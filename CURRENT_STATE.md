@@ -5,13 +5,13 @@ Verified against commit: `4fcadbe` (C1: deterministic Stage-2 corpus canonicaliz
 Active branch at verification: `main` (working tree clean)
 
 ```yaml
-current_phase: extraction-architecture-frozen # R3a/R3b/C1 complete; critical path = RAG v1.0 application E2E
+current_phase: extraction-architecture-frozen # C1 complete; priority = CORPUS_INGEST_READY (C2 -> Q1 -> I1 -> I2)
 repository:
   branch: main
   head: 4fcadbe
   frozen_artifacts: [see Frozen Artifacts section]
   evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1]
-  next_actions: [c2-canonical-kg, r2-reranker-qualification, m1-mcp-contract]
+  next_actions: [c2-canonical-kg, q1-heterogeneous-qualification, i1-bulk-ingestion]
   do_not_do: [see Explicitly Prohibited Actions]
   known_gaps: [see Known Limitations]
 ```
@@ -259,23 +259,29 @@ permits a new corpus version.
 ## Current Workstream
 
 Phase H (empirical qualification) — complete. Extraction architecture
-frozen at commit 3ada0af. Critical path is now the RAG v1.0 application
-E2E (R3a COMPLETE, R3b COMPLETE, C1 COMPLETE → C2 → R2 → M1–M5 → R4 →
-O2 → O1 → A1 → V1); E1-a/E1-b are deferred measured improvements.
+frozen at commit 3ada0af. Milestone A (CORPUS_INGEST_READY): R3a/R3b
+COMPLETE, C1 COMPLETE → C2 → Q1 → I1 → I2. Milestone B (RAG_V1_E2E):
+R2 → M1–M5 → R4 → O2 → O1 → A1 → V1. E1-a/E1-b are deferred measured
+improvements.
 
-## Next Authorized Actions (critical path, in order)
+## Next Authorized Actions
 
-1. **C2**: canonical KG + source/provenance links — project the C1
-   registry into Neo4j as a rebuildable projection with provenance
-   links to source-local facts. NEXT gate.
-2. **R2**: reranker qualification (bypassable for first /chat E2E;
-   evaluate before defaulting).
-3. **M1–M5**: Polymath MCP contract, server, Claude E2E, Hermes Agent
-   E2E, read/write/admin permission boundaries.
-4. **R4**: graph/retrieval scale qualification.
-5. **O2**: model digest pinning. **O1**: clean-clone + backup/recovery
-   drill. **A1**: fresh-machine + fresh-agent acceptance. **V1**:
-   RAG v1.0 checkpoint.
+MILESTONE A — CORPUS_INGEST_READY (current priority; C1 COMPLETE):
+
+1. **C2**: canonical KG + provenance projection — project the C1
+   registry into Neo4j as a rebuildable projection (CanonicalEntity
+   nodes + HAS_MEMBER edges carrying decision/basis/version; complete
+   graph lineage canonical → local → fact → evidence → source).
+   NEXT gate.
+2. **Q1**: heterogeneous extraction/corpus qualification with measured
+   quality gates.
+3. **I1**: manifest-driven bulk ingestion controller.
+4. **I2**: corpus-scale integrity run.
+
+CORPUS_INGEST_READY = C1 + C2 + Q1 + I1 + I2 pass.
+
+MILESTONE B — RAG_V1_E2E (after Milestone A):
+R2 (reranker, bypassable) → M1–M5 (MCP) → R4 → O2 → O1 → A1 → V1.
 
 ## Deferred Measured Improvement (NOT critical path)
 

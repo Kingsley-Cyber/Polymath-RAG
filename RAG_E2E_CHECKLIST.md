@@ -7,6 +7,16 @@ complete.
 
 Status vocabulary: COMPLETE / IN PROGRESS / NOT STARTED / BLOCKED.
 
+Two milestones gate the release path:
+
+- **MILESTONE A — CORPUS_INGEST_READY**: C1 + C2 + Q1 + I1 + I2 all
+  COMPLETE. This is the current priority: the system must be able to
+  mass-ingest the real corpus confidently.
+- **MILESTONE B — RAG_V1_E2E**: the remaining application gates
+  (R2, M1–M5, R4, O2, O1, A1) + the V1 checkpoint.
+
+R2/MCP are NOT prerequisites for CORPUS_INGEST_READY.
+
 ## Foundation gates
 
 | Gate | Question | Status | Evidence |
@@ -28,7 +38,7 @@ Status vocabulary: COMPLETE / IN PROGRESS / NOT STARTED / BLOCKED.
 | X3 | Is runtime independent of raw resources? | COMPLETE | GATE 10 test (vendor/ removed → compiler still loads) |
 | X4 | Are facts provably evidence-backed with resource provenance? | COMPLETE | provenance carries rule_id, roleset, resource_contract_id; live proof (founded/establish.01/base-97.1/semlink=true) |
 
-## Retrieval gates
+## Retrieval and answer gates
 
 | Gate | Question | Status | Evidence |
 |---|---|---|---|
@@ -37,41 +47,31 @@ Status vocabulary: COMPLETE / IN PROGRESS / NOT STARTED / BLOCKED.
 | R3a | Can every answer claim assemble from traceable EvidenceBundle evidence? | COMPLETE | POST /evidence + `shared/polymath_shared/evidence_assembly.py`; live E2E traceable bundle; loud 502 on unresolved/missing-provenance |
 | R3b | Is there a working answer generation + `/chat` path end to end? | COMPLETE | POST /chat: R3a bundle → deterministic propose/validate/render; citations reference bundle items with locators; live E2E cited grounded answer + abstention |
 
-## Canonicalization gates
+## MILESTONE A — CORPUS_INGEST_READY
 
 | Gate | Question | Status | Evidence |
 |---|---|---|---|
 | C1 | Does Stage-2 corpus-level canonicalization merge cross-document entities deterministically? | COMPLETE | ADR 0009 + migration 0005 + `canonicalize` stage: content-hash canonical ids, conservative SAME_AS/ALIAS_OF/DISTINCT/AMBIGUOUS policy, full lineage, replay-safe, order-independent (live E2E) |
-| C2 | Does the canonical KG carry source/provenance links to every fact? | NOT STARTED | builds on C1 + existing fact provenance |
+| C2 | Does the canonical KG carry source/provenance links to every fact? | NOT STARTED | projects C1 registry into Neo4j (rebuildable); next gate |
+| Q1 | Does extraction qualify on a heterogeneous corpus (mixed domains/types) with measured quality gates? | NOT STARTED | corpus qualification not run |
+| I1 | Does a manifest drive bulk ingestion of many documents idempotently? | NOT STARTED | no manifest-based bulk controller |
+| I2 | Does a corpus-scale integrity run prove receipts/projections/canonicalization converge at scale? | NOT STARTED | scale integrity not run |
 
-## Reranking gate
+**CORPUS_INGEST_READY = C1 + C2 + Q1 + I1 + I2 all COMPLETE.**
+
+## MILESTONE B — RAG_V1_E2E
 
 | Gate | Question | Status | Evidence |
 |---|---|---|---|
 | R2 | Do fused candidates get cross-representation reranking? | NOT STARTED | G3 reranker is a stub. BYPASSABLE for first /chat E2E; must be evaluated before becoming a default |
-
-## MCP gates
-
-| Gate | Question | Status | Evidence |
-|---|---|---|---|
 | M1 | Is the Polymath MCP contract defined (tools, inputs/outputs, versioning)? | NOT STARTED | no contract file exists |
 | M2 | Does the Polymath MCP server implement the contract against the real orchestrator? | NOT STARTED | no server exists |
 | M3 | Does Claude MCP E2E work against the server? | NOT STARTED | qualification not run |
 | M4 | Does Hermes Agent MCP E2E work against the server? | NOT STARTED | qualification not run |
 | M5 | Are MCP read/write/admin permission boundaries enforced and tested? | NOT STARTED | no boundary policy exists |
-
-## Scale and operations gates
-
-| Gate | Question | Status | Evidence |
-|---|---|---|---|
 | R4 | Is graph expansion bounded and useful at real corpus scale? | IN PROGRESS | monotonicity unit-tested; scale/hub qualification not run |
 | O2 | Are model weights pinned with recorded digests in production? | IN PROGRESS | TOFU digests; `POLYMATH_REQUIRE_PINNED=0` until digests recorded |
 | O1 | Can a clean machine reproduce the pinned system and recover its data? | NOT STARTED | launchd/Makefile exist; clean-clone startup gate + backup drill not proven |
-
-## Acceptance gates
-
-| Gate | Question | Status | Evidence |
-|---|---|---|---|
 | A1 | Does a fresh agent on a fresh machine bootstrap, run the E2E, and pass acceptance? | NOT STARTED | full new-agent/new-machine acceptance drill |
 | V1 | Is the RAG v1.0 checkpoint recorded with all evidence above? | NOT STARTED | release checkpoint |
 
@@ -95,11 +95,9 @@ production lexical path.
 
 ## The next unchecked gate
 
-**C2** — canonical KG + source/provenance linkage: project the C1
-canonical registry (canonical entities + memberships) into Neo4j as a
-rebuildable projection with provenance links to source-local facts.
-Then R2 (reranker, bypassable initially), M1–M5 (MCP), R4, O2, O1, A1,
-V1.
+**C2** — canonical KG + provenance projection (Milestone A). Then
+Q1 → I1 → I2 → **CORPUS_INGEST_READY**, then Milestone B
+(R2 → M1–M5 → R4 → O2 → O1 → A1 → V1).
 
 ## Marking policy
 

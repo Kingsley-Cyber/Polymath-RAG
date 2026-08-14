@@ -43,22 +43,19 @@ Read:
 
 Do NOT begin E1 yet (deferred measured improvement).
 
-CRITICAL PATH TO RAG v1.0 (in order):
-1. ~~grounded EvidenceBundle assembly (R3a)~~ COMPLETE
-2. ~~functional answer generation and /chat path (R3b)~~ COMPLETE
-3. ~~Stage-2 corpus-level canonicalization/merge (C1)~~ COMPLETE
-4. canonical KG + source/provenance linkage (C2) ← NEXT
-5. reranking qualification (R2 — bypassable for first /chat E2E)
-6. Polymath MCP contract (M1)
-7. Polymath MCP server (M2)
-8. Claude MCP end-to-end qualification (M3)
-9. Hermes Agent MCP end-to-end qualification (M4)
-10. MCP read/write/admin permission boundaries (M5)
-11. graph/retrieval scale qualification (R4)
-12. model digest pinning (O2)
-13. clean-clone + backup/recovery drill (O1)
-14. fresh-machine + fresh-agent E2E acceptance (A1)
-15. RAG v1.0 checkpoint (V1)
+MILESTONE A — CORPUS_INGEST_READY (current priority):
+1. ~~Stage-2 corpus-level canonicalization/merge (C1)~~ COMPLETE
+2. canonical KG + provenance projection (C2) ← NEXT
+3. heterogeneous extraction qualification (Q1)
+4. manifest-driven bulk ingestion (I1)
+5. corpus-scale integrity qualification (I2)
+
+CORPUS_INGEST_READY is achieved only when C1+C2+Q1+I1+I2 pass.
+
+MILESTONE B — RAG_V1_E2E (after Milestone A):
+R2 (reranker, bypassable) → M1–M5 (MCP) → R4 → O2 → O1 → A1 → V1.
+R3a and R3b are already COMPLETE. R2/MCP are NOT prerequisites for
+CORPUS_INGEST_READY.
 
 E1 may be pulled back onto the critical path only if an E2E acceptance
 test demonstrates that one of those extraction defects blocks the
@@ -66,14 +63,20 @@ production lexical path.
 
 ## Next Unchecked Critical-Path Gate
 
-**C2** — canonical KG + source/provenance linkage. Project the C1
-registry (canonical entities + memberships) into Neo4j as a
-rebuildable projection: canonical entity nodes, canonical membership
-edges to local entities, and provenance links from the canonical layer
-back to source-local facts. Postgres remains authority; Neo4j stays
-disposable/rebuildable. The milestone after C2 is Q1 (heterogeneous
-corpus qualification), then I1/I2 (bulk ingest + integrity) →
-CORPUS_INGEST_READY.
+**C2** — canonical KG + provenance projection. Project the C1 registry
+(canonical entities + memberships) into Neo4j as a completely
+rebuildable graph layer with full traversal back to every source-local
+entity, fact, evidence record, and source document:
+
+CanonicalEntity → HAS_MEMBER → LocalEntity → Fact → SUPPORTED_BY →
+Evidence → FROM_CHUNK → Chunk → Document
+
+Postgres remains authority; Neo4j remains disposable. Never mutate
+local entity/fact IDs, never rewrite source evidence, never create a
+new semantic fact because entities canonicalize, membership edges
+carry C1 decision/basis/version, conflicting facts stay distinct,
+Neo4j loss must be completely reconstructable from Postgres, replay
+creates zero duplicates, incremental changes converge.
 
 ## Do Not Do
 
