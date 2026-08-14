@@ -1,0 +1,33 @@
+{"item_id": "a01", "outcome_target": "gold", "unit": ["triple", "a01", "John", "founded", "Acme"]}
+{"item_id": "a02", "outcome_target": "gold", "unit": ["triple", "a02", "John", "founded", "Acme"]}
+{"item_id": "a03", "outcome_target": "gold", "unit": ["triple", "a03", "The pipeline", "uses", "bi-encoder"]}
+{"item_id": "a04", "outcome_target": "gold", "unit": ["triple", "a04", "Acme", "uses", "Kubernetes"]}
+{"item_id": "a05", "outcome_target": "gold", "unit": ["triple", "a05", "GPU", "part_of", "workstation"]}
+{"item_id": "a06", "outcome_target": "gold", "unit": ["triple", "a06", "John", "has_role", "Acme"]}
+{"item_id": "a07", "outcome_target": "gold", "unit": ["triple", "a07", "Acme", "employs", "Mary"]}
+{"item_id": "a08", "outcome_target": "gold", "unit": ["triple", "a08", "encoder", "depends_on", "tokenizer"]}
+{"item_id": "a09", "outcome_target": "gold", "unit": ["triple", "a09", "Metacognition", "is_a", "cognition"]}
+{"item_id": "a10", "outcome_target": "gold", "unit": ["triple", "a10", "CUDA context poisoning", "causes", "the sidecar"]}
+{"item_id": "a11", "outcome_target": "gold", "unit": ["triple", "a11", "Acme", "located_in", "Berlin"]}
+{"item_id": "a12", "outcome_target": "gold", "unit": ["triple", "a12", "The report", "stated_in", "ISO 27001"]}
+{"item_id": "a13", "outcome_target": "gold", "unit": ["abstention", "a13", null, null, null]}
+{"item_id": "a14", "outcome_target": "gold", "unit": ["triple", "a14", "John", "founded", "Acme"]}
+{"item_id": "a14", "outcome_target": "gold", "unit": ["triple", "a14", "John", "has_role", "Acme"]}
+{"item_id": "b01", "outcome_target": "gold", "unit": ["abstention", "b01", null, null, null]}
+{"item_id": "b02", "outcome_target": "gold", "unit": ["triple", "b02", "John", "founded", "a company"]}
+{"item_id": "b03", "outcome_target": "gold", "unit": ["abstention", "b03", null, null, null]}
+{"item_id": "b04", "outcome_target": "gold", "unit": ["abstention", "b04", null, null, null]}
+{"item_id": "b05", "outcome_target": "gold", "unit": ["triple", "b05", "Alice", "member_of", "Acme"]}
+{"item_id": "b05", "outcome_target": "gold", "unit": ["triple", "b05", "Bob", "member_of", "Acme"]}
+{"item_id": "b06", "outcome_target": "gold", "unit": ["triple", "b06", "The team", "uses", "framework"]}
+{"item_id": "b06", "outcome_target": "gold", "unit": ["triple", "b06", "author", "founded", "startup"]}
+{"item_id": "b06", "outcome_target": "gold", "unit": ["spurious", "b06", "The team", "founded", "startup"]}
+{"item_id": "b07", "outcome_target": "gold", "unit": ["triple", "b07", "Beta", "subsidiary_of", "Acme"]}
+{"item_id": "b08", "outcome_target": "gold", "unit": ["abstention", "b08", null, null, null]}
+{"item_id": "b09", "outcome_target": "gold", "unit": ["triple", "b09", "Acme", "acquired", "Beta"]}
+{"item_id": "b10", "outcome_target": "gold", "unit": ["abstention", "b10", null, null, null]}
+{"item_id": "b11", "outcome_target": "gold", "unit": ["triple", "b11", "plaintext", "transforms_into", "ciphertext"]}
+{"item_id": "b12", "outcome_target": "gold", "unit": ["abstention", "b12", null, null, null]}
+{"item_id": "b13", "outcome_target": "gold", "unit": ["triple", "b13", "Bob", "founded", "Acme"]}
+{"item_id": "b13", "outcome_target": "gold", "unit": ["spurious", "b13", "Alice", "founded", "Acme"]}
+{"item_id": "b14", "outcome_target": "gold", "unit": ["abstention", "b14", null, null, null]}

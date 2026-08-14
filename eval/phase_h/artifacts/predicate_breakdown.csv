@@ -1,0 +1,15 @@
+predicate,rule_coverage_status,gold_count,baseline_correct,baseline_incorrect,baseline_missed,hybrid_correct,hybrid_incorrect,hybrid_missed,delta_correct,delta_incorrect,delta_missed
+acquired,PARTIAL,1,1,0,0,1,0,0,0,0,0
+causes,PARTIAL,1,1,0,0,1,0,0,0,0,0
+depends_on,COMPLETE,1,1,0,0,1,0,0,0,0,0
+employs,PARTIAL,1,1,0,0,1,0,0,0,0,0
+founded,COMPLETE,6,5,0,1,5,0,1,0,0,0
+has_role,PARTIAL,2,2,0,0,2,0,0,0,0,0
+is_a,MANUAL_ONLY,1,1,0,0,1,0,0,0,0,0
+located_in,PARTIAL,1,1,0,0,1,0,0,0,0,0
+member_of,PARTIAL,2,2,0,0,2,0,0,0,0,0
+part_of,MANUAL_ONLY,1,1,0,0,1,0,0,0,0,0
+stated_in,COMPLETE,1,1,0,0,1,0,0,0,0,0
+subsidiary_of,PARTIAL,1,1,0,0,1,0,0,0,0,0
+transforms_into,COMPLETE,1,0,0,1,0,0,1,0,0,0
+uses,PARTIAL,3,3,0,0,3,0,0,0,0,0

@@ -69,6 +69,7 @@ def build_candidates(
     ontology_profile: str,
     extractor_version: str,
     rule_pack: dict,
+    enrich: bool = True,
 ) -> list[RelationCandidate]:
     """Deterministic candidate generation over sentence slices.
 
@@ -77,6 +78,9 @@ def build_candidates(
     the entity nearest to the RIGHT. This fixes direction by surface
     linear order — a deterministic heuristic, marked weak in provenance
     unless the syntactic record supplies voice normalization.
+
+    `enrich=False` is the Phase H lexical BASELINE arm: candidates carry
+    no resource-derived evidence (roleset/VN/FN/SemLink all empty).
 
     Total order: (sentence, evidence, subject, object) — reproducible
     from the same spans.
@@ -90,7 +94,9 @@ def build_candidates(
                 evidence.end - sl.sentence_start,
             )
             evidence.trigger_lemma = evidence.trigger_lemma or _head_trigger(evidence, sl)
-            _lexical = _lookup_for(rule_pack, evidence)
+            _lexical = _lookup_for(rule_pack, evidence) if enrich else {
+                "roleset": None, "vn_classes": [], "fn_frames": [], "semlink_resolved": False,
+            }
 
             left = sorted(
                 [e for e in sl.entities if e.end <= evidence.start],

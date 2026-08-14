@@ -82,6 +82,20 @@ that motivated it and the refactor that implemented it.
   coarse evidence (may abstain), the lexical lane localizes triggers,
   resources constrain, the compiler decides. Mode: lexical | hybrid.
 
+
+## 2026-08-14: Phase H — lexical-semantic waterfall qualification
+
+- Two-arm experiment (lexical baseline vs resource-enriched hybrid)
+  over the frozen corpus with a clean contract boundary
+  (load_rule_pack(use_resources=...) / candidates(enrich=...)).
+- Verdict: NO MATERIAL BENEFIT — Δcorrect=0, Δincorrect=0, Δmissed=0
+  on 33 units; determinism verified (identical repeated hashes).
+- Finding: the frozen corpus is structurally blind to the resource
+  boundary; isolation tests prove the arms differ (coin: UNSUPPORTED
+  vs FOUNDED/CREATED). Corpus v1.1 (resource-expanded triggers,
+  multi-sense disambiguation) is the gating artifact for the
+  hybrid-default decision.
+
 ## 2026-08-14: Phase G1 — document semantic routing + retrieval primitives
 
 - Document RetrievalProfile (bottom-up, deterministic, no LLM) with

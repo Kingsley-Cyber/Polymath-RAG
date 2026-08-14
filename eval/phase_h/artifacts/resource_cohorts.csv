@@ -1,0 +1,9 @@
+cohort,n,baseline_correct,baseline_incorrect,baseline_missed,hybrid_correct,hybrid_incorrect,hybrid_missed
+C0_manual_only,3,3,0,0,3,0,0
+C1_propbank,25,26,2,2,26,2,2
+C2_verbnet,17,18,2,1,18,2,1
+C3_framenet,8,9,1,0,9,1,0
+C4_direct_semlink,8,9,1,0,9,1,0
+C7_no_resource_coverage,3,3,0,0,3,0,0
+C8_polysemous,1,1,0,0,1,0,0
+C9_assertion_control,4,4,1,0,4,1,0

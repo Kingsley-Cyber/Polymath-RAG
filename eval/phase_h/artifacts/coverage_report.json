@@ -1,0 +1,555 @@
+{
+ "note": "coverage != correctness; outcomes scored separately",
+ "rows": [
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": true
+   },
+   "item_id": "a01",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": true
+   },
+   "item_id": "a02",
+   "outcomes": [
+    "MISSED"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "a03",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "C8_polysemous"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "a04",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C7_no_resource_coverage",
+    "C0_manual_only"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": true,
+    "pb": false,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": false
+   },
+   "item_id": "a05",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C7_no_resource_coverage"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": true,
+    "pb": false,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": false
+   },
+   "item_id": "a06",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "a07",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "a08",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C0_manual_only"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": true
+   },
+   "item_id": "a09",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "a10",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": false
+   },
+   "item_id": "a11",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": false
+   },
+   "item_id": "a12",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "C0_manual_only"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "a13",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": true
+   },
+   "item_id": "a14",
+   "outcomes": [
+    "CORRECT",
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C9_assertion_control"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": true
+   },
+   "item_id": "b01",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": true
+   },
+   "item_id": "b02",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C9_assertion_control"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": true
+   },
+   "item_id": "b03",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": true
+   },
+   "item_id": "b04",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": false
+   },
+   "item_id": "b05",
+   "outcomes": [
+    "CORRECT",
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "b06",
+   "outcomes": [
+    "CORRECT",
+    "CORRECT",
+    "INCORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C7_no_resource_coverage"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": true,
+    "pb": false,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": false
+   },
+   "item_id": "b07",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": false
+   },
+   "item_id": "b08",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": false
+   },
+   "item_id": "b09",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": false
+   },
+   "item_id": "b10",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": false
+   },
+   "item_id": "b11",
+   "outcomes": [
+    "MISSED"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "C9_assertion_control"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "b12",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C9_assertion_control"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": true
+   },
+   "item_id": "b13",
+   "outcomes": [
+    "CORRECT",
+    "INCORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": false
+   },
+   "item_id": "b14",
+   "outcomes": [
+    "CORRECT"
+   ]
+  }
+ ]
+}

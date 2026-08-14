@@ -48,18 +48,27 @@ class RulePackError(ValueError):
 # ---------------------------------------------------------------------------
 
 
-def load_rule_pack(path: Optional[Path] = None) -> dict[str, Any]:
-    """Load the rule pack + the compiled lexical tables.
+def load_rule_pack(path: Optional[Path] = None, *, use_resources: bool = True) -> dict[str, Any]:
+    """Load the rule pack + (optionally) the compiled lexical tables.
 
     Runtime reads ONLY the committed compiled tables under
     resources/compiled/<contract>/ (GATE 10: raw vendored resources are
     build dependencies, never runtime dependencies). The compiled
     artifact carries the resource_contract_id and a content digest; any
     mismatch is a hard failure — a resource change is an explicit
-    contract bump, never silent drift."""
+    contract bump, never silent drift.
+
+    `use_resources=False` is the Phase H lexical BASELINE arm: the same
+    compiler DAG over the hand-curated YAML trigger vocabulary, with NO
+    resource-derived evidence anywhere (no class expansion, no
+    roleset/VN/FN/SemLink lookups). The compiler itself is byte-for-byte
+    the same code path.
+    """
     raw = yaml.safe_load((path or _RULE_PACK_PATH).read_text())
-    compiled = _load_compiled_lexical(raw)
     resources = yaml.safe_load(_RESOURCE_INDEX_PATH.read_text())
+    if not use_resources:
+        return _compile_baseline(raw, resources)
+    compiled = _load_compiled_lexical(raw)
     return _compile(raw, resources, compiled)
 
 
@@ -99,6 +108,46 @@ def _load_compiled_lexical(raw: dict) -> dict:
     if digest != compiled["compiled_lexical_sha256"]:
         raise RulePackError("compiled_lexical.json digest mismatch — rebuild it")
     return compiled
+
+
+def _compile_baseline(raw: dict, resources: dict) -> dict[str, Any]:
+    """The Phase H lexical BASELINE: same validation, same compiler DAG,
+    manual YAML triggers only. `lexical` tables are empty structures so
+    every resource-coverage probe reads as absence (never an error)."""
+    pack = raw["rule_pack"]
+    predicates = raw.get("predicates", [])
+    core_types = set(raw.get("core_types", []))
+    evidence_classes = set(raw.get("evidence_classes", {}))
+
+    by_id: dict[str, dict] = {}
+    for rule in predicates:
+        _validate_structure(rule, core_types, evidence_classes, resources)
+        if rule["id"] in by_id:
+            raise RulePackError(f"duplicate predicate id: {rule['id']}")
+        by_id[rule["id"]] = rule
+    _validate_inverses(by_id)
+    _validate_determinism(by_id)
+
+    return {
+        "pack": pack,
+        "predicates": by_id,
+        "predicate_order": [rule["id"] for rule in predicates],
+        "core_types": core_types,
+        "evidence_classes": raw.get("evidence_classes", {}),
+        "resource_versions": pack.get("resource_versions", {}),
+        "resource_contract_id": None,  # baseline: no resource contract
+        "compiled_lexical_sha256": None,
+        "lexical": {
+            "lemma_to_vn_classes": {},
+            "lemma_to_pb_rolesets": {},
+            "pb_roleset_arguments": {},
+            "pb_to_vn": {},
+            "pb_to_fn": {},
+            "vn_to_fn": {},
+            "frame_index": {},
+        },
+        "use_resources": False,
+    }
 
 
 def _compile(raw: dict, resources: dict, compiled: dict) -> dict[str, Any]:
@@ -164,6 +213,7 @@ def _compile(raw: dict, resources: dict, compiled: dict) -> dict[str, Any]:
         "resource_contract_id": compiled.get("resource_contract_id"),
         "compiled_lexical_sha256": compiled.get("compiled_lexical_sha256"),
         "lexical": _load_lexical_tables(compiled_dir),
+        "use_resources": True,
     }
 
 

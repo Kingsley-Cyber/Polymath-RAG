@@ -1,0 +1,280 @@
+{
+ "baseline": {
+  "correct": 29,
+  "incorrect": 2,
+  "missed": 2,
+  "outcomes": {
+   "CORRECT": 29,
+   "INCORRECT": 2,
+   "MISSED": 2
+  },
+  "precision": 0.9354838709677419,
+  "recall": 0.9354838709677419,
+  "total": 33
+ },
+ "delta": {
+  "d_correct": 0,
+  "d_incorrect": 0,
+  "d_missed": 0
+ },
+ "hybrid": {
+  "correct": 29,
+  "incorrect": 2,
+  "missed": 2,
+  "outcomes": {
+   "CORRECT": 29,
+   "INCORRECT": 2,
+   "MISSED": 2
+  },
+  "precision": 0.9354838709677419,
+  "recall": 0.9354838709677419,
+  "total": 33
+ },
+ "transitions": {
+  "cells": {
+   "CORRECT -> CORRECT": 29,
+   "INCORRECT -> INCORRECT": 2,
+   "MISSED -> MISSED": 2
+  },
+  "detail": {
+   "CORRECT -> CORRECT": [
+    [
+     "abstention",
+     "a13",
+     null,
+     null,
+     null
+    ],
+    [
+     "abstention",
+     "b01",
+     null,
+     null,
+     null
+    ],
+    [
+     "abstention",
+     "b03",
+     null,
+     null,
+     null
+    ],
+    [
+     "abstention",
+     "b04",
+     null,
+     null,
+     null
+    ],
+    [
+     "abstention",
+     "b08",
+     null,
+     null,
+     null
+    ],
+    [
+     "abstention",
+     "b10",
+     null,
+     null,
+     null
+    ],
+    [
+     "abstention",
+     "b12",
+     null,
+     null,
+     null
+    ],
+    [
+     "abstention",
+     "b14",
+     null,
+     null,
+     null
+    ],
+    [
+     "triple",
+     "a01",
+     "John",
+     "founded",
+     "Acme"
+    ],
+    [
+     "triple",
+     "a03",
+     "The pipeline",
+     "uses",
+     "bi-encoder"
+    ],
+    [
+     "triple",
+     "a04",
+     "Acme",
+     "uses",
+     "Kubernetes"
+    ],
+    [
+     "triple",
+     "a05",
+     "GPU",
+     "part_of",
+     "workstation"
+    ],
+    [
+     "triple",
+     "a06",
+     "John",
+     "has_role",
+     "Acme"
+    ],
+    [
+     "triple",
+     "a07",
+     "Acme",
+     "employs",
+     "Mary"
+    ],
+    [
+     "triple",
+     "a08",
+     "encoder",
+     "depends_on",
+     "tokenizer"
+    ],
+    [
+     "triple",
+     "a09",
+     "Metacognition",
+     "is_a",
+     "cognition"
+    ],
+    [
+     "triple",
+     "a10",
+     "CUDA context poisoning",
+     "causes",
+     "the sidecar"
+    ],
+    [
+     "triple",
+     "a11",
+     "Acme",
+     "located_in",
+     "Berlin"
+    ],
+    [
+     "triple",
+     "a12",
+     "The report",
+     "stated_in",
+     "ISO 27001"
+    ],
+    [
+     "triple",
+     "a14",
+     "John",
+     "founded",
+     "Acme"
+    ],
+    [
+     "triple",
+     "a14",
+     "John",
+     "has_role",
+     "Acme"
+    ],
+    [
+     "triple",
+     "b02",
+     "John",
+     "founded",
+     "a company"
+    ],
+    [
+     "triple",
+     "b05",
+     "Alice",
+     "member_of",
+     "Acme"
+    ],
+    [
+     "triple",
+     "b05",
+     "Bob",
+     "member_of",
+     "Acme"
+    ],
+    [
+     "triple",
+     "b06",
+     "The team",
+     "uses",
+     "framework"
+    ],
+    [
+     "triple",
+     "b06",
+     "author",
+     "founded",
+     "startup"
+    ],
+    [
+     "triple",
+     "b07",
+     "Beta",
+     "subsidiary_of",
+     "Acme"
+    ],
+    [
+     "triple",
+     "b09",
+     "Acme",
+     "acquired",
+     "Beta"
+    ],
+    [
+     "triple",
+     "b13",
+     "Bob",
+     "founded",
+     "Acme"
+    ]
+   ],
+   "INCORRECT -> INCORRECT": [
+    [
+     "spurious",
+     "b06",
+     "The team",
+     "founded",
+     "startup"
+    ],
+    [
+     "spurious",
+     "b13",
+     "Alice",
+     "founded",
+     "Acme"
+    ]
+   ],
+   "MISSED -> MISSED": [
+    [
+     "triple",
+     "a02",
+     "John",
+     "founded",
+     "Acme"
+    ],
+    [
+     "triple",
+     "b11",
+     "plaintext",
+     "transforms_into",
+     "ciphertext"
+    ]
+   ]
+  },
+  "total_units": 33
+ }
+}
