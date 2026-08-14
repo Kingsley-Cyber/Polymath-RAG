@@ -1,7 +1,7 @@
 # Current Repository State
 
 Last verified: 2026-08-14
-Verified against commit: `3ada0af6020c64d8acc5cbde3ade34beb9c7ccef`
+Verified against commit: `522e971` (reprioritize: RAG v1.0 application E2E on critical path, E1 deferred)
 Active branch at verification: `main` (working tree clean)
 
 ```yaml
