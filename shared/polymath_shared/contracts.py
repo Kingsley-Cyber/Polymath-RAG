@@ -190,6 +190,30 @@ class DocumentProfile(BaseModel):
     core_labels: list[CoreType] = Field(default_factory=list)
 
 
+class RetrievalProfile(BaseModel):
+    """The document's semantic address for cross-domain routing.
+
+    Built bottom-up: child chunks -> parent summaries -> this profile.
+    It answers "why should this whole source be considered for a query",
+    never "what does one chunk say". Distinct from DocumentProfile (the
+    deterministic label-routing artifact); neither is a substitute for
+    the other."""
+    document_id: str
+    semantic_summary: str
+    primary_domains: list[str] = Field(default_factory=list)
+    secondary_domains: list[str] = Field(default_factory=list)
+    core_concepts: list[str] = Field(default_factory=list)
+    methods: list[str] = Field(default_factory=list)
+    problems_addressed: list[str] = Field(default_factory=list)
+    use_for_questions_about: list[str] = Field(default_factory=list)
+    connects_to_domains: list[str] = Field(default_factory=list)
+    parent_ids: list[str] = Field(default_factory=list)
+    source_parent_count: int = 0
+    summarized_parent_count: int = 0
+    coverage: float = 1.0
+    summary_contract: str = "document-summary-v1"
+
+
 class IntakeRequest(BaseModel):
     corpus_id: str
     source_name: str

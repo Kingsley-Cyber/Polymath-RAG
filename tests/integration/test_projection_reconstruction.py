@@ -232,6 +232,7 @@ def _project_all(run: str) -> None:
     _run_intake(run)
     _seed_facts(run)
     _mark_stage_ok(run, "extract")
+    _mark_stage_ok(run, "profile_document")
     from polymath_shared.db import tx as _tx
 
     with _tx() as conn:
@@ -519,7 +520,7 @@ class TestReconstruction:
         detected = {
             (g.stage, g.event_type)
             for g in census.gaps
-            if g.run_id == run and g.stage != "verify_projections"
+            if g.run_id == run and g.stage in ("project_qdrant", "project_neo4j")
         }
         assert detected == {
             ("project_qdrant", "project_qdrant.v1"),

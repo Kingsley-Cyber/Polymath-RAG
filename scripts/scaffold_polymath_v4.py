@@ -142,6 +142,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("orchestrator/orchestrator/__init__.py", "py", "PKG_INIT"),
     ("orchestrator/orchestrator/main.py", "py", "ORCHESTRATOR_MAIN"),
     ("orchestrator/orchestrator/api/intake.py", "py", "ORCHESTRATOR_INTAKE"),
+    ("orchestrator/orchestrator/api/retrieve.py", "py", None),
     ("orchestrator/orchestrator/api/chat.py", "py", "ORCHESTRATOR_CHAT"),
     ("orchestrator/orchestrator/api/health.py", "py", "ORCHESTRATOR_HEALTH"),
     ("orchestrator/orchestrator/registry.py", "py", "ORCHESTRATOR_REGISTRY"),
@@ -226,30 +227,38 @@ TREE: list[tuple[str, str, str | None]] = [
     ("workers/workers/project_qdrant_worker.py", "py", None),
     ("workers/workers/project_neo4j_worker.py", "py", None),
     ("workers/workers/verify_worker.py", "py", None),
+    ("workers/workers/document_profile_builder.py", "py", None),
+    ("workers/workers/profile_worker.py", "py", None),
 
-    # shared: projection contracts (Phase F)
+    # shared: projection contracts (Phase F) + store drivers + retrieval
     ("shared/polymath_shared/projection_contracts.py", "py", None),
+    ("shared/polymath_shared/stores.py", "py", None),
+    ("shared/polymath_shared/retrieval.py", "py", None),
 
-    # stores: Neo4j uniqueness constraints (constrained MERGE)
+    # stores: Neo4j uniqueness constraints + document profile columns
     ("stores/neo4j/constraints/0001_uniqueness.cypher", "cypher", None),
+    ("stores/postgres/migrations/0003_document_profiles.sql", "sql", None),
 
-    # deployment: Phase F workers
+    # deployment: Phase F/G workers
     ("deployment/launchd/ai.polymath.worker.project-qdrant.plist", "plist", None),
     ("deployment/launchd/ai.polymath.worker.project-neo4j.plist", "plist", None),
     ("deployment/launchd/ai.polymath.worker.verify.plist", "plist", None),
+    ("deployment/launchd/ai.polymath.worker.profile-document.plist", "plist", None),
 
-    # docs/wiki: Phase F decisions, experiments, work logs
+    # docs/wiki: Phase F/G decisions, experiments, work logs
     ("docs/wiki/decisions/0007-lexical-evidence-lane.md", "md", None),
     ("docs/wiki/experiments/0001-gliner-evidence-pass.md", "md", None),
     ("docs/wiki/experiments/0002-compiler-recovery.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-phase-f.md", "md", None),
+    ("docs/wiki/work-log/2026-08-14-phase-g1.md", "md", None),
 
     # eval: frozen gold data + the layer measurement harness
     ("eval/gold/relations_v1.yaml", "yaml", None),
     ("eval/measure_layers.py", "py", None),
 
-    # tests: Phase F destructive-reconstruction acceptance gate
+    # tests: Phase F gate + G1 cross-domain routing acceptance
     ("tests/integration/test_projection_reconstruction.py", "py", None),
+    ("tests/integration/test_cross_domain_routing.py", "py", None),
 
     # stores: the workflow schema (docs/chunks/entities/evidence/facts)
     ("stores/postgres/migrations/0002_workflow.sql", "sql", None),

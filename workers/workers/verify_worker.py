@@ -19,7 +19,7 @@ import time
 
 import psycopg
 from psycopg import Connection
-from qdrant_client import QdrantClient
+from polymath_shared.stores import qdrant_client as _qdrant_client
 
 from polymath_shared.db import tx
 from polymath_shared.logging import configure_logging
@@ -32,7 +32,7 @@ from polymath_shared.receipts import (
     stage_transaction,
 )
 from polymath_shared.settings import get_settings
-from workers.project_neo4j_worker import _driver as _neo4j_driver
+from polymath_shared.stores import neo4j_driver as _neo4j_driver
 
 STAGE = "verify_projections"
 EVENT_TYPE = "verify.v1"
@@ -103,7 +103,7 @@ def reconcile_qdrant(conn: Connection, run_id: str, corpus: str) -> dict:
     desired = set(_desired_chunk_ids(conn, run_id))
     receipts = set(_receipt_chunk_ids(conn, corpus, "qdrant"))
 
-    client = QdrantClient(url=settings.stores.qdrant_url, timeout=60)
+    client = _qdrant_client()
     try:
         store_ids: set[str] = set()
         try:
@@ -122,7 +122,7 @@ def reconcile_qdrant(conn: Connection, run_id: str, corpus: str) -> dict:
     # Orphan store artifacts (no receipt, no source) -> delete from store.
     orphans_in_store = store_ids - receipts
     if orphans_in_store:
-        client = QdrantClient(url=settings.stores.qdrant_url, timeout=60)
+        client = _qdrant_client()
         try:
             points, _ = client.scroll(collection_name=collection, limit=100_000, with_vectors=False)
             orphan_point_ids = [

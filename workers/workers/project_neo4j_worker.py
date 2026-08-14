@@ -40,6 +40,7 @@ from polymath_shared.receipts import (
     stage_transaction,
 )
 from polymath_shared.settings import get_settings
+from polymath_shared.stores import neo4j_driver
 
 STAGE = "project_neo4j"
 EVENT_TYPE = "project_neo4j.v1"
@@ -85,11 +86,7 @@ PROJECTION_QUERIES = [
 
 
 def _driver():
-    settings = get_settings()
-    return GraphDatabase.driver(
-        settings.stores.neo4j_uri,
-        auth=(settings.stores.neo4j_user, settings.stores.neo4j_password),
-    )
+    return neo4j_driver()
 
 
 def _apply_constraints(driver) -> None:

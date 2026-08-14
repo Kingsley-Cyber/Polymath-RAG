@@ -45,3 +45,18 @@ that motivated it and the refactor that implemented it.
   numbers (compiler 95.7% predicate accuracy on gold inputs).
 - Neo4j moved to host ports 7475/7688 — the v3.3 graph on 7474 is
   never touched.
+
+## 2026-08-14: Phase G1 — document semantic routing + retrieval primitives
+
+- Document RetrievalProfile (bottom-up, deterministic, no LLM) with
+  coverage accounting; the `profile_document` stage brings the census
+  chain to six stages.
+- Three parallel retrieval lanes — document router, parent router,
+  global child — fused by reciprocal-rank fusion; document routing is
+  never a recall gate (a child hit survives a zero-scoring document).
+- POST /retrieve returns the routing trace: document ranking with
+  reasons, parent hits, child evidence, bounded graph expansion
+  (2 hops, high/medium-weight predicates only).
+- Cross-domain acceptance: the validation query discovers Loop
+  Engineering, Predicate Compiler, and Prompt Graph as complementary
+  sources; unrelated filler stays out of the top ranks.

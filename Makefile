@@ -103,3 +103,7 @@ dev-worker-project-neo4j:
 ## dev-worker-verify — projection verifier in the foreground
 dev-worker-verify:
 	$(PY) -m workers.verify_worker
+
+## dev-worker-profile — document retrieval-profile worker in the foreground
+dev-worker-profile:
+	$(PY) -m workers.profile_worker

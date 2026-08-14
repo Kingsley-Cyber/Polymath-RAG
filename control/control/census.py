@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 
 from psycopg import Connection
 
-STAGE_CHAIN = ["intake", "extract", "project_qdrant", "project_neo4j", "verify_projections"]
+STAGE_CHAIN = ["intake", "extract", "profile_document", "project_qdrant", "project_neo4j", "verify_projections"]
 
 # Each stage's re-drive event type. Projection stages have their own
 # event types so the census can schedule them independently — two
@@ -23,6 +23,7 @@ STAGE_CHAIN = ["intake", "extract", "project_qdrant", "project_neo4j", "verify_p
 STAGE_EVENTS = {
     "intake": "intake.v1",
     "extract": "chunked.v1",
+    "profile_document": "profile_document.v1",
     "project_qdrant": "project_qdrant.v1",
     "project_neo4j": "project_neo4j.v1",
     "verify_projections": "verify.v1",
