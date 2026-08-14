@@ -34,7 +34,7 @@ Status vocabulary: COMPLETE / IN PROGRESS / NOT STARTED / BLOCKED.
 |---|---|---|---|
 | R0 | Is document routing parallel and never a recall gate? | COMPLETE | G1: golden trace frozen; child-survives-zero-doc test |
 | R1 | Does the G2 neural dense lane pass its contract gates? | COMPLETE | embedding-contract tests + live zero-overlap query proof (gate 7e) |
-| R3a | Can every answer claim assemble from traceable EvidenceBundle evidence? | NOT STARTED | first critical-path implementation gate |
+| R3a | Can every answer claim assemble from traceable EvidenceBundle evidence? | COMPLETE | POST /evidence + `shared/polymath_shared/evidence_assembly.py`; live E2E traceable bundle; loud 502 on unresolved/missing-provenance |
 | R3b | Is there a working answer generation + `/chat` path end to end? | NOT STARTED | currently an API stub |
 
 ## Canonicalization gates
@@ -95,9 +95,9 @@ production lexical path.
 
 ## The next unchecked gate
 
-**R3a** — grounded EvidenceBundle assembly: every answer claim must
-assemble from traceable evidence bundles (fact + source span +
-provenance). Then R3b (answer generation + `/chat`), C1/C2
+**R3b** — working answer generation + `/chat` end to end: generate the
+final answer strictly from the R3a EvidenceBundle (no unsupported
+claims), with citations to bundle items. Then C1/C2
 (canonicalization), R2 (reranker, bypassable initially), M1–M5 (MCP),
 R4, O2, O1, A1, V1.
 

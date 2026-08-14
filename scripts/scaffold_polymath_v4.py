@@ -79,6 +79,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-08-14-checkpoint-e2e.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-bootstrap-continuity.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-critical-path-reprioritization.md", "md", None),
+    ("docs/wiki/work-log/2026-08-14-r3a-evidence-bundle.md", "md", None),
     ("ARCHITECTURE.md", "md", "ARCHITECTURE_STUB"),
     ("ARCHITECTURE_CHANGELOG.md", "md", "ARCHITECTURE_CHANGELOG_STUB"),
     ("PLAN.md", "md", "PLAN_STUB"),
@@ -106,6 +107,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-08-14-phase-c.md", "md", None),
     ("docs/wiki/decisions/0006-packaging-deployment.md", "md", None),
     ("docs/wiki/refactors/0001-phase-b-production.md", "md", None),
+    ("docs/wiki/refactors/0002-r3a-evidence-bundle.md", "md", None),
     ("docs/runbooks/operator.md", "md", "RUNBOOK_OPERATOR"),
     ("docs/runbooks/agent-onboarding.md", "md", "RUNBOOK_AGENT_ONBOARDING"),
 
@@ -116,6 +118,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("contracts/ingestion/v1/ingest_event.schema.json", "json", "INGEST_EVENT_SCHEMA"),
     ("contracts/extraction/v1/gliner_infer.schema.json", "json", "GLINER_INFER_SCHEMA"),
     ("contracts/extraction/v1/relation_candidate.schema.json", "json", "RELATION_CANDIDATE_SCHEMA"),
+    ("contracts/answer/v1/evidence_bundle.schema.json", "json", None),
 
     # ── Sidecar registry (the source of truth for "where is X") ───────────
     ("sidecars/README.md", "md", "SIDECARS_README"),
@@ -149,6 +152,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("orchestrator/orchestrator/main.py", "py", "ORCHESTRATOR_MAIN"),
     ("orchestrator/orchestrator/api/intake.py", "py", "ORCHESTRATOR_INTAKE"),
     ("orchestrator/orchestrator/api/retrieve.py", "py", None),
+    ("orchestrator/orchestrator/api/evidence.py", "py", None),
     ("orchestrator/orchestrator/api/chat.py", "py", "ORCHESTRATOR_CHAT"),
     ("orchestrator/orchestrator/api/health.py", "py", "ORCHESTRATOR_HEALTH"),
     ("orchestrator/orchestrator/registry.py", "py", "ORCHESTRATOR_REGISTRY"),
@@ -240,6 +244,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("shared/polymath_shared/projection_contracts.py", "py", None),
     ("shared/polymath_shared/stores.py", "py", None),
     ("shared/polymath_shared/retrieval.py", "py", None),
+    ("shared/polymath_shared/evidence_assembly.py", "py", None),
     ("shared/polymath_shared/embedding_contracts.py", "py", None),
 
     # stores: Neo4j uniqueness constraints + document profile columns
@@ -349,8 +354,11 @@ TREE: list[tuple[str, str, str | None]] = [
     ("resources/compiled/03a513ece6da32b243289fa9b9ef9dfe8e21cec4ff9f0435678ad4425021c150/vn_class_index.json", "json", None),
     ("resources/compiled/03a513ece6da32b243289fa9b9ef9dfe8e21cec4ff9f0435678ad4425021c150/vn_to_fn.json", "json", None),
     ("tests/integration/test_cross_domain_routing.py", "py", None),
+    ("tests/integration/test_evidence_bundle_e2e.py", "py", None),
     ("tests/contracts/test_embedding_contracts.py", "py", None),
+    ("tests/contracts/test_evidence_bundle_contract.py", "py", None),
     ("tests/determinism/test_retrieval_invariants.py", "py", None),
+    ("tests/determinism/test_evidence_assembly.py", "py", None),
 
     # stores: the workflow schema (docs/chunks/entities/evidence/facts)
     ("stores/postgres/migrations/0002_workflow.sql", "sql", None),

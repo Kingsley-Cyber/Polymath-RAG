@@ -5,13 +5,13 @@ Verified against commit: `522e971` (reprioritize: RAG v1.0 application E2E on cr
 Active branch at verification: `main` (working tree clean)
 
 ```yaml
-current_phase: extraction-architecture-frozen # Phase H complete; critical path = RAG v1.0 application E2E
+current_phase: extraction-architecture-frozen # R3a complete; critical path = RAG v1.0 application E2E
 repository:
   branch: main
-  head: 541aad65a15515ed1951c758ee65de271aaaa1e1
+  head: 71e804e2cfdfafae0294fa79cca97843fcd96b32
   frozen_artifacts: [see Frozen Artifacts section]
   evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1]
-  next_actions: [r3a-evidence-bundle-assembly, r3b-answer-generation-chat, c1-stage2-canonicalization]
+  next_actions: [r3b-answer-generation-chat, c1-stage2-canonicalization, c2-canonical-kg]
   do_not_do: [see Explicitly Prohibited Actions]
   known_gaps: [see Known Limitations]
 ```
@@ -19,8 +19,8 @@ repository:
 ## System Status
 
 - **Build pipeline**: `preflight ok`, `repo guard ok`, `wiki ok` (verified at the commit above).
-- **Unit tests**: 77 passed, 15 skipped (skips = integration / neural-gated gates) — verified.
-- **Integration tests**: 12 passed, 2 skipped (`POLYMATH_INTEGRATION=1` + live stores; Qdrant on 6334, Neo4j on 7688, Postgres on 5432) — verified.
+- **Unit tests**: 91 passed, 17 skipped (skips = integration / neural-gated gates) — verified.
+- **Integration tests**: 14 passed, 2 skipped (`POLYMATH_INTEGRATION=1` + live stores; Qdrant on 6334, Neo4j on 7688, Postgres on 5432) — verified.
 - **Extraction verdict**: hybrid resource enrichment **REJECTED as production default** (Phase H v1.1: Δincorrect = +4 > 0). The lexical lane remains the production default. See "Current Evaluation Results".
 
 ## Current Architecture
@@ -89,10 +89,17 @@ transaction: artifact + receipt + status + outbox event).
   (Loop Engineering rank 0, Predicate Compiler rank 1, Prompt Graph
   rank 2; filler excluded).
 - Document routing is **never a recall gate** (tested invariant).
-- **Not implemented** (critical path now): R3a EvidenceBundle answer
-  assembly, R3b answer generation + `/chat` (stub), R2/G3 reranking
-  (bypassable initially), R4 scale qualification. See
-  `RAG_E2E_CHECKLIST.md` for the full critical path.
+- **R3a (grounded EvidenceBundle assembly)**: implemented — POST
+  /evidence (orchestrator) + deterministic assembler in
+  `shared/polymath_shared/evidence_assembly.py`, contract
+  `contracts/answer/v1/evidence_bundle.schema.json`. Claim items carry
+  fact/entity IDs, source document + span locator, provenance,
+  epistemics, applicability, retrieval lane; evidence-only items never
+  carry claims; unresolved references / missing provenance fail loudly
+  (502). Live E2E verified.
+- **Not implemented** (critical path now): R3b answer generation +
+  `/chat` (stub), R2/G3 reranking (bypassable initially), R4 scale
+  qualification. See `RAG_E2E_CHECKLIST.md` for the full critical path.
 
 ## Knowledge Extraction State
 
@@ -235,23 +242,22 @@ permits a new corpus version.
 
 Phase H (empirical qualification) — complete. Extraction architecture
 frozen at commit 3ada0af. Critical path is now the RAG v1.0 application
-E2E (R3a → R3b → C1 → C2 → R2 → M1–M5 → R4 → O2 → O1 → A1 → V1);
-E1-a/E1-b are deferred measured improvements.
+E2E (R3a COMPLETE → R3b → C1 → C2 → R2 → M1–M5 → R4 → O2 → O1 → A1 →
+V1); E1-a/E1-b are deferred measured improvements.
 
 ## Next Authorized Actions (critical path, in order)
 
-1. **R3a**: grounded EvidenceBundle assembly — every answer claim
-   assembles from traceable evidence bundles (fact + source span +
-   provenance). FIRST critical-path implementation gate.
-2. **R3b**: working answer generation + `/chat` end to end.
-3. **C1**: Stage-2 corpus-level canonicalization / cross-document merge.
-4. **C2**: canonical KG + source/provenance links.
-5. **R2**: reranker qualification (bypassable for first /chat E2E;
+1. **R3b**: working answer generation + `/chat` end to end, built
+   strictly on the R3a EvidenceBundle (no unsupported claims), with
+   citations to bundle items. NEXT gate.
+2. **C1**: Stage-2 corpus-level canonicalization / cross-document merge.
+3. **C2**: canonical KG + source/provenance links.
+4. **R2**: reranker qualification (bypassable for first /chat E2E;
    evaluate before defaulting).
-6. **M1–M5**: Polymath MCP contract, server, Claude E2E, Hermes Agent
+5. **M1–M5**: Polymath MCP contract, server, Claude E2E, Hermes Agent
    E2E, read/write/admin permission boundaries.
-7. **R4**: graph/retrieval scale qualification.
-8. **O2**: model digest pinning. **O1**: clean-clone + backup/recovery
+6. **R4**: graph/retrieval scale qualification.
+7. **O2**: model digest pinning. **O1**: clean-clone + backup/recovery
    drill. **A1**: fresh-machine + fresh-agent acceptance. **V1**:
    RAG v1.0 checkpoint.
 
@@ -321,4 +327,4 @@ v3.3 stack owns 6333/7474 and must never be touched); Neo4j on 7688.
 6. `eval/phase_h/REPORT.md` (v1.0), `eval/phase_h/REPORT_v1.1.md` (v1.1)
 7. `resources/README.md` (resource pipeline + upgrade procedure)
 8. `scripts/README.md` (managed scripts registry)
-9. `RAG_E2E_CHECKLIST.md` (release-gate checklist — next unchecked gate: R3a)
+9. `RAG_E2E_CHECKLIST.md` (release-gate checklist — next unchecked gate: R3b)

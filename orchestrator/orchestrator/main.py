@@ -10,6 +10,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from .api.chat import router as chat_router
+from .api.evidence import router as evidence_router
 from .api.health import router as health_router
 from .api.intake import router as intake_router
 from .api.retrieve import router as retrieve_router
@@ -29,4 +30,5 @@ app = FastAPI(title="Polymath Orchestrator", lifespan=lifespan)
 app.include_router(health_router)
 app.include_router(intake_router)
 app.include_router(retrieve_router)
+app.include_router(evidence_router)
 app.include_router(chat_router)

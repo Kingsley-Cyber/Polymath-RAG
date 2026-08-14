@@ -3,6 +3,19 @@
 Dated diffs of every architectural change. Each entry links to the ADR
 that motivated it and the refactor that implemented it.
 
+## 2026-08-14: R3a grounded EvidenceBundle assembly
+
+- New wire contract `contracts/answer/v1/evidence_bundle.schema.json`
+  (answer path; refactor 0002, work log 2026-08-14-r3a-evidence-bundle).
+- POST /evidence on the orchestrator: deterministic bundle where every
+  claim item carries fact/entity IDs, source document + span locator,
+  provenance, epistemics, applicability, and retrieval lane; evidence-
+  only items never carry claims. Unresolvable references and missing
+  provenance are typed assembly errors mapped to HTTP 502 — loud, never
+  silent.
+- Boundary kept: R3a assembles evidence; final answer prose is R3b.
+  No extraction change, no migration, no dependency-map change.
+
 ## 2026-08-13: initial scaffold
 
 - Skeleton created by `scripts/scaffold_polymath_v4.py` (sha: f82bf2fc9fb1).
