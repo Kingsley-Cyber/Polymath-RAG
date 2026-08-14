@@ -8,7 +8,7 @@ deterministic compiler (shared/polymath_shared/rulepack/compiler.py).
 from __future__ import annotations
 
 from enum import Enum
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -212,6 +212,50 @@ class RetrievalProfile(BaseModel):
     summarized_parent_count: int = 0
     coverage: float = 1.0
     summary_contract: str = "document-summary-v1"
+
+
+# ---------------------------------------------------------------------------
+# R3a grounded evidence contracts
+# ---------------------------------------------------------------------------
+
+
+class SourceSpan(BaseModel):
+    document_id: str
+    source_name: str
+    chunk_id: str
+    char_start: int = Field(ge=0)
+    char_end: int = Field(ge=0)
+    text: str
+    evidence_offsets: dict[str, Any] = Field(default_factory=dict)
+
+
+class RetrievalPath(BaseModel):
+    lane: str
+    representation_kind: str = ""
+    contract_id: str = ""
+    rank: int = -1
+    raw_score: Optional[float] = None
+    parent_id: str = ""
+
+
+class EvidenceBundleItem(BaseModel):
+    support_id: str
+    support_kind: Literal["passage", "fact"]
+    knowledge_id: str
+    fact_id: Optional[str] = None
+    evidence_id: Optional[str] = None
+    claim_candidate: Optional[dict[str, Any]] = None
+    source_span: SourceSpan
+    provenance: dict[str, Any] = Field(default_factory=dict)
+    epistemics: dict[str, Any] = Field(default_factory=dict)
+    applicability: dict[str, Any] = Field(default_factory=dict)
+    support_metadata: dict[str, Any] = Field(default_factory=dict)
+    retrieval: list[RetrievalPath] = Field(default_factory=list)
+
+
+class EvidenceBundle(BaseModel):
+    query: str
+    evidence_bundle: list[EvidenceBundleItem] = Field(default_factory=list)
 
 
 class IntakeRequest(BaseModel):
