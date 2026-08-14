@@ -3,6 +3,21 @@
 Dated diffs of every architectural change. Each entry links to the ADR
 that motivated it and the refactor that implemented it.
 
+## 2026-08-14: C2 canonical KG + provenance projection
+
+- New census stage `project_canonical` (after `canonicalize`):
+  `(:CanonicalEntity)` nodes with C1 ids, `[:HAS_MEMBER]` edges
+  carrying decision/basis/version, `(:Evidence)-[:FROM_CHUNK]->(:Chunk)`
+  source links. Neo4j receives Postgres identities only.
+- Receipt kinds `canonical_entity` / `canonical_membership` /
+  `evidence_chunk`; `reconcile_canonical` in verify_projections
+  (orphan receipts superseded before store-orphan scan; missing
+  artifacts clear receipts and degrade loudly); census re-arm covers
+  the canonical projection.
+- Rebuildable from Postgres; replay no-op; incremental delta;
+  destructive reconstruction + orphan detection proven live
+  (refactor 0005; work log 2026-08-14-c2-canonical-kg).
+
 ## 2026-08-14: C1 Stage-2 corpus canonicalization (ADR 0009)
 
 - New Postgres registry (migration 0005): `canonical_entities`,

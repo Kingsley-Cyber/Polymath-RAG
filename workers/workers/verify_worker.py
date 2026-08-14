@@ -208,6 +208,146 @@ def _receipt_kind_ids(conn: Connection, corpus: str, projection: str, kind: str)
     return [r[0] for r in rows]
 
 
+def _desired_canonical_ids(conn: Connection, corpus: str) -> list[str]:
+    rows = conn.execute(
+        "SELECT canonical_id FROM canonical_entities WHERE corpus_id = %s ORDER BY canonical_id",
+        (corpus,),
+    ).fetchall()
+    return [r[0] for r in rows]
+
+
+def _desired_membership_ids(conn: Connection, corpus: str) -> list[str]:
+    rows = conn.execute(
+        "SELECT local_entity_id FROM canonical_memberships WHERE corpus_id = %s ORDER BY local_entity_id",
+        (corpus,),
+    ).fetchall()
+    return [r[0] for r in rows]
+
+
+def _desired_evidence_ids(conn: Connection, corpus: str) -> list[str]:
+    rows = conn.execute(
+        """
+        SELECT ev.evidence_id FROM evidence ev
+          JOIN documents d ON d.doc_id = ev.doc_id
+         WHERE d.corpus_id = %s ORDER BY ev.evidence_id
+        """,
+        (corpus,),
+    ).fetchall()
+    return [r[0] for r in rows]
+
+
+def _supersede_receipts(conn: Connection, entity_ids: list[str]) -> None:
+    """Supersede active claims (history survives in projection_attempts)."""
+    supersede_projection_claims(conn, projection="neo4j", entity_ids=sorted(set(entity_ids)))
+
+
+def reconcile_canonical(conn: Connection, run_id: str, corpus: str) -> dict:
+    """Reconcile the C2 canonical projection (nodes, memberships,
+    evidence->chunk links) against Postgres and receipts.
+
+    Store lost an artifact -> receipt cleared (census re-drives
+    project_canonical). Store has an extra artifact (crash orphan) ->
+    deleted. Receipt without a source row -> superseded."""
+    from polymath_shared.projection_contracts import (
+        KIND_CANONICAL_ENTITY,
+        KIND_CANONICAL_MEMBERSHIP,
+        KIND_EVIDENCE_CHUNK,
+    )
+
+    desired_nodes = set(_desired_canonical_ids(conn, corpus))
+    desired_memberships = set(_desired_membership_ids(conn, corpus))
+    desired_evidence = set(_desired_evidence_ids(conn, corpus))
+    node_receipts = set(_receipt_kind_ids(conn, corpus, "neo4j", KIND_CANONICAL_ENTITY))
+    membership_receipts = set(_receipt_kind_ids(conn, corpus, "neo4j", KIND_CANONICAL_MEMBERSHIP))
+    evidence_receipts = set(_receipt_kind_ids(conn, corpus, "neo4j", KIND_EVIDENCE_CHUNK))
+
+    # Receipts whose source rows no longer exist (orphan receipts) are
+    # superseded FIRST so the store-orphan scan below sees the updated
+    # active receipt set (an edge whose membership was deleted must be
+    # recognized as a store orphan in this same run).
+    orphan_node_receipts = node_receipts - {
+        r[0] for r in conn.execute(
+            "SELECT canonical_id FROM canonical_entities").fetchall()}
+    orphan_membership_receipts = membership_receipts - {
+        r[0] for r in conn.execute(
+            "SELECT local_entity_id FROM canonical_memberships").fetchall()}
+    orphan_evidence_receipts = evidence_receipts - {
+        r[0] for r in conn.execute("SELECT evidence_id FROM evidence").fetchall()}
+    superseded = set()
+    if orphan_node_receipts:
+        _supersede_receipts(conn, sorted(orphan_node_receipts))
+        superseded |= orphan_node_receipts
+    if orphan_membership_receipts:
+        _supersede_receipts(conn, sorted(orphan_membership_receipts))
+        superseded |= orphan_membership_receipts
+    if orphan_evidence_receipts:
+        _supersede_receipts(conn, sorted(orphan_evidence_receipts))
+        superseded |= orphan_evidence_receipts
+
+    active_nodes = node_receipts - superseded
+    active_memberships = membership_receipts - superseded
+    active_evidence = evidence_receipts - superseded
+
+    driver = _neo4j_driver()
+    try:
+        with driver.session() as session:
+            store_nodes = {r["id"] for r in session.run(
+                "MATCH (c:CanonicalEntity) RETURN c.canonical_id AS id")}
+            store_memberships = {r["id"] for r in session.run(
+                "MATCH (:CanonicalEntity)-[m:HAS_MEMBER]->() RETURN m.local_entity_id AS id")}
+            store_evidence_links = {r["id"] for r in session.run(
+                "MATCH (ev:Evidence)-[:FROM_CHUNK]->() RETURN ev.evidence_id AS id")}
+
+            orphan_nodes = store_nodes - active_nodes
+            for canonical_id in orphan_nodes:
+                session.run(
+                    "MATCH (c:CanonicalEntity {canonical_id: $id}) DETACH DELETE c",
+                    id=canonical_id,
+                )
+            orphan_memberships = store_memberships - active_memberships
+            for local_entity_id in orphan_memberships:
+                session.run(
+                    "MATCH (:CanonicalEntity)-[m:HAS_MEMBER {local_entity_id: $id}]->() DELETE m",
+                    id=local_entity_id,
+                )
+            orphan_links = store_evidence_links - active_evidence
+            for evidence_id in orphan_links:
+                session.run(
+                    "MATCH (ev:Evidence {evidence_id: $id})-[r:FROM_CHUNK]->() DELETE r",
+                    id=evidence_id,
+                )
+            missing_nodes = (active_nodes & desired_nodes) - store_nodes
+            missing_memberships = (active_memberships & desired_memberships) - store_memberships
+            missing_links = (active_evidence & desired_evidence) - store_evidence_links
+    finally:
+        driver.close()
+
+    # Receipts exist but the store lost the artifact -> clear (re-drive).
+    if missing_nodes:
+        _supersede_receipts(conn, sorted(missing_nodes))
+    if missing_memberships:
+        _supersede_receipts(conn, sorted(missing_memberships))
+    if missing_links:
+        _supersede_receipts(conn, sorted(missing_links))
+
+    cleared = superseded | missing_nodes | missing_memberships | missing_links
+
+    missing_receipts = (
+        (desired_nodes - (node_receipts - cleared))
+        | (desired_memberships - (membership_receipts - cleared))
+        | (desired_evidence - (evidence_receipts - cleared))
+    )
+
+    return {
+        "missing_in_store": sorted(
+            missing_nodes | missing_memberships | missing_links),
+        "orphans_in_store": sorted(
+            orphan_nodes | orphan_memberships | orphan_links),
+        "orphan_receipts": sorted(superseded),
+        "missing_receipts": sorted(missing_receipts),
+    }
+
+
 def process_event(conn: Connection, event: dict) -> None:
     run_id = event["run_id"]
     corpus = _run_identity(conn, run_id)
@@ -216,19 +356,27 @@ def process_event(conn: Connection, event: dict) -> None:
 
     qdrant_report = reconcile_qdrant(conn, run_id, corpus)
     neo4j_report = reconcile_neo4j(conn, run_id, corpus)
+    canonical_report = reconcile_canonical(conn, run_id, corpus)
 
     contract = stage_contract_hash(STAGE, {"contract_version": CONTRACT_VERSION})
     with stage_transaction(conn, run_id=run_id, stage=STAGE, contract_hash=contract) as writer:
-        writer.artifact({"qdrant": qdrant_report, "neo4j": neo4j_report})
+        writer.artifact({
+            "qdrant": qdrant_report,
+            "neo4j": neo4j_report,
+            "canonical": canonical_report,
+        })
 
         loss = (
             qdrant_report["missing_in_store"] + qdrant_report["orphans_in_store"]
             + neo4j_report["missing_in_store"] + neo4j_report["orphans_in_store"]
+            + canonical_report["missing_in_store"] + canonical_report["orphans_in_store"]
         )
         problem = (
             qdrant_report["missing_receipts"]
             + neo4j_report["missing_receipts"]
             + neo4j_report["missing_facts"]
+            + canonical_report["missing_receipts"]
+            + canonical_report["orphan_receipts"]
         )
         if loss or problem:
             # Degraded (not failed): the census re-drives projectors and

@@ -231,10 +231,6 @@ def _project_all(run: str) -> None:
     _seed_facts(run)
     _mark_stage_ok(run, "extract")
     _mark_stage_ok(run, "profile_document")
-    # The C1 canonicalize stage (ADR 0009) completes the census chain;
-    # this fixture marks it complete so the projection-receipt re-arm
-    # path the tests target stays reachable.
-    _mark_stage_ok(run, "canonicalize")
     from polymath_shared.db import tx as _tx
 
     with _tx() as conn:
@@ -243,6 +239,15 @@ def _project_all(run: str) -> None:
     with _tx() as conn:
         from workers.project_neo4j_worker import process_event as _n
         _n(conn, _event(run, {"run_id": run}))
+    # The C1/C2 stages run for real so the corpus has a complete
+    # canonical registry + projection (the census re-arm path these
+    # tests target expects full-chain state).
+    with _tx() as conn:
+        from workers.canonicalize_worker import process_event as _canon
+        _canon(conn, _event(run, {"run_id": run}))
+    with _tx() as conn:
+        from workers.project_canonical_worker import process_event as _pcanon
+        _pcanon(conn, _event(run, {"run_id": run}))
     _mark_query_ready(run)
 
 

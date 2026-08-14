@@ -19,8 +19,8 @@ repository:
 ## System Status
 
 - **Build pipeline**: `preflight ok`, `repo guard ok`, `wiki ok` (verified at the commit above).
-- **Unit tests**: 127 passed, 20 skipped (skips = integration / neural-gated gates) — verified.
-- **Integration tests**: 17 passed, 2 skipped (`POLYMATH_INTEGRATION=1` + live stores; Qdrant on 6334, Neo4j on 7688, Postgres on 5432) — verified.
+- **Unit tests**: 131 passed, 21 skipped (skips = integration / neural-gated gates) — verified.
+- **Integration tests**: 18 passed, 2 skipped (`POLYMATH_INTEGRATION=1` + live stores; Qdrant on 6334, Neo4j on 7688, Postgres on 5432) — verified.
 - **Extraction verdict**: hybrid resource enrichment **REJECTED as production default** (Phase H v1.1: Δincorrect = +4 > 0). The lexical lane remains the production default. See "Current Evaluation Results".
 
 ## Current Architecture
@@ -33,10 +33,11 @@ sidecar-cpu / store / control. Authoritative files: `ARCHITECTURE.md`,
 0005 sidecar-contract, 0006 packaging-deployment, 0007 lexical evidence
 lane, 0008 evidence-pass boundary).
 
-Production path per run (census-driven, seven stages):
+Production path per run (census-driven, eight stages):
 `intake → extract → profile_document → project_qdrant → project_neo4j →
-verify_projections → canonicalize`, with receipts as the commit point
-(one Postgres transaction: artifact + receipt + status + outbox event).
+verify_projections → canonicalize → project_canonical`, with receipts
+as the commit point (one Postgres transaction: artifact + receipt +
+status + outbox event).
 
 ## Production Components
 
@@ -132,7 +133,14 @@ verify_projections → canonicalize`, with receipts as the commit point
   ALIAS_OF only on explicit corpus-profile declarations; DISTINCT on
   incompatible types; homonym-risk classes abstain. Canonical ids are
   content hashes (order-independent, replay-safe, incremental delta).
-  The Neo4j canonical projection is C2 — not built yet.
+- **Stage 2 canonical KG projection: implemented (C2).** The
+  `project_canonical` stage projects the registry into Neo4j:
+  `CanonicalEntity` nodes (C1 ids verbatim) +
+  `HAS_MEMBER` edges carrying decision/confidence/basis/version +
+  `Evidence-[:FROM_CHUNK]->Chunk` source links. Rebuildable from
+  Postgres; replay no-op; incremental delta; orphan detection and
+  census re-arm live-proven. Neo4j never decides identity; no
+  synthetic facts; conflicts stay distinct.
 - The 28-predicate rule pack is frozen at v1.0.1; changes require a
   measured delta (see Prohibited Actions).
 
@@ -243,8 +251,8 @@ permits a new corpus version.
   `POLYMATH_REQUIRE_PINNED=0` until production digests are recorded.
 - Single-controller lease (multi-controller deferred, PLAN.md).
 - G3/G4/G5 retrieval layers and the answer path are not built.
-- Stage 2 corpus-level canonicalization now exists (C1); the Neo4j
-  canonical KG projection (C2) does not.
+- Stage 2 corpus-level canonicalization + canonical KG projection now
+  exist (C1 + C2).
 
 ## Open Risks
 
@@ -260,23 +268,19 @@ permits a new corpus version.
 
 Phase H (empirical qualification) — complete. Extraction architecture
 frozen at commit 3ada0af. Milestone A (CORPUS_INGEST_READY): R3a/R3b
-COMPLETE, C1 COMPLETE → C2 → Q1 → I1 → I2. Milestone B (RAG_V1_E2E):
+COMPLETE, C1 COMPLETE, C2 COMPLETE → Q1 → I1 → I2. Milestone B
+(RAG_V1_E2E):
 R2 → M1–M5 → R4 → O2 → O1 → A1 → V1. E1-a/E1-b are deferred measured
 improvements.
 
 ## Next Authorized Actions
 
-MILESTONE A — CORPUS_INGEST_READY (current priority; C1 COMPLETE):
+MILESTONE A — CORPUS_INGEST_READY (current priority; C1+C2 COMPLETE):
 
-1. **C2**: canonical KG + provenance projection — project the C1
-   registry into Neo4j as a rebuildable projection (CanonicalEntity
-   nodes + HAS_MEMBER edges carrying decision/basis/version; complete
-   graph lineage canonical → local → fact → evidence → source).
-   NEXT gate.
-2. **Q1**: heterogeneous extraction/corpus qualification with measured
-   quality gates.
-3. **I1**: manifest-driven bulk ingestion controller.
-4. **I2**: corpus-scale integrity run.
+1. **Q1**: heterogeneous extraction/corpus qualification with measured
+   quality gates. NEXT gate.
+2. **I1**: manifest-driven bulk ingestion controller.
+3. **I2**: corpus-scale integrity run.
 
 CORPUS_INGEST_READY = C1 + C2 + Q1 + I1 + I2 pass.
 

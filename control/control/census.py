@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 
 from psycopg import Connection
 
-STAGE_CHAIN = ["intake", "extract", "profile_document", "project_qdrant", "project_neo4j", "verify_projections", "canonicalize"]
+STAGE_CHAIN = ["intake", "extract", "profile_document", "project_qdrant", "project_neo4j", "verify_projections", "canonicalize", "project_canonical"]
 
 # Each stage's re-drive event type. Projection stages have their own
 # event types so the census can schedule them independently — two
@@ -28,6 +28,7 @@ STAGE_EVENTS = {
     "project_neo4j": "project_neo4j.v1",
     "verify_projections": "verify.v1",
     "canonicalize": "canonicalize.v1",
+    "project_canonical": "project_canonical.v1",
 }
 
 
@@ -119,7 +120,7 @@ def compute_census(conn: Connection, *, max_attempts: int = 3) -> Census:
             # Projection receipt census: an ok projection stage can still
             # have missing receipts (store loss cleared by VERIFY). Re-arm
             # the stage so the projector re-drives (PLAN Phase F gate 1/2).
-            for stage in ("project_qdrant", "project_neo4j"):
+            for stage in ("project_qdrant", "project_neo4j", "project_canonical"):
                 missing = _missing_projection_receipts(conn, run_id, stage)
                 if missing:
                     census.gaps.append(Gap(
@@ -151,6 +152,43 @@ def _missing_projection_receipts(conn: Connection, run_id: str, stage: str) -> l
                       AND pr.entity_id = c.chunk_id)
             """,
             (run_id,),
+        ).fetchall()
+        return [r[0] for r in rows]
+    if stage == "project_canonical":
+        rows = conn.execute(
+            """
+            SELECT ce.canonical_id FROM canonical_entities ce
+              JOIN runs r ON r.corpus_id = ce.corpus_id
+             WHERE r.run_id = %s
+               AND NOT EXISTS (
+                   SELECT 1 FROM projection_receipts pr
+                    WHERE pr.projection = 'neo4j'
+                      AND pr.entity_kind = 'canonical_entity'
+                      AND pr.active
+                      AND pr.entity_id = ce.canonical_id)
+            UNION ALL
+            SELECT cm.local_entity_id FROM canonical_memberships cm
+              JOIN runs r ON r.corpus_id = cm.corpus_id
+             WHERE r.run_id = %s
+               AND NOT EXISTS (
+                   SELECT 1 FROM projection_receipts pr
+                    WHERE pr.projection = 'neo4j'
+                      AND pr.entity_kind = 'canonical_membership'
+                      AND pr.active
+                      AND pr.entity_id = cm.local_entity_id)
+            UNION ALL
+            SELECT ev.evidence_id FROM evidence ev
+              JOIN documents d ON d.doc_id = ev.doc_id
+              JOIN runs r ON r.corpus_id = d.corpus_id
+             WHERE r.run_id = %s
+               AND NOT EXISTS (
+                   SELECT 1 FROM projection_receipts pr
+                    WHERE pr.projection = 'neo4j'
+                      AND pr.entity_kind = 'evidence_chunk'
+                      AND pr.active
+                      AND pr.entity_id = ev.evidence_id)
+            """,
+            (run_id, run_id, run_id),
         ).fetchall()
         return [r[0] for r in rows]
     rows = conn.execute(

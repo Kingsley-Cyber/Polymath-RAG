@@ -52,7 +52,7 @@ R2/MCP are NOT prerequisites for CORPUS_INGEST_READY.
 | Gate | Question | Status | Evidence |
 |---|---|---|---|
 | C1 | Does Stage-2 corpus-level canonicalization merge cross-document entities deterministically? | COMPLETE | ADR 0009 + migration 0005 + `canonicalize` stage: content-hash canonical ids, conservative SAME_AS/ALIAS_OF/DISTINCT/AMBIGUOUS policy, full lineage, replay-safe, order-independent (live E2E) |
-| C2 | Does the canonical KG carry source/provenance links to every fact? | NOT STARTED | projects C1 registry into Neo4j (rebuildable); next gate |
+| C2 | Does the canonical KG carry source/provenance links to every fact? | COMPLETE | `project_canonical` stage: CanonicalEntity nodes + HAS_MEMBER (decision/basis/version) + Evidence→FROM_CHUNK links; live E2E full lineage, destructive reconstruction, orphan detection, census re-arm |
 | Q1 | Does extraction qualify on a heterogeneous corpus (mixed domains/types) with measured quality gates? | NOT STARTED | corpus qualification not run |
 | I1 | Does a manifest drive bulk ingestion of many documents idempotently? | NOT STARTED | no manifest-based bulk controller |
 | I2 | Does a corpus-scale integrity run prove receipts/projections/canonicalization converge at scale? | NOT STARTED | scale integrity not run |
@@ -95,9 +95,9 @@ production lexical path.
 
 ## The next unchecked gate
 
-**C2** — canonical KG + provenance projection (Milestone A). Then
-Q1 → I1 → I2 → **CORPUS_INGEST_READY**, then Milestone B
-(R2 → M1–M5 → R4 → O2 → O1 → A1 → V1).
+**Q1** — heterogeneous extraction/corpus qualification with measured
+quality gates (Milestone A). Then I1 → I2 → **CORPUS_INGEST_READY**,
+then Milestone B (R2 → M1–M5 → R4 → O2 → O1 → A1 → V1).
 
 ## Marking policy
 

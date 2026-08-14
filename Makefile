@@ -111,3 +111,7 @@ dev-worker-profile:
 ## dev-worker-canonicalize — corpus canonicalization worker in the foreground
 dev-worker-canonicalize:
 	$(PY) -m workers.canonicalize_worker
+
+## dev-worker-project-canonical — canonical graph projector in the foreground
+dev-worker-project-canonical:
+	$(PY) -m workers.project_canonical_worker

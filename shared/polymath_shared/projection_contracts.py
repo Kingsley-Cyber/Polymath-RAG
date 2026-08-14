@@ -40,6 +40,9 @@ KIND_CHUNK = "chunk"
 KIND_ENTITY = "entity"
 KIND_FACT = "fact"
 KIND_EVIDENCE = "evidence"
+KIND_CANONICAL_ENTITY = "canonical_entity"
+KIND_CANONICAL_MEMBERSHIP = "canonical_membership"
+KIND_EVIDENCE_CHUNK = "evidence_chunk"
 
 EMBEDDING_CONTRACTS: dict[str, dict[str, Any]] = {
     "hash-embed-v1": {"dim": 512, "description": "deterministic hashed 3-gram bag, zero model"},

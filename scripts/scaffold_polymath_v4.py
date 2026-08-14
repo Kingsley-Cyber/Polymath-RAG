@@ -82,6 +82,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-08-14-r3a-evidence-bundle.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-r3b-grounded-answer.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-c1-canonicalization.md", "md", None),
+    ("docs/wiki/work-log/2026-08-14-c2-canonical-kg.md", "md", None),
     ("ARCHITECTURE.md", "md", "ARCHITECTURE_STUB"),
     ("ARCHITECTURE_CHANGELOG.md", "md", "ARCHITECTURE_CHANGELOG_STUB"),
     ("PLAN.md", "md", "PLAN_STUB"),
@@ -112,6 +113,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/refactors/0002-r3a-evidence-bundle.md", "md", None),
     ("docs/wiki/refactors/0003-r3b-grounded-answer.md", "md", None),
     ("docs/wiki/refactors/0004-c1-canonicalization.md", "md", None),
+    ("docs/wiki/refactors/0005-c2-canonical-kg.md", "md", None),
     ("docs/runbooks/operator.md", "md", "RUNBOOK_OPERATOR"),
     ("docs/runbooks/agent-onboarding.md", "md", "RUNBOOK_AGENT_ONBOARDING"),
 
@@ -246,6 +248,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("workers/workers/document_profile_builder.py", "py", None),
     ("workers/workers/profile_worker.py", "py", None),
     ("workers/workers/canonicalize_worker.py", "py", None),
+    ("workers/workers/project_canonical_worker.py", "py", None),
 
     # shared: projection contracts (Phase F) + store drivers + retrieval
     ("shared/polymath_shared/projection_contracts.py", "py", None),
@@ -271,6 +274,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("deployment/launchd/ai.polymath.worker.verify.plist", "plist", None),
     ("deployment/launchd/ai.polymath.worker.profile-document.plist", "plist", None),
     ("deployment/launchd/ai.polymath.worker.canonicalize.plist", "plist", None),
+    ("deployment/launchd/ai.polymath.worker.project-canonical.plist", "plist", None),
 
     # docs/wiki: Phase F/G decisions, experiments, work logs
     ("docs/wiki/decisions/0007-lexical-evidence-lane.md", "md", None),
@@ -369,6 +373,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/integration/test_evidence_bundle_e2e.py", "py", None),
     ("tests/integration/test_chat_e2e.py", "py", None),
     ("tests/integration/test_canonicalization_e2e.py", "py", None),
+    ("tests/integration/test_canonical_projection_e2e.py", "py", None),
     ("tests/contracts/test_embedding_contracts.py", "py", None),
     ("tests/contracts/test_evidence_bundle_contract.py", "py", None),
     ("tests/contracts/test_chat_response_contract.py", "py", None),
@@ -377,6 +382,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_evidence_assembly.py", "py", None),
     ("tests/determinism/test_answer_synthesis.py", "py", None),
     ("tests/determinism/test_canonicalizer.py", "py", None),
+    ("tests/determinism/test_canonical_projection_plan.py", "py", None),
 
     # stores: the workflow schema (docs/chunks/entities/evidence/facts)
     ("stores/postgres/migrations/0002_workflow.sql", "sql", None),
