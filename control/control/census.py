@@ -146,6 +146,7 @@ def _missing_projection_receipts(conn: Connection, run_id: str, stage: str) -> l
                    SELECT 1 FROM projection_receipts pr
                     WHERE pr.projection = 'qdrant'
                       AND pr.entity_kind = 'chunk'
+                      AND pr.active
                       AND pr.entity_id = c.chunk_id)
             """,
             (run_id,),
@@ -161,6 +162,7 @@ def _missing_projection_receipts(conn: Connection, run_id: str, stage: str) -> l
                SELECT 1 FROM projection_receipts pr
                 WHERE pr.projection = 'neo4j'
                   AND pr.entity_kind = 'fact'
+                  AND pr.active
                   AND pr.entity_id = e.fact_id)
         """,
         (run_id,),

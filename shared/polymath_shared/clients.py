@@ -87,3 +87,18 @@ class GlinerClient(SidecarClient):
 
     def evidence_pass(self, text: str, threshold: float = 0.5) -> dict[str, Any]:
         return self.infer({"task": "evidence", "text": text, "labels": [], "threshold": threshold})
+
+
+class EmbedderClient(SidecarClient):
+    """Client for the embedder sidecar. Returns vectors tagged with the
+    frozen contract id — an index can only be replayed by the identical
+    contract (G2 gate 4)."""
+
+    def __init__(self, pin_release: str | None = None) -> None:
+        super().__init__(get_settings().sidecars.embedder_url, pin_release=pin_release)
+
+    def embed(self, texts: list[str], representation_kind: str) -> dict[str, Any]:
+        return self.infer({
+            "texts": texts,
+            "representation_kind": representation_kind,
+        })

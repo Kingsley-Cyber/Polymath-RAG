@@ -16,10 +16,8 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from polymath_shared.db import tx
-from polymath_shared.projection_contracts import (
-    EMBEDDING_CONTRACT,
-    qdrant_collection_name,
-)
+from polymath_shared.embedding_contracts import active_contract
+from polymath_shared.projection_contracts import qdrant_collection_name
 from polymath_shared.retrieval import graph_expansion, run_lanes
 from polymath_shared.settings import get_settings
 
@@ -84,22 +82,32 @@ async def retrieve(req: RetrieveRequest) -> dict:
         expand=lambda surfaces: _neo4j_expand(surfaces),
     )
 
+    def _hit(h) -> dict:
+        return {
+            "source_id": h.source_id,
+            "representation_kind": h.representation_kind,
+            "contract_id": h.contract_id,
+            "rank": h.rank,
+            "raw_score": round(h.raw_score, 4),
+            "document_id": h.document_id,
+            "parent_id": h.parent_id,
+            "chunk_id": h.chunk_id,
+            "why": h.why,
+        }
+
     return {
         "query": query,
-        "document_routing": [
-            {"rank": i, "doc_id": h.id, "score": round(h.score, 4), "why": h.why}
-            for i, h in enumerate(result.doc_ranking[: req.limit])
-        ],
-        "parent_routing": [
-            {"chunk_id": h.id, "score": round(h.score, 4)}
-            for h in result.parent_ranking[: req.limit]
-        ],
+        # Per-lane ablation BEFORE fusion (G2 gate 2).
+        "document_lane": [_hit(h) for h in result.document_ranking[: req.limit]],
+        "parent_lane": [_hit(h) for h in result.parent_ranking[: req.limit]],
+        "child_dense_lane": [_hit(h) for h in result.child_dense_ranking[: req.limit]],
+        "child_lexical_lane": [_hit(h) for h in result.child_lexical_ranking[: req.limit]],
+        # Fused view.
         "selected_documents": result.selected_documents[: req.limit],
-        "child_evidence": [
-            {k: c[k] for k in ("chunk_id", "doc_id", "parent_id", "score") if k in c}
-            for c in result.selected_children[: req.limit]
-        ],
         "child_evidence_count": len(result.selected_children),
+        "child_evidence": [
+            c for c in result.selected_children[: req.limit]
+        ],
         "graph_facts": result.graph_facts,
     }
 
@@ -160,27 +168,43 @@ def _fetch_children_rows(conn, corpus_id: Optional[str]) -> list[dict]:
 
 
 def _qdrant_search(query: str, corpus_id: Optional[str], limit: int) -> list[dict]:
-    from polymath_shared.projection_contracts import embed
     from polymath_shared.stores import qdrant_client as _qdrant_client
 
+    contract = active_contract()
     client = _qdrant_client(timeout=30)
     try:
         collections = [c.name for c in client.get_collections().collections]
+        # Only collections of the ACTIVE contract: other contract versions
+        # have different dimensions and must never be queried with this
+        # contract's vectors.
+        contract_suffix = f"_{contract.contract_id}"
         targets = [
             name for name in collections
-            if name.startswith("polymath_") and (
-                not corpus_id or name == qdrant_collection_name(corpus_id, EMBEDDING_CONTRACT)
-            )
+            if name.startswith("polymath_")
+            and name.endswith(contract_suffix)
+            and (not corpus_id or name == qdrant_collection_name(corpus_id, contract.contract_id))
         ]
-        vector = embed(query, EMBEDDING_CONTRACT)
+        if contract.embed_fn is not None:
+            vector = contract.embed(query, "query")
+        else:
+            from polymath_shared.clients import EmbedderClient
+
+            embedder = EmbedderClient()
+            try:
+                vector = embedder.embed([query], "query")["vectors"][0]
+            finally:
+                embedder.close()
         out: list[dict] = []
         for collection in targets:
-            hits = client.query_points(
-                collection_name=collection,
-                query=vector,
-                limit=limit,
-                with_payload=True,
-            ).points
+            try:
+                hits = client.query_points(
+                    collection_name=collection,
+                    query=vector,
+                    limit=limit,
+                    with_payload=True,
+                ).points
+            except Exception:
+                continue  # one broken collection never kills the lane
             for p in hits:
                 payload = p.payload or {}
                 out.append({
@@ -188,6 +212,8 @@ def _qdrant_search(query: str, corpus_id: Optional[str], limit: int) -> list[dic
                     "doc_id": payload.get("doc_id", ""),
                     "parent_id": payload.get("parent_id", ""),
                     "text": payload.get("text", ""),
+                    "corpus_id": payload.get("corpus_id", ""),
+                    "contract_id": contract.contract_id,
                     "vector_score": p.score or 0.0,
                 })
         return out

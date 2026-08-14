@@ -23,7 +23,7 @@ services:
     volumes:
       - ./stores/qdrant/snapshots:/qdrant/snapshots
     ports:
-      - "127.0.0.1:6333:6333"
+      - "127.0.0.1:6334:6333"
     healthcheck:
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/6333 && echo -e 'GET /healthz HTTP/1.0\r\n\r\n' >&3"]
     restart: unless-stopped

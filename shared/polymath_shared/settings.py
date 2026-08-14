@@ -48,10 +48,14 @@ class ControlSettings(BaseSettings):
 
 class StoreSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore")
-    qdrant_url: str = Field(default="http://127.0.0.1:6333", description="Qdrant projection store")
+    qdrant_url: str = Field(default="http://127.0.0.1:6334", description="Qdrant projection store")
     neo4j_uri: str = Field(default="bolt://127.0.0.1:7688", description="Neo4j projection store")
     neo4j_user: str = Field(default="neo4j")
     neo4j_password: str = Field(default="polymath-dev", description="Neo4j password (override in .env)")
+    embedding_contract_id: str = Field(
+        default="hash-embed-v1",
+        description="Active embedding contract id (a new id = a new index version)",
+    )
 
 
 class Settings(BaseSettings):

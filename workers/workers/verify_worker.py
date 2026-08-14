@@ -23,13 +23,14 @@ from polymath_shared.stores import qdrant_client as _qdrant_client
 
 from polymath_shared.db import tx
 from polymath_shared.logging import configure_logging
-from polymath_shared.projection_contracts import EMBEDDING_CONTRACT
+from polymath_shared.embedding_contracts import active_contract
 from polymath_shared.projection_contracts import qdrant_collection_name
 from polymath_shared.receipts import (
     StageFailed,
     claim_events,
     stage_contract_hash,
     stage_transaction,
+    supersede_projection_claims,
 )
 from polymath_shared.settings import get_settings
 from polymath_shared.stores import neo4j_driver as _neo4j_driver
@@ -65,7 +66,7 @@ def _receipt_chunk_ids(conn: Connection, corpus: str, projection: str) -> list[s
         SELECT pr.entity_id FROM projection_receipts pr
           JOIN chunks c ON c.chunk_id = pr.entity_id
           JOIN documents d ON d.doc_id = c.doc_id
-         WHERE pr.projection = %s AND pr.entity_kind = 'chunk' AND d.corpus_id = %s
+         WHERE pr.projection = %s AND pr.entity_kind = 'chunk' AND pr.active AND d.corpus_id = %s
         """,
         (projection, corpus),
     ).fetchall()
@@ -73,33 +74,28 @@ def _receipt_chunk_ids(conn: Connection, corpus: str, projection: str) -> list[s
 
 
 def _clear_receipts(conn: Connection, projection: str, entity_ids: list[str]) -> None:
-    conn.execute(
-        "DELETE FROM projection_receipts WHERE projection = %s AND entity_id = ANY(%s)",
-        (projection, entity_ids),
-    )
+    """Supersede active claims (history survives in projection_attempts)."""
+    supersede_projection_claims(conn, projection=projection, entity_ids=entity_ids)
 
 
 def _delete_orphan_receipts(conn: Connection, projection: str) -> list[str]:
+    """Supersede claims whose source entity no longer exists."""
     rows = conn.execute(
         """
         SELECT pr.entity_id FROM projection_receipts pr
-         WHERE pr.projection = %s AND pr.entity_kind = 'chunk'
+         WHERE pr.projection = %s AND pr.entity_kind = 'chunk' AND pr.active
            AND NOT EXISTS (SELECT 1 FROM chunks c WHERE c.chunk_id = pr.entity_id)
         """,
         (projection,),
     ).fetchall()
     ids = [r[0] for r in rows]
-    if ids:
-        conn.execute(
-            "DELETE FROM projection_receipts WHERE projection = %s AND entity_id = ANY(%s)",
-            (projection, ids),
-        )
+    supersede_projection_claims(conn, projection=projection, entity_ids=ids)
     return ids
 
 
 def reconcile_qdrant(conn: Connection, run_id: str, corpus: str) -> dict:
     settings = get_settings()
-    collection = qdrant_collection_name(corpus, EMBEDDING_CONTRACT)
+    collection = qdrant_collection_name(corpus, active_contract().contract_id)
     desired = set(_desired_chunk_ids(conn, run_id))
     receipts = set(_receipt_chunk_ids(conn, corpus, "qdrant"))
 
@@ -176,7 +172,7 @@ def reconcile_neo4j(conn: Connection, run_id: str, corpus: str) -> dict:
             if missing_edges:
                 conn.execute(
                     """
-                    DELETE FROM projection_receipts
+                    UPDATE projection_receipts SET active = FALSE
                      WHERE projection = 'neo4j' AND entity_kind = 'fact'
                        AND entity_id = ANY(%s)
                     """,
@@ -205,7 +201,7 @@ def _receipt_kind_ids(conn: Connection, corpus: str, projection: str, kind: str)
     rows = conn.execute(
         """
         SELECT pr.entity_id FROM projection_receipts pr
-         WHERE pr.projection = %s AND pr.entity_kind = %s
+         WHERE pr.projection = %s AND pr.entity_kind = %s AND pr.active
         """,
         (projection, kind),
     ).fetchall()

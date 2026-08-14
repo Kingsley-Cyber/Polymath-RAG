@@ -31,8 +31,6 @@ from qdrant_client.models import Distance, PointStruct, VectorParams
 from polymath_shared.db import tx
 from polymath_shared.logging import configure_logging
 from polymath_shared.projection_contracts import (
-    EMBEDDING_CONTRACT,
-    EMBEDDING_CONTRACTS,
     KIND_CHUNK,
     PROJECTION_QDRANT,
     embed,
@@ -44,6 +42,7 @@ from polymath_shared.projection_contracts import (
 from polymath_shared.receipts import (
     StageFailed,
     claim_events,
+    record_projection_attempt,
     stage_contract_hash,
     stage_transaction,
 )
@@ -57,6 +56,28 @@ CONTRACT_VERSION = "1.0.0"
 log = logging.getLogger("project-qdrant")
 
 
+def _active_contract():
+    """Resolve the active embedding contract through the shared resolver
+    (friendly id or derived contract id)."""
+    from polymath_shared.embedding_contracts import active_contract
+
+    return active_contract()
+
+
+def _embed_texts(contract, texts: list[str]) -> list[list[float]]:
+    """Embed under the active contract: local fn or the embedder sidecar."""
+    if contract.embed_fn is not None:
+        return [contract.embed(text, "child_chunk") for text in texts]
+    from polymath_shared.clients import EmbedderClient
+
+    client = EmbedderClient()
+    try:
+        client.verify_pin()
+        return client.embed(texts, "child_chunk")["vectors"]
+    finally:
+        client.close()
+
+
 def _collection_exists(client: QdrantClient, name: str) -> bool:
     try:
         client.get_collection(name)
@@ -65,15 +86,12 @@ def _collection_exists(client: QdrantClient, name: str) -> bool:
         return False
 
 
-def _ensure_collection(client: QdrantClient, name: str) -> None:
+def _ensure_collection(client: QdrantClient, name: str, dim: int) -> None:
     if _collection_exists(client, name):
         return
     client.create_collection(
         collection_name=name,
-        vectors_config=VectorParams(
-            size=EMBEDDING_CONTRACTS[EMBEDDING_CONTRACT]["dim"],
-            distance=Distance.COSINE,
-        ),
+        vectors_config=VectorParams(size=dim, distance=Distance.COSINE),
     )
 
 
@@ -105,11 +123,12 @@ def _chunks_for_run(conn: Connection, run_id: str) -> list[dict]:
     ]
 
 
-def _write_points(client: QdrantClient, collection: str, chunks: list[dict]) -> None:
+def _write_points(client: QdrantClient, collection: str, chunks: list[dict], contract) -> None:
+    vectors = _embed_texts(contract, [chunk["text"] for chunk in chunks])
     points = [
         PointStruct(
             id=qdrant_point_uuid(chunk["chunk_id"]),
-            vector=embed(chunk["text"], EMBEDDING_CONTRACT),
+            vector=vectors[i],
             payload={
                 "chunk_id": chunk["chunk_id"],
                 "doc_id": chunk["doc_id"],
@@ -120,27 +139,14 @@ def _write_points(client: QdrantClient, collection: str, chunks: list[dict]) -> 
                 "content_hash": projection_id(
                     PROJECTION_QDRANT, KIND_CHUNK, chunk["chunk_id"], CONTRACT_VERSION
                 ),
-                "embedding_contract": EMBEDDING_CONTRACT,
+                "embedding_contract": contract.contract_id,
                 "text": chunk["text"],
                 "summary": chunk["summary"],
             },
         )
-        for chunk in chunks
+        for i, chunk in enumerate(chunks)
     ]
     client.upsert(collection_name=collection, points=points, wait=True)
-
-
-def _receipts(conn: Connection, chunks: list[dict]) -> None:
-    for chunk in chunks:
-        conn.execute(
-            """
-            INSERT INTO projection_receipts (projection, entity_kind, entity_id, receipt_hash)
-            VALUES (%s, %s, %s, %s)
-            ON CONFLICT (projection, entity_kind, entity_id) DO NOTHING
-            """,
-            (PROJECTION_QDRANT, KIND_CHUNK, chunk["chunk_id"],
-             receipt_hash(PROJECTION_QDRANT, KIND_CHUNK, chunk["chunk_id"], CONTRACT_VERSION)),
-        )
 
 
 def process_event(conn: Connection, event: dict) -> None:
@@ -148,26 +154,38 @@ def process_event(conn: Connection, event: dict) -> None:
     run_id = event["run_id"]
     corpus_id = payload.get("corpus_id")
     chunks = _chunks_for_run(conn, run_id)
+    contract = _active_contract()
 
-    contract = stage_contract_hash(STAGE, {
+    stage_contract = stage_contract_hash(STAGE, {
         "projection": PROJECTION_QDRANT,
-        "embedding_contract": EMBEDDING_CONTRACT,
+        "embedding_contract": contract.contract_id,
         "contract_version": CONTRACT_VERSION,
     })
 
-    with stage_transaction(conn, run_id=run_id, stage=STAGE, contract_hash=contract) as writer:
-        writer.artifact({"chunk_count": len(chunks), "embedding_contract": EMBEDDING_CONTRACT})
+    with stage_transaction(conn, run_id=run_id, stage=STAGE, contract_hash=stage_contract) as writer:
+        writer.artifact({
+            "chunk_count": len(chunks),
+            "embedding_contract": contract.contract_id,
+        })
 
         if chunks:
             client = QdrantClient(url=get_settings().stores.qdrant_url, timeout=60)
             try:
                 corpus_id = corpus_id or chunks[0]["corpus_id"]
-                collection = qdrant_collection_name(corpus_id, EMBEDDING_CONTRACT)
-                _ensure_collection(client, collection)
-                _write_points(client, collection, chunks)
+                collection = qdrant_collection_name(corpus_id, contract.contract_id)
+                _ensure_collection(client, collection, contract.dimension)
+                _write_points(client, collection, chunks, contract)
             finally:
                 client.close()
-            _receipts(conn, chunks)
+            for chunk in chunks:
+                record_projection_attempt(
+                    conn,
+                    projection=PROJECTION_QDRANT,
+                    entity_kind=KIND_CHUNK,
+                    entity_id=chunk["chunk_id"],
+                    receipt_hash=receipt_hash(PROJECTION_QDRANT, KIND_CHUNK, chunk["chunk_id"], CONTRACT_VERSION),
+                    contract=contract.contract_id,
+                )
 
         crash_after = int(os.environ.get("POLYMATH_TEST_CRASH_AFTER_POINTS", "0"))
         if crash_after and len(chunks) >= crash_after:

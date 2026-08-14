@@ -45,10 +45,8 @@ if sys_path not in sys.path:
 
 from polymath_shared.db import tx  # noqa: E402
 from polymath_shared.identity import content_hash, run_id  # noqa: E402
-from polymath_shared.projection_contracts import (  # noqa: E402
-    EMBEDDING_CONTRACT,
-    qdrant_collection_name,
-)
+from polymath_shared.embedding_contracts import active_contract  # noqa: E402
+from polymath_shared.projection_contracts import qdrant_collection_name  # noqa: E402
 from polymath_shared.settings import get_settings  # noqa: E402
 from workers.project_neo4j_worker import _driver as _neo4j_driver  # noqa: E402
 from workers.verify_worker import process_event as verify_event  # noqa: E402
@@ -248,7 +246,7 @@ def _qdrant_point_ids(run: str) -> set[str]:
     """Source chunk ids present in the run's collection (via payloads)."""
     settings = get_settings()
     corpus = _corpus_of(run)
-    collection = qdrant_collection_name(corpus, EMBEDDING_CONTRACT)
+    collection = qdrant_collection_name(corpus, active_contract().contract_id)
     client = QdrantClient(url=settings.stores.qdrant_url)
     try:
         points, _ = client.scroll(collection_name=collection, limit=100_000, with_vectors=False)
@@ -283,7 +281,7 @@ def _neo4j_chunk_ids(run: str) -> set[str]:
 def _reset_stores(run: str) -> None:
     settings = get_settings()
     corpus = _corpus_of(run)
-    collection = qdrant_collection_name(corpus, EMBEDDING_CONTRACT)
+    collection = qdrant_collection_name(corpus, active_contract().contract_id)
     client = QdrantClient(url=settings.stores.qdrant_url)
     try:
         try:
@@ -350,7 +348,7 @@ def _wipe_corpus(corpus: str) -> None:
 
 def _reset_stores_by_corpus(corpus: str) -> None:
     settings = get_settings()
-    collection = qdrant_collection_name(corpus, EMBEDDING_CONTRACT)
+    collection = qdrant_collection_name(corpus, active_contract().contract_id)
     client = QdrantClient(url=settings.stores.qdrant_url)
     try:
         try:
@@ -369,7 +367,7 @@ class TestReconstruction:
         assert before
 
         settings = get_settings()
-        collection = qdrant_collection_name(_corpus_of(run), EMBEDDING_CONTRACT)
+        collection = qdrant_collection_name(_corpus_of(run), active_contract().contract_id)
         client = QdrantClient(url=settings.stores.qdrant_url)
         client.delete_collection(collection)
         client.close()
@@ -461,24 +459,24 @@ class TestReconstruction:
     def test_contract_bump_creates_new_version_keeps_facts(self, monkeypatch) -> None:
         run = _new_corpus("gate5")
         _project_all(run)
-        old_collection = qdrant_collection_name(_corpus_of(run), EMBEDDING_CONTRACT)
+        from polymath_shared.embedding_contracts import HASH_EMBED_CONTRACT, SHORT_NAMES
+        from dataclasses import replace
+
+        old_collection = qdrant_collection_name(_corpus_of(run), active_contract().contract_id)
         facts_before = _fact_count()
 
+        bumped = replace(HASH_EMBED_CONTRACT, contract_version="2")
+        monkeypatch.setitem(SHORT_NAMES, "hash-embed-v1", bumped)
         monkeypatch.setattr(
-            "workers.project_qdrant_worker.EMBEDDING_CONTRACT", "hash-embed-v2-test"
-        )
-        from polymath_shared import projection_contracts as pc
-
-        monkeypatch.setitem(
-            pc.EMBEDDING_CONTRACTS,
-            "hash-embed-v2-test",
-            {"dim": 512, "description": "test contract", "fn": pc.hash_embed_v1},
+            "polymath_shared.embedding_contracts.CONTRACTS",
+            {**__import__("polymath_shared.embedding_contracts", fromlist=["CONTRACTS"]).CONTRACTS,
+             bumped.contract_id: bumped},
         )
         with tx() as conn:
             from workers.project_qdrant_worker import process_event as _q
             _q(conn, _event(run, {"run_id": run}))
 
-        new_collection = qdrant_collection_name(_corpus_of(run), "hash-embed-v2-test")
+        new_collection = qdrant_collection_name(_corpus_of(run), bumped.contract_id)
         settings = get_settings()
         client = QdrantClient(url=settings.stores.qdrant_url)
         try:
@@ -493,7 +491,7 @@ class TestReconstruction:
         _project_all(run)
 
         settings = get_settings()
-        collection = qdrant_collection_name(_corpus_of(run), EMBEDDING_CONTRACT)
+        collection = qdrant_collection_name(_corpus_of(run), active_contract().contract_id)
         from polymath_shared import projection_contracts as pc
 
         client = QdrantClient(url=settings.stores.qdrant_url)
@@ -532,7 +530,7 @@ class TestReconstruction:
         _project_all(run)
 
         settings = get_settings()
-        collection = qdrant_collection_name(_corpus_of(run), EMBEDDING_CONTRACT)
+        collection = qdrant_collection_name(_corpus_of(run), active_contract().contract_id)
         from polymath_shared import projection_contracts as pc
 
         client = QdrantClient(url=settings.stores.qdrant_url)
@@ -547,18 +545,22 @@ class TestReconstruction:
         with tx() as conn:
             conn.execute(
                 """
-                INSERT INTO projection_receipts (projection, entity_kind, entity_id, receipt_hash)
-                VALUES ('qdrant', 'chunk', 'orphan_chunk_id', 'deadbeef')
+                INSERT INTO projection_receipts (projection, entity_kind, entity_id, receipt_hash, active)
+                VALUES ('qdrant', 'chunk', 'orphan_chunk_id', 'deadbeef', TRUE)
+                ON CONFLICT (projection, entity_kind, entity_id)
+                DO UPDATE SET active = TRUE
                 """
             )
             verify_event(conn, _event(run, {"run_id": run}))
 
         assert "orphan_chunk_id" not in _qdrant_point_ids(run)
         with tx() as conn:
-            orphan = conn.execute(
-                "SELECT 1 FROM projection_receipts WHERE entity_id = 'orphan_chunk_id'"
+            claim = conn.execute(
+                "SELECT active FROM projection_receipts WHERE entity_id = 'orphan_chunk_id'"
             ).fetchone()
-            assert orphan is None
+            # The claim is superseded (active=false); the immutable attempt
+            # history remains — verification never erases the trail.
+            assert claim is not None and claim[0] is False
         census = compute_census(_get_conn(), max_attempts=3)
         assert [g for g in census.gaps if g.run_id == run] == []
 

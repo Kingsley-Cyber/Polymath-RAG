@@ -1,6 +1,6 @@
 [embedder]
 display_name = "Embedder (Qwen3-Embedding-0.6B)"
-release = "1.0.0"
+release = "neural-embed-v1"
 manifest_url = "http://127.0.0.1:8742/manifest"
 contract = "contracts/sidecar/v1/manifest.schema.json"
 device = "mps"

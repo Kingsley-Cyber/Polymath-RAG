@@ -60,3 +60,20 @@ that motivated it and the refactor that implemented it.
 - Cross-domain acceptance: the validation query discovers Loop
   Engineering, Predicate Compiler, and Prompt Graph as complementary
   sources; unrelated filler stays out of the top ranks.
+
+## 2026-08-14: Phase G2 — embedding contracts, dense lane, frozen G1
+
+- The G1 cross-domain trace is frozen as a golden behavioral test.
+- Frozen embedding contracts: content-hash contract ids, representation
+  kinds, no backend field; hash-embed-v1 retained permanently as the
+  zero-model test contract; neural contract pins
+  Qwen/Qwen3-Embedding-0.6B @ 97b0c614be4d; the embedder sidecar is
+  implemented host-native with a real /ready probe.
+- Four independently inspectable lanes (document / parent / child dense
+  / child lexical) with per-hit representation provenance; fusion stays
+  rank-based RRF; a contract bump is a new index version, never a
+  mutation.
+- Receipt semantics: append-only projection_attempts + active claim
+  flag — verification supersedes claims, never erases history.
+- Qdrant moved to host port 6334; the live v3.3 stack on 6333 is never
+  touched.

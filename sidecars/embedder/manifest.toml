@@ -1,0 +1,29 @@
+# Embedder sidecar manifest (ADR-0005, G2).
+#
+# Identity: pinned model release — Qwen3-Embedding-0.6B at HF sha
+# 97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3 (last modified 2026-04-20).
+# The frozen embedding contract in shared/embedding_contracts.py MUST
+# record the same revision: index naming and sidecar identity cannot
+# drift apart (G2 gate 4).
+
+[identity]
+name = "embedder"
+version = "neural-embed-v1"
+release = "neural-embed-v1"
+
+[identity.model]
+id = "Qwen/Qwen3-Embedding-0.6B"
+revision = "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3"
+weights_sha256 = "__PIN_WEIGHTS_SHA256__"
+
+[wire]
+infer_path = "/infer"
+
+[health]
+health_path = "/health"
+ready_path = "/ready"
+
+[runtime]
+device = "mps"
+max_input_tokens = 8192
+batch_limit = 32

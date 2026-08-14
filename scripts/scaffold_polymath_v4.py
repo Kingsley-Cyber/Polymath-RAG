@@ -234,10 +234,15 @@ TREE: list[tuple[str, str, str | None]] = [
     ("shared/polymath_shared/projection_contracts.py", "py", None),
     ("shared/polymath_shared/stores.py", "py", None),
     ("shared/polymath_shared/retrieval.py", "py", None),
+    ("shared/polymath_shared/embedding_contracts.py", "py", None),
 
     # stores: Neo4j uniqueness constraints + document profile columns
     ("stores/neo4j/constraints/0001_uniqueness.cypher", "cypher", None),
     ("stores/postgres/migrations/0003_document_profiles.sql", "sql", None),
+    ("stores/postgres/migrations/0004_projection_claims.sql", "sql", None),
+
+    # sidecars: pinned embedder manifest (neural embedding contract)
+    ("sidecars/embedder/manifest.toml", "toml", None),
 
     # deployment: Phase F/G workers
     ("deployment/launchd/ai.polymath.worker.project-qdrant.plist", "plist", None),
@@ -251,14 +256,17 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/0002-compiler-recovery.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-phase-f.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-phase-g1.md", "md", None),
+    ("docs/wiki/work-log/2026-08-14-phase-g2.md", "md", None),
 
     # eval: frozen gold data + the layer measurement harness
     ("eval/gold/relations_v1.yaml", "yaml", None),
     ("eval/measure_layers.py", "py", None),
 
-    # tests: Phase F gate + G1 cross-domain routing acceptance
+    # tests: Phase F gate + G1/G2 cross-domain routing acceptance
     ("tests/integration/test_projection_reconstruction.py", "py", None),
     ("tests/integration/test_cross_domain_routing.py", "py", None),
+    ("tests/contracts/test_embedding_contracts.py", "py", None),
+    ("tests/determinism/test_retrieval_invariants.py", "py", None),
 
     # stores: the workflow schema (docs/chunks/entities/evidence/facts)
     ("stores/postgres/migrations/0002_workflow.sql", "sql", None),

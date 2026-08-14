@@ -36,6 +36,7 @@ from polymath_shared.projection_contracts import (
 from polymath_shared.receipts import (
     StageFailed,
     claim_events,
+    record_projection_attempt,
     stage_contract_hash,
     stage_transaction,
 )
@@ -170,26 +171,24 @@ def _receipts(conn: Connection, rows: dict[str, list[dict]]) -> None:
         rows_key = {"entity_id": "entities", "fact_id": "facts", "evidence_id": "evidence"}[source_key]
         for row in rows[rows_key]:
             source_id = row[source_key]
-            conn.execute(
-                """
-                INSERT INTO projection_receipts (projection, entity_kind, entity_id, receipt_hash)
-                VALUES (%s, %s, %s, %s)
-                ON CONFLICT (projection, entity_kind, entity_id) DO NOTHING
-                """,
-                (PROJECTION_NEO4J, kind, source_id,
-                 receipt_hash(PROJECTION_NEO4J, kind, source_id, CONTRACT_VERSION)),
+            record_projection_attempt(
+                conn,
+                projection=PROJECTION_NEO4J,
+                entity_kind=kind,
+                entity_id=source_id,
+                receipt_hash=receipt_hash(PROJECTION_NEO4J, kind, source_id, CONTRACT_VERSION),
+                contract=CONTRACT_VERSION,
             )
     from polymath_shared.projection_contracts import KIND_CHUNK
 
     for row in rows["docs"]:
-        conn.execute(
-            """
-            INSERT INTO projection_receipts (projection, entity_kind, entity_id, receipt_hash)
-            VALUES (%s, %s, %s, %s)
-            ON CONFLICT (projection, entity_kind, entity_id) DO NOTHING
-            """,
-            (PROJECTION_NEO4J, KIND_CHUNK, row["chunk_id"],
-             receipt_hash(PROJECTION_NEO4J, KIND_CHUNK, row["chunk_id"], CONTRACT_VERSION)),
+        record_projection_attempt(
+            conn,
+            projection=PROJECTION_NEO4J,
+            entity_kind=KIND_CHUNK,
+            entity_id=row["chunk_id"],
+            receipt_hash=receipt_hash(PROJECTION_NEO4J, KIND_CHUNK, row["chunk_id"], CONTRACT_VERSION),
+            contract=CONTRACT_VERSION,
         )
 
 

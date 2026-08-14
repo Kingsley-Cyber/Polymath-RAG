@@ -165,6 +165,75 @@ class _StageWrite:
 
 
 # ---------------------------------------------------------------------------
+# Projection claims (Phase F/G): immutable attempts + active claims
+# ---------------------------------------------------------------------------
+
+
+def record_projection_attempt(
+    conn: Connection,
+    *,
+    projection: str,
+    entity_kind: str,
+    entity_id: str,
+    receipt_hash: str,
+    contract: str = "",
+) -> None:
+    """Append the immutable attempt AND (re)claim the projection.
+
+    The attempt row is history — never deleted. The claim row is the
+    active belief that the artifact is currently present; re-projection
+    after a verified store loss re-activates it."""
+    conn.execute(
+        """
+        INSERT INTO projection_attempts (projection, entity_kind, entity_id, receipt_hash, contract)
+        VALUES (%s, %s, %s, %s, %s)
+        """,
+        (projection, entity_kind, entity_id, receipt_hash, contract),
+    )
+    conn.execute(
+        """
+        INSERT INTO projection_receipts (projection, entity_kind, entity_id, receipt_hash, active)
+        VALUES (%s, %s, %s, %s, TRUE)
+        ON CONFLICT (projection, entity_kind, entity_id) DO UPDATE
+           SET active = TRUE, receipt_hash = EXCLUDED.receipt_hash, written_at = now()
+        """,
+        (projection, entity_kind, entity_id, receipt_hash),
+    )
+
+
+def supersede_projection_claims(
+    conn: Connection,
+    *,
+    projection: str,
+    entity_kind: str | None = None,
+    entity_ids: list[str],
+) -> None:
+    """Invalidate active claims without erasing attempt history.
+
+    Used by VERIFY_PROJECTIONS when a store lost artifacts or a claim's
+    source row no longer exists. The census then sees the gap and
+    schedules reconstruction."""
+    if not entity_ids:
+        return
+    if entity_kind:
+        conn.execute(
+            """
+            UPDATE projection_receipts SET active = FALSE
+             WHERE projection = %s AND entity_kind = %s AND entity_id = ANY(%s)
+            """,
+            (projection, entity_kind, entity_ids),
+        )
+    else:
+        conn.execute(
+            """
+            UPDATE projection_receipts SET active = FALSE
+             WHERE projection = %s AND entity_id = ANY(%s)
+            """,
+            (projection, entity_ids),
+        )
+
+
+# ---------------------------------------------------------------------------
 # Outbox consumption (workers + control plane)
 # ---------------------------------------------------------------------------
 
