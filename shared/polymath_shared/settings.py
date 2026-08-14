@@ -46,11 +46,20 @@ class ControlSettings(BaseSettings):
     max_attempts: int = Field(default=3, description="Stage attempts before failed")
 
 
+class StoreSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore")
+    qdrant_url: str = Field(default="http://127.0.0.1:6333", description="Qdrant projection store")
+    neo4j_uri: str = Field(default="bolt://127.0.0.1:7688", description="Neo4j projection store")
+    neo4j_user: str = Field(default="neo4j")
+    neo4j_password: str = Field(default="polymath-dev", description="Neo4j password (override in .env)")
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore")
     env: str = Field(default="local", description="local | prod")
     log_level: str = Field(default="INFO")
     postgres: PostgresSettings = Field(default_factory=PostgresSettings)
+    stores: StoreSettings = Field(default_factory=StoreSettings)
     sidecars: SidecarSettings = Field(default_factory=SidecarSettings)
     worker: WorkerSettings = Field(default_factory=WorkerSettings)
     control: ControlSettings = Field(default_factory=ControlSettings)

@@ -36,8 +36,8 @@ services:
       - ./stores/neo4j/data:/data
       - ./stores/neo4j/constraints:/constraints
     ports:
-      - "127.0.0.1:7474:7474"
-      - "127.0.0.1:7687:7687"
+      - "127.0.0.1:7475:7474"
+      - "127.0.0.1:7688:7687"
     healthcheck:
       test: ["CMD-SHELL", "cypher-shell -u neo4j -p ${NEO4J_PASSWORD} 'RETURN 1' || exit 1"]
     restart: unless-stopped

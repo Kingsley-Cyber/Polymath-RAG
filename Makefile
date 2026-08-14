@@ -91,3 +91,15 @@ uninstall-launchd:
 ## clean — remove venv and caches
 clean:
 	rm -rf .venv .pytest_cache **/__pycache__ **/**/__pycache__
+
+## dev-worker-project-qdrant — Qdrant projector in the foreground
+dev-worker-project-qdrant:
+	$(PY) -m workers.project_qdrant_worker
+
+## dev-worker-project-neo4j — Neo4j projector in the foreground
+dev-worker-project-neo4j:
+	$(PY) -m workers.project_neo4j_worker
+
+## dev-worker-verify — projection verifier in the foreground
+dev-worker-verify:
+	$(PY) -m workers.verify_worker

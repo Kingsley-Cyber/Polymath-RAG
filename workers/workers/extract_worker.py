@@ -49,7 +49,6 @@ from workers.syntax import parse_sentence, parser_identity
 
 STAGE = "extract"
 EVENT_TYPE = "chunked.v1"
-NEXT_EVENT_TYPE = "extracted.v1"
 
 EXTRACTOR_VERSION = "gliner-2pass-v1"
 ONTOLOGY_VERSION = "core-v1"
@@ -245,7 +244,8 @@ def process_event(conn: Connection, event: dict) -> None:
             gliner.close()
 
         writer.artifact({"audit": audit})
-        writer.outbox(NEXT_EVENT_TYPE, {"run_id": run_id, "doc_id": doc_id})
+        # No outbox event: the control census schedules the projection
+        # stages from the extract receipt (per-stage event types).
         writer.run_status("reconciling")
 
 

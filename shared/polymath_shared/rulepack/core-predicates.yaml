@@ -13,7 +13,7 @@
 
 rule_pack:
   id: core-predicates
-  version: 1.0.0
+  version: 1.0.1
   resource_versions:
     verbnet: "3.3"            # vendored at build time
     propbank: "unified-2020"
@@ -164,7 +164,7 @@ predicates:
     tier: 0
     definition: "A claim is stated in a document."
     signatures:
-      - {subject_core: [Concept, Product, Technology, Method], object_core: [Document]}
+      - {subject_core: [Concept, Product, Technology, Method, Document], object_core: [Document]}
     evidence:
       classes: [reference_attribution]
       verbs: [state, cite, document, describe, report]
@@ -419,7 +419,7 @@ predicates:
     tier: 1
     definition: "Subject causes or produces an effect."
     signatures:
-      - {subject_core: [Process, Event, Concept], object_core: [Process, Event, Concept]}
+      - {subject_core: [Process, Event, Concept], object_core: [Process, Event, Concept, Product]}
     evidence:
       classes: [causation]
       verbs: [cause, produce, induce, trigger]

@@ -82,7 +82,15 @@ class TestCompileChecks:
     def test_valid_pack_compiles(self, pack: dict) -> None:
         assert pack["predicates"], "rule pack must compile to a non-empty DAG"
         assert "founded" in pack["predicates"]
-        assert pack["pack"]["version"] == "1.0.0"
+        # The version must match the YAML source (no drift between the
+        # compiled artifact and the shipped data).
+        import yaml
+        from pathlib import Path
+
+        from polymath_shared.rulepack import compiler as c
+
+        raw = yaml.safe_load((Path(c.__file__).parent / "core-predicates.yaml").read_text())
+        assert pack["pack"]["version"] == raw["rule_pack"]["version"]
 
     def test_inverse_consistency_rejected(self) -> None:
         import yaml

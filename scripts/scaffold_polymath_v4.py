@@ -223,9 +223,33 @@ TREE: list[tuple[str, str, str | None]] = [
     ("workers/workers/candidates.py", "py", None),
     ("workers/workers/syntax.py", "py", None),
     ("workers/workers/evidence_proposer.py", "py", None),
+    ("workers/workers/project_qdrant_worker.py", "py", None),
+    ("workers/workers/project_neo4j_worker.py", "py", None),
+    ("workers/workers/verify_worker.py", "py", None),
 
-    # docs/wiki: the Phase C evidence-pass experiment
+    # shared: projection contracts (Phase F)
+    ("shared/polymath_shared/projection_contracts.py", "py", None),
+
+    # stores: Neo4j uniqueness constraints (constrained MERGE)
+    ("stores/neo4j/constraints/0001_uniqueness.cypher", "cypher", None),
+
+    # deployment: Phase F workers
+    ("deployment/launchd/ai.polymath.worker.project-qdrant.plist", "plist", None),
+    ("deployment/launchd/ai.polymath.worker.project-neo4j.plist", "plist", None),
+    ("deployment/launchd/ai.polymath.worker.verify.plist", "plist", None),
+
+    # docs/wiki: Phase F decisions, experiments, work logs
+    ("docs/wiki/decisions/0007-lexical-evidence-lane.md", "md", None),
     ("docs/wiki/experiments/0001-gliner-evidence-pass.md", "md", None),
+    ("docs/wiki/experiments/0002-compiler-recovery.md", "md", None),
+    ("docs/wiki/work-log/2026-08-14-phase-f.md", "md", None),
+
+    # eval: frozen gold data + the layer measurement harness
+    ("eval/gold/relations_v1.yaml", "yaml", None),
+    ("eval/measure_layers.py", "py", None),
+
+    # tests: Phase F destructive-reconstruction acceptance gate
+    ("tests/integration/test_projection_reconstruction.py", "py", None),
 
     # stores: the workflow schema (docs/chunks/entities/evidence/facts)
     ("stores/postgres/migrations/0002_workflow.sql", "sql", None),

@@ -54,7 +54,10 @@ def _gap_payload(conn: Connection, gap: Gap) -> dict | None:
     """Rebuild the minimal payload for the gap's event type. For intake
     gaps the original intake payload lives in the first outbox row (or
     the metadata), so a crashed first-event window can be repaired
-    without asking the user to re-upload (ISSUES_REPORT §1.4 fix)."""
+    without asking the user to re-upload (ISSUES_REPORT §1.4 fix).
+
+    Projection and verify stages only need the run identity: the
+    workers read the authoritative Postgres rows themselves."""
     if gap.event_type == "intake.v1":
         row = conn.execute(
             "SELECT payload FROM outbox_events WHERE run_id = %s AND event_type = 'intake.v1' ORDER BY event_id LIMIT 1",
@@ -78,7 +81,8 @@ def _gap_payload(conn: Connection, gap: Gap) -> dict | None:
             return row[0] if isinstance(row[0], dict) else json.loads(row[0])
         return None
 
-    return None
+    # project_qdrant.v1 / project_neo4j.v1 / verify.v1: identity only.
+    return {"run_id": gap.run_id}
 
 
 def _dumps(payload: dict) -> str:

@@ -22,3 +22,6 @@ polymath-control = { workspace = true }
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+markers = [
+    "integration: requires live stores (make db-up) and POLYMATH_INTEGRATION=1",
+]

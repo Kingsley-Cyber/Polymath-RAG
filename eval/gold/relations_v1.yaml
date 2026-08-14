@@ -1,0 +1,242 @@
+# Gold set for experiment 0002: how much relation knowledge does the
+# deterministic lexical compiler actually recover?
+#
+# FROZEN evaluation data. Do not edit entries to change a measurement —
+# that would make the experiment a development-set regression (see the
+# repository benchmark-integrity rules). Revisions get a new version id.
+#
+# Format per item:
+#   text       the sentence
+#   entities   gold entity spans (text, core type)  [Band B: GLiNER-level gold]
+#   evidence   gold evidence spans (text, class, lemma)
+#   scope      gold scope flags (negated, speculative, question, ...)
+#   gold       expected (subject, predicate, object) triples; empty = abstain
+#   abstain    reason for the expected abstention (for the abstention metric)
+#   band       A = canonical mechanics, B = failure taxonomy (docx §21)
+
+version: 1.0
+items:
+  # ── Band A: canonical mechanics ─────────────────────────────────────────
+  - id: a01
+    text: "John founded Acme in 2012."
+    entities: [{text: John, type: Person}, {text: Acme, type: Organization}, {text: "2012", type: TimeReference}]
+    evidence: [{text: founded, class: creation, lemma: found}]
+    gold: [{subject: John, predicate: founded, object: Acme}]
+    band: A
+
+  - id: a02
+    text: "Acme was founded by John."
+    entities: [{text: Acme, type: Organization}, {text: John, type: Person}]
+    evidence: [{text: "founded", class: creation, lemma: found}]
+    gold: [{subject: John, predicate: founded, object: Acme}]
+    band: A
+
+  - id: a03
+    text: "The pipeline uses a bi-encoder."
+    entities: [{text: "The pipeline", type: Method}, {text: "bi-encoder", type: Technology}]
+    evidence: [{text: uses, class: usage_application, lemma: use}]
+    gold: [{subject: "The pipeline", predicate: uses, object: "bi-encoder"}]
+    band: A
+
+  - id: a04
+    text: "Acme runs on Kubernetes."
+    entities: [{text: Acme, type: Organization}, {text: Kubernetes, type: Technology}]
+    evidence: [{text: "runs on", class: usage_application, lemma: run}]
+    gold: [{subject: Acme, predicate: uses, object: Kubernetes}]
+    band: A
+
+  - id: a05
+    text: "The GPU is a component of the workstation."
+    entities: [{text: GPU, type: Technology}, {text: workstation, type: Technology}]
+    evidence: [{text: "component of", class: composition, lemma: component}]
+    gold: [{subject: GPU, predicate: part_of, object: workstation}]
+    band: A
+
+  - id: a06
+    text: "John is the CEO of Acme."
+    entities: [{text: John, type: Person}, {text: Acme, type: Organization}]
+    evidence: [{text: "CEO of", class: leadership_governance, lemma: ceo}]
+    gold: [{subject: John, predicate: has_role, object: Acme}]
+    band: A
+
+  - id: a07
+    text: "Acme hired Mary in 2015."
+    entities: [{text: Acme, type: Organization}, {text: Mary, type: Person}]
+    evidence: [{text: hired, class: employment_membership, lemma: hire}]
+    gold: [{subject: Acme, predicate: employs, object: Mary}]
+    band: A
+
+  - id: a08
+    text: "The encoder depends on the tokenizer."
+    entities: [{text: encoder, type: Technology}, {text: tokenizer, type: Technology}]
+    evidence: [{text: "depends on", class: dependency, lemma: depend}]
+    gold: [{subject: encoder, predicate: depends_on, object: tokenizer}]
+    band: A
+
+  - id: a09
+    text: "Metacognition is a type of cognition."
+    entities: [{text: Metacognition, type: Concept}, {text: cognition, type: Concept}]
+    evidence: [{text: "is a type of", class: classification, lemma: be}]
+    gold: [{subject: Metacognition, predicate: is_a, object: cognition}]
+    band: A
+
+  - id: a10
+    text: "CUDA context poisoning causes the sidecar to return errors."
+    entities: [{text: "CUDA context poisoning", type: Process}, {text: "the sidecar", type: Product}]
+    evidence: [{text: causes, class: causation, lemma: cause}]
+    gold: [{subject: "CUDA context poisoning", predicate: causes, object: "the sidecar"}]
+    band: A
+
+  - id: a11
+    text: "Acme is headquartered in Berlin."
+    entities: [{text: Acme, type: Organization}, {text: Berlin, type: Location}]
+    evidence: [{text: "headquartered in", class: location, lemma: headquarter}]
+    gold: [{subject: Acme, predicate: located_in, object: Berlin}]
+    band: A
+
+  - id: a12
+    text: "The report is described in ISO 27001."
+    entities: [{text: "The report", type: Document}, {text: "ISO 27001", type: Document}]
+    evidence: [{text: "described in", class: reference_attribution, lemma: describe}]
+    gold: [{subject: "The report", predicate: stated_in, object: "ISO 27001"}]
+    band: A
+
+  - id: a13
+    text: "The encoder reached 92 percent accuracy."
+    entities: [{text: encoder, type: Technology}, {text: "92 percent accuracy", type: Measurement}]
+    evidence: [{text: reached, class: measurement, lemma: reach}]
+    gold: []
+    abstain: lexical_coverage   # "reach" is not a measurement trigger in v1
+    band: A
+
+  - id: a14
+    text: "John founded Acme and remains its CEO."
+    entities: [{text: John, type: Person}, {text: Acme, type: Organization}]
+    evidence:
+      - {text: founded, class: creation, lemma: found}
+      - {text: "CEO of", class: leadership_governance, lemma: ceo}
+    gold:
+      - {subject: John, predicate: founded, object: Acme}
+      - {subject: John, predicate: has_role, object: Acme}
+    band: A
+
+  # ── Band B: failure taxonomy ────────────────────────────────────────────
+  - id: b01
+    text: "John did not found Acme."
+    entities: [{text: John, type: Person}, {text: Acme, type: Organization}]
+    evidence: [{text: found, class: creation, lemma: found}]
+    scope: {negated: true}
+    gold: []
+    abstain: negation
+    band: B
+
+  - id: b02
+    text: "John may found a company next year."
+    entities: [{text: John, type: Person}, {text: "a company", type: Organization}]
+    evidence: [{text: found, class: creation, lemma: found}]
+    scope: {speculative: true}   # hedge cue (docx §13: "may join" is speculation)
+    gold: [{subject: John, predicate: founded, object: "a company", qualified: speculative}]
+    band: B
+
+  - id: b03
+    text: "Did John found Acme?"
+    entities: [{text: John, type: Person}, {text: Acme, type: Organization}]
+    evidence: [{text: found, class: creation, lemma: found}]
+    scope: {question: true}
+    gold: []
+    abstain: question
+    band: B
+
+  - id: b04
+    text: "John founded his argument on data."
+    entities: [{text: John, type: Person}, {text: "his argument", type: Concept}]
+    evidence: [{text: founded, class: creation, lemma: found}]
+    gold: []
+    abstain: type_violation   # found.02 sense; Person->Concept is not a signature
+    band: B
+
+  - id: b05
+    text: "Alice and Bob joined Acme."
+    entities: [{text: Alice, type: Person}, {text: Bob, type: Person}, {text: Acme, type: Organization}]
+    evidence: [{text: joined, class: employment_membership, lemma: join}]
+    gold:
+      - {subject: Alice, predicate: member_of, object: Acme}
+      - {subject: Bob, predicate: member_of, object: Acme}
+    band: B
+
+  - id: b06
+    text: "The team uses a framework whose author founded a startup."
+    entities:
+      - {text: "The team", type: Organization}
+      - {text: framework, type: Product}
+      - {text: author, type: Person}
+      - {text: startup, type: Organization}
+    evidence:
+      - {text: uses, class: usage_application, lemma: use}
+      - {text: founded, class: creation, lemma: found}
+    gold:
+      - {subject: "The team", predicate: uses, object: framework}
+      - {subject: author, predicate: founded, object: startup}
+    band: B
+
+  - id: b07
+    text: "Beta is a subsidiary of Acme."
+    entities: [{text: Beta, type: Organization}, {text: Acme, type: Organization}]
+    evidence: [{text: "subsidiary of", class: ownership_control, lemma: subsidiary}]
+    gold: [{subject: Beta, predicate: subsidiary_of, object: Acme}]
+    band: B
+
+  - id: b08
+    text: "The vendor shipped a quantum processor."
+    entities: [{text: vendor, type: Organization}, {text: "quantum processor", type: Product}]
+    evidence: [{text: shipped, class: usage_application, lemma: ship}]
+    gold: []
+    abstain: lexical_coverage   # "ship" not in the v1 trigger vocabulary
+    band: B
+
+  - id: b09
+    text: "Acme acquired Beta in 2024."
+    entities: [{text: Acme, type: Organization}, {text: Beta, type: Organization}]
+    evidence: [{text: acquired, class: ownership_control, lemma: acquire}]
+    gold: [{subject: Acme, predicate: acquired, object: Beta}]
+    band: B
+
+  - id: b10
+    text: "The model outperforms the baseline by twelve points."
+    entities: [{text: "The model", type: Product}, {text: baseline, type: Product}]
+    evidence: [{text: outperforms, class: comparison, lemma: outperform}]
+    gold: []
+    abstain: lexical_coverage   # "outperform" not a v1 comparison trigger
+    band: B
+
+  - id: b11
+    text: "The protocol converts plaintext into ciphertext."
+    entities: [{text: "The protocol", type: Method}, {text: plaintext, type: Concept}, {text: ciphertext, type: Concept}]
+    evidence: [{text: converts, class: transformation, lemma: convert}]
+    gold: [{subject: plaintext, predicate: transforms_into, object: ciphertext}]
+    band: B
+
+  - id: b12
+    text: "Unlike Acme, Beta does not use Kubernetes."
+    entities: [{text: Acme, type: Organization}, {text: Beta, type: Organization}, {text: Kubernetes, type: Technology}]
+    evidence: [{text: use, class: usage_application, lemma: use}]
+    scope: {negated: true, comparison: true}
+    gold: []
+    abstain: negation_comparison
+    band: B
+
+  - id: b13
+    text: "Alice said Bob founded Acme."
+    entities: [{text: Alice, type: Person}, {text: Bob, type: Person}, {text: Acme, type: Organization}]
+    evidence: [{text: founded, class: creation, lemma: found}]
+    scope: {attributed: true}
+    gold: [{subject: Bob, predicate: founded, object: Acme, attributed: true}]
+    band: B
+
+  - id: b14
+    text: "The system requires a stable network connection."
+    entities: [{text: "The system", type: Product}, {text: "stable network connection", type: Concept}]
+    evidence: [{text: requires, class: dependency, lemma: require}]
+    gold: []
+    abstain: type_violation   # requires: Concept object is not in the signature
+    band: B
