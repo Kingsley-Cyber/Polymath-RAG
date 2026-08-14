@@ -1,0 +1,7 @@
+[cloud-modal]
+display_name = "Modal Cloud Overflow (embed)"
+release = "1.0.0"
+manifest_url = "https://api.modal.example/polymath/embed/manifest"
+contract = "contracts/sidecar/v1/manifest.schema.json"
+device = "cloud"
+owner = "sidecar-cpu"

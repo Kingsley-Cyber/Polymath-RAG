@@ -1,0 +1,47 @@
+{
+  "$id": "https://polymath.local/contracts/sidecar/v1/manifest.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SidecarManifest",
+  "description": "Identity + wire contract for a Polymath sidecar.",
+  "type": "object",
+  "required": ["identity", "wire", "health"],
+  "properties": {
+    "identity": {
+      "type": "object",
+      "required": ["name", "version", "model"],
+      "properties": {
+        "name": {"type": "string"},
+        "version": {"type": "string"},
+        "model": {
+          "type": "object",
+          "required": ["id", "revision", "weights_sha256"],
+          "properties": {
+            "id": {"type": "string"},
+            "revision": {"type": "string"},
+            "weights_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        }
+      }
+    },
+    "wire": {
+      "type": "object",
+      "required": ["infer_path", "request_schema", "response_schema"],
+      "properties": {
+        "infer_path": {"type": "string"},
+        "request_schema": {"type": "object"},
+        "response_schema": {"type": "object"}
+      }
+    },
+    "health": {
+      "type": "object",
+      "required": ["health_path", "ready_path"],
+      "properties": {
+        "health_path": {"type": "string"},
+        "ready_path": {"type": "string"}
+      }
+    }
+  }
+}

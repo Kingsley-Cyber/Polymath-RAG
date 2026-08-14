@@ -1,0 +1,40 @@
+{
+  "$id": "https://polymath.local/contracts/extraction/v1/gliner_infer.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GLiNER two-pass inference",
+  "$defs": {
+    "request": {
+      "type": "object",
+      "required": ["task", "text", "threshold"],
+      "properties": {
+        "task": {"enum": ["entity", "evidence"]},
+        "text": {"type": "string"},
+        "threshold": {"type": "number", "minimum": 0, "maximum": 1},
+        "labels": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "span": {
+      "type": "object",
+      "required": ["text", "start", "end", "label", "score"],
+      "properties": {
+        "text": {"type": "string"},
+        "start": {"type": "integer", "minimum": 0},
+        "end": {"type": "integer", "minimum": 0},
+        "label": {"type": "string"},
+        "score": {"type": "number", "minimum": 0, "maximum": 1}
+      },
+      "additionalProperties": false
+    },
+    "response": {
+      "type": "object",
+      "required": ["task", "spans", "model_release"],
+      "properties": {
+        "task": {"enum": ["entity", "evidence"]},
+        "spans": {"type": "array", "items": {"$ref": "#/$defs/span"}},
+        "model_release": {"type": "string"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

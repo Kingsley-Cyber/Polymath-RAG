@@ -1,0 +1,15 @@
+# Place at /etc/systemd/system/polymath-control.service
+[Unit]
+Description=Polymath v4 Control Plane
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=polymath
+WorkingDirectory=/opt/polymath-v4/control
+ExecStart=/opt/polymath-v4/.venv/bin/python -m control.main
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

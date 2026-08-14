@@ -1,0 +1,18 @@
+[identity]
+name = "gliner-runtime"
+version = "__PIN_RELEASE__"
+device = "__PIN_DEVICE__"
+
+[identity.model]
+id = "__PIN_MODEL_ID__"
+revision = "__PIN_REVISION__"
+weights_sha256 = "__PIN_SHA256__"
+
+[wire]
+infer_path = "/infer"
+request_schema = { "$ref" = "contracts/extraction/v1/gliner_infer.schema.json#/$defs/request" }
+response_schema = { "$ref" = "contracts/extraction/v1/gliner_infer.schema.json#/$defs/response" }
+
+[health]
+health_path = "/health"
+ready_path = "/ready"

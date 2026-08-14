@@ -1,0 +1,16 @@
+{
+  "$id": "https://polymath.local/contracts/ingestion/v1/ingest_event.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IngestEvent",
+  "type": "object",
+  "required": ["event_type", "run_id", "occurred_at", "schema_version"],
+  "properties": {
+    "event_type": {
+      "enum": ["intake", "parse_complete", "embed_complete",
+               "extract_complete", "promote_complete", "query_ready"]
+    },
+    "run_id": {"type": "string"},
+    "occurred_at": {"type": "string", "format": "date-time"},
+    "schema_version": {"const": "ingest.v1"}
+  }
+}

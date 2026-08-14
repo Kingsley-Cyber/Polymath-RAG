@@ -1,0 +1,32 @@
+{
+  "version": "v1",
+  "owners": {
+    "contracts": {"paths": ["contracts/"], "may_depend_on": []},
+    "shared": {"paths": ["shared/"], "may_depend_on": ["contracts"]},
+    "orchestrator": {"paths": ["orchestrator/"], "may_depend_on": ["contracts", "shared"]},
+    "worker": {"paths": ["workers/"], "may_depend_on": ["contracts", "shared"]},
+    "control": {"paths": ["control/"], "may_depend_on": ["contracts", "shared"]},
+    "sidecar": {"paths": ["sidecars/"], "may_depend_on": ["contracts", "shared"]},
+    "store": {"paths": ["stores/"], "may_depend_on": []},
+    "governance": {"paths": ["architecture/", "docs/", "scripts/", ".github/"], "may_depend_on": []}
+  },
+  "forbidden_imports": [
+    {"from": "orchestrator", "to": "worker"},
+    {"from": "orchestrator", "to": "control"},
+    {"from": "worker", "to": "orchestrator"},
+    {"from": "worker", "to": "control"},
+    {"from": "worker", "to": "sidecar"},
+    {"from": "control", "to": "orchestrator"},
+    {"from": "control", "to": "worker"},
+    {"from": "sidecar", "to": "orchestrator"},
+    {"from": "sidecar", "to": "worker"},
+    {"from": "sidecar", "to": "control"}
+  ],
+  "change_triggers": {
+    "contracts/": ["reverse-dependent verification", "work log"],
+    "architecture/dependencies.json": ["ADR", "refactor entry", "architecture changelog", "work log"],
+    "stores/postgres/migrations/": ["replay proof", "rollback note", "work log"],
+    "sidecars/": ["manifest proof", "readiness proof", "work log"],
+    "scripts/": ["scripts registry", "work log"]
+  }
+}

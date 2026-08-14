@@ -1,0 +1,20 @@
+{
+  "identity": {
+    "name": "example-sidecar",
+    "version": "example-release",
+    "model": {
+      "id": "example/model",
+      "revision": "example-revision",
+      "weights_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  },
+  "wire": {
+    "infer_path": "/infer",
+    "request_schema": {"$ref": "infer_request.schema.json"},
+    "response_schema": {"$ref": "infer_response.schema.json"}
+  },
+  "health": {
+    "health_path": "/health",
+    "ready_path": "/ready"
+  }
+}

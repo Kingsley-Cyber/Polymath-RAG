@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+
+# Local state
+.env
+.env.local
+*.log
+
+# Stores (bind-mounted, never committed)
+stores/postgres/data/
+stores/qdrant/snapshots/*.snapshot
+stores/neo4j/data/
+stores/redis/dump.rdb
+
+# Sidecar model weights (downloaded, not committed)
+sidecars/*/models/
+sidecars/*/weights/
+
+# Editor
+.vscode/
+.idea/
+.DS_Store
+
+# Generated
+.scaffold-touched

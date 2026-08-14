@@ -1,0 +1,53 @@
+# compose.yaml: Polymath v4
+# Only the data stores run in Docker. The orchestrator, workers,
+# control plane, and sidecars are host-native. See ADR-0003.
+
+services:
+  postgres:
+    image: ${POSTGRES_IMAGE}
+    environment:
+      POSTGRES_USER: polymath
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: polymath
+    volumes:
+      - ./stores/postgres/data:/var/lib/postgresql/data
+      - ./stores/postgres/migrations:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U polymath"]
+    restart: unless-stopped
+
+  qdrant:
+    image: ${QDRANT_IMAGE}
+    volumes:
+      - ./stores/qdrant/snapshots:/qdrant/snapshots
+    ports:
+      - "127.0.0.1:6333:6333"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/6333 && echo -e 'GET /healthz HTTP/1.0\r\n\r\n' >&3"]
+    restart: unless-stopped
+
+  neo4j:
+    image: ${NEO4J_IMAGE}
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD}
+    volumes:
+      - ./stores/neo4j/data:/data
+      - ./stores/neo4j/constraints:/constraints
+    ports:
+      - "127.0.0.1:7474:7474"
+      - "127.0.0.1:7687:7687"
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u neo4j -p ${NEO4J_PASSWORD} 'RETURN 1' || exit 1"]
+    restart: unless-stopped
+
+  redis:
+    image: ${REDIS_IMAGE}
+    volumes:
+      - ./stores/redis:/data
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+    restart: unless-stopped
