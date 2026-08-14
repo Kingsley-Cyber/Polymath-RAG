@@ -1,14 +1,14 @@
 # Current Repository State
 
 Last verified: 2026-08-14
-Verified against commit: `4fcadbe` (C1: deterministic Stage-2 corpus canonicalization — gate COMPLETE)
+Verified against commit: `0573372` (C2: canonical KG + provenance projection — gate COMPLETE)
 Active branch at verification: `main` (working tree clean)
 
 ```yaml
 current_phase: extraction-architecture-frozen # C1 complete; priority = CORPUS_INGEST_READY (C2 -> Q1 -> I1 -> I2)
 repository:
   branch: main
-  head: 4fcadbe
+  head: 0573372
   frozen_artifacts: [see Frozen Artifacts section]
   evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1]
   next_actions: [c2-canonical-kg, q1-heterogeneous-qualification, i1-bulk-ingestion]
