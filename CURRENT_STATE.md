@@ -1,14 +1,14 @@
 # Current Repository State
 
 Last verified: 2026-08-14
-Verified against commit: `99c4146` (R3a: grounded EvidenceBundle assembly — gate COMPLETE)
+Verified against commit: `a961b6d` (R3b: grounded answer generation + /chat — gate COMPLETE)
 Active branch at verification: `main` (working tree clean)
 
 ```yaml
 current_phase: extraction-architecture-frozen # R3a+R3b complete; critical path = RAG v1.0 application E2E
 repository:
   branch: main
-  head: 99c4146
+  head: a961b6d
   frozen_artifacts: [see Frozen Artifacts section]
   evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1]
   next_actions: [c1-stage2-canonicalization, c2-canonical-kg, r2-reranker-qualification]
