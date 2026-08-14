@@ -5,6 +5,61 @@ architecture change rules, managed scripts, and the proof required from each
 agent. If code or prose conflicts with this file, stop and resolve the
 contract conflict before editing.
 
+## 0. Mandatory Bootstrap
+
+A new agent MUST bootstrap from repository state before reasoning from
+memory or chat context.
+
+> Chat history is not authoritative project state. Repository bootstrap
+> files are.
+
+Before making any code, schema, data, architecture, or evaluation change:
+
+1. Read `AGENTS.md` (this file).
+2. Read `CURRENT_STATE.md` (authoritative state snapshot).
+3. Read `NEXT_SESSION.md` (last handoff + next authorized task).
+4. Read `ARCHITECTURE.md` and `architecture/dependencies.json`.
+5. Run `git status`, record the active branch and `HEAD`.
+6. Verify every frozen hash listed in `CURRENT_STATE.md` (`shasum -a 256 <file>`).
+7. Run the fast verification commands (`make guards` + the test command
+   recorded in `CURRENT_STATE.md`).
+8. Do not modify anything until repository state and bootstrap state agree.
+
+Never assume:
+
+- never assume the previous agent's branch or HEAD;
+- never assume tests are green;
+- never assume frozen artifacts are unchanged;
+- never treat experimental findings as production defaults;
+- never silently change frozen architecture;
+- never modify evaluation corpora after freeze;
+- never continue from stale documentation without verifying it against
+  git and artifacts.
+
+Staleness contract: if current `HEAD` differs from the commit recorded in
+`CURRENT_STATE.md`, inspect the commits since that state, determine whether
+the state documentation is stale, and update it before relying on it for
+consequential work. A changed HEAD does not automatically mean the
+documentation is invalid — verify the actual diff.
+
+Where to find things:
+
+| Question | File |
+|---|---|
+| current state, frozen hashes, evaluations, prohibitions | `CURRENT_STATE.md` |
+| next authorized task | `NEXT_SESSION.md` |
+| architecture + ownership | `ARCHITECTURE.md`, `architecture/dependencies.json` |
+| decisions | `docs/wiki/decisions/` (ADRs 0000–0008) |
+| experiments + measured results | `docs/wiki/experiments/`, `eval/phase_h/REPORT*.md` |
+| work log (append-only) | `docs/wiki/work-log/` |
+| contracts | `contracts/` |
+| resource build pipeline | `resources/README.md` |
+| managed scripts | `scripts/README.md` |
+| tests | `tests/` (+ `tests/integration/` behind `POLYMATH_INTEGRATION=1`) |
+
+If documentation conflicts, resolution order: git state + frozen hashes →
+`CURRENT_STATE.md` → ADRs → `ARCHITECTURE.md` → other docs.
+
 ## 1. Select one owner
 
 Every runtime change has one process owner.
@@ -46,11 +101,13 @@ needs multiple runtime owners, split it at a versioned contract boundary.
 
 Read in this order:
 
-1. `AGENTS.md`
-2. `ARCHITECTURE.md`
-3. `architecture/dependencies.json`
-4. `PLAN.md`
-5. the ADR, refactor entry, package contract, and latest relevant work log
+1. `AGENTS.md` (bootstrap section included)
+2. `CURRENT_STATE.md`
+3. `NEXT_SESSION.md`
+4. `ARCHITECTURE.md`
+5. `architecture/dependencies.json`
+6. `PLAN.md`
+7. the ADR, refactor entry, package contract, and latest relevant work log
 
 Then run:
 

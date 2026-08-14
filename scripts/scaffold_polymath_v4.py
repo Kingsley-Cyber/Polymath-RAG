@@ -73,6 +73,11 @@ TODAY = _dt.date.today().isoformat()
 TREE: list[tuple[str, str, str | None]] = [
     # ── Top-level governance ────────────────────────────────────────────────
     ("README.md", "md", "README"),
+    ("CURRENT_STATE.md", "md", None),
+    ("NEXT_SESSION.md", "md", None),
+    ("RAG_E2E_CHECKLIST.md", "md", None),
+    ("docs/wiki/work-log/2026-08-14-checkpoint-e2e.md", "md", None),
+    ("docs/wiki/work-log/2026-08-14-bootstrap-continuity.md", "md", None),
     ("ARCHITECTURE.md", "md", "ARCHITECTURE_STUB"),
     ("ARCHITECTURE_CHANGELOG.md", "md", "ARCHITECTURE_CHANGELOG_STUB"),
     ("PLAN.md", "md", "PLAN_STUB"),
