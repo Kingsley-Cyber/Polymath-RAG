@@ -5,13 +5,13 @@ Verified against commit: `a961b6d` (R3b: grounded answer generation + /chat — 
 Active branch at verification: `main` (working tree clean)
 
 ```yaml
-current_phase: extraction-architecture-frozen # R3a+R3b complete; critical path = RAG v1.0 application E2E
+current_phase: extraction-architecture-frozen # R3a/R3b/C1 complete; critical path = RAG v1.0 application E2E
 repository:
   branch: main
   head: a961b6d
   frozen_artifacts: [see Frozen Artifacts section]
   evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1]
-  next_actions: [c1-stage2-canonicalization, c2-canonical-kg, r2-reranker-qualification]
+  next_actions: [c2-canonical-kg, r2-reranker-qualification, m1-mcp-contract]
   do_not_do: [see Explicitly Prohibited Actions]
   known_gaps: [see Known Limitations]
 ```
@@ -19,8 +19,8 @@ repository:
 ## System Status
 
 - **Build pipeline**: `preflight ok`, `repo guard ok`, `wiki ok` (verified at the commit above).
-- **Unit tests**: 108 passed, 19 skipped (skips = integration / neural-gated gates) — verified.
-- **Integration tests**: 16 passed, 2 skipped (`POLYMATH_INTEGRATION=1` + live stores; Qdrant on 6334, Neo4j on 7688, Postgres on 5432) — verified.
+- **Unit tests**: 127 passed, 20 skipped (skips = integration / neural-gated gates) — verified.
+- **Integration tests**: 17 passed, 2 skipped (`POLYMATH_INTEGRATION=1` + live stores; Qdrant on 6334, Neo4j on 7688, Postgres on 5432) — verified.
 - **Extraction verdict**: hybrid resource enrichment **REJECTED as production default** (Phase H v1.1: Δincorrect = +4 > 0). The lexical lane remains the production default. See "Current Evaluation Results".
 
 ## Current Architecture
@@ -33,10 +33,10 @@ sidecar-cpu / store / control. Authoritative files: `ARCHITECTURE.md`,
 0005 sidecar-contract, 0006 packaging-deployment, 0007 lexical evidence
 lane, 0008 evidence-pass boundary).
 
-Production path per run (census-driven, six stages):
+Production path per run (census-driven, seven stages):
 `intake → extract → profile_document → project_qdrant → project_neo4j →
-verify_projections`, with receipts as the commit point (one Postgres
-transaction: artifact + receipt + status + outbox event).
+verify_projections → canonicalize`, with receipts as the commit point
+(one Postgres transaction: artifact + receipt + status + outbox event).
 
 ## Production Components
 
@@ -122,10 +122,17 @@ transaction: artifact + receipt + status + outbox event).
 - Evidence-pass boundary (ADR-0008): GLiNER pass 2 proposes coarse
   evidence (may abstain on the pinned model); the lexical lane
   localizes triggers; resources constrain; the compiler decides.
-- **Stage 2 (corpus-level canonicalization/merge): does NOT exist in
-  this repository.** Facts are per-document; there is no cross-document
-  entity merge or graph-wide canonicalization layer. Do not imply
-  otherwise.
+- **Stage 2 (corpus-level canonicalization): implemented (C1, ADR
+  0009).** The `canonicalize` stage maintains a deterministic corpus
+  registry (`canonical_entities`, `canonical_memberships`,
+  `canonicalization_decisions`, migration 0005) that ADDS canonical
+  identities on top of source-local entities — local entity/fact/
+  evidence rows are never mutated. Conservative policy: SAME_AS only
+  on normalized-exact-name + compatible type + mergeable class;
+  ALIAS_OF only on explicit corpus-profile declarations; DISTINCT on
+  incompatible types; homonym-risk classes abstain. Canonical ids are
+  content hashes (order-independent, replay-safe, incremental delta).
+  The Neo4j canonical projection is C2 — not built yet.
 - The 28-predicate rule pack is frozen at v1.0.1; changes require a
   measured delta (see Prohibited Actions).
 
@@ -236,7 +243,8 @@ permits a new corpus version.
   `POLYMATH_REQUIRE_PINNED=0` until production digests are recorded.
 - Single-controller lease (multi-controller deferred, PLAN.md).
 - G3/G4/G5 retrieval layers and the answer path are not built.
-- Stage 2 corpus-level canonicalization does not exist.
+- Stage 2 corpus-level canonicalization now exists (C1); the Neo4j
+  canonical KG projection (C2) does not.
 
 ## Open Risks
 
@@ -252,20 +260,20 @@ permits a new corpus version.
 
 Phase H (empirical qualification) — complete. Extraction architecture
 frozen at commit 3ada0af. Critical path is now the RAG v1.0 application
-E2E (R3a COMPLETE, R3b COMPLETE → C1 → C2 → R2 → M1–M5 → R4 → O2 → O1
-→ A1 → V1); E1-a/E1-b are deferred measured improvements.
+E2E (R3a COMPLETE, R3b COMPLETE, C1 COMPLETE → C2 → R2 → M1–M5 → R4 →
+O2 → O1 → A1 → V1); E1-a/E1-b are deferred measured improvements.
 
 ## Next Authorized Actions (critical path, in order)
 
-1. **C1**: Stage-2 corpus-level canonicalization / cross-document
-   merge. NEXT gate.
-2. **C2**: canonical KG + source/provenance links.
-3. **R2**: reranker qualification (bypassable for first /chat E2E;
+1. **C2**: canonical KG + source/provenance links — project the C1
+   registry into Neo4j as a rebuildable projection with provenance
+   links to source-local facts. NEXT gate.
+2. **R2**: reranker qualification (bypassable for first /chat E2E;
    evaluate before defaulting).
-4. **M1–M5**: Polymath MCP contract, server, Claude E2E, Hermes Agent
+3. **M1–M5**: Polymath MCP contract, server, Claude E2E, Hermes Agent
    E2E, read/write/admin permission boundaries.
-5. **R4**: graph/retrieval scale qualification.
-6. **O2**: model digest pinning. **O1**: clean-clone + backup/recovery
+4. **R4**: graph/retrieval scale qualification.
+5. **O2**: model digest pinning. **O1**: clean-clone + backup/recovery
    drill. **A1**: fresh-machine + fresh-agent acceptance. **V1**:
    RAG v1.0 checkpoint.
 
@@ -335,4 +343,4 @@ v3.3 stack owns 6333/7474 and must never be touched); Neo4j on 7688.
 6. `eval/phase_h/REPORT.md` (v1.0), `eval/phase_h/REPORT_v1.1.md` (v1.1)
 7. `resources/README.md` (resource pipeline + upgrade procedure)
 8. `scripts/README.md` (managed scripts registry)
-9. `RAG_E2E_CHECKLIST.md` (release-gate checklist — next unchecked gate: C1)
+9. `RAG_E2E_CHECKLIST.md` (release-gate checklist — next unchecked gate: C2)

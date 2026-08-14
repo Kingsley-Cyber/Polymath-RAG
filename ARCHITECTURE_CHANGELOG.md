@@ -3,6 +3,22 @@
 Dated diffs of every architectural change. Each entry links to the ADR
 that motivated it and the refactor that implemented it.
 
+## 2026-08-14: C1 Stage-2 corpus canonicalization (ADR 0009)
+
+- New Postgres registry (migration 0005): `canonical_entities`,
+  `canonical_memberships`, `canonicalization_decisions` — corpus
+  layer ADDED on top of source-local knowledge, never erasing it.
+- New census stage `canonicalize` (`canonicalize.v1`) after
+  `verify_projections`; deterministic recompute + delete-stale /
+  insert-missing diff inside one stage transaction.
+- Conservative policy: SAME_AS only on normalized-exact-name +
+  compatible type + mergeable class; ALIAS_OF only on explicit
+  corpus-profile declarations; DISTINCT on incompatible types;
+  homonym-risk classes abstain. No fuzzy/LLM merges. Content-hash
+  canonical ids are order-independent and replay-safe.
+- Wire contract `contracts/canonicalization/v1/`; refactor 0004; work
+  log 2026-08-14-c1-canonicalization.
+
 ## 2026-08-14: R3b grounded answer generation + /chat
 
 - New wire contract `contracts/answer/v1/chat_response.schema.json`

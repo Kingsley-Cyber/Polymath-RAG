@@ -1,0 +1,66 @@
+{
+  "$id": "https://polymath.local/contracts/canonicalization/v1/canonicalization_output.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CanonicalizationOutput",
+  "description": "C1 output: the deterministic corpus canonical registry produced by shared/polymath_shared/canonicalizer.py. Canonicalization ADDS a corpus layer; it never erases source-local identity. Every membership carries decision, confidence, basis, and canonicalizer_version. Produced by the canonicalize worker stage; persisted in migration 0005 tables.",
+  "type": "object",
+  "required": ["corpus_id", "canonicalizer_version", "canonical_entities", "memberships", "decisions"],
+  "properties": {
+    "corpus_id": {"type": "string"},
+    "canonicalizer_version": {"type": "string"},
+    "canonical_entities": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/canonical_entity"}
+    },
+    "memberships": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/membership"}
+    },
+    "decisions": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/decision"}
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "canonical_entity": {
+      "type": "object",
+      "required": ["canonical_id", "canonical_type", "normalized_name", "canonicalizer_version"],
+      "properties": {
+        "canonical_id": {"type": "string", "pattern": "^cent_"},
+        "canonical_type": {"type": "string"},
+        "normalized_name": {"type": "string"},
+        "canonicalizer_version": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "membership": {
+      "type": "object",
+      "required": ["canonical_id", "local_entity_id", "decision", "confidence", "basis", "canonicalizer_version"],
+      "properties": {
+        "canonical_id": {"type": "string", "pattern": "^cent_"},
+        "local_entity_id": {"type": "string", "pattern": "^ent_"},
+        "decision": {"enum": ["SAME_AS", "ALIAS_OF", "DISTINCT", "AMBIGUOUS", "UNRESOLVED", "SELF"]},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "basis": {"type": "array", "items": {"type": "string"}},
+        "canonicalizer_version": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "decision": {
+      "type": "object",
+      "required": ["decision_id", "local_entity_a", "local_entity_b", "decision", "confidence", "basis", "canonicalizer_version"],
+      "properties": {
+        "decision_id": {"type": "string", "pattern": "^dec_"},
+        "local_entity_a": {"type": "string", "pattern": "^ent_"},
+        "local_entity_b": {"type": "string", "pattern": "^ent_"},
+        "decision": {"enum": ["SAME_AS", "ALIAS_OF", "DISTINCT", "AMBIGUOUS", "UNRESOLVED"]},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "basis": {"type": "array", "items": {"type": "string"}},
+        "canonical_id": {"type": ["string", "null"]},
+        "canonicalizer_version": {"type": "string"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

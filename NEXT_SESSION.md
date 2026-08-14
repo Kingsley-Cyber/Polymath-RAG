@@ -6,27 +6,28 @@ Read:
 1. `AGENTS.md`
 2. `CURRENT_STATE.md`
 3. `ARCHITECTURE.md`
-4. `RAG_E2E_CHECKLIST.md` (next unchecked gate: C1)
+4. `RAG_E2E_CHECKLIST.md` (next unchecked gate: C2)
 
 ## Last Completed
 
-- **R3b** — grounded answer generation + /chat. POST /chat runs the
-  R3a bundle through a deterministic propose→validate→render pipeline
-  (`shared/polymath_shared/answer_synthesis.py`, contract
-  `contracts/answer/v1/chat_response.schema.json`). The validator is
-  the trust boundary: supports must resolve to real bundle items,
-  fabrication tokens are rejected, conflicts represented (never
-  arbitrated), epistemic scope survives, insufficient evidence
-  abstains. Live E2E verified (cited grounded conflict answer).
-  Evidence: work log `2026-08-14-r3b-grounded-answer.md`, refactor 0003.
+- **C1** — deterministic Stage-2 corpus canonicalization (ADR 0009).
+  New census stage `canonicalize` + migration 0005 registry
+  (`canonical_entities`, `canonical_memberships`,
+  `canonicalization_decisions`) + pure deterministic canonicalizer.
+  Content-hash canonical ids; conservative SAME_AS/ALIAS_OF/DISTINCT/
+  AMBIGUOUS policy; full lineage back to source-local knowledge;
+  order-independent, replay-safe, incremental delta. Live E2E
+  verified. Evidence: work log `2026-08-14-c1-canonicalization.md`,
+  refactor 0004.
+- **R3b** — grounded answer generation + /chat (work log
+  `2026-08-14-r3b-grounded-answer.md`, refactor 0003).
 - **R3a** — grounded EvidenceBundle assembly (work log
   `2026-08-14-r3a-evidence-bundle.md`, refactor 0002).
 - Phase H v1.1 — hybrid REJECT as production default (frozen evidence).
-- Bootstrap continuity system + Docker hygiene (approved only).
 
 ## What Was Validated (at checkpoint)
 
-- 108 unit tests passed / 19 skipped; 16 integration passed / 2 skipped.
+- 127 unit tests passed / 20 skipped; 17 integration passed / 2 skipped.
 - All three guards green (preflight / repo guard / wiki worm).
 - Frozen hashes re-verified: relations_v1 `fdfd75b4…`, relations_v1.1
   `3ee7065a…`, resource contract `03a513ec…`, tables `0ac3002a…`,
@@ -45,8 +46,8 @@ Do NOT begin E1 yet (deferred measured improvement).
 CRITICAL PATH TO RAG v1.0 (in order):
 1. ~~grounded EvidenceBundle assembly (R3a)~~ COMPLETE
 2. ~~functional answer generation and /chat path (R3b)~~ COMPLETE
-3. Stage-2 corpus-level canonicalization/merge (C1) ← NEXT
-4. canonical KG + source/provenance linkage (C2)
+3. ~~Stage-2 corpus-level canonicalization/merge (C1)~~ COMPLETE
+4. canonical KG + source/provenance linkage (C2) ← NEXT
 5. reranking qualification (R2 — bypassable for first /chat E2E)
 6. Polymath MCP contract (M1)
 7. Polymath MCP server (M2)
@@ -65,11 +66,14 @@ production lexical path.
 
 ## Next Unchecked Critical-Path Gate
 
-**C1** — Stage-2 corpus-level canonicalization / cross-document merge.
-Facts are per-document today; C1 adds the deterministic merge layer
-(cross-document entity merge) WITHOUT touching the frozen per-document
-extraction path. See `CURRENT_STATE.md` (Knowledge Extraction State)
-for the current absence.
+**C2** — canonical KG + source/provenance linkage. Project the C1
+registry (canonical entities + memberships) into Neo4j as a
+rebuildable projection: canonical entity nodes, canonical membership
+edges to local entities, and provenance links from the canonical layer
+back to source-local facts. Postgres remains authority; Neo4j stays
+disposable/rebuildable. The milestone after C2 is Q1 (heterogeneous
+corpus qualification), then I1/I2 (bulk ingest + integrity) →
+CORPUS_INGEST_READY.
 
 ## Do Not Do
 

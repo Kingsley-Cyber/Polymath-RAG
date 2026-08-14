@@ -81,6 +81,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-08-14-critical-path-reprioritization.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-r3a-evidence-bundle.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-r3b-grounded-answer.md", "md", None),
+    ("docs/wiki/work-log/2026-08-14-c1-canonicalization.md", "md", None),
     ("ARCHITECTURE.md", "md", "ARCHITECTURE_STUB"),
     ("ARCHITECTURE_CHANGELOG.md", "md", "ARCHITECTURE_CHANGELOG_STUB"),
     ("PLAN.md", "md", "PLAN_STUB"),
@@ -110,6 +111,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/refactors/0001-phase-b-production.md", "md", None),
     ("docs/wiki/refactors/0002-r3a-evidence-bundle.md", "md", None),
     ("docs/wiki/refactors/0003-r3b-grounded-answer.md", "md", None),
+    ("docs/wiki/refactors/0004-c1-canonicalization.md", "md", None),
     ("docs/runbooks/operator.md", "md", "RUNBOOK_OPERATOR"),
     ("docs/runbooks/agent-onboarding.md", "md", "RUNBOOK_AGENT_ONBOARDING"),
 
@@ -122,6 +124,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("contracts/extraction/v1/relation_candidate.schema.json", "json", "RELATION_CANDIDATE_SCHEMA"),
     ("contracts/answer/v1/evidence_bundle.schema.json", "json", None),
     ("contracts/answer/v1/chat_response.schema.json", "json", None),
+    ("contracts/canonicalization/v1/canonicalization_output.schema.json", "json", None),
 
     # ── Sidecar registry (the source of truth for "where is X") ───────────
     ("sidecars/README.md", "md", "SIDECARS_README"),
@@ -242,6 +245,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("workers/workers/verify_worker.py", "py", None),
     ("workers/workers/document_profile_builder.py", "py", None),
     ("workers/workers/profile_worker.py", "py", None),
+    ("workers/workers/canonicalize_worker.py", "py", None),
 
     # shared: projection contracts (Phase F) + store drivers + retrieval
     ("shared/polymath_shared/projection_contracts.py", "py", None),
@@ -249,12 +253,14 @@ TREE: list[tuple[str, str, str | None]] = [
     ("shared/polymath_shared/retrieval.py", "py", None),
     ("shared/polymath_shared/evidence_assembly.py", "py", None),
     ("shared/polymath_shared/answer_synthesis.py", "py", None),
+    ("shared/polymath_shared/canonicalizer.py", "py", None),
     ("shared/polymath_shared/embedding_contracts.py", "py", None),
 
     # stores: Neo4j uniqueness constraints + document profile columns
     ("stores/neo4j/constraints/0001_uniqueness.cypher", "cypher", None),
     ("stores/postgres/migrations/0003_document_profiles.sql", "sql", None),
     ("stores/postgres/migrations/0004_projection_claims.sql", "sql", None),
+    ("stores/postgres/migrations/0005_canonicalization.sql", "sql", None),
 
     # sidecars: pinned embedder manifest (neural embedding contract)
     ("sidecars/embedder/manifest.toml", "toml", None),
@@ -264,6 +270,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("deployment/launchd/ai.polymath.worker.project-neo4j.plist", "plist", None),
     ("deployment/launchd/ai.polymath.worker.verify.plist", "plist", None),
     ("deployment/launchd/ai.polymath.worker.profile-document.plist", "plist", None),
+    ("deployment/launchd/ai.polymath.worker.canonicalize.plist", "plist", None),
 
     # docs/wiki: Phase F/G decisions, experiments, work logs
     ("docs/wiki/decisions/0007-lexical-evidence-lane.md", "md", None),
@@ -292,6 +299,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("scripts/flatten_resources.py", "py", None),
     ("scripts/compile_predicate_rules.py", "py", None),
     ("docs/wiki/decisions/0008-evidence-pass-boundary.md", "md", None),
+    ("docs/wiki/decisions/0009-canonicalization-layer.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-phase-g-resources.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-phase-g-resources-hardening.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-phase-h.md", "md", None),
@@ -360,12 +368,15 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/integration/test_cross_domain_routing.py", "py", None),
     ("tests/integration/test_evidence_bundle_e2e.py", "py", None),
     ("tests/integration/test_chat_e2e.py", "py", None),
+    ("tests/integration/test_canonicalization_e2e.py", "py", None),
     ("tests/contracts/test_embedding_contracts.py", "py", None),
     ("tests/contracts/test_evidence_bundle_contract.py", "py", None),
     ("tests/contracts/test_chat_response_contract.py", "py", None),
+    ("tests/contracts/test_canonicalization_contract.py", "py", None),
     ("tests/determinism/test_retrieval_invariants.py", "py", None),
     ("tests/determinism/test_evidence_assembly.py", "py", None),
     ("tests/determinism/test_answer_synthesis.py", "py", None),
+    ("tests/determinism/test_canonicalizer.py", "py", None),
 
     # stores: the workflow schema (docs/chunks/entities/evidence/facts)
     ("stores/postgres/migrations/0002_workflow.sql", "sql", None),

@@ -107,3 +107,7 @@ dev-worker-verify:
 ## dev-worker-profile — document retrieval-profile worker in the foreground
 dev-worker-profile:
 	$(PY) -m workers.profile_worker
+
+## dev-worker-canonicalize — corpus canonicalization worker in the foreground
+dev-worker-canonicalize:
+	$(PY) -m workers.canonicalize_worker

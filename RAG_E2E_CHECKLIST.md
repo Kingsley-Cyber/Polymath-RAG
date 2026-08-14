@@ -41,7 +41,7 @@ Status vocabulary: COMPLETE / IN PROGRESS / NOT STARTED / BLOCKED.
 
 | Gate | Question | Status | Evidence |
 |---|---|---|---|
-| C1 | Does Stage-2 corpus-level canonicalization merge cross-document entities deterministically? | NOT STARTED | facts are per-document today; no merge layer exists |
+| C1 | Does Stage-2 corpus-level canonicalization merge cross-document entities deterministically? | COMPLETE | ADR 0009 + migration 0005 + `canonicalize` stage: content-hash canonical ids, conservative SAME_AS/ALIAS_OF/DISTINCT/AMBIGUOUS policy, full lineage, replay-safe, order-independent (live E2E) |
 | C2 | Does the canonical KG carry source/provenance links to every fact? | NOT STARTED | builds on C1 + existing fact provenance |
 
 ## Reranking gate
@@ -95,9 +95,11 @@ production lexical path.
 
 ## The next unchecked gate
 
-**C1** — Stage-2 corpus-level canonicalization / cross-document merge.
-Then C2 (canonical KG + provenance links), R2 (reranker, bypassable
-initially), M1–M5 (MCP), R4, O2, O1, A1, V1.
+**C2** — canonical KG + source/provenance linkage: project the C1
+canonical registry (canonical entities + memberships) into Neo4j as a
+rebuildable projection with provenance links to source-local facts.
+Then R2 (reranker, bypassable initially), M1–M5 (MCP), R4, O2, O1, A1,
+V1.
 
 ## Marking policy
 
