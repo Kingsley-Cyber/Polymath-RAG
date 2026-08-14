@@ -96,6 +96,12 @@ needs multiple runtime owners, split it at a versioned contract boundary.
 8. Existing tests and evaluation artifacts are immutable unless the user
    explicitly asks to change them. Fix implementation failures in code.
 9. Secrets, source text, and credentials never enter logs or work records.
+10. Never prune Docker volumes, delete bind-mounted store data, or run
+    `docker volume rm` / `docker system prune --volumes` without explicit
+    user approval. Report disk usage, volumes by owning store, and cleanup
+    candidates first; only volumes the user approves are touched. Removing
+    a stopped container that owns no volume still requires listing what it
+    owned first.
 
 ## 3. Read and verify before editing
 

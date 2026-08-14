@@ -34,29 +34,72 @@ Status vocabulary: COMPLETE / IN PROGRESS / NOT STARTED / BLOCKED.
 |---|---|---|---|
 | R0 | Is document routing parallel and never a recall gate? | COMPLETE | G1: golden trace frozen; child-survives-zero-doc test |
 | R1 | Does the G2 neural dense lane pass its contract gates? | COMPLETE | embedding-contract tests + live zero-overlap query proof (gate 7e) |
-| R2 | Do fused candidates get cross-representation reranking? | NOT STARTED | G3 reranker is a stub |
-| R3 | Can every answer claim assemble from traceable EvidenceBundle evidence? | NOT STARTED | G5 not built |
+| R3a | Can every answer claim assemble from traceable EvidenceBundle evidence? | NOT STARTED | first critical-path implementation gate |
+| R3b | Is there a working answer generation + `/chat` path end to end? | NOT STARTED | currently an API stub |
+
+## Canonicalization gates
+
+| Gate | Question | Status | Evidence |
+|---|---|---|---|
+| C1 | Does Stage-2 corpus-level canonicalization merge cross-document entities deterministically? | NOT STARTED | facts are per-document today; no merge layer exists |
+| C2 | Does the canonical KG carry source/provenance links to every fact? | NOT STARTED | builds on C1 + existing fact provenance |
+
+## Reranking gate
+
+| Gate | Question | Status | Evidence |
+|---|---|---|---|
+| R2 | Do fused candidates get cross-representation reranking? | NOT STARTED | G3 reranker is a stub. BYPASSABLE for first /chat E2E; must be evaluated before becoming a default |
+
+## MCP gates
+
+| Gate | Question | Status | Evidence |
+|---|---|---|---|
+| M1 | Is the Polymath MCP contract defined (tools, inputs/outputs, versioning)? | NOT STARTED | no contract file exists |
+| M2 | Does the Polymath MCP server implement the contract against the real orchestrator? | NOT STARTED | no server exists |
+| M3 | Does Claude MCP E2E work against the server? | NOT STARTED | qualification not run |
+| M4 | Does Hermes Agent MCP E2E work against the server? | NOT STARTED | qualification not run |
+| M5 | Are MCP read/write/admin permission boundaries enforced and tested? | NOT STARTED | no boundary policy exists |
+
+## Scale and operations gates
+
+| Gate | Question | Status | Evidence |
+|---|---|---|---|
 | R4 | Is graph expansion bounded and useful at real corpus scale? | IN PROGRESS | monotonicity unit-tested; scale/hub qualification not run |
+| O2 | Are model weights pinned with recorded digests in production? | IN PROGRESS | TOFU digests; `POLYMATH_REQUIRE_PINNED=0` until digests recorded |
+| O1 | Can a clean machine reproduce the pinned system and recover its data? | NOT STARTED | launchd/Makefile exist; clean-clone startup gate + backup drill not proven |
+
+## Acceptance gates
+
+| Gate | Question | Status | Evidence |
+|---|---|---|---|
+| A1 | Does a fresh agent on a fresh machine bootstrap, run the E2E, and pass acceptance? | NOT STARTED | full new-agent/new-machine acceptance drill |
+| V1 | Is the RAG v1.0 checkpoint recorded with all evidence above? | NOT STARTED | release checkpoint |
 
 ## Empirical gates (the measured-delta discipline)
 
 | Gate | Question | Status | Evidence |
 |---|---|---|---|
 | H1 | Does resource enrichment add correct facts without unacceptable incorrect ones? | COMPLETE (answered: NO) | Phase H v1.0 + v1.1; verdict REJECT for hybrid default; Δ +1/+4/−4 |
-| E1 | Which measured extraction gaps are worth changing? | NOT STARTED | two named mechanisms (expanded-trigger roleset constraint; composed-FN filter) — hypotheses only |
-| D1 | Can additional controllers/providers be added without changing ingestion semantics? | NOT STARTED | deferred in PLAN.md |
 
-## Operations gates
+## Deferred measured improvement (NOT on the critical path)
 
 | Gate | Question | Status | Evidence |
 |---|---|---|---|
-| O1 | Can a clean machine reproduce the pinned system and recover its data? | NOT STARTED | launchd/Makefile exist; clean-clone startup gate + backup drill not proven |
-| O2 | Are model weights pinned with recorded digests in production? | IN PROGRESS | TOFU digests; `POLYMATH_REQUIRE_PINNED=0` until digests recorded |
+| E1-a | Do class-expanded triggers require resolved-roleset compatibility? | NOT STARTED | hypothesis only; `coin`-class trap fix experiment |
+| E1-b | Must the FN anchor filter not reject on composed-only frame mismatch? | NOT STARTED | hypothesis only; restores 2 suppressed `developed` facts |
+| D1 | Can additional controllers/providers be added without changing ingestion semantics? | NOT STARTED | deferred in PLAN.md |
+
+E1 may be pulled back onto the critical path only if an E2E acceptance
+test demonstrates that one of those extraction defects blocks the
+production lexical path.
 
 ## The next unchecked gate
 
-**E1** — run the two measured extraction experiments separately on the
-frozen v1.1 corpus, each as a before/after delta.
+**R3a** — grounded EvidenceBundle assembly: every answer claim must
+assemble from traceable evidence bundles (fact + source span +
+provenance). Then R3b (answer generation + `/chat`), C1/C2
+(canonicalization), R2 (reranker, bypassable initially), M1–M5 (MCP),
+R4, O2, O1, A1, V1.
 
 ## Marking policy
 

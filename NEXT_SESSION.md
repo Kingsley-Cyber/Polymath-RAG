@@ -6,7 +6,7 @@ Read:
 1. `AGENTS.md`
 2. `CURRENT_STATE.md`
 3. `ARCHITECTURE.md`
-4. `RAG_E2E_CHECKLIST.md` (next unchecked gate: E1)
+4. `RAG_E2E_CHECKLIST.md` (next unchecked gate: R3a)
 
 ## Last Completed
 
@@ -15,6 +15,10 @@ Read:
   Δincorrect +4, Δmissed −4). Evidence: `eval/phase_h/REPORT_v1.1.md`.
 - Bootstrap continuity system — `AGENTS.md` §0 (Mandatory Bootstrap),
   `CURRENT_STATE.md`, `NEXT_SESSION.md`, `RAG_E2E_CHECKLIST.md`.
+- Docker hygiene (approved only): 20.76GB build cache pruned, one
+  dangling image removed, five OOM-killed v3.3 worker containers
+  removed after `docker inspect`/log evidence was preserved to
+  `~/repo-backups/oom-evidence-2026-08-14/`.
 
 ## What Was Validated (at checkpoint)
 
@@ -26,40 +30,68 @@ Read:
 
 ## Current Verified Commit
 
-- branch: `main`
-- commit: `3ada0af` (+ checkpoint commit from this handoff)
+- branch: `main` (tracks `origin/main`:
+  `https://github.com/Kingsley-Cyber/Polymath-RAG.git`)
+- The remote blocker is RESOLVED: origin exists and the checkpoint is
+  pushed. Sync with `git fetch && git pull --ff-only` before work.
 
-## Current Blockers
+## Priority Change (critical)
 
-- **No git remote for polymath-v4.** `git remote -v` is empty; the
-  GitHub account `Kingsley-Cyber` has `polymath_v3.3` but no
-  `polymath-v4` repository. Pushing requires either creating the repo
-  (public/private decision) or a user-supplied remote URL. Do NOT
-  invent one.
+Do NOT begin E1 yet.
 
-## Next Unchecked RAG E2E Gate
+The project priority is now to finish a usable Polymath RAG application
+end-to-end. E1 improves a hybrid extraction path that has already been
+rejected as the production default, so it is not currently an E2E
+blocker.
 
-**E1** — run the two measured extraction experiments SEPARATELY on the
-frozen v1.1 corpus, each as a before/after delta:
-1. class-expanded triggers require resolved-roleset compatibility;
-2. the FN anchor filter must not exclude on composed-only frame
-   mismatch.
-Report Δ-correct / Δ-incorrect per experiment. Promote hybrid only on
-a measured precision-first pass.
+CRITICAL PATH TO RAG v1.0 (in order):
+1. grounded EvidenceBundle assembly (R3a)
+2. functional answer generation and /chat path (R3b)
+3. Stage-2 corpus-level canonicalization/merge (C1)
+4. canonical KG + source/provenance linkage (C2)
+5. reranking qualification (R2 — bypassable for first /chat E2E)
+6. Polymath MCP contract (M1)
+7. Polymath MCP server (M2)
+8. Claude MCP end-to-end qualification (M3)
+9. Hermes Agent MCP end-to-end qualification (M4)
+10. MCP read/write/admin permission boundaries (M5)
+11. graph/retrieval scale qualification (R4)
+12. model digest pinning (O2)
+13. clean-clone + backup/recovery drill (O1)
+14. fresh-machine + fresh-agent E2E acceptance (A1)
+15. RAG v1.0 checkpoint (V1)
+
+DEFERRED MEASURED IMPROVEMENT (NOT critical path):
+- E1-a roleset compatibility
+- E1-b composed-FN filter correction
+
+E1 may be pulled back onto the critical path only if an E2E acceptance
+test demonstrates that one of those extraction defects blocks the
+production lexical path.
+
+## Next Unchecked Critical-Path Gate
+
+**R3a** — grounded EvidenceBundle assembly: every answer claim must
+assemble from traceable evidence bundles (fact + source span +
+provenance). First implementation gate.
 
 ## Do Not Do
 
+- Do NOT begin E1 (deferred measured improvement).
 - No production extraction changes without a measured delta.
 - No edits to `eval/gold/relations_v1.yaml` / `relations_v1.1.yaml`.
-- No G3/G4/G5 until E1 is decided.
 - No fuzzy SemLink joins; no composed-as-direct attestation.
-- Do not create a GitHub remote or run `docker system prune` without
-  explicit approval.
+- Never prune Docker volumes (`docker volume prune`, `docker system
+  prune --volumes`, or any `docker volume rm`) without explicit
+  approval. Docker cleanup performed this session was approved and is
+  recorded above; anything else requires approval.
+- The live v3.3 stack (ports 6333/7474/7687/8000/3000/4000/8765/8080/
+  27017/6379) must never be touched.
 
 ## Verification Before Work
 
 ```bash
-git status --short && git rev-parse HEAD
+git fetch && git status --short && git rev-parse HEAD
 make guards
 .venv/bin/python -m pytest tests -q
 shasum -a 256 eval/gold/relations_v1.1.yaml   # expect 3ee7065a…
@@ -69,3 +101,7 @@ shasum -a 256 eval/gold/relations_v1.1.yaml   # expect 3ee7065a…
 
 * Qdrant for this repo is on 6334; the live v3.3 stack on 6333/7474 is
   off-limits.
+* v4 store data lives in bind mounts under `stores/` (not Docker
+  volumes); `polymath-v4-redis-1` is compose-defined but never started
+  (Redis is notification-only; Postgres outbox is authority).
+* OOM evidence (5 dead v3.3 workers): `~/repo-backups/oom-evidence-2026-08-14/`.

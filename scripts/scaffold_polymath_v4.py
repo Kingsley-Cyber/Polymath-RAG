@@ -78,6 +78,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("RAG_E2E_CHECKLIST.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-checkpoint-e2e.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-bootstrap-continuity.md", "md", None),
+    ("docs/wiki/work-log/2026-08-14-critical-path-reprioritization.md", "md", None),
     ("ARCHITECTURE.md", "md", "ARCHITECTURE_STUB"),
     ("ARCHITECTURE_CHANGELOG.md", "md", "ARCHITECTURE_CHANGELOG_STUB"),
     ("PLAN.md", "md", "PLAN_STUB"),

@@ -5,15 +5,15 @@ Verified against commit: `3ada0af6020c64d8acc5cbde3ade34beb9c7ccef`
 Active branch at verification: `main` (working tree clean)
 
 ```yaml
-current_phase: extraction-architecture-frozen # Phase H complete; next = measured E1 experiments
+current_phase: extraction-architecture-frozen # Phase H complete; critical path = RAG v1.0 application E2E
 repository:
   branch: main
-  head: 3ada0af6020c64d8acc5cbde3ade34beb9c7ccef
-frozen_artifacts: [see Frozen Artifacts section]
-evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1]
-next_actions: [e1-roleset-constraint-experiment, e1-composed-fn-filter-experiment]
-do_not_do: [see Explicitly Prohibited Actions]
-known_gaps: [see Known Limitations]
+  head: 541aad65a15515ed1951c758ee65de271aaaa1e1
+  frozen_artifacts: [see Frozen Artifacts section]
+  evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1]
+  next_actions: [r3a-evidence-bundle-assembly, r3b-answer-generation-chat, c1-stage2-canonicalization]
+  do_not_do: [see Explicitly Prohibited Actions]
+  known_gaps: [see Known Limitations]
 ```
 
 ## System Status
@@ -89,8 +89,10 @@ transaction: artifact + receipt + status + outbox event).
   (Loop Engineering rank 0, Predicate Compiler rank 1, Prompt Graph
   rank 2; filler excluded).
 - Document routing is **never a recall gate** (tested invariant).
-- **Not implemented**: G3 reranking, G4 scale qualification, G5 answer/
-  evidence assembly. The orchestrator `/chat` endpoint is a stub.
+- **Not implemented** (critical path now): R3a EvidenceBundle answer
+  assembly, R3b answer generation + `/chat` (stub), R2/G3 reranking
+  (bypassable initially), R4 scale qualification. See
+  `RAG_E2E_CHECKLIST.md` for the full critical path.
 
 ## Knowledge Extraction State
 
@@ -222,30 +224,48 @@ permits a new corpus version.
 ## Open Risks
 
 - The hybrid default decision is gated on the two E1 experiments; until
-  they run, do not enable hybrid in production.
+  they run, do not enable hybrid in production. E1 is DEFERRED measured
+  improvement work (not a RAG v1.0 blocker); it returns to the critical
+  path only if an E2E acceptance test shows one of the named defects
+  blocking the production lexical path.
 - Class-expanded triggers can assert wrong predicate senses on
   out-of-vocabulary sentences (measured, unfixed by design).
 
 ## Current Workstream
 
 Phase H (empirical qualification) — complete. Extraction architecture
-frozen at commit 3ada0af. Retrieval tail (G3–G5) and production
-hardening are queued behind the E1 gate.
+frozen at commit 3ada0af. Critical path is now the RAG v1.0 application
+E2E (R3a → R3b → C1 → C2 → R2 → M1–M5 → R4 → O2 → O1 → A1 → V1);
+E1-a/E1-b are deferred measured improvements.
 
-## Next Authorized Actions
+## Next Authorized Actions (critical path, in order)
 
-1. **E1-a**: measured experiment — class-expanded triggers require
-   resolved-roleset compatibility. Hypothesis, not yet implemented:
-   `coin`-class traps should become abstentions.
-2. **E1-b**: measured experiment — the FN anchor filter must not exclude
-   a rule on composed-only frame mismatch. Hypothesis: restores the two
-   suppressed `developed` facts.
-   Each experiment: fix in code → rerun Phase H harness on frozen v1.1
-   → report Δ before/after → only then decide promotion. Production
-   defaults change ONLY on a measured precision-first pass.
-3. After E1: G3 rerank → G5 evidence assembly → G4 scale → production
-   hardening (embedder digest pinning, clean-clone gate, backup drill)
-   → remote compute / v3.3 cut-over (PLAN.md Phase H).
+1. **R3a**: grounded EvidenceBundle assembly — every answer claim
+   assembles from traceable evidence bundles (fact + source span +
+   provenance). FIRST critical-path implementation gate.
+2. **R3b**: working answer generation + `/chat` end to end.
+3. **C1**: Stage-2 corpus-level canonicalization / cross-document merge.
+4. **C2**: canonical KG + source/provenance links.
+5. **R2**: reranker qualification (bypassable for first /chat E2E;
+   evaluate before defaulting).
+6. **M1–M5**: Polymath MCP contract, server, Claude E2E, Hermes Agent
+   E2E, read/write/admin permission boundaries.
+7. **R4**: graph/retrieval scale qualification.
+8. **O2**: model digest pinning. **O1**: clean-clone + backup/recovery
+   drill. **A1**: fresh-machine + fresh-agent acceptance. **V1**:
+   RAG v1.0 checkpoint.
+
+## Deferred Measured Improvement (NOT critical path)
+
+- **E1-a**: class-expanded triggers require resolved-roleset
+  compatibility. Hypothesis: `coin`-class traps become abstentions.
+- **E1-b**: FN anchor filter must not exclude a rule on composed-only
+  frame mismatch. Hypothesis: restores the two suppressed `developed`
+  facts.
+- Each experiment: fix in code → rerun Phase H harness on frozen v1.1
+  → report Δ before/after → only then decide promotion. Production
+  defaults change ONLY on a measured precision-first pass.
+- Do NOT begin E1 work while critical-path gates are incomplete.
 
 ## Explicitly Prohibited Actions
 
@@ -301,4 +321,4 @@ v3.3 stack owns 6333/7474 and must never be touched); Neo4j on 7688.
 6. `eval/phase_h/REPORT.md` (v1.0), `eval/phase_h/REPORT_v1.1.md` (v1.1)
 7. `resources/README.md` (resource pipeline + upgrade procedure)
 8. `scripts/README.md` (managed scripts registry)
-9. `RAG_E2E_CHECKLIST.md` (release-gate checklist — next unchecked gate: E1)
+9. `RAG_E2E_CHECKLIST.md` (release-gate checklist — next unchecked gate: R3a)
