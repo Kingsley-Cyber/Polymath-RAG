@@ -4,7 +4,9 @@
 id: verbnet
 version: "3.3"
 kind: archive
-url: "https://codeload.github.com/cu-clear/verbnet/zip/refs/tags/vn-3.3"
+url: "https://codeload.github.com/cu-clear/verbnet/zip/9c6f7b949560189d5c72b863ee3cb47da4409a41"
+commit: "9c6f7b949560189d5c72b863ee3cb47da4409a41"
+ref_label: "tag vn-3.3"
 archive_name: verbnet-3.3.zip
-sha256: "e230202d78546ba81c9ac757896ea4edfebf7b4829cc6483849df2f320816296"
+sha256: "aa071b9fa004c9317d6ecb54a401c61b5aa88a7c9975a4eed95995b13158bbb3"
 license: "VerbNet 3.3"

@@ -204,11 +204,71 @@ def validate_and_compile(
         "core_types": sorted(core_types),
         "evidence_classes": rules.get("evidence_classes", {}),
         "resource_versions": rules["rule_pack"].get("resource_versions", {}),
+        "rule_coverage": _rule_coverage(rules, tables),
     }
     out["compiled_lexical_sha256"] = hashlib.sha256(
         json.dumps(out, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
     return [], out
+
+
+def _rule_coverage(rules: dict, tables: dict) -> dict[str, dict]:
+    """Per-rule coverage report (spec §25): where the hand-curated rule
+    pack is confirmed / expanded / unsupported / conflicting with the
+    real resources. Manual rules are NEVER auto-deleted on missing
+    coverage — external resources are incomplete by design."""
+    vn_index = tables["vn_class_index.json"]
+    frame_index = tables["frame_index.json"]
+    pb_to_vn = tables["pb_to_vn.json"]
+    pb_to_fn = tables["pb_to_fn.json"]
+    flattened_rolesets = set(tables["resource_index.json"]["propbank_rolesets"])
+
+    report: dict[str, dict] = {}
+    for rule in rules["predicates"]:
+        ev = rule["evidence"]
+        entry = {
+            "manual_verbs": sorted(ev.get("verbs", [])),
+            "manual_nouns": sorted(ev.get("nouns", [])),
+            "manual_multiword": sorted(ev.get("multiword", [])),
+            "cited_vn_classes": sorted(ev.get("verbnet_classes", [])),
+            "cited_pb_rolesets": sorted(ev.get("propbank_rolesets", [])),
+            "cited_fn_frames": sorted(ev.get("framenet_frames", [])),
+        }
+        cited_vn = set(ev.get("verbnet_classes", []))
+        cited_pb = set(ev.get("propbank_rolesets", []))
+        cited_fn = set(ev.get("framenet_frames", []))
+
+        vn_ok = all(c in vn_index for c in cited_vn)
+        pb_ok = all(rs in flattened_rolesets for rs in cited_pb)
+        fn_ok = all(f in frame_index for f in cited_fn)
+
+        # SemLink: does any cited roleset resolve (attested or composed)?
+        semlink_rolesets = {
+            rs for rs in cited_pb
+            if rs in pb_to_vn or rs in pb_to_fn
+        }
+
+        has_manual = bool(entry["manual_verbs"] or entry["manual_nouns"] or entry["manual_multiword"])
+        has_resources = bool(cited_vn or cited_pb or cited_fn)
+
+        if has_resources and (not vn_ok or not pb_ok or not fn_ok):
+            status = "CONFLICT"
+        elif has_manual and semlink_rolesets:
+            status = "COMPLETE"
+        elif has_manual and has_resources:
+            status = "PARTIAL"
+        elif has_resources:
+            status = "PARTIAL"
+        else:
+            status = "MANUAL_ONLY"
+
+        entry.update({
+            "resource_confirmed": sorted((cited_vn if vn_ok else set()) | (cited_pb if pb_ok else set()) | (cited_fn if fn_ok else set())),
+            "semlink_resolved_rolesets": sorted(semlink_rolesets),
+            "status": status,
+        })
+        report[rule["id"]] = entry
+    return report
 
 
 def _signatures_overlap(sigs_a: list[dict], sigs_b: list[dict]) -> bool:

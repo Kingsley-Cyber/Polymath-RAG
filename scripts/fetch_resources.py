@@ -37,8 +37,20 @@ def fetch(manifest: dict, force: bool) -> Path | None:
     print(f"  fetching: {manifest['url']}")
     VENDOR.mkdir(parents=True, exist_ok=True)
     tmp = archive.with_suffix(".part")
-    urllib.request.urlretrieve(manifest["url"], tmp)
-    tmp.rename(archive)
+    try:
+        urllib.request.urlretrieve(manifest["url"], tmp)
+        # Fetch verifies inline: a wrong-byte archive never lands.
+        actual = sha256_of(tmp)
+        if actual != manifest["sha256"]:
+            tmp.unlink(missing_ok=True)
+            raise RuntimeError(
+                f"{manifest['id']}: fetched archive sha256 {actual} != pinned "
+                f"{manifest['sha256']} — refusing to install"
+            )
+        tmp.rename(archive)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
     return archive
 
 

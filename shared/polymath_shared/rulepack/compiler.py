@@ -410,6 +410,8 @@ def compile_relation(
         rule_version=rule_pack["pack"]["version"],
         provenance={
             "roleset": candidate.roleset,
+            "trigger_lemma": candidate.evidence.trigger_lemma,
+            "trigger_surface": candidate.evidence.text,
             "verbnet_classes": candidate.verbnet_classes,
             "framenet_frames": candidate.framenet_frames,
             "semlink_resolved": candidate.semlink_resolved,

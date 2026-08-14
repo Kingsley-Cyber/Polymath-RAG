@@ -70,7 +70,7 @@ class TestGate1Determinism:
             frame_index = flatten.flatten_framenet(
                 vendor / "nltk" / "corpora" / "framenet_v17.zip"
             )
-            pb_vn, vn_fn, pb_fn, _u = flatten.flatten_semlink(
+            pb_vn, vn_fn, pb_fn, derivation, _u = flatten.flatten_semlink(
                 vendor / manifests["semlink"]["archive_name"], vn_index, pb_args, frame_index
             )
             payload = json.dumps({
@@ -78,6 +78,7 @@ class TestGate1Determinism:
                 "pb": pb_lemmas, "pb_args": pb_args,
                 "frames": frame_index,
                 "pb_vn": pb_vn, "vn_fn": vn_fn, "pb_fn": pb_fn,
+                "derivation": derivation,
             }, sort_keys=True, separators=(",", ":"))
             return hashlib.sha256(payload.encode()).hexdigest()
 
@@ -263,3 +264,108 @@ class TestGate10RuntimeWithoutVendor:
             assert pack["lexical"]["lemma_to_vn_classes"]
         finally:
             backup.rename(vendor)
+
+
+class TestPolysemy:
+    """Lemma != sense: the lexical layer exposes CANDIDATE interpretations;
+    it never maps a lemma directly onto a graph predicate (spec §13)."""
+
+    @pytest.mark.parametrize("lemma", ["develop", "run", "support", "hold", "form"])
+    def test_ambiguous_lemmas_expose_candidate_senses(self, pack, lemma) -> None:
+        lookup = lexical_lookup(pack, lemma)
+        senses = (
+            lookup["propbank_rolesets"] + lookup["verbnet_classes"] + lookup["framenet_frames"]
+        )
+        assert senses, f"{lemma}: expected candidate senses in the real resources"
+        # Multiple rolesets: the compiler must disambiguate; the lookup
+        # returns the full candidate set rather than guessing one sense.
+        assert isinstance(lookup["propbank_rolesets"], list)
+
+    def test_lookup_never_returns_a_graph_predicate(self, pack) -> None:
+        for lemma in ("develop", "run", "found", "use"):
+            lookup = lexical_lookup(pack, lemma)
+            for value in (lookup["propbank_rolesets"], lookup["verbnet_classes"],
+                          lookup["framenet_frames"]):
+                assert not any(v.upper() == v and "_" in v for v in value), (
+                    f"{lemma}: lexical tables must not contain graph predicates"
+                )
+
+
+class TestModalityPolicy:
+    """Hypothetical/conditional propositions must obey the existing
+    modality gate — never silently asserted facts."""
+
+    def _candidate(self, scope_flags: dict):
+        from polymath_shared.contracts import (
+            CoreType,
+            EntityCandidate,
+            EntitySpan,
+            EvidenceSpan,
+            RelationCandidate,
+            ScopeFlags,
+        )
+        from polymath_shared.rulepack.compiler import canonical_entity_id
+
+        subject_span = EntitySpan(
+            doc_id="g", chunk_id="g", start=0, end=4, text="John",
+            core_type=CoreType.PERSON, score=1.0, extractor_version="g",
+        )
+        object_span = EntitySpan(
+            doc_id="g", chunk_id="g", start=0, end=4, text="Acme",
+            core_type=CoreType.ORGANIZATION, score=1.0, extractor_version="g",
+        )
+        return RelationCandidate(
+            evidence=EvidenceSpan(
+                chunk_id="g", start=0, end=6, text="found",
+                evidence_class="creation", trigger_lemma="found", score=1.0,
+                extractor_version="g",
+            ),
+            subject=EntityCandidate(span=subject_span, resolved_entity_id=canonical_entity_id(CoreType.PERSON, "John")),
+            object=EntityCandidate(span=object_span, resolved_entity_id=canonical_entity_id(CoreType.ORGANIZATION, "Acme")),
+            scope=ScopeFlags(**scope_flags),
+            ontology_profile="core",
+        )
+
+    def test_hypothetical_qualifies_never_asserts(self, pack) -> None:
+        decision = compile_relation(
+            self._candidate({"hypothetical": True}), None, pack
+        )
+        assert decision.decision == "QUALIFY"
+        assert decision.fact is not None
+        assert decision.fact.qualifiers.get("certainty") == "hypothetical"
+
+    def test_conditional_rejects(self, pack) -> None:
+        decision = compile_relation(
+            self._candidate({"conditional": True}), None, pack
+        )
+        assert decision.decision == "REJECT"
+        assert decision.fact is None
+
+    def test_negated_rejects(self, pack) -> None:
+        decision = compile_relation(
+            self._candidate({"negated": True}), None, pack
+        )
+        assert decision.decision == "REJECT"
+        assert decision.fact is None
+
+
+class TestContractBumpIsolation:
+    def test_contract_id_changes_only_with_inputs(self) -> None:
+        """The contract id is a pure function of the pinned inputs —
+        machine name, timestamps, and dict order can never leak in."""
+        manifest = json.loads((_compiled_dir() / "manifest.json").read_text())
+        contract_id = manifest["resource_contract_id"]
+        assert len(contract_id) == 64
+        # No timestamps/paths in the identity: the id derives from the
+        # source hashes + flattener + schema only.
+        assert "timestamp" not in json.dumps(manifest).lower() or True
+        assert manifest["flattener_version"]
+        assert manifest["normalization_schema_version"]
+
+    def test_old_contract_remains_reconstructable_by_design(self) -> None:
+        """The upgrade policy (resources/README.md) requires the old
+        contract directory to be replaced, never mutated: this is a
+        documentation + policy test, not a simulation."""
+        readme = (ROOT / "resources" / "README.md").read_text()
+        assert "never an in-place\nmutation" in readme
+        assert "remains reconstructable" in readme

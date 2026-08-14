@@ -134,7 +134,7 @@ def flatten_propbank(archive: Path) -> tuple[dict, dict, list[str]]:
     )
 
 
-def flatten_semlink(archive: Path, vn_class_index: dict, pb_args: dict, frame_index: dict) -> tuple[dict, dict, dict, list[str]]:
+def flatten_semlink(archive: Path, vn_class_index: dict, pb_args: dict, frame_index: dict):
     """SemLink 2 JSON mappings: pb->vn (roles), vn->fn, and pb->fn composed
     through the VN bridge (this release ships no direct pb-fn mapping).
 
@@ -200,7 +200,11 @@ def flatten_semlink(archive: Path, vn_class_index: dict, pb_args: dict, frame_in
         if frames:
             pb_to_fn[roleset] = sorted(frames)
 
-    return pb_to_vn, vn_to_fn, pb_to_fn, unresolved
+    # Directly attested vs derived: this SemLink 2 release ships NO direct
+    # pb->fn mapping file; every pb->fn entry is COMPOSED through the VN
+    # bridge. Recorded explicitly so consumers never confuse a chain
+    # derivation with an attested mapping (docx §9).
+    return pb_to_vn, vn_to_fn, pb_to_fn, {"direct": {}, "composed": pb_to_fn}, unresolved
 
 
 def flatten_framenet(nltk_zip: Path) -> dict:
@@ -223,6 +227,36 @@ def flatten_framenet(nltk_zip: Path) -> dict:
         lus = sorted({lu.name for lu in frame.lexUnit.values()})
         frame_index[frame.name] = lus
     return frame_index
+
+
+def _build_statistics(
+    *,
+    vn_index: dict,
+    lemma_to_vn: dict,
+    lemma_to_pb: dict,
+    pb_args: dict,
+    frame_index: dict,
+    pb_to_vn: dict,
+    vn_to_fn: dict,
+    pb_to_fn: dict,
+) -> dict:
+    """Deterministic build statistics (spec §24). Diagnostic metadata —
+    never part of the resource contract identity."""
+    unified_lemmas = set(lemma_to_vn) | set(lemma_to_pb)
+    return {
+        "verbnet_classes": len(vn_index),
+        "verbnet_member_lemmas": len(lemma_to_vn),
+        "propbank_lemmas": len(lemma_to_pb),
+        "propbank_rolesets": len(pb_args),
+        "propbank_argument_definitions": sum(len(a) for a in pb_args.values()),
+        "framenet_frames": len(frame_index),
+        "framenet_lexical_units": sum(len(lus) for lus in frame_index.values()),
+        "semlink_pb_to_vn_mappings": len(pb_to_vn),
+        "semlink_vn_to_fn_mappings": len(vn_to_fn),
+        "semlink_pb_to_fn_composed": len(pb_to_fn),
+        "semlink_pb_to_fn_direct": 0,
+        "unified_lemmas": len(unified_lemmas),
+    }
 
 
 def main() -> int:
@@ -266,7 +300,7 @@ def main() -> int:
         print(f"  {len(frame_index)} frames")
 
     print("[semlink] flattening mappings...")
-    pb_to_vn, vn_to_fn, pb_to_fn, semlink_unresolved = flatten_semlink(
+    pb_to_vn, vn_to_fn, pb_to_fn, semlink_derivation, semlink_unresolved = flatten_semlink(
         VENDOR / manifests["semlink"]["archive_name"], vn_index, pb_args, frame_index
     )
     print(
@@ -289,6 +323,7 @@ def main() -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     tables = {
+        "semlink_derivation.json": semlink_derivation,
         "lemma_to_vn_classes.json": lemma_to_vn,
         "vn_class_index.json": vn_index,
         "lemma_to_pb_rolesets.json": lemma_to_pb,
@@ -315,6 +350,18 @@ def main() -> int:
         )
     )
 
+    stats = _build_statistics(
+        vn_index=vn_index,
+        lemma_to_vn=lemma_to_vn,
+        lemma_to_pb=lemma_to_pb,
+        pb_args=pb_args,
+        frame_index=frame_index,
+        pb_to_vn=pb_to_vn,
+        vn_to_fn=vn_to_fn,
+        pb_to_fn=pb_to_fn,
+    )
+    (out_dir / "build_statistics.json").write_text(_json_dump(stats))
+
     (out_dir / "manifest.json").write_text(_json_dump({
         "resource_contract_id": resource_contract_id,
         "flattener_version": FLATTENER_VERSION,
@@ -322,6 +369,7 @@ def main() -> int:
         "source_hashes": hashes,
         "source_versions": {mid: m["version"] for mid, m in manifests.items()},
         "tables": sorted(tables),
+        "build_statistics": stats,
         "tables_sha256": tables_digest,
         "skipped_files": sorted(pb_skipped),
         "semlink_unresolved_keys": sorted(semlink_unresolved),

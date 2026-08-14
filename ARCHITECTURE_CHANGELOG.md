@@ -47,6 +47,22 @@ that motivated it and the refactor that implemented it.
   never touched.
 
 
+
+## 2026-08-14: Phase G hardening — immutable pins, coverage report, spec closure
+
+- All resource manifests resolve exact commit SHAs (no branch refs at
+  build time); archive hashes re-pinned; resource contract re-derived
+  (03a513ec...).
+- Fetch verifies checksums inline (wrong bytes never land); SemLink
+  attested-vs-composed derivation recorded explicitly; fact provenance
+  carries trigger_lemma + trigger_surface.
+- build_statistics.json + per-rule coverage report (10 COMPLETE /
+  12 PARTIAL / 6 MANUAL_ONLY / 0 CONFLICT).
+- resources/README.md documents pinned sources, licenses, contract
+  identity, and the upgrade procedure (contract migration, never
+  in-place).
+- Polysemy / modality / contract-isolation tests added.
+
 ## 2026-08-14: Phase G — the lexical-semantic compiler becomes real (+ G.1)
 
 - VerbNet 3.3, Unified PropBank, FrameNet 1.7, SemLink 2.0 vendored,

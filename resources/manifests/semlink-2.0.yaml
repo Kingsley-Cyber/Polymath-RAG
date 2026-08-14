@@ -5,7 +5,9 @@
 id: semlink
 version: "2.0"
 kind: archive
-url: "https://codeload.github.com/cu-clear/semlink/zip/refs/heads/master"
+url: "https://codeload.github.com/cu-clear/semlink/zip/2636bf5a4ae9c93b669a1184a8aaae9ca21552d3"
+commit: "2636bf5a4ae9c93b669a1184a8aaae9ca21552d3"
+ref_label: "master @ 2636bf5 (SemLink 2, VN 3.3 + unified PB + FN 1.7 generation)"
 archive_name: semlink.zip
-sha256: "75f8781ade525b5cf687949bf5694e614fa558e6ec7f2154ed21e22d81205d85"
+sha256: "8b1d9dfa081c319a6fbf0570e0039abd9b0f8d790c063263e4832e93171730e4"
 license: "SemLink 2"

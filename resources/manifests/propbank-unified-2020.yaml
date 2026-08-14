@@ -4,7 +4,9 @@
 id: propbank
 version: "unified-2020"
 kind: archive
-url: "https://codeload.github.com/propbank/propbank-frames/zip/refs/heads/main"
+url: "https://codeload.github.com/propbank/propbank-frames/zip/c66e0ccf28b53f00051b187db83e937b5bee2e32"
+commit: "c66e0ccf28b53f00051b187db83e937b5bee2e32"
+ref_label: "main @ c66e0cc (unified frames; SemLink-2 generation)"
 archive_name: propbank-frames.zip
-sha256: "2e7849611653bed5f93a9067ad0658470c77ccc8c00ae03dc550eb9858a7fbf2"
+sha256: "e7f9ee449d5aa999a83b19fd8f3a458661850435ff7e089ea3af320555fb41af"
 license: "PropBank"
