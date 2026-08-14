@@ -224,7 +224,7 @@ predicates:
       nouns: [founding, establishment, formation]
       multiword: ["set up"]
       verbnet_classes: [create-26.4, build-26.1]
-      propbank_rolesets: [found.01, establish.01]
+      propbank_rolesets: [establish.01]
       framenet_frames: [Creating, Intentionally_create]
       negative_triggers: [join, acquire, merge]
       ambiguous_triggers: [start, launch]
@@ -246,7 +246,7 @@ predicates:
       nouns: [development, implementation]
       verbnet_classes: [build-26.1]
       propbank_rolesets: [develop.02]
-      framenet_frames: [Creating, Invention]
+      framenet_frames: [Creating]
       negative_triggers: [found, establish]
     direction: {canonical: agent_to_patient, inverse: developed_by, symmetry: asymmetric, transitivity: "false"}
     constraints: {negated: reject, hypothetical: reject, speculative: qualify, conditional: reject, attributed: qualify_wrap_stated_in, question: reject}
@@ -318,7 +318,6 @@ predicates:
       verbs: [join, belong]
       nouns: [member]
       multiword: ["member of", "joined"]
-      propbank_rolesets: [member.01]
       framenet_frames: [Membership]
     direction: {canonical: member_to_group, inverse: has_member, symmetry: asymmetric, transitivity: "false"}
     constraints: {negated: reject, hypothetical: reject, speculative: qualify, conditional: reject, attributed: qualify_wrap_stated_in, question: reject}
@@ -388,7 +387,7 @@ predicates:
       verbs: [use, apply, leverage, adopt, employ, utilize, run]
       nouns: [use, usage, application, adoption]
       multiword: ["built with", "built on", "run on", "based on", "powered by"]
-      verbnet_classes: [use-105]
+      verbnet_classes: [use-105.1]
       propbank_rolesets: [use.01, apply.01, adopt.01]
       framenet_frames: [Using]
     direction: {canonical: agent_to_instrument, inverse: used_by, symmetry: asymmetric, transitivity: "false"}
@@ -488,9 +487,9 @@ predicates:
       classes: [transformation]
       verbs: [convert, transform, translate, compile]
       multiword: ["turns into", "turned into", "converts to", "compiles into", "maps to"]
-      verbnet_classes: [turn-26.6]
+      verbnet_classes: [turn-26.6.1]
       propbank_rolesets: [become.01, convert.01]
-      framenet_frames: [Change_event]
+      framenet_frames: [Undergo_change]
     direction: {canonical: source_to_result, inverse: transformed_from, symmetry: asymmetric, transitivity: "false"}
     constraints: {negated: reject, hypothetical: qualify, speculative: qualify, conditional: qualify, question: reject}
     graph: {traversal_weight: medium}
@@ -522,7 +521,7 @@ predicates:
       classes: [comparison]
       verbs: [resemble, parallel, mirror]
       multiword: ["similar to", "like", "analogous to", "comparable to"]
-      verbnet_classes: [correspond-36.1]
+      verbnet_classes: [correspond-36.1.1]
       propbank_rolesets: [resemble.01]
       framenet_frames: [Similarity]
     direction: {canonical: canonical_order, inverse: similar_to, symmetry: symmetric, transitivity: "false"}

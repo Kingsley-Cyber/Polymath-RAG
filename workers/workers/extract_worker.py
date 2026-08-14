@@ -42,7 +42,6 @@ from polymath_shared.rulepack import compile_relation, load_rule_pack
 from workers.candidates import SentenceSlice, build_candidates
 from workers.chunker import materialize_chunks, plan_document
 from workers.evidence_proposer import EXTRACTOR_VERSION as EVIDENCE_EXTRACTOR_VERSION
-from workers.evidence_proposer import propose_evidence
 from workers.profile_router import chunk_label_set
 from workers.summarizer import split_sentences
 from workers.syntax import parse_sentence, parser_identity
@@ -140,13 +139,34 @@ def _entity_spans(
 
 
 def _evidence_spans(
+    gliner: GlinerClient,
     chunk_text: str,
     chunk_id: str,
     pack: dict,
+    mode: str,
 ) -> list[EvidenceSpan]:
-    """Evidence proposal = the deterministic lexical lane. GLiNER never
-    decides evidence classes (experiments/0001-gliner-evidence-pass.md)."""
-    return propose_evidence(chunk_text, chunk_id, pack)
+    """ADR-0008: pass 2 = GLiNER coarse proposals (may abstain) +
+    lexical trigger localization. The compiler decides either way."""
+    from workers.evidence_proposer import (
+        localize_trigger,
+        merge_gliner_proposals,
+        propose_evidence,
+    )
+
+    anchors = propose_evidence(chunk_text, chunk_id, pack)
+    if mode == "hybrid":
+        result = gliner.evidence_pass(chunk_text, threshold=EVIDENCE_THRESHOLD)
+        proposals = merge_gliner_proposals(chunk_text, chunk_id, result.get("spans", []))
+        # Localize each proposal to a compiled trigger; unlocalizable
+        # proposals compile to UNSUPPORTED downstream.
+        proposals = [localize_trigger(p, pack) for p in proposals]
+        merged = {s.text: s for s in anchors}
+        for p in proposals:
+            key = p.text
+            if key not in merged:
+                merged[key] = p
+        return sorted(merged.values(), key=lambda s: (s.start, s.end))
+    return anchors
 
 
 def _slices(
@@ -175,6 +195,11 @@ def process_event(conn: Connection, event: dict) -> None:
     doc_id = payload["doc_id"]
     profile_dict = payload.get("profile", {})
     raw = base64.b64decode(payload["doc_content"]).decode("utf-8", errors="replace")
+    from polymath_shared.settings import get_settings
+
+    proposal_mode = get_settings().worker.evidence_proposal_mode
+    if proposal_mode not in ("lexical", "hybrid"):
+        raise ValueError(f"unknown evidence proposal mode: {proposal_mode}")
 
     pack = _pack()
     parser_name, parser_version = parser_identity()
@@ -195,6 +220,7 @@ def process_event(conn: Connection, event: dict) -> None:
         "ontology_version": ONTOLOGY_VERSION,
         "rule_pack_version": RULE_PACK_VERSION,
         "thresholds": {"entity": ENTITY_THRESHOLD, "evidence": EVIDENCE_THRESHOLD},
+        "evidence_proposal_mode": proposal_mode,
     })
 
     with stage_transaction(
@@ -216,7 +242,9 @@ def process_event(conn: Connection, event: dict) -> None:
                     gliner, row["text"], row["chunk_id"], doc_id, profile_dict
                 )
                 audit.extend(rejected)
-                evidence = _evidence_spans(row["text"], row["chunk_id"], pack)
+                evidence = _evidence_spans(
+                    gliner, row["text"], row["chunk_id"], pack, proposal_mode
+                )
                 sentences = _sentences_of(row["text"])
                 slices = _slices(sentences, entities, evidence)
                 for sl in slices:

@@ -27,3 +27,7 @@ sidecars/*/weights/
 
 # Generated
 .scaffold-touched
+
+# Lexical resources: raw vendor archives are build deps, never committed.
+# The compiled tables under resources/compiled/ ARE committed (runtime).
+resources/vendor/

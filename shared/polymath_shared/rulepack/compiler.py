@@ -16,6 +16,8 @@ Compile-time checks (docx §15) run on every load and fail fast:
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from pathlib import Path
 from typing import Any, Optional
@@ -47,12 +49,59 @@ class RulePackError(ValueError):
 
 
 def load_rule_pack(path: Optional[Path] = None) -> dict[str, Any]:
+    """Load the rule pack + the compiled lexical tables.
+
+    Runtime reads ONLY the committed compiled tables under
+    resources/compiled/<contract>/ (GATE 10: raw vendored resources are
+    build dependencies, never runtime dependencies). The compiled
+    artifact carries the resource_contract_id and a content digest; any
+    mismatch is a hard failure — a resource change is an explicit
+    contract bump, never silent drift."""
     raw = yaml.safe_load((path or _RULE_PACK_PATH).read_text())
+    compiled = _load_compiled_lexical(raw)
     resources = yaml.safe_load(_RESOURCE_INDEX_PATH.read_text())
-    return _compile(raw, resources)
+    return _compile(raw, resources, compiled)
 
 
-def _compile(raw: dict, resources: dict) -> dict[str, Any]:
+def _load_compiled_lexical(raw: dict) -> dict:
+    compiled_root = Path(__file__).resolve().parents[3] / "resources" / "compiled"
+    if not compiled_root.exists():
+        raise RulePackError(
+            "compiled lexical tables missing: run "
+            "scripts/flatten_resources.py && scripts/compile_predicate_rules.py"
+        )
+    dirs = [d for d in compiled_root.iterdir() if d.is_dir()]
+    if len(dirs) != 1:
+        raise RulePackError(
+            f"expected exactly one compiled resource contract, found {[d.name for d in dirs]}"
+        )
+    path = dirs[0] / "compiled_lexical.json"
+    if not path.exists():
+        raise RulePackError(f"{path.name} missing; run scripts/compile_predicate_rules.py")
+    compiled = json.loads(path.read_text())
+
+    if compiled["rule_pack_id"] != raw["rule_pack"]["id"]:
+        raise RulePackError(
+            f"compiled rule pack id {compiled['rule_pack_id']!r} != YAML {raw['rule_pack']['id']!r}"
+        )
+    if compiled["rule_pack_version"] != raw["rule_pack"]["version"]:
+        raise RulePackError(
+            "compiled rule pack version mismatch — re-run "
+            "scripts/compile_predicate_rules.py after a rule change"
+        )
+    digest = hashlib.sha256(
+        json.dumps(
+            {k: v for k, v in compiled.items() if k != "compiled_lexical_sha256"},
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
+    ).hexdigest()
+    if digest != compiled["compiled_lexical_sha256"]:
+        raise RulePackError("compiled_lexical.json digest mismatch — rebuild it")
+    return compiled
+
+
+def _compile(raw: dict, resources: dict, compiled: dict) -> dict[str, Any]:
     pack = raw["rule_pack"]
     predicates = raw.get("predicates", [])
     core_types = set(raw.get("core_types", []))
@@ -63,15 +112,47 @@ def _compile(raw: dict, resources: dict) -> dict[str, Any]:
     if not core_types:
         raise RulePackError("rule pack declares no core types")
 
+    # Runtime rule records come from the COMPILED artifact (trigger sets
+    # expanded through real VerbNet class membership); the YAML remains
+    # the authored source. Every compiled rule id must exist in the YAML
+    # and vice versa — drift between the two is a hard failure.
+    compiled_predicates = compiled.get("predicates", {})
+    yaml_ids = {rule["id"] for rule in predicates}
+    compiled_ids = set(compiled_predicates)
+    missing_compiled = yaml_ids - compiled_ids
+    stray_compiled = compiled_ids - yaml_ids
+    if missing_compiled or stray_compiled:
+        raise RulePackError(
+            f"rule/compiled drift: missing={sorted(missing_compiled)} stray={sorted(stray_compiled)} "
+            "— re-run scripts/compile_predicate_rules.py"
+        )
+
     by_id: dict[str, dict] = {}
     for rule in predicates:
         _validate_structure(rule, core_types, evidence_classes, resources)
         if rule["id"] in by_id:
             raise RulePackError(f"duplicate predicate id: {rule['id']}")
-        by_id[rule["id"]] = rule
+        compiled_rule = compiled_predicates[rule["id"]]
+        # Structural fields come from the YAML (direction, constraints,
+        # graph, signatures); the trigger vocabulary comes from the
+        # compiled tables (class membership included).
+        by_id[rule["id"]] = {
+            **rule,
+            "evidence": {**rule["evidence"],
+                         "verbs": compiled_rule["verbs"],
+                         "nouns": compiled_rule["nouns"],
+                         "multiword": compiled_rule["multiword"],
+                         "verbnet_classes": compiled_rule["verbnet_classes"],
+                         "propbank_rolesets": compiled_rule["propbank_rolesets"],
+                         "framenet_frames": compiled_rule["framenet_frames"],
+                         "class_members": compiled_rule.get("class_members", {})},
+        }
 
     _validate_inverses(by_id)
     _validate_determinism(by_id)
+
+    compiled_root = Path(__file__).resolve().parents[3] / "resources" / "compiled"
+    compiled_dir = [d for d in compiled_root.iterdir() if d.is_dir()][0]
 
     return {
         "pack": pack,
@@ -80,6 +161,48 @@ def _compile(raw: dict, resources: dict) -> dict[str, Any]:
         "core_types": core_types,
         "evidence_classes": raw.get("evidence_classes", {}),
         "resource_versions": pack.get("resource_versions", {}),
+        "resource_contract_id": compiled.get("resource_contract_id"),
+        "compiled_lexical_sha256": compiled.get("compiled_lexical_sha256"),
+        "lexical": _load_lexical_tables(compiled_dir),
+    }
+
+
+def _load_lexical_tables(compiled_dir: Path) -> dict[str, Any]:
+    """Runtime O(1) lexical lookup tables (GATE 10: no vendor access)."""
+    manifest = json.loads((compiled_dir / "manifest.json").read_text())
+    tables: dict[str, Any] = {}
+    for name in manifest["tables"]:
+        tables[name.removesuffix(".json")] = json.loads(
+            (compiled_dir / name).read_text()
+        )
+    return tables
+
+
+def lexical_lookup(pack: dict, lemma: str) -> dict[str, Any]:
+    """O(1) lemma lookup into the compiled lexical tables: VerbNet classes,
+    PropBank rolesets (+argument glosses), composed FrameNet frames, and
+    the SemLink mappings that constrain disambiguation. Missing data is
+    absence, never a gate (docx §9: SemLink coverage is partial)."""
+    lemma = (lemma or "").lower().strip()
+    tables = pack["lexical"]
+    rolesets = tables["lemma_to_pb_rolesets"].get(lemma, [])
+    return {
+        "verbnet_classes": tables["lemma_to_vn_classes"].get(lemma, []),
+        "propbank_rolesets": rolesets,
+        "framenet_frames": sorted(
+            {frame for rs in rolesets for frame in tables["pb_to_fn"].get(rs, [])}
+        ),
+        "pb_arguments": {
+            rs: tables["pb_roleset_arguments"].get(rs, {}) for rs in rolesets
+        },
+        "semlink_pb_vn": {
+            rs: tables["pb_to_vn"][rs]
+            for rs in rolesets if rs in tables["pb_to_vn"]
+        },
+        "semlink_resolved": any(
+            rs in tables["pb_to_vn"] or rs in tables["pb_to_fn"]
+            for rs in rolesets
+        ),
     }
 
 
@@ -107,15 +230,10 @@ def _validate_structure(rule: dict, core_types: set, evidence_classes: set, reso
     if not triggers and not ev.get("verbnet_classes"):
         problems.append("no lexical triggers and no VerbNet classes")
 
-    for cls in ev.get("verbnet_classes", []):
-        if cls not in resources.get("verbnet", {}).get("classes", {}):
-            problems.append(f"cites unknown VerbNet class: {cls}")
-    for roleset in ev.get("propbank_rolesets", []):
-        if roleset not in resources.get("propbank", {}).get("rolesets", {}):
-            problems.append(f"cites unknown PropBank roleset: {roleset}")
-    for frame in ev.get("framenet_frames", []):
-        if frame not in resources.get("framenet", {}).get("frames", {}):
-            problems.append(f"cites unknown FrameNet frame: {frame}")
+    # Resource-citation existence is NOT checked here: it is a BUILD gate
+    # (scripts/compile_predicate_rules.py validates every citation against
+    # the flattened real-resource index). The runtime consumes the
+    # compiled artifact, which cannot exist if the build gate failed.
 
     direction = rule.get("direction", {})
     if not direction.get("canonical"):
@@ -296,6 +414,8 @@ def compile_relation(
             "framenet_frames": candidate.framenet_frames,
             "semlink_resolved": candidate.semlink_resolved,
             "resource_versions": rule_pack["resource_versions"],
+            "resource_contract_id": rule_pack.get("resource_contract_id"),
+            "compiled_lexical_sha256": rule_pack.get("compiled_lexical_sha256"),
             "orientation": orientation,
             "weak": weak,
             "scope": scope.model_dump(),

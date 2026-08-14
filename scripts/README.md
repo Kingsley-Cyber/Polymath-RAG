@@ -14,3 +14,7 @@ state, and a work-log entry.
 
 No script may commit, push, delete, migrate, or repair services unless its
 contract names that mutation and requires an explicit operator flag.
+| `scripts/fetch_resources.py` | governance | `resources/manifests/` | `resources/vendor/` archives | `python3 scripts/fetch_resources.py --force` |
+| `scripts/verify_resources.py` | governance | vendor archives + manifests | nothing | `python3 scripts/verify_resources.py` |
+| `scripts/flatten_resources.py` | governance | verified vendor archives | `resources/compiled/<contract>/` | `python3 scripts/flatten_resources.py` |
+| `scripts/compile_predicate_rules.py` | governance | rules YAML + compiled tables | `compiled_lexical.json` | `python3 scripts/compile_predicate_rules.py` |

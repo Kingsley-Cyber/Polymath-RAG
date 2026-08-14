@@ -37,6 +37,11 @@ class WorkerSettings(BaseSettings):
     poll_interval_s: float = Field(default=2.0, description="Outbox poll interval")
     batch_size: int = Field(default=8, description="Max outbox events per poll")
     claim_ttl_s: int = Field(default=300, description="Stage lease TTL")
+    evidence_proposal_mode: str = Field(
+        default="lexical",
+        description="ADR-0008: 'lexical' (pass 2 abstains) or 'hybrid' "
+                    "(GLiNER evidence proposals merge with lexical anchors)",
+    )
 
 
 class ControlSettings(BaseSettings):

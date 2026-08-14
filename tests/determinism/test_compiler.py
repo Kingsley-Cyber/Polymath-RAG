@@ -78,6 +78,16 @@ def _candidate(
     )
 
 
+
+def _compiled() -> dict:
+    import json
+    from pathlib import Path as _P
+
+    root = Path(__file__).resolve().parents[2]
+    dirs = [d for d in (root / "resources" / "compiled").iterdir() if d.is_dir()]
+    return json.loads((dirs[0] / "compiled_lexical.json").read_text())
+
+
 class TestCompileChecks:
     def test_valid_pack_compiles(self, pack: dict) -> None:
         assert pack["predicates"], "rule pack must compile to a non-empty DAG"
@@ -104,19 +114,36 @@ class TestCompileChecks:
         raw["predicates"][1]["direction"]["inverse"] = "is_a"
         resources = yaml.safe_load((Path(c.__file__).parent / "resource_index.yaml").read_text())
         with pytest.raises(RulePackError, match="inverse mismatch"):
-            c._compile(raw, resources)
+            c._compile(raw, resources, _compiled())
 
     def test_unknown_verbnet_class_rejected(self) -> None:
+        """GATE 3 (build gate): a cited VerbNet class that does not exist
+        in the flattened real-resource index hard-fails the build."""
+        import importlib.util
+        import json as _json
         import yaml
-        from pathlib import Path
+        from pathlib import Path as _P
 
         from polymath_shared.rulepack import compiler as c
 
-        raw = yaml.safe_load((Path(c.__file__).parent / "core-predicates.yaml").read_text())
+        raw = yaml.safe_load((_P(c.__file__).parent / "core-predicates.yaml").read_text())
         raw["predicates"][1]["evidence"]["verbnet_classes"] = ["nonexistent-99.9"]
-        resources = yaml.safe_load((Path(c.__file__).parent / "resource_index.yaml").read_text())
-        with pytest.raises(RulePackError, match="unknown VerbNet class"):
-            c._compile(raw, resources)
+
+        root = _P(__file__).resolve().parents[2]
+        compiled_dir = [d for d in (root / "resources" / "compiled").iterdir() if d.is_dir()][0]
+        manifest = _json.loads((compiled_dir / "manifest.json").read_text())
+        tables = {
+            name: _json.loads((compiled_dir / name).read_text())
+            for name in manifest["tables"]
+        }
+        spec = importlib.util.spec_from_file_location(
+            "cpr", root / "scripts" / "compile_predicate_rules.py"
+        )
+        cpr = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cpr)
+        failures, _ = cpr.validate_and_compile(raw, tables, manifest)
+        assert failures, "build gate must fail on a nonexistent VerbNet class"
+        assert any("VerbNet" in f for f in failures)
 
     def test_unknown_core_type_rejected(self) -> None:
         import yaml
@@ -128,7 +155,7 @@ class TestCompileChecks:
         raw["predicates"][0]["signatures"][0]["subject_core"] = ["NonexistentType"]
         resources = yaml.safe_load((Path(c.__file__).parent / "resource_index.yaml").read_text())
         with pytest.raises(RulePackError, match="unknown core types"):
-            c._compile(raw, resources)
+            c._compile(raw, resources, _compiled())
 
 
 class TestCompileRelation:

@@ -1,0 +1,10 @@
+# Unified PropBank frame files — rolesets with argument glosses.
+# Source: https://github.com/propbank/propbank-frames branch main.
+# License: PropBank (LDC-style, free).
+id: propbank
+version: "unified-2020"
+kind: archive
+url: "https://codeload.github.com/propbank/propbank-frames/zip/refs/heads/main"
+archive_name: propbank-frames.zip
+sha256: "2e7849611653bed5f93a9067ad0658470c77ccc8c00ae03dc550eb9858a7fbf2"
+license: "PropBank"

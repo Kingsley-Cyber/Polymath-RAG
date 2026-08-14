@@ -46,6 +46,26 @@ that motivated it and the refactor that implemented it.
 - Neo4j moved to host ports 7475/7688 — the v3.3 graph on 7474 is
   never touched.
 
+
+## 2026-08-14: Phase G — the lexical-semantic compiler becomes real (+ G.1)
+
+- VerbNet 3.3, Unified PropBank, FrameNet 1.7, SemLink 2.0 vendored,
+  sha256-pinned, flattened into immutable lemma-keyed tables under
+  resources/compiled/<resource_contract_id>/ (deterministic rebuilds,
+  byte-identical — GATE 1).
+- Rule pack compiles against the REAL resource index: invented
+  citations fail the build (GATE 3); trigger sets expand through real
+  VerbNet class membership (GATE 5); SemLink is evidence, never a gate
+  (GATE 4); runtime reads only compiled tables (GATE 10).
+- Rule citations corrected against real data (found.01 -> establish.01,
+  VN 3.3 class numbering, real FN frame names).
+- Facts carry resource_contract_id + compiled_lexical_sha256 in
+  provenance; extract workers look up VN/PB/FN from the compiled
+  tables (O(1), no raw-resource parsing).
+- ADR-0008 restores the two-pass boundary: GLiNER pass 2 proposes
+  coarse evidence (may abstain), the lexical lane localizes triggers,
+  resources constrain, the compiler decides. Mode: lexical | hybrid.
+
 ## 2026-08-14: Phase G1 — document semantic routing + retrieval primitives
 
 - Document RetrievalProfile (bottom-up, deterministic, no LLM) with

@@ -1,0 +1,9 @@
+# FrameNet 1.7 — 1,224 frames, ~13.5k lexical units.
+# Distributed via NLTK corpus framenet_v17 (sqlite).
+# License: FrameNet 1.7 license (via NLTK distribution).
+id: framenet
+version: "1.7"
+kind: nltk
+corpus: "framenet_v17"
+sha256: "22f6aad6fb799ba4dbed0440714e1118442ad7d7345351de37428581284f471c"
+license: "FrameNet 1.7 (NLTK distribution)"

@@ -90,6 +90,7 @@ def build_candidates(
                 evidence.end - sl.sentence_start,
             )
             evidence.trigger_lemma = evidence.trigger_lemma or _head_trigger(evidence, sl)
+            _lexical = _lookup_for(rule_pack, evidence)
 
             left = sorted(
                 [e for e in sl.entities if e.end <= evidence.start],
@@ -118,6 +119,10 @@ def build_candidates(
                         subject=_entity_candidate(subject_span, subject_id),
                         object=_entity_candidate(object_span, object_id),
                         roles=_role_assignments(subject_span, object_span, sl.parse),
+                        roleset=_lexical["roleset"],
+                        verbnet_classes=_lexical["vn_classes"],
+                        framenet_frames=_lexical["fn_frames"],
+                        semlink_resolved=_lexical["semlink_resolved"],
                         scope=scope,
                         ontology_profile=ontology_profile,
                     ))
@@ -157,6 +162,26 @@ def _role_assignments(subject: EntitySpan, object: EntitySpan, parse: dict | Non
                 syntactic_path="obj", weak=not parse.get("roleset_known", False),
             ))
     return roles
+
+
+def _lookup_for(rule_pack: dict, evidence: EvidenceSpan) -> dict:
+    """Real-resource lemma lookup (compiled tables): VerbNet classes,
+    PropBank rolesets, composed FrameNet frames, SemLink resolution.
+    A single roleset disambiguates; several stay ambiguous (compiler
+    abstains). Missing data is absence, never a gate (docx §9)."""
+    from polymath_shared.rulepack.compiler import lexical_lookup
+
+    lemma = evidence.trigger_lemma
+    if not lemma:
+        return {"roleset": None, "vn_classes": [], "fn_frames": [], "semlink_resolved": False}
+    lookup = lexical_lookup(rule_pack, lemma)
+    rolesets = lookup["propbank_rolesets"]
+    return {
+        "roleset": rolesets[0] if len(rolesets) == 1 else None,
+        "vn_classes": lookup["verbnet_classes"],
+        "fn_frames": lookup["framenet_frames"],
+        "semlink_resolved": lookup["semlink_resolved"],
+    }
 
 
 def _head_trigger(evidence: EvidenceSpan, sl: SentenceSlice) -> str | None:

@@ -1,0 +1,10 @@
+# VerbNet 3.3 — the largest openly available Levin-style verb lexicon.
+# Source: https://github.com/cu-clear/verbnet tag vn-3.3 (332 class XMLs).
+# License: VerbNet 3.3 license (free for research/commercial with attribution).
+id: verbnet
+version: "3.3"
+kind: archive
+url: "https://codeload.github.com/cu-clear/verbnet/zip/refs/tags/vn-3.3"
+archive_name: verbnet-3.3.zip
+sha256: "e230202d78546ba81c9ac757896ea4edfebf7b4829cc6483849df2f320816296"
+license: "VerbNet 3.3"

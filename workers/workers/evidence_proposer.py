@@ -1,17 +1,21 @@
-"""Evidence-span proposal: the deterministic lexical lane (docx §4, §22).
+"""Evidence-span proposal (ADR-0007, ADR-0008).
 
-Phase C measured result (experiments/0001-gliner-evidence-pass.md): the
-pinned GLiNER medium model does not fire on the 18 descriptive evidence
-labels at any usable threshold, and gliner-multitask-large fires with
-entity-style spans (it matches the nouns, not the verb phrases). The
-evidence pass therefore runs on the rule pack's compiled trigger
-vocabulary — exact verb/noun/multiword matches over each sentence.
+Pass 2 of the two-pass architecture is GLiNER's job: the evidence task
+proposes coarse evidence spans (the 18-class inventory) as linguistic
+recall beyond the enumerated trigger vocabulary. On the pinned model it
+may abstain — a measured proposal set, not an error.
 
-This is bounded recall by design: an evidence span exists only when the
-curated lexicon contains the trigger. Silence is a valid answer. The
-GLiNER evidence task remains in the sidecar wire contract as an optional
-co-proposer (POLYMATH_EVIDENCE_PROPOSAL_MODE=gliner) for future
-qualification; it never overrides the compiler.
+The lexical lane here is trigger LOCALIZATION: deterministic anchors
+that map visible/proposed evidence onto the compiled rule-pack trigger
+tables. It never pretends to be the neural pass; a GLiNER-proposed span
+that no trigger can localize compiles to UNSUPPORTED — neural recall is
+bounded by the curated lexicon, semantics stay with the compiler.
+
+Modes:
+  lexical  pass 2 abstains; this lane proposes (default until a
+           qualified evidence model exists — experiment 0001)
+  hybrid   GLiNER proposals merge with lexical anchors; the compiler
+           applies identical gates either way
 """
 from __future__ import annotations
 
@@ -21,6 +25,9 @@ from typing import Any
 from polymath_shared.contracts import EvidenceSpan
 
 EXTRACTOR_VERSION = "lexical-evidence-v1"
+GLINER_EVIDENCE_EXTRACTOR_VERSION = "gliner-evidence-v1"
+
+DEFAULT_MODE = "lexical"
 
 
 def _lemma_candidates(token: str) -> list[str]:
@@ -44,12 +51,12 @@ def propose_evidence(
     chunk_id: str,
     rule_pack: dict[str, Any],
 ) -> list[EvidenceSpan]:
-    """Deterministic evidence-span proposal over one chunk.
+    """Deterministic trigger-localization over one chunk using the
+    COMPILED trigger tables (class membership included — GATE 5).
 
     Total order: (start, end, rule order) — reproducible from the same
     text and rule pack. Each trigger carries the evidence class of its
-    owning predicate rule; the compiler disambiguates further.
-    """
+    owning predicate rule; the compiler disambiguates further."""
     lowered = text.lower()
     spans: list[EvidenceSpan] = []
 
@@ -101,3 +108,53 @@ def propose_evidence(
                 ))
 
     return sorted(spans, key=lambda s: (s.start, s.end))
+
+
+def merge_gliner_proposals(
+    text: str,
+    chunk_id: str,
+    gliner_spans: list[dict],
+) -> list[EvidenceSpan]:
+    """ADR-0008: GLiNER pass 2 proposals enter as evidence candidates
+    with their coarse class. The compiler still localizes triggers and
+    decides — a proposal with no trigger localizes to UNSUPPORTED."""
+    spans: list[EvidenceSpan] = []
+    for item in gliner_spans:
+        spans.append(EvidenceSpan(
+            chunk_id=chunk_id,
+            start=item["start"],
+            end=item["end"],
+            text=item.get("text") or text[item["start"]: item["end"]],
+            evidence_class=item["label"],
+            trigger_lemma=None,
+            score=item["score"],
+            extractor_version=GLINER_EVIDENCE_EXTRACTOR_VERSION,
+        ))
+    return sorted(spans, key=lambda s: (s.start, s.end))
+
+
+def localize_trigger(span: EvidenceSpan, rule_pack: dict) -> EvidenceSpan:
+    """Deterministic trigger localization inside an evidence span: find
+    the first compiled verb/noun/multiword match within the span text.
+    Returns a copy with trigger_lemma set (or the span unchanged — the
+    compiler then reports UNSUPPORTED, never a guess)."""
+    text = span.text
+    if span.trigger_lemma:
+        return span
+    lowered = text.lower()
+    for rule_id in rule_pack["predicate_order"]:
+        ev = rule_pack["predicates"][rule_id]["evidence"]
+        for phrase in sorted(ev.get("multiword", []), key=len, reverse=True):
+            if phrase.lower() in lowered:
+                span.trigger_lemma = phrase.split()[0]
+                return span
+        for noun in sorted(ev.get("nouns", []), key=len, reverse=True):
+            if re.search(r"\b" + re.escape(noun.lower()) + r"\b", lowered):
+                span.trigger_lemma = noun.lower()
+                return span
+        for verb in sorted(ev.get("verbs", []), key=len, reverse=True):
+            m = re.search(r"\b" + re.escape(verb.lower()) + r"\w*\b", lowered)
+            if m:
+                span.trigger_lemma = verb.lower()
+                return span
+    return span

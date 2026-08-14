@@ -23,12 +23,15 @@ IGNORED_NAMES = {
     "weights.digest",
 }
 IGNORED_PREFIXES = (
-
     "stores/postgres/data/",
     "stores/qdrant/data/",
     "stores/neo4j/data/",
     "var/log/",
     "stores/redis/dump.rdb",
+    "resources/vendor/nltk/",
+    "resources/vendor/verbnet-3.3.zip",
+    "resources/vendor/propbank-frames.zip",
+    "resources/vendor/semlink.zip",
 )
 IGNORED_SUFFIXES = (".egg-info", ".pid")
 MODULE_OWNERS = {

@@ -1,0 +1,11 @@
+# SemLink 2 — PB/VN/FN alignment (JSON mappings: pb-vn2.json, vn-fn2.json).
+# PB->FN is composed through the VN bridge (no direct pb-fn2 in this release).
+# Source: https://github.com/cu-clear/semlink branch master.
+# License: SemLink (free with attribution).
+id: semlink
+version: "2.0"
+kind: archive
+url: "https://codeload.github.com/cu-clear/semlink/zip/refs/heads/master"
+archive_name: semlink.zip
+sha256: "75f8781ade525b5cf687949bf5694e614fa558e6ec7f2154ed21e22d81205d85"
+license: "SemLink 2"
