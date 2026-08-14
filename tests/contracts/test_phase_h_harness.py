@@ -190,3 +190,80 @@ class TestProvenanceAndDistinction:
                 break
         else:
             pytest.skip("no composed-only roleset in the vendored contract")
+
+
+class TestCorpusV11Freeze:
+    """Corpus v1.1 freeze gate: additive, immutable, hashed."""
+
+    V11 = ROOT / "eval" / "gold" / "relations_v1.1.yaml"
+    V11_SHA256 = "3ee7065acba980cbc61eeccc935774f864b9e677c60652c7f9f357253b5b484c"
+
+    def test_v10_control_untouched(self) -> None:
+        import hashlib
+
+        v10 = hashlib.sha256(
+            (ROOT / "eval" / "gold" / "relations_v1.yaml").read_bytes()
+        ).hexdigest()
+        assert v10 == "fdfd75b499eddab1f353e6ce7c9d2b600d3d0ab226cae8f2e7b06f5419503694", (
+            "corpus v1.0 must remain byte-identical — it is the control"
+        )
+
+    def test_v11_hash_is_frozen(self) -> None:
+        import hashlib
+
+        actual = hashlib.sha256(self.V11.read_bytes()).hexdigest()
+        assert actual == self.V11_SHA256, "corpus v1.1 content changed after freeze"
+
+    def test_v11_required_cohorts_present(self) -> None:
+        import yaml
+
+        corpus = yaml.safe_load(self.V11.read_text())
+        assert corpus["version"] == "1.1"
+        assert corpus["parent_control"] == "relations_v1.yaml@1.0"
+        bands = {item["band"] for item in corpus["items"]}
+        assert bands >= {"E", "T", "P", "V", "A", "M", "G", "S", "N"}, bands
+        # Every item carries authored cohort provenance.
+        for item in corpus["items"]:
+            assert item.get("cohorts"), item["id"]
+            assert "coverage" in item, item["id"]
+            assert "manual_covered" in item, item["id"]
+
+    def test_v11_eval_artifacts_match_frozen_sha(self) -> None:
+        import json
+
+        manifest = json.loads(
+            (ROOT / "eval" / "phase_h" / "artifacts_v1.1" / "manifest.json").read_text()
+        )
+        assert manifest["gold"]["sha256"] == self.V11_SHA256
+        assert manifest["gold"]["version"] == "1.1"
+
+
+class TestOrientedFactRecording:
+    """Regression: the harness must record the ORIENTED fact endpoints
+    (passive inversion), never the surface order."""
+
+    def test_passive_parse_inverts_in_harness(self, harness, tmp_path) -> None:
+        harness.main(argv=["--gold", "eval/gold/relations_v1.1.yaml",
+                           "--outdir", str(tmp_path)])
+        rows = [
+            json.loads(line)
+            for line in (tmp_path / "baseline_predictions.jsonl").read_text().splitlines()
+        ]
+        v01 = next(r for r in rows if r["item_id"] == "v11_v01")
+        facts = {c["subject"]: c["object"] for c in v01["compiled"] if "predicate" in c}
+        assert "John" in facts and facts["John"] == "Acme", (
+            "passive inversion must orient (John -> Acme)"
+        )
+
+
+class TestUnionAccounting:
+    def test_absent_side_is_correct_abstention(self, harness, tmp_path) -> None:
+        harness.main(argv=["--gold", "eval/gold/relations_v1.1.yaml",
+                           "--outdir", str(tmp_path)])
+        metrics = json.loads((tmp_path / "metrics.json").read_text())
+        cells = metrics["transitions"]["cells"]
+        # The class-breadth traps must appear as baseline-abstained ->
+        # hybrid-incorrect, not vanish from the matrix.
+        assert cells.get("CORRECT_ABSTENTION -> INCORRECT", 0) >= 1
+        accounted = sum(cells.values())
+        assert accounted == metrics["transitions"]["total_units"]

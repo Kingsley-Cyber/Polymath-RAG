@@ -1,0 +1,19 @@
+{
+ "arm_boundary": {
+  "baseline": "load_rule_pack(use_resources=False) + build_candidates(enrich=False)",
+  "compiler_dag": "identical compile_relation",
+  "hybrid": "load_rule_pack(use_resources=True) + build_candidates(enrich=True)"
+ },
+ "experiment": "phase-h-lexical-semantic-waterfall",
+ "git_commit": "12645c1",
+ "gold": {
+  "items": 33,
+  "path": "eval/gold/relations_v1.1.yaml",
+  "sha256": "3ee7065acba980cbc61eeccc935774f864b9e677c60652c7f9f357253b5b484c",
+  "version": "1.1"
+ },
+ "ontology_version": "core-v1",
+ "resource_contract_id": "03a513ece6da32b243289fa9b9ef9dfe8e21cec4ff9f0435678ad4425021c150",
+ "rule_pack_version": "1.0.1",
+ "tables_sha256": "0ac3002ad2a2fcd79e33549faedfdc890f1d0f427852f5ae105f23c1a1ec81f1"
+}

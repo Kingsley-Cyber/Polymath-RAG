@@ -1,0 +1,729 @@
+{
+ "note": "coverage != correctness; outcomes scored separately",
+ "rows": [
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "EXPANDED_POSITIVE"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_e01",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "EXPANDED_POSITIVE"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": true
+   },
+   "item_id": "v11_e02",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "EXPANDED_POSITIVE"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_e03",
+   "outcomes": [
+    "CORRECT",
+    "INCORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "EXPANDED_POSITIVE"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_e04",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "EXPANDED_POSITIVE"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_e05",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "EXPANDED_POSITIVE"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_e06",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "CLASS_BREADTH_TRAP"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_t01",
+   "outcomes": [
+    "INCORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C4_direct_semlink",
+    "CLASS_BREADTH_TRAP"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_t02",
+   "outcomes": [
+    "INCORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "CLASS_BREADTH_TRAP"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_t03",
+   "outcomes": [
+    "INCORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "POLYSEMY",
+    "lemma_develop"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_p01",
+   "outcomes": [
+    "MISSED"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "POLYSEMY",
+    "lemma_develop"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_p02",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "POLYSEMY",
+    "lemma_develop"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_p03",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "POLYSEMY",
+    "lemma_run"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_p04",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "POLYSEMY",
+    "lemma_run"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_p05",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "POLYSEMY",
+    "lemma_support"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_p06",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "POLYSEMY",
+    "lemma_support"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_p07",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "POLYSEMY",
+    "lemma_hold"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_p08",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "POLYSEMY",
+    "lemma_hold"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_p09",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "POLYSEMY",
+    "lemma_form"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_p10",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "POLYSEMY",
+    "lemma_form"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_p11",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "PASSIVE_PARSE"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": true
+   },
+   "item_id": "v11_v01",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "PASSIVE_PARSE",
+    "EXPANDED_POSITIVE"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_v02",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "PASSIVE_PARSE"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_v03",
+   "outcomes": [
+    "MISSED"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "ARG1_ARG2"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": false
+   },
+   "item_id": "v11_a01",
+   "outcomes": [
+    "MISSED"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "ARG1_ARG2",
+    "EXPANDED_POSITIVE"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_a02",
+   "outcomes": [
+    "MISSED"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "ASSERTION_CONTROL",
+    "EXPANDED_POSITIVE"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": true
+   },
+   "item_id": "v11_m01",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "ASSERTION_CONTROL",
+    "EXPANDED_POSITIVE"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_m02",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C3_framenet",
+    "C4_direct_semlink",
+    "ASSERTION_CONTROL",
+    "EXPANDED_POSITIVE"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_m03",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C2_verbnet",
+    "C6_alignment_gap"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": true,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_g01",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C1_propbank",
+    "C6_alignment_gap"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": false
+   },
+   "item_id": "v11_g02",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C0_manual_only",
+    "C1_propbank"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": false
+   },
+   "item_id": "v11_s01",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C0_manual_only",
+    "C7_no_resource_coverage"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": true,
+    "pb": false,
+    "sl_composed": false,
+    "sl_direct": false,
+    "vn": false
+   },
+   "item_id": "v11_s02",
+   "outcomes": [
+    "CORRECT"
+   ]
+  },
+  {
+   "cohorts": [
+    "C7_no_resource_coverage",
+    "NO_RELATION"
+   ],
+   "coverage": {
+    "alignment_gap": false,
+    "fn": false,
+    "none": false,
+    "pb": true,
+    "sl_composed": false,
+    "sl_direct": true,
+    "vn": true
+   },
+   "item_id": "v11_n01",
+   "outcomes": [
+    "CORRECT"
+   ]
+  }
+ ]
+}

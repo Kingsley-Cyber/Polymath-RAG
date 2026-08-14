@@ -1,0 +1,392 @@
+# Corpus v1.1 — the lexical-semantic boundary corpus (Phase H gate).
+#
+# ADDITIVE to relations_v1.yaml (v1.0 remains the control corpus,
+# untouched). v1.1 deliberately exercises the boundary between the
+# lexical baseline and the resource-enriched hybrid:
+#
+#   band E  EXPANDED_POSITIVE   trigger outside the manual vocabulary,
+#                               recoverable through compiled resources
+#   band T  CLASS_BREADTH_TRAP  class expansion would create a WRONG edge
+#   band P  POLYSEMY            multi-sense contrast sets
+#   band V  PASSIVE_PARSE       frozen syntactic evidence for direction
+#   band A  ARG1_ARG2           theme->result pairing (W2 exposure)
+#   band M  ASSERTION_CONTROL   modality/negation x expansion
+#   band G  ALIGNMENT_GAP       recorded SemLink->VN id misalignment
+#   band S  STRUCTURAL          manual-only predicates
+#   band N  NO_RELATION         correct-abstention controls
+#
+# Gold is authored independently from sentence semantics. It is NEVER
+# derived from compiler output. Per-item coverage flags are provenance
+# recorded from the vendored compiled tables at freeze time.
+#
+# FREEZE: this file is immutable once evaluation starts. Any later gold
+# defect requires a new corpus version, never an edit.
+
+version: "1.1"
+parent_control: "relations_v1.yaml@1.0"
+
+items:
+  # ── EXPANDED POSITIVES ─────────────────────────────────────────────────
+  - id: v11_e01
+    band: E
+    text: "Acme coined the brand name in 2024."
+    entities: [{text: Acme, type: Organization}, {text: "the brand name", type: Product}]
+    evidence: [{text: coined, class: creation, lemma: coin}]
+    gold: [{subject: Acme, predicate: created, object: "the brand name"}]
+    manual_covered: false
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, EXPANDED_POSITIVE]
+
+  - id: v11_e02
+    band: E
+    text: "The lab authored the benchmark."
+    entities: [{text: "The lab", type: Organization}, {text: "the benchmark", type: Product}]
+    evidence: [{text: authored, class: creation, lemma: author}]
+    gold: [{subject: "The lab", predicate: created, object: "the benchmark"}]
+    manual_covered: false
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, EXPANDED_POSITIVE]
+
+  - id: v11_e03
+    band: E
+    text: "The firm inherited the subsidiary from its parent."
+    entities: [{text: "The firm", type: Organization}, {text: "the subsidiary", type: Organization},
+               {text: "its parent", type: Organization}]
+    evidence: [{text: inherited, class: ownership_control, lemma: inherit}]
+    gold: [{subject: "The firm", predicate: acquired, object: "the subsidiary"}]
+    manual_covered: false
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, EXPANDED_POSITIVE]
+
+  - id: v11_e04
+    band: E
+    text: "The company recovered the assets."
+    entities: [{text: "The company", type: Organization}, {text: "the assets", type: Product}]
+    evidence: [{text: recovered, class: ownership_control, lemma: recover}]
+    gold: [{subject: "The company", predicate: acquired, object: "the assets"}]
+    manual_covered: false
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, EXPANDED_POSITIVE]
+
+  - id: v11_e05
+    band: E
+    text: "The model exploits the feature set."
+    entities: [{text: "The model", type: Product}, {text: "the feature set", type: Product}]
+    evidence: [{text: exploits, class: usage_application, lemma: exploit}]
+    gold: [{subject: "The model", predicate: uses, object: "the feature set"}]
+    manual_covered: false
+    coverage: {pb: true, vn: true, fn: false, sl_direct: false, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, EXPANDED_POSITIVE]
+
+  - id: v11_e06
+    band: E
+    text: "The engine reuses the waste heat."
+    entities: [{text: "The engine", type: Product}, {text: "the waste heat", type: Product}]
+    evidence: [{text: reuses, class: usage_application, lemma: reuse}]
+    gold: [{subject: "The engine", predicate: uses, object: "the waste heat"}]
+    manual_covered: false
+    coverage: {pb: true, vn: true, fn: false, sl_direct: false, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, EXPANDED_POSITIVE]
+
+  # ── CLASS-BREADTH TRAPS ────────────────────────────────────────────────
+  - id: v11_t01
+    band: T
+    text: "John coined Acme last spring."
+    entities: [{text: John, type: Person}, {text: Acme, type: Organization}]
+    evidence: [{text: coined, class: creation, lemma: coin}]
+    gold: []
+    abstain: class_breadth   # coining is not founding
+    manual_covered: false
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, CLASS_BREADTH_TRAP]
+
+  - id: v11_t02
+    band: T
+    text: "John arranged a conference in Berlin."
+    entities: [{text: John, type: Person}, {text: "a conference", type: Event},
+               {text: Berlin, type: Location}]
+    evidence: [{text: arranged, class: creation, lemma: arrange}]
+    gold: []
+    abstain: class_breadth   # arranging an event is not founding it
+    manual_covered: false
+    coverage: {pb: true, vn: true, fn: false, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C4_direct_semlink, CLASS_BREADTH_TRAP]
+
+  - id: v11_t03
+    band: T
+    text: "The board conferred a title on John."
+    entities: [{text: "The board", type: Organization}, {text: "a title", type: Concept},
+               {text: John, type: Person}]
+    evidence: [{text: conferred, class: comparison, lemma: confer}]
+    gold: []
+    abstain: class_breadth   # conferring is not resembling
+    manual_covered: false
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, CLASS_BREADTH_TRAP]
+
+  # ── POLYSEMY CONTRAST SETS ─────────────────────────────────────────────
+  - id: v11_p01
+    band: P
+    text: "Microsoft developed Windows."
+    entities: [{text: Microsoft, type: Organization}, {text: Windows, type: Product}]
+    evidence: [{text: developed, class: creation, lemma: develop}]
+    gold: [{subject: Microsoft, predicate: developed, object: Windows}]
+    manual_covered: true
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, POLYSEMY, lemma_develop]
+
+  - id: v11_p02
+    band: P
+    text: "The disease developed rapidly."
+    entities: [{text: "The disease", type: Process}]
+    evidence: [{text: developed, class: creation, lemma: develop}]
+    gold: []
+    abstain: intransitive_sense
+    manual_covered: true
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, POLYSEMY, lemma_develop]
+
+  - id: v11_p03
+    band: P
+    text: "The committee developed the rules of procedure."
+    entities: [{text: "The committee", type: Organization},
+               {text: "the rules of procedure", type: Document}]
+    evidence: [{text: developed, class: creation, lemma: develop}]
+    gold: []
+    abstain: signature_gap   # elaborating rules fits no signature (Document object)
+    manual_covered: true
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, POLYSEMY, lemma_develop]
+
+  - id: v11_p04
+    band: P
+    text: "The engine runs the pump."
+    entities: [{text: "The engine", type: Product}, {text: "the pump", type: Product}]
+    evidence: [{text: runs, class: usage_application, lemma: run}]
+    gold: [{subject: "The engine", predicate: uses, object: "the pump"}]
+    manual_covered: true
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, POLYSEMY, lemma_run]
+
+  - id: v11_p05
+    band: P
+    text: "John runs the marathon."
+    entities: [{text: John, type: Person}, {text: "the marathon", type: Event}]
+    evidence: [{text: runs, class: usage_application, lemma: run}]
+    gold: []
+    abstain: sense_disambiguation  # racing is not using
+    manual_covered: true
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, POLYSEMY, lemma_run]
+
+  - id: v11_p06
+    band: P
+    text: "The beam supports the roof."
+    entities: [{text: "The beam", type: Product}, {text: "the roof", type: Product}]
+    evidence: [{text: supports, class: association, lemma: support}]
+    gold: []
+    abstain: no_rule   # structural support has no predicate in the vocabulary
+    manual_covered: false
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, POLYSEMY, lemma_support]
+
+  - id: v11_p07
+    band: P
+    text: "The state supports the school."
+    entities: [{text: "The state", type: Organization}, {text: "the school", type: Organization}]
+    evidence: [{text: supports, class: association, lemma: support}]
+    gold: []
+    abstain: no_rule   # fiscal support has no predicate in the vocabulary
+    manual_covered: false
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, POLYSEMY, lemma_support]
+
+  - id: v11_p08
+    band: P
+    text: "Acme holds the patent."
+    entities: [{text: Acme, type: Organization}, {text: "the patent", type: Product}]
+    evidence: [{text: holds, class: ownership_control, lemma: hold}]
+    gold: [{subject: Acme, predicate: owns, object: "the patent"}]
+    manual_covered: true
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, POLYSEMY, lemma_hold]
+
+  - id: v11_p09
+    band: P
+    text: "The jar holds water."
+    entities: [{text: "The jar", type: Product}, {text: water, type: Product}]
+    evidence: [{text: holds, class: ownership_control, lemma: hold}]
+    gold: []
+    abstain: sense_disambiguation  # containing is not owning
+    manual_covered: true
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, POLYSEMY, lemma_hold]
+
+  - id: v11_p10
+    band: P
+    text: "The team formed a committee."
+    entities: [{text: "The team", type: Organization}, {text: "a committee", type: Organization}]
+    evidence: [{text: formed, class: creation, lemma: form}]
+    gold: [{subject: "The team", predicate: founded, object: "a committee"}]
+    manual_covered: true
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, POLYSEMY, lemma_form]
+
+  - id: v11_p11
+    band: P
+    text: "Clouds formed over the valley."
+    entities: [{text: Clouds, type: Concept}, {text: "the valley", type: Location}]
+    evidence: [{text: formed, class: creation, lemma: form}]
+    gold: []
+    abstain: intransitive_sense
+    manual_covered: true
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, POLYSEMY, lemma_form]
+
+  # ── PASSIVE WITH FROZEN PARSE ──────────────────────────────────────────
+  - id: v11_v01
+    band: V
+    text: "Acme was founded by John."
+    entities: [{text: Acme, type: Organization}, {text: John, type: Person}]
+    evidence: [{text: founded, class: creation, lemma: found}]
+    parse: {voice: passive, agent: John}
+    gold: [{subject: John, predicate: founded, object: Acme}]
+    manual_covered: true
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, PASSIVE_PARSE]
+
+  - id: v11_v02
+    band: V
+    text: "The subsidiary was inherited by the firm."
+    entities: [{text: "The subsidiary", type: Organization}, {text: "the firm", type: Organization}]
+    evidence: [{text: inherited, class: ownership_control, lemma: inherit}]
+    parse: {voice: passive, agent: "the firm"}
+    gold: [{subject: "the firm", predicate: acquired, object: "The subsidiary"}]
+    manual_covered: false
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, PASSIVE_PARSE, EXPANDED_POSITIVE]
+
+  - id: v11_v03
+    band: V
+    text: "Windows was developed by Microsoft."
+    entities: [{text: Windows, type: Product}, {text: Microsoft, type: Organization}]
+    evidence: [{text: developed, class: creation, lemma: develop}]
+    parse: {voice: passive, agent: Microsoft}
+    gold: [{subject: Microsoft, predicate: developed, object: Windows}]
+    manual_covered: true
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, PASSIVE_PARSE]
+
+  # ── ARG1->ARG2 EXPOSURE ────────────────────────────────────────────────
+  - id: v11_a01
+    band: A
+    text: "The protocol converts plaintext into ciphertext."
+    entities: [{text: "The protocol", type: Method}, {text: plaintext, type: Concept},
+               {text: ciphertext, type: Concept}]
+    evidence: [{text: converts, class: transformation, lemma: convert}]
+    gold: [{subject: plaintext, predicate: transforms_into, object: ciphertext}]
+    manual_covered: true
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, ARG1_ARG2]
+
+  - id: v11_a02
+    band: A
+    text: "The alchemist transmuted lead into gold."
+    entities: [{text: "The alchemist", type: Person}, {text: lead, type: Concept},
+               {text: gold, type: Concept}]
+    evidence: [{text: transmuted, class: transformation, lemma: transmute}]
+    gold: [{subject: lead, predicate: transforms_into, object: gold}]
+    manual_covered: false
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, ARG1_ARG2, EXPANDED_POSITIVE]
+
+  # ── ASSERTION CONTROL x EXPANSION ──────────────────────────────────────
+  - id: v11_m01
+    band: M
+    text: "The lab may author a new dataset."
+    entities: [{text: "The lab", type: Organization}, {text: "a new dataset", type: Product}]
+    evidence: [{text: author, class: creation, lemma: author}]
+    scope: {speculative: true}
+    gold: [{subject: "The lab", predicate: created, object: "a new dataset", qualified: speculative}]
+    manual_covered: false
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, ASSERTION_CONTROL, EXPANDED_POSITIVE]
+
+  - id: v11_m02
+    band: M
+    text: "The firm did not inherit the subsidiary."
+    entities: [{text: "The firm", type: Organization}, {text: "the subsidiary", type: Organization}]
+    evidence: [{text: inherit, class: ownership_control, lemma: inherit}]
+    scope: {negated: true}
+    gold: []
+    abstain: negation
+    manual_covered: false
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, ASSERTION_CONTROL, EXPANDED_POSITIVE]
+
+  - id: v11_m03
+    band: M
+    text: "If the company recovers the assets, it will sell them."
+    entities: [{text: "the company", type: Organization}, {text: "the assets", type: Product}]
+    evidence: [{text: recovers, class: ownership_control, lemma: recover}]
+    scope: {conditional: true}
+    gold: []
+    abstain: conditional
+    manual_covered: false
+    coverage: {pb: true, vn: true, fn: true, sl_direct: true, sl_composed: false, alignment_gap: false}
+    cohorts: [C1_propbank, C2_verbnet, C3_framenet, C4_direct_semlink, ASSERTION_CONTROL, EXPANDED_POSITIVE]
+
+  # ── ALIGNMENT GAP ──────────────────────────────────────────────────────
+  - id: v11_g01
+    band: G
+    text: "The company absorbed the subsidiary."
+    entities: [{text: "The company", type: Organization}, {text: "the subsidiary", type: Organization}]
+    evidence: [{text: absorbed, class: ownership_control, lemma: absorb}]
+    gold: [{subject: "The company", predicate: acquired, object: "the subsidiary"}]
+    manual_covered: true
+    coverage: {pb: true, vn: true, fn: false, sl_direct: false, sl_composed: false, alignment_gap: true}
+    cohorts: [C1_propbank, C2_verbnet, C6_alignment_gap]
+
+  - id: v11_g02
+    band: G
+    text: "The king abdicated the throne."
+    entities: [{text: "The king", type: Person}, {text: "the throne", type: Concept}]
+    evidence: [{text: abdicated, class: ownership_control, lemma: abdicate}]
+    gold: []
+    abstain: no_rule
+    manual_covered: false
+    coverage: {pb: true, vn: false, fn: false, sl_direct: false, sl_composed: false, alignment_gap: true}
+    cohorts: [C1_propbank, C6_alignment_gap]
+
+  # ── STRUCTURAL MANUAL-ONLY ─────────────────────────────────────────────
+  - id: v11_s01
+    band: S
+    text: "The merger occurred in 2019."
+    entities: [{text: "The merger", type: Event}, {text: "2019", type: TimeReference}]
+    evidence: [{text: occurred, class: temporal, lemma: occur}]
+    gold: [{subject: "The merger", predicate: occurred_at, object: "2019"}]
+    manual_covered: true
+    coverage: {pb: true, vn: false, fn: false, sl_direct: false, sl_composed: false, alignment_gap: false}
+    cohorts: [C0_manual_only, C1_propbank]
+
+  - id: v11_s02
+    band: S
+    text: "The GPU is a component of the workstation."
+    entities: [{text: "The GPU", type: Technology}, {text: "the workstation", type: Technology}]
+    evidence: [{text: "component of", class: composition, lemma: component}]
+    gold: [{subject: "The GPU", predicate: part_of, object: "the workstation"}]
+    manual_covered: true
+    coverage: {pb: false, vn: false, fn: false, sl_direct: false, sl_composed: false, alignment_gap: false}
+    cohorts: [C0_manual_only, C7_no_resource_coverage]
+
+  # ── NO-RELATION CONTROL ────────────────────────────────────────────────
+  - id: v11_n01
+    band: N
+    text: "The soup simmered for an hour."
+    entities: [{text: "The soup", type: Product}, {text: "an hour", type: TimeReference}]
+    evidence: [{text: simmered, class: transformation, lemma: simmer}]
+    gold: []
+    abstain: no_relation
+    manual_covered: false
+    coverage: {pb: false, vn: false, fn: false, sl_direct: false, sl_composed: false, alignment_gap: false}
+    cohorts: [C7_no_resource_coverage, NO_RELATION]

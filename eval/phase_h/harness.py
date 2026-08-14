@@ -197,6 +197,21 @@ def run_arm(items: list[dict], arm: str) -> dict:
                 w3 = True
                 break
 
+        # Frozen syntactic evidence (v1.1 PASSIVE_PARSE items): the item
+        # carries the parse record the production worker would supply;
+        # the harness resolves the agent's canonical entity id.
+        syntactic = None
+        parse_spec = item.get("parse")
+        if parse_spec:
+            agent_text = parse_spec["agent"]
+            agent_type = next(
+                g["type"] for g in item["entities"] if g["text"] == agent_text
+            )
+            syntactic = {
+                "voice": parse_spec.get("voice", "passive"),
+                "agent": {"entity_id": canonical_entity_id(CoreType(agent_type), agent_text)},
+            }
+
         # Compile every generated candidate (evidence × pair), collecting
         # the arm's decisions.
         compiled: list[dict] = []
@@ -213,12 +228,19 @@ def run_arm(items: list[dict], arm: str) -> dict:
                     cand.verbnet_classes = sorted(set(lookup.get("verbnet_classes", [])))
                     cand.framenet_frames = sorted(set(lookup.get("framenet_frames", [])))
                     cand.semlink_resolved = bool(lookup.get("semlink_resolved"))
-                decision = compile_relation(cand, None, pack)
+                decision = compile_relation(cand, syntactic, pack)
                 if decision.fact is not None:
+                    # Record the ORIENTED fact endpoints: the compiler may
+                    # invert surface order (passive voice), and the fact's
+                    # hashed subject/object are the canonical truth.
+                    if decision.fact.subject_id == cand.subject.resolved_entity_id:
+                        fact_subj, fact_obj = cand.subject.span.text, cand.object.span.text
+                    else:
+                        fact_subj, fact_obj = cand.object.span.text, cand.subject.span.text
                     compiled.append({
-                        "subject": cand.subject.span.text,
+                        "subject": fact_subj,
                         "predicate": decision.fact.predicate,
-                        "object": cand.object.span.text,
+                        "object": fact_obj,
                         "decision": decision.fact.decision,
                         "rule_id": decision.fact.rule_id,
                         "roleset": decision.fact.provenance.get("roleset"),
@@ -296,7 +318,9 @@ def run_arm(items: list[dict], arm: str) -> dict:
             "W6_roleset": next(
                 (c.get("roleset") for c in compiled if c.get("roleset")), None
             ),
-            "W7_orientation": "surface_weak" if not item.get("scope", {}).get("negated") else "surface_weak",
+            "W7_orientation": (
+                "passive_inverted" if parse_spec else "surface_weak"
+            ),
             "W8_assertion_gate": gate,
             "W9_decisions": [c["decision"] for c in compiled],
             "W10_see_predictions": True,
@@ -375,19 +399,26 @@ def score(predictions: list[dict], items: list[dict]) -> dict:
 
 
 def transitions(units_a: list[dict], units_b: list[dict]) -> dict:
+    """Paired transition matrix over the UNION of unit keys.
+
+    A unit that exists in only one arm (e.g. a spurious edge produced by
+    the hybrid alone) gets the counterfactual outcome CORRECT_ABSTENTION
+    on the absent side: the other arm produced no edge, which for a
+    spurious key is the correct behavior."""
     key = lambda u: (u["kind"], u["item_id"],
                      u.get("subject"), u.get("predicate"), u.get("object"))
     a = {key(u): u["outcome"] for u in units_a}
     b = {key(u): u["outcome"] for u in units_b}
-    assert set(a) == set(b), "unit populations must be identical across arms"
-    cells = {}
-    for k in sorted(a):
-        pair = (a[k], b[k])
-        cells.setdefault(pair, []).append(k)
+    union = sorted(set(a) | set(b))
+    cells: dict[tuple[str, str], list[tuple]] = {}
+    for k in union:
+        outcome_a = a.get(k, "CORRECT_ABSTENTION")
+        outcome_b = b.get(k, "CORRECT_ABSTENTION")
+        cells.setdefault((outcome_a, outcome_b), []).append(k)
     return {
         "cells": {f"{x} -> {y}": len(ks) for (x, y), ks in sorted(cells.items())},
         "detail": {f"{x} -> {y}": [list(k) for k in ks] for (x, y), ks in sorted(cells.items())},
-        "total_units": len(a),
+        "total_units": len(union),
     }
 
 
@@ -416,8 +447,14 @@ def _unit_key(u: dict) -> tuple:
 
 
 def _cohort_of(item: dict, arm_predictions: dict) -> list[str]:
-    """Resource-coverage cohorts for one item (arm B evidence)."""
+    """Resource-coverage cohorts for one item (arm B evidence).
+
+    v1.1 items carry AUTHORED cohort provenance (item['cohorts']) —
+    recorded from the vendored tables at freeze time. Derived cohorts
+    (from live lookups) still run as a cross-check and are appended."""
     cov = arm_predictions["resource_coverage"]
+    if item.get("cohorts"):
+        return list(item["cohorts"])
     cohorts = []
     if cov["none"]:
         cohorts.append("C7_no_resource_coverage")
@@ -470,16 +507,34 @@ def _load_rule_coverage() -> dict:
     return _RULE_COVERAGE_CACHE
 
 
+def _git_commit() -> str:
+    import subprocess
+
+    try:
+        return subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True,
+            check=True,
+        ).stdout.strip()
+    except Exception:
+        return "unknown"
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--outdir", default=str(ROOT / "eval" / "phase_h" / "artifacts"))
+    parser.add_argument("--gold", default=str(GOLD_PATH),
+                        help="frozen gold corpus YAML (v1.0 default; v1.1 for the boundary gate)")
     args = parser.parse_args(argv)
     outdir = Path(args.outdir)
+    global GOLD_SHA256_BEFORE
+    global GOLD_SOURCE_PATH
+    GOLD_SOURCE_PATH = Path(args.gold)
+    GOLD_SHA256_BEFORE = hashlib.sha256(GOLD_SOURCE_PATH.read_bytes()).hexdigest()
     outdir.mkdir(parents=True, exist_ok=True)
 
-    gold = yaml.safe_load(GOLD_PATH.read_text())
+    gold = yaml.safe_load(GOLD_SOURCE_PATH.read_text())
     items = gold["items"]
-    assert hashlib.sha256(GOLD_PATH.read_bytes()).hexdigest() == GOLD_SHA256_BEFORE, (
+    assert hashlib.sha256(GOLD_SOURCE_PATH.read_bytes()).hexdigest() == GOLD_SHA256_BEFORE, (
         "gold corpus changed during the run — experiment invalid"
     )
 
@@ -514,8 +569,9 @@ def main(argv: list[str] | None = None) -> int:
 
     manifest = {
         "experiment": "phase-h-lexical-semantic-waterfall",
-        "git_commit": "12645c1",
-        "gold": {"path": "eval/gold/relations_v1.yaml", "version": gold["version"],
+        "git_commit": _git_commit(),
+        "gold": {"path": str(GOLD_SOURCE_PATH.resolve().relative_to(ROOT.resolve())),
+                 "version": gold["version"],
                  "sha256": GOLD_SHA256_BEFORE, "items": len(items)},
         "resource_contract_id": compiled_manifest["resource_contract_id"],
         "tables_sha256": compiled_manifest["tables_sha256"],
@@ -562,9 +618,12 @@ def main(argv: list[str] | None = None) -> int:
     # -- changed examples (resource-attributed) ----------------------------
     _load_rule_coverage()
     changed: list[dict] = []
-    for k in sorted({_unit_key(u) for u in scored["baseline"]["units"]}):
-        a = next(u["outcome"] for u in scored["baseline"]["units"] if _unit_key(u) == k)
-        b = next(u["outcome"] for u in scored["hybrid"]["units"] if _unit_key(u) == k)
+    unit_map = {}
+    for arm in ("baseline", "hybrid"):
+        unit_map[arm] = {_unit_key(u): u["outcome"] for u in scored[arm]["units"]}
+    for k in sorted(set(unit_map["baseline"]) | set(unit_map["hybrid"])):
+        a = unit_map["baseline"].get(k, "CORRECT_ABSTENTION")
+        b = unit_map["hybrid"].get(k, "CORRECT_ABSTENTION")
         if a != b:
             item_id = k[1]
             item = next(i for i in items if i["id"] == item_id)

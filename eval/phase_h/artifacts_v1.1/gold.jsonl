@@ -1,0 +1,33 @@
+{"item_id": "v11_e01", "outcome_target": "gold", "unit": ["triple", "v11_e01", "Acme", "created", "the brand name"]}
+{"item_id": "v11_e02", "outcome_target": "gold", "unit": ["triple", "v11_e02", "The lab", "created", "the benchmark"]}
+{"item_id": "v11_e03", "outcome_target": "gold", "unit": ["triple", "v11_e03", "The firm", "acquired", "the subsidiary"]}
+{"item_id": "v11_e04", "outcome_target": "gold", "unit": ["triple", "v11_e04", "The company", "acquired", "the assets"]}
+{"item_id": "v11_e05", "outcome_target": "gold", "unit": ["triple", "v11_e05", "The model", "uses", "the feature set"]}
+{"item_id": "v11_e06", "outcome_target": "gold", "unit": ["triple", "v11_e06", "The engine", "uses", "the waste heat"]}
+{"item_id": "v11_t01", "outcome_target": "gold", "unit": ["abstention", "v11_t01", null, null, null]}
+{"item_id": "v11_t02", "outcome_target": "gold", "unit": ["abstention", "v11_t02", null, null, null]}
+{"item_id": "v11_t03", "outcome_target": "gold", "unit": ["abstention", "v11_t03", null, null, null]}
+{"item_id": "v11_p01", "outcome_target": "gold", "unit": ["triple", "v11_p01", "Microsoft", "developed", "Windows"]}
+{"item_id": "v11_p02", "outcome_target": "gold", "unit": ["abstention", "v11_p02", null, null, null]}
+{"item_id": "v11_p03", "outcome_target": "gold", "unit": ["abstention", "v11_p03", null, null, null]}
+{"item_id": "v11_p04", "outcome_target": "gold", "unit": ["triple", "v11_p04", "The engine", "uses", "the pump"]}
+{"item_id": "v11_p05", "outcome_target": "gold", "unit": ["abstention", "v11_p05", null, null, null]}
+{"item_id": "v11_p06", "outcome_target": "gold", "unit": ["abstention", "v11_p06", null, null, null]}
+{"item_id": "v11_p07", "outcome_target": "gold", "unit": ["abstention", "v11_p07", null, null, null]}
+{"item_id": "v11_p08", "outcome_target": "gold", "unit": ["triple", "v11_p08", "Acme", "owns", "the patent"]}
+{"item_id": "v11_p09", "outcome_target": "gold", "unit": ["abstention", "v11_p09", null, null, null]}
+{"item_id": "v11_p10", "outcome_target": "gold", "unit": ["triple", "v11_p10", "The team", "founded", "a committee"]}
+{"item_id": "v11_p11", "outcome_target": "gold", "unit": ["abstention", "v11_p11", null, null, null]}
+{"item_id": "v11_v01", "outcome_target": "gold", "unit": ["triple", "v11_v01", "John", "founded", "Acme"]}
+{"item_id": "v11_v02", "outcome_target": "gold", "unit": ["triple", "v11_v02", "the firm", "acquired", "The subsidiary"]}
+{"item_id": "v11_v03", "outcome_target": "gold", "unit": ["triple", "v11_v03", "Microsoft", "developed", "Windows"]}
+{"item_id": "v11_a01", "outcome_target": "gold", "unit": ["triple", "v11_a01", "plaintext", "transforms_into", "ciphertext"]}
+{"item_id": "v11_a02", "outcome_target": "gold", "unit": ["triple", "v11_a02", "lead", "transforms_into", "gold"]}
+{"item_id": "v11_m01", "outcome_target": "gold", "unit": ["triple", "v11_m01", "The lab", "created", "a new dataset"]}
+{"item_id": "v11_m02", "outcome_target": "gold", "unit": ["abstention", "v11_m02", null, null, null]}
+{"item_id": "v11_m03", "outcome_target": "gold", "unit": ["abstention", "v11_m03", null, null, null]}
+{"item_id": "v11_g01", "outcome_target": "gold", "unit": ["triple", "v11_g01", "The company", "acquired", "the subsidiary"]}
+{"item_id": "v11_g02", "outcome_target": "gold", "unit": ["abstention", "v11_g02", null, null, null]}
+{"item_id": "v11_s01", "outcome_target": "gold", "unit": ["triple", "v11_s01", "The merger", "occurred_at", "2019"]}
+{"item_id": "v11_s02", "outcome_target": "gold", "unit": ["triple", "v11_s02", "The GPU", "part_of", "the workstation"]}
+{"item_id": "v11_n01", "outcome_target": "gold", "unit": ["abstention", "v11_n01", null, null, null]}

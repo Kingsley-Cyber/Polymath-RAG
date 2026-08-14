@@ -96,6 +96,22 @@ that motivated it and the refactor that implemented it.
   multi-sense disambiguation) is the gating artifact for the
   hybrid-default decision.
 
+
+## 2026-08-14: Phase H v1.1 — boundary corpus freeze and rerun (REJECT)
+
+- Corpus v1.1 (33 items, sha256 3ee7065a…) additive to the v1.0
+  control; exercises the arm boundary: 11 expanded positives, 3
+  class-breadth traps, 11 polysemy contrast items, passive-with-parse,
+  ARG1→ARG2, assertion controls, alignment-gap, structural cohorts.
+- Rerun verdict: REJECT — Δcorrect=+1, Δincorrect=+4, Δmissed=-4.
+  VerbNet class expansion recovers 6 facts (created/acquired/uses) but
+  asserts 4 wrong edges (3 traps + 1 oblique pairing) and the FN anchor
+  filter suppresses 2 correct developed facts.
+- Named mechanisms for the next measured experiments (NOT applied):
+  expanded-trigger roleset constraint; composed-FN filter relaxation.
+- Production extraction code unchanged; harness-only fixes recorded per
+  the bug protocol; determinism verified across three runs per arm.
+
 ## 2026-08-14: Phase G1 — document semantic routing + retrieval primitives
 
 - Document RetrievalProfile (bottom-up, deterministic, no LLM) with
