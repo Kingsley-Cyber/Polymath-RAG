@@ -1,7 +1,11 @@
 [project]
-name = "polymath-<role>"
-version = "0.1.0"
+name = "polymath-control"
+version = "0.2.0"
 requires-python = ">=3.11"
+dependencies = [
+    "polymath-shared",
+    "psycopg[binary]>=3.1,<4",
+]
 
-[tool.pytest.ini_options]
-testpaths = ["../../tests"]
+[tool.setuptools.packages.find]
+include = ["control*"]

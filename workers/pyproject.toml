@@ -1,7 +1,14 @@
 [project]
-name = "polymath-<role>"
-version = "0.1.0"
+name = "polymath-workers"
+version = "0.2.0"
 requires-python = ">=3.11"
+dependencies = [
+    "polymath-shared",
+    "psycopg[binary]>=3.1,<4",
+]
 
-[tool.pytest.ini_options]
-testpaths = ["../../tests"]
+[project.optional-dependencies]
+extraction = ["gliner>=0.2", "spacy>=3.7,<4"]
+
+[tool.setuptools.packages.find]
+include = ["workers*"]

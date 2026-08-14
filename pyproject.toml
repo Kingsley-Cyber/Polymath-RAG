@@ -1,0 +1,24 @@
+[project]
+name = "polymath-v4"
+version = "0.2.0"
+description = "Local-first GraphRAG with deterministic relation extraction"
+requires-python = ">=3.11"
+
+[tool.uv.workspace]
+members = ["shared", "workers", "orchestrator", "control"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8,<10",
+    "ruff>=0.9,<1",
+]
+
+[tool.uv.sources]
+polymath-shared = { workspace = true }
+polymath-workers = { workspace = true }
+polymath-orchestrator = { workspace = true }
+polymath-control = { workspace = true }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

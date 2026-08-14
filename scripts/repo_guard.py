@@ -13,18 +13,22 @@ from types import ModuleType
 
 IGNORED_NAMES = {
     ".DS_Store",
+    ".env",
     ".git",
     ".mypy_cache",
     ".pytest_cache",
     ".ruff_cache",
     ".venv",
     "__pycache__",
+    "weights.digest",
 }
 IGNORED_PREFIXES = (
     "stores/postgres/data/",
     "stores/qdrant/data/",
     "stores/neo4j/data/",
+    "var/log/",
 )
+IGNORED_SUFFIXES = (".egg-info", ".pid")
 MODULE_OWNERS = {
     "control": "control",
     "orchestrator": "orchestrator",
@@ -66,6 +70,8 @@ def declared_paths(root: Path) -> set[str]:
 def is_ignored(relative: str) -> bool:
     path = Path(relative)
     if any(part in IGNORED_NAMES for part in path.parts):
+        return True
+    if any(part.endswith(IGNORED_SUFFIXES) for part in path.parts):
         return True
     return relative.startswith(IGNORED_PREFIXES)
 

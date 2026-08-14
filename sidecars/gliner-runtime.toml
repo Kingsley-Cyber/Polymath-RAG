@@ -1,7 +1,7 @@
 [gliner-runtime]
 display_name = "GLiNER two-pass runtime"
-release = "__PIN_RELEASE__"
+release = "gliner-2pass-v1"
 manifest_url = "http://127.0.0.1:8740/manifest"
 contract = "contracts/sidecar/v1/manifest.schema.json"
-device = "__PIN_DEVICE__"
+device = "mps"
 owner = "sidecar-gpu"

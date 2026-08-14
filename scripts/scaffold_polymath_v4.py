@@ -96,6 +96,10 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/README.md", "md", "EXPERIMENT_README"),
     ("docs/wiki/work-log/README.md", "md", "WORK_LOG_README"),
     ("docs/wiki/work-log/2026-08-13-bootstrap.md", "md", "WORK_LOG_BOOTSTRAP"),
+    ("docs/wiki/work-log/2026-08-13-phase-b.md", "md", None),
+    ("docs/wiki/work-log/2026-08-14-phase-c.md", "md", None),
+    ("docs/wiki/decisions/0006-packaging-deployment.md", "md", None),
+    ("docs/wiki/refactors/0001-phase-b-production.md", "md", None),
     ("docs/runbooks/operator.md", "md", "RUNBOOK_OPERATOR"),
     ("docs/runbooks/agent-onboarding.md", "md", "RUNBOOK_AGENT_ONBOARDING"),
 
@@ -192,6 +196,44 @@ TREE: list[tuple[str, str, str | None]] = [
     (".github/workflows/determinism.yml", "yaml", "_CI_DETERMINISM"),
     (".github/workflows/agent-preflight.yml", "yaml", "_CI_AGENT_PREFLIGHT"),
     (".github/workflows/repo-governance.yml", "yaml", "_CI_REPO_GOVERNANCE"),
+
+    # ── Phase B production additions (2026-08-13) ─────────────────────────
+    ("pyproject.toml", "toml", None),
+    ("Makefile", "makefile", None),
+    ("var/.gitkeep", "gitkeep", None),
+    ("deployment/launchd/ai.polymath.api.plist", "plist", None),
+    ("deployment/launchd/ai.polymath.control.plist", "plist", None),
+    ("deployment/launchd/ai.polymath.worker.intake.plist", "plist", None),
+    ("deployment/launchd/ai.polymath.worker.extract.plist", "plist", None),
+    ("deployment/launchd/ai.polymath.gliner.plist", "plist", None),
+
+    # shared: workflow authority plumbing + the deterministic rule pack
+    ("shared/polymath_shared/settings.py", "py", None),
+    ("shared/polymath_shared/db.py", "py", None),
+    ("shared/polymath_shared/rulepack/__init__.py", "py", None),
+    ("shared/polymath_shared/rulepack/compiler.py", "py", None),
+    ("shared/polymath_shared/rulepack/negation.py", "py", None),
+    ("shared/polymath_shared/rulepack/core-predicates.yaml", "yaml", None),
+    ("shared/polymath_shared/rulepack/resource_index.yaml", "yaml", None),
+
+    # workers: the no-LLM ingestion layer and extraction assembly
+    ("workers/workers/summarizer.py", "py", None),
+    ("workers/workers/chunker.py", "py", None),
+    ("workers/workers/profile_router.py", "py", None),
+    ("workers/workers/candidates.py", "py", None),
+    ("workers/workers/syntax.py", "py", None),
+    ("workers/workers/evidence_proposer.py", "py", None),
+
+    # docs/wiki: the Phase C evidence-pass experiment
+    ("docs/wiki/experiments/0001-gliner-evidence-pass.md", "md", None),
+
+    # stores: the workflow schema (docs/chunks/entities/evidence/facts)
+    ("stores/postgres/migrations/0002_workflow.sql", "sql", None),
+
+    # tests: determinism, no-LLM ingestion invariants, contract models
+    ("tests/determinism/test_compiler.py", "py", None),
+    ("tests/determinism/test_chunker_summarizer.py", "py", None),
+    ("tests/contracts/test_contract_models.py", "py", None),
 ]
 
 

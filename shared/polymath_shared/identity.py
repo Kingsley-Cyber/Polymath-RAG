@@ -54,3 +54,58 @@ def document_id(normalized_bytes: bytes) -> str:
 
 def chunk_id(doc_id: str, chunk_index: int, chunk_text: str) -> str:
     return f"chunk_{content_hash({'d': doc_id, 'i': chunk_index, 't': chunk_text})}"
+
+
+def run_id(corpus_id: str, intake_payload: dict) -> str:
+    """Run identity. Replaying the same intake over a corpus yields the
+    same run id, so re-intake is a no-op at the Postgres level."""
+    return f"run_{content_hash({'corpus': corpus_id, 'intake': intake_payload})}"
+
+
+def receipt_id(run: str, stage: str, contract_hash: str) -> str:
+    """Receipt identity = the idempotency key of one stage attempt."""
+    return content_hash({'run': run, 'stage': stage, 'contract': contract_hash})
+
+
+def attempt_id(run: str, stage: str, contract_hash: str) -> str:
+    return receipt_id(run, stage, contract_hash)[:16]
+
+
+def owner_id(hostname: str, role: str, started_at_iso: str) -> str:
+    """Persistent control-plane owner identity (ISSUES_REPORT §1.1 fix).
+
+    Keyed on (hostname, role, start timestamp) instead of a process-local
+    UUID, so a restarted controller/worker with the same role on the same
+    host reclaims its own leases deterministically.
+    """
+    return content_hash({'host': hostname, 'role': role, 'started': started_at_iso})
+
+
+def lease_key(*parts: str) -> str:
+    return ":".join(parts)
+
+
+def contract_hash(schema_version: str, frozen_params: dict) -> str:
+    """Stage contract identity: the schema version plus every frozen
+    parameter that changes the stage's output. Wall-clock fields never
+    enter the contract."""
+    return content_hash({'schema': schema_version, 'frozen': frozen_params})
+
+
+def normalize_document_bytes(raw: bytes, *, strip_bom: bool = True, normalize_crlf: bool = True) -> bytes:
+    """Canonical byte normalization for document identity.
+
+    UTF-8 decode + NFC normalize + re-encode, so identical text with
+    different byte encodings maps to one document. Non-decodable bytes
+    pass through raw so binary payloads still hash stably.
+    """
+    try:
+        text = raw.decode("utf-8-sig" if strip_bom else "utf-8")
+        if normalize_crlf:
+            text = text.replace("\r\n", "\n").replace("\r", "\n")
+        import unicodedata
+
+        text = unicodedata.normalize("NFC", text)
+        return text.encode("utf-8")
+    except UnicodeDecodeError:
+        return raw

@@ -1,7 +1,18 @@
 [project]
-name = "polymath-<role>"
-version = "0.1.0"
+name = "polymath-shared"
+version = "0.2.0"
 requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2,<3",
+    "pydantic-settings>=2,<3",
+    "httpx>=0.27,<1",
+    "psycopg[binary]>=3.1,<4",
+    "psycopg-pool>=3.2,<4",
+    "PyYAML>=6,<7",
+]
 
-[tool.pytest.ini_options]
-testpaths = ["../../tests"]
+[tool.setuptools.packages.find]
+include = ["polymath_shared*"]
+
+[tool.setuptools.package-data]
+polymath_shared = ["rulepack/*.yaml"]

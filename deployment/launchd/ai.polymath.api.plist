@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>ai.polymath.api</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>__PY__</string>
+    <string>-m</string>
+    <string>uvicorn</string>
+    <string>orchestrator.main:app</string>
+    <string>--host</string><string>127.0.0.1</string>
+    <string>--port</string><string>7200</string>
+  </array>
+  <key>WorkingDirectory</key><string>__REPO__/orchestrator</string>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>ProcessType</key><string>Interactive</string>
+  <key>StandardOutPath</key><string>__REPO__/var/log/api.log</string>
+  <key>StandardErrorPath</key><string>__REPO__/var/log/api.err.log</string>
+  <key>ThrottleInterval</key><integer>5</integer>
+</dict>
+</plist>

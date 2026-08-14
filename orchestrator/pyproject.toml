@@ -1,7 +1,12 @@
 [project]
-name = "polymath-<role>"
-version = "0.1.0"
+name = "polymath-orchestrator"
+version = "0.2.0"
 requires-python = ">=3.11"
+dependencies = [
+    "polymath-shared",
+    "fastapi>=0.115,<1",
+    "uvicorn>=0.30,<1",
+]
 
-[tool.pytest.ini_options]
-testpaths = ["../../tests"]
+[tool.setuptools.packages.find]
+include = ["orchestrator*"]
