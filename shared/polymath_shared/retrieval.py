@@ -1,4 +1,4 @@
-"""Deterministic retrieval primitives (Phase G1/G2).
+"""Deterministic retrieval primitives (Phase G1/G2 + R3a).
 
 Four independently inspectable lanes, no lane is a gate:
 
@@ -15,6 +15,9 @@ enriches retrieval; it never suppresses recall.
 
 Every dense hit carries representation provenance: source id,
 representation_kind, contract id, raw rank and raw score (G2 gate 3).
+R3a additionally assembles retrieved passages and graph facts into a
+fail-closed EvidenceBundle. Postgres rows are authoritative for source text,
+fact/evidence identity, qualifiers, and compiler provenance.
 """
 from __future__ import annotations
 
@@ -22,6 +25,8 @@ import math
 import re
 from dataclasses import dataclass, field
 from typing import Any, Callable
+
+from .contracts import EvidenceBundle, EvidenceBundleItem, RetrievalPath, SourceSpan
 
 _TOKEN_RE = re.compile(r"[a-z0-9]+(?:[-_][a-z0-9]+)*")
 
@@ -49,6 +54,10 @@ PROFILE_FIELD_WEIGHTS = {
 
 GRAPH_HOPS = 2
 GRAPH_MAX_FACTS = 20
+
+
+class EvidenceAssemblyError(RuntimeError):
+    """A retrieved candidate cannot be grounded to authoritative support."""
 
 
 def tokens(text: str) -> set[str]:
@@ -143,7 +152,6 @@ def run_lanes(
     """
     result = RetrievalResult(query=query)
 
-    # -- document semantic lane ---------------------------------------------
     doc_scores: dict[str, tuple[float, str]] = {}
     profile_map: dict[str, dict] = {}
     for row in fetch_profiles():
@@ -165,7 +173,6 @@ def run_lanes(
             why=why,
         ))
 
-    # -- parent semantic lane -----------------------------------------------
     parent_rows = fetch_parents()
     parent_hits: list[RetrievalHit] = []
     for row in parent_rows:
@@ -184,10 +191,6 @@ def run_lanes(
     for rank, hit in enumerate(result.parent_ranking):
         hit.rank = rank
 
-    # -- child dense lane (Qdrant under the active contract) ----------------
-    # A dense hit requires an actual vector score: rows without one are
-    # not dense evidence and must not pollute the fusion with zero-score
-    # promotions.
     dense_rows = child_search(50)
     dense_hits: list[RetrievalHit] = []
     for row in dense_rows:
@@ -210,7 +213,6 @@ def run_lanes(
     for rank, hit in enumerate(result.child_dense_ranking):
         hit.rank = rank
 
-    # -- child lexical lane (exact/sparse evidence) -------------------------
     child_rows = fetch_children(2000)
     child_texts: dict[str, dict] = {
         row["chunk_id"]: row for row in child_rows if row.get("text")
@@ -236,7 +238,6 @@ def run_lanes(
     for rank, hit in enumerate(result.child_lexical_ranking):
         hit.rank = rank
 
-    # -- fusion over ranks only (G2 gate 6) ---------------------------------
     parent_doc = {r["chunk_id"]: r["doc_id"] for r in parent_rows}
     dense_doc = {h.chunk_id: h.document_id for h in result.child_dense_ranking}
     lexical_doc = {h.chunk_id: h.document_id for h in result.child_lexical_ranking}
@@ -256,7 +257,6 @@ def run_lanes(
         for rank, doc_id in enumerate([d for d in fused_docs if d][:10])
     ]
 
-    # -- child evidence: dense and lexical union, ranked by RRF --------------
     dense_rows_by_id = {row["chunk_id"]: row for row in dense_rows if row.get("chunk_id")}
     evidence: dict[str, dict] = {}
     for hit in rrf([
@@ -275,7 +275,6 @@ def run_lanes(
             }),
         }
 
-    # Parent expansion: siblings under the same parent join the bundle.
     parents_of = {c.get("parent_id") for c in evidence.values() if c.get("parent_id")}
     if parents_of:
         for row in child_rows:
@@ -307,3 +306,212 @@ def graph_expansion(
         return []
     facts = expand(entity_surfaces[:10])
     return facts[:GRAPH_MAX_FACTS]
+
+
+# ---------------------------------------------------------------------------
+# R3a grounded evidence assembly
+# ---------------------------------------------------------------------------
+
+
+def _required_text(value: Any, label: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise EvidenceAssemblyError(f"missing required {label}")
+    return value
+
+
+def _required_int(value: Any, label: str) -> int:
+    if not isinstance(value, int):
+        raise EvidenceAssemblyError(f"missing required {label}")
+    return value
+
+
+def _retrieval_paths(raw: Any) -> list[RetrievalPath]:
+    paths: list[RetrievalPath] = []
+    for item in raw or []:
+        if not isinstance(item, dict):
+            continue
+        paths.append(RetrievalPath(
+            lane=str(item.get("lane") or ""),
+            representation_kind=str(item.get("representation_kind") or ""),
+            contract_id=str(item.get("contract_id") or ""),
+            rank=int(item.get("rank", -1)),
+            raw_score=float(item["raw_score"]) if item.get("raw_score") is not None else None,
+            parent_id=str(item.get("parent_id") or ""),
+        ))
+    return sorted(
+        paths,
+        key=lambda p: (
+            p.rank if p.rank >= 0 else 1_000_000,
+            p.lane,
+            p.contract_id,
+            p.parent_id,
+        ),
+    )
+
+
+def _passage_support(row: dict[str, Any]) -> EvidenceBundleItem:
+    chunk_id = _required_text(row.get("chunk_id"), "passage.chunk_id")
+    doc_id = _required_text(row.get("doc_id"), "passage.doc_id")
+    source_name = _required_text(row.get("source_name"), "passage.source_name")
+    text = _required_text(row.get("text"), "passage.text")
+    char_start = _required_int(row.get("char_start"), "passage.char_start")
+    char_end = _required_int(row.get("char_end"), "passage.char_end")
+    if char_end < char_start:
+        raise EvidenceAssemblyError(f"invalid passage span for {chunk_id}")
+    paths = _retrieval_paths(row.get("retrieval_paths"))
+    if not paths:
+        raise EvidenceAssemblyError(f"missing retrieval provenance for passage {chunk_id}")
+    return EvidenceBundleItem(
+        support_id=f"passage:{chunk_id}",
+        support_kind="passage",
+        knowledge_id=chunk_id,
+        claim_candidate={"kind": "source_passage", "text": text},
+        source_span=SourceSpan(
+            document_id=doc_id,
+            source_name=source_name,
+            chunk_id=chunk_id,
+            char_start=char_start,
+            char_end=char_end,
+            text=text,
+        ),
+        provenance={
+            "chunk_id": chunk_id,
+            "contract_ids": sorted(set(row.get("contract_ids") or [])),
+            "source_kind": "retrieved_source_text",
+        },
+        retrieval=paths,
+    )
+
+
+def _fact_support(row: dict[str, Any], graph_rank: int) -> EvidenceBundleItem:
+    fact_id = _required_text(row.get("fact_id"), "fact.fact_id")
+    evidence_id = _required_text(row.get("evidence_id"), "fact.evidence_id")
+    doc_id = _required_text(row.get("doc_id"), "fact.doc_id")
+    chunk_id = _required_text(row.get("chunk_id"), "fact.chunk_id")
+    source_name = _required_text(row.get("source_name"), "fact.source_name")
+    text = _required_text(row.get("text"), "fact.source_text")
+    char_start = _required_int(row.get("char_start"), "fact.char_start")
+    char_end = _required_int(row.get("char_end"), "fact.char_end")
+    if char_end < char_start:
+        raise EvidenceAssemblyError(f"invalid fact source span for {fact_id}")
+
+    predicate = _required_text(row.get("predicate"), "fact.predicate")
+    subject_id = _required_text(row.get("subject_id"), "fact.subject_id")
+    object_id = _required_text(row.get("object_id"), "fact.object_id")
+    subject = _required_text(row.get("subject"), "fact.subject")
+    obj = _required_text(row.get("object"), "fact.object")
+    provenance = row.get("provenance")
+    if not isinstance(provenance, dict) or not provenance:
+        raise EvidenceAssemblyError(f"missing compiler provenance for fact {fact_id}")
+    span_offsets = row.get("span_offsets") or {}
+    if not isinstance(span_offsets, dict):
+        raise EvidenceAssemblyError(f"invalid evidence offsets for fact {fact_id}")
+    qualifiers = row.get("qualifiers") or {}
+    if not isinstance(qualifiers, dict):
+        raise EvidenceAssemblyError(f"invalid qualifiers for fact {fact_id}")
+    rule_id = _required_text(row.get("rule_id"), "fact.rule_id")
+    rule_version = _required_text(row.get("rule_version"), "fact.rule_version")
+
+    combined_provenance = dict(provenance)
+    combined_provenance.update({
+        "fact_rule_id": rule_id,
+        "fact_rule_version": rule_version,
+        "evidence_rule_id": str(row.get("evidence_rule_id") or ""),
+        "evidence_rule_version": str(row.get("evidence_rule_version") or ""),
+        "evidence_extractor_version": str(row.get("extractor_version") or ""),
+        "evidence_id": evidence_id,
+    })
+    return EvidenceBundleItem(
+        support_id=f"fact:{fact_id}:{evidence_id}",
+        support_kind="fact",
+        knowledge_id=fact_id,
+        fact_id=fact_id,
+        evidence_id=evidence_id,
+        claim_candidate={
+            "kind": "relation",
+            "subject_id": subject_id,
+            "subject": subject,
+            "predicate": predicate,
+            "object_id": object_id,
+            "object": obj,
+        },
+        source_span=SourceSpan(
+            document_id=doc_id,
+            source_name=source_name,
+            chunk_id=chunk_id,
+            char_start=char_start,
+            char_end=char_end,
+            text=text,
+            evidence_offsets=span_offsets,
+        ),
+        provenance=combined_provenance,
+        epistemics={"decision": str(row.get("decision") or "")},
+        applicability={"qualifiers": qualifiers},
+        support_metadata={"gliner_scores": row.get("gliner_scores") or {}},
+        retrieval=[RetrievalPath(
+            lane="graph_expansion",
+            representation_kind="canonical_fact",
+            contract_id="neo4j-projection",
+            rank=graph_rank,
+        )],
+    )
+
+
+def assemble_evidence_bundle(
+    query: str,
+    *,
+    passages: list[dict[str, Any]],
+    graph_facts: list[dict[str, Any]],
+    fact_support_rows: list[dict[str, Any]],
+) -> EvidenceBundle:
+    """Build a deterministic, fail-closed EvidenceBundle.
+
+    Graph facts only nominate fact ids. Every nomination must resolve to an
+    authoritative Postgres fact+evidence+chunk+document row. Duplicate
+    nominations collapse by stable support id; conflicting facts remain
+    separate support items.
+    """
+    clean_query = query.strip()
+    if not clean_query:
+        raise EvidenceAssemblyError("query is required")
+
+    fact_ranks: dict[str, int] = {}
+    for rank, fact in enumerate(graph_facts):
+        fact_id = fact.get("fact_id") if isinstance(fact, dict) else None
+        if fact_id and str(fact_id) not in fact_ranks:
+            fact_ranks[str(fact_id)] = rank
+
+    rows_by_fact: dict[str, list[dict[str, Any]]] = {}
+    for row in fact_support_rows:
+        fact_id = row.get("fact_id")
+        if fact_id:
+            rows_by_fact.setdefault(str(fact_id), []).append(row)
+
+    for fact_id in sorted(fact_ranks):
+        if not rows_by_fact.get(fact_id):
+            raise EvidenceAssemblyError(
+                f"graph fact {fact_id} has no authoritative Postgres evidence"
+            )
+
+    items: dict[str, EvidenceBundleItem] = {}
+    for passage in passages:
+        item = _passage_support(passage)
+        items.setdefault(item.support_id, item)
+
+    for fact_id, graph_rank in sorted(fact_ranks.items(), key=lambda kv: (kv[1], kv[0])):
+        for row in sorted(
+            rows_by_fact[fact_id],
+            key=lambda r: (str(r.get("evidence_id") or ""), str(r.get("chunk_id") or "")),
+        ):
+            item = _fact_support(row, graph_rank)
+            items.setdefault(item.support_id, item)
+
+    def order(item: EvidenceBundleItem) -> tuple[int, int, str]:
+        best_rank = min((p.rank for p in item.retrieval if p.rank >= 0), default=1_000_000)
+        kind_order = 0 if item.support_kind == "fact" else 1
+        return (best_rank, kind_order, item.support_id)
+
+    return EvidenceBundle(
+        query=clean_query,
+        evidence_bundle=sorted(items.values(), key=order),
+    )
