@@ -56,6 +56,7 @@ async def retrieve(req: RetrieveRequest) -> dict:
         children_rows = _fetch_children_rows(conn, corpus_id)
         children = [r for r in children_rows if r["tier"] == "child"]
         parent_rows = [r for r in children_rows if r["tier"] == "parent"]
+        # Parent lane scores PARENT summaries.
         parents = [
             {"chunk_id": r["chunk_id"], "doc_id": r["doc_id"], "summary": r["summary"]}
             for r in parent_rows
@@ -101,10 +102,12 @@ async def retrieve(req: RetrieveRequest) -> dict:
 
     return {
         "query": query,
+        # Per-lane ablation BEFORE fusion (G2 gate 2).
         "document_lane": [_hit(h) for h in result.document_ranking[: req.limit]],
         "parent_lane": [_hit(h) for h in result.parent_ranking[: req.limit]],
         "child_dense_lane": [_hit(h) for h in result.child_dense_ranking[: req.limit]],
         "child_lexical_lane": [_hit(h) for h in result.child_lexical_ranking[: req.limit]],
+        # Fused view.
         "selected_documents": result.selected_documents[: req.limit],
         "child_evidence_count": len(result.selected_children),
         "child_evidence": [c for c in result.selected_children[: req.limit]],
@@ -338,6 +341,9 @@ def _qdrant_search(query: str, corpus_id: Optional[str], limit: int) -> list[dic
     client = _qdrant_client(timeout=30)
     try:
         collections = [c.name for c in client.get_collections().collections]
+        # Only collections of the ACTIVE contract: other contract versions
+        # have different dimensions and must never be queried with this
+        # contract's vectors.
         contract_suffix = f"_{contract.contract_id}"
         targets = [
             name for name in collections
@@ -365,7 +371,7 @@ def _qdrant_search(query: str, corpus_id: Optional[str], limit: int) -> list[dic
                     with_payload=True,
                 ).points
             except Exception:
-                continue
+                continue  # one broken collection never kills the lane
             for p in hits:
                 payload = p.payload or {}
                 out.append({
