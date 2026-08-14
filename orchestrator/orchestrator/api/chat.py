@@ -1,13 +1,42 @@
-"""Chat API. POST /chat.
+"""Chat API. POST /chat — R3b grounded answer generation.
 
-Validates input, reads from the ledger, calls the synthesis path.
-No long-running work. No scheduling. No model loading.
+Flow: user query -> R3a EvidenceBundle -> answer synthesis ->
+claim/evidence validation -> final answer + citations.
+
+The synthesizer receives ONLY the assembled bundle (never Postgres /
+Neo4j / Qdrant handles), and the deterministic validator decides which
+claims may render. No factual assertion survives into the answer
+unless supported by one or more bundle items. Assembly failures stay
+loud (502), as in R3a.
 """
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from polymath_shared.answer_synthesis import grounded_answer
+from polymath_shared.db import tx
+from polymath_shared.evidence_assembly import (
+    AssemblyError,
+    assemble_evidence_bundle,
+)
+from polymath_shared.retrieval import graph_expansion, run_lanes
+
+from .evidence import (
+    _resolve_chunk,
+    _resolve_document,
+    _resolve_entity,
+    _resolve_evidence_rows,
+    _resolve_fact,
+)
+from .retrieve import (
+    _entity_surfaces,
+    _fetch_children_rows,
+    _fetch_parents,
+    _fetch_profiles,
+    _neo4j_expand,
+    _qdrant_search,
+)
 
 router = APIRouter()
 
@@ -17,11 +46,54 @@ class ChatRequest(BaseModel):
     corpus_id: str | None = None
 
 
-class ChatResponse(BaseModel):
-    answer: str
-    citations: list[int]
+@router.post("/chat")
+async def chat(req: ChatRequest) -> dict:
+    query = req.message.strip()
+    if not query:
+        raise HTTPException(status_code=422, detail="message is required")
+    corpus_id = req.corpus_id
 
+    with tx() as conn:
+        profiles = _fetch_profiles(conn, corpus_id)
+        children_rows = _fetch_children_rows(conn, corpus_id)
+        children = [r for r in children_rows if r["tier"] == "child"]
+        parent_rows = [r for r in children_rows if r["tier"] == "parent"]
+        parents = [
+            {"chunk_id": r["chunk_id"], "doc_id": r["doc_id"], "summary": r["summary"]}
+            for r in parent_rows
+        ]
 
-@router.post("/chat", response_model=ChatResponse)
-async def chat(req: ChatRequest) -> ChatResponse:
-    raise NotImplementedError
+    result = run_lanes(
+        query,
+        fetch_profiles=lambda: profiles,
+        fetch_parents=lambda: parents,
+        fetch_children=lambda limit: children[:limit],
+        child_search=lambda limit: _qdrant_search(query, corpus_id, limit),
+    )
+
+    graph_facts = graph_expansion(
+        _entity_surfaces(query, result),
+        expand=lambda surfaces: _neo4j_expand(surfaces),
+    )
+
+    try:
+        bundle = assemble_evidence_bundle(
+            query,
+            graph_facts,
+            result.selected_children,
+            resolve_fact=lambda fid: _resolve_fact(fid),
+            resolve_evidence=lambda fid: _resolve_evidence_rows(fid),
+            resolve_entity=lambda eid: _resolve_entity(eid),
+            resolve_document=lambda did: _resolve_document(did),
+            resolve_chunk=lambda cid: _resolve_chunk(cid),
+        )
+    except AssemblyError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "error_code": type(exc).__name__,
+                "message": str(exc),
+            },
+        ) from exc
+
+    return grounded_answer(bundle, query)

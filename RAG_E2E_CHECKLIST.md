@@ -35,7 +35,7 @@ Status vocabulary: COMPLETE / IN PROGRESS / NOT STARTED / BLOCKED.
 | R0 | Is document routing parallel and never a recall gate? | COMPLETE | G1: golden trace frozen; child-survives-zero-doc test |
 | R1 | Does the G2 neural dense lane pass its contract gates? | COMPLETE | embedding-contract tests + live zero-overlap query proof (gate 7e) |
 | R3a | Can every answer claim assemble from traceable EvidenceBundle evidence? | COMPLETE | POST /evidence + `shared/polymath_shared/evidence_assembly.py`; live E2E traceable bundle; loud 502 on unresolved/missing-provenance |
-| R3b | Is there a working answer generation + `/chat` path end to end? | NOT STARTED | currently an API stub |
+| R3b | Is there a working answer generation + `/chat` path end to end? | COMPLETE | POST /chat: R3a bundle → deterministic propose/validate/render; citations reference bundle items with locators; live E2E cited grounded answer + abstention |
 
 ## Canonicalization gates
 
@@ -95,11 +95,9 @@ production lexical path.
 
 ## The next unchecked gate
 
-**R3b** — working answer generation + `/chat` end to end: generate the
-final answer strictly from the R3a EvidenceBundle (no unsupported
-claims), with citations to bundle items. Then C1/C2
-(canonicalization), R2 (reranker, bypassable initially), M1–M5 (MCP),
-R4, O2, O1, A1, V1.
+**C1** — Stage-2 corpus-level canonicalization / cross-document merge.
+Then C2 (canonical KG + provenance links), R2 (reranker, bypassable
+initially), M1–M5 (MCP), R4, O2, O1, A1, V1.
 
 ## Marking policy
 

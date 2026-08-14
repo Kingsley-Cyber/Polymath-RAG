@@ -80,6 +80,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-08-14-bootstrap-continuity.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-critical-path-reprioritization.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-r3a-evidence-bundle.md", "md", None),
+    ("docs/wiki/work-log/2026-08-14-r3b-grounded-answer.md", "md", None),
     ("ARCHITECTURE.md", "md", "ARCHITECTURE_STUB"),
     ("ARCHITECTURE_CHANGELOG.md", "md", "ARCHITECTURE_CHANGELOG_STUB"),
     ("PLAN.md", "md", "PLAN_STUB"),
@@ -108,6 +109,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/decisions/0006-packaging-deployment.md", "md", None),
     ("docs/wiki/refactors/0001-phase-b-production.md", "md", None),
     ("docs/wiki/refactors/0002-r3a-evidence-bundle.md", "md", None),
+    ("docs/wiki/refactors/0003-r3b-grounded-answer.md", "md", None),
     ("docs/runbooks/operator.md", "md", "RUNBOOK_OPERATOR"),
     ("docs/runbooks/agent-onboarding.md", "md", "RUNBOOK_AGENT_ONBOARDING"),
 
@@ -119,6 +121,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("contracts/extraction/v1/gliner_infer.schema.json", "json", "GLINER_INFER_SCHEMA"),
     ("contracts/extraction/v1/relation_candidate.schema.json", "json", "RELATION_CANDIDATE_SCHEMA"),
     ("contracts/answer/v1/evidence_bundle.schema.json", "json", None),
+    ("contracts/answer/v1/chat_response.schema.json", "json", None),
 
     # ── Sidecar registry (the source of truth for "where is X") ───────────
     ("sidecars/README.md", "md", "SIDECARS_README"),
@@ -245,6 +248,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("shared/polymath_shared/stores.py", "py", None),
     ("shared/polymath_shared/retrieval.py", "py", None),
     ("shared/polymath_shared/evidence_assembly.py", "py", None),
+    ("shared/polymath_shared/answer_synthesis.py", "py", None),
     ("shared/polymath_shared/embedding_contracts.py", "py", None),
 
     # stores: Neo4j uniqueness constraints + document profile columns
@@ -355,10 +359,13 @@ TREE: list[tuple[str, str, str | None]] = [
     ("resources/compiled/03a513ece6da32b243289fa9b9ef9dfe8e21cec4ff9f0435678ad4425021c150/vn_to_fn.json", "json", None),
     ("tests/integration/test_cross_domain_routing.py", "py", None),
     ("tests/integration/test_evidence_bundle_e2e.py", "py", None),
+    ("tests/integration/test_chat_e2e.py", "py", None),
     ("tests/contracts/test_embedding_contracts.py", "py", None),
     ("tests/contracts/test_evidence_bundle_contract.py", "py", None),
+    ("tests/contracts/test_chat_response_contract.py", "py", None),
     ("tests/determinism/test_retrieval_invariants.py", "py", None),
     ("tests/determinism/test_evidence_assembly.py", "py", None),
+    ("tests/determinism/test_answer_synthesis.py", "py", None),
 
     # stores: the workflow schema (docs/chunks/entities/evidence/facts)
     ("stores/postgres/migrations/0002_workflow.sql", "sql", None),

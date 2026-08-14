@@ -3,6 +3,19 @@
 Dated diffs of every architectural change. Each entry links to the ADR
 that motivated it and the refactor that implemented it.
 
+## 2026-08-14: R3b grounded answer generation + /chat
+
+- New wire contract `contracts/answer/v1/chat_response.schema.json`
+  (answer path; refactor 0003, work log 2026-08-14-r3b-grounded-answer).
+- POST /chat: query → R3a EvidenceBundle → deterministic propose →
+  validate → render. The validator, not the proposer, decides what may
+  render: citations reference bundle item ids and retain locators;
+  unsupported/fake-cited/ungrounded claims fail closed into the claim
+  ledger; conflicts are represented, never arbitrated; epistemic scope
+  survives; insufficient evidence abstains explicitly.
+- Boundary kept: no retrieval re-implementation in the synthesizer, no
+  direct store access, no C1/C2/R2/E1. R3a semantics untouched.
+
 ## 2026-08-14: R3a grounded EvidenceBundle assembly
 
 - New wire contract `contracts/answer/v1/evidence_bundle.schema.json`

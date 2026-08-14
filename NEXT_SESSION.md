@@ -6,24 +6,27 @@ Read:
 1. `AGENTS.md`
 2. `CURRENT_STATE.md`
 3. `ARCHITECTURE.md`
-4. `RAG_E2E_CHECKLIST.md` (next unchecked gate: R3b)
+4. `RAG_E2E_CHECKLIST.md` (next unchecked gate: C1)
 
 ## Last Completed
 
-- **R3a** — grounded EvidenceBundle assembly. POST /evidence +
-  `shared/polymath_shared/evidence_assembly.py` + contract
-  `contracts/answer/v1/evidence_bundle.schema.json`. Claim items carry
-  fact/entity IDs, source document + span locator, provenance,
-  epistemics, applicability, retrieval lane; evidence-only items never
-  carry claims; unresolved references / missing provenance → loud 502.
-  Live E2E verified. Evidence: work log
-  `2026-08-14-r3a-evidence-bundle.md`, refactor 0002.
+- **R3b** — grounded answer generation + /chat. POST /chat runs the
+  R3a bundle through a deterministic propose→validate→render pipeline
+  (`shared/polymath_shared/answer_synthesis.py`, contract
+  `contracts/answer/v1/chat_response.schema.json`). The validator is
+  the trust boundary: supports must resolve to real bundle items,
+  fabrication tokens are rejected, conflicts represented (never
+  arbitrated), epistemic scope survives, insufficient evidence
+  abstains. Live E2E verified (cited grounded conflict answer).
+  Evidence: work log `2026-08-14-r3b-grounded-answer.md`, refactor 0003.
+- **R3a** — grounded EvidenceBundle assembly (work log
+  `2026-08-14-r3a-evidence-bundle.md`, refactor 0002).
 - Phase H v1.1 — hybrid REJECT as production default (frozen evidence).
 - Bootstrap continuity system + Docker hygiene (approved only).
 
 ## What Was Validated (at checkpoint)
 
-- 91 unit tests passed / 17 skipped; 14 integration passed / 2 skipped.
+- 108 unit tests passed / 19 skipped; 16 integration passed / 2 skipped.
 - All three guards green (preflight / repo guard / wiki worm).
 - Frozen hashes re-verified: relations_v1 `fdfd75b4…`, relations_v1.1
   `3ee7065a…`, resource contract `03a513ec…`, tables `0ac3002a…`,
@@ -41,8 +44,8 @@ Do NOT begin E1 yet (deferred measured improvement).
 
 CRITICAL PATH TO RAG v1.0 (in order):
 1. ~~grounded EvidenceBundle assembly (R3a)~~ COMPLETE
-2. functional answer generation and /chat path (R3b) ← NEXT
-3. Stage-2 corpus-level canonicalization/merge (C1)
+2. ~~functional answer generation and /chat path (R3b)~~ COMPLETE
+3. Stage-2 corpus-level canonicalization/merge (C1) ← NEXT
 4. canonical KG + source/provenance linkage (C2)
 5. reranking qualification (R2 — bypassable for first /chat E2E)
 6. Polymath MCP contract (M1)
@@ -62,10 +65,11 @@ production lexical path.
 
 ## Next Unchecked Critical-Path Gate
 
-**R3b** — working answer generation + `/chat` end to end. Build the
-answer strictly from the R3a EvidenceBundle (no unsupported claims),
-with citations to bundle items. R3a assembles evidence; R3b turns it
-into the final response.
+**C1** — Stage-2 corpus-level canonicalization / cross-document merge.
+Facts are per-document today; C1 adds the deterministic merge layer
+(cross-document entity merge) WITHOUT touching the frozen per-document
+extraction path. See `CURRENT_STATE.md` (Knowledge Extraction State)
+for the current absence.
 
 ## Do Not Do
 
