@@ -19,7 +19,7 @@ NEGATION_CUES = frozenset({
 })
 
 HEDGE_CUES = frozenset({
-    "may", "might", "could", "possibly", "perhaps", "likely", "probably",
+    "may", "might", "could", "can", "possibly", "perhaps", "likely", "probably",
     "suggest", "suggests", "hypothesize", "appears to", "seems to", "reportedly",
 })
 
@@ -62,7 +62,10 @@ def analyze_scope(
     flags.negated = _cue_near(lowered, evidence_start, evidence_end, NEGATION_CUES, window)
     flags.speculative = _cue_near(lowered, evidence_start, evidence_end, HEDGE_CUES, window)
     flags.conditional = _cue_near(lowered, evidence_start, evidence_end, CONDITIONAL_CUES, window)
-    flags.hypothetical = any(cue in before for cue in ("would", "could", "plans to", "intends to"))
+    # Q1-R v1.1.0: "could" is a hedge (speculative), not a hypothetical;
+    # only genuinely counterfactual cues set hypothetical so epistemic
+    # hedges keep certainty=speculative.
+    flags.hypothetical = any(cue in before for cue in ("would", "plans to", "intends to"))
 
     for cue in sorted(ATTRIBUTION_CUES, key=len, reverse=True):
         if cue in before:

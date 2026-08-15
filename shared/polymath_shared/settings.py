@@ -42,6 +42,12 @@ class WorkerSettings(BaseSettings):
         description="ADR-0008: 'lexical' (pass 2 abstains) or 'hybrid' "
                     "(GLiNER evidence proposals merge with lexical anchors)",
     )
+    rule_pack_version: str = Field(
+        default="1.0.1",
+        description="Deterministic rule pack version for extraction. "
+                    "1.0.1 = frozen Q1 production baseline; 1.1.0 = "
+                    "candidate realistic-prose baseline (Q1-R).",
+    )
 
 
 class ControlSettings(BaseSettings):

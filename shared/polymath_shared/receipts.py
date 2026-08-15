@@ -133,8 +133,16 @@ class _StageWrite:
     # -- durable writes ----------------------------------------------------
 
     def artifact(self, payload: dict) -> str:
-        """Store a stage artifact; the artifact id is content-derived."""
-        artifact_id = content_hash({"run": self.run_id, "stage": self.stage, "payload": payload})
+        """Store a stage artifact; the artifact id is content-derived and
+        includes the stage contract — a contract-bumped re-run (e.g. rule
+        pack v1.1.0) must be able to write its own artifact row instead of
+        colliding with the previous contract's primary key."""
+        artifact_id = content_hash({
+            "run": self.run_id,
+            "stage": self.stage,
+            "contract": self.contract_hash,
+            "payload": payload,
+        })
         self.conn.execute(
             """
             INSERT INTO artifacts (artifact_id, run_id, stage, contract_hash, payload)

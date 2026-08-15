@@ -48,7 +48,8 @@ class RulePackError(ValueError):
 # ---------------------------------------------------------------------------
 
 
-def load_rule_pack(path: Optional[Path] = None, *, use_resources: bool = True) -> dict[str, Any]:
+def load_rule_pack(path: Optional[Path] = None, *, use_resources: bool = True,
+                   pack_version: Optional[str] = None) -> dict[str, Any]:
     """Load the rule pack + (optionally) the compiled lexical tables.
 
     Runtime reads ONLY the committed compiled tables under
@@ -63,16 +64,39 @@ def load_rule_pack(path: Optional[Path] = None, *, use_resources: bool = True) -
     resource-derived evidence anywhere (no class expansion, no
     roleset/VN/FN/SemLink lookups). The compiler itself is byte-for-byte
     the same code path.
+
+    `pack_version` selects the rule-pack release: "1.0.1" is the frozen
+    Q1 production baseline (core-predicates.yaml + compiled_lexical.json,
+    both frozen); "1.1.0" is the Q1-R candidate realistic-prose baseline
+    (core-predicates-v1.1.0.yaml + compiled_lexical-v1.1.0.json). When
+    None, the worker setting POLYMATH_WORKER_RULE_PACK_VERSION decides
+    (default 1.0.1 so frozen evaluation harnesses stay byte-identical).
     """
-    raw = yaml.safe_load((path or _RULE_PACK_PATH).read_text())
+    if pack_version is None:
+        try:
+            from polymath_shared.settings import get_settings
+
+            pack_version = get_settings().worker.rule_pack_version
+        except Exception:
+            pack_version = "1.0.1"
+    if pack_version == "1.0.1":
+        yaml_path = path or _RULE_PACK_PATH
+        compiled_name = "compiled_lexical.json"
+    elif pack_version == "1.1.0":
+        yaml_path = path or (_RULE_PACK_PATH.parent / "core-predicates-v1.1.0.yaml")
+        compiled_name = "compiled_lexical-v1.1.0.json"
+    else:
+        raise RulePackError(f"unknown rule pack version {pack_version!r}")
+
+    raw = yaml.safe_load(yaml_path.read_text())
     resources = yaml.safe_load(_RESOURCE_INDEX_PATH.read_text())
     if not use_resources:
         return _compile_baseline(raw, resources)
-    compiled = _load_compiled_lexical(raw)
+    compiled = _load_compiled_lexical(raw, compiled_name)
     return _compile(raw, resources, compiled)
 
 
-def _load_compiled_lexical(raw: dict) -> dict:
+def _load_compiled_lexical(raw: dict, compiled_name: str) -> dict:
     compiled_root = Path(__file__).resolve().parents[3] / "resources" / "compiled"
     if not compiled_root.exists():
         raise RulePackError(
@@ -84,9 +108,9 @@ def _load_compiled_lexical(raw: dict) -> dict:
         raise RulePackError(
             f"expected exactly one compiled resource contract, found {[d.name for d in dirs]}"
         )
-    path = dirs[0] / "compiled_lexical.json"
+    path = dirs[0] / compiled_name
     if not path.exists():
-        raise RulePackError(f"{path.name} missing; run scripts/compile_predicate_rules.py")
+        raise RulePackError(f"{compiled_name} missing; run scripts/compile_predicate_rules.py")
     compiled = json.loads(path.read_text())
 
     if compiled["rule_pack_id"] != raw["rule_pack"]["id"]:

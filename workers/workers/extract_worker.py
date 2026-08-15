@@ -50,6 +50,15 @@ EVENT_TYPE = "chunked.v1"
 EXTRACTOR_VERSION = "gliner-2pass-v1"
 ONTOLOGY_VERSION = "core-v1"
 RULE_PACK_VERSION = "1.0.0"
+# Q1-R: the rule-pack release the extract stage compiles against.
+# Packed into the stage contract so a pack promotion re-runs extraction.
+_ACTIVE_PACK_VERSION = "1.0.1"  # overwritten at runtime from settings
+
+
+def active_pack_version() -> str:
+    from polymath_shared.settings import get_settings
+
+    return get_settings().worker.rule_pack_version
 
 ENTITY_THRESHOLD = 0.5
 EVIDENCE_THRESHOLD = 0.4
@@ -62,7 +71,7 @@ _rule_pack = None
 def _pack() -> dict:
     global _rule_pack
     if _rule_pack is None:
-        _rule_pack = load_rule_pack()
+        _rule_pack = load_rule_pack(pack_version=active_pack_version())
     return _rule_pack
 
 
@@ -180,11 +189,43 @@ def _slices(
             parse = parse_sentence(text)
             if parse is not None:
                 parse["_sentence_offsets"] = [start, end]
+                _fill_parse_entities(parse, ent)
             slices.append(SentenceSlice(
                 text=text, sentence_start=start, sentence_end=end,
                 entities=ent, evidence=ev, parse=parse,
             ))
     return slices
+
+
+def _fill_parse_entities(parse: dict, entities: list[EntitySpan]) -> None:
+    """Q1-R v1.1.0: link the syntactic record's subject/agent/object to
+    pass-1 entity ids by deterministic surface match, so the compiler's
+    voice normalization (_oriented_pair) can orient passive facts by
+    semantic role. Without this link the passive path was dead in
+    production (the frozen harness was the only supplier of entity_id)."""
+    from polymath_shared.rulepack.compiler import canonical_entity_id
+
+    for slot in ("subject", "agent", "object"):
+        record = parse.get(slot)
+        if not record:
+            continue
+        token_text = (record.get("token_text") or "").strip()
+        head_text = (record.get("head_text") or "").strip()
+        if not token_text:
+            continue
+        match = None
+        for span in entities:
+            span_text = span.text.strip()
+            if span_text == token_text or span_text == head_text:
+                match = span
+                break
+        if match is None:
+            for span in entities:
+                if token_text.lower() in span.text.lower():
+                    match = span
+                    break
+        if match is not None:
+            record["entity_id"] = canonical_entity_id(match.core_type, match.text)
 
 
 def process_event(conn: Connection, event: dict) -> None:
@@ -207,7 +248,7 @@ def process_event(conn: Connection, event: dict) -> None:
         parser=parser_name,
         parser_version=parser_version,
         ontology_version=ONTOLOGY_VERSION,
-        rule_pack_version=RULE_PACK_VERSION,
+        rule_pack_version=active_pack_version(),
         thresholds={"entity": ENTITY_THRESHOLD, "evidence": EVIDENCE_THRESHOLD},
     )
 
@@ -216,6 +257,8 @@ def process_event(conn: Connection, event: dict) -> None:
         "evidence_proposer": EVIDENCE_EXTRACTOR_VERSION,
         "ontology_version": ONTOLOGY_VERSION,
         "rule_pack_version": RULE_PACK_VERSION,
+        "active_pack_version": active_pack_version(),
+        "parser_version": parser_version,
         "thresholds": {"entity": ENTITY_THRESHOLD, "evidence": EVIDENCE_THRESHOLD},
         "evidence_proposal_mode": proposal_mode,
     })

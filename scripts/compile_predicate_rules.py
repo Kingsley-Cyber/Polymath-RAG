@@ -21,6 +21,7 @@ Usage:
 """
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import sys
@@ -49,13 +50,21 @@ def _find_compiled_dir() -> Path:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--pack", default=None,
+                        help="rules YAML path (default: frozen core-predicates.yaml -> compiled_lexical.json)")
+    parser.add_argument("--out-name", default="compiled_lexical.json",
+                        help="output filename inside the compiled contract dir")
+    args = parser.parse_args()
+
     compiled_dir = _find_compiled_dir()
     manifest = json.loads((compiled_dir / "manifest.json").read_text())
     tables = {
         name: json.loads((compiled_dir / name).read_text())
         for name in manifest["tables"]
     }
-    rules = yaml.safe_load(RULES_YAML.read_text())
+    rules_yaml = Path(args.pack) if args.pack else RULES_YAML
+    rules = yaml.safe_load(rules_yaml.read_text())
 
     failures, out = validate_and_compile(rules, tables, manifest)
     if failures:
@@ -64,10 +73,10 @@ def main() -> int:
             print(f"  {failure}")
         return 1
 
-    (compiled_dir / "compiled_lexical.json").write_text(
+    (compiled_dir / args.out_name).write_text(
         json.dumps(out, sort_keys=True, separators=(",", ":"), indent=None)
     )
-    print(f"compiled_lexical.json written to {compiled_dir.name}")
+    print(f"{args.out_name} written to {compiled_dir.name}")
     print(f"  predicates: {len(out['predicates'])}")
     print(f"  resource_contract_id: {manifest['resource_contract_id'][:24]}...")
     print(f"  compiled_lexical_sha256: {out['compiled_lexical_sha256'][:24]}...")
