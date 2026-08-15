@@ -375,3 +375,17 @@ that motivated it and the refactor that implemented it.
   corpus isolation 0 leaks; deterministic; lanes ~8-15ms p50.
 - No FAST/HYBRID/GRAPH exposure, no support classifier, no synthesis
   change (D4/D4.1 stand).
+
+## 2026-08-15: R1C — FAST production route
+
+- Versioned retrieval-mode contract (retrieval-mode-v1): FAST maps to
+  the qualified pass1-retrieval-v1 plan; LEGACY retained explicitly
+  as the frozen regression default; HYBRID/GRAPH not exposed.
+- /retrieve, /evidence, /chat accept mode=FAST and consume ONE
+  Pass-1 result (orchestrator/api/fast.py wraps the shared engine).
+  FAST: neural routing only (no hash fallback), explicit readiness
+  (query_ready + populated routing projection), loud 502 semantics,
+  hierarchical trace, bounded evidence (graph lane empty by contract).
+- Parity: repeated-request 0 mismatches; doc R@1 0.882 matches R1B;
+  final-evidence recall 0.971 (R1B 0.941); latency p50 659 ms.
+- Suites + guards green; frozen legacy golden contracts untouched.

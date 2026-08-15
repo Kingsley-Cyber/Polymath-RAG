@@ -1,0 +1,133 @@
+{
+  "parity": {
+    "queries": 34,
+    "selected_doc_mismatch": 0,
+    "selected_section_mismatch": 0,
+    "evidence_mismatch": 0,
+    "g3_order_mismatch": 0
+  },
+  "production_doc_metrics": {
+    "R@1": 0.882,
+    "R@3": 0.912,
+    "R@5": 0.971,
+    "MRR": 0.909
+  },
+  "final_evidence_supporting_recall": 0.971,
+  "r1b_harness_final_evidence_supporting_recall": 0.941,
+  "rescue_preserved": 6,
+  "evidence_mean": 5.2,
+  "evidence_max": 7,
+  "api_total_p50_ms": 658.6,
+  "api_total_p95_ms": 821.7,
+  "component_p50_ms": {
+    "doc": 7.9,
+    "section": 4.1,
+    "child": 3.9,
+    "deep": 16.8
+  },
+  "smoke": {
+    "A_doc_led": {
+      "documents": [
+        "doc_ee1a799e",
+        "doc_f2e79d8a",
+        "doc_99fe7f27",
+        "doc_05b8c6a9",
+        "doc_9bf1e24d"
+      ],
+      "sections": 5,
+      "evidence": [
+        "chunk_4b5ad0",
+        "chunk_411bf1",
+        "chunk_bc86d6",
+        "chunk_ff1a12",
+        "chunk_c306ed"
+      ]
+    },
+    "B_section_led": {
+      "documents": [
+        "doc_9bf1e24d",
+        "doc_e6b3aead",
+        "doc_3d6490dc",
+        "doc_05b8c6a9",
+        "doc_1430730f"
+      ],
+      "sections": 5,
+      "evidence": [
+        "chunk_c306ed",
+        "chunk_35ca01",
+        "chunk_d54e6a",
+        "chunk_ff1a12",
+        "chunk_f523b8",
+        "chunk_193c85"
+      ]
+    },
+    "C_rescue": {
+      "documents": [
+        "doc_45a822c2",
+        "doc_43aeafb5",
+        "doc_b6cb3af6",
+        "doc_27f4cdcd",
+        "doc_82a81df7"
+      ],
+      "sections": 5,
+      "evidence": [
+        "chunk_2f20a4",
+        "chunk_1c5069",
+        "chunk_92a7b2",
+        "chunk_7ba75a",
+        "chunk_23a8d7"
+      ]
+    },
+    "D_disambig": {
+      "documents": [
+        "doc_82a81df7",
+        "doc_689db52b",
+        "doc_6e90a1cc",
+        "doc_6924d12b",
+        "doc_52e02a74"
+      ],
+      "sections": 5,
+      "evidence": [
+        "chunk_23a8d7",
+        "chunk_632630",
+        "chunk_64c8cf",
+        "chunk_e4e0be",
+        "chunk_f0a8bc"
+      ]
+    },
+    "E_late": {
+      "documents": [
+        "doc_2b3edd8d",
+        "doc_bc19cc38",
+        "doc_43aeafb5",
+        "doc_fc550c44",
+        "doc_f50b8754"
+      ],
+      "sections": 5,
+      "evidence": [
+        "chunk_ba4a31",
+        "chunk_b6b8c0",
+        "chunk_1c5069",
+        "chunk_7cf973",
+        "chunk_cdb7d9"
+      ]
+    },
+    "G_multi_doc": {
+      "documents": [
+        "doc_f2e79d8a",
+        "doc_05b8c6a9",
+        "doc_ee1a799e",
+        "doc_dfdc37ee",
+        "doc_99fe7f27"
+      ],
+      "sections": 5,
+      "evidence": [
+        "chunk_411bf1",
+        "chunk_ff1a12",
+        "chunk_4b5ad0",
+        "chunk_d7ba18",
+        "chunk_bc86d6"
+      ]
+    }
+  }
+}

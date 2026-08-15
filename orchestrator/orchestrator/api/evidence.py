@@ -42,6 +42,7 @@ class EvidenceRequest(BaseModel):
     query: str
     corpus_id: Optional[str] = None
     limit: int = 10
+    mode: Optional[str] = None
 
 
 @router.post("/evidence")
@@ -50,6 +51,52 @@ async def evidence(req: EvidenceRequest) -> dict:
     if not query:
         raise HTTPException(status_code=422, detail="query is required")
     corpus_id = req.corpus_id
+
+    # R1C: FAST mode = the same qualified Pass-1 result /retrieve and
+    # /chat consume; the graph lane is empty by FAST contract.
+    from polymath_shared.retrieval_modes import MODE_FAST, validate_mode
+
+    if validate_mode(req.mode) == MODE_FAST:
+        from orchestrator.api.fast import fast_retrieve
+
+        fast = fast_retrieve(query, corpus_id)
+        child_evidence = [
+            {"chunk_id": c["chunk_id"], "doc_id": c["doc_id"], "parent_id": c["parent_id"]}
+            for c in fast["evidence"]
+        ]
+        document_summaries = [
+            {"doc_id": d["doc_id"], "summary": (d.get("document_summary") or {}).get("text", "")}
+            for d in fast["selected_documents"] if d.get("document_summary")
+        ]
+        parent_ids = [s["parent_id"] for s in fast["selected_sections"]]
+        with tx() as conn:
+            rows = conn.execute(
+                "SELECT chunk_id, doc_id, summary FROM chunks WHERE chunk_id = ANY(%s)",
+                (parent_ids,),
+            ).fetchall()
+            section_summaries = [
+                {"chunk_id": r[0], "doc_id": r[1], "summary": r[2] or ""} for r in rows
+            ]
+        try:
+            bundle = assemble_evidence_bundle(
+                query,
+                [],
+                child_evidence,
+                evidence_order=[c["chunk_id"] for c in fast["evidence"]],
+                resolve_fact=lambda fid: _resolve_fact(fid),
+                resolve_evidence=lambda fid: _resolve_evidence_rows(fid),
+                resolve_entity=lambda eid: _resolve_entity(eid),
+                resolve_document=lambda did: _resolve_document(did),
+                resolve_chunk=lambda cid: _resolve_chunk(cid),
+                document_summaries=document_summaries,
+                section_summaries=section_summaries,
+            )
+        except AssemblyError as exc:
+            raise HTTPException(status_code=502, detail={
+                "error_code": type(exc).__name__, "message": str(exc),
+            }) from exc
+        bundle["meta"]["mode"] = MODE_FAST
+        return bundle
 
     with tx() as conn:
         profiles = _fetch_profiles(conn, corpus_id)

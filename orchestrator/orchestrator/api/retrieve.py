@@ -36,6 +36,7 @@ class RetrieveRequest(BaseModel):
     query: str
     corpus_id: Optional[str] = None
     limit: int = 10
+    mode: Optional[str] = None
 
 
 @router.post("/retrieve")
@@ -44,6 +45,17 @@ async def retrieve(req: RetrieveRequest) -> dict:
     if not query:
         raise HTTPException(status_code=422, detail="query is required")
     corpus_id = req.corpus_id
+
+    # R1C: explicit production modes. FAST maps deterministically to the
+    # qualified pass1-retrieval-v1 engine; LEGACY is the frozen lane
+    # route retained for regression (G1/G2 golden contracts).
+    from polymath_shared.retrieval_modes import MODE_FAST, validate_mode
+
+    mode = validate_mode(req.mode)
+    if mode == MODE_FAST:
+        from orchestrator.api.fast import fast_retrieve
+
+        return fast_retrieve(query, corpus_id)
 
     with tx() as conn:
         profiles = _fetch_profiles(conn, corpus_id)
