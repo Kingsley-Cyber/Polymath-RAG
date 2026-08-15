@@ -146,14 +146,19 @@ def reconcile_qdrant(conn: Connection, run_id: str, corpus: str) -> dict:
 def reconcile_neo4j(conn: Connection, run_id: str, corpus: str) -> dict:
     desired = set(_desired_chunk_ids(conn, run_id))
     receipts = set(_receipt_chunk_ids(conn, corpus, "neo4j"))
+    # Neo4j is a SHARED graph: a chunk is an orphan only when it has no
+    # active receipt ANYWHERE (bulk-acceptance-discovered defect — the
+    # corpus-scoped receipt set made one corpus's verify delete other
+    # corpora's legitimately receipted chunks).
+    global_receipts = set(_receipt_kind_ids(conn, corpus, "neo4j", "chunk"))
 
     driver = _neo4j_driver()
     try:
         with driver.session() as session:
             result = session.run("MATCH (c:Chunk) RETURN c.chunk_id AS id")
             store_ids = {r["id"] for r in result}
-            # Delete orphan chunk nodes (no receipt).
-            orphans = store_ids - receipts
+            # Delete orphan chunk nodes (no receipt anywhere).
+            orphans = store_ids - global_receipts
             for chunk_id in orphans:
                 session.run(
                     "MATCH (c:Chunk {chunk_id: $id}) DETACH DELETE c", id=chunk_id
@@ -190,7 +195,7 @@ def reconcile_neo4j(conn: Connection, run_id: str, corpus: str) -> dict:
 
     return {
         "missing_in_store": sorted(missing_in_store),
-        "orphans_in_store": sorted(store_ids - receipts),
+        "orphans_in_store": sorted(orphans),
         "orphan_receipts": orphan_receipts,
         "missing_receipts": sorted(missing_receipts),
         "missing_facts": sorted(missing_edges) if missing_edges else [],

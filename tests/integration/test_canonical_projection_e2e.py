@@ -389,3 +389,51 @@ def test_canonical_projection_e2e_full_lineage_and_rebuild() -> None:
     assert "ent_c2_acme_b" in _receipt_ids(KIND_CANONICAL_MEMBERSHIP)
     assert "ev_c2_fact_c2_a" in _receipt_ids(KIND_EVIDENCE_CHUNK)
     _cleanup()
+
+
+def test_verify_does_not_delete_other_corpora_chunks() -> None:
+    """Bulk-acceptance-discovered defect: reconcile_neo4j deleted chunks
+    receipted by OTHER corpora. A corpus's verify must only delete
+    chunks with no receipt anywhere."""
+    with tx() as conn:
+        conn.execute(
+            "INSERT INTO projection_receipts (projection, entity_kind, entity_id, receipt_hash, active) "
+            "VALUES ('neo4j', 'chunk', 'chunk_foreign_survivor', 'hash', TRUE) "
+            "ON CONFLICT (projection, entity_kind, entity_id) DO UPDATE SET active = TRUE"
+        )
+    driver = neo4j_driver()
+    try:
+        with driver.session() as s:
+            s.run("MERGE (c:Chunk {chunk_id: 'chunk_foreign_survivor'})").consume()
+    finally:
+        driver.close()
+    _cleanup()
+    rid = _make_run()
+    try:
+        _seed_doc("doc_c2_x", "x.txt", "chunk_c2_x", "AcmeCorp ships tools.")
+        _seed_entity("ent_c2_x", "Organization", "AcmeCorp")
+        _seed_entity("ent_c2_x2", "Product", "tools")
+        _seed_fact("fact_c2_x", "ships", "ent_c2_x", "ent_c2_x2", "doc_c2_x", "chunk_c2_x")
+        with tx() as conn:
+            _canonicalize(conn, {"run_id": rid})
+            _project(conn, {"run_id": rid})
+            _verify(conn, {"run_id": rid})
+        driver = neo4j_driver()
+        try:
+            with driver.session() as s:
+                survivor = s.run(
+                    "MATCH (c:Chunk {chunk_id: 'chunk_foreign_survivor'}) RETURN c").single()
+        finally:
+            driver.close()
+        assert survivor is not None, "foreign receipted chunk was deleted"
+        with tx() as conn:
+            conn.execute(
+                "DELETE FROM projection_receipts WHERE entity_id = 'chunk_foreign_survivor'")
+        driver = neo4j_driver()
+        try:
+            with driver.session() as s:
+                s.run("MATCH (c:Chunk {chunk_id: 'chunk_foreign_survivor'}) DETACH DELETE c").consume()
+        finally:
+            driver.close()
+    finally:
+        _cleanup()

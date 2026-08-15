@@ -325,6 +325,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/contracts/test_materialization_contract.py", "py", None),
     ("docs/wiki/work-log/2026-08-14-q1-qualification.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-i0-native-documents.md", "md", None),
+    ("docs/wiki/work-log/2026-08-14-bulk-acceptance-verify-fix.md", "md", None),
     ("docs/wiki/refactors/0006-q1-qualification.md", "md", None),
     ("docs/wiki/refactors/0007-i0-native-documents.md", "md", None),
     ("eval/gold/relations_v1.yaml", "yaml", None),

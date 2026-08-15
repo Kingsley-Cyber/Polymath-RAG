@@ -3,6 +3,15 @@
 Dated diffs of every architectural change. Each entry links to the ADR
 that motivated it and the refactor that implemented it.
 
+## 2026-08-14: verify cross-corpus chunk-deletion fix
+
+- Bulk-acceptance run discovered `reconcile_neo4j` deleted other
+  corpora's receipted chunk nodes (orphan check used corpus-scoped
+  receipts against the shared graph). Fixed: orphans = chunks with no
+  active receipt ANYWHERE; report value matches the deletion set.
+  Regression test added; live stores re-driven to query_ready
+  (work log 2026-08-14-bulk-acceptance-verify-fix).
+
 ## 2026-08-14: I0 native document materialization (ADR 0010)
 
 - `shared/polymath_shared/materializer.py`: deterministic
