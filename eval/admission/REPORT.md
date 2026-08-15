@@ -1,11 +1,14 @@
 # E2/C1.1 Entity Admission Qualification — Report
 
-Status: FROZEN
+Status: FROZEN (v1.1 rerun)
 Date: 2026-08-14
-Outcome: **candidate measured, NOT promoted** — local accuracy 90.9% with
-four recorded error classes; downstream projection confirms generic-hub
-suppression and specific-hub survival. Policy revision (v1.1) and the
-decisive downstream rerun are the next step.
+Outcome: **BOTH LAYERS PASS — promotion authorized, not yet wired.**
+
+admission-v1.0 was measured (90.9%, 4 error classes) and NOT promoted.
+admission-v1.1 fixed exactly those mechanisms and now scores 55/55 on
+the frozen gold; the admission-filtered disposable projection passes
+the downstream G4 checkpoint (zero generic-hub noise, scoped traversal
+survives, canonical bidirectional hop1 finally safe).
 
 ## Lifecycle boundary (inspected, recorded)
 
@@ -64,12 +67,55 @@ Overall accuracy 0.909. Error classes recorded (all anticipated):
   co-occurring proper-name/acronym signal, or exclude bare
   hex-index-like suffixes).
 
+## admission-v1.1 — fixes and local results
+
+Four measured v1.0 mechanisms fixed deterministically:
+1. capitalization alone never promotes generic common nouns
+   (sentence-initial or not);
+2. digit/version signal requires a co-occurring identity signal; a
+   digit alone never promotes (multi-token digit surfaces are numbered
+   generics; only single-token versioned names qualify);
+3. weak modifiers ("real", "new", "main") do not lift a generic head
+   out of MENTION_ONLY;
+4. bounded GENERIC_HEAD inventory (documented lexical structure) +
+   deictic references → DOCUMENT_SCOPED; identifier-on-lowercase-head
+   ("component D6L11") → MENTION_ONLY.
+
+Frozen gold v1.1 (`admission_gold_v1.1.json`, 55 items, hash
+`93c4a99b…`): **55/55 — GLOBAL/CORPUS_SCOPED/DOCUMENT_SCOPED/
+MENTION_ONLY all P=1.0 R=1.0.**
+
+## Downstream checkpoint (admission-filtered disposable projection)
+
+MENTION_ONLY surfaces deleted from the Neo4j projection (facts with a
+MENTION_ONLY endpoint remain Postgres evidence): dropped = the system,
+the model, the platform, the database + all 264 component leaves;
+kept = 9 GLOBAL/CORPUS_SCOPED entities.
+
+| Query | outgoing sel | bidir sel | note |
+|---|---|---|---|
+| q01/q07 | 0/0 | 0/0 | generic hubs correctly absent |
+| q03 retrieval pipeline | 1u | **3u** | bidirectional gain survives |
+| q05 corpus layer | 0 | **1u** | incoming edge recovered |
+| q06 verification loop | 1u | **2u** | incoming edge recovered |
+| q11 vector index | 0 | **1u** | incoming edge recovered |
+| q09/q10 | 0n | **0n** | generic noise eliminated |
+| aggregate | — | 12u / **0n** | 100% precision; reranker no longer acts as garbage cleanup |
+
 ## Verdict
 
-Both-layer promotion is NOT granted: local error classes are recorded
-and must be resolved in admission-v1.1 before the decisive downstream
-G4/G4.2 rerun with an actually-rebuilt projection. No production code
-changed (policy lives in `eval/admission/`, experiment-only).
+**Both-layer promotion authorized:** local admission quality (100%) AND
+downstream graph-quality improvement (zero generic noise, scoped
+bidirectional traversal survives) both pass. Production remains
+UNCHANGED until the wiring is executed as its own change.
+
+Production wiring plan (authorized, not started): candidates.py
+identity allocation by admission class (GLOBAL → canonical_entity_id;
+CORPUS_SCOPED → corpus-scoped id; DOCUMENT_SCOPED → document-scoped
+id; MENTION_ONLY → mention id only); extract persistence + Neo4j
+projector skip MENTION_ONLY nodes; facts with MENTION_ONLY endpoints
+park as evidence, never invent identity; then the promoted graph
+policy (canonical bidirectional hop1 + caps + G3 reranker).
 
 ## Production state
 
