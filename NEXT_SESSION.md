@@ -10,6 +10,16 @@ Read:
 
 ## Last Completed
 
+- **I1 — manifest-driven bulk ingestion** (ADR 0013, refactor 0010,
+  work log `2026-08-15-i1-manifest-driven-bulk-ingestion.md`).
+  Manifest contract v1 + pure policy + shared intake writer (one
+  execution path; POST /intake delegates to it) + control-plane
+  plan/execute/status + CLI (`make ingest-plan/run/status`) + frozen
+  fixture. Live verification: 6 submitted → 6 query_ready via the
+  real control plane; replay submits 0; changed-content, partial-
+  failure resume, corpus propagation, and batch-bounded resumable
+  submission all proven by the integration suite. Deletions deferred
+  by design.
 - **Live entity-admission E2E smoke gate — PASS** (work log
   `2026-08-15-smoke-admission-e2e-pass.md`). After D1
   (shared Neo4j-eligibility predicate: parked MENTION_ONLY facts are
@@ -78,8 +88,8 @@ MILESTONE A — CORPUS_INGEST_READY (current priority):
 4. ~~native document materialization (I0)~~ COMPLETE
 5. ~~entity admission production wiring (E2/C1.1)~~ COMPLETE (ADR 0011)
 6. ~~live admission smoke gate + D1/D2 defect fixes~~ COMPLETE (PASS)
-7. manifest-driven bulk ingestion (I1) ← NEXT
-8. corpus-scale integrity qualification (I2)
+7. ~~manifest-driven bulk ingestion (I1)~~ COMPLETE (ADR 0013)
+8. corpus-scale integrity qualification (I2) ← NEXT
 
 CORPUS_INGEST_READY is achieved only when C1+C2+Q1+I0+I1+I2 pass.
 

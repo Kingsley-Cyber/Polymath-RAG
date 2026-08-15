@@ -1,0 +1,31 @@
+version: 1
+
+corpus:
+  corpus_id: i1-fixture-corpus
+  title: I1 Bulk Fixture
+  description: "Frozen I1 bulk-ingestion fixture: markdown, txt, pdf, disabled, missing, changed-content cases."
+
+defaults:
+  language: en
+  source_tier: primary
+  enabled: true
+
+documents:
+  - source: ./books/notes.md
+
+  - source: ./books/plain.txt
+
+  - source: ./books/psychology.pdf
+
+  - source: ./books/changed.md
+
+  - source: ./papers/study.md
+    title: Study Paper (overridden title)
+
+  - source: ./transcripts/session.txt
+    source_tier: secondary
+
+  - source: ./books/disabled.md
+    enabled: false
+
+  - source: ./books/missing.pdf

@@ -1,0 +1,67 @@
+{
+  "$id": "https://polymath.local/contracts/ingestion/v1/manifest.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IngestionManifest",
+  "description": "I1 manifest-driven bulk ingestion declaration (version 1). The manifest declares WHAT should be ingested for one corpus: corpus identity, defaults, and a list of document sources resolved relative to the manifest file. It is an ingestion DECLARATION, not destructive desired-state reconciliation: documents absent from a later manifest are never deleted. The control plane decides what remains to be done; workers perform the existing pipeline. Unknown fields fail validation (closed schema). Source paths must be unique per manifest (duplicates fail validation).",
+  "type": "object",
+  "required": ["version", "corpus", "documents"],
+  "properties": {
+    "version": {
+      "description": "Manifest schema version. Only 1 exists.",
+      "const": 1
+    },
+    "corpus": {
+      "type": "object",
+      "required": ["corpus_id"],
+      "properties": {
+        "corpus_id": {
+          "description": "Declared corpus identity carried through the existing lifecycle. Never derived from folder names when the manifest provides it explicitly.",
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+        },
+        "title": {"type": ["string", "null"]},
+        "description": {"type": ["string", "null"]}
+      },
+      "additionalProperties": false
+    },
+    "defaults": {
+      "type": "object",
+      "properties": {
+        "language": {"type": "string", "default": "en"},
+        "source_tier": {
+          "enum": ["primary", "secondary", "tertiary"],
+          "default": "primary"
+        },
+        "enabled": {"type": "boolean", "default": true}
+      },
+      "additionalProperties": false,
+      "default": {}
+    },
+    "documents": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/document"}
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "document": {
+      "type": "object",
+      "required": ["source"],
+      "properties": {
+        "source": {
+          "description": "Path relative to the manifest file location (never process cwd).",
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {"type": ["string", "null"]},
+        "source_tier": {
+          "enum": ["primary", "secondary", "tertiary"]
+        },
+        "language": {"type": "string"},
+        "enabled": {"type": "boolean", "default": true}
+      },
+      "additionalProperties": false
+    }
+  }
+}

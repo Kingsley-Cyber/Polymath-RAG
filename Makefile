@@ -34,6 +34,18 @@ db-migrate:
 ## migrate — alias for db-migrate
 migrate: db-migrate
 
+## ingest-plan — read-only manifest ingestion plan (I1)
+ingest-plan:
+	$(PY) scripts/ingest.py plan --manifest $(MANIFEST)
+
+## ingest-run — submit required manifest intake work (I1)
+ingest-run:
+	$(PY) scripts/ingest.py run --manifest $(MANIFEST)
+
+## ingest-status — manifest reconciliation report (I1)
+ingest-status:
+	$(PY) scripts/ingest.py status --manifest $(MANIFEST)
+
 ## dev-api — orchestrator in the foreground
 dev-api:
 	cd orchestrator && ../$(PY) -m uvicorn orchestrator.main:app --host 127.0.0.1 --port 7200

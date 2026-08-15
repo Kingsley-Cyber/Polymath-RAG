@@ -1,0 +1,8 @@
+version: 1
+
+corpus:
+  corpus_id: i1-fixture-corpus
+
+documents:
+  - source: ./books/notes.md
+  - source: ./books/notes.md

@@ -5,21 +5,21 @@ SINGLE Postgres transaction, returns run_id immediately (PLAN Phase B
 exit proof). Replaying identical canonical input returns the existing
 run_id and creates no second run.
 
+The write itself lives in shared/polymath_shared/intake_submission.py —
+the ONE execution path shared with the I1 manifest producer.
+
 The orchestrator decides nothing about what happens next — the control
 plane and workers own that.
 """
 from __future__ import annotations
 
-import base64
-import json
-
 import psycopg
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from polymath_shared.contracts import IntakeRequest
 from polymath_shared.db import tx
-from polymath_shared.identity import content_hash, run_id
+from polymath_shared.intake_submission import canonical_intake_payload, submit_intake
 
 router = APIRouter()
 
@@ -32,48 +32,19 @@ class IntakeResponse(BaseModel):
 
 @router.post("/intake", response_model=IntakeResponse)
 async def intake(req: IntakeRequest) -> IntakeResponse:
-    try:
-        base64.b64decode(req.content_b64, validate=True)
-    except Exception:
-        raise HTTPException(status_code=422, detail="content_b64 is not valid base64")
-
-    canonical_payload = {
-        "corpus_id": req.corpus_id,
-        "source_name": req.source_name,
-        "media_type": req.media_type,
-        "content_b64": req.content_b64,
-        "config": req.config,
-    }
-    rid = run_id(req.corpus_id, canonical_payload)
-    outbox_key = content_hash({"run": rid, "type": "intake.v1", "payload": canonical_payload})
-
+    canonical_payload = canonical_intake_payload(
+        req.corpus_id, req.source_name, req.media_type, req.content_b64, req.config
+    )
     try:
         with tx() as conn:
-            existing = conn.execute("SELECT 1 FROM runs WHERE run_id = %s", (rid,)).fetchone()
-            if existing:
-                return IntakeResponse(run_id=rid, accepted=True, already_exists=True)
-
-            conn.execute(
-                """
-                INSERT INTO runs (run_id, corpus_id, status, metadata)
-                VALUES (%s, %s, 'intake', %s)
-                """,
-                (rid, req.corpus_id, json.dumps({
-                    "source_name": req.source_name,
-                    "intake_payload": canonical_payload,
-                })),
-            )
-            conn.execute(
-                """
-                INSERT INTO outbox_events (run_id, event_type, payload, idempotency_key)
-                VALUES (%s, 'intake.v1', %s, %s)
-                """,
-                (rid, json.dumps(canonical_payload), outbox_key),
-            )
+            result = submit_intake(conn, canonical_payload)
+            return IntakeResponse(**result)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     except psycopg.errors.UniqueViolation:
-        return IntakeResponse(run_id=rid, accepted=True, already_exists=True)
-
-    return IntakeResponse(run_id=rid, accepted=True)
+        return IntakeResponse(
+            run_id=result.get("run_id", ""), accepted=True, already_exists=True,
+        )
 
 
 @router.get("/runs/{run_id}")

@@ -280,3 +280,20 @@ that motivated it and the refactor that implemented it.
 - Live smoke corpus: all six gate queries now answer with cited
   in-corpus passages (zero foreign citations); the vague "system"
   query gains no graph authority.
+
+## 2026-08-15: I1 — manifest-driven bulk ingestion (ADR 0013)
+
+- Versioned closed-schema manifest (YAML, contracts/ingestion/v1)
+  declares what should be ingested; paths resolve relative to the
+  manifest; duplicate sources and unknown fields fail validation;
+  manifest identity is order-stable (canonical semantic hash) and
+  distinct from document content identity and run identity.
+- Planning is read-only and derives actions from authoritative
+  Postgres state; execution submits intake work through the ONE
+  shared intake writer (POST /intake now delegates to it — the
+  single-document path is unchanged); RETRY re-arms failed runs'
+  outbox events without mutating stage history or receipts.
+- CLI: scripts/ingest.py (plan/run/status) + make ingest-plan /
+  ingest-run / ingest-status. Batch-bounded, resumable, idempotent
+  (replay submits nothing). Deletions are explicitly deferred:
+  manifest absence is never deletion authorization.
