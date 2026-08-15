@@ -6,31 +6,36 @@ Read:
 1. `AGENTS.md`
 2. `CURRENT_STATE.md`
 3. `ARCHITECTURE.md`
-4. `RAG_E2E_CHECKLIST.md` (next unchecked gate: Q1)
+4. `RAG_E2E_CHECKLIST.md` (next unchecked gate: I1)
 
 ## Last Completed
 
-- **C2** — canonical KG + provenance projection. New census stage
-  `project_canonical`: CanonicalEntity nodes (C1 ids verbatim) +
-  HAS_MEMBER edges (decision/confidence/basis/version) +
-  Evidence→FROM_CHUNK source links. Verify gains `reconcile_canonical`
-  (orphan receipts → store orphans → missing artifacts, degrade
-  loudly); census re-arm covers canonical receipts. Live E2E proves
-  full lineage, destructive reconstruction from Postgres, replay
-  no-op, incremental delta, orphan detection. Evidence: work log
-  `2026-08-14-c2-canonical-kg.md`, refactor 0005.
-- **C1** — deterministic Stage-2 corpus canonicalization (ADR 0009;
-  work log `2026-08-14-c1-canonicalization.md`, refactor 0004).
+- **Q1** — heterogeneous production extraction qualification: **PASS**
+  (frozen). Corpus `eval/gold/qualification_q1.yaml` (53 items, 11
+  classes, sha `2ce1d237…`); frozen report `eval/q1/REPORT_Q1.md`;
+  regression locks `tests/contracts/test_q1_qualification_regression.py`.
+  Production (lexical) arm: P/R 0.943, 0 wrong-predicate, 0
+  wrong-scope; residual failures all catalogued classes. Pipeline E2E
+  with real GLiNER: 0 failed attempts, 0 degraded runs, full
+  provenance. Q1-discovered defect fixed: census chain reordered
+  (canonicalize → project_canonical → verify_projections).
+  **Production extraction is qualified. Further extraction changes
+  require a demonstrated regression or separately measured
+  improvement.** Evidence: work log
+  `2026-08-14-q1-qualification.md`, refactor 0006.
+- **C2** / **C1** — canonicalization layer + canonical KG (refactors
+  0005/0004, ADR 0009).
 - **R3b** / **R3a** — grounded answer path (refactors 0003/0002).
 - Phase H v1.1 — hybrid REJECT as production default (frozen evidence).
 
 ## What Was Validated (at checkpoint)
 
-- 131 unit tests passed / 21 skipped; 18 integration passed / 2 skipped.
+- 134 unit tests passed / 21 skipped; 18 integration passed / 2 skipped.
 - All three guards green (preflight / repo guard / wiki worm).
 - Frozen hashes re-verified: relations_v1 `fdfd75b4…`, relations_v1.1
   `3ee7065a…`, resource contract `03a513ec…`, tables `0ac3002a…`,
-  compiled lexical `5c58adbd…`.
+  compiled lexical `5c58adbd…`, Q1 corpus `2ce1d237…`, Q1 scorer
+  `94fdc6a9…`.
 
 ## Current Verified Commit
 
@@ -45,8 +50,8 @@ Do NOT begin E1 yet (deferred measured improvement).
 MILESTONE A — CORPUS_INGEST_READY (current priority):
 1. ~~Stage-2 corpus-level canonicalization/merge (C1)~~ COMPLETE
 2. ~~canonical KG + provenance projection (C2)~~ COMPLETE
-3. heterogeneous extraction qualification (Q1) ← NEXT
-4. manifest-driven bulk ingestion (I1)
+3. ~~heterogeneous extraction qualification (Q1)~~ COMPLETE (PASS)
+4. manifest-driven bulk ingestion (I1) ← NEXT
 5. corpus-scale integrity qualification (I2)
 
 CORPUS_INGEST_READY is achieved only when C1+C2+Q1+I1+I2 pass.
@@ -62,13 +67,12 @@ production lexical path.
 
 ## Next Unchecked Critical-Path Gate
 
-**Q1** — heterogeneous extraction/corpus qualification. Qualify the
-production extraction path (lexical lane, frozen compiler v1.0.1) on a
-heterogeneous corpus — mixed domains, media, and entity types — with
-measured quality gates recorded as qualification evidence (not held
-out by later tuning). Decide the acceptance bar for mass ingestion;
-the bulk-ingest controller (I1) and the corpus-scale integrity run
-(I2) follow, then CORPUS_INGEST_READY.
+**I1** — manifest-driven bulk ingestion. A manifest (file list /
+directory walk / list of sources) drives idempotent bulk intake of
+many documents through the production pipeline; per-source intake
+status, retries, and a final summary are reported; replay of the same
+manifest is a no-op. Extraction is qualified — do not tune it. Then
+I2 (corpus-scale integrity run) → CORPUS_INGEST_READY.
 
 ## Do Not Do
 

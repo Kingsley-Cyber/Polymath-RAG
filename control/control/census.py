@@ -15,11 +15,15 @@ from dataclasses import dataclass, field
 
 from psycopg import Connection
 
-STAGE_CHAIN = ["intake", "extract", "profile_document", "project_qdrant", "project_neo4j", "verify_projections", "canonicalize", "project_canonical"]
+STAGE_CHAIN = ["intake", "extract", "profile_document", "project_qdrant", "project_neo4j", "canonicalize", "project_canonical", "verify_projections"]
 
 # Each stage's re-drive event type. Projection stages have their own
 # event types so the census can schedule them independently — two
 # projectors never race over one shared outbox row.
+# Order note (Q1): canonicalize/project_canonical run BEFORE
+# verify_projections so the verifier reconciles the canonical graph
+# only when it is due (no false degraded states on incremental
+# ingestion).
 STAGE_EVENTS = {
     "intake": "intake.v1",
     "extract": "chunked.v1",

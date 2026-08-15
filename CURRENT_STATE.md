@@ -5,13 +5,13 @@ Verified against commit: `0573372` (C2: canonical KG + provenance projection —
 Active branch at verification: `main` (working tree clean)
 
 ```yaml
-current_phase: extraction-architecture-frozen # C1 complete; priority = CORPUS_INGEST_READY (C2 -> Q1 -> I1 -> I2)
+current_phase: extraction-qualified # Q1 PASS; extraction locked; priority = CORPUS_INGEST_READY (I1 -> I2)
 repository:
   branch: main
   head: 0573372
   frozen_artifacts: [see Frozen Artifacts section]
-  evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1]
-  next_actions: [c2-canonical-kg, q1-heterogeneous-qualification, i1-bulk-ingestion]
+  evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1, qualification-q1]
+  next_actions: [i1-bulk-ingestion, i2-scale-integrity]
   do_not_do: [see Explicitly Prohibited Actions]
   known_gaps: [see Known Limitations]
 ```
@@ -19,9 +19,10 @@ repository:
 ## System Status
 
 - **Build pipeline**: `preflight ok`, `repo guard ok`, `wiki ok` (verified at the commit above).
-- **Unit tests**: 131 passed, 21 skipped (skips = integration / neural-gated gates) — verified.
+- **Unit tests**: 134 passed, 21 skipped (skips = integration / neural-gated gates) — verified.
 - **Integration tests**: 18 passed, 2 skipped (`POLYMATH_INTEGRATION=1` + live stores; Qdrant on 6334, Neo4j on 7688, Postgres on 5432) — verified.
-- **Extraction verdict**: hybrid resource enrichment **REJECTED as production default** (Phase H v1.1: Δincorrect = +4 > 0). The lexical lane remains the production default. See "Current Evaluation Results".
+- **Extraction verdict**: hybrid resource enrichment **REJECTED as production default** (Phase H v1.1: Δincorrect = +4 > 0). The lexical lane remains the production default.
+- **Q1 qualification verdict: PASS** (frozen report `eval/q1/REPORT_Q1.md`): production lexical arm P/R 0.943 on the 53-item heterogeneous corpus; 0 wrong-predicate, 0 wrong-scope; every residual failure is a catalogued class; pipeline E2E clean with real GLiNER. **Production extraction is qualified. Further extraction changes require a demonstrated regression or separately measured improvement.**
 
 ## Current Architecture
 
@@ -33,9 +34,10 @@ sidecar-cpu / store / control. Authoritative files: `ARCHITECTURE.md`,
 0005 sidecar-contract, 0006 packaging-deployment, 0007 lexical evidence
 lane, 0008 evidence-pass boundary).
 
-Production path per run (census-driven, eight stages):
+Production path per run (census-driven, eight stages; Q1 reorder:
+canonical projection precedes verification):
 `intake → extract → profile_document → project_qdrant → project_neo4j →
-verify_projections → canonicalize → project_canonical`, with receipts
+canonicalize → project_canonical → verify_projections`, with receipts
 as the commit point (one Postgres transaction: artifact + receipt +
 status + outbox event).
 
@@ -268,19 +270,18 @@ permits a new corpus version.
 
 Phase H (empirical qualification) — complete. Extraction architecture
 frozen at commit 3ada0af. Milestone A (CORPUS_INGEST_READY): R3a/R3b
-COMPLETE, C1 COMPLETE, C2 COMPLETE → Q1 → I1 → I2. Milestone B
+COMPLETE, C1 COMPLETE, C2 COMPLETE, Q1 COMPLETE (PASS) → I1 → I2.
+Milestone B
 (RAG_V1_E2E):
 R2 → M1–M5 → R4 → O2 → O1 → A1 → V1. E1-a/E1-b are deferred measured
 improvements.
 
 ## Next Authorized Actions
 
-MILESTONE A — CORPUS_INGEST_READY (current priority; C1+C2 COMPLETE):
+MILESTONE A — CORPUS_INGEST_READY (current priority; C1+C2+Q1 COMPLETE):
 
-1. **Q1**: heterogeneous extraction/corpus qualification with measured
-   quality gates. NEXT gate.
-2. **I1**: manifest-driven bulk ingestion controller.
-3. **I2**: corpus-scale integrity run.
+1. **I1**: manifest-driven bulk ingestion controller. NEXT gate.
+2. **I2**: corpus-scale integrity run.
 
 CORPUS_INGEST_READY = C1 + C2 + Q1 + I1 + I2 pass.
 
@@ -353,4 +354,4 @@ v3.3 stack owns 6333/7474 and must never be touched); Neo4j on 7688.
 6. `eval/phase_h/REPORT.md` (v1.0), `eval/phase_h/REPORT_v1.1.md` (v1.1)
 7. `resources/README.md` (resource pipeline + upgrade procedure)
 8. `scripts/README.md` (managed scripts registry)
-9. `RAG_E2E_CHECKLIST.md` (release-gate checklist — next unchecked gate: C2)
+9. `RAG_E2E_CHECKLIST.md` (release-gate checklist — next unchecked gate: I1)

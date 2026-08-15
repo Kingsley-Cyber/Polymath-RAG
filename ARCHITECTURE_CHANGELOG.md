@@ -3,6 +3,22 @@
 Dated diffs of every architectural change. Each entry links to the ADR
 that motivated it and the refactor that implemented it.
 
+## 2026-08-14: Q1 heterogeneous extraction qualification (PASS)
+
+- Frozen qualification corpus `eval/gold/qualification_q1.yaml`
+  (53 items, 11 classes) + frozen harness artifacts + frozen report
+  `eval/q1/REPORT_Q1.md`: production (lexical) arm P/R 0.943, 0
+  wrong-predicate, 0 wrong-scope; residual failures all catalogued
+  classes. Regression locks in
+  `tests/contracts/test_q1_qualification_regression.py`.
+- Q1-discovered defect fixed: census chain reordered —
+  canonicalize → project_canonical → verify_projections — so the
+  verifier reconciles the canonical graph only when it is due
+  (refactor 0006; work log 2026-08-14-q1-qualification).
+- Production extraction declared qualified; further extraction
+  changes require a demonstrated regression or separately measured
+  improvement.
+
 ## 2026-08-14: C2 canonical KG + provenance projection
 
 - New census stage `project_canonical` (after `canonicalize`):

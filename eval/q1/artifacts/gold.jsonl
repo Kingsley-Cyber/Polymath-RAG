@@ -1,0 +1,56 @@
+{"item_id": "q1_b01", "outcome_target": "gold", "unit": ["triple", "q1_b01", "AcmeCorp", "acquired", "the startup"]}
+{"item_id": "q1_b02", "outcome_target": "gold", "unit": ["triple", "q1_b02", "The company", "owns", "three subsidiaries"]}
+{"item_id": "q1_b03", "outcome_target": "gold", "unit": ["triple", "q1_b03", "BlueChip", "subsidiary_of", "the conglomerate"]}
+{"item_id": "q1_b04", "outcome_target": "gold", "unit": ["triple", "q1_b04", "The bank", "employs", "hundreds of engineers"]}
+{"item_id": "q1_b05", "outcome_target": "gold", "unit": ["triple", "q1_b05", "Maya", "has_role", "the startup"]}
+{"item_id": "q1_b06", "outcome_target": "gold", "unit": ["triple", "q1_b06", "Chen", "leads", "the research division"]}
+{"item_id": "q1_b07", "outcome_target": "gold", "unit": ["triple", "q1_b07", "The team", "member_of", "the industry consortium"]}
+{"item_id": "q1_b08", "outcome_target": "gold", "unit": ["triple", "q1_b08", "The founder", "founded", "the company"]}
+{"item_id": "q1_b09", "outcome_target": "gold", "unit": ["triple", "q1_b09", "The startup", "employs", "a new CFO"]}
+{"item_id": "q1_t01", "outcome_target": "gold", "unit": ["triple", "q1_t01", "The lab", "created", "a new benchmark dataset"]}
+{"item_id": "q1_t02", "outcome_target": "gold", "unit": ["triple", "q1_t02", "The team", "developed", "the recommendation engine"]}
+{"item_id": "q1_t03", "outcome_target": "gold", "unit": ["triple", "q1_t03", "The service", "uses", "a vector database"]}
+{"item_id": "q1_t04", "outcome_target": "gold", "unit": ["triple", "q1_t04", "The parser", "implemented_with", "Rust"]}
+{"item_id": "q1_t05", "outcome_target": "gold", "unit": ["triple", "q1_t05", "source code", "transforms_into", "bytecode"]}
+{"item_id": "q1_t06", "outcome_target": "gold", "unit": ["triple", "q1_t06", "The model", "is_a", "neural network"]}
+{"item_id": "q1_t07", "outcome_target": "gold", "unit": ["triple", "q1_t07", "The frontend", "part_of", "the platform"]}
+{"item_id": "q1_t07", "outcome_target": "gold", "unit": ["triple", "q1_t07", "backend", "part_of", "the platform"]}
+{"item_id": "q1_t08", "outcome_target": "gold", "unit": ["triple", "q1_t08", "Accuracy", "measured_by", "the F1 score"]}
+{"item_id": "q1_s01", "outcome_target": "gold", "unit": ["triple", "q1_s01", "High temperature", "causes", "protein denaturation"]}
+{"item_id": "q1_s02", "outcome_target": "gold", "unit": ["triple", "q1_s02", "The catalyst", "enables", "the reaction"]}
+{"item_id": "q1_s03", "outcome_target": "gold", "unit": ["triple", "q1_s03", "Hormones", "influences", "metabolic rate"]}
+{"item_id": "q1_s04", "outcome_target": "gold", "unit": ["triple", "q1_s04", "The algorithm", "depends_on", "the training data"]}
+{"item_id": "q1_s05", "outcome_target": "gold", "unit": ["triple", "q1_s05", "The compound", "transforms_into", "a gas"]}
+{"item_id": "q1_s05", "outcome_target": "gold", "unit": ["spurious", "q1_s05", "The compound", "transforms_into", "high pressure"]}
+{"item_id": "q1_s06", "outcome_target": "gold", "unit": ["triple", "q1_s06", "The molecule", "derived_from", "the plant extract"]}
+{"item_id": "q1_p01", "outcome_target": "gold", "unit": ["triple", "q1_p01", "Priya", "has_role", "the engineering team"]}
+{"item_id": "q1_p02", "outcome_target": "gold", "unit": ["triple", "q1_p02", "The researchers", "member_of", "the institute"]}
+{"item_id": "q1_p03", "outcome_target": "gold", "unit": ["triple", "q1_p03", "The author", "created", "the paper"]}
+{"item_id": "q1_p04", "outcome_target": "gold", "unit": ["triple", "q1_p04", "The director", "leads", "the board"]}
+{"item_id": "q1_g01", "outcome_target": "gold", "unit": ["triple", "q1_g01", "The headquarters", "located_in", "Zurich"]}
+{"item_id": "q1_g02", "outcome_target": "gold", "unit": ["triple", "q1_g02", "The factory", "located_in", "the industrial park"]}
+{"item_id": "q1_g03", "outcome_target": "gold", "unit": ["triple", "q1_g03", "The observatory", "located_in", "the summit"]}
+{"item_id": "q1_tm01", "outcome_target": "gold", "unit": ["triple", "q1_tm01", "The conference", "occurred_at", "September"]}
+{"item_id": "q1_tm02", "outcome_target": "gold", "unit": ["triple", "q1_tm02", "The launch", "occurred_at", "September"]}
+{"item_id": "q1_tm03", "outcome_target": "gold", "unit": ["triple", "q1_tm03", "The event", "occurred_at", "the auditorium"]}
+{"item_id": "q1_c01", "outcome_target": "gold", "unit": ["triple", "q1_c01", "A transformer", "instance_of", "a neural architecture"]}
+{"item_id": "q1_c02", "outcome_target": "gold", "unit": ["triple", "q1_c02", "The chip", "part_of", "the device"]}
+{"item_id": "q1_c03", "outcome_target": "gold", "unit": ["triple", "q1_c03", "labeled examples", "part_of", "The dataset"]}
+{"item_id": "q1_c03", "outcome_target": "gold", "unit": ["spurious", "q1_c03", "The dataset", "part_of", "labeled examples"]}
+{"item_id": "q1_c04", "outcome_target": "gold", "unit": ["triple", "q1_c04", "PyTorch", "alias_of", "the deep learning framework"]}
+{"item_id": "q1_sc01", "outcome_target": "gold", "unit": ["abstention", "q1_sc01", null, null, null]}
+{"item_id": "q1_sc02", "outcome_target": "gold", "unit": ["abstention", "q1_sc02", null, null, null]}
+{"item_id": "q1_sc03", "outcome_target": "gold", "unit": ["abstention", "q1_sc03", null, null, null]}
+{"item_id": "q1_sc04", "outcome_target": "gold", "unit": ["triple", "q1_sc04", "The firm", "owns", "the patent portfolio"]}
+{"item_id": "q1_sc05", "outcome_target": "gold", "unit": ["triple", "q1_sc05", "The tool", "enables", "the pipeline"]}
+{"item_id": "q1_sc06", "outcome_target": "gold", "unit": ["triple", "q1_sc06", "the vendor", "uses", "the framework"]}
+{"item_id": "q1_n01", "outcome_target": "gold", "unit": ["abstention", "q1_n01", null, null, null]}
+{"item_id": "q1_n02", "outcome_target": "gold", "unit": ["abstention", "q1_n02", null, null, null]}
+{"item_id": "q1_n03", "outcome_target": "gold", "unit": ["abstention", "q1_n03", null, null, null]}
+{"item_id": "q1_n04", "outcome_target": "gold", "unit": ["abstention", "q1_n04", null, null, null]}
+{"item_id": "q1_ps01", "outcome_target": "gold", "unit": ["triple", "q1_ps01", "the team", "created", "The operating system"]}
+{"item_id": "q1_ps02", "outcome_target": "gold", "unit": ["triple", "q1_ps02", "the institute", "developed", "The vaccine"]}
+{"item_id": "q1_ps03", "outcome_target": "gold", "unit": ["abstention", "q1_ps03", null, null, null]}
+{"item_id": "q1_u01", "outcome_target": "gold", "unit": ["abstention", "q1_u01", null, null, null]}
+{"item_id": "q1_u02", "outcome_target": "gold", "unit": ["triple", "q1_u02", "The codebase", "uses", "the library"]}
+{"item_id": "q1_u03", "outcome_target": "gold", "unit": ["abstention", "q1_u03", null, null, null]}

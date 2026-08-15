@@ -1,0 +1,420 @@
+# Qualification corpus Q1 — heterogeneous production extraction gate.
+#
+# Authored from sentence semantics ONLY; never derived from compiler
+# output. Document classes (band field) span the production domain mix:
+#   BUSINESS  organizational/ownership/employment/leadership
+#   TECH      products, technology, usage, implementation
+#   SCIENCE   causation, influence, dependency, transformation
+#   PEOPLE    roles, membership, authorship
+#   GEO       locations
+#   TIME      temporal events
+#   CLASSIFY  classification/composition/alias
+#   SCOPE     negation/conditional/question/speculative/hypothetical/
+#             attributed assertion control
+#   NO_REL    correct-abstention controls
+#   PASSIVE   frozen syntactic direction evidence
+#   OOV       triggers outside the manual vocabulary (honest
+#             unsupported-rate measurement)
+#
+# Gold uses the frozen 28-predicate ontology vocabulary. Entities and
+# evidence spans are the frozen upstream (the same convention as the
+# Phase H corpora: upstream spans are byte-stable, no GLiNER variance).
+#
+# FREEZE: this file is immutable once scoring starts. Any later defect
+# requires a new corpus version, never an edit.
+
+version: "q1.0"
+parent_control: "none (standalone heterogeneous qualification corpus)"
+
+items:
+  # ── BUSINESS ────────────────────────────────────────────────────────
+  - id: q1_b01
+    band: BUSINESS
+    text: "AcmeCorp acquired the startup in March."
+    entities: [{text: AcmeCorp, type: Organization}, {text: the startup, type: Organization}, {text: March, type: TimeReference}]
+    evidence: [{text: acquired, class: ownership_control, lemma: acquire}]
+    gold: [{subject: AcmeCorp, predicate: acquired, object: the startup}]
+
+  - id: q1_b02
+    band: BUSINESS
+    text: "The company owns three subsidiaries."
+    entities: [{text: The company, type: Organization}, {text: three subsidiaries, type: Organization}]
+    evidence: [{text: owns, class: ownership_control, lemma: own}]
+    gold: [{subject: The company, predicate: owns, object: three subsidiaries}]
+
+  - id: q1_b03
+    band: BUSINESS
+    text: "BlueChip is a subsidiary of the conglomerate."
+    entities: [{text: BlueChip, type: Organization}, {text: the conglomerate, type: Organization}]
+    evidence: [{text: subsidiary of, class: ownership_control, lemma: subsidiary}]
+    gold: [{subject: BlueChip, predicate: subsidiary_of, object: the conglomerate}]
+
+  - id: q1_b04
+    band: BUSINESS
+    text: "The bank employs hundreds of engineers."
+    entities: [{text: The bank, type: Organization}, {text: hundreds of engineers, type: Person}]
+    evidence: [{text: employs, class: employment_membership, lemma: employ}]
+    gold: [{subject: The bank, predicate: employs, object: hundreds of engineers}]
+
+  - id: q1_b05
+    band: BUSINESS
+    text: "Maya is the CEO of the startup."
+    entities: [{text: Maya, type: Person}, {text: the startup, type: Organization}]
+    evidence: [{text: CEO of, class: leadership_governance, lemma: ceo}]
+    gold: [{subject: Maya, predicate: has_role, object: the startup}]
+
+  - id: q1_b06
+    band: BUSINESS
+    text: "Chen spearheads the research division."
+    entities: [{text: Chen, type: Person}, {text: the research division, type: Organization}]
+    evidence: [{text: spearheads, class: leadership_governance, lemma: spearhead}]
+    gold: [{subject: Chen, predicate: leads, object: the research division}]
+
+  - id: q1_b07
+    band: BUSINESS
+    text: "The team joined the industry consortium."
+    entities: [{text: The team, type: Organization}, {text: the industry consortium, type: Organization}]
+    evidence: [{text: joined, class: employment_membership, lemma: join}]
+    gold: [{subject: The team, predicate: member_of, object: the industry consortium}]
+
+  - id: q1_b08
+    band: BUSINESS
+    text: "The founder started the company in 2019."
+    entities: [{text: The founder, type: Person}, {text: the company, type: Organization}, {text: "2019", type: TimeReference}]
+    evidence: [{text: started, class: creation, lemma: start}]
+    gold: [{subject: The founder, predicate: founded, object: the company}]
+
+  - id: q1_b09
+    band: BUSINESS
+    text: "The startup hired a new CFO."
+    entities: [{text: The startup, type: Organization}, {text: a new CFO, type: Person}]
+    evidence: [{text: hired, class: employment_membership, lemma: hire}]
+    gold: [{subject: The startup, predicate: employs, object: a new CFO}]
+
+  # ── TECH ────────────────────────────────────────────────────────────
+  - id: q1_t01
+    band: TECH
+    text: "The lab created a new benchmark dataset."
+    entities: [{text: The lab, type: Organization}, {text: a new benchmark dataset, type: Product}]
+    evidence: [{text: created, class: creation, lemma: create}]
+    gold: [{subject: The lab, predicate: created, object: a new benchmark dataset}]
+
+  - id: q1_t02
+    band: TECH
+    text: "The team developed the recommendation engine."
+    entities: [{text: The team, type: Organization}, {text: the recommendation engine, type: Technology}]
+    evidence: [{text: developed, class: creation, lemma: develop}]
+    gold: [{subject: The team, predicate: developed, object: the recommendation engine}]
+
+  - id: q1_t03
+    band: TECH
+    text: "The service uses a vector database."
+    entities: [{text: The service, type: Product}, {text: a vector database, type: Technology}]
+    evidence: [{text: uses, class: usage_application, lemma: use}]
+    gold: [{subject: The service, predicate: uses, object: a vector database}]
+
+  - id: q1_t04
+    band: TECH
+    text: "The parser is implemented in Rust."
+    entities: [{text: The parser, type: Method}, {text: Rust, type: Technology}]
+    evidence: [{text: implemented in, class: usage_application, lemma: implement}]
+    gold: [{subject: The parser, predicate: implemented_with, object: Rust}]
+
+  - id: q1_t05
+    band: TECH
+    text: "The compiler transforms source code into bytecode."
+    entities: [{text: The compiler, type: Technology}, {text: source code, type: Concept}, {text: bytecode, type: Concept}]
+    evidence: [{text: transforms, class: transformation, lemma: transform}]
+    gold: [{subject: source code, predicate: transforms_into, object: bytecode}]
+
+  - id: q1_t06
+    band: TECH
+    text: "The model is a type of neural network."
+    entities: [{text: The model, type: Technology}, {text: neural network, type: Concept}]
+    evidence: [{text: is a type of, class: classification, lemma: type}]
+    gold: [{subject: The model, predicate: is_a, object: neural network}]
+
+  - id: q1_t07
+    band: TECH
+    text: "The frontend and backend are part of the platform."
+    entities: [{text: The frontend, type: Product}, {text: backend, type: Product}, {text: the platform, type: Product}]
+    evidence: [{text: part of, class: composition, lemma: part}]
+    gold: [{subject: The frontend, predicate: part_of, object: the platform},
+           {subject: backend, predicate: part_of, object: the platform}]
+
+  - id: q1_t08
+    band: TECH
+    text: "Accuracy is measured by the F1 score."
+    entities: [{text: Accuracy, type: Concept}, {text: the F1 score, type: Measurement}]
+    evidence: [{text: measured by, class: measurement, lemma: measure}]
+    gold: [{subject: Accuracy, predicate: measured_by, object: the F1 score}]
+
+  # ── SCIENCE ─────────────────────────────────────────────────────────
+  - id: q1_s01
+    band: SCIENCE
+    text: "High temperature causes protein denaturation."
+    entities: [{text: High temperature, type: Concept}, {text: protein denaturation, type: Process}]
+    evidence: [{text: causes, class: causation, lemma: cause}]
+    gold: [{subject: High temperature, predicate: causes, object: protein denaturation}]
+
+  - id: q1_s02
+    band: SCIENCE
+    text: "The catalyst enables the reaction."
+    entities: [{text: The catalyst, type: Technology}, {text: the reaction, type: Process}]
+    evidence: [{text: enables, class: causation, lemma: enable}]
+    gold: [{subject: The catalyst, predicate: enables, object: the reaction}]
+
+  - id: q1_s03
+    band: SCIENCE
+    text: "Hormones influence metabolic rate."
+    entities: [{text: Hormones, type: Concept}, {text: metabolic rate, type: Concept}]
+    evidence: [{text: influence, class: influence_affect, lemma: influence}]
+    gold: [{subject: Hormones, predicate: influences, object: metabolic rate}]
+
+  - id: q1_s04
+    band: SCIENCE
+    text: "The algorithm depends on the training data."
+    entities: [{text: The algorithm, type: Technology}, {text: the training data, type: Technology}]
+    evidence: [{text: depends on, class: dependency, lemma: depend}]
+    gold: [{subject: The algorithm, predicate: depends_on, object: the training data}]
+
+  - id: q1_s05
+    band: SCIENCE
+    text: "The compound transforms into a gas at high pressure."
+    entities: [{text: The compound, type: Concept}, {text: a gas, type: Concept}, {text: high pressure, type: Concept}]
+    evidence: [{text: transforms into, class: transformation, lemma: transform}]
+    gold: [{subject: The compound, predicate: transforms_into, object: a gas}]
+
+  - id: q1_s06
+    band: SCIENCE
+    text: "The molecule is derived from the plant extract."
+    entities: [{text: The molecule, type: Concept}, {text: the plant extract, type: Concept}]
+    evidence: [{text: derived from, class: transformation, lemma: derive}]
+    gold: [{subject: The molecule, predicate: derived_from, object: the plant extract}]
+
+  # ── PEOPLE ──────────────────────────────────────────────────────────
+  - id: q1_p01
+    band: PEOPLE
+    text: "Priya serves as the head of the engineering team."
+    entities: [{text: Priya, type: Person}, {text: the engineering team, type: Organization}]
+    evidence: [{text: serves as, class: leadership_governance, lemma: serve}]
+    gold: [{subject: Priya, predicate: has_role, object: the engineering team}]
+
+  - id: q1_p02
+    band: PEOPLE
+    text: "The researchers are members of the institute."
+    entities: [{text: The researchers, type: Person}, {text: the institute, type: Organization}]
+    evidence: [{text: members of, class: employment_membership, lemma: member}]
+    gold: [{subject: The researchers, predicate: member_of, object: the institute}]
+
+  - id: q1_p03
+    band: PEOPLE
+    text: "The author wrote the paper."
+    entities: [{text: The author, type: Person}, {text: the paper, type: Concept}]
+    evidence: [{text: wrote, class: creation, lemma: write}]
+    gold: [{subject: The author, predicate: created, object: the paper}]
+
+  - id: q1_p04
+    band: PEOPLE
+    text: "The director leads the board."
+    entities: [{text: The director, type: Person}, {text: the board, type: Organization}]
+    evidence: [{text: leads, class: leadership_governance, lemma: lead}]
+    gold: [{subject: The director, predicate: leads, object: the board}]
+
+  # ── GEO ─────────────────────────────────────────────────────────────
+  - id: q1_g01
+    band: GEO
+    text: "The headquarters is located in Zurich."
+    entities: [{text: The headquarters, type: Location}, {text: Zurich, type: Location}]
+    evidence: [{text: located in, class: location, lemma: locate}]
+    gold: [{subject: The headquarters, predicate: located_in, object: Zurich}]
+
+  - id: q1_g02
+    band: GEO
+    text: "The factory is based in the industrial park."
+    entities: [{text: The factory, type: Location}, {text: the industrial park, type: Location}]
+    evidence: [{text: based in, class: location, lemma: base}]
+    gold: [{subject: The factory, predicate: located_in, object: the industrial park}]
+
+  - id: q1_g03
+    band: GEO
+    text: "The observatory is situated at the summit."
+    entities: [{text: The observatory, type: Location}, {text: the summit, type: Location}]
+    evidence: [{text: situated at, class: location, lemma: situate}]
+    gold: [{subject: The observatory, predicate: located_in, object: the summit}]
+
+  # ── TIME ────────────────────────────────────────────────────────────
+  - id: q1_tm01
+    band: TIME
+    text: "The conference took place in September."
+    entities: [{text: The conference, type: Event}, {text: September, type: TimeReference}]
+    evidence: [{text: took place in, class: temporal, lemma: occur}]
+    gold: [{subject: The conference, predicate: occurred_at, object: September}]
+
+  - id: q1_tm02
+    band: TIME
+    text: "The launch happened in September."
+    entities: [{text: The launch, type: Event}, {text: September, type: TimeReference}]
+    evidence: [{text: happened in, class: temporal, lemma: happen}]
+    gold: [{subject: The launch, predicate: occurred_at, object: September}]
+
+  - id: q1_tm03
+    band: TIME
+    text: "The event was held in the auditorium."
+    entities: [{text: The event, type: Event}, {text: the auditorium, type: Location}]
+    evidence: [{text: was held in, class: temporal, lemma: hold}]
+    gold: [{subject: The event, predicate: occurred_at, object: the auditorium}]
+
+  # ── CLASSIFY ────────────────────────────────────────────────────────
+  - id: q1_c01
+    band: CLASSIFY
+    text: "A transformer is an instance of a neural architecture."
+    entities: [{text: A transformer, type: Technology}, {text: a neural architecture, type: Concept}]
+    evidence: [{text: an instance of, class: classification, lemma: instance}]
+    gold: [{subject: A transformer, predicate: instance_of, object: a neural architecture}]
+
+  - id: q1_c02
+    band: CLASSIFY
+    text: "The chip is a component of the device."
+    entities: [{text: The chip, type: Product}, {text: the device, type: Product}]
+    evidence: [{text: component of, class: composition, lemma: component}]
+    gold: [{subject: The chip, predicate: part_of, object: the device}]
+
+  - id: q1_c03
+    band: CLASSIFY
+    text: "The dataset consists of labeled examples."
+    entities: [{text: The dataset, type: Product}, {text: labeled examples, type: Product}]
+    evidence: [{text: consists of, class: composition, lemma: consist}]
+    gold: [{subject: labeled examples, predicate: part_of, object: The dataset}]
+
+  - id: q1_c04
+    band: CLASSIFY
+    text: "PyTorch is also known as the deep learning framework."
+    entities: [{text: PyTorch, type: Technology}, {text: the deep learning framework, type: Technology}]
+    evidence: [{text: also known as, class: reference_attribution, lemma: alias}]
+    gold: [{subject: PyTorch, predicate: alias_of, object: the deep learning framework}]
+
+  # ── SCOPE (assertion control) ───────────────────────────────────────
+  - id: q1_sc01
+    band: SCOPE
+    text: "The company did not acquire the rival."
+    entities: [{text: The company, type: Organization}, {text: the rival, type: Organization}]
+    evidence: [{text: acquire, class: ownership_control, lemma: acquire}]
+    scope: {negated: true}
+    gold: []
+
+  - id: q1_sc02
+    band: SCOPE
+    text: "If funding arrives, the team will expand the office."
+    entities: [{text: funding, type: Concept}, {text: the team, type: Organization}, {text: the office, type: Location}]
+    evidence: [{text: expand, class: usage_application, lemma: expand}]
+    scope: {conditional: true}
+    gold: []
+
+  - id: q1_sc03
+    band: SCOPE
+    text: "Did the lab develop the model?"
+    entities: [{text: the lab, type: Organization}, {text: the model, type: Technology}]
+    evidence: [{text: develop, class: creation, lemma: develop}]
+    scope: {question: true}
+    gold: []
+
+  - id: q1_sc04
+    band: SCOPE
+    text: "The firm may own the patent portfolio."
+    entities: [{text: The firm, type: Organization}, {text: the patent portfolio, type: Product}]
+    evidence: [{text: own, class: ownership_control, lemma: own}]
+    scope: {speculative: true}
+    gold: [{subject: The firm, predicate: owns, object: the patent portfolio, qualified: true}]
+
+  - id: q1_sc05
+    band: SCOPE
+    text: "The tool would enable the pipeline."
+    entities: [{text: The tool, type: Technology}, {text: the pipeline, type: Process}]
+    evidence: [{text: enable, class: causation, lemma: enable}]
+    scope: {hypothetical: true}
+    gold: [{subject: The tool, predicate: enables, object: the pipeline, qualified: true}]
+
+  - id: q1_sc06
+    band: SCOPE
+    text: "According to the report, the vendor uses the framework."
+    entities: [{text: the report, type: Document}, {text: the vendor, type: Organization}, {text: the framework, type: Technology}]
+    evidence: [{text: uses, class: usage_application, lemma: use}]
+    scope: {attributed: true, attribution_source: "the report"}
+    gold: [{subject: the vendor, predicate: uses, object: the framework, attributed: true}]
+
+  # ── NO_REL (correct abstention) ─────────────────────────────────────
+  - id: q1_n01
+    band: NO_REL
+    text: "The weather was pleasant during the walk."
+    entities: [{text: The weather, type: Concept}, {text: the walk, type: Event}]
+    evidence: [{text: was, class: classification, lemma: be}]
+    gold: []
+
+  - id: q1_n02
+    band: NO_REL
+    text: "She read the newsletter on Tuesday."
+    entities: [{text: She, type: Person}, {text: the newsletter, type: Document}, {text: Tuesday, type: TimeReference}]
+    evidence: [{text: read, class: reference_attribution, lemma: read}]
+    gold: []
+
+  - id: q1_n03
+    band: NO_REL
+    text: "The store sells furniture and lamps."
+    entities: [{text: The store, type: Organization}, {text: furniture, type: Product}, {text: lamps, type: Product}]
+    evidence: [{text: sells, class: ownership_control, lemma: sell}]
+    gold: []
+
+  - id: q1_n04
+    band: NO_REL
+    text: "The festival attracted a large audience."
+    entities: [{text: The festival, type: Event}, {text: a large audience, type: Person}]
+    evidence: [{text: attracted, class: influence_affect, lemma: attract}]
+    gold: []
+
+  # ── PASSIVE (frozen syntactic direction) ────────────────────────────
+  - id: q1_ps01
+    band: PASSIVE
+    text: "The operating system was designed by the team."
+    entities: [{text: The operating system, type: Concept}, {text: the team, type: Organization}]
+    evidence: [{text: designed, class: creation, lemma: design}]
+    parse: {voice: passive, agent: the team}
+    gold: [{subject: the team, predicate: created, object: The operating system}]
+
+  - id: q1_ps02
+    band: PASSIVE
+    text: "The vaccine was developed by the institute."
+    entities: [{text: The vaccine, type: Product}, {text: the institute, type: Organization}]
+    evidence: [{text: developed, class: creation, lemma: develop}]
+    parse: {voice: passive, agent: the institute}
+    gold: [{subject: the institute, predicate: developed, object: The vaccine}]
+
+  - id: q1_ps03
+    band: PASSIVE
+    text: "The award was given to the researcher."
+    entities: [{text: The award, type: Product}, {text: the researcher, type: Person}]
+    evidence: [{text: given, class: reference_attribution, lemma: give}]
+    parse: {voice: passive, agent: the researcher}
+    gold: []
+
+  # ── OOV (honest unsupported-rate measurement) ───────────────────────
+  - id: q1_u01
+    band: OOV
+    text: "The organization rewarded the team."
+    entities: [{text: The organization, type: Organization}, {text: the team, type: Organization}]
+    evidence: [{text: rewarded, class: influence_affect, lemma: reward}]
+    gold: []
+
+  - id: q1_u02
+    band: OOV
+    text: "The codebase leverages the library."
+    entities: [{text: The codebase, type: Product}, {text: the library, type: Technology}]
+    evidence: [{text: leverages, class: usage_application, lemma: leverage}]
+    gold: [{subject: The codebase, predicate: uses, object: the library}]
+
+  - id: q1_u03
+    band: OOV
+    text: "The firm merged with the competitor."
+    entities: [{text: The firm, type: Organization}, {text: the competitor, type: Organization}]
+    evidence: [{text: merged, class: ownership_control, lemma: merge}]
+    gold: []
