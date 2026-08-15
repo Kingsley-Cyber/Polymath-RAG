@@ -16,10 +16,14 @@
       "properties": {
         "contract_id": {"type": "string"},
         "assembly_version": {"type": "string"},
+        "ordering": {
+          "description": "Ordering policy: identity (R3a default) or rerank (G3 candidate ordering hint).",
+          "enum": ["identity", "rerank"]
+        },
         "claim_count": {"type": "integer", "minimum": 0},
         "evidence_count": {"type": "integer", "minimum": 0}
       },
-      "required": ["contract_id", "assembly_version"]
+      "required": ["contract_id", "assembly_version", "ordering"]
     }
   },
   "$defs": {

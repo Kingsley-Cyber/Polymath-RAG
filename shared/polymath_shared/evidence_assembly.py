@@ -84,6 +84,7 @@ def assemble_evidence_bundle(
     resolve_entity: Callable[[str], Optional[dict]],
     resolve_document: Callable[[str], Optional[dict]],
     resolve_chunk: Callable[[str], Optional[dict]],
+    evidence_order: Optional[list[str]] = None,
 ) -> dict:
     """Assemble the R3a bundle. Pure and deterministic given the resolvers.
 
@@ -92,6 +93,14 @@ def assemble_evidence_bundle(
                         Postgres entity resolution is authoritative).
     child_evidence rows: {chunk_id, doc_id, parent_id, text,
                           contract_ids} (dense/lexical lanes).
+
+    `evidence_order` (G5/G3): optional list of chunk ids giving a
+    fused-rerank ordering for evidence-only items. Claims stay
+    identity-ordered first; evidence items follow the hint order
+    (ids absent from the hint fall back to identity order). The
+    candidate SET is unchanged by any ordering hint — recall and
+    grounding semantics never depend on order. meta.ordering records
+    which policy applied.
 
     Resolvers return None for a missing row; the assembler raises the
     matching typed error instead of emitting an unsupported claim.
@@ -197,13 +206,26 @@ def assemble_evidence_bundle(
         })
 
     # -- deterministic ordering: claims first, then evidence ----------------
-    items.sort(key=lambda i: (0 if i["kind"] == "claim" else 1, i["knowledge_id"] or ""))
+    # G5/G3: evidence items may follow a fused-rerank hint; the SET never
+    # changes. Claims stay identity-ordered (fact grounding is order-free).
+    if evidence_order:
+        rank = {cid: i for i, cid in enumerate(evidence_order)}
+        items.sort(key=lambda i: (
+            0 if i["kind"] == "claim" else 1,
+            0 if i["kind"] == "claim" else rank.get(i["knowledge_id"], 10**9),
+            i["knowledge_id"] or "",
+        ))
+        ordering = "rerank"
+    else:
+        items.sort(key=lambda i: (0 if i["kind"] == "claim" else 1, i["knowledge_id"] or ""))
+        ordering = "identity"
     return {
         "query": query,
         "evidence_bundle": items,
         "meta": {
             "contract_id": CONTRACT_ID,
             "assembly_version": ASSEMBLY_VERSION,
+            "ordering": ordering,
             "claim_count": sum(1 for i in items if i["kind"] == "claim"),
             "evidence_count": sum(1 for i in items if i["kind"] == "evidence"),
         },

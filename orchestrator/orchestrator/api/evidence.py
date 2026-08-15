@@ -88,10 +88,14 @@ async def evidence(req: EvidenceRequest) -> dict:
         }) from exc
 
     try:
+        _evidence_order = None
+        if selected_children and all("rerank_score" in c for c in selected_children):
+            _evidence_order = [c["chunk_id"] for c in selected_children]
         bundle = assemble_evidence_bundle(
             query,
             graph_facts,
             selected_children,
+            evidence_order=_evidence_order,
             resolve_fact=lambda fid: _resolve_fact(fid),
             resolve_evidence=lambda fid: _resolve_evidence_rows(fid),
             resolve_entity=lambda eid: _resolve_entity(eid),
