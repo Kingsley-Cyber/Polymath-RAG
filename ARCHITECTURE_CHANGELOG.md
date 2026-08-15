@@ -321,3 +321,16 @@ that motivated it and the refactor that implemented it.
 - Verdict: REJECT — no text-support policy implemented; no
   threshold picked; no heuristics invented. An answerability model
   track is a pending user decision. I2 skipped gates remain unrun.
+
+## 2026-08-15: D4.1 — answer-support model qualification (REJECT)
+
+- Frozen 794-pair support qualification set; four deterministic
+  candidates measured (NLI DeBERTa xsmall/base, QNLI distilroberta/
+  electra). NLI is task-misaligned (recall ≈ 0). QNLI separates the
+  bulk of negatives (p50 0.01-0.03 vs SUPPORTS p90 0.98) and runs at
+  ~0.5-1.4 ms/pair, but no threshold reaches defensible precision
+  (max 0.80 at R=0.09; contradiction pairs score as support; abstract
+  term hallucination; one answerable query fails outright).
+- Verdict: no candidate promoted; no production wiring. A 3-way
+  supports/topic_only/contradicts classifier (fine-tune) is a pending
+  user decision.

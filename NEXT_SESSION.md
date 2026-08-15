@@ -10,6 +10,15 @@ Read:
 
 ## Last Completed
 
+- **D4.1 — answer-support model qualification: REJECT (frozen)** (work
+  log `2026-08-15-d41-answer-support-model-qualification.md`, report
+  `eval/d4/REPORT_D41.md`). 794 frozen (query, passage) pairs, 4
+  candidates: NLI DeBERTa (task mismatch, recall≈0) and QNLI
+  cross-encoders (right family, distributions separated, but max
+  precision 0.80/0.58 at any threshold; contradiction pairs score as
+  support; abstract-term hallucination; q4 fails). No production
+  wiring. Next: user decision — fine-tune a 3-way classifier, accept
+  graph-only abstention, or other.
 - **D4 — TEXT support admission: REJECT (insufficient signals)**
   (work log `2026-08-15-d4-text-support-admission.md`, report
   `eval/d4/REPORT.md`). Frozen development set (7 answerable +
