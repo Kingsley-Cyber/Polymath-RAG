@@ -1,0 +1,30 @@
+# Reranker sidecar manifest (ADR-0005, G3).
+#
+# Identity: pinned model release — Qwen3-Reranker-0.6B at HF sha
+# e61197ed45024b0ed8a2d74b80b4d909f1255473. Cross-representation
+# reranking over the FUSED retrieval candidates; cosine-style scores
+# from the cross-encoder, never calibrated weights. Weights digest:
+# trust-on-first-use until the operator records the sha256 here
+# (POLYMATH_REQUIRE_PINNED=1 refuses an unpinned digest).
+
+[identity]
+name = "reranker"
+version = "g3-rerank-v1"
+release = "g3-rerank-v1"
+
+[identity.model]
+id = "Qwen/Qwen3-Reranker-0.6B"
+revision = "e61197ed45024b0ed8a2d74b80b4d909f1255473"
+weights_sha256 = "__PIN_WEIGHTS_SHA256__"
+
+[wire]
+infer_path = "/rerank"
+
+[health]
+health_path = "/health"
+ready_path = "/ready"
+
+[runtime]
+device = "mps"
+max_input_tokens = 8192
+batch_limit = 64

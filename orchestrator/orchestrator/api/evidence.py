@@ -74,11 +74,24 @@ async def evidence(req: EvidenceRequest) -> dict:
         expand=lambda surfaces: _neo4j_expand(surfaces),
     )
 
+    # G3 candidate: rerank the fused candidates feeding the bundle.
+    from polymath_shared.rerank import RerankUnavailable, apply_rerank
+
+    try:
+        _reranked_documents, selected_children = apply_rerank(
+            query, result.selected_documents, result.selected_children,
+        )
+    except RerankUnavailable as exc:
+        raise HTTPException(status_code=502, detail={
+            "error_code": "rerank_unavailable",
+            "message": str(exc),
+        }) from exc
+
     try:
         bundle = assemble_evidence_bundle(
             query,
             graph_facts,
-            result.selected_children,
+            selected_children,
             resolve_fact=lambda fid: _resolve_fact(fid),
             resolve_evidence=lambda fid: _resolve_evidence_rows(fid),
             resolve_entity=lambda eid: _resolve_entity(eid),

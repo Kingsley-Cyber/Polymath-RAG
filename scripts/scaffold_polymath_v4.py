@@ -153,6 +153,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("sidecars/gliner_runtime/manifest.toml", "toml", "SIDECAR_GLINER_RUNTIME_MANIFEST"),
     ("sidecars/embedder/server.py", "py", "SIDECAR_EMBEDDER_SERVER"),
     ("sidecars/reranker/server.py", "py", "SIDECAR_RERANKER_SERVER"),
+    ("sidecars/reranker/manifest.toml", "toml", None),
 
     # ── Orchestrator (dumb on purpose) ────────────────────────────────────
     ("orchestrator/README.md", "md", "ORCHESTRATOR_README"),
@@ -354,7 +355,10 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-08-14-ep1-entity-proposal.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-em1-model-qualification.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-sr1-span-repair.md", "md", None),
+    ("docs/wiki/work-log/2026-08-14-g3-reranker.md", "md", None),
+    ("docs/wiki/experiments/0003-g3-reranker.md", "md", None),
     ("shared/polymath_shared/span_repair.py", "py", None),
+    ("shared/polymath_shared/rerank.py", "py", None),
     ("eval/sr1/qualify_sr1.py", "py", None),
     ("eval/sr1/REPORT_SR1.md", "md", None),
     ("eval/sr1/artifacts/SR1-A_0.30.json", "json", None),
@@ -395,6 +399,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/em1/artifacts/C-nuner-zero_0.60.json", "json", None),
     ("eval/q1r/REPORT_Q1R.md", "md", None),
     ("tests/determinism/test_q1r_v110_revision.py", "py", None),
+    ("tests/determinism/test_rerank_wrapper.py", "py", None),
     ("shared/polymath_shared/rulepack/core-predicates-v1.1.0.yaml", "yaml", None),
     ("resources/compiled/03a513ece6da32b243289fa9b9ef9dfe8e21cec4ff9f0435678ad4425021c150/compiled_lexical-v1.1.0.json", "json", None),
     ("docs/wiki/refactors/0006-q1-qualification.md", "md", None),

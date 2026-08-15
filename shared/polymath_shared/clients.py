@@ -102,3 +102,43 @@ class EmbedderClient(SidecarClient):
             "texts": texts,
             "representation_kind": representation_kind,
         })
+
+
+class RerankerClient:
+    """Client for the G3 reranker sidecar (cross-encoder).
+
+    Scores (query, candidate) pairs; returns scores + the reordered
+    index list + the pinned model identity. The caller keeps rank-based
+    fusion and applies the scores ordinally — this client never
+    invents calibrated weights."""
+    POST_PATH = "/rerank"
+
+    def __init__(self, timeout: float = 60.0) -> None:
+        settings = get_settings()
+        self._client = httpx.Client(
+            base_url=settings.sidecars.reranker_url.rstrip("/"),
+            timeout=timeout,
+        )
+
+    def close(self) -> None:
+        self._client.close()
+
+    def __enter__(self) -> "RerankerClient":
+        return self
+
+    def __exit__(self, *exc: Any) -> None:
+        self.close()
+
+    def rerank(
+        self,
+        query: str,
+        documents: list[str],
+        top_k: int | None = None,
+    ) -> dict[str, Any]:
+        r = self._client.post(self.POST_PATH, json={
+            "query": query,
+            "documents": documents,
+            "top_k": top_k,
+        })
+        r.raise_for_status()
+        return r.json()

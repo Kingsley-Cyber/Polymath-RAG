@@ -82,6 +82,21 @@ async def retrieve(req: RetrieveRequest) -> dict:
         expand=lambda surfaces: _neo4j_expand(surfaces),
     )
 
+    # G3 candidate: cross-representation reranking over the FUSED views
+    # only (per-lane ablations stay untouched). Enabled via
+    # POLYMATH_G3_RERANKER=1; unavailable rerankers fail loudly.
+    from polymath_shared.rerank import RerankUnavailable, apply_rerank
+
+    try:
+        selected_documents, selected_children = apply_rerank(
+            query, result.selected_documents, result.selected_children,
+        )
+    except RerankUnavailable as exc:
+        raise HTTPException(status_code=502, detail={
+            "error_code": "rerank_unavailable",
+            "message": str(exc),
+        }) from exc
+
     def _hit(h) -> dict:
         return {
             "source_id": h.source_id,
@@ -102,11 +117,11 @@ async def retrieve(req: RetrieveRequest) -> dict:
         "parent_lane": [_hit(h) for h in result.parent_ranking[: req.limit]],
         "child_dense_lane": [_hit(h) for h in result.child_dense_ranking[: req.limit]],
         "child_lexical_lane": [_hit(h) for h in result.child_lexical_ranking[: req.limit]],
-        # Fused view.
-        "selected_documents": result.selected_documents[: req.limit],
-        "child_evidence_count": len(result.selected_children),
+        # Fused views (G3: reranked when the candidate is enabled).
+        "selected_documents": selected_documents[: req.limit],
+        "child_evidence_count": len(selected_children),
         "child_evidence": [
-            c for c in result.selected_children[: req.limit]
+            c for c in selected_children[: req.limit]
         ],
         "graph_facts": result.graph_facts,
     }

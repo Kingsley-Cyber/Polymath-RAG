@@ -25,6 +25,11 @@ class SidecarSettings(BaseSettings):
     gliner_url: str = Field(default="http://127.0.0.1:8740", description="GLiNER two-pass runtime")
     embedder_url: str = Field(default="http://127.0.0.1:8742", description="Embedder sidecar")
     reranker_url: str = Field(default="http://127.0.0.1:8743", description="Reranker sidecar")
+    g3_reranker: bool = Field(
+        default=False,
+        description="G3 candidate (not a production default): cross-representation "
+                    "reranking over fused retrieval candidates (POLYMATH_G3_RERANKER=1)",
+    )
     sidecar_timeout_s: float = Field(default=60.0, description="Sidecar HTTP timeout")
     sidecar_pin_required: bool = Field(
         default=True,

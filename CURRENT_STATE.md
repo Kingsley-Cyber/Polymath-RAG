@@ -5,13 +5,13 @@ Verified against commit: `1b11662` (roadmap restored: entity-architecture escala
 Active branch at verification: `main` (working tree clean)
 
 ```yaml
-current_phase: extraction-backlog-consolidated # Phase H v1.1 verdict stands (hybrid REJECT); entity boundary gap documented; roadmap restored
+current_phase: g3-verdict-recorded # G3 reranking gate PASS (candidate, not default); next = G5/G4 per roadmap
 repository:
   branch: main
   head: 1b11662
   frozen_artifacts: [see Frozen Artifacts section]
   evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1, qualification-q1, q1r-validation, ep1, em1, sr1]
-  next_actions: [measured-backlog-prioritization, i1-bulk-ingestion, i2-scale-integrity]
+  next_actions: [g5-evidence-assembly, g4-scale-qualification, i1-bulk-ingestion]
   do_not_do: [see Explicitly Prohibited Actions]
   known_gaps: [see Known Limitations]
 ```

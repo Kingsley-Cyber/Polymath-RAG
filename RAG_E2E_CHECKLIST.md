@@ -64,7 +64,7 @@ R2/MCP are NOT prerequisites for CORPUS_INGEST_READY.
 
 | Gate | Question | Status | Evidence |
 |---|---|---|---|
-| R2 | Do fused candidates get cross-representation reranking? | NOT STARTED | G3 reranker is a stub. BYPASSABLE for first /chat E2E; must be evaluated before becoming a default |
+| R2 | Do fused candidates get cross-representation reranking? | IN PROGRESS | G3 candidate implemented (POLYMATH_G3_RERANKER=1): gate 7f PASSES with reranking (surface-noise pushed out of top-3), FAILS without; deterministic; candidate only — not a production default (experiment 0003) |
 | M1 | Is the Polymath MCP contract defined (tools, inputs/outputs, versioning)? | NOT STARTED | no contract file exists |
 | M2 | Does the Polymath MCP server implement the contract against the real orchestrator? | NOT STARTED | no server exists |
 | M3 | Does Claude MCP E2E work against the server? | NOT STARTED | qualification not run |
