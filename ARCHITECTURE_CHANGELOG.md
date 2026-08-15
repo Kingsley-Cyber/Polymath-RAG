@@ -440,3 +440,15 @@ that motivated it and the refactor that implemented it.
   0 isolation leaks; graph increment ~10ms (p50 7.3ms) over HYBRID
   p50 637.6ms. Suites + guards green. R1E remains frozen negative
   (no corpus reach).
+
+## 2026-08-15: R2 — hierarchical synthesis audit (STOP: no generation model)
+
+- Step-1 audit frozen (eval/r2/AUDIT.md): synthesis is
+  deterministic-template-v2 only — no generative model, provider
+  client, or model pin exists; hierarchy does not survive into the
+  flat bundle; summaries/children distinguishable but validated
+  identically; no composition stage; contradictions represented,
+  never arbitrated.
+- R2 §7 hard gate: GENERATION MODEL CONTRACT = MISSING → STOP.
+  No implementation; retrieval frozen; model selection deferred to
+  an explicit user decision.

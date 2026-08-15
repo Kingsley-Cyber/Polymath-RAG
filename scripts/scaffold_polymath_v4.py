@@ -474,6 +474,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("orchestrator/orchestrator/api/graph.py", "py", None),
     ("eval/r1f/measure.py", "py", None),
     ("eval/r1f/result.json", "json", None),
+    ("eval/r2/AUDIT.md", "md", None),
+    ("docs/wiki/work-log/2026-08-15-r2-hierarchical-synthesis.md", "md", None),
     ("docs/wiki/work-log/2026-08-15-r1f-graph-mode.md", "md", None),
     ("docs/wiki/work-log/2026-08-15-r1e-pass2-corpus-reach.md", "md", None),
     ("docs/wiki/work-log/2026-08-15-r1d-hybrid-retrieval.md", "md", None),
