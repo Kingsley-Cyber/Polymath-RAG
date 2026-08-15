@@ -441,6 +441,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/d4/artifacts/d41_qnli-distilroberta-base.json", "json", None),
     ("eval/d4/artifacts/d41_qnli-electra-base.json", "json", None),
     ("eval/d4/artifacts/d41_analysis.json", "json", None),
+    ("eval/r1/POSTURE_REPORT.md", "md", None),
+    ("docs/wiki/work-log/2026-08-15-r1-retrieval-posture-audit.md", "md", None),
     ("docs/wiki/work-log/2026-08-15-d41-answer-support-model-qualification.md", "md", None),
     ("docs/wiki/work-log/2026-08-15-d4-text-support-admission.md", "md", None),
     ("docs/wiki/work-log/2026-08-15-i2-corpus-integrity-qualification.md", "md", None),
