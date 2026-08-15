@@ -1,0 +1,37 @@
+{
+  "version": "g4-corpus-spec-1.1",
+  "supersedes": "g4-corpus-spec-1 (be0b1832)",
+  "reason": "AUTHORING-CORRECTNESS ADDITION ONLY: the frozen query set (hash 5b021632, authored before any results) declares named surfaces (metric recorder, corpus layer, verification loop, attention model, internal wiki) that spec v1 omitted. v1.1 adds those entities + their designed edge sets so the frozen queries are exercisable. No query, relevance judgment, or policy changed; no measurement result informed this addition beyond the surfaces the frozen queries themselves declare.",
+  "docs": 12,
+  "hubs": [
+    {"surface": "the platform", "core_type": "Technology", "target_degree": 50},
+    {"surface": "the database", "core_type": "Technology", "target_degree": 40},
+    {"surface": "the vector index", "core_type": "Technology", "target_degree": 35},
+    {"surface": "the worker pool", "core_type": "Technology", "target_degree": 30},
+    {"surface": "the retrieval pipeline", "core_type": "Technology", "target_degree": 25}
+  ],
+  "leaf_facts_per_doc": 22,
+  "predicates": ["uses", "part_of", "depends_on", "influences", "enables", "causes", "is_a", "instance_of", "measured_by"],
+  "noise_inserts": [
+    {"surface": "the system", "core_type": "Concept", "note": "generic adversarial hub, degree ~15"},
+    {"surface": "the model", "core_type": "Technology", "note": "generic adversarial hub, degree ~15"}
+  ],
+  "named_query_entities": [
+    {"surface": "the metric recorder", "core_type": "Technology",
+     "edges": [["the metric recorder", "uses", "the database"],
+               ["the metric recorder", "depends_on", "the worker pool"]]},
+    {"surface": "the corpus layer", "core_type": "Concept",
+     "edges": [["the corpus layer", "part_of", "the platform"],
+               ["the retrieval pipeline", "part_of", "the corpus layer"]]},
+    {"surface": "the verification loop", "core_type": "Process",
+     "edges": [["the verification loop", "enables", "the retrieval pipeline"],
+               ["the verification loop", "depends_on", "the database"],
+               ["the worker pool", "enables", "the verification loop"]]},
+    {"surface": "the attention model", "core_type": "Technology",
+     "edges": [["the attention model", "influences", "the retrieval pipeline"],
+               ["the attention model", "uses", "the vector index"],
+               ["the attention model", "depends_on", "the platform"]]},
+    {"surface": "the internal wiki", "core_type": "Document",
+     "edges": []}
+  ]
+}

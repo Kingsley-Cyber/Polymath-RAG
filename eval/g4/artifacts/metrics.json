@@ -1,0 +1,425 @@
+{
+ "degree": {
+  "max": 50,
+  "nodes": 280,
+  "p50": 1,
+  "p90": 1,
+  "p95": 2,
+  "p99": 38,
+  "top_nodes": [
+   {
+    "degree": 50,
+    "id": "ent_b792c58d833be4b0c6c2d2979ded6a057cd87afe4a5c8f3cf51ee9164b11f99a",
+    "surface": "the platform"
+   },
+   {
+    "degree": 39,
+    "id": "ent_b1767dfe4398a4f44786b172b02b77a3c1d02915d98d2eb50b1c089cdaff87c3",
+    "surface": "the retrieval pipeline"
+   },
+   {
+    "degree": 38,
+    "id": "ent_23290cce9933ab18c87dcc95ee4dc45c05d9cb03da9d10c691202c625311789a",
+    "surface": "the database"
+   },
+   {
+    "degree": 38,
+    "id": "ent_f9be96405189face9c875103d00a2d2eed28217399166436542a8acf2cb15114",
+    "surface": "the worker pool"
+   },
+   {
+    "degree": 37,
+    "id": "ent_bb753507cc51a78325df01504138d16196cfe1df12e41a5e126ea839f558d163",
+    "surface": "the vector index"
+   },
+   {
+    "degree": 36,
+    "id": "ent_27d5584110a2eb846ae1983300166830a1c3efd3b1bcc57c01d1bba1bce6ee30",
+    "surface": "the system"
+   },
+   {
+    "degree": 36,
+    "id": "ent_946195c063233556f890691d248cd936be8bf68461d95bc9ed70eeed50e0e434",
+    "surface": "the model"
+   },
+   {
+    "degree": 3,
+    "id": "ent_2dd394088d73bb21c22510d2b8c3342e006559d1c83090f6c2cf356cc77155ff",
+    "surface": "Polaris"
+   }
+  ]
+ },
+ "manifest": {
+  "corpus": "g4_e2e",
+  "corpus_spec_sha256": "327dede2a4305a9e3a010735fa026f6e785b93522db2195e13f175285b789c4f",
+  "corpus_spec_v1_sha256": "be0b1832220766e314cc46d81ecf6ec41f7be583a2baee1f1e1e4133e65f7695",
+  "expansion_policy": "production _neo4j_expand (outgoing-only hop1, HIGH_MEDIUM allowlist, LIMIT 8 seeds / 20 facts); hop2 = measurement-only; bidir-hop1/2 = measurement-only CANDIDATE (incoming+outgoing)",
+  "git_commit": "c6c8315bbdfb8f586d3c4866dc12fa450ea6fe03",
+  "neo4j_projection": "production project_neo4j + project_canonical workers",
+  "query_set_sha256": "5b021632acad9b03935fb39d3643d4c084429f8566252f3a8836fdf1df38839a",
+  "reranker": "not tested",
+  "retrieval_contract": "production run_lanes fusion, untouched"
+ },
+ "monotonicity": {
+  "q01": {
+   "base_subset_hop1": true,
+   "bidir_base_subset_hop1": true,
+   "bidir_hop1_subset_hop2": true,
+   "hop1_subset_bidir": true,
+   "hop1_subset_hop2": true
+  },
+  "q02": {
+   "base_subset_hop1": true,
+   "bidir_base_subset_hop1": true,
+   "bidir_hop1_subset_hop2": true,
+   "hop1_subset_bidir": true,
+   "hop1_subset_hop2": true
+  },
+  "q03": {
+   "base_subset_hop1": true,
+   "bidir_base_subset_hop1": true,
+   "bidir_hop1_subset_hop2": true,
+   "hop1_subset_bidir": true,
+   "hop1_subset_hop2": true
+  },
+  "q04": {
+   "base_subset_hop1": true,
+   "bidir_base_subset_hop1": true,
+   "bidir_hop1_subset_hop2": true,
+   "hop1_subset_bidir": false,
+   "hop1_subset_hop2": true
+  },
+  "q05": {
+   "base_subset_hop1": true,
+   "bidir_base_subset_hop1": true,
+   "bidir_hop1_subset_hop2": true,
+   "hop1_subset_bidir": true,
+   "hop1_subset_hop2": true
+  },
+  "q06": {
+   "base_subset_hop1": true,
+   "bidir_base_subset_hop1": true,
+   "bidir_hop1_subset_hop2": true,
+   "hop1_subset_bidir": true,
+   "hop1_subset_hop2": true
+  },
+  "q07": {
+   "base_subset_hop1": true,
+   "bidir_base_subset_hop1": true,
+   "bidir_hop1_subset_hop2": true,
+   "hop1_subset_bidir": true,
+   "hop1_subset_hop2": true
+  },
+  "q08": {
+   "base_subset_hop1": true,
+   "bidir_base_subset_hop1": true,
+   "bidir_hop1_subset_hop2": true,
+   "hop1_subset_bidir": true,
+   "hop1_subset_hop2": true
+  },
+  "q09": {
+   "base_subset_hop1": true,
+   "bidir_base_subset_hop1": true,
+   "bidir_hop1_subset_hop2": true,
+   "hop1_subset_bidir": true,
+   "hop1_subset_hop2": true
+  },
+  "q10": {
+   "base_subset_hop1": true,
+   "bidir_base_subset_hop1": true,
+   "bidir_hop1_subset_hop2": true,
+   "hop1_subset_bidir": false,
+   "hop1_subset_hop2": true
+  },
+  "q11": {
+   "base_subset_hop1": true,
+   "bidir_base_subset_hop1": true,
+   "bidir_hop1_subset_hop2": true,
+   "hop1_subset_bidir": true,
+   "hop1_subset_hop2": true
+  },
+  "q12": {
+   "base_subset_hop1": true,
+   "bidir_base_subset_hop1": true,
+   "bidir_hop1_subset_hop2": true,
+   "hop1_subset_bidir": true,
+   "hop1_subset_hop2": true
+  }
+ },
+ "noise_by_hop": [
+  {
+   "config": "hop1",
+   "hop": 1,
+   "irrelevant": 0,
+   "precision": 1.0,
+   "relevant": 12,
+   "total": 12
+  },
+  {
+   "config": "hop2",
+   "hop": 2,
+   "irrelevant": 0,
+   "precision": 1.0,
+   "relevant": 12,
+   "total": 12
+  },
+  {
+   "config": "bidir-hop1",
+   "hop": 1,
+   "irrelevant": 20,
+   "precision": 0.8701298701298701,
+   "relevant": 134,
+   "total": 154
+  },
+  {
+   "config": "bidir-hop2",
+   "hop": 2,
+   "irrelevant": 24,
+   "precision": 0.8481012658227848,
+   "relevant": 134,
+   "total": 158
+  }
+ ],
+ "per_query": [
+  {
+   "baseline_facts": 0,
+   "baseline_latency_p50": 0.0,
+   "baseline_latency_p95": 0.0,
+   "bidir-hop1_facts": 20,
+   "bidir-hop1_latency_p50": 0.0064,
+   "bidir-hop1_latency_p95": 0.0064,
+   "bidir-hop2_facts": 20,
+   "bidir-hop2_latency_p50": 0.0096,
+   "bidir-hop2_latency_p95": 0.0096,
+   "class": "high-degree-hub",
+   "hop1_facts": 0,
+   "hop1_latency_p50": 0.0054,
+   "hop1_latency_p95": 0.0054,
+   "hop2_facts": 0,
+   "hop2_latency_p50": 0.0042,
+   "hop2_latency_p95": 0.0042,
+   "id": "q01",
+   "query": "which components use the platform"
+  },
+  {
+   "baseline_facts": 0,
+   "baseline_latency_p50": 0.0,
+   "baseline_latency_p95": 0.0,
+   "bidir-hop1_facts": 2,
+   "bidir-hop1_latency_p50": 0.0054,
+   "bidir-hop1_latency_p95": 0.0054,
+   "bidir-hop2_facts": 3,
+   "bidir-hop2_latency_p50": 0.0089,
+   "bidir-hop2_latency_p95": 0.0089,
+   "class": "low-degree",
+   "hop1_facts": 2,
+   "hop1_latency_p50": 0.0047,
+   "hop1_latency_p95": 0.0047,
+   "hop2_facts": 2,
+   "hop2_latency_p50": 0.0045,
+   "hop2_latency_p95": 0.0045,
+   "id": "q02",
+   "query": "what does the metric recorder use"
+  },
+  {
+   "baseline_facts": 0,
+   "baseline_latency_p50": 0.0,
+   "baseline_latency_p95": 0.0,
+   "bidir-hop1_facts": 20,
+   "bidir-hop1_latency_p50": 0.0053,
+   "bidir-hop1_latency_p95": 0.0053,
+   "bidir-hop2_facts": 20,
+   "bidir-hop2_latency_p50": 0.0093,
+   "bidir-hop2_latency_p95": 0.0093,
+   "class": "normal-degree",
+   "hop1_facts": 1,
+   "hop1_latency_p50": 0.0044,
+   "hop1_latency_p95": 0.0044,
+   "hop2_facts": 1,
+   "hop2_latency_p50": 0.0044,
+   "hop2_latency_p95": 0.0044,
+   "id": "q03",
+   "query": "how is the retrieval pipeline organized"
+  },
+  {
+   "baseline_facts": 0,
+   "baseline_latency_p50": 0.0,
+   "baseline_latency_p95": 0.0,
+   "bidir-hop1_facts": 20,
+   "bidir-hop1_latency_p50": 0.0059,
+   "bidir-hop1_latency_p95": 0.0059,
+   "bidir-hop2_facts": 20,
+   "bidir-hop2_latency_p50": 0.0083,
+   "bidir-hop2_latency_p95": 0.0083,
+   "class": "cross-domain-bridge",
+   "hop1_facts": 3,
+   "hop1_latency_p50": 0.0049,
+   "hop1_latency_p95": 0.0049,
+   "hop2_facts": 3,
+   "hop2_latency_p50": 0.0046,
+   "hop2_latency_p95": 0.0046,
+   "id": "q04",
+   "query": "which studies influence the attention model"
+  },
+  {
+   "baseline_facts": 0,
+   "baseline_latency_p50": 0.0,
+   "baseline_latency_p95": 0.0,
+   "bidir-hop1_facts": 2,
+   "bidir-hop1_latency_p50": 0.0052,
+   "bidir-hop1_latency_p95": 0.0052,
+   "bidir-hop2_facts": 2,
+   "bidir-hop2_latency_p50": 0.0122,
+   "bidir-hop2_latency_p95": 0.0122,
+   "class": "structural-predicate",
+   "hop1_facts": 1,
+   "hop1_latency_p50": 0.0049,
+   "hop1_latency_p95": 0.0049,
+   "hop2_facts": 1,
+   "hop2_latency_p50": 0.0045,
+   "hop2_latency_p95": 0.0045,
+   "id": "q05",
+   "query": "what is part of the corpus layer"
+  },
+  {
+   "baseline_facts": 0,
+   "baseline_latency_p50": 0.0,
+   "baseline_latency_p95": 0.0,
+   "bidir-hop1_facts": 3,
+   "bidir-hop1_latency_p50": 0.0053,
+   "bidir-hop1_latency_p95": 0.0053,
+   "bidir-hop2_facts": 4,
+   "bidir-hop2_latency_p50": 0.0085,
+   "bidir-hop2_latency_p95": 0.0085,
+   "class": "semantic-predicate",
+   "hop1_facts": 2,
+   "hop1_latency_p50": 0.0051,
+   "hop1_latency_p95": 0.0051,
+   "hop2_facts": 2,
+   "hop2_latency_p50": 0.0041,
+   "hop2_latency_p95": 0.0041,
+   "id": "q06",
+   "query": "what enables the verification loop"
+  },
+  {
+   "baseline_facts": 0,
+   "baseline_latency_p50": 0.0,
+   "baseline_latency_p95": 0.0,
+   "bidir-hop1_facts": 20,
+   "bidir-hop1_latency_p50": 0.0047,
+   "bidir-hop1_latency_p95": 0.0047,
+   "bidir-hop2_facts": 22,
+   "bidir-hop2_latency_p50": 0.0097,
+   "bidir-hop2_latency_p95": 0.0097,
+   "class": "high-degree-hub",
+   "hop1_facts": 0,
+   "hop1_latency_p50": 0.005,
+   "hop1_latency_p95": 0.005,
+   "hop2_facts": 0,
+   "hop2_latency_p50": 0.0045,
+   "hop2_latency_p95": 0.0045,
+   "id": "q07",
+   "query": "what is the database used for"
+  },
+  {
+   "baseline_facts": 0,
+   "baseline_latency_p50": 0.0,
+   "baseline_latency_p95": 0.0,
+   "bidir-hop1_facts": 0,
+   "bidir-hop1_latency_p50": 0.0028,
+   "bidir-hop1_latency_p95": 0.0028,
+   "bidir-hop2_facts": 0,
+   "bidir-hop2_latency_p50": 0.0031,
+   "bidir-hop2_latency_p95": 0.0031,
+   "class": "should-add-nothing",
+   "hop1_facts": 0,
+   "hop1_latency_p50": 0.0032,
+   "hop1_latency_p95": 0.0032,
+   "hop2_facts": 0,
+   "hop2_latency_p50": 0.0031,
+   "hop2_latency_p95": 0.0031,
+   "id": "q08",
+   "query": "who maintains the internal wiki"
+  },
+  {
+   "baseline_facts": 0,
+   "baseline_latency_p50": 0.0,
+   "baseline_latency_p95": 0.0,
+   "bidir-hop1_facts": 17,
+   "bidir-hop1_latency_p50": 0.0053,
+   "bidir-hop1_latency_p95": 0.0053,
+   "bidir-hop2_facts": 17,
+   "bidir-hop2_latency_p50": 0.0094,
+   "bidir-hop2_latency_p95": 0.0094,
+   "class": "adversarial-generic",
+   "hop1_facts": 0,
+   "hop1_latency_p50": 0.0048,
+   "hop1_latency_p95": 0.0048,
+   "hop2_facts": 0,
+   "hop2_latency_p50": 0.0043,
+   "hop2_latency_p95": 0.0043,
+   "id": "q09",
+   "query": "what uses the system"
+  },
+  {
+   "baseline_facts": 0,
+   "baseline_latency_p50": 0.0,
+   "baseline_latency_p95": 0.0,
+   "bidir-hop1_facts": 20,
+   "bidir-hop1_latency_p50": 0.0054,
+   "bidir-hop1_latency_p95": 0.0054,
+   "bidir-hop2_facts": 20,
+   "bidir-hop2_latency_p50": 0.0096,
+   "bidir-hop2_latency_p95": 0.0096,
+   "class": "adversarial-high-degree",
+   "hop1_facts": 3,
+   "hop1_latency_p50": 0.0047,
+   "hop1_latency_p95": 0.0047,
+   "hop2_facts": 3,
+   "hop2_latency_p50": 0.0044,
+   "hop2_latency_p95": 0.0044,
+   "id": "q10",
+   "query": "tell me about the model"
+  },
+  {
+   "baseline_facts": 0,
+   "baseline_latency_p50": 0.0,
+   "baseline_latency_p95": 0.0,
+   "bidir-hop1_facts": 20,
+   "bidir-hop1_latency_p50": 0.0053,
+   "bidir-hop1_latency_p95": 0.0053,
+   "bidir-hop2_facts": 20,
+   "bidir-hop2_latency_p50": 0.0087,
+   "bidir-hop2_latency_p95": 0.0087,
+   "class": "high-degree-hub",
+   "hop1_facts": 0,
+   "hop1_latency_p50": 0.0043,
+   "hop1_latency_p95": 0.0043,
+   "hop2_facts": 0,
+   "hop2_latency_p50": 0.0044,
+   "hop2_latency_p95": 0.0044,
+   "id": "q11",
+   "query": "which parts depend on the vector index"
+  },
+  {
+   "baseline_facts": 0,
+   "baseline_latency_p50": 0.0,
+   "baseline_latency_p95": 0.0,
+   "bidir-hop1_facts": 0,
+   "bidir-hop1_latency_p50": 0.0033,
+   "bidir-hop1_latency_p95": 0.0033,
+   "bidir-hop2_facts": 0,
+   "bidir-hop2_latency_p50": 0.0039,
+   "bidir-hop2_latency_p95": 0.0039,
+   "class": "no-entities",
+   "hop1_facts": 0,
+   "hop1_latency_p50": 0.0036,
+   "hop1_latency_p95": 0.0036,
+   "hop2_facts": 0,
+   "hop2_latency_p50": 0.0032,
+   "hop2_latency_p95": 0.0032,
+   "id": "q12",
+   "query": "what is pineapple made of"
+  }
+ ]
+}

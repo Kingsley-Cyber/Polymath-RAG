@@ -1,0 +1,50 @@
+{
+ "nodes": 280,
+ "p50": 1,
+ "p90": 1,
+ "p95": 2,
+ "p99": 38,
+ "max": 50,
+ "top_nodes": [
+  {
+   "id": "ent_b792c58d833be4b0c6c2d2979ded6a057cd87afe4a5c8f3cf51ee9164b11f99a",
+   "surface": "the platform",
+   "degree": 50
+  },
+  {
+   "id": "ent_b1767dfe4398a4f44786b172b02b77a3c1d02915d98d2eb50b1c089cdaff87c3",
+   "surface": "the retrieval pipeline",
+   "degree": 39
+  },
+  {
+   "id": "ent_23290cce9933ab18c87dcc95ee4dc45c05d9cb03da9d10c691202c625311789a",
+   "surface": "the database",
+   "degree": 38
+  },
+  {
+   "id": "ent_f9be96405189face9c875103d00a2d2eed28217399166436542a8acf2cb15114",
+   "surface": "the worker pool",
+   "degree": 38
+  },
+  {
+   "id": "ent_bb753507cc51a78325df01504138d16196cfe1df12e41a5e126ea839f558d163",
+   "surface": "the vector index",
+   "degree": 37
+  },
+  {
+   "id": "ent_27d5584110a2eb846ae1983300166830a1c3efd3b1bcc57c01d1bba1bce6ee30",
+   "surface": "the system",
+   "degree": 36
+  },
+  {
+   "id": "ent_946195c063233556f890691d248cd936be8bf68461d95bc9ed70eeed50e0e434",
+   "surface": "the model",
+   "degree": 36
+  },
+  {
+   "id": "ent_2dd394088d73bb21c22510d2b8c3342e006559d1c83090f6c2cf356cc77155ff",
+   "surface": "Polaris",
+   "degree": 3
+  }
+ ]
+}

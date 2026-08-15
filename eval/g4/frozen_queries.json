@@ -1,0 +1,115 @@
+{
+  "version": "g4-queries-1",
+  "authored": "2026-08-14",
+  "note": "FROZEN BEFORE ANY RESULTS INSPECTION. Relevance judgments are authored against the qualification corpus design (eval/g4/corpus_spec.json), never from extraction/expansion output. No LLM judge.",
+  "queries": [
+    {
+      "id": "q01",
+      "text": "which components use the platform",
+      "class": "high-degree-hub",
+      "seeds_hint": ["platform"],
+      "relevant_surfaces": ["the platform", "platform"],
+      "noise_surfaces": ["the database", "the vector index"],
+      "expect_graph_help": true
+    },
+    {
+      "id": "q02",
+      "text": "what does the metric recorder use",
+      "class": "low-degree",
+      "seeds_hint": ["metric recorder"],
+      "relevant_surfaces": ["the metric recorder", "metric recorder"],
+      "noise_surfaces": ["the platform"],
+      "expect_graph_help": true
+    },
+    {
+      "id": "q03",
+      "text": "how is the retrieval pipeline organized",
+      "class": "normal-degree",
+      "seeds_hint": ["retrieval pipeline"],
+      "relevant_surfaces": ["the retrieval pipeline", "retrieval pipeline", "retrieval"],
+      "noise_surfaces": ["the metric recorder"],
+      "expect_graph_help": true
+    },
+    {
+      "id": "q04",
+      "text": "which studies influence the attention model",
+      "class": "cross-domain-bridge",
+      "seeds_hint": ["attention model"],
+      "relevant_surfaces": ["the attention model", "attention model", "attention"],
+      "noise_surfaces": ["the worker pool"],
+      "expect_graph_help": true
+    },
+    {
+      "id": "q05",
+      "text": "what is part of the corpus layer",
+      "class": "structural-predicate",
+      "seeds_hint": ["corpus layer"],
+      "relevant_surfaces": ["the corpus layer", "corpus layer"],
+      "noise_surfaces": ["the platform"],
+      "expect_graph_help": true
+    },
+    {
+      "id": "q06",
+      "text": "what enables the verification loop",
+      "class": "semantic-predicate",
+      "seeds_hint": ["verification loop"],
+      "relevant_surfaces": ["the verification loop", "verification loop", "verification"],
+      "noise_surfaces": ["the database"],
+      "expect_graph_help": true
+    },
+    {
+      "id": "q07",
+      "text": "what is the database used for",
+      "class": "high-degree-hub",
+      "seeds_hint": ["database"],
+      "relevant_surfaces": ["the database", "database"],
+      "noise_surfaces": ["the platform", "the vector index"],
+      "expect_graph_help": true
+    },
+    {
+      "id": "q08",
+      "text": "who maintains the internal wiki",
+      "class": "should-add-nothing",
+      "seeds_hint": ["internal wiki"],
+      "relevant_surfaces": ["the internal wiki"],
+      "noise_surfaces": ["the platform", "the database"],
+      "expect_graph_help": false
+    },
+    {
+      "id": "q09",
+      "text": "what uses the system",
+      "class": "adversarial-generic",
+      "seeds_hint": ["system"],
+      "relevant_surfaces": [],
+      "noise_surfaces": ["the platform", "the database", "the vector index", "the worker pool", "the retrieval pipeline"],
+      "expect_graph_help": false
+    },
+    {
+      "id": "q10",
+      "text": "tell me about the model",
+      "class": "adversarial-high-degree",
+      "seeds_hint": ["model"],
+      "relevant_surfaces": ["the model"],
+      "noise_surfaces": ["the platform", "the database"],
+      "expect_graph_help": false
+    },
+    {
+      "id": "q11",
+      "text": "which parts depend on the vector index",
+      "class": "high-degree-hub",
+      "seeds_hint": ["vector index"],
+      "relevant_surfaces": ["the vector index", "vector index"],
+      "noise_surfaces": ["the metric recorder"],
+      "expect_graph_help": true
+    },
+    {
+      "id": "q12",
+      "text": "what is pineapple made of",
+      "class": "no-entities",
+      "seeds_hint": [],
+      "relevant_surfaces": [],
+      "noise_surfaces": ["the platform", "the database", "the vector index", "the worker pool", "the retrieval pipeline"],
+      "expect_graph_help": false
+    }
+  ]
+}

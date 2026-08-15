@@ -1,0 +1,11 @@
+{
+ "corpus": "g4_e2e",
+ "corpus_spec_sha256": "327dede2a4305a9e3a010735fa026f6e785b93522db2195e13f175285b789c4f",
+ "corpus_spec_v1_sha256": "be0b1832220766e314cc46d81ecf6ec41f7be583a2baee1f1e1e4133e65f7695",
+ "expansion_policy": "production _neo4j_expand (outgoing-only hop1, HIGH_MEDIUM allowlist, LIMIT 8 seeds / 20 facts); hop2 = measurement-only; bidir-hop1/2 = measurement-only CANDIDATE (incoming+outgoing)",
+ "git_commit": "c6c8315bbdfb8f586d3c4866dc12fa450ea6fe03",
+ "neo4j_projection": "production project_neo4j + project_canonical workers",
+ "query_set_sha256": "5b021632acad9b03935fb39d3643d4c084429f8566252f3a8836fdf1df38839a",
+ "reranker": "not tested",
+ "retrieval_contract": "production run_lanes fusion, untouched"
+}

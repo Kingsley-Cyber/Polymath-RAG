@@ -1,0 +1,19 @@
+{
+  "version": "g4-corpus-spec-1",
+  "authored": "2026-08-14",
+  "note": "Qualification corpus DESIGN, authored before seeding. Deterministic synthetic content projected through the REAL pipeline workers; heavy-tailed degree distribution so hub behavior is exercised at realistic degree.",
+  "docs": 12,
+  "hubs": [
+    {"surface": "the platform", "core_type": "Technology", "target_degree": 50},
+    {"surface": "the database", "core_type": "Technology", "target_degree": 40},
+    {"surface": "the vector index", "core_type": "Technology", "target_degree": 35},
+    {"surface": "the worker pool", "core_type": "Technology", "target_degree": 30},
+    {"surface": "the retrieval pipeline", "core_type": "Technology", "target_degree": 25}
+  ],
+  "leaf_facts_per_doc": 22,
+  "predicates": ["uses", "part_of", "depends_on", "influences", "enables", "causes", "is_a", "instance_of", "measured_by"],
+  "noise_inserts": [
+    {"surface": "the system", "core_type": "Concept", "note": "generic adversarial hub, degree ~15"},
+    {"surface": "the model", "core_type": "Technology", "note": "generic adversarial hub, degree ~15"}
+  ]
+}
