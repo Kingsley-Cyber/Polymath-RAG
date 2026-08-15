@@ -112,7 +112,8 @@ def _graph_fact(fact_id: str) -> dict:
             "object": ENTITIES[fact["object_id"]]["normalized_surface"]}
 
 
-def _bundle(graph_facts=None, child_evidence=None) -> dict:
+def _bundle(graph_facts=None, child_evidence=None,
+            document_summaries=None, section_summaries=None) -> dict:
     return assemble_evidence_bundle(
         QUERY,
         graph_facts if graph_facts is not None else [_graph_fact("fact_f1")],
@@ -122,6 +123,8 @@ def _bundle(graph_facts=None, child_evidence=None) -> dict:
         resolve_entity=lambda eid: ENTITIES.get(eid),
         resolve_document=lambda did: DOCUMENTS.get(did),
         resolve_chunk=lambda cid: CHUNKS.get(cid),
+        document_summaries=document_summaries,
+        section_summaries=section_summaries,
     )
 
 
@@ -179,16 +182,23 @@ def test_scoped_claim_keeps_epistemic_qualification() -> None:
     assert ep["attribution_source"] == "the report"
 
 
-def test_evidence_only_input_abstains() -> None:
+def test_text_evidence_supports_answer_independently() -> None:
+    """D3: the TEXT lane alone supports an answer — graph evidence
+    augments text, never gates it."""
     bundle = _bundle(graph_facts=[], child_evidence=[{
         "chunk_id": "chunk_ctx", "doc_id": "doc_c", "parent_id": "",
         "text": "context chunk with no facts", "contract_ids": ["lexical-v1"],
     }])
     resp = grounded_answer(bundle, QUERY)
-    assert resp["answer"] == ABSTENTION_MESSAGE
-    assert resp["meta"]["abstained"] is True
-    assert resp["citations"] == []
-    assert all(c["status"] != "supported" for c in resp["claims"])
+    assert resp["meta"]["abstained"] is False
+    assert resp["meta"]["text_support_count"] == 1
+    assert resp["answer"].startswith("Relevant passage: \u201c")
+    assert "context chunk" in resp["answer"]
+    assert resp["citations"], "text evidence must be cited"
+    assert resp["citations"][0]["locators"] == ["chunk:chunk_ctx@48:74"]
+    supported = [c for c in resp["claims"] if c["status"] == "supported"]
+    assert len(supported) == 1
+    assert supported[0]["lane"] == "text"
 
 
 def test_unsupported_generated_claim_is_rejected() -> None:
@@ -212,7 +222,9 @@ def test_fake_citation_is_rejected() -> None:
     assert resp["answer"] == ABSTENTION_MESSAGE
 
 
-def test_claim_backed_only_by_evidence_items_is_rejected() -> None:
+def test_text_claim_backed_by_text_items_is_supported() -> None:
+    """D3: a TEXT lane claim supported by text evidence items is a
+    first-class supported claim (typed lanes, independent support)."""
     bundle = _bundle(graph_facts=[], child_evidence=[{
         "chunk_id": "chunk_ctx", "doc_id": "doc_c", "parent_id": "",
         "text": "context chunk with no facts", "contract_ids": ["lexical-v1"],
@@ -220,8 +232,71 @@ def test_claim_backed_only_by_evidence_items_is_rejected() -> None:
     ev_item_id = bundle_item_id(bundle["evidence_bundle"][0])
     fake = {"text": "context chunk with no facts", "support": [ev_item_id]}
     resp = grounded_answer(bundle, QUERY, synthesize=lambda b: [fake])
+    assert resp["claims"][0]["status"] == "supported"
+    assert resp["claims"][0]["lane"] == "text"
+    assert resp["meta"]["abstained"] is False
+
+
+def test_non_verbatim_text_claim_is_rejected() -> None:
+    """Fail-closed TEXT lane grounding: a passage claim that is not a
+    verbatim substring of its supporting text item never renders."""
+    bundle = _bundle(graph_facts=[], child_evidence=[{
+        "chunk_id": "chunk_ctx", "doc_id": "doc_c", "parent_id": "",
+        "text": "context chunk with no facts", "contract_ids": ["lexical-v1"],
+    }])
+    ev_item_id = bundle_item_id(bundle["evidence_bundle"][0])
+    fake = {"text": "context chunk with invented facts", "support": [ev_item_id]}
+    resp = grounded_answer(bundle, QUERY, synthesize=lambda b: [fake])
     assert resp["claims"][0]["status"] == "unsupported"
-    assert resp["answer"] == ABSTENTION_MESSAGE
+    assert resp["meta"]["abstained"] is True
+
+
+def test_mixed_lane_support_is_rejected() -> None:
+    """A claim mixing graph and text support is fail-closed."""
+    bundle = _bundle(graph_facts=[_graph_fact("fact_f1")], child_evidence=[{
+        "chunk_id": "chunk_ctx", "doc_id": "doc_c", "parent_id": "",
+        "text": "context chunk with no facts", "contract_ids": ["lexical-v1"],
+    }])
+    ids = [bundle_item_id(i) for i in bundle["evidence_bundle"]]
+    fake = {"text": "AliceSmith founded AcmeCorp", "support": ids}
+    resp = grounded_answer(bundle, QUERY, synthesize=lambda b: [fake])
+    assert resp["claims"][0]["status"] == "unsupported"
+
+
+def test_graph_augments_text_never_gates_it() -> None:
+    """Combined bundle: graph sentences render first, text passages
+    follow; text still cited; both lanes counted."""
+    bundle = _bundle(graph_facts=[_graph_fact("fact_f1")], child_evidence=[{
+        "chunk_id": "chunk_ctx", "doc_id": "doc_c", "parent_id": "",
+        "text": "context chunk with no facts", "contract_ids": ["lexical-v1"],
+    }])
+    resp = grounded_answer(bundle, QUERY)
+    assert resp["answer"].startswith("AliceSmith founded AcmeCorp [1]")
+    assert "Relevant passage" in resp["answer"]
+    assert resp["meta"]["supported_claim_count"] == 2
+    assert resp["meta"]["text_support_count"] == 1
+    assert len(resp["citations"]) == 2
+
+
+def test_bundle_items_are_lane_typed() -> None:
+    """R3a v2: every bundle item carries an explicit support lane;
+    summaries become text items with deterministic locators."""
+    bundle = _bundle(graph_facts=[], child_evidence=[{
+        "chunk_id": "chunk_ctx", "doc_id": "doc_c", "parent_id": "",
+        "text": "context chunk with no facts", "contract_ids": ["lexical-v1"],
+    }], document_summaries=[{"doc_id": "doc_c", "summary": "a document summary"}],
+        section_summaries=[{"chunk_id": "parent_p1", "doc_id": "doc_c", "summary": "a section summary"}])
+    items = bundle["evidence_bundle"]
+    lanes = {i.get("lane") for i in items}
+    assert lanes == {"text"}
+    kinds = {(i.get("text_kind")) for i in items}
+    assert kinds == {"child_chunk", "document_summary", "section_summary"}
+    locators = {(i.get("source_span") or {}).get("locator") for i in items}
+    assert "doc:doc_c" in locators
+    assert "section:parent_p1" in locators
+    assert any(l.startswith("chunk:") for l in locators)
+    assert bundle["meta"]["text_evidence_count"] == 3
+    assert bundle["meta"]["graph_claim_count"] == 0
 
 
 def test_malformed_model_output_fails_closed() -> None:

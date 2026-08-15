@@ -266,3 +266,17 @@ that motivated it and the refactor that implemented it.
   depth.
 - Compiler authority unchanged; Q1 frozen extraction qualification
   untouched (harness source-compatible via default corpus_id).
+
+## 2026-08-15: D3 — typed evidence support lanes (TEXT / GRAPH, contracts v2)
+
+- The EvidenceBundle and answer synthesis contracts bump to v2 with
+  two INDEPENDENT typed support lanes: GRAPH (compiler/expanded fact
+  claims) and TEXT (document summary, section summary, child chunk,
+  lexical/dense retrieval evidence).
+- Either lane supports an answer independently; graph evidence
+  augments text and never gates it. Abstention only when both lanes
+  are empty. Text claims are verbatim, fail-closed passages with
+  exact locators; no special-case fallback and no generator.
+- Live smoke corpus: all six gate queries now answer with cited
+  in-corpus passages (zero foreign citations); the vague "system"
+  query gains no graph authority.

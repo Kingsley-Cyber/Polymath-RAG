@@ -21,6 +21,12 @@ queries, zero foreign citations, no legacy-hub activation, replay
 PASS, Neo4j reconstruction PASS, determinism PASS, tests/guards
 green.
 
+## Changes
+
+- None to production code: this entry records the gate PASS evidence.
+  The fixes that made the gate pass are the separate D1 (806fe2a) and
+  D2 (44b98fd) changes.
+
 ## Results
 
 - Original stuck run (`run_3f1febc…`, corpus
@@ -70,6 +76,14 @@ green.
   worm ok.
 - Evidence: work logs 2026-08-15-d1-eligibility-receipt-predicate.md,
   2026-08-15-d2-corpus-scoped-graph.md, and this entry.
+
+## Rejected claims
+
+- No tuning of admission, GLiNER, compiler, canonicalization,
+  traversal, or reranking was performed during the gate rerun.
+- No reconstruction shortcut: the sanctioned gate-2 sequence
+  (delete projection → verify clears receipts → census gap →
+  projector → verify) was used as-is.
 
 ## Open contract gaps
 

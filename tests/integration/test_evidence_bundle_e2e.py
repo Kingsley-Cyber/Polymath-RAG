@@ -177,7 +177,7 @@ def test_evidence_endpoint_returns_traceable_bundle() -> None:
             status, body = _post_evidence(client, "who founded acmecorp")
             assert status == 200, body
             assert body["query"] == "who founded acmecorp"
-            assert body["meta"]["contract_id"] == "answer/evidence_bundle/v1"
+            assert body["meta"]["contract_id"] == "answer/evidence_bundle/v2"
             claims = [i for i in body["evidence_bundle"] if i["kind"] == "claim"]
             assert len(claims) == 1, claims
             claim = claims[0]

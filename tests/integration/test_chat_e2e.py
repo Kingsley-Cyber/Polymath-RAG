@@ -181,8 +181,11 @@ def test_chat_e2e_cited_grounded_answer() -> None:
             assert "conflicting evidence" in resp["answer"]
 
             supported = [c for c in resp["claims"] if c["status"] == "supported"]
-            assert len(supported) == 2
-            conflicting = [c for c in supported if c.get("conflicts_with")]
+            graph_supported = [c for c in supported if c.get("lane") == "graph"]
+            # D3: text lane claims may accompany; the GRAPH lane keeps
+            # its own identity (2 fact claims, both conflicts marked).
+            assert len(graph_supported) == 2
+            conflicting = [c for c in graph_supported if c.get("conflicts_with")]
             assert len(conflicting) == 2
 
             # Every supported claim maps to >=1 real bundle item.
@@ -201,8 +204,10 @@ def test_chat_e2e_cited_grounded_answer() -> None:
                 assert all(l.startswith("chunk:chunk_r3b_") for l in citation["locators"])
                 assert citation["source_document_ids"]
 
-            assert resp["meta"]["contract_id"] == "answer/chat_response/v1"
-            assert resp["meta"]["supported_claim_count"] == 2
+            assert resp["meta"]["contract_id"] == "answer/chat_response/v2"
+            # D3: 2 graph claims + text lane passages both supported.
+            assert resp["meta"]["supported_claim_count"] == 4
+            assert resp["meta"]["text_support_count"] >= 1
     finally:
         _cleanup()
 

@@ -105,6 +105,16 @@ async def evidence(req: EvidenceRequest) -> dict:
             resolve_entity=lambda eid: _resolve_entity(eid),
             resolve_document=lambda did: _resolve_document(did),
             resolve_chunk=lambda cid: _resolve_chunk(cid),
+            document_summaries=[
+                {"doc_id": p["doc_id"],
+                 "summary": (p.get("retrieval_profile") or {}).get("semantic_summary") or ""}
+                for p in profiles
+            ],
+            section_summaries=[
+                {"chunk_id": p["chunk_id"], "doc_id": p["doc_id"],
+                 "summary": p.get("summary") or ""}
+                for p in parents
+            ],
         )
     except AssemblyError as exc:
         raise HTTPException(

@@ -1,16 +1,23 @@
 """R3a: deterministic evidence-bundle assembly (no stores).
 
 Takes retrieval artifacts — graph facts from the Neo4j expansion lane
-and child evidence from the dense/lexical lanes — and assembles a
-deterministic EvidenceBundle where every candidate claim is traceable
-to fact/entity IDs, source document, exact evidence span, provenance,
-epistemics, applicability, and retrieval lane.
+and textual evidence (document summaries, section summaries, child
+chunks from the dense/lexical lanes) — and assembles a deterministic
+EvidenceBundle where every item carries an explicit typed support
+lane:
 
-Invariant: no answer claim exists downstream unless this assembler can
-point to the evidence that supports it. A claim item therefore
-REQUIRES a resolvable fact row, at least one evidence row, resolvable
-entities/document/chunk, and non-empty provenance. Any violation is a
-typed AssemblyError — loud, never a silent omission.
+  GRAPH (lane=graph): compiler facts / graph-expanded facts, fully
+    traceable to fact/entity IDs, source document, exact evidence
+    span, provenance, epistemics, applicability.
+  TEXT  (lane=text):  document summary, section summary, child chunk,
+    lexical/dense retrieval evidence — first-class support items.
+
+Invariant (D3): the lanes are INDEPENDENT. Either may support an
+answer on its own; graph evidence augments textual retrieval and
+never gates it. A graph claim still REQUIRES a resolvable fact row,
+at least one evidence row, resolvable entities/document/chunk, and
+non-empty provenance — any violation is a typed AssemblyError
+(loud, never a silent omission).
 
 Boundary rule: this module assembles evidence. It does NOT decide what
 the final prose answer should say (R3b owns that).
@@ -23,13 +30,21 @@ from __future__ import annotations
 
 from typing import Callable, Optional
 
-ASSEMBLY_VERSION = "1.0.0"
-CONTRACT_ID = "answer/evidence_bundle/v1"
+ASSEMBLY_VERSION = "2.0.0"
+CONTRACT_ID = "answer/evidence_bundle/v2"
 LEXICAL_CONTRACT_ID = "lexical-v1"
 
 GRAPH_LANE = "graph"
+TEXT_LANE = "text"
+
+TEXT_KIND_DOCUMENT_SUMMARY = "document_summary"
+TEXT_KIND_SECTION_SUMMARY = "section_summary"
+TEXT_KIND_CHILD_CHUNK = "child_chunk"
+
 DENSE_LANE = "dense"
 LEXICAL_LANE = "lexical"
+DOCUMENT_SUMMARY_LANE = "document_summary"
+SECTION_SUMMARY_LANE = "section_summary"
 
 
 class AssemblyError(Exception):
@@ -85,22 +100,29 @@ def assemble_evidence_bundle(
     resolve_document: Callable[[str], Optional[dict]],
     resolve_chunk: Callable[[str], Optional[dict]],
     evidence_order: Optional[list[str]] = None,
+    document_summaries: Optional[list[dict]] = None,
+    section_summaries: Optional[list[dict]] = None,
 ) -> dict:
-    """Assemble the R3a bundle. Pure and deterministic given the resolvers.
+    """Assemble the R3a bundle (v2 typed lanes). Pure and deterministic
+    given the resolvers.
 
     graph_facts rows:   {fact_id, predicate, subject, object} (Neo4j
                         expansion lane; surfaces are fallback only —
                         Postgres entity resolution is authoritative).
     child_evidence rows: {chunk_id, doc_id, parent_id, text,
                           contract_ids} (dense/lexical lanes).
+    document_summaries: [{doc_id, summary}] — TEXT lane,
+                        document-summary granularity.
+    section_summaries:  [{chunk_id, doc_id, summary}] — TEXT lane,
+                        section (parent-chunk) summary granularity.
 
     `evidence_order` (G5/G3): optional list of chunk ids giving a
-    fused-rerank ordering for evidence-only items. Claims stay
-    identity-ordered first; evidence items follow the hint order
-    (ids absent from the hint fall back to identity order). The
-    candidate SET is unchanged by any ordering hint — recall and
-    grounding semantics never depend on order. meta.ordering records
-    which policy applied.
+    fused-rerank ordering for text evidence items. Graph claims stay
+    identity-ordered first; text items follow the hint order (ids
+    absent from the hint fall back to identity order). The candidate
+    SET is unchanged by any ordering hint — recall and grounding
+    semantics never depend on order. meta.ordering records which
+    policy applied.
 
     Resolvers return None for a missing row; the assembler raises the
     matching typed error instead of emitting an unsupported claim.
@@ -142,7 +164,9 @@ def assemble_evidence_bundle(
                     f"fact {fact_id}",
                 )
             items.append({
+                "lane": GRAPH_LANE,
                 "kind": "claim",
+                "text_kind": None,
                 "claim_candidate": f"{subject['normalized_surface']} {fact['predicate']} {object_['normalized_surface']}",
                 "knowledge_id": fact_id,
                 "fact_id": fact_id,
@@ -163,7 +187,87 @@ def assemble_evidence_bundle(
                 "retrieval": {"lanes": [GRAPH_LANE], "score": None},
             })
 
-    # -- evidence-only items (retrieved chunks without a fact) --------------
+    # -- text evidence items (TEXT lane, independent support) -------------
+    # document summaries
+    for row in sorted(
+        (d for d in (document_summaries or []) if d.get("doc_id") and (d.get("summary") or "")),
+        key=lambda d: d.get("doc_id") or "",
+    ):
+        doc_id = row["doc_id"]
+        doc = resolve_document(doc_id)
+        if doc is None:
+            raise UnresolvedDocumentError(doc_id, "document summary")
+        summary = row["summary"] or ""
+        items.append({
+            "lane": TEXT_LANE,
+            "kind": "evidence",
+            "text_kind": TEXT_KIND_DOCUMENT_SUMMARY,
+            "claim_candidate": None,
+            "knowledge_id": doc_id,
+            "fact_id": None,
+            "entity_ids": None,
+            "predicate": None,
+            "source_document_id": doc_id,
+            "source_span": {
+                "text": summary,
+                "locator": f"doc:{doc_id}",
+                "chunk_id": None,
+                "char_start": None,
+                "char_end": None,
+                "offsets_source": "summary",
+                "span_offsets": {},
+            },
+            "provenance": {},
+            "epistemics": {"decision": "evidence"},
+            "applicability": {
+                "corpus_id": doc.get("corpus_id"),
+                "source_name": doc.get("source_name"),
+                "conditions": [],
+            },
+            "retrieval": {"lanes": [DOCUMENT_SUMMARY_LANE], "score": None},
+        })
+
+    # section summaries
+    for row in sorted(
+        (s for s in (section_summaries or []) if s.get("chunk_id") and (s.get("summary") or "")),
+        key=lambda s: s.get("chunk_id") or "",
+    ):
+        chunk_id = row["chunk_id"]
+        doc_id = row.get("doc_id") or ""
+        doc = resolve_document(doc_id)
+        if doc is None:
+            raise UnresolvedDocumentError(doc_id, f"section summary {chunk_id}")
+        summary = row["summary"] or ""
+        items.append({
+            "lane": TEXT_LANE,
+            "kind": "evidence",
+            "text_kind": TEXT_KIND_SECTION_SUMMARY,
+            "claim_candidate": None,
+            "knowledge_id": chunk_id,
+            "fact_id": None,
+            "entity_ids": None,
+            "predicate": None,
+            "source_document_id": doc_id,
+            "source_span": {
+                "text": summary,
+                "locator": f"section:{chunk_id}",
+                "chunk_id": chunk_id,
+                "char_start": None,
+                "char_end": None,
+                "offsets_source": "summary",
+                "span_offsets": {},
+            },
+            "provenance": {},
+            "epistemics": {"decision": "evidence"},
+            "applicability": {
+                "corpus_id": doc.get("corpus_id"),
+                "source_name": doc.get("source_name"),
+                "conditions": [],
+            },
+            "retrieval": {"lanes": [SECTION_SUMMARY_LANE], "score": None},
+        })
+
+    # -- child-chunk text evidence ----------------------------------------
     seen_chunks: set[str] = set()
     for row in sorted(
         (c for c in child_evidence if c.get("chunk_id")),
@@ -187,7 +291,9 @@ def assemble_evidence_bundle(
             for cid in (row.get("contract_ids") or [])
         })
         items.append({
+            "lane": TEXT_LANE,
             "kind": "evidence",
+            "text_kind": TEXT_KIND_CHILD_CHUNK,
             "claim_candidate": None,
             "knowledge_id": chunk_id,
             "fact_id": None,
@@ -205,8 +311,8 @@ def assemble_evidence_bundle(
             "retrieval": {"lanes": lanes, "score": None},
         })
 
-    # -- deterministic ordering: claims first, then evidence ----------------
-    # G5/G3: evidence items may follow a fused-rerank hint; the SET never
+    # -- deterministic ordering: graph claims first, then text evidence ---
+    # G5/G3: text items may follow a fused-rerank hint; the SET never
     # changes. Claims stay identity-ordered (fact grounding is order-free).
     if evidence_order:
         rank = {cid: i for i, cid in enumerate(evidence_order)}
@@ -228,6 +334,8 @@ def assemble_evidence_bundle(
             "ordering": ordering,
             "claim_count": sum(1 for i in items if i["kind"] == "claim"),
             "evidence_count": sum(1 for i in items if i["kind"] == "evidence"),
+            "graph_claim_count": sum(1 for i in items if i.get("lane") == GRAPH_LANE),
+            "text_evidence_count": sum(1 for i in items if i.get("lane") == TEXT_LANE),
         },
     }
 

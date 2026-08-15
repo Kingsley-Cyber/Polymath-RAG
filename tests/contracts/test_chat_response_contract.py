@@ -18,7 +18,7 @@ from polymath_shared.evidence_assembly import assemble_evidence_bundle  # noqa: 
 @pytest.fixture(scope="module")
 def schema(repo_root: Path) -> dict:
     return json.loads(
-        (repo_root / "contracts" / "answer" / "v1" / "chat_response.schema.json").read_text()
+        (repo_root / "contracts" / "answer" / "v2" / "chat_response.schema.json").read_text()
     )
 
 

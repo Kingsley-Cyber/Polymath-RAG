@@ -5,17 +5,24 @@ deterministic validation -> prose rendering with citations.
 
 Trust boundary: the proposer is NEVER trusted to obey the grounding
 rule by prompting alone. It emits structured claims referencing bundle
-item ids; the validator decides which claims may render. v1 uses a
+item ids; the validator decides which claims may render. v2 uses a
 deterministic template proposer; an LLM proposer can replace it later
 without changing the validator or renderer.
 
-Rules enforced by the validator (fail-closed):
-  - a claim must have >=1 support bundle item that is kind=claim
-    (evidence-only items may accompany, never substitute);
-  - every support id must resolve to a real bundle item id;
-  - every meaningful token of the claim text must appear in the union
-    of its supporting claim surfaces (kills the "founded in 2019"
-    fabrication class);
+Typed support lanes (D3, v2):
+  - GRAPH lane claims (fact triples): a claim must have >=1 support
+    bundle item with lane=graph, kind=claim; every meaningful token of
+    the claim text must appear in the union of its supporting claim
+    surfaces (kills the "founded in 2019" fabrication class).
+  - TEXT lane claims (verbatim passages): the claim text must be a
+    verbatim, case-insensitive substring of at least one supporting
+    lane=text item's passage — excerpts are cut from the passage
+    itself, so no fabrication can survive.
+  - The lanes are INDEPENDENT: a text-only bundle produces a cited
+    passage answer; a graph-only bundle produces the fact answer.
+    Graph evidence augments text, never gates it. Abstention only
+    when BOTH lanes are empty. Mixed-lane support for one claim is
+    rejected (fail-closed).
   - malformed entries are dropped deterministically;
   - conflicts (same entity pair, different predicate) are marked on
     both claims and never arbitrated;
@@ -33,8 +40,8 @@ from typing import Callable, Iterable
 from polymath_shared.identity import content_hash
 from polymath_shared.retrieval import tokens
 
-SYNTHESIS_VERSION = "deterministic-template-v1"
-CHAT_CONTRACT_ID = "answer/chat_response/v1"
+SYNTHESIS_VERSION = "deterministic-template-v2"
+CHAT_CONTRACT_ID = "answer/chat_response/v2"
 
 ABSTENTION_MESSAGE = (
     "I don't have enough grounded evidence to answer this question."
@@ -43,6 +50,11 @@ CONFLICT_NOTE = (
     " Note: conflicting evidence exists; both claims are shown without "
     "arbitration."
 )
+
+GRAPH_LANE = "graph"
+TEXT_LANE = "text"
+
+TEXT_EXCERPT_WIDTH = 160
 
 
 def bundle_item_id(item: dict) -> str:
@@ -63,19 +75,67 @@ def _index_items(bundle: dict) -> tuple[dict[str, dict], list[str]]:
     return by_id, order
 
 
+def _excerpt(passage: str, query: str, width: int = TEXT_EXCERPT_WIDTH) -> str:
+    """Deterministic passage excerpt: a window around the first
+    occurrence of the query's rarest long token (ties: longest token
+    first). Word-boundary trimmed. Pure and byte-stable."""
+    terms = sorted(
+        {t for t in tokens(query) if len(t) > 3},
+        key=lambda t: (passage.lower().count(t.lower()), -len(t), t),
+    )
+    if not terms or not passage:
+        return passage[:width].strip()
+    lower = passage.lower()
+    idx = lower.find(terms[0].lower())
+    if idx == -1:
+        return passage[:width].strip()
+    start = max(0, idx - width // 2)
+    end = min(len(passage), start + width)
+    start = max(0, end - width)
+    while start > 0 and passage[start] not in " \n\t":
+        start -= 1
+    while end < len(passage) and passage[end] not in " \n\t":
+        end += 1
+    return passage[start:end].strip()
+
+
+def _passage_of(item: dict) -> str:
+    return (item.get("source_span") or {}).get("text") or ""
+
+
+def _text_grounded(claim_text: str, passages: list[str]) -> bool:
+    """Fail-closed TEXT lane grounding: the claim must be a verbatim,
+    case-insensitive substring of at least one supporting passage."""
+    if not claim_text.strip():
+        return False
+    lowered = claim_text.lower()
+    return any(lowered in (p or "").lower() for p in passages)
+
+
 def synthesize_claims(bundle: dict) -> list[dict]:
-    """v1 template proposer: one claim per bundle claim item.
+    """v2 template proposer: one GRAPH claim per graph claim item and
+    one TEXT passage claim per text evidence item (typed lanes).
 
     Evidence-only items inform prose but never become factual claims.
     Output is already deterministic (bundle order)."""
+    query = bundle.get("query") or ""
     proposed: list[dict] = []
     for item in bundle.get("evidence_bundle") or []:
-        if item.get("kind") != "claim":
-            continue
-        proposed.append({
-            "text": item.get("claim_candidate") or "",
-            "support": [bundle_item_id(item)],
-        })
+        if item.get("kind") == "claim" and item.get("lane") == GRAPH_LANE:
+            proposed.append({
+                "text": item.get("claim_candidate") or "",
+                "support": [bundle_item_id(item)],
+                "lane": GRAPH_LANE,
+            })
+        elif item.get("kind") == "evidence" and item.get("lane") == TEXT_LANE:
+            passage = _passage_of(item)
+            if not passage.strip():
+                continue
+            proposed.append({
+                "text": _excerpt(passage, query),
+                "support": [bundle_item_id(item)],
+                "lane": TEXT_LANE,
+            })
     return proposed
 
 
@@ -157,23 +217,36 @@ def validate_claims(proposed: Iterable, bundle: dict) -> dict:
     unsupported: list[dict] = []
 
     for raw in normalized:
-        claim_items = [
-            iid for iid in raw["support"]
-            if iid in items_by_id and items_by_id[iid].get("kind") == "claim"
-        ]
+        support_items = [items_by_id[iid] for iid in raw["support"] if iid in items_by_id]
         missing = [iid for iid in raw["support"] if iid not in items_by_id]
-        surfaces = [items_by_id[iid].get("claim_candidate") or "" for iid in claim_items]
-        ok = (
-            bool(claim_items)
-            and not missing
-            and _grounded(raw["text"], surfaces)
-        )
+        lanes = {i.get("lane") for i in support_items if i.get("lane")}
+        # Typed-lane validation: a claim is supported by exactly one
+        # lane (mixed support is fail-closed).
+        if lanes == {GRAPH_LANE}:
+            claim_items = [iid for iid in raw["support"]
+                           if items_by_id[iid].get("kind") == "claim"]
+            surfaces = [items_by_id[iid].get("claim_candidate") or "" for iid in claim_items]
+            ok = (
+                bool(claim_items)
+                and not missing
+                and _grounded(raw["text"], surfaces)
+            )
+            lane = GRAPH_LANE
+        elif lanes == {TEXT_LANE}:
+            passages = [_passage_of(i) for i in support_items]
+            ok = bool(support_items) and not missing and _text_grounded(raw["text"], passages)
+            lane = TEXT_LANE
+        else:
+            ok = False
+            lane = None
         row = {
             "text": raw["text"],
             "support": raw["support"],
             "status": "supported" if ok else "unsupported",
         }
-        primary = claim_items[0] if claim_items else (raw["support"][0] if raw["support"] else None)
+        if lane:
+            row["lane"] = lane
+        primary = raw["support"][0] if raw["support"] else None
         primary_item = items_by_id.get(primary) if primary else None
         if primary_item and primary_item.get("kind") == "claim":
             epistemics = primary_item.get("epistemics") or {}
@@ -212,6 +285,10 @@ def _epistemic_prefix(claim: dict) -> str:
 def render_answer(bundle: dict, query: str, validation: dict) -> dict:
     """Deterministic renderer: prose + citations + claim ledger.
 
+    GRAPH lane claims render as factual sentences (epistemic prefix);
+    TEXT lane claims render as cited passages. Graph augments text and
+    renders first; text alone still produces an answer (D3).
+
     Citations reference bundle item ids (not merely documents) and
     retain the exact source locators."""
     items_by_id, item_order = _index_items(bundle)
@@ -219,6 +296,7 @@ def render_answer(bundle: dict, query: str, validation: dict) -> dict:
     citation_order: list[str] = []  # primary support item ids, in use
     citation_ids: dict[str, int] = {}
     sentences: list[str] = []
+    passages: list[str] = []
     ledger = list(validation["supported"]) + list(validation["unsupported"])
 
     for claim in validation["supported"]:
@@ -229,12 +307,15 @@ def render_answer(bundle: dict, query: str, validation: dict) -> dict:
         if primary not in citation_ids:
             citation_order.append(primary)
             citation_ids[primary] = len(citation_order)
-        sentence = f"{_epistemic_prefix(claim)}{claim['text']} [{citation_ids[primary]}]"
-        sentences.append(sentence)
+        if claim.get("lane") == TEXT_LANE:
+            passages.append(f"Relevant passage: \u201c{claim['text']}\u201d [{citation_ids[primary]}]")
+        else:
+            sentence = f"{_epistemic_prefix(claim)}{claim['text']} [{citation_ids[primary]}]"
+            sentences.append(sentence)
 
     has_conflict = any(c.get("conflicts_with") for c in validation["supported"])
-    if sentences:
-        answer = " ".join(sentences)
+    if sentences or passages:
+        answer = " ".join(sentences + passages)
         if has_conflict:
             answer += CONFLICT_NOTE
     else:
@@ -259,9 +340,12 @@ def render_answer(bundle: dict, query: str, validation: dict) -> dict:
         "meta": {
             "contract_id": CHAT_CONTRACT_ID,
             "synthesis_version": SYNTHESIS_VERSION,
-            "abstained": not sentences,
+            "abstained": not (sentences or passages),
             "supported_claim_count": len(validation["supported"]),
             "unsupported_claim_count": len(validation["unsupported"]),
+            "text_support_count": sum(
+                1 for c in validation["supported"] if c.get("lane") == TEXT_LANE
+            ),
         },
     }
 
