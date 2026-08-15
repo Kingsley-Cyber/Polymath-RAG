@@ -26,9 +26,11 @@ class SidecarSettings(BaseSettings):
     embedder_url: str = Field(default="http://127.0.0.1:8742", description="Embedder sidecar")
     reranker_url: str = Field(default="http://127.0.0.1:8743", description="Reranker sidecar")
     g3_reranker: bool = Field(
-        default=False,
-        description="G3 candidate (not a production default): cross-representation "
-                    "reranking over fused retrieval candidates (POLYMATH_G3_RERANKER=1)",
+        default=True,
+        description="Cross-representation reranking over fused retrieval "
+                    "candidates. PROMOTED TO DEFAULT by G3+G5 evidence "
+                    "(2026-08-14); disable explicitly with POLYMATH_G3_RERANKER=0. "
+                    "A missing reranker sidecar fails LOUDLY while enabled.",
     )
     sidecar_timeout_s: float = Field(default=60.0, description="Sidecar HTTP timeout")
     sidecar_pin_required: bool = Field(

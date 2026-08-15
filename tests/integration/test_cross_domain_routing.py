@@ -431,8 +431,8 @@ class TestG2HarderValidation:
         } <= set(ranked[:4]), f"complementary trio missing from top ranks: {ranked[:4]}"
 
     @pytest.mark.skipif(
-        os.environ.get("POLYMATH_G3_RERANKER") != "1",
-        reason="cross-representation noise discrimination belongs to the G3 reranker (fusion is rank-based, no score normalization)",
+        os.environ.get("POLYMATH_G3_RERANKER") in ("0", "false", "False"),
+        reason="G3 reranker is the production default; this gate runs unless explicitly disabled",
     )
     def test_surface_vocabulary_noise_stays_out(self) -> None:
         """Gate 7f: a document sharing query vocabulary in irrelevant
@@ -448,7 +448,14 @@ class TestG2HarderValidation:
             fetch_children=lambda limit: children[:limit],
             child_search=lambda limit: _qdrant_search(VALIDATION_QUERY, None, limit),
         )
-        ranked = [self._source_of(d["doc_id"]) for d in result.selected_documents]
+        # G3 is the PRODUCTION DEFAULT: the retrieval path applies the
+        # reranker to the fused candidates before selection.
+        from polymath_shared.rerank import apply_rerank
+
+        docs, _kids = apply_rerank(VALIDATION_QUERY,
+                                   result.selected_documents,
+                                   result.selected_children)
+        ranked = [self._source_of(d["doc_id"]) for d in docs]
         assert "surface-noise" not in ranked[:3], (
             f"surface-vocabulary noise outranked the complementary sources: {ranked[:3]}"
         )

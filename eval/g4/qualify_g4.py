@@ -312,6 +312,11 @@ def _hop2_expand(hop1_facts: list[dict]) -> list[dict]:
     return rows
 
 
+def _neo4j_expand_facts(surfaces: list[str]) -> list[dict]:
+    """Thin wrapper over the production one-hop expansion."""
+    return _neo4j_expand(surfaces)
+
+
 def _bidir_expand(surfaces: list[str]) -> list[dict]:
     """Measurement-only CANDIDATE (not production): bidirectional
     one-hop expansion — outgoing AND incoming REL edges from seeds.

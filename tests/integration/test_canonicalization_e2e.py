@@ -32,14 +32,38 @@ CORPUS = "c1_e2e"
 
 
 def _cleanup() -> None:
+    """Corpus-scoped cleanup (join-based: content-hashed ids can start
+    with 'c1'/'doc_c1' coincidentally, so prefix patterns may hit
+    unrelated corpora's rows)."""
     with tx() as conn:
+        ids = conn.execute(
+            "SELECT jsonb_agg(id) FROM ("
+            "SELECT DISTINCT c.chunk_id AS id FROM chunks c JOIN documents d ON d.doc_id=c.doc_id WHERE d.corpus_id=%s "
+            "UNION SELECT DISTINCT e.evidence_id AS id FROM evidence e JOIN documents d ON d.doc_id=e.doc_id WHERE d.corpus_id=%s "
+            "UNION SELECT DISTINCT f.fact_id AS id FROM facts f JOIN evidence e ON e.fact_id=f.fact_id JOIN documents d ON d.doc_id=e.doc_id WHERE d.corpus_id=%s "
+            "UNION SELECT DISTINCT ce.canonical_id AS id FROM canonical_entities ce WHERE ce.corpus_id=%s "
+            "UNION SELECT DISTINCT cm.local_entity_id AS id FROM canonical_memberships cm WHERE cm.corpus_id=%s "
+            "UNION SELECT DISTINCT e2.entity_id AS id FROM entities e2 JOIN facts f2 ON f2.subject_id=e2.entity_id OR f2.object_id=e2.entity_id "
+            "JOIN evidence ev2 ON ev2.fact_id=f2.fact_id JOIN documents d2 ON d2.doc_id=ev2.doc_id WHERE d2.corpus_id=%s) x",
+            (CORPUS,)*6).fetchone()[0] or []
+        chunk_ids=[i for i in ids if i.startswith('chunk_')]
+        ev_ids=[i for i in ids if i.startswith('ev_')]
+        fact_ids=[i for i in ids if i.startswith('fact_')]
+        canon_ids=[i for i in ids if i.startswith('cent_')]
+        ent_ids=[i for i in ids if i.startswith('ent_')]
+        conn.execute("DELETE FROM projection_receipts WHERE entity_id = ANY(%s)",
+                     (chunk_ids+ev_ids+fact_ids+canon_ids+ent_ids,))
         conn.execute("DELETE FROM canonicalization_decisions WHERE corpus_id = %s", (CORPUS,))
         conn.execute("DELETE FROM canonical_memberships WHERE corpus_id = %s", (CORPUS,))
         conn.execute("DELETE FROM canonical_entities WHERE corpus_id = %s", (CORPUS,))
-        conn.execute("DELETE FROM evidence WHERE fact_id LIKE 'fact_c1_%'")
-        conn.execute("DELETE FROM facts WHERE fact_id LIKE 'fact_c1_%'")
-        conn.execute("DELETE FROM entities WHERE entity_id LIKE 'ent_c1_%'")
-        conn.execute("DELETE FROM chunks WHERE doc_id LIKE 'doc_c1_%'")
+        conn.execute("DELETE FROM evidence WHERE evidence_id = ANY(%s)", (ev_ids,))
+        conn.execute("DELETE FROM facts WHERE fact_id = ANY(%s)", (fact_ids,))
+        if ent_ids:
+            conn.execute(
+                "DELETE FROM entities WHERE entity_id = ANY(%s) "
+                "AND NOT EXISTS (SELECT 1 FROM facts f2 WHERE f2.subject_id=entities.entity_id OR f2.object_id=entities.entity_id)",
+                (ent_ids,))
+        conn.execute("DELETE FROM chunks WHERE chunk_id = ANY(%s)", (chunk_ids,))
         conn.execute("DELETE FROM documents WHERE corpus_id = %s", (CORPUS,))
         conn.execute("DELETE FROM corpora WHERE corpus_id = %s", (CORPUS,))
         conn.execute("DELETE FROM runs WHERE corpus_id = %s", (CORPUS,))
@@ -216,14 +240,19 @@ def test_canonicalize_stage_builds_registry_with_lineage() -> None:
     # Original entity/fact/evidence rows untouched.
     with tx() as conn:
         n_entities = conn.execute(
-            "SELECT COUNT(*) FROM entities WHERE entity_id LIKE 'ent_c1_%'"
-        ).fetchone()[0]
+            "SELECT COUNT(DISTINCT e.entity_id) FROM entities e "
+            "JOIN facts f ON f.subject_id=e.entity_id OR f.object_id=e.entity_id "
+            "JOIN evidence ev ON ev.fact_id=f.fact_id "
+            "JOIN documents d ON d.doc_id=ev.doc_id WHERE d.corpus_id=%s",
+            (CORPUS,)).fetchone()[0]
         n_facts = conn.execute(
-            "SELECT COUNT(*) FROM facts WHERE fact_id LIKE 'fact_c1_%'"
-        ).fetchone()[0]
+            "SELECT COUNT(*) FROM facts f JOIN evidence e ON e.fact_id=f.fact_id "
+            "JOIN documents d ON d.doc_id=e.doc_id WHERE d.corpus_id=%s",
+            (CORPUS,)).fetchone()[0]
         n_evidence = conn.execute(
-            "SELECT COUNT(*) FROM evidence WHERE fact_id LIKE 'fact_c1_%'"
-        ).fetchone()[0]
+            "SELECT COUNT(*) FROM evidence e JOIN documents d ON d.doc_id=e.doc_id "
+            "WHERE d.corpus_id=%s",
+            (CORPUS,)).fetchone()[0]
     assert n_entities == 5
     assert n_facts == 5
     assert n_evidence == 5

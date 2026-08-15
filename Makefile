@@ -115,3 +115,7 @@ dev-worker-canonicalize:
 ## dev-worker-project-canonical — canonical graph projector in the foreground
 dev-worker-project-canonical:
 	$(PY) -m workers.project_canonical_worker
+
+## dev-reranker — G3 reranker sidecar in the foreground (first boot downloads the pinned model)
+dev-reranker:
+	$(PY) -m uvicorn server:app --host 127.0.0.1 --port 8743 --app-dir sidecars/reranker
