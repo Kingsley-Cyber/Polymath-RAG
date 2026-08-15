@@ -14,7 +14,6 @@ the receipt (AGENTS.md rule 5). GLiNER proposes; the compiler decides.
 """
 from __future__ import annotations
 
-import base64
 import json
 import logging
 import time
@@ -40,7 +39,6 @@ from polymath_shared.receipts import (
 )
 from polymath_shared.rulepack import compile_relation, load_rule_pack
 from workers.candidates import SentenceSlice, build_candidates
-from workers.chunker import materialize_chunks, plan_document
 from workers.evidence_proposer import EXTRACTOR_VERSION as EVIDENCE_EXTRACTOR_VERSION
 from workers.profile_router import chunk_label_set
 from workers.summarizer import split_sentences
@@ -194,7 +192,6 @@ def process_event(conn: Connection, event: dict) -> None:
     run_id = event["run_id"]
     doc_id = payload["doc_id"]
     profile_dict = payload.get("profile", {})
-    raw = base64.b64decode(payload["doc_content"]).decode("utf-8", errors="replace")
     from polymath_shared.settings import get_settings
 
     proposal_mode = get_settings().worker.evidence_proposal_mode
@@ -228,8 +225,24 @@ def process_event(conn: Connection, event: dict) -> None:
     ) as writer:
         writer.artifact({"manifest": manifest.model_dump()})
 
-        plan = plan_document(raw, doc_id)
-        chunks = materialize_chunks(plan)
+        # Postgres is the authority: consume the chunks the intake stage
+        # committed (materialized for native formats, I0/ADR 0010),
+        # never re-derive text from event bytes.
+        chunk_rows = conn.execute(
+            """
+            SELECT chunk_id, doc_id, parent_id, tier, text, summary,
+                   char_start, char_end
+              FROM chunks
+             WHERE doc_id = %s
+             ORDER BY chunk_index
+            """,
+            (doc_id,),
+        ).fetchall()
+        chunks = [
+            {"chunk_id": r[0], "doc_id": r[1], "parent_id": r[2], "tier": r[3],
+             "text": r[4], "summary": r[5], "char_start": r[6], "char_end": r[7]}
+            for r in chunk_rows
+        ]
         child_chunks = [row for row in chunks if row["tier"] == "child"]
 
         gliner = GlinerClient()

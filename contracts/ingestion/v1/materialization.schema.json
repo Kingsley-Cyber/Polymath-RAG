@@ -1,0 +1,42 @@
+{
+  "$id": "https://polymath.local/contracts/ingestion/v1/materialization.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Materialization",
+  "description": "I0 output (ADR 0010): the deterministic normalized-text representation of a native source document plus its structural source map. Produced by shared/polymath_shared/materializer.py; persisted on documents.materialization / documents.source_map (migration 0006). Semantic extraction is downstream and unchanged.",
+  "type": "object",
+  "required": [
+    "text", "source_map", "parser", "parser_version", "format",
+    "media_type", "original_sha256", "normalized_text_sha256",
+    "original_byte_length", "warnings"
+  ],
+  "properties": {
+    "text": {"type": "string", "minLength": 1},
+    "source_map": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/segment"}
+    },
+    "parser": {"type": "string"},
+    "parser_version": {"type": "string"},
+    "format": {"enum": ["text", "markdown", "html", "pdf", "epub", "docx"]},
+    "media_type": {"type": "string"},
+    "original_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "normalized_text_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "original_byte_length": {"type": "integer", "minimum": 0},
+    "warnings": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "segment": {
+      "type": "object",
+      "required": ["text_start", "text_end", "kind", "location", "label"],
+      "properties": {
+        "text_start": {"type": "integer", "minimum": 0},
+        "text_end": {"type": "integer", "minimum": 0},
+        "kind": {"type": "string"},
+        "location": {"type": "string"},
+        "label": {"type": "string"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

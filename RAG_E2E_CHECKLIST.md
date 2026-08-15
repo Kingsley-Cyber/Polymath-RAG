@@ -9,9 +9,9 @@ Status vocabulary: COMPLETE / IN PROGRESS / NOT STARTED / BLOCKED.
 
 Two milestones gate the release path:
 
-- **MILESTONE A — CORPUS_INGEST_READY**: C1 + C2 + Q1 + I1 + I2 all
-  COMPLETE. This is the current priority: the system must be able to
-  mass-ingest the real corpus confidently.
+- **MILESTONE A — CORPUS_INGEST_READY**: C1 + C2 + Q1 + I0 + I1 + I2
+  all COMPLETE. This is the current priority: the system must be able
+  to mass-ingest the real corpus confidently.
 - **MILESTONE B — RAG_V1_E2E**: the remaining application gates
   (R2, M1–M5, R4, O2, O1, A1) + the V1 checkpoint.
 
@@ -54,10 +54,11 @@ R2/MCP are NOT prerequisites for CORPUS_INGEST_READY.
 | C1 | Does Stage-2 corpus-level canonicalization merge cross-document entities deterministically? | COMPLETE | ADR 0009 + migration 0005 + `canonicalize` stage: content-hash canonical ids, conservative SAME_AS/ALIAS_OF/DISTINCT/AMBIGUOUS policy, full lineage, replay-safe, order-independent (live E2E) |
 | C2 | Does the canonical KG carry source/provenance links to every fact? | COMPLETE | `project_canonical` stage: CanonicalEntity nodes + HAS_MEMBER (decision/basis/version) + Evidence→FROM_CHUNK links; live E2E full lineage, destructive reconstruction, orphan detection, census re-arm |
 | Q1 | Does extraction qualify on a heterogeneous corpus (mixed domains/types) with measured quality gates? | COMPLETE | frozen corpus `qualification_q1.yaml` + `eval/q1/REPORT_Q1.md`: PASS — P/R 0.943, 0 wrong-predicate/scope; pipeline E2E clean; regression locks added |
+| I0 | Do native source files (PDF/EPUB/DOCX/TXT/MD/HTML) materialize deterministically into the frozen pipeline with source-location maps? | COMPLETE | ADR 0010 + `materializer.py` + migration 0006; typed loud failures; live book-sample E2E proves fact → evidence → chunk → page/chapter lineage |
 | I1 | Does a manifest drive bulk ingestion of many documents idempotently? | NOT STARTED | no manifest-based bulk controller |
 | I2 | Does a corpus-scale integrity run prove receipts/projections/canonicalization converge at scale? | NOT STARTED | scale integrity not run |
 
-**CORPUS_INGEST_READY = C1 + C2 + Q1 + I1 + I2 all COMPLETE.**
+**CORPUS_INGEST_READY = C1 + C2 + Q1 + I0 + I1 + I2 all COMPLETE.**
 
 ## MILESTONE B — RAG_V1_E2E
 

@@ -69,18 +69,28 @@ def process_event(conn: Connection, event: dict) -> None:
     doc_id = document_id(normalized)
     content_hash = hashlib.sha256(normalized).hexdigest()
 
-    try:
-        text = normalized.decode("utf-8")
-    except UnicodeDecodeError:
-        text = ""
-
-    profile = route_document(source_name, text[:4000])
-    plan = plan_document(text, doc_id, **CHUNK_FROZEN_PARAMS)
-    chunks = materialize_chunks(plan)
-
     with stage_transaction(
         conn, run_id=run_id, stage=STAGE, contract_hash=contract()
     ) as writer:
+        # I0: native document materialization (ADR 0010). Deterministic,
+        # per-format, fail-loud: a materialization failure commits a
+        # FAILURE receipt (never a silent empty document). TXT/Markdown
+        # go through the SAME byte normalization as before — the
+        # Q1-qualified path is unchanged.
+        from polymath_shared.materializer import MaterializationError, materialize
+
+        try:
+            materialization = materialize(raw, media_type, source_name)
+        except MaterializationError as exc:
+            raise RuntimeError(
+                f"materialization failed for {source_name}: {type(exc).__name__}: {exc}"
+            ) from exc
+        text = materialization.text
+
+        profile = route_document(source_name, text[:4000])
+        plan = plan_document(text, doc_id, **CHUNK_FROZEN_PARAMS)
+        chunks = materialize_chunks(plan)
+
         conn.execute(
             """
             INSERT INTO corpora (corpus_id, name, config_hash, profile)
@@ -92,12 +102,23 @@ def process_event(conn: Connection, event: dict) -> None:
         conn.execute(
             """
             INSERT INTO documents (doc_id, corpus_id, source_name, media_type,
-                                   byte_length, content_hash, profile)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+                                   byte_length, content_hash, profile,
+                                   source_hash, materialization, source_map)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (doc_id) DO NOTHING
             """,
             (doc_id, corpus_id, source_name, media_type,
-             len(normalized), content_hash, json.dumps(profile.model_dump())),
+             len(normalized), content_hash, json.dumps(profile.model_dump()),
+             materialization.original_sha256,
+             json.dumps({
+                 "parser": materialization.parser,
+                 "parser_version": materialization.parser_version,
+                 "format": materialization.format,
+                 "normalized_text_sha256": materialization.normalized_text_sha256,
+                 "original_byte_length": materialization.original_byte_length,
+                 "warnings": materialization.warnings,
+             }),
+             json.dumps(materialization.source_map)),
         )
 
         # Parents first, then children: children carry parent_id foreign

@@ -1,0 +1,26 @@
+# THE PRINCIPLES OF PSYCHOLOGY
+
+## CHAPTER IV — HABIT
+
+When we look at living creatures from an outward point of view, one
+of the first things that strike us is that they are bundles of habits.
+
+An acquired habit, from the physiological point of view, is nothing
+but a new pathway of discharge formed in the brain, by which certain
+incoming currents ever after tend to escape.
+
+The great thing in all education is to make our nervous system our
+ally instead of our enemy. For this we must make automatic and
+habitual, as early as possible, as many useful actions as we can.
+
+Habit simplifies the movements required to achieve a given result,
+makes them more accurate and diminishes fatigue.
+
+There is no more miserable human being than one in whom nothing is
+habitual but indecision.
+
+Editor's summary for the qualification fixture: James developed the
+theory of habit formation. The principle of association depends on
+repetition. The psychologist uses introspection as a method of study.
+The educator causes the student to form good habits.
+

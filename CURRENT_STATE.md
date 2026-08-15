@@ -5,7 +5,7 @@ Verified against commit: `28906e9` (Q1: heterogeneous extraction qualification �
 Active branch at verification: `main` (working tree clean)
 
 ```yaml
-current_phase: extraction-qualified # Q1 PASS; extraction locked; priority = CORPUS_INGEST_READY (I1 -> I2)
+current_phase: extraction-qualified # Q1 PASS, I0 PASS; extraction locked; priority = CORPUS_INGEST_READY (I1 -> I2)
 repository:
   branch: main
   head: 28906e9
@@ -19,8 +19,8 @@ repository:
 ## System Status
 
 - **Build pipeline**: `preflight ok`, `repo guard ok`, `wiki ok` (verified at the commit above).
-- **Unit tests**: 134 passed, 21 skipped (skips = integration / neural-gated gates) — verified.
-- **Integration tests**: 18 passed, 2 skipped (`POLYMATH_INTEGRATION=1` + live stores; Qdrant on 6334, Neo4j on 7688, Postgres on 5432) — verified.
+- **Unit tests**: 152 passed, 22 skipped (skips = integration / neural-gated gates) — verified.
+- **Integration tests**: 19 passed, 2 skipped (`POLYMATH_INTEGRATION=1` + live stores; Qdrant on 6334, Neo4j on 7688, Postgres on 5432) — verified.
 - **Extraction verdict**: hybrid resource enrichment **REJECTED as production default** (Phase H v1.1: Δincorrect = +4 > 0). The lexical lane remains the production default.
 - **Q1 qualification verdict: PASS** (frozen report `eval/q1/REPORT_Q1.md`): production lexical arm P/R 0.943 on the 53-item heterogeneous corpus; 0 wrong-predicate, 0 wrong-scope; every residual failure is a catalogued class; pipeline E2E clean with real GLiNER. **Production extraction is qualified. Further extraction changes require a demonstrated regression or separately measured improvement.**
 
@@ -83,6 +83,16 @@ status + outbox event).
 - Parent summaries and the document RetrievalProfile are deterministic
   extractive — **no LLM anywhere in the ingestion layer**.
 - No-LLM ingestion is an invariant of this repository.
+- **Native document materialization (I0, ADR 0010)**: intake
+  materializes PDF/EPUB/DOCX/TXT/MD/HTML deterministically
+  (`shared/polymath_shared/materializer.py`) into normalized text +
+  a structural source map (page/chapter/section/paragraph) persisted
+  on `documents.source_hash` / `materialization` / `source_map`
+  (migration 0006). Failures are typed and LOUD (never a silent empty
+  document); one new dependency (`pypdf`). The extract worker consumes
+  the authoritative Postgres chunks. TXT behavior is byte-stable vs
+  the Q1-qualified path. The citation chain is now
+  fact → evidence → chunk offsets → source-map → page/chapter.
 
 ## Retrieval State
 
@@ -270,7 +280,7 @@ permits a new corpus version.
 
 Phase H (empirical qualification) — complete. Extraction architecture
 frozen at commit 3ada0af. Milestone A (CORPUS_INGEST_READY): R3a/R3b
-COMPLETE, C1 COMPLETE, C2 COMPLETE, Q1 COMPLETE (PASS) → I1 → I2.
+COMPLETE, C1 COMPLETE, C2 COMPLETE, Q1 COMPLETE (PASS), I0 COMPLETE → I1 → I2.
 Milestone B
 (RAG_V1_E2E):
 R2 → M1–M5 → R4 → O2 → O1 → A1 → V1. E1-a/E1-b are deferred measured
@@ -278,12 +288,13 @@ improvements.
 
 ## Next Authorized Actions
 
-MILESTONE A — CORPUS_INGEST_READY (current priority; C1+C2+Q1 COMPLETE):
+MILESTONE A — CORPUS_INGEST_READY (current priority; C1+C2+Q1+I0
+COMPLETE):
 
 1. **I1**: manifest-driven bulk ingestion controller. NEXT gate.
 2. **I2**: corpus-scale integrity run.
 
-CORPUS_INGEST_READY = C1 + C2 + Q1 + I1 + I2 pass.
+CORPUS_INGEST_READY = C1 + C2 + Q1 + I0 + I1 + I2 pass.
 
 MILESTONE B — RAG_V1_E2E (after Milestone A):
 R2 (reranker, bypassable) → M1–M5 (MCP) → R4 → O2 → O1 → A1 → V1.

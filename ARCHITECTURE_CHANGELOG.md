@@ -3,6 +3,22 @@
 Dated diffs of every architectural change. Each entry links to the ADR
 that motivated it and the refactor that implemented it.
 
+## 2026-08-14: I0 native document materialization (ADR 0010)
+
+- `shared/polymath_shared/materializer.py`: deterministic
+  per-format materialization (TXT/MD/HTML/PDF/EPUB/DOCX) → normalized
+  text + structural source map (page/chapter/section/paragraph) with
+  typed loud failures; one new dependency (`pypdf`).
+- Intake materializes inside the stage transaction; documents gain
+  `source_hash`/`materialization`/`source_map` (migration 0006);
+  extract consumes the authoritative Postgres chunks (single chunk
+  lineage for native + text formats).
+- New contract `contracts/ingestion/v1/materialization.schema.json`;
+  public-domain book fixtures; live E2E proves the citation chain
+  fact → evidence → chunk offsets → source-map → page/chapter
+  (refactor 0007; work log 2026-08-14-i0-native-documents).
+- Semantic extraction unchanged (Q1 locks still green).
+
 ## 2026-08-14: Q1 heterogeneous extraction qualification (PASS)
 
 - Frozen qualification corpus `eval/gold/qualification_q1.yaml`

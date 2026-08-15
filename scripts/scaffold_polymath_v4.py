@@ -122,6 +122,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("contracts/sidecar/v1/manifest.schema.json", "json", "SIDECAR_MANIFEST_SCHEMA"),
     ("contracts/sidecar/v1/manifest.example.json", "json", "SIDECAR_MANIFEST_EXAMPLE"),
     ("contracts/ingestion/v1/ingest_event.schema.json", "json", "INGEST_EVENT_SCHEMA"),
+    ("contracts/ingestion/v1/materialization.schema.json", "json", None),
     ("contracts/extraction/v1/gliner_infer.schema.json", "json", "GLINER_INFER_SCHEMA"),
     ("contracts/extraction/v1/relation_candidate.schema.json", "json", "RELATION_CANDIDATE_SCHEMA"),
     ("contracts/answer/v1/evidence_bundle.schema.json", "json", None),
@@ -257,6 +258,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("shared/polymath_shared/evidence_assembly.py", "py", None),
     ("shared/polymath_shared/answer_synthesis.py", "py", None),
     ("shared/polymath_shared/canonicalizer.py", "py", None),
+    ("shared/polymath_shared/materializer.py", "py", None),
     ("shared/polymath_shared/embedding_contracts.py", "py", None),
 
     # stores: Neo4j uniqueness constraints + document profile columns
@@ -264,6 +266,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("stores/postgres/migrations/0003_document_profiles.sql", "sql", None),
     ("stores/postgres/migrations/0004_projection_claims.sql", "sql", None),
     ("stores/postgres/migrations/0005_canonicalization.sql", "sql", None),
+    ("stores/postgres/migrations/0006_materialization.sql", "sql", None),
 
     # sidecars: pinned embedder manifest (neural embedding contract)
     ("sidecars/embedder/manifest.toml", "toml", None),
@@ -286,6 +289,18 @@ TREE: list[tuple[str, str, str | None]] = [
 
     # eval: frozen gold data + the layer measurement harness
     ("eval/gold/qualification_q1.yaml", "yaml", None),
+    ("eval/fixtures/native_docs/psychology.txt", "txt", None),
+    ("eval/fixtures/native_docs/psychology.md", "md", None),
+    ("eval/fixtures/native_docs/psychology.html", "html", None),
+    ("eval/fixtures/native_docs/psychology.pdf", "pdf", None),
+    ("eval/fixtures/native_docs/psychology.epub", "epub", None),
+    ("eval/fixtures/native_docs/psychology.docx", "docx", None),
+    ("eval/fixtures/native_docs/technical.txt", "txt", None),
+    ("eval/fixtures/native_docs/technical.md", "md", None),
+    ("eval/fixtures/native_docs/technical.html", "html", None),
+    ("eval/fixtures/native_docs/technical.pdf", "pdf", None),
+    ("eval/fixtures/native_docs/technical.epub", "epub", None),
+    ("eval/fixtures/native_docs/technical.docx", "docx", None),
     ("eval/q1/REPORT_Q1.md", "md", None),
     ("eval/q1/artifacts/manifest.json", "json", None),
     ("eval/q1/artifacts/metrics.json", "json", None),
@@ -307,8 +322,11 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/q1/artifacts/resource_cohorts.csv", "csv", None),
     ("eval/q1/artifacts/paired_transitions.csv", "csv", None),
     ("tests/contracts/test_q1_qualification_regression.py", "py", None),
+    ("tests/contracts/test_materialization_contract.py", "py", None),
     ("docs/wiki/work-log/2026-08-14-q1-qualification.md", "md", None),
+    ("docs/wiki/work-log/2026-08-14-i0-native-documents.md", "md", None),
     ("docs/wiki/refactors/0006-q1-qualification.md", "md", None),
+    ("docs/wiki/refactors/0007-i0-native-documents.md", "md", None),
     ("eval/gold/relations_v1.yaml", "yaml", None),
     ("eval/measure_layers.py", "py", None),
 
@@ -328,6 +346,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("scripts/compile_predicate_rules.py", "py", None),
     ("docs/wiki/decisions/0008-evidence-pass-boundary.md", "md", None),
     ("docs/wiki/decisions/0009-canonicalization-layer.md", "md", None),
+    ("docs/wiki/decisions/0010-native-document-materialization.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-phase-g-resources.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-phase-g-resources-hardening.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-phase-h.md", "md", None),
@@ -398,6 +417,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/integration/test_chat_e2e.py", "py", None),
     ("tests/integration/test_canonicalization_e2e.py", "py", None),
     ("tests/integration/test_canonical_projection_e2e.py", "py", None),
+    ("tests/integration/test_i0_native_docs_e2e.py", "py", None),
     ("tests/contracts/test_embedding_contracts.py", "py", None),
     ("tests/contracts/test_evidence_bundle_contract.py", "py", None),
     ("tests/contracts/test_chat_response_contract.py", "py", None),
@@ -406,6 +426,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_evidence_assembly.py", "py", None),
     ("tests/determinism/test_answer_synthesis.py", "py", None),
     ("tests/determinism/test_canonicalizer.py", "py", None),
+    ("tests/determinism/test_materializer.py", "py", None),
     ("tests/determinism/test_canonical_projection_plan.py", "py", None),
 
     # stores: the workflow schema (docs/chunks/entities/evidence/facts)
