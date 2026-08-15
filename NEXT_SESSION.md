@@ -70,12 +70,18 @@ production lexical path.
 
 ## Next Unchecked Critical-Path Gate
 
-**I1** — manifest-driven bulk ingestion. A manifest (file list /
-directory walk / list of sources) drives idempotent bulk intake of
-many documents through the production pipeline; per-source intake
-status, retries, and a final summary are reported; replay of the same
-manifest is a no-op. Extraction is qualified — do not tune it. Then
-I2 (corpus-scale integrity run) → CORPUS_INGEST_READY.
+**I1** — manifest-driven bulk ingestion. BLOCKED: I1 is NOT authorized
+to force a new entity-architecture decision. The realistic-prose
+entity boundary gap is documented (EP1/EM1/SR1, frozen FAIL) and
+entity-architecture escalation is STOPPED. I1 resumes when a
+deliberate product decision addresses the gap or accepts documented
+conservative prose coverage. Extraction fixes are prioritized ONLY by
+demonstrated downstream waterfall/retrieval delta (see the
+consolidated backlog in CURRENT_STATE.md).
+
+Phase H v1.1 status (restored): corpus relations_v1.1 frozen
+(`3ee7065a…`); lexical-vs-hybrid verdict **REJECT** as production
+default (Δ +1/+4/−4); evidence `eval/phase_h/REPORT_v1.1.md`.
 
 ## Do Not Do
 

@@ -1,17 +1,17 @@
 # Current Repository State
 
 Last verified: 2026-08-14
-Verified against commit: `c85f1cb` (SR1: bounded deterministic span repair — FAIL on dev bar, held-out preserved)
+Verified against commit: `1b11662` (roadmap restored: entity-architecture escalation stopped; evidence chain frozen)
 Active branch at verification: `main` (working tree clean)
 
 ```yaml
-current_phase: sr1-failed # SR1 repair FAIL on dev bar; unrecoverable span classes recorded; architecture decision pending; I1 blocked
+current_phase: extraction-backlog-consolidated # Phase H v1.1 verdict stands (hybrid REJECT); entity boundary gap documented; roadmap restored
 repository:
   branch: main
-  head: c85f1cb
+  head: 1b11662
   frozen_artifacts: [see Frozen Artifacts section]
-  evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1, qualification-q1, q1r-validation]
-  next_actions: [entity-architecture-decision, i1-bulk-ingestion, i2-scale-integrity]
+  evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1, qualification-q1, q1r-validation, ep1, em1, sr1]
+  next_actions: [measured-backlog-prioritization, i1-bulk-ingestion, i2-scale-integrity]
   do_not_do: [see Explicitly Prohibited Actions]
   known_gaps: [see Known Limitations]
 ```
@@ -286,12 +286,37 @@ Milestone B
 R2 → M1–M5 → R4 → O2 → O1 → A1 → V1. E1-a/E1-b are deferred measured
 improvements.
 
+## Measured Extraction Backlog (consolidated, frozen evidence)
+
+Everything below is frozen measurement, not open speculation. Fixes are
+prioritized ONLY by demonstrated downstream waterfall/retrieval delta —
+never by armchair promise.
+
+1. **E1-a / E1-b** (deferred measured improvements, Q1-frozen):
+   class-expanded trigger roleset constraint; composed-FN anchor
+   filter. Evidence: `eval/phase_h/REPORT_v1.1.md`.
+2. **Realistic-prose entity boundary gap** (EP1/EM1/SR1, all FAIL):
+   GLiNER medium-v2.1 cannot seed or repair the multiword concept
+   spans long-form prose relations need, at any precision-safe
+   operating point; three larger zero-shot models and deterministic
+   span repair did not clear the floors. Unrecoverable span classes
+   recorded in `eval/sr1/REPORT_SR1.md`. Entity-architecture
+   escalation is STOPPED; a future fix requires a demonstrated
+   downstream delta under the same frozen protocol (heldout_ep1_v1
+   remains untouched and one-shot).
+3. **Rule-pack v1.1.0 candidate** (Q1-R): zero drift on all frozen
+   corpora, bogus worker->leads class removed, but realistic recall
+   not achieved — candidate only, production default stays 1.0.1.
+
 ## Next Authorized Actions
 
-MILESTONE A — CORPUS_INGEST_READY (current priority; C1+C2+Q1+I0
-COMPLETE):
+MILESTONE A — CORPUS_INGEST_READY (C1+C2+Q1+I0 COMPLETE):
 
-1. **I1**: manifest-driven bulk ingestion controller. NEXT gate.
+1. **I1**: manifest-driven bulk ingestion controller. BLOCKED on the
+   documented realistic-prose entity boundary gap — and I1 is NOT
+   authorized to force a new entity-architecture decision. It resumes
+   when a deliberate product decision addresses the gap or accepts
+   the documented conservative prose coverage.
 2. **I2**: corpus-scale integrity run.
 
 CORPUS_INGEST_READY = C1 + C2 + Q1 + I0 + I1 + I2 pass.
@@ -330,6 +355,10 @@ R2 (reranker, bypassable) → M1–M5 (MCP) → R4 → O2 → O1 → A1 → V1.
 - Reintroduce a neural evidence pass on the basis of the original Kimi
   design alone (ADR-0007 + experiment 0001 falsified it on the pinned
   model; a new model requires qualification evidence first).
+- Train a model, introduce a decoder-based entity extractor, promote
+  span repair, or accept/degrade the entity gate without a measured
+  downstream waterfall/retrieval delta under the frozen protocol
+  (roadmap restoration 2026-08-14).
 
 ## Verification Commands
 
