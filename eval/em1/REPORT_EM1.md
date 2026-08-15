@@ -1,3 +1,4 @@
+> HISTORICAL / FROZEN / NOT PRODUCTION — the models below were evaluated and REJECTED in EM1; the sole production GLiNER is urchade/gliner_medium-v2.1 @ 40ec4193.
 # EM1 Entity Model Qualification Report
 
 Status: FROZEN

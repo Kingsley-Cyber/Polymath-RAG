@@ -268,6 +268,49 @@ def check_change_companions(root: Path, base: str) -> list[str]:
     return errors
 
 
+PRODUCTION_MODEL_SURFACES = [
+    "sidecars/", "deployment/", "orchestrator/", "workers/", "control/",
+    "shared/", "Makefile", ".env.example", "compose.yaml", "pyproject.toml",
+]
+FORBIDDEN_ALTERNATE_MODEL_IDS = [
+    "gliner_large", "gliner-community", "NuNER_Zero", "nuner",
+]
+
+
+def check_production_model_surface(root: Path) -> list[str]:
+    """Model-surface guard (2026-08-14 cleanup): the ONLY supported
+    production GLiNER entity model is urchade/gliner_medium-v2.1 @
+    40ec4193. Alternate models evaluated in EM1 (HISTORICAL / FROZEN /
+    NOT PRODUCTION) may only appear in eval/ and history docs — never
+    on an active production surface."""
+    errors: list[str] = []
+    for surface in PRODUCTION_MODEL_SURFACES:
+        surface_path = root / surface
+        candidates = ([surface_path] if surface_path.is_file()
+                      else sorted(surface_path.rglob("*")) if surface_path.is_dir()
+                      else [])
+        for path in candidates:
+            if not path.is_file():
+                continue
+            if surface_path.is_file():
+                pass
+            elif path.suffix not in (".py", ".toml", ".yaml", ".yml", ".json",
+                                     ".md", ".sql", ".plist", ".example", ".cypher"):
+                continue
+            try:
+                text = path.read_text()
+            except (OSError, UnicodeDecodeError):
+                continue
+            relative = path.relative_to(root).as_posix()
+            for model_id in FORBIDDEN_ALTERNATE_MODEL_IDS:
+                if model_id in text:
+                    errors.append(
+                        f"{relative}: alternate GLiNER model id {model_id!r} on a "
+                        "production surface (historical references belong in eval/ only)"
+                    )
+    return errors
+
+
 def run_checks(root: Path, base: str | None = None) -> list[str]:
     checks = [
         check_declared_files,
@@ -275,6 +318,7 @@ def run_checks(root: Path, base: str | None = None) -> list[str]:
         check_work_logs,
         check_dependencies,
         check_forbidden_imports,
+        check_production_model_surface,
     ]
     errors: list[str] = []
     for check in checks:

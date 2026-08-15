@@ -1,3 +1,6 @@
+# HISTORICAL / FROZEN / NOT PRODUCTION — EM1 evaluated and rejected these challengers.
+# The sole production GLiNER entity model is urchade/gliner_medium-v2.1 @ 40ec4193.
+# Nothing here may be consumed by production configuration (enforced by repo_guard).
 # EM1 candidate pins — frozen before any scoring.
 # Every model is referenced by its exact Hugging Face revision.
 models:
