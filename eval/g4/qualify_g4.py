@@ -339,13 +339,21 @@ def _bidir_expand(surfaces: list[str]) -> list[dict]:
             ids = [m["entity_id"] for m in matched]
             rows = s.run(
                 """
-                MATCH (s:Entity)-[r:REL]-(o:Entity)
-                WHERE (s.entity_id IN $ids OR o.entity_id IN $ids)
-                  AND r.predicate IN $predicates
-                  AND s.entity_id <> o.entity_id
-                RETURN r.fact_id AS fact_id, r.predicate AS predicate,
-                       s.surface AS subject, o.surface AS object,
-                       s.entity_id AS subject_id, o.entity_id AS object_id
+                CALL () {
+                    MATCH (s:Entity)-[r:REL]->(o:Entity)
+                    WHERE s.entity_id IN $ids AND r.predicate IN $predicates
+                    RETURN r.fact_id AS fact_id, r.predicate AS predicate,
+                           s.entity_id AS subject_id, s.surface AS subject,
+                           o.entity_id AS object_id, o.surface AS object
+                    UNION
+                    MATCH (s:Entity)-[r:REL]->(o:Entity)
+                    WHERE o.entity_id IN $ids AND r.predicate IN $predicates
+                    RETURN r.fact_id AS fact_id, r.predicate AS predicate,
+                           s.entity_id AS subject_id, s.surface AS subject,
+                           o.entity_id AS object_id, o.surface AS object
+                }
+                RETURN fact_id, predicate, subject_id, subject, object_id, object
+                ORDER BY fact_id
                 LIMIT 20
                 """,
                 ids=ids, predicates=sorted(HIGH_MEDIUM_PREDICATES),

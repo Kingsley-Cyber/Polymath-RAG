@@ -253,6 +253,14 @@ def _entity_surfaces(query: str, result) -> list[str]:
 
 
 def _neo4j_expand(surfaces: list[str]) -> list[dict]:
+    """One-hop graph expansion (production, outgoing-only).
+
+    NOTE (G4.1, frozen): the measured canonical bidirectional variant
+    (directed UNION, ORDER BY fact_id, CALL () subquery) exists as the
+    candidate implementation in eval/g4/qualify_g4.py — it restores
+    hub retrieval but is NOT promoted: the frozen q09 generic-seed
+    criterion still fails, and the next experiment is generic-seed
+    eligibility."""
     from polymath_shared.stores import neo4j_driver
 
     driver = neo4j_driver()
@@ -276,7 +284,9 @@ def _neo4j_expand(surfaces: list[str]) -> list[dict]:
                 MATCH (s:Entity)-[r:REL]->(o:Entity)
                 WHERE s.entity_id IN $ids AND r.predicate IN $predicates
                 RETURN r.fact_id AS fact_id, r.predicate AS predicate,
-                       s.surface AS subject, o.surface AS object
+                       s.entity_id AS subject_id, s.surface AS subject,
+                       o.entity_id AS object_id, o.surface AS object
+                ORDER BY fact_id
                 LIMIT 20
                 """,
                 ids=ids,

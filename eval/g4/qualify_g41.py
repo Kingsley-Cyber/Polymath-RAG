@@ -34,12 +34,76 @@ sys.path.insert(0, str(ROOT / "workers"))
 from polymath_shared.clients import RerankerClient  # noqa: E402
 from polymath_shared.retrieval import tokens  # noqa: E402
 
-from eval.g4.qualify_g4 import _bidir_expand, _neo4j_expand_facts  # noqa: E402
+from eval.g4.qualify_g4 import _neo4j_expand_facts  # noqa: E402
+from polymath_shared.stores import neo4j_driver  # noqa: E402
+
+
+def _outgoing_expand_facts(surfaces: list[str]) -> list[dict]:
+    """Frozen OUTGOING-ONLY baseline (the pre-promotion production
+    behavior) for the A arm of the G4.1 comparison. Kept local so the
+    historical A arm stays reproducible after production changed."""
+    d = neo4j_driver()
+    try:
+        with d.session() as s:
+            matched = s.run(
+                """
+                MATCH (e:Entity)
+                WHERE any(x IN $surfaces WHERE toLower(e.surface) CONTAINS x)
+                   OR any(x IN $surfaces WHERE x CONTAINS toLower(e.surface))
+                RETURN e.entity_id AS entity_id
+                LIMIT 8
+                """,
+                surfaces=surfaces,
+            ).data()
+            if not matched:
+                return []
+            ids = [m["entity_id"] for m in matched]
+            rows = s.run(
+                """
+                MATCH (s:Entity)-[r:REL]->(o:Entity)
+                WHERE s.entity_id IN $ids AND r.predicate IN $predicates
+                RETURN r.fact_id AS fact_id, r.predicate AS predicate,
+                       s.entity_id AS subject_id, s.surface AS subject,
+                       o.entity_id AS object_id, o.surface AS object
+                ORDER BY fact_id
+                LIMIT 20
+                """,
+                ids=ids,
+                predicates=sorted(__import__(
+                    "orchestrator.orchestrator.api.retrieve",
+                    fromlist=["HIGH_MEDIUM_PREDICATES"]).HIGH_MEDIUM_PREDICATES),
+            ).data()
+            return rows
+    finally:
+        d.close()
 
 G4 = ROOT / "eval" / "g4"
 ARTIFACTS = G4 / "artifacts"
 TOP_K = 10
 REPEATS = 2
+
+
+def _orientation_ok(facts: dict[str, dict]) -> bool:
+    """Every retrieved fact's (subject_id, predicate, object_id) must
+    match the STORED Postgres fact orientation exactly (canonical
+    direction preserved by construction)."""
+    from polymath_shared.db import tx
+
+    if not facts:
+        return True
+    with tx() as conn:
+        rows = conn.execute(
+            "SELECT fact_id, predicate, subject_id, object_id FROM facts WHERE fact_id = ANY(%s)",
+            (sorted(facts.keys()),),
+        ).fetchall()
+    stored = {r[0]: (r[1], r[2], r[3]) for r in rows}
+    for fid, f in facts.items():
+        if fid not in stored:
+            return False
+        pred, sid, oid = stored[fid]
+        if (f.get("predicate"), f.get("subject_id"), f.get("object_id")) != (pred, sid, oid):
+            return False
+    return True
 
 
 def _fact_text(f: dict) -> str:
@@ -72,8 +136,8 @@ def main() -> int:
             selected_sets = []
             for _ in range(REPEATS):
                 t0 = time.perf_counter()
-                facts = (_neo4j_expand_facts(surfaces) if cfg == "A"
-                         else _bidir_expand(surfaces))
+                facts = (_outgoing_expand_facts(surfaces) if cfg == "A"
+                         else _neo4j_expand_facts(surfaces))
                 unique = {f["fact_id"]: f for f in facts}
                 raw = list(unique.values())
                 if raw:
@@ -100,9 +164,11 @@ def main() -> int:
             row[f"{cfg}_selected_noise"] = sel_cls.get("irrelevant", 0)
             row[f"{cfg}_latency_p50"] = results[cfg]["latency_p50"]
             row[f"{cfg}_deterministic"] = results[cfg]["deterministic"]
+            if cfg == "B":
+                row["B_orientation_ok"] = _orientation_ok(unique)
 
         # retention: useful facts A selected that B also selects
-        a_raw = {f["fact_id"]: f for f in _neo4j_expand_facts(surfaces)}
+        a_raw = {f["fact_id"]: f for f in _outgoing_expand_facts(surfaces)}
         a_useful_sel = {fid for fid in results["A"]["selected_ids"]
                         if _classify(a_raw[fid], q) == "relevant"}
         b_sel = results["B"]["selected_ids"]
