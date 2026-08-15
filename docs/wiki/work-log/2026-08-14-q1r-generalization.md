@@ -4,7 +4,7 @@ owner: governance
 date: 2026-08-14
 last_reviewed: 2026-08-14
 last_touched: 2026-08-14
-status: in_progress
+status: complete
 architecture_impact: evidence-proposer version bump (extraction behavior, measured)
 ---
 
@@ -81,9 +81,11 @@ decision counts, rejection reasons) + explicit probe sentences:
 
 ## Open contract gaps
 
-- Decision needed: whether to open a measured rule-pack v1.1.0
-  signature/scope revision (would supersede Q1 numbers by versioned
-  change, per the Q1-R brief) or accept documented conservative
-  extraction on prose.
-- Validation C (new held-out realistic set) remains to be authored and
-  run once after the mechanism decision.
+- v1.1.0 implemented and validated (see `eval/q1r/REPORT_Q1R.md`):
+  zero drift on Q1 + Phase H corpora, bogus worker->leads class
+  removed, passive direction canonical at unit level — but realistic
+  recall NOT achieved (smoke docs 03/04 still 0; held-out 0 facts).
+  Promotion FAIL; production default stays 1.0.1.
+- Remaining loss boundary: the ENTITY-PROPOSAL layer (GLiNER span
+  coverage for multiword concepts on full documents). I1 remains
+  blocked pending that decision.

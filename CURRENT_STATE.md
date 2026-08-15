@@ -1,17 +1,17 @@
 # Current Repository State
 
 Last verified: 2026-08-14
-Verified against commit: `fc8475d` (I0: native document materialization — gate COMPLETE)
+Verified against commit: `dee8d9d` (Q1-R: rule-pack v1.1.0 candidate — zero-drift, realistic recall NOT achieved)
 Active branch at verification: `main` (working tree clean)
 
 ```yaml
-current_phase: extraction-qualified # Q1 PASS, I0 PASS; extraction locked; priority = CORPUS_INGEST_READY (I1 -> I2)
+current_phase: q1r-not-promoted # Q1-R: v1.1.0 zero-drift but realistic recall FAIL; I1 blocked pending entity-proposal decision
 repository:
   branch: main
-  head: fc8475d
+  head: dee8d9d
   frozen_artifacts: [see Frozen Artifacts section]
-  evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1, qualification-q1]
-  next_actions: [i1-bulk-ingestion, i2-scale-integrity]
+  evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1, qualification-q1, q1r-validation]
+  next_actions: [entity-proposal-qualification, i1-bulk-ingestion, i2-scale-integrity]
   do_not_do: [see Explicitly Prohibited Actions]
   known_gaps: [see Known Limitations]
 ```
