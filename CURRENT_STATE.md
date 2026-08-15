@@ -1,17 +1,17 @@
 # Current Repository State
 
 Last verified: 2026-08-14
-Verified against commit: `52560b5` (EP1: entity-proposal qualification — measured FAIL, escalate to model change)
+Verified against commit: `0a626d8` (EM1: entity model qualification — FAIL, escalate architecture/provider)
 Active branch at verification: `main` (working tree clean)
 
 ```yaml
-current_phase: ep1-failed-escalate # EP1 measured FAIL on all sanctioned entity levers; model-change experiment sanctioned; I1 blocked
+current_phase: em1-failed-escalate # EM1: no candidate model clears precision-first floors; architecture/provider escalation; I1 blocked
 repository:
   branch: main
-  head: 52560b5
+  head: 0a626d8
   frozen_artifacts: [see Frozen Artifacts section]
   evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1, qualification-q1, q1r-validation]
-  next_actions: [entity-model-qualification, i1-bulk-ingestion, i2-scale-integrity]
+  next_actions: [entity-architecture-escalation, i1-bulk-ingestion, i2-scale-integrity]
   do_not_do: [see Explicitly Prohibited Actions]
   known_gaps: [see Known Limitations]
 ```
