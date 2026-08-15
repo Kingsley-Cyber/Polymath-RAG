@@ -14,7 +14,7 @@ release = "neural-embed-v1"
 [identity.model]
 id = "Qwen/Qwen3-Embedding-0.6B"
 revision = "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3"
-weights_sha256 = "__PIN_WEIGHTS_SHA256__"
+weights_sha256 = "c76e8d7f28ec4ce0c548bb2eac381b84491184083fbef4c915c2485e873aa4a6"
 
 [wire]
 infer_path = "/infer"

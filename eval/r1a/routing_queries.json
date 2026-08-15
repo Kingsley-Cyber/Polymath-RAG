@@ -1,0 +1,29 @@
+{
+  "note": "Frozen R1A routing qualification set: query -> correct document + correct section (parent) over the frozen I2 corpus. Development set; exposure-counted.",
+  "corpus_id": "i2-qualification-corpus",
+  "queries": [
+    {"query_id": "r1_exact_doc", "category": "exact_terminology", "query": "What does zero trust abandon?", "doc": "cyber/zero_trust.docx", "section_hint": "zero trust"},
+    {"query_id": "r2_exact_doc", "category": "exact_terminology", "query": "Which phases does incident response proceed through?", "doc": "cyber/incident_response.pdf", "section_hint": "incident response"},
+    {"query_id": "r3_exact_doc", "category": "exact_terminology", "query": "What is a judgment of learning?", "doc": "psych/judgment_of_learning.epub", "section_hint": "judgment of learning"},
+    {"query_id": "r4_exact_doc", "category": "exact_terminology", "query": "How does a vector index support dense search?", "doc": "systems/vector_indexes.md", "section_hint": "vector indexes"},
+    {"query_id": "r5_exact_doc", "category": "exact_terminology", "query": "What does source monitoring attribute?", "doc": "psych/source_monitoring.md", "section_hint": "source monitoring"},
+    {"query_id": "r6_paraphrase", "category": "conceptual_paraphrase", "query": "Why can rereading leave a learner unable to recall the idea?", "doc": "psych/retrieval_practice.md", "section_hint": "retrieval practice"},
+    {"query_id": "r7_paraphrase", "category": "conceptual_paraphrase", "query": "Why do learners misjudge what they know after study?", "doc": "psych/judgment_of_learning.epub", "section_hint": "judgment of learning"},
+    {"query_id": "r8_paraphrase", "category": "conceptual_paraphrase", "query": "What makes lateral movement harder in a network?", "doc": "cyber/zero_trust.docx", "section_hint": "zero trust"},
+    {"query_id": "r9_paraphrase", "category": "conceptual_paraphrase", "query": "How do queries and stored documents get compared numerically?", "doc": "knowledge/embedding_models.docx", "section_hint": "embedding models"},
+    {"query_id": "r10_paraphrase", "category": "conceptual_paraphrase", "query": "What happens when a prediction does not match the outcome?", "doc": "psych/self_regulated_learning.md", "section_hint": "self-regulated learning"},
+    {"query_id": "r11_late_term", "category": "terminology_late", "query": "What does the document say about stewarding source records during note taking?", "doc": "psych/source_monitoring.md", "section_hint": "source monitoring"},
+    {"query_id": "r12_late_term", "category": "terminology_late", "query": "What is said about audit logs in the zero trust document?", "doc": "cyber/zero_trust.docx", "section_hint": "zero trust"},
+    {"query_id": "r13_late_term", "category": "terminology_late", "query": "What does the working memory document say about capacity limits?", "doc": "psych/working_memory.txt", "section_hint": "working memory"},
+    {"query_id": "r14_not_first", "category": "not_first_sentence", "query": "Which benefit of retrieval practice involves observing actual failures?", "doc": "psych/retrieval_practice.md", "section_hint": "retrieval practice"},
+    {"query_id": "r15_not_first", "category": "not_first_sentence", "query": "How can instructional design reduce unnecessary processing?", "doc": "psych/cognitive_load.md", "section_hint": "cognitive load"},
+    {"query_id": "r16_not_first", "category": "not_first_sentence", "query": "What makes an alert actionable in a monitoring system?", "doc": "cyber/security_monitoring.md", "section_hint": "security monitoring"},
+    {"query_id": "r17_minority", "category": "minority_section", "query": "What does the encryption document say about key storage?", "doc": "cyber/encryption_basics.md", "section_hint": "encryption"},
+    {"query_id": "r18_minority", "category": "minority_section", "query": "What does the fault tolerance document say about degraded states?", "doc": "systems/fault_tolerance.html", "section_hint": "fault tolerance"},
+    {"query_id": "r19_minority", "category": "minority_section", "query": "What does the authentication document say about sessions?", "doc": "cyber/authentication.txt", "section_hint": "authentication"},
+    {"query_id": "r20_disambiguate", "category": "similar_document_disambiguation", "query": "What does the document about reranking say about candidate sets?", "doc": "knowledge/reranking.md", "section_hint": "reranking"},
+    {"query_id": "r21_disambiguate", "category": "similar_document_disambiguation", "query": "Which document discusses calibration of embeddings rather than of learners?", "doc": "knowledge/embedding_models.docx", "section_hint": "embedding models"},
+    {"query_id": "r22_disambiguate", "category": "similar_document_disambiguation", "query": "Where is corpus management versus corpus integrity discussed?", "doc": "knowledge/corpus_management.txt", "section_hint": "corpus management"},
+    {"query_id": "r23_disambiguate", "category": "similar_document_disambiguation", "query": "Which document covers knowledge graphs versus graph traversal policy?", "doc": "knowledge/knowledge_graphs.epub", "section_hint": "knowledge graphs"}
+  ]
+}

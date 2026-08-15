@@ -27,7 +27,7 @@ from workers.document_profile_builder import SUMMARY_CONTRACT, build_profile
 
 STAGE = "profile_document"
 EVENT_TYPE = "profile_document.v1"
-CONTRACT_VERSION = "1.0.0"
+CONTRACT_VERSION = "1.1.0"
 
 log = logging.getLogger("profile-document")
 
@@ -56,6 +56,68 @@ def _parents_for_doc(conn: Connection, doc_id: str) -> list[dict]:
         (doc_id,),
     ).fetchall()
     return [{"chunk_id": r[0], "summary": r[1], "text": r[2]} for r in rows]
+
+
+def _children_for_doc(conn: Connection, doc_id: str) -> list[dict]:
+    rows = conn.execute(
+        """
+        SELECT chunk_id, parent_id, text FROM chunks
+         WHERE doc_id = %s AND tier = 'child'
+         ORDER BY chunk_index
+        """,
+        (doc_id,),
+    ).fetchall()
+    return [{"chunk_id": r[0], "parent_id": r[1], "text": r[2]} for r in rows]
+
+
+def _persist_retrieval_summaries(
+    conn: Connection,
+    *,
+    corpus_id: str,
+    doc_id: str,
+    parents: list[dict],
+    children: list[dict],
+) -> None:
+    """R1A substrate: canonical deterministic routing summaries
+    (contract retrieval-summary-v2). Deterministic, source-derived,
+    coverage-preserving; content-derived identity + provenance."""
+    from polymath_shared.retrieval_summaries import (
+        CONTRACT as R1A_CONTRACT,
+        DOC_SUMMARY_KIND,
+        SECTION_SUMMARY_KIND,
+        document_retrieval_summary,
+        section_retrieval_summary,
+        summary_id,
+    )
+
+    doc_text, doc_prov = document_retrieval_summary(parents, doc_id=doc_id)
+    conn.execute(
+        """
+        INSERT INTO retrieval_summaries (summary_id, kind, contract, corpus_id,
+                                         doc_id, parent_id, summary_text, provenance)
+        VALUES (%s, %s, %s, %s, %s, NULL, %s, %s)
+        ON CONFLICT (summary_id) DO NOTHING
+        """,
+        (summary_id(DOC_SUMMARY_KIND, doc_id, doc_text), DOC_SUMMARY_KIND,
+         R1A_CONTRACT, corpus_id, doc_id, doc_text, json.dumps(doc_prov)),
+    )
+
+    by_parent: dict[str, list[dict]] = {}
+    for child in children:
+        by_parent.setdefault(child["parent_id"] or "", []).append(child)
+    for parent in parents:
+        pid = parent["chunk_id"]
+        text, prov = section_retrieval_summary(by_parent.get(pid, []), parent_id=pid)
+        conn.execute(
+            """
+            INSERT INTO retrieval_summaries (summary_id, kind, contract, corpus_id,
+                                             doc_id, parent_id, summary_text, provenance)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (summary_id) DO NOTHING
+            """,
+            (summary_id(SECTION_SUMMARY_KIND, pid, text), SECTION_SUMMARY_KIND,
+             R1A_CONTRACT, corpus_id, doc_id, pid, text, json.dumps(prov)),
+        )
 
 
 def _entities_for_doc(conn: Connection, doc_id: str) -> list[tuple[str, str]]:
@@ -98,6 +160,7 @@ def process_event(conn: Connection, event: dict) -> None:
         profiles: list[dict] = []
         for doc in _documents_for_run(conn, run_id):
             parents = _parents_for_doc(conn, doc["doc_id"])
+            children = _children_for_doc(conn, doc["doc_id"])
             entities = _entities_for_doc(conn, doc["doc_id"])
             predicates = _predicates_for_doc(conn, doc["doc_id"])
             profile = build_profile(
@@ -121,6 +184,16 @@ def process_event(conn: Connection, event: dict) -> None:
                 (json.dumps(profile.model_dump()), SUMMARY_CONTRACT,
                  profile.source_parent_count, profile.summarized_parent_count,
                  profile.coverage, doc["doc_id"]),
+            )
+            corpus_row = conn.execute(
+                "SELECT corpus_id FROM documents WHERE doc_id = %s", (doc["doc_id"],)
+            ).fetchone()
+            _persist_retrieval_summaries(
+                conn,
+                corpus_id=corpus_row[0] if corpus_row else "",
+                doc_id=doc["doc_id"],
+                parents=parents,
+                children=children,
             )
             profiles.append(profile.model_dump())
 

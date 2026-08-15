@@ -51,7 +51,7 @@ from polymath_shared.settings import get_settings
 STAGE = "project_qdrant"
 EVENT_TYPE = "project_qdrant.v1"
 
-CONTRACT_VERSION = "1.0.0"
+CONTRACT_VERSION = "1.1.0"
 
 log = logging.getLogger("project-qdrant")
 
@@ -149,6 +149,101 @@ def _write_points(client: QdrantClient, collection: str, chunks: list[dict], con
     client.upsert(collection_name=collection, points=points, wait=True)
 
 
+# ---------------------------------------------------------------------------
+# R1A substrate: routing representations (SUMMARIES ROUTE / CHILDREN PROVE)
+# ---------------------------------------------------------------------------
+ROUTING_KIND_DOCUMENT_SUMMARY = "routing_document_summary"
+ROUTING_KIND_SECTION_SUMMARY = "routing_section_summary"
+ROUTING_KIND_CHILD = "routing_child"
+
+ROUTING_CONTRACT_VERSION = "1.0.0"
+
+
+def _routing_rows(conn: Connection, run_id: str) -> list[dict]:
+    """Authoritative routing representations for the run's corpus:
+    canonical DOCUMENT_RETRIEVAL_SUMMARY + SECTION_RETRIEVAL_SUMMARY
+    rows (contract retrieval-summary-v2) + child evidence chunks."""
+    from polymath_shared.retrieval_summaries import (
+        DOC_SUMMARY_KIND,
+        SECTION_SUMMARY_KIND,
+    )
+
+    rows = conn.execute(
+        """
+        SELECT rs.summary_id, rs.kind, rs.summary_text, rs.corpus_id, rs.doc_id,
+               rs.parent_id, d.source_name
+          FROM retrieval_summaries rs
+          JOIN documents d ON d.doc_id = rs.doc_id
+          JOIN runs r ON r.corpus_id = rs.corpus_id
+         WHERE r.run_id = %s
+         ORDER BY rs.doc_id, rs.parent_id NULLS FIRST
+        """,
+        (run_id,),
+    ).fetchall()
+    out = []
+    for row in rows:
+        kind = ROUTING_KIND_DOCUMENT_SUMMARY if row[1] == DOC_SUMMARY_KIND else ROUTING_KIND_SECTION_SUMMARY
+        out.append({
+            "summary_id": row[0],
+            "representation_kind": kind,
+            "text": row[2],
+            "corpus_id": row[3],
+            "doc_id": row[4],
+            "parent_id": row[5],
+            "source_name": row[6],
+        })
+    children = conn.execute(
+        """
+        SELECT c.chunk_id, c.doc_id, c.parent_id, c.text, d.corpus_id
+          FROM chunks c
+          JOIN documents d ON d.doc_id = c.doc_id
+          JOIN runs r ON r.corpus_id = d.corpus_id
+         WHERE r.run_id = %s AND c.tier = 'child'
+         ORDER BY c.chunk_index
+        """,
+        (run_id,),
+    ).fetchall()
+    for row in children:
+        out.append({
+            "summary_id": None,
+            "representation_kind": ROUTING_KIND_CHILD,
+            "text": row[3],
+            "corpus_id": row[4],
+            "doc_id": row[1],
+            "parent_id": row[2],
+            "source_name": "",
+            "chunk_id": row[0],
+        })
+    return out
+
+
+def _write_routing_points(client: QdrantClient, collection: str, rows: list[dict], contract) -> None:
+    # the embedder contract bounds batches at 32 texts per request
+    batch_limit = getattr(contract, "batch_limit", 32) or 32
+    vectors: list[list[float]] = []
+    for i in range(0, len(rows), batch_limit):
+        vectors.extend(_embed_texts(contract, [r["text"] for r in rows[i:i + batch_limit]]))
+    points = []
+    for i, r in enumerate(rows):
+        point_id = qdrant_point_uuid(r["summary_id"] or r["chunk_id"])
+        points.append(PointStruct(
+            id=point_id,
+            vector=vectors[i],
+            payload={
+                "summary_id": r["summary_id"],
+                "chunk_id": r.get("chunk_id"),
+                "representation_kind": r["representation_kind"],
+                "corpus_id": r["corpus_id"],
+                "doc_id": r["doc_id"],
+                "parent_id": r["parent_id"] or "",
+                "source_name": r["source_name"],
+                "embedding_contract": contract.contract_id,
+                "text": r["text"],
+            },
+        ))
+    client.upsert(collection_name=collection, points=points, wait=True)
+
+
 def process_event(conn: Connection, event: dict) -> None:
     payload = event["payload"]
     run_id = event["run_id"]
@@ -160,6 +255,8 @@ def process_event(conn: Connection, event: dict) -> None:
         "projection": PROJECTION_QDRANT,
         "embedding_contract": contract.contract_id,
         "contract_version": CONTRACT_VERSION,
+        "routing_contract": "neural-embed-v1",
+        "routing_contract_version": ROUTING_CONTRACT_VERSION,
     })
 
     with stage_transaction(conn, run_id=run_id, stage=STAGE, contract_hash=stage_contract) as writer:
@@ -185,6 +282,37 @@ def process_event(conn: Connection, event: dict) -> None:
                     entity_id=chunk["chunk_id"],
                     receipt_hash=receipt_hash(PROJECTION_QDRANT, KIND_CHUNK, chunk["chunk_id"], CONTRACT_VERSION),
                     contract=contract.contract_id,
+                )
+
+        # R1A routing representations under the QUALIFIED neural
+        # contract, in a separate collection (hash vectors never appear
+        # semantically equivalent to neural vectors). Idempotent upserts
+        # (point ids are summary/chunk content ids).
+        from polymath_shared.embedding_contracts import NEURAL_EMBED_CONTRACT
+
+        routing_contract = NEURAL_EMBED_CONTRACT
+        routing_rows = _routing_rows(conn, run_id)
+        if routing_rows:
+            client = QdrantClient(url=get_settings().stores.qdrant_url, timeout=120)
+            try:
+                routing_collection = qdrant_collection_name(
+                    corpus_id or routing_rows[0]["corpus_id"], routing_contract.contract_id
+                )
+                _ensure_collection(client, routing_collection, routing_contract.dimension)
+                _write_routing_points(client, routing_collection, routing_rows, routing_contract)
+            finally:
+                client.close()
+            for r in routing_rows:
+                record_projection_attempt(
+                    conn,
+                    projection=PROJECTION_QDRANT,
+                    entity_kind=r["representation_kind"],
+                    entity_id=r["summary_id"] or r["chunk_id"],
+                    receipt_hash=receipt_hash(
+                        PROJECTION_QDRANT, r["representation_kind"],
+                        r["summary_id"] or r["chunk_id"], ROUTING_CONTRACT_VERSION,
+                    ),
+                    contract=routing_contract.contract_id,
                 )
 
         crash_after = int(os.environ.get("POLYMATH_TEST_CRASH_AFTER_POINTS", "0"))

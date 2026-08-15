@@ -334,3 +334,24 @@ that motivated it and the refactor that implemented it.
 - Verdict: no candidate promoted; no production wiring. A 3-way
   supports/topic_only/contradicts classifier (fine-tune) is a pending
   user decision.
+
+## 2026-08-15: R1A — deterministic summary routing substrate
+
+- ONE canonical retrieval-summary contract (retrieval-summary-v2):
+  coverage-preserving DOCUMENT_RETRIEVAL_SUMMARY and per-child
+  SECTION_RETRIEVAL_SUMMARY, deterministic + source-derived, with
+  versioned content identity (summ_<hash>) and per-sentence
+  provenance; persisted authoritatively (migration 0008).
+- Qualified the existing pinned neural embedding contract
+  (Qwen3-Embedding-0.6B @ 97b0c614…, 1024-dim, sidecar verified);
+  routing points projected under the neural contract in a separate
+  collection with explicit representation_kind
+  (document_summary / section_summary / child) — hash vectors are
+  never semantically confused with neural vectors.
+- Qualification: coverage fixture (v2 beats v1: concepts 0.870 vs
+  0.837, section themes 0.778 vs 0.657, late content 0.889 vs 0.667,
+  zero redundancy, no fabrication); frozen routing set (doc routing
+  R@1 0.609→0.826, MRR 0.714→0.878; section routing R@1 0.652→0.696,
+  MRR 0.736→0.805; global child control R@5 0.957). Rebuild
+  deterministic. No control plane built (no RRF/FAST/HYBRID/GRAPH/
+  MMR/Pass-2).

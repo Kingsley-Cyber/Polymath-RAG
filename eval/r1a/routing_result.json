@@ -1,0 +1,32 @@
+{
+  "doc_routing_current_lexical_profile": {
+    "R@1": 0.609,
+    "R@3": 0.783,
+    "R@5": 0.826,
+    "MRR": 0.714
+  },
+  "section_routing_current_parent_lexical": {
+    "R@1": 0.652,
+    "R@3": 0.783,
+    "R@5": 0.826,
+    "MRR": 0.736
+  },
+  "doc_routing_candidate_neural": {
+    "R@1": 0.826,
+    "R@3": 0.913,
+    "R@5": 0.913,
+    "MRR": 0.878
+  },
+  "section_routing_candidate_neural": {
+    "R@1": 0.696,
+    "R@3": 0.913,
+    "R@5": 0.913,
+    "MRR": 0.805
+  },
+  "global_child_neural": {
+    "R@1": 0.87,
+    "R@3": 0.913,
+    "R@5": 0.957,
+    "MRR": 0.905
+  }
+}

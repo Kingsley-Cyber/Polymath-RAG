@@ -1,0 +1,174 @@
+{
+  "aggregate": {
+    "documents": 9,
+    "v1": {
+      "concept_coverage": 0.837,
+      "section_theme_coverage": 0.657,
+      "late_content_coverage": 0.667,
+      "redundancy": 0.037,
+      "size_chars": 400.0
+    },
+    "v2": {
+      "concept_coverage": 0.87,
+      "section_theme_coverage": 0.778,
+      "late_content_coverage": 0.889,
+      "redundancy": 0.0,
+      "size_chars": 510.667
+    }
+  },
+  "per_document": [
+    {
+      "document": "d1_single_section.md",
+      "v1": {
+        "concept_coverage": 1.0,
+        "section_theme_coverage": 1.0,
+        "late_content_coverage": 1.0,
+        "redundancy": 0.0,
+        "size_chars": 277
+      },
+      "v2": {
+        "concept_coverage": 1.0,
+        "section_theme_coverage": 1.0,
+        "late_content_coverage": 1.0,
+        "redundancy": 0.0,
+        "size_chars": 348
+      }
+    },
+    {
+      "document": "d2_multi_section.md",
+      "v1": {
+        "concept_coverage": 0.7,
+        "section_theme_coverage": 1.0,
+        "late_content_coverage": 0.0,
+        "redundancy": 0.0,
+        "size_chars": 406
+      },
+      "v2": {
+        "concept_coverage": 1.0,
+        "section_theme_coverage": 1.0,
+        "late_content_coverage": 1.0,
+        "redundancy": 0.0,
+        "size_chars": 864
+      }
+    },
+    {
+      "document": "d3_dominant_plus_small.md",
+      "v1": {
+        "concept_coverage": 0.5,
+        "section_theme_coverage": 0.5,
+        "late_content_coverage": 0.0,
+        "redundancy": 0.0,
+        "size_chars": 490
+      },
+      "v2": {
+        "concept_coverage": 0.5,
+        "section_theme_coverage": 0.5,
+        "late_content_coverage": 1.0,
+        "redundancy": 0.0,
+        "size_chars": 788
+      }
+    },
+    {
+      "document": "d4_terminology_late.md",
+      "v1": {
+        "concept_coverage": 1.0,
+        "section_theme_coverage": 1.0,
+        "late_content_coverage": 1.0,
+        "redundancy": 0.0,
+        "size_chars": 446
+      },
+      "v2": {
+        "concept_coverage": 1.0,
+        "section_theme_coverage": 1.0,
+        "late_content_coverage": 1.0,
+        "redundancy": 0.0,
+        "size_chars": 446
+      }
+    },
+    {
+      "document": "d5_conclusion_not_in_intro.md",
+      "v1": {
+        "concept_coverage": 0.333,
+        "section_theme_coverage": 0.333,
+        "late_content_coverage": 0.0,
+        "redundancy": 0.0,
+        "size_chars": 448
+      },
+      "v2": {
+        "concept_coverage": 0.333,
+        "section_theme_coverage": 0.333,
+        "late_content_coverage": 0.0,
+        "redundancy": 0.0,
+        "size_chars": 448
+      }
+    },
+    {
+      "document": "d6_redundant_children.md",
+      "v1": {
+        "concept_coverage": 1.0,
+        "section_theme_coverage": 0.5,
+        "late_content_coverage": 1.0,
+        "redundancy": 0.333,
+        "size_chars": 472
+      },
+      "v2": {
+        "concept_coverage": 1.0,
+        "section_theme_coverage": 1.0,
+        "late_content_coverage": 1.0,
+        "redundancy": 0.0,
+        "size_chars": 448
+      }
+    },
+    {
+      "document": "d7_one_child_parent.md",
+      "v1": {
+        "concept_coverage": 1.0,
+        "section_theme_coverage": 1.0,
+        "late_content_coverage": 1.0,
+        "redundancy": 0.0,
+        "size_chars": 180
+      },
+      "v2": {
+        "concept_coverage": 1.0,
+        "section_theme_coverage": 1.0,
+        "late_content_coverage": 1.0,
+        "redundancy": 0.0,
+        "size_chars": 180
+      }
+    },
+    {
+      "document": "d8_multi_child_parent.md",
+      "v1": {
+        "concept_coverage": 1.0,
+        "section_theme_coverage": 0.25,
+        "late_content_coverage": 1.0,
+        "redundancy": 0.0,
+        "size_chars": 462
+      },
+      "v2": {
+        "concept_coverage": 1.0,
+        "section_theme_coverage": 0.5,
+        "late_content_coverage": 1.0,
+        "redundancy": 0.0,
+        "size_chars": 528
+      }
+    },
+    {
+      "document": "d9_mixed_structure.md",
+      "v1": {
+        "concept_coverage": 1.0,
+        "section_theme_coverage": 0.333,
+        "late_content_coverage": 1.0,
+        "redundancy": 0.0,
+        "size_chars": 419
+      },
+      "v2": {
+        "concept_coverage": 1.0,
+        "section_theme_coverage": 0.667,
+        "late_content_coverage": 1.0,
+        "redundancy": 0.0,
+        "size_chars": 546
+      }
+    }
+  ]
+}
