@@ -358,6 +358,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-08-14-sr1-span-repair.md", "md", None),
     ("docs/wiki/work-log/2026-08-15-e2-admission-production-wiring.md", "md", None),
     ("docs/wiki/work-log/2026-08-15-smoke-admission-e2e-fail.md", "md", None),
+    ("docs/wiki/work-log/2026-08-15-d1-eligibility-receipt-predicate.md", "md", None),
+    ("docs/wiki/work-log/2026-08-15-d2-corpus-scoped-graph.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-g3-reranker.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-g5-answer-path-verification.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-g4-graph-expansion.md", "md", None),
@@ -406,6 +408,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/0004-g5-answer-path-verification.md", "md", None),
     ("shared/polymath_shared/span_repair.py", "py", None),
     ("shared/polymath_shared/entity_admission.py", "py", None),
+    ("shared/polymath_shared/neo4j_eligibility.py", "py", None),
     ("shared/polymath_shared/rerank.py", "py", None),
     ("eval/sr1/qualify_sr1.py", "py", None),
     ("eval/sr1/REPORT_SR1.md", "md", None),
@@ -449,6 +452,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_q1r_v110_revision.py", "py", None),
     ("tests/fixtures/smoke/metacognition_excerpt_test.md", "md", None),
     ("tests/determinism/test_entity_admission.py", "py", None),
+    ("tests/determinism/test_neo4j_eligibility.py", "py", None),
     ("tests/determinism/test_rerank_wrapper.py", "py", None),
     ("shared/polymath_shared/rulepack/core-predicates-v1.1.0.yaml", "yaml", None),
     ("resources/compiled/03a513ece6da32b243289fa9b9ef9dfe8e21cec4ff9f0435678ad4425021c150/compiled_lexical-v1.1.0.json", "json", None),
@@ -461,6 +465,7 @@ TREE: list[tuple[str, str, str | None]] = [
     # tests: Phase F gate + G1/G2 cross-domain routing acceptance
     ("tests/integration/test_projection_reconstruction.py", "py", None),
     ("tests/integration/test_admission_projection.py", "py", None),
+    ("tests/integration/test_corpus_scoped_graph.py", "py", None),
 
     # ── Phase G: lexical resource compiler (build deps + committed tables) ──
     ("resources/README.md", "md", None),

@@ -169,6 +169,28 @@ def reconcile_neo4j(conn: Connection, run_id: str, corpus: str) -> dict:
             result = session.run("MATCH ()-[r:REL]->() RETURN r.fact_id AS id")
             edge_ids = {r["id"] for r in result if r["id"]}
             fact_receipts = set(_receipt_kind_ids(conn, corpus, "neo4j", "fact"))
+            # Eligibility boundary (D1): facts whose endpoints are
+            # MENTION_ONLY are parked by design — their edges must not
+            # survive and their receipts (if any) are erroneous. The
+            # predicate is corpus-independent (admission classes live
+            # on entity rows), so this never clears another corpus's
+            # eligible receipts.
+            ineligible_facts = _ineligible_fact_ids(conn)
+            for fact_id in (edge_ids & ineligible_facts):
+                session.run(
+                    "MATCH ()-[r:REL {fact_id: $id}]->() DELETE r", id=fact_id
+                )
+            erroneous = fact_receipts & ineligible_facts
+            if erroneous:
+                conn.execute(
+                    """
+                    UPDATE projection_receipts SET active = FALSE
+                     WHERE projection = 'neo4j' AND entity_kind = 'fact'
+                       AND entity_id = ANY(%s)
+                    """,
+                    (sorted(erroneous),),
+                )
+                fact_receipts -= erroneous
             for fact_id in edge_ids - fact_receipts:
                 session.run(
                     "MATCH ()-[r:REL {fact_id: $id}]->() DELETE r", id=fact_id
@@ -200,6 +222,13 @@ def reconcile_neo4j(conn: Connection, run_id: str, corpus: str) -> dict:
         "missing_receipts": sorted(missing_receipts),
         "missing_facts": sorted(missing_edges) if missing_edges else [],
     }
+
+
+def _ineligible_fact_ids(conn: Connection) -> set[str]:
+    from polymath_shared.neo4j_eligibility import ineligible_fact_ids_sql
+
+    rows = conn.execute(ineligible_fact_ids_sql()).fetchall()
+    return {r[0] for r in rows}
 
 
 def _receipt_kind_ids(conn: Connection, corpus: str, projection: str, kind: str) -> list[str]:

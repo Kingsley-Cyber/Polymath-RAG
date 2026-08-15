@@ -1,0 +1,60 @@
+"""Neo4j projection eligibility (entity admission boundary).
+
+ONE deterministic predicate defines which entities and facts are
+Neo4j-eligible, shared by the three consumers that must agree:
+
+  - project_neo4j_worker : projects only eligible entities/facts;
+  - control census        : receipt expectations exclude ineligible
+                            facts (parked facts are NOT projection
+                            failures, and no synthetic receipts exist);
+  - verify_worker         : reconciles edges/receipts only for
+                            eligible facts; edges of ineligible facts
+                            are removed, their receipts cleared.
+
+Rule (entity-admission-v1.1, identity contract v2):
+  an entity is eligible iff admission_class != 'MENTION_ONLY'
+  (NULL = legacy GLOBAL rows are eligible);
+  a fact is eligible iff BOTH endpoints are eligible entities.
+MENTION_ONLY-dependent facts stay parked in Postgres by design.
+"""
+from __future__ import annotations
+
+ADMITTED_SQL = "admission_class IS DISTINCT FROM 'MENTION_ONLY'"
+
+
+def entity_eligible_sql(alias: str = "e") -> str:
+    """SQL predicate for an eligible entity row (admission column)."""
+    return f"{alias}.admission_class IS DISTINCT FROM 'MENTION_ONLY'"
+
+
+def fact_eligible_sql(f_alias: str = "f") -> str:
+    """SQL predicate for an eligible fact row: both endpoints admitted."""
+    return (
+        f"EXISTS (SELECT 1 FROM entities {f_alias}_s"
+        f" WHERE {f_alias}_s.entity_id = {f_alias}.subject_id"
+        f" AND {f_alias}_s.admission_class IS DISTINCT FROM 'MENTION_ONLY')"
+        f" AND EXISTS (SELECT 1 FROM entities {f_alias}_o"
+        f" WHERE {f_alias}_o.entity_id = {f_alias}.object_id"
+        f" AND {f_alias}_o.admission_class IS DISTINCT FROM 'MENTION_ONLY')"
+    )
+
+
+def fact_eligible_from_classes(subject_class: str | None,
+                               object_class: str | None) -> bool:
+    """Pure predicate over persisted admission classes (deterministic).
+
+    None (legacy pre-0007 rows) means GLOBAL and is eligible."""
+    return (subject_class != "MENTION_ONLY") and (object_class != "MENTION_ONLY")
+
+
+def eligible_fact_ids_sql() -> str:
+    """All globally eligible fact ids (corpus-independent: eligibility
+    is a property of a fact's endpoint entities, not of its corpus)."""
+    return "SELECT f.fact_id FROM facts f WHERE " + fact_eligible_sql("f")
+
+
+def ineligible_fact_ids_sql() -> str:
+    return (
+        "SELECT f.fact_id FROM facts f WHERE NOT ("
+        + fact_eligible_sql("f") + ")"
+    )

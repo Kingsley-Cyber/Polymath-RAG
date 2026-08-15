@@ -195,12 +195,19 @@ def _missing_projection_receipts(conn: Connection, run_id: str, stage: str) -> l
             (run_id, run_id, run_id),
         ).fetchall()
         return [r[0] for r in rows]
+    from polymath_shared.neo4j_eligibility import fact_eligible_sql
+
+    # Receipt expectations must obey the Neo4j-eligibility predicate:
+    # MENTION_ONLY-dependent facts are intentionally parked in Postgres
+    # and are NOT projection failures (no synthetic receipts).
     rows = conn.execute(
         """
         SELECT e.fact_id FROM evidence e
           JOIN documents d ON d.doc_id = e.doc_id
           JOIN runs r ON r.corpus_id = d.corpus_id
+          JOIN facts f ON f.fact_id = e.fact_id
          WHERE r.run_id = %s
+           AND """ + fact_eligible_sql("f") + """
            AND NOT EXISTS (
                SELECT 1 FROM projection_receipts pr
                 WHERE pr.projection = 'neo4j'

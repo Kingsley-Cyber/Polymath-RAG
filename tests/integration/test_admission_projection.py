@@ -211,6 +211,21 @@ def _project_neo4j(run: str) -> None:
         _n(conn, _event(run, {"run_id": run}))
 
 
+def _project_all(run: str) -> None:
+    """Full projection chain so verify can converge (mirrors the
+    reconstruction suite's sanctioned drive path)."""
+    with tx() as conn:
+        from workers.project_qdrant_worker import process_event as _q
+        _q(conn, _event(run, {"run_id": run}))
+    _project_neo4j(run)
+    with tx() as conn:
+        from workers.canonicalize_worker import process_event as _canon
+        _canon(conn, _event(run, {"run_id": run}))
+    with tx() as conn:
+        from workers.project_canonical_worker import process_event as _pcanon
+        _pcanon(conn, _event(run, {"run_id": run}))
+
+
 def _wipe_corpus(corpus: str) -> None:
     """Remove all state for one corpus so the suite is re-runnable."""
     with tx() as conn:
@@ -243,12 +258,43 @@ def _wipe_corpus(corpus: str) -> None:
 
 
 def _reset_stores_by_corpus(corpus: str) -> None:
+    """Corpus-scoped store reset (never deletes unrelated corpus data)."""
     from workers.project_neo4j_worker import _driver as _neo4j_driver
+
+    with tx() as conn:
+        chunk_ids = [r[0] for r in conn.execute(
+            "SELECT c.chunk_id FROM chunks c JOIN documents d ON d.doc_id=c.doc_id WHERE d.corpus_id=%s",
+            (corpus,)).fetchall()]
+        fact_ids = [r[0] for r in conn.execute(
+            "SELECT DISTINCT e.fact_id FROM evidence e JOIN documents d ON d.doc_id=e.doc_id WHERE d.corpus_id=%s",
+            (corpus,)).fetchall()]
+        evidence_ids = [r[0] for r in conn.execute(
+            "SELECT e.evidence_id FROM evidence e JOIN documents d ON d.doc_id=e.doc_id WHERE d.corpus_id=%s",
+            (corpus,)).fetchall()]
+        entity_ids = [r[0] for r in conn.execute(
+            "SELECT e.entity_id FROM entities e JOIN facts f ON f.subject_id=e.entity_id OR f.object_id=e.entity_id JOIN evidence ev ON ev.fact_id=f.fact_id JOIN documents d ON d.doc_id=ev.doc_id WHERE d.corpus_id=%s",
+            (corpus,)).fetchall()]
+        doc_ids = [r[0] for r in conn.execute("SELECT doc_id FROM documents WHERE corpus_id=%s", (corpus,)).fetchall()]
 
     driver = _neo4j_driver()
     try:
         with driver.session() as session:
-            session.run("MATCH (n) DETACH DELETE n")
+            for kind, ids in (("fact", fact_ids), ("evidence", evidence_ids),
+                              ("entity", entity_ids), ("chunk", chunk_ids),
+                              ("doc", doc_ids)):
+                for i in range(0, len(ids), 50):
+                    batch = ids[i:i + 50]
+                    if kind == "fact":
+                        session.run("MATCH ()-[r:REL]->() WHERE r.fact_id IN $ids DELETE r", ids=batch)
+                        session.run("MATCH (f:Fact) WHERE f.fact_id IN $ids DETACH DELETE f", ids=batch)
+                    elif kind == "evidence":
+                        session.run("MATCH (e:Evidence) WHERE e.evidence_id IN $ids DETACH DELETE e", ids=batch)
+                    elif kind == "entity":
+                        session.run("MATCH (e:Entity) WHERE e.entity_id IN $ids DETACH DELETE e", ids=batch)
+                    elif kind == "chunk":
+                        session.run("MATCH (c:Chunk) WHERE c.chunk_id IN $ids DETACH DELETE c", ids=batch)
+                    else:
+                        session.run("MATCH (d:Document) WHERE d.doc_id IN $ids DETACH DELETE d", ids=batch)
     finally:
         driver.close()
 
@@ -335,3 +381,51 @@ def test_admission_seed_classes_match_policy():
     assert stored_classes.get("the vector index") == "CORPUS_SCOPED"
     assert stored_classes.get("our engine") == "DOCUMENT_SCOPED"
     assert stored_classes.get("the system") == "MENTION_ONLY"
+
+
+def _repair_shared_graph() -> None:
+    """Reconstruct every run's Neo4j projection (idempotent): the
+    equivalent of the census re-drive after store damage. Needed because
+    earlier full-graph test wipes removed other corpora's edges while
+    their receipts stayed active."""
+    from workers.project_neo4j_worker import process_event as _n
+
+    with tx() as conn:
+        runs = [r[0] for r in conn.execute(
+            "SELECT run_id FROM runs ORDER BY created_at").fetchall()]
+    for rid in runs:
+        with tx() as conn:
+            _n(conn, _event(rid, {"run_id": rid}))
+
+
+def test_d1_receipt_expectations_converge():
+    """D1: census receipt expectations obey the shared Neo4j-eligibility
+    predicate — parked facts are NOT projection failures, and verify
+    promotes the run to query_ready with no gaps."""
+    from control.census import _missing_projection_receipts
+    from workers.verify_worker import process_event as verify_event
+    from polymath_shared.neo4j_eligibility import ineligible_fact_ids_sql
+
+    run = _new_corpus("admission-d1-converge")
+    _run_intake(run)
+    stored = _seed_through_admission(run)
+    _mark_stage_ok(run, "extract")
+    _mark_stage_ok(run, "profile_document")
+    _project_all(run)
+    _repair_shared_graph()
+
+    with tx() as conn:
+        # 1) The census sees NO missing neo4j fact receipts even though
+        #    parked facts exist with evidence and no receipts.
+        missing = _missing_projection_receipts(conn, run, "project_neo4j")
+        assert missing == [], f"parked facts counted as gaps: {missing}"
+        # 2) The shared predicate flags exactly the parked facts.
+        ineligible = {r[0] for r in conn.execute(ineligible_fact_ids_sql()).fetchall()}
+        mention_ids = {eid for _, (eid, cls) in stored["entities"].items() if cls == "MENTION_ONLY"}
+        parked = {f.fact_id for f in stored["facts"]
+                  if f.subject_id in mention_ids or f.object_id in mention_ids}
+        assert parked and parked <= ineligible
+        # 3) Verify converges: no loss, no problem, run promoted.
+        verify_event(conn, _event(run, {"run_id": run}))
+        status = conn.execute("SELECT status FROM runs WHERE run_id=%s", (run,)).fetchone()[0]
+        assert status == "query_ready", f"run stuck at {status}"
