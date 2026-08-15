@@ -1,14 +1,14 @@
 # Current Repository State
 
 Last verified: 2026-08-14
-Verified against commit: `28906e9` (Q1: heterogeneous extraction qualification — PASS)
+Verified against commit: `fc8475d` (I0: native document materialization — gate COMPLETE)
 Active branch at verification: `main` (working tree clean)
 
 ```yaml
 current_phase: extraction-qualified # Q1 PASS, I0 PASS; extraction locked; priority = CORPUS_INGEST_READY (I1 -> I2)
 repository:
   branch: main
-  head: 28906e9
+  head: fc8475d
   frozen_artifacts: [see Frozen Artifacts section]
   evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1, qualification-q1]
   next_actions: [i1-bulk-ingestion, i2-scale-integrity]
