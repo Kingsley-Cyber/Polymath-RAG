@@ -1,0 +1,52 @@
+{
+  "queries_sha256": "64a88b44cbeb07b1f28d9d0d48420f27a4089f5137fccffdf03ff9ca5642121a",
+  "results": {
+    "B_query_only": {
+      "complementary_doc": null,
+      "precision3": 0.056,
+      "redundant_hits": 2,
+      "irrelevant_hits": 3,
+      "useful_queries": 2,
+      "complementary_child_recall": 0.222,
+      "mean_concepts": 0.0,
+      "generic_seed_violations": 0,
+      "pass1_parity": true,
+      "latency_ms": 1683.9,
+      "breadth": {
+        "MECHANISM": 2
+      }
+    },
+    "C_concepts": {
+      "complementary_doc": null,
+      "precision3": 0.056,
+      "redundant_hits": 2,
+      "irrelevant_hits": 2,
+      "useful_queries": 2,
+      "complementary_child_recall": 0.222,
+      "mean_concepts": 6.0,
+      "generic_seed_violations": 0,
+      "pass1_parity": true,
+      "latency_ms": 1572.2,
+      "breadth": {
+        "MECHANISM": 2
+      }
+    },
+    "D_concepts_lexical": {
+      "complementary_doc": null,
+      "precision3": 0.111,
+      "redundant_hits": 2,
+      "irrelevant_hits": 1,
+      "useful_queries": 3,
+      "complementary_child_recall": 0.333,
+      "mean_concepts": 6.0,
+      "generic_seed_violations": 0,
+      "pass1_parity": true,
+      "latency_ms": 1705.5,
+      "breadth": {
+        "LIMITATION": 1,
+        "MECHANISM": 3
+      }
+    }
+  },
+  "deterministic": true
+}

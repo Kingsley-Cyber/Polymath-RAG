@@ -408,3 +408,19 @@ that motivated it and the refactor that implemented it.
   composition readiness ok; isolation 0 leaks; deterministic.
 - /retrieve, /evidence, /chat expose mode=HYBRID through one path.
   Suites + guards green.
+
+## 2026-08-15: R1E — Pass-2 corpus reach qualification (REJECT)
+
+- corpus-reach-v1 engine: Pass-1 document exclusion at retrieval
+  time, deterministic Pass1ConceptState (generic-seed guard),
+  summary-led reach lanes + optional lexical lane, RRF, section
+  resolution, filtered deepening, G3 invariant, bounded reach budget,
+  DIRECT vs CORPUS_REACH provenance, no recursion.
+- Frozen 12-query qualification: query-only reach precision@3 0.056;
+  ConceptState adds ZERO over query-only; lexical reach reaches
+  precision 0.111 / child recall 0.333. Mostly redundant/topic-
+  adjacent results; complementary docs not retained for 9-10/12
+  queries. Pass-1 parity + determinism + isolation verified.
+- Verdict: REJECT — no production exposure; HYBRID remains
+  direct-only. Complementarity signal options are a future user
+  decision (no LLM expansion used).

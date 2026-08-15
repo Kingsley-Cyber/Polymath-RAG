@@ -1,0 +1,260 @@
+{
+  "note": "Frozen R1E Pass-2 corpus-reach qualification set over the frozen I2 corpus. Gold: direct docs, complementary docs (classified), redundant docs, irrelevant docs, complementary child substrings. Development set; exposure-counted; the runtime algorithm never sees the labels.",
+  "corpus_id": "i2-qualification-corpus",
+  "queries": [
+    {
+      "query_id": "e1_mechanism",
+      "query": "How does cognitive load affect monitoring accuracy?",
+      "direct_docs": [
+        "psych/cognitive_load.md",
+        "psych/metacognitive_monitoring.md"
+      ],
+      "complementary_docs": [
+        {
+          "doc": "psych/working_memory.txt",
+          "kind": "MECHANISM",
+          "child_substring": "Capacity limits constrain"
+        }
+      ],
+      "redundant_docs": [
+        "psych/judgment_of_learning.epub"
+      ],
+      "irrelevant_docs": [
+        "cyber/authentication.txt",
+        "knowledge/reranking.md"
+      ]
+    },
+    {
+      "query_id": "e2_limitation",
+      "query": "What does zero trust abandon?",
+      "direct_docs": [
+        "cyber/zero_trust.docx"
+      ],
+      "complementary_docs": [
+        {
+          "doc": "cyber/encryption_basics.md",
+          "kind": "LIMITATION",
+          "child_substring": "Encryption does not remove the need for access control"
+        },
+        {
+          "doc": "cyber/authentication.txt",
+          "kind": "MECHANISM",
+          "child_substring": "Sessions must be bounded"
+        }
+      ],
+      "redundant_docs": [
+        "cyber/threat_modeling.html"
+      ],
+      "irrelevant_docs": [
+        "psych/source_monitoring.md"
+      ]
+    },
+    {
+      "query_id": "e3_alternate",
+      "query": "Why can rereading leave a learner unable to recall the idea?",
+      "direct_docs": [
+        "psych/retrieval_practice.md",
+        "psych/metacognitive_monitoring.md"
+      ],
+      "complementary_docs": [
+        {
+          "doc": "psych/judgment_of_learning.epub",
+          "kind": "ALTERNATE_FRAMEWORK",
+          "child_substring": "cues used to make these judgments are not always diagnostic"
+        },
+        {
+          "doc": "psych/self_regulated_learning.md",
+          "kind": "MECHANISM",
+          "child_substring": "calibration signal"
+        }
+      ],
+      "redundant_docs": [
+        "psych/cognitive_load.md"
+      ],
+      "irrelevant_docs": [
+        "systems/worker_pools.md"
+      ]
+    },
+    {
+      "query_id": "e4_supporting",
+      "query": "How do queries and stored documents get compared numerically?",
+      "direct_docs": [
+        "knowledge/embedding_models.docx"
+      ],
+      "complementary_docs": [
+        {
+          "doc": "systems/vector_indexes.md",
+          "kind": "SUPPORTING_EVIDENCE",
+          "child_substring": "approximate nearest-neighbor search"
+        }
+      ],
+      "redundant_docs": [
+        "knowledge/reranking.md"
+      ],
+      "irrelevant_docs": [
+        "psych/working_memory.txt"
+      ]
+    },
+    {
+      "query_id": "e5_bridge",
+      "query": "How does a system behave under overload?",
+      "direct_docs": [
+        "systems/worker_pools.md"
+      ],
+      "complementary_docs": [
+        {
+          "doc": "psych/working_memory.txt",
+          "kind": "CROSS_DOMAIN_BRIDGE",
+          "child_substring": "Capacity limits constrain"
+        },
+        {
+          "doc": "systems/fault_tolerance.html",
+          "kind": "MECHANISM",
+          "child_substring": "Degraded states are observable"
+        }
+      ],
+      "redundant_docs": [
+        "systems/document_ingestion.md"
+      ],
+      "irrelevant_docs": [
+        "cyber/encryption_basics.md"
+      ]
+    },
+    {
+      "query_id": "e6_redundant",
+      "query": "How are retrieval rankings fused?",
+      "direct_docs": [
+        "knowledge/reranking.md"
+      ],
+      "complementary_docs": [
+        {
+          "doc": "systems/retrieval_pipelines.pdf",
+          "kind": "MECHANISM",
+          "child_substring": "reciprocal-rank fusion"
+        }
+      ],
+      "redundant_docs": [
+        "knowledge/retrieval_evaluation.md"
+      ],
+      "irrelevant_docs": [
+        "cyber/zero_trust.docx"
+      ]
+    },
+    {
+      "query_id": "e7_related_not_useful",
+      "query": "What does threat modeling identify?",
+      "direct_docs": [
+        "cyber/threat_modeling.html"
+      ],
+      "complementary_docs": [],
+      "redundant_docs": [
+        "cyber/security_monitoring.md",
+        "cyber/incident_response.pdf"
+      ],
+      "irrelevant_docs": [
+        "knowledge/graph_traversal.md"
+      ]
+    },
+    {
+      "query_id": "e8_none_useful",
+      "query": "Which phases does incident response proceed through?",
+      "direct_docs": [
+        "cyber/incident_response.pdf"
+      ],
+      "complementary_docs": [],
+      "redundant_docs": [
+        "cyber/security_monitoring.md"
+      ],
+      "irrelevant_docs": [
+        "psych/judgment_of_learning.epub",
+        "systems/vector_indexes.md"
+      ]
+    },
+    {
+      "query_id": "e9_composition",
+      "query": "How does working memory relate to monitoring accuracy?",
+      "direct_docs": [
+        "psych/metacognitive_monitoring.md",
+        "psych/working_memory.txt"
+      ],
+      "complementary_docs": [
+        {
+          "doc": "psych/cognitive_load.md",
+          "kind": "MECHANISM",
+          "child_substring": "extraneous load"
+        }
+      ],
+      "redundant_docs": [
+        "psych/retrieval_practice.md"
+      ],
+      "irrelevant_docs": [
+        "systems/retrieval_pipelines.pdf"
+      ]
+    },
+    {
+      "query_id": "e10_exact_term",
+      "query": "Where is reciprocal-rank fusion discussed?",
+      "direct_docs": [
+        "knowledge/reranking.md"
+      ],
+      "complementary_docs": [
+        {
+          "doc": "systems/retrieval_pipelines.pdf",
+          "kind": "MECHANISM",
+          "child_substring": "reciprocal-rank fusion"
+        }
+      ],
+      "redundant_docs": [
+        "knowledge/retrieval_evaluation.md"
+      ],
+      "irrelevant_docs": [
+        "psych/self_regulated_learning.md"
+      ]
+    },
+    {
+      "query_id": "e11_contrast",
+      "query": "Is encryption alone enough to protect data?",
+      "direct_docs": [
+        "cyber/encryption_basics.md"
+      ],
+      "complementary_docs": [
+        {
+          "doc": "cyber/authentication.txt",
+          "kind": "CONTRAST",
+          "child_substring": "access control"
+        }
+      ],
+      "redundant_docs": [
+        "cyber/zero_trust.docx"
+      ],
+      "irrelevant_docs": [
+        "systems/verification_loops.md"
+      ]
+    },
+    {
+      "query_id": "e12_breadth",
+      "query": "What supports evidence-based answers?",
+      "direct_docs": [
+        "knowledge/evidence_bundles.md"
+      ],
+      "complementary_docs": [
+        {
+          "doc": "knowledge/retrieval_evaluation.md",
+          "kind": "SUPPORTING_EVIDENCE",
+          "child_substring": "relevance judgments"
+        },
+        {
+          "doc": "systems/verification_loops.md",
+          "kind": "MECHANISM",
+          "child_substring": "Receipts are the commit point"
+        }
+      ],
+      "redundant_docs": [
+        "knowledge/reranking.md"
+      ],
+      "irrelevant_docs": [
+        "psych/source_monitoring.md"
+      ]
+    }
+  ]
+}

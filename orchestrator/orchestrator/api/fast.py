@@ -52,12 +52,17 @@ class FastSearcher:
         for key in ("corpus_id", "doc_id", "parent_id"):
             if filters.get(key):
                 must.append(FieldCondition(key=key, match=MatchValue(value=filters[key])))
+        must_not = []
+        if filters.get("exclude_doc_ids"):
+            from qdrant_client.models import MatchAny
+            must_not.append(FieldCondition(
+                key="doc_id", match=MatchAny(any=list(filters["exclude_doc_ids"]))))
         t0 = time.time()
         try:
             points = self.client.query_points(
                 collection_name=collection,
                 query=vector,
-                query_filter=Filter(must=must),
+                query_filter=Filter(must=must, must_not=must_not),
                 limit=limit,
                 with_payload=True,
             ).points
