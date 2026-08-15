@@ -1,0 +1,9 @@
+{
+  "experiment": "g4.2-seed-eligibility",
+  "query_set": "eval/g4/frozen_queries.json",
+  "corpus": "g4_e2e (specs: corpus_spec.json be0b1832, corpus_spec_v1.1.json 327dede2)",
+  "neo4j_projection": "production workers",
+  "retrieval_contract": "production run_lanes fusion + G3 reranker default ON (Qwen/Qwen3-Reranker-0.6B @ e61197ed)",
+  "seed_policy_version": "g4-seed-identity-v1",
+  "hard_boundaries": "no GLiNER/extraction/compiler/canonicalization/graph-weight/cap/hop/reranker/R3 changes"
+}

@@ -1,0 +1,134 @@
+{
+ "aggregate": {
+  "raw_noise": 20,
+  "raw_useful": 127,
+  "selected_noise": 10,
+  "selected_useful": 67
+ },
+ "arm": "B",
+ "churn": {
+  "q03": {
+   "raw_useful": 20,
+   "selected_useful": 10
+  },
+  "q04": {
+   "raw_useful": 20,
+   "selected_useful": 10
+  },
+  "q10": {
+   "raw_useful": 20,
+   "selected_useful": 10
+  }
+ },
+ "latency_p50": null,
+ "per_query": [
+  {
+   "arm": "B",
+   "id": "q01",
+   "raw_noise": 0,
+   "raw_total": 20,
+   "raw_useful": 20,
+   "selected_noise": 0,
+   "selected_useful": 10
+  },
+  {
+   "arm": "B",
+   "id": "q02",
+   "raw_noise": 0,
+   "raw_total": 2,
+   "raw_useful": 2,
+   "selected_noise": 0,
+   "selected_useful": 2
+  },
+  {
+   "arm": "B",
+   "id": "q03",
+   "raw_noise": 0,
+   "raw_total": 20,
+   "raw_useful": 20,
+   "selected_noise": 0,
+   "selected_useful": 10
+  },
+  {
+   "arm": "B",
+   "id": "q04",
+   "raw_noise": 0,
+   "raw_total": 20,
+   "raw_useful": 20,
+   "selected_noise": 0,
+   "selected_useful": 10
+  },
+  {
+   "arm": "B",
+   "id": "q05",
+   "raw_noise": 0,
+   "raw_total": 2,
+   "raw_useful": 2,
+   "selected_noise": 0,
+   "selected_useful": 2
+  },
+  {
+   "arm": "B",
+   "id": "q06",
+   "raw_noise": 0,
+   "raw_total": 3,
+   "raw_useful": 3,
+   "selected_noise": 0,
+   "selected_useful": 3
+  },
+  {
+   "arm": "B",
+   "id": "q07",
+   "raw_noise": 0,
+   "raw_total": 20,
+   "raw_useful": 20,
+   "selected_noise": 0,
+   "selected_useful": 10
+  },
+  {
+   "arm": "B",
+   "id": "q08",
+   "raw_noise": 0,
+   "raw_total": 0,
+   "raw_useful": 0,
+   "selected_noise": 0,
+   "selected_useful": 0
+  },
+  {
+   "arm": "B",
+   "id": "q09",
+   "raw_noise": 20,
+   "raw_total": 20,
+   "raw_useful": 0,
+   "selected_noise": 10,
+   "selected_useful": 0
+  },
+  {
+   "arm": "B",
+   "id": "q10",
+   "raw_noise": 0,
+   "raw_total": 20,
+   "raw_useful": 20,
+   "selected_noise": 0,
+   "selected_useful": 10
+  },
+  {
+   "arm": "B",
+   "id": "q11",
+   "raw_noise": 0,
+   "raw_total": 20,
+   "raw_useful": 20,
+   "selected_noise": 0,
+   "selected_useful": 10
+  },
+  {
+   "arm": "B",
+   "id": "q12",
+   "raw_noise": 0,
+   "raw_total": 0,
+   "raw_useful": 0,
+   "selected_noise": 0,
+   "selected_useful": 0
+  }
+ ]
+}
