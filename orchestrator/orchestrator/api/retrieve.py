@@ -79,7 +79,11 @@ async def retrieve(req: RetrieveRequest) -> dict:
 
     result.graph_facts = graph_expansion(
         _entity_surfaces(query, result),
-        expand=lambda surfaces: _neo4j_expand(surfaces),
+        expand=lambda surfaces: _neo4j_expand(
+            surfaces,
+            corpus_id=corpus_id,
+            preferred_chunk_ids=[c["chunk_id"] for c in result.selected_children[:10]],
+        ),
     )
 
     # G3 candidate: cross-representation reranking over the FUSED views
@@ -252,33 +256,106 @@ def _entity_surfaces(query: str, result) -> list[str]:
     return list(dict.fromkeys(surfaces))[:12]
 
 
-def _neo4j_expand(surfaces: list[str]) -> list[dict]:
-    """One-hop graph expansion (production, canonical bidirectional).
+def _surface_matches(surface: str, term: str) -> bool:
+    s, t = surface.lower(), term.lower()
+    return bool(t) and (t in s or s in t)
+
+
+def _corpus_seed_ids(
+    conn,
+    surfaces: list[str],
+    corpus_id: Optional[str],
+    preferred_chunk_ids: list[str],
+) -> list[str]:
+    """Corpus-authorized seed resolution (D2).
+
+    Seeds are entities attached to in-scope evidence — never a raw
+    surface match against the unrestricted shared graph. Preference
+    order: entities attached to the RETRIEVED evidence chunks first,
+    then any entity evidenced in the active corpus; ties broken by
+    entity_id for determinism. MENTION_ONLY entities can never seed
+    (they have no graph nodes). GLOBAL identity is untouched."""
+    from polymath_shared.neo4j_eligibility import entity_eligible_sql
+
+    rows = conn.execute(
+        """
+        SELECT DISTINCT e.entity_id, e.normalized_surface,
+               bool_or(ev.chunk_id = ANY(%s)) AS preferred
+          FROM entities e
+          JOIN facts f ON f.subject_id = e.entity_id OR f.object_id = e.entity_id
+          JOIN evidence ev ON ev.fact_id = f.fact_id
+          JOIN documents d ON d.doc_id = ev.doc_id
+         WHERE (""" + ("" if corpus_id is None else "d.corpus_id = %s AND ") +
+        entity_eligible_sql("e") + """)
+         GROUP BY e.entity_id, e.normalized_surface
+        """,
+        (preferred_chunk_ids or [], *( [corpus_id] if corpus_id else [] )),
+    ).fetchall()
+    matched = [
+        (bool(pref), eid) for eid, surf, pref in rows
+        if any(_surface_matches(surf, term) for term in surfaces)
+    ]
+    matched.sort(key=lambda x: (not x[0], x[1]))
+    return [eid for _, eid in matched[:8]]
+
+
+def _authorized_fact_ids(conn, corpus_id: Optional[str]) -> Optional[set]:
+    """Facts authorized for graph expansion under the active corpus.
+
+    A fact is authorized when it is supported by evidence in the active
+    corpus. Facts supported EXCLUSIVELY by another corpus are excluded
+    (D2). Facts with NO evidence anywhere are INTENTIONALLY kept: an
+    unresolvable reference must fail loudly in assembly (frozen R3a
+    acceptance), never be silently hidden. With no corpus scope
+    (cross-corpus route), every projected fact is authorized."""
+    if corpus_id is None:
+        return None
+    rows = conn.execute(
+        """
+        SELECT DISTINCT ev.fact_id FROM evidence ev
+          JOIN documents d ON d.doc_id = ev.doc_id
+         WHERE d.corpus_id = %s
+        """,
+        (corpus_id,),
+    ).fetchall()
+    in_scope = {r[0] for r in rows}
+    # Evidence-less facts stay authorized so assembly fails loudly.
+    rows = conn.execute(
+        """
+        SELECT f.fact_id FROM facts f
+         WHERE NOT EXISTS (SELECT 1 FROM evidence e WHERE e.fact_id = f.fact_id)
+        """
+    ).fetchall()
+    return in_scope | {r[0] for r in rows}
+
+
+def _neo4j_expand(
+    surfaces: list[str],
+    corpus_id: Optional[str] = None,
+    preferred_chunk_ids: Optional[list[str]] = None,
+) -> list[dict]:
+    """One-hop graph expansion (production, canonical bidirectional,
+    corpus-authorized).
 
     Two DIRECTED clauses preserve stored fact orientation by
     construction; an incoming edge only makes the EXISTING fact
     eligible, never reverses or invents a relation. HIGH_MEDIUM
     allowlist, 8-seed / 20-fact caps, dedupe by fact_id, stable
-    ORDER BY fact_id. Promoted with the entity-admission boundary
-    (E2/C1.1): MENTION_ONLY surfaces never reach the graph."""
+    ORDER BY fact_id. Seeds are resolved from entities attached to
+    in-scope evidence (D2); facts supported exclusively by another
+    corpus are never returned (D2)."""
     from polymath_shared.stores import neo4j_driver
+
+    with tx() as conn:
+        ids = _corpus_seed_ids(conn, surfaces, corpus_id, preferred_chunk_ids or [])
+        authorized = _authorized_fact_ids(conn, corpus_id)
+
+    if not ids:
+        return []
 
     driver = neo4j_driver()
     try:
         with driver.session() as session:
-            matched = session.run(
-                """
-                MATCH (e:Entity)
-                WHERE any(s IN $surfaces WHERE toLower(e.surface) CONTAINS s)
-                   OR any(s IN $surfaces WHERE s CONTAINS toLower(e.surface))
-                RETURN e.entity_id AS entity_id, e.surface AS surface
-                LIMIT 8
-                """,
-                surfaces=surfaces,
-            ).data()
-            if not matched:
-                return []
-            ids = [m["entity_id"] for m in matched]
             rows = session.run(
                 """
                 CALL () {
@@ -301,6 +378,8 @@ def _neo4j_expand(surfaces: list[str]) -> list[dict]:
                 ids=ids,
                 predicates=sorted(HIGH_MEDIUM_PREDICATES),
             ).data()
+            if authorized is not None:
+                rows = [r for r in rows if r["fact_id"] in authorized]
             return rows
     except Exception:
         return []

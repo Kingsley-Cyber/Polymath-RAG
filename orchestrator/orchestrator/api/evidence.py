@@ -71,7 +71,11 @@ async def evidence(req: EvidenceRequest) -> dict:
 
     graph_facts = graph_expansion(
         _entity_surfaces(query, result),
-        expand=lambda surfaces: _neo4j_expand(surfaces),
+        expand=lambda surfaces: _neo4j_expand(
+            surfaces,
+            corpus_id=corpus_id,
+            preferred_chunk_ids=[c["chunk_id"] for c in result.selected_children[:10]],
+        ),
     )
 
     # G3 candidate: rerank the fused candidates feeding the bundle.
