@@ -297,3 +297,17 @@ that motivated it and the refactor that implemented it.
   ingest-run / ingest-status. Batch-bounded, resumable, idempotent
   (replay submits nothing). Deletions are explicitly deferred:
   manifest absence is never deletion authorization.
+
+## 2026-08-15: I2 — corpus-scale integrity qualification (FAIL: queryability)
+
+- Frozen 28-document multi-format qualification corpus + 4-document
+  isolation corpus (tests/fixtures/i2/) with phase-based verifier
+  (eval/i2/verify_i2.py).
+- PASS: convergence (28/28 query_ready, 0 retries), eligibility-aware
+  durable census, admission scale census, generic-hub check, identity
+  invariants on persisted rows, corpus isolation, replay idempotency.
+- FAIL (frozen, unpatched): TEXT lane returns 96 cited passages for
+  an unsupported query — every retrieved passage counts as supported
+  text evidence with no deterministic support bound. Owning layers
+  recorded; fix deferred to a future change (D4), not started.
+- Qualification only: no production behavior changed.

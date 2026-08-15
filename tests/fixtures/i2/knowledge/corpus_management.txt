@@ -1,0 +1,9 @@
+# Corpus Management
+
+Corpus management controls what enters a corpus and how it is tracked. A manifest declares the sources to ingest; the control plane decides what remains to be done.
+
+Content identity, not modification time, is the authority. A changed file is a new content version, and the old version remains historically attributable through its document row.
+
+A manifest is an ingestion declaration, not a destructive reconciliation. Documents absent from a later manifest are not deleted without an explicit deletion design.
+
+Bulk ingestion submits ordinary intake work. The same pipeline that ingests one document ingests a thousand, with no second implementation.

@@ -1,0 +1,41 @@
+version: 1
+
+corpus:
+  corpus_id: i2-qualification-corpus
+  title: I2 Corpus-Scale Integrity Qualification
+  description: "Frozen 28-document qualification corpus: psychology/metacognition, systems, cybersecurity, knowledge systems. Multi-format."
+
+defaults:
+  language: en
+  source_tier: primary
+  enabled: true
+
+documents:
+  - source: ./psych/cognitive_load.md
+  - source: ./psych/judgment_of_learning.epub
+  - source: ./psych/metacognitive_control.md
+  - source: ./psych/metacognitive_monitoring.md
+  - source: ./psych/retrieval_practice.md
+  - source: ./psych/self_regulated_learning.md
+  - source: ./psych/source_monitoring.md
+  - source: ./psych/working_memory.txt
+  - source: ./systems/document_ingestion.md
+  - source: ./systems/fault_tolerance.html
+  - source: ./systems/platform_services.md
+  - source: ./systems/retrieval_pipelines.pdf
+  - source: ./systems/vector_indexes.md
+  - source: ./systems/verification_loops.md
+  - source: ./systems/worker_pools.md
+  - source: ./cyber/authentication.txt
+  - source: ./cyber/encryption_basics.md
+  - source: ./cyber/incident_response.pdf
+  - source: ./cyber/security_monitoring.md
+  - source: ./cyber/threat_modeling.html
+  - source: ./cyber/zero_trust.docx
+  - source: ./knowledge/corpus_management.txt
+  - source: ./knowledge/embedding_models.docx
+  - source: ./knowledge/evidence_bundles.md
+  - source: ./knowledge/graph_traversal.md
+  - source: ./knowledge/knowledge_graphs.epub
+  - source: ./knowledge/reranking.md
+  - source: ./knowledge/retrieval_evaluation.md

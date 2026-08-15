@@ -1,0 +1,13 @@
+<h1 id="fault-tolerance-and-recovery">Fault Tolerance and Recovery</h1>
+<p>Fault tolerance begins with idempotent processing. Every durable
+mutation uses canonical content identity, so replaying identical input
+cannot create a second logical result.</p>
+<p>Stage artifacts, receipts, status transitions, and outbox events
+commit in one transaction. A crash cannot leave a partial stage recorded
+as complete.</p>
+<p>Recovery is driven by a census that compares desired state with
+observed state. Missing receipts re-arm their stage; failed stages retry
+up to a bound; orphans are removed deterministically.</p>
+<p>Degraded states are observable, not hidden. A run that has not
+converged remains visible to the operator, and no false completion state
+exists.</p>

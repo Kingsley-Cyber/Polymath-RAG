@@ -1,0 +1,9 @@
+# Authentication and Sessions
+
+Authentication establishes who a user is; authorization decides what they may do. Multi-factor authentication combines something the user knows with something they have or are.
+
+Sessions must be bounded. Expiring tokens, revocation lists, and refresh mechanisms limit the damage of a stolen credential.
+
+Credential storage must resist offline attacks. Passwords are stored as salted hashes with a slow key-derivation function, never in plaintext.
+
+Authentication events feed the monitoring system. Unusual login patterns are among the earliest observable signals of account compromise.

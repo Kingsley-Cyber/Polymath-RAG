@@ -1,0 +1,15 @@
+{
+  "main_manifest_id": "manifest_e6e3031837040b231a31e4428888e0d744dfa5fb31f36beca0f6eb4b50e4e077",
+  "isolation_manifest_id": "manifest_b4c8b2330e3ac45d858d6b58e8b46a7b2f5da9526e8260dfcb618609ea218e96",
+  "main_document_count": 28,
+  "isolation_document_count": 4,
+  "formats": [
+    ".docx",
+    ".epub",
+    ".html",
+    ".md",
+    ".pdf",
+    ".txt"
+  ],
+  "total_bytes": 81610
+}

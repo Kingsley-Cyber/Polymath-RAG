@@ -1,0 +1,7 @@
+Working memory is the limited-capacity system that holds and manipulates information during complex cognitive activity.
+
+Working memory is heavily involved in metacognitive monitoring because evaluating performance requires holding the task, the strategy, and the outcome in mind simultaneously. When working memory is occupied, monitoring accuracy deteriorates.
+
+Capacity limits constrain how many pieces of information can be processed at once. A student solving a multistep statistics problem while trying to remember an unfamiliar formula may recognize that an error has occurred but fail to identify which step produced it.
+
+The interaction between working memory and cognitive load determines how much attention remains available for monitoring and control. Tasks with high intrinsic complexity leave fewer resources for evaluating the quality of one's own performance.

@@ -1,0 +1,16 @@
+version: 1
+
+corpus:
+  corpus_id: i2-isolation-corpus
+  title: I2 Isolation Corpus
+  description: "Small overlapping-terminology corpus for corpus-isolation qualification."
+
+defaults:
+  language: en
+  enabled: true
+
+documents:
+  - source: ./iso/systems_note.md
+  - source: ./iso/memory_note.txt
+  - source: ./iso/pipeline_note.md
+  - source: ./iso/model_note.txt

@@ -1,0 +1,5 @@
+# Overlapping Model Note
+
+The model performs reranking after the system retrieves candidates.
+Working memory limits how much context the model can attend to.
+

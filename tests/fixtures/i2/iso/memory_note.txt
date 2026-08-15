@@ -1,0 +1,5 @@
+# Overlapping Memory Note
+
+Working memory constrains how the model evaluates its own predictions.
+The system stores calibration history for later review.
+
