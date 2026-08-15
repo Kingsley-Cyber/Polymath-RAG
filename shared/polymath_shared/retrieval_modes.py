@@ -18,9 +18,10 @@ RETRIEVAL_MODE_CONTRACT = "retrieval-mode-v1"
 
 MODE_FAST = "FAST"
 MODE_HYBRID = "HYBRID"
+MODE_GRAPH = "GRAPH"
 MODE_LEGACY = "LEGACY"
 
-EXPOSED_MODES = (MODE_FAST, MODE_HYBRID, MODE_LEGACY)
+EXPOSED_MODES = (MODE_FAST, MODE_HYBRID, MODE_GRAPH, MODE_LEGACY)
 
 DEFAULT_MODE = MODE_LEGACY  # frozen regression default; FAST/HYBRID are explicit
 
@@ -39,9 +40,17 @@ def mode_plan(mode: str) -> Pass1RetrievalPlan:
 
 
 def hybrid_mode_plan(mode: str) -> HybridRetrievalPlan:
-    if mode == MODE_HYBRID:
+    if mode in (MODE_HYBRID, MODE_GRAPH):
         return HYBRID_PROMOTED_PLAN
     raise ValueError(f"mode {mode!r} has no hybrid plan")
+
+
+# R1F: GRAPH = promoted HYBRID + the already-qualified evidence-authorized
+# corpus-authorized canonical bidirectional hop1 graph expansion
+# (D2 machinery: 8 seeds / 20 facts, HIGH_MEDIUM, SPO preserved).
+GRAPH_PLAN_VERSION = "graph-retrieval-v1"
+GRAPH_MAX_SEEDS = 8
+GRAPH_MAX_FACTS = 20
 
 
 def validate_mode(mode: str | None) -> str:

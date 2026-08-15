@@ -57,9 +57,56 @@ async def chat(req: ChatRequest) -> dict:
     # R1C: FAST mode consumes the SAME qualified Pass-1 result as
     # /retrieve and /evidence (one control-plane path). FAST excludes
     # graph expansion by contract: the bundle's graph lane stays empty.
-    from polymath_shared.retrieval_modes import MODE_FAST, MODE_HYBRID, validate_mode
+    from polymath_shared.retrieval_modes import MODE_FAST, MODE_GRAPH, MODE_HYBRID, validate_mode
 
     mode = validate_mode(req.mode)
+    if mode == MODE_GRAPH:
+        # GRAPH: one GRAPH retrieval result feeds the existing bundle
+        # (graph lane = qualified facts; text lane = HYBRID evidence).
+        # No synthesis change: EvidenceBundle v2 semantics as-is.
+        from orchestrator.api.graph import graph_retrieve
+
+        g = graph_retrieve(query, corpus_id)
+        graph_facts = [
+            {"fact_id": f["fact_id"], "predicate": f["predicate"],
+             "subject": f["subject"], "object": f["object"]}
+            for f in g["graph_relationships"]
+        ]
+        child_evidence = [
+            {"chunk_id": c["chunk_id"], "doc_id": d["doc_id"]}
+            for d in g["documents"]
+            for s in d["sections"]
+            for c in s["evidence"]
+        ]
+        evidence_order = [c["chunk_id"] for c in child_evidence]
+        document_summaries = [
+            {"doc_id": d["doc_id"], "summary": d["document_summary"] or ""}
+            for d in g["documents"] if d["document_summary"]
+        ]
+        section_summaries = [
+            {"chunk_id": s["parent_id"], "doc_id": d["doc_id"],
+             "summary": s["summary"] or ""}
+            for d in g["documents"] for s in d["sections"]
+        ]
+        try:
+            bundle = assemble_evidence_bundle(
+                query,
+                graph_facts,
+                child_evidence,
+                evidence_order=evidence_order,
+                resolve_fact=lambda fid: _resolve_fact(fid),
+                resolve_evidence=lambda fid: _resolve_evidence_rows(fid),
+                resolve_entity=lambda eid: _resolve_entity(eid),
+                resolve_document=lambda did: _resolve_document(did),
+                resolve_chunk=lambda cid: _resolve_chunk(cid),
+                document_summaries=document_summaries,
+                section_summaries=section_summaries,
+            )
+        except AssemblyError as exc:
+            raise HTTPException(status_code=502, detail={
+                "error_code": type(exc).__name__, "message": str(exc),
+            }) from exc
+        return grounded_answer(bundle, query)
     if mode in (MODE_FAST, MODE_HYBRID):
         if mode == MODE_FAST:
             from orchestrator.api.fast import fast_retrieve

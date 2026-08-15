@@ -1,0 +1,24 @@
+{
+  "queries": 48,
+  "parity": {
+    "docs": 0,
+    "sections": 0,
+    "evidence": 0
+  },
+  "graph_facts_total": 6,
+  "graph_checks": {
+    "authorized": true,
+    "spo": true,
+    "bounds": true
+  },
+  "deterministic": true,
+  "iso_leaks": 0,
+  "latency_ms": {
+    "pass1_p50": 976.6,
+    "pass1_p95": 1354.8,
+    "graph_p50": 8.8,
+    "graph_p95": 23.6,
+    "total_p50": 982.5,
+    "total_p95": 1367.1
+  }
+}

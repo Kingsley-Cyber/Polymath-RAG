@@ -229,3 +229,58 @@ def test_hybrid_endpoint_lexical_rescue_and_parity():
     finally:
         _wipe(CORPUS)
         _wipe(CORPUS_B)
+
+
+def test_graph_endpoint_hybrid_plus_qualified_hop1():
+    """R1F: GRAPH = promoted HYBRID + evidence-authorized corpus-
+    authorized bidirectional hop1; hierarchical synthesis context;
+    summaries=context, children=exact evidence, facts=relationships."""
+    _wipe(CORPUS)
+    _wipe(CORPUS_B)
+    try:
+        _seed(CORPUS, {"alpha.md": TEXT_A, "beta.md": TEXT_B})
+        _seed(CORPUS_B, {"beta_b.md": TEXT_B.replace("R1C Fast Beta", "R1C Fast Beta B")})
+
+        with TestClient(app) as client:
+            g = client.post("/retrieve", json={
+                "query": "What is the pouch thermometer method?", "corpus_id": CORPUS, "mode": "GRAPH"})
+            assert g.status_code == 200, g.text
+            gb = g.json()
+            assert gb["meta"]["mode"] == "GRAPH"
+            assert gb["meta"]["plan_version"] == "graph-retrieval-v1"
+            assert gb["meta"]["pass1_plan_version"] == "hybrid-retrieval-v1"
+            # hierarchical context: documents -> sections -> exact evidence
+            assert gb["documents"]
+            assert all("document_summary" in d and "sections" in d for d in gb["documents"])
+            # HYBRID parity: identical document set
+            h = client.post("/retrieve", json={
+                "query": "What is the pouch thermometer method?", "corpus_id": CORPUS, "mode": "HYBRID"})
+            assert [d["doc_id"] for d in gb["documents"]] == \
+                   [d["doc_id"] for d in h.json()["selected_documents"]]
+            # determinism
+            g2 = client.post("/retrieve", json={
+                "query": "What is the pouch thermometer method?", "corpus_id": CORPUS, "mode": "GRAPH"})
+            assert g2.json()["graph_relationships"] == gb["graph_relationships"]
+            # isolation: facts belong to the requested corpus only
+            with tx() as conn:
+                corpus_facts = {r[0] for r in conn.execute("""
+                    SELECT DISTINCT ev.fact_id FROM evidence ev
+                      JOIN documents d ON d.doc_id = ev.doc_id WHERE d.corpus_id = %s""",
+                    (CORPUS,)).fetchall()}
+            assert all(f["fact_id"] in corpus_facts for f in gb["graph_relationships"])
+
+            # chat consumes one GRAPH result (existing bundle semantics;
+            # graph lane may be empty for a fact-free corpus — text lane
+            # still answers)
+            chat = client.post("/chat", json={
+                "message": "What is the pouch thermometer method?", "corpus_id": CORPUS, "mode": "GRAPH"})
+            assert chat.status_code == 200, chat.text
+            assert chat.json()["meta"]["abstained"] is False
+
+            # failure semantics inherited from FAST
+            unknown = client.post("/retrieve", json={
+                "query": "anything", "corpus_id": "no-such-corpus-xyz", "mode": "GRAPH"})
+            assert unknown.status_code == 502, unknown.text
+    finally:
+        _wipe(CORPUS)
+        _wipe(CORPUS_B)

@@ -424,3 +424,19 @@ that motivated it and the refactor that implemented it.
 - Verdict: REJECT — no production exposure; HYBRID remains
   direct-only. Complementarity signal options are a future user
   decision (no LLM expansion used).
+
+## 2026-08-15: R1F — production GRAPH mode
+
+- GRAPH (graph-retrieval-v1) = promoted HYBRID + the D2-qualified
+  evidence-authorized corpus-authorized bidirectional hop1 (8
+  seeds / 20 facts, HIGH_MEDIUM, SPO preserved). One GRAPH result
+  feeds /retrieve, /evidence, /chat.
+- Hierarchical synthesis context: document summaries + section
+  summaries as routing context, child chunks as exact evidence,
+  graph facts as the GRAPH_RELATIONSHIPS lane — never conflated;
+  synthesis untouched.
+- Qualification (frozen 48-query set): HYBRID parity 0 mismatches;
+  all facts corpus-authorized + SPO-exact + bounded; deterministic;
+  0 isolation leaks; graph increment ~10ms (p50 7.3ms) over HYBRID
+  p50 637.6ms. Suites + guards green. R1E remains frozen negative
+  (no corpus reach).
