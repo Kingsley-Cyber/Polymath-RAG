@@ -1,0 +1,34 @@
+779 records
+
+per query gold distribution (S=supported, U=unsupported):
+  q1_direct_lexical        S=  4 U= 48
+  q2_paraphrased           S=  7 U= 52
+  q3_cross_section         S= 10 U= 55
+  q4_terminology_mismatch  S=  7 U= 99
+  q5_summary_level         S=  7 U= 49
+  q6_child_text            S=  4 U= 50
+  q7_graph_independent     S=  4 U= 57
+  u1_capital               S=  0 U= 50
+  u2_medical               S=  0 U= 50
+  u3_sports                S=  0 U= 50
+  u4_product               S=  0 U= 50
+  u5_same_domain           S=  0 U= 63
+  u6_keyword_trap          S=  0 U= 63
+
+dense_score: S n=24 p50=0.3802 min=0.2007 max=0.6799
+          U n=626 p50=0.1716 p90=0.3021 p95=0.3528 max=0.6133
+          full separation: False (S_min=0.2007 vs U_max=0.6133)
+          zero-FP point: t>=0.65: TP=1/24 FN=23 FP=0
+          top-5 U scores: [0.6133, 0.5003, 0.4792, 0.4764, 0.4733]
+
+lexical_score: S n=31 p50=0.7988 min=0.1526 max=4.3423
+          U n=208 p50=0.4547 p90=1.1489 p95=1.6478 max=3.1611
+          full separation: False (S_min=0.1526 vs U_max=3.1611)
+          zero-FP point: t>=3.96: TP=2/31 FN=29 FP=0
+          top-5 U scores: [3.1611, 2.9041, 2.8007, 2.673, 2.6414]
+
+rerank_score: S n=16 p50=5.9375 min=-2.6250 max=9.0000
+          U n=504 p50=-9.7500 p90=-5.1250 p95=-1.3125 max=6.5000
+          full separation: False (S_min=-2.6250 vs U_max=6.5000)
+          zero-FP point: t>=7.19: TP=5/16 FN=11 FP=0
+          top-5 U scores: [6.5, 6.4375, 5.875, 5.625, 5.0]

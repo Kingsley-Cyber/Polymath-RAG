@@ -311,3 +311,13 @@ that motivated it and the refactor that implemented it.
   text evidence with no deterministic support bound. Owning layers
   recorded; fix deferred to a future change (D4), not started.
 - Qualification only: no production behavior changed.
+
+## 2026-08-15: D4 — TEXT support admission qualification (REJECT)
+
+- Frozen D4 development set measured against the frozen retrieval+G3
+  pipeline: no existing signal (dense, lexical, G3 rerank) separates
+  answer support from topical relatedness; same-domain negatives
+  outscore true positives; query-level threshold interval is empty.
+- Verdict: REJECT — no text-support policy implemented; no
+  threshold picked; no heuristics invented. An answerability model
+  track is a pending user decision. I2 skipped gates remain unrun.

@@ -1,0 +1,20 @@
+{
+  "development_set": true,
+  "note": "Frozen D4 development set: used to measure signals and choose the text-support operating point. Exposure-counted; not an independent heldout set (per AGENTS benchmark-integrity rules).",
+  "corpus_id": "i2-qualification-corpus",
+  "queries": [
+    {"query_id": "q1_direct_lexical", "kind": "answerable", "query": "What does zero trust abandon?"},
+    {"query_id": "q2_paraphrased", "kind": "answerable", "query": "Why can rereading leave a learner unable to recall the idea?"},
+    {"query_id": "q3_cross_section", "kind": "answerable", "query": "How does cognitive load affect monitoring accuracy?"},
+    {"query_id": "q4_terminology_mismatch", "kind": "answerable", "query": "What improves the correspondence between a learner's judgment and actual performance?"},
+    {"query_id": "q5_summary_level", "kind": "answerable", "query": "What distinction do researchers draw between judging knowledge and acting on it?"},
+    {"query_id": "q6_child_text", "kind": "answerable", "query": "Which phases does incident response proceed through?"},
+    {"query_id": "q7_graph_independent", "kind": "answerable", "query": "What do judgments of learning guide?"},
+    {"query_id": "u1_capital", "kind": "unsupported", "query": "What is the capital of France?"},
+    {"query_id": "u2_medical", "kind": "unsupported", "query": "What is the recommended dosage of metformin for diabetes?"},
+    {"query_id": "u3_sports", "kind": "unsupported", "query": "Who won the 2024 Olympic marathon?"},
+    {"query_id": "u4_product", "kind": "unsupported", "query": "Which smartphone has the best camera in 2026?"},
+    {"query_id": "u5_same_domain", "kind": "unsupported", "query": "What does metacognitive scaffolding theory say about error monitoring?"},
+    {"query_id": "u6_keyword_trap", "kind": "unsupported", "query": "How does the system manage worker memory pools under load?"}
+  ]
+}

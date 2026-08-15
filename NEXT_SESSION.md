@@ -10,6 +10,16 @@ Read:
 
 ## Last Completed
 
+- **D4 — TEXT support admission: REJECT (insufficient signals)**
+  (work log `2026-08-15-d4-text-support-admission.md`, report
+  `eval/d4/REPORT.md`). Frozen development set (7 answerable +
+  6 unsupported) measured against the FROZEN pipeline: dense,
+  lexical, and G3 rerank scores all fail to separate answer support
+  from topical relatedness — same-domain unsupported queries outscore
+  true positives (u5: 6.44, u6: 6.50 vs q5 true support 1.25-2.25).
+  No threshold, no heuristic, no production change. Next: user
+  decision — authorize an entailment/answerability-model track, or
+  accept current semantics.
 - **I2 — corpus-scale integrity qualification: FAIL (frozen)** (work
   log `2026-08-15-i2-corpus-integrity-qualification.md`, report
   `eval/i2/REPORT.md`). Frozen 28-doc multi-format corpus ingested
