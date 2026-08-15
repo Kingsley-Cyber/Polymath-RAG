@@ -1,17 +1,17 @@
 # Current Repository State
 
 Last verified: 2026-08-14
-Verified against commit: `dee8d9d` (Q1-R: rule-pack v1.1.0 candidate — zero-drift, realistic recall NOT achieved)
+Verified against commit: `52560b5` (EP1: entity-proposal qualification — measured FAIL, escalate to model change)
 Active branch at verification: `main` (working tree clean)
 
 ```yaml
-current_phase: q1r-not-promoted # Q1-R: v1.1.0 zero-drift but realistic recall FAIL; I1 blocked pending entity-proposal decision
+current_phase: ep1-failed-escalate # EP1 measured FAIL on all sanctioned entity levers; model-change experiment sanctioned; I1 blocked
 repository:
   branch: main
-  head: dee8d9d
+  head: 52560b5
   frozen_artifacts: [see Frozen Artifacts section]
   evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1, qualification-q1, q1r-validation]
-  next_actions: [entity-proposal-qualification, i1-bulk-ingestion, i2-scale-integrity]
+  next_actions: [entity-model-qualification, i1-bulk-ingestion, i2-scale-integrity]
   do_not_do: [see Explicitly Prohibited Actions]
   known_gaps: [see Known Limitations]
 ```
