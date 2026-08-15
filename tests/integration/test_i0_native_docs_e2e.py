@@ -60,6 +60,19 @@ SAMPLES = [
 
 
 def _cleanup() -> None:
+    from polymath_shared.embedding_contracts import active_contract
+    from polymath_shared.projection_contracts import qdrant_collection_name
+    from polymath_shared.stores import qdrant_client as _qc
+
+    _client = _qc()
+    try:
+        try:
+            _client.delete_collection(qdrant_collection_name(CORPUS, active_contract().contract_id))
+        except Exception:
+            pass
+    finally:
+        _client.close()
+
     with tx() as conn:
         ids = conn.execute(
             "SELECT jsonb_agg(id) FROM ("

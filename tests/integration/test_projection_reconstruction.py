@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import base64
 import json
+from typing import Iterator
 import os
 from pathlib import Path
 
@@ -364,6 +365,25 @@ def _reset_stores_by_corpus(corpus: str) -> None:
             client.delete_collection(collection)
         except Exception:
             pass
+    finally:
+        client.close()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _cleanup_gate_collections() -> Iterator[None]:
+    """Delete this suite's Qdrant collections after the module runs —
+    otherwise stale collections accumulate across suite runs and
+    pollute the global dense lane of OTHER tests (gate 7f)."""
+    yield
+    settings = get_settings()
+    client = QdrantClient(url=settings.stores.qdrant_url)
+    try:
+        for i in range(1, 8):
+            collection = qdrant_collection_name(f"gate{i}", active_contract().contract_id)
+            try:
+                client.delete_collection(collection)
+            except Exception:
+                pass
     finally:
         client.close()
 
