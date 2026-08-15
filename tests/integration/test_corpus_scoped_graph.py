@@ -157,9 +157,12 @@ def test_expansion_is_corpus_authorized():
         assert b_use["predicate"] == "uses"
 
         # 4) Cross-corpus route (corpus_id=None) still spans corpora.
-        rows = _neo4j_expand(["system", "database"], corpus_id=None)
+        #    Use d2-only surfaces so legacy shared-graph hubs do not
+        #    consume the 8-seed cap before the d2 entities.
+        rows = _neo4j_expand(["sharedcorp"], corpus_id=None)
         fact_ids = {r["fact_id"] for r in rows}
-        assert "fact_d2a_use" in fact_ids and "fact_d2b_use" in fact_ids
+        assert "fact_d2a_shared" in fact_ids, f"corpus A fact missing: {fact_ids}"
+        assert "fact_d2b_use" in fact_ids, f"corpus B fact missing: {fact_ids}"
     finally:
         _wipe(CORPUS_A)
         _wipe(CORPUS_B)

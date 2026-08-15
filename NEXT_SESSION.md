@@ -10,6 +10,17 @@ Read:
 
 ## Last Completed
 
+- **Live entity-admission E2E smoke gate — PASS** (work log
+  `2026-08-15-smoke-admission-e2e-pass.md`). After D1
+  (shared Neo4j-eligibility predicate: parked MENTION_ONLY facts are
+  not projection failures — receipt census/verify/projector agree)
+  and D2 (corpus-authorized graph expansion: seeds from in-scope
+  evidence, no facts supported exclusively by another corpus), the
+  frozen metacognition document passed: query_ready, all six queries
+  corpus-clean with zero foreign citations, vague "system" query
+  gains no legacy-hub authority, replay idempotent (identical run_id
+  + semantic hashes), Neo4j reconstruction exact, determinism PASS,
+  suites/guards green. **I1 unblocked.**
 - **E2/C1.1 production wiring** — entity admission boundary (ADR 0011,
   refactor 0008). Production identity allocation now runs the
   qualified entity-admission-v1.1 policy: GLOBAL / CORPUS_SCOPED /
@@ -66,8 +77,9 @@ MILESTONE A — CORPUS_INGEST_READY (current priority):
 3. ~~heterogeneous extraction qualification (Q1)~~ COMPLETE (PASS)
 4. ~~native document materialization (I0)~~ COMPLETE
 5. ~~entity admission production wiring (E2/C1.1)~~ COMPLETE (ADR 0011)
-6. manifest-driven bulk ingestion (I1) ← NEXT
-7. corpus-scale integrity qualification (I2)
+6. ~~live admission smoke gate + D1/D2 defect fixes~~ COMPLETE (PASS)
+7. manifest-driven bulk ingestion (I1) ← NEXT
+8. corpus-scale integrity qualification (I2)
 
 CORPUS_INGEST_READY is achieved only when C1+C2+Q1+I0+I1+I2 pass.
 

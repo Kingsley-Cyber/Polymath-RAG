@@ -360,6 +360,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-08-15-smoke-admission-e2e-fail.md", "md", None),
     ("docs/wiki/work-log/2026-08-15-d1-eligibility-receipt-predicate.md", "md", None),
     ("docs/wiki/work-log/2026-08-15-d2-corpus-scoped-graph.md", "md", None),
+    ("docs/wiki/work-log/2026-08-15-smoke-admission-e2e-pass.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-g3-reranker.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-g5-answer-path-verification.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-g4-graph-expansion.md", "md", None),
