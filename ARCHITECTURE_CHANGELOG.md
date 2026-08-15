@@ -452,3 +452,18 @@ that motivated it and the refactor that implemented it.
 - R2 §7 hard gate: GENERATION MODEL CONTRACT = MISSING → STOP.
   No implementation; retrieval frozen; model selection deferred to
   an explicit user decision.
+
+## 2026-08-15: E3 — GLiNER-only local ingestion qualification (PASS)
+
+- Frozen 14-doc multi-domain/multi-format corpus + 13-phase
+  verifier. Proven: pinned GLiNER (40ec4193, mps, tofu digest) is the
+  ONLY learned extraction model; golden path converges and replays
+  idempotently; production evidence pass is lexical (hybrid GLiNER
+  evidence pass NOT re-enabled); deterministic; Qdrant/Neo4j
+  reconstruction exact; versioning/isolation/interrupt-resume pass;
+  GLiNER outage fails loudly with no fallback and no silent
+  query_ready.
+- Quality findings recorded with ownership: low yield on realistic
+  prose (compound misses), and wrong-edge cases from title-as-entity
+  GLiNER proposals + compiler surface-weak pairings. Not patched
+  (future qualified change).

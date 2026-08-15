@@ -1,0 +1,183 @@
+{
+  "accepted_entities": [
+    {
+      "surface": "authorization-code flow",
+      "type": "Process",
+      "admission": "CORPUS_SCOPED",
+      "source": "metacognition_copy.md"
+    },
+    {
+      "surface": "bearer-token replayability",
+      "type": "Technology",
+      "admission": "CORPUS_SCOPED",
+      "source": "metacognition_copy.md"
+    },
+    {
+      "surface": "identity team",
+      "type": "Organization",
+      "admission": "CORPUS_SCOPED",
+      "source": "metacognition_copy.md"
+    },
+    {
+      "surface": "identity team",
+      "type": "Organization",
+      "admission": "CORPUS_SCOPED",
+      "source": "metacognition_copy.md"
+    },
+    {
+      "surface": "identity team",
+      "type": "Organization",
+      "admission": "CORPUS_SCOPED",
+      "source": "metacognition_copy.md"
+    },
+    {
+      "surface": "red team",
+      "type": "Organization",
+      "admission": "CORPUS_SCOPED",
+      "source": "metacognition_copy.md"
+    },
+    {
+      "surface": "red team",
+      "type": "Organization",
+      "admission": "CORPUS_SCOPED",
+      "source": "metacognition_copy.md"
+    },
+    {
+      "surface": "sensitive-data logging",
+      "type": "Technology",
+      "admission": "CORPUS_SCOPED",
+      "source": "metacognition_copy.md"
+    },
+    {
+      "surface": "Atlas",
+      "type": "Technology",
+      "admission": "GLOBAL",
+      "source": "metacognition_copy.md"
+    },
+    {
+      "surface": "Daniel Ortiz",
+      "type": "Person",
+      "admission": "GLOBAL",
+      "source": "metacognition_copy.md"
+    },
+    {
+      "surface": "Keycloak 26.2",
+      "type": "Technology",
+      "admission": "GLOBAL",
+      "source": "metacognition_copy.md"
+    },
+    {
+      "surface": "Red Ridge Systems",
+      "type": "Organization",
+      "admission": "GLOBAL",
+      "source": "metacognition_copy.md"
+    },
+    {
+      "surface": "The security team",
+      "type": "Organization",
+      "admission": "GLOBAL",
+      "source": "metacognition_copy.md"
+    },
+    {
+      "surface": "The security team",
+      "type": "Organization",
+      "admission": "GLOBAL",
+      "source": "metacognition_copy.md"
+    },
+    {
+      "surface": "Zero-Day Response Handbook",
+      "type": "Document",
+      "admission": "GLOBAL",
+      "source": "cyber_zero_day.pdf"
+    },
+    {
+      "surface": "vendor",
+      "type": "Organization",
+      "admission": "MENTION_ONLY",
+      "source": "cyber_zero_day.pdf"
+    }
+  ],
+  "accepted_facts": [
+    {
+      "predicate": "associated_with",
+      "subject": "The security team",
+      "object": "sensitive-data logging",
+      "decision": "ACCEPT",
+      "source": "metacognition_copy.md",
+      "orientation": "surface_weak",
+      "negated": null,
+      "modality": null
+    },
+    {
+      "predicate": "associated_with",
+      "subject": "Keycloak 26.2",
+      "object": "authorization-code flow",
+      "decision": "ACCEPT",
+      "source": "metacognition_copy.md",
+      "orientation": "active_surface",
+      "negated": null,
+      "modality": null
+    },
+    {
+      "predicate": "associated_with",
+      "subject": "The security team",
+      "object": "bearer-token replayability",
+      "decision": "ACCEPT",
+      "source": "metacognition_copy.md",
+      "orientation": "surface_weak",
+      "negated": null,
+      "modality": null
+    },
+    {
+      "predicate": "has_role",
+      "subject": "Daniel Ortiz",
+      "object": "Red Ridge Systems",
+      "decision": "ACCEPT",
+      "source": "metacognition_copy.md",
+      "orientation": "surface_weak",
+      "negated": null,
+      "modality": null
+    },
+    {
+      "predicate": "instance_of",
+      "subject": "Atlas",
+      "object": "identity team",
+      "decision": "ACCEPT",
+      "source": "metacognition_copy.md",
+      "orientation": "surface_weak",
+      "negated": null,
+      "modality": null
+    },
+    {
+      "predicate": "instance_of",
+      "subject": "red team",
+      "object": "identity team",
+      "decision": "ACCEPT",
+      "source": "metacognition_copy.md",
+      "orientation": "surface_weak",
+      "negated": null,
+      "modality": null
+    },
+    {
+      "predicate": "instance_of",
+      "subject": "Zero-Day Response Handbook",
+      "object": "vendor",
+      "decision": "ACCEPT",
+      "source": "cyber_zero_day.pdf",
+      "orientation": "surface_weak",
+      "negated": null,
+      "modality": null
+    },
+    {
+      "predicate": "owns",
+      "subject": "red team",
+      "object": "identity team",
+      "decision": "ACCEPT",
+      "source": "metacognition_copy.md",
+      "orientation": "surface_weak",
+      "negated": null,
+      "modality": null
+    }
+  ],
+  "rejected_decisions_sample": []
+}

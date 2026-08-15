@@ -1,0 +1,7 @@
+# Distributed Queue Reliability
+
+A distributed queue decouples producers from consumers and absorbs load spikes.
+
+At-least-once delivery requires idempotent consumers. Every mutation is keyed by a content hash, so a redelivered message cannot create a second logical result.
+
+Backpressure propagates from the slowest consumer. When a worker pool saturates, the scheduler defers new submissions rather than growing the queue without bound. Dead-letter queues collect messages that fail repeatedly.

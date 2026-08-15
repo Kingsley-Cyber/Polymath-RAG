@@ -1,0 +1,11 @@
+# Transcript: Systems Roundtable
+
+Host: Welcome back. Today we are talking about failure budgets.
+
+Speaker A: A failure budget is the amount of unreliability you are allowed before changes freeze. If the budget is spent, feature work pauses.
+
+Speaker B: Right. And the budget is measured over a rolling window, so a bad quarter ages out.
+
+Host: Does that punish small teams?
+
+Speaker A: No, because the budget scales with the traffic the service actually handles.

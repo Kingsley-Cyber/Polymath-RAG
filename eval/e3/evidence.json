@@ -1,0 +1,160 @@
+{
+  "phases": {
+    "model_contract": {
+      "model": "urchade/gliner_medium-v2.1",
+      "revision": "40ec419335d09393f298636f471328b722c6da9e",
+      "release": "gliner-2pass-v1",
+      "weights_verification": {
+        "verified": true,
+        "mode": "tofu",
+        "digest": "3357a37ec9367e99"
+      },
+      "device": "mps",
+      "entity_threshold": 0.5,
+      "evidence_threshold": 0.4,
+      "ready": {
+        "ready": true
+      }
+    },
+    "golden_path": {
+      "wall_s": 3.1,
+      "status": "query_ready",
+      "attempts": [
+        [
+          "intake",
+          "ok"
+        ],
+        [
+          "extract",
+          "ok"
+        ],
+        [
+          "profile_document",
+          "ok"
+        ],
+        [
+          "project_qdrant",
+          "ok"
+        ],
+        [
+          "project_neo4j",
+          "ok"
+        ],
+        [
+          "canonicalize",
+          "ok"
+        ],
+        [
+          "project_canonical",
+          "ok"
+        ],
+        [
+          "verify_projections",
+          "ok"
+        ]
+      ],
+      "replay_already_exists": true,
+      "replay_counts_equal": true,
+      "counts": {
+        "documents": 1,
+        "chunks": 4,
+        "facts": 0,
+        "entities": 0,
+        "receipts": 11
+      }
+    },
+    "double_pass": {
+      "pass1": "GLiNER entity proposal (task=entity, labels=core types, threshold 0.5)",
+      "pass2": "deterministic lexical trigger proposer (evidence_proposer) \u2014 NOT a GLiNER pass",
+      "gliner_infer_calls_in_extract_worker": 0,
+      "evidence_proposer_nature": "lexical trigger tables (rule pack), per docstring",
+      "rejected_gliner_evidence_experiment": "not re-enabled"
+    },
+    "scale": {
+      "documents": 14,
+      "wall_s": 40.3,
+      "documents_per_min": 20.8,
+      "counts": {
+        "documents": 14,
+        "chunks": 32,
+        "facts": 8,
+        "entities": 12,
+        "receipts": 82
+      }
+    },
+    "determinism": {
+      "hash1": "f3cf33138de120c2cfb3",
+      "hash2": "f3cf33138de120c2cfb3",
+      "equal": true
+    },
+    "reconstruction_qdrant": {
+      "before": 32,
+      "after": 32,
+      "exact": true
+    },
+    "versioning": {
+      "versions_for_locator": 2,
+      "old_content_preserved": true,
+      "documents_before_after": [
+        14,
+        15
+      ],
+      "replay_noop": true
+    },
+    "isolation": {
+      "cross_corpus_scoped_collisions": 0
+    },
+    "census": {
+      "admission": {
+        "GLOBAL": 6,
+        "CORPUS_SCOPED": 5,
+        "MENTION_ONLY": 1
+      },
+      "facts_total": 8,
+      "predicates": {
+        "instance_of": 3,
+        "owns": 1,
+        "has_role": 1,
+        "associated_with": 3
+      },
+      "parked_facts": 1,
+      "counts": {
+        "documents": 15,
+        "chunks": 36,
+        "facts": 8,
+        "entities": 12,
+        "receipts": 93
+      }
+    },
+    "failure_semantics": {
+      "loud_failure": true,
+      "failure_type": "StageFailed (extract)",
+      "stage_attempt": "failed",
+      "run_status_after": "reconciling",
+      "silent_query_ready": false,
+      "probe_output": [
+        "RAISED StageFailed",
+        "STATUS reconciling",
+        "ATTEMPT failed",
+        "CLEANED"
+      ]
+    },
+    "interrupt_resume": {
+      "runs": 6,
+      "all_query_ready": true,
+      "states": [
+        "query_ready",
+        "query_ready",
+        "query_ready",
+        "query_ready",
+        "query_ready",
+        "query_ready"
+      ]
+    },
+    "neo4j_reconstruction": {
+      "before": 11,
+      "after": 11,
+      "exact": true
+    }
+  }
+}
