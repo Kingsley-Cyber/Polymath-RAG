@@ -1,0 +1,570 @@
+{
+ "arm": "SR1-A",
+ "deterministic": true,
+ "load_seconds": 5.36,
+ "per_document": {
+  "01_psychology_working_memory.md": {
+   "bare_head_rate": 0.0,
+   "core_type_accuracy": 0.9310344827586207,
+   "counts": {
+    "bare_head": 0,
+    "exact": 20,
+    "false": 14,
+    "overlap": 9,
+    "proposals": 43,
+    "type_correct": 27,
+    "type_wrong": 2
+   },
+   "exact_precision": 0.46511627906976744,
+   "exact_recall": 0.3125,
+   "false_span_rate": 0.32558139534883723,
+   "mentions": 64,
+   "multiword_matched": 20,
+   "multiword_n": 40,
+   "multiword_recall": 0.5,
+   "overlap_recall": 0.453125,
+   "per_label": {
+    "CognitiveBias": {
+     "exact": 2,
+     "false": 0,
+     "proposals": 4
+    },
+    "Concept": {
+     "exact": 8,
+     "false": 8,
+     "proposals": 20
+    },
+    "Document": {
+     "exact": 1,
+     "false": 3,
+     "proposals": 5
+    },
+    "Location": {
+     "exact": 0,
+     "false": 2,
+     "proposals": 2
+    },
+    "MetacognitiveStrategy": {
+     "exact": 1,
+     "false": 0,
+     "proposals": 1
+    },
+    "Method": {
+     "exact": 2,
+     "false": 0,
+     "proposals": 3
+    },
+    "Person": {
+     "exact": 4,
+     "false": 0,
+     "proposals": 4
+    },
+    "Process": {
+     "exact": 2,
+     "false": 1,
+     "proposals": 4
+    }
+   },
+   "proposals": 43
+  },
+  "02_technical_event_pipeline.md": {
+   "bare_head_rate": 0.0,
+   "core_type_accuracy": 0.6538461538461539,
+   "counts": {
+    "bare_head": 0,
+    "exact": 24,
+    "false": 31,
+    "overlap": 2,
+    "proposals": 57,
+    "type_correct": 17,
+    "type_wrong": 9
+   },
+   "exact_precision": 0.42105263157894735,
+   "exact_recall": 0.5714285714285714,
+   "false_span_rate": 0.543859649122807,
+   "mentions": 42,
+   "multiword_matched": 18,
+   "multiword_n": 19,
+   "multiword_recall": 0.9473684210526315,
+   "overlap_recall": 0.6190476190476191,
+   "per_label": {
+    "Concept": {
+     "exact": 0,
+     "false": 1,
+     "proposals": 1
+    },
+    "Dataset": {
+     "exact": 5,
+     "false": 5,
+     "proposals": 10
+    },
+    "Document": {
+     "exact": 1,
+     "false": 2,
+     "proposals": 3
+    },
+    "Event": {
+     "exact": 0,
+     "false": 1,
+     "proposals": 3
+    },
+    "Model": {
+     "exact": 0,
+     "false": 1,
+     "proposals": 1
+    },
+    "Person": {
+     "exact": 1,
+     "false": 0,
+     "proposals": 1
+    },
+    "Process": {
+     "exact": 4,
+     "false": 12,
+     "proposals": 16
+    },
+    "Technology": {
+     "exact": 13,
+     "false": 9,
+     "proposals": 22
+    }
+   },
+   "proposals": 57
+  },
+  "03_research_notes_sleep_and_attention.md": {
+   "bare_head_rate": 0.0,
+   "core_type_accuracy": 0.875,
+   "counts": {
+    "bare_head": 0,
+    "exact": 17,
+    "false": 34,
+    "overlap": 7,
+    "proposals": 58,
+    "type_correct": 21,
+    "type_wrong": 3
+   },
+   "exact_precision": 0.29310344827586204,
+   "exact_recall": 0.34,
+   "false_span_rate": 0.5862068965517241,
+   "mentions": 50,
+   "multiword_matched": 19,
+   "multiword_n": 29,
+   "multiword_recall": 0.6551724137931034,
+   "overlap_recall": 0.48,
+   "per_label": {
+    "Concept": {
+     "exact": 8,
+     "false": 14,
+     "proposals": 27
+    },
+    "Document": {
+     "exact": 1,
+     "false": 6,
+     "proposals": 8
+    },
+    "Finding": {
+     "exact": 0,
+     "false": 1,
+     "proposals": 1
+    },
+    "Location": {
+     "exact": 0,
+     "false": 1,
+     "proposals": 1
+    },
+    "Measurement": {
+     "exact": 3,
+     "false": 2,
+     "proposals": 6
+    },
+    "Person": {
+     "exact": 0,
+     "false": 5,
+     "proposals": 5
+    },
+    "Process": {
+     "exact": 1,
+     "false": 1,
+     "proposals": 2
+    },
+    "StudyDesign": {
+     "exact": 4,
+     "false": 1,
+     "proposals": 5
+    },
+    "Theory": {
+     "exact": 0,
+     "false": 1,
+     "proposals": 1
+    },
+    "TimeReference": {
+     "exact": 0,
+     "false": 2,
+     "proposals": 2
+    }
+   },
+   "proposals": 58
+  },
+  "04_transcript_local_rag_build.md": {
+   "bare_head_rate": 0.0,
+   "core_type_accuracy": 0.5862068965517241,
+   "counts": {
+    "bare_head": 0,
+    "exact": 22,
+    "false": 18,
+    "overlap": 7,
+    "proposals": 47,
+    "type_correct": 17,
+    "type_wrong": 12
+   },
+   "exact_precision": 0.46808510638297873,
+   "exact_recall": 0.4230769230769231,
+   "false_span_rate": 0.3829787234042553,
+   "mentions": 52,
+   "multiword_matched": 17,
+   "multiword_n": 30,
+   "multiword_recall": 0.5666666666666667,
+   "overlap_recall": 0.5576923076923077,
+   "per_label": {
+    "API": {
+     "exact": 1,
+     "false": 0,
+     "proposals": 1
+    },
+    "Concept": {
+     "exact": 0,
+     "false": 2,
+     "proposals": 2
+    },
+    "Dataset": {
+     "exact": 1,
+     "false": 1,
+     "proposals": 3
+    },
+    "Document": {
+     "exact": 1,
+     "false": 1,
+     "proposals": 3
+    },
+    "Event": {
+     "exact": 3,
+     "false": 0,
+     "proposals": 3
+    },
+    "Library": {
+     "exact": 2,
+     "false": 0,
+     "proposals": 2
+    },
+    "Measurement": {
+     "exact": 0,
+     "false": 1,
+     "proposals": 1
+    },
+    "Method": {
+     "exact": 1,
+     "false": 0,
+     "proposals": 1
+    },
+    "Model": {
+     "exact": 2,
+     "false": 1,
+     "proposals": 4
+    },
+    "Organization": {
+     "exact": 0,
+     "false": 2,
+     "proposals": 2
+    },
+    "Person": {
+     "exact": 1,
+     "false": 4,
+     "proposals": 6
+    },
+    "Process": {
+     "exact": 7,
+     "false": 2,
+     "proposals": 12
+    },
+    "Technology": {
+     "exact": 3,
+     "false": 0,
+     "proposals": 3
+    },
+    "TimeReference": {
+     "exact": 0,
+     "false": 4,
+     "proposals": 4
+    }
+   },
+   "proposals": 47
+  }
+ },
+ "repair_report": {
+  "confusion": [
+   {
+    "doc": "01_psychology_working_memory.md",
+    "label": "Concept",
+    "raw": "Working memory",
+    "repaired": "Load Working memory",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "01_psychology_working_memory.md",
+    "label": "Concept",
+    "raw": "information",
+    "repaired": "manipulate information",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "01_psychology_working_memory.md",
+    "label": "Concept",
+    "raw": "working memory",
+    "repaired": "distinguish working memory",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "01_psychology_working_memory.md",
+    "label": "Concept",
+    "raw": "information",
+    "repaired": "store much information",
+    "rule": "expand-l2-r0"
+   },
+   {
+    "doc": "01_psychology_working_memory.md",
+    "label": "CognitiveBias",
+    "raw": "attention",
+    "repaired": "it allocates attention",
+    "rule": "expand-l2-r0"
+   },
+   {
+    "doc": "01_psychology_working_memory.md",
+    "label": "Concept",
+    "raw": "information",
+    "repaired": "coordinates information",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "01_psychology_working_memory.md",
+    "label": "CognitiveBias",
+    "raw": "working memory",
+    "repaired": "than working memory",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "01_psychology_working_memory.md",
+    "label": "Concept",
+    "raw": "cognitive load",
+    "repaired": "unnecessary cognitive load",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "01_psychology_working_memory.md",
+    "label": "Document",
+    "raw": "explanatory text",
+    "repaired": "near explanatory text",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "01_psychology_working_memory.md",
+    "label": "Method",
+    "raw": "laboratory studies",
+    "repaired": "Several laboratory studies",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "02_technical_event_pipeline.md",
+    "label": "Event",
+    "raw": "Event",
+    "repaired": "Restart-Safe Event",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "02_technical_event_pipeline.md",
+    "label": "Event",
+    "raw": "event",
+    "repaired": "next outbox event",
+    "rule": "expand-l2-r0"
+   },
+   {
+    "doc": "02_technical_event_pipeline.md",
+    "label": "Process",
+    "raw": "transaction",
+    "repaired": "one transaction",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "02_technical_event_pipeline.md",
+    "label": "Technology",
+    "raw": "system",
+    "repaired": "updates one system",
+    "rule": "expand-l2-r0"
+   },
+   {
+    "doc": "02_technical_event_pipeline.md",
+    "label": "Dataset",
+    "raw": "document",
+    "repaired": "same document",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "02_technical_event_pipeline.md",
+    "label": "Process",
+    "raw": "exactly-once delivery",
+    "repaired": "than exactly-once delivery",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "02_technical_event_pipeline.md",
+    "label": "Process",
+    "raw": "semantic retrieval",
+    "repaired": "accelerate semantic retrieval",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "02_technical_event_pipeline.md",
+    "label": "Process",
+    "raw": "traversal",
+    "repaired": "accelerate traversal",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "02_technical_event_pipeline.md",
+    "label": "Document",
+    "raw": "document",
+    "repaired": "same document",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "03_research_notes_sleep_and_attention.md",
+    "label": "Document",
+    "raw": "review papers",
+    "repaired": "Several review papers",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "03_research_notes_sleep_and_attention.md",
+    "label": "Concept",
+    "raw": "attention",
+    "repaired": "treat sustained attention",
+    "rule": "expand-l2-r0"
+   },
+   {
+    "doc": "03_research_notes_sleep_and_attention.md",
+    "label": "Person",
+    "raw": "people",
+    "repaired": "yet people",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "03_research_notes_sleep_and_attention.md",
+    "label": "Concept",
+    "raw": "performance",
+    "repaired": "influence performance",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "03_research_notes_sleep_and_attention.md",
+    "label": "Concept",
+    "raw": "constructs",
+    "repaired": "other constructs",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "03_research_notes_sleep_and_attention.md",
+    "label": "Concept",
+    "raw": "attention",
+    "repaired": "impairing attention",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "03_research_notes_sleep_and_attention.md",
+    "label": "Concept",
+    "raw": "memory",
+    "repaired": "Claims about memory",
+    "rule": "expand-l2-r0"
+   },
+   {
+    "doc": "03_research_notes_sleep_and_attention.md",
+    "label": "Concept",
+    "raw": "causal overreach",
+    "repaired": "against causal overreach",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "03_research_notes_sleep_and_attention.md",
+    "label": "Concept",
+    "raw": "scope",
+    "repaired": "system ignores scope",
+    "rule": "expand-l2-r0"
+   },
+   {
+    "doc": "04_transcript_local_rag_build.md",
+    "label": "Process",
+    "raw": "ingestion",
+    "repaired": "it mixed ingestion",
+    "rule": "expand-l2-r0"
+   },
+   {
+    "doc": "04_transcript_local_rag_build.md",
+    "label": "Process",
+    "raw": "retrieval",
+    "repaired": "vector retrieval",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "04_transcript_local_rag_build.md",
+    "label": "Dataset",
+    "raw": "artifacts",
+    "repaired": "Workers commit artifacts",
+    "rule": "expand-l2-r0"
+   },
+   {
+    "doc": "04_transcript_local_rag_build.md",
+    "label": "Organization",
+    "raw": "company",
+    "repaired": "same company",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "04_transcript_local_rag_build.md",
+    "label": "Person",
+    "raw": "John Smith",
+    "repaired": "two John Smith",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "04_transcript_local_rag_build.md",
+    "label": "Concept",
+    "raw": "philosophy",
+    "repaired": "same philosophy",
+    "rule": "expand-l1-r0"
+   },
+   {
+    "doc": "04_transcript_local_rag_build.md",
+    "label": "Process",
+    "raw": "reranking",
+    "repaired": "improvements like reranking",
+    "rule": "expand-l2-r0"
+   }
+  ],
+  "correct": 1,
+  "incorrect": 34,
+  "no_op": 0,
+  "repaired": 35,
+  "total": 205
+ },
+ "repair_version": "bounded-span-repair-v1",
+ "summary": {
+  "bare_head_rate": 0.0,
+  "core_type_accuracy": 0.7592592592592593,
+  "exact_precision": 0.40487804878048783,
+  "exact_recall": 0.39903846153846156,
+  "false_span_rate": 0.47317073170731705,
+  "mentions": 208,
+  "multiword_recall": 0.6271186440677966,
+  "overlap_recall": 0.5192307692307693,
+  "proposals": 205
+ },
+ "threshold": 0.3
+}
