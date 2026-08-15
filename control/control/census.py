@@ -157,7 +157,41 @@ def _missing_projection_receipts(conn: Connection, run_id: str, stage: str) -> l
             """,
             (run_id,),
         ).fetchall()
-        return [r[0] for r in rows]
+        missing = [r[0] for r in rows]
+        # R1B: neural routing representations are production dependencies
+        # for a query-ready corpus — their receipts must also converge.
+        routing_rows = conn.execute(
+            """
+            SELECT rs.summary_id AS id, 'routing_document_summary' AS kind
+              FROM retrieval_summaries rs
+              JOIN runs r ON r.corpus_id = rs.corpus_id
+             WHERE r.run_id = %s AND rs.kind = 'document_retrieval_summary'
+            UNION ALL
+            SELECT rs.summary_id, 'routing_section_summary'
+              FROM retrieval_summaries rs
+              JOIN runs r ON r.corpus_id = rs.corpus_id
+             WHERE r.run_id = %s AND rs.kind = 'section_retrieval_summary'
+            UNION ALL
+            SELECT c.chunk_id, 'routing_child'
+              FROM chunks c
+              JOIN documents d ON d.doc_id = c.doc_id
+              JOIN runs r ON r.corpus_id = d.corpus_id
+             WHERE r.run_id = %s AND c.tier = 'child'
+            """,
+            (run_id, run_id, run_id),
+        ).fetchall()
+        for entity_id, kind in routing_rows:
+            has = conn.execute(
+                """
+                SELECT 1 FROM projection_receipts pr
+                 WHERE pr.projection = 'qdrant' AND pr.entity_kind = %s
+                   AND pr.active AND pr.entity_id = %s
+                """,
+                (kind, entity_id),
+            ).fetchone()
+            if has is None:
+                missing.append(entity_id)
+        return missing
     if stage == "project_canonical":
         rows = conn.execute(
             """

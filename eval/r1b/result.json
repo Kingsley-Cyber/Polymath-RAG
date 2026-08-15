@@ -1,0 +1,208 @@
+{
+  "queries_sha256": "0ec1b8724f7fbd712a2de660bbcbddf41905bb6a7bde595ef5b893cb40f9c83b",
+  "ablations": {
+    "F_full": {
+      "doc": {
+        "R@1": 0.882,
+        "R@3": 0.912,
+        "R@5": 0.912,
+        "MRR": 0.91
+      },
+      "sec": {
+        "R@1": 0.882,
+        "R@3": 0.912,
+        "R@5": 0.912,
+        "MRR": 0.897
+      },
+      "child": {
+        "R@1": 0.853,
+        "R@3": 0.941,
+        "R@5": 0.971,
+        "R@10": 0.971,
+        "MRR": 0.9
+      },
+      "final_evidence_supporting_recall": 0.941,
+      "arrivals": {
+        "DOCUMENT_LED": 0,
+        "SECTION_LED": 0,
+        "GLOBAL_CHILD_RESCUE": 8,
+        "MULTI_REPRESENTATION": 170
+      },
+      "total_lat_p50_ms": 675.0,
+      "total_lat_p95_ms": 824.6
+    },
+    "A_document_only": {
+      "doc": {
+        "R@1": 0.824,
+        "R@3": 0.941,
+        "R@5": 0.941,
+        "MRR": 0.876
+      },
+      "sec": {
+        "R@1": 0.0,
+        "R@3": 0.0,
+        "R@5": 0.0,
+        "MRR": 0.0
+      },
+      "child": {
+        "R@1": 0.0,
+        "R@3": 0.0,
+        "R@5": 0.0,
+        "R@10": 0.0,
+        "MRR": 0.0
+      },
+      "final_evidence_supporting_recall": 0.0,
+      "arrivals": {
+        "DOCUMENT_LED": 0,
+        "SECTION_LED": 0,
+        "GLOBAL_CHILD_RESCUE": 0,
+        "MULTI_REPRESENTATION": 0
+      },
+      "total_lat_p50_ms": 56.8,
+      "total_lat_p95_ms": 64.2
+    },
+    "B_section_only": {
+      "doc": {
+        "R@1": 0.824,
+        "R@3": 0.912,
+        "R@5": 0.941,
+        "MRR": 0.881
+      },
+      "sec": {
+        "R@1": 0.824,
+        "R@3": 0.912,
+        "R@5": 0.941,
+        "MRR": 0.875
+      },
+      "child": {
+        "R@1": 0.0,
+        "R@3": 0.0,
+        "R@5": 0.0,
+        "R@10": 0.0,
+        "MRR": 0.0
+      },
+      "final_evidence_supporting_recall": 0.941,
+      "arrivals": {
+        "DOCUMENT_LED": 0,
+        "SECTION_LED": 170,
+        "GLOBAL_CHILD_RESCUE": 0,
+        "MULTI_REPRESENTATION": 0
+      },
+      "total_lat_p50_ms": 622.2,
+      "total_lat_p95_ms": 674.2
+    },
+    "C_child_only": {
+      "doc": {
+        "R@1": 0.853,
+        "R@3": 0.941,
+        "R@5": 0.971,
+        "MRR": 0.9
+      },
+      "sec": {
+        "R@1": 0.853,
+        "R@3": 0.941,
+        "R@5": 0.971,
+        "MRR": 0.9
+      },
+      "child": {
+        "R@1": 0.853,
+        "R@3": 0.941,
+        "R@5": 0.971,
+        "R@10": 0.971,
+        "MRR": 0.9
+      },
+      "final_evidence_supporting_recall": 0.971,
+      "arrivals": {
+        "DOCUMENT_LED": 0,
+        "SECTION_LED": 0,
+        "GLOBAL_CHILD_RESCUE": 0,
+        "MULTI_REPRESENTATION": 170
+      },
+      "total_lat_p50_ms": 616.1,
+      "total_lat_p95_ms": 675.5
+    },
+    "D_hierarchy_no_rescue": {
+      "doc": {
+        "R@1": 0.882,
+        "R@3": 0.912,
+        "R@5": 0.912,
+        "MRR": 0.91
+      },
+      "sec": {
+        "R@1": 0.882,
+        "R@3": 0.912,
+        "R@5": 0.912,
+        "MRR": 0.897
+      },
+      "child": {
+        "R@1": 0.853,
+        "R@3": 0.941,
+        "R@5": 0.971,
+        "R@10": 0.971,
+        "MRR": 0.9
+      },
+      "final_evidence_supporting_recall": 0.912,
+      "arrivals": {
+        "DOCUMENT_LED": 0,
+        "SECTION_LED": 0,
+        "GLOBAL_CHILD_RESCUE": 0,
+        "MULTI_REPRESENTATION": 170
+      },
+      "total_lat_p50_ms": 629.9,
+      "total_lat_p95_ms": 691.5
+    },
+    "E_no_g3": {
+      "doc": {
+        "R@1": 0.882,
+        "R@3": 0.912,
+        "R@5": 0.912,
+        "MRR": 0.91
+      },
+      "sec": {
+        "R@1": 0.882,
+        "R@3": 0.912,
+        "R@5": 0.912,
+        "MRR": 0.897
+      },
+      "child": {
+        "R@1": 0.853,
+        "R@3": 0.941,
+        "R@5": 0.971,
+        "R@10": 0.971,
+        "MRR": 0.9
+      },
+      "final_evidence_supporting_recall": 0.941,
+      "arrivals": {
+        "DOCUMENT_LED": 0,
+        "SECTION_LED": 0,
+        "GLOBAL_CHILD_RESCUE": 8,
+        "MULTI_REPRESENTATION": 170
+      },
+      "total_lat_p50_ms": 107.0,
+      "total_lat_p95_ms": 120.9
+    }
+  },
+  "deterministic": true,
+  "filter_verification": true,
+  "cross_corpus_isolation": {
+    "leaks": 0
+  },
+  "lane_latency_ms": {
+    "doc": {
+      "p50_ms": 9.9,
+      "p95_ms": 15.3
+    },
+    "section": {
+      "p50_ms": 7.8,
+      "p95_ms": 12.7
+    },
+    "child": {
+      "p50_ms": 8.0,
+      "p95_ms": 13.3
+    },
+    "deep": {
+      "p50_ms": 7.0,
+      "p95_ms": 9.5
+    }
+  }
+}

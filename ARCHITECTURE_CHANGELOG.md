@@ -355,3 +355,23 @@ that motivated it and the refactor that implemented it.
   MRR 0.736→0.805; global child control R@5 0.957). Rebuild
   deterministic. No control plane built (no RRF/FAST/HYBRID/GRAPH/
   MMR/Pass-2).
+
+## 2026-08-15: R1B — summary-led Pass-1 retrieval
+
+- Versioned Pass1RetrievalPlan (pass1-retrieval-v1) + deterministic
+  engine: three corpus-filtered neural searches over the qualified
+  routing projection (document_summary / section_summary / child) →
+  RRF k=60 with per-lane contributions → explicit DocumentCandidate
+  aggregation → bounded document/section resolution → filtered child
+  deepening (corpus+doc+parent) → global-child rescue (recall safety)
+  → dedupe → G3 (candidate-set invariant) → bounded hierarchical
+  evidence. Routing summaries never become exact evidence.
+- Reconciliation closed: verify + census cover routing receipts —
+  neural routing points cannot silently disappear from a query-ready
+  corpus.
+- Qualification (frozen 34-query set): F = DOC R@1 0.882 / CHILD R@5
+  0.971 / MRR 0.900, final-evidence recall 0.941; rescue improves
+  0.912 → 0.941; G3 order-only; filter verification clean; cross-
+  corpus isolation 0 leaks; deterministic; lanes ~8-15ms p50.
+- No FAST/HYBRID/GRAPH exposure, no support classifier, no synthesis
+  change (D4/D4.1 stand).

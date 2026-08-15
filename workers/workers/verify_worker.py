@@ -73,6 +73,127 @@ def _receipt_chunk_ids(conn: Connection, corpus: str, projection: str) -> list[s
     return [r[0] for r in rows]
 
 
+ROUTING_KINDS = (
+    "routing_document_summary",
+    "routing_section_summary",
+    "routing_child",
+)
+
+
+def _desired_routing_ids(conn: Connection, corpus: str) -> dict[str, set[str]]:
+    """R1B reconciliation: authoritative routing representation ids per
+    kind. Summaries come from retrieval_summaries (contract
+    retrieval-summary-v2); children from the chunk rows."""
+    doc_rows = conn.execute(
+        """
+        SELECT rs.summary_id FROM retrieval_summaries rs
+         WHERE rs.corpus_id = %s AND rs.kind = 'document_retrieval_summary'
+        """,
+        (corpus,),
+    ).fetchall()
+    section_rows = conn.execute(
+        """
+        SELECT rs.summary_id FROM retrieval_summaries rs
+         WHERE rs.corpus_id = %s AND rs.kind = 'section_retrieval_summary'
+        """,
+        (corpus,),
+    ).fetchall()
+    child_rows = conn.execute(
+        """
+        SELECT c.chunk_id FROM chunks c
+          JOIN documents d ON d.doc_id = c.doc_id
+         WHERE d.corpus_id = %s AND c.tier = 'child'
+        """,
+        (corpus,),
+    ).fetchall()
+    return {
+        "routing_document_summary": {r[0] for r in doc_rows},
+        "routing_section_summary": {r[0] for r in section_rows},
+        "routing_child": {r[0] for r in child_rows},
+    }
+
+
+def _routing_receipts(conn: Connection, corpus: str) -> dict[str, set[str]]:
+    """Active qdrant routing receipts scoped to the corpus's
+    authoritative entities (summary rows / child chunks)."""
+    doc_rows = conn.execute(
+        """
+        SELECT pr.entity_id FROM projection_receipts pr
+          JOIN retrieval_summaries rs ON rs.summary_id = pr.entity_id
+         WHERE pr.projection = 'qdrant' AND pr.entity_kind = 'routing_document_summary'
+           AND pr.active AND rs.corpus_id = %s
+        """,
+        (corpus,),
+    ).fetchall()
+    section_rows = conn.execute(
+        """
+        SELECT pr.entity_id FROM projection_receipts pr
+          JOIN retrieval_summaries rs ON rs.summary_id = pr.entity_id
+         WHERE pr.projection = 'qdrant' AND pr.entity_kind = 'routing_section_summary'
+           AND pr.active AND rs.corpus_id = %s
+        """,
+        (corpus,),
+    ).fetchall()
+    child_rows = conn.execute(
+        """
+        SELECT pr.entity_id FROM projection_receipts pr
+          JOIN chunks c ON c.chunk_id = pr.entity_id
+          JOIN documents d ON d.doc_id = c.doc_id
+         WHERE pr.projection = 'qdrant' AND pr.entity_kind = 'routing_child'
+           AND pr.active AND d.corpus_id = %s
+        """,
+        (corpus,),
+    ).fetchall()
+    return {
+        "routing_document_summary": {r[0] for r in doc_rows},
+        "routing_section_summary": {r[0] for r in section_rows},
+        "routing_child": {r[0] for r in child_rows},
+    }
+
+
+def reconcile_routing_qdrant(conn: Connection, corpus: str) -> dict:
+    """R1B: neural routing projections cannot silently disappear.
+
+    A query-ready corpus whose neural routing points are lost must be
+    detected: receipts cleared for lost store artifacts (census
+    re-drives the projector) and orphan store points (no receipt)
+    removed. Same receipt-is-the-commit-point discipline as chunks."""
+    from polymath_shared.embedding_contracts import NEURAL_EMBED_CONTRACT
+
+    desired = _desired_routing_ids(conn, corpus)
+    receipts = _routing_receipts(conn, corpus)
+
+    client = _qdrant_client()
+    try:
+        collection = qdrant_collection_name(corpus, NEURAL_EMBED_CONTRACT.contract_id)
+        store: dict[str, dict[str, set[str]]] = {k: set() for k in ROUTING_KINDS}
+        try:
+            points, _ = client.scroll(collection_name=collection, limit=100_000,
+                                      with_payload=True, with_vectors=False)
+            for p in points:
+                if not p.payload:
+                    continue
+                kind = p.payload.get("representation_kind")
+                if kind in store:
+                    store[kind].add(str(p.payload.get("summary_id") or p.payload.get("chunk_id")))
+        except Exception:
+            store = {k: set() for k in ROUTING_KINDS}
+    finally:
+        client.close()
+
+    report = {"missing_in_store": [], "orphans_in_store": [], "missing_receipts": []}
+    for kind in ROUTING_KINDS:
+        lost = receipts[kind] - store[kind]
+        if lost:
+            _clear_receipts(conn, "qdrant", sorted(lost))
+            report["missing_in_store"].extend(sorted(lost))
+        orphans = store[kind] - receipts[kind]
+        report["orphans_in_store"].extend(sorted(orphans))
+        missing = desired[kind] - (receipts[kind] - lost)
+        report["missing_receipts"].extend(sorted(missing))
+    return report
+
+
 def _clear_receipts(conn: Connection, projection: str, entity_ids: list[str]) -> None:
     """Supersede active claims (history survives in projection_attempts)."""
     supersede_projection_claims(conn, projection=projection, entity_ids=entity_ids)
@@ -389,6 +510,7 @@ def process_event(conn: Connection, event: dict) -> None:
         raise RuntimeError(f"run {run_id} not found")
 
     qdrant_report = reconcile_qdrant(conn, run_id, corpus)
+    routing_report = reconcile_routing_qdrant(conn, corpus)
     neo4j_report = reconcile_neo4j(conn, run_id, corpus)
     canonical_report = reconcile_canonical(conn, run_id, corpus)
 
@@ -396,17 +518,20 @@ def process_event(conn: Connection, event: dict) -> None:
     with stage_transaction(conn, run_id=run_id, stage=STAGE, contract_hash=contract) as writer:
         writer.artifact({
             "qdrant": qdrant_report,
+            "routing_qdrant": routing_report,
             "neo4j": neo4j_report,
             "canonical": canonical_report,
         })
 
         loss = (
             qdrant_report["missing_in_store"] + qdrant_report["orphans_in_store"]
+            + routing_report["missing_in_store"]
             + neo4j_report["missing_in_store"] + neo4j_report["orphans_in_store"]
             + canonical_report["missing_in_store"] + canonical_report["orphans_in_store"]
         )
         problem = (
             qdrant_report["missing_receipts"]
+            + routing_report["missing_receipts"]
             + neo4j_report["missing_receipts"]
             + neo4j_report["missing_facts"]
             + canonical_report["missing_receipts"]
