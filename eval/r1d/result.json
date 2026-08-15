@@ -1,0 +1,382 @@
+{
+  "queries_sha256": "c91ab40c5069e4c85dc6d6f5ae54b7764785b0358c5fae62517d6f8fa516512e",
+  "results": {
+    "A_fast": {
+      "doc": {
+        "R@1": 0.875,
+        "R@3": 0.917,
+        "R@5": 0.917,
+        "MRR": 0.904
+      },
+      "section": {
+        "R@1": 0.875,
+        "R@3": 0.917,
+        "R@5": 0.917,
+        "MRR": 0.892
+      },
+      "child": {
+        "R@1": 0.833,
+        "R@3": 0.938,
+        "R@5": 0.958,
+        "R@10": 0.958,
+        "MRR": 0.884
+      },
+      "final_evidence_recall": 0.938
+    },
+    "B_lexical": {
+      "doc": {
+        "R@1": 0.896,
+        "R@3": 0.979,
+        "R@5": 1.0,
+        "MRR": 0.935
+      },
+      "section": {
+        "R@1": 0.812,
+        "R@3": 0.938,
+        "R@5": 1.0,
+        "MRR": 0.877
+      },
+      "child": {
+        "R@1": 0.833,
+        "R@3": 0.938,
+        "R@5": 0.958,
+        "R@10": 0.958,
+        "MRR": 0.884
+      },
+      "final_evidence_recall": 1.0
+    },
+    "B_arrivals": {
+      "LEXICAL_RESCUE": 52,
+      "GLOBAL_CHILD_RESCUE": 12,
+      "MULTI_REPRESENTATION": 195
+    },
+    "B_lexical_contribution": {
+      "lexical_only_children": 2,
+      "neural_only_children": 0,
+      "overlap": 46
+    },
+    "B_latency_ms": 684.5,
+    "C_mmr_no_lexical": {
+      "1.0": {
+        "doc": {
+          "R@1": 0.875,
+          "R@3": 0.917,
+          "R@5": 0.917,
+          "MRR": 0.904
+        },
+        "section": {
+          "R@1": 0.812,
+          "R@3": 0.917,
+          "R@5": 0.917,
+          "MRR": 0.858
+        },
+        "child": {
+          "R@1": 0.833,
+          "R@3": 0.938,
+          "R@5": 0.958,
+          "R@10": 0.958,
+          "MRR": 0.884
+        },
+        "final_evidence_recall": 0.938
+      },
+      "0.9": {
+        "doc": {
+          "R@1": 0.875,
+          "R@3": 0.917,
+          "R@5": 0.917,
+          "MRR": 0.904
+        },
+        "section": {
+          "R@1": 0.833,
+          "R@3": 0.896,
+          "R@5": 0.896,
+          "MRR": 0.861
+        },
+        "child": {
+          "R@1": 0.833,
+          "R@3": 0.938,
+          "R@5": 0.958,
+          "R@10": 0.958,
+          "MRR": 0.884
+        },
+        "final_evidence_recall": 0.917
+      },
+      "0.8": {
+        "doc": {
+          "R@1": 0.875,
+          "R@3": 0.917,
+          "R@5": 0.917,
+          "MRR": 0.904
+        },
+        "section": {
+          "R@1": 0.833,
+          "R@3": 0.896,
+          "R@5": 0.896,
+          "MRR": 0.861
+        },
+        "child": {
+          "R@1": 0.833,
+          "R@3": 0.938,
+          "R@5": 0.958,
+          "R@10": 0.958,
+          "MRR": 0.884
+        },
+        "final_evidence_recall": 0.917
+      },
+      "0.7": {
+        "doc": {
+          "R@1": 0.875,
+          "R@3": 0.917,
+          "R@5": 0.917,
+          "MRR": 0.904
+        },
+        "section": {
+          "R@1": 0.833,
+          "R@3": 0.896,
+          "R@5": 0.896,
+          "MRR": 0.865
+        },
+        "child": {
+          "R@1": 0.833,
+          "R@3": 0.938,
+          "R@5": 0.958,
+          "R@10": 0.958,
+          "MRR": 0.884
+        },
+        "final_evidence_recall": 0.917
+      }
+    },
+    "D_full": {
+      "1.0": {
+        "metrics": {
+          "doc": {
+            "R@1": 0.896,
+            "R@3": 0.979,
+            "R@5": 1.0,
+            "MRR": 0.935
+          },
+          "section": {
+            "R@1": 0.812,
+            "R@3": 0.938,
+            "R@5": 1.0,
+            "MRR": 0.877
+          },
+          "child": {
+            "R@1": 0.833,
+            "R@3": 0.938,
+            "R@5": 0.958,
+            "R@10": 0.958,
+            "MRR": 0.884
+          },
+          "final_evidence_recall": 1.0
+        },
+        "arrivals": {
+          "LEXICAL_RESCUE": 52,
+          "GLOBAL_CHILD_RESCUE": 12,
+          "MULTI_REPRESENTATION": 195
+        },
+        "latency_ms": 792.4,
+        "contribution": {
+          "lexical_only_children": 2,
+          "neural_only_children": 0,
+          "overlap": 46
+        }
+      },
+      "0.9": {
+        "metrics": {
+          "doc": {
+            "R@1": 0.896,
+            "R@3": 0.979,
+            "R@5": 1.0,
+            "MRR": 0.935
+          },
+          "section": {
+            "R@1": 0.833,
+            "R@3": 0.896,
+            "R@5": 0.938,
+            "MRR": 0.87
+          },
+          "child": {
+            "R@1": 0.833,
+            "R@3": 0.938,
+            "R@5": 0.958,
+            "R@10": 0.958,
+            "MRR": 0.884
+          },
+          "final_evidence_recall": 0.979
+        },
+        "arrivals": {
+          "LEXICAL_RESCUE": 52,
+          "GLOBAL_CHILD_RESCUE": 12,
+          "MULTI_REPRESENTATION": 147
+        },
+        "latency_ms": 672.6,
+        "contribution": {
+          "lexical_only_children": 2,
+          "neural_only_children": 0,
+          "overlap": 46
+        }
+      },
+      "0.8": {
+        "metrics": {
+          "doc": {
+            "R@1": 0.896,
+            "R@3": 0.979,
+            "R@5": 1.0,
+            "MRR": 0.935
+          },
+          "section": {
+            "R@1": 0.854,
+            "R@3": 0.896,
+            "R@5": 0.938,
+            "MRR": 0.884
+          },
+          "child": {
+            "R@1": 0.833,
+            "R@3": 0.938,
+            "R@5": 0.958,
+            "R@10": 0.958,
+            "MRR": 0.884
+          },
+          "final_evidence_recall": 0.979
+        },
+        "arrivals": {
+          "LEXICAL_RESCUE": 52,
+          "GLOBAL_CHILD_RESCUE": 12,
+          "MULTI_REPRESENTATION": 123
+        },
+        "latency_ms": 612.7,
+        "contribution": {
+          "lexical_only_children": 2,
+          "neural_only_children": 0,
+          "overlap": 46
+        }
+      },
+      "0.7": {
+        "metrics": {
+          "doc": {
+            "R@1": 0.896,
+            "R@3": 0.979,
+            "R@5": 1.0,
+            "MRR": 0.935
+          },
+          "section": {
+            "R@1": 0.854,
+            "R@3": 0.896,
+            "R@5": 0.938,
+            "MRR": 0.884
+          },
+          "child": {
+            "R@1": 0.833,
+            "R@3": 0.938,
+            "R@5": 0.958,
+            "R@10": 0.958,
+            "MRR": 0.884
+          },
+          "final_evidence_recall": 0.979
+        },
+        "arrivals": {
+          "LEXICAL_RESCUE": 52,
+          "GLOBAL_CHILD_RESCUE": 12,
+          "MULTI_REPRESENTATION": 112
+        },
+        "latency_ms": 589.4,
+        "contribution": {
+          "lexical_only_children": 2,
+          "neural_only_children": 0,
+          "overlap": 46
+        }
+      }
+    }
+  },
+  "composition_readiness": {
+    "p1_paraphrase_1": {
+      "required_docs": [
+        "doc_9bf1e24d1ff902c9ab01d6c4199fbc4c397a6ef4b7ad1b8fab1b806a9fd1752c",
+        "doc_05b8c6a9f22b7fe7ef183cca6b06eaaf21afd5e72837256d54fe1a2893f00d2c"
+      ],
+      "selected": [
+        "doc_05b8c6a9f22b7fe7ef183cca6b06eaaf21afd5e72837256d54fe1a2893f00d2c",
+        "doc_9bf1e24d1ff902c9ab01d6c4199fbc4c397a6ef4b7ad1b8fab1b806a9fd1752c",
+        "doc_e6b3aead6b728a9909ed30b21a17c473a97440257449feda54ac55b4523096a5",
+        "doc_ee1a799ea5429df361a05e0c269ab6b9272cad36db2fa2cdc8ba75b899bc72f5",
+        "doc_f2e79d8a79e6edaaa121ed3b50026aa7868bd173f72ba99da49577cf974334e6"
+      ],
+      "all_required": true,
+      "evidence_docs": [
+        "doc_05b8c6a9f22b7fe7ef183cca6b06eaaf21afd5e72837256d54fe1a2893f00d2c",
+        "doc_9bf1e24d1ff902c9ab01d6c4199fbc4c397a6ef4b7ad1b8fab1b806a9fd1752c",
+        "doc_dfdc37ee4b2fda59f5c0d03937f46866eff00778404ba3eceeecabbcb3bc4c04",
+        "doc_e6b3aead6b728a9909ed30b21a17c473a97440257449feda54ac55b4523096a5",
+        "doc_f2e79d8a79e6edaaa121ed3b50026aa7868bd173f72ba99da49577cf974334e6"
+      ]
+    },
+    "p1_rescue_1": {
+      "required_docs": [
+        "doc_2b3edd8d04ada6363c1ec1392c95636725741b193ac64af88f6f221a4ed327de",
+        "doc_490a068ef64cb9ee309a019f56fb8a23e3ad731734b7cd67269c33a36fbd84c5"
+      ],
+      "selected": [
+        "doc_2b3edd8d04ada6363c1ec1392c95636725741b193ac64af88f6f221a4ed327de",
+        "doc_43aeafb524d895fb2e9e7d4d9d60146d7878e11cd362971af9603b09654ecd05",
+        "doc_490a068ef64cb9ee309a019f56fb8a23e3ad731734b7cd67269c33a36fbd84c5",
+        "doc_bc19cc38f2172700fca4f64b4264484460e6c6e9143c08aeffe191d65a958ae7",
+        "doc_fc550c441db80d4d4a72ea771146f8e40b82f87115ac514ecdee615da41b9e1c"
+      ],
+      "all_required": true,
+      "evidence_docs": [
+        "doc_2b3edd8d04ada6363c1ec1392c95636725741b193ac64af88f6f221a4ed327de",
+        "doc_43aeafb524d895fb2e9e7d4d9d60146d7878e11cd362971af9603b09654ecd05",
+        "doc_490a068ef64cb9ee309a019f56fb8a23e3ad731734b7cd67269c33a36fbd84c5",
+        "doc_a55e7dd615b19a628c2e5bc534e6fcb30dabde5573fbbe61997cbeab5fecc4d6",
+        "doc_bc19cc38f2172700fca4f64b4264484460e6c6e9143c08aeffe191d65a958ae7",
+        "doc_fc550c441db80d4d4a72ea771146f8e40b82f87115ac514ecdee615da41b9e1c"
+      ]
+    },
+    "p1_cross_1": {
+      "required_docs": [
+        "doc_05b8c6a9f22b7fe7ef183cca6b06eaaf21afd5e72837256d54fe1a2893f00d2c",
+        "doc_f2e79d8a79e6edaaa121ed3b50026aa7868bd173f72ba99da49577cf974334e6"
+      ],
+      "selected": [
+        "doc_05b8c6a9f22b7fe7ef183cca6b06eaaf21afd5e72837256d54fe1a2893f00d2c",
+        "doc_9bf1e24d1ff902c9ab01d6c4199fbc4c397a6ef4b7ad1b8fab1b806a9fd1752c",
+        "doc_dfdc37ee4b2fda59f5c0d03937f46866eff00778404ba3eceeecabbcb3bc4c04",
+        "doc_e6b3aead6b728a9909ed30b21a17c473a97440257449feda54ac55b4523096a5",
+        "doc_f2e79d8a79e6edaaa121ed3b50026aa7868bd173f72ba99da49577cf974334e6"
+      ],
+      "all_required": true,
+      "evidence_docs": [
+        "doc_05b8c6a9f22b7fe7ef183cca6b06eaaf21afd5e72837256d54fe1a2893f00d2c",
+        "doc_dfdc37ee4b2fda59f5c0d03937f46866eff00778404ba3eceeecabbcb3bc4c04",
+        "doc_e6b3aead6b728a9909ed30b21a17c473a97440257449feda54ac55b4523096a5",
+        "doc_ee1a799ea5429df361a05e0c269ab6b9272cad36db2fa2cdc8ba75b899bc72f5",
+        "doc_f2e79d8a79e6edaaa121ed3b50026aa7868bd173f72ba99da49577cf974334e6"
+      ]
+    },
+    "p1_cross_2": {
+      "required_docs": [
+        "doc_f50b87545d3b0ad585eadb7b62706f5e8255928f4f6b2c603e2536260bd185ef",
+        "doc_b6cb3af60cebfbe4333156925286e29b604b26a9fd560dfece3a81db3e402569"
+      ],
+      "selected": [
+        "doc_52e02a74c46ed0e3a614a34b27d1281dbf8bf854b757684a70ea4b399a83641d",
+        "doc_5d23c78a839db2d87a67b51cea9bdb7f7f7c03bd28a773e22bdab7d271e3f228",
+        "doc_6924d12b9e81f7a02d8f8e7c6c96121db6ae39971640586b7f5b30154f575f56",
+        "doc_b6cb3af60cebfbe4333156925286e29b604b26a9fd560dfece3a81db3e402569",
+        "doc_f50b87545d3b0ad585eadb7b62706f5e8255928f4f6b2c603e2536260bd185ef"
+      ],
+      "all_required": true,
+      "evidence_docs": [
+        "doc_52e02a74c46ed0e3a614a34b27d1281dbf8bf854b757684a70ea4b399a83641d",
+        "doc_5d23c78a839db2d87a67b51cea9bdb7f7f7c03bd28a773e22bdab7d271e3f228",
+        "doc_6924d12b9e81f7a02d8f8e7c6c96121db6ae39971640586b7f5b30154f575f56",
+        "doc_6e90a1ccabda50bd66bfe3ff36e6929586bb6b3acc4ab9e20247e1af614f3751",
+        "doc_b6cb3af60cebfbe4333156925286e29b604b26a9fd560dfece3a81db3e402569",
+        "doc_f50b87545d3b0ad585eadb7b62706f5e8255928f4f6b2c603e2536260bd185ef"
+      ]
+    }
+  },
+  "deterministic": true,
+  "iso_leaks": 0
+}

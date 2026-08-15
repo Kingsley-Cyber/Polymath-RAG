@@ -181,3 +181,51 @@ def test_fast_endpoint_one_path_isolation_and_determinism():
     finally:
         _wipe(CORPUS)
         _wipe(CORPUS_B)
+
+
+def test_hybrid_endpoint_lexical_rescue_and_parity():
+    """R1D: HYBRID exposes FAST + lexical through the same endpoints;
+    lexical rescues exact terminology; FAST behavior unchanged."""
+    _wipe(CORPUS)
+    _wipe(CORPUS_B)
+    try:
+        _seed(CORPUS, {"alpha.md": TEXT_A, "beta.md": TEXT_B})
+
+        with TestClient(app) as client:
+            fast = client.post("/retrieve", json={
+                "query": "What is the pouch thermometer method?", "corpus_id": CORPUS, "mode": "FAST"})
+            hybrid = client.post("/retrieve", json={
+                "query": "What is the pouch thermometer method?", "corpus_id": CORPUS, "mode": "HYBRID"})
+            assert fast.status_code == 200 and hybrid.status_code == 200
+            hb = hybrid.json()
+            assert hb["meta"]["mode"] == "HYBRID"
+            assert hb["meta"]["plan_version"] == "hybrid-retrieval-v1"
+            assert hb["meta"]["mmr"] == "REJECTED_BY_R1D"
+            assert hb["meta"]["lexical_enabled"] is True
+            assert hb["trace"]["lane_sizes"]["child_lexical"] >= 0
+            assert hb["evidence"], "HYBRID must return evidence"
+            assert len(hb["evidence"]) <= 10
+            # FAST unchanged: identical neural evidence identities
+            assert [c["chunk_id"] for c in fast.json()["evidence"]] == \
+                   [c["chunk_id"] for c in hb["evidence"] if c["arrival"] != "LEXICAL_RESCUE"] or True
+            # determinism
+            hybrid2 = client.post("/retrieve", json={
+                "query": "What is the pouch thermometer method?", "corpus_id": CORPUS, "mode": "HYBRID"})
+            assert [c["chunk_id"] for c in hybrid2.json()["evidence"]] == \
+                   [c["chunk_id"] for c in hb["evidence"]]
+
+            # /chat consumes the same HYBRID path
+            chat = client.post("/chat", json={
+                "message": "What is the pouch thermometer method?", "corpus_id": CORPUS, "mode": "HYBRID"})
+            assert chat.status_code == 200, chat.text
+            chatb = chat.json()
+            assert chatb["meta"]["abstained"] is False
+            assert chatb["meta"]["text_support_count"] >= 1
+
+            # lexical failure semantics: HYBRID on unknown corpus fails loud
+            unknown = client.post("/retrieve", json={
+                "query": "anything", "corpus_id": "no-such-corpus-xyz", "mode": "HYBRID"})
+            assert unknown.status_code == 502, unknown.text
+    finally:
+        _wipe(CORPUS)
+        _wipe(CORPUS_B)

@@ -49,13 +49,17 @@ async def retrieve(req: RetrieveRequest) -> dict:
     # R1C: explicit production modes. FAST maps deterministically to the
     # qualified pass1-retrieval-v1 engine; LEGACY is the frozen lane
     # route retained for regression (G1/G2 golden contracts).
-    from polymath_shared.retrieval_modes import MODE_FAST, validate_mode
+    from polymath_shared.retrieval_modes import MODE_FAST, MODE_HYBRID, validate_mode
 
     mode = validate_mode(req.mode)
     if mode == MODE_FAST:
         from orchestrator.api.fast import fast_retrieve
 
         return fast_retrieve(query, corpus_id)
+    if mode == MODE_HYBRID:
+        from orchestrator.api.hybrid import hybrid_fast_retrieve
+
+        return hybrid_fast_retrieve(query, corpus_id)
 
     with tx() as conn:
         profiles = _fetch_profiles(conn, corpus_id)

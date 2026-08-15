@@ -1,0 +1,402 @@
+{
+  "note": "Frozen R1D HYBRID qualification set = R1B 34 queries (with 4 multi-doc gold extensions) + 14 lexical-sensitive cases. Development set; exposure-counted.",
+  "corpus_id": "i2-qualification-corpus",
+  "queries": [
+    {
+      "query_id": "p1_exact_1",
+      "category": "exact_document_topic",
+      "query": "What does zero trust abandon?",
+      "gold_doc": "cyber/zero_trust.docx",
+      "gold_child_substring": "inside the network perimeter is trusted",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_exact_2",
+      "category": "exact_document_topic",
+      "query": "Which phases does incident response proceed through?",
+      "gold_doc": "cyber/incident_response.pdf",
+      "gold_child_substring": "preparation, detection, containment",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_exact_3",
+      "category": "exact_document_topic",
+      "query": "What is a judgment of learning?",
+      "gold_doc": "psych/judgment_of_learning.epub",
+      "gold_child_substring": "an estimate, made after studying an item",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_exact_4",
+      "category": "exact_document_topic",
+      "query": "How does a vector index support dense search?",
+      "gold_doc": "systems/vector_indexes.md",
+      "gold_child_substring": "approximate nearest-neighbor search",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_exact_5",
+      "category": "exact_document_topic",
+      "query": "What does source monitoring attribute?",
+      "gold_doc": "psych/source_monitoring.md",
+      "gold_child_substring": "attributing remembered information to its origin",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_exact_6",
+      "category": "exact_document_topic",
+      "query": "What does threat modeling identify before an adversary acts?",
+      "gold_doc": "cyber/threat_modeling.html",
+      "gold_child_substring": "assets, entry points, and trust boundaries",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_paraphrase_1",
+      "category": "conceptual_paraphrase",
+      "query": "Why can rereading leave a learner unable to recall the idea?",
+      "gold_doc": "psych/retrieval_practice.md",
+      "gold_child_substring": "fluency-based judgments",
+      "gold_docs_extra": [
+        "psych/metacognitive_monitoring.md"
+      ],
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_paraphrase_2",
+      "category": "conceptual_paraphrase",
+      "query": "Why do learners misjudge what they know after study?",
+      "gold_doc": "psych/judgment_of_learning.epub",
+      "gold_child_substring": "cues used to make these judgments are not always diagnostic",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_paraphrase_3",
+      "category": "conceptual_paraphrase",
+      "query": "What makes lateral movement harder in a network?",
+      "gold_doc": "cyber/zero_trust.docx",
+      "gold_child_substring": "Network segmentation shrinks the blast radius",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_paraphrase_4",
+      "category": "conceptual_paraphrase",
+      "query": "How do queries and stored documents get compared numerically?",
+      "gold_doc": "knowledge/embedding_models.docx",
+      "gold_child_substring": "map text into dense vectors",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_paraphrase_5",
+      "category": "conceptual_paraphrase",
+      "query": "What happens when a prediction does not match the outcome?",
+      "gold_doc": "psych/self_regulated_learning.md",
+      "gold_child_substring": "discrepancy between prediction and outcome becomes a calibration signal",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_paraphrase_6",
+      "category": "conceptual_paraphrase",
+      "query": "Why should a knowledge graph be deletable and rebuildable?",
+      "gold_doc": "knowledge/knowledge_graphs.epub",
+      "gold_child_substring": "disposable projection",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_late_1",
+      "category": "late_document_concept",
+      "query": "What does the document say about recording the source of each claim while taking notes?",
+      "gold_doc": "psych/source_monitoring.md",
+      "gold_child_substring": "recording the source of each claim during note taking",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_late_2",
+      "category": "late_document_concept",
+      "query": "What does the zero trust document say about audit logs?",
+      "gold_doc": "cyber/zero_trust.docx",
+      "gold_child_substring": "audit logs make unauthorized access observable",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_late_3",
+      "category": "late_document_concept",
+      "query": "What does the working memory document say about capacity limits?",
+      "gold_doc": "psych/working_memory.txt",
+      "gold_child_substring": "Capacity limits constrain",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_late_4",
+      "category": "late_document_concept",
+      "query": "What response latency evidence does the self-regulated learning document mention?",
+      "gold_doc": "psych/self_regulated_learning.md",
+      "gold_child_substring": "response latency",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_minority_1",
+      "category": "minority_section",
+      "query": "What does the encryption document say about key storage?",
+      "gold_doc": "cyber/encryption_basics.md",
+      "gold_child_substring": "Keys must be managed separately",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_minority_2",
+      "category": "minority_section",
+      "query": "What does the fault tolerance document say about degraded states?",
+      "gold_doc": "systems/fault_tolerance.html",
+      "gold_child_substring": "Degraded states are observable",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_minority_3",
+      "category": "minority_section",
+      "query": "What does the authentication document say about sessions?",
+      "gold_doc": "cyber/authentication.txt",
+      "gold_child_substring": "Sessions must be bounded",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_minority_4",
+      "category": "minority_section",
+      "query": "What does the verification loops document say about receipts?",
+      "gold_doc": "systems/verification_loops.md",
+      "gold_child_substring": "Receipts are the commit point",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_disambig_1",
+      "category": "similar_document_disambiguation",
+      "query": "Which document discusses reranking candidates rather than evaluating them?",
+      "gold_doc": "knowledge/reranking.md",
+      "gold_child_substring": "reorders candidate results",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_disambig_2",
+      "category": "similar_document_disambiguation",
+      "query": "Which document covers embedding models rather than knowledge graphs?",
+      "gold_doc": "knowledge/embedding_models.docx",
+      "gold_child_substring": "map text into dense vectors",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_disambig_3",
+      "category": "similar_document_disambiguation",
+      "query": "Where is corpus management rather than document ingestion discussed?",
+      "gold_doc": "knowledge/corpus_management.txt",
+      "gold_child_substring": "manifest declares the sources",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_disambig_4",
+      "category": "similar_document_disambiguation",
+      "query": "Which document discusses graph traversal policy rather than the graph itself?",
+      "gold_doc": "knowledge/graph_traversal.md",
+      "gold_child_substring": "hop limit",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_rescue_1",
+      "category": "child_global_rescue",
+      "query": "Which ingredient of zero trust reduces the value of a successful breach?",
+      "gold_doc": "cyber/zero_trust.docx",
+      "gold_child_substring": "Encrypting data at rest and in transit",
+      "gold_docs_extra": [
+        "cyber/encryption_basics.md"
+      ],
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_rescue_2",
+      "category": "child_global_rescue",
+      "query": "What does the platform services document say about model processes?",
+      "gold_doc": "systems/platform_services.md",
+      "gold_child_substring": "host-native",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_rescue_3",
+      "category": "child_global_rescue",
+      "query": "What does the worker pools document say about backpressure?",
+      "gold_doc": "systems/worker_pools.md",
+      "gold_child_substring": "Backpressure matters",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_rescue_4",
+      "category": "child_global_rescue",
+      "query": "What does the document ingestion document say about native formats?",
+      "gold_doc": "systems/document_ingestion.md",
+      "gold_child_substring": "materialized deterministically",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_docled_1",
+      "category": "document_summary_leads",
+      "query": "What is the overall topic of the evidence bundles document?",
+      "gold_doc": "knowledge/evidence_bundles.md",
+      "gold_child_substring": "assembles the support for an answer",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_docled_2",
+      "category": "document_summary_leads",
+      "query": "What is the overall topic of the cognitive load document?",
+      "gold_doc": "psych/cognitive_load.md",
+      "gold_child_substring": "intrinsic load",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_sectionled_1",
+      "category": "section_summary_leads",
+      "query": "Which section of the metacognitive monitoring document discusses accuracy deterioration?",
+      "gold_doc": "psych/metacognitive_monitoring.md",
+      "gold_child_substring": "Accuracy of monitoring deteriorates",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_sectionled_2",
+      "category": "section_summary_leads",
+      "query": "Which section of the retrieval practice document discusses calibration?",
+      "gold_doc": "psych/retrieval_practice.md",
+      "gold_child_substring": "improves calibration",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_cross_1",
+      "category": "cross_section",
+      "query": "How does working memory relate to monitoring accuracy?",
+      "gold_doc": "psych/metacognitive_monitoring.md",
+      "gold_child_substring": "Accuracy of monitoring deteriorates",
+      "gold_docs_extra": [
+        "psych/working_memory.txt"
+      ],
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "p1_cross_2",
+      "category": "cross_section",
+      "query": "How do receipts connect verification loops and corpus integrity?",
+      "gold_doc": "systems/verification_loops.md",
+      "gold_child_substring": "Receipts are the commit point",
+      "gold_docs_extra": [
+        "knowledge/corpus_management.txt"
+      ],
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "h1_acronym",
+      "category": "acronym",
+      "query": "What is STRIDE used for in threat modeling?",
+      "gold_doc": "cyber/threat_modeling.html",
+      "gold_child_substring": "STRIDE",
+      "lexical_value": "yes"
+    },
+    {
+      "query_id": "h2_acronym",
+      "category": "acronym",
+      "query": "What does TLS protect data in transit?",
+      "gold_doc": "cyber/encryption_basics.md",
+      "gold_child_substring": "TLS",
+      "lexical_value": "yes"
+    },
+    {
+      "query_id": "h3_abbrev",
+      "category": "acronym",
+      "query": "What is a JOL?",
+      "gold_doc": "psych/judgment_of_learning.epub",
+      "gold_child_substring": "JOL",
+      "lexical_value": "yes"
+    },
+    {
+      "query_id": "h4_quote",
+      "category": "quoted_phrase",
+      "query": "Which document says receipts are the commit point for projections?",
+      "gold_doc": "systems/verification_loops.md",
+      "gold_child_substring": "Receipts are the commit point",
+      "lexical_value": "yes"
+    },
+    {
+      "query_id": "h5_quote",
+      "category": "quoted_phrase",
+      "query": "Where does the phrase blast radius appear?",
+      "gold_doc": "cyber/zero_trust.docx",
+      "gold_child_substring": "blast radius",
+      "lexical_value": "yes"
+    },
+    {
+      "query_id": "h6_term",
+      "category": "exact_term",
+      "query": "What does the worker pools document say about backpressure?",
+      "gold_doc": "systems/worker_pools.md",
+      "gold_child_substring": "Backpressure matters",
+      "lexical_value": "yes"
+    },
+    {
+      "query_id": "h7_term",
+      "category": "exact_term",
+      "query": "Which document discusses idempotent processing?",
+      "gold_doc": "systems/fault_tolerance.html",
+      "gold_child_substring": "idempotent processing",
+      "lexical_value": "yes"
+    },
+    {
+      "query_id": "h8_term",
+      "category": "exact_term",
+      "query": "Where is reciprocal-rank fusion discussed?",
+      "gold_doc": "knowledge/reranking.md",
+      "gold_child_substring": "Reciprocal-rank fusion",
+      "lexical_value": "yes"
+    },
+    {
+      "query_id": "h9_term",
+      "category": "exact_term",
+      "query": "What does the corpus management document say about manifests?",
+      "gold_doc": "knowledge/corpus_management.txt",
+      "gold_child_substring": "manifest declares",
+      "lexical_value": "yes"
+    },
+    {
+      "query_id": "h10_term",
+      "category": "exact_term",
+      "query": "Which document mentions hop limits?",
+      "gold_doc": "knowledge/graph_traversal.md",
+      "gold_child_substring": "hop limit",
+      "lexical_value": "yes"
+    },
+    {
+      "query_id": "h11_term",
+      "category": "exact_term",
+      "query": "What is the testing effect?",
+      "gold_doc": "psych/retrieval_practice.md",
+      "gold_child_substring": "testing effect",
+      "lexical_value": "yes"
+    },
+    {
+      "query_id": "h12_term",
+      "category": "exact_term",
+      "query": "Which document discusses alerts that fire constantly?",
+      "gold_doc": "cyber/security_monitoring.md",
+      "gold_child_substring": "actionable",
+      "lexical_value": "yes"
+    },
+    {
+      "query_id": "h13_no_value",
+      "category": "lexical_no_value",
+      "query": "How does cognitive load affect monitoring accuracy?",
+      "gold_doc": "psych/cognitive_load.md",
+      "gold_child_substring": "monitoring accuracy",
+      "lexical_value": "no"
+    },
+    {
+      "query_id": "h14_no_value",
+      "category": "lexical_no_value",
+      "query": "Why can rereading leave a learner unable to recall the idea?",
+      "gold_doc": "psych/retrieval_practice.md",
+      "gold_child_substring": "rereading",
+      "lexical_value": "no"
+    }
+  ]
+}

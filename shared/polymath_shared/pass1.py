@@ -89,10 +89,12 @@ class DocumentCandidate:
     document_summary_hits: list[LaneHit] = field(default_factory=list)
     section_summary_hits: list[LaneHit] = field(default_factory=list)
     global_child_hits: list[LaneHit] = field(default_factory=list)
+    child_lexical_hits: list[LaneHit] = field(default_factory=list)
     rrf_contributions: dict[str, float] = field(default_factory=dict)
     best_document_summary_rank: Optional[int] = None
     best_section_summary_rank: Optional[int] = None
     best_child_rank: Optional[int] = None
+    best_lexical_rank: Optional[int] = None
     aggregate_score: float = 0.0
     aggregate_rank: int = -1
 
@@ -105,6 +107,8 @@ class DocumentCandidate:
             kinds.append(REPRESENTATION_KIND_SECTION_SUMMARY)
         if self.global_child_hits:
             kinds.append(REPRESENTATION_KIND_CHILD)
+        if self.child_lexical_hits:
+            kinds.append("child_lexical")
         return kinds
 
 
@@ -135,7 +139,21 @@ def aggregate_documents(
     k: int,
 ) -> list[DocumentCandidate]:
     """RRF over the three independent doc-level rankings, preserving
-    per-lane contributions for diagnostics (deterministic, inspectable)."""
+    per-lane contributions for diagnostics (deterministic, inspectable).
+    R1D: the FAST three-lane signature is frozen; HYBRID uses
+    aggregate_documents_n with a fourth lexical lane."""
+    return aggregate_documents_n(
+        [(REPRESENTATION_KIND_DOCUMENT_SUMMARY, doc_lane),
+         (REPRESENTATION_KIND_SECTION_SUMMARY, section_lane),
+         (REPRESENTATION_KIND_CHILD, child_lane)],
+        k=k,
+    )
+
+
+def aggregate_documents_n(
+    lanes: list[tuple[str, list[LaneHit]]],
+    k: int,
+) -> list[DocumentCandidate]:
     by_doc: dict[str, DocumentCandidate] = {}
 
     def ensure(hit: LaneHit) -> DocumentCandidate:
@@ -145,11 +163,13 @@ def aggregate_documents(
             by_doc[hit.doc_id] = cand
         return cand
 
-    for lane, attr in (
-        (doc_lane, "document_summary_hits"),
-        (section_lane, "section_summary_hits"),
-        (child_lane, "global_child_hits"),
-    ):
+    for kind, lane in lanes:
+        attr = {
+            REPRESENTATION_KIND_DOCUMENT_SUMMARY: "document_summary_hits",
+            REPRESENTATION_KIND_SECTION_SUMMARY: "section_summary_hits",
+            REPRESENTATION_KIND_CHILD: "global_child_hits",
+            "child_lexical": "child_lexical_hits",
+        }[kind]
         seen: set[str] = set()
         for hit in lane:
             cand = ensure(hit)
@@ -157,8 +177,8 @@ def aggregate_documents(
             if hit.doc_id not in seen:
                 seen.add(hit.doc_id)
                 contrib = _rrf_score(hit.rank, k)
-                cand.rrf_contributions[hit.representation_kind] = (
-                    cand.rrf_contributions.get(hit.representation_kind, 0.0) + contrib
+                cand.rrf_contributions[kind] = (
+                    cand.rrf_contributions.get(kind, 0.0) + contrib
                 )
 
     candidates = list(by_doc.values())
@@ -170,6 +190,8 @@ def aggregate_documents(
             (h.rank for h in cand.section_summary_hits), default=None)
         cand.best_child_rank = min(
             (h.rank for h in cand.global_child_hits), default=None)
+        cand.best_lexical_rank = min(
+            (h.rank for h in cand.child_lexical_hits), default=None)
     candidates.sort(key=lambda c: (-c.aggregate_score, c.doc_id))
     for rank, cand in enumerate(candidates):
         cand.aggregate_rank = rank

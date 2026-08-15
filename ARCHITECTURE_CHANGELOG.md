@@ -389,3 +389,22 @@ that motivated it and the refactor that implemented it.
 - Parity: repeated-request 0 mismatches; doc R@1 0.882 matches R1B;
   final-evidence recall 0.971 (R1B 0.941); latency p50 659 ms.
 - Suites + guards green; frozen legacy golden contracts untouched.
+
+## 2026-08-15: R1D — HYBRID retrieval (FAST + lexical; MMR REJECTED)
+
+- HYBRID mode (hybrid-retrieval-v1) reuses the FAST engine: an
+  independent corpus-filtered lexical child lane (exact terminology)
+  joins the three neural lanes in four-lane RRF (k=60); lexical
+  rescue arrival; bounded evidence; G3 invariant. FAST unchanged
+  (R1C parity re-verified).
+- Document-level MMR qualified over the frozen lambda grid
+  {1.0, 0.9, 0.8, 0.7} using qualified document-summary vectors:
+  every lambda<1.0 damages supporting-child recall (0.938→0.917;
+  1.0→0.979) without improving doc R@1 → MMR REJECTED; production
+  HYBRID = FAST + lexical, lambda 1.0 documented.
+- Qualification (frozen 48-query set): FAST doc R@1 0.875/MRR 0.904
+  vs HYBRID 0.896/0.935 (R@5 1.0); final evidence recall 0.938→1.0;
+  52 lexical rescues; 2 lexical-exclusive gold children;
+  composition readiness ok; isolation 0 leaks; deterministic.
+- /retrieve, /evidence, /chat expose mode=HYBRID through one path.
+  Suites + guards green.

@@ -54,12 +54,18 @@ async def evidence(req: EvidenceRequest) -> dict:
 
     # R1C: FAST mode = the same qualified Pass-1 result /retrieve and
     # /chat consume; the graph lane is empty by FAST contract.
-    from polymath_shared.retrieval_modes import MODE_FAST, validate_mode
+    from polymath_shared.retrieval_modes import MODE_FAST, MODE_HYBRID, validate_mode
 
-    if validate_mode(req.mode) == MODE_FAST:
-        from orchestrator.api.fast import fast_retrieve
+    mode = validate_mode(req.mode)
+    if mode in (MODE_FAST, MODE_HYBRID):
+        if mode == MODE_FAST:
+            from orchestrator.api.fast import fast_retrieve
 
-        fast = fast_retrieve(query, corpus_id)
+            fast = fast_retrieve(query, corpus_id)
+        else:
+            from orchestrator.api.hybrid import hybrid_fast_retrieve
+
+            fast = hybrid_fast_retrieve(query, corpus_id)
         child_evidence = [
             {"chunk_id": c["chunk_id"], "doc_id": c["doc_id"], "parent_id": c["parent_id"]}
             for c in fast["evidence"]
@@ -95,7 +101,7 @@ async def evidence(req: EvidenceRequest) -> dict:
             raise HTTPException(status_code=502, detail={
                 "error_code": type(exc).__name__, "message": str(exc),
             }) from exc
-        bundle["meta"]["mode"] = MODE_FAST
+        bundle["meta"]["mode"] = mode
         return bundle
 
     with tx() as conn:
