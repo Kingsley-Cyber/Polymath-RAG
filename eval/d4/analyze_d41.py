@@ -162,7 +162,10 @@ def main() -> int:
                   f"topic_rej={p['topic_only_rejection']} irre_rej={p['irrelevant_rejection']} "
                   f"contra_rej={p['contradiction_rejection']}")
         pf = a["precision_first_zero_fp"]
-        print(f"  zero-FP point: t={pf['t']} P={pf['precision']} R={pf['recall']} FN={pf['missed_supports']}")
+        if pf:
+            print(f"  zero-FP point: t={pf['t']} P={pf['precision']} R={pf['recall']} FN={pf['missed_supports']}")
+        else:
+            print("  zero-FP point: none")
         print("  controls:", json.dumps(a["controls"]))
         print("  by_text_kind:", json.dumps(a["by_text_kind"]))
     outpath = ROOT / "eval" / "d4" / "artifacts" / "d41_analysis.json"

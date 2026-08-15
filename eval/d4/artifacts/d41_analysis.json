@@ -1,0 +1,2626 @@
+{
+ "cross-encoder/nli-deberta-v3-xsmall": {
+  "model": "cross-encoder/nli-deberta-v3-xsmall",
+  "deterministic": true,
+  "distributions": {
+   "SUPPORTS": {
+    "n": 43,
+    "p50": 0.007,
+    "p90": 0.055,
+    "max": 0.303
+   },
+   "TOPIC_ONLY": {
+    "n": 177,
+    "p50": 0.012,
+    "p90": 0.197,
+    "max": 0.709
+   },
+   "IRRELEVANT": {
+    "n": 559,
+    "p50": 0.009,
+    "p90": 0.061,
+    "max": 0.793
+   },
+   "CONTRADICTS": {
+    "n": 15,
+    "p50": 0.027,
+    "p90": 0.732,
+    "max": 0.732
+   }
+  },
+  "operating_points": [
+   {
+    "t": 0.5,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "false_supports": 19,
+    "missed_supports": 43,
+    "topic_only_rejection": 0.9944,
+    "irrelevant_rejection": 0.9714,
+    "contradiction_rejection": 0.8667,
+    "qid": {
+     "q1_direct_lexical": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 39,
+       "CONTRADICTS": 0
+      }
+     },
+     "q2_paraphrased": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 18,
+       "IRRELEVANT": 34,
+       "CONTRADICTS": 0
+      }
+     },
+     "q3_cross_section": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 10,
+       "TOPIC_ONLY": 19,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q4_terminology_mismatch": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 74,
+       "CONTRADICTS": 0
+      }
+     },
+     "q5_summary_level": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 13,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q6_child_text": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 41,
+       "CONTRADICTS": 0
+      }
+     },
+     "q7_graph_independent": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 22,
+       "IRRELEVANT": 35,
+       "CONTRADICTS": 0
+      }
+     },
+     "u1_capital": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u2_medical": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u3_sports": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u4_product": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u5_same_domain": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 38,
+       "CONTRADICTS": 0
+      }
+     },
+     "u6_keyword_trap": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 37,
+       "IRRELEVANT": 26,
+       "CONTRADICTS": 0
+      }
+     },
+     "c1_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 9
+      }
+     },
+     "c2_contradiction": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     },
+     "c3_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     }
+    }
+   },
+   {
+    "t": 0.6,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "false_supports": 18,
+    "missed_supports": 43,
+    "topic_only_rejection": 0.9944,
+    "irrelevant_rejection": 0.9732,
+    "contradiction_rejection": 0.8667,
+    "qid": {
+     "q1_direct_lexical": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 39,
+       "CONTRADICTS": 0
+      }
+     },
+     "q2_paraphrased": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 18,
+       "IRRELEVANT": 34,
+       "CONTRADICTS": 0
+      }
+     },
+     "q3_cross_section": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 10,
+       "TOPIC_ONLY": 19,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q4_terminology_mismatch": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 74,
+       "CONTRADICTS": 0
+      }
+     },
+     "q5_summary_level": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 13,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q6_child_text": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 41,
+       "CONTRADICTS": 0
+      }
+     },
+     "q7_graph_independent": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 22,
+       "IRRELEVANT": 35,
+       "CONTRADICTS": 0
+      }
+     },
+     "u1_capital": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u2_medical": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u3_sports": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u4_product": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u5_same_domain": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 38,
+       "CONTRADICTS": 0
+      }
+     },
+     "u6_keyword_trap": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 37,
+       "IRRELEVANT": 26,
+       "CONTRADICTS": 0
+      }
+     },
+     "c1_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 9
+      }
+     },
+     "c2_contradiction": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     },
+     "c3_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     }
+    }
+   },
+   {
+    "t": 0.7,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "false_supports": 11,
+    "missed_supports": 43,
+    "topic_only_rejection": 0.9944,
+    "irrelevant_rejection": 0.9857,
+    "contradiction_rejection": 0.8667,
+    "qid": {
+     "q1_direct_lexical": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 39,
+       "CONTRADICTS": 0
+      }
+     },
+     "q2_paraphrased": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 18,
+       "IRRELEVANT": 34,
+       "CONTRADICTS": 0
+      }
+     },
+     "q3_cross_section": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 10,
+       "TOPIC_ONLY": 19,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q4_terminology_mismatch": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 74,
+       "CONTRADICTS": 0
+      }
+     },
+     "q5_summary_level": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 13,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q6_child_text": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 41,
+       "CONTRADICTS": 0
+      }
+     },
+     "q7_graph_independent": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 22,
+       "IRRELEVANT": 35,
+       "CONTRADICTS": 0
+      }
+     },
+     "u1_capital": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u2_medical": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u3_sports": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u4_product": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u5_same_domain": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 38,
+       "CONTRADICTS": 0
+      }
+     },
+     "u6_keyword_trap": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 37,
+       "IRRELEVANT": 26,
+       "CONTRADICTS": 0
+      }
+     },
+     "c1_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 9
+      }
+     },
+     "c2_contradiction": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     },
+     "c3_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     }
+    }
+   },
+   {
+    "t": 0.8,
+    "precision": 1.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "false_supports": 0,
+    "missed_supports": 43,
+    "topic_only_rejection": 1.0,
+    "irrelevant_rejection": 1.0,
+    "contradiction_rejection": 1.0,
+    "qid": {
+     "q1_direct_lexical": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 39,
+       "CONTRADICTS": 0
+      }
+     },
+     "q2_paraphrased": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 18,
+       "IRRELEVANT": 34,
+       "CONTRADICTS": 0
+      }
+     },
+     "q3_cross_section": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 10,
+       "TOPIC_ONLY": 19,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q4_terminology_mismatch": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 74,
+       "CONTRADICTS": 0
+      }
+     },
+     "q5_summary_level": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 13,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q6_child_text": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 41,
+       "CONTRADICTS": 0
+      }
+     },
+     "q7_graph_independent": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 22,
+       "IRRELEVANT": 35,
+       "CONTRADICTS": 0
+      }
+     },
+     "u1_capital": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u2_medical": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u3_sports": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u4_product": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u5_same_domain": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 38,
+       "CONTRADICTS": 0
+      }
+     },
+     "u6_keyword_trap": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 37,
+       "IRRELEVANT": 26,
+       "CONTRADICTS": 0
+      }
+     },
+     "c1_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 9
+      }
+     },
+     "c2_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     },
+     "c3_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     }
+    }
+   },
+   {
+    "t": 0.9,
+    "precision": 1.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "false_supports": 0,
+    "missed_supports": 43,
+    "topic_only_rejection": 1.0,
+    "irrelevant_rejection": 1.0,
+    "contradiction_rejection": 1.0,
+    "qid": {
+     "q1_direct_lexical": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 39,
+       "CONTRADICTS": 0
+      }
+     },
+     "q2_paraphrased": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 18,
+       "IRRELEVANT": 34,
+       "CONTRADICTS": 0
+      }
+     },
+     "q3_cross_section": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 10,
+       "TOPIC_ONLY": 19,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q4_terminology_mismatch": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 74,
+       "CONTRADICTS": 0
+      }
+     },
+     "q5_summary_level": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 13,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q6_child_text": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 41,
+       "CONTRADICTS": 0
+      }
+     },
+     "q7_graph_independent": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 22,
+       "IRRELEVANT": 35,
+       "CONTRADICTS": 0
+      }
+     },
+     "u1_capital": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u2_medical": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u3_sports": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u4_product": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u5_same_domain": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 38,
+       "CONTRADICTS": 0
+      }
+     },
+     "u6_keyword_trap": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 37,
+       "IRRELEVANT": 26,
+       "CONTRADICTS": 0
+      }
+     },
+     "c1_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 9
+      }
+     },
+     "c2_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     },
+     "c3_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     }
+    }
+   },
+   {
+    "t": 0.95,
+    "precision": 1.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "false_supports": 0,
+    "missed_supports": 43,
+    "topic_only_rejection": 1.0,
+    "irrelevant_rejection": 1.0,
+    "contradiction_rejection": 1.0,
+    "qid": {
+     "q1_direct_lexical": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 39,
+       "CONTRADICTS": 0
+      }
+     },
+     "q2_paraphrased": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 18,
+       "IRRELEVANT": 34,
+       "CONTRADICTS": 0
+      }
+     },
+     "q3_cross_section": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 10,
+       "TOPIC_ONLY": 19,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q4_terminology_mismatch": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 74,
+       "CONTRADICTS": 0
+      }
+     },
+     "q5_summary_level": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 13,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q6_child_text": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 41,
+       "CONTRADICTS": 0
+      }
+     },
+     "q7_graph_independent": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 22,
+       "IRRELEVANT": 35,
+       "CONTRADICTS": 0
+      }
+     },
+     "u1_capital": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u2_medical": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u3_sports": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u4_product": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u5_same_domain": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 38,
+       "CONTRADICTS": 0
+      }
+     },
+     "u6_keyword_trap": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 37,
+       "IRRELEVANT": 26,
+       "CONTRADICTS": 0
+      }
+     },
+     "c1_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 9
+      }
+     },
+     "c2_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     },
+     "c3_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     }
+    }
+   },
+   {
+    "t": 0.99,
+    "precision": 1.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "false_supports": 0,
+    "missed_supports": 43,
+    "topic_only_rejection": 1.0,
+    "irrelevant_rejection": 1.0,
+    "contradiction_rejection": 1.0,
+    "qid": {
+     "q1_direct_lexical": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 39,
+       "CONTRADICTS": 0
+      }
+     },
+     "q2_paraphrased": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 18,
+       "IRRELEVANT": 34,
+       "CONTRADICTS": 0
+      }
+     },
+     "q3_cross_section": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 10,
+       "TOPIC_ONLY": 19,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q4_terminology_mismatch": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 74,
+       "CONTRADICTS": 0
+      }
+     },
+     "q5_summary_level": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 13,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q6_child_text": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 41,
+       "CONTRADICTS": 0
+      }
+     },
+     "q7_graph_independent": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 22,
+       "IRRELEVANT": 35,
+       "CONTRADICTS": 0
+      }
+     },
+     "u1_capital": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u2_medical": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u3_sports": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u4_product": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u5_same_domain": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 38,
+       "CONTRADICTS": 0
+      }
+     },
+     "u6_keyword_trap": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 37,
+       "IRRELEVANT": 26,
+       "CONTRADICTS": 0
+      }
+     },
+     "c1_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 9
+      }
+     },
+     "c2_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     },
+     "c3_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     }
+    }
+   }
+  ],
+  "precision_first_zero_fp": null,
+  "best_precision95": {
+   "t": 0.99,
+   "precision": 1.0,
+   "recall": 0.0,
+   "f1": 0.0,
+   "false_supports": 0,
+   "missed_supports": 43,
+   "topic_only_rejection": 1.0,
+   "irrelevant_rejection": 1.0,
+   "contradiction_rejection": 1.0,
+   "qid": {
+    "q1_direct_lexical": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 4,
+      "TOPIC_ONLY": 9,
+      "IRRELEVANT": 39,
+      "CONTRADICTS": 0
+     }
+    },
+    "q2_paraphrased": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 7,
+      "TOPIC_ONLY": 18,
+      "IRRELEVANT": 34,
+      "CONTRADICTS": 0
+     }
+    },
+    "q3_cross_section": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 10,
+      "TOPIC_ONLY": 19,
+      "IRRELEVANT": 36,
+      "CONTRADICTS": 0
+     }
+    },
+    "q4_terminology_mismatch": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 7,
+      "TOPIC_ONLY": 25,
+      "IRRELEVANT": 74,
+      "CONTRADICTS": 0
+     }
+    },
+    "q5_summary_level": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 7,
+      "TOPIC_ONLY": 13,
+      "IRRELEVANT": 36,
+      "CONTRADICTS": 0
+     }
+    },
+    "q6_child_text": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 4,
+      "TOPIC_ONLY": 9,
+      "IRRELEVANT": 41,
+      "CONTRADICTS": 0
+     }
+    },
+    "q7_graph_independent": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 4,
+      "TOPIC_ONLY": 22,
+      "IRRELEVANT": 35,
+      "CONTRADICTS": 0
+     }
+    },
+    "u1_capital": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 0,
+      "TOPIC_ONLY": 0,
+      "IRRELEVANT": 50,
+      "CONTRADICTS": 0
+     }
+    },
+    "u2_medical": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 0,
+      "TOPIC_ONLY": 0,
+      "IRRELEVANT": 50,
+      "CONTRADICTS": 0
+     }
+    },
+    "u3_sports": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 0,
+      "TOPIC_ONLY": 0,
+      "IRRELEVANT": 50,
+      "CONTRADICTS": 0
+     }
+    },
+    "u4_product": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 0,
+      "TOPIC_ONLY": 0,
+      "IRRELEVANT": 50,
+      "CONTRADICTS": 0
+     }
+    },
+    "u5_same_domain": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 0,
+      "TOPIC_ONLY": 25,
+      "IRRELEVANT": 38,
+      "CONTRADICTS": 0
+     }
+    },
+    "u6_keyword_trap": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 0,
+      "TOPIC_ONLY": 37,
+      "IRRELEVANT": 26,
+      "CONTRADICTS": 0
+     }
+    },
+    "c1_contradiction": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 0,
+      "TOPIC_ONLY": 0,
+      "IRRELEVANT": 0,
+      "CONTRADICTS": 9
+     }
+    },
+    "c2_contradiction": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 0,
+      "TOPIC_ONLY": 0,
+      "IRRELEVANT": 0,
+      "CONTRADICTS": 3
+     }
+    },
+    "c3_contradiction": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 0,
+      "TOPIC_ONLY": 0,
+      "IRRELEVANT": 0,
+      "CONTRADICTS": 3
+     }
+    }
+   }
+  },
+  "by_text_kind": {},
+  "controls": {
+   "metacognition_controls": {
+    "covered": 0,
+    "abstained": 0,
+    "total": 7
+   },
+   "offtopic_controls": {
+    "covered": 0,
+    "abstained": 0,
+    "total": 4
+   },
+   "same_domain_controls": {
+    "covered": 0,
+    "abstained": 0,
+    "total": 2
+   },
+   "contradiction_controls": {
+    "covered": 0,
+    "abstained": 0,
+    "total": 3
+   }
+  }
+ },
+ "cross-encoder/nli-deberta-v3-base": {
+  "model": "cross-encoder/nli-deberta-v3-base",
+  "deterministic": true,
+  "distributions": {
+   "SUPPORTS": {
+    "n": 43,
+    "p50": 0.001,
+    "p90": 0.01,
+    "max": 0.965
+   },
+   "TOPIC_ONLY": {
+    "n": 177,
+    "p50": 0.001,
+    "p90": 0.008,
+    "max": 0.965
+   },
+   "IRRELEVANT": {
+    "n": 559,
+    "p50": 0.001,
+    "p90": 0.009,
+    "max": 0.716
+   },
+   "CONTRADICTS": {
+    "n": 15,
+    "p50": 0.005,
+    "p90": 0.879,
+    "max": 0.879
+   }
+  },
+  "operating_points": [
+   {
+    "t": 0.5,
+    "precision": 0.25,
+    "recall": 0.0465,
+    "f1": 0.0784,
+    "false_supports": 6,
+    "missed_supports": 41,
+    "topic_only_rejection": 0.9944,
+    "irrelevant_rejection": 0.9946,
+    "contradiction_rejection": 0.8667,
+    "qid": {
+     "q1_direct_lexical": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 39,
+       "CONTRADICTS": 0
+      }
+     },
+     "q2_paraphrased": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 18,
+       "IRRELEVANT": 34,
+       "CONTRADICTS": 0
+      }
+     },
+     "q3_cross_section": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 10,
+       "TOPIC_ONLY": 19,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q4_terminology_mismatch": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 74,
+       "CONTRADICTS": 0
+      }
+     },
+     "q5_summary_level": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 13,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q6_child_text": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 41,
+       "CONTRADICTS": 0
+      }
+     },
+     "q7_graph_independent": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 22,
+       "IRRELEVANT": 35,
+       "CONTRADICTS": 0
+      }
+     },
+     "u1_capital": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u2_medical": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u3_sports": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u4_product": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u5_same_domain": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 38,
+       "CONTRADICTS": 0
+      }
+     },
+     "u6_keyword_trap": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 37,
+       "IRRELEVANT": 26,
+       "CONTRADICTS": 0
+      }
+     },
+     "c1_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 9
+      }
+     },
+     "c2_contradiction": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     },
+     "c3_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     }
+    }
+   },
+   {
+    "t": 0.6,
+    "precision": 0.3333,
+    "recall": 0.0465,
+    "f1": 0.0816,
+    "false_supports": 4,
+    "missed_supports": 41,
+    "topic_only_rejection": 0.9944,
+    "irrelevant_rejection": 0.9982,
+    "contradiction_rejection": 0.8667,
+    "qid": {
+     "q1_direct_lexical": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 39,
+       "CONTRADICTS": 0
+      }
+     },
+     "q2_paraphrased": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 18,
+       "IRRELEVANT": 34,
+       "CONTRADICTS": 0
+      }
+     },
+     "q3_cross_section": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 10,
+       "TOPIC_ONLY": 19,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q4_terminology_mismatch": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 74,
+       "CONTRADICTS": 0
+      }
+     },
+     "q5_summary_level": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 13,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q6_child_text": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 41,
+       "CONTRADICTS": 0
+      }
+     },
+     "q7_graph_independent": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 22,
+       "IRRELEVANT": 35,
+       "CONTRADICTS": 0
+      }
+     },
+     "u1_capital": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u2_medical": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u3_sports": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u4_product": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u5_same_domain": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 38,
+       "CONTRADICTS": 0
+      }
+     },
+     "u6_keyword_trap": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 37,
+       "IRRELEVANT": 26,
+       "CONTRADICTS": 0
+      }
+     },
+     "c1_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 9
+      }
+     },
+     "c2_contradiction": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     },
+     "c3_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     }
+    }
+   },
+   {
+    "t": 0.7,
+    "precision": 0.3333,
+    "recall": 0.0465,
+    "f1": 0.0816,
+    "false_supports": 4,
+    "missed_supports": 41,
+    "topic_only_rejection": 0.9944,
+    "irrelevant_rejection": 0.9982,
+    "contradiction_rejection": 0.8667,
+    "qid": {
+     "q1_direct_lexical": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 39,
+       "CONTRADICTS": 0
+      }
+     },
+     "q2_paraphrased": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 18,
+       "IRRELEVANT": 34,
+       "CONTRADICTS": 0
+      }
+     },
+     "q3_cross_section": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 10,
+       "TOPIC_ONLY": 19,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q4_terminology_mismatch": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 74,
+       "CONTRADICTS": 0
+      }
+     },
+     "q5_summary_level": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 13,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q6_child_text": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 41,
+       "CONTRADICTS": 0
+      }
+     },
+     "q7_graph_independent": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 22,
+       "IRRELEVANT": 35,
+       "CONTRADICTS": 0
+      }
+     },
+     "u1_capital": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u2_medical": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u3_sports": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u4_product": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u5_same_domain": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 38,
+       "CONTRADICTS": 0
+      }
+     },
+     "u6_keyword_trap": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 37,
+       "IRRELEVANT": 26,
+       "CONTRADICTS": 0
+      }
+     },
+     "c1_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 9
+      }
+     },
+     "c2_contradiction": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     },
+     "c3_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     }
+    }
+   },
+   {
+    "t": 0.8,
+    "precision": 0.4,
+    "recall": 0.0465,
+    "f1": 0.0833,
+    "false_supports": 3,
+    "missed_supports": 41,
+    "topic_only_rejection": 0.9944,
+    "irrelevant_rejection": 1.0,
+    "contradiction_rejection": 0.8667,
+    "qid": {
+     "q1_direct_lexical": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 39,
+       "CONTRADICTS": 0
+      }
+     },
+     "q2_paraphrased": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 18,
+       "IRRELEVANT": 34,
+       "CONTRADICTS": 0
+      }
+     },
+     "q3_cross_section": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 10,
+       "TOPIC_ONLY": 19,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q4_terminology_mismatch": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 74,
+       "CONTRADICTS": 0
+      }
+     },
+     "q5_summary_level": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 13,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q6_child_text": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 41,
+       "CONTRADICTS": 0
+      }
+     },
+     "q7_graph_independent": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 22,
+       "IRRELEVANT": 35,
+       "CONTRADICTS": 0
+      }
+     },
+     "u1_capital": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u2_medical": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u3_sports": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u4_product": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u5_same_domain": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 38,
+       "CONTRADICTS": 0
+      }
+     },
+     "u6_keyword_trap": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 37,
+       "IRRELEVANT": 26,
+       "CONTRADICTS": 0
+      }
+     },
+     "c1_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 9
+      }
+     },
+     "c2_contradiction": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     },
+     "c3_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     }
+    }
+   },
+   {
+    "t": 0.9,
+    "precision": 0.6667,
+    "recall": 0.0465,
+    "f1": 0.087,
+    "false_supports": 1,
+    "missed_supports": 41,
+    "topic_only_rejection": 0.9944,
+    "irrelevant_rejection": 1.0,
+    "contradiction_rejection": 1.0,
+    "qid": {
+     "q1_direct_lexical": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 39,
+       "CONTRADICTS": 0
+      }
+     },
+     "q2_paraphrased": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 18,
+       "IRRELEVANT": 34,
+       "CONTRADICTS": 0
+      }
+     },
+     "q3_cross_section": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 10,
+       "TOPIC_ONLY": 19,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q4_terminology_mismatch": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 74,
+       "CONTRADICTS": 0
+      }
+     },
+     "q5_summary_level": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 13,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q6_child_text": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 41,
+       "CONTRADICTS": 0
+      }
+     },
+     "q7_graph_independent": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 22,
+       "IRRELEVANT": 35,
+       "CONTRADICTS": 0
+      }
+     },
+     "u1_capital": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u2_medical": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u3_sports": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u4_product": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u5_same_domain": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 38,
+       "CONTRADICTS": 0
+      }
+     },
+     "u6_keyword_trap": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 37,
+       "IRRELEVANT": 26,
+       "CONTRADICTS": 0
+      }
+     },
+     "c1_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 9
+      }
+     },
+     "c2_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     },
+     "c3_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     }
+    }
+   },
+   {
+    "t": 0.95,
+    "precision": 0.6667,
+    "recall": 0.0465,
+    "f1": 0.087,
+    "false_supports": 1,
+    "missed_supports": 41,
+    "topic_only_rejection": 0.9944,
+    "irrelevant_rejection": 1.0,
+    "contradiction_rejection": 1.0,
+    "qid": {
+     "q1_direct_lexical": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 39,
+       "CONTRADICTS": 0
+      }
+     },
+     "q2_paraphrased": {
+      "any_support": true,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 18,
+       "IRRELEVANT": 34,
+       "CONTRADICTS": 0
+      }
+     },
+     "q3_cross_section": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 10,
+       "TOPIC_ONLY": 19,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q4_terminology_mismatch": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 74,
+       "CONTRADICTS": 0
+      }
+     },
+     "q5_summary_level": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 13,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q6_child_text": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 41,
+       "CONTRADICTS": 0
+      }
+     },
+     "q7_graph_independent": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 22,
+       "IRRELEVANT": 35,
+       "CONTRADICTS": 0
+      }
+     },
+     "u1_capital": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u2_medical": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u3_sports": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u4_product": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u5_same_domain": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 38,
+       "CONTRADICTS": 0
+      }
+     },
+     "u6_keyword_trap": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 37,
+       "IRRELEVANT": 26,
+       "CONTRADICTS": 0
+      }
+     },
+     "c1_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 9
+      }
+     },
+     "c2_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     },
+     "c3_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     }
+    }
+   },
+   {
+    "t": 0.99,
+    "precision": 1.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "false_supports": 0,
+    "missed_supports": 43,
+    "topic_only_rejection": 1.0,
+    "irrelevant_rejection": 1.0,
+    "contradiction_rejection": 1.0,
+    "qid": {
+     "q1_direct_lexical": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 39,
+       "CONTRADICTS": 0
+      }
+     },
+     "q2_paraphrased": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 18,
+       "IRRELEVANT": 34,
+       "CONTRADICTS": 0
+      }
+     },
+     "q3_cross_section": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 10,
+       "TOPIC_ONLY": 19,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q4_terminology_mismatch": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 74,
+       "CONTRADICTS": 0
+      }
+     },
+     "q5_summary_level": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 7,
+       "TOPIC_ONLY": 13,
+       "IRRELEVANT": 36,
+       "CONTRADICTS": 0
+      }
+     },
+     "q6_child_text": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 9,
+       "IRRELEVANT": 41,
+       "CONTRADICTS": 0
+      }
+     },
+     "q7_graph_independent": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 4,
+       "TOPIC_ONLY": 22,
+       "IRRELEVANT": 35,
+       "CONTRADICTS": 0
+      }
+     },
+     "u1_capital": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u2_medical": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u3_sports": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u4_product": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 50,
+       "CONTRADICTS": 0
+      }
+     },
+     "u5_same_domain": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 25,
+       "IRRELEVANT": 38,
+       "CONTRADICTS": 0
+      }
+     },
+     "u6_keyword_trap": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 37,
+       "IRRELEVANT": 26,
+       "CONTRADICTS": 0
+      }
+     },
+     "c1_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 9
+      }
+     },
+     "c2_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     },
+     "c3_contradiction": {
+      "any_support": false,
+      "gold": {
+       "SUPPORTS": 0,
+       "TOPIC_ONLY": 0,
+       "IRRELEVANT": 0,
+       "CONTRADICTS": 3
+      }
+     }
+    }
+   }
+  ],
+  "precision_first_zero_fp": null,
+  "best_precision95": {
+   "t": 0.99,
+   "precision": 1.0,
+   "recall": 0.0,
+   "f1": 0.0,
+   "false_supports": 0,
+   "missed_supports": 43,
+   "topic_only_rejection": 1.0,
+   "irrelevant_rejection": 1.0,
+   "contradiction_rejection": 1.0,
+   "qid": {
+    "q1_direct_lexical": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 4,
+      "TOPIC_ONLY": 9,
+      "IRRELEVANT": 39,
+      "CONTRADICTS": 0
+     }
+    },
+    "q2_paraphrased": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 7,
+      "TOPIC_ONLY": 18,
+      "IRRELEVANT": 34,
+      "CONTRADICTS": 0
+     }
+    },
+    "q3_cross_section": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 10,
+      "TOPIC_ONLY": 19,
+      "IRRELEVANT": 36,
+      "CONTRADICTS": 0
+     }
+    },
+    "q4_terminology_mismatch": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 7,
+      "TOPIC_ONLY": 25,
+      "IRRELEVANT": 74,
+      "CONTRADICTS": 0
+     }
+    },
+    "q5_summary_level": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 7,
+      "TOPIC_ONLY": 13,
+      "IRRELEVANT": 36,
+      "CONTRADICTS": 0
+     }
+    },
+    "q6_child_text": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 4,
+      "TOPIC_ONLY": 9,
+      "IRRELEVANT": 41,
+      "CONTRADICTS": 0
+     }
+    },
+    "q7_graph_independent": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 4,
+      "TOPIC_ONLY": 22,
+      "IRRELEVANT": 35,
+      "CONTRADICTS": 0
+     }
+    },
+    "u1_capital": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 0,
+      "TOPIC_ONLY": 0,
+      "IRRELEVANT": 50,
+      "CONTRADICTS": 0
+     }
+    },
+    "u2_medical": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 0,
+      "TOPIC_ONLY": 0,
+      "IRRELEVANT": 50,
+      "CONTRADICTS": 0
+     }
+    },
+    "u3_sports": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 0,
+      "TOPIC_ONLY": 0,
+      "IRRELEVANT": 50,
+      "CONTRADICTS": 0
+     }
+    },
+    "u4_product": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 0,
+      "TOPIC_ONLY": 0,
+      "IRRELEVANT": 50,
+      "CONTRADICTS": 0
+     }
+    },
+    "u5_same_domain": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 0,
+      "TOPIC_ONLY": 25,
+      "IRRELEVANT": 38,
+      "CONTRADICTS": 0
+     }
+    },
+    "u6_keyword_trap": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 0,
+      "TOPIC_ONLY": 37,
+      "IRRELEVANT": 26,
+      "CONTRADICTS": 0
+     }
+    },
+    "c1_contradiction": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 0,
+      "TOPIC_ONLY": 0,
+      "IRRELEVANT": 0,
+      "CONTRADICTS": 9
+     }
+    },
+    "c2_contradiction": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 0,
+      "TOPIC_ONLY": 0,
+      "IRRELEVANT": 0,
+      "CONTRADICTS": 3
+     }
+    },
+    "c3_contradiction": {
+     "any_support": false,
+     "gold": {
+      "SUPPORTS": 0,
+      "TOPIC_ONLY": 0,
+      "IRRELEVANT": 0,
+      "CONTRADICTS": 3
+     }
+    }
+   }
+  },
+  "by_text_kind": {},
+  "controls": {
+   "metacognition_controls": {
+    "covered": 0,
+    "abstained": 0,
+    "total": 7
+   },
+   "offtopic_controls": {
+    "covered": 0,
+    "abstained": 0,
+    "total": 4
+   },
+   "same_domain_controls": {
+    "covered": 0,
+    "abstained": 0,
+    "total": 2
+   },
+   "contradiction_controls": {
+    "covered": 0,
+    "abstained": 0,
+    "total": 3
+   }
+  }
+ }
+}
