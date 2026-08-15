@@ -1,0 +1,1473 @@
+{
+ "deterministic": true,
+ "device": "mps",
+ "dtype": "fp32",
+ "file_sha256": {
+  ".gitattributes": "11ad7efa24975ee4b0c3c3a38ed18737f0658a5f75a0a96787b576a78a023361",
+  "NuZero_token_token_metrics.txt": "75886494db36b4913f0d1451c67c79b55937a45a5d90726e4f14418079cf9b01",
+  "README.md": "5372254dbbcf73a9c89e4bdec4ec26006bdbf6d837b12db593ff87773c920656",
+  "gliner_config.json": "c8183e314da2f2b5dbd08a7074e9787488310bebeb3996d5ce2e511a7673a7dd",
+  "model.safetensors": "27126232d8ec683d74507012846bb36793349f1c48739fe5e72ea7a886f20145",
+  "pytorch_model.bin": "96a89110ff7d5d029a1b1bc1236dc46b9e01202ca807a8d319fd4fe3009403f5",
+  "zero_shot_performance_unzero_token.png": "bebd67be5bbb10e5190eb92f3e6f6a6e163a77b74ecc9101e2cecc831aca520d"
+ },
+ "library": {
+  "gliner": "0.2.28",
+  "torch": "2.13.0",
+  "transformers": "5.13.1"
+ },
+ "license": "mit",
+ "load_seconds": 9.48,
+ "maxrss_kb": 4814340096,
+ "model": "C-nuner-zero",
+ "peak_mps_mb": 1712,
+ "per_document": {
+  "01_psychology_working_memory.md": {
+   "proposals": [
+    {
+     "core_type": "Concept",
+     "end": 9,
+     "label": "Concept",
+     "score": 0.8672,
+     "start": 2,
+     "text": "Working"
+    },
+    {
+     "core_type": "Concept",
+     "end": 16,
+     "label": "Concept",
+     "score": 0.872,
+     "start": 10,
+     "text": "Memory"
+    },
+    {
+     "core_type": "Concept",
+     "end": 45,
+     "label": "Concept",
+     "score": 0.8643,
+     "start": 38,
+     "text": "Working"
+    },
+    {
+     "core_type": "Concept",
+     "end": 52,
+     "label": "Concept",
+     "score": 0.868,
+     "start": 46,
+     "text": "memory"
+    },
+    {
+     "core_type": "Concept",
+     "end": 143,
+     "label": "Concept",
+     "score": 0.6017,
+     "start": 132,
+     "text": "information"
+    },
+    {
+     "core_type": "Concept",
+     "end": 348,
+     "label": "Concept",
+     "score": 0.6389,
+     "start": 342,
+     "text": "verbal"
+    },
+    {
+     "core_type": "Concept",
+     "end": 360,
+     "label": "Concept",
+     "score": 0.6314,
+     "start": 349,
+     "text": "instruction"
+    },
+    {
+     "core_type": "Concept",
+     "end": 403,
+     "label": "Concept",
+     "score": 0.8792,
+     "start": 396,
+     "text": "working"
+    },
+    {
+     "core_type": "Concept",
+     "end": 410,
+     "label": "Concept",
+     "score": 0.8717,
+     "start": 404,
+     "text": "memory"
+    },
+    {
+     "core_type": "Concept",
+     "end": 425,
+     "label": "Concept",
+     "score": 0.7538,
+     "start": 416,
+     "text": "long-term"
+    },
+    {
+     "core_type": "Concept",
+     "end": 432,
+     "label": "Concept",
+     "score": 0.801,
+     "start": 426,
+     "text": "memory"
+    },
+    {
+     "core_type": "Concept",
+     "end": 464,
+     "label": "Concept",
+     "score": 0.8748,
+     "start": 457,
+     "text": "working"
+    },
+    {
+     "core_type": "Concept",
+     "end": 471,
+     "label": "Concept",
+     "score": 0.8696,
+     "start": 465,
+     "text": "memory"
+    },
+    {
+     "core_type": "Concept",
+     "end": 536,
+     "label": "Concept",
+     "score": 0.7937,
+     "start": 527,
+     "text": "attention"
+    },
+    {
+     "core_type": "Concept",
+     "end": 556,
+     "label": "Concept",
+     "score": 0.6667,
+     "start": 545,
+     "text": "information"
+    },
+    {
+     "core_type": "Concept",
+     "end": 688,
+     "label": "Concept",
+     "score": 0.8704,
+     "start": 681,
+     "text": "working"
+    },
+    {
+     "core_type": "Concept",
+     "end": 695,
+     "label": "Concept",
+     "score": 0.8687,
+     "start": 689,
+     "text": "memory"
+    },
+    {
+     "core_type": "Concept",
+     "end": 771,
+     "label": "Concept",
+     "score": 0.6276,
+     "start": 760,
+     "text": "information"
+    },
+    {
+     "core_type": "Concept",
+     "end": 797,
+     "label": "Concept",
+     "score": 0.6486,
+     "start": 790,
+     "text": "central"
+    },
+    {
+     "core_type": "Concept",
+     "end": 805,
+     "label": "Concept",
+     "score": 0.7036,
+     "start": 798,
+     "text": "control"
+    },
+    {
+     "core_type": "Concept",
+     "end": 813,
+     "label": "Concept",
+     "score": 0.6711,
+     "start": 806,
+     "text": "process"
+    },
+    {
+     "core_type": "Concept",
+     "end": 998,
+     "label": "Concept",
+     "score": 0.6428,
+     "start": 991,
+     "text": "control"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1006,
+     "label": "Concept",
+     "score": 0.6095,
+     "start": 999,
+     "text": "process"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1047,
+     "label": "Concept",
+     "score": 0.6524,
+     "start": 1036,
+     "text": "information"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1087,
+     "label": "Concept",
+     "score": 0.8053,
+     "start": 1078,
+     "text": "attention"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1140,
+     "label": "Concept",
+     "score": 0.6775,
+     "start": 1129,
+     "text": "information"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1162,
+     "label": "Concept",
+     "score": 0.6183,
+     "start": 1155,
+     "text": "sources"
+    },
+    {
+     "core_type": "Concept",
+     "end": 55,
+     "label": "Concept",
+     "score": 0.6043,
+     "start": 46,
+     "text": "component"
+    },
+    {
+     "core_type": "Person",
+     "end": 326,
+     "label": "Person",
+     "score": 0.6902,
+     "start": 319,
+     "text": "student"
+    },
+    {
+     "core_type": "Concept",
+     "end": 372,
+     "label": "Concept",
+     "score": 0.7072,
+     "start": 361,
+     "text": "statistical"
+    },
+    {
+     "core_type": "Concept",
+     "end": 380,
+     "label": "Concept",
+     "score": 0.7651,
+     "start": 373,
+     "text": "concept"
+    },
+    {
+     "core_type": "Person",
+     "end": 463,
+     "label": "Person",
+     "score": 0.7406,
+     "start": 456,
+     "text": "student"
+    },
+    {
+     "core_type": "Person",
+     "end": 560,
+     "label": "Person",
+     "score": 0.7281,
+     "start": 553,
+     "text": "student"
+    },
+    {
+     "core_type": "Concept",
+     "end": 825,
+     "label": "CognitiveBias",
+     "score": 0.6428,
+     "start": 816,
+     "text": "cognitive"
+    },
+    {
+     "core_type": "Concept",
+     "end": 830,
+     "label": "CognitiveBias",
+     "score": 0.6303,
+     "start": 826,
+     "text": "load"
+    },
+    {
+     "core_type": "Concept",
+     "end": 988,
+     "label": "Concept",
+     "score": 0.6221,
+     "start": 977,
+     "text": "information"
+    },
+    {
+     "core_type": "Person",
+     "end": 9,
+     "label": "Person",
+     "score": 0.7021,
+     "start": 2,
+     "text": "learner"
+    },
+    {
+     "core_type": "Person",
+     "end": 148,
+     "label": "Person",
+     "score": 0.6071,
+     "start": 142,
+     "text": "expert"
+    },
+    {
+     "core_type": "Method",
+     "end": 174,
+     "label": "Method",
+     "score": 0.8977,
+     "start": 166,
+     "text": "teaching"
+    },
+    {
+     "core_type": "Method",
+     "end": 181,
+     "label": "Method",
+     "score": 0.8593,
+     "start": 175,
+     "text": "method"
+    },
+    {
+     "core_type": "Person",
+     "end": 221,
+     "label": "Person",
+     "score": 0.722,
+     "start": 214,
+     "text": "learner"
+    },
+    {
+     "core_type": "Document",
+     "end": 901,
+     "label": "Document",
+     "score": 0.7056,
+     "start": 891,
+     "text": "literature"
+    },
+    {
+     "core_type": "Person",
+     "end": 1063,
+     "label": "Person",
+     "score": 0.6025,
+     "start": 1056,
+     "text": "learner"
+    },
+    {
+     "core_type": "Concept",
+     "end": 18,
+     "label": "Concept",
+     "score": 0.941,
+     "start": 11,
+     "text": "working"
+    },
+    {
+     "core_type": "Concept",
+     "end": 25,
+     "label": "Concept",
+     "score": 0.9383,
+     "start": 19,
+     "text": "memory"
+    },
+    {
+     "core_type": "Concept",
+     "end": 108,
+     "label": "Concept",
+     "score": 0.8679,
+     "start": 97,
+     "text": "overloading"
+    },
+    {
+     "core_type": "Concept",
+     "end": 115,
+     "label": "Concept",
+     "score": 0.9004,
+     "start": 109,
+     "text": "memory"
+    },
+    {
+     "core_type": "Concept",
+     "end": 149,
+     "label": "Concept",
+     "score": 0.6478,
+     "start": 144,
+     "text": "tasks"
+    },
+    {
+     "core_type": "Concept",
+     "end": 162,
+     "label": "Concept",
+     "score": 0.6066,
+     "start": 154,
+     "text": "evidence"
+    },
+    {
+     "core_type": "Concept",
+     "end": 269,
+     "label": "Concept",
+     "score": 0.892,
+     "start": 259,
+     "text": "processing"
+    },
+    {
+     "core_type": "Concept",
+     "end": 277,
+     "label": "Concept",
+     "score": 0.8889,
+     "start": 270,
+     "text": "demands"
+    },
+    {
+     "core_type": "Concept",
+     "end": 332,
+     "label": "Concept",
+     "score": 0.8809,
+     "start": 323,
+     "text": "cognitive"
+    },
+    {
+     "core_type": "Concept",
+     "end": 343,
+     "label": "Concept",
+     "score": 0.8731,
+     "start": 333,
+     "text": "operations"
+    },
+    {
+     "core_type": "Concept",
+     "end": 365,
+     "label": "Concept",
+     "score": 0.7836,
+     "start": 357,
+     "text": "learning"
+    }
+   ],
+   "score": {
+    "bare_head_rate": 0.0967741935483871,
+    "core_type_accuracy": 0.9333333333333333,
+    "counts": {
+     "bare_head": 3,
+     "exact": 2,
+     "false": 16,
+     "overlap": 10,
+     "proposals": 31,
+     "type_correct": 14,
+     "type_wrong": 1
+    },
+    "exact_precision": 0.06451612903225806,
+    "exact_recall": 0.03125,
+    "false_span_rate": 0.5161290322580645,
+    "mentions": 64,
+    "multiword_matched": 10,
+    "multiword_n": 40,
+    "multiword_recall": 0.25,
+    "overlap_recall": 0.234375,
+    "per_label": {
+     "CognitiveBias": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 2
+     },
+     "Concept": {
+      "exact": 0,
+      "false": 13,
+      "proposals": 23
+     },
+     "Document": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 1
+     },
+     "Method": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 2
+     },
+     "Person": {
+      "exact": 2,
+      "false": 0,
+      "proposals": 3
+     }
+    },
+    "proposals": 31
+   }
+  },
+  "02_technical_event_pipeline.md": {
+   "proposals": [
+    {
+     "core_type": "Process",
+     "end": 347,
+     "label": "Process",
+     "score": 0.6008,
+     "start": 342,
+     "text": "batch"
+    },
+    {
+     "core_type": "Technology",
+     "end": 639,
+     "label": "Technology",
+     "score": 0.603,
+     "start": 631,
+     "text": "database"
+    },
+    {
+     "core_type": "Document",
+     "end": 854,
+     "label": "Dataset",
+     "score": 0.7041,
+     "start": 847,
+     "text": "records"
+    },
+    {
+     "core_type": "Product",
+     "end": 985,
+     "label": "Model",
+     "score": 0.9112,
+     "start": 974,
+     "text": "correctness"
+    },
+    {
+     "core_type": "Product",
+     "end": 991,
+     "label": "Model",
+     "score": 0.8838,
+     "start": 986,
+     "text": "model"
+    }
+   ],
+   "score": {
+    "bare_head_rate": 0.0,
+    "core_type_accuracy": 1.0,
+    "counts": {
+     "bare_head": 0,
+     "exact": 0,
+     "false": 4,
+     "overlap": 1,
+     "proposals": 5,
+     "type_correct": 1,
+     "type_wrong": 0
+    },
+    "exact_precision": 0.0,
+    "exact_recall": 0.0,
+    "false_span_rate": 0.8,
+    "mentions": 42,
+    "multiword_matched": 0,
+    "multiword_n": 19,
+    "multiword_recall": 0.0,
+    "overlap_recall": 0.023809523809523808,
+    "per_label": {
+     "Dataset": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 1
+     },
+     "Model": {
+      "exact": 0,
+      "false": 2,
+      "proposals": 2
+     },
+     "Process": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 1
+     },
+     "Technology": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 1
+     }
+    },
+    "proposals": 5
+   }
+  },
+  "03_research_notes_sleep_and_attention.md": {
+   "proposals": [
+    {
+     "core_type": "Concept",
+     "end": 46,
+     "label": "Concept",
+     "score": 0.6775,
+     "start": 37,
+     "text": "Attention"
+    },
+    {
+     "core_type": "Measurement",
+     "end": 254,
+     "label": "Measurement",
+     "score": 0.7929,
+     "start": 241,
+     "text": "reaction-time"
+    },
+    {
+     "core_type": "Measurement",
+     "end": 263,
+     "label": "Measurement",
+     "score": 0.7538,
+     "start": 255,
+     "text": "measures"
+    },
+    {
+     "core_type": "Document",
+     "end": 434,
+     "label": "Document",
+     "score": 0.731,
+     "start": 428,
+     "text": "review"
+    },
+    {
+     "core_type": "Document",
+     "end": 441,
+     "label": "Document",
+     "score": 0.7071,
+     "start": 435,
+     "text": "papers"
+    },
+    {
+     "core_type": "Concept",
+     "end": 505,
+     "label": "Concept",
+     "score": 0.6807,
+     "start": 496,
+     "text": "attention"
+    },
+    {
+     "core_type": "Concept",
+     "end": 614,
+     "label": "Concept",
+     "score": 0.6453,
+     "start": 605,
+     "text": "sustained"
+    },
+    {
+     "core_type": "Concept",
+     "end": 624,
+     "label": "Concept",
+     "score": 0.7109,
+     "start": 615,
+     "text": "attention"
+    },
+    {
+     "core_type": "Concept",
+     "end": 640,
+     "label": "Concept",
+     "score": 0.6713,
+     "start": 626,
+     "text": "working-memory"
+    },
+    {
+     "core_type": "Concept",
+     "end": 649,
+     "label": "Concept",
+     "score": 0.6627,
+     "start": 641,
+     "text": "updating"
+    },
+    {
+     "core_type": "Concept",
+     "end": 665,
+     "label": "Concept",
+     "score": 0.6579,
+     "start": 655,
+     "text": "subjective"
+    },
+    {
+     "core_type": "Concept",
+     "end": 673,
+     "label": "Concept",
+     "score": 0.6545,
+     "start": 666,
+     "text": "fatigue"
+    },
+    {
+     "core_type": "Method",
+     "end": 776,
+     "label": "StudyDesign",
+     "score": 0.8572,
+     "start": 769,
+     "text": "studies"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1093,
+     "label": "Concept",
+     "score": 0.6111,
+     "start": 1087,
+     "text": "effort"
+    },
+    {
+     "core_type": "Method",
+     "end": 533,
+     "label": "StudyDesign",
+     "score": 0.6312,
+     "start": 527,
+     "text": "design"
+    },
+    {
+     "core_type": "Method",
+     "end": 922,
+     "label": "StudyDesign",
+     "score": 0.944,
+     "start": 909,
+     "text": "Observational"
+    },
+    {
+     "core_type": "Method",
+     "end": 930,
+     "label": "StudyDesign",
+     "score": 0.95,
+     "start": 923,
+     "text": "studies"
+    },
+    {
+     "core_type": "Method",
+     "end": 10,
+     "label": "StudyDesign",
+     "score": 0.9169,
+     "start": 0,
+     "text": "Controlled"
+    },
+    {
+     "core_type": "Method",
+     "end": 22,
+     "label": "StudyDesign",
+     "score": 0.9091,
+     "start": 11,
+     "text": "restriction"
+    },
+    {
+     "core_type": "Method",
+     "end": 30,
+     "label": "StudyDesign",
+     "score": 0.9207,
+     "start": 23,
+     "text": "studies"
+    },
+    {
+     "core_type": "Concept",
+     "end": 98,
+     "label": "Concept",
+     "score": 0.623,
+     "start": 87,
+     "text": "performance"
+    },
+    {
+     "core_type": "Concept",
+     "end": 455,
+     "label": "Concept",
+     "score": 0.6473,
+     "start": 447,
+     "text": "semantic"
+    },
+    {
+     "core_type": "Concept",
+     "end": 464,
+     "label": "Concept",
+     "score": 0.6631,
+     "start": 456,
+     "text": "patterns"
+    },
+    {
+     "core_type": "Concept",
+     "end": 476,
+     "label": "Concept",
+     "score": 0.7332,
+     "start": 466,
+     "text": "constructs"
+    },
+    {
+     "core_type": "Concept",
+     "end": 516,
+     "label": "Concept",
+     "score": 0.7468,
+     "start": 506,
+     "text": "constructs"
+    },
+    {
+     "core_type": "Concept",
+     "end": 566,
+     "label": "Concept",
+     "score": 0.7323,
+     "start": 556,
+     "text": "constructs"
+    },
+    {
+     "core_type": "Concept",
+     "end": 593,
+     "label": "Concept",
+     "score": 0.6823,
+     "start": 580,
+     "text": "interventions"
+    },
+    {
+     "core_type": "Concept",
+     "end": 612,
+     "label": "Concept",
+     "score": 0.6491,
+     "start": 604,
+     "text": "outcomes"
+    },
+    {
+     "core_type": "Concept",
+     "end": 629,
+     "label": "Concept",
+     "score": 0.6328,
+     "start": 618,
+     "text": "conditional"
+    },
+    {
+     "core_type": "Concept",
+     "end": 636,
+     "label": "Concept",
+     "score": 0.6653,
+     "start": 630,
+     "text": "claims"
+    },
+    {
+     "core_type": "Concept",
+     "end": 671,
+     "label": "Concept",
+     "score": 0.6724,
+     "start": 661,
+     "text": "population"
+    },
+    {
+     "core_type": "Concept",
+     "end": 682,
+     "label": "Concept",
+     "score": 0.6754,
+     "start": 675,
+     "text": "context"
+    },
+    {
+     "core_type": "Concept",
+     "end": 896,
+     "label": "Concept",
+     "score": 0.6803,
+     "start": 887,
+     "text": "predicate"
+    },
+    {
+     "core_type": "Concept",
+     "end": 902,
+     "label": "Concept",
+     "score": 0.6577,
+     "start": 897,
+     "text": "layer"
+    },
+    {
+     "core_type": "Concept",
+     "end": 984,
+     "label": "Concept",
+     "score": 0.6293,
+     "start": 969,
+     "text": "domain-specific"
+    },
+    {
+     "core_type": "Concept",
+     "end": 994,
+     "label": "Concept",
+     "score": 0.6143,
+     "start": 985,
+     "text": "extension"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1037,
+     "label": "Finding",
+     "score": 0.6516,
+     "start": 1028,
+     "text": "practical"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1048,
+     "label": "Finding",
+     "score": 0.674,
+     "start": 1038,
+     "text": "conclusion"
+    },
+    {
+     "core_type": "Concept",
+     "end": 56,
+     "label": "Concept",
+     "score": 0.8738,
+     "start": 47,
+     "text": "attention"
+    },
+    {
+     "core_type": "Concept",
+     "end": 138,
+     "label": "Concept",
+     "score": 0.7108,
+     "start": 129,
+     "text": "mechanism"
+    },
+    {
+     "core_type": "Person",
+     "end": 180,
+     "label": "Person",
+     "score": 0.6161,
+     "start": 169,
+     "text": "participant"
+    },
+    {
+     "core_type": "Concept",
+     "end": 201,
+     "label": "Concept",
+     "score": 0.9052,
+     "start": 195,
+     "text": "memory"
+    },
+    {
+     "core_type": "Concept",
+     "end": 212,
+     "label": "Concept",
+     "score": 0.8989,
+     "start": 203,
+     "text": "executive"
+    },
+    {
+     "core_type": "Concept",
+     "end": 220,
+     "label": "Concept",
+     "score": 0.905,
+     "start": 213,
+     "text": "control"
+    },
+    {
+     "core_type": "Concept",
+     "end": 234,
+     "label": "Concept",
+     "score": 0.7832,
+     "start": 225,
+     "text": "long-term"
+    },
+    {
+     "core_type": "Concept",
+     "end": 248,
+     "label": "Concept",
+     "score": 0.8836,
+     "start": 235,
+     "text": "psychological"
+    },
+    {
+     "core_type": "Concept",
+     "end": 257,
+     "label": "Concept",
+     "score": 0.872,
+     "start": 249,
+     "text": "outcomes"
+    },
+    {
+     "core_type": "Process",
+     "end": 299,
+     "label": "Process",
+     "score": 0.7719,
+     "start": 290,
+     "text": "ingestion"
+    },
+    {
+     "core_type": "Process",
+     "end": 307,
+     "label": "Process",
+     "score": 0.7947,
+     "start": 300,
+     "text": "testing"
+    },
+    {
+     "core_type": "Concept",
+     "end": 373,
+     "label": "Concept",
+     "score": 0.8588,
+     "start": 362,
+     "text": "uncertainty"
+    },
+    {
+     "core_type": "Concept",
+     "end": 386,
+     "label": "Concept",
+     "score": 0.8603,
+     "start": 375,
+     "text": "attribution"
+    },
+    {
+     "core_type": "Concept",
+     "end": 399,
+     "label": "Concept",
+     "score": 0.7463,
+     "start": 388,
+     "text": "measurement"
+    },
+    {
+     "core_type": "Concept",
+     "end": 412,
+     "label": "Concept",
+     "score": 0.8077,
+     "start": 400,
+     "text": "distinctions"
+    },
+    {
+     "core_type": "Concept",
+     "end": 437,
+     "label": "Concept",
+     "score": 0.8559,
+     "start": 431,
+     "text": "causal"
+    },
+    {
+     "core_type": "Concept",
+     "end": 447,
+     "label": "Concept",
+     "score": 0.855,
+     "start": 438,
+     "text": "overreach"
+    },
+    {
+     "core_type": "Concept",
+     "end": 469,
+     "label": "Concept",
+     "score": 0.7598,
+     "start": 461,
+     "text": "concepts"
+    },
+    {
+     "core_type": "Concept",
+     "end": 544,
+     "label": "Concept",
+     "score": 0.8126,
+     "start": 539,
+     "text": "scope"
+    }
+   ],
+   "score": {
+    "bare_head_rate": 0.04,
+    "core_type_accuracy": 0.8888888888888888,
+    "counts": {
+     "bare_head": 2,
+     "exact": 1,
+     "false": 32,
+     "overlap": 15,
+     "proposals": 50,
+     "type_correct": 16,
+     "type_wrong": 2
+    },
+    "exact_precision": 0.02,
+    "exact_recall": 0.02,
+    "false_span_rate": 0.64,
+    "mentions": 50,
+    "multiword_matched": 13,
+    "multiword_n": 29,
+    "multiword_recall": 0.4482758620689655,
+    "overlap_recall": 0.36,
+    "per_label": {
+     "Concept": {
+      "exact": 1,
+      "false": 24,
+      "proposals": 36
+     },
+     "Document": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 2
+     },
+     "Finding": {
+      "exact": 0,
+      "false": 2,
+      "proposals": 2
+     },
+     "Measurement": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 2
+     },
+     "Person": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 1
+     },
+     "Process": {
+      "exact": 0,
+      "false": 2,
+      "proposals": 2
+     },
+     "StudyDesign": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 5
+     }
+    },
+    "proposals": 50
+   }
+  },
+  "04_transcript_local_rag_build.md": {
+   "proposals": [
+    {
+     "core_type": "Process",
+     "end": 449,
+     "label": "Process",
+     "score": 0.6583,
+     "start": 442,
+     "text": "parsing"
+    },
+    {
+     "core_type": "Process",
+     "end": 457,
+     "label": "Process",
+     "score": 0.6202,
+     "start": 451,
+     "text": "entity"
+    },
+    {
+     "core_type": "Process",
+     "end": 468,
+     "label": "Process",
+     "score": 0.698,
+     "start": 458,
+     "text": "extraction"
+    },
+    {
+     "core_type": "Process",
+     "end": 479,
+     "label": "Process",
+     "score": 0.6286,
+     "start": 470,
+     "text": "retrieval"
+    },
+    {
+     "core_type": "Process",
+     "end": 487,
+     "label": "Process",
+     "score": 0.644,
+     "start": 480,
+     "text": "ranking"
+    },
+    {
+     "core_type": "Product",
+     "end": 504,
+     "label": "Model",
+     "score": 0.6327,
+     "start": 496,
+     "text": "language"
+    },
+    {
+     "core_type": "Technology",
+     "end": 680,
+     "label": "Technology",
+     "score": 0.7199,
+     "start": 672,
+     "text": "Postgres"
+    },
+    {
+     "core_type": "Technology",
+     "end": 711,
+     "label": "Technology",
+     "score": 0.6744,
+     "start": 705,
+     "text": "Qdrant"
+    },
+    {
+     "core_type": "Technology",
+     "end": 756,
+     "label": "Technology",
+     "score": 0.7079,
+     "start": 751,
+     "text": "Neo4j"
+    },
+    {
+     "core_type": "Technology",
+     "end": 953,
+     "label": "Technology",
+     "score": 0.691,
+     "start": 948,
+     "text": "Neo4j"
+    },
+    {
+     "core_type": "Technology",
+     "end": 1008,
+     "label": "Technology",
+     "score": 0.66,
+     "start": 1002,
+     "text": "Qdrant"
+    },
+    {
+     "core_type": "Concept",
+     "end": 259,
+     "label": "Concept",
+     "score": 0.7177,
+     "start": 251,
+     "text": "evidence"
+    },
+    {
+     "core_type": "Concept",
+     "end": 294,
+     "label": "Concept",
+     "score": 0.602,
+     "start": 290,
+     "text": "rule"
+    },
+    {
+     "core_type": "Concept",
+     "end": 307,
+     "label": "Concept",
+     "score": 0.6709,
+     "start": 299,
+     "text": "resource"
+    },
+    {
+     "core_type": "Concept",
+     "end": 318,
+     "label": "Concept",
+     "score": 0.6829,
+     "start": 308,
+     "text": "provenance"
+    },
+    {
+     "core_type": "Concept",
+     "end": 371,
+     "label": "Concept",
+     "score": 0.7421,
+     "start": 363,
+     "text": "evidence"
+    },
+    {
+     "core_type": "Concept",
+     "end": 438,
+     "label": "Concept",
+     "score": 0.6795,
+     "start": 430,
+     "text": "relation"
+    },
+    {
+     "core_type": "Concept",
+     "end": 688,
+     "label": "Concept",
+     "score": 0.6305,
+     "start": 679,
+     "text": "canonical"
+    },
+    {
+     "core_type": "Concept",
+     "end": 695,
+     "label": "Concept",
+     "score": 0.7287,
+     "start": 689,
+     "text": "entity"
+    },
+    {
+     "core_type": "Concept",
+     "end": 815,
+     "label": "Concept",
+     "score": 0.6176,
+     "start": 810,
+     "text": "names"
+    },
+    {
+     "core_type": "Person",
+     "end": 919,
+     "label": "Person",
+     "score": 0.8269,
+     "start": 915,
+     "text": "John"
+    },
+    {
+     "core_type": "Person",
+     "end": 925,
+     "label": "Person",
+     "score": 0.8337,
+     "start": 920,
+     "text": "Smith"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1098,
+     "label": "Concept",
+     "score": 0.7593,
+     "start": 1090,
+     "text": "evidence"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1105,
+     "label": "Concept",
+     "score": 0.6164,
+     "start": 1099,
+     "text": "bundle"
+    },
+    {
+     "core_type": "Concept",
+     "end": 263,
+     "label": "Concept",
+     "score": 0.6866,
+     "start": 258,
+     "text": "facts"
+    },
+    {
+     "core_type": "Concept",
+     "end": 318,
+     "label": "Concept",
+     "score": 0.6664,
+     "start": 311,
+     "text": "sources"
+    },
+    {
+     "core_type": "Process",
+     "end": 470,
+     "label": "Process",
+     "score": 0.749,
+     "start": 461,
+     "text": "ingestion"
+    },
+    {
+     "core_type": "Concept",
+     "end": 601,
+     "label": "Concept",
+     "score": 0.6061,
+     "start": 593,
+     "text": "failures"
+    },
+    {
+     "core_type": "Process",
+     "end": 665,
+     "label": "Process",
+     "score": 0.8283,
+     "start": 656,
+     "text": "integrity"
+    },
+    {
+     "core_type": "Process",
+     "end": 669,
+     "label": "Process",
+     "score": 0.8547,
+     "start": 666,
+     "text": "run"
+    },
+    {
+     "core_type": "Concept",
+     "end": 734,
+     "label": "Concept",
+     "score": 0.7198,
+     "start": 729,
+     "text": "facts"
+    },
+    {
+     "core_type": "Concept",
+     "end": 758,
+     "label": "Concept",
+     "score": 0.6443,
+     "start": 747,
+     "text": "projections"
+    },
+    {
+     "core_type": "Process",
+     "end": 856,
+     "label": "Process",
+     "score": 0.647,
+     "start": 847,
+     "text": "reranking"
+    },
+    {
+     "core_type": "Concept",
+     "end": 873,
+     "label": "Concept",
+     "score": 0.6615,
+     "start": 867,
+     "text": "domain"
+    },
+    {
+     "core_type": "Concept",
+     "end": 884,
+     "label": "Concept",
+     "score": 0.6701,
+     "start": 874,
+     "text": "ontologies"
+    },
+    {
+     "core_type": "Concept",
+     "end": 949,
+     "label": "Concept",
+     "score": 0.6053,
+     "start": 939,
+     "text": "guarantees"
+    }
+   ],
+   "score": {
+    "bare_head_rate": 0.16666666666666666,
+    "core_type_accuracy": 0.8888888888888888,
+    "counts": {
+     "bare_head": 5,
+     "exact": 0,
+     "false": 12,
+     "overlap": 13,
+     "proposals": 30,
+     "type_correct": 16,
+     "type_wrong": 2
+    },
+    "exact_precision": 0.0,
+    "exact_recall": 0.0,
+    "false_span_rate": 0.4,
+    "mentions": 52,
+    "multiword_matched": 11,
+    "multiword_n": 30,
+    "multiword_recall": 0.36666666666666664,
+    "overlap_recall": 0.34615384615384615,
+    "per_label": {
+     "Concept": {
+      "exact": 0,
+      "false": 9,
+      "proposals": 15
+     },
+     "Model": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 1
+     },
+     "Person": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 2
+     },
+     "Process": {
+      "exact": 0,
+      "false": 2,
+      "proposals": 9
+     },
+     "Technology": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 3
+     }
+    },
+    "proposals": 30
+   }
+  }
+ },
+ "repo": "numind/NuNER_Zero",
+ "revision": "c90187673f464518dca09f41689184ed6976242c",
+ "summary": {
+  "bare_head_rate": 0.06578947368421052,
+  "core_type_accuracy": 0.9038461538461539,
+  "exact_precision": 0.019736842105263157,
+  "exact_recall": 0.014423076923076924,
+  "false_span_rate": 0.42105263157894735,
+  "mentions": 208,
+  "multiword_recall": 0.288135593220339,
+  "overlap_recall": 0.25,
+  "proposals": 152
+ },
+ "threshold": 0.6
+}

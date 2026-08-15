@@ -1,0 +1,38 @@
+# EM1 candidate pins — frozen before any scoring.
+# Every model is referenced by its exact Hugging Face revision.
+models:
+  - id: baseline-medium
+    repo: urchade/gliner_medium-v2.1
+    revision: 40ec419335d09393f298636f471328b722c6da9e
+    license: apache-2.0
+    role: baseline
+  - id: A-large-v21
+    repo: urchade/gliner_large-v2.1
+    revision: abd49a1f1ebc12af1be84d06f6848221cf96dcad
+    license: apache-2.0
+    role: challenger
+  - id: B-large-v25
+    repo: gliner-community/gliner_large-v2.5
+    revision: 3d6d1760be1c591069f85f207fced9214df8b15f
+    license: apache-2.0
+    role: challenger
+  - id: C-nuner-zero
+    repo: numind/NuNER_Zero
+    revision: c90187673f464518dca09f41689184ed6976242c
+    license: mit
+    role: challenger
+
+# Fair inference contract (identical for every model)
+contract:
+  corpus: realistic_smoke_v1
+  gold: eval/gold/ep1_dev_gold.yaml
+  labels: production-label-inventory          # profile router labels, no per-model rewriting
+  mapping: production-label-mapping           # extract_worker._map_label
+  threshold_grid: [0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60]
+  threshold_selection_set: dev-only
+  device: mps
+  dtype: fp32
+  library:
+    gliner: 0.2.28
+    torch: 2.13.0
+    transformers: 5.13.1
