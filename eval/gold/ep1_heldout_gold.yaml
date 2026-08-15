@@ -1,0 +1,123 @@
+# EP1 entity-mention gold — HELD-OUT corpus (heldout_ep1_v1).
+#
+# Authored from the source text alongside the documents, BEFORE any
+# entity-proposal implementation or inspection of extraction output.
+# Same schema as ep1_dev_gold.yaml. Timestamps and speaker markers are
+# deliberately ABSENT (proposals of them count as false spans).
+
+version: "ep1-gold-1"
+documents:
+  - doc: "01_psychology_semantic_memory.md"
+    mentions:
+      - {surface: "Semantic memory", core_type: Concept, multiword: true, head: "memory"}
+      - {surface: "semantic memory", core_type: Concept, multiword: true, head: "memory"}
+      - {surface: "episodic memory", core_type: Concept, multiword: true, head: "memory"}
+      - {surface: "concepts", core_type: Concept, multiword: false, head: "concepts"}
+      - {surface: "retrieval time", core_type: Measurement, multiword: true, head: "time"}
+      - {surface: "reaction time", core_type: Measurement, multiword: true, head: "time"}
+      - {surface: "category structure", core_type: Concept, multiword: true, head: "structure"}
+      - {surface: "concept formation", core_type: Process, multiword: true, head: "formation"}
+      - {surface: "prototypes", core_type: Concept, multiword: false, head: "prototypes"}
+      - {surface: "typicality", core_type: Concept, multiword: false, head: "typicality"}
+      - {surface: "lexical access", core_type: Process, multiword: true, head: "access"}
+      - {surface: "tip-of-the-tongue states", core_type: Concept, multiword: true, head: "states"}
+      - {surface: "vocabulary knowledge", core_type: Concept, multiword: true, head: "knowledge"}
+      - {surface: "older adults", core_type: Person, multiword: true, head: "adults"}
+      - {surface: "younger adults", core_type: Person, multiword: true, head: "adults"}
+      - {surface: "measurement instrument", core_type: Measurement, multiword: true, head: "instrument"}
+      - {surface: "students", core_type: Person, multiword: false, head: "students"}
+      - {surface: "experts", core_type: Person, multiword: false, head: "experts"}
+      - {surface: "instructional design research", core_type: Method, multiword: true, head: "research"}
+      - {surface: "category production", core_type: Process, multiword: true, head: "production"}
+      - {surface: "verification speed", core_type: Measurement, multiword: true, head: "speed"}
+      - {surface: "naming ability", core_type: Measurement, multiword: true, head: "ability"}
+      - {surface: "participant", core_type: Person, multiword: false, head: "participant"}
+      - {surface: "retrieval burden", core_type: Concept, multiword: true, head: "burden"}
+      - {surface: "retrieval deficit", core_type: Concept, multiword: true, head: "deficit"}
+
+  - doc: "02_technical_streaming_checkpoints.md"
+    mentions:
+      - {surface: "streaming processor", core_type: Technology, multiword: true, head: "processor"}
+      - {surface: "derived state", core_type: Concept, multiword: true, head: "state"}
+      - {surface: "checkpoint mechanism", core_type: Technology, multiword: true, head: "mechanism"}
+      - {surface: "durable storage", core_type: Technology, multiword: true, head: "storage"}
+      - {surface: "input offsets", core_type: Concept, multiword: true, head: "offsets"}
+      - {surface: "deterministic output keys", core_type: Concept, multiword: true, head: "keys"}
+      - {surface: "at-least-once delivery", core_type: Process, multiword: true, head: "delivery"}
+      - {surface: "windowed aggregation", core_type: Process, multiword: true, head: "aggregation"}
+      - {surface: "window", core_type: Concept, multiword: false, head: "window"}
+      - {surface: "correction stream", core_type: Technology, multiword: true, head: "stream"}
+      - {surface: "deterministic event log", core_type: Technology, multiword: true, head: "log"}
+      - {surface: "test harness", core_type: Technology, multiword: true, head: "harness"}
+      - {surface: "input sequences", core_type: Concept, multiword: true, head: "sequences"}
+      - {surface: "derived state", core_type: Concept, multiword: true, head: "state"}
+      - {surface: "backpressure", core_type: Concept, multiword: false, head: "backpressure"}
+      - {surface: "queue depth", core_type: Measurement, multiword: true, head: "depth"}
+      - {surface: "input lag", core_type: Measurement, multiword: true, head: "lag"}
+      - {surface: "checkpoint age", core_type: Measurement, multiword: true, head: "age"}
+      - {surface: "observability metrics", core_type: Measurement, multiword: true, head: "metrics"}
+      - {surface: "processing logic", core_type: Technology, multiword: true, head: "logic"}
+      - {surface: "delivery semantics", core_type: Concept, multiword: true, head: "semantics"}
+      - {surface: "late record", core_type: Document, multiword: true, head: "record"}
+      - {surface: "worker", core_type: Person, multiword: false, head: "worker"}
+      - {surface: "consumers", core_type: Technology, multiword: false, head: "consumers"}
+
+  - doc: "03_research_caffeine_alertness.md"
+    mentions:
+      - {surface: "caffeine", core_type: Concept, multiword: false, head: "caffeine"}
+      - {surface: "alertness", core_type: Concept, multiword: false, head: "alertness"}
+      - {surface: "task switching", core_type: Process, multiword: true, head: "switching"}
+      - {surface: "subjective sleepiness", core_type: Concept, multiword: true, head: "sleepiness"}
+      - {surface: "vigilance tasks", core_type: Measurement, multiword: true, head: "tasks"}
+      - {surface: "executive tasks", core_type: Measurement, multiword: true, head: "tasks"}
+      - {surface: "habitual use", core_type: Concept, multiword: true, head: "use"}
+      - {surface: "regular consumers", core_type: Person, multiword: true, head: "consumers"}
+      - {surface: "occasional consumers", core_type: Person, multiword: true, head: "consumers"}
+      - {surface: "dose-response curve", core_type: Measurement, multiword: true, head: "curve"}
+      - {surface: "task switching", core_type: Process, multiword: true, head: "switching"}
+      - {surface: "switch cost", core_type: Measurement, multiword: true, head: "cost"}
+      - {surface: "switch trials", core_type: Measurement, multiword: true, head: "trials"}
+      - {surface: "repeat trials", core_type: Measurement, multiword: true, head: "trials"}
+      - {surface: "response time", core_type: Measurement, multiword: true, head: "time"}
+      - {surface: "executive control", core_type: Concept, multiword: true, head: "control"}
+      - {surface: "blood caffeine concentration", core_type: Measurement, multiword: true, head: "concentration"}
+      - {surface: "withdrawal", core_type: Concept, multiword: false, head: "withdrawal"}
+      - {surface: "participants", core_type: Person, multiword: false, head: "participants"}
+      - {surface: "baseline", core_type: Measurement, multiword: false, head: "baseline"}
+      - {surface: "subjective alertness", core_type: Concept, multiword: true, head: "alertness"}
+      - {surface: "behavioral vigilance", core_type: Concept, multiword: true, head: "vigilance"}
+      - {surface: "self-reported alertness", core_type: Concept, multiword: true, head: "alertness"}
+      - {surface: "measured vigilance", core_type: Measurement, multiword: true, head: "vigilance"}
+      - {surface: "sustained attention", core_type: Concept, multiword: true, head: "attention"}
+      - {surface: "fatigued individuals", core_type: Person, multiword: true, head: "individuals"}
+
+  - doc: "04_transcript_analytics_migration.md"
+    mentions:
+      - {surface: "analytics pipeline", core_type: Technology, multiword: true, head: "pipeline"}
+      - {surface: "warehouse", core_type: Technology, multiword: false, head: "warehouse"}
+      - {surface: "raw events", core_type: Event, multiword: true, head: "events"}
+      - {surface: "transformation jobs", core_type: Process, multiword: true, head: "jobs"}
+      - {surface: "event streaming architecture", core_type: Technology, multiword: true, head: "architecture"}
+      - {surface: "processing layer", core_type: Technology, multiword: true, head: "layer"}
+      - {surface: "serving layer", core_type: Technology, multiword: true, head: "layer"}
+      - {surface: "derived tables", core_type: Concept, multiword: true, head: "tables"}
+      - {surface: "long-term storage", core_type: Technology, multiword: true, head: "storage"}
+      - {surface: "materialized view", core_type: Technology, multiword: true, head: "view"}
+      - {surface: "rebuild job", core_type: Process, multiword: true, head: "job"}
+      - {surface: "Postgres", core_type: Technology, multiword: false, head: "Postgres"}
+      - {surface: "schema", core_type: Concept, multiword: false, head: "schema"}
+      - {surface: "migration history", core_type: Concept, multiword: true, head: "history"}
+      - {surface: "checkpoints", core_type: Concept, multiword: false, head: "checkpoints"}
+      - {surface: "watermark", core_type: Concept, multiword: false, head: "watermark"}
+      - {surface: "event offset", core_type: Measurement, multiword: true, head: "offset"}
+      - {surface: "freshness requirement", core_type: Concept, multiword: true, head: "requirement"}
+      - {surface: "backfill job", core_type: Process, multiword: true, head: "job"}
+      - {surface: "historical events", core_type: Event, multiword: true, head: "events"}
+      - {surface: "checksum comparison", core_type: Process, multiword: true, head: "comparison"}
+      - {surface: "retention policy", core_type: Concept, multiword: true, head: "policy"}
+      - {surface: "compaction jobs", core_type: Process, multiword: true, head: "jobs"}
+      - {surface: "columnar format", core_type: Concept, multiword: true, head: "format"}
+      - {surface: "query layer", core_type: Technology, multiword: true, head: "layer"}
+      - {surface: "query results", core_type: Concept, multiword: true, head: "results"}
+      - {surface: "alerting system", core_type: Technology, multiword: true, head: "system"}
+      - {surface: "analyst", core_type: Person, multiword: false, head: "analyst"}

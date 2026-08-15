@@ -1,0 +1,160 @@
+# EP1 entity-mention gold — DEVELOPMENT corpus (realistic_smoke_v1).
+#
+# Annotates ENTITY MENTIONS only (never relations). For each mention:
+#   surface    canonical exact span text (as it appears in the source)
+#   core_type  frozen-ontology core type
+#   multiword  true when span integrity matters ("working memory" over "memory")
+#   head       head token(s) that must be inside a proposed span for
+#              overlap-recall credit
+# Timestamps and speaker markers are deliberately ABSENT: proposals of
+# them are measured as false spans (noise control requirement).
+# Gold is authored from the source text, never from extraction output.
+
+version: "ep1-gold-1"
+documents:
+  - doc: "01_psychology_working_memory.md"
+    mentions:
+      - {surface: "Working memory", core_type: Concept, multiword: true, head: "memory"}
+      - {surface: "working memory", core_type: Concept, multiword: true, head: "memory"}
+      - {surface: "long-term memory", core_type: Concept, multiword: true, head: "memory"}
+      - {surface: "cognitive load", core_type: Concept, multiword: true, head: "load"}
+      - {surface: "attention", core_type: Concept, multiword: false, head: "attention"}
+      - {surface: "sleep deprivation", core_type: Concept, multiword: true, head: "deprivation"}
+      - {surface: "verbal system", core_type: Concept, multiword: true, head: "system"}
+      - {surface: "visuospatial system", core_type: Concept, multiword: true, head: "system"}
+      - {surface: "central control process", core_type: Process, multiword: true, head: "process"}
+      - {surface: "episodic component", core_type: Concept, multiword: true, head: "component"}
+      - {surface: "instructional design research", core_type: Method, multiword: true, head: "research"}
+      - {surface: "worked examples", core_type: Document, multiword: true, head: "examples"}
+      - {surface: "stepwise demonstrations", core_type: Method, multiword: true, head: "demonstrations"}
+      - {surface: "explanatory text", core_type: Document, multiword: true, head: "text"}
+      - {surface: "teaching method", core_type: Method, multiword: true, head: "method"}
+      - {surface: "prior knowledge", core_type: Concept, multiword: true, head: "knowledge"}
+      - {surface: "statistical concept", core_type: Concept, multiword: true, head: "concept"}
+      - {surface: "attentional control", core_type: Concept, multiword: true, head: "control"}
+      - {surface: "fatigue", core_type: Concept, multiword: false, head: "fatigue"}
+      - {surface: "student", core_type: Person, multiword: false, head: "student"}
+      - {surface: "learner", core_type: Person, multiword: false, head: "learner"}
+      - {surface: "novice", core_type: Person, multiword: false, head: "novice"}
+      - {surface: "expert", core_type: Person, multiword: false, head: "expert"}
+      - {surface: "laboratory studies", core_type: Method, multiword: true, head: "studies"}
+      - {surface: "sustained attention", core_type: Concept, multiword: true, head: "attention"}
+      - {surface: "task", core_type: Concept, multiword: false, head: "task"}
+
+  - doc: "02_technical_event_pipeline.md"
+    mentions:
+      - {surface: "event pipeline", core_type: Technology, multiword: true, head: "pipeline"}
+      - {surface: "transactional database", core_type: Technology, multiword: true, head: "database"}
+      - {surface: "workflow authority", core_type: Concept, multiword: true, head: "authority"}
+      - {surface: "worker", core_type: Person, multiword: false, head: "worker"}
+      - {surface: "receipt", core_type: Document, multiword: false, head: "receipt"}
+      - {surface: "run status", core_type: Concept, multiword: true, head: "status"}
+      - {surface: "outbox event", core_type: Event, multiword: true, head: "event"}
+      - {surface: "message broker", core_type: Technology, multiword: true, head: "broker"}
+      - {surface: "documents", core_type: Document, multiword: false, head: "documents"}
+      - {surface: "chunks", core_type: Document, multiword: false, head: "chunks"}
+      - {surface: "facts", core_type: Concept, multiword: false, head: "facts"}
+      - {surface: "projection artifacts", core_type: Product, multiword: true, head: "artifacts"}
+      - {surface: "deterministic identifiers", core_type: Concept, multiword: true, head: "identifiers"}
+      - {surface: "replay", core_type: Process, multiword: false, head: "replay"}
+      - {surface: "storage layer", core_type: Technology, multiword: true, head: "layer"}
+      - {surface: "orchestration layer", core_type: Technology, multiword: true, head: "layer"}
+      - {surface: "external services", core_type: Technology, multiword: true, head: "services"}
+      - {surface: "search indexes", core_type: Technology, multiword: true, head: "indexes"}
+      - {surface: "vector index", core_type: Technology, multiword: true, head: "index"}
+      - {surface: "graph store", core_type: Technology, multiword: true, head: "store"}
+      - {surface: "graph databases", core_type: Technology, multiword: true, head: "databases"}
+      - {surface: "workflow database", core_type: Technology, multiword: true, head: "database"}
+      - {surface: "projection worker", core_type: Technology, multiword: true, head: "worker"}
+      - {surface: "verifier", core_type: Technology, multiword: false, head: "verifier"}
+      - {surface: "bounded leases", core_type: Concept, multiword: true, head: "leases"}
+      - {surface: "deterministic stage contracts", core_type: Concept, multiword: true, head: "contracts"}
+      - {surface: "machine", core_type: Technology, multiword: false, head: "machine"}
+      - {surface: "batch", core_type: Process, multiword: false, head: "batch"}
+
+  - doc: "03_research_notes_sleep_and_attention.md"
+    mentions:
+      - {surface: "restricted sleep", core_type: Concept, multiword: true, head: "sleep"}
+      - {surface: "sleep restriction", core_type: Concept, multiword: true, head: "restriction"}
+      - {surface: "attentional performance", core_type: Concept, multiword: true, head: "performance"}
+      - {surface: "attention", core_type: Concept, multiword: false, head: "attention"}
+      - {surface: "sustained attention", core_type: Concept, multiword: true, head: "attention"}
+      - {surface: "reaction-time measures", core_type: Measurement, multiword: true, head: "measures"}
+      - {surface: "working-memory updating", core_type: Concept, multiword: true, head: "updating"}
+      - {surface: "subjective fatigue", core_type: Concept, multiword: true, head: "fatigue"}
+      - {surface: "sleep restriction studies", core_type: Method, multiword: true, head: "studies"}
+      - {surface: "review papers", core_type: Document, multiword: true, head: "papers"}
+      - {surface: "operational definitions", core_type: Concept, multiword: true, head: "definitions"}
+      - {surface: "group averages", core_type: Measurement, multiword: true, head: "averages"}
+      - {surface: "hours of sleep", core_type: Measurement, multiword: true, head: "sleep"}
+      - {surface: "attentional lapses", core_type: Concept, multiword: true, head: "lapses"}
+      - {surface: "task conditions", core_type: Concept, multiword: true, head: "conditions"}
+      - {surface: "psychomotor vigilance tasks", core_type: Measurement, multiword: true, head: "tasks"}
+      - {surface: "executive control", core_type: Concept, multiword: true, head: "control"}
+      - {surface: "self-report scales", core_type: Measurement, multiword: true, head: "scales"}
+      - {surface: "alertness", core_type: Concept, multiword: false, head: "alertness"}
+      - {surface: "response variability", core_type: Concept, multiword: true, head: "variability"}
+      - {surface: "fatigue", core_type: Concept, multiword: false, head: "fatigue"}
+      - {surface: "correlation", core_type: Concept, multiword: false, head: "correlation"}
+      - {surface: "intervention evidence", core_type: Concept, multiword: true, head: "evidence"}
+      - {surface: "observational studies", core_type: Method, multiword: true, head: "studies"}
+      - {surface: "stress", core_type: Concept, multiword: false, head: "stress"}
+      - {surface: "workload", core_type: Concept, multiword: false, head: "workload"}
+      - {surface: "illness", core_type: Concept, multiword: false, head: "illness"}
+      - {surface: "controlled restriction studies", core_type: Method, multiword: true, head: "studies"}
+      - {surface: "laboratory conditions", core_type: Concept, multiword: true, head: "conditions"}
+      - {surface: "psychology material", core_type: Document, multiword: true, head: "material"}
+      - {surface: "constructs", core_type: Concept, multiword: false, head: "constructs"}
+      - {surface: "measurement instruments", core_type: Measurement, multiword: true, head: "instruments"}
+      - {surface: "interventions", core_type: Process, multiword: false, head: "interventions"}
+      - {surface: "outcomes", core_type: Concept, multiword: false, head: "outcomes"}
+      - {surface: "conditional claims", core_type: Concept, multiword: true, head: "claims"}
+      - {surface: "long-term psychological outcomes", core_type: Concept, multiword: true, head: "outcomes"}
+
+  - doc: "04_transcript_local_rag_build.md"
+    mentions:
+      - {surface: "research assistant", core_type: Technology, multiword: true, head: "assistant"}
+      - {surface: "local-first architecture", core_type: Concept, multiword: true, head: "architecture"}
+      - {surface: "ingestion", core_type: Process, multiword: false, head: "ingestion"}
+      - {surface: "retrieval", core_type: Process, multiword: false, head: "retrieval"}
+      - {surface: "answer generation", core_type: Process, multiword: true, head: "generation"}
+      - {surface: "document parsing", core_type: Process, multiword: true, head: "parsing"}
+      - {surface: "entity extraction", core_type: Process, multiword: true, head: "extraction"}
+      - {surface: "retrieval ranking", core_type: Process, multiword: true, head: "ranking"}
+      - {surface: "language model", core_type: Technology, multiword: true, head: "model"}
+      - {surface: "Postgres", core_type: Technology, multiword: false, head: "Postgres"}
+      - {surface: "workflow authority", core_type: Concept, multiword: true, head: "authority"}
+      - {surface: "Qdrant", core_type: Technology, multiword: false, head: "Qdrant"}
+      - {surface: "vector retrieval", core_type: Process, multiword: true, head: "retrieval"}
+      - {surface: "Neo4j", core_type: Technology, multiword: false, head: "Neo4j"}
+      - {surface: "graph traversal", core_type: Process, multiword: true, head: "traversal"}
+      - {surface: "workers", core_type: Person, multiword: false, head: "workers"}
+      - {surface: "artifacts", core_type: Product, multiword: false, head: "artifacts"}
+      - {surface: "receipts", core_type: Document, multiword: false, head: "receipts"}
+      - {surface: "status changes", core_type: Process, multiword: true, head: "changes"}
+      - {surface: "outbox events", core_type: Event, multiword: true, head: "events"}
+      - {surface: "durable history", core_type: Concept, multiword: true, head: "history"}
+      - {surface: "GLiNER", core_type: Technology, multiword: false, head: "GLiNER"}
+      - {surface: "deterministic compiler", core_type: Technology, multiword: true, head: "compiler"}
+      - {surface: "graph predicates", core_type: Concept, multiword: true, head: "predicates"}
+      - {surface: "source chunk", core_type: Concept, multiword: true, head: "chunk"}
+      - {surface: "abstention", core_type: Concept, multiword: false, head: "abstention"}
+      - {surface: "corpus layer", core_type: Concept, multiword: true, head: "layer"}
+      - {surface: "local entities", core_type: Concept, multiword: true, head: "entities"}
+      - {surface: "canonical entity", core_type: Concept, multiword: true, head: "entity"}
+      - {surface: "membership decision", core_type: Concept, multiword: true, head: "decision"}
+      - {surface: "John Smith", core_type: Person, multiword: true, head: "Smith"}
+      - {surface: "evidence bundle", core_type: Concept, multiword: true, head: "bundle"}
+      - {surface: "synthesizer", core_type: Technology, multiword: false, head: "synthesizer"}
+      - {surface: "validator", core_type: Technology, multiword: false, head: "validator"}
+      - {surface: "bulk ingestion", core_type: Process, multiword: true, head: "ingestion"}
+      - {surface: "scale qualification", core_type: Process, multiword: true, head: "qualification"}
+      - {surface: "manifest", core_type: Document, multiword: false, head: "manifest"}
+      - {surface: "content hashes", core_type: Concept, multiword: true, head: "hashes"}
+      - {surface: "integrity run", core_type: Process, multiword: true, head: "run"}
+      - {surface: "duplicate facts", core_type: Concept, multiword: true, head: "facts"}
+      - {surface: "orphaned projections", core_type: Concept, multiword: true, head: "projections"}
+      - {surface: "real corpus", core_type: Concept, multiword: true, head: "corpus"}
+      - {surface: "reranking", core_type: Process, multiword: false, head: "reranking"}
+      - {surface: "domain ontologies", core_type: Concept, multiword: true, head: "ontologies"}
+      - {surface: "ingestion guarantees", core_type: Concept, multiword: true, head: "guarantees"}

@@ -1,0 +1,1723 @@
+{
+ "arm": "threshold-v2",
+ "corpus": "realistic_smoke_v1",
+ "gold_path": "eval/gold/ep1_dev_gold.yaml",
+ "gold_sha256": "710a354ab83a58c6d8dd4bab80842543187191db3fe1c45179b84e153694ef8d",
+ "per_document": {
+  "01_psychology_working_memory.md": {
+   "proposals": [
+    {
+     "core_type": "Concept",
+     "end": 373,
+     "expansion": null,
+     "label": "Field of study",
+     "original_label": "Field of study",
+     "original_text": "Researchers",
+     "start": 362,
+     "text": " Researcher"
+    },
+    {
+     "core_type": "Concept",
+     "end": 536,
+     "expansion": null,
+     "label": "Psychological concept",
+     "original_label": "Psychological concept",
+     "original_text": "attention",
+     "start": 527,
+     "text": " attentio"
+    },
+    {
+     "core_type": "Document",
+     "end": 666,
+     "expansion": null,
+     "label": "Document or publication",
+     "original_label": "Document or publication",
+     "original_text": "One influential account",
+     "start": 643,
+     "text": "\n\nOne influential accou"
+    },
+    {
+     "core_type": "Process",
+     "end": 813,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "central control process",
+     "start": 790,
+     "text": "a central control proce"
+    },
+    {
+     "core_type": "Location",
+     "end": 948,
+     "expansion": null,
+     "label": "Location",
+     "original_label": "Location",
+     "original_text": "locations",
+     "start": 939,
+     "text": "s locatio"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1340,
+     "expansion": null,
+     "label": "Psychological concept",
+     "original_label": "Psychological concept",
+     "original_text": "Cognitive load",
+     "start": 1326,
+     "text": "\nCognitive loa"
+    },
+    {
+     "core_type": "Person",
+     "end": 1492,
+     "expansion": null,
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "student",
+     "start": 1485,
+     "text": " studen"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1546,
+     "expansion": null,
+     "label": "Scientific concept",
+     "original_label": "Scientific concept",
+     "original_text": "new statistical concept",
+     "start": 1523,
+     "text": " new statistical concep"
+    },
+    {
+     "core_type": "Measurement",
+     "end": 1760,
+     "expansion": null,
+     "label": "Experimental task",
+     "original_label": "Experimental task",
+     "original_text": "immediate task",
+     "start": 1746,
+     "text": " immediate tas"
+    },
+    {
+     "core_type": "Document",
+     "end": 1929,
+     "expansion": null,
+     "label": "Document or publication",
+     "original_label": "Document or publication",
+     "original_text": "Instructional design research",
+     "start": 1900,
+     "text": "\n\nInstructional design resear"
+    },
+    {
+     "core_type": "Method",
+     "end": 2031,
+     "expansion": null,
+     "label": "Method or technique",
+     "original_label": "Method or technique",
+     "original_text": "Worked examples",
+     "start": 2016,
+     "text": ". Worked exampl"
+    },
+    {
+     "core_type": "Concept",
+     "end": 2041,
+     "expansion": null,
+     "label": "Research construct",
+     "original_label": "Research construct",
+     "original_text": "diagrams",
+     "start": 2033,
+     "text": ", diagra"
+    },
+    {
+     "core_type": "Document",
+     "end": 2070,
+     "expansion": null,
+     "label": "Document or publication",
+     "original_label": "Document or publication",
+     "original_text": "explanatory text",
+     "start": 2054,
+     "text": "r explanatory te"
+    },
+    {
+     "core_type": "Method",
+     "end": 2099,
+     "expansion": null,
+     "label": "Method or technique",
+     "original_label": "Method or technique",
+     "original_text": "stepwise demonstrations",
+     "start": 2076,
+     "text": "d stepwise demonstratio"
+    },
+    {
+     "core_type": "Person",
+     "end": 2246,
+     "expansion": null,
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "learner",
+     "start": 2239,
+     "text": "learner"
+    },
+    {
+     "core_type": "Person",
+     "end": 2385,
+     "expansion": null,
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "expert",
+     "start": 2379,
+     "text": "expert"
+    },
+    {
+     "core_type": "Method",
+     "end": 2418,
+     "expansion": null,
+     "label": "Method or technique",
+     "original_label": "Method or technique",
+     "original_text": "teaching method",
+     "start": 2403,
+     "text": "teaching method"
+    },
+    {
+     "core_type": "Measurement",
+     "end": 2529,
+     "expansion": null,
+     "label": "Experimental task",
+     "original_label": "Experimental task",
+     "original_text": "Sleep deprivation",
+     "start": 2512,
+     "text": "\nSleep deprivatio"
+    },
+    {
+     "core_type": "Method",
+     "end": 2631,
+     "expansion": null,
+     "label": "Method or technique",
+     "original_label": "Method or technique",
+     "original_text": "laboratory studies",
+     "start": 2613,
+     "text": " laboratory studie"
+    },
+    {
+     "core_type": "Concept",
+     "end": 2757,
+     "expansion": null,
+     "label": "Psychological concept",
+     "original_label": "Psychological concept",
+     "original_text": "attention",
+     "start": 2748,
+     "text": " attentio"
+    },
+    {
+     "core_type": "Concept",
+     "end": 2825,
+     "expansion": null,
+     "label": "Data structure",
+     "original_label": "Data structure",
+     "original_text": "working memory",
+     "start": 2811,
+     "text": " working memor"
+    },
+    {
+     "core_type": "Document",
+     "end": 3138,
+     "expansion": null,
+     "label": "Document or publication",
+     "original_label": "Document or publication",
+     "original_text": "literature",
+     "start": 3128,
+     "text": "e literatu"
+    },
+    {
+     "core_type": "Concept",
+     "end": 3395,
+     "expansion": null,
+     "label": "Psychological concept",
+     "original_label": "Psychological concept",
+     "original_text": "fatigue",
+     "start": 3388,
+     "text": "s fatig"
+    },
+    {
+     "core_type": "Concept",
+     "end": 3424,
+     "expansion": null,
+     "label": "Data structure",
+     "original_label": "Data structure",
+     "original_text": "working memory",
+     "start": 3410,
+     "text": "working memory"
+    }
+   ],
+   "score": {
+    "bare_head_rate": 0.0,
+    "core_type_accuracy": 0.7894736842105263,
+    "counts": {
+     "bare_head": 0,
+     "exact": 4,
+     "false": 5,
+     "overlap": 15,
+     "proposals": 24,
+     "type_correct": 15,
+     "type_wrong": 4
+    },
+    "exact_precision": 0.16666666666666666,
+    "exact_recall": 0.0625,
+    "false_span_rate": 0.20833333333333334,
+    "mentions": 64,
+    "multiword_matched": 13,
+    "multiword_n": 40,
+    "multiword_recall": 0.325,
+    "overlap_recall": 0.296875,
+    "per_label": {
+     "Data structure": {
+      "exact": 1,
+      "false": 0,
+      "proposals": 2
+     },
+     "Document or publication": {
+      "exact": 0,
+      "false": 2,
+      "proposals": 4
+     },
+     "Experimental task": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 2
+     },
+     "Field of study": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 1
+     },
+     "Location": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 1
+     },
+     "Method or technique": {
+      "exact": 1,
+      "false": 0,
+      "proposals": 4
+     },
+     "Person": {
+      "exact": 2,
+      "false": 0,
+      "proposals": 3
+     },
+     "Process or activity": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 1
+     },
+     "Psychological concept": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 4
+     },
+     "Research construct": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 1
+     },
+     "Scientific concept": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 1
+     }
+    },
+    "proposals": 24
+   }
+  },
+  "02_technical_event_pipeline.md": {
+   "proposals": [
+    {
+     "core_type": "Event",
+     "end": 32,
+     "expansion": null,
+     "label": "Event",
+     "original_label": "Event",
+     "original_text": "event",
+     "start": 27,
+     "text": "Event"
+    },
+    {
+     "core_type": "Person",
+     "end": 153,
+     "expansion": null,
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "worker",
+     "start": 147,
+     "text": " worke"
+    },
+    {
+     "core_type": "Concept",
+     "end": 191,
+     "expansion": null,
+     "label": "Data structure",
+     "original_label": "Data structure",
+     "original_text": "database",
+     "start": 183,
+     "text": " databas"
+    },
+    {
+     "core_type": "Process",
+     "end": 242,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "network call",
+     "start": 230,
+     "text": " network cal"
+    },
+    {
+     "core_type": "Process",
+     "end": 611,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "workflow authority",
+     "start": 593,
+     "text": "p workflow authori"
+    },
+    {
+     "core_type": "Process",
+     "end": 628,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "transaction",
+     "start": 617,
+     "text": "a transacti"
+    },
+    {
+     "core_type": "Concept",
+     "end": 639,
+     "expansion": null,
+     "label": "Data structure",
+     "original_label": "Data structure",
+     "original_text": "transactional database",
+     "start": 617,
+     "text": "a transactional databa"
+    },
+    {
+     "core_type": "Event",
+     "end": 771,
+     "expansion": null,
+     "label": "Event",
+     "original_label": "Event",
+     "original_text": "outbox",
+     "start": 765,
+     "text": "t outb"
+    },
+    {
+     "core_type": "Process",
+     "end": 1173,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "Idempotent identities",
+     "start": 1152,
+     "text": ".\n\nIdempotent identit"
+    },
+    {
+     "core_type": "Document",
+     "end": 1209,
+     "expansion": null,
+     "label": "Document or publication",
+     "original_label": "Document or publication",
+     "original_text": "Documents",
+     "start": 1200,
+     "text": "Documents"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1217,
+     "expansion": null,
+     "label": "Data structure",
+     "original_label": "Data structure",
+     "original_text": "chunks",
+     "start": 1211,
+     "text": "chunks"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1224,
+     "expansion": null,
+     "label": "Data structure",
+     "original_label": "Data structure",
+     "original_text": "facts",
+     "start": 1219,
+     "text": "facts"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1250,
+     "expansion": null,
+     "label": "Data structure",
+     "original_label": "Data structure",
+     "original_text": "projection artifacts",
+     "start": 1230,
+     "text": "projection artifacts"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1324,
+     "expansion": null,
+     "label": "Data structure",
+     "original_label": "Data structure",
+     "original_text": "normalized content",
+     "start": 1306,
+     "text": "normalized content"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1353,
+     "expansion": null,
+     "label": "Data structure",
+     "original_label": "Data structure",
+     "original_text": "stable structural inputs",
+     "start": 1329,
+     "text": "stable structural inputs"
+    },
+    {
+     "core_type": "Technology",
+     "end": 1410,
+     "expansion": null,
+     "label": "Software component",
+     "original_label": "Software component",
+     "original_text": "pipeline",
+     "start": 1402,
+     "text": "pipeline"
+    },
+    {
+     "core_type": "Technology",
+     "end": 1531,
+     "expansion": null,
+     "label": "Software component",
+     "original_label": "Software component",
+     "original_text": "storage layer",
+     "start": 1518,
+     "text": "storage layer"
+    },
+    {
+     "core_type": "Technology",
+     "end": 1563,
+     "expansion": null,
+     "label": "Software component",
+     "original_label": "Software component",
+     "original_text": "orchestration layer",
+     "start": 1544,
+     "text": "orchestration layer"
+    },
+    {
+     "core_type": "Technology",
+     "end": 1730,
+     "expansion": null,
+     "label": "Technology",
+     "original_label": "Technology",
+     "original_text": "Search indexes",
+     "start": 1716,
+     "text": "\nSearch indexe"
+    },
+    {
+     "core_type": "Technology",
+     "end": 1750,
+     "expansion": null,
+     "label": "Technology",
+     "original_label": "Technology",
+     "original_text": "graph databases",
+     "start": 1735,
+     "text": " graph database"
+    },
+    {
+     "core_type": "Technology",
+     "end": 1807,
+     "expansion": null,
+     "label": "Technology",
+     "original_label": "Technology",
+     "original_text": "workflow database",
+     "start": 1790,
+     "text": " workflow databas"
+    },
+    {
+     "core_type": "Concept",
+     "end": 2007,
+     "expansion": null,
+     "label": "System role",
+     "original_label": "System role",
+     "original_text": "projection worker",
+     "start": 1990,
+     "text": " projection worke"
+    },
+    {
+     "core_type": "Concept",
+     "end": 2081,
+     "expansion": null,
+     "label": "System role",
+     "original_label": "System role",
+     "original_text": "verifier",
+     "start": 2073,
+     "text": " verifie"
+    },
+    {
+     "core_type": "Process",
+     "end": 2330,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "Concurrency",
+     "start": 2319,
+     "text": "\n\nConcurren"
+    },
+    {
+     "core_type": "Concept",
+     "end": 2380,
+     "expansion": null,
+     "label": "System role",
+     "original_label": "System role",
+     "original_text": "worker",
+     "start": 2374,
+     "text": "worker"
+    },
+    {
+     "core_type": "Concept",
+     "end": 2381,
+     "expansion": null,
+     "label": "System role",
+     "original_label": "System role",
+     "original_text": "workers",
+     "start": 2374,
+     "text": "workers"
+    },
+    {
+     "core_type": "Process",
+     "end": 2552,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "bounded leases",
+     "start": 2538,
+     "text": "bounded leases"
+    },
+    {
+     "core_type": "Process",
+     "end": 2583,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "deterministic stage contracts",
+     "start": 2554,
+     "text": "deterministic stage contracts"
+    },
+    {
+     "core_type": "Process",
+     "end": 2619,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "transactional claim operations",
+     "start": 2589,
+     "text": "transactional claim operations"
+    },
+    {
+     "core_type": "Process",
+     "end": 2883,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "pipeline",
+     "start": 2875,
+     "text": " pipelin"
+    },
+    {
+     "core_type": "Document",
+     "end": 3077,
+     "expansion": null,
+     "label": "Document or publication",
+     "original_label": "Document or publication",
+     "original_text": "document",
+     "start": 3069,
+     "text": " documen"
+    },
+    {
+     "core_type": "Concept",
+     "end": 3111,
+     "expansion": null,
+     "label": "Data structure",
+     "original_label": "Data structure",
+     "original_text": "projection",
+     "start": 3101,
+     "text": " projectio"
+    }
+   ],
+   "score": {
+    "bare_head_rate": 0.0,
+    "core_type_accuracy": 0.5,
+    "counts": {
+     "bare_head": 0,
+     "exact": 9,
+     "false": 14,
+     "overlap": 9,
+     "proposals": 32,
+     "type_correct": 9,
+     "type_wrong": 9
+    },
+    "exact_precision": 0.28125,
+    "exact_recall": 0.21428571428571427,
+    "false_span_rate": 0.4375,
+    "mentions": 42,
+    "multiword_matched": 12,
+    "multiword_n": 19,
+    "multiword_recall": 0.631578947368421,
+    "overlap_recall": 0.42857142857142855,
+    "per_label": {
+     "Data structure": {
+      "exact": 3,
+      "false": 5,
+      "proposals": 8
+     },
+     "Document or publication": {
+      "exact": 1,
+      "false": 1,
+      "proposals": 2
+     },
+     "Event": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 2
+     },
+     "Person": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 1
+     },
+     "Process or activity": {
+      "exact": 2,
+      "false": 5,
+      "proposals": 9
+     },
+     "Software component": {
+      "exact": 2,
+      "false": 1,
+      "proposals": 3
+     },
+     "System role": {
+      "exact": 1,
+      "false": 1,
+      "proposals": 4
+     },
+     "Technology": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 3
+     }
+    },
+    "proposals": 32
+   }
+  },
+  "03_research_notes_sleep_and_attention.md": {
+   "proposals": [
+    {
+     "core_type": "Document",
+     "end": 16,
+     "expansion": null,
+     "label": "Document or publication",
+     "original_label": "Document or publication",
+     "original_text": "Research Notes",
+     "start": 2,
+     "text": "Research Notes"
+    },
+    {
+     "core_type": "Concept",
+     "end": 46,
+     "expansion": null,
+     "label": "Psychological concept",
+     "original_label": "Psychological concept",
+     "original_text": "Attention",
+     "start": 37,
+     "text": "Attention"
+    },
+    {
+     "core_type": "Measurement",
+     "end": 68,
+     "expansion": null,
+     "label": "Experimental task",
+     "original_label": "Experimental task",
+     "original_text": "Task Performance",
+     "start": 52,
+     "text": "Task Performance"
+    },
+    {
+     "core_type": "Measurement",
+     "end": 232,
+     "expansion": null,
+     "label": "Experimental task",
+     "original_label": "Experimental task",
+     "original_text": "tasks",
+     "start": 227,
+     "text": " task"
+    },
+    {
+     "core_type": "Measurement",
+     "end": 263,
+     "expansion": null,
+     "label": "Measurement or metric",
+     "original_label": "Measurement or metric",
+     "original_text": "Simple reaction-time measures",
+     "start": 234,
+     "text": " Simple reaction-time measure"
+    },
+    {
+     "core_type": "Document",
+     "end": 441,
+     "expansion": null,
+     "label": "Document or publication",
+     "original_label": "Document or publication",
+     "original_text": "review papers",
+     "start": 428,
+     "text": " review paper"
+    },
+    {
+     "core_type": "Concept",
+     "end": 649,
+     "expansion": null,
+     "label": "Psychological concept",
+     "original_label": "Psychological concept",
+     "original_text": "working-memory updating",
+     "start": 626,
+     "text": " working-memory updatin"
+    },
+    {
+     "core_type": "Concept",
+     "end": 673,
+     "expansion": null,
+     "label": "Psychological concept",
+     "original_label": "Psychological concept",
+     "original_text": "subjective fatigue",
+     "start": 655,
+     "text": " subjective fatigu"
+    },
+    {
+     "core_type": "Measurement",
+     "end": 1404,
+     "expansion": null,
+     "label": "Experimental task",
+     "original_label": "Experimental task",
+     "original_text": "Psychomotor vigilance tasks",
+     "start": 1377,
+     "text": " Psychomotor vigilance task"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1493,
+     "expansion": null,
+     "label": "Psychological concept",
+     "original_label": "Psychological concept",
+     "original_text": "executive control",
+     "start": 1476,
+     "text": " executive contro"
+    },
+    {
+     "core_type": "Measurement",
+     "end": 1513,
+     "expansion": null,
+     "label": "Measurement or metric",
+     "original_label": "Measurement or metric",
+     "original_text": "Self-report scales",
+     "start": 1495,
+     "text": " Self-report scale"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1542,
+     "expansion": null,
+     "label": "Psychological concept",
+     "original_label": "Psychological concept",
+     "original_text": "perceived fatigue",
+     "start": 1525,
+     "text": " perceived fatigu"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1542,
+     "expansion": null,
+     "label": "Psychological concept",
+     "original_label": "Psychological concept",
+     "original_text": "fatigue",
+     "start": 1535,
+     "text": " fatigu"
+    },
+    {
+     "core_type": "Person",
+     "end": 1554,
+     "expansion": null,
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "people",
+     "start": 1548,
+     "text": " peopl"
+    },
+    {
+     "core_type": "Method",
+     "end": 1630,
+     "expansion": null,
+     "label": "Method or technique",
+     "original_label": "Method or technique",
+     "original_text": "study design",
+     "start": 1618,
+     "text": " study desig"
+    },
+    {
+     "core_type": "Document",
+     "end": 1658,
+     "expansion": null,
+     "label": "Document or publication",
+     "original_label": "Document or publication",
+     "original_text": "literature",
+     "start": 1648,
+     "text": " literatur"
+    },
+    {
+     "core_type": "Person",
+     "end": 1672,
+     "expansion": null,
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "participants",
+     "start": 1660,
+     "text": " participant"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1714,
+     "expansion": null,
+     "label": "Psychological concept",
+     "original_label": "Psychological concept",
+     "original_text": "alertness",
+     "start": 1705,
+     "text": " alertnes"
+    },
+    {
+     "core_type": "Concept",
+     "end": 2148,
+     "expansion": null,
+     "label": "Psychological concept",
+     "original_label": "Psychological concept",
+     "original_text": "stress",
+     "start": 2142,
+     "text": "o stre"
+    },
+    {
+     "core_type": "Concept",
+     "end": 2158,
+     "expansion": null,
+     "label": "Psychological concept",
+     "original_label": "Psychological concept",
+     "original_text": "workload",
+     "start": 2150,
+     "text": ", worklo"
+    },
+    {
+     "core_type": "Concept",
+     "end": 2167,
+     "expansion": null,
+     "label": "Psychological concept",
+     "original_label": "Psychological concept",
+     "original_text": "illness",
+     "start": 2160,
+     "text": ", illne"
+    },
+    {
+     "core_type": "Method",
+     "end": 2234,
+     "expansion": null,
+     "label": "Method or technique",
+     "original_label": "Method or technique",
+     "original_text": "Controlled restriction studies",
+     "start": 2204,
+     "text": "Controlled restriction studies"
+    },
+    {
+     "core_type": "Measurement",
+     "end": 2334,
+     "expansion": null,
+     "label": "Experimental task",
+     "original_label": "Experimental task",
+     "original_text": "laboratory conditions",
+     "start": 2313,
+     "text": "laboratory conditions"
+    },
+    {
+     "core_type": "Concept",
+     "end": 2601,
+     "expansion": null,
+     "label": "Field of study",
+     "original_label": "Field of study",
+     "original_text": "psychology",
+     "start": 2591,
+     "text": " psycholog"
+    },
+    {
+     "core_type": "Concept",
+     "end": 2680,
+     "expansion": null,
+     "label": "Psychological concept",
+     "original_label": "Psychological concept",
+     "original_text": "constructs",
+     "start": 2670,
+     "text": " construct"
+    },
+    {
+     "core_type": "Measurement",
+     "end": 2745,
+     "expansion": null,
+     "label": "Measurement or metric",
+     "original_label": "Measurement or metric",
+     "original_text": "measurement instruments",
+     "start": 2722,
+     "text": " measurement instrument"
+    },
+    {
+     "core_type": "Concept",
+     "end": 2797,
+     "expansion": null,
+     "label": "Scientific concept",
+     "original_label": "Scientific concept",
+     "original_text": "interventions",
+     "start": 2784,
+     "text": " intervention"
+    },
+    {
+     "core_type": "Concept",
+     "end": 2840,
+     "expansion": null,
+     "label": "Research construct",
+     "original_label": "Research construct",
+     "original_text": "conditional claims",
+     "start": 2822,
+     "text": " conditional claim"
+    },
+    {
+     "core_type": "Measurement",
+     "end": 3315,
+     "expansion": null,
+     "label": "Experimental task",
+     "original_label": "Experimental task",
+     "original_text": "Sleep restriction",
+     "start": 3298,
+     "text": "Sleep restriction"
+    },
+    {
+     "core_type": "Person",
+     "end": 3478,
+     "expansion": null,
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "participant",
+     "start": 3467,
+     "text": "participant"
+    },
+    {
+     "core_type": "Concept",
+     "end": 3499,
+     "expansion": null,
+     "label": "Psychological concept",
+     "original_label": "Psychological concept",
+     "original_text": "memory",
+     "start": 3493,
+     "text": "memory"
+    },
+    {
+     "core_type": "Concept",
+     "end": 3518,
+     "expansion": null,
+     "label": "Psychological concept",
+     "original_label": "Psychological concept",
+     "original_text": "executive control",
+     "start": 3501,
+     "text": "executive control"
+    },
+    {
+     "core_type": "Concept",
+     "end": 3555,
+     "expansion": null,
+     "label": "Psychological concept",
+     "original_label": "Psychological concept",
+     "original_text": "long-term psychological outcomes",
+     "start": 3523,
+     "text": "long-term psychological outcomes"
+    },
+    {
+     "core_type": "Measurement",
+     "end": 3605,
+     "expansion": null,
+     "label": "Experimental task",
+     "original_label": "Experimental task",
+     "original_text": "ingestion testing",
+     "start": 3588,
+     "text": "ingestion testing"
+    },
+    {
+     "core_type": "Document",
+     "end": 3620,
+     "expansion": null,
+     "label": "Document or publication",
+     "original_label": "Document or publication",
+     "original_text": "this document",
+     "start": 3607,
+     "text": "this document"
+    },
+    {
+     "core_type": "Concept",
+     "end": 3684,
+     "expansion": null,
+     "label": "Psychological concept",
+     "original_label": "Psychological concept",
+     "original_text": "attribution",
+     "start": 3673,
+     "text": "attribution"
+    },
+    {
+     "core_type": "Concept",
+     "end": 3710,
+     "expansion": null,
+     "label": "Scientific concept",
+     "original_label": "Scientific concept",
+     "original_text": "measurement distinctions",
+     "start": 3686,
+     "text": "measurement distinctions"
+    },
+    {
+     "core_type": "Concept",
+     "end": 3745,
+     "expansion": null,
+     "label": "Scientific concept",
+     "original_label": "Scientific concept",
+     "original_text": "causal overreach",
+     "start": 3729,
+     "text": "causal overreach"
+    }
+   ],
+   "score": {
+    "bare_head_rate": 0.0,
+    "core_type_accuracy": 0.8260869565217391,
+    "counts": {
+     "bare_head": 0,
+     "exact": 6,
+     "false": 15,
+     "overlap": 17,
+     "proposals": 38,
+     "type_correct": 19,
+     "type_wrong": 4
+    },
+    "exact_precision": 0.15789473684210525,
+    "exact_recall": 0.12,
+    "false_span_rate": 0.39473684210526316,
+    "mentions": 50,
+    "multiword_matched": 15,
+    "multiword_n": 29,
+    "multiword_recall": 0.5172413793103449,
+    "overlap_recall": 0.46,
+    "per_label": {
+     "Document or publication": {
+      "exact": 0,
+      "false": 3,
+      "proposals": 4
+     },
+     "Experimental task": {
+      "exact": 2,
+      "false": 3,
+      "proposals": 6
+     },
+     "Field of study": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 1
+     },
+     "Measurement or metric": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 3
+     },
+     "Method or technique": {
+      "exact": 1,
+      "false": 1,
+      "proposals": 2
+     },
+     "Person": {
+      "exact": 0,
+      "false": 3,
+      "proposals": 3
+     },
+     "Psychological concept": {
+      "exact": 3,
+      "false": 3,
+      "proposals": 15
+     },
+     "Research construct": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 1
+     },
+     "Scientific concept": {
+      "exact": 0,
+      "false": 2,
+      "proposals": 3
+     }
+    },
+    "proposals": 38
+   }
+  },
+  "04_transcript_local_rag_build.md": {
+   "proposals": [
+    {
+     "core_type": "Person",
+     "end": 89,
+     "expansion": null,
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "HOST",
+     "start": 85,
+     "text": "*HOS"
+    },
+    {
+     "core_type": "Concept",
+     "end": 157,
+     "expansion": null,
+     "label": "System role",
+     "original_label": "System role",
+     "original_text": "research assistant",
+     "start": 139,
+     "text": " research assistan"
+    },
+    {
+     "core_type": "Process",
+     "end": 242,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "ingestion",
+     "start": 233,
+     "text": " ingestio"
+    },
+    {
+     "core_type": "Process",
+     "end": 253,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "retrieval",
+     "start": 244,
+     "text": " retrieva"
+    },
+    {
+     "core_type": "Process",
+     "end": 276,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "answer generation",
+     "start": 259,
+     "text": " answer generatio"
+    },
+    {
+     "core_type": "Process",
+     "end": 449,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "document parsing",
+     "start": 433,
+     "text": " document parsin"
+    },
+    {
+     "core_type": "Process",
+     "end": 468,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "entity extraction",
+     "start": 451,
+     "text": " entity extractio"
+    },
+    {
+     "core_type": "Process",
+     "end": 487,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "retrieval ranking",
+     "start": 470,
+     "text": " retrieval rankin"
+    },
+    {
+     "core_type": "Concept",
+     "end": 510,
+     "expansion": null,
+     "label": "Data structure",
+     "original_label": "Data structure",
+     "original_text": "language model",
+     "start": 496,
+     "text": " language mode"
+    },
+    {
+     "core_type": "Process",
+     "end": 523,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "rebuild",
+     "start": 516,
+     "text": " rebuil"
+    },
+    {
+     "core_type": "Person",
+     "end": 630,
+     "expansion": null,
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "ENGINEER",
+     "start": 622,
+     "text": "**ENGINE"
+    },
+    {
+     "core_type": "Technology",
+     "end": 680,
+     "expansion": null,
+     "label": "Technology",
+     "original_label": "Technology",
+     "original_text": "Postgres",
+     "start": 672,
+     "text": "e Postgr"
+    },
+    {
+     "core_type": "Concept",
+     "end": 703,
+     "expansion": null,
+     "label": "System role",
+     "original_label": "System role",
+     "original_text": "workflow authority",
+     "start": 685,
+     "text": "e workflow authori"
+    },
+    {
+     "core_type": "Technology",
+     "end": 711,
+     "expansion": null,
+     "label": "Technology",
+     "original_label": "Technology",
+     "original_text": "Qdrant",
+     "start": 705,
+     "text": ". Qdra"
+    },
+    {
+     "core_type": "Technology",
+     "end": 756,
+     "expansion": null,
+     "label": "Technology",
+     "original_label": "Technology",
+     "original_text": "Neo4j",
+     "start": 751,
+     "text": "d Neo"
+    },
+    {
+     "core_type": "Process",
+     "end": 790,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "graph traversal",
+     "start": 775,
+     "text": "r graph travers"
+    },
+    {
+     "core_type": "Concept",
+     "end": 865,
+     "expansion": null,
+     "label": "System role",
+     "original_label": "System role",
+     "original_text": "Workers",
+     "start": 858,
+     "text": ". Worke"
+    },
+    {
+     "core_type": "Process",
+     "end": 892,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "receipts",
+     "start": 884,
+     "text": ", receip"
+    },
+    {
+     "core_type": "Process",
+     "end": 908,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "status changes",
+     "start": 894,
+     "text": ", status chang"
+    },
+    {
+     "core_type": "Event",
+     "end": 927,
+     "expansion": null,
+     "label": "Event",
+     "original_label": "Event",
+     "original_text": "outbox events",
+     "start": 914,
+     "text": "d outbox even"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1079,
+     "expansion": null,
+     "label": "Data structure",
+     "original_label": "Data structure",
+     "original_text": "durable history",
+     "start": 1064,
+     "text": "e durable histo"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1363,
+     "expansion": null,
+     "label": "Data structure",
+     "original_label": "Data structure",
+     "original_text": "entities",
+     "start": 1355,
+     "text": "entities"
+    },
+    {
+     "core_type": "Technology",
+     "end": 1393,
+     "expansion": null,
+     "label": "Software component",
+     "original_label": "Software component",
+     "original_text": "deterministic compiler",
+     "start": 1371,
+     "text": "deterministic compiler"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1463,
+     "expansion": null,
+     "label": "Data structure",
+     "original_label": "Data structure",
+     "original_text": "evidence",
+     "start": 1455,
+     "text": "evidence"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1481,
+     "expansion": null,
+     "label": "Data structure",
+     "original_label": "Data structure",
+     "original_text": "source chunk",
+     "start": 1469,
+     "text": "source chunk"
+    },
+    {
+     "core_type": "Person",
+     "end": 1710,
+     "expansion": null,
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "ENGINEER",
+     "start": 1702,
+     "text": "*ENGINEE"
+    },
+    {
+     "core_type": "Technology",
+     "end": 1730,
+     "expansion": null,
+     "label": "Software component",
+     "original_label": "Software component",
+     "original_text": "corpus layer",
+     "start": 1718,
+     "text": " corpus laye"
+    },
+    {
+     "core_type": "Document",
+     "end": 1756,
+     "expansion": null,
+     "label": "Document or publication",
+     "original_label": "Document or publication",
+     "original_text": "documents",
+     "start": 1747,
+     "text": " document"
+    },
+    {
+     "core_type": "Organization",
+     "end": 1785,
+     "expansion": null,
+     "label": "Organization",
+     "original_label": "Organization",
+     "original_text": "company",
+     "start": 1778,
+     "text": " compan"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1899,
+     "expansion": null,
+     "label": "Data structure",
+     "original_label": "Data structure",
+     "original_text": "canonical entity",
+     "start": 1883,
+     "text": " canonical entit"
+    },
+    {
+     "core_type": "Person",
+     "end": 2129,
+     "expansion": null,
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "John Smith",
+     "start": 2119,
+     "text": " John Smit"
+    },
+    {
+     "core_type": "Person",
+     "end": 2227,
+     "expansion": null,
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "HOST",
+     "start": 2223,
+     "text": "**HO"
+    },
+    {
+     "core_type": "Concept",
+     "end": 2246,
+     "expansion": null,
+     "label": "Data structure",
+     "original_label": "Data structure",
+     "original_text": "answer path",
+     "start": 2235,
+     "text": "e answer pa"
+    },
+    {
+     "core_type": "Process",
+     "end": 2281,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "Retrieval",
+     "start": 2272,
+     "text": ". Retriev"
+    },
+    {
+     "core_type": "Concept",
+     "end": 2309,
+     "expansion": null,
+     "label": "Data structure",
+     "original_label": "Data structure",
+     "original_text": "evidence bundle",
+     "start": 2294,
+     "text": "n evidence bund"
+    },
+    {
+     "core_type": "Concept",
+     "end": 2330,
+     "expansion": null,
+     "label": "System role",
+     "original_label": "System role",
+     "original_text": "synthesizer",
+     "start": 2319,
+     "text": "e synthesiz"
+    },
+    {
+     "core_type": "Technology",
+     "end": 2423,
+     "expansion": null,
+     "label": "Software component",
+     "original_label": "Software component",
+     "original_text": "validator",
+     "start": 2414,
+     "text": " validato"
+    },
+    {
+     "core_type": "Concept",
+     "end": 2508,
+     "expansion": null,
+     "label": "Data structure",
+     "original_label": "Data structure",
+     "original_text": "model",
+     "start": 2503,
+     "text": " mode"
+    },
+    {
+     "core_type": "Person",
+     "end": 2773,
+     "expansion": null,
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "ENGINEER",
+     "start": 2765,
+     "text": "**ENGINE"
+    },
+    {
+     "core_type": "Process",
+     "end": 2825,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "bulk ingestion",
+     "start": 2811,
+     "text": "s bulk ingesti"
+    },
+    {
+     "core_type": "Process",
+     "end": 2849,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "scale qualification",
+     "start": 2830,
+     "text": "d scale qualificati"
+    },
+    {
+     "core_type": "Concept",
+     "end": 2869,
+     "expansion": null,
+     "label": "Data structure",
+     "original_label": "Data structure",
+     "original_text": "manifest",
+     "start": 2861,
+     "text": "a manife"
+    },
+    {
+     "core_type": "Process",
+     "end": 3024,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "larger integrity run",
+     "start": 3004,
+     "text": "a larger integrity r"
+    },
+    {
+     "core_type": "Process",
+     "end": 3211,
+     "expansion": null,
+     "label": "Process or activity",
+     "original_label": "Process or activity",
+     "original_text": "reranking",
+     "start": 3202,
+     "text": "e reranki"
+    },
+    {
+     "core_type": "Concept",
+     "end": 3239,
+     "expansion": null,
+     "label": "Data structure",
+     "original_label": "Data structure",
+     "original_text": "richer domain ontologies",
+     "start": 3215,
+     "text": "r richer domain ontologi"
+    },
+    {
+     "core_type": "Measurement",
+     "end": 3255,
+     "expansion": null,
+     "label": "Measurement or metric",
+     "original_label": "Measurement or metric",
+     "original_text": "measured",
+     "start": 3247,
+     "text": "e measur"
+    }
+   ],
+   "score": {
+    "bare_head_rate": 0.0,
+    "core_type_accuracy": 0.7878787878787878,
+    "counts": {
+     "bare_head": 0,
+     "exact": 2,
+     "false": 13,
+     "overlap": 31,
+     "proposals": 46,
+     "type_correct": 26,
+     "type_wrong": 7
+    },
+    "exact_precision": 0.043478260869565216,
+    "exact_recall": 0.038461538461538464,
+    "false_span_rate": 0.2826086956521739,
+    "mentions": 52,
+    "multiword_matched": 21,
+    "multiword_n": 30,
+    "multiword_recall": 0.7,
+    "overlap_recall": 0.6346153846153846,
+    "per_label": {
+     "Data structure": {
+      "exact": 1,
+      "false": 4,
+      "proposals": 11
+     },
+     "Document or publication": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 1
+     },
+     "Event": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 1
+     },
+     "Measurement or metric": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 1
+     },
+     "Organization": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 1
+     },
+     "Person": {
+      "exact": 0,
+      "false": 5,
+      "proposals": 6
+     },
+     "Process or activity": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 15
+     },
+     "Software component": {
+      "exact": 1,
+      "false": 0,
+      "proposals": 3
+     },
+     "System role": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 4
+     },
+     "Technology": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 3
+     }
+    },
+    "proposals": 46
+   }
+  }
+ },
+ "summary": {
+  "arm": "threshold-v2",
+  "bare_head_rate": 0.5142857142857142,
+  "core_type_accuracy": 0.7419354838709677,
+  "documents": 4,
+  "exact_precision": 0.15,
+  "exact_recall": 0.10096153846153846,
+  "false_span_rate": 0.3357142857142857,
+  "mentions": 208,
+  "multiword_recall": 0.5169491525423728,
+  "overlap_recall": 0.44711538461538464,
+  "proposals": 140
+ }
+}

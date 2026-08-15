@@ -1,0 +1,1243 @@
+{
+ "arm": "expand",
+ "corpus": "realistic_smoke_v1",
+ "gold_path": "eval/gold/ep1_dev_gold.yaml",
+ "gold_sha256": "710a354ab83a58c6d8dd4bab80842543187191db3fe1c45179b84e153694ef8d",
+ "per_document": {
+  "01_psychology_working_memory.md": {
+   "proposals": [
+    {
+     "core_type": "Concept",
+     "end": 536,
+     "expansion": null,
+     "label": "CognitiveBias",
+     "original_label": "CognitiveBias",
+     "original_text": "attention",
+     "start": 527,
+     "text": " attentio"
+    },
+    {
+     "core_type": "Document",
+     "end": 666,
+     "expansion": "deterministic-np-v1",
+     "label": "Document",
+     "original_label": "Document",
+     "original_text": "One influential account",
+     "start": 625,
+     "text": "disappear quickly.\n\nOne influential accou"
+    },
+    {
+     "core_type": "Process",
+     "end": 813,
+     "expansion": null,
+     "label": "Process",
+     "original_label": "Process",
+     "original_text": "central control process",
+     "start": 790,
+     "text": "a central control proce"
+    },
+    {
+     "core_type": "Location",
+     "end": 948,
+     "expansion": null,
+     "label": "Location",
+     "original_label": "Location",
+     "original_text": "locations",
+     "start": 939,
+     "text": "s locatio"
+    },
+    {
+     "core_type": "Person",
+     "end": 1492,
+     "expansion": null,
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "student",
+     "start": 1485,
+     "text": " studen"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1546,
+     "expansion": null,
+     "label": "Concept",
+     "original_label": "Concept",
+     "original_text": "new statistical concept",
+     "start": 1523,
+     "text": " new statistical concep"
+    },
+    {
+     "core_type": "Concept",
+     "end": 1877,
+     "expansion": null,
+     "label": "Concept",
+     "original_label": "Concept",
+     "original_text": "new concept",
+     "start": 1866,
+     "text": " new concep"
+    },
+    {
+     "core_type": "Method",
+     "end": 1929,
+     "expansion": "deterministic-np-v1",
+     "label": "Method",
+     "original_label": "Method",
+     "original_text": "Instructional design research",
+     "start": 1884,
+     "text": "prior knowledge.\n\nInstructional design resear"
+    },
+    {
+     "core_type": "Document",
+     "end": 2031,
+     "expansion": null,
+     "label": "Document",
+     "original_label": "Document",
+     "original_text": "Worked examples",
+     "start": 2016,
+     "text": ". Worked exampl"
+    },
+    {
+     "core_type": "Document",
+     "end": 2070,
+     "expansion": null,
+     "label": "Document",
+     "original_label": "Document",
+     "original_text": "explanatory text",
+     "start": 2054,
+     "text": "r explanatory te"
+    },
+    {
+     "core_type": "Method",
+     "end": 2099,
+     "expansion": null,
+     "label": "MetacognitiveStrategy",
+     "original_label": "MetacognitiveStrategy",
+     "original_text": "stepwise demonstrations",
+     "start": 2076,
+     "text": "d stepwise demonstratio"
+    },
+    {
+     "core_type": "Person",
+     "end": 2246,
+     "expansion": null,
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "learner",
+     "start": 2239,
+     "text": "learner"
+    },
+    {
+     "core_type": "Method",
+     "end": 2418,
+     "expansion": null,
+     "label": "Method",
+     "original_label": "Method",
+     "original_text": "teaching method",
+     "start": 2403,
+     "text": "teaching method"
+    },
+    {
+     "core_type": "Method",
+     "end": 2631,
+     "expansion": null,
+     "label": "Method",
+     "original_label": "Method",
+     "original_text": "laboratory studies",
+     "start": 2613,
+     "text": " laboratory studie"
+    },
+    {
+     "core_type": "Concept",
+     "end": 3424,
+     "expansion": null,
+     "label": "Concept",
+     "original_label": "Concept",
+     "original_text": "working memory",
+     "start": 3410,
+     "text": "working memory"
+    },
+    {
+     "core_type": "Location",
+     "end": 3582,
+     "expansion": null,
+     "label": "Location",
+     "original_label": "Location",
+     "original_text": "applied settings",
+     "start": 3566,
+     "text": "applied settings"
+    },
+    {
+     "core_type": "Process",
+     "end": 3742,
+     "expansion": null,
+     "label": "Process",
+     "original_label": "Process",
+     "original_text": "cognitive operations",
+     "start": 3722,
+     "text": "cognitive operations"
+    }
+   ],
+   "score": {
+    "bare_head_rate": 0.0,
+    "core_type_accuracy": 1.0,
+    "counts": {
+     "bare_head": 0,
+     "exact": 3,
+     "false": 5,
+     "overlap": 9,
+     "proposals": 17,
+     "type_correct": 12,
+     "type_wrong": 0
+    },
+    "exact_precision": 0.17647058823529413,
+    "exact_recall": 0.046875,
+    "false_span_rate": 0.29411764705882354,
+    "mentions": 64,
+    "multiword_matched": 9,
+    "multiword_n": 40,
+    "multiword_recall": 0.225,
+    "overlap_recall": 0.1875,
+    "per_label": {
+     "CognitiveBias": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 1
+     },
+     "Concept": {
+      "exact": 1,
+      "false": 1,
+      "proposals": 3
+     },
+     "Document": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 3
+     },
+     "Location": {
+      "exact": 0,
+      "false": 2,
+      "proposals": 2
+     },
+     "MetacognitiveStrategy": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 1
+     },
+     "Method": {
+      "exact": 1,
+      "false": 0,
+      "proposals": 3
+     },
+     "Person": {
+      "exact": 1,
+      "false": 0,
+      "proposals": 2
+     },
+     "Process": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 2
+     }
+    },
+    "proposals": 17
+   }
+  },
+  "02_technical_event_pipeline.md": {
+   "proposals": [
+    {
+     "core_type": "Event",
+     "end": 32,
+     "expansion": null,
+     "label": "Event",
+     "original_label": "Event",
+     "original_text": "event",
+     "start": 27,
+     "text": "Event"
+    },
+    {
+     "core_type": "Person",
+     "end": 153,
+     "expansion": null,
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "worker",
+     "start": 147,
+     "text": " worke"
+    },
+    {
+     "core_type": "Technology",
+     "end": 286,
+     "expansion": null,
+     "label": "Technology",
+     "original_label": "Technology",
+     "original_text": "remote service",
+     "start": 272,
+     "text": " remote servic"
+    },
+    {
+     "core_type": "Technology",
+     "end": 445,
+     "expansion": null,
+     "label": "Technology",
+     "original_label": "Technology",
+     "original_text": "system",
+     "start": 439,
+     "text": " syste"
+    },
+    {
+     "core_type": "Process",
+     "end": 628,
+     "expansion": null,
+     "label": "Process",
+     "original_label": "Process",
+     "original_text": "transaction",
+     "start": 617,
+     "text": "a transacti"
+    },
+    {
+     "core_type": "Document",
+     "end": 1209,
+     "expansion": "deterministic-np-v1",
+     "label": "Document",
+     "original_label": "Document",
+     "original_text": "Documents",
+     "start": 1181,
+     "text": "equally important. Documents"
+    },
+    {
+     "core_type": "Document",
+     "end": 1217,
+     "expansion": null,
+     "label": "Dataset",
+     "original_label": "Dataset",
+     "original_text": "chunks",
+     "start": 1211,
+     "text": "chunks"
+    },
+    {
+     "core_type": "Document",
+     "end": 1224,
+     "expansion": null,
+     "label": "Dataset",
+     "original_label": "Dataset",
+     "original_text": "facts",
+     "start": 1219,
+     "text": "facts"
+    },
+    {
+     "core_type": "Document",
+     "end": 1250,
+     "expansion": null,
+     "label": "Dataset",
+     "original_label": "Dataset",
+     "original_text": "projection artifacts",
+     "start": 1230,
+     "text": "projection artifacts"
+    },
+    {
+     "core_type": "Technology",
+     "end": 1410,
+     "expansion": null,
+     "label": "Technology",
+     "original_label": "Technology",
+     "original_text": "pipeline",
+     "start": 1402,
+     "text": "pipeline"
+    },
+    {
+     "core_type": "Process",
+     "end": 1481,
+     "expansion": null,
+     "label": "Process",
+     "original_label": "Process",
+     "original_text": "replay",
+     "start": 1475,
+     "text": "replay"
+    },
+    {
+     "core_type": "Technology",
+     "end": 1531,
+     "expansion": null,
+     "label": "Technology",
+     "original_label": "Technology",
+     "original_text": "storage layer",
+     "start": 1518,
+     "text": "storage layer"
+    },
+    {
+     "core_type": "Technology",
+     "end": 1563,
+     "expansion": null,
+     "label": "Technology",
+     "original_label": "Technology",
+     "original_text": "orchestration layer",
+     "start": 1544,
+     "text": "orchestration layer"
+    },
+    {
+     "core_type": "Technology",
+     "end": 1649,
+     "expansion": null,
+     "label": "Technology",
+     "original_label": "Technology",
+     "original_text": "external services",
+     "start": 1632,
+     "text": "external services"
+    },
+    {
+     "core_type": "Technology",
+     "end": 1730,
+     "expansion": "deterministic-np-v1",
+     "label": "Technology",
+     "original_label": "Technology",
+     "original_text": "Search indexes",
+     "start": 1693,
+     "text": "exactly-once delivery.\n\nSearch indexe"
+    },
+    {
+     "core_type": "Technology",
+     "end": 1750,
+     "expansion": null,
+     "label": "Technology",
+     "original_label": "Technology",
+     "original_text": "graph databases",
+     "start": 1735,
+     "text": " graph database"
+    },
+    {
+     "core_type": "Technology",
+     "end": 1807,
+     "expansion": null,
+     "label": "Technology",
+     "original_label": "Technology",
+     "original_text": "workflow database",
+     "start": 1790,
+     "text": " workflow databas"
+    },
+    {
+     "core_type": "Technology",
+     "end": 1823,
+     "expansion": null,
+     "label": "Technology",
+     "original_label": "Technology",
+     "original_text": "vector index",
+     "start": 1811,
+     "text": " vector inde"
+    },
+    {
+     "core_type": "Technology",
+     "end": 1876,
+     "expansion": null,
+     "label": "Technology",
+     "original_label": "Technology",
+     "original_text": "graph store",
+     "start": 1865,
+     "text": " graph stor"
+    },
+    {
+     "core_type": "Technology",
+     "end": 2007,
+     "expansion": null,
+     "label": "Technology",
+     "original_label": "Technology",
+     "original_text": "projection worker",
+     "start": 1990,
+     "text": " projection worke"
+    },
+    {
+     "core_type": "Technology",
+     "end": 2081,
+     "expansion": null,
+     "label": "Technology",
+     "original_label": "Technology",
+     "original_text": "verifier",
+     "start": 2073,
+     "text": " verifie"
+    },
+    {
+     "core_type": "Process",
+     "end": 2583,
+     "expansion": null,
+     "label": "Process",
+     "original_label": "Process",
+     "original_text": "deterministic stage contracts",
+     "start": 2554,
+     "text": "deterministic stage contracts"
+    },
+    {
+     "core_type": "Technology",
+     "end": 2883,
+     "expansion": null,
+     "label": "Technology",
+     "original_label": "Technology",
+     "original_text": "pipeline",
+     "start": 2875,
+     "text": " pipelin"
+    },
+    {
+     "core_type": "Document",
+     "end": 3077,
+     "expansion": "deterministic-np-v1",
+     "label": "Document",
+     "original_label": "Document",
+     "original_text": "document",
+     "start": 3065,
+     "text": "same documen"
+    },
+    {
+     "core_type": "Document",
+     "end": 3165,
+     "expansion": null,
+     "label": "Dataset",
+     "original_label": "Dataset",
+     "original_text": "corpus",
+     "start": 3159,
+     "text": " corpu"
+    },
+    {
+     "core_type": "Product",
+     "end": 3361,
+     "expansion": null,
+     "label": "Model",
+     "original_label": "Model",
+     "original_text": "correctness model",
+     "start": 3344,
+     "text": " correctness mode"
+    }
+   ],
+   "score": {
+    "bare_head_rate": 0.0,
+    "core_type_accuracy": 0.7777777777777778,
+    "counts": {
+     "bare_head": 0,
+     "exact": 8,
+     "false": 8,
+     "overlap": 10,
+     "proposals": 26,
+     "type_correct": 14,
+     "type_wrong": 4
+    },
+    "exact_precision": 0.3076923076923077,
+    "exact_recall": 0.19047619047619047,
+    "false_span_rate": 0.3076923076923077,
+    "mentions": 42,
+    "multiword_matched": 12,
+    "multiword_n": 19,
+    "multiword_recall": 0.631578947368421,
+    "overlap_recall": 0.42857142857142855,
+    "per_label": {
+     "Dataset": {
+      "exact": 3,
+      "false": 1,
+      "proposals": 4
+     },
+     "Document": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 2
+     },
+     "Event": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 1
+     },
+     "Model": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 1
+     },
+     "Person": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 1
+     },
+     "Process": {
+      "exact": 2,
+      "false": 0,
+      "proposals": 3
+     },
+     "Technology": {
+      "exact": 3,
+      "false": 4,
+      "proposals": 14
+     }
+    },
+    "proposals": 26
+   }
+  },
+  "03_research_notes_sleep_and_attention.md": {
+   "proposals": [
+    {
+     "core_type": "Document",
+     "end": 16,
+     "expansion": null,
+     "label": "Document",
+     "original_label": "Document",
+     "original_text": "Research Notes",
+     "start": 2,
+     "text": "Research Notes"
+    },
+    {
+     "core_type": "Concept",
+     "end": 46,
+     "expansion": null,
+     "label": "Concept",
+     "original_label": "Concept",
+     "original_text": "Attention",
+     "start": 37,
+     "text": "Attention"
+    },
+    {
+     "core_type": "Measurement",
+     "end": 263,
+     "expansion": "deterministic-np-v1",
+     "label": "Measurement",
+     "original_label": "Measurement",
+     "original_text": "Simple reaction-time measures",
+     "start": 213,
+     "text": "uniform across tasks. Simple reaction-time measure"
+    },
+    {
+     "core_type": "Document",
+     "end": 441,
+     "expansion": null,
+     "label": "Document",
+     "original_label": "Document",
+     "original_text": "review papers",
+     "start": 428,
+     "text": " review paper"
+    },
+    {
+     "core_type": "Concept",
+     "end": 649,
+     "expansion": null,
+     "label": "Concept",
+     "original_label": "Concept",
+     "original_text": "working-memory updating",
+     "start": 626,
+     "text": " working-memory updatin"
+    },
+    {
+     "core_type": "Concept",
+     "end": 673,
+     "expansion": null,
+     "label": "Concept",
+     "original_label": "Concept",
+     "original_text": "subjective fatigue",
+     "start": 655,
+     "text": " subjective fatigu"
+    },
+    {
+     "core_type": "Method",
+     "end": 776,
+     "expansion": null,
+     "label": "StudyDesign",
+     "original_label": "StudyDesign",
+     "original_text": "sleep restriction studies",
+     "start": 751,
+     "text": "t sleep restriction studi"
+    },
+    {
+     "core_type": "Measurement",
+     "end": 1404,
+     "expansion": "deterministic-np-v1",
+     "label": "Measurement",
+     "original_label": "Measurement",
+     "original_text": "Psychomotor vigilance tasks",
+     "start": 1369,
+     "text": "matters. Psychomotor vigilance task"
+    },
+    {
+     "core_type": "Measurement",
+     "end": 1513,
+     "expansion": "deterministic-np-v1",
+     "label": "Measurement",
+     "original_label": "Measurement",
+     "original_text": "Self-report scales",
+     "start": 1477,
+     "text": "executive control. Self-report scale"
+    },
+    {
+     "core_type": "Person",
+     "end": 1554,
+     "expansion": "deterministic-np-v1",
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "people",
+     "start": 1545,
+     "text": "yet peopl"
+    },
+    {
+     "core_type": "Document",
+     "end": 1658,
+     "expansion": null,
+     "label": "Document",
+     "original_label": "Document",
+     "original_text": "literature",
+     "start": 1648,
+     "text": " literatur"
+    },
+    {
+     "core_type": "Person",
+     "end": 1672,
+     "expansion": null,
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "participants",
+     "start": 1660,
+     "text": " participant"
+    },
+    {
+     "core_type": "Method",
+     "end": 2027,
+     "expansion": null,
+     "label": "StudyDesign",
+     "original_label": "StudyDesign",
+     "original_text": "Observational studies",
+     "start": 2006,
+     "text": ". Observational studi"
+    },
+    {
+     "core_type": "Method",
+     "end": 2234,
+     "expansion": "deterministic-np-v1",
+     "label": "StudyDesign",
+     "original_label": "StudyDesign",
+     "original_text": "Controlled restriction studies",
+     "start": 2175,
+     "text": "other confounding variables. Controlled restriction studies"
+    },
+    {
+     "core_type": "Document",
+     "end": 2610,
+     "expansion": null,
+     "label": "Document",
+     "original_label": "Document",
+     "original_text": "psychology material",
+     "start": 2591,
+     "text": " psychology materia"
+    },
+    {
+     "core_type": "Concept",
+     "end": 2680,
+     "expansion": null,
+     "label": "Concept",
+     "original_label": "Concept",
+     "original_text": "constructs",
+     "start": 2670,
+     "text": " construct"
+    },
+    {
+     "core_type": "Measurement",
+     "end": 2745,
+     "expansion": null,
+     "label": "Measurement",
+     "original_label": "Measurement",
+     "original_text": "measurement instruments",
+     "start": 2722,
+     "text": " measurement instrument"
+    },
+    {
+     "core_type": "Concept",
+     "end": 2816,
+     "expansion": null,
+     "label": "Concept",
+     "original_label": "Concept",
+     "original_text": "interventions linked to outcomes",
+     "start": 2784,
+     "text": " interventions linked to outcome"
+    },
+    {
+     "core_type": "Concept",
+     "end": 2840,
+     "expansion": null,
+     "label": "Concept",
+     "original_label": "Concept",
+     "original_text": "conditional claims",
+     "start": 2822,
+     "text": " conditional claim"
+    },
+    {
+     "core_type": "Concept",
+     "end": 2956,
+     "expansion": null,
+     "label": "Concept",
+     "original_label": "Concept",
+     "original_text": "is associated with",
+     "start": 2938,
+     "text": "\"is associated wit"
+    },
+    {
+     "core_type": "Person",
+     "end": 3478,
+     "expansion": null,
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "participant",
+     "start": 3467,
+     "text": "participant"
+    },
+    {
+     "core_type": "Concept",
+     "end": 3518,
+     "expansion": null,
+     "label": "Concept",
+     "original_label": "Concept",
+     "original_text": "executive control",
+     "start": 3501,
+     "text": "executive control"
+    },
+    {
+     "core_type": "Concept",
+     "end": 3555,
+     "expansion": null,
+     "label": "Concept",
+     "original_label": "Concept",
+     "original_text": "long-term psychological outcomes",
+     "start": 3523,
+     "text": "long-term psychological outcomes"
+    },
+    {
+     "core_type": "Document",
+     "end": 3620,
+     "expansion": null,
+     "label": "Document",
+     "original_label": "Document",
+     "original_text": "this document",
+     "start": 3607,
+     "text": "this document"
+    },
+    {
+     "core_type": "Concept",
+     "end": 3684,
+     "expansion": null,
+     "label": "Concept",
+     "original_label": "Concept",
+     "original_text": "attribution",
+     "start": 3673,
+     "text": "attribution"
+    },
+    {
+     "core_type": "Concept",
+     "end": 3710,
+     "expansion": null,
+     "label": "Concept",
+     "original_label": "Concept",
+     "original_text": "measurement distinctions",
+     "start": 3686,
+     "text": "measurement distinctions"
+    }
+   ],
+   "score": {
+    "bare_head_rate": 0.0,
+    "core_type_accuracy": 0.8823529411764706,
+    "counts": {
+     "bare_head": 0,
+     "exact": 3,
+     "false": 9,
+     "overlap": 14,
+     "proposals": 26,
+     "type_correct": 15,
+     "type_wrong": 2
+    },
+    "exact_precision": 0.11538461538461539,
+    "exact_recall": 0.06,
+    "false_span_rate": 0.34615384615384615,
+    "mentions": 50,
+    "multiword_matched": 14,
+    "multiword_n": 29,
+    "multiword_recall": 0.4827586206896552,
+    "overlap_recall": 0.34,
+    "per_label": {
+     "Concept": {
+      "exact": 3,
+      "false": 3,
+      "proposals": 11
+     },
+     "Document": {
+      "exact": 0,
+      "false": 3,
+      "proposals": 5
+     },
+     "Measurement": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 4
+     },
+     "Person": {
+      "exact": 0,
+      "false": 3,
+      "proposals": 3
+     },
+     "StudyDesign": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 3
+     }
+    },
+    "proposals": 26
+   }
+  },
+  "04_transcript_local_rag_build.md": {
+   "proposals": [
+    {
+     "core_type": "Person",
+     "end": 157,
+     "expansion": null,
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "research assistant",
+     "start": 139,
+     "text": " research assistan"
+    },
+    {
+     "core_type": "Process",
+     "end": 242,
+     "expansion": "deterministic-np-v1",
+     "label": "Process",
+     "original_label": "Process",
+     "original_text": "ingestion",
+     "start": 228,
+     "text": "mixed ingestio"
+    },
+    {
+     "core_type": "Process",
+     "end": 253,
+     "expansion": null,
+     "label": "Process",
+     "original_label": "Process",
+     "original_text": "retrieval",
+     "start": 244,
+     "text": " retrieva"
+    },
+    {
+     "core_type": "Process",
+     "end": 276,
+     "expansion": null,
+     "label": "Process",
+     "original_label": "Process",
+     "original_text": "answer generation",
+     "start": 259,
+     "text": " answer generatio"
+    },
+    {
+     "core_type": "Document",
+     "end": 441,
+     "expansion": null,
+     "label": "Document",
+     "original_label": "Document",
+     "original_text": "document",
+     "start": 433,
+     "text": " documen"
+    },
+    {
+     "core_type": "Process",
+     "end": 468,
+     "expansion": null,
+     "label": "Process",
+     "original_label": "Process",
+     "original_text": "entity extraction",
+     "start": 451,
+     "text": " entity extractio"
+    },
+    {
+     "core_type": "Product",
+     "end": 510,
+     "expansion": null,
+     "label": "Model",
+     "original_label": "Model",
+     "original_text": "language model",
+     "start": 496,
+     "text": " language mode"
+    },
+    {
+     "core_type": "Process",
+     "end": 523,
+     "expansion": null,
+     "label": "Process",
+     "original_label": "Process",
+     "original_text": "rebuild",
+     "start": 516,
+     "text": " rebuil"
+    },
+    {
+     "core_type": "Person",
+     "end": 630,
+     "expansion": null,
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "ENGINEER",
+     "start": 622,
+     "text": "**ENGINE"
+    },
+    {
+     "core_type": "Technology",
+     "end": 680,
+     "expansion": null,
+     "label": "Technology",
+     "original_label": "Technology",
+     "original_text": "Postgres",
+     "start": 672,
+     "text": "e Postgr"
+    },
+    {
+     "core_type": "Technology",
+     "end": 711,
+     "expansion": null,
+     "label": "Technology",
+     "original_label": "Technology",
+     "original_text": "Qdrant",
+     "start": 705,
+     "text": ". Qdra"
+    },
+    {
+     "core_type": "Technology",
+     "end": 756,
+     "expansion": null,
+     "label": "Technology",
+     "original_label": "Technology",
+     "original_text": "Neo4j",
+     "start": 751,
+     "text": "d Neo"
+    },
+    {
+     "core_type": "Event",
+     "end": 927,
+     "expansion": null,
+     "label": "Event",
+     "original_label": "Event",
+     "original_text": "outbox events",
+     "start": 914,
+     "text": "d outbox even"
+    },
+    {
+     "core_type": "Document",
+     "end": 1463,
+     "expansion": null,
+     "label": "Dataset",
+     "original_label": "Dataset",
+     "original_text": "evidence",
+     "start": 1455,
+     "text": "evidence"
+    },
+    {
+     "core_type": "Person",
+     "end": 1710,
+     "expansion": null,
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "ENGINEER",
+     "start": 1702,
+     "text": "*ENGINEE"
+    },
+    {
+     "core_type": "Document",
+     "end": 1756,
+     "expansion": "deterministic-np-v1",
+     "label": "Document",
+     "original_label": "Document",
+     "original_text": "Two documents",
+     "start": 1719,
+     "text": "corpus layer came later. Two document"
+    },
+    {
+     "core_type": "Organization",
+     "end": 1785,
+     "expansion": "deterministic-np-v1",
+     "label": "Organization",
+     "original_label": "Organization",
+     "original_text": "company",
+     "start": 1774,
+     "text": "same compan"
+    },
+    {
+     "core_type": "Person",
+     "end": 2129,
+     "expansion": "deterministic-np-v1",
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "John Smith",
+     "start": 2116,
+     "text": "two John Smit"
+    },
+    {
+     "core_type": "Method",
+     "end": 2281,
+     "expansion": null,
+     "label": "Method",
+     "original_label": "Method",
+     "original_text": "Retrieval",
+     "start": 2272,
+     "text": ". Retriev"
+    },
+    {
+     "core_type": "Product",
+     "end": 2508,
+     "expansion": null,
+     "label": "Model",
+     "original_label": "Model",
+     "original_text": "model",
+     "start": 2503,
+     "text": " mode"
+    },
+    {
+     "core_type": "Person",
+     "end": 2773,
+     "expansion": null,
+     "label": "Person",
+     "original_label": "Person",
+     "original_text": "ENGINEER",
+     "start": 2765,
+     "text": "**ENGINE"
+    },
+    {
+     "core_type": "Process",
+     "end": 2825,
+     "expansion": null,
+     "label": "Process",
+     "original_label": "Process",
+     "original_text": "bulk ingestion",
+     "start": 2811,
+     "text": "s bulk ingesti"
+    },
+    {
+     "core_type": "Process",
+     "end": 2849,
+     "expansion": null,
+     "label": "Process",
+     "original_label": "Process",
+     "original_text": "scale qualification",
+     "start": 2830,
+     "text": "d scale qualificati"
+    },
+    {
+     "core_type": "Document",
+     "end": 2869,
+     "expansion": "deterministic-np-v1",
+     "label": "Document",
+     "original_label": "Document",
+     "original_text": "manifest",
+     "start": 2856,
+     "text": "need a manife"
+    },
+    {
+     "core_type": "Process",
+     "end": 3024,
+     "expansion": "deterministic-np-v1",
+     "label": "Process",
+     "original_label": "Process",
+     "original_text": "larger integrity run",
+     "start": 2996,
+     "text": "we need a larger integrity r"
+    },
+    {
+     "core_type": "Document",
+     "end": 3170,
+     "expansion": null,
+     "label": "Dataset",
+     "original_label": "Dataset",
+     "original_text": "real corpus",
+     "start": 3159,
+     "text": "a real corp"
+    },
+    {
+     "core_type": "Measurement",
+     "end": 3255,
+     "expansion": null,
+     "label": "Measurement",
+     "original_label": "Measurement",
+     "original_text": "measured",
+     "start": 3247,
+     "text": "e measur"
+    }
+   ],
+   "score": {
+    "bare_head_rate": 0.0,
+    "core_type_accuracy": 0.6842105263157895,
+    "counts": {
+     "bare_head": 0,
+     "exact": 0,
+     "false": 8,
+     "overlap": 19,
+     "proposals": 27,
+     "type_correct": 13,
+     "type_wrong": 6
+    },
+    "exact_precision": 0.0,
+    "exact_recall": 0.0,
+    "false_span_rate": 0.2962962962962963,
+    "mentions": 52,
+    "multiword_matched": 12,
+    "multiword_n": 30,
+    "multiword_recall": 0.4,
+    "overlap_recall": 0.36538461538461536,
+    "per_label": {
+     "Dataset": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 2
+     },
+     "Document": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 3
+     },
+     "Event": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 1
+     },
+     "Measurement": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 1
+     },
+     "Method": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 1
+     },
+     "Model": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 2
+     },
+     "Organization": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 1
+     },
+     "Person": {
+      "exact": 0,
+      "false": 3,
+      "proposals": 5
+     },
+     "Process": {
+      "exact": 0,
+      "false": 1,
+      "proposals": 8
+     },
+     "Technology": {
+      "exact": 0,
+      "false": 0,
+      "proposals": 3
+     }
+    },
+    "proposals": 27
+   }
+  }
+ },
+ "summary": {
+  "arm": "expand",
+  "bare_head_rate": 0.5416666666666666,
+  "core_type_accuracy": 0.8181818181818182,
+  "documents": 4,
+  "exact_precision": 0.14583333333333334,
+  "exact_recall": 0.0673076923076923,
+  "false_span_rate": 0.3125,
+  "mentions": 208,
+  "multiword_recall": 0.3983050847457627,
+  "overlap_recall": 0.3173076923076923,
+  "proposals": 96
+ }
+}
