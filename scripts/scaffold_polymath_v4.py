@@ -289,6 +289,11 @@ TREE: list[tuple[str, str, str | None]] = [
 
     # eval: frozen gold data + the layer measurement harness
     ("eval/gold/qualification_q1.yaml", "yaml", None),
+    ("eval/gold/realistic_smoke_v1/01_psychology_working_memory.md", "md", None),
+    ("eval/gold/realistic_smoke_v1/02_technical_event_pipeline.md", "md", None),
+    ("eval/gold/realistic_smoke_v1/03_research_notes_sleep_and_attention.md", "md", None),
+    ("eval/gold/realistic_smoke_v1/04_transcript_local_rag_build.md", "md", None),
+    ("eval/gold/realistic_smoke_v1/SHA256SUMS", "sha256", None),
     ("eval/fixtures/native_docs/psychology.txt", "txt", None),
     ("eval/fixtures/native_docs/psychology.md", "md", None),
     ("eval/fixtures/native_docs/psychology.html", "html", None),
@@ -326,6 +331,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-08-14-q1-qualification.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-i0-native-documents.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-bulk-acceptance-verify-fix.md", "md", None),
+    ("docs/wiki/work-log/2026-08-14-q1r-generalization.md", "md", None),
     ("docs/wiki/refactors/0006-q1-qualification.md", "md", None),
     ("docs/wiki/refactors/0007-i0-native-documents.md", "md", None),
     ("eval/gold/relations_v1.yaml", "yaml", None),

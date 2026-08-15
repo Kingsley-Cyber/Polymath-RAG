@@ -24,17 +24,49 @@ from typing import Any
 
 from polymath_shared.contracts import EvidenceSpan
 
-EXTRACTOR_VERSION = "lexical-evidence-v1"
+EXTRACTOR_VERSION = "lexical-evidence-v2"
 GLINER_EVIDENCE_EXTRACTOR_VERSION = "gliner-evidence-v1"
 
 DEFAULT_MODE = "lexical"
 
+# Q1-R fix: the v1 stemmer could not map past-tense forms ("used" ->
+# "us" -> dead end) and copula forms ("is" -> nothing), so realistic
+# prose ("used", "based", "reduced", "increased", "reported") produced
+# no evidence anchors at all. v2 restores -ed/-ing/-ies forms with
+# e-restoration and a small irregular map. Multiword triggers and the
+# deterministic compiler are untouched.
+_IRREGULAR_LEMMAS = {
+    "is": "be", "are": "be", "was": "be", "were": "be", "been": "be",
+    "being": "be", "am": "be",
+    "made": "make", "did": "do", "led": "lead", "ran": "run",
+    "built": "build", "wrote": "write", "held": "hold", "took": "take",
+}
+
 
 def _lemma_candidates(token: str) -> list[str]:
     cands = [token]
-    for suffix in ("ing", "ed", "es", "s"):
-        if token.endswith(suffix) and len(token) - len(suffix) >= 3:
-            cands.append(token[: -len(suffix)])
+    irregular = _IRREGULAR_LEMMAS.get(token)
+    if irregular:
+        cands.append(irregular)
+    n = len(token)
+    if n > 4 and token.endswith("ies"):
+        cands.append(token[:-3] + "y")      # studies -> study
+    if n > 4 and token.endswith("ing"):
+        stem = token[:-3]
+        cands.append(stem + "e")            # using -> use, making -> make
+        cands.append(stem)
+    if n > 3 and token.endswith("ed"):
+        stem = token[:-2]
+        cands.append(stem + "e")            # used -> use, based -> base
+        cands.append(stem)
+        if stem.endswith("i"):
+            cands.append(stem[:-1] + "y")   # tried -> try
+        if len(stem) >= 3 and stem[-1] == stem[-2]:
+            cands.append(stem[:-1])         # stopped -> stop
+    if n > 3 and token.endswith("es"):
+        cands.append(token[:-2] + "e")      # uses -> use
+    if n > 3 and token.endswith("s"):
+        cands.append(token[:-1])            # uses -> use, leads -> lead
     return cands
 
 

@@ -164,3 +164,20 @@ def test_original_hash_is_traceable() -> None:
 
     assert m.original_sha256 == hashlib.sha256(raw).hexdigest()
     assert m.original_byte_length == len(raw)
+
+
+def test_evidence_lemmatizer_v2_maps_realistic_prose_forms() -> None:
+    """Q1-R regression lock: the v2 lexical lemmatizer maps past-tense
+    and copula forms that realistic prose depends on. The v1 stemmer
+    produced zero anchors for these (the Q1-R generalization failure)."""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "workers"))
+    from workers.evidence_proposer import _match_verb  # noqa: E402
+
+    assert _match_verb("used", ["use", "apply"]) == "use"
+    assert _match_verb("based", ["locate", "base", "situate"]) == "base"
+    assert _match_verb("reduced", ["reduce", "cut"]) == "reduce"
+    assert _match_verb("reported", ["state", "cite", "document", "describe", "report"]) == "report"
+    assert _match_verb("is", ["be", "represent", "constitute"]) == "be"
+    assert _match_verb("making", ["make", "create"]) == "make"
+    assert _match_verb("uses", ["use", "apply"]) == "use"
+    assert _match_verb("leads", ["lead", "head"]) == "lead"
