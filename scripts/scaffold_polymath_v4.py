@@ -481,6 +481,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/r2a/run.py", "py", None),
     ("eval/r2a/seed.py", "py", None),
     ("eval/e3/verify_e3.py", "py", None),
+    ("eval/e3/_failure_probe.py", "py", None),
     ("eval/e3/evidence.json", "json", None),
     ("eval/e3/corpus/author.py", "py", None),
     ("eval/e3/corpus/SHA256SUMS", "txt", None),
