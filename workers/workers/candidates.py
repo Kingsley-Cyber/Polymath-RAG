@@ -27,7 +27,6 @@ from polymath_shared.contracts import (
     SemanticRole,
     ScopeFlags,
 )
-from polymath_shared.rulepack.compiler import canonical_entity_id
 from polymath_shared.rulepack.negation import analyze_scope
 
 MAX_SYNTAX_DISTANCE = 4
@@ -66,6 +65,7 @@ def build_candidates(
     slices: list[SentenceSlice],
     *,
     doc_id: str,
+    corpus_id: str = "eval",
     ontology_profile: str,
     extractor_version: str,
     rule_pack: dict,
@@ -118,8 +118,8 @@ def build_candidates(
                     ):
                         continue
 
-                    subject_id = canonical_entity_id(subject_span.core_type, subject_span.text)
-                    object_id = canonical_entity_id(object_span.core_type, object_span.text)
+                    subject_id = _allocate(subject_span, sl, doc_id, corpus_id)
+                    object_id = _allocate(object_span, sl, doc_id, corpus_id)
                     candidates.append(RelationCandidate(
                         evidence=evidence,
                         subject=_entity_candidate(subject_span, subject_id),
@@ -133,6 +133,30 @@ def build_candidates(
                         ontology_profile=ontology_profile,
                     ))
     return candidates
+
+
+def _allocate(span, sl: SentenceSlice, doc_id: str, corpus_id: str) -> str:
+    """Entity admission boundary (E2/C1.1): identity by reference class.
+
+    GLOBAL -> global canonical id; CORPUS_SCOPED -> corpus+type+surface;
+    DOCUMENT_SCOPED -> corpus+doc+type+surface; MENTION_ONLY -> stable
+    evidence mention id (never a durable graph identity)."""
+    from polymath_shared.entity_admission import allocate_entity_id
+
+    leading = sl.text[: len(sl.text) - len(sl.text.lstrip())]
+    sentence_initial = span.start <= sl.sentence_start + len(leading)
+    decision = allocate_entity_id(
+        span.text,
+        span.core_type.value,
+        corpus_id=corpus_id,
+        doc_id=span.doc_id or doc_id,
+        chunk_id=span.chunk_id,
+        span_start=span.start,
+        span_end=span.end,
+        extraction_score=span.score,
+        sentence_initial=sentence_initial,
+    )
+    return decision.mention_id
 
 
 def _entity_candidate(span: EntitySpan, resolved_id: str):

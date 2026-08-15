@@ -241,3 +241,28 @@ that motivated it and the refactor that implemented it.
   flag — verification supersedes claims, never erases history.
 - Qdrant moved to host port 6334; the live v3.3 stack on 6333 is never
   touched.
+
+## 2026-08-15: E2/C1.1 production — entity admission boundary + bidirectional hop1
+
+- Entity admission (qualified 2026-08-14, 100% gold + downstream G4
+  PASS) is now production behavior at the identity allocation point:
+  GLOBAL / CORPUS_SCOPED / DOCUMENT_SCOPED / MENTION_ONLY reference
+  classes with a new identity contract (entity-identity-v2, migration
+  0007 entities.admission_class). GLOBAL ids remain byte-compatible
+  with canonical_entity_id.
+- MENTION_ONLY mentions keep a stable evidence id, are persisted in
+  Postgres, and are never projected as Neo4j Entity nodes; facts with
+  a MENTION_ONLY endpoint are parked as unresolved evidence (Postgres
+  authority, no graph edge). Generic hubs (the system / the model /
+  the platform) can no longer enter the graph.
+- Canonicalization input excludes DOCUMENT_SCOPED (doc-local
+  identities never merge across documents) and MENTION_ONLY.
+- Graph expansion promotes to the G4-measured canonical bidirectional
+  hop1: two directed clauses inside one CALL () subquery, dedupe by
+  fact_id, ORDER BY fact_id, LIMIT 20. An incoming edge only makes the
+  EXISTING fact eligible — orientation is never invented. The frozen
+  q09 generic-seed criterion no longer applies (generic surfaces
+  cannot exist as graph nodes); G4.2 remains rejected as defense in
+  depth.
+- Compiler authority unchanged; Q1 frozen extraction qualification
+  untouched (harness source-compatible via default corpus_id).

@@ -49,6 +49,8 @@ def _corpus_entities(conn: Connection, corpus_id: str) -> list[dict]:
           JOIN evidence ev ON ev.fact_id = f.fact_id
           JOIN documents d ON d.doc_id = ev.doc_id
          WHERE d.corpus_id = %s
+           AND e.admission_class IS DISTINCT FROM 'MENTION_ONLY'
+           AND e.admission_class IS DISTINCT FROM 'DOCUMENT_SCOPED'
          ORDER BY e.entity_id
         """,
         (corpus_id,),

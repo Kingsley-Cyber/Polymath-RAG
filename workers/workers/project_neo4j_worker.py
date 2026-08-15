@@ -117,6 +117,7 @@ def _graph_rows(conn: Connection, run_id: str) -> dict[str, list[dict]]:
           JOIN runs r ON r.corpus_id = d.corpus_id
           JOIN entities e ON e.entity_id = f.subject_id OR e.entity_id = f.object_id
          WHERE r.run_id = %s
+           AND e.admission_class IS DISTINCT FROM 'MENTION_ONLY'
         """,
         (run_id,),
     ).fetchall()
@@ -127,7 +128,11 @@ def _graph_rows(conn: Connection, run_id: str) -> dict[str, list[dict]]:
           JOIN evidence e ON e.fact_id = f.fact_id
           JOIN documents d ON d.doc_id = e.doc_id
           JOIN runs r ON r.corpus_id = d.corpus_id
+          JOIN entities se ON se.entity_id = f.subject_id
+          JOIN entities oe ON oe.entity_id = f.object_id
          WHERE r.run_id = %s
+           AND se.admission_class IS DISTINCT FROM 'MENTION_ONLY'
+           AND oe.admission_class IS DISTINCT FROM 'MENTION_ONLY'
         """,
         (run_id,),
     ).fetchall()

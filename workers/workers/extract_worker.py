@@ -180,6 +180,7 @@ def _slices(
     sentences: _Sentences,
     entities: list[EntitySpan],
     evidence: list[EvidenceSpan],
+    corpus_id: str = "eval",
 ) -> list[SentenceSlice]:
     slices: list[SentenceSlice] = []
     for text, (start, end) in zip(sentences.texts, sentences.offsets):
@@ -189,7 +190,7 @@ def _slices(
             parse = parse_sentence(text)
             if parse is not None:
                 parse["_sentence_offsets"] = [start, end]
-                _fill_parse_entities(parse, ent)
+                _fill_parse_entities(parse, ent, corpus_id)
             slices.append(SentenceSlice(
                 text=text, sentence_start=start, sentence_end=end,
                 entities=ent, evidence=ev, parse=parse,
@@ -197,14 +198,28 @@ def _slices(
     return slices
 
 
-def _fill_parse_entities(parse: dict, entities: list[EntitySpan]) -> None:
+def _allocate_parse_entity(span, corpus_id: str, parse: dict) -> str:
+    """Parse-record entity ids must use the SAME admission identity as
+    candidates (the compiler compares them in _oriented_pair)."""
+    from polymath_shared.entity_admission import allocate_entity_id
+
+    sent_start = (parse.get("_sentence_offsets") or [0])[0]
+    leading = len(parse.get("text", "")) - len(parse.get("text", "").lstrip())
+    return allocate_entity_id(
+        span.text, span.core_type.value,
+        corpus_id=corpus_id, doc_id=span.doc_id, chunk_id=span.chunk_id,
+        span_start=span.start, span_end=span.end,
+        extraction_score=span.score,
+        sentence_initial=span.start <= sent_start + leading,
+    ).mention_id
+
+
+def _fill_parse_entities(parse: dict, entities: list[EntitySpan], corpus_id: str = "eval") -> None:
     """Q1-R v1.1.0: link the syntactic record's subject/agent/object to
     pass-1 entity ids by deterministic surface match, so the compiler's
     voice normalization (_oriented_pair) can orient passive facts by
     semantic role. Without this link the passive path was dead in
     production (the frozen harness was the only supplier of entity_id)."""
-    from polymath_shared.rulepack.compiler import canonical_entity_id
-
     for slot in ("subject", "agent", "object"):
         record = parse.get(slot)
         if not record:
@@ -225,7 +240,7 @@ def _fill_parse_entities(parse: dict, entities: list[EntitySpan]) -> None:
                     match = span
                     break
         if match is not None:
-            record["entity_id"] = canonical_entity_id(match.core_type, match.text)
+            record["entity_id"] = _allocate_parse_entity(match, corpus_id, parse)
 
 
 def process_event(conn: Connection, event: dict) -> None:
@@ -259,9 +274,16 @@ def process_event(conn: Connection, event: dict) -> None:
         "rule_pack_version": RULE_PACK_VERSION,
         "active_pack_version": active_pack_version(),
         "parser_version": parser_version,
+        "admission_policy": "entity-admission-v1.1",
+        "identity_contract": "entity-identity-v2",
         "thresholds": {"entity": ENTITY_THRESHOLD, "evidence": EVIDENCE_THRESHOLD},
         "evidence_proposal_mode": proposal_mode,
     })
+
+    corpus_row = conn.execute(
+        "SELECT r.corpus_id FROM runs r WHERE r.run_id = %s", (run_id,)
+    ).fetchone()
+    corpus_id = corpus_row[0] if corpus_row else "unknown"
 
     with stage_transaction(
         conn, run_id=run_id, stage=STAGE, contract_hash=contract
@@ -302,11 +324,12 @@ def process_event(conn: Connection, event: dict) -> None:
                     gliner, row["text"], row["chunk_id"], pack, proposal_mode
                 )
                 sentences = _sentences_of(row["text"])
-                slices = _slices(sentences, entities, evidence)
+                slices = _slices(sentences, entities, evidence, corpus_id)
                 for sl in slices:
                     candidates = build_candidates(
                         [sl],
                         doc_id=doc_id,
+                        corpus_id=corpus_id,
                         ontology_profile=profile_dict.get("profile_id", "core"),
                         extractor_version=EXTRACTOR_VERSION,
                         rule_pack=pack,
@@ -334,23 +357,24 @@ def process_event(conn: Connection, event: dict) -> None:
 
 
 def _persist_decision(conn: Connection, chunk_row: dict, candidate, decision) -> None:
+    from polymath_shared.entity_admission import decide as _admission_decide
+
     fact = decision.fact
-    conn.execute(
-        """
-        INSERT INTO entities (entity_id, core_type, normalized_surface)
-        VALUES (%s, %s, %s)
-        ON CONFLICT (entity_id) DO NOTHING
-        """,
-        (fact.subject_id, candidate.subject.span.core_type.value, candidate.subject.span.text),
-    )
-    conn.execute(
-        """
-        INSERT INTO entities (entity_id, core_type, normalized_surface)
-        VALUES (%s, %s, %s)
-        ON CONFLICT (entity_id) DO NOTHING
-        """,
-        (fact.object_id, candidate.object.span.core_type.value, candidate.object.span.text),
-    )
+    for entity_id, span in (
+        (fact.subject_id, candidate.subject.span),
+        (fact.object_id, candidate.object.span),
+    ):
+        admission = _admission_decide(
+            span.text, span.core_type.value, span.score
+        ).reference_class
+        conn.execute(
+            """
+            INSERT INTO entities (entity_id, core_type, normalized_surface, admission_class)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (entity_id) DO NOTHING
+            """,
+            (entity_id, span.core_type.value, span.text, admission),
+        )
     conn.execute(
         """
         INSERT INTO facts (fact_id, predicate, subject_id, object_id, qualifiers,

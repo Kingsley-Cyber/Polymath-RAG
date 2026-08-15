@@ -10,6 +10,17 @@ Read:
 
 ## Last Completed
 
+- **E2/C1.1 production wiring** — entity admission boundary (ADR 0011,
+  refactor 0008). Production identity allocation now runs the
+  qualified entity-admission-v1.1 policy: GLOBAL / CORPUS_SCOPED /
+  DOCUMENT_SCOPED / MENTION_ONLY with identity contract
+  entity-identity-v2 (migration 0007). MENTION_ONLY entities never
+  project to Neo4j; facts with a MENTION_ONLY endpoint are parked as
+  Postgres-only evidence. Graph expansion promoted to canonical
+  bidirectional hop1 (directed UNION, dedupe by fact_id): downstream
+  G4 rerun 12 useful / 0 noise, q09 clean; Phase H P/R 0.9355 both
+  arms unchanged; compiler untouched. Evidence: work log
+  `2026-08-15-e2-admission-production-wiring.md`, ADR 0011.
 - **I0** — native document materialization (ADR 0010). Deterministic
   PDF/EPUB/DOCX/TXT/MD/HTML → normalized text + structural source map
   (page/chapter/section/paragraph) fed into the frozen pipeline; typed
@@ -54,8 +65,9 @@ MILESTONE A — CORPUS_INGEST_READY (current priority):
 2. ~~canonical KG + provenance projection (C2)~~ COMPLETE
 3. ~~heterogeneous extraction qualification (Q1)~~ COMPLETE (PASS)
 4. ~~native document materialization (I0)~~ COMPLETE
-5. manifest-driven bulk ingestion (I1) ← NEXT
-6. corpus-scale integrity qualification (I2)
+5. ~~entity admission production wiring (E2/C1.1)~~ COMPLETE (ADR 0011)
+6. manifest-driven bulk ingestion (I1) ← NEXT
+7. corpus-scale integrity qualification (I2)
 
 CORPUS_INGEST_READY is achieved only when C1+C2+Q1+I0+I1+I2 pass.
 

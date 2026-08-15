@@ -268,6 +268,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("stores/postgres/migrations/0004_projection_claims.sql", "sql", None),
     ("stores/postgres/migrations/0005_canonicalization.sql", "sql", None),
     ("stores/postgres/migrations/0006_materialization.sql", "sql", None),
+    ("stores/postgres/migrations/0007_admission.sql", "sql", None),
 
     # sidecars: pinned embedder manifest (neural embedding contract)
     ("sidecars/embedder/manifest.toml", "toml", None),
@@ -355,6 +356,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-08-14-ep1-entity-proposal.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-em1-model-qualification.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-sr1-span-repair.md", "md", None),
+    ("docs/wiki/work-log/2026-08-15-e2-admission-production-wiring.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-g3-reranker.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-g5-answer-path-verification.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-g4-graph-expansion.md", "md", None),
@@ -402,6 +404,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/0003-g3-reranker.md", "md", None),
     ("docs/wiki/experiments/0004-g5-answer-path-verification.md", "md", None),
     ("shared/polymath_shared/span_repair.py", "py", None),
+    ("shared/polymath_shared/entity_admission.py", "py", None),
     ("shared/polymath_shared/rerank.py", "py", None),
     ("eval/sr1/qualify_sr1.py", "py", None),
     ("eval/sr1/REPORT_SR1.md", "md", None),
@@ -443,16 +446,19 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/em1/artifacts/C-nuner-zero_0.60.json", "json", None),
     ("eval/q1r/REPORT_Q1R.md", "md", None),
     ("tests/determinism/test_q1r_v110_revision.py", "py", None),
+    ("tests/determinism/test_entity_admission.py", "py", None),
     ("tests/determinism/test_rerank_wrapper.py", "py", None),
     ("shared/polymath_shared/rulepack/core-predicates-v1.1.0.yaml", "yaml", None),
     ("resources/compiled/03a513ece6da32b243289fa9b9ef9dfe8e21cec4ff9f0435678ad4425021c150/compiled_lexical-v1.1.0.json", "json", None),
     ("docs/wiki/refactors/0006-q1-qualification.md", "md", None),
     ("docs/wiki/refactors/0007-i0-native-documents.md", "md", None),
+    ("docs/wiki/refactors/0008-e2-admission-production.md", "md", None),
     ("eval/gold/relations_v1.yaml", "yaml", None),
     ("eval/measure_layers.py", "py", None),
 
     # tests: Phase F gate + G1/G2 cross-domain routing acceptance
     ("tests/integration/test_projection_reconstruction.py", "py", None),
+    ("tests/integration/test_admission_projection.py", "py", None),
 
     # ── Phase G: lexical resource compiler (build deps + committed tables) ──
     ("resources/README.md", "md", None),
@@ -468,6 +474,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/decisions/0008-evidence-pass-boundary.md", "md", None),
     ("docs/wiki/decisions/0009-canonicalization-layer.md", "md", None),
     ("docs/wiki/decisions/0010-native-document-materialization.md", "md", None),
+    ("docs/wiki/decisions/0011-entity-admission-boundary.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-phase-g-resources.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-phase-g-resources-hardening.md", "md", None),
     ("docs/wiki/work-log/2026-08-14-phase-h.md", "md", None),

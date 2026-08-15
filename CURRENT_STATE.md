@@ -1,28 +1,29 @@
 # Current Repository State
 
-Last verified: 2026-08-14
-Verified against commit: `1b11662` (roadmap restored: entity-architecture escalation stopped; evidence chain frozen)
+Last verified: 2026-08-15
+Verified against commit: `41bbaed` (E2/C1.1 promotion authorized, not wired) — admission production wiring in progress on top
 Active branch at verification: `main` (working tree clean)
 
 ```yaml
 current_phase: g5-verified # G5: existing R3a/R3b answer path verified under G3 reranking (PASS); next = G4 scale
 repository:
   branch: main
-  head: 1b11662
+  head: 41bbaed
   frozen_artifacts: [see Frozen Artifacts section]
-  evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1, qualification-q1, q1r-validation, ep1, em1, sr1]
-  next_actions: [g4-scale-qualification, i1-bulk-ingestion, i2-scale-integrity]
+  evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1, qualification-q1, q1r-validation, ep1, em1, sr1, e2-admission, g4]
+  next_actions: [i1-bulk-ingestion, i2-scale-integrity, g4-scale-qualification]
   do_not_do: [see Explicitly Prohibited Actions]
   known_gaps: [see Known Limitations]
 ```
 
 ## System Status
 
-- **Build pipeline**: `preflight ok`, `repo guard ok`, `wiki ok` (verified at the commit above).
-- **Unit tests**: 152 passed, 22 skipped (skips = integration / neural-gated gates) — verified.
-- **Integration tests**: 19 passed, 2 skipped (`POLYMATH_INTEGRATION=1` + live stores; Qdrant on 6334, Neo4j on 7688, Postgres on 5432) — verified.
+- **Build pipeline**: `preflight ok`, `repo guard ok`, `wiki ok` (verified).
+- **Unit tests**: 173 passed, 28 skipped (skips = integration / neural-gated gates) — verified.
+- **Integration tests**: 26 passed, 1 skipped (`POLYMATH_INTEGRATION=1` + live stores; Qdrant on 6334, Neo4j on 7688, Postgres on 5432) — verified.
 - **Extraction verdict**: hybrid resource enrichment **REJECTED as production default** (Phase H v1.1: Δincorrect = +4 > 0). The lexical lane remains the production default.
 - **Q1 qualification verdict: PASS** (frozen report `eval/q1/REPORT_Q1.md`): production lexical arm P/R 0.943 on the 53-item heterogeneous corpus; 0 wrong-predicate, 0 wrong-scope; every residual failure is a catalogued class; pipeline E2E clean with real GLiNER. **Production extraction is qualified. Further extraction changes require a demonstrated regression or separately measured improvement.**
+- **E2/C1.1 admission verdict: WIRED (production)** (ADR 0011, refactor 0008): entity-admission-v1.1 policy at the identity allocation point — GLOBAL / CORPUS_SCOPED / DOCUMENT_SCOPED / MENTION_ONLY with identity contract entity-identity-v2 (migration 0007). MENTION_ONLY never projects to Neo4j; facts with a MENTION_ONLY endpoint stay parked in Postgres. Graph expansion is now canonical bidirectional hop1 (directed UNION, dedupe by fact_id). Downstream G4 rerun: 12 useful / 0 noise, q09 clean. Phase H harness rerun: P/R 0.9355 both arms (unchanged).
 
 ## Current Architecture
 
@@ -365,13 +366,13 @@ R2 (reranker, bypassable) → M1–M5 (MCP) → R4 → O2 → O1 → A1 → V1.
 ```bash
 git status --short && git branch --show-current && git rev-parse HEAD
 make guards                     # preflight + repo guard + wiki worm
-.venv/bin/python -m pytest tests -q                 # 77 passed / 15 skipped (verified)
+.venv/bin/python -m pytest tests -q                 # 173 passed / 28 skipped (verified)
 POLYMATH_INTEGRATION=1 \
   POLYMATH_PG_DSN="postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath" \
   POLYMATH_QDRANT_URL="http://127.0.0.1:6334" \
   POLYMATH_NEO4J_URI="bolt://127.0.0.1:7688" \
   POLYMATH_NEO4J_PASSWORD=polymath-dev \
-  .venv/bin/python -m pytest tests/integration -q   # 12 passed / 2 skipped (verified)
+  .venv/bin/python -m pytest tests/integration -q   # 26 passed / 1 skipped (verified)
 shasum -a 256 eval/gold/relations_v1.yaml eval/gold/relations_v1.1.yaml
 python3 scripts/verify_resources.py
 python3 scripts/flatten_resources.py   # deterministic; same contract id expected
