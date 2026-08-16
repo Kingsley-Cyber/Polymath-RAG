@@ -106,6 +106,9 @@ def propose_evidence(
                     text=text[m.start(): m.end()],
                     evidence_class=class_id,
                     trigger_lemma=phrase.split()[0],
+                    trigger_lexical_class="MULTIWORD",
+                    trigger_predicate_id=rule_id,
+                    trigger_match_source="multiword",
                     score=1.0,
                     extractor_version=EXTRACTOR_VERSION,
                 ))
@@ -122,6 +125,9 @@ def propose_evidence(
                         text=text[m.start(): m.end()],
                         evidence_class=class_id,
                         trigger_lemma=lemma,
+                        trigger_lexical_class="VERB",
+                        trigger_predicate_id=rule_id,
+                        trigger_match_source="verbs",
                         score=1.0,
                         extractor_version=EXTRACTOR_VERSION,
                     ))
@@ -135,6 +141,9 @@ def propose_evidence(
                     text=text[m.start(): m.end()],
                     evidence_class=class_id,
                     trigger_lemma=noun.lower(),
+                    trigger_lexical_class="NOUN",
+                    trigger_predicate_id=rule_id,
+                    trigger_match_source="nouns",
                     score=1.0,
                     extractor_version=EXTRACTOR_VERSION,
                 ))
@@ -168,8 +177,16 @@ def merge_gliner_proposals(
 def localize_trigger(span: EvidenceSpan, rule_pack: dict) -> EvidenceSpan:
     """Deterministic trigger localization inside an evidence span: find
     the first compiled verb/noun/multiword match within the span text.
-    Returns a copy with trigger_lemma set (or the span unchanged — the
-    compiler then reports UNSUPPORTED, never a guess)."""
+
+    I3R-R1 typed trigger contract: on a match, records which lexical
+    arm of which predicate authorized the trigger (VERB/NOUN/MULTIWORD
+    + predicate id + source arm). Verb matching is BOUNDED surface-form
+    matching (base + s/es/d/ed/ing + e-drop/y-drop/doubling), never a
+    bare prefix wildcard — "application" can no longer match "apply"
+    and "startled" cannot match "start".
+
+    Returns the span unchanged when nothing matches — the compiler then
+    reports UNSUPPORTED, never a guess."""
     text = span.text
     if span.trigger_lemma:
         return span
@@ -179,14 +196,43 @@ def localize_trigger(span: EvidenceSpan, rule_pack: dict) -> EvidenceSpan:
         for phrase in sorted(ev.get("multiword", []), key=len, reverse=True):
             if phrase.lower() in lowered:
                 span.trigger_lemma = phrase.split()[0]
+                span.trigger_lexical_class = "MULTIWORD"
+                span.trigger_predicate_id = rule_id
+                span.trigger_match_source = "multiword"
                 return span
         for noun in sorted(ev.get("nouns", []), key=len, reverse=True):
             if re.search(r"\b" + re.escape(noun.lower()) + r"\b", lowered):
                 span.trigger_lemma = noun.lower()
+                span.trigger_lexical_class = "NOUN"
+                span.trigger_predicate_id = rule_id
+                span.trigger_match_source = "nouns"
                 return span
         for verb in sorted(ev.get("verbs", []), key=len, reverse=True):
-            m = re.search(r"\b" + re.escape(verb.lower()) + r"\w*\b", lowered)
-            if m:
-                span.trigger_lemma = verb.lower()
-                return span
+            for m in re.finditer(r"\b[a-z]+(?:'[a-z]+)?\b", lowered):
+                if _bounded_verb_form(m.group(0), verb.lower()):
+                    span.trigger_lemma = verb.lower()
+                    span.trigger_lexical_class = "VERB"
+                    span.trigger_predicate_id = rule_id
+                    span.trigger_match_source = "verbs"
+                    return span
     return span
+
+
+def _bounded_verb_form(surface: str, lemma: str) -> bool:
+    """I3R-R1C: a surface is a valid inflection of `lemma` only under
+    explicit bounded forms (base, +s, +es, +d, +ed, +ing with e-drop,
+    y->ies/ied, and consonant doubling). Arbitrary suffix strings that
+    share a prefix are NOT valid forms."""
+    if surface == lemma:
+        return True
+    forms = {
+        lemma + "s", lemma + "es", lemma + "d", lemma + "ed", lemma + "ing",
+    }
+    if lemma.endswith("e"):
+        forms |= {lemma[:-1] + "ing", lemma[:-1] + "d"}
+    if lemma.endswith("y"):
+        forms |= {lemma[:-1] + "ies", lemma[:-1] + "ied"}
+    if (len(lemma) >= 3 and lemma[-3] not in "aeiou"
+            and lemma[-2] in "aeiou" and lemma[-1] not in "aeiouy"):
+        forms |= {lemma + lemma[-1] + "ed", lemma + lemma[-1] + "ing"}
+    return surface in forms

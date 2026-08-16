@@ -50,13 +50,24 @@ class EntitySpan(BaseModel):
 
 
 class EvidenceSpan(BaseModel):
-    """GLiNER pass-2 output — a coarse evidence class, never a predicate."""
+    """GLiNER pass-2 output — a coarse evidence class, never a predicate.
+
+    I3R-R1 typed trigger contract: when localization (evidence_proposer.
+    localize_trigger) authorizes a trigger, it records WHICH lexical arm
+    of WHICH predicate produced it (trigger_lexical_class in
+    {VERB, NOUN, MULTIWORD}, trigger_predicate_id, trigger_match_source
+    in {"verbs","nouns","multiword"}). The compiler then tests ONLY that
+    arm of that predicate. Spans without these fields (legacy frozen
+    harnesses) fall back to the untyped all-arm behavior unchanged."""
     chunk_id: str
     start: int = Field(ge=0)
     end: int = Field(ge=0)
     text: str
     evidence_class: str
     trigger_lemma: Optional[str] = None
+    trigger_lexical_class: Optional[str] = None
+    trigger_predicate_id: Optional[str] = None
+    trigger_match_source: Optional[str] = None
     score: float = Field(ge=0, le=1)
     extractor_version: str
 

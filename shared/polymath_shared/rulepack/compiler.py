@@ -85,6 +85,9 @@ def load_rule_pack(path: Optional[Path] = None, *, use_resources: bool = True,
     elif pack_version == "1.1.0":
         yaml_path = path or (_RULE_PACK_PATH.parent / "core-predicates-v1.1.0.yaml")
         compiled_name = "compiled_lexical-v1.1.0.json"
+    elif pack_version == "1.2.0":
+        yaml_path = path or (_RULE_PACK_PATH.parent / "core-predicates-v1.2.0.yaml")
+        compiled_name = "compiled_lexical-v1.2.0.json"
     else:
         raise RulePackError(f"unknown rule pack version {pack_version!r}")
 
@@ -535,6 +538,25 @@ def _trigger_matches(rule: dict, evidence: Any) -> bool:
     for negative in ev.get("negative_triggers", []):
         if negative.lower() in text.split():
             return False
+
+    # I3R-R1 typed trigger contract: when localization recorded WHICH
+    # lexical arm of WHICH predicate produced this trigger, only that
+    # arm of that predicate may authorize it — the compiler no longer
+    # tests a category-less lemma against every inventory. Spans
+    # without the typed fields (legacy frozen harnesses) keep the
+    # untyped all-arm behavior unchanged.
+    typed_rule = getattr(evidence, "trigger_predicate_id", None)
+    if typed_rule:
+        if typed_rule != rule["id"]:
+            return False
+        source = getattr(evidence, "trigger_match_source", None)
+        if source == "verbs":
+            return any(lemma == verb.lower() for verb in ev.get("verbs", []))
+        if source == "nouns":
+            return any(lemma == noun.lower() for noun in ev.get("nouns", []))
+        if source == "multiword":
+            return any(phrase.lower() in text for phrase in ev.get("multiword", []))
+        return False
 
     for verb in ev.get("verbs", []):
         if lemma == verb.lower():
