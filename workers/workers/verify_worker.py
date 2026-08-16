@@ -236,15 +236,21 @@ def reconcile_qdrant(conn: Connection, run_id: str, corpus: str) -> dict:
     if missing_in_store:
         _clear_receipts(conn, "qdrant", sorted(missing_in_store))
 
-    # Orphan store artifacts (no receipt, no source) -> delete from store.
+    # I3R-R5B orphan semantics: a store point is an orphan ONLY when no
+    # authoritative source artifact desires it anymore. Points whose
+    # chunk row still exists but whose receipt is temporarily absent
+    # are IN-FLIGHT, not orphans — keep them; the missing-receipts gap
+    # below re-drives the projector instead.
     orphans_in_store = store_ids - receipts
-    if orphans_in_store:
+    true_orphans = orphans_in_store - desired
+    in_flight = orphans_in_store & desired
+    if true_orphans:
         client = _qdrant_client()
         try:
             points, _ = client.scroll(collection_name=collection, limit=100_000, with_vectors=False)
             orphan_point_ids = [
                 p.id for p in points
-                if p.payload and str(p.payload.get("chunk_id")) in orphans_in_store
+                if p.payload and str(p.payload.get("chunk_id")) in true_orphans
             ]
             if orphan_point_ids:
                 client.delete(collection_name=collection, points_selector=orphan_point_ids)
@@ -258,7 +264,8 @@ def reconcile_qdrant(conn: Connection, run_id: str, corpus: str) -> dict:
 
     return {
         "missing_in_store": sorted(missing_in_store),
-        "orphans_in_store": sorted(orphans_in_store),
+        "orphans_in_store": sorted(true_orphans),
+        "in_flight_points_kept": sorted(in_flight),
         "orphan_receipts": orphan_receipts,
         "missing_receipts": sorted(missing_receipts),
     }
@@ -278,8 +285,12 @@ def reconcile_neo4j(conn: Connection, run_id: str, corpus: str) -> dict:
         with driver.session() as session:
             result = session.run("MATCH (c:Chunk) RETURN c.chunk_id AS id")
             store_ids = {r["id"] for r in result}
-            # Delete orphan chunk nodes (no receipt anywhere).
-            orphans = store_ids - global_receipts
+            # I3R-R5B: a chunk node is an orphan ONLY when no authoritative
+            # chunk row still exists anywhere; nodes with a live source row
+            # but a missing receipt are in-flight and are kept.
+            live_chunks = {r[0] for r in conn.execute(
+                "SELECT chunk_id FROM chunks").fetchall()}
+            orphans = store_ids - global_receipts - live_chunks
             for chunk_id in orphans:
                 session.run(
                     "MATCH (c:Chunk {chunk_id: $id}) DETACH DELETE c", id=chunk_id
@@ -312,10 +323,14 @@ def reconcile_neo4j(conn: Connection, run_id: str, corpus: str) -> dict:
                     (sorted(erroneous),),
                 )
                 fact_receipts -= erroneous
-            for fact_id in edge_ids - fact_receipts:
-                session.run(
-                    "MATCH ()-[r:REL {fact_id: $id}]->() DELETE r", id=fact_id
-                )
+            # I3R-R5A: an edge without a receipt is deleted ONLY when no
+            # authoritative eligible fact still desires it. Edges whose
+            # fact is ineligible were already deleted above (D1 boundary);
+            # every remaining edge without a receipt is an IN-FLIGHT
+            # projection (edge written, receipt pending) — keep it and
+            # report it so the run re-enters the census and the projector
+            # converges the bookkeeping.
+            in_flight_edges = sorted(edge_ids - fact_receipts)
             missing_edges = fact_receipts - edge_ids
             if missing_edges:
                 conn.execute(
@@ -342,6 +357,7 @@ def reconcile_neo4j(conn: Connection, run_id: str, corpus: str) -> dict:
         "orphan_receipts": orphan_receipts,
         "missing_receipts": sorted(missing_receipts),
         "missing_facts": sorted(missing_edges) if missing_edges else [],
+        "in_flight_fact_edges_kept": in_flight_edges,
     }
 
 
@@ -536,6 +552,10 @@ def process_event(conn: Connection, event: dict) -> None:
             + neo4j_report["missing_facts"]
             + canonical_report["missing_receipts"]
             + canonical_report["orphan_receipts"]
+            # I3R-R5: in-flight edges are kept, but they mean bookkeeping
+            # has not converged yet — keep the run non-terminal so the
+            # census re-drives the projector.
+            + neo4j_report["in_flight_fact_edges_kept"]
         )
         if loss or problem:
             # Degraded (not failed): the census re-drives projectors and

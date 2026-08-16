@@ -246,6 +246,63 @@ def supersede_projection_claims(
 # ---------------------------------------------------------------------------
 
 
+def invalidate_corpus_projections(conn: Connection, corpus_id: str) -> int:
+    """I3R-R5C: deterministic reconstruction entry for a corpus whose
+    runs are terminal (query_ready).
+
+    Supersedes every active projection receipt for the corpus's derived
+    objects (chunk/summary/canonical/fact identities across the qdrant
+    and neo4j projections) and re-enters each query_ready run into the
+    census as degraded with fresh projection + verification attempts.
+    The normal control loop then re-drives projection, re-verification,
+    and promotion — no manual status edits, no new scheduler."""
+    doc_rows = conn.execute(
+        "SELECT doc_id FROM documents WHERE corpus_id = %s", (corpus_id,)
+    ).fetchall()
+    if not doc_rows:
+        return 0
+    doc_ids = [r[0] for r in doc_rows]
+    chunk_ids = [r[0] for r in conn.execute(
+        "SELECT chunk_id FROM chunks WHERE doc_id = ANY(%s)", (doc_ids,)
+    ).fetchall()]
+    summary_ids = [r[0] for r in conn.execute(
+        "SELECT summary_id FROM retrieval_summaries WHERE corpus_id = %s",
+        (corpus_id,)).fetchall()]
+    canonical_ids = [r[0] for r in conn.execute(
+        "SELECT canonical_id FROM canonical_entities WHERE corpus_id = %s",
+        (corpus_id,)).fetchall()]
+    fact_ids = [r[0] for r in conn.execute(
+        "SELECT DISTINCT ev.fact_id FROM evidence ev WHERE ev.doc_id = ANY(%s)",
+        (doc_ids,)).fetchall()]
+    entity_ids = chunk_ids + summary_ids + canonical_ids + fact_ids
+    for projection in ("qdrant", "neo4j"):
+        supersede_projection_claims(conn, projection=projection,
+                                    entity_ids=entity_ids)
+    run_rows = conn.execute(
+        "SELECT run_id FROM runs WHERE corpus_id = %s AND status = 'query_ready'",
+        (corpus_id,)).fetchall()
+    # I3R-R5C: re-enter runs via IN-PLACE attempt updates, not synthetic
+    # rows — the census reads the latest-started attempt per stage, and a
+    # synthetic later-started row would permanently shadow the real
+    # attempts (endless re-drive). stage_attempts is state, not an
+    # append-only log: workers themselves update outcome in place.
+    stages = ("project_qdrant", "project_neo4j", "project_canonical",
+              "verify_projections")
+    for (rid,) in run_rows:
+        conn.execute(
+            "UPDATE runs SET status = 'degraded', updated_at = now() "
+            "WHERE run_id = %s", (rid,))
+        conn.execute(
+            """
+            UPDATE stage_attempts
+               SET outcome = 'skipped', completed_at = now(), error = NULL
+             WHERE run_id = %s AND stage = ANY(%s)
+            """,
+            (rid, list(stages)),
+        )
+    return len(run_rows)
+
+
 def claim_events(conn: Connection, event_types: list[str], limit: int) -> list[dict]:
     """Claim a batch of undelivered outbox events with a short row lock.
     Delivery marks the row; the idempotency key makes redelivery safe."""

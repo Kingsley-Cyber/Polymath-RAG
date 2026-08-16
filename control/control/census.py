@@ -192,6 +192,42 @@ def _missing_projection_receipts(conn: Connection, run_id: str, stage: str) -> l
             if has is None:
                 missing.append(entity_id)
         return missing
+    if stage == "project_neo4j":
+        # I3R-R5: eligible facts and chunk nodes are part of the
+        # query-ready contract; missing active neo4j receipts re-drive
+        # the projector (in-flight-edge convergence path).
+        from polymath_shared.neo4j_eligibility import fact_eligible_sql
+        fact_rows = conn.execute(
+            """
+            SELECT f.fact_id FROM facts f
+              JOIN evidence ev ON ev.fact_id = f.fact_id
+              JOIN documents d ON d.doc_id = ev.doc_id
+              JOIN runs r ON r.corpus_id = d.corpus_id
+             WHERE r.run_id = %s
+               AND """ + fact_eligible_sql("f") + """
+               AND NOT EXISTS (
+                   SELECT 1 FROM projection_receipts pr
+                    WHERE pr.projection = 'neo4j' AND pr.entity_kind = 'fact'
+                      AND pr.active AND pr.entity_id = f.fact_id)
+            """,
+            (run_id,),
+        ).fetchall()
+        missing = [r[0] for r in fact_rows]
+        chunk_rows = conn.execute(
+            """
+            SELECT c.chunk_id FROM chunks c
+              JOIN documents d ON d.doc_id = c.doc_id
+              JOIN runs r ON r.corpus_id = d.corpus_id
+             WHERE r.run_id = %s
+               AND NOT EXISTS (
+                   SELECT 1 FROM projection_receipts pr
+                    WHERE pr.projection = 'neo4j' AND pr.entity_kind = 'chunk'
+                      AND pr.active AND pr.entity_id = c.chunk_id)
+            """,
+            (run_id,),
+        ).fetchall()
+        missing.extend(r[0] for r in chunk_rows)
+        return missing
     if stage == "project_canonical":
         rows = conn.execute(
             """
