@@ -5,13 +5,13 @@ Verified against commit: `8323304` (E5 analysis: deterministic concept layer aut
 Active branch at verification: `main`
 
 ```yaml
-current_phase: e5b-complete-reject # E5B closed: part 1 discovery qualified (13/13 candidates); part 2 routing A/B REJECT (R@1 0.882->0.853, coverage unchanged)
+current_phase: e5-track-closed # E5 CLOSED: discovery primitive preserved (experimental, non-production); enriched routing REJECTED; production unchanged
 repository:
   branch: main
   head: 8323304
   frozen_artifacts: [see Frozen Artifacts section]
   evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1, qualification-q1, q1r-validation, ep1, em1, sr1, e2-admission, g4, e3, e3b, e4, e5, e5b-part1, e5b-part2-reject]
-  next_actions: [e5c-or-user-decision-on-concept-hypotheses, i1-bulk-ingestion, i2-scale-integrity, g4-scale-qualification]
+  next_actions: [i1-bulk-ingestion, i2-scale-integrity, g4-scale-qualification, synthesis-answerability-requires-user-authorization]
   do_not_do: [see Explicitly Prohibited Actions]
   known_gaps: [see Known Limitations]
 ```
@@ -22,6 +22,20 @@ repository:
 - **Unit tests**: 173 passed, 28 skipped (skips = integration / neural-gated gates) — verified.
 - **Integration tests**: 26 passed, 1 skipped (`POLYMATH_INTEGRATION=1` + live stores; Qdrant on 6334, Neo4j on 7688, Postgres on 5432) — verified.
 - **Extraction verdict**: hybrid resource enrichment **REJECTED as production default** (Phase H v1.1: Δincorrect = +4 > 0). The lexical lane remains the production default.
+- **E5 track: CLOSED** (analysis `8323304`, part 1 `ba363ec`, part 2 `0632132`).
+  Finding 1: the deterministic concept candidate primitive
+  (`concept-inventory-v1`) is QUALIFIED as an experimental, derived-
+  metadata primitive — psychology discovery 13/13 vs GLiNER 2/13, zero
+  new dependencies, ~1-2.4 ms/doc, full determinism, graph/extraction
+  delta 0. Finding 2: concept-enriched semantic routing
+  (`routing-concept-enriched-v1`) is REJECTED — frozen A/B on the
+  re-ingested I2 corpus (harness reproduced R1B exactly): doc/sec R@1
+  0.882 → 0.853, 1 improved / 29 unchanged / 4 regressed (psychology
+  ranks 1→3, 2→3), R1A coverage unchanged. Posture: concept code and
+  all E5 evidence are PRESERVED as non-production research
+  infrastructure; production retrieval/graph/extraction are exactly as
+  before E5; no E5C started. GLiNER-only extraction remains qualified
+  with its abstract-concept recall limitation measured and documented.
 - **Q1 qualification verdict: PASS** (frozen report `eval/q1/REPORT_Q1.md`): production lexical arm P/R 0.943 on the 53-item heterogeneous corpus; 0 wrong-predicate, 0 wrong-scope; every residual failure is a catalogued class; pipeline E2E clean with real GLiNER. **Production extraction is qualified. Further extraction changes require a demonstrated regression or separately measured improvement.**
 - **E2/C1.1 admission verdict: WIRED (production)** (ADR 0011, refactor 0008): entity-admission-v1.1 policy at the identity allocation point — GLOBAL / CORPUS_SCOPED / DOCUMENT_SCOPED / MENTION_ONLY with identity contract entity-identity-v2 (migration 0007). MENTION_ONLY never projects to Neo4j; facts with a MENTION_ONLY endpoint stay parked in Postgres. Graph expansion is now canonical bidirectional hop1 (directed UNION, dedupe by fact_id). Downstream G4 rerun: 12 useful / 0 noise, q09 clean. Phase H harness rerun: P/R 0.9355 both arms (unchanged).
 
@@ -376,6 +390,16 @@ R2 (reranker, bypassable) → M1–M5 (MCP) → R4 → O2 → O1 → A1 → V1.
   span repair, or accept/degrade the entity gate without a measured
   downstream waterfall/retrieval delta under the frozen protocol
   (roadmap restoration 2026-08-14).
+- Tune concept ranking, change concept budgets, or alter the
+  concept-enriched serialization after the frozen REJECT (E5C remains
+  unauthorized future research; the concatenated single-embedding
+  architecture is rejected by experiment).
+- Inject the concept inventory into retrieval-summary-v2, routing
+  representations, FAST, HYBRID, GRAPH, RRF, G3, or query expansion.
+- Add another NLP/NER/RE model (GLiREL, spaCy/Stanza/SuPar, any
+  decoder extractor) or change GLiNER release/thresholds/labels as an
+  extraction-recall experiment without explicit authorization — the
+  GLiNER-only pathway is qualified.
 
 ## Verification Commands
 

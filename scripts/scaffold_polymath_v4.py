@@ -505,6 +505,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/e5b/freeze_p2.py", "py", None),
     ("eval/e5b/evidence_p2.json", "json", None),
     ("docs/wiki/work-log/2026-08-16-e5b-routing-qualification.md", "md", None),
+    ("docs/wiki/work-log/2026-08-16-e5-track-closeout.md", "md", None),
     ("docs/wiki/work-log/2026-08-15-e4-entity-recall-failure-analysis.md", "md", None),
     ("shared/polymath_shared/endpoint_binding.py", "py", None),
     ("docs/wiki/work-log/2026-08-15-e3b-extraction-quality-repair.md", "md", None),

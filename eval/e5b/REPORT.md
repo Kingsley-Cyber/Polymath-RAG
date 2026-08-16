@@ -156,3 +156,50 @@ gate, corpus-level frequency normalization, short-document budget
 reduction.
 
 NEXT: STOP. No production integration, no reruns.
+
+---
+
+# E5 Track Closeout (2026-08-16)
+
+Track CLOSED. Commits: analysis `8323304`, part 1 `ba363ec`, part 2
+`0632132`.
+
+Two separate findings:
+
+1. **Concept candidate primitive — QUALIFIED (experimental, derived
+   metadata).** 13/13 psychology candidates vs GLiNER 2/13; zero new
+   dependencies; deterministic/order/concurrency/replay/version-safe;
+   graph delta 0; extraction delta 0. Status: preserved as research
+   infrastructure (code + tests + all evidence, including this negative
+   routing result). NOT a production dependency. NOT wired into any
+   lane.
+2. **Concept-enriched semantic routing — REJECTED.** Frozen A/B
+   (harness reproduced R1B exactly): doc/sec R@1 0.882 → 0.853;
+   1 improved / 29 unchanged / 4 regressed, including psychology
+   ranks 1→3 and 2→3; R1A coverage unchanged. Concatenated
+   single-embedding enrichment trades top-rank discrimination for
+   broader similarity. No promotion of `routing-concept-enriched-v1`.
+
+Production posture: unchanged in every lane. Entity/graph lane:
+document → GLiNER medium-v2.1 (@ `40ec4193…`) → entity admission →
+E3B binding gates → compiler → facts → graph. Retrieval lane:
+retrieval-summary-v2 → Qwen3-Embedding-0.6B (@ `97b0c614…`) →
+FAST / HYBRID / GRAPH. No concept inventory in summaries, routing
+representations, RRF, G3, or query expansion.
+
+GLiNER-only extraction pathway: qualified (operational, idempotent,
+deterministic, interrupt/resume, versioned, Qdrant/Neo4j
+reconstruction, corpus isolation, no fallback; E3B precision repair
+3 correct / 0 wrong). Its abstract-concept recall limitation is
+measured and documented — not a compiler defect. The graph stays
+sparse and precise; text retrieval protects recall.
+
+E5C hypotheses — FUTURE RESEARCH ONLY (frozen, not authorized):
+occurrence floor, summary-co-occurrence gate, corpus-level frequency
+normalization, short-document budgets. Preferred future shape if
+concept retrieval is ever revisited: summary semantic vector +
+independent concept/lexical ranking fused (rank fusion), NOT
+concatenated enrichment.
+
+NEXT: STOP. No further extraction-recall experiments, no synthesis/
+answerability work without explicit user authorization.

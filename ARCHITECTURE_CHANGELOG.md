@@ -536,3 +536,19 @@ that motivated it and the refactor that implemented it.
   unchanged, graph/extraction/Neo4j zero-delta, determinism green.
   Verdict REJECT; no production integration, no tuning.
   (work log `2026-08-16-e5b-routing-qualification.md`)
+
+## 2026-08-16: E5 track closeout — CLOSED
+
+- E5 closed with two distinct findings: the deterministic concept
+  candidate primitive (`concept-inventory-v1`) is preserved as
+  qualified experimental research infrastructure with NO production
+  use; the concept-enriched routing representation
+  (`routing-concept-enriched-v1`) is REJECTED (frozen A/B: R@1
+  0.882 -> 0.853, psychology regressions, coverage unchanged).
+- Production architecture unchanged in every lane (entity/graph:
+  GLiNER + admission + E3B gates + compiler; retrieval:
+  retrieval-summary-v2 + Qwen3 embedding + FAST/HYBRID/GRAPH).
+- E5C hypotheses frozen as unauthorized future research; preferred
+  future shape is rank fusion of independent lanes, not concatenated
+  single-embedding enrichment.
+  (work log `2026-08-16-e5-track-closeout.md`)

@@ -10,6 +10,26 @@ Read:
 
 ## Last Completed
 
+- **E5 track — CLOSED** (closeout work log
+  `2026-08-16-e5-track-closeout.md`; commits `8323304` → `ba363ec` →
+  `0632132`). Final interpretation of both frozen findings:
+  (1) deterministic concept candidate primitive
+  (`concept-inventory-v1`) = QUALIFIED EXPERIMENTAL PRIMITIVE —
+  preserved with tests, frozen evidence, and the negative routing
+  result, but with NO production use and NO production dependency;
+  (2) concept-enriched semantic routing
+  (`routing-concept-enriched-v1`) = REJECTED (doc/sec R@1 0.882 →
+  0.853, psychology regressions, coverage unchanged). Production
+  posture unchanged: entity/graph lane stays GLiNER → admission →
+  E3B gates → compiler; retrieval lane stays summaries → Qwen3
+  embedding → FAST/HYBRID/GRAPH. GLiNER-only extraction remains
+  qualified (abstract-concept recall limitation measured, documented,
+  NOT a compiler defect; graph stays sparse and precise — text
+  retrieval protects recall). E5C hypotheses frozen as future
+  research only (preferred future shape: summary semantic vector +
+  independent concept/lexical rank fusion, NOT concatenated
+  enrichment). **Do not start another extraction-recall experiment or
+  synthesis/answerability work without explicit user authorization.**
 - **E5B — deterministic concept inventory: CLOSED, verdict REJECT**
   (work logs `2026-08-15-e5b-concept-inventory.md` +
   `2026-08-16-e5b-routing-qualification.md`, report `eval/e5b/REPORT.md`,
