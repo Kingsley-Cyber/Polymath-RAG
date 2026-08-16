@@ -136,7 +136,13 @@ class _StageWrite:
         """Store a stage artifact; the artifact id is content-derived and
         includes the stage contract — a contract-bumped re-run (e.g. rule
         pack v1.1.0) must be able to write its own artifact row instead of
-        colliding with the previous contract's primary key."""
+        colliding with the previous contract's primary key.
+
+        Multiple artifact() calls within one stage MERGE into the single
+        (run, stage, contract) row (jsonb ||, last write wins per key):
+        DO NOTHING silently swallowed everything after the first call —
+        manifests ate the audit, syntax, and rescue evidence (found
+        during I4R-A; provenance must never be dropped)."""
         artifact_id = content_hash({
             "run": self.run_id,
             "stage": self.stage,
@@ -147,7 +153,8 @@ class _StageWrite:
             """
             INSERT INTO artifacts (artifact_id, run_id, stage, contract_hash, payload)
             VALUES (%s, %s, %s, %s, %s)
-            ON CONFLICT (run_id, stage, contract_hash) DO NOTHING
+            ON CONFLICT (run_id, stage, contract_hash) DO UPDATE
+            SET payload = artifacts.payload || EXCLUDED.payload
             """,
             (artifact_id, self.run_id, self.stage, self.contract_hash, json.dumps(payload)),
         )

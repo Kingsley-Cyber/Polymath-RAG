@@ -1,48 +1,56 @@
-# I4R — staged repair regression (NOT RUN; authorization suspended)
+# I4R — staged repair regression on frozen I4 (development set)
 
-Status: **NO MEASUREMENT PERFORMED.** The I4R umbrella gate was
-authorized 2026-08-16 with staged sub-gates (A boundary reconciliation,
-B missing-argument rescue, C type reconciliation, D frame arbitration;
-one isolated commit + frozen-I4 measurement after each; combined
-configuration as the final result). I4R-A was implemented and unit
-tested, then the TEMPORALLY DURABLE EXTRACTION ARCHITECTURE directive
-(2026-08-16) halted all acceptance measurement pending the architecture
-alignment (now complete) and a fresh explicit authorization.
+Bars (restated per authorization): **P >= 0.95, R >= 0.70,
+out-of-envelope abstention 100%, must-not-assert 100%**. Frozen I4
+corpus/gold/capability hashes verified before AND after every run
+(FROZEN_STATE f9989bcb…, capability d0b77c03…, frozen evidence.json
+4d0c53c8… byte-restored after each measurement). I4 remains a
+development regression set; the sealed I5 holdout decides
+generalization. Procedure: extract worker restarted with
+POLYMATH_SYNTAX_PROVIDER=spacy + the stage's POLYMATH_RESCUE value;
+verify_i4 phases freeze/ingestion/facts/provenance; plain worker
+restored afterwards.
 
-Bars that any future I4R run must restate (frozen I4 development
-regression): **P >= 0.95, R >= 0.70, out-of-envelope abstention 100%,
-must-not-assert 100%**, with FROZEN_STATE/capability-matrix/gold hashes
-verified before and after, and eval/i4/evidence snapshot+restore
-around every run. I4 remains a development set; I5 is the sealed
-generalization test.
+## Baseline (frozen I4 fresh run, 2026-08-16 morning)
 
-## Implemented (flag-gated OFF, unmeasured)
+TP 10 / FP 10 / FN 16 → P 0.500, R 0.385; envelope 7/8 abstained
+(B06 asserted); must-not 18/18; provenance exact for all accepted
+facts.
 
-- I4R-A boundary reconciliation: `workers/workers/rescue.py`
-  (alignment over syntax-evidence noun chunks, determiner-trimmed;
-  exact-NP targeted re-query via the GLiNER sidecar's additive
-  POST /rescue; exact-full-span-only acceptance; refused ->
-  BOUNDARY_UNRESOLVED = durable mention, no argument binding).
-  Controlled by `POLYMATH_RESCUE` (default off) and requires
-  `POLYMATH_SYNTAX_PROVIDER=spacy`. All query labels resolve through
-  semantic-query-policy-v1.
-- Batched client `GlinerClient.infer_rescue_batch()`; contract
-  `contracts/extraction/v1/gliner_rescue.schema.json`.
+## I4R-A — boundary reconciliation (POLYMATH_RESCUE=boundary)
 
-## Drafted measurement procedure (not executed)
+**Result (reproduced twice, deterministic): TP 10 / FP 6 / FN 16 →
+P 0.625 (+0.125), R 0.385 (unchanged); envelope 7/8; must-not 18/18;
+provenance 15/15 exact-span.**
 
-1. Freeze check: `shasum -a 256` of FROZEN_STATE components, before
-   and after.
-2. Snapshot `eval/i4/evidence/{evidence.json,verify_i4.log}`; restore
-   byte-identically after; keep I4R copies under eval/i4r/.
-3. Restart the extract worker with POLYMATH_SYNTAX_PROVIDER=spacy +
-   POLYMATH_RESCUE=<stage set>; verify sidecars /ready.
-4. `.venv/bin/python eval/i4/verify_i4.py --phase freeze --phase
-   ingestion --phase control_chain --phase entities --phase facts
-   --phase provenance` per sub-gate; full phase list for the combined
-   run.
-5. Restore the plain worker env afterwards.
+Rescue audit (persisted stage artifact, rescue-v1 +
+semantic-query-policy-v1): 15 deduplicated boundary candidates across
+the corpus — 2 accepted (GLiNER confirmed the full expanded NP under
+the original canonical label): "Crestline automation team"
+(Organization, 0.795), "Nimbus postmortem report" (Document, 0.590);
+13 refused → BOUNDARY_UNRESOLVED → the facts those contracted spans
+would have anchored abstain (FP 10 → 6) with the original proposals
+retained as durable mentions.
 
-Pre-measurement probe evidence (label-vocabulary sensitivity on bare
-NP queries) is recorded in
-`docs/wiki/experiments/0005-gliner-label-vocab-probe.md`.
+Reading: exactly the precision-first outcome the probes predicted —
+identity-label bare-NP re-queries refuse most expansions at the frozen
+0.5 threshold, so the contraction FP class collapses while recall is
+untouched. The recall side (FN 16) is I4R-B/C/D territory.
+Notable observation for later gates: several rescue targets carry
+markdown header residue ("### Brightpath Learning") — sentence slicing
+keeps '###' prefixes; a future cleanup candidate, untouched here.
+
+Evidence: `evidence/i4r-a-evidence.json` (+ verify log); frozen
+`eval/i4/evidence/` restored byte-identically after each run.
+
+## Also fixed during I4R-A (provenance loss)
+
+`stage_transaction.artifact()` used ON CONFLICT … DO NOTHING, so the
+first artifact call (manifest) silently swallowed every later one —
+audit, syntax, and rescue evidence were never persisted for ANY prior
+run. Artifacts now merge per (run, stage, contract) with jsonb ||;
+regression test `tests/integration/test_i4r_a_artifact_merge.py`.
+
+## I4R-B / I4R-C / I4R-D
+
+Pending (this report updates as each staged measurement lands).

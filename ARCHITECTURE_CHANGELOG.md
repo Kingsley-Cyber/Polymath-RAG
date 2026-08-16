@@ -660,3 +660,15 @@ that motivated it and the refactor that implemented it.
   DEFERRED production gate, required before the first real
   model/query-policy upgrade. Not built now to protect I4R.
   (work log `2026-08-16-temporal-interpretation-deferred.md`)
+
+## 2026-08-16: I4R-A boundary reconciliation measured on frozen I4
+
+- First staged I4R measurement (development regression): P 0.500 ->
+  0.625 (+0.125), R 0.385 unchanged; envelope 7/8, must-not 18/18,
+  provenance 15/15 exact. 15 boundary candidates, 2 GLiNER-confirmed
+  expansions, 13 refused -> BOUNDARY_UNRESOLVED abstentions (FP 10->6).
+  Reproduced twice; frozen artifacts hash-verified and byte-restored.
+- Provenance repair discovered by the measurement: stage artifacts
+  merged instead of first-write-wins (manifests had been swallowing
+  audit/syntax/rescue evidence since inception); regression-tested.
+  (eval/i4r/REPORT.md, work log 2026-08-16-i4r-a-boundary.md)
