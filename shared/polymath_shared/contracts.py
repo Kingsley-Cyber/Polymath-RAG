@@ -106,6 +106,8 @@ class RelationCandidate(BaseModel):
     semlink_resolved: bool = False
     scope: ScopeFlags = Field(default_factory=ScopeFlags)
     ontology_profile: str
+    sentence_text: str = ""
+    sentence_start: int = 0
 
 
 class CanonicalFact(BaseModel):

@@ -278,6 +278,7 @@ def process_event(conn: Connection, event: dict) -> None:
         "identity_contract": "entity-identity-v2",
         "thresholds": {"entity": ENTITY_THRESHOLD, "evidence": EVIDENCE_THRESHOLD},
         "evidence_proposal_mode": proposal_mode,
+        "binding_gates": "endpoint-binding-v1",
     })
 
     corpus_row = conn.execute(

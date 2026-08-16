@@ -60,8 +60,41 @@ def test_q1_baseline_metrics_reproduce(q1_paths: tuple[Path, Path]) -> None:
 
     import harness as _h  # noqa: E402
 
-    run = _h.run_arm(gold["items"], "baseline")
+    # The Q1 lock is the FROZEN qualification: reproduce the original
+    # compiler posture with the E3B binding gates disabled (they did not
+    # exist at Q1 time).
+    import os as _os
+    _os.environ["POLYMATH_BINDING_GATES"] = "0"
+    try:
+        run = _h.run_arm(gold["items"], "baseline")
+    finally:
+        _os.environ.pop("POLYMATH_BINDING_GATES", None)
     units = _h.score(run["predictions"], gold["items"])["units"]
     summary = _h.summarize(units)
     for key, value in FROZEN_BASELINE.items():
         assert summary[key] == value, f"baseline {key} drifted: {summary[key]} != {value}"
+
+
+# E3B promotion: with the deterministic endpoint-binding gates enabled,
+# the Q1 baseline must remain EXACTLY the frozen qualification — the
+# gates reject only relation-general wrong-edge families absent from Q1
+# (relation-specific trigger evidence, org-object instance phrasing,
+# ambiguous control-ownership, title/body and clause separation).
+def test_q1_binding_gates_baseline_reproduce(q1_paths: tuple[Path, Path]) -> None:
+    """E3B: gates-ON posture reproduces the frozen Q1 baseline exactly."""
+    corpus, _ = q1_paths
+    gold = yaml.safe_load(corpus.read_text())
+    assert gold["version"] == "q1.0"
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "eval" / "phase_h"))
+    import harness as _h  # noqa: E402
+
+    import os as _os
+    _os.environ["POLYMATH_BINDING_GATES"] = "1"
+    try:
+        run = _h.run_arm(gold["items"], "baseline")
+    finally:
+        _os.environ.pop("POLYMATH_BINDING_GATES", None)
+    units = _h.score(run["predictions"], gold["items"])["units"]
+    summary = _h.summarize(units)
+    for key, value in FROZEN_BASELINE.items():
+        assert summary[key] == value, f"gates-on {key} drifted: {summary[key]} != {value}"

@@ -121,6 +121,8 @@ def build_candidates(
                     subject_id = _allocate(subject_span, sl, doc_id, corpus_id)
                     object_id = _allocate(object_span, sl, doc_id, corpus_id)
                     candidates.append(RelationCandidate(
+                        sentence_text=sl.text,
+                        sentence_start=sl.sentence_start,
                         evidence=evidence,
                         subject=_entity_candidate(subject_span, subject_id),
                         object=_entity_candidate(object_span, object_id),

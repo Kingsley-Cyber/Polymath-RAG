@@ -467,3 +467,19 @@ that motivated it and the refactor that implemented it.
   prose (compound misses), and wrong-edge cases from title-as-entity
   GLiNER proposals + compiler surface-weak pairings. Not patched
   (future qualified change).
+
+## 2026-08-15: E3B — extraction quality repair (endpoint-binding gates)
+
+- Deterministic compiler binding gates (endpoint-binding-v1,
+  toggleable via POLYMATH_BINDING_GATES, default ON, pinned in the
+  extract contract): relation-specific trigger evidence (has_role
+  role inventory + noun-trigger rejection under surface_weak; owns
+  control-lemma requires attachment; instance_of org-object requires
+  specific phrasing), title/body pairing restriction,
+  coordination-aware clause binding, surface-weak locality.
+- On the two frozen documents: wrong edges 4 -> 0; all frozen
+  negative controls eliminated; positive controls survive.
+- Q1 gates-ON = EXACT frozen baseline (50/3/3, P/R 0.9434) — zero
+  regression (lock added). Entity recall audit recorded honestly:
+  GLiNER medium-v2.1 misses lowercase abstract compounds (ownership
+  GLiNER_DISCOVERY, unpatched). No new learned model.

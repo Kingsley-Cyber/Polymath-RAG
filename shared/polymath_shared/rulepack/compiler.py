@@ -462,6 +462,25 @@ def compile_relation(
         )
 
     rule = valid[0]
+
+    # -- stage 3b: deterministic endpoint binding guards (E3B) --------------
+    # Relation-general, model-free gates: endpoint type families,
+    # surface-weak locality, title/body pairing, coordination awareness.
+    # Toggleable for ablations: POLYMATH_BINDING_GATES=0 disables them.
+    import os as _os
+    if _os.environ.get("POLYMATH_BINDING_GATES", "1") == "1":
+        from polymath_shared.endpoint_binding import (
+            binding_gate_violation,
+        )
+        violation = binding_gate_violation(
+            rule, subject_type, object_type, orientation,
+            candidate, agent_cand, patient_cand,
+        )
+        if violation is not None:
+            return CompilerDecision(
+                decision="REJECT", reason=violation, rule_id=rule["id"],
+            )
+
     subject_id = agent_cand.resolved_entity_id
     object_id = patient_cand.resolved_entity_id
     if subject_id == object_id:
