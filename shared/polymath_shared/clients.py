@@ -104,6 +104,30 @@ class EmbedderClient(SidecarClient):
         })
 
 
+class SpacySyntaxClient(SidecarClient):
+    """Client for the spaCy syntax sidecar (syntax-evidence-v1).
+
+    Sends the extract worker's EXISTING sentence slices for batched
+    annotation and validates the versioned contract id on every
+    response. The sidecar never proposes entities or predicates; the
+    evidence it returns is syntax only, with offsets relative to the
+    supplied sentence text."""
+
+    CONTRACT_ID = "syntax-evidence-v1"
+
+    def __init__(self, pin_release: str | None = None) -> None:
+        super().__init__(get_settings().sidecars.spacy_url, pin_release=pin_release)
+
+    def syntax(self, sentences: list[dict[str, str]]) -> dict[str, Any]:
+        response = self.infer({"sentences": sentences})
+        if response.get("contract") != self.CONTRACT_ID:
+            raise RuntimeError(
+                f"syntax sidecar returned contract {response.get('contract')!r}, "
+                f"expected {self.CONTRACT_ID!r}"
+            )
+        return response
+
+
 class RerankerClient:
     """Client for the G3 reranker sidecar (cross-encoder).
 

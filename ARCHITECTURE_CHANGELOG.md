@@ -587,3 +587,26 @@ that motivated it and the refactor that implemented it.
   span boundary/typing behavior and a leads/has_role shared-trigger
   emission surface. No repairs performed.
   (work log `2026-08-16-i4-fresh-acceptance.md`)
+
+## 2026-08-16: SYNTAX-BOOTSTRAP — spaCy syntax sidecar (install + wire only)
+
+- Explicitly authorized infrastructure gate: `sidecars/spacy_runtime/`
+  (own isolated venv — spaCy/Thinc never enter the root GLiNER venv),
+  spaCy 3.8.15 + en_core_web_sm 3.8.0 + thinc-apple-ops 1.0.0 pinned;
+  NER disabled at load and asserted absent at startup, in /health, and
+  in /ready. GLiNER remains the only entity/relation proposal model.
+- New versioned wire contract `syntax-evidence-v1` (batched tokens +
+  noun chunks, offsets relative to the supplied sentence text,
+  offset-invariant enforced server-side) served on :8744 as
+  sidecar-cpu; registry entry + launchd unit + digest-pinned manifest
+  (no TOFU placeholder).
+- Optional `SpacySyntaxClient` wired into the extract worker between
+  the GLiNER passes and build_candidates, behind
+  `POLYMATH_SYNTAX_PROVIDER` (default `disabled`): disabled is
+  byte-identical production; enabled + unavailable sidecar fails
+  loudly. Syntax evidence attaches to SentenceSlice for a future
+  reconciliation layer; nothing downstream consumes it in this gate.
+- SPACY_BACKEND=apple|cpu switches float backends explicitly via
+  thinc set_current_ops (reported in health, never silent).
+- Q1/E3B/I3R regression locks unchanged with the provider disabled.
+  (work log `2026-08-16-syntax-bootstrap.md`)

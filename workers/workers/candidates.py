@@ -119,6 +119,10 @@ class SentenceSlice:
     evidence: list[EvidenceSpan]
     parse: dict | None
     sentence_index: int = 0
+    # SYNTAX-BOOTSTRAP: optional syntax-evidence-v1 annotation of this
+    # slice (tokens + noun chunks). None unless POLYMATH_SYNTAX_PROVIDER=spacy;
+    # nothing on the candidate/compiler path reads it in this gate.
+    syntax: dict | None = None
 
 
 def _type_compatible(

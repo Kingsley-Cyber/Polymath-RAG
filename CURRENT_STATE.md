@@ -1,20 +1,31 @@
 # Current Repository State
 
-Last verified: 2026-08-15
-Verified against commit: `8323304` (E5 analysis: deterministic concept layer authorized) — E5B part 1 completed on top
+Last verified: 2026-08-16
+Verified against commit: `e8c5eeb` (I4 FAIL closeout) with SYNTAX-BOOTSTRAP applied on top (uncommitted at verification; see work log `2026-08-16-syntax-bootstrap.md`)
 Active branch at verification: `main`
 
 ```yaml
-current_phase: e5-track-closed # E5 CLOSED: discovery primitive preserved (experimental, non-production); enriched routing REJECTED; production unchanged
+current_phase: i4-failed-awaiting-i4r-authorization # control/durability/provenance/graph/retrieval green; fact bar FAIL (P 0.500 / R 0.385); no repairs without named gate
 repository:
   branch: main
-  head: 8323304
+  head: e8c5eeb
   frozen_artifacts: [see Frozen Artifacts section]
-  evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1, qualification-q1, q1r-validation, ep1, em1, sr1, e2-admission, g4, e3, e3b, e4, e5, e5b-part1, e5b-part2-reject]
-  next_actions: [i1-bulk-ingestion, i2-scale-integrity, g4-scale-qualification, synthesis-answerability-requires-user-authorization]
+  evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1, qualification-q1, q1r-validation, ep1, em1, sr1, e2-admission, g4, e3, e3b, e4, e5, e5b-part1, e5b-part2-reject, i3-5doc, i3r, i4]
+  next_actions: [await-explicit-i4r-authorization, i1-blocked-on-entity-boundary-gap]
   do_not_do: [see Explicitly Prohibited Actions]
   known_gaps: [see Known Limitations]
 ```
+
+Gate history since the last full-state verification: I3 five-doc
+acceptance FAIL → I3R repair regression PASS (rule pack v1.2.0 promoted
+to production default; typed trigger contract, argument frames, durable
+mentions migration 0009, exact-evidence-v1 provenance migration 0010) →
+I4 fresh heterogeneous acceptance FAIL on the fact bar (TP 10 / FP 10 /
+FN 16; P 0.500, R 0.385 vs required >=0.95 / >=0.70) with control
+plane, durability, provenance, graph, and retrieval all green. I4
+corpus/gold/capability matrix frozen in `eval/i4/FROZEN_STATE.json`.
+No I4R repair is authorized; frozen I4 artifacts must not change.
+See `NEXT_SESSION.md` and `eval/i4/REPORT.md`.
 
 ## System Status
 
@@ -79,6 +90,18 @@ status + outbox event).
 
 ## Experimental Components
 
+- **spaCy syntax sidecar** (SYNTAX-BOOTSTRAP, 2026-08-16):
+  `sidecars/spacy_runtime/` on :8744 — isolated venv, spaCy 3.8.15 +
+  en_core_web_sm 3.8.0, NER DISABLED (GLiNER remains the only entity
+  model; this satisfies the "no spaCy without explicit authorization"
+  prohibition — the named authorization is recorded in the work log).
+  Serves `syntax-evidence-v1` (batched tokens + noun chunks, offsets
+  relative to supplied sentence text). Wired into the extract worker
+  behind `POLYMATH_SYNTAX_PROVIDER` (default `disabled` =
+  byte-identical production; `spacy` fails loudly when unreachable).
+  Syntax evidence attaches to `SentenceSlice.syntax`; NO downstream
+  consumer exists in this gate — promotion requires its own
+  authorization.
 - **Hybrid evidence proposal mode** (`POLYMATH_WORKER_EVIDENCE_PROPOSAL_MODE=hybrid`):
   ADR-0008. NOT the default. Measured on v1.1 and rejected as default
   (see evaluations). Default is `lexical`.

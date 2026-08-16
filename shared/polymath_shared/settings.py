@@ -25,6 +25,15 @@ class SidecarSettings(BaseSettings):
     gliner_url: str = Field(default="http://127.0.0.1:8740", description="GLiNER two-pass runtime")
     embedder_url: str = Field(default="http://127.0.0.1:8742", description="Embedder sidecar")
     reranker_url: str = Field(default="http://127.0.0.1:8743", description="Reranker sidecar")
+    spacy_url: str = Field(default="http://127.0.0.1:8744", description="spaCy syntax sidecar (syntax-evidence-v1)")
+    syntax_provider: str = Field(
+        default="disabled",
+        description="Optional syntax-evidence lane behind the extract "
+                    "worker's GLiNER pass: 'disabled' (production default, "
+                    "byte-identical behavior) or 'spacy'. When 'spacy', a "
+                    "missing syntax sidecar fails LOUDLY — no silent "
+                    "fallback (SYNTAX-BOOTSTRAP).",
+    )
     g3_reranker: bool = Field(
         default=True,
         description="Cross-representation reranking over fused retrieval "

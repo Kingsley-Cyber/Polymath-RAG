@@ -1,0 +1,93 @@
+{
+  "$id": "https://polymath.local/contracts/extraction/v1/syntax_evidence.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "spaCy syntax evidence (syntax-evidence-v1)",
+  "description": "Batched syntax annotation of EXISTING sentence slices. Offsets are relative to the exact supplied sentence text; the invariant sentence_text[start:end] == surface holds for every token and noun chunk. spaCy NER output is never part of this contract.",
+  "$defs": {
+    "sentence_in": {
+      "type": "object",
+      "required": ["sentence_id", "text"],
+      "properties": {
+        "sentence_id": {"type": "string", "minLength": 1},
+        "text": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "request": {
+      "type": "object",
+      "required": ["sentences"],
+      "properties": {
+        "sentences": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 512,
+          "items": {"$ref": "#/$defs/sentence_in"}
+        }
+      },
+      "additionalProperties": false
+    },
+    "token": {
+      "type": "object",
+      "required": ["i", "text", "char_start", "char_end", "lemma", "pos", "tag", "dep", "head_i"],
+      "properties": {
+        "i": {"type": "integer", "minimum": 0},
+        "text": {"type": "string"},
+        "char_start": {"type": "integer", "minimum": 0},
+        "char_end": {"type": "integer", "minimum": 0},
+        "lemma": {"type": "string"},
+        "pos": {"type": "string"},
+        "tag": {"type": "string"},
+        "dep": {"type": "string"},
+        "head_i": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "noun_chunk": {
+      "type": "object",
+      "required": ["char_start", "char_end", "text", "root_i"],
+      "properties": {
+        "char_start": {"type": "integer", "minimum": 0},
+        "char_end": {"type": "integer", "minimum": 0},
+        "text": {"type": "string"},
+        "root_i": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "sentence_out": {
+      "type": "object",
+      "required": ["sentence_id", "tokens", "noun_chunks"],
+      "properties": {
+        "sentence_id": {"type": "string", "minLength": 1},
+        "tokens": {"type": "array", "items": {"$ref": "#/$defs/token"}},
+        "noun_chunks": {"type": "array", "items": {"$ref": "#/$defs/noun_chunk"}}
+      },
+      "additionalProperties": false
+    },
+    "response": {
+      "type": "object",
+      "required": ["contract", "results", "model_release"],
+      "properties": {
+        "contract": {"const": "syntax-evidence-v1"},
+        "results": {"type": "array", "items": {"$ref": "#/$defs/sentence_out"}},
+        "model_release": {"type": "string"},
+        "runtime": {
+          "type": "object",
+          "required": ["spacy_version", "model", "model_version", "thinc_version", "backend", "batch_size", "ner_disabled"],
+          "properties": {
+            "spacy_version": {"type": "string"},
+            "model": {"type": "string"},
+            "model_version": {"type": "string"},
+            "thinc_version": {"type": ["string", "null"]},
+            "apple_ops_version": {"type": ["string", "null"]},
+            "apple_ops_active": {"type": "boolean"},
+            "backend": {"enum": ["apple", "cpu"]},
+            "batch_size": {"type": "integer", "minimum": 1},
+            "ner_disabled": {"type": "boolean"}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -131,3 +131,12 @@ dev-worker-project-canonical:
 ## dev-reranker — G3 reranker sidecar in the foreground (first boot downloads the pinned model)
 dev-reranker:
 	$(PY) -m uvicorn server:app --host 127.0.0.1 --port 8743 --app-dir sidecars/reranker
+
+## setup-spacy — create the ISOLATED spaCy syntax sidecar venv (never the root venv)
+setup-spacy:
+	cd sidecars/spacy_runtime && $(UV) venv --python 3.11 .venv && \
+		$(UV) pip install --python .venv/bin/python -r requirements.txt -e ../../shared
+
+## dev-spacy — spaCy syntax sidecar in the foreground (own venv, port 8744)
+dev-spacy:
+	cd sidecars/spacy_runtime && .venv/bin/python -m uvicorn server:app --host 127.0.0.1 --port 8744

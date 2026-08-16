@@ -270,6 +270,60 @@ def _fill_parse_entities(parse: dict, entities: list[EntitySpan], corpus_id: str
             record["entity_id"] = _allocate_parse_entity(match, corpus_id, parse)
 
 
+def _syntax_evidence(
+    ordered_slices: list[tuple[dict, SentenceSlice]],
+) -> dict | None:
+    """SYNTAX-BOOTSTRAP: optional spaCy syntax annotation of the SAME
+    sentence slices GLiNER just proposed over — attached per slice for a
+    future reconciliation layer; nothing downstream consumes it in this
+    gate.
+
+    provider=disabled (production default): returns None before any
+    client is constructed — the extraction path is byte-identical.
+    provider=spacy: one batched syntax-evidence-v1 call for the whole
+    document; an unavailable sidecar raises and fails the stage LOUDLY
+    (no silent fallback, no different syntax logic)."""
+    from polymath_shared.settings import get_settings
+
+    provider = get_settings().sidecars.syntax_provider
+    if provider not in ("disabled", "spacy"):
+        raise ValueError(f"unknown syntax provider: {provider}")
+    if provider == "disabled" or not ordered_slices:
+        return None
+
+    from polymath_shared.clients import SpacySyntaxClient
+
+    sentences = [
+        {"sentence_id": f"{row['chunk_id']}:{idx}", "text": sl.text}
+        for idx, (row, sl) in enumerate(ordered_slices)
+    ]
+    client = SpacySyntaxClient()
+    try:
+        client.verify_pin()
+        response = client.syntax(sentences)
+    finally:
+        client.close()
+
+    expected_ids = [s["sentence_id"] for s in sentences]
+    returned_ids = [r["sentence_id"] for r in response["results"]]
+    if returned_ids != expected_ids:
+        raise RuntimeError(
+            "syntax sidecar returned mismatched sentence identity/order"
+        )
+    by_id = {r["sentence_id"]: r for r in response["results"]}
+    for idx, (row, sl) in enumerate(ordered_slices):
+        # SentenceSlice is frozen; attach through the dataclass escape
+        # hatch. The field is read by nothing on the candidate path.
+        object.__setattr__(sl, "syntax", by_id[f"{row['chunk_id']}:{idx}"])
+    return {
+        "contract": response["contract"],
+        "provider": "spacy",
+        "model_release": response.get("model_release"),
+        "runtime": response.get("runtime"),
+        "sentences": len(sentences),
+    }
+
+
 def process_event(conn: Connection, event: dict) -> None:
     payload = event["payload"]
     run_id = event["run_id"]
@@ -367,6 +421,13 @@ def process_event(conn: Connection, event: dict) -> None:
                     ordered_slices.append((row, sl))
 
             doc_entity_history: list[EntitySpan] = []
+            # SYNTAX-BOOTSTRAP: after the GLiNER passes and before
+            # build_candidates — annotate the same slices (one batched
+            # call) when the provider is enabled; disabled records and
+            # changes nothing.
+            syntax_runtime = _syntax_evidence(ordered_slices)
+            if syntax_runtime is not None:
+                writer.artifact({"syntax": syntax_runtime})
             for row, sl in ordered_slices:
                 candidates = build_candidates(
                     [sl],

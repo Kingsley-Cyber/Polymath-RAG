@@ -456,6 +456,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/i3_5doc/REPORT_I3R.md", "md", None),
     ("docs/wiki/work-log/2026-08-16-i3r-repair.md", "md", None),
     ("docs/wiki/work-log/2026-08-16-i4-fresh-acceptance.md", "md", None),
+    ("docs/wiki/work-log/2026-08-16-syntax-bootstrap.md", "md", None),
     ("eval/i4/matrix.py", "py", None),
     ("eval/i4/capability_matrix.json", "json", None),
     ("eval/i4/CAPABILITY_MATRIX.md", "md", None),
@@ -822,6 +823,17 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_compiler.py", "py", None),
     ("tests/determinism/test_chunker_summarizer.py", "py", None),
     ("tests/contracts/test_contract_models.py", "py", None),
+
+    # SYNTAX-BOOTSTRAP: spaCy syntax sidecar (isolated venv, NER disabled)
+    ("sidecars/spacy-syntax.toml", "toml", None),
+    ("sidecars/spacy_runtime/server.py", "py", None),
+    ("sidecars/spacy_runtime/manifest.toml", "toml", None),
+    ("sidecars/spacy_runtime/requirements.txt", "txt", None),
+    ("sidecars/spacy_runtime/benchmark.py", "py", None),
+    ("contracts/extraction/v1/syntax_evidence.schema.json", "json", None),
+    ("deployment/launchd/ai.polymath.spacy.plist", "plist", None),
+    ("tests/integration/test_spacy_syntax_sidecar.py", "py", None),
+    ("tests/contracts/test_syntax_provider_gate.py", "py", None),
 ]
 
 
