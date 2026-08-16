@@ -687,3 +687,12 @@ that motivated it and the refactor that implemented it.
   normal vocabulary; only slot-legal full-span answers re-type. Frozen
   I4: 9 candidates, 0 applied (none slot-legal), bar unchanged
   (P 0.667 / R 0.462 cumulative). (eval/i4r/REPORT.md)
+
+## 2026-08-16: I4R-D frame arbitration measured (rule pack v1.3.0)
+
+- Predicate grammatical frames (trigger lexical class + required
+  argument-head dependency relations) arbitrate shared triggers:
+  "X leads Y" emits leads only (has_role's verb frame requires a
+  prepositional object). Cumulative P 0.706 / R 0.462; envelope and
+  must-not held. Pack default stays 1.2.0; 1.3.0 selected by env for
+  the rescue configuration. (eval/i4r/REPORT.md)

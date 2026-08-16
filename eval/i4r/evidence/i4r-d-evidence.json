@@ -1,0 +1,300 @@
+{
+  "phases": {
+    "freeze": {
+      "frozen_files": 11,
+      "rule_pack": "1.2.0",
+      "gliner": {
+        "entity_threshold": 0.5,
+        "evidence_threshold": 0.4,
+        "model": "urchade/gliner_medium-v2.1",
+        "revision": "40ec419335d09393f298636f471328b722c6da9e"
+      }
+    },
+    "ingestion": {
+      "submitted": 5,
+      "terminal_states": {
+        "query_ready": 5
+      },
+      "wall_time_s": 40.1,
+      "docs_per_min": 7.5,
+      "documents": [
+        {
+          "doc_id": "doc_85a21d16237959a1a72ffe82eb591ff05b758a7839e23b12da356aebc5acba67",
+          "source_name": "corpus/01_northvale_health.md",
+          "content_hash": "85a21d16237959a1a72ffe82eb591ff05b758a7839e23b12da356aebc5acba67"
+        },
+        {
+          "doc_id": "doc_bb1fa6f6d94a4855e7ecef360ab4e11c08b7848cdda85f8a1459675b611d029a",
+          "source_name": "corpus/02_nimbus_cloud.md",
+          "content_hash": "bb1fa6f6d94a4855e7ecef360ab4e11c08b7848cdda85f8a1459675b611d029a"
+        },
+        {
+          "doc_id": "doc_07dfb7f0d1e1989ff25459845498ada8831cd4336de5f530ae9359d61317acb2",
+          "source_name": "corpus/03_crestline_automation.md",
+          "content_hash": "07dfb7f0d1e1989ff25459845498ada8831cd4336de5f530ae9359d61317acb2"
+        },
+        {
+          "doc_id": "doc_c1aa662574cab4c93405c709f615098b50e79a57fd497aed2c49c4cc4bc9c72c",
+          "source_name": "corpus/04_brightpath_learning.md",
+          "content_hash": "c1aa662574cab4c93405c709f615098b50e79a57fd497aed2c49c4cc4bc9c72c"
+        },
+        {
+          "doc_id": "doc_e43f6c2fe7a9a907ab8f986159bd4a7d60b7615981f4387b760a07261ebbb7d8",
+          "source_name": "corpus/05_corval_logistics.md",
+          "content_hash": "e43f6c2fe7a9a907ab8f986159bd4a7d60b7615981f4387b760a07261ebbb7d8"
+        }
+      ]
+    },
+    "facts": {
+      "supported_positive": {
+        "gold": 26,
+        "tp": 12,
+        "fp": 5,
+        "fn": 14,
+        "precision": 0.706,
+        "recall": 0.462,
+        "f1": 0.558,
+        "per_predicate": {
+          "uses": {
+            "gold": 5,
+            "tp": 2,
+            "fp": 0,
+            "fn": 3
+          },
+          "located_in": {
+            "gold": 4,
+            "tp": 2,
+            "fp": 0,
+            "fn": 2
+          },
+          "has_role": {
+            "gold": 2,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "depends_on": {
+            "gold": 3,
+            "tp": 2,
+            "fp": 1,
+            "fn": 1
+          },
+          "part_of": {
+            "gold": 2,
+            "tp": 0,
+            "fp": 0,
+            "fn": 2
+          },
+          "founded": {
+            "gold": 1,
+            "tp": 1,
+            "fp": 1,
+            "fn": 0
+          },
+          "created": {
+            "gold": 2,
+            "tp": 0,
+            "fp": 0,
+            "fn": 2
+          },
+          "leads": {
+            "gold": 1,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "developed": {
+            "gold": 1,
+            "tp": 0,
+            "fp": 1,
+            "fn": 1
+          },
+          "associated_with": {
+            "gold": 2,
+            "tp": 0,
+            "fp": 1,
+            "fn": 2
+          },
+          "causes": {
+            "gold": 1,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "acquired": {
+            "gold": 1,
+            "tp": 0,
+            "fp": 0,
+            "fn": 1
+          },
+          "subsidiary_of": {
+            "gold": 1,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "member_of": {
+            "gold": 0,
+            "tp": 0,
+            "fp": 1,
+            "fn": 0
+          }
+        },
+        "fn_details": [
+          {
+            "fact_id": "A01",
+            "predicate": "uses",
+            "subject": "Northvale Health Network",
+            "object": "CareChart EMR",
+            "doc": "01_northvale_health.md"
+          },
+          {
+            "fact_id": "A05",
+            "predicate": "part_of",
+            "subject": "radiology review board",
+            "object": "Lakeshore General Hospital",
+            "doc": "01_northvale_health.md"
+          },
+          {
+            "fact_id": "A07",
+            "predicate": "uses",
+            "subject": "Nimbus Cloud",
+            "object": "Kubernetes",
+            "doc": "02_nimbus_cloud.md"
+          },
+          {
+            "fact_id": "A09",
+            "predicate": "part_of",
+            "subject": "Nimbus billing service",
+            "object": "Nimbus Cloud platform",
+            "doc": "02_nimbus_cloud.md"
+          },
+          {
+            "fact_id": "A10",
+            "predicate": "created",
+            "subject": "engineering group",
+            "object": "load-testing harness",
+            "doc": "02_nimbus_cloud.md"
+          },
+          {
+            "fact_id": "A12",
+            "predicate": "located_in",
+            "subject": "Crestline plant",
+            "object": "Toledo",
+            "doc": "03_crestline_automation.md"
+          },
+          {
+            "fact_id": "A14",
+            "predicate": "created",
+            "subject": "analytics team",
+            "object": "shift scheduling model",
+            "doc": "03_crestline_automation.md"
+          },
+          {
+            "fact_id": "A15",
+            "predicate": "developed",
+            "subject": "Crestline Automation",
+            "object": "Cobalt assembly cell",
+            "doc": "03_crestline_automation.md"
+          },
+          {
+            "fact_id": "A16",
+            "predicate": "associated_with",
+            "subject": "vision system",
+            "object": "quality database",
+            "doc": "03_crestline_automation.md"
+          },
+          {
+            "fact_id": "A18",
+            "predicate": "uses",
+            "subject": "Brightpath Learning",
+            "object": "Mentor assessment engine",
+            "doc": "04_brightpath_learning.md"
+          },
+          {
+            "fact_id": "A19",
+            "predicate": "located_in",
+            "subject": "Brightpath Learning",
+            "object": "Raleigh",
+            "doc": "04_brightpath_learning.md"
+          },
+          {
+            "fact_id": "A21",
+            "predicate": "depends_on",
+            "subject": "Mentor assessment engine",
+            "object": "QBank item database",
+            "doc": "04_brightpath_learning.md"
+          },
+          {
+            "fact_id": "A22",
+            "predicate": "acquired",
+            "subject": "Brightpath Learning",
+            "object": "Coachlight review app",
+            "doc": "04_brightpath_learning.md"
+          },
+          {
+            "fact_id": "A26",
+            "predicate": "associated_with",
+            "subject": "QuickScale invoicing system",
+            "object": "FreightNet routing platform",
+            "doc": "05_corval_logistics.md"
+          }
+        ],
+        "fp_details": [
+          {
+            "predicate": "associated_with",
+            "subject": "crestline",
+            "object": "vision system",
+            "doc": "corpus/03_crestline_automation.md"
+          },
+          {
+            "predicate": "developed",
+            "subject": "crestline",
+            "object": "cobalt assembly cell",
+            "doc": "corpus/03_crestline_automation.md"
+          },
+          {
+            "predicate": "founded",
+            "subject": "crestline",
+            "object": "robotics vendor",
+            "doc": "corpus/03_crestline_automation.md"
+          },
+          {
+            "predicate": "depends_on",
+            "subject": "mentor engine",
+            "object": "qbank item database",
+            "doc": "corpus/04_brightpath_learning.md"
+          },
+          {
+            "predicate": "member_of",
+            "subject": "regional dispatchers",
+            "object": "west coast logistics consortium",
+            "doc": "corpus/05_corval_logistics.md"
+          }
+        ]
+      },
+      "out_of_envelope": {
+        "fixtures": 8,
+        "correct_abstentions": 7,
+        "unexpected_assertions": 1,
+        "details": [
+          {
+            "case_id": "B06",
+            "asserted": "regional dispatchers member_of west coast logistics consortium"
+          }
+        ]
+      },
+      "must_not_assert": {
+        "passed": 18,
+        "total": 18,
+        "violations": []
+      }
+    },
+    "provenance": {
+      "accepted_facts": 16,
+      "exact_matches": 16,
+      "all_exact": true,
+      "details": []
+    }
+  }
+}

@@ -81,6 +81,15 @@ slot-incompatible candidates; GLiNER full-span-answered several
 precision-safe (abstains rather than rewriting) and simply had no
 effect on this holdout. Recorded honestly as a no-delta stage.
 
-## I4R-D
+## I4R-D — syntax-guided frame arbitration (pack v1.3.0, cumulative A+B+C+D)
 
-Pending.
+**Result: TP 12 / FP 5 / FN 14 → P 0.706 (+0.039 over C), R 0.462;
+envelope 7/8; must-not 18/18; provenance 16/16 exact.** leads owns the
+transitive dobj construction; has_role's verb arm owns
+prepositional/role constructions; nominal/multiword arms and all other
+predicates unconstrained. One shared-trigger double emission removed
+with zero recall cost.
+
+## Combined I4R evaluation
+
+Pending (full phase set).

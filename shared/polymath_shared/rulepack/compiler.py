@@ -88,6 +88,11 @@ def load_rule_pack(path: Optional[Path] = None, *, use_resources: bool = True,
     elif pack_version == "1.2.0":
         yaml_path = path or (_RULE_PACK_PATH.parent / "core-predicates-v1.2.0.yaml")
         compiled_name = "compiled_lexical-v1.2.0.json"
+    elif pack_version == "1.3.0":
+        # I4R-D: grammatical frames (spaCy-dependency arbitration) for
+        # shared-trigger predicates; see core-predicates-v1.3.0.yaml.
+        yaml_path = path or (_RULE_PACK_PATH.parent / "core-predicates-v1.3.0.yaml")
+        compiled_name = "compiled_lexical-v1.3.0.json"
     else:
         raise RulePackError(f"unknown rule pack version {pack_version!r}")
 
@@ -379,12 +384,19 @@ def compile_relation(
     candidate: RelationCandidate,
     syntactic: Optional[dict],
     rule_pack: dict[str, Any],
+    syntax: Optional[dict] = None,
 ) -> CompilerDecision:
     """Map one normalized RelationCandidate onto a Decision (docx §11.2).
 
     `syntactic` is the UD-derived parse record for the candidate's
     evidence span (see workers/syntax). When None or `weak`, orientation
     falls back to surface order and the decision is marked weak.
+
+    `syntax` is the raw syntax-evidence-v1 annotation of the SAME
+    sentence (tokens with dep/head + noun chunks). It powers grammatical
+    frame arbitration (I4R-D, rule-pack frames): a predicate whose
+    declared frame is not satisfied by the dependency structure cannot
+    fire. None disables frame checks (legacy frozen harnesses).
 
     Stages, in fixed order:
       1. modality gate (§13)          -> REJECT / QUALIFY
@@ -413,6 +425,16 @@ def compile_relation(
     ]
     if not matches:
         return CompilerDecision(decision="UNSUPPORTED", reason=f"no rule for evidence class '{evidence.evidence_class}'")
+
+    # -- stage 2b: grammatical frame arbitration (I4R-D, pack frames) --
+    if syntax is not None:
+        matches = [r for r in matches if _frame_satisfied(r, evidence, candidate, syntax)]
+        if not matches:
+            return CompilerDecision(
+                decision="REJECT",
+                reason="frame_violation: no declared grammatical frame satisfied",
+                rule_id=getattr(evidence, "trigger_predicate_id", None),
+            )
 
     # Role-set filter when the candidate carries semantic anchors: a rule
     # that declares rolesets/VN classes but shares none of the candidate's
@@ -526,6 +548,66 @@ def compile_relation(
 # ---------------------------------------------------------------------------
 # Internals
 # ---------------------------------------------------------------------------
+
+
+_MODIFIER_DEPS = {"det", "compound", "amod", "nummod", "quantmod", "poss", "case", "cc", "punct", "prep"}
+
+
+def _head_token_of(span: Any, syntax: dict, sentence_start: int) -> Optional[dict]:
+    """The syntactic head token inside a (chunk-relative) entity span:
+    the token whose dependency head lies outside the span (or itself)."""
+    s = span.start - sentence_start
+    e = span.end - sentence_start
+    tokens = [t for t in syntax.get("tokens", [])
+              if t["char_start"] >= s and t["char_start"] < e]
+    if not tokens:
+        return None
+    for tok in tokens:
+        if tok["head_i"] == tok["i"]:
+            return tok
+    for tok in sorted(tokens, key=lambda t: -t["char_start"]):
+        if tok["head_i"] not in {t["i"] for t in tokens}:
+            return tok
+    return max(tokens, key=lambda t: t["char_start"])
+
+
+def _frame_satisfied(rule: dict, evidence: Any, candidate: RelationCandidate,
+                      syntax: dict) -> bool:
+    """I4R-D frame arbitration: each predicate declares the grammatical
+    constructions it owns (rule-pack `frames`). A frame applies when its
+    `when.lexical_class` matches the trigger's recorded arm; its
+    `requires` then constrains the dependency relations of the subject
+    and object head tokens. Rules without frames (or trigger arms
+    without an applicable frame declaration) are unconstrained —
+    backward compatible. spaCy supplies the structure; deterministic
+    predicate semantics decide."""
+    frames = rule.get("frames")
+    if not frames:
+        return True
+    lexical_class = (getattr(evidence, "trigger_lexical_class", None) or "").upper()
+    applicable = [
+        f for f in frames
+        if not f.get("when", {}).get("lexical_class")
+        or lexical_class in f["when"]["lexical_class"]
+    ]
+    if not applicable or not lexical_class:
+        return True  # undeclared arm: frames do not constrain it
+    sentence_start = getattr(candidate, "sentence_start", 0) or 0
+    subject_tok = _head_token_of(candidate.subject.span, syntax, sentence_start)
+    object_tok = _head_token_of(candidate.object.span, syntax, sentence_start)
+    if subject_tok is None and object_tok is None:
+        return True  # no structural anchors: do not invent a violation
+    for frame in applicable:
+        requires = frame.get("requires", {}) or {}
+        subject_ok = True
+        object_ok = True
+        if requires.get("subject_dep"):
+            subject_ok = subject_tok is not None and subject_tok["dep"] in requires["subject_dep"]
+        if requires.get("object_dep"):
+            object_ok = object_tok is not None and object_tok["dep"] in requires["object_dep"]
+        if subject_ok and object_ok:
+            return True
+    return False
 
 
 def _trigger_matches(rule: dict, evidence: Any) -> bool:

@@ -483,7 +483,7 @@ def process_event(conn: Connection, event: dict) -> None:
                 doc_entity_history.extend(
                     sorted(sl.entities, key=lambda e: (e.start, e.end)))
                 for candidate in candidates:
-                    decision = compile_relation(candidate, sl.parse, pack)
+                    decision = compile_relation(candidate, sl.parse, pack, syntax=sl.syntax)
                     if decision.decision in ("ACCEPT", "QUALIFY") and decision.fact:
                         _persist_decision(conn, row, candidate, decision)
                     else:
