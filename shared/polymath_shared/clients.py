@@ -88,6 +88,23 @@ class GlinerClient(SidecarClient):
     def evidence_pass(self, text: str, threshold: float = 0.5) -> dict[str, Any]:
         return self.infer({"task": "evidence", "text": text, "labels": [], "threshold": threshold})
 
+    def infer_rescue_batch(
+        self, requests: list[dict[str, Any]]
+    ) -> list[list[dict[str, Any]]]:
+        """I4R targeted rescue: batched (text, labels, threshold)
+        re-queries against the same resident model via POST /rescue.
+        Grouping by label-set fingerprint happens server-side per item;
+        results align 1:1 with the input order. The caller decides what
+        to ask; the model decides what it is."""
+        r = self._client.post("/rescue", json={"requests": requests})
+        r.raise_for_status()
+        results = r.json().get("results", [])
+        if len(results) != len(requests):
+            raise RuntimeError(
+                f"rescue batch returned {len(results)} results for {len(requests)} requests"
+            )
+        return [item.get("spans", []) for item in results]
+
 
 class EmbedderClient(SidecarClient):
     """Client for the embedder sidecar. Returns vectors tagged with the

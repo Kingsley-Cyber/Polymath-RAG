@@ -52,6 +52,32 @@ class InferResponse(BaseModel):
     model_release: str
 
 
+class RescueItem(BaseModel):
+    """One targeted rescue query (I4R): GLiNER is asked about EXACTLY
+    the supplied phrase — the caller (deterministic alignment code)
+    decides what to ask; the model decides what it is. Same resident
+    model, same revision, threshold carried per request (frozen 0.5 in
+    practice)."""
+
+    text: str
+    labels: list[str] = Field(min_length=1)
+    threshold: float = Field(default=0.5, ge=0, le=1)
+
+
+class RescueRequest(BaseModel):
+    requests: list[RescueItem] = Field(min_length=1, max_length=256)
+
+
+class RescueItemResult(BaseModel):
+    text: str
+    spans: list[ProposalSpan]
+
+
+class RescueResponse(BaseModel):
+    results: list[RescueItemResult]
+    model_release: str
+
+
 def load_manifest() -> dict:
     with MANIFEST_PATH.open("rb") as handle:
         return tomllib.load(handle)
@@ -194,5 +220,37 @@ async def infer(request: InferRequest) -> InferResponse:
             )
             for item in raw
         ],
+        model_release=app.state.manifest["identity"]["version"],
+    )
+
+
+@app.post("/rescue", response_model=RescueResponse)
+async def rescue(request: RescueRequest) -> RescueResponse:
+    """Batched targeted re-queries against the SAME resident model
+    (I4R). Each item is an independent (text, labels, threshold)
+    zero-shot query; results align 1:1 with request order. `/infer`
+    behavior is unchanged."""
+    if not getattr(app.state, "weights", {}).get("verified", False):
+        raise HTTPException(status_code=503, detail="weights verification failed")
+    results = []
+    for item in request.requests:
+        raw = app.state.model.predict_entities(
+            item.text, item.labels, threshold=item.threshold,
+        )
+        results.append(RescueItemResult(
+            text=item.text,
+            spans=[
+                ProposalSpan(
+                    text=s["text"],
+                    start=int(s["start"]),
+                    end=int(s["end"]),
+                    label=s["label"].split(":", 1)[0].strip(),
+                    score=float(s["score"]),
+                )
+                for s in raw
+            ],
+        ))
+    return RescueResponse(
+        results=results,
         model_release=app.state.manifest["identity"]["version"],
     )

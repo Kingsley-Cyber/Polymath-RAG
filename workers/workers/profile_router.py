@@ -16,66 +16,16 @@ from dataclasses import dataclass, field
 
 from polymath_shared.contracts import CoreType, DocumentProfile
 
-CORE_LABELS: list[str] = [t.value for t in CoreType]
+# Provider-facing label vocabulary is query-policy configuration
+# (semantic-query-policy-v1), not profile semantics: re-exported here
+# for existing importers.
+from polymath_shared.query_policy import (  # noqa: F401
+    CORE_LABELS,
+    MODULES,
+    DomainModule,
+)
 
 MAX_LABELS_PER_CALL = 50  # uni-encoder budget (docx §3.1)
-
-
-@dataclass(frozen=True)
-class DomainModule:
-    module_id: str
-    version: str
-    labels: dict[str, CoreType]  # domain label -> core type (mandatory mapping)
-    path_hints: tuple[str, ...] = ()
-    keywords: tuple[str, ...] = ()
-    extra_module_cap: int = 1  # at most one extra module fires on a chunk
-
-
-MODULES: dict[str, DomainModule] = {
-    m.module_id: m
-    for m in [
-        DomainModule(
-            "software_tech", "1.0.0",
-            {"Library": CoreType.PRODUCT, "Framework": CoreType.PRODUCT, "API": CoreType.TECHNOLOGY,
-             "Vulnerability": CoreType.CONCEPT, "AttackTechnique": CoreType.METHOD,
-             "Model": CoreType.PRODUCT, "Dataset": CoreType.DOCUMENT, "ProgrammingLanguage": CoreType.TECHNOLOGY},
-            ("github", "src", "software", "tech"), ("kubernetes", "docker", "api", "software", "compiler"),
-        ),
-        DomainModule(
-            "psych_cognition", "1.0.0",
-            {"CognitiveBias": CoreType.CONCEPT, "MetacognitiveStrategy": CoreType.METHOD,
-             "EmotionCategory": CoreType.CONCEPT, "VADDimension": CoreType.MEASUREMENT},
-            ("psych", "cognition", "mental"), ("metacognition", "cognitive", "emotion", "valence"),
-        ),
-        DomainModule(
-            "facs_body", "1.0.0",
-            {"FacialActionUnit": CoreType.CONCEPT, "MuscleAction": CoreType.CONCEPT,
-             "FacialExpression": CoreType.CONCEPT, "BodyMovement": CoreType.PROCESS,
-             "JointAngle": CoreType.MEASUREMENT},
-            ("facs", "body", "movement", "motion"), ("action unit", "facial", "biomechanics", "joint"),
-        ),
-        DomainModule(
-            "commerce_marketing", "1.0.0",
-            {"Brand": CoreType.ORGANIZATION, "Campaign": CoreType.EVENT,
-             "MarketingTechnique": CoreType.METHOD, "Metric": CoreType.MEASUREMENT,
-             "ConsumerBehavior": CoreType.PROCESS},
-            ("marketing", "brand", "campaign"), ("marketing", "brand", "campaign", "conversion"),
-        ),
-        DomainModule(
-            "media_film", "1.0.0",
-            {"Film": CoreType.DOCUMENT, "Shot": CoreType.CONCEPT,
-             "CinematographyTechnique": CoreType.METHOD, "AnimationTechnique": CoreType.METHOD,
-             "PromptTechnique": CoreType.METHOD},
-            ("film", "video", "media", "animation"), ("cinematography", "animation", "prompt", "veo"),
-        ),
-        DomainModule(
-            "academic", "1.0.0",
-            {"Theory": CoreType.CONCEPT, "Finding": CoreType.CONCEPT,
-             "StudyDesign": CoreType.METHOD, "Citation": CoreType.DOCUMENT},
-            ("paper", "academic", "arxiv"), ("paper", "study", "experiment", "finding"),
-        ),
-    ]
-}
 
 _EXTRA_MODULE_PROBES: list[tuple[str, str]] = [
     ("facs_body", r"\bAU\d{1,2}\b"),

@@ -253,3 +253,46 @@ compile and persist an evidence-backed fact, recover after a controlled
 process restart, rebuild its projections, and show the run in structured
 logs. Until that path passes, the repository is a scaffold and must be
 described as such.
+
+## 14. Temporal durability of extraction (semantic-query-policy-v1)
+
+Stable: immutable source evidence, canonical ontology, canonical
+predicate semantics, versioned contracts, provenance, deterministic
+acceptance. Replaceable: GLiNER (model/revision/labels), spaCy (or any
+syntax provider), rule packs, query vocabularies, corpora.
+
+- **Canonical types are not model wording.** Every GLiNER query —
+  discovery pass 1 and every rescue query — resolves provider-facing
+  labels through the versioned semantic query policy
+  (`shared/polymath_shared/query_policy.py`); raw provider labels map
+  back to canonical types through the same policy. The compiler,
+  predicates, and canonicalizer never see provider aliases
+  ("Company"/"Corporation"/...). Alias vocabularies are policy data
+  that enter only through a named evidence gate
+  (GLINER-QUERY-VOCAB-vN) with a version bump — never a code branch,
+  never an ontology change.
+- **Raw provider output is preserved.** Every mention stores
+  raw_label + query_policy_version + pass_kind (discovery |
+  boundary_rescue | missing_argument_rescue | type_reconciliation)
+  alongside the canonical core_type (migration 0011). The durable
+  syntax artifact (syntax-evidence-v1 stage artifact) identifies
+  provider, model/version, backend, and contract version.
+- **One extraction contract identity.** The extract stage contract
+  hash includes every input that can change semantic output: chunk
+  contract, GLiNER model/revision/threshold, query policy version +
+  aliases, syntax provider + contract, rule pack, argument frames,
+  admission policy, rescue policy (including its disabled state), and
+  compiler versions. Any interpretation is reproducibly attributable.
+- **Source evidence is immutable; interpretations are versioned.** A
+  document may carry multiple extraction interpretations (contract
+  v1/v2/...); each is attributable to its contract identity through
+  receipts/manifests. Upgrades follow OBSERVE -> FREEZE BASELINE ->
+  VERSIONED POLICY/CONTRACT -> REPROCESS -> DIFF -> EVALUATE ->
+  PROMOTE/REJECT -> FREEZE RESULT. History is never silently
+  overwritten; promotion rebuilds disposable projections
+  deterministically from the promoted authoritative Postgres state
+  (Qdrant/Neo4j never hold authority).
+- **Predicate signatures constrain acceptance; they never manufacture
+  semantic compatibility.** Model answers are queried under the normal
+  qualified policy; the predicate contract then validates or rejects
+  the canonical result.

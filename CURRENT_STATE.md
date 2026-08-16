@@ -90,6 +90,21 @@ status + outbox event).
 
 ## Experimental Components
 
+- **Temporal extraction architecture** (2026-08-16 directive, aligned):
+  semantic-query-policy-v1 owns the provider-facing label vocabulary
+  (canonical types never change with model wording; aliases require a
+  named GLINER-QUERY-VOCAB gate); raw provider labels + pass_kind +
+  query_policy_version persist on every mention (migration 0011); the
+  extract stage contract identity always includes query policy,
+  syntax contract, and rescue policy. Upgrades follow the
+  observe→freeze→version→reprocess→diff→evaluate→promote lifecycle;
+  Qdrant/Neo4j stay disposable. Probe evidence: experiment 0005.
+- **I4R staged repair** (AUTHORIZED, then measurement SUSPENDED by the
+  same directive): I4R-A boundary reconciliation implemented and unit
+  tested behind POLYMATH_RESCUE (default off, requires syntax
+  provider, fails loudly); I4R-B/C/D not started. NO frozen-I4
+  measurement has run — resuming requires explicit authorization; see
+  `eval/i4r/REPORT.md`.
 - **spaCy syntax sidecar** (SYNTAX-BOOTSTRAP, 2026-08-16):
   `sidecars/spacy_runtime/` on :8744 — isolated venv, spaCy 3.8.15 +
   en_core_web_sm 3.8.0, NER DISABLED (GLiNER remains the only entity

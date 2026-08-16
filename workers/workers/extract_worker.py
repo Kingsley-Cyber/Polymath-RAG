@@ -37,6 +37,7 @@ from polymath_shared.receipts import (
     stage_contract_hash,
     stage_transaction,
 )
+from polymath_shared.query_policy import QUERY_POLICY_VERSION, policy_identity
 from polymath_shared.rulepack import compile_relation, load_rule_pack
 from workers.candidates import SentenceSlice, build_candidates
 from workers.evidence_proposer import EXTRACTOR_VERSION as EVIDENCE_EXTRACTOR_VERSION
@@ -128,17 +129,15 @@ def _sentences_of(chunk_text: str) -> _Sentences:
 
 
 def _map_label(label: str, pack: dict) -> str | None:
-    """Pass-1 label -> core type. Domain labels map through the profile's
-    label->core table (profile_router.MODULES); core labels pass through."""
-    from workers.profile_router import MODULES
+    """Pass-1 raw label -> canonical core type, resolved through the
+    semantic query policy (semantic-query-policy-v1). Domain labels map
+    through the policy's module table; core labels pass through. The
+    compiler and predicates never see provider aliases."""
+    from polymath_shared.query_policy import canonical_of
 
     if _core_type(label, pack):
         return label
-    for module in MODULES.values():
-        mapped = module.labels.get(label)
-        if mapped:
-            return mapped.value
-    return None
+    return canonical_of(label)
 
 
 def _entity_spans(
@@ -168,6 +167,8 @@ def _entity_spans(
             core_type=CoreType(core_type),
             score=item["score"],
             extractor_version=EXTRACTOR_VERSION,
+            raw_label=item["label"],
+            pass_kind="discovery",
         ))
     return spans, rejected
 
@@ -335,6 +336,13 @@ def process_event(conn: Connection, event: dict) -> None:
     if proposal_mode not in ("lexical", "hybrid"):
         raise ValueError(f"unknown evidence proposal mode: {proposal_mode}")
 
+    rescue_stages = get_settings().rescue_policy.enabled_stages()
+    if rescue_stages and get_settings().sidecars.syntax_provider != "spacy":
+        raise RuntimeError(
+            "POLYMATH_RESCUE enabled but POLYMATH_SYNTAX_PROVIDER != spacy — "
+            "rescue requires syntax evidence; refusing to extract without it"
+        )
+
     pack = _pack()
     parser_name, parser_version = parser_identity()
     manifest = ExtractionManifest(
@@ -346,9 +354,10 @@ def process_event(conn: Connection, event: dict) -> None:
         ontology_version=ONTOLOGY_VERSION,
         rule_pack_version=active_pack_version(),
         thresholds={"entity": ENTITY_THRESHOLD, "evidence": EVIDENCE_THRESHOLD},
+        query_policy=QUERY_POLICY_VERSION,
     )
 
-    contract = stage_contract_hash(STAGE, {
+    contract_payload = {
         "extractor_version": EXTRACTOR_VERSION,
         "evidence_proposer": EVIDENCE_EXTRACTOR_VERSION,
         "ontology_version": ONTOLOGY_VERSION,
@@ -362,7 +371,22 @@ def process_event(conn: Connection, event: dict) -> None:
         "binding_gates": "endpoint-binding-v1",
         "provenance_contract": "exact-evidence-v1",
         "gliner_pin": _GLINER_PIN,
-    })
+        # Temporal durability (semantic-query-policy-v1): the extraction
+        # contract identity includes EVERY input that can change semantic
+        # output — provider-facing vocabulary policy, syntax contract,
+        # rescue policy — including their disabled state, so any
+        # interpretation is reproducibly attributable years later.
+        "query_policy": policy_identity(),
+        "syntax_contract": {
+            "provider": get_settings().sidecars.syntax_provider,
+            "contract": "syntax-evidence-v1",
+        },
+        "rescue_policy": {
+            "contract": "rescue-v1",
+            "stages": list(rescue_stages),
+        },
+    }
+    contract = stage_contract_hash(STAGE, contract_payload)
 
     corpus_row = conn.execute(
         "SELECT r.corpus_id FROM runs r WHERE r.run_id = %s", (run_id,)
@@ -428,6 +452,15 @@ def process_event(conn: Connection, event: dict) -> None:
             syntax_runtime = _syntax_evidence(ordered_slices)
             if syntax_runtime is not None:
                 writer.artifact({"syntax": syntax_runtime})
+            # I4R rescue lane (flag-gated; default off = no-op): syntax
+            # says where semantic certainty is missing; GLiNER is
+            # re-queried about that exact phrase; deterministic code
+            # applies exact-full-span-only acceptance.
+            if rescue_stages:
+                from workers.rescue import apply_rescue
+
+                rescue_report = apply_rescue(ordered_slices, rescue_stages)
+                writer.artifact({"rescue": rescue_report})
             for row, sl in ordered_slices:
                 candidates = build_candidates(
                     [sl],
@@ -493,14 +526,16 @@ def _persist_mentions(conn: Connection, corpus_id: str, doc_id: str,
                                   char_start, char_end, surface,
                                   normalized_surface, core_type,
                                   gliner_score, extractor_version,
-                                  admission_class, entity_id)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                  admission_class, entity_id,
+                                  raw_label, query_policy_version, pass_kind)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (mention_id) DO NOTHING
             """,
             (decision.mention_id, corpus_id, span.doc_id or doc_id,
              span.chunk_id, span.start, span.end, span.text,
              norm_surface, span.core_type.value, span.score,
-             span.extractor_version, decision.reference_class, entity_id),
+             span.extractor_version, decision.reference_class, entity_id,
+             span.raw_label, QUERY_POLICY_VERSION, span.pass_kind),
         )
         if is_durable:
             conn.execute(

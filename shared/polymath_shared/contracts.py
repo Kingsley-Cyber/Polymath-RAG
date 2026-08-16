@@ -47,6 +47,12 @@ class EntitySpan(BaseModel):
     domain_types: list[str] = Field(default_factory=list)
     score: float = Field(ge=0, le=1)
     extractor_version: str
+    # Raw provider label preserved verbatim alongside the canonical
+    # mapping (semantic-query-policy-v1): never discard the provider
+    # result. pass_kind marks how the span was produced (discovery,
+    # boundary_rescue, missing_argument_rescue, type_reconciliation).
+    raw_label: Optional[str] = None
+    pass_kind: str = "discovery"
 
 
 class EvidenceSpan(BaseModel):
@@ -168,6 +174,10 @@ class ExtractionManifest(BaseModel):
     rule_pack_version: str
     resource_versions: dict[str, str] = Field(default_factory=dict)
     thresholds: dict[str, float] = Field(default_factory=dict)
+    # semantic-query-policy-v1: identity of the provider-facing label
+    # vocabulary that produced the proposals. Canonical ontology never
+    # changes with it.
+    query_policy: str = "semantic-query-policy-v1"
 
 
 class CompilerDecision(BaseModel):

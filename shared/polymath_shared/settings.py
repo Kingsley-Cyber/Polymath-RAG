@@ -7,6 +7,7 @@ are never logged.
 from __future__ import annotations
 
 from functools import lru_cache
+from typing import ClassVar
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -85,6 +86,36 @@ class StoreSettings(BaseSettings):
     )
 
 
+class RescueSettings(BaseSettings):
+    """I4R rescue policy (POLYMATH_RESCUE). 'off' (production default)
+    is byte-identical extraction. 'on' enables every stage; a comma list
+    enables a subset: boundary, missing_argument, type_reconciliation,
+    frames. Any enabled stage requires POLYMATH_SYNTAX_PROVIDER=spacy
+    and fails loudly when syntax evidence is unavailable."""
+
+    RESCUE_STAGES: ClassVar[tuple[str, ...]] = (
+        "boundary", "missing_argument", "type_reconciliation", "frames",
+    )
+
+    model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore")
+    rescue: str = Field(default="off", description="Rescue policy stages (I4R)")
+
+    def enabled_stages(self) -> tuple[str, ...]:
+        value = self.rescue.strip()
+        if value == "off":
+            return ()
+        if value == "on":
+            return self.RESCUE_STAGES
+        stages = tuple(s.strip() for s in value.split(",") if s.strip())
+        unknown = [s for s in stages if s not in self.RESCUE_STAGES]
+        if unknown:
+            raise ValueError(f"unknown POLYMATH_RESCUE stages: {unknown}")
+        return stages
+
+    def stage_enabled(self, stage: str) -> bool:
+        return stage in self.enabled_stages()
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore")
     env: str = Field(default="local", description="local | prod")
@@ -93,6 +124,10 @@ class Settings(BaseSettings):
     stores: StoreSettings = Field(default_factory=StoreSettings)
     sidecars: SidecarSettings = Field(default_factory=SidecarSettings)
     worker: WorkerSettings = Field(default_factory=WorkerSettings)
+    # Field name deliberately != "rescue": POLYMATH_RESCUE belongs to the
+    # nested RescueSettings field, and a colliding outer name would make
+    # pydantic-settings JSON-decode the stage string as a nested model.
+    rescue_policy: RescueSettings = Field(default_factory=RescueSettings)
     control: ControlSettings = Field(default_factory=ControlSettings)
 
 

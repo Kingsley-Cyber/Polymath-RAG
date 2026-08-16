@@ -610,3 +610,41 @@ that motivated it and the refactor that implemented it.
   thinc set_current_ops (reported in health, never silent).
 - Q1/E3B/I3R regression locks unchanged with the provider disabled.
   (work log `2026-08-16-syntax-bootstrap.md`)
+
+## 2026-08-16: I4R-A boundary reconciliation (flag-gated, default off)
+
+- Explicitly authorized I4R umbrella gate, first staged sub-gate.
+  spaCy noun chunks (determiner-trimmed) align against pass-1 GLiNER
+  spans over the same sentence slices; a span strictly inside a larger
+  argument NP is re-queried at the existing pinned GLiNER sidecar via
+  a new additive batched POST /rescue (same model/revision, frozen 0.5
+  threshold; /infer untouched). Acceptance is exact-full-span-only
+  (start==0, end==len, same label). Accepted -> the argument binds to
+  the expanded span; refused -> BOUNDARY_UNRESOLVED: the original
+  proposal stays durable, the fact abstains. No deterministic
+  promotion.
+- New flag POLYMATH_RESCUE (off | on | stage list); default off keeps
+  the stage contract hash byte-identical. Rescue provenance records
+  deterministic request identities (rescue-v1|kind|revision|
+  threshold|text|ordered labels).
+- work log `2026-08-16-i4r-a-boundary.md`; measurement in
+  `eval/i4r/REPORT.md`.
+
+## 2026-08-16: temporal extraction architecture alignment
+
+- semantic-query-policy-v1: canonical types -> provider-facing label
+  vocabulary resolved through a versioned policy; domain-module label
+  table relocated to the policy; raw provider labels + pass_kind +
+  query_policy_version preserved on every mention (migration 0011);
+  ExtractionManifest carries the query policy. Compiler/predicates
+  cannot see provider aliases (guarded by test).
+- Extraction contract identity now always includes query policy,
+  syntax contract, and rescue policy (incl. disabled state): every
+  interpretation is reproducibly attributable; upgrades follow the
+  observe->freeze->version->reprocess->diff->evaluate->promote
+  lifecycle with disposable projections rebuilt from authority.
+- Label-vocabulary sensitivity recorded as probe evidence (experiment
+  0005); alias adoption requires a named GLINER-QUERY-VOCAB gate.
+- I4R staged repair plan paused at A (implemented, flag-gated OFF,
+  unmeasured) pending explicit authorization; no acceptance test run.
+  (work log `2026-08-16-temporal-extraction-architecture.md`)
