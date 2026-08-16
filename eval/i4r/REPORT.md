@@ -51,6 +51,26 @@ audit, syntax, and rescue evidence were never persisted for ANY prior
 run. Artifacts now merge per (run, stage, contract) with jsonb ||;
 regression test `tests/integration/test_i4r_a_artifact_merge.py`.
 
-## I4R-B / I4R-C / I4R-D
+## I4R-B — missing-argument rescue (POLYMATH_RESCUE=boundary,missing_argument)
 
-Pending (this report updates as each staged measurement lands).
+**Result: TP 12 / FP 6 / FN 14 → P 0.667 (+0.042 over A), R 0.462
+(+0.077); envelope 7/8; must-not 18/18; provenance 17/17 exact.**
+
+First recall movement of the repair. Trigger-governed slots with no
+entity, queried with the NORMAL policy vocabulary (temporal directive
+§10 — no slot-forced labels), exact-full-span acceptance; the
+predicate signature validates the canonical type downstream.
+Accepted rescues include Amara Osei (Person, 0.916) and chief
+medical officer (Person, 0.713) — the +2 TP class.
+
+Mid-stage correction recorded: the first B measurement asserted
+envelope case B07 ("company employs two new surgeons") via the
+quantified NP "two new surgeons" (Person, 0.599). Fixed with a
+general syntax-only rule — quantified NPs (nummod/quantmod) are
+descriptions, not referential entity endpoints — which restored
+envelope 7/8 while keeping the recall gain. Evidence for both runs
+preserved (i4r-b evidence is the corrected run).
+
+## I4R-C / I4R-D
+
+Pending.

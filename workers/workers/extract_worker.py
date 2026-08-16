@@ -459,7 +459,16 @@ def process_event(conn: Connection, event: dict) -> None:
             if rescue_stages:
                 from workers.rescue import apply_rescue
 
-                rescue_report = apply_rescue(ordered_slices, rescue_stages)
+                # Normal policy vocabulary for missing-argument queries
+                # (temporal-durability §10): the pass-1 label set, never
+                # slot-forced types.
+                from polymath_shared.contracts import DocumentProfile
+
+                rescue_label_set = tuple(
+                    DocumentProfile(**profile_dict).label_set
+                ) if profile_dict.get("label_set") else ()
+                rescue_report = apply_rescue(
+                    ordered_slices, rescue_stages, rescue_label_set)
                 writer.artifact({"rescue": rescue_report})
             for row, sl in ordered_slices:
                 candidates = build_candidates(

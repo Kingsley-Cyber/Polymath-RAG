@@ -672,3 +672,11 @@ that motivated it and the refactor that implemented it.
   merged instead of first-write-wins (manifests had been swallowing
   audit/syntax/rescue evidence since inception); regression-tested.
   (eval/i4r/REPORT.md, work log 2026-08-16-i4r-a-boundary.md)
+
+## 2026-08-16: I4R-B missing-argument rescue measured on frozen I4
+
+- Cumulative (A+B): P 0.667 (baseline 0.500), R 0.462 (baseline
+  0.385); envelope 7/8, must-not 18/18, provenance exact. Normal-
+  vocabulary queries per temporal directive §10; quantified NPs
+  excluded as non-referential (B07 audit -> general rule).
+  (eval/i4r/REPORT.md, work log 2026-08-16-i4r-b-missing-argument.md)

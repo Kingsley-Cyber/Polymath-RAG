@@ -137,6 +137,101 @@ def _accepted(spans: list[dict], query: RescueQuery) -> dict | None:
     return None
 
 
+# Dependency relations that fill predicate argument slots. Covers both
+# the UD scheme (obj/obl/obl:agent/nsubj:pass) and spaCy's English
+# ClearNLP scheme (dobj/pobj/agent); prepositional objects (pobj) hang
+# off the preposition, so the trigger->prep->pobj chain is walked too.
+ARGUMENT_DEPS = frozenset({
+    "nsubj", "nsubj:pass", "obj", "iobj", "dobj", "obl", "obl:agent", "pobj", "agent",
+})
+PREP_DEPS = frozenset({"prep", "case"})
+
+
+def _tokens(syntax: dict) -> list[dict]:
+    return sorted(syntax.get("tokens", []), key=lambda t: t["char_start"])
+
+
+def _trigger_tokens(sl, tokens: list[dict]) -> list[dict]:
+    """Tokens overlapping this slice's evidence (trigger) spans."""
+    out = []
+    for ev in sl.evidence:
+        s = ev.start - sl.sentence_start
+        e = ev.end - sl.sentence_start
+        for tok in tokens:
+            if tok["char_start"] < e and tok["char_end"] > s:
+                out.append(tok)
+    return out
+
+
+def missing_argument_candidates(sl, revision: str, label_set: tuple[str, ...]):
+    """I4R-B: trigger-governed grammatical slots with NO GLiNER entity.
+
+    For each evidence (trigger) token, tokens whose dependency head is
+    the trigger and whose relation fills an argument slot (nsubj/obj/
+    obl/…) identify the argument position; the trimmed noun chunk
+    containing such a token is a rescue candidate when NO existing
+    entity overlaps it. Free-floating noun chunks never qualify.
+
+    Per the temporal-durability directive (§10), the query uses the
+    NORMAL policy vocabulary (the pass-1 label set), never slot-forced
+    types; the returned canonical type is validated by the predicate
+    signature downstream — rules constrain acceptance, they do not
+    manufacture compatibility."""
+    from polymath_shared.query_policy import QUERY_POLICY_VERSION
+
+    syntax = getattr(sl, "syntax", None)
+    if not syntax:
+        return []
+    tokens = _tokens(syntax)
+    chunks = _trimmed_noun_chunks(syntax, sl.text)
+    triggers = {t["i"] for t in _trigger_tokens(sl, tokens)}
+    # argument tokens: direct children in argument deps, plus
+    # prepositional objects reached through trigger-governed preps
+    argument_tokens: list[dict] = []
+    for tok in tokens:
+        if tok["head_i"] in triggers and tok["dep"] in ARGUMENT_DEPS:
+            argument_tokens.append(tok)
+        elif tok["head_i"] in triggers and tok["dep"] in PREP_DEPS:
+            for tok2 in tokens:
+                if tok2["head_i"] == tok["i"] and tok2["dep"] in ARGUMENT_DEPS:
+                    argument_tokens.append(tok2)
+    candidates = []
+    seen_np: set[tuple[int, int]] = set()
+    for tok in argument_tokens:
+        # the trimmed NP containing this argument token
+        np = None
+        for (cs, ce, surface) in chunks:
+            if cs <= tok["char_start"] and tok["char_end"] <= ce:
+                if np is None or (ce - cs) < (np[1] - np[0]):
+                    np = (cs, ce, surface)
+        if np is None or np[:2] in seen_np:
+            continue
+        cs, ce, surface = np
+        # Quantified NPs ("two new surgeons") are descriptions, not
+        # referential entity endpoints — excluded from rescue on
+        # syntax alone (I4R-B B07 audit; nummod/quantmod children).
+        inside = [t for t in tokens if t["char_start"] >= cs and t["char_end"] <= ce]
+        if any(t["dep"] in ("nummod", "quantmod") for t in inside):
+            continue
+        chunk_cs, chunk_ce = sl.sentence_start + cs, sl.sentence_start + ce
+        # only MISSING arguments: skip any NP an entity already covers
+        if any(e.start < chunk_ce and e.end > chunk_cs for e in sl.entities):
+            continue
+        # the NP must not itself be the trigger surface
+        if any(ev.start < chunk_ce and ev.end > chunk_cs for ev in sl.evidence):
+            continue
+        seen_np.add(np[:2])
+        candidates.append((RescueQuery(
+            kind="missing_argument",
+            text=surface,
+            labels=tuple(label_set),
+            threshold=RESCUE_THRESHOLD,
+            model_revision=revision,
+            query_policy_version=QUERY_POLICY_VERSION,
+        ), chunk_cs, chunk_ce))
+    return candidates
+
+
 def _gliner_revision() -> str:
     from polymath_shared.clients import GlinerClient
 
@@ -251,7 +346,99 @@ def _policy_version() -> str:
     return QUERY_POLICY_VERSION
 
 
-def apply_rescue(ordered_slices: list, stages: tuple[str, ...]) -> dict:
+def apply_missing_arguments(ordered_slices: list, label_set: tuple[str, ...]) -> dict:
+    """I4R-B: query the normal policy vocabulary for trigger-governed
+    NPs with no entity; accepted full-span predictions become entity
+    spans (pass_kind=missing_argument_rescue) that the existing
+    candidate/type-compatibility machinery then validates — predicate
+    signatures constrain acceptance, they never force the query."""
+    from polymath_shared.clients import GlinerClient
+    from polymath_shared.contracts import CoreType, EntitySpan
+    from polymath_shared.query_policy import canonical_of
+
+    revision = _gliner_revision()
+    per_slice: list[list] = []
+    queries: dict[str, RescueQuery] = {}
+    for row, sl in ordered_slices:
+        found = missing_argument_candidates(sl, revision, label_set)
+        per_slice.append(found)
+        for query, _cs, _ce in found:
+            queries.setdefault(query.identity, query)
+
+    results: dict[str, list[dict]] = {}
+    report_queries = []
+    if queries:
+        ordered = list(queries.values())
+        client = GlinerClient()
+        try:
+            client.verify_pin()
+            spans_by_query = []
+            for i in range(0, len(ordered), 256):
+                spans_by_query.extend(client.infer_rescue_batch(
+                    [q.payload() for q in ordered[i:i + 256]]))
+        finally:
+            client.close()
+        results = {q.identity: spans for q, spans in zip(ordered, spans_by_query)}
+        for q in ordered:
+            hit = _accepted(results.get(q.identity, []), q)
+            canonical = canonical_of(hit["label"]) if hit else None
+            report_queries.append({
+                "identity": q.identity, "kind": q.kind, "text": q.text,
+                "labels": list(q.labels), "threshold": q.threshold,
+                "query_policy_version": q.query_policy_version,
+                "raw_predictions": [
+                    {"raw_label": s.get("label"), "text": s.get("text"),
+                     "score": round(float(s.get("score", 0.0)), 4)}
+                    for s in results.get(q.identity, [])
+                ],
+                "outcome": "accepted" if (hit and canonical) else "refused",
+                "accepted_raw_label": hit.get("label") if hit else None,
+                "canonical_type": canonical,
+                "score": round(float(hit["score"]), 4) if hit else None,
+                "accept_reason": ("exact_full_span_canonical_mappable" if (hit and canonical)
+                                  else ("unmappable_label" if hit else "no_full_span_prediction")),
+            })
+
+    added = 0
+    for (row, sl), found in zip(ordered_slices, per_slice):
+        if not found:
+            continue
+        hits = {q.identity: _accepted(results.get(q.identity, []), q)
+                for q, _cs, _ce in found}
+        new_entities = list(sl.entities)
+        for query, chunk_cs, chunk_ce in found:
+            hit = hits[query.identity]
+            if hit is None:
+                continue
+            canonical = canonical_of(hit.get("label", ""))
+            if canonical is None:
+                continue
+            new_entities.append(EntitySpan(
+                doc_id=row["doc_id"],
+                chunk_id=row["chunk_id"],
+                start=chunk_cs,
+                end=chunk_ce,
+                text=sl.text[chunk_cs - sl.sentence_start:chunk_ce - sl.sentence_start],
+                core_type=CoreType(canonical),
+                score=float(hit["score"]),
+                extractor_version="gliner-2pass-v1",
+                raw_label=hit.get("label"),
+                pass_kind="missing_argument_rescue",
+            ))
+            added += 1
+        object.__setattr__(sl, "entities", new_entities)
+
+    return {
+        "contract": RESCUE_CONTRACT,
+        "query_policy_version": _policy_version(),
+        "stages": ["missing_argument"],
+        "queries": report_queries,
+        "counts": {"candidates": len(queries), "accepted": added, "refused": len(queries) - added},
+    }
+
+
+def apply_rescue(ordered_slices: list, stages: tuple[str, ...],
+                 label_set: tuple[str, ...] = ()) -> dict:
     """Entry point from the extract worker. Every enabled stage requires
     syntax evidence on every slice; missing evidence fails LOUDLY (no
     silent rescue-free extraction)."""
@@ -266,4 +453,6 @@ def apply_rescue(ordered_slices: list, stages: tuple[str, ...]) -> dict:
               "stages": list(stages)}
     if "boundary" in stages:
         report["boundary"] = apply_boundary(ordered_slices)
+    if "missing_argument" in stages:
+        report["missing_argument"] = apply_missing_arguments(ordered_slices, label_set)
     return report
