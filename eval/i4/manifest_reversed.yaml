@@ -1,0 +1,18 @@
+version: 1
+
+corpus:
+  corpus_id: i4-fresh-acceptance-v1
+  title: I4 Fresh Acceptance (reversed submission order)
+  description: "Order-independence variant: identical documents, reversed canonical order."
+
+defaults:
+  language: en
+  source_tier: primary
+  enabled: true
+
+documents:
+  - source: ./corpus/05_corval_logistics.md
+  - source: ./corpus/02_nimbus_cloud.md
+  - source: ./corpus/04_brightpath_learning.md
+  - source: ./corpus/01_northvale_health.md
+  - source: ./corpus/03_crestline_automation.md

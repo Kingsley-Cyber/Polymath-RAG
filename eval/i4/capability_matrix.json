@@ -1,0 +1,1980 @@
+{
+ "derived_from": {
+  "compiled_lexical_sha256": "d96560393884381d33754c1c7f7e0ac30bad8fd2f7d53c1b49ee40f16a6506db",
+  "resource_contract_id": "03a513ece6da32b243289fa9b9ef9dfe8e21cec4ff9f0435678ad4425021c150",
+  "rule_pack_version": "1.2.0",
+  "rule_pack_yaml": "shared/polymath_shared/rulepack/core-predicates-v1.2.0.yaml"
+ },
+ "global_semantics": {
+  "argument_frames": "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)",
+  "association_frame": "ARG1_AFTER_TRIGGER_ARG2_AFTER_PREP when a preposition follows the trigger (referential-argument gate: MENTION_ONLY args abstain); otherwise the default frame",
+  "coordination": "predicate-region boundaries: a coordinator (and/but/or/while, optionally comma-prefixed, or ';') opens a NEW region only when the word after it is a trigger surface; entity lists (max 3 members) expand only on ONE side; double lists fail closed",
+  "graph_eligibility": "fact eligible iff BOTH endpoints have admission_class != MENTION_ONLY (shared neo4j_eligibility predicate used by projector, census, verifier)",
+  "local_reference": "bounded definite descriptions ('the X', 1-3 content words) resolve the SUBJECT slot only: head-match against one unique history entity, or closed-class org descriptions against the unique Organization entity; 0 or >1 candidates -> abstain; alias-only identity",
+  "negation_modality": "per-predicate constraints (reject/qualify); negated/conditional/question -> REJECT; speculative/hypothetical/attributed -> QUALIFY",
+  "passive": "UNSUPPORTED without a parse record \u2014 no syntactic parse means surface order only; 'by'-passives typically fail subject signatures and abstain",
+  "referentiaL_gate_evidence_classes": [
+   "association"
+  ],
+  "surface_weak": "YES \u2014 without a syntactic parse every pairing is a surface frame; at most one unambiguous binding per trigger, else no fact",
+  "trigger_matching": "typed trigger contract: the compiler tests ONLY the lexical arm (verbs/nouns/multiword) of the predicate that localized the trigger; verb surfaces match BOUNDED inflection forms (base/+s/+es/+d/+ed/+ing with e-drop, y->ies/ied, consonant doubling) \u2014 arbitrary prefix strings never match; noun surfaces match exact word boundaries; multiword triggers match by substring"
+ },
+ "predicates": {
+  "acquired": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "attributed": "qualify_wrap_stated_in",
+    "conditional": "reject",
+    "hypothetical": "reject",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "Buyer acquires an organization or product.",
+   "direction": "buyer_to_acquired",
+   "evidence_classes": [
+    "ownership_control"
+   ],
+   "graph_traversal_weight": "high",
+   "inverse": "acquired_by",
+   "multiword": [],
+   "negative_triggers": [],
+   "nouns": [
+    "acquisition",
+    "takeover"
+   ],
+   "object_core": [
+    "Organization",
+    "Product"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Organization",
+      "Product"
+     ],
+     "subject_core": [
+      "Organization",
+      "Person"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Organization",
+    "Person"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 1,
+   "verbs": [
+    "absorb",
+    "accept",
+    "accrue",
+    "accumulate",
+    "acquire",
+    "appropriate",
+    "arrogate",
+    "borrow",
+    "buy",
+    "cadge",
+    "collect",
+    "commandeer",
+    "exact",
+    "grab",
+    "hijack",
+    "inherit",
+    "make",
+    "purchase",
+    "receive",
+    "recoup",
+    "recover",
+    "regain",
+    "retrieve",
+    "seize",
+    "select",
+    "snatch",
+    "source",
+    "subselect"
+   ]
+  },
+  "alias_of": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "hypothetical": "qualify",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "Subject and object denote the same entity under different names.",
+   "direction": "surface_to_canonical",
+   "evidence_classes": [
+    "classification",
+    "reference_attribution"
+   ],
+   "graph_traversal_weight": "low",
+   "inverse": "alias_of",
+   "multiword": [
+    "aka",
+    "also known as",
+    "formerly known as",
+    "goes by",
+    "renamed"
+   ],
+   "negative_triggers": [],
+   "nouns": [],
+   "object_core": [
+    "Concept",
+    "Method",
+    "Organization",
+    "Person",
+    "Product",
+    "Technology"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Person",
+      "Organization",
+      "Product",
+      "Technology",
+      "Concept",
+      "Method"
+     ],
+     "subject_core": [
+      "Person",
+      "Organization",
+      "Product",
+      "Technology",
+      "Concept",
+      "Method"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Concept",
+    "Method",
+    "Organization",
+    "Person",
+    "Product",
+    "Technology"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 0,
+   "verbs": []
+  },
+  "associated_with": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "conditional": "qualify",
+    "hypothetical": "qualify",
+    "negated": "qualify",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "Fallback association. Emitted only when no specific predicate applies.",
+   "direction": "canonical_order",
+   "evidence_classes": [
+    "association"
+   ],
+   "graph_traversal_weight": "low",
+   "inverse": "associated_with",
+   "multiword": [
+    "associated with",
+    "connected to",
+    "linked to",
+    "related to"
+   ],
+   "negative_triggers": [],
+   "nouns": [],
+   "object_core": [
+    "Concept",
+    "Document",
+    "Event",
+    "Location",
+    "Method",
+    "Organization",
+    "Person",
+    "Process",
+    "Product",
+    "Technology"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Person",
+      "Organization",
+      "Location",
+      "Product",
+      "Technology",
+      "Concept",
+      "Method",
+      "Event",
+      "Document",
+      "Process"
+     ],
+     "subject_core": [
+      "Person",
+      "Organization",
+      "Location",
+      "Product",
+      "Technology",
+      "Concept",
+      "Method",
+      "Event",
+      "Document",
+      "Process"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Concept",
+    "Document",
+    "Event",
+    "Location",
+    "Method",
+    "Organization",
+    "Person",
+    "Process",
+    "Product",
+    "Technology"
+   ],
+   "supported_frames": [
+    "ARG1_AFTER_TRIGGER_ARG2_AFTER_PREP when a preposition follows the trigger (referential-argument gate: MENTION_ONLY args abstain); otherwise the default frame"
+   ],
+   "tier": 1,
+   "verbs": [
+    "associate",
+    "connect",
+    "link",
+    "relate"
+   ]
+  },
+  "causes": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "attributed": "qualify_wrap_stated_in",
+    "conditional": "qualify",
+    "hypothetical": "qualify",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "Subject causes or produces an effect.",
+   "direction": "cause_to_effect",
+   "evidence_classes": [
+    "causation"
+   ],
+   "graph_traversal_weight": "high",
+   "inverse": "caused_by",
+   "multiword": [
+    "because of",
+    "due to",
+    "lead to",
+    "leads to",
+    "led to",
+    "result in",
+    "resulted in",
+    "results in"
+   ],
+   "negative_triggers": [],
+   "nouns": [],
+   "object_core": [
+    "Concept",
+    "Event",
+    "Process",
+    "Product"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Process",
+      "Event",
+      "Concept",
+      "Product"
+     ],
+     "subject_core": [
+      "Process",
+      "Event",
+      "Concept"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Concept",
+    "Event",
+    "Process"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 1,
+   "verbs": [
+    "cause",
+    "induce",
+    "produce",
+    "trigger"
+   ]
+  },
+  "created": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "attributed": "qualify_wrap_stated_in",
+    "conditional": "reject",
+    "hypothetical": "reject",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "Agent brings a product, artifact, or concept into existence.",
+   "direction": "agent_to_patient",
+   "evidence_classes": [
+    "creation"
+   ],
+   "graph_traversal_weight": "high",
+   "inverse": "created_by",
+   "multiword": [],
+   "negative_triggers": [
+    "found",
+    "establish",
+    "launch"
+   ],
+   "nouns": [
+    "author",
+    "creation"
+   ],
+   "object_core": [
+    "Concept",
+    "Method",
+    "Product"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Product",
+      "Concept",
+      "Method"
+     ],
+     "subject_core": [
+      "Person",
+      "Organization"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Organization",
+    "Person"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 1,
+   "verbs": [
+    "arrange",
+    "assemble",
+    "author",
+    "bake",
+    "bead",
+    "blow",
+    "build",
+    "cast",
+    "chisel",
+    "churn",
+    "coin",
+    "compile",
+    "compute",
+    "concoct",
+    "construct",
+    "contrive",
+    "cook",
+    "cowrite",
+    "create",
+    "crochet",
+    "derive",
+    "design",
+    "develop",
+    "embroider",
+    "erect",
+    "fabricate",
+    "fashion",
+    "fold",
+    "forge",
+    "form",
+    "formulate",
+    "grind",
+    "grow",
+    "hack",
+    "hammer",
+    "knit",
+    "lay",
+    "make",
+    "manufacture",
+    "mass-produce",
+    "model",
+    "mold",
+    "organize",
+    "pound",
+    "produce",
+    "publish",
+    "rearrange",
+    "reassemble",
+    "rebuild",
+    "reconstitute",
+    "refashion",
+    "reorganize",
+    "roll",
+    "sculpture",
+    "sew",
+    "spin",
+    "stitch",
+    "style",
+    "synthesize",
+    "turn_out",
+    "weave",
+    "whittle",
+    "write"
+   ]
+  },
+  "depends_on": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "conditional": "qualify",
+    "hypothetical": "qualify",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "A system, method, or process requires another to function.",
+   "direction": "dependent_to_requirement",
+   "evidence_classes": [
+    "dependency"
+   ],
+   "graph_traversal_weight": "high",
+   "inverse": "dependent_of",
+   "multiword": [
+    "depends on",
+    "is a prerequisite for",
+    "relies on",
+    "requires"
+   ],
+   "negative_triggers": [],
+   "nouns": [],
+   "object_core": [
+    "Method",
+    "Technology"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Technology",
+      "Method"
+     ],
+     "subject_core": [
+      "Product",
+      "Technology",
+      "Method",
+      "Process"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Method",
+    "Process",
+    "Product",
+    "Technology"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 1,
+   "verbs": [
+    "depend",
+    "need",
+    "require"
+   ]
+  },
+  "derived_from": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "conditional": "reject",
+    "hypothetical": "qualify",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "An artifact derives from a source artifact.",
+   "direction": "artifact_to_source",
+   "evidence_classes": [
+    "transformation",
+    "reference_attribution"
+   ],
+   "graph_traversal_weight": "medium",
+   "inverse": "derives",
+   "multiword": [
+    "a fork of",
+    "adapted from",
+    "based on",
+    "derived from"
+   ],
+   "negative_triggers": [],
+   "nouns": [],
+   "object_core": [
+    "Concept",
+    "Document"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Document",
+      "Concept"
+     ],
+     "subject_core": [
+      "Document",
+      "Product",
+      "Concept"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Concept",
+    "Document",
+    "Product"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 1,
+   "verbs": [
+    "adapt",
+    "derive",
+    "fork",
+    "port"
+   ]
+  },
+  "developed": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "attributed": "qualify_wrap_stated_in",
+    "conditional": "reject",
+    "hypothetical": "reject",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "Agent develops a technology, method, or product.",
+   "direction": "agent_to_patient",
+   "evidence_classes": [
+    "creation"
+   ],
+   "graph_traversal_weight": "high",
+   "inverse": "developed_by",
+   "multiword": [],
+   "negative_triggers": [
+    "found",
+    "establish"
+   ],
+   "nouns": [
+    "development",
+    "implementation"
+   ],
+   "object_core": [
+    "Method",
+    "Product",
+    "Technology"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Technology",
+      "Method",
+      "Product"
+     ],
+     "subject_core": [
+      "Person",
+      "Organization"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Organization",
+    "Person"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 1,
+   "verbs": [
+    "arrange",
+    "assemble",
+    "bake",
+    "bead",
+    "blow",
+    "cast",
+    "chisel",
+    "churn",
+    "code",
+    "compile",
+    "cook",
+    "crochet",
+    "develop",
+    "embroider",
+    "engineer",
+    "erect",
+    "fashion",
+    "fold",
+    "forge",
+    "formulate",
+    "grind",
+    "grow",
+    "hack",
+    "hammer",
+    "implement",
+    "knit",
+    "mold",
+    "pound",
+    "prototype",
+    "reassemble",
+    "refashion",
+    "roll",
+    "sculpture",
+    "sew",
+    "spin",
+    "stitch",
+    "weave",
+    "whittle"
+   ]
+  },
+  "employs": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "attributed": "qualify_wrap_stated_in",
+    "conditional": "reject",
+    "hypothetical": "reject",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "Organization employs a person.",
+   "direction": "org_to_person",
+   "evidence_classes": [
+    "employment_membership"
+   ],
+   "graph_traversal_weight": "high",
+   "inverse": "works_for",
+   "multiword": [],
+   "negative_triggers": [
+    "join",
+    "work"
+   ],
+   "nouns": [
+    "employer"
+   ],
+   "object_core": [
+    "Person"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Person"
+     ],
+     "subject_core": [
+      "Organization"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Organization"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 1,
+   "verbs": [
+    "employ",
+    "hire",
+    "recruit",
+    "retain"
+   ]
+  },
+  "enables": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "conditional": "qualify",
+    "hypothetical": "qualify",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "A method or technology enables a process.",
+   "direction": "enabler_to_process",
+   "evidence_classes": [
+    "causation"
+   ],
+   "graph_traversal_weight": "high",
+   "inverse": "enabled_by",
+   "multiword": [
+    "allows for",
+    "makes it possible"
+   ],
+   "negative_triggers": [],
+   "nouns": [],
+   "object_core": [
+    "Process"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Process"
+     ],
+     "subject_core": [
+      "Method",
+      "Technology"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Method",
+    "Technology"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 1,
+   "verbs": [
+    "allow",
+    "enable",
+    "facilitate",
+    "permit"
+   ]
+  },
+  "founded": {
+   "ambiguous_triggers": [
+    "start",
+    "launch"
+   ],
+   "constraints": {
+    "attributed": "qualify_wrap_stated_in",
+    "conditional": "reject",
+    "hypothetical": "reject",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "Agent establishes an organization or institution.",
+   "direction": "agent_to_patient",
+   "evidence_classes": [
+    "creation"
+   ],
+   "graph_traversal_weight": "high",
+   "inverse": "founded_by",
+   "multiword": [
+    "set up"
+   ],
+   "negative_triggers": [
+    "join",
+    "acquire",
+    "merge"
+   ],
+   "nouns": [
+    "establishment",
+    "formation",
+    "founding"
+   ],
+   "object_core": [
+    "Organization"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Organization"
+     ],
+     "subject_core": [
+      "Person",
+      "Organization"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Organization",
+    "Person"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 1,
+   "verbs": [
+    "arrange",
+    "assemble",
+    "author",
+    "bake",
+    "bead",
+    "blow",
+    "cast",
+    "charter",
+    "chisel",
+    "churn",
+    "coin",
+    "compile",
+    "compute",
+    "concoct",
+    "construct",
+    "contrive",
+    "cook",
+    "cowrite",
+    "create",
+    "crochet",
+    "derive",
+    "develop",
+    "embroider",
+    "erect",
+    "establish",
+    "fabricate",
+    "fashion",
+    "fold",
+    "forge",
+    "form",
+    "formulate",
+    "found",
+    "grind",
+    "grow",
+    "hack",
+    "hammer",
+    "incorporate",
+    "knit",
+    "launch",
+    "lay",
+    "manufacture",
+    "mass-produce",
+    "model",
+    "mold",
+    "organize",
+    "pound",
+    "produce",
+    "publish",
+    "rearrange",
+    "reassemble",
+    "rebuild",
+    "reconstitute",
+    "refashion",
+    "reorganize",
+    "roll",
+    "sculpture",
+    "sew",
+    "spin",
+    "start",
+    "stitch",
+    "style",
+    "synthesize",
+    "turn_out",
+    "weave",
+    "whittle"
+   ]
+  },
+  "has_role": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "attributed": "qualify_wrap_stated_in",
+    "conditional": "reject",
+    "hypothetical": "reject",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "Person holds a role in an organization.",
+   "direction": "person_to_org",
+   "evidence_classes": [
+    "leadership_governance",
+    "employment_membership"
+   ],
+   "graph_traversal_weight": "high",
+   "inverse": "role_held_by",
+   "multiword": [
+    "CEO of",
+    "CTO of",
+    "is the head of",
+    "runs the",
+    "serves as",
+    "works for"
+   ],
+   "negative_triggers": [
+    "hire",
+    "employ"
+   ],
+   "nouns": [
+    "ceo",
+    "cto",
+    "director",
+    "engineer",
+    "founder",
+    "head",
+    "lead",
+    "manager",
+    "president"
+   ],
+   "object_core": [
+    "Organization"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Organization"
+     ],
+     "subject_core": [
+      "Person"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Person"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 1,
+   "verbs": [
+    "chair",
+    "direct",
+    "head",
+    "lead",
+    "manage",
+    "serve"
+   ]
+  },
+  "implemented_with": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "conditional": "reject",
+    "hypothetical": "reject",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "A product or method is implemented with a technology.",
+   "direction": "product_to_tech",
+   "evidence_classes": [
+    "usage_application"
+   ],
+   "graph_traversal_weight": "high",
+   "inverse": "implements",
+   "multiword": [
+    "implemented in",
+    "implemented with",
+    "powered by",
+    "written in"
+   ],
+   "negative_triggers": [],
+   "nouns": [],
+   "object_core": [
+    "Technology"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Technology"
+     ],
+     "subject_core": [
+      "Product",
+      "Method"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Method",
+    "Product"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 1,
+   "verbs": [
+    "implement",
+    "realize"
+   ]
+  },
+  "influences": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "conditional": "qualify",
+    "hypothetical": "qualify",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "Subject influences, affects, or modulates an object.",
+   "direction": "influencer_to_influenced",
+   "evidence_classes": [
+    "influence_affect"
+   ],
+   "graph_traversal_weight": "high",
+   "inverse": "influenced_by",
+   "multiword": [],
+   "negative_triggers": [],
+   "nouns": [],
+   "object_core": [
+    "Concept",
+    "Process"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Process",
+      "Concept"
+     ],
+     "subject_core": [
+      "Person",
+      "Organization",
+      "Process",
+      "Concept",
+      "Method"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Concept",
+    "Method",
+    "Organization",
+    "Person",
+    "Process"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 1,
+   "verbs": [
+    "affect",
+    "bias",
+    "influence",
+    "modulate",
+    "shape",
+    "sway"
+   ]
+  },
+  "instance_of": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "conditional": "reject",
+    "hypothetical": "reject",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "Subject is an instance of a class or category.",
+   "direction": "instance_to_class",
+   "evidence_classes": [
+    "classification"
+   ],
+   "graph_traversal_weight": "medium",
+   "inverse": "has_instance",
+   "multiword": [
+    "a member of the class",
+    "an example of",
+    "an instance of"
+   ],
+   "negative_triggers": [],
+   "nouns": [],
+   "object_core": [
+    "Concept",
+    "Organization"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Concept",
+      "Organization"
+     ],
+     "subject_core": [
+      "Person",
+      "Organization",
+      "Location",
+      "Product",
+      "Technology",
+      "Document",
+      "Event",
+      "Method"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Document",
+    "Event",
+    "Location",
+    "Method",
+    "Organization",
+    "Person",
+    "Product",
+    "Technology"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 0,
+   "verbs": [
+    "be"
+   ]
+  },
+  "is_a": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "conditional": "reject",
+    "hypothetical": "reject",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "Subject is a subtype or kind of object.",
+   "direction": "sub_to_super",
+   "evidence_classes": [
+    "classification"
+   ],
+   "graph_traversal_weight": "medium",
+   "inverse": "has_subclass",
+   "multiword": [
+    "categorized as",
+    "is a",
+    "is a kind of",
+    "is a type of",
+    "kind of",
+    "known as",
+    "type of"
+   ],
+   "negative_triggers": [],
+   "nouns": [],
+   "object_core": [
+    "Concept"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Concept"
+     ],
+     "subject_core": [
+      "Concept",
+      "Technology",
+      "Method",
+      "Product",
+      "Process"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Concept",
+    "Method",
+    "Process",
+    "Product",
+    "Technology"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 0,
+   "verbs": [
+    "be",
+    "constitute",
+    "represent"
+   ]
+  },
+  "leads": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "attributed": "qualify_wrap_stated_in",
+    "conditional": "reject",
+    "hypothetical": "reject",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "Person leads an organization, event, or process.",
+   "direction": "person_to_led",
+   "evidence_classes": [
+    "leadership_governance"
+   ],
+   "graph_traversal_weight": "high",
+   "inverse": "led_by",
+   "multiword": [],
+   "negative_triggers": [],
+   "nouns": [],
+   "object_core": [
+    "Event",
+    "Organization",
+    "Process"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Organization",
+      "Event",
+      "Process"
+     ],
+     "subject_core": [
+      "Person"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Person"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 1,
+   "verbs": [
+    "chair",
+    "direct",
+    "head",
+    "lead",
+    "manage",
+    "run",
+    "spearhead"
+   ]
+  },
+  "located_in": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "conditional": "reject",
+    "hypothetical": "reject",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "Subject is physically located in object.",
+   "direction": "entity_to_place",
+   "evidence_classes": [
+    "location"
+   ],
+   "graph_traversal_weight": "medium",
+   "inverse": "location_of",
+   "multiword": [
+    "based in",
+    "has offices in",
+    "headquartered in",
+    "located in",
+    "operates in",
+    "situated in"
+   ],
+   "negative_triggers": [],
+   "nouns": [],
+   "object_core": [
+    "Location"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Location"
+     ],
+     "subject_core": [
+      "Organization",
+      "Location",
+      "Product",
+      "Document",
+      "Event"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Document",
+    "Event",
+    "Location",
+    "Organization",
+    "Product"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 0,
+   "verbs": [
+    "base",
+    "coexist",
+    "dwell",
+    "exist",
+    "extend",
+    "flourish",
+    "hold",
+    "languish",
+    "linger",
+    "live",
+    "locate",
+    "loom",
+    "lurk",
+    "persevere",
+    "persist",
+    "predominate",
+    "prevail",
+    "prosper",
+    "remain",
+    "reside",
+    "shelter",
+    "situate",
+    "stand",
+    "stay",
+    "thrive",
+    "tower",
+    "vegetate",
+    "wait"
+   ]
+  },
+  "measured_by": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "conditional": "reject",
+    "hypothetical": "qualify",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "Subject's magnitude is expressed by a measurement.",
+   "direction": "entity_to_measurement",
+   "evidence_classes": [
+    "measurement"
+   ],
+   "graph_traversal_weight": "medium",
+   "inverse": "measures",
+   "multiword": [
+    "accuracy of",
+    "measured at",
+    "measured by",
+    "rated at",
+    "scored"
+   ],
+   "negative_triggers": [],
+   "nouns": [],
+   "object_core": [
+    "Measurement"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Measurement"
+     ],
+     "subject_core": [
+      "Process",
+      "Concept",
+      "Product",
+      "Technology"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Concept",
+    "Process",
+    "Product",
+    "Technology"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 0,
+   "verbs": [
+    "measure",
+    "quantify",
+    "rate",
+    "record",
+    "score"
+   ]
+  },
+  "member_of": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "attributed": "qualify_wrap_stated_in",
+    "conditional": "reject",
+    "hypothetical": "reject",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "Person or organization is a member of an organization.",
+   "direction": "member_to_group",
+   "evidence_classes": [
+    "employment_membership"
+   ],
+   "graph_traversal_weight": "high",
+   "inverse": "has_member",
+   "multiword": [
+    "joined",
+    "member of"
+   ],
+   "negative_triggers": [],
+   "nouns": [
+    "member"
+   ],
+   "object_core": [
+    "Organization"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Organization"
+     ],
+     "subject_core": [
+      "Person",
+      "Organization"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Organization",
+    "Person"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 1,
+   "verbs": [
+    "belong",
+    "join"
+   ]
+  },
+  "occurred_at": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "conditional": "reject",
+    "hypothetical": "reject",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "Event happened at a time.",
+   "direction": "event_to_time",
+   "evidence_classes": [
+    "temporal"
+   ],
+   "graph_traversal_weight": "medium",
+   "inverse": null,
+   "multiword": [
+    "happened in",
+    "occurred in",
+    "took place in",
+    "was held in"
+   ],
+   "negative_triggers": [],
+   "nouns": [],
+   "object_core": [
+    "TimeReference"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "TimeReference"
+     ],
+     "subject_core": [
+      "Event"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Event"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 0,
+   "verbs": [
+    "happen",
+    "hold",
+    "occur"
+   ]
+  },
+  "owns": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "attributed": "qualify_wrap_stated_in",
+    "conditional": "reject",
+    "hypothetical": "reject",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "Owner possesses an organization or product.",
+   "direction": "owner_to_owned",
+   "evidence_classes": [
+    "ownership_control"
+   ],
+   "graph_traversal_weight": "high",
+   "inverse": "owned_by",
+   "multiword": [],
+   "negative_triggers": [
+    "acquire"
+   ],
+   "nouns": [
+    "owner",
+    "proprietor"
+   ],
+   "object_core": [
+    "Organization",
+    "Product"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Organization",
+      "Product"
+     ],
+     "subject_core": [
+      "Person",
+      "Organization"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Organization",
+    "Person"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 1,
+   "verbs": [
+    "control",
+    "hold",
+    "own",
+    "possess"
+   ]
+  },
+  "part_of": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "conditional": "reject",
+    "hypothetical": "reject",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "Subject is a component, part, or member of object.",
+   "direction": "part_to_whole",
+   "evidence_classes": [
+    "composition"
+   ],
+   "graph_traversal_weight": "medium",
+   "inverse": "contains",
+   "multiword": [
+    "component of",
+    "comprised of",
+    "consists of",
+    "made up of",
+    "member of",
+    "part of"
+   ],
+   "negative_triggers": [
+    "own",
+    "acquire"
+   ],
+   "nouns": [
+    "component",
+    "element",
+    "member",
+    "part",
+    "section"
+   ],
+   "object_core": [
+    "Concept",
+    "Organization",
+    "Product",
+    "Technology"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Concept",
+      "Product",
+      "Technology",
+      "Organization"
+     ],
+     "subject_core": [
+      "Concept",
+      "Product",
+      "Technology",
+      "Process",
+      "Organization"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Concept",
+    "Organization",
+    "Process",
+    "Product",
+    "Technology"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 0,
+   "verbs": [
+    "compose",
+    "comprise",
+    "consist",
+    "constitute",
+    "contain",
+    "include"
+   ]
+  },
+  "similar_to": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "conditional": "reject",
+    "hypothetical": "qualify",
+    "negated": "qualify",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "Two entities resemble each other.",
+   "direction": "canonical_order",
+   "evidence_classes": [
+    "comparison"
+   ],
+   "graph_traversal_weight": "low",
+   "inverse": "similar_to",
+   "multiword": [
+    "analogous to",
+    "comparable to",
+    "like",
+    "similar to"
+   ],
+   "negative_triggers": [],
+   "nouns": [],
+   "object_core": [
+    "Concept",
+    "Method",
+    "Organization",
+    "Person",
+    "Product",
+    "Technology"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Person",
+      "Organization",
+      "Product",
+      "Technology",
+      "Concept",
+      "Method"
+     ],
+     "subject_core": [
+      "Person",
+      "Organization",
+      "Product",
+      "Technology",
+      "Concept",
+      "Method"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Concept",
+    "Method",
+    "Organization",
+    "Person",
+    "Product",
+    "Technology"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 1,
+   "verbs": [
+    "banter",
+    "bargain",
+    "collaborate",
+    "collide",
+    "commiserate",
+    "communicate",
+    "compromise",
+    "concur",
+    "confer",
+    "cooperate",
+    "correspond",
+    "deliberate",
+    "differ",
+    "disagree",
+    "interact",
+    "mirror",
+    "negotiate",
+    "parallel",
+    "plot",
+    "resemble"
+   ]
+  },
+  "stated_in": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "hypothetical": "qualify",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "A claim is stated in a document.",
+   "direction": "content_to_document",
+   "evidence_classes": [
+    "reference_attribution"
+   ],
+   "graph_traversal_weight": "low",
+   "inverse": "states",
+   "multiword": [
+    "according to",
+    "cited in",
+    "described in",
+    "documented in",
+    "per",
+    "stated in"
+   ],
+   "negative_triggers": [],
+   "nouns": [],
+   "object_core": [
+    "Document"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Document"
+     ],
+     "subject_core": [
+      "Concept",
+      "Product",
+      "Technology",
+      "Method",
+      "Document"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Concept",
+    "Document",
+    "Method",
+    "Product",
+    "Technology"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 0,
+   "verbs": [
+    "cite",
+    "describe",
+    "document",
+    "report",
+    "state"
+   ]
+  },
+  "subsidiary_of": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "conditional": "reject",
+    "hypothetical": "reject",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "Organization is a subsidiary of another organization.",
+   "direction": "child_to_parent",
+   "evidence_classes": [
+    "ownership_control"
+   ],
+   "graph_traversal_weight": "high",
+   "inverse": "parent_of",
+   "multiword": [
+    "a division of",
+    "subsidiary of"
+   ],
+   "negative_triggers": [],
+   "nouns": [
+    "branch",
+    "division",
+    "subsidiary"
+   ],
+   "object_core": [
+    "Organization"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Organization"
+     ],
+     "subject_core": [
+      "Organization"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Organization"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 1,
+   "verbs": []
+  },
+  "transforms_into": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "conditional": "qualify",
+    "hypothetical": "qualify",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "Subject converts into an object.",
+   "direction": "source_to_result",
+   "evidence_classes": [
+    "transformation"
+   ],
+   "graph_traversal_weight": "medium",
+   "inverse": "transformed_from",
+   "multiword": [
+    "compiles into",
+    "converts to",
+    "maps to",
+    "turned into",
+    "turns into"
+   ],
+   "negative_triggers": [],
+   "nouns": [],
+   "object_core": [
+    "Concept",
+    "Process",
+    "Product"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Product",
+      "Concept",
+      "Process"
+     ],
+     "subject_core": [
+      "Product",
+      "Concept",
+      "Process"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Concept",
+    "Process",
+    "Product"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 1,
+   "verbs": [
+    "alter",
+    "compile",
+    "convert",
+    "deform",
+    "metamorphose",
+    "morph",
+    "mutate",
+    "transform",
+    "translate",
+    "transmute"
+   ]
+  },
+  "uses": {
+   "ambiguous_triggers": [],
+   "constraints": {
+    "attributed": "qualify_wrap_stated_in",
+    "conditional": "reject",
+    "hypothetical": "reject",
+    "negated": "reject",
+    "question": "reject",
+    "speculative": "qualify"
+   },
+   "definition": "Agent or process applies a technology, method, or resource instrumentally.",
+   "direction": "agent_to_instrument",
+   "evidence_classes": [
+    "usage_application"
+   ],
+   "graph_traversal_weight": "high",
+   "inverse": "used_by",
+   "multiword": [
+    "adoption of",
+    "application of",
+    "based on",
+    "built on",
+    "built with",
+    "powered by",
+    "run on",
+    "usage of",
+    "use of"
+   ],
+   "negative_triggers": [],
+   "nouns": [],
+   "object_core": [
+    "Method",
+    "Product",
+    "Technology"
+   ],
+   "rule_pack_version": "1.2.0",
+   "signatures": [
+    {
+     "object_core": [
+      "Technology",
+      "Method",
+      "Product"
+     ],
+     "subject_core": [
+      "Person",
+      "Organization",
+      "Method",
+      "Process",
+      "Product"
+     ]
+    }
+   ],
+   "subject_core": [
+    "Method",
+    "Organization",
+    "Person",
+    "Process",
+    "Product"
+   ],
+   "supported_frames": [
+    "SUBJ_BEFORE_TRIGGER_OBJ_AFTER (nearest type-compatible entity per slot; predicate-region bounded)"
+   ],
+   "tier": 1,
+   "verbs": [
+    "adopt",
+    "apply",
+    "employ",
+    "exert",
+    "exploit",
+    "leverage",
+    "play",
+    "reuse",
+    "run",
+    "use",
+    "utilize",
+    "work"
+   ]
+  }
+ }
+}

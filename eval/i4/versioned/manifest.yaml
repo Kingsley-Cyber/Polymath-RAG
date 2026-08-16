@@ -1,0 +1,1 @@
+{"version": 1, "corpus": {"corpus_id": "i4-fresh-acceptance-v1", "title": "I4 versioning copy", "description": "single-document versioning check"}, "defaults": {"language": "en", "source_tier": "primary", "enabled": true}, "documents": [{"source": "./04_brightpath_learning.md"}]}

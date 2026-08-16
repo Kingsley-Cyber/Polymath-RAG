@@ -1,0 +1,70 @@
+{
+  "note": "I4 entity gold — FOUR tiers measured independently (I3R-R4 reality): RAW_DISCOVERY (GLiNER proposal expected), DURABLE_MENTION (mentions row), DURABLE_REFERENTIAL_ENTITY (entities row / entity_id set), GRAPH_ELIGIBLE (admission != MENTION_ONLY). Fact participation is NOT required for durability.",
+  "documents": {
+    "01_northvale_health.md": [
+      {"surface": "Northvale Health Network", "allowed_types": ["Organization"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "CareChart EMR", "allowed_types": ["Product", "Technology"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "Lakeshore General Hospital", "allowed_types": ["Organization"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "Austin", "allowed_types": ["Location"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "Dr. Amara Osei", "allowed_types": ["Person"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "CareConnect portal", "allowed_types": ["Technology", "Product"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "radiology review board", "allowed_types": ["Organization", "Concept"], "expected_admission": "CORPUS_SCOPED", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "Riverside Clinic", "allowed_types": ["Organization"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "CareCoordinator scheduling model", "allowed_types": ["Product", "Method"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "state registry", "allowed_types": ["Organization"], "expected_admission": "CORPUS_SCOPED", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "surgeons", "allowed_types": ["Person"], "expected_admission": "MENTION_ONLY", "durable_mention": true, "durable_referential_entity": false, "graph_eligible": false}
+    ],
+    "02_nimbus_cloud.md": [
+      {"surface": "Nimbus Cloud", "allowed_types": ["Organization"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "Kubernetes", "allowed_types": ["Technology"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "Ledger billing service", "allowed_types": ["Technology", "Product"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "Postgres cluster", "allowed_types": ["Technology", "Product"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "Nimbus billing service", "allowed_types": ["Technology", "Product"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "Nimbus Cloud platform", "allowed_types": ["Technology", "Product"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "engineering group", "allowed_types": ["Organization"], "expected_admission": "CORPUS_SCOPED", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "load-testing harness", "allowed_types": ["Product", "Method"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "postmortem report", "allowed_types": ["Document"], "expected_admission": "MENTION_ONLY", "durable_mention": true, "durable_referential_entity": false, "graph_eligible": false},
+      {"surface": "Nimbus API gateway", "allowed_types": ["Technology"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "Go", "allowed_types": ["Technology"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "cache layer", "allowed_types": ["Technology"], "expected_admission": "CORPUS_SCOPED", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true}
+    ],
+    "03_crestline_automation.md": [
+      {"surface": "Crestline Automation", "allowed_types": ["Organization"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "Siemens PLCs", "allowed_types": ["Technology", "Product"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "Crestline plant", "allowed_types": ["Location", "Organization"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "Toledo", "allowed_types": ["Location"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "Maria Kowalski", "allowed_types": ["Person"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "Crestline automation team", "allowed_types": ["Organization"], "expected_admission": "CORPUS_SCOPED", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "analytics team", "allowed_types": ["Organization"], "expected_admission": "CORPUS_SCOPED", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "shift scheduling model", "allowed_types": ["Product", "Method", "Concept"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "Cobalt assembly cell", "allowed_types": ["Technology", "Product"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "vision system", "allowed_types": ["Technology", "Product"], "expected_admission": "CORPUS_SCOPED", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "quality database", "allowed_types": ["Technology", "Product"], "expected_admission": "CORPUS_SCOPED", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "pump failure", "allowed_types": ["Event", "Concept"], "expected_admission": "CORPUS_SCOPED", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "production stoppage", "allowed_types": ["Event", "Process"], "expected_admission": "CORPUS_SCOPED", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "night-shift pilot", "allowed_types": ["Event", "Process"], "expected_admission": "MENTION_ONLY", "durable_mention": true, "durable_referential_entity": false, "graph_eligible": false}
+    ],
+    "04_brightpath_learning.md": [
+      {"surface": "Brightpath Learning", "allowed_types": ["Organization"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "Mentor assessment engine", "allowed_types": ["Technology", "Product"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "Raleigh", "allowed_types": ["Location"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "Daniel Okafor", "allowed_types": ["Person"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "QBank item database", "allowed_types": ["Technology", "Product"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "Coachlight review app", "allowed_types": ["Product", "Technology"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "curriculum designer", "allowed_types": ["Person"], "expected_admission": "MENTION_ONLY", "durable_mention": true, "durable_referential_entity": false, "graph_eligible": false},
+      {"surface": "assessment format", "allowed_types": ["Concept", "Method"], "expected_admission": "MENTION_ONLY", "durable_mention": true, "durable_referential_entity": false, "graph_eligible": false},
+      {"surface": "instructors", "allowed_types": ["Person"], "expected_admission": "MENTION_ONLY", "durable_mention": true, "durable_referential_entity": false, "graph_eligible": false}
+    ],
+    "05_corval_logistics.md": [
+      {"surface": "Corval Logistics", "allowed_types": ["Organization"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "FreightNet routing platform", "allowed_types": ["Technology", "Product"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "Corval Freight", "allowed_types": ["Organization"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "Portside warehouse", "allowed_types": ["Location", "Product"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "Oakland", "allowed_types": ["Location"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "QuickScale invoicing system", "allowed_types": ["Technology", "Product"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "West Coast logistics consortium", "allowed_types": ["Organization"], "expected_admission": "GLOBAL", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true},
+      {"surface": "regional dispatchers", "allowed_types": ["Organization", "Person"], "expected_admission": "MENTION_ONLY", "durable_mention": true, "durable_referential_entity": false, "graph_eligible": false},
+      {"surface": "harbor terminal", "allowed_types": ["Location"], "expected_admission": "CORPUS_SCOPED", "durable_mention": true, "durable_referential_entity": true, "graph_eligible": true}
+    ]
+  }
+}

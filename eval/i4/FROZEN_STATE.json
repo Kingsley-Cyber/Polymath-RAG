@@ -1,0 +1,37 @@
+{
+ "compiled_lexical_sha256": "d96560393884381d33754c1c7f7e0ac30bad8fd2f7d53c1b49ee40f16a6506db",
+ "contracts": {
+  "binding_gates": "endpoint-binding-v1",
+  "entity_admission": "entity-admission-v1.1",
+  "identity": "entity-identity-v2",
+  "provenance": "exact-evidence-v1",
+  "retrieval_summary": "retrieval-summary-v2"
+ },
+ "embedder": {
+  "model": "Qwen/Qwen3-Embedding-0.6B",
+  "revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3"
+ },
+ "frozen_at_gold_authoring_complete": true,
+ "gliner": {
+  "entity_threshold": 0.5,
+  "evidence_threshold": 0.4,
+  "model": "urchade/gliner_medium-v2.1",
+  "revision": "40ec419335d09393f298636f471328b722c6da9e"
+ },
+ "hashes": {
+  "CAPABILITY_MATRIX.md": "bce59265c96ce05177e86ee5b939d2941344b611d1b4b2727da73975361289e9",
+  "capability_matrix.json": "d0b77c03c9dd9da5cf13645791e0a2d5117cce42ea41babc79a01bb32ce3d8af",
+  "corpus/01_northvale_health.md": "85a21d16237959a1a72ffe82eb591ff05b758a7839e23b12da356aebc5acba67",
+  "corpus/02_nimbus_cloud.md": "bb1fa6f6d94a4855e7ecef360ab4e11c08b7848cdda85f8a1459675b611d029a",
+  "corpus/03_crestline_automation.md": "07dfb7f0d1e1989ff25459845498ada8831cd4336de5f530ae9359d61317acb2",
+  "corpus/04_brightpath_learning.md": "c1aa662574cab4c93405c709f615098b50e79a57fd497aed2c49c4cc4bc9c72c",
+  "corpus/05_corval_logistics.md": "e43f6c2fe7a9a907ab8f986159bd4a7d60b7615981f4387b760a07261ebbb7d8",
+  "gold/entity_gold.json": "10f2fc251f3ce3419d902735151f5e5bbe06e4497aa06671c46e25c5839797e4",
+  "gold/fact_gold.json": "b9263cff8abe2ed2d82185bfdb23fd997aeca25d6f3de54bb4271f43b3401df3",
+  "gold/text_concept_gold.json": "3f94fae847c3960c1b562112b123b40cde15cbb14b59c775f3e5cbe55953f2bb",
+  "manifest.yaml": "7a312165df4c3b1384b4787abb8cdd517db29a68184847162acde3c185a0253c"
+ },
+ "head": "ce2545f",
+ "resource_contract_id": "03a513ece6da32b243289fa9b9ef9dfe8e21cec4ff9f0435678ad4425021c150",
+ "rule_pack_version": "1.2.0"
+}

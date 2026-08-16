@@ -1,0 +1,75 @@
+{
+  "note": "I4 fact gold. Authored BEFORE extraction from the frozen capability matrix (capability_matrix.json sha d0b77c03…). Three classes: A SUPPORTED_POSITIVE (inside the executable envelope — counts toward recall), B OUT_OF_ENVELOPE (semantically valid but outside frozen capability — correct behavior is abstention, NOT a false negative), C MUST_NOT_ASSERT (any positive fact is a HARD failure).",
+  "capability_matrix_sha256": "d0b77c03c9dd9da5cf13645791e0a2d5117cce42ea41babc79a01bb32ce3d8af",
+  "supported_positive": {
+    "note": "subject/object types verified against the frozen signatures; trigger verified against verbs/nouns/multiword; frame = SUBJ_BEFORE_TRIGGER_OBJ_AFTER (default) or ARG1_AFTER_ARG2_AFTER_PREP (association).",
+    "facts": [
+      {"fact_id": "A01", "doc": "01_northvale_health.md", "predicate": "uses", "subject": "Northvale Health Network", "subject_type": "Organization", "object": "CareChart EMR", "object_type": ["Product", "Technology"], "trigger": "uses", "frame": "default", "graph_eligible": true},
+      {"fact_id": "A02", "doc": "01_northvale_health.md", "predicate": "located_in", "subject": "Lakeshore General Hospital", "subject_type": "Organization", "object": "Austin", "object_type": "Location", "trigger": "located in", "frame": "default", "graph_eligible": true},
+      {"fact_id": "A03", "doc": "01_northvale_health.md", "predicate": "has_role", "subject": "Amara Osei", "subject_type": "Person", "object": "Northvale Health Network", "object_type": "Organization", "trigger": "serves as", "frame": "default", "graph_eligible": true},
+      {"fact_id": "A04", "doc": "01_northvale_health.md", "predicate": "depends_on", "subject": "CareConnect portal", "subject_type": ["Technology", "Product"], "object": "CareChart EMR", "object_type": ["Product", "Technology"], "trigger": "depends on", "frame": "default", "graph_eligible": true},
+      {"fact_id": "A05", "doc": "01_northvale_health.md", "predicate": "part_of", "subject": "radiology review board", "subject_type": ["Organization", "Concept"], "object": "Lakeshore General Hospital", "object_type": "Organization", "trigger": "part of", "frame": "default", "graph_eligible": true},
+      {"fact_id": "A06", "doc": "01_northvale_health.md", "predicate": "founded", "subject": "Amara Osei", "subject_type": "Person", "object": "Riverside Clinic", "object_type": "Organization", "trigger": "founded", "frame": "default", "graph_eligible": true},
+
+      {"fact_id": "A07", "doc": "02_nimbus_cloud.md", "predicate": "uses", "subject": "Nimbus Cloud", "subject_type": "Organization", "object": "Kubernetes", "object_type": "Technology", "trigger": "uses", "frame": "default", "graph_eligible": true},
+      {"fact_id": "A08", "doc": "02_nimbus_cloud.md", "predicate": "depends_on", "subject": "Ledger billing service", "subject_type": ["Technology", "Product"], "object": "Postgres cluster", "object_type": ["Technology", "Product"], "trigger": "depends on", "frame": "default", "graph_eligible": true},
+      {"fact_id": "A09", "doc": "02_nimbus_cloud.md", "predicate": "part_of", "subject": "Nimbus billing service", "subject_type": ["Technology", "Product"], "object": "Nimbus Cloud platform", "object_type": ["Technology", "Product"], "trigger": "part of", "frame": "default", "graph_eligible": true},
+      {"fact_id": "A10", "doc": "02_nimbus_cloud.md", "predicate": "created", "subject": "engineering group", "subject_type": "Organization", "object": "load-testing harness", "object_type": ["Product", "Method"], "trigger": "created", "frame": "default", "graph_eligible": true},
+
+      {"fact_id": "A11", "doc": "03_crestline_automation.md", "predicate": "uses", "subject": "Crestline Automation", "subject_type": "Organization", "object": "Siemens PLCs", "object_type": ["Technology", "Product"], "trigger": "uses", "frame": "default", "graph_eligible": true},
+      {"fact_id": "A12", "doc": "03_crestline_automation.md", "predicate": "located_in", "subject": "Crestline plant", "subject_type": ["Location", "Organization"], "object": "Toledo", "object_type": "Location", "trigger": "based in", "frame": "default", "graph_eligible": true},
+      {"fact_id": "A13", "doc": "03_crestline_automation.md", "predicate": "leads", "subject": "Maria Kowalski", "subject_type": "Person", "object": "Crestline automation team", "object_type": "Organization", "trigger": "leads", "frame": "default", "graph_eligible": true},
+      {"fact_id": "A14", "doc": "03_crestline_automation.md", "predicate": "created", "subject": "analytics team", "subject_type": "Organization", "object": "shift scheduling model", "object_type": ["Product", "Method", "Concept"], "trigger": "created", "frame": "default", "graph_eligible": true},
+      {"fact_id": "A15", "doc": "03_crestline_automation.md", "predicate": "developed", "subject": "Crestline Automation", "subject_type": "Organization", "object": "Cobalt assembly cell", "object_type": ["Technology", "Product", "Method"], "trigger": "developed", "frame": "default", "graph_eligible": true},
+      {"fact_id": "A16", "doc": "03_crestline_automation.md", "predicate": "associated_with", "subject": "vision system", "subject_type": ["Technology", "Product"], "object": "quality database", "object_type": ["Technology", "Product"], "trigger": "linked", "frame": "association_prep", "graph_eligible": true},
+      {"fact_id": "A17", "doc": "03_crestline_automation.md", "predicate": "causes", "subject": "pump failure", "subject_type": ["Event", "Concept"], "object": "production stoppage", "object_type": ["Event", "Process", "Concept"], "trigger": "caused", "frame": "default", "graph_eligible": true},
+
+      {"fact_id": "A18", "doc": "04_brightpath_learning.md", "predicate": "uses", "subject": "Brightpath Learning", "subject_type": "Organization", "object": "Mentor assessment engine", "object_type": ["Technology", "Product"], "trigger": "uses", "frame": "default", "graph_eligible": true},
+      {"fact_id": "A19", "doc": "04_brightpath_learning.md", "predicate": "located_in", "subject": "Brightpath Learning", "subject_type": "Organization", "object": "Raleigh", "object_type": "Location", "trigger": "headquartered in", "frame": "default", "graph_eligible": true},
+      {"fact_id": "A20", "doc": "04_brightpath_learning.md", "predicate": "has_role", "subject": "Daniel Okafor", "subject_type": "Person", "object": "Brightpath Learning", "object_type": "Organization", "trigger": "works for", "frame": "default", "graph_eligible": true},
+      {"fact_id": "A21", "doc": "04_brightpath_learning.md", "predicate": "depends_on", "subject": "Mentor assessment engine", "subject_type": ["Technology", "Product"], "object": "QBank item database", "object_type": ["Technology", "Product"], "trigger": "depends on", "frame": "default_local_reference", "note": "subject resolved via bounded definite-description ('The mentor engine' -> unique 'engine'-head antecedent)", "graph_eligible": true},
+      {"fact_id": "A22", "doc": "04_brightpath_learning.md", "predicate": "acquired", "subject": "Brightpath Learning", "subject_type": "Organization", "object": "Coachlight review app", "object_type": ["Product", "Technology"], "trigger": "acquired", "frame": "default", "graph_eligible": true},
+
+      {"fact_id": "A23", "doc": "05_corval_logistics.md", "predicate": "uses", "subject": "Corval Logistics", "subject_type": "Organization", "object": "FreightNet routing platform", "object_type": ["Technology", "Product"], "trigger": "uses", "frame": "default", "graph_eligible": true},
+      {"fact_id": "A24", "doc": "05_corval_logistics.md", "predicate": "subsidiary_of", "subject": "Corval Freight", "subject_type": "Organization", "object": "Corval Logistics", "object_type": "Organization", "trigger": "subsidiary of", "frame": "default", "graph_eligible": true},
+      {"fact_id": "A25", "doc": "05_corval_logistics.md", "predicate": "located_in", "subject": "Portside warehouse", "subject_type": ["Location", "Product"], "object": "Oakland", "object_type": "Location", "trigger": "located in", "frame": "default", "graph_eligible": true},
+      {"fact_id": "A26", "doc": "05_corval_logistics.md", "predicate": "associated_with", "subject": "QuickScale invoicing system", "subject_type": ["Technology", "Product"], "object": "FreightNet routing platform", "object_type": ["Technology", "Product"], "trigger": "linked", "frame": "association_prep", "graph_eligible": true}
+    ]
+  },
+  "out_of_envelope": {
+    "note": "Correct behavior is ABSTENTION. These are NOT false negatives.",
+    "cases": [
+      {"case_id": "B01", "doc": "01_northvale_health.md", "sentence": "The hospital transfers patient records to the state registry after discharge, and the team uses the portal during handoffs.", "reason": "unsupported predicate ('transfers' is not in the frozen vocabulary)"},
+      {"case_id": "B02", "doc": "02_nimbus_cloud.md", "sentence": "The Nimbus API gateway is implemented in Go.", "reason": "implemented_with subject core is {Product, Method}; the gateway is Technology — outside the frozen signature"},
+      {"case_id": "B03", "doc": "02_nimbus_cloud.md", "sentence": "The platform was designed by the engineering group.", "reason": "passive 'by' construction without a syntactic parse; surface subject Technology is outside created's subject core"},
+      {"case_id": "B04", "doc": "03_crestline_automation.md", "sentence": "The scheduling model enables same-day dispatch for urgent orders.", "reason": "enables object core is {Process}; the typing of 'same-day dispatch' is discovery-dependent — abstention is acceptable, assertion is not scored as recall"},
+      {"case_id": "B05", "doc": "04_brightpath_learning.md", "sentence": "The spaced repetition schedule influences retention across cohorts.", "reason": "influences object core is {Concept, Process}; 'retention' typing is discovery-dependent"},
+      {"case_id": "B06", "doc": "05_corval_logistics.md", "sentence": "The regional dispatchers joined the West Coast logistics consortium.", "reason": "plural generic subject; member_of binding is discovery-dependent"},
+      {"case_id": "B07", "doc": "01_northvale_health.md", "sentence": "The company hired two new surgeons last month.", "reason": "elliptical 'the company' plus generic object — outside the bounded resolver's authority"},
+      {"case_id": "B08", "doc": "04_brightpath_learning.md", "sentence": "Two rival providers use the same assessment format.", "reason": "generic subject/object discovery-dependent"}
+    ]
+  },
+  "must_not_assert": {
+    "note": "ANY positive fact matching a fixture is a HARD failure.",
+    "fixtures": [
+      {"fixture_id": "N01", "doc": "01_northvale_health.md", "kind": "negation", "description": "The EMR outage did not affect the patient portal", "forbid": "any causes/influences fact with subject 'EMR outage' or object 'patient portal'"},
+      {"fixture_id": "N02", "doc": "01_northvale_health.md", "kind": "modality", "description": "evaluated but not adopted the CareCoordinator model", "forbid": "uses/acquired fact with object CareCoordinator"},
+      {"fixture_id": "N03", "doc": "02_nimbus_cloud.md", "kind": "negation", "description": "Postgres cluster was NOT the root cause", "forbid": "causes fact with subject 'Postgres cluster'"},
+      {"fixture_id": "N04", "doc": "02_nimbus_cloud.md", "kind": "modality", "description": "considered replacing the cache layer but kept it", "forbid": "any removal/replacement fact about 'cache layer'"},
+      {"fixture_id": "N05", "doc": "03_crestline_automation.md", "kind": "negation", "description": "vision system NOT responsible for the defect spike", "forbid": "causes fact with subject 'vision system' and defect-related object"},
+      {"fixture_id": "N06", "doc": "03_crestline_automation.md", "kind": "negation", "description": "did not deploy the Cobalt cell on line one", "forbid": "uses/deploys fact with object 'Cobalt assembly cell'"},
+      {"fixture_id": "N07", "doc": "03_crestline_automation.md", "kind": "modality", "description": "evaluated a night-shift pilot but has not adopted it", "forbid": "any fact asserting adoption/deployment of the night-shift pilot"},
+      {"fixture_id": "N08", "doc": "04_brightpath_learning.md", "kind": "modality", "description": "considered replacing the Mentor engine but kept it", "forbid": "any removal/replacement fact about 'Mentor assessment engine'"},
+      {"fixture_id": "N09", "doc": "04_brightpath_learning.md", "kind": "negation", "description": "has not adopted the Coachlight app for high school courses", "forbid": "uses fact with object 'Coachlight review app' beyond the acquired fact (no deployment fact)"},
+      {"fixture_id": "N10", "doc": "05_corval_logistics.md", "kind": "modality", "description": "considered replacing FreightNet but kept the setup", "forbid": "any removal/replacement fact about 'FreightNet routing platform'"},
+      {"fixture_id": "N11", "doc": "05_corval_logistics.md", "kind": "negation", "description": "invoicing system NOT responsible for the billing delays", "forbid": "causes fact with subject 'QuickScale invoicing system'"},
+      {"fixture_id": "N12", "doc": "05_corval_logistics.md", "kind": "modality", "description": "new pricing model has NOT been deployed", "forbid": "uses/deployment fact with object 'pricing model'"},
+      {"fixture_id": "N13", "doc": "01_northvale_health.md", "kind": "role_object", "description": "role text must not become the has_role object", "forbid": "has_role fact with object 'chief medical officer'"},
+      {"fixture_id": "N14", "doc": "03_crestline_automation.md", "kind": "role_object", "description": "the plant must not become the leads object", "forbid": "leads fact with subject 'Maria Kowalski' and object 'Crestline plant'"},
+      {"fixture_id": "N15", "doc": "02_nimbus_cloud.md", "kind": "bare_action", "description": "They deployed the patch and restarted the cluster", "forbid": "any fact from this sentence"},
+      {"fixture_id": "N16", "doc": "01_northvale_health.md", "kind": "generic_trap", "description": "the team uses the portal during handoffs", "forbid": "graph fact with MENTION_ONLY 'team' endpoints"},
+      {"fixture_id": "N17", "doc": "03_crestline_automation.md", "kind": "coordination_proximity", "description": "linked vision system to quality database", "forbid": "associated_with facts pairing (Crestline Automation, vision system) or (Crestline Automation, quality database)"},
+      {"fixture_id": "N18", "doc": "02_nimbus_cloud.md", "kind": "title_body", "description": "title entity must not gain unsupported body relations", "forbid": "any fact with subject 'Nimbus Cloud Platform' beyond the frozen supported set"}
+    ]
+  }
+}

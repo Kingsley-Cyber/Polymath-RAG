@@ -576,3 +576,14 @@ that motivated it and the refactor that implemented it.
   30/30; Q1/E3B locks byte-identical. I3 is a repair regression —
   production acceptance requires a fresh I4 holdout.
   (work log `2026-08-16-i3r-repair.md`)
+
+## 2026-08-16: I4 fresh heterogeneous acceptance — FAIL (no production change)
+
+- Frozen capability matrix derived from executable config, fresh
+  five-document corpus + three-class fact gold + four-tier entity
+  gold. Control plane/durability/provenance/graph/retrieval gates all
+  green on the fresh holdout; fact extraction FAILS the frozen bar
+  (P 0.500 / R 0.385 vs >=0.95 / >=0.70) driven by GLiNER fresh-domain
+  span boundary/typing behavior and a leads/has_role shared-trigger
+  emission surface. No repairs performed.
+  (work log `2026-08-16-i4-fresh-acceptance.md`)

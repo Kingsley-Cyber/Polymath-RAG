@@ -1,0 +1,10 @@
+{
+  "phases": {
+    "versioning": {
+      "docs_before": 6,
+      "docs_after": 6,
+      "new_versions": 2,
+      "replay_noop": true
+    }
+  }
+}
