@@ -486,6 +486,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/e3b/evidence.json", "json", None),
     ("eval/e4/analyze_e4.py", "py", None),
     ("eval/e4/evidence.json", "json", None),
+    ("eval/e5/ANALYSIS.md", "md", None),
     ("docs/wiki/work-log/2026-08-15-e4-entity-recall-failure-analysis.md", "md", None),
     ("shared/polymath_shared/endpoint_binding.py", "py", None),
     ("docs/wiki/work-log/2026-08-15-e3b-extraction-quality-repair.md", "md", None),

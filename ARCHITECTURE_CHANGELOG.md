@@ -496,3 +496,18 @@ that motivated it and the refactor that implemented it.
 - Recommendation: accept the discovery limitation; the only
   deterministic lever is a future span-normalization study (not
   attempted). No production change; frozen labels/threshold/model.
+
+## 2026-08-15: E5 — deterministic concept candidate layer (analysis)
+
+- Analysis frozen (eval/e5/ANALYSIS.md): a deterministic concept
+  layer is architecturally safe for GRAPH precision by structural
+  separation (retrieval-only sink — it can never create entities,
+  facts, admission decisions, or graph edges) and recall-positive at
+  the concept level (20-line deterministic noun-phrase prototype
+  recovers 6/13 abstract concepts vs GLiNER's 2/13; 12/13 strings
+  literally present in the text). The open qualification is SUMMARY
+  precision, measurable with the frozen R1B routing set + R1A
+  coverage fixture. R1E's ConceptState rejection does not transfer
+  (different sink: pass-1 summary enrichment vs pass-2 expansion).
+- No implementation; recommendation recorded (E5B pending user
+  authorization).
