@@ -641,30 +641,10 @@ def _persist_decision(conn: Connection, chunk_row: dict, candidate, decision) ->
 
 
 def run_forever(poll_interval_s: float = 2.0, batch_size: int = 4) -> None:
-    configure_logging("worker-extract")
-    while True:
-        try:
-            with tx() as conn:
-                events = claim_events(conn, [EVENT_TYPE], batch_size)
-                if events:
-                    for event in events:
-                        try:
-                            process_event(conn, event)
-                            log.info("extract event processed", extra={
-                                "run_id": event["run_id"], "stage": STAGE,
-                                "attempt_id": event["idempotency_key"][:16],
-                            })
-                        except StageFailed as exc:
-                            log.error(str(exc), extra={
-                                "run_id": event["run_id"], "stage": STAGE,
-                                "error_code": "stage_failed",
-                            })
-        except psycopg.errors.OperationalError as exc:
-            log.warning("postgres unavailable; backing off", extra={"error_code": "pg_unavailable"})
-        except Exception as exc:
-            log.exception("extract processing failed", extra={"error_code": type(exc).__name__})
-        time.sleep(poll_interval_s)
+    from polymath_shared.worker_runtime import run_worker
 
+    run_worker('extract', [EVENT_TYPE], process_event,
+               poll_interval_s=poll_interval_s, batch_size=batch_size)
 
 if __name__ == "__main__":
     run_forever()

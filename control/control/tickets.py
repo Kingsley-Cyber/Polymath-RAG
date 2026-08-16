@@ -1,0 +1,258 @@
+"""CONTROL-PLANE-V2 stage tickets (ADR-0014).
+
+Explicit handoff: a stage's work event exists ONLY after the control
+plane verifies the predecessor's artifacts, receipts, and contract.
+The ticket chains of different runs progress independently (pipelined
+fan-out); per-stage pending high watermarks pause new intake tickets
+(backpressure); promotion to query_ready is a generation barrier.
+"""
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass
+
+from psycopg import Connection
+
+from polymath_shared.identity import content_hash
+
+# The per-run ticket DAG: (stage, event_type, required artifact keys,
+# required receipt projections). ORDERED — each entry's readiness is
+# verified against the completion of everything before it (a stage is
+# only handed work when its predecessors' durable evidence exists).
+STAGE_DAG: list[tuple[str, str, tuple[str, ...], tuple[str, ...]]] = [
+    ("intake", "intake.v1", (), ()),
+    ("extract", "chunked.v1", ("manifest",), ()),
+    ("profile_document", "profile_document.v1", ("documents_profiled",), ()),
+    ("project_qdrant", "project_qdrant.v1", ("chunk_count",), ("qdrant",)),
+    ("project_neo4j", "project_neo4j.v1", ("facts",), ("neo4j",)),
+    ("canonicalize", "canonicalize.v1", ("canonical_entities",), ()),
+    ("project_canonical", "project_canonical.v1", ("memberships",), ("neo4j",)),
+    ("verify_projections", "verify.v1", ("docs",), ()),
+]
+
+DAG_ORDER = [stage for stage, _evt, _art, _rec in STAGE_DAG]
+_STAGE_SPEC = {stage: (evt, art, rec) for stage, evt, art, rec in STAGE_DAG}
+
+DEFAULT_HIGH_WATERMARK = 64
+
+
+def ticket_id(run_id: str, stage: str, generation: int = 1) -> str:
+    return "tkt_" + content_hash({"run": run_id, "stage": stage, "gen": generation})[:32]
+
+
+def ensure_run_tickets(conn: Connection, run_id: str, corpus_id: str,
+                        execution_contract: dict | None = None) -> list[str]:
+    """Create the full ticket chain for a run (idempotent). The intake
+    ticket is READY immediately; every other stage starts PENDING and is
+    advanced only by verified predecessor completion."""
+    created = []
+    for stage, event_type, _art, _rec in STAGE_DAG:
+        tid = ticket_id(run_id, stage)
+        row = conn.execute(
+            "SELECT 1 FROM stage_tickets WHERE ticket_id=%s", (tid,)
+        ).fetchone()
+        if row:
+            continue
+        conn.execute(
+            """
+            INSERT INTO stage_tickets
+                (ticket_id, run_id, corpus_id, stage, event_type, status)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            ON CONFLICT (run_id, stage, generation) DO NOTHING
+            """,
+            (tid, run_id, corpus_id, stage, event_type,
+             "ready" if stage == "intake" else "pending"),
+        )
+        created.append(tid)
+        if stage == "intake":
+            # readiness at birth emits the work event immediately
+            _emit_ticket_event(conn, tid, run_id, stage)
+    if execution_contract:
+        conn.execute(
+            "UPDATE runs SET execution_contract=%s WHERE run_id=%s",
+            (json.dumps(execution_contract), run_id),
+        )
+    return created
+
+
+def _stage_attempt_ok(conn: Connection, run_id: str, stage: str) -> bool:
+    row = conn.execute(
+        """
+        SELECT outcome FROM stage_attempts
+         WHERE run_id=%s AND stage=%s
+         ORDER BY started_at DESC LIMIT 1
+        """,
+        (run_id, stage),
+    ).fetchone()
+    return bool(row) and row[0] == "ok"
+
+
+def _artifacts_present(conn: Connection, run_id: str, stage: str,
+                       keys: tuple[str, ...]) -> bool:
+    if not keys:
+        return True
+    row = conn.execute(
+        "SELECT payload FROM artifacts WHERE run_id=%s AND stage=%s "
+        "ORDER BY artifact_id DESC LIMIT 1",
+        (run_id, stage),
+    ).fetchone()
+    if not row:
+        return False
+    payload = row[0] if isinstance(row[0], dict) else json.loads(row[0])
+    return all(k in payload for k in keys)
+
+
+def _receipts_present(conn: Connection, run_id: str, corpus_id: str,
+                      projection: str) -> bool:
+    """Desired == actual for this projection (per-object)."""
+    row = conn.execute(
+        """
+        SELECT
+          (SELECT COUNT(*) FROM chunks c
+             JOIN documents d ON d.doc_id = c.doc_id
+             JOIN runs r ON r.corpus_id = d.corpus_id
+            WHERE r.run_id = %s
+              AND NOT EXISTS (SELECT 1 FROM projection_receipts pr
+                              WHERE pr.projection = %s AND pr.active
+                                AND pr.entity_kind = 'chunk'
+                                AND pr.entity_id = c.chunk_id))
+        """,
+        (run_id, projection),
+    ).fetchone()
+    return bool(row) and row[0] == 0
+
+
+def advance_tickets(conn: Connection) -> int:
+    """The reconciliation step: verify predecessors, mark READY, and
+    EMIT the stage's outbox event exactly when ready (explicit
+    handoff). Also releases expired leases for retry."""
+    advanced = 0
+    rows = conn.execute(
+        "SELECT ticket_id, run_id, stage FROM stage_tickets "
+        "WHERE status = 'pending' ORDER BY created_at LIMIT 256"
+    ).fetchall()
+    for tid, run_id, stage in rows:
+        idx = DAG_ORDER.index(stage)
+        predecessors = DAG_ORDER[:idx]
+        ok = all(_stage_attempt_ok(conn, run_id, p) for p in predecessors)
+        if ok:
+            for p in predecessors:
+                _evt, art, rec = _STAGE_SPEC[p]
+                if not _artifacts_present(conn, run_id, p, art):
+                    ok = False
+                    break
+                for projection in rec:
+                    if not _receipts_present(conn, run_id, _corpus_of(conn, run_id), projection):
+                        ok = False
+                        break
+                if not ok:
+                    break
+        if not ok:
+            continue
+        _emit_ticket_event(conn, tid, run_id, stage)
+        advanced += 1
+    # READY tickets without a live (undelivered) event: the intake
+    # ticket is born ready, and lease-expiry returns tickets to ready —
+    # backfill their events so workers can always claim them.
+    ready_rows = conn.execute(
+        """
+        SELECT t.ticket_id, t.run_id, t.stage FROM stage_tickets t
+        WHERE t.status = 'ready'
+          AND NOT EXISTS (
+              SELECT 1 FROM outbox_events e
+               WHERE e.run_id = t.run_id AND e.event_type = t.event_type
+                 AND e.delivered_at IS NULL
+                 AND e.payload->>'ticket_id' = t.ticket_id)
+        ORDER BY t.created_at LIMIT 256
+        """
+    ).fetchall()
+    for tid, run_id, stage in ready_rows:
+        _emit_ticket_event(conn, tid, run_id, stage)
+        advanced += 1
+    _release_expired_leases(conn)
+    return advanced
+
+
+def _corpus_of(conn: Connection, run_id: str) -> str:
+    row = conn.execute(
+        "SELECT corpus_id FROM runs WHERE run_id=%s", (run_id,)
+    ).fetchone()
+    return row[0] if row else ""
+
+
+def _emit_ticket_event(conn: Connection, tid: str, run_id: str, stage: str) -> None:
+    """Mark READY and upsert the stage's outbox event — the ONLY path by
+    which stage work becomes claimable."""
+    event_type, _art, _rec = _STAGE_SPEC[stage]
+    payload = {"run_id": run_id, "ticket_id": tid}
+    key = content_hash({"run": run_id, "type": event_type, "payload": payload})
+    conn.execute(
+        """
+        INSERT INTO outbox_events (run_id, event_type, payload, idempotency_key)
+        VALUES (%s, %s, %s, %s)
+        ON CONFLICT (idempotency_key) DO UPDATE SET delivered_at = NULL
+        """,
+        (run_id, event_type, json.dumps(payload), key),
+    )
+    conn.execute(
+        "UPDATE stage_tickets SET status='ready', updated_at=now() WHERE ticket_id=%s",
+        (tid,),
+    )
+
+
+def _release_expired_leases(conn: Connection) -> int:
+    """Lease timeout: a ticket claimed but never completed returns to
+    READY for retry (attempt count preserved)."""
+    rows = conn.execute(
+        """
+        UPDATE stage_tickets SET status='ready', lease_owner=NULL,
+               lease_expires_at=NULL, updated_at=now()
+         WHERE status='leased' AND lease_expires_at < now()
+         RETURNING lease_owner
+        """
+    ).fetchall()
+    for (owner,) in rows:
+        if owner:
+            conn.execute(
+                "UPDATE worker_registrations SET status='quarantined', "
+                "last_error='lease expired without completion' WHERE worker_id=%s",
+                (owner,),
+            )
+    return len(rows)
+
+
+def generation_barrier(conn: Connection, corpus_id: str) -> dict:
+    """QUERY_READY for a corpus generation requires: all tickets DONE,
+    zero pending/ready/leased/repair tickets, and projection desired ==
+    actual. Returns the barrier verdict + what blocks it."""
+    pending = conn.execute(
+        "SELECT stage, status, COUNT(*) FROM stage_tickets "
+        "WHERE corpus_id=%s AND status != 'done' GROUP BY 1,2",
+        (corpus_id,),
+    ).fetchall()
+    runs = conn.execute(
+        "SELECT run_id FROM runs WHERE corpus_id=%s", (corpus_id,)
+    ).fetchall()
+    incomplete_receipts = 0
+    for (run_id,) in runs:
+        for projection in ("qdrant", "neo4j"):
+            if not _receipts_present(conn, run_id, corpus_id, projection):
+                incomplete_receipts += 1
+    return {
+        "open_tickets": sum(count for _s, _st, count in pending),
+        "open_by_status": {f"{s}/{st}": c for s, st, c in pending},
+        "incomplete_projections": incomplete_receipts,
+        "passed": not pending and incomplete_receipts == 0,
+    }
+
+
+def backpressure_paused(conn: Connection, stage: str = "extract",
+                        watermark: int = DEFAULT_HIGH_WATERMARK) -> bool:
+    """High watermark: pause NEW intake ticket creation when a downstream
+    stage's pending queue is deep (bounded queues; nothing is lost —
+    ticket creation resumes as the queue drains)."""
+    row = conn.execute(
+        "SELECT COUNT(*) FROM stage_tickets WHERE stage=%s AND status IN ('pending','ready','leased')",
+        (stage,),
+    ).fetchone()
+    return bool(row) and row[0] >= watermark

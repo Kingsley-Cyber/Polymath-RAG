@@ -709,3 +709,25 @@ that motivated it and the refactor that implemented it.
   debris across back-to-back runs; stale worker processes) attributed
   to TEST-HARNESS-STABILITY. STOP per directive; I5 awaits separate
   authorization. (eval/i4r/REPORT.md)
+
+## 2026-08-16: CONTROL-PLANE-V2 — explicit execution authority (ADR-0014)
+
+- Four targets, authorized after I4R closeout: (1) worker identity +
+  build/contract compatibility leasing (worker_registrations; stale
+  workers refused and marked); (2) durable stage tickets with verified
+  explicit handoff — a stage's event exists only after the control
+  plane verifies the predecessor's artifacts/receipts/contract
+  (migration 0012; one shared worker runtime for all 8 workers);
+  (3) generation readiness barrier — query_ready requires all tickets
+  done + projection desired==actual; (4) evaluation snapshot barrier —
+  evaluators freeze a state hash; drift aborts loudly (the retrieval
+  0/30 class is now structurally prevented; helper
+  eval/i4r/snapshot_barrier.py, frozen harness untouched).
+- Throughput posture: per-run ticket chains progress independently
+  (pipelined fan-out); per-stage high-watermark backpressure pauses new
+  chains; legacy scheduler keeps driving failure retries (idempotent
+  coexistence). V2.1 deferred: auto-drain/restart, typed artifact
+  ledger, experiment coordinator, GLiNER batching service.
+- Live proof: smoke corpus through the full ticket chain to
+  query_ready; barrier refused mid-flight and passed at convergence;
+  fleet registry 8/8 healthy. (work log 2026-08-16-control-plane-v2.md)
