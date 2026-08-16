@@ -348,6 +348,20 @@ def norm(s: str) -> str:
 def phase_entities() -> None:
     gold = json.loads((FIXTURE / "gold" / "entity_gold.json").read_text())["documents"]
     with tx() as c:
+        # I3R-R4 reality: THREE universes — durable mentions (every
+        # accepted GLiNER proposal), durable referential entities
+        # (non-MENTION_ONLY), and fact endpoints (graph-facing).
+        mention_rows = q("""SELECT m.mention_id, m.core_type, m.normalized_surface,
+                                   m.admission_class, d.source_name
+                              FROM mentions m JOIN documents d ON d.doc_id=m.doc_id
+                             WHERE m.corpus_id=%s ORDER BY d.source_name, m.normalized_surface""",
+                         (CORPUS,), c)
+        entity_rows = q("""SELECT m.entity_id, m.core_type, m.normalized_surface,
+                                  m.admission_class, d.source_name
+                             FROM mentions m JOIN documents d ON d.doc_id=m.doc_id
+                            WHERE m.corpus_id=%s AND m.entity_id IS NOT NULL
+                            ORDER BY d.source_name, m.normalized_surface""",
+                        (CORPUS,), c)
         rows = q("""SELECT DISTINCT e.entity_id, e.core_type, e.normalized_surface, e.admission_class,
                            d.source_name
                       FROM entities e
@@ -435,10 +449,12 @@ def phase_entities() -> None:
     EVIDENCE["phases"]["entities"] = {
         "aggregate": totals,
         "per_document": per_doc,
-        "durable_universe": {
-            "note": "production persists entities ONLY as fact endpoints; GLiNER proposals without an accepted fact are ephemeral by design",
-            "fact_endpoint_rows": len(rows),
+        "universes": {
+            "durable_mentions": len(mention_rows),
+            "durable_referential_entities": len(entity_rows),
+            "fact_endpoints": len(rows),
             "canonical_entities": canon,
+            "note": "I3R-R4: mentions persist EVERY accepted GLiNER proposal; non-MENTION_ONLY mentions additionally become entities rows without fact participation; graph stays fact-driven",
         },
     }
     log("entities", f"P={totals['precision']} R={totals['recall']} F1={totals['f1']} "
@@ -982,10 +998,11 @@ def phase_reconstruction() -> None:
             s.run("MATCH (c:Chunk) WHERE c.chunk_id IN $ids DETACH DELETE c", ids=chunk_ids)
     finally:
         driver.close()
+    from polymath_shared.receipts import invalidate_corpus_projections
     with tx() as c:
-        supersede_projection_claims(c, projection="qdrant", entity_ids=chunk_ids + summary_ids)
-        supersede_projection_claims(c, projection="neo4j", entity_ids=docs)
-    log("reconstruction", "stores destroyed + claims superseded; waiting for census reschedule")
+        invalidated = invalidate_corpus_projections(c, CORPUS)
+    log("reconstruction", f"stores destroyed + {invalidated} runs invalidated; "
+                           "waiting for census re-drive")
     states = wait_convergence(CORPUS, 5, deadline_s=2400)
     h_after = semantic_hash(CORPUS)
     ok = states.get("query_ready") == 5 and h_before == h_after

@@ -453,6 +453,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/integration/test_i3r_r4_mentions.py", "py", None),
     ("tests/integration/test_i3r_r5_projection_consistency.py", "py", None),
     ("tests/determinism/test_i3r_r6_provenance.py", "py", None),
+    ("eval/i3_5doc/REPORT_I3R.md", "md", None),
+    ("docs/wiki/work-log/2026-08-16-i3r-repair.md", "md", None),
     ("tests/determinism/test_retrieval_summaries.py", "py", None),
     ("eval/r1a/routing_queries.json", "json", None),
     ("eval/r1a/measure_routing.py", "py", None),

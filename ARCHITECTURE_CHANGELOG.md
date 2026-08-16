@@ -552,3 +552,27 @@ that motivated it and the refactor that implemented it.
   future shape is rank fusion of independent lanes, not concatenated
   single-embedding enrichment.
   (work log `2026-08-16-e5-track-closeout.md`)
+
+## 2026-08-16: I3R repository-realigned extraction + control-plane repair
+
+- Rule pack v1.2.0 becomes the production default: typed trigger
+  contract (the compiler tests only the lexical arm that authorized a
+  trigger), bounded verb-form matching, uses noun triggers moved to
+  multiword constructions, founded restricted to Organization objects.
+- build_candidates: trigger-scoped surface argument frames replace
+  the left×right Cartesian product; predicate-region coordination
+  boundaries; bounded entity lists; type-compatible nearest slots;
+  bounded definite-description reference resolution.
+- Durable mentions (migration 0009): every accepted GLiNER proposal
+  persists with provenance; factless referential entities durable;
+  graph stays fact-driven.
+- Verifier orphan semantics realigned (deletion requires no
+  authoritative source); in-flight projections kept; query_ready is
+  revocable via invalidate_corpus_projections; census re-drives
+  missing neo4j receipts.
+- exact-evidence-v1 provenance (migration 0010) + real GLiNER pins in
+  the extract manifest + unresolved-pin guard.
+- I3 rerun: false facts 8→0; reconstruction hash-equal; retrieval
+  30/30; Q1/E3B locks byte-identical. I3 is a repair regression —
+  production acceptance requires a fresh I4 holdout.
+  (work log `2026-08-16-i3r-repair.md`)
