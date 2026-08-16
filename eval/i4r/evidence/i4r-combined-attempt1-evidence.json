@@ -1,0 +1,1115 @@
+{
+  "phases": {
+    "freeze": {
+      "frozen_files": 11,
+      "rule_pack": "1.2.0",
+      "gliner": {
+        "entity_threshold": 0.5,
+        "evidence_threshold": 0.4,
+        "model": "urchade/gliner_medium-v2.1",
+        "revision": "40ec419335d09393f298636f471328b722c6da9e"
+      }
+    },
+    "ingestion": {
+      "submitted": 5,
+      "terminal_states": {
+        "query_ready": 5
+      },
+      "wall_time_s": 50.1,
+      "docs_per_min": 6.0,
+      "documents": [
+        {
+          "doc_id": "doc_85a21d16237959a1a72ffe82eb591ff05b758a7839e23b12da356aebc5acba67",
+          "source_name": "corpus/01_northvale_health.md",
+          "content_hash": "85a21d16237959a1a72ffe82eb591ff05b758a7839e23b12da356aebc5acba67"
+        },
+        {
+          "doc_id": "doc_bb1fa6f6d94a4855e7ecef360ab4e11c08b7848cdda85f8a1459675b611d029a",
+          "source_name": "corpus/02_nimbus_cloud.md",
+          "content_hash": "bb1fa6f6d94a4855e7ecef360ab4e11c08b7848cdda85f8a1459675b611d029a"
+        },
+        {
+          "doc_id": "doc_07dfb7f0d1e1989ff25459845498ada8831cd4336de5f530ae9359d61317acb2",
+          "source_name": "corpus/03_crestline_automation.md",
+          "content_hash": "07dfb7f0d1e1989ff25459845498ada8831cd4336de5f530ae9359d61317acb2"
+        },
+        {
+          "doc_id": "doc_c1aa662574cab4c93405c709f615098b50e79a57fd497aed2c49c4cc4bc9c72c",
+          "source_name": "corpus/04_brightpath_learning.md",
+          "content_hash": "c1aa662574cab4c93405c709f615098b50e79a57fd497aed2c49c4cc4bc9c72c"
+        },
+        {
+          "doc_id": "doc_e43f6c2fe7a9a907ab8f986159bd4a7d60b7615981f4387b760a07261ebbb7d8",
+          "source_name": "corpus/05_corval_logistics.md",
+          "content_hash": "e43f6c2fe7a9a907ab8f986159bd4a7d60b7615981f4387b760a07261ebbb7d8"
+        }
+      ]
+    },
+    "control_chain": {
+      "all_ok": true,
+      "per_run": {
+        "run_380c43d6": {
+          "stages": [
+            "intake",
+            "extract",
+            "project_qdrant",
+            "project_canonical",
+            "verify_projections",
+            "profile_document",
+            "canonicalize",
+            "project_neo4j"
+          ],
+          "ok": true
+        },
+        "run_50a05174": {
+          "stages": [
+            "intake",
+            "extract",
+            "project_canonical",
+            "verify_projections",
+            "project_qdrant",
+            "profile_document",
+            "canonicalize",
+            "project_neo4j"
+          ],
+          "ok": true
+        },
+        "run_72df8244": {
+          "stages": [
+            "intake",
+            "extract",
+            "project_canonical",
+            "verify_projections",
+            "profile_document",
+            "canonicalize",
+            "project_neo4j",
+            "project_qdrant"
+          ],
+          "ok": true
+        },
+        "run_b982fe95": {
+          "stages": [
+            "intake",
+            "extract",
+            "project_canonical",
+            "verify_projections",
+            "profile_document",
+            "canonicalize",
+            "project_neo4j",
+            "project_qdrant"
+          ],
+          "ok": true
+        },
+        "run_f6212548": {
+          "stages": [
+            "intake",
+            "extract",
+            "project_canonical",
+            "verify_projections",
+            "profile_document",
+            "canonicalize",
+            "project_neo4j",
+            "project_qdrant"
+          ],
+          "ok": true
+        }
+      }
+    },
+    "entities": {
+      "raw_discovery": {
+        "tp": 45,
+        "fn": 10,
+        "recall": 0.818
+      },
+      "durable_mentions": {
+        "tp": 45,
+        "fn": 10,
+        "recall": 0.818
+      },
+      "durable_referential": {
+        "tp": 43,
+        "fn": 0,
+        "recall": 1.0
+      },
+      "graph_eligible": {
+        "tp": 43,
+        "fn": 0,
+        "recall": 1.0
+      },
+      "wrong_type": 5,
+      "details": [
+        {
+          "doc": "01_northvale_health.md",
+          "surface": "Northvale Health Network",
+          "result": "OK",
+          "type": "Organization",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "01_northvale_health.md",
+          "surface": "CareChart EMR",
+          "result": "OK",
+          "type": "Technology",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "01_northvale_health.md",
+          "surface": "Lakeshore General Hospital",
+          "result": "OK",
+          "type": "Organization",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "01_northvale_health.md",
+          "surface": "Austin",
+          "result": "OK",
+          "type": "Location",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "01_northvale_health.md",
+          "surface": "Dr. Amara Osei",
+          "result": "OK",
+          "type": "Person",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "01_northvale_health.md",
+          "surface": "CareConnect portal",
+          "result": "OK",
+          "type": "Technology",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "01_northvale_health.md",
+          "surface": "radiology review board",
+          "result": "NOT_DISCOVERED"
+        },
+        {
+          "doc": "01_northvale_health.md",
+          "surface": "Riverside Clinic",
+          "result": "OK",
+          "type": "Organization",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "01_northvale_health.md",
+          "surface": "CareCoordinator scheduling model",
+          "result": "NOT_DISCOVERED"
+        },
+        {
+          "doc": "01_northvale_health.md",
+          "surface": "state registry",
+          "result": "OK",
+          "type": "Organization",
+          "class": "CORPUS_SCOPED",
+          "durable": true
+        },
+        {
+          "doc": "01_northvale_health.md",
+          "surface": "surgeons",
+          "result": "NOT_DISCOVERED"
+        },
+        {
+          "doc": "02_nimbus_cloud.md",
+          "surface": "Nimbus Cloud",
+          "result": "OK",
+          "type": "Organization",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "02_nimbus_cloud.md",
+          "surface": "Kubernetes",
+          "result": "WRONG_TYPE",
+          "got": "Product"
+        },
+        {
+          "doc": "02_nimbus_cloud.md",
+          "surface": "Kubernetes",
+          "result": "OK",
+          "type": "Product",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "02_nimbus_cloud.md",
+          "surface": "Ledger billing service",
+          "result": "OK",
+          "type": "Technology",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "02_nimbus_cloud.md",
+          "surface": "Postgres cluster",
+          "result": "OK",
+          "type": "Technology",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "02_nimbus_cloud.md",
+          "surface": "Nimbus billing service",
+          "result": "WRONG_TYPE",
+          "got": "Organization"
+        },
+        {
+          "doc": "02_nimbus_cloud.md",
+          "surface": "Nimbus billing service",
+          "result": "OK",
+          "type": "Organization",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "02_nimbus_cloud.md",
+          "surface": "Nimbus Cloud platform",
+          "result": "WRONG_TYPE",
+          "got": "Organization"
+        },
+        {
+          "doc": "02_nimbus_cloud.md",
+          "surface": "Nimbus Cloud platform",
+          "result": "OK",
+          "type": "Organization",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "02_nimbus_cloud.md",
+          "surface": "engineering group",
+          "result": "WRONG_TYPE",
+          "got": "Person"
+        },
+        {
+          "doc": "02_nimbus_cloud.md",
+          "surface": "engineering group",
+          "result": "OK",
+          "type": "Person",
+          "class": "CORPUS_SCOPED",
+          "durable": true
+        },
+        {
+          "doc": "02_nimbus_cloud.md",
+          "surface": "load-testing harness",
+          "result": "NOT_DISCOVERED"
+        },
+        {
+          "doc": "02_nimbus_cloud.md",
+          "surface": "postmortem report",
+          "result": "OK",
+          "type": "Document",
+          "class": "CORPUS_SCOPED",
+          "durable": true
+        },
+        {
+          "doc": "02_nimbus_cloud.md",
+          "surface": "Nimbus API gateway",
+          "result": "WRONG_TYPE",
+          "got": "Organization"
+        },
+        {
+          "doc": "02_nimbus_cloud.md",
+          "surface": "Nimbus API gateway",
+          "result": "OK",
+          "type": "Organization",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "02_nimbus_cloud.md",
+          "surface": "Go",
+          "result": "OK",
+          "type": "Technology",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "02_nimbus_cloud.md",
+          "surface": "cache layer",
+          "result": "OK",
+          "type": "Technology",
+          "class": "CORPUS_SCOPED",
+          "durable": true
+        },
+        {
+          "doc": "03_crestline_automation.md",
+          "surface": "Crestline Automation",
+          "result": "OK",
+          "type": "Organization",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "03_crestline_automation.md",
+          "surface": "Siemens PLCs",
+          "result": "OK",
+          "type": "Technology",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "03_crestline_automation.md",
+          "surface": "Crestline plant",
+          "result": "OK",
+          "type": "Organization",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "03_crestline_automation.md",
+          "surface": "Toledo",
+          "result": "OK",
+          "type": "Location",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "03_crestline_automation.md",
+          "surface": "Maria Kowalski",
+          "result": "OK",
+          "type": "Person",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "03_crestline_automation.md",
+          "surface": "Crestline automation team",
+          "result": "OK",
+          "type": "Organization",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "03_crestline_automation.md",
+          "surface": "analytics team",
+          "result": "OK",
+          "type": "Organization",
+          "class": "CORPUS_SCOPED",
+          "durable": true
+        },
+        {
+          "doc": "03_crestline_automation.md",
+          "surface": "shift scheduling model",
+          "result": "NOT_DISCOVERED"
+        },
+        {
+          "doc": "03_crestline_automation.md",
+          "surface": "Cobalt assembly cell",
+          "result": "OK",
+          "type": "Technology",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "03_crestline_automation.md",
+          "surface": "vision system",
+          "result": "OK",
+          "type": "Technology",
+          "class": "CORPUS_SCOPED",
+          "durable": true
+        },
+        {
+          "doc": "03_crestline_automation.md",
+          "surface": "quality database",
+          "result": "NOT_DISCOVERED"
+        },
+        {
+          "doc": "03_crestline_automation.md",
+          "surface": "pump failure",
+          "result": "OK",
+          "type": "Event",
+          "class": "CORPUS_SCOPED",
+          "durable": true
+        },
+        {
+          "doc": "03_crestline_automation.md",
+          "surface": "production stoppage",
+          "result": "OK",
+          "type": "Event",
+          "class": "CORPUS_SCOPED",
+          "durable": true
+        },
+        {
+          "doc": "03_crestline_automation.md",
+          "surface": "night-shift pilot",
+          "result": "NOT_DISCOVERED"
+        },
+        {
+          "doc": "04_brightpath_learning.md",
+          "surface": "Brightpath Learning",
+          "result": "OK",
+          "type": "Organization",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "04_brightpath_learning.md",
+          "surface": "Mentor assessment engine",
+          "result": "OK",
+          "type": "Technology",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "04_brightpath_learning.md",
+          "surface": "Raleigh",
+          "result": "OK",
+          "type": "Location",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "04_brightpath_learning.md",
+          "surface": "Daniel Okafor",
+          "result": "OK",
+          "type": "Person",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "04_brightpath_learning.md",
+          "surface": "QBank item database",
+          "result": "OK",
+          "type": "Technology",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "04_brightpath_learning.md",
+          "surface": "Coachlight review app",
+          "result": "OK",
+          "type": "Technology",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "04_brightpath_learning.md",
+          "surface": "curriculum designer",
+          "result": "NOT_DISCOVERED"
+        },
+        {
+          "doc": "04_brightpath_learning.md",
+          "surface": "assessment format",
+          "result": "NOT_DISCOVERED"
+        },
+        {
+          "doc": "04_brightpath_learning.md",
+          "surface": "instructors",
+          "result": "NOT_DISCOVERED"
+        },
+        {
+          "doc": "05_corval_logistics.md",
+          "surface": "Corval Logistics",
+          "result": "OK",
+          "type": "Organization",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "05_corval_logistics.md",
+          "surface": "FreightNet routing platform",
+          "result": "OK",
+          "type": "Technology",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "05_corval_logistics.md",
+          "surface": "Corval Freight",
+          "result": "OK",
+          "type": "Organization",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "05_corval_logistics.md",
+          "surface": "Portside warehouse",
+          "result": "OK",
+          "type": "Location",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "05_corval_logistics.md",
+          "surface": "Oakland",
+          "result": "OK",
+          "type": "Location",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "05_corval_logistics.md",
+          "surface": "QuickScale invoicing system",
+          "result": "OK",
+          "type": "Technology",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "05_corval_logistics.md",
+          "surface": "West Coast logistics consortium",
+          "result": "OK",
+          "type": "Organization",
+          "class": "GLOBAL",
+          "durable": true
+        },
+        {
+          "doc": "05_corval_logistics.md",
+          "surface": "regional dispatchers",
+          "result": "OK",
+          "type": "Person",
+          "class": "CORPUS_SCOPED",
+          "durable": true
+        },
+        {
+          "doc": "05_corval_logistics.md",
+          "surface": "harbor terminal",
+          "result": "OK",
+          "type": "Location",
+          "class": "CORPUS_SCOPED",
+          "durable": true
+        }
+      ]
+    },
+    "facts": {
+      "supported_positive": {
+        "gold": 26,
+        "tp": 12,
+        "fp": 5,
+        "fn": 14,
+        "precision": 0.706,
+        "recall": 0.462,
+        "f1": 0.558,
+        "per_predicate": {
+          "uses": {
+            "gold": 5,
+            "tp": 2,
+            "fp": 0,
+            "fn": 3
+          },
+          "located_in": {
+            "gold": 4,
+            "tp": 2,
+            "fp": 0,
+            "fn": 2
+          },
+          "has_role": {
+            "gold": 2,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "depends_on": {
+            "gold": 3,
+            "tp": 2,
+            "fp": 1,
+            "fn": 1
+          },
+          "part_of": {
+            "gold": 2,
+            "tp": 0,
+            "fp": 0,
+            "fn": 2
+          },
+          "founded": {
+            "gold": 1,
+            "tp": 1,
+            "fp": 1,
+            "fn": 0
+          },
+          "created": {
+            "gold": 2,
+            "tp": 0,
+            "fp": 0,
+            "fn": 2
+          },
+          "leads": {
+            "gold": 1,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "developed": {
+            "gold": 1,
+            "tp": 0,
+            "fp": 1,
+            "fn": 1
+          },
+          "associated_with": {
+            "gold": 2,
+            "tp": 0,
+            "fp": 1,
+            "fn": 2
+          },
+          "causes": {
+            "gold": 1,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "acquired": {
+            "gold": 1,
+            "tp": 0,
+            "fp": 0,
+            "fn": 1
+          },
+          "subsidiary_of": {
+            "gold": 1,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "member_of": {
+            "gold": 0,
+            "tp": 0,
+            "fp": 1,
+            "fn": 0
+          }
+        },
+        "fn_details": [
+          {
+            "fact_id": "A01",
+            "predicate": "uses",
+            "subject": "Northvale Health Network",
+            "object": "CareChart EMR",
+            "doc": "01_northvale_health.md"
+          },
+          {
+            "fact_id": "A05",
+            "predicate": "part_of",
+            "subject": "radiology review board",
+            "object": "Lakeshore General Hospital",
+            "doc": "01_northvale_health.md"
+          },
+          {
+            "fact_id": "A07",
+            "predicate": "uses",
+            "subject": "Nimbus Cloud",
+            "object": "Kubernetes",
+            "doc": "02_nimbus_cloud.md"
+          },
+          {
+            "fact_id": "A09",
+            "predicate": "part_of",
+            "subject": "Nimbus billing service",
+            "object": "Nimbus Cloud platform",
+            "doc": "02_nimbus_cloud.md"
+          },
+          {
+            "fact_id": "A10",
+            "predicate": "created",
+            "subject": "engineering group",
+            "object": "load-testing harness",
+            "doc": "02_nimbus_cloud.md"
+          },
+          {
+            "fact_id": "A12",
+            "predicate": "located_in",
+            "subject": "Crestline plant",
+            "object": "Toledo",
+            "doc": "03_crestline_automation.md"
+          },
+          {
+            "fact_id": "A14",
+            "predicate": "created",
+            "subject": "analytics team",
+            "object": "shift scheduling model",
+            "doc": "03_crestline_automation.md"
+          },
+          {
+            "fact_id": "A15",
+            "predicate": "developed",
+            "subject": "Crestline Automation",
+            "object": "Cobalt assembly cell",
+            "doc": "03_crestline_automation.md"
+          },
+          {
+            "fact_id": "A16",
+            "predicate": "associated_with",
+            "subject": "vision system",
+            "object": "quality database",
+            "doc": "03_crestline_automation.md"
+          },
+          {
+            "fact_id": "A18",
+            "predicate": "uses",
+            "subject": "Brightpath Learning",
+            "object": "Mentor assessment engine",
+            "doc": "04_brightpath_learning.md"
+          },
+          {
+            "fact_id": "A19",
+            "predicate": "located_in",
+            "subject": "Brightpath Learning",
+            "object": "Raleigh",
+            "doc": "04_brightpath_learning.md"
+          },
+          {
+            "fact_id": "A21",
+            "predicate": "depends_on",
+            "subject": "Mentor assessment engine",
+            "object": "QBank item database",
+            "doc": "04_brightpath_learning.md"
+          },
+          {
+            "fact_id": "A22",
+            "predicate": "acquired",
+            "subject": "Brightpath Learning",
+            "object": "Coachlight review app",
+            "doc": "04_brightpath_learning.md"
+          },
+          {
+            "fact_id": "A26",
+            "predicate": "associated_with",
+            "subject": "QuickScale invoicing system",
+            "object": "FreightNet routing platform",
+            "doc": "05_corval_logistics.md"
+          }
+        ],
+        "fp_details": [
+          {
+            "predicate": "associated_with",
+            "subject": "crestline",
+            "object": "vision system",
+            "doc": "corpus/03_crestline_automation.md"
+          },
+          {
+            "predicate": "developed",
+            "subject": "crestline",
+            "object": "cobalt assembly cell",
+            "doc": "corpus/03_crestline_automation.md"
+          },
+          {
+            "predicate": "founded",
+            "subject": "crestline",
+            "object": "robotics vendor",
+            "doc": "corpus/03_crestline_automation.md"
+          },
+          {
+            "predicate": "depends_on",
+            "subject": "mentor engine",
+            "object": "qbank item database",
+            "doc": "corpus/04_brightpath_learning.md"
+          },
+          {
+            "predicate": "member_of",
+            "subject": "regional dispatchers",
+            "object": "west coast logistics consortium",
+            "doc": "corpus/05_corval_logistics.md"
+          }
+        ]
+      },
+      "out_of_envelope": {
+        "fixtures": 8,
+        "correct_abstentions": 7,
+        "unexpected_assertions": 1,
+        "details": [
+          {
+            "case_id": "B06",
+            "asserted": "regional dispatchers member_of west coast logistics consortium"
+          }
+        ]
+      },
+      "must_not_assert": {
+        "passed": 18,
+        "total": 18,
+        "violations": []
+      }
+    },
+    "provenance": {
+      "accepted_facts": 16,
+      "exact_matches": 16,
+      "all_exact": true,
+      "details": []
+    },
+    "graph": {
+      "eligible_facts": 16,
+      "projected": 16,
+      "missing": [],
+      "orphan": [
+        "fact_a9320f71216ac0f9acababe070aca890b82e4bc6348e32433424e2c017c55a04"
+      ],
+      "duplicate": [],
+      "neo4j_entity_nodes_total": 41
+    },
+    "qdrant": {
+      "chunk_points": 10,
+      "routing_points": 18,
+      "kinds": {
+        "routing_section_summary": 6,
+        "routing_child": 6,
+        "routing_document_summary": 6
+      },
+      "foreign": 3,
+      "duplicate_ids_chunk": 0,
+      "duplicate_ids_routing": 0
+    },
+    "replay": {
+      "submitted": 0,
+      "docs": [
+        5,
+        5
+      ],
+      "mentions": [
+        69,
+        69
+      ],
+      "hash_equal": true,
+      "pass": true
+    },
+    "order": {
+      "submitted": 5,
+      "hash_equal": true
+    },
+    "concurrency": {
+      "hash_equal": true
+    },
+    "interrupt": {
+      "injected_failures": 5,
+      "hash_equal": true,
+      "pass": true
+    },
+    "reconstruction": {
+      "error": "i4-fresh-acceptance-v1 did not converge: {'reconciling': 5}"
+    },
+    "race_fixture": {
+      "fact_id": "fact_6f8fff8dc82",
+      "edge_kept": true,
+      "pass": true
+    },
+    "retrieval": {
+      "all_top5": false,
+      "table": [
+        {
+          "query": "Which EMR platform does Northvale Health Network use?",
+          "mode": "FAST",
+          "gold_doc": "01_northvale_health.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "Which EMR platform does Northvale Health Network use?",
+          "mode": "HYBRID",
+          "gold_doc": "01_northvale_health.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "Which EMR platform does Northvale Health Network use?",
+          "mode": "GRAPH",
+          "gold_doc": "01_northvale_health.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "Which scheduling dependency does the CareConnect portal have?",
+          "mode": "FAST",
+          "gold_doc": "01_northvale_health.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "Which scheduling dependency does the CareConnect portal have?",
+          "mode": "HYBRID",
+          "gold_doc": "01_northvale_health.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "Which scheduling dependency does the CareConnect portal have?",
+          "mode": "GRAPH",
+          "gold_doc": "01_northvale_health.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "Which infrastructure does the billing service depend on?",
+          "mode": "FAST",
+          "gold_doc": "02_nimbus_cloud.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "Which infrastructure does the billing service depend on?",
+          "mode": "HYBRID",
+          "gold_doc": "02_nimbus_cloud.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "Which infrastructure does the billing service depend on?",
+          "mode": "GRAPH",
+          "gold_doc": "02_nimbus_cloud.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "What was the root cause of the outage?",
+          "mode": "FAST",
+          "gold_doc": "02_nimbus_cloud.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "What was the root cause of the outage?",
+          "mode": "HYBRID",
+          "gold_doc": "02_nimbus_cloud.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "What was the root cause of the outage?",
+          "mode": "GRAPH",
+          "gold_doc": "02_nimbus_cloud.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "What caused the production stoppage on line two?",
+          "mode": "FAST",
+          "gold_doc": "03_crestline_automation.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "What caused the production stoppage on line two?",
+          "mode": "HYBRID",
+          "gold_doc": "03_crestline_automation.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "What caused the production stoppage on line two?",
+          "mode": "GRAPH",
+          "gold_doc": "03_crestline_automation.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "Which systems did Crestline link together in March?",
+          "mode": "FAST",
+          "gold_doc": "03_crestline_automation.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "Which systems did Crestline link together in March?",
+          "mode": "HYBRID",
+          "gold_doc": "03_crestline_automation.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "Which systems did Crestline link together in March?",
+          "mode": "GRAPH",
+          "gold_doc": "03_crestline_automation.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "Which assessment engine does Brightpath Learning use?",
+          "mode": "FAST",
+          "gold_doc": "04_brightpath_learning.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "Which assessment engine does Brightpath Learning use?",
+          "mode": "HYBRID",
+          "gold_doc": "04_brightpath_learning.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "Which assessment engine does Brightpath Learning use?",
+          "mode": "GRAPH",
+          "gold_doc": "04_brightpath_learning.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "What did Brightpath Learning acquire last spring?",
+          "mode": "FAST",
+          "gold_doc": "04_brightpath_learning.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "What did Brightpath Learning acquire last spring?",
+          "mode": "HYBRID",
+          "gold_doc": "04_brightpath_learning.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "What did Brightpath Learning acquire last spring?",
+          "mode": "GRAPH",
+          "gold_doc": "04_brightpath_learning.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "Which routing platform does Corval Logistics use?",
+          "mode": "FAST",
+          "gold_doc": "05_corval_logistics.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "Which routing platform does Corval Logistics use?",
+          "mode": "HYBRID",
+          "gold_doc": "05_corval_logistics.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "Which routing platform does Corval Logistics use?",
+          "mode": "GRAPH",
+          "gold_doc": "05_corval_logistics.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "Was the invoicing system responsible for the billing delays?",
+          "mode": "FAST",
+          "gold_doc": "05_corval_logistics.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "Was the invoicing system responsible for the billing delays?",
+          "mode": "HYBRID",
+          "gold_doc": "05_corval_logistics.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        },
+        {
+          "query": "Was the invoicing system responsible for the billing delays?",
+          "mode": "GRAPH",
+          "gold_doc": "05_corval_logistics.md",
+          "doc_rank": 99,
+          "graph_facts": 0
+        }
+      ]
+    },
+    "isolation": {
+      "foreign": [],
+      "pass": true
+    },
+    "versioning": {
+      "docs_before": 5,
+      "docs_after": 6,
+      "new_versions": 2,
+      "replay_noop": true
+    }
+  }
+}

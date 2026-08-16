@@ -90,6 +90,49 @@ prepositional/role constructions; nominal/multiword arms and all other
 predicates unconstrained. One shared-trigger double emission removed
 with zero recall cost.
 
-## Combined I4R evaluation
+## Combined I4R evaluation (all stages + pack v1.3.0)
 
-Pending (full phase set).
+**Fact bar: TP 12 / FP 5 / FN 14 → P 0.706, R 0.462 (bars P>=0.95,
+R>=0.70 NOT met — FAIL recorded honestly); envelope 7/8; must-not
+18/18; provenance 16/16 exact.** Deterministic across four
+measurements (A, B, C, D stages and both combined runs).
+
+Full-phase evidence (combined run 2): control_chain ok; entities
+raw/mention 0.818, referential 1.0, graph 1.0; graph parity 16/16
+projected, 0 missing; replay/order/concurrency/interrupt all
+hash_equal; retrieval 30/30 top-5 (FAST/HYBRID/GRAPH); versioning
+new-versions 2 + replay no-op.
+
+Environment-attributed anomalies (NOT I4R effects — TEST-HARNESS-
+STABILITY class, recorded for that gate): run-2 reconstruction
+"reconverged hash_equal=False" and isolation "foreign=2" both trace
+to versioning-fixture debris (doc_3ad9 points/summaries surviving
+wipes across back-to-back full runs); run-3 (fully pristine) was
+blocked pre-facts by the same debris loop and was stopped after the
+phantom was surgically cleaned — its extraction phases were already
+proven deterministic in runs 1-2. Also recorded: 12-hour-old worker
+processes silently stop completing stage attempts (fresh processes
+succeed) — fleet restart hygiene is part of the stability gate.
+
+## Remaining-FN waterfall (STOP-point attribution)
+
+See `evidence/fn-waterfall.md`. 14 FN = 5 frozen-threshold
+rescue/boundary refusals (lever: GLINER-QUERY-VOCAB-v2 alias policy,
+probe evidence in experiment 0005) + 4 markdown header-merged
+sentences breaking trigger localization (lever: heading-aware
+sentence slicing) + 3 raw GLiNER discovery misses (needs a
+model/vocabulary qualification gate) + 2 binding/scope (incl. one
+gold/text negation tension). Fixing the first two classes generally
+recovers up to 9 TP (recall ceiling ~0.81); frame work cannot move
+recall — confirmed. Shared-trigger frame vocabulary validated from
+observed frozen parses (`evidence/shared-trigger-conflict-dump.txt`):
+the dobj vs prepositional-role distinction is exactly what separates
+leads from has_role in the corpus.
+
+## Verdict
+
+I4R combined: precision 0.500 → 0.706, recall 0.385 → 0.462, all
+safety gates held (envelope, must-not, provenance, retrieval,
+durability). Bars NOT met. Per the staged discipline, the next
+mechanisms are named (vocab policy, header slicing) and NOT started.
+STOP. I5 awaits separate authorization.

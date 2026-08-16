@@ -1,0 +1,30 @@
+DOC: 01_northvale_health.md
+SENTENCE: Lakeshore General Hospital is located in Austin, and its nursing stations run the platform around the clock.
+  TRIGGER token='run' lemma='run' pos=VERB dep=conj head_i=4
+    ARG 'stations' dep=nsubj
+    ARG 'platform' dep=dobj
+    ARG 'around' dep=prep ->pobj ['clock']
+
+DOC: 01_northvale_health.md
+SENTENCE: Amara Osei serves as chief medical officer of Northvale Health Network.
+  TRIGGER token='serves' lemma='serve' pos=VERB dep=ROOT head_i=2
+    ARG 'Osei' dep=nsubj
+    ARG 'as' dep=prep ->pobj ['officer']
+
+DOC: 02_nimbus_cloud.md
+SENTENCE: The operations group manages the fleet from a single console.
+  TRIGGER token='manages' lemma='manage' pos=VERB dep=ROOT head_i=3
+    ARG 'group' dep=nsubj
+    ARG 'fleet' dep=dobj
+    ARG 'from' dep=prep ->pobj ['console']
+
+DOC: 03_crestline_automation.md
+SENTENCE: The Crestline plant is based in Toledo and runs two shifts.
+  TRIGGER token='runs' lemma='run' pos=VERB dep=conj head_i=4
+    ARG 'shifts' dep=dobj
+
+DOC: 03_crestline_automation.md
+SENTENCE: Maria Kowalski leads the Crestline automation team.
+  TRIGGER token='leads' lemma='lead' pos=VERB dep=ROOT head_i=2
+    ARG 'Kowalski' dep=nsubj
+    ARG 'team' dep=dobj

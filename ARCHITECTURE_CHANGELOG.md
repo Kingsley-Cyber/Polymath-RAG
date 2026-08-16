@@ -696,3 +696,16 @@ that motivated it and the refactor that implemented it.
   prepositional object). Cumulative P 0.706 / R 0.462; envelope and
   must-not held. Pack default stays 1.2.0; 1.3.0 selected by env for
   the rescue configuration. (eval/i4r/REPORT.md)
+
+## 2026-08-16: I4R combined evaluation + FN waterfall (STOP)
+
+- Combined (A+B+C+D, pack 1.3.0): P 0.706 / R 0.462 (baseline
+  0.500/0.385); envelope 7/8, must-not 18/18, provenance exact,
+  retrieval 30/30, all durability phases hash-equal. Bars not met —
+  recorded as FAIL per the honest-measurement contract. Remaining-FN
+  waterfall: 5 frozen-threshold refusals (GLINER-QUERY-VOCAB-v2 is the
+  named lever), 4 header-merged sentences, 3 discovery misses, 2
+  binding/scope. Harness-environment anomalies (versioning-fixture
+  debris across back-to-back runs; stale worker processes) attributed
+  to TEST-HARNESS-STABILITY. STOP per directive; I5 awaits separate
+  authorization. (eval/i4r/REPORT.md)
