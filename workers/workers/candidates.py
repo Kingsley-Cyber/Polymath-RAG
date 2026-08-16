@@ -233,14 +233,31 @@ def build_candidates(
             right_bound = min([b for b in boundaries if b >= rel_ev_end],
                               default=len(sentence))
 
+            # I3R-R2 (correction): slot selection prefers the NEAREST
+            # entity whose core type is compatible with at least one
+            # predicate signature of the evidence class — a nearer
+            # incompatible span must not starve a compatible binding.
+            def _slot_compatible(span: EntitySpan, side: str) -> bool:
+                for rule in rule_pack["predicates"].values():
+                    if evidence.evidence_class not in rule["evidence"].get("classes", []):
+                        continue
+                    for sig in rule["signatures"]:
+                        if side == "left" and span.core_type.value in sig.get("subject_core", []):
+                            return True
+                        if side == "right" and span.core_type.value in sig.get("object_core", []):
+                            return True
+                return False
+
             left = sorted(
                 [e for e in sl.entities
-                 if e.end <= evidence.start and e.start - rel_start >= left_bound],
+                 if e.end <= evidence.start and e.start - rel_start >= left_bound
+                 and _slot_compatible(e, "left")],
                 key=lambda e: (-e.end, -e.start),
             )
             right = sorted(
                 [e for e in sl.entities
-                 if e.start >= evidence.end and e.end - rel_start <= right_bound],
+                 if e.start >= evidence.end and e.start - rel_start <= right_bound
+                 and _slot_compatible(e, "right")],
                 key=lambda e: (e.start, e.end),
             )
 
