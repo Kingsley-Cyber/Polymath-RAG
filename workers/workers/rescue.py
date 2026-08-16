@@ -437,8 +437,192 @@ def apply_missing_arguments(ordered_slices: list, label_set: tuple[str, ...]) ->
     }
 
 
+def _slot_types(pack: dict, evidence, side: str) -> set[str]:
+    """Allowed canonical types for one argument side of the trigger's
+    predicate (I3R-R1 trigger_predicate_id when present, else every
+    predicate carrying the evidence class)."""
+    pred_ids = []
+    if getattr(evidence, "trigger_predicate_id", None):
+        pred_ids.append(evidence.trigger_predicate_id)
+    else:
+        pred_ids = [
+            pid for pid, rule in pack["predicates"].items()
+            if evidence.evidence_class in rule["evidence"].get("classes", [])
+        ]
+    types: set[str] = set()
+    for pid in pred_ids:
+        rule = pack["predicates"].get(pid)
+        if not rule:
+            continue
+        for sig in rule["signatures"]:
+            types.update(sig.get(side, []))
+    return types
+
+
+def type_reconciliation_candidates(sl, revision: str, label_set: tuple[str, ...], pack: dict):
+    """I4R-C: an entity occupying a trigger-governed argument slot whose
+    canonical type is INCOMPATIBLE with that slot's signature is
+    re-queried over its full argument NP with the NORMAL policy
+    vocabulary (temporal directive §10 — never slot-forced labels).
+    A full-span prediction whose canonical type IS slot-legal replaces
+    the entity's type; anything else keeps the original entity (the
+    incompatible pairing abstains downstream, exactly as today)."""
+    from polymath_shared.query_policy import QUERY_POLICY_VERSION
+
+    syntax = getattr(sl, "syntax", None)
+    if not syntax:
+        return []
+    tokens = _tokens(syntax)
+    chunks = _trimmed_noun_chunks(syntax, sl.text)
+    candidates = []
+    seen: set[tuple[int, int]] = set()
+    for evidence in sl.evidence:
+        s = evidence.start - sl.sentence_start
+        e = evidence.end - sl.sentence_start
+        trig = [t for t in tokens if t["char_start"] < e and t["char_end"] > s]
+        trig_ids = {t["i"] for t in trig}
+        if not trig_ids:
+            continue
+        for tok in tokens:
+            governed = (tok["head_i"] in trig_ids and tok["dep"] in ARGUMENT_DEPS)
+            if not governed and tok["head_i"] in trig_ids and tok["dep"] in PREP_DEPS:
+                governed = any(
+                    t2["head_i"] == tok["i"] and t2["dep"] in ARGUMENT_DEPS
+                    for t2 in tokens
+                )
+                if governed:
+                    continue  # prepositional object handled via its own token below
+            if not governed:
+                continue
+            side = "subject_core" if tok["dep"] in ("nsubj", "nsubj:pass") else "object_core"
+            np = None
+            for (cs, ce, surface) in chunks:
+                if cs <= tok["char_start"] and tok["char_end"] <= ce:
+                    if np is None or (ce - cs) < (np[1] - np[0]):
+                        np = (cs, ce, surface)
+            if np is None or np[:2] in seen:
+                continue
+            cs, ce, surface = np
+            chunk_cs, chunk_ce = sl.sentence_start + cs, sl.sentence_start + ce
+            overlapping = [e2 for e2 in sl.entities if e2.start < chunk_ce and e2.end > chunk_cs]
+            if not overlapping:
+                continue  # missing arguments are I4R-B territory
+            slot_types = _slot_types(pack, evidence, side)
+            if not slot_types:
+                continue
+            if all(e2.core_type.value in slot_types for e2 in overlapping):
+                continue  # already compatible — nothing to reconcile
+            seen.add(np[:2])
+            candidates.append((
+                overlapping[0],
+                RescueQuery(
+                    kind="type_reconciliation",
+                    text=surface,
+                    labels=tuple(label_set),
+                    threshold=RESCUE_THRESHOLD,
+                    model_revision=revision,
+                    query_policy_version=QUERY_POLICY_VERSION,
+                ),
+                chunk_cs, chunk_ce, slot_types,
+            ))
+    return candidates
+
+
+def apply_type_reconciliation(ordered_slices: list, label_set: tuple[str, ...], pack: dict) -> dict:
+    """I4R-C application: re-typed full-span predictions that are
+    slot-legal replace the entity's canonical type (pass_kind=
+    type_reconciliation); everything else is recorded and left as-is —
+    incompatible pairings abstain downstream (precision-first)."""
+    from polymath_shared.clients import GlinerClient
+    from polymath_shared.contracts import CoreType, EntitySpan
+    from polymath_shared.query_policy import canonical_of
+
+    revision = _gliner_revision()
+    per_slice: list[list] = []
+    queries: dict[str, RescueQuery] = {}
+    for row, sl in ordered_slices:
+        found = type_reconciliation_candidates(sl, revision, label_set, pack)
+        per_slice.append(found)
+        for entity, query, _cs, _ce, _types in found:
+            queries.setdefault(query.identity, query)
+
+    results: dict[str, list[dict]] = {}
+    report_queries = []
+    if queries:
+        ordered = list(queries.values())
+        client = GlinerClient()
+        try:
+            client.verify_pin()
+            spans_by_query = []
+            for i in range(0, len(ordered), 256):
+                spans_by_query.extend(client.infer_rescue_batch(
+                    [q.payload() for q in ordered[i:i + 256]]))
+        finally:
+            client.close()
+        results = {q.identity: spans for q, spans in zip(ordered, spans_by_query)}
+        for q in ordered:
+            hit = _accepted(results.get(q.identity, []), q)
+            canonical = canonical_of(hit["label"]) if hit else None
+            report_queries.append({
+                "identity": q.identity, "kind": q.kind, "text": q.text,
+                "labels": list(q.labels), "threshold": q.threshold,
+                "query_policy_version": q.query_policy_version,
+                "raw_predictions": [
+                    {"raw_label": s.get("label"), "text": s.get("text"),
+                     "score": round(float(s.get("score", 0.0)), 4)}
+                    for s in results.get(q.identity, [])
+                ],
+                "outcome": "re_typed" if hit else "refused",
+                "re_typed_to": canonical,
+                "score": round(float(hit["score"]), 4) if hit else None,
+            })
+
+    re_typed = 0
+    for (row, sl), found in zip(ordered_slices, per_slice):
+        if not found:
+            continue
+        outcomes = {}
+        for entity, query, chunk_cs, chunk_ce, slot_types in found:
+            hit = _accepted(results.get(query.identity, []), query)
+            canonical = canonical_of(hit["label"]) if hit else None
+            outcomes[id(entity)] = (hit, canonical, slot_types, chunk_cs, chunk_ce)
+        new_entities = []
+        for entity in sl.entities:
+            outcome = outcomes.get(id(entity))
+            if outcome is None:
+                new_entities.append(entity)
+                continue
+            hit, canonical, slot_types, chunk_cs, chunk_ce = outcome
+            if hit is None or canonical is None or canonical not in slot_types:
+                new_entities.append(entity)  # refused/incompatible: abstain pairing
+                continue
+            new_entities.append(EntitySpan(
+                doc_id=entity.doc_id,
+                chunk_id=entity.chunk_id,
+                start=chunk_cs,
+                end=chunk_ce,
+                text=sl.text[chunk_cs - sl.sentence_start:chunk_ce - sl.sentence_start],
+                core_type=CoreType(canonical),
+                score=float(hit["score"]),
+                extractor_version=entity.extractor_version,
+                raw_label=hit.get("label"),
+                pass_kind="type_reconciliation",
+            ))
+            re_typed += 1
+        object.__setattr__(sl, "entities", new_entities)
+
+    return {
+        "contract": RESCUE_CONTRACT,
+        "query_policy_version": _policy_version(),
+        "stages": ["type_reconciliation"],
+        "queries": report_queries,
+        "counts": {"candidates": len(queries), "re_typed": re_typed,
+                   "kept_incompatible": len(queries) - re_typed},
+    }
+
+
 def apply_rescue(ordered_slices: list, stages: tuple[str, ...],
-                 label_set: tuple[str, ...] = ()) -> dict:
+                 label_set: tuple[str, ...] = (), pack: dict | None = None) -> dict:
     """Entry point from the extract worker. Every enabled stage requires
     syntax evidence on every slice; missing evidence fails LOUDLY (no
     silent rescue-free extraction)."""
@@ -455,4 +639,9 @@ def apply_rescue(ordered_slices: list, stages: tuple[str, ...],
         report["boundary"] = apply_boundary(ordered_slices)
     if "missing_argument" in stages:
         report["missing_argument"] = apply_missing_arguments(ordered_slices, label_set)
+    if "type_reconciliation" in stages:
+        if pack is None:
+            raise RuntimeError("type_reconciliation requires the rule pack")
+        report["type_reconciliation"] = apply_type_reconciliation(
+            ordered_slices, label_set, pack)
     return report

@@ -468,7 +468,7 @@ def process_event(conn: Connection, event: dict) -> None:
                     DocumentProfile(**profile_dict).label_set
                 ) if profile_dict.get("label_set") else ()
                 rescue_report = apply_rescue(
-                    ordered_slices, rescue_stages, rescue_label_set)
+                    ordered_slices, rescue_stages, rescue_label_set, _pack())
                 writer.artifact({"rescue": rescue_report})
             for row, sl in ordered_slices:
                 candidates = build_candidates(

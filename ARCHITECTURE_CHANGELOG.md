@@ -680,3 +680,10 @@ that motivated it and the refactor that implemented it.
   vocabulary queries per temporal directive §10; quantified NPs
   excluded as non-referential (B07 audit -> general rule).
   (eval/i4r/REPORT.md, work log 2026-08-16-i4r-b-missing-argument.md)
+
+## 2026-08-16: I4R-C type reconciliation measured (zero delta, precision-safe)
+
+- Slot-incompatible entities re-queried over their argument NP with the
+  normal vocabulary; only slot-legal full-span answers re-type. Frozen
+  I4: 9 candidates, 0 applied (none slot-legal), bar unchanged
+  (P 0.667 / R 0.462 cumulative). (eval/i4r/REPORT.md)

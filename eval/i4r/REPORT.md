@@ -71,6 +71,16 @@ descriptions, not referential entity endpoints — which restored
 envelope 7/8 while keeping the recall gain. Evidence for both runs
 preserved (i4r-b evidence is the corrected run).
 
-## I4R-C / I4R-D
+## I4R-C — type reconciliation (cumulative A+B+C)
+
+**Result: zero delta on frozen I4 — TP 12 / FP 6 / FN 14, P 0.667,
+R 0.462; envelope 7/8; must-not 18/18; provenance 17/17.** Audit: 9
+slot-incompatible candidates; GLiNER full-span-answered several
+("harbor terminal"→Location 0.718, "chief medical officer"→Person
+0.713) but none were slot-legal, so no re-types applied. The stage is
+precision-safe (abstains rather than rewriting) and simply had no
+effect on this holdout. Recorded honestly as a no-delta stage.
+
+## I4R-D
 
 Pending.
