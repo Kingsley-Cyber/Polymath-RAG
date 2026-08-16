@@ -483,3 +483,16 @@ that motivated it and the refactor that implemented it.
   regression (lock added). Entity recall audit recorded honestly:
   GLiNER medium-v2.1 misses lowercase abstract compounds (ownership
   GLiNER_DISCOVERY, unpatched). No new learned model.
+
+## 2026-08-15: E4 — entity recall failure analysis (measurement only)
+
+- Psychology concepts missed by GLiNER medium-v2.1 are invisible at
+  every measured threshold (0.3-0.6) and under all evaluated label
+  schemas and label guidance: ownership GLiNER_DISCOVERY (model
+  proposal surface favors capitalized/concrete spans). Boundary-class
+  failures recorded separately (sibling/adjacent spans). Cyber
+  misses are acronyms/compounds (discovery) plus adjacent-span
+  boundaries.
+- Recommendation: accept the discovery limitation; the only
+  deterministic lever is a future span-normalization study (not
+  attempted). No production change; frozen labels/threshold/model.

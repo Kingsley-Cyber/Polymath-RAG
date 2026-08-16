@@ -1,0 +1,575 @@
+{
+  "phases": {},
+  "raw_proposals": {
+    "psychology": [
+      {
+        "text": "Cognitive Load",
+        "label": "Process",
+        "score": 0.611,
+        "start": 28,
+        "end": 42
+      },
+      {
+        "text": "learner",
+        "label": "Person",
+        "score": 0.847,
+        "start": 113,
+        "end": 120
+      },
+      {
+        "text": "learner",
+        "label": "Person",
+        "score": 0.811,
+        "start": 509,
+        "end": 516
+      },
+      {
+        "text": "metacognitive monitoring",
+        "label": "Process",
+        "score": 0.593,
+        "start": 777,
+        "end": 801
+      },
+      {
+        "text": "learner",
+        "label": "Person",
+        "score": 0.722,
+        "start": 1059,
+        "end": 1066
+      },
+      {
+        "text": "learner",
+        "label": "Person",
+        "score": 0.747,
+        "start": 1270,
+        "end": 1277
+      },
+      {
+        "text": "learner",
+        "label": "Person",
+        "score": 0.826,
+        "start": 1427,
+        "end": 1434
+      },
+      {
+        "text": "cognitive load",
+        "label": "Process",
+        "score": 0.642,
+        "start": 1547,
+        "end": 1561
+      },
+      {
+        "text": "metacognition",
+        "label": "Concept",
+        "score": 0.513,
+        "start": 1670,
+        "end": 1683
+      },
+      {
+        "text": "learner",
+        "label": "Person",
+        "score": 0.849,
+        "start": 1841,
+        "end": 1848
+      },
+      {
+        "text": "learner",
+        "label": "Person",
+        "score": 0.729,
+        "start": 2185,
+        "end": 2192
+      },
+      {
+        "text": "learner",
+        "label": "Person",
+        "score": 0.758,
+        "start": 2484,
+        "end": 2491
+      }
+    ],
+    "cybersecurity": [
+      {
+        "text": "Atlas Identity Gateway",
+        "label": "Organization",
+        "score": 0.503,
+        "start": 55,
+        "end": 77
+      },
+      {
+        "text": "7 August 2026",
+        "label": "TimeReference",
+        "score": 0.654,
+        "start": 82,
+        "end": 95
+      },
+      {
+        "text": "security engineering team",
+        "label": "Organization",
+        "score": 0.603,
+        "start": 101,
+        "end": 126
+      },
+      {
+        "text": "Northstar Digital",
+        "label": "Organization",
+        "score": 0.952,
+        "start": 130,
+        "end": 147
+      },
+      {
+        "text": "Atlas Identity Gateway",
+        "label": "Product",
+        "score": 0.578,
+        "start": 194,
+        "end": 216
+      },
+      {
+        "text": "OAuth 2.0",
+        "label": "Technology",
+        "score": 0.766,
+        "start": 335,
+        "end": 344
+      },
+      {
+        "text": "Meridian Billing API",
+        "label": "Organization",
+        "score": 0.569,
+        "start": 372,
+        "end": 392
+      },
+      {
+        "text": "IP addresses",
+        "label": "Location",
+        "score": 0.647,
+        "start": 433,
+        "end": 445
+      },
+      {
+        "text": "Keycloak 26.2",
+        "label": "Technology",
+        "score": 0.705,
+        "start": 518,
+        "end": 531
+      },
+      {
+        "text": "OpenID Connect",
+        "label": "Technology",
+        "score": 0.804,
+        "start": 544,
+        "end": 558
+      },
+      {
+        "text": "authorization-code flow",
+        "label": "Process",
+        "score": 0.536,
+        "start": 559,
+        "end": 582
+      },
+      {
+        "text": "Meridian Billing API",
+        "label": "Organization",
+        "score": 0.588,
+        "start": 750,
+        "end": 770
+      },
+      {
+        "text": "Fluent Bit",
+        "label": "Organization",
+        "score": 0.599,
+        "start": 884,
+        "end": 894
+      },
+      {
+        "text": "Elasticsearch cluster",
+        "label": "Technology",
+        "score": 0.66,
+        "start": 901,
+        "end": 922
+      },
+      {
+        "text": "Daniel Ortiz",
+        "label": "Person",
+        "score": 0.99,
+        "start": 988,
+        "end": 1000
+      },
+      {
+        "text": "Red Ridge Systems",
+        "label": "Organization",
+        "score": 0.903,
+        "start": 1046,
+        "end": 1063
+      },
+      {
+        "text": "incident report",
+        "label": "Document",
+        "score": 0.706,
+        "start": 1173,
+        "end": 1188
+      },
+      {
+        "text": "mutual TLS",
+        "label": "Technology",
+        "score": 0.618,
+        "start": 1612,
+        "end": 1622
+      },
+      {
+        "text": "DPoP",
+        "label": "Technology",
+        "score": 0.561,
+        "start": 1696,
+        "end": 1700
+      },
+      {
+        "text": "Amazon GuardDuty",
+        "label": "Organization",
+        "score": 0.618,
+        "start": 2324,
+        "end": 2340
+      }
+    ]
+  },
+  "baseline": {
+    "psychology": {
+      "labels": [
+        "Person",
+        "Organization",
+        "Location",
+        "Product",
+        "Technology",
+        "Concept",
+        "Method",
+        "Event",
+        "Document",
+        "Process",
+        "Measurement",
+        "TimeReference"
+      ],
+      "threshold": 0.5,
+      "found_exact": 2,
+      "overlap": 0,
+      "missed": 11,
+      "total": 13,
+      "proposal_count": 12
+    },
+    "cybersecurity": {
+      "labels": [
+        "Person",
+        "Organization",
+        "Location",
+        "Product",
+        "Technology",
+        "Concept",
+        "Method",
+        "Event",
+        "Document",
+        "Process",
+        "Measurement",
+        "TimeReference"
+      ],
+      "threshold": 0.5,
+      "found_exact": 12,
+      "overlap": 0,
+      "missed": 8,
+      "total": 20,
+      "proposal_count": 20
+    }
+  },
+  "missed_entity_table": [
+    {
+      "concept": "metacognitive control",
+      "class": "WRONG_BOUNDARY",
+      "evidence": [
+        {
+          "text": "metacognitive monitoring",
+          "label": "Process",
+          "score": 0.593
+        }
+      ],
+      "document": "metacognition.md"
+    },
+    {
+      "concept": "judgments of learning",
+      "class": "MISSED",
+      "evidence": [],
+      "document": "metacognition.md"
+    },
+    {
+      "concept": "processing fluency",
+      "class": "MISSED",
+      "evidence": [],
+      "document": "metacognition.md"
+    },
+    {
+      "concept": "familiarity effect",
+      "class": "MISSED",
+      "evidence": [],
+      "document": "metacognition.md"
+    },
+    {
+      "concept": "illusion of competence",
+      "class": "MISSED",
+      "evidence": [],
+      "document": "metacognition.md"
+    },
+    {
+      "concept": "working memory",
+      "class": "MISSED",
+      "evidence": [],
+      "document": "metacognition.md"
+    },
+    {
+      "concept": "retrieval practice",
+      "class": "MISSED",
+      "evidence": [],
+      "document": "metacognition.md"
+    },
+    {
+      "concept": "corrective feedback",
+      "class": "MISSED",
+      "evidence": [],
+      "document": "metacognition.md"
+    },
+    {
+      "concept": "self-regulated learning",
+      "class": "MISSED",
+      "evidence": [],
+      "document": "metacognition.md"
+    },
+    {
+      "concept": "local regulation",
+      "class": "MISSED",
+      "evidence": [],
+      "document": "metacognition.md"
+    },
+    {
+      "concept": "global regulation",
+      "class": "MISSED",
+      "evidence": [],
+      "document": "metacognition.md"
+    },
+    {
+      "concept": "AWS",
+      "class": "MISSED",
+      "evidence": [],
+      "document": "metacognition_copy.md"
+    },
+    {
+      "concept": "CloudTrail",
+      "class": "MISSED",
+      "evidence": [],
+      "document": "metacognition_copy.md"
+    },
+    {
+      "concept": "HTTP Authorization header",
+      "class": "WRONG_BOUNDARY",
+      "evidence": [
+        {
+          "text": "authorization-code flow",
+          "label": "Process",
+          "score": 0.536
+        }
+      ],
+      "document": "metacognition_copy.md"
+    },
+    {
+      "concept": "Elasticsearch",
+      "class": "WRONG_BOUNDARY",
+      "evidence": [
+        {
+          "text": "Elasticsearch cluster",
+          "label": "Technology",
+          "score": 0.66
+        }
+      ],
+      "document": "metacognition_copy.md"
+    },
+    {
+      "concept": "site reliability engineer",
+      "class": "WRONG_BOUNDARY",
+      "evidence": [
+        {
+          "text": "security engineering team",
+          "label": "Organization",
+          "score": 0.603
+        }
+      ],
+      "document": "metacognition_copy.md"
+    },
+    {
+      "concept": "bearer token",
+      "class": "MISSED",
+      "evidence": [],
+      "document": "metacognition_copy.md"
+    },
+    {
+      "concept": "STRIDE",
+      "class": "MISSED",
+      "evidence": [],
+      "document": "metacognition_copy.md"
+    },
+    {
+      "concept": "Security Architecture Council",
+      "class": "WRONG_BOUNDARY",
+      "evidence": [
+        {
+          "text": "security engineering team",
+          "label": "Organization",
+          "score": 0.603
+        }
+      ],
+      "document": "metacognition_copy.md"
+    }
+  ],
+  "schema_A_generic": {
+    "labels": [
+      "Concept",
+      "Method",
+      "Process",
+      "Technology",
+      "Event"
+    ],
+    "threshold": 0.5,
+    "found_exact": 2,
+    "overlap": 0,
+    "missed": 11,
+    "total": 13,
+    "proposal_count": 5
+  },
+  "schema_B_psych_specific": {
+    "labels": [
+      "Cognitive Process",
+      "Learning Strategy",
+      "Metacognitive Concept",
+      "Psychological Mechanism",
+      "Mental State"
+    ],
+    "threshold": 0.5,
+    "found_exact": 2,
+    "overlap": 0,
+    "missed": 11,
+    "total": 13,
+    "proposal_count": 3
+  },
+  "schema_C_mixed": {
+    "labels": [
+      "Concept",
+      "Process",
+      "Method",
+      "Theory",
+      "Strategy",
+      "Cognitive Function"
+    ],
+    "threshold": 0.5,
+    "found_exact": 0,
+    "overlap": 2,
+    "missed": 11,
+    "total": 13,
+    "proposal_count": 6
+  },
+  "threshold_sweep": {
+    "0.3": {
+      "labels": [
+        "Person",
+        "Organization",
+        "Location",
+        "Product",
+        "Technology",
+        "Concept",
+        "Method",
+        "Event",
+        "Document",
+        "Process",
+        "Measurement",
+        "TimeReference"
+      ],
+      "threshold": 0.3,
+      "found_exact": 5,
+      "overlap": 2,
+      "missed": 6,
+      "total": 13,
+      "proposal_count": 31
+    },
+    "0.4": {
+      "labels": [
+        "Person",
+        "Organization",
+        "Location",
+        "Product",
+        "Technology",
+        "Concept",
+        "Method",
+        "Event",
+        "Document",
+        "Process",
+        "Measurement",
+        "TimeReference"
+      ],
+      "threshold": 0.4,
+      "found_exact": 3,
+      "overlap": 2,
+      "missed": 8,
+      "total": 13,
+      "proposal_count": 22
+    },
+    "0.5": {
+      "labels": [
+        "Person",
+        "Organization",
+        "Location",
+        "Product",
+        "Technology",
+        "Concept",
+        "Method",
+        "Event",
+        "Document",
+        "Process",
+        "Measurement",
+        "TimeReference"
+      ],
+      "threshold": 0.5,
+      "found_exact": 2,
+      "overlap": 0,
+      "missed": 11,
+      "total": 13,
+      "proposal_count": 12
+    },
+    "0.6": {
+      "labels": [
+        "Person",
+        "Organization",
+        "Location",
+        "Product",
+        "Technology",
+        "Concept",
+        "Method",
+        "Event",
+        "Document",
+        "Process",
+        "Measurement",
+        "TimeReference"
+      ],
+      "threshold": 0.6,
+      "found_exact": 1,
+      "overlap": 0,
+      "missed": 12,
+      "total": 13,
+      "proposal_count": 10
+    }
+  },
+  "guided_labels": {
+    "labels": [
+      "Psychological concept including cognitive processes, learning mechanisms, mental strategies, self-regulation concepts",
+      "Concept",
+      "Method",
+      "Process"
+    ],
+    "threshold": 0.5,
+    "found_exact": 2,
+    "overlap": 1,
+    "missed": 10,
+    "total": 13,
+    "proposal_count": 9
+  }
+}
