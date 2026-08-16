@@ -59,6 +59,55 @@ _PREPOSITIONS = {"to", "with", "of", "into", "from", "in", "on", "onto",
 # (no MENTION_ONLY definites like "the workflow" anchoring a relation).
 _REFERENTIAL_FRAMES = {"association"}
 
+# I3R-R3: bounded local definite-description resolver. Only definite
+# descriptions of 1-3 content words are considered; resolution is
+# alias-only (reuses the existing entity identity — never creates a
+# canonical entity named "company"/"gateway").
+_DEFINITE_DESCRIPTION_RE = re.compile(
+    r"\bthe\s+([a-z][a-z0-9]*(?:\s+[a-z0-9]+){0,2})\b", re.IGNORECASE)
+_ORG_DESCRIPTIONS = {"company", "firm", "business", "organization",
+                     "vendor", "retailer", "startup", "provider",
+                     "operator", "maker"}
+
+
+def _resolve_definite_description(
+    sentence: str,
+    rel_ev_start: int,
+    left_bound: int,
+    history: list[EntitySpan],
+) -> EntitySpan | None:
+    """I3R-R3: resolve 'the X' immediately left of a trigger against the
+    document entity history.
+
+    Rules (bounded, deterministic, abstain on ambiguity):
+      1. head match: description's last word equals the last word of
+         exactly ONE history entity's normalized surface;
+      2. org description: description's last word is a closed-class
+         org term and exactly ONE history entity has core_type
+         Organization.
+    Anything else (zero or multiple matches) abstains."""
+    window = sentence[left_bound:rel_ev_start]
+    matches = list(_DEFINITE_DESCRIPTION_RE.finditer(window))
+    if not matches:
+        return None
+    desc = matches[-1].group(1).lower().strip()
+    words = desc.split()
+    head = words[-1]
+    candidates: list[EntitySpan] = []
+    if head in _ORG_DESCRIPTIONS:
+        orgs = [e for e in history if e.core_type.value == "Organization"]
+        if len(orgs) == 1:
+            return orgs[0]
+        if orgs:
+            return None  # ambiguous
+    for e in history:
+        surf_words = e.text.lower().split()
+        if surf_words and surf_words[-1] == head:
+            candidates.append(e)
+    if len(candidates) == 1:
+        return candidates[0]
+    return None
+
 
 @dataclass(frozen=True)
 class SentenceSlice:
@@ -225,6 +274,15 @@ def build_candidates(
             if not subjects or not objects:
                 subjects = left[:1]
                 objects = right[:1]
+
+            if not subjects and objects and doc_entities_history:
+                # I3R-R3: bounded local definite-description resolution
+                # for the subject slot ('The gateway uses Envoy Proxy'
+                # after 'Meridian API Gateway routes traffic').
+                resolved = _resolve_definite_description(
+                    sentence, rel_ev_start, left_bound, doc_entities_history)
+                if resolved is not None:
+                    subjects = [resolved]
 
             if not subjects or not objects:
                 # fail-closed: no unambiguous surface binding

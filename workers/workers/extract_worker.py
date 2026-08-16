@@ -315,7 +315,13 @@ def process_event(conn: Connection, event: dict) -> None:
         gliner.verify_pin()
         audit: list[dict] = []
 
+        # I3R-R3: two-pass extraction — pass A gathers the full document
+        # entity stream (the bounded local-reference resolver needs
+        # earlier-sentence history), pass B builds candidates with that
+        # history. Extraction candidates remain derived from the current
+        # document proposal stream only.
         try:
+            ordered_slices: list[tuple[dict, SentenceSlice]] = []
             for row in child_chunks:
                 entities, rejected = _entity_spans(
                     gliner, row["text"], row["chunk_id"], doc_id, profile_dict
@@ -327,27 +333,34 @@ def process_event(conn: Connection, event: dict) -> None:
                 sentences = _sentences_of(row["text"])
                 slices = _slices(sentences, entities, evidence, corpus_id)
                 for sl in slices:
-                    candidates = build_candidates(
-                        [sl],
-                        doc_id=doc_id,
-                        corpus_id=corpus_id,
-                        ontology_profile=profile_dict.get("profile_id", "core"),
-                        extractor_version=EXTRACTOR_VERSION,
-                        rule_pack=pack,
-                    )
-                    for candidate in candidates:
-                        decision = compile_relation(candidate, sl.parse, pack)
-                        if decision.decision in ("ACCEPT", "QUALIFY") and decision.fact:
-                            _persist_decision(conn, row, candidate, decision)
-                        else:
-                            audit.append({
-                                "decision": decision.decision,
-                                "reason": decision.reason,
-                                "alternatives": decision.alternatives,
-                                "subject": candidate.subject.span.text,
-                                "object": candidate.object.span.text,
-                                "evidence_class": candidate.evidence.evidence_class,
-                            })
+                    ordered_slices.append((row, sl))
+
+            doc_entity_history: list[EntitySpan] = []
+            for row, sl in ordered_slices:
+                candidates = build_candidates(
+                    [sl],
+                    doc_id=doc_id,
+                    corpus_id=corpus_id,
+                    ontology_profile=profile_dict.get("profile_id", "core"),
+                    extractor_version=EXTRACTOR_VERSION,
+                    rule_pack=pack,
+                    doc_entities_history=doc_entity_history,
+                )
+                doc_entity_history.extend(
+                    sorted(sl.entities, key=lambda e: (e.start, e.end)))
+                for candidate in candidates:
+                    decision = compile_relation(candidate, sl.parse, pack)
+                    if decision.decision in ("ACCEPT", "QUALIFY") and decision.fact:
+                        _persist_decision(conn, row, candidate, decision)
+                    else:
+                        audit.append({
+                            "decision": decision.decision,
+                            "reason": decision.reason,
+                            "alternatives": decision.alternatives,
+                            "subject": candidate.subject.span.text,
+                            "object": candidate.object.span.text,
+                            "evidence_class": candidate.evidence.evidence_class,
+                        })
         finally:
             gliner.close()
 
