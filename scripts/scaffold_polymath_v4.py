@@ -467,6 +467,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/contracts/test_query_policy.py", "py", None),
     ("docs/wiki/experiments/0005-gliner-label-vocab-probe.md", "md", None),
     ("docs/wiki/work-log/2026-08-16-temporal-extraction-architecture.md", "md", None),
+    ("docs/wiki/work-log/2026-08-16-temporal-interpretation-deferred.md", "md", None),
     ("eval/i4/matrix.py", "py", None),
     ("eval/i4/capability_matrix.json", "json", None),
     ("eval/i4/CAPABILITY_MATRIX.md", "md", None),

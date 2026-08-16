@@ -648,3 +648,15 @@ that motivated it and the refactor that implemented it.
 - I4R staged repair plan paused at A (implemented, flag-gated OFF,
   unmeasured) pending explicit authorization; no acceptance test run.
   (work log `2026-08-16-temporal-extraction-architecture.md`)
+
+## 2026-08-16: TEMPORAL-INTERPRETATION-V1 recorded as deferred gate
+
+- Alignment status: complete-with-one-deferred-durability-gap.
+  Version attribution exists (contract identity in receipts);
+  first-class interpretation versioning — (source_content_version,
+  extraction_contract_hash) = interpretation owning mentions/entities/
+  facts/evidence/canonicalization/projection eligibility, with
+  promotion selecting the current interpretation — is a NAMED
+  DEFERRED production gate, required before the first real
+  model/query-policy upgrade. Not built now to protect I4R.
+  (work log `2026-08-16-temporal-interpretation-deferred.md`)
