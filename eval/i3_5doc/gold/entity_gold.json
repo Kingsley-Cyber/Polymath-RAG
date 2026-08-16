@@ -1,0 +1,72 @@
+{
+  "note": "I3 strict entity gold. Authored BEFORE ingestion. Only spans whose type is unambiguous under the frozen production schema (12 core types + profile modules) are recorded; genuinely ambiguous spans carry an explicit allowed type set. Admission expectation follows entity-admission-v1.1 (GLOBAL/CORPUS_SCOPED/DOCUMENT_SCOPED/MENTION_ONLY).",
+  "contracts": {
+    "gl": {"model": "urchade/gliner_medium-v2.1", "revision": "40ec419335d09393f298636f471328b722c6da9e", "threshold": 0.5},
+    "admission": "entity-admission-v1.1",
+    "core_types": ["Person","Organization","Location","Product","Technology","Concept","Method","Event","Document","Process","Measurement","TimeReference"]
+  },
+  "documents": {
+    "01_harborpay_oauth_incident.md": {
+      "entities": [
+        {"surface": "HarborPay", "normalized": "harborpay", "label": "Organization", "admission": "GLOBAL"},
+        {"surface": "Meridian API Gateway", "normalized": "meridian api gateway", "label": ["Product", "Technology"], "admission": "GLOBAL"},
+        {"surface": "Envoy Proxy", "normalized": "envoy proxy", "label": ["Product", "Technology"], "admission": "GLOBAL"},
+        {"surface": "Splunk Cloud", "normalized": "splunk cloud", "label": ["Product", "Technology"], "admission": "GLOBAL"},
+        {"surface": "Okta Workforce Identity", "normalized": "okta workforce identity", "label": ["Product", "Technology"], "admission": "GLOBAL"},
+        {"surface": "Settlement API", "normalized": "settlement api", "label": ["Technology", "Product"], "admission": "GLOBAL"},
+        {"surface": "OAuth 2.0", "normalized": "oauth 2.0", "label": ["Technology", "Method"], "admission": "GLOBAL"},
+        {"surface": "Maya Chen", "normalized": "maya chen", "label": "Person", "admission": "GLOBAL"},
+        {"surface": "DPoP", "normalized": "dpop", "label": ["Technology", "Method"], "admission": "GLOBAL"},
+        {"surface": "Token Handling Standard", "normalized": "token handling standard", "label": ["Document", "Method"], "admission": "GLOBAL"},
+        {"surface": "7 August 2026", "normalized": "7 august 2026", "label": "TimeReference", "admission": "DOCUMENT_SCOPED"}
+      ]
+    },
+    "02_monitoring_and_learning.md": {
+      "entities": [],
+      "note": "No unambiguous entity spans: the document contains only abstract lowercase concepts, which the frozen schema does not assign a single unambiguous type. All conceptual content is covered by text-concept gold (separate); absence of graph entities here is NOT an extraction failure."
+    },
+    "03_northwind_growth_review.md": {
+      "entities": [
+        {"surface": "Northwind Outfitters", "normalized": "northwind outfitters", "label": "Organization", "admission": "GLOBAL"},
+        {"surface": "Shopify Plus", "normalized": "shopify plus", "label": ["Product", "Technology"], "admission": "GLOBAL"},
+        {"surface": "Stripe", "normalized": "stripe", "label": ["Product", "Technology"], "admission": "GLOBAL"},
+        {"surface": "Klaviyo", "normalized": "klaviyo", "label": ["Product", "Technology"], "admission": "GLOBAL"},
+        {"surface": "Meta Ads", "normalized": "meta ads", "label": ["Product", "Technology"], "admission": "GLOBAL"},
+        {"surface": "Priya Raman", "normalized": "priya raman", "label": "Person", "admission": "GLOBAL"},
+        {"surface": "conversion rate", "normalized": "conversion rate", "label": "Measurement", "admission": "MENTION_ONLY"},
+        {"surface": "average order value", "normalized": "average order value", "label": "Measurement", "admission": "MENTION_ONLY"},
+        {"surface": "customer acquisition cost", "normalized": "customer acquisition cost", "label": "Measurement", "admission": "MENTION_ONLY"},
+        {"surface": "contribution margin", "normalized": "contribution margin", "label": "Measurement", "admission": "MENTION_ONLY"},
+        {"surface": "repeat-purchase rate", "normalized": "repeat purchase rate", "label": "Measurement", "admission": "MENTION_ONLY"},
+        {"surface": "second quarter", "normalized": "second quarter", "label": "TimeReference", "admission": "DOCUMENT_SCOPED"}
+      ]
+    },
+    "04_orion_event_pipeline.md": {
+      "entities": [
+        {"surface": "Orion Analytics", "normalized": "orion analytics", "label": "Organization", "admission": "GLOBAL"},
+        {"surface": "Order Event Router", "normalized": "order event router", "label": ["Product", "Technology"], "admission": "GLOBAL"},
+        {"surface": "Atlas Commerce Platform", "normalized": "atlas commerce platform", "label": ["Product", "Technology"], "admission": "GLOBAL"},
+        {"surface": "Apache Kafka", "normalized": "apache kafka", "label": "Technology", "admission": "GLOBAL"},
+        {"surface": "PostgreSQL", "normalized": "postgresql", "label": "Technology", "admission": "GLOBAL"},
+        {"surface": "Redis", "normalized": "redis", "label": "Technology", "admission": "GLOBAL"},
+        {"surface": "Kubernetes", "normalized": "kubernetes", "label": "Technology", "admission": "GLOBAL"},
+        {"surface": "Reliable Event Processing Runbook", "normalized": "reliable event processing runbook", "label": "Document", "admission": "GLOBAL"},
+        {"surface": "11 August 2026", "normalized": "11 august 2026", "label": "TimeReference", "admission": "DOCUMENT_SCOPED"}
+      ]
+    },
+    "05_warehouse_automation_transcript.md": {
+      "entities": [
+        {"surface": "Summit Fulfillment", "normalized": "summit fulfillment", "label": "Organization", "admission": "GLOBAL"},
+        {"surface": "Locus Robotics", "normalized": "locus robotics", "label": "Organization", "admission": "GLOBAL"},
+        {"surface": "Reno Distribution Center", "normalized": "reno distribution center", "label": "Location", "admission": "GLOBAL"},
+        {"surface": "Manhattan Active Warehouse Management", "normalized": "manhattan active warehouse management", "label": ["Product", "Technology"], "admission": "GLOBAL"},
+        {"surface": "Elena Torres", "normalized": "elena torres", "label": "Person", "admission": "GLOBAL"},
+        {"surface": "Zebra", "normalized": "zebra", "label": "Organization", "admission": "GLOBAL"},
+        {"surface": "Zebra handheld scanners", "normalized": "zebra handheld scanners", "label": ["Product", "Technology"], "admission": "GLOBAL"},
+        {"surface": "units picked per hour", "normalized": "units picked per hour", "label": "Measurement", "admission": "MENTION_ONLY"},
+        {"surface": "packing-station utilization", "normalized": "packing station utilization", "label": "Measurement", "admission": "MENTION_ONLY"},
+        {"surface": "inventory accuracy", "normalized": "inventory accuracy", "label": "Measurement", "admission": "MENTION_ONLY"}
+      ]
+    }
+  }
+}

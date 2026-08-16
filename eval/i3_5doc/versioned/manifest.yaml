@@ -1,0 +1,1 @@
+{"version": 1, "corpus": {"corpus_id": "i3-five-doc-v1", "title": "I3 versioning controlled copy", "description": "single-document versioning check"}, "defaults": {"language": "en", "source_tier": "primary", "enabled": true}, "documents": [{"source": "./03_northwind_growth_review.md"}]}

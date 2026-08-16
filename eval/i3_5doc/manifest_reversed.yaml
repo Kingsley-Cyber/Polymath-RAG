@@ -1,0 +1,18 @@
+version: 1
+
+corpus:
+  corpus_id: i3-five-doc-v1
+  title: I3 Five-Document E2E Acceptance (reversed submission order)
+  description: "Order-independence variant: identical documents, reversed canonical order."
+
+defaults:
+  language: en
+  source_tier: primary
+  enabled: true
+
+documents:
+  - source: ./corpus/05_warehouse_automation_transcript.md
+  - source: ./corpus/03_northwind_growth_review.md
+  - source: ./corpus/01_harborpay_oauth_incident.md
+  - source: ./corpus/04_orion_event_pipeline.md
+  - source: ./corpus/02_monitoring_and_learning.md

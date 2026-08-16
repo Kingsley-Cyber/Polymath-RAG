@@ -1,0 +1,96 @@
+{
+  "note": "I3 MUST-NOT-ASSERT gold. Authored BEFORE ingestion. Every fixture is a hard failure if it appears as a positive graph fact. Compiled from the frozen corpus negative controls plus explicit plan requirements.",
+  "fixtures": [
+    {
+      "id": "N01",
+      "doc": "01_harborpay_oauth_incident.md",
+      "description": "HarborPay must not become Maya Chen's role",
+      "check": "no has_role fact with object HarborPay (any subject)",
+      "kind": "role_organization_confusion"
+    },
+    {
+      "id": "N02",
+      "doc": "01_harborpay_oauth_incident.md",
+      "description": "Okta Workforce Identity was NOT compromised",
+      "check": "no positive fact asserting compromise/damage/breach of Okta Workforce Identity (any predicate)",
+      "kind": "negation_gate"
+    },
+    {
+      "id": "N03",
+      "doc": "01_harborpay_oauth_incident.md",
+      "description": "DPoP was evaluated but NOT deployed",
+      "check": "no positive uses/deploys fact with object DPoP",
+      "kind": "modality_gate"
+    },
+    {
+      "id": "N04",
+      "doc": "01_harborpay_oauth_incident.md",
+      "description": "Settlement API / Meridian API Gateway proximity must not produce arbitrary relations",
+      "check": "no associated_with/similar_to/part_of fact pairing the two without in-sentence evidence",
+      "kind": "proximity_noise"
+    },
+    {
+      "id": "N05",
+      "doc": "03_northwind_growth_review.md",
+      "description": "Priya Raman must not have_role Northwind Outfitters",
+      "check": "no has_role fact with subject Priya Raman and object Northwind Outfitters",
+      "kind": "role_organization_confusion"
+    },
+    {
+      "id": "N06",
+      "doc": "04_orion_event_pipeline.md",
+      "description": "Kafka was NOT the root cause",
+      "check": "no causes fact with subject Apache Kafka (or Kafka-related span)",
+      "kind": "negation_gate"
+    },
+    {
+      "id": "N07",
+      "doc": "04_orion_event_pipeline.md",
+      "description": "PostgreSQL was NOT the root cause",
+      "check": "no causes fact with subject PostgreSQL",
+      "kind": "negation_gate"
+    },
+    {
+      "id": "N08",
+      "doc": "04_orion_event_pipeline.md",
+      "description": "Redis was NOT the root cause",
+      "check": "no causes fact with subject Redis",
+      "kind": "negation_gate"
+    },
+    {
+      "id": "N09",
+      "doc": "04_orion_event_pipeline.md",
+      "description": "Kubernetes was NOT the root cause",
+      "check": "no causes fact with subject Kubernetes",
+      "kind": "negation_gate"
+    },
+    {
+      "id": "N10",
+      "doc": "05_warehouse_automation_transcript.md",
+      "description": "robots were NOT responsible for the inventory errors",
+      "check": "no causes fact with a robot subject and inventory-error object",
+      "kind": "negation_gate"
+    },
+    {
+      "id": "N11",
+      "doc": "05_warehouse_automation_transcript.md",
+      "description": "Locus Robotics must not be represented as removed/replaced",
+      "check": "no transforms_into/removal fact targeting Locus Robotics",
+      "kind": "negation_gate"
+    },
+    {
+      "id": "N12",
+      "doc": "05_warehouse_automation_transcript.md",
+      "description": "Elena Torres must not have_role Summit Fulfillment",
+      "check": "no has_role fact with subject Elena Torres and object Summit Fulfillment",
+      "kind": "role_organization_confusion"
+    },
+    {
+      "id": "N13",
+      "doc": "02_monitoring_and_learning.md",
+      "description": "No speculative knowledge assertions in psych prose",
+      "check": "no causes/enables/influences fact with concept endpoints fabricated from generic sentences",
+      "kind": "generic_concept_noise"
+    }
+  ]
+}

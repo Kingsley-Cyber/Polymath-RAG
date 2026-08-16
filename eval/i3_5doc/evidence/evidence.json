@@ -1,0 +1,1220 @@
+{
+  "phases": {
+    "freeze": {
+      "corpus_hashes": {
+        "corpus/01_harborpay_oauth_incident.md": "270ded79fc3ab4565575b6180bad4947ec91a7f3178ac9d1ca3815aced896837",
+        "corpus/02_monitoring_and_learning.md": "a5d32bc103962d3bb0e9751d9537d4df07da7090f670405483cf26dec4465ca5",
+        "corpus/03_northwind_growth_review.md": "9fd6ba833aa175dde6af67482ca02649f105199d8930b0042a5063cd2c55eee0",
+        "corpus/04_orion_event_pipeline.md": "df93cb85066a2a745a5fa2e6e7dfb1349bd32319227efbef4f7f6fab7b187c36",
+        "corpus/05_warehouse_automation_transcript.md": "4931d365b40a05d77ed928f562af775b3888aa7568d37e9e18d659f430497950"
+      },
+      "gold_hashes": {
+        "gold/entity_gold.json": "05516793c898c9855edcc7a0ec977864906ac78cefb06c19155abe045b100c2a",
+        "gold/fact_gold.json": "22ff71991308f07b791120b8ee059efc31a0e3c68da581dc6901ed4be836dfd0",
+        "gold/must_not_gold.json": "0db25e7605508a615294aa9730adb503f2d8cbdb8e5ac17301f9906092733421",
+        "gold/text_concept_gold.json": "7446f56c2f0379cbff2c885b02b23cf0be67bcf00923408d1b6b50ccb8e821db"
+      },
+      "manifest_id": "manifest_62574af466e7ade7174bb227c64bfbd61ac5ce48099436a1bcedb0a0178bdd01",
+      "manifest_sha256": "2d69e5c69584d233fe7013264b88884e42312420347eec5211280e152164cfea",
+      "documents": 5,
+      "contracts": {
+        "shared/polymath_shared/rulepack/core-predicates-v1.1.0.yaml": "1e3e92fd40ec3845b954f4765fded1862625b2051fa98f5efbb2a876f640f1ff",
+        "shared/polymath_shared/entity_admission.py": "bfc6b19ea8c97e4deb543bc6d6e3703389ac6e92deddaa2343fdb1cac3aebca8",
+        "shared/polymath_shared/endpoint_binding.py": "49c6f9c83701c2ff999039853a7336d07c8638bc3230b451624beaea0258cfd1",
+        "shared/polymath_shared/neo4j_eligibility.py": "0e30962ca9361251cfdb91af7f00ffb05c3b3de7044b0220c79db8127c07fe96",
+        "shared/polymath_shared/retrieval_summaries.py": "576aa855bd2a8d41b50b84bb22fdd9b46d2b51af146239445916ce53e68d9db6",
+        "shared/polymath_shared/rulepack/compiler.py": "247ecd694fcb16ec20f38dbebfd4c12bf86e367c11fe08831eace743aacd1389",
+        "shared/polymath_shared/rulepack/negation.py": "3a8077b12f666acb9e56c73877a07d9d8a12968aa0cd51e625ab7eae28edc9ba",
+        "workers/workers/profile_router.py": "1debc4ccf3d4588acfdcfe705ed6ced8d79f1abc0852a2fa76483a6782cdc2c4",
+        "workers/workers/document_profile_builder.py": "8380a185b508ecf122bd6a7af2e2bbaa7a0f8cc44c3337f425ecbbaebfcdfc80",
+        "shared/polymath_shared/manifest.py": "8951dcec095fbc00e1875999a3f69b8c4e799d18df87bcced5b06a34268a6b83",
+        "shared/polymath_shared/pass1.py": "10c523e89d273930cb2a9eb24ad86b3c82045f2313b03a848d751585f6bd8f4c",
+        "shared/polymath_shared/hybrid.py": "da69181add6d02242b25c21026d6b0cf09979591ac9e7d3490d772f044d241ad",
+        "shared/polymath_shared/retrieval_modes.py": "53b57640b39f467112036185c3fe2cb82e833ceac5557200e7663ed896eb42dd",
+        "compiled_lexical_sha256": "5c58adbd3cfc18e2e8b28245d5166dbb2920a33210ca7ccc0051231b421c8806",
+        "resource_contract_id": "03a513ece6da32b243289fa9b9ef9dfe8e21cec4ff9f0435678ad4425021c150",
+        "rule_pack_version": "1.0.1"
+      }
+    },
+    "entities": {
+      "aggregate": {
+        "tp": 4,
+        "boundary": 0,
+        "wrong_type": 1,
+        "fp": 4,
+        "fn": 37,
+        "gold": 42,
+        "ownership": {
+          "DISCOVERY": 37,
+          "BOUNDARY": 0,
+          "TYPING": 1,
+          "ADMISSION": 0,
+          "CANONICALIZATION": 0,
+          "EPHEMERAL_NO_FACT": 0
+        },
+        "precision": 0.444,
+        "recall": 0.098,
+        "f1": 0.16
+      },
+      "per_document": {
+        "01_harborpay_oauth_incident.md": {
+          "tp": 1,
+          "fp": 1,
+          "fn": 10,
+          "wrong_type": 0,
+          "boundary": 0,
+          "precision": 0.5,
+          "recall": 0.091,
+          "f1": 0.154,
+          "details": [
+            {
+              "gold": "HarborPay",
+              "result": "TP",
+              "type": "Organization",
+              "class": "GLOBAL"
+            },
+            {
+              "gold": "Meridian API Gateway",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "Envoy Proxy",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "Splunk Cloud",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "Okta Workforce Identity",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "Settlement API",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "OAuth 2.0",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "Maya Chen",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "DPoP",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "Token Handling Standard",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "7 August 2026",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "got": "Authorization headers",
+              "type": "Technology",
+              "class": "GLOBAL",
+              "result": "FP"
+            }
+          ]
+        },
+        "02_monitoring_and_learning.md": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "wrong_type": 0,
+          "boundary": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "details": []
+        },
+        "03_northwind_growth_review.md": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 12,
+          "wrong_type": 0,
+          "boundary": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "details": [
+            {
+              "gold": "Northwind Outfitters",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "Shopify Plus",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "Stripe",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "Klaviyo",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "Meta Ads",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "Priya Raman",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "conversion rate",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "average order value",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "customer acquisition cost",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "contribution margin",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "repeat-purchase rate",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "second quarter",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            }
+          ]
+        },
+        "04_orion_event_pipeline.md": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 9,
+          "wrong_type": 0,
+          "boundary": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "details": [
+            {
+              "gold": "Orion Analytics",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "Order Event Router",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "Atlas Commerce Platform",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "Apache Kafka",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "PostgreSQL",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "Redis",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "Kubernetes",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "Reliable Event Processing Runbook",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "11 August 2026",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            }
+          ]
+        },
+        "05_warehouse_automation_transcript.md": {
+          "tp": 3,
+          "fp": 3,
+          "fn": 6,
+          "wrong_type": 1,
+          "boundary": 0,
+          "precision": 0.429,
+          "recall": 0.333,
+          "f1": 0.375,
+          "details": [
+            {
+              "gold": "Summit Fulfillment",
+              "result": "TP",
+              "type": "Organization",
+              "class": "GLOBAL"
+            },
+            {
+              "gold": "Locus Robotics",
+              "result": "TP",
+              "type": "Organization",
+              "class": "GLOBAL"
+            },
+            {
+              "gold": "Reno Distribution Center",
+              "result": "TP",
+              "type": "Location",
+              "class": "GLOBAL"
+            },
+            {
+              "gold": "Manhattan Active Warehouse Management",
+              "result": "WRONG_TYPE",
+              "got_type": "Organization",
+              "allowed": [
+                "Product",
+                "Technology"
+              ]
+            },
+            {
+              "gold": "Elena Torres",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "Zebra",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "Zebra handheld scanners",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "units picked per hour",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "packing-station utilization",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "gold": "inventory accuracy",
+              "result": "FN",
+              "owner": "DISCOVERY"
+            },
+            {
+              "got": "autonomous mobile robots",
+              "type": "Technology",
+              "class": "CORPUS_SCOPED",
+              "result": "FP"
+            },
+            {
+              "got": "pilot",
+              "type": "Event",
+              "class": "MENTION_ONLY",
+              "result": "FP"
+            },
+            {
+              "got": "workflow",
+              "type": "Process",
+              "class": "MENTION_ONLY",
+              "result": "FP"
+            }
+          ]
+        }
+      },
+      "durable_universe": {
+        "note": "production persists entities ONLY as fact endpoints; GLiNER proposals without an accepted fact are ephemeral by design",
+        "fact_endpoint_rows": 9,
+        "canonical_entities": [
+          {
+            "canonical_id": "cent_bd7fc0f7924d9530200bfb3b718efd8dbe7c91cc6517c5a3fe1b450f8d50b4a7",
+            "canonical_type": "Location",
+            "normalized_surface": "reno distribution center",
+            "local_entity_id": "ent_03d400d3993fae3caad8f621ac832e9f28c269f9413026cceca50bcadce6fd84"
+          },
+          {
+            "canonical_id": "cent_5e2b66e0893d193652d14a27ba4e8c836dc9fd6990e62b5b89c325f05212f01d",
+            "canonical_type": "Organization",
+            "normalized_surface": "locus robotics",
+            "local_entity_id": "ent_be615bc3192ab4b71bd4fd6f0face43dda236d4d930d498e0bf6b8099b507f4b"
+          },
+          {
+            "canonical_id": "cent_36644ba03a9a5a9221839506dc56c2669f70d8c778d19470fe0ad7f3d9af805d",
+            "canonical_type": "Organization",
+            "normalized_surface": "summit fulfillment",
+            "local_entity_id": "ent_c1237c8cf9345b2db9a299b0d16d9764e60a1cffaf5018157ce83837294ebde3"
+          },
+          {
+            "canonical_id": "cent_43f77526b87a1287394aecd1fc2f88ff74c59b04baa5722b38a5a276042be873",
+            "canonical_type": "Organization",
+            "normalized_surface": "manhattan active warehouse management",
+            "local_entity_id": "ent_ef41c5a455c59523796a722761e8cc47a6dd4fd70ced2e7cdcf784089354f7e5"
+          },
+          {
+            "canonical_id": "cent_fc314bf7481450e8d6a846d60983e1f6b25d598943e141f6a6bdc2f198d7225b",
+            "canonical_type": "Organization",
+            "normalized_surface": "harborpay",
+            "local_entity_id": "ent_fb8ed43ef275fca153c5f20635911983f8ae15c4a7586e57a9526391e3c29b6b"
+          },
+          {
+            "canonical_id": "cent_cc3b410aea85c8bb6bf2b1d110a70b36d90cc7d64aca9dc2f2662035bd8a16cc",
+            "canonical_type": "Technology",
+            "normalized_surface": "authorization headers",
+            "local_entity_id": "ent_1f2e1b797518faf9ece2c3c55a9a277e367c413525b46e8a8e12e3c3aac43ed2"
+          },
+          {
+            "canonical_id": "cent_e5dfa22f0b530844fdc69d45616e6a54dd05d290f37798daf3f5055836af4005",
+            "canonical_type": "Technology",
+            "normalized_surface": "autonomous mobile robots",
+            "local_entity_id": "entc_63a6303ef268f4dac188b256847f8a777d06585245615ac8286c91fa31d6f9d9"
+          }
+        ]
+      }
+    },
+    "facts": {
+      "aggregate": {
+        "tp": 0,
+        "fp": 8,
+        "fn": 3,
+        "wrong_pred": 0,
+        "wrong_dir": 0,
+        "ownership": {
+          "NO_ENDPOINT": 3
+        },
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "per_document": {
+        "01_harborpay_oauth_incident.md": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 3,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "details": [
+            {
+              "gold": "HarborPay uses Okta Workforce Identity",
+              "result": "FN",
+              "owner": "NO_ENDPOINT"
+            },
+            {
+              "gold": "Meridian API Gateway uses Envoy Proxy",
+              "result": "FN",
+              "owner": "NO_ENDPOINT"
+            },
+            {
+              "gold": "HarborPay depends_on mutual TLS",
+              "result": "FN",
+              "owner": "NO_ENDPOINT"
+            },
+            {
+              "got": "HarborPay uses Authorization headers",
+              "result": "FP",
+              "decision": "ACCEPT",
+              "predicate": "uses"
+            }
+          ],
+          "graph_facts_found": 1
+        },
+        "02_monitoring_and_learning.md": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "details": [],
+          "graph_facts_found": 0
+        },
+        "03_northwind_growth_review.md": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "details": [],
+          "graph_facts_found": 0
+        },
+        "04_orion_event_pipeline.md": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "details": [],
+          "graph_facts_found": 0
+        },
+        "05_warehouse_automation_transcript.md": {
+          "tp": 0,
+          "fp": 7,
+          "fn": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "details": [
+            {
+              "got": "Reno Distribution Center associated_with workflow",
+              "result": "FP",
+              "decision": "ACCEPT",
+              "predicate": "associated_with"
+            },
+            {
+              "got": "Reno Distribution Center associated_with Manhattan Active Warehouse Management",
+              "result": "FP",
+              "decision": "ACCEPT",
+              "predicate": "associated_with"
+            },
+            {
+              "got": "autonomous mobile robots associated_with workflow",
+              "result": "FP",
+              "decision": "ACCEPT",
+              "predicate": "associated_with"
+            },
+            {
+              "got": "autonomous mobile robots associated_with Manhattan Active Warehouse Management",
+              "result": "FP",
+              "decision": "ACCEPT",
+              "predicate": "associated_with"
+            },
+            {
+              "got": "Locus Robotics associated_with workflow",
+              "result": "FP",
+              "decision": "ACCEPT",
+              "predicate": "associated_with"
+            },
+            {
+              "got": "Locus Robotics associated_with Manhattan Active Warehouse Management",
+              "result": "FP",
+              "decision": "ACCEPT",
+              "predicate": "associated_with"
+            },
+            {
+              "got": "Summit Fulfillment founded pilot",
+              "result": "FP",
+              "decision": "ACCEPT",
+              "predicate": "founded"
+            }
+          ],
+          "graph_facts_found": 7
+        }
+      }
+    },
+    "negatives": {
+      "passed": 13,
+      "total": 13,
+      "fixtures": [
+        {
+          "id": "N01",
+          "doc": "01_harborpay_oauth_incident.md",
+          "passed": true,
+          "description": "HarborPay must not become Maya Chen's role",
+          "failure_detail": null
+        },
+        {
+          "id": "N02",
+          "doc": "01_harborpay_oauth_incident.md",
+          "passed": true,
+          "description": "Okta Workforce Identity was NOT compromised",
+          "failure_detail": null
+        },
+        {
+          "id": "N03",
+          "doc": "01_harborpay_oauth_incident.md",
+          "passed": true,
+          "description": "DPoP was evaluated but NOT deployed",
+          "failure_detail": null
+        },
+        {
+          "id": "N04",
+          "doc": "01_harborpay_oauth_incident.md",
+          "passed": true,
+          "description": "Settlement API / Meridian API Gateway proximity must not produce arbitrary relations",
+          "failure_detail": null
+        },
+        {
+          "id": "N05",
+          "doc": "03_northwind_growth_review.md",
+          "passed": true,
+          "description": "Priya Raman must not have_role Northwind Outfitters",
+          "failure_detail": null
+        },
+        {
+          "id": "N06",
+          "doc": "04_orion_event_pipeline.md",
+          "passed": true,
+          "description": "Kafka was NOT the root cause",
+          "failure_detail": null
+        },
+        {
+          "id": "N07",
+          "doc": "04_orion_event_pipeline.md",
+          "passed": true,
+          "description": "PostgreSQL was NOT the root cause",
+          "failure_detail": null
+        },
+        {
+          "id": "N08",
+          "doc": "04_orion_event_pipeline.md",
+          "passed": true,
+          "description": "Redis was NOT the root cause",
+          "failure_detail": null
+        },
+        {
+          "id": "N09",
+          "doc": "04_orion_event_pipeline.md",
+          "passed": true,
+          "description": "Kubernetes was NOT the root cause",
+          "failure_detail": null
+        },
+        {
+          "id": "N10",
+          "doc": "05_warehouse_automation_transcript.md",
+          "passed": true,
+          "description": "robots were NOT responsible for the inventory errors",
+          "failure_detail": null
+        },
+        {
+          "id": "N11",
+          "doc": "05_warehouse_automation_transcript.md",
+          "passed": true,
+          "description": "Locus Robotics must not be represented as removed/replaced",
+          "failure_detail": null
+        },
+        {
+          "id": "N12",
+          "doc": "05_warehouse_automation_transcript.md",
+          "passed": true,
+          "description": "Elena Torres must not have_role Summit Fulfillment",
+          "failure_detail": null
+        },
+        {
+          "id": "N13",
+          "doc": "02_monitoring_and_learning.md",
+          "passed": true,
+          "description": "No speculative knowledge assertions in psych prose",
+          "failure_detail": null
+        }
+      ]
+    },
+    "hygiene": {
+      "generic_looking_nodes": [],
+      "mention_only_projected_violations": [],
+      "mention_only_projected": 0
+    },
+    "provenance": {
+      "sampled_facts": [
+        {
+          "doc": "corpus/01_harborpay_oauth_incident.md",
+          "predicate": "uses",
+          "subj": "HarborPay",
+          "obj": "Authorization headers",
+          "chunk_id": "chunk_eff981931e7cb3d7b961c86f61908531a549554a3d548a437d302d5c28cebb5f",
+          "parent_id": "chunk_ec331da7db99fdf334356ffdff242022a90c49961cab10e5e8db6367787f5ff8",
+          "span_offsets": {
+            "chunk_char_start": 1153
+          },
+          "evidence_excerpt": "The team evaluated DPoP as an additional proof-of-possession control but did not deploy DPoP during the incident respons",
+          "subj_in_evidence": true,
+          "obj_in_evidence": true,
+          "offsets_in_bounds": false
+        },
+        {
+          "doc": "corpus/05_warehouse_automation_transcript.md",
+          "predicate": "associated_with",
+          "subj": "Reno Distribution Center",
+          "obj": "workflow",
+          "chunk_id": "chunk_3f65c51538a8cb60a4d5f65686e313bd4ca08a21a60eb98971a3f33dd0d7931a",
+          "parent_id": "chunk_d76478bece776e325ef647d24e25f22dd5cae53acbd1bae239b26ba8e0dd22da",
+          "span_offsets": {
+            "chunk_char_start": 0
+          },
+          "evidence_excerpt": "### Transcript: Why Warehouse Automation Pilots Fail When Summit Fulfillment started its automation pilot, the team focu",
+          "subj_in_evidence": true,
+          "obj_in_evidence": true,
+          "offsets_in_bounds": false
+        },
+        {
+          "doc": "corpus/05_warehouse_automation_transcript.md",
+          "predicate": "associated_with",
+          "subj": "Reno Distribution Center",
+          "obj": "Manhattan Active Warehouse Management",
+          "chunk_id": "chunk_3f65c51538a8cb60a4d5f65686e313bd4ca08a21a60eb98971a3f33dd0d7931a",
+          "parent_id": "chunk_d76478bece776e325ef647d24e25f22dd5cae53acbd1bae239b26ba8e0dd22da",
+          "span_offsets": {
+            "chunk_char_start": 0
+          },
+          "evidence_excerpt": "### Transcript: Why Warehouse Automation Pilots Fail When Summit Fulfillment started its automation pilot, the team focu",
+          "subj_in_evidence": true,
+          "obj_in_evidence": true,
+          "offsets_in_bounds": false
+        },
+        {
+          "doc": "corpus/05_warehouse_automation_transcript.md",
+          "predicate": "associated_with",
+          "subj": "autonomous mobile robots",
+          "obj": "workflow",
+          "chunk_id": "chunk_3f65c51538a8cb60a4d5f65686e313bd4ca08a21a60eb98971a3f33dd0d7931a",
+          "parent_id": "chunk_d76478bece776e325ef647d24e25f22dd5cae53acbd1bae239b26ba8e0dd22da",
+          "span_offsets": {
+            "chunk_char_start": 0
+          },
+          "evidence_excerpt": "### Transcript: Why Warehouse Automation Pilots Fail When Summit Fulfillment started its automation pilot, the team focu",
+          "subj_in_evidence": true,
+          "obj_in_evidence": true,
+          "offsets_in_bounds": false
+        }
+      ],
+      "exact_matches": 0,
+      "sampled": 4
+    },
+    "qdrant": {
+      "chunk_collection_points": 0,
+      "routing_collection_points": 20,
+      "routing_kinds": {
+        "routing_document_summary": 5,
+        "routing_child": 10,
+        "routing_section_summary": 5
+      },
+      "expected_routing_kinds_present": true,
+      "foreign_doc_points": [],
+      "duplicate_point_ids_within_routing": 0,
+      "duplicate_point_ids_within_chunks": 0,
+      "note": "the same chunk id legitimately appears in the chunk collection and as a routing_child point; cross-collection identity is by design",
+      "expected_chunk_points": 15,
+      "expected_routing_points": 25
+    },
+    "neo4j": {
+      "eligible_facts": 4,
+      "graph_fact_rels": 325,
+      "missing_eligible": [],
+      "orphan_rels": [],
+      "duplicate_rels": [],
+      "graph_docs": [],
+      "note": "all_graph_facts is the SHARED Neo4j graph across corpora; missing/orphan computed only for this corpus's own fact universe",
+      "foreign_fact_rows_elsewhere": 430
+    },
+    "replay": {
+      "resubmitted": 0,
+      "documents_before_after": [
+        5,
+        5
+      ],
+      "facts_before_after": [
+        8,
+        8
+      ],
+      "entities_before_after": [
+        0,
+        0
+      ],
+      "semantic_hash_equal": true,
+      "new_intake_runs": 0,
+      "pass": true
+    },
+    "isolation": {
+      "foreign_documents": [],
+      "foreign_chunks": [],
+      "foreign_facts": [],
+      "pass": true,
+      "iso_corpus_present": true
+    },
+    "retrieval": {
+      "all_gold_docs_top5": true,
+      "table": [
+        {
+          "query": "What caused the OAuth replay incident?",
+          "mode": "FAST",
+          "gold_doc": "01_harborpay_oauth_incident.md",
+          "doc_rank": 1,
+          "sec_rank": 1,
+          "child_count": 10,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_270ded79fc3ab4565575b6180bad4947ec91",
+            "doc_df93cb85066a2a745a5fa2e6e7dfb1349bd3",
+            "doc_9fd6ba833aa175dde6af67482ca02649f105"
+          ]
+        },
+        {
+          "query": "What caused the OAuth replay incident?",
+          "mode": "HYBRID",
+          "gold_doc": "01_harborpay_oauth_incident.md",
+          "doc_rank": 1,
+          "sec_rank": 1,
+          "child_count": 10,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_270ded79fc3ab4565575b6180bad4947ec91",
+            "doc_df93cb85066a2a745a5fa2e6e7dfb1349bd3",
+            "doc_9fd6ba833aa175dde6af67482ca02649f105"
+          ]
+        },
+        {
+          "query": "What caused the OAuth replay incident?",
+          "mode": "GRAPH",
+          "gold_doc": "01_harborpay_oauth_incident.md",
+          "doc_rank": 1,
+          "sec_rank": null,
+          "child_count": 0,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_270ded79fc3ab4565575b6180bad4947ec91",
+            "doc_df93cb85066a2a745a5fa2e6e7dfb1349bd3",
+            "doc_9fd6ba833aa175dde6af67482ca02649f105"
+          ]
+        },
+        {
+          "query": "What controls did HarborPay apply after the incident?",
+          "mode": "FAST",
+          "gold_doc": "01_harborpay_oauth_incident.md",
+          "doc_rank": 1,
+          "sec_rank": 1,
+          "child_count": 10,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_270ded79fc3ab4565575b6180bad4947ec91",
+            "doc_df93cb85066a2a745a5fa2e6e7dfb1349bd3",
+            "doc_9fd6ba833aa175dde6af67482ca02649f105"
+          ]
+        },
+        {
+          "query": "What controls did HarborPay apply after the incident?",
+          "mode": "HYBRID",
+          "gold_doc": "01_harborpay_oauth_incident.md",
+          "doc_rank": 1,
+          "sec_rank": 1,
+          "child_count": 10,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_270ded79fc3ab4565575b6180bad4947ec91",
+            "doc_df93cb85066a2a745a5fa2e6e7dfb1349bd3",
+            "doc_9fd6ba833aa175dde6af67482ca02649f105"
+          ]
+        },
+        {
+          "query": "What controls did HarborPay apply after the incident?",
+          "mode": "GRAPH",
+          "gold_doc": "01_harborpay_oauth_incident.md",
+          "doc_rank": 1,
+          "sec_rank": null,
+          "child_count": 0,
+          "graph_evidence_facts": 1,
+          "graph_fact_ids": [
+            "fact_58fdf4d29b8a00ec533a6754bac1a3c230ae2357bef4be4f9d2f03d5ed4aefe9"
+          ],
+          "top_docs": [
+            "doc_270ded79fc3ab4565575b6180bad4947ec91",
+            "doc_df93cb85066a2a745a5fa2e6e7dfb1349bd3",
+            "doc_9fd6ba833aa175dde6af67482ca02649f105"
+          ]
+        },
+        {
+          "query": "Why can familiarity create an illusion of competence?",
+          "mode": "FAST",
+          "gold_doc": "02_monitoring_and_learning.md",
+          "doc_rank": 1,
+          "sec_rank": 1,
+          "child_count": 10,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_a5d32bc103962d3bb0e9751d9537d4df07da",
+            "doc_4931d365b40a05d77ed928f562af775b3888",
+            "doc_9fd6ba833aa175dde6af67482ca02649f105"
+          ]
+        },
+        {
+          "query": "Why can familiarity create an illusion of competence?",
+          "mode": "HYBRID",
+          "gold_doc": "02_monitoring_and_learning.md",
+          "doc_rank": 1,
+          "sec_rank": 1,
+          "child_count": 10,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_a5d32bc103962d3bb0e9751d9537d4df07da",
+            "doc_df93cb85066a2a745a5fa2e6e7dfb1349bd3",
+            "doc_4931d365b40a05d77ed928f562af775b3888"
+          ]
+        },
+        {
+          "query": "Why can familiarity create an illusion of competence?",
+          "mode": "GRAPH",
+          "gold_doc": "02_monitoring_and_learning.md",
+          "doc_rank": 1,
+          "sec_rank": null,
+          "child_count": 0,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_a5d32bc103962d3bb0e9751d9537d4df07da",
+            "doc_df93cb85066a2a745a5fa2e6e7dfb1349bd3",
+            "doc_4931d365b40a05d77ed928f562af775b3888"
+          ]
+        },
+        {
+          "query": "How do monitoring and control interact in self-regulated learning?",
+          "mode": "FAST",
+          "gold_doc": "02_monitoring_and_learning.md",
+          "doc_rank": 1,
+          "sec_rank": 1,
+          "child_count": 10,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_a5d32bc103962d3bb0e9751d9537d4df07da",
+            "doc_4931d365b40a05d77ed928f562af775b3888",
+            "doc_270ded79fc3ab4565575b6180bad4947ec91"
+          ]
+        },
+        {
+          "query": "How do monitoring and control interact in self-regulated learning?",
+          "mode": "HYBRID",
+          "gold_doc": "02_monitoring_and_learning.md",
+          "doc_rank": 1,
+          "sec_rank": 1,
+          "child_count": 10,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_a5d32bc103962d3bb0e9751d9537d4df07da",
+            "doc_270ded79fc3ab4565575b6180bad4947ec91",
+            "doc_4931d365b40a05d77ed928f562af775b3888"
+          ]
+        },
+        {
+          "query": "How do monitoring and control interact in self-regulated learning?",
+          "mode": "GRAPH",
+          "gold_doc": "02_monitoring_and_learning.md",
+          "doc_rank": 1,
+          "sec_rank": null,
+          "child_count": 0,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_a5d32bc103962d3bb0e9751d9537d4df07da",
+            "doc_270ded79fc3ab4565575b6180bad4947ec91",
+            "doc_4931d365b40a05d77ed928f562af775b3888"
+          ]
+        },
+        {
+          "query": "Why did the higher conversion rate not mean healthier growth?",
+          "mode": "FAST",
+          "gold_doc": "03_northwind_growth_review.md",
+          "doc_rank": 2,
+          "sec_rank": 2,
+          "child_count": 10,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_4931d365b40a05d77ed928f562af775b3888",
+            "doc_9fd6ba833aa175dde6af67482ca02649f105",
+            "doc_a5d32bc103962d3bb0e9751d9537d4df07da"
+          ]
+        },
+        {
+          "query": "Why did the higher conversion rate not mean healthier growth?",
+          "mode": "HYBRID",
+          "gold_doc": "03_northwind_growth_review.md",
+          "doc_rank": 1,
+          "sec_rank": 2,
+          "child_count": 10,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_9fd6ba833aa175dde6af67482ca02649f105",
+            "doc_a5d32bc103962d3bb0e9751d9537d4df07da",
+            "doc_270ded79fc3ab4565575b6180bad4947ec91"
+          ]
+        },
+        {
+          "query": "Why did the higher conversion rate not mean healthier growth?",
+          "mode": "GRAPH",
+          "gold_doc": "03_northwind_growth_review.md",
+          "doc_rank": 1,
+          "sec_rank": null,
+          "child_count": 0,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_9fd6ba833aa175dde6af67482ca02649f105",
+            "doc_a5d32bc103962d3bb0e9751d9537d4df07da",
+            "doc_270ded79fc3ab4565575b6180bad4947ec91"
+          ]
+        },
+        {
+          "query": "Which platforms remained in Northwind Outfitters' commerce stack?",
+          "mode": "FAST",
+          "gold_doc": "03_northwind_growth_review.md",
+          "doc_rank": 1,
+          "sec_rank": 1,
+          "child_count": 10,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_9fd6ba833aa175dde6af67482ca02649f105",
+            "doc_df93cb85066a2a745a5fa2e6e7dfb1349bd3",
+            "doc_270ded79fc3ab4565575b6180bad4947ec91"
+          ]
+        },
+        {
+          "query": "Which platforms remained in Northwind Outfitters' commerce stack?",
+          "mode": "HYBRID",
+          "gold_doc": "03_northwind_growth_review.md",
+          "doc_rank": 1,
+          "sec_rank": 1,
+          "child_count": 10,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_9fd6ba833aa175dde6af67482ca02649f105",
+            "doc_df93cb85066a2a745a5fa2e6e7dfb1349bd3",
+            "doc_270ded79fc3ab4565575b6180bad4947ec91"
+          ]
+        },
+        {
+          "query": "Which platforms remained in Northwind Outfitters' commerce stack?",
+          "mode": "GRAPH",
+          "gold_doc": "03_northwind_growth_review.md",
+          "doc_rank": 1,
+          "sec_rank": null,
+          "child_count": 0,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_9fd6ba833aa175dde6af67482ca02649f105",
+            "doc_df93cb85066a2a745a5fa2e6e7dfb1349bd3",
+            "doc_270ded79fc3ab4565575b6180bad4947ec91"
+          ]
+        },
+        {
+          "query": "Why were duplicate confirmation messages sent?",
+          "mode": "FAST",
+          "gold_doc": "04_orion_event_pipeline.md",
+          "doc_rank": 1,
+          "sec_rank": 1,
+          "child_count": 10,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_df93cb85066a2a745a5fa2e6e7dfb1349bd3",
+            "doc_270ded79fc3ab4565575b6180bad4947ec91",
+            "doc_4931d365b40a05d77ed928f562af775b3888"
+          ]
+        },
+        {
+          "query": "Why were duplicate confirmation messages sent?",
+          "mode": "HYBRID",
+          "gold_doc": "04_orion_event_pipeline.md",
+          "doc_rank": 1,
+          "sec_rank": 1,
+          "child_count": 10,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_df93cb85066a2a745a5fa2e6e7dfb1349bd3",
+            "doc_9fd6ba833aa175dde6af67482ca02649f105",
+            "doc_270ded79fc3ab4565575b6180bad4947ec91"
+          ]
+        },
+        {
+          "query": "Why were duplicate confirmation messages sent?",
+          "mode": "GRAPH",
+          "gold_doc": "04_orion_event_pipeline.md",
+          "doc_rank": 1,
+          "sec_rank": null,
+          "child_count": 0,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_df93cb85066a2a745a5fa2e6e7dfb1349bd3",
+            "doc_9fd6ba833aa175dde6af67482ca02649f105",
+            "doc_270ded79fc3ab4565575b6180bad4947ec91"
+          ]
+        },
+        {
+          "query": "Which infrastructure platforms were retained after the incident?",
+          "mode": "FAST",
+          "gold_doc": "04_orion_event_pipeline.md",
+          "doc_rank": 2,
+          "sec_rank": 2,
+          "child_count": 10,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_270ded79fc3ab4565575b6180bad4947ec91",
+            "doc_df93cb85066a2a745a5fa2e6e7dfb1349bd3",
+            "doc_4931d365b40a05d77ed928f562af775b3888"
+          ]
+        },
+        {
+          "query": "Which infrastructure platforms were retained after the incident?",
+          "mode": "HYBRID",
+          "gold_doc": "04_orion_event_pipeline.md",
+          "doc_rank": 2,
+          "sec_rank": 2,
+          "child_count": 10,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_270ded79fc3ab4565575b6180bad4947ec91",
+            "doc_df93cb85066a2a745a5fa2e6e7dfb1349bd3",
+            "doc_4931d365b40a05d77ed928f562af775b3888"
+          ]
+        },
+        {
+          "query": "Which infrastructure platforms were retained after the incident?",
+          "mode": "GRAPH",
+          "gold_doc": "04_orion_event_pipeline.md",
+          "doc_rank": 2,
+          "sec_rank": null,
+          "child_count": 0,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_270ded79fc3ab4565575b6180bad4947ec91",
+            "doc_df93cb85066a2a745a5fa2e6e7dfb1349bd3",
+            "doc_4931d365b40a05d77ed928f562af775b3888"
+          ]
+        },
+        {
+          "query": "Why did reduced walking not eliminate warehouse bottlenecks?",
+          "mode": "FAST",
+          "gold_doc": "05_warehouse_automation_transcript.md",
+          "doc_rank": 1,
+          "sec_rank": 1,
+          "child_count": 10,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_4931d365b40a05d77ed928f562af775b3888",
+            "doc_df93cb85066a2a745a5fa2e6e7dfb1349bd3",
+            "doc_9fd6ba833aa175dde6af67482ca02649f105"
+          ]
+        },
+        {
+          "query": "Why did reduced walking not eliminate warehouse bottlenecks?",
+          "mode": "HYBRID",
+          "gold_doc": "05_warehouse_automation_transcript.md",
+          "doc_rank": 1,
+          "sec_rank": 1,
+          "child_count": 10,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_4931d365b40a05d77ed928f562af775b3888",
+            "doc_9fd6ba833aa175dde6af67482ca02649f105",
+            "doc_270ded79fc3ab4565575b6180bad4947ec91"
+          ]
+        },
+        {
+          "query": "Why did reduced walking not eliminate warehouse bottlenecks?",
+          "mode": "GRAPH",
+          "gold_doc": "05_warehouse_automation_transcript.md",
+          "doc_rank": 1,
+          "sec_rank": null,
+          "child_count": 0,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_4931d365b40a05d77ed928f562af775b3888",
+            "doc_9fd6ba833aa175dde6af67482ca02649f105",
+            "doc_270ded79fc3ab4565575b6180bad4947ec91"
+          ]
+        },
+        {
+          "query": "Were the robots responsible for the inventory errors?",
+          "mode": "FAST",
+          "gold_doc": "05_warehouse_automation_transcript.md",
+          "doc_rank": 1,
+          "sec_rank": 1,
+          "child_count": 10,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_4931d365b40a05d77ed928f562af775b3888",
+            "doc_df93cb85066a2a745a5fa2e6e7dfb1349bd3",
+            "doc_270ded79fc3ab4565575b6180bad4947ec91"
+          ]
+        },
+        {
+          "query": "Were the robots responsible for the inventory errors?",
+          "mode": "HYBRID",
+          "gold_doc": "05_warehouse_automation_transcript.md",
+          "doc_rank": 1,
+          "sec_rank": 1,
+          "child_count": 10,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_4931d365b40a05d77ed928f562af775b3888",
+            "doc_df93cb85066a2a745a5fa2e6e7dfb1349bd3",
+            "doc_270ded79fc3ab4565575b6180bad4947ec91"
+          ]
+        },
+        {
+          "query": "Were the robots responsible for the inventory errors?",
+          "mode": "GRAPH",
+          "gold_doc": "05_warehouse_automation_transcript.md",
+          "doc_rank": 1,
+          "sec_rank": null,
+          "child_count": 0,
+          "graph_evidence_facts": 0,
+          "graph_fact_ids": [],
+          "top_docs": [
+            "doc_4931d365b40a05d77ed928f562af775b3888",
+            "doc_df93cb85066a2a745a5fa2e6e7dfb1349bd3",
+            "doc_270ded79fc3ab4565575b6180bad4947ec91"
+          ]
+        }
+      ]
+    }
+  }
+}

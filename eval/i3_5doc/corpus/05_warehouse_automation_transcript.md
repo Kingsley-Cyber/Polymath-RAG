@@ -1,0 +1,7 @@
+### Transcript: Why Warehouse Automation Pilots Fail
+
+When Summit Fulfillment started its automation pilot, the team focused almost entirely on robot speed. They installed Locus Robotics autonomous mobile robots in the Reno Distribution Center and connected the workflow to Manhattan Active Warehouse Management. Elena Torres, the site's operations manager, said the original assumption was simple: if associates walked fewer miles, every order would leave the building faster. The pilot did reduce travel distance, but it also moved congestion toward packing stations.
+
+The second problem was inventory accuracy. Zebra handheld scanners were still being used for cycle counts, and several high-volume locations contained incorrect quantities. The robots were not responsible for those inventory errors. They simply reached the affected locations more consistently, which made the discrepancies visible more often. Summit Fulfillment eventually changed replenishment rules and increased cycle-count frequency rather than replacing the autonomous mobile robots.
+
+By the end of the pilot, the Reno Distribution Center kept Locus Robotics, Manhattan Active Warehouse Management, and the Zebra scanners. The team added packing-station utilization and inventory accuracy to the pilot scorecard instead of evaluating automation only through units picked per hour. Elena Torres said the main lesson was that warehouse automation changes the location of bottlenecks; it does not automatically remove them.

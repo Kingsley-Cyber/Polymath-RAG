@@ -1,0 +1,7 @@
+### Monitoring Accuracy, Cognitive Load, and the Regulation of Learning
+
+Metacognitive monitoring is the process by which learners estimate the quality of their own understanding. Judgments of learning often depend on processing fluency, familiarity, and the apparent ease of recall. These signals can be useful, but they can also produce an illusion of competence when material feels familiar without being retrievable from memory. Cognitive load can further reduce monitoring accuracy when working-memory demands compete with the resources needed to evaluate performance.
+
+Effective learning also requires metacognitive control. A learner may respond to an inaccurate judgment by ending study too early, repeatedly reviewing material that already feels fluent, or avoiding difficult retrieval attempts. Retrieval practice and corrective feedback can improve calibration because they provide observable evidence about what can actually be recalled. Local regulation changes behavior during a particular task, while global regulation changes longer-term study strategies.
+
+Self-regulated learning therefore depends on an interaction between monitoring and control rather than either process alone. High confidence does not necessarily cause successful recall, and familiarity should not be treated as proof of learning. In practice, stronger regulation occurs when learners compare their predictions with actual retrieval performance and use the discrepancy to adjust subsequent study decisions.

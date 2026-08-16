@@ -1,0 +1,61 @@
+{
+  "note": "I3 fact gold. Authored BEFORE ingestion. Only facts whose predicates are explicitly supported by the frozen production compiler (28-rule pack v1.1.0) AND whose direction/polarity are unambiguous are recorded. Facts outside the supported vocabulary are deliberately absent — the system is not penalized for them. Predicate signature constraints (subject/object core types) are noted per fact.",
+  "contracts": {
+    "rule_pack": "core-predicates-v1.1.0",
+    "compiler": "deterministic lexical compiler (28 predicates)",
+    "binding_gates": "endpoint-binding-v1",
+    "projection_eligibility": "neo4j-eligible iff both endpoints admission_class != MENTION_ONLY"
+  },
+  "documents": {
+    "01_harborpay_oauth_incident.md": {
+      "facts": [
+        {
+          "predicate": "uses",
+          "subject": "HarborPay",
+          "object": "Okta Workforce Identity",
+          "direction": "agent_to_instrument",
+          "polarity": "positive",
+          "evidence_sentence": "HarborPay uses Okta Workforce Identity to authenticate administrators.",
+          "projection_eligible": true,
+          "note": "subject and object spans both explicit in-sentence"
+        },
+        {
+          "predicate": "uses",
+          "subject": "Meridian API Gateway",
+          "object": "Envoy Proxy",
+          "direction": "agent_to_instrument",
+          "polarity": "positive",
+          "evidence_sentence": "The gateway uses Envoy Proxy for request routing.",
+          "projection_eligible": true,
+          "note": "subject span is coreferent ('The gateway'); if the compiler cannot resolve the antecedent the expected classification is NO_ENDPOINT, not a wrong fact"
+        },
+        {
+          "predicate": "depends_on",
+          "subject": "HarborPay",
+          "object": "mutual TLS",
+          "direction": "dependent_to_requirement",
+          "polarity": "positive",
+          "evidence_sentence": "HarborPay disabled the debugging configuration, reduced the access-token lifetime, and required mutual TLS between the Meridian API Gateway and the Settlement API.",
+          "projection_eligible": true,
+          "note": "coordinated VP; coordination-aware clause binding may accept or reject (BINDING_GATE classification if missed)"
+        }
+      ]
+    },
+    "02_monitoring_and_learning.md": {
+      "facts": [],
+      "note": "No supported-predicate facts with resolvable entity endpoints. All content is text-concept territory; the graph is expected to stay empty for this document by design."
+    },
+    "03_northwind_growth_review.md": {
+      "facts": [],
+      "note": "uses(Northwind Outfitters, Klaviyo) candidate has subject 'The company' (unresolvable coreference). No other supported-predicate trigger with explicit entity endpoints in the document."
+    },
+    "04_orion_event_pipeline.md": {
+      "facts": [],
+      "note": "'runs on' (uses multiword) candidate has subject 'The service' (unresolvable coreference); 'caused' candidate has generic subject 'retry bug'. No supported-predicate fact with explicit entity endpoints."
+    },
+    "05_warehouse_automation_transcript.md": {
+      "facts": [],
+      "note": "'connected the workflow to' (associated_with) has generic subject; 'installed ... in' is not a supported located_in trigger. No supported-predicate fact with explicit entity endpoints."
+    }
+  }
+}

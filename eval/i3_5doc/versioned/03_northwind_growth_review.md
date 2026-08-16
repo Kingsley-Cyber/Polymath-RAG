@@ -1,0 +1,7 @@
+### Northwind Outfitters: Growth Efficiency Review
+
+Northwind Outfitters sells outdoor clothing through a Shopify Plus storefront and processes card payments with Stripe. The company uses Klaviyo for lifecycle email campaigns and Meta Ads for most paid social acquisition. During the second quarter, reported conversion rate increased from 2.7 percent to 3.2 percent, while average order value remained nearly unchanged. Priya Raman, the growth director at Northwind Outfitters, asked the analytics team to determine whether the higher conversion rate represented healthier growth.
+
+The investigation showed that customer acquisition cost had risen sharply because Meta Ads required substantially more spend to acquire each new customer. At the same time, a free-shipping promotion increased checkout completion but reduced contribution margin on low-value orders. Klaviyo's abandoned-cart campaign recovered some otherwise lost purchases, but those recovered orders did not offset the acquisition-cost increase. The analytics team concluded that conversion rate by itself overstated the improvement in business performance.
+
+Northwind Outfitters kept Shopify Plus, Stripe, and Klaviyo in the existing commerce stack. The company reduced spending on poorly performing Meta Ads campaigns and changed the free-shipping threshold instead of removing free shipping entirely. Priya Raman approved a revised weekly dashboard that reports conversion rate together with customer acquisition cost, average order value, contribution margin, and repeat-purchase rate.

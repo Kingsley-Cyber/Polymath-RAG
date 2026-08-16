@@ -1,0 +1,82 @@
+{
+  "note": "I3 text-concept gold. Authored BEFORE ingestion. Concepts that must remain retrievable from TEXT even when they do not become graph entities. Absence from Neo4j is NOT a failure; these are checked in the retrieval smoke phase (doc-level semantic access), not in graph metrics.",
+  "documents": {
+    "01_harborpay_oauth_incident.md": [
+      "OAuth token replay",
+      "bearer token",
+      "access-token lifetime",
+      "mutual TLS",
+      "proof-of-possession",
+      "application log",
+      "Authorization headers",
+      "incident review",
+      "network locations"
+    ],
+    "02_monitoring_and_learning.md": [
+      "metacognitive monitoring",
+      "metacognitive control",
+      "judgments of learning",
+      "processing fluency",
+      "familiarity",
+      "illusion of competence",
+      "cognitive load",
+      "working memory",
+      "retrieval practice",
+      "corrective feedback",
+      "calibration",
+      "local regulation",
+      "global regulation",
+      "self-regulated learning",
+      "monitoring accuracy"
+    ],
+    "03_northwind_growth_review.md": [
+      "conversion rate",
+      "customer acquisition cost",
+      "average order value",
+      "contribution margin",
+      "repeat-purchase rate",
+      "checkout completion",
+      "free-shipping promotion",
+      "abandoned-cart campaign",
+      "lifecycle email"
+    ],
+    "04_orion_event_pipeline.md": [
+      "idempotency keys",
+      "duplicate delivery",
+      "retry bug",
+      "order-created events",
+      "order-updated events",
+      "confirmation messages",
+      "replay fixture"
+    ],
+    "05_warehouse_automation_transcript.md": [
+      "robot speed",
+      "autonomous mobile robots",
+      "travel distance",
+      "packing stations",
+      "inventory accuracy",
+      "cycle counts",
+      "units picked per hour",
+      "packing-station utilization",
+      "replenishment rules",
+      "bottlenecks"
+    ]
+  },
+  "frozen_retrieval_questions": {
+    "01": {"doc": "01_harborpay_oauth_incident.md",
+           "q1": "What caused the OAuth replay incident?",
+           "q2": "What controls did HarborPay apply after the incident?"},
+    "02": {"doc": "02_monitoring_and_learning.md",
+           "q1": "Why can familiarity create an illusion of competence?",
+           "q2": "How do monitoring and control interact in self-regulated learning?"},
+    "03": {"doc": "03_northwind_growth_review.md",
+           "q1": "Why did the higher conversion rate not mean healthier growth?",
+           "q2": "Which platforms remained in Northwind Outfitters' commerce stack?"},
+    "04": {"doc": "04_orion_event_pipeline.md",
+           "q1": "Why were duplicate confirmation messages sent?",
+           "q2": "Which infrastructure platforms were retained after the incident?"},
+    "05": {"doc": "05_warehouse_automation_transcript.md",
+           "q1": "Why did reduced walking not eliminate warehouse bottlenecks?",
+           "q2": "Were the robots responsible for the inventory errors?"}
+  }
+}
