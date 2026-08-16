@@ -68,6 +68,33 @@ log = logging.getLogger("extract")
 _rule_pack = None
 
 
+def _gliner_pin() -> dict:
+    """I3R-R7: the actual immutable GLiNER identity from the sidecar's
+    /manifest (canonical production configuration source) — never a
+    template placeholder."""
+    try:
+        from polymath_shared.clients import GlinerClient
+
+        client = GlinerClient()
+        try:
+            m = client.manifest()
+            model = (m.get("identity") or {}).get("model") or {}
+            model_id = model.get("id") or "unknown"
+            revision = model.get("revision") or "unknown"
+            if str(model_id).startswith("__PIN_") or str(revision).startswith("__PIN_"):
+                raise RuntimeError("GLiNER sidecar manifest is unpinned")
+            return {"model_id": model_id, "revision": revision}
+        finally:
+            client.close()
+    except Exception:
+        # Fail LOUD at artifact time instead of recording placeholders:
+        # a run whose extractor cannot resolve the pin records nothing.
+        raise RuntimeError("could not resolve the GLiNER pin from the sidecar manifest")
+
+
+_GLINER_PIN = _gliner_pin()
+
+
 def _pack() -> dict:
     global _rule_pack
     if _rule_pack is None:
@@ -183,7 +210,7 @@ def _slices(
     corpus_id: str = "eval",
 ) -> list[SentenceSlice]:
     slices: list[SentenceSlice] = []
-    for text, (start, end) in zip(sentences.texts, sentences.offsets):
+    for sentence_idx, (text, (start, end)) in enumerate(zip(sentences.texts, sentences.offsets)):
         ent = [e for e in entities if e.start >= start and e.end <= end]
         ev = [v for v in evidence if v.start >= start and v.end <= end]
         if ent or ev:
@@ -258,8 +285,8 @@ def process_event(conn: Connection, event: dict) -> None:
     parser_name, parser_version = parser_identity()
     manifest = ExtractionManifest(
         run_id=run_id,
-        gliner_model="__PIN_MODEL__",
-        gliner_revision="__PIN_REVISION__",
+        gliner_model=_GLINER_PIN["model_id"],
+        gliner_revision=_GLINER_PIN["revision"],
         parser=parser_name,
         parser_version=parser_version,
         ontology_version=ONTOLOGY_VERSION,
@@ -279,6 +306,8 @@ def process_event(conn: Connection, event: dict) -> None:
         "thresholds": {"entity": ENTITY_THRESHOLD, "evidence": EVIDENCE_THRESHOLD},
         "evidence_proposal_mode": proposal_mode,
         "binding_gates": "endpoint-binding-v1",
+        "provenance_contract": "exact-evidence-v1",
+        "gliner_pin": _GLINER_PIN,
     })
 
     corpus_row = conn.execute(
@@ -425,6 +454,34 @@ def _persist_mentions(conn: Connection, corpus_id: str, doc_id: str,
             )
 
 
+def _evidence_offsets(chunk_row: dict, candidate) -> dict:
+    """I3R-R6 exact-evidence-v1 provenance record. All span offsets are
+    CHUNK-RELATIVE so that chunk_text[start:end] == surface verifiably."""
+    chunk_start = int(chunk_row.get("char_start") or 0)
+    chunk_end = int(chunk_row.get("char_end") or 0)
+    ev = candidate.evidence
+    subj = candidate.subject.span
+    obj = candidate.object.span
+    # span offsets are CHUNK-RELATIVE (GLiNER spans are chunk-based);
+    # chunk_char_start/end locate the chunk within the document.
+    return {
+        "provenance_contract": "exact-evidence-v1",
+        "chunk_char_start": chunk_start,
+        "chunk_char_end": chunk_end,
+        "sentence_index": getattr(candidate, "sentence_index", 0),
+        "evidence_surface": ev.text,
+        "evidence_start": ev.start,
+        "evidence_end": ev.end,
+        "trigger_lemma": ev.trigger_lemma,
+        "subject_surface": subj.text,
+        "subject_start": subj.start,
+        "subject_end": subj.end,
+        "object_surface": obj.text,
+        "object_start": obj.start,
+        "object_end": obj.end,
+    }
+
+
 def _persist_decision(conn: Connection, chunk_row: dict, candidate, decision) -> None:
     from polymath_shared.entity_admission import decide as _admission_decide
 
@@ -462,16 +519,19 @@ def _persist_decision(conn: Connection, chunk_row: dict, candidate, decision) ->
         fact.fact_id, chunk_row["doc_id"], chunk_row["chunk_id"],
         {"chunk": chunk_row["char_start"]}, fact.rule_id,
     )
+    offsets = _evidence_offsets(chunk_row, candidate)
     conn.execute(
         """
         INSERT INTO evidence (evidence_id, fact_id, doc_id, chunk_id, span_offsets,
-                              rule_id, gliner_scores, extractor_version, rule_version)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                              rule_id, gliner_scores, extractor_version, rule_version,
+                              provenance_contract)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT (evidence_id) DO NOTHING
         """,
         (ev_id, fact.fact_id, chunk_row["doc_id"], chunk_row["chunk_id"],
-         json.dumps({"chunk_char_start": chunk_row["char_start"]}),
-         fact.rule_id, json.dumps({}), EXTRACTOR_VERSION, fact.rule_version),
+         json.dumps(offsets),
+         fact.rule_id, json.dumps({}), EXTRACTOR_VERSION, fact.rule_version,
+         "exact-evidence-v1"),
     )
 
 

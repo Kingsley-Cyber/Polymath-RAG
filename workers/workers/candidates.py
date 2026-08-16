@@ -118,6 +118,7 @@ class SentenceSlice:
     entities: list[EntitySpan]
     evidence: list[EvidenceSpan]
     parse: dict | None
+    sentence_index: int = 0
 
 
 def _type_compatible(
@@ -325,6 +326,7 @@ def build_candidates(
                     candidates.append(RelationCandidate(
                         sentence_text=sentence,
                         sentence_start=rel_start,
+                        sentence_index=sl.sentence_index,
                         evidence=evidence,
                         subject=_entity_candidate(subject_span, subject_id),
                         object=_entity_candidate(object_span, object_id),

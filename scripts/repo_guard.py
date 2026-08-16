@@ -277,6 +277,28 @@ FORBIDDEN_ALTERNATE_MODEL_IDS = [
 ]
 
 
+def check_unresolved_pin_markers(root: Path) -> list[str]:
+    """I3R-R7: production artifacts must never carry unresolved template
+    markers ('__PIN_*') for model identity. The canonical pins come from
+    the sidecar manifests; literal placeholders in code are a defect."""
+    errors: list[str] = []
+    for surface in ("workers", "shared", "orchestrator", "control", "sidecars"):
+        for path in sorted((root / surface).rglob("*.py")):
+            try:
+                text = path.read_text()
+            except Exception:
+                continue
+            for i, line in enumerate(text.splitlines(), 1):
+                if ('"__PIN_' not in line and "'__PIN_" not in line):
+                    continue
+                if ".startswith(" in line:
+                    continue  # pin-validation predicate, not a placeholder value
+                errors.append(
+                    f"{path.relative_to(root)}:{i}: unresolved __PIN_ marker: "
+                    f"{line.strip()[:80]}")
+    return errors
+
+
 def check_production_model_surface(root: Path) -> list[str]:
     """Model-surface guard (2026-08-14 cleanup): the ONLY supported
     production GLiNER entity model is urchade/gliner_medium-v2.1 @
@@ -319,6 +341,7 @@ def run_checks(root: Path, base: str | None = None) -> list[str]:
         check_dependencies,
         check_forbidden_imports,
         check_production_model_surface,
+        check_unresolved_pin_markers,
     ]
     errors: list[str] = []
     for check in checks:

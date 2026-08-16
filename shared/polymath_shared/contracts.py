@@ -119,6 +119,7 @@ class RelationCandidate(BaseModel):
     ontology_profile: str
     sentence_text: str = ""
     sentence_start: int = 0
+    sentence_index: int = 0
 
 
 class CanonicalFact(BaseModel):
