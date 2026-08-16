@@ -327,6 +327,8 @@ def process_event(conn: Connection, event: dict) -> None:
                     gliner, row["text"], row["chunk_id"], doc_id, profile_dict
                 )
                 audit.extend(rejected)
+                if entities:
+                    _persist_mentions(conn, corpus_id, doc_id, entities)
                 evidence = _evidence_spans(
                     gliner, row["text"], row["chunk_id"], pack, proposal_mode
                 )
@@ -368,6 +370,59 @@ def process_event(conn: Connection, event: dict) -> None:
         # No outbox event: the control census schedules the projection
         # stages from the extract receipt (per-stage event types).
         writer.run_status("reconciling")
+
+
+def _persist_mentions(conn: Connection, corpus_id: str, doc_id: str,
+                      spans: list[EntitySpan]) -> None:
+    """I3R-R4: persist every accepted GLiNER proposal as a durable
+    mention with its admission decision; non-MENTION_ONLY spans also
+    become durable referential entity rows. Graph topology remains
+    fact-driven (project_neo4j/canonicalization keep their facts
+    joins)."""
+    import re as _re
+
+    from polymath_shared.entity_admission import allocate_entity_id
+
+    for span in spans:
+        decision = allocate_entity_id(
+            span.text, span.core_type.value,
+            corpus_id=corpus_id, doc_id=span.doc_id or doc_id,
+            chunk_id=span.chunk_id, span_start=span.start,
+            span_end=span.end, extraction_score=span.score,
+            sentence_initial=False,
+        )
+        norm_surface = _re.sub(r"\s+", " ", span.text).strip().lower()
+        is_durable = decision.reference_class != "MENTION_ONLY"
+        # non-MENTION_ONLY classes use their durable id as the mention
+        # identity (entity_admission docstring); MENTION_ONLY mentions
+        # carry no entities-row identity.
+        entity_id = decision.mention_id if is_durable else None
+        conn.execute(
+            """
+            INSERT INTO mentions (mention_id, corpus_id, doc_id, chunk_id,
+                                  char_start, char_end, surface,
+                                  normalized_surface, core_type,
+                                  gliner_score, extractor_version,
+                                  admission_class, entity_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (mention_id) DO NOTHING
+            """,
+            (decision.mention_id, corpus_id, span.doc_id or doc_id,
+             span.chunk_id, span.start, span.end, span.text,
+             norm_surface, span.core_type.value, span.score,
+             span.extractor_version, decision.reference_class, entity_id),
+        )
+        if is_durable:
+            conn.execute(
+                """
+                INSERT INTO entities (entity_id, core_type, normalized_surface,
+                                      admission_class)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (entity_id) DO NOTHING
+                """,
+                (entity_id, span.core_type.value,
+                 norm_surface, decision.reference_class),
+            )
 
 
 def _persist_decision(conn: Connection, chunk_row: dict, candidate, decision) -> None:
