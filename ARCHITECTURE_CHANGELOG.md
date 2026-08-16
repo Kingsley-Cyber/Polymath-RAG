@@ -511,3 +511,15 @@ that motivated it and the refactor that implemented it.
   (different sink: pass-1 summary enrichment vs pass-2 expansion).
 - No implementation; recommendation recorded (E5B pending user
   authorization).
+
+## 2026-08-15: E5B deterministic concept inventory (part 1)
+
+- `shared/polymath_shared/concept_inventory.py`: pure deterministic
+  concept extraction for retrieval metadata (`concept-inventory-v1`,
+  `routing-concept-enriched-v1`). No runtime owner, no persistence, no
+  model dependencies. Concepts never feed entities/facts/graph.
+- Frozen qualification docs extended with `eval/e5b/corpus/youtube.md`;
+  evidence + report in `eval/e5b/`; 10 pure determinism tests.
+- Retrieval `retrieval-summary-v2` untouched; experimental Qdrant
+  collections deferred to part 2 (routing A/B vs R1B 0.882).
+  (work log `2026-08-15-e5b-concept-inventory.md`)

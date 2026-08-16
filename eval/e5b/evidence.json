@@ -1,0 +1,284 @@
+{
+  "phases": {},
+  "psychology": {
+    "candidate_recall": 13,
+    "gold_total": 13,
+    "error_ownership": {
+      "metacognitive monitoring": "ADMITTED",
+      "metacognitive control": "RANKED_OUT_BY_BUDGET",
+      "judgments of learning": "ADMITTED",
+      "processing fluency": "RANKED_OUT_BY_BUDGET",
+      "familiarity effect": "RANKED_OUT_BY_BUDGET",
+      "illusion of competence": "ADMITTED",
+      "working memory": "RANKED_OUT_BY_BUDGET",
+      "cognitive load": "ADMITTED",
+      "retrieval practice": "RANKED_OUT_BY_BUDGET",
+      "corrective feedback": "RANKED_OUT_BY_BUDGET",
+      "self-regulated learning": "ADMITTED",
+      "local regulation": "RANKED_OUT_BY_BUDGET",
+      "global regulation": "RANKED_OUT_BY_BUDGET"
+    },
+    "counts": {
+      "candidates": 186,
+      "pre_filtered": 69,
+      "post_overlap": 62
+    },
+    "budget_grid": {
+      "doc_4": {
+        "admitted_recall": 3,
+        "precision": 0.75,
+        "admitted_total": 4,
+        "recovered": [
+          "cognitive load",
+          "illusion of competence",
+          "metacognitive monitoring"
+        ]
+      },
+      "doc_8": {
+        "admitted_recall": 5,
+        "precision": 0.625,
+        "admitted_total": 8,
+        "recovered": [
+          "cognitive load",
+          "illusion of competence",
+          "judgments of learning",
+          "metacognitive monitoring",
+          "self regulated learning"
+        ]
+      },
+      "doc_12": {
+        "admitted_recall": 5,
+        "precision": 0.417,
+        "admitted_total": 12,
+        "recovered": [
+          "cognitive load",
+          "illusion of competence",
+          "judgments of learning",
+          "metacognitive monitoring",
+          "self regulated learning"
+        ]
+      }
+    },
+    "section_grid": {
+      "section_3": {
+        "union_recall": 4,
+        "precision": 0.444
+      },
+      "section_6": {
+        "union_recall": 4,
+        "precision": 0.235
+      },
+      "section_8": {
+        "union_recall": 4,
+        "precision": 0.174
+      }
+    }
+  },
+  "cybersecurity": {
+    "candidate_recall": 12,
+    "gold_total": 15,
+    "error_ownership": {
+      "Atlas Identity Gateway": "ADMITTED",
+      "OAuth 2.0": "NOT_GENERATED",
+      "Meridian Billing API": "ADMITTED",
+      "Keycloak 26.2": "NOT_GENERATED",
+      "OpenID Connect": "RANKED_OUT_BY_BUDGET",
+      "authorization-code flow": "PRE_FILTER_REJECTED",
+      "HTTP Authorization header": "RANKED_OUT_BY_BUDGET",
+      "Fluent Bit": "RANKED_OUT_BY_BUDGET",
+      "Elasticsearch": "NOT_GENERATED",
+      "site reliability engineer": "PRE_FILTER_REJECTED",
+      "Red Ridge Systems": "RANKED_OUT_BY_BUDGET",
+      "bearer token": "ADMITTED",
+      "mutual TLS": "OVERLAP_DROPPED",
+      "Amazon GuardDuty": "RANKED_OUT_BY_BUDGET",
+      "Security Architecture Council": "RANKED_OUT_BY_BUDGET"
+    },
+    "counts": {
+      "candidates": 254,
+      "pre_filtered": 158,
+      "post_overlap": 96
+    },
+    "budget_grid": {
+      "doc_4": {
+        "admitted_recall": 3,
+        "precision": 0.75,
+        "admitted_total": 4,
+        "recovered": [
+          "atlas identity gateway",
+          "bearer token",
+          "meridian billing api"
+        ]
+      },
+      "doc_8": {
+        "admitted_recall": 3,
+        "precision": 0.375,
+        "admitted_total": 8,
+        "recovered": [
+          "atlas identity gateway",
+          "bearer token",
+          "meridian billing api"
+        ]
+      },
+      "doc_12": {
+        "admitted_recall": 4,
+        "precision": 0.333,
+        "admitted_total": 12,
+        "recovered": [
+          "atlas identity gateway",
+          "bearer token",
+          "meridian billing api",
+          "red ridge systems"
+        ]
+      }
+    },
+    "section_grid": {
+      "section_3": {
+        "union_recall": 3,
+        "precision": 0.375
+      },
+      "section_6": {
+        "union_recall": 3,
+        "precision": 0.176
+      },
+      "section_8": {
+        "union_recall": 4,
+        "precision": 0.174
+      }
+    }
+  },
+  "youtube": {
+    "candidate_recall": 11,
+    "gold_total": 12,
+    "error_ownership": {
+      "conversion rate": "RANKED_OUT_BY_BUDGET",
+      "average order value": "ADMITTED",
+      "contribution margin": "RANKED_OUT_BY_BUDGET",
+      "customer acquisition cost": "ADMITTED",
+      "cart abandonment": "RANKED_OUT_BY_BUDGET",
+      "session replay": "RANKED_OUT_BY_BUDGET",
+      "net revenue per visitor": "NOT_GENERATED",
+      "buy-one-get-one": "PRE_FILTER_REJECTED",
+      "shipping-cost step": "ADMITTED",
+      "first-time visitors": "RANKED_OUT_BY_BUDGET",
+      "returning customers": "RANKED_OUT_BY_BUDGET",
+      "email subscribers": "RANKED_OUT_BY_BUDGET"
+    },
+    "counts": {
+      "candidates": 132,
+      "pre_filtered": 59,
+      "post_overlap": 37
+    },
+    "budget_grid": {
+      "doc_4": {
+        "admitted_recall": 1,
+        "precision": 0.25,
+        "admitted_total": 4,
+        "recovered": [
+          "average order value"
+        ]
+      },
+      "doc_8": {
+        "admitted_recall": 3,
+        "precision": 0.375,
+        "admitted_total": 8,
+        "recovered": [
+          "average order value",
+          "customer acquisition cost",
+          "shipping cost step"
+        ]
+      },
+      "doc_12": {
+        "admitted_recall": 4,
+        "precision": 0.333,
+        "admitted_total": 12,
+        "recovered": [
+          "average order value",
+          "customer acquisition cost",
+          "first time visitors",
+          "shipping cost step"
+        ]
+      }
+    },
+    "section_grid": {
+      "section_3": {
+        "union_recall": 2,
+        "precision": 0.25
+      },
+      "section_6": {
+        "union_recall": 6,
+        "precision": 0.353
+      },
+      "section_8": {
+        "union_recall": 8,
+        "precision": 0.364
+      }
+    }
+  },
+  "graph_zero_delta": {
+    "equal": true,
+    "hash": "04fcafa9b1201bbe"
+  },
+  "determinism": {
+    "two_clean_runs": true,
+    "concurrent_run": true
+  },
+  "replay": {
+    "identical": true
+  },
+  "versioning": {
+    "edited_candidate_set_differs": true,
+    "unmodified_unchanged": {
+      "psychology": true,
+      "cybersecurity": true
+    }
+  },
+  "performance_ms_per_doc": 3.02,
+  "r1a_coverage": {
+    "d1_single_section.md": {
+      "baseline": 5,
+      "enriched": 5,
+      "total": 5
+    },
+    "d2_multi_section.md": {
+      "baseline": 9,
+      "enriched": 9,
+      "total": 10
+    },
+    "d3_dominant_plus_small.md": {
+      "baseline": 2,
+      "enriched": 2,
+      "total": 4
+    },
+    "d4_terminology_late.md": {
+      "baseline": 4,
+      "enriched": 4,
+      "total": 4
+    },
+    "d5_conclusion_not_in_intro.md": {
+      "baseline": 1,
+      "enriched": 1,
+      "total": 3
+    },
+    "d6_redundant_children.md": {
+      "baseline": 4,
+      "enriched": 4,
+      "total": 4
+    },
+    "d7_one_child_parent.md": {
+      "baseline": 2,
+      "enriched": 2,
+      "total": 2
+    },
+    "d8_multi_child_parent.md": {
+      "baseline": 4,
+      "enriched": 4,
+      "total": 4
+    },
+    "d9_mixed_structure.md": {
+      "baseline": 6,
+      "enriched": 6,
+      "total": 6
+    }
+  }
+}

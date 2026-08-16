@@ -1,17 +1,17 @@
 # Current Repository State
 
 Last verified: 2026-08-15
-Verified against commit: `41bbaed` (E2/C1.1 promotion authorized, not wired) — admission production wiring in progress on top
-Active branch at verification: `main` (working tree clean)
+Verified against commit: `8323304` (E5 analysis: deterministic concept layer authorized) — E5B part 1 completed on top
+Active branch at verification: `main`
 
 ```yaml
-current_phase: g5-verified # G5: existing R3a/R3b answer path verified under G3 reranking (PASS); next = G4 scale
+current_phase: e5b-part1-complete # E5B deterministic concept inventory: quality+invariants frozen; part 2 (routing A/B) pending stack bring-up
 repository:
   branch: main
-  head: 41bbaed
+  head: 8323304
   frozen_artifacts: [see Frozen Artifacts section]
-  evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1, qualification-q1, q1r-validation, ep1, em1, sr1, e2-admission, g4]
-  next_actions: [i1-bulk-ingestion, i2-scale-integrity, g4-scale-qualification]
+  evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1, qualification-q1, q1r-validation, ep1, em1, sr1, e2-admission, g4, e3, e3b, e4, e5, e5b-part1]
+  next_actions: [e5b-part2-routing-ab, i1-bulk-ingestion, i2-scale-integrity, g4-scale-qualification]
   do_not_do: [see Explicitly Prohibited Actions]
   known_gaps: [see Known Limitations]
 ```
@@ -250,6 +250,11 @@ permits a new corpus version.
 
 ## Known Limitations
 
+- E5B concept inventory (part 1): single-occurrence concepts tie-break
+  by `concept_id` at budget admission (RANKED_OUT_BY_BUDGET class;
+  the `in_summary_text` ranking component is the production remedy).
+  4-token concepts (per-bridged / multi-hyphen compounds) are
+  pre-filtered. Routing A/B unmeasured (stores were down).
 - W2 candidate generation: no ARG1→ARG2 (theme→result) pairing
   (measured: v11_a01/a02 MISSED in both arms).
 - W7 orientation: passive inversion requires a syntactic parse; frozen
@@ -310,6 +315,17 @@ never by armchair promise.
    not achieved — candidate only, production default stays 1.0.1.
 
 ## Next Authorized Actions
+
+E5B part 2 (routing A/B, required to close E5B): bring up the full
+stack (Qdrant/Neo4j/Redis/orchestrator/control — all were down at
+part-1 qualification), re-ingest the I2 corpus, re-measure R1B (expect
+doc R@1 0.882), then build disposable experimental collections
+`routing_document_summary_concept_e5b` / `routing_section_summary_concept_e5b`
+from `enriched_representation` with the frozen embedder pin
+(`97b0c614…`) and re-run the frozen R1B query set: no material
+regression + concept-lane comparison. See `eval/e5b/REPORT.md` and
+work log `2026-08-15-e5b-concept-inventory.md`. EVEN ON PASS → STOP
+(no production promotion; E5C is a separate future gate).
 
 MILESTONE A — CORPUS_INGEST_READY (C1+C2+Q1+I0 COMPLETE):
 
