@@ -1,0 +1,269 @@
+{
+  "gate": "E5B part 2 \u2014 routing qualification",
+  "base_commit": "ba363ec",
+  "in_summary_text": {
+    "present_in_ba363ec": true,
+    "behavior": "6th component of the deterministic ranking tuple: +1 when normalized concept is a substring of the normalized chunk-summary concat (document_inventory) or the section_summary argument (section_inventory). Used exactly as committed; weight/order/semantics unchanged."
+  },
+  "contracts": {
+    "concept": "concept-inventory-v1",
+    "routing": "routing-concept-enriched-v1",
+    "embedding": {
+      "model": "Qwen/Qwen3-Embedding-0.6B",
+      "revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+      "collections": [
+        "routing_document_summary_concept_e5b",
+        "routing_section_summary_concept_e5b"
+      ]
+    }
+  },
+  "stack": {
+    "postgres": "up (127.0.0.1:5432)",
+    "qdrant": "up (127.0.0.1:6334, prod collections untouched)",
+    "neo4j": "up (127.0.0.1:7475/7688)",
+    "redis": "up (recreated to apply host port mapping)",
+    "embedder": "ready (pin verified via /sidecars)",
+    "gliner": "ready",
+    "reranker": "ready",
+    "orchestrator": "up (:7200, /ready true)",
+    "control": "up (ticking)",
+    "workers": "8/8 up"
+  },
+  "frozen_artifact_discrepancy": {
+    "queries_file": "eval/r1b/queries.json (git-frozen at 1c75735)",
+    "raw_sha256": "0eadb8c51e3534d9591e29bb29f6e5dd274bba51ad176c35cd5e7f17072a95b6",
+    "recorded_sha_in_r1b_result": "0ec1b8724f7fbd712a2de660bbcbddf41905bb6a7bde595ef5b893cb40f9c83b",
+    "note": "The sha recorded in eval/r1b/result.json does not match any natural hashing of the committed queries file; it is a hardcoded constant in eval/r1b/measure.py (stale label). The git-frozen file is authoritative: this harness reproduces the frozen R1B baseline exactly (doc R@1 0.882, sec R@1 0.882, MRR 0.910/0.897), validating measurement fidelity."
+  },
+  "psychology": {
+    "gold": 13,
+    "generated_and_admitted": 5,
+    "generated_but_budgeted_out": 7,
+    "not_generated_or_filtered": 1,
+    "gold_rank_table": {
+      "metacognitive monitoring": {
+        "rank": 1,
+        "status": "GENERATED_AND_ADMITTED"
+      },
+      "metacognitive control": {
+        "rank": null,
+        "status": "FILTERED_AT_ADMISSION"
+      },
+      "judgments of learning": {
+        "rank": 5,
+        "status": "GENERATED_AND_ADMITTED"
+      },
+      "processing fluency": {
+        "rank": 41,
+        "status": "GENERATED_BUT_BUDGETED_OUT"
+      },
+      "familiarity effect": {
+        "rank": 39,
+        "status": "GENERATED_BUT_BUDGETED_OUT"
+      },
+      "illusion of competence": {
+        "rank": 4,
+        "status": "GENERATED_AND_ADMITTED"
+      },
+      "working memory": {
+        "rank": 43,
+        "status": "GENERATED_BUT_BUDGETED_OUT"
+      },
+      "cognitive load": {
+        "rank": 2,
+        "status": "GENERATED_AND_ADMITTED"
+      },
+      "retrieval practice": {
+        "rank": 45,
+        "status": "GENERATED_BUT_BUDGETED_OUT"
+      },
+      "corrective feedback": {
+        "rank": 29,
+        "status": "GENERATED_BUT_BUDGETED_OUT"
+      },
+      "self-regulated learning": {
+        "rank": 7,
+        "status": "GENERATED_AND_ADMITTED"
+      },
+      "local regulation": {
+        "rank": 22,
+        "status": "GENERATED_BUT_BUDGETED_OUT"
+      },
+      "global regulation": {
+        "rank": 21,
+        "status": "GENERATED_BUT_BUDGETED_OUT"
+      }
+    }
+  },
+  "document_routing": {
+    "baseline": {
+      "R@1": 0.882,
+      "R@3": 0.912,
+      "R@5": 0.912,
+      "MRR": 0.91
+    },
+    "candidate": {
+      "R@1": 0.853,
+      "R@3": 0.941,
+      "R@5": 0.941,
+      "MRR": 0.888
+    }
+  },
+  "section_routing": {
+    "baseline": {
+      "R@1": 0.882,
+      "R@3": 0.912,
+      "R@5": 0.912,
+      "MRR": 0.897
+    },
+    "candidate": {
+      "R@1": 0.853,
+      "R@3": 0.941,
+      "R@5": 0.941,
+      "MRR": 0.882
+    }
+  },
+  "r1a_coverage": {
+    "documents": 9,
+    "A": {
+      "concept_coverage": 0.87,
+      "section_theme_coverage": 0.778,
+      "late_content_coverage": 0.889,
+      "redundancy": 0.0,
+      "size_chars": 510.667
+    },
+    "B": {
+      "concept_coverage": 0.87,
+      "section_theme_coverage": 0.778,
+      "late_content_coverage": 0.889,
+      "redundancy": 0.007,
+      "size_chars": 886.667
+    }
+  },
+  "query_deltas": {
+    "doc": {
+      "improved": 1,
+      "unchanged": 29,
+      "regressed": 4,
+      "regressed_queries": [
+        {
+          "query_id": "p1_paraphrase_3",
+          "gold_doc": "cyber/zero_trust.docx",
+          "baseline_rank": 10,
+          "candidate_rank": 14
+        },
+        {
+          "query_id": "p1_paraphrase_4",
+          "gold_doc": "knowledge/embedding_models.docx",
+          "baseline_rank": 6,
+          "candidate_rank": 8
+        },
+        {
+          "query_id": "p1_sectionled_2",
+          "gold_doc": "psych/retrieval_practice.md",
+          "baseline_rank": 1,
+          "candidate_rank": 3
+        },
+        {
+          "query_id": "p1_cross_1",
+          "gold_doc": "psych/metacognitive_monitoring.md",
+          "baseline_rank": 2,
+          "candidate_rank": 3
+        }
+      ],
+      "improved_queries": [
+        {
+          "query_id": "p1_paraphrase_5",
+          "gold_doc": "psych/self_regulated_learning.md",
+          "baseline_rank": 6,
+          "candidate_rank": 3
+        }
+      ]
+    },
+    "sec": {
+      "improved": 1,
+      "unchanged": 31,
+      "regressed": 2,
+      "regressed_queries": [
+        {
+          "query_id": "p1_sectionled_2",
+          "gold_doc": "psych/retrieval_practice.md",
+          "baseline_rank": 1,
+          "candidate_rank": 3
+        },
+        {
+          "query_id": "p1_cross_1",
+          "gold_doc": "psych/metacognitive_monitoring.md",
+          "baseline_rank": 2,
+          "candidate_rank": 3
+        }
+      ],
+      "improved_queries": [
+        {
+          "query_id": "p1_paraphrase_5",
+          "gold_doc": "psych/self_regulated_learning.md",
+          "baseline_rank": 99,
+          "candidate_rank": 3
+        }
+      ]
+    }
+  },
+  "regression_observation": {
+    "p1_sectionled_2": "psych/retrieval_practice.md doc 1->3, sec 1->3. The iso/memory_note.txt concept list ('stores calibration history', 'system stores calibration') absorbs the literal query term 'calibration' and outranks the gold doc.",
+    "p1_cross_1": "psych/metacognitive_monitoring.md doc 2->3, sec 2->3. psych/working_memory.txt and iso/memory_note.txt (both with 'memory' concept lists) outrank the gold doc."
+  },
+  "zero_delta": {
+    "graph_zero_delta": true,
+    "extraction_zero_delta": true,
+    "neo4j": {
+      "concept_nodes": 0,
+      "nodes": 1711,
+      "relationships": 1618
+    },
+    "concept_ids_in_neo4j": true,
+    "corpus_wide_inventory_ms": 275.4,
+    "corpus_child_chunks": 28
+  },
+  "determinism": {
+    "candidate_two_runs_identical": true,
+    "point_ids_rebuild_identical": true
+  },
+  "performance": {
+    "concept_extraction_ms_per_doc": 1.96,
+    "representation_size": {
+      "baseline_chars": 18123,
+      "enriched_chars": 30576,
+      "delta_pct": 68.7
+    },
+    "embedding_latency": {
+      "baseline_ms": 1926.1,
+      "enriched_ms": 3151.9
+    },
+    "search_latency_ms": {
+      "baseline": {
+        "doc": 10.5,
+        "sec": 8.4,
+        "child": 7.3
+      },
+      "candidate": {
+        "doc": 7.1,
+        "sec": 4.9,
+        "child": 7.9
+      }
+    }
+  },
+  "verdict": "REJECT",
+  "verdict_reasoning": [
+    "Primary doc/sec R@1 regresses 0.882 -> 0.853 (one query each; the two real regressions are BOTH psychology queries that ranked 1-2 in baseline, the domain the lane was meant to help).",
+    "R1A coverage is unchanged (0.870/0.778/0.889 -> identical); criterion 7 (meaningful coverage improvement) not met.",
+    "Decision rule: 'If routing does not improve or regresses: REJECT E5B representation even though candidate extraction itself works.'",
+    "Part 1 discovery results (13/13 candidates vs GLiNER 2/13) remain valid as extraction evidence; they do not qualify the routing representation."
+  ],
+  "e5c_hypotheses_recorded_only": [
+    "admission floor: require occurrence_count >= 2 for routing-representation concepts",
+    "summary-co-occurrence gate: admit only concepts present in the doc/section summary",
+    "corpus-level frequency normalization (IDF-style)",
+    "single-child/short-document budget reduction (tiny docs fill budget with fragments)"
+  ],
+  "next": "STOP. No production integration, no tuning, no reruns."
+}

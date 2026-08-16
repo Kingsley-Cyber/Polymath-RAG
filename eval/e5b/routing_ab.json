@@ -1,0 +1,374 @@
+{
+  "queries_sha256": "0eadb8c51e3534d9591e29bb29f6e5dd274bba51ad176c35cd5e7f17072a95b6",
+  "production_collections": [
+    "polymath_ac2b0cae4818_embed_e794ec4cab197a3f",
+    "polymath_3b07df7335bd_embed_e794ec4cab197a3f"
+  ],
+  "e5b_collections": [
+    "routing_document_summary_concept_e5b",
+    "routing_section_summary_concept_e5b"
+  ],
+  "build": {
+    "docs": 32,
+    "sections": 32,
+    "children": 32,
+    "extraction_ms_total": 62.57176399230957,
+    "chars_baseline": 18123,
+    "chars_enriched": 30576,
+    "embed_ms_enriched": 3151.9,
+    "embed_ms_baseline": 1926.1,
+    "enriched_texts": 64
+  },
+  "doc": {
+    "baseline": {
+      "R@1": 0.882,
+      "R@3": 0.912,
+      "R@5": 0.912,
+      "MRR": 0.91
+    },
+    "candidate": {
+      "R@1": 0.853,
+      "R@3": 0.941,
+      "R@5": 0.941,
+      "MRR": 0.888
+    }
+  },
+  "sec": {
+    "baseline": {
+      "R@1": 0.882,
+      "R@3": 0.912,
+      "R@5": 0.912,
+      "MRR": 0.897
+    },
+    "candidate": {
+      "R@1": 0.853,
+      "R@3": 0.941,
+      "R@5": 0.941,
+      "MRR": 0.882
+    }
+  },
+  "query_level": [
+    {
+      "query_id": "p1_exact_1",
+      "query": "What does zero trust abandon?",
+      "gold_doc": "cyber/zero_trust.docx",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_exact_2",
+      "query": "Which phases does incident response proceed through?",
+      "gold_doc": "cyber/incident_response.pdf",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_exact_3",
+      "query": "What is a judgment of learning?",
+      "gold_doc": "psych/judgment_of_learning.epub",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_exact_4",
+      "query": "How does a vector index support dense search?",
+      "gold_doc": "systems/vector_indexes.md",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_exact_5",
+      "query": "What does source monitoring attribute?",
+      "gold_doc": "psych/source_monitoring.md",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_exact_6",
+      "query": "What does threat modeling identify before an adversary acts?",
+      "gold_doc": "cyber/threat_modeling.html",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_paraphrase_1",
+      "query": "Why can rereading leave a learner unable to recall the idea?",
+      "gold_doc": "psych/retrieval_practice.md",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_paraphrase_2",
+      "query": "Why do learners misjudge what they know after study?",
+      "gold_doc": "psych/judgment_of_learning.epub",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_paraphrase_3",
+      "query": "What makes lateral movement harder in a network?",
+      "gold_doc": "cyber/zero_trust.docx",
+      "baseline_doc_rank": 10,
+      "candidate_doc_rank": 14,
+      "baseline_sec_rank": 99,
+      "candidate_sec_rank": 99
+    },
+    {
+      "query_id": "p1_paraphrase_4",
+      "query": "How do queries and stored documents get compared numerically?",
+      "gold_doc": "knowledge/embedding_models.docx",
+      "baseline_doc_rank": 6,
+      "candidate_doc_rank": 8,
+      "baseline_sec_rank": 99,
+      "candidate_sec_rank": 99
+    },
+    {
+      "query_id": "p1_paraphrase_5",
+      "query": "What happens when a prediction does not match the outcome?",
+      "gold_doc": "psych/self_regulated_learning.md",
+      "baseline_doc_rank": 6,
+      "candidate_doc_rank": 3,
+      "baseline_sec_rank": 99,
+      "candidate_sec_rank": 3
+    },
+    {
+      "query_id": "p1_paraphrase_6",
+      "query": "Why should a knowledge graph be deletable and rebuildable?",
+      "gold_doc": "knowledge/knowledge_graphs.epub",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_late_1",
+      "query": "What does the document say about recording the source of each claim while taking notes?",
+      "gold_doc": "psych/source_monitoring.md",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_late_2",
+      "query": "What does the zero trust document say about audit logs?",
+      "gold_doc": "cyber/zero_trust.docx",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_late_3",
+      "query": "What does the working memory document say about capacity limits?",
+      "gold_doc": "psych/working_memory.txt",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_late_4",
+      "query": "What response latency evidence does the self-regulated learning document mention?",
+      "gold_doc": "psych/self_regulated_learning.md",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_minority_1",
+      "query": "What does the encryption document say about key storage?",
+      "gold_doc": "cyber/encryption_basics.md",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_minority_2",
+      "query": "What does the fault tolerance document say about degraded states?",
+      "gold_doc": "systems/fault_tolerance.html",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_minority_3",
+      "query": "What does the authentication document say about sessions?",
+      "gold_doc": "cyber/authentication.txt",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_minority_4",
+      "query": "What does the verification loops document say about receipts?",
+      "gold_doc": "systems/verification_loops.md",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_disambig_1",
+      "query": "Which document discusses reranking candidates rather than evaluating them?",
+      "gold_doc": "knowledge/reranking.md",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_disambig_2",
+      "query": "Which document covers embedding models rather than knowledge graphs?",
+      "gold_doc": "knowledge/embedding_models.docx",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_disambig_3",
+      "query": "Where is corpus management rather than document ingestion discussed?",
+      "gold_doc": "knowledge/corpus_management.txt",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_disambig_4",
+      "query": "Which document discusses graph traversal policy rather than the graph itself?",
+      "gold_doc": "knowledge/graph_traversal.md",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_rescue_1",
+      "query": "Which ingredient of zero trust reduces the value of a successful breach?",
+      "gold_doc": "cyber/zero_trust.docx",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_rescue_2",
+      "query": "What does the platform services document say about model processes?",
+      "gold_doc": "systems/platform_services.md",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_rescue_3",
+      "query": "What does the worker pools document say about backpressure?",
+      "gold_doc": "systems/worker_pools.md",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_rescue_4",
+      "query": "What does the document ingestion document say about native formats?",
+      "gold_doc": "systems/document_ingestion.md",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_docled_1",
+      "query": "What is the overall topic of the evidence bundles document?",
+      "gold_doc": "knowledge/evidence_bundles.md",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_docled_2",
+      "query": "What is the overall topic of the cognitive load document?",
+      "gold_doc": "psych/cognitive_load.md",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_sectionled_1",
+      "query": "Which section of the metacognitive monitoring document discusses accuracy deterioration?",
+      "gold_doc": "psych/metacognitive_monitoring.md",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    },
+    {
+      "query_id": "p1_sectionled_2",
+      "query": "Which section of the retrieval practice document discusses calibration?",
+      "gold_doc": "psych/retrieval_practice.md",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 3,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 3
+    },
+    {
+      "query_id": "p1_cross_1",
+      "query": "How does working memory relate to monitoring accuracy?",
+      "gold_doc": "psych/metacognitive_monitoring.md",
+      "baseline_doc_rank": 2,
+      "candidate_doc_rank": 3,
+      "baseline_sec_rank": 2,
+      "candidate_sec_rank": 3
+    },
+    {
+      "query_id": "p1_cross_2",
+      "query": "How do receipts connect verification loops and corpus integrity?",
+      "gold_doc": "systems/verification_loops.md",
+      "baseline_doc_rank": 1,
+      "candidate_doc_rank": 1,
+      "baseline_sec_rank": 1,
+      "candidate_sec_rank": 1
+    }
+  ],
+  "determinism": {
+    "candidate_two_runs_identical": true,
+    "point_ids_rebuild_identical": true
+  },
+  "search_latency_ms": {
+    "baseline": {
+      "doc": 10.5,
+      "sec": 8.4,
+      "child": 7.3
+    },
+    "candidate": {
+      "doc": 7.1,
+      "sec": 4.9,
+      "child": 7.9
+    }
+  }
+}

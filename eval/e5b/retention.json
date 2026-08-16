@@ -1,0 +1,118 @@
+{
+  "gold_ranks": {
+    "metacognitive monitoring": {
+      "rank": 1,
+      "status": "GENERATED_AND_ADMITTED"
+    },
+    "metacognitive control": {
+      "rank": null,
+      "status": "FILTERED_AT_ADMISSION"
+    },
+    "judgments of learning": {
+      "rank": 5,
+      "status": "GENERATED_AND_ADMITTED"
+    },
+    "processing fluency": {
+      "rank": 41,
+      "status": "GENERATED_BUT_BUDGETED_OUT"
+    },
+    "familiarity effect": {
+      "rank": 39,
+      "status": "GENERATED_BUT_BUDGETED_OUT"
+    },
+    "illusion of competence": {
+      "rank": 4,
+      "status": "GENERATED_AND_ADMITTED"
+    },
+    "working memory": {
+      "rank": 43,
+      "status": "GENERATED_BUT_BUDGETED_OUT"
+    },
+    "cognitive load": {
+      "rank": 2,
+      "status": "GENERATED_AND_ADMITTED"
+    },
+    "retrieval practice": {
+      "rank": 45,
+      "status": "GENERATED_BUT_BUDGETED_OUT"
+    },
+    "corrective feedback": {
+      "rank": 29,
+      "status": "GENERATED_BUT_BUDGETED_OUT"
+    },
+    "self-regulated learning": {
+      "rank": 7,
+      "status": "GENERATED_AND_ADMITTED"
+    },
+    "local regulation": {
+      "rank": 22,
+      "status": "GENERATED_BUT_BUDGETED_OUT"
+    },
+    "global regulation": {
+      "rank": 21,
+      "status": "GENERATED_BUT_BUDGETED_OUT"
+    }
+  },
+  "budget_cutoff_view": {
+    "budget_4": {
+      "admitted": [
+        "metacognitive monitoring",
+        "cognitive load",
+        "regulation of learning",
+        "illusion of competence"
+      ],
+      "gold_hits": [
+        "metacognitive monitoring",
+        "illusion of competence",
+        "cognitive load"
+      ]
+    },
+    "budget_8": {
+      "admitted": [
+        "metacognitive monitoring",
+        "cognitive load",
+        "regulation of learning",
+        "illusion of competence",
+        "judgments of learning",
+        "ease of processing",
+        "self regulated learning",
+        "study time"
+      ],
+      "gold_hits": [
+        "metacognitive monitoring",
+        "judgments of learning",
+        "illusion of competence",
+        "cognitive load",
+        "self-regulated learning"
+      ]
+    },
+    "budget_12": {
+      "admitted": [
+        "metacognitive monitoring",
+        "cognitive load",
+        "regulation of learning",
+        "illusion of competence",
+        "judgments of learning",
+        "ease of processing",
+        "self regulated learning",
+        "study time",
+        "poor monitoring",
+        "practicing material",
+        "changing study",
+        "intermediate steps"
+      ],
+      "gold_hits": [
+        "metacognitive monitoring",
+        "judgments of learning",
+        "illusion of competence",
+        "cognitive load",
+        "self-regulated learning"
+      ]
+    }
+  },
+  "pipeline_counts": {
+    "candidates": 186,
+    "pre_filtered": 69,
+    "post_overlap": 62
+  }
+}

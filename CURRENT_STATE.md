@@ -5,13 +5,13 @@ Verified against commit: `8323304` (E5 analysis: deterministic concept layer aut
 Active branch at verification: `main`
 
 ```yaml
-current_phase: e5b-part1-complete # E5B deterministic concept inventory: quality+invariants frozen; part 2 (routing A/B) pending stack bring-up
+current_phase: e5b-complete-reject # E5B closed: part 1 discovery qualified (13/13 candidates); part 2 routing A/B REJECT (R@1 0.882->0.853, coverage unchanged)
 repository:
   branch: main
   head: 8323304
   frozen_artifacts: [see Frozen Artifacts section]
-  evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1, qualification-q1, q1r-validation, ep1, em1, sr1, e2-admission, g4, e3, e3b, e4, e5, e5b-part1]
-  next_actions: [e5b-part2-routing-ab, i1-bulk-ingestion, i2-scale-integrity, g4-scale-qualification]
+  evaluations: [experiment-0001, experiment-0002, phase-h-v1.0, phase-h-v1.1, qualification-q1, q1r-validation, ep1, em1, sr1, e2-admission, g4, e3, e3b, e4, e5, e5b-part1, e5b-part2-reject]
+  next_actions: [e5c-or-user-decision-on-concept-hypotheses, i1-bulk-ingestion, i2-scale-integrity, g4-scale-qualification]
   do_not_do: [see Explicitly Prohibited Actions]
   known_gaps: [see Known Limitations]
 ```
@@ -250,11 +250,12 @@ permits a new corpus version.
 
 ## Known Limitations
 
-- E5B concept inventory (part 1): single-occurrence concepts tie-break
-  by `concept_id` at budget admission (RANKED_OUT_BY_BUDGET class;
-  the `in_summary_text` ranking component is the production remedy).
-  4-token concepts (per-bridged / multi-hyphen compounds) are
-  pre-filtered. Routing A/B unmeasured (stores were down).
+- E5B concept inventory: single-occurrence concepts tie-break by
+  `concept_id` at budget admission (RANKED_OUT_BY_BUDGET class); the
+  `in_summary_text` ranking component is present but did not save
+  routing. 4-token concepts (per-bridged / multi-hyphen compounds)
+  are pre-filtered. Routing A/B measured: REJECT (R@1 0.882 → 0.853,
+  coverage unchanged). E5C hypotheses recorded, not authorized.
 - W2 candidate generation: no ARG1→ARG2 (theme→result) pairing
   (measured: v11_a01/a02 MISSED in both arms).
 - W7 orientation: passive inversion requires a syntactic parse; frozen
@@ -316,16 +317,15 @@ never by armchair promise.
 
 ## Next Authorized Actions
 
-E5B part 2 (routing A/B, required to close E5B): bring up the full
-stack (Qdrant/Neo4j/Redis/orchestrator/control — all were down at
-part-1 qualification), re-ingest the I2 corpus, re-measure R1B (expect
-doc R@1 0.882), then build disposable experimental collections
-`routing_document_summary_concept_e5b` / `routing_section_summary_concept_e5b`
-from `enriched_representation` with the frozen embedder pin
-(`97b0c614…`) and re-run the frozen R1B query set: no material
-regression + concept-lane comparison. See `eval/e5b/REPORT.md` and
-work log `2026-08-15-e5b-concept-inventory.md`. EVEN ON PASS → STOP
-(no production promotion; E5C is a separate future gate).
+E5B is CLOSED with verdict REJECT (frozen evidence
+`eval/e5b/evidence_p2.json`, report `eval/e5b/REPORT.md`, work log
+`2026-08-16-e5b-routing-qualification.md`). The deterministic concept
+extraction itself (part 1) remains valid discovery evidence; the
+routing representation fails (R@1 0.882 → 0.853, coverage unchanged,
+psychology regressions). Recorded E5C hypotheses (occurrence-count
+floor, summary-co-occurrence gate, corpus-level frequency
+normalization, short-document budgets) require a separate experiment
+authorization — do NOT begin automatically.
 
 MILESTONE A — CORPUS_INGEST_READY (C1+C2+Q1+I0 COMPLETE):
 

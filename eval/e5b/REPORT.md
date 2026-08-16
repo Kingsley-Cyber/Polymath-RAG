@@ -83,3 +83,76 @@ required before E5B is complete.
    summaries); production uses real routing summaries.
 3. 4-token concepts (per-bridged or multi-hyphen compounds) are
    pre-filtered by the >3-token span rule.
+
+---
+
+# E5B Part 2 — Routing Qualification (frozen evidence `evidence_p2.json`)
+
+Date: 2026-08-16 | Base: `ba363ec` | Stack: full (Postgres/Qdrant/Neo4j/
+Redis + embedder/GLiNER/reranker sidecars + orchestrator/control +
+8 workers). I2 corpus re-ingested live: 28 + 4 isolation docs query_ready
+(250s, p50 122.6s/doc).
+
+## Harness validation
+
+Baseline arm reproduced the frozen R1B numbers EXACTLY:
+doc 0.882/0.912/0.912 MRR 0.910; sec 0.882/0.912/0.912 MRR 0.897.
+(Discrepancy reported: the sha recorded in `eval/r1b/result.json` is a
+stale hardcoded constant; the git-frozen queries file sha is
+`0eadb8c51e…` and its content yields the frozen numbers.)
+
+## IN_SUMMARY_TEXT
+
+Present in `ba363ec`: YES — 6th ranking-tuple component (+1 when the
+normalized concept occurs in the normalized summary concat). Used
+exactly as committed; not altered.
+
+## Results
+
+| metric | baseline | candidate | delta |
+|---|---|---|---|
+| doc R@1 / R@3 / R@5 | 0.882 / 0.912 / 0.912 | 0.853 / 0.941 / 0.941 | −0.029 / +0.029 / +0.029 |
+| doc MRR | 0.910 | 0.888 | −0.022 |
+| sec R@1 / R@3 / R@5 | 0.882 / 0.912 / 0.912 | 0.853 / 0.941 / 0.941 | −0.029 / +0.029 / +0.029 |
+| sec MRR | 0.897 | 0.882 | −0.015 |
+
+Query deltas: doc improved 1 / unchanged 29 / regressed 4;
+sec improved 1 / unchanged 31 / regressed 2. The two real regressions
+are BOTH psychology: `p1_sectionled_2` (retrieval_practice.md 1→3 —
+iso/memory_note.txt's concept list absorbs the literal query term
+"calibration") and `p1_cross_1` (metacognitive_monitoring.md 2→3 —
+working_memory.txt and the iso note outrank it). One psychology query
+improved (`p1_paraphrase_5`, doc 6→3, sec 99→3).
+
+R1A coverage A/B: 0.870 / 0.778 / 0.889 / redundancy 0.0 in BOTH arms
+(+376 chars, +74% representation size) — no coverage improvement.
+
+Psychology retention ranks (pre-budget deterministic order): admitted
+ranks 1,2,4,5,7; budgeted-out ranks 21–45; `metacognitive control`
+filtered at admission (rule-pack verb lemma), correcting part 1's
+RANKED_OUT_BY_BUDGET label (part-1 evidence left intact; correction
+noted here).
+
+Safety: graph zero-delta ✓, extraction zero-delta ✓, Neo4j concept
+nodes 0 ✓ (1711 nodes/1618 rels unchanged). Determinism ✓ (two runs
+identical; point ids identical across rebuild). Performance: ~1 ms/doc
+extraction over 64 inventories, embedding +64% batch wall time for the
++74% text, search latency unchanged (7–10 ms p50).
+
+## Verdict
+
+**REJECT.** The bounded concept inventory does not improve the
+qualified routing representation: primary R@1 regresses by one query
+(0.882 → 0.853) and the regressed queries are psychology — the domain
+the lane exists to help. Coverage unchanged. Per the decision rule
+("if routing does not improve or regresses: REJECT"), the E5B
+representation fails qualification even though candidate extraction
+itself works (part 1: 13/13 candidates vs GLiNER 2/13).
+
+No tuning performed after observation (budget, ranking, guards,
+dictionaries, serialization all frozen at `ba363ec`). Recorded E5C
+hypotheses only: occurrence-count admission floor, summary-co-occurrence
+gate, corpus-level frequency normalization, short-document budget
+reduction.
+
+NEXT: STOP. No production integration, no reruns.

@@ -523,3 +523,16 @@ that motivated it and the refactor that implemented it.
 - Retrieval `retrieval-summary-v2` untouched; experimental Qdrant
   collections deferred to part 2 (routing A/B vs R1B 0.882).
   (work log `2026-08-15-e5b-concept-inventory.md`)
+
+## 2026-08-16: E5B part 2 routing qualification — REJECT
+
+- Frozen routing A/B on the re-ingested I2 corpus: candidate
+  (retrieval-summary-v2 + concept-inventory-v1 under
+  routing-concept-enriched-v1, disposable collections
+  routing_document_summary_concept_e5b /
+  routing_section_summary_concept_e5b) vs baseline. Harness reproduced
+  the frozen R1B numbers exactly; candidate doc/sec R@1 0.882 -> 0.853
+  (one query each; both real regressions psychology), R1A coverage
+  unchanged, graph/extraction/Neo4j zero-delta, determinism green.
+  Verdict REJECT; no production integration, no tuning.
+  (work log `2026-08-16-e5b-routing-qualification.md`)

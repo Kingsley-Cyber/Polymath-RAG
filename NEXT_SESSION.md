@@ -10,22 +10,22 @@ Read:
 
 ## Last Completed
 
-- **E5B — deterministic concept inventory, part 1 (frozen evidence)**
-  (work log `2026-08-15-e5b-concept-inventory.md`, report
-  `eval/e5b/REPORT.md`, verifier `eval/e5b/verify_e5b.py`). New
-  `shared/polymath_shared/concept_inventory.py` (contracts
-  `concept-inventory-v1` + `routing-concept-enriched-v1`): psychology
-  candidate recall 13/13 vs GLiNER 2/13, admitted 5/13 @ budget 8
-  (P 0.625); graph+facts zero-delta; determinism/order/concurrency/
-  replay/versioning green; 2.4 ms/doc; 10 pure determinism tests.
-  Concepts are retrieval metadata only. **Next authorized task:
-  E5B part 2 — routing A/B vs R1B 0.882 R@1.** Requires: bring up
-  Qdrant/Neo4j/Redis/orchestrator/control (all down at part-1 time),
-  re-ingest I2 corpus, re-measure R1B baseline, build disposable
-  `routing_*_concept_e5b` collections from `enriched_representation`
-  with the frozen embedder pin, re-run frozen R1B query set, no
-  material regression. EVEN ON PASS → STOP (no promotion; E5C is a
-  separate gate).
+- **E5B — deterministic concept inventory: CLOSED, verdict REJECT**
+  (work logs `2026-08-15-e5b-concept-inventory.md` +
+  `2026-08-16-e5b-routing-qualification.md`, report `eval/e5b/REPORT.md`,
+  frozen evidence `eval/e5b/evidence_p2.json`). Part 1 (discovery):
+  psychology candidates 13/13 vs GLiNER 2/13, admitted 5/13 @ budget 8,
+  zero-delta, determinism green. Part 2 (routing A/B on re-ingested
+  I2 corpus, harness validated by exact R1B reproduction 0.882/0.912/
+  0.912): candidate doc/sec R@1 0.882 → 0.853 (one query each; both
+  real regressions psychology — iso/memory_note.txt concept lists
+  absorb query terms), R1A coverage unchanged (0.870/0.778/0.889),
+  graph/extraction/Neo4j zero-delta, determinism green, ~1 ms/doc
+  extraction, search latency unchanged. Verdict REJECT per decision
+  rule; no tuning performed; no production integration. E5C
+  hypotheses recorded only (occurrence floor, summary-co-occurrence
+  gate, corpus-level frequency normalization, short-doc budgets) —
+  require separate experiment authorization.
 
 - **D4.1 — answer-support model qualification: REJECT (frozen)** (work
   log `2026-08-15-d41-answer-support-model-qualification.md`, report
