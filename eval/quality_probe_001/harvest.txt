@@ -1,0 +1,189 @@
+==================== CHUNKS
+CHILD [54:426] tokens=62 hp=['Designing a Restart-Safe Event Processing Pipeline'] sentences=3
+   s0: A restart-safe event pipeline must assume that processes will fail at inconvenient moments.
+   s1: A worker may crash after writing to a database but before acknowledging a message, a network ca
+   s2: The design goal is not to prevent every failure.
+CHILD [427:562] tokens=19 hp=['Designing a Restart-Safe Event Processing Pipeline'] sentences=1
+   s0: Instead, the system should make repeated work harmless and make incomplete work visible enough 
+CHILD [564:850] tokens=45 hp=['Designing a Restart-Safe Event Processing Pipeline'] sentences=3
+   s0: One common approach is to keep workflow authority in a transactional database.
+   s1: A worker claims an event, performs the stage-specific writes, records a receipt, updates the ru
+   s2: If the transaction commits, the stage is complete.
+CHILD [851:912] tokens=10 hp=['Designing a Restart-Safe Event Processing Pipeline'] sentences=1
+   s0: If it rolls back, none of those changes become authoritative.
+CHILD [913:1035] tokens=19 hp=['Designing a Restart-Safe Event Processing Pipeline'] sentences=1
+   s0: This pattern avoids the ambiguous state created when a worker updates one system and then crash
+CHILD [1036:1153] tokens=19 hp=['Designing a Restart-Safe Event Processing Pipeline'] sentences=1
+   s0: The outbox can later be delivered to downstream workers without making the message broker itsel
+CHILD [1155:2369] tokens=172 hp=['Designing a Restart-Safe Event Processing Pipeline'] sentences=10
+   s0: Idempotent identities are equally important.
+   s1: Documents, chunks, facts, and projection artifacts can be assigned deterministic identifiers de
+   s2: When the same document is submitted again, the pipeline lands on the same identifiers instead o
+   s3: A replay can therefore become a no-op at the storage layer even if the orchestration layer retr
+   s4: This is especially useful when external services provide at-least-once delivery rather than exa
+   s5: Search indexes and graph databases should be treated differently from the workflow database.
+   s6: A vector index can accelerate semantic retrieval, and a graph store can accelerate traversal, b
+   s7: The projection worker should therefore record what it attempted to materialize and the verifier
+   s8: If a projection disappears, the system should clear or supersede the corresponding claim and sc
+   s9: Concurrency introduces another class of failure.
+CHILD [2370:2743] tokens=59 hp=['Designing a Restart-Safe Event Processing Pipeline'] sentences=3
+   s0: Two workers may attempt to process the same stage, or one worker may stall long enough that a l
+   s1: A robust implementation uses bounded leases, deterministic stage contracts, and transactional c
+   s2: The losing worker must be able to discover that its work is stale.
+CHILD [2744:2855] tokens=17 hp=['Designing a Restart-Safe Event Processing Pipeline'] sentences=1
+   s0: This prevents a delayed process from overwriting a newer run state after ownership has already 
+CHILD [2857:3456] tokens=88 hp=['Designing a Restart-Safe Event Processing Pipeline'] sentences=3
+   s0: Operationally, the pipeline is only trustworthy if these properties are tested under failure ra
+   s1: Useful tests include killing a worker between database writes, replaying the same document repe
+   s2: A system that passes those tests can scale by adding workers and larger batches without changin
+PARENTS: 3
+  parent summary: A restart-safe event pipeline must assume that processes will fail at inconvenient moments. Instead, the system should m
+  parent summary: This pattern avoids the ambiguous state created when a worker updates one system and then crashes before updating anothe
+  parent summary: This prevents a delayed process from overwriting a newer run state after ownership has already moved elsewhere. Operatio
+==================== MENTIONS (durable layer)
+total mentions: 42
+  correctness model                        Product        CORPUS_SCOPED  raw=Model score=0.924 kind=discovery
+  worker                                   Person         MENTION_ONLY   raw=Person score=0.89 kind=discovery
+  document                                 Document       MENTION_ONLY   raw=Document score=0.875 kind=discovery
+  database                                 Document       MENTION_ONLY   raw=Dataset score=0.87 kind=discovery
+  documents                                Document       GLOBAL         raw=Document score=0.857 kind=discovery
+  worker                                   Person         MENTION_ONLY   raw=Person score=0.847 kind=discovery
+  worker                                   Person         MENTION_ONLY   raw=Person score=0.842 kind=discovery
+  document                                 Document       MENTION_ONLY   raw=Document score=0.828 kind=discovery
+  graph databases                          Technology     CORPUS_SCOPED  raw=Technology score=0.822 kind=discovery
+  batch                                    Document       MENTION_ONLY   raw=Dataset score=0.821 kind=discovery
+  worker                                   Person         MENTION_ONLY   raw=Person score=0.816 kind=discovery
+  event                                    Event          MENTION_ONLY   raw=Event score=0.805 kind=discovery
+  event                                    Event          MENTION_ONLY   raw=Event score=0.804 kind=discovery
+  bounded leases                           Technology     CORPUS_SCOPED  raw=Technology score=0.797 kind=discovery
+  orchestration layer                      Technology     CORPUS_SCOPED  raw=Technology score=0.792 kind=discovery
+  search indexes                           Technology     GLOBAL         raw=Technology score=0.776 kind=discovery
+  robust implementation                    Technology     CORPUS_SCOPED  raw=Technology score=0.773 kind=discovery
+  storage layer                            Technology     CORPUS_SCOPED  raw=Technology score=0.761 kind=discovery
+  worker                                   Person         MENTION_ONLY   raw=Person score=0.757 kind=discovery
+  worker                                   Person         MENTION_ONLY   raw=Person score=0.741 kind=discovery
+  network call                             Process        CORPUS_SCOPED  raw=Process score=0.732 kind=discovery
+  deterministic stage contracts            Document       CORPUS_SCOPED  raw=Document score=0.73 kind=discovery
+  delayed process                          Process        CORPUS_SCOPED  raw=Process score=0.727 kind=discovery
+  chunks                                   Document       MENTION_ONLY   raw=Dataset score=0.703 kind=discovery
+  corpus                                   Document       MENTION_ONLY   raw=Dataset score=0.683 kind=discovery
+  facts                                    Document       MENTION_ONLY   raw=Dataset score=0.674 kind=discovery
+  transactional claim operations           Process        CORPUS_SCOPED  raw=Process score=0.661 kind=discovery
+  system                                   Technology     MENTION_ONLY   raw=Technology score=0.656 kind=discovery
+  graph store                              Technology     CORPUS_SCOPED  raw=Technology score=0.653 kind=discovery
+  projection worker                        Technology     CORPUS_SCOPED  raw=Technology score=0.653 kind=discovery
+  vector index                             Technology     CORPUS_SCOPED  raw=Technology score=0.634 kind=discovery
+  workflow database                        Technology     CORPUS_SCOPED  raw=Technology score=0.625 kind=discovery
+  remote service                           Technology     CORPUS_SCOPED  raw=Technology score=0.607 kind=discovery
+  workers                                  Person         MENTION_ONLY   raw=Person score=0.603 kind=discovery
+  pipeline                                 Technology     MENTION_ONLY   raw=Technology score=0.598 kind=discovery
+  pipeline                                 Technology     MENTION_ONLY   raw=Technology score=0.576 kind=discovery
+  message broker                           Organization   CORPUS_SCOPED  raw=Organization score=0.57 kind=discovery
+  external services                        Technology     CORPUS_SCOPED  raw=Technology score=0.566 kind=discovery
+  the outbox                               Technology     GLOBAL         raw=Technology score=0.554 kind=discovery
+  replay                                   Process        MENTION_ONLY   raw=Process score=0.528 kind=discovery
+  verifier                                 Technology     MENTION_ONLY   raw=Technology score=0.507 kind=discovery
+  transactional database                   Technology     CORPUS_SCOPED  raw=Technology score=0.502 kind=discovery
+==================== ENTITIES (admitted)
+fact-endpoint entities: 0
+==================== FACTS + PROVENANCE
+accepted facts: 0
+==================== AUDIT (candidates & rejections)
+audit entries: 7
+  REJECT       worker                   --creation--> remote service           | type_violation: no signature accepts (Person -> Technology)
+  REJECT       The outbox               --classification--> message broker           | scope_gate: negated, speculative
+  REJECT       The outbox               --classification--> message broker           | scope_gate: negated, speculative
+  REJECT       graph databases          --classification--> workflow database        | scope_gate: conditional
+  REJECT       Search indexes           --classification--> workflow database        | scope_gate: conditional
+  REJECT       graph databases          --classification--> workflow database        | scope_gate: conditional
+  REJECT       Search indexes           --classification--> workflow database        | scope_gate: conditional
+==================== RESCUE
+{
+ "stages": [
+  "boundary",
+  "missing_argument",
+  "type_reconciliation",
+  "frames"
+ ],
+ "boundary": {
+  "counts": {
+   "refused": 5,
+   "accepted": 0,
+   "candidates": 5
+  },
+  "stages": [
+   "boundary"
+  ],
+  "queries": [
+   {
+    "kind": "boundary",
+    "text": "next outbox event",
+    "score": null,
+    "labels": [
+     "Event"
+    ],
+    "outcome": "refused",
+    "identity": "515d494957f74ea18ad90ad5306eddd8c9c24f51d8013f76edd184e80f25f80b",
+    "threshold": 0.5,
+    "accept_reason": "no_full_span_prediction",
+    "raw_predictions": [],
+    "accepted_raw_label": null,
+    "query_policy_version": "semantic-query-policy-v1"
+   },
+   {
+    "kind": "boundary",
+    "text": "Two workers",
+    "score": null,
+    "labels": [
+     "Person"
+    ],
+    "outcome": "refused",
+    "identity": "619ceda84d829e62d4d8527361236d088c57a0a22ce667e7d5c9b4a9172657b2",
+    "threshold": 0.5,
+    "accept_reason": "no_full_span_prediction",
+    "raw_predictions": [],
+    "accepted_raw_label": null,
+    "query_policy_version": "semantic-query-policy-v1"
+   },
+   {
+    "kind": "boundary",
+    "text": "one worker",
+    "score": null,
+    "labels": [
+     "Person"
+    ],
+    "outcome": "refused",
+    "identity": "eb4a7e0d0a61082264b6349fc1b0685e78bdd4435d6e3e7617502ddfaf948861",
+    "threshold": 0.5,
+    "accept_reason": "no_full_span_prediction",
+    "raw_predictions": [],
+    "accepted_raw_label": null,
+    "query_policy_version": "semantic-query-policy-v1"
+   },
+   {
+    "kind": "boundary",
+    "text": "losing worker",
+    "score": null,
+    "labels": [
+     "Person"
+    ],
+    "outcome": "refused",
+    "identity": "f1b2460f052648743e88994dd39ceb39fd7591a8deb1ce8aab66ae149e08b266",
+    "threshold": 0.5,
+    "accept_reason": "no_full_span_prediction",
+    "raw_predictions": [],
+    "accepted_raw_label": null,
+    "query_policy_version": "semantic-query-policy-v1"
+   },
+   {
+    "kind": "boundary",
+    "text": "same document",
+    "score": null,
+    "labels": [
+     "Document"
+    ],
+    "outcome": "refused",
+    "identity": "373b020a0609099dd9cce177467c46fbc03c04e15a0696cdb7c3fcf8426c66ff",
+    "threshold": 0.5,
+    "accept_reason": "no_full_span_prediction",
+    "raw_predictions": 

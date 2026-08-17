@@ -47,6 +47,7 @@ def claim_ticket_events(conn, identity: dict, event_types: list[str], limit: int
               LEFT JOIN runs r ON r.run_id = e.run_id
              WHERE e.delivered_at IS NULL
                AND e.event_type = ANY(%s)
+               AND (t.ticket_id IS NULL OR t.status = 'ready')
              ORDER BY e.event_id
              LIMIT %s
              FOR UPDATE OF e SKIP LOCKED

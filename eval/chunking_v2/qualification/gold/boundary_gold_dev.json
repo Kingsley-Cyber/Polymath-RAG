@@ -1,0 +1,24 @@
+{
+  "subset": "dev",
+  "docs": ["01_cyber_postmortem.md", "02_distributed_tradeoffs.md", "03_psychology_prose.md"],
+  "required_breaks": [
+    {"doc": "01_cyber_postmortem.md", "before": "The incident was contained quickly but exposed three structural weaknesses.", "after": "The rotation began at 14:02 UTC.", "reason": "heading boundary + topic shift"},
+    {"doc": "01_cyber_postmortem.md", "before": "The rollback completed at 14:11 and error rates returned to baseline within a minute.", "after": "The rotation service and the verification service disagreed about ordering.", "reason": "heading boundary"},
+    {"doc": "01_cyber_postmortem.md", "before": "A negative-result TTL of five seconds would have converted a hard outage into a soft degradation.", "after": "The remediation plan is tracked in the incident register.", "reason": "table region boundary"},
+    {"doc": "01_cyber_postmortem.md", "before": "The identity team will present the two-phase protocol design at the next architecture council.", "after": "Rotation is a distributed-systems problem, not a configuration problem.", "reason": "heading boundary"},
+    {"doc": "02_distributed_tradeoffs.md", "before": "Session consistency guarantees that a client observes its own writes.", "after": "Every distributed datastore chooses a position on the consistency spectrum,", "reason": "ordering note: heading boundary between Why Consistency Matters and Read-Your-Writes"},
+    {"doc": "02_distributed_tradeoffs.md", "before": "Teams that adopt session consistency should instrument the degradation path explicitly.", "after": "Causal consistency preserves the happens-before relationship", "reason": "heading boundary"},
+    {"doc": "02_distributed_tradeoffs.md", "before": "The bug is not in the datastore; the bug is that the application expressed causality through an out-of-band channel.", "after": "Teams that follow this sequence rarely regret their consistency choice.", "reason": "list region boundary"},
+    {"doc": "03_psychology_prose.md", "before": "Because retrieval success is the actual outcome of interest, judgments anchored to it track learning far better.", "after": "Monitoring feeds control: the decision to restudy,", "reason": "heading boundary"},
+    {"doc": "03_psychology_prose.md", "before": "Interventions that target only one phase tend to wash out because the other phases compensate.", "after": "Older adults show preserved monitoring for text comprehension", "reason": "heading boundary"},
+    {"doc": "03_psychology_prose.md", "before": "Calibration, the match between confidence and accuracy, is domain-specific and trainable.", "after": "The protocols above are ordered by maturity of evidence,", "reason": "table region boundary"}
+  ],
+  "forbidden_breaks": [
+    {"doc": "01_cyber_postmortem.md", "within": ["The rotation service and the verification service disagreed about ordering.", "The fix is a versioned key-rotation protocol where publication is two-phase and verification fleets subscribe to rotation events instead of polling."], "reason": "single coherent argument"},
+    {"doc": "01_cyber_postmortem.md", "within": ["Cache behavior amplified the fault.", "A negative-result TTL of five seconds would have converted a hard outage into a soft degradation."], "reason": "single coherent argument"},
+    {"doc": "02_distributed_tradeoffs.md", "within": ["This sounds trivial until a gateway load-balances requests across regions.", "Session tokens solve this by tagging each request with a logical clock that replicas consult before serving."], "reason": "problem and solution in one argument"},
+    {"doc": "02_distributed_tradeoffs.md", "within": ["If the badge printer reads from a replica that has not applied the reservation,", "The bug is not in the datastore; the bug is that the application expressed causality through an out-of-band channel."], "reason": "worked example conclusion"},
+    {"doc": "03_psychology_prose.md", "within": ["Fluent processing feels like understanding,", "The illusion of competence persists until the learner faces a test, where fluency cannot help."], "reason": "single mechanism explanation"},
+    {"doc": "03_psychology_prose.md", "within": ["A learner who overestimates mastery terminates study early;", "Both patterns waste the scarcest resource, which is study time."], "reason": "paired contrast argument"}
+  ]
+}

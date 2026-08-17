@@ -54,6 +54,16 @@ def tick() -> dict:
         barrier = _barrier_or_none(conn, census)
         if barrier is None:
             apply_promotions(conn, census)
+        else:
+            # Per-corpus barrier: a blocked corpus must not freeze
+            # promotion for healthy corpora — promote everything whose
+            # own corpus passes the generation barrier.
+            blocked = _corpora_with_open_barriers(conn, census)
+            promoted = [r for r in census.promote
+                        if _corpus_of_run(conn, r) not in blocked]
+            if len(promoted) != len(census.promote):
+                census = census.__class__(gaps=census.gaps, promote=promoted, fail=census.fail)
+            apply_promotions(conn, census)
         apply_failures(conn, census)
         record_heartbeat(conn, owner, tick_ok=True, census_size=len(census.gaps))
         return {
@@ -97,14 +107,27 @@ def _barrier_or_none(conn, census) -> dict | None:
     """Generation barrier (ADR-0014): block promotion of any corpus whose
     ticket chains are not fully DONE with desired==actual projections.
     Returns the blocking verdict, or None when promotion may proceed."""
+    blocked = _corpora_with_open_barriers(conn, census)
+    return next(iter(blocked.values()), None) if blocked else None
+
+
+def _corpora_with_open_barriers(conn, census) -> dict:
     from control.tickets import generation_barrier
 
-    corpora = {gap.corpus_id for gap in census.gaps} | set(census.promote)
+    corpora = {gap.corpus_id for gap in census.gaps} | {
+        _corpus_of_run(conn, r) for r in census.promote
+    }
+    blocked = {}
     for corpus_id in sorted(corpora):
         verdict = generation_barrier(conn, corpus_id)
         if not verdict["passed"]:
-            return verdict
-    return None
+            blocked[corpus_id] = verdict
+    return blocked
+
+
+def _corpus_of_run(conn, run_id: str) -> str:
+    row = conn.execute("SELECT corpus_id FROM runs WHERE run_id=%s", (run_id,)).fetchone()
+    return row[0] if row else ""
 
 
 def run_forever() -> None:

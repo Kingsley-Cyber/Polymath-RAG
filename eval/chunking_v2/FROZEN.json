@@ -1,0 +1,12 @@
+{
+  "frozen_at": "2026-08-16",
+  "files": {
+    "corpus/01_cyber_postmortem.md": "f962f1c2fd4f0bc805c42daa13268ecb010dfd0311349005840fda19e8e7ce7b",
+    "corpus/02_distributed_tradeoffs.md": "162a871cf0655154b8d7b7a9e5e94567ca8653d454991792f53b3659506ade69",
+    "corpus/03_psychology_prose.md": "cccb623d06bfbf8b5bc0c54a4bf6c532e363747d5b93f53287e601572b3de87e",
+    "corpus/04_commerce_operations.md": "e0cc064ebabde9ac6d4929209c399aed84845fcbf386e060ea2fad120d0b96cb",
+    "corpus/05_interview_transcript.md": "233a0d1b5d76c2b5f13e6cec80484f1ca143d9c9a0d0a2c093d5a98409c29fa2",
+    "gold/boundary_gold_dev.json": "e237b55e24525f9e194695bb2b6541cd4622c9ed765601fabf1d1869fba1f0a8",
+    "gold/boundary_gold_sealed.json": "ab888839d654c9377fd16f7edb60e626089aa5f8aafa06d0ae822dc7a4aa4fec"
+  }
+}

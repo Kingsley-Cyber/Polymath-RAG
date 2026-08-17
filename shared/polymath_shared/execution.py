@@ -49,6 +49,7 @@ def worker_contracts() -> dict[str, Any]:
         "syntax_provider": s.sidecars.syntax_provider,
         "rescue_stages": sorted(s.rescue_policy.enabled_stages()),
         "gliner_url": s.sidecars.gliner_url,
+        "chunker": s.worker.chunker,
     }
 
 
@@ -111,7 +112,7 @@ def compatible(worker_contracts: dict[str, Any],
     required_build = execution_contract.get("worker_build")
     if required_build and worker_contracts.get("build_sha") != required_build:
         return False
-    for key in ("query_policy", "rule_pack", "syntax_provider"):
+    for key in ("query_policy", "rule_pack", "syntax_provider", "chunker"):
         want = execution_contract.get(key)
         if want is not None and worker_contracts.get(key) != want:
             return False

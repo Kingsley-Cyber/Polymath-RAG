@@ -731,3 +731,26 @@ that motivated it and the refactor that implemented it.
 - Live proof: smoke corpus through the full ticket chain to
   query_ready; barrier refused mid-flight and passed at convergence;
   fleet registry 8/8 healthy. (work log 2026-08-16-control-plane-v2.md)
+
+## 2026-08-16: SEMANTIC-CHUNKING-V2 (qualified, unpromoted) + QUALITY-PROBE-001
+
+- chunk-contract-v2 / ChunkingProvider (legacy_v1 default untouched;
+  semantic_v2 = structure-constrained Chonkie 1.7.0 through the pinned
+  Qwen embedder, batched, content-addressed cache; headings never in
+  chunk text; exact offset roundtrip; POLYMATH_CHUNKER + CP2 contract
+  gating). Qualification on the frozen CHUNKING-V2-QUALIFICATION set
+  (dev matrix + sealed): semantic_v2 required-break recall 1.0 vs
+  legacy 0.0; zero hard-boundary violations; 5-run determinism 100%.
+  Legacy offset-failure defect discovered (space-joined chunk text was
+  never an exact source substring). NOT promoted (I4 regression
+  pending separate completion; promotion bar requires it).
+- QUALITY-PROBE-001 (single-doc full-stack diagnostic): mention layer
+  rich + correctly bounded; generics quarantined MENTION_ONLY; 0 facts
+  (all 7 candidate rejections defensible on normative prose); text
+  RAG preserved everything (4/5 exact rank-1). Confirms the
+  frozen-vocabulary rescue refusal class on fresh material.
+- CP2 defects found and fixed by the probe: claim starvation (LIMIT
+  before gating), ticket payload reuse, intake semantic-path binding,
+  uniform fleet env requirement, per-corpus barrier blast radius.
+  Five long-lived processes died silently during the session —
+  auto-restart remains the top operational gap (V2.1).

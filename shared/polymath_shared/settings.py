@@ -9,7 +9,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import ClassVar
 
-from pydantic import Field
+from pydantic import Field, AliasChoices
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -64,6 +64,14 @@ class WorkerSettings(BaseSettings):
         description="Deterministic rule pack version for extraction. "
                     "1.0.1 = frozen Q1 production baseline; 1.1.0 = "
                     "candidate realistic-prose baseline (Q1-R).",
+    )
+    chunker: str = Field(
+        default="legacy_v1",
+        validation_alias=AliasChoices("chunker", "POLYMATH_CHUNKER"),
+        description="Chunking provider (SEMANTIC-CHUNKING-V2): "
+                    "legacy_v1 (production default) or semantic_v2 "
+                    "(qualification candidate; promotion is separately "
+                    "authorized).",
     )
 
 

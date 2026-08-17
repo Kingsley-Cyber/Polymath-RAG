@@ -1,0 +1,404 @@
+{
+  "legacy_v1": {
+    "provider": "legacy_v1",
+    "structural": {
+      "chunks": 8,
+      "heading_contamination": 3,
+      "cross_section": 6,
+      "offset_failures": 7
+    },
+    "boundary": {
+      "01_cyber_postmortem.md": {
+        "required_recall": 0.0,
+        "forbidden_violations": 1,
+        "n_required": 4
+      },
+      "02_distributed_tradeoffs.md": {
+        "required_recall": 0.0,
+        "forbidden_violations": 0,
+        "n_required": 3
+      },
+      "03_psychology_prose.md": {
+        "required_recall": 0.0,
+        "forbidden_violations": 0,
+        "n_required": 3
+      }
+    },
+    "boundary_totals": {
+      "required_recall": 0.0,
+      "forbidden_violations": 1
+    },
+    "sizes": {
+      "p10": 15,
+      "p50": 170,
+      "p90": 191,
+      "p99": 191,
+      "tiny_rate": 0.0,
+      "oversize_rate": 0.0
+    },
+    "deterministic": true,
+    "wall_s": 0.004
+  },
+  "matrix": {
+    "t0.55/w1": {
+      "provider": "semantic_v2@t0.55/w1",
+      "structural": {
+        "chunks": 27,
+        "heading_contamination": 0,
+        "cross_section": 0,
+        "offset_failures": 0
+      },
+      "boundary": {
+        "01_cyber_postmortem.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 1,
+          "n_required": 4
+        },
+        "02_distributed_tradeoffs.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 0,
+          "n_required": 3
+        },
+        "03_psychology_prose.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 2,
+          "n_required": 3
+        }
+      },
+      "boundary_totals": {
+        "required_recall": 1.0,
+        "forbidden_violations": 3
+      },
+      "sizes": {
+        "p10": 14,
+        "p50": 40,
+        "p90": 70,
+        "p99": 80,
+        "tiny_rate": 0.0,
+        "oversize_rate": 0.0
+      },
+      "deterministic": true,
+      "wall_s": 1.467,
+      "cache": {
+        "hits": 684,
+        "misses": 0,
+        "requests": 684
+      }
+    },
+    "t0.55/w3": {
+      "provider": "semantic_v2@t0.55/w3",
+      "structural": {
+        "chunks": 22,
+        "heading_contamination": 0,
+        "cross_section": 0,
+        "offset_failures": 0
+      },
+      "boundary": {
+        "01_cyber_postmortem.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 1,
+          "n_required": 4
+        },
+        "02_distributed_tradeoffs.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 0,
+          "n_required": 3
+        },
+        "03_psychology_prose.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 0,
+          "n_required": 3
+        }
+      },
+      "boundary_totals": {
+        "required_recall": 1.0,
+        "forbidden_violations": 1
+      },
+      "sizes": {
+        "p10": 18,
+        "p50": 41,
+        "p90": 105,
+        "p99": 111,
+        "tiny_rate": 0.045,
+        "oversize_rate": 0.0
+      },
+      "deterministic": true,
+      "wall_s": 0.877,
+      "cache": {
+        "hits": 372,
+        "misses": 0,
+        "requests": 372
+      }
+    },
+    "t0.65/w1": {
+      "provider": "semantic_v2@t0.65/w1",
+      "structural": {
+        "chunks": 27,
+        "heading_contamination": 0,
+        "cross_section": 0,
+        "offset_failures": 0
+      },
+      "boundary": {
+        "01_cyber_postmortem.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 1,
+          "n_required": 4
+        },
+        "02_distributed_tradeoffs.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 0,
+          "n_required": 3
+        },
+        "03_psychology_prose.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 2,
+          "n_required": 3
+        }
+      },
+      "boundary_totals": {
+        "required_recall": 1.0,
+        "forbidden_violations": 3
+      },
+      "sizes": {
+        "p10": 14,
+        "p50": 40,
+        "p90": 70,
+        "p99": 80,
+        "tiny_rate": 0.0,
+        "oversize_rate": 0.0
+      },
+      "deterministic": true,
+      "wall_s": 1.361,
+      "cache": {
+        "hits": 684,
+        "misses": 0,
+        "requests": 684
+      }
+    },
+    "t0.65/w3": {
+      "provider": "semantic_v2@t0.65/w3",
+      "structural": {
+        "chunks": 22,
+        "heading_contamination": 0,
+        "cross_section": 0,
+        "offset_failures": 0
+      },
+      "boundary": {
+        "01_cyber_postmortem.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 1,
+          "n_required": 4
+        },
+        "02_distributed_tradeoffs.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 0,
+          "n_required": 3
+        },
+        "03_psychology_prose.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 0,
+          "n_required": 3
+        }
+      },
+      "boundary_totals": {
+        "required_recall": 1.0,
+        "forbidden_violations": 1
+      },
+      "sizes": {
+        "p10": 18,
+        "p50": 41,
+        "p90": 105,
+        "p99": 111,
+        "tiny_rate": 0.045,
+        "oversize_rate": 0.0
+      },
+      "deterministic": true,
+      "wall_s": 0.812,
+      "cache": {
+        "hits": 372,
+        "misses": 0,
+        "requests": 372
+      }
+    },
+    "t0.75/w1": {
+      "provider": "semantic_v2@t0.75/w1",
+      "structural": {
+        "chunks": 28,
+        "heading_contamination": 0,
+        "cross_section": 0,
+        "offset_failures": 0
+      },
+      "boundary": {
+        "01_cyber_postmortem.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 1,
+          "n_required": 4
+        },
+        "02_distributed_tradeoffs.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 0,
+          "n_required": 3
+        },
+        "03_psychology_prose.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 2,
+          "n_required": 3
+        }
+      },
+      "boundary_totals": {
+        "required_recall": 1.0,
+        "forbidden_violations": 3
+      },
+      "sizes": {
+        "p10": 11,
+        "p50": 40,
+        "p90": 70,
+        "p99": 80,
+        "tiny_rate": 0.0,
+        "oversize_rate": 0.0
+      },
+      "deterministic": true,
+      "wall_s": 1.334,
+      "cache": {
+        "hits": 684,
+        "misses": 0,
+        "requests": 684
+      }
+    },
+    "t0.75/w3": {
+      "provider": "semantic_v2@t0.75/w3",
+      "structural": {
+        "chunks": 22,
+        "heading_contamination": 0,
+        "cross_section": 0,
+        "offset_failures": 0
+      },
+      "boundary": {
+        "01_cyber_postmortem.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 1,
+          "n_required": 4
+        },
+        "02_distributed_tradeoffs.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 0,
+          "n_required": 3
+        },
+        "03_psychology_prose.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 0,
+          "n_required": 3
+        }
+      },
+      "boundary_totals": {
+        "required_recall": 1.0,
+        "forbidden_violations": 1
+      },
+      "sizes": {
+        "p10": 18,
+        "p50": 41,
+        "p90": 105,
+        "p99": 111,
+        "tiny_rate": 0.045,
+        "oversize_rate": 0.0
+      },
+      "deterministic": true,
+      "wall_s": 0.74,
+      "cache": {
+        "hits": 372,
+        "misses": 0,
+        "requests": 372
+      }
+    },
+    "t0.85/w1": {
+      "provider": "semantic_v2@t0.85/w1",
+      "structural": {
+        "chunks": 28,
+        "heading_contamination": 0,
+        "cross_section": 0,
+        "offset_failures": 0
+      },
+      "boundary": {
+        "01_cyber_postmortem.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 1,
+          "n_required": 4
+        },
+        "02_distributed_tradeoffs.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 0,
+          "n_required": 3
+        },
+        "03_psychology_prose.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 2,
+          "n_required": 3
+        }
+      },
+      "boundary_totals": {
+        "required_recall": 1.0,
+        "forbidden_violations": 3
+      },
+      "sizes": {
+        "p10": 11,
+        "p50": 40,
+        "p90": 70,
+        "p99": 80,
+        "tiny_rate": 0.0,
+        "oversize_rate": 0.0
+      },
+      "deterministic": true,
+      "wall_s": 1.341,
+      "cache": {
+        "hits": 684,
+        "misses": 0,
+        "requests": 684
+      }
+    },
+    "t0.85/w3": {
+      "provider": "semantic_v2@t0.85/w3",
+      "structural": {
+        "chunks": 22,
+        "heading_contamination": 0,
+        "cross_section": 0,
+        "offset_failures": 0
+      },
+      "boundary": {
+        "01_cyber_postmortem.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 1,
+          "n_required": 4
+        },
+        "02_distributed_tradeoffs.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 0,
+          "n_required": 3
+        },
+        "03_psychology_prose.md": {
+          "required_recall": 1.0,
+          "forbidden_violations": 0,
+          "n_required": 3
+        }
+      },
+      "boundary_totals": {
+        "required_recall": 1.0,
+        "forbidden_violations": 1
+      },
+      "sizes": {
+        "p10": 18,
+        "p50": 41,
+        "p90": 105,
+        "p99": 111,
+        "tiny_rate": 0.045,
+        "oversize_rate": 0.0
+      },
+      "deterministic": true,
+      "wall_s": 0.759,
+      "cache": {
+        "hits": 372,
+        "misses": 0,
+        "requests": 372
+      }
+    }
+  }
+}

@@ -24,6 +24,7 @@ from psycopg import Connection
 from polymath_shared.db import tx
 from polymath_shared.identity import document_id, normalize_document_bytes
 from polymath_shared.logging import configure_logging
+from polymath_shared.settings import get_settings
 from polymath_shared.receipts import (
     StageFailed,
     claim_events,
@@ -31,6 +32,7 @@ from polymath_shared.receipts import (
     stage_transaction,
 )
 from workers.chunker import materialize_chunks, plan_document
+from workers.summarizer import summarize
 from workers.profile_router import route_document
 
 STAGE = "intake"
@@ -88,8 +90,21 @@ def process_event(conn: Connection, event: dict) -> None:
         text = materialization.text
 
         profile = route_document(source_name, text[:4000])
-        plan = plan_document(text, doc_id, **CHUNK_FROZEN_PARAMS)
-        chunks = materialize_chunks(plan)
+        chunker_provider = get_settings().worker.chunker
+        if chunker_provider not in ("legacy_v1", "semantic_v2"):
+            raise ValueError(f"unknown chunking provider: {chunker_provider}")
+        if chunker_provider == "semantic_v2":
+            # SEMANTIC-CHUNKING-V2 (chunk-contract-v2): structure-
+            # constrained semantic chunking; headings NEVER enter chunk
+            # body text. Chonkie is a library dependency — Polymath
+            # owns orchestration, offsets, and state.
+            from workers.semantic_chunker import SemanticEmbeddingCache, semantic_chunk_rows
+
+            chunks = semantic_chunk_rows(
+                text, doc_id, cache=SemanticEmbeddingCache())
+        else:
+            plan = plan_document(text, doc_id, **CHUNK_FROZEN_PARAMS)
+            chunks = materialize_chunks(plan)
 
         conn.execute(
             """
@@ -129,12 +144,16 @@ def process_event(conn: Connection, event: dict) -> None:
             conn.execute(
                 """
                 INSERT INTO chunks (chunk_id, doc_id, parent_id, chunk_index, tier,
-                                    text, summary, char_start, char_end)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                    text, summary, char_start, char_end,
+                                    chunk_contract_version, provider, heading_path, token_count)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (chunk_id) DO NOTHING
                 """,
                 (row["chunk_id"], row["doc_id"], row["parent_id"], row["chunk_index"],
-                 row["tier"], row["text"], row["summary"], row["char_start"], row["char_end"]),
+                 row["tier"], row["text"], row["summary"], row["char_start"], row["char_end"],
+                 row.get("chunk_contract_version"), row.get("provider"),
+                 json.dumps(row["heading_path"]) if row.get("heading_path") else None,
+                 row.get("token_count")),
             )
         for row in chunks:
             if row["tier"] != "child":
@@ -142,21 +161,27 @@ def process_event(conn: Connection, event: dict) -> None:
             conn.execute(
                 """
                 INSERT INTO chunks (chunk_id, doc_id, parent_id, chunk_index, tier,
-                                    text, summary, char_start, char_end)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                    text, summary, char_start, char_end,
+                                    chunk_contract_version, provider, heading_path, token_count)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (chunk_id) DO NOTHING
                 """,
                 (row["chunk_id"], row["doc_id"], row["parent_id"], row["chunk_index"],
-                 row["tier"], row["text"], row["summary"], row["char_start"], row["char_end"]),
+                 row["tier"], row["text"], row["summary"], row["char_start"], row["char_end"],
+                 row.get("chunk_contract_version"), row.get("provider"),
+                 json.dumps(row["heading_path"]) if row.get("heading_path") else None,
+                 row.get("token_count")),
             )
 
+        children = [r for r in chunks if r["tier"] == "child"]
+        parents = [r for r in chunks if r["tier"] == "parent"]
         routing_card = {
             "doc_id": doc_id,
             "source_name": source_name,
             "profile": profile.model_dump(),
-            "document_summary": plan.document_summary,
-            "child_chunks": len(plan.children),
-            "parent_chunks": len(plan.parents),
+            "document_summary": summarize(text, max_sentences=6, max_chars=1600),
+            "child_chunks": len(children),
+            "parent_chunks": len(parents),
         }
         writer.artifact({"routing_card": routing_card})
         writer.outbox(NEXT_EVENT_TYPE, {

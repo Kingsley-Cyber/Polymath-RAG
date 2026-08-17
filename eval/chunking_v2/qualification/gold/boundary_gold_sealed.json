@@ -1,0 +1,17 @@
+{
+  "subset": "sealed",
+  "docs": ["04_commerce_operations.md", "05_interview_transcript.md"],
+  "required_breaks": [
+    {"doc": "04_commerce_operations.md", "before": "Customers can clear a failed invoice at any point in the cycle,", "after": "A dispute freezes the disputed amount", "reason": "heading boundary"},
+    {"doc": "04_commerce_operations.md", "before": "HarborPay wins roughly seventy percent of chargeback cases where delivery evidence exists.", "after": "The close sequence is strict.", "reason": "heading boundary"},
+    {"doc": "04_commerce_operations.md", "before": "Teams have attempted partial closes during incidents;", "after": "The schedule above applies to card payments only.", "reason": "table region boundary"},
+    {"doc": "05_interview_transcript.md", "before": "Their daily work spans capacity planning, incident response, and the internal developer platform.", "after": "Interviewer: When you joined,", "reason": "heading boundary"},
+    {"doc": "05_interview_transcript.md", "before": "The numbers moved slowly for two quarters, then compounded.", "after": "The transcript shows a recurring theme:", "reason": "heading boundary"}
+  ],
+  "forbidden_breaks": [
+    {"doc": "04_commerce_operations.md", "within": ["The billing engine computes usage, applies proration, adds tax,", "Every transition writes an immutable ledger entry that the reconciliation jobs read."], "reason": "single lifecycle argument"},
+    {"doc": "04_commerce_operations.md", "within": ["Billing errors are corrected with credit notes.", "Fraud routes to the risk team and suspends the account pending review."], "reason": "triage enumeration"},
+    {"doc": "05_interview_transcript.md", "within": ["The first thing I did was introduce per-lane isolation,", "We got the budget in the second quarter."], "reason": "single narrative turn"},
+    {"doc": "05_interview_transcript.md", "within": ["A large build would evict everything.", "The lesson was that isolation is systemic, not local."], "reason": "problem-fix-lesson turn"}
+  ]
+}

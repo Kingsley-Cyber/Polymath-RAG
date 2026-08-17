@@ -1,0 +1,80 @@
+{
+  "semantic_v2": {
+    "provider": "semantic_v2-sealed",
+    "structural": {
+      "chunks": 17,
+      "heading_contamination": 0,
+      "cross_section": 0,
+      "offset_failures": 0
+    },
+    "boundary": {
+      "04_commerce_operations.md": {
+        "required_recall": 1.0,
+        "forbidden_violations": 0,
+        "n_required": 3
+      },
+      "05_interview_transcript.md": {
+        "required_recall": 1.0,
+        "forbidden_violations": 1,
+        "n_required": 2
+      }
+    },
+    "boundary_totals": {
+      "required_recall": 1.0,
+      "forbidden_violations": 1
+    },
+    "sizes": {
+      "p10": 5,
+      "p50": 35,
+      "p90": 61,
+      "p99": 87,
+      "tiny_rate": 0.176,
+      "oversize_rate": 0.0
+    },
+    "deterministic": true,
+    "wall_s": 3.68,
+    "cache": {
+      "hits": 320,
+      "misses": 64
+    }
+  },
+  "legacy_v1": {
+    "provider": "legacy_v1-sealed",
+    "structural": {
+      "chunks": 4,
+      "heading_contamination": 2,
+      "cross_section": 4,
+      "offset_failures": 4
+    },
+    "boundary": {
+      "04_commerce_operations.md": {
+        "required_recall": 0.0,
+        "forbidden_violations": 0,
+        "n_required": 3
+      },
+      "05_interview_transcript.md": {
+        "required_recall": 0.0,
+        "forbidden_violations": 0,
+        "n_required": 2
+      }
+    },
+    "boundary_totals": {
+      "required_recall": 0.0,
+      "forbidden_violations": 0
+    },
+    "sizes": {
+      "p10": 91,
+      "p50": 170,
+      "p90": 184,
+      "p99": 184,
+      "tiny_rate": 0.0,
+      "oversize_rate": 0.0
+    },
+    "deterministic": true,
+    "wall_s": 0.002
+  },
+  "params": {
+    "threshold": 0.65,
+    "similarity_window": 3
+  }
+}

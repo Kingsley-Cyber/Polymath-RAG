@@ -182,9 +182,20 @@ def _corpus_of(conn: Connection, run_id: str) -> str:
 
 def _emit_ticket_event(conn: Connection, tid: str, run_id: str, stage: str) -> None:
     """Mark READY and upsert the stage's outbox event — the ONLY path by
-    which stage work becomes claimable."""
+    which stage work becomes claimable. Every ticket event carries the
+    ORIGINAL stage payload from the producing stage's outbox row (the
+    scheduler's _gap_payload contract); ticket_id is added on top."""
     event_type, _art, _rec = _STAGE_SPEC[stage]
-    payload = {"run_id": run_id, "ticket_id": tid}
+    row = conn.execute(
+        "SELECT payload FROM outbox_events WHERE run_id=%s AND event_type=%s "
+        "ORDER BY event_id LIMIT 1", (run_id, event_type),
+    ).fetchone()
+    if row and row[0]:
+        base = row[0] if isinstance(row[0], dict) else json.loads(row[0])
+    else:
+        base = {"run_id": run_id}
+    payload = dict(base)
+    payload["ticket_id"] = tid
     key = content_hash({"run": run_id, "type": event_type, "payload": payload})
     conn.execute(
         """

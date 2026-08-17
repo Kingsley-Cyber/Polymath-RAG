@@ -1,0 +1,1230 @@
+{
+ "source": {
+  "file": "02_technical_event_pipeline.md",
+  "sha256": "be5ddfe310d6bfde13e90517b3faca204c3325442d25f1a9523e481cd7ac4a5b",
+  "run_id": "run_96bfd76318d8080a8bf60a59e9c5dd2be40db04dbc485f99af46d2bfa0e2db23",
+  "execution_contract": {
+   "chunker": "semantic_v2",
+   "rule_pack": "1.3.0",
+   "gliner_url": "http://127.0.0.1:8740",
+   "query_policy": "semantic-query-policy-v1",
+   "rescue_stages": [
+    "boundary",
+    "frames",
+    "missing_argument",
+    "type_reconciliation"
+   ],
+   "syntax_provider": "spacy"
+  }
+ },
+ "chunks": [
+  {
+   "id": "chunk_4a39bfb1f75358",
+   "tier": "parent",
+   "start": 54,
+   "end": 912,
+   "heading_path": [
+    "Designing a Restart-Safe Event Processing Pipeline"
+   ],
+   "tokens": 44,
+   "text": "A restart-safe event pipeline must assume that processes will fail at inconvenient moments. Instead, the system should make repeated work harmless and make incomplete work visible enough to resume without manual reconstruction. One common approach is to keep workflow authority in a transactional database."
+  },
+  {
+   "id": "chunk_a08fedb5d4eeca",
+   "tier": "child",
+   "start": 54,
+   "end": 426,
+   "heading_path": [
+    "Designing a Restart-Safe Event Processing Pipeline"
+   ],
+   "tokens": 62,
+   "text": "A restart-safe event pipeline must assume that processes will fail at inconvenient moments. A worker may crash after writing to a database but before acknowledging a message, a network call may time out even though the remote service completed the request, or a machine may reboot while a batch is only partially processed. The design goal is not to prevent every failure."
+  },
+  {
+   "id": "chunk_2b7d05d067c701",
+   "tier": "child",
+   "start": 427,
+   "end": 562,
+   "heading_path": [
+    "Designing a Restart-Safe Event Processing Pipeline"
+   ],
+   "tokens": 19,
+   "text": "Instead, the system should make repeated work harmless and make incomplete work visible enough to resume without manual reconstruction."
+  },
+  {
+   "id": "chunk_8915949a2b9c1f",
+   "tier": "child",
+   "start": 564,
+   "end": 850,
+   "heading_path": [
+    "Designing a Restart-Safe Event Processing Pipeline"
+   ],
+   "tokens": 45,
+   "text": "One common approach is to keep workflow authority in a transactional database. A worker claims an event, performs the stage-specific writes, records a receipt, updates the run status, and emits the next outbox event in one transaction. If the transaction commits, the stage is complete."
+  },
+  {
+   "id": "chunk_03ca9cff4a7df6",
+   "tier": "child",
+   "start": 851,
+   "end": 912,
+   "heading_path": [
+    "Designing a Restart-Safe Event Processing Pipeline"
+   ],
+   "tokens": 10,
+   "text": "If it rolls back, none of those changes become authoritative."
+  },
+  {
+   "id": "chunk_92ee8e54116b80",
+   "tier": "parent",
+   "start": 913,
+   "end": 2743,
+   "heading_path": [
+    "Designing a Restart-Safe Event Processing Pipeline"
+   ],
+   "tokens": 43,
+   "text": "This pattern avoids the ambiguous state created when a worker updates one system and then crashes before updating another. The outbox can later be delivered to downstream workers without making the message broker itself the source of truth. Idempotent identities are equally important."
+  },
+  {
+   "id": "chunk_c236f421c7bf38",
+   "tier": "child",
+   "start": 913,
+   "end": 1035,
+   "heading_path": [
+    "Designing a Restart-Safe Event Processing Pipeline"
+   ],
+   "tokens": 19,
+   "text": "This pattern avoids the ambiguous state created when a worker updates one system and then crashes before updating another."
+  },
+  {
+   "id": "chunk_29c3125990f42a",
+   "tier": "child",
+   "start": 1036,
+   "end": 1153,
+   "heading_path": [
+    "Designing a Restart-Safe Event Processing Pipeline"
+   ],
+   "tokens": 19,
+   "text": "The outbox can later be delivered to downstream workers without making the message broker itself the source of truth."
+  },
+  {
+   "id": "chunk_9699d8b396b205",
+   "tier": "child",
+   "start": 1155,
+   "end": 2369,
+   "heading_path": [
+    "Designing a Restart-Safe Event Processing Pipeline"
+   ],
+   "tokens": 172,
+   "text": "Idempotent identities are equally important. Documents, chunks, facts, and projection artifacts can be assigned deterministic identifiers derived from normalized content and stable structural inputs. When the same document is submitted again, the pipeline lands on the same identifiers instead of creating duplicates. A replay can therefore become a no-op at the storage layer even if the orchestration layer retries the same work several times. This is especially useful when external services provide at-least-once delivery rather than exactly-once delivery.\n\nSearch indexes and graph databases should be treated differently from the workflow database. A vector index can accelerate semantic retrieval, and a graph store can accelerate traversal, but neither needs to be authoritative if both can be rebuilt from durable records. The projection worker should therefore record what it attempted to materialize and the verifier should compare the projected state with the authoritative receipts. If a projection disappears, the system should clear or supersede the corresponding claim and schedule reconstruction rather than pretending the index is still complete.\n\nConcurrency introduces another class of failure."
+  },
+  {
+   "id": "chunk_dd3dcd5ae9dc26",
+   "tier": "child",
+   "start": 2370,
+   "end": 2743,
+   "heading_path": [
+    "Designing a Restart-Safe Event Processing Pipeline"
+   ],
+   "tokens": 59,
+   "text": "Two workers may attempt to process the same stage, or one worker may stall long enough that a lease expires and another worker takes over. A robust implementation uses bounded leases, deterministic stage contracts, and transactional claim operations so that only one committed result becomes authoritative. The losing worker must be able to discover that its work is stale."
+  },
+  {
+   "id": "chunk_4e01a29d93cea6",
+   "tier": "parent",
+   "start": 2744,
+   "end": 3456,
+   "heading_path": [
+    "Designing a Restart-Safe Event Processing Pipeline"
+   ],
+   "tokens": 36,
+   "text": "This prevents a delayed process from overwriting a newer run state after ownership has already moved elsewhere. Operationally, the pipeline is only trustworthy if these properties are tested under failure rather than inferred from clean runs."
+  },
+  {
+   "id": "chunk_a1d4d7747888bc",
+   "tier": "child",
+   "start": 2744,
+   "end": 2855,
+   "heading_path": [
+    "Designing a Restart-Safe Event Processing Pipeline"
+   ],
+   "tokens": 17,
+   "text": "This prevents a delayed process from overwriting a newer run state after ownership has already moved elsewhere."
+  },
+  {
+   "id": "chunk_1838637eec38c7",
+   "tier": "child",
+   "start": 2857,
+   "end": 3456,
+   "heading_path": [
+    "Designing a Restart-Safe Event Processing Pipeline"
+   ],
+   "tokens": 88,
+   "text": "Operationally, the pipeline is only trustworthy if these properties are tested under failure rather than inferred from clean runs. Useful tests include killing a worker between database writes, replaying the same document repeatedly, deleting a projection and rebuilding it, adding a document after the corpus is already populated, and verifying that unrelated records remain unchanged. A system that passes those tests can scale by adding workers and larger batches without changing its correctness model, because the failure semantics were designed into the workflow rather than patched around it."
+  }
+ ],
+ "mentions": [
+  {
+   "surface": "correctness model",
+   "core": "Product",
+   "admission": "CORPUS_SCOPED",
+   "raw_label": "Model",
+   "score": 0.9241,
+   "kind": "discovery"
+  },
+  {
+   "surface": "worker",
+   "core": "Person",
+   "admission": "MENTION_ONLY",
+   "raw_label": "Person",
+   "score": 0.8901,
+   "kind": "discovery"
+  },
+  {
+   "surface": "document",
+   "core": "Document",
+   "admission": "MENTION_ONLY",
+   "raw_label": "Document",
+   "score": 0.8753,
+   "kind": "discovery"
+  },
+  {
+   "surface": "database",
+   "core": "Document",
+   "admission": "MENTION_ONLY",
+   "raw_label": "Dataset",
+   "score": 0.8703,
+   "kind": "discovery"
+  },
+  {
+   "surface": "Documents",
+   "core": "Document",
+   "admission": "GLOBAL",
+   "raw_label": "Document",
+   "score": 0.8565,
+   "kind": "discovery"
+  },
+  {
+   "surface": "worker",
+   "core": "Person",
+   "admission": "MENTION_ONLY",
+   "raw_label": "Person",
+   "score": 0.8466,
+   "kind": "discovery"
+  },
+  {
+   "surface": "worker",
+   "core": "Person",
+   "admission": "MENTION_ONLY",
+   "raw_label": "Person",
+   "score": 0.8416,
+   "kind": "discovery"
+  },
+  {
+   "surface": "document",
+   "core": "Document",
+   "admission": "MENTION_ONLY",
+   "raw_label": "Document",
+   "score": 0.8278,
+   "kind": "discovery"
+  },
+  {
+   "surface": "graph databases",
+   "core": "Technology",
+   "admission": "CORPUS_SCOPED",
+   "raw_label": "Technology",
+   "score": 0.8222,
+   "kind": "discovery"
+  },
+  {
+   "surface": "batch",
+   "core": "Document",
+   "admission": "MENTION_ONLY",
+   "raw_label": "Dataset",
+   "score": 0.8207,
+   "kind": "discovery"
+  },
+  {
+   "surface": "worker",
+   "core": "Person",
+   "admission": "MENTION_ONLY",
+   "raw_label": "Person",
+   "score": 0.8158,
+   "kind": "discovery"
+  },
+  {
+   "surface": "event",
+   "core": "Event",
+   "admission": "MENTION_ONLY",
+   "raw_label": "Event",
+   "score": 0.8054,
+   "kind": "discovery"
+  },
+  {
+   "surface": "event",
+   "core": "Event",
+   "admission": "MENTION_ONLY",
+   "raw_label": "Event",
+   "score": 0.8039,
+   "kind": "discovery"
+  },
+  {
+   "surface": "bounded leases",
+   "core": "Technology",
+   "admission": "CORPUS_SCOPED",
+   "raw_label": "Technology",
+   "score": 0.7973,
+   "kind": "discovery"
+  },
+  {
+   "surface": "orchestration layer",
+   "core": "Technology",
+   "admission": "CORPUS_SCOPED",
+   "raw_label": "Technology",
+   "score": 0.7916,
+   "kind": "discovery"
+  },
+  {
+   "surface": "Search indexes",
+   "core": "Technology",
+   "admission": "GLOBAL",
+   "raw_label": "Technology",
+   "score": 0.7757,
+   "kind": "discovery"
+  },
+  {
+   "surface": "robust implementation",
+   "core": "Technology",
+   "admission": "CORPUS_SCOPED",
+   "raw_label": "Technology",
+   "score": 0.773,
+   "kind": "discovery"
+  },
+  {
+   "surface": "storage layer",
+   "core": "Technology",
+   "admission": "CORPUS_SCOPED",
+   "raw_label": "Technology",
+   "score": 0.7615,
+   "kind": "discovery"
+  },
+  {
+   "surface": "worker",
+   "core": "Person",
+   "admission": "MENTION_ONLY",
+   "raw_label": "Person",
+   "score": 0.7571,
+   "kind": "discovery"
+  },
+  {
+   "surface": "worker",
+   "core": "Person",
+   "admission": "MENTION_ONLY",
+   "raw_label": "Person",
+   "score": 0.7406,
+   "kind": "discovery"
+  },
+  {
+   "surface": "network call",
+   "core": "Process",
+   "admission": "CORPUS_SCOPED",
+   "raw_label": "Process",
+   "score": 0.7322,
+   "kind": "discovery"
+  },
+  {
+   "surface": "deterministic stage contracts",
+   "core": "Document",
+   "admission": "CORPUS_SCOPED",
+   "raw_label": "Document",
+   "score": 0.7302,
+   "kind": "discovery"
+  },
+  {
+   "surface": "delayed process",
+   "core": "Process",
+   "admission": "CORPUS_SCOPED",
+   "raw_label": "Process",
+   "score": 0.727,
+   "kind": "discovery"
+  },
+  {
+   "surface": "chunks",
+   "core": "Document",
+   "admission": "MENTION_ONLY",
+   "raw_label": "Dataset",
+   "score": 0.7029,
+   "kind": "discovery"
+  },
+  {
+   "surface": "corpus",
+   "core": "Document",
+   "admission": "MENTION_ONLY",
+   "raw_label": "Dataset",
+   "score": 0.6829,
+   "kind": "discovery"
+  },
+  {
+   "surface": "facts",
+   "core": "Document",
+   "admission": "MENTION_ONLY",
+   "raw_label": "Dataset",
+   "score": 0.6738,
+   "kind": "discovery"
+  },
+  {
+   "surface": "transactional claim operations",
+   "core": "Process",
+   "admission": "CORPUS_SCOPED",
+   "raw_label": "Process",
+   "score": 0.6614,
+   "kind": "discovery"
+  },
+  {
+   "surface": "system",
+   "core": "Technology",
+   "admission": "MENTION_ONLY",
+   "raw_label": "Technology",
+   "score": 0.6564,
+   "kind": "discovery"
+  },
+  {
+   "surface": "graph store",
+   "core": "Technology",
+   "admission": "CORPUS_SCOPED",
+   "raw_label": "Technology",
+   "score": 0.6531,
+   "kind": "discovery"
+  },
+  {
+   "surface": "projection worker",
+   "core": "Technology",
+   "admission": "CORPUS_SCOPED",
+   "raw_label": "Technology",
+   "score": 0.6527,
+   "kind": "discovery"
+  },
+  {
+   "surface": "vector index",
+   "core": "Technology",
+   "admission": "CORPUS_SCOPED",
+   "raw_label": "Technology",
+   "score": 0.634,
+   "kind": "discovery"
+  },
+  {
+   "surface": "workflow database",
+   "core": "Technology",
+   "admission": "CORPUS_SCOPED",
+   "raw_label": "Technology",
+   "score": 0.6251,
+   "kind": "discovery"
+  },
+  {
+   "surface": "remote service",
+   "core": "Technology",
+   "admission": "CORPUS_SCOPED",
+   "raw_label": "Technology",
+   "score": 0.6069,
+   "kind": "discovery"
+  },
+  {
+   "surface": "workers",
+   "core": "Person",
+   "admission": "MENTION_ONLY",
+   "raw_label": "Person",
+   "score": 0.6034,
+   "kind": "discovery"
+  },
+  {
+   "surface": "pipeline",
+   "core": "Technology",
+   "admission": "MENTION_ONLY",
+   "raw_label": "Technology",
+   "score": 0.5981,
+   "kind": "discovery"
+  },
+  {
+   "surface": "pipeline",
+   "core": "Technology",
+   "admission": "MENTION_ONLY",
+   "raw_label": "Technology",
+   "score": 0.5759,
+   "kind": "discovery"
+  },
+  {
+   "surface": "message broker",
+   "core": "Organization",
+   "admission": "CORPUS_SCOPED",
+   "raw_label": "Organization",
+   "score": 0.5698,
+   "kind": "discovery"
+  },
+  {
+   "surface": "external services",
+   "core": "Technology",
+   "admission": "CORPUS_SCOPED",
+   "raw_label": "Technology",
+   "score": 0.5657,
+   "kind": "discovery"
+  },
+  {
+   "surface": "The outbox",
+   "core": "Technology",
+   "admission": "GLOBAL",
+   "raw_label": "Technology",
+   "score": 0.5537,
+   "kind": "discovery"
+  },
+  {
+   "surface": "replay",
+   "core": "Process",
+   "admission": "MENTION_ONLY",
+   "raw_label": "Process",
+   "score": 0.528,
+   "kind": "discovery"
+  },
+  {
+   "surface": "verifier",
+   "core": "Technology",
+   "admission": "MENTION_ONLY",
+   "raw_label": "Technology",
+   "score": 0.5069,
+   "kind": "discovery"
+  },
+  {
+   "surface": "transactional database",
+   "core": "Technology",
+   "admission": "CORPUS_SCOPED",
+   "raw_label": "Technology",
+   "score": 0.5023,
+   "kind": "discovery"
+  }
+ ],
+ "facts": [],
+ "audit": [
+  {
+   "object": "remote service",
+   "reason": "type_violation: no signature accepts (Person -> Technology)",
+   "subject": "worker",
+   "decision": "REJECT",
+   "alternatives": [],
+   "evidence_class": "creation"
+  },
+  {
+   "object": "message broker",
+   "reason": "scope_gate: negated, speculative",
+   "subject": "The outbox",
+   "decision": "REJECT",
+   "alternatives": [],
+   "evidence_class": "classification"
+  },
+  {
+   "object": "message broker",
+   "reason": "scope_gate: negated, speculative",
+   "subject": "The outbox",
+   "decision": "REJECT",
+   "alternatives": [],
+   "evidence_class": "classification"
+  },
+  {
+   "object": "workflow database",
+   "reason": "scope_gate: conditional",
+   "subject": "graph databases",
+   "decision": "REJECT",
+   "alternatives": [],
+   "evidence_class": "classification"
+  },
+  {
+   "object": "workflow database",
+   "reason": "scope_gate: conditional",
+   "subject": "Search indexes",
+   "decision": "REJECT",
+   "alternatives": [],
+   "evidence_class": "classification"
+  },
+  {
+   "object": "workflow database",
+   "reason": "scope_gate: conditional",
+   "subject": "graph databases",
+   "decision": "REJECT",
+   "alternatives": [],
+   "evidence_class": "classification"
+  },
+  {
+   "object": "workflow database",
+   "reason": "scope_gate: conditional",
+   "subject": "Search indexes",
+   "decision": "REJECT",
+   "alternatives": [],
+   "evidence_class": "classification"
+  }
+ ],
+ "rescue": {
+  "stages": [
+   "boundary",
+   "missing_argument",
+   "type_reconciliation",
+   "frames"
+  ],
+  "boundary": {
+   "counts": {
+    "refused": 5,
+    "accepted": 0,
+    "candidates": 5
+   },
+   "stages": [
+    "boundary"
+   ],
+   "queries": [
+    {
+     "kind": "boundary",
+     "text": "next outbox event",
+     "score": null,
+     "labels": [
+      "Event"
+     ],
+     "outcome": "refused",
+     "identity": "515d494957f74ea18ad90ad5306eddd8c9c24f51d8013f76edd184e80f25f80b",
+     "threshold": 0.5,
+     "accept_reason": "no_full_span_prediction",
+     "raw_predictions": [],
+     "accepted_raw_label": null,
+     "query_policy_version": "semantic-query-policy-v1"
+    },
+    {
+     "kind": "boundary",
+     "text": "Two workers",
+     "score": null,
+     "labels": [
+      "Person"
+     ],
+     "outcome": "refused",
+     "identity": "619ceda84d829e62d4d8527361236d088c57a0a22ce667e7d5c9b4a9172657b2",
+     "threshold": 0.5,
+     "accept_reason": "no_full_span_prediction",
+     "raw_predictions": [],
+     "accepted_raw_label": null,
+     "query_policy_version": "semantic-query-policy-v1"
+    },
+    {
+     "kind": "boundary",
+     "text": "one worker",
+     "score": null,
+     "labels": [
+      "Person"
+     ],
+     "outcome": "refused",
+     "identity": "eb4a7e0d0a61082264b6349fc1b0685e78bdd4435d6e3e7617502ddfaf948861",
+     "threshold": 0.5,
+     "accept_reason": "no_full_span_prediction",
+     "raw_predictions": [],
+     "accepted_raw_label": null,
+     "query_policy_version": "semantic-query-policy-v1"
+    },
+    {
+     "kind": "boundary",
+     "text": "losing worker",
+     "score": null,
+     "labels": [
+      "Person"
+     ],
+     "outcome": "refused",
+     "identity": "f1b2460f052648743e88994dd39ceb39fd7591a8deb1ce8aab66ae149e08b266",
+     "threshold": 0.5,
+     "accept_reason": "no_full_span_prediction",
+     "raw_predictions": [],
+     "accepted_raw_label": null,
+     "query_policy_version": "semantic-query-policy-v1"
+    },
+    {
+     "kind": "boundary",
+     "text": "same document",
+     "score": null,
+     "labels": [
+      "Document"
+     ],
+     "outcome": "refused",
+     "identity": "373b020a0609099dd9cce177467c46fbc03c04e15a0696cdb7c3fcf8426c66ff",
+     "threshold": 0.5,
+     "accept_reason": "no_full_span_prediction",
+     "raw_predictions": [],
+     "accepted_raw_label": null,
+     "query_policy_version": "semantic-query-policy-v1"
+    }
+   ],
+   "contract": "rescue-v1",
+   "query_policy_version": "semantic-query-policy-v1"
+  },
+  "contract": "rescue-v1",
+  "missing_argument": {
+   "counts": {
+    "refused": 9,
+    "accepted": 2,
+    "candidates": 11
+   },
+   "stages": [
+    "missing_argument"
+   ],
+   "queries": [
+    {
+     "kind": "missing_argument",
+     "text": "receipt",
+     "score": null,
+     "labels": [
+      "Person",
+      "Organization",
+      "Location",
+      "Product",
+      "Technology",
+      "Concept",
+      "Method",
+      "Event",
+      "Document",
+      "Process",
+      "Measurement",
+      "TimeReference",
+      "Library",
+      "Framework",
+      "API",
+      "Vulnerability",
+      "AttackTechnique",
+      "Model",
+      "Dataset",
+      "ProgrammingLanguage"
+     ],
+     "outcome": "refused",
+     "identity": "daa3e2a0b87cec7732fef9336c5c38b9deec119a5f30aac0010d950d2849f331",
+     "threshold": 0.5,
+     "accept_reason": "no_full_span_prediction",
+     "canonical_type": null,
+     "raw_predictions": [],
+     "accepted_raw_label": null,
+     "query_policy_version": "semantic-query-policy-v1"
+    },
+    {
+     "kind": "missing_argument",
+     "text": "stage",
+     "score": null,
+     "labels": [
+      "Person",
+      "Organization",
+      "Location",
+      "Product",
+      "Technology",
+      "Concept",
+      "Method",
+      "Event",
+      "Document",
+      "Process",
+      "Measurement",
+      "TimeReference",
+      "Library",
+      "Framework",
+      "API",
+      "Vulnerability",
+      "AttackTechnique",
+      "Model",
+      "Dataset",
+      "ProgrammingLanguage"
+     ],
+     "outcome": "refused",
+     "identity": "643a19f37924536f5859e036ff96719f39c8002433c29ded44fb5c6577513868",
+     "threshold": 0.5,
+     "accept_reason": "no_full_span_prediction",
+     "canonical_type": null,
+     "raw_predictions": [],
+     "accepted_raw_label": null,
+     "query_policy_version": "semantic-query-policy-v1"
+    },
+    {
+     "kind": "missing_argument",
+     "text": "it",
+     "score": null,
+     "labels": [
+      "Person",
+      "Organization",
+      "Location",
+      "Product",
+      "Technology",
+      "Concept",
+      "Method",
+      "Event",
+      "Document",
+      "Process",
+      "Measurement",
+      "TimeReference",
+      "Library",
+      "Framework",
+      "API",
+      "Vulnerability",
+      "AttackTechnique",
+      "Model",
+      "Dataset",
+      "ProgrammingLanguage"
+     ],
+     "outcome": "refused",
+     "identity": "55eec0222e43a8111fbc2a8f7365fc7cbdfb9ca69e55d25d4660173b64201132",
+     "threshold": 0.5,
+     "accept_reason": "no_full_span_prediction",
+     "canonical_type": null,
+     "raw_predictions": [],
+     "accepted_raw_label": null,
+     "query_policy_version": "semantic-query-policy-v1"
+    },
+    {
+     "kind": "missing_argument",
+     "text": "truth",
+     "score": null,
+     "labels": [
+      "Person",
+      "Organization",
+      "Location",
+      "Product",
+      "Technology",
+      "Concept",
+      "Method",
+      "Event",
+      "Document",
+      "Process",
+      "Measurement",
+      "TimeReference",
+      "Library",
+      "Framework",
+      "API",
+      "Vulnerability",
+      "AttackTechnique",
+      "Model",
+      "Dataset",
+      "ProgrammingLanguage"
+     ],
+     "outcome": "refused",
+     "identity": "6a9ef06a6710f40adcb3ac909d3223627df0f35cffa475772ecee2a46e0db611",
+     "threshold": 0.5,
+     "accept_reason": "no_full_span_prediction",
+     "canonical_type": null,
+     "raw_predictions": [],
+     "accepted_raw_label": null,
+     "query_policy_version": "semantic-query-policy-v1"
+    },
+    {
+     "kind": "missing_argument",
+     "text": "Idempotent identities",
+     "score": 0.5169,
+     "labels": [
+      "Person",
+      "Organization",
+      "Location",
+      "Product",
+      "Technology",
+      "Concept",
+      "Method",
+      "Event",
+      "Document",
+      "Process",
+      "Measurement",
+      "TimeReference",
+      "Library",
+      "Framework",
+      "API",
+      "Vulnerability",
+      "AttackTechnique",
+      "Model",
+      "Dataset",
+      "ProgrammingLanguage"
+     ],
+     "outcome": "accepted",
+     "identity": "0dab971ea34589b170ff06c0e99562e0e45714c60ad3983df4147806292133ed",
+     "threshold": 0.5,
+     "accept_reason": "exact_full_span_canonical_mappable",
+     "canonical_type": "Concept",
+     "raw_predictions": [
+      {
+       "text": "Idempotent identities",
+       "score": 0.5169,
+       "raw_label": "Concept"
+      }
+     ],
+     "accepted_raw_label": "Concept",
+     "query_policy_version": "semantic-query-policy-v1"
+    },
+    {
+     "kind": "missing_argument",
+     "text": "normalized content",
+     "score": null,
+     "labels": [
+      "Person",
+      "Organization",
+      "Location",
+      "Product",
+      "Technology",
+      "Concept",
+      "Method",
+      "Event",
+      "Document",
+      "Process",
+      "Measurement",
+      "TimeReference",
+      "Library",
+      "Framework",
+      "API",
+      "Vulnerability",
+      "AttackTechnique",
+      "Model",
+      "Dataset",
+      "ProgrammingLanguage"
+     ],
+     "outcome": "refused",
+     "identity": "91e8be55dcb94f943e70e3bb6b71c032ac58043bf51ac5221cbaed166b9d667b",
+     "threshold": 0.5,
+     "accept_reason": "no_full_span_prediction",
+     "canonical_type": null,
+     "raw_predictions": [],
+     "accepted_raw_label": null,
+     "query_policy_version": "semantic-query-policy-v1"
+    },
+    {
+     "kind": "missing_argument",
+     "text": "duplicates",
+     "score": null,
+     "labels": [
+      "Person",
+      "Organization",
+      "Location",
+      "Product",
+      "Technology",
+      "Concept",
+      "Method",
+      "Event",
+      "Document",
+      "Process",
+      "Measurement",
+      "TimeReference",
+      "Library",
+      "Framework",
+      "API",
+      "Vulnerability",
+      "AttackTechnique",
+      "Model",
+      "Dataset",
+      "ProgrammingLanguage"
+     ],
+     "outcome": "refused",
+     "identity": "13c18dd8027ae55226b34480a946fe55c420891226dce2309d78eaea5eaea5f3",
+     "threshold": 0.5,
+     "accept_reason": "no_full_span_prediction",
+     "canonical_type": null,
+     "raw_predictions": [],
+     "accepted_raw_label": null,
+     "query_policy_version": "semantic-query-policy-v1"
+    },
+    {
+     "kind": "missing_argument",
+     "text": "This",
+     "score": null,
+     "labels": [
+      "Person",
+      "Organization",
+      "Location",
+      "Product",
+      "Technology",
+      "Concept",
+      "Method",
+      "Event",
+      "Document",
+      "Process",
+      "Measurement",
+      "TimeReference",
+      "Library",
+      "Framework",
+      "API",
+      "Vulnerability",
+      "AttackTechnique",
+      "Model",
+      "Dataset",
+      "ProgrammingLanguage"
+     ],
+     "outcome": "refused",
+     "identity": "ef30918fdf067ace5936a2d30457c7183a6a953dda0dbe9c7ce728677fc7129d",
+     "threshold": 0.5,
+     "accept_reason": "no_full_span_prediction",
+     "canonical_type": null,
+     "raw_predictions": [],
+     "accepted_raw_label": null,
+     "query_policy_version": "semantic-query-policy-v1"
+    },
+    {
+     "kind": "missing_argument",
+     "text": "losing worker",
+     "score": 0.5712,
+     "labels": [
+      "Person",
+      "Organization",
+      "Location",
+      "Product",
+      "Technology",
+      "Concept",
+      "Method",
+      "Event",
+      "Document",
+      "Process",
+      "Measurement",
+      "TimeReference",
+      "Library",
+      "Framework",
+      "API",
+      "Vulnerability",
+      "AttackTechnique",
+      "Model",
+      "Dataset",
+      "ProgrammingLanguage"
+     ],
+     "outcome": "accepted",
+     "identity": "5da2ff5b2b642e7b4040a0810bbb302af7338404d62a9d1662dae3ab9f7d35c3",
+     "threshold": 0.5,
+     "accept_reason": "exact_full_span_canonical_mappable",
+     "canonical_type": "Person",
+     "raw_predictions": [
+      {
+       "text": "losing worker",
+       "score": 0.5712,
+       "raw_label": "Person"
+      }
+     ],
+     "accepted_raw_label": "Person",
+     "query_policy_version": "semantic-query-policy-v1"
+    },
+    {
+     "kind": "missing_argument",
+     "text": "Useful tests",
+     "score": null,
+     "labels": [
+      "Person",
+      "Organization",
+      "Location",
+      "Product",
+      "Technology",
+      "Concept",
+      "Method",
+      "Event",
+      "Document",
+      "Process",
+      "Measurement",
+      "TimeReference",
+      "Library",
+      "Framework",
+      "API",
+      "Vulnerability",
+      "AttackTechnique",
+      "Model",
+      "Dataset",
+      "ProgrammingLanguage"
+     ],
+     "outcome": "refused",
+     "identity": "2a57bfd325cf51f9eed732311e8aeb11b260c22f9f2aa9335a7898486ae9e1c3",
+     "threshold": 0.5,
+     "accept_reason": "no_full_span_prediction",
+     "canonical_type": null,
+     "raw_predictions": [],
+     "accepted_raw_label": null,
+     "query_policy_version": "semantic-query-policy-v1"
+    },
+    {
+     "kind": "missing_argument",
+     "text": "workflow",
+     "score": null,
+     "labels": [
+      "Person",
+      "Organization",
+      "Location",
+      "Product",
+      "Technology",
+      "Concept",
+      "Method",
+      "Event",
+      "Document",
+      "Process",
+      "Measurement",
+      "TimeReference",
+      "Library",
+      "Framework",
+      "API",
+      "Vulnerability",
+      "AttackTechnique",
+      "Model",
+      "Dataset",
+      "ProgrammingLanguage"
+     ],
+     "outcome": "refused",
+     "identity": "593ec908a9c32daa3e29d1d28eee92d69e5b5b5b27ba0119e6f1f02461007831",
+     "threshold": 0.5,
+     "accept_reason": "no_full_span_prediction",
+     "canonical_type": null,
+     "raw_predictions": [],
+     "accepted_raw_label": null,
+     "query_policy_version": "semantic-query-policy-v1"
+    }
+   ],
+   "contract": "rescue-v1",
+   "query_policy_version": "semantic-query-policy-v1"
+  },
+  "type_reconciliation": {
+   "counts": {
+    "re_typed": 0,
+    "candidates": 4,
+    "kept_incompatible": 4
+   },
+   "stages": [
+    "type_reconciliation"
+   ],
+   "queries": [
+    {
+     "kind": "type_reconciliation",
+     "text": "system",
+     "score": null,
+     "labels": [
+      "Person",
+      "Organization",
+      "Location",
+      "Product",
+      "Technology",
+      "Concept",
+      "Method",
+      "Event",
+      "Document",
+      "Process",
+      "Measurement",
+      "TimeReference",
+      "Library",
+      "Framework",
+      "API",
+      "Vulnerability",
+      "AttackTechnique",
+      "Model",
+      "Dataset",
+      "ProgrammingLanguage"
+     ],
+     "outcome": "refused",
+     "identity": "b0c4ce0bebdbe69680475adeca4af633c5c57b1891f82f4576e182670240ba45",
+     "threshold": 0.5,
+     "re_typed_to": null,
+     "raw_predictions": [],
+     "query_policy_version": "semantic-query-policy-v1"
+    },
+    {
+     "kind": "type_reconciliation",
+     "text": "Idempotent identities",
+     "score": 0.5169,
+     "labels": [
+      "Person",
+      "Organization",
+      "Location",
+      "Product",
+      "Technology",
+      "Concept",
+      "Method",
+      "Event",
+      "Document",
+      "Process",
+      "Measurement",
+      "TimeReference",
+      "Library",
+      "Framework",
+      "API",
+      "Vulnerability",
+      "AttackTechnique",
+      "Model",
+      "Dataset",
+      "ProgrammingLanguage"
+     ],
+     "outcome": "re_typed",
+     "identity": "befb69a9c5f3b757922d0c46acd1cae0226408213ad3ea2d8021006281117d6a",
+     "threshold": 0.5,
+     "re_typed_to": "Concept",
+     "raw_predictions": [
+      {
+       "text": "Idempotent identities",
+       "score": 0.5169,
+       "raw_label": "Concept"
+      }
+     ],
+     "query_policy_version": "semantic-query-policy-v1"
+    },
+    {
+     "kind": "type_reconciliation",
+     "text": "robust implementation",
+     "score": null,
+     "labels": [
+      "Person",
+      "Organization",
+      "Location",
+      "Product",
+      "Technology",
+      "Concept",
+      "Method",
+      "Event",
+      "Document",
+      "Process",
+      "Measurement",
+      "TimeReference",
+      "Library",
+      "Framework",
+      "API",
+      "Vulnerability",
+      "AttackTechnique",
+      "Model",
+      "Dataset",
+      "ProgrammingLanguage"
+     ],
+     "outcome": "refused",
+     "identity": "b9aa8434318ecea19309e9a774d1931397c15466f31de419110965d28eafb012",
+     "threshold": 0.5,
+     "re_typed_to": null,
+     "raw_predictions": [],
+     "query_policy_version": "semantic-query-policy-v1"
+    },
+    {
+     "kind": "type_reconciliation",
+     "text": "losing worker",
+     "score": 0.5712,
+     "labels": [
+      "Person",
+      "Organization",
+      "Location",
+      "Product",
+      "Technology",
+      "Concept",
+      "Method",
+      "Event",
+      "Document",
+      "Process",
+      "Measurement",
+      "TimeReference",
+      "Library",
+      "Framework",
+      "API",
+      "Vulnerability",
+      "AttackTechnique",
+      "Model",
+      "Dataset",
+      "ProgrammingLanguage"
+     ],
+     "outcome": "re_typed",
+     "identity": "215dc558f252cea3875c296ea388ed62e74fc8c38507ebd8b1391effff67a13e",
+     "threshold": 0.5,
+     "re_typed_to": "Person",
+     "raw_predictions": [
+      {
+       "text": "losing worker",
+       "score": 0.5712,
+       "raw_label": "Person"
+      }
+     ],
+     "query_policy_version": "semantic-query-policy-v1"
+    }
+   ],
+   "contract": "rescue-v1",
+   "query_policy_version": "semantic-query-policy-v1"
+  },
+  "query_policy_version": "semantic-query-policy-v1"
+ }
+}
