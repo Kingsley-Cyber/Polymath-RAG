@@ -268,18 +268,28 @@ def apply_boundary(ordered_slices: list) -> dict:
     results: dict[str, list[dict]] = {}
     report_queries = []
     if queries:
-        ordered = list(queries.values())
+        # GLINER-QUERY-VOCAB-v2: multi-label rescue queries dilute scores
+        # (measured); each label becomes its own single-label request and
+        # any full-span hit under ANY label of the canonical type accepts.
+        expanded: list[tuple[str, dict]] = []
+        for q in queries.values():
+            for label in q.labels:
+                expanded.append((q.identity, {"text": q.text, "labels": [label],
+                                              "threshold": q.threshold}))
         client = GlinerClient()
         try:
             client.verify_pin()
-            spans_by_query = []
-            for i in range(0, len(ordered), 256):
-                spans_by_query.extend(client.infer_rescue_batch(
-                    [q.payload() for q in ordered[i:i + 256]]))
+            batch_out = []
+            for i in range(0, len(expanded), 256):
+                batch_out.extend(client.infer_rescue_batch(
+                    [payload for _id, payload in expanded[i:i + 256]]))
         finally:
             client.close()
-        results = {q.identity: spans for q, spans in zip(ordered, spans_by_query)}
-        for q in ordered:
+        merged: dict[str, list[dict]] = {}
+        for (identity, _payload), spans in zip(expanded, batch_out):
+            merged.setdefault(identity, []).extend(spans)
+        results = merged
+        for q in queries.values():
             hit = _accepted(results.get(q.identity, []), q)
             report_queries.append({
                 "identity": q.identity, "kind": q.kind, "text": q.text,

@@ -39,12 +39,12 @@ def _build_sha() -> str:
 def worker_contracts() -> dict[str, Any]:
     """The contract surface a worker runs with, resolved from settings —
     the same identity inputs the extraction contract hash uses."""
-    from polymath_shared.query_policy import QUERY_POLICY_VERSION
+    from polymath_shared.query_policy import active_policy_version
     from polymath_shared.settings import get_settings
 
     s = get_settings()
     return {
-        "query_policy": QUERY_POLICY_VERSION,
+        "query_policy": active_policy_version(),
         "rule_pack": s.worker.rule_pack_version,
         "syntax_provider": s.sidecars.syntax_provider,
         "rescue_stages": sorted(s.rescue_policy.enabled_stages()),

@@ -75,7 +75,8 @@ def test_determiner_trim_invariant():
         assert text[s:e] == surf
 
 
-def test_clean_alignment_and_contraction_detection():
+def test_clean_alignment_and_contraction_detection(monkeypatch):
+    monkeypatch.setenv("POLYMATH_QUERY_POLICY", "semantic-query-policy-v1")
     sl = _slice([_span("Crestline", 0, 9), _span("controller", 32, 42, "Product")])
     found = boundary_candidates(sl, REV)
     assert len(found) == 1  # "controller" == trimmed NP is clean, not a candidate
@@ -92,7 +93,8 @@ def test_clean_alignment_and_contraction_detection():
     assert query.query_policy_version == "semantic-query-policy-v1"
 
 
-def test_acceptance_is_exact_full_span_only():
+def test_acceptance_is_exact_full_span_only(monkeypatch):
+    monkeypatch.setenv("POLYMATH_QUERY_POLICY", "semantic-query-policy-v1")
     query = RescueQuery(kind="boundary", text="Crestline Automation",
                         labels=("Organization",), threshold=0.5, model_revision=REV,
                         query_policy_version="semantic-query-policy-v1")
@@ -167,7 +169,8 @@ def test_apply_boundary_refused_marks_unresolved(fake_gliner):
     assert sl.entities == []  # BOUNDARY_UNRESOLVED: no argument binding in this sentence
 
 
-def test_apply_boundary_dedups_identical_queries(fake_gliner):
+def test_apply_boundary_dedups_identical_queries(fake_gliner, monkeypatch):
+    monkeypatch.setenv("POLYMATH_QUERY_POLICY", "semantic-query-policy-v1")
     fake_gliner.responses = {"Crestline Automation": [
         {"text": "Crestline Automation", "start": 0, "end": 20,
          "label": "Organization", "score": 0.8},
@@ -177,6 +180,23 @@ def test_apply_boundary_dedups_identical_queries(fake_gliner):
     apply_boundary([({"chunk_id": "c1"}, sl1), ({"chunk_id": "c1"}, sl2)])
     assert len(fake_gliner.calls) == 1
     assert len(fake_gliner.calls[0]) == 1
+
+
+def test_apply_boundary_v2_expands_per_alias_single_label(fake_gliner, monkeypatch):
+    """v2: each provider label becomes its own single-label request (the
+    only regime where bare-NP firing was measured); any full-span hit
+    under any alias of the canonical type accepts."""
+    monkeypatch.setenv("POLYMATH_QUERY_POLICY", "semantic-query-policy-v2")
+    fake_gliner.responses = {"Crestline Automation": [
+        {"text": "Crestline Automation", "start": 0, "end": 20,
+         "label": "Company", "score": 0.82},
+    ]}
+    sl = _slice([_span("Crestline", 0, 9)])
+    report = apply_boundary([({"chunk_id": "c1"}, sl)])
+    flat = [r for call in fake_gliner.calls for r in call]
+    assert {tuple(r["labels"]) for r in flat} == {("Organization",), ("Company",), ("Corporation",)}
+    assert report["counts"]["accepted"] == 1
+    assert report["queries"][0]["accepted_raw_label"] == "Company"
 
 
 def test_apply_rescue_requires_syntax_evidence():

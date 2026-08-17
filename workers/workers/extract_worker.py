@@ -148,12 +148,26 @@ def _entity_spans(
     profile: dict,
 ) -> tuple[list[EntitySpan], list[dict]]:
     from polymath_shared.contracts import DocumentProfile
+    from polymath_shared.query_policy import provider_passes
 
-    labels = DocumentProfile(**profile).label_set if profile.get("label_set") else []
-    result = gliner.entity_pass(chunk_text, labels, threshold=ENTITY_THRESHOLD)
+    base_labels = DocumentProfile(**profile).label_set if profile.get("label_set") else []
     spans: list[EntitySpan] = []
     rejected: list[dict] = []
-    for item in result.get("spans", []):
+    # GLINER-QUERY-VOCAB-v2: policy-level passes (v1: one identity pass,
+    # byte-identical; v2: identity + enriched, deterministic union —
+    # higher raw score wins, identity pass preferred on exact ties).
+    proposals: dict[tuple[int, int], dict] = {}
+    for pass_labels in provider_passes():
+        labels = list(dict.fromkeys(list(base_labels) + list(pass_labels)))
+        if not labels:
+            continue
+        result = gliner.entity_pass(chunk_text, labels, threshold=ENTITY_THRESHOLD)
+        for item in result.get("spans", []):
+            key = (item["start"], item["end"])
+            current = proposals.get(key)
+            if current is None or item["score"] > current["score"]:
+                proposals[key] = item
+    for item in proposals.values():
         core_type = _map_label(item["label"], _pack())
         if core_type is None:
             rejected.append({"span": item, "reason": "no core mapping for label"})

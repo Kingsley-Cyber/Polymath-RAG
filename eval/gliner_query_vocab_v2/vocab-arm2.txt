@@ -1,0 +1,20 @@
+== probe-v2 mentions (key surfaces) ==
+  robust implementation: [('robust implementation', 'Technology', 'Technology', Decimal('0.773'), 'CORPUS_SCOPED')]
+  bounded leases: [('bounded leases', 'Technology', 'Technology', Decimal('0.797'), 'CORPUS_SCOPED')]
+  deterministic stage contracts: [('deterministic stage contracts', 'Document', 'Document', Decimal('0.730'), 'CORPUS_SCOPED')]
+  transactional claim operations: [('transactional claim operations', 'Process', 'Operation', Decimal('0.849'), 'CORPUS_SCOPED')]
+  restart-safe event pipeline: NO MENTION
+  workflow authority: NO MENTION
+  idempotent identities: NO MENTION
+  at-least-once delivery: NO MENTION
+== key sentence: candidates/first_loss ==
+== rescue ==
+  counts: {'refused': 5, 'accepted': 0, 'candidates': 5}
+    next outbox event              -> refused  raw=None preds=0
+    Two workers                    -> refused  raw=None preds=0
+    one worker                     -> refused  raw=None preds=0
+    losing worker                  -> refused  raw=None preds=0
+    same document                  -> refused  raw=None preds=0
+== reason distribution ==
+  {"NEGATED": 2, "CONDITIONAL": 4, "GLINER_PROPOSED": 10, "CANDIDATE_CREATED": 7, "ADMITTED_MENTION_ONLY": 47, "TYPE_SIGNATURE_MISMATCH": 1, "OBJECT_ENDPOINT_UNAVAILABLE": 44, "SUBJECT_ENDPOINT_UNAVAILABLE": 49}
+  facts: 0

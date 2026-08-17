@@ -21,16 +21,34 @@ from polymath_shared.query_policy import (
 )
 
 
-def test_policy_version_and_identity():
+def test_policy_version_and_identity(monkeypatch):
+    monkeypatch.setenv("POLYMATH_QUERY_POLICY", "semantic-query-policy-v1")
     assert QUERY_POLICY_VERSION == "semantic-query-policy-v1"
     identity = policy_identity()
-    assert identity["query_policy_version"] == QUERY_POLICY_VERSION
+    assert identity["query_policy_version"] == "semantic-query-policy-v1"
     assert identity["aliases"] == {}  # v1 is deliberately identity
+    assert identity["passes"] == "identity"
 
 
-def test_v1_labels_are_identity_no_aliases():
+def test_v1_labels_are_identity_no_aliases(monkeypatch):
+    monkeypatch.setenv("POLYMATH_QUERY_POLICY", "semantic-query-policy-v1")
     for core in ("Organization", "Technology", "Product", "Person"):
         assert query_labels_for(core) == (core,)
+
+
+def test_v2_policy_two_passes_and_alias_canonicalization(monkeypatch):
+    from polymath_shared.query_policy import canonical_of, provider_passes
+
+    monkeypatch.setenv("POLYMATH_QUERY_POLICY", "semantic-query-policy-v2")
+    passes = provider_passes()
+    assert len(passes) == 2
+    assert passes[0][0] == "Person"  # identity pass unchanged
+    assert "Company" in passes[1]
+    assert canonical_of("Company") == "Organization"
+    assert canonical_of("Implementation method") == "Method"
+    assert canonical_of("Organization") == "Organization"  # core names still self-map
+    assert canonical_of("NotALabel") is None
+    assert query_labels_for("Organization") == ("Organization", "Company", "Corporation")
 
 
 def test_canonical_of_maps_core_and_domain_labels():

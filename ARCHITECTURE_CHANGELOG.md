@@ -795,3 +795,18 @@ that motivated it and the refactor that implemented it.
   rejections. Observability output (funnel, first-loss, waterfall,
   TP/FP/FN attribution, unexplained=0) is required for future
   extraction gates. (experiment 0006)
+
+## 2026-08-16: GLINER-QUERY-VOCAB-v2 measured — NOT QUALIFIED (evidence recorded)
+
+- semantic-query-policy-v2 (two-pass union: identity + enriched aliases,
+  deterministic higher-score merge; per-alias single-label rescue
+  requests). Dev selection measured label mechanics first: case
+  sensitivity, multi-label dilution (25-label flat set loses baseline
+  spans), and zero bare-NP firing for abstract technical phrases.
+- Frozen I4 (development regression): TP 12→12, FP 5→6, FN 14→14,
+  P 0.706→0.667, R 0.462→0.462. Zero recall gain, one new FP. Probe:
+  one typing upgrade (Operation .849), +5 mentions, key sentence
+  unchanged (union keeps the higher .773 identity typing). The dominant
+  loss class persists; the merge rule cannot flip a confident wrong
+  typing. NOT QUALIFIED; policy v1 remains production default
+  (env-switchable for future gates).
