@@ -535,6 +535,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/gliner_type_arbitration_v1/arbitration-phase3.txt", "txt", None),
     ("docs/wiki/plans/GLINER-TYPE-ARBITRATION-V1-PLAN.md", "md", None),
     ("docs/wiki/decisions/0015-entity-relation-separation.md", "md", None),
+    ("docs/wiki/decisions/0016-lexical-role-realignment.md", "md", None),
+    ("docs/wiki/plans/LEXICAL-ROLE-REALIGNMENT-PLAN.md", "md", None),
     ("eval/model_qual/run_candidate.py", "py", None),
     ("docs/wiki/experiments/0007-lexical-compiler-alignment.md", "md", None),
     ("eval/lexical_alignment/lexical-alignment.txt", "txt", None),

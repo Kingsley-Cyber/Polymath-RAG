@@ -867,3 +867,20 @@ that motivated it and the refactor that implemented it.
 - Additional finding: "routes" missing from trigger inventory;
   duplicate candidates from shared-trigger sentences in in-process
   traces.
+
+## 2026-08-17: ADR-0016 — Lexical-Role Realignment (Kimi architecture restored)
+
+- Records the CORRECT architecture realigned to the original Kimi
+  design, not the debugging-era approximation. 12 realignment
+  invariants declared. The key correction: candidate arguments are
+  derived from the UD dependency tree (not left×right positional
+  pairing), PropBank ARG0/ARG1 roles are assigned to endpoints (the
+  largest missing piece), and type compatibility runs AFTER structural
+  candidates exist (not before). Types remain one compiler feature —
+  the fix is ordering, not elimination.
+- Supersedes ADR-0015's more aggressive "move all type logic late" —
+  ADR-0016 retains the cheap type-pair precheck per the original Kimi
+  design, but only after structural argument candidates exist.
+- Implementation plan recorded (6 phases: UD binding, PB roles, type
+  precheck reorder, compiler integration, observability, qualification).
+  No production change authorized without a named gate.

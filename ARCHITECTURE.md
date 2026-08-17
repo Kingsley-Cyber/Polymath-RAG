@@ -296,3 +296,40 @@ syntax provider), rule packs, query vocabularies, corpora.
   semantic compatibility.** Model answers are queried under the normal
   qualified policy; the predicate contract then validates or rejects
   the canonical result.
+
+## 15. Lexical-Role Architecture (ADR-0015 + ADR-0016)
+
+The corrected extraction architecture (ADR-0016, realigned to the
+original Kimi design):
+
+```
+GLiNER Pass 1          GLiNER Pass 2
+entity/object spans    coarse evidence classes (~18)
+      │                      │
+      └──────────┬───────────┘
+                 ▼
+             spaCy UD
+    lemma / dependency / voice / coordination
+                 ▼
+        COMPILED LEXICON (VN / PB / FN / SemLink)
+                 ▼
+        SEMANTIC ROLES (ARG0 / ARG1 / ...)
+                 ▼
+        ARGUMENT BINDING (UD-tree, not left×right)
+                 ▼
+        TYPE-PAIR PRECHECK (cheap, AFTER structural candidates)
+                 ▼
+        PREDICATE COMPILER (semantic mapping authority)
+                 ▼
+        ONTOLOGY VALIDATION (late, not pre-candidate gate)
+                 ▼
+        FACT
+```
+
+12 realignment invariants: GLiNER never decides a graph relation;
+Pass 2 extracts evidence classes not predicates; PropBank roles must
+be assigned; candidate generation is UD-bounded not Cartesian; type
+compatibility runs after structural candidates; the compiler is the
+semantic mapping authority; ontology validates the compiled
+interpretation; UNSUPPORTED means abstain. Types remain one compiler
+feature — the correction is ordering, not elimination. See ADR-0016.
