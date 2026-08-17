@@ -884,3 +884,18 @@ that motivated it and the refactor that implemented it.
 - Implementation plan recorded (6 phases: UD binding, PB roles, type
   precheck reorder, compiler integration, observability, qualification).
   No production change authorized without a named gate.
+
+## 2026-08-17: KIMI-ARCHITECTURE-REALIGNMENT-V1 — ARCHITECTURALLY ALIGNED BUT QUALITY BLOCKED
+
+- kimi_v1 relation pipeline implemented (workers/kimi_candidates.py):
+  UD-tree primary binding, post-structural type precheck, bounded linear
+  recall fallback, fallback discipline (binding_source on every candidate).
+  6 unit tests green. Default stays legacy_v1 (env-switchable).
+- Frozen I4: legacy TP=12/FP=5/FN=14 P=.706 R=.462 → kimi TP=11/FP=5/
+  FN=15 P=.688 R=.423. No P/R improvement; slight recall cost from narrower
+  bounded recall. BUT: key-sentence diagnostic now honest (TYPE_PRECHECK_
+  IMPOSSIBLE with structural context vs misleading SUBJECT_ENDPOINT_
+  UNAVAILABLE). First-loss distribution shifted: fewer misleading SUBJECT
+  losses (54% vs 71%), more honest OBJECT losses. No FP regression, no
+  candidate explosion. The architecture is correct; the model's typing
+  remains the constraint (same conclusion as four upstream gates).

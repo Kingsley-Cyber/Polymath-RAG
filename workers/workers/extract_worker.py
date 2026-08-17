@@ -39,7 +39,8 @@ from polymath_shared.receipts import (
 )
 from polymath_shared.query_policy import QUERY_POLICY_VERSION, policy_identity
 from polymath_shared.rulepack import compile_relation, load_rule_pack
-from workers.candidates import SentenceSlice, build_candidates
+from workers.candidates import SentenceSlice
+from workers.kimi_candidates import build_candidates_dispatch as build_candidates
 from workers.evidence_proposer import EXTRACTOR_VERSION as EVIDENCE_EXTRACTOR_VERSION
 from workers.profile_router import chunk_label_set
 from workers.summarizer import split_sentences
