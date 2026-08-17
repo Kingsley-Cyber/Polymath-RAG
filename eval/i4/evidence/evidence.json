@@ -1,10 +1,304 @@
 {
   "phases": {
-    "versioning": {
-      "docs_before": 6,
-      "docs_after": 6,
-      "new_versions": 2,
-      "replay_noop": true
+    "freeze": {
+      "frozen_files": 11,
+      "rule_pack": "1.2.0",
+      "gliner": {
+        "entity_threshold": 0.5,
+        "evidence_threshold": 0.4,
+        "model": "urchade/gliner_medium-v2.1",
+        "revision": "40ec419335d09393f298636f471328b722c6da9e"
+      }
+    },
+    "ingestion": {
+      "error": "i4-fresh-acceptance-v1 did not converge: {'reconciling': 5}"
+    },
+    "facts": {
+      "supported_positive": {
+        "gold": 26,
+        "tp": 0,
+        "fp": 0,
+        "fn": 26,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "per_predicate": {
+          "uses": {
+            "gold": 5,
+            "tp": 0,
+            "fp": 0,
+            "fn": 5
+          },
+          "located_in": {
+            "gold": 4,
+            "tp": 0,
+            "fp": 0,
+            "fn": 4
+          },
+          "has_role": {
+            "gold": 2,
+            "tp": 0,
+            "fp": 0,
+            "fn": 2
+          },
+          "depends_on": {
+            "gold": 3,
+            "tp": 0,
+            "fp": 0,
+            "fn": 3
+          },
+          "part_of": {
+            "gold": 2,
+            "tp": 0,
+            "fp": 0,
+            "fn": 2
+          },
+          "founded": {
+            "gold": 1,
+            "tp": 0,
+            "fp": 0,
+            "fn": 1
+          },
+          "created": {
+            "gold": 2,
+            "tp": 0,
+            "fp": 0,
+            "fn": 2
+          },
+          "leads": {
+            "gold": 1,
+            "tp": 0,
+            "fp": 0,
+            "fn": 1
+          },
+          "developed": {
+            "gold": 1,
+            "tp": 0,
+            "fp": 0,
+            "fn": 1
+          },
+          "associated_with": {
+            "gold": 2,
+            "tp": 0,
+            "fp": 0,
+            "fn": 2
+          },
+          "causes": {
+            "gold": 1,
+            "tp": 0,
+            "fp": 0,
+            "fn": 1
+          },
+          "acquired": {
+            "gold": 1,
+            "tp": 0,
+            "fp": 0,
+            "fn": 1
+          },
+          "subsidiary_of": {
+            "gold": 1,
+            "tp": 0,
+            "fp": 0,
+            "fn": 1
+          }
+        },
+        "fn_details": [
+          {
+            "fact_id": "A01",
+            "predicate": "uses",
+            "subject": "Northvale Health Network",
+            "object": "CareChart EMR",
+            "doc": "01_northvale_health.md"
+          },
+          {
+            "fact_id": "A02",
+            "predicate": "located_in",
+            "subject": "Lakeshore General Hospital",
+            "object": "Austin",
+            "doc": "01_northvale_health.md"
+          },
+          {
+            "fact_id": "A03",
+            "predicate": "has_role",
+            "subject": "Amara Osei",
+            "object": "Northvale Health Network",
+            "doc": "01_northvale_health.md"
+          },
+          {
+            "fact_id": "A04",
+            "predicate": "depends_on",
+            "subject": "CareConnect portal",
+            "object": "CareChart EMR",
+            "doc": "01_northvale_health.md"
+          },
+          {
+            "fact_id": "A05",
+            "predicate": "part_of",
+            "subject": "radiology review board",
+            "object": "Lakeshore General Hospital",
+            "doc": "01_northvale_health.md"
+          },
+          {
+            "fact_id": "A06",
+            "predicate": "founded",
+            "subject": "Amara Osei",
+            "object": "Riverside Clinic",
+            "doc": "01_northvale_health.md"
+          },
+          {
+            "fact_id": "A07",
+            "predicate": "uses",
+            "subject": "Nimbus Cloud",
+            "object": "Kubernetes",
+            "doc": "02_nimbus_cloud.md"
+          },
+          {
+            "fact_id": "A08",
+            "predicate": "depends_on",
+            "subject": "Ledger billing service",
+            "object": "Postgres cluster",
+            "doc": "02_nimbus_cloud.md"
+          },
+          {
+            "fact_id": "A09",
+            "predicate": "part_of",
+            "subject": "Nimbus billing service",
+            "object": "Nimbus Cloud platform",
+            "doc": "02_nimbus_cloud.md"
+          },
+          {
+            "fact_id": "A10",
+            "predicate": "created",
+            "subject": "engineering group",
+            "object": "load-testing harness",
+            "doc": "02_nimbus_cloud.md"
+          },
+          {
+            "fact_id": "A11",
+            "predicate": "uses",
+            "subject": "Crestline Automation",
+            "object": "Siemens PLCs",
+            "doc": "03_crestline_automation.md"
+          },
+          {
+            "fact_id": "A12",
+            "predicate": "located_in",
+            "subject": "Crestline plant",
+            "object": "Toledo",
+            "doc": "03_crestline_automation.md"
+          },
+          {
+            "fact_id": "A13",
+            "predicate": "leads",
+            "subject": "Maria Kowalski",
+            "object": "Crestline automation team",
+            "doc": "03_crestline_automation.md"
+          },
+          {
+            "fact_id": "A14",
+            "predicate": "created",
+            "subject": "analytics team",
+            "object": "shift scheduling model",
+            "doc": "03_crestline_automation.md"
+          },
+          {
+            "fact_id": "A15",
+            "predicate": "developed",
+            "subject": "Crestline Automation",
+            "object": "Cobalt assembly cell",
+            "doc": "03_crestline_automation.md"
+          },
+          {
+            "fact_id": "A16",
+            "predicate": "associated_with",
+            "subject": "vision system",
+            "object": "quality database",
+            "doc": "03_crestline_automation.md"
+          },
+          {
+            "fact_id": "A17",
+            "predicate": "causes",
+            "subject": "pump failure",
+            "object": "production stoppage",
+            "doc": "03_crestline_automation.md"
+          },
+          {
+            "fact_id": "A18",
+            "predicate": "uses",
+            "subject": "Brightpath Learning",
+            "object": "Mentor assessment engine",
+            "doc": "04_brightpath_learning.md"
+          },
+          {
+            "fact_id": "A19",
+            "predicate": "located_in",
+            "subject": "Brightpath Learning",
+            "object": "Raleigh",
+            "doc": "04_brightpath_learning.md"
+          },
+          {
+            "fact_id": "A20",
+            "predicate": "has_role",
+            "subject": "Daniel Okafor",
+            "object": "Brightpath Learning",
+            "doc": "04_brightpath_learning.md"
+          },
+          {
+            "fact_id": "A21",
+            "predicate": "depends_on",
+            "subject": "Mentor assessment engine",
+            "object": "QBank item database",
+            "doc": "04_brightpath_learning.md"
+          },
+          {
+            "fact_id": "A22",
+            "predicate": "acquired",
+            "subject": "Brightpath Learning",
+            "object": "Coachlight review app",
+            "doc": "04_brightpath_learning.md"
+          },
+          {
+            "fact_id": "A23",
+            "predicate": "uses",
+            "subject": "Corval Logistics",
+            "object": "FreightNet routing platform",
+            "doc": "05_corval_logistics.md"
+          },
+          {
+            "fact_id": "A24",
+            "predicate": "subsidiary_of",
+            "subject": "Corval Freight",
+            "object": "Corval Logistics",
+            "doc": "05_corval_logistics.md"
+          },
+          {
+            "fact_id": "A25",
+            "predicate": "located_in",
+            "subject": "Portside warehouse",
+            "object": "Oakland",
+            "doc": "05_corval_logistics.md"
+          },
+          {
+            "fact_id": "A26",
+            "predicate": "associated_with",
+            "subject": "QuickScale invoicing system",
+            "object": "FreightNet routing platform",
+            "doc": "05_corval_logistics.md"
+          }
+        ],
+        "fp_details": []
+      },
+      "out_of_envelope": {
+        "fixtures": 8,
+        "correct_abstentions": 8,
+        "unexpected_assertions": 0,
+        "details": []
+      },
+      "must_not_assert": {
+        "passed": 18,
+        "total": 18,
+        "violations": []
+      }
     }
   }
 }
