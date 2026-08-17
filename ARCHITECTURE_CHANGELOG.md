@@ -853,3 +853,17 @@ that motivated it and the refactor that implemented it.
 - Next evidence-based gate identified: MODEL-QUALIFICATION-V1 (the frozen
   GLiNER's type classification is the bottleneck three upstream gates
   could not route around).
+
+## 2026-08-17: LEXICAL-COMPILER-ALIGNMENT-V1 — evidence chain traced
+
+- Traced the full VN/PB/FN/SemLink/spaCy/type chain for 8 sentences
+  through actual pipeline code. Definitive answers: Q9=C (types are
+  an EARLY HARD VETO at the _slot_compatible pre-candidate filter);
+  Q10=AFTER (the compiler only sees type-compatible candidates).
+  The lexical evidence chain (VerbNet classes, PropBank rolesets,
+  FrameNet frames, SemLink mappings) is rich, available, and correct
+  — but cannot speak because the type veto runs before candidates
+  reach the compiler. Directly validates ADR-0015's proposal.
+- Additional finding: "routes" missing from trigger inventory;
+  duplicate candidates from shared-trigger sentences in in-process
+  traces.

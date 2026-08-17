@@ -1,0 +1,213 @@
+==========================================================================================
+SENTENCE: Northvale Health Network uses the CareChart EMR platform across its three hospitals.
+==========================================================================================
+  Q1 TRIGGER: YES — 1 trigger(s) found
+
+  TRIGGER: 'uses' (lemma='use')
+    class=usage_application lexical_class=VERB predicate=uses
+    Q2 VERBNET:    ['consume-66', 'spend_time-104', 'use-105.1']
+    Q3 PROPBANK:   roleset=None classes=['adopt.01', 'apply.01', 'use.01']
+    Q5 FRAMENET:   ['Using']
+    Q6 SEMLINK:    resolved=True
+
+  Q7 SPACY PARSE: fallback (deterministic passive only)
+
+  Q9/Q10 CANDIDATE PATH:
+    entities available: [('Northvale Health Network', 'Organization'), ('CareChart EMR platform', 'Technology')]
+    NO CANDIDATES CREATED
+      trigger 'uses': left=0 right=1
+
+==========================================================================================
+SENTENCE: Brightpath Learning uses the Mentor assessment engine for adaptive quizzes.
+==========================================================================================
+  Q1 TRIGGER: YES — 1 trigger(s) found
+
+  TRIGGER: 'uses' (lemma='use')
+    class=usage_application lexical_class=VERB predicate=uses
+    Q2 VERBNET:    ['consume-66', 'spend_time-104', 'use-105.1']
+    Q3 PROPBANK:   roleset=None classes=['adopt.01', 'apply.01', 'use.01']
+    Q5 FRAMENET:   ['Using']
+    Q6 SEMLINK:    resolved=True
+
+  Q7 SPACY PARSE: fallback (deterministic passive only)
+
+  Q9/Q10 CANDIDATE PATH:
+    entities available: [('Brightpath Learning', 'Organization'), ('Mentor assessment engine', 'Technology')]
+    CANDIDATE: 'Brightpath Learning' (Organization) --[usage_application]--> 'Mentor assessment engine' (Technology)
+      roleset=None VN=['consume-66', 'spend_time-104', 'use-105.1'] FN=['Using']
+      Q10 COMPILER RECEIVED: YES (after type-compat pre-filter)
+      COMPILER DECISION: ACCEPT reason=None
+
+==========================================================================================
+SENTENCE: The engineering group created the load-testing harness after the September outage.
+==========================================================================================
+  Q1 TRIGGER: YES — 3 trigger(s) found
+
+  TRIGGER: 'engineering' (lemma='engineer')
+    class=creation lexical_class=VERB predicate=developed
+    Q2 VERBNET:    []
+    Q3 PROPBANK:   roleset=engineer.01 classes=['develop.02']
+    Q5 FRAMENET:   []
+    Q6 SEMLINK:    resolved=False
+
+  TRIGGER: 'created' (lemma='create')
+    class=creation lexical_class=VERB predicate=created
+    Q2 VERBNET:    ['create-26.4', 'engender-27.1']
+    Q3 PROPBANK:   roleset=create.01 classes=['build.01', 'create.01', 'make.01']
+    Q5 FRAMENET:   ['Behind_the_scenes', 'Cause_to_start', 'Intentionally_create', 'Manufacturing']
+    Q6 SEMLINK:    resolved=True
+
+  TRIGGER: 'created' (lemma='create')
+    class=creation lexical_class=VERB predicate=founded
+    Q2 VERBNET:    ['create-26.4', 'engender-27.1']
+    Q3 PROPBANK:   roleset=create.01 classes=['establish.01']
+    Q5 FRAMENET:   ['Behind_the_scenes', 'Cause_to_start', 'Intentionally_create', 'Manufacturing']
+    Q6 SEMLINK:    resolved=True
+
+  Q7 SPACY PARSE: fallback (deterministic passive only)
+
+  Q9/Q10 CANDIDATE PATH:
+    entities available: [('engineering group', 'Person')]
+    NO CANDIDATES CREATED
+      trigger 'engineering': left=0 right=0
+      trigger 'created': left=1 right=0
+      trigger 'created': left=1 right=0
+
+==========================================================================================
+SENTENCE: Amara Osei serves as chief medical officer of Northvale Health Network.
+==========================================================================================
+  Q1 TRIGGER: YES — 2 trigger(s) found
+
+  TRIGGER: 'serves' (lemma='serve')
+    class=leadership_governance lexical_class=VERB predicate=has_role
+    Q2 VERBNET:    ['fit-54.3', 'pay-68', 'spend_time-104']
+    Q3 PROPBANK:   roleset=None classes=['head.01', 'serve.02']
+    Q5 FRAMENET:   ['Process_end']
+    Q6 SEMLINK:    resolved=True
+
+  TRIGGER: 'serves as' (lemma='serves')
+    class=leadership_governance lexical_class=MULTIWORD predicate=has_role
+    Q2 VERBNET:    []
+    Q3 PROPBANK:   roleset=None classes=['head.01', 'serve.02']
+    Q5 FRAMENET:   []
+    Q6 SEMLINK:    resolved=False
+
+  Q7 SPACY PARSE: fallback (deterministic passive only)
+
+  Q9/Q10 CANDIDATE PATH:
+    entities available: [('Northvale Health Network', 'Organization'), ('CareChart EMR platform', 'Technology')]
+    NO CANDIDATES CREATED
+      trigger 'serves': left=0 right=1
+      trigger 'serves as': left=0 right=1
+
+==========================================================================================
+SENTENCE: Lakeshore General Hospital is located in Austin.
+==========================================================================================
+  Q1 TRIGGER: YES — 4 trigger(s) found
+
+  TRIGGER: 'is' (lemma='be')
+    class=classification lexical_class=VERB predicate=is_a
+    Q2 VERBNET:    ['representation-110.1']
+    Q3 PROPBANK:   roleset=None classes=[]
+    Q5 FRAMENET:   []
+    Q6 SEMLINK:    resolved=False
+
+  TRIGGER: 'is' (lemma='be')
+    class=classification lexical_class=VERB predicate=instance_of
+    Q2 VERBNET:    ['representation-110.1']
+    Q3 PROPBANK:   roleset=None classes=[]
+    Q5 FRAMENET:   []
+    Q6 SEMLINK:    resolved=False
+
+  TRIGGER: 'located' (lemma='locate')
+    class=location lexical_class=VERB predicate=located_in
+    Q2 VERBNET:    []
+    Q3 PROPBANK:   roleset=None classes=[]
+    Q5 FRAMENET:   []
+    Q6 SEMLINK:    resolved=False
+
+  TRIGGER: 'located in' (lemma='located')
+    class=location lexical_class=MULTIWORD predicate=located_in
+    Q2 VERBNET:    []
+    Q3 PROPBANK:   roleset=None classes=[]
+    Q5 FRAMENET:   []
+    Q6 SEMLINK:    resolved=False
+
+  Q7 SPACY PARSE: fallback (deterministic passive only)
+
+  Q9/Q10 CANDIDATE PATH:
+    entities available: [('Lakeshore General Hospital', 'Organization'), ('Austin', 'Location')]
+    CANDIDATE: 'Lakeshore General Hospital' (Organization) --[location]--> 'Austin' (Location)
+      roleset=None VN=[] FN=[]
+      Q10 COMPILER RECEIVED: YES (after type-compat pre-filter)
+      COMPILER DECISION: ACCEPT reason=None
+    CANDIDATE: 'Lakeshore General Hospital' (Organization) --[location]--> 'Austin' (Location)
+      roleset=None VN=[] FN=[]
+      Q10 COMPILER RECEIVED: YES (after type-compat pre-filter)
+      COMPILER DECISION: ACCEPT reason=None
+
+==========================================================================================
+SENTENCE: A robust implementation uses bounded leases and deterministic stage contracts.
+==========================================================================================
+  Q1 TRIGGER: YES — 2 trigger(s) found
+
+  TRIGGER: 'implementation' (lemma='implementation')
+    class=creation lexical_class=NOUN predicate=developed
+    Q2 VERBNET:    []
+    Q3 PROPBANK:   roleset=None classes=['develop.02']
+    Q5 FRAMENET:   []
+    Q6 SEMLINK:    resolved=False
+
+  TRIGGER: 'uses' (lemma='use')
+    class=usage_application lexical_class=VERB predicate=uses
+    Q2 VERBNET:    ['consume-66', 'spend_time-104', 'use-105.1']
+    Q3 PROPBANK:   roleset=None classes=['adopt.01', 'apply.01', 'use.01']
+    Q5 FRAMENET:   ['Using']
+    Q6 SEMLINK:    resolved=True
+
+  Q7 SPACY PARSE: fallback (deterministic passive only)
+
+  Q9/Q10 CANDIDATE PATH:
+    entities available: [('robust implementation', 'Technology'), ('bounded leases', 'Technology')]
+    NO CANDIDATES CREATED
+      trigger 'implementation': left=0 right=1
+      trigger 'uses': left=1 right=1
+      type-check: 'robust implementation'(Technology) -> 'bounded leases'(Technology) [usage_application] = VETO
+
+==========================================================================================
+SENTENCE: Maria Kowalski leads the Crestline automation team.
+==========================================================================================
+  Q1 TRIGGER: YES — 2 trigger(s) found
+
+  TRIGGER: 'leads' (lemma='lead')
+    class=leadership_governance lexical_class=VERB predicate=has_role
+    Q2 VERBNET:    ['accompany-51.7', 'compel-59.1', 'result-27.2', 'spend_time-104', 'supervision-95.2.2', 'terminus-47.9']
+    Q3 PROPBANK:   roleset=None classes=['head.01', 'serve.02']
+    Q5 FRAMENET:   ['Causation', 'Cotheme']
+    Q6 SEMLINK:    resolved=True
+
+  TRIGGER: 'leads' (lemma='lead')
+    class=leadership_governance lexical_class=VERB predicate=leads
+    Q2 VERBNET:    ['accompany-51.7', 'compel-59.1', 'result-27.2', 'spend_time-104', 'supervision-95.2.2', 'terminus-47.9']
+    Q3 PROPBANK:   roleset=None classes=['lead.02']
+    Q5 FRAMENET:   ['Causation', 'Cotheme']
+    Q6 SEMLINK:    resolved=True
+
+  Q7 SPACY PARSE: fallback (deterministic passive only)
+
+  Q9/Q10 CANDIDATE PATH:
+    entities available: [('Maria Kowalski', 'Person'), ('Crestline automation team', 'Organization')]
+    CANDIDATE: 'Maria Kowalski' (Person) --[leadership_governance]--> 'Crestline automation team' (Organization)
+      roleset=None VN=['accompany-51.7', 'compel-59.1', 'result-27.2', 'spend_time-104', 'supervision-95.2.2', 'terminus-47.9'] FN=['Causation', 'Cotheme']
+      Q10 COMPILER RECEIVED: YES (after type-compat pre-filter)
+      COMPILER DECISION: ACCEPT reason=None
+    CANDIDATE: 'Maria Kowalski' (Person) --[leadership_governance]--> 'Crestline automation team' (Organization)
+      roleset=None VN=['accompany-51.7', 'compel-59.1', 'result-27.2', 'spend_time-104', 'supervision-95.2.2', 'terminus-47.9'] FN=['Causation', 'Cotheme']
+      Q10 COMPILER RECEIVED: YES (after type-compat pre-filter)
+      COMPILER DECISION: ACCEPT reason=None
+
+==========================================================================================
+SENTENCE: CareChart EMR platform routes requests through the gateway.
+==========================================================================================
+  Q1 TRIGGER: NO lexical trigger found
+
