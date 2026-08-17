@@ -1,0 +1,62 @@
+
+=== i4-fresh-acceptance-v1 dc3867 NOT FOUND ===
+
+=== i4-fresh-acceptance-v1 8bdd3e trigger='uses' ===
+  chunk text: ### Northvale Health Network: Operations Review Northvale Health Network uses the CareChart EMR platform across its three hospitals. Lakeshore General...
+  mentions in chunk:
+    Northvale Health Network         Organization   GLOBAL
+    CareChart EMR platform           Technology     GLOBAL
+    CareChart                        Product        GLOBAL
+    Lakeshore General Hospital       Organization   GLOBAL
+    Austin                           Location       GLOBAL
+    Dr. Amara Osei                   Person         GLOBAL
+    CareConnect portal               Technology     GLOBAL
+    CareChart EMR                    Technology     GLOBAL
+    Riverside Clinic                 Organization   GLOBAL
+    2015                             TimeReference  MENTION_ONLY
+    patient portal                   Technology     CORPUS_SCOPED
+    state registry                   Organization   CORPUS_SCOPED
+
+=== i4-fresh-acceptance-v1 490aab trigger='uses' ===
+  chunk text: ### Brightpath Learning: Platform Brief Brightpath Learning uses the Mentor assessment engine for adaptive quizzes. The company is headquartered in Ra...
+  mentions in chunk:
+    Brightpath Learning              Organization   GLOBAL
+    Mentor assessment engine         Technology     GLOBAL
+    Raleigh                          Location       GLOBAL
+    Daniel Okafor                    Person         GLOBAL
+    mentor engine                    Technology     CORPUS_SCOPED
+    QBank item database              Technology     GLOBAL
+    item difficulty                  Concept        CORPUS_SCOPED
+    Coachlight review app            Technology     GLOBAL
+    last spring                      TimeReference  CORPUS_SCOPED
+    spaced repetition schedule       Concept        CORPUS_SCOPED
+    retention                        Measurement    MENTION_ONLY
+    Mentor engine                    Technology     GLOBAL
+    last month                       TimeReference  CORPUS_SCOPED
+    Coachlight app                   Technology     GLOBAL
+
+=== i4-fresh-acceptance-v1 d042b0 NOT FOUND ===
+
+=== i4-fresh-acceptance-v1 3e9e1a trigger='uses' ===
+  chunk text: ### Nimbus Cloud Platform: Postmortem Review Nimbus Cloud uses Kubernetes to orchestrate its container platform. The Ledger billing service depends on...
+  mentions in chunk:
+    Nimbus Cloud                     Organization   GLOBAL
+    Kubernetes                       Product        GLOBAL
+    container platform               Technology     CORPUS_SCOPED
+    Ledger billing service           Technology     GLOBAL
+    Postgres cluster                 Technology     GLOBAL
+    operations group                 Organization   CORPUS_SCOPED
+    Nimbus                           Organization   GLOBAL
+    engineering group                Person         CORPUS_SCOPED
+    load-testing harness             Technology     CORPUS_SCOPED
+    September outage                 Event          GLOBAL
+    September                        TimeReference  GLOBAL
+    outage                           Event          MENTION_ONLY
+    outage                           Event          MENTION_ONLY
+    postmortem report                Document       CORPUS_SCOPED
+    cache layer                      Technology     CORPUS_SCOPED
+    outage                           Event          MENTION_ONLY
+    Nimbus API gateway               Technology     GLOBAL
+    Go                               Technology     GLOBAL
+
+=== quality-probe-002 57fbc NOT FOUND ===

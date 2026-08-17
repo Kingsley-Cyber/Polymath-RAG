@@ -1,0 +1,337 @@
+{
+ "acquired": {
+  "subject": [
+   "Organization",
+   "Person"
+  ],
+  "object": [
+   "Organization",
+   "Product"
+  ]
+ },
+ "alias_of": {
+  "subject": [
+   "Concept",
+   "Method",
+   "Organization",
+   "Person",
+   "Product",
+   "Technology"
+  ],
+  "object": [
+   "Concept",
+   "Method",
+   "Organization",
+   "Person",
+   "Product",
+   "Technology"
+  ]
+ },
+ "associated_with": {
+  "subject": [
+   "Concept",
+   "Document",
+   "Event",
+   "Location",
+   "Method",
+   "Organization",
+   "Person",
+   "Process",
+   "Product",
+   "Technology"
+  ],
+  "object": [
+   "Concept",
+   "Document",
+   "Event",
+   "Location",
+   "Method",
+   "Organization",
+   "Person",
+   "Process",
+   "Product",
+   "Technology"
+  ]
+ },
+ "causes": {
+  "subject": [
+   "Concept",
+   "Event",
+   "Process"
+  ],
+  "object": [
+   "Concept",
+   "Event",
+   "Process",
+   "Product"
+  ]
+ },
+ "created": {
+  "subject": [
+   "Organization",
+   "Person"
+  ],
+  "object": [
+   "Concept",
+   "Method",
+   "Product"
+  ]
+ },
+ "depends_on": {
+  "subject": [
+   "Method",
+   "Process",
+   "Product",
+   "Technology"
+  ],
+  "object": [
+   "Method",
+   "Technology"
+  ]
+ },
+ "derived_from": {
+  "subject": [
+   "Concept",
+   "Document",
+   "Product"
+  ],
+  "object": [
+   "Concept",
+   "Document"
+  ]
+ },
+ "developed": {
+  "subject": [
+   "Organization",
+   "Person"
+  ],
+  "object": [
+   "Method",
+   "Product",
+   "Technology"
+  ]
+ },
+ "employs": {
+  "subject": [
+   "Organization"
+  ],
+  "object": [
+   "Person"
+  ]
+ },
+ "enables": {
+  "subject": [
+   "Method",
+   "Technology"
+  ],
+  "object": [
+   "Process"
+  ]
+ },
+ "founded": {
+  "subject": [
+   "Organization",
+   "Person"
+  ],
+  "object": [
+   "Organization"
+  ]
+ },
+ "has_role": {
+  "subject": [
+   "Person"
+  ],
+  "object": [
+   "Organization"
+  ]
+ },
+ "implemented_with": {
+  "subject": [
+   "Method",
+   "Product"
+  ],
+  "object": [
+   "Technology"
+  ]
+ },
+ "influences": {
+  "subject": [
+   "Concept",
+   "Method",
+   "Organization",
+   "Person",
+   "Process"
+  ],
+  "object": [
+   "Concept",
+   "Process"
+  ]
+ },
+ "instance_of": {
+  "subject": [
+   "Document",
+   "Event",
+   "Location",
+   "Method",
+   "Organization",
+   "Person",
+   "Product",
+   "Technology"
+  ],
+  "object": [
+   "Concept",
+   "Organization"
+  ]
+ },
+ "is_a": {
+  "subject": [
+   "Concept",
+   "Method",
+   "Process",
+   "Product",
+   "Technology"
+  ],
+  "object": [
+   "Concept"
+  ]
+ },
+ "leads": {
+  "subject": [
+   "Person"
+  ],
+  "object": [
+   "Event",
+   "Organization",
+   "Process"
+  ]
+ },
+ "located_in": {
+  "subject": [
+   "Document",
+   "Event",
+   "Location",
+   "Organization",
+   "Product"
+  ],
+  "object": [
+   "Location"
+  ]
+ },
+ "measured_by": {
+  "subject": [
+   "Concept",
+   "Process",
+   "Product",
+   "Technology"
+  ],
+  "object": [
+   "Measurement"
+  ]
+ },
+ "member_of": {
+  "subject": [
+   "Organization",
+   "Person"
+  ],
+  "object": [
+   "Organization"
+  ]
+ },
+ "occurred_at": {
+  "subject": [
+   "Event"
+  ],
+  "object": [
+   "TimeReference"
+  ]
+ },
+ "owns": {
+  "subject": [
+   "Organization",
+   "Person"
+  ],
+  "object": [
+   "Organization",
+   "Product"
+  ]
+ },
+ "part_of": {
+  "subject": [
+   "Concept",
+   "Organization",
+   "Process",
+   "Product",
+   "Technology"
+  ],
+  "object": [
+   "Concept",
+   "Organization",
+   "Product",
+   "Technology"
+  ]
+ },
+ "similar_to": {
+  "subject": [
+   "Concept",
+   "Method",
+   "Organization",
+   "Person",
+   "Product",
+   "Technology"
+  ],
+  "object": [
+   "Concept",
+   "Method",
+   "Organization",
+   "Person",
+   "Product",
+   "Technology"
+  ]
+ },
+ "stated_in": {
+  "subject": [
+   "Concept",
+   "Document",
+   "Method",
+   "Product",
+   "Technology"
+  ],
+  "object": [
+   "Document"
+  ]
+ },
+ "subsidiary_of": {
+  "subject": [
+   "Organization"
+  ],
+  "object": [
+   "Organization"
+  ]
+ },
+ "transforms_into": {
+  "subject": [
+   "Concept",
+   "Process",
+   "Product"
+  ],
+  "object": [
+   "Concept",
+   "Process",
+   "Product"
+  ]
+ },
+ "uses": {
+  "subject": [
+   "Method",
+   "Organization",
+   "Person",
+   "Process",
+   "Product"
+  ],
+  "object": [
+   "Method",
+   "Product",
+   "Technology"
+  ]
+ }
+}

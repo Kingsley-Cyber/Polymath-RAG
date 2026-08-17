@@ -1,0 +1,26 @@
+SUBJECT-filtered cases (entity exists, type blocked): 65
+
+Blocked subject types by evidence class:
+   20x reference_attribution          blocks subject types: Event, Location, Measurement, Process, TimeReference
+   11x usage_application              blocks subject types: Concept, Document, Event, Location, Measurement, Technology, TimeReference
+   10x creation                       blocks subject types: Concept, Document, Event, Location, Measurement, Method, Process, Product, Technology, TimeReference
+   10x classification                 blocks subject types: Measurement, TimeReference
+    5x location                       blocks subject types: Concept, Measurement, Method, Person, Process, Technology, TimeReference
+    3x ownership_control              blocks subject types: Concept, Document, Event, Location, Measurement, Method, Process, Product, Technology, TimeReference
+    2x dependency                     blocks subject types: Concept, Document, Event, Location, Measurement, Organization, Person, TimeReference
+    2x composition                    blocks subject types: Document, Event, Location, Measurement, Method, Person, TimeReference
+    1x causation                      blocks subject types: Document, Location, Measurement, Organization, Person, Product, TimeReference
+    1x association                    blocks subject types: Measurement, TimeReference
+
+USES-specific subject-filtered cases: 11
+  implemented [i4-fresh-acceptance-v1] sid=dc3867:8
+  implemented in [i4-fresh-acceptance-v1] sid=dc3867:8
+  uses [i4-fresh-acceptance-v1] sid=8bdd3e:0
+  uses [i4-fresh-acceptance-v1] sid=490aab:0
+  uses [i4-fresh-acceptance-v1] sid=d042b0:0
+  uses [i4-fresh-acceptance-v1] sid=3e9e1a:0
+  implemented [i4-fresh-acceptance-v1] sid=3e9e1a:8
+  implemented in [i4-fresh-acceptance-v1] sid=3e9e1a:8
+  uses [quality-probe-002] sid=57fbc:19
+  uses [vocab-probe-v1] sid=57fbc:19
+  uses [vocab-probe-v2] sid=57fbc:19

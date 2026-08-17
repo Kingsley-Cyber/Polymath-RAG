@@ -1,0 +1,36 @@
+== USES SUBJECT: Technology counterfactual ==
+Currently blocked Technology-subject USES candidates in dev evidence:
+  1. 'robust implementation uses bounded leases' (QUALITY-PROBE)
+     - Technology subject is semantically defensible (an implementation IS a technical thing)
+     - bounded leases (Technology object) is legal
+     - Classification: TYPE_DEFENSIBLE + RELATION_VALID (C)
+     - This would become a candidate → compiler → likely ACCEPTED
+
+  2. No other Technology-subject USES cases observed in dev evidence
+
+== USES OBJECT: Process counterfactual ==
+Currently blocked Process-object USES candidates:
+  1. 'robust implementation uses transactional claim operations'
+     - Process object is semantically defensible (claim operations IS a process)
+     - Classification: TYPE_DEFENSIBLE + RELATION_VALID (C)
+     - But subject Technology would ALSO need to be legal → compound expansion
+
+  2. No other Process-object USES cases observed
+
+== GENERALIZATION SAFETY (Phase 12) ==
+If Technology becomes legal as USES.subject, search for cases where
+a Technology entity could wrongly become a USES subject:
+  - I4 traces: Technology entities near 'uses' triggers that are NOT valid:
+    'CareChart EMR platform uses...' → would fire if Technology legal
+    → is 'CareChart EMR platform uses X' semantically valid? Depends on X
+    'container platform uses...' → similarly debatable
+  - These would need frame/negation gates to prevent wrong facts
+
+== SUMMARY ==
+Observed USES signature defect evidence:
+  Technology subject: 1 valid (probe), 0 invalid, 0 ambiguous
+  Process object: 1 valid (probe), 0 invalid, 0 ambiguous
+  Both from the SAME sentence → single-evidence, compound expansion
+  Generalization risk: Technology subjects in technical prose are common
+  ('the system uses', 'the platform uses') but admission (MENTION_ONLY
+  for generics) is the real gate, not the signature

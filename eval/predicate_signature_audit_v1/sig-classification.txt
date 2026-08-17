@@ -1,0 +1,42 @@
+distinct endpoint-unavailable sentences: 318
+  [BOTH] adopted                        | trigger='adopted' class='usage_application'        | mentions: []
+  [OBJ] was                            | trigger='was' class='classification'               | mentions: []
+  [OBJ] joining                        | trigger='joining' class='employment_membership'    | mentions: []
+  [SUBJ] based                          | trigger='based' class='location'                   | mentions: []
+  [SUBJ] based in                       | trigger='based in' class='location'                | mentions: []
+  [BOTH] is                             | trigger='is' class='classification'                | mentions: [('state registry', 'Organization'), ('vision system', 'Technology'), ('Corval Logistics', 'Organization')]
+  [BOTH] runs                           | trigger='runs' class='leadership_governance'       | mentions: []
+  [BOTH] runs                           | trigger='runs' class='usage_application'           | mentions: []
+  [BOTH] adopted                        | trigger='adopted' class='usage_application'        | mentions: []
+  [OBJ] created                        | trigger='created' class='creation'                 | mentions: []
+  [OBJ] model                          | trigger='model' class='creation'                   | mentions: []
+  [BOTH] enables                        | trigger='enables' class='causation'                | mentions: []
+  [BOTH] model                          | trigger='model' class='creation'                   | mentions: []
+  [OBJ] was                            | trigger='was' class='classification'               | mentions: []
+  [SUBJ] designed                       | trigger='designed' class='creation'                | mentions: []
+  [BOTH] engineering                    | trigger='engineering' class='creation'             | mentions: [('engineering group', 'Person')]
+  [OBJ] is                             | trigger='is' class='classification'                | mentions: [('state registry', 'Organization'), ('vision system', 'Technology'), ('Corval Logistics', 'Organization')]
+  [OBJ] existing                       | trigger='existing' class='location'                | mentions: []
+  [OBJ] use                            | trigger='use' class='usage_application'            | mentions: [('Portside warehouse', 'Location')]
+  [BOTH] adopted                        | trigger='adopted' class='usage_application'        | mentions: []
+  [OBJ] model                          | trigger='model' class='creation'                   | mentions: []
+  [OBJ] affect                         | trigger='affect' class='influence_affect'          | mentions: []
+  [BOTH] records                        | trigger='records' class='measurement'              | mentions: []
+  [OBJ] uses                           | trigger='uses' class='usage_application'           | mentions: []
+  [OBJ] is                             | trigger='is' class='classification'                | mentions: [('state registry', 'Organization'), ('vision system', 'Technology'), ('Corval Logistics', 'Organization')]
+  [OBJ] existing                       | trigger='existing' class='location'                | mentions: []
+  [OBJ] was                            | trigger='was' class='classification'               | mentions: []
+  [BOTH] been                           | trigger='been' class='classification'              | mentions: []
+  [BOTH] model                          | trigger='model' class='creation'                   | mentions: []
+  [BOTH] source                         | trigger='source' class='ownership_control'         | mentions: []
+
+== USES SIGNATURE ANALYSIS ==
+uses.subject_core = Person,Organization,Method,Process,Product
+uses.object_core = Method,Product,Technology
+
+NOT in subject: Technology, Concept, Document, Event, Location, Measurement, TimeReference
+NOT in object: Person, Organization, Process, Concept, Document, Event, Location, Measurement, TimeReference
+
+Question: in technical prose, does 'X uses Y' commonly involve:
+  Technology subjects? (the system uses..., the platform uses...)
+  Process objects? (uses transactional claim operations)

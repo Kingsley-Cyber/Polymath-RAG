@@ -840,3 +840,16 @@ that motivated it and the refactor that implemented it.
 - Critical evidence for sequencing: the dominant extraction failure is
   neither arbitration (6/190) nor context starvation on the key class —
   it is type classification under the frozen model.
+
+## 2026-08-16: PREDICATE-SIGNATURE-AUDIT-V1 — NO CHANGE JUSTIFIED
+
+- Complete signature matrix extracted (28 predicates, machine-readable).
+- 458 type-slot loss events censused from observability traces; 11 USES-
+  specific subject-filtered cases (6 heading-merge artifacts, 1 genuine
+  signature case). The genuine case ("robust implementation uses bounded
+  leases": Technology subject + Technology object) is TYPE_DEFENSIBLE +
+  RELATION_VALID, but evidence basis is ONE sentence. Generalization
+  risk unquantified. VERDICT: NO CHANGE JUSTIFIED.
+- Next evidence-based gate identified: MODEL-QUALIFICATION-V1 (the frozen
+  GLiNER's type classification is the bottleneck three upstream gates
+  could not route around).

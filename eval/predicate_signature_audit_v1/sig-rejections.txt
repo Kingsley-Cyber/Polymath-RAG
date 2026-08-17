@@ -1,0 +1,26 @@
+total type-slot loss events: 458
+
+by reason_code: {
+ "OBJECT_ENDPOINT_UNAVAILABLE": 182,
+ "SUBJECT_ENDPOINT_UNAVAILABLE": 258,
+ "TYPE_SIGNATURE_MISMATCH": 16,
+ "OBJECT_TYPE_INCOMPATIBLE": 2
+}
+by corpus: {
+ "i4-fresh-acceptance-v1": 176,
+ "quality-probe-002": 94,
+ "vocab-probe-v1": 94,
+ "vocab-probe-v2": 94
+}
+
+== TYPE PAIRS REJECTED ==
+  Postgres cluster          (Technology  ) --causation--> outage                    (Event       ) [i4-fresh-acceptance-v1]
+  Postgres cluster          (Technology  ) --causation--> outage                    (Event       ) [i4-fresh-acceptance-v1]
+
+== TYPE PAIR FREQUENCY ==
+  2x Technology --[causation]--> Event
+
+== ENDPOINT_UNAVAILABLE breakdown ==
+  subject_filtered(left=0,right>0) = 75
+  object_filtered(right=0,left>0) = 182
+  both_zero = 183
