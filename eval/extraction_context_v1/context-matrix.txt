@@ -1,0 +1,41 @@
+== KEY SENTENCE DEV MATRIX ==
+
+C0_FOCAL_ONLY:
+  robust implementation                    Technology     0.546
+  bounded leases                           Technology     0.858
+  deterministic stage contracts            Technology     0.84
+  transactional claim operations           Process        0.913
+
+C1_HEADING_FOCAL:
+  bounded leases                           Technology     0.895
+  deterministic stage contracts            Document       0.874
+  transactional claim operations           Process        0.846
+
+C2_PREVIOUS_FOCAL:
+  workers                                  Person         0.599
+  worker                                   Person         0.651
+  worker                                   Person         0.634
+  robust implementation                    Technology     0.672
+  bounded leases                           Technology     0.799
+  deterministic stage contracts            Document       0.906
+  transactional claim operations           Process        0.642
+
+C3_HEADING_PREVIOUS_FOCAL:
+  Concurrency                              Technology     0.51
+  Concurrency                              Concept        0.556
+  robust implementation                    Technology     0.54
+  bounded leases                           Technology     0.727
+  deterministic stage contracts            Document       0.935
+  transactional claim operations           Process        0.535
+
+== ANAPHORA SENTENCE DEV MATRIX ==
+
+C0_FOCAL_ONLY:
+  The company                              Organization   0.833
+  three new instructors                    Person         0.763
+  Raleigh campus                           Location       0.974
+
+C2_PREVIOUS_FOCAL:
+  Brightpath Learning                      Organization   0.987
+  three new instructors                    Person         0.799
+  Raleigh campus                           Location       0.962

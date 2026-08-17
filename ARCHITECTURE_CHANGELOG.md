@@ -824,3 +824,19 @@ that motivated it and the refactor that implemented it.
   CONTEXT-SCORING effect (chunk .773 vs sentence .546), not an arbitration
   defect. The correct next gate is EXTRACTION-CONTEXT-V1.
 - No semantic changes made. Evidence preserved for future gates.
+
+## 2026-08-16: EXTRACTION-CONTEXT-V1 measured — NOT QUALIFIED (infrastructure preserved)
+
+- extraction-context-v1 contract implemented: bounded envelope
+  construction (pure deterministic function), hard-boundary enforcement
+  (no cross-section context), offset ownership classification
+  (CONTEXT_PREDICTION_FOCAL / OUTSIDE_FOCAL / CROSSES_BOUNDARY),
+  observability reason codes. Default C0_FOCAL_ONLY = byte-identical.
+- Dev matrix C0-C3: context DOES eliminate anaphora FPs ("The company"
+  stops firing when antecedent visible) but BREAKS deterministic-stage-
+  contracts typing (Technology→Document under every context variant)
+  and does NOT fix the key sentence (robust implementation stays
+  Technology). NO POLICY DOMINATES → NOT QUALIFIED.
+- Critical evidence for sequencing: the dominant extraction failure is
+  neither arbitration (6/190) nor context starvation on the key class —
+  it is type classification under the frozen model.

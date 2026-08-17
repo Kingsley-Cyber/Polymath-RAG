@@ -146,6 +146,8 @@ def _entity_spans(
     chunk_id: str,
     doc_id: str,
     profile: dict,
+    envelope=None,
+    trace=None,
 ) -> tuple[list[EntitySpan], list[dict]]:
     from polymath_shared.contracts import DocumentProfile
     from polymath_shared.query_policy import provider_passes
@@ -153,21 +155,45 @@ def _entity_spans(
     base_labels = DocumentProfile(**profile).label_set if profile.get("label_set") else []
     spans: list[EntitySpan] = []
     rejected: list[dict] = []
-    # GLINER-QUERY-VOCAB-v2: policy-level passes (v1: one identity pass,
-    # byte-identical; v2: identity + enriched, deterministic union —
-    # higher raw score wins, identity pass preferred on exact ties).
+    # EXTRACTION-CONTEXT-V1: when an envelope is supplied, GLiNER reads
+    # the envelope text and predictions are mapped back to source
+    # coordinates; only focal-owned predictions become EntitySpans.
+    inference_text = envelope.envelope_text if envelope else chunk_text
+    focal_offset = envelope.focal_envelope_start if envelope else 0
     proposals: dict[tuple[int, int], dict] = {}
     for pass_labels in provider_passes():
         labels = list(dict.fromkeys(list(base_labels) + list(pass_labels)))
         if not labels:
             continue
-        result = gliner.entity_pass(chunk_text, labels, threshold=ENTITY_THRESHOLD)
+        result = gliner.entity_pass(inference_text, labels, threshold=ENTITY_THRESHOLD)
         for item in result.get("spans", []):
             key = (item["start"], item["end"])
             current = proposals.get(key)
             if current is None or item["score"] > current["score"]:
                 proposals[key] = item
+    from polymath_shared.extraction_context import classify_prediction
     for item in proposals.values():
+        if envelope is not None:
+            classification, src_start, src_end = classify_prediction(
+                envelope, item["start"], item["end"])
+            if trace and trace.enabled:
+                trace.record(
+                    event_type="context", decision=classification,
+                    reason_code=classification, doc_id=doc_id, chunk_id=chunk_id,
+                    surface=item["text"][:80],
+                    detail={"envelope_offsets": [item["start"], item["end"]],
+                            "source_offsets": [src_start, src_end],
+                            "raw_label": item["label"],
+                            "score": round(item["score"], 4),
+                            "policy": envelope.policy})
+            if classification != "CONTEXT_PREDICTION_FOCAL":
+                rejected.append({"span": item, "reason": classification})
+                continue
+            # remap to FOCAL-CHUNK-RELATIVE offsets (EntitySpan contract):
+            # chunk_relative = source_offset - focal.char_start
+            item = dict(item)
+            item["start"] = src_start - envelope.focal_source_start
+            item["end"] = src_end - envelope.focal_source_start
         core_type = _map_label(item["label"], _pack())
         if core_type is None:
             rejected.append({"span": item, "reason": "no core mapping for label"})
@@ -490,9 +516,30 @@ def process_event(conn: Connection, event: dict) -> None:
         # document proposal stream only.
         try:
             ordered_slices: list[tuple[dict, SentenceSlice]] = []
+            # EXTRACTION-CONTEXT-V1: build the envelope per focal chunk
+            from polymath_shared.extraction_context import active_policy, build_envelope
+            context_active = active_policy() != "C0_FOCAL_ONLY"
+            doc_text_cache: dict[str, str] = {}
+            child_siblings = sorted(child_chunks, key=lambda r: r["char_start"])
             for row in child_chunks:
+                envelope = None
+                if context_active:
+                    doc_key = row["doc_id"]
+                    if doc_key not in doc_text_cache:
+                        doc_row = conn.execute(
+                            "SELECT text FROM documents WHERE doc_id=%s", (doc_key,)
+                        ).fetchone()
+                        # documents table may not have text; reconstruct from chunks
+                        if doc_row and doc_row[0]:
+                            doc_text_cache[doc_key] = doc_row[0]
+                        else:
+                            doc_text_cache[doc_key] = "\n".join(
+                                r["text"] for r in sorted(child_chunks, key=lambda x: x["char_start"]))
+                    envelope = build_envelope(row, child_siblings,
+                                              doc_text_cache[doc_key])
                 entities, rejected = _entity_spans(
-                    gliner, row["text"], row["chunk_id"], doc_id, profile_dict
+                    gliner, row["text"], row["chunk_id"], doc_id, profile_dict,
+                    envelope=envelope, trace=trace
                 )
                 audit.extend(rejected)
                 if entities:
