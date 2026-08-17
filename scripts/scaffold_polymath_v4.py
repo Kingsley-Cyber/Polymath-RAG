@@ -486,6 +486,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("stores/postgres/migrations/0011_semantic_query_policy.sql", "sql", None),
     ("tests/contracts/test_query_policy.py", "py", None),
     ("docs/wiki/experiments/0005-gliner-label-vocab-probe.md", "md", None),
+    ("docs/wiki/experiments/0006-extraction-diagnostic-deep-dive.md", "md", None),
     ("docs/wiki/work-log/2026-08-16-temporal-extraction-architecture.md", "md", None),
     ("docs/wiki/work-log/2026-08-16-temporal-interpretation-deferred.md", "md", None),
     ("docs/wiki/decisions/0014-control-plane-v2.md", "md", None),

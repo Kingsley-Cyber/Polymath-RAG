@@ -90,6 +90,28 @@ status + outbox event).
 
 ## Experimental Components
 
+- **Extraction diagnostic posture** (experiment 0006, 2026-08-16):
+
+  ```
+  EXTRACTION-OBSERVABILITY-V1    PASS / FROZEN (required diagnostic
+                                mechanism for future extraction gates)
+  SEMANTIC-CHUNKING-V2           STRUCTURALLY QUALIFIED,
+                                SEMANTIC PROMOTION BLOCKED
+                                (TP 12->14, FP 5->11, P .706->.560,
+                                R .462->.538 on frozen I4; default
+                                stays legacy_v1)
+  GLINER-QUERY-VOCAB-v2          NEXT AUTHORIZED CANDIDATE / NOT STARTED
+  EXTRACTION-CONTEXT-V1          EVIDENCE-BACKED / NOT STARTED
+  PREDICATE-SIGNATURE REPAIR     BLOCKED ON UPSTREAM QUALIFICATION
+  I5                             NOT AUTHORIZED
+  CP2.1 SUPERVISION              SEPARATE OPEN OPERATIONAL GATE
+  ```
+
+  Dominant observed loss (measured): span -> raw GLiNER label ->
+  canonical type -> predicate slot compatibility — i.e. current
+  observed losses are dominated by vocabulary/type alignment under the
+  frozen model/query policy. Context starvation is an evidence-backed
+  hypothesis, not a proven mechanism.
 - **Temporal extraction architecture** (2026-08-16 directive, aligned):
   semantic-query-policy-v1 owns the provider-facing label vocabulary
   (canonical types never change with model wording; aliases require a

@@ -778,3 +778,20 @@ that motivated it and the refactor that implemented it.
   semantic chunking trades precision for recall on this holdout.
   Promotion bar NOT met → semantic_v2 remains unpromoted (default
   legacy_v1). Frozen evidence restored byte-identically (4d0c53c8).
+
+## 2026-08-16: Extraction diagnostic deep-dive recorded (experiment 0006)
+
+- Evidence/architecture analysis only; zero behavior change. Findings:
+  discovery is not the dominant observed bottleneck — current observed
+  losses are dominated by vocabulary/type alignment under the frozen
+  model/query policy (three independent evidence sources). semantic_v2
+  structurally qualified but semantically unpromoted (TP 12→14,
+  FP 5→11, P .706→.560, R .462→.538); precision regression attributed
+  to an evidence-backed context-starvation hypothesis (not proven) —
+  EXTRACTION-CONTEXT-V1 requires its own frozen gate. STORAGE UNIT !=
+  MODEL CONTEXT WINDOW recorded as an architectural distinction.
+  Ranked sequence frozen: vocab-v2 → re-probe → context-v1 → re-probe
+  + I4 → waterfall → signature repair only for correctly-typed
+  rejections. Observability output (funnel, first-loss, waterfall,
+  TP/FP/FN attribution, unexplained=0) is required for future
+  extraction gates. (experiment 0006)
