@@ -208,6 +208,7 @@ def build_candidates(
     rule_pack: dict,
     enrich: bool = True,
     doc_entities_history: list[EntitySpan] | None = None,
+    observer=None,
 ) -> list[RelationCandidate]:
     """Deterministic, trigger-scoped candidate generation (I3R-R2).
 
@@ -308,12 +309,21 @@ def build_candidates(
 
             if not subjects or not objects:
                 # fail-closed: no unambiguous surface binding
+                if observer:
+                    reason = ("SUBJECT_ENDPOINT_UNAVAILABLE" if not subjects and not objects else
+                              "SUBJECT_ENDPOINT_UNAVAILABLE" if not subjects else
+                              "OBJECT_ENDPOINT_UNAVAILABLE")
+                    observer.record_candidate_outcome(sl, evidence, reason, {
+                        "left_candidates": len(left), "right_candidates": len(right)})
                 continue
 
             # -- list expansion (bounded, single-sided only) -----------
             if len(left) > 1 and len(right) > 1:
                 # ambiguous: entity lists on BOTH sides of the trigger
                 # -> fail-closed, no fact (R2C)
+                if observer:
+                    observer.record_candidate_outcome(sl, evidence, "ARGUMENT_BINDING_AMBIGUOUS",
+                                                      {"left": len(left), "right": len(right)})
                 continue
             if len(left) > 1 and len(right) <= 1 and len(objects) == 1 and not (
                     evidence.evidence_class == "association" and subjects is left[:1]):
@@ -321,6 +331,9 @@ def build_candidates(
             elif len(right) > 1 and len(left) <= 1 and len(subjects) == 1:
                 objects = right[:MAX_LIST_MEMBERS]
             if len(subjects) > MAX_LIST_MEMBERS or len(objects) > MAX_LIST_MEMBERS:
+                if observer:
+                    observer.record_candidate_outcome(sl, evidence, "COORDINATION_AMBIGUOUS",
+                                                      {"subjects": len(subjects), "objects": len(objects)})
                 continue  # ambiguous list binding
 
             # referential gate: prepositional frames require
@@ -328,22 +341,35 @@ def build_candidates(
             if referential_gate:
                 if any(_admission_class_of(s, sl, doc_id, corpus_id) == "MENTION_ONLY"
                        for s in subjects + objects):
+                    if observer:
+                        observer.record_candidate_outcome(sl, evidence, "SUBJECT_MENTION_ONLY",
+                                                          {"gate": "referential_frame"})
                     continue
 
             for subject_span in subjects:
                 for object_span in objects:
                     if subject_span.text == object_span.text and subject_span.core_type == object_span.core_type:
-                        continue
+                        continue  # self-pairing
                     if not _type_compatible(
                         subject_span.core_type.value,
                         object_span.core_type.value,
                         evidence.evidence_class,
                         rule_pack,
                     ):
+                        if observer:
+                            observer.record_candidate_outcome(sl, evidence, "OBJECT_TYPE_INCOMPATIBLE", {
+                                "subject": subject_span.text,
+                                "subject_type": subject_span.core_type.value,
+                                "object": object_span.text,
+                                "object_type": object_span.core_type.value,
+                                "evidence_class": evidence.evidence_class})
                         continue
 
                     subject_id = _allocate(subject_span, sl, doc_id, corpus_id)
                     object_id = _allocate(object_span, sl, doc_id, corpus_id)
+                    if observer:
+                        observer.record_candidate_outcome(sl, evidence, "CANDIDATE_CREATED", {
+                            "subject": subject_span.text, "object": object_span.text})
                     candidates.append(RelationCandidate(
                         sentence_text=sentence,
                         sentence_start=rel_start,

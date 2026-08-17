@@ -754,3 +754,27 @@ that motivated it and the refactor that implemented it.
   uniform fleet env requirement, per-corpus barrier blast radius.
   Five long-lived processes died silently during the session —
   auto-restart remains the top operational gap (V2.1).
+
+## 2026-08-16: EXTRACTION-OBSERVABILITY-V1 + SEMANTIC-CHUNKING-V2 I4 regression
+
+- extraction-observability-v1: typed reason codes (9 categories),
+  TraceEvent envelope (deterministic identity; timing excluded from
+  hashes), TraceCollector (off|summary|full; one batch persist per
+  stage), extraction_trace_events (migration 0014 — event identity is
+  a content hash; no event can overwrite another), observer hooks in
+  candidate binding (every silent continue now carries a reason),
+  compiler reason→code mapping, trace CLI (scripts/trace_report.py
+  run/sentence/surface/waterfall), funnel artifact per run.
+  QUALITY-PROBE-002 FULL rerun automatically explains the previously
+  black-box "robust implementation uses..." case: trigger fired;
+  subject typed Technology admits nowhere in any uses-signature —
+  first loss argument_binding/SUBJECT_ENDPOINT_UNAVAILABLE.
+- I4 diagnostic join (analysis-only): FN/FP outcomes attributed to
+  first-loss stages from runtime traces; discovery-miss surfaces carry
+  GLINER_NO_PROPOSAL by construction; scorer untouched.
+- SEMANTIC-CHUNKING-V2 §17 I4 regression measured (semantic chunks,
+  everything else frozen): TP 12→14, FN 14→12, R 0.462→0.538, but
+  FP 5→11, P 0.706→0.56, envelope 7/8→6/8. Recorded, not tuned:
+  semantic chunking trades precision for recall on this holdout.
+  Promotion bar NOT met → semantic_v2 remains unpromoted (default
+  legacy_v1). Frozen evidence restored byte-identically (4d0c53c8).

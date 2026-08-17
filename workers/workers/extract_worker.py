@@ -271,6 +271,47 @@ def _fill_parse_entities(parse: dict, entities: list[EntitySpan], corpus_id: str
             record["entity_id"] = _allocate_parse_entity(match, corpus_id, parse)
 
 
+class _SliceObserver:
+    """Adapts build_candidates' outcome callbacks into trace events."""
+
+    def __init__(self, collector, row, sl, sentence_id):
+        self._c = collector
+        self._row = row
+        self._sl = sl
+        self._sid = sentence_id
+        self.created = 0
+        self.losses: list[str] = []
+
+    def record_candidate_outcome(self, sl, evidence, code, detail=None):
+        if not self._c.enabled:
+            return
+        detail = detail or {}
+        first_loss_stage = {
+            "SUBJECT_ENDPOINT_UNAVAILABLE": "argument_binding",
+            "OBJECT_ENDPOINT_UNAVAILABLE": "argument_binding",
+            "SUBJECT_MENTION_ONLY": "admission",
+            "ARGUMENT_BINDING_AMBIGUOUS": "argument_binding",
+            "COORDINATION_AMBIGUOUS": "argument_binding",
+            "OBJECT_TYPE_INCOMPATIBLE": "candidate_generation",
+            "CANDIDATE_CREATED": "candidate_generation",
+        }.get(code, "argument_binding")
+        self._c.record(
+            event_type="candidate" if code == "CANDIDATE_CREATED" else "first_loss",
+            decision=code, reason_code=code,
+            doc_id=self._row["doc_id"], chunk_id=self._row["chunk_id"],
+            sentence_id=self._sid,
+            surface=str(detail.get("subject") or detail.get("object") or evidence.text or "")[:80],
+            char_start=evidence.start, char_end=evidence.end,
+            detail={"first_loss_stage": first_loss_stage,
+                    "trigger": evidence.text, "trigger_predicate_id": getattr(evidence, "trigger_predicate_id", None),
+                    "evidence_class": evidence.evidence_class, **detail},
+        )
+        if code == "CANDIDATE_CREATED":
+            self.created += 1
+        else:
+            self.losses.append(code)
+
+
 def _syntax_evidence(
     ordered_slices: list[tuple[dict, SentenceSlice]],
 ) -> dict | None:
@@ -335,6 +376,12 @@ def process_event(conn: Connection, event: dict) -> None:
     proposal_mode = get_settings().worker.evidence_proposal_mode
     if proposal_mode not in ("lexical", "hybrid"):
         raise ValueError(f"unknown evidence proposal mode: {proposal_mode}")
+
+    from polymath_shared.observability import (
+        TraceCollector, extraction_contracts, trace_mode,
+    )
+
+    trace = TraceCollector(trace_mode(), run_id, extraction_contracts())
 
     rescue_stages = get_settings().rescue_policy.enabled_stages()
     if rescue_stages and get_settings().sidecars.syntax_provider != "spacy":
@@ -436,6 +483,21 @@ def process_event(conn: Connection, event: dict) -> None:
                 audit.extend(rejected)
                 if entities:
                     _persist_mentions(conn, corpus_id, doc_id, entities)
+                if trace.enabled:
+                    trace.record(
+                        event_type="discovery", decision="GLINER_PROPOSED",
+                        reason_code="GLINER_PROPOSED", doc_id=doc_id,
+                        chunk_id=row["chunk_id"],
+                        detail={"proposals": len(entities), "rejected_labels": len(rejected)})
+                    for ent in entities:
+                        trace.record(
+                            event_type="admission",
+                            decision="ADMITTED_MENTION_ONLY",  # corrected below by class
+                            reason_code="ADMITTED_MENTION_ONLY", doc_id=doc_id,
+                            chunk_id=row["chunk_id"], surface=ent.text,
+                            char_start=ent.start, char_end=ent.end,
+                            detail={"core_type": ent.core_type.value, "raw_label": ent.raw_label,
+                                    "score": ent.score, "pass_kind": ent.pass_kind})
                 evidence = _evidence_spans(
                     gliner, row["text"], row["chunk_id"], pack, proposal_mode
                 )
@@ -470,7 +532,9 @@ def process_event(conn: Connection, event: dict) -> None:
                 rescue_report = apply_rescue(
                     ordered_slices, rescue_stages, rescue_label_set, _pack())
                 writer.artifact({"rescue": rescue_report})
-            for row, sl in ordered_slices:
+            for slice_idx, (row, sl) in enumerate(ordered_slices):
+                slice_observer = _SliceObserver(
+                    trace, row, sl, f"{row['chunk_id']}:{slice_idx}")
                 candidates = build_candidates(
                     [sl],
                     doc_id=doc_id,
@@ -479,13 +543,44 @@ def process_event(conn: Connection, event: dict) -> None:
                     extractor_version=EXTRACTOR_VERSION,
                     rule_pack=pack,
                     doc_entities_history=doc_entity_history,
+                    observer=slice_observer,
                 )
                 doc_entity_history.extend(
                     sorted(sl.entities, key=lambda e: (e.start, e.end)))
                 for candidate in candidates:
                     decision = compile_relation(candidate, sl.parse, pack, syntax=sl.syntax)
+                    if trace.enabled:
+                        reason = str(decision.reason or "")
+                        code = ("NEGATED" if "negated" in reason else
+                                "CONDITIONAL" if "conditional" in reason else
+                                "MODAL" if any(w in reason for w in ("speculative", "hypothetical", "modal")) else
+                                "FRAME_MISMATCH" if reason.startswith("frame_violation") else
+                                "TYPE_SIGNATURE_MISMATCH" if reason.startswith("type_violation") else
+                                "AMBIGUOUS_PREDICATE" if decision.decision == "AMBIGUOUS" else
+                                "UNSUPPORTED_PREDICATE" if decision.decision == "UNSUPPORTED" else
+                                "E3B_REJECTED" if reason.startswith("binding:") else
+                                "COMPILER_ACCEPTED" if decision.decision in ("ACCEPT", "QUALIFY") else
+                                "COMPILER_REJECTED")
+                        trace.record(
+                            event_type="compiler", decision=decision.decision,
+                            reason_code=code, doc_id=doc_id, chunk_id=row["chunk_id"],
+                            sentence_id=f"{row['chunk_id']}:{slice_idx}",
+                            surface=str(candidate.subject.span.text)[:80],
+                            detail={"predicate": getattr(decision, "rule_id", None),
+                                    "reason": reason[:200],
+                                    "subject": candidate.subject.span.text,
+                                    "object": candidate.object.span.text})
                     if decision.decision in ("ACCEPT", "QUALIFY") and decision.fact:
                         _persist_decision(conn, row, candidate, decision)
+                        if trace.enabled:
+                            trace.record(
+                                event_type="fact", decision="FACT_ACCEPTED",
+                                reason_code="FACT_ACCEPTED", doc_id=doc_id,
+                                chunk_id=row["chunk_id"],
+                                sentence_id=f"{row['chunk_id']}:{slice_idx}",
+                                surface=decision.fact.subject_id,
+                                detail={"fact_id": decision.fact.fact_id,
+                                        "predicate": decision.fact.predicate})
                     else:
                         audit.append({
                             "decision": decision.decision,
@@ -499,6 +594,17 @@ def process_event(conn: Connection, event: dict) -> None:
             gliner.close()
 
         writer.artifact({"audit": audit})
+        if trace.enabled:
+            trace.count("chunks", len(child_chunks))
+            trace.count("slices", len(ordered_slices))
+            trace.count("candidates_compiled", len(candidates) if 'candidates' in dir() else 0)
+            funnel = trace.funnel()  # BEFORE flush (flush clears events)
+            written = trace.flush(conn)
+            writer.artifact({"trace": {
+                "observer_contract_version": "extraction-observability-v1",
+                "mode": trace.mode, "events_written": written,
+                **funnel,
+            }})
         # No outbox event: the control census schedules the projection
         # stages from the extract receipt (per-stage event types).
         writer.run_status("reconciling")

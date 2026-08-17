@@ -19,3 +19,4 @@ contract names that mutation and requires an explicit operator flag.
 | `scripts/verify_resources.py` | governance | vendor archives + manifests | nothing | `python3 scripts/verify_resources.py` |
 | `scripts/flatten_resources.py` | governance | verified vendor archives | `resources/compiled/<contract>/` | `python3 scripts/flatten_resources.py` |
 | `scripts/compile_predicate_rules.py` | governance | rules YAML + compiled tables | `compiled_lexical.json` | `python3 scripts/compile_predicate_rules.py` |
+| `scripts/trace_report.py` | worker | extraction_trace_events (analysis only) | nothing (stdout) | `.venv/bin/python scripts/trace_report.py surface <run_id> "<surface>"` |
