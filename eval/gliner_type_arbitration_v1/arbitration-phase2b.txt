@@ -1,0 +1,29 @@
+== PHASE 2b: SENTENCE-CONTEXT SINGLE-LABEL vs MULTI-LABEL ==
+
+'facts':
+  single [Concept     ] -> ('Concept', 0.65)
+  single [Document    ] -> ('Document', 0.688)
+  CORE-12        -> ('Concept', 0.725)
+
+'Concurrency':
+  single [Technology  ] -> ('Technology', 0.957)
+  single [Concept     ] -> ('Concept', 0.972)
+  single [Method      ] -> ('Method', 0.899)
+  single [Process     ] -> ('Process', 0.914)
+  CORE-12        -> ('Technology', 0.598)
+
+'robust implementation':
+
+'alerting threshold':
+  single [Measurement ] -> ('Measurement', 0.516)
+  CORE-12        -> ('Measurement', 0.521)
+
+'token service metrics':
+  single [Technology  ] -> ('Technology', 0.557)
+  single [Measurement ] -> ('Measurement', 0.79)
+  CORE-12        -> ('Technology', 0.56)
+
+'verifier':
+  single [Technology  ] -> ('Technology', 0.76)
+  single [Method      ] -> ('Method', 0.67)
+  CORE-12        -> ('Method', 0.665)

@@ -1,0 +1,17 @@
+== PHASE 1: COLLISION CENSUS ==
+{
+ "total_spans": 190,
+ "multi_hypothesis": 93,
+ "same_canonical": 87,
+ "canonical_conflict": 6,
+ "score_reversals": 25,
+ "comparability_pairs": 93
+}
+
+== CANONICAL CONFLICTS (6) ==
+  facts                          id=('Concept', 'Concept', 0.759) en=('Document', 'Document', 0.844) | Documents, chunks, facts, and projection artifacts can be as
+  Concurrency                    id=('Technology', 'Technology', 0.598) en=('Technical concept', 'Concept', 0.67) | Concurrency introduces another class of failure.
+  robust implementation          id=('Technology', 'Technology', 0.546) en=('Implementation method', 'Method', 0.617) | A robust implementation uses bounded leases, deterministic s
+  alerting threshold             id=('Measurement', 'Measurement', 0.521) en=('Technical concept', 'Concept', 0.511) | Third, the alerting threshold for token rejection was tuned 
+  token service metrics          id=('Technology', 'Technology', 0.56) en=('Metric', 'Measurement', 0.819) | At 14:03 the first rejection spike appeared in the token ser
+  verifier                       id=('Method', 'Method', 0.665) en=('Technical tool', 'Technology', 0.557) | Once a verifier fetched an empty or partial key set, it cach

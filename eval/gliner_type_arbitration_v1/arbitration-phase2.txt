@@ -1,0 +1,13 @@
+== PHASE 2: SINGLE-LABEL REGIME ON CONFLICT SURFACES ==
+
+facts:
+
+Concurrency:
+
+robust implementation:
+
+alerting threshold:
+
+token service metrics:
+
+verifier:

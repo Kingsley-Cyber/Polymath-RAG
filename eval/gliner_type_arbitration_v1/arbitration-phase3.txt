@@ -1,0 +1,13 @@
+== PHASE 3: ARBITRATION POLICY COMPARISON ==
+surface                      right        | A_GLOBAL_MAX_RAW     | B_PRESERVE_AMBIGUOUS | D_MAX_SINGLE_LABEL  
+facts                        Document     | Document       ✓ | AMBIGUOUS      ~ | D              ✗
+Concurrency                  Concept      | Concept        ✓ | AMBIGUOUS      ~ | C              ✗
+robust implementation        Method       | Method         ✓ | AMBIGUOUS      ~ | M              ✗
+alerting threshold           Measurement  | Measurement    ✓ | AMBIGUOUS      ~ | M              ✗
+token service metrics        Measurement  | Measurement    ✓ | AMBIGUOUS      ~ | M              ✗
+verifier                     Technology   | Method         ✗ | AMBIGUOUS      ~ | T              ✗
+
+== SUMMARY (of 6 conflict cases) ==
+  A_GLOBAL_MAX_RAW      : correct=5 ambiguous=0 wrong=1
+  B_PRESERVE_AMBIGUOUS  : correct=0 ambiguous=6 wrong=0
+  D_MAX_SINGLE_LABEL    : correct=0 ambiguous=0 wrong=6

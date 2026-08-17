@@ -810,3 +810,17 @@ that motivated it and the refactor that implemented it.
   loss class persists; the merge rule cannot flip a confident wrong
   typing. NOT QUALIFIED; policy v1 remains production default
   (env-switchable for future gates).
+
+## 2026-08-16: GLINER-TYPE-ARBITRATION-V1 measured — NOT QUALIFIED (evidence preserved)
+
+- Phase 1 census (190 dev spans): only 6 canonical-type conflicts (3.2%),
+  5/6 already correctly resolved by current max-raw-score merge.
+- Phase 2 comparability: NO — raw scores from different label-set contexts
+  are not safely comparable (order reversals measured; Concurrency drops
+  38% from single-label to 12-label context).
+- Phase 3 policies: no alternative dominates the current merge on the
+  measured conflict population.
+- CRITICAL FINDING: the production "robust implementation" failure is a
+  CONTEXT-SCORING effect (chunk .773 vs sentence .546), not an arbitration
+  defect. The correct next gate is EXTRACTION-CONTEXT-V1.
+- No semantic changes made. Evidence preserved for future gates.
