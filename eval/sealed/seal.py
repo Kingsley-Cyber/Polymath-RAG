@@ -151,8 +151,10 @@ def _already_ingested(doc_hashes: dict[str, str]) -> list[dict]:
             if h:
                 known.setdefault(h, []).append({"corpus": corpus, "source": name})
     for path, digest in doc_hashes.items():
-        for hit in known.get(digest, []):
-            seen.append({"document": path, **hit})
+        # content_hash and source_hash can both match the same row; report the
+        # document once rather than once per matching column
+        for hit in {(h["corpus"], h["source"]) for h in known.get(digest, [])}:
+            seen.append({"document": path, "corpus": hit[0], "source": hit[1]})
     return seen
 
 
