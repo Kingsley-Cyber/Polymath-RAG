@@ -73,7 +73,13 @@ def _git(*args) -> str:
 
 
 def _code_state() -> dict:
-    dirty = _git("status", "--porcelain")
+    # The sealed manifests are the harness's OWN output, not code under test.
+    # Counting them as drift makes an intact seal unverifiable the moment it
+    # is written, and would push a user toward --allow-dirty, which defeats
+    # the check that matters.
+    dirty = "\n".join(
+        ln for ln in _git("status", "--porcelain").splitlines()
+        if "eval/sealed/manifest_" not in ln)
     return {
         "commit": _git("rev-parse", "HEAD"),
         "branch": _git("rev-parse", "--abbrev-ref", "HEAD"),
