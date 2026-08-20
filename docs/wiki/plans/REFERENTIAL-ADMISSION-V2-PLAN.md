@@ -1929,3 +1929,77 @@ The rule is correct as written — title capitalization is not identity
 evidence — but a heading is also where a document names what it is about.
 Whether a heading-only proper name should be recoverable by other means is a
 semantic decision, not a bug, and is not actioned.
+
+---
+
+# V4 SEMANTIC FREEZE — 2026-08-20
+
+Semantic development is CLOSED for this release. The accepted state is the
+last one that passed its qualification contract, reproduced and verified.
+
+```
+main / accepted/v2-semantic-freeze
+    I4        TP 13  FP 3  FN 13  P .812  R .500  envelope 7/8  must-not 18/18
+    provenance 15/15 · historical 55-gold 1.0, 0 errors · census no divergences
+    S6A       DURABLE 38 · DISCOVERY_MISS 7 · SPAN_BOUNDARY 1
+              HEADING_SUPPRESSED 2 · LOCAL_REFERENCE_UNRESOLVED 4
+    S6B       WRONG_CANONICAL_IDENTITY 3 · UNSUPPORTED_FACT 3 · UNEXPLAINED 0
+    569 tests pass
+
+candidate/rescue-discourse-v1-failed   (tag v4-candidate-rescue-discourse-FAILED)
+    A+B+67+69 · 602 tests pass · FAILED its acceptance bar
+```
+
+**A failed candidate does not become production because it fixed real bugs.**
+Otherwise every acceptance bar in this programme becomes decorative.
+
+## Why the accepted state keeps a known coverage defect
+
+The accepted state deletes valid provider spans on refused widening; the
+candidate fixes that but introduced wrong canonical identities and
+unsupported facts. For a precision-first graph:
+
+```
+NO EDGE  is preferable to  A WRONG EDGE
+```
+
+A coverage defect is the safer release limitation than a truth defect, and
+the underlying text stays reachable through the non-graph retrieval path — a
+suppressed graph candidate does not erase the document from Polymath's
+knowledge surface. This is a serious known limitation, not correct behaviour.
+
+## KNOWN LIMITATIONS — V4
+
+1. **Failed boundary widening can suppress valid semantic spans.** 13 per I4
+   run, `Nimbus Cloud` at 0.91 among them (ledger 63).
+2. **Deterministic discourse/coreference is deliberately conservative.** E3
+   resolves on shared content words, which is lexical relatedness rather than
+   identity (ledger 69); E4b never fires in production because
+   `admitted_anchors` carries an entity id where a core type is expected
+   (ledger 70).
+3. **Identity extent can differ**: `Crestline` vs `Crestline Automation`,
+   `Nimbus` vs `Nimbus billing service` (ledger 73). This is the unsolved
+   axis, and the residual failures are extent, not discourse.
+4. **Heading-only identity/alias recovery is incomplete** (ledger 61).
+5. **Corpus-scoped concept homonyms remain possible** — two documents
+   defining one term in different senses would share an id. Not observed.
+6. **Some valid relationships therefore never enter the canonical graph.**
+
+These are release limitations. They are NOT an invitation to open six more
+gates. Row 64 (rescue label-vocabulary dilution) stays frozen. E4b stays out
+of the composition. The failed candidate stays available for a future
+redesign of identity extent.
+
+## Next, without semantic tuning
+
+```
+fresh untouched multi-domain qualification   <- DO NOT TUNE
+        ↓
+measure actual generalization
+        ↓
+CP2.1 operational hardening
+        ↓
+large corpus ingest
+        ↓
+release decision
+```

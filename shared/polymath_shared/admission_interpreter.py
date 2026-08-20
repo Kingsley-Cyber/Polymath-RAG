@@ -136,13 +136,9 @@ def _interpret_v2(proposal_surface, core_type, span, sentence_text, syntax,
     if env.referential_surface.lower().startswith(_DEF):
         # E4 BOUNDARY REPAIR: the consumer must receive syntax so antecedent
         # candidates come from bounded noun chunks, not the fallback regex.
-        # Row 70: admission-harbor-v2 explicitly EXCLUDES E4b type-noun
-        # anaphora. It is not production-qualified — "exactly one candidate
-        # of a compatible type" resolved `vision system` -> `Siemens PLCs`.
         r = resolve(env.referential_surface, discourse_context or [sentence_text],
                     admitted_anchors=admitted_anchors,
-                    syntax=discourse_syntax, target_tokens=toks,
-                    enable_type_noun_anaphora=False)
+                    syntax=discourse_syntax, target_tokens=toks)
         settled = r.basis is not ReferenceBasis.AMBIGUOUS
         established = r.basis in (ReferenceBasis.ANTECEDENT_RESOLVED,
                                   ReferenceBasis.DOCUMENT_CONSTITUTED)

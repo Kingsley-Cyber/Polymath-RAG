@@ -159,26 +159,14 @@ def test_apply_boundary_accepted_expands_and_refused_abstains(fake_gliner):
     assert expanded.raw_label == "Organization" and expanded.pass_kind == "boundary_rescue"
 
 
-def test_apply_boundary_refused_keeps_the_original_span(fake_gliner):
-    """RESCUE-SPAN-PRESERVATION-V1 (A) — supersedes the original assertion.
-
-    This test previously asserted `sl.entities == []`: a refused widening
-    DELETED the provider's span, justified by the original staying "a durable
-    mention (already persisted in pass A)". S4c moved mention persistence
-    after rescue, which invalidated that premise and turned the drop into
-    data loss — 13 spans in one I4 run, including `Nimbus Cloud` at 0.91.
-
-    A failed hypothesis about a larger extent is not negative evidence about
-    the accepted smaller one.
-    """
+def test_apply_boundary_refused_marks_unresolved(fake_gliner):
     fake_gliner.responses = {"Crestline Automation": [
         {"text": "Crestline", "start": 0, "end": 9, "label": "Organization", "score": 0.9},
     ]}
     sl = _slice([_span("Crestline", 0, 9)])
     report = apply_boundary([({"chunk_id": "c1"}, sl)])
     assert report["counts"]["refused"] == 1
-    assert [e.text for e in sl.entities] == ["Crestline"]
-    assert sl.entities[0].pass_kind == "discovery"   # unaltered, not re-tagged
+    assert sl.entities == []  # BOUNDARY_UNRESOLVED (ledger row 63: known limitation)
 
 
 def test_apply_boundary_dedups_identical_queries(fake_gliner, monkeypatch):

@@ -151,27 +151,6 @@ def _is_definite(surface: str) -> bool:
     return surface.lower().startswith(_DET)
 
 
-def type_compatible(target_head: str, anchor_core_type: str | None):
-    """E4-ANTECEDENT-TYPE-COMPATIBILITY-V1.
-
-        Positive compatibility can support resolution.
-        Type incompatibility BLOCKS resolution.
-        Unknown compatibility does NOT become positive compatibility.
-
-    Returns True / False / None (unknown). The three-valued result matters:
-    collapsing None to True is how `the company` came to resolve to
-    `Raleigh`, and collapsing it to False would discard head-identity
-    evidence that needs no type support at all.
-
-    The reference phrase's expected type comes from the versioned type-noun
-    policy, not from provider labels, so this adds no new ontology.
-    """
-    want = _TYPE_NOUN.get(target_head)
-    if want is None or not anchor_core_type:
-        return None
-    return anchor_core_type == want
-
-
 def _head(surface: str) -> str:
     c = _content(surface)
     return c[-1] if c else ""
@@ -222,7 +201,6 @@ def resolve(target: str, context: list[str], *,
             admitted_anchors: list[tuple[str, str]] | None = None,
             syntax: list[dict] | None = None,
             target_tokens: list[dict] | None = None,
-            enable_type_noun_anaphora: bool = True
             ) -> DiscourseResult:
     """Classify one LOCAL_REFERENCE mention from its discourse.
 
@@ -241,31 +219,18 @@ def resolve(target: str, context: list[str], *,
         return DiscourseResult(ReferenceBasis.EXTERNAL_UNRESOLVED,
                                evidence=("no definite/demonstrative determiner",))
 
-    # ---- E3: ANCHOR CONTINUITY (E3-ANCHOR-CONTINUITY-V1) ------------------
-    #
-    #     Lexical overlap may PROPOSE an antecedent. It may not PROVE identity.
-    #
-    # E3 used to resolve on ANY shared content word, which made it an
-    # approximate coreference engine wearing the name of a continuity rule:
-    # `assembly line` -> `Crestline Automation`, `regional dispatchers` ->
-    # `Corval Logistics`. A shared noun or modifier shows two phrases are
-    # lexically related; it says nothing about them denoting one referent.
-    #
-    # E3 now resolves ONLY on exact normalized anchor repetition — the
-    # reference re-states the anchor's name. Contraction/alias identity
-    # (`Crestline` <-> `Crestline Automation`) belongs to the contraction
-    # resolver, which has the token-containment evidence and the types to do
-    # it properly; descriptive anaphora belongs to E4. Overlapping candidates
-    # remain candidates and fall through rather than authorizing anything.
+    # ---- E3: the target's own words name an anchor already established ----
+    # KNOWN LIMITATION (ledger row 69): resolves on ANY shared content word,
+    # which is lexical relatedness, not identity. Fixed on
+    # candidate/rescue-discourse-v1-failed; not promoted.
     tw = set(_content(target))
-    proposed = [a for a in anchors if tw & set(_content(a))]
-    repeated = [a for a in proposed if _content(a) == list(_content(target))]
-    if len(repeated) == 1:
-        return DiscourseResult(ReferenceBasis.ANTECEDENT_RESOLVED, repeated[0],
-                               ("E3 exact anchor repetition",), tuple(repeated))
-    if len(repeated) > 1:
+    named = [a for a in anchors if tw & set(_content(a))]
+    if len(named) == 1:
+        return DiscourseResult(ReferenceBasis.ANTECEDENT_RESOLVED, named[0],
+                               ("E3 repeated named anchor",), tuple(named))
+    if len(named) > 1:
         return DiscourseResult(ReferenceBasis.AMBIGUOUS, None,
-                               ("E3 multiple identical named anchors",), tuple(repeated))
+                               ("E3 multiple named anchors match",), tuple(named))
 
     # ---- E4b: type-noun ANAPHORA — NOT IN THE LIVE V2 COMPOSITION --------
     # Row 70. E4b is retained, its input representation is correct, and its
@@ -279,7 +244,7 @@ def resolve(target: str, context: list[str], *,
     # exact-one type match is NECESSARY SUPPORTING evidence, never SUFFICIENT
     # identity evidence. "Acme Systems negotiated with the company" has exactly
     # one Organization and still must not resolve.
-    type_of = _TYPE_NOUN.get(target_head) if enable_type_noun_anaphora else None
+    type_of = _TYPE_NOUN.get(target_head)
     if type_of:
         # (2)(5) candidate must occur in a STRICTLY PRIOR sentence; a candidate
         # sharing the target's sentence is a co-participant, not an antecedent
@@ -316,22 +281,11 @@ def resolve(target: str, context: list[str], *,
     # anchor whose sentence also introduced the head. Head identity only —
     # never "nearest noun", never type similarity.
     compat: list[str] = []
-    rejected_incompatible: list[str] = []
-    anchor_type = {a: ct for a, ct in pairs}
     for sent in prior:
         low = sent.lower()
         if target_head and target_head in _content(sent):
             for a in anchors:
                 if a.lower() in low and a not in compat:
-                    # This branch's evidence is only CO-OCCURRENCE: the anchor
-                    # appears in a sentence that also mentions the head. That
-                    # is far weaker than head identity and needs positive type
-                    # corroboration, or `the company` resolves to `Raleigh`
-                    # merely because both appear in one sentence.
-                    ok = type_compatible(target_head, anchor_type.get(a))
-                    if ok is not True:
-                        rejected_incompatible.append(a)
-                        continue
                     compat.append(a)
     # Head-sharing candidates are NOT type-filtered: sharing the target's
     # lexical head IS the positive evidence, and it stands without type
@@ -349,12 +303,6 @@ def resolve(target: str, context: list[str], *,
     if len(compat) > 1:
         return DiscourseResult(ReferenceBasis.AMBIGUOUS, None,
                                ("E4 multiple compatible antecedents",), tuple(compat))
-    if rejected_incompatible:
-        return DiscourseResult(
-            ReferenceBasis.EXTERNAL_UNRESOLVED, None,
-            (f"E4 candidate(s) {sorted(set(rejected_incompatible))[:2]!r} rejected: "
-             f"type-incompatible with '{target_head}'",),
-            tuple(sorted(set(rejected_incompatible))))
 
     # ---- E5: event nominalization whose source event the document states ---
     verbs = _NOMINALIZATION.get(target_head, ())

@@ -448,14 +448,13 @@ def _allocate_identities(ordered_slices, corpus_id: str, doc_id: str, *,
             # A resolved LOCAL_REFERENCE must not become one, or reference
             # chains would manufacture identity by recurrence.
             if identity.durable and result.anchor_kind == "IDENTITY":
-                # (surface, CORE TYPE) — discourse-reference-v1's contract.
-                # This carried `identity.entity_id`, so E4b's `ct == type_of`
-                # compared an entity id to a type name and never matched:
-                # E4b was dead on the production path while passing in tests,
-                # and `the company` fell through to E4's weak co-occurrence
-                # branch. Identity inheritance is unaffected — it resolves
-                # through `anchor_identity`, keyed by surface.
-                anchors.append((result.referential_surface, result.core_type))
+                # KNOWN LIMITATION (ledger row 70): this passes an entity id
+                # where discourse-reference-v1 expects a CORE TYPE, so E4b
+                # never fires in production though it passes in tests. Fixed
+                # on candidate/rescue-discourse-v1-failed; not promoted,
+                # because correcting it revived E4b and it then resolved
+                # `vision system` -> `Siemens PLCs`.
+                anchors.append((result.referential_surface, identity.entity_id))
             if identity.durable:
                 # Any durable admission can be the antecedent a later
                 # reference inherits from — concepts included.
