@@ -154,7 +154,7 @@ def _classify(surface: str, sentence_initial: bool) -> tuple[str, tuple[str, ...
     return "MENTION_ONLY", ("insufficient_referential_specificity",)
 
 
-def decide(surface: str, core_type: str, extraction_score: float,
+def decide_v1_1_historical(surface: str, core_type: str, extraction_score: float,
            mention_id: str | None = None,
            sentence_initial: bool = False) -> EntityAdmissionDecision:
     cls, reasons = _classify(surface, sentence_initial)
@@ -170,6 +170,13 @@ def decide(surface: str, core_type: str, extraction_score: float,
         reference_class=cls,
         reasons=reasons,
     )
+
+
+# S4: `decide` kept as an explicit HISTORICAL alias. Production must never
+# call it — the single live authority is
+# `admission_interpreter.interpret_admission(contract_version=...)`. A test
+# asserts no production module imports this name.
+decide = decide_v1_1_historical
 
 
 def allocate_entity_id(

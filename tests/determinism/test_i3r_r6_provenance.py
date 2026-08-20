@@ -24,17 +24,25 @@ class _Cand:
             doc_id="d1", chunk_id="c1", start=0, end=9,
             text="HarborPay", core_type=CoreType("Organization"),
             score=0.9, extractor_version="t")
+        self.subject.resolved_entity_id = "HarborPay"
         self.object = type("O", (), {})()
         self.object.span = EntitySpan(
             doc_id="d1", chunk_id="c1", start=20, end=31,
             text="Envoy Proxy", core_type=CoreType("Technology"),
             score=0.9, extractor_version="t")
+        self.object.resolved_entity_id = "Envoy Proxy"
         self.sentence_index = 2
 
 
 def test_offsets_are_chunk_relative_and_exact():
     chunk_row = {"char_start": 500, "char_end": 900}
-    offsets = _evidence_offsets(chunk_row, _Cand())
+    cand = _Cand()
+    decision = type("D", (), {})()
+    fact = type("F", (), {})()
+    fact.subject_id = cand.subject.span.text
+    fact.object_id = cand.object.span.text
+    decision.fact = fact
+    offsets = _evidence_offsets(chunk_row, cand, decision)
     assert offsets["provenance_contract"] == "exact-evidence-v1"
     assert offsets["chunk_char_start"] == 500
     assert offsets["chunk_char_end"] == 900

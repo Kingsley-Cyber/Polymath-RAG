@@ -104,6 +104,7 @@ def process_event(conn: Connection, event: dict) -> None:
                 text, doc_id, cache=SemanticEmbeddingCache())
         else:
             plan = plan_document(text, doc_id, **CHUNK_FROZEN_PARAMS)
+            layout_regions = plan.layout
             chunks = materialize_chunks(plan)
 
         conn.execute(
@@ -136,6 +137,20 @@ def process_event(conn: Connection, event: dict) -> None:
              json.dumps(materialization.source_map)),
         )
 
+        # LAYOUT-EVIDENCE-V1: the authoritative record, in materialized
+        # source offsets. `chunks.layout_map` is a projection of this for
+        # cheap lookup; this table is what the projection is auditable
+        # against, and the only place heading status is ever DETECTED.
+        for region in layout_regions:
+            conn.execute(
+                """
+                INSERT INTO document_layout (doc_id, kind, char_start, char_end)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (doc_id, char_start, char_end, kind) DO NOTHING
+                """,
+                (doc_id, region["kind"], region["char_start"], region["char_end"]),
+            )
+
         # Parents first, then children: children carry parent_id foreign
         # keys, so the parent rows must exist before the FK is checked.
         for row in chunks:
@@ -145,15 +160,17 @@ def process_event(conn: Connection, event: dict) -> None:
                 """
                 INSERT INTO chunks (chunk_id, doc_id, parent_id, chunk_index, tier,
                                     text, summary, char_start, char_end,
-                                    chunk_contract_version, provider, heading_path, token_count)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                    chunk_contract_version, provider, heading_path, token_count,
+                                    layout_map)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (chunk_id) DO NOTHING
                 """,
                 (row["chunk_id"], row["doc_id"], row["parent_id"], row["chunk_index"],
                  row["tier"], row["text"], row["summary"], row["char_start"], row["char_end"],
                  row.get("chunk_contract_version"), row.get("provider"),
                  json.dumps(row["heading_path"]) if row.get("heading_path") else None,
-                 row.get("token_count")),
+                 row.get("token_count"),
+                 json.dumps(row["layout_map"]) if row.get("layout_map") is not None else None),
             )
         for row in chunks:
             if row["tier"] != "child":
@@ -162,15 +179,17 @@ def process_event(conn: Connection, event: dict) -> None:
                 """
                 INSERT INTO chunks (chunk_id, doc_id, parent_id, chunk_index, tier,
                                     text, summary, char_start, char_end,
-                                    chunk_contract_version, provider, heading_path, token_count)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                    chunk_contract_version, provider, heading_path, token_count,
+                                    layout_map)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (chunk_id) DO NOTHING
                 """,
                 (row["chunk_id"], row["doc_id"], row["parent_id"], row["chunk_index"],
                  row["tier"], row["text"], row["summary"], row["char_start"], row["char_end"],
                  row.get("chunk_contract_version"), row.get("provider"),
                  json.dumps(row["heading_path"]) if row.get("heading_path") else None,
-                 row.get("token_count")),
+                 row.get("token_count"),
+                 json.dumps(row["layout_map"]) if row.get("layout_map") is not None else None),
             )
 
         children = [r for r in chunks if r["tier"] == "child"]

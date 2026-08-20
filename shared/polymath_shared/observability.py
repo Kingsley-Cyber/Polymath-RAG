@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import time
 from dataclasses import dataclass, field
 from typing import Any
@@ -66,15 +67,73 @@ FACT = {
     "GRAPH_ELIGIBLE", "GRAPH_INELIGIBLE_MENTION_ONLY",
     "GRAPH_INELIGIBLE_DOCUMENT_SCOPED",
 }
+
+# -- kimi_v1 lane (ADR-0016 Phase 5) --------------------------------------
+# The realigned pipeline binds arguments from the UD tree, assigns
+# PropBank roles, and applies the type pre-check AFTER structure exists.
+# Each step needs its own vocabulary so a terminal outcome is explained by
+# the step that actually produced it (qualification criterion #14). The
+# legacy_v1 lane never emits these codes.
+UD_BINDING = {
+    "UD_SUBJECT_BOUND", "UD_OBJECT_BOUND", "UD_OBLIQUE_BOUND",
+    "UD_NO_ARGUMENT_IN_SLOT",
+}
+ROLE = {
+    "ROLE_ARG0_ASSIGNED", "ROLE_ARG1_ASSIGNED", "ROLE_ARG2_ASSIGNED",
+    "ROLE_ASSIGNED", "ROLE_NO_ROLESET", "ROLE_ORIENTATION_INCOMPLETE",
+}
+TYPE_PRECHECK = {
+    "TYPE_PRECHECK_PASS", "TYPE_PRECHECK_FAIL",
+    "TYPE_PRECHECK_IMPOSSIBLE", "TYPE_PRECHECK_NO_VIABLE_PAIR",
+}
+
 ALL_CODES = (DISCOVERY | SYNTAX | RESCUE | ADMISSION | TRIGGER
-             | ARGUMENT_BINDING | CANDIDATE | COMPILER | FACT)
+             | ARGUMENT_BINDING | CANDIDATE | COMPILER | FACT
+             | UD_BINDING | ROLE | TYPE_PRECHECK)
+
+# Non-terminal step outcomes. They explain the PATH a trigger took and
+# must never enter the first-loss distribution, because the pipeline
+# continues past every one of them: an empty UD slot still goes to bounded
+# linear recall, and one type-rejected pair still leaves the other pairs.
+# Only the codes NOT listed here end a trigger's life -- notably
+# TYPE_PRECHECK_NO_VIABLE_PAIR, which fires once every pair has failed.
+STEP_CODES = (UD_BINDING | ROLE | TYPE_PRECHECK) - {
+    "TYPE_PRECHECK_NO_VIABLE_PAIR",
+}
 
 FIRST_LOSS_STAGES = (
     "chunking", "gliner_discovery", "syntax_alignment", "rescue",
-    "admission", "trigger", "argument_binding", "candidate_generation",
+    "admission", "trigger", "ud_binding", "argument_binding",
+    "role_assignment", "type_precheck", "candidate_generation",
     "frame", "type_signature", "negation_modality", "compiler",
     "fact_persistence", "graph_projection",
 )
+
+# -- fallback discipline (ADR-0016 directive Phase 17) --------------------
+# `BindingSource` (contracts.py) names the specific MECHANISM that bound an
+# argument; the directive names three DISCIPLINE TIERS. Both vocabularies
+# are real, so this is the explicit mapping between them rather than a
+# rename of the enum.
+UD_PRIMARY = "UD_PRIMARY"
+SAFE_FALLBACK = "SAFE_FALLBACK"
+BOUNDED_RECALL = "BOUNDED_RECALL"
+BINDING_DISCIPLINE = {
+    "UD_DIRECT": UD_PRIMARY,
+    "UD_PREPOSITIONAL": UD_PRIMARY,
+    "UD_PASSIVE": UD_PRIMARY,
+    "UD_COORDINATION": UD_PRIMARY,
+    "SAFE_LOCAL_PATTERN": SAFE_FALLBACK,
+    "BOUNDED_LINEAR_RECALL": BOUNDED_RECALL,
+}
+
+
+def binding_discipline(source) -> str:
+    """Map a BindingSource (enum or bare string) to its directive tier.
+
+    Unknown sources degrade to BOUNDED_RECALL: the observer never claims
+    stronger provenance than it can prove."""
+    return BINDING_DISCIPLINE.get(str(getattr(source, "value", source)),
+                                  BOUNDED_RECALL)
 
 
 def event_id(payload: dict) -> str:
@@ -183,7 +242,11 @@ class TraceCollector:
                 """,
                 rows,
             )
-        written = len(rows)
+            inserted = cur.rowcount
+        # ON CONFLICT DO NOTHING means attempted != inserted. Reporting
+        # len(rows) here made the stage artifact claim events that the
+        # table had silently deduplicated away.
+        written = inserted if inserted is not None and inserted >= 0 else len(rows)
         self.events = []
         return written
 
@@ -230,5 +293,10 @@ def extraction_contracts() -> dict:
         "syntax_contract_version": "syntax-evidence-v1",
         "rescue_policy_version": ",".join(sorted(s.rescue_policy.enabled_stages())) or "off",
         "rule_pack_version": s.worker.rule_pack_version,
+        # Without this, legacy_v1 and kimi_v1 runs of the SAME corpus at the
+        # same pack produce byte-identical envelopes, so the second arm's
+        # events collide on trace_event_id and are dropped by ON CONFLICT.
+        # An A/B then reads as if one arm emitted nothing.
+        "relation_pipeline": os.environ.get("POLYMATH_RELATION_PIPELINE", "legacy_v1"),
         "worker_build_sha": _build_sha(),
     }

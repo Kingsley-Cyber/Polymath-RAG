@@ -16,7 +16,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from polymath_shared.contracts import EntitySpan, EvidenceSpan
+from polymath_shared.contracts import BindingSource, EntitySpan, EvidenceSpan
 from workers.candidates import (
     MAX_LIST_MEMBERS,
     SentenceSlice,
@@ -31,12 +31,18 @@ from workers.candidates import (
     _type_compatible,
 )
 from polymath_shared.rulepack.negation import analyze_scope
+from polymath_shared.rulepack.role_assignment import (
+    assign_roles,
+    get_role_inventory,
+)
+from polymath_shared.rulepack.lexical_evidence import build_lexical_semantic_evidence
 
 # spaCy ClearNLP + UD dependency relations that fill predicate argument slots
 SUBJECT_DEPS = frozenset({"nsubj", "nsubj:pass"})
 OBJECT_DEPS = frozenset({"dobj", "obj", "iobj"})
-OBLIQUE_DEPS = frozenset({"obl", "obl:agent", "pobj", "agent", "obl:tmod"})
+OBLIQUE_DEPS = frozenset({"obl", "obl:agent", "obl:tmod"})
 PREP_DEPS = frozenset({"prep", "agent"})
+AGENT_OBJECT_DEPS = frozenset({"pobj", "obl"})
 
 
 def _syntax_tokens(sl: SentenceSlice) -> list[dict]:
@@ -84,13 +90,13 @@ def _find_ud_arguments(
                 args["subject"].append(tok)
             elif tok["dep"] in OBJECT_DEPS:
                 args["object"].append(tok)
+            elif tok["dep"] in PREP_DEPS:
+                # preposition / agent → look for pobj/obl under it
+                for child in tokens:
+                    if child["head_i"] == tok["i"] and child["dep"] in AGENT_OBJECT_DEPS:
+                        args["prep_object"].append(child)
             elif tok["dep"] in OBLIQUE_DEPS:
                 args["oblique"].append(tok)
-            elif tok["dep"] in PREP_DEPS:
-                # preposition → look for pobj under it
-                for child in tokens:
-                    if child["head_i"] == tok["i"] and child["dep"] in ("pobj", "obl"):
-                        args["prep_object"].append(child)
 
     # coordination: conj dependents of subject/object heads
     for role_toks in (args["subject"], args["object"]):
@@ -99,19 +105,52 @@ def _find_ud_arguments(
                 if tok["head_i"] == head_tok["i"] and tok["dep"] == "conj":
                     role_toks.append(tok)
 
-    # coordination of the trigger itself (compound predicates)
+    # Propagate shared arguments from a governing predicate to a conjunct
+    # predicate.  If the trigger head is a conjunct of another predicate,
+    # and the conjunct lacks a subject/object, borrow the governor's subject
+    # or object.  This handles "John founded Acme and later joined Beta"
+    # where 'joined' shares the subject 'John' with 'founded'.
     for tok in tokens:
         if tok["head_i"] == trig_idx and tok["dep"] == "conj":
             args["coordination"].append(tok)
-            # inherit the conjunct's arguments too
-            for child in tokens:
-                if child["head_i"] == tok["i"]:
-                    if child["dep"] in SUBJECT_DEPS:
-                        args["subject"].append(child)
-                    elif child["dep"] in OBJECT_DEPS:
-                        args["object"].append(child)
+    _propagate_shared_arguments(tokens, trig_idx, args)
 
     return args
+
+
+def _propagate_shared_arguments(
+    tokens: list[dict], trig_idx: int, args: dict[str, list[dict]]
+) -> None:
+    """Fill missing subject/object slots of a conjunct from its governor.
+
+    Walks up one step on a `conj` edge and copies the governor's nsubj/dobj
+    when the conjunct lacks them.  Only fills truly empty slots so the
+    conjunct's own explicit arguments are never overwritten.
+    """
+    trigger_tok = next((t for t in tokens if t["i"] == trig_idx), None)
+    if trigger_tok is None:
+        return
+    if trigger_tok.get("dep") != "conj":
+        return
+    governor_idx = trigger_tok.get("head_i")
+    if governor_idx is None:
+        return
+
+    governor_args: dict[str, list[dict]] = {
+        "subject": [],
+        "object": [],
+    }
+    for tok in tokens:
+        if tok["head_i"] == governor_idx:
+            if tok["dep"] in SUBJECT_DEPS:
+                governor_args["subject"].append(tok)
+            elif tok["dep"] in OBJECT_DEPS:
+                governor_args["object"].append(tok)
+
+    if not args["subject"] and governor_args["subject"]:
+        args["subject"].extend(governor_args["subject"])
+    if not args["object"] and governor_args["object"]:
+        args["object"].extend(governor_args["object"])
 
 
 def _token_to_entity(
@@ -148,6 +187,7 @@ def build_candidates_kimi(
     enrich: bool = True,
     doc_entities_history: list[EntitySpan] | None = None,
     observer=None,
+    identities: dict | None = None,
 ) -> list[RelationCandidate]:
     """kimi_v1: UD-anchored, evidence-scoped candidate generation.
 
@@ -183,7 +223,12 @@ def build_candidates_kimi(
 
             subjects: list[EntitySpan] = []
             objects: list[EntitySpan] = []
-            binding_source = "BOUNDED_LINEAR_RECALL"  # default fallback
+            oblique_spans: list[EntitySpan] = []
+            # Reset per evidence. Python loop variables outlive their
+            # block, so without this a trigger in a sentence with no
+            # tokens would silently reuse the PREVIOUS sentence's head.
+            trig_head = None
+            binding_source = BindingSource.BOUNDED_LINEAR_RECALL
 
             # -- UD-tree primary binding ------------------------------
             if tokens:
@@ -203,9 +248,39 @@ def build_candidates_kimi(
                         ent = _token_to_entity(tok, sl.entities, sl)
                         if ent is not None and ent not in objects:
                             objects.append(ent)
+                            oblique_spans.append(ent)
 
                     if subjects or objects:
-                        binding_source = "UD_DIRECT"
+                        binding_source = BindingSource.UD_DIRECT
+
+                    # -- Phase 5: record what the UD tree itself bound,
+                    # BEFORE any recall net runs, so the trace separates
+                    # "the tree found it" from "the window found it".
+                    if observer:
+                        for slot, bound, code in (
+                            ("subject", subjects, "UD_SUBJECT_BOUND"),
+                            ("object", objects, "UD_OBJECT_BOUND"),
+                        ):
+                            observer.record_candidate_outcome(
+                                sl, evidence,
+                                code if bound else "UD_NO_ARGUMENT_IN_SLOT",
+                                {"slot": slot,
+                                 "spans": [e.text for e in bound],
+                                 "binding_source": binding_source,
+                                 "kimi_v1": True})
+                        if oblique_spans:
+                            observer.record_candidate_outcome(
+                                sl, evidence, "UD_OBLIQUE_BOUND", {
+                                    "slot": "oblique",
+                                    "spans": [e.text for e in oblique_spans],
+                                    "binding_source": binding_source,
+                                    "kimi_v1": True})
+                elif observer:
+                    observer.record_candidate_outcome(
+                        sl, evidence, "UD_NO_ARGUMENT_IN_SLOT", {
+                            "slot": "trigger_head",
+                            "binding_source": binding_source,
+                            "kimi_v1": True})
 
             # -- bounded linear recall (only if UD missed a slot) ------
             if not subjects:
@@ -217,10 +292,7 @@ def build_candidates_kimi(
                 )
                 if left_entities:
                     subjects = [left_entities[0]]
-                    if binding_source == "UD_DIRECT":
-                        binding_source = "UD_OBJECT_RECALL_SUBJECT"
-                    else:
-                        binding_source = "BOUNDED_LINEAR_RECALL"
+                    binding_source = BindingSource.BOUNDED_LINEAR_RECALL
 
             if not objects:
                 right_entities = sorted(
@@ -230,10 +302,7 @@ def build_candidates_kimi(
                 )
                 if right_entities:
                     objects = [right_entities[0]]
-                    if binding_source == "UD_DIRECT":
-                        binding_source = "UD_SUBJECT_RECALL_OBJECT"
-                    else:
-                        binding_source = "BOUNDED_LINEAR_RECALL"
+                    binding_source = BindingSource.BOUNDED_LINEAR_RECALL
 
             # -- definite description recall (subject slot) ------------
             if not subjects and objects and doc_entities_history:
@@ -241,7 +310,7 @@ def build_candidates_kimi(
                     sentence, rel_ev_start, left_bound, doc_entities_history)
                 if resolved is not None:
                     subjects = [resolved]
-                    binding_source = "SAFE_LOCAL_PATTERN"
+                    binding_source = BindingSource.SAFE_LOCAL_PATTERN
 
             if not subjects or not objects:
                 if observer:
@@ -260,19 +329,39 @@ def build_candidates_kimi(
                 objects = objects[:MAX_LIST_MEMBERS]
 
             # -- TYPE PRE-CHECK: AFTER structural candidates exist ----
-            # (the Kimi-corrected position: cheap evidence-class
-            # signature-union filter on already-bound argument pairs)
+            # Kimi-corrected position: cheap evidence-class signature-union
+            # filter on already-bound argument pairs. Because role-based
+            # direction may invert passive pairs, a pair is viable if EITHER
+            # orientation can satisfy a signature of the evidence class.
             compatible_pairs: list[tuple[EntitySpan, EntitySpan]] = []
             for s in subjects:
                 for o in objects:
                     if s.text == o.text and s.core_type == o.core_type:
                         continue
-                    if _type_compatible(s.core_type.value, o.core_type.value,
-                                        evidence.evidence_class, rule_pack):
+                    forward_ok = _type_compatible(
+                        s.core_type.value, o.core_type.value,
+                        evidence.evidence_class, rule_pack)
+                    reverse_ok = _type_compatible(
+                        o.core_type.value, s.core_type.value,
+                        evidence.evidence_class, rule_pack)
+                    if forward_ok or reverse_ok:
                         compatible_pairs.append((s, o))
+                        if observer:
+                            observer.record_candidate_outcome(
+                                sl, evidence, "TYPE_PRECHECK_PASS", {
+                                    "subject": s.text, "subject_type": s.core_type.value,
+                                    "object": o.text, "object_type": o.core_type.value,
+                                    "evidence_class": evidence.evidence_class,
+                                    "orientation": ("forward" if forward_ok else "reverse"),
+                                    "binding_source": binding_source,
+                                    "kimi_v1": True})
                     elif observer:
+                        # Plan Phase 5 names this TYPE_PRECHECK_FAIL. The
+                        # older TYPE_PRECHECK_IMPOSSIBLE stays registered in
+                        # ALL_CODES so traces recorded before this gate still
+                        # validate, but is no longer emitted.
                         observer.record_candidate_outcome(
-                            sl, evidence, "TYPE_PRECHECK_IMPOSSIBLE", {
+                            sl, evidence, "TYPE_PRECHECK_FAIL", {
                                 "subject": s.text, "subject_type": s.core_type.value,
                                 "object": o.text, "object_type": o.core_type.value,
                                 "evidence_class": evidence.evidence_class,
@@ -291,14 +380,112 @@ def build_candidates_kimi(
 
             # -- candidate creation with role annotation ---------------
             for subject_span, object_span in compatible_pairs:
-                subject_id = _allocate(subject_span, sl, doc_id, corpus_id)
-                object_id = _allocate(object_span, sl, doc_id, corpus_id)
+                subject_id = _allocate(subject_span, sl, doc_id, corpus_id,
+                                       identities)
+                object_id = _allocate(object_span, sl, doc_id, corpus_id,
+                                      identities)
                 if observer:
                     observer.record_candidate_outcome(sl, evidence, "CANDIDATE_CREATED", {
                         "subject": subject_span.text, "object": object_span.text,
                         "binding_source": binding_source,
                         "roleset": _lexical.get("roleset"),
                         "kimi_v1": True})
+                # -- PropBank semantic-role assignment (Phase 3) -----
+                role_inv = get_role_inventory(_lexical, _lexical.get("roleset"))
+                voice = "passive" if (sl.parse or {}).get("voice") == "passive" else "active"
+                subj_dep = None
+                obj_dep = None
+                agent_span: Any | None = None
+                if tokens and trig_head is not None:
+                    for tok in tokens:
+                        if tok["head_i"] == trig_head["i"]:
+                            if tok["dep"] in SUBJECT_DEPS:
+                                subj_dep = tok["dep"]
+                            elif tok["dep"] in OBJECT_DEPS:
+                                obj_dep = tok["dep"]
+                            elif tok["dep"] in PREP_DEPS:
+                                # agent preposition: find its object
+                                for child in tokens:
+                                    if (child["head_i"] == tok["i"]
+                                            and child["dep"] in AGENT_OBJECT_DEPS):
+                                        agent_span = _token_to_entity(child, sl.entities, sl)
+
+                role_result = assign_roles(
+                    roleset=_lexical.get("roleset"),
+                    role_inventory=role_inv,
+                    voice=voice,
+                    subject_dep=subj_dep,
+                    object_dep=obj_dep,
+                    subject_entity=subject_span,
+                    object_entity=object_span,
+                    agent_entity=agent_span,
+                )
+
+                # -- Phase 8: normalized lexical-semantic evidence object ----
+                lse = build_lexical_semantic_evidence(
+                    evidence=evidence,
+                    subject=subject_span,
+                    object=object_span,
+                    lexical=_lexical,
+                    role_result=role_result,
+                    tokens=tokens,
+                    trigger_head=trig_head,
+                    subj_dep=subj_dep,
+                    obj_dep=obj_dep,
+                    binding_source=binding_source,
+                    rule_pack=rule_pack,
+                )
+
+                if observer:
+                    observer.record_candidate_outcome(sl, evidence, "ROLE_ASSIGNED", {
+                        "subject": subject_span.text, "object": object_span.text,
+                        "roleset": _lexical.get("roleset"),
+                        "role_inventory": role_inv,
+                        "assigned_roles": {r: getattr(e, 'text', str(e))
+                                           for r, e in role_result["assigned"].items()},
+                        "voice": voice,
+                        "orientation": role_result["orientation"],
+                        "subj_dep": subj_dep, "obj_dep": obj_dep,
+                        "vn_matches": lse.verbnet_matches[:3],
+                        "fn_matches": lse.framenet_matches[:3],
+                        "semlink_status": lse.semlink_status,
+                        "binding_source": binding_source,
+                        "kimi_v1": True})
+
+                # -- Phase 5: one event per role actually assigned, so a
+                # trace can answer "which endpoint became ARG0?" without
+                # re-deriving it from the summary event's detail blob.
+                if observer:
+                    for role_label in ("ARG0", "ARG1", "ARG2"):
+                        bound = role_result["assigned"].get(role_label)
+                        if bound is None:
+                            continue
+                        observer.record_candidate_outcome(
+                            sl, evidence, f"ROLE_{role_label}_ASSIGNED", {
+                                "role": role_label,
+                                "entity": getattr(bound, "text", str(bound)),
+                                "roleset": _lexical.get("roleset"),
+                                "voice": voice,
+                                "syntactic_path": _role_path(
+                                    bound, subject_span, object_span,
+                                    agent_span, subj_dep, obj_dep),
+                                "binding_source": binding_source,
+                                "kimi_v1": True})
+                    if role_result["orientation"] == "no_roleset":
+                        observer.record_candidate_outcome(
+                            sl, evidence, "ROLE_NO_ROLESET", {
+                                "trigger_lemma": evidence.trigger_lemma,
+                                "binding_source": binding_source,
+                                "kimi_v1": True})
+                    elif role_result["orientation"] == "incomplete":
+                        observer.record_candidate_outcome(
+                            sl, evidence, "ROLE_ORIENTATION_INCOMPLETE", {
+                                "roleset": _lexical.get("roleset"),
+                                "assigned": sorted(role_result["assigned"]),
+                                "unassigned_roles": role_result["unassigned_roles"],
+                                "binding_source": binding_source,
+                                "kimi_v1": True})
+
                 candidates.append(RelationCandidate(
                     sentence_text=sentence,
                     sentence_start=rel_start,
@@ -311,8 +498,16 @@ def build_candidates_kimi(
                     verbnet_classes=_lexical["vn_classes"],
                     framenet_frames=_lexical["fn_frames"],
                     semlink_resolved=_lexical["semlink_resolved"],
+                    semlink_mapping={
+                        "roleset": _lexical.get("roleset"),
+                        "vn_classes": _lexical.get("vn_classes", []),
+                        "fn_frames": _lexical.get("fn_frames", []),
+                        "semlink_pb_vn": _lexical.get("semlink_pb_vn", {}),
+                    },
                     scope=scope,
                     ontology_profile=ontology_profile,
+                    assigned_roles=role_result["assigned"],
+                    lexical_semantic_evidence=lse,
                 ))
 
     return candidates
@@ -321,6 +516,22 @@ def build_candidates_kimi(
 def _lookup_trigger_lemma(evidence: EvidenceSpan, sl: SentenceSlice) -> str | None:
     """Fallback trigger lemma from the evidence surface."""
     return evidence.text.split()[0].lower() if evidence.text else None
+
+
+def _role_path(bound, subject_span, object_span, agent_span,
+               subj_dep, obj_dep) -> str | None:
+    """Name the dependency that actually supplied this role.
+
+    Role label alone is not enough: under passive voice ARG0 comes from
+    the by-agent and ARG1 from the surface subject, so keying the path off
+    "ARG0 -> subj_dep" would mislabel every passive."""
+    if agent_span is not None and bound is agent_span:
+        return "agent"
+    if bound is subject_span:
+        return subj_dep
+    if bound is object_span:
+        return obj_dep
+    return None
 
 
 def active_pipeline() -> str:

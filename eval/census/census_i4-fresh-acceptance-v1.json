@@ -1,0 +1,59 @@
+{
+ "corpus": "i4-fresh-acceptance-v1",
+ "per_document": {
+  "corpus/01_northvale_health.md": {
+   "anchor_kinds": {
+    "GENERIC": 2,
+    "IDENTITY": 10,
+    "LOCAL_REFERENCE": 2,
+    "UNKNOWN": 2
+   },
+   "graph_eligible": 11,
+   "mentions": 16
+  },
+  "corpus/02_nimbus_cloud.md": {
+   "anchor_kinds": {
+    "IDENTITY": 8,
+    "LOCAL_REFERENCE": 6
+   },
+   "graph_eligible": 9,
+   "mentions": 14
+  },
+  "corpus/03_crestline_automation.md": {
+   "anchor_kinds": {
+    "GENERIC": 1,
+    "IDENTITY": 9,
+    "LOCAL_REFERENCE": 8,
+    "UNKNOWN": 4
+   },
+   "graph_eligible": 10,
+   "mentions": 22
+  },
+  "corpus/04_brightpath_learning.md": {
+   "anchor_kinds": {
+    "IDENTITY": 9,
+    "LOCAL_REFERENCE": 3,
+    "UNKNOWN": 3
+   },
+   "graph_eligible": 12,
+   "mentions": 15
+  },
+  "corpus/05_corval_logistics.md": {
+   "anchor_kinds": {
+    "GENERIC": 2,
+    "IDENTITY": 10,
+    "LOCAL_REFERENCE": 2,
+    "UNKNOWN": 1
+   },
+   "graph_eligible": 11,
+   "mentions": 15
+  }
+ },
+ "totals": {
+  "canonical_entities": 24,
+  "canonical_facts": 11,
+  "distinct_entities": 40,
+  "graph_eligible": 53,
+  "mentions": 82
+ }
+}

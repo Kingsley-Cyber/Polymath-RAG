@@ -18,7 +18,8 @@ from repo_guard import run_checks
 def check_python_syntax(root: Path) -> list[str]:
     errors: list[str] = []
     for path in root.rglob("*.py"):
-        if any(part in {".git", ".venv", "__pycache__"} for part in path.parts):
+        if any(part == ".git" or part == "__pycache__" or part.startswith(".venv")
+               for part in path.parts):
             continue
         relative = path.relative_to(root).as_posix()
         try:

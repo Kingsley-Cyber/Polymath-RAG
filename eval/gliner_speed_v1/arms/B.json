@@ -1,0 +1,195 @@
+{
+ "arm": "B",
+ "model": "medium",
+ "labels": "descriptive",
+ "label_count": 12,
+ "threshold": 0.5,
+ "model_load_ms": 5665.6,
+ "warmup": 3,
+ "reps": 10,
+ "documents": {
+  "01_northvale_health.md": {
+   "slices": 13,
+   "chars": 853,
+   "slice_ms": {
+    "median": 59.93,
+    "p95": 67.93,
+    "min": 44.71
+   },
+   "doc_ms": {
+    "median": 767.61,
+    "p95": 774.68,
+    "min": 747.81
+   },
+   "chars_per_sec": 1111.2,
+   "entity_count": 13,
+   "entities": [
+    {
+     "text": "Austin",
+     "start": 41,
+     "end": 47,
+     "label": "Location",
+     "score": 0.9280818700790405
+    },
+    {
+     "text": "Lakeshore General Hospital",
+     "start": 0,
+     "end": 26,
+     "label": "Organization",
+     "score": 0.7310037016868591
+    },
+    {
+     "text": "Lakeshore General Hospital",
+     "start": 38,
+     "end": 64,
+     "label": "Organization",
+     "score": 0.8087612390518188
+    },
+    {
+     "text": "Northvale Health Network",
+     "start": 4,
+     "end": 28,
+     "label": "Organization",
+     "score": 0.6651780009269714
+    },
+    {
+     "text": "Northvale Health Network",
+     "start": 0,
+     "end": 24,
+     "label": "Organization",
+     "score": 0.7932734489440918
+    },
+    {
+     "text": "Northvale Health Network",
+     "start": 46,
+     "end": 70,
+     "label": "Organization",
+     "score": 0.8346909284591675
+    },
+    {
+     "text": "Riverside Clinic",
+     "start": 23,
+     "end": 39,
+     "label": "Organization",
+     "score": 0.7272679209709167
+    },
+    {
+     "text": "The company",
+     "start": 0,
+     "end": 11,
+     "label": "Organization",
+     "score": 0.5935291051864624
+    },
+    {
+     "text": "The hospital",
+     "start": 0,
+     "end": 12,
+     "label": "Organization",
+     "score": 0.6155234575271606
+    },
+    {
+     "text": "hospital",
+     "start": 4,
+     "end": 12,
+     "label": "Organization",
+     "score": 0.6541497111320496
+    },
+    {
+     "text": "team",
+     "start": 86,
+     "end": 90,
+     "label": "Organization",
+     "score": 0.8099659085273743
+    },
+    {
+     "text": "Amara Osei",
+     "start": 0,
+     "end": 10,
+     "label": "Person",
+     "score": 0.8846585154533386
+    },
+    {
+     "text": "Amara Osei",
+     "start": 0,
+     "end": 10,
+     "label": "Person",
+     "score": 0.9214825630187988
+    }
+   ]
+  },
+  "05_corval_logistics.md": {
+   "slices": 10,
+   "chars": 627,
+   "slice_ms": {
+    "median": 58.83,
+    "p95": 66.78,
+    "min": 49.92
+   },
+   "doc_ms": {
+    "median": 584.43,
+    "p95": 596.75,
+    "min": 573.1
+   },
+   "chars_per_sec": 1072.8,
+   "entity_count": 8,
+   "entities": [
+    {
+     "text": "Oakland",
+     "start": 37,
+     "end": 44,
+     "label": "Location",
+     "score": 0.9086730480194092
+    },
+    {
+     "text": "Corval",
+     "start": 0,
+     "end": 6,
+     "label": "Organization",
+     "score": 0.5896474123001099
+    },
+    {
+     "text": "Corval",
+     "start": 0,
+     "end": 6,
+     "label": "Organization",
+     "score": 0.6408596634864807
+    },
+    {
+     "text": "Corval Freight",
+     "start": 0,
+     "end": 14,
+     "label": "Organization",
+     "score": 0.7272887229919434
+    },
+    {
+     "text": "Corval Logistics",
+     "start": 4,
+     "end": 20,
+     "label": "Organization",
+     "score": 0.6809210777282715
+    },
+    {
+     "text": "Corval Logistics",
+     "start": 0,
+     "end": 16,
+     "label": "Organization",
+     "score": 0.6834995150566101
+    },
+    {
+     "text": "Corval Logistics",
+     "start": 34,
+     "end": 50,
+     "label": "Organization",
+     "score": 0.7793076634407043
+    },
+    {
+     "text": "West Coast logistics consortium",
+     "start": 36,
+     "end": 67,
+     "label": "Organization",
+     "score": 0.7144683003425598
+    }
+   ]
+  }
+ }
+}

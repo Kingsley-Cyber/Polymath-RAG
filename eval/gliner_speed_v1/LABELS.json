@@ -1,0 +1,32 @@
+{
+  "contract": "gliner-speed-v1-labels",
+  "note": "Both sets have exactly 12 entries \u2014 label COUNT is held constant so only label CONTENT varies (GLINER-QUERY-VOCAB-v2 measured severe multi-label dilution). Descriptive labels use the 'Type: description' form because the GLiNER sidecar already maps a proposal back to its canonical type via label.split(':',1)[0] \u2014 so this format is production-compatible with no code change.",
+  "identity": [
+    "Person",
+    "Organization",
+    "Location",
+    "Product",
+    "Technology",
+    "Concept",
+    "Method",
+    "Event",
+    "Document",
+    "Process",
+    "Measurement",
+    "TimeReference"
+  ],
+  "descriptive": {
+    "Person": "Person: a specifically identifiable named individual person",
+    "Organization": "Organization: a specifically identifiable company, agency, institution, team, or named organization",
+    "Location": "Location: a specifically identifiable place, city, region, country, facility, or named site",
+    "Product": "Product: a specifically identifiable commercial product, application, service, or named offering",
+    "Technology": "Technology: a specifically identifiable technology, protocol, algorithm, standard, framework, or technical system",
+    "Concept": "Concept: a specifically identifiable abstract concept, principle, theory, or named idea",
+    "Method": "Method: a specifically identifiable method, technique, procedure, strategy, or named approach",
+    "Event": "Event: a specifically identifiable event, incident, outage, milestone, or named occurrence",
+    "Document": "Document: a specifically identifiable document, report, record, dataset, or named written artifact",
+    "Process": "Process: a specifically identifiable process, workflow, operation, or named ongoing activity",
+    "Measurement": "Measurement: a specifically identifiable measurement, metric, quantity, or named unit of measure",
+    "TimeReference": "TimeReference: a specifically identifiable date, time, period, or named temporal reference"
+  }
+}

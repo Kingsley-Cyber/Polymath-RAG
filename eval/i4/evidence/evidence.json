@@ -1,63 +1,85 @@
 {
   "phases": {
-    "freeze": {
-      "frozen_files": 11,
-      "rule_pack": "1.2.0",
-      "gliner": {
-        "entity_threshold": 0.5,
-        "evidence_threshold": 0.4,
-        "model": "urchade/gliner_medium-v2.1",
-        "revision": "40ec419335d09393f298636f471328b722c6da9e"
-      }
-    },
     "ingestion": {
-      "error": "i4-fresh-acceptance-v1 did not converge: {'reconciling': 5}"
+      "submitted": 5,
+      "terminal_states": {
+        "query_ready": 5
+      },
+      "wall_time_s": 220.3,
+      "docs_per_min": 1.4,
+      "documents": [
+        {
+          "doc_id": "doc_85a21d16237959a1a72ffe82eb591ff05b758a7839e23b12da356aebc5acba67",
+          "source_name": "corpus/01_northvale_health.md",
+          "content_hash": "85a21d16237959a1a72ffe82eb591ff05b758a7839e23b12da356aebc5acba67"
+        },
+        {
+          "doc_id": "doc_bb1fa6f6d94a4855e7ecef360ab4e11c08b7848cdda85f8a1459675b611d029a",
+          "source_name": "corpus/02_nimbus_cloud.md",
+          "content_hash": "bb1fa6f6d94a4855e7ecef360ab4e11c08b7848cdda85f8a1459675b611d029a"
+        },
+        {
+          "doc_id": "doc_07dfb7f0d1e1989ff25459845498ada8831cd4336de5f530ae9359d61317acb2",
+          "source_name": "corpus/03_crestline_automation.md",
+          "content_hash": "07dfb7f0d1e1989ff25459845498ada8831cd4336de5f530ae9359d61317acb2"
+        },
+        {
+          "doc_id": "doc_c1aa662574cab4c93405c709f615098b50e79a57fd497aed2c49c4cc4bc9c72c",
+          "source_name": "corpus/04_brightpath_learning.md",
+          "content_hash": "c1aa662574cab4c93405c709f615098b50e79a57fd497aed2c49c4cc4bc9c72c"
+        },
+        {
+          "doc_id": "doc_e43f6c2fe7a9a907ab8f986159bd4a7d60b7615981f4387b760a07261ebbb7d8",
+          "source_name": "corpus/05_corval_logistics.md",
+          "content_hash": "e43f6c2fe7a9a907ab8f986159bd4a7d60b7615981f4387b760a07261ebbb7d8"
+        }
+      ]
     },
     "facts": {
       "supported_positive": {
         "gold": 26,
-        "tp": 0,
-        "fp": 0,
-        "fn": 26,
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0,
+        "tp": 14,
+        "fp": 10,
+        "fn": 12,
+        "precision": 0.583,
+        "recall": 0.538,
+        "f1": 0.56,
         "per_predicate": {
           "uses": {
             "gold": 5,
-            "tp": 0,
-            "fp": 0,
-            "fn": 5
+            "tp": 3,
+            "fp": 5,
+            "fn": 2
           },
           "located_in": {
             "gold": 4,
-            "tp": 0,
-            "fp": 0,
-            "fn": 4
+            "tp": 2,
+            "fp": 1,
+            "fn": 2
           },
           "has_role": {
             "gold": 2,
-            "tp": 0,
+            "tp": 2,
             "fp": 0,
-            "fn": 2
+            "fn": 0
           },
           "depends_on": {
             "gold": 3,
-            "tp": 0,
+            "tp": 3,
             "fp": 0,
-            "fn": 3
+            "fn": 0
           },
           "part_of": {
             "gold": 2,
             "tp": 0,
-            "fp": 0,
+            "fp": 1,
             "fn": 2
           },
           "founded": {
             "gold": 1,
-            "tp": 0,
-            "fp": 0,
-            "fn": 1
+            "tp": 1,
+            "fp": 1,
+            "fn": 0
           },
           "created": {
             "gold": 2,
@@ -67,14 +89,14 @@
           },
           "leads": {
             "gold": 1,
-            "tp": 0,
+            "tp": 1,
             "fp": 0,
-            "fn": 1
+            "fn": 0
           },
           "developed": {
             "gold": 1,
             "tp": 0,
-            "fp": 0,
+            "fp": 1,
             "fn": 1
           },
           "associated_with": {
@@ -85,9 +107,9 @@
           },
           "causes": {
             "gold": 1,
-            "tp": 0,
+            "tp": 1,
             "fp": 0,
-            "fn": 1
+            "fn": 0
           },
           "acquired": {
             "gold": 1,
@@ -97,9 +119,15 @@
           },
           "subsidiary_of": {
             "gold": 1,
-            "tp": 0,
+            "tp": 1,
             "fp": 0,
-            "fn": 1
+            "fn": 0
+          },
+          "member_of": {
+            "gold": 0,
+            "tp": 0,
+            "fp": 1,
+            "fn": 0
           }
         },
         "fn_details": [
@@ -111,27 +139,6 @@
             "doc": "01_northvale_health.md"
           },
           {
-            "fact_id": "A02",
-            "predicate": "located_in",
-            "subject": "Lakeshore General Hospital",
-            "object": "Austin",
-            "doc": "01_northvale_health.md"
-          },
-          {
-            "fact_id": "A03",
-            "predicate": "has_role",
-            "subject": "Amara Osei",
-            "object": "Northvale Health Network",
-            "doc": "01_northvale_health.md"
-          },
-          {
-            "fact_id": "A04",
-            "predicate": "depends_on",
-            "subject": "CareConnect portal",
-            "object": "CareChart EMR",
-            "doc": "01_northvale_health.md"
-          },
-          {
             "fact_id": "A05",
             "predicate": "part_of",
             "subject": "radiology review board",
@@ -139,24 +146,10 @@
             "doc": "01_northvale_health.md"
           },
           {
-            "fact_id": "A06",
-            "predicate": "founded",
-            "subject": "Amara Osei",
-            "object": "Riverside Clinic",
-            "doc": "01_northvale_health.md"
-          },
-          {
             "fact_id": "A07",
             "predicate": "uses",
             "subject": "Nimbus Cloud",
             "object": "Kubernetes",
-            "doc": "02_nimbus_cloud.md"
-          },
-          {
-            "fact_id": "A08",
-            "predicate": "depends_on",
-            "subject": "Ledger billing service",
-            "object": "Postgres cluster",
             "doc": "02_nimbus_cloud.md"
           },
           {
@@ -174,24 +167,10 @@
             "doc": "02_nimbus_cloud.md"
           },
           {
-            "fact_id": "A11",
-            "predicate": "uses",
-            "subject": "Crestline Automation",
-            "object": "Siemens PLCs",
-            "doc": "03_crestline_automation.md"
-          },
-          {
             "fact_id": "A12",
             "predicate": "located_in",
             "subject": "Crestline plant",
             "object": "Toledo",
-            "doc": "03_crestline_automation.md"
-          },
-          {
-            "fact_id": "A13",
-            "predicate": "leads",
-            "subject": "Maria Kowalski",
-            "object": "Crestline automation team",
             "doc": "03_crestline_automation.md"
           },
           {
@@ -216,38 +195,10 @@
             "doc": "03_crestline_automation.md"
           },
           {
-            "fact_id": "A17",
-            "predicate": "causes",
-            "subject": "pump failure",
-            "object": "production stoppage",
-            "doc": "03_crestline_automation.md"
-          },
-          {
-            "fact_id": "A18",
-            "predicate": "uses",
-            "subject": "Brightpath Learning",
-            "object": "Mentor assessment engine",
-            "doc": "04_brightpath_learning.md"
-          },
-          {
             "fact_id": "A19",
             "predicate": "located_in",
             "subject": "Brightpath Learning",
             "object": "Raleigh",
-            "doc": "04_brightpath_learning.md"
-          },
-          {
-            "fact_id": "A20",
-            "predicate": "has_role",
-            "subject": "Daniel Okafor",
-            "object": "Brightpath Learning",
-            "doc": "04_brightpath_learning.md"
-          },
-          {
-            "fact_id": "A21",
-            "predicate": "depends_on",
-            "subject": "Mentor assessment engine",
-            "object": "QBank item database",
             "doc": "04_brightpath_learning.md"
           },
           {
@@ -258,27 +209,6 @@
             "doc": "04_brightpath_learning.md"
           },
           {
-            "fact_id": "A23",
-            "predicate": "uses",
-            "subject": "Corval Logistics",
-            "object": "FreightNet routing platform",
-            "doc": "05_corval_logistics.md"
-          },
-          {
-            "fact_id": "A24",
-            "predicate": "subsidiary_of",
-            "subject": "Corval Freight",
-            "object": "Corval Logistics",
-            "doc": "05_corval_logistics.md"
-          },
-          {
-            "fact_id": "A25",
-            "predicate": "located_in",
-            "subject": "Portside warehouse",
-            "object": "Oakland",
-            "doc": "05_corval_logistics.md"
-          },
-          {
             "fact_id": "A26",
             "predicate": "associated_with",
             "subject": "QuickScale invoicing system",
@@ -286,19 +216,91 @@
             "doc": "05_corval_logistics.md"
           }
         ],
-        "fp_details": []
+        "fp_details": [
+          {
+            "predicate": "uses",
+            "subject": "northvale health network",
+            "object": "carechart emr platform",
+            "doc": "corpus/01_northvale_health.md"
+          },
+          {
+            "predicate": "uses",
+            "subject": "northvale health network",
+            "object": "carechart emr platform",
+            "doc": "corpus/01_northvale_health.md"
+          },
+          {
+            "predicate": "part_of",
+            "subject": "nimbus",
+            "object": "nimbus cloud",
+            "doc": "corpus/02_nimbus_cloud.md"
+          },
+          {
+            "predicate": "developed",
+            "subject": "crestline",
+            "object": "cobalt assembly cell",
+            "doc": "corpus/03_crestline_automation.md"
+          },
+          {
+            "predicate": "founded",
+            "subject": "crestline",
+            "object": "robotics vendor",
+            "doc": "corpus/03_crestline_automation.md"
+          },
+          {
+            "predicate": "located_in",
+            "subject": "crestline",
+            "object": "toledo",
+            "doc": "corpus/03_crestline_automation.md"
+          },
+          {
+            "predicate": "uses",
+            "subject": "crestline automation",
+            "object": "siemens plcs",
+            "doc": "corpus/03_crestline_automation.md"
+          },
+          {
+            "predicate": "uses",
+            "subject": "brightpath learning",
+            "object": "mentor assessment engine",
+            "doc": "corpus/04_brightpath_learning.md"
+          },
+          {
+            "predicate": "member_of",
+            "subject": "regional dispatchers",
+            "object": "west coast logistics consortium",
+            "doc": "corpus/05_corval_logistics.md"
+          },
+          {
+            "predicate": "uses",
+            "subject": "corval logistics",
+            "object": "freightnet routing platform",
+            "doc": "corpus/05_corval_logistics.md"
+          }
+        ]
       },
       "out_of_envelope": {
         "fixtures": 8,
-        "correct_abstentions": 8,
-        "unexpected_assertions": 0,
-        "details": []
+        "correct_abstentions": 7,
+        "unexpected_assertions": 1,
+        "details": [
+          {
+            "case_id": "B06",
+            "asserted": "regional dispatchers member_of west coast logistics consortium"
+          }
+        ]
       },
       "must_not_assert": {
         "passed": 18,
         "total": 18,
         "violations": []
       }
+    },
+    "provenance": {
+      "accepted_facts": 20,
+      "exact_matches": 20,
+      "all_exact": true,
+      "details": []
     }
   }
 }

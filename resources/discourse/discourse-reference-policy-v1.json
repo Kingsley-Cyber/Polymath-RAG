@@ -1,0 +1,139 @@
+{
+ "authored": "2026-08-18",
+ "contract": "policy DATA only \u2014 never executable logic. Every entry states its semantic purpose. Entries must NOT be added to fix a single evaluation item.",
+ "e4b_rule": "exact-one type match is NECESSARY SUPPORTING evidence, NEVER SUFFICIENT identity evidence. E4b additionally requires: candidate in a STRICTLY PRIOR sentence; no competing unnamed party introduced by an indefinite marker before the target; exactly one survivor. Otherwise AMBIGUOUS or EXTERNAL_UNRESOLVED.",
+ "external_party": {
+  "agency": {
+   "purpose": "external institutional party"
+  },
+  "client": {
+   "purpose": "as customer"
+  },
+  "company": {
+   "purpose": "generic party reference; the document does not constitute a company"
+  },
+  "contractor": {
+   "purpose": "as vendor"
+  },
+  "customer": {
+   "purpose": "counterparty; exists independently"
+  },
+  "distributor": {
+   "purpose": "as vendor"
+  },
+  "firm": {
+   "purpose": "as company"
+  },
+  "manufacturer": {
+   "purpose": "as vendor"
+  },
+  "partner": {
+   "purpose": "counterparty; exists independently"
+  },
+  "provider": {
+   "purpose": "as vendor"
+  },
+  "supplier": {
+   "purpose": "as vendor"
+  },
+  "vendor": {
+   "purpose": "third party contracted by the document's subject; exists independently of the document"
+  }
+ },
+ "indefinite_markers": [
+  "a",
+  "an",
+  "another",
+  "other",
+  "some"
+ ],
+ "overlap_note": "type_noun and external_party answer DIFFERENT questions and legitimately overlap. 'company' is a type_noun (it may anaphorically reference a named Organization) AND an external_party (if unresolved, never manufacture a document-constituted entity). Order: resolve antecedence first; only if that fails does external_party apply.",
+ "owner": "DISCOURSE-REFERENCE-V1 and its frozen fixture suite",
+ "type_noun": {
+  "app": {
+   "core_type": "Product",
+   "purpose": "as product"
+  },
+  "application": {
+   "core_type": "Technology",
+   "purpose": "as service"
+  },
+  "company": {
+   "core_type": "Organization",
+   "purpose": "anaphoric type-noun for a named organization"
+  },
+  "corporation": {
+   "core_type": "Organization",
+   "purpose": "as company"
+  },
+  "document": {
+   "core_type": "Document",
+   "purpose": "anaphoric type-noun for a named document"
+  },
+  "engine": {
+   "core_type": "Technology",
+   "purpose": "as service"
+  },
+  "firm": {
+   "core_type": "Organization",
+   "purpose": "as company"
+  },
+  "hospital": {
+   "core_type": "Organization",
+   "purpose": "institutional organization type-noun"
+  },
+  "individual": {
+   "core_type": "Person",
+   "purpose": "as person"
+  },
+  "network": {
+   "core_type": "Organization",
+   "purpose": "institutional organization type-noun (health/provider networks)"
+  },
+  "organisation": {
+   "core_type": "Organization",
+   "purpose": "as company, en-GB"
+  },
+  "organization": {
+   "core_type": "Organization",
+   "purpose": "as company"
+  },
+  "person": {
+   "core_type": "Person",
+   "purpose": "anaphoric type-noun for a named person"
+  },
+  "platform": {
+   "core_type": "Technology",
+   "purpose": "as service"
+  },
+  "product": {
+   "core_type": "Product",
+   "purpose": "anaphoric type-noun for a named product"
+  },
+  "report": {
+   "core_type": "Document",
+   "purpose": "as document"
+  },
+  "service": {
+   "core_type": "Technology",
+   "purpose": "anaphoric type-noun for a deployed technical service"
+  },
+  "supplier": {
+   "core_type": "Organization",
+   "purpose": "as vendor"
+  },
+  "system": {
+   "core_type": "Technology",
+   "purpose": "as service"
+  },
+  "tool": {
+   "core_type": "Technology",
+   "purpose": "as service"
+  },
+  "vendor": {
+   "core_type": "Organization",
+   "purpose": "party type-noun; also EXTERNAL_PARTY - see overlap note"
+  }
+ },
+ "version": "discourse-reference-policy-v1"
+}

@@ -576,3 +576,143 @@ def run_forever(poll_interval_s: float = 2.0, batch_size: int = 4) -> None:
 
 if __name__ == "__main__":
     run_forever()
+
+
+# ---------------------------------------------------------------------------
+# SEMANTIC-RESIDUE-RECONCILIATION-V1
+# ---------------------------------------------------------------------------
+# Store-side orphans (Qdrant points, Neo4j edges, receipts) already have a
+# reconciler above. Postgres SEMANTIC rows did not, and `entities`/`facts` are
+# not corpus-scoped, so a wipe leaves them behind: a failed run's rows survive
+# every subsequent wipe and stay visible to canonicalization candidate
+# generation, antecedent selection, entity counts and graph reconstruction.
+#
+# The authority is the PROVENANCE CHAIN, not a timestamp or a run label:
+#
+#     evidence  is authoritative while its document exists
+#     fact      is authoritative while it has evidence
+#     entity    is authoritative while a mention or a fact refers to it
+#
+# A row whose chain is broken cannot be traced to a source span, so it can
+# never be re-derived, verified, or defended — it is residue by definition.
+# Deletion is ordered along the chain and re-evaluated after each step,
+# because removing an orphan fact can orphan the entities it was holding up.
+
+RESIDUE_CONTRACT = "semantic-residue-reconciliation-v1"
+
+_DANGLING_EVIDENCE = """
+    SELECT evidence_id FROM evidence e
+     WHERE NOT EXISTS (SELECT 1 FROM documents d WHERE d.doc_id = e.doc_id)
+"""
+_UNSUPPORTED_FACTS = """
+    SELECT fact_id FROM facts f
+     WHERE NOT EXISTS (SELECT 1 FROM evidence e WHERE e.fact_id = f.fact_id)
+"""
+# `doomed` are facts already scheduled for removal in this pass. A dry run
+# that ignored them would understate the result, because the entities those
+# facts alone were holding up become unreferenced the moment they go.
+_UNREFERENCED_ENTITIES = """
+    SELECT entity_id FROM entities e
+     WHERE NOT EXISTS (SELECT 1 FROM mentions m WHERE m.entity_id = e.entity_id)
+       AND NOT EXISTS (SELECT 1 FROM facts f
+                        WHERE (f.subject_id = e.entity_id
+                               OR f.object_id = e.entity_id)
+                          AND NOT (f.fact_id = ANY(%s)))
+"""
+
+
+def reconcile_semantic_residue(conn, *, apply: bool = False) -> dict:
+    """Find (and optionally remove) semantic rows with a broken provenance
+    chain. Defaults to a dry run: reporting residue is always safe, removing
+    it is a decision.
+    """
+    report = {"contract": RESIDUE_CONTRACT, "applied": apply,
+              "dangling_evidence": 0, "unsupported_facts": 0,
+              "unreferenced_entities": 0}
+
+    def ids(sql, params=None):
+        return [r[0] for r in conn.execute(sql, params).fetchall()]
+
+    stale_ev = ids(_DANGLING_EVIDENCE)
+    report["dangling_evidence"] = len(stale_ev)
+    if apply and stale_ev:
+        conn.execute("DELETE FROM evidence WHERE evidence_id = ANY(%s)", (stale_ev,))
+
+    # re-read: dropping evidence can leave a fact unsupported
+    stale_facts = ids(_UNSUPPORTED_FACTS)
+    report["unsupported_facts"] = len(stale_facts)
+    if apply and stale_facts:
+        conn.execute("DELETE FROM evidence WHERE fact_id = ANY(%s)", (stale_facts,))
+        conn.execute("DELETE FROM facts WHERE fact_id = ANY(%s)", (stale_facts,))
+
+    # re-read again: dropping facts can leave an entity unreferenced
+    stale_entities = ids(_UNREFERENCED_ENTITIES,
+                         ([] if apply else stale_facts,))
+    report["unreferenced_entities"] = len(stale_entities)
+    if apply and stale_entities:
+        conn.execute("DELETE FROM entities WHERE entity_id = ANY(%s)", (stale_entities,))
+
+    if apply:
+        conn.commit()
+        report["residual_after"] = {
+            "dangling_evidence": len(ids(_DANGLING_EVIDENCE)),
+            "unsupported_facts": len(ids(_UNSUPPORTED_FACTS)),
+            "unreferenced_entities": len(ids(_UNREFERENCED_ENTITIES, ([],))),
+        }
+    return report
+
+
+def reconcile_graph_residue(conn, *, apply: bool = False) -> dict:
+    """Propagate semantic-residue removal into Neo4j.
+
+    `reconcile_semantic_residue` is Postgres-only, so removing a fact whose
+    provenance chain broke left its relationship standing in the graph. The
+    graph then asserted a fact the authoritative store no longer holds, which
+    is precisely the reconstruction mismatch invariant 8 forbids.
+
+    Postgres is the authority in one direction only: the graph is derived
+    from it and never the reverse, so anything in the graph without a
+    surviving Postgres row is removed rather than reconciled back.
+    """
+    from workers.project_neo4j_worker import _driver
+
+    live_facts = {r[0] for r in conn.execute("SELECT fact_id FROM facts").fetchall()}
+    live_entities = {r[0] for r in conn.execute("SELECT entity_id FROM entities").fetchall()}
+
+    driver = _driver()
+    try:
+        with driver.session() as s:
+            graph_facts = {r["id"] for r in
+                           s.run("MATCH ()-[r]->() RETURN r.fact_id AS id") if r["id"]}
+            graph_ents = {r["id"] for r in
+                          s.run("MATCH (e:Entity) RETURN e.entity_id AS id") if r["id"]}
+            stale_facts = sorted(graph_facts - live_facts)
+            report = {"contract": "graph-residue-reconciliation-v1",
+                      "applied": apply,
+                      "orphaned_relationships": len(stale_facts)}
+            if apply and stale_facts:
+                s.run("MATCH ()-[r]->() WHERE r.fact_id IN $ids DELETE r",
+                      ids=stale_facts)
+            # An Entity node earns its place by being referenced by a
+            # surviving relationship OR by still existing in Postgres.
+            with driver.session() as s2:
+                remaining = {r["id"] for r in s2.run(
+                    "MATCH ()-[r]->() RETURN r.fact_id AS id") if r["id"]} if apply else graph_facts
+            stale_ents = sorted(graph_ents - live_entities)
+            report["orphaned_entities"] = len(stale_ents)
+            if apply and stale_ents:
+                s.run("MATCH (e:Entity) WHERE e.entity_id IN $ids DETACH DELETE e",
+                      ids=stale_ents)
+            if apply:
+                with driver.session() as s3:
+                    report["residual_after"] = {
+                        "orphaned_relationships": len(
+                            {r["id"] for r in s3.run("MATCH ()-[r]->() RETURN r.fact_id AS id")
+                             if r["id"]} - live_facts),
+                        "orphaned_entities": len(
+                            {r["id"] for r in s3.run("MATCH (e:Entity) RETURN e.entity_id AS id")
+                             if r["id"]} - live_entities),
+                    }
+        return report
+    finally:
+        driver.close()

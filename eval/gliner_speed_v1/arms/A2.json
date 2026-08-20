@@ -1,0 +1,454 @@
+{
+ "arm": "A2",
+ "model": "medium",
+ "labels": "identity",
+ "label_count": 12,
+ "threshold": 0.5,
+ "model_load_ms": 6252.6,
+ "warmup": 3,
+ "reps": 10,
+ "documents": {
+  "01_northvale_health.md": {
+   "slices": 13,
+   "chars": 853,
+   "slice_ms": {
+    "median": 34.96,
+    "p95": 42.46,
+    "min": 24.35
+   },
+   "doc_ms": {
+    "median": 449.7,
+    "p95": 482.13,
+    "min": 441.54
+   },
+   "chars_per_sec": 1896.8,
+   "entity_count": 34,
+   "entities": [
+    {
+     "text": "The EMR outage",
+     "start": 0,
+     "end": 14,
+     "label": "Event",
+     "score": 0.7595067024230957
+    },
+    {
+     "text": "discharge",
+     "start": 67,
+     "end": 76,
+     "label": "Event",
+     "score": 0.7628964781761169
+    },
+    {
+     "text": "evaluated",
+     "start": 13,
+     "end": 22,
+     "label": "Event",
+     "score": 0.517760694026947
+    },
+    {
+     "text": "Austin",
+     "start": 41,
+     "end": 47,
+     "label": "Location",
+     "score": 0.9872879981994629
+    },
+    {
+     "text": "Lakeshore General Hospital",
+     "start": 38,
+     "end": 64,
+     "label": "Location",
+     "score": 0.8696808218955994
+    },
+    {
+     "text": "Lakeshore General Hospital",
+     "start": 0,
+     "end": 26,
+     "label": "Organization",
+     "score": 0.9740197658538818
+    },
+    {
+     "text": "Northvale Health Network",
+     "start": 4,
+     "end": 28,
+     "label": "Organization",
+     "score": 0.9665061831474304
+    },
+    {
+     "text": "Northvale Health Network",
+     "start": 0,
+     "end": 24,
+     "label": "Organization",
+     "score": 0.9588967561721802
+    },
+    {
+     "text": "Northvale Health Network",
+     "start": 46,
+     "end": 70,
+     "label": "Organization",
+     "score": 0.9704106450080872
+    },
+    {
+     "text": "Riverside Clinic",
+     "start": 23,
+     "end": 39,
+     "label": "Organization",
+     "score": 0.9599098563194275
+    },
+    {
+     "text": "The company",
+     "start": 0,
+     "end": 11,
+     "label": "Organization",
+     "score": 0.8749669194221497
+    },
+    {
+     "text": "The hospital",
+     "start": 0,
+     "end": 12,
+     "label": "Organization",
+     "score": 0.8568074703216553
+    },
+    {
+     "text": "The hospital",
+     "start": 0,
+     "end": 12,
+     "label": "Organization",
+     "score": 0.8072919845581055
+    },
+    {
+     "text": "radiology review board",
+     "start": 4,
+     "end": 26,
+     "label": "Organization",
+     "score": 0.6855030059814453
+    },
+    {
+     "text": "team",
+     "start": 86,
+     "end": 90,
+     "label": "Organization",
+     "score": 0.6528545618057251
+    },
+    {
+     "text": "Amara Osei",
+     "start": 0,
+     "end": 10,
+     "label": "Person",
+     "score": 0.9906256198883057
+    },
+    {
+     "text": "Amara Osei",
+     "start": 0,
+     "end": 10,
+     "label": "Person",
+     "score": 0.9916568994522095
+    },
+    {
+     "text": "Dr",
+     "start": 0,
+     "end": 2,
+     "label": "Person",
+     "score": 0.8272935152053833
+    },
+    {
+     "text": "Dr",
+     "start": 0,
+     "end": 2,
+     "label": "Person",
+     "score": 0.8272935152053833
+    },
+    {
+     "text": "two new surgeons",
+     "start": 18,
+     "end": 34,
+     "label": "Person",
+     "score": 0.7849280834197998
+    },
+    {
+     "text": "Operations Review",
+     "start": 30,
+     "end": 47,
+     "label": "Process",
+     "score": 0.7489768862724304
+    },
+    {
+     "text": "handoffs",
+     "start": 114,
+     "end": 122,
+     "label": "Process",
+     "score": 0.7829554080963135
+    },
+    {
+     "text": "CareChart EMR",
+     "start": 38,
+     "end": 51,
+     "label": "Technology",
+     "score": 0.800351083278656
+    },
+    {
+     "text": "CareChart EMR platform",
+     "start": 34,
+     "end": 56,
+     "label": "Technology",
+     "score": 0.8475788831710815
+    },
+    {
+     "text": "CareConnect portal",
+     "start": 4,
+     "end": 22,
+     "label": "Technology",
+     "score": 0.6630677580833435
+    },
+    {
+     "text": "CareCoordinator scheduling model",
+     "start": 27,
+     "end": 59,
+     "label": "Technology",
+     "score": 0.8125904202461243
+    },
+    {
+     "text": "patient portal",
+     "start": 34,
+     "end": 48,
+     "label": "Technology",
+     "score": 0.7893514037132263
+    },
+    {
+     "text": "platform",
+     "start": 82,
+     "end": 90,
+     "label": "Technology",
+     "score": 0.7508636116981506
+    },
+    {
+     "text": "portal",
+     "start": 100,
+     "end": 106,
+     "label": "Technology",
+     "score": 0.7338036894798279
+    },
+    {
+     "text": "state registry",
+     "start": 46,
+     "end": 60,
+     "label": "Technology",
+     "score": 0.5214459300041199
+    },
+    {
+     "text": "2015",
+     "start": 43,
+     "end": 47,
+     "label": "TimeReference",
+     "score": 0.9546101689338684
+    },
+    {
+     "text": "Tuesday",
+     "start": 81,
+     "end": 88,
+     "label": "TimeReference",
+     "score": 0.7203083634376526
+    },
+    {
+     "text": "around the clock",
+     "start": 91,
+     "end": 107,
+     "label": "TimeReference",
+     "score": 0.5996216535568237
+    },
+    {
+     "text": "last month",
+     "start": 35,
+     "end": 45,
+     "label": "TimeReference",
+     "score": 0.8355859518051147
+    }
+   ]
+  },
+  "05_corval_logistics.md": {
+   "slices": 10,
+   "chars": 627,
+   "slice_ms": {
+    "median": 33.31,
+    "p95": 39.56,
+    "min": 26.43
+   },
+   "doc_ms": {
+    "median": 325.93,
+    "p95": 333.45,
+    "min": 324.87
+   },
+   "chars_per_sec": 1923.7,
+   "entity_count": 24,
+   "entities": [
+    {
+     "text": "new pricing model",
+     "start": 4,
+     "end": 21,
+     "label": "Concept",
+     "score": 0.5525173544883728
+    },
+    {
+     "text": "billing delays",
+     "start": 49,
+     "end": 63,
+     "label": "Event",
+     "score": 0.6579986214637756
+    },
+    {
+     "text": "delays",
+     "start": 49,
+     "end": 55,
+     "label": "Event",
+     "score": 0.5392264723777771
+    },
+    {
+     "text": "regional hauls",
+     "start": 58,
+     "end": 72,
+     "label": "Event",
+     "score": 0.8471273183822632
+    },
+    {
+     "text": "Oakland",
+     "start": 37,
+     "end": 44,
+     "label": "Location",
+     "score": 0.9842682480812073
+    },
+    {
+     "text": "The harbor terminal",
+     "start": 0,
+     "end": 19,
+     "label": "Location",
+     "score": 0.9008445739746094
+    },
+    {
+     "text": "Corval",
+     "start": 0,
+     "end": 6,
+     "label": "Organization",
+     "score": 0.940085232257843
+    },
+    {
+     "text": "Corval",
+     "start": 0,
+     "end": 6,
+     "label": "Organization",
+     "score": 0.8716844916343689
+    },
+    {
+     "text": "Corval Freight",
+     "start": 0,
+     "end": 14,
+     "label": "Organization",
+     "score": 0.9686957597732544
+    },
+    {
+     "text": "Corval Logistics",
+     "start": 4,
+     "end": 20,
+     "label": "Organization",
+     "score": 0.9541829824447632
+    },
+    {
+     "text": "Corval Logistics",
+     "start": 0,
+     "end": 16,
+     "label": "Organization",
+     "score": 0.9738523364067078
+    },
+    {
+     "text": "Corval Logistics",
+     "start": 34,
+     "end": 50,
+     "label": "Organization",
+     "score": 0.974728524684906
+    },
+    {
+     "text": "FreightNet",
+     "start": 53,
+     "end": 63,
+     "label": "Organization",
+     "score": 0.8337116241455078
+    },
+    {
+     "text": "FreightNet",
+     "start": 28,
+     "end": 38,
+     "label": "Organization",
+     "score": 0.7491766810417175
+    },
+    {
+     "text": "The Portside warehouse",
+     "start": 0,
+     "end": 22,
+     "label": "Organization",
+     "score": 0.8904742002487183
+    },
+    {
+     "text": "West Coast logistics consortium",
+     "start": 36,
+     "end": 67,
+     "label": "Organization",
+     "score": 0.9156307578086853
+    },
+    {
+     "text": "regional dispatchers",
+     "start": 4,
+     "end": 24,
+     "label": "Person",
+     "score": 0.8728907704353333
+    },
+    {
+     "text": "Regional Operations Review",
+     "start": 22,
+     "end": 48,
+     "label": "Process",
+     "score": 0.6822218298912048
+    },
+    {
+     "text": "QuickScale",
+     "start": 18,
+     "end": 28,
+     "label": "Product",
+     "score": 0.6572124361991882
+    },
+    {
+     "text": "FreightNet routing platform",
+     "start": 26,
+     "end": 53,
+     "label": "Technology",
+     "score": 0.8916705250740051
+    },
+    {
+     "text": "invoicing system",
+     "start": 4,
+     "end": 20,
+     "label": "Technology",
+     "score": 0.8439355492591858
+    },
+    {
+     "text": "rival platform",
+     "start": 46,
+     "end": 60,
+     "label": "Technology",
+     "score": 0.591468095779419
+    },
+    {
+     "text": "routing platform",
+     "start": 64,
+     "end": 80,
+     "label": "Technology",
+     "score": 0.5443008542060852
+    },
+    {
+     "text": "June",
+     "start": 84,
+     "end": 88,
+     "label": "TimeReference",
+     "score": 0.9588169455528259
+    }
+   ]
+  }
+ }
+}

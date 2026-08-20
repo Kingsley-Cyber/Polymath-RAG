@@ -27,7 +27,9 @@ sidecars/*/weights/
 
 # Generated
 .scaffold-touched
+eval/kimi_realignment_v1/dev_matrix_results/
 
 # Lexical resources: raw vendor archives are build deps, never committed.
 # The compiled tables under resources/compiled/ ARE committed (runtime).
 resources/vendor/
+.venv-gliner2/

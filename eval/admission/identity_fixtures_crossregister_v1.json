@@ -1,0 +1,57 @@
+{
+ "version": "identity-fixtures-crossregister-1",
+ "authored": "2026-08-18",
+ "contract": "identity-precision-v2",
+ "why": "The frozen 55-item admission gold is technical noun phrases from ONE self-referential corpus. It contains no pronoun, no wh-word, no sentence-initial quantifier, no clause. Two real documents (a spoken transcript and an academic psychology text) produced ~69% false identity admissions. Negatives and positives are paired FROM THE SAME DOCUMENTS so a passing rule cannot simply be rejecting conversational or academic prose wholesale.",
+ "sources": [
+  "/Users/king/Downloads/e/04_transcript_local_rag_build.md",
+  "/Users/king/Downloads/e/01_psychology_working_memory.md"
+ ],
+ "must_not_be_identity": [
+  {"surface": "I", "sentence": "Today I want to walk through why we moved the research assistant.", "class": "pronoun", "source": "transcript"},
+  {"surface": "That", "sentence": "That was convenient for demos and painful for debugging.", "class": "demonstrative", "source": "transcript"},
+  {"surface": "What", "sentence": "What changed on the extraction side?", "class": "wh-form", "source": "transcript"},
+  {"surface": "Workers", "sentence": "Workers commit artifacts, receipts, and outbox events transactionally.", "class": "sentence-initial common noun", "source": "transcript"},
+  {"surface": "Two documents", "sentence": "Two documents may mention the same company using different surfaces.", "class": "quantified plurality", "source": "transcript"},
+  {"surface": "Earlier versions", "sentence": "Earlier versions leaned more heavily on model output.", "class": "sentence-initial common noun", "source": "transcript"},
+  {"surface": "two John Smith", "sentence": "We would rather keep two John Smith records separate than silently merge them.", "class": "quantifier + named surface", "source": "transcript",
+   "why": "a quantified named surface does not inherit SINGULAR identity"},
+  {"surface": "Researchers", "sentence": "Researchers generally distinguish working memory from long-term memory.", "class": "sentence-initial common noun", "source": "psychology"},
+  {"surface": "One influential account", "sentence": "One influential account proposes that working memory contains separate systems.", "class": "quantified plurality", "source": "psychology"},
+  {"surface": "Several laboratory studies", "sentence": "Several laboratory studies have reported slower responses after restricted sleep.", "class": "quantified plurality", "source": "psychology"},
+  {"surface": "These findings", "sentence": "These findings do not prove that every component is equally impaired.", "class": "demonstrative + common noun", "source": "psychology"},
+  {"surface": "Worked examples", "sentence": "Worked examples and diagrams can reduce the need to coordinate information.", "class": "sentence-initial common noun", "source": "psychology"},
+  {"surface": "Performance", "sentence": "Performance depends on the type of information and prior knowledge.", "class": "sentence-initial common noun", "source": "psychology"},
+  {"surface": "This", "sentence": "This makes working memory useful as an explanatory concept.", "class": "bare demonstrative", "source": "psychology"},
+  {"surface": "When attention shifts", "sentence": "When attention shifts, information that has not been rehearsed can disappear.", "class": "clausal span", "source": "psychology",
+   "why": "a subordinate clause is not a nominal referent at all"}
+ ],
+ "must_be_identity": [
+  {"surface": "Postgres", "sentence": "Postgres is the workflow authority for the pipeline.", "source": "transcript"},
+  {"surface": "Qdrant", "sentence": "Qdrant is still used for vector retrieval in the system.", "source": "transcript"},
+  {"surface": "Neo4j", "sentence": "Neo4j is still used for graph traversal by the workers.", "source": "transcript"},
+  {"surface": "GLiNER", "sentence": "In the current version, GLiNER proposes entities for the compiler.", "source": "transcript"},
+  {"surface": "Crestline Automation", "sentence": "Crestline Automation uses Siemens PLCs on the assembly line.", "source": "i4"},
+  {"surface": "FreightNet routing platform", "sentence": "Corval Logistics uses the FreightNet routing platform for regional hauls.", "source": "i4"},
+  {"surface": "Cobalt assembly cell", "sentence": "Crestline developed the Cobalt assembly cell with the robotics vendor.", "source": "i4"},
+  {"surface": "West Coast logistics consortium", "sentence": "The dispatchers joined the West Coast logistics consortium in June.", "source": "i4"}
+ ],
+ "adversarial_pairs": [
+  {"negative": "Workers", "positive": "Workers United",
+   "neg_sentence": "Workers commit artifacts and receipts transactionally.",
+   "pos_sentence": "The dispute involved Workers United and the employer.",
+   "why": "same head noun; only the second carries a proper-name anchor"},
+  {"negative": "Researchers", "positive": "Researcher Technologies",
+   "neg_sentence": "Researchers generally distinguish the two memory systems.",
+   "pos_sentence": "Researcher Technologies published the benchmark last spring.",
+   "why": "same head noun; identity must come from the anchor, not capitalization"},
+  {"negative": "two documents", "positive": "Document D6L11",
+   "neg_sentence": "We compared two documents from the same corpus.",
+   "pos_sentence": "The auditor cited Document D6L11 in the finding.",
+   "why": "quantified plurality vs identifier structure"},
+  {"negative": "When attention shifts", "positive": "Attention Shift Protocol",
+   "neg_sentence": "When attention shifts, unrehearsed information disappears.",
+   "pos_sentence": "The team followed the Attention Shift Protocol during testing.",
+   "why": "clause vs named nominal"}
+ ]
+}

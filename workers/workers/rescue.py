@@ -81,7 +81,38 @@ def _trimmed_noun_chunks(syntax: dict, text: str) -> list[tuple[int, int, str]]:
     return out
 
 
-def boundary_candidates(sl, revision: str) -> list[tuple[object, RescueQuery, int, int]]:
+def layout_of(row: dict) -> tuple[tuple[int, int], ...]:
+    """Persisted heading regions for a chunk, in CHUNK-relative coordinates.
+
+    Read, never re-derived: chunk text is assembled with `" ".join(sentences)`
+    and no longer carries the line structure heading detection needs
+    (layout-evidence-v1). An absent map means the chunk predates that
+    evidence, and the bound ABSTAINS rather than asserting "no headings".
+    """
+    raw = (row or {}).get("layout_map")
+    return tuple((int(a), int(b)) for a, b in raw) if raw else ()
+
+
+def crosses_layout_boundary(regions: tuple[tuple[int, int], ...],
+                            start: int, end: int) -> bool:
+    """Does [start, end) straddle a structural edge?
+
+    Sentence splitting merges a heading with the prose beneath it when the
+    heading has no terminal punctuation, so spaCy noun chunks run straight
+    across the junction and manufacture phrases like
+    `Postmortem Review Nimbus Cloud` that exist in no linguistic sense. A
+    candidate is refused when a heading edge falls strictly inside it;
+    candidates wholly inside or wholly outside a heading are untouched.
+    """
+    for a, b in regions:
+        if start < a < end or start < b < end:
+            return True
+    return False
+
+
+def boundary_candidates(sl, revision: str,
+                        layout: tuple[tuple[int, int], ...] = ()
+                        ) -> list[tuple[object, RescueQuery, int, int]]:
     """Per slice: GLiNER spans strictly inside a larger (trimmed) NP
     become boundary rescue candidates.
 
@@ -111,6 +142,10 @@ def boundary_candidates(sl, revision: str) -> list[tuple[object, RescueQuery, in
                     best = (entity, surface, chunk_cs, chunk_ce)
         if best is not None:
             entity, surface, chunk_cs, chunk_ce = best
+            # RESCUE-SPAN-PRESERVATION-V1 (B): never widen across a
+            # structural edge. The entity keeps its provider extent.
+            if crosses_layout_boundary(layout, chunk_cs, chunk_ce):
+                continue
             candidates.append((entity, RescueQuery(
                 kind="boundary",
                 text=surface,
@@ -163,7 +198,8 @@ def _trigger_tokens(sl, tokens: list[dict]) -> list[dict]:
     return out
 
 
-def missing_argument_candidates(sl, revision: str, label_set: tuple[str, ...]):
+def missing_argument_candidates(sl, revision: str, label_set: tuple[str, ...],
+                                layout: tuple[tuple[int, int], ...] = ()):
     """I4R-B: trigger-governed grammatical slots with NO GLiNER entity.
 
     For each evidence (trigger) token, tokens whose dependency head is
@@ -214,6 +250,10 @@ def missing_argument_candidates(sl, revision: str, label_set: tuple[str, ...]):
         if any(t["dep"] in ("nummod", "quantmod") for t in inside):
             continue
         chunk_cs, chunk_ce = sl.sentence_start + cs, sl.sentence_start + ce
+        # RESCUE-SPAN-PRESERVATION-V1 (B): a candidate straddling a heading
+        # edge is a segmentation artifact, not a noun phrase.
+        if crosses_layout_boundary(layout, chunk_cs, chunk_ce):
+            continue
         # only MISSING arguments: skip any NP an entity already covers
         if any(e.start < chunk_ce and e.end > chunk_cs for e in sl.entities):
             continue
@@ -248,11 +288,11 @@ def apply_boundary(ordered_slices: list) -> dict:
     run ONE batched /rescue call (bounded), apply results per slice.
 
     Accepted -> the slice's argument-binding entity list carries the
-    EXPANDED span (same core type, rescued score, chunk-relative
-    offsets of the trimmed NP). Refused -> BOUNDARY_UNRESOLVED: the
-    original proposal stays a durable mention (already persisted in
-    pass A) but is REMOVED from this sentence's argument binding —
-    unresolved argument identity means no edge."""
+    EXPANDED span (same core type, rescued score, chunk-relative offsets of
+    the trimmed NP). Refused -> the ORIGINAL provider span is KEPT
+    (RESCUE-SPAN-PRESERVATION-V1): rescue may improve an accepted span, but
+    failed speculative rescue may never destroy the accepted provider span
+    it started from."""
     from polymath_shared.clients import GlinerClient
     from polymath_shared.contracts import CoreType, EntitySpan
 
@@ -260,7 +300,7 @@ def apply_boundary(ordered_slices: list) -> dict:
     per_slice: list[list] = []
     queries: dict[str, RescueQuery] = {}
     for row, sl in ordered_slices:
-        found = boundary_candidates(sl, revision)
+        found = boundary_candidates(sl, revision, layout_of(row))
         per_slice.append(found)
         for entity, query, _cs, _ce in found:
             queries.setdefault(query.identity, query)
@@ -326,7 +366,19 @@ def apply_boundary(ordered_slices: list) -> dict:
                 continue
             hit, chunk_cs, chunk_ce = outcome
             if hit is None:
-                continue  # BOUNDARY_UNRESOLVED: no argument binding here
+                # RESCUE-SPAN-PRESERVATION-V1 (A). A failed hypothesis about a
+                # LARGER extent is not negative evidence about the accepted
+                # smaller one, so the provider's span survives its own failed
+                # widening. `Nimbus Cloud` (0.91) was being destroyed because
+                # `Postmortem Review Nimbus Cloud` failed.
+                #
+                # This previously dropped the entity, justified by "the
+                # original stays a durable mention (already persisted in
+                # pass A)". S4c moved mention persistence AFTER rescue, which
+                # silently invalidated that premise and turned a binding
+                # decision into data loss.
+                new_entities.append(entity)
+                continue
             new_entities.append(EntitySpan(
                 doc_id=entity.doc_id,
                 chunk_id=entity.chunk_id,
@@ -370,7 +422,8 @@ def apply_missing_arguments(ordered_slices: list, label_set: tuple[str, ...]) ->
     per_slice: list[list] = []
     queries: dict[str, RescueQuery] = {}
     for row, sl in ordered_slices:
-        found = missing_argument_candidates(sl, revision, label_set)
+        found = missing_argument_candidates(sl, revision, label_set,
+                                            layout_of(row))
         per_slice.append(found)
         for query, _cs, _ce in found:
             queries.setdefault(query.identity, query)

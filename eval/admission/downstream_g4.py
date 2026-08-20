@@ -27,7 +27,7 @@ sys.path.insert(0, str(ROOT / "workers"))
 sys.path.insert(0, str(ROOT / "eval" / "admission"))
 sys.path.insert(0, str(ROOT / "eval" / "g4"))
 
-from entity_admission import decide  # noqa: E402
+from polymath_shared.entity_admission import decide  # noqa: E402  (PHASE 0 D1: production, not the local fork)
 from eval.g4.qualify_g4 import _bidir_expand, seed  # noqa: E402
 from polymath_shared.clients import RerankerClient  # noqa: E402
 from polymath_shared.db import tx  # noqa: E402

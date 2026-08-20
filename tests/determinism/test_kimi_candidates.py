@@ -19,11 +19,11 @@ sys.path.insert(0, str(ROOT / "workers"))
 from polymath_shared.contracts import CoreType, EntitySpan, EvidenceSpan
 from polymath_shared.rulepack import load_rule_pack
 from workers.candidates import SentenceSlice
+from tests.historical_boundary import build_candidates_kimi
 from workers.kimi_candidates import (
     _find_ud_arguments,
     _token_to_entity,
     _trigger_head_token,
-    build_candidates_kimi,
 )
 
 PACK = load_rule_pack(pack_version="1.3.0")
@@ -111,9 +111,12 @@ def test_kimi_creates_structural_candidate_before_type_check():
     # the outcome should be TYPE_PRECHECK (honest) or CANDIDATE_CREATED
     codes = [c for c, _ in obs.outcomes]
     assert "SUBJECT_ENDPOINT_UNAVAILABLE" not in codes, f"early veto leaked: {codes}"
+    # ADR-0016 Phase 5: the trace now names the structural step that
+    # succeeded before the type step that failed.
+    assert "UD_SUBJECT_BOUND" in codes and "UD_OBJECT_BOUND" in codes, codes
     # Technology→Technology for uses is actually legal (both in sig), so
     # candidate should form
-    assert len(candidates) > 0 or "TYPE_PRECHECK_IMPOSSIBLE" in codes
+    assert len(candidates) > 0 or "TYPE_PRECHECK_FAIL" in codes
 
 
 def test_kimi_no_cartesian_explosion():

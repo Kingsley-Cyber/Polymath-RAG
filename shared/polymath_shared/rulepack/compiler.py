@@ -677,13 +677,40 @@ def _is_weak(syntactic: Optional[dict], candidate: RelationCandidate) -> bool:
 
 
 def _oriented_pair(candidate: RelationCandidate, syntactic: Optional[dict]) -> tuple:
-    """Voice normalization (docx §12): return (agent, patient, orientation).
+    """Voice normalization (docx §12 + KIMI Phase 4): return (agent,
+    patient, orientation).
 
-    Passive with obl:agent: the agent filler becomes the agent and the
-    surface subject (nsubj:pass) becomes the patient. Without a parse,
-    surface order is kept and the decision is marked weak — orientation
-    is then syntax-only.
+    Priority order:
+    1. PropBank assigned roles (ARG0=agent, ARG1=patient) — the
+       role-based canonical direction per KIMI invariant I6.
+    2. LexicalSemanticEvidence voice field (passive / role_canonical).
+    3. Syntactic passive detection (legacy fallback).
+    4. Surface order (weak fallback, no parse).
     """
+    # KIMI Phase 4: role-based direction from assigned PropBank roles
+    assigned = getattr(candidate, "assigned_roles", None)
+    if assigned:
+        arg0 = assigned.get("ARG0")
+        arg1 = assigned.get("ARG1")
+        if arg0 is not None and arg1 is not None:
+            arg0_text = getattr(arg0, "text", str(arg0))
+            arg1_text = getattr(arg1, "text", str(arg1))
+            if candidate.subject.span.text == arg0_text:
+                return candidate.subject, candidate.object, "role_canonical"
+            elif candidate.subject.span.text == arg1_text:
+                return candidate.object, candidate.subject, "role_canonical_passive"
+
+    # KIMI Phase 8: normalized lexical-semantic evidence carries voice
+    lse = getattr(candidate, "lexical_semantic_evidence", None)
+    if lse:
+        voice = (lse.voice or "active").lower()
+        if voice in ("passive", "passive_agent_elided", "role_canonical_passive"):
+            # passive: candidate.subject is surface subject (patient), object is agent
+            return candidate.object, candidate.subject, "passive_inverted"
+        if voice == "role_canonical":
+            return candidate.subject, candidate.object, "role_canonical"
+
+    # legacy voice normalization fallback
     if not syntactic:
         return candidate.subject, candidate.object, "surface_weak"
     agent_entity = (syntactic.get("agent") or {}).get("entity_id")
@@ -693,6 +720,219 @@ def _oriented_pair(candidate: RelationCandidate, syntactic: Optional[dict]) -> t
         if candidate.subject.resolved_entity_id == agent_entity:
             return candidate.subject, candidate.object, "passive_agent_subject"
     return candidate.subject, candidate.object, "active_surface"
+
+
+def _lexical_score(rule: dict, candidate: RelationCandidate) -> tuple[int, int, int, int]:
+    """KIMI Phases 5-7: score a rule by converging lexical-semantic evidence.
+
+    Prefers the normalized LexicalSemanticEvidence object when present;
+    falls back to legacy RelationCandidate fields for frozen harnesses.
+
+    Returns a 4-tuple (roleset_match, vn_match, fn_match, semlink_match)
+    intended for lexicographic comparison. Higher = more supported.
+    Missing data is neutral (0), never a hard gate unless the rule cites it.
+    """
+    lse = candidate.lexical_semantic_evidence
+    score = [0, 0, 0, 0]
+    ev = rule.get("evidence", {})
+
+    # PropBank roleset (Phase 3)
+    candidate_roleset = (lse.propbank_roleset if lse else None) or candidate.roleset
+    if candidate_roleset and ev.get("propbank_rolesets"):
+        if candidate_roleset in ev["propbank_rolesets"]:
+            score[0] = 2
+        else:
+            score[0] = -1  # roleset explicitly cited but mismatch
+
+    # VerbNet class overlap (Phase 5)
+    rule_vn = set(ev.get("verbnet_classes", []))
+    cand_vn = set((lse.verbnet_classes if lse else None) or candidate.verbnet_classes or [])
+    if rule_vn:
+        if cand_vn & rule_vn:
+            score[1] = 2
+        elif cand_vn:
+            score[1] = -1  # candidate has VN but none overlap
+
+    # FrameNet frame overlap (Phase 6)
+    rule_fn = set(ev.get("framenet_frames", []))
+    cand_fn = set((lse.framenet_frames if lse else None) or candidate.framenet_frames or [])
+    if rule_fn:
+        if cand_fn & rule_fn:
+            score[2] = 2
+        elif cand_fn:
+            score[2] = -1
+
+    # SemLink consistency (Phase 7): roleset maps to VN/FN that rule cites
+    semlink = lse.semlink_mapping if lse else (candidate.semlink_mapping or {})
+    semlink_vn = semlink.get("semlink_pb_vn", {}) if isinstance(semlink, dict) else {}
+    if semlink_vn and rule_vn:
+        mapped_vn = set()
+        for rs, vns in semlink_vn.items():
+            mapped_vn.update(vns)
+        if mapped_vn & rule_vn:
+            score[3] = 2
+        elif mapped_vn:
+            score[3] = -1
+
+    return tuple(score)
+
+
+def compile_relation_kimi(
+    candidate: RelationCandidate,
+    syntactic: Optional[dict],
+    rule_pack: dict[str, Any],
+    syntax: Optional[dict] = None,
+) -> CompilerDecision:
+    """KIMI-completion compiler path: active VN/PB/FN/SemLink participation.
+
+    Same stages as `compile_relation`, but predicate selection uses
+    lexical-semantic evidence as converging signal, not just a filter.
+    Legacy `compile_relation` is unchanged.
+    """
+    evidence = candidate.evidence
+    rules = rule_pack["predicates"]
+
+    # -- stage 1: modality gate ---------------------------------------------
+    scope: ScopeFlags = candidate.scope
+    gate = _modality_decision(scope)
+    if gate == "REJECT":
+        return CompilerDecision(
+            decision="REJECT",
+            reason=_scope_reason(scope),
+            rule_id=None,
+        )
+
+    # -- stage 2: predicate candidates --------------------------------------
+    matches = [
+        rules[rule_id]
+        for rule_id in rule_pack["predicate_order"]
+        if _trigger_matches(rules[rule_id], evidence)
+    ]
+    if not matches:
+        return CompilerDecision(
+            decision="UNSUPPORTED",
+            reason=f"no rule for evidence class '{evidence.evidence_class}'",
+        )
+
+    # -- stage 2b: grammatical frame arbitration ---------------------------
+    if syntax is not None:
+        matches = [r for r in matches if _frame_satisfied(r, evidence, candidate, syntax)]
+        if not matches:
+            return CompilerDecision(
+                decision="REJECT",
+                reason="frame_violation: no declared grammatical frame satisfied",
+                rule_id=getattr(evidence, "trigger_predicate_id", None),
+            )
+
+    # -- stage 2c: active lexical-semantic scoring --------------------------
+    # Score every rule by how much its declared lexical evidence converges
+    # with the candidate's PropBank roleset, VN classes, FN frames, SemLink.
+    scored = [(rule, _lexical_score(rule, candidate)) for rule in matches]
+    # Filter out rules with explicit negative lexical signal
+    scored = [(rule, score) for rule, score in scored if score > (-1, -1, -1, -1)]
+    if not scored:
+        return CompilerDecision(
+            decision="UNSUPPORTED",
+            reason="lexical_evidence_mismatch: no rule converges with VN/PB/FN/SemLink",
+            rule_id=candidate.roleset,
+        )
+
+    # Sort by score descending; keep only the top tier
+    scored.sort(key=lambda x: x[1], reverse=True)
+    top_score = scored[0][1]
+    top_rules = [rule for rule, score in scored if score == top_score]
+
+    # If the top tier has >1 rule, we need more evidence to disambiguate.
+    # Fall back to type-signature uniqueness check below; if still >1,
+    # return AMBIGUOUS.
+    matches = top_rules
+
+    # -- stage 3: orientation -------------------------------------------------
+    # KIMI Phase 4: orient by PropBank roles / voice BEFORE signature check,
+    # so passive paraphrases validate the canonical (agent, patient) pair.
+    agent_cand, patient_cand, orientation = _oriented_pair(candidate, syntactic)
+
+    subject_type = agent_cand.span.core_type.value
+    object_type = patient_cand.span.core_type.value
+    valid: list[dict] = []
+    for rule in matches:
+        if any(
+            subject_type in sig.get("subject_core", []) and object_type in sig.get("object_core", [])
+            for sig in rule["signatures"]
+        ):
+            valid.append(rule)
+
+    if not valid:
+        return CompilerDecision(
+            decision="REJECT",
+            reason=f"type_violation: no signature accepts ({subject_type} -> {object_type})",
+            rule_id=None,
+        )
+    if len(valid) > 1:
+        return CompilerDecision(
+            decision="AMBIGUOUS",
+            alternatives=[rule["id"] for rule in valid],
+            reason="multiple predicates converge; additional lexical evidence required",
+        )
+
+    rule = valid[0]
+
+    # -- stage 3b: endpoint binding guards -----------------------------------
+    import os as _os
+    if _os.environ.get("POLYMATH_BINDING_GATES", "1") == "1":
+        from polymath_shared.endpoint_binding import binding_gate_violation
+        violation = binding_gate_violation(
+            rule, subject_type, object_type, orientation,
+            candidate, agent_cand, patient_cand,
+        )
+        if violation is not None:
+            return CompilerDecision(decision="REJECT", reason=violation, rule_id=rule["id"])
+
+    subject_id = agent_cand.resolved_entity_id
+    object_id = patient_cand.resolved_entity_id
+    if subject_id == object_id:
+        return CompilerDecision(decision="REJECT", reason="self_edge", rule_id=rule["id"])
+
+    # -- stage 4: direction + qualifiers ------------------------------------
+    weak = _is_weak(syntactic, candidate)
+    qualifiers = _qualifiers(candidate, syntactic)
+    qualifiers.update(_scope_qualifiers(scope, gate))
+
+    predicate = rule["id"]
+    fact = CanonicalFact(
+        fact_id=fact_id(predicate, subject_id, object_id, qualifiers),
+        predicate=predicate,
+        subject_id=subject_id,
+        object_id=object_id,
+        qualifiers=qualifiers,
+        decision="QUALIFY" if gate == "QUALIFY" else "ACCEPT",
+        rule_id=rule["id"],
+        rule_version=rule_pack["pack"]["version"],
+        provenance={
+            "roleset": candidate.roleset,
+            "trigger_lemma": candidate.evidence.trigger_lemma,
+            "trigger_surface": candidate.evidence.text,
+            "verbnet_classes": candidate.verbnet_classes,
+            "framenet_frames": candidate.framenet_frames,
+            "semlink_resolved": candidate.semlink_resolved,
+            "resource_versions": rule_pack["resource_versions"],
+            "resource_contract_id": rule_pack.get("resource_contract_id"),
+            "compiled_lexical_sha256": rule_pack.get("compiled_lexical_sha256"),
+            "orientation": orientation,
+            "weak": weak,
+            "scope": scope.model_dump(),
+            "assigned_roles": {
+                r: getattr(e, "text", str(e))
+                for r, e in (candidate.assigned_roles or {}).items()
+            },
+            "lexical_semantic_evidence": (
+                candidate.lexical_semantic_evidence.model_dump()
+                if candidate.lexical_semantic_evidence else None
+            ),
+        },
+    )
+
+    return CompilerDecision(decision=fact.decision, fact=fact, rule_id=rule["id"])
 
 
 def _qualifiers(candidate: RelationCandidate, syntactic: Optional[dict]) -> dict:

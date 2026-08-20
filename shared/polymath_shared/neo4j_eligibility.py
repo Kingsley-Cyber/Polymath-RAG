@@ -11,11 +11,23 @@ Neo4j-eligible, shared by the three consumers that must agree:
                             eligible facts; edges of ineligible facts
                             are removed, their receipts cleared.
 
-Rule (entity-admission-v1.1, identity contract v2):
+Rule:
   an entity is eligible iff admission_class != 'MENTION_ONLY'
-  (NULL = legacy GLOBAL rows are eligible);
+  (NULL = legacy pre-0007 rows are eligible);
   a fact is eligible iff BOTH endpoints are eligible entities.
 MENTION_ONLY-dependent facts stay parked in Postgres by design.
+
+S4c — why this is NOT a second eligibility authority. SQL cannot call
+`graph_eligible()`, so this reads a column. Under admission-harbor-v2 that
+column is WRITTEN as the projection of that one predicate:
+
+    MentionIdentity.admission_class == scope        if graph_eligible(d)
+                                    == 'MENTION_ONLY' otherwise
+
+so an ineligible decision is stored as MENTION_ONLY whatever its scope, and
+this predicate reproduces `graph_eligible()` exactly rather than re-deriving
+it. The projection is held by test_s4c_single_path.py; if it ever breaks,
+these three consumers drift together, not apart.
 """
 from __future__ import annotations
 

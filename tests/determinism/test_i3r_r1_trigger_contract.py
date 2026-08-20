@@ -61,7 +61,7 @@ def test_started_event_does_not_compile_to_founded():
         spans = triggers_for(sent)
         sl = SentenceSlice(text=sent, sentence_start=0, sentence_end=len(sent),
                            entities=entities, evidence=spans, parse=None)
-        from workers.candidates import build_candidates
+        from tests.historical_boundary import build_candidates
         out = []
         for cand in build_candidates(
             [sl], doc_id="d1", corpus_id="c1", ontology_profile="core",
@@ -85,7 +85,8 @@ def test_started_event_does_not_compile_to_founded():
 def test_started_organization_still_compiles_to_founded():
     from polymath_shared.contracts import EntitySpan
     from polymath_shared.rulepack import compile_relation
-    from workers.candidates import SentenceSlice, build_candidates
+    from tests.historical_boundary import build_candidates
+    from workers.candidates import SentenceSlice
 
     founder = EntitySpan(doc_id="d1", chunk_id="chunk_t", start=0, end=11,
                          text="The founder", core_type="Person", score=0.9,

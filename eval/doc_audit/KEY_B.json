@@ -1,0 +1,85 @@
+{
+  "contract": "single-doc-utility-key-v1",
+  "authored_from": "document text only",
+  "bias_disclosure": "NOT blind. VAR-CHUNK FP/FN lists for all docs and doc 05 full output were seen before authoring. Items with pre_known=true must be discounted.",
+  "documents": {
+    "01_northvale_health.md": {
+      "wanted": [
+        {"predicate": "uses", "subject": "Northvale Health Network", "object": "CareChart EMR platform", "pre_known": true},
+        {"predicate": "located_in", "subject": "Lakeshore General Hospital", "object": "Austin", "pre_known": false},
+        {"predicate": "has_role", "subject": "Amara Osei", "object": "chief medical officer", "pre_known": false},
+        {"predicate": "depends_on", "subject": "CareConnect portal", "object": "CareChart EMR", "pre_known": false},
+        {"predicate": "part_of", "subject": "radiology review board", "object": "Lakeshore General Hospital", "pre_known": true},
+        {"predicate": "founded", "subject": "Amara Osei", "object": "Riverside Clinic", "pre_known": false}
+      ],
+      "traps": [
+        {"text": "evaluated the CareCoordinator scheduling model but has not adopted it", "why": "abandoned intent"},
+        {"text": "The EMR outage did not affect the patient portal", "why": "negation"},
+        {"text": "The company hired two new surgeons last month", "why": "unresolved definite description + bare plural object"}
+      ]
+    },
+    "02_nimbus_cloud.md": {
+      "wanted": [
+        {"predicate": "uses", "subject": "Nimbus Cloud", "object": "Kubernetes", "pre_known": true},
+        {"predicate": "depends_on", "subject": "Ledger billing service", "object": "Postgres cluster", "pre_known": true},
+        {"predicate": "part_of", "subject": "Nimbus billing service", "object": "Nimbus Cloud platform", "pre_known": true},
+        {"predicate": "created", "subject": "engineering group", "object": "load-testing harness", "pre_known": true},
+        {"predicate": "implemented_with", "subject": "Nimbus API gateway", "object": "Go", "pre_known": false},
+        {"predicate": "developed", "subject": "engineering group", "object": "platform", "pre_known": false, "note": "PASSIVE: 'The platform was designed by the engineering group' — direction test"}
+      ],
+      "traps": [
+        {"text": "considered replacing the cache layer but kept the existing setup", "why": "abandoned intent"},
+        {"text": "The Postgres cluster was not the root cause of the outage", "why": "negation"},
+        {"text": "They deployed the patch and restarted the cluster", "why": "unresolved pronoun subject"}
+      ]
+    },
+    "03_crestline_automation.md": {
+      "wanted": [
+        {"predicate": "uses", "subject": "Crestline Automation", "object": "Siemens PLCs", "pre_known": true},
+        {"predicate": "located_in", "subject": "Crestline plant", "object": "Toledo", "pre_known": true},
+        {"predicate": "leads", "subject": "Maria Kowalski", "object": "Crestline automation team", "pre_known": false},
+        {"predicate": "created", "subject": "analytics team", "object": "shift scheduling model", "pre_known": true},
+        {"predicate": "enables", "subject": "shift scheduling model", "object": "same-day dispatch", "pre_known": false},
+        {"predicate": "developed", "subject": "Crestline Automation", "object": "Cobalt assembly cell", "pre_known": true},
+        {"predicate": "associated_with", "subject": "vision system", "object": "quality database", "pre_known": true, "note": "DITRANSITIVE 'Crestline linked X to Y' — primary VAR-BIND test"},
+        {"predicate": "causes", "subject": "pump failure", "object": "production stoppage", "pre_known": false, "note": "explicit 'caused' — reachability test for the causes predicate"}
+      ],
+      "traps": [
+        {"text": "The vision system was not responsible for the defect spike", "why": "negation"},
+        {"text": "The team did not deploy the Cobalt cell on line one", "why": "negation"},
+        {"text": "The plant evaluated a night-shift pilot but has not adopted it", "why": "abandoned intent"}
+      ]
+    },
+    "04_brightpath_learning.md": {
+      "wanted": [
+        {"predicate": "uses", "subject": "Brightpath Learning", "object": "Mentor assessment engine", "pre_known": true},
+        {"predicate": "located_in", "subject": "Brightpath Learning", "object": "Raleigh", "pre_known": true, "note": "'The company is headquartered in Raleigh' — subject-slot coreference test"},
+        {"predicate": "employs", "subject": "Brightpath Learning", "object": "Daniel Okafor", "pre_known": false},
+        {"predicate": "depends_on", "subject": "Mentor assessment engine", "object": "QBank item database", "pre_known": true},
+        {"predicate": "acquired", "subject": "Brightpath Learning", "object": "Coachlight review app", "pre_known": false},
+        {"predicate": "influences", "subject": "spaced repetition schedule", "object": "retention", "pre_known": false}
+      ],
+      "traps": [
+        {"text": "considered replacing the Mentor engine but kept the existing setup", "why": "abandoned intent"},
+        {"text": "Two rival providers use the same assessment format", "why": "bare plural subject"},
+        {"text": "The company hired three new instructors last month", "why": "unresolved definite description + bare plural object"},
+        {"text": "Brightpath has not adopted the Coachlight app for high school courses", "why": "negation"}
+      ]
+    },
+    "05_corval_logistics.md": {
+      "wanted": [
+        {"predicate": "uses", "subject": "Corval Logistics", "object": "FreightNet routing platform", "pre_known": true},
+        {"predicate": "subsidiary_of", "subject": "Corval Freight", "object": "Corval Logistics", "pre_known": true},
+        {"predicate": "located_in", "subject": "Portside warehouse", "object": "Oakland", "pre_known": true},
+        {"predicate": "associated_with", "subject": "QuickScale invoicing system", "object": "FreightNet routing platform", "pre_known": true, "note": "DITRANSITIVE 'Corval linked X to Y' — primary VAR-BIND test"},
+        {"predicate": "causes", "subject": "harbor terminal", "object": "billing delays", "pre_known": true, "note": "'was the actual source of the delays' — object-slot coreference test"}
+      ],
+      "traps": [
+        {"text": "considered replacing FreightNet with a rival platform but kept the existing setup", "why": "abandoned intent"},
+        {"text": "The invoicing system was not responsible for the billing delays", "why": "negation"},
+        {"text": "The new pricing model has not been deployed", "why": "negation"},
+        {"text": "The regional dispatchers joined the West Coast logistics consortium", "why": "bare plural subject"}
+      ]
+    }
+  }
+}

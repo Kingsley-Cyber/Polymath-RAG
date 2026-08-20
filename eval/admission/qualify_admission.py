@@ -12,6 +12,7 @@ Usage:
 from __future__ import annotations
 
 import json
+import os
 import sys
 import time
 from collections import Counter, defaultdict
@@ -21,16 +22,36 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "shared"))
 sys.path.insert(0, str(ROOT / "workers"))
-sys.path.insert(0, str(ROOT / "eval" / "admission"))
-
-from entity_admission import POLICY_VERSION, decide  # noqa: E402
+# PHASE 0 (D1): import PRODUCTION admission, never the local fork.
+# `eval/admission/entity_admission.py` is a frozen v1.1 snapshot kept for
+# historical reproduction only; importing it meant this harness never
+# tested the code that actually ships.
+from polymath_shared.entity_admission import POLICY_VERSION, decide  # noqa: E402
 
 HERE = ROOT / "eval" / "admission"
 ARTIFACTS = HERE / "artifacts"
 
 
 def main() -> int:
-    gold = json.loads((HERE / "admission_gold.json").read_text())["items"]
+    # PHASE 0 (D2): admission_gold.json is the v1 (44-item) set using the
+    # umbrella label "SCOPED". The policy split SCOPED into
+    # CORPUS_SCOPED/DOCUMENT_SCOPED at v1.1 (identity contract v2) and the
+    # harness was never repointed, so every scoped item scored as wrong
+    # (0.773). GOLD is selectable; the default matches the live policy.
+    gold_name = os.environ.get("POLYMATH_ADMISSION_GOLD", "admission_gold_v1.1.json")
+    gold_path = HERE / gold_name
+    gold_doc = json.loads(gold_path.read_text())
+    gold = gold_doc["items"]
+    gold_labels = sorted({i["label"] for i in gold})
+    policy_labels = {"GLOBAL", "CORPUS_SCOPED", "DOCUMENT_SCOPED", "MENTION_ONLY"}
+    unknown = [l for l in gold_labels if l not in policy_labels]
+    if unknown:
+        raise SystemExit(
+            f"gold {gold_name} uses label(s) {unknown} that the {POLICY_VERSION} "
+            f"policy cannot emit (it emits {sorted(policy_labels)}). "
+            f"This gold predates the current contract - pick a matching gold "
+            f"or re-author it. Refusing to report a misleading accuracy."
+        )
 
     # ---- local scoring: baseline (all GLOBAL) vs candidate ----
     per_class = Counter(i["label"] for i in gold)
@@ -103,14 +124,25 @@ def main() -> int:
                      "global_entities_created": len(gold)},
         "candidate": {
             "accuracy": correct / len(rows),
+            "gold_file": gold_name,
+            "gold_version": gold_doc.get("version"),
+            "policy_version": POLICY_VERSION,
             "per_class": class_stats,
             "errors": errors,
         },
         "downstream_g4_projection": downstream,
     }
     ARTIFACTS.mkdir(parents=True, exist_ok=True)
-    (ARTIFACTS / "admission_metrics.json").write_text(
-        json.dumps(payload, indent=1, sort_keys=True))
+    # PHASE 0 (D3): committed artifacts are evidence. Writing requires an
+    # explicit opt-in; otherwise the run reports to stdout only.
+    out = ARTIFACTS / "admission_metrics.json"
+    if os.environ.get("POLYMATH_WRITE_ARTIFACTS") == "1":
+        out.write_text(json.dumps(payload, indent=1, sort_keys=True))
+        print(json.dumps({"artifact_written": str(out)}))
+    else:
+        print(json.dumps({
+            "artifact_write": "SKIPPED (set POLYMATH_WRITE_ARTIFACTS=1 to persist)",
+            "would_write": str(out)}))
 
     print(json.dumps({
         "accuracy": payload["candidate"]["accuracy"],

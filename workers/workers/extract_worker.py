@@ -38,9 +38,9 @@ from polymath_shared.receipts import (
     stage_transaction,
 )
 from polymath_shared.query_policy import QUERY_POLICY_VERSION, policy_identity
-from polymath_shared.rulepack import compile_relation, load_rule_pack
+from polymath_shared.rulepack import compile_relation, compile_relation_kimi, load_rule_pack
 from workers.candidates import SentenceSlice
-from workers.kimi_candidates import build_candidates_dispatch as build_candidates
+from workers.kimi_candidates import active_pipeline, build_candidates_dispatch as build_candidates
 from workers.evidence_proposer import EXTRACTOR_VERSION as EVIDENCE_EXTRACTOR_VERSION
 from workers.profile_router import chunk_label_set
 from workers.summarizer import split_sentences
@@ -259,7 +259,11 @@ def _slices(
             parse = parse_sentence(text)
             if parse is not None:
                 parse["_sentence_offsets"] = [start, end]
-                _fill_parse_entities(parse, ent, corpus_id)
+                # S4b: NO allocation here. `_slices` runs BEFORE syntax
+                # exists, so it cannot be an admission authority under a
+                # syntax-dependent contract. Parse entity ids are attached
+                # at the post-syntax boundary from the single identities
+                # map (see _allocate_identities).
             slices.append(SentenceSlice(
                 text=text, sentence_start=start, sentence_end=end,
                 entities=ent, evidence=ev, parse=parse,
@@ -267,23 +271,216 @@ def _slices(
     return slices
 
 
-def _allocate_parse_entity(span, corpus_id: str, parse: dict) -> str:
-    """Parse-record entity ids must use the SAME admission identity as
-    candidates (the compiler compares them in _oriented_pair)."""
-    from polymath_shared.entity_admission import allocate_entity_id
+def _allocate_parse_entity(span, corpus_id: str, parse: dict,
+                           identities: dict | None = None) -> str | None:
+    """S4b — CONSUMER, not an authority.
 
-    sent_start = (parse.get("_sentence_offsets") or [0])[0]
-    leading = len(parse.get("text", "")) - len(parse.get("text", "").lstrip())
-    return allocate_entity_id(
-        span.text, span.core_type.value,
-        corpus_id=corpus_id, doc_id=span.doc_id, chunk_id=span.chunk_id,
-        span_start=span.start, span_end=span.end,
-        extraction_score=span.score,
-        sentence_initial=span.start <= sent_start + leading,
-    ).mention_id
+    Parse-record entity ids must be IDENTICAL to candidate ids because the
+    compiler compares them in `_oriented_pair`. This function previously
+    RE-DERIVED admission for the same span, which is a second semantic
+    authority over one mention: two independent admissions of one span can
+    disagree, and under admission-harbor-v2 it would also need syntax the
+    parse record does not carry.
+
+    THE INVARIANT: admission is computed ONCE per mention interpretation.
+    Every downstream representation carries the resulting identity; none
+    recomputes it.
+
+    `identities` maps a span key to the id already allocated at the
+    admission boundary. A miss returns None — the parse record simply
+    carries no entity_id — rather than inventing one.
+    """
+    if not identities:
+        return None
+    identity = identities.get(_span_identity_key(span, corpus_id))
+    return identity.entity_id if identity is not None else None
 
 
-def _fill_parse_entities(parse: dict, entities: list[EntitySpan], corpus_id: str = "eval") -> None:
+def _persist_slice_manifest(conn: Connection, doc_id: str,
+                            ordered_slices: list[tuple[dict, SentenceSlice]]) -> None:
+    """SENTENCE-SLICE-MANIFEST-V1 — the interpreter's view, made durable.
+
+    `slice_index` is the position in DOCUMENT order, which is the order the
+    discourse consumer accumulated context in; reproducing the set without
+    the order would still change resolution.
+    """
+    conn.execute("DELETE FROM sentence_slices WHERE doc_id = %s", (doc_id,))
+    for idx, (row, sl) in enumerate(ordered_slices):
+        conn.execute(
+            """
+            INSERT INTO sentence_slices (doc_id, chunk_id, slice_index,
+                                         chunk_start, chunk_end, in_context)
+            VALUES (%s, %s, %s, %s, %s, TRUE)
+            ON CONFLICT (doc_id, chunk_id, slice_index) DO UPDATE
+                SET chunk_start = EXCLUDED.chunk_start,
+                    chunk_end = EXCLUDED.chunk_end,
+                    in_context = EXCLUDED.in_context
+            """,
+            (doc_id, row["chunk_id"], idx, sl.sentence_start, sl.sentence_end),
+        )
+
+
+def _allocate_identities(ordered_slices, corpus_id: str, doc_id: str, *,
+                         contract_version: str) -> dict:
+    """S4b/S4c — THE single admission authority for a document.
+
+    `contract_version` is REQUIRED and never inferred. Production pins
+    admission-harbor-v2; an explicitly pinned historical replay is the only
+    other legitimate value. There is no default, because a default is how a
+    fallback gets in.
+
+    Runs at the post-syntax boundary (S4a) and interprets each proposed span
+    EXACTLY ONCE under the pinned semantic contract. Every downstream
+    representation — parse records, relation candidates, persisted mentions,
+    fact endpoints — reads its identity from this map rather than re-deriving
+    admission. Two independent admissions of one span can disagree; that is a
+    second semantic authority, which wiring invariant 1 forbids.
+
+    Discourse state accumulates in document order, so a reference is resolved
+    against what the document has actually established BEFORE it, never after.
+    """
+    from polymath_shared.admission_interpreter import interpret_admission
+    from polymath_shared.execution import SEMANTIC_CONTRACT_V2
+    from dataclasses import replace
+
+    from polymath_shared.identity_allocation import (
+        allocate_identity, normalized_for_lookup, span_identity_key,
+    )
+    from polymath_shared.layout_evidence import in_heading
+
+    reads_coordinates = contract_version == SEMANTIC_CONTRACT_V2
+
+    # CONCEPT-EVIDENCE-V1 reads definitional patterns from the whole
+    # document, not the sentence: "X is defined as ..." may be chunks away.
+    chunk_text: dict[str, str] = {}
+    for row, _sl in ordered_slices:
+        chunk_text.setdefault(row["chunk_id"], row.get("text") or "")
+    document_text = "\n".join(chunk_text.values())
+    # LAYOUT-EVIDENCE-V1 (row 53): heading status is READ from persisted
+    # layout evidence, never re-derived here. Chunk text is assembled with
+    # `" ".join(sentences)` and has no line structure left, so detecting
+    # headings from it marked whole chunks as headings and withdrew identity
+    # from every span inside them.
+    #
+    # NULL layout_map means the chunk predates layout evidence. The rule then
+    # ABSTAINS — absent evidence is not evidence of absence, and asserting
+    # "no headings" would silently re-enable the typography defect.
+    chunk_headings: dict[str, list[tuple[int, int]]] = {}
+    for row, _sl in ordered_slices:
+        cid = row["chunk_id"]
+        if cid in chunk_headings:
+            continue
+        raw = row.get("layout_map")
+        chunk_headings[cid] = [tuple(r) for r in raw] if raw else []
+
+    out: dict = {}
+    context: list[str] = []
+    context_syntax: list[dict | None] = []
+    anchors: list[tuple[str, str]] = []
+    # ANTECEDENT-IDENTITY-INHERITANCE-V1: the identity each admitted anchor
+    # holds, so a reference that resolves to one can inherit it rather than
+    # mint a second id from its own descriptive surface.
+    anchor_identity: dict[str, str] = {}
+
+    for _row, sl in ordered_slices:
+        for span in sl.entities:
+            key = span_identity_key(span, corpus_id)
+            if key in out:
+                continue
+            # `sl.syntax` is annotated over `sl.text`, so its token offsets
+            # are SENTENCE-relative while span offsets are chunk-absolute.
+            # A silent frame mismatch would select the wrong tokens and thus
+            # decide identity from the wrong evidence — fail loudly instead.
+            #
+            # This is a precondition of V2 SPECIFICALLY: it is the contract
+            # that reads span coordinates to select tokens. The historical
+            # interpreter reads only the surface, so enforcing coordinate
+            # agreement during a pinned replay would reject fixtures on a
+            # dimension that contract never consulted.
+            rel_start = span.start - sl.sentence_start
+            rel_end = span.end - sl.sentence_start
+            if reads_coordinates and sl.text[rel_start:rel_end] != span.text:
+                raise RuntimeError(
+                    "span/sentence coordinate frame mismatch at "
+                    f"{span.chunk_id}[{span.start}:{span.end}]: "
+                    f"sentence yields {sl.text[rel_start:rel_end]!r}, "
+                    f"span carries {span.text!r}")
+            result = interpret_admission(
+                contract_version=contract_version,
+                proposal_surface=span.text,
+                core_type=span.core_type.value,
+                span=(rel_start, rel_end),
+                sentence_text=sl.text,
+                syntax=sl.syntax,
+                document_text=document_text,
+                discourse_context=list(context),
+                discourse_syntax=list(context_syntax),
+                admitted_anchors=list(anchors),
+                # carried for an explicitly pinned historical replay; the
+                # V2 interpreter ignores both.
+                extraction_score=span.score,
+                sentence_initial=rel_start <= len(
+                    sl.text[: len(sl.text) - len(sl.text.lstrip())]),
+                heading_context=in_heading(
+                    chunk_headings.get(span.chunk_id, []),
+                    span.start, span.end),
+            )
+            inherited = None
+            if result.reference_basis == "ANTECEDENT_RESOLVED":
+                inherited = anchor_identity.get(
+                    normalized_for_lookup(result.resolves_to or ""))
+                if inherited is None:
+                    # The antecedent carries no durable identity — a generic
+                    # population, or a noun phrase never admitted in its own
+                    # right. Keep the record truthful: eligibility is
+                    # inherited too, so it is False here.
+                    result = replace(
+                        result, graph_eligible=False,
+                        admission_reason=(
+                            f"{result.admission_reason}; antecedent carries no "
+                            "durable identity to inherit"))
+            identity = allocate_identity(
+                result, corpus_id=corpus_id, doc_id=span.doc_id or doc_id,
+                chunk_id=span.chunk_id, span_start=span.start,
+                span_end=span.end, inherit_entity_id=inherited)
+            out[key] = identity
+            # Only a durable IDENTITY anchor can serve as an antecedent.
+            # A resolved LOCAL_REFERENCE must not become one, or reference
+            # chains would manufacture identity by recurrence.
+            if identity.durable and result.anchor_kind == "IDENTITY":
+                # (surface, CORE TYPE) — discourse-reference-v1's contract.
+                # This carried `identity.entity_id`, so E4b's `ct == type_of`
+                # compared an entity id to a type name and never matched:
+                # E4b was dead on the production path while passing in tests,
+                # and `the company` fell through to E4's weak co-occurrence
+                # branch. Identity inheritance is unaffected — it resolves
+                # through `anchor_identity`, keyed by surface.
+                anchors.append((result.referential_surface, result.core_type))
+            if identity.durable:
+                # Any durable admission can be the antecedent a later
+                # reference inherits from — concepts included.
+                anchor_identity.setdefault(
+                    normalized_for_lookup(result.proposal_surface),
+                    identity.entity_id)
+                anchor_identity.setdefault(
+                    normalized_for_lookup(result.referential_surface),
+                    identity.entity_id)
+        context.append(sl.text)
+        context_syntax.append(sl.syntax)
+    return out
+
+
+def _span_identity_key(span, corpus_id: str) -> tuple:
+    """Re-export of the shared key so extract_worker and candidates cannot
+    drift apart on what counts as "the same span"."""
+    from polymath_shared.identity_allocation import span_identity_key
+
+    return span_identity_key(span, corpus_id)
+
+
+def _fill_parse_entities(parse: dict, entities: list[EntitySpan],
+                         corpus_id: str = "eval",
+                         identities: dict | None = None) -> None:
     """Q1-R v1.1.0: link the syntactic record's subject/agent/object to
     pass-1 entity ids by deterministic surface match, so the compiler's
     voice normalization (_oriented_pair) can orient passive facts by
@@ -309,7 +506,44 @@ def _fill_parse_entities(parse: dict, entities: list[EntitySpan], corpus_id: str
                     match = span
                     break
         if match is not None:
-            record["entity_id"] = _allocate_parse_entity(match, corpus_id, parse)
+            allocated = _allocate_parse_entity(match, corpus_id, parse,
+                                               identities)
+            if allocated is not None:
+                record["entity_id"] = allocated
+
+
+# ADR-0016 Phase 5: which pipeline step owns each outcome. A code missing
+# here degrades to argument_binding, preserving pre-Phase-5 behaviour.
+_STAGE_BY_CODE = {
+    "SUBJECT_ENDPOINT_UNAVAILABLE": "argument_binding",
+    "OBJECT_ENDPOINT_UNAVAILABLE": "argument_binding",
+    "SUBJECT_MENTION_ONLY": "admission",
+    "ARGUMENT_BINDING_AMBIGUOUS": "argument_binding",
+    "COORDINATION_AMBIGUOUS": "argument_binding",
+    "OBJECT_TYPE_INCOMPATIBLE": "candidate_generation",
+    "CANDIDATE_CREATED": "candidate_generation",
+    "UD_SUBJECT_BOUND": "ud_binding",
+    "UD_OBJECT_BOUND": "ud_binding",
+    "UD_OBLIQUE_BOUND": "ud_binding",
+    "UD_NO_ARGUMENT_IN_SLOT": "ud_binding",
+    "ROLE_ARG0_ASSIGNED": "role_assignment",
+    "ROLE_ARG1_ASSIGNED": "role_assignment",
+    "ROLE_ARG2_ASSIGNED": "role_assignment",
+    "ROLE_ASSIGNED": "role_assignment",
+    "ROLE_NO_ROLESET": "role_assignment",
+    "ROLE_ORIENTATION_INCOMPLETE": "role_assignment",
+    "TYPE_PRECHECK_PASS": "type_precheck",
+    "TYPE_PRECHECK_FAIL": "type_precheck",
+    "TYPE_PRECHECK_IMPOSSIBLE": "type_precheck",
+    "TYPE_PRECHECK_NO_VIABLE_PAIR": "type_precheck",
+}
+# Progress events carry their own event_type so summary mode (terminal
+# decisions only) drops them and the first-loss funnel never sees them.
+_EVENT_TYPE_BY_STAGE = {
+    "ud_binding": "binding",
+    "role_assignment": "role",
+    "type_precheck": "type_precheck",
+}
 
 
 class _SliceObserver:
@@ -326,30 +560,38 @@ class _SliceObserver:
     def record_candidate_outcome(self, sl, evidence, code, detail=None):
         if not self._c.enabled:
             return
+        from polymath_shared.observability import (
+            STEP_CODES, binding_discipline,
+        )
         detail = detail or {}
-        first_loss_stage = {
-            "SUBJECT_ENDPOINT_UNAVAILABLE": "argument_binding",
-            "OBJECT_ENDPOINT_UNAVAILABLE": "argument_binding",
-            "SUBJECT_MENTION_ONLY": "admission",
-            "ARGUMENT_BINDING_AMBIGUOUS": "argument_binding",
-            "COORDINATION_AMBIGUOUS": "argument_binding",
-            "OBJECT_TYPE_INCOMPATIBLE": "candidate_generation",
-            "CANDIDATE_CREATED": "candidate_generation",
-        }.get(code, "argument_binding")
+        stage = _STAGE_BY_CODE.get(code, "argument_binding")
+        step = code in STEP_CODES
+        if code == "CANDIDATE_CREATED":
+            event_type = "candidate"
+        elif step:
+            event_type = _EVENT_TYPE_BY_STAGE.get(stage, "binding")
+        else:
+            event_type = "first_loss"
+        # Directive Phase 17: every event that names a binding mechanism
+        # also names its discipline tier, so the trace reads in either
+        # vocabulary without renaming BindingSource.
+        if "binding_source" in detail and "binding_discipline" not in detail:
+            detail = {**detail,
+                      "binding_discipline": binding_discipline(detail["binding_source"])}
         self._c.record(
-            event_type="candidate" if code == "CANDIDATE_CREATED" else "first_loss",
+            event_type=event_type,
             decision=code, reason_code=code,
             doc_id=self._row["doc_id"], chunk_id=self._row["chunk_id"],
             sentence_id=self._sid,
             surface=str(detail.get("subject") or detail.get("object") or evidence.text or "")[:80],
             char_start=evidence.start, char_end=evidence.end,
-            detail={"first_loss_stage": first_loss_stage,
+            detail={"first_loss_stage": stage,
                     "trigger": evidence.text, "trigger_predicate_id": getattr(evidence, "trigger_predicate_id", None),
                     "evidence_class": evidence.evidence_class, **detail},
         )
         if code == "CANDIDATE_CREATED":
             self.created += 1
-        else:
+        elif not step:
             self.losses.append(code)
 
 
@@ -492,7 +734,7 @@ def process_event(conn: Connection, event: dict) -> None:
         chunk_rows = conn.execute(
             """
             SELECT chunk_id, doc_id, parent_id, tier, text, summary,
-                   char_start, char_end
+                   char_start, char_end, layout_map
               FROM chunks
              WHERE doc_id = %s
              ORDER BY chunk_index
@@ -501,7 +743,8 @@ def process_event(conn: Connection, event: dict) -> None:
         ).fetchall()
         chunks = [
             {"chunk_id": r[0], "doc_id": r[1], "parent_id": r[2], "tier": r[3],
-             "text": r[4], "summary": r[5], "char_start": r[6], "char_end": r[7]}
+             "text": r[4], "summary": r[5], "char_start": r[6], "char_end": r[7],
+             "layout_map": r[8]}
             for r in chunk_rows
         ]
         child_chunks = [row for row in chunks if row["tier"] == "child"]
@@ -543,8 +786,11 @@ def process_event(conn: Connection, event: dict) -> None:
                     envelope=envelope, trace=trace
                 )
                 audit.extend(rejected)
-                if entities:
-                    _persist_mentions(conn, corpus_id, doc_id, entities)
+                # S4a EXTRACT-STAGE ORDERING: mention persistence is DEFERRED
+                # until syntax exists. A mention carries a semantic admission
+                # decision, and admission-harbor-v2 cannot decide without
+                # syntax-evidence-v1 — persisting here would have committed a
+                # decision the contract forbids making.
                 if trace.enabled:
                     trace.record(
                         event_type="discovery", decision="GLINER_PROPOSED",
@@ -576,6 +822,13 @@ def process_event(conn: Connection, event: dict) -> None:
             syntax_runtime = _syntax_evidence(ordered_slices)
             if syntax_runtime is not None:
                 writer.artifact({"syntax": syntax_runtime})
+            # S4a: the semantic dependency boundary. Every slice now carries
+            # its syntax, so a mention may be persisted WITH an admission
+            # decision. Batching is unchanged — `ordered_slices` already
+            # accumulated the whole document before this point, so deferring
+            # mention writes to the same boundary alters no memory profile.
+            # S4b: allocate ONCE, then hand the same identities to every
+            # downstream representation.
             # I4R rescue lane (flag-gated; default off = no-op): syntax
             # says where semantic certainty is missing; GLiNER is
             # re-queried about that exact phrase; deterministic code
@@ -594,6 +847,41 @@ def process_event(conn: Connection, event: dict) -> None:
                 rescue_report = apply_rescue(
                     ordered_slices, rescue_stages, rescue_label_set, _pack())
                 writer.artifact({"rescue": rescue_report})
+
+            # SENTENCE-SLICE-MANIFEST-V1 (row 54): record WHICH slices the
+            # interpreter saw, in what order, under which contract — before
+            # interpreting. Slice membership depends on GLiNER evidence-trigger
+            # placement, which is not otherwise recoverable, so reprocessing
+            # had to guess at it: a narrower guess loses antecedents, a wider
+            # one invents them. Persisting the view is what makes
+            # re-derivation reproduce interpretation instead of approximating
+            # it.
+            _persist_slice_manifest(conn, doc_id, ordered_slices)
+            # S4c: THE admission boundary. It sits after syntax (S4a) AND
+            # after rescue, because rescue is proposal generation too — a
+            # rescued span is a candidate endpoint and must be interpreted
+            # by the same authority, exactly once, not left unadmitted.
+            from polymath_shared.execution import SEMANTIC_CONTRACT_V2
+
+            identities = _allocate_identities(
+                ordered_slices, corpus_id, doc_id,
+                contract_version=SEMANTIC_CONTRACT_V2)
+            for _row, _sl in ordered_slices:
+                if _sl.parse is not None:
+                    _fill_parse_entities(_sl.parse, _sl.entities, corpus_id,
+                                         identities)
+            # S4c: persist the FINAL proposal set — the slices as they stand
+            # after rescue — not the pre-rescue snapshot. Rescue rebuilds
+            # `sl.entities` (boundary correction, type reconciliation), so the
+            # earlier snapshot holds spans the pipeline has since superseded.
+            # Persisting those would store a mention row for a span no
+            # candidate, parse record or fact endpoint refers to, and it could
+            # only be admitted by interpreting it a SECOND time — the very
+            # divergence this cutover removes.
+            _persist_mentions(
+                conn, corpus_id, doc_id,
+                [span for _row, _sl in ordered_slices for span in _sl.entities],
+                ordered_slices=ordered_slices, identities=identities)
             for slice_idx, (row, sl) in enumerate(ordered_slices):
                 slice_observer = _SliceObserver(
                     trace, row, sl, f"{row['chunk_id']}:{slice_idx}")
@@ -606,11 +894,15 @@ def process_event(conn: Connection, event: dict) -> None:
                     rule_pack=pack,
                     doc_entities_history=doc_entity_history,
                     observer=slice_observer,
+                    identities=identities,
                 )
                 doc_entity_history.extend(
                     sorted(sl.entities, key=lambda e: (e.start, e.end)))
                 for candidate in candidates:
-                    decision = compile_relation(candidate, sl.parse, pack, syntax=sl.syntax)
+                    if active_pipeline() == "kimi_v1":
+                        decision = compile_relation_kimi(candidate, sl.parse, pack, syntax=sl.syntax)
+                    else:
+                        decision = compile_relation(candidate, sl.parse, pack, syntax=sl.syntax)
                     if trace.enabled:
                         reason = str(decision.reason or "")
                         code = ("NEGATED" if "negated" in reason else
@@ -633,7 +925,9 @@ def process_event(conn: Connection, event: dict) -> None:
                                     "subject": candidate.subject.span.text,
                                     "object": candidate.object.span.text})
                     if decision.decision in ("ACCEPT", "QUALIFY") and decision.fact:
-                        _persist_decision(conn, row, candidate, decision)
+                        _persist_decision(conn, row, candidate, decision,
+                                          corpus_id=corpus_id,
+                                          identities=identities)
                         if trace.enabled:
                             trace.record(
                                 event_type="fact", decision="FACT_ACCEPTED",
@@ -673,30 +967,38 @@ def process_event(conn: Connection, event: dict) -> None:
 
 
 def _persist_mentions(conn: Connection, corpus_id: str, doc_id: str,
-                      spans: list[EntitySpan]) -> None:
-    """I3R-R4: persist every accepted GLiNER proposal as a durable
-    mention with its admission decision; non-MENTION_ONLY spans also
-    become durable referential entity rows. Graph topology remains
-    fact-driven (project_neo4j/canonicalization keep their facts
-    joins)."""
-    import re as _re
+                      spans: list[EntitySpan],
+                      ordered_slices: list[tuple[dict, SentenceSlice]] | None = None,
+                      identities: dict | None = None,
+                      ) -> None:
+    """I3R-R4 / S4c: persist every accepted GLiNER proposal as a durable
+    mention carrying the SINGLE admission decision made for it.
 
-    from polymath_shared.entity_admission import allocate_entity_id
+    This is a consumer, not an authority. A span with no entry in the
+    identities map was never interpreted, which means the caller changed the
+    ordering — refuse rather than interpret it a second time here.
+    """
+    from polymath_shared.identity_allocation import (
+        normalized_for_lookup, span_identity_key,
+    )
+
+    if identities is None:
+        raise RuntimeError(
+            "_persist_mentions requires the identities map (S4c): mentions "
+            "must carry the admission decided at the post-syntax boundary, "
+            "never a second one computed here")
 
     for span in spans:
-        decision = allocate_entity_id(
-            span.text, span.core_type.value,
-            corpus_id=corpus_id, doc_id=span.doc_id or doc_id,
-            chunk_id=span.chunk_id, span_start=span.start,
-            span_end=span.end, extraction_score=span.score,
-            sentence_initial=False,
-        )
-        norm_surface = _re.sub(r"\s+", " ", span.text).strip().lower()
-        is_durable = decision.reference_class != "MENTION_ONLY"
-        # non-MENTION_ONLY classes use their durable id as the mention
-        # identity (entity_admission docstring); MENTION_ONLY mentions
-        # carry no entities-row identity.
-        entity_id = decision.mention_id if is_durable else None
+        identity = identities.get(span_identity_key(span, corpus_id))
+        if identity is None:
+            raise RuntimeError(
+                f"no admission for span {span.text!r} at {span.chunk_id}"
+                f"[{span.start}:{span.end}] — persistence ran before or "
+                "outside the single admission boundary")
+        adm = identity.admission
+        norm_surface = normalized_for_lookup(span.text)
+        entity_id = identity.entity_id if identity.durable else None
+        mention_id = "mention_" + _mention_suffix(span, doc_id)
         conn.execute(
             """
             INSERT INTO mentions (mention_id, corpus_id, doc_id, chunk_id,
@@ -704,17 +1006,29 @@ def _persist_mentions(conn: Connection, corpus_id: str, doc_id: str,
                                   normalized_surface, core_type,
                                   gliner_score, extractor_version,
                                   admission_class, entity_id,
-                                  raw_label, query_policy_version, pass_kind)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                  raw_label, query_policy_version, pass_kind,
+                                  proposal_surface, referential_surface,
+                                  anchor_kind, decision_status,
+                                  reference_basis, admission_reason,
+                                  semantic_contract)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (mention_id) DO NOTHING
             """,
-            (decision.mention_id, corpus_id, span.doc_id or doc_id,
+            (mention_id, corpus_id, span.doc_id or doc_id,
              span.chunk_id, span.start, span.end, span.text,
              norm_surface, span.core_type.value, span.score,
-             span.extractor_version, decision.reference_class, entity_id,
-             span.raw_label, QUERY_POLICY_VERSION, span.pass_kind),
+             span.extractor_version, identity.admission_class, entity_id,
+             span.raw_label, QUERY_POLICY_VERSION, span.pass_kind,
+             adm.proposal_surface, adm.referential_surface,
+             adm.anchor_kind, adm.decision_status, adm.reference_basis,
+             adm.admission_reason, adm.semantic_contract),
         )
-        if is_durable:
+        # Same rule as reprocessing: an inheriting reference does not describe
+        # the identity it borrowed. Under ON CONFLICT DO NOTHING this was
+        # ORDER-dependent — whichever mention landed first defined the class —
+        # so an anchor preceded by its own reference would have been mislabelled.
+        if identity.durable and adm.reference_basis != "ANTECEDENT_RESOLVED":
             conn.execute(
                 """
                 INSERT INTO entities (entity_id, core_type, normalized_surface,
@@ -722,19 +1036,44 @@ def _persist_mentions(conn: Connection, corpus_id: str, doc_id: str,
                 VALUES (%s, %s, %s, %s)
                 ON CONFLICT (entity_id) DO NOTHING
                 """,
+                # the entity's own surface — the envelope is a reference TO
+                # the entity, not the entity's name
                 (entity_id, span.core_type.value,
-                 norm_surface, decision.reference_class),
+                 normalized_for_lookup(span.text),
+                 identity.admission_class),
             )
 
 
-def _evidence_offsets(chunk_row: dict, candidate) -> dict:
+def _mention_suffix(span: EntitySpan, doc_id: str) -> str:
+    """Evidence identity of the mention ROW — always span-stable, never the
+    durable entity id. Keeping these apart is what lets one entity own many
+    mentions without the rows colliding."""
+    from polymath_shared.identity import content_hash
+
+    return content_hash({
+        "doc": span.doc_id or doc_id, "chunk": span.chunk_id,
+        "type": span.core_type.value, "start": span.start, "end": span.end,
+    })
+
+
+def _evidence_offsets(chunk_row: dict, candidate, decision) -> dict:
     """I3R-R6 exact-evidence-v1 provenance record. All span offsets are
-    CHUNK-RELATIVE so that chunk_text[start:end] == surface verifiably."""
+    CHUNK-RELATIVE so that chunk_text[start:end] == surface verifiably.
+
+    The semantic subject/object are taken from the compiler decision's
+    fact so that passive paraphrases label the actual agent/patient,
+    not the surface word order."""
     chunk_start = int(chunk_row.get("char_start") or 0)
     chunk_end = int(chunk_row.get("char_end") or 0)
     ev = candidate.evidence
-    subj = candidate.subject.span
-    obj = candidate.object.span
+    fact = decision.fact
+    # Match the semantic subject_id / object_id to the candidate spans.
+    # The compiler may have inverted passive pairs, so we compare by
+    # resolved entity identity (not by surface position).
+    if fact.subject_id == candidate.subject.resolved_entity_id:
+        subj, obj = candidate.subject.span, candidate.object.span
+    else:
+        subj, obj = candidate.object.span, candidate.subject.span
     # span offsets are CHUNK-RELATIVE (GLiNER spans are chunk-based);
     # chunk_char_start/end locate the chunk within the document.
     return {
@@ -755,24 +1094,41 @@ def _evidence_offsets(chunk_row: dict, candidate) -> dict:
     }
 
 
-def _persist_decision(conn: Connection, chunk_row: dict, candidate, decision) -> None:
-    from polymath_shared.entity_admission import decide as _admission_decide
+def _persist_decision(conn: Connection, chunk_row: dict, candidate, decision,
+                      corpus_id: str = "eval", identities: dict | None = None) -> None:
+    """S4c: fact endpoints are written from the SAME admission the mention
+    carries. Re-deciding here is what previously let an endpoint disagree
+    with its own mention row."""
+    from polymath_shared.identity_allocation import (
+        normalized_for_lookup, span_identity_key,
+    )
 
     fact = decision.fact
     for entity_id, span in (
         (fact.subject_id, candidate.subject.span),
         (fact.object_id, candidate.object.span),
     ):
-        admission = _admission_decide(
-            span.text, span.core_type.value, span.score
-        ).reference_class
+        identity = (identities or {}).get(span_identity_key(span, corpus_id))
+        if identity is None:
+            raise RuntimeError(
+                f"fact endpoint {span.text!r} has no admission in the "
+                "identities map — the compiler produced an endpoint the "
+                "admission boundary never interpreted")
+        if identity.admission.reference_basis == "ANTECEDENT_RESOLVED":
+            # This endpoint BORROWED its identity from an anchor (row 48).
+            # The anchor already described the entity when its own mention was
+            # persisted; describing it again from the reference would restamp
+            # a GLOBAL anchor with the reference's DOCUMENT_SCOPED scope.
+            continue
         conn.execute(
             """
             INSERT INTO entities (entity_id, core_type, normalized_surface, admission_class)
             VALUES (%s, %s, %s, %s)
             ON CONFLICT (entity_id) DO NOTHING
             """,
-            (entity_id, span.core_type.value, span.text, admission),
+            (entity_id, span.core_type.value,
+             normalized_for_lookup(span.text),
+             identity.admission_class),
         )
     conn.execute(
         """
@@ -792,7 +1148,7 @@ def _persist_decision(conn: Connection, chunk_row: dict, candidate, decision) ->
         fact.fact_id, chunk_row["doc_id"], chunk_row["chunk_id"],
         {"chunk": chunk_row["char_start"]}, fact.rule_id,
     )
-    offsets = _evidence_offsets(chunk_row, candidate)
+    offsets = _evidence_offsets(chunk_row, candidate, decision)
     conn.execute(
         """
         INSERT INTO evidence (evidence_id, fact_id, doc_id, chunk_id, span_offsets,

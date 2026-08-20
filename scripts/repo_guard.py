@@ -72,9 +72,17 @@ def declared_paths(root: Path) -> set[str]:
     return {item[0] for item in module.TREE}
 
 
+# Sibling virtualenvs (.venv-gliner2, .venv-relex) are build artifacts, not
+# repository files. IGNORED_NAMES matches exact names only, so they need a
+# prefix rule.
+IGNORED_DIR_PREFIXES = (".venv",)
+
+
 def is_ignored(relative: str) -> bool:
     path = Path(relative)
     if any(part in IGNORED_NAMES for part in path.parts):
+        return True
+    if any(part.startswith(IGNORED_DIR_PREFIXES) for part in path.parts):
         return True
     if any(part.endswith(IGNORED_SUFFIXES) for part in path.parts):
         return True

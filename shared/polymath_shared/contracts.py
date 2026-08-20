@@ -86,11 +86,80 @@ class SemanticRole(str, Enum):
     ARGM_TMP = "ARGM-TMP"
 
 
+class BindingSource(str, Enum):
+    UD_DIRECT = "UD_DIRECT"
+    UD_PREPOSITIONAL = "UD_PREPOSITIONAL"
+    UD_PASSIVE = "UD_PASSIVE"
+    UD_COORDINATION = "UD_COORDINATION"
+    SAFE_LOCAL_PATTERN = "SAFE_LOCAL_PATTERN"
+    BOUNDED_LINEAR_RECALL = "BOUNDED_LINEAR_RECALL"
+
+
 class RoleAssignment(BaseModel):
     role: SemanticRole
     entity_ref: str
     syntactic_path: str  # e.g. "nsubj:pass", "obl:agent"
     weak: bool = False   # roleset unknown -> syntax-only orientation
+
+
+class ArgumentEndpoint(BaseModel):
+    entity_ref: str
+    surface: str
+    core_type: str
+    syntactic_path: str
+    binding_source: BindingSource
+    role: Optional[SemanticRole] = None
+
+
+class LexicalSemanticEvidence(BaseModel):
+    """KIMI Phase 8: one normalized, versioned compiler input.
+
+    This object collects every piece of lexical-semantic evidence that
+    already exists in the pipeline and presents it to the compiler as a
+    single deterministic structure. It does not invent new semantics; it
+    exposes the evidence that the UD parse, PropBank, VerbNet, FrameNet,
+    SemLink, and type precheck have already produced.
+    """
+    # evidence identity
+    evidence_class: str
+    evidence_surface: str
+    evidence_start: int
+    evidence_end: int
+
+    # trigger identity
+    trigger_surface: str
+    trigger_lemma: Optional[str] = None
+    trigger_pos: Optional[str] = None
+
+    # syntax / voice
+    voice: str = "active"
+    dependency_head: Optional[dict] = None
+    dependency_paths: list[dict] = Field(default_factory=list)
+
+    # PropBank
+    propbank_roleset: Optional[str] = None
+    propbank_role_inventory: dict[str, str] = Field(default_factory=dict)
+    assigned_roles: dict[str, str] = Field(default_factory=dict)
+
+    # VerbNet / FrameNet / SemLink
+    verbnet_classes: list[str] = Field(default_factory=list)
+    verbnet_matches: list[tuple[str, str]] = Field(default_factory=list)
+    framenet_frames: list[str] = Field(default_factory=list)
+    framenet_matches: list[tuple[str, str]] = Field(default_factory=list)
+    semlink_mapping: dict = Field(default_factory=dict)
+    semlink_status: str = "SEMLINK_UNAVAILABLE"
+
+    # argument binding
+    argument_endpoints: list[ArgumentEndpoint] = Field(default_factory=list)
+    binding_sources: list[BindingSource] = Field(default_factory=list)
+
+    # endpoint types for precheck
+    endpoint_types: dict[str, str] = Field(default_factory=dict)
+
+    # contracts
+    lexical_resource_contract: Optional[str] = None
+    syntax_contract: Optional[str] = None
+    evidence_pass_contract: Optional[str] = None
 
 
 class ScopeFlags(BaseModel):
@@ -122,6 +191,12 @@ class RelationCandidate(BaseModel):
     framenet_frames: list[str] = Field(default_factory=list)
     semlink_resolved: bool = False
     scope: ScopeFlags = Field(default_factory=ScopeFlags)
+    # KIMI Phase 3: PropBank-assigned semantic roles {ARG0: span, ARG1: span}
+    assigned_roles: dict | None = None
+    # KIMI Phase 7: SemLink mapping identity used for cross-resource alignment
+    semlink_mapping: dict | None = None
+    # KIMI Phase 8: normalized lexical-semantic evidence object consumed by compiler
+    lexical_semantic_evidence: LexicalSemanticEvidence | None = None
     ontology_profile: str
     sentence_text: str = ""
     sentence_start: int = 0

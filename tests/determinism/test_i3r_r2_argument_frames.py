@@ -15,7 +15,8 @@ sys.path.insert(0, str(ROOT / "workers"))
 
 from polymath_shared.contracts import EntitySpan, CoreType  # noqa: E402
 from polymath_shared.rulepack import load_rule_pack  # noqa: E402
-from workers.candidates import SentenceSlice, build_candidates  # noqa: E402
+from workers.candidates import SentenceSlice  # noqa: E402
+from tests.historical_boundary import build_candidates  # noqa: E402
 from workers.evidence_proposer import propose_evidence  # noqa: E402
 
 PACK = load_rule_pack(pack_version="1.2.0")

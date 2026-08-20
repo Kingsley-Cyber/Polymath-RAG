@@ -1,0 +1,1190 @@
+{
+ "arm": "VAR-CHUNK",
+ "config": {
+  "relation_pipeline": "legacy_v1",
+  "chunker": "semantic_v2",
+  "rescue": "on",
+  "rule_pack": "1.3.0",
+  "syntax": "spacy"
+ },
+ "documents": {
+  "01_northvale_health.md": {
+   "emitted": [
+    {
+     "predicate": "depends_on",
+     "subject": "careconnect portal",
+     "subject_type": "Technology",
+     "subject_admission": "GLOBAL",
+     "object": "carechart emr",
+     "object_type": "Technology",
+     "object_admission": "GLOBAL",
+     "decision": "ACCEPT"
+    },
+    {
+     "predicate": "employs",
+     "subject": "the company",
+     "subject_type": "Organization",
+     "subject_admission": "GLOBAL",
+     "object": "two new surgeons",
+     "object_type": "Person",
+     "object_admission": "CORPUS_SCOPED",
+     "decision": "ACCEPT"
+    },
+    {
+     "predicate": "founded",
+     "subject": "Amara Osei",
+     "subject_type": "Person",
+     "subject_admission": "GLOBAL",
+     "object": "riverside clinic",
+     "object_type": "Organization",
+     "object_admission": "GLOBAL",
+     "decision": "ACCEPT"
+    },
+    {
+     "predicate": "has_role",
+     "subject": "Amara Osei",
+     "subject_type": "Person",
+     "subject_admission": "GLOBAL",
+     "object": "northvale health network",
+     "object_type": "Organization",
+     "object_admission": "GLOBAL",
+     "decision": "ACCEPT"
+    },
+    {
+     "predicate": "located_in",
+     "subject": "lakeshore general hospital",
+     "subject_type": "Organization",
+     "subject_admission": "GLOBAL",
+     "object": "austin",
+     "object_type": "Location",
+     "object_admission": "GLOBAL",
+     "decision": "ACCEPT"
+    },
+    {
+     "predicate": "part_of",
+     "subject": "radiology review board",
+     "subject_type": "Technology",
+     "subject_admission": "CORPUS_SCOPED",
+     "object": "lakeshore general hospital",
+     "object_type": "Organization",
+     "object_admission": "GLOBAL",
+     "decision": "ACCEPT"
+    },
+    {
+     "predicate": "uses",
+     "subject": "northvale health network",
+     "subject_type": "Organization",
+     "subject_admission": "GLOBAL",
+     "object": "carechart emr platform",
+     "object_type": "Technology",
+     "object_admission": "GLOBAL",
+     "decision": "ACCEPT"
+    }
+   ],
+   "emitted_count": 7,
+   "gold_scoped": {
+    "gold": 6,
+    "tp": 5,
+    "fp": 2,
+    "fn": 1
+   },
+   "key_b": {
+    "wanted": 6,
+    "found": 5,
+    "detail": [
+     {
+      "predicate": "uses",
+      "subject": "Northvale Health Network",
+      "object": "CareChart EMR platform",
+      "pre_known": true,
+      "found": true
+     },
+     {
+      "predicate": "located_in",
+      "subject": "Lakeshore General Hospital",
+      "object": "Austin",
+      "pre_known": false,
+      "found": true
+     },
+     {
+      "predicate": "has_role",
+      "subject": "Amara Osei",
+      "object": "chief medical officer",
+      "pre_known": false,
+      "found": false
+     },
+     {
+      "predicate": "depends_on",
+      "subject": "CareConnect portal",
+      "object": "CareChart EMR",
+      "pre_known": false,
+      "found": true
+     },
+     {
+      "predicate": "part_of",
+      "subject": "radiology review board",
+      "object": "Lakeshore General Hospital",
+      "pre_known": true,
+      "found": true
+     },
+     {
+      "predicate": "founded",
+      "subject": "Amara Osei",
+      "object": "Riverside Clinic",
+      "pre_known": false,
+      "found": true
+     }
+    ]
+   },
+   "mentions": [
+    {
+     "surface": "amara osei",
+     "type": "Person",
+     "admission": "GLOBAL",
+     "score": 0.9916569
+    },
+    {
+     "surface": "northvale health network",
+     "type": "Organization",
+     "admission": "GLOBAL",
+     "score": 0.99091095
+    },
+    {
+     "surface": "dr. amara osei",
+     "type": "Person",
+     "admission": "GLOBAL",
+     "score": 0.97969604
+    },
+    {
+     "surface": "austin",
+     "type": "Location",
+     "admission": "GLOBAL",
+     "score": 0.9740959
+    },
+    {
+     "surface": "lakeshore general hospital",
+     "type": "Organization",
+     "admission": "GLOBAL",
+     "score": 0.97280425
+    },
+    {
+     "surface": "riverside clinic",
+     "type": "Organization",
+     "admission": "GLOBAL",
+     "score": 0.95990986
+    },
+    {
+     "surface": "2015",
+     "type": "TimeReference",
+     "admission": "MENTION_ONLY",
+     "score": 0.95461017
+    },
+    {
+     "surface": "patient portal",
+     "type": "Technology",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.9365506
+    },
+    {
+     "surface": "the hospital",
+     "type": "Organization",
+     "admission": "GLOBAL",
+     "score": 0.9242972
+    },
+    {
+     "surface": "carechart emr",
+     "type": "Technology",
+     "admission": "GLOBAL",
+     "score": 0.8684487
+    },
+    {
+     "surface": "carechart emr platform",
+     "type": "Technology",
+     "admission": "GLOBAL",
+     "score": 0.85777456
+    },
+    {
+     "surface": "dr.",
+     "type": "Person",
+     "admission": "GLOBAL",
+     "score": 0.84740853
+    },
+    {
+     "surface": "emr outage",
+     "type": "Process",
+     "admission": "GLOBAL",
+     "score": 0.77272695
+    },
+    {
+     "surface": "careconnect portal",
+     "type": "Technology",
+     "admission": "GLOBAL",
+     "score": 0.77243274
+    },
+    {
+     "surface": "handoffs",
+     "type": "Process",
+     "admission": "MENTION_ONLY",
+     "score": 0.7254651
+    },
+    {
+     "surface": "team",
+     "type": "Organization",
+     "admission": "MENTION_ONLY",
+     "score": 0.6124362
+    },
+    {
+     "surface": "radiology review board",
+     "type": "Technology",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.60297364
+    },
+    {
+     "surface": "two new surgeons",
+     "type": "Person",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.59499866
+    },
+    {
+     "surface": "tuesday",
+     "type": "TimeReference",
+     "admission": "GLOBAL",
+     "score": 0.5887454
+    },
+    {
+     "surface": "last month",
+     "type": "TimeReference",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.5584126
+    }
+   ],
+   "fragment_pairs": [
+    [
+     "carechart emr",
+     "carechart emr platform"
+    ],
+    [
+     "dr.",
+     "dr. amara osei"
+    ]
+   ]
+  },
+  "02_nimbus_cloud.md": {
+   "emitted": [
+    {
+     "predicate": "uses",
+     "subject": "nimbus cloud",
+     "subject_type": "Organization",
+     "subject_admission": "GLOBAL",
+     "object": "container platform",
+     "object_type": "Technology",
+     "object_admission": "CORPUS_SCOPED",
+     "decision": "ACCEPT"
+    },
+    {
+     "predicate": "uses",
+     "subject": "nimbus cloud",
+     "subject_type": "Organization",
+     "subject_admission": "GLOBAL",
+     "object": "kubernetes",
+     "object_type": "Technology",
+     "object_admission": "GLOBAL",
+     "decision": "ACCEPT"
+    }
+   ],
+   "emitted_count": 2,
+   "gold_scoped": {
+    "gold": 4,
+    "tp": 1,
+    "fp": 1,
+    "fn": 3
+   },
+   "key_b": {
+    "wanted": 6,
+    "found": 1,
+    "detail": [
+     {
+      "predicate": "uses",
+      "subject": "Nimbus Cloud",
+      "object": "Kubernetes",
+      "pre_known": true,
+      "found": true
+     },
+     {
+      "predicate": "depends_on",
+      "subject": "Ledger billing service",
+      "object": "Postgres cluster",
+      "pre_known": true,
+      "found": false
+     },
+     {
+      "predicate": "part_of",
+      "subject": "Nimbus billing service",
+      "object": "Nimbus Cloud platform",
+      "pre_known": true,
+      "found": false
+     },
+     {
+      "predicate": "created",
+      "subject": "engineering group",
+      "object": "load-testing harness",
+      "pre_known": true,
+      "found": false
+     },
+     {
+      "predicate": "implemented_with",
+      "subject": "Nimbus API gateway",
+      "object": "Go",
+      "pre_known": false,
+      "found": false
+     },
+     {
+      "predicate": "developed",
+      "subject": "engineering group",
+      "object": "platform",
+      "pre_known": false,
+      "note": "PASSIVE: 'The platform was designed by the engineering group' \u2014 direction test",
+      "found": false
+     }
+    ]
+   },
+   "mentions": [
+    {
+     "surface": "go",
+     "type": "Technology",
+     "admission": "GLOBAL",
+     "score": 0.98663515
+    },
+    {
+     "surface": "postgres cluster",
+     "type": "Technology",
+     "admission": "GLOBAL",
+     "score": 0.91434294
+    },
+    {
+     "surface": "nimbus cloud",
+     "type": "Organization",
+     "admission": "GLOBAL",
+     "score": 0.90792775
+    },
+    {
+     "surface": "september outage",
+     "type": "Event",
+     "admission": "GLOBAL",
+     "score": 0.8487091
+    },
+    {
+     "surface": "cluster",
+     "type": "Technology",
+     "admission": "MENTION_ONLY",
+     "score": 0.814226
+    },
+    {
+     "surface": "operations group",
+     "type": "Organization",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.80299866
+    },
+    {
+     "surface": "outage",
+     "type": "Event",
+     "admission": "MENTION_ONLY",
+     "score": 0.7871816
+    },
+    {
+     "surface": "cache layer",
+     "type": "Technology",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.7819474
+    },
+    {
+     "surface": "outage",
+     "type": "Event",
+     "admission": "MENTION_ONLY",
+     "score": 0.7794759
+    },
+    {
+     "surface": "they",
+     "type": "Person",
+     "admission": "GLOBAL",
+     "score": 0.7771161
+    },
+    {
+     "surface": "nimbus",
+     "type": "Organization",
+     "admission": "GLOBAL",
+     "score": 0.76359457
+    },
+    {
+     "surface": "engineering group",
+     "type": "Organization",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.73490787
+    },
+    {
+     "surface": "nimbus postmortem report",
+     "type": "Document",
+     "admission": "GLOBAL",
+     "score": 0.71264356
+    },
+    {
+     "surface": "fleet",
+     "type": "Technology",
+     "admission": "MENTION_ONLY",
+     "score": 0.67014474
+    },
+    {
+     "surface": "patch",
+     "type": "Document",
+     "admission": "MENTION_ONLY",
+     "score": 0.6565046
+    },
+    {
+     "surface": "container platform",
+     "type": "Technology",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.6282013
+    },
+    {
+     "surface": "orchestrate",
+     "type": "Process",
+     "admission": "MENTION_ONLY",
+     "score": 0.58669007
+    },
+    {
+     "surface": "the platform",
+     "type": "Technology",
+     "admission": "GLOBAL",
+     "score": 0.5796623
+    },
+    {
+     "surface": "deployed",
+     "type": "Process",
+     "admission": "MENTION_ONLY",
+     "score": 0.5774516
+    },
+    {
+     "surface": "ledger billing service",
+     "type": "Organization",
+     "admission": "GLOBAL",
+     "score": 0.5726067
+    },
+    {
+     "surface": "restarted",
+     "type": "Process",
+     "admission": "MENTION_ONLY",
+     "score": 0.53882194
+    },
+    {
+     "surface": "team",
+     "type": "Organization",
+     "admission": "MENTION_ONLY",
+     "score": 0.5025541
+    }
+   ],
+   "fragment_pairs": [
+    [
+     "nimbus",
+     "nimbus cloud"
+    ],
+    [
+     "nimbus",
+     "nimbus postmortem report"
+    ]
+   ]
+  },
+  "03_crestline_automation.md": {
+   "emitted": [
+    {
+     "predicate": "associated_with",
+     "subject": "crestline",
+     "subject_type": "Organization",
+     "subject_admission": "GLOBAL",
+     "object": "vision system",
+     "object_type": "Technology",
+     "object_admission": "CORPUS_SCOPED",
+     "decision": "ACCEPT"
+    },
+    {
+     "predicate": "causes",
+     "subject": "pump failure",
+     "subject_type": "Event",
+     "subject_admission": "CORPUS_SCOPED",
+     "object": "production stoppage",
+     "object_type": "Event",
+     "object_admission": "CORPUS_SCOPED",
+     "decision": "ACCEPT"
+    },
+    {
+     "predicate": "developed",
+     "subject": "crestline",
+     "subject_type": "Organization",
+     "subject_admission": "GLOBAL",
+     "object": "cobalt assembly cell",
+     "object_type": "Technology",
+     "object_admission": "GLOBAL",
+     "decision": "ACCEPT"
+    },
+    {
+     "predicate": "founded",
+     "subject": "crestline",
+     "subject_type": "Organization",
+     "subject_admission": "GLOBAL",
+     "object": "robotics vendor",
+     "object_type": "Organization",
+     "object_admission": "CORPUS_SCOPED",
+     "decision": "ACCEPT"
+    },
+    {
+     "predicate": "leads",
+     "subject": "maria kowalski",
+     "subject_type": "Person",
+     "subject_admission": "GLOBAL",
+     "object": "Crestline automation team",
+     "object_type": "Organization",
+     "object_admission": "GLOBAL",
+     "decision": "ACCEPT"
+    }
+   ],
+   "emitted_count": 5,
+   "gold_scoped": {
+    "gold": 7,
+    "tp": 2,
+    "fp": 3,
+    "fn": 5
+   },
+   "key_b": {
+    "wanted": 8,
+    "found": 2,
+    "detail": [
+     {
+      "predicate": "uses",
+      "subject": "Crestline Automation",
+      "object": "Siemens PLCs",
+      "pre_known": true,
+      "found": false
+     },
+     {
+      "predicate": "located_in",
+      "subject": "Crestline plant",
+      "object": "Toledo",
+      "pre_known": true,
+      "found": false
+     },
+     {
+      "predicate": "leads",
+      "subject": "Maria Kowalski",
+      "object": "Crestline automation team",
+      "pre_known": false,
+      "found": true
+     },
+     {
+      "predicate": "created",
+      "subject": "analytics team",
+      "object": "shift scheduling model",
+      "pre_known": true,
+      "found": false
+     },
+     {
+      "predicate": "enables",
+      "subject": "shift scheduling model",
+      "object": "same-day dispatch",
+      "pre_known": false,
+      "found": false
+     },
+     {
+      "predicate": "developed",
+      "subject": "Crestline Automation",
+      "object": "Cobalt assembly cell",
+      "pre_known": true,
+      "found": false
+     },
+     {
+      "predicate": "associated_with",
+      "subject": "vision system",
+      "object": "quality database",
+      "pre_known": true,
+      "note": "DITRANSITIVE 'Crestline linked X to Y' \u2014 primary VAR-BIND test",
+      "found": false
+     },
+     {
+      "predicate": "causes",
+      "subject": "pump failure",
+      "object": "production stoppage",
+      "pre_known": false,
+      "note": "explicit 'caused' \u2014 reachability test for the causes predicate",
+      "found": true
+     }
+    ]
+   },
+   "mentions": [
+    {
+     "surface": "maria kowalski",
+     "type": "Person",
+     "admission": "GLOBAL",
+     "score": 0.99263644
+    },
+    {
+     "surface": "toledo",
+     "type": "Location",
+     "admission": "GLOBAL",
+     "score": 0.9761271
+    },
+    {
+     "surface": "march",
+     "type": "TimeReference",
+     "admission": "GLOBAL",
+     "score": 0.96283066
+    },
+    {
+     "surface": "line two",
+     "type": "Location",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.9569669
+    },
+    {
+     "surface": "crestline",
+     "type": "Organization",
+     "admission": "GLOBAL",
+     "score": 0.94596535
+    },
+    {
+     "surface": "production stoppage",
+     "type": "Event",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.83946943
+    },
+    {
+     "surface": "defect spike",
+     "type": "Event",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.8384218
+    },
+    {
+     "surface": "line one",
+     "type": "Location",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.8248439
+    },
+    {
+     "surface": "vision system",
+     "type": "Technology",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.79569674
+    },
+    {
+     "surface": "cobalt assembly cell",
+     "type": "Technology",
+     "admission": "GLOBAL",
+     "score": 0.77088064
+    },
+    {
+     "surface": "analytics team",
+     "type": "Organization",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.7658323
+    },
+    {
+     "surface": "two shifts",
+     "type": "TimeReference",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.7613121
+    },
+    {
+     "surface": "cobalt cell",
+     "type": "Technology",
+     "admission": "GLOBAL",
+     "score": 0.7572796
+    },
+    {
+     "surface": "the plant",
+     "type": "Organization",
+     "admission": "GLOBAL",
+     "score": 0.71524745
+    },
+    {
+     "surface": "siemens plcs",
+     "type": "Technology",
+     "admission": "GLOBAL",
+     "score": 0.7102328
+    },
+    {
+     "surface": "pump failure",
+     "type": "Event",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.6972507
+    },
+    {
+     "surface": "assembly line",
+     "type": "Process",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.67756057
+    },
+    {
+     "surface": "the vision system",
+     "type": "Technology",
+     "admission": "GLOBAL",
+     "score": 0.64231527
+    },
+    {
+     "surface": "last year",
+     "type": "TimeReference",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.63473046
+    },
+    {
+     "surface": "robotics vendor",
+     "type": "Organization",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.57477456
+    },
+    {
+     "surface": "same-day dispatch",
+     "type": "Process",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.5315709
+    },
+    {
+     "surface": "scheduling model",
+     "type": "Technology",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.51408315
+    }
+   ],
+   "fragment_pairs": []
+  },
+  "04_brightpath_learning.md": {
+   "emitted": [
+    {
+     "predicate": "acquired",
+     "subject": "brightpath learning",
+     "subject_type": "Organization",
+     "subject_admission": "GLOBAL",
+     "object": "coachlight review app",
+     "object_type": "Product",
+     "object_admission": "GLOBAL",
+     "decision": "ACCEPT"
+    },
+    {
+     "predicate": "depends_on",
+     "subject": "mentor engine",
+     "subject_type": "Technology",
+     "subject_admission": "CORPUS_SCOPED",
+     "object": "qbank item database",
+     "object_type": "Technology",
+     "object_admission": "GLOBAL",
+     "decision": "ACCEPT"
+    },
+    {
+     "predicate": "employs",
+     "subject": "the company",
+     "subject_type": "Organization",
+     "subject_admission": "GLOBAL",
+     "object": "three new instructors",
+     "object_type": "Person",
+     "object_admission": "CORPUS_SCOPED",
+     "decision": "ACCEPT"
+    },
+    {
+     "predicate": "has_role",
+     "subject": "daniel okafor",
+     "subject_type": "Person",
+     "subject_admission": "GLOBAL",
+     "object": "brightpath learning",
+     "object_type": "Organization",
+     "object_admission": "GLOBAL",
+     "decision": "ACCEPT"
+    },
+    {
+     "predicate": "located_in",
+     "subject": "the company",
+     "subject_type": "Organization",
+     "subject_admission": "GLOBAL",
+     "object": "raleigh",
+     "object_type": "Location",
+     "object_admission": "GLOBAL",
+     "decision": "ACCEPT"
+    },
+    {
+     "predicate": "uses",
+     "subject": "brightpath learning",
+     "subject_type": "Organization",
+     "subject_admission": "GLOBAL",
+     "object": "mentor assessment engine",
+     "object_type": "Technology",
+     "object_admission": "GLOBAL",
+     "decision": "ACCEPT"
+    }
+   ],
+   "emitted_count": 6,
+   "gold_scoped": {
+    "gold": 5,
+    "tp": 3,
+    "fp": 3,
+    "fn": 2
+   },
+   "key_b": {
+    "wanted": 6,
+    "found": 2,
+    "detail": [
+     {
+      "predicate": "uses",
+      "subject": "Brightpath Learning",
+      "object": "Mentor assessment engine",
+      "pre_known": true,
+      "found": true
+     },
+     {
+      "predicate": "located_in",
+      "subject": "Brightpath Learning",
+      "object": "Raleigh",
+      "pre_known": true,
+      "note": "'The company is headquartered in Raleigh' \u2014 subject-slot coreference test",
+      "found": false
+     },
+     {
+      "predicate": "employs",
+      "subject": "Brightpath Learning",
+      "object": "Daniel Okafor",
+      "pre_known": false,
+      "found": false
+     },
+     {
+      "predicate": "depends_on",
+      "subject": "Mentor assessment engine",
+      "object": "QBank item database",
+      "pre_known": true,
+      "found": false
+     },
+     {
+      "predicate": "acquired",
+      "subject": "Brightpath Learning",
+      "object": "Coachlight review app",
+      "pre_known": false,
+      "found": true
+     },
+     {
+      "predicate": "influences",
+      "subject": "spaced repetition schedule",
+      "object": "retention",
+      "pre_known": false,
+      "found": false
+     }
+    ]
+   },
+   "mentions": [
+    {
+     "surface": "daniel okafor",
+     "type": "Person",
+     "admission": "GLOBAL",
+     "score": 0.9936661
+    },
+    {
+     "surface": "raleigh",
+     "type": "Location",
+     "admission": "GLOBAL",
+     "score": 0.9850863
+    },
+    {
+     "surface": "brightpath",
+     "type": "Organization",
+     "admission": "GLOBAL",
+     "score": 0.9416517
+    },
+    {
+     "surface": "brightpath learning",
+     "type": "Organization",
+     "admission": "GLOBAL",
+     "score": 0.9318847
+    },
+    {
+     "surface": "last spring",
+     "type": "TimeReference",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.8887348
+    },
+    {
+     "surface": "coachlight review app",
+     "type": "Product",
+     "admission": "GLOBAL",
+     "score": 0.8441928
+    },
+    {
+     "surface": "coachlight app",
+     "type": "Product",
+     "admission": "GLOBAL",
+     "score": 0.8299876
+    },
+    {
+     "surface": "mentor engine",
+     "type": "Product",
+     "admission": "GLOBAL",
+     "score": 0.8007423
+    },
+    {
+     "surface": "qbank item database",
+     "type": "Technology",
+     "admission": "GLOBAL",
+     "score": 0.78331417
+    },
+    {
+     "surface": "mentor assessment engine",
+     "type": "Technology",
+     "admission": "GLOBAL",
+     "score": 0.7549036
+    },
+    {
+     "surface": "three new instructors",
+     "type": "Person",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.6940548
+    },
+    {
+     "surface": "retention",
+     "type": "Concept",
+     "admission": "MENTION_ONLY",
+     "score": 0.6752298
+    },
+    {
+     "surface": "two rival providers",
+     "type": "Organization",
+     "admission": "GLOBAL",
+     "score": 0.65952253
+    },
+    {
+     "surface": "mentor engine",
+     "type": "Technology",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.65481293
+    },
+    {
+     "surface": "item difficulty",
+     "type": "Concept",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.5855711
+    }
+   ],
+   "fragment_pairs": [
+    [
+     "brightpath",
+     "brightpath learning"
+    ]
+   ]
+  },
+  "05_corval_logistics.md": {
+   "emitted": [
+    {
+     "predicate": "associated_with",
+     "subject": "corval",
+     "subject_type": "Organization",
+     "subject_admission": "GLOBAL",
+     "object": "quickscale invoicing system",
+     "object_type": "Technology",
+     "object_admission": "GLOBAL",
+     "decision": "ACCEPT"
+    },
+    {
+     "predicate": "located_in",
+     "subject": "portside warehouse",
+     "subject_type": "Location",
+     "subject_admission": "GLOBAL",
+     "object": "oakland",
+     "object_type": "Location",
+     "object_admission": "GLOBAL",
+     "decision": "ACCEPT"
+    },
+    {
+     "predicate": "member_of",
+     "subject": "regional dispatchers",
+     "subject_type": "Person",
+     "subject_admission": "CORPUS_SCOPED",
+     "object": "west coast logistics consortium",
+     "object_type": "Organization",
+     "object_admission": "GLOBAL",
+     "decision": "ACCEPT"
+    },
+    {
+     "predicate": "subsidiary_of",
+     "subject": "corval freight",
+     "subject_type": "Organization",
+     "subject_admission": "GLOBAL",
+     "object": "corval logistics",
+     "object_type": "Organization",
+     "object_admission": "GLOBAL",
+     "decision": "ACCEPT"
+    },
+    {
+     "predicate": "uses",
+     "subject": "corval logistics",
+     "subject_type": "Organization",
+     "subject_admission": "GLOBAL",
+     "object": "freightnet routing platform",
+     "object_type": "Technology",
+     "object_admission": "GLOBAL",
+     "decision": "ACCEPT"
+    }
+   ],
+   "emitted_count": 5,
+   "gold_scoped": {
+    "gold": 4,
+    "tp": 3,
+    "fp": 2,
+    "fn": 1
+   },
+   "key_b": {
+    "wanted": 5,
+    "found": 3,
+    "detail": [
+     {
+      "predicate": "uses",
+      "subject": "Corval Logistics",
+      "object": "FreightNet routing platform",
+      "pre_known": true,
+      "found": true
+     },
+     {
+      "predicate": "subsidiary_of",
+      "subject": "Corval Freight",
+      "object": "Corval Logistics",
+      "pre_known": true,
+      "found": true
+     },
+     {
+      "predicate": "located_in",
+      "subject": "Portside warehouse",
+      "object": "Oakland",
+      "pre_known": true,
+      "found": true
+     },
+     {
+      "predicate": "associated_with",
+      "subject": "QuickScale invoicing system",
+      "object": "FreightNet routing platform",
+      "pre_known": true,
+      "note": "DITRANSITIVE 'Corval linked X to Y' \u2014 primary VAR-BIND test",
+      "found": false
+     },
+     {
+      "predicate": "causes",
+      "subject": "harbor terminal",
+      "object": "billing delays",
+      "pre_known": true,
+      "note": "'was the actual source of the delays' \u2014 object-slot coreference test",
+      "found": false
+     }
+    ]
+   },
+   "mentions": [
+    {
+     "surface": "corval logistics",
+     "type": "Organization",
+     "admission": "GLOBAL",
+     "score": 0.9897057
+    },
+    {
+     "surface": "corval",
+     "type": "Organization",
+     "admission": "GLOBAL",
+     "score": 0.9882487
+    },
+    {
+     "surface": "oakland",
+     "type": "Location",
+     "admission": "GLOBAL",
+     "score": 0.9726874
+    },
+    {
+     "surface": "june",
+     "type": "TimeReference",
+     "admission": "GLOBAL",
+     "score": 0.94749105
+    },
+    {
+     "surface": "harbor terminal",
+     "type": "Location",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.92750365
+    },
+    {
+     "surface": "corval freight",
+     "type": "Organization",
+     "admission": "GLOBAL",
+     "score": 0.8903742
+    },
+    {
+     "surface": "regional dispatchers",
+     "type": "Person",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.8887722
+    },
+    {
+     "surface": "freightnet routing platform",
+     "type": "Technology",
+     "admission": "GLOBAL",
+     "score": 0.88255143
+    },
+    {
+     "surface": "quickscale invoicing system",
+     "type": "Technology",
+     "admission": "GLOBAL",
+     "score": 0.8620854
+    },
+    {
+     "surface": "freightnet",
+     "type": "Organization",
+     "admission": "GLOBAL",
+     "score": 0.8331526
+    },
+    {
+     "surface": "portside",
+     "type": "Location",
+     "admission": "GLOBAL",
+     "score": 0.8117363
+    },
+    {
+     "surface": "west coast logistics consortium",
+     "type": "Organization",
+     "admission": "GLOBAL",
+     "score": 0.8088824
+    },
+    {
+     "surface": "invoicing system",
+     "type": "Technology",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.80374557
+    },
+    {
+     "surface": "regional hauls",
+     "type": "Event",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.65370786
+    },
+    {
+     "surface": "billing delays",
+     "type": "Event",
+     "admission": "CORPUS_SCOPED",
+     "score": 0.5564189
+    }
+   ],
+   "fragment_pairs": [
+    [
+     "corval",
+     "corval freight"
+    ],
+    [
+     "corval",
+     "corval logistics"
+    ],
+    [
+     "freightnet",
+     "freightnet routing platform"
+    ]
+   ]
+  }
+ },
+ "canonicalization": {
+  "entities": 39,
+  "clusters": 39,
+  "merged": 0
+ }
+}

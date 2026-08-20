@@ -1,0 +1,1005 @@
+{
+ "version": "admission-gold-2",
+ "authored": "2026-08-18",
+ "supersedes": "admission-gold-1.1 (preserved untouched at admission_gold_v1.1.json)",
+ "contract": "ENTITY-HARBOR-V1",
+ "note": "Two axes. `scope` is carried forward UNCHANGED from v1.1 (which the production policy scores 55/55) so scope remains independently regression-testable. `anchor_kind` / `referentiality` / `reference_basis` are the NEW Harbor contract and are NOT yet implemented by any policy - this file is the specification, not a passing baseline. REVISION 3b: GENERIC_GROUP renamed GENERIC; seven surfaces ruled; CONTEXT_REQUIRED added as an anchor_kind for surfaces the span cannot settle; structural evidence fields recorded but NOT decisive. PHASE 2A: CONTEXT_REQUIRED moved out of anchor_kind (a referent TYPE) into decision_status (a decision STATE); anchor_kind UNKNOWN pairs with it. reference_basis gains AMBIGUOUS for the >1-antecedent case.",
+ "axes": {
+  "anchor_kind": [
+   "IDENTITY",
+   "CONCEPT",
+   "LOCAL_REFERENCE",
+   "GENERIC",
+   "UNKNOWN"
+  ],
+  "referentiality": [
+   "SPECIFIC",
+   "GENERIC",
+   "UNRESOLVED"
+  ],
+  "reference_basis": [
+   "ANTECEDENT_RESOLVED",
+   "DOCUMENT_CONSTITUTED",
+   "EXTERNAL_UNRESOLVED",
+   "AMBIGUOUS"
+  ],
+  "scope": [
+   "GLOBAL",
+   "CORPUS_SCOPED",
+   "DOCUMENT_SCOPED",
+   "MENTION_ONLY"
+  ],
+  "structural": [
+   "named_anchor_present",
+   "identifier_present",
+   "determiner",
+   "multiword"
+  ],
+  "decision_status": [
+   "RESOLVED",
+   "CONTEXT_REQUIRED",
+   "ABSTAINED"
+  ]
+ },
+ "critical_limitation": "reference_basis CANNOT be determined from a surface string. It requires document context. Items marked CONTEXT_REQUIRED carry no basis assertion; only items with `context_document` assert one. A surface-only gold cannot qualify the LOCAL_REFERENCE branch of the contract.",
+ "items": [
+  {
+   "surface": "Kubernetes",
+   "core_type": "Technology",
+   "scope": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "referentiality": "SPECIFIC",
+   "structural": {
+    "named_anchor_present": true,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "PostgreSQL",
+   "core_type": "Technology",
+   "scope": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "referentiality": "SPECIFIC",
+   "structural": {
+    "named_anchor_present": true,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "Postgres",
+   "core_type": "Technology",
+   "scope": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "referentiality": "SPECIFIC",
+   "structural": {
+    "named_anchor_present": true,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "Qwen3-Reranker-0.6B",
+   "core_type": "Technology",
+   "scope": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "referentiality": "SPECIFIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": true,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "Polymath v4",
+   "core_type": "Product",
+   "scope": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "referentiality": "SPECIFIC",
+   "structural": {
+    "named_anchor_present": true,
+    "identifier_present": true,
+    "determiner": null,
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "Redis",
+   "core_type": "Technology",
+   "scope": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "referentiality": "SPECIFIC",
+   "structural": {
+    "named_anchor_present": true,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "Redis",
+   "core_type": "Technology",
+   "scope": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "referentiality": "SPECIFIC",
+   "sentence_initial": true,
+   "structural": {
+    "named_anchor_present": true,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "Neo4j",
+   "core_type": "Technology",
+   "scope": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "referentiality": "SPECIFIC",
+   "structural": {
+    "named_anchor_present": true,
+    "identifier_present": true,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "GLiNER",
+   "core_type": "Technology",
+   "scope": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "referentiality": "SPECIFIC",
+   "structural": {
+    "named_anchor_present": true,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "AcmeCorp",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "referentiality": "SPECIFIC",
+   "structural": {
+    "named_anchor_present": true,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "AliceSmith",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "referentiality": "SPECIFIC",
+   "structural": {
+    "named_anchor_present": true,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "Zurich",
+   "core_type": "Location",
+   "scope": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "referentiality": "SPECIFIC",
+   "structural": {
+    "named_anchor_present": true,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "GPT-4",
+   "core_type": "Technology",
+   "scope": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "referentiality": "SPECIFIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "AWS",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "referentiality": "SPECIFIC",
+   "structural": {
+    "named_anchor_present": true,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "FrameNet",
+   "core_type": "Technology",
+   "scope": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "referentiality": "SPECIFIC",
+   "structural": {
+    "named_anchor_present": true,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "Polymath retrieval system",
+   "core_type": "Technology",
+   "scope": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "referentiality": "SPECIFIC",
+   "ruling": "REVISION 3b: 'Polymath' is an explicit identifying anchor modifying a generic head",
+   "structural": {
+    "named_anchor_present": true,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "Qwen3 embedding model",
+   "core_type": "Technology",
+   "scope": "GLOBAL",
+   "anchor_kind": "UNKNOWN",
+   "referentiality": "UNRESOLVED",
+   "ruling": "REVISION 3b: named anchor is strong, but the surface cannot say particular model vs Qwen3 family/category",
+   "structural": {
+    "named_anchor_present": true,
+    "identifier_present": true,
+    "determiner": null,
+    "multiword": true
+   },
+   "decision_status": "CONTEXT_REQUIRED"
+  },
+  {
+   "surface": "system",
+   "core_type": "Technology",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "GENERIC",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "the system",
+   "core_type": "Concept",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "referentiality": "UNRESOLVED",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": "the",
+    "multiword": true
+   },
+   "decision_status": "CONTEXT_REQUIRED"
+  },
+  {
+   "surface": "System",
+   "core_type": "Concept",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "GENERIC",
+   "referentiality": "GENERIC",
+   "sentence_initial": true,
+   "structural": {
+    "named_anchor_present": true,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "System",
+   "core_type": "Concept",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "GENERIC",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": true,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "model",
+   "core_type": "Technology",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "GENERIC",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "the model",
+   "core_type": "Technology",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "referentiality": "UNRESOLVED",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": "the",
+    "multiword": true
+   },
+   "decision_status": "CONTEXT_REQUIRED"
+  },
+  {
+   "surface": "platform",
+   "core_type": "Technology",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "GENERIC",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "the platform",
+   "core_type": "Technology",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "referentiality": "UNRESOLVED",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": "the",
+    "multiword": true
+   },
+   "decision_status": "CONTEXT_REQUIRED"
+  },
+  {
+   "surface": "component",
+   "core_type": "Technology",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "GENERIC",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "component D6L11",
+   "core_type": "Technology",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "IDENTITY",
+   "referentiality": "SPECIFIC",
+   "ruling": "REVISION 3b: D6L11 is a discriminative identifier; the legacy MENTION_ONLY scope is old policy, not evidence of no identity",
+   "structural": {
+    "named_anchor_present": true,
+    "identifier_present": true,
+    "determiner": null,
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "service",
+   "core_type": "Technology",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "GENERIC",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "data",
+   "core_type": "Concept",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "GENERIC",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "process",
+   "core_type": "Process",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "GENERIC",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "application",
+   "core_type": "Technology",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "GENERIC",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "tool",
+   "core_type": "Technology",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "GENERIC",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "engine",
+   "core_type": "Technology",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "GENERIC",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "node",
+   "core_type": "Technology",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "GENERIC",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "layer",
+   "core_type": "Concept",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "GENERIC",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "framework",
+   "core_type": "Technology",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "GENERIC",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": false
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "the real system",
+   "core_type": "Concept",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "referentiality": "UNRESOLVED",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": "the",
+    "multiword": true
+   },
+   "decision_status": "CONTEXT_REQUIRED"
+  },
+  {
+   "surface": "new model",
+   "core_type": "Technology",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "GENERIC",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "main platform",
+   "core_type": "Technology",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "GENERIC",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "Model 3",
+   "core_type": "Technology",
+   "scope": "CORPUS_SCOPED",
+   "anchor_kind": "IDENTITY",
+   "referentiality": "SPECIFIC",
+   "ruling": "REVISION 3b: numbered identifier creates a particular referent; scope need not be GLOBAL",
+   "structural": {
+    "named_anchor_present": true,
+    "identifier_present": true,
+    "determiner": null,
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "authentication system",
+   "core_type": "Technology",
+   "scope": "CORPUS_SCOPED",
+   "anchor_kind": "CONCEPT",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "retrieval system",
+   "core_type": "Technology",
+   "scope": "CORPUS_SCOPED",
+   "anchor_kind": "CONCEPT",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "language model",
+   "core_type": "Technology",
+   "scope": "CORPUS_SCOPED",
+   "anchor_kind": "CONCEPT",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "storage layer",
+   "core_type": "Concept",
+   "scope": "CORPUS_SCOPED",
+   "anchor_kind": "CONCEPT",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "transactional outbox",
+   "core_type": "Concept",
+   "scope": "CORPUS_SCOPED",
+   "anchor_kind": "CONCEPT",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "retrieval control plane",
+   "core_type": "Technology",
+   "scope": "CORPUS_SCOPED",
+   "anchor_kind": "CONCEPT",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "vector index",
+   "core_type": "Technology",
+   "scope": "CORPUS_SCOPED",
+   "anchor_kind": "CONCEPT",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "workflow authority",
+   "core_type": "Concept",
+   "scope": "CORPUS_SCOPED",
+   "anchor_kind": "CONCEPT",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "payment processing system",
+   "core_type": "Technology",
+   "scope": "CORPUS_SCOPED",
+   "anchor_kind": "CONCEPT",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "worker pool",
+   "core_type": "Technology",
+   "scope": "CORPUS_SCOPED",
+   "anchor_kind": "CONCEPT",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "retrieval pipeline",
+   "core_type": "Technology",
+   "scope": "CORPUS_SCOPED",
+   "anchor_kind": "CONCEPT",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "System architecture",
+   "core_type": "Concept",
+   "scope": "CORPUS_SCOPED",
+   "anchor_kind": "CONCEPT",
+   "referentiality": "GENERIC",
+   "structural": {
+    "named_anchor_present": true,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "our recommendation engine",
+   "core_type": "Technology",
+   "scope": "DOCUMENT_SCOPED",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "referentiality": "UNRESOLVED",
+   "ruling": "REVISION 3b: possessive reference is clear; DOCUMENT_CONSTITUTED vs ANTECEDENT_RESOLVED needs context",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": "our",
+    "multiword": true
+   },
+   "decision_status": "CONTEXT_REQUIRED"
+  },
+  {
+   "surface": "this service",
+   "core_type": "Technology",
+   "scope": "DOCUMENT_SCOPED",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "referentiality": "UNRESOLVED",
+   "ruling": "REVISION 3b: deictic reference is clear; basis needs context",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": "this",
+    "multiword": true
+   },
+   "decision_status": "CONTEXT_REQUIRED"
+  },
+  {
+   "surface": "the ingestion system",
+   "core_type": "Technology",
+   "scope": "CORPUS_SCOPED",
+   "anchor_kind": "UNKNOWN",
+   "referentiality": "UNRESOLVED",
+   "ruling": "REVISION 3b: could be a specific local system, a previously introduced one, or generic terminology",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": "the",
+    "multiword": true
+   },
+   "decision_status": "CONTEXT_REQUIRED"
+  },
+  {
+   "surface": "the pump failure",
+   "core_type": "Event",
+   "scope": "DOCUMENT_SCOPED",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "referentiality": "SPECIFIC",
+   "reference_basis": "DOCUMENT_CONSTITUTED",
+   "context_document": "03_crestline_automation.md",
+   "basis_reason": "specific event constituted by the document",
+   "settled_in": "REVISION 3a",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": "the",
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "the production stoppage",
+   "core_type": "Event",
+   "scope": "DOCUMENT_SCOPED",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "referentiality": "SPECIFIC",
+   "reference_basis": "DOCUMENT_CONSTITUTED",
+   "context_document": "03_crestline_automation.md",
+   "basis_reason": "specific resulting event/state",
+   "settled_in": "REVISION 3a",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": "the",
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "the vision system",
+   "core_type": "Technology",
+   "scope": "DOCUMENT_SCOPED",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "referentiality": "SPECIFIC",
+   "reference_basis": "DOCUMENT_CONSTITUTED",
+   "context_document": "03_crestline_automation.md",
+   "basis_reason": "stable local artifact established by the document",
+   "settled_in": "REVISION 3a",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": "the",
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "the robotics vendor",
+   "core_type": "Organization",
+   "scope": "DOCUMENT_SCOPED",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "referentiality": "UNRESOLVED",
+   "reference_basis": "EXTERNAL_UNRESOLVED",
+   "context_document": "03_crestline_automation.md",
+   "basis_reason": "particular external party whose identity is withheld",
+   "settled_in": "REVISION 3a",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": "the",
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "the radiology review board",
+   "core_type": "Organization",
+   "scope": "DOCUMENT_SCOPED",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "referentiality": "SPECIFIC",
+   "reference_basis": "DOCUMENT_CONSTITUTED",
+   "context_document": "01_northvale_health.md",
+   "basis_reason": "one bounded institutional collective in this document",
+   "settled_in": "REVISION 3a",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": "the",
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "the engineering group",
+   "core_type": "Organization",
+   "scope": "DOCUMENT_SCOPED",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "referentiality": "SPECIFIC",
+   "reference_basis": "DOCUMENT_CONSTITUTED",
+   "context_document": "02_nimbus_cloud.md",
+   "basis_reason": "one bounded collective actor, not a generic plurality",
+   "settled_in": "REVISION 3a",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": "the",
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "the analytics team",
+   "core_type": "Organization",
+   "scope": "DOCUMENT_SCOPED",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "referentiality": "SPECIFIC",
+   "reference_basis": "DOCUMENT_CONSTITUTED",
+   "context_document": "03_crestline_automation.md",
+   "basis_reason": "one bounded collective actor, not a generic plurality",
+   "settled_in": "REVISION 3a",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": "the",
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "regional dispatchers",
+   "core_type": "Person",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "GENERIC",
+   "referentiality": "GENERIC",
+   "context_document": "05_corval_logistics.md",
+   "basis_reason": "unbounded plurality/existential set, not one stable participant",
+   "settled_in": "REVISION 3a",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "two new surgeons",
+   "core_type": "Person",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "GENERIC",
+   "referentiality": "GENERIC",
+   "context_document": "01_northvale_health.md",
+   "basis_reason": "unbounded plurality/existential set, not one stable participant",
+   "settled_in": "REVISION 3a",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  },
+  {
+   "surface": "three new instructors",
+   "core_type": "Person",
+   "scope": "MENTION_ONLY",
+   "anchor_kind": "GENERIC",
+   "referentiality": "GENERIC",
+   "context_document": "04_brightpath_learning.md",
+   "basis_reason": "unbounded plurality/existential set, not one stable participant",
+   "settled_in": "REVISION 3a",
+   "structural": {
+    "named_anchor_present": false,
+    "identifier_present": false,
+    "determiner": null,
+    "multiword": true
+   },
+   "decision_status": "RESOLVED"
+  }
+ ],
+ "invariant": "If the required classification depends on discourse context, the system MUST consume discourse context or return CONTEXT_REQUIRED. It must NEVER infer the answer from morphology because the harness happens to expect one.",
+ "concept_admission_rule": "CONCEPT requires defensible auditable evidence (canonical vocabulary/ontology entry, previously admitted concept, deterministic terminology evidence). Otherwise ABSTAIN. 'technical-looking compound -> CONCEPT' is forbidden: it is the two-token bug in a more sophisticated form."
+}

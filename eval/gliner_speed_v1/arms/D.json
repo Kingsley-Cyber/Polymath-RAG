@@ -1,0 +1,510 @@
+{
+ "arm": "D",
+ "model": "gliner2",
+ "labels": "descriptive",
+ "label_count": 12,
+ "threshold": 0.5,
+ "model_load_ms": 5445.1,
+ "warmup": 3,
+ "reps": 10,
+ "documents": {
+  "01_northvale_health.md": {
+   "slices": 13,
+   "chars": 853,
+   "slice_ms": {
+    "median": 57.63,
+    "p95": 70.46,
+    "min": 39.42
+   },
+   "doc_ms": {
+    "median": 748.97,
+    "p95": 779.9,
+    "min": 721.24
+   },
+   "chars_per_sec": 1138.9,
+   "entity_count": 43,
+   "entities": [
+    {
+     "text": "scheduling data",
+     "start": 56,
+     "end": 71,
+     "label": "Concept",
+     "score": 0.580892026424408
+    },
+    {
+     "text": "scheduling model",
+     "start": 43,
+     "end": 59,
+     "label": "Concept",
+     "score": 0.7099772691726685
+    },
+    {
+     "text": "patient records",
+     "start": 23,
+     "end": 38,
+     "label": "Document",
+     "score": 0.994350790977478
+    },
+    {
+     "text": "scheduling data",
+     "start": 56,
+     "end": 71,
+     "label": "Document",
+     "score": 0.8893344402313232
+    },
+    {
+     "text": "EMR outage",
+     "start": 4,
+     "end": 14,
+     "label": "Event",
+     "score": 0.9791737794876099
+    },
+    {
+     "text": "discharge",
+     "start": 67,
+     "end": 76,
+     "label": "Event",
+     "score": 0.7384716868400574
+    },
+    {
+     "text": "Austin",
+     "start": 41,
+     "end": 47,
+     "label": "Location",
+     "score": 0.9971718192100525
+    },
+    {
+     "text": "state registry",
+     "start": 46,
+     "end": 60,
+     "label": "Location",
+     "score": 0.9004886150360107
+    },
+    {
+     "text": "two",
+     "start": 18,
+     "end": 21,
+     "label": "Measurement",
+     "score": 0.7005298733711243
+    },
+    {
+     "text": "Operations Review",
+     "start": 30,
+     "end": 47,
+     "label": "Method",
+     "score": 0.6084147691726685
+    },
+    {
+     "text": "handoffs",
+     "start": 114,
+     "end": 122,
+     "label": "Method",
+     "score": 0.8899410963058472
+    },
+    {
+     "text": "CareChart EMR",
+     "start": 38,
+     "end": 51,
+     "label": "Organization",
+     "score": 0.6310561299324036
+    },
+    {
+     "text": "EMR",
+     "start": 4,
+     "end": 7,
+     "label": "Organization",
+     "score": 0.5457025170326233
+    },
+    {
+     "text": "Lakeshore General Hospital",
+     "start": 0,
+     "end": 26,
+     "label": "Organization",
+     "score": 0.9473490118980408
+    },
+    {
+     "text": "Lakeshore General Hospital",
+     "start": 38,
+     "end": 64,
+     "label": "Organization",
+     "score": 0.9724615812301636
+    },
+    {
+     "text": "Northvale Health Network",
+     "start": 4,
+     "end": 28,
+     "label": "Organization",
+     "score": 0.9901301264762878
+    },
+    {
+     "text": "Northvale Health Network",
+     "start": 0,
+     "end": 24,
+     "label": "Organization",
+     "score": 0.9951785802841187
+    },
+    {
+     "text": "Northvale Health Network",
+     "start": 46,
+     "end": 70,
+     "label": "Organization",
+     "score": 0.9992081522941589
+    },
+    {
+     "text": "Riverside Clinic",
+     "start": 23,
+     "end": 39,
+     "label": "Organization",
+     "score": 0.9554411768913269
+    },
+    {
+     "text": "company",
+     "start": 4,
+     "end": 11,
+     "label": "Organization",
+     "score": 0.7118398547172546
+    },
+    {
+     "text": "hospital",
+     "start": 4,
+     "end": 12,
+     "label": "Organization",
+     "score": 0.9646314978599548
+    },
+    {
+     "text": "network",
+     "start": 67,
+     "end": 74,
+     "label": "Organization",
+     "score": 0.8700507283210754
+    },
+    {
+     "text": "radiology review board",
+     "start": 4,
+     "end": 26,
+     "label": "Organization",
+     "score": 0.9345912337303162
+    },
+    {
+     "text": "state registry",
+     "start": 46,
+     "end": 60,
+     "label": "Organization",
+     "score": 0.7966729998588562
+    },
+    {
+     "text": "team",
+     "start": 86,
+     "end": 90,
+     "label": "Organization",
+     "score": 0.6074613928794861
+    },
+    {
+     "text": "Amara Osei",
+     "start": 0,
+     "end": 10,
+     "label": "Person",
+     "score": 0.9999703168869019
+    },
+    {
+     "text": "Amara Osei",
+     "start": 0,
+     "end": 10,
+     "label": "Person",
+     "score": 0.9999098777770996
+    },
+    {
+     "text": "Operations Review",
+     "start": 30,
+     "end": 47,
+     "label": "Process",
+     "score": 0.9987961053848267
+    },
+    {
+     "text": "handoffs",
+     "start": 114,
+     "end": 122,
+     "label": "Process",
+     "score": 0.9850730299949646
+    },
+    {
+     "text": "CareChart EMR",
+     "start": 34,
+     "end": 47,
+     "label": "Product",
+     "score": 0.9414822459220886
+    },
+    {
+     "text": "CareConnect portal",
+     "start": 4,
+     "end": 22,
+     "label": "Product",
+     "score": 0.9509177207946777
+    },
+    {
+     "text": "CareCoordinator",
+     "start": 27,
+     "end": 42,
+     "label": "Product",
+     "score": 0.8235585689544678
+    },
+    {
+     "text": "patient portal",
+     "start": 34,
+     "end": 48,
+     "label": "Product",
+     "score": 0.6239535212516785
+    },
+    {
+     "text": "CareChart EMR",
+     "start": 34,
+     "end": 47,
+     "label": "Technology",
+     "score": 0.6734620928764343
+    },
+    {
+     "text": "CareChart EMR",
+     "start": 38,
+     "end": 51,
+     "label": "Technology",
+     "score": 0.9880097508430481
+    },
+    {
+     "text": "network",
+     "start": 67,
+     "end": 74,
+     "label": "Technology",
+     "score": 0.7317067384719849
+    },
+    {
+     "text": "patient portal",
+     "start": 34,
+     "end": 48,
+     "label": "Technology",
+     "score": 0.7239879369735718
+    },
+    {
+     "text": "portal",
+     "start": 100,
+     "end": 106,
+     "label": "Technology",
+     "score": 0.9970671534538269
+    },
+    {
+     "text": "2015",
+     "start": 43,
+     "end": 47,
+     "label": "TimeReference",
+     "score": 0.9971936345100403
+    },
+    {
+     "text": "Tuesday",
+     "start": 81,
+     "end": 88,
+     "label": "TimeReference",
+     "score": 0.9993919134140015
+    },
+    {
+     "text": "clock",
+     "start": 102,
+     "end": 107,
+     "label": "TimeReference",
+     "score": 0.9227655529975891
+    },
+    {
+     "text": "discharge",
+     "start": 67,
+     "end": 76,
+     "label": "TimeReference",
+     "score": 0.7929101586341858
+    },
+    {
+     "text": "last month",
+     "start": 35,
+     "end": 45,
+     "label": "TimeReference",
+     "score": 0.9997465014457703
+    }
+   ]
+  },
+  "05_corval_logistics.md": {
+   "slices": 10,
+   "chars": 627,
+   "slice_ms": {
+    "median": 53.9,
+    "p95": 64.44,
+    "min": 45.26
+   },
+   "doc_ms": {
+    "median": 551.22,
+    "p95": 567.85,
+    "min": 537.09
+   },
+   "chars_per_sec": 1137.5,
+   "entity_count": 23,
+   "entities": [
+    {
+     "text": "billing delays",
+     "start": 49,
+     "end": 63,
+     "label": "Event",
+     "score": 0.9263370037078857
+    },
+    {
+     "text": "delays",
+     "start": 49,
+     "end": 55,
+     "label": "Event",
+     "score": 0.9997360110282898
+    },
+    {
+     "text": "harbor terminal",
+     "start": 4,
+     "end": 19,
+     "label": "Location",
+     "score": 0.9997456669807434
+    },
+    {
+     "text": "Corval",
+     "start": 0,
+     "end": 6,
+     "label": "Organization",
+     "score": 0.9709992408752441
+    },
+    {
+     "text": "Corval Freight",
+     "start": 0,
+     "end": 14,
+     "label": "Organization",
+     "score": 0.9885579347610474
+    },
+    {
+     "text": "Corval Logistics",
+     "start": 4,
+     "end": 20,
+     "label": "Organization",
+     "score": 0.9867553114891052
+    },
+    {
+     "text": "Corval Logistics",
+     "start": 0,
+     "end": 16,
+     "label": "Organization",
+     "score": 0.9899817109107971
+    },
+    {
+     "text": "Corval Logistics",
+     "start": 34,
+     "end": 50,
+     "label": "Organization",
+     "score": 0.995381236076355
+    },
+    {
+     "text": "West Coast logistics consortium",
+     "start": 36,
+     "end": 67,
+     "label": "Organization",
+     "score": 0.9964841604232788
+    },
+    {
+     "text": "Corval",
+     "start": 0,
+     "end": 6,
+     "label": "Person",
+     "score": 0.9979902505874634
+    },
+    {
+     "text": "Regional Operations Review",
+     "start": 22,
+     "end": 48,
+     "label": "Process",
+     "score": 0.9934142827987671
+    },
+    {
+     "text": "FreightNet",
+     "start": 26,
+     "end": 36,
+     "label": "Product",
+     "score": 0.980715274810791
+    },
+    {
+     "text": "FreightNet",
+     "start": 53,
+     "end": 63,
+     "label": "Product",
+     "score": 0.8585111498832703
+    },
+    {
+     "text": "FreightNet",
+     "start": 28,
+     "end": 38,
+     "label": "Product",
+     "score": 0.9974650144577026
+    },
+    {
+     "text": "QuickScale",
+     "start": 18,
+     "end": 28,
+     "label": "Product",
+     "score": 0.9882579445838928
+    },
+    {
+     "text": "pricing model",
+     "start": 8,
+     "end": 21,
+     "label": "Product",
+     "score": 0.6770118474960327
+    },
+    {
+     "text": "FreightNet",
+     "start": 26,
+     "end": 36,
+     "label": "Technology",
+     "score": 0.9807369709014893
+    },
+    {
+     "text": "FreightNet",
+     "start": 53,
+     "end": 63,
+     "label": "Technology",
+     "score": 0.9238138794898987
+    },
+    {
+     "text": "FreightNet",
+     "start": 28,
+     "end": 38,
+     "label": "Technology",
+     "score": 0.8289016485214233
+    },
+    {
+     "text": "invoicing system",
+     "start": 4,
+     "end": 20,
+     "label": "Technology",
+     "score": 0.9840314388275146
+    },
+    {
+     "text": "June",
+     "start": 84,
+     "end": 88,
+     "label": "TimeReference",
+     "score": 0.9996644258499146
+    },
+    {
+     "text": "billing delays",
+     "start": 49,
+     "end": 63,
+     "label": "TimeReference",
+     "score": 0.9993157386779785
+    },
+    {
+     "text": "delays",
+     "start": 49,
+     "end": 55,
+     "label": "TimeReference",
+     "score": 0.5911919474601746
+    }
+   ]
+  }
+ }
+}

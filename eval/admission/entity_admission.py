@@ -1,29 +1,13 @@
-"""Entity admission policy (EXPERIMENT-ONLY, entity-admission-v1.1).
+"""HISTORICAL SNAPSHOT — DO NOT IMPORT.
 
-Four classes:
-  GLOBAL           strong identity across corpora
-  CORPUS_SCOPED    identity meaningful within a corpus
-  DOCUMENT_SCOPED  identity established within one document (deictic/
-                   possessive modification)
-  MENTION_ONLY     linguistic mention; evidence/provenance only, NEVER
-                   projected as a KG node
+Frozen copy of entity-admission-v1.1 as it stood for the E2/C1.1
+qualification. Kept only so that historical evidence can be reproduced
+byte-for-byte.
 
-v1.1 fixes the four measured v1.0 error mechanisms:
-  1. capitalization alone does NOT establish proper-name identity for
-     generic common nouns (sentence-initial or not);
-  2. digit/version signal alone does NOT establish GLOBAL identity —
-     it requires a co-occurring identity signal (proper/acronym/
-     multiword product structure);
-  3. weak modifiers ("real", "new", "main", ...) do not lift a generic
-     head out of MENTION_ONLY;
-  4. genuinely discriminative compounds still qualify (retrieval
-     pipeline, vector index, worker pool, transactional outbox).
-
-The genericity signal is a BOUNDED, documented common-noun list
-(reproducible lexical structure, not a banned-word dump) — exactly the
-"deterministic genericity policy" the G4.2 brief sanctioned.
-Deterministic, no model, no numeric fake confidence, every decision
-explains itself. NOT production.
+Production code lives in `shared/polymath_shared/entity_admission.py`.
+Importing this file from a harness means the harness is not testing what
+ships — that defect (PHASE 0, ledger row 37) cost a 0.773 reading of a
+policy that actually scores 55/55.
 """
 from __future__ import annotations
 

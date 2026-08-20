@@ -7,6 +7,7 @@ from polymath_shared.rulepack.compiler import (
     RulePackError,
     canonical_entity_id,
     compile_relation,
+    compile_relation_kimi,
     load_rule_pack,
     normalize_trigger,
 )
@@ -15,6 +16,7 @@ __all__ = [
     "RulePackError",
     "canonical_entity_id",
     "compile_relation",
+    "compile_relation_kimi",
     "load_rule_pack",
     "normalize_trigger",
 ]

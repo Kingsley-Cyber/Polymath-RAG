@@ -109,7 +109,8 @@ def test_observer_off_is_behavior_neutral():  # A, B
     """build_candidates with observer=None and with a recording observer
     must produce IDENTICAL candidates."""
     from polymath_shared.contracts import CoreType, EntitySpan
-    from workers.candidates import SentenceSlice, build_candidates
+    from tests.historical_boundary import build_candidates
+    from workers.candidates import SentenceSlice
     from workers.chunker import materialize_chunks, plan_document
     from polymath_shared.rulepack import load_rule_pack
 

@@ -14,7 +14,7 @@ matches.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from polymath_shared.identity import chunk_id
 from workers.summarizer import split_sentences, summarize, summarize_children
@@ -26,6 +26,10 @@ class ChunkSpec:
     char_start: int
     char_end: int
     sentences: tuple[int, ...]  # global sentence indices
+    # LAYOUT-EVIDENCE-V1: chunk-relative [start,end) ranges that are heading
+    # text. The chunker is the only component holding both the document and
+    # chunk coordinate systems at once, so the projection happens here.
+    layout_headings: tuple[tuple[int, int], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -35,41 +39,61 @@ class ChunkPlan:
     parents: list[ChunkSpec]  # parent i summarizes children[fanout*i : fanout*(i+1)]
     document_summary: str
     fanout: int
+    # layout-evidence-v1 regions in MATERIALIZED SOURCE offsets
+    layout: list[dict] = field(default_factory=list)
 
 
 def _pack_sentences(
     sentences: list[str],
     starts: list[int],
     target_chars: int,
+    layout: list[tuple[int, int]] | None = None,
 ) -> list[ChunkSpec]:
     """Greedy sentence packing. Never splits a sentence; a sentence longer
-    than the target becomes its own chunk."""
+    than the target becomes its own chunk.
+
+    `layout` are document-offset heading regions. They are projected into
+    chunk coordinates AS THE CHUNK IS ASSEMBLED, because that is the only
+    moment both coordinate systems are known. Chunk TEXT is unchanged.
+    """
+    from polymath_shared.layout_evidence import project_regions
+
     chunks: list[ChunkSpec] = []
     buf: list[str] = []
     buf_len = 0
     idxs: list[int] = []
     first_start = 0
     last_end = 0
+    heads: list[tuple[int, int]] = []
+    offset = 0            # chunk-relative offset of the next sentence
+
+    def _flush():
+        chunks.append(ChunkSpec(
+            text=" ".join(buf), char_start=first_start, char_end=last_end,
+            sentences=tuple(idxs), layout_headings=tuple(heads),
+        ))
 
     for i, (sentence, start) in enumerate(zip(sentences, starts)):
         end = start + len(sentence)
         if buf and buf_len + 1 + len(sentence) > target_chars:
-            chunks.append(ChunkSpec(
-                text=" ".join(buf), char_start=first_start, char_end=last_end,
-                sentences=tuple(idxs),
-            ))
-            buf, buf_len, idxs = [], 0, []
+            _flush()
+            buf, buf_len, idxs, heads = [], 0, [], []
             first_start = start
+        # Chunk-relative start of this sentence inside `" ".join(buf)`:
+        # the joined length so far, plus one for the separator. `buf_len`
+        # keeps its ORIGINAL meaning (sum of sentence lengths, no
+        # separators) so packing decisions — and therefore chunk text,
+        # chunk ids and embeddings — are bit-for-bit unchanged.
+        offset = 0 if not buf else buf_len + len(buf)
+        if layout:
+            heads.extend(project_regions(layout, start, end, offset))
         buf.append(sentence)
         buf_len += len(sentence)
         idxs.append(i)
         last_end = end
 
     if buf:
-        chunks.append(ChunkSpec(
-            text=" ".join(buf), char_start=first_start, char_end=last_end,
-            sentences=tuple(idxs),
-        ))
+        _flush()
     return chunks
 
 
@@ -95,7 +119,14 @@ def plan_document(
         starts.append(text.find(sentence, cursor))
         cursor = starts[-1] + len(sentence)
 
-    children = _pack_sentences(sentences, starts, child_target_chars)
+    # LAYOUT-EVIDENCE-V1: detected HERE, on the materialized source text,
+    # which still has its line structure. Nothing downstream may re-derive
+    # it from chunk text — that text is joined with spaces and no longer
+    # carries the lines the detection depends on.
+    from polymath_shared.layout_evidence import heading_regions
+
+    layout = heading_regions(text)
+    children = _pack_sentences(sentences, starts, child_target_chars, layout)
     parents: list[ChunkSpec] = []
     for i in range(0, len(children), parent_fanout):
         group = children[i : i + parent_fanout]
@@ -113,6 +144,8 @@ def plan_document(
         parents=parents,
         document_summary=summarize(text, max_sentences=6, max_chars=1600),
         fanout=parent_fanout,
+        layout=[{"kind": "heading", "char_start": a, "char_end": b}
+                for a, b in layout],
     )
 
 
@@ -138,6 +171,9 @@ def materialize_chunks(plan: ChunkPlan) -> list[dict]:
             "summary": summarize(spec.text, max_sentences=2, max_chars=420),
             "char_start": spec.char_start,
             "char_end": spec.char_end,
+            # layout-evidence-v1 projection; [] means "detected, none here",
+            # which is different from NULL meaning "never detected".
+            "layout_map": [[a, b] for a, b in spec.layout_headings],
         }
         rows.append(row)
         child_by_spec[i] = row

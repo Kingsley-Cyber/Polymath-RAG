@@ -7,6 +7,16 @@ Usage:
   python scripts/trace_report.py sentence <sentence_id>
   python scripts/trace_report.py waterfall <run_id>
 
+Add --all to any command to union every configuration ever recorded for
+the target instead of the newest one.
+
+SCOPING: run_ids are deterministic (same canonical input -> same run_id),
+so a run_id identifies a DOCUMENT, not one execution. Re-ingesting the
+same corpus under a different pipeline / rule pack / chunker appends to
+the SAME run_id. These reports therefore scope to the most recent
+extraction contract by default and print the scope they used; without
+that a waterfall silently unions every experiment ever run.
+
 Reads extraction_trace_events + semantic tables; analysis only.
 """
 from __future__ import annotations
@@ -27,18 +37,67 @@ def _conn():
     return psycopg.connect(get_settings().postgres.dsn)
 
 
+
+# --- contract scoping -----------------------------------------------------
+SHOW_ALL = False
+
+
+def _scope(c, run_id: str):
+    """Newest (relation_pipeline, rule_pack_version, chunk_contract_hash)
+    recorded for this run_id, or None when unioning."""
+    if SHOW_ALL:
+        return None
+    row = c.execute(
+        """SELECT envelope->>'relation_pipeline', envelope->>'rule_pack_version',
+                  envelope->>'chunk_contract_hash'
+             FROM extraction_trace_events WHERE run_id=%s
+            GROUP BY 1,2,3 ORDER BY MAX(created_at) DESC LIMIT 1""",
+        (run_id,)).fetchone()
+    return row
+
+
+def _scope_sql(scope, alias: str = ""):
+    """(sql_fragment, params) restricting to one extraction contract."""
+    if scope is None:
+        return "", ()
+    p = f"{alias}." if alias else ""
+    return (f" AND {p}envelope->>'relation_pipeline' IS NOT DISTINCT FROM %s"
+            f" AND {p}envelope->>'rule_pack_version' IS NOT DISTINCT FROM %s"
+            f" AND {p}envelope->>'chunk_contract_hash' IS NOT DISTINCT FROM %s"), tuple(scope)
+
+
+def _print_scope(c, run_id: str, scope) -> None:
+    if scope is None:
+        n = c.execute("SELECT COUNT(DISTINCT (envelope->>'relation_pipeline', "
+                      "envelope->>'rule_pack_version', envelope->>'chunk_contract_hash')) "
+                      "FROM extraction_trace_events WHERE run_id=%s", (run_id,)).fetchone()[0]
+        print(f"SCOPE: ALL configurations ({n} distinct) — counts are a union, not one run")
+        return
+    print(f"SCOPE: pipeline={scope[0] or 'unrecorded'} pack={scope[1]} chunker={scope[2]}")
+    others = c.execute(
+        """SELECT COUNT(*) FROM (SELECT 1 FROM extraction_trace_events WHERE run_id=%s
+             GROUP BY envelope->>'relation_pipeline', envelope->>'rule_pack_version',
+                      envelope->>'chunk_contract_hash') t""", (run_id,)).fetchone()[0]
+    if others > 1:
+        print(f"       ({others - 1} older configuration(s) hidden; --all to include)")
+
+
 def cmd_surface(run_id: str, surface: str) -> None:
     c = _conn()
     print(f"SURFACE: {surface}")
+    scope = _scope(c, run_id)
+    _print_scope(c, run_id, scope)
+    sql, sp = _scope_sql(scope)
     like = f"%{surface.lower()}%"
     rows = c.execute(
         "SELECT event_type, decision, reason_code, sentence_id, detail FROM extraction_trace_events "
-        "WHERE run_id=%s AND lower(surface) LIKE %s ORDER BY created_at", (run_id, like)).fetchall()
+        "WHERE run_id=%s AND lower(surface) LIKE %s" + sql + " ORDER BY created_at",
+        (run_id, like, *sp)).fetchall()
     if not rows:
         rows = c.execute(
             "SELECT event_type, decision, reason_code, sentence_id, detail FROM extraction_trace_events "
-            "WHERE run_id=%s AND lower(envelope::text) LIKE %s ORDER BY created_at LIMIT 20",
-            (run_id, like)).fetchall()
+            "WHERE run_id=%s AND lower(envelope::text) LIKE %s" + sql + " ORDER BY created_at LIMIT 20",
+            (run_id, like, *sp)).fetchall()
     mention = c.execute(
         "SELECT normalized_surface, core_type, admission_class, gliner_score FROM mentions "
         "WHERE corpus_id=(SELECT corpus_id FROM runs WHERE run_id=%s) AND normalized_surface LIKE %s "
@@ -106,9 +165,12 @@ def cmd_run(run_id: str) -> None:
 
 def cmd_waterfall(run_id: str) -> None:
     c = _conn()
+    scope = _scope(c, run_id)
+    _print_scope(c, run_id, scope)
+    sql, sp = _scope_sql(scope)
     rows = c.execute(
-        "SELECT reason_code, COUNT(*) FROM extraction_trace_events WHERE run_id=%s "
-        "GROUP BY 1 ORDER BY 2 DESC", (run_id,)).fetchall()
+        "SELECT reason_code, COUNT(*) FROM extraction_trace_events WHERE run_id=%s"
+        + sql + " GROUP BY 1 ORDER BY 2 DESC", (run_id, *sp)).fetchall()
     total = sum(n for _, n in rows) or 1
     print("REJECTION/DECISION WATERFALL")
     for code, n in rows:
@@ -120,7 +182,14 @@ def main():
     if len(sys.argv) < 3:
         print(__doc__)
         return 1
-    cmd, arg = sys.argv[1], sys.argv[2]
+    global SHOW_ALL
+    argv = [a for a in sys.argv if a != "--all"]
+    SHOW_ALL = len(argv) != len(sys.argv)
+    if len(argv) < 3:
+        print(__doc__)
+        return 1
+    sys.argv = argv
+    cmd, arg = argv[1], argv[2]
     if cmd == "surface":
         cmd_surface(arg, sys.argv[3] if len(sys.argv) > 3 else "")
     elif cmd == "sentence":

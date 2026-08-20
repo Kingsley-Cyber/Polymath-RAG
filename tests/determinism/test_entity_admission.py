@@ -22,7 +22,8 @@ if sys_path not in sys.path:
 from polymath_shared.contracts import CoreType, EntitySpan, EvidenceSpan  # noqa: E402
 from polymath_shared.entity_admission import allocate_entity_id, decide  # noqa: E402
 from polymath_shared.rulepack.compiler import canonical_entity_id  # noqa: E402
-from workers.candidates import SentenceSlice, build_candidates  # noqa: E402
+from workers.candidates import SentenceSlice  # noqa: E402
+from tests.historical_boundary import build_candidates  # noqa: E402
 
 
 def _alloc(surface, ctype, *, corpus="c1", doc="d1", chunk="k1", start=0, end=None):

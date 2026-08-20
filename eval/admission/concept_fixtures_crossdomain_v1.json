@@ -1,0 +1,52 @@
+{
+ "version": "concept-fixtures-crossdomain-1",
+ "authored": "2026-08-18",
+ "contract": "concept-evidence-v1",
+ "why": "PHASE 2D acceptance: the SAME deterministic engine must run unchanged on arbitrary books. Four unrelated domains, none named anywhere in executable code. A whitelist tuned to the I4 corpus would fail every one of these.",
+ "domains": {
+  "technical": {
+   "document": "### Durable Messaging\n\nA transactional outbox is a pattern that records outgoing events in the same database transaction as the state change. The write-ahead log is a file that records mutations before they are applied. The system was restarted twice. Teams often deploy a message broker alongside it.",
+   "cases": [
+    {"term": "transactional outbox", "expect": "CONCEPT", "authority": "DOCUMENT_DEFINED"},
+    {"term": "write-ahead log", "expect": "CONCEPT", "authority": "DOCUMENT_DEFINED"},
+    {"term": "message broker", "expect": "ABSTAIN", "why": "mentioned, never defined — technical-looking morphology is not authority"},
+    {"term": "the system", "expect": "ABSTAIN", "why": "generic/local reference, owned by another Harbor branch"}
+   ]
+  },
+  "medical": {
+   "document": "### Respiratory Failure\n\nAcute respiratory distress syndrome is a condition in which fluid collects in the alveoli. Photosynthesis is the process by which plants convert light into chemical energy. The patient improved overnight. Clinicians monitored oxygen saturation closely.",
+   "cases": [
+    {"term": "acute respiratory distress syndrome", "expect": "CONCEPT", "authority": "DOCUMENT_DEFINED"},
+    {"term": "photosynthesis", "expect": "CONCEPT", "authority": "DOCUMENT_DEFINED"},
+    {"term": "oxygen saturation", "expect": "ABSTAIN", "why": "mentioned, never defined"}
+   ]
+  },
+  "narrative": {
+   "document": "### The Ashen Court\n\nThe Ember Rite is a ceremony performed at the turning of the year. Soulbinding refers to the joining of two fates by oath. Kaelen crossed the courtyard at dusk. The old bridge had stood for centuries.",
+   "cases": [
+    {"term": "the Ember Rite", "expect": "CONCEPT", "authority": "DOCUMENT_DEFINED",
+     "why": "the engine has never seen this term and needs no lexicon — the book defines it"},
+    {"term": "Soulbinding", "expect": "CONCEPT", "authority": "DOCUMENT_DEFINED"},
+    {"term": "the old bridge", "expect": "ABSTAIN", "why": "never defined; a local reference, not a concept"}
+   ]
+  },
+  "business": {
+   "document": "### Operations Handbook\n\nThe committee met on Tuesday. Revenue grew by nine percent.\n\n## Glossary\n\n- chargeback — a reversal of a completed payment initiated by the cardholder\n- run rate — annualised figure derived from a shorter period\n",
+   "cases": [
+    {"term": "chargeback", "expect": "CONCEPT", "authority": "GLOSSARY_DECLARED"},
+    {"term": "run rate", "expect": "CONCEPT", "authority": "GLOSSARY_DECLARED"},
+    {"term": "the committee", "expect": "ABSTAIN", "why": "appears in prose, absent from the glossary"}
+   ]
+  }
+ },
+ "adversarial": [
+  {"term": "vector index", "document": "", "expect": "ABSTAIN",
+   "why": "FORBIDDEN SHORTCUT: two technical-looking words. With no document definition, no registry and no lexicon it MUST abstain — this is the exact phrase whose admission the old two-token rule got wrong."},
+  {"term": "retrieval system", "document": "The retrieval system was slow. The retrieval system was restarted. The retrieval system remains under review.",
+   "expect": "ABSTAIN",
+   "why": "FORBIDDEN SHORTCUT: three occurrences. Frequency is supporting evidence only."},
+  {"term": "quality database", "document": "Crestline linked the vision system to the quality database in March.",
+   "expect": "ABSTAIN",
+   "why": "mentioned in the I4 corpus but never defined; must not be admitted just because it appears in the evaluation set"}
+ ]
+}

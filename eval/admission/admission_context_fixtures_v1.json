@@ -1,0 +1,231 @@
+{
+ "version": "admission-context-fixtures-1",
+ "authored": "2026-08-18",
+ "contract": "ENTITY-HARBOR-V1",
+ "why": "Surface-only gold cannot qualify ANTECEDENT_RESOLVED / DOCUMENT_CONSTITUTED / EXTERNAL_UNRESOLVED, because those are DISCOURSE properties. Without these fixtures a context resolver could be built with no test for it (REVISION 3b).",
+ "schema": {
+  "context": "ordered sentences constituting the discourse up to and including the target",
+  "target": "the exact surface being classified",
+  "anchor_kind": "IDENTITY | CONCEPT | LOCAL_REFERENCE | GENERIC | CONTEXT_REQUIRED",
+  "reference_basis": "ANTECEDENT_RESOLVED | DOCUMENT_CONSTITUTED | EXTERNAL_UNRESOLVED (LOCAL_REFERENCE only)",
+  "resolves_to": "for ANTECEDENT_RESOLVED only: the EXISTING admitted anchor whose identity must be REUSED. Must be a surface that actually occurs; never a canonical form invented for the fixture.",
+  "graph_eligible": "expected outcome of the single eligibility authority",
+  "admitted_anchors": "[(surface, core_type)] already admitted in this document; makes the fixture self-contained"
+ },
+ "fixtures": [
+  {
+   "id": "ctx-01-antecedent-resolved",
+   "context": [
+    "QuickScale deployed a recommendation engine.",
+    "This service handles ranking requests."
+   ],
+   "target": "This service",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "reference_basis": "ANTECEDENT_RESOLVED",
+   "resolves_to": "recommendation engine",
+   "graph_eligible": true,
+   "must_not": "create a new entity from the surface 'This service'",
+   "admitted_anchors": [
+    [
+     "recommendation engine",
+     "Technology"
+    ],
+    [
+     "QuickScale",
+     "Organization"
+    ]
+   ],
+   "fixture_correction": "originally asserted 'QuickScale recommendation engine', a canonical surface that never appears in the discourse. resolves_to must name the EXISTING admitted anchor; inventing a fuller name is the boundary-invention error REVISION 2 decision 9 forbids."
+  },
+  {
+   "id": "ctx-02-external-unresolved",
+   "context": [
+    "The robotics vendor was founded in 2018."
+   ],
+   "target": "the robotics vendor",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "reference_basis": "EXTERNAL_UNRESOLVED",
+   "graph_eligible": false,
+   "why": "a particular external organization exists but the document never says which; asserting identity would overclaim",
+   "admitted_anchors": []
+  },
+  {
+   "id": "ctx-03-document-constituted-event",
+   "context": [
+    "The pump failed during the afternoon run.",
+    "The pump failure caused a production stoppage."
+   ],
+   "target": "the pump failure",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "reference_basis": "DOCUMENT_CONSTITUTED",
+   "graph_eligible": true,
+   "why": "the document itself constitutes the event; no external identity is needed for the asserted relation to be meaningful",
+   "admitted_anchors": []
+  },
+  {
+   "id": "ctx-04-document-constituted-collective",
+   "context": [
+    "The engineering group created a load-testing harness.",
+    "The group later extended it."
+   ],
+   "target": "the engineering group",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "reference_basis": "DOCUMENT_CONSTITUTED",
+   "graph_eligible": true,
+   "why": "REVISION 3a: one bounded discourse participant; later text refers back to the SAME participant",
+   "admitted_anchors": []
+  },
+  {
+   "id": "ctx-05-generic-plurality-contrast",
+   "context": [
+    "Regional dispatchers joined the consortium.",
+    "Dispatchers frequently work overnight."
+   ],
+   "target": "Regional dispatchers",
+   "anchor_kind": "GENERIC",
+   "graph_eligible": false,
+   "why": "REVISION 3a contrast: the second mention describes a class/population, so there is no bounded collective identity",
+   "admitted_anchors": []
+  },
+  {
+   "id": "ctx-06-same-surface-opposite-basis",
+   "context": [
+    "Northvale Health Network operates three hospitals.",
+    "The company hired two new surgeons last month."
+   ],
+   "target": "The company",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "reference_basis": "ANTECEDENT_RESOLVED",
+   "resolves_to": "Northvale Health Network",
+   "graph_eligible": true,
+   "why": "ADVERSARIAL: identical surface to ctx-07 but resolvable here. Proves basis is discourse-determined, not surface-determined.",
+   "admitted_anchors": [
+    [
+     "Northvale Health Network",
+     "Organization"
+    ]
+   ]
+  },
+  {
+   "id": "ctx-07-same-surface-opposite-basis",
+   "context": [
+    "The company hired two new surgeons last month."
+   ],
+   "target": "The company",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "reference_basis": "EXTERNAL_UNRESOLVED",
+   "graph_eligible": false,
+   "why": "ADVERSARIAL PAIR with ctx-06: same surface, no antecedent, therefore not graph-eligible",
+   "admitted_anchors": []
+  },
+  {
+   "id": "ctx-08-named-anchor-particular",
+   "context": [
+    "Polymath ships a retrieval system behind the control plane.",
+    "The Polymath retrieval system uses a vector index."
+   ],
+   "target": "Polymath retrieval system",
+   "anchor_kind": "IDENTITY",
+   "graph_eligible": true,
+   "why": "'Polymath' identifies WHICH system; named_anchor_present plus a particularising context",
+   "admitted_anchors": []
+  },
+  {
+   "id": "ctx-09-named-anchor-family",
+   "context": [
+    "Qwen3 embedding models come in several sizes.",
+    "Teams pick a Qwen3 embedding model to suit their latency budget."
+   ],
+   "target": "Qwen3 embedding model",
+   "anchor_kind": "CONCEPT",
+   "graph_eligible": true,
+   "why": "ADVERSARIAL PAIR with ctx-08: same named-anchor+generic-head shape, but the context makes it a FAMILY/CATEGORY, not one deployed model. Proves 'proper token + concept head -> IDENTITY' is wrong.",
+   "admitted_anchors": []
+  },
+  {
+   "id": "ctx-10-generic-despite-recurrence",
+   "context": [
+    "The system logs every request.",
+    "The system was restarted twice.",
+    "The system remains under review."
+   ],
+   "target": "The system",
+   "anchor_kind": "GENERIC",
+   "graph_eligible": false,
+   "why": "REVISION 2: recurrence is supporting evidence only. Three occurrences do not constitute a bounded referent.",
+   "admitted_anchors": []
+  },
+  {
+   "id": "ctx-11-type-noun-anaphora-resolves",
+   "context": [
+    "Northvale Health Network expanded rapidly.",
+    "The company opened another clinic."
+   ],
+   "target": "The company",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "reference_basis": "ANTECEDENT_RESOLVED",
+   "resolves_to": "Northvale Health Network",
+   "admitted_anchors": [
+    [
+     "Northvale Health Network",
+     "Organization"
+    ]
+   ],
+   "graph_eligible": true,
+   "why": "E4b: sole prior Organization, target in a strictly later sentence, no competing party"
+  },
+  {
+   "id": "ctx-12-same-sentence-co-participant",
+   "context": [
+    "Acme Systems negotiated with the company."
+   ],
+   "target": "the company",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "reference_basis": "EXTERNAL_UNRESOLVED",
+   "admitted_anchors": [
+    [
+     "Acme Systems",
+     "Organization"
+    ]
+   ],
+   "graph_eligible": false,
+   "why": "ADVERSARIAL vs ctx-11: SAME surface, SAME type universe (one Organization), opposite outcome. A candidate sharing the target's sentence is a co-participant, not an antecedent. Exact-one type match is necessary but NOT sufficient."
+  },
+  {
+   "id": "ctx-13-competing-unnamed-party",
+   "context": [
+    "Acme hired a supplier.",
+    "The company later changed the specification."
+   ],
+   "target": "The company",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "reference_basis": "AMBIGUOUS",
+   "admitted_anchors": [
+    [
+     "Acme",
+     "Organization"
+    ]
+   ],
+   "graph_eligible": false,
+   "why": "ADVERSARIAL: sole admitted Organization, but 'a supplier' introduced an unnamed second party. Must abstain rather than force Acme."
+  },
+  {
+   "id": "ctx-14-contracted-with-same-sentence",
+   "context": [
+    "Northvale Health Network contracted with the company."
+   ],
+   "target": "the company",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "reference_basis": "EXTERNAL_UNRESOLVED",
+   "admitted_anchors": [
+    [
+     "Northvale Health Network",
+     "Organization"
+    ]
+   ],
+   "graph_eligible": false,
+   "why": "ADVERSARIAL vs ctx-11: identical surface and type universe; 'contracted with' marks a distinct party"
+  }
+ ],
+ "policy_pack": "resources/discourse/discourse-reference-policy-v1.json (hash-pinned)"
+}

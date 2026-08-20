@@ -1,0 +1,478 @@
+[
+ {
+  "fact": "depends_on(careconnect portal -> carechart emr)",
+  "doc": "01_northvale_health.md",
+  "was_tp": true,
+  "subject": {
+   "surface": "careconnect portal",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope 'The CareConnect portal' kept as context)"
+  },
+  "object": {
+   "surface": "carechart emr",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: acronym_identity (envelope 'CareChart EMR' kept as context)"
+  },
+  "retained": true,
+  "classification": "PRESERVED",
+  "reason": "both endpoints graph-eligible"
+ },
+ {
+  "fact": "founded(Amara Osei -> riverside clinic)",
+  "doc": "01_northvale_health.md",
+  "was_tp": true,
+  "subject": {
+   "surface": "Amara Osei",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope 'Amara Osei' kept as context)"
+  },
+  "object": {
+   "surface": "riverside clinic",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope 'the Riverside Clinic' kept as context)"
+  },
+  "retained": true,
+  "classification": "PRESERVED",
+  "reason": "both endpoints graph-eligible"
+ },
+ {
+  "fact": "has_role(Amara Osei -> northvale health network)",
+  "doc": "01_northvale_health.md",
+  "was_tp": true,
+  "subject": {
+   "surface": "Amara Osei",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope 'Amara Osei' kept as context)"
+  },
+  "object": {
+   "surface": "northvale health network",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope '### Northvale Health Network' kept as context)"
+  },
+  "retained": true,
+  "classification": "PRESERVED",
+  "reason": "both endpoints graph-eligible"
+ },
+ {
+  "fact": "located_in(lakeshore general hospital -> austin)",
+  "doc": "01_northvale_health.md",
+  "was_tp": true,
+  "subject": {
+   "surface": "lakeshore general hospital",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope 'Lakeshore General Hospital' kept as context)"
+  },
+  "object": {
+   "surface": "austin",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope 'Austin' kept as context)"
+  },
+  "retained": true,
+  "classification": "PRESERVED",
+  "reason": "both endpoints graph-eligible"
+ },
+ {
+  "fact": "depends_on(ledger billing service -> postgres cluster)",
+  "doc": "02_nimbus_cloud.md",
+  "was_tp": true,
+  "subject": {
+   "surface": "ledger billing service",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope 'The Ledger billing service' kept as context)"
+  },
+  "object": {
+   "surface": "postgres cluster",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope 'the Postgres cluster' kept as context)"
+  },
+  "retained": true,
+  "classification": "PRESERVED",
+  "reason": "both endpoints graph-eligible"
+ },
+ {
+  "fact": "associated_with(crestline -> vision system)",
+  "doc": "03_crestline_automation.md",
+  "was_tp": false,
+  "subject": {
+   "surface": "crestline",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope 'Crestline' kept as context)"
+  },
+  "object": {
+   "surface": "vision system",
+   "old": "CORPUS_SCOPED",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "status": "RESOLVED",
+   "basis": "DOCUMENT_CONSTITUTED",
+   "scope": "DOCUMENT_SCOPED",
+   "eligible": true,
+   "why": "gold_v2 qualified ruling (envelope: noun chunk contains the proposal and its head 'syste)"
+  },
+  "retained": true,
+  "classification": "PRESERVED",
+  "reason": "both endpoints graph-eligible"
+ },
+ {
+  "fact": "causes(pump failure -> production stoppage)",
+  "doc": "03_crestline_automation.md",
+  "was_tp": true,
+  "subject": {
+   "surface": "pump failure",
+   "old": "CORPUS_SCOPED",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "status": "RESOLVED",
+   "basis": "DOCUMENT_CONSTITUTED",
+   "scope": "DOCUMENT_SCOPED",
+   "eligible": true,
+   "why": "gold_v2 qualified ruling (envelope: noun chunk contains the proposal and its head 'failu)"
+  },
+  "object": {
+   "surface": "production stoppage",
+   "old": "CORPUS_SCOPED",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "status": "RESOLVED",
+   "basis": "DOCUMENT_CONSTITUTED",
+   "scope": "DOCUMENT_SCOPED",
+   "eligible": true,
+   "why": "gold_v2 qualified ruling (envelope: noun chunk contains the proposal and its head 'stopp)"
+  },
+  "retained": true,
+  "classification": "PRESERVED",
+  "reason": "both endpoints graph-eligible"
+ },
+ {
+  "fact": "developed(crestline -> cobalt assembly cell)",
+  "doc": "03_crestline_automation.md",
+  "was_tp": false,
+  "subject": {
+   "surface": "crestline",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope 'Crestline' kept as context)"
+  },
+  "object": {
+   "surface": "cobalt assembly cell",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope 'the Cobalt assembly cell' kept as context)"
+  },
+  "retained": true,
+  "classification": "PRESERVED",
+  "reason": "both endpoints graph-eligible"
+ },
+ {
+  "fact": "founded(crestline -> robotics vendor)",
+  "doc": "03_crestline_automation.md",
+  "was_tp": false,
+  "subject": {
+   "surface": "crestline",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope 'Crestline' kept as context)"
+  },
+  "object": {
+   "surface": "robotics vendor",
+   "old": "CORPUS_SCOPED",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "status": "RESOLVED",
+   "basis": "EXTERNAL_UNRESOLVED",
+   "scope": "DOCUMENT_SCOPED",
+   "eligible": false,
+   "why": "gold_v2 qualified ruling (envelope: noun chunk contains the proposal and its head 'vendo)"
+  },
+  "retained": false,
+  "classification": "REMOVED_BY_HARBOR",
+  "reason": "object not graph-eligible: LOCAL_REFERENCE/EXTERNAL_UNRESOLVED"
+ },
+ {
+  "fact": "leads(maria kowalski -> Crestline automation team)",
+  "doc": "03_crestline_automation.md",
+  "was_tp": true,
+  "subject": {
+   "surface": "maria kowalski",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope 'Maria Kowalski' kept as context)"
+  },
+  "object": {
+   "surface": "Crestline automation team",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope 'the Crestline automation team' kept as context)"
+  },
+  "retained": true,
+  "classification": "PRESERVED",
+  "reason": "both endpoints graph-eligible"
+ },
+ {
+  "fact": "uses(crestline automation -> siemens plcs)",
+  "doc": "03_crestline_automation.md",
+  "was_tp": true,
+  "subject": {
+   "surface": "crestline automation",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope '### Crestline Automation' kept as context)"
+  },
+  "object": {
+   "surface": "siemens plcs",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope 'Siemens PLCs' kept as context)"
+  },
+  "retained": true,
+  "classification": "PRESERVED",
+  "reason": "both endpoints graph-eligible"
+ },
+ {
+  "fact": "depends_on(mentor engine -> qbank item database)",
+  "doc": "04_brightpath_learning.md",
+  "was_tp": false,
+  "subject": {
+   "surface": "mentor engine",
+   "old": "CORPUS_SCOPED",
+   "anchor_kind": "LOCAL_REFERENCE",
+   "status": "ABSTAINED",
+   "basis": "AMBIGUOUS",
+   "scope": "CORPUS_SCOPED",
+   "eligible": false,
+   "why": "discourse: E3 multiple named anchors match"
+  },
+  "object": {
+   "surface": "qbank item database",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope 'the QBank item database' kept as context)"
+  },
+  "retained": false,
+  "classification": "MASKED_ERROR",
+  "reason": "subject not graph-eligible: ABSTAINED (LOCAL_REFERENCE)"
+ },
+ {
+  "fact": "has_role(daniel okafor -> brightpath learning)",
+  "doc": "04_brightpath_learning.md",
+  "was_tp": true,
+  "subject": {
+   "surface": "daniel okafor",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope 'Daniel Okafor' kept as context)"
+  },
+  "object": {
+   "surface": "brightpath learning",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope '### Brightpath Learning' kept as context)"
+  },
+  "retained": true,
+  "classification": "PRESERVED",
+  "reason": "both endpoints graph-eligible"
+ },
+ {
+  "fact": "located_in(portside warehouse -> oakland)",
+  "doc": "05_corval_logistics.md",
+  "was_tp": true,
+  "subject": {
+   "surface": "portside warehouse",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope 'The Portside warehouse' kept as context)"
+  },
+  "object": {
+   "surface": "oakland",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope 'Oakland' kept as context)"
+  },
+  "retained": true,
+  "classification": "PRESERVED",
+  "reason": "both endpoints graph-eligible"
+ },
+ {
+  "fact": "member_of(regional dispatchers -> west coast logistics consortium)",
+  "doc": "05_corval_logistics.md",
+  "was_tp": false,
+  "subject": {
+   "surface": "regional dispatchers",
+   "old": "CORPUS_SCOPED",
+   "anchor_kind": "GENERIC",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "MENTION_ONLY",
+   "eligible": false,
+   "why": "gold_v2 qualified ruling (envelope: noun chunk contains the proposal and its head 'dispa)"
+  },
+  "object": {
+   "surface": "west coast logistics consortium",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope 'the West Coast logistics consortium' kept as context)"
+  },
+  "retained": false,
+  "classification": "REMOVED_BY_HARBOR",
+  "reason": "subject not graph-eligible: GENERIC \u2014 a class/plurality, not one entity"
+ },
+ {
+  "fact": "subsidiary_of(corval freight -> corval logistics)",
+  "doc": "05_corval_logistics.md",
+  "was_tp": true,
+  "subject": {
+   "surface": "corval freight",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope 'Corval Freight' kept as context)"
+  },
+  "object": {
+   "surface": "corval logistics",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope '### Corval Logistics' kept as context)"
+  },
+  "retained": true,
+  "classification": "PRESERVED",
+  "reason": "both endpoints graph-eligible"
+ },
+ {
+  "fact": "uses(corval logistics -> freightnet routing platform)",
+  "doc": "05_corval_logistics.md",
+  "was_tp": true,
+  "subject": {
+   "surface": "corval logistics",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope '### Corval Logistics' kept as context)"
+  },
+  "object": {
+   "surface": "freightnet routing platform",
+   "old": "GLOBAL",
+   "anchor_kind": "IDENTITY",
+   "status": "RESOLVED",
+   "basis": null,
+   "scope": "GLOBAL",
+   "eligible": true,
+   "why": "identity on proposal: proper_name_identity (envelope 'the FreightNet routing platform' kept as context)"
+  },
+  "retained": true,
+  "classification": "PRESERVED",
+  "reason": "both endpoints graph-eligible"
+ }
+]

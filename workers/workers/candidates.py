@@ -188,14 +188,18 @@ def _predicate_region_boundaries(sentence: str, trigger_index: dict[str, set[str
 
 
 def _admission_class_of(span: EntitySpan, sl: SentenceSlice, doc_id: str,
-                        corpus_id: str) -> str:
-    """Reuse the frozen admission classifier to decide referentiality of
-    a frame argument (I3R-R2 referential-frame gate)."""
-    from polymath_shared.entity_admission import decide
-    leading = sl.text[: len(sl.text) - len(sl.text.lstrip())]
-    sentence_initial = span.start <= sl.sentence_start + len(leading)
-    return decide(span.text, span.core_type.value, span.score,
-                  sentence_initial=sentence_initial).reference_class
+                        corpus_id: str, identities: dict | None = None) -> str:
+    """S4c: referentiality of a frame argument, READ from the single
+    admission decided at the extract-stage boundary (I3R-R2 referential-frame
+    gate). This is a consumer — it never classifies."""
+    from polymath_shared.identity_allocation import span_identity_key
+
+    identity = (identities or {}).get(span_identity_key(span, corpus_id))
+    if identity is None:
+        raise RuntimeError(
+            f"no admission for frame argument {span.text!r} — candidate "
+            "generation ran outside the single admission boundary")
+    return identity.admission_class
 
 
 def build_candidates(
@@ -209,6 +213,7 @@ def build_candidates(
     enrich: bool = True,
     doc_entities_history: list[EntitySpan] | None = None,
     observer=None,
+    identities: dict | None = None,
 ) -> list[RelationCandidate]:
     """Deterministic, trigger-scoped candidate generation (I3R-R2).
 
@@ -339,7 +344,7 @@ def build_candidates(
             # referential gate: prepositional frames require
             # non-MENTION_ONLY arguments
             if referential_gate:
-                if any(_admission_class_of(s, sl, doc_id, corpus_id) == "MENTION_ONLY"
+                if any(_admission_class_of(s, sl, doc_id, corpus_id, identities) == "MENTION_ONLY"
                        for s in subjects + objects):
                     if observer:
                         observer.record_candidate_outcome(sl, evidence, "SUBJECT_MENTION_ONLY",
@@ -365,8 +370,10 @@ def build_candidates(
                                 "evidence_class": evidence.evidence_class})
                         continue
 
-                    subject_id = _allocate(subject_span, sl, doc_id, corpus_id)
-                    object_id = _allocate(object_span, sl, doc_id, corpus_id)
+                    subject_id = _allocate(subject_span, sl, doc_id, corpus_id,
+                                           identities)
+                    object_id = _allocate(object_span, sl, doc_id, corpus_id,
+                                          identities)
                     if observer:
                         observer.record_candidate_outcome(sl, evidence, "CANDIDATE_CREATED", {
                             "subject": subject_span.text, "object": object_span.text})
@@ -388,28 +395,24 @@ def build_candidates(
     return candidates
 
 
-def _allocate(span, sl: SentenceSlice, doc_id: str, corpus_id: str) -> str:
-    """Entity admission boundary (E2/C1.1): identity by reference class.
+def _allocate(span, sl: SentenceSlice, doc_id: str, corpus_id: str,
+              identities: dict | None = None) -> str:
+    """S4c: the candidate's endpoint id, READ from the single admission
+    decided at the extract-stage boundary.
 
-    GLOBAL -> global canonical id; CORPUS_SCOPED -> corpus+type+surface;
-    DOCUMENT_SCOPED -> corpus+doc+type+surface; MENTION_ONLY -> stable
-    evidence mention id (never a durable graph identity)."""
-    from polymath_shared.entity_admission import allocate_entity_id
+    Previously this re-derived admission, so a candidate endpoint could
+    disagree with the mention row for the same span. It is now a consumer;
+    a missing entry means candidate generation ran outside the boundary,
+    which must fail rather than silently allocate a second identity."""
+    from polymath_shared.identity_allocation import span_identity_key
 
-    leading = sl.text[: len(sl.text) - len(sl.text.lstrip())]
-    sentence_initial = span.start <= sl.sentence_start + len(leading)
-    decision = allocate_entity_id(
-        span.text,
-        span.core_type.value,
-        corpus_id=corpus_id,
-        doc_id=span.doc_id or doc_id,
-        chunk_id=span.chunk_id,
-        span_start=span.start,
-        span_end=span.end,
-        extraction_score=span.score,
-        sentence_initial=sentence_initial,
-    )
-    return decision.mention_id
+    identity = (identities or {}).get(span_identity_key(span, corpus_id))
+    if identity is None:
+        raise RuntimeError(
+            f"no admission for candidate endpoint {span.text!r} at "
+            f"{span.chunk_id}[{span.start}:{span.end}] — candidate "
+            "generation ran outside the single admission boundary")
+    return identity.entity_id
 
 
 def _entity_candidate(span: EntitySpan, resolved_id: str):
@@ -450,20 +453,54 @@ def _role_assignments(subject: EntitySpan, object: EntitySpan, parse: dict | Non
 def _lookup_for(rule_pack: dict, evidence: EvidenceSpan) -> dict:
     """Real-resource lemma lookup (compiled tables): VerbNet classes,
     PropBank rolesets, composed FrameNet frames, SemLink resolution.
-    A single roleset disambiguates; several stay ambiguous (compiler
-    abstains). Missing data is absence, never a gate (docx §9)."""
+
+    KIMI Phase 3: when the typed trigger contract recorded WHICH predicate
+    produced the trigger, use that rule's declared roleset/VN/FN. This
+    disambiguates polysemous verbs like 'found' (establish.01 for creation)
+    vs the raw lexical lookup (found.04 = base upon). Missing data is
+    absence, never a gate (docx §9).
+    """
     from polymath_shared.rulepack.compiler import lexical_lookup
 
     lemma = evidence.trigger_lemma
     if not lemma:
-        return {"roleset": None, "vn_classes": [], "fn_frames": [], "semlink_resolved": False}
+        return {"roleset": None, "vn_classes": [], "fn_frames": [], "semlink_resolved": False,
+                "pb_arguments": {}, "semlink_pb_vn": {}}
+
+    # Typed trigger: the evidence names the predicate and lexical arm.
+    typed_rule_id = getattr(evidence, "trigger_predicate_id", None)
+    if typed_rule_id and typed_rule_id in rule_pack.get("predicates", {}):
+        rule = rule_pack["predicates"][typed_rule_id]
+        ev = rule.get("evidence", {})
+        rolesets = ev.get("propbank_rolesets", [])
+        selected = rolesets[0] if len(rolesets) == 1 else None
+        # Pull the actual PropBank argument inventory from compiled tables
+        # for the selected roleset, not the raw lemma lookup (which may map
+        # to a different sense, e.g., "found" -> found.04 vs establish.01).
+        pb_table = rule_pack.get("lexical", {}).get("pb_roleset_arguments", {})
+        semlink_table = rule_pack.get("lexical", {}).get("pb_to_vn", {})
+        pb_args = {selected: pb_table.get(selected, {})} if selected else {}
+        semlink = {selected: semlink_table.get(selected, {})} if selected else {}
+        return {
+            "roleset": selected,
+            "vn_classes": ev.get("verbnet_classes", []),
+            "fn_frames": ev.get("framenet_frames", []),
+            "semlink_resolved": bool(rolesets),
+            "pb_arguments": pb_args,
+            "semlink_pb_vn": semlink,
+        }
+
+    # Untyped / legacy harness: raw lexical lookup.
     lookup = lexical_lookup(rule_pack, lemma)
     rolesets = lookup["propbank_rolesets"]
+    selected = rolesets[0] if len(rolesets) == 1 else None
     return {
-        "roleset": rolesets[0] if len(rolesets) == 1 else None,
+        "roleset": selected,
         "vn_classes": lookup["verbnet_classes"],
         "fn_frames": lookup["framenet_frames"],
         "semlink_resolved": lookup["semlink_resolved"],
+        "pb_arguments": lookup.get("pb_arguments", {}),
+        "semlink_pb_vn": lookup.get("semlink_pb_vn", {}),
     }
 
 
@@ -471,3 +508,22 @@ def _head_trigger(evidence: EvidenceSpan, sl: SentenceSlice) -> str | None:
     from polymath_shared.rulepack.compiler import normalize_trigger
 
     return normalize_trigger(evidence.text)
+
+
+def identities_for(slices: list[SentenceSlice], *, corpus_id: str, doc_id: str,
+                   contract_version: str) -> dict:
+    """S4c — the admission boundary, for callers that own a slice list
+    directly (tests, eval harnesses, replay tools).
+
+    Delegates to the SAME authority the extract stage uses, so a harness can
+    never diverge from production by building its own map. `contract_version`
+    is explicit and required: pin admission-harbor-v2 for current semantics,
+    or pin the historical contract when deliberately replaying it.
+    """
+    from workers.extract_worker import _allocate_identities
+
+    return _allocate_identities([({"chunk_id": sl.entities[0].chunk_id
+                                   if sl.entities else "c0", "text": sl.text}, sl)
+                                 for sl in slices],
+                                corpus_id, doc_id,
+                                contract_version=contract_version)
