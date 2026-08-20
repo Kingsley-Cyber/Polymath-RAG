@@ -1,0 +1,470 @@
+{
+ "contract": "sealed-multidomain-qualification-v1",
+ "corpus": "smq1-sealed-v1",
+ "seal_status": "SEALED",
+ "invariants": [
+  {
+   "invariant": "every mention carries admission-harbor-v2",
+   "layer": "B_admission",
+   "count": 0,
+   "status": "PASS"
+  },
+  {
+   "invariant": "no durable id from a non-v2 admission",
+   "layer": "B_admission",
+   "count": 0,
+   "status": "PASS"
+  },
+  {
+   "invariant": "entity id prefix agrees with admission class",
+   "layer": "C_canonicalization",
+   "count": 0,
+   "status": "PASS"
+  },
+  {
+   "invariant": "no identity fragmentation (one surface, one id)",
+   "layer": "C_canonicalization",
+   "count": 0,
+   "status": "PASS"
+  },
+  {
+   "invariant": "every fact has exact-span evidence",
+   "layer": "D_relation",
+   "count": 0,
+   "status": "PASS"
+  },
+  {
+   "invariant": "no orphaned semantic rows",
+   "layer": "F_infrastructure",
+   "count": 0,
+   "status": "PASS"
+  },
+  {
+   "invariant": "no projected relationship has an ineligible endpoint",
+   "layer": "D_relation",
+   "status": "PASS",
+   "count": 0,
+   "projected": 0,
+   "eligible": 0,
+   "not_yet_projected": 0
+  }
+ ],
+ "invariant_failures": 0,
+ "failure_layers": [],
+ "summary": {
+  "documents": 2,
+  "durable_identities": 12,
+  "concepts": 0,
+  "abstentions": 51,
+  "canonical_facts": 0
+ },
+ "per_document": {
+  "/Users/king/Downloads/Additional/Completed MD/RESEARCH_QUERY_living_performance_realism.md": {
+   "mentions": 39,
+   "graph_eligible": 7,
+   "abstention_rate": 0.821,
+   "anchor_kinds": {
+    "GENERIC": 17,
+    "IDENTITY": 7,
+    "UNKNOWN": 15
+   }
+  },
+  "/Users/king/Downloads/Additional/Completed MD/gap_answer_05_mismatched-hands-diagnosis.md": {
+   "mentions": 30,
+   "graph_eligible": 6,
+   "abstention_rate": 0.8,
+   "anchor_kinds": {
+    "GENERIC": 13,
+    "IDENTITY": 5,
+    "LOCAL_REFERENCE": 2,
+    "UNKNOWN": 10
+   }
+  }
+ },
+ "durable_identities": [
+  {
+   "surface": "BLEND",
+   "core_type": "Method",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['BLEND'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "CPCS",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['CPCS'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "DiffH2O",
+   "core_type": "Document",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['DiffH2O'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "FACS",
+   "core_type": "Technology",
+   "scope": "GLOBAL",
+   "evidence": "identity: acronym structure"
+  },
+  {
+   "surface": "JointHOI",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['JointHOI'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "L5 emphasis dynamics",
+   "core_type": "Concept",
+   "scope": "GLOBAL",
+   "evidence": "identity: acronym structure"
+  },
+  {
+   "surface": "LIVING_PERFORMANCE_REALISM.md",
+   "core_type": "Document",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['LIVING_PERFORMANCE_REALISM.md'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Laban",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Laban'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "OpenAI",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['OpenAI'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Veo Reference Images",
+   "core_type": "Document",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Veo', 'Reference'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "resting micro-sway amplitude",
+   "core_type": "Measurement",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['sway'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "zipper_hand",
+   "core_type": "Concept",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['zipper_hand'] (POS=PROPN, not capitalization)"
+  }
+ ],
+ "concepts": [],
+ "abstentions": [
+  {
+   "surface": "Ambiguous role labels",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'labels' (lemma 'label') with no identity anchor"
+  },
+  {
+   "surface": "Reference-image and character-conditioning workflows",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'workflows' (lemma 'workflow') with no identity anchor"
+  },
+  {
+   "surface": "age",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'age' with no identity or concept evidence"
+  },
+  {
+   "surface": "arousal",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'arousal' with no identity or concept evidence"
+  },
+  {
+   "surface": "breath",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'breath' with no identity or concept evidence"
+  },
+  {
+   "surface": "concept",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'concept' with no identity or concept evidence"
+  },
+  {
+   "surface": "contact",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'contact' with no identity or concept evidence"
+  },
+  {
+   "surface": "culture",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'culture' with no identity or concept evidence"
+  },
+  {
+   "surface": "disfluency",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'disfluency' with no identity or concept evidence"
+  },
+  {
+   "surface": "effort",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'effort' with no identity or concept evidence"
+  },
+  {
+   "surface": "filler/pause rates",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'rates' (lemma 'rate') with no identity anchor"
+  },
+  {
+   "surface": "gait",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'gait' with no identity or concept evidence"
+  },
+  {
+   "surface": "geometry",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'geometry' with no identity or concept evidence"
+  },
+  {
+   "surface": "identity",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'identity' with no identity or concept evidence"
+  },
+  {
+   "surface": "interpenetration",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'interpenetration' with no identity or concept evidence"
+  },
+  {
+   "surface": "lever",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'lever' with no identity or concept evidence"
+  },
+  {
+   "surface": "model",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'model' with no identity or concept evidence"
+  },
+  {
+   "surface": "occlusion",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'occlusion' with no identity or concept evidence"
+  },
+  {
+   "surface": "one continuous contact path",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: quantifier 'one' over a common-noun head 'path'"
+  },
+  {
+   "surface": "render",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'render' with no identity or concept evidence"
+  },
+  {
+   "surface": "saccade durations",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'durations' (lemma 'duration') with no identity anchor"
+  },
+  {
+   "surface": "semantics",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'semantics' (lemma 'semantic') with no identity anchor"
+  },
+  {
+   "surface": "species",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'species' (lemma 'specie') with no identity anchor"
+  },
+  {
+   "surface": "stress",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'stress' with no identity or concept evidence"
+  },
+  {
+   "surface": "text",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'text' with no identity or concept evidence"
+  },
+  {
+   "surface": "uncanny-valley thresholds",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'thresholds' (lemma 'threshold') with no identity anchor"
+  },
+  {
+   "surface": "zipper_hand",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'zipper_hand' with no identity or concept evidence"
+  },
+  {
+   "surface": "visual model",
+   "anchor": "LOCAL_REFERENCE",
+   "status": "RESOLVED",
+   "why": "discourse: E4 exactly one compatible local antecedent; antecedent carries no durable identity to inherit"
+  },
+  {
+   "surface": "Completed coverage table",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "Deep Research Prompt",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "Sora 2 Prompting Guide",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "Video identity consistency",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "anchor_hand",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "blink rate",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "complex articulation",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "director/coding agent",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "gait phase",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "generation time",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "handheld shake spectra",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "identity ambiguity",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "image identity consistency",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "lab",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "lens distortion",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "measured",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "motor sequencing",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "observed measurement",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "self-occlusion",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "self-similarity",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "species affect",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "timeline event",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "wave propagation",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  }
+ ],
+ "canonical_facts": [],
+ "verdict": null,
+ "verdict_note": "The harness does NOT set the verdict. Invariant failures are release blockers; the inventory requires adjudication by the evaluator. Choose QUALIFIED / QUALIFIED WITH KNOWN LIMITATIONS / REJECTED FOR RELEASE."
+}
