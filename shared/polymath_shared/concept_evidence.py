@@ -39,6 +39,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from functools import lru_cache
 from enum import Enum
 
 CONCEPT_CONTRACT = "concept-evidence-v1"
@@ -145,24 +146,53 @@ def concept_candidate(surface: str, *, is_identity: bool = False,
     return bool(_norm(_strip_det(surface)))
 
 
-def _sentences(text: str) -> list[str]:
-    return [s.strip() for s in re.split(r"(?<=[.!?])\s+|\n+", text) if s.strip()]
+@lru_cache(maxsize=8)
+def _sentences(text: str) -> tuple[str, ...]:
+    return tuple(s.strip() for s in re.split(r"(?<=[.!?])\s+|\n+", text) if s.strip())
 
 
-def find_document_definition(term: str, text: str,
-                             doc_id: str | None = None) -> ConceptEvidence | None:
-    """DOCUMENT_DEFINED — the document itself establishes the term."""
-    bare = _strip_det(term)
+@lru_cache(maxsize=65536)
+def _definition_scan(bare: str, text: str,
+                     doc_id: str | None) -> ConceptEvidence | None:
+    """ADMISSION-IMPL-MEMO-V1 — implementation-only optimization.
+
+    Behavior-identical to the naive scan (asserted by
+    tests/determinism/test_concept_evidence_equivalence.py against a
+    verbatim reference copy): same first-sentence-then-first-template
+    precedence, same evidence construction, same ABSTAIN. Changes:
+
+      * the document sentence split is computed once per text, not per span
+      * the 13 definitional templates are compiled once per distinct term
+      * sentences where the escaped term itself finds no re.I match are
+        skipped — sound because every template embeds that subpattern, so
+        a full-template match implies the prefilter matched; the SAME
+        regex engine and flags decide both, so no case-folding divergence
+      * results are memoized per (bare term, text, doc_id)
+
+    The concept-evidence-v1 contract string is unchanged BECAUSE the
+    input/output behavior is unchanged.
+    """
     pat = re.escape(bare)
+    term_rx = re.compile(pat, re.I)
+    compiled = [(re.compile(tmpl.replace("{term}", pat), re.I), why)
+                for tmpl, why in _DEFINITIONAL]
     for sent in _sentences(text):
-        for tmpl, why in _DEFINITIONAL:
-            if re.search(tmpl.replace("{term}", pat), sent, re.I):
+        if not term_rx.search(sent):
+            continue
+        for rx, why in compiled:
+            if rx.search(sent):
                 off = text.find(sent)
                 return ConceptEvidence(
                     ConceptEvidenceKind.DOCUMENT_DEFINED, bare, quote=sent[:200],
                     source_document_id=doc_id,
                     source_offsets=(off, off + len(sent)) if off >= 0 else None)
     return None
+
+
+def find_document_definition(term: str, text: str,
+                             doc_id: str | None = None) -> ConceptEvidence | None:
+    """DOCUMENT_DEFINED — the document itself establishes the term."""
+    return _definition_scan(_strip_det(term), text, doc_id)
 
 
 def find_glossary_declaration(term: str, text: str,

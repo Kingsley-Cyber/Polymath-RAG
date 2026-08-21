@@ -56,4 +56,8 @@ def test_missing_required_evidence_fails_closed():
 def test_bundle_does_not_move_the_semantic_bundle_hash():
     from polymath_shared.execution import semantic_authority_sha256
 
-    assert semantic_authority_sha256().startswith("3981fcffac9c34f5")
+    # ADMISSION-IMPL-MEMO-V1 moved the authority code hash: behavior-
+    # identical memoization in concept_evidence.py, licensed by
+    # test_concept_evidence_equivalence.py plus a B8 same-corpus run
+    # with identical semantic state (perf-baseline-v1, 2026-08-21).
+    assert semantic_authority_sha256().startswith("fd68fc57f4c18057")
