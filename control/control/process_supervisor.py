@@ -33,7 +33,30 @@ from pathlib import Path
 
 log = logging.getLogger("cp21")
 
-FLEET: list[tuple[str, str]] = [
+# A slot is either a worker module (health = fresh DB registration heartbeat)
+# or a service spec dict (health = HTTP 200 on health_url). PHASE A extends
+# supervision to EVERY long-lived runtime component: sidecars and the
+# orchestrator die and restart under the same bounded policy as workers.
+FLEET: list = [
+    # ---- neural sidecars (started FIRST: workers verify their pins) ------
+    {"name": "sidecar_gliner", "argv": ["{python}", "-m", "uvicorn",
+        "server:app", "--host", "127.0.0.1", "--port", "8740"],
+     "cwd": "sidecars/gliner_runtime", "health_url": "http://127.0.0.1:8740/manifest"},
+    {"name": "sidecar_spacy", "argv": [".venv/bin/python", "-m", "uvicorn",
+        "server:app", "--host", "127.0.0.1", "--port", "8744"],
+     "cwd": "sidecars/spacy_runtime", "health_url": "http://127.0.0.1:8744/manifest"},
+    {"name": "sidecar_embedder", "argv": ["{python}", "-m", "uvicorn",
+        "server:app", "--host", "127.0.0.1", "--port", "8742"],
+     "cwd": "sidecars/embedder", "health_url": "http://127.0.0.1:8742/manifest"},
+    {"name": "sidecar_reranker", "argv": ["{python}", "-m", "uvicorn",
+        "server:app", "--host", "127.0.0.1", "--port", "8743",
+        "--app-dir", "sidecars/reranker"],
+     "cwd": ".", "health_url": "http://127.0.0.1:8743/ready"},
+    # ---- orchestrator ----------------------------------------------------
+    {"name": "orchestrator", "argv": ["{python}", "-m", "uvicorn",
+        "orchestrator.main:app", "--host", "127.0.0.1", "--port", "7200"],
+     "cwd": "orchestrator", "health_url": "http://127.0.0.1:7200/health"},
+    # ---- control + workers (health = fresh registration heartbeat) ------
     ("control", "control.main"),
     ("intake", "workers.intake_worker"),
     ("profile", "workers.profile_worker"),
@@ -49,7 +72,10 @@ FLEET: list[tuple[str, str]] = [
 @dataclass
 class Slot:
     name: str
-    module: str
+    module: str            # module name, script path, or "" for argv slots
+    argv: list | None = None
+    cwd: str | None = None
+    health_url: str | None = None
     proc: subprocess.Popen | None = None
     started_at: float = 0.0
     exits: list[float] = field(default_factory=list)   # exit timestamps
@@ -64,7 +90,14 @@ class Supervisor:
                  max_restarts: int = 5, window_s: float = 300.0,
                  backoff_s: float = 2.0, health_timeout_s: float = 30.0,
                  dsn: str | None = None):
-        self.slots = [Slot(n, m) for n, m in fleet]
+        self.slots = []
+        for entry in fleet:
+            if isinstance(entry, dict):
+                self.slots.append(Slot(entry["name"], "", argv=entry["argv"],
+                                       cwd=entry.get("cwd"),
+                                       health_url=entry.get("health_url")))
+            else:
+                self.slots.append(Slot(entry[0], entry[1]))
         self.python = python or sys.executable
         self.log_dir = Path(log_dir or "/tmp/polymath_fleet")
         self.state_path = Path(state_path or (self.log_dir / "supervisor_state.json"))
@@ -81,10 +114,17 @@ class Supervisor:
     def _spawn(self, slot: Slot) -> None:
         self.log_dir.mkdir(parents=True, exist_ok=True)
         out = open(self.log_dir / f"{slot.name}.log", "ab")
-        argv = ([self.python, slot.module] if slot.module.endswith(".py")
-                else [self.python, "-m", slot.module])   # script paths, for tests
+        if slot.argv is not None:
+            repo = Path(__file__).resolve().parents[2]
+            argv = [a.replace("{python}", str(repo / ".venv/bin/python"))
+                    for a in slot.argv]
+            cwd = str(repo / slot.cwd) if slot.cwd else None
+        else:
+            argv = ([self.python, slot.module] if slot.module.endswith(".py")
+                    else [self.python, "-m", slot.module])   # scripts, for tests
+            cwd = None
         slot.proc = subprocess.Popen(
-            argv,
+            argv, cwd=cwd,
             stdout=out, stderr=subprocess.STDOUT,
             env=os.environ.copy(), start_new_session=True)
         slot.started_at = time.time()
@@ -113,6 +153,17 @@ class Supervisor:
         """A restarted worker is healthy when a FRESH registration for its
         worker_type heartbeats after the spawn — proof it re-registered and
         re-advertised capability, not merely that the process exists."""
+        if slot.health_url:
+            import httpx
+            deadline = time.time() + self.health_timeout_s
+            while time.time() < deadline:
+                try:
+                    if httpx.get(slot.health_url, timeout=3).status_code == 200:
+                        return True
+                except Exception:
+                    pass
+                time.sleep(1.0)
+            return False
         if slot.name == "control":
             return slot.proc is not None and slot.proc.poll() is None
         deadline = time.time() + self.health_timeout_s
