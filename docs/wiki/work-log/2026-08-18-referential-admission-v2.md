@@ -1796,3 +1796,43 @@ correct inheritances: `outage`/`september outage`,
 Rows 72 (failed qualification), 73 (known limitation: identity EXTENT is the
 unsolved axis), 74 (no VCS isolation for the unpromoted candidate stack).
 Row 64 remains frozen.
+
+## 2026-08-21 — SUBTOKEN-SPAN-ADMISSION-V1: qualified on candidate branch
+
+### Contract
+`subtoken-span-admission-v1`, inside `_interpret_v2`. The three-way
+distinction ruled: syntax truly unavailable -> RETRYABLE (unchanged); syntax
+present + span covers no complete token -> settled abstention on THAT span
+(UNKNOWN/ABSTAINED/MENTION_ONLY, never eligible, surface preserved verbatim,
+containing token recorded as evidence only); sentence with zero tokens ->
+RETRYABLE (outage shape). Authority hash moved 8241bf94 -> 3981fcff — a
+candidate semantic change, NOT on main.
+
+### Proof
+```
+unit gates                6/6 (outage path, nested, zero-overlap,
+                          no-token sentence, surface preservation, ordinary spans)
+previously-crashing call  COMPLETES: 60 spans, `instagram` abstains
+I4 state hash             byte-identical (P .812 R .500 envelope 7/8 exact)
+smq1 stamped hashes       reproduced across TWO independent re-ingests
+historical 55-gold        accuracy 1.0, 0 errors
+suite                     575 passed
+URL transcripts           ingest end-to-end, 0 stage failures (subtoken-probe-v1)
+```
+
+### Rejected claims
+- **The production probe's convergence does NOT by itself prove the fix
+  fired in production.** No abstention rows were persisted, and the reason is
+  ledger 63: boundary rescue DELETED the `instagram`/`youtube` spans before
+  admission saw them. The fix was proven instead on the exact configuration
+  that crashed in the forensics bench, plus unit gates.
+- **My earlier severity claim was overstated and is corrected (row 76).**
+  "Deterministic production crash on any URL-bearing document" holds only for
+  sub-token spans that ESCAPE boundary widening; the current deletion bug
+  masks the two probe documents' triggers.
+- **New gate dependency recorded:** row 75 is a prerequisite for ever
+  promoting the rescue-preservation fix — without it, fixing deletion
+  unmasks the crashes it was hiding.
+
+### Open
+Promotion to main (a semantic-freeze change) is the evaluator's call.
