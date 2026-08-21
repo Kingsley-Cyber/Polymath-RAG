@@ -2,8 +2,8 @@
  "manifest": {
   "code": {
    "branch": "architecture/evidence-first-v5",
-   "commit": "7f018ee22b8275aa5bd57f5a712b4ee8eea19b68",
-   "describe": "v4-semantic-freeze-26-g7f018ee",
+   "commit": "9f888c4d92c3c180a42ab87ef979f79eebb82ff6",
+   "describe": "v4-semantic-freeze-37-g9f888c4",
    "dirty_files": []
   },
   "contract": "sealed-multidomain-qualification-v1",
@@ -27,7 +27,17 @@
     "structurally_different"
    ]
   },
-  "results": null,
+  "results": {
+   "canonical_count": 6,
+   "canonical_hash": "0222460d74f901ac9afe2b55103e9acc930ca383e32a706cdaeec9e41a6d8873",
+   "corpus_id": "smq3-biomed-v1",
+   "entities_count": 493,
+   "entities_hash": "0ca4145a873c3021d44494ae321e629a273831e53c7fa79353501f994575e2c7",
+   "facts_count": 12,
+   "facts_hash": "8ce8c4c94d61e3edc3d290c2f9522864d754f18c70560533d26c6b6c9e54c83a",
+   "mentions_count": 975,
+   "mentions_hash": "996ff8f75798a95514edbe69ee5023b986cc05c055ccb66b139c714b35ab0759"
+  },
   "runtime": {
    "dependency_files": [
     "control/pyproject.toml",
@@ -57,10 +67,10 @@
    "platform": "macOS-26.4.1-arm64-arm-64bit",
    "python": "3.11.15"
   },
-  "sealed_at_utc": "2026-08-21T00:00:00Z",
+  "sealed_at_utc": "re-seal after Phase B engineering closure (recorder fix + ADMISSION-IMPL-MEMO-V1 + shadow fix); semantic equivalence proven by B8 identical-state runs on perf-baseline-v1; original seal 7f018ee",
   "semantic_bundle": {
    "authorities": {
-    "authority_code_sha256": "fc29d71d5602137b9b865ec439abd5b609520d2e43a8e81ec1246e68922e09ec",
+    "authority_code_sha256": "9554fac4ced8aedea9b233c8816c95b32e0a4fa28be2078fc3ba184951716530",
     "canonical_fact_gate_contract": "entity-harbor-v1",
     "concept_evidence_contract": "concept-evidence-v1",
     "contraction_resolution_contract": "contraction-resolution-v1",
@@ -80,11 +90,11 @@
     "syntax_provider": "disabled",
     "type_identity_alignment_contract": "harbor-type-identity-alignment-v1"
    },
-   "authority_sha256": "3981fcffac9c34f5532f1a3dbfadf3f38724d328744ab25755418feee9485e13",
-   "bundle_sha256": "7c4c35cf23054308d4c98d013a3b61c5c152ac343e9ed91e1bae7636bab6dfa0",
+   "authority_sha256": "fd68fc57f4c18057b00f7206313ab2e6e49149c232a6943f14e736a8aef18743",
+   "bundle_sha256": "5d99a7d4f0f12116b385528464880eb0a46be8e3d3fd728cb4198a8edc47425c",
    "semantic_contract": "admission-harbor-v2"
   },
   "set_name": "smq3-biomed"
  },
- "manifest_sha256": "6a3e0572248da266daa26bce87d89f2cea063406e519036c1f29d5a42a24c515"
+ "manifest_sha256": "c5fe74c582e5c7847c94ac716c4470e756ed7f49a34d614c5ca4bb84a5940fb7"
 }
