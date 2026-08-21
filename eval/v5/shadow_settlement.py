@@ -134,7 +134,7 @@ def verify_bundle(conn, doc_id: str) -> None:
             f"recomputed {live[:12]}) — ledger changed after sealing")
 
 
-def shadow_settle(conn, doc_id: str):
+def shadow_settle(conn, doc_id: str, corpus_id: str = "shadow"):
     verify_bundle(conn, doc_id)
     from polymath_shared.execution import SEMANTIC_CONTRACT_V2
     from workers.extract_worker import _allocate_identities, _syntax_evidence
@@ -152,8 +152,16 @@ def shadow_settle(conn, doc_id: str):
         by_chunk.setdefault(sp.chunk_id, []).append(sp)
     ordered = _ordered_slices_from_manifest(chunks, manifest, by_chunk)
     _syntax_evidence(ordered)
-    return _allocate_identities(ordered, "shadow", doc_id,
-                                contract_version=SEMANTIC_CONTRACT_V2)
+    # Settle under the REAL corpus id: CORPUS_SCOPED entity ids hash the
+    # corpus, so a placeholder would fork the id space and the comparison
+    # would only pass on corpora that happen to contain no entc_ identities.
+    ids = _allocate_identities(ordered, corpus_id, doc_id,
+                               contract_version=SEMANTIC_CONTRACT_V2)
+    return ids, ordered
+
+
+def shadow_settle_ids(conn, doc_id: str, corpus_id: str = "shadow"):
+    return shadow_settle(conn, doc_id, corpus_id)[0]
 
 
 SEMANTIC_FIELDS = ("anchor_kind", "decision_status", "admission_class",
@@ -169,7 +177,7 @@ def compare(conn, corpus: str) -> dict:
             "SELECT doc_id FROM documents WHERE corpus_id=%s ORDER BY doc_id",
             (corpus,)).fetchall():
         report["docs"] += 1
-        ids = shadow_settle(conn, doc_id)
+        ids = shadow_settle_ids(conn, doc_id, corpus)
         prod = {}
         for r in conn.execute(
                 """SELECT chunk_id, char_start, char_end, core_type, anchor_kind,
