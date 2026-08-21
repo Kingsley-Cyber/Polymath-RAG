@@ -36,3 +36,21 @@
    re-ingesting into another corpus requires removing the first copy.
 10. **Sealed-register coverage** — biomedical register sealed with ONE
     deterministic document; broader biomedical qualification is future work.
+
+## Replay-harness fidelity (eval-side; production semantics unaffected)
+
+11. **Fact replay over-produces where the frame gate depends on live
+    context** — settlement replay (identities) is exact (shadow PASS on the
+    Sanders baseline after the type-reconciliation surface fixes), but
+    `eval/v5/replay_full.py` re-derives three compiler inputs instead of
+    reusing production's: (a) the sentence parse (`workers/syntax.py
+    parse_sentence` prefers a locally loaded spaCy model and silently falls
+    back to a regex passive-matcher — environment-sensitive), (b) evidence
+    anchors (recomputed lexically via `propose_evidence`, with observed
+    duplicates), and (c) slice syntax timing. Measured on the Sanders
+    baseline: replay 398 facts vs production 392 — 6 extra ACCEPTs that
+    production's frame gate REJECTED (`frame_violation`), 0 missing. The
+    direction is replay-permissive: production never gains unattested
+    edges. Fix belongs to Phase F: persist (or deterministically re-derive)
+    parse + evidence-anchor context per slice so the compiler replays under
+    production's exact inputs.

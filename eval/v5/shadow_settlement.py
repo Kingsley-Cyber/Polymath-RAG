@@ -102,8 +102,12 @@ def active_set_from_ledger(conn, doc_id: str) -> dict:
                     continue
                 from polymath_shared.contracts import CoreType, EntitySpan
                 src = cur.pop(idx)
+                # psurf is the INSTALLED surface (the slice text at the
+                # proposed offsets), which production places on the re-typed
+                # span. src.text is the pre-reconciliation surface and
+                # carrying it here breaks the settlement frame check.
                 cur.append(EntitySpan(
-                    doc_id=doc_id, chunk_id=cid, start=ps, end=pe, text=src.text,
+                    doc_id=doc_id, chunk_id=cid, start=ps, end=pe, text=psurf,
                     core_type=CoreType(ev["to_type"]),
                     score=float(ev.get("score") or src.score),
                     extractor_version=src.extractor_version,
