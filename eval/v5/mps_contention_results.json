@@ -3,38 +3,34 @@
  "batch": 32,
  "gliner_alone": {
   "runs_s": [
-   7.86,
-   7.15,
-   7.13
+   8.89,
+   7.19,
+   7.12
   ],
-  "median_s": 7.15,
-  "chunks_per_s": 8.95,
+  "median_s": 7.19,
+  "chunks_per_s": 8.9,
   "load_errors": []
  },
  "gliner_plus_embed": {
   "runs_s": [
-   7.3,
-   7.15,
-   7.11
+   22.62,
+   21.83,
+   20.84
   ],
-  "median_s": 7.15,
-  "chunks_per_s": 8.95,
-  "load_errors": [
-   "embed:[Errno 61] Connection refused"
-  ],
-  "slowdown_x": 1.0
+  "median_s": 21.83,
+  "chunks_per_s": 2.93,
+  "load_errors": [],
+  "slowdown_x": 3.04
  },
  "gliner_plus_embed_plus_rerank": {
   "runs_s": [
-   19.34,
-   19.05,
-   18.65
+   35.37,
+   35.63,
+   36.13
   ],
-  "median_s": 19.05,
-  "chunks_per_s": 3.36,
-  "load_errors": [
-   "embed:[Errno 61] Connection refused"
-  ],
-  "slowdown_x": 2.66
+  "median_s": 35.63,
+  "chunks_per_s": 1.8,
+  "load_errors": [],
+  "slowdown_x": 4.96
  }
 }
