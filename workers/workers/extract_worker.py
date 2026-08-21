@@ -782,6 +782,14 @@ def process_event(conn: Connection, event: dict) -> None:
         # document proposal stream only.
         try:
             ordered_slices: list[tuple[dict, SentenceSlice]] = []
+            # PHASE B1: wall-clock attribution. Pure observability — a perf
+            # dict in the stage artifact; no semantic effect.
+            import time as _t
+            _perf = {"entity_pass_s": 0.0, "evidence_pass_s": 0.0,
+                     "slices_s": 0.0, "syntax_s": 0.0, "rescue_s": 0.0,
+                     "admission_s": 0.0, "persist_mentions_s": 0.0,
+                     "candidates_compile_s": 0.0, "l1_l4_writes_s": 0.0,
+                     "provider_calls": 0, "stage_t0": _t.perf_counter()}
             # V5 L1 (raw-evidence-ledger-v1): provider observations captured
             # per chunk, bulk-written once per document inside this stage
             # transaction — so raw evidence commits with the stage receipt
@@ -827,10 +835,13 @@ def process_event(conn: Connection, event: dict) -> None:
                                 r["text"] for r in sorted(child_chunks, key=lambda x: x["char_start"]))
                     envelope = build_envelope(row, child_siblings,
                                               doc_text_cache[doc_key])
+                _pt = _t.perf_counter()
                 entities, rejected = _entity_spans(
                     gliner, row["text"], row["chunk_id"], doc_id, profile_dict,
                     envelope=envelope, trace=trace, raw_sink=raw_entity_sink
                 )
+                _perf["entity_pass_s"] += _t.perf_counter() - _pt
+                _perf["provider_calls"] += 1
                 audit.extend(rejected)
                 # S4a EXTRACT-STAGE ORDERING: mention persistence is DEFERRED
                 # until syntax exists. A mention carries a semantic admission
@@ -852,10 +863,12 @@ def process_event(conn: Connection, event: dict) -> None:
                             char_start=ent.start, char_end=ent.end,
                             detail={"core_type": ent.core_type.value, "raw_label": ent.raw_label,
                                     "score": ent.score, "pass_kind": ent.pass_kind})
+                _pt = _t.perf_counter()
                 evidence = _evidence_spans(
                     gliner, row["text"], row["chunk_id"], pack, proposal_mode,
                     raw_sink=raw_predicate_sink
                 )
+                _perf["evidence_pass_s"] += _t.perf_counter() - _pt
                 # drain this chunk's raw observations into ledger rows
                 _raw_rows_entity.extend(
                     _raw.proposal_row(doc_id, row["chunk_id"], item,
@@ -867,8 +880,10 @@ def process_event(conn: Connection, event: dict) -> None:
                                       _raw_contract(labels, "evidence"))
                     for item, labels in raw_predicate_sink)
                 raw_predicate_sink.clear()
+                _pt = _t.perf_counter()
                 sentences = _sentences_of(row["text"])
                 slices = _slices(sentences, entities, evidence, corpus_id)
+                _perf["slices_s"] += _t.perf_counter() - _pt
                 for sl in slices:
                     ordered_slices.append((row, sl))
 
@@ -880,7 +895,9 @@ def process_event(conn: Connection, event: dict) -> None:
             # changes nothing.
             _raw.bulk_write(conn, "raw_entity_proposals", _raw_rows_entity)
             _raw.bulk_write(conn, "raw_predicate_evidence", _raw_rows_predicate)
+            _pt = _t.perf_counter()
             syntax_runtime = _syntax_evidence(ordered_slices)
+            _perf["syntax_s"] = _t.perf_counter() - _pt
             if syntax_runtime is not None:
                 writer.artifact({"syntax": syntax_runtime})
             # S4a: the semantic dependency boundary. Every slice now carries
@@ -905,8 +922,10 @@ def process_event(conn: Connection, event: dict) -> None:
                 rescue_label_set = tuple(
                     DocumentProfile(**profile_dict).label_set
                 ) if profile_dict.get("label_set") else ()
+                _pt = _t.perf_counter()
                 rescue_report = apply_rescue(
                     ordered_slices, rescue_stages, rescue_label_set, _pack())
+                _perf["rescue_s"] = _t.perf_counter() - _pt
                 writer.artifact({"rescue": rescue_report})
                 # V5 L2: persist every rescue decision as a span hypothesis,
                 # idempotently, inside this stage transaction.
@@ -936,9 +955,11 @@ def process_event(conn: Connection, event: dict) -> None:
             # by the same authority, exactly once, not left unadmitted.
             from polymath_shared.execution import SEMANTIC_CONTRACT_V2
 
+            _pt = _t.perf_counter()
             identities = _allocate_identities(
                 ordered_slices, corpus_id, doc_id,
                 contract_version=SEMANTIC_CONTRACT_V2)
+            _perf["admission_s"] = _t.perf_counter() - _pt
             for _row, _sl in ordered_slices:
                 if _sl.parse is not None:
                     _fill_parse_entities(_sl.parse, _sl.entities, corpus_id,
@@ -951,10 +972,13 @@ def process_event(conn: Connection, event: dict) -> None:
             # candidate, parse record or fact endpoint refers to, and it could
             # only be admitted by interpreting it a SECOND time — the very
             # divergence this cutover removes.
+            _pt = _t.perf_counter()
             _persist_mentions(
                 conn, corpus_id, doc_id,
                 [span for _row, _sl in ordered_slices for span in _sl.entities],
                 ordered_slices=ordered_slices, identities=identities)
+            _perf["persist_mentions_s"] = _t.perf_counter() - _pt
+            _pt = _t.perf_counter()
             for slice_idx, (row, sl) in enumerate(ordered_slices):
                 slice_observer = _SliceObserver(
                     trace, row, sl, f"{row['chunk_id']}:{slice_idx}")
@@ -1023,7 +1047,18 @@ def process_event(conn: Connection, event: dict) -> None:
                             "object": candidate.object.span.text,
                             "evidence_class": candidate.evidence.evidence_class,
                         })
+            _perf["candidates_compile_s"] = _t.perf_counter() - _pt
+            _pt = _t.perf_counter()
             _raw.bulk_write(conn, "relation_candidates", _l4_rows)
+            _perf["l1_l4_writes_s"] += _t.perf_counter() - _pt
+            _perf["total_s"] = _t.perf_counter() - _perf.pop("stage_t0")
+            _perf = {k: (round(v, 2) if isinstance(v, float) else v)
+                     for k, v in _perf.items()}
+            _perf["chunks"] = len(child_chunks)
+            _perf["slices"] = len(ordered_slices)
+            writer.artifact({"perf": _perf})
+            log.info("extract perf", extra={"run_id": run_id, "stage": "extract",
+                                            "detail": None})
         finally:
             gliner.close()
 
