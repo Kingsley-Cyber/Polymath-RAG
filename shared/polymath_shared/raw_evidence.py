@@ -115,3 +115,65 @@ _INSERT["span_hypotheses"] = (
     " proposed_char_end, proposed_surface, status, disposition, evidence)"
     " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
     " ON CONFLICT (hypothesis_id) DO NOTHING")
+
+
+BUNDLE_CONTRACT = "document-evidence-bundle-v1"
+
+_BUNDLE_MEMBERS = (
+    ("chunks", "SELECT chunk_id FROM chunks WHERE doc_id=%s ORDER BY chunk_id"),
+    ("sentence_slices",
+     "SELECT chunk_id, slice_index, chunk_start, chunk_end FROM sentence_slices"
+     " WHERE doc_id=%s ORDER BY chunk_id, slice_index"),
+    ("layout",
+     "SELECT kind, char_start, char_end FROM document_layout WHERE doc_id=%s"
+     " ORDER BY char_start, char_end"),
+    ("raw_entity_proposals",
+     "SELECT proposal_id FROM raw_entity_proposals WHERE doc_id=%s ORDER BY proposal_id"),
+    ("raw_predicate_evidence",
+     "SELECT evidence_id FROM raw_predicate_evidence WHERE doc_id=%s ORDER BY evidence_id"),
+    ("span_hypotheses",
+     "SELECT hypothesis_id FROM span_hypotheses WHERE doc_id=%s ORDER BY hypothesis_id"),
+)
+
+
+class IncompleteEvidence(RuntimeError):
+    """Fail closed: a bundle over missing required evidence is not a bundle.
+    Reconstructing the gap with a heuristic is exactly what V5 forbids."""
+
+
+def bundle_manifest(conn: Any, doc_id: str) -> dict:
+    members, counts = {}, {}
+    for name, sql in _BUNDLE_MEMBERS:
+        rows = conn.execute(sql, (doc_id,)).fetchall()
+        counts[name] = len(rows)
+        members[name] = content_hash({"rows": [list(map(str, r)) for r in rows]})
+    if counts["chunks"] == 0:
+        raise IncompleteEvidence(f"{doc_id}: no chunks — nothing to bundle")
+    if counts["sentence_slices"] == 0:
+        raise IncompleteEvidence(
+            f"{doc_id}: no sentence-slice manifest — the interpreter view is "
+            "required evidence (sentence-slice-manifest-v1) and may not be "
+            "reconstructed")
+    body = {"contract": BUNDLE_CONTRACT, "doc_id": doc_id, "members": members}
+    return {"doc_id": doc_id, "evidence_contract": BUNDLE_CONTRACT,
+            "bundle_sha256": content_hash(body),
+            "member_hashes": members, "counts": counts}
+
+
+def write_bundle(conn: Any, doc_id: str) -> dict:
+    import json
+    m = bundle_manifest(conn, doc_id)
+    conn.execute(
+        """
+        INSERT INTO document_evidence_bundles
+            (doc_id, evidence_contract, bundle_sha256, member_hashes, counts)
+        VALUES (%s,%s,%s,%s,%s)
+        ON CONFLICT (doc_id) DO UPDATE
+            SET bundle_sha256=EXCLUDED.bundle_sha256,
+                member_hashes=EXCLUDED.member_hashes,
+                counts=EXCLUDED.counts, updated_at=now()
+        """,
+        (m["doc_id"], m["evidence_contract"], m["bundle_sha256"],
+         json.dumps(m["member_hashes"], sort_keys=True),
+         json.dumps(m["counts"], sort_keys=True)))
+    return m

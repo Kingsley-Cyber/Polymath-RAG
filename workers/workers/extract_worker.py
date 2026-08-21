@@ -914,6 +914,10 @@ def process_event(conn: Connection, event: dict) -> None:
             # re-derivation reproduce interpretation instead of approximating
             # it.
             _persist_slice_manifest(conn, doc_id, ordered_slices)
+            # V5 P4: EVIDENCE-COMPLETE. Raw capture, syntax, slice manifest
+            # and rescue hypotheses are all durable — seal the document's
+            # evidence bundle manifest before anything settles.
+            _bundle = _raw.write_bundle(conn, doc_id)
             # S4c: THE admission boundary. It sits after syntax (S4a) AND
             # after rescue, because rescue is proposal generation too — a
             # rescued span is a candidate endpoint and must be interpreted

@@ -5,8 +5,8 @@
       "terminal_states": {
         "query_ready": 5
       },
-      "wall_time_s": 190.3,
-      "docs_per_min": 1.6,
+      "wall_time_s": 180.3,
+      "docs_per_min": 1.7,
       "documents": [
         {
           "doc_id": "doc_85a21d16237959a1a72ffe82eb591ff05b758a7839e23b12da356aebc5acba67",
