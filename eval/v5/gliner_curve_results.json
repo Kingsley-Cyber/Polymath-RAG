@@ -1,0 +1,27 @@
+{
+ "per_call_s": 17.7,
+ "batch_1": {
+  "s": 16.0,
+  "equivalent": true
+ },
+ "batch_8": {
+  "s": 15.8,
+  "equivalent": true
+ },
+ "batch_16": {
+  "s": 15.3,
+  "equivalent": true
+ },
+ "batch_32": {
+  "s": 14.4,
+  "equivalent": true
+ },
+ "batch_64": {
+  "s": 14.5,
+  "equivalent": true
+ },
+ "batch_128": {
+  "s": 14.5,
+  "equivalent": true
+ }
+}

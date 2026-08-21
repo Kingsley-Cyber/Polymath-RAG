@@ -90,3 +90,16 @@ def test_hypotheses_do_not_change_the_semantic_bundle():
     from polymath_shared.execution import semantic_authority_sha256
 
     assert semantic_authority_sha256().startswith("3981fcffac9c34f5")
+
+
+def test_hypothesis_surfaces_always_match_their_own_offsets(monkeypatch):
+    """A hypothesis row whose surface disagrees with its offsets poisons
+    ledger replay (caught live by the settlement frame check on the Sanders
+    baseline). Every lane must record the INSTALLED surface."""
+    import inspect
+
+    import workers.rescue as R
+
+    src = inspect.getsource(R.apply_type_reconciliation)
+    assert 'sl.text[chunk_cs - sl.sentence_start' in src.split(
+        '"proposed_surface":')[1][:200]

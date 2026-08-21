@@ -652,7 +652,13 @@ def apply_type_reconciliation(ordered_slices: list, label_set: tuple[str, ...], 
                 "source_char_start": entity.start, "source_char_end": entity.end,
                 "source_surface": entity.text,
                 "proposed_char_start": chunk_cs, "proposed_char_end": chunk_ce,
-                "proposed_surface": entity.text,
+                # the INSTALLED surface — what apply() actually places at the
+                # proposed offsets. Recording entity.text here produced
+                # hypothesis rows whose surface disagreed with their own
+                # offsets (caught by the settlement frame check during
+                # ledger replay).
+                "proposed_surface": sl.text[chunk_cs - sl.sentence_start:
+                                            chunk_ce - sl.sentence_start],
                 "status": "ACCEPTED" if _ok else "REJECTED",
                 "disposition": "SUPERSEDED_SOURCE" if _ok else "NO_CHANGE",
                 "evidence": {"from_type": entity.core_type.value,
