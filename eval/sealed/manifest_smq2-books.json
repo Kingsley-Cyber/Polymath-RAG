@@ -2,8 +2,8 @@
  "manifest": {
   "code": {
    "branch": "architecture/evidence-first-v5",
-   "commit": "103e3feff016fd56d10e6273501a70593547d95c",
-   "describe": "v4-semantic-freeze-17-g103e3fe",
+   "commit": "f4c8cbc0eeb2938dbb56e323ab8950be77af0248",
+   "describe": "v4-semantic-freeze-19-gf4c8cbc",
    "dirty_files": []
   },
   "contract": "sealed-multidomain-qualification-v1",
@@ -107,5 +107,5 @@
   },
   "set_name": "smq2-books"
  },
- "manifest_sha256": "a55bc952d0c79f08b3a6a321fe361d9789c53bd96839e977afa423f662916901"
+ "manifest_sha256": "48bda9a56f2c220616a6d472f27354447660b9ca02cd744de3bd3160bc07e220"
 }
