@@ -149,6 +149,7 @@ def _entity_spans(
     profile: dict,
     envelope=None,
     trace=None,
+    raw_sink: list | None = None,
 ) -> tuple[list[EntitySpan], list[dict]]:
     from polymath_shared.contracts import DocumentProfile
     from polymath_shared.query_policy import provider_passes
@@ -167,6 +168,13 @@ def _entity_spans(
         if not labels:
             continue
         result = gliner.entity_pass(inference_text, labels, threshold=ENTITY_THRESHOLD)
+        if raw_sink is not None:
+            # V5 L1: the provider's observations EXACTLY as returned —
+            # before dedupe, before label mapping, before envelope
+            # classification, before rescue. Paired with the composed label
+            # list so the ledger records what was actually asked.
+            for item in result.get("spans", []):
+                raw_sink.append((dict(item), tuple(labels)))
         for item in result.get("spans", []):
             key = (item["start"], item["end"])
             current = proposals.get(key)
@@ -220,6 +228,7 @@ def _evidence_spans(
     chunk_id: str,
     pack: dict,
     mode: str,
+    raw_sink: list | None = None,
 ) -> list[EvidenceSpan]:
     """ADR-0008: pass 2 = GLiNER coarse proposals (may abstain) +
     lexical trigger localization. The compiler decides either way."""
@@ -232,6 +241,9 @@ def _evidence_spans(
     anchors = propose_evidence(chunk_text, chunk_id, pack)
     if mode == "hybrid":
         result = gliner.evidence_pass(chunk_text, threshold=EVIDENCE_THRESHOLD)
+        if raw_sink is not None:
+            for item in result.get("spans", []):
+                raw_sink.append((dict(item), ()))
         proposals = merge_gliner_proposals(chunk_text, chunk_id, result.get("spans", []))
         # Localize each proposal to a compiled trigger; unlocalizable
         # proposals compile to UNSUPPORTED downstream.
@@ -759,6 +771,30 @@ def process_event(conn: Connection, event: dict) -> None:
         # document proposal stream only.
         try:
             ordered_slices: list[tuple[dict, SentenceSlice]] = []
+            # V5 L1 (raw-evidence-ledger-v1): provider observations captured
+            # per chunk, bulk-written once per document inside this stage
+            # transaction — so raw evidence commits with the stage receipt
+            # and rolls back with the stage. (chunk_id, item, labels) tuples.
+            raw_entity_sink: list = []
+            raw_predicate_sink: list = []
+            _raw_rows_entity: list = []
+            _raw_rows_predicate: list = []
+            from polymath_shared import raw_evidence as _raw
+
+            _gl_model = (gliner.manifest().get("identity", {}) or {}).get("model", {})
+            _contract_cache: dict = {}
+
+            def _raw_contract(labels, task):
+                key = (tuple(labels), task)
+                if key not in _contract_cache:
+                    _contract_cache[key] = _raw.provider_contract(
+                        provider="gliner",
+                        model_id=str(_gl_model.get("id")),
+                        revision=str(_gl_model.get("revision")),
+                        task=task,
+                        threshold=ENTITY_THRESHOLD if task == "entity" else EVIDENCE_THRESHOLD,
+                        labels=list(labels))
+                return _contract_cache[key]
             # EXTRACTION-CONTEXT-V1: build the envelope per focal chunk
             from polymath_shared.extraction_context import active_policy, build_envelope
             context_active = active_policy() != "C0_FOCAL_ONLY"
@@ -782,7 +818,7 @@ def process_event(conn: Connection, event: dict) -> None:
                                               doc_text_cache[doc_key])
                 entities, rejected = _entity_spans(
                     gliner, row["text"], row["chunk_id"], doc_id, profile_dict,
-                    envelope=envelope, trace=trace
+                    envelope=envelope, trace=trace, raw_sink=raw_entity_sink
                 )
                 audit.extend(rejected)
                 # S4a EXTRACT-STAGE ORDERING: mention persistence is DEFERRED
@@ -806,8 +842,20 @@ def process_event(conn: Connection, event: dict) -> None:
                             detail={"core_type": ent.core_type.value, "raw_label": ent.raw_label,
                                     "score": ent.score, "pass_kind": ent.pass_kind})
                 evidence = _evidence_spans(
-                    gliner, row["text"], row["chunk_id"], pack, proposal_mode
+                    gliner, row["text"], row["chunk_id"], pack, proposal_mode,
+                    raw_sink=raw_predicate_sink
                 )
+                # drain this chunk's raw observations into ledger rows
+                _raw_rows_entity.extend(
+                    _raw.proposal_row(doc_id, row["chunk_id"], item,
+                                      _raw_contract(labels, "entity"))
+                    for item, labels in raw_entity_sink)
+                raw_entity_sink.clear()
+                _raw_rows_predicate.extend(
+                    _raw.evidence_row(doc_id, row["chunk_id"], item,
+                                      _raw_contract(labels, "evidence"))
+                    for item, labels in raw_predicate_sink)
+                raw_predicate_sink.clear()
                 sentences = _sentences_of(row["text"])
                 slices = _slices(sentences, entities, evidence, corpus_id)
                 for sl in slices:
@@ -818,6 +866,8 @@ def process_event(conn: Connection, event: dict) -> None:
             # build_candidates — annotate the same slices (one batched
             # call) when the provider is enabled; disabled records and
             # changes nothing.
+            _raw.bulk_write(conn, "raw_entity_proposals", _raw_rows_entity)
+            _raw.bulk_write(conn, "raw_predicate_evidence", _raw_rows_predicate)
             syntax_runtime = _syntax_evidence(ordered_slices)
             if syntax_runtime is not None:
                 writer.artifact({"syntax": syntax_runtime})
