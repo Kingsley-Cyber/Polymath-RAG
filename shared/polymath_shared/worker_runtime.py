@@ -97,6 +97,35 @@ def complete_ticket(conn, ticket_id: str | None) -> None:
     )
 
 
+def _lease_keeper(dsn: str, worker_id: str, ticket_id: str,
+                  ttl_s: int, stop, interval_s: float = 60.0):
+    """CP2.1 lease handling for LONG stages.
+
+    A book-scale extract runs far past claim_ttl_s (300s). Without renewal
+    the control plane revokes a HEALTHY worker's lease mid-stage: the ticket
+    returns to ready (double-processing risk with >1 worker of a type), the
+    owner is falsely quarantined, and heartbeats pause because the worker
+    loop only beats BETWEEN events. This thread renews the lease and beats
+    the heart WHILE processing; it stops the moment the stage finishes, so
+    genuine death still expires the lease within one TTL.
+    """
+    import psycopg as _psycopg
+    while not stop.wait(interval_s):
+        try:
+            with _psycopg.connect(dsn, connect_timeout=5) as conn:
+                conn.execute(
+                    """UPDATE stage_tickets
+                          SET lease_expires_at = now() + make_interval(secs => %s)
+                        WHERE ticket_id = %s AND lease_owner = %s
+                          AND status = 'leased'""",
+                    (ttl_s, ticket_id, worker_id))
+                heartbeat(conn, worker_id, current_ticket=ticket_id)
+                conn.commit()
+        except Exception:
+            log.warning("lease renewal failed; will retry",
+                        extra={"error_code": "lease_renew_failed"})
+
+
 def run_worker(worker_type: str, event_types: list[str],
                process_event: Callable[..., None],
                poll_interval_s: float = 2.0, batch_size: int = 4,
@@ -123,6 +152,16 @@ def run_worker(worker_type: str, event_types: list[str],
                 events = claim_ticket_events(conn, identity, event_types, batch_size)
             for event in events:
                 ticket_id = event.get("ticket_id")
+                import threading as _threading
+
+                from polymath_shared.settings import get_settings as _gs
+                _stop = _threading.Event()
+                _keeper = _threading.Thread(
+                    target=_lease_keeper,
+                    args=(_gs().postgres.dsn, identity["worker_id"], ticket_id,
+                          _gs().worker.claim_ttl_s, _stop),
+                    daemon=True)
+                _keeper.start()
                 try:
                     with tx() as conn:
                         heartbeat(conn, identity["worker_id"], current_ticket=ticket_id)
@@ -150,6 +189,8 @@ def run_worker(worker_type: str, event_types: list[str],
                     with tx() as conn:
                         heartbeat(conn, identity["worker_id"],
                                   last_error=f"{type(exc).__name__}: {exc}")
+                finally:
+                    _stop.set()
         except psycopg.errors.OperationalError:
             log.warning("postgres unavailable; backing off",
                         extra={"error_code": "pg_unavailable"})

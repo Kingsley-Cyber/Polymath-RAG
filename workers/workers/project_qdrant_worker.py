@@ -64,8 +64,17 @@ def _active_contract():
     return active_contract()
 
 
+EMBED_BATCH = 64
+
+
 def _embed_texts(contract, texts: list[str]) -> list[list[float]]:
-    """Embed under the active contract: local fn or the embedder sidecar."""
+    """Embed under the active contract: local fn or the embedder sidecar.
+
+    Batched: a book-sized run (~700+ chunks) in one sidecar call exceeded
+    the HTTP client timeout ("timed out", project_qdrant stage failure —
+    same defect class as the syntax 512-cap). Batching is transport only:
+    same texts, same contract, same vectors, same order.
+    """
     if contract.embed_fn is not None:
         return [contract.embed(text, "child_chunk") for text in texts]
     from polymath_shared.clients import EmbedderClient
@@ -73,7 +82,11 @@ def _embed_texts(contract, texts: list[str]) -> list[list[float]]:
     client = EmbedderClient()
     try:
         client.verify_pin()
-        return client.embed(texts, "child_chunk")["vectors"]
+        out: list[list[float]] = []
+        for i in range(0, len(texts), EMBED_BATCH):
+            out.extend(client.embed(texts[i:i + EMBED_BATCH],
+                                    "child_chunk")["vectors"])
+        return out
     finally:
         client.close()
 
