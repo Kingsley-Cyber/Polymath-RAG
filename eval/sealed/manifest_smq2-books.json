@@ -1,0 +1,111 @@
+{
+ "manifest": {
+  "code": {
+   "branch": "architecture/evidence-first-v5",
+   "commit": "103e3feff016fd56d10e6273501a70593547d95c",
+   "describe": "v4-semantic-freeze-17-g103e3fe",
+   "dirty_files": []
+  },
+  "contract": "sealed-multidomain-qualification-v1",
+  "documents": [
+   {
+    "byte_length": 200099,
+    "name": "07_cialdini_influence_psychology_of_persuasion_9c007aa1.epub",
+    "path": "/Users/king/Downloads/book-optimizer/books/07_cialdini_influence_psychology_of_persuasion_9c007aa1.epub",
+    "register": "academic_social_science",
+    "sha256": "5e469c77ef5fda7aa153c2ba6b65cb74268c98900af530dae53f361065203ce6"
+   },
+   {
+    "byte_length": 2886972,
+    "name": "10_nygard_release_it_8487f6f1.epub",
+    "path": "/Users/king/Downloads/book-optimizer/books/10_nygard_release_it_8487f6f1.epub",
+    "register": "business_operations",
+    "sha256": "a598fd41fe8fbb6c6f88f7004a373ed623ba18954478a7caaffbc3d2add58e4f"
+   },
+   {
+    "byte_length": 444190,
+    "name": "02b-Bernays-Propaganda-1928.epub",
+    "path": "/Users/king/Desktop/hermes agent/libgen-workflows/epub/02b-Bernays-Propaganda-1928.epub",
+    "register": "structurally_different",
+    "sha256": "00f05454439706423fa9a25d841a16315ff0a918cfaaeafb5715cf946ed43f84"
+   },
+   {
+    "byte_length": 7775216,
+    "name": "01_sanders_applied_network_security_monitoring_160e2a94.epub",
+    "path": "/Users/king/Downloads/book-optimizer/books/01_sanders_applied_network_security_monitoring_160e2a94.epub",
+    "register": "technical_cyber",
+    "sha256": "b07a1f1fbf2a453eef26759c312b9e0d2ae555875960f1973c7953c73af5b3c3"
+   }
+  ],
+  "register_coverage": {
+   "covered": [
+    "academic_social_science",
+    "business_operations",
+    "structurally_different",
+    "technical_cyber"
+   ],
+   "missing": [
+    "biomedical_scientific"
+   ]
+  },
+  "results": null,
+  "runtime": {
+   "dependency_files": [
+    "control/pyproject.toml",
+    "orchestrator/pyproject.toml",
+    "pyproject.toml",
+    "shared/pyproject.toml",
+    "workers/pyproject.toml"
+   ],
+   "dependency_lock_hash": "3240e9786fa61dba036b2b8353dadbaf796e226ec1994e7733372a02ff2c5649",
+   "models": {
+    "embedder": {
+     "id": "Qwen/Qwen3-Embedding-0.6B",
+     "revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+     "weights_sha256": "c76e8d7f28ec4ce0c548bb2eac381b84491184083fbef4c915c2485e873aa4a6"
+    },
+    "gliner": {
+     "id": "urchade/gliner_medium-v2.1",
+     "revision": "40ec419335d09393f298636f471328b722c6da9e",
+     "weights_sha256": "__PIN_WEIGHTS_SHA256__"
+    },
+    "spacy": {
+     "id": "en_core_web_sm",
+     "revision": "3.8.0",
+     "weights_sha256": "92e0ab7d01be1b1c62f0cf2249d7350293cbc750d5bd75e3c86774c703e21750"
+    }
+   },
+   "platform": "macOS-26.4.1-arm64-arm-64bit",
+   "python": "3.11.15"
+  },
+  "sealed_at_utc": "2026-08-21T00:00:00Z",
+  "semantic_bundle": {
+   "authorities": {
+    "authority_code_sha256": "fc29d71d5602137b9b865ec439abd5b609520d2e43a8e81ec1246e68922e09ec",
+    "canonical_fact_gate_contract": "entity-harbor-v1",
+    "concept_evidence_contract": "concept-evidence-v1",
+    "contraction_resolution_contract": "contraction-resolution-v1",
+    "discourse_reference_contract": "discourse-reference-v1",
+    "discourse_reference_policy": "discourse-reference-policy-v1",
+    "discourse_reference_policy_sha256": "4694c626adb79bdc052298b457b204bb8d5993dbfef1724132d043bc0bce93e7",
+    "entity_harbor_contract": "entity-harbor-v1",
+    "generic_classification_contract": "generic-classification-v1",
+    "graph_eligibility_contract": "entity-harbor-v1",
+    "identity_allocation_contract": "identity-allocation-v1",
+    "identity_precision_contract": "identity-precision-v2",
+    "layout_evidence_contract": "layout-evidence-v1",
+    "referential_envelope_contract": "referential-span-v1",
+    "semantic_contract": "admission-harbor-v2",
+    "syntax_contract": "syntax-evidence-v1",
+    "syntax_model": "en_core_web_sm@3.8.0",
+    "syntax_provider": "disabled",
+    "type_identity_alignment_contract": "harbor-type-identity-alignment-v1"
+   },
+   "authority_sha256": "3981fcffac9c34f5532f1a3dbfadf3f38724d328744ab25755418feee9485e13",
+   "bundle_sha256": "7c4c35cf23054308d4c98d013a3b61c5c152ac343e9ed91e1bae7636bab6dfa0",
+   "semantic_contract": "admission-harbor-v2"
+  },
+  "set_name": "smq2-books"
+ },
+ "manifest_sha256": "a55bc952d0c79f08b3a6a321fe361d9789c53bd96839e977afa423f662916901"
+}

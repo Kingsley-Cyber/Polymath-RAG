@@ -633,20 +633,30 @@ def _syntax_evidence(
         {"sentence_id": f"{row['chunk_id']}:{idx}", "text": sl.text}
         for idx, (row, sl) in enumerate(ordered_slices)
     ]
+    # The sidecar accepts at most 512 sentences per request; a book-sized
+    # document exceeds that in one batched call (observed: 1242 sentences ->
+    # 422). Batch client-side, preserving order, verifying identity/order
+    # PER BATCH exactly as before — same sentences, same pinned model, same
+    # per-sentence results, so this is transport, not semantics.
+    SYNTAX_BATCH = 512
     client = SpacySyntaxClient()
+    results: list[dict] = []
     try:
         client.verify_pin()
-        response = client.syntax(sentences)
+        for i in range(0, len(sentences), SYNTAX_BATCH):
+            batch = sentences[i:i + SYNTAX_BATCH]
+            response = client.syntax(batch)
+            expected_ids = [s["sentence_id"] for s in batch]
+            returned_ids = [r["sentence_id"] for r in response["results"]]
+            if returned_ids != expected_ids:
+                raise RuntimeError(
+                    "syntax sidecar returned mismatched sentence identity/order"
+                )
+            results.extend(response["results"])
     finally:
         client.close()
 
-    expected_ids = [s["sentence_id"] for s in sentences]
-    returned_ids = [r["sentence_id"] for r in response["results"]]
-    if returned_ids != expected_ids:
-        raise RuntimeError(
-            "syntax sidecar returned mismatched sentence identity/order"
-        )
-    by_id = {r["sentence_id"]: r for r in response["results"]}
+    by_id = {r["sentence_id"]: r for r in results}
     for idx, (row, sl) in enumerate(ordered_slices):
         # SentenceSlice is frozen; attach through the dataclass escape
         # hatch. The field is read by nothing on the candidate path.
@@ -657,6 +667,7 @@ def _syntax_evidence(
         "model_release": response.get("model_release"),
         "runtime": response.get("runtime"),
         "sentences": len(sentences),
+        "batches": (len(sentences) + SYNTAX_BATCH - 1) // SYNTAX_BATCH,
     }
 
 
