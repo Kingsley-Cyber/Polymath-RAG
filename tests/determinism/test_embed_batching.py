@@ -7,7 +7,7 @@ class _FakeEmbedder:
     def verify_pin(self): pass
     def close(self): pass
     def embed(self, texts, kind):
-        assert len(texts) <= 64
+        assert len(texts) <= 32
         self.calls.append(len(texts))
         return {"vectors": [[float(hash(t) % 97)] for t in texts]}
 
@@ -24,7 +24,28 @@ def test_embeds_are_batched_and_order_preserved(monkeypatch):
     monkeypatch.setattr(C, "EmbedderClient", lambda: fake)
     texts = [f"chunk {i}" for i in range(700)]
     vectors = _embed_texts(_Contract(), texts)
-    assert fake.calls == [64] * 10 + [60]
+    assert fake.calls == [32] * 21 + [28]
     assert len(vectors) == 700
     assert vectors[0] == [float(hash("chunk 0") % 97)]
     assert vectors[-1] == [float(hash("chunk 699") % 97)]
+
+
+def test_upserts_are_batched_for_book_scale():
+    from workers.project_qdrant_worker import UPSERT_BATCH, _upsert_batched
+
+    class _FakeQdrant:
+        def __init__(self): self.calls = []
+        def upsert(self, collection_name, points, wait):
+            assert wait is True and len(points) <= UPSERT_BATCH
+            self.calls.append(len(points))
+
+    fake = _FakeQdrant()
+    _upsert_batched(fake, "c", list(range(638)))
+    assert fake.calls == [128, 128, 128, 128, 126]
+    assert sum(fake.calls) == 638
+
+
+def test_embed_batch_respects_the_embedder_contract_bound():
+    from workers.project_qdrant_worker import EMBED_BATCH
+
+    assert EMBED_BATCH <= 32, "the embedder contract bounds batches at 32"

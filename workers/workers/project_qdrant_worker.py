@@ -64,7 +64,7 @@ def _active_contract():
     return active_contract()
 
 
-EMBED_BATCH = 64
+EMBED_BATCH = 32  # the embedder contract bounds batches at 32 texts
 
 
 def _embed_texts(contract, texts: list[str]) -> list[list[float]]:
@@ -136,6 +136,19 @@ def _chunks_for_run(conn: Connection, run_id: str) -> list[dict]:
     ]
 
 
+UPSERT_BATCH = 128
+
+
+def _upsert_batched(client: QdrantClient, collection: str, points: list) -> None:
+    """A single wait=True upsert of a book-sized point set outlives the
+    client read timeout while Qdrant indexes ("timed out", third instance of
+    the unbatched-at-scale defect class). Transport only: same points, same
+    payloads, same ids, order preserved."""
+    for i in range(0, len(points), UPSERT_BATCH):
+        client.upsert(collection_name=collection,
+                      points=points[i:i + UPSERT_BATCH], wait=True)
+
+
 def _write_points(client: QdrantClient, collection: str, chunks: list[dict], contract) -> None:
     vectors = _embed_texts(contract, [chunk["text"] for chunk in chunks])
     points = [
@@ -159,7 +172,7 @@ def _write_points(client: QdrantClient, collection: str, chunks: list[dict], con
         )
         for i, chunk in enumerate(chunks)
     ]
-    client.upsert(collection_name=collection, points=points, wait=True)
+    _upsert_batched(client, collection, points)
 
 
 # ---------------------------------------------------------------------------
@@ -254,7 +267,7 @@ def _write_routing_points(client: QdrantClient, collection: str, rows: list[dict
                 "text": r["text"],
             },
         ))
-    client.upsert(collection_name=collection, points=points, wait=True)
+    _upsert_batched(client, collection, points)
 
 
 def process_event(conn: Connection, event: dict) -> None:
