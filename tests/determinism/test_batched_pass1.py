@@ -25,7 +25,11 @@ def test_precomputed_path_equals_per_call_path():
     sink_a, sink_b = [], []
     a_spans, a_rej = _entity_spans(_PerCall(), text, "c1", "d1", PROFILE,
                                    raw_sink=sink_a)
-    labels_key = tuple(PROFILE["label_set"])
+    # the key must be the COMPOSED label list exactly as _entity_spans
+    # builds it (base + provider pass, deduped) — a mismatch raises
+    from polymath_shared.query_policy import provider_passes
+    labels_key = tuple(dict.fromkeys(
+        list(PROFILE["label_set"]) + list(list(provider_passes())[0])))
     b_spans, b_rej = _entity_spans(object(), text, "c1", "d1", PROFILE,
                                    raw_sink=sink_b,
                                    precomputed={labels_key: [dict(s) for s in SPANS]})
@@ -60,3 +64,11 @@ def test_batch_client_chunks_and_preserves_order(monkeypatch):
                                ["Organization"], batch=32)
     assert sent == [32, 32, 6]
     assert len(out) == 70 and out[0][0]["text"] == "t0" and out[69][0]["text"] == "t69"
+
+
+def test_missing_composition_key_fails_loudly():
+    import pytest
+
+    with pytest.raises(RuntimeError, match="label composition"):
+        _entity_spans(object(), "Nimbus", "c1", "d1", PROFILE,
+                      precomputed={("Wrong",): []})

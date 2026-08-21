@@ -174,7 +174,14 @@ def _entity_spans(
             # Everything below — raw capture, dedupe, envelope
             # classification, label mapping — is IDENTICAL to the per-call
             # path; only where the bytes traveled changed.
-            result = {"spans": precomputed.get(tuple(labels), [])}
+            if tuple(labels) not in precomputed:
+                # A label-composition mismatch between the batch builder and
+                # this function would otherwise yield silently EMPTY provider
+                # results — a masked defect. Fail loudly instead.
+                raise RuntimeError(
+                    f"batched pass-1 has no result for label composition "
+                    f"{labels!r}; batch builder and _entity_spans disagree")
+            result = {"spans": precomputed[tuple(labels)]}
         else:
             result = gliner.entity_pass(inference_text, labels, threshold=ENTITY_THRESHOLD)
         if raw_sink is not None:
