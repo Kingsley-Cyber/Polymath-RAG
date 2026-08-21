@@ -1192,11 +1192,21 @@ def _persist_decision(conn: Connection, chunk_row: dict, candidate, decision,
                 f"fact endpoint {span.text!r} has no admission in the "
                 "identities map — the compiler produced an endpoint the "
                 "admission boundary never interpreted")
-        if identity.admission.reference_basis == "ANTECEDENT_RESOLVED":
-            # This endpoint BORROWED its identity from an anchor (row 48).
-            # The anchor already described the entity when its own mention was
-            # persisted; describing it again from the reference would restamp
-            # a GLOBAL anchor with the reference's DOCUMENT_SCOPED scope.
+        if (identity.admission.reference_basis == "ANTECEDENT_RESOLVED"
+                and identity.durable):
+            # This endpoint BORROWED a durable identity from an anchor
+            # (row 48). The anchor already described the entity when its own
+            # mention was persisted; describing it again from the reference
+            # would restamp a GLOBAL anchor with the reference's
+            # DOCUMENT_SCOPED scope.
+            #
+            # A NON-durable resolved reference is different: it inherited
+            # NOTHING, its id is its own span-scoped mention_ identity, and
+            # no anchor ever writes that entities row — skipping here left a
+            # parked fact pointing at a missing row (FK violation, found by
+            # the first book-scale ingest). It falls through and records its
+            # own MENTION_ONLY entity row, exactly like every other parked
+            # endpoint.
             continue
         conn.execute(
             """

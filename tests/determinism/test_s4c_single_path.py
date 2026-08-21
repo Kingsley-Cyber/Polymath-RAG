@@ -169,3 +169,20 @@ def test_identity_does_not_fragment_on_a_determiner():
     definite = _id("CareConnect portal", "the CareConnect portal")
     assert bare == definite, (
         "a determiner in the envelope split one referent into two entities")
+
+
+def test_non_durable_resolved_endpoints_write_their_own_parked_entity_row():
+    """Row-57 edge found at book scale: skipping the entities insert for
+    ANTECEDENT_RESOLVED endpoints is correct ONLY when a durable anchor was
+    inherited (the anchor's mention wrote the row). A resolved reference that
+    inherited nothing carries its own span-scoped mention_ id, which nothing
+    else writes — a parked fact referencing it violated facts' FK."""
+    import inspect
+
+    from workers.extract_worker import _persist_decision
+
+    src = inspect.getsource(_persist_decision)
+    guard = src.split('ANTECEDENT_RESOLVED"')[1][:120]
+    assert "identity.durable" in guard, (
+        "the skip must require an inherited DURABLE identity, or non-durable "
+        "resolved endpoints leave dangling fact FKs")
