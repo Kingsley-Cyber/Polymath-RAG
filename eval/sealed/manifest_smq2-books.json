@@ -2,8 +2,8 @@
  "manifest": {
   "code": {
    "branch": "architecture/evidence-first-v5",
-   "commit": "f4c8cbc0eeb2938dbb56e323ab8950be77af0248",
-   "describe": "v4-semantic-freeze-19-gf4c8cbc",
+   "commit": "31e33eaddedaf20d4dfd06d0664c4ee798aba86c",
+   "describe": "v4-semantic-freeze-23-g31e33ea",
    "dirty_files": []
   },
   "contract": "sealed-multidomain-qualification-v1",
@@ -48,7 +48,17 @@
     "biomedical_scientific"
    ]
   },
-  "results": null,
+  "results": {
+   "canonical_count": 313,
+   "canonical_hash": "4bb42ea81e08c0b9aaad1b9650e39fcb253f2a571dc0dbfe22b6339adbeee54e",
+   "corpus_id": "smq2-books-v1",
+   "entities_count": 2403,
+   "entities_hash": "2b92e6c8ce1b62ba986c3951ffcddbae7ae30d074b664305da7b8e8a51f5e824",
+   "facts_count": 931,
+   "facts_hash": "b94e8d4c8904ae42ae8a40de287517ce5811cafd867aa5f808cb456e78a752a0",
+   "mentions_count": 18129,
+   "mentions_hash": "7a375b019529ec8bb70012b2f302e456bfdbd4e4a88c6115a5b5a30db9dc9e09"
+  },
   "runtime": {
    "dependency_files": [
     "control/pyproject.toml",
@@ -107,5 +117,5 @@
   },
   "set_name": "smq2-books"
  },
- "manifest_sha256": "48bda9a56f2c220616a6d472f27354447660b9ca02cd744de3bd3160bc07e220"
+ "manifest_sha256": "fb056d2832dc79fb9ec22cf4faf3b15c258ca41e1395e3d191833c384dd2cfcd"
 }

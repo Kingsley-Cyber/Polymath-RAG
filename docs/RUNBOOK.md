@@ -85,3 +85,16 @@ The V4 semantic-freeze limitations carry forward (plan: KNOWN LIMITATIONS),
 plus at book scale: provider type instability fragments same-surface
 identities (`harvard` Location vs Organization) — the row-51 homonym-guard
 trade-off, measured, not yet ruled on.
+
+## Addenda (book-scale cycle)
+
+- The reranker sidecar (:8743) is a HARD dependency of FAST retrieval:
+  `nohup .venv/bin/python -m uvicorn server:app --host 127.0.0.1 --port 8743 --app-dir sidecars/reranker &`
+- Per-ticket re-drive (lighter than corpus wipe), for budget-exhausted
+  deterministic failures after the cause is fixed:
+  `UPDATE stage_tickets SET status='ready', attempt=0, lease_owner=NULL,
+   lease_expires_at=NULL, last_error_note='operator re-drive: <why>' WHERE …`
+- stage_attempts rows are keyed by deterministic attempt id: retries UPDATE
+  the same row; filter monitoring on `completed_at`, never `started_at`.
+- After a reboot: docker stores self-heal; restart sidecars (8740/8742/8743/8744,
+  spacy has its OWN venv), then the supervised fleet, then the orchestrator.
