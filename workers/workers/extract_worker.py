@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import time
 from dataclasses import dataclass, field
 
@@ -150,6 +151,7 @@ def _entity_spans(
     envelope=None,
     trace=None,
     raw_sink: list | None = None,
+    precomputed: dict | None = None,
 ) -> tuple[list[EntitySpan], list[dict]]:
     from polymath_shared.contracts import DocumentProfile
     from polymath_shared.query_policy import provider_passes
@@ -167,7 +169,14 @@ def _entity_spans(
         labels = list(dict.fromkeys(list(base_labels) + list(pass_labels)))
         if not labels:
             continue
-        result = gliner.entity_pass(inference_text, labels, threshold=ENTITY_THRESHOLD)
+        if precomputed is not None:
+            # PHASE B2: provider output supplied by the batched transport.
+            # Everything below — raw capture, dedupe, envelope
+            # classification, label mapping — is IDENTICAL to the per-call
+            # path; only where the bytes traveled changed.
+            result = {"spans": precomputed.get(tuple(labels), [])}
+        else:
+            result = gliner.entity_pass(inference_text, labels, threshold=ENTITY_THRESHOLD)
         if raw_sink is not None:
             # V5 L1: the provider's observations EXACTLY as returned —
             # before dedupe, before label mapping, before envelope
@@ -317,8 +326,8 @@ def _persist_slice_manifest(conn: Connection, doc_id: str,
     the order would still change resolution.
     """
     conn.execute("DELETE FROM sentence_slices WHERE doc_id = %s", (doc_id,))
-    for idx, (row, sl) in enumerate(ordered_slices):
-        conn.execute(
+    with conn.cursor() as _cur:                       # PHASE B6: bulk write
+        _cur.executemany(
             """
             INSERT INTO sentence_slices (doc_id, chunk_id, slice_index,
                                          chunk_start, chunk_end, in_context)
@@ -328,8 +337,8 @@ def _persist_slice_manifest(conn: Connection, doc_id: str,
                     chunk_end = EXCLUDED.chunk_end,
                     in_context = EXCLUDED.in_context
             """,
-            (doc_id, row["chunk_id"], idx, sl.sentence_start, sl.sentence_end),
-        )
+            [(doc_id, row["chunk_id"], idx, sl.sentence_start, sl.sentence_end)
+             for idx, (row, sl) in enumerate(ordered_slices)])
 
 
 def _allocate_identities(ordered_slices, corpus_id: str, doc_id: str, *,
@@ -819,6 +828,28 @@ def process_event(conn: Connection, event: dict) -> None:
             context_active = active_policy() != "C0_FOCAL_ONLY"
             doc_text_cache: dict[str, str] = {}
             child_siblings = sorted(child_chunks, key=lambda r: r["char_start"])
+            # PHASE B2: one batched provider call set per label composition
+            # for the WHOLE document (chunk-level batching; C0 policy = no
+            # envelopes on the batched path). Per-chunk calls remain the
+            # automatic path whenever envelopes are active.
+            _batched_pass1: dict = {}
+            if not context_active:
+                from polymath_shared.query_policy import provider_passes as _pp
+                from polymath_shared.contracts import DocumentProfile as _DP
+                _base = _DP(**profile_dict).label_set if profile_dict.get("label_set") else []
+                _texts = [r["text"] for r in child_chunks]
+                _gbatch = int(os.environ.get("POLYMATH_GLINER_BATCH", "32"))
+                _t_batch = _t.perf_counter()
+                for _pl in _pp():
+                    _labels = list(dict.fromkeys(list(_base) + list(_pl)))
+                    if not _labels or not _texts:
+                        continue
+                    _rows = gliner.entity_pass_batch(
+                        _texts, _labels, threshold=ENTITY_THRESHOLD, batch=_gbatch)
+                    for _r_, _row_ in zip(child_chunks, _rows):
+                        _batched_pass1.setdefault(_r_["chunk_id"], {})[tuple(_labels)] = _row_
+                _perf["entity_pass_s"] += _t.perf_counter() - _t_batch
+                _perf["provider_calls"] += (len(_texts) + _gbatch - 1) // _gbatch
             for row in child_chunks:
                 envelope = None
                 if context_active:
@@ -838,10 +869,12 @@ def process_event(conn: Connection, event: dict) -> None:
                 _pt = _t.perf_counter()
                 entities, rejected = _entity_spans(
                     gliner, row["text"], row["chunk_id"], doc_id, profile_dict,
-                    envelope=envelope, trace=trace, raw_sink=raw_entity_sink
+                    envelope=envelope, trace=trace, raw_sink=raw_entity_sink,
+                    precomputed=_batched_pass1.get(row["chunk_id"])
                 )
-                _perf["entity_pass_s"] += _t.perf_counter() - _pt
-                _perf["provider_calls"] += 1
+                if not _batched_pass1:
+                    _perf["entity_pass_s"] += _t.perf_counter() - _pt
+                    _perf["provider_calls"] += 1
                 audit.extend(rejected)
                 # S4a EXTRACT-STAGE ORDERING: mention persistence is DEFERRED
                 # until syntax exists. A mention carries a semantic admission
@@ -1101,6 +1134,11 @@ def _persist_mentions(conn: Connection, corpus_id: str, doc_id: str,
             "must carry the admission decided at the post-syntax boundary, "
             "never a second one computed here")
 
+    # PHASE B6: one executemany for the whole document instead of one
+    # INSERT per span (a book = ~8k round-trips inside the txn). Same rows,
+    # same transaction, same conflict semantics.
+    _mention_rows = []
+    _entity_rows = []
     for span in spans:
         identity = identities.get(span_identity_key(span, corpus_id))
         if identity is None:
@@ -1112,7 +1150,28 @@ def _persist_mentions(conn: Connection, corpus_id: str, doc_id: str,
         norm_surface = normalized_for_lookup(span.text)
         entity_id = identity.entity_id if identity.durable else None
         mention_id = "mention_" + _mention_suffix(span, doc_id)
-        conn.execute(
+        _mention_rows.append(
+            (mention_id, corpus_id, span.doc_id or doc_id,
+             span.chunk_id, span.start, span.end, span.text,
+             norm_surface, span.core_type.value, span.score,
+             span.extractor_version, identity.admission_class, entity_id,
+             span.raw_label, QUERY_POLICY_VERSION, span.pass_kind,
+             adm.proposal_surface, adm.referential_surface,
+             adm.anchor_kind, adm.decision_status, adm.reference_basis,
+             adm.admission_reason, adm.semantic_contract))
+        # Same rule as reprocessing: an inheriting reference does not describe
+        # the identity it borrowed. Under ON CONFLICT DO NOTHING this was
+        # ORDER-dependent — whichever mention landed first defined the class —
+        # so an anchor preceded by its own reference would have been mislabelled.
+        if identity.durable and adm.reference_basis != "ANTECEDENT_RESOLVED":
+            # the entity's own surface — the envelope is a reference TO
+            # the entity, not the entity's name
+            _entity_rows.append(
+                (entity_id, span.core_type.value,
+                 normalized_for_lookup(span.text), identity.admission_class))
+
+    with conn.cursor() as _cur:
+        _cur.executemany(
             """
             INSERT INTO mentions (mention_id, corpus_id, doc_id, chunk_id,
                                   char_start, char_end, surface,
@@ -1127,34 +1186,15 @@ def _persist_mentions(conn: Connection, corpus_id: str, doc_id: str,
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                     %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (mention_id) DO NOTHING
-            """,
-            (mention_id, corpus_id, span.doc_id or doc_id,
-             span.chunk_id, span.start, span.end, span.text,
-             norm_surface, span.core_type.value, span.score,
-             span.extractor_version, identity.admission_class, entity_id,
-             span.raw_label, QUERY_POLICY_VERSION, span.pass_kind,
-             adm.proposal_surface, adm.referential_surface,
-             adm.anchor_kind, adm.decision_status, adm.reference_basis,
-             adm.admission_reason, adm.semantic_contract),
-        )
-        # Same rule as reprocessing: an inheriting reference does not describe
-        # the identity it borrowed. Under ON CONFLICT DO NOTHING this was
-        # ORDER-dependent — whichever mention landed first defined the class —
-        # so an anchor preceded by its own reference would have been mislabelled.
-        if identity.durable and adm.reference_basis != "ANTECEDENT_RESOLVED":
-            conn.execute(
+            """, _mention_rows)
+        if _entity_rows:
+            _cur.executemany(
                 """
                 INSERT INTO entities (entity_id, core_type, normalized_surface,
                                       admission_class)
                 VALUES (%s, %s, %s, %s)
                 ON CONFLICT (entity_id) DO NOTHING
-                """,
-                # the entity's own surface — the envelope is a reference TO
-                # the entity, not the entity's name
-                (entity_id, span.core_type.value,
-                 normalized_for_lookup(span.text),
-                 identity.admission_class),
-            )
+                """, _entity_rows)
 
 
 def _mention_suffix(span: EntitySpan, doc_id: str) -> str:
