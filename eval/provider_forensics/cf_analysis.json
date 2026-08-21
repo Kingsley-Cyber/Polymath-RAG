@@ -1,0 +1,1018 @@
+{
+ "medium": {
+  "docs": {
+   "01_northvale_health.md": {
+    "ms": 79.3,
+    "proposals": 15,
+    "unmapped_labels": 0,
+    "bad_offsets": 0,
+    "score_median": 0.95,
+    "durable": [
+     [
+      "Austin",
+      "Location",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "CareChart EMR",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "CareChart EMR platform",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "CareConnect portal",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Lakeshore General Hospital",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Northvale Health Network",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Riverside Clinic",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "patient portal",
+      "Technology",
+      "LOCAL_REFERENCE",
+      "DOCUMENT_SCOPED"
+     ]
+    ],
+    "subtoken_spans_dropped": 0,
+    "gold": {
+     "Amara Osei": "PARTIAL:Dr. Amara Osei",
+     "Austin": "EXACT:Location",
+     "CareChart EMR": "EXACT:Technology",
+     "CareConnect portal": "EXACT:Technology",
+     "Lakeshore General Hospital": "EXACT:Organization",
+     "Northvale Health Network": "EXACT:Organization",
+     "Riverside Clinic": "EXACT:Organization",
+     "radiology review board": "ABSENT"
+    }
+   },
+   "02_nimbus_cloud.md": {
+    "ms": 73.9,
+    "proposals": 19,
+    "unmapped_labels": 0,
+    "bad_offsets": 0,
+    "score_median": 0.68,
+    "durable": [
+     [
+      "Go",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Kubernetes",
+      "Product",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Ledger billing service",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Nimbus",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Nimbus API gateway",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Nimbus Cloud",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Postgres cluster",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "September outage",
+      "Event",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "outage",
+      "Event",
+      "LOCAL_REFERENCE",
+      "DOCUMENT_SCOPED"
+     ]
+    ],
+    "subtoken_spans_dropped": 0,
+    "gold": {
+     "Kubernetes": "EXACT:Framework",
+     "Ledger billing service": "EXACT:API",
+     "Nimbus Cloud": "EXACT:Organization",
+     "Nimbus Cloud platform": "PARTIAL:Nimbus Cloud",
+     "Nimbus billing service": "PARTIAL:Nimbus",
+     "Postgres cluster": "EXACT:Technology",
+     "engineering group": "EXACT:Person",
+     "load-testing harness": "ABSENT"
+    }
+   },
+   "03_crestline_automation.md": {
+    "ms": 71.5,
+    "proposals": 23,
+    "unmapped_labels": 0,
+    "bad_offsets": 0,
+    "score_median": 0.81,
+    "durable": [
+     [
+      "Cobalt assembly cell",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Cobalt cell",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Crestline",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Crestline Automation",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "March",
+      "TimeReference",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Maria Kowalski",
+      "Person",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Siemens PLCs",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Toledo",
+      "Location",
+      "IDENTITY",
+      "GLOBAL"
+     ]
+    ],
+    "subtoken_spans_dropped": 0,
+    "gold": {
+     "Cobalt assembly cell": "EXACT:Technology",
+     "Crestline Automation": "EXACT:Organization",
+     "Crestline automation team": "PARTIAL:Crestline Automation",
+     "Crestline plant": "PARTIAL:Crestline",
+     "Maria Kowalski": "EXACT:Person",
+     "Siemens PLCs": "EXACT:Technology",
+     "Toledo": "EXACT:Location",
+     "analytics team": "EXACT:Organization",
+     "production stoppage": "EXACT:Event",
+     "pump failure": "EXACT:Event",
+     "quality database": "ABSENT",
+     "shift scheduling model": "ABSENT",
+     "vision system": "EXACT:Technology"
+    }
+   },
+   "04_brightpath_learning.md": {
+    "ms": 64.9,
+    "proposals": 15,
+    "unmapped_labels": 0,
+    "bad_offsets": 0,
+    "score_median": 0.83,
+    "durable": [
+     [
+      "Brightpath Learning",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Coachlight app",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Coachlight review app",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Daniel Okafor",
+      "Person",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Mentor assessment engine",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Mentor engine",
+      "Technology",
+      "LOCAL_REFERENCE",
+      "DOCUMENT_SCOPED"
+     ],
+     [
+      "QBank item database",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Raleigh",
+      "Location",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "mentor engine",
+      "Technology",
+      "LOCAL_REFERENCE",
+      "DOCUMENT_SCOPED"
+     ]
+    ],
+    "subtoken_spans_dropped": 0,
+    "gold": {
+     "Brightpath Learning": "EXACT:Organization",
+     "Coachlight review app": "EXACT:Technology",
+     "Daniel Okafor": "EXACT:Person",
+     "Mentor assessment engine": "EXACT:Technology",
+     "QBank item database": "EXACT:Technology",
+     "Raleigh": "EXACT:Location"
+    }
+   },
+   "05_corval_logistics.md": {
+    "ms": 63.1,
+    "proposals": 16,
+    "unmapped_labels": 0,
+    "bad_offsets": 0,
+    "score_median": 0.82,
+    "durable": [
+     [
+      "Corval Freight",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Corval Logistics",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "FreightNet",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "FreightNet routing platform",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "June",
+      "TimeReference",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Oakland",
+      "Location",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Portside warehouse",
+      "Location",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "QuickScale invoicing system",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "West Coast logistics consortium",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "invoicing system",
+      "Technology",
+      "LOCAL_REFERENCE",
+      "DOCUMENT_SCOPED"
+     ],
+     [
+      "regional dispatchers",
+      "Person",
+      "LOCAL_REFERENCE",
+      "DOCUMENT_SCOPED"
+     ]
+    ],
+    "subtoken_spans_dropped": 0,
+    "gold": {
+     "Corval Freight": "EXACT:Organization",
+     "Corval Logistics": "EXACT:Organization",
+     "FreightNet routing platform": "EXACT:Technology",
+     "Oakland": "EXACT:Location",
+     "Portside warehouse": "EXACT:Location",
+     "QuickScale invoicing system": "EXACT:Technology"
+    }
+   },
+   "is-the-intentional-male-another-performance.md": {
+    "ms": 122.3,
+    "proposals": 54,
+    "unmapped_labels": 0,
+    "bad_offsets": 0,
+    "score_median": 0.7,
+    "durable": [
+     [
+      "Groq",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Techne Writing",
+      "Document",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Techne Writing",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "instagram",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "simp",
+      "Person",
+      "IDENTITY",
+      "GLOBAL"
+     ]
+    ],
+    "subtoken_spans_dropped": 2,
+    "gold": {}
+   },
+   "ignore parameter in landing page report urls in google ads.md": {
+    "ms": 131.9,
+    "proposals": 25,
+    "unmapped_labels": 0,
+    "bad_offsets": 0,
+    "score_median": 0.87,
+    "durable": [
+     [
+      "Blueness Digital",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Google",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Samrush report",
+      "Document",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Seamrush report",
+      "Document",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Tegan",
+      "Person",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "URL",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "UTM",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "UTM parameters",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "landing page report",
+      "Document",
+      "LOCAL_REFERENCE",
+      "DOCUMENT_SCOPED"
+     ]
+    ],
+    "subtoken_spans_dropped": 2,
+    "gold": {}
+   }
+  }
+ },
+ "gliner2": {
+  "docs": {
+   "01_northvale_health.md": {
+    "ms": 58.9,
+    "proposals": 16,
+    "unmapped_labels": 0,
+    "bad_offsets": 0,
+    "score_median": 0.91,
+    "durable": [
+     [
+      "Austin",
+      "Location",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "CareChart EMR",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "CareConnect",
+      "Product",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "CareCoordinator",
+      "Product",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "EMR outage",
+      "Event",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Lakeshore General Hospital",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Northvale Health Network",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Riverside Clinic",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "radiology review board",
+      "Organization",
+      "LOCAL_REFERENCE",
+      "DOCUMENT_SCOPED"
+     ]
+    ],
+    "subtoken_spans_dropped": 0,
+    "gold": {
+     "Amara Osei": "PARTIAL:Dr. Amara Osei",
+     "Austin": "EXACT:Location",
+     "CareChart EMR": "EXACT:Technology",
+     "CareConnect portal": "PARTIAL:CareConnect",
+     "Lakeshore General Hospital": "EXACT:Organization",
+     "Northvale Health Network": "EXACT:Organization",
+     "Riverside Clinic": "EXACT:Organization",
+     "radiology review board": "EXACT:Organization"
+    }
+   },
+   "02_nimbus_cloud.md": {
+    "ms": 63.8,
+    "proposals": 18,
+    "unmapped_labels": 0,
+    "bad_offsets": 0,
+    "score_median": 0.86,
+    "durable": [
+     [
+      "Go",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Kubernetes",
+      "Product",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Ledger billing service",
+      "Product",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Nimbus API gateway",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Nimbus billing service",
+      "Product",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Nimbus postmortem report",
+      "Document",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Postgres cluster",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "September outage",
+      "Event",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "cluster",
+      "Technology",
+      "LOCAL_REFERENCE",
+      "DOCUMENT_SCOPED"
+     ],
+     [
+      "outage",
+      "Event",
+      "LOCAL_REFERENCE",
+      "DOCUMENT_SCOPED"
+     ]
+    ],
+    "subtoken_spans_dropped": 0,
+    "gold": {
+     "Kubernetes": "EXACT:Technology",
+     "Ledger billing service": "EXACT:Product",
+     "Nimbus Cloud": "EXACT:Organization",
+     "Nimbus Cloud platform": "PARTIAL:Nimbus Cloud",
+     "Nimbus billing service": "EXACT:Product",
+     "Postgres cluster": "EXACT:Technology",
+     "engineering group": "EXACT:Organization",
+     "load-testing harness": "EXACT:Product"
+    }
+   },
+   "03_crestline_automation.md": {
+    "ms": 57.1,
+    "proposals": 19,
+    "unmapped_labels": 0,
+    "bad_offsets": 0,
+    "score_median": 0.83,
+    "durable": [
+     [
+      "Cobalt assembly cell",
+      "Product",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Crestline",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Crestline Automation",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "March",
+      "TimeReference",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Maria Kowalski",
+      "Person",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Siemens PLCs",
+      "Product",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Toledo",
+      "Location",
+      "IDENTITY",
+      "GLOBAL"
+     ]
+    ],
+    "subtoken_spans_dropped": 0,
+    "gold": {
+     "Cobalt assembly cell": "EXACT:Product",
+     "Crestline Automation": "EXACT:Organization",
+     "Crestline automation team": "PARTIAL:Crestline Automation",
+     "Crestline plant": "PARTIAL:Crestline",
+     "Maria Kowalski": "EXACT:Person",
+     "Siemens PLCs": "EXACT:Product",
+     "Toledo": "EXACT:Location",
+     "analytics team": "EXACT:Organization",
+     "production stoppage": "EXACT:Event",
+     "pump failure": "EXACT:Event",
+     "quality database": "EXACT:Technology",
+     "shift scheduling model": "EXACT:Technology",
+     "vision system": "EXACT:Technology"
+    }
+   },
+   "04_brightpath_learning.md": {
+    "ms": 50.2,
+    "proposals": 12,
+    "unmapped_labels": 0,
+    "bad_offsets": 0,
+    "score_median": 0.72,
+    "durable": [
+     [
+      "Brightpath Learning",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Coachlight",
+      "Product",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Daniel Okafor",
+      "Person",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "QBank",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Raleigh",
+      "Location",
+      "IDENTITY",
+      "GLOBAL"
+     ]
+    ],
+    "subtoken_spans_dropped": 0,
+    "gold": {
+     "Brightpath Learning": "EXACT:Organization",
+     "Coachlight review app": "PARTIAL:Coachlight",
+     "Daniel Okafor": "EXACT:Person",
+     "Mentor assessment engine": "PARTIAL:mentor",
+     "QBank item database": "PARTIAL:QBank",
+     "Raleigh": "EXACT:Location"
+    }
+   },
+   "05_corval_logistics.md": {
+    "ms": 49.4,
+    "proposals": 12,
+    "unmapped_labels": 0,
+    "bad_offsets": 0,
+    "score_median": 0.85,
+    "durable": [
+     [
+      "Corval Freight",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Corval Logistics",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "FreightNet",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "June",
+      "TimeReference",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Oakland",
+      "Location",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "QuickScale",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "West Coast logistics consortium",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ]
+    ],
+    "subtoken_spans_dropped": 0,
+    "gold": {
+     "Corval Freight": "EXACT:Organization",
+     "Corval Logistics": "EXACT:Organization",
+     "FreightNet routing platform": "PARTIAL:FreightNet",
+     "Oakland": "EXACT:Location",
+     "Portside warehouse": "ABSENT",
+     "QuickScale invoicing system": "PARTIAL:QuickScale"
+    }
+   },
+   "is-the-intentional-male-another-performance.md": {
+    "ms": 84.7,
+    "proposals": 116,
+    "unmapped_labels": 0,
+    "bad_offsets": 0,
+    "score_median": 0.81,
+    "durable": [
+     [
+      "66 seconds",
+      "TimeReference",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Comment",
+      "Document",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Groq",
+      "Person",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Socratic escalation",
+      "Method",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Techne Writing",
+      "Method",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Techne Writing",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Techne Writing",
+      "Person",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "instagram",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "matcha lattes",
+      "Product",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "virgin/whore",
+      "Concept",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "~60-word sparse threshold",
+      "Measurement",
+      "IDENTITY",
+      "GLOBAL"
+     ]
+    ],
+    "subtoken_spans_dropped": 0,
+    "gold": {}
+   },
+   "ignore parameter in landing page report urls in google ads.md": {
+    "ms": 89.7,
+    "proposals": 52,
+    "unmapped_labels": 0,
+    "bad_offsets": 0,
+    "score_median": 0.74,
+    "durable": [
+     [
+      "Blueness Digital",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "CRM",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Google",
+      "Organization",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Google Ads",
+      "Product",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Google article",
+      "Document",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Samrush report",
+      "Document",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Seamrush report",
+      "Document",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "Tegan",
+      "Person",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "URL",
+      "Concept",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "URL parameter",
+      "Concept",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "UTM",
+      "Technology",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "UTM parameter",
+      "Concept",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "UTM parameters",
+      "Concept",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "UTM string",
+      "Concept",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "ad",
+      "Product",
+      "LOCAL_REFERENCE",
+      "DOCUMENT_SCOPED"
+     ],
+     [
+      "ads",
+      "Product",
+      "LOCAL_REFERENCE",
+      "DOCUMENT_SCOPED"
+     ],
+     [
+      "auto applied UTM parameters",
+      "Concept",
+      "IDENTITY",
+      "GLOBAL"
+     ],
+     [
+      "landing page report",
+      "Document",
+      "LOCAL_REFERENCE",
+      "DOCUMENT_SCOPED"
+     ],
+     [
+      "traffic",
+      "Concept",
+      "LOCAL_REFERENCE",
+      "DOCUMENT_SCOPED"
+     ]
+    ],
+    "subtoken_spans_dropped": 0,
+    "gold": {}
+   }
+  }
+ }
+}

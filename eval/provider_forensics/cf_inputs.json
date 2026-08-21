@@ -1,0 +1,351 @@
+{
+ "threshold": 0.5,
+ "docs": [
+  {
+   "name": "01_northvale_health.md",
+   "kind": "i4",
+   "doc_id": "doc_85a21d16237959a1a72ffe82eb591ff05b758a7839e23b12da356aebc5acba67",
+   "labels": [
+    "Person",
+    "Organization",
+    "Location",
+    "Product",
+    "Technology",
+    "Concept",
+    "Method",
+    "Event",
+    "Document",
+    "Process",
+    "Measurement",
+    "TimeReference"
+   ],
+   "chunks": [
+    {
+     "chunk_id": "chunk_c0123155428e790beab7f40a20ff6e0a5c2aa051772862cb1499da28fd8bdd3e",
+     "text": "### Northvale Health Network: Operations Review Northvale Health Network uses the CareChart EMR platform across its three hospitals. Lakeshore General Hospital is located in Austin, and its nursing stations run the platform around the clock. Dr. Amara Osei serves as chief medical officer of Northvale Health Network. The CareConnect portal depends on the CareChart EMR for scheduling data. The radiology review board is part of Lakeshore General Hospital and meets every Tuesday. Dr. Amara Osei founded the Riverside Clinic in 2015 before joining the network. The hospital evaluated the CareCoordinator scheduling model but has not adopted it. The EMR outage did not affect the patient portal. The hospital transfers patient records to the state registry after discharge, and the team uses the portal during handoffs. The company hired two new surgeons last month.",
+     "layout_map": [
+      [
+       0,
+       47
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "name": "02_nimbus_cloud.md",
+   "kind": "i4",
+   "doc_id": "doc_bb1fa6f6d94a4855e7ecef360ab4e11c08b7848cdda85f8a1459675b611d029a",
+   "labels": [
+    "Person",
+    "Organization",
+    "Location",
+    "Product",
+    "Technology",
+    "Concept",
+    "Method",
+    "Event",
+    "Document",
+    "Process",
+    "Measurement",
+    "TimeReference",
+    "Library",
+    "Framework",
+    "API",
+    "Vulnerability",
+    "AttackTechnique",
+    "Model",
+    "Dataset",
+    "ProgrammingLanguage"
+   ],
+   "chunks": [
+    {
+     "chunk_id": "chunk_d757cefa21041482cf134b02c5585d6c28b9458fc44f8cfaf5f6d7584a3e9e1a",
+     "text": "### Nimbus Cloud Platform: Postmortem Review Nimbus Cloud uses Kubernetes to orchestrate its container platform. The Ledger billing service depends on the Postgres cluster for ledger writes. The operations group manages the fleet from a single console. The Nimbus billing service is part of the Nimbus Cloud platform. The engineering group created the load-testing harness after the September outage. The outage summary is described in the Nimbus postmortem report. The team considered replacing the cache layer but kept the existing setup. The Postgres cluster was not the root cause of the outage. The Nimbus API gateway is implemented in Go. The platform was designed by the engineering group. They deployed the patch and restarted the cluster.",
+     "layout_map": [
+      [
+       0,
+       44
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "name": "03_crestline_automation.md",
+   "kind": "i4",
+   "doc_id": "doc_07dfb7f0d1e1989ff25459845498ada8831cd4336de5f530ae9359d61317acb2",
+   "labels": [
+    "Person",
+    "Organization",
+    "Location",
+    "Product",
+    "Technology",
+    "Concept",
+    "Method",
+    "Event",
+    "Document",
+    "Process",
+    "Measurement",
+    "TimeReference"
+   ],
+   "chunks": [
+    {
+     "chunk_id": "chunk_14d7b403b69bbbb8debaf4965f2c3b6271dd91af2f61d29894ad5eec39188288",
+     "text": "### Crestline Automation: Line Efficiency Review Crestline Automation uses Siemens PLCs on the assembly line. The Crestline plant is based in Toledo and runs two shifts. Maria Kowalski leads the Crestline automation team. The analytics team created the shift scheduling model last year. The scheduling model enables same-day dispatch for urgent orders. Crestline developed the Cobalt assembly cell with the robotics vendor. Crestline linked the vision system to the quality database in March. The pump failure caused the production stoppage on line two. The vision system was not responsible for the defect spike. The team did not deploy the Cobalt cell on line one. The plant evaluated a night-shift pilot but has not adopted it.",
+     "layout_map": [
+      [
+       0,
+       48
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "name": "04_brightpath_learning.md",
+   "kind": "i4",
+   "doc_id": "doc_c1aa662574cab4c93405c709f615098b50e79a57fd497aed2c49c4cc4bc9c72c",
+   "labels": [
+    "Person",
+    "Organization",
+    "Location",
+    "Product",
+    "Technology",
+    "Concept",
+    "Method",
+    "Event",
+    "Document",
+    "Process",
+    "Measurement",
+    "TimeReference"
+   ],
+   "chunks": [
+    {
+     "chunk_id": "chunk_caaa0912c64832355d38a38bb1654aac9d00566af8eef99205696b9cb6490aab",
+     "text": "### Brightpath Learning: Platform Brief Brightpath Learning uses the Mentor assessment engine for adaptive quizzes. The company is headquartered in Raleigh. Daniel Okafor works for Brightpath Learning as a curriculum designer. The mentor engine depends on the QBank item database for item difficulty. Brightpath Learning acquired the Coachlight review app last spring. The spaced repetition schedule influences retention across cohorts. The company considered replacing the Mentor engine but kept the existing setup. Two rival providers use the same assessment format. The company hired three new instructors last month. Brightpath has not adopted the Coachlight app for high school courses.",
+     "layout_map": [
+      [
+       0,
+       39
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "name": "05_corval_logistics.md",
+   "kind": "i4",
+   "doc_id": "doc_e43f6c2fe7a9a907ab8f986159bd4a7d60b7615981f4387b760a07261ebbb7d8",
+   "labels": [
+    "Person",
+    "Organization",
+    "Location",
+    "Product",
+    "Technology",
+    "Concept",
+    "Method",
+    "Event",
+    "Document",
+    "Process",
+    "Measurement",
+    "TimeReference"
+   ],
+   "chunks": [
+    {
+     "chunk_id": "chunk_e3a02f162db67108fb5d68ff29766208459d107c0edd130b78ff4011b292bba2",
+     "text": "### Corval Logistics: Regional Operations Review Corval Logistics uses the FreightNet routing platform for regional hauls. Corval Freight is a subsidiary of Corval Logistics. The Portside warehouse is located in Oakland. Corval linked the QuickScale invoicing system to the FreightNet routing platform in June. The regional dispatchers joined the West Coast logistics consortium. Corval considered replacing FreightNet with a rival platform but kept the existing setup. The invoicing system was not responsible for the billing delays. The new pricing model has not been deployed. The harbor terminal was the actual source of the delays.",
+     "layout_map": [
+      [
+       0,
+       48
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "name": "is-the-intentional-male-another-performance.md",
+   "kind": "transcript",
+   "doc_id": "cf_is-the-intentional-male-",
+   "labels": [
+    "Person",
+    "Organization",
+    "Location",
+    "Product",
+    "Technology",
+    "Concept",
+    "Method",
+    "Event",
+    "Document",
+    "Process",
+    "Measurement",
+    "TimeReference"
+   ],
+   "chunks": [
+    {
+     "chunk_id": "cf_is-the-intentional-m_0",
+     "text": "--- title: \"Is the intentional male another performance?\" source_url: \"https://www.instagram.com/reel/Db6oeigMDgZ/\" platform: instagram fetched_at: \"2026-08-11T20:33:00\" transcript_word_count: 173 enrichment_lenses_applied: [hook, angle, structure, sound, sentiment, takeaway] creator: \"Techne Writing\" duration_seconds: 67 transcription_engine: \"groq whisper-large-v3-turbo\" comments_pulled: true source_language: en tags: [performative-male, intentional-male, capitalism, gender, masculinity, philosophy] doc_type: enriched-transcript --- # Is the intentional male another performance? \u2014 Techne Writing ## 1. Full Transcript (verbatim) > Are intentional males simps? The intentional male is supposed to be self-contained. He knows who he is. He plans for the future. He communicates. Most importantly, he does not rely on another woman to be happy. But at the same time, when you look this up online, the intentional male is usually positioned as someone who you want to marry. It's almost like a prerequisite for marriage. So if you think about that, is this man really defining himself by his own self?",
+     "layout_map": [
+      [
+       507,
+       536
+      ],
+      [
+       541,
+       604
+      ],
+      [
+       605,
+       610
+      ],
+      [
+       611,
+       637
+      ]
+     ]
+    },
+    {
+     "chunk_id": "cf_is-the-intentional-m_1",
+     "text": "Now, there's also a performative male, not unlike the intentional male, because the performative male also intends a whole lot of signifiers that make him more appealing to women. And interestingly, if you think about the expectations on men and on women, women are either split between, I guess, virgins and whores. they cannot be both men in this kind of diagram. It's almost like as though the moment they have something feminine in them, there is something called to question. They're not a complete man. They're not a man. ## 2. Enrichment (Polymath-Lens Output) ### Hook The reel opens with a provocative, charged question \u2014 *\"Are intentional males simps?\"* \u2014 weaponizing a loaded internet insult (\"simp\") against the very figure self-improvement culture idealizes. It instantly frames the \"intentional male\" as a target for critique rather than aspiration, hooking both the masculine self-improvement audience (who feels attacked) and the gender-critique audience (who feels validated). The hook works because it collides two opposed emotional registers: the aspirational identity of the \"self-improved man\" and the pejorative judgment of \"simp.\" That tension is the entire engine of the piece.",
+     "layout_map": [
+      [
+       528,
+       533
+      ],
+      [
+       534,
+       567
+      ],
+      [
+       568,
+       576
+      ]
+     ]
+    },
+    {
+     "chunk_id": "cf_is-the-intentional-m_2",
+     "text": "### Angle The thesis is a deconstruction-through-analogy: the \"intentional male\" and the \"performative male\" are two faces of the same coin. Both curate signifiers to be appealing \u2014 the performative male signals status, the intentional male signals self-sufficiency, and crucially the intentional male is marketed as a \"marriage prerequisite,\" i.e., he is defined by female desirability (\"someone you want to marry\") rather than by himself. The caption pushes this further into a capitalism critique: intention = productivity = more spending (\"those matcha lattes add up\"). The angle is philosophical irony \u2014 expose the self-contained man as secretly other-directed. ### Structure Classic Socratic escalation. (1) Provocative question (hook). (2) Define the ideal on its own terms \u2014 the intentional male is \"self-contained,\" \"knows who he is,\" \"plans for the future,\" \"does not rely on another woman.\" (3) Invert it \u2014 but he's positioned online as a marriage prerequisite, so he's actually defining himself by the female gaze. (4) Broaden to a gender-double-standard symmetry \u2014 just as women are split into \"virgins and whores,\" men are policed into \"complete man\" vs.",
+     "layout_map": [
+      [
+       0,
+       9
+      ],
+      [
+       667,
+       680
+      ]
+     ]
+    },
+    {
+     "chunk_id": "cf_is-the-intentional-m_3",
+     "text": "\"not a man\" the moment they show anything feminine. (5) Land on the existential cut: \"they're not a complete man. They're not a man.\" The structure moves from individual critique to systemic gender-structure critique in ~66 seconds. ### Sound Spoken-word philosophical narration over a background music bed (the audio is a single voice track with an ambient bed; Groq returned only the speech, no separate narrator). The tone is measured, essayistic, almost academic \u2014 a \"Techne Writing\" brand voice. No music-only watermark appeared, confirming real narration. The rhythm is deliberate and aphoristic, with the final three lines delivered as short, staccato pronouncements that land like verdicts. ### Sentiment Critically skeptical, analytical, and gently destabilizing rather than hostile. The piece interrogates a cultural figure (the self-improved / self-optimized man) with intellectual curiosity rather than mockery \u2014 even the \"simp\" hook is a rhetorical device, not an attack. The undercurrent is a critique of inauthenticity and of capitalism-as-identity: the fear that even our \"self-actualization\" is a performance sold back to us.",
+     "layout_map": [
+      [
+       233,
+       242
+      ],
+      [
+       699,
+       712
+      ]
+     ]
+    },
+    {
+     "chunk_id": "cf_is-the-intentional-m_4",
+     "text": "The tone is more essay/lecture than rant, which matches the \"Techne Writing\" (techn\u00e9 = craft/art) branding. ### Takeaway The load-bearing reframe: **any identity that is optimized for an audience is a performance, even the \"self-contained\" one.** If the intentional male's value is that he is marriage-material \u2014 a prerequisite women want \u2014 then his self-sufficiency is instrumentalized toward the female gaze, making him structurally identical to the performative male. The deeper claim is a double-standard symmetry: men are policed into a \"complete man\" binary just as women are policed into a \"virgin/whore\" binary; any trace of the feminine makes a man \"not a man.\" The transferable principle: *authenticity is not self-possession but freedom from the audience.* Capitalism monetizes the appearance of autonomy. ### Comment Demand Data Only the creator's own pin was fetched (1 comment, 0 likes; total 2 on the post). The creator's question \u2014 *\"Do you think the 'solo thriving' of an intentional or performative male is just capitalism? How would you resist that? \ud83c\udf75\ud83d\udc54\"* \u2014 extends the reel and invites the audience to answer the capitalism question directly.",
+     "layout_map": [
+      [
+       108,
+       120
+      ],
+      [
+       817,
+       840
+      ]
+     ]
+    },
+    {
+     "chunk_id": "cf_is-the-intentional-m_5",
+     "text": "There is no external audience demand signal yet (no third-party intent comments captured). This is a reach / engagement-play reel whose monetization funnel is brand-building and dialogue-starting, not a direct product pitch. ## 3. Vision Keyframe Breakdown Not applicable \u2014 transcript is 173 words of coherent narrative speech (above the ~60-word sparse threshold), not music-only. No keyframe vision analysis required. ## 4. Evidence Map | Comment | Intent | Demand signal | |---------|--------|---------------| | @technewriting: \"Do you think the 'solo thriving' of an intentional or performative male is just capitalism? How would you resist that? \ud83c\udf75\ud83d\udc54\" | Engagement / discussion prompt (creator-pinned) | Confirms the thesis is the demand trigger \u2014 audience is invited to debate the capitalism frame, not to buy anything. |",
+     "layout_map": [
+      [
+       225,
+       230
+      ],
+      [
+       231,
+       256
+      ],
+      [
+       420,
+       425
+      ],
+      [
+       426,
+       438
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ignore parameter in landing page report urls in google ads.md",
+   "kind": "transcript",
+   "doc_id": "cf_ignore parameter in land",
+   "labels": [
+    "Person",
+    "Organization",
+    "Location",
+    "Product",
+    "Technology",
+    "Concept",
+    "Method",
+    "Event",
+    "Document",
+    "Process",
+    "Measurement",
+    "TimeReference"
+   ],
+   "chunks": [
+    {
+     "chunk_id": "cf_ignore parameter in _0",
+     "text": "--- title: \"{ignore} Parameter in Landing Page Report URLs in Google Ads\" video_id: 1WmAUwfbTR8 url: https://www.youtube.com/watch?v=1WmAUwfbTR8 transcription: youtube-transcript-api date: 2026-07-14 language: en source_format: youtube_transcript --- # {ignore} Parameter in Landing Page Report URLs in Google Ads **Source:** https://www.youtube.com/watch?v=1WmAUwfbTR8 ## Transcript ### Section 1 Hey guys, Tegan here from Blueness Digital and in this video I want to run through an issue that we ran into with a client the other day on the landing page report and these URLs redirecting to 404 errors. So, as you can see here, we've got a URL here and then it's got this curly bracket ignore uh before the question mark and the UTM string appended to that. So, obviously everything after the question mark doesn't have any impact on where the URL redirects. that just pushes additional data um you know to whatever platform that URL is redirecting to with regards to where that click came from. Now obviously if there's something before the question mark that impacts where the URL redirects. So as you can see here if we click on this URL it takes us to sorry it takes us to a 404 page here. Now, obviously the client looked through",
+     "layout_map": [
+      [
+       213,
+       246
+      ],
+      [
+       251,
+       313
+      ],
+      [
+       370,
+       383
+      ],
+      [
+       384,
+       397
+      ]
+     ]
+    },
+    {
+     "chunk_id": "cf_ignore parameter in _1",
+     "text": "the landing page report and immediately flagged this with us. And from what I could see according to this Google article here, this is actually quite a common issue. And as you can see here, the URL on the ad itself um without ignore is where the traffic goes. But in the um sorry in the landing page report um that URL parameter or that ignore parameter is put in there but it's so that you ignore it or so that you must ignore it. Um it doesn't affect where the URL redirects. Now obviously we wanted to make sure that we kind of justified this um with numbers to the client. So this is just a screenshot here of a Samrush report that we pulled together for them. And as you can see here, um, this is just a video I sent to them. Um, there were zero pages that returned with a 404 error status on it. So, the ads weren't in fact directing to a 404 page error. As that article mentioned, it was just the case in the landing page report. The ads actually weren't pushing to that broken page. They were pushing to the correct page. And we validated that with a Seamrush report here. So just more as a as a heads up that if you run into this issue, this is why now why this ignore parameter gets added in there in the first place.",
+     "layout_map": []
+    },
+    {
+     "chunk_id": "cf_ignore parameter in _2",
+     "text": "I'm not 100% sure of this, but I believe it's because if you go into the campaign and go into your campaign settings, sorry, go into your campaign settings and if you go down to additional settings down here and sorry, go down to additional settings there. And then if you add a custom uh UTM parameter to your campaigns. So as you can see here, we want to push in the UTM source Google ads. So we can see exactly where this traffic's coming from on the CRM. As far as I can see, this um you know additional UTM parameter conflicts with the auto applied UTM parameters that are added onto all the ads by Google themselves. And I think that's where that that ignore, you know, piece comes in where you've got essentially two UTM parameters getting pushed in. One that I've added here and then the second one that's added automatically by Google. Obviously, this um appears correctly on the actual ad itself and the UTM parameters that I add to the ad itself or to the campaign itself. Those are the ones that get pushed into the CRM. Um, but I believe this is where that, you know, ignore piece comes from. So, hopefully that was a help. Hopefully that helps someone out there. Um, any questions, leave them in the comments",
+     "layout_map": []
+    },
+    {
+     "chunk_id": "cf_ignore parameter in _3",
+     "text": "and we'll chat soon. Bye for now. ---",
+     "layout_map": []
+    }
+   ]
+  }
+ ]
+}
