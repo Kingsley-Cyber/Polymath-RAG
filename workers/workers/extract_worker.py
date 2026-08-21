@@ -862,6 +862,7 @@ def process_event(conn: Connection, event: dict) -> None:
                     ordered_slices.append((row, sl))
 
             doc_entity_history: list[EntitySpan] = []
+            _l4_rows: list = []
             # SYNTAX-BOOTSTRAP: after the GLiNER passes and before
             # build_candidates — annotate the same slices (one batched
             # call) when the provider is enabled; disabled records and
@@ -964,6 +965,10 @@ def process_event(conn: Connection, event: dict) -> None:
                         decision = compile_relation_kimi(candidate, sl.parse, pack, syntax=sl.syntax)
                     else:
                         decision = compile_relation(candidate, sl.parse, pack, syntax=sl.syntax)
+                    # V5 L4 (I7): every candidate's disposition is durable —
+                    # refused relation evidence survives outside the trace.
+                    _l4_rows.append(_raw.relation_candidate_row(
+                        doc_id, row["chunk_id"], candidate, decision))
                     if trace.enabled:
                         reason = str(decision.reason or "")
                         code = ("NEGATED" if "negated" in reason else
@@ -1007,6 +1012,7 @@ def process_event(conn: Connection, event: dict) -> None:
                             "object": candidate.object.span.text,
                             "evidence_class": candidate.evidence.evidence_class,
                         })
+            _raw.bulk_write(conn, "relation_candidates", _l4_rows)
         finally:
             gliner.close()
 

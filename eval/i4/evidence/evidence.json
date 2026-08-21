@@ -260,6 +260,12 @@
         "total": 18,
         "violations": []
       }
+    },
+    "provenance": {
+      "accepted_facts": 15,
+      "exact_matches": 15,
+      "all_exact": true,
+      "details": []
     }
   }
 }

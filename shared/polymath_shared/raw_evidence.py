@@ -177,3 +177,33 @@ def write_bundle(conn: Any, doc_id: str) -> dict:
          json.dumps(m["member_hashes"], sort_keys=True),
          json.dumps(m["counts"], sort_keys=True)))
     return m
+
+
+def relation_candidate_row(doc_id: str, chunk_id: str, candidate, decision) -> tuple:
+    """One compiled relation candidate with its disposition (L4, I7)."""
+    fact = getattr(decision, "fact", None)
+    subj, obj = candidate.subject, candidate.object
+    cid = "relc_" + content_hash({
+        "doc": doc_id, "chunk": chunk_id,
+        "evidence": [candidate.evidence.start, candidate.evidence.end,
+                     candidate.evidence.evidence_class],
+        "subject": [subj.span.start, subj.span.end, subj.span.core_type.value],
+        "object": [obj.span.start, obj.span.end, obj.span.core_type.value],
+        "decision": decision.decision,
+    })
+    return (cid, doc_id, chunk_id,
+            candidate.evidence.evidence_class,
+            getattr(candidate.evidence, "trigger_surface", None),
+            subj.span.text, subj.resolved_entity_id,
+            obj.span.text, obj.resolved_entity_id,
+            getattr(decision, "rule_id", None),
+            decision.decision, str(decision.reason or "")[:400],
+            fact.fact_id if fact else None)
+
+
+_INSERT["relation_candidates"] = (
+    "INSERT INTO relation_candidates (candidate_id, doc_id, chunk_id,"
+    " evidence_class, trigger_surface, subject_surface, subject_entity_id,"
+    " object_surface, object_entity_id, predicate, decision, reason, fact_id)"
+    " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+    " ON CONFLICT (candidate_id) DO NOTHING")
