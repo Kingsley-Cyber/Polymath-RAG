@@ -307,6 +307,7 @@ def apply_boundary(ordered_slices: list) -> dict:
             })
 
     accepted = refused = 0
+    hypotheses: list[dict] = []
     for (row, sl), found in zip(ordered_slices, per_slice):
         if not found:
             continue
@@ -318,6 +319,24 @@ def apply_boundary(ordered_slices: list) -> dict:
                 accepted += 1
             else:
                 refused += 1
+            # V5 L2: every widening attempt is a HYPOTHESIS record. The
+            # ACTIVE set below keeps V4-effective semantics (R5): a refused
+            # widening still removes the source from argument binding —
+            # recorded as SUPPRESSED_SOURCE instead of silent destruction,
+            # with the raw observation durable in L1.
+            hypotheses.append({
+                "chunk_id": row["chunk_id"], "mechanism": "boundary_widening",
+                "source_char_start": entity.start, "source_char_end": entity.end,
+                "source_surface": entity.text,
+                "proposed_char_start": chunk_cs, "proposed_char_end": chunk_ce,
+                "proposed_surface": query.text,
+                "status": "ACCEPTED" if hit else "REJECTED",
+                "disposition": "SUPERSEDED_SOURCE" if hit else "SUPPRESSED_SOURCE",
+                "evidence": {"query_identity": query.identity,
+                             "labels": list(query.labels),
+                             "score": round(float(hit["score"]), 4) if hit else None,
+                             "accepted_raw_label": hit.get("label") if hit else None},
+            })
         new_entities = []
         for entity in sl.entities:
             outcome = outcomes.get(id(entity))
@@ -354,6 +373,7 @@ def apply_boundary(ordered_slices: list) -> dict:
         "query_policy_version": _policy_version(),
         "stages": ["boundary"],
         "queries": report_queries,
+        "hypotheses": hypotheses,
         "counts": {"candidates": len(queries), "accepted": accepted, "refused": refused},
     }
 
@@ -418,6 +438,7 @@ def apply_missing_arguments(ordered_slices: list, label_set: tuple[str, ...]) ->
             })
 
     added = 0
+    ma_hypotheses: list[dict] = []
     for (row, sl), found in zip(ordered_slices, per_slice):
         if not found:
             continue
@@ -426,6 +447,18 @@ def apply_missing_arguments(ordered_slices: list, label_set: tuple[str, ...]) ->
         new_entities = list(sl.entities)
         for query, chunk_cs, chunk_ce in found:
             hit = hits[query.identity]
+            _ok = hit is not None and canonical_of(hit.get("label", "")) is not None
+            ma_hypotheses.append({
+                "chunk_id": row["chunk_id"], "mechanism": "missing_argument",
+                "proposed_char_start": chunk_cs, "proposed_char_end": chunk_ce,
+                "proposed_surface": query.text,
+                "status": "ACCEPTED" if _ok else "REJECTED",
+                "disposition": "ADDED" if _ok else "NO_CHANGE",
+                "evidence": {"query_identity": query.identity,
+                             "labels": list(query.labels),
+                             "score": round(float(hit["score"]), 4) if hit else None,
+                             "accepted_raw_label": hit.get("label") if hit else None},
+            })
             if hit is None:
                 continue
             canonical = canonical_of(hit.get("label", ""))
@@ -451,6 +484,7 @@ def apply_missing_arguments(ordered_slices: list, label_set: tuple[str, ...]) ->
         "query_policy_version": _policy_version(),
         "stages": ["missing_argument"],
         "queries": report_queries,
+        "hypotheses": ma_hypotheses,
         "counts": {"candidates": len(queries), "accepted": added, "refused": len(queries) - added},
     }
 
@@ -596,6 +630,7 @@ def apply_type_reconciliation(ordered_slices: list, label_set: tuple[str, ...], 
             })
 
     re_typed = 0
+    tr_hypotheses: list[dict] = []
     for (row, sl), found in zip(ordered_slices, per_slice):
         if not found:
             continue
@@ -611,7 +646,21 @@ def apply_type_reconciliation(ordered_slices: list, label_set: tuple[str, ...], 
                 new_entities.append(entity)
                 continue
             hit, canonical, slot_types, chunk_cs, chunk_ce = outcome
-            if hit is None or canonical is None or canonical not in slot_types:
+            _ok = not (hit is None or canonical is None or canonical not in slot_types)
+            tr_hypotheses.append({
+                "chunk_id": entity.chunk_id, "mechanism": "type_reconciliation",
+                "source_char_start": entity.start, "source_char_end": entity.end,
+                "source_surface": entity.text,
+                "proposed_char_start": chunk_cs, "proposed_char_end": chunk_ce,
+                "proposed_surface": entity.text,
+                "status": "ACCEPTED" if _ok else "REJECTED",
+                "disposition": "SUPERSEDED_SOURCE" if _ok else "NO_CHANGE",
+                "evidence": {"from_type": entity.core_type.value,
+                             "to_type": canonical,
+                             "slot_types": sorted(slot_types),
+                             "score": round(float(hit["score"]), 4) if hit else None},
+            })
+            if not _ok:
                 new_entities.append(entity)  # refused/incompatible: abstain pairing
                 continue
             new_entities.append(EntitySpan(
@@ -634,6 +683,7 @@ def apply_type_reconciliation(ordered_slices: list, label_set: tuple[str, ...], 
         "query_policy_version": _policy_version(),
         "stages": ["type_reconciliation"],
         "queries": report_queries,
+        "hypotheses": tr_hypotheses,
         "counts": {"candidates": len(queries), "re_typed": re_typed,
                    "kept_incompatible": len(queries) - re_typed},
     }

@@ -89,3 +89,29 @@ def ledger_hash(conn: Any, doc_ids: list[str]) -> dict:
         out[table] = {"count": len(rows),
                       "sha256": content_hash({"ids": [r[0] for r in rows]})}
     return out
+
+
+def hypothesis_row(doc_id: str, h: dict) -> tuple:
+    """One rescue decision as an L2 record. Ids are content-addressed over
+    the decision's identifying content, so replays are idempotent."""
+    import json
+    hid = "hyp_" + content_hash({
+        "doc": doc_id, "chunk": h["chunk_id"], "mechanism": h["mechanism"],
+        "src": [h.get("source_char_start"), h.get("source_char_end")],
+        "dst": [h["proposed_char_start"], h["proposed_char_end"]],
+        "surface": h["proposed_surface"], "status": h["status"],
+    })
+    return (hid, doc_id, h["chunk_id"], h["mechanism"],
+            h.get("source_char_start"), h.get("source_char_end"),
+            h.get("source_surface"),
+            h["proposed_char_start"], h["proposed_char_end"],
+            h["proposed_surface"], h["status"], h["disposition"],
+            json.dumps(h.get("evidence") or {}, sort_keys=True))
+
+
+_INSERT["span_hypotheses"] = (
+    "INSERT INTO span_hypotheses (hypothesis_id, doc_id, chunk_id, mechanism,"
+    " source_char_start, source_char_end, source_surface, proposed_char_start,"
+    " proposed_char_end, proposed_surface, status, disposition, evidence)"
+    " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+    " ON CONFLICT (hypothesis_id) DO NOTHING")

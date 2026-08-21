@@ -34,6 +34,232 @@
           "content_hash": "e43f6c2fe7a9a907ab8f986159bd4a7d60b7615981f4387b760a07261ebbb7d8"
         }
       ]
+    },
+    "facts": {
+      "supported_positive": {
+        "gold": 26,
+        "tp": 13,
+        "fp": 3,
+        "fn": 13,
+        "precision": 0.812,
+        "recall": 0.5,
+        "f1": 0.619,
+        "per_predicate": {
+          "uses": {
+            "gold": 5,
+            "tp": 2,
+            "fp": 0,
+            "fn": 3
+          },
+          "located_in": {
+            "gold": 4,
+            "tp": 2,
+            "fp": 0,
+            "fn": 2
+          },
+          "has_role": {
+            "gold": 2,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "depends_on": {
+            "gold": 3,
+            "tp": 3,
+            "fp": 0,
+            "fn": 0
+          },
+          "part_of": {
+            "gold": 2,
+            "tp": 0,
+            "fp": 0,
+            "fn": 2
+          },
+          "founded": {
+            "gold": 1,
+            "tp": 1,
+            "fp": 1,
+            "fn": 0
+          },
+          "created": {
+            "gold": 2,
+            "tp": 0,
+            "fp": 0,
+            "fn": 2
+          },
+          "leads": {
+            "gold": 1,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "developed": {
+            "gold": 1,
+            "tp": 0,
+            "fp": 1,
+            "fn": 1
+          },
+          "associated_with": {
+            "gold": 2,
+            "tp": 0,
+            "fp": 0,
+            "fn": 2
+          },
+          "causes": {
+            "gold": 1,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "acquired": {
+            "gold": 1,
+            "tp": 0,
+            "fp": 0,
+            "fn": 1
+          },
+          "subsidiary_of": {
+            "gold": 1,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "member_of": {
+            "gold": 0,
+            "tp": 0,
+            "fp": 1,
+            "fn": 0
+          }
+        },
+        "fn_details": [
+          {
+            "fact_id": "A01",
+            "predicate": "uses",
+            "subject": "Northvale Health Network",
+            "object": "CareChart EMR",
+            "doc": "01_northvale_health.md"
+          },
+          {
+            "fact_id": "A05",
+            "predicate": "part_of",
+            "subject": "radiology review board",
+            "object": "Lakeshore General Hospital",
+            "doc": "01_northvale_health.md"
+          },
+          {
+            "fact_id": "A07",
+            "predicate": "uses",
+            "subject": "Nimbus Cloud",
+            "object": "Kubernetes",
+            "doc": "02_nimbus_cloud.md"
+          },
+          {
+            "fact_id": "A09",
+            "predicate": "part_of",
+            "subject": "Nimbus billing service",
+            "object": "Nimbus Cloud platform",
+            "doc": "02_nimbus_cloud.md"
+          },
+          {
+            "fact_id": "A10",
+            "predicate": "created",
+            "subject": "engineering group",
+            "object": "load-testing harness",
+            "doc": "02_nimbus_cloud.md"
+          },
+          {
+            "fact_id": "A12",
+            "predicate": "located_in",
+            "subject": "Crestline plant",
+            "object": "Toledo",
+            "doc": "03_crestline_automation.md"
+          },
+          {
+            "fact_id": "A14",
+            "predicate": "created",
+            "subject": "analytics team",
+            "object": "shift scheduling model",
+            "doc": "03_crestline_automation.md"
+          },
+          {
+            "fact_id": "A15",
+            "predicate": "developed",
+            "subject": "Crestline Automation",
+            "object": "Cobalt assembly cell",
+            "doc": "03_crestline_automation.md"
+          },
+          {
+            "fact_id": "A16",
+            "predicate": "associated_with",
+            "subject": "vision system",
+            "object": "quality database",
+            "doc": "03_crestline_automation.md"
+          },
+          {
+            "fact_id": "A18",
+            "predicate": "uses",
+            "subject": "Brightpath Learning",
+            "object": "Mentor assessment engine",
+            "doc": "04_brightpath_learning.md"
+          },
+          {
+            "fact_id": "A19",
+            "predicate": "located_in",
+            "subject": "Brightpath Learning",
+            "object": "Raleigh",
+            "doc": "04_brightpath_learning.md"
+          },
+          {
+            "fact_id": "A22",
+            "predicate": "acquired",
+            "subject": "Brightpath Learning",
+            "object": "Coachlight review app",
+            "doc": "04_brightpath_learning.md"
+          },
+          {
+            "fact_id": "A26",
+            "predicate": "associated_with",
+            "subject": "QuickScale invoicing system",
+            "object": "FreightNet routing platform",
+            "doc": "05_corval_logistics.md"
+          }
+        ],
+        "fp_details": [
+          {
+            "predicate": "developed",
+            "subject": "crestline",
+            "object": "cobalt assembly cell",
+            "doc": "corpus/03_crestline_automation.md"
+          },
+          {
+            "predicate": "founded",
+            "subject": "crestline",
+            "object": "robotics vendor",
+            "doc": "corpus/03_crestline_automation.md"
+          },
+          {
+            "predicate": "member_of",
+            "subject": "regional dispatchers",
+            "object": "west coast logistics consortium",
+            "doc": "corpus/05_corval_logistics.md"
+          }
+        ]
+      },
+      "out_of_envelope": {
+        "fixtures": 8,
+        "correct_abstentions": 7,
+        "unexpected_assertions": 1,
+        "details": [
+          {
+            "case_id": "B06",
+            "asserted": "regional dispatchers member_of west coast logistics consortium"
+          }
+        ]
+      },
+      "must_not_assert": {
+        "passed": 18,
+        "total": 18,
+        "violations": []
+      }
     }
   }
 }

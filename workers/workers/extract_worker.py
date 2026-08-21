@@ -896,6 +896,14 @@ def process_event(conn: Connection, event: dict) -> None:
                 rescue_report = apply_rescue(
                     ordered_slices, rescue_stages, rescue_label_set, _pack())
                 writer.artifact({"rescue": rescue_report})
+                # V5 L2: persist every rescue decision as a span hypothesis,
+                # idempotently, inside this stage transaction.
+                _hyp_rows = [
+                    _raw.hypothesis_row(doc_id, h)
+                    for lane in rescue_report.values() if isinstance(lane, dict)
+                    for h in lane.get("hypotheses", [])
+                ]
+                _raw.bulk_write(conn, "span_hypotheses", _hyp_rows)
 
             # SENTENCE-SLICE-MANIFEST-V1 (row 54): record WHICH slices the
             # interpreter saw, in what order, under which contract — before
