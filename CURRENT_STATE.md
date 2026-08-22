@@ -1,8 +1,34 @@
 # CURRENT STATE — Polymath V5 (evidence-first)
 
-Branch `architecture/evidence-first-v5` · authority `3981fcff…`
-(= `v4-semantic-freeze` + qualified SUBTOKEN-SPAN-ADMISSION-V1).
+> **Superseded in part, 2026-08-22.** The architecture description below
+> is still accurate. The status claims are not: two admission chains
+> described here as qualified had **zero production callers** until this
+> date. Read `POLYMATH_V5_RELEASE_BASELINE.md` for frozen state and
+> `NEXT_SESSION.md` for the handoff.
+>
+> Never trust a document about state. These are the authorities:
+>
+> ```
+> .venv/bin/python shared/polymath_shared/bundle_integrity.py
+> .venv/bin/python eval/v5/implementation_plan.py
+> ```
+
+Branch `architecture/evidence-first-v5` · HEAD `f655c07`
+authority `fd68fc57f4c18057` · bundle `v5-production-002`
+rule pack `1.3.0` (declared == loaded, boot-enforced)
 `main` = `v4-semantic-freeze` (43209aa), untouched.
+
+**Both admission chains are WIRED and in SHADOW.** They run, record
+every decision, and govern nothing:
+
+```
+POLYMATH_ENTITY_ADMISSION_ENFORCE   unset      E1-E7
+POLYMATH_FACT_ADMISSION_ENFORCE     unset      F1-F8
+```
+
+Under enforcement `core-3-v1` yields an **empty T2 graph** (PASS 0,
+QUALIFY 7, REJECT 22). The gates are precise and the recall cost is
+severe; flipping either flag is the owner's decision, not an agent's.
 
 ## Architecture (implemented and qualified)
 
