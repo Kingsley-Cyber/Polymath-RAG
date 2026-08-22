@@ -1,6 +1,7 @@
 # POLYMATH RUNTIME BUDGET — one hard ceiling for the whole repository.
 #
-# The workstation owner allocates Polymath 13 GB on a 32 GB Mac Studio.
+# The workstation owner allocates Polymath 16 GB on a 32 GB Mac Studio
+# (raised from 13 GB so the full fleet can run concurrently).
 # Everything Polymath starts must fit inside it: the Docker VM holding
 # the stores, every sidecar's model and GPU pool, the workers, and the
 # orchestrator. Exceeding it is a defect, not a tuning opportunity.
@@ -12,7 +13,7 @@
 # these numbers are read at boot, exported as real limits, and checked
 # by a preflight that refuses to start an over-committed fleet.
 
-total_gb: 13.0
+total_gb: 16.0
 
 # --------------------------------------------------------------------
 # Stores (Docker VM). The VM reserves its allocation as wired memory
@@ -70,10 +71,10 @@ reserve_gb: 0.5
 # --------------------------------------------------------------------
 # PROFILES — the working sets Polymath actually runs.
 #
-# Four resident models plus the store VM do not fit 13 GB, and pretending
-# otherwise is how a machine ends up thrashing. Polymath therefore runs
-# in stages, loading only the models the current stage calls. Select one
-# with POLYMATH_PROFILE; it expands to POLYMATH_FLEET_ONLY.
+# At 16 GB the full fleet fits, so profiles are an EFFICIENCY choice
+# rather than a necessity: a stage that never calls GLiNER should not
+# hold its model resident. Select one with POLYMATH_PROFILE; omit it to
+# run everything. The preflight still refuses an over-committed set.
 # --------------------------------------------------------------------
 profiles:
   projection:
