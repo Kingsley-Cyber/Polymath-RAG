@@ -151,15 +151,25 @@ def p_e6_inventory_closed() -> tuple[bool, str]:
 
 
 def p_rule_pack_pinned() -> tuple[bool, str]:
-    src = _read("shared/polymath_shared/settings.py")
-    m = re.search(r"rule_pack_version:\s*str\s*=\s*Field\(\s*default=\"([^\"]+)\"", src)
-    if not m:
-        raise ProbeUnavailable("rule_pack_version default not found")
-    default = m.group(1)
-    declared = "1.3.0" if "core-predicates-v1.3.0" in _read("docs/SEMANTIC_CONTRACTS.md") else None
-    if declared and default != declared:
-        return False, f"settings default {default} != documented {declared}"
-    return True, f"default {default} matches documented pack"
+    """Delegates to bundle_integrity: ONE implementation of this check.
+
+    This probe previously carried its own copy of the version regex. It
+    drifted from the real one the moment a comment with parentheses was
+    added to settings.py, returned None, and reported UNKNOWN while the
+    boot gate reported OK. Two implementations of one invariant is the
+    same defect class the invariant exists to catch.
+    """
+    from polymath_shared.bundle_integrity import (
+        _declared_rule_pack, _loaded_rule_pack,
+    )
+    declared, loaded = _declared_rule_pack(), _loaded_rule_pack()
+    if not declared or not loaded:
+        raise ProbeUnavailable(
+            f"could not resolve both versions (declared={declared}, "
+            f"loaded={loaded})")
+    if declared != loaded:
+        return False, f"settings default {loaded} != documented {declared}"
+    return True, f"declared and loaded agree: v{declared}"
 
 
 def p_bundle_integrity_enforced() -> tuple[bool, str]:

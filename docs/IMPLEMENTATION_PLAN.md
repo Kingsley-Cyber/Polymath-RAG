@@ -6,11 +6,11 @@
 POLYMATH_PG_DSN=… .venv/bin/python eval/v5/implementation_plan.py --write
 ```
 
-Build `3765725`. Every status below is a PREDICATE evaluated against the running system — source, config, compiled artefacts, database state — never a typed claim.
+Build `90f5122`. Every status below is a PREDICATE evaluated against the running system — source, config, compiled artefacts, database state — never a typed claim.
 
 This file is generated because a hand-maintained plan drifts, and this repository has already paid for that: `SEMANTIC_CONTRACTS.md` declared rule pack v1.3.0 byte-frozen while `settings.py` shipped v1.2.0, and two admission gate chains were reported as qualified while having zero production callers.
 
-`6 done · 9 open · 3 blocked · 1 unknown`
+`7 done · 9 open · 3 blocked · 0 unknown`
 
 `?` means the probe could not observe the system. It is never folded into done.
 
@@ -68,9 +68,9 @@ This file is generated because a hand-maintained plan drifts, and this repositor
       similar_to is authored with 3 verbs and compiles to 20, including banter, bargain, collaborate. This is the single largest source of wrong facts and it is a build-time bug in our own compiler.
       *probe:* similar_to compiled to 20 triggers from 3 authored (VerbNet class expansion): banter, bargain, collaborate, collide, commiserate, ...
 
-- [?] **D2 Pin the rule pack the docs declare** — `UNKNOWN` · **new contract required**
+- [x] **D2 Pin the rule pack the docs declare** — `DONE` · **new contract required**
       SEMANTIC_CONTRACTS declares v1.3.0 byte-frozen; settings ships 1.2.0, so frame arbitration is inert in production.
-      *probe:* rule_pack_version default not found
+      *probe:* declared and loaded agree: v1.3.0
 
 ## SEMANTIC TRACK — P1
 
