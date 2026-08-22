@@ -1,0 +1,132 @@
+{
+ "documents": 25,
+ "chunks_child": 15205,
+ "chunks_all": 19016,
+ "sentence_slices": 109316,
+ "raw_entity_proposals": 173153,
+ "raw_predicate_evidence": 0,
+ "span_hypotheses": 196541,
+ "mentions": 144396,
+ "mentions_by_id_kind": {
+  "document_scoped": 24,
+  "corpus_scoped": 10792,
+  "no_identity": 85939,
+  "global": 47641
+ },
+ "distinct_durable_entities": 17723,
+ "entities_by_admission_class": {
+  "CORPUS_SCOPED": 555,
+  "DOCUMENT_SCOPED": 11,
+  "GLOBAL": 17151,
+  "null": 6
+ },
+ "relation_candidates": 34342,
+ "rc_by_decision": {
+  "ACCEPT": 5681,
+  "REJECT": 25598,
+  "QUALIFY": 3063
+ },
+ "rc_reject_reasons_top": [
+  [
+   "type_violation: no signature accepts (Technology -",
+   4308
+  ],
+  [
+   "type_violation: no signature accepts (Organization",
+   2633
+  ],
+  [
+   "scope_gate: conditional",
+   1958
+  ],
+  [
+   "scope_gate: negated",
+   1731
+  ],
+  [
+   "type_violation: no signature accepts (Person -> Te",
+   1053
+  ],
+  [
+   "type_violation: no signature accepts (Person -> Pe",
+   1033
+  ],
+  [
+   "scope_gate: conditional, speculative",
+   1018
+  ],
+  [
+   "type_violation: no signature accepts (Person -> Or",
+   858
+  ],
+  [
+   "scope_gate: negated, speculative",
+   817
+  ],
+  [
+   "scope_gate: attributed, question",
+   637
+  ],
+  [
+   "type_violation: no signature accepts (Person -> Co",
+   546
+  ],
+  [
+   "scope_gate: conditional, negated",
+   518
+  ]
+ ],
+ "facts_via_evidence": 7903,
+ "facts_by_decision": {
+  "ACCEPT": 5154,
+  "QUALIFY": 2749
+ },
+ "predicate_distribution": {
+  "uses": 1847,
+  "similar_to": 1010,
+  "instance_of": 927,
+  "part_of": 905,
+  "is_a": 715,
+  "created": 438,
+  "developed": 289,
+  "acquired": 269,
+  "founded": 260,
+  "depends_on": 258,
+  "stated_in": 251,
+  "located_in": 121,
+  "causes": 91,
+  "derived_from": 69,
+  "associated_with": 64,
+  "measured_by": 61,
+  "influences": 58,
+  "alias_of": 56,
+  "owns": 46,
+  "implemented_with": 31,
+  "enables": 28,
+  "member_of": 28,
+  "has_role": 26,
+  "transforms_into": 21,
+  "employs": 15,
+  "leads": 7,
+  "subsidiary_of": 6,
+  "occurred_at": 6
+ },
+ "fact_entities": 9314,
+ "db_size": "2510 MB",
+ "tickets": {
+  "profile_document/pending": 3,
+  "verify_projections/pending": 28,
+  "project_qdrant/leased": 4,
+  "project_qdrant/ready": 2,
+  "project_neo4j/pending": 28,
+  "canonicalize/pending": 28,
+  "intake/failed": 3,
+  "project_qdrant/failed": 19,
+  "intake/done": 25,
+  "extract/done": 25,
+  "extract/pending": 3,
+  "project_qdrant/pending": 3,
+  "project_canonical/pending": 28,
+  "profile_document/done": 25
+ }
+}

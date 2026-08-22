@@ -1,0 +1,69 @@
+{
+ "citation_like_chunks": 7,
+ "facts_evidenced_in_citation_chunks": 1,
+ "citation_fact_predicates": {
+  "part_of": 1
+ },
+ "total_facts": 7903,
+ "smq3": {
+  "candidates": 103,
+  "by_decision": {
+   "ACCEPT": 12,
+   "QUALIFY": 3,
+   "REJECT": 88
+  },
+  "reject_reasons": {
+   "type_violation: no signature accepts (Co": 32,
+   "type_violation: no signature accepts (Pe": 16,
+   "type_violation: no signature accepts (Me": 11,
+   "type_violation: no signature accepts (Or": 11,
+   "binding:endpoints_outside_trigger_clause": 10,
+   "scope_gate: negated, speculative": 8
+  },
+  "mentions": 975,
+  "durable": 493,
+  "content_hash": "4bfdf4034799f5df3d5c81f999b004ed69898239591df0c5894abcb58953417a",
+  "scope_gated_examples": [
+   {
+    "reason": "scope_gate: negated, speculative",
+    "subj": "taxonomy of facial expressions",
+    "obj": "Ekman"
+   },
+   {
+    "reason": "scope_gate: negated, speculative",
+    "subj": "taxonomy of facial expressions",
+    "obj": "Izard"
+   },
+   {
+    "reason": "scope_gate: negated, speculative",
+    "subj": "taxonomy of facial expressions",
+    "obj": "taxonomy of emotions"
+   },
+   {
+    "reason": "scope_gate: negated, speculative",
+    "subj": "Izard",
+    "obj": "taxonomy of emotions"
+   },
+   {
+    "reason": "scope_gate: negated, speculative",
+    "subj": "Ekman",
+    "obj": "taxonomy of emotions"
+   },
+   {
+    "reason": "scope_gate: negated, speculative",
+    "subj": "taxonomy of facial expressions",
+    "obj": "taxonomy of emotions"
+   },
+   {
+    "reason": "scope_gate: negated, speculative",
+    "subj": "Facial expressions",
+    "obj": "Camras"
+   },
+   {
+    "reason": "scope_gate: negated, speculative",
+    "subj": "Facial expressions",
+    "obj": "Camras"
+   }
+  ]
+ }
+}
