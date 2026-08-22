@@ -93,6 +93,27 @@ class BindingSource(str, Enum):
     UD_COORDINATION = "UD_COORDINATION"
     SAFE_LOCAL_PATTERN = "SAFE_LOCAL_PATTERN"
     BOUNDED_LINEAR_RECALL = "BOUNDED_LINEAR_RECALL"
+    UD_DEPENDENCY = "UD_DEPENDENCY"
+    NOMINAL_DEPENDENCY = "NOMINAL_DEPENDENCY"
+
+
+V2_BINDING_SOURCES = frozenset(
+    {BindingSource.UD_DEPENDENCY, BindingSource.NOMINAL_DEPENDENCY}
+)
+
+
+def v2_binding_refusal(candidate) -> Optional[str]:
+    """PREDICATE-COMPILER-V2 hard rule: a relation candidate exists only
+    when a spaCy token licensed it and dependency structure bound its
+    arguments. No token id -> NO_TRIGGER_TOKEN. Any binding source
+    outside the V2 set (proximity recall, surface patterns) ->
+    UNLICENSED_BINDING_SOURCE. Returns the refusal reason or None."""
+    if getattr(candidate, "trigger_token_id", None) is None:
+        return "NO_TRIGGER_TOKEN"
+    source = getattr(candidate, "binding_source", None)
+    if source not in V2_BINDING_SOURCES:
+        return "UNLICENSED_BINDING_SOURCE"
+    return None
 
 
 class RoleAssignment(BaseModel):
@@ -201,6 +222,16 @@ class RelationCandidate(BaseModel):
     sentence_text: str = ""
     sentence_start: int = 0
     sentence_index: int = 0
+    # PREDICATE-COMPILER-V2 provenance (slice 1). Optional so the frozen
+    # legacy_v1/kimi_v1 pipelines keep constructing candidates unchanged;
+    # v2_binding_refusal makes these mandatory on the V2 path only.
+    document_id: Optional[str] = None
+    sentence_id: Optional[str] = None
+    trigger_token_id: Optional[int] = None
+    subject_token_id: Optional[int] = None
+    object_token_id: Optional[int] = None
+    dependency_path: Optional[str] = None
+    binding_source: Optional[BindingSource] = None
 
 
 class CanonicalFact(BaseModel):

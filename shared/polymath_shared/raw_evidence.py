@@ -208,12 +208,34 @@ def relation_candidate_row(doc_id: str, chunk_id: str, candidate, decision) -> t
             obj.span.text, obj.resolved_entity_id,
             getattr(decision, "rule_id", None),
             decision.decision, str(decision.reason or "")[:400],
-            fact.fact_id if fact else None)
+            fact.fact_id if fact else None,
+            # PREDICATE-COMPILER-V2 slice 1: syntax provenance. Legacy
+            # candidates carry None here, which is the measurable signal.
+            getattr(candidate, "trigger_token_id", None),
+            getattr(candidate, "subject_token_id", None),
+            getattr(candidate, "object_token_id", None),
+            getattr(candidate, "dependency_path", None),
+            _binding_source_text(candidate),
+            (getattr(candidate, "sentence_id", None)
+             or (f"{chunk_id}#s{candidate.sentence_index}"
+                 if candidate.sentence_index else None)))
+
+
+def _binding_source_text(candidate):
+    source = getattr(candidate, "binding_source", None)
+    if source is None:
+        lse = getattr(candidate, "lexical_semantic_evidence", None)
+        sources = getattr(lse, "binding_sources", None) if lse else None
+        if sources:
+            source = sources[0]
+    return source.value if hasattr(source, "value") else source
 
 
 _INSERT["relation_candidates"] = (
     "INSERT INTO relation_candidates (candidate_id, doc_id, chunk_id,"
     " evidence_class, trigger_surface, subject_surface, subject_entity_id,"
-    " object_surface, object_entity_id, predicate, decision, reason, fact_id)"
-    " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+    " object_surface, object_entity_id, predicate, decision, reason, fact_id,"
+    " trigger_token_id, subject_token_id, object_token_id, dependency_path,"
+    " binding_source, sentence_id)"
+    " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
     " ON CONFLICT (candidate_id) DO NOTHING")
