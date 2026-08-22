@@ -344,6 +344,13 @@ def f4_assertion(ctx: FactContext, pack: dict) -> GateVerdict:
         tokens = ctx.parse.get("tokens") or []
         head = _clause_head(ctx, trig)
         head_i = head.get("i") if head else None
+        # Clause-local syntactic negation. The persisted ScopeFlags read
+        # "the Raspberry Pi doesn't use BIOS or UEFI" as unnegated and both
+        # edges were admitted; a `neg` dependent on the governing clause is
+        # unambiguous and costs nothing to check.
+        if any(t.get("head_i") == head_i and t.get("dep") == "neg" for t in tokens):
+            return GateVerdict(REJECT, "NEG_SCOPE",
+                               "clause carries a syntactic negation")
         for tok in tokens:
             if tok.get("head_i") != head_i or tok.get("dep") not in {"aux", "auxpass"}:
                 continue
@@ -498,11 +505,16 @@ def f5_predicate_evidence(ctx: FactContext, pack: dict) -> GateVerdict:
         for form in forms:
             entry = lexical_lookup(pack, form) or {}
             frames = {str(f).lower() for f in (entry.get("framenet_frames") or [])}
-            vn = {str(v).lower() for v in (entry.get("verbnet_classes") or [])}
             rolesets = {str(r).lower() for r in (entry.get("propbank_rolesets") or [])}
             ev = rule.get("evidence") or {}
+            # PropBank rolesets and FrameNet frames only. VerbNet CLASS
+            # membership is deliberately excluded: it is the coarse signal
+            # that produced the sense-blind expansion in the first place,
+            # so re-licensing through it would readmit exactly what
+            # `_sense_agrees` just refused — `collaborate` shares
+            # correspond-36.1.1 with `similar_to` and produced
+            # similar_to(Google, NORAD) from "Google collaborated with NORAD".
             if (frames & {str(f).lower() for f in (ev.get("framenet_frames") or [])}
-                    or vn & {str(v).lower() for v in (ev.get("verbnet_classes") or [])}
                     or rolesets & {str(r).lower() for r in (ev.get("propbank_rolesets") or [])}):
                 return GateVerdict(PASS)
     except Exception:
@@ -584,6 +596,13 @@ def _syntactic_roles(ctx: FactContext) -> tuple[Optional[dict], Optional[dict], 
     # subject as the semantic subject — the two must not be conflated.
     passive = passive and any(t.get("dep") == "agent" for t in kids)
     subj = next((t for t in kids if t.get("dep") in _SUBJ_DEPS), None)
+    if subj is None and (head or {}).get("dep") in {"acl", "relcl", "advcl"}:
+        # Participial clause: "SpamCop currently owned by Cisco Systems".
+        # The patient is the noun the clause attaches to, not a child of
+        # the participle, so without this the roles read as unwitnessed
+        # and the inverted edge slipped through.
+        by_i = {t.get("i"): t for t in tokens}
+        subj = by_i.get(head.get("head_i"))
     obj = next((t for t in kids if t.get("dep") in _OBJ_DEPS), None)
     if obj is None:
         for t in kids:
@@ -675,6 +694,17 @@ def f7_direction(ctx: FactContext, pack: dict) -> GateVerdict:
             return GateVerdict(REJECT, "DIRECTION_CONTRADICTED",
                                "active clause places the candidate's object "
                                "in subject position")
+        if passive and witnessed and subj_side == "SUBJ" and obj_side == "OBJ":
+            # Explicit agent phrase names the semantic subject: in
+            # "SpamCop owned BY Cisco Systems" the candidate holds
+            # (patient, agent), which is the inverse of the canonical
+            # orientation. Grammar witnesses the flip, so apply it.
+            if _signature_ok(rule, ctx.object_type, ctx.subject_type):
+                return GateVerdict(PASS, "DIRECTION_AGENT_FLIP",
+                                   "passive agent phrase names the subject",
+                                   flip=True)
+            return GateVerdict(REJECT, "DIRECTION_FLIP_UNLICENSED",
+                               "agent flip not licensed by the signature")
         if passive and subj_side == "SUBJ":
             # "SpamCop currently owned by Cisco Systems" admitted
             # owns(spamcop, cisco) — inverted. In a passive the surface
@@ -727,6 +757,87 @@ def _reachable_within(ctx: FactContext, start: dict, hops: int) -> set:
         seen |= nxt
         frontier = nxt
     return seen
+
+
+
+_OBJ_POSITION_DEPS = {"dobj", "obj", "attr", "oprd", "dative", "acomp"}
+
+
+def _role_positions(ctx: FactContext, trig: dict) -> tuple[set, set]:
+    """Token ids occupying subject / object argument positions of the
+    trigger's clause.
+
+    Subject positions: the clause's nsubj/nsubjpass/csubj, the agent of a
+    passive, the noun a participial clause attaches to, and the possessor
+    of a nominal trigger ("Acme's use of X").
+
+    Object positions: the clause's direct/attributive objects, and the
+    object of any preposition hanging off the clause head or off a
+    nominal trigger ("part OF X", "based ON X"). Coordinated conjuncts of
+    a licensed object are included, since "uses A and B" genuinely
+    relates both.
+    """
+    tokens = ctx.parse.get("tokens") or []
+    by_i = {t.get("i"): t for t in tokens}
+    head = _clause_head(ctx, trig) or trig
+    hi = head.get("i")
+    kids = [t for t in tokens if t.get("head_i") == hi]
+
+    subj: set = {t.get("i") for t in kids if t.get("dep") in _SUBJ_DEPS}
+    obj: set = {t.get("i") for t in kids if t.get("dep") in _OBJ_POSITION_DEPS}
+
+    for t in kids:
+        if t.get("dep") in {"prep", "agent"}:
+            for x in tokens:
+                if x.get("head_i") == t.get("i") and x.get("dep") in {"pobj", "obj"}:
+                    (subj if t.get("dep") == "agent" else obj).add(x.get("i"))
+    # prepositions hanging off a NOMINAL trigger: "component of X"
+    if trig.get("i") != hi:
+        for t in tokens:
+            if t.get("head_i") == trig.get("i") and t.get("dep") == "prep":
+                for x in tokens:
+                    if x.get("head_i") == t.get("i") and x.get("dep") in {"pobj", "obj"}:
+                        obj.add(x.get("i"))
+    if head.get("dep") in {"acl", "relcl"}:
+        # "RHEL, which uses Firewalld" — the relative pronoun is the
+        # grammatical subject but the ANTECEDENT is the semantic one, so
+        # the antecedent occupies the subject position too. Without this
+        # every relative-clause fact was rejected as unbound.
+        rel_pronoun = any(
+            t.get("dep") in _SUBJ_DEPS and t.get("pos") == "PRON"
+            and (t.get("lemma") or "").lower() in {"which", "that", "who", "whom"}
+            for t in kids)
+        if not subj or rel_pronoun:
+            subj.add(head.get("head_i"))
+    for t in kids:
+        if t.get("dep") == "poss":
+            subj.add(t.get("i"))
+
+    # An argument's own prepositional complement is still that argument's
+    # referent for these purposes: "use their own versions OF Git"
+    # relates the subject to Git, not to "versions".
+    for oid in list(obj):
+        for t in tokens:
+            if t.get("head_i") == oid and t.get("dep") == "prep":
+                for x in tokens:
+                    if x.get("head_i") == t.get("i") and x.get("dep") in {"pobj", "obj"}:
+                        obj.add(x.get("i"))
+
+    def _with_conjuncts(ids: set) -> set:
+        """Coordination AND apposition: "two major websites, GitHub and
+        GitLab, use ..." puts both names in the subject position."""
+        out = set(ids)
+        changed = True
+        while changed:
+            changed = False
+            for t in tokens:
+                if (t.get("dep") in {"conj", "appos"} and t.get("head_i") in out
+                        and t.get("i") not in out):
+                    out.add(t.get("i"))
+                    changed = True
+        return out
+
+    return _with_conjuncts(subj), _with_conjuncts(obj)
 
 
 def f8_direct_support(ctx: FactContext, pack: dict) -> GateVerdict:
@@ -786,13 +897,35 @@ def f8_direct_support(ctx: FactContext, pack: dict) -> GateVerdict:
             return GateVerdict(REJECT, "BINDING_COPULA_COMPLEMENT",
                                "object is not the predicate nominal")
 
-    reach = _reachable_within(ctx, trig, _ARGUMENT_HOPS)
-    missing = [name for name, tokn in (("subject", subj_head), ("object", obj_head))
-               if tokn.get("i") not in reach]
-    if missing:
-        return GateVerdict(REJECT, "BINDING_NOT_WITNESSED",
-                           f"{', '.join(missing)} is not a dependency argument "
-                           f"of the trigger")
+    # A proper-name token is not a predication. "the 2002 book Object
+    # Design by Rebecca Wirfs-Brock" made created(wirfs-brock, ddd)
+    # because `Design` — tagged PROPN inside a title — was read as a
+    # creation trigger.
+    if trig.get("pos") == "PROPN":
+        return GateVerdict(REJECT, "BINDING_TRIGGER_IS_NAME",
+                           "trigger token is part of a proper name")
+
+    subj_ok, obj_ok = _role_positions(ctx, trig)
+    s_i, o_i = subj_head.get("i"), obj_head.get("i")
+    symmetric = ((( _pack_rule(pack, ctx.predicate) or {}).get("direction") or {})
+                 .get("symmetry") == "symmetric")
+    # In an agentive passive the candidate's order and the grammatical
+    # roles are legitimately crossed (F7 has already resolved which way
+    # the fact points), so the reversed assignment is equally bound.
+    _, _, agentive_passive = _syntactic_roles(ctx)
+    reversed_ok = symmetric or agentive_passive
+    bound = (s_i in subj_ok and o_i in obj_ok) or (
+        reversed_ok and s_i in obj_ok and o_i in subj_ok)
+    if not bound:
+        # Reachability alone admitted co-occurrence: DDD sat four hops
+        # from its trigger in a different clause, and comma enumerations
+        # ("an event broker, schema registry, ... any required processing
+        # framework") bound two list siblings as a dependency. Both
+        # endpoints must occupy an ARGUMENT POSITION of the trigger's
+        # clause, not merely be reachable from it.
+        return GateVerdict(REJECT, "BINDING_ROLE",
+                           "endpoints do not occupy argument positions of "
+                           "the trigger's clause")
     return GateVerdict(PASS)
 
 

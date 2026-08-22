@@ -127,7 +127,7 @@ def attach_parses(rows: list[dict]) -> dict:
     return {"sentences": len(sentences)}
 
 
-def run(corpus: str, out_path: str | None) -> dict:
+def run(corpus: str, out_path: str | None, persist: bool = False) -> dict:
     from polymath_shared.fact_admission import FactContext, admit, policy
     from polymath_shared.rulepack.compiler import load_rule_pack
     from polymath_shared.source_region import REGION_POLICY_VERSION, region_at
@@ -220,12 +220,46 @@ def run(corpus: str, out_path: str | None) -> dict:
     if out_path:
         with open(out_path, "w") as f:
             json.dump({"report": report, "decisions": decisions}, f, indent=1)
+    if persist:
+        persist_decisions(conn, corpus, decisions, report)
+        report["persisted"] = len(decisions)
     return report
+
+
+def persist_decisions(conn, corpus: str, decisions: list[dict],
+                      report: dict, shadow: bool = True) -> None:
+    """Record every gate decision in fact_admission_decisions.
+
+    shadow=True by default: the rows document what admission WOULD do
+    without governing the projected graph. Cutover flips the flag; it
+    does not rewrite history.
+    """
+    from polymath_shared.source_region import REGION_POLICY_VERSION
+    rows = [(d["fact_id"], d["candidate_id"], corpus, d["doc_id"],
+             d["outcome"], d["gate"], d["reason"], bool(d["flipped"]), shadow,
+             report["contract"], report["policy_version"],
+             REGION_POLICY_VERSION)
+            for d in decisions if d.get("fact_id")]
+    with conn.cursor() as cur:
+        cur.execute("""DELETE FROM fact_admission_decisions
+                        WHERE corpus_id = %s AND contract_version = %s
+                          AND policy_version = %s""",
+                    (corpus, report["contract"], report["policy_version"]))
+        cur.executemany(
+            """INSERT INTO fact_admission_decisions
+                 (fact_id, candidate_id, corpus_id, doc_id, outcome, gate,
+                  reason, flipped, shadow, contract_version, policy_version,
+                  region_policy_version)
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+               ON CONFLICT DO NOTHING""", rows)
+    conn.commit()
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--corpus", required=True)
     ap.add_argument("--out")
+    ap.add_argument("--persist", action="store_true",
+                    help="record decisions in fact_admission_decisions (shadow)")
     a = ap.parse_args()
-    print(json.dumps(run(a.corpus, a.out), indent=1))
+    print(json.dumps(run(a.corpus, a.out, a.persist), indent=1))

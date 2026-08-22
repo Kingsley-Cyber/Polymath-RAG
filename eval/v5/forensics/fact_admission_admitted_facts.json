@@ -1,0 +1,770 @@
+[
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "manjaro",
+  "object": "arch linux",
+  "doc": "05_nikkel_practical_linux_",
+  "context": "ion, and configuration. For example, Ubuntu is based on Debian, CentOS Stream is based on Red Hat Enterprise Linux, and Manjaro is based on Arch Linux. Some distros even are based on distros that are themselves based on another distro. For example, Linux Mint is based o"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "linux mint",
+  "object": "ubuntu",
+  "doc": "05_nikkel_practical_linux_",
+  "context": "s based on Arch Linux. Some distros even are based on distros that are themselves based on another distro. For example, Linux Mint is based on Ubuntu, which is based on Debian. There are also many specialty distributions that are typically based on another distro but b"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "rhel",
+  "object": "firewalld",
+  "doc": "02_Data_Engineering_clean2",
+  "context": "The following tasks allow TCP traffic on port 22 for RHEL, which uses Firewalld, and Ubuntu, which uses UFW. Save this task as tasks/firewall-allow-ssh.yml: - name: Open Port 22/TCP ansible.posix.fir"
+ },
+ {
+  "predicate": "similar_to",
+  "flipped": false,
+  "subject": "mapreduce",
+  "object": "unix tools",
+  "doc": "11_kleppmann_designing_dat",
+  "context": "MapReduce is a bit like Unix tools, but distributed across potentially thousands of machines. Like Unix tools, it is a fairly blunt, brute-force, but surp"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "nexatech",
+  "object": "kubernetes",
+  "doc": "06_Hands-On_Splunk_on_AWS_",
+  "context": "onment. Case Study 1: Enhancing Kubernetes deployments at NexaTech The breakdown of the case is as follows: Background: NexaTech, known for its strong e-commerce platform, uses Kubernetes to orchestrate containerized apps."
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "gitlab",
+  "object": "git",
+  "doc": "02_Data_Engineering_clean2",
+  "context": "ture breaks something, which occurs frequently in development releases. Git is free, and two major websites, GitHub and GitLab, use their own versions of Git under the surface to host projects online. Both GitHub and GitLab have their own spins on project terminology, but the "
+ },
+ {
+  "predicate": "created",
+  "flipped": false,
+  "subject": "usenix",
+  "object": "gmail",
+  "doc": "13_beyer_sre_converted.epu",
+  "context": " hope will scale to read this book. The book provides an insider\u2019s guide to building maintainable services. Rik Farrow, USENIX Writing large-scale services like Gmail is hard. Running them with high reliability is even harder, especially when you change them every day."
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "nexatech",
+  "object": "aws cloudtrail",
+  "doc": "06_Hands-On_Splunk_on_AWS_",
+  "context": "ular data dumps into Splunk to prevent data loss or bottlenecks during ingesting. Integrating with AWS native services: NexaTech uses AWS CloudTrail to audit AWS account activities and AWS CloudWatch to monitor apps in real-time. They can obtain a combined picture of "
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "rapid",
+  "object": "blaze",
+  "doc": "13_beyer_sre_converted.epu",
+  "context": " integration revision number (often obtained automatically from our continuous test system) to create a release branch. Rapid uses Blaze to compile all the binaries and execute the unit tests, often performing these two steps in parallel. Compilation and t"
+ },
+ {
+  "predicate": "similar_to",
+  "flipped": false,
+  "subject": "dconf",
+  "object": "windows registry",
+  "doc": "05_nikkel_practical_linux_",
+  "context": "ts to modify configuration settings (for performance, reading settings is done directly from the files, without D-Bus). Dconf is conceptually similar to the Windows Registry, where data is stored in a hierarchical tree with keys and values. The desktop configuration utilities like GNOME Contr"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "gnome 3",
+  "object": "gsettings api",
+  "doc": "05_nikkel_practical_linux_",
+  "context": " and configuration settings can be shared between different programs. GNOME configuration Desktop environments based on GNOME 3 and GNOME 4013 store settings and configuration data using the GSettings API, which in turn uses the dconf configuration system."
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "bns",
+  "object": "chubby",
+  "doc": "13_beyer_sre_converted.epu",
+  "context": "to select which replica may proceed. Data that must be consistent is well suited to storage in Chubby. For this reason, BNS uses Chubby to store mapping between BNS paths and IP address:port pairs. Monitoring and Alerting We want to make sure that all ser"
+ },
+ {
+  "predicate": "part_of",
+  "flipped": false,
+  "subject": "arcsight",
+  "object": "hewlett-packard",
+  "doc": "02_collins_network_securit",
+  "context": "). None of them have achieved serious industry acceptance.What has been accepted widely is CEF. Originally developed by ArcSight (now part of Hewlett-Packard) to provide sensor developers with a standard format in which to send messages to their SIEM. CEF is a record format th"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "u.s. federal government",
+  "object": "sha",
+  "doc": "03_CompTIA_CySA+_CS0-002_C",
+  "context": "al security standard that governs the Digital Security Algorithm (DSA). DSA generates a message digest of 160 bits. The U.S. federal government requires the use of DSA, RSA, or Elliptic Curve DSA (ECDSA) and SHA for digital signatures. DSA is slower than RSA and only provides digital signatures. RSA provides digital signatures, e"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "nexatech",
+  "object": "aws",
+  "doc": "06_Hands-On_Splunk_on_AWS_",
+  "context": "Suppose that NexaTech is using AWS and that it has four universal forwarders on distinct AWS servers that are gathering logs from separate systems. Every "
+ },
+ {
+  "predicate": "associated_with",
+  "flipped": false,
+  "subject": "ipv4",
+  "object": "mac addresses",
+  "doc": "02_collins_network_securit",
+  "context": "rred across a router, the addressing information is replaced with the addressing information of the router\u2019s interface. IPv4 and IPv6 addresses are related to MAC addresses using Address Resolution Protocol (ARP). IPv4 address An IPv4 address is a 32-bit integer value assigned to every routa"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "u.s. federal government",
+  "object": "dsa",
+  "doc": "03_CompTIA_CySA+_CS0-002_C",
+  "context": "al security standard that governs the Digital Security Algorithm (DSA). DSA generates a message digest of 160 bits. The U.S. federal government requires the use of DSA, RSA, or Elliptic Curve DSA (ECDSA) and SHA for digital signatures. DSA is slower than RSA and only provides digital si"
+ },
+ {
+  "predicate": "part_of",
+  "flipped": true,
+  "subject": "ip packet",
+  "object": "ethernet packet",
+  "doc": "10_nygard_release_it_8487f",
+  "context": "t the TCP/IP stack created around the HTTP request in the second packet. The outermost frame is an Ethernet packet. The Ethernet packet contains an IP packet, which in turn contains a TCP packet. Finally, the payload of the TCP packet is an HTTP request. The exact bytes of the"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "static libraries",
+  "object": "dlls",
+  "doc": "04_sikorski_practical_malw",
+  "context": "ons. A DLL is an executable file that does not run alone, but exports functions that can be used by other applications. Static libraries were the standard prior to the use of DLLs, and static libraries still exist, but they are much less common. The main advantage of using DLLs over static librarie"
+ },
+ {
+  "predicate": "similar_to",
+  "flipped": false,
+  "subject": "fpu",
+  "object": "cpu",
+  "doc": "04_sikorski_practical_malw",
+  "context": "n for exception handlers to identify which FPU instructions may have caused a fault. This field is required because the FPU is running in parallel with the CPU. If the FPU generates an exception, the exception handler cannot simply look at the interrupt return address to identif"
+ },
+ {
+  "predicate": "similar_to",
+  "flipped": false,
+  "subject": "usenix",
+  "object": "gmail",
+  "doc": "13_beyer_sre_converted.epu",
+  "context": " hope will scale to read this book. The book provides an insider\u2019s guide to building maintainable services. Rik Farrow, USENIX Writing large-scale services like Gmail is hard. Running them with high reliability is even harder, especially when you change them every day."
+ },
+ {
+  "predicate": "similar_to",
+  "flipped": false,
+  "subject": "dns",
+  "object": "ip addresses",
+  "doc": "04_sikorski_practical_malw",
+  "context": " Information The two fundamental elements that compose the landscape of the Internet are IP addresses and domain names. DNS translates domain names like www.yahoo.com into IP addresses (and back). Unsurprisingly, malware also uses DNS to look like regular traffic, and to maintain flexibility and robust-"
+ },
+ {
+  "predicate": "similar_to",
+  "flipped": false,
+  "subject": "kali linux",
+  "object": "ext4",
+  "doc": "01_Mastering_Cybersecurity",
+  "context": "han traditional partitioning, LVM can be beneficial for managing large storage needs in advanced pen testing scenarios. Kali Linux also supports other file systems like ext4, NTFS, and FAT32. Each has its own strengths and weaknesses. Understanding these file systems and available mounting op"
+ },
+ {
+  "predicate": "developed",
+  "flipped": false,
+  "subject": "nexatech",
+  "object": "splunk",
+  "doc": "06_Hands-On_Splunk_on_AWS_",
+  "context": "a system to monitor security across various Kubernetes clusters and maintain compliance with healthcare laws. Solution: NexaTech implemented Splunk for real-time security monitoring. Splunk gathered security logs from all Kubernetes clusters and used advanced analyti"
+ },
+ {
+  "predicate": "founded",
+  "flipped": false,
+  "subject": "osint investigator",
+  "object": "brazil-based biscuit vendor",
+  "doc": "01_Mastering_Cybersecurity",
+  "context": "o lure unsus- pecting users. Spam emails range from offering a free trip to pills for health problems. Among these, the OSINT investigator who was analyzing email metadata and threat intelligence using \u2018Phishtool,\u2019 found an email from a Brazil-based biscuit vendor as displayed in Figure 8.65."
+ },
+ {
+  "predicate": "alias_of",
+  "flipped": false,
+  "subject": "measured boot",
+  "object": "secure boot",
+  "doc": "03_CompTIA_CySA+_CS0-002_C",
+  "context": "verify the hash value that comes along with the update to ensure that it has not been altered since its creation. 9. D. Measured Boot, also known as Secure Boot, is a term that applies to several technologies that follow the Secure Boot standard. Its implementations include Windo"
+ },
+ {
+  "predicate": "has_role",
+  "flipped": false,
+  "subject": "rebekah",
+  "object": "rapid7",
+  "doc": "06_brown_intelligence_driv",
+  "context": "Today, Rebekah leads the Rapid7 threat-intelligence programs at Rapid7, where her responsibilities include program architecture, management, analysis, and operations. Rebekah lives with her "
+ },
+ {
+  "predicate": "associated_with",
+  "flipped": false,
+  "subject": "ipv6",
+  "object": "mac addresses",
+  "doc": "02_collins_network_securit",
+  "context": "ss a router, the addressing information is replaced with the addressing information of the router\u2019s interface. IPv4 and IPv6 addresses are related to MAC addresses using Address Resolution Protocol (ARP). IPv4 address An IPv4 address is a 32-bit integer value assigned to every routa"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "ubuntu",
+  "object": "debian",
+  "doc": "05_nikkel_practical_linux_",
+  "context": "f distros are based on other distros and simply add additional software, customization, and configuration. For example, Ubuntu is based on Debian, CentOS Stream is based on Red Hat Enterprise Linux, and Manjaro is based on Arch Linux. Some distros even are based on"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "nexatech",
+  "object": "splunk",
+  "doc": "06_Hands-On_Splunk_on_AWS_",
+  "context": " server performed during peak hours. Real-time analysis of all this data was not possible. Data sampling to the Rescue: NexaTech made the decision to use Splunk's data sampling method, concentrating on their website access logs. They sampled every 50th log rather than consuming e"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "security onion",
+  "object": "bro",
+  "doc": "01_sanders_applied_network",
+  "context": "trospectively. Typically, once you have a working Bro script, getting it to run all the time isn\u2019t very difficult. When Security Onion runs Bro in sensor mode, Bro reads its configuration from /opt/bro/share/bro/site/local.bro by default. Of course, the term \u201ccon"
+ },
+ {
+  "predicate": "depends_on",
+  "flipped": false,
+  "subject": "docker",
+  "object": "http",
+  "doc": "06_Hands-On_Splunk_on_AWS_",
+  "context": "an to run several instances. Configure the security group: Create a security group that operates as a virtual firewall. Docker requires open ports such as 22 (SSH), 80 (HTTP), and 443 (HTTPS). You may also want to open specific ports for the Docker apps you intend to run. Review and launch: C"
+ },
+ {
+  "predicate": "similar_to",
+  "flipped": false,
+  "subject": "lucene",
+  "object": "term dictionary",
+  "doc": "11_kleppmann_designing_dat",
+  "context": "ans that one letter has been added, removed, or replaced) [37 ]. As mentioned in \u201cMaking an LSM-tree out of SSTables\u201d , Lucene uses a SSTable-like structure for its term dictionary. This structure requires a small in-memory index that tells queries at which offset in the sorted file they need to loo"
+ },
+ {
+  "predicate": "located_in",
+  "flipped": false,
+  "subject": "ossec.conf file",
+  "object": "/var/ossec/etc",
+  "doc": "05_Security_Monitoring_Waz",
+  "context": "IM module is enabled on the Wazuh agent. The configuration of the FIM module is present in the <syscheck> tag under the ossec.conf file located at /var/ossec/etc. We only need to add directories (to be monitored) under the <syscheck> block. The following configuration will monitor"
+ },
+ {
+  "predicate": "similar_to",
+  "flipped": false,
+  "subject": "splunk",
+  "object": "ip address",
+  "doc": "06_Hands-On_Splunk_on_AWS_",
+  "context": "xing), Splunk's built-in intelligence recognizes commonly used log types, such as web server logs from Apache or Nginx. Splunk extracts elements like IP address, date, method, endpoint, status code, bytes, referrer, and user-agent with ease from the logs that are shown. Going a s"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "sesame",
+  "object": "trusted authentication server",
+  "doc": "03_CompTIA_CySA+_CS0-002_C",
+  "context": "lity to fix Kerberos\u2019s weaknesses. SESAME uses both symmetric and asymmetric cryptography to protect interchanged data. SESAME uses a trusted authentication server at each host. SESAME uses Privileged Attribute Certificates (PACs) instead of tickets. It incorporates two certificates"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "sql injection attacks",
+  "object": "suricata ids",
+  "doc": "05_Security_Monitoring_Waz",
+  "context": "Now, we have learned about how to detect SQL Injection attacks using a Suricata IDS and visualize them on a Wazuh dashboard. In the next section, we will test our DVWA application for XSS vulnerabilities"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "vizio tvs",
+  "object": "acr technology",
+  "doc": "01_Mastering_Cybersecurity",
+  "context": " this was found to be capturing and selling user viewing data to third \u2011pa rty companies without explicit user consent. Vizio TVs employed ACR technology to identify the content displayed on the screen. This involved capturing a sample of pixels at regular intervals and ma"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "sun microsystems",
+  "object": "openboot firmware",
+  "doc": "05_nikkel_practical_linux_",
+  "context": "similar to firewall rules that are loaded into the kernel with a userspace tool (nft). Chapter 6 1. Earlier Apple Macs, Sun Microsystems, and other older hardware used the OpenBoot firmware. 2. http://www.intel.com/technology/framework/spec.htm 3. This is actually 0xAA55, but Intel PCs store it in little-end"
+ },
+ {
+  "predicate": "acquired",
+  "flipped": false,
+  "subject": "google",
+  "object": "youtube",
+  "doc": "13_beyer_sre_converted.epu",
+  "context": "ates penalties if we fail to deliver to the external target. YouTube provides a contrasting set of considerations. When Google acquired YouTube, we had to decide on the appropriate availability target for the website. In 2006, YouTube was focused on consumers and"
+ },
+ {
+  "predicate": "associated_with",
+  "flipped": false,
+  "subject": "cisco router",
+  "object": "vlan switch",
+  "doc": "03_CompTIA_CySA+_CS0-002_C",
+  "context": "se 3 PC\u2019s are connected to a shared router. The 2 shared routers from buildings 1 and 2 are connected to a router. This router is connected to a VLAN switch, 2 PC\u2019s are connected to this VLAN switch. From the VLAN switch, another router is connected. This router is in series "
+ },
+ {
+  "predicate": "developed",
+  "flipped": false,
+  "subject": "anonymous",
+  "object": "low orbit ion cannon",
+  "doc": "02_collins_network_securit",
+  "context": "ket for the rental and use of botnets. An alternative approach, used notably by some of Anonymous, involves volunteers. Anonymous has developed a family of JavaScript and C# DDoS tools under the monicker \u201cLOIC\u201d (Low Orbit Ion Cannon) to conduct DDoS attacks. The LOIC family of tools are, in comparison to hardcore malware, fairly primitive. Arguably, "
+ },
+ {
+  "predicate": "similar_to",
+  "flipped": false,
+  "subject": "rik farrow",
+  "object": "gmail",
+  "doc": "13_beyer_sre_converted.epu",
+  "context": "es that they hope will scale to read this book. The book provides an insider\u2019s guide to building maintainable services. Rik Farrow, USENIX Writing large-scale services like Gmail is hard. Running them with high reliability is even harder, especially when you change them every day."
+ },
+ {
+  "predicate": "founded",
+  "flipped": false,
+  "subject": "joe beda",
+  "object": "microsoft",
+  "doc": "16_burns_kubernetes_up_and",
+  "context": "ng Go code, you can catch him giving technical workshops covering everything from programming to system administration. Joe Beda started his career at Microsoft working on Internet Explorer (he was young and naive). Throughout 7 years at Microsoft and 10 at Google, Joe has worked"
+ },
+ {
+  "predicate": "part_of",
+  "flipped": false,
+  "subject": "sms",
+  "object": "world wide web",
+  "doc": "03_CompTIA_CySA+_CS0-002_C",
+  "context": "ications adapters installed on each computer authorized to access the network. SMS/MMS/Messaging Short Message Service (SMS) is a text messaging service component of most telephone, World Wide Web, and mobile telephony systems."
+ },
+ {
+  "predicate": "has_role",
+  "flipped": false,
+  "subject": "niall murphy",
+  "object": "google ireland",
+  "doc": "13_beyer_sre_converted.epu",
+  "context": "hD in Chemistry from Stanford University and a BS in Chemistry and a BA in Psychology from the University of Rochester. Niall Murphy leads the Ads Site Reliability Engineering team at Google Ireland. He has been involved in the Internet industry for about 20 years, and is currently chairperson of INEX, Ireland\u2019s peer"
+ },
+ {
+  "predicate": "similar_to",
+  "flipped": false,
+  "subject": "btrfs",
+  "object": "lvm",
+  "doc": "05_nikkel_practical_linux_",
+  "context": "many modern features in btrfs are multiple device management, subvolumes, and CoW snapshots. Because of these features, btrfs doesn\u2019t need a separate volume management layer like LVM. Today, btrfs is actively developed, and newly implemented features are listed on the btrfs homepage at https://btrfs.w"
+ },
+ {
+  "predicate": "associated_with",
+  "flipped": false,
+  "subject": "autonomous system number (asn)",
+  "object": "ip address",
+  "doc": "01_sanders_applied_network",
+  "context": "Robtex, which we will look at in a moment. Another useful piece of information that the registry record gives us is the Autonomous System Number (ASN) associated with the IP address."
+ },
+ {
+  "predicate": "member_of",
+  "flipped": false,
+  "subject": "mauricio",
+  "object": "huk guerillas",
+  "doc": "01-Bowart-Operation_Mind_C",
+  "context": "that this piece of pa- per was given him by a man named Luis Mauricio. Castillo said that Mauricio also gave him money. Mauricio was known to the NBI as a member of the Huk guerillas. Placing Castillo in a trance, the hypnotist called out the series of letters on the cigarette package. Castillo did no"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "bigtable data model",
+  "object": "cassandra",
+  "doc": "11_kleppmann_designing_dat",
+  "context": "Oracle allows the same, using a feature called multi-table index cluster tables [28 ]. The column-family concept in the Bigtable data model (used in Cassandra and HBase) has a similar purpose of managing locality [29 ]. We will also see more on locality in Chapter 3 . Convergen"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "lucene",
+  "object": "term dictionary",
+  "doc": "11_kleppmann_designing_dat",
+  "context": "ans that one letter has been added, removed, or replaced) [37 ]. As mentioned in \u201cMaking an LSM-tree out of SSTables\u201d , Lucene uses a SSTable-like structure for its term dictionary. This structure requires a small in-memory index that tells queries at which offset in the sorted file they need to loo"
+ },
+ {
+  "predicate": "depends_on",
+  "flipped": false,
+  "subject": "btrfs",
+  "object": "lvm",
+  "doc": "05_nikkel_practical_linux_",
+  "context": "many modern features in btrfs are multiple device management, subvolumes, and CoW snapshots. Because of these features, btrfs doesn\u2019t need a separate volume management layer like LVM. Today, btrfs is actively developed, and newly implemented features are listed on the btrfs homepage at https://btrfs.w"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "google sre",
+  "object": "paxos protocol",
+  "doc": "13_beyer_sre_converted.epu",
+  "context": "Google SRE uses the protocol described in Chapter 14, which offers an easy-to-follow and well-defined set of steps that aid an on-call engineer to r"
+ },
+ {
+  "predicate": "member_of",
+  "flipped": false,
+  "subject": "sirhan",
+  "object": "rosicrucians",
+  "doc": "01-Bowart-Operation_Mind_C",
+  "context": "While Los Angeles Mayor Sam Yorty ignorantly told the press Sirhan was \"a member of numerous Communist or- ganizations, including the Rosicrucians,\" Sirhan's neighbors told a different story. One said he was \"very religious.\" An- other reported that he was \"just a n"
+ },
+ {
+  "predicate": "part_of",
+  "flipped": true,
+  "subject": "job object",
+  "object": "kubernetes",
+  "doc": "08_burns_designing_distrib",
+  "context": "Kubernetes container orchestrator contains a number of features that make it significantly easier to implement. Namely, Kubernetes contains a Job object that allows for the reliable execution of the work queue."
+ },
+ {
+  "predicate": "founded",
+  "flipped": false,
+  "subject": "chris",
+  "object": "rural technology fund",
+  "doc": "01_sanders_applied_network",
+  "context": "edition. Chris currently holds several industry certifications, including the SANS GSE and CISSP distinctions. In 2008, Chris founded the Rural Technology Fund. The RTF is a 501(c)(3) non-profit organization designed to provide scholarship opportunities to students from rural ar"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "u.s. federal government",
+  "object": "ecdsa",
+  "doc": "03_CompTIA_CySA+_CS0-002_C",
+  "context": "DSA generates a message digest of 160 bits. The U.S. federal government requires the use of DSA, RSA, or Elliptic Curve DSA (ECDSA) and SHA for digital signatures. DSA is slower than RSA and provides only digital signatures. RSA provides digital sign"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "soc analyst",
+  "object": "soar",
+  "doc": "05_Security_Monitoring_Waz",
+  "context": "rategy. Next, let\u2019s discuss how an SOC analyst uses a SOAR platform throughout the alert and incident life cycle. How a SOC analyst uses SOAR"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "github",
+  "object": "git",
+  "doc": "02_Data_Engineering_clean2",
+  "context": "f a new feature breaks something, which occurs frequently in development releases. Git is free, and two major websites, GitHub and GitLab, use their own versions of Git under the surface to host projects online. Both GitHub and GitLab have their own spins on project terminology, but the "
+ },
+ {
+  "predicate": "founded",
+  "flipped": false,
+  "subject": "harvard",
+  "object": "germanic museum",
+  "doc": "02b-Bernays-Propaganda-192",
+  "context": "tatives of the Italian government, to emphasize its high standing in Latin studies and the Romance languages. Years ago Harvard founded the Germanic Museum, which was ceremoniously opened by Prince Henry of Prussia.Many colleges maintain extension courses which bring their w"
+ },
+ {
+  "predicate": "similar_to",
+  "flipped": false,
+  "subject": "ostree",
+  "object": "git",
+  "doc": "05_nikkel_practical_linux_",
+  "context": "aging and distribution of desktop apps. Flatpak uses repositories to transfer and update files using the OSTree system. OSTree is similar to Git, but it tracks binary files rather than source code. The apps are run in containers with explicit permissions to access"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "intel",
+  "object": "amd64",
+  "doc": "04_sikorski_practical_malw",
+  "context": "s not compatible with x86. AMD later introduced a 64-bit architecture called AMD64, which was compatible with x86 code. Intel adopted AMD64 and called its implementation EM64T. This architecture is now known as x64, or x86-64, and it is the most popular imple"
+ },
+ {
+  "predicate": "part_of",
+  "flipped": true,
+  "subject": "python script",
+  "object": "justniffer",
+  "doc": "01_sanders_applied_network",
+  "context": " output directly from the wire to a local folder, sorted by host, with a BASH script. In another commonly used example; Justniffer includes a Python script called Justniffer-grab-http-traffic, which will extract files transferred during HTTP communication."
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "sesame",
+  "object": "privileged attribute certificates",
+  "doc": "03_CompTIA_CySA+_CS0-002_C",
+  "context": "ric and asymmetric cryptography to protect interchanged data. SESAME uses a trusted authentication server at each host. SESAME uses Privileged Attribute Certificates (PACs) instead of tickets. It incorporates two certificates: one for authentication and one for defining access privile"
+ },
+ {
+  "predicate": "part_of",
+  "flipped": true,
+  "subject": "ip packets",
+  "object": "ethernet frames",
+  "doc": "02_collins_network_securit",
+  "context": "dern system, tcpdump will be capturing IP over Ethernet, meaning that the data actually captured by libpcap consists of Ethernet frames containing IP packets. While IP contains over 80 unique protocols, on any operational network, the overwhelming majority of traffic will orig"
+ },
+ {
+  "predicate": "part_of",
+  "flipped": true,
+  "subject": "splunk",
+  "object": "treemap visualization",
+  "doc": "06_Hands-On_Splunk_on_AWS_",
+  "context": "like you would with any other visualization. Once you are satisfied, save it as a report or a dashboard panel. Once the Treemap visualization is successfully included in Splunk, you will have opened yet another way to portray data."
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "soc analyst",
+  "object": "soar platform",
+  "doc": "05_Security_Monitoring_Waz",
+  "context": "estration and security automation to provide an all-encompassing incident response strategy. Next, let\u2019s discuss how an SOC analyst uses a SOAR platform throughout the alert and incident life cycle. How a SOC analyst uses SOAR"
+ },
+ {
+  "predicate": "part_of",
+  "flipped": false,
+  "subject": "fleet server",
+  "object": "elastic stack",
+  "doc": "03_practical_threat_detect",
+  "context": "on requirements. Managing these agents can become complicated as the number and diversity of installed agents increase. Fleet Server is a component of the Elastic Stack that attempts to simplify agent management. From Kibana, we can create different agent policies, which define what data"
+ },
+ {
+  "predicate": "similar_to",
+  "flipped": false,
+  "subject": "splunk",
+  "object": "aws",
+  "doc": "06_Hands-On_Splunk_on_AWS_",
+  "context": "al it is to set up these clusters for real-world use. As data continues to grow and cloud adoption rises, understanding Splunk clustering on platforms like AWS has become essential for staying competitive. Clusters offer better performance, load balancing, and data redundancy, w"
+ },
+ {
+  "predicate": "part_of",
+  "flipped": false,
+  "subject": "vectors",
+  "object": "r",
+  "doc": "02_collins_network_securit",
+  "context": "type: character, logical, or string. Vectors can be created using the c function or any of a number of other functions. Vectors are the most commonly used element in R: the scalar values we used earlier were technically vectors of length 1.[6]> # An example of an integer vector > int.ve"
+ },
+ {
+  "predicate": "alias_of",
+  "flipped": false,
+  "subject": "measured boot",
+  "object": "secure boot",
+  "doc": "03_CompTIA_CySA+_CS0-002_C",
+  "context": "re has not altered the files or introduced new files into the process. Let\u2019s look at some of these Secure Boot methods. Measured Boot, also known as Secure Boot, is a term that applies to several technologies that follow the Secure Boot standard."
+ },
+ {
+  "predicate": "part_of",
+  "flipped": false,
+  "subject": "linux filesystem",
+  "object": "unix",
+  "doc": "05_nikkel_practical_linux_",
+  "context": "the Unix system.1 The paper was only 11 pages long and described the basic design principles and operation of Unix. The filesystem was a central component of Unix, and everything, including hardware devices, was accessible as a file in a hierarchical tree."
+ },
+ {
+  "predicate": "located_in",
+  "flipped": false,
+  "subject": "forensic technology team",
+  "object": "zurich",
+  "doc": "05_nikkel_practical_linux_",
+  "context": "Four firm, collecting evidence and conducting investigations for clients across Europe, and eventually came to lead the Forensic Technology team based in Zurich. He later moved to New York to open a forensic lab for a major global financial institution. As part of the bank\u2019s Cybe"
+ },
+ {
+  "predicate": "member_of",
+  "flipped": false,
+  "subject": "allen dulles",
+  "object": "war- ren commission",
+  "doc": "01-Bowart-Operation_Mind_C",
+  "context": "that ought to have been related to the Commission, because it does bear on the motives, whatever else.\" Helms: \"... Mr. Allen Dulles was a member of the War- ren Commission. And the first assassination plot happened during his time as director. What he said to the Warren Commission about thi"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "fintech",
+  "object": "gnu taler",
+  "doc": "05_nikkel_practical_linux_",
+  "context": "dge. A significant number of cloud providers use Linux systems as their platform of choice. New financial technologies (FinTech) using mobile devices, new payment systems (GNU Taler, for example), cryptocurrencies (such as Bitcoin), blockchain ledgers, and others will need to be analyzed for fraud, m"
+ },
+ {
+  "predicate": "founded",
+  "flipped": false,
+  "subject": "chris sanders",
+  "object": "rural technology fund",
+  "doc": "01_sanders_applied_network",
+  "context": "t grades, often have fewer opportunities for exposure to technology than their urban or suburban counterparts. In 2008, Chris Sanders founded the Rural Technology Fund. The RTF seeks to reduce the digital divide between rural communities and their urban and suburban counterparts. This i"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "alex shvartsman",
+  "object": "dynamic quorum-acknowledged broadcasts",
+  "doc": "11_kleppmann_designing_dat",
+  "context": " Journal of the ACM , volume 42, number 1, pages 124\u2013142, January 1995. doi:10.1145/200836.200869 [24 ] Nancy Lynch and Alex Shvartsman: \u201cRobust Emulation of Shared Memory Using Dynamic Quorum-Acknowledged Broadcasts ,\u201d at 27th Annual International Symposium on Fault-Tolerant Computing (FTCS), June 1997. doi:10.1109/FTCS.1997.614100 ["
+ },
+ {
+  "predicate": "similar_to",
+  "flipped": false,
+  "subject": "kali linux",
+  "object": "ntfs",
+  "doc": "01_Mastering_Cybersecurity",
+  "context": "han traditional partitioning, LVM can be beneficial for managing large storage needs in advanced pen testing scenarios. Kali Linux also supports other file systems like ext4, NTFS, and FAT32. Each has its own strengths and weaknesses. Understanding these file systems and available mounting options "
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "graylog",
+  "object": "elasticsearch",
+  "doc": "01_Mastering_Cybersecurity",
+  "context": "arding directly from devices, or utilize Graylog\u2019s GELF (Graylog Extended Log Format) for structured data transmission. Graylog utilizes Elasticsearch, a powerful search engine, for efficient log indexing and retrieval. Users can leverage Graylog\u2019s query language to sea"
+ },
+ {
+  "predicate": "associated_with",
+  "flipped": false,
+  "subject": "logitech media players",
+  "object": "microsoft internet information services",
+  "doc": "01_Mastering_Cybersecurity",
+  "context": "ew such network devices which have been already hacked. Example 15: Search for Media Servers This Shodan query displays Logitech media players connected to the Internet with successful con- nection and information retrieval as shown in Figure 8.58. Figure 8.59 displays some of the media "
+ },
+ {
+  "predicate": "similar_to",
+  "flipped": false,
+  "subject": "sirhan",
+  "object": "candy jones",
+  "doc": "01-Bowart-Operation_Mind_C",
+  "context": "o examining the bizarre notebooks, investi- gators also made note of Sirhan's unusual behavior after the assassination. Sirhan, like Candy Jones, had a \"thing\" about mirrors. In his cell he'd stare into a little mirror for hours on end. He also practiced concentra"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "bigtable data model",
+  "object": "hbase",
+  "doc": "11_kleppmann_designing_dat",
+  "context": "Oracle allows the same, using a feature called multi-table index cluster tables [28 ]. The column-family concept in the Bigtable data model (used in Cassandra and HBase) has a similar purpose of managing locality [29 ]. We will also see more on locality in Chapter 3 . Convergence of docu"
+ },
+ {
+  "predicate": "part_of",
+  "flipped": true,
+  "subject": "neo4j",
+  "object": "graph databases",
+  "doc": "02_collins_network_securit",
+  "context": "ese storage systems are less prevalent than the big three, but are generally optimized for specific data or query types.Graph databases include Neo4j, ArangoDB, and Titan. Graph databases provide scalable, highly efficient queries when working with graph data (see Chap"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "datadog",
+  "object": "lql",
+  "doc": "01_Mastering_Cybersecurity",
+  "context": "ss integration with other mon \u2011 itoring tools, empowering organizations to unlock the true potential of their log data. Datadog leverages a Log Query Language (LQL) specifically designed for searching and filtering log data. LQL allows users to filter logs based on timestamps, sever"
+ },
+ {
+  "predicate": "created",
+  "flipped": false,
+  "subject": "rik farrow",
+  "object": "gmail",
+  "doc": "13_beyer_sre_converted.epu",
+  "context": "es that they hope will scale to read this book. The book provides an insider\u2019s guide to building maintainable services. Rik Farrow, USENIX Writing large-scale services like Gmail is hard. Running them with high reliability is even harder, especially when you change them every day."
+ },
+ {
+  "predicate": "stated_in",
+  "flipped": false,
+  "subject": "xml processor",
+  "object": "dtd",
+  "doc": "03_CompTIA_CySA+_CS0-002_C",
+  "context": "configured XML parser and sends an XML request. The second step involves the web application and the hacker server. The XML processor retrieves the malicious external entity within the document type declaration (DTD). The third step also involves the hacker server and web application. Here, the XML processor validates the DTD and res"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "raspberry pi",
+  "object": "bios",
+  "doc": "05_nikkel_practical_linux_",
+  "context": "nel parameters, and executing the kernel. Non-PC systems may have a completely different boot process. For example, the Raspberry Pi doesn\u2019t use BIOS or UEFI, but has its own bootloading mechanism,1 which is also described here. Modern Linux PCs overwhelmingly use the "
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "cisco module",
+  "object": "confluent",
+  "doc": "02_Data_Engineering_clean2",
+  "context": "fy the brokers as a single comma-separated string inside an array \u2778, using the format hostname:port for each entry. The omkafka module uses the librdkafka C/C++ library from Confluent, and we specify its connection-specific options in the confParam array \u2779. We also specify the Snappy compression codec "
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "windows",
+  "object": "bits",
+  "doc": "02_Data_Engineering_clean2",
+  "context": "en follows this with an HTTP GET request to fetch the file. Both actions generate logs with forensic value, but because Windows uses BITS frequently and adversary actions are exceedingly rare, BITS logs need extensive tuning to provide value. Installation"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "raspberry pi",
+  "object": "uefi",
+  "doc": "05_nikkel_practical_linux_",
+  "context": "nel parameters, and executing the kernel. Non-PC systems may have a completely different boot process. For example, the Raspberry Pi doesn\u2019t use BIOS or UEFI, but has its own bootloading mechanism,1 which is also described here. Modern Linux PCs overwhelmingly use the GRand Un"
+ },
+ {
+  "predicate": "associated_with",
+  "flipped": false,
+  "subject": "ips",
+  "object": "ids",
+  "doc": "04_sikorski_practical_malw",
+  "context": " as scanning, service enumeration and profiling, nonstandard use of protocols, and beaconing from installed malware. An IPS is closely related to an IDS, the difference being that while an IDS is designed to merely detect the malicious traffic, an IPS is designed to detec"
+ },
+ {
+  "predicate": "similar_to",
+  "flipped": false,
+  "subject": "kali linux",
+  "object": "fat32",
+  "doc": "01_Mastering_Cybersecurity",
+  "context": "han traditional partitioning, LVM can be beneficial for managing large storage needs in advanced pen testing scenarios. Kali Linux also supports other file systems like ext4, NTFS, and FAT32. Each has its own strengths and weaknesses. Understanding these file systems and available mounting options (e.g., read"
+ },
+ {
+  "predicate": "created",
+  "flipped": false,
+  "subject": "adam richter",
+  "object": "yggdrasil linux",
+  "doc": "05_nikkel_practical_linux_",
+  "context": " and functional Linux distros were available. Peter MacDonald of Canada created the Softlanding Linux System (SLS), and Adam Richter of Berkeley, California, created Yggdrasil Linux. Once distributions made Linux easier for people to install, it started to become more popular outside the kernel devel"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "u.s. federal government",
+  "object": "rsa",
+  "doc": "03_CompTIA_CySA+_CS0-002_C",
+  "context": "al security standard that governs the Digital Security Algorithm (DSA). DSA generates a message digest of 160 bits. The U.S. federal government requires the use of DSA, RSA, or Elliptic Curve DSA (ECDSA) and SHA for digital signatures. DSA is slower than RSA and only provides digital signatu"
+ },
+ {
+  "predicate": "developed",
+  "flipped": false,
+  "subject": "google",
+  "object": "protocol buffers",
+  "doc": "02_collins_network_securit",
+  "context": "ct format. There is a loose similarity to XML and JSON, but with an emphasis on a highly compact, binary representation.Google developed the first of these systems in the form of Protocol Buffers. Multiple tools are available now, including but not limited to: Protocol Buffers Google describes these as a \u201csmaller,"
+ },
+ {
+  "predicate": "uses",
+  "flipped": false,
+  "subject": "calamares",
+  "object": "manjaro",
+  "doc": "05_nikkel_practical_linux_",
+  "context": "Calamares has become well known because of Manjaro, but it was developed with the intention of being a general installer for any distribution. See https://calamares.io/ f"
+ }
+]
