@@ -250,6 +250,38 @@ def _routing_rows(conn: Connection, run_id: str) -> list[dict]:
     return out
 
 
+
+def _already_current(conn, wanted: list[tuple[str, str, str]]) -> set[tuple[str, str]]:
+    """(entity_kind, entity_id) pairs whose ACTIVE receipt already matches
+    the hash this projection would write.
+
+    Routing representations are corpus-wide by design, so every run's
+    projection re-derives the whole corpus. That is correct for retrieval
+    and quadratic for ingestion: on the 25-book corpus each ticket
+    re-embedded all 19,016 chunks, which is ~50 minutes of work per
+    ticket and the real reason projections never converged.
+
+    The receipt hash already encodes the contract version, so comparing
+    against it skips only rows that are genuinely current: a contract
+    change, a wiped receipt or new content all produce a different hash
+    and are re-projected.
+    """
+    if not wanted:
+        return set()
+    rows = conn.execute(
+        """
+        SELECT pr.entity_kind, pr.entity_id
+          FROM projection_receipts pr
+          JOIN (VALUES %s) AS w(kind, eid, rhash)
+            ON pr.entity_kind = w.kind AND pr.entity_id = w.eid
+           AND pr.receipt_hash = w.rhash
+         WHERE pr.projection = %%s AND pr.active
+        """ % ",".join(["(%s,%s,%s)"] * len(wanted)),
+        [v for triple in wanted for v in triple] + [PROJECTION_QDRANT],
+    ).fetchall()
+    return {(k, e) for k, e in rows}
+
+
 def _write_routing_points(client: QdrantClient, collection: str, rows: list[dict], contract) -> None:
     # the embedder contract bounds batches at 32 texts per request
     batch_limit = getattr(contract, "batch_limit", 32) or 32
@@ -326,6 +358,25 @@ def process_event(conn: Connection, event: dict) -> None:
 
         routing_contract = NEURAL_EMBED_CONTRACT
         routing_rows = _routing_rows(conn, run_id)
+        # Incremental: drop rows already projected under this exact
+        # contract. Without this every ticket re-embeds the whole corpus.
+        if routing_rows:
+            _wanted = [
+                (r["representation_kind"], r["summary_id"] or r["chunk_id"],
+                 receipt_hash(PROJECTION_QDRANT, r["representation_kind"],
+                              r["summary_id"] or r["chunk_id"],
+                              ROUTING_CONTRACT_VERSION))
+                for r in routing_rows]
+            _current = _already_current(conn, _wanted)
+            _before = len(routing_rows)
+            routing_rows = [
+                r for r in routing_rows
+                if (r["representation_kind"],
+                    r["summary_id"] or r["chunk_id"]) not in _current]
+            if _before != len(routing_rows):
+                log.info("routing projection incremental",
+                         extra={"run_id": run_id, "stage": STAGE,
+                                "error_code": None})
         if routing_rows:
             client = QdrantClient(url=get_settings().stores.qdrant_url,
                                   timeout=QDRANT_TIMEOUT_S)
