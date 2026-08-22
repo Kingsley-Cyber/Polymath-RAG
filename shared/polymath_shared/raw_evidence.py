@@ -193,7 +193,17 @@ def relation_candidate_row(doc_id: str, chunk_id: str, candidate, decision) -> t
     })
     return (cid, doc_id, chunk_id,
             candidate.evidence.evidence_class,
-            getattr(candidate.evidence, "trigger_surface", None),
+            # PROVENANCE. This read `trigger_surface`, which EvidenceSpan
+            # does not define, so getattr returned None for every candidate
+            # ever recorded: 34,655 of 34,655 rows across every corpus,
+            # including all 8,834 ACCEPT/QUALIFY. Licensing was working the
+            # whole time -- `_trigger_matches` tests `trigger_lemma` against
+            # the licensed verb/noun/multiword arms -- but the ledger never
+            # recorded WHICH trigger licensed a fact, so no fact could be
+            # audited back to its lexical cause. A silent getattr default
+            # turned a contract field into a permanent NULL.
+            (getattr(candidate.evidence, "trigger_lemma", None)
+             or getattr(candidate.evidence, "text", None)),
             subj.span.text, subj.resolved_entity_id,
             obj.span.text, obj.resolved_entity_id,
             getattr(decision, "rule_id", None),

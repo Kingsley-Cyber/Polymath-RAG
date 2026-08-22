@@ -158,3 +158,39 @@ def test_compiled_vocabulary_has_not_inflated():
         f"compiled vocabulary is {total} triggers against {licensed} "
         f"authored + {promoted} promoted. It was 337 against 112 before "
         f"VerbNet expansion was removed.")
+
+
+# ---------------------------------------------------------------------------
+# provenance: a fact must be auditable back to the trigger that licensed it
+# ---------------------------------------------------------------------------
+
+def test_relation_candidate_records_the_trigger_that_licensed_it():
+    """`trigger_surface` was read off a field EvidenceSpan never defines.
+
+    getattr(..., "trigger_surface", None) returned None for all 34,655
+    candidates ever recorded, across every corpus, including all 8,834
+    ACCEPT/QUALIFY rows. Licensing was working -- `_trigger_matches`
+    tests `trigger_lemma` against the licensed arms -- but the ledger
+    could not say which trigger produced any given fact. A silent
+    getattr default turned a contract field into a permanent NULL, and
+    an unauditable fact is not evidence-first.
+    """
+    src = (ROOT / "shared" / "polymath_shared" / "raw_evidence.py").read_text()
+    fn = src[src.index("def relation_candidate_row"):]
+    fn = fn[:fn.index("\n\n\n")] if "\n\n\n" in fn else fn
+    assert "trigger_lemma" in fn, (
+        "relation_candidate_row does not record trigger_lemma; the field "
+        "EvidenceSpan actually defines")
+    assert '"trigger_surface", None' not in fn, (
+        "still reading a non-existent `trigger_surface` attribute, which "
+        "silently records NULL for every candidate")
+
+
+def test_evidence_span_defines_the_field_the_ledger_reads():
+    """Guard the mismatch itself, not just today's symptom."""
+    from polymath_shared.contracts import EvidenceSpan
+
+    fields = set(EvidenceSpan.model_fields)
+    assert "trigger_lemma" in fields, (
+        f"EvidenceSpan no longer defines trigger_lemma; the ledger reads "
+        f"it. Available: {sorted(fields)}")
