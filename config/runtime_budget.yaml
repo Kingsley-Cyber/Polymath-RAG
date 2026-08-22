@@ -84,6 +84,12 @@ profiles:
     why: "ingest and extract; needs GLiNER and spaCy, plus embedder for projection"
     slots: [control, intake, profile, extract, sidecar_gliner, sidecar_spacy,
             sidecar_embedder]
+  converge:
+    why: "drive an already-extracted corpus to query_ready: project vectors,
+          canonicalize, project the graph, verify. Extraction models are not
+          called, so GLiNER, spaCy and the reranker stay unloaded."
+    slots: [control, qdrant, canonicalize, project_canonical, neo4j, verify,
+            sidecar_embedder]
   graph:
     why: "canonicalize and project the graph; no provider models"
     slots: [control, canonicalize, project_canonical, neo4j, verify]
