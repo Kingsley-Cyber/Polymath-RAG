@@ -158,3 +158,28 @@ def test_inference_clients_are_connect_fast_and_read_patient():
             assert c._timeout.pool <= 5.0
         finally:
             c.close()
+
+
+def test_routing_projection_checkpoints_so_a_retry_resumes():
+    """A full corpus routing pass is hours of embedding. Receipts written
+    only at the end mean any failure discards every completed batch:
+    three attempts once burned 1,705 embed calls without finishing one
+    pass. Slices must be checkpointed on their own connection so a retry
+    resumes instead of restarting."""
+    import ast
+    import inspect
+
+    from workers import project_qdrant_worker as w
+
+    import textwrap
+    tree = ast.parse(textwrap.dedent(inspect.getsource(w._write_routing_points)))
+    calls = {n.func.id for n in ast.walk(tree)
+             if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+    assert "_checkpoint_routing" in calls, "routing pass does not checkpoint"
+    assert "_write_routing_slice" in calls, "routing pass is not sliced"
+
+    # the checkpoint must open its OWN transaction, not reuse the stage's
+    cp = inspect.getsource(w._checkpoint_routing)
+    assert "with tx()" in cp, (
+        "checkpoint must commit independently of the stage transaction, "
+        "which rolls back on failure")

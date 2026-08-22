@@ -282,7 +282,52 @@ def _already_current(conn, wanted: list[tuple[str, str, str]]) -> set[tuple[str,
     return {(k, e) for k, e in rows}
 
 
-def _write_routing_points(client: QdrantClient, collection: str, rows: list[dict], contract) -> None:
+def _write_routing_points(client: QdrantClient, collection: str, rows: list[dict],
+                          contract, checkpoint_every: int = 512) -> None:
+    """Embed, upsert and CHECKPOINT in slices.
+
+    A full corpus routing pass is ~2.3 hours of embedding (chunk texts run
+    to thousands of tokens; a 32-text batch measured 6-45 s). Receipts used
+    to be written only after the whole pass, inside the stage transaction,
+    so any failure discarded every completed batch and the retry started
+    from zero — three attempts burned 1,705 embed calls without ever
+    finishing one pass.
+
+    Points in Qdrant are a non-transactional side effect that already
+    survives a rollback, so the receipt recording that fact is committed
+    on its own connection as each slice lands. A retry then sees those
+    entities as current (`_already_current`) and resumes where it stopped.
+    """
+    for start in range(0, len(rows), checkpoint_every):
+        slice_rows = rows[start:start + checkpoint_every]
+        _write_routing_slice(client, collection, slice_rows, contract)
+        _checkpoint_routing(slice_rows, contract)
+
+
+def _checkpoint_routing(rows: list[dict], contract) -> None:
+    """Durably record a completed slice, independent of the stage tx."""
+    try:
+        with tx() as conn:
+            for r in rows:
+                record_projection_attempt(
+                    conn,
+                    projection=PROJECTION_QDRANT,
+                    entity_kind=r["representation_kind"],
+                    entity_id=r["summary_id"] or r["chunk_id"],
+                    receipt_hash=receipt_hash(
+                        PROJECTION_QDRANT, r["representation_kind"],
+                        r["summary_id"] or r["chunk_id"], ROUTING_CONTRACT_VERSION),
+                    contract=contract.contract_id,
+                )
+    except Exception:
+        # A checkpoint is an optimisation: losing one costs re-work on
+        # retry, never correctness. The stage still records receipts on
+        # success.
+        log.warning("routing checkpoint failed; progress will be re-done",
+                    extra={"error_code": "checkpoint_failed"})
+
+
+def _write_routing_slice(client: QdrantClient, collection: str, rows: list[dict], contract) -> None:
     # the embedder contract bounds batches at 32 texts per request
     batch_limit = getattr(contract, "batch_limit", 32) or 32
     vectors: list[list[float]] = []
