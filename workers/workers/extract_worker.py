@@ -1066,7 +1066,7 @@ def process_event(conn: Connection, event: dict) -> None:
                 doc_entity_history.extend(
                     sorted(sl.entities, key=lambda e: (e.start, e.end)))
                 for candidate in candidates:
-                    if active_pipeline() == "kimi_v1":
+                    if active_pipeline() in ("kimi_v1", "kimi_v2"):
                         decision = compile_relation_kimi(candidate, sl.parse, pack, syntax=sl.syntax)
                     else:
                         decision = compile_relation(candidate, sl.parse, pack, syntax=sl.syntax)

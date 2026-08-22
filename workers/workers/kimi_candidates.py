@@ -535,8 +535,9 @@ def _role_path(bound, subject_span, object_span, agent_span,
 
 
 def active_pipeline() -> str:
-    """legacy_v1 (positional binding + early type veto) or
-    kimi_v1 (UD binding + post-structural type precheck)."""
+    """legacy_v1 (positional binding + early type veto),
+    kimi_v1 (UD binding + post-structural type precheck), or
+    kimi_v2 (token-originated, UD-only binding — no recall nets)."""
     return os.environ.get("POLYMATH_RELATION_PIPELINE", "legacy_v1")
 
 
@@ -544,6 +545,9 @@ def build_candidates_dispatch(
     slices: list[SentenceSlice], **kwargs
 ) -> list[RelationCandidate]:
     """Dispatch to the active relation pipeline."""
+    if active_pipeline() == "kimi_v2":
+        from workers.kimi_v2_candidates import build_candidates_kimi_v2
+        return build_candidates_kimi_v2(slices, **kwargs)
     if active_pipeline() == "kimi_v1":
         return build_candidates_kimi(slices, **kwargs)
     from workers.candidates import build_candidates
