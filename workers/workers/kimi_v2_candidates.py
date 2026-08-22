@@ -141,8 +141,30 @@ def build_candidates_kimi_v2(
             binding_source = (BindingSource.NOMINAL_DEPENDENCY if nominal
                               else BindingSource.UD_DEPENDENCY)
 
+            # Voice is read from the UD tree itself (auxpass / nsubj:pass),
+            # never fabricated: a passive without its by-agent yields an
+            # oblique-bound object exactly like an active dobj would not.
+            children = _children(tokens, tok["i"])
+            voice = ("passive"
+                     if any(t["dep"] in ("auxpass", "aux:pass")
+                            for t in children)
+                     or any(t["dep"] in ("nsubjpass", "nsubj:pass")
+                            for t in subj_toks)
+                     else "active")
+
             dep_path_parts: list[str] = []
             if nominal:
+                for prep in _children(tokens, tok["i"]):
+                    if prep["dep"] not in PREP_DEPS:
+                        continue
+                    pobjs = [t for t in _children(tokens, prep["i"])
+                             if t["dep"] in PREP_OBJECT_DEPS]
+                    obj_toks.extend(pobjs)
+                    if pobjs:
+                        dep_path_parts.append(
+                            f"{prep['dep']}.{prep['text'].lower()}>"
+                            f"{pobjs[0]['dep']}")
+            elif voice == "passive":
                 for prep in _children(tokens, tok["i"]):
                     if prep["dep"] not in PREP_DEPS:
                         continue
@@ -182,11 +204,16 @@ def build_candidates_kimi_v2(
 
             scope = analyze_scope(sl.text, tok["char_start"],
                                   tok["char_end"])
+            trig_abs_start = rel_start + tok["char_start"]
+            trig_abs_end = rel_start + tok["char_end"]
 
-            evidence = EvidenceSpan(
+            # Lexical enrichment needs only the trigger identity; the
+            # per-pair candidate evidence span is widened below to attest
+            # trigger plus arguments (what F8 support verifies).
+            probe = EvidenceSpan(
                 chunk_id=chunk_id,
-                start=rel_start + tok["char_start"],
-                end=rel_start + tok["char_end"],
+                start=trig_abs_start,
+                end=trig_abs_end,
                 text=tok["text"],
                 evidence_class=evidence_class,
                 trigger_lemma=lemma,
@@ -196,7 +223,7 @@ def build_candidates_kimi_v2(
                 score=1.0,
                 extractor_version=extractor_version,
             )
-            lexical = (_lookup_for(rule_pack, evidence) if enrich else {
+            lexical = (_lookup_for(rule_pack, probe) if enrich else {
                 "roleset": None, "vn_classes": [], "fn_frames": [],
                 "semlink_resolved": False,
             })
@@ -231,9 +258,9 @@ def build_candidates_kimi_v2(
 
                     role_inv = get_role_inventory(
                         lexical, lexical.get("roleset"))
-                    voice = ("passive"
-                             if (sl.parse or {}).get("voice") == "passive"
-                             else "active")
+                    subj_dep = subj_tok["dep"]
+                    if subj_dep == "nsubjpass":
+                        subj_dep = "nsubj:pass"
                     agent_span = None
                     if voice == "passive":
                         for child in _children(tokens, tok["i"]):
@@ -248,11 +275,30 @@ def build_candidates_kimi_v2(
                         roleset=lexical.get("roleset"),
                         role_inventory=role_inv,
                         voice=voice,
-                        subject_dep=subj_tok["dep"],
+                        subject_dep=subj_dep,
                         object_dep=obj_tok["dep"],
                         subject_entity=subject_span,
                         object_entity=object_span,
                         agent_entity=agent_span,
+                    )
+                    evidence = EvidenceSpan(
+                        chunk_id=chunk_id,
+                        start=min(subject_span.start, object_span.start,
+                                  trig_abs_start),
+                        end=max(subject_span.end, object_span.end,
+                                trig_abs_end),
+                        text=sl.text[
+                            min(subject_span.start, object_span.start,
+                                trig_abs_start) - rel_start:
+                            max(subject_span.end, object_span.end,
+                                trig_abs_end) - rel_start],
+                        evidence_class=evidence_class,
+                        trigger_lemma=lemma,
+                        trigger_lexical_class="NOUN" if nominal else "VERB",
+                        trigger_predicate_id=predicate_id,
+                        trigger_match_source="nouns" if nominal else "verbs",
+                        score=1.0,
+                        extractor_version=extractor_version,
                     )
                     lse = build_lexical_semantic_evidence(
                         evidence=evidence,

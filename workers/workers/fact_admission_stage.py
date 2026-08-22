@@ -145,9 +145,18 @@ class FactAdmissionStage:
             object_end=getattr(obj.span, "end", None),
             evidence_start=getattr(ev, "start", None),
             evidence_end=getattr(ev, "end", None),
+            # PREDICATE-COMPILER-V2: locate the predicate occurrence by
+            # its licensed spaCy token, not by the (now clause-wide)
+            # evidence span start.
+            **_trigger_offsets(candidate, sl),
             chunk_text=row.get("text"),
             region=row.get("region"),
-            parse=getattr(sl, "parse", None),
+            # F8 witness: prefer the worker parse record; when none exists
+            # (PREDICATE-COMPILER-V2 removed the regex fallback), the
+            # sidecar syntax-evidence tokens ARE the real spaCy parse —
+            # same token shape, sentence-relative offsets, which is the
+            # coordinate frame the span-support helpers already expect.
+            parse=getattr(sl, "parse", None) or getattr(sl, "syntax", None),
             sentence_start=getattr(sl, "sentence_start", 0) or 0,
             subject_entity_admission=_endpoint(
                 getattr(fact, "subject_id", None), subj.span),
@@ -238,6 +247,24 @@ def _pack() -> dict:
 def _type_of(endpoint) -> str | None:
     ct = getattr(getattr(endpoint, "span", None), "core_type", None)
     return getattr(ct, "value", None) if ct is not None else None
+
+
+def _trigger_offsets(candidate, sl) -> dict:
+    """Char range of the predicate occurrence, resolved from the V2
+    trigger_token_id against the sidecar token payload. Empty when the
+    candidate carries no token id (legacy pipelines), in which case the
+    gate falls back to reading the trigger at the evidence span."""
+    tok_id = getattr(candidate, "trigger_token_id", None)
+    syntax = getattr(sl, "syntax", None)
+    if tok_id is None or not syntax:
+        return {}
+    tok = next((t for t in (syntax.get("tokens") or [])
+                if t.get("i") == tok_id), None)
+    if tok is None:
+        return {}
+    start = (getattr(sl, "sentence_start", 0) or 0) + tok["char_start"]
+    return {"trigger_start": start,
+            "trigger_end": start + (tok["char_end"] - tok["char_start"])}
 
 
 def _class_of(endpoint, identities) -> str | None:

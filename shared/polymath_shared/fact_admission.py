@@ -133,6 +133,12 @@ class FactContext:
     object_end: Optional[int] = None
     evidence_start: Optional[int] = None
     evidence_end: Optional[int] = None
+    # PREDICATE-COMPILER-V2: the trigger's own char range inside the
+    # chunk. The evidence span now attests the whole relation, so the
+    # trigger can no longer be recovered from the span start. None =>
+    # fall back to the legacy reading (evidence offsets == trigger).
+    trigger_start: Optional[int] = None
+    trigger_end: Optional[int] = None
     # source
     chunk_text: Optional[str] = None
     region: Optional[str] = None                 # precomputed by region.py
@@ -284,11 +290,17 @@ def f3_endpoints(ctx: FactContext, pack: dict) -> GateVerdict:
 # ---------------------------------------------------------------------------
 
 def _trigger_token(ctx: FactContext) -> Optional[dict]:
-    if not ctx.parse or ctx.evidence_start is None:
+    if not ctx.parse:
+        return None
+    trig_s = ctx.trigger_start if ctx.trigger_start is not None \
+        else ctx.evidence_start
+    trig_e = ctx.trigger_end if ctx.trigger_end is not None \
+        else (ctx.evidence_end or ctx.evidence_start)
+    if trig_s is None:
         return None
     tokens = ctx.parse.get("tokens") or []
-    s = ctx.evidence_start - ctx.sentence_start
-    e = (ctx.evidence_end or ctx.evidence_start) - ctx.sentence_start
+    s = trig_s - ctx.sentence_start
+    e = trig_e - ctx.sentence_start
     return next((t for t in tokens
                  if t.get("char_start") is not None and s <= t["char_start"] < e), None)
 
