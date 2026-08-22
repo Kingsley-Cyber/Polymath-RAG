@@ -54,3 +54,43 @@
     edges. Fix belongs to Phase F: persist (or deterministically re-derive)
     parse + evidence-anchor context per slice so the compiler replays under
     production's exact inputs.
+
+
+## Operational (post-completion-mission, 2026-08-22)
+
+12. **Boot recovery is broken on this host.** `launchctl kickstart`
+    silently no-ops and the LaunchAgent exits 126: macOS TCC blocks
+    launchd from executing `scripts/boot_polymath.sh` under
+    `~/Documents`. Several hours of "fleet restarts" were no-ops against
+    stale code before this was noticed. Boot recovery must NOT be
+    claimed as passing until the script is relocated outside the
+    protected tree. Start the fleet manually with
+    `nohup bash scripts/boot_polymath.sh &` meanwhile.
+
+13. **Large-corpus convergence is host-capacity bound.** A full routing
+    projection embeds every corpus row once (18,823 on the 25-book
+    corpus). On a saturated host — swap 28.6/28.6 GB, 66 MB free — the
+    embedder degraded from ~5s to 72.7s per small batch, making the pass
+    a multi-hour proposition. The projection is now checkpointed every
+    512 rows on an independent connection, so it RESUMES rather than
+    restarts; it needs headroom, not a fix.
+
+14. **`is_a` and `instance_of` currently admit zero facts.** The
+    copula-complement binding rule refuses the whole family. Inspection
+    showed most graph-pool taxonomy candidates are genuinely bad
+    (`is_a(mitre, privileges required)`,
+    `instance_of(chapter 2 of this book, patterns)`), so zero is largely
+    correct — but a family at exactly zero is a gate-defect signature
+    and `COPULA-COMPLEMENT-BINDING-V2` remains the first semantic
+    follow-up.
+
+15. **Predicate pack verb lists are sense-blind.** VerbNet class
+    expansion inserted `make`/`source`/`receive` into `acquired`,
+    `work` into `uses`, `collaborate` into `similar_to`. FACT-ADMISSION
+    F5 compensates by demanding PropBank/FrameNet sense agreement for
+    class-inherited triggers; the pack itself is still wrong and is
+    frozen.
+
+16. **`similar_to` is not assertable.** Measured 29% supported / 71%
+    wrong; demoted to Tier 1 by policy. This is stratification, not
+    suppression — the relation stays fully provenanced and queryable.
