@@ -1,0 +1,213 @@
+# POLYMATH-FACT-ADMISSION-V1 — declarative policy
+#
+# Ontology metadata that the frozen relation pack does not carry, kept
+# OUT of the pack so core-predicates-v1.3.0.yaml stays byte-frozen.
+# Everything here is declarative ontology data, never code, and is
+# versioned as one unit by `policy_version`.
+policy_version: fact-admission-policy-v1
+region_policy_version: region-policy-v1
+
+# ---------------------------------------------------------------------
+# F2 — region licensing.
+#
+# A region that cannot license relation ASSERTION can still carry
+# evidence: mentions, slices, hypotheses and text retrieval are
+# untouched. Only canonical relation candidacy fails closed here.
+# Named so a later policy version can license specific regions
+# (e.g. TABLE_FACT_POLICY) without touching code.
+# ---------------------------------------------------------------------
+regions:
+  BODY_PROSE:        {licenses_relations: true}
+  BIBLIOGRAPHY:      {licenses_relations: false, reason: REGION_BIBLIOGRAPHY}
+  INDEX:             {licenses_relations: false, reason: REGION_INDEX}
+  TABLE_OF_CONTENTS: {licenses_relations: false, reason: REGION_TOC}
+  CAPTION:           {licenses_relations: false, reason: REGION_CAPTION}
+  HEADING:           {licenses_relations: false, reason: REGION_HEADING}
+  CODE_OR_CONFIG:    {licenses_relations: false, reason: REGION_CODE}
+
+# ---------------------------------------------------------------------
+# F7 — orientation licensing.
+#
+# Each asymmetric predicate declares which lexical triggers express the
+# CANONICAL orientation and which express the INVERSE one. "X includes
+# Y" is inverse evidence for part_of, whose canonical orientation is
+# part→whole: the fact is part_of(Y, X), never part_of(X, Y).
+#
+# A flip is applied ONLY when (a) the trigger is declared inverse, and
+# (b) the flipped signature is itself licensed. Otherwise: REJECT.
+# Triggers absent from both lists leave orientation unlicensed for
+# asymmetric predicates -> REJECT(DIRECTION_UNLICENSED).
+# ---------------------------------------------------------------------
+orientation:
+  part_of:
+    canonical_triggers: [part, component, member, element, section, belong,
+                         "part of", "component of", "member of", "consists of",
+                         "comprised of", "made up of", "belongs to"]
+    inverse_triggers:   [contain, include, comprise, consist, compose,
+                         constitute, incorporate, encompass, "includes",
+                         "consist of", "made of"]
+  owns:
+    canonical_triggers: [own, owns, possess, hold, "property of"]
+    inverse_triggers:   ["owned by", "held by", "belongs to"]
+  uses:
+    canonical_triggers: [use, apply, leverage, adopt, employ, utilize, run,
+                         "use of", "usage of", "application of", "adoption of",
+                         "built with", "built on", "run on", "based on",
+                         "powered by"]
+    inverse_triggers:   ["used by", "adopted by", "employed by"]
+  depends_on:
+    canonical_triggers: [depend, rely, require, need, "depends on", "relies on",
+                         "dependent on", "requires"]
+    inverse_triggers:   ["required by", "needed by", "relied upon by"]
+  developed:
+    canonical_triggers: [develop, build, engineer, implement, "developed by"]
+    inverse_triggers:   []
+  acquired:
+    canonical_triggers: [acquire, buy, purchase, absorb, acquisition, takeover]
+    inverse_triggers:   ["acquired by", "bought by", "purchased by"]
+  member_of:
+    canonical_triggers: [join, "member of", "belongs to", "part of"]
+    inverse_triggers:   ["includes", "has members", "comprises"]
+  subsidiary_of:
+    canonical_triggers: ["subsidiary of", "division of", "unit of"]
+    inverse_triggers:   ["parent of", "owns"]
+  employs:
+    canonical_triggers: [employ, hire, "works for", "employed at"]
+    inverse_triggers:   ["employed by", "hired by"]
+  # Copular and locative predicates: the trigger lemma persisted for
+  # "X is a Y" is the copula `be`, so canonical orientation must name it
+  # explicitly or every definitional fact fails orientation licensing.
+  founded:
+    canonical_triggers: [found, establish, form, start, "co-found",
+                         "founded", "established"]
+    inverse_triggers:   ["founded by", "established by"]
+  stated_in:
+    canonical_triggers: [state, describe, document, report, per, note,
+                         "described in", "documented in", "stated in",
+                         "according to", "as described"]
+    inverse_triggers:   []
+  has_role:
+    canonical_triggers: [lead, serve, act, hold, "serves as", "role of",
+                         "works as", "acts as"]
+    inverse_triggers:   []
+  implemented_with:
+    canonical_triggers: [implement, build, "implemented with", "built with",
+                         "implemented in", "written in"]
+    inverse_triggers:   []
+  derived_from:
+    canonical_triggers: [derive, originate, stem, descend, "derived from",
+                         "based on", "adapted from"]
+    inverse_triggers:   []
+  influences:
+    canonical_triggers: [influence, affect, shape, impact, "influenced by"]
+    inverse_triggers:   ["influenced by", "shaped by"]
+  transforms_into:
+    canonical_triggers: [transform, convert, become, turn, "transforms into",
+                         "converted to"]
+    inverse_triggers:   []
+  causes:
+    canonical_triggers: [cause, lead, result, produce, trigger, "causes",
+                         "leads to", "results in", "gives rise to"]
+    inverse_triggers:   ["caused by", "results from", "due to"]
+  enables:
+    canonical_triggers: [enable, allow, permit, facilitate, support,
+                         "enables", "allows"]
+    inverse_triggers:   ["enabled by"]
+  measured_by:
+    canonical_triggers: [measure, quantify, assess, gauge, "measured by",
+                         "measured in", "expressed in"]
+    inverse_triggers:   ["measures"]
+  occurred_at:
+    canonical_triggers: [occur, happen, "took place", "occurred at",
+                         "occurred in", "held at"]
+    inverse_triggers:   []
+  leads:
+    canonical_triggers: [lead, head, direct, manage, "leads", "heads"]
+    inverse_triggers:   ["led by", "headed by"]
+  is_a:
+    canonical_triggers: [be, "is a", "is an", "are a", "are an", "is the",
+                         "defined as", "known as"]
+    inverse_triggers:   []
+  instance_of:
+    canonical_triggers: [be, "is a", "is an", "instance of", "example of",
+                         "such as", "kind of", "type of"]
+    inverse_triggers:   [include, includes, "including"]
+  located_in:
+    canonical_triggers: [locate, base, situate, reside, live, "in", "at",
+                         "located in", "based in", "within", "situated in"]
+    inverse_triggers:   ["contains", "houses", "home to"]
+  created:
+    canonical_triggers: [create, author, write, invent, originate, design,
+                         produce, compose, "created by", "authored by"]
+    inverse_triggers:   ["created by", "authored by", "written by"]
+
+# ---------------------------------------------------------------------
+# F4 — assertion mode.
+#
+# English modal auxiliaries are a CLOSED grammatical class, not an
+# open-ended verb dictionary: enumerating them is linguistics, not rule
+# accretion. They are matched against the AUX dependents of the trigger's
+# governing verb (clause-local), never by document-global keyword search.
+# ---------------------------------------------------------------------
+modal_auxiliaries: [may, might, could, would, should, must, shall, can]
+
+# Contrastive / antonym markers. Scope flags detect SYNTACTIC negation
+# ("is not similar to"); they do not detect LEXICAL negation
+# ("is quite dissimilar to SNMP"), which admitted a false similar_to edge
+# in iteration 1. A closed set of contrast markers, matched against the
+# trigger's own surface, closes that without touching negation semantics.
+contrastive_markers: [dissimilar, unlike, differ, differs, different,
+                      distinct, contrary, opposed, unrelated, incompatible,
+                      unlikely, opposite, versus, "as opposed to",
+                      "in contrast", "rather than", "instead of"]
+# Modals that express possibility/hypothesis (reject as asserted fact)
+# vs. obligation/ability. Both fail assertion; kept apart so a later
+# policy can license obligation readings.
+epistemic_modals: [may, might, could, would]
+deontic_modals:   [should, must, shall, can]
+
+# Verbs whose complement clause is a proposal/consideration rather than
+# an event: "decide to use", "consider adopting", "plan to migrate".
+# Clause-local, dependency-scoped; a small closed set of attitude verbs.
+irrealis_governors: [decide, consider, plan, propose, intend, evaluate,
+                     recommend, suggest, want, attempt, try, aim, seek,
+                     hope, expect, plan]
+
+# ---------------------------------------------------------------------
+# F5 — predicate strength ordering.
+#
+# Relation admission must never STRENGTHEN the source meaning. A trigger
+# licensed by a weaker predicate cannot mint a stronger one, even when
+# both share an evidence class. Strength is ontology metadata: the
+# lexical resources say what the verb MEANS, this says which predicates
+# claim more than others.
+# ---------------------------------------------------------------------
+predicate_strength:
+  associated_with: 1
+  similar_to: 1
+  stated_in: 1
+  instance_of: 2
+  is_a: 2
+  part_of: 2
+  located_in: 2
+  measured_by: 2
+  uses: 3
+  depends_on: 3
+  implemented_with: 3
+  derived_from: 3
+  transforms_into: 3
+  influences: 3
+  enables: 3
+  member_of: 3
+  has_role: 3
+  employs: 4
+  leads: 4
+  owns: 4
+  created: 5
+  developed: 5
+  founded: 5
+  acquired: 5
+  subsidiary_of: 5
+  causes: 5
+  alias_of: 5
+  occurred_at: 2

@@ -1,0 +1,226 @@
+[
+ {
+  "predicate": "created",
+  "subject": "eric evans [Person]",
+  "object": "ddd [Product]",
+  "doc": "09_percival_architecture_pat",
+  "context": "in service that we can use for our first use case. But first we\u2019ll need a database\u2026 1 DDD did not originate domain modeling. Eric Evans refers to the 2002 book Object Design by Rebecca Wirfs-Brock and Alan McKean (Addison-Wesley Professional), which introduced responsibility-driven design, of which DDD is a special case dealing with the domain."
+ },
+ {
+  "predicate": "uses",
+  "subject": "manjaro [Product]",
+  "object": "arch linux [Product]",
+  "doc": "05_nikkel_practical_linux_fo",
+  "context": "mization, and configuration. For example, Ubuntu is based on Debian, CentOS Stream is based on Red Hat Enterprise Linux, and Manjaro is based on Arch Linux. Some distros even are based on distros that are themselves based on another distro. For example, Linux Mint is based on Ubu"
+ },
+ {
+  "predicate": "depends_on",
+  "subject": "ip [Technology]",
+  "object": "b/ip [Technology]",
+  "doc": "03_CompTIA_CySA+_CS0-002_Cer",
+  "context": "ACnet/IP (B/IP). The BACnet standard makes exclusive use of MAC addresses for all data links, including Ethernet. To support IP, IP addresses are needed, which is why B/IP was developed. Chapter 6"
+ },
+ {
+  "predicate": "associated_with",
+  "subject": "heavy_xor [Method]",
+  "object": "single_xor [Method]",
+  "doc": "04_sikorski_practical_malwar",
+  "context": "HR instructions in addition to the xor instructions. Looking at the functions called by heavy_xor, we see that single_xor is related to heavy_xor since the caller of single_xor is also called by heavy_xor, as shown in Figure 13-4L. Figure 13-4L: Relationship of"
+ },
+ {
+  "predicate": "located_in",
+  "subject": "marbo [Location]",
+  "object": "guam [Location]",
+  "doc": "01-Bowart-Operation_Mind_Con",
+  "context": "han anyone else and report to somewhere I can't remember and then go to work at eight-thirty. I remember riding the bus from Marbo to the base on Guam, and I was the only one on the bus. But I can't remember where I went before I reported for regular duty. 40 Walter Bowart O"
+ },
+ {
+  "predicate": "uses",
+  "subject": "linux mint [Product]",
+  "object": "ubuntu [Product]",
+  "doc": "05_nikkel_practical_linux_fo",
+  "context": "aro is based on Arch Linux. Some distros even are based on distros that are themselves based on another distro. For example, Linux Mint is based on Ubuntu, which is based on Debian. There are also many specialty distributions that are typically based on another distro but built "
+ },
+ {
+  "predicate": "uses",
+  "subject": "bottled water [Product]",
+  "object": "api [Technology]",
+  "doc": "11_kleppmann_designing_data_",
+  "context": "schema changes. LinkedIn\u2019s Databus [25 ], Facebook\u2019s Wormhole [26 ], and Yahoo!\u2019s Sherpa [27 ] use this idea at large scale. Bottled Water implements CDC for PostgreSQL using an API that decodes the write-ahead log [28 ], Maxwell and Debezium do something similar for MySQL by parsing the binlog [29 , 30 ,"
+ },
+ {
+  "predicate": "similar_to",
+  "subject": "google [Organization]",
+  "object": "norad [Organization]",
+  "doc": "13_beyer_sre_converted.epub",
+  "context": "c \u2014 upward of one million requests per second. What caused this massive surge in traffic? Santa was coming. A few years ago, Google collaborated with NORAD (the North American Aerospace Defense Command) to host a Christmas-themed website that tracked Santa\u2019s progress around the w"
+ },
+ {
+  "predicate": "depends_on",
+  "subject": "secure boot authentication method [Method]",
+  "object": "os kernel [Technology]",
+  "doc": "03_CompTIA_CySA+_CS0-002_Cer",
+  "context": "ected at both firewalls before it can enter the internal network. scripting Using scripting languages to automate a process. Secure Boot Authentication method that requires all boot loader components (e.g., OS kernel, drivers) attest to their identity (digital signature) and the attestation is compared to the trusted list. secure enclave A"
+ },
+ {
+  "predicate": "causes",
+  "subject": "groundhog day anti-pattern [Concept]",
+  "object": "email-driven architecture anti-pattern [Concept]",
+  "doc": "14_richards_fundamentals_of_",
+  "context": ". These three anti-patterns usually follow a progressive flow: overcoming the Covering Your Assets anti-pattern leads to the Groundhog Day anti-pattern, and overcoming this anti-pattern leads to the Email-Driven Architecture anti-pattern."
+ },
+ {
+  "predicate": "uses",
+  "subject": "rhel [Product]",
+  "object": "firewalld [Technology]",
+  "doc": "02_Data_Engineering_clean2.e",
+  "context": "The following tasks allow TCP traffic on port 22 for RHEL, which uses Firewalld, and Ubuntu, which uses UFW. Save this task as tasks/firewall-allow-ssh.yml: - name: Open Port 22/TCP ansible.posix.firewall"
+ },
+ {
+  "predicate": "uses",
+  "subject": "classic splunk dashboards [Product]",
+  "object": "simple xml [Technology]",
+  "doc": "06_Hands-On_Splunk_on_AWS_Si",
+  "context": "Customization capabilities: Classic Splunk Dashboards are built using Simple XML, allowing customization through XML-based configurations. In contrast, Dashboard Studio offers more flexibility, using JSON "
+ },
+ {
+  "predicate": "similar_to",
+  "subject": "mapreduce [Technology]",
+  "object": "unix tools [Technology]",
+  "doc": "11_kleppmann_designing_data_",
+  "context": "MapReduce is a bit like Unix tools, but distributed across potentially thousands of machines. Like Unix tools, it is a fairly blunt, brute-force, but surprisin"
+ },
+ {
+  "predicate": "uses",
+  "subject": "honeyd [Product]",
+  "object": "unix [Technology]",
+  "doc": "01_sanders_applied_network_s",
+  "context": " a great purpose as a canary honeypot utility. While there has been more than one version of Honeyd on Windows, the original Honeyd runs exclusively on Unix based operating systems, and that is the version that we will cover here."
+ },
+ {
+  "predicate": "uses",
+  "subject": "nexatech [Organization]",
+  "object": "kubernetes [Technology]",
+  "doc": "06_Hands-On_Splunk_on_AWS_Si",
+  "context": "environment. Case Study 1: Enhancing Kubernetes deployments at NexaTech The breakdown of the case is as follows: Background: NexaTech, known for its strong e-commerce platform, uses Kubernetes to orchestrate containerized apps."
+ },
+ {
+  "predicate": "employs",
+  "subject": "people's republic of china [Organization]",
+  "object": "pavlov [Person]",
+  "doc": "01-Bowart-Operation_Mind_Con",
+  "context": "t \"perpetual equa- libration\") and sanity could be reliably balanced or unbal- anced. To that end the Soviets, and later the People's Republic of China, employed Pavlov's new science for the creation of the totalitarian state. While the general public in the West may continue to associate beh"
+ },
+ {
+  "predicate": "located_in",
+  "subject": "figure 4-7 [Document]",
+  "object": "location [Location]",
+  "doc": "12_bellemare_building_event_",
+  "context": " what the data store client could do but does it externally to the data store to reduce load. An example of this is shown in Figure 4-7, where a User is denormalized based on User, Location, and Employer. Figure 4-7. Eventification of public User events using private User, Location, and Employer event streamsIn t"
+ },
+ {
+  "predicate": "uses",
+  "subject": "enterprise matrix [Product]",
+  "object": "att&ck framework [Product]",
+  "doc": "05_Security_Monitoring_Wazuh",
+  "context": "s Techniques Procedures Groups Software Matrices The ATT&CK framework has three matrices: Enterprise, Mobile, and Cloud. The Enterprise Matrix is the most widely used matrix in the ATT&CK framework. Let\u2019s understand some of the technologies covered under each of these matrices as follows: Figure 6.11 \u2013 MITRE ATT&CK matri"
+ },
+ {
+  "predicate": "part_of",
+  "subject": "cron [Technology]",
+  "object": "crond [Technology]",
+  "doc": "13_beyer_sre_converted.epub",
+  "context": "on the hour\u201d). Complex intervals, such as \u201cevery Saturday, which is also the 30th day of the month,\u201d can also be configured. Cron is usually implemented using a single component, which is commonly referred to as crond. crond is a daemon that loads the list of scheduled cron jobs. Jobs are launched according to their specified execution time"
+ },
+ {
+  "predicate": "similar_to",
+  "subject": "xor [Method]",
+  "object": "caesar cipher [Technology]",
+  "doc": "04_sikorski_practical_malwar",
+  "context": "s a secret wartime message encrypted with the Caesar cipher: ATTACK AT NOON DWWDFN DW QRRQ 270 Chapter 13 www.it-ebooks.info XOR The XOR cipher is a simple cipher that is similar to the Caesar cipher."
+ },
+ {
+  "predicate": "uses",
+  "subject": "gitlab [Organization]",
+  "object": "git [Technology]",
+  "doc": "02_Data_Engineering_clean2.e",
+  "context": "w feature breaks something, which occurs frequently in development releases. Git is free, and two major websites, GitHub and GitLab, use their own versions of Git under the surface to host projects online. Both GitHub and GitLab have their own spins on project terminology, but the under"
+ },
+ {
+  "predicate": "created",
+  "subject": "ggg [Organization]",
+  "object": "quanta [Concept]",
+  "doc": "14_richards_fundamentals_of_",
+  "context": "n the final analysis, this design resolved to five quanta, identified in Figure 18-4. Figure 18-4. The quanta boundaries for GGG In Figure 18-4, the design includes quanta for Payment, Auctioneer, Bidder, Bidder Streams, and Bid Tracker, roughly corresponding to the services. Multiple instances "
+ },
+ {
+  "predicate": "similar_to",
+  "subject": "session data [Concept]",
+  "object": "ipfix [Technology]",
+  "doc": "01_sanders_applied_network_s",
+  "context": " of the fundamental concepts associated with the collection of session data. This included an overview of different types of session data like NetFlow and IPFIX, as well as a detailed overview of data collection and retrieval with SiLK, and a brief overview of Argus. I can\u2019t stress th"
+ },
+ {
+  "predicate": "similar_to",
+  "subject": "psexec [Technology]",
+  "object": "sysinternal [Organization]",
+  "doc": "03_practical_threat_detectio",
+  "context": "cribed as a \u201ccollection of Python classes for working with network protocols.\" The repository contains an implementation for PsExec (https://github.com/fortra/impacket/blob/8799a1a2c42ad74423841d21ed5f4193ea54f3d5/examples/psexec.py), which very closely resembles Sysinternal\u2019s PsExec, in terms of its functionality. The following excerpt shows the output of running impacket-psexec: \u250c\u2500\u2500(examiner \u327f l"
+ },
+ {
+  "predicate": "uses",
+  "subject": "shuffle [Organization]",
+  "object": "docker container [Technology]",
+  "doc": "05_Security_Monitoring_Wazuh",
+  "context": "full user management, multi-factor authentication, single sign-on, multi-tenancy, and a lot more. Now, let\u2019s learn to set up Shuffle using a Docker container. Setting up Shuffle SOAR Shuffle SOAR can be deployed in self-hosted or in the cloud. For cloud-based deployment, you simply"
+ },
+ {
+  "predicate": "created",
+  "subject": "rebecca wirfs-brock [Person]",
+  "object": "ddd [Product]",
+  "doc": "09_percival_architecture_pat",
+  "context": "ut first we\u2019ll need a database\u2026 1 DDD did not originate domain modeling. Eric Evans refers to the 2002 book Object Design by Rebecca Wirfs-Brock and Alan McKean (Addison-Wesley Professional), which introduced responsibility-driven design, of which DDD is a special case dealing with the domain."
+ },
+ {
+  "predicate": "associated_with",
+  "subject": "ne twork interface [Technology]",
+  "object": "vm [Technology]",
+  "doc": "01_Mastering_Cybersecurity_B",
+  "context": "ical storage that serves as the hard drive for the VM. The VM\u2019s guest OS sees this virtual disk as a normal physical disk. \u2022 Ne twork interface: configure the VM\u2019s network interface to connect to the host machine\u2019s network, allowing the VM to access the internet or other network resources. Workstation Player provides a software abstraction layer (SAL) that sits "
+ },
+ {
+  "predicate": "part_of",
+  "subject": "arcsight [Organization]",
+  "object": "hewlett-packard [Organization]",
+  "doc": "02_collins_network_security_",
+  "context": "IDMEF). None of them have achieved serious industry acceptance.What has been accepted widely is CEF. Originally developed by ArcSight (now part of Hewlett-Packard) to provide sensor developers with a standard format in which to send messages to their SIEM. CEF is a record format that sp"
+ },
+ {
+  "predicate": "depends_on",
+  "subject": "schema registry [Technology]",
+  "object": "heavyweight framework [Technology]",
+  "doc": "12_bellemare_building_event_",
+  "context": "opy of the production environment where the microservice will be deployed. At a minimum this means creating an event broker, schema registry, any microservice-specific data stores, the microservice itself, and any required processing framework, such as when you are using a heavyweight framework or FaaS."
+ },
+ {
+  "predicate": "owns",
+  "subject": "spamcop [Organization]",
+  "object": "cisco systems [Organization]",
+  "doc": "02_collins_network_security_",
+  "context": "BL (spam addresses), and XBL (hijacked IP addresses and bots). These lists are accessible as a single combined service, ZEN. SpamCop Currently owned by Cisco Systems, SpamCop began as a private effort and eventually became part of IronPort\u2019s email reputation system. Currently, SpamCop prov"
+ },
+ {
+  "predicate": "uses",
+  "subject": "workstation player [Product]",
+  "object": "cpu [Technology]",
+  "doc": "01_Mastering_Cybersecurity_B",
+  "context": " physical machine\u2019s capabilities, including the following. \u2022 CP U: assign virtual cores to the VM, mimicking a physical CPU. Workstation Player uses virtualization technologies built into the CPU (hardware virtualization) to share the physi\u2011 cal CPU efficiently between the host and guest OS. \u2022 Me mory (RAM): allocate a"
+ },
+ {
+  "predicate": "part_of",
+  "subject": "ethernet packet [Technology]",
+  "object": "ip packet [Technology]",
+  "doc": "10_nygard_release_it_8487f6f",
+  "context": "n that the TCP/IP stack created around the HTTP request in the second packet. The outermost frame is an Ethernet packet. The Ethernet packet contains an IP packet, which in turn contains a TCP packet. Finally, the payload of the TCP packet is an HTTP request. The exact bytes of the enti"
+ }
+]
