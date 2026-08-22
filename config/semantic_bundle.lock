@@ -1,0 +1,17 @@
+{
+ "bundle": "v5-production-001",
+ "bundle_sha256": "a866d0cb687daa52140c941649d35ffa5b1f859140b72576b9ed231fd7efd217",
+ "members": {
+  "shared/polymath_shared/entity_admission_policy.yaml": "b0ec0bb6e51cfd52507a15882b427b94911925c7f2fa862e7f74f4e28d1f6420",
+  "shared/polymath_shared/fact_admission_policy.yaml": "6dea4877c54860400923748d4417dfe704cd03b644c3cce40c180bc182e9143e",
+  "shared/polymath_shared/entity_knowledge_admission.py": "91e478e995982faaae0676fe6ce541e11ef04295ef8adcf83d42555872d75ae6",
+  "shared/polymath_shared/fact_admission.py": "253407ec1f052da5b5d81e797ec2a39d727fa3e77e9edfb51d8e5cfd64b0bdc1",
+  "shared/polymath_shared/identity_allocation.py": "e3f429bbea4c1f38100fd57e5e26ee237f777b036ca109a49d238b21e88c15c9",
+  "shared/polymath_shared/entity_harbor.py": "377b6d82e1d55da57aa53d5eb52b93f23c34d511092a9753962fda94cc933259",
+  "shared/polymath_shared/admission_interpreter.py": "634b2b368a14f0399c5e0d6e9eb11486c4bbba314de4a1fa8ccd2f7644ec4e3c",
+  "shared/polymath_shared/source_region.py": "2bac84a90d3ed19305eb8da13ec668052aa5aab258736cf86469137afd75e09f"
+ },
+ "entity_policy": "E1-E7",
+ "fact_policy": "F1-F8",
+ "predicate_pack": "1.3.0"
+}

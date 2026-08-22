@@ -28,6 +28,21 @@ done
 if [ -n "${POLYMATH_PROFILE:-}" ]; then
   echo "boot: runtime profile ${POLYMATH_PROFILE}"
 fi
+# 1a. SEMANTIC RUNTIME INTEGRITY. Refuse to start a runtime whose
+# semantic surface differs from the declared contract, or whose
+# admission boundaries have no production caller.
+#
+# This exists because the system was previously happy to run with two
+# qualified gate chains that nothing called, and with a rule pack the
+# documentation declared byte-frozen at a version the runtime did not
+# load. Documents did not prevent either state. A boot check does.
+.venv/bin/python shared/polymath_shared/bundle_integrity.py --strict || {
+  echo "boot: FATAL — semantic runtime integrity violated (see above)."
+  echo "boot: refusing to start. Fix the invariant, or re-freeze the"
+  echo "boot: bundle deliberately with --freeze if the change is intended."
+  exit 1
+}
+
 .venv/bin/python - <<'BUDGET' || exit 1
 import sys
 sys.path.insert(0, "shared")

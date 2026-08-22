@@ -6,11 +6,11 @@
 POLYMATH_PG_DSN=… .venv/bin/python eval/v5/implementation_plan.py --write
 ```
 
-Build `5cb9846`. Every status below is a PREDICATE evaluated against the running system — source, config, compiled artefacts, database state — never a typed claim.
+Build `3765725`. Every status below is a PREDICATE evaluated against the running system — source, config, compiled artefacts, database state — never a typed claim.
 
 This file is generated because a hand-maintained plan drifts, and this repository has already paid for that: `SEMANTIC_CONTRACTS.md` declared rule pack v1.3.0 byte-frozen while `settings.py` shipped v1.2.0, and two admission gate chains were reported as qualified while having zero production callers.
 
-`5 done · 11 open · 3 blocked · 0 unknown`
+`6 done · 9 open · 3 blocked · 1 unknown`
 
 `?` means the probe could not observe the system. It is never folded into done.
 
@@ -60,17 +60,17 @@ This file is generated because a hand-maintained plan drifts, and this repositor
 
 ## SEMANTIC TRACK — P0 repair
 
-- [ ] **D0 Semantic bundle integrity at startup** — `OPEN`
+- [x] **D0 Semantic bundle integrity at startup** — `DONE`
       Declared contract and loaded runtime must be identical or the process must refuse to start. 'Mostly compatible' is how frames ran disabled in production while the docs said enforced.
-      *probe:* nothing verifies that the loaded semantic bundle matches the declared contract; drift is silent
+      *probe:* boot verifies runtime bundle against declared contract
 
 - [ ] **D1 Repair the compiled VerbNet trigger expansion** — `OPEN` · **new contract required**
       similar_to is authored with 3 verbs and compiles to 20, including banter, bargain, collaborate. This is the single largest source of wrong facts and it is a build-time bug in our own compiler.
       *probe:* similar_to compiled to 20 triggers from 3 authored (VerbNet class expansion): banter, bargain, collaborate, collide, commiserate, ...
 
-- [ ] **D2 Pin the rule pack the docs declare** — `OPEN` · **new contract required**
+- [?] **D2 Pin the rule pack the docs declare** — `UNKNOWN` · **new contract required**
       SEMANTIC_CONTRACTS declares v1.3.0 byte-frozen; settings ships 1.2.0, so frame arbitration is inert in production.
-      *probe:* settings default 1.2.0 != documented 1.3.0
+      *probe:* rule_pack_version default not found
 
 ## SEMANTIC TRACK — P1
 

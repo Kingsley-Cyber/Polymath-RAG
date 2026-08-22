@@ -94,18 +94,26 @@ class TestCompileChecks:
         assert "founded" in pack["predicates"]
         # The version must match the YAML source of the pack version in
         # effect (no drift between the compiled artifact and the shipped
-        # data). Production default is 1.2.0 (I3R-R1).
+        # data).
+        #
+        # The filename is DERIVED, not looked up in a hardcoded table. The
+        # table listed 1.0.1/1.1.0/1.2.0 and raised KeyError the moment
+        # production moved to 1.3.0 -- a test that fails when the system
+        # is corrected is a test asserting yesterday's configuration.
         import yaml
         from pathlib import Path
 
         from polymath_shared.rulepack import compiler as c
 
         version = pack["pack"]["version"]
-        yaml_name = {  # noqa: F841
-            "1.0.1": "core-predicates.yaml",
-            "1.1.0": "core-predicates-v1.1.0.yaml",
-            "1.2.0": "core-predicates-v1.2.0.yaml",
-        }[version]
+        base = Path(c.__file__).parent
+        candidates = [f"core-predicates-v{version}.yaml"]
+        if version == "1.0.1":
+            candidates.append("core-predicates.yaml")   # the unversioned original
+        yaml_name = next((n for n in candidates if (base / n).exists()), None)
+        assert yaml_name, (
+            f"rule pack {version} is in effect but no matching YAML exists; "
+            f"tried {candidates}")
         raw = yaml.safe_load((Path(c.__file__).parent / yaml_name).read_text())
         assert pack["pack"]["version"] == raw["rule_pack"]["version"]
 
