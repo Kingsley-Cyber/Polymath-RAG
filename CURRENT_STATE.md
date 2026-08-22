@@ -184,3 +184,70 @@ Ranked next actions supersede the earlier list:
 
 Unchanged from the earlier handoff: the semantic freeze, the projection
 backlog incident (§13 of the forensic report), and the do-not-touch list.
+
+
+---
+
+# HANDOFF — COMPLETION MISSION CLOSE (2026-08-22)
+
+**Verdict: NOT PRODUCTION READY.** See `FINAL_RELEASE_REPORT.md`.
+763 tests green. Nothing cut over; all admission decisions `shadow=TRUE`.
+
+## The one thing to do first
+
+**Re-run convergence and the holdout on a host with memory headroom.**
+Both are mechanical, need no new engineering, and are the biggest
+information gain available. This host was at swap 28.6/28.6 GB, which
+degraded the embedder 13x and stopped the final run.
+
+```bash
+nohup bash scripts/boot_polymath.sh &          # launchctl is a no-op here
+# projections resume from checkpoint automatically (11,425 rows durable)
+# then ingest the sealed holdout:
+#   eval/sealed/manifest_holdout-v1.json  (hash 829c5d9b...)
+```
+
+The holdout is sealed and MUST be adjudicated once, without tuning. The
+76.8% supported / 14.5% wrong figure is a DEVELOPMENT number — the gates
+were iterated against those same labelled facts — so the holdout is the
+number the release decision actually rests on.
+
+## What changed this mission
+
+Five P0 defects, all regression-covered:
+1. lease starvation (claim burned a retry; keeper renewed one ticket;
+   reaper quarantined healthy workers) -> `lease_faults = 0`
+2. claim depth never applied (all 8 workers override the shared default)
+3. **worker self-deadlock** — heartbeat inside the stage transaction held
+   the worker's own registration lock for the whole stage, blocking its
+   own lease keeper and control's sweep. This was the real "sidecar
+   hang". -> blocked queries 3 -> 0
+4. quadratic projection (every ticket re-derived the whole corpus)
+5. non-resumable projection (receipts only at the end) -> now
+   checkpointed every 512 rows, verified resuming after a restart
+
+Plus: readiness vs liveness with periodic probing, stale-connection
+recovery with typed errors, and failure records that carry the exception
+type and cause chain (without which defects 4 and 5 were invisible).
+
+Semantics: ENTITY-KNOWLEDGE-ADMISSION-V1 (new, 7 gates), plus role-based
+binding, witnessed orientation, negation/contrastive/nominalized/
+attributed clause gates, and sense agreement for class-inherited
+triggers. Precision moved 29/33/38 -> 76.8/7.2/14.5 on development data.
+
+## Traps for the next person
+
+- `launchctl kickstart` SILENTLY NO-OPS on this machine (TCC blocks
+  launchd under `~/Documents`). Verify the supervisor pid actually
+  changed, or you will test stale code for hours. I did.
+- A shared default is not a fix when every caller overrides it. Assert
+  the ENTRY POINTS.
+- Do not patch Python with text regexes. One dedented a `return` out of
+  its guard and caused an 11-restart storm. The replacement tests are
+  AST-based for that reason.
+
+## Unchanged and still frozen
+
+GLiNER pin/threshold/labels, Harbor, canonicalization, the predicate
+pack (known sense-blind, reported not patched), sealed sets, authority
+`fd68fc57...`, and the append-only ledger discipline.
