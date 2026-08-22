@@ -1000,6 +1000,25 @@ def process_event(conn: Connection, event: dict) -> None:
                 ordered_slices, corpus_id, doc_id,
                 contract_version=SEMANTIC_CONTRACT_V2)
             _perf["admission_s"] = _t.perf_counter() - _pt
+
+            # ENTITY-KNOWLEDGE-ADMISSION-V1 (E1-E7). Runs AFTER identity
+            # allocation, because the gates judge a SETTLED class and a
+            # decided admission -- never a raw provider label -- and BEFORE
+            # `_fill_parse_entities` and `_persist_mentions`, so a refused
+            # entity never reaches argument binding or the graph.
+            #
+            # A refusal demotes to MENTION_ONLY; it never drops the span.
+            # `_persist_mentions` still writes the mention row, so the
+            # surface stays readable and attributable at its offsets. Only
+            # the durable identity is withheld.
+            _pt = _t.perf_counter()
+            from workers.entity_admission_stage import apply_entity_admission
+
+            _entity_admission = apply_entity_admission(
+                conn, corpus_id, doc_id, ordered_slices, identities,
+                mention_id_for=lambda s: "mention_" + _mention_suffix(s, doc_id))
+            _perf["entity_admission_s"] = _t.perf_counter() - _pt
+
             for _row, _sl in ordered_slices:
                 if _sl.parse is not None:
                     _fill_parse_entities(_sl.parse, _sl.entities, corpus_id,

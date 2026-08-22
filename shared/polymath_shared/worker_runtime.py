@@ -31,6 +31,18 @@ from polymath_shared.receipts import StageFailed
 
 LEASE_SECONDS = 300
 
+#: Module-level logger.
+#:
+#: `_lease_keeper` is a module-level function whose only error path called
+#: `log.warning(...)`, but `log` was bound ONLY inside `run_worker`. The
+#: first transient renewal failure therefore raised NameError *inside the
+#: except handler*, which propagated out of the daemon thread target and
+#: killed the keeper with no join, no supervisor visibility and no log
+#: line. The lease then decayed to expiry and the reaper reclaimed a
+#: healthy worker's ticket -- re-introducing, through the error path, the
+#: exact failure LONG-STAGE-LEASE-CORRECTNESS-V1 was written to prevent.
+log = logging.getLogger("worker-runtime")
+
 #: CLAIM-STARVATION-V1. Events this process has already refused on
 #: contract grounds, excluded from the next fetch so the scan advances
 #: past them instead of re-reading the same head forever.
