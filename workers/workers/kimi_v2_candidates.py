@@ -234,6 +234,25 @@ def build_candidates_kimi_v2(
                             and subject_span.core_type
                             == object_span.core_type):
                         continue
+                    evidence = EvidenceSpan(
+                        chunk_id=chunk_id,
+                        start=min(subject_span.start, object_span.start,
+                                  trig_abs_start),
+                        end=max(subject_span.end, object_span.end,
+                                trig_abs_end),
+                        text=sl.text[
+                            min(subject_span.start, object_span.start,
+                                trig_abs_start) - rel_start:
+                            max(subject_span.end, object_span.end,
+                                trig_abs_end) - rel_start],
+                        evidence_class=evidence_class,
+                        trigger_lemma=lemma,
+                        trigger_lexical_class="NOUN" if nominal else "VERB",
+                        trigger_predicate_id=predicate_id,
+                        trigger_match_source="nouns" if nominal else "verbs",
+                        score=1.0,
+                        extractor_version=extractor_version,
+                    )
                     forward_ok = _type_compatible(
                         subject_span.core_type.value,
                         object_span.core_type.value,
@@ -280,25 +299,6 @@ def build_candidates_kimi_v2(
                         subject_entity=subject_span,
                         object_entity=object_span,
                         agent_entity=agent_span,
-                    )
-                    evidence = EvidenceSpan(
-                        chunk_id=chunk_id,
-                        start=min(subject_span.start, object_span.start,
-                                  trig_abs_start),
-                        end=max(subject_span.end, object_span.end,
-                                trig_abs_end),
-                        text=sl.text[
-                            min(subject_span.start, object_span.start,
-                                trig_abs_start) - rel_start:
-                            max(subject_span.end, object_span.end,
-                                trig_abs_end) - rel_start],
-                        evidence_class=evidence_class,
-                        trigger_lemma=lemma,
-                        trigger_lexical_class="NOUN" if nominal else "VERB",
-                        trigger_predicate_id=predicate_id,
-                        trigger_match_source="nouns" if nominal else "verbs",
-                        score=1.0,
-                        extractor_version=extractor_version,
                     )
                     lse = build_lexical_semantic_evidence(
                         evidence=evidence,
