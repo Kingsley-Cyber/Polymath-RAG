@@ -59,3 +59,81 @@ extract+embed contention can push sidecar calls past client timeouts.
 
 See `docs/RUNBOOK.md`. Sealed qualification: `eval/sealed/`. Replay and
 reconstruction drivers: `eval/v5/`.
+
+---
+
+# HANDOFF — 2026-08-22 (release-closure forensic pass)
+
+Authority moved `3981fcff…` → **`fd68fc57…`** (ADMISSION-IMPL-MEMO-V1,
+behavior-identical, licensed by `tests/determinism/
+test_concept_evidence_equivalence.py` + B8 identical-state run).
+638 tests pass. HEAD = forensic-report commits on
+`architecture/evidence-first-v5`.
+
+## What "extraction is fixed" means — and what it never meant
+
+FIXED (proven, committed):
+- Extract throughput: 709 s → 315 s/book (2.25×), semantically
+  byte-identical (B8), now provider-bound (77% GLiNER).
+- Extract reliability: batching for syntax/embed/upsert, bulk writes,
+  in-flight lease keeper for the extract stage, sub-token abstention,
+  supervision with live-tested crash recovery. 25/25 books extracted;
+  zero evidence lost through SIGKILL, reboot, wedge.
+
+NEVER CLAIMED FIXED (frozen, first measured by the forensic pass):
+- Relation/edge PRECISION. The semantic layer was frozen the whole
+  mission; the sealed qualifications certified invariants +
+  determinism, not fact-level precision. The first deterministic
+  sample (FINAL_FORENSIC_REPORT.md §7) measured it: ~38% of projected
+  edges WRONG under strict span attestation. That is not a regression
+  of something fixed — it is the frozen layer's true baseline,
+  now known.
+
+## Read these, in order
+
+1. `FINAL_FORENSIC_REPORT.md` — the full 19-section forensic report +
+   verdict (**NOT PRODUCTION READY as a knowledge-graph product**;
+   production-grade as evidence-first ingestion + text retrieval).
+2. `eval/v5/forensics/*.json` — classified fact samples, fragmentation
+   census, per-book accounting, global funnel.
+3. `docs/KNOWN_LIMITATIONS.md`, `eval/v5/FINDINGS_phaseB.md`,
+   `eval/sealed/FINDINGS_smq3-biomed.md`.
+
+## Live state at handoff
+
+- Corpus `release-books-v1`: 25 docs, extraction/settlement COMPLETE
+  (144,396 mentions, 7,903 facts). Projections (qdrant→neo4j→verify)
+  STILL DRAINING under an operator script.
+- **Open incident (report §13):** project_qdrant failed 3× per ticket.
+  Root causes, all still in code: (1) embedder inference wedge with a
+  liveness-only health probe (restarted 00:29, healthy now);
+  (2) worker batch-claims 4 tickets, lease keeper renews none of the
+  project_qdrant tickets → reaper kills healthy long projections at
+  claim_ttl 300 s. Mitigation running: `/tmp/serial_redrive2.py`
+  (one-ticket-at-a-time promotion + external 30-min lease renewal
+  every 30 s). If dead after a reboot, rerun it; procedure is also in
+  docs/RUNBOOK.md (per-ticket re-drive SQL).
+- The 3 permanent intake-refusal runs (2 corrupt originals + 1
+  failed repair) are DELIBERATE evidence — do not clean them up.
+
+## Next actions (ranked; from report §15/§19)
+
+1. P1 engineering: readiness-probing health checks (probe /infer, not
+   /manifest) + claim depth 1 or per-ticket lease renewal for long
+   stages + regressions for both. Turns §13 into a non-event.
+2. P2 cheap precision win: structure/citation-region candidacy
+   suppression from layout evidence (index pages, headings, captions,
+   reference lists currently mint edges).
+3. First post-freeze semantic gate: relation-precision work measured
+   on the L4 disposition ledger (direction-sensitive part_of frames,
+   modality gate on created/acquired, pronoun durable-identity ban).
+4. Finish report §11/§12 (retrieval panel — script ready at
+   scratchpad `retrieval_panel.py`) + §2 store counts once the drain
+   completes, then re-commit the report.
+
+## Do not touch
+
+Semantic freeze (GLiNER pin/labels/thresholds, Harbor, compiler,
+canonicalization), frozen artifacts (`eval/i4/gold/`,
+`eval/i4/verify_i4.py`, `eval/admission/artifacts/`), sealed sets,
+the append-only ledger discipline.
