@@ -406,6 +406,17 @@ def f4_assertion(ctx: FactContext, pack: dict) -> GateVerdict:
                         f"epistemic modal governs the matrix clause "
                         f"'{gov.get('lemma')}'")
 
+    # A clause serving as the SUBJECT of its matrix predicate is a
+    # nominalization: "Writing large-scale services like Gmail is hard"
+    # asserts something about the ACTIVITY, not that anyone wrote Gmail.
+    # It produced created(rik farrow, gmail) and created(usenix, gmail)
+    # from a blurb byline that the sentence splitter glued to the
+    # following sentence, giving the gerund a spurious subject.
+    if trig is not None and trig.get("dep") in {"csubj", "csubjpass"}:
+        return GateVerdict(QUALIFY, "NOMINALIZED_CLAUSE",
+                           "predicate heads a clausal subject; the clause "
+                           "names an activity rather than asserting an event")
+
     if scope.get("speculative"):
         return GateVerdict(QUALIFY, "SPECULATIVE", "speculative clause")
     if scope.get("attributed"):
