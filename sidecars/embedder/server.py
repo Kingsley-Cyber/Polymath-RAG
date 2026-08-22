@@ -18,7 +18,7 @@ import tomllib
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel, Field
 
 from polymath_shared.embedding_contracts import CONTRACTS, NEURAL_EMBED_CONTRACT
@@ -115,15 +115,26 @@ async def health() -> dict:
 
 
 @app.get("/ready")
-async def ready() -> dict:
+async def ready(response: Response) -> dict:
+    """READINESS, not liveness (P0-B).
+
+    Returns 503 when the inference path is not usable, so a process that
+    is alive but whose model has wedged stops being dispatched to. A
+    wedged forward pass hangs here and the caller's timeout converts that
+    into a probe failure — which is the intended signal. `/manifest` and
+    `/health` remain pure liveness.
+    """
     model = getattr(app.state, "model", None)
     if model is None:
+        response.status_code = 503
         return {"ready": False, "reason": "model not loaded"}
     if not getattr(app.state, "weights", {}).get("verified", False):
+        response.status_code = 503
         return {"ready": False, "reason": f"weights unverified: {app.state.weights}"}
     try:
         model.encode(["readiness probe"], normalize_embeddings=True)
     except Exception as exc:
+        response.status_code = 503
         return {"ready": False, "reason": f"forward pass failed: {exc}"}
     return {"ready": True}
 

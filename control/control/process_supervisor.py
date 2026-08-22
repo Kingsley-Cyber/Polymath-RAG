@@ -41,13 +41,13 @@ FLEET: list = [
     # ---- neural sidecars (started FIRST: workers verify their pins) ------
     {"name": "sidecar_gliner", "argv": ["{python}", "-m", "uvicorn",
         "server:app", "--host", "127.0.0.1", "--port", "8740"],
-     "cwd": "sidecars/gliner_runtime", "health_url": "http://127.0.0.1:8740/manifest"},
+     "cwd": "sidecars/gliner_runtime", "health_url": "http://127.0.0.1:8740/ready"},
     {"name": "sidecar_spacy", "argv": [".venv/bin/python", "-m", "uvicorn",
         "server:app", "--host", "127.0.0.1", "--port", "8744"],
-     "cwd": "sidecars/spacy_runtime", "health_url": "http://127.0.0.1:8744/manifest"},
+     "cwd": "sidecars/spacy_runtime", "health_url": "http://127.0.0.1:8744/ready"},
     {"name": "sidecar_embedder", "argv": ["{python}", "-m", "uvicorn",
         "server:app", "--host", "127.0.0.1", "--port", "8742"],
-     "cwd": "sidecars/embedder", "health_url": "http://127.0.0.1:8742/manifest"},
+     "cwd": "sidecars/embedder", "health_url": "http://127.0.0.1:8742/ready"},
     {"name": "sidecar_reranker", "argv": ["{python}", "-m", "uvicorn",
         "server:app", "--host", "127.0.0.1", "--port", "8743",
         "--app-dir", "sidecars/reranker"],
@@ -88,6 +88,7 @@ class Supervisor:
     def __init__(self, fleet=FLEET, *, python: str | None = None,
                  log_dir: str | None = None, state_path: str | None = None,
                  max_restarts: int = 5, window_s: float = 300.0,
+                 probe_timeout_s: float = 10.0,
                  backoff_s: float = 2.0, health_timeout_s: float = 30.0,
                  dsn: str | None = None):
         self.slots = []
@@ -102,6 +103,10 @@ class Supervisor:
         self.log_dir = Path(log_dir or "/tmp/polymath_fleet")
         self.state_path = Path(state_path or (self.log_dir / "supervisor_state.json"))
         self.max_restarts = max_restarts
+        # Bounds a wedged inference probe: the forward pass in /ready hangs
+        # when the model is stuck, and the timeout is what turns that hang
+        # into an actionable unhealthy verdict instead of a hung supervisor.
+        self.probe_timeout_s = probe_timeout_s
         self.window_s = window_s
         self.backoff_s = backoff_s
         self.health_timeout_s = health_timeout_s
@@ -158,8 +163,17 @@ class Supervisor:
             deadline = time.time() + self.health_timeout_s
             while time.time() < deadline:
                 try:
-                    if httpx.get(slot.health_url, timeout=3).status_code == 200:
-                        return True
+                    r = httpx.get(slot.health_url, timeout=self.probe_timeout_s)
+                    # Status code AND body. A sidecar that answers 200 while
+                    # reporting {"ready": false} is exactly the wedge this
+                    # gate exists to catch, and older builds do that.
+                    if r.status_code == 200:
+                        try:
+                            body = r.json()
+                        except Exception:
+                            body = {}
+                        if body.get("ready") is not False:
+                            return True
                 except Exception:
                     pass
                 time.sleep(1.0)

@@ -67,11 +67,18 @@ def claim_ticket_events(conn, identity: dict, event_types: list[str], limit: int
                         identity["worker_id"], e["run_id"],
                     )
                     continue
+                # LONG-STAGE-LEASE-CORRECTNESS-V1: claiming is not an
+                # attempt. `attempt` counts EXECUTIONS THAT FAILED, and is
+                # incremented by _fail_ticket or by the reaper when the
+                # executing worker disappears. Incrementing here burned the
+                # retry budget of every ticket a worker merely queued, which
+                # failed all 24 projections of release-books-v1 without a
+                # single real failure.
                 cur.execute(
                     """
                     UPDATE stage_tickets SET status='leased', lease_owner=%s,
                            lease_expires_at = now() + make_interval(secs => %s),
-                           attempt = attempt + 1, updated_at=now()
+                           updated_at=now()
                      WHERE ticket_id=%s AND status='ready'
                     """,
                     (identity["worker_id"], LEASE_SECONDS, e["ticket_id"]),
@@ -99,6 +106,10 @@ def complete_ticket(conn, ticket_id: str | None) -> None:
 
 def _lease_keeper(dsn: str, worker_id: str, ticket_id: str,
                   ttl_s: int, stop, interval_s: float = 60.0):
+    # Renews EVERY ticket this worker holds, not just the one executing.
+    # With claim depth 1 that is the same set; keeping it owner-scoped is
+    # defence in depth so a future batching change cannot resurrect the
+    # queued-ticket starvation bug.
     """CP2.1 lease handling for LONG stages.
 
     A book-scale extract runs far past claim_ttl_s (300s). Without renewal
@@ -116,9 +127,8 @@ def _lease_keeper(dsn: str, worker_id: str, ticket_id: str,
                 conn.execute(
                     """UPDATE stage_tickets
                           SET lease_expires_at = now() + make_interval(secs => %s)
-                        WHERE ticket_id = %s AND lease_owner = %s
-                          AND status = 'leased'""",
-                    (ttl_s, ticket_id, worker_id))
+                        WHERE lease_owner = %s AND status = 'leased'""",
+                    (ttl_s, worker_id))
                 heartbeat(conn, worker_id, current_ticket=ticket_id)
                 conn.commit()
         except Exception:
@@ -128,11 +138,18 @@ def _lease_keeper(dsn: str, worker_id: str, ticket_id: str,
 
 def run_worker(worker_type: str, event_types: list[str],
                process_event: Callable[..., None],
-               poll_interval_s: float = 2.0, batch_size: int = 4,
+               poll_interval_s: float = 2.0, batch_size: int = 1,
                extra_env_check: Callable[[], None] | None = None) -> None:
     """The fleet's single loop: register → heartbeat → claim gated work
     → execute → complete ticket. `process_event(conn, event)` keeps its
-    existing signature and stage logic."""
+    existing signature and stage logic.
+
+    batch_size defaults to 1 (LONG-STAGE-LEASE-CORRECTNESS-V1): a worker
+    executes tickets serially, so claiming ahead bought nothing but made
+    "held" differ from "being processed" — and a book-scale stage running
+    past claim_ttl_s let the reaper expire the queued ones. Parallelism
+    comes from running several workers of a type, which is unaffected.
+    """
     configure_logging(f"worker-{worker_type.replace('_', '-')}")
     identity = worker_identity(worker_type)
     contracts = identity["contracts"]
@@ -207,7 +224,8 @@ def _fail_ticket(ticket_id: str | None, reason: str) -> None:
             conn.execute(
                 """
                 UPDATE stage_tickets SET
-                    status = CASE WHEN attempt >= 3 THEN 'failed' ELSE 'ready' END,
+                    attempt = attempt + 1,
+                    status = CASE WHEN attempt + 1 >= 3 THEN 'failed' ELSE 'ready' END,
                     lease_owner=NULL, lease_expires_at=NULL,
                     last_error_note = %s, updated_at=now()
                  WHERE ticket_id=%s AND status='leased'

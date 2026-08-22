@@ -212,18 +212,45 @@ def _emit_ticket_event(conn: Connection, tid: str, run_id: str, stage: str) -> N
 
 
 def _release_expired_leases(conn: Connection) -> int:
-    """Lease timeout: a ticket claimed but never completed returns to
-    READY for retry (attempt count preserved)."""
+    """Lease timeout: a claimed-but-uncompleted ticket returns to READY.
+
+    LONG-STAGE-LEASE-CORRECTNESS-V1. An expired lease is only evidence of
+    a failed execution when the OWNER IS GONE. A live, heartbeating worker
+    whose lease lapsed is a control-plane fault (renewal missed a beat),
+    not a stage failure, so it must not burn the ticket's retry budget or
+    quarantine a healthy worker — that combination silently failed all 24
+    projections of release-books-v1 without one real failure.
+
+      owner stale  -> attempt += 1, quarantine  (the executor vanished)
+      owner alive  -> attempt unchanged, no quarantine, reason recorded
+    """
     rows = conn.execute(
         """
-        UPDATE stage_tickets SET status='ready', lease_owner=NULL,
-               lease_expires_at=NULL, updated_at=now()
-         WHERE status='leased' AND lease_expires_at < now()
-         RETURNING lease_owner
+        WITH expired AS (
+            SELECT t.ticket_id, t.lease_owner,
+                   COALESCE(w.heartbeat_at < now() - interval '90 seconds', TRUE)
+                       AS owner_stale
+              FROM stage_tickets t
+              LEFT JOIN worker_registrations w ON w.worker_id = t.lease_owner
+             WHERE t.status = 'leased' AND t.lease_expires_at < now()
+        )
+        UPDATE stage_tickets t SET
+               status = 'ready',
+               lease_owner = NULL,
+               lease_expires_at = NULL,
+               attempt = t.attempt + CASE WHEN e.owner_stale THEN 1 ELSE 0 END,
+               last_error_note = CASE
+                   WHEN e.owner_stale THEN 'lease expired: executing worker gone'
+                   ELSE 'lease_expired_while_owner_alive (no retry consumed)'
+               END,
+               updated_at = now()
+          FROM expired e
+         WHERE t.ticket_id = e.ticket_id
+         RETURNING e.lease_owner, e.owner_stale
         """
     ).fetchall()
-    for (owner,) in rows:
-        if owner:
+    for owner, owner_stale in rows:
+        if owner and owner_stale:
             conn.execute(
                 "UPDATE worker_registrations SET status='quarantined', "
                 "last_error='lease expired without completion' WHERE worker_id=%s",
