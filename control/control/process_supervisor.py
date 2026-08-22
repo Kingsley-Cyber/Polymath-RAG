@@ -87,6 +87,30 @@ class Slot:
 
 
 class Supervisor:
+    #: Optional slot allowlist, e.g. POLYMATH_FLEET_ONLY="control,qdrant,
+    #: sidecar_embedder". A targeted run should not hold models it will
+    #: never call: a projection needs the embedder, not GLiNER, spaCy or
+    #: the reranker, and each of those keeps a model resident. Used to
+    #: bound Polymath's footprint on a shared workstation.
+    @staticmethod
+    def _fleet_filter(fleet):
+        only = os.environ.get("POLYMATH_FLEET_ONLY", "").strip()
+        if not only:
+            return fleet
+        def _name(entry):
+            if isinstance(entry, dict):
+                return entry["name"]
+            if isinstance(entry, (tuple, list)):
+                return entry[0]
+            return entry
+
+        wanted = {n.strip() for n in only.split(",") if n.strip()}
+        kept = [e for e in fleet if _name(e) in wanted]
+        missing = wanted - {_name(e) for e in fleet}
+        if missing:
+            raise ValueError(f"POLYMATH_FLEET_ONLY names unknown slots: {sorted(missing)}")
+        return kept
+
     def __init__(self, fleet=FLEET, *, python: str | None = None,
                  log_dir: str | None = None, state_path: str | None = None,
                  max_restarts: int = 5, window_s: float = 300.0,
@@ -100,6 +124,7 @@ class Supervisor:
                  readiness_failures_before_restart: int = 5,
                  backoff_s: float = 2.0, health_timeout_s: float = 30.0,
                  dsn: str | None = None):
+        fleet = self._fleet_filter(fleet)
         self.slots = []
         for entry in fleet:
             if isinstance(entry, dict):

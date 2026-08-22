@@ -95,7 +95,8 @@ def main() -> int:
     ap.add_argument("--target-docs", type=int, default=25)
     ap.add_argument("--out")
     # graceful capacity stop
-    ap.add_argument("--min-free-pct", type=float, default=8.0)
+    ap.add_argument("--min-free-pct", type=float, default=34.0,
+                    help="stop gracefully below this; the default leaves\n                         the workstation owner a third of the machine")
     ap.add_argument("--stall-minutes", type=int, default=25,
                     help="no checkpoint progress for this long => stop")
     a = ap.parse_args()
