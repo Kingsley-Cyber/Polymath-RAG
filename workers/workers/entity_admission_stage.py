@@ -46,6 +46,7 @@ from polymath_shared.entity_knowledge_admission import (
     admit_entity,
     policy,
 )
+from polymath_shared.fact_admission import EndpointAdmission
 from polymath_shared.identity_allocation import span_identity_key
 
 log = logging.getLogger("entity-admission-stage")
@@ -91,6 +92,10 @@ def apply_entity_admission(
     rows: list[tuple] = []
     passed = rejected = demoted = 0
     by_gate: dict[str, int] = {}
+    # Verdicts keyed exactly as FACT-ADMISSION-V1 expects them, so F3 can
+    # attribute a refusal to the ENTITY layer instead of reporting "the
+    # relation gate failed" for an endpoint that was never admissible.
+    verdicts: dict[tuple, Any] = {}
 
     for row, sl in ordered_slices:
         chunk_id = row.get("chunk_id")
@@ -152,6 +157,10 @@ def apply_entity_admission(
             else:
                 passed += 1
 
+            verdicts[(identity.entity_id, span.start, span.chunk_id or chunk_id)] = (
+                EndpointAdmission(admitted=not is_reject,
+                                  reason=decision.reason if is_reject else None))
+
             mid = (mention_id_for(span) if mention_id_for
                    else f"{span.chunk_id or chunk_id}:{span.start}:{span.end}")
             rows.append((
@@ -195,6 +204,9 @@ def apply_entity_admission(
         "rejected": rejected,
         "demoted": demoted,
         "by_gate": by_gate,
+        # Consumed by the fact stage in the same document pass; never
+        # persisted, because the durable record is the decisions table.
+        "verdicts": verdicts,
     }
     if rejected:
         log.info("entity admission: %d/%d refused (%s)%s",

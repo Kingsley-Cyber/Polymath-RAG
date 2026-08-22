@@ -79,17 +79,14 @@ def test_entity_admission_has_a_production_caller():
         "activation: this is NOT_IMPLEMENTED.")
 
 
-@pytest.mark.xfail(
-    strict=False,
-    reason="A3 open: F1-F8 is not yet wired. This test is the definition "
-           "of done for that item and must flip to passing, never be "
-           "deleted or relaxed.")
 def test_fact_admission_has_a_production_caller():
     callers = BI.call_graph_census()["fact_admission"]
     assert callers, (
         "FACT-ADMISSION-V1 has zero production callers. Production ships "
         "the unadmitted graph while the shadow harness reports 14.5% "
-        "wrong -- a number that describes nothing the system does.")
+        "wrong -- a number that describes nothing the system does. "
+        "This was xfail while A3 was open; it flipped to a hard assertion "
+        "the moment F1-F8 was wired, and must never be relaxed again.")
 
 
 # ---------------------------------------------------------------------------

@@ -1019,6 +1019,17 @@ def process_event(conn: Connection, event: dict) -> None:
                 mention_id_for=lambda s: "mention_" + _mention_suffix(s, doc_id))
             _perf["entity_admission_s"] = _t.perf_counter() - _pt
 
+            # FACT-ADMISSION-V1 (F1-F8): the last court before a claim
+            # becomes asserted knowledge. Carries the ENTITY verdicts so
+            # F3 can refuse an endpoint that was never admissible and
+            # attribute the refusal to the entity layer -- "You acquired
+            # Hooked" is refused for `You`, not for `acquired`.
+            from workers.fact_admission_stage import FactAdmissionStage
+
+            _fact_stage = FactAdmissionStage(
+                corpus_id, doc_id,
+                entity_verdicts=_entity_admission.get("verdicts"))
+
             for _row, _sl in ordered_slices:
                 if _sl.parse is not None:
                     _fill_parse_entities(_sl.parse, _sl.entities, corpus_id,
@@ -1085,13 +1096,29 @@ def process_event(conn: Connection, event: dict) -> None:
                                     "subject": candidate.subject.span.text,
                                     "object": candidate.object.span.text})
                     if decision.decision in ("ACCEPT", "QUALIFY") and decision.fact:
-                        _persist_decision(conn, row, candidate, decision,
-                                          corpus_id=corpus_id,
-                                          identities=identities)
+                        # The compiler decided the trigger MEANS this
+                        # predicate. Admission decides whether the claim may
+                        # be ASSERTED. The candidate row above is already
+                        # durable, so a refusal withholds the assertion
+                        # without losing the evidence.
+                        _may_assert = _fact_stage.admits(
+                            row=row, candidate=candidate, decision=decision,
+                            sl=sl, identities=identities)
+                        if _may_assert:
+                            _persist_decision(conn, row, candidate, decision,
+                                              corpus_id=corpus_id,
+                                              identities=identities)
                         if trace.enabled:
+                            # Report the ASSERTION, not the proposal: a fact
+                            # the admission chain withheld must not appear in
+                            # the trace as FACT_ACCEPTED.
                             trace.record(
-                                event_type="fact", decision="FACT_ACCEPTED",
-                                reason_code="FACT_ACCEPTED", doc_id=doc_id,
+                                event_type="fact",
+                                decision=("FACT_ACCEPTED" if _may_assert
+                                          else "FACT_WITHHELD"),
+                                reason_code=("FACT_ACCEPTED" if _may_assert
+                                             else "FACT_ADMISSION_REFUSED"),
+                                doc_id=doc_id,
                                 chunk_id=row["chunk_id"],
                                 sentence_id=f"{row['chunk_id']}:{slice_idx}",
                                 surface=decision.fact.subject_id,
@@ -1109,6 +1136,7 @@ def process_event(conn: Connection, event: dict) -> None:
             _perf["candidates_compile_s"] = _t.perf_counter() - _pt
             _pt = _t.perf_counter()
             _raw.bulk_write(conn, "relation_candidates", _l4_rows)
+            _fact_admission = _fact_stage.flush(conn)
             _perf["l1_l4_writes_s"] += _t.perf_counter() - _pt
             _perf["total_s"] = _t.perf_counter() - _perf.pop("stage_t0")
             _perf = {k: (round(v, 2) if isinstance(v, float) else v)
