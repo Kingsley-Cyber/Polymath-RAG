@@ -6,11 +6,11 @@
 POLYMATH_PG_DSN=… .venv/bin/python eval/v5/implementation_plan.py --write
 ```
 
-Build `90f5122`. Every status below is a PREDICATE evaluated against the running system — source, config, compiled artefacts, database state — never a typed claim.
+Build `2e41a44`. Every status below is a PREDICATE evaluated against the running system — source, config, compiled artefacts, database state — never a typed claim.
 
 This file is generated because a hand-maintained plan drifts, and this repository has already paid for that: `SEMANTIC_CONTRACTS.md` declared rule pack v1.3.0 byte-frozen while `settings.py` shipped v1.2.0, and two admission gate chains were reported as qualified while having zero production callers.
 
-`7 done · 9 open · 3 blocked · 0 unknown`
+`8 done · 10 open · 1 blocked · 0 unknown`
 
 `?` means the probe could not observe the system. It is never folded into done.
 
@@ -50,13 +50,13 @@ This file is generated because a hand-maintained plan drifts, and this repositor
       Built, tested, qualified, frozen -- and zero production callers. 'Figure 4-7' still mints durable graph identities today.
       *probe:* called from workers/workers/entity_admission_stage.py
 
-- [ ] **A3 Wire FACT-ADMISSION-V1 (F1-F8)** — `OPEN` · **new contract required**
+- [x] **A3 Wire FACT-ADMISSION-V1 (F1-F8)** — `DONE` · **new contract required**
       Called only from eval/. Production ships the 38%-wrong graph; the 14.5% figure is a shadow-harness number, not production behaviour.
-      *probe:* no worker/control/orchestrator imports fact_admission
+      *probe:* called from workers/workers/entity_admission_stage.py, workers/workers/extract_worker.py, workers/workers/fact_admission_stage.py
 
-- [-] **A4 Flip fact decisions out of shadow** — `BLOCKED` · **new contract required** · depends on A3
+- [ ] **A4 Flip fact decisions out of shadow** — `OPEN` · **new contract required** · depends on A3
       All 8,744 persisted decisions carry shadow=TRUE. Cutover flips a flag; it never rewrites history.
-      *probe:* blocked by A3 — 0 live of 8744 decisions (rest shadow)
+      *probe:* 0 live of 8780 decisions (rest shadow)
 
 ## SEMANTIC TRACK — P0 repair
 
@@ -74,9 +74,9 @@ This file is generated because a hand-maintained plan drifts, and this repositor
 
 ## SEMANTIC TRACK — P1
 
-- [-] **D3 Restore refused-widening spans to argument binding** — `BLOCKED` · depends on A2, A3
+- [ ] **D3 Restore refused-widening spans to argument binding** — `OPEN` · depends on A2, A3
       CORRECTED. Evidence is NOT destroyed: span_hypotheses holds 44,071 REJECTED/SUPPRESSED_SOURCE records with source offsets, durable in L1/L2. What is lost is the span's participation in ARGUMENT BINDING -- coverage, not evidence. The fix was attempted on candidate/rescue-discourse-v1-failed and FAILED its bar: keeping an unresolved-boundary span active produced wrong facts, and with no gate to catch them, 'no edge beats a wrong edge' was right. Once E1-E7 and F1-F8 are wired, the gate rejects those facts instead, so this becomes safe. Retry only after A2/A3, and A/B it on the bench.
-      *probe:* blocked by A3 — refused widening still discards the accepted span (destroys upstream evidence on downstream failure)
+      *probe:* refused widening still discards the accepted span (destroys upstream evidence on downstream failure)
 
 - [ ] **D4 Stop projecting similar_to into the graph** — `OPEN`
       71% wrong, already T1-only and already excluded from retrieval, but still projected. Subtractive and reversible; evidence survives.
