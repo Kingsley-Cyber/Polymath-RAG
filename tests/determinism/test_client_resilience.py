@@ -183,3 +183,59 @@ def test_routing_projection_checkpoints_so_a_retry_resumes():
     assert "with tx()" in cp, (
         "checkpoint must commit independently of the stage transaction, "
         "which rolls back on failure")
+
+
+def test_runtime_budget_profiles_all_fit_the_ceiling():
+    """Every working set Polymath actually runs must fit its allocation.
+
+    The embedder was measured holding 41.58 GiB of Metal pool on a 32 GB
+    machine, which thrashed the workstation. Four resident models plus
+    the store VM do not fit the 13 GB allocation, so Polymath runs in
+    stages -- and each stage must provably fit.
+    """
+    from polymath_shared.runtime_budget import budget, plan
+
+    profiles = budget().get("profiles") or {}
+    assert profiles, "no runtime profiles defined"
+    for name, spec in profiles.items():
+        p = plan(",".join(spec["slots"]))
+        assert p["fits"], (
+            f"profile {name} commits {p['committed_gb']} GB against a "
+            f"{p['ceiling_gb']} GB ceiling")
+
+
+def test_embedder_metal_pool_is_capped():
+    """A sidecar with a GPU budget must start with a hard watermark."""
+    from polymath_shared.runtime_budget import export_env
+
+    env = export_env("sidecar_embedder")
+    assert float(env["PYTORCH_MPS_HIGH_WATERMARK_RATIO"]) < 0.2, (
+        "Metal pool is effectively uncapped")
+    assert float(env["PYTORCH_MPS_LOW_WATERMARK_RATIO"]) < \
+        float(env["PYTORCH_MPS_HIGH_WATERMARK_RATIO"]), (
+        "low watermark must sit below high so blocks are returned early")
+    assert int(env["POLYMATH_MAX_BATCH_TEXTS"]) <= 16
+    assert int(env["POLYMATH_MAX_BATCH_TOKENS"]) <= 32768
+
+
+def test_embedder_batches_by_tokens_and_releases_metal():
+    """Attention memory scales with the square of sequence length, so a
+    fixed COUNT of long chunks is not a fixed amount of memory."""
+    import ast
+    import inspect
+    import sys
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    src = (root / "sidecars/embedder/server.py").read_text()
+    tree = ast.parse(src)
+    names = {n.name for n in ast.walk(tree)
+             if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
+    assert "_token_bounded_batches" in names, "embedder does not bound batches"
+    assert "_release_mps" in names, "embedder never releases its Metal pool"
+    infer = next(n for n in ast.walk(tree)
+                 if isinstance(n, ast.AsyncFunctionDef) and n.name == "infer")
+    called = {c.func.id for c in ast.walk(infer)
+              if isinstance(c, ast.Call) and isinstance(c.func, ast.Name)}
+    assert "_token_bounded_batches" in called
+    assert "_release_mps" in called

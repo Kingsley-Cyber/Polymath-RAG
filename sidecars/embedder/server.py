@@ -139,6 +139,55 @@ async def ready(response: Response) -> dict:
     return {"ready": True}
 
 
+def _token_bounded_batches(texts: list[str]) -> list[list[int]]:
+    """Group text INDICES into batches bounded by tokens, not by count.
+
+    Attention memory scales with the square of sequence length, so a
+    fixed count of long chunks is not a fixed amount of memory: 32 texts
+    of 8k tokens is a different universe from 32 short ones. Bounding by
+    the token budget keeps every batch roughly the same size in memory
+    regardless of what the corpus contains.
+
+    Order is preserved exactly: batches are contiguous and results are
+    concatenated in input order, so vectors are identical to a single
+    unbatched call.
+    """
+    max_texts = int(os.environ.get("POLYMATH_MAX_BATCH_TEXTS", "8"))
+    max_tokens = int(os.environ.get("POLYMATH_MAX_BATCH_TOKENS", "16384"))
+    batches: list[list[int]] = []
+    current: list[int] = []
+    budget = 0
+    for i, text in enumerate(texts):
+        # Cheap deterministic proxy; the tokenizer is not on this path.
+        approx = max(1, len(text) // 4)
+        if current and (len(current) >= max_texts or budget + approx > max_tokens):
+            batches.append(current)
+            current, budget = [], 0
+        current.append(i)
+        budget += approx
+    if current:
+        batches.append(current)
+    return batches
+
+
+def _release_mps() -> None:
+    """Return Metal blocks to the system after each request.
+
+    PyTorch's MPS allocator keeps freed blocks in a pool. Across a
+    corpus-sized projection that pool grew to 41.58 GiB on a 32 GB
+    machine and the host thrashed; the sidecar then failed with
+    `MPS backend out of memory` mid-batch. Releasing per request keeps
+    the process inside its budget.
+    """
+    try:
+        import torch
+
+        if torch.backends.mps.is_available():
+            torch.mps.empty_cache()
+    except Exception:
+        pass
+
+
 @app.post("/infer", response_model=EmbedResponse)
 async def infer(request: EmbedRequest) -> EmbedResponse:
     if not getattr(app.state, "weights", {}).get("verified", False):
@@ -148,7 +197,17 @@ async def infer(request: EmbedRequest) -> EmbedResponse:
         contract.query_prefix + text if request.representation_kind == "query" else text
         for text in request.texts
     ]
-    vectors = app.state.model.encode(prefixed, normalize_embeddings=True)
+    model = app.state.model
+    vectors: list = [None] * len(prefixed)
+    try:
+        for group in _token_bounded_batches(prefixed):
+            chunk = [prefixed[i] for i in group]
+            encoded = model.encode(chunk, batch_size=len(chunk),
+                                   normalize_embeddings=True)
+            for slot, vec in zip(group, encoded):
+                vectors[slot] = vec
+    finally:
+        _release_mps()
     return EmbedResponse(
         vectors=[v.tolist() for v in vectors],
         contract_id=contract.contract_id,

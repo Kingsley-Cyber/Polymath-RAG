@@ -19,6 +19,23 @@ psycopg.connect('postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath', co
 PY
 done
 
+# 1b. RUNTIME BUDGET. Polymath is allocated a fixed share of this
+# workstation (config/runtime_budget.yaml). Select a profile so only the
+# models the current stage calls are resident:
+#   POLYMATH_PROFILE=projection|extraction|graph|retrieval
+# The supervisor runs a preflight and REFUSES to start an over-committed
+# working set rather than discovering it by thrashing the machine.
+if [ -n "${POLYMATH_PROFILE:-}" ]; then
+  echo "boot: runtime profile ${POLYMATH_PROFILE}"
+fi
+.venv/bin/python - <<'BUDGET' || exit 1
+import sys
+sys.path.insert(0, "shared")
+from polymath_shared.runtime_budget import preflight
+p = preflight()
+print(f"boot: budget {p['committed_gb']} GB committed of {p['ceiling_gb']} GB ceiling")
+BUDGET
+
 # 2. everything else lives under ONE supervisor (sidecars, orchestrator,
 #    control, workers) with bounded restart + quarantine + health checks.
 mkdir -p /tmp/polymath_fleet

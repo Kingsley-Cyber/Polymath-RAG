@@ -1,0 +1,91 @@
+# POLYMATH RUNTIME BUDGET — one hard ceiling for the whole repository.
+#
+# The workstation owner allocates Polymath 13 GB on a 32 GB Mac Studio.
+# Everything Polymath starts must fit inside it: the Docker VM holding
+# the stores, every sidecar's model and GPU pool, the workers, and the
+# orchestrator. Exceeding it is a defect, not a tuning opportunity.
+#
+# Why this file exists: the embedder was observed holding 41.58 GiB of
+# MPS memory on a 32 GB machine because `model.encode()` was called with
+# no batch bound and PyTorch's Metal pool was never released. That is
+# what made the host thrash. A budget nobody enforces is a comment, so
+# these numbers are read at boot, exported as real limits, and checked
+# by a preflight that refuses to start an over-committed fleet.
+
+total_gb: 13.0
+
+# --------------------------------------------------------------------
+# Stores (Docker VM). The VM reserves its allocation as wired memory
+# whether or not containers use it, so this is a real cost the moment
+# Docker starts — it is the single largest line and the one most worth
+# keeping honest.
+# --------------------------------------------------------------------
+docker:
+  vm_gb: 5.0
+  containers:
+    qdrant_gb: 2.5      # vectors are mmap'd; it pages rather than pins
+    neo4j_gb: 1.0
+    postgres_gb: 1.0
+    redis_gb: 0.25
+
+# --------------------------------------------------------------------
+# Sidecars. `resident_gb` is the host RAM the process holds; `mps_gb`
+# caps its Metal pool, which is the allocation that actually ran away.
+#
+# NOT all sidecars run at once. A projection needs the embedder only; an
+# extraction needs GLiNER and spaCy. `POLYMATH_FLEET_ONLY` selects the
+# working set, and the preflight budgets only what is actually started.
+# --------------------------------------------------------------------
+sidecars:
+  sidecar_embedder:
+    resident_gb: 0.5      # measured host RSS ~0.12 GB; headroom for tokenizer
+    mps_gb: 2.0
+    # Long chunk texts make attention memory scale with the SQUARE of
+    # sequence length, so batches are bounded by TOKENS, not by count.
+    max_batch_tokens: 16384
+    max_batch_texts: 8
+  sidecar_gliner:
+    resident_gb: 0.8
+    mps_gb: 2.0
+  sidecar_spacy:
+    resident_gb: 0.5
+    mps_gb: 0.0         # CPU pipeline
+  sidecar_reranker:
+    resident_gb: 0.8
+    mps_gb: 1.5
+
+# --------------------------------------------------------------------
+# Control plane. Workers are thin; the orchestrator holds request state.
+# --------------------------------------------------------------------
+control_plane:
+  per_worker_gb: 0.15
+  orchestrator_gb: 0.5
+  control_gb: 0.15
+
+# Refuse to start when the selected working set exceeds the ceiling.
+enforce_preflight: true
+# Leave this much of the budget unallocated for spikes.
+reserve_gb: 0.5
+
+# --------------------------------------------------------------------
+# PROFILES — the working sets Polymath actually runs.
+#
+# Four resident models plus the store VM do not fit 13 GB, and pretending
+# otherwise is how a machine ends up thrashing. Polymath therefore runs
+# in stages, loading only the models the current stage calls. Select one
+# with POLYMATH_PROFILE; it expands to POLYMATH_FLEET_ONLY.
+# --------------------------------------------------------------------
+profiles:
+  projection:
+    why: "embed + upsert vectors; needs no extraction models"
+    slots: [control, qdrant, sidecar_embedder]
+  extraction:
+    why: "ingest and extract; needs GLiNER and spaCy, plus embedder for projection"
+    slots: [control, intake, profile, extract, sidecar_gliner, sidecar_spacy,
+            sidecar_embedder]
+  graph:
+    why: "canonicalize and project the graph; no provider models"
+    slots: [control, canonicalize, project_canonical, neo4j, verify]
+  retrieval:
+    why: "serve queries; needs embedder for query vectors and the reranker"
+    slots: [orchestrator, sidecar_embedder, sidecar_reranker]

@@ -96,6 +96,11 @@ class Supervisor:
     def _fleet_filter(fleet):
         only = os.environ.get("POLYMATH_FLEET_ONLY", "").strip()
         if not only:
+            prof = os.environ.get("POLYMATH_PROFILE", "").strip()
+            if prof:
+                from polymath_shared.runtime_budget import profile_slots
+                only = ",".join(profile_slots(prof))
+        if not only:
             return fleet
         def _name(entry):
             if isinstance(entry, dict):
@@ -165,10 +170,21 @@ class Supervisor:
             argv = ([self.python, slot.module] if slot.module.endswith(".py")
                     else [self.python, "-m", slot.module])   # scripts, for tests
             cwd = None
+        # RUNTIME BUDGET: a slot is started with its own memory caps, so
+        # the limit binds at the process that actually allocates. The
+        # embedder once held 41.58 GiB of Metal pool on a 32 GB machine
+        # because nothing capped it.
+        child_env = os.environ.copy()
+        try:
+            from polymath_shared.runtime_budget import export_env
+            child_env.update(export_env(slot.name))
+        except Exception:
+            log.warning("no runtime budget for slot %s; starting uncapped",
+                        slot.name)
         slot.proc = subprocess.Popen(
             argv, cwd=cwd,
             stdout=out, stderr=subprocess.STDOUT,
-            env=os.environ.copy(), start_new_session=True)
+            env=child_env, start_new_session=True)
         slot.started_at = time.time()
         log.info("spawned %s (%s) pid=%s", slot.name, slot.module, slot.proc.pid)
 
@@ -330,6 +346,18 @@ class Supervisor:
             pass
 
     def run_forever(self, poll_s: float = 2.0) -> None:
+        # Refuse to start an over-committed fleet rather than discover it
+        # by thrashing the workstation.
+        try:
+            from polymath_shared.runtime_budget import preflight
+            plan = preflight()
+            log.info("runtime budget: %.2f GB committed of %.2f GB ceiling",
+                     plan["committed_gb"], plan["ceiling_gb"])
+        except Exception as exc:
+            if type(exc).__name__ == "BudgetExceeded":
+                log.error("REFUSING TO START: %s", exc)
+                raise
+            log.warning("runtime budget preflight unavailable: %s", exc)
         signal.signal(signal.SIGTERM, self._on_term)
         signal.signal(signal.SIGINT, self._on_term)
         log.info("cp2.1 supervisor: %d slots", len(self.slots))
