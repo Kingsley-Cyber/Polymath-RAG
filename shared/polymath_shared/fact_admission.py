@@ -96,6 +96,13 @@ class AdmissionDecision:
 
 
 @dataclass
+class EndpointAdmission:
+    """What ENTITY-KNOWLEDGE-ADMISSION-V1 decided about one endpoint."""
+    admitted: bool = True
+    reason: Optional[str] = None
+
+
+@dataclass
 class FactContext:
     """Everything a gate may read. Assembled once per candidate.
 
@@ -133,6 +140,13 @@ class FactContext:
     parse: Optional[dict] = None                 # syntax-evidence-v1 tokens
     scope: dict = field(default_factory=dict)    # persisted ScopeFlags
     sentence_start: int = 0
+    # ENTITY-KNOWLEDGE-ADMISSION-V1 verdicts for the two endpoints. When
+    # supplied, F3 consumes them: an endpoint that is not admissible as
+    # canonical knowledge cannot anchor a canonical fact, and the reason
+    # is attributed to the ENTITY layer so forensics can tell "the
+    # relation gate failed" from "the endpoint was never admissible".
+    subject_entity_admission: Optional[EndpointAdmission] = None
+    object_entity_admission: Optional[EndpointAdmission] = None
 
 
 # ---------------------------------------------------------------------------
@@ -252,6 +266,16 @@ def f3_endpoints(ctx: FactContext, pack: dict) -> GateVerdict:
         if pos in _PRONOUN_POS:
             return GateVerdict(REJECT, f"ENDPOINT_{side}_PRONOMINAL",
                                f"{side} head token is a pronoun")
+
+    # Entity-layer eligibility. Extent errors ("Pavlovian" -> pavlov) and
+    # structural entities ("Figure 4-7") are endpoint defects that no
+    # relation gate can repair, so the entity boundary decides and this
+    # gate merely consumes its verdict.
+    for side, adm in (("SUBJ", ctx.subject_entity_admission),
+                      ("OBJ", ctx.object_entity_admission)):
+        if adm is not None and not adm.admitted:
+            return GateVerdict(REJECT, f"ENDPOINT_{side}_NOT_KNOWLEDGE",
+                               f"entity admission refused {side}: {adm.reason}")
     return GateVerdict(PASS)
 
 
@@ -476,6 +500,12 @@ def f5_predicate_evidence(ctx: FactContext, pack: dict) -> GateVerdict:
     rule = _pack_rule(pack, ctx.predicate)
     if rule is None:
         return GateVerdict(REJECT, "PRED_UNKNOWN", ctx.predicate)
+    if ctx.predicate in set(policy().get("t1_only_predicates") or []):
+        # Stratification, not suppression: the relation stays as fully
+        # provenanced Tier-1 information; it may not be ASSERTED.
+        return GateVerdict(QUALIFY, "PREDICATE_T1_ONLY",
+                           f"'{ctx.predicate}' is not assertable: its "
+                           f"licensing evidence does not separate the sense")
     forms = _trigger_forms(ctx)
     if not forms:
         return GateVerdict(REJECT, "PRED_NO_TRIGGER", "no trigger evidence")
@@ -667,6 +697,35 @@ def f7_direction(ctx: FactContext, pack: dict) -> GateVerdict:
     def _hit(pool: set[str]) -> bool:
         return any(f in pool or any(f == p or f in p.split() for p in pool)
                    for f in forms)
+
+    # S4: a past participle modifying a noun, with the other endpoint in
+    # its prepositional complement, expresses the INVERSE relation:
+    # "the Bigtable data model (used IN Cassandra)" means Cassandra uses
+    # the model. Candidate order says nothing; the construction does.
+    part_inv = (policy().get("participial_inverse") or {}).get(ctx.predicate)
+    if part_inv and ctx.parse:
+        trig = _trigger_token(ctx)
+        if trig is not None and trig.get("dep") in {"acl", "relcl", "amod"}:
+            tokens = ctx.parse.get("tokens") or []
+            obj_head = _head_token_in(ctx, ctx.object_start, ctx.object_end)
+            for t in tokens:
+                if (t.get("head_i") == trig.get("i")
+                        and t.get("dep") in {"prep", "agent"}
+                        and (t.get("lemma") or t.get("text") or "").lower()
+                        in {str(x).lower() for x in part_inv}):
+                    pobj = next((x for x in tokens
+                                 if x.get("head_i") == t.get("i")
+                                 and x.get("dep") in {"pobj", "obj"}), None)
+                    if pobj is not None and obj_head is not None and \
+                            pobj.get("i") == obj_head.get("i"):
+                        if _signature_ok(rule, ctx.object_type, ctx.subject_type):
+                            return GateVerdict(
+                                PASS, "DIRECTION_PARTICIPIAL_FLIP",
+                                "participial inverse construction", flip=True)
+                        return GateVerdict(
+                            REJECT, "DIRECTION_FLIP_UNLICENSED",
+                            "participial inverse but flipped signature "
+                            "unlicensed")
 
     syn_subj, syn_obj, passive = _syntactic_roles(ctx)
     subj_side = _side_of(ctx, syn_subj)

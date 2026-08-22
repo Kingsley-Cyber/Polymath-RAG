@@ -127,6 +127,48 @@ def attach_parses(rows: list[dict]) -> dict:
     return {"sentences": len(sentences)}
 
 
+
+def _admit_endpoints(rows: list[dict], layout: dict) -> dict:
+    """Run entity admission once per distinct endpoint occurrence.
+
+    Keyed by (entity_id, span start, chunk) because the SAME entity can be
+    well-formed in one sentence and a cut-word fragment in another — the
+    verdict belongs to the occurrence, not to the id.
+    """
+    from polymath_shared.entity_knowledge_admission import (
+        EntityContext, admit_entity,
+    )
+    from polymath_shared.fact_admission import EndpointAdmission
+    from polymath_shared.source_region import region_at
+
+    out: dict = {}
+    for r in rows:
+        off = r["offsets"] if isinstance(r["offsets"], dict) else {}
+        for side in ("subject", "object"):
+            eid = r[f"{side}_id"]
+            start, end = off.get(f"{side}_start"), off.get(f"{side}_end")
+            key = (eid, start, r["chunk_id"])
+            if eid is None or key in out:
+                continue
+            surface = r.get(f"{side}_surface") or ""
+            region = r["region"]
+            if start is not None and end is not None:
+                region = region_at(r["chunk_text"], start, end,
+                                   layout.get(r["doc_id"]))
+            d = admit_entity(EntityContext(
+                entity_id=eid, surface=surface,
+                normalized_surface=surface.lower(),
+                core_type=r[f"{side}_type"],
+                admission_class=r[f"{side}_class"],
+                doc_id=r["doc_id"], chunk_id=r["chunk_id"],
+                char_start=start, char_end=end,
+                chunk_text=r["chunk_text"], region=region,
+                parse=r.get("parse"), sentence_start=r["sentence_start"]))
+            out[key] = EndpointAdmission(
+                admitted=(d.outcome == "PASS"), reason=d.reason)
+    return out
+
+
 def run(corpus: str, out_path: str | None, persist: bool = False) -> dict:
     from polymath_shared.fact_admission import FactContext, admit, policy
     from polymath_shared.rulepack.compiler import load_rule_pack
@@ -153,6 +195,12 @@ def run(corpus: str, out_path: str | None, persist: bool = False) -> dict:
 
     stats = attach_parses(rows)
 
+    # ENTITY-KNOWLEDGE-ADMISSION-V1 runs FIRST: an endpoint that cannot be
+    # asserted as knowledge cannot anchor an asserted fact. Each endpoint
+    # is judged once and the verdict is cached, so the entity pass costs
+    # one decision per distinct (entity, span), not one per candidate.
+    entity_decisions = _admit_endpoints(rows, layout)
+
     decisions, gate_census, reason_census = [], Counter(), Counter()
     pred_before, pred_after = Counter(), Counter()
     doc_before, doc_after = Counter(), Counter()
@@ -176,6 +224,10 @@ def run(corpus: str, out_path: str | None, persist: bool = False) -> dict:
             chunk_text=r["chunk_text"], region=r["region"],
             parse=r.get("parse"), scope=(prov.get("scope") or {}),
             sentence_start=r["sentence_start"],
+            subject_entity_admission=entity_decisions.get(
+                (r["subject_id"], off.get("subject_start"), r["chunk_id"])),
+            object_entity_admission=entity_decisions.get(
+                (r["object_id"], off.get("object_start"), r["chunk_id"])),
         )
         d = admit(ctx, pack)
         pred_before[r["predicate"]] += 1

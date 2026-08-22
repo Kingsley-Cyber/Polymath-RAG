@@ -68,6 +68,10 @@ _CODE_LINE = re.compile(r"^\s*(?:[$#>]\s"
 # normalized text, so structure has to be measured, not assumed.
 _PAGE_REF = re.compile(r",\s*\d{1,4}(?:\s*[–—-]\s*\d{1,4})?(?=[\s,.;]|$)")
 _TABLE_CELL = re.compile(r"\b[A-Z]{1,3}\d{2,5}\s*,")
+# Bibliographic furniture: volume/number/pages/doi/isbn/proceedings.
+_CITATION_FURNITURE = re.compile(
+    r"\b(?:volume|vol\.|number|no\.|pages|pp\.|doi|isbn|issn|"
+    r"proceedings|journal|conference|symposium|eds?\.|edition)\b", re.I)
 
 
 def _page_ref_density(text: str) -> float:
@@ -97,7 +101,12 @@ def classify_chunk(text: str) -> str:
 
     # Bibliography: dense citation shapes anywhere in the chunk.
     if (len(_YEAR_CITE.findall(text)) >= 4
-            or len(_AUTHOR_INITIAL.findall(text)) >= 5):
+            or len(_AUTHOR_INITIAL.findall(text)) >= 5
+            # A single dense reference line ("Nancy Lynch and Alex
+            # Shvartsman: 'Robust Emulation ...' Journal of the ACM,
+            # volume 42, number 1, pages 124-142") carries the same
+            # citation furniture without repeating it four times.
+            or len(_CITATION_FURNITURE.findall(text)) >= 3):
         return BIBLIOGRAPHY
 
     # newline-independent: dense page references are an index/TOC page

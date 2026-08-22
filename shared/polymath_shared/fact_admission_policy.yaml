@@ -60,7 +60,10 @@ orientation:
                          "dependent on", "requires"]
     inverse_triggers:   ["required by", "needed by", "relied upon by"]
   developed:
-    canonical_triggers: [develop, build, engineer, implement, "developed by"]
+    # `implement` deliberately absent: deploying or configuring a
+    # third-party product is not developing it ("NexaTech implemented
+    # Splunk"). That reading belongs to uses/implemented_with.
+    canonical_triggers: [develop, engineer, "developed by", "development of"]
     inverse_triggers:   []
   acquired:
     canonical_triggers: [acquire, buy, purchase, absorb, acquisition, takeover]
@@ -78,8 +81,12 @@ orientation:
   # "X is a Y" is the copula `be`, so canonical orientation must name it
   # explicitly or every definitional fact fails orientation licensing.
   founded:
-    canonical_triggers: [found, establish, form, start, "co-found",
-                         "founded", "established"]
+    # `start` deliberately absent: "started his career at Microsoft"
+    # produced founded(joe beda, microsoft). Starting AT an organisation
+    # is not founding it, and no orientation evidence distinguishes the
+    # two, so the weaker trigger does not license the stronger claim.
+    canonical_triggers: [found, establish, "co-found", "founded",
+                         "established", "incorporated"]
     inverse_triggers:   ["founded by", "established by"]
   stated_in:
     canonical_triggers: [state, describe, document, report, per, note,
@@ -211,3 +218,44 @@ predicate_strength:
   causes: 5
   alias_of: 5
   occurred_at: 2
+
+
+# ---------------------------------------------------------------------
+# S3 — PREDICATE ASSERTABILITY.
+#
+# Which predicates may reach T2 at all. This is stratification, not
+# suppression: a predicate listed here as t1_only still produces a fully
+# provenanced Tier-1 relation that retrieval and future reasoning can
+# use — it simply may not be ASSERTED as canonical knowledge.
+#
+# The list is evidence-driven, not taste. Measured on the 25-book
+# corpus, whole admitted population classified against evidence spans:
+#
+#   similar_to   29% supported / 71% wrong  (n=14)
+#
+# Its licensing evidence is the "comparison" class, carried by triggers
+# (`like`, `parallel`, `related to`) that mark exemplification
+# ("elements like IP addresses"), concurrency ("running in parallel
+# with") or mere association at least as often as similarity. No
+# deterministic contract available to us separates those senses, so the
+# honest tier for the whole predicate is T1.
+# ---------------------------------------------------------------------
+t1_only_predicates:
+  - similar_to
+
+# ---------------------------------------------------------------------
+# S4 — PARTICIPIAL INVERSE CONSTRUCTIONS.
+#
+# "the Bigtable data model (used in Cassandra)" means Cassandra uses the
+# model, not the reverse. A past participle modifying a noun, with the
+# other endpoint inside its prepositional complement, inverts the
+# canonical orientation. Listed per predicate as ontology metadata so
+# the mechanism stays declarative.
+# ---------------------------------------------------------------------
+participial_inverse:
+  uses: [in, by, at, throughout, across, within]
+  developed: [by]
+  created: [by]
+  founded: [by]
+  owns: [by]
+  employs: [by]

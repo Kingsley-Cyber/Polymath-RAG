@@ -27,6 +27,16 @@ class SidecarUnavailable(RuntimeError):
     """
 
 
+#: Read budget for GPU inference calls. Connect and pool stay short (see
+#: SidecarClient.__init__) so a dead or restarted sidecar is still detected
+#: in seconds; only the READ phase is patient. Measured need: on the shared
+#: MPS device a 32-text embed batch takes ~2.4s idle but ~38s while GLiNER
+#: extraction runs, so the generic 30s budget failed every attempt of a
+#: projection and burned the ticket. A wedged sidecar is caught by the
+#: readiness probe and the supervisor, never by starving this timeout.
+INFERENCE_READ_TIMEOUT_S = 300.0
+
+
 class SidecarClient:
     def __init__(
         self,
@@ -135,7 +145,9 @@ class GlinerClient(SidecarClient):
     """Client for the GLiNER two-pass runtime (sidecar gliner-runtime)."""
 
     def __init__(self, pin_release: str | None = None) -> None:
-        super().__init__(get_settings().sidecars.gliner_url, pin_release=pin_release)
+        super().__init__(get_settings().sidecars.gliner_url,
+                         timeout=INFERENCE_READ_TIMEOUT_S,
+                         pin_release=pin_release)
 
     def entity_pass(self, text: str, labels: list[str], threshold: float = 0.5) -> dict[str, Any]:
         return self.infer({"task": "entity", "text": text, "labels": labels, "threshold": threshold})
@@ -184,7 +196,9 @@ class EmbedderClient(SidecarClient):
     contract (G2 gate 4)."""
 
     def __init__(self, pin_release: str | None = None) -> None:
-        super().__init__(get_settings().sidecars.embedder_url, pin_release=pin_release)
+        super().__init__(get_settings().sidecars.embedder_url,
+                         timeout=INFERENCE_READ_TIMEOUT_S,
+                         pin_release=pin_release)
 
     def embed(self, texts: list[str], representation_kind: str) -> dict[str, Any]:
         return self.infer({
@@ -205,7 +219,9 @@ class SpacySyntaxClient(SidecarClient):
     CONTRACT_ID = "syntax-evidence-v1"
 
     def __init__(self, pin_release: str | None = None) -> None:
-        super().__init__(get_settings().sidecars.spacy_url, pin_release=pin_release)
+        super().__init__(get_settings().sidecars.spacy_url,
+                         timeout=INFERENCE_READ_TIMEOUT_S,
+                         pin_release=pin_release)
 
     def syntax(self, sentences: list[dict[str, str]]) -> dict[str, Any]:
         response = self.infer({"sentences": sentences})

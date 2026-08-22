@@ -137,3 +137,24 @@ def test_server_error_is_retried_then_raised(monkeypatch):
     with pytest.raises(httpx.HTTPStatusError):
         c.request("POST", "/infer", json={}, attempts=3)
     assert _Client503.calls == 3
+
+
+def test_inference_clients_are_connect_fast_and_read_patient():
+    """Contended GPU inference is legitimately slow: a 32-text embed
+    batch measured ~2.4s idle and ~38s while extraction ran, so the
+    generic 30s budget failed every attempt of a projection and burned
+    the ticket. Connect stays short so a dead sidecar is still caught
+    immediately; only the read phase is patient."""
+    from polymath_shared.clients import (
+        INFERENCE_READ_TIMEOUT_S, EmbedderClient, GlinerClient,
+        SpacySyntaxClient,
+    )
+    assert INFERENCE_READ_TIMEOUT_S >= 120.0
+    for factory in (EmbedderClient, GlinerClient, SpacySyntaxClient):
+        c = factory()
+        try:
+            assert c._timeout.read == INFERENCE_READ_TIMEOUT_S
+            assert c._timeout.connect <= 5.0
+            assert c._timeout.pool <= 5.0
+        finally:
+            c.close()
