@@ -297,3 +297,85 @@ def test_a_long_stage_beyond_ttl_survives_with_renewal():
     with tx() as c:
         assert _status(c, tid) == "leased", "renewed ticket was reaped anyway"
         assert _attempt(c, tid) == 0
+
+
+def test_stage_transaction_does_not_hold_the_worker_registration_lock():
+    """SELF-DEADLOCK regression.
+
+    Heartbeating inside the stage transaction locks this worker's own
+    worker_registrations row for the entire stage. A 46-minute projection
+    then blocked its own lease keeper (which heartbeats on a second
+    connection) and the control plane's staleness sweep: the heartbeat
+    froze, the lease expired, control stopped ticking, and the worker
+    looked wedged while it was working normally.
+
+    The stage transaction must therefore not touch worker_registrations.
+    """
+    import ast
+    import inspect
+    import textwrap
+
+    from polymath_shared import worker_runtime
+
+    tree = ast.parse(textwrap.dedent(inspect.getsource(worker_runtime.run_worker)))
+
+    def calls(node):
+        return {n.func.id for n in ast.walk(node)
+                if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+
+    stage_blocks = [w for w in ast.walk(tree) if isinstance(w, ast.With)
+                    and "process_event" in calls(w)]
+    assert stage_blocks, "could not find the stage transaction"
+    for block in stage_blocks:
+        assert "heartbeat" not in calls(block), (
+            "heartbeat is inside the stage transaction; it holds this "
+            "worker's registration row lock for the whole stage and "
+            "deadlocks the worker's own lease keeper")
+
+
+def test_lease_keeper_renews_under_a_concurrent_long_transaction():
+    """The keeper must make progress while a long stage transaction is
+    open on another connection — the exact live condition that stalled."""
+    import threading
+
+    from polymath_shared.db import tx
+    from polymath_shared.settings import get_settings
+    from polymath_shared.worker_runtime import _lease_keeper
+    from polymath_shared.execution import heartbeat
+
+    with tx() as c:
+        _register(c, "w-lock", heartbeat_age_s=0)
+        tid, _ = _mk_ticket(c, "extract", status="leased", owner="w-lock",
+                            lease_offset_s=5)
+
+    # hold a long transaction that has ALREADY touched this worker's row
+    holder_ready = threading.Event()
+    release = threading.Event()
+
+    def holder():
+        with tx() as conn:
+            heartbeat(conn, "w-lock")
+            holder_ready.set()
+            release.wait(timeout=20)
+
+    th_hold = threading.Thread(target=holder, daemon=True)
+    th_hold.start()
+    holder_ready.wait(timeout=10)
+
+    stop = threading.Event()
+    th = threading.Thread(target=_lease_keeper,
+                          args=(get_settings().postgres.dsn, "w-lock", tid,
+                                300, stop, 0.2), daemon=True)
+    th.start()
+    time.sleep(2.0)
+    release.set()
+    stop.set()
+    th.join(timeout=10); th_hold.join(timeout=10)
+
+    with tx() as c:
+        remaining = c.execute(
+            "SELECT EXTRACT(EPOCH FROM (lease_expires_at - now())) "
+            "FROM stage_tickets WHERE ticket_id=%s", (tid,)).fetchone()[0]
+    assert remaining > 60, (
+        f"keeper made no progress while a long transaction was open "
+        f"(remaining {remaining}s)")

@@ -179,9 +179,23 @@ def run_worker(worker_type: str, event_types: list[str],
                           _gs().worker.claim_ttl_s, _stop),
                     daemon=True)
                 _keeper.start()
+                # SELF-DEADLOCK (measured): heartbeating INSIDE the stage
+                # transaction locks this worker's own worker_registrations
+                # row for the whole stage. A 46-minute projection therefore
+                # blocked its own lease keeper (which heartbeats on a second
+                # connection) AND the control plane's staleness sweep — so
+                # the heartbeat froze, the lease expired, control stopped
+                # ticking, and the worker looked wedged while it was in fact
+                # working. The heartbeat belongs in its own short
+                # transaction, before the long one opens.
                 try:
                     with tx() as conn:
                         heartbeat(conn, identity["worker_id"], current_ticket=ticket_id)
+                except Exception:
+                    log.warning("pre-stage heartbeat failed; continuing",
+                                extra={"error_code": "heartbeat_failed"})
+                try:
+                    with tx() as conn:
                         process_event(conn, event)
                         complete_ticket(conn, ticket_id)
                     with tx() as conn:
