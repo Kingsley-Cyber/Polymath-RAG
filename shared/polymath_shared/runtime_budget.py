@@ -20,6 +20,7 @@ import functools
 import os
 import pathlib
 import subprocess
+import sys
 from typing import Any
 
 import yaml
@@ -37,11 +38,14 @@ def budget() -> dict[str, Any]:
 
 
 def physical_gb() -> float:
-    out = subprocess.run(["sysctl", "-n", "hw.memsize"],
-                         capture_output=True, text=True)
     try:
+        out = subprocess.run(["sysctl", "-n", "hw.memsize"],
+                             capture_output=True, text=True, timeout=30)
         return int(out.stdout.strip()) / (1024 ** 3)
-    except ValueError:
+    except Exception:
+        # Non-Darwin, sysctl absent, or the call failed. Callers treat 0
+        # as "unknown" and fall back; raising here would take the whole
+        # supervisor down over a memory-size probe.
         return 0.0
 
 
@@ -49,14 +53,42 @@ def physical_gb() -> float:
 # MPS caps
 # ---------------------------------------------------------------------------
 
+@functools.lru_cache(maxsize=1)
+def mps_denominator_gb() -> float:
+    """The number PyTorch actually divides the watermark ratio by.
+
+    NOT physical memory. `PYTORCH_MPS_HIGH_WATERMARK_RATIO` is applied
+    against Metal's RECOMMENDED MAX WORKING SET, which on Apple Silicon
+    is roughly 78% of RAM (24.96 GiB of 32 GiB on this host). Dividing
+    the budget by physical memory instead produced a cap 22% tighter
+    than the budget stated: a 2.0 GB embedder budget became a 1.56 GiB
+    ceiling, and the projection failed with `MPS backend out of memory`
+    at 1.54 GiB allocated while the budget appeared to have headroom.
+
+    Asked of torch in a subprocess so the supervisor -- which sizes the
+    fleet before any model loads -- never imports torch itself.
+    """
+    probe = ("import torch,sys;"
+             "sys.stdout.write(str(torch.mps.recommended_max_memory()))")
+    try:
+        out = subprocess.run([sys.executable, "-c", probe],
+                             capture_output=True, text=True, timeout=60)
+        value = int(out.stdout.strip()) / (1024 ** 3)
+        if value > 0:
+            return value
+    except Exception:
+        pass
+    # Metal unavailable or torch absent: the conventional Apple Silicon
+    # fraction is a far better estimate than physical memory.
+    return (physical_gb() or 32.0) * 0.78
+
+
 def mps_env(slot: str) -> dict[str, str]:
     """Environment that bounds one sidecar's Metal pool.
 
-    PyTorch expresses the cap as a RATIO of the machine's recommended
-    maximum, so the absolute gigabyte figure in the budget is converted
-    against physical memory. The low watermark sits below the high one so
-    the allocator starts returning blocks before it hits the wall instead
-    of raising `MPS backend out of memory` mid-batch.
+    The low watermark sits below the high one so the allocator starts
+    returning blocks before it hits the wall instead of raising `MPS
+    backend out of memory` mid-batch.
     """
     spec = (budget().get("sidecars") or {}).get(slot) or {}
     cap_gb = float(spec.get("mps_gb", 0) or 0)
@@ -64,8 +96,7 @@ def mps_env(slot: str) -> dict[str, str]:
         # No GPU budget: keep the runtime off Metal entirely.
         return {"PYTORCH_ENABLE_MPS_FALLBACK": "1",
                 "POLYMATH_MPS_CAP_GB": "0"}
-    total = physical_gb() or 32.0
-    high = max(0.02, min(0.95, cap_gb / total))
+    high = max(0.02, min(0.95, cap_gb / mps_denominator_gb()))
     return {
         "PYTORCH_MPS_HIGH_WATERMARK_RATIO": f"{high:.4f}",
         "PYTORCH_MPS_LOW_WATERMARK_RATIO": f"{high * 0.7:.4f}",

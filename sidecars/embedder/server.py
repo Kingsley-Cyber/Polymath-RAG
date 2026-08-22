@@ -170,6 +170,43 @@ def _token_bounded_batches(texts: list[str]) -> list[list[int]]:
     return batches
 
 
+def _is_oom(exc: BaseException) -> bool:
+    return isinstance(exc, RuntimeError) and "out of memory" in str(exc).lower()
+
+
+def _encode_adaptive(model, texts: list[str], depth: int = 0):
+    """Encode a group, halving it on OOM instead of failing the request.
+
+    The batch planner bounds groups by an APPROXIMATE token count
+    (`len(text) // 4`) because the tokenizer is deliberately not on this
+    path. An approximation is occasionally wrong in the expensive
+    direction, and when it was, the Metal allocator raised and the
+    sidecar answered 500 -- which failed the caller's whole projection
+    ticket and burned one of its retries. A wrong size estimate is not a
+    reason to lose work: split the group, release the pool, and try
+    again.
+
+    Splitting cannot change the result. Encoding is per-text and
+    order-preserving, so any grouping yields identical vectors.
+    """
+    try:
+        return list(model.encode(texts, batch_size=len(texts),
+                                 normalize_embeddings=True))
+    except Exception as exc:
+        if not _is_oom(exc) or len(texts) == 1:
+            # A single text that will not fit is a real capacity failure:
+            # the budget cannot encode this corpus and must be raised.
+            raise
+        _release_mps()
+        mid = len(texts) // 2
+        log.warning("mps oom on %d texts (depth %d); splitting to %d + %d",
+                    len(texts), depth, mid, len(texts) - mid)
+        left = _encode_adaptive(model, texts[:mid], depth + 1)
+        _release_mps()
+        right = _encode_adaptive(model, texts[mid:], depth + 1)
+        return left + right
+
+
 def _release_mps() -> None:
     """Return Metal blocks to the system after each request.
 
@@ -202,9 +239,7 @@ async def infer(request: EmbedRequest) -> EmbedResponse:
     try:
         for group in _token_bounded_batches(prefixed):
             chunk = [prefixed[i] for i in group]
-            encoded = model.encode(chunk, batch_size=len(chunk),
-                                   normalize_embeddings=True)
-            for slot, vec in zip(group, encoded):
+            for slot, vec in zip(group, _encode_adaptive(model, chunk)):
                 vectors[slot] = vec
     finally:
         _release_mps()
