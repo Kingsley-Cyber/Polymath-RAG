@@ -137,3 +137,50 @@ Semantic freeze (GLiNER pin/labels/thresholds, Harbor, compiler,
 canonicalization), frozen artifacts (`eval/i4/gold/`,
 `eval/i4/verify_i4.py`, `eval/admission/artifacts/`), sealed sets,
 the append-only ledger discipline.
+
+---
+
+# HANDOFF ADDENDUM — POLYMATH-FACT-ADMISSION-V1 (2026-08-22)
+
+**Status: implemented, qualified, FAILED the precision bar, NOT cut over.**
+Production canonical facts and the Neo4j projection are untouched.
+
+Read `eval/v5/FINDINGS_fact_admission_v1.md` for the full qualification.
+
+What exists now (all committed, 692 tests green):
+- `shared/polymath_shared/fact_admission.py` — the F1–F8 gate chain.
+- `shared/polymath_shared/fact_admission_policy.yaml` — declarative
+  region licensing, orientation metadata, modal/contrastive classes,
+  predicate strength ordering. No code changes needed to retune these.
+- `shared/polymath_shared/source_region.py` — REGION-POLICY-V1.
+- `eval/v5/fact_admission_shadow.py` — replays the whole L4 ledger in
+  **10.2 s**. This is the iteration loop: no re-ingestion, ever.
+- `tests/determinism/test_fact_admission.py` — 54 cases, each drawn from
+  a mechanism the forensic pass actually measured.
+
+Headline numbers (release-books-v1 graph pool, 1,521 facts):
+admitted 298 · qualified 147 · rejected 1,334;
+precision 44% supported / 31% questionable / **25% wrong**
+(baseline 29 / 33 / 38). Bar was ≤5% wrong — not met.
+
+Two things the next person must know:
+1. **A rule-pack defect was found, not patched** (frozen): predicate
+   verb lists were VerbNet-class-expanded without sense disambiguation
+   (make/source/receive → acquired, work → uses, collaborate →
+   similar_to). This is the predicate-misfire class from the forensic
+   report. F5 compensates; the pack itself is still wrong.
+2. **is_a and instance_of fall to exactly zero** (127 facts) through the
+   copula-complement rule. A predicate hitting zero is a gate defect
+   signature. Fix COPULA-COMPLEMENT-BINDING-V2 before anything else.
+
+Ranked next actions supersede the earlier list:
+1. COPULA-COMPLEMENT-BINDING-V2 (recover the taxonomy backbone).
+2. Coordination / list-enumeration gate; multi-entity clause binding;
+   agentless-passive orientation.
+3. A separate ENTITY-admission gate — entity extent ("Pavlovian" →
+   pavlov) and figure/document entities ("Figure 4-7") are upstream
+   defects that cap achievable relation precision regardless of gates.
+4. Only then re-qualify and consider cutover.
+
+Unchanged from the earlier handoff: the semantic freeze, the projection
+backlog incident (§13 of the forensic report), and the do-not-touch list.
