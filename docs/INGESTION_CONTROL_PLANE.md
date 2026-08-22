@@ -1,7 +1,10 @@
 # The ingestion control plane — what it is, and is it good enough
 
 Assessment written 2026-08-22 against `HEAD 8e78657`. Every number is
-measured from the running system, not asserted.
+measured from the running system, not asserted. Expanded same day at
+`HEAD 8f6b13e` (§8) for the PREDICATE-COMPILER-V2 ingestion path:
+one new defect (D9), intake-provenance diagnostics, and a measured
+re-confirmation of D1+D2 from today's shadow-A/B leg.
 
 **Short answer:** the design is sound and unusually well-reasoned. The
 implementation has **four defects that make failure permanent and
@@ -299,3 +302,104 @@ comments. Fix the four defects and add the age metric.
 4. **D2** — backoff with jitter.
 5. **D3** — auditable requeue for quarantined tickets.
 6. **D5, D7, D8** — pruning, scan limits, index.
+
+---
+
+## 8. Expansion — the new ingestion path (PREDICATE-COMPILER-V2)
+
+Measured 2026-08-22 at `HEAD 8f6b13e`, bundle `v5-production-003`.
+The relation generator is now selectable per fleet
+(`POLYMATH_RELATION_PIPELINE` ∈ {`legacy_v1`, `kimi_v1`, `kimi_v2`}).
+Every candidate row carries intake provenance
+(`stores/postgres/migrations/0023_predicate_v2_provenance.sql`):
+`binding_source`, `trigger_token_id`, `subject_token_id`,
+`object_token_id`, `dependency_path`, `sentence_id`.
+
+### D9 — the relation pipeline is not part of the pinned contract
+
+Contract-pinned claiming (§3) compares the worker's advertised
+contracts against the run's `execution_contract`. Measured right now,
+the extract worker advertises:
+
+```json
+{"chunker": "legacy_v1", "rule_pack": "1.3.0", "gliner_url": "…",
+ "query_policy": "semantic-query-policy-v1",
+ "rescue_stages": ["boundary", "frames", "missing_argument",
+                   "type_reconciliation"],
+ "semantic_bundle": "62fe40ae…", "syntax_provider": "spacy"}
+```
+
+**No `relation_pipeline` key.** The run's pinned contract omits it too.
+Consequence: a legacy_v1 worker and a kimi_v2 worker can both claim
+tickets of the SAME corpus and interleave their rows into one ledger —
+association rows (`binding_source IS NULL`) beside dependency rows —
+and no contract check anywhere objects. This is exactly the failure
+class contract pinning exists to prevent, one field wide.
+
+The shadow A/B that measured §8's numbers only stayed clean because
+the entire fleet was restarted per leg with the env var set at boot.
+That is a runbook substitute for a missing contract field.
+
+**Fix:** add `relation_pipeline` in three places, all in
+`shared/polymath_shared/execution.py`: the run contract dict (~line
+100 region), the worker advertisement dict (~line 192), and the key
+tuple of the compatibility check (~line 291). The existing check then
+refuses mixed fleets with zero new machinery. Until it lands, treat
+any corpus whose rows show mixed `binding_source` NULL/non-NULL as
+contaminated for A/B purposes.
+
+### Intake-provenance diagnostics (new capability)
+
+The same columns make "which generator actually produced this ledger"
+a query, not an assumption:
+
+```sql
+-- Which intake produced each corpus?
+SELECT d.corpus_id,
+       coalesce(rc.binding_source, 'NULL')          AS binding_source,
+       count(*)                                     AS rows,
+       count(*) FILTER (WHERE rc.trigger_token_id IS NULL)
+                                                    AS missing_trigger_token
+  FROM relation_candidates rc JOIN documents d USING(doc_id)
+ GROUP BY 1, 2 ORDER BY 1, 3 DESC;
+```
+
+Reading: `binding_source = 'NULL'` ⇒ association intake (legacy);
+`UD_DEPENDENCY`/`NOMINAL_DEPENDENCY` ⇒ V2 dependency intake;
+anything else on a V2-supposed corpus ⇒ mixed-fleet contamination
+(see D9). Acceptance-gate SQL for slice 7 counts these columns
+(`missing_trigger_token == 0`, chunk-wide generation == 0).
+
+Measured today on core-3-v1, one leg each:
+
+| | legacy_v1 | kimi_v2 |
+|---|---:|---:|
+| candidates | 98 | 6 |
+| binding_source populated | 0/98 | 6/6 |
+| ACCEPT / QUALIFY | 16 / 8 | 0 / 1 |
+| F-chain refusals | 25 | 1 |
+
+### D1 + D2 re-measured on the new path
+
+Today's first kimi_v2 leg failed 2 of 3 tickets on a deterministic bug
+(`UnboundLocalError`, fixed in `8f6b13e`'s predecessor commit). The
+control-plane behaviour matched D1+D2 exactly as written: three
+attempts burned within seconds, tickets terminal at `status='failed'`,
+corpus blocked until manual reset SQL. The exception chain WAS durable
+(`receipts.error`), so forensics took one query — the diagnosis path
+works even where the retry policy does not.
+
+Forensics recipe for extract-stage failures:
+
+```sql
+SELECT r.run_id, r.status, left(r.error, 800) AS exception_chain
+  FROM receipts r
+ WHERE r.stage='extract' AND r.status='failed'
+ ORDER BY r.receipt_id DESC LIMIT 5;
+```
+
+### Additions to the suggested order
+
+Between steps 2 and 3: **D9** — pin `relation_pipeline` in both
+contracts (small: one registration key, one manifest key, existing
+check). It gates every trustworthy A/B measurement that follows.
