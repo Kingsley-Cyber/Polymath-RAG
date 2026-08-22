@@ -392,6 +392,11 @@ def f4_assertion(ctx: FactContext, pack: dict) -> GateVerdict:
             if lemma in pol["irrealis_governors"]:
                 return GateVerdict(REJECT, "IRREALIS",
                                    f"attitude verb '{lemma}' governs the clause")
+            if lemma in pol.get("attribution_governors", []):
+                # Someone's reported claim, which the document may even be
+                # discrediting. Real information, not an assertion of ours.
+                return GateVerdict(QUALIFY, "ATTRIBUTED_CLAUSE",
+                                   f"reported through '{lemma}'")
             for tok in tokens:
                 if (tok.get("head_i") == gov.get("i")
                         and tok.get("dep") in {"aux", "auxpass"}

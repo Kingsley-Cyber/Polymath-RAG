@@ -138,6 +138,13 @@ def _chunks_for_run(conn: Connection, run_id: str) -> list[dict]:
 
 UPSERT_BATCH = 128
 
+#: Qdrant read budget. Indexing a batch while the host is also running
+#: GPU extraction routinely outlives a 60s client timeout, and the bare
+#: "timed out" that produced was the last real cause of failed
+#: projections once the lease defect stopped masking it. Batching bounds
+#: how much work one call carries; this bounds how long we wait for it.
+QDRANT_TIMEOUT_S = 300
+
 
 def _upsert_batched(client: QdrantClient, collection: str, points: list) -> None:
     """A single wait=True upsert of a book-sized point set outlives the
@@ -292,7 +299,8 @@ def process_event(conn: Connection, event: dict) -> None:
         })
 
         if chunks:
-            client = QdrantClient(url=get_settings().stores.qdrant_url, timeout=60)
+            client = QdrantClient(url=get_settings().stores.qdrant_url,
+                                  timeout=QDRANT_TIMEOUT_S)
             try:
                 corpus_id = corpus_id or chunks[0]["corpus_id"]
                 collection = qdrant_collection_name(corpus_id, contract.contract_id)
@@ -319,7 +327,8 @@ def process_event(conn: Connection, event: dict) -> None:
         routing_contract = NEURAL_EMBED_CONTRACT
         routing_rows = _routing_rows(conn, run_id)
         if routing_rows:
-            client = QdrantClient(url=get_settings().stores.qdrant_url, timeout=120)
+            client = QdrantClient(url=get_settings().stores.qdrant_url,
+                                  timeout=QDRANT_TIMEOUT_S)
             try:
                 routing_collection = qdrant_collection_name(
                     corpus_id or routing_rows[0]["corpus_id"], routing_contract.contract_id

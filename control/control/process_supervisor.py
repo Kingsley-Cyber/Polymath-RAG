@@ -76,6 +76,8 @@ class Slot:
     argv: list | None = None
     cwd: str | None = None
     health_url: str | None = None
+    last_probe_at: float = 0.0
+    readiness_failures: int = 0
     proc: subprocess.Popen | None = None
     started_at: float = 0.0
     exits: list[float] = field(default_factory=list)   # exit timestamps
@@ -89,6 +91,8 @@ class Supervisor:
                  log_dir: str | None = None, state_path: str | None = None,
                  max_restarts: int = 5, window_s: float = 300.0,
                  probe_timeout_s: float = 10.0,
+                 readiness_interval_s: float = 60.0,
+                 readiness_failures_before_restart: int = 3,
                  backoff_s: float = 2.0, health_timeout_s: float = 30.0,
                  dsn: str | None = None):
         self.slots = []
@@ -107,6 +111,9 @@ class Supervisor:
         # when the model is stuck, and the timeout is what turns that hang
         # into an actionable unhealthy verdict instead of a hung supervisor.
         self.probe_timeout_s = probe_timeout_s
+        # Slow cadence: the probe is a real forward pass.
+        self.readiness_interval_s = readiness_interval_s
+        self.readiness_failures_before_restart = readiness_failures_before_restart
         self.window_s = window_s
         self.backoff_s = backoff_s
         self.health_timeout_s = health_timeout_s
@@ -206,6 +213,13 @@ class Supervisor:
                 continue
             code = slot.proc.poll()
             if code is None:
+                # HANG-DEATH (P0-B). A process that exited is easy; a
+                # process that is alive while its inference path is wedged
+                # answered every liveness check for 16 hours and stalled a
+                # whole corpus. Readiness is therefore probed periodically,
+                # not only at spawn, and a slot that fails repeatedly is
+                # restarted exactly like one that died.
+                self._check_readiness(slot)
                 continue
             slot.last_exit_code = code
             slot.exits.append(time.time())
@@ -220,6 +234,56 @@ class Supervisor:
             self._spawn(slot)
         self._write_state()
         return self.state()
+
+    def _check_readiness(self, slot: Slot) -> None:
+        """Probe a live service slot's readiness on a slow cadence.
+
+        Deliberately infrequent: the probe runs a real forward pass, so
+        probing every tick would itself contend for the GPU. Consecutive
+        failures are required before restarting so a single slow response
+        under load never causes a restart storm.
+        """
+        if not slot.health_url or slot.proc is None:
+            return
+        now = time.time()
+        if now - slot.last_probe_at < self.readiness_interval_s:
+            return
+        slot.last_probe_at = now
+        ready = False
+        try:
+            import httpx
+            r = httpx.get(slot.health_url, timeout=self.probe_timeout_s)
+            if r.status_code == 200:
+                try:
+                    ready = r.json().get("ready") is not False
+                except Exception:
+                    ready = True
+        except Exception:
+            ready = False
+        if ready:
+            slot.readiness_failures = 0
+            return
+        slot.readiness_failures += 1
+        log.warning("slot %s not ready (%d/%d)", slot.name,
+                    slot.readiness_failures, self.readiness_failures_before_restart)
+        if slot.readiness_failures < self.readiness_failures_before_restart:
+            return
+        log.error("slot %s wedged: restarting on readiness failure", slot.name)
+        slot.readiness_failures = 0
+        slot.exits.append(now)
+        if not self._restart_allowed(slot):
+            self._quarantine(slot, "readiness failures exceeded restart budget")
+            return
+        try:
+            slot.proc.terminate()
+            slot.proc.wait(timeout=15)
+        except Exception:
+            try:
+                slot.proc.kill()
+            except Exception:
+                pass
+        slot.restarts += 1
+        self._spawn(slot)
 
     def state(self) -> dict:
         return {"slots": [{

@@ -180,6 +180,17 @@ irrealis_governors: [decide, consider, plan, propose, intend, evaluate,
                      recommend, suggest, want, attempt, try, aim, seek,
                      hope, expect, plan]
 
+# Speech and belief verbs. A clause reported through one of these is
+# SOMEONE'S CLAIM, not the document's assertion — and the document may
+# be discrediting it: "Mayor Yorty IGNORANTLY TOLD the press Sirhan was
+# a member of ..." was admitted as an asserted membership fact. A closed
+# class of reporting verbs, matched clause-locally through the same
+# dependency machinery as the irrealis governors.
+attribution_governors: [say, tell, claim, report, allege, state, argue,
+                        believe, think, assert, insist, contend, maintain,
+                        note, observe, remark, testify, announce, declare,
+                        write, describe, accord]
+
 # ---------------------------------------------------------------------
 # F5 — predicate strength ordering.
 #
