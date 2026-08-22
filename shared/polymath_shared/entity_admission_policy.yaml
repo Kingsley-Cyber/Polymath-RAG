@@ -3,7 +3,7 @@
 # Ontology/structure data only, never code. Versioned as one unit so a
 # later release can license a region or a class without a code change,
 # and so a historical replay can pin the exact policy it ran under.
-policy_version: entity-admission-policy-v1
+policy_version: entity-admission-policy-v2
 
 # ---------------------------------------------------------------------
 # E2 — which source regions may license an ASSERTED entity.
@@ -67,6 +67,18 @@ naming_core_types:
 # so an unknown or future class fails closed rather than silently
 # becoming knowledge.
 # ---------------------------------------------------------------------
+# E6 TYPE. This list must be exactly the reachable CoreType inventory --
+# no more, no less. It previously carried eight types the extractor can
+# never produce (Material, Role, Condition, Substance, Structure,
+# Phenomenon, Activity, System), which made E6 a VACUOUS SUPERSET GATE:
+# every settled class was already a member, so the gate could not refuse
+# anything while reading, from outside, like a closed inventory.
+#
+# Removing them is behaviourally identical TODAY -- all twelve reachable
+# types were admissible before and remain so. What changes is the future:
+# a thirteenth CoreType must now be admitted DELIBERATELY, because
+# test_e6_inventory_is_exactly_the_reachable_inventory fails closed until
+# someone adds it here on purpose. That is the whole point of the gate.
 admissible_core_types:
   - Person
   - Organization
@@ -79,12 +91,4 @@ admissible_core_types:
   - Document
   - Event
   - Measurement
-  - Material
-  - Role
-  - Condition
-  - Substance
-  - Structure
-  - Phenomenon
-  - Activity
-  - System
   - TimeReference

@@ -6,11 +6,11 @@
 POLYMATH_PG_DSN=… .venv/bin/python eval/v5/implementation_plan.py --write
 ```
 
-Build `910535b`. Every status below is a PREDICATE evaluated against the running system — source, config, compiled artefacts, database state — never a typed claim.
+Build `5e25c0e`. Every status below is a PREDICATE evaluated against the running system — source, config, compiled artefacts, database state — never a typed claim.
 
 This file is generated because a hand-maintained plan drifts, and this repository has already paid for that: `SEMANTIC_CONTRACTS.md` declared rule pack v1.3.0 byte-frozen while `settings.py` shipped v1.2.0, and two admission gate chains were reported as qualified while having zero production callers.
 
-`3 done · 12 open · 4 blocked · 0 unknown`
+`4 done · 11 open · 4 blocked · 0 unknown`
 
 `?` means the probe could not observe the system. It is never folded into done.
 
@@ -42,13 +42,13 @@ This file is generated because a hand-maintained plan drifts, and this repositor
 
 ## SEMANTIC TRACK — P0 activate
 
-- [ ] **A1 Close the E6 type inventory** — `OPEN` · **new contract required**
+- [x] **A1 Close the E6 type inventory** — `DONE` · **new contract required**
       E6 tests membership against 20 admissible types while 12 are reachable. It is a vacuous superset gate; wiring it as-is changes nothing while looking closed.
-      *probe:* 20 admissible vs 12 reachable; unreachable: Activity, Condition, Material, Phenomenon, Role, Structure
+      *probe:* 12 admissible, all reachable
 
-- [-] **A2 Wire ENTITY-KNOWLEDGE-ADMISSION-V1 (E1-E7)** — `BLOCKED` · **new contract required** · depends on A1
+- [ ] **A2 Wire ENTITY-KNOWLEDGE-ADMISSION-V1 (E1-E7)** — `OPEN` · **new contract required** · depends on A1
       Built, tested, qualified, frozen -- and zero production callers. 'Figure 4-7' still mints durable graph identities today.
-      *probe:* blocked by A1 — zero production callers of E1-E7
+      *probe:* zero production callers of E1-E7
 
 - [ ] **A3 Wire FACT-ADMISSION-V1 (F1-F8)** — `OPEN` · **new contract required**
       Called only from eval/. Production ships the 38%-wrong graph; the 14.5% figure is a shadow-harness number, not production behaviour.
@@ -72,11 +72,11 @@ This file is generated because a hand-maintained plan drifts, and this repositor
       SEMANTIC_CONTRACTS declares v1.3.0 byte-frozen; settings ships 1.2.0, so frame arbitration is inert in production.
       *probe:* settings default 1.2.0 != documented 1.3.0
 
-- [ ] **D3 Stop rescue deleting accepted spans** — `OPEN`
-      A refused widening destroys the accepted provider span -- the clearest contradiction of 'never destroy upstream evidence because a downstream interpretation fails' in the codebase.
-      *probe:* refused widening still discards the accepted span (destroys upstream evidence on downstream failure)
-
 ## SEMANTIC TRACK — P1
+
+- [-] **D3 Restore refused-widening spans to argument binding** — `BLOCKED` · depends on A2, A3
+      CORRECTED. Evidence is NOT destroyed: span_hypotheses holds 44,071 REJECTED/SUPPRESSED_SOURCE records with source offsets, durable in L1/L2. What is lost is the span's participation in ARGUMENT BINDING -- coverage, not evidence. The fix was attempted on candidate/rescue-discourse-v1-failed and FAILED its bar: keeping an unresolved-boundary span active produced wrong facts, and with no gate to catch them, 'no edge beats a wrong edge' was right. Once E1-E7 and F1-F8 are wired, the gate rejects those facts instead, so this becomes safe. Retry only after A2/A3, and A/B it on the bench.
+      *probe:* blocked by A2, A3 — refused widening still discards the accepted span (destroys upstream evidence on downstream failure)
 
 - [ ] **D4 Stop projecting similar_to into the graph** — `OPEN`
       71% wrong, already T1-only and already excluded from retrieval, but still projected. Subtractive and reversible; evidence survives.

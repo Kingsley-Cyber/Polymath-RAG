@@ -403,11 +403,17 @@ PLAN: list[Item] = [
          "SEMANTIC_CONTRACTS declares v1.3.0 byte-frozen; settings ships "
          "1.2.0, so frame arbitration is inert in production.",
          p_rule_pack_pinned, authority=True, owner="fact"),
-    Item("D3", "SEMANTIC TRACK — P0 repair", "Stop rescue deleting accepted spans",
-         "A refused widening destroys the accepted provider span -- the "
-         "clearest contradiction of 'never destroy upstream evidence because "
-         "a downstream interpretation fails' in the codebase.",
-         p_rescue_preserves_span, owner="entity"),
+    Item("D3", "SEMANTIC TRACK — P1", "Restore refused-widening spans to argument binding",
+         "CORRECTED. Evidence is NOT destroyed: span_hypotheses holds 44,071 "
+         "REJECTED/SUPPRESSED_SOURCE records with source offsets, durable in "
+         "L1/L2. What is lost is the span's participation in ARGUMENT BINDING "
+         "-- coverage, not evidence. The fix was attempted on "
+         "candidate/rescue-discourse-v1-failed and FAILED its bar: keeping an "
+         "unresolved-boundary span active produced wrong facts, and with no "
+         "gate to catch them, 'no edge beats a wrong edge' was right. Once "
+         "E1-E7 and F1-F8 are wired, the gate rejects those facts instead, so "
+         "this becomes safe. Retry only after A2/A3, and A/B it on the bench.",
+         p_rescue_preserves_span, depends_on=("A2", "A3"), owner="entity"),
     Item("D4", "SEMANTIC TRACK — P1", "Stop projecting similar_to into the graph",
          "71% wrong, already T1-only and already excluded from retrieval, but "
          "still projected. Subtractive and reversible; evidence survives.",
