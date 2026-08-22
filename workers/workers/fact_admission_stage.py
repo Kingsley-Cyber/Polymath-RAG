@@ -108,6 +108,7 @@ class FactAdmissionStage:
 
         pack = _pack()
         subj, obj = candidate.subject, candidate.object
+        ev = candidate.evidence
         chunk_id = row.get("chunk_id")
 
         def _endpoint(entity_id, span) -> EndpointAdmission | None:
@@ -120,21 +121,30 @@ class FactAdmissionStage:
             doc_id=self.doc_id,
             chunk_id=chunk_id,
             predicate=getattr(fact, "predicate", None) or "",
-            subject_entity_id=getattr(fact, "subject_id", None),
-            object_entity_id=getattr(fact, "object_id", None),
+            subject_entity_id=(getattr(fact, "subject_id", None)
+                               or getattr(subj, "resolved_entity_id", None)),
+            object_entity_id=(getattr(fact, "object_id", None)
+                              or getattr(obj, "resolved_entity_id", None)),
             subject_type=_type_of(subj),
             object_type=_type_of(obj),
             subject_admission_class=_class_of(subj, identities),
             object_admission_class=_class_of(obj, identities),
             subject_surface=getattr(subj.span, "text", None),
             object_surface=getattr(obj.span, "text", None),
-            trigger_surface=getattr(candidate, "trigger_surface", None),
-            trigger_lemma=getattr(candidate, "trigger_lemma", None),
-            evidence_class=getattr(candidate, "evidence_class", None),
+            # These live on candidate.EVIDENCE, not on the candidate. Reading
+            # them off the candidate returned None and F1 refused all 36
+            # facts as MISSING_INPUT -- a gate correctly failing closed on a
+            # caller that had guessed the shape. raw_evidence
+            # .relation_candidate_row is the authority on these accessors.
+            trigger_surface=getattr(ev, "trigger_surface", None),
+            trigger_lemma=getattr(ev, "trigger_lemma", None),
+            evidence_class=getattr(ev, "evidence_class", None),
             subject_start=getattr(subj.span, "start", None),
             subject_end=getattr(subj.span, "end", None),
             object_start=getattr(obj.span, "start", None),
             object_end=getattr(obj.span, "end", None),
+            evidence_start=getattr(ev, "start", None),
+            evidence_end=getattr(ev, "end", None),
             chunk_text=row.get("text"),
             region=row.get("region"),
             parse=getattr(sl, "parse", None),
