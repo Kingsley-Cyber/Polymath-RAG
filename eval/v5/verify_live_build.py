@@ -79,6 +79,29 @@ def _proc_start_epoch(pid: int) -> float | None:
     return None
 
 
+def in_scope() -> set[str] | None:
+    """Slots this run is supposed to be running.
+
+    A capped run (POLYMATH_FLEET_ONLY) deliberately omits slots, and an
+    absent slot is not stale code. Scoping keeps the fence honest in both
+    directions: it still fails on a RUNNING component that is not the
+    current build, and it no longer fails on a component nobody started.
+    """
+    only = os.environ.get("POLYMATH_FLEET_ONLY", "").strip()
+    if not only:
+        return None
+    return {n.strip() for n in only.split(",") if n.strip()}
+
+
+#: supervisor slot name -> the identity this checker reports it under
+_SLOT_TO_WORKER = {
+    "qdrant": "project_qdrant", "neo4j": "project_neo4j",
+    "canonicalize": "canonicalize", "intake": "intake",
+    "profile": "profile_document", "extract": "extract",
+    "project_canonical": "project_canonical", "verify": "verify_projections",
+}
+
+
 def check_workers(sha: str, max_heartbeat_age_s: int = 180) -> list[dict]:
     out = []
     with psycopg.connect(DSN, connect_timeout=10) as conn:
@@ -147,10 +170,19 @@ def main() -> int:
     from polymath_shared.execution import semantic_authority_sha256
 
     components = check_workers(sha) + check_services() + check_services(True)
-    enforced = [c for c in components if not c.get("advisory")]
+    scope = in_scope()
+    if scope is not None:
+        allowed = {_SLOT_TO_WORKER.get(n, n) for n in scope} | scope
+        for c in components:
+            if c["component"] not in allowed:
+                c["out_of_scope"] = True
+                c["why"] = "not started by this capped run"
+    enforced = [c for c in components
+                if not c.get("advisory") and not c.get("out_of_scope")]
     report = {
         "head_sha": sha,
         "semantic_authority_sha256": semantic_authority_sha256()[:16],
+        "scope": sorted(scope) if scope else "full fleet",
         "components": components,
         "enforced": len(enforced),
         "passing": sum(1 for c in enforced if c["ok"]),
@@ -162,6 +194,8 @@ def main() -> int:
         print(f"LIVE BUILD FENCE  HEAD={sha}  "
               f"authority={report['semantic_authority_sha256']}")
         for c in components:
+            if c.get("out_of_scope"):
+                continue
             mark = "ok  " if c["ok"] else "STALE"
             tag = " (advisory)" if c.get("advisory") else ""
             extra = c.get("build_sha") or c.get("started_at") or ""
