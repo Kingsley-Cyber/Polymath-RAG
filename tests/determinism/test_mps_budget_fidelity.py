@@ -148,3 +148,54 @@ def test_non_oom_errors_are_not_retried():
         and any(isinstance(b, ast.Raise) for b in ast.walk(g))
         for g in ast.walk(fn) if isinstance(g, ast.If)), (
         "_encode_adaptive must re-raise non-OOM exceptions immediately")
+
+
+# ---------------------------------------------------------------------------
+# FRAME PINNING
+#
+# Measured on this host, same cap, same batch, only the release site
+# differing: releasing inside the `except` handler left the pool at
+# 3.45 GiB and the retry failed; clearing the traceback first returned
+# the pool to 1.14 GiB (weights only) and the batch succeeded.
+# ---------------------------------------------------------------------------
+
+def test_release_is_not_called_inside_the_except_handler():
+    """An exception handler pins the frames that hold the tensors.
+
+    While `except ... as exc:` is live, `exc.__traceback__` references
+    `model.encode`'s frames, and those frames reference the partially
+    built activations that caused the OOM. `empty_cache()` frees only
+    unreferenced blocks, so a release from inside the handler frees
+    nothing and every retry inherits a full pool.
+    """
+    fn = _fn("_encode_adaptive")
+    for handler in (n for n in ast.walk(fn) if isinstance(n, ast.ExceptHandler)):
+        called = [c.func.id for c in ast.walk(handler)
+                  if isinstance(c, ast.Call) and isinstance(c.func, ast.Name)]
+        assert "_release_mps" not in called, (
+            "_release_mps() is called inside the except handler, where the "
+            "traceback still pins the tensors it is meant to free")
+        assert "_encode_adaptive" not in called, (
+            "the retry recurses inside the handler, so every nested attempt "
+            "inherits the pinned pool of its parent")
+
+
+def test_traceback_is_dropped_before_retrying():
+    fn = _fn("_encode_adaptive")
+    assert any(
+        isinstance(t, ast.Attribute) and t.attr == "__traceback__"
+        for n in ast.walk(fn) if isinstance(n, ast.Assign)
+        for t in n.targets), (
+        "_encode_adaptive must clear exc.__traceback__ before releasing; "
+        "otherwise the failed attempt's activations stay reachable")
+
+
+def test_release_collects_before_emptying_the_cache():
+    """empty_cache() returns only unreferenced blocks."""
+    fn = _fn("_release_mps")
+    names = [c.func.attr for c in ast.walk(fn)
+             if isinstance(c, ast.Call) and isinstance(c.func, ast.Attribute)]
+    assert "collect" in names, "_release_mps does not gc.collect() first"
+    assert "empty_cache" in names, "_release_mps does not empty the Metal pool"
+    assert names.index("collect") < names.index("empty_cache"), (
+        "gc.collect() must run before empty_cache(), not after")

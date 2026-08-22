@@ -197,14 +197,24 @@ def _encode_adaptive(model, texts: list[str], depth: int = 0):
             # A single text that will not fit is a real capacity failure:
             # the budget cannot encode this corpus and must be raised.
             raise
-        _release_mps()
-        mid = len(texts) // 2
-        log.warning("mps oom on %d texts (depth %d); splitting to %d + %d",
-                    len(texts), depth, mid, len(texts) - mid)
-        left = _encode_adaptive(model, texts[:mid], depth + 1)
-        _release_mps()
-        right = _encode_adaptive(model, texts[mid:], depth + 1)
-        return left + right
+        # Drop the traceback BEFORE releasing. Its frames still reference
+        # `model.encode`'s locals -- the partially built activations that
+        # caused the OOM -- so `empty_cache()` called while the handler is
+        # live frees nothing. This was observed directly: the pool sat at
+        # a constant 3.42 GiB across every retry, and splitting to a
+        # single text still failed, because each attempt was pinned by
+        # the traceback of the one before it.
+        exc.__traceback__ = None
+
+    # Outside the handler: no frame from the failed attempt survives.
+    _release_mps()
+    mid = len(texts) // 2
+    log.warning("mps oom on %d texts (depth %d); splitting to %d + %d",
+                len(texts), depth, mid, len(texts) - mid)
+    left = _encode_adaptive(model, texts[:mid], depth + 1)
+    _release_mps()
+    right = _encode_adaptive(model, texts[mid:], depth + 1)
+    return left + right
 
 
 def _release_mps() -> None:
@@ -217,9 +227,15 @@ def _release_mps() -> None:
     the process inside its budget.
     """
     try:
+        import gc
+
         import torch
 
         if torch.backends.mps.is_available():
+            # Collect first: `empty_cache()` returns only blocks with no
+            # live reference, so any tensor still owned by an unreachable
+            # cycle stays pinned and the pool never shrinks.
+            gc.collect()
             torch.mps.empty_cache()
     except Exception:
         pass
