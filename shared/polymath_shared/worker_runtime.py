@@ -31,10 +31,38 @@ from polymath_shared.receipts import StageFailed
 
 LEASE_SECONDS = 300
 
+#: CLAIM-STARVATION-V1. Events this process has already refused on
+#: contract grounds, excluded from the next fetch so the scan advances
+#: past them instead of re-reading the same head forever.
+#:
+#: An old `vocab-probe-v2` run pinned `semantic-query-policy-v2` and the
+#: `semantic_v2` chunker -- semantics this fleet does not run, so no
+#: worker could ever claim it. Because the claim query ordered by
+#: event_id and took the first `limit` rows, that single permanently
+#: incompatible event sat at the head of the intake queue and starved 48
+#: compatible events behind it, including an entire freshly ingested
+#: corpus. The fleet looked healthy: workers heartbeated, leases were
+#: sound, nothing errored. It simply never claimed anything.
+_REFUSED: dict[str, set[int]] = {}
+
+#: Refusals are forgotten periodically so a deliberate semantic cutover
+#: re-admits work that a previous configuration could not run.
+_REFUSED_TTL_S = 900.0
+_REFUSED_AT: dict[str, float] = {}
+
+
+def _refused_set(worker_type: str) -> set[int]:
+    now = time.time()
+    if now - _REFUSED_AT.get(worker_type, 0.0) > _REFUSED_TTL_S:
+        _REFUSED[worker_type] = set()
+        _REFUSED_AT[worker_type] = now
+    return _REFUSED.setdefault(worker_type, set())
+
 
 def claim_ticket_events(conn, identity: dict, event_types: list[str], limit: int) -> list[dict]:
     """Claim undelivered events gated by ticket readiness + worker
     compatibility. Leases the ticket for LEASE_SECONDS."""
+    refused = _refused_set(identity.get("worker_type", "?"))
     with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
         cur.execute(
             """
@@ -48,11 +76,12 @@ def claim_ticket_events(conn, identity: dict, event_types: list[str], limit: int
              WHERE e.delivered_at IS NULL
                AND e.event_type = ANY(%s)
                AND (t.ticket_id IS NULL OR t.status = 'ready')
+               AND NOT (e.event_id = ANY(%s))
              ORDER BY e.event_id
              LIMIT %s
              FOR UPDATE OF e SKIP LOCKED
             """,
-            (event_types, limit),
+            (event_types, list(refused), limit),
         )
         events = cur.fetchall()
         claimed = []
@@ -62,10 +91,18 @@ def claim_ticket_events(conn, identity: dict, event_types: list[str], limit: int
                     continue
                 contract = json.loads(e["execution_contract"] or "{}")
                 if contract and not compatible(identity["contracts"], contract):
-                    logging.getLogger("worker-runtime").warning(
-                        "lease refused: worker %s incompatible with run %s contract",
-                        identity["worker_id"], e["run_id"],
-                    )
+                    # Remember it, so the NEXT fetch scans past it rather
+                    # than returning the same unclaimable head forever.
+                    first_time = e["event_id"] not in refused
+                    refused.add(e["event_id"])
+                    if first_time:
+                        logging.getLogger("worker-runtime").warning(
+                            "lease refused: worker %s incompatible with run %s "
+                            "contract; skipping event %s (%d refused this "
+                            "window)",
+                            identity["worker_id"], e["run_id"],
+                            e["event_id"], len(refused),
+                        )
                     continue
                 # LONG-STAGE-LEASE-CORRECTNESS-V1: claiming is not an
                 # attempt. `attempt` counts EXECUTIONS THAT FAILED, and is

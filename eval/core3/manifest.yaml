@@ -1,0 +1,35 @@
+version: 1
+
+# CORE-3 diagnostic corpus.
+#
+# Three short documents chosen by the workstation owner precisely
+# because they are small: a full pipeline pass costs minutes rather
+# than hours, so extraction can be diagnosed and locked down in a tight
+# loop instead of behind a multi-hour projection.
+#
+# Sources were copied off a removable volume into the repository. Two
+# documents in release-books-v1 still point at a session-scoped temp
+# directory that will be cleaned up; a corpus whose sources can vanish
+# is not a corpus, so these are held here instead.
+#
+# Registers differ on purpose. Narrative persuasion, procedural
+# tutorial and technical reference stress different parts of the
+# extractor, and an extraction that is only correct on one register is
+# not locked down.
+
+corpus:
+  corpus_id: core-3-v1
+  title: Core 3 Diagnostic Corpus
+  description: "Three short documents across distinct registers: behavioural-design narrative (Eyal, Hooked), procedural ML tutorial (LLM fine-tuning walkthrough), technical reference (Meyer, Vector Database Management)."
+
+defaults:
+  language: en
+  source_tier: primary
+  enabled: true
+
+documents:
+  # register is recorded in the description above rather than per
+  # document: the manifest schema is frozen and rejects extra keys.
+  - source: ./corpus/01_hooked_eyal.md
+  - source: ./corpus/02_finetune_llm_13min.md
+  - source: ./corpus/03_vector_db_meyer.md

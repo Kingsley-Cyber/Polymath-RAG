@@ -1,8 +1,10 @@
 # POLYMATH RUNTIME BUDGET — one hard ceiling for the whole repository.
 #
-# The workstation owner allocates Polymath 16 GB on a 32 GB Mac Studio,
-# raised from 13 GB. Note the full fleet needs ~18.4 GB and so still
-# runs staged; see the profiles section at the foot of this file.
+# The workstation owner allocates Polymath 19 GB on a 32 GB Mac Studio
+# (13 -> 16 -> 19, each raise deliberate). 19 GB is the first figure that
+# admits the FULL FLEET, which measures 17.95 GB once every sidecar cap
+# is measured rather than estimated. Profiles remain the default: a
+# stage that never calls GLiNER should still not hold its model.
 # Everything Polymath starts must fit inside it: the Docker VM holding
 # the stores, every sidecar's model and GPU pool, the workers, and the
 # orchestrator. Exceeding it is a defect, not a tuning opportunity.
@@ -14,7 +16,7 @@
 # these numbers are read at boot, exported as real limits, and checked
 # by a preflight that refuses to start an over-committed fleet.
 
-total_gb: 16.0
+total_gb: 19.0
 
 # --------------------------------------------------------------------
 # Stores (Docker VM). The VM reserves its allocation as wired memory
@@ -87,13 +89,12 @@ reserve_gb: 0.5
 # --------------------------------------------------------------------
 # PROFILES — the working sets Polymath actually runs.
 #
-# Profiles are how Polymath fits its allocation. Once the sidecar caps
-# were MEASURED rather than estimated, the full fleet came to 17.95 GB
-# -- it needs ~18.4 GB total and does NOT fit 16 GB. Every profile does,
-# with room to spare, because no stage calls every model: a projection
-# never invokes GLiNER, and an extraction never invokes the reranker.
-# Select one with POLYMATH_PROFILE. The preflight refuses an
-# over-committed set rather than discovering it by thrashing.
+# At 19 GB the full fleet (17.95 GB) fits, so profiles are once again an
+# EFFICIENCY choice rather than a necessity: no stage calls every model,
+# so a projection should not hold GLiNER resident and an extraction
+# should not hold the reranker. Select one with POLYMATH_PROFILE; omit
+# it to run everything. The preflight refuses an over-committed set
+# rather than discovering it by thrashing.
 # --------------------------------------------------------------------
 profiles:
   projection:
