@@ -118,7 +118,8 @@ def test_verbal_trigger_binds_ud_arguments_only():
     assert c.dependency_path == "nsubj+dobj"
     assert c.document_id == "d1"
     assert c.sentence_id == "c0#s0"
-    assert c.evidence.start == 6 and c.evidence.end == 14
+    assert (c.evidence.start, c.evidence.end) == (0, 20)
+    assert c.evidence.text == "Apple acquired Beats"
 
 
 def test_nominal_prep_of_pattern_binds_part_of():
