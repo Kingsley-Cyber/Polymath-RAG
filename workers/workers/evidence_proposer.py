@@ -98,7 +98,8 @@ def propose_evidence(
         class_id = ev["classes"][0]
 
         for phrase in ev.get("multiword", []):
-            for m in re.finditer(re.escape(phrase.lower()), lowered):
+            pattern = r"(?<!\w)" + re.escape(phrase.lower()) + r"(?!\w)"
+            for m in re.finditer(pattern, lowered):
                 spans.append(EvidenceSpan(
                     chunk_id=chunk_id,
                     start=m.start(),
@@ -194,7 +195,7 @@ def localize_trigger(span: EvidenceSpan, rule_pack: dict) -> EvidenceSpan:
     for rule_id in rule_pack["predicate_order"]:
         ev = rule_pack["predicates"][rule_id]["evidence"]
         for phrase in sorted(ev.get("multiword", []), key=len, reverse=True):
-            if phrase.lower() in lowered:
+            if re.search(r"(?<!\w)" + re.escape(phrase.lower()) + r"(?!\w)", lowered):
                 span.trigger_lemma = phrase.split()[0]
                 span.trigger_lexical_class = "MULTIWORD"
                 span.trigger_predicate_id = rule_id

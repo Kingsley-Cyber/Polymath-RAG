@@ -637,7 +637,10 @@ def _trigger_matches(rule: dict, evidence: Any) -> bool:
         if source == "nouns":
             return any(lemma == noun.lower() for noun in ev.get("nouns", []))
         if source == "multiword":
-            return any(phrase.lower() in text for phrase in ev.get("multiword", []))
+            return any(
+                re.search(r"(?<!\w)" + re.escape(phrase.lower()) + r"(?!\w)", text)
+                for phrase in ev.get("multiword", [])
+            )
         return False
 
     for verb in ev.get("verbs", []):
@@ -647,7 +650,7 @@ def _trigger_matches(rule: dict, evidence: Any) -> bool:
         if lemma == noun.lower():
             return True
     for phrase in ev.get("multiword", []):
-        if phrase.lower() in text:
+        if re.search(r"(?<!\w)" + re.escape(phrase.lower()) + r"(?!\w)", text):
             return True
     return False
 
