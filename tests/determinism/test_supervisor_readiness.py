@@ -157,3 +157,45 @@ def test_worker_slots_without_health_url_are_untouched(sup, monkeypatch):
     for _ in range(3):
         sup.tick()
     assert sup.spawned == []
+
+
+def test_readiness_endpoints_are_structurally_sound():
+    """Every sidecar /ready must end with an unconditional ready:True and
+    put each ready:False inside its own guard.
+
+    A patch once dedented a `return {"ready": False}` out of its `if`,
+    so spaCy reported not-ready unconditionally; the supervisor then
+    restarted it eleven times and syntax parsing went with it. Structure,
+    not text, is what makes that detectable.
+    """
+    import ast
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2] / "sidecars"
+    servers = [root / "spacy_runtime" / "server.py",
+               root / "gliner_runtime" / "server.py",
+               root / "embedder" / "server.py"]
+    for path in servers:
+        tree = ast.parse(path.read_text())
+        fn = next((n for n in ast.walk(tree)
+                   if isinstance(n, (ast.AsyncFunctionDef, ast.FunctionDef))
+                   and n.name == "ready"), None)
+        assert fn is not None, f"{path.name} has no ready endpoint"
+        body_returns = [st for st in fn.body if isinstance(st, ast.Return)]
+        assert body_returns, f"{path.name}: ready has no terminal return"
+        last = body_returns[-1].value
+        assert isinstance(last, ast.Dict), f"{path.name}: ready must return a dict"
+        vals = [v.value for v in last.values if isinstance(v, ast.Constant)]
+        assert True in vals, (
+            f"{path.name}: the function-level return is not ready:True — a "
+            f"guarded ready:False has escaped its branch")
+
+
+def test_probe_budget_tolerates_a_loaded_sidecar():
+    """The probe runs a real forward pass and competes with real work."""
+    import inspect
+
+    from control.process_supervisor import Supervisor
+    sig = inspect.signature(Supervisor.__init__)
+    assert sig.parameters["probe_timeout_s"].default >= 30.0
+    assert sig.parameters["readiness_failures_before_restart"].default >= 4

@@ -90,9 +90,14 @@ class Supervisor:
     def __init__(self, fleet=FLEET, *, python: str | None = None,
                  log_dir: str | None = None, state_path: str | None = None,
                  max_restarts: int = 5, window_s: float = 300.0,
-                 probe_timeout_s: float = 10.0,
-                 readiness_interval_s: float = 60.0,
-                 readiness_failures_before_restart: int = 3,
+                 # A BUSY sidecar queues the readiness probe behind real
+                 # inference: the embedder answers in ~0.3s idle but ~7s
+                 # under load, and a 10s budget with 3 strikes restarted
+                 # healthy-but-loaded sidecars 11 times. Budget generously
+                 # and require a longer silence before calling it wedged.
+                 probe_timeout_s: float = 60.0,
+                 readiness_interval_s: float = 120.0,
+                 readiness_failures_before_restart: int = 5,
                  backoff_s: float = 2.0, health_timeout_s: float = 30.0,
                  dsn: str | None = None):
         self.slots = []

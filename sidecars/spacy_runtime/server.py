@@ -250,7 +250,7 @@ async def ready(response: Response) -> dict:
         (doc,) = nlp.pipe(["readiness probe sentence."], batch_size=app.state.batch_size)
         if not doc or not doc[0].text:
             response.status_code = 503
-        return {"ready": False, "reason": "forward pass produced no tokens"}
+            return {"ready": False, "reason": "forward pass produced no tokens"}
     except Exception as exc:
         response.status_code = 503
         return {"ready": False, "reason": f"forward pass failed: {exc}"}
