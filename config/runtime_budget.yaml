@@ -60,7 +60,11 @@ sidecars:
   sidecar_gliner:
     port: 8740          # observed to decide if this cap is actually held
     resident_gb: 0.8
-    mps_gb: 2.0
+    # gliner_medium-v2.1: 195M params in FLOAT32, so 0.73 GiB of weights
+    # at rest and 3.02 GiB peak driver on an 8x750-token batch. The 2.0
+    # GB guess here failed extraction on /infer_batch exactly as the same
+    # guess had already failed embedding on /infer.
+    mps_gb: 3.5           # measured peak 3.02 GiB + margin
   sidecar_spacy:
     port: 8744          # observed to decide if this cap is actually held
     resident_gb: 0.5
@@ -104,6 +108,13 @@ profiles:
     why: "ingest and extract; needs GLiNER and spaCy, plus embedder for projection"
     slots: [control, intake, profile, extract, sidecar_gliner, sidecar_spacy,
             sidecar_embedder]
+  pipeline:
+    why: "every ingestion stage end to end: intake through verify, with the
+          extraction and embedding models. Excludes the orchestrator and
+          reranker, which serve queries and are not part of building."
+    slots: [control, intake, profile, extract, canonicalize,
+            project_canonical, neo4j, qdrant, verify,
+            sidecar_gliner, sidecar_spacy, sidecar_embedder]
   converge:
     why: "drive an already-extracted corpus to query_ready: project vectors,
           canonicalize, project the graph, verify. Extraction models are not

@@ -32,6 +32,8 @@ sys.path.insert(0, str(ROOT / "shared"))
 from polymath_shared import runtime_budget as rb  # noqa: E402
 
 EMBEDDER = ROOT / "sidecars" / "embedder" / "server.py"
+GLINER = ROOT / "sidecars" / "gliner_runtime" / "server.py"
+METAL = ROOT / "shared" / "polymath_shared" / "metal.py"
 
 
 # ---------------------------------------------------------------------------
@@ -91,9 +93,9 @@ def test_cpu_only_sidecar_gets_no_metal_budget():
 # dedented a `return` out of its guard and caused 11 restart storms)
 # ---------------------------------------------------------------------------
 
-def _fn(name: str):
+def _fn(name: str, where=None):
     """Locate a def by name. `infer` is `async def`, a distinct AST node."""
-    tree = ast.parse(EMBEDDER.read_text())
+    tree = ast.parse((where or EMBEDDER).read_text())
     for node in ast.walk(tree):
         if (isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
                 and node.name == name):
@@ -113,19 +115,19 @@ def test_infer_encodes_through_the_adaptive_path():
 
 
 def test_adaptive_encode_splits_on_oom_and_recurses():
-    fn = _fn("_encode_adaptive")
+    fn = _fn("run_adaptive", METAL)
     src = ast.dump(fn)
-    assert "_is_oom" in src, "_encode_adaptive does not discriminate OOM"
-    assert "_release_mps" in src, "_encode_adaptive does not release the pool"
+    assert "is_oom" in src, "run_adaptive does not discriminate OOM"
+    assert "release" in src, "run_adaptive does not release the pool"
     assert sum(1 for n in ast.walk(fn)
                if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
-               and n.func.id == "_encode_adaptive") >= 2, (
-        "_encode_adaptive does not recurse into both halves")
+               and n.func.id == "run_adaptive") >= 2, (
+        "run_adaptive does not recurse into both halves")
 
 
 def test_single_text_oom_still_raises():
     """One text that cannot fit is a real capacity failure, not a retry."""
-    fn = _fn("_encode_adaptive")
+    fn = _fn("run_adaptive", METAL)
     guards = [n for n in ast.walk(fn) if isinstance(n, ast.If)]
     assert any(
         any(isinstance(c, ast.Compare)
@@ -134,20 +136,20 @@ def test_single_text_oom_still_raises():
             for c in ast.walk(g.test))
         and any(isinstance(b, ast.Raise) for b in ast.walk(g))
         for g in guards), (
-        "_encode_adaptive must re-raise rather than split a single text; "
+        "run_adaptive must re-raise rather than split a single text; "
         "silently returning would fabricate vectors")
 
 
 def test_non_oom_errors_are_not_retried():
     """Splitting a batch cannot fix a contract or model error."""
-    fn = _fn("_encode_adaptive")
+    fn = _fn("run_adaptive", METAL)
     assert any(
         isinstance(g.test, ast.BoolOp)
         and any(isinstance(v, ast.UnaryOp) and isinstance(v.op, ast.Not)
                 for v in ast.walk(g.test))
         and any(isinstance(b, ast.Raise) for b in ast.walk(g))
         for g in ast.walk(fn) if isinstance(g, ast.If)), (
-        "_encode_adaptive must re-raise non-OOM exceptions immediately")
+        "run_adaptive must re-raise non-OOM exceptions immediately")
 
 
 # ---------------------------------------------------------------------------
@@ -168,34 +170,50 @@ def test_release_is_not_called_inside_the_except_handler():
     unreferenced blocks, so a release from inside the handler frees
     nothing and every retry inherits a full pool.
     """
-    fn = _fn("_encode_adaptive")
+    fn = _fn("run_adaptive", METAL)
     for handler in (n for n in ast.walk(fn) if isinstance(n, ast.ExceptHandler)):
         called = [c.func.id for c in ast.walk(handler)
                   if isinstance(c, ast.Call) and isinstance(c.func, ast.Name)]
-        assert "_release_mps" not in called, (
-            "_release_mps() is called inside the except handler, where the "
+        assert "release" not in called, (
+            "release() is called inside the except handler, where the "
             "traceback still pins the tensors it is meant to free")
-        assert "_encode_adaptive" not in called, (
+        assert "run_adaptive" not in called, (
             "the retry recurses inside the handler, so every nested attempt "
             "inherits the pinned pool of its parent")
 
 
 def test_traceback_is_dropped_before_retrying():
-    fn = _fn("_encode_adaptive")
+    fn = _fn("run_adaptive", METAL)
     assert any(
         isinstance(t, ast.Attribute) and t.attr == "__traceback__"
         for n in ast.walk(fn) if isinstance(n, ast.Assign)
         for t in n.targets), (
-        "_encode_adaptive must clear exc.__traceback__ before releasing; "
+        "run_adaptive must clear exc.__traceback__ before releasing; "
         "otherwise the failed attempt's activations stay reachable")
 
 
 def test_release_collects_before_emptying_the_cache():
     """empty_cache() returns only unreferenced blocks."""
-    fn = _fn("_release_mps")
+    fn = _fn("release", METAL)
     names = [c.func.attr for c in ast.walk(fn)
              if isinstance(c, ast.Call) and isinstance(c.func, ast.Attribute)]
-    assert "collect" in names, "_release_mps does not gc.collect() first"
-    assert "empty_cache" in names, "_release_mps does not empty the Metal pool"
+    assert "collect" in names, "release() does not gc.collect() first"
+    assert "empty_cache" in names, "release() does not empty the Metal pool"
     assert names.index("collect") < names.index("empty_cache"), (
         "gc.collect() must run before empty_cache(), not after")
+
+
+def test_every_gpu_sidecar_uses_the_shared_discipline():
+    """The same OOM defect was fixed twice before it was shared once.
+
+    A GPU sidecar that calls its model directly has no splitter and no
+    pool release, which is exactly how GLiNER came to 500 on
+    /infer_batch after the embedder had already been fixed.
+    """
+    for path in (EMBEDDER, GLINER):
+        src = path.read_text()
+        assert "run_adaptive" in src, (
+            f"{path.parent.name} does not route inference through "
+            f"polymath_shared.metal.run_adaptive")
+        assert "release" in src, (
+            f"{path.parent.name} never releases the Metal pool")

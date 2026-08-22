@@ -22,6 +22,8 @@ from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel, Field
 
 from polymath_shared.logging import configure_logging
+from polymath_shared.metal import release as release_metal
+from polymath_shared.metal import run_adaptive
 from polymath_shared.rulepack import load_rule_pack
 
 MANIFEST_PATH = Path(__file__).with_name("manifest.toml")
@@ -254,8 +256,16 @@ async def infer_batch(request: InferBatchRequest) -> InferBatchResponse:
     if request.task != "entity":
         raise HTTPException(status_code=422, detail="batch supports the entity task")
     mode = getattr(app.state, "batch_mode", "loop")
-    raw_rows = _predict_many(app.state.model, request.texts, request.labels,
-                             request.threshold, mode)
+    # A Metal exhaustion must cost a retry of the batch, not the caller's
+    # whole extract ticket. Splitting cannot change results: _predict_many
+    # is per-text and order-preserving in both modes.
+    try:
+        raw_rows = run_adaptive(
+            lambda chunk: _predict_many(app.state.model, list(chunk),
+                                        request.labels, request.threshold, mode),
+            request.texts, what="entity")
+    finally:
+        release_metal()
     return InferBatchResponse(
         task=request.task, mode=mode,
         results=[[ProposalSpan(text=i["text"], start=int(i["start"]),
