@@ -48,15 +48,49 @@ class TestArmIsolation:
         assert baseline["use_resources"] is False
         assert baseline["lexical"]["lemma_to_pb_rolesets"] == {}
 
-    def test_baseline_pack_has_no_class_expanded_triggers(self) -> None:
+    def test_enrichment_arm_contains_exactly_the_licensed_promotions(self) -> None:
+        """The arms differ by PROMOTIONS, not by VerbNet class expansion.
+
+        This asserted `len(baseline) < len(hybrid)` -- that enrichment
+        always adds triggers. It did, and that was the defect: gate 5
+        merged whole VerbNet classes into production, turning 112
+        authored verbs into 337 and letting `founded` inherit `bake`.
+
+        Expansion is removed. The enrichment arm now differs from
+        baseline by exactly the verbs a human promoted in
+        trigger_allowlist.yaml, which is currently none -- so identical
+        arms is the CORRECT state, not a broken test. This harness
+        remains the instrument for measuring a future promotion.
+        """
+        import yaml as _yaml
+
         from polymath_shared.rulepack import load_rule_pack
+
+        allow = _yaml.safe_load(
+            (ROOT / "resources" / "predicates" / "trigger_allowlist.yaml").read_text())
+        promoted = {pid: set(e.get("allow") or [])
+                    for pid, e in (allow.get("predicates") or {}).items()}
 
         baseline = load_rule_pack(use_resources=False)
         hybrid = load_rule_pack(use_resources=True)
-        assert len(baseline["predicates"]["founded"]["evidence"]["verbs"]) < len(
-            hybrid["predicates"]["founded"]["evidence"]["verbs"]
-        ), "baseline must not contain resource-expanded triggers"
+        for pid, extra in promoted.items():
+            bp = (baseline["predicates"].get(pid) or {}).get("evidence") or {}
+            hp = (hybrid["predicates"].get(pid) or {}).get("evidence") or {}
+            b = set(bp.get("verbs") or [])
+            h = set(hp.get("verbs") or [])
+            assert h - b == extra, (
+                f"{pid}: enrichment adds {sorted(h - b)} but only "
+                f"{sorted(extra)} is licensed in trigger_allowlist.yaml. "
+                f"VerbNet class expansion has returned.")
 
+    @pytest.mark.skipif(
+        True,
+        reason="Probes with `coin`, an unlicensed VerbNet class member of "
+               "founded. Gate 5 no longer expands classes into production, "
+               "so `coin` is correctly UNSUPPORTED in BOTH arms and there is "
+               "no enrichment boundary to isolate. Re-enable with a verb "
+               "from trigger_allowlist.yaml `allow:` when a promotion is "
+               "being evaluated -- that is what this harness is now for.")
     def test_arms_differ_only_at_the_enrichment_boundary(self) -> None:
         """A class-member trigger compiles in the hybrid arm and is
         UNSUPPORTED in the baseline — the isolation is real, not cosmetic."""
@@ -257,6 +291,13 @@ class TestOrientedFactRecording:
 
 
 class TestUnionAccounting:
+    @pytest.mark.skipif(
+        True,
+        reason="Expects a CORRECT_ABSTENTION -> INCORRECT transition caused "
+               "by class expansion turning an abstention into a wrong "
+               "answer. That transition is exactly the defect gate 5 no "
+               "longer produces, so the cell is legitimately empty. "
+               "Re-enable when evaluating a licensed promotion.")
     def test_absent_side_is_correct_abstention(self, harness, tmp_path) -> None:
         harness.main(argv=["--gold", "eval/gold/relations_v1.1.yaml",
                            "--outdir", str(tmp_path)])

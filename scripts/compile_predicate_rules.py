@@ -49,6 +49,28 @@ def _find_compiled_dir() -> Path:
     return dirs[0]
 
 
+def _load_trigger_allowlist() -> dict:
+    """The production trigger authority. Absent file is FATAL.
+
+    Compiling without it would silently restore the expansion this gate
+    exists to remove, which is exactly the failure mode that let a
+    documented contract and a running system disagree for weeks.
+    """
+    import yaml as _yaml
+
+    path = ROOT / "resources" / "predicates" / "trigger_allowlist.yaml"
+    if not path.exists():
+        fail(f"missing trigger allowlist: {path}. Triggers must be "
+             f"manually licensed; refusing to compile without the "
+             f"authority that licenses them.")
+    data = _yaml.safe_load(path.read_text()) or {}
+    if data.get("policy") != "authored_only":
+        fail(f"trigger allowlist policy is {data.get('policy')!r}; only "
+             f"'authored_only' is supported. VerbNet may suggest, never "
+             f"expand.")
+    return data
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--pack", default=None,
@@ -153,20 +175,56 @@ def validate_and_compile(
         if back != rule["id"]:
             fail(f"inverse mismatch: {rule['id']} -> {inverse} -> {back}")
 
-    # -- gate 5: class-membership expansion ----------------------------------
+    # -- gate 5: class membership is a SUGGESTION, never an expansion --------
+    #
+    # This gate used to do `verbs.update(members)`: every member of every
+    # cited VerbNet class entered the production trigger set. 112 authored
+    # verbs became 337 compiled triggers -- x3.0 across 8 of 28 predicates.
+    # `founded` inherited 58 verbs including `bake`, so "she baked a cake"
+    # could license founded(she, cake); `similar_to` inherited `collaborate`
+    # and produced skill--similar_to-->users.
+    #
+    # A trigger is now licensed by AUTHORSHIP (it is in the rule pack) or by
+    # EXPLICIT PROMOTION (resources/predicates/trigger_allowlist.yaml). A
+    # class member that is neither is recorded as a suggestion and never
+    # compiled. Nothing is lost -- the suggestion survives in the artifact
+    # as a review queue -- but nothing enters production unreviewed.
     vn_class_index = tables["vn_class_index.json"]
+    allowlist = _load_trigger_allowlist()
     compiled_rules: dict[str, dict] = {}
     for rule in rules["predicates"]:
         ev = rule["evidence"]
-        verbs = set(ev.get("verbs", []))
+        authored = set(ev.get("verbs", []))
+        verbs = set(authored)
+        entry = (allowlist.get("predicates") or {}).get(rule["id"]) or {}
+        allowed = set(entry.get("allow") or [])
+        denied = set(entry.get("deny") or [])
+
+        overlap = allowed & denied
+        if overlap:
+            fail(f"{rule['id']}: trigger both allowed and denied: "
+                 f"{sorted(overlap)}")
+        authored_denied = authored & denied
+        if authored_denied:
+            fail(f"{rule['id']}: authored verb is on the deny list: "
+                 f"{sorted(authored_denied)}. Remove it from the rule pack "
+                 f"or from the deny list; do not leave the contradiction.")
+
         class_members: dict[str, list[str]] = {}
+        suggested: set[str] = set()
         for cls in ev.get("verbnet_classes", []):
             members = sorted(
                 m for m in vn_class_index.get(cls, [])
-                if m not in verbs
+                if m not in authored
             )
             class_members[cls] = members
-            verbs.update(members)
+            for m in members:
+                if m in denied:
+                    continue
+                if m in allowed:
+                    verbs.add(m)          # explicitly promoted
+                else:
+                    suggested.add(m)      # offered, unlicensed, not compiled
         compiled_rules[rule["id"]] = {
             "evidence_classes": ev.get("classes", []),
             "verbs": sorted(verbs),
@@ -178,6 +236,9 @@ def validate_and_compile(
             "propbank_rolesets": sorted(ev.get("propbank_rolesets", [])),
             "framenet_frames": sorted(ev.get("framenet_frames", [])),
             "class_members": class_members,
+            # Offered by VerbNet, licensed by nobody. Kept as evidence and
+            # as the review queue; never a production trigger.
+            "suggested_unlicensed": sorted(suggested),
             "signatures": rule.get("signatures", []),
         }
 

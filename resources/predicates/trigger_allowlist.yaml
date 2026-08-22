@@ -1,0 +1,434 @@
+# TRIGGER ALLOWLIST — the production trigger authority.
+#
+# A trigger must be MANUALLY LICENSED. VerbNet may suggest; it may never
+# expand the production vocabulary on its own.
+#
+# The compiler previously did `verbs.update(class_members)` in gate 5,
+# merging every member of every cited VerbNet class into the trigger set.
+# 112 authored verbs became 337 compiled triggers -- x3.0 -- across 8 of
+# 28 predicates. `founded` inherited 58 verbs including `bake`, so "she
+# baked a cake" could license founded(she, cake). `similar_to` inherited
+# `collaborate`, which produced the observed skill--similar_to-->users.
+#
+# Those were not extraction failures. They were compiler failures, and
+# Fact Admission is the wrong place to fix them: the compiler must stop
+# making invalid accusations rather than the court acquitting them one
+# at a time.
+#
+# POLICY
+#   authored    verbs in the rule pack YAML, licensed by authorship
+#   allow       a class member explicitly promoted into production
+#   deny        a class member that must NEVER be licensed. Recorded so
+#               no future expansion can re-admit it silently, and so the
+#               reason this file exists stays legible.
+#   suggested   what VerbNet offered and nobody licensed. Retained as
+#               evidence, never compiled. This is the review queue.
+#
+# Adding to `allow` is a semantic change: new rule pack version, shadow
+# comparison, measured. Exactly like any other.
+
+policy: authored_only
+contract: trigger-allowlist-v1
+
+predicates:
+
+  is_a:
+    # authored (3): be, constitute, represent
+    allow: []
+    deny: []
+    suggested: []
+
+  instance_of:
+    # authored (1): be
+    allow: []
+    deny: []
+    suggested: []
+
+  part_of:
+    # authored (6): compose, comprise, consist, constitute, contain, include
+    allow: []
+    deny: []
+    suggested: []
+
+  located_in:
+    # authored (3): base, locate, situate
+    allow: []
+    # observed producing false facts; never licensable
+    deny:
+      - coexist
+      - dwell
+      - flourish
+      - extend
+      - hold
+    suggested:
+      - exist
+      - languish
+      - linger
+      - live
+      - loom
+      - lurk
+      - persevere
+      - persist
+      - predominate
+      - prevail
+      - prosper
+      - remain
+      - reside
+      - shelter
+      - stand
+      - stay
+      - thrive
+      - tower
+      - vegetate
+      - wait
+
+  alias_of:
+    # authored (0): -
+    allow: []
+    deny: []
+    suggested: []
+
+  occurred_at:
+    # authored (3): happen, hold, occur
+    allow: []
+    deny: []
+    suggested: []
+
+  stated_in:
+    # authored (5): cite, describe, document, report, state
+    allow: []
+    deny: []
+    suggested: []
+
+  measured_by:
+    # authored (5): measure, quantify, rate, record, score
+    allow: []
+    deny: []
+    suggested: []
+
+  created:
+    # authored (6): build, create, design, make, produce, write
+    allow: []
+    # observed producing false facts; never licensable
+    deny:
+      - bake
+      - bead
+      - blow
+      - cast
+      - arrange
+      - assemble
+      - knit
+      - sew
+      - weave
+    suggested:
+      - author
+      - chisel
+      - churn
+      - coin
+      - compile
+      - compute
+      - concoct
+      - construct
+      - contrive
+      - cook
+      - cowrite
+      - crochet
+      - derive
+      - develop
+      - embroider
+      - erect
+      - fabricate
+      - fashion
+      - fold
+      - forge
+      - form
+      - formulate
+      - grind
+      - grow
+      - hack
+      - hammer
+      - lay
+      - manufacture
+      - mass-produce
+      - model
+      - mold
+      - organize
+      - pound
+      - publish
+      - rearrange
+      - reassemble
+      - rebuild
+      - reconstitute
+      - refashion
+      - reorganize
+      - roll
+      - sculpture
+      - spin
+      - stitch
+      - style
+      - synthesize
+      - turn_out
+      - whittle
+
+  founded:
+    # authored (7): charter, establish, form, found, incorporate, launch, start
+    allow: []
+    # observed producing false facts; never licensable
+    deny:
+      - bake
+      - bead
+      - blow
+      - cast
+      - author
+      - arrange
+      - assemble
+      - knit
+      - sew
+      - weave
+    suggested:
+      - chisel
+      - churn
+      - coin
+      - compile
+      - compute
+      - concoct
+      - construct
+      - contrive
+      - cook
+      - cowrite
+      - create
+      - crochet
+      - derive
+      - develop
+      - embroider
+      - erect
+      - fabricate
+      - fashion
+      - fold
+      - forge
+      - formulate
+      - grind
+      - grow
+      - hack
+      - hammer
+      - lay
+      - manufacture
+      - mass-produce
+      - model
+      - mold
+      - organize
+      - pound
+      - produce
+      - publish
+      - rearrange
+      - reassemble
+      - rebuild
+      - reconstitute
+      - refashion
+      - reorganize
+      - roll
+      - sculpture
+      - spin
+      - stitch
+      - style
+      - synthesize
+      - turn_out
+      - whittle
+
+  developed:
+    # authored (5): code, develop, engineer, implement, prototype
+    allow: []
+    # observed producing false facts; never licensable
+    deny:
+      - bake
+      - bead
+      - blow
+      - cast
+      - arrange
+      - assemble
+    suggested:
+      - chisel
+      - churn
+      - compile
+      - cook
+      - crochet
+      - embroider
+      - erect
+      - fashion
+      - fold
+      - forge
+      - formulate
+      - grind
+      - grow
+      - hack
+      - hammer
+      - knit
+      - mold
+      - pound
+      - reassemble
+      - refashion
+      - roll
+      - sculpture
+      - sew
+      - spin
+      - stitch
+      - weave
+      - whittle
+
+  employs:
+    # authored (4): employ, hire, recruit, retain
+    allow: []
+    deny: []
+    suggested: []
+
+  has_role:
+    # authored (6): chair, direct, head, lead, manage, serve
+    allow: []
+    deny: []
+    suggested: []
+
+  leads:
+    # authored (7): chair, direct, head, lead, manage, run, spearhead
+    allow: []
+    deny: []
+    suggested: []
+
+  member_of:
+    # authored (2): belong, join
+    allow: []
+    deny: []
+    suggested: []
+
+  owns:
+    # authored (4): control, hold, own, possess
+    allow: []
+    deny: []
+    suggested: []
+
+  acquired:
+    # authored (4): absorb, acquire, buy, purchase
+    allow: []
+    # observed producing false facts; never licensable
+    deny:
+      - accept
+      - borrow
+      - grab
+      - snatch
+      - seize
+      - cadge
+      - commandeer
+      - arrogate
+      - appropriate
+      - hijack
+      - inherit
+      - make
+      - receive
+      - source
+      - select
+      - subselect
+      - exact
+    suggested:
+      - accrue
+      - accumulate
+      - collect
+      - recoup
+      - recover
+      - regain
+      - retrieve
+
+  subsidiary_of:
+    # authored (0): -
+    allow: []
+    deny: []
+    suggested: []
+
+  uses:
+    # authored (7): adopt, apply, employ, leverage, run, use, utilize
+    allow: []
+    # observed producing false facts; never licensable
+    deny:
+      - work
+      - play
+      - exert
+      - exploit
+      - reuse
+    suggested: []
+
+  implemented_with:
+    # authored (2): implement, realize
+    allow: []
+    deny: []
+    suggested: []
+
+  causes:
+    # authored (4): cause, induce, produce, trigger
+    allow: []
+    deny: []
+    suggested: []
+
+  enables:
+    # authored (4): allow, enable, facilitate, permit
+    allow: []
+    deny: []
+    suggested: []
+
+  influences:
+    # authored (6): affect, bias, influence, modulate, shape, sway
+    allow: []
+    deny: []
+    suggested: []
+
+  depends_on:
+    # authored (3): depend, need, require
+    allow: []
+    deny: []
+    suggested: []
+
+  transforms_into:
+    # authored (4): compile, convert, transform, translate
+    allow: []
+    # observed producing false facts; never licensable
+    deny:
+      - alter
+      - deform
+      - morph
+      - mutate
+      - metamorphose
+      - transmute
+    suggested: []
+
+  derived_from:
+    # authored (4): adapt, derive, fork, port
+    allow: []
+    deny: []
+    suggested: []
+
+  similar_to:
+    # authored (3): mirror, parallel, resemble
+    allow: []
+    # observed producing false facts; never licensable
+    deny:
+      - banter
+      - bargain
+      - collaborate
+      - collide
+      - commiserate
+      - communicate
+      - compromise
+      - concur
+      - confer
+      - cooperate
+      - correspond
+      - deliberate
+      - differ
+      - disagree
+    suggested:
+      - interact
+      - negotiate
+      - plot
+
+  associated_with:
+    # authored (4): associate, connect, link, relate
+    allow: []
+    deny: []
+    suggested: []
