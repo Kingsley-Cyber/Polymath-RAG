@@ -48,6 +48,7 @@ docker:
 # could not help, because a SINGLE long text already exceeded the cap.
 sidecars:
   sidecar_embedder:
+    port: 8742          # observed to decide if this cap is actually held
     resident_gb: 0.5      # measured host RSS ~0.30 GB; headroom for tokenizer
     mps_gb: 3.5           # measured peak 3.17 GiB + margin
     # Long chunk texts make attention memory scale with the SQUARE of
@@ -55,12 +56,15 @@ sidecars:
     max_batch_tokens: 16384
     max_batch_texts: 8
   sidecar_gliner:
+    port: 8740          # observed to decide if this cap is actually held
     resident_gb: 0.8
     mps_gb: 2.0
   sidecar_spacy:
+    port: 8744          # observed to decide if this cap is actually held
     resident_gb: 0.5
     mps_gb: 0.0         # CPU pipeline
   sidecar_reranker:
+    port: 8743          # observed to decide if this cap is actually held
     resident_gb: 0.8
     # Also a Qwen3 0.6B, so weights alone are ~1.11 GiB. Reranking sees
     # shorter query+passage pairs than a full chunk, but 1.5 GB could

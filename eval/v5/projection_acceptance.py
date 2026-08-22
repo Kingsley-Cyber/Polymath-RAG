@@ -29,6 +29,8 @@ sys.path.insert(0, str(ROOT / "shared"))
 
 import psycopg  # noqa: E402
 
+from polymath_shared.runtime_budget import footprint_gb  # noqa: E402
+
 DSN = os.environ.get(
     "POLYMATH_PG_DSN",
     "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath")
@@ -54,14 +56,46 @@ def swap_used_mb() -> float:
 
 
 def free_pct() -> float:
-    out = subprocess.run(["memory_pressure"], capture_output=True, text=True)
+    """Genuinely AVAILABLE memory as a percentage of physical.
+
+    `memory_pressure`'s own "free percentage" is an instantaneous sample
+    that swung 6% -> 59% -> 47% -> 7% within four minutes on this host and
+    tripped the guard while the embedder was perfectly healthy. What
+    matters is reclaimable memory: free + inactive + speculative pages,
+    since macOS evicts inactive pages on demand.
+    """
+    out = subprocess.run(["vm_stat"], capture_output=True, text=True)
+    pages, page_size = {}, 16384
     for line in out.stdout.splitlines():
-        if "free percentage" in line:
+        if "page size of" in line:
             try:
-                return float(line.rsplit(":", 1)[1].strip().rstrip("%"))
-            except ValueError:
-                return -1.0
-    return -1.0
+                page_size = int(line.split("page size of")[1].split()[0])
+            except Exception:
+                pass
+            continue
+        if ":" not in line:
+            continue
+        k, v = line.split(":", 1)
+        v = v.strip().rstrip(".")
+        if v.isdigit():
+            pages[k.strip()] = int(v)
+    if not pages:
+        return -1.0
+    avail = (pages.get("Pages free", 0) + pages.get("Pages inactive", 0)
+             + pages.get("Pages speculative", 0))
+    total_bytes = _physical_bytes()
+    if not total_bytes:
+        return -1.0
+    return round(100.0 * avail * page_size / total_bytes, 1)
+
+
+def _physical_bytes() -> int:
+    out = subprocess.run(["sysctl", "-n", "hw.memsize"],
+                         capture_output=True, text=True)
+    try:
+        return int(out.stdout.strip())
+    except ValueError:
+        return 0
 
 
 def snapshot(conn, corpus: str) -> dict:
@@ -95,8 +129,13 @@ def main() -> int:
     ap.add_argument("--target-docs", type=int, default=25)
     ap.add_argument("--out")
     # graceful capacity stop
-    ap.add_argument("--min-free-pct", type=float, default=34.0,
-                    help="stop gracefully below this; the default leaves\n                         the workstation owner a third of the machine")
+    ap.add_argument("--min-free-pct", type=float, default=12.0,
+                    help="SECONDARY floor: stop when the HOST is genuinely "
+                         "starved, whoever caused it. Deliberately low, "
+                         "because the primary guard is Polymath's own "
+                         "allocation, not the owner's applications.")
+    ap.add_argument("--low-ticks", type=int, default=3,
+                    help="consecutive minutes below the floor before stopping")
     ap.add_argument("--stall-minutes", type=int, default=25,
                     help="no checkpoint progress for this long => stop")
     a = ap.parse_args()
@@ -104,11 +143,15 @@ def main() -> int:
     conn = psycopg.connect(DSN, connect_timeout=10)
     first = snapshot(conn, a.corpus)
     start = time.time()
+    base_fp = footprint_gb()
     print(json.dumps({"event": "resume_baseline", **first,
                       "swap_used_mb": swap_used_mb(),
-                      "free_pct": free_pct()}))
+                      "free_pct": free_pct(),
+                      "polymath_gb": base_fp["total_gb"],
+                      "budget_gb": base_fp["budget_gb"]}))
     history = [(start, first["checkpoint"])]
     last_progress = start
+    low_streak = over_streak = 0
     verdict, detail = "TIMEOUT", ""
 
     while time.time() - start < a.minutes * 60:
@@ -121,6 +164,7 @@ def main() -> int:
             continue
         now = time.time()
         swap, free = swap_used_mb(), free_pct()
+        fp = footprint_gb()
         if snap["checkpoint"] > history[-1][1]:
             last_progress = now
         history.append((now, snap["checkpoint"]))
@@ -134,13 +178,43 @@ def main() -> int:
             "query_ready": snap["query_ready"], "tickets": snap["tickets"],
             "lease_faults": snap["lease_faults"], "blocked": snap["blocked"],
             "control_ticks": snap["control_ticks"],
-            "swap_used_mb": swap, "free_pct": free}), flush=True)
+            "swap_used_mb": swap, "free_pct": free,
+            "polymath_gb": fp["total_gb"], "budget_gb": fp["budget_gb"],
+            "headroom_gb": fp["headroom_gb"]}), flush=True)
 
         if snap["query_ready"] >= a.target_docs:
             verdict, detail = "CONVERGED", f"{snap['query_ready']} docs query_ready"
             break
+
+        # PRIMARY: Polymath's own footprint against its own allocation.
+        # That allocation is the contract the owner set, and exceeding it
+        # is a defect regardless of what else the machine is doing.
+        if not fp["within_budget"]:
+            over_streak += 1
+        else:
+            over_streak = 0
+        if over_streak >= a.low_ticks:
+            verdict, detail = ("BUDGET_EXCEEDED",
+                               f"Polymath held {fp['total_gb']} GB against a "
+                               f"{fp['budget_gb']} GB allocation for "
+                               f"{over_streak} consecutive minutes")
+            break
+
+        # SECONDARY: genuine host starvation, whoever caused it. The floor
+        # is deliberately low. A previous run stopped at 34% free while
+        # Polymath held 6.93 GB of its 16 GB allocation -- the rest of the
+        # machine was the owner's own applications, which are entitled to
+        # it. Stopping there measured somebody else's memory, not ours.
         if 0 <= free < a.min_free_pct:
-            verdict, detail = "CAPACITY_STOP", f"free memory {free}% below {a.min_free_pct}%"
+            low_streak += 1
+        else:
+            low_streak = 0
+        if low_streak >= a.low_ticks:
+            verdict, detail = ("HOST_STARVED",
+                               f"host free memory below {a.min_free_pct}% for "
+                               f"{low_streak} consecutive minutes while "
+                               f"Polymath held {fp['total_gb']} GB of "
+                               f"{fp['budget_gb']} GB")
             break
         if now - last_progress > a.stall_minutes * 60:
             verdict, detail = "STALLED", f"no checkpoint progress for {a.stall_minutes}m"
@@ -154,6 +228,8 @@ def main() -> int:
         "resumed": final["checkpoint"] > first["checkpoint"],
         "rows_added": final["checkpoint"] - first["checkpoint"],
         "elapsed_min": round((time.time() - start) / 60, 1),
+        "polymath_gb": footprint_gb()["total_gb"],
+        "budget_gb": footprint_gb()["budget_gb"],
         "lease_faults": final["lease_faults"],
         "blocked_queries": final["blocked"],
         "query_ready": final["query_ready"],

@@ -175,6 +175,60 @@ def preflight(fleet_only: str | None = None) -> dict[str, Any]:
     return p
 
 
+def _listening(port: int) -> bool:
+    try:
+        out = subprocess.run(["lsof", "-nP", f"-iTCP:{port}", "-sTCP:LISTEN", "-t"],
+                             capture_output=True, text=True, timeout=15)
+        return bool(out.stdout.strip())
+    except Exception:
+        return False
+
+
+def footprint_gb() -> dict[str, float]:
+    """What Polymath is ACTUALLY consuming right now.
+
+    This is the number the allocation is a contract about, and it is not
+    the same as the machine's free memory. The host also runs the
+    owner's own applications; those legitimately occupy the rest of the
+    machine, and a run that stops because the owner opened a browser is
+    measuring somebody else's memory.
+
+    Metal allocations live in unified memory and do not appear in RSS,
+    so the sidecars' GPU pools are added from their budgeted caps rather
+    than observed -- the preflight already refuses a fleet whose caps do
+    not fit, and the watermark ratios make the caps binding.
+    """
+    out = subprocess.run(["ps", "-eo", "rss,command"],
+                         capture_output=True, text=True, timeout=30)
+    markers = ("process_supervisor", "sidecars.", "control.main", "workers.",
+               "orchestrator", "polymath")
+    rss = 0.0
+    for line in out.stdout.splitlines()[1:]:
+        parts = line.split(None, 1)
+        if len(parts) < 2 or not parts[0].isdigit():
+            continue
+        if "grep" in parts[1]:
+            continue
+        if any(m in parts[1] for m in markers):
+            rss += int(parts[0]) / (1024 ** 2)
+    b = budget()
+    vm = float(b["docker"]["vm_gb"])
+    # Charge a GPU cap only for a sidecar that is actually LISTENING.
+    # Reading the intended working set from the environment instead
+    # over-charged a projection run with GLiNER and the reranker it had
+    # never started, and a guard that invents 5.5 GB of usage will stop
+    # a run that is comfortably inside its allocation.
+    gpu = sum(float(spec.get("mps_gb", 0) or 0)
+              for spec in (b.get("sidecars") or {}).values()
+              if spec.get("port") and _listening(int(spec["port"])))
+    total = rss + vm + gpu
+    ceiling = float(b["total_gb"])
+    return {"host_rss_gb": round(rss, 2), "docker_vm_gb": vm,
+            "gpu_caps_gb": round(gpu, 2), "total_gb": round(total, 2),
+            "budget_gb": ceiling, "within_budget": total <= ceiling,
+            "headroom_gb": round(ceiling - total, 2)}
+
+
 def export_env(slot: str) -> dict[str, str]:
     """Full environment for one sidecar: MPS cap plus batch bounds."""
     texts, tokens = batch_bounds(slot)
