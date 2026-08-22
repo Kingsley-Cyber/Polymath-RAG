@@ -88,16 +88,34 @@ class _StageWrite:
             (self.run_id, self.stage, self.contract_hash),
         )
 
+    @staticmethod
+    def _describe(exc: BaseException) -> str:
+        """Type, message and cause chain.
+
+        Recording only str(exc) produced failure records that read
+        exactly "timed out" — true, useless, and undiagnosable without
+        re-running the stage by hand. The type and the __cause__ chain
+        are what say WHICH client timed out.
+        """
+        parts, seen, cur = [], set(), exc
+        while cur is not None and id(cur) not in seen:
+            seen.add(id(cur))
+            name = f"{type(cur).__module__}.{type(cur).__name__}"
+            parts.append(f"{name}: {cur}" if str(cur) else name)
+            cur = cur.__cause__ or cur.__context__
+        return " <- ".join(parts)[:2000]
+
     def _record_failure(self, exc: BaseException) -> None:
         # Runs AFTER a rollback-to-savepoint, so this transaction is clean
         # and these statements can commit.
+        described = self._describe(exc)
         self.conn.execute(
             """
             UPDATE stage_attempts
                SET outcome = 'failed', error = %s, completed_at = now()
              WHERE run_id = %s AND stage = %s AND contract_hash = %s
             """,
-            (str(exc)[:2000], self.run_id, self.stage, self.contract_hash),
+            (described, self.run_id, self.stage, self.contract_hash),
         )
         self.conn.execute(
             """
@@ -107,7 +125,7 @@ class _StageWrite:
                SET status = 'failed', error = EXCLUDED.error
             """,
             (receipt_id(self.run_id, self.stage, self.contract_hash),
-             self.run_id, self.stage, self.contract_hash, str(exc)[:2000]),
+             self.run_id, self.stage, self.contract_hash, described),
         )
 
     def _commit_receipt(self) -> None:

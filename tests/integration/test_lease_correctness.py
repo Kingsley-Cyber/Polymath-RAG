@@ -115,6 +115,23 @@ def test_worker_claims_one_ticket_at_a_time_by_default():
     assert sig.parameters["batch_size"].default == 1
 
 
+def test_every_worker_entry_point_claims_one_ticket():
+    """The shared default is not enough: each worker declares its own
+    run_forever(batch_size=...) and every one of them overrode it with 4
+    (intake with 8), so fixing only the shared default left production
+    claiming four tickets per worker. This asserts the ENTRY POINTS."""
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2] / "workers" / "workers"
+    offenders = []
+    for path in sorted(root.glob("*_worker.py")):
+        m = re.search(r"def run_forever\([^)]*batch_size: int = (\d+)", path.read_text())
+        if m and int(m.group(1)) != 1:
+            offenders.append(f"{path.name}={m.group(1)}")
+    assert not offenders, f"workers claiming more than one ticket: {offenders}"
+
+
 # ---------------------------------------------------------------------------
 # the reaper
 # ---------------------------------------------------------------------------

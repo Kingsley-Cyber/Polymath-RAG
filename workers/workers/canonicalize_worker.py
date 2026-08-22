@@ -167,7 +167,14 @@ def process_event(conn: Connection, event: dict) -> None:
         writer.run_status("reconciling")
 
 
-def run_forever(poll_interval_s: float = 2.0, batch_size: int = 4) -> None:
+def run_forever(poll_interval_s: float = 2.0, batch_size: int = 1) -> None:
+    """LONG-STAGE-LEASE-CORRECTNESS-V1: claim depth 1.
+
+    A worker executes tickets serially, so claiming ahead bought nothing
+    but made "held" differ from "being processed" -- and a stage running
+    past claim_ttl_s let the reaper expire the queued ones. Parallelism
+    comes from running several workers of a type.
+    """
     from polymath_shared.worker_runtime import run_worker
 
     run_worker('canonicalize', [EVENT_TYPE], process_event,
