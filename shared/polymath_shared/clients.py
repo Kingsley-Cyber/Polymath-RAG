@@ -233,30 +233,26 @@ class SpacySyntaxClient(SidecarClient):
         return response
 
 
-class RerankerClient:
+class RerankerClient(SidecarClient):
     """Client for the G3 reranker sidecar (cross-encoder).
 
     Scores (query, candidate) pairs; returns scores + the reordered
     index list + the pinned model identity. The caller keeps rank-based
     fusion and applies the scores ordinally — this client never
-    invents calibrated weights."""
+    invents calibrated weights.
+
+    Inherits SidecarClient so `rerank()` goes through the same bounded,
+    pool-invalidating `request()` as every other sidecar call. It
+    previously carried its own bare `httpx.Client` while calling
+    `self.request(...)`, so every rerank raised AttributeError and the
+    orchestrator answered 502 `rerank_unavailable` on FAST, HYBRID and
+    GRAPH alike. Nothing caught it because no test and no acceptance run
+    had exercised retrieval since the client was refactored.
+    """
     POST_PATH = "/rerank"
 
     def __init__(self, timeout: float = 60.0) -> None:
-        settings = get_settings()
-        self._client = httpx.Client(
-            base_url=settings.sidecars.reranker_url.rstrip("/"),
-            timeout=timeout,
-        )
-
-    def close(self) -> None:
-        self._client.close()
-
-    def __enter__(self) -> "RerankerClient":
-        return self
-
-    def __exit__(self, *exc: Any) -> None:
-        self.close()
+        super().__init__(get_settings().sidecars.reranker_url, timeout=timeout)
 
     def rerank(
         self,

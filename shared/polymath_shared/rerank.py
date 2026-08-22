@@ -99,7 +99,12 @@ def apply_rerank(
             query, selected_documents, selected_children, client=client,
         )
     except Exception as exc:
-        raise RerankUnavailable(f"reranker unavailable: {type(exc).__name__}") from exc
+        # Carry the MESSAGE, not just the type. `reranker unavailable:
+        # AttributeError` was the only symptom of a client that could not
+        # call its own method, and it named neither the attribute nor the
+        # class -- turning a one-line fix into an investigation.
+        raise RerankUnavailable(
+            f"reranker unavailable: {type(exc).__name__}: {exc}") from exc
     finally:
         if client is not None:
             client.close()
