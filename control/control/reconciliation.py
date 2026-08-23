@@ -211,8 +211,24 @@ def _mint_successor(conn: Connection, old_run_id: str, new_run_id: str,
                                       corpus_id, stale)
 
     # 4. fresh ticket chain under the CURRENT contract; intake READY +
-    #    event emitted by the existing idempotent path. Content-derived
+    #    event emitted by the existing idempotent path. The successor's
+    #    intake claim needs the REAL intake payload (corpus_id,
+    #    content_b64...) -- copy the parent's original intake.v1 rows
+    #    verbatim FIRST, so _emit_ticket_event finds them instead of
+    #    falling back to a bare {run_id} payload (observed live as
+    #    KeyError('corpus_id') burning retry budget). Content-derived
     #    doc/chunk identities make re-intake reuse the raw document.
+    conn.execute(
+        """INSERT INTO outbox_events
+               (run_id, event_type, payload, idempotency_key)
+            SELECT %s, e.event_type, e.payload,
+                   %s || e.idempotency_key::text
+              FROM outbox_events e
+             WHERE e.run_id=%s AND e.event_type='intake.v1'
+            ON CONFLICT (idempotency_key) DO NOTHING""",
+        (new_run_id, content_hash({"carried_to": new_run_id,
+                                   "kind": "intake"}),
+         old_run_id))
     from control.tickets import ensure_run_tickets
     ensure_run_tickets(conn, new_run_id, corpus_id, dict(current))
 
