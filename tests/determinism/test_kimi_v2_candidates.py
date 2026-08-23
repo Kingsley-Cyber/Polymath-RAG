@@ -324,3 +324,39 @@ def test_unlicensed_control_verb_does_not_propagate():
         identities=_identities([sl]))
     assert [c for c in cands
             if c.evidence.trigger_predicate_id == "uses"] == []
+
+
+def test_compound_np_head_binds_through_child_entity():
+    """'The BERT model was introduced by Google Research.'
+    nsubj head = generic 'model'; the compound child 'BERT' names the
+    admitted entity. Argument must bind through the compound child."""
+    text = "The BERT model was introduced by Google Research."
+    toks = [
+        _tok(0, "The", 0, pos="DET", dep="det", head_i=2),
+        _tok(1, "BERT", text.index("BERT"), lemma="bert", pos="PROPN", dep="compound",
+             head_i=2),
+        _tok(2, "model", text.index("model"), pos="NOUN", dep="nsubjpass", head_i=3),
+        _tok(3, "was", text.index("was"), lemma="be", pos="AUX", dep="auxpass",
+             head_i=4),
+        _tok(4, "introduced", text.index("introduced"), lemma="introduce", pos="VERB",
+             dep="ROOT", head_i=4),
+        _tok(5, "by", text.index("by"), pos="ADP", dep="agent", head_i=4),
+        _tok(6, "Google Research", text.index("Google Research"), pos="PROPN", dep="pobj",
+             head_i=5),
+    ]
+    ents = [_ent("c0", "BERT", text.index("BERT"),
+                 text.index("BERT") + 4, "Architecture"),
+            _ent("c0", "Google Research",
+                 text.index("Google Research"),
+                 text.index("Google Research") + 15, "ResearchGroup")]
+    sl = _slice(text, toks, ents)
+    cands = build_candidates_kimi_v2(
+        [sl], doc_id="d1", corpus_id="c1", ontology_profile="core",
+        extractor_version="test", rule_pack=PACK,
+        identities=_identities([sl]))
+    introduced = [c for c in cands
+                  if c.evidence.trigger_predicate_id == "introduced"]
+    assert len(introduced) == 1
+    pair = {c.subject.span.text for c in introduced} | \
+           {c.object.span.text for c in introduced}
+    assert pair == {"BERT", "Google Research"}
