@@ -193,12 +193,12 @@ def render(out: dict) -> str:
             f"| {stage} | {s['completions_sampled']} | "
             f"{s.get('latency_p50_s','-')} | {s.get('latency_p95_s','-')} | "
             f"{s['failures_cumulative']} |")
-        lines += ["", "## Integrity",
-                  f"- duplicate fact tuples: {i['duplicate_fact_tuples']}",
-                  f"- entity identity fragments (same surface+type, "
-                  f"multiple ids): {i['entity_identity_fragments']}",
-                  f"- active receipts: {i['active_projection_receipts']}",
-                  "", f"## Queue curve\n- {out['queue_curve']}"]
+    lines += ["", "## Integrity",
+              f"- duplicate fact tuples: {i['duplicate_fact_tuples']}",
+              f"- entity identity fragments (same surface+type, "
+              f"multiple ids): {i['entity_identity_fragments']}",
+              f"- active receipts: {i['active_projection_receipts']}",
+              "", f"## Queue curve\n- {out['queue_curve']}"]
     return "\n".join(lines)
 
 
