@@ -48,14 +48,19 @@ def corpus_refresh_policy(*, completed_documents: int, last_run_at,
 def _weighted(per_doc, fact_degrees, top_n):
     docs = defaultdict(set)
     count = Counter()
-    for dsid, items in per_doc:
+    density = {}
+    for dsid, items, dens in per_doc:
         for item in items or []:
             docs[item].add(dsid)
             count[item] += 1
+            density[item] = max(density.get(item, 0.0), dens or 0.5)
     ranked = []
     for item, c in count.most_common():
         spread = len(docs[item])
-        score = round(2 * spread + c + (fact_degrees or {}).get(item, 0), 3)
+        dens = density.get(item, 0.0) or 0.5
+        concept_strength = min(1.0, 0.25 + 0.25 * spread)
+        score = round(spread * dens * concept_strength
+                      + (fact_degrees or {}).get(item, 0) * 0.01, 3)
         ranked.append({"item": item, "weight": score,
                        "document_spread": spread, "occurrences": c,
                        "source_document_summary_ids": sorted(docs[item])})
@@ -65,11 +70,13 @@ def _weighted(per_doc, fact_degrees, top_n):
 def build_corpus_map(*, corpus_id: str, document_summaries: list[dict],
                      fact_degrees: dict | None = None,
                      top_n: int = 10) -> dict:
-    ent_per_doc = [(r["summary_id"], r.get("major_entities") or [])
+    ent_per_doc = [(r["summary_id"], r.get("major_entities") or [],
+                    (r.get("evidence_density") or 0.5))
                    for r in document_summaries]
-    cpt_per_doc = [(r["summary_id"], r.get("major_concepts") or [])
+    cpt_per_doc = [(r["summary_id"], r.get("major_concepts") or [],
+                    (r.get("evidence_density") or 0.5))
                    for r in document_summaries]
-    pred_per_doc = [(r["summary_id"], r.get("methods") or [])
+    pred_per_doc = [(r["summary_id"], r.get("methods") or [], 0.5)
                     for r in document_summaries]
 
     entities = _weighted(ent_per_doc, fact_degrees, top_n)

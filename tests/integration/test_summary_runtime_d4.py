@@ -6,6 +6,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import pytest
 import psycopg
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -24,6 +25,16 @@ def _seed_doc(conn, sid, ents, cpts, methods):
            VALUES (%s,%s,%s,%s,'admission-harbor-v2','w','{}',
                    %s::text[], %s::text[], %s::text[], 's')""",
         (sid, "doc_" + sid, CORPUS, "h_" + sid, ents, cpts, methods))
+
+
+def _reset_corpus_tables():
+    import psycopg
+
+    with psycopg.connect(DSN) as c:
+        for t in ("summary_artifacts", "document_summaries",
+                  "corpus_summaries", "summary_jobs"):
+            c.execute("DELETE FROM " + t + " WHERE corpus_id=%s",
+                      (CORPUS,))
 
 
 def test_weighting_prefers_document_spread_and_fact_degree():
@@ -100,3 +111,9 @@ def test_corpus_ticket_lifecycle_and_idempotency():
                   "document_summaries", "summary_jobs"):
             conn.execute(f"DELETE FROM {t} WHERE corpus_id=%s", (CORPUS,))
         conn.commit()
+
+
+@pytest.fixture(autouse=True)
+def _isolated_corpus():
+    _reset_corpus_tables()
+    yield

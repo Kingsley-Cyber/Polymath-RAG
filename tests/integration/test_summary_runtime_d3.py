@@ -5,6 +5,7 @@ import sys
 import uuid
 from pathlib import Path
 
+import pytest
 import psycopg
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -21,6 +22,17 @@ def _seed_parent(conn, sid, text, ents, cpts):
            entities, concepts, summary)
            VALUES (%s,%s,%s,%s,'admission-harbor-v2','w','{}',%s,%s,%s)""",
         (sid, "par_" + sid, CORPUS, "hash_" + sid, ents, cpts, text))
+
+
+def _reset_corpus_tables():
+    import psycopg
+
+    with psycopg.connect(DSN) as c:
+        for t in ("summary_artifacts", "document_summaries",
+                  "parent_summaries", "corpus_summaries",
+                  "summary_jobs"):
+            c.execute("DELETE FROM " + t + " WHERE corpus_id=%s",
+                      (CORPUS,))
 
 
 def test_d3_lifecycle_lineage_and_idempotency():
@@ -106,3 +118,9 @@ def _cleanup():
                   (CORPUS,))
         c.execute("DELETE FROM summary_jobs WHERE corpus_id=%s", (CORPUS,))
         c.commit()
+
+
+@pytest.fixture(autouse=True)
+def _isolated_corpus():
+    _reset_corpus_tables()
+    yield
