@@ -13,7 +13,10 @@ entity surfaces / accepted facts, never raw mentions.
 from __future__ import annotations
 
 from polymath_shared.identity import content_hash
+from collections import Counter
+
 from polymath_shared.parent_summary import build_parent_summary
+from polymath_shared.summary_layer import build_envelope
 
 
 def _ticket_state(conn, ticket_id: str) -> str | None:
@@ -80,3 +83,97 @@ def run_parent_summary_ticket(conn, *, ticket_id: str, corpus_id: str,
     return {"status": "COMPLETE", "artifact_id": env["artifact_id"],
             "output_hash": env["output_hash"],
             "summary_id": env["artifact_id"]}
+
+
+def run_document_summary_ticket(conn, *, ticket_id: str, corpus_id: str,
+                                document_id: str, input_hash: str,
+                                contract_version: str, worker_id: str,
+                                parent_summary_ids: list[str],
+                                title: str = "",
+                                accepted_predicates: list[str] | None = None,
+                                event_count: int = 0,
+                                source_ids: list[str] | None = None):
+    """D3: compose the document summary from PARENT SUMMARIES ONLY.
+
+    Verifies every referenced parent exists and its stored
+    artifact_hash matches the caller's view before aggregating. Never
+    invents entities/facts/relationships — it only compresses settled
+    knowledge."""
+    if not _claim(conn, ticket_id, worker_id):
+        return {"status": "SKIPPED_NOT_CLAIMABLE"}
+
+    existing = conn.execute(
+        "SELECT artifact_id FROM summary_artifacts WHERE input_hash=%s",
+        (input_hash,)).fetchone()
+    if existing:
+        conn.execute("UPDATE summary_jobs SET state='COMPLETE', "
+                     "completed_at=now() WHERE ticket_id=%s", (ticket_id,))
+        return {"status": "EXISTING", "artifact_id": existing[0]}
+
+    # verify lineage: every parent summary must exist; hash agreement
+    parents = []
+    for pid in parent_summary_ids:
+        row = conn.execute(
+            """SELECT summary_id, summary, entities, concepts,
+               artifact_hash FROM parent_summaries WHERE summary_id=%s""",
+            (pid,)).fetchone()
+        if row is None:
+            conn.execute("UPDATE summary_jobs SET state='FAILED', "
+                         "completed_at=now() WHERE ticket_id=%s",
+                         (ticket_id,))
+            return {"status": "FAILED", "reason":
+                    f"missing parent summary {pid}"}
+        parents.append(row)
+
+    ent_freq: Counter = Counter()
+    cpt_freq: Counter = Counter()
+    lines: list[str] = []
+    for _sid, summary, ents, cpts, _h in parents:
+        for e in ents or []:
+            ent_freq[e] += 1
+        for cpt in cpts or []:
+            cpt_freq[cpt] += 1
+        if summary:
+            lines.append(summary)
+    preds = sorted(set(accepted_predicates or []))
+    lead = f"{title} — " if title else ""
+    body = " ".join(lines[:3])
+    density = round(len(preds) / max(len(parents), 1), 4)
+    payload = {
+        "summary_type": "document",
+        "document_id": document_id,
+        "concepts": [c for c, _ in cpt_freq.most_common(10)],
+        "entities": [e for e, _ in ent_freq.most_common(10)],
+        "methods": preds,
+        "predicates": preds,
+        "evidence_density": density,
+        "event_count": event_count,
+        "summary": (lead + body).strip(),
+    }
+    env = build_envelope(derived_from=list(parent_summary_ids),
+                         payload=payload)
+    artifact_id = "dsa_" + content_hash({"in": input_hash})[:32]
+    conn.execute(
+        """INSERT INTO summary_artifacts (artifact_id, input_hash,
+           output_hash, stage, corpus_id, contract_version,
+           created_by_worker, source_ids, payload)
+           VALUES (%s,%s,%s,'DOCUMENT_SUMMARY',%s,%s,%s,%s,%s)
+           ON CONFLICT (input_hash) DO NOTHING""",
+        (artifact_id, input_hash, env["output_hash"], corpus_id,
+         contract_version, worker_id, source_ids or parent_summary_ids,
+         __import__("json").dumps({"envelope": env})))
+    conn.execute(
+        """INSERT INTO document_summaries (summary_id, document_id,
+           corpus_id, artifact_hash, contract_version, created_by_worker,
+           source_ids, major_entities, major_concepts, methods, domains,
+           questions_answered, summary)
+           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'{}','{}',%s)
+           ON CONFLICT (summary_id) DO NOTHING""",
+        (env["artifact_id"], document_id, corpus_id, env["output_hash"],
+         contract_version, worker_id, list(parent_summary_ids),
+         payload["entities"], payload["concepts"], payload["methods"],
+         payload["summary"]))
+    conn.execute("UPDATE summary_jobs SET state='COMPLETE', "
+                 "completed_at=now() WHERE ticket_id=%s", (ticket_id,))
+    return {"status": "COMPLETE", "artifact_id": artifact_id,
+            "document_summary_id": env["artifact_id"]}
