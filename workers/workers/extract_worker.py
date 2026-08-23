@@ -805,7 +805,13 @@ def process_event(conn: Connection, event: dict) -> None:
                      "slices_s": 0.0, "syntax_s": 0.0, "rescue_s": 0.0,
                      "admission_s": 0.0, "persist_mentions_s": 0.0,
                      "candidates_compile_s": 0.0, "l1_l4_writes_s": 0.0,
+                     "fact_admission_s": 0.0,
                      "provider_calls": 0, "stage_t0": _t.perf_counter()}
+            # EXTRACTION-AUDIT-V1: per-stage counts for the durable audit
+            # report (timings come from _perf, monotonic perf_counter).
+            _counts = {"gliner_entity_proposals": 0, "gliner_entity_rejected": 0,
+                       "evidence_spans": 0, "mentions_persisted": 0}
+            _decision_counts: dict = {}
             # V5 L1 (raw-evidence-ledger-v1): provider observations captured
             # per chunk, bulk-written once per document inside this stage
             # transaction — so raw evidence commits with the stage receipt
@@ -879,6 +885,9 @@ def process_event(conn: Connection, event: dict) -> None:
                     envelope=envelope, trace=trace, raw_sink=raw_entity_sink,
                     precomputed=_batched_pass1.get(row["chunk_id"])
                 )
+                _counts["gliner_entity_proposals"] += len(entities)
+                if rejected:
+                    _counts["gliner_entity_rejected"] += len(rejected)
                 if not _batched_pass1:
                     _perf["entity_pass_s"] += _t.perf_counter() - _pt
                     _perf["provider_calls"] += 1
@@ -908,6 +917,7 @@ def process_event(conn: Connection, event: dict) -> None:
                     gliner, row["text"], row["chunk_id"], pack, proposal_mode,
                     raw_sink=raw_predicate_sink
                 )
+                _counts["evidence_spans"] += len(evidence)
                 _perf["evidence_pass_s"] += _t.perf_counter() - _pt
                 # drain this chunk's raw observations into ledger rows
                 _raw_rows_entity.extend(
@@ -1018,6 +1028,10 @@ def process_event(conn: Connection, event: dict) -> None:
                 conn, corpus_id, doc_id, ordered_slices, identities,
                 mention_id_for=lambda s: "mention_" + _mention_suffix(s, doc_id))
             _perf["entity_admission_s"] = _t.perf_counter() - _pt
+            _counts["entity_admission_considered"] = int(
+                _entity_admission.get("considered", 0))
+            _counts["entity_admission_refused"] = int(
+                _entity_admission.get("rejected", 0))
 
             # FACT-ADMISSION-V1 (F1-F8): the last court before a claim
             # becomes asserted knowledge. Carries the ENTITY verdicts so
@@ -1043,9 +1057,12 @@ def process_event(conn: Connection, event: dict) -> None:
             # only be admitted by interpreting it a SECOND time — the very
             # divergence this cutover removes.
             _pt = _t.perf_counter()
+            _mention_spans = [span for _row, _sl in ordered_slices
+                              for span in _sl.entities]
+            _counts["mentions_persisted"] = len(_mention_spans)
             _persist_mentions(
                 conn, corpus_id, doc_id,
-                [span for _row, _sl in ordered_slices for span in _sl.entities],
+                _mention_spans,
                 ordered_slices=ordered_slices, identities=identities)
             _perf["persist_mentions_s"] = _t.perf_counter() - _pt
             _pt = _t.perf_counter()
@@ -1074,6 +1091,8 @@ def process_event(conn: Connection, event: dict) -> None:
                     # refused relation evidence survives outside the trace.
                     _l4_rows.append(_raw.relation_candidate_row(
                         doc_id, row["chunk_id"], candidate, decision))
+                    _decision_counts[decision.decision] = (
+                        _decision_counts.get(decision.decision, 0) + 1)
                     if trace.enabled:
                         reason = str(decision.reason or "")
                         code = ("NEGATED" if "negated" in reason else
@@ -1101,9 +1120,11 @@ def process_event(conn: Connection, event: dict) -> None:
                         # be ASSERTED. The candidate row above is already
                         # durable, so a refusal withholds the assertion
                         # without losing the evidence.
+                        _pf = _t.perf_counter()
                         _may_assert = _fact_stage.admits(
                             row=row, candidate=candidate, decision=decision,
                             sl=sl, identities=identities)
+                        _perf["fact_admission_s"] += _t.perf_counter() - _pf
                         if _may_assert:
                             _persist_decision(conn, row, candidate, decision,
                                               corpus_id=corpus_id,
@@ -1143,6 +1164,46 @@ def process_event(conn: Connection, event: dict) -> None:
                      for k, v in _perf.items()}
             _perf["chunks"] = len(child_chunks)
             _perf["slices"] = len(ordered_slices)
+
+            # EXTRACTION-AUDIT-V1: durable per-document audit report.
+            # Monotonic timings only (perf_counter), integer milliseconds,
+            # counts for every stage boundary — the phase's auditable
+            # record, queryable via artifacts(run_id, stage='extract').
+            timing_ms = {
+                "total_ms": int(round(_perf.get("total_s", 0) * 1000)),
+                "gliner_ms": int(round((_perf.get("entity_pass_s", 0.0)
+                                        + _perf.get("evidence_pass_s", 0.0)) * 1000)),
+                "spacy_ms": int(round(_perf.get("syntax_s", 0.0) * 1000)),
+                "rescue_ms": int(round(_perf.get("rescue_s", 0.0) * 1000)),
+                "entity_admission_ms": int(round(_perf.get("entity_admission_s", 0.0) * 1000)),
+                "persist_mentions_ms": int(round(_perf.get("persist_mentions_s", 0.0) * 1000)),
+                "predicate_compile_ms": int(round(_perf.get("candidates_compile_s", 0.0) * 1000)),
+                "fact_admission_ms": int(round(_perf.get("fact_admission_s", 0.0) * 1000)),
+                "writes_ms": int(round(_perf.get("l1_l4_writes_s", 0.0) * 1000)),
+            }
+            extraction_audit = {
+                "contract": "extraction-audit-v1",
+                "run_id": run_id,
+                "corpus_id": corpus_id,
+                "document_id": doc_id,
+                "relation_pipeline": active_pipeline(),
+                "bytes": sum(len(r["text"]) for r in child_chunks),
+                "timing_ms": timing_ms,
+                "counts": {
+                    "chunks": len(child_chunks),
+                    "sentences": len(ordered_slices),
+                    **_counts,
+                    "relation_candidates_by_decision": dict(_decision_counts),
+                    "facts_passed": _fact_stage.passed,
+                    "facts_qualified": _fact_stage.qualified,
+                    "facts_rejected": _fact_stage.rejected,
+                    "facts_withheld": getattr(_fact_stage, "withheld", 0),
+                },
+            }
+            writer.artifact({"extraction_audit": extraction_audit})
+            import json as _json
+            log.info("extract audit %s", _json.dumps(extraction_audit),
+                     extra={"run_id": run_id, "stage": "extract"})
             writer.artifact({"perf": _perf})
             log.info("extract perf", extra={"run_id": run_id, "stage": "extract",
                                             "detail": None})
