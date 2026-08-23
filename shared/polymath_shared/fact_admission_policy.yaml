@@ -128,6 +128,30 @@ orientation:
     canonical_triggers: [occur, happen, "took place", "occurred at",
                          "occurred in", "held at"]
     inverse_triggers:   []
+  # SCIENTIFIC-KAG-V1 (phase 4) research predicates.
+  contains_component:
+    canonical_triggers: [include, comprise, consist, compose, contain,
+                         constitute, incorporate, component, element,
+                         subcomponent]
+    inverse_triggers:   []
+  introduced:
+    canonical_triggers: [introduce]
+    inverse_triggers:   []
+  proposed:
+    canonical_triggers: [propose, present]
+    inverse_triggers:   []
+  trained_on:
+    canonical_triggers: [train]
+    inverse_triggers:   []
+  evaluated_on:
+    canonical_triggers: [evaluate]
+    inverse_triggers:   []
+  outperforms:
+    canonical_triggers: [outperform, surpass, exceed]
+    inverse_triggers:   [outperformed]
+  released_on:
+    canonical_triggers: [release]
+    inverse_triggers:   []
   leads:
     canonical_triggers: [lead, head, direct, manage, "leads", "heads"]
     inverse_triggers:   ["led by", "headed by"]

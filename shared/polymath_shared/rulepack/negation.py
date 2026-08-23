@@ -68,11 +68,19 @@ def analyze_scope(
     flags.hypothetical = any(cue in before for cue in ("would", "plans to", "intends to"))
 
     for cue in sorted(ATTRIBUTION_CUES, key=len, reverse=True):
-        if cue in before:
-            flags.attributed = True
-            source = _attribution_source(sentence, cue)
-            if source:
-                flags.attribution_source = source
+        # Word-boundary + token-sequence matching only: a substring hit
+        # let the cue "per" fire inside "paper"/"period" and falsely
+        # attribute whole sentences.
+        cue_tokens = _tokens(cue)
+        before_tokens = _tokens(before)
+        for i in range(len(before_tokens) - len(cue_tokens) + 1):
+            if before_tokens[i:i + len(cue_tokens)] == cue_tokens:
+                flags.attributed = True
+                source = _attribution_source(sentence, cue)
+                if source:
+                    flags.attribution_source = source
+                break
+        if flags.attributed:
             break
 
     flags.comparison = any(cue in lowered for cue in ("unlike", "compared to", "in contrast"))

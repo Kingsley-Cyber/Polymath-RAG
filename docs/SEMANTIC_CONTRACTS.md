@@ -40,7 +40,7 @@ at T0/T1.
 | semantic authority hash | `fd68fc57f4c18057…` (asserted by three fence tests) |
 | entity Harbor / admission-harbor-v2 | unchanged |
 | canonicalization | unchanged |
-| predicate rule pack | `core-predicates-v1.3.0.yaml`, byte-frozen |
+| predicate rule pack | `core-predicates-v1.4.0.yaml`, byte-frozen (SCIENTIFIC-KAG-V1: research predicates + 35-type backbone; supersedes v1.3.0, which remains loadable for pinned replay) |
 | layout evidence | `layout-evidence-v1` |
 | slice manifest | `sentence-slice-manifest-v1` |
 | syntax evidence | `syntax-evidence-v1` (spaCy, pinned) |

@@ -93,6 +93,11 @@ def load_rule_pack(path: Optional[Path] = None, *, use_resources: bool = True,
         # shared-trigger predicates; see core-predicates-v1.3.0.yaml.
         yaml_path = path or (_RULE_PACK_PATH.parent / "core-predicates-v1.3.0.yaml")
         compiled_name = "compiled_lexical-v1.3.0.json"
+    elif pack_version == "1.4.0":
+        # SCIENTIFIC-KAG-V1: research predicates + type-ontology families;
+        # see core-predicates-v1.4.0.yaml.
+        yaml_path = path or (_RULE_PACK_PATH.parent / "core-predicates-v1.4.0.yaml")
+        compiled_name = "compiled_lexical-v1.4.0.json"
     else:
         raise RulePackError(f"unknown rule pack version {pack_version!r}")
 

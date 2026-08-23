@@ -1,9 +1,9 @@
 {
- "bundle": "v5-production-004",
- "bundle_sha256": "98eb5f773f4aceeb74e22dfc893136f967b10198970c00363380f7f8dbc91ec2",
+ "bundle": "v5-production-005",
+ "bundle_sha256": "bdfec5d02b7f1b061ce09871d7d36fe272332722f0e9a19d294545732963bd91",
  "members": {
   "shared/polymath_shared/entity_admission_policy.yaml": "94e128e73f9e5abacb06c9f3304a585aa0d39f5b96dbbd711b52f20b580db165",
-  "shared/polymath_shared/fact_admission_policy.yaml": "6dea4877c54860400923748d4417dfe704cd03b644c3cce40c180bc182e9143e",
+  "shared/polymath_shared/fact_admission_policy.yaml": "999c3f9fcb2c0572e3afe11ed042a5dfafac57ae66c86be6456e7839eeae2dab",
   "shared/polymath_shared/entity_knowledge_admission.py": "91e478e995982faaae0676fe6ce541e11ef04295ef8adcf83d42555872d75ae6",
   "shared/polymath_shared/fact_admission.py": "225949e37887fe6964d5b5faab4ab1dc79f494ee667c5e3fe837bebd016c8ed2",
   "shared/polymath_shared/identity_allocation.py": "e3f429bbea4c1f38100fd57e5e26ee237f777b036ca109a49d238b21e88c15c9",
@@ -13,5 +13,5 @@
  },
  "entity_policy": "E1-E7",
  "fact_policy": "F1-F8",
- "predicate_pack": "1.3.0"
+ "predicate_pack": "1.4.0"
 }
