@@ -53,7 +53,13 @@ def test_v2_policy_two_passes_and_alias_canonicalization(monkeypatch):
 
 def test_canonical_of_maps_core_and_domain_labels():
     assert canonical_of("Organization") == "Organization"
-    assert canonical_of("Library") == "Product"  # software_tech module label
+    # SCIENTIFIC-KAG-V1: Library/Model/Framework/Dataset/Metric/Theory are
+    # canonical types now, so core identity shadows the old module aliases.
+    assert canonical_of("Library") == "Library"
+    assert canonical_of("Model") == "Model"
+    assert canonical_of("Dataset") == "Dataset"
+    assert canonical_of("Metric") == "Metric"
+    assert canonical_of("Theory") == "Theory"
     assert canonical_of("Brand") == "Organization"  # commerce module label
     assert canonical_of("NotALabel") is None  # never silently coerced
 

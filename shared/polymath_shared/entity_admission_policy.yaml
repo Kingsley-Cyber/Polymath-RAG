@@ -3,7 +3,7 @@
 # Ontology/structure data only, never code. Versioned as one unit so a
 # later release can license a region or a class without a code change,
 # and so a historical replay can pin the exact policy it ran under.
-policy_version: entity-admission-policy-v2
+policy_version: entity-admission-policy-v3
 
 # ---------------------------------------------------------------------
 # E2 — which source regions may license an ASSERTED entity.
@@ -92,3 +92,26 @@ admissible_core_types:
   - Event
   - Measurement
   - TimeReference
+  - ResearchGroup
+  - Paper
+  - Dataset
+  - Corpus
+  - Benchmark
+  - Metric
+  - Task
+  - Model
+  - Algorithm
+  - Framework
+  - Architecture
+  - Theory
+  - Technique
+  - Component
+  - Software
+  - Library
+  - Tool
+  - Experiment
+  - Release
+  - TrainingRun
+  - Date
+  - TimePeriod
+  - Version

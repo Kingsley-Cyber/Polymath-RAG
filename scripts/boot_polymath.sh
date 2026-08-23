@@ -5,6 +5,7 @@ set -uo pipefail
 cd "$(dirname "$0")/.."
 export POLYMATH_PG_DSN="${POLYMATH_PG_DSN:-postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath}"
 export POLYMATH_SYNTAX_PROVIDER="${POLYMATH_SYNTAX_PROVIDER:-spacy}"
+export POLYMATH_QUERY_POLICY="${POLYMATH_QUERY_POLICY:-semantic-query-policy-v3}"
 export POLYMATH_RESCUE="${POLYMATH_RESCUE:-on}"
 export POLYMATH_WORKER_RULE_PACK_VERSION="${POLYMATH_WORKER_RULE_PACK_VERSION:-1.3.0}"
 export POLYMATH_CHUNKER="${POLYMATH_CHUNKER:-legacy_v1}"

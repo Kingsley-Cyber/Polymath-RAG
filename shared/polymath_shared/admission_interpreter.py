@@ -220,6 +220,18 @@ def _interpret_v2(proposal_surface, core_type, span, sentence_text, syntax,
         return _result(d, f"concept: {ev.kind.value}",
                        {"authority": ev.kind.value, "quote": ev.quote[:160]})
 
+    # 3b. SCIENTIFIC-KAG-V1 named-concept gate — multi-token technical
+    #     compounds and named concepts are auditable concept sources even
+    #     without a document definition ("thought generator", "Tree of
+    #     Thoughts"). Bare generic nouns and plurals decline here and fall
+    #     through to generic classification unchanged.
+    from polymath_shared.scientific_concept import named_concept_evidence
+    sci = named_concept_evidence(proposal_surface, toks)
+    if sci is not None:
+        d = HarborDecision(proposal_surface, AnchorKind.CONCEPT,
+                           Referentiality.GENERIC, "CORPUS_SCOPED")
+        return _result(d, f"scientific-concept: {sci['pattern']}", sci)
+
     # 4. GENERIC-CLASSIFICATION-V1 — attribution only. Reached ONLY after
     #    IDENTITY, LOCAL_REFERENCE and CONCEPT have all declined, so it can
     #    never override an established interpretation. Eligibility is

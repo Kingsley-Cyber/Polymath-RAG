@@ -103,7 +103,21 @@ MODULES: dict[str, DomainModule] = {
 # where bare-NP firing was observed).
 QUERY_POLICY_V1 = "semantic-query-policy-v1"
 QUERY_POLICY_V2 = "semantic-query-policy-v2"
+QUERY_POLICY_V3 = "semantic-query-policy-v3"
 QUERY_POLICY_VERSION = QUERY_POLICY_V1  # back-compat symbol (prefer active_policy_version)
+
+# SCIENTIFIC-KAG-V1 (phase 1): the proven 12-label identity pass keeps
+# its measured budget; scientific-research labels fire in a dedicated
+# second pass. Union across passes is deterministic (identity pass
+# preferred on ties), exactly like v2's alias passes.
+SCIENTIFIC_PASS_LABELS: tuple[str, ...] = tuple(
+    t.value for t in CoreType
+    if t.value not in {
+        "Person", "Organization", "Location", "Product", "Technology",
+        "Concept", "Method", "Event", "Document", "Process",
+        "Measurement", "TimeReference",
+    }
+)
 
 PROVIDER_ALIASES_V2: dict[str, tuple[str, ...]] = {
     "Organization": ("Company", "Corporation"),
@@ -132,10 +146,14 @@ def provider_alias_map() -> dict[str, str]:
 
 def provider_passes() -> list[tuple[str, ...]]:
     """Query passes for entity discovery. v1: one identity pass
-    (byte-identical baseline). v2: identity pass + enriched pass."""
+    (byte-identical baseline). v2: identity pass + enriched alias pass.
+    v3 (scientific): legacy identity pass + dedicated scientific pass."""
     core = tuple(CORE_LABELS)
     if active_policy_version() == QUERY_POLICY_V1:
         return [core]
+    if active_policy_version() == QUERY_POLICY_V3:
+        legacy = tuple(t.value for t in CoreType)[:12]
+        return [legacy, core, SCIENTIFIC_PASS_LABELS]
     enriched = tuple(dict.fromkeys(
         [label for canonical in CORE_LABELS
          for label in (canonical,) + PROVIDER_ALIASES_V2.get(canonical, ())]))
@@ -175,5 +193,7 @@ def policy_identity() -> dict:
     return {
         "query_policy_version": version,
         "aliases": {k: list(v) for k, v in sorted(aliases.items())},
-        "passes": "identity+enriched" if version == QUERY_POLICY_V2 else "identity",
+        "passes": ("identity+enriched" if version == QUERY_POLICY_V2
+                   else "legacy+core+scientific" if version == QUERY_POLICY_V3
+                   else "identity"),
     }

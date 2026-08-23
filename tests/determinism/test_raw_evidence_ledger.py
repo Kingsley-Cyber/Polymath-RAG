@@ -76,4 +76,4 @@ def test_ledger_capture_does_not_move_the_semantic_bundle():
     # identical memoization in concept_evidence.py, licensed by
     # test_concept_evidence_equivalence.py plus a B8 same-corpus run
     # with identical semantic state (perf-baseline-v1, 2026-08-21).
-    assert semantic_authority_sha256().startswith("fd68fc57f4c18057")
+    assert semantic_authority_sha256().startswith("6976e483c9934abf")
