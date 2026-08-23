@@ -18,6 +18,7 @@ import json
 import logging
 import os
 import time
+from pathlib import Path
 from dataclasses import dataclass, field
 
 import psycopg
@@ -622,6 +623,27 @@ class _SliceObserver:
             self.losses.append(code)
 
 
+def _acceptance_block(admitted_facts, durable_surfaces) -> dict:
+    """ACCEPTANCE-HARNESS-V1 against optional frozen human labels
+    (POLYMATH_ACCEPTANCE_LABELS=<path>.json). Absent labels leave the
+    gate shape with AWAITING_HUMAN_LABELS."""
+    import json as _j
+
+    from polymath_shared.acceptance_harness import score_acceptance
+
+    path = os.environ.get("POLYMATH_ACCEPTANCE_LABELS")
+    if not path or not Path(path).exists():
+        return {"contract": "acceptance-harness-v1",
+                "status": "AWAITING_HUMAN_LABELS"}
+    labels = _j.loads(Path(path).read_text())
+    scored = score_acceptance(
+        labels, admitted_entities=durable_surfaces,
+        admitted_facts=admitted_facts, admitted_events=[])
+    scored["status"] = "SCORED"
+    scored["labels_path"] = path
+    return scored
+
+
 def _syntax_evidence(
     ordered_slices: list[tuple[dict, SentenceSlice]],
 ) -> dict | None:
@@ -1062,6 +1084,7 @@ def process_event(conn: Connection, event: dict) -> None:
             _mention_spans = [span for _row, _sl in ordered_slices
                               for span in _sl.entities]
             _counts["mentions_persisted"] = len(_mention_spans)
+            _durable_surfaces = sorted({s.text for s in _mention_spans})
             _persist_mentions(
                 conn, corpus_id, doc_id,
                 _mention_spans,
@@ -1106,6 +1129,17 @@ def process_event(conn: Connection, event: dict) -> None:
                         from polymath_shared.event_reification import (
                             event_candidate,
                         )
+                        _admitted_facts.append({
+                            "subject": candidate.subject.span.text,
+                            "predicate": decision.fact.predicate,
+                            "object": candidate.object.span.text,
+                            "chunk_id": row.get("chunk_id"),
+                            "provenance": {
+                                "trigger_surface":
+                                    decision.fact.provenance.get(
+                                        "trigger_surface"),
+                                "evidence_start": candidate.evidence.start,
+                            }})
                         _ec = event_candidate(
                             decision.fact.predicate,
                             decision.fact.subject_id,
@@ -1271,6 +1305,8 @@ def process_event(conn: Connection, event: dict) -> None:
                     ec["admitted"] = False
                     ec["admission_reason"] = reason
             replay_benchmark["counts"]["event_count"] = len(admitted_events)
+            replay_benchmark["acceptance"] = _acceptance_block(
+                _admitted_facts, _durable_surfaces)
             replay_benchmark["events"] = {
                 "admitted": admitted_events,
                 "rejected": [ec for ec in _event_candidates
