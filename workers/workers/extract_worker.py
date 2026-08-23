@@ -1201,6 +1201,42 @@ def process_event(conn: Connection, event: dict) -> None:
                 },
             }
             writer.artifact({"extraction_audit": extraction_audit})
+            # SEMANTIC-REPLAY-BENCHMARK-V1: the machine-comparable record
+            # for corpus-level regression. Contract versions + counts +
+            # rejection histograms, deterministic JSON.
+            from polymath_shared.query_policy import active_policy_version
+            from polymath_shared.execution import SEMANTIC_CONTRACT_V2
+            replay_benchmark = {
+                "contract": "semantic-replay-benchmark-v1",
+                "run_id": run_id,
+                "corpus_id": corpus_id,
+                "document_id": doc_id,
+                "pipeline_version": f"{EXTRACTOR_VERSION}+{active_pipeline()}",
+                "build_sha": os.environ.get("POLYMATH_BUILD_SHA"),
+                "entity_contract_version": SEMANTIC_CONTRACT_V2,
+                "predicate_pack_version": pack.get("pack", {}).get("version"),
+                "vocabulary_version": active_policy_version(),
+                "counts": {
+                    "fact_count": _fact_stage.passed,
+                    "fact_qualified": _fact_stage.qualified,
+                    "event_count": 0,
+                    "relation_candidates": sum(_decision_counts.values()),
+                    "mentions_persisted": _counts.get(
+                        "mentions_persisted", 0),
+                },
+                "rejection_histogram": {
+                    "entity_admission": dict(_entity_admission.get(
+                        "by_gate", {})) if _entity_admission else {},
+                    "compiler_decisions": dict(_decision_counts),
+                    "fact_admission_gates": dict(_fact_stage.by_gate),
+                    "fact_admission_reasons": {
+                        f"{r[5]}:{r[6]}": sum(
+                            1 for x in _fact_stage.rows
+                            if x[5] == r[5] and x[6] == r[6])
+                        for r in set(_fact_stage.rows)},
+                },
+            }
+            writer.artifact({"replay_benchmark": replay_benchmark})
             import json as _json
             log.info("extract audit %s", _json.dumps(extraction_audit),
                      extra={"run_id": run_id, "stage": "extract"})
