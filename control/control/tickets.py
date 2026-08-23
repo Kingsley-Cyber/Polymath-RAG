@@ -28,7 +28,25 @@ STAGE_DAG: list[tuple[str, str, tuple[str, ...], tuple[str, ...]]] = [
     ("canonicalize", "canonicalize.v1", ("canonical_entities",), ()),
     ("project_canonical", "project_canonical.v1", ("memberships",), ("neo4j",)),
     ("verify_projections", "verify.v1", ("docs",), ()),
+    # SUMMARY-VOCABULARY-LAYER: background intelligence stages. They run
+    # AFTER settlement consumes nothing from the critical ingestion path:
+    # a failure degrades summaries to DEGRADED, never blocks QUERY_READY.
+    ("parent_summary", "parent_summary.v1", (), ()),
+    ("document_summary", "document_summary.v1", (), ()),
+    ("corpus_summary", "corpus_summary.v1", (), ()),
+    ("vocabulary", "vocabulary.v1", (), ()),
 ]
+
+# Stages whose incompleteness must NOT block corpus promotion
+# (SUMMARY-VOCABULARY-LAYER production rule: knowledge=READY while
+# summaries=DEGRADED).
+NON_BLOCKING_STAGES = frozenset({
+    "parent_summary", "document_summary", "corpus_summary", "vocabulary",
+})
+
+
+def is_blocking(stage: str) -> bool:
+    return stage not in NON_BLOCKING_STAGES
 
 DAG_ORDER = [stage for stage, _evt, _art, _rec in STAGE_DAG]
 _STAGE_SPEC = {stage: (evt, art, rec) for stage, evt, art, rec in STAGE_DAG}
@@ -265,8 +283,9 @@ def generation_barrier(conn: Connection, corpus_id: str) -> dict:
     actual. Returns the barrier verdict + what blocks it."""
     pending = conn.execute(
         "SELECT stage, status, COUNT(*) FROM stage_tickets "
-        "WHERE corpus_id=%s AND status != 'done' GROUP BY 1,2",
-        (corpus_id,),
+        "WHERE corpus_id=%s AND status != 'done' "
+        "AND stage NOT IN %s GROUP BY 1,2",
+        (corpus_id, tuple(sorted(NON_BLOCKING_STAGES))),
     ).fetchall()
     runs = conn.execute(
         "SELECT run_id FROM runs WHERE corpus_id=%s", (corpus_id,)

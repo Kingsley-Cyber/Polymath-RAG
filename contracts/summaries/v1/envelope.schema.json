@@ -1,0 +1,19 @@
+{
+  "$id": "https://polymath.local/contracts/summaries/v1/envelope.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Summary artifact envelope (SUMMARY-VOCABULARY-LAYER)",
+  "type": "object",
+  "required": ["artifact_id", "input_hash", "output_hash", "version",
+               "derived_from", "created_at"],
+  "additionalProperties": true,
+  "properties": {
+    "artifact_id": {"type": "string", "minLength": 1},
+    "input_hash": {"type": "string", "minLength": 8},
+    "output_hash": {"type": "string", "minLength": 8},
+    "version": {"type": "string"},
+    "model": {"type": ["string", "null"]},
+    "prompt_version": {"type": ["string", "null"]},
+    "derived_from": {"type": "array", "items": {"type": "string"}},
+    "created_at": {"type": "string"}
+  }
+}

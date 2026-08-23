@@ -29,6 +29,10 @@ def test_stage_dag_covers_the_production_chain_in_order():
         "intake", "extract", "profile_document", "project_qdrant",
         "project_neo4j", "canonicalize", "project_canonical",
         "verify_projections",
+        # SUMMARY-VOCABULARY-LAYER: background intelligence stages,
+        # non-blocking (knowledge=READY while summaries=DEGRADED).
+        "parent_summary", "document_summary", "corpus_summary",
+        "vocabulary",
     ]
     # every stage declares its event type; explicit handoff specs exist
     for stage, event_type, artifacts, receipts in STAGE_DAG:
