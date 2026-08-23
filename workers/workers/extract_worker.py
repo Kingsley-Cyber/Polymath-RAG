@@ -836,6 +836,8 @@ def process_event(conn: Connection, event: dict) -> None:
             _decision_counts: dict = {}
             _event_facts = 0
             _event_candidates: list = []
+            _admitted_facts: list = []
+            _durable_surfaces: list = []
             # V5 L1 (raw-evidence-ledger-v1): provider observations captured
             # per chunk, bulk-written once per document inside this stage
             # transaction — so raw evidence commits with the stage receipt
