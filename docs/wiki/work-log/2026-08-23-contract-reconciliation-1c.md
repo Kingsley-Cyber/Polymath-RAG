@@ -141,3 +141,54 @@ NULL THEN 0 ELSE 1 END). One-line ordering change; no behavior change
 for either lane's eligibility. Legacy backlog still drains (it is real
 work under current worker semantics) but can no longer hide the
 ticket-gated queue.
+
+---
+
+# NEW SLICE (same day): PREDICATE-COMPILER-V2 semantic layer
+
+## Contract
+
+Owner mission: replace verb-dictionary scaling with semantic frame
+compilation — surface -> lexical semantics (VerbNet/PB/FN, vendored)
+-> authored scientific frame -> typed roles -> signature validation ->
+scientific predicate -> existing admission gates. Deterministic only;
+fail-closed on unmapped types.
+
+## Changes
+
+- docs/wiki/plans/PREDICATE-COMPILER-V2.md (architecture report)
+- shared/polymath_shared/rulepack/scientific-predicate-ontology-v2.yaml
+  (5 families, roles w/ VN/PB/FN provenance, typed mappings, machine-
+  checkable negative examples, compound head allowlist)
+- shared/polymath_shared/rulepack/semantic_frames.py (resolver +
+  fail-closed typed predicate resolution)
+- shared/polymath_shared/rulepack/compound_heads.py (deterministic
+  head inheritance; bare generic heads never anchor)
+- tests/determinism/test_predicate_compiler_v2.py (17 fixtures incl.
+  DOC_003 speculative-similarity negative)
+
+Schema changes: NONE — EvidenceSpan.trigger_match_source carries
+frame:<id> provenance within existing contract fields.
+
+## Proof
+
+- 17/17 fixtures green (pytest determinism).
+- SHADOW replay over TEST.md chunks (no production writes):
+  v1 anchors=0 -> v2 anchors=23; all headline sentences fire
+  (introduced/pretrained/evaluated/rely on); typed resolution maps
+  Model+Corpus->trained_on, Architecture+Benchmark->evaluated_on,
+  Architecture+ResearchGroup->introduced_by; Method object ->
+  trained_with; Optimizer object -> UNSUPPORTED; speculative sentence
+  -> zero frames.
+
+## Rejected claims / Open gaps
+
+- Production splice NOT yet wired into evidence_proposer/compiler
+  live path: cutover shifts the semantic bundle hash, re-pins runs,
+  and would re-drive scale-10k mid-drain. Awaiting owner go/no-go;
+  seams named in PREDICATE-COMPILER-V2.md (frame lane in proposer,
+  FRAME branch at compile entry, kimi TYPE_PRECHECK bypass for
+  FRAME-classed spans).
+- Entity discovery gap unchanged: BooksCorpus/English Wikipedia never
+  proposed by GLiNER -> trained_on(BERT, BooksCorpus) stays blocked at
+  typing until discovered (Category A/B boundary, owner's call).
