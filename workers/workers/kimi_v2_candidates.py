@@ -40,6 +40,11 @@ from workers.kimi_candidates import (
     _syntax_tokens,
     _token_to_entity,
 )
+from polymath_shared.discourse_bridge import (
+    find_appos_entity_head,
+    is_pronoun_token,
+    resolve_anaphora,
+)
 
 VERBAL_POS = frozenset({"VERB", "AUX"})
 NOMINAL_POS = frozenset({"NOUN"})
@@ -91,13 +96,40 @@ def _conj_expansion(tokens: list[dict], heads: list[dict]) -> list[dict]:
     return out
 
 
-def _entity_pairs(tok_list: list[dict], sl: SentenceSlice) -> list[tuple]:
+def _entity_pairs(tok_list: list[dict], sl: SentenceSlice,
+                  anaphora: dict | None = None) -> tuple[list[tuple], bool]:
     pairs: list[tuple] = []
+    used_anaphora = False
     for tok in tok_list:
-        ent = _token_to_entity(tok, sl.entities, sl)
+        ent = None
+        if is_pronoun_token(tok) and anaphora:
+            key = (sl.entities[0].chunk_id,
+                   sl.sentence_start + tok["char_start"],
+                   sl.sentence_start + tok["char_end"])
+            # A resolved pronoun outranks its own noisy GLiNER proposal.
+            ent = anaphora.get(key)
+            used_anaphora = True
+        if ent is None:
+            ent = _token_to_entity(tok, sl.entities, sl)
+        if ent is None:
+            # Phase 5.5 discourse bridge: (a) controlled anaphora — a
+            # pronoun span resolved to a prior durable subject; (b)
+            # definitional apposition — a token inside an appos subtree
+            # describes, and binds through, the entity head it apposes.
+            if anaphora:
+                key = (sl.entities[0].chunk_id,
+                       sl.sentence_start + tok["char_start"],
+                       sl.sentence_start + tok["char_end"])
+                ent = anaphora.get(key)
+            if ent is None:
+                head_tok = find_appos_entity_head(
+                    {"head_i": tok.get("head_i"), "i": tok.get("i"),
+                     "dep": tok.get("dep")}, sl)
+                if head_tok is not None:
+                    ent = _token_to_entity(head_tok, sl.entities, sl)
         if ent is not None and all(ent is not e for _, e in pairs):
             pairs.append((tok, ent))
-    return pairs
+    return pairs, used_anaphora
 
 
 def _control_controller(
@@ -157,6 +189,7 @@ def build_candidates_kimi_v2(
 ) -> list[RelationCandidate]:
     verb_registry, noun_registry = _v2_registry(rule_pack)
     candidates: list[RelationCandidate] = []
+    anaphora = resolve_anaphora(slices)
 
     for sl in slices:
         tokens = _syntax_tokens(sl)
@@ -273,8 +306,10 @@ def build_candidates_kimi_v2(
                             "kimi_v2": True})
                 continue
 
-            subject_pairs = _entity_pairs(subj_toks, sl)
-            object_pairs = _entity_pairs(obj_toks, sl)
+            subject_pairs, subj_via_anaphora = _entity_pairs(
+                subj_toks, sl, anaphora)
+            object_pairs, _obj_via_anaphora = _entity_pairs(
+                obj_toks, sl, anaphora)
             if not subject_pairs or not object_pairs:
                 if observer:
                     observer.record_candidate_outcome(
@@ -396,6 +431,9 @@ def build_candidates_kimi_v2(
                         rule_pack=rule_pack,
                     )
 
+                    if subj_via_anaphora:
+                        binding_source = BindingSource.DISCOURSE_ANAPHORA
+                        dep_path_parts.insert(0, "anaphora")
                     if not dep_path_parts:
                         dep_path_parts.append(
                             f"{subj_tok['dep']}+{obj_tok['dep']}")
