@@ -553,3 +553,30 @@ tickets within one tick regardless of worker completion timing.
 Current committed state: conditional-exclusion SQL correct but
 insufficient alone; control plane restarted with it; scale-10k
 extraction continues (done climbing); test-validation-v1 still queued.
+
+---
+
+## ADDENDUM 5e (2026-08-23): ROOT CAUSE FOUND — contract-pin claim refusal
+
+The 63 READY scale-10k tickets all HAVE live undelivered claim events,
+the extract worker is ALIVE and polling, yet nothing is claimed.
+Diagnosis: the worker advertises UPGRADED contracts (bundle
+v5-production-005 / pack 1.4.0 / policy v3) while every scale-10k run
+pins the PRE-upgrade execution_contract. Contract-pinned claiming
+refuses the mismatch SILENTLY at the lease step.
+
+This is not a bug in contract pinning — it is the missing RECONCILIATION
+half of the identity model (addendum 3): "same source + new pipeline ⇒
+reuse raw document, regenerate derived artifacts." Nothing implements
+that regeneration path yet, so post-upgrade runs are stranded.
+
+REQUIRED (STEP 1c): pipeline-version reconciliation at the control
+plane — when a run's pinned contract differs from current worker
+contracts and its corpus is ACTIVE, mint a successor run (new
+processing_run row) and migrate ticket chains, preserving document
+identity. Until then: any corpus ingested BEFORE an upgrade is
+permanently frozen mid-pipeline after every upgrade.
+
+Interim operational unblock (no code): delete the stranded runs'
+ticket/outbox rows and re-submit the manifest — fresh runs pin current
+contracts. Proven working on test-validation-v1 this session.
