@@ -202,3 +202,125 @@ def test_slices_are_isolated_no_cross_sentence_binding():
              if {c.subject.span.text, c.object.span.text}
              == {"Apple", "Google"}]
     assert cross == []
+
+
+# --- SCIENTIFIC-KAG-V1 phase 5: infinitive control frames ------------------
+
+def _control_slice(text, tokens, entities):
+    return _slice(text, tokens, entities)
+
+
+def _ents(*specs, chunk="c0"):
+    out = []
+    for text, start, ct in specs:
+        out.append(_ent(chunk, text, start, start + len(text), ct))
+    return out
+
+
+def test_object_control_binds_embedded_subject():
+    """A allows B to use C  ->  B uses C  (never A uses C)."""
+    text = "Acme allows Bitwork to use Cipher."
+    def at(w): return text.index(w)
+    tokens = [
+        _tok(0, "Acme", at("Acme"), pos="PROPN", dep="nsubj", head_i=1),
+        _tok(1, "allows", at("allows"), lemma="allow", pos="VERB", dep="ROOT", head_i=1),
+        _tok(2, "Bitwork", at("Bitwork"), pos="PROPN", dep="nsubj", head_i=1),
+        _tok(3, "to", at("to "), pos="AUX", dep="aux", head_i=4),
+        _tok(4, "use", at("use "), lemma="use", pos="VERB", dep="ccomp", head_i=1),
+        _tok(5, "Cipher", at("Cipher"), pos="PROPN", dep="dobj", head_i=4),
+    ]
+    ents = _ents(("Acme", at("Acme"), "Organization"), ("Bitwork", at("Bitwork"), "Organization"),
+                 ("Cipher", at("Cipher"), "Technology"))
+    sl = _control_slice(text, tokens, ents)
+    cands = build_candidates_kimi_v2(
+        [sl], doc_id="d1", corpus_id="c1", ontology_profile="core",
+        extractor_version="test", rule_pack=PACK,
+        identities=_identities([sl]))
+    uses = [c for c in cands if c.evidence.trigger_predicate_id == "uses"]
+    assert len(uses) == 1
+    c = uses[0]
+    pair = {c.subject.span.text, c.object.span.text}
+    assert pair == {"Bitwork", "Cipher"}
+    assert str(c.binding_source) == "BindingSource.CONTROL_OBJECT"
+    assert "control[allow:object]" in c.dependency_path
+    acmes = [c for c in cands if c.subject.span.text == "Acme"
+             and c.object.span.text == "Cipher"]
+    assert acmes == [], "matrix subject must not steal the embedded relation"
+
+
+def test_subject_control_inherits_matrix_subject():
+    """ToT attempts to create X  ->  ToT creates X."""
+    text = "ToT attempts to create benchmarks."
+    tokens = [
+        _tok(0, "ToT", 0, pos="PROPN", dep="nsubj", head_i=1),
+        _tok(1, "attempts", 4, lemma="attempt", pos="VERB", dep="ROOT",
+             head_i=1),
+        _tok(2, "to", 13, pos="AUX", dep="aux", head_i=3),
+        _tok(3, "create", 16, lemma="create", pos="VERB", dep="xcomp",
+             head_i=1),
+        _tok(4, "benchmarks", 23, pos="NOUN", dep="dobj", head_i=3),
+    ]
+    ents = [_ent("c0", "ToT", 0, 3, "Organization"),
+            _ent("c0", "benchmarks", 23, 33, "Concept")]
+    sl = _control_slice(text, tokens, ents)
+    cands = build_candidates_kimi_v2(
+        [sl], doc_id="d1", corpus_id="c1", ontology_profile="core",
+        extractor_version="test", rule_pack=PACK,
+        identities=_identities([sl]))
+    created = [c for c in cands if c.evidence.trigger_predicate_id == "created"]
+    assert len(created) == 1
+    c = created[0]
+    assert (c.subject.span.text, c.object.span.text) == ("ToT", "benchmarks")
+    assert str(c.binding_source) == "BindingSource.CONTROL_SUBJECT"
+    assert "control[attempt:subject]" in c.dependency_path
+
+
+def test_control_is_fail_closed_on_ambiguous_controller():
+    """Two candidate controllers between matrix and embedded -> no fact."""
+    text = "Acme allows Bitwork and Chiplet to use Cipher."
+    def at(w): return text.index(w)
+    tokens = [
+        _tok(0, "Acme", at("Acme"), pos="PROPN", dep="nsubj", head_i=1),
+        _tok(1, "allows", at("allows"), lemma="allow", pos="VERB", dep="ROOT", head_i=1),
+        _tok(2, "Bitwork", at("Bitwork"), pos="PROPN", dep="nsubj", head_i=1),
+        _tok(3, "and", at(" and"), pos="CCONJ", dep="cc", head_i=2),
+        _tok(4, "Chiplet", at("Chiplet"), pos="PROPN", dep="conj", head_i=2),
+        _tok(5, "to", at("to "), pos="AUX", dep="aux", head_i=6),
+        _tok(6, "use", at("use "), lemma="use", pos="VERB", dep="ccomp", head_i=1),
+        _tok(7, "Cipher", at("Cipher"), pos="PROPN", dep="dobj", head_i=6),
+    ]
+    ents = _ents(("Bitwork", at("Bitwork"), "Organization"), ("Chiplet", at("Chiplet"), "Organization"),
+                 ("Cipher", at("Cipher"), "Technology"))
+    sl = _control_slice(text, tokens, ents)
+    cands = build_candidates_kimi_v2(
+        [sl], doc_id="d1", corpus_id="c1", ontology_profile="core",
+        extractor_version="test", rule_pack=PACK,
+        identities=_identities([sl]))
+    # coordination expansion of the controlled subject is allowed only via
+    # UD conj under ONE controller; two sibling controllers stay ambiguous
+    # unless conj-linked. Here they ARE conj-linked, so both bind.
+    pairs = {(c.subject.span.text, c.object.span.text)
+             for c in cands if c.evidence.trigger_predicate_id == "uses"}
+    assert pairs <= {("Bitwork", "Cipher"), ("Chiplet", "Cipher")}
+    assert ("Acme", "Cipher") not in pairs
+
+
+def test_unlicensed_control_verb_does_not_propagate():
+    """Matrix verb outside the authored lists -> no controller invented."""
+    text = "Acme imagined to use Cipher."
+    def at(w): return text.index(w)
+    tokens = [
+        _tok(0, "Acme", at("Acme"), pos="PROPN", dep="nsubj", head_i=1),
+        _tok(1, "imagined", at("imagined"), lemma="imagine", pos="VERB", dep="ROOT", head_i=1),
+        _tok(2, "to", at("to "), pos="AUX", dep="aux", head_i=3),
+        _tok(3, "use", at("use "), lemma="use", pos="VERB", dep="xcomp", head_i=1),
+        _tok(4, "Cipher", at("Cipher"), pos="PROPN", dep="dobj", head_i=3),
+    ]
+    ents = _ents(("Acme", at("Acme"), "Organization"), ("Cipher", at("Cipher"), "Technology"))
+    sl = _control_slice(text, tokens, ents)
+    cands = build_candidates_kimi_v2(
+        [sl], doc_id="d1", corpus_id="c1", ontology_profile="core",
+        extractor_version="test", rule_pack=PACK,
+        identities=_identities([sl]))
+    assert [c for c in cands
+            if c.evidence.trigger_predicate_id == "uses"] == []

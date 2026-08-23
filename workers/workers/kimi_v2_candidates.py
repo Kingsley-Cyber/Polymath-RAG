@@ -50,6 +50,19 @@ PREP_DEPS = frozenset({"prep", "agent"})
 PREP_OBJECT_DEPS = frozenset({"pobj", "obl"})
 CONJ_DEP = "conj"
 
+# SCIENTIFIC-KAG-V1 phase 5: authored infinitive-control frames.
+# The EMBEDDED verb is the predicate occurrence; its subject is supplied
+# by the matrix clause under a licensed control verb. Fail-closed on
+# ambiguity: zero or several controllers yields no candidate.
+SUBJECT_CONTROL_VERBS = frozenset({
+    "use", "leverage", "attempt", "try", "begin", "continue", "fail",
+    "help",
+})
+OBJECT_CONTROL_VERBS = frozenset({
+    "allow", "enable", "permit", "require", "cause",
+})
+CONTROL_EMBEDDED_DEPS = frozenset({"xcomp", "ccomp", "advcl"})
+
 
 def _v2_registry(rule_pack: dict) -> tuple[dict[str, str], dict[str, str]]:
     verbs: dict[str, str] = {}
@@ -85,6 +98,48 @@ def _entity_pairs(tok_list: list[dict], sl: SentenceSlice) -> list[tuple]:
         if ent is not None and all(ent is not e for _, e in pairs):
             pairs.append((tok, ent))
     return pairs
+
+
+def _control_controller(
+    tokens: list[dict], tok: dict, sl: SentenceSlice,
+) -> tuple[dict, BindingSource, str] | None:
+    """Infinitive-control resolution for an embedded predicate token.
+
+    Returns (controller_token, binding_source, matrix_lemma) or None.
+    Deterministic and fail-closed: the controller is the unique
+    entity-bearing argument child of the matrix verb that sits BETWEEN
+    the matrix verb and this token — which selects the object controller
+    for allow-class verbs and excludes the matrix's own subject."""
+    if tok.get("dep") not in CONTROL_EMBEDDED_DEPS:
+        return None
+    head_i = tok.get("head_i")
+    matrix = next((t for t in tokens if t["i"] == head_i), None)
+    if matrix is None or matrix is tok:
+        return None
+    m_lemma = (matrix.get("lemma") or "").lower()
+    m_pos = matrix.get("pos", "")
+    if m_pos not in VERBAL_POS:
+        return None
+
+    if m_lemma in SUBJECT_CONTROL_VERBS:
+        ctrl = [t for t in _children(tokens, matrix["i"])
+                if t["dep"] in SUBJECT_DEPS]
+        source = BindingSource.CONTROL_SUBJECT
+        frame = "subject"
+    elif m_lemma in OBJECT_CONTROL_VERBS:
+        lo, hi = sorted((matrix["i"], tok["i"]))
+        ctrl = [t for t in _children(tokens, matrix["i"])
+                if t["dep"] in (SUBJECT_DEPS | OBJECT_DEPS)
+                and lo < t["i"] < hi]
+        source = BindingSource.CONTROL_OBJECT
+        frame = "object"
+    else:
+        return None
+
+    entity_ctrl = [t for t in ctrl if _token_to_entity(t, sl.entities, sl)]
+    if len(entity_ctrl) != 1:
+        return None
+    return entity_ctrl[0], source, f"{m_lemma}:{frame}"
 
 
 def build_candidates_kimi_v2(
@@ -178,6 +233,24 @@ def build_candidates_kimi_v2(
 
             subj_toks = _conj_expansion(tokens, subj_toks)
             obj_toks = _conj_expansion(tokens, obj_toks)
+
+            # Phase 5: infinitive-control. Only when the embedded verb has
+            # NO subject of its own; its own explicit arguments always win.
+            control_note = None
+            if not subj_toks and not nominal:
+                ctrl = _control_controller(tokens, tok, sl)
+                if ctrl is not None:
+                    subj_toks = [ctrl[0]]
+                    binding_source = ctrl[1]
+                    control_note = ctrl[2]
+                    dep_path_parts.insert(
+                        0, f"control[{ctrl[2]}]")
+                elif observer:
+                    observer.record_candidate_outcome(
+                        sl, None, "V2_CONTROL_AMBIGUOUS", {
+                            "token_i": tok["i"], "lemma": lemma,
+                            "kimi_v2": True})
+
             _propagate_shared_arguments(
                 tokens, tok["i"],
                 {"subject": subj_toks, "object": obj_toks})
