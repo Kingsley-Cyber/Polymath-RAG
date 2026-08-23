@@ -140,55 +140,114 @@ def _receipts_present(conn: Connection, run_id: str, corpus_id: str,
     return bool(row) and row[0] == 0
 
 
+ADVANCE_PAGE = 256
+
+
 def advance_tickets(conn: Connection) -> int:
-    """The reconciliation step: verify predecessors, mark READY, and
-    EMIT the stage's outbox event exactly when ready (explicit
-    handoff). Also releases expired leases for retry."""
+    """D7-H1: keyset advancement over the eligible work set.
+
+    Per (stage, corpus): walk PENDING tickets strictly past the stored
+    scheduler cursor, verify predecessors, emit events. An empty page
+    wraps the cursor (full-cycle scan); one full pass per tick maximum,
+    so processing is bounded regardless of table size."""
     advanced = 0
-    rows = conn.execute(
-        "SELECT ticket_id, run_id, stage FROM stage_tickets "
-        "WHERE status = 'pending' ORDER BY created_at LIMIT 256"
-    ).fetchall()
-    for tid, run_id, stage in rows:
-        idx = DAG_ORDER.index(stage)
-        predecessors = DAG_ORDER[:idx]
-        ok = all(_stage_attempt_ok(conn, run_id, p) for p in predecessors)
-        if ok:
-            for p in predecessors:
-                _evt, art, rec = _STAGE_SPEC[p]
-                if not _artifacts_present(conn, run_id, p, art):
-                    ok = False
-                    break
-                for projection in rec:
-                    if not _receipts_present(conn, run_id, _corpus_of(conn, run_id), projection):
-                        ok = False
-                        break
-                if not ok:
-                    break
-        if not ok:
-            continue
-        _emit_ticket_event(conn, tid, run_id, stage)
-        advanced += 1
-    # READY tickets without a live (undelivered) event: the intake
-    # ticket is born ready, and lease-expiry returns tickets to ready —
-    # backfill their events so workers can always claim them.
+    corpora = [r[0] for r in conn.execute(
+        """SELECT DISTINCT corpus_id FROM stage_tickets
+           WHERE status='pending' ORDER BY corpus_id""").fetchall()]
+    for corpus_id in corpora:
+        advanced += _advance_pending_corpus(conn, corpus_id)
+
+    # READY backfill: re-emit missing claim events, keyset on seq
     ready_rows = conn.execute(
         """
-        SELECT t.ticket_id, t.run_id, t.stage FROM stage_tickets t
+        SELECT t.seq, t.ticket_id, t.run_id, t.stage FROM stage_tickets t
         WHERE t.status = 'ready'
           AND NOT EXISTS (
               SELECT 1 FROM outbox_events e
                WHERE e.run_id = t.run_id AND e.event_type = t.event_type
                  AND e.delivered_at IS NULL
                  AND e.payload->>'ticket_id' = t.ticket_id)
-        ORDER BY t.created_at LIMIT 256
+        ORDER BY t.seq LIMIT 256
         """
     ).fetchall()
-    for tid, run_id, stage in ready_rows:
+    for seq, tid, run_id, stage in ready_rows:
         _emit_ticket_event(conn, tid, run_id, stage)
+        conn.execute(
+            """INSERT INTO scheduler_cursors (stage, corpus_id, last_seq)
+               VALUES ('__ready__',%s,%s)
+               ON CONFLICT (stage, corpus_id)
+               DO UPDATE SET last_seq=EXCLUDED.last_seq,
+                             updated_at=now()""", (stage, seq))
         advanced += 1
     _release_expired_leases(conn)
     return advanced
+
+
+def _eligible_all_stages(conn, corpus_id: str, limit: int):
+    after_row = conn.execute(
+        "SELECT last_seq FROM scheduler_cursors "
+        "WHERE stage='__all__' AND corpus_id=%s",
+        (corpus_id,)).fetchone()
+    after = after_row[0] if after_row else 0
+    rows = conn.execute(
+        """SELECT seq, ticket_id, run_id, stage FROM stage_tickets
+           WHERE corpus_id=%s AND status='pending' AND seq > %s
+           ORDER BY seq LIMIT %s""",
+        (corpus_id, after, limit)).fetchall()
+    if not rows and after:
+        conn.execute(
+            "UPDATE scheduler_cursors SET last_seq=0, updated_at=now() "
+            "WHERE stage='__all__' AND corpus_id=%s", (corpus_id,))
+        conn.commit()
+        rows = []
+        after = 0
+    else:
+        next_seq = rows[-1][0] if rows else after
+        conn.execute(
+            """INSERT INTO scheduler_cursors (stage, corpus_id, last_seq)
+               VALUES ('__all__',%s,%s)
+               ON CONFLICT (stage, corpus_id)
+               DO UPDATE SET last_seq=EXCLUDED.last_seq, updated_at=now()""",
+            (corpus_id, next_seq))
+    return rows
+
+
+def _advance_pending_corpus(conn, corpus_id: str) -> int:
+    advanced = 0
+    while True:
+        rows = _eligible_all_stages(conn, corpus_id, ADVANCE_PAGE)
+        if not rows:
+            break
+        for seq, tid, run_id, stage in rows:
+            if _try_advance_one(conn, tid, run_id, stage):
+                advanced += 1
+    return advanced
+
+
+def _try_advance_one(conn, tid, run_id: str, stage: str) -> bool:
+    idx = DAG_ORDER.index(stage)
+    predecessors = DAG_ORDER[:idx]
+    ok = all(_stage_attempt_ok(conn, run_id, pr) for pr in predecessors)
+    if ok:
+        for pr in predecessors:
+            _evt, art, rec = _STAGE_SPEC[pr]
+            if not _artifacts_present(conn, run_id, pr, art):
+                ok = False
+                break
+            for projection in rec:
+                if not _receipts_present(conn, run_id,
+                                         _corpus_of(conn, run_id),
+                                         projection):
+                    ok = False
+                    break
+            if not ok:
+                break
+    if not ok:
+        return False
+    _emit_ticket_event(conn, tid, run_id, stage)
+    return True
+
+
 
 
 def _corpus_of(conn: Connection, run_id: str) -> str:
@@ -363,7 +422,7 @@ def eligible_page(conn, *, stage: str, corpus_id: str,
         "WHERE stage=%s AND corpus_id=%s", (stage, corpus_id)).fetchone()
     after = row[0] if row else 0
     rows = conn.execute(
-        """SELECT seq, ticket_id FROM stage_tickets
+        """SELECT seq, ticket_id, run_id FROM stage_tickets
            WHERE stage=%s AND corpus_id=%s AND status='pending'
            AND seq > %s ORDER BY seq LIMIT %s""",
         (stage, corpus_id, after, limit)).fetchall()

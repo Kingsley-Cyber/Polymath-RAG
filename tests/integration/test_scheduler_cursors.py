@@ -52,14 +52,14 @@ def test_head_of_line_wave2_discovered_via_cursor():
         # first page (limit 10 < 30 old rows): only OLD tickets visible
         page1, cursor1 = eligible_page(conn, stage="parent_summary",
                                        corpus_id=CORPUS, limit=10)
-        assert all(tid in set(old_ids) for _, tid in page1)
+        assert all(row[1] in set(old_ids) for row in page1)
 
         # walk pages to exhaustion; wrap-around then discovers wave-2
         seen_new = False
         for _ in range(10):
             page, _cur = eligible_page(conn, stage="parent_summary",
                                        corpus_id=CORPUS, limit=10)
-            got = {tid for _, tid in page}
+            got = {row[1] for row in page}
             if got & set(new_ids):
                 seen_new = True
                 break
