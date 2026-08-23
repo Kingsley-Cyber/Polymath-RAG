@@ -414,3 +414,23 @@ STATUS: BLOCKING STEP 4b. Required fix (next slice):
 per-corpus watermark scoping in backpressure_paused + regression test
 "one busy corpus cannot starve another". Nothing is lost — all 96
 first-wave tickets persist; resume is automatic after the fix.
+
+---
+
+## ADDENDUM 5b (2026-08-23) — D7 fix verified partial; second layer exposed
+
+After the hierarchy fix + control-plane restart: extract done climbed
+24 → 42 (resume proof — persisted tickets reclaimed automatically),
+then plateaued with 54 pending while the worker idled.
+
+SECOND LAYER CONFIRMED: `advance_tickets` scans
+`ORDER BY created_at LIMIT 256` over ~80k tickets (D7 head-of-line).
+At 10k scale the window fills with other corpora/stages' older tickets,
+so wave-2 extract tickets never reach the front to be advanced.
+Fix design (next slice): cursor-paged advancement per stage (keyset on
+created_at,ticket_id) + per-stage round-robin so no single stage's
+history monopolizes the window. Same pattern as D7: deterministic,
+bounded, resumable.
+
+State: nothing lost; 42 extracts durable; scale run resumes after the
+advancement-paging fix.
