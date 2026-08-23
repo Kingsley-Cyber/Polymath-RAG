@@ -434,3 +434,75 @@ bounded, resumable.
 
 State: nothing lost; 42 extracts durable; scale run resumes after the
 advancement-paging fix.
+
+---
+
+## ADDENDUM 6 (owner, 2026-08-23) — D7 SCHEDULER HARDENING PASS
+
+Scope escalation: do NOT only implement keyset paging. Harden the
+advancement system into a real distributed workflow engine. Do not
+mark D7 complete until: no starvation · no duplicate claims · no lost
+tickets · no orphan completions · deterministic replay.
+
+### H1 — cursor must operate on the ELIGIBLE WORK SET
+Keyset paging over raw table order still skips work when tickets
+mutate state mid-scan. Required index:
+    idx_ready_stage_queue ON stage_tickets(stage,status,corpus_id,ticket_id)
+Cursor walks the eligible set (stage,status,corpus_id,ticket_id), not
+table position.
+
+### H2 — retry starvation
+Separate queues: READY_QUEUE / RETRY_QUEUE / DEAD_LETTER_QUEUE.
+Never mix new work with delayed recovery work.
+
+### H3 — corpus fairness
+Per-corpus watermarks fix admission; advancement can still bias
+alphabetically. Weighted fair scheduling (corpus weights, e.g. AI:5 /
+Cyber:1) or round-robin between corpora.
+
+### H4 — atomic claims
+Two workers must never receive the same ticket:
+    UPDATE stage_tickets SET status='RUNNING', worker_id=:worker
+    WHERE id IN (SELECT id ... WHERE status='READY' LIMIT 256
+                 FOR UPDATE SKIP LOCKED)
+Claim happens in ONE transaction.
+
+### H5 — artifact-before-complete invariant
+Crash between artifact write and completion ⇒ COMPLETE-without-artifact.
+State machine: CLAIMED → PROCESSING → ARTIFACT_WRITTEN →
+RECEIPT_COMMITTED → COMPLETE. Completion REQUIRES artifact exists +
+hash verified + receipt committed. Never PROCESSING→COMPLETE.
+
+### H6 — queue amplification metric
+10k docs × fan-out could mint 260k tickets. Track ticket_amplification
+{documents, generated_tickets, ratio}. 1 document = 1000 tickets is a
+design problem.
+
+### H7 — corpus lifecycle
+ACTIVE | PAUSED | DRAINING | ARCHIVED. ARCHIVED: no new tickets,
+existing finish, projections frozen.
+
+### H8 — automatic backpressure recovery
+No permanent pause flags. Pressure is computed per tick from queue
+depth/utilization; extract resumes automatically when summary workers
+drain.
+
+### H9 — scheduler indexes at 1M scale
+(stage,status,corpus_id,ticket_id) · (worker_id,status) ·
+(next_retry_at,status).
+
+### H10 — observability completeness
+Every ticket answers "why is this waiting?": id, stage, state, corpus,
+created_at, claimed_at, worker, attempts, last_error, next_retry,
+blocked_reason. No mystery queues.
+
+### Regression tests required for EVERY item (failure injection each).
+Use monotonic ticket_sequence/bigint cursor — NEVER created_at
+(collisions/backfills/retries/imports). Independent per-corpus cursors.
+Scheduler metrics: oldest_ready_ticket_age{stage,corpus},
+cursor_position, ready_count, claimed_last_minute. Healthy = ready_count↑
+AND claimed_last_minute↑; broken = ready_count↑ AND claimed=0.
+
+Finding of record: the first D7 failures were not random bugs — the
+control plane is becoming the limiting architecture. This pass hardens
+it accordingly.
