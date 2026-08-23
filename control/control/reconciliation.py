@@ -301,5 +301,68 @@ def _carry_completed_stages(conn: Connection, old_run_id: str,
                ON CONFLICT (artifact_id) DO NOTHING""",
             ("art_" + content_hash({"run": new_run_id, "stage": stage}),
              new_run_id, stage, contract_hash, json.dumps(art_payload)))
+
+        # The DOWNSTREAM stage's claim payload derives from the event
+        # this stage PRODUCED (_emit_ticket_event copies that row
+        # verbatim). Carrying a done stage without its produced events
+        # leaves downstream claims a bare {run_id} payload -- observed
+        # live as KeyError('doc_id') on every gated extract claim.
+        idx = DAG_ORDER.index(stage)
+        if idx + 1 < len(DAG_ORDER):
+            produced_type = _STAGE_SPEC[DAG_ORDER[idx + 1]][0]
+            src_rows = conn.execute(
+                """SELECT event_id FROM outbox_events
+                    WHERE run_id=%s AND event_type=%s""",
+                (old_run_id, produced_type)).fetchall()
+            for (src_event_id,) in src_rows:
+                conn.execute(
+                    """INSERT INTO outbox_events
+                           (run_id, event_type, payload, idempotency_key)
+                        SELECT %s, e.event_type, e.payload, %s
+                          FROM outbox_events e WHERE e.event_id=%s
+                        ON CONFLICT (idempotency_key) DO NOTHING""",
+                    (new_run_id,
+                     content_hash({"carried_to": new_run_id,
+                                   "src_event": src_event_id}),
+                     src_event_id))
         carried.append(stage)
     return carried
+
+
+def backfill_carried_events(conn: Connection) -> int:
+    """One-time-idempotent repair for successors minted BEFORE the
+    produced-events copy existed: re-run the carry copy for each run's
+    recorded carried_stages. Deterministic keys make replays no-ops."""
+    from control.tickets import DAG_ORDER, _STAGE_SPEC
+
+    fixed = 0
+    rows = conn.execute(
+        """SELECT run_id, supersedes_run_id,
+                  metadata->'reconciliation'->'carried_stages'
+             FROM runs
+            WHERE supersedes_run_id IS NOT NULL""").fetchall()
+    for new_run_id, old_run_id, carried in rows:
+        if not old_run_id or not carried:
+            continue
+        for stage in carried:
+            idx = DAG_ORDER.index(stage)
+            if idx + 1 >= len(DAG_ORDER):
+                continue
+            produced_type = _STAGE_SPEC[DAG_ORDER[idx + 1]][0]
+            src_rows = conn.execute(
+                """SELECT event_id FROM outbox_events
+                    WHERE run_id=%s AND event_type=%s""",
+                (old_run_id, produced_type)).fetchall()
+            for (src_event_id,) in src_rows:
+                conn.execute(
+                    """INSERT INTO outbox_events
+                           (run_id, event_type, payload, idempotency_key)
+                        SELECT %s, e.event_type, e.payload, %s
+                          FROM outbox_events e WHERE e.event_id=%s
+                        ON CONFLICT (idempotency_key) DO NOTHING""",
+                    (new_run_id,
+                     content_hash({"carried_to": new_run_id,
+                                   "src_event": src_event_id}),
+                     src_event_id))
+                fixed += 1
+    return fixed
