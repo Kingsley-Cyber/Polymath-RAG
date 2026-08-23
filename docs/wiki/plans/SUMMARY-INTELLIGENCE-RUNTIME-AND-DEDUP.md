@@ -506,3 +506,24 @@ AND claimed_last_minute↑; broken = ready_count↑ AND claimed=0.
 Finding of record: the first D7 failures were not random bugs — the
 control plane is becoming the limiting architecture. This pass hardens
 it accordingly.
+
+---
+
+## ADDENDUM 5c (2026-08-23): OPEN BLOCKER — advancement paging (D7 second layer)
+
+After the D7 hierarchy fix + restart, scale-10k-v1 remains stalled:
+extract 42 done / 54 pending, worker idle, and NEW corpora (e.g.
+test-validation-v1) get NO tickets created. Both symptoms trace to the
+unfixed HALF of D7: `advance_tickets` discovery scans
+`ORDER BY created_at LIMIT 256` over ~80k tickets — wave-2 and other
+corpora never enter the window, and ticket CREATION for new runs is
+starved behind it.
+
+REQUIRED NEXT SLICE (D7-H1 wiring): keyset-paged per-(stage,corpus)
+advancement consuming eligible_page() + scheduler_cursors (both landed,
+5208ee3), replacing the LIMIT-256 scan. Then: scale resumes, new corpora
+admit, addendum-5 metrics become collectable.
+
+Also fixed en route: _admitted_facts init-placement regression
+(NameError) introduced by the acceptance-block patch — caught by STEP
+4b failure monitoring, root-caused via receipts.error.
