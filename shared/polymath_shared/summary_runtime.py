@@ -177,3 +177,25 @@ def run_document_summary_ticket(conn, *, ticket_id: str, corpus_id: str,
                  "completed_at=now() WHERE ticket_id=%s", (ticket_id,))
     return {"status": "COMPLETE", "artifact_id": artifact_id,
             "document_summary_id": env["artifact_id"]}
+
+
+# --- D6 hardening: bounded retries + dead letter -----------------------
+MAX_ATTEMPTS = 5
+
+
+def backoff_seconds(attempts: int) -> int:
+    """Exponential backoff with cap: 8s, 16s, 32s, 64s…"""
+    return min(8 * (2 ** max(attempts - 1, 0)), 600)
+
+
+def fail_ticket(conn, ticket_id: str, attempts: int,
+                error_note: str | None = None) -> str:
+    """FAILED -> RETRY_WAIT within budget, else FAILED_PERMANENT."""
+    if attempts + 1 >= MAX_ATTEMPTS:
+        state = "FAILED_PERMANENT"
+    else:
+        state = "RETRY_WAIT"
+    conn.execute(
+        "UPDATE summary_jobs SET state=%s, attempts=%s "
+        "WHERE ticket_id=%s", (state, attempts + 1, ticket_id))
+    return state
