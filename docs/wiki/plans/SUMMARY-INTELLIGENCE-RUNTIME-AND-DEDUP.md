@@ -527,3 +527,29 @@ admit, addendum-5 metrics become collectable.
 Also fixed en route: _admitted_facts init-placement regression
 (NameError) introduced by the acceptance-block patch — caught by STEP
 4b failure monitoring, root-caused via receipts.error.
+
+---
+
+## ADDENDUM 5d (2026-08-23): CREATION-WINDOW FLIP-FLOP STARVATION
+
+Third layer of D7 found live: `_ensure_tickets_backpressure_gated`'s
+candidate window (LIMIT 32, oldest-first) fills entirely with a
+saturated corpus's ~9,900 runs whenever that corpus momentarily dips
+below the watermark (workers complete tickets between ticks), then
+re-saturates — flip-flopping every tick. Younger corpora NEVER enter
+the window. Verified: manual ensure created 384 tickets while
+test-validation-v1 (ingested hours ago) still had zero.
+
+FIX SPEC (next slice):
+- Sticky hysteresis: persist `creation_paused_until_drain` per corpus;
+  once marked, a corpus stays out of the candidate window until active
+  < watermark/2 (not just < watermark).
+- Or simpler and stronger: candidate window orders/excludes by
+  per-corpus ACTIVE count directly in SQL (`corpus_active < watermark`
+  join), so window membership can't be gamed by completion timing.
+Regression: young-corpus run + saturated old corpus ⇒ young gets
+tickets within one tick regardless of worker completion timing.
+
+Current committed state: conditional-exclusion SQL correct but
+insufficient alone; control plane restarted with it; scale-10k
+extraction continues (done climbing); test-validation-v1 still queued.
