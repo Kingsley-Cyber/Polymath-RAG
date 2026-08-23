@@ -813,6 +813,7 @@ def process_event(conn: Connection, event: dict) -> None:
                        "evidence_spans": 0, "mentions_persisted": 0}
             _decision_counts: dict = {}
             _event_facts = 0
+            _event_candidates: list = []
             # V5 L1 (raw-evidence-ledger-v1): provider observations captured
             # per chunk, bulk-written once per document inside this stage
             # transaction — so raw evidence commits with the stage receipt
@@ -1098,6 +1099,22 @@ def process_event(conn: Connection, event: dict) -> None:
                             decision.fact.qualifiers.get("temporal_surface")
                             or decision.fact.predicate == "occurred_at"):
                         _event_facts += 1
+                    # Phase 6b: event candidate generation on ACCEPTED
+                    # scientific-action facts.
+                    if (decision.decision == "ACCEPT"
+                            and decision.fact is not None):
+                        from polymath_shared.event_reification import (
+                            event_candidate,
+                        )
+                        _ec = event_candidate(
+                            decision.fact.predicate,
+                            decision.fact.subject_id,
+                            decision.fact.object_id,
+                            decision.fact.qualifiers,
+                            subject_surface=candidate.subject.span.text,
+                            object_surface=candidate.object.span.text)
+                        if _ec:
+                            _event_candidates.append(_ec)
                     if trace.enabled:
                         reason = str(decision.reason or "")
                         code = ("NEGATED" if "negated" in reason else
@@ -1225,6 +1242,7 @@ def process_event(conn: Connection, event: dict) -> None:
                     "fact_count": _fact_stage.passed,
                     "fact_qualified": _fact_stage.qualified,
                     "event_count": _event_facts,
+                    "events": [],
                     "relation_candidates": sum(_decision_counts.values()),
                     "mentions_persisted": _counts.get(
                         "mentions_persisted", 0),
@@ -1240,6 +1258,23 @@ def process_event(conn: Connection, event: dict) -> None:
                             if x[5] == r[5] and x[6] == r[6])
                         for r in set(_fact_stage.rows)},
                 },
+            }
+            from polymath_shared.event_reification import admit_event
+            admitted_events = []
+            for ec in _event_candidates:
+                ok, reason = admit_event(ec)
+                if ok:
+                    ec["admitted"] = True
+                    ec["admission_reason"] = reason
+                    admitted_events.append(ec)
+                else:
+                    ec["admitted"] = False
+                    ec["admission_reason"] = reason
+            replay_benchmark["counts"]["event_count"] = len(admitted_events)
+            replay_benchmark["events"] = {
+                "admitted": admitted_events,
+                "rejected": [ec for ec in _event_candidates
+                             if not ec.get("admitted")],
             }
             writer.artifact({"replay_benchmark": replay_benchmark})
             import json as _json
