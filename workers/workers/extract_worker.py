@@ -812,6 +812,7 @@ def process_event(conn: Connection, event: dict) -> None:
             _counts = {"gliner_entity_proposals": 0, "gliner_entity_rejected": 0,
                        "evidence_spans": 0, "mentions_persisted": 0}
             _decision_counts: dict = {}
+            _event_facts = 0
             # V5 L1 (raw-evidence-ledger-v1): provider observations captured
             # per chunk, bulk-written once per document inside this stage
             # transaction — so raw evidence commits with the stage receipt
@@ -1093,6 +1094,10 @@ def process_event(conn: Connection, event: dict) -> None:
                         doc_id, row["chunk_id"], candidate, decision))
                     _decision_counts[decision.decision] = (
                         _decision_counts.get(decision.decision, 0) + 1)
+                    if decision.fact is not None and (
+                            decision.fact.qualifiers.get("temporal_surface")
+                            or decision.fact.predicate == "occurred_at"):
+                        _event_facts += 1
                     if trace.enabled:
                         reason = str(decision.reason or "")
                         code = ("NEGATED" if "negated" in reason else
@@ -1219,7 +1224,7 @@ def process_event(conn: Connection, event: dict) -> None:
                 "counts": {
                     "fact_count": _fact_stage.passed,
                     "fact_qualified": _fact_stage.qualified,
-                    "event_count": 0,
+                    "event_count": _event_facts,
                     "relation_candidates": sum(_decision_counts.values()),
                     "mentions_persisted": _counts.get(
                         "mentions_persisted", 0),

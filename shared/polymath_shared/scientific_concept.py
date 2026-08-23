@@ -135,3 +135,50 @@ def named_concept_evidence(surface: str, tokens: list[dict] | None = None):
                 "pattern": "technical_head_compound",
                 "head": head_lemma, "surface": text}
     return None
+
+
+_MONTH_NUM = {m: f"{i:02d}" for i, m in enumerate(
+    ("january", "february", "march", "april", "may", "june", "july",
+     "august", "september", "october", "november", "december"), start=1)}
+
+_YEAR_RE = re.compile(r"\b(1[89]\d{2}|20\d{2})\b")
+
+
+def is_temporal_surface(surface: str) -> bool:
+    """Deterministic temporal-complement test: 'March 2023',
+    'December 15, 2023', a bare year, or an ISO date."""
+    text = (surface or "").strip()
+    if not text:
+        return False
+    words = text.split()
+    if _is_date_expression(words):
+        return True
+    if _YEAR_RE.fullmatch(text):
+        return True
+    if re.fullmatch(r"\d{4}-\d{2}(-\d{2})?", text):
+        return True
+    return False
+
+
+def normalize_temporal(surface: str) -> dict | None:
+    """'March 2023' -> {'valid_from': '2023-03'}; bare year -> YYYY.
+    None when the surface is not temporal."""
+    text = (surface or "").strip()
+    if not is_temporal_surface(text):
+        return None
+    if _YEAR_RE.fullmatch(text):
+        return {"valid_from": text}
+    if re.fullmatch(r"\d{4}-\d{2}(-\d{2})?", text):
+        return {"valid_from": text}
+    words = [w.strip(",") for w in text.split()]
+    month = _MONTH_NUM.get(words[0].lower())
+    year = next((w for w in words[1:] if w.isdigit() and len(w) == 4), None)
+    day = next((w for w in words[1:] if w.isdigit() and len(w) <= 2), None)
+    out = {}
+    if month and year:
+        out["valid_from"] = f"{year}-{month}"
+        if day:
+            out["valid_from"] += f"-{int(day):02d}"
+    elif year:
+        out["valid_from"] = year
+    return out or None

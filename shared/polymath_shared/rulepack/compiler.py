@@ -968,6 +968,19 @@ def _qualifiers(candidate: RelationCandidate, syntactic: Optional[dict]) -> dict
                 qualifiers["valid_from"] = temporal["valid_from"]
             if temporal.get("valid_until"):
                 qualifiers["valid_until"] = temporal["valid_until"]
+    # SCIENTIFIC-KAG-V1 phase 6: the generator captures the temporal
+    # complement from UD tokens (the parse record is retired); carry it
+    # as structured time on the fact.
+    surface = getattr(candidate, "temporal_surface", None)
+    if surface:
+        qualifiers["temporal_surface"] = surface
+        try:
+            from polymath_shared.scientific_concept import normalize_temporal
+            normalized = normalize_temporal(surface)
+            if normalized:
+                qualifiers.update(normalized)
+        except Exception:
+            pass
     return qualifiers
 
 

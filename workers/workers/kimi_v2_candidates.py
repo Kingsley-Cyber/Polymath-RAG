@@ -24,6 +24,10 @@ from polymath_shared.rulepack.lexical_evidence import (
     build_lexical_semantic_evidence,
 )
 from polymath_shared.rulepack.negation import analyze_scope
+from polymath_shared.scientific_concept import (
+    is_temporal_surface,
+    normalize_temporal,
+)
 from polymath_shared.rulepack.role_assignment import (
     assign_roles,
     get_role_inventory,
@@ -130,6 +134,18 @@ def _entity_pairs(tok_list: list[dict], sl: SentenceSlice,
         if ent is not None and all(ent is not e for _, e in pairs):
             pairs.append((tok, ent))
     return pairs, used_anaphora
+
+
+TEMPORAL_OBJECT_TYPES = frozenset(
+    {"Date", "TimePeriod", "Version", "TimeReference"})
+
+
+def _pobj_phrase(tokens: list[dict], pobj: dict) -> str:
+    """The temporal NP surface: the pobj plus its nummod children."""
+    parts = [pobj] + [t for t in _children(tokens, pobj["i"])
+                      if t["dep"] == "nummod"]
+    parts.sort(key=lambda t: t["char_start"])
+    return " ".join(t["text"] for t in parts)
 
 
 def _control_controller(
@@ -241,35 +257,43 @@ def build_candidates_kimi_v2(
                      else "active")
 
             dep_path_parts: list[str] = []
-            if nominal:
-                for prep in _children(tokens, tok["i"]):
-                    if prep["dep"] not in PREP_DEPS:
+            temporal_surface: str | None = None
+            temporal_toks: list[dict] = []
+            control_note = None
+
+            # Phase 6: prep>pobj complements are partitioned for EVERY
+            # verbal trigger (active or passive) — a temporal phrase
+            # ("in March 2023", "in 2024") is an event attribute, never
+            # the primary object. Non-temporal pobjs bind as objects only
+            # where the architecture allows it: passives, nominal
+            # predicates, and control-framed infinitives.
+            _allow_pobj_objects = (
+                nominal or voice == "passive" or bool(control_note))
+            for prep in _children(tokens, tok["i"]):
+                if prep["dep"] not in PREP_DEPS:
+                    continue
+                pobjs = [t for t in _children(tokens, prep["i"])
+                         if t["dep"] in PREP_OBJECT_DEPS]
+                for p in pobjs:
+                    phrase = _pobj_phrase(tokens, p)
+                    if is_temporal_surface(phrase):
+                        temporal_toks.append(p)
+                        if temporal_surface is None:
+                            temporal_surface = phrase
                         continue
-                    pobjs = [t for t in _children(tokens, prep["i"])
-                             if t["dep"] in PREP_OBJECT_DEPS]
-                    obj_toks.extend(pobjs)
-                    if pobjs:
-                        dep_path_parts.append(
-                            f"{prep['dep']}.{prep['text'].lower()}>"
-                            f"{pobjs[0]['dep']}")
-            elif voice == "passive":
-                for prep in _children(tokens, tok["i"]):
-                    if prep["dep"] not in PREP_DEPS:
-                        continue
-                    pobjs = [t for t in _children(tokens, prep["i"])
-                             if t["dep"] in PREP_OBJECT_DEPS]
-                    obj_toks.extend(pobjs)
-                    if pobjs:
-                        dep_path_parts.append(
-                            f"{prep['dep']}.{prep['text'].lower()}>"
-                            f"{pobjs[0]['dep']}")
+                    if _allow_pobj_objects:
+                        obj_toks.append(p)
+                if pobjs and obj_toks:
+                    dep_path_parts.append(
+                        f"{prep['dep']}.{prep['text'].lower()}>"
+                        f"{pobjs[0]['dep']}")
+
 
             subj_toks = _conj_expansion(tokens, subj_toks)
             obj_toks = _conj_expansion(tokens, obj_toks)
 
             # Phase 5: infinitive-control. Only when the embedded verb has
             # NO subject of its own; its own explicit arguments always win.
-            control_note = None
             if not subj_toks and not nominal:
                 ctrl = _control_controller(tokens, tok, sl)
                 if ctrl is not None:
@@ -284,14 +308,32 @@ def build_candidates_kimi_v2(
                         for prep in _children(tokens, tok["i"]):
                             if prep["dep"] not in PREP_DEPS:
                                 continue
-                            obj_toks.extend(
-                                t for t in _children(tokens, prep["i"])
-                                if t["dep"] in PREP_OBJECT_DEPS)
+                            for gc in _children(tokens, prep["i"]):
+                                if gc["dep"] not in PREP_OBJECT_DEPS:
+                                    continue
+                                phrase = _pobj_phrase(tokens, gc)
+                                if is_temporal_surface(phrase):
+                                    temporal_toks.append(gc)
+                                    if temporal_surface is None:
+                                        temporal_surface = phrase
+                                else:
+                                    obj_toks.append(gc)
                 elif observer:
                     observer.record_candidate_outcome(
                         sl, None, "V2_CONTROL_AMBIGUOUS", {
                             "token_i": tok["i"], "lemma": lemma,
                             "kimi_v2": True})
+
+            # Phase 6: an intransitive event predicate whose only
+            # complement is temporal ("occurred in 2024") binds the DATE
+            # as the knowledge-object endpoint.
+            rule_obj_core = {
+                core for sig in rule_pack["predicates"][predicate_id][
+                    "signatures"]
+                for core in (sig.get("object_core") or [])}
+            if (not obj_toks and temporal_toks
+                    and rule_obj_core & TEMPORAL_OBJECT_TYPES):
+                obj_toks.extend(temporal_toks)
 
             _propagate_shared_arguments(
                 tokens, tok["i"],
@@ -469,5 +511,6 @@ def build_candidates_kimi_v2(
                         object_token_id=obj_tok["i"],
                         dependency_path="+".join(dep_path_parts),
                         binding_source=binding_source,
+                        temporal_surface=temporal_surface,
                     ))
     return candidates

@@ -260,6 +260,10 @@ class RelationCandidate(BaseModel):
     object_token_id: Optional[int] = None
     dependency_path: Optional[str] = None
     binding_source: Optional[BindingSource] = None
+    # SCIENTIFIC-KAG-V1 phase 6: the temporal complement of the trigger
+    # ("in March 2023"), kept as a structured string so facts carry
+    # machine-normalizable time instead of flattened prose.
+    temporal_surface: Optional[str] = None
 
 
 class CanonicalFact(BaseModel):
