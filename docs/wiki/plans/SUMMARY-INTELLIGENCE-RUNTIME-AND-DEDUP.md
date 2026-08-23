@@ -615,3 +615,34 @@ extract claiming again, zero wedged transactions. Regression proof:
 tests/integration/test_contract_reconciliation.py T1-T4
 (queued upgrade · mid-processing upgrade · replay determinism ·
 policy-only carry) — 4/4 green.
+
+---
+
+## ADDENDUM 5g (2026-08-23): DRAIN CAPTURE + TWO MORE SCALE DEFECTS CLOSED
+
+Continuous capture (30s JSONL, eval/v5/scale/metrics_drain_2026-08-23.jsonl):
+done 2597→2683 and climbing; dead letters 0 throughout; GPU ~51%
+active; knowledge surface stable (227k mentions, 26.3k entities,
+8.5k facts — identity-explosion watch still NEGATIVE).
+
+Defect 4 (claim ordering): 2,643 ungated legacy-lane events sat at the
+event_id head, starving 369+ gated READY tickets behind them — the
+convergence metric read flat while real work bypassed lease/backpressure/
+contract gates entirely. Fix: gated events sort first (1d14f0e).
+
+Defect 5 (census per-entity loop): _missing_projection_receipts ran one
+SELECT PER ENTITY inside the tick transaction (py-spy caught it live);
+complete runs with hundreds of chunks held the tick open MINUTES while
+every claim queued behind it. Fix: set-based anti-join, same result
+(census fix committed). This is the root of the recurring "wedged
+tick" signature from addenda 5a-5e.
+
+Also fixed en route: reconciliation successors needed their parents'
+PRODUCED outbox payloads verbatim (intake.v1 corpus_id, chunked.v1
+doc_id) — bare {run_id} fallbacks crashed every gated claim with
+KeyError and burned retry budget until repaired (ce6f3c0, fd436af).
+
+Known-open: /rescue calls intermittently stall to the 300s client
+timeout under GPU contention (pre-existing MPS limitation, now
+quantified: bursts of ~16 jobs/min between multi-minute stalls).
+Watch: created>completed during load, completed catches up after.
