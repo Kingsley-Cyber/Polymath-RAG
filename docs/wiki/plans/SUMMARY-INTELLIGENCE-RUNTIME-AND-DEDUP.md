@@ -191,3 +191,53 @@ Forbidden behaviors that MUST have failing tests:
 Every D4/D5 artifact must be fully auditable: source_document_summary_
 ids, artifact_hash, contract_version on every field-bearing record;
 rejection/merge decisions carry reasons (merge_receipts per Part B).
+
+---
+
+## ADDENDUM 2 (owner, 2026-08-23) — D4 completion contract + ordering lock
+
+### Gate before anything else
+Any stage test can execute ALONE, in ANY order, on a clean control-plane
+state. A derived-data stage must not depend on execution order. Fix the
+D3/D4 test isolation first (per-test corpus reset fixture).
+
+### Corrected remaining order
+1. Fix D4 completion contract
+2. Build D5 vocabulary
+3. Lock DEDUP identity model
+4. D6 hardening
+5. Build projections (Qdrant summary/concept collections; Neo4j
+   HAS_SUMMARY / SUPPORTED_BY / SUPPORTED_BY-evidence)
+6. Acceptance harness (human labels)
+7. Enforcement flip
+
+Reason: projections and validation depend on STABLE IDENTITIES, so dedup
+precedes projections and validation.
+
+### D4 revised weighting model (replaces additive score)
+    importance = document_spread * evidence_density * concept_strength
+Multiplicative, not additive. Example: Transformer in 80 documents /
+400 parent summaries / 200 facts beats "attention" repeated 10,000
+times in ONE document.
+No field without source IDs:
+- concepts[].source_documents
+- entities[].source_documents
+- predicates[].supporting_fact_ids
+
+### D5 frozen rules
+Allowed inputs ONLY: parent summaries · document summaries ·
+corpus summary · accepted concepts. NEVER GLiNER spans / raw nouns /
+raw chunks / embedding neighbors / unadmitted facts.
+Merge requires: same domain + shared evidence + summary support.
+Forbidden forever: embedding-only merges · frequency-only vocabulary ·
+raw noun phrases as concepts.
+Vocabulary NEVER decides entity identity ("BERT relates_to concept
+transformer architecture" is the strongest claim it may make).
+Corpus isolation: ai_v1::model ≠ cyber_v1::model.
+Output shape per family: canonical, aliases[], supported_by{summaries,
+facts, corpus}, provenance.
+
+### Final production gate (all PASS before enforcement flip)
+Extraction · Entity Admission · Fact Admission · Event Admission ·
+Summary DAG · Vocabulary · Dedup · Projection rebuild · Acceptance
+harness.
