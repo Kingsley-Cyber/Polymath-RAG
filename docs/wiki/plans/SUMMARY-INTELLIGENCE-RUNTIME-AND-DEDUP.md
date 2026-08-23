@@ -241,3 +241,76 @@ facts, corpus}, provenance.
 Extraction · Entity Admission · Fact Admission · Event Admission ·
 Summary DAG · Vocabulary · Dedup · Projection rebuild · Acceptance
 harness.
+
+---
+
+## ADDENDUM 3 (owner, 2026-08-23) — FINAL SEQUENCE: identity, replay, throughput
+
+Remaining work is PRODUCTION INTEGRITY, not extraction logic. Locked
+order (do not run 10k before identity+projections are frozen — that
+measures a moving target):
+
+    1 DEDUP identity model
+    2 Projection layer
+    3 Projection recovery validation
+    4 10k scale test
+    5 Acceptance harness (human labels)
+    6 Nine-gate production review
+    7 Enforcement flip
+
+### 1 Identity model
+document_hash = sha256(normalized_content + corpus_id +
+ingestion_contract_version). Same hash ⇒ reuse artifacts, no
+re-extraction. Same hash + NEW pipeline version ⇒ raw document survives,
+DERIVED artifacts regenerate.
+Store document_identity {document_id, corpus_id, content_hash,
+ingestion_version, first_seen, last_processed}.
+
+entity_key = hash(corpus_id + normalized_name + entity_type).
+No cross-corpus merge ever (AI::BERT and Cyber::BERT are different
+namespaces). Every merge writes a merge_receipt {merge_id,
+source_entities[], target_entity, reason, evidence[]} — never silent.
+
+fact_key = hash(subject_id + predicate + object_id). "BERT was
+pretrained using BooksCorpus" after "BERT trained_on BooksCorpus" ⇒ ONE
+fact, MORE evidence. Contradictions never overwrite: claim_set keeps
+competing values each with its own support ({91%: paper_A}, {94%:
+paper_B}) — the graph represents disagreement.
+
+### 4 Projection layer
+Qdrant collections: summary_documents · summary_parents ·
+concept_families. Payload: {corpus_id, artifact_id, artifact_hash,
+summary_type}.
+Neo4j DERIVED NAVIGATION ONLY: (Document)-HAS_SUMMARY->(DocumentSummary);
+(Concept)-SUPPORTED_BY->(DocumentSummary); (Fact)-SUPPORTED_BY->
+(Evidence). NEVER Summary-CREATED->Entity — summaries do not create
+knowledge.
+
+### 5 Projection recovery gate
+Delete Qdrant summary collections + Neo4j summary relationships; keep
+Postgres ledger; replay ⇒ same points, same relationships, same hashes.
+If not deterministic, projection is not done.
+
+### 6 Scale metrics (after stability)
+Intake docs/sec + MB/sec + duplicate-skip rate; extraction GLiNER/spaCy
+throughput + candidate counts; knowledge admissions/sec + facts/sec +
+events/sec; summaries parent/doc/corpus/vocabulary rates; infrastructure
+RAM/CPU/GPU-MPS/Redis queue depth/Postgres connections/worker
+utilization/retries/dead letters.
+
+### 7 Acceptance harness = the production gate
+Not "does it run" but "does it produce the knowledge a human researcher
+expects": entity_recall · predicate_precision · event_recall ·
+evidence_support. A scientific KAG prefers a MISSING FACT over a FALSE
+FACT.
+
+### Nine-Gate Production Review
+G1 deterministic ingestion · G2 entity identity stable · G3 predicate
+compiler validated · G4 fact admission validated · G5 event/temporal
+validated · G6 summary DAG deterministic · G7 vocabulary contamination
+prevented · G8 projection rebuild succeeds · G9 acceptance harness meets
+target (>=90% supported, <=5% wrong). All PASS ⇒ enforcement flip.
+
+Adding more models is not the bottleneck. Identity, replay, projection
+recovery, and measured throughput turn the prototype into a production
+scientific KAG.
