@@ -646,3 +646,25 @@ Known-open: /rescue calls intermittently stall to the 300s client
 timeout under GPU contention (pre-existing MPS limitation, now
 quantified: bursts of ~16 jobs/min between multi-minute stalls).
 Watch: created>completed during load, completed catches up after.
+
+---
+
+## ADDENDUM 5h (owner, 2026-08-23): LOCKED VALIDATION ORDER — post-drain
+
+    1 TEST.md successor completes
+    2 Compare against old baseline
+    3 ACCEPTANCE HARNESS on the replay output   <- inserted by owner
+    4 Identify remaining missed facts
+    5 Fix compound-NP binding
+    6 Authored predicate registry updates
+    7 Replay
+    8 Acceptance harness
+
+No predicate changes before step 2's baseline comparison. Harness runs
+TWICE: once after replay to size the gap (step 3), once after the fix
+arc to prove movement (step 8).
+
+Lineage observation recorded: test-validation-v1 reconciled in TWO
+hops (v1-pin -> v3-pin within 90s) because policy resolution drifted
+between mints. One-successor index held; nothing lost; pin-resolution
+stability is a watch item, not a blocker.
