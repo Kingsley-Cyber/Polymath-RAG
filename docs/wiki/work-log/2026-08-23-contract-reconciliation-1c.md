@@ -126,3 +126,18 @@ the append-only discipline; superseded-lineage supersedes it.
 - Legacy runs pinned before the fence exist with NULL contract or
   pre-bundle shapes; they are out of scope for reconciliation unless
   they carry a comparable full contract (documented in module).
+
+## Correction (same day, drain observation)
+
+Live drain exposed a THIRD lane defect: claim_ticket_events ordered by
+event_id only, so 2,643 undelivered LEGACY-scheduler events (runs with
+no CP2 ticket rows — the "pass through" escape hatch) sat at the head
+and starved 369+ gated READY successor tickets behind them. Gated
+tickets are the owner's convergence metric; ungated work bypasses
+lease, backpressure, and contract gates.
+
+Fix: gated events sort FIRST in the claim query (CASE ticket_id IS NOT
+NULL THEN 0 ELSE 1 END). One-line ordering change; no behavior change
+for either lane's eligibility. Legacy backlog still drains (it is real
+work under current worker semantics) but can no longer hide the
+ticket-gated queue.
