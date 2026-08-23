@@ -314,3 +314,40 @@ target (>=90% supported, <=5% wrong). All PASS ⇒ enforcement flip.
 Adding more models is not the bottleneck. Identity, replay, projection
 recovery, and measured throughput turn the prototype into a production
 scientific KAG.
+
+---
+
+## ADDENDUM 4 (owner, 2026-08-23) — STEP 4 scale-validation spec
+
+Question: can the control plane sustain a large derived knowledge
+workload without memory leaks, duplicate work, starvation, or
+nondeterministic state? Measure EACH STAGE independently.
+
+Dataset (10k): repeated documents · similar documents · different
+domains · small + large files. Track duplicate_percentage.
+
+Intake: docs/sec, bytes/sec, duplicate_skip_rate, failed_documents,
+queue_depth. EXPECT: duplicates never enter extraction.
+Extraction: GLiNER docs/sec + memory peak; spaCy same.
+Knowledge settlement: entities_created, entity_merges, facts_created,
+fact_growth, events_created, rejection_rates. WATCH: entity explosion,
+duplicate identities, false fact growth.
+Summary runtime per worker: jobs_completed, jobs_per_second,
+p50/p95_latency, retries. Corpus mapping batch: refresh_duration,
+documents_processed, concepts_updated, vocabulary_updates.
+Infrastructure: Postgres connections/query_latency/locks; Redis
+queue_depth/memory; Qdrant points_written/write_latency; Neo4j
+relationships/transaction_time; RAM peak/CPU/GPU memory.
+
+Failure injection required: worker crash (lease expires → reclaimed →
+no duplicate artifact); store loss (delete Qdrant collection ⇒
+projection rebuild only); queue overload (100k tickets ⇒ backpressure,
+no OOM).
+
+Success criteria: duplicate processing 0 · artifact collisions 0 ·
+orphan projections 0 · tickets failing without dead letter 0 · rebuild
+hash mismatch 0 · uncontrolled memory growth 0 · corpus leakage 0.
+
+STEP 5 labels must cover entity correctness, predicate correctness,
+event correctness, evidence grounding, retrieval usefulness.
+"Scaling and evaluation are the remaining unknowns — not architecture."
