@@ -24,6 +24,8 @@ stronger authority and plurals still reach the generic gate.
 """
 from __future__ import annotations
 
+import re
+
 # Scientific head lemmas whose compounds name a concept rather than a
 # class term. Authored list; extend through policy, never silently.
 SCIENTIFIC_HEAD_LEMMAS = frozenset({
@@ -35,6 +37,26 @@ SCIENTIFIC_HEAD_LEMMAS = frozenset({
 })
 
 _ACRONYM_RE = None
+
+_MONTHS = ("january", "february", "march", "april", "may", "june", "july",
+           "august", "september", "october", "november", "december")
+
+
+def _is_date_expression(words: list[str]) -> bool:
+    """Month-name temporal compounds: 'March 2023', 'March 15, 2023'."""
+    if not words:
+        return False
+    if words[0].lower() in _MONTHS:
+        tail = [w for w in words[1:] if w != ","]
+        return bool(tail) and tail[-1].isdigit() and len(tail[-1]) == 4
+    return False
+
+
+def _is_version_identity(words: list[str]) -> bool:
+    """'Version 3.8', 'version 1.0.2' — an explicit version naming."""
+    return (len(words) >= 2
+            and words[0].lower() in ("version", "ver")
+            and re.fullmatch(r"v?\d+(\.\d+)*", words[1]) is not None)
 
 
 def _is_acronym(token: str) -> bool:
@@ -83,6 +105,13 @@ def named_concept_evidence(surface: str, tokens: list[dict] | None = None):
 
     if len(words) < 2:
         return None
+
+    if _is_date_expression(words):
+        return {"contract": "scientific-concept-evidence-v1",
+                "pattern": "date_expression", "surface": text}
+    if _is_version_identity(words):
+        return {"contract": "scientific-concept-evidence-v1",
+                "pattern": "version_identity", "surface": text}
 
     if any(_is_acronym(w) for w in words):
         return {"contract": "scientific-concept-evidence-v1",
