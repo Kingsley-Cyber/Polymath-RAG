@@ -351,3 +351,47 @@ hash mismatch 0 · uncontrolled memory growth 0 · corpus leakage 0.
 STEP 5 labels must cover entity correctness, predicate correctness,
 event correctness, evidence grounding, retrieval usefulness.
 "Scaling and evaluation are the remaining unknowns — not architecture."
+
+---
+
+## ADDENDUM 5 (owner, 2026-08-23) — live-run monitoring spec (scale-10k-v1)
+
+Queue health (critical): pending/running/complete/failed/retry_wait
+counts per stage · oldest_ticket_age · throughput_per_stage.
+THE question: is one slow stage starving the pipeline?
+
+Extraction: documents_processed, docs/sec, GLiNER avg_ms+p95_ms+
+memory_peak, spaCy same. WATCH: continuously rising memory; workers
+slowing over time; queue growth without recovery.
+
+Entity admission: mentions_seen, accepted, mention_only, rejected,
+merge_candidates, canonical_entities_created. 10k docs is where
+IDENTITY EXPLOSION appears: documents up but entities growing
+uncontrollably = dedup failure.
+
+Facts: predicate_candidates, qualified, rejected, top_rejection_reasons.
+A scientific KAG REJECTS AGGRESSIVELY — a clean graph is the goal, not
+a huge one.
+
+Summary runtime (first real test of the new layer): parent/document
+jobs, latency, throughput, artifact_duplicates. Corpus mapping must NOT
+run 10,000 times — expect: documents complete → batch threshold → ONE
+corpus refresh.
+
+Failure injections after workload stabilizes:
+1 worker crash mid-ticket ⇒ lease expires → reclaim → retry → COMPLETE,
+  0 duplicate artifacts
+2 store loss: delete Qdrant summary collections ⇒ Postgres unchanged,
+  Neo4j unchanged, projection rebuilt
+3 queue overload: more tickets than workers ⇒ bounded growth, stable
+  memory, no OOM ("containers consuming memory doing nothing" is
+  answered by idle scale-down + bounded queues)
+
+Seven-zero acceptance targets before advancing:
+duplicate processing 0 · artifact hash collision 0 · orphan projection 0
+· uncontrolled retries 0 · failed ticket without dead letter 0 · corpus
+contamination 0 · rebuild mismatch 0.
+
+Remaining questions are exactly STEP 4b / STEP 5 / nine gates:
+1 Can it sustain large ingestion? 2 Can it recover from failures?
+3 Does it produce human-expected scientific knowledge?
