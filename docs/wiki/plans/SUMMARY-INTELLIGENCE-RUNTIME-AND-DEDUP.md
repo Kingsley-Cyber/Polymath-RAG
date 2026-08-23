@@ -580,3 +580,38 @@ permanently frozen mid-pipeline after every upgrade.
 Interim operational unblock (no code): delete the stranded runs'
 ticket/outbox rows and re-submit the manifest — fresh runs pin current
 contracts. Proven working on test-validation-v1 this session.
+
+---
+
+## ADDENDUM 5f (2026-08-23): STEP 1c IMPLEMENTED — reconciliation live
+
+`control/control/reconciliation.py::reconcile_contract_drift` runs in
+every control tick BEFORE ticket creation. When an open run's pinned
+contract differs from the fleet's current contracts it mints a
+deterministic successor run (`run_<hash(reconciles, contract)>`),
+pins CURRENT contracts, copies immutable lineage (metadata +
+intake_payload verbatim), and closes the old run as
+`status='superseded'` with `superseded_by_run_id` — ZERO deletion,
+tickets/events/attempts preserved as history.
+
+Selective regeneration (T4): `STAGE_CONTRACT_DEPENDENCIES` declares
+each stage's contract keys; DONE stages whose keys are all unchanged
+carry into the successor as run-scoped copies with
+`carried_from_run` provenance; changed-dependency stages regenerate.
+One-active-intent invariant: partial unique index
+`runs_one_successor_idx` (migration 0029) allows at most one successor
+per superseded run, ever.
+
+SECOND ROOT CAUSE found during verification (migration 0030):
+`outbox_events` had NO index on `(run_id, event_type)` — every
+`_emit_ticket_event` lookup seq-scanned a 1.4 GB table; control ticks
+observed wedged 5-6+ MINUTES inside that single SELECT, starving all
+worker claims independent of contract pinning. Indexed; wedges = 0
+since restart. This is why scale-10k stalled even where pins matched.
+
+Verified live: control restarted → stranded corpora reconciled
+(successor runs visible with lineage), intake 742 done and climbing,
+extract claiming again, zero wedged transactions. Regression proof:
+tests/integration/test_contract_reconciliation.py T1-T4
+(queued upgrade · mid-processing upgrade · replay determinism ·
+policy-only carry) — 4/4 green.

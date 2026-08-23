@@ -44,6 +44,13 @@ def tick() -> dict:
         from control import tickets as cp2_tickets
         from control.worker_supervisor import sweep as supervise
 
+        # STEP 1c (addendum 5e): reconcile contract drift BEFORE ticket
+        # creation, so stranded pre-upgrade runs mint successors under
+        # the CURRENT contract instead of freezing forever. Zero
+        # deletion; lineage columns record the supersession.
+        from control.reconciliation import reconcile_contract_drift
+        reconciled = reconcile_contract_drift(conn)
+
         ensured = _ensure_tickets_backpressure_gated(conn)
         advanced = cp2_tickets.advance_tickets(conn)
         supervised = supervise(conn)
@@ -73,6 +80,7 @@ def tick() -> dict:
             "scheduled": scheduled,
             "promoted": len(census.promote),
             "failed": len(census.fail),
+            "reconciled": len(reconciled.get("reconciled", {})),
         }
 
 
