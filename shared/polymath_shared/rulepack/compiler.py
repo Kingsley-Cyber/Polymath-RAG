@@ -97,6 +97,22 @@ def load_rule_pack(path: Optional[Path] = None, *, use_resources: bool = True,
         raise RulePackError(f"unknown rule pack version {pack_version!r}")
 
     raw = yaml.safe_load(yaml_path.read_text())
+    # SCIENTIFIC-KAG-V1: signature families resolve through the type
+    # ontology BEFORE structural validation, so a pack may author
+    # `subject_core: [ResearchArtifact]` and validate against concrete
+    # canonical types. Unknown family tokens fail loudly here.
+    from polymath_shared.type_ontology import expand_signature
+
+    for rule in raw.get("predicates", []):
+        rule["signatures"] = [
+            expand_signature(sig) for sig in (rule.get("signatures") or [])]
+    if raw.get("core_types") is not None:
+        known = set(raw["core_types"])
+        for rule in raw.get("predicates", []):
+            for sig in rule.get("signatures") or []:
+                known |= set(sig.get("subject_core") or [])
+                known |= set(sig.get("object_core") or [])
+        raw["core_types"] = sorted(known)
     resources = yaml.safe_load(_RESOURCE_INDEX_PATH.read_text())
     if not use_resources:
         return _compile_baseline(raw, resources)
