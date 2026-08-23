@@ -668,3 +668,35 @@ Lineage observation recorded: test-validation-v1 reconciled in TWO
 hops (v1-pin -> v3-pin within 90s) because policy resolution drifted
 between mints. One-successor index held; nothing lost; pin-resolution
 stability is a watch item, not a blocker.
+
+---
+
+## ADDENDUM 5i (owner, 2026-08-23): MISSION SEQUENCE LOCKED
+
+Track separation directive: production reliability (drain/control
+plane) and intelligence quality (Compiler v2) advance independently.
+NO v2 splice into the live drain. No bundle change. No run
+invalidation during Phase 1.
+
+    P1 Finish drain (dead letters=0, queue converges, no stranded
+       tickets, projection receipts complete). Capture final metrics.
+    P2 Promote Compiler v2 to production candidate path (shadow ->
+       enforce). Preserve evidence contracts, admission logic,
+       replay determinism, provenance. Every candidate records:
+       semantic_frame_id, lexical_resource_source, role_mapping,
+       predicate_mapping_rule, dependency_path, evidence_span.
+    P3 TEST.md replay comparison (baseline vs v2): recovered facts,
+       missing facts, false positives, rejected-with-reason.
+    P4 Entity discovery follow-on ONLY after v2 validation
+       (corpus/dataset/benchmark registries; no capitalized-noun
+       acceptance).
+    P5 Acceptance harness: entity_recall, predicate_precision,
+       event_recall, evidence_support + v2 metrics
+       (semantic_frame_accuracy, role_binding_accuracy).
+    FINAL Intelligence brief (9 sections per owner spec).
+
+Operating rules unchanged: no verb dictionary, no embedding truth,
+no LLM relations, no weakened gates. Misses classified A-E before
+any patch.
+
+Phase-1 telemetry continues via drain_metrics.jsonl sampler.
