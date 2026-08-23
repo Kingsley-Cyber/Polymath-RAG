@@ -1,0 +1,22 @@
+{
+ "contract": "scale-metrics-v1",
+ "step": "4b-partial",
+ "corpus_id": "scale-10k-v1",
+ "dataset": {
+  "document_count": 10000,
+  "total_bytes": 8790785,
+  "duplicate_percentage": 2.0
+ },
+ "intake": {
+  "first_submission_seconds": 35.7,
+  "documents_per_second": 280.1,
+  "submitted": 10000,
+  "duplicate_skip_rate_resubmission": 100.0,
+  "resubmission_seconds": 13.3,
+  "failed_documents": 0
+ },
+ "extraction": {
+  "status": "IN_PROGRESS_BACKGROUND",
+  "note": "10k intake tickets queue; control plane creates extract tickets as intake settles"
+ }
+}
