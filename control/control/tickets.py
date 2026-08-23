@@ -339,3 +339,45 @@ def backpressure_paused(conn: Connection, stage: str = "extract",
     # SUPERSEDED by backpressure_decision (D7 fix): kept as the global
     # ceiling view only.
     return extract_active_count(conn) >= GLOBAL_EXTRACT_LIMIT
+
+
+def _reset_cursor(conn, stage: str, corpus_id: str) -> int:
+    """Wrap-around: after a full pass, restart from the beginning so no
+    ticket is ever invisible because of its table position."""
+    conn.execute(
+        "UPDATE scheduler_cursors SET last_seq=0, updated_at=now() "
+        "WHERE stage=%s AND corpus_id=%s", (stage, corpus_id))
+    return 0
+
+
+def eligible_page(conn, *, stage: str, corpus_id: str,
+                  limit: int = 256) -> tuple[list[tuple], int]:
+    """D7-H1: keyset page over the ELIGIBLE WORK SET.
+
+    Returns (rows, next_seq). rows are PENDING tickets for
+    (stage, corpus) with seq strictly greater than the stored cursor;
+    an empty page wraps the cursor to zero (full-cycle scan), so every
+    ticket becomes visible again exactly once per cycle."""
+    row = conn.execute(
+        "SELECT last_seq FROM scheduler_cursors "
+        "WHERE stage=%s AND corpus_id=%s", (stage, corpus_id)).fetchone()
+    after = row[0] if row else 0
+    rows = conn.execute(
+        """SELECT seq, ticket_id FROM stage_tickets
+           WHERE stage=%s AND corpus_id=%s AND status='pending'
+           AND seq > %s ORDER BY seq LIMIT %s""",
+        (stage, corpus_id, after, limit)).fetchall()
+    if not rows and after:
+        # exhausted: signal empty page and rewind for the next cycle
+        conn.execute(
+            "UPDATE scheduler_cursors SET last_seq=0, updated_at=now() "
+            "WHERE stage=%s AND corpus_id=%s", (stage, corpus_id))
+        return [], 0
+    next_seq = rows[-1][0] if rows else after
+    conn.execute(
+        """INSERT INTO scheduler_cursors (stage, corpus_id, last_seq)
+           VALUES (%s,%s,%s)
+           ON CONFLICT (stage, corpus_id)
+           DO UPDATE SET last_seq=EXCLUDED.last_seq, updated_at=now()""",
+        (stage, corpus_id, next_seq))
+    return rows, next_seq
