@@ -395,3 +395,22 @@ contamination 0 · rebuild mismatch 0.
 Remaining questions are exactly STEP 4b / STEP 5 / nine gates:
 1 Can it sustain large ingestion? 2 Can it recover from failures?
 3 Does it produce human-expected scientific knowledge?
+
+---
+
+## ADDENDUM 5a — LIVE FINDING (2026-08-23): D7 starvation reproduced at scale
+
+scale-10k-v1 froze mid-first-wave with the fleet healthy:
+extract 24/96 done · 72 pending READY-to-advance · worker alive+idle ·
+zero progress over 90s. Root cause matches owner defect D7 exactly:
+
+`backpressure_paused()` counts extract tickets ACROSS ALL CORPORA
+(watermark 64, hardcoded stage) and gates `ensure_run_tickets`
+globally (main.py:89). At 10k-doc scale the watermark saturates on the
+first generation, freezing new-ticket creation corpus-wide — including
+advancement of already-created tickets behind it.
+
+STATUS: BLOCKING STEP 4b. Required fix (next slice):
+per-corpus watermark scoping in backpressure_paused + regression test
+"one busy corpus cannot starve another". Nothing is lost — all 96
+first-wave tickets persist; resume is automatic after the fix.
