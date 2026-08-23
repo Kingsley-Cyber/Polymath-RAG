@@ -130,3 +130,64 @@ SUMMARY INTELLIGENCE (consumes canonical objects ONLY).
 Rule of record: every summary artifact references CANONICAL IDs and
 never creates new identity. Summary Intelligence inherits a clean
 knowledge substrate.
+
+---
+
+## ADDENDUM (owner, 2026-08-23) — D4/D5/D6 refined requirements
+
+D3 boundary confirmed. Risk moves UP into aggregation scope; D4/D5 need
+stricter rules than D3. The layer must be FULLY AUDITABLE.
+
+### D4 Corpus Mapping Worker
+Purpose: "What does this corpus contain?" — a NAVIGATION MAP. Truth
+remains Evidence → Fact Admission → Fact Ledger.
+Input contract: document_summaries ONLY (never raw docs/chunks/GLiNER
+output/candidate entities/unadmitted facts).
+Batch trigger policy — never per-document tickets:
+    triggers: document_count_threshold | scheduled_refresh |
+              manual_rebuild
+    threshold.documents: 100 · debounce_minutes: 30
+Weighted composition (NOT mention counting):
+- concept weight = frequency + document spread + evidence density
+  ("attention in 45 documents across 3 domains with 400 supporting
+  facts" outranks raw repetition)
+- entity importance = entity_frequency + fact_degree +
+  document_distribution (BERT: 23 documents / 74 facts / 4 events)
+- predicate map for routing: trained_on:182 · evaluated_on:97 …
+Output fields each carrying source_document_summary_ids,
+artifact_hash, contract_version: concepts, entities, domains,
+predicates, document_clusters (e.g. architecture papers / evaluation
+papers / training methodology).
+
+### D5 Vocabulary Mapping Worker — most dangerous stage
+Rule: vocabulary can suggest semantic bridges; it can NEVER redefine
+knowledge.
+Input allowed: parent summaries + document summaries + corpus summary +
+accepted concepts.
+Concept family merge requires ALL of:
+1. same domain (AI-corpus attention terms may family; cross-domain no)
+2. supporting evidence overlap (same supporting documents OR same
+   accepted-fact neighborhood)
+3. NEVER merge entities ("Transformer architecture" vocabulary vs
+   "Transformer model" entity stay separate)
+Forbidden behaviors that MUST have failing tests:
+- embedding-only merge ("cosine .92 therefore alias" → NO)
+- frequency-only vocabulary ("top 100 words become concepts" → NO)
+- raw noun-phrase extraction as concepts → NO
+
+### D6 Hardening (before production)
+1. corpus rebuild determinism — delete corpus_summary + concept_family,
+   replay ⇒ identical artifact hashes
+2. vocabulary contamination test — AI "model"=ML-model vs Cyber
+   "model"=threat-model ⇒ two separate families, no bleed
+3. summary drift test — change ONE source document ⇒ only dependent
+   summaries invalidate, not whole-corpus rebuild
+4. scale test @10k documents — documents/sec, summary jobs/sec,
+   memory, queue depth, failed tickets, retry count
+5. projection recovery — delete Qdrant summaries + Neo4j summary links,
+   replay ⇒ identical projections
+
+### Auditability mandate
+Every D4/D5 artifact must be fully auditable: source_document_summary_
+ids, artifact_hash, contract_version on every field-bearing record;
+rejection/merge decisions carry reasons (merge_receipts per Part B).
