@@ -77,35 +77,16 @@ def tick() -> dict:
 
 
 def _ensure_tickets_backpressure_gated(conn) -> int:
-    """Create ticket chains for active runs that lack them; pause NEW
-    chains while a downstream stage's queue is at the high watermark
-    (backpressure — existing chains always complete)."""
-    from control.tickets import (
-        backpressure_decision,
-        ensure_run_tickets,
-    )
-    from polymath_shared.execution import default_execution_contract
+    """D7-5d: creation fairness + sticky hysteresis.
 
-    rows = conn.execute(
-        """
-        SELECT r.run_id, r.corpus_id FROM runs r
-        WHERE r.status IN ('intake', 'reconciling', 'degraded')
-          AND NOT EXISTS (SELECT 1 FROM stage_tickets t WHERE t.run_id = r.run_id)
-        ORDER BY r.created_at LIMIT 32
-        """
-    ).fetchall()
-    ensured = 0
-    skipped = {}
-    for run_id, corpus_id in rows:
-        paused, reason = backpressure_decision(conn, corpus_id)
-        if paused:
-            skipped[reason] = skipped.get(reason, 0) + 1
-            continue
-        ensured += len(ensure_run_tickets(
-            conn, run_id, corpus_id, default_execution_contract()))
-    _last_backpressure_skips = skipped
-    return ensured
+    Per-corpus runtime state gates NEW ticket chains: pause enters at
+    >= watermark and resumes only at <= watermark/2. The creation
+    window is distributed round-robin across ELIGIBLE corpora
+    (last_creation_tick NULLS FIRST), so a saturated corpus can never
+    fill the window."""
+    from control.tickets import fair_ensure_tickets_backpressure_gated
 
+    return fair_ensure_tickets_backpressure_gated(conn, window=32)
 
 def _barrier_or_none(conn, census) -> dict | None:
     """Generation barrier (ADR-0014): block promotion of any corpus whose

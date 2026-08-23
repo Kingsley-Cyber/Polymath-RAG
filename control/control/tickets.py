@@ -13,6 +13,8 @@ from dataclasses import dataclass
 
 from psycopg import Connection
 
+from polymath_shared.execution import (
+    default_execution_contract)
 from polymath_shared.identity import content_hash
 
 # The per-run ticket DAG: (stage, event_type, required artifact keys,
@@ -440,3 +442,91 @@ def eligible_page(conn, *, stage: str, corpus_id: str,
            DO UPDATE SET last_seq=EXCLUDED.last_seq, updated_at=now()""",
         (stage, corpus_id, next_seq))
     return rows, next_seq
+
+
+# --- D7-5d: creation fairness + hysteresis ------------------------------
+
+def refresh_corpus_runtime_state(conn, *, watermark: int | None = None) -> dict:
+    """Recompute per-corpus active extract counts and apply the sticky
+    creation gate: pause enters at >= watermark; resumes only at
+    <= watermark/2 (hysteresis kills the flip-flop)."""
+    wm = watermark or CORPUS_EXTRACT_WATERMARK
+    rows = conn.execute(
+        """SELECT corpus_id, COUNT(*) FROM stage_tickets
+           WHERE stage='extract' AND status IN ('pending','ready','leased')
+           GROUP BY corpus_id""").fetchall()
+    active = {r[0]: r[1] for r in rows}
+    # corpora with ticketless runs still count as needing service
+    for r in conn.execute(
+            """SELECT DISTINCT r.corpus_id FROM runs r
+               WHERE r.status IN ('intake','reconciling','degraded')
+               AND NOT EXISTS (SELECT 1 FROM stage_tickets t
+                               WHERE t.run_id=r.run_id)""").fetchall():
+        active.setdefault(r[0], 0)
+    changed = {}
+    for corpus_id, n in active.items():
+        row = conn.execute(
+            "SELECT creation_paused, watermark FROM corpus_runtime_state "
+            "WHERE corpus_id=%s", (corpus_id,)).fetchone()
+        was_paused = bool(row and row[0])
+        eff_wm = (row[1] if row and row[1] else wm)
+        if not was_paused and n >= eff_wm:
+            paused = True
+        elif was_paused and n <= eff_wm // 2:
+            paused = False
+        else:
+            paused = was_paused
+        conn.execute(
+            """INSERT INTO corpus_runtime_state (corpus_id, active_tickets,
+               watermark, creation_paused, updated_at)
+               VALUES (%s,%s,%s,%s,now())
+               ON CONFLICT (corpus_id) DO UPDATE SET
+                 active_tickets=EXCLUDED.active_tickets,
+                 watermark=EXCLUDED.watermark,
+                 creation_paused=EXCLUDED.creation_paused,
+                 updated_at=now()""",
+            (corpus_id, n, eff_wm, paused))
+        if paused != was_paused:
+            changed[corpus_id] = paused
+    return {"active": active, "changed": changed}
+
+
+def eligible_creation_corpora(conn, window: int = 32) -> list[str]:
+    """Fair share: non-paused corpora round-robin by last_creation_tick
+    (NULLS FIRST = never served before), oldest tick first."""
+    return [r[0] for r in conn.execute(
+        """SELECT c.corpus_id FROM corpus_runtime_state c
+           WHERE c.creation_paused = FALSE
+           ORDER BY c.last_creation_tick ASC NULLS FIRST,
+                    c.corpus_id ASC LIMIT %s""",
+        (window,)).fetchall()]
+
+
+def fair_ensure_tickets_backpressure_gated(conn, *,
+                                           window: int = 32) -> int:
+    """D7-5d entry point: refresh hysteresis state, distribute the
+    creation window round-robin across ELIGIBLE corpora."""
+    refresh_corpus_runtime_state(
+        conn, watermark=CORPUS_EXTRACT_WATERMARK)
+    eligible = eligible_creation_corpora(conn, window=window)
+    ensured = 0
+    per = max(1, window // max(len(eligible), 1))
+    for corpus_id in eligible:
+        runs = conn.execute(
+            """SELECT r.run_id FROM runs r
+               WHERE r.corpus_id=%s
+               AND r.status IN ('intake','reconciling','degraded')
+               AND NOT EXISTS (SELECT 1 FROM stage_tickets t
+                               WHERE t.run_id=r.run_id)
+               ORDER BY r.created_at LIMIT %s""",
+            (corpus_id, per)).fetchall()
+        if not runs:
+            continue
+        conn.execute(
+            """UPDATE corpus_runtime_state SET last_creation_tick=now()
+               WHERE corpus_id=%s""", (corpus_id,))
+        for (run_id,) in runs:
+            ensured += len(ensure_run_tickets(
+                conn, run_id, corpus_id,
+                default_execution_contract()))
+    return ensured

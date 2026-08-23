@@ -126,6 +126,18 @@ def _entity_pairs(tok_list: list[dict], sl: SentenceSlice,
                        sl.sentence_start + tok["char_end"])
                 ent = anaphora.get(key)
             if ent is None:
+                # Scientific-register compound-NP heads: a generic head
+                # token ("model") whose compound child names the entity
+                # ("BERT") binds through the child — dependency evidence
+                # only, never surface guessing.
+                for child in (getattr(sl, "syntax", None) or {}).get(
+                        "tokens", []):
+                    if (child.get("head_i") == tok.get("i")
+                            and child.get("dep") == "compound"):
+                        ent = _token_to_entity(child, sl.entities, sl)
+                        if ent is not None:
+                            break
+            if ent is None:
                 head_tok = find_appos_entity_head(
                     {"head_i": tok.get("head_i"), "i": tok.get("i"),
                      "dep": tok.get("dep")}, sl)
