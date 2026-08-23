@@ -81,13 +81,11 @@ def _ensure_tickets_backpressure_gated(conn) -> int:
     chains while a downstream stage's queue is at the high watermark
     (backpressure — existing chains always complete)."""
     from control.tickets import (
-        backpressure_paused,
+        backpressure_decision,
         ensure_run_tickets,
     )
     from polymath_shared.execution import default_execution_contract
 
-    if backpressure_paused(conn):
-        return 0
     rows = conn.execute(
         """
         SELECT r.run_id, r.corpus_id FROM runs r
@@ -97,9 +95,15 @@ def _ensure_tickets_backpressure_gated(conn) -> int:
         """
     ).fetchall()
     ensured = 0
+    skipped = {}
     for run_id, corpus_id in rows:
+        paused, reason = backpressure_decision(conn, corpus_id)
+        if paused:
+            skipped[reason] = skipped.get(reason, 0) + 1
+            continue
         ensured += len(ensure_run_tickets(
             conn, run_id, corpus_id, default_execution_contract()))
+    _last_backpressure_skips = skipped
     return ensured
 
 

@@ -303,13 +303,39 @@ def generation_barrier(conn: Connection, corpus_id: str) -> dict:
     }
 
 
+GLOBAL_EXTRACT_LIMIT = 256
+CORPUS_EXTRACT_WATERMARK = 64
+
+
+def extract_active_count(conn: Connection) -> int:
+    row = conn.execute(
+        "SELECT COUNT(*) FROM stage_tickets WHERE stage=%s "
+        "AND status IN ('pending','ready','leased')", ("extract",)
+    ).fetchone()
+    return row[0] if row else 0
+
+
+def backpressure_decision(conn: Connection,
+                          corpus_id: str) -> tuple[bool, str]:
+    """Two-tier hierarchy (owner D7 fix): GLOBAL resource ceiling first,
+    then PER-CORPUS stage watermark. One busy corpus can never starve
+    another, and N saturated corpora still respect the global limit."""
+    if extract_active_count(conn) >= GLOBAL_EXTRACT_LIMIT:
+        return True, "global_ceiling"
+    row = conn.execute(
+        "SELECT COUNT(*) FROM stage_tickets WHERE corpus_id=%s "
+        "AND stage=%s AND status IN ('pending','ready','leased')",
+        (corpus_id, "extract")).fetchone()
+    if row and row[0] >= CORPUS_EXTRACT_WATERMARK:
+        return True, "corpus_watermark"
+    return False, ""
+
+
 def backpressure_paused(conn: Connection, stage: str = "extract",
                         watermark: int = DEFAULT_HIGH_WATERMARK) -> bool:
     """High watermark: pause NEW intake ticket creation when a downstream
     stage's pending queue is deep (bounded queues; nothing is lost —
     ticket creation resumes as the queue drains)."""
-    row = conn.execute(
-        "SELECT COUNT(*) FROM stage_tickets WHERE stage=%s AND status IN ('pending','ready','leased')",
-        (stage,),
-    ).fetchone()
-    return bool(row) and row[0] >= watermark
+    # SUPERSEDED by backpressure_decision (D7 fix): kept as the global
+    # ceiling view only.
+    return extract_active_count(conn) >= GLOBAL_EXTRACT_LIMIT
