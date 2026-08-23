@@ -245,6 +245,15 @@ def build_candidates_kimi_v2(
                     control_note = ctrl[2]
                     dep_path_parts.insert(
                         0, f"control[{ctrl[2]}]")
+                    # A controlled infinitive takes its object through the
+                    # same prep>pobj subtree ("enables B to train on D").
+                    if not obj_toks:
+                        for prep in _children(tokens, tok["i"]):
+                            if prep["dep"] not in PREP_DEPS:
+                                continue
+                            obj_toks.extend(
+                                t for t in _children(tokens, prep["i"])
+                                if t["dep"] in PREP_OBJECT_DEPS)
                 elif observer:
                     observer.record_candidate_outcome(
                         sl, None, "V2_CONTROL_AMBIGUOUS", {
