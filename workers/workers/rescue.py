@@ -345,15 +345,15 @@ def apply_boundary(ordered_slices: list) -> dict:
                 continue
             hit, chunk_cs, chunk_ce = outcome
             if hit is None:
-                # KNOWN LIMITATION (ledger row 63): this DELETES the accepted
-                # provider span when a speculative widening is refused. 13
-                # spans per I4 run, `Nimbus Cloud` at 0.91 among them. The fix
-                # is implemented on candidate/rescue-discourse-v1-failed and
-                # is NOT promoted: it failed its acceptance bar. Coverage loss
-                # is the safer release limitation than the truth defects the
-                # candidate introduced — no edge beats a wrong edge, and the
-                # text remains reachable through non-graph retrieval.
-                continue  # BOUNDARY_UNRESOLVED: no argument binding here
+                # RESCUE-SPAN-PRESERVATION-V1 (restored 2026-08-24): a
+                # refused speculative widening keeps the ORIGINAL provider
+                # span. Ledger row 63 recorded the deletion as a known
+                # limitation; the discourse-candidate fix that failed its
+                # bar was a different, larger mechanism. Simply retaining
+                # the untouched provider span manufactures no new edges and
+                # cannot be wronger than the provider observation itself.
+                new_entities.append(entity)
+                continue
             new_entities.append(EntitySpan(
                 doc_id=entity.doc_id,
                 chunk_id=entity.chunk_id,

@@ -57,8 +57,13 @@ def _run(monkeypatch, responses):
 
 def test_refused_widening_records_suppression_and_keeps_v4_behavior(monkeypatch):
     sl, report = _run(monkeypatch, {"Crestline Automation": []})
-    # V4-effective ACTIVE semantics unchanged: source removed from binding
-    assert sl.entities == []
+    # RESCUE-SPAN-PRESERVATION-V1 (restored 2026-08-24): refused widening
+    # keeps the original provider span; the V4 "source removed from
+    # binding" deletion was ledger row 63's limitation and contradicted
+    # apply_boundary's own preservation docstring.
+    assert [(e.text, e.start, e.end) for e in sl.entities] == \
+        [("Crestline", 0, 9)]
+    assert sl.entities[0].pass_kind == "discovery"
     # ...but no longer silent: the decision is a durable hypothesis record
     (h,) = report["hypotheses"]
     assert h["mechanism"] == "boundary_widening"
