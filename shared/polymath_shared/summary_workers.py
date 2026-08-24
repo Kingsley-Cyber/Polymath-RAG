@@ -9,7 +9,9 @@ from polymath_shared.summary_layer import build_envelope
 
 
 def build_document_summary(*, document_id: str, title: str,
-                           parent_summaries: list[dict]) -> dict:
+                           parent_summaries: list[dict],
+                           procedures: list[dict] | None = None,
+                           concepts: list[dict] | None = None) -> dict:
     """Input: parent-summary envelopes (payloads). Never raw text."""
     entity_freq: Counter = Counter()
     concept_freq: Counter = Counter()
@@ -29,6 +31,8 @@ def build_document_summary(*, document_id: str, title: str,
     top_concepts = [c for c, _ in concept_freq.most_common(8)]
     lead = f"{title} — " if title else ""
     body = " ".join(summary_lines[:3])
+    procedures = procedures or []
+    concepts = concepts or []
     payload = {
         "summary_type": "document",
         "document_id": document_id,
@@ -36,6 +40,18 @@ def build_document_summary(*, document_id: str, title: str,
         "major_entities": top_entities,
         "major_concepts": top_concepts,
         "derived_from": derived,
+        # KNOWLEDGE-ARTIFACT-LAYER: typed sections; summaries consume
+        # only ADMITTED artifacts and preserve their source ids.
+        "procedures": [{"title": p.get("title"),
+                        "steps": p.get("steps", []),
+                        "tools": p.get("tools", []),
+                        "artifact_id": p.get("artifact_id")}
+                       for p in procedures],
+        "concepts": [{"name": c.get("name"),
+                      "description": c.get("description"),
+                      "domain": c.get("domain"),
+                      "artifact_id": c.get("artifact_id")}
+                     for c in concepts],
     }
     return build_envelope(derived_from=derived, payload=payload)
 

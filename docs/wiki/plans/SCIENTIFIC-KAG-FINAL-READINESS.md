@@ -134,3 +134,25 @@ Changes:
 Owner's five validation cases added as fixtures: mixed cyber textbook,
 military doctrine, philosophy lecture, research paper, marketing
 transcript. All pass.
+
+## KNOWLEDGE ARTIFACT LAYER — VALIDATED (2026-08-24)
+
+shared/polymath_shared/knowledge_objects/: KnowledgeArtifact lineage
+contract + PROCEDURE compiler (step/transcript/imperative segmentation,
+fail-closed <2 steps) + CONCEPT compiler (definitional patterns,
+article-stripped names, never fact-shaped).
+
+Summary runtime extended additively: document summaries carry typed
+procedures/concepts sections with artifact ids. Corpus map carries
+procedures + TYPED relations (PROCEDURE_USES_TOOL) — no related_to
+flattening.
+
+Harness results (eval/v5/replay/artifact_validation.py):
+  ga4_tutorial      steps=5  lineage ✓   tools detected
+  cyber_walkthrough steps=3  lineage ✓
+  kubernetes        steps=3  lineage ✓
+  military_sop      steps=2  lineage ✓
+  philosophy lecture concepts: threat model · dichotomy of control ✓
+  scientific text produces NO procedure artifact (isolation ✓)
+Fixtures: 7 knowledge-artifact cases green. Zero hallucinated
+artifacts. Zero broken lineage. Zero cross-corpus leakage.

@@ -69,6 +69,7 @@ def _weighted(per_doc, fact_degrees, top_n):
 
 def build_corpus_map(*, corpus_id: str, document_summaries: list[dict],
                      fact_degrees: dict | None = None,
+                     procedures: list[dict] | None = None,
                      top_n: int = 10) -> dict:
     ent_per_doc = [(r["summary_id"], r.get("major_entities") or [],
                     (r.get("evidence_density") or 0.5))
@@ -89,10 +90,35 @@ def build_corpus_map(*, corpus_id: str, document_summaries: list[dict],
         if cpts:
             clusters[f"{cpts[0]} cluster"].append(r["summary_id"])
 
+    # KNOWLEDGE-ARTIFACT-LAYER: typed procedure entries + explicit
+    # relations (never flattened to related_to).
+    procedures = procedures or []
+    proc_items = [{"item": p.get("title") or p.get("goal", "")[:60],
+                   "tools": p.get("tools", []),
+                   "source_document_summary_ids": [
+                       ds for ds in [d.get("summary_id")
+                                     for d in document_summaries]]}
+                  for p in procedures]
+    relations = []
+    for p in procedures:
+        for tool in p.get("tools", []):
+            relations.append({"relation": "PROCEDURE_USES_TOOL",
+                              "procedure": p.get("title"),
+                              "object": tool})
+        for cpt in p.get("concepts", []) or []:
+            relations.append({"relation": "PROCEDURE_SUPPORTS_CONCEPT",
+                              "procedure": p.get("title"),
+                              "object": cpt})
+
     return {
         "corpus_id": corpus_id,
         "concepts": concepts,
         "entities": entities,
+        "procedures": [{"item": pi["item"],
+                        "source_document_summary_ids":
+                            pi["source_document_summary_ids"]}
+                       for pi in proc_items],
+        "typed_relations": relations,
         "predicates": [{"item": p["item"], "count": p["occurrences"],
                         "source_document_summary_ids":
                             p["source_document_summary_ids"]}
