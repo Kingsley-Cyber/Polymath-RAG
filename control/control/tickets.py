@@ -342,11 +342,18 @@ def generation_barrier(conn: Connection, corpus_id: str) -> dict:
     """QUERY_READY for a corpus generation requires: all tickets DONE,
     zero pending/ready/leased/repair tickets, and projection desired ==
     actual. Returns the barrier verdict + what blocks it."""
+    # BARRIER-OPEN-WORK-V2 (2026-08-24): two measured defects fixed.
+    # 1) psycopg3 rewrites %s to server-side $n placeholders where tuple
+    #    adaptation cannot produce an IN-list -> SyntaxError every tick
+    #    once any promotion existed. `!= ALL(list)` binds correctly.
+    # 2) superseded/failed HISTORY rows are not open work; counting them
+    #    kept reconciled corpora permanently barrier-blocked.
     pending = conn.execute(
         "SELECT stage, status, COUNT(*) FROM stage_tickets "
-        "WHERE corpus_id=%s AND status != 'done' "
-        "AND stage NOT IN %s GROUP BY 1,2",
-        (corpus_id, tuple(sorted(NON_BLOCKING_STAGES))),
+        "WHERE corpus_id=%s AND status IN ('pending','ready','leased') "
+        "AND archived_at IS NULL "
+        "AND stage != ALL(%s) GROUP BY 1,2",
+        (corpus_id, sorted(NON_BLOCKING_STAGES)),
     ).fetchall()
     runs = conn.execute(
         "SELECT run_id FROM runs WHERE corpus_id=%s", (corpus_id,)
