@@ -38,6 +38,17 @@ from polymath_shared.rulepack.role_assignment import (
 from polymath_shared.rulepack.lexical_evidence import build_lexical_semantic_evidence
 
 # spaCy ClearNLP + UD dependency relations that fill predicate argument slots
+# DEP-LABEL NORMALIZATION (CATEGORY-D fix, measured 2026-08-24): the
+# syntax sidecar emits ClearNLP-style labels WITHOUT colons
+# (nsubjpass/auxpass) while every consumer expects UD colon style
+# (nsubj:pass). Passive subjects were therefore invisible to slot
+# assignment -- scientific passive sentences produced ZERO candidates.
+DEP_LABEL_ALIASES = {
+    "nsubjpass": "nsubj:pass",
+    "auxpass": "aux:pass",
+    "nsubjpass": "nsubj:pass",
+}
+
 SUBJECT_DEPS = frozenset({"nsubj", "nsubj:pass"})
 OBJECT_DEPS = frozenset({"dobj", "obj", "iobj"})
 OBLIQUE_DEPS = frozenset({"obl", "obl:agent", "obl:tmod"})
@@ -46,11 +57,19 @@ AGENT_OBJECT_DEPS = frozenset({"pobj", "obl"})
 
 
 def _syntax_tokens(sl: SentenceSlice) -> list[dict]:
-    """Syntax-evidence-v1 tokens sorted by char_start."""
+    """Syntax-evidence-v1 tokens sorted by char_start, dep labels
+    normalized to UD colon style (CATEGORY-D fix: sidecar emits
+    nsubjpass/auxpass without colons)."""
     syntax = getattr(sl, "syntax", None)
     if not syntax:
         return []
-    return sorted(syntax.get("tokens", []), key=lambda t: t["char_start"])
+    toks = sorted(syntax.get("tokens", []),
+                  key=lambda t: t["char_start"])
+    for t in toks:
+        dep = t.get("dep")
+        if dep:
+            t["dep"] = DEP_LABEL_ALIASES.get(dep, dep)
+    return toks
 
 
 def _trigger_head_token(
