@@ -62,3 +62,34 @@ See test suite + live drift drill in session log.
 
 - Sidecar model revisions are recorded from pinned contracts, not live
   sidecar manifest queries (deferred; sidecars already pin via verify_pin).
+
+## Proof (live drill, 2026-08-24)
+
+1. Fleet restart on 8d7371a: all 8 pipeline workers registered ONE
+   bundle hash (83e00583925b1a4e) — fleet uniformity.
+2. Stale detection: after the next commit (fence config-source fix),
+   verify_live_build flagged `recorded 83e00583 != fresh c98ced4c
+   (stale memory)` with a CLEAN tree — exactly the blind spot this
+   slice closes; build_sha==HEAD still passed at that moment.
+3. Restart: fence PASS 12/12 including execution_bundle section
+   (fresh=c98ced4cedc2, uniform, clean).
+4. Output stamping: novel sentence probe produced fact
+   developed_by ACCEPT carrying provenance.generated_by_bundle_hash =
+   bundle_c98ced4cedc2c155. Pre-existing identical facts keep their
+   original rows untouched (content identity idempotency).
+5. worker_contracts now includes rule_pack_file_sha + ontology_file_sha,
+   so semantic-file drift mints successor runs via existing contract
+   reconciliation.
+
+## Operational notes recorded
+
+- 408 reconciling-status scale-10k runs carried legacy-shape chunked.v1
+  events ({run_id, ticket_id}, no doc_id) from an earlier
+  reconciliation writer generation. The extract worker consumed each
+  once and crashed KeyError('doc_id'); events are now all delivered;
+  no tickets burned (those runs have none); their work is carried by
+  the active successor chain. Writer-side payload contract remains the
+  durable fix candidate.
+- One pre-existing dead ticket (probe-enf2, malformed event) predates
+  this slice; watcher treats dead>0 as regression. Owner call: purge
+  poison corpus or amend watcher baseline.
