@@ -99,8 +99,14 @@ def build_concept_families(*, corpus_id: str, parent_summaries: list[dict],
             "aliases": [s for s in surfaces if _norm(s) != canonical],
             "supporting_summaries": all_summaries,
         })
+    # VOCABULARY GUARD (owner): single-mention concepts never admit.
+    # A family requires at least TWO distinct supporting summaries —
+    # the corpus map must show stable cross-summary presence.
+    out_families = [f for f in out_families
+                    if len(set(f.get("supporting_summaries", []))) >= 2]
     return {"contract": "vocabulary-mapping-v1",
             "corpus_id": corpus_id,
+            "min_supporting_summaries": 2,
             "families": out_families}
 
 
