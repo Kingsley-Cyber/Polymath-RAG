@@ -23,7 +23,9 @@ _IMPERATIVE = (
     "install", "configure", "create", "open", "select", "run", "deploy",
     "setup", "set up", "add", "go to", "navigate", "paste", "click",
     "enable", "choose", "make sure", "sign in", "log in",
-    "establish", "assign", "verify", "review", "define")
+    "establish", "assign", "verify", "review", "define",
+    "isolate", "perform", "document", "preserve", "validate",
+    "monitor", "update", "reinforce", "analyze")
 
 _STEP_MARK = re.compile(r"(?im)^\s*(?:step\s*\d+[:.)]?\s*|\d+[.)]\s+)")
 _TRANSCRIPT_STAMP = re.compile(r"\*\*\[\d+:\d+\]\*\*\s*")
@@ -52,7 +54,7 @@ def _is_imperative(sentence: str) -> bool:
 
 
 _SEQ_START = re.compile(r"(?i)^\s*(first|next|then|finally|now)\b[, :]?\s*")
-_STEP_INLINE = re.compile(r"(?i)\bstep\s*\d+\s*[:.)]\s*")
+_STEP_INLINE = re.compile(r"(?i)\bstep\s*(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten)\b\s*[:.)]?\s*")
 
 
 def split_step_sentences(text: str) -> list[str]:

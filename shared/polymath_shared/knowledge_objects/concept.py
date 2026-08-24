@@ -16,6 +16,9 @@ from polymath_shared.knowledge_objects.knowledge_artifact import (
     KnowledgeArtifact, finalize)
 
 _DEFINE_PATTERNS = (
+    re.compile(r"(?i)^(?P<name>[^.;]{3,60}?)\s+(?:is|are)\s+"
+               r"(?:often\s+|commonly\s+)?(?:described|defined)\s+as\s+"
+               r"(?P<desc>[^.;]{10,200})"),
     re.compile(r"(?i)^(?P<name>[^.;]{3,60}?)\s+(?:is|are)\s+defined\s+as\s+"
                r"(?P<desc>[^.;]{10,200})"),
     re.compile(r"(?i)^(?P<name>[^.;]{3,60}?)\s+means\s+(?P<desc>[^.;]{10,200})"),
