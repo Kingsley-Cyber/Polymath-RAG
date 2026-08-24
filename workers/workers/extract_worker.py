@@ -1259,6 +1259,20 @@ def process_event(conn: Connection, event: dict) -> None:
                 "fact_admission_ms": int(round(_perf.get("fact_admission_s", 0.0) * 1000)),
                 "writes_ms": int(round(_perf.get("l1_l4_writes_s", 0.0) * 1000)),
             }
+            # KNOWLEDGE-ARTIFACT-PERSISTENCE-V1: procedures/concepts as
+            # durable first-class objects, gated by router lanes only.
+            try:
+                _artifact_counts = _persist_knowledge_artifacts(
+                    conn, corpus_id=corpus_id, doc_id=doc_id,
+                    doc_text="\n".join(r["text"] for r in child_chunks),
+                    chunk_ids=[r["chunk_id"] for r in child_chunks],
+                    durable_surfaces=_durable_surfaces)
+                extraction_audit_extra = {
+                    "artifacts": _artifact_counts}
+            except Exception as exc:
+                extraction_audit_extra = {"artifacts_error": str(exc)[:200]}
+                _artifact_counts = {"procedures": 0, "concepts": 0}
+
             extraction_audit = {
                 "contract": "extraction-audit-v1",
                 "run_id": run_id,
@@ -1271,6 +1285,7 @@ def process_event(conn: Connection, event: dict) -> None:
                     "chunks": len(child_chunks),
                     "sentences": len(ordered_slices),
                     **_counts,
+                    **_artifact_counts,
                     "relation_candidates_by_decision": dict(_decision_counts),
                     "facts_passed": _fact_stage.passed,
                     "facts_qualified": _fact_stage.qualified,
@@ -1278,7 +1293,8 @@ def process_event(conn: Connection, event: dict) -> None:
                     "facts_withheld": getattr(_fact_stage, "withheld", 0),
                 },
             }
-            writer.artifact({"extraction_audit": extraction_audit})
+            writer.artifact({"extraction_audit": extraction_audit,
+                             **extraction_audit_extra})
             # SEMANTIC-REPLAY-BENCHMARK-V1: the machine-comparable record
             # for corpus-level regression. Contract versions + counts +
             # rejection histograms, deterministic JSON.
@@ -1499,6 +1515,15 @@ def _evidence_offsets(chunk_row: dict, candidate, decision) -> dict:
 _BUNDLE_STAMP: dict | None = None
 
 
+def _bundle_hash() -> str:
+    global _BUNDLE_STAMP
+    if _BUNDLE_STAMP is None:
+        from polymath_shared.execution_bundle import (
+            bundle_id, compute_execution_bundle)
+        _BUNDLE_STAMP = bundle_id(compute_execution_bundle())
+    return _BUNDLE_STAMP
+
+
 def _stamped_provenance(provenance: dict) -> dict:
     """EXECUTION-BUNDLE-FENCE-V1: every accepted fact records the exact
     code+configuration bundle that produced it. Computed once per
@@ -1509,8 +1534,75 @@ def _stamped_provenance(provenance: dict) -> dict:
             bundle_id, compute_execution_bundle)
         _BUNDLE_STAMP = bundle_id(compute_execution_bundle())
     out = dict(provenance or {})
-    out.setdefault("generated_by_bundle_hash", _BUNDLE_STAMP)
+    out.setdefault("generated_by_bundle_hash", _bundle_hash())
     return out
+
+
+def _persist_knowledge_artifacts(conn: Connection, *, corpus_id: str,
+                                 doc_id: str, doc_text: str,
+                                 chunk_ids: list[str],
+                                 durable_surfaces: list[str]) -> dict:
+    """KNOWLEDGE-ARTIFACT-PERSISTENCE-V1: compile Procedure/Concept
+    artifacts behind the document router's lane policy and persist them
+    as first-class objects. They are NOT facts and never touch the
+    entity graph here; retrieval projection is the projector's job.
+    Content-addressed ids make replay idempotent."""
+    from polymath_shared.knowledge_router.classifier import classify_document
+    from polymath_shared.knowledge_objects.concept import compile_concepts
+    from polymath_shared.knowledge_objects.procedure import compile_procedure
+
+    routing = classify_document(doc_text)["routing"]
+    disabled = set(routing.get("disabled") or [])
+    counts = {"procedures": 0, "concepts": 0}
+
+    if "procedure" not in disabled:
+        proc = compile_procedure(
+            document_id=doc_id, corpus_id=corpus_id, text=doc_text,
+            admitted_entities=durable_surfaces,
+            source_chunk_ids=chunk_ids)
+        if proc:
+            conn.execute(
+                """
+                INSERT INTO procedure_artifacts
+                    (procedure_id, document_id, corpus_id, title, goal,
+                     steps_json, tools_json, confidence, source_chunk_ids,
+                     generated_by_bundle_hash)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                ON CONFLICT (procedure_id) DO NOTHING
+                """,
+                (proc["artifact_id"], doc_id, corpus_id,
+                 proc.get("title", ""), proc.get("goal", ""),
+                 json.dumps(proc.get("steps", [])),
+                 json.dumps(proc.get("tools", [])),
+                 float(proc.get("confidence", 0.0)), list(chunk_ids),
+                 _bundle_hash()))
+            counts["procedures"] = 1
+
+    if "concept" not in disabled:
+        from workers.summarizer import split_sentences
+        concepts = compile_concepts(
+            document_id=doc_id, corpus_id=corpus_id,
+            sentences=split_sentences(doc_text),
+            admitted_entities=durable_surfaces,
+            source_chunk_ids=chunk_ids)
+        for c in concepts:
+            conn.execute(
+                """
+                INSERT INTO concept_artifacts
+                    (concept_id, document_id, corpus_id, name, description,
+                     domain, related_entities, source_sentence, confidence,
+                     supporting_chunks, generated_by_bundle_hash)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                ON CONFLICT (concept_id) DO NOTHING
+                """,
+                (c["artifact_id"], doc_id, corpus_id, c["name"],
+                 c.get("description", ""), c.get("domain", "general"),
+                 json.dumps(c.get("related_entities", [])),
+                 c.get("source_sentence", ""),
+                 float(c.get("confidence", 0.0)), list(chunk_ids),
+                 _bundle_hash()))
+            counts["concepts"] += 1
+    return counts
 
 
 def _persist_decision(conn: Connection, chunk_row: dict, candidate, decision,

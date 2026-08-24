@@ -188,6 +188,9 @@ def _write_points(client: QdrantClient, collection: str, chunks: list[dict], con
 ROUTING_KIND_DOCUMENT_SUMMARY = "routing_document_summary"
 ROUTING_KIND_SECTION_SUMMARY = "routing_section_summary"
 ROUTING_KIND_CHILD = "routing_child"
+# KNOWLEDGE-ARTIFACT-PERSISTENCE-V1: typed knowledge-object lanes.
+ROUTING_KIND_PROCEDURE = "routing_procedure"
+ROUTING_KIND_CONCEPT = "routing_concept"
 
 ROUTING_CONTRACT_VERSION = "1.0.0"
 
@@ -246,6 +249,58 @@ def _routing_rows(conn: Connection, run_id: str) -> list[dict]:
             "parent_id": row[2],
             "source_name": "",
             "chunk_id": row[0],
+        })
+    # KNOWLEDGE-ARTIFACT-PERSISTENCE-V1: typed knowledge-object lanes.
+    # Procedures and concepts project as first-class retrieval objects
+    # with their own representation kinds — never flattened into child
+    # chunks, never mixed into fact evidence.
+    procs = conn.execute(
+        """
+        SELECT p.procedure_id, p.document_id, p.corpus_id, p.title,
+               p.goal, p.steps_json, p.tools_json, d.source_name
+          FROM procedure_artifacts p
+          JOIN documents d ON d.doc_id = p.document_id
+          JOIN runs r ON r.corpus_id = p.corpus_id
+         WHERE r.run_id = %s
+        """,
+        (run_id,),
+    ).fetchall()
+    for pid, did, corpus, title, goal, steps, tools, sname in procs:
+        steps_l = steps if isinstance(steps, list) else json.loads(steps or "[]")
+        tools_l = tools if isinstance(tools, list) else json.loads(tools or "[]")
+        numbered = "\n".join(f"{i+1}. {s}" for i, s in enumerate(steps_l))
+        text = f"{title}. {goal}.\n{numbered}"
+        if tools_l:
+            text += f"\nTools: {', '.join(tools_l)}."
+        out.append({
+            "summary_id": pid,
+            "representation_kind": ROUTING_KIND_PROCEDURE,
+            "text": text,
+            "corpus_id": corpus,
+            "doc_id": did,
+            "parent_id": None,
+            "source_name": sname or "",
+        })
+    concepts = conn.execute(
+        """
+        SELECT c.concept_id, c.document_id, c.corpus_id, c.name,
+               c.description, c.domain, d.source_name
+          FROM concept_artifacts c
+          JOIN documents d ON d.doc_id = c.document_id
+          JOIN runs r ON r.corpus_id = c.corpus_id
+         WHERE r.run_id = %s
+        """,
+        (run_id,),
+    ).fetchall()
+    for cid_, did, corpus, name, desc, domain, sname in concepts:
+        out.append({
+            "summary_id": cid_,
+            "representation_kind": ROUTING_KIND_CONCEPT,
+            "text": f"{name}: {desc}",
+            "corpus_id": corpus,
+            "doc_id": did,
+            "parent_id": None,
+            "source_name": sname or "",
         })
     return out
 
