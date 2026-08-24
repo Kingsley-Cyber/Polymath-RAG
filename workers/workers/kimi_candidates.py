@@ -197,6 +197,7 @@ def build_candidates_kimi(
     trigger_index = _trigger_surfaces(rule_pack)
     candidates: list[RelationCandidate] = []
 
+    prev_slice_entities: list[EntitySpan] | None = None
     for sl in slices:
         sentence = sl.text
         rel_start = sl.sentence_start
@@ -252,6 +253,81 @@ def build_candidates_kimi(
 
                     if subjects or objects:
                         binding_source = BindingSource.UD_DIRECT
+
+                    # -- PREDICATE-COMPILER-V2 (CATEGORY-C): frame-
+                    # oriented binding replaces positional slots for
+                    # FRAME anchors. Voice-aware PropBank orientation,
+                    # bounded head-chain inheritance, controlled
+                    # pronoun resolution — all deterministic,
+                    # fail-closed on ambiguity.
+                    if (getattr(evidence, "trigger_lexical_class", "")
+                            or "").upper() == "FRAME":
+                        from polymath_shared.rulepack.frame_roles import (
+                            orient_frame_slots, head_chain_theme,
+                            resolve_pronoun_subject,
+                        )
+                        from polymath_shared.rulepack.semantic_frames import (
+                            mappings_for_frame,
+                        )
+                        src = getattr(evidence, "trigger_match_source", "") or ""
+                        fid = src.partition("|")[0][6:] or None
+                        pat = "theme_standard"
+                        if fid:
+                            pats = {m.get("pattern", "")
+                                    for m in mappings_for_frame(fid)}
+                            if any("passive-agent" in p for p in pats):
+                                pat = "theme_by_agent"
+                            elif any(p.startswith("agent ") for p in pats):
+                                pat = "agent_theme"
+                        oriented = orient_frame_slots(
+                            tokens, trig_head, ud_args, pat)
+
+                        def _ents(toks):
+                            out = []
+                            for t in toks:
+                                e = _token_to_entity(t, sl.entities, sl)
+                                if e is not None and e not in out:
+                                    out.append(e)
+                            return out
+
+                        f_subj = _ents(oriented["fact_subject"])
+                        f_obj = _ents(oriented["fact_object"])
+                        # C2: bounded head-chain inheritance for an empty
+                        # theme slot (entity separated from its trigger
+                        # only by determiners/copulas/generic heads).
+                        if not f_subj:
+                            hc = head_chain_theme(
+                                sentence, sl.entities, evidence.start)
+                            if hc is not None:
+                                f_subj = [hc]
+                        # C3: controlled pronoun resolution — previous
+                        # sentence, exactly ONE type-compatible durable
+                        # candidate; ambiguous -> stays unbound.
+                        if not f_subj:
+                            pron_toks = [t for t in ud_args.get("subject", [])
+                                         if (t.get("lemma") or "").lower() in
+                                         {"it", "they", "this", "these"}]
+                            if pron_toks:
+                                allowed = set()
+                                if fid:
+                                    for m in mappings_for_frame(fid):
+                                        allowed |= {
+                                            s.lower() for s in
+                                            m.get("subject_types", [])}
+                                ent, note = resolve_pronoun_subject(
+                                    pron_toks[0], prev_slice_entities or [],
+                                    allowed)
+                                if ent is not None:
+                                    f_subj = [ent]
+                                if observer:
+                                    observer.record_candidate_outcome(
+                                        sl, evidence,
+                                        "PRONOUN_" +
+                                        note.split(":")[0].upper(),
+                                        {"note": note, "kimi_v1": True})
+                        if f_subj or f_obj:
+                            subjects, objects = f_subj, f_obj
+                            binding_source = BindingSource.SAFE_LOCAL_PATTERN
 
                     # -- Phase 5: record what the UD tree itself bound,
                     # BEFORE any recall net runs, so the trace separates
@@ -518,6 +594,10 @@ def build_candidates_kimi(
                     assigned_roles=role_result["assigned"],
                     lexical_semantic_evidence=lse,
                 ))
+
+        # C3: carry this sentence's entities for next-slice pronoun
+        # resolution (deterministic one-sentence window).
+        prev_slice_entities = list(sl.entities)
 
     return candidates
 

@@ -245,3 +245,97 @@ def test_compiler_frame_branch_rejects_speculative():
     c = c.model_copy(update={"scope": ScopeFlags(speculative=True)})
     d = compile_relation(c, None, {"predicate_order": [], "predicates": {}})
     assert d.decision == "REJECT" and "frame_scope_reject" in d.reason
+
+
+# --- CATEGORY-C: role-oriented frame binding (frame_roles) --------------
+
+def _tok(i, text, lemma, pos, dep, head_i, cs, ce):
+    return {"i": i, "text": text, "lemma": lemma, "pos": pos, "dep": dep,
+            "head_i": head_i, "char_start": cs, "char_end": ce}
+
+
+def _ent(text, start, end, ctype):
+    from polymath_shared.contracts import EntitySpan
+    return EntitySpan(doc_id="d", chunk_id="ch", start=start, end=end,
+                      text=text, core_type=ctype, score=1.0,
+                      extractor_version="test")
+
+
+def test_c1_active_voice_orientation_binds_theme_not_agent():
+    """Studies evaluated BERT on GLUE -> subject=BERT(ARG1), never Studies."""
+    from polymath_shared.rulepack.frame_roles import (
+        orient_frame_slots, detect_voice)
+    #        0 Studies  evaluated  BERT   on   GLUE
+    toks = [
+        _tok(0, "Studies", "study", "NOUN", "nsubj", 1, 0, 7),
+        _tok(1, "evaluated", "evaluate", "VERB", "ROOT", -1, 8, 17),
+        _tok(2, "BERT", "BERT", "PROPN", "obj", 1, 18, 22),
+        _tok(3, "on", "on", "ADP", "prep", 1, 23, 25),
+        _tok(4, "GLUE", "GLUE", "PROPN", "pobj", 3, 26, 30),
+    ]
+    ud = {"subject": [toks[0]], "object": [toks[2]],
+          "prep_object": [toks[4]], "oblique": [], "coordination": []}
+    assert detect_voice(toks, toks[1]) == "active"
+    o = orient_frame_slots(toks, toks[1], ud, "theme_standard")
+    assert [t["text"] for t in o["fact_subject"]] == ["BERT"]
+    assert [t["text"] for t in o["fact_object"]] == ["GLUE"]
+
+
+def test_c1_passive_voice_orientation_swaps_correctly():
+    from polymath_shared.rulepack.frame_roles import (
+        orient_frame_slots, detect_voice)
+    # BERT was evaluated on GLUE  /  introduced by Google Research
+    toks = [
+        _tok(0, "BERT", "BERT", "PROPN", "nsubj:pass", 2, 0, 4),
+        _tok(1, "was", "be", "AUX", "aux:pass", 2, 5, 8),
+        _tok(2, "introduced", "introduce", "VERB", "ROOT", -1, 9, 19),
+        _tok(3, "by", "by", "ADP", "agent", 2, 20, 22),
+        _tok(4, "Google", "Google", "PROPN", "pobj", 3, 23, 29),
+    ]
+    ud = {"subject": [toks[0]], "object": [],
+          "prep_object": [toks[4]], "oblique": [], "coordination": []}
+    assert detect_voice(toks, toks[2]) == "passive"
+    o = orient_frame_slots(toks, toks[2], ud, "theme_by_agent")
+    assert [t["text"] for t in o["fact_subject"]] == ["BERT"]
+    assert [t["text"] for t in o["fact_object"]] == ["Google"]
+
+
+def test_c2_head_chain_binds_entity_across_generic_heads():
+    from polymath_shared.rulepack.frame_roles import head_chain_theme
+    from polymath_shared.contracts import CoreType
+    # "Tree of Thoughts is a reasoning framework introduced by Princeton"
+    sent = "Tree of Thoughts is a reasoning framework introduced by Princeton"
+    ents = [_ent("Tree of Thoughts", 0, 16, CoreType.FRAMEWORK)]
+    got = head_chain_theme(sent, ents, trigger_start=sent.index("introduced"))
+    assert got is not None and got.text == "Tree of Thoughts"
+
+
+def test_c2_head_chain_rejects_non_inert_gap():
+    from polymath_shared.rulepack.frame_roles import head_chain_theme
+    from polymath_shared.contracts import CoreType
+    sent = "Tree of Thoughts outperformed baselines and was introduced by Princeton"
+    ents = [_ent("Tree of Thoughts", 0, 16, CoreType.FRAMEWORK)]
+    assert head_chain_theme(
+        sent, ents, trigger_start=sent.index("introduced")) is None
+
+
+def test_c3_pronoun_resolves_only_when_unique_and_compatible():
+    from polymath_shared.rulepack.frame_roles import resolve_pronoun_subject
+    from polymath_shared.contracts import CoreType
+    pron = _tok(0, "It", "it", "PRON", "nsubj:pass", 2, 0, 2)
+    prev = [_ent("BERT", 0, 4, CoreType.ARCHITECTURE)]
+    ent, note = resolve_pronoun_subject(pron, prev, {"model", "architecture",
+                                                     "system"})
+    assert ent is not None and note.startswith("pronoun_resolved_unique")
+
+    # ambiguity: two same-type candidates -> fail closed
+    prev2 = [_ent("BERT", 0, 4, CoreType.ARCHITECTURE),
+             _ent("GPT", 20, 23, CoreType.MODEL)]
+    ent2, note2 = resolve_pronoun_subject(pron, prev2, {"model",
+                                                        "architecture"})
+    assert ent2 is None and note2.startswith("pronoun_ambiguous")
+
+    # type-incompatible candidate -> no resolution
+    prev3 = [_ent("BooksCorpus", 0, 11, CoreType.CORPUS)]
+    ent3, _ = resolve_pronoun_subject(pron, prev3, {"model"})
+    assert ent3 is None

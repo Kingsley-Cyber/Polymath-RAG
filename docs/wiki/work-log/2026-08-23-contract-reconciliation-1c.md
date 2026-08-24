@@ -230,3 +230,24 @@ answer WHY 68 v1 anchors produced zero RPE rows (binding-class
 question, CATEGORY_C/D candidate for the taxonomy).
 
 Schema changes: none. Rollback: unset env / revert commit.
+
+---
+
+# SLICE: CATEGORY-C role binding (owner mission)
+
+frame_roles.py: voice-aware orientation (theme/agent slots from UD deps,
+passive swap mirrors role_assignment maps), bounded head-chain
+inheritance (gap must end in generic head; fillers+lowercase modifiers
+only; other entity surfaces veto), controlled pronouns (prev sentence,
+exactly ONE type-compatible durable candidate, else fail-closed).
+kimi_candidates: FRAME anchors route through oriented slots before
+linear recall; pronoun window carries previous slice entities.
+
+Proof: 28/28 v2 fixtures (C1 active+passive orientation, C2 chain
+accept + non-inert-gap reject, C3 unique/ambiguous/incompatible);
+legacy compiler 10/10 untouched. ROLE-BINDING_REPORT.md: all four
+TEST.md C-failures now bind through real functions; speculative
+negatives still produce zero frames.
+
+Rejected: loosening distance limits (used inert-gap rule instead),
+pronoun coreference beyond one sentence, any admission weakening.
