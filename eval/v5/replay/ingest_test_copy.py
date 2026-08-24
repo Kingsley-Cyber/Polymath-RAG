@@ -17,7 +17,6 @@ sys.path.insert(0, str(ROOT / "control"))
 sys.path.insert(0, str(ROOT / "workers"))
 
 os.environ["POLYMATH_RELATION_PIPELINE"] = "kimi_v1"
-os.environ["POLYMATH_PREDICATE_V2"] = "shadow"
 os.environ["POLYMATH_SYNTAX_PROVIDER"] = "spacy"
 os.environ.setdefault(
     "POLYMATH_PG_DSN",
@@ -30,6 +29,9 @@ if len(_sys.argv) >= 3:
 else:
     SRC = "/Users/king/Downloads/untitled folder/TEST copy.md"
     CORPUS = "test-copy-v1"
+MODE = _sys.argv[3] if len(_sys.argv) >= 4 else "shadow"
+RUN_TAG = _sys.argv[4] if len(_sys.argv) >= 5 else ""
+CORPUS = f"{CORPUS}-{MODE}" if len(_sys.argv) >= 4 else CORPUS
 
 import psycopg  # noqa: E402
 from psycopg.rows import dict_row  # noqa: E402
@@ -37,6 +39,8 @@ from psycopg.rows import dict_row  # noqa: E402
 
 def main() -> dict:  # noqa: C901
     raw = Path(SRC).read_bytes()
+    if RUN_TAG:
+        raw = raw + f"\n\n<!-- validation-tag:{RUN_TAG} -->\n".encode()
     content_b64 = base64.b64encode(raw).decode()
     canonical = {
         "corpus_id": CORPUS,

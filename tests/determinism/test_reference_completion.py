@@ -84,3 +84,30 @@ def test_compound_expansion_rejects_lowercase_adjective():
                    score=1.0, extractor_version="t")
     assert expand_compound_left(sent, e, 0) is None or \
         expand_compound_left(sent, e, sent.index("were")) is None or True
+
+
+def test_copula_clause_boundary_guard():
+    from polymath_shared.rulepack.frame_roles import crosses_clause_boundary
+    sent = ("A student who is trying to understand a new statistical "
+            "concept may perform worse.")
+    left_end = sent.index("student") + len("student")
+    right_start = sent.index("new statistical")
+    assert crosses_clause_boundary(sent, left_end, right_start) is True
+
+
+def test_copula_same_clause_passes():
+    from polymath_shared.rulepack.frame_roles import crosses_clause_boundary
+    sent = "The threat model is a framework."
+    left_end = sent.index("threat model") + len("threat model")
+    right_start = sent.index("framework")
+    assert crosses_clause_boundary(sent, left_end, right_start) is False
+
+
+def test_pronoun_admission_ban_surfaces():
+    from polymath_shared.admission_interpreter import (  # noqa: F401
+        _interpret_v2)
+    src = pathlib.Path(
+        ROOT / "shared" / "polymath_shared" /
+        "admission_interpreter.py").read_text()
+    assert 'PRONOUN_SURFACES' in src or '_PRONOUN_SURFACES' in src
+    assert 'pronoun_admission_ban' in src

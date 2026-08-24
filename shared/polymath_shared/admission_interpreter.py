@@ -122,6 +122,20 @@ def _interpret_v2(proposal_surface, core_type, span, sentence_text, syntax,
             graph_eligible(d), reason, SEMANTIC_CONTRACT_V2,
             d.resolves_to, ev)
 
+    # PRONOUN-ADMISSION-BAN (owner E-1, 2026-08-24): personal/demonstrative
+    # pronouns are never durable entities. They previously slipped through
+    # as GLOBAL ("You", "I" admitted in transcript corpora) contaminating
+    # every conversation-derived graph. Fail-closed to MENTION_ONLY with
+    # an explicit reason; no gate is weakened by this.
+    _PRONOUN_SURFACES = {"i", "you", "we", "it", "he", "she", "they",
+                         "me", "him", "her", "them", "us"}
+    if proposal_surface.strip().lower() in _PRONOUN_SURFACES:
+        d = HarborDecision(proposal_surface, AnchorKind.UNKNOWN,
+                           Referentiality.UNRESOLVED, "MENTION_ONLY",
+                           DecisionStatus.ABSTAINED)
+        return _result(d, "pronoun_admission_ban: pronouns are never "
+                          "durable entities (E-1)", {})
+
     # SUBTOKEN-SPAN-ADMISSION-V1 (ledger 75). An empty `toks` list has TWO
     # causes that previously shared one (wrong) outcome:
     #

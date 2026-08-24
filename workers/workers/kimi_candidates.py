@@ -447,9 +447,23 @@ def build_candidates_kimi(
             compatible_pairs: list[tuple[EntitySpan, EntitySpan]] = []
             is_frame = (getattr(evidence, "trigger_lexical_class", "")
                         or "").upper() == "FRAME"
+            from polymath_shared.rulepack.frame_roles import (
+                crosses_clause_boundary as _ccb, is_copula_lemma)
+            _copula = is_copula_lemma(evidence.trigger_lemma)
             for s in subjects:
                 for o in objects:
                     if s.text == o.text and s.core_type == o.core_type:
+                        continue
+                    if (_copula
+                            and _ccb(sl.text,
+                                     min(s.end, o.end),
+                                     max(s.start, o.start))):
+                        if observer:
+                            observer.record_candidate_outcome(
+                                sl, evidence,
+                                "COPULA_CLAUSE_BOUNDARY_REJECT",
+                                {"subject": s.text, "object": o.text,
+                                 "kimi_v1": True})
                         continue
                     if is_frame:
                         # PREDICATE-COMPILER-V2: frame spans skip the

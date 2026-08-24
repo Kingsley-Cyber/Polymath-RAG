@@ -156,3 +156,22 @@ Harness results (eval/v5/replay/artifact_validation.py):
   scientific text produces NO procedure artifact (isolation ✓)
 Fixtures: 7 knowledge-artifact cases green. Zero hallucinated
 artifacts. Zero broken lineage. Zero cross-corpus leakage.
+
+## ENFORCEMENT MEASUREMENT — OPEN ISSUE (2026-08-24 late)
+
+Router-enforce + E-1 + C-copula code shipped and unit-green, but the
+three-corpus live rerun produced inconsistent counts. Root causes
+identified, fix deferred to a CLEAN-STATE protocol:
+
+1. documents.doc_id is GLOBALLY unique by content hash — re-ingesting
+   identical bytes into a new corpus silently no-ops (cross-corpus
+   dedup by design). Validation reruns MUST use content-tagged variants
+   (marker comments) or fresh corpora.
+2. First tagged rerun yielded test-copy facts=1 with legacy-lane
+   type_violations present — indicates frame anchors were dropped on a
+   SCIENTIFIC_RELATIONAL doc (gate logic inverted somewhere in the
+   classify→lane wiring) AND/OR interaction with the new copula guard.
+   Requires single-variable debugging in a fresh session.
+
+DO NOT flip enforcement in production until the clean-state protocol
+reproduces: test-copy ≥7 facts · shopify junk=0 · psych misfire=0.

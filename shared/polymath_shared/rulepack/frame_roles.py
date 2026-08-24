@@ -18,6 +18,7 @@ Provenance strings ride through to the compiler decision reason.
 """
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from polymath_shared.rulepack.compound_heads import (
@@ -265,3 +266,21 @@ def expand_compound_left(sentence: str, entity: Any,
         wider["start"] = new_start
         return wider
     return None
+
+
+_COPULA_LEMMAS = frozenset({"is", "are", "was", "were", "be", "being",
+                            "been", "am"})
+_RELATIVE_PRONOUNS = re.compile(r"\b(who|whom|whose|which)\b", re.IGNORECASE)
+
+
+def is_copula_lemma(lemma: str | None) -> bool:
+    return (lemma or "").lower() in _COPULA_LEMMAS
+
+
+def crosses_clause_boundary(text: str, left_end: int,
+                            right_start: int) -> bool:
+    """C-copula guard: a relative pronoun between the two endpoints
+    means the copula crossed a clause boundary ('a student who is
+    trying to understand a new concept') — such bindings are junk."""
+    gap = text[left_end:right_start]
+    return bool(_RELATIVE_PRONOUNS.search(gap))

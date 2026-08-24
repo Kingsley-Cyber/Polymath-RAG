@@ -246,6 +246,7 @@ def _evidence_spans(
     pack: dict,
     mode: str,
     raw_sink: list | None = None,
+    scientific_lane_allowed: bool = True,
 ) -> list[EvidenceSpan]:
     """ADR-0008: pass 2 = GLiNER coarse proposals (may abstain) +
     lexical trigger localization. The compiler decides either way."""
@@ -254,6 +255,9 @@ def _evidence_spans(
         merge_gliner_proposals,
         propose_evidence,
     )
+
+    if not scientific_lane_allowed:
+        return []  # ROUTER ENFORCEMENT: lane disabled for this document
 
     anchors = propose_evidence(chunk_text, chunk_id, pack)
     if mode == "hybrid":
@@ -735,6 +739,22 @@ def process_event(conn: Connection, event: dict) -> None:
 
     pack = _pack()
     parser_name, parser_version = parser_identity()
+
+    # KNOWLEDGE-ROUTER enforcement (owner v1.1): when the routed mode
+    # disables scientific_predicate, relation anchors are not produced at
+    # all — the lane never enters, so nothing can fail into it. Entity
+    # pass-1/proposals are unaffected (admission still runs).
+    scientific_lane_allowed = True
+    if os.environ.get("POLYMATH_PREDICATE_V2") == "enforce":
+        from polymath_shared.knowledge_router.classifier import (
+            classify_document)
+        _doc_text = "\n".join(
+            c[0] for c in (conn.cursor().execute(
+                "SELECT text FROM chunks WHERE doc_id=%s "
+                "ORDER BY chunk_index", (doc_id,)).fetchall()))
+        _prof = classify_document(_doc_text)
+        scientific_lane_allowed = "scientific_predicate" not in \
+            _prof["routing"]["disabled"]
     manifest = ExtractionManifest(
         run_id=run_id,
         gliner_model=_GLINER_PIN["model_id"],
@@ -941,8 +961,8 @@ def process_event(conn: Connection, event: dict) -> None:
                 _pt = _t.perf_counter()
                 evidence = _evidence_spans(
                     gliner, row["text"], row["chunk_id"], pack, proposal_mode,
-                    raw_sink=raw_predicate_sink
-                )
+                    raw_sink=raw_predicate_sink,
+                    scientific_lane_allowed=scientific_lane_allowed)
                 _counts["evidence_spans"] += len(evidence)
                 _perf["evidence_pass_s"] += _t.perf_counter() - _pt
                 # drain this chunk's raw observations into ledger rows
