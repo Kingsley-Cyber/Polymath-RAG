@@ -33,6 +33,14 @@ _REL_PHRASE = {
     "acquired": "acquired",
     "created": "created",
     "developed": "developed",
+    # PREDICATE-COMPILER-V2 predicates (scientific-kag-v2.0): the frame
+    # lane emits these; composition must render them or facts vanish.
+    "introduced_by": "was introduced by",
+    "proposed_by": "was proposed by",
+    "evaluated_against": "was evaluated against",
+    "compared_against": "was compared against",
+    "depends_on": "depends on",
+    "uses_component": "uses",
 }
 
 MAX_SUMMARY_FACTS = 4
@@ -105,15 +113,72 @@ def build_parent_summary(*, parent_id: str, parent_text: str,
 
 
 def re_finditer_candidates(text: str) -> list[str]:
-    """Named-concept surfaces inside one child text (compound tokens or
-    capitalized compounds). Deterministic regex scan."""
+    """Named-concept surfaces inside one child text. Deterministic
+    token-walk: start at a capitalized token; continue through
+    capitalized tokens and small connectors (of/in/the/for/and);
+    reject sentence-length runs via the 5-word cap; hyphenated
+    technical terms scanned separately."""
     import re
 
     out: list[str] = []
-    for m in re.finditer(r"[A-Z][A-Za-z0-9]*(?:[- ][A-Za-z0-9]+)*", text):
-        surface = m.group(0).strip()
-        if len(surface.split()) >= 1 and named_concept_evidence(surface):
-            out.append(surface)
+    seen_spans: list[tuple[int, int]] = []
+    tok_re = re.compile(r"[A-Za-z0-9][A-Za-z0-9\-]*")
+    connectors = {"of", "in", "the", "for"}
+    toks = [(m.start(), m.end(), m.group(0)) for m in tok_re.finditer(text)]
+    i = 0
+    n = len(toks)
+    while i < n:
+        st, en, w = toks[i]
+        if not w[0].isupper():
+            i += 1
+            continue
+        j = i
+        words = [w]
+        while j + 1 < n:
+            nt = toks[j + 1]
+            nxt = nt[2]
+            # sentence punctuation breaks a chain
+            gap_txt = text[toks[j][1]:nt[0]]
+            if any(p in gap_txt for p in ".!?"):
+                break
+            if nxt[:1].isupper() and len(words) < 5:
+                j += 1
+                words.append(nxt)
+            elif (nxt.lower() in connectors and j + 2 < n
+                  and toks[j + 2][2][:1].isupper() and len(words) < 4):
+                gap2 = text[nt[1]:toks[j + 2][0]]
+                if any(p in gap2 for p in ".!?"):
+                    break
+                j += 2
+                words.extend([nxt, toks[j][2]])
+            else:
+                break
+        surface = text[st:toks[j][1]].strip()
+        # strip leading articles from sentence-initial chains
+        lead = words[0].lower()
+        while surface and lead in ("the", "a", "an") and len(words) > 0:
+            surface = surface.split(" ", 1)[1].strip() if " " in surface \
+                else ""
+            words = words[1:]
+            if not words:
+                break
+            lead = words[0].lower()
+        is_acronym = w.isupper() and len(w) >= 2 and w[-1].isdigit() is False
+        if surface and (len(words) >= 2 or (w.isupper() and len(w) >= 3)):
+            seen_spans.append((st, toks[j][1]))
+            if named_concept_evidence(surface):
+                out.append(surface)
+        i = j + 1
+    # lowercase technical compounds ("self-attention layers"): hyphenated
+    for m in re.finditer(r"\b[a-z]+(?:-[a-z]+)+\b", text):
+        cand = m.group(0)
+        if named_concept_evidence(cand.replace("-", " ")) or \
+                any(part in ("attention", "search", "training",
+                             "learning") for part in cand.split("-")):
+            if not any(cs <= m.start() and m.end() <= ce
+                       for cs, ce in seen_spans):
+                out.append(cand)
+    return out
     # lowercase technical compounds ("self-attention layers"): hyphenated
     for m in re.finditer(r"\b[a-z]+(?:-[a-z]+)+\b", text):
         cand = m.group(0)

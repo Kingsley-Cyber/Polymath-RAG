@@ -66,7 +66,11 @@ def main() -> dict:
                          "payload": payload,
                          "idempotency_key": "replay-waterfall"})
 
-    facts = [dict(r) for r in cur.execute("""
+    facts = [
+        {"fact_id": r["fact_id"], "predicate": r["predicate"],
+         "subject_surface": r["subject"],
+         "object_surface": r["object"]}
+        for r in cur.execute("""
         SELECT DISTINCT f.fact_id, f.predicate,
                sn.normalized_surface AS subject,
                no.normalized_surface AS object
@@ -86,10 +90,10 @@ def main() -> dict:
           AND admission_class IN ('GLOBAL','CORPUS_SCOPED','DOCUMENT_SCOPED')
         """, (doc_id,)).fetchall()]
 
-    parents = cur.execute("""
+    parents = [(r["chunk_id"], r["text"]) for r in cur.execute("""
         SELECT chunk_id, text FROM chunks
          WHERE doc_id=%s AND tier='parent' ORDER BY chunk_index""",
-        (doc_id,)).fetchall()
+        (doc_id,)).fetchall()]
     children_by_parent = {}
     for pid, ptext in parents:
         kids = cur.execute("""
@@ -110,7 +114,7 @@ def main() -> dict:
             VALUES (%s,'PARENT_SUMMARY',%s,%s,%s,'replay-v1')
             ON CONFLICT (ticket_id) DO NOTHING""",
             (ticket, corpus_id, pid, "replay_" + pid[-16:]))
-        kid_dicts = [{"chunk_id": k, "text": t} for k, t in kids]
+        kid_dicts = [{"id": k, "text": t} for k, t in kids]
         res = run_parent_summary_ticket(
             conn, ticket_id=ticket, corpus_id=corpus_id, parent_id=pid,
             input_hash="replay_" + pid[-16:], contract_version="replay-v1",
