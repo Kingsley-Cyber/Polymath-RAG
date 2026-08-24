@@ -1,0 +1,42 @@
+---
+change_id: operational-cleanup-p0
+owner: control
+date: 2026-08-24
+status: complete
+architecture_impact: none (compatibility adapter at consumption boundary + health-baseline archive)
+last_reviewed: 2026-08-24
+---
+
+# OPERATIONAL-CLEANUP-P0: legacy event adapter + dead-letter archive
+
+## Contract
+
+Workers consume CANONICAL event payloads only. Legacy-shape events are
+normalized (with best-effort recovery) at the claim boundary; a payload
+that cannot be recovered fails its ticket ONCE with a typed reason
+(LEGACY_EVENT_UNRECOVERABLE) instead of crashing the stage loop on a
+missing key. Health baselines evaluate current system state: historical
+invalid probes are archived with an explicit reason and excluded from
+dead-letter health, never silently purged.
+
+Smallest acceptance criteria:
+
+1. `shared/polymath_shared/event_adapter.py` normalizes known legacy
+   shapes to canonical payloads; recovery consults tickets/artifacts.
+2. Unrecoverable poison fails the ticket deterministically (attempt
+   burned once, typed last_error), zero worker KeyError crash-loops.
+3. Migration 0032 adds `dead_letter_archive` + `archived_at`/
+   `archived_reason` on stage_tickets; probe-enf2 archived as
+   `historical invalid probe`, excluded_from_health=true.
+4. Convergence watcher counts only non-archived failures.
+
+## Changes
+
+- shared/polymath_shared/event_adapter.py (new)
+- shared/polymath_shared/worker_runtime.py (normalize at claim)
+- stores/postgres/migrations/0032_dead_letter_archive.sql (new)
+- workers/workers/extract_worker.py (typed failure path)
+
+## Proof
+
+Determinism tests + live behavior in session log.

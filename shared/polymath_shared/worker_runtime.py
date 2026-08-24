@@ -135,6 +135,37 @@ def claim_ticket_events(conn, identity: dict, event_types: list[str], limit: int
                 )
                 if cur.rowcount == 0:
                     continue  # lost the ticket race
+            # EVENT-ADAPTER-V1: normalize BEFORE handing to the stage.
+            # A legacy payload that cannot be recovered fails its ticket
+            # ONCE here (typed reason, attempt burned deterministically)
+            # instead of crash-looping a worker on a missing key.
+            from polymath_shared.event_adapter import (
+                LegacyEventUnrecoverable,
+                normalize_event,
+            )
+            try:
+                e = dict(e)
+                e["payload"] = normalize_event(
+                    cur, e["event_type"], e["payload"], e["run_id"])
+            except LegacyEventUnrecoverable as exc:
+                if e.get("ticket_id") is not None:
+                    cur.execute(
+                        """
+                        UPDATE stage_tickets
+                           SET status='failed', attempt = attempt + 1,
+                               lease_owner=NULL, lease_expires_at=NULL,
+                               last_error_note=%s, updated_at=now()
+                         WHERE ticket_id=%s AND status='leased'
+                        """,
+                        (exc.reason[:500], e["ticket_id"]),
+                    )
+                logging.getLogger("worker-runtime").error(
+                    "legacy event unrecoverable; ticket failed once",
+                    extra={"error_code": "LEGACY_EVENT_UNRECOVERABLE",
+                           "run_id": e["run_id"],
+                           "event_type": e["event_type"],
+                           "detail": str(exc)[:200]})
+                continue
             claimed.append(dict(e))
         if claimed:
             cur.execute(
