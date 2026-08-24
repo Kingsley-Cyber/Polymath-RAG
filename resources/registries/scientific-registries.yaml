@@ -1,0 +1,23 @@
+# scientific-registries.yaml — AUTHORITATIVE scientific object surfaces
+# (DECISION A1). Registry entries feed entity DISCOVERY as
+# confidence=authoritative candidates: they are never a bypass of
+# Entity Admission — admitted through the same gates, with registry
+# provenance recorded.
+#
+# Types use CoreType values. Additions require a source citation.
+
+version: "scientific-registries-v1.0.0"
+
+datasets:
+  - {surface: "BooksCorpus",       type: "Dataset", source: "BERT paper corpus"}
+  - {surface: "English Wikipedia", type: "Corpus",  source: "BERT paper corpus"}
+  - {surface: "Common Crawl",      type: "Corpus",  source: "common scientific usage"}
+  - {surface: "ImageNet",          type: "Dataset", source: "vision benchmark literature"}
+
+benchmarks:
+  - {surface: "GLUE",     type: "Benchmark", source: "benchmark literature"}
+  - {surface: "SuperGLUE", type: "Benchmark", source: "benchmark literature"}
+  - {surface: "SQuAD",    type: "Benchmark", source: "QA benchmark literature"}
+
+research_corpora:
+  - {surface: "PubMed",   type: "Corpus", source: "biomedical literature"}
