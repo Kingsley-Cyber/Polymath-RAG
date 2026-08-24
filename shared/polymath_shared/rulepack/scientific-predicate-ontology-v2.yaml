@@ -70,6 +70,8 @@ frames:
       - {surface: evaluated,   lemma: evaluate,   provenance: propbank:assess.01}
       - {surface: assess,      lemma: assess,     provenance: propbank:assess.01}
       - {surface: benchmark,   lemma: benchmark,  provenance: authored-extension}
+      - {surface: examines,    lemma: examine,    provenance: authored-extension}
+      - {surface: examined,    lemma: examine,    provenance: authored-extension}
       - {surface: compared,    lemma: compare,    provenance: propbank:compare.01}
       - {surface: compare,     lemma: compare,    provenance: propbank:compare.01}
     roles:

@@ -313,6 +313,91 @@ def build_candidates_kimi(
 
                         f_subj = _ents(oriented["fact_subject"])
                         f_obj = _ents(oriented["fact_object"])
+                        # C3c: possessive-theme inheritance (bounded,
+                        # fail-closed). A frame slot token with a UD `poss`
+                        # child ("Orion's performance") may recover the
+                        # POSSESSOR as the slot endpoint when exactly ONE
+                        # subject-type-compatible durable entity in the
+                        # document history carries that surface. Possessive
+                        # pronouns never match (E-1); ambiguity abstains.
+                        if doc_entities_history:
+                            _PRONOUN_SURF = {"i", "you", "we", "it", "he",
+                                             "she", "they", "me", "him",
+                                             "her", "them", "us", "my",
+                                             "his", "its", "their"}
+                            for slot_name in ("subject", "object"):
+                                slot_toks = (oriented["fact_subject"] if
+                                             slot_name == "subject" else
+                                             oriented["fact_object"])
+                                allowed_c3c = set()
+                                if fid:
+                                    for m in mappings_for_frame(fid):
+                                        src = ("subject_types" if
+                                               slot_name == "subject" else
+                                               "object_types")
+                                        allowed_c3c |= {
+                                            x.lower() for x in
+                                            m.get(src, [])}
+                                recovered: list[Any] = []
+                                for st in slot_toks:
+                                    # only bare NP heads: a token already
+                                    # covered by an entity is not recoverable
+                                    if _ents([st]):
+                                        continue
+                                    for pt in [t for t in tokens
+                                               if t.get("head_i") ==
+                                               st.get("i")
+                                               and t.get("dep") == "poss"]:
+                                        surf = (pt.get("text") or "").strip()
+                                        low_l = surf.lower()
+                                        if low_l.endswith("'s"):
+                                            low_l = low_l[:-2]
+                                        # bounded alias rule (I3R-R3 family):
+                                        # the possessor must equal the FULL
+                                        # surface, the FIRST word, or the
+                                        # LAST word of exactly ONE durable
+                                        # history entity ("Orion" recovers
+                                        # "Orion Adaptive Reasoning Model").
+                                        # Pronouns never match (E-1);
+                                        # ambiguity abstains.
+                                        if not surf or low_l in \
+                                                _PRONOUN_SURF:
+                                            continue
+                                        hits: dict[str, Any] = {}
+                                        for he in doc_entities_history:
+                                            hw = he.text.lower().split()
+                                            if low_l != he.text.lower() and \
+                                                    not (hw and low_l in
+                                                         (hw[0], hw[-1])):
+                                                continue
+                                            ct = getattr(
+                                                getattr(he, "core_type",
+                                                        None), "value",
+                                                getattr(he, "core_type", ""))
+                                            if allowed_c3c and \
+                                                    str(ct).lower() not in \
+                                                    allowed_c3c:
+                                                continue
+                                            hits.setdefault(he.text, he)
+                                        if len(hits) != 1:
+                                            continue
+                                        ent_c3c = next(iter(hits.values()))
+                                        if ent_c3c not in recovered:
+                                            recovered.append(ent_c3c)
+                                        if observer:
+                                            observer.record_candidate_outcome(
+                                                sl, evidence,
+                                                "POSSESSION_BOUND",
+                                                {"slot": slot_name,
+                                                 "possessor": surf,
+                                                 "entity": ent_c3c.text,
+                                                 "kimi_v1": True})
+                                if recovered:
+                                    if slot_name == "subject":
+                                        f_subj = (f_subj or []) + recovered
+                                    else:
+                                        f_obj = (f_obj or []) + recovered
+
                         # C2: bounded head-chain inheritance for an empty
                         # theme slot (entity separated from its trigger
                         # only by determiners/copulas/generic heads).
