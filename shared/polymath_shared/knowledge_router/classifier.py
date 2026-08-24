@@ -1,18 +1,18 @@
-"""KNOWLEDGE-ROUTER-V1: deterministic document classifier.
+"""KNOWLEDGE-ROUTER-V1.1: deterministic document classifier.
 
-Owner architecture decision: the router is a TRAFFIC CONTROLLER between
-intake and extraction. It decides WHICH EXTRACTION PATHS may operate —
-it never weakens admission, never creates facts, never uses embeddings.
+OWNER CORRECTION APPLIED (v1.1): the router is a COST OPTIMIZER, not a
+gatekeeper. It decides EXTRACTION PRIORITY per knowledge mode — never
+whether knowledge exists. One ingestion engine; multiple grounded
+representations at different confidence levels.
 
 Signals (authored weights, deterministic):
-  1 metadata   front-matter key/values (e.g. youtube transcripts)
-  2 structure  step markers / section headers (regex counts)
-  3 linguistic per-mode lexicon density (hits per 100 words)
+  1 metadata   front-matter key/values
+  2 structure  step markers / section headers
+  3 linguistic per-mode lexicon density
 
-Output: multi-label modes with confidences + primary mode + domains.
-Classification is NOT permanent truth — profiles refine after
-processing (observed_content shares stored alongside initial
-prediction).
+Classification runs at DOCUMENT level (full text) — chunks have no
+context. Output carries the routing contract tiers:
+always / preferred / optional / disabled.
 """
 from __future__ import annotations
 
@@ -61,12 +61,12 @@ def _lexicon_density(text: str, terms: list[list]) -> float:
 
 def classify_document(text: str,
                       metadata: dict[str, str] | None = None) -> dict:
-    """Multi-label knowledge-mode classification. Deterministic."""
+    """Multi-label knowledge-mode classification with priority contract.
+    Deterministic. Document-level input required."""
     cfg = load_config()
     meta = {**_front_matter(text), **(metadata or {})}
     signals: dict[str, dict] = {}
 
-    # signal 1: metadata hints
     for mode, hints in (cfg.get("metadata_hints") or {}).items():
         s = signals.setdefault(mode, {"metadata": 0.0, "structure": 0.0,
                                       "linguistic": 0.0})
@@ -74,7 +74,6 @@ def classify_document(text: str,
             if str(meta.get(h["key"], "")).strip() == h["equals"]:
                 s["metadata"] += h.get("weight", 1)
 
-    # signal 2: structure patterns
     for mode, pats in (cfg.get("structure_patterns") or {}).items():
         s = signals.setdefault(mode, {"metadata": 0.0, "structure": 0.0,
                                       "linguistic": 0.0})
@@ -82,13 +81,11 @@ def classify_document(text: str,
             s["structure"] += p["weight"] * len(
                 re.findall(p["regex"], text))
 
-    # signal 3: lexicon density
     for mode, terms in (cfg.get("lexicons") or {}).items():
         s = signals.setdefault(mode, {"metadata": 0.0, "structure": 0.0,
                                       "linguistic": 0.0})
         s["linguistic"] += _lexicon_density(text, terms)
 
-    # normalize each signal axis to 0..1 across modes, then combine
     scored: list[tuple[str, float]] = []
     for mode in cfg["modes"]:
         s = signals.get(mode)
@@ -101,12 +98,24 @@ def classify_document(text: str,
         ({"type": m, "confidence": round(v / total, 2)} for m, v in scored),
         key=lambda x: -x["confidence"])
 
-    primary = modes[0]["type"] if modes else "FACTUAL"
-    policy = (cfg.get("routing_policy") or {}).get(primary, ["entity"])
+    primary = modes[0]["type"] if modes else "REFERENCE"
+    policy = ((cfg.get("routing_policy") or {}).get(primary)
+              or {"always": ["entity"], "preferred": [], "optional": [],
+                  "disabled": []})
+    enabled = sorted(set(policy.get("always", []))
+                     | set(policy.get("preferred", [])))
     return {
         "router_version": cfg["version"],
         "primary_mode": primary,
         "modes": modes[:5],
-        "enabled_extractors": policy,
+        # v1.1 contract: priorities, not gates
+        "routing": {
+            "always": sorted(policy.get("always", [])),
+            "preferred": sorted(policy.get("preferred", [])),
+            "optional": sorted(policy.get("optional", [])),
+            "disabled": sorted(policy.get("disabled", [])),
+        },
+        # backward-compatible view (always + preferred lanes)
+        "enabled_extractors": enabled,
         "signals": {m: v for m, v in signals.items() if any(v.values())},
     }

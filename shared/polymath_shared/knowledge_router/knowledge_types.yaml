@@ -1,23 +1,26 @@
-# knowledge-types.yaml — KNOWLEDGE-ROUTER-V1
+# knowledge-types.yaml — KNOWLEDGE-ROUTER-V1.1
 #
-# Deterministic document classification signals. The router is a
-# TRAFFIC CONTROLLER, not a knowledge engine: it decides which
-# extraction paths may operate. It never weakens Entity Admission,
-# never creates facts, never uses embeddings.
+# OWNER CORRECTION APPLIED: the router is a COST OPTIMIZER / priority
+# system, NOT a gatekeeper. It decides what to PRIORITIZE, never what
+# exists — one ingestion engine, multiple grounded representations.
 #
-# Level 1 = knowledge_mode (multi-label, confidence-scored)
-# Level 2 = domain (separate axis; same mode exists in many domains)
+# Mode renamed FACTUAL -> SCIENTIFIC_RELATIONAL (tutorials contain
+# facts; this mode means "predicate extraction is valuable here").
+#
+# Policy tiers per mode:
+#   always    extraction runs regardless of confidence
+#   preferred high-priority lanes for this mode
+#   optional  run when confidence/budget allows
+#   disabled  off for this mode (the ONLY tier that turns anything off)
 
-version: "knowledge-router-v1.0.0"
+version: "knowledge-router-v1.1.0"
 
 modes:
-  - FACTUAL       # scientific/factual claims (the existing pipeline)
-  - PROCEDURAL    # how-to workflows, tutorials, runbooks
-  - CONCEPTUAL    # ideas, principles, philosophy
-  - EVENT         # news/incident timelines
-  - NARRATIVE     # stories, transcripts without structure
-  - REFERENCE     # manuals, API docs, lookup material
-  - OPINION       # argumentative/editorial
+  - SCIENTIFIC_RELATIONAL
+  - PROCEDURAL
+  - CONCEPTUAL
+  - NARRATIVE
+  - REFERENCE
 
 domains:
   - artificial_intelligence
@@ -28,12 +31,11 @@ domains:
   - biomedical
   - philosophy
   - marketing
+  - military
   - general
 
-# Signal 3 — linguistic lexicons (lemma-ish token hits per 100 words).
-# Deterministic; weights are authored, tunable via regression only.
 lexicons:
-  FACTUAL:
+  SCIENTIFIC_RELATIONAL:
     - [evaluated, 2]
     - [experiment, 2]
     - [dataset, 2]
@@ -44,6 +46,7 @@ lexicons:
     - [baseline, 1]
     - [corpus, 2]
     - [hypothesis, 2]
+    - [state-of-the-art, 2]
   PROCEDURAL:
     - [install, 2]
     - [configure, 2]
@@ -54,10 +57,11 @@ lexicons:
     - [open, 1]
     - [go to, 2]
     - [paste, 2]
-    - [create, 1]
-    - [report, 1]
+    - [deploy, 2]
     - [setup, 2]
     - [prompt, 1]
+    - [report, 1]
+    - [workflow, 1]
   CONCEPTUAL:
     - [meaning, 2]
     - [principle, 2]
@@ -67,35 +71,54 @@ lexicons:
     - [concept, 1]
     - [represents, 1]
     - [teaches, 2]
+    - [definition, 1]
+    - [doctrine, 2]
   NARRATIVE:
     - [hey guys, 2]
     - [in this video, 2]
     - [story, 1]
 
-# Signal 2 — structural patterns (count-based, per whole document).
 structure_patterns:
   PROCEDURAL:
     - {regex: "(?im)^step\\s*\\d+", weight: 3}
     - {regex: "(?im)^\\d+\\.\\s", weight: 2}
-    - {regex: "\\*\\*\\[\\d+:\\d+\\]\\*\\*", weight: 2}   # transcript stamps
+    - {regex: "\\*\\*\\[\\d+:\\d+\\]\\*\\*", weight: 2}
     - {regex: "(?i)\\b(install|configure|set up|navigate to)\\b", weight: 1}
-  FACTUAL:
+  SCIENTIFIC_RELATIONAL:
     - {regex: "(?im)^#{1,3}\\s*(abstract|methodology|results|conclusion|related work)\\b", weight: 3}
     - {regex: "(?i)\\b(we (evaluate|propose|demonstrate)|state-of-the-art)\\b", weight: 2}
 
-# Signal 1 — metadata hints (front matter keys/values).
 metadata_hints:
   PROCEDURAL:
     - {key: source_format, equals: youtube_transcript, weight: 2}
   NARRATIVE:
     - {key: source_format, equals: youtube_transcript, weight: 1}
 
+# OWNER ROUTING CONTRACT: priorities, not gates.
+# entity extraction is ALWAYS on (Entity Admission governs it anyway).
 routing_policy:
-  # mode -> allowed extraction paths (Entity Admission always on)
-  FACTUAL:     [entity, scientific_predicate, evidence]
-  PROCEDURAL:  [entity, concept]          # procedure engine: planned slice
-  CONCEPTUAL:  [entity, concept]
-  NARRATIVE:   [entity]
-  EVENT:       [entity, event]
-  REFERENCE:   [entity, concept]
-  OPINION:     [entity]                   # scope gates still refuse claims
+  SCIENTIFIC_RELATIONAL:
+    always:    [entity]
+    preferred: [scientific_predicate, evidence, concept]
+    optional:  [procedure]
+    disabled:  []
+  PROCEDURAL:
+    always:    [entity]
+    preferred: [procedure, concept]
+    optional:  []
+    disabled:  [scientific_predicate]
+  CONCEPTUAL:
+    always:    [entity, concept]
+    preferred: [framework, argument]
+    optional:  []
+    disabled:  [scientific_predicate]
+  NARRATIVE:
+    always:    [entity]
+    preferred: []
+    optional:  [concept]
+    disabled:  [scientific_predicate]
+  REFERENCE:
+    always:    [entity]
+    preferred: [concept]
+    optional:  [procedure]
+    disabled:  []

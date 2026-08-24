@@ -114,3 +114,23 @@ Fixtures: tests/determinism/test_knowledge_router.py (5).
 Integration seam (cutover restart): after text normalization at intake,
 store classification profile on documents.profile.knowledge_router;
 extract_worker enables lanes per routing_policy. Dormant until then.
+
+## ROUTER v1.1 — OWNER CORRECTION APPLIED (2026-08-24)
+
+Router is a COST OPTIMIZER / priority system, not a gatekeeper:
+one ingestion engine, multiple grounded representations at different
+confidence levels.
+
+Changes:
+- FACTUAL renamed SCIENTIFIC_RELATIONAL (tutorials contain facts;
+  the mode means "predicate extraction is valuable")
+- routing contract tiers: always / preferred / optional / disabled —
+  entity+concept can never be gated (fixture-enforced invariant)
+- concept extraction ALWAYS available on every mode
+- scientific_predicate remains disabled-only on PROCEDURAL /
+  CONCEPTUAL / NARRATIVE
+- document-level classification confirmed correct (chunks lack context)
+
+Owner's five validation cases added as fixtures: mixed cyber textbook,
+military doctrine, philosophy lecture, research paper, marketing
+transcript. All pass.
