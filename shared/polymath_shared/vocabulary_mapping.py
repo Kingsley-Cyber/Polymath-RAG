@@ -47,13 +47,16 @@ def build_concept_families(*, corpus_id: str, parent_summaries: list[dict],
                 "summaries": set(), "surfaces": set()})
             support[_norm(cpt)]["summaries"].add(str(sid))
             support[_norm(cpt)]["surfaces"].add(cpt)
+    # Derived-layer support (document summaries) is recorded as
+    # PROVENANCE ONLY. A document summary derives from parent summaries,
+    # so counting it toward admission would let one document create a
+    # concept (parent + its own derivative = fake support of 2).
     for ds in document_summaries:
         d = ds.get("payload", ds)
-        did = d.get("document_id") or ds.get("artifact_id")
+        did = "derived:" + str(d.get("document_id") or ds.get("artifact_id"))
         for cpt in d.get("major_concepts", []):
             support.setdefault(_norm(cpt), {
                 "summaries": set(), "surfaces": set()})
-            support[_norm(cpt)]["summaries"].add(str(did))
             support[_norm(cpt)]["surfaces"].add(cpt)
 
     for concept in accepted_concepts:
@@ -90,20 +93,23 @@ def build_concept_families(*, corpus_id: str, parent_summaries: list[dict],
         surfaces = sorted({s for k in families[root]
                            for s in support[k]["surfaces"]})
         canonical = _pick_canonical(surfaces, members)
-        all_summaries = sorted({x for k in families[root]
-                                for x in support[k]["summaries"]})
+        all_support = sorted({x for k in families[root]
+                              for x in support[k]["summaries"]})
+        independent = [x for x in all_support
+                       if not x.startswith("derived:")]
         out_families.append({
             "contract": "concept-family-v1",
             "corpus_id": corpus_id,
             "canonical_name": canonical,
             "aliases": [s for s in surfaces if _norm(s) != canonical],
-            "supporting_summaries": all_summaries,
+            "supporting_summaries": all_support,
+            "independent_support_count": len(independent),
         })
     # VOCABULARY GUARD (owner): single-mention concepts never admit.
     # A family requires at least TWO distinct supporting summaries —
     # the corpus map must show stable cross-summary presence.
     out_families = [f for f in out_families
-                    if len(set(f.get("supporting_summaries", []))) >= 2]
+                    if f.get("independent_support_count", 0) >= 2]
     return {"contract": "vocabulary-mapping-v1",
             "corpus_id": corpus_id,
             "min_supporting_summaries": 2,

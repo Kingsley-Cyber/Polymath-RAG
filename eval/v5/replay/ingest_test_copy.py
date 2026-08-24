@@ -23,14 +23,19 @@ os.environ.setdefault(
     "POLYMATH_PG_DSN",
     "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath")
 
-SRC = "/Users/king/Downloads/untitled folder/TEST copy.md"
-CORPUS = "test-copy-v1"
+import sys as _sys
+if len(_sys.argv) >= 3:
+    SRC = _sys.argv[1]
+    CORPUS = _sys.argv[2]
+else:
+    SRC = "/Users/king/Downloads/untitled folder/TEST copy.md"
+    CORPUS = "test-copy-v1"
 
 import psycopg  # noqa: E402
 from psycopg.rows import dict_row  # noqa: E402
 
 
-def main() -> dict:
+def main() -> dict:  # noqa: C901
     raw = Path(SRC).read_bytes()
     content_b64 = base64.b64encode(raw).decode()
     canonical = {
