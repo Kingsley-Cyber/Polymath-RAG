@@ -3,6 +3,7 @@ change_id: shadow-parity-enforce-gate
 owner: control
 date: 2026-08-24
 status: complete
+enforce_flip: verified
 architecture_impact: none (operational gate; no schema or boundary change)
 last_reviewed: 2026-08-24
 ---
@@ -65,3 +66,11 @@ See report; queries reproduced in session log.
 
 - Worker-staleness fence (execution_bundle_hash per ticket) is a
   separate admitted slice queued before large ingestion.
+
+## Enforce flip proof (appended)
+
+Fleet restarted with POLYMATH_PREDICATE_V2=enforce (kimi_v1, spacy,
+bundle v5-production-007). Corpus `s-val-doc01-enforce-v1` extracted:
+introduced_by / trained_on / evaluated_on all ACCEPT with identical
+endpoints — zero enforcement-time divergence from shadow. Live-build
+fence PASS on pipeline slots.
