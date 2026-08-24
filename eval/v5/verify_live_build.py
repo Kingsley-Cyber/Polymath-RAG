@@ -98,6 +98,7 @@ _SLOT_TO_WORKER = {
     "qdrant": "project_qdrant", "neo4j": "project_neo4j",
     "canonicalize": "canonicalize", "intake": "intake",
     "profile": "profile_document", "extract": "extract",
+    "summaries": "summaries",
     "project_canonical": "project_canonical", "verify": "verify_projections",
 }
 
