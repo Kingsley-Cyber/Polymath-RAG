@@ -1,0 +1,91 @@
+# SCIENTIFIC KAG FINAL READINESS REPORT (2026-08-24)
+
+## 1 Executive Summary
+
+The Scientific KAG intelligence stack is structurally complete and
+validated end-to-end on real corpora: extraction produces admitted,
+provenance-complete facts from scientific text (0 → 5 facts on TEST.md
+in shadow replay); summaries compose exclusively from accepted
+knowledge with verified lineage; the corpus map is a weighted,
+lineage-traceable knowledge index; retrieval routes and grounds answers
+across 51 deterministic queries at 1.00 routing / 0.92 evidence recall.
+Remaining gaps are policy decisions (A2) and a registry layer (A1) —
+not architecture. Recommendation: READY FOR PRODUCTION SCALE TEST
+following the two gated steps below.
+
+## 2 Extraction Intelligence Validation
+
+- TEST.md transaction-scoped replay: candidates 13 → ACCEPT 5 ·
+  REJECT 2 · UNSUPPORTED 6 (fail-closed on unmapped types).
+- CATEGORY matrix: B=0 · C=0 · D=0 · E=1 correct rejection.
+- Adversarial negatives (speculative similarity): zero frames fire.
+- Fixtures: 34 green (28 v2 + 6 summary composition).
+
+## 3 Predicate Compiler v2
+
+- Frame lane (VerbNet/PropBank/FrameNet-provenanced realizations) owns
+  covered spans; typed signature mapping decides predicate; fail-closed
+  UNSUPPORTED otherwise.
+- Full chain proven per fact: GLiNER → admission → UD → frame → roles →
+  predicate → CanonicalFact → evidence row.
+- Example accepted: BERT introduced_by Google Research
+  (frame=creation_event, source=propbank:introduce.01).
+
+## 4 Summary Runtime Validation
+
+- Parent summaries compose ONLY admitted facts/entities (D3a phrase
+  table fixed; D3b concept scanner rewritten).
+- Document summaries derive ONLY from parent summaries
+  (derived_from_parents_only=true).
+- Lineage: parent_source_ids_resolve=true.
+
+## 5 Corpus Mapping Validation
+
+- Multi-document waterfall (4 docs / 24 parents): lineage
+  item→doc-summary→parents→chunks TRUE with zero breaks.
+- Weighting honors document spread; predicates from admitted facts.
+
+## 6 Vocabulary Validation
+
+- Guards enforced: min_supporting_summaries=2; single-mention concepts
+  cannot admit; corpus isolation structural.
+- Status: ARMED — opens automatically on support overlap at scale.
+
+## 7 Retrieval Validation
+
+51 deterministic queries self-derived from admitted facts across all
+fact-bearing corpora:
+- routing_accuracy = 1.00 (zero cross-corpus leakage)
+- evidence_recall = 0.92 (1.00 outside synthetic hex-token corpus g4_e2e)
+- grounding: every graph fact cites fact_id; citations resolve to docs
+
+## 8 Known Limitations & Policy Decisions
+
+DECISION A1 (registry): trained_on endpoints BooksCorpus/English
+Wikipedia blocked because entities never discovered. Resolution path:
+Dataset/Benchmark/Corpus REGISTRIES feeding discovery as authoritative
+surfaces. Entity admission NOT weakened.
+
+DECISION A2 (referential policy): generic category nouns ("neural
+models", "extensive datasets") currently admit CORPUS_SCOPED. Owner
+policy: such phrases are CONCEPTS, not entities. Implementation: map
+generic-head surfaces to concept layer at admission; keeps entity graph
+named-object only.
+
+Other limitations: event/temporal layer pending (dates correctly
+UNSUPPORTED today); dense retrieval lane offline in replay scoring;
+anchor-collision dedup policy open.
+
+## 9 Production Recommendation
+
+READY FOR PRODUCTION SCALE TEST, gated on:
+1. Drain completion + PHASE_1 reliability package (in progress,
+   dead_letters=0 throughout).
+2. Cutover restart: POLYMATH_RELATION_PIPELINE=kimi_v1 +
+   POLYMATH_PREDICATE_V2=shadow → confirm shadow projections in live
+   execution, then enforce.
+
+Lock metadata: rule_pack 1.4.0 · query_policy semantic-query-policy-v1
+· semantic_bundle 6976e483… · ontology
+scientific-predicate-ontology-v2.0.0 · vocabulary-mapping-v1
+(min_supporting_summaries=2) · concept-family-v1 · envelope v1.
