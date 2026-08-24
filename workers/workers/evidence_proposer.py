@@ -78,6 +78,36 @@ def _match_verb(token: str, verbs: list[str]) -> str | None:
     return None
 
 
+def propose_frame_evidence(
+    text: str,
+    chunk_id: str,
+) -> list[EvidenceSpan]:
+    """PREDICATE-COMPILER-V2 semantic lane: ontology frame realizations
+    as deterministic anchors. Each span carries
+    trigger_lexical_class='FRAME' and
+    trigger_match_source='frame:<id>|<lexical-provenance>' — predicate
+    selection happens AT COMPILE TIME from typed arguments, never here.
+    No overlap-dedup here; caller merges against trigger-lane spans."""
+    from polymath_shared.rulepack.semantic_frames import resolve_frames
+
+    spans: list[EvidenceSpan] = []
+    for f in resolve_frames(text):
+        spans.append(EvidenceSpan(
+            chunk_id=chunk_id,
+            start=f.start,
+            end=f.end,
+            text=text[f.start:f.end],
+            evidence_class="action",
+            trigger_lemma=f.lemma,
+            trigger_lexical_class="FRAME",
+            trigger_predicate_id=None,
+            trigger_match_source=f"frame:{f.frame_id}|{f.provenance}",
+            score=1.0,
+            extractor_version=EXTRACTOR_VERSION,
+        ))
+    return sorted(spans, key=lambda s: (s.start, s.end))
+
+
 def propose_evidence(
     text: str,
     chunk_id: str,
@@ -88,7 +118,13 @@ def propose_evidence(
 
     Total order: (start, end, rule order) — reproducible from the same
     text and rule pack. Each trigger carries the evidence class of its
-    owning predicate rule; the compiler disambiguates further."""
+    owning predicate rule; the compiler disambiguates further.
+
+    PREDICATE-COMPILER-V2: when POLYMATH_PREDICATE_V2 is 'shadow' or
+    'enforce', ontology frame anchors are APPENDED after the compiled
+    trigger lanes — trigger surfaces keep precedence on overlap (the
+    legacy path remains byte-identical for its spans, satisfying the
+    shadow-comparison requirement)."""
     lowered = text.lower()
     spans: list[EvidenceSpan] = []
 
@@ -148,6 +184,14 @@ def propose_evidence(
                     score=1.0,
                     extractor_version=EXTRACTOR_VERSION,
                 ))
+
+    import os as _os
+    if _os.environ.get("POLYMATH_PREDICATE_V2", "off") in ("shadow", "enforce"):
+        existing = [(s.start, s.end) for s in spans]
+        for f in propose_frame_evidence(text, chunk_id):
+            if any(not (f.end <= s or f.start >= e) for s, e in existing):
+                continue  # trigger lane keeps precedence on overlap
+            spans.append(f)
 
     return sorted(spans, key=lambda s: (s.start, s.end))
 

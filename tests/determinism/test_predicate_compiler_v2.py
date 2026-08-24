@@ -144,3 +144,104 @@ def test_ontology_negative_examples_are_machine_checkable():
         for m in frame.get("mappings", []):
             for neg in m.get("negative_examples", []):
                 assert neg.get("sentence") and neg.get("reason"), (fid, neg)
+
+
+# --- production splice: proposer frame lane (env-gated) -----------------
+
+def test_frame_lane_off_by_default(monkeypatch):
+    import os
+    from workers.evidence_proposer import propose_evidence
+    monkeypatch.delenv("POLYMATH_PREDICATE_V2", raising=False)
+    pack = {"predicate_order": [], "predicates": {}}
+    spans = propose_evidence(
+        "The BERT model was pretrained on BooksCorpus.", "c1", pack)
+    assert spans == [], "frame lane must be OFF unless explicitly enabled"
+
+
+def test_frame_lane_emits_provenance_anchors(monkeypatch):
+    from workers.evidence_proposer import propose_evidence
+    monkeypatch.setenv("POLYMATH_PREDICATE_V2", "shadow")
+    pack = {"predicate_order": [], "predicates": {}}
+    text = "The BERT model was introduced by Google Research in 2018."
+    spans = propose_evidence(text, "c1", pack)
+    assert spans and all(s.trigger_lexical_class == "FRAME" for s in spans)
+    f = spans[0]
+    assert f.trigger_match_source.startswith("frame:creation_event|")
+    assert "propbank:introduce" in f.trigger_match_source
+    assert 0 <= f.start < f.end <= len(text)
+
+
+def test_trigger_lane_keeps_precedence_on_overlap(monkeypatch):
+    from workers.evidence_proposer import propose_evidence
+    monkeypatch.setenv("POLYMATH_PREDICATE_V2", "enforce")
+    # 'rate' is a v1 trigger surface; construct a pack whose trigger
+    # overlaps a frame realization span
+    pack = {"predicate_order": ["r1"], "predicates": {"r1": {
+        "evidence": {"classes": ["action"], "nouns": ["benchmark"]}}}}
+    spans = propose_evidence("We benchmark the model.", "c1", pack)
+    bench = [s for s in spans if s.text == "benchmark"]
+    assert len(bench) == 1 and bench[0].trigger_match_source == "nouns", (
+        "trigger lane must win overlapping spans; frame lane supplements only")
+
+
+# --- production splice: compiler FRAME branch ---------------------------
+
+def _candidate_for(text, trigger_start, trigger_end, subj_type, obj_type):
+    from polymath_shared.contracts import (
+        EntitySpan, EvidenceSpan, EntityCandidate, RelationCandidate,
+        ScopeFlags, CoreType,
+    )
+    ev = EvidenceSpan(
+        chunk_id="ch", start=trigger_start, end=trigger_end,
+        text=text[trigger_start:trigger_end], evidence_class="action",
+        trigger_lemma="introduced", trigger_lexical_class="FRAME",
+        trigger_predicate_id=None,
+        trigger_match_source="frame:creation_event|propbank:introduce.01",
+        score=1.0, extractor_version="test")
+    sub = EntitySpan(doc_id="d", chunk_id="ch", start=0, end=4, text="BERT",
+                     core_type=CoreType(subj_type), score=1.0,
+                     extractor_version="test")
+    obj = EntitySpan(doc_id="d", chunk_id="ch", start=20, end=35,
+                     text="Google Research",
+                     core_type=CoreType(obj_type), score=1.0,
+                     extractor_version="test")
+    return RelationCandidate(
+        evidence=ev,
+        subject=EntityCandidate(span=sub, resolved_entity_id="ent_x"),
+        object=EntityCandidate(span=obj, resolved_entity_id="ent_y"),
+        ontology_profile="core",
+        scope=ScopeFlags())
+
+
+def test_compiler_frame_branch_accepts_with_full_provenance():
+    from polymath_shared.rulepack.compiler import compile_relation
+    c = _candidate_for("The BERT model was introduced by Google Research.",
+                       22, 32, "Architecture", "ResearchGroup")
+    d = compile_relation(c, None, {"predicate_order": [], "predicates": {}})
+    assert d.decision == "ACCEPT"
+    assert d.rule_id == "introduced_by"
+    for token in ("semantic_frame_id=creation_event",
+                  "lexical_resource_source=propbank:introduce.01",
+                  "predicate_mapping_rule=introduced_by",
+                  "subject_type=Architecture",
+                  "object_type=ResearchGroup"):
+        assert token in d.reason
+
+
+def test_compiler_frame_branch_fail_closed_on_bad_types():
+    from polymath_shared.rulepack.compiler import compile_relation
+    c = _candidate_for("The optimizer trained the model.", 4, 11,
+                       "Model", "Metric")
+    d = compile_relation(c, None, {"predicate_order": [], "predicates": {}})
+    assert d.decision == "UNSUPPORTED"
+    assert "frame_unmapped" in d.reason
+
+
+def test_compiler_frame_branch_rejects_speculative():
+    from polymath_shared.contracts import ScopeFlags
+    from polymath_shared.rulepack.compiler import compile_relation
+    c = _candidate_for("BERT was introduced by Google Research.",
+                       9, 19, "Architecture", "ResearchGroup")
+    c = c.model_copy(update={"scope": ScopeFlags(speculative=True)})
+    d = compile_relation(c, None, {"predicate_order": [], "predicates": {}})
+    assert d.decision == "REJECT" and "frame_scope_reject" in d.reason

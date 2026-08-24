@@ -334,9 +334,18 @@ def build_candidates_kimi(
             # direction may invert passive pairs, a pair is viable if EITHER
             # orientation can satisfy a signature of the evidence class.
             compatible_pairs: list[tuple[EntitySpan, EntitySpan]] = []
+            is_frame = (getattr(evidence, "trigger_lexical_class", "")
+                        or "").upper() == "FRAME"
             for s in subjects:
                 for o in objects:
                     if s.text == o.text and s.core_type == o.core_type:
+                        continue
+                    if is_frame:
+                        # PREDICATE-COMPILER-V2: frame spans skip the
+                        # rule-pack class signature precheck — the
+                        # ontology signature validation at compile time
+                        # is the authority (fail-closed there).
+                        compatible_pairs.append((s, o))
                         continue
                     forward_ok = _type_compatible(
                         s.core_type.value, o.core_type.value,

@@ -192,3 +192,41 @@ frame:<id> provenance within existing contract fields.
 - Entity discovery gap unchanged: BooksCorpus/English Wikipedia never
   proposed by GLiNER -> trained_on(BERT, BooksCorpus) stays blocked at
   typing until discovered (Category A/B boundary, owner's call).
+
+---
+
+# SLICE: PREDICATE-COMPILER-V2 production splice (dormant until cutover)
+
+## Contract
+
+Owner authorized splice with track separation: code lands now, but
+POLYMATH_PREDICATE_V2 defaults to OFF — zero production behavior
+change during the Phase-1 drain. Activation = env at next worker
+restart AFTER drain completes. Trigger lane keeps byte-identical
+behavior and precedence on span overlap (shadow comparability).
+
+## Changes
+
+- evidence_proposer.py: propose_frame_evidence() + env-gated append
+  in propose_evidence (off|shadow|enforce; default off)
+- compiler.py: FRAME branch after modality gate ->
+  _compile_frame_relation(): ontology typed resolution, fail-closed
+  UNSUPPORTED on unmapped types, scope REJECTs mirroring pack rules,
+  full provenance in decision reason (semantic_frame_id,
+  lexical_resource_source, predicate_mapping_rule, subject/object
+  types, evidence span)
+- kimi_candidates.py: FRAME spans skip rule-pack class precheck
+  (ontology signatures are the authority)
+- fixtures extended to 23: lane off-by-default, provenance anchors,
+  trigger precedence overlap, compiler accept/fail-closed/speculative
+
+## Proof
+
+23/23 v2 fixtures + 10/10 legacy compiler tests green.
+Real-function A/B on TEST.md chunks: v1 anchors 68 -> v2 77
+(+9 frame anchors: introduced/pretrained/evaluated/rely on/uses/
+benchmark). Production facts remain 0 for v1 — the replay must also
+answer WHY 68 v1 anchors produced zero RPE rows (binding-class
+question, CATEGORY_C/D candidate for the taxonomy).
+
+Schema changes: none. Rollback: unset env / revert commit.

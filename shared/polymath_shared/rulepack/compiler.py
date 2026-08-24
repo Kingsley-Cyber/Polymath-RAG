@@ -401,6 +401,74 @@ def _signatures_overlap(sigs_a: list[dict], sigs_b: list[dict]) -> bool:
 # ---------------------------------------------------------------------------
 
 
+def _compile_frame_relation(candidate) -> CompilerDecision:
+    """PREDICATE-COMPILER-V2 (owner mission): compile a FRAME-anchored
+    candidate through the scientific predicate ontology.
+
+    semantic frame + typed roles -> predicate, fail-closed. Scope
+    constraints mirror the ontology: negated/speculative/conditional/
+    hypothetical/question REJECT; attributed QUALIFY. Every decision
+    reason carries the full provenance chain required by the owner:
+    semantic_frame_id, lexical_resource_source, predicate_mapping_rule,
+    subject/object types."""
+    from polymath_shared.rulepack.semantic_frames import resolve_predicate
+
+    evidence = candidate.evidence
+    scope: ScopeFlags = candidate.scope
+    source = getattr(evidence, "trigger_match_source", "") or ""
+    frame_id, _, lexical_source = source.partition("|")
+    frame_id = frame_id[6:] if frame_id.startswith("frame:") else None
+
+    def _core(side) -> str | None:
+        ct = getattr(getattr(side, "span", None), "core_type", None)
+        return getattr(ct, "value", None)
+
+    subj_type = _core(candidate.subject)
+    obj_type = _core(candidate.object)
+
+    mapping = None
+    if frame_id:
+        try:
+            mapping = resolve_predicate(frame_id, subj_type, obj_type)
+        except Exception:
+            mapping = None
+    if mapping is None:
+        return CompilerDecision(
+            decision="UNSUPPORTED",
+            reason=(f"frame_unmapped: semantic_frame_id={frame_id} "
+                    f"subject={subj_type} object={obj_type} "
+                    f"lexical_source={lexical_source or 'unknown'}"),
+            rule_id=None,
+        )
+
+    # ontology scope constraints (deterministic; mirrors pack rules)
+    if scope.negated or scope.speculative or scope.conditional \
+            or scope.hypothetical or scope.question:
+        return CompilerDecision(
+            decision="REJECT",
+            reason=(f"frame_scope_reject: negated={scope.negated} "
+                    f"speculative={scope.speculative} "
+                    f"conditional={scope.conditional} "
+                    f"hypothetical={scope.hypothetical} "
+                    f"question={scope.question}"),
+            rule_id=mapping["predicate"],
+        )
+    qualifier = "attributed_qualify" if scope.attributed else None
+
+    provenance = (
+        f"semantic_frame_id={frame_id} "
+        f"lexical_resource_source={lexical_source or 'unknown'} "
+        f"predicate_mapping_rule={mapping['predicate']} "
+        f"subject_type={subj_type} object_type={obj_type} "
+        f"evidence_span=[{evidence.start}:{evidence.end}]"
+        f"{(' qualifier=' + qualifier) if qualifier else ''}")
+    return CompilerDecision(
+        decision="QUALIFY" if qualifier else "ACCEPT",
+        reason=provenance,
+        rule_id=mapping["predicate"],
+    )
+
+
 def compile_relation(
     candidate: RelationCandidate,
     syntactic: Optional[dict],
@@ -437,6 +505,15 @@ def compile_relation(
             reason=_scope_reason(scope),
             rule_id=None,
         )
+
+    # -- PREDICATE-COMPILER-V2: semantic frame lane -------------------------
+    # FRAME-classed anchors resolve frame + typed arguments -> predicate
+    # via the authored scientific ontology. Fail-closed: no valid typed
+    # mapping -> UNSUPPORTED. Provenance (semantic_frame_id, lexical
+    # resource source, mapping rule) rides the decision reason; the
+    # downstream admission gates are unchanged.
+    if (getattr(evidence, "trigger_lexical_class", "") or "").upper() == "FRAME":
+        return _compile_frame_relation(candidate)
 
     # -- stage 2: predicate candidates --------------------------------------
     matches = [
