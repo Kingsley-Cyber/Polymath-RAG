@@ -14,7 +14,13 @@ corpus map, vocabulary evaluated.
 | DOCUMENT_SCOPED | 3 | single-document durable |
 | MENTION_ONLY | 33 | evidence-only, correctly non-referential |
 
-## Admitted facts — all with full provenance
+## Admitted facts — after REFERENCE-COMPLETION slice (7 total)
+
+New since D-slice:
+| Sentinel Detection Framework | created_by | Secure Horizon Labs |
+| Atlas Language Model | developed_by | Quantum Research Group |
+
+Original five below (all with full provenance):
 (frame id · lexical source · role mapping · evidence span)
 
 | Subject | Predicate | Object |

@@ -20,7 +20,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from polymath_shared.rulepack.compound_heads import is_generic_head
+from polymath_shared.rulepack.compound_heads import (
+    compound_head_nouns, is_generic_head)
 
 #: UD labels treated as passive evidence when governed by the trigger.
 _PASSIVE_DEPS = frozenset({"nsubj:pass", "agent", "obl:agent"})
@@ -184,3 +185,83 @@ def resolve_pronoun_subject(
     if len(texts) > 1:
         return None, f"pronoun_ambiguous:{sorted(texts)[:4]}"
     return None, "pronoun_no_compatible_candidate"
+
+
+def resolve_definite_frame_subject(
+    subject_tokens: list[dict],
+    sentence_text: str,
+    prior_entities: list[Any],
+    allowed_subject_types: set[str],
+) -> tuple[Any | None, str]:
+    """Definite-description resolution ("the model was trained on X").
+
+    Owner rules: ONE-sentence lookback (previous + current), same
+    document, type compatibility, UNIQUE candidate — else fail closed.
+
+    subject_tokens: the UD subject-slot tokens of the FRAME anchor.
+    Fires only when they spell a DEFINITE generic-head phrase:
+    determiner 'the' + optional words + generic head noun.
+    """
+    if not subject_tokens:
+        return None, "no_subject_tokens"
+    phrase = " ".join(t.get("text", "") for t in subject_tokens).strip()
+    low = phrase.lower()
+    if not (low.startswith("the ") or low == "the"):
+        return None, "not_definite"
+    head = low.split()[-1].removesuffix("s")
+    if head not in {h for h in compound_head_nouns()}:
+        return None, "head_not_generic"
+
+    cands: dict[str, Any] = {}
+    for e in prior_entities or []:
+        ct = getattr(getattr(e, "core_type", None), "value",
+                     getattr(e, "core_type", ""))
+        if str(ct).lower() in allowed_subject_types:
+            cands.setdefault(e.text, e)
+    if len(cands) == 1:
+        e = next(iter(cands.values()))
+        return e, f"definite_resolved_unique:{e.text}"
+    if len(cands) > 1:
+        return None, f"definite_ambiguous:{sorted(cands)[:4]}"
+    return None, "definite_no_compatible_candidate"
+
+
+def expand_compound_left(sentence: str, entity: Any,
+                         trigger_start: int, max_extra: int = 3) -> Any | None:
+    """C3b compound/head inheritance: 'Orion Transformer architecture'.
+
+    Widen a bound entity span leftwards through Capitalized modifier
+    tokens only ('Orion', 'Transformer'). Lowercase adjectives
+    ('advanced') reject the expansion - fail-closed, no guessing.
+    Returns a copy with widened span/text, or None.
+    """
+    start = getattr(entity, "start", None)
+    text = getattr(entity, "text", None)
+    if start is None or text is None:
+        return None
+    words = sentence[:start].split()
+    take = []
+    for w in reversed(words[-max_extra:]):
+        if w[:1].isupper():
+            take.insert(0, w)
+        else:
+            break
+    if not take:
+        return None
+    new_start = start - len(" ".join(take)) - 1
+    if new_start < 0:
+        return None
+    merged_text = " ".join(take) + " " + text
+    if take and take[0].lower() in ("the", "a", "an"):
+        take = take[1:]
+        merged_text = " ".join(take) + " " + text
+        new_start = start - len(" ".join(take)) - 1
+    if hasattr(entity, "model_copy"):
+        return entity.model_copy(update={"text": merged_text,
+                                         "start": new_start})
+    if isinstance(entity, dict):
+        wider = dict(entity)
+        wider["text"] = merged_text
+        wider["start"] = new_start
+        return wider
+    return None

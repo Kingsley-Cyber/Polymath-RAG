@@ -265,6 +265,8 @@ def build_candidates_kimi(
                         from polymath_shared.rulepack.frame_roles import (
                             orient_frame_slots, head_chain_theme,
                             resolve_pronoun_subject,
+                            resolve_definite_frame_subject,
+                            expand_compound_left,
                         )
                         from polymath_shared.rulepack.semantic_frames import (
                             mappings_for_frame,
@@ -325,7 +327,40 @@ def build_candidates_kimi(
                                         "PRONOUN_" +
                                         note.split(":")[0].upper(),
                                         {"note": note, "kimi_v1": True})
+                        # C3-definite: 'the <generic head>' subject with
+                        # no entity bound -> unique type-compatible
+                        # candidate from previous sentence (fail-closed).
+                        if not f_subj and ud_args.get("subject"):
+                            allowed = set()
+                            if fid:
+                                for m in mappings_for_frame(fid):
+                                    allowed |= {x.lower() for x in
+                                                m.get("subject_types", [])}
+                            ent2, note2 = (
+                                resolve_definite_frame_subject(
+                                    ud_args["subject"], sentence,
+                                    prev_slice_entities or [], allowed))
+                            if ent2 is not None:
+                                f_subj = [ent2]
+                            if observer and note2 != "no_subject_tokens":
+                                observer.record_candidate_outcome(
+                                    sl, evidence, "DEFINITE_" +
+                                    note2.split(":")[0].upper(),
+                                    {"note": note2, "kimi_v1": True})
+                        # C3b: widen named-modifier + typed-head chains
+                        widened = []
+                        for slot_ents in (f_subj, f_obj):
+                            widened_slot = []
+                            for e in slot_ents:
+                                w2 = expand_compound_left(sentence, e,
+                                                          evidence.start)
+                                widened_slot.append(w2 if w2 is not None
+                                                    else e)
+                            widened.append(widened_slot)
                         if f_subj or f_obj:
+                            subjects = widened[0] or f_subj
+                            objects = widened[1] or f_obj
+                            binding_source = BindingSource.SAFE_LOCAL_PATTERN
                             subjects, objects = f_subj, f_obj
                             binding_source = BindingSource.SAFE_LOCAL_PATTERN
 

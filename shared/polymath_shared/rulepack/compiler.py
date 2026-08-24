@@ -429,7 +429,9 @@ def _compile_frame_relation(candidate) -> CompilerDecision:
     mapping = None
     if frame_id:
         try:
-            mapping = resolve_predicate(frame_id, subj_type, obj_type)
+            mapping = resolve_predicate(
+                frame_id, subj_type, obj_type,
+                lemma_hint=getattr(evidence, "trigger_lemma", None))
         except Exception:
             mapping = None
     if mapping is None:

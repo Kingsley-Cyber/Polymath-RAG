@@ -109,6 +109,8 @@ frames:
       - {surface: propose,    lemma: propose,   provenance: propbank:propose.01}
       - {surface: presented,  lemma: present,   provenance: propbank:present.01}
       - {surface: developed,  lemma: develop,   provenance: propbank:develop.02}
+      - {surface: created,    lemma: create,    provenance: propbank:create.01}
+      - {surface: create,     lemma: create,    provenance: propbank:create.01}
     roles:
       agent: {thematic: Agent, propbank: ARG0}
       theme: {thematic: Theme, propbank: ARG1}
@@ -127,6 +129,23 @@ frames:
       - predicate: proposed_by
         subject_types: [Method, Framework, Model, System, Approach]
         object_types: [ResearchGroup, Person, Organization]
+      - predicate: created_by
+        subject_types: [Model, System, Framework, Method, Technology, Task]
+        object_types: [Organization, ResearchGroup, Person]
+        pattern: "theme passive-agent[by]"
+        positive_fixtures:
+          - sentence: "The Sentinel Detection Framework was created by Secure Horizon Labs in 2022."
+            subject: Sentinel Detection Framework
+            object: Secure Horizon Labs
+      - predicate: developed_by
+        subject_types: [Model, System, Architecture, Framework, Method,
+                        Technology]
+        object_types: [Organization, ResearchGroup, Person]
+        pattern: "theme passive-agent[by]"
+        positive_fixtures:
+          - sentence: "The Atlas Language Model was developed by Quantum Research Group."
+            subject: Atlas Language Model
+            object: Quantum Research Group
 
   usage_event:
     definition: "A system uses, applies, or depends on a method, component, or dataset."

@@ -108,22 +108,35 @@ def mappings_for_frame(frame_id: str) -> list[dict[str, Any]]:
 
 def resolve_predicate(frame_id: str,
                       subject_type: str | None,
-                      object_type: str | None) -> dict[str, Any] | None:
+                      object_type: str | None,
+                      lemma_hint: str | None = None) -> dict[str, Any] | None:
     """Signature validation: the ONLY path from a typed frame to a
     predicate. Returns the mapping dict (with predicate id) or None.
 
-    None means UNSUPPORTED — the compiler must not emit a candidate.
+    None means UNSUPPORTED - the compiler must not emit a candidate.
+    lemma_hint: when the anchor's trigger lemma aligns with exactly one
+    viable mapping's predicate root ('created' -> created_by), it wins;
+    otherwise first typed match (deterministic).
     """
     if subject_type is None or object_type is None:
         return None
     s = subject_type.lower()
     o = object_type.lower()
+    viable = []
     for m in mappings_for_frame(frame_id):
         subs = {t.lower() for t in m.get("subject_types", [])}
         objs = {t.lower() for t in m.get("object_types", [])}
         if s in subs and o in objs:
-            return m
-    return None
+            viable.append(m)
+    if not viable:
+        return None
+    if lemma_hint:
+        root = lemma_hint.lower().removesuffix("d").removesuffix("e")
+        aligned = [m for m in viable
+                   if m["predicate"].lower().startswith(root)]
+        if len(aligned) == 1:
+            return aligned[0]
+    return viable[0]
 
 
 def compound_head_nouns() -> frozenset[str]:
