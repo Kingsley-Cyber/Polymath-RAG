@@ -186,6 +186,8 @@ def worker_contracts() -> dict[str, Any]:
     from polymath_shared.settings import get_settings
 
     s = get_settings()
+    from polymath_shared.execution_bundle import semantic_file_hashes
+    files = semantic_file_hashes()
     return {
         "query_policy": active_policy_version(),
         "rule_pack": s.worker.rule_pack_version,
@@ -197,10 +199,22 @@ def worker_contracts() -> dict[str, Any]:
         # actually execute. A worker alive but running older code advertises
         # a different value and is refused the ticket.
         "semantic_bundle": semantic_authority_sha256(),
+        # EXECUTION-BUNDLE-FENCE-V1: lexical/semantic authority FILE hashes.
+        # The ontology realization edit moved no existing fence because the
+        # yaml escapes the python-module code hash; these close that hole,
+        # so contract reconciliation mints successors when they change.
+        "rule_pack_file_sha": files["core-predicates-v1.4.0.yaml"],
+        "ontology_file_sha": files["scientific-predicate-ontology-v2.yaml"],
     }
 
 
 def worker_identity(worker_type: str) -> dict[str, Any]:
+    from polymath_shared.execution_bundle import (
+        bundle_id,
+        compute_execution_bundle,
+    )
+
+    bundle = compute_execution_bundle()
     return {
         "worker_id": f"{worker_type}-{os.getpid()}-{uuid.uuid4().hex[:8]}",
         "worker_type": worker_type,
@@ -209,25 +223,49 @@ def worker_identity(worker_type: str) -> dict[str, Any]:
         "build_sha": _build_sha(),
         "contracts": worker_contracts(),
         "started_at": time.time(),
+        # EXECUTION-BUNDLE-FENCE-V1
+        "execution_bundle": bundle,
+        "execution_bundle_id": bundle_id(bundle),
     }
 
 
 def register_worker(conn: Connection, identity: dict[str, Any]) -> None:
     import json
 
+    bundle = identity.get("execution_bundle") or {}
+    conn.execute(
+        """
+        INSERT INTO execution_bundles
+            (bundle_hash, git_sha, tree_dirty, semantic_authority,
+             rule_pack_file, ontology_file, config)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT (bundle_hash) DO UPDATE SET last_seen_at = now()
+        """,
+        (bundle.get("execution_bundle_hash", ""),
+         bundle.get("git_sha", ""),
+         bundle.get("tree_dirty") == "True",
+         bundle.get("semantic_authority", ""),
+         bundle.get("rule_pack_file", ""),
+         bundle.get("ontology_file", ""),
+         json.dumps(bundle.get("config", {}))),
+    )
     conn.execute(
         """
         INSERT INTO worker_registrations
-            (worker_id, worker_type, pid, host, build_sha, contracts, status)
-        VALUES (%s, %s, %s, %s, %s, %s, 'healthy')
+            (worker_id, worker_type, pid, host, build_sha, contracts,
+             status, execution_bundle_hash, execution_bundle)
+        VALUES (%s, %s, %s, %s, %s, %s, 'healthy', %s, %s)
         ON CONFLICT (worker_id) DO UPDATE SET
             pid = EXCLUDED.pid, host = EXCLUDED.host,
             build_sha = EXCLUDED.build_sha, contracts = EXCLUDED.contracts,
-            status = 'healthy', started_at = now(), heartbeat_at = now()
+            status = 'healthy', started_at = now(), heartbeat_at = now(),
+            execution_bundle_hash = EXCLUDED.execution_bundle_hash,
+            execution_bundle = EXCLUDED.execution_bundle
         """,
         (identity["worker_id"], identity["worker_type"], identity["pid"],
          identity["host"], identity["build_sha"],
-         json.dumps(identity["contracts"])),
+         json.dumps(identity["contracts"]),
+         bundle.get("execution_bundle_hash", ""), json.dumps(bundle)),
     )
 
 

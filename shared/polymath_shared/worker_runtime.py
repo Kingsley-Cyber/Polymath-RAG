@@ -204,6 +204,19 @@ def run_worker(worker_type: str, event_types: list[str],
     identity = worker_identity(worker_type)
     contracts = identity["contracts"]
     log = logging.getLogger(f"worker-{worker_type}")
+    # EXECUTION-BUNDLE-FENCE-V1: pin the boot fingerprint. If the pinned
+    # surfaces change on disk while this process lives, its boot-time
+    # self-description no longer describes the code it would execute —
+    # refuse claims loudly instead of producing provenance-orphaned
+    # knowledge (measured failure class during P0.7 parity).
+    from polymath_shared.execution_bundle import (
+        bundle_id,
+        fast_code_fingerprint,
+        semantic_file_hashes,
+    )
+    boot_fingerprint = fast_code_fingerprint()
+    boot_semantic_files = semantic_file_hashes()
+    bundle_stale_reason: str | None = None
     registered = False
     while True:
         try:
@@ -214,9 +227,39 @@ def run_worker(worker_type: str, event_types: list[str],
                     log.info("registered", extra={
                         "worker_id": identity["worker_id"],
                         "build_sha": identity["build_sha"],
+                        "execution_bundle": identity["execution_bundle_id"],
                     })
                 heartbeat(conn, identity["worker_id"])
-                events = claim_ticket_events(conn, identity, event_types, batch_size)
+                if bundle_stale_reason is None:
+                    drift = None
+                    if fast_code_fingerprint() != boot_fingerprint:
+                        drift = "BUNDLE_STALE_CODE_DRIFT"
+                    else:
+                        now_files = semantic_file_hashes()
+                        if now_files != boot_semantic_files:
+                            drift = "BUNDLE_STALE_SEMANTIC_FILE_DRIFT"
+                    if drift:
+                        bundle_stale_reason = drift
+                        log.critical(
+                            "execution bundle stale; refusing claims",
+                            extra={"error_code": drift,
+                                   "worker_id": identity["worker_id"],
+                                   "bundle": identity["execution_bundle_id"]})
+                events = []
+                if bundle_stale_reason is not None:
+                    conn.execute(
+                        """
+                        UPDATE worker_registrations
+                           SET last_error = %s, status = 'quarantined'
+                         WHERE worker_id = %s
+                        """,
+                        (bundle_stale_reason, identity["worker_id"]),
+                    )
+                    log.error("claims refused while bundle is stale",
+                              extra={"error_code": bundle_stale_reason})
+                else:
+                    events = claim_ticket_events(
+                        conn, identity, event_types, batch_size)
             for event in events:
                 ticket_id = event.get("ticket_id")
                 import threading as _threading

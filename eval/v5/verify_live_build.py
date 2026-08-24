@@ -107,24 +107,62 @@ def check_workers(sha: str, max_heartbeat_age_s: int = 180) -> list[dict]:
     with psycopg.connect(DSN, connect_timeout=10) as conn:
         rows = conn.execute(
             """SELECT worker_type, worker_id, pid, build_sha, status,
+                      execution_bundle_hash,
                       EXTRACT(EPOCH FROM (now() - heartbeat_at)) AS age
                  FROM worker_registrations
                 ORDER BY worker_type, heartbeat_at DESC""").fetchall()
     seen = set()
-    for wtype, wid, pid, build, status, age in rows:
+    for wtype, wid, pid, build, status, bundle, age in rows:
         if wtype in seen:
             continue          # newest registration per type
         seen.add(wtype)
         fresh = age is not None and age <= max_heartbeat_age_s
+        ok = bool(build == sha and fresh)
+        why = ("" if build == sha else f"build {build} != HEAD {sha}") \
+            or ("" if fresh else f"heartbeat {age:.0f}s old")
         out.append({
             "component": wtype, "kind": "worker", "pid": pid,
-            "build_sha": build, "expected": sha, "status": status,
+            "build_sha": build, "expected": sha,
+            "execution_bundle_hash": bundle or "",
+            "status": status,
             "heartbeat_age_s": round(age, 1) if age is not None else None,
-            "ok": bool(build == sha and fresh),
-            "why": ("" if build == sha else f"build {build} != HEAD {sha}")
-                   or ("" if fresh else f"heartbeat {age:.0f}s old"),
+            "ok": ok, "why": why,
         })
     return out
+
+
+def check_execution_bundles(components: list[dict]) -> dict:
+    """EXECUTION-BUNDLE-FENCE-V1: every healthy in-scope worker must carry
+    the SAME execution_bundle_hash, it must match a FRESHLY computed
+    on-disk bundle (closes the stale-in-memory blind spot), and the tree
+    it describes must be clean. Uniform-but-stale still fails."""
+    from polymath_shared.execution_bundle import compute_execution_bundle
+
+    fresh = compute_execution_bundle()
+    hashes = sorted({c["execution_bundle_hash"] for c in components
+                     if c.get("execution_bundle_hash")})
+    uniform = len(hashes) <= 1
+    matches_disk = bool(hashes) and hashes[0] == fresh["execution_bundle_hash"]
+    clean = fresh["tree_dirty"] != "True"
+    ok = bool(hashes) and uniform and matches_disk and clean
+    why = []
+    if not hashes:
+        why.append("no worker reported an execution bundle")
+    if not uniform:
+        why.append(f"fleet split across bundles {hashes}")
+    if hashes and not matches_disk:
+        why.append(f"recorded {hashes[0][:12]} != fresh "
+                   f"{fresh['execution_bundle_hash'][:12]} (stale memory)")
+    if not clean:
+        why.append("working tree dirty at fence time")
+    return {
+        "component": "execution_bundle", "kind": "bundle",
+        "ok": ok, "why": "; ".join(why),
+        "fresh_hash": fresh["execution_bundle_hash"],
+        "worker_hashes": hashes,
+        "uniform": uniform, "matches_disk": matches_disk,
+        "tree_clean": clean,
+    }
 
 
 def check_services(advisory: bool = False) -> list[dict]:
@@ -179,14 +217,20 @@ def main() -> int:
                 c["why"] = "not started by this capped run"
     enforced = [c for c in components
                 if not c.get("advisory") and not c.get("out_of_scope")]
+    worker_components = [c for c in components if c.get("kind") == "worker"
+                         and not c.get("out_of_scope")]
+    bundle_check = check_execution_bundles(worker_components) \
+        if worker_components else None
+    all_enforced = enforced + ([bundle_check] if bundle_check else [])
     report = {
         "head_sha": sha,
         "semantic_authority_sha256": semantic_authority_sha256()[:16],
         "scope": sorted(scope) if scope else "full fleet",
         "components": components,
-        "enforced": len(enforced),
-        "passing": sum(1 for c in enforced if c["ok"]),
-        "verdict": "PASS" if all(c["ok"] for c in enforced) else "FAIL",
+        "execution_bundle": bundle_check,
+        "enforced": len(all_enforced),
+        "passing": sum(1 for c in all_enforced if c["ok"]),
+        "verdict": "PASS" if all(c["ok"] for c in all_enforced) else "FAIL",
     }
     if a.json:
         print(json.dumps(report, indent=1))
@@ -201,6 +245,11 @@ def main() -> int:
             extra = c.get("build_sha") or c.get("started_at") or ""
             print(f"  [{mark}] {c['component']:22s} pid={str(c.get('pid')):>7} "
                   f"{extra}{tag} {c.get('why','')}")
+        if bundle_check:
+            mark = "ok  " if bundle_check["ok"] else "FAIL"
+            print(f"  [{mark}] execution_bundle        "
+                  f"fresh={bundle_check['fresh_hash'][:12]} "
+                  f"{bundle_check['why']}")
         print(f"  => {report['verdict']} "
               f"({report['passing']}/{report['enforced']} enforced components)")
     return 0 if report["verdict"] == "PASS" else 1

@@ -1496,6 +1496,23 @@ def _evidence_offsets(chunk_row: dict, candidate, decision) -> dict:
     }
 
 
+_BUNDLE_STAMP: dict | None = None
+
+
+def _stamped_provenance(provenance: dict) -> dict:
+    """EXECUTION-BUNDLE-FENCE-V1: every accepted fact records the exact
+    code+configuration bundle that produced it. Computed once per
+    process; the claim gate guarantees it cannot go stale mid-flight."""
+    global _BUNDLE_STAMP
+    if _BUNDLE_STAMP is None:
+        from polymath_shared.execution_bundle import (
+            bundle_id, compute_execution_bundle)
+        _BUNDLE_STAMP = bundle_id(compute_execution_bundle())
+    out = dict(provenance or {})
+    out.setdefault("generated_by_bundle_hash", _BUNDLE_STAMP)
+    return out
+
+
 def _persist_decision(conn: Connection, chunk_row: dict, candidate, decision,
                       corpus_id: str = "eval", identities: dict | None = None) -> None:
     """S4c: fact endpoints are written from the SAME admission the mention
@@ -1551,7 +1568,7 @@ def _persist_decision(conn: Connection, chunk_row: dict, candidate, decision,
         """,
         (fact.fact_id, fact.predicate, fact.subject_id, fact.object_id,
          json.dumps(fact.qualifiers), fact.decision, fact.rule_id,
-         fact.rule_version, json.dumps(fact.provenance)),
+         fact.rule_version, json.dumps(_stamped_provenance(fact.provenance))),
     )
 
     from polymath_shared.identity import evidence_id
