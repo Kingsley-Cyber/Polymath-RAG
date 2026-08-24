@@ -89,3 +89,28 @@ Lock metadata: rule_pack 1.4.0 · query_policy semantic-query-policy-v1
 · semantic_bundle 6976e483… · ontology
 scientific-predicate-ontology-v2.0.0 · vocabulary-mapping-v1
 (min_supporting_summaries=2) · concept-family-v1 · envelope v1.
+
+---
+
+# ADDENDUM — KNOWLEDGE-ROUTER-V1 (2026-08-24)
+
+Architecture decision locked per owner: the router is a TRAFFIC
+CONTROLLER between intake and extraction — never a knowledge engine,
+never admission-weakening, embedding-free.
+
+shared/polymath_shared/knowledge_router/: knowledge_types.yaml
+(modes FACTUAL/PROCEDURAL/CONCEPTUAL/EVENT/NARRATIVE/REFERENCE/OPINION
++ domains + authored lexicons/structure/metadata signals +
+routing_policy mode→extractors) · classifier.py (deterministic
+multi-label confidence; document-level input REQUIRED — parent-chunk
+classification under-triggers).
+
+Validated on the three real corpora (full-document input):
+  test-copy-v1        FACTUAL 0.81 -> scientific_predicate+evidence ON
+  ga-addtocart        PROCEDURAL 0.97 -> scientific predicates OFF
+  hooks-transcript    PROCEDURAL 0.99 -> scientific predicates OFF
+
+Fixtures: tests/determinism/test_knowledge_router.py (5).
+Integration seam (cutover restart): after text normalization at intake,
+store classification profile on documents.profile.knowledge_router;
+extract_worker enables lanes per routing_policy. Dormant until then.

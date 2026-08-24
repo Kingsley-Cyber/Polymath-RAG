@@ -1,0 +1,101 @@
+# knowledge-types.yaml — KNOWLEDGE-ROUTER-V1
+#
+# Deterministic document classification signals. The router is a
+# TRAFFIC CONTROLLER, not a knowledge engine: it decides which
+# extraction paths may operate. It never weakens Entity Admission,
+# never creates facts, never uses embeddings.
+#
+# Level 1 = knowledge_mode (multi-label, confidence-scored)
+# Level 2 = domain (separate axis; same mode exists in many domains)
+
+version: "knowledge-router-v1.0.0"
+
+modes:
+  - FACTUAL       # scientific/factual claims (the existing pipeline)
+  - PROCEDURAL    # how-to workflows, tutorials, runbooks
+  - CONCEPTUAL    # ideas, principles, philosophy
+  - EVENT         # news/incident timelines
+  - NARRATIVE     # stories, transcripts without structure
+  - REFERENCE     # manuals, API docs, lookup material
+  - OPINION       # argumentative/editorial
+
+domains:
+  - artificial_intelligence
+  - cybersecurity
+  - commerce
+  - software_engineering
+  - finance
+  - biomedical
+  - philosophy
+  - marketing
+  - general
+
+# Signal 3 — linguistic lexicons (lemma-ish token hits per 100 words).
+# Deterministic; weights are authored, tunable via regression only.
+lexicons:
+  FACTUAL:
+    - [evaluated, 2]
+    - [experiment, 2]
+    - [dataset, 2]
+    - [benchmark, 2]
+    - [results, 1]
+    - [methodology, 2]
+    - [pretrained, 2]
+    - [baseline, 1]
+    - [corpus, 2]
+    - [hypothesis, 2]
+  PROCEDURAL:
+    - [install, 2]
+    - [configure, 2]
+    - [select, 1]
+    - [step, 2]
+    - [run, 1]
+    - [execute, 2]
+    - [open, 1]
+    - [go to, 2]
+    - [paste, 2]
+    - [create, 1]
+    - [report, 1]
+    - [setup, 2]
+    - [prompt, 1]
+  CONCEPTUAL:
+    - [meaning, 2]
+    - [principle, 2]
+    - [philosophy, 2]
+    - [framework, 1]
+    - [argues, 2]
+    - [concept, 1]
+    - [represents, 1]
+    - [teaches, 2]
+  NARRATIVE:
+    - [hey guys, 2]
+    - [in this video, 2]
+    - [story, 1]
+
+# Signal 2 — structural patterns (count-based, per whole document).
+structure_patterns:
+  PROCEDURAL:
+    - {regex: "(?im)^step\\s*\\d+", weight: 3}
+    - {regex: "(?im)^\\d+\\.\\s", weight: 2}
+    - {regex: "\\*\\*\\[\\d+:\\d+\\]\\*\\*", weight: 2}   # transcript stamps
+    - {regex: "(?i)\\b(install|configure|set up|navigate to)\\b", weight: 1}
+  FACTUAL:
+    - {regex: "(?im)^#{1,3}\\s*(abstract|methodology|results|conclusion|related work)\\b", weight: 3}
+    - {regex: "(?i)\\b(we (evaluate|propose|demonstrate)|state-of-the-art)\\b", weight: 2}
+
+# Signal 1 — metadata hints (front matter keys/values).
+metadata_hints:
+  PROCEDURAL:
+    - {key: source_format, equals: youtube_transcript, weight: 2}
+  NARRATIVE:
+    - {key: source_format, equals: youtube_transcript, weight: 1}
+
+routing_policy:
+  # mode -> allowed extraction paths (Entity Admission always on)
+  FACTUAL:     [entity, scientific_predicate, evidence]
+  PROCEDURAL:  [entity, concept]          # procedure engine: planned slice
+  CONCEPTUAL:  [entity, concept]
+  NARRATIVE:   [entity]
+  EVENT:       [entity, event]
+  REFERENCE:   [entity, concept]
+  OPINION:     [entity]                   # scope gates still refuse claims
