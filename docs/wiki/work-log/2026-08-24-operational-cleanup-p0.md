@@ -40,3 +40,16 @@ Smallest acceptance criteria:
 ## Proof
 
 Determinism tests + live behavior in session log.
+
+## P1 ARTIFACT-PERSISTENCE proof (same slice session)
+
+Migration 0033 applied. Live corpus `p1-genre-probe-v1`:
+- SOP doc -> procedure_artifacts row: 4 steps, tools [Splunk forwarder,
+  SIEM console, ...], confidence 0.8, bundle-stamped.
+- Philosophy doc -> 3 concept_artifacts (discipline of assent,
+  Amor fati, + heading-glued first entry flagged as polish).
+- Qdrant collection for the corpus: 10 points including
+  routing_procedure x1 and routing_concept x3 with text composed from
+  goal/steps/tools and name/description respectively.
+- Idempotency: re-ingest of identical bytes reuses content-addressed
+  artifact ids (ON CONFLICT DO NOTHING).
