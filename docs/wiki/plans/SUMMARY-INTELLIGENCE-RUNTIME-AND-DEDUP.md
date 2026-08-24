@@ -700,3 +700,16 @@ no LLM relations, no weakened gates. Misses classified A-E before
 any patch.
 
 Phase-1 telemetry continues via drain_metrics.jsonl sampler.
+
+---
+
+## ADDENDUM 5j: acceptance harness armed (owner COVERAGE_GATE schema)
+
+eval/v5/acceptance/harness.py scores every mission gate against live
+state with honest verdicts (PASS/FAIL/PENDING + measured values):
+extraction coverage+integrity · summary lineage per level · vocabulary
+merge receipts · retrieval routing population. Current run: YELLOW —
+summary/vocabulary PENDING (stages queued behind drain), retrieval
+SCORED (20k routing summaries), extraction facts awaiting cutover
+replay scoring. Gates: coverage>=90% precision>=95% support>=95%
+role_binding_err=0 FP=0.
