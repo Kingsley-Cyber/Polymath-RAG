@@ -187,11 +187,17 @@ def propose_evidence(
 
     import os as _os
     if _os.environ.get("POLYMATH_PREDICATE_V2", "off") in ("shadow", "enforce"):
-        existing = [(s.start, s.end) for s in spans]
-        for f in propose_frame_evidence(text, chunk_id):
-            if any(not (f.end <= s or f.start >= e) for s, e in existing):
-                continue  # trigger lane keeps precedence on overlap
-            spans.append(f)
+        # SEMANTIC PRECEDENCE: where an ontology frame realizes the same
+        # span a manual trigger covers, the FRAME owns it — typed role
+        # compilation supersedes untyped trigger arms. This is the exact
+        # seam under test; all other trigger spans are untouched.
+        frame_spans = propose_frame_evidence(text, chunk_id)
+        kept = [
+            s for s in spans
+            if not any(f.start <= s.start and s.end <= f.end
+                       for f in frame_spans)
+        ]
+        spans = sorted(kept + frame_spans, key=lambda s: (s.start, s.end))
 
     return sorted(spans, key=lambda s: (s.start, s.end))
 

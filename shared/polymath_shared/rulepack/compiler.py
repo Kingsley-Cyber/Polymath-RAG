@@ -455,18 +455,46 @@ def _compile_frame_relation(candidate) -> CompilerDecision:
         )
     qualifier = "attributed_qualify" if scope.attributed else None
 
-    provenance = (
-        f"semantic_frame_id={frame_id} "
-        f"lexical_resource_source={lexical_source or 'unknown'} "
-        f"predicate_mapping_rule={mapping['predicate']} "
-        f"subject_type={subj_type} object_type={obj_type} "
-        f"evidence_span=[{evidence.start}:{evidence.end}]"
-        f"{(' qualifier=' + qualifier) if qualifier else ''}")
-    return CompilerDecision(
+    # Build the CanonicalFact exactly like the pack path so downstream
+    # admission/projection consume it unchanged.
+    from polymath_shared.contracts import CanonicalFact
+    from polymath_shared.identity import fact_id
+
+    subject_id = candidate.subject.resolved_entity_id
+    object_id = candidate.object.resolved_entity_id
+    if subject_id == object_id:
+        return CompilerDecision(decision="REJECT", reason="self_edge",
+                                rule_id=mapping["predicate"])
+    qualifiers = {}
+    if qualifier:
+        qualifiers["attributed"] = qualifier
+    onto_version = "scientific-predicate-ontology-v2.0.0"
+    fact = CanonicalFact(
+        fact_id=fact_id(mapping["predicate"], subject_id, object_id,
+                        qualifiers),
+        predicate=mapping["predicate"],
+        subject_id=subject_id,
+        object_id=object_id,
+        qualifiers=qualifiers,
         decision="QUALIFY" if qualifier else "ACCEPT",
-        reason=provenance,
         rule_id=mapping["predicate"],
+        rule_version=onto_version,
+        provenance={
+            "semantic_frame_id": frame_id,
+            "lexical_resource_source": lexical_source or "unknown",
+            "predicate_mapping_rule": mapping["predicate"],
+            "trigger_lemma": evidence.trigger_lemma,
+            "trigger_surface": evidence.text,
+            "orientation": "frame_role_oriented",
+            "weak": False,
+            "scope": scope.model_dump(),
+            "ontology_version": onto_version,
+            "evidence_span": [evidence.start, evidence.end],
+            "dependency_path": getattr(candidate, "roleset", None),
+        },
     )
+    return CompilerDecision(decision=fact.decision, fact=fact,
+                            rule_id=mapping["predicate"])
 
 
 def compile_relation(
@@ -902,6 +930,10 @@ def compile_relation_kimi(
             reason=_scope_reason(scope),
             rule_id=None,
         )
+
+    # -- PREDICATE-COMPILER-V2: semantic frame lane (kimi path) -------------
+    if (getattr(evidence, "trigger_lexical_class", "") or "").upper() == "FRAME":
+        return _compile_frame_relation(candidate)
 
     # -- stage 2: predicate candidates --------------------------------------
     matches = [

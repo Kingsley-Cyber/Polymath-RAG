@@ -171,17 +171,16 @@ def test_frame_lane_emits_provenance_anchors(monkeypatch):
     assert 0 <= f.start < f.end <= len(text)
 
 
-def test_trigger_lane_keeps_precedence_on_overlap(monkeypatch):
+def test_frame_owns_overlapping_span_semantic_precedence(monkeypatch):
     from workers.evidence_proposer import propose_evidence
-    monkeypatch.setenv("POLYMATH_PREDICATE_V2", "enforce")
-    # 'rate' is a v1 trigger surface; construct a pack whose trigger
-    # overlaps a frame realization span
+    monkeypatch.setenv("POLYMATH_PREDICATE_V2", "shadow")
     pack = {"predicate_order": ["r1"], "predicates": {"r1": {
         "evidence": {"classes": ["action"], "nouns": ["benchmark"]}}}}
     spans = propose_evidence("We benchmark the model.", "c1", pack)
     bench = [s for s in spans if s.text == "benchmark"]
-    assert len(bench) == 1 and bench[0].trigger_match_source == "nouns", (
-        "trigger lane must win overlapping spans; frame lane supplements only")
+    assert len(bench) == 1, "overlap must collapse to ONE span"
+    assert bench[0].trigger_lexical_class == "FRAME", (
+        "where an ontology frame realizes the span, the FRAME owns it")
 
 
 # --- production splice: compiler FRAME branch ---------------------------
@@ -218,14 +217,14 @@ def test_compiler_frame_branch_accepts_with_full_provenance():
     c = _candidate_for("The BERT model was introduced by Google Research.",
                        22, 32, "Architecture", "ResearchGroup")
     d = compile_relation(c, None, {"predicate_order": [], "predicates": {}})
-    assert d.decision == "ACCEPT"
-    assert d.rule_id == "introduced_by"
-    for token in ("semantic_frame_id=creation_event",
-                  "lexical_resource_source=propbank:introduce.01",
-                  "predicate_mapping_rule=introduced_by",
-                  "subject_type=Architecture",
-                  "object_type=ResearchGroup"):
-        assert token in d.reason
+    assert d.decision == "ACCEPT" and d.fact is not None
+    assert d.rule_id == "introduced_by" and d.fact.predicate == "introduced_by"
+    prov = d.fact.provenance
+    assert prov["semantic_frame_id"] == "creation_event"
+    assert prov["lexical_resource_source"] == "propbank:introduce.01"
+    assert prov["predicate_mapping_rule"] == "introduced_by"
+    assert prov["orientation"] == "frame_role_oriented"
+    assert d.fact.subject_id != d.fact.object_id
 
 
 def test_compiler_frame_branch_fail_closed_on_bad_types():
