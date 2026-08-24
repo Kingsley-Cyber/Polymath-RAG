@@ -133,12 +133,31 @@ def check_workers(sha: str, max_heartbeat_age_s: int = 180) -> list[dict]:
 
 def check_execution_bundles(components: list[dict]) -> dict:
     """EXECUTION-BUNDLE-FENCE-V1: every healthy in-scope worker must carry
-    the SAME execution_bundle_hash, it must match a FRESHLY computed
-    on-disk bundle (closes the stale-in-memory blind spot), and the tree
-    it describes must be clean. Uniform-but-stale still fails."""
+    the SAME execution_bundle_hash; a freshly computed bundle under the
+    FLEET'S RECORDED CONFIG (execution_bundles.config) must match it.
+    Config comes from the DB, not this shell, so a fence run outside the
+    boot environment cannot produce a false stale-memory alarm while
+    genuine on-disk drift still fails loudly."""
+    import json as _json
+
     from polymath_shared.execution_bundle import compute_execution_bundle
 
-    fresh = compute_execution_bundle()
+    with psycopg.connect(DSN, connect_timeout=10) as conn:
+        cfg_rows = conn.execute(
+            "SELECT config FROM execution_bundles ORDER BY last_seen_at DESC "
+            "LIMIT 1").fetchall()
+    fresh_env = dict(cfg_rows[0][0]) if cfg_rows else {}
+    saved = {k: os.environ.get(k) for k in fresh_env}
+    try:
+        os.environ.update({k: str(v) for k, v in fresh_env.items() if v})
+        fresh = compute_execution_bundle()
+    finally:
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+
     hashes = sorted({c["execution_bundle_hash"] for c in components
                      if c.get("execution_bundle_hash")})
     uniform = len(hashes) <= 1
