@@ -135,3 +135,54 @@ pending same. Graph usefulness currently = entity retrieval only.
 Replay successor extraction → harness gap-sizing → then B-vocabulary
 authored updates + A-binding fix together, fixtures first, replay,
 harness again.
+
+---
+
+# FAILURE MATRIX (2026-08-24): every expected TEST.md fact traced
+
+Stages traced: frame resolution -> role binding -> type checking ->
+admission projection. v2 shadow semantics; NO rules modified.
+Legend: A=entity_discovery · B=semantic_frame · C=role_binding ·
+D=type_ontology · E=expected_rejection.
+
+| # | Expected fact | Frame | Binding | Types | Class |
+|---|---|---|---|---|---|
+| 1 | BERT introduced_by Google Research | creation_event OK | passive-by binds; BERT nearest-left ✓ | Architecture+ResearchGroup→introduced_by ✓ | **PROJECTED PASS** |
+| 2 | BERT pretrained_on BooksCorpus | training_event OK | object never proposed | unreachable | **A** |
+| 3 | BERT pretrained_on English Wikipedia | training_event OK | object never proposed | unreachable | **A** |
+| 4 | BERT evaluated_on GLUE | evaluation_event OK | ACTIVE voice; no left-entity subject; role orientation missing in legacy_v1 | Architecture+Benchmark ✓ once oriented | **C** |
+| 5 | BERT evaluated_on SQuAD | evaluation_event OK | same as #4 | ✓ | **C** |
+| 6 | ToT introduced_by Princeton researchers | creation_event OK | ToT >4 tokens left of trigger (intervening generic head chain) | ✓ | **C** |
+| 7 | ToT evaluated_on Game of 24 | evaluation_event OK | pronominal subject "It" — durable-identity ban | ✓ | **C** |
+| 8 | ToT evaluated_on creative writing | evaluation_event OK | endpoint only MENTION_ONLY (non-referential) | Task type exists ✓ | **A*** (admission-class) |
+| 9 | ToT evaluated_on crossword solving | evaluation_event OK | same | ✓ | **A*** (admission-class) |
+| 10 | NEG speculative similarity | zero frames fire ✓ | n/a | n/a | **E — correctly rejected TODAY** |
+
+## Matrix totals (10 expected facts)
+
+```yaml
+projected_pass_v2:      1
+entity_discovery_A:     2   # BooksCorpus, English Wikipedia
+endpoint_nonref_A2:     2   # MENTION_ONLY endpoints (taxonomy split proposed)
+role_binding_C:         4   # active-voice orientation x2,
+                            # head-chain distance x1, pronoun x1
+semantic_frame_B:       0   # v2 ontology covers every trigger present
+type_mapping_D:         0   # signatures correct where reached
+expected_rejection_E:   1   # speculative similarity — already safe
+```
+
+## Reading
+
+- v2 eliminated CATEGORY_B entirely for TEST.md: every relational verb
+  now resolves to a frame.
+- The residual is dominated by BINDING (C): active/passive orientation
+  and head-chain/pronoun subjects — exactly what PropBank role
+  assignment (already present in kimi_v1 path) addresses; cutover
+  replay must run kimi_v1+v2 lanes, not legacy_v1 positional binding.
+- A* proposes a taxonomy refinement for owner ratification: split
+  entity_discovery into A1 (never proposed: BooksCorpus) vs
+  A2 (proposed but admission_class=MENTION_ONLY: creative writing).
+  Fixes differ: registries vs referential-eligibility policy.
+
+NO RULES MODIFIED — classification complete; awaiting fix authorization
+per measured gaps.
