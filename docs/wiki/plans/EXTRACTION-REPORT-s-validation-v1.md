@@ -42,3 +42,23 @@ facts 5 · procedures 1 (4 steps) · concepts 0 · scope rejections 7
 ## Isolation & guards
 All four documents share one corpus: vocabulary correctly admitted 0
 families (single-document support everywhere). No cross-contamination.
+
+## DEBUG SLICE RESULT — doc01 scientific lane (2026-08-24 late)
+
+Traced path with real functions: text → anchors → frames → binding.
+
+| Stage | Result |
+|---|---|
+| v1 trigger anchors | 23 (introduced/trained/contains_component/is_a…) |
+| v2 frame anchors | creation_event · training_event · evaluation_event ✓ |
+| endpoint admission | Orion Model + ANS Lab + HorizonText Corpus + ReasonBench/LogicQA/MultiStepEval — ALL GLOBAL ✓ |
+
+CLASSIFICATION: **C — role binding/candidate generation.** Zero
+candidates emerged despite anchors + fully-admitted typed endpoints.
+A/B/D/E cleared by evidence. Exact sub-cause (suspect: slice syntax
+availability collapsing UD slots) requires instrumented rerun.
+
+Red regression fixtures committed:
+tests/determinism/test_sval_doc01_red.py — 3 expected bindings marked
+red; anchor-stage clearance tests green. Slice ends here per
+stop-condition discipline: no blind patching.
