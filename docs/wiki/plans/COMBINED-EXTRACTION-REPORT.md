@@ -4,6 +4,16 @@ Five corpora through the production path under v2 shadow (all lanes).
 This cross-corpus view is the honest precision picture the router
 enforcement decision rests on.
 
+## Source documents
+
+| Corpus | Source file |
+|---|---|
+| test-copy-v1 | `/Users/king/Downloads/untitled folder/TEST copy.md` |
+| hooks-transcript-v1 | `/Volumes/Flash Drive/markbuildsbrands_transcripts/how to create unlimited hooks with ai that print money in just 49 sec.md` |
+| ga-addtocart-v1 | `/Volumes/Flash Drive/markbuildsbrands_transcripts/add to cart report in google analytics.md` |
+| shopify-mcp-v1 | `/Volumes/Flash Drive/markbuildsbrands_transcripts/i make 150kmo from 3 businesses - heres the one id start today.md` |
+| psych-working-memory-v1 | `/Users/king/Downloads/e/01_psychology_working_memory.md` |
+
 ## Per-corpus summary
 
 | Corpus | Domain | Entities | Facts | Procedures | Concepts | Quality |
