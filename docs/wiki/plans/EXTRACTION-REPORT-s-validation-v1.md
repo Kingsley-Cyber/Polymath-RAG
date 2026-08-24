@@ -62,3 +62,34 @@ Red regression fixtures committed:
 tests/determinism/test_sval_doc01_red.py — 3 expected bindings marked
 red; anchor-stage clearance tests green. Slice ends here per
 stop-condition discipline: no blind patching.
+
+## SCIENTIFIC EXTRACTION TRACE REPORT — doc01 (TASK_1 complete)
+
+Trace artifact: eval/v5/replay/scientific_trace_doc01.py +
+scientific-trace-doc01.json (real sidecar syntax + real functions).
+
+| Stage | Input | Output | Verdict |
+|---|---|---|---|
+| Router | full doc text | SCIENTIFIC_RELATIONAL 1.0 · disabled=[] | PASS — not suppressing |
+| Frame resolution | S1/S2/S3 | creation/training/evaluation_event all resolve | PASS |
+| Trigger anchors (v1) | full text | 23 anchors incl introduced/trained/benchmark | PASS |
+| Entity typing | mentions DB | Model/Org/Corpus/Benchmark all GLOBAL-admitted | PASS |
+| Role binding | anchors+entities+slices | **ZERO candidate pairs** | **FAIL — CATEGORY_D** |
+| Admission | n/a | never reached | — |
+
+Root-cause category: **D (role binding regression)**. Sub-cause
+hypotheses for instrumented rerun:
+(a) slice syntax tokens absent during that ingest → UD slots empty
+    AND linear-recall region bounds collapsed;
+(b) anchor/sentence offset misalignment between chunk tiers dropping
+    every span at slice assembly;
+(c) both — needs observer traces at binding points.
+
+Red fixtures already mark the three expected bindings
+(test_sval_doc01_red.py). No patch applied — per discipline.
+
+## ROUTER A/B note
+
+Live classification NOW: primary=SCIENTIFIC_RELATIONAL conf=1.0,
+disabled=[] → CATEGORY_A (router suppression) definitively ruled out
+for this document.
