@@ -122,6 +122,35 @@ def _artifacts_present(conn: Connection, run_id: str, stage: str,
     return all(k in payload for k in keys)
 
 
+def _runs_with_missing_receipts(conn, run_ids: list[str],
+                                projection: str) -> set[str]:
+    """LOCK-CONTENTION-V3: answer 'which runs are missing chunk receipts?'
+    for MANY runs in ONE set-based query.
+
+    V2's per-(run,projection) EXISTS still executed thousands of 21k-chunk
+    anti-joins when a backlog mints thousands of successor runs. This form
+    walks the chunk set ONCE, early-exits per row on the first missing
+    receipt, and returns ONLY the runs that have gaps — absence from the
+    result means fully present."""
+    if not run_ids:
+        return set()
+    rows = conn.execute(
+        """
+        SELECT DISTINCT r.run_id
+          FROM chunks c
+          JOIN documents d ON d.doc_id = c.doc_id
+          JOIN runs r ON r.corpus_id = d.corpus_id
+         WHERE r.run_id = ANY(%s)
+           AND NOT EXISTS (SELECT 1 FROM projection_receipts pr
+                           WHERE pr.projection = %s AND pr.active
+                             AND pr.entity_kind = 'chunk'
+                             AND pr.entity_id = c.chunk_id)
+        """,
+        (run_ids, projection),
+    ).fetchall()
+    return {r[0] for r in rows}
+
+
 def _receipts_present(conn: Connection, run_id: str, corpus_id: str,
                       projection: str,
                       cache: dict | None = None) -> bool:
@@ -242,6 +271,19 @@ def _eligible_all_stages(conn, corpus_id: str, limit: int):
 
 def _advance_pending_corpus(conn, corpus_id: str,
                             receipts_cache: dict | None = None) -> int:
+    # LOCK-CONTENTION-V3: one set-based query per (corpus, projection)
+    # answers receipt completeness for ALL pending runs of this corpus;
+    # the per-ticket check then becomes a dict lookup.
+    if receipts_cache is not None:
+        pending_runs = [r[0] for r in conn.execute(
+            """SELECT DISTINCT t.run_id FROM stage_tickets t
+               WHERE t.corpus_id=%s AND t.status='pending'""",
+            (corpus_id,)).fetchall()]
+        for projection in ("qdrant", "neo4j"):
+            missing = _runs_with_missing_receipts(conn, pending_runs,
+                                                  projection)
+            for rid in pending_runs:
+                receipts_cache[(rid, projection)] = rid not in missing
     advanced = 0
     while True:
         rows = _eligible_all_stages(conn, corpus_id, ADVANCE_PAGE)
@@ -387,10 +429,10 @@ def generation_barrier(conn: Connection, corpus_id: str) -> dict:
         "SELECT run_id FROM runs WHERE corpus_id=%s", (corpus_id,)
     ).fetchall()
     incomplete_receipts = 0
-    for (run_id,) in runs:
-        for projection in ("qdrant", "neo4j"):
-            if not _receipts_present(conn, run_id, corpus_id, projection):
-                incomplete_receipts += 1
+    run_ids = [r[0] for r in runs]
+    for projection in ("qdrant", "neo4j"):
+        incomplete_receipts += len(
+            _runs_with_missing_receipts(conn, run_ids, projection))
     return {
         "open_tickets": sum(count for _s, _st, count in pending),
         "open_by_status": {f"{s}/{st}": c for s, st, c in pending},
