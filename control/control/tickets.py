@@ -64,7 +64,14 @@ def ensure_run_tickets(conn: Connection, run_id: str, corpus_id: str,
                         execution_contract: dict | None = None) -> list[str]:
     """Create the full ticket chain for a run (idempotent). The intake
     ticket is READY immediately; every other stage starts PENDING and is
-    advanced only by verified predecessor completion."""
+    advanced only by verified predecessor completion.
+
+    CHAIN-CREATION-RECONCILES-HISTORY (measured live, Stage-K pilot):
+    when a run's stages already completed via the legacy census/event
+    path before its chain existed, minting them PENDING forced full
+    model re-execution AND barrier-blocked the corpus until the replay
+    drained. Stages whose latest attempt is ok are born DONE instead —
+    the durable attempt IS the completion proof."""
     created = []
     for stage, event_type, _art, _rec in STAGE_DAG:
         tid = ticket_id(run_id, stage)
@@ -73,6 +80,12 @@ def ensure_run_tickets(conn: Connection, run_id: str, corpus_id: str,
         ).fetchone()
         if row:
             continue
+        if stage == "intake":
+            status = "ready"
+        elif _stage_attempt_ok(conn, run_id, stage):
+            status = "done"
+        else:
+            status = "pending"
         conn.execute(
             """
             INSERT INTO stage_tickets
@@ -80,11 +93,10 @@ def ensure_run_tickets(conn: Connection, run_id: str, corpus_id: str,
             VALUES (%s, %s, %s, %s, %s, %s)
             ON CONFLICT (run_id, stage, generation) DO NOTHING
             """,
-            (tid, run_id, corpus_id, stage, event_type,
-             "ready" if stage == "intake" else "pending"),
+            (tid, run_id, corpus_id, stage, event_type, status),
         )
         created.append(tid)
-        if stage == "intake":
+        if stage == "intake" and status == "ready":
             # readiness at birth emits the work event immediately
             _emit_ticket_event(conn, tid, run_id, stage)
     if execution_contract:
