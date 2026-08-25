@@ -250,3 +250,15 @@ def test_creation_round_robin_serves_workless_corpora():
     assert "update" in positions and "continue" in positions
     assert positions["update"] < positions["continue"], (
         "work-less corpora skip the tick update and starve the rotation")
+
+
+def test_archived_chain_suppression():
+    """schedule_gaps must not re-arm events for runs whose ticket chain
+    was deliberately superseded/archived — measured live: 44k armed
+    scale-debris events occupied the claim FIFO after ticket archival."""
+    import inspect
+    from control import scheduler as S
+    src = inspect.getsource(S.schedule_gaps)
+    assert "_archived_run_ids" in src
+    helper = inspect.getsource(S._archived_run_ids)
+    assert "superseded" in helper and "ANY(%s)" in helper

@@ -33,7 +33,15 @@ def schedule_gaps(conn: Connection, census: Census) -> int:
     scheduled = 0
     rows: list[tuple] = []
     by_type: dict[str, list[Gap]] = {}
+    # ARCHIVED-CHAIN-SUPPRESSION: one batched query identifies runs whose
+    # ticket chains were deliberately superseded/archived; their events
+    # are never re-armed (measured live: 44k armed debris events
+    # occupied the claim FIFO after ticket archival).
+    all_run_ids = [g.run_id for g in census.gaps]
+    archived = _archived_run_ids(conn, all_run_ids) if all_run_ids else set()
     for gap in census.gaps:
+        if gap.run_id in archived:
+            continue
         by_type.setdefault(gap.event_type, []).append(gap)
 
     for event_type, gaps in by_type.items():
@@ -128,6 +136,18 @@ def _bulk_intake_metadata(conn: Connection,
         if metadata and metadata.get("intake_payload"):
             out[run_id] = metadata["intake_payload"]
     return out
+
+
+def _archived_run_ids(conn: Connection, run_ids: list[str]) -> set[str]:
+    """Runs with a deliberately superseded (archived) ticket chain."""
+    if not run_ids:
+        return set()
+    rows = conn.execute(
+        """SELECT DISTINCT run_id FROM stage_tickets
+            WHERE status='superseded' AND run_id = ANY(%s)""",
+        (sorted(set(run_ids)),),
+    ).fetchall()
+    return {r[0] for r in rows}
 
 
 def apply_promotions(conn: Connection, census: Census) -> None:

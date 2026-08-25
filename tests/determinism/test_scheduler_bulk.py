@@ -30,6 +30,9 @@ class RecordingConn:
     def execute(self, sql, params=None):
         flat = " ".join(sql.split())
         self.sqls.append(flat)
+        if "FROM stage_tickets" in flat and "superseded" in flat:
+            self._result = []          # nothing archived
+            return self
         if "DISTINCT ON" in flat:
             self._result = [(rid, {"doc_id": f"d_{rid}"})
                             for rid in self._first]
@@ -37,6 +40,10 @@ class RecordingConn:
         if "INSERT INTO outbox_events" in flat:
             self.insert_params = params
         return self
+
+    def fetchone(self):
+        rows = getattr(self, "_result", None)
+        return rows[0] if rows else None
 
     @property
     def rowcount(self):
@@ -64,7 +71,7 @@ def test_identity_gaps_need_zero_reads_and_keys_match():
     # exactly one payload read (chunked DISTINCT ON) + one bulk insert;
     # identity-only types issue NO reads at all.
     assert sum(1 for s in conn.sqls if "DISTINCT ON" in s) == 1
-    assert len(conn.sqls) == 2
+    assert len(conn.sqls) == 3  # archived-probe + DISTINCT ON + insert
     assert sum(1 for s in conn.sqls if "INSERT INTO outbox_events" in s) == 1
     assert n == 3   # run_d had no recorded payload -> skipped, as before
 
@@ -94,6 +101,9 @@ def test_intake_falls_back_to_runs_metadata():
         def execute(self, sql, params=None):
             flat = " ".join(sql.split())
             self.sqls.append(flat)
+            if "FROM stage_tickets" in flat and "superseded" in flat:
+                self._result = []
+                return self
             if "DISTINCT ON" in flat and "intake.v1" in str(params):
                 self._result = []          # no recorded intake event
                 return self
