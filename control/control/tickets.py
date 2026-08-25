@@ -161,44 +161,6 @@ def _verdict_put(key, state: str) -> None:
     _RECEIPT_VERDICT_STORE[key] = (_time.monotonic(), state)
 
 
-def _runs_with_missing_receipts(conn, run_ids: list[str],
-                                projection: str) -> set[str]:
-    """Receipt completeness for MANY runs in one pass.
-
-    Per-run EXISTS with the explicit-state TTL store above.
-      - missing-dominant backlog: inner NOT EXISTS finds a gap
-        immediately => milliseconds per run.
-      - fully-present run: full chunk walk (~32ms/10k) but memoized.
-    A stale MISSING only delays advancement; it can never create it."""
-    out: set[str] = set()
-    for rid in run_ids:
-        key = (rid, projection)
-        state = _verdict_get(key)
-        if state is None:
-            row = conn.execute(
-                """
-                SELECT EXISTS (
-                  SELECT 1 FROM chunks c
-                     JOIN documents d ON d.doc_id = c.doc_id
-                     JOIN runs r ON r.corpus_id = d.corpus_id
-                    WHERE r.run_id = %s
-                      AND NOT EXISTS (
-                          SELECT 1 FROM projection_receipts pr
-                           WHERE pr.projection = %s AND pr.active
-                             AND pr.entity_kind = 'chunk'
-                             AND pr.entity_id = c.chunk_id)
-                  LIMIT 1)
-                """,
-                (rid, projection),
-            ).fetchone()
-            state = (RECEIPT_STATE_MISSING
-                     if bool(row and row[0]) else RECEIPT_STATE_PRESENT)
-            _verdict_put(key, state)
-        if state == RECEIPT_STATE_MISSING:
-            out.add(rid)
-    return out
-
-
 def _receipts_present(conn: Connection, run_id: str, corpus_id: str,
                       projection: str,
                       cache: dict | None = None) -> bool:
@@ -314,20 +276,57 @@ def _eligible_all_stages(conn, corpus_id: str, limit: int):
     return rows
 
 
+def _corpora_with_missing_chunk_receipts(conn, projection: str) -> set[str]:
+    """BULK-RECEIPT-COMPLETENESS-V1.
+
+    MEASURED LIVE 2026-08-25: the previous implementation looped one
+    per-run EXISTS anti-join over chunks×documents×runs — 4,316 pending
+    runs × 2 projections inside ONE tick transaction ground for >100
+    minutes (live reproduction of the historical 53.8-minute cold seed;
+    process CPU ~0, Postgres DataFileRead-bound; documents table carried
+    390k dead tuples with last_analyze=NULL, so every per-run plan was a
+    bloated seq scan).
+
+    Receipt completeness is CORPUS-scoped (chunks join documents join
+    runs by corpus_id — every pending run of a corpus observes the same
+    chunk gaps), so ONE set-based anti-join answers ALL runs at once:
+
+      cost = O(chunks + receipts-index-probes) per projection per tick,
+      independent of pending-run count.
+
+    Semantics unchanged: MISSING only DELAYS advancement; a cached/
+    derived MISSING can never create advancement (VERDICT-STORE-V2).
+    """
+    rows = conn.execute(
+        """
+        SELECT DISTINCT d.corpus_id
+          FROM chunks c
+          JOIN documents d ON d.doc_id = c.doc_id
+         WHERE NOT EXISTS (
+             SELECT 1 FROM projection_receipts pr
+              WHERE pr.projection = %s AND pr.active
+                AND pr.entity_kind = 'chunk'
+                AND pr.entity_id = c.chunk_id)
+        """,
+        (projection,),
+    ).fetchall()
+    return {r[0] for r in rows}
+
+
 def _advance_pending_corpus(conn, corpus_id: str) -> int:
-    # LOCK-CONTENTION-V3/V2-store: one set-based query per (corpus,
-    # projection) records PRESENT/MISSING states for ALL pending runs;
-    # per-ticket checks are then pure cache lookups.
+    # BULK-RECEIPT-COMPLETENESS-V1: one anti-join per projection seeds
+    # the explicit-state verdict store for EVERY pending run of this
+    # corpus; per-ticket checks stay pure cache lookups.
     pending_runs = [r[0] for r in conn.execute(
         """SELECT DISTINCT t.run_id FROM stage_tickets t
            WHERE t.corpus_id=%s AND t.status='pending'""",
         (corpus_id,)).fetchall()]
     for projection in ("qdrant", "neo4j"):
-        missing = _runs_with_missing_receipts(conn, pending_runs,
-                                              projection)
+        corpus_is_missing = corpus_id in _corpora_with_missing_chunk_receipts(
+            conn, projection)
+        state = RECEIPT_STATE_MISSING if corpus_is_missing \
+            else RECEIPT_STATE_PRESENT
         for rid in pending_runs:
-            state = (RECEIPT_STATE_MISSING if rid in missing
-                     else RECEIPT_STATE_PRESENT)
             if _verdict_get((rid, projection)) != state:
                 _verdict_put((rid, projection), state)
     advanced = 0
@@ -483,9 +482,13 @@ def generation_barrier(conn: Connection, corpus_id: str) -> dict:
     ).fetchall()
     incomplete_receipts = 0
     run_ids = [r[0] for r in runs]
+    # BULK-RECEIPT-COMPLETENESS-V1: receipt truth is corpus-scoped, so
+    # the barrier consults ONE anti-join per projection instead of
+    # looping per-run EXISTS queries.
     for projection in ("qdrant", "neo4j"):
-        incomplete_receipts += len(
-            _runs_with_missing_receipts(conn, run_ids, projection))
+        if corpus_id in _corpora_with_missing_chunk_receipts(conn,
+                                                             projection):
+            incomplete_receipts += len(run_ids)
     return {
         "open_tickets": sum(count for _s, _st, count in pending),
         "open_by_status": {f"{s}/{st}": c for s, st, c in pending},

@@ -23,7 +23,7 @@ from control.tickets import (
     _RECEIPT_VERDICT_STORE,
     _verdict_get,
     _verdict_put,
-    _runs_with_missing_receipts,
+    _advance_pending_corpus,
     _try_advance_one,
 )
 
@@ -92,14 +92,48 @@ def test_cached_missing_blocks_advancement_without_db(monkeypatch):
     assert emitted == []
 
 
-def test_set_based_helper_maps_states_to_missing_set(monkeypatch):
-    """_runs_with_missing_receipts returns ONLY runs whose cached state
-    is MISSING; PRESENT runs are excluded without any query."""
-    class MustNotQuery:
-        def execute(self, *a, **k):
-            raise AssertionError("present runs must be served from cache")
-    _verdict_put(("run_p", "neo4j"), RECEIPT_STATE_PRESENT)
-    _verdict_put(("run_m", "neo4j"), RECEIPT_STATE_MISSING)
-    out = _runs_with_missing_receipts(MustNotQuery(),
-                                      ["run_p", "run_m"], "neo4j")
-    assert out == {"run_m"}
+def test_bulk_seed_maps_corpus_truth_to_pending_runs(monkeypatch):
+    """BULK-RECEIPT-COMPLETENESS-V1: ONE anti-join per projection seeds
+    the verdict store for every pending run — MISSING for runs of a
+    corpus with chunk-receipt gaps, PRESENT otherwise. Pending-run count
+    must not multiply queries (that loop ground a live tick >100 min)."""
+    import control.tickets as T
+
+    _RECEIPT_VERDICT_STORE.clear()
+
+    queries = {"n": 0}
+
+    class BulkConn:
+        def execute(self, sql, *a, **k):
+            queries["n"] += 1
+            return self
+        def fetchall(self):
+            # 1: pending run ids; then bulk completeness per projection:
+            # qdrant corpus has gaps, neo4j does not.
+            if queries["n"] == 1:
+                return [("run_1",), ("run_2",)]
+            return [("corpus_x",)] if "chunks" in str(queries) or True \
+                else []
+
+    # drive fetchall sequencing explicitly instead of guessing
+    seq = {"i": 0}
+
+    class SeqConn:
+        def execute(self, sql, *a, **k):
+            return self
+        def fetchall(self):
+            seq["i"] += 1
+            if seq["i"] == 1:
+                return [("run_1",), ("run_2",)]   # pending runs
+            if seq["i"] == 2:
+                return [("corpus_x",)]            # qdrant: gaps exist
+            return []                             # neo4j: complete
+
+    monkeypatch.setattr(T, "_eligible_all_stages", lambda c, cid, lim: [])
+    advanced = T._advance_pending_corpus(SeqConn(), "corpus_x")
+
+    assert advanced == 0
+    assert T._verdict_get(("run_1", "qdrant")) == RECEIPT_STATE_MISSING
+    assert T._verdict_get(("run_2", "qdrant")) == RECEIPT_STATE_MISSING
+    assert T._verdict_get(("run_1", "neo4j")) == RECEIPT_STATE_PRESENT
+    assert T._verdict_get(("run_2", "neo4j")) == RECEIPT_STATE_PRESENT

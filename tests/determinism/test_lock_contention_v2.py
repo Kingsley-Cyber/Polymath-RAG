@@ -30,11 +30,15 @@ def conn():
 
 
 def test_uses_exists_form_not_count():
-    """The early-exit form is the fix; pin the query shape."""
+    """The early-exit form is the fix; pin the query shape.
+
+    BULK-RECEIPT-COMPLETENESS-V1: completeness moved to ONE corpus-scoped
+    anti-join per projection; pin the same discipline on the new surface.
+    """
     import inspect
     from control import tickets
-    src = inspect.getsource(tickets._runs_with_missing_receipts)
-    assert "SELECT EXISTS (" in src
+    src = inspect.getsource(tickets._corpora_with_missing_chunk_receipts)
+    assert "NOT EXISTS" in src
     assert "COUNT(*)" not in src
     # single-run path shares the EXISTS discipline
     src2 = inspect.getsource(tickets._receipts_present)
