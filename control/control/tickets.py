@@ -147,8 +147,16 @@ def _runs_with_missing_receipts(conn, run_ids: list[str],
     now = _time.monotonic()
     key = (tuple(sorted(run_ids)), projection)
     hit = _RECEIPT_VERDICT_TTL_CACHE.get(key)
-    if hit and now - hit[0] < 90.0:
-        return hit[1]
+    if hit:
+        age = now - hit[0]
+        # Missing verdicts are monotonic-until-receipts-land: a stale
+        # 'missing' merely delays advancement one cycle (those tickets
+        # cannot be claimed before receipts exist anyway), so they cache
+        # 10x longer than present-verdicts. This keeps a draining
+        # multi-hour backlog from re-scanning every tick.
+        ttl = 90.0 if not hit[1] else 900.0
+        if age < ttl:
+            return hit[1]
 
     rows = conn.execute(
         """
