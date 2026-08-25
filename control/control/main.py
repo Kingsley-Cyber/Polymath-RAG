@@ -134,7 +134,10 @@ def run_forever() -> None:
             result = tick()
             log.info('tick completed', extra={
                 'error_code': 'TICK-PHASE-TIMING-V1',
-                'duration_ms': round((_perf.perf_counter()-_t0)*1000, 1)})
+                'duration_ms': round((_perf.perf_counter()-_t0)*1000, 1),
+                'detail': _json.dumps({
+                    'tick_result': str(result.get('tick')),
+                    'reason': str(result.get('reason'))[:40]})})
             if result.get("tick") == "ok":
                 log.info("control tick", extra={
                     "stage": "control",
