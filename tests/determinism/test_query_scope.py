@@ -225,3 +225,28 @@ def test_graph_seeds_derive_from_scoped_children():
     assert "fused_evidence" in seeds_src          # seeds from scoped fusion
     facts_src = inspect.getsource(Bench.graph_facts)
     assert "ev.doc_id = ANY(%s)" in facts_src     # fact backfill doc-bounded
+
+
+# ---- creation round-robin (measured live during Stage-K pilot) -------
+def test_creation_round_robin_serves_workless_corpora():
+    """A work-less corpus must still advance its last_creation_tick when
+    served, otherwise stale entries pin the window edge and new corpora
+    starve forever (measured: pilot-modern-v1 unserved for 70 min at
+    position 36 of a 32-wide rotation)."""
+    import ast
+    src = pathlib.Path(ROOT / "control" / "control" / "tickets.py").read_text()
+    tree = ast.parse(src)
+    fn = next(n for n in ast.walk(tree)
+              if isinstance(n, ast.FunctionDef)
+              and n.name == "fair_ensure_tickets_backpressure_gated")
+    # the UPDATE to last_creation_tick must appear BEFORE the `continue`
+    positions = {}
+    for node in ast.walk(fn):
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            if "last_creation_tick=now()" in node.value:
+                positions["update"] = node.lineno
+        if isinstance(node, ast.Continue):
+            positions.setdefault("continue", node.lineno)
+    assert "update" in positions and "continue" in positions
+    assert positions["update"] < positions["continue"], (
+        "work-less corpora skip the tick update and starve the rotation")

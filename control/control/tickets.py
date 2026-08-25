@@ -665,6 +665,15 @@ def fair_ensure_tickets_backpressure_gated(conn, *,
     ensured = 0
     per = max(1, window // max(len(eligible), 1))
     for corpus_id in eligible:
+        # CREATION-ROUND-ROBIN-V2: mark service BEFORE checking for
+        # work. MEASURED LIVE: skipping the timestamp update for
+        # work-less corpora pinned 35 stale entries at the front of the
+        # rotation, starving new corpora past the window edge forever
+        # (pilot-modern-v1 got zero ticket chains for 70 minutes while
+        # position 36 of a 32-wide window).
+        conn.execute(
+            """UPDATE corpus_runtime_state SET last_creation_tick=now()
+               WHERE corpus_id=%s""", (corpus_id,))
         runs = conn.execute(
             """SELECT r.run_id FROM runs r
                WHERE r.corpus_id=%s
@@ -675,9 +684,6 @@ def fair_ensure_tickets_backpressure_gated(conn, *,
             (corpus_id, per)).fetchall()
         if not runs:
             continue
-        conn.execute(
-            """UPDATE corpus_runtime_state SET last_creation_tick=now()
-               WHERE corpus_id=%s""", (corpus_id,))
         for (run_id,) in runs:
             ensured += len(ensure_run_tickets(
                 conn, run_id, corpus_id,
