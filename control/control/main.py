@@ -162,6 +162,21 @@ def run_forever() -> None:
                     'reason': str(result.get('reason'))[:40],
                     'gaps': result.get('gaps'),
                     'phase_ms': result.get('phase_ms')})})
+            # TICK-PHASE-TIMING-V1: the shared logger whitelists fields,
+            # so phase tables land in a sidecar JSONL instead.
+            try:
+                if isinstance(result.get("phase_ms"), dict):
+                    import json as _j2
+                    with open("/tmp/polymath_fleet/tick_phases.jsonl",
+                              "a") as _fh:
+                        _fh.write(_j2.dumps({
+                            "ts": _perf.perf_counter(),
+                            "duration_ms": round(
+                                (_perf.perf_counter()-_t0)*1000, 1),
+                            "phase_ms": result["phase_ms"],
+                        }) + "\n")
+            except Exception:
+                pass
             if result.get("tick") == "ok":
                 log.info("control tick", extra={
                     "stage": "control",

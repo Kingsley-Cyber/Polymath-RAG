@@ -81,13 +81,8 @@ class MeasuringCursor:
         return getattr(self._cur, name)
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--label", default="cold-seed")
-    args = ap.parse_args()
-
+def run_one(mode: str) -> dict:
     ledger: dict[str, dict] = {}
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     with psycopg.connect(DSN, connect_timeout=10) as conn:
         conn.execute("SET statement_timeout = '35min'")
         cur = conn.cursor()
@@ -99,36 +94,38 @@ def main() -> int:
                 return wrapped.execute(sql, params)
 
         t0 = time.perf_counter()
-        census = compute_census(ConnShim(), mode="full")
+        compute_census(ConnShim(), mode=mode)
         total_ms = (time.perf_counter() - t0) * 1000
         phases = pop_census_timing() or {}
-        # the watermark INSERT happens in our tx; discard everything.
         conn.rollback()
 
-    sql_ms = round(sum(e["ms"] for e in ledger.values()), 1)
-    receipt_ms = phases.get("receipt_checks_ms", 0.0)
-    loop_ms = phases.get("python_loop_ms", 0.0)
-    accounted = {
-        "sql_total_ms": sql_ms,
-        "census_total_ms": phases.get("census_total_ms"),
-        "wall_offline_ms": round(total_ms, 1),
-    }
-    gaps = len(census.gaps)
-
-    report = {
-        "label": args.label,
-        "captured_at": stamp,
-        "mode": "full (forced)",
-        "accounting": accounted,
+    return {
+        "mode": mode,
+        "wall_ms": round(total_ms, 1),
         "phases": phases,
         "sql_buckets": {k: {"ms": round(v["ms"], 1), "queries": v["n"]}
                         for k, v in sorted(ledger.items(),
                                            key=lambda kv: -kv[1]["ms"])},
-        "gaps": gaps,
-        "promote": len(census.promote),
-        "fail": len(census.fail),
-        "note": "transaction rolled back; watermark NOT seeded; "
-                "zero durable writes",
+    }
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--label", default="cold-seed")
+    ap.add_argument("--modes", default="full,auto",
+                    help="comma list: full, auto(incremental)")
+    args = ap.parse_args()
+
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    runs = [run_one(m.strip()) for m in args.modes.split(",") if m.strip()]
+
+    report = {
+        "label": args.label,
+        "captured_at": stamp,
+        "runs": runs,
+        "note": "transactions rolled back; watermark NOT touched by "
+                "offline runs (full re-seeds inside its own rolled-back "
+                "tx); zero durable writes",
     }
 
     outdir = ROOT / "eval" / "v5" / "scale"
@@ -139,31 +136,41 @@ def main() -> int:
         "# COLD-TICK ATTRIBUTION (offline, MEASURED)",
         "",
         f"- captured: {stamp}  label: {args.label}",
-        f"- wall (offline full census): **{total_ms/1000:.1f} s**",
-        f"- census_total_ms: {phases.get('census_total_ms')}",
-        f"- runs evaluated: {phases.get('runs_evaluated')}  "
-        f"gaps={gaps} promote={len(census.promote)} fail={len(census.fail)}",
-        "",
-        "| phase | ms | share of census_total |",
-        "|---|---|---|",
     ]
-    ct = float(phases.get("census_total_ms") or 1)
-    for k in ("runs_query_ms", "dirty_select_ms", "attempts_fetch_ms",
-              "python_loop_ms", "receipt_checks_ms"):
-        v = float(phases.get(k) or 0.0)
-        lines.append(f"| {k} | {v:.1f} | {100*v/ct:.1f}% |")
-    lines += ["", "| SQL bucket | ms | queries |", "|---|---|---|"]
-    for k, v in sorted(ledger.items(), key=lambda kv: -kv[1]["ms"]):
-        lines.append(f"| {k} | {v['ms']:.1f} | {v['n']} |")
-    lines += [
-        "",
-        f"SQL total: {sql_ms:.1f} ms across "
-        f"{sum(v['n'] for v in ledger.values())} statements.",
-        "Transaction rolled back — no watermark seeded, no writes.",
-    ]
+    for r in runs:
+        ph = r["phases"]
+        ct = float(ph.get("census_total_ms") or r["wall_ms"] or 1)
+        lines += [
+            "",
+            f"## mode={r['mode']} — wall {r['wall_ms']/1000:.2f} s",
+            "",
+            f"runs evaluated: {ph.get('runs_evaluated')}",
+            "",
+            "| phase | ms | share of census_total |",
+            "|---|---|---|",
+        ]
+        for k in ("runs_query_ms", "dirty_select_ms", "attempts_fetch_ms",
+                  "python_loop_ms", "receipt_checks_ms"):
+            v = float(ph.get(k) or 0.0)
+            lines.append(f"| {k} | {v:.1f} | {100*v/ct:.1f}% |")
+        lines += ["", "| SQL bucket | ms | queries |", "|---|---|---|"]
+        for k, v in sorted(r["sql_buckets"].items(),
+                           key=lambda kv: -kv[1]["ms"]):
+            lines.append(f"| {k} | {v['ms']:.1f} | {v['queries']} |")
+        sql_total = sum(v["ms"] for v in r["sql_buckets"].values())
+        lines += [
+            "",
+            f"SQL total {sql_total:.1f} ms / "
+            f"{sum(v['queries'] for v in r['sql_buckets'].values())} "
+            "statements.",
+        ]
+    lines += ["", "Transactions rolled back — zero durable writes."]
     (outdir / f"cold-tick-attribution-{stamp}.md").write_text(
         "\n".join(lines) + "\n")
-    print(json.dumps(report["accounting"], indent=1))
+    for r in runs:
+        print(f"mode={r['mode']:12s} wall={r['wall_ms']/1000:8.2f}s "
+              f"census_total={r['phases'].get('census_total_ms')}ms "
+              f"receipt_checks={r['phases'].get('receipt_checks_ms')}ms")
     print(f"written: {jpath}")
     return 0
 
