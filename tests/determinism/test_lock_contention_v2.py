@@ -103,13 +103,18 @@ def test_advance_tickets_entry_point_wiring(monkeypatch):
     import control.tickets as T
 
     sig = inspect.signature(T._advance_pending_corpus)
-    assert list(sig.parameters) == ["conn", "corpus_id"], \
+    assert list(sig.parameters) == ["conn", "corpus_id",
+                                    "missing_by_projection"], \
         "signature drift: update the advance_tickets call site together"
 
     calls = []
 
-    def fake_advancer(conn, corpus_id):
+    def fake_advancer(conn, corpus_id, missing_by_projection=None):
         calls.append(corpus_id)
+        # TICK-CACHE-V1: caller must pass precomputed gap sets so the
+        # global anti-joins never multiply by pending-corpus count.
+        assert isinstance(missing_by_projection, dict) and \
+            set(missing_by_projection) == {"qdrant", "neo4j"}
         return 0
 
     monkeypatch.setattr(T, "_advance_pending_corpus", fake_advancer)
