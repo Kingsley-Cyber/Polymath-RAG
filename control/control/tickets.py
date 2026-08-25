@@ -122,6 +122,9 @@ def _artifacts_present(conn: Connection, run_id: str, stage: str,
     return all(k in payload for k in keys)
 
 
+_RECEIPT_VERDICT_TTL_CACHE: dict = {}
+
+
 def _runs_with_missing_receipts(conn, run_ids: list[str],
                                 projection: str) -> set[str]:
     """LOCK-CONTENTION-V3: answer 'which runs are missing chunk receipts?'
@@ -134,21 +137,40 @@ def _runs_with_missing_receipts(conn, run_ids: list[str],
     result means fully present."""
     if not run_ids:
         return set()
+
+    # TTL memo: a draining backlog asks the SAME question every tick for
+    # minutes on end. 90s staleness is invisible to advancement semantics
+    # (the census re-drives projectors regardless) and turns an
+    # every-tick multi-minute scan into a once-per-90-seconds one.
+    import time as _time
+    global _RECEIPT_VERDICT_TTL_CACHE
+    now = _time.monotonic()
+    key = (tuple(sorted(run_ids)), projection)
+    hit = _RECEIPT_VERDICT_TTL_CACHE.get(key)
+    if hit and now - hit[0] < 90.0:
+        return hit[1]
+
     rows = conn.execute(
         """
-        SELECT DISTINCT r.run_id
-          FROM chunks c
-          JOIN documents d ON d.doc_id = c.doc_id
-          JOIN runs r ON r.corpus_id = d.corpus_id
-         WHERE r.run_id = ANY(%s)
-           AND NOT EXISTS (SELECT 1 FROM projection_receipts pr
-                           WHERE pr.projection = %s AND pr.active
-                             AND pr.entity_kind = 'chunk'
-                             AND pr.entity_id = c.chunk_id)
+        SELECT u.rid
+          FROM unnest(%s::text[]) AS u(rid)
+         WHERE EXISTS (
+           SELECT 1
+             FROM chunks c
+             JOIN documents d ON d.doc_id = c.doc_id
+             JOIN runs r ON r.corpus_id = d.corpus_id
+            WHERE r.run_id = u.rid
+              AND NOT EXISTS (SELECT 1 FROM projection_receipts pr
+                              WHERE pr.projection = %s AND pr.active
+                                AND pr.entity_kind = 'chunk'
+                                AND pr.entity_id = c.chunk_id)
+           LIMIT 1)
         """,
         (run_ids, projection),
     ).fetchall()
-    return {r[0] for r in rows}
+    missing = {r[0] for r in rows}
+    _RECEIPT_VERDICT_TTL_CACHE[key] = (now, missing)
+    return missing
 
 
 def _receipts_present(conn: Connection, run_id: str, corpus_id: str,
