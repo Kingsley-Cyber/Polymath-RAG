@@ -39,6 +39,9 @@ router = APIRouter()
 class AskRequest(BaseModel):
     question: str
     corpus_id: Optional[str] = None
+    corpus_ids: Optional[list[str]] = None
+    workspace: Optional[str] = None
+    all_authorized: bool = False
 
 
 def _norm(s: str) -> str:
@@ -62,13 +65,10 @@ def _match_score(text: str, terms: list[str]) -> float:
 
 # ------------------------------------------------------------------ lanes
 
-def _procedures(conn, corpus_id: Optional[str], question: str) -> list[dict]:
+def _procedures(conn, scope: "QueryScope", question: str) -> list[dict]:
     terms = _terms(question)
-    args: list = []
-    where = ""
-    if corpus_id:
-        where = "WHERE corpus_id=%s"
-        args.append(corpus_id)
+    where = "WHERE corpus_id = ANY(%s)"
+    args: list = [list(scope.corpus_ids)]
     rows = conn.execute(
         f"""SELECT procedure_id, document_id, corpus_id, title, goal,
                    steps_json, tools_json, confidence, source_chunk_ids
@@ -95,13 +95,10 @@ def _procedures(conn, corpus_id: Optional[str], question: str) -> list[dict]:
     return sorted(scored, key=lambda r: (-r["score"], r["object_id"]))[:5]
 
 
-def _concepts(conn, corpus_id: Optional[str], question: str) -> list[dict]:
+def _concepts(conn, scope: "QueryScope", question: str) -> list[dict]:
     terms = _terms(question)
-    args: list = []
-    where = ""
-    if corpus_id:
-        where = "WHERE corpus_id=%s"
-        args.append(corpus_id)
+    where = "WHERE corpus_id = ANY(%s)"
+    args: list = [list(scope.corpus_ids)]
     rows = conn.execute(
         f"""SELECT concept_id, document_id, corpus_id, name, description,
                    domain, confidence, supporting_chunks
@@ -125,13 +122,10 @@ def _concepts(conn, corpus_id: Optional[str], question: str) -> list[dict]:
     return sorted(scored, key=lambda r: (-r["score"], r["object_id"]))[:8]
 
 
-def _facts(conn, corpus_id: Optional[str], question: str) -> list[dict]:
+def _facts(conn, scope: "QueryScope", question: str) -> list[dict]:
     terms = _terms(question)
-    args: list = []
-    where = "WHERE f.decision='ACCEPT'"
-    if corpus_id:
-        where += " AND d.corpus_id=%s"
-        args.append(corpus_id)
+    args: list = [list(scope.corpus_ids)]
+    where = ("WHERE f.decision='ACCEPT' AND d.corpus_id = ANY(%s)")
     like = [f"%{t}%" for t in terms]
     args = args + [like, like, like]
     rows = conn.execute(
@@ -164,14 +158,16 @@ def _facts(conn, corpus_id: Optional[str], question: str) -> list[dict]:
     return sorted(out, key=lambda r: (-r["score"], r["object_id"]))[:8]
 
 
-def _concept_graph(conn, corpus_id: Optional[str],
+def _concept_graph(conn, scope: "QueryScope",
                    names: list[str]) -> list[dict]:
-    """RELATED_CONCEPT edges from the vocabulary layer when present."""
-    if not names:
+    """RELATED_CONCEPT edges from the vocabulary layer when present.
+    Scope never widens: only the resolved corpus set is consulted."""
+    if not names or not scope.corpus_ids:
         return []
-    sel = ("SELECT canonical_name, definition FROM concept_families"
-           + (" WHERE corpus_id=%s" if corpus_id else ""))
-    rows = conn.execute(sel, (corpus_id,) if corpus_id else ()).fetchall()
+    rows = conn.execute(
+        """SELECT canonical_name, definition FROM concept_families
+            WHERE corpus_id = ANY(%s)""" ,
+        (list(scope.corpus_ids),)).fetchall()
     out = []
     lowered = {_norm(n) for n in names}
     for canon, definition in rows:
@@ -191,27 +187,40 @@ def ask(req: AskRequest):
     question = (req.question or "").strip()
     if not question:
         raise HTTPException(422, "question required")
-    routed = classify_query(question)
-    route = routed["route"]
 
     with tx() as conn:
+        # QUERY-SCOPE-V1: explicit, fail-closed. No scope → typed 422.
+        from polymath_shared.query_scope import (
+            QueryScopeRequired,
+            UnknownQueryScope,
+            resolve_query_scope,
+        )
+        try:
+            scope = resolve_query_scope(
+                conn,
+                corpus_id=req.corpus_id,
+                corpus_ids=req.corpus_ids,
+                workspace=req.workspace,
+                all_authorized=req.all_authorized)
+        except QueryScopeRequired:
+            raise HTTPException(422, "QUERY_SCOPE_REQUIRED")
+        except UnknownQueryScope as exc:
+            raise HTTPException(404, str(exc))
+
+        routed = classify_query(question)
+        route = routed["route"]
+
         procedures = concepts = facts = families = []
         if route == ROUTE_PROCEDURE:
-            procedures = _procedures(conn, req.corpus_id, question)
-            if not procedures:
-                procedures = _procedures(conn, None, question)[:3]
+            procedures = _procedures(conn, scope, question)
         elif route == ROUTE_CONCEPT:
-            concepts = _concepts(conn, req.corpus_id, question)
-            if not concepts:
-                concepts = _concepts(conn, None, question)[:3]
+            concepts = _concepts(conn, scope, question)
         elif route == ROUTE_FACT:
-            facts = _facts(conn, req.corpus_id, question)
-            if not facts:
-                facts = _facts(conn, None, question)[:3]
+            facts = _facts(conn, scope, question)
         else:  # POLYMATH
-            concepts = _concepts(conn, None, question)[:6]
-            facts = _facts(conn, None, question)[:6]
-            families = _concept_graph(conn, req.corpus_id,
+            concepts = _concepts(conn, scope, question)[:6]
+            facts = _facts(conn, scope, question)[:6]
+            families = _concept_graph(conn, scope,
                                       [c["name"] for c in concepts])
 
     objects = {
@@ -232,6 +241,7 @@ def ask(req: AskRequest):
         "objects": objects,
         "cited_document_ids": cited_documents,
         "grounded": grounded,
+        "scope": scope.as_dict(),
         "latency_ms": round((time.perf_counter() - t0) * 1000, 1),
         "contracts": {
             "query_router": QUERY_ROUTER_VERSION,
