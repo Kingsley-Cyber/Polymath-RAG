@@ -123,23 +123,44 @@ def _artifacts_present(conn: Connection, run_id: str, stage: str,
 
 
 def _receipts_present(conn: Connection, run_id: str, corpus_id: str,
-                      projection: str) -> bool:
-    """Desired == actual for this projection (per-object)."""
+                      projection: str,
+                      cache: dict | None = None) -> bool:
+    """Desired == actual for this projection (per-object).
+
+    LOCK-CONTENTION-V2 (2026-08-24): this check used to run a full
+    corpus-wide anti-join COUNT for EVERY candidate ticket inside the
+    control tick's single transaction — O(pending_tickets x chunks x
+    receipts), which held the tick open for minutes on the 10k corpus
+    and froze ticket creation fleet-wide. Two bounded changes:
+
+    1. EXISTS early-exit instead of COUNT (stops at the first gap).
+    2. Optional per-pass memoization keyed on (run_id, projection):
+       within one advance pass every ticket of a run shares the same
+       predecessor receipt state, so the query runs once per pair, not
+       once per ticket.
+    """
+    cache_key = (run_id, projection)
+    if cache is not None and cache_key in cache:
+        return cache[cache_key]
     row = conn.execute(
         """
-        SELECT
-          (SELECT COUNT(*) FROM chunks c
+        SELECT NOT EXISTS (
+          SELECT 1 FROM chunks c
              JOIN documents d ON d.doc_id = c.doc_id
              JOIN runs r ON r.corpus_id = d.corpus_id
             WHERE r.run_id = %s
               AND NOT EXISTS (SELECT 1 FROM projection_receipts pr
                               WHERE pr.projection = %s AND pr.active
                                 AND pr.entity_kind = 'chunk'
-                                AND pr.entity_id = c.chunk_id))
+                                AND pr.entity_id = c.chunk_id)
+              LIMIT 1)
         """,
         (run_id, projection),
     ).fetchone()
-    return bool(row) and row[0] == 0
+    result = bool(row) and bool(row[0])
+    if cache is not None:
+        cache[cache_key] = result
+    return result
 
 
 ADVANCE_PAGE = 256
@@ -153,11 +174,16 @@ def advance_tickets(conn: Connection) -> int:
     wraps the cursor (full-cycle scan); one full pass per tick maximum,
     so processing is bounded regardless of table size."""
     advanced = 0
+    # LOCK-CONTENTION-V2: one memo per tick. Receipt state for a run
+    # cannot usefully change mid-pass (the tick is the only writer of
+    # advancement decisions), so each (run_id, projection) is queried
+    # at most once per pass instead of once per candidate ticket.
+    receipts_cache: dict = {}
     corpora = [r[0] for r in conn.execute(
         """SELECT DISTINCT corpus_id FROM stage_tickets
            WHERE status='pending' ORDER BY corpus_id""").fetchall()]
     for corpus_id in corpora:
-        advanced += _advance_pending_corpus(conn, corpus_id)
+        advanced += _advance_pending_corpus(conn, corpus_id, receipts_cache)
 
     # READY backfill: re-emit missing claim events, keyset on seq
     ready_rows = conn.execute(
@@ -214,19 +240,21 @@ def _eligible_all_stages(conn, corpus_id: str, limit: int):
     return rows
 
 
-def _advance_pending_corpus(conn, corpus_id: str) -> int:
+def _advance_pending_corpus(conn, corpus_id: str,
+                            receipts_cache: dict | None = None) -> int:
     advanced = 0
     while True:
         rows = _eligible_all_stages(conn, corpus_id, ADVANCE_PAGE)
         if not rows:
             break
         for seq, tid, run_id, stage in rows:
-            if _try_advance_one(conn, tid, run_id, stage):
+            if _try_advance_one(conn, tid, run_id, stage, receipts_cache):
                 advanced += 1
     return advanced
 
 
-def _try_advance_one(conn, tid, run_id: str, stage: str) -> bool:
+def _try_advance_one(conn, tid: str, run_id: str, stage: str,
+                     receipts_cache: dict | None = None) -> bool:
     idx = DAG_ORDER.index(stage)
     predecessors = DAG_ORDER[:idx]
     ok = all(_stage_attempt_ok(conn, run_id, pr) for pr in predecessors)
@@ -239,7 +267,7 @@ def _try_advance_one(conn, tid, run_id: str, stage: str) -> bool:
             for projection in rec:
                 if not _receipts_present(conn, run_id,
                                          _corpus_of(conn, run_id),
-                                         projection):
+                                         projection, receipts_cache):
                     ok = False
                     break
             if not ok:

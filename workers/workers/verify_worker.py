@@ -525,10 +525,25 @@ def process_event(conn: Connection, event: dict) -> None:
     if corpus is None:
         raise RuntimeError(f"run {run_id} not found")
 
-    qdrant_report = reconcile_qdrant(conn, run_id, corpus)
-    routing_report = reconcile_routing_qdrant(conn, corpus)
-    neo4j_report = reconcile_neo4j(conn, run_id, corpus)
-    canonical_report = reconcile_canonical(conn, run_id, corpus)
+    # LOCK-CONTENTION-V2 (2026-08-24): reconciliation used to execute all
+    # four store reconciliations on the caller's transaction connection —
+    # holding a Postgres snapshot open across MINUTES of Qdrant/Neo4j
+    # network I/O on the 10k corpus. Read phase now runs on short-lived
+    # autocommit connections; the outer transaction stays open only for
+    # the bounded write phase below (artifact + run status), which is
+    # exactly the charter's read/compute/write split.
+    import psycopg
+    from polymath_shared.settings import get_settings as _gs
+
+    def _short_conn():
+        return psycopg.connect(_gs().postgres.dsn, autocommit=True,
+                               connect_timeout=10)
+
+    with _short_conn() as rc:
+        qdrant_report = reconcile_qdrant(rc, run_id, corpus)
+        routing_report = reconcile_routing_qdrant(rc, corpus)
+        neo4j_report = reconcile_neo4j(rc, run_id, corpus)
+        canonical_report = reconcile_canonical(rc, run_id, corpus)
 
     contract = stage_contract_hash(STAGE, {"contract_version": CONTRACT_VERSION})
     with stage_transaction(conn, run_id=run_id, stage=STAGE, contract_hash=contract) as writer:
