@@ -233,13 +233,11 @@ def advance_tickets(conn: Connection) -> int:
     # advancement decisions), so each (run_id, projection) is queried
     # at most once per pass instead of once per candidate ticket.
     receipts_cache: dict = {}
-    budget = {"left": RECEIPT_CHECK_BUDGET_PER_TICK}
     corpora = [r[0] for r in conn.execute(
         """SELECT DISTINCT corpus_id FROM stage_tickets
            WHERE status='pending' ORDER BY corpus_id""").fetchall()]
     for corpus_id in corpora:
-        advanced += _advance_pending_corpus(conn, corpus_id, receipts_cache,
-                                            budget)
+        advanced += _advance_pending_corpus(conn, corpus_id, receipts_cache)
 
     # READY backfill: re-emit missing claim events, keyset on seq
     ready_rows = conn.execute(
@@ -297,8 +295,7 @@ def _eligible_all_stages(conn, corpus_id: str, limit: int):
 
 
 def _advance_pending_corpus(conn, corpus_id: str,
-                            receipts_cache: dict | None = None,
-                            budget: dict | None = None) -> int:
+                            receipts_cache: dict | None = None) -> int:
     # LOCK-CONTENTION-V3: one set-based query per (corpus, projection)
     # answers receipt completeness for ALL pending runs of this corpus;
     # the per-ticket check then becomes a dict lookup.
@@ -318,34 +315,15 @@ def _advance_pending_corpus(conn, corpus_id: str,
         if not rows:
             break
         for seq, tid, run_id, stage in rows:
-            if _try_advance_one(conn, tid, run_id, stage, receipts_cache,
-                                budget):
+            if _try_advance_one(conn, tid, run_id, stage, receipts_cache):
                 advanced += 1
     return advanced
 
 
-RECEIPT_CHECK_BUDGET_PER_TICK = 150
-
-
 def _try_advance_one(conn, tid: str, run_id: str, stage: str,
-                     receipts_cache: dict | None = None,
-                     budget: dict | None = None) -> bool:
+                     receipts_cache: dict | None = None) -> bool:
     idx = DAG_ORDER.index(stage)
     predecessors = DAG_ORDER[:idx]
-    # RECEIPT-BUDGET-V1: a cold controller facing thousands of successor
-    # runs pays one EXISTS walk per (run, projection). Unbounded, that
-    # made cold ticks take 12+ minutes. Bound checks per tick; runs
-    # beyond budget are DEFERRED (tickets stay pending — never lost),
-    # and the durable TTL memo shrinks the workload every tick until
-    # steady state.
-    if budget is not None:
-        for pr in predecessors:
-            _evt, art, rec = _STAGE_SPEC[pr]
-            for projection in rec:
-                key = (run_id, projection)
-                if (key not in _RECEIPT_VERDICT_TTL_CACHE
-                        and budget.get("left", 0) <= 0):
-                    return False   # deferred: budget exhausted
     ok = all(_stage_attempt_ok(conn, run_id, pr) for pr in predecessors)
     if ok:
         for pr in predecessors:
@@ -354,27 +332,9 @@ def _try_advance_one(conn, tid: str, run_id: str, stage: str,
                 ok = False
                 break
             for projection in rec:
-                key = (run_id, projection)
-                cached = _RECEIPT_VERDICT_TTL_CACHE.get(key)
-                if cached is not None:
-                    import time as _t
-                    age = _t.monotonic() - cached[0]
-                    ttl = 900.0 if cached[1] else 90.0
-                    present = cached[1] if age < ttl else None
-                else:
-                    present = None
-                if present is None:
-                    if budget is not None:
-                        if budget.get("left", 0) <= 0:
-                            return False  # deferred
-                        budget["left"] -= 1
-                    present = _receipts_present(conn, run_id,
-                                                _corpus_of(conn, run_id),
-                                                projection)
-                    import time as _t
-                    _RECEIPT_VERDICT_TTL_CACHE[key] = (
-                        _t.monotonic(), not present)
-                if not present:
+                if not _receipts_present(conn, run_id,
+                                         _corpus_of(conn, run_id),
+                                         projection, receipts_cache):
                     ok = False
                     break
             if not ok:
