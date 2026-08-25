@@ -97,3 +97,20 @@ def test_repeated_refusal_does_not_relog_every_poll():
                               "than as a starved queue")
             return
     raise AssertionError("no refusal warning found")
+
+
+def test_fresh_runs_claim_before_historical_backlog():
+    """FOREGROUND-UNDER-BACKLOG (measured live 2026-08-25): strict
+    event_id FIFO parked a newly submitted document behind 238 ready
+    backlog tickets — new work waited tens of minutes for downstream
+    stages while the fleet was otherwise healthy. The claim query now
+    sorts FRESH runs (created within 15 min) ahead of historical work,
+    FIFO within each lane, ticketed-before-orphan preserved."""
+    sql = " ".join(
+        n.value for n in ast.walk(_fn("claim_ticket_events"))
+        if isinstance(n, ast.Constant) and isinstance(n.value, str))
+    assert "r.created_at > now() - interval '15 minutes'" in sql
+    # fresh lane first, then legacy ticketed-first priority, then FIFO
+    assert sql.index("r.created_at > now() - interval '15 minutes'") \
+        < sql.index("t.ticket_id IS NOT NULL")
+    assert "e.event_id" in sql

@@ -89,7 +89,10 @@ def claim_ticket_events(conn, identity: dict, event_types: list[str], limit: int
                 AND e.event_type = ANY(%s)
                 AND (t.ticket_id IS NULL OR t.status = 'ready')
                 AND NOT (e.event_id = ANY(%s))
-             ORDER BY CASE WHEN t.ticket_id IS NOT NULL THEN 0 ELSE 1 END,
+             ORDER BY CASE WHEN r.created_at > now() - interval '15 minutes'
+                           THEN 0 ELSE 1 END,
+                      CASE WHEN t.ticket_id IS NOT NULL
+                           THEN 0 ELSE 1 END,
                       e.event_id
              LIMIT %s
              FOR UPDATE OF e SKIP LOCKED
