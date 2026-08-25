@@ -23,6 +23,11 @@ log = logging.getLogger("event-adapter")
 #: Payload keys each stage's process_event actually requires today.
 _REQUIRED = {
     "chunked.v1": ("doc_id",),
+    # MEASURED 2026-08-25: restart READY-backfill re-emits bare
+    # {run_id, ticket_id} intake payloads when the original producing
+    # event is gone -> intake workers crashed KeyError('corpus_id') x3
+    # across 74 tickets in one restart cycle.
+    "intake.v1": ("corpus_id",),
 }
 
 
@@ -87,6 +92,20 @@ def normalize_event(conn: Callable[[str, tuple], Any],
                      "artifact", extra={
                          "run_id": run_id,
                          "doc_id": recovered.get("doc_id")})
+
+    if event_type == "intake.v1" and "corpus_id" in missing:
+        try:
+            row = conn.execute(
+                "SELECT corpus_id FROM runs WHERE run_id=%s",
+                (run_id,),
+            ).fetchone()
+        except Exception:
+            row = None
+        if row and row[0]:
+            canonical.setdefault("corpus_id", row[0])
+            missing = [k for k in required if not canonical.get(k)]
+            log.info("legacy intake.v1 payload recovered corpus_id "
+                     "from runs row", extra={"run_id": run_id})
     if missing:
         raise LegacyEventUnrecoverable(
             f"LEGACY_EVENT_UNRECOVERABLE {event_type}: missing "
