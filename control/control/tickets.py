@@ -123,62 +123,57 @@ def _artifacts_present(conn: Connection, run_id: str, stage: str,
 
 
 _RECEIPT_VERDICT_TTL_CACHE: dict = {}
+_RECEIPT_TTL_PRESENT = 90.0     # present can flip to missing on store loss
+_RECEIPT_TTL_MISSING = 900.0    # missing flips only when receipts land
 
 
 def _runs_with_missing_receipts(conn, run_ids: list[str],
                                 projection: str) -> set[str]:
-    """LOCK-CONTENTION-V3: answer 'which runs are missing chunk receipts?'
-    for MANY runs in ONE set-based query.
+    """LOCK-CONTENTION-V3 (final form): per-run EXISTS with a durable
+    per-(run, projection) TTL memo.
 
-    V2's per-(run,projection) EXISTS still executed thousands of 21k-chunk
-    anti-joins when a backlog mints thousands of successor runs. This form
-    walks the chunk set ONCE, early-exits per row on the first missing
-    receipt, and returns ONLY the runs that have gaps — absence from the
-    result means fully present."""
-    if not run_ids:
-        return set()
-
-    # TTL memo: a draining backlog asks the SAME question every tick for
-    # minutes on end. 90s staleness is invisible to advancement semantics
-    # (the census re-drives projectors regardless) and turns an
-    # every-tick multi-minute scan into a once-per-90-seconds one.
+    Measured behavior classes:
+      - missing-dominant backlog (the common bulk case): the inner
+        NOT EXISTS finds a gap immediately => milliseconds per run.
+      - fully-present run: full chunk walk (~32ms/10k) but rare among
+        PENDING tickets, and memoized for 15 minutes.
+    Verdicts are monotonic-until-receipts-land, so a stale 'missing'
+    only delays advancement one cycle and cannot create wrong claims.
+    """
+    out: set[str] = set()
     import time as _time
-    global _RECEIPT_VERDICT_TTL_CACHE
     now = _time.monotonic()
-    key = (tuple(sorted(run_ids)), projection)
-    hit = _RECEIPT_VERDICT_TTL_CACHE.get(key)
-    if hit:
-        age = now - hit[0]
-        # Missing verdicts are monotonic-until-receipts-land: a stale
-        # 'missing' merely delays advancement one cycle (those tickets
-        # cannot be claimed before receipts exist anyway), so they cache
-        # 10x longer than present-verdicts. This keeps a draining
-        # multi-hour backlog from re-scanning every tick.
-        ttl = 90.0 if not hit[1] else 900.0
-        if age < ttl:
-            return hit[1]
-
-    rows = conn.execute(
-        """
-        SELECT u.rid
-          FROM unnest(%s::text[]) AS u(rid)
-         WHERE EXISTS (
-           SELECT 1
-             FROM chunks c
-             JOIN documents d ON d.doc_id = c.doc_id
-             JOIN runs r ON r.corpus_id = d.corpus_id
-            WHERE r.run_id = u.rid
-              AND NOT EXISTS (SELECT 1 FROM projection_receipts pr
-                              WHERE pr.projection = %s AND pr.active
-                                AND pr.entity_kind = 'chunk'
-                                AND pr.entity_id = c.chunk_id)
-           LIMIT 1)
-        """,
-        (run_ids, projection),
-    ).fetchall()
-    missing = {r[0] for r in rows}
-    _RECEIPT_VERDICT_TTL_CACHE[key] = (now, missing)
-    return missing
+    for rid in run_ids:
+        key = (rid, projection)
+        hit = _RECEIPT_VERDICT_TTL_CACHE.get(key)
+        if hit:
+            age = now - hit[0]
+            ttl = (_RECEIPT_TTL_PRESENT if not hit[1]
+                   else _RECEIPT_TTL_MISSING)
+            if age < ttl:
+                if hit[1]:
+                    out.add(rid)
+                continue
+        missing = conn.execute(
+            """
+            SELECT EXISTS (
+              SELECT 1 FROM chunks c
+                 JOIN documents d ON d.doc_id = c.doc_id
+                 JOIN runs r ON r.corpus_id = d.corpus_id
+                WHERE r.run_id = %s
+                  AND NOT EXISTS (SELECT 1 FROM projection_receipts pr
+                                  WHERE pr.projection = %s AND pr.active
+                                    AND pr.entity_kind = 'chunk'
+                                    AND pr.entity_id = c.chunk_id)
+                LIMIT 1)
+            """,
+            (rid, projection),
+        ).fetchone()
+        is_missing = bool(missing and missing[0])
+        _RECEIPT_VERDICT_TTL_CACHE[key] = (now, is_missing)
+        if is_missing:
+            out.add(rid)
+    return out
 
 
 def _receipts_present(conn: Connection, run_id: str, corpus_id: str,
