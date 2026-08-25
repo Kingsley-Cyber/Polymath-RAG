@@ -78,6 +78,27 @@ touch extraction/admission/rulepack except for proven correctness bugs.
   from the 74 — see triage plan below.
 - Bundle: v5-production-007 · HEAD at handoff: see `git log -1`.
 
+## CORRECTION CYCLE (2026-08-25, after closeout — read first)
+
+King's review caught a boolean inversion in the (now REVERTED)
+RECEIPT-BUDGET-V1 patch: the verdict TTL cache stored `not present`
+while a call site read it as `present` -> a measured MISSING could
+falsely ADVANCE. Fixed by RECEIPT-VERDICT-STORE-V2: explicit
+PRESENT/MISSING states, asymmetric TTL, single representation,
+advancement consults store; cached MISSING blocks with zero DB queries.
+Tests: tests/determinism/test_receipt_verdict_store.py (5/5) + updated
+test_lock_contention_v2.py + test_incremental_census.py (13/13 total).
+
+ALSO: the focused-suite hang (>300s) was a stale control process
+holding a 28-min transaction on scheduler_cursors/receipt rows;
+recycling control fixed it. If tests hang again: check
+pg_stat_activity FIRST.
+
+53.8-minute cold-seed tick remains NOT phase-attributed (<95%
+accounted). FIRST next-session item: instrument compute_census
+internals (attempts fetch / python loop / receipt probes) + tick phase
+breakdown, capture offline full-census attribution, THEN resume.
+
 ## KNOWN ISSUES (triage queue, in order)
 
 1. **74 failed intake tickets across corpora** (`KeyError:

@@ -39,7 +39,10 @@ telemetry-justified and queued next.
 
 1. Incremental census (dirty-run set) — tick ~24min cold under backlog;
    telemetry proves census Python loop over 25k attempts/10k runs.
-2. Triage 74 failed intake tickets (KeyError corpus_id from restart
+2. CORRECTION CYCLE landed post-closeout: receipt-verdict cache had a
+   boolean inversion (MISSING could falsely advance) - FIXED via
+   explicit PRESENT/MISSING store + 5 regression tests; budget patch
+   REVERTED. Then triage 74 failed intake tickets (KeyError corpus_id from restart
    backfill; adapter fixed post-incident): archive test corpora, revive
    release-books-v1 trio via re-emit.
 3. Contract freeze docs (chunk hierarchy from ACTUAL chunker code;

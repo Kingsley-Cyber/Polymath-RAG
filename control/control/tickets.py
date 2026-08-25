@@ -122,56 +122,79 @@ def _artifacts_present(conn: Connection, run_id: str, stage: str,
     return all(k in payload for k in keys)
 
 
-_RECEIPT_VERDICT_TTL_CACHE: dict = {}
-_RECEIPT_TTL_PRESENT = 90.0     # present can flip to missing on store loss
-_RECEIPT_TTL_MISSING = 900.0    # missing flips only when receipts land
+# RECEIPT-VERDICT-STORE-V2 (2026-08-25): explicit semantic states.
+# The previous encoding stored `not present` as a bool and one call site
+# read it back as `present` — a measured-MISSING verdict could then
+# falsely ADVANCE a run. Forbidden. States are now explicit strings;
+# there is exactly ONE writer and ONE reader representation.
+#
+# Contract:
+#   state PRESENT -> all desired receipts exist   TTL  90s (can flip on
+#                                                    store loss)
+#   state MISSING -> at least one receipt absent  TTL 900s (flips only
+#                                                    when receipts land)
+# A stale MISSING may DELAY advancement; it can never create it.
+RECEIPT_STATE_PRESENT = "PRESENT"
+RECEIPT_STATE_MISSING = "MISSING"
+_RECEIPT_TTL = {
+    RECEIPT_STATE_PRESENT: 90.0,
+    RECEIPT_STATE_MISSING: 900.0,
+}
+_RECEIPT_VERDICT_STORE: dict = {}
+
+
+def _verdict_get(key) -> str | None:
+    """Return the cached STATE if fresh, else None (expired/absent)."""
+    import time as _time
+    hit = _RECEIPT_VERDICT_STORE.get(key)
+    if hit is None:
+        return None
+    written_at, state = hit
+    if _time.monotonic() - written_at < _RECEIPT_TTL[state]:
+        return state
+    return None
+
+
+def _verdict_put(key, state: str) -> None:
+    assert state in (RECEIPT_STATE_PRESENT, RECEIPT_STATE_MISSING)
+    import time as _time
+    _RECEIPT_VERDICT_STORE[key] = (_time.monotonic(), state)
 
 
 def _runs_with_missing_receipts(conn, run_ids: list[str],
                                 projection: str) -> set[str]:
-    """LOCK-CONTENTION-V3 (final form): per-run EXISTS with a durable
-    per-(run, projection) TTL memo.
+    """Receipt completeness for MANY runs in one pass.
 
-    Measured behavior classes:
-      - missing-dominant backlog (the common bulk case): the inner
-        NOT EXISTS finds a gap immediately => milliseconds per run.
-      - fully-present run: full chunk walk (~32ms/10k) but rare among
-        PENDING tickets, and memoized for 15 minutes.
-    Verdicts are monotonic-until-receipts-land, so a stale 'missing'
-    only delays advancement one cycle and cannot create wrong claims.
-    """
+    Per-run EXISTS with the explicit-state TTL store above.
+      - missing-dominant backlog: inner NOT EXISTS finds a gap
+        immediately => milliseconds per run.
+      - fully-present run: full chunk walk (~32ms/10k) but memoized.
+    A stale MISSING only delays advancement; it can never create it."""
     out: set[str] = set()
-    import time as _time
-    now = _time.monotonic()
     for rid in run_ids:
         key = (rid, projection)
-        hit = _RECEIPT_VERDICT_TTL_CACHE.get(key)
-        if hit:
-            age = now - hit[0]
-            ttl = (_RECEIPT_TTL_PRESENT if not hit[1]
-                   else _RECEIPT_TTL_MISSING)
-            if age < ttl:
-                if hit[1]:
-                    out.add(rid)
-                continue
-        missing = conn.execute(
-            """
-            SELECT EXISTS (
-              SELECT 1 FROM chunks c
-                 JOIN documents d ON d.doc_id = c.doc_id
-                 JOIN runs r ON r.corpus_id = d.corpus_id
-                WHERE r.run_id = %s
-                  AND NOT EXISTS (SELECT 1 FROM projection_receipts pr
-                                  WHERE pr.projection = %s AND pr.active
-                                    AND pr.entity_kind = 'chunk'
-                                    AND pr.entity_id = c.chunk_id)
-                LIMIT 1)
-            """,
-            (rid, projection),
-        ).fetchone()
-        is_missing = bool(missing and missing[0])
-        _RECEIPT_VERDICT_TTL_CACHE[key] = (now, is_missing)
-        if is_missing:
+        state = _verdict_get(key)
+        if state is None:
+            row = conn.execute(
+                """
+                SELECT EXISTS (
+                  SELECT 1 FROM chunks c
+                     JOIN documents d ON d.doc_id = c.doc_id
+                     JOIN runs r ON r.corpus_id = d.corpus_id
+                    WHERE r.run_id = %s
+                      AND NOT EXISTS (
+                          SELECT 1 FROM projection_receipts pr
+                           WHERE pr.projection = %s AND pr.active
+                             AND pr.entity_kind = 'chunk'
+                             AND pr.entity_id = c.chunk_id)
+                  LIMIT 1)
+                """,
+                (rid, projection),
+            ).fetchone()
+            state = (RECEIPT_STATE_MISSING
+                     if bool(row and row[0]) else RECEIPT_STATE_PRESENT)
+            _verdict_put(key, state)
+        if state == RECEIPT_STATE_MISSING:
             out.add(rid)
     return out
 
@@ -181,21 +204,16 @@ def _receipts_present(conn: Connection, run_id: str, corpus_id: str,
                       cache: dict | None = None) -> bool:
     """Desired == actual for this projection (per-object).
 
-    LOCK-CONTENTION-V2 (2026-08-24): this check used to run a full
-    corpus-wide anti-join COUNT for EVERY candidate ticket inside the
-    control tick's single transaction — O(pending_tickets x chunks x
-    receipts), which held the tick open for minutes on the 10k corpus
-    and froze ticket creation fleet-wide. Two bounded changes:
-
-    1. EXISTS early-exit instead of COUNT (stops at the first gap).
-    2. Optional per-pass memoization keyed on (run_id, projection):
-       within one advance pass every ticket of a run shares the same
-       predecessor receipt state, so the query runs once per pair, not
-       once per ticket.
+    RECEIPT-VERDICT-STORE-V2: the authoritative cross-tick cache is the
+    explicit-state store (PRESENT/MISSING with asymmetric TTL). The
+    optional `cache` dict remains only as an intra-pass memo for legacy
+    callers; both layers share the same EXISTS query shape pinned by
+    tests. A stale MISSING delays advancement; it can never create it.
     """
     cache_key = (run_id, projection)
-    if cache is not None and cache_key in cache:
-        return cache[cache_key]
+    state = _verdict_get(cache_key)
+    if state is not None:
+        return state == RECEIPT_STATE_PRESENT
     row = conn.execute(
         """
         SELECT NOT EXISTS (
@@ -212,6 +230,8 @@ def _receipts_present(conn: Connection, run_id: str, corpus_id: str,
         (run_id, projection),
     ).fetchone()
     result = bool(row) and bool(row[0])
+    _verdict_put(cache_key,
+                 RECEIPT_STATE_PRESENT if result else RECEIPT_STATE_MISSING)
     if cache is not None:
         cache[cache_key] = result
     return result
@@ -294,34 +314,34 @@ def _eligible_all_stages(conn, corpus_id: str, limit: int):
     return rows
 
 
-def _advance_pending_corpus(conn, corpus_id: str,
-                            receipts_cache: dict | None = None) -> int:
-    # LOCK-CONTENTION-V3: one set-based query per (corpus, projection)
-    # answers receipt completeness for ALL pending runs of this corpus;
-    # the per-ticket check then becomes a dict lookup.
-    if receipts_cache is not None:
-        pending_runs = [r[0] for r in conn.execute(
-            """SELECT DISTINCT t.run_id FROM stage_tickets t
-               WHERE t.corpus_id=%s AND t.status='pending'""",
-            (corpus_id,)).fetchall()]
-        for projection in ("qdrant", "neo4j"):
-            missing = _runs_with_missing_receipts(conn, pending_runs,
-                                                  projection)
-            for rid in pending_runs:
-                receipts_cache[(rid, projection)] = rid not in missing
+def _advance_pending_corpus(conn, corpus_id: str) -> int:
+    # LOCK-CONTENTION-V3/V2-store: one set-based query per (corpus,
+    # projection) records PRESENT/MISSING states for ALL pending runs;
+    # per-ticket checks are then pure cache lookups.
+    pending_runs = [r[0] for r in conn.execute(
+        """SELECT DISTINCT t.run_id FROM stage_tickets t
+           WHERE t.corpus_id=%s AND t.status='pending'""",
+        (corpus_id,)).fetchall()]
+    for projection in ("qdrant", "neo4j"):
+        missing = _runs_with_missing_receipts(conn, pending_runs,
+                                              projection)
+        for rid in pending_runs:
+            state = (RECEIPT_STATE_MISSING if rid in missing
+                     else RECEIPT_STATE_PRESENT)
+            if _verdict_get((rid, projection)) != state:
+                _verdict_put((rid, projection), state)
     advanced = 0
     while True:
         rows = _eligible_all_stages(conn, corpus_id, ADVANCE_PAGE)
         if not rows:
             break
         for seq, tid, run_id, stage in rows:
-            if _try_advance_one(conn, tid, run_id, stage, receipts_cache):
+            if _try_advance_one(conn, tid, run_id, stage):
                 advanced += 1
     return advanced
 
 
-def _try_advance_one(conn, tid: str, run_id: str, stage: str,
-                     receipts_cache: dict | None = None) -> bool:
+def _try_advance_one(conn, tid: str, run_id: str, stage: str) -> bool:
     idx = DAG_ORDER.index(stage)
     predecessors = DAG_ORDER[:idx]
     ok = all(_stage_attempt_ok(conn, run_id, pr) for pr in predecessors)
@@ -332,11 +352,19 @@ def _try_advance_one(conn, tid: str, run_id: str, stage: str,
                 ok = False
                 break
             for projection in rec:
-                if not _receipts_present(conn, run_id,
-                                         _corpus_of(conn, run_id),
-                                         projection, receipts_cache):
-                    ok = False
+                key = (run_id, projection)
+                state = _verdict_get(key)
+                if state == RECEIPT_STATE_MISSING:
+                    ok = False          # stale MISSING delays; never advances
                     break
+                if state is None:
+                    present = _receipts_present(
+                        conn, run_id, _corpus_of(conn, run_id), projection)
+                    _verdict_put(key, RECEIPT_STATE_PRESENT
+                                 if present else RECEIPT_STATE_MISSING)
+                    if not present:
+                        ok = False
+                        break
             if not ok:
                 break
     if not ok:

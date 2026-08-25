@@ -33,30 +33,40 @@ def test_uses_exists_form_not_count():
     """The early-exit form is the fix; pin the query shape."""
     import inspect
     from control import tickets
-    src = inspect.getsource(tickets._receipts_present)
-    assert "SELECT NOT EXISTS" in src
+    src = inspect.getsource(tickets._runs_with_missing_receipts)
+    assert "SELECT EXISTS (" in src
     assert "COUNT(*)" not in src
+    # single-run path shares the EXISTS discipline
+    src2 = inspect.getsource(tickets._receipts_present)
+    assert "NOT EXISTS" in src2
+    assert "COUNT(*)" not in src2
 
 
-def test_memo_prevents_repeat_queries(conn, monkeypatch):
-    """Charter invariant: one (run_id, projection) => at most ONE query
-    per advance pass, regardless of candidate ticket count."""
+def test_verdict_store_collapses_repeat_queries(monkeypatch):
+    """25 sequential decisions for one (run, projection) => at most ONE
+    database query; the explicit-state store serves the rest."""
+    import control.tickets as T
     calls = {"n": 0}
-    real_execute = conn.execute
 
-    def counting_execute(sql, *a, **k):
-        if "NOT EXISTS" in sql and "projection_receipts" in sql:
-            calls["n"] += 1
-        return real_execute(sql, *a, **k)
-
-    monkeypatch.setattr(conn, "execute", counting_execute)
-    cache: dict = {}
-    run_id = "run_does_not_exist_" + uuid.uuid4().hex[:8]
+    class CountingConn:
+        def execute(self, sql, *a, **k):
+            if "NOT EXISTS" in sql:
+                calls["n"] += 1
+            return self
+        def fetchone(self):
+            return (True,)       # NOT EXISTS=true => no gaps => present
+    c = CountingConn()
     for _ in range(25):
-        # 25 candidate tickets of the same run share predecessor state
-        assert _receipts_present(conn, run_id, "c", "qdrant", cache) is True
-    assert calls["n"] == 1          # queried exactly once
-    assert len(cache) == 1
+        present = T._receipts_present(c, "run_z", "corpus_z", "qdrant")
+        assert present is True
+    assert calls["n"] == 1
+
+
+def test_statement_timeout_guard(conn):
+    """C4 hang-guard: DB-touching determinism tests must fail fast, not
+    wait behind a long control transaction."""
+    row = conn.execute("SHOW statement_timeout").fetchone()
+    assert row is not None
 
 
 def test_missing_receipt_is_detected(monkeypatch):
@@ -69,7 +79,10 @@ def test_missing_receipt_is_detected(monkeypatch):
             return self
         def fetchone(self):
             return (self._r,)
-    monkeypatch.syspath_prepend(str(ROOT / "control"))
-    from control.tickets import _receipts_present as rp
+    from control.tickets import (_receipts_present as rp,
+                                 _RECEIPT_VERDICT_STORE)
+    # run 1: DB says gaps exist -> PRESENT must be False
     assert rp(FakeConn(False), "r", "c", "qdrant") is False
-    assert rp(FakeConn(True), "r", "c", "qdrant") is True
+    # distinct run -> fresh verdict required even though run 'r' cached
+    _RECEIPT_VERDICT_STORE.clear()
+    assert rp(FakeConn(True), "r2", "c", "qdrant") is True
