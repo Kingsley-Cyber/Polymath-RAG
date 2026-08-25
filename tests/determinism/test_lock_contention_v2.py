@@ -86,3 +86,43 @@ def test_missing_receipt_is_detected(monkeypatch):
     # distinct run -> fresh verdict required even though run 'r' cached
     _RECEIPT_VERDICT_STORE.clear()
     assert rp(FakeConn(True), "r2", "c", "qdrant") is True
+
+
+def test_advance_tickets_entry_point_wiring(monkeypatch):
+    """MEASURED LIVE 2026-08-25: the store cutover left advance_tickets
+    calling _advance_pending_corpus with a stale third argument — every
+    real tick died with TypeError for hours while component tests passed.
+    This pins the ENTRY POINT wiring: one 2-arg call per pending corpus,
+    and the whole pass completes."""
+    import inspect
+
+    import control.tickets as T
+
+    sig = inspect.signature(T._advance_pending_corpus)
+    assert list(sig.parameters) == ["conn", "corpus_id"], \
+        "signature drift: update the advance_tickets call site together"
+
+    calls = []
+
+    def fake_advancer(conn, corpus_id):
+        calls.append(corpus_id)
+        return 0
+
+    monkeypatch.setattr(T, "_advance_pending_corpus", fake_advancer)
+
+    class FakeConn:
+        """Scripted: first fetchall = pending corpora; later queries
+        (ready backfill, lease sweep) return nothing."""
+        def __init__(self):
+            self._n = 0
+        def execute(self, sql, *a, **k):
+            self._n += 1
+            return self
+        def fetchall(self):
+            return [("corpus_a",)] if self._n == 1 else []
+        def fetchone(self):
+            return None
+
+    advanced = T.advance_tickets(FakeConn())
+    assert calls == ["corpus_a"]
+    assert advanced == 0

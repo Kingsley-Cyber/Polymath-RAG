@@ -248,16 +248,16 @@ def advance_tickets(conn: Connection) -> int:
     wraps the cursor (full-cycle scan); one full pass per tick maximum,
     so processing is bounded regardless of table size."""
     advanced = 0
-    # LOCK-CONTENTION-V2: one memo per tick. Receipt state for a run
-    # cannot usefully change mid-pass (the tick is the only writer of
-    # advancement decisions), so each (run_id, projection) is queried
-    # at most once per pass instead of once per candidate ticket.
-    receipts_cache: dict = {}
+    # RECEIPT-VERDICT-STORE-V2: the cross-tick memo is the explicit-state
+    # verdict store inside _advance_pending_corpus; no per-tick dict is
+    # threaded through anymore (the stale third argument crashed every
+    # live tick with a TypeError between the store cutover and this fix —
+    # measured: 1,864 consecutive failed ticks).
     corpora = [r[0] for r in conn.execute(
         """SELECT DISTINCT corpus_id FROM stage_tickets
            WHERE status='pending' ORDER BY corpus_id""").fetchall()]
     for corpus_id in corpora:
-        advanced += _advance_pending_corpus(conn, corpus_id, receipts_cache)
+        advanced += _advance_pending_corpus(conn, corpus_id)
 
     # READY backfill: re-emit missing claim events, keyset on seq
     ready_rows = conn.execute(

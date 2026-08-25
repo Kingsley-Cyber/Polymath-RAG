@@ -73,6 +73,23 @@ _CENSUS_CURSOR_CORPUS = "__global__"
 _HISTORY_CACHE: dict[str, list[tuple[str, str, object]]] = {}
 _VERDICT_CACHE: dict[str, dict] = {}
 
+# CENSUS-PHASE-TIMING-V1: always-on phase telemetry for the tick that
+# just ran. Overhead is a handful of perf_counter pairs; consumers call
+# pop_census_timing() after compute_census returns.
+_TIMING_KEYS = (
+    "runs_query_ms", "dirty_select_ms", "attempts_fetch_ms",
+    "python_loop_ms", "receipt_checks_ms", "receipt_queries",
+    "mode", "runs_evaluated",
+)
+_LAST_TIMING: dict | None = None
+
+
+def pop_census_timing() -> dict | None:
+    """Return (and clear) the phase timings of the last compute_census."""
+    global _LAST_TIMING
+    out, _LAST_TIMING = _LAST_TIMING, None
+    return out
+
 
 def _watermark_read(conn: Connection):
     row = conn.execute(
@@ -108,10 +125,14 @@ def compute_census(conn: Connection, *, max_attempts: int = 3,
     time, attempts by stage + started time, so two ticks over the same
     state produce the same schedule.
     """
+    global _LAST_TIMING
     census = Census()
 
     import os as _os
     import time as _time
+    _t_all = _time.perf_counter()
+    timing: dict = {"receipt_checks_ms": 0.0, "receipt_queries": 0}
+
     mode = (mode or os.environ.get("POLYMATH_CENSUS_MODE", "auto")).lower()
     if os.environ.get("POLYMATH_CENSUS_AUDIT") == "1":
         mode = "full"
@@ -122,24 +143,30 @@ def compute_census(conn: Connection, *, max_attempts: int = 3,
         # no durable watermark yet: a cold controller must seed via one
         # authoritative full pass before narrowing to dirty runs.
         mode = "full"
+    timing["mode"] = mode
 
+    _t0 = _time.perf_counter()
     runs = conn.execute(
         """
         SELECT run_id, corpus_id, status, created_at
           FROM runs
          WHERE status IN ('intake', 'reconciling', 'degraded')
-         ORDER BY created_at, run_id
+          ORDER BY created_at, run_id
         """
     ).fetchall()
+    timing["runs_query_ms"] = round((_time.perf_counter() - _t0) * 1000, 1)
 
     if mode == "incremental":
         overlap_us = 1_000_000  # 1s replay window; derivation is idempotent
+        _t0 = _time.perf_counter()
         changed = {
             r[0] for r in conn.execute(
                 """SELECT DISTINCT run_id FROM stage_attempts
                    WHERE started_at > now() - %s::interval""",
                 (f"{(_time.time()*1e6 - wm_us + overlap_us)/1e6:.3f} seconds",),
             ).fetchall()}
+        timing["dirty_select_ms"] = round(
+            (_time.perf_counter() - _t0) * 1000, 1)
         # brand-new active runs have no attempts yet but need first census
         new_runs = {r[0] for r in runs
                     if _epoch_us(r[3]) > wm_us - overlap_us}
@@ -149,6 +176,7 @@ def compute_census(conn: Connection, *, max_attempts: int = 3,
 
     attempts_by_run: dict[str, list[tuple[str, str, object]]] = {}
     if changed is None:
+        _t0 = _time.perf_counter()
         attempts = conn.execute(
             """
             SELECT run_id, stage, outcome, started_at
@@ -156,6 +184,8 @@ def compute_census(conn: Connection, *, max_attempts: int = 3,
              ORDER BY run_id, stage, started_at
             """
         ).fetchall()
+        timing["attempts_fetch_ms"] = round(
+            (_time.perf_counter() - _t0) * 1000, 1)
         for row in attempts:
             attempts_by_run.setdefault(row[0], []).append(
                 (row[1], row[2], row[3]))
@@ -166,6 +196,7 @@ def compute_census(conn: Connection, *, max_attempts: int = 3,
         # unchanged runs reuse cached history AND their previous verdict.
         fresh = changed & {r[0] for r in runs}
         if fresh:
+            _t0 = _time.perf_counter()
             rows = conn.execute(
                 """
                 SELECT run_id, stage, outcome, started_at
@@ -175,6 +206,8 @@ def compute_census(conn: Connection, *, max_attempts: int = 3,
                 """,
                 (sorted(fresh),),
             ).fetchall()
+            timing["dirty_select_ms"] = timing.get("dirty_select_ms", 0.0) \
+                + round((_time.perf_counter() - _t0) * 1000, 1)
             by_run: dict[str, list] = {}
             for row in rows:
                 by_run.setdefault(row[0], []).append(
@@ -182,6 +215,7 @@ def compute_census(conn: Connection, *, max_attempts: int = 3,
             _HISTORY_CACHE.update(by_run)
 
     max_seen_us = wm_us or 0
+    _t_loop = _time.perf_counter()
 
     for run_id, corpus_id, _status, created_at in runs:
         if changed is not None and run_id not in changed:
@@ -249,7 +283,10 @@ def compute_census(conn: Connection, *, max_attempts: int = 3,
             # have missing receipts (store loss cleared by VERIFY). Re-arm
             # the stage so the projector re-drives (PLAN Phase F gate 1/2).
             for stage in ("project_qdrant", "project_neo4j", "project_canonical"):
+                _t0 = _time.perf_counter()
                 missing = _missing_projection_receipts(conn, run_id, stage)
+                timing["receipt_checks_ms"] += round(
+                    (_time.perf_counter() - _t0) * 1000, 1)
                 if missing:
                     census.gaps.append(Gap(
                         run_id=run_id, corpus_id=corpus_id, stage=stage,
@@ -281,6 +318,10 @@ def compute_census(conn: Connection, *, max_attempts: int = 3,
     # watermark back together with the tick's work (safe replay).
     if max_seen_us > (wm_us or 0):
         _watermark_write(conn, max_seen_us)
+    timing["python_loop_ms"] = round((_time.perf_counter() - _t_loop) * 1000, 1)
+    timing["census_total_ms"] = round((_time.perf_counter() - _t_all) * 1000, 1)
+    timing["runs_evaluated"] = len(runs)
+    _LAST_TIMING = timing
     return census
 
 
