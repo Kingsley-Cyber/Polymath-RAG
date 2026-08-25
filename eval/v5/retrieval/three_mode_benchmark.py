@@ -93,7 +93,7 @@ class Bench:
         c = self.contract
         prefixed = (c.query_prefix + text) if c.query_prefix else text
         if c.embed_fn is not None:
-            return c.embed(prefixed)
+            return c.embed(prefixed, "query")
         from polymath_shared.clients import EmbedderClient
         cl = EmbedderClient()
         out = cl.embed([prefixed], "query")
