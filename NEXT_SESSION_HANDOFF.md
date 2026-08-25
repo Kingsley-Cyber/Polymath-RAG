@@ -241,20 +241,20 @@ EOF
 
 ## NEXT SESSION QUEUE (charter order)
 
-1. ~~Attribute the 53.8-min cold-seed tick~~ DONE (closeout §2).
-2. ~~Measure incremental census steady state~~ DONE (0.31 s wall).
-3. ~~Triage failed tickets~~ DONE (129 archived + deliberate trio
-   documented; release-books "revive" plan was wrong — sources corrupt/
-   superseded, repaired variants already ingested).
-4. **P5 contract freezes** — write ACTUAL behavior docs:
-   RETRIEVAL-CHUNK-HIERARCHY-V1 (audit chunker first),
-   RETRIEVAL-STORAGE-CONTRACT-V1 (qdrant payload fields exist today:
-   representation_kind/corpus/doc/text/embedding_contract — extend per
-   charter metadata list).
-5. **Three-mode same-query benchmark harness**
-   (eval/v5/retrieval/THREE-MODE-BENCHMARK-V1) — VECTOR/HYBRID/GRAPH
-   personalities per contract; GRAPH = hybrid seeds → hop1 expansion →
-   evidence backfill.
-6. **Real 50–100 doc pilot**, then resume scale qualification.
-7. (optional, post-drain) set-based advance_tickets if the ~12 s DAG
-   walk stays flagged in tick phases once pending drains.
+1. ~~Attribute 53.8-min tick~~ DONE · 2. ~~incremental census~~ DONE
+   (0.31 s) · 3. ~~triage failed tickets~~ DONE · 4. ~~chunk/storage
+   contracts~~ DONE (docs/contracts/) · 5. ~~three-mode harness~~ DONE
+   (behavioral; judging needs sealed set) · 6. ~~G1 neural cutover~~
+   DONE+QUALIFIED (`f121b79`: registry migration 0034, default flipped,
+   hash-vs-neural 0/9 vs 6/9).
+7. **Stage-K pilot findings to close** (eval/v5/retrieval/
+   STAGE-K-PILOT-RELEASE-BOOKS.md):
+   a. OWNER DECISION: /ask no-corpus fallback returns TEST-corpus
+      artifacts (grounded=True but foreign provenance). Pick strict
+      scoping / query_ready-only / per-object corpus_id.
+   b. Fresh ingest (new small real corpus) to validate procedure/
+      concept artifact lanes end-to-end (release-books predates 0033).
+   c. Redrive 3 legacy doc summaries (admitted slice).
+8. Sealed judged set for three-mode accuracy claims.
+9. (optional, post-drain) set-based advance_tickets if ~12 s DAG walk
+   stays flagged in tick phases.
