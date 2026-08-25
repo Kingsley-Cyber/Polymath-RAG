@@ -76,7 +76,10 @@ touch extraction/admission/rulepack except for proven correctness bugs.
   probe-enf2 (excluded from health).
 - Watcher v2 runs (excludes archived); last line may show REGRESSION
   from the 74 — see triage plan below.
-- Bundle: v5-production-007 · HEAD at handoff: see `git log -1`.
+- Bundle: v5-production-007 · HEAD at handoff: `4e243cc`
+  (PERFORMANCE-CORRECTION). Fleet control MUST be restarted to pick up
+  RECEIPT-VERDICT-STORE-V2 (running process predates it) — the
+  bootstrap restart handles this.
 
 ## CORRECTION CYCLE (2026-08-25, after closeout — read first)
 
@@ -216,10 +219,13 @@ EOF
 
 ## NEXT SESSION QUEUE (charter order)
 
-1. **Incremental census** (telemetry-justified): dirty-run set from
-   stage_attempts watermark; census re-derived for changed runs only.
-   Target: tick p95 < 30s under full backlog. Then small-corpus
-   entry < 60s end-to-end.
+1. **Attribute the 53.8-min cold-seed tick** (>=95% accounted):
+   instrument compute_census internals (attempts fetch ms, python loop
+   ms, receipt-probe ms+count) and tick phases; capture one offline
+   full-census attribution into eval/v5/scale/. MEASURED only.
+2. **Incremental census** is IMPLEMENTED (ea3fdcb) but its steady-state
+   tick p50/p95/max under backlog is UNMEASURED — measure after #1,
+   then small-corpus entry < 60s end-to-end target.
 2. **Triage issue #1** (archive test-corpus failures; revive
    release-books trio via adapter-backed re-emit).
 3. **P5 contract freezes** — write ACTUAL behavior docs:
