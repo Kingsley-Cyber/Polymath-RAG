@@ -195,6 +195,13 @@ def _write_points(client: QdrantClient, collection: str, chunks: list[dict], con
                 "parent_id": chunk["parent_id"] or "",
                 "corpus_id": chunk["corpus_id"],
                 "tier": chunk["tier"],
+                # PAYLOAD-VOCABULARY-UNIFICATION (measured Stage-K pilot):
+                # production retrieval filters representation_kind
+                # ('routing_child' per pass1.py); tier-only payloads made
+                # every child invisible to the FAST/dense lane.
+                "representation_kind":
+                    "routing_child" if chunk.get("tier") == "child"
+                    else "parent_summary",
                 "chunk_index": chunk["chunk_index"],
                 "content_hash": projection_id(
                     PROJECTION_QDRANT, KIND_CHUNK, chunk["chunk_id"], CONTRACT_VERSION
