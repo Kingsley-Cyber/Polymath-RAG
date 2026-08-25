@@ -40,6 +40,20 @@ class LegacyEventUnrecoverable(Exception):
         self.reason = reason
 
 
+def _row_value(row: Any, key: str) -> Any:
+    """Read one column from a row produced by EITHER cursor factory.
+
+    MEASURED 2026-08-25: production claims run a dict_row cursor, so a
+    single-column row arrives as ``{"payload": …}``; tuple unpacking
+    ``(payload,)`` against that dict binds the KEY STRING ``"payload"``
+    instead of the value, and every recovery silently crashed the claim
+    transaction. This helper accepts dict rows and tuple rows alike.
+    """
+    if isinstance(row, dict):
+        return row.get(key)
+    return row[0] if row else None
+
+
 def _recover_from_intake_artifact(
         conn: Callable[[str, tuple], Any], run_id: str) -> Optional[dict]:
     """EXECUTION-BUNDLE era recovery: the intake stage persists an
@@ -55,10 +69,21 @@ def _recover_from_intake_artifact(
         ).fetchall()
     except Exception:
         return None
-    for (payload,) in rows:
+    for row in rows or []:
+        payload = _row_value(row, "payload")
         if payload is None:
             continue
-        p = payload if isinstance(payload, dict) else json.loads(payload)
+        if isinstance(payload, dict):
+            p = payload
+        else:
+            try:
+                p = json.loads(payload)
+            except (TypeError, ValueError):
+                log.warning("intake artifact payload unparseable; "
+                            "cannot recover", extra={"run_id": run_id})
+                continue
+        if not isinstance(p, dict):
+            continue
         card = p.get("routing_card") or {}
         if card.get("doc_id"):
             merged = {"doc_id": card["doc_id"]}
@@ -101,8 +126,9 @@ def normalize_event(conn: Callable[[str, tuple], Any],
             ).fetchone()
         except Exception:
             row = None
-        if row and row[0]:
-            canonical.setdefault("corpus_id", row[0])
+        corpus_id = _row_value(row, "corpus_id") if row is not None else None
+        if corpus_id:
+            canonical.setdefault("corpus_id", corpus_id)
             missing = [k for k in required if not canonical.get(k)]
             log.info("legacy intake.v1 payload recovered corpus_id "
                      "from runs row", extra={"run_id": run_id})
