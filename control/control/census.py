@@ -11,6 +11,7 @@ forensics).
 """
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 
 from psycopg import Connection
@@ -52,7 +53,55 @@ class Census:
     fail: list[str] = field(default_factory=list)
 
 
-def compute_census(conn: Connection, *, max_attempts: int = 3) -> Census:
+# INCREMENTAL-CENSUS-V1 (2026-08-25): the routine control pass no longer
+# re-derives state for every historical run. stage_attempts is the
+# sufficient mutator signal for a run's gap verdict — receipt writes and
+# clears happen inside stage transactions that record attempts — so runs
+# without post-watermark attempts reuse their previous tick's verdict.
+#
+#   NORMAL OPERATION              RECOVERY / AUDIT
+#   incremental (dirty only)      full sweep
+#
+# Full mode remains authoritative and is forced by:
+#   POLYMATH_CENSUS_MODE=full  or  POLYMATH_CENSUS_AUDIT=1
+# Watermark lives in scheduler_cursors (stage='__census__',
+# corpus_id='__global__', last_seq = started_at epoch-micros) and is
+# written in the SAME transaction as the tick's resulting work, so a
+# crash rolls both back together (no lost changes, safe replay).
+_CENSUS_CURSOR_STAGE = "__census__"
+_CENSUS_CURSOR_CORPUS = "__global__"
+_HISTORY_CACHE: dict[str, list[tuple[str, str, object]]] = {}
+_VERDICT_CACHE: dict[str, dict] = {}
+
+
+def _watermark_read(conn: Connection):
+    row = conn.execute(
+        """SELECT last_seq FROM scheduler_cursors
+           WHERE stage=%s AND corpus_id=%s""",
+        (_CENSUS_CURSOR_STAGE, _CENSUS_CURSOR_CORPUS)).fetchone()
+    return row[0] if row else None
+
+
+def _watermark_write(conn: Connection, epoch_us: int) -> None:
+    conn.execute(
+        """INSERT INTO scheduler_cursors (stage, corpus_id, last_seq)
+           VALUES (%s,%s,%s)
+           ON CONFLICT (stage, corpus_id)
+           DO UPDATE SET last_seq=EXCLUDED.last_seq, updated_at=now()""",
+        (_CENSUS_CURSOR_STAGE, _CENSUS_CURSOR_CORPUS, epoch_us))
+
+
+def _epoch_us(dt) -> int:
+    import datetime as _dt
+    if dt is None:
+        return 0
+    if isinstance(dt, _dt.datetime):
+        return int(dt.timestamp() * 1_000_000)
+    return int(dt)
+
+
+def compute_census(conn: Connection, *, max_attempts: int = 3,
+                   mode: str | None = None) -> Census:
     """Deterministic census over non-terminal runs.
 
     Sort orders are explicit (ISSUES_REPORT §2.3 fix): runs by created
@@ -61,28 +110,103 @@ def compute_census(conn: Connection, *, max_attempts: int = 3) -> Census:
     """
     census = Census()
 
+    import os as _os
+    import time as _time
+    mode = (mode or os.environ.get("POLYMATH_CENSUS_MODE", "auto")).lower()
+    if os.environ.get("POLYMATH_CENSUS_AUDIT") == "1":
+        mode = "full"
+    wm_us = _watermark_read(conn)
+    if mode == "auto":
+        mode = "incremental" if wm_us is not None else "full"
+    if mode == "incremental" and wm_us is None:
+        # no durable watermark yet: a cold controller must seed via one
+        # authoritative full pass before narrowing to dirty runs.
+        mode = "full"
+
     runs = conn.execute(
         """
-        SELECT run_id, corpus_id, status
+        SELECT run_id, corpus_id, status, created_at
           FROM runs
          WHERE status IN ('intake', 'reconciling', 'degraded')
          ORDER BY created_at, run_id
         """
     ).fetchall()
 
-    attempts = conn.execute(
-        """
-        SELECT run_id, stage, outcome, started_at
-          FROM stage_attempts
-         ORDER BY run_id, stage, started_at
-        """
-    ).fetchall()
-    attempts_by_run: dict[str, list[tuple[str, str, object]]] = {}
-    for row in attempts:
-        attempts_by_run.setdefault(row[0], []).append((row[1], row[2], row[3]))
+    if mode == "incremental":
+        overlap_us = 1_000_000  # 1s replay window; derivation is idempotent
+        changed = {
+            r[0] for r in conn.execute(
+                """SELECT DISTINCT run_id FROM stage_attempts
+                   WHERE started_at > now() - %s::interval""",
+                (f"{(_time.time()*1e6 - wm_us + overlap_us)/1e6:.3f} seconds",),
+            ).fetchall()}
+        # brand-new active runs have no attempts yet but need first census
+        new_runs = {r[0] for r in runs
+                    if _epoch_us(r[3]) > wm_us - overlap_us}
+        changed |= new_runs
+    else:
+        changed = None  # full sweep
 
-    for run_id, corpus_id, _status in runs:
-        history = attempts_by_run.get(run_id, [])
+    attempts_by_run: dict[str, list[tuple[str, str, object]]] = {}
+    if changed is None:
+        attempts = conn.execute(
+            """
+            SELECT run_id, stage, outcome, started_at
+              FROM stage_attempts
+             ORDER BY run_id, stage, started_at
+            """
+        ).fetchall()
+        for row in attempts:
+            attempts_by_run.setdefault(row[0], []).append(
+                (row[1], row[2], row[3]))
+        _HISTORY_CACHE.clear()
+        _HISTORY_CACHE.update(attempts_by_run)
+    else:
+        # merge only changed runs' histories into the durable cache;
+        # unchanged runs reuse cached history AND their previous verdict.
+        fresh = changed & {r[0] for r in runs}
+        if fresh:
+            rows = conn.execute(
+                """
+                SELECT run_id, stage, outcome, started_at
+                  FROM stage_attempts
+                 WHERE run_id = ANY(%s)
+                 ORDER BY run_id, stage, started_at
+                """,
+                (sorted(fresh),),
+            ).fetchall()
+            by_run: dict[str, list] = {}
+            for row in rows:
+                by_run.setdefault(row[0], []).append(
+                    (row[1], row[2], row[3]))
+            _HISTORY_CACHE.update(by_run)
+
+    max_seen_us = wm_us or 0
+
+    for run_id, corpus_id, _status, created_at in runs:
+        if changed is not None and run_id not in changed:
+            verdict = _VERDICT_CACHE.get(run_id)
+            if verdict is not None:
+                census.gaps.extend(verdict["gaps"])
+                if verdict["promote"]:
+                    census.promote.append(run_id)
+                if verdict["fail"]:
+                    census.fail.append(run_id)
+                continue
+            # no prior verdict (cache cold after restart): fall through to
+            # full per-run evaluation using cached history; history cache
+            # may be empty here, so backfill this run's history.
+            if run_id not in _HISTORY_CACHE:
+                rows = conn.execute(
+                    """SELECT stage, outcome, started_at FROM stage_attempts
+                       WHERE run_id=%s ORDER BY started_at""",
+                    (run_id,)).fetchall()
+                _HISTORY_CACHE[run_id] = list(rows)
+
+        history = _HISTORY_CACHE.get(run_id, [])
+        max_seen_us = max(max_seen_us,
+                          max((_epoch_us(h[2]) for h in history), default=0),
+                          _epoch_us(created_at))
         last_by_stage: dict[str, tuple[str, object]] = {}
         count_by_stage: dict[str, int] = {}
         for stage, outcome, started_at in history:
@@ -137,6 +261,26 @@ def compute_census(conn: Connection, *, max_attempts: int = 3) -> Census:
         if complete and not census.fail:
             census.promote.append(run_id)
 
+        # INCREMENTAL-CENSUS-V1: remember each run's derived outcome so
+        # unchanged runs can be replayed verbatim next tick.
+        _VERDICT_CACHE[run_id] = {
+            "gaps": [g for g in census.gaps if g.run_id == run_id],
+            "promote": run_id in census.promote,
+            "fail": run_id in census.fail,
+        }
+
+    # prune cache entries for runs that left the active set
+    active_ids = {r[0] for r in runs}
+    for stale in list(_VERDICT_CACHE):
+        if stale not in active_ids:
+            _VERDICT_CACHE.pop(stale, None)
+            _HISTORY_CACHE.pop(stale, None)
+
+    # Full passes SEED the watermark; incremental passes advance it.
+    # Written inside the caller's transaction so a crash rolls the
+    # watermark back together with the tick's work (safe replay).
+    if max_seen_us > (wm_us or 0):
+        _watermark_write(conn, max_seen_us)
     return census
 
 
