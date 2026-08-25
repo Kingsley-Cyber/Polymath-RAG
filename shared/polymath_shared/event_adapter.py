@@ -26,8 +26,11 @@ _REQUIRED = {
     # MEASURED 2026-08-25: restart READY-backfill re-emits bare
     # {run_id, ticket_id} intake payloads when the original producing
     # event is gone -> intake workers crashed KeyError('corpus_id') x3
-    # across 74 tickets in one restart cycle.
-    "intake.v1": ("corpus_id",),
+    # across 74 tickets in one restart cycle. MEASURED later the same
+    # day: corpus-only recovery still crashed on KeyError('source_name')
+    # (release-books trio), so intake requires BOTH keys and recovery
+    # prefers the COMPLETE durable payload (runs.metadata.intake_payload).
+    "intake.v1": ("corpus_id", "source_name"),
 }
 
 
@@ -118,20 +121,42 @@ def normalize_event(conn: Callable[[str, tuple], Any],
                          "run_id": run_id,
                          "doc_id": recovered.get("doc_id")})
 
-    if event_type == "intake.v1" and "corpus_id" in missing:
+    if event_type == "intake.v1" and missing:
+        # Recovery order (MEASURED 2026-08-25, release-books trio):
+        #   1. runs.metadata.intake_payload — the COMPLETE durable
+        #      payload (corpus_id + source_name + media_type + content).
+        #   2. runs.corpus_id — bare fallback for corpus-only needs.
         try:
             row = conn.execute(
-                "SELECT corpus_id FROM runs WHERE run_id=%s",
+                "SELECT metadata FROM runs WHERE run_id=%s",
                 (run_id,),
             ).fetchone()
         except Exception:
             row = None
-        corpus_id = _row_value(row, "corpus_id") if row is not None else None
-        if corpus_id:
-            canonical.setdefault("corpus_id", corpus_id)
-            missing = [k for k in required if not canonical.get(k)]
-            log.info("legacy intake.v1 payload recovered corpus_id "
-                     "from runs row", extra={"run_id": run_id})
+        metadata = _row_value(row, "metadata") if row is not None else None
+        intake_payload = (metadata or {}).get("intake_payload") \
+            if isinstance(metadata, dict) else None
+        if isinstance(intake_payload, dict):
+            for k, v in intake_payload.items():
+                canonical.setdefault(k, v)
+            log.info("legacy intake.v1 payload recovered from "
+                     "runs.metadata.intake_payload", extra={"run_id": run_id})
+        missing = [k for k in required if not canonical.get(k)]
+        if missing and "corpus_id" in missing:
+            try:
+                row = conn.execute(
+                    "SELECT corpus_id FROM runs WHERE run_id=%s",
+                    (run_id,),
+                ).fetchone()
+            except Exception:
+                row = None
+            corpus_id = _row_value(row, "corpus_id") \
+                if row is not None else None
+            if corpus_id:
+                canonical.setdefault("corpus_id", corpus_id)
+                missing = [k for k in required if not canonical.get(k)]
+                log.info("legacy intake.v1 payload recovered corpus_id "
+                         "from runs row", extra={"run_id": run_id})
     if missing:
         raise LegacyEventUnrecoverable(
             f"LEGACY_EVENT_UNRECOVERABLE {event_type}: missing "

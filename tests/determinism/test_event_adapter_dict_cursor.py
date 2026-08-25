@@ -32,11 +32,14 @@ class _FakeResult:
         return self._rows[0] if self._rows else None
 
 
-def _dict_conn(artifacts=None, corpus_id=None):
+def _dict_conn(artifacts=None, corpus_id=None, metadata=None):
     class Cur:
         def execute(self, sql, params=None):
             if "FROM artifacts" in sql:
                 self._result = _FakeResult(artifacts or [])
+            elif "metadata" in sql:
+                self._result = _FakeResult(
+                    [{"metadata": metadata}] if metadata else [])
             else:
                 self._result = _FakeResult(
                     [{"corpus_id": corpus_id}] if corpus_id else [])
@@ -45,11 +48,13 @@ def _dict_conn(artifacts=None, corpus_id=None):
     return Cur()
 
 
-def _tuple_conn(artifacts=None, corpus_id=None):
+def _tuple_conn(artifacts=None, corpus_id=None, metadata=None):
     class Cur:
         def execute(self, sql, params=None):
             if "FROM artifacts" in sql:
                 rows = [(a["payload"],) for a in (artifacts or [])]
+            elif "metadata" in sql:
+                rows = [(metadata,)] if metadata else []
             else:
                 rows = [(corpus_id,)] if corpus_id else []
             self._result = _FakeResult(rows)
@@ -77,11 +82,27 @@ def test_chunked_v1_recovers_doc_id(conn_factory):
 
 
 @pytest.mark.parametrize("conn_factory", [_dict_conn, _tuple_conn])
-def test_intake_v1_recovers_corpus_id(conn_factory):
+def test_intake_v1_recovers_full_payload_from_metadata(conn_factory):
+    """MEASURED 2026-08-25: corpus-only recovery still crashed intake on
+    KeyError('source_name'); the COMPLETE durable payload lives in
+    runs.metadata.intake_payload and must be preferred."""
     out = normalize_event(
-        conn_factory(corpus_id="corpus_x"),
+        conn_factory(metadata={"intake_payload": {
+            "corpus_id": "corpus_x", "source_name": "book.epub",
+            "media_type": "application/epub+zip",
+            "content_b64": "QQ=="}}),
         "intake.v1", {"run_id": "r2", "ticket_id": "t2"}, "r2")
     assert out["corpus_id"] == "corpus_x"
+    assert out["source_name"] == "book.epub"
+    assert out["content_b64"] == "QQ=="
+
+
+def test_intake_v1_corpus_only_recovery_still_fails_closed():
+    """A bare runs.corpus_id cannot satisfy source_name -> typed refusal,
+    never a worker crash."""
+    with pytest.raises(LegacyEventUnrecoverable):
+        normalize_event(_dict_conn(corpus_id="corpus_x"),
+                        "intake.v1", {"run_id": "r2b"}, "r2b")
 
 
 @pytest.mark.parametrize("bad_payload", ["payload-scalar", "", None, 7])
