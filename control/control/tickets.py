@@ -664,11 +664,15 @@ def refresh_corpus_runtime_state(conn, *, watermark: int | None = None) -> dict:
 
 
 def eligible_creation_corpora(conn, window: int = 32) -> list[str]:
-    """Fair share: non-paused corpora round-robin by last_creation_tick
-    (NULLS FIRST = never served before), oldest tick first."""
+    """Fair share: non-paused, non-archived corpora round-robin by
+    last_creation_tick (NULLS FIRST = never served before), oldest tick
+    first. ARCHIVED-CORPUS-REGISTRY: archived corpora are out of the
+    scheduling lifecycle entirely."""
     return [r[0] for r in conn.execute(
         """SELECT c.corpus_id FROM corpus_runtime_state c
            WHERE c.creation_paused = FALSE
+             AND NOT EXISTS (SELECT 1 FROM archived_corpora ac
+                              WHERE ac.corpus_id = c.corpus_id)
            ORDER BY c.last_creation_tick ASC NULLS FIRST,
                     c.corpus_id ASC LIMIT %s""",
         (window,)).fetchall()]

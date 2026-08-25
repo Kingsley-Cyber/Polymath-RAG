@@ -262,3 +262,16 @@ def test_archived_chain_suppression():
     assert "_archived_run_ids" in src
     helper = inspect.getsource(S._archived_run_ids)
     assert "superseded" in helper and "ANY(%s)" in helper
+
+
+def test_archived_corpora_out_of_lifecycle():
+    """ARCHIVED-CORPUS-REGISTRY: archived corpora get no creation window
+    and no contract-drift reconciliation (measured: drift reconciliation
+    regenerated 9,373 ready scale events minutes after cleanup)."""
+    import inspect
+    from control import reconciliation as R
+    rec_src = inspect.getsource(R.reconcile_contract_drift)
+    assert "archived_corpora" in rec_src
+    from control import tickets as T
+    elig = inspect.getsource(T.eligible_creation_corpora)
+    assert "archived_corpora" in elig

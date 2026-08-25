@@ -117,6 +117,9 @@ def reconcile_contract_drift(conn: Connection) -> dict:
            AND r.execution_contract::text IS NOT NULL
            AND r.execution_contract <> %s::jsonb
            AND r.superseded_by_run_id IS NULL
+           AND NOT EXISTS (
+               SELECT 1 FROM archived_corpora ac
+                WHERE ac.corpus_id = r.corpus_id)
            AND EXISTS (SELECT 1 FROM stage_tickets t
                         WHERE t.run_id = r.run_id
                           AND t.status = ANY(%s))
