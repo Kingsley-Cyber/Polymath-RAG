@@ -76,22 +76,25 @@ def tick() -> dict:
         # The legacy scheduler still drives FAILED-stage retries (its
         # events are idempotent against ticket events by content hash).
         scheduled = _phase("schedule_gaps", schedule_gaps, conn, census)
-        barrier = _barrier_or_none(conn, census)
-        if barrier is None:
+        # BARRIER-V2: evaluate open barriers ONCE (the previous shape
+        # computed the per-corpus barrier set twice — once for the
+        # verdict and again inside the blocked branch; measured 3.8-4.8s
+        # of every tick in duplicate anti-joins).
+        _s = _t.perf_counter()
+        blocked = _corpora_with_open_barriers(conn, census)
+        if not blocked:
             _phase("apply_promotions", apply_promotions, conn, census)
         else:
             # Per-corpus barrier: a blocked corpus must not freeze
             # promotion for healthy corpora — promote everything whose
             # own corpus passes the generation barrier.
-            _s = _t.perf_counter()
-            blocked = _corpora_with_open_barriers(conn, census)
             promoted = [r for r in census.promote
                         if _corpus_of_run(conn, r) not in blocked]
             if len(promoted) != len(census.promote):
                 census = census.__class__(gaps=census.gaps, promote=promoted, fail=census.fail)
             apply_promotions(conn, census)
-            phase_ms["barrier_promotions"] = round(
-                (_t.perf_counter() - _s) * 1000, 1)
+        phase_ms["barrier_promotions"] = round(
+            (_t.perf_counter() - _s) * 1000, 1)
         _phase("apply_failures", apply_failures, conn, census)
         record_heartbeat(conn, owner, tick_ok=True, census_size=len(census.gaps))
         return {
