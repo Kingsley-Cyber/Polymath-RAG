@@ -29,7 +29,14 @@ STAGE_DAG: list[tuple[str, str, tuple[str, ...], tuple[str, ...]]] = [
     ("project_neo4j", "project_neo4j.v1", ("facts",), ("neo4j",)),
     ("canonicalize", "canonicalize.v1", ("canonical_entities",), ()),
     ("project_canonical", "project_canonical.v1", ("memberships",), ("neo4j",)),
-    ("verify_projections", "verify.v1", ("docs",), ()),
+    # VERIFY-DAG-KEYS-V2 (measured 2026-08-25, Stage-K pilot): the
+    # verifier writes {qdrant, routing_qdrant, neo4j, canonical}; the
+    # stale declared key 'docs' blocked ticket advancement for every
+    # run whose chain was minted after the verifier's reconciliation
+    # rewrite (artifact check failed -> summary stages never became
+    # ready -> corpus could not promote).
+    ("verify_projections", "verify.v1",
+     ("qdrant", "routing_qdrant", "neo4j", "canonical"), ()),
     # SUMMARY-VOCABULARY-LAYER: background intelligence stages. They run
     # AFTER settlement consumes nothing from the critical ingestion path:
     # a failure degrades summaries to DEGRADED, never blocks QUERY_READY.
