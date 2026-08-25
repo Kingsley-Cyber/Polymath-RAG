@@ -66,22 +66,46 @@ touch extraction/admission/rulepack except for proven correctness bugs.
     remaining bottleneck — incremental-census redesign is now
     telemetry-justified.
 
-## CURRENT LIVE STATE (at handoff)
+## CURRENT LIVE STATE (at handoff — updated 2026-08-25 ~13:00 UTC)
 
-- Fleet: pipeline profile, kimi_v1 + **enforce** + spacy, one control.
-- Control heartbeat: alive but ~24-min tick cadence under backlog
-  (cold passes; warm skip ticks ms-level). Census redesign pending.
-- Tickets: done 4,751 · pending 4,391 · ready 376 · superseded 17,162 ·
-  failed 74 (see KNOWN ISSUES #1) · dead-letter archive has
-  probe-enf2 (excluded from health).
-- Watcher v2 runs (excludes archived); last line may show REGRESSION
-  from the 74 — see triage plan below.
-- Bundle: v5-production-007 · HEAD at handoff: `4e243cc`
-  (PERFORMANCE-CORRECTION). Fleet control MUST be restarted to pick up
-  RECEIPT-VERDICT-STORE-V2 (running process predates it) — the
-  bootstrap restart handles this.
+**CONTROL/PERFORMANCE: GO, FROZEN.** Read
+`eval/v5/scale/CONTROL-PERFORMANCE-FINAL-CLOSEOUT.md` first.
 
-## CORRECTION CYCLE (2026-08-25, after closeout — read first)
+- HEAD at handoff: `9331f9a`; fence PASS 13/13 on this exact build.
+- Fleet: pipeline profile, kimi_v1 + enforce + spacy, ONE control,
+  booted detached (`disown`) — a non-detached boot was killed by shell
+  recycling once tonight ("supervisor stopped").
+- Ticks: cold seed 100 s (was 3226 s); incremental census 0.31 s;
+  steady tick 21–35 s (advance_tickets ~12 s is the largest phase and
+  the one open optimization candidate).
+- Tickets: failed ≈0 live (74+3 triaged → dead_letter_archive 129 +
+  deliberate-evidence trio; scale-10k-v1 pending/ready 3,467 archived
+  superseded per FOREGROUND-UNDER-BACKLOG). Foreground proof: probe doc
+  query_ready ≈90 s under load.
+- Receipts: RECEIPT-VERDICT-STORE-V2 semantics everywhere; corpus-scoped
+  bulk completeness (~0.23 s/tick); scheduler bulk (keys byte-identical).
+
+## SESSION LOG (2026-08-25 overnight — what happened after the correction cycle)
+
+1. Fleet restart exposed TWO live defects the component tests missed:
+   event_adapter consumed tuple rows under a dict_row cursor (extract/
+   intake crash-loop; `4bc430d`) and advance_tickets passed a stale
+   third argument — every real tick TypeErrored since the store cutover
+   (1,864 failures measured; `ad81e24`). Entry-point wiring now pinned.
+2. Cold-seed reproduced live (>100 min single tx): per-run receipt
+   EXISTS loops × bloat (documents 390k dead tuples, never analyzed).
+   Fixed by BULK-RECEIPT-COMPLETENESS-V1 (`1c872f3`): one corpus-scoped
+   anti-join per projection — measured 156 ms + 78 ms all-corpora.
+   VACUUM ANALYZE applied to hot tables.
+3. SCHEDULER-BULK-V1 (`a56df8e`): schedule_gaps 52→5 s; idempotency keys
+   byte-identical (test-pinned).
+4. FOREGROUND-UNDER-BACKLOG (`4b0fe16`, `9331f9a`): two-lane claim
+   ordering + stale scale mass archived; probe doc query_ready ≈90 s.
+5. Telemetry: census phase timings always-on; tick phases in
+   /tmp/polymath_fleet/tick_phases.jsonl (logger whitelist strips custom
+   fields); offline attribution driver eval/v5/scale/cold_tick_attribution.py.
+
+## CORRECTION CYCLE (2026-08-25, earlier — historical)
 
 King's review caught a boolean inversion in the (now REVERTED)
 RECEIPT-BUDGET-V1 patch: the verdict TTL cache stored `not present`
@@ -97,10 +121,8 @@ holding a 28-min transaction on scheduler_cursors/receipt rows;
 recycling control fixed it. If tests hang again: check
 pg_stat_activity FIRST.
 
-53.8-minute cold-seed tick remains NOT phase-attributed (<95%
-accounted). FIRST next-session item: instrument compute_census
-internals (attempts fetch / python loop / receipt probes) + tick phase
-breakdown, capture offline full-census attribution, THEN resume.
+53.8-minute cold-seed tick attribution: DONE this session — see §2 of
+CONTROL-PERFORMANCE-FINAL-CLOSEOUT.md (measured ≥95%).
 
 ## KNOWN ISSUES (triage queue, in order)
 
@@ -219,22 +241,20 @@ EOF
 
 ## NEXT SESSION QUEUE (charter order)
 
-1. **Attribute the 53.8-min cold-seed tick** (>=95% accounted):
-   instrument compute_census internals (attempts fetch ms, python loop
-   ms, receipt-probe ms+count) and tick phases; capture one offline
-   full-census attribution into eval/v5/scale/. MEASURED only.
-2. **Incremental census** is IMPLEMENTED (ea3fdcb) but its steady-state
-   tick p50/p95/max under backlog is UNMEASURED — measure after #1,
-   then small-corpus entry < 60s end-to-end target.
-2. **Triage issue #1** (archive test-corpus failures; revive
-   release-books trio via adapter-backed re-emit).
-3. **P5 contract freezes** — write ACTUAL behavior docs:
+1. ~~Attribute the 53.8-min cold-seed tick~~ DONE (closeout §2).
+2. ~~Measure incremental census steady state~~ DONE (0.31 s wall).
+3. ~~Triage failed tickets~~ DONE (129 archived + deliberate trio
+   documented; release-books "revive" plan was wrong — sources corrupt/
+   superseded, repaired variants already ingested).
+4. **P5 contract freezes** — write ACTUAL behavior docs:
    RETRIEVAL-CHUNK-HIERARCHY-V1 (audit chunker first),
    RETRIEVAL-STORAGE-CONTRACT-V1 (qdrant payload fields exist today:
    representation_kind/corpus/doc/text/embedding_contract — extend per
    charter metadata list).
-4. **Three-mode same-query benchmark harness**
+5. **Three-mode same-query benchmark harness**
    (eval/v5/retrieval/THREE-MODE-BENCHMARK-V1) — VECTOR/HYBRID/GRAPH
    personalities per contract; GRAPH = hybrid seeds → hop1 expansion →
    evidence backfill.
-5. **Real 50–100 doc pilot**, then resume scale qualification.
+6. **Real 50–100 doc pilot**, then resume scale qualification.
+7. (optional, post-drain) set-based advance_tickets if the ~12 s DAG
+   walk stays flagged in tick phases once pending drains.
