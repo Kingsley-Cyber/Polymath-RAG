@@ -32,6 +32,19 @@ _MAX_NAME = 8      # words
 _MAX_DESC = 40
 
 
+def _clean_name(name: str) -> str:
+    """Strip markdown-heading glue and collapse immediate repeats
+    ('# Notes on X X' -> 'X') so concept names are clean nouns."""
+    n = re.sub(r"^#+\s*", "", (name or "").strip())
+    words = n.split()
+    out: list[str] = []
+    for w in words:
+        if out and w.lower() == out[-1].lower():
+            continue
+        out.append(w)
+    return " ".join(out)
+
+
 def compile_concepts(*, document_id: str, corpus_id: str,
                      sentences: list[str],
                      domain: str = "general",
@@ -48,6 +61,7 @@ def compile_concepts(*, document_id: str, corpus_id: str,
             if not m:
                 continue
             name = m.group("name").strip(" \"'").strip()
+            name = _clean_name(name)
             parts = name.split()
             while parts and parts[0].lower() in ("the", "a", "an"):
                 parts = parts[1:]

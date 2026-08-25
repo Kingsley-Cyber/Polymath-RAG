@@ -53,3 +53,25 @@ Migration 0033 applied. Live corpus `p1-genre-probe-v1`:
   goal/steps/tools and name/description respectively.
 - Idempotency: re-ingest of identical bytes reuses content-addressed
   artifact ids (ON CONFLICT DO NOTHING).
+
+## PHASE 2+3 proof (same session)
+
+- SUMMARY-WORKER-FLEET-V1 wired into supervisor ('summaries' slot,
+  pipeline+converge profiles); in-process drive of the real contracts
+  produced parent_summaries=2 -> document_summaries=2 -> corpus map=1
+  on the genre corpus; vocabulary admitted 0 families by design
+  (single-doc support, fail-closed).
+- QUERY-ROUTER-V1 + /ask route: deterministic lexicon classifier;
+  acceptance 4/4 PASS (FACT/PROCEDURE/CONCEPT/POLYMATH), grounded=True
+  everywhere (stored-objects-only), citations resolve.
+- Fixes folded in: barrier SQL SyntaxError (control ticks were failing
+  whenever promotions existed) + superseded-history miscount;
+  concept-name heading glue cleanup; fact-lane SQL-side prefilter.
+
+## Flagged for next session (Phase-6 performance)
+
+scale-10k verify/projection transactions hold locks >26 min
+(corpus-wide COUNT(*) per document inside one tx); control tick is
+lock-blocked behind them, freezing ticket creation fleet-wide until
+they finish. Not a correctness defect; it is THE throughput item and
+it starves small interactive ingests while a large backlog drains.
