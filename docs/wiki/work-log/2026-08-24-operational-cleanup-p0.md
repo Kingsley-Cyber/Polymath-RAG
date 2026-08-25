@@ -97,3 +97,10 @@ single-query, missing-receipt detection).
 Live: heartbeat resumed 2026-08-25 02:04 UTC after >1 day gap;
 small-corpus invariant A passes — lock-test-a-v1 received its full
 12-ticket DAG during peak backlog saturation.
+
+## SESSION CLOSEOUT (2026-08-25)
+
+Continuation packet: docs/contexts/session-packet-2026-08-25.md
+Handoff: NEXT_SESSION_HANDOFF.md (rewritten at closeout)
+Next engineering item: incremental census (telemetry-justified), then
+contract freezes + three-mode benchmark + real-corpus pilot.

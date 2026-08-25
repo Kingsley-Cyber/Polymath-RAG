@@ -1,123 +1,213 @@
-# NEXT_SESSION HANDOFF — 2026-08-24 (late)
+# NEXT_SESSION HANDOFF — 2026-08-25 (session close)
 
-Read this file top-to-bottom, then run the bootstrap commands. Do not
-re-derive state from chat history — this file + the DB are the
-authorities.
+Read top-to-bottom, then run BOOTSTRAP. This file + Postgres are the
+authorities. Do not re-derive state from chat history.
 
-## WHERE WE ARE
+## WHERE THE PRODUCT STANDS
 
-Architecture is FROZEN and feature-complete. The intelligence stack
-(extraction v2 / artifacts / summaries / corpus map / vocabulary /
-router) is built, unit-tested, and shadow-validated. What remains:
+The RAG is **queryable end-to-end and enforce-live**:
 
-1. Verify the CATEGORY-D binding fix on live extraction (this session's
-   last commit — unit-verified, NOT yet re-extracted end-to-end).
-2. Drain convergence → PHASE_1 reliability package.
-3. Cutover restart with the full env (below) → enforcement decision.
-4. A1 registries / A2 concept policy (owner decisions, blocked on
-   nothing technical).
+```
+DOCUMENT → CONTROL PLANE → EXTRACTION (frozen, enforce)
+  → FACT / PROCEDURE / CONCEPT artifacts (persisted, bundle-stamped)
+  → PARENT → DOCUMENT → CORPUS MAP summaries (live worker)
+  → QUERY ROUTER → /ask → grounded answer
+```
+
+Charter acceptance 4/4 PASS (FACT/PROCEDURE/CONCEPT/POLYMATH routes,
+grounded=True everywhere). Scientific extraction is FROZEN — do not
+touch extraction/admission/rulepack except for proven correctness bugs.
+
+## WHAT THIS SESSION DID (chronological, all committed)
+
+1. **P0 recovery**: killed orphan controls (one spamming PG auth-FATALs
+   11h), telemetry archived to eval/v5/scale/, bundle refrozen
+   v5-production-006→007, cutover restart kimi_v1+shadow.
+2. **CATEGORY-D closed LIVE** (e306da6): doc01 trio
+   introduced_by/trained_on/evaluated_on ACCEPT. Two new bounded fixes:
+   definite-NP aux-tail head repair (candidates.py) + C3c possession
+   inheritance + `examined` realization. Red fixtures now real
+   assertions (14/14 green).
+3. **Shadow parity PASS → PREDICATE_V2=enforce LIVE** (aafa3e0,
+   255ebb5): 4-doc s-val set matches baseline; rescue-span-preservation
+   restored (refused widening no longer deletes provider spans — was
+   ledger row 63 limitation destroying GLiNER observations).
+4. **EXECUTION-BUNDLE-FENCE-V1** (8d7371a..): every worker registers
+   execution_bundle_hash (git+dirty+authority+rulepack+ontology+config);
+   claim gate self-quarantines on disk drift; facts stamp
+   provenance.generated_by_bundle_hash; migration 0031; fence PASS
+   includes bundle uniformity. PROVEN LIVE: caught stale workers twice.
+5. **OPERATIONAL-CLEANUP-P0** (00a35c0): EVENT-ADAPTER normalizes
+   legacy payloads at claim boundary (typed single-shot failure);
+   DEAD-LETTER-ARCHIVE migration 0032 + watcher v2 excludes archived
+   historical probes.
+6. **P1 ARTIFACT PERSISTENCE** (48ece42, 0fea327): migration 0033
+   procedure_artifacts + concept_artifacts; extract compiles behind
+   router lanes with stamps; Qdrant routing_procedure/routing_concept
+   lanes verified live.
+7. **P2 SUMMARIES WORKER** (dff12ef): 'summaries' fleet worker consumes
+   the four background stages; waterfall verified 2 parents → 2 docs →
+   corpus map on genre corpus.
+8. **BARRIER SQL FIX** (67cf20c): control tick was failing EVERY tick
+   with SyntaxError once promotions existed (server-side binding vs
+   tuple IN) + superseded-history miscount in generation_barrier.
+9. **P2/P3 RETRIEVAL** (82810eb): QUERY-ROUTER-V1 (deterministic
+   lexicon) + /ask endpoint (stored-objects-only answering). Acceptance
+   4/4 PASS.
+10. **4A LOCK-CONTENTION-V2** (175db66, a965aa9): receipts-present used
+    corpus-wide anti-join COUNT per candidate ticket inside the control
+    tx; verify reconciliation moved to short autocommit read phase.
+    Heartbeat resumed after >1 day dead. Small-corpus entry works under
+    peak backlog.
+11. **4B** (c5dae0e..6ee3376): receipts verdict final form = per-run
+    EXISTS + asymmetric TTL memo (present=90s, missing=900s monotonic).
+    Measured: cold tick 762s dominated by receipt checks (96% sampling
+    attribution); census Python loop over 25k attempts/10k runs is the
+    remaining bottleneck — incremental-census redesign is now
+    telemetry-justified.
+
+## CURRENT LIVE STATE (at handoff)
+
+- Fleet: pipeline profile, kimi_v1 + **enforce** + spacy, one control.
+- Control heartbeat: alive but ~24-min tick cadence under backlog
+  (cold passes; warm skip ticks ms-level). Census redesign pending.
+- Tickets: done 4,751 · pending 4,391 · ready 376 · superseded 17,162 ·
+  failed 74 (see KNOWN ISSUES #1) · dead-letter archive has
+  probe-enf2 (excluded from health).
+- Watcher v2 runs (excludes archived); last line may show REGRESSION
+  from the 74 — see triage plan below.
+- Bundle: v5-production-007 · HEAD at handoff: see `git log -1`.
+
+## KNOWN ISSUES (triage queue, in order)
+
+1. **74 failed intake tickets across corpora** (`KeyError:
+   'corpus_id'`, minted by restart READY-backfill emitting bare
+   payloads at 2026-08-25 02:48 UTC). Adapter now recovers corpus_id
+   from the runs row (committed post-incident). Triage:
+   - test corpora (bp-test-a 64, d7-h1-test, reconcile-1c-test,
+     vocab-probe-v2, reconcile tests ≈ 71): archive via
+     dead_letter_archive like probe-enf2.
+   - release-books-v1 (3): real data — reset tickets to ready AFTER
+     deploying current adapter so backfill re-emits WITH recovery;
+     intake will re-run from existing materialized content.
+2. **Control census Python loop** over 25k attempts / 10k active runs
+   every tick (~24-min ticks). Telemetry justifies incremental census
+   (dirty-run set from stage_attempts > watermark). This is THE next
+   engineering item before resuming scale qualification.
+3. Concept compiler glues markdown heading into first concept name
+   ("# Notes on X X" → cleaned for NEW ingests only; old rows remain).
+4. Fence blind spot note: build_sha==HEAD passes while uncommitted
+   edits age past process start — mitigated by dirty-tree flag in the
+   bundle itself; keep tree clean at boot.
 
 ## BOOTSTRAP (run in order)
 
 ```bash
 cd /Users/king/Documents/polymath-rebuild/polymath-v4
 export POLYMATH_PG_DSN="postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath"
-git log --oneline -5          # expect HEAD at/after 12c713d
+git log --oneline -3          # expect ≥ adapter commit above
 git status                    # must be clean
 docker ps                     # postgres/redis/qdrant/neo4j up?
-```
 
-Then verify fleet liveness:
-```bash
+# fleet (pipeline profile = 12 slots incl. summaries; no orchestrator)
+ps aux | grep -E "control.main|workers\." | grep -v grep
 curl -s -m 3 http://127.0.0.1:8740/ready   # gliner
 curl -s -m 3 http://127.0.0.1:8744/ready   # spacy
 curl -s -m 3 http://127.0.0.1:8742/ready   # embedder
-ps aux | grep -E "control.main|extract_worker" | grep -v grep
+
+# if down:
+env POLYMATH_PG_DSN="$POLYMATH_PG_DSN" POLYMATH_PROFILE=pipeline \
+  POLYMATH_RELATION_PIPELINE=kimi_v1 POLYMATH_PREDICATE_V2=enforce \
+  POLYMATH_SYNTAX_PROVIDER=spacy \
+  nohup bash scripts/boot_polymath.sh > /tmp/polymath_fleet/boot.log 2>&1 &
+# wait ~60s for sidecars; extract crash-loops until they answer
+
+# fence (scoped to pipeline slots; MUST be PASS 12/12):
+SLOTS=$(.venv/bin/python -c "import sys; sys.path.insert(0,'shared'); \
+  from polymath_shared.runtime_budget import profile_slots; \
+  print(','.join(profile_slots('pipeline')))")
+POLYMATH_FLEET_ONLY="$SLOTS" .venv/bin/python eval/v5/verify_live_build.py
 ```
-If workers are down: `POLYMATH_PROFILE=pipeline nohup bash
-scripts/boot_polymath.sh > /tmp/polymath_fleet/boot.log 2>&1 &`
 
-## CURRENT DRAIN STATE (at handoff)
+If fence shows `execution_bundle` FAIL "stale memory": code changed
+since boot — restart fleet. If FAIL "tree dirty": commit or stash first.
+Keep the working tree CLEAN whenever workers boot.
 
-done ≈ 3,424 · pending ≈ 4,680 · ready 441 · **dead letters 0**.
-Convergence watcher: `/tmp/polymath_fleet/convergence_watch.sh`
-(logs `/tmp/polymath_fleet/watch.log`; exits when open ≤50 or dead>0).
-Telemetry: `/tmp/polymath_fleet/drain_metrics.jsonl` (~1,150 samples,
-30s cadence). Copy BOTH to `eval/v5/scale/` before they rotate.
-
-## THE ONE OPEN DEFECT: CATEGORY_D (role binding)
-
-Doc01 of s-validation-v1 ("Adaptive Neural Reasoning Systems") produced
-0 candidates despite anchors resolving and endpoints GLOBAL-admitted.
-
-**FIX ALREADY COMMITTED (12c713d)**: sidecar emits dep labels without
-colons (`nsubjpass`) while kimi expects UD style (`nsubj:pass`).
-`DEP_LABEL_ALIASES` normalization added in `_syntax_tokens`.
-Unit-verified: passive subject now binds.
-
-**STILL TO DO**: re-extract s-validation doc01 under enforce env and
-confirm ≥3 facts (introduced_by / trained_on / evaluated_on). Red
-fixtures in `tests/determinism/test_sval_doc01_red.py` mark the target;
-they turn green only via live verification.
-
-## CUTOVER RESTART CHECKLIST (after drain converges)
-
-Stop fleet (SIGTERM supervisor first, then children; VERIFY pids die —
-launchctl no-ops here), then boot with FULL env:
+## VERIFICATION COMMANDS
 
 ```bash
-export POLYMATH_PROFILE=pipeline
-export POLYMATH_RELATION_PIPELINE=kimi_v1
-export POLYMATH_PREDICATE_V2=enforce   # or shadow for one more pass
-export POLYMATH_SYNTAX_PROVIDER=spacy
-nohup bash scripts/boot_polymath.sh > /tmp/polymath_fleet/boot.log 2>&1 &
+# fast regression core (~seconds)
+.venv/bin/python -m pytest tests/determinism/test_sval_doc01_red.py \
+  tests/determinism/test_category_d_followup.py \
+  tests/determinism/test_execution_bundle.py \
+  tests/determinism/test_lock_contention_v2.py \
+  tests/determinism/test_i4r_a_boundary.py \
+  tests/determinism/test_kimi_candidates.py -p no:cacheprovider -q
+
+# /ask smoke (direct function; orchestrator not in pipeline profile)
+POLYMATH_PG_DSN="$POLYMATH_PG_DSN" .venv/bin/python - <<'EOF'
+import sys; sys.path.insert(0,"shared"); sys.path.insert(0,"."); sys.path.insert(0,"orchestrator")
+from orchestrator.api.ask import AskRequest, ask
+r = ask(AskRequest(question="What benchmark evaluated the Orion model?"))
+print(r["route"], r["objects"]["facts"][:1])
+EOF
 ```
 
-Then confirm: new PIDs for control+workers, sidecars ready (8740/42/44),
-and re-run the three-corpus replay scripts in eval/v5/replay/.
+## TRAPS (all live-earned; do not relearn)
 
-## KEY FILES
+1. **Keep tree clean when workers boot** — dirty tree fails integrity
+   gate AND poisons execution_bundle uniformity.
+2. **pkill leaves PG backends**: after killing control, check
+   pg_stat_activity for orphaned long txs; cancel them.
+3. **Restart READY-backfill mints bare payloads** for tickets whose
+   original events were consumed — event_adapter must cover EVERY
+   stage's required keys (intake.v1 fixed; audit others if a new
+   KeyError class appears).
+4. **doc_id is globally unique by content hash** — tagged variants for
+   re-extraction (marker comment changes hash).
+5. **launchctl no-ops under ~/Documents (TCC)**; shell cwd resets
+   between tool calls; extract crash-loops until sidecars answer /ready
+   (wait ~60s); psql not on host PATH — use docker exec.
+6. **Multiple control.main can accumulate across restarts** — after any
+   restart, `pgrep -f control.main | wc -l` must be ≤1 per supervisor;
+   kill stragglers decisively (they hold leases/ticks).
+7. Pre-existing test failures (do NOT chase as regressions):
+   3 bundle-pin tests pin stale authority hash 6976e483 vs live
+   557afbc3; 2 vocabulary_mapping IndexErrors; syntax_provider_gate ×2
+   fail only if POLYMATH_SYNTAX_PROVIDER leaks into env.
 
-| What | Where |
+## KEY FILES QUICK MAP
+
+| Area | Where |
 |---|---|
-| Router v1.1 | shared/polymath_shared/knowledge_router/ |
-| Frame/definite/compound resolvers | shared/polymath_shared/rulepack/frame_roles.py |
-| Ontology (incl created_by/developed_by) | rulepack/scientific-predicate-ontology-v2.yaml |
-| Artifacts | knowledge_objects/{knowledge_artifact,procedure,concept}.py |
-| Registries (A1 substrate) | resources/registries/scientific-registries.yaml |
-| GO/NO-GO harness | eval/v5/rag_gonogo.py |
-| Doc01 trace + red fixtures | eval/v5/replay/scientific_trace_doc01.py · tests/determinism/test_sval_doc01_red.py |
-| Reliability package generator | eval/v5/scale/phase1_baseline_report.py |
+| Execution bundle | shared/polymath_shared/execution_bundle.py |
+| Event adapter | shared/polymath_shared/event_adapter.py |
+| Claim gate + TTL memos | shared/polymath_shared/worker_runtime.py |
+| Barrier/receipts fix | control/control/tickets.py (generation_barrier, _receipts_present, _runs_with_missing_receipts) |
+| Artifacts compile/persist | workers/workers/extract_worker.py (_persist_knowledge_artifacts) |
+| Summaries worker | workers/workers/summary_worker{,_impl}.py |
+| Query router + /ask | shared/polymath_shared/query_router.py, orchestrator/orchestrator/api/ask.py |
+| CATEGORY-D fixes | workers/workers/kimi_candidates.py (DEP_LABEL_ALIASES, C3c), workers/workers/candidates.py (aux-tail), rulepack ontology yaml (examined realization) |
+| Live fence | eval/v5/verify_live_build.py |
+| Waterfall report | eval/v5/scale/INGESTION-WATERFALL-V1.md |
+| Parity report | docs/wiki/plans/SHADOW-PARITY-REPORT.md |
+| Work logs | docs/wiki/work-log/2026-08-24-*.md |
 
-## REPORTS ON RECORD (all committed)
+## NEXT SESSION QUEUE (charter order)
 
-- RAG-GONOGO-RESULTS.md — 6 PASS / H1+H3 partial
-- SCIENTIFIC-KAG-INTELLIGENCE-BASELINE.md — TEST.md 0→5 facts
-- COMBINED-EXTRACTION-REPORT.md — 5-corpus precision analysis
-- EXTRACTION-REPORT-s-validation-v1.md — latest 4-doc set
-- SUMMARY-RUNTIME-FIX-REPORT.md — D1/D2/D3 closed
-- DECISION-A1-A2-POLICY.md
-
-## TRAPS (learned the hard way this session)
-
-1. `documents.doc_id` is GLOBALLY unique by content hash — identical
-   bytes into a second corpus silently no-op. Use tagged variants for
-   evaluation reruns (marker comment appended changes content hash).
-2. Sidecar dep labels have NO colons (`nsubjpass`). Anything matching
-   UD-style deps must normalize first.
-3. `psql -c "..." < file` ignores stdin — pipe the file instead.
-4. launchctl kickstart silently no-ops under ~/Documents (TCC).
-5. Shell cwd resets between tool calls — prefix every command.
-6. extract worker crash-loops at boot until sidecars answer /ready;
-   wait ~60s before diagnosing.
-
-## ENV FLAGS (for cutover restart)
-
-```
-POLYMATH_RELATION_PIPELINE=kimi_v1     # role-oriented binding
-POLYMATH_PREDICATE_V2=shadow|enforce   # frame lane + precedence
-POLYMATH_KNOWLEDGE_ROUTER=1            # classification profile stored
-                                       # (persistence slice pending)
-```
-
-Default remains legacy_v1/off — pre-cutover behavior unchanged.
+1. **Incremental census** (telemetry-justified): dirty-run set from
+   stage_attempts watermark; census re-derived for changed runs only.
+   Target: tick p95 < 30s under full backlog. Then small-corpus
+   entry < 60s end-to-end.
+2. **Triage issue #1** (archive test-corpus failures; revive
+   release-books trio via adapter-backed re-emit).
+3. **P5 contract freezes** — write ACTUAL behavior docs:
+   RETRIEVAL-CHUNK-HIERARCHY-V1 (audit chunker first),
+   RETRIEVAL-STORAGE-CONTRACT-V1 (qdrant payload fields exist today:
+   representation_kind/corpus/doc/text/embedding_contract — extend per
+   charter metadata list).
+4. **Three-mode same-query benchmark harness**
+   (eval/v5/retrieval/THREE-MODE-BENCHMARK-V1) — VECTOR/HYBRID/GRAPH
+   personalities per contract; GRAPH = hybrid seeds → hop1 expansion →
+   evidence backfill.
+5. **Real 50–100 doc pilot**, then resume scale qualification.

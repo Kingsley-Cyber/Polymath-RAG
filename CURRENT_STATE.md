@@ -1,5 +1,12 @@
 # CURRENT STATE — Polymath V5 (evidence-first)
 
+> **FRESHNESS 2026-08-25:** status claims below describe the Aug-22
+> evidence-first baseline and are SUPERSEDED for current state by
+> `NEXT_SESSION_HANDOFF.md` (HEAD, live fleet enforce-live, artifacts +
+> summaries + /ask shipped; control-tick scaling work ongoing).
+> Architecture description below remains accurate.
+>
+
 > **Superseded in part, 2026-08-22.** The architecture description below
 > is still accurate. The status claims are not: two admission chains
 > described here as qualified had **zero production callers** until this
