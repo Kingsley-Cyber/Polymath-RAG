@@ -129,7 +129,12 @@ def run_forever() -> None:
     while True:
         started = time.monotonic()
         try:
+            import time as _perf, json as _json
+            _t0 = _perf.perf_counter()
             result = tick()
+            log.info('tick completed', extra={
+                'error_code': 'TICK-PHASE-TIMING-V1',
+                'duration_ms': round((_perf.perf_counter()-_t0)*1000, 1)})
             if result.get("tick") == "ok":
                 log.info("control tick", extra={
                     "stage": "control",

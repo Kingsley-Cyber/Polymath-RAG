@@ -75,3 +75,25 @@ scale-10k verify/projection transactions hold locks >26 min
 lock-blocked behind them, freezing ticket creation fleet-wide until
 they finish. Not a correctness defect; it is THE throughput item and
 it starves small interactive ingests while a large backlog drains.
+
+## PHASE 4A LOCK-CONTENTION-V2 proof
+
+Measured root causes (two independent defects compounded):
+1. control/control/tickets.py::_receipts_present ran a corpus-wide
+   anti-join COUNT per candidate ticket per projection inside the
+   tick's single transaction — O(pending x chunks x receipts). On
+   scale-10k this held ticks open for minutes; combined with the
+   barrier SyntaxError (fixed earlier today) the control loop had been
+   effectively dead since Aug 23 12:41 UTC (heartbeat gap proven).
+2. verify reconciliation executed Qdrant/Neo4j network I/O inside the
+   caller's transaction (minutes-long snapshot).
+
+Fixes: EXISTS early-exit + per-pass (run_id,projection) memoization in
+ticket advancement; verify read-phase moved to short autocommit
+connections with the outer tx bounded to writes. Regression tests:
+tests/determinism/test_lock_contention_v2.py (shape pin, memo
+single-query, missing-receipt detection).
+
+Live: heartbeat resumed 2026-08-25 02:04 UTC after >1 day gap;
+small-corpus invariant A passes — lock-test-a-v1 received its full
+12-ticket DAG during peak backlog saturation.
