@@ -1,0 +1,268 @@
+{
+ "corpus": "release-books-v1",
+ "captured_at": "20260825T175110Z",
+ "k": 10,
+ "verdict": {
+  "hash_semantic": "0/4",
+  "neural_semantic": "2/4",
+  "hash_exact": "0/4",
+  "neural_exact": "4/4",
+  "qualified": true
+ },
+ "results": {
+  "hash": {
+   "q01": {
+    "latency_ms": 16.4,
+    "doc_rank": [],
+    "top_texts": []
+   },
+   "q02": {
+    "latency_ms": 14.6,
+    "doc_rank": [],
+    "top_texts": []
+   },
+   "q03": {
+    "latency_ms": 16.5,
+    "doc_rank": [],
+    "top_texts": []
+   },
+   "q04": {
+    "latency_ms": 24.7,
+    "doc_rank": [],
+    "top_texts": []
+   },
+   "q05": {
+    "latency_ms": 13.8,
+    "doc_rank": [],
+    "top_texts": []
+   },
+   "q06": {
+    "latency_ms": 11.8,
+    "doc_rank": [],
+    "top_texts": []
+   },
+   "q07": {
+    "latency_ms": 12.1,
+    "doc_rank": [],
+    "top_texts": []
+   },
+   "q08": {
+    "latency_ms": 12.4,
+    "doc_rank": [],
+    "top_texts": []
+   },
+   "q09": {
+    "latency_ms": 15.7,
+    "doc_rank": [],
+    "top_texts": []
+   },
+   "q10": {
+    "latency_ms": 15.4,
+    "doc_rank": [],
+    "top_texts": []
+   }
+  },
+  "neural": {
+   "q01": {
+    "latency_ms": 288.7,
+    "doc_rank": [
+     "doc_65cf5f59bcc1511e9888ab0fc333bce6f7f7bb4492811375219847fa09d44488",
+     "doc_65cf5f59bcc1511e9888ab0fc333bce6f7f7bb4492811375219847fa09d44488",
+     "doc_65cf5f59bcc1511e9888ab0fc333bce6f7f7bb4492811375219847fa09d44488",
+     "doc_65cf5f59bcc1511e9888ab0fc333bce6f7f7bb4492811375219847fa09d44488",
+     "doc_65cf5f59bcc1511e9888ab0fc333bce6f7f7bb4492811375219847fa09d44488",
+     "doc_65cf5f59bcc1511e9888ab0fc333bce6f7f7bb4492811375219847fa09d44488",
+     "doc_65cf5f59bcc1511e9888ab0fc333bce6f7f7bb4492811375219847fa09d44488",
+     "doc_65cf5f59bcc1511e9888ab0fc333bce6f7f7bb4492811375219847fa09d44488",
+     "doc_65cf5f59bcc1511e9888ab0fc333bce6f7f7bb4492811375219847fa09d44488",
+     "doc_65cf5f59bcc1511e9888ab0fc333bce6f7f7bb4492811375219847fa09d44488"
+    ],
+    "top_texts": [
+     "How resilient is our business to service downtime? Which is worse for the service: a constant low rate of failures, or a",
+     "reliable and available. However, there are several pitfalls in the organization of on-call rotations and responsibilitie",
+     "behavior can very easily threaten the stability of a service. (There is also the topic of protecting a service from abus"
+    ]
+   },
+   "q02": {
+    "latency_ms": 190.8,
+    "doc_rank": [
+     "doc_8f42e97a4b9164c1bae80d4dd8f7801d8d187097637a9ae0e0b1be921f04df58",
+     "doc_8f42e97a4b9164c1bae80d4dd8f7801d8d187097637a9ae0e0b1be921f04df58",
+     "doc_8f42e97a4b9164c1bae80d4dd8f7801d8d187097637a9ae0e0b1be921f04df58",
+     "doc_8f42e97a4b9164c1bae80d4dd8f7801d8d187097637a9ae0e0b1be921f04df58",
+     "doc_8f42e97a4b9164c1bae80d4dd8f7801d8d187097637a9ae0e0b1be921f04df58",
+     "doc_8f42e97a4b9164c1bae80d4dd8f7801d8d187097637a9ae0e0b1be921f04df58",
+     "doc_8f42e97a4b9164c1bae80d4dd8f7801d8d187097637a9ae0e0b1be921f04df58",
+     "doc_8f42e97a4b9164c1bae80d4dd8f7801d8d187097637a9ae0e0b1be921f04df58",
+     "doc_8f42e97a4b9164c1bae80d4dd8f7801d8d187097637a9ae0e0b1be921f04df58",
+     "doc_8f42e97a4b9164c1bae80d4dd8f7801d8d187097637a9ae0e0b1be921f04df58"
+    ],
+    "top_texts": [
+     "Architects live in a constant state of flux because change is both pervasive and constant. Domain changes The domain tha",
+     "We define software architecture in terms beyond structural scaffolding, incorporating principles, characteristics, and s",
+     "The next factor that defines software architecture is architecture decisions. Architecture decisions define the rules fo"
+    ]
+   },
+   "q03": {
+    "latency_ms": 186.1,
+    "doc_rank": [
+     "doc_57556d6a30cf45b6d0d49f85bcd4fd6dcfcd743650ee3494252ebafb0a36752e",
+     "doc_57556d6a30cf45b6d0d49f85bcd4fd6dcfcd743650ee3494252ebafb0a36752e",
+     "doc_57556d6a30cf45b6d0d49f85bcd4fd6dcfcd743650ee3494252ebafb0a36752e",
+     "doc_57556d6a30cf45b6d0d49f85bcd4fd6dcfcd743650ee3494252ebafb0a36752e",
+     "doc_57556d6a30cf45b6d0d49f85bcd4fd6dcfcd743650ee3494252ebafb0a36752e",
+     "doc_57556d6a30cf45b6d0d49f85bcd4fd6dcfcd743650ee3494252ebafb0a36752e",
+     "doc_57556d6a30cf45b6d0d49f85bcd4fd6dcfcd743650ee3494252ebafb0a36752e",
+     "doc_57556d6a30cf45b6d0d49f85bcd4fd6dcfcd743650ee3494252ebafb0a36752e",
+     "doc_57556d6a30cf45b6d0d49f85bcd4fd6dcfcd743650ee3494252ebafb0a36752e",
+     "doc_57556d6a30cf45b6d0d49f85bcd4fd6dcfcd743650ee3494252ebafb0a36752e"
+    ],
+    "top_texts": [
+     "Persuading an intellectually lazy person to take up mental action is like getting a couch potato to run laps. Persuading",
+     "One of the most powerful tools to begin this change in your customer\u2019s mind is using the right words. At the right time,",
+     "There is one fundamental truth: people will accept an idea that is the result of their thinking, not yours.The entire tr"
+    ]
+   },
+   "q04": {
+    "latency_ms": 179.3,
+    "doc_rank": [
+     "doc_a598fd41fe8fbb6c6f88f7004a373ed623ba18954478a7caaffbc3d2add58e4f",
+     "doc_f82291ce2d28a06717cf7dc3f306c326b2883cc2095bdd2c7d725ccefbf77704",
+     "doc_a598fd41fe8fbb6c6f88f7004a373ed623ba18954478a7caaffbc3d2add58e4f",
+     "doc_f82291ce2d28a06717cf7dc3f306c326b2883cc2095bdd2c7d725ccefbf77704",
+     "doc_a598fd41fe8fbb6c6f88f7004a373ed623ba18954478a7caaffbc3d2add58e4f",
+     "doc_a598fd41fe8fbb6c6f88f7004a373ed623ba18954478a7caaffbc3d2add58e4f",
+     "doc_f82291ce2d28a06717cf7dc3f306c326b2883cc2095bdd2c7d725ccefbf77704",
+     "doc_65cf5f59bcc1511e9888ab0fc333bce6f7f7bb4492811375219847fa09d44488",
+     "doc_a598fd41fe8fbb6c6f88f7004a373ed623ba18954478a7caaffbc3d2add58e4f",
+     "doc_f82291ce2d28a06717cf7dc3f306c326b2883cc2095bdd2c7d725ccefbf77704"
+    ],
+    "top_texts": [
+     "We want a continuous low level of breakage to make sure our system can handle the big things. Finally, Nassim Taleb\u2019s An",
+     ", there is no such thing as perfect reliability, so we\u2019ll need to understand the limits of what we can realistically pro",
+     "downtime, and then we\u2019ll move into versioning across disparate services\u2014always a tricky issue! In Part IV: Solve Systemi"
+    ]
+   },
+   "q05": {
+    "latency_ms": 187.0,
+    "doc_rank": [
+     "doc_4c7ae65e639cd661b0e6f009333ace57ae9a5955bda78d12eacc23d64f2132fd",
+     "doc_4c7ae65e639cd661b0e6f009333ace57ae9a5955bda78d12eacc23d64f2132fd",
+     "doc_4c7ae65e639cd661b0e6f009333ace57ae9a5955bda78d12eacc23d64f2132fd",
+     "doc_4c7ae65e639cd661b0e6f009333ace57ae9a5955bda78d12eacc23d64f2132fd",
+     "doc_4c7ae65e639cd661b0e6f009333ace57ae9a5955bda78d12eacc23d64f2132fd",
+     "doc_4c7ae65e639cd661b0e6f009333ace57ae9a5955bda78d12eacc23d64f2132fd",
+     "doc_4c7ae65e639cd661b0e6f009333ace57ae9a5955bda78d12eacc23d64f2132fd",
+     "doc_4c7ae65e639cd661b0e6f009333ace57ae9a5955bda78d12eacc23d64f2132fd",
+     "doc_4c7ae65e639cd661b0e6f009333ace57ae9a5955bda78d12eacc23d64f2132fd",
+     "doc_4c7ae65e639cd661b0e6f009333ace57ae9a5955bda78d12eacc23d64f2132fd"
+    ],
+    "top_texts": [
+     "Optimization and fine-tuning:To install Splunk on AWS, set up the relevant AWS resources and then deploy the necessary S",
+     "Introduction to the inception of Splunk Founders, initial mission, and growth trajectory Evolution of its product range ",
+     "This next step will prepare you to manage Splunk\u2019s complexities confidently, ensuring a resilient and well-supported dep"
+    ]
+   },
+   "q06": {
+    "latency_ms": 173.5,
+    "doc_rank": [
+     "doc_f9d330f95d028c05def3022ba76505200f9ce884d17e1d5c9227c94e0485b95e",
+     "doc_f9d330f95d028c05def3022ba76505200f9ce884d17e1d5c9227c94e0485b95e",
+     "doc_f9d330f95d028c05def3022ba76505200f9ce884d17e1d5c9227c94e0485b95e",
+     "doc_f9d330f95d028c05def3022ba76505200f9ce884d17e1d5c9227c94e0485b95e",
+     "doc_f9d330f95d028c05def3022ba76505200f9ce884d17e1d5c9227c94e0485b95e",
+     "doc_f9d330f95d028c05def3022ba76505200f9ce884d17e1d5c9227c94e0485b95e",
+     "doc_f9d330f95d028c05def3022ba76505200f9ce884d17e1d5c9227c94e0485b95e",
+     "doc_f9d330f95d028c05def3022ba76505200f9ce884d17e1d5c9227c94e0485b95e",
+     "doc_f9d330f95d028c05def3022ba76505200f9ce884d17e1d5c9227c94e0485b95e",
+     "doc_f9d330f95d028c05def3022ba76505200f9ce884d17e1d5c9227c94e0485b95e"
+    ],
+    "top_texts": [
+     "Security Monitoring with Wazuh A hands-on guide to effective enterprise security using real-life use cases in Wazuh Rajn",
+     "Wazuh is an open-source security monitoring platform that provides extended detection and response (XDR) and SIEM functi",
+     "The Wazuh indexer uses four index patterns to store the data:wazuh-alerts-*: This is the index pattern for alerts genera"
+    ]
+   },
+   "q07": {
+    "latency_ms": 179.5,
+    "doc_rank": [
+     "doc_09af89bc18f7a308edc0dd9402090eed331dae849622a52c6f1c2b8e4bf3ae5b",
+     "doc_09af89bc18f7a308edc0dd9402090eed331dae849622a52c6f1c2b8e4bf3ae5b",
+     "doc_09af89bc18f7a308edc0dd9402090eed331dae849622a52c6f1c2b8e4bf3ae5b",
+     "doc_09af89bc18f7a308edc0dd9402090eed331dae849622a52c6f1c2b8e4bf3ae5b",
+     "doc_09af89bc18f7a308edc0dd9402090eed331dae849622a52c6f1c2b8e4bf3ae5b",
+     "doc_09af89bc18f7a308edc0dd9402090eed331dae849622a52c6f1c2b8e4bf3ae5b",
+     "doc_09af89bc18f7a308edc0dd9402090eed331dae849622a52c6f1c2b8e4bf3ae5b",
+     "doc_f2c544966051316b213119bf34494bcd52c72073bbb892bf81180550c87b5409",
+     "doc_09af89bc18f7a308edc0dd9402090eed331dae849622a52c6f1c2b8e4bf3ae5b",
+     "doc_09af89bc18f7a308edc0dd9402090eed331dae849622a52c6f1c2b8e4bf3ae5b"
+    ],
+    "top_texts": [
+     "www.it-ebooks.info PRAISE FOR PRACTICAL MALWARE ANALYSIS \u201cAn excellent crash course in malware analysis.\u201d \u2014Dino Dai Zovi",
+     "In order to make sense of it, you\u2019ll use a variety of tools and tricks, each revealing a small amount of information. Yo",
+     "Practical Malware Analysis begins with easy methods that can be used to get information from relatively unsophisticated "
+    ]
+   },
+   "q08": {
+    "latency_ms": 191.1,
+    "doc_rank": [
+     "doc_75a13cadf1762c4f3e601e5e9235604611a0466240fec7c7c64be82bf3445f26",
+     "doc_75a13cadf1762c4f3e601e5e9235604611a0466240fec7c7c64be82bf3445f26",
+     "doc_75a13cadf1762c4f3e601e5e9235604611a0466240fec7c7c64be82bf3445f26",
+     "doc_75a13cadf1762c4f3e601e5e9235604611a0466240fec7c7c64be82bf3445f26",
+     "doc_75a13cadf1762c4f3e601e5e9235604611a0466240fec7c7c64be82bf3445f26",
+     "doc_75a13cadf1762c4f3e601e5e9235604611a0466240fec7c7c64be82bf3445f26",
+     "doc_75a13cadf1762c4f3e601e5e9235604611a0466240fec7c7c64be82bf3445f26",
+     "doc_75a13cadf1762c4f3e601e5e9235604611a0466240fec7c7c64be82bf3445f26",
+     "doc_75a13cadf1762c4f3e601e5e9235604611a0466240fec7c7c64be82bf3445f26",
+     "doc_75a13cadf1762c4f3e601e5e9235604611a0466240fec7c7c64be82bf3445f26"
+    ],
+    "top_texts": [
+     "Com\u00admer\u00adcial Mes\u00adsaging Sys\u00adtems Pat\u00adtern Form Dia\u00adgram Nota\u00adtion Ex\u00adamples and In\u00adter\u00adludes Or\u00adgan\u00adiz\u00ada\u00adtion of This Bo",
+     "Util\u00adiz\u00ading years of prac\u00adtical ex\u00adper\u00adi\u00adence, seasoned ex\u00adperts Gregor Hohpe and Bobby Woolf show how asyn\u00adchron\u00adous me",
+     "The pat\u00adterns in this chapter provide you with the basic vocab\u00adu\u00adlary and un\u00adder\u00adstand\u00ading of how to achieve en\u00adter\u00adpris"
+    ]
+   },
+   "q09": {
+    "latency_ms": 188.7,
+    "doc_rank": [
+     "doc_65cf5f59bcc1511e9888ab0fc333bce6f7f7bb4492811375219847fa09d44488",
+     "doc_2fac912df70b6fc118d5a28311fabd1ff671e701d5a4b7f38c9d39c7b53d7210",
+     "doc_2fac912df70b6fc118d5a28311fabd1ff671e701d5a4b7f38c9d39c7b53d7210",
+     "doc_2fac912df70b6fc118d5a28311fabd1ff671e701d5a4b7f38c9d39c7b53d7210",
+     "doc_2fac912df70b6fc118d5a28311fabd1ff671e701d5a4b7f38c9d39c7b53d7210",
+     "doc_2fac912df70b6fc118d5a28311fabd1ff671e701d5a4b7f38c9d39c7b53d7210",
+     "doc_65cf5f59bcc1511e9888ab0fc333bce6f7f7bb4492811375219847fa09d44488",
+     "doc_2fac912df70b6fc118d5a28311fabd1ff671e701d5a4b7f38c9d39c7b53d7210",
+     "doc_2fac912df70b6fc118d5a28311fabd1ff671e701d5a4b7f38c9d39c7b53d7210",
+     "doc_8f42e97a4b9164c1bae80d4dd8f7801d8d187097637a9ae0e0b1be921f04df58"
+    ],
+    "top_texts": [
+     "pipelines are added as an afterthought to services that are already popular and successful. Sometimes, such pipelines ar",
+     "A well-formed data pipeline should process the data into a single format, making the differences between tools irrelevan",
+     "CONTENTS IN DETAIL ACKNOWLEDGMENTS INTRODUCTION Who This Book Is For What\u2019s in This Book Prerequisites Online Resources "
+    ]
+   },
+   "q10": {
+    "latency_ms": 188.4,
+    "doc_rank": [
+     "doc_0cbec94dddba0e1ae8c7328bdb87f54019d3e78480d859d861af56545b0fbdaa",
+     "doc_8f42e97a4b9164c1bae80d4dd8f7801d8d187097637a9ae0e0b1be921f04df58",
+     "doc_ac90e2b8aff80ae15795a64ce6daa31dc87001f13a9c0ba0eb76a097cdd6c29f",
+     "doc_f093d53e53bf2c16ea644ca0a1b5bc550b00de34e5d5d6de8f571127fd7ef647",
+     "doc_f2c544966051316b213119bf34494bcd52c72073bbb892bf81180550c87b5409",
+     "doc_0cbec94dddba0e1ae8c7328bdb87f54019d3e78480d859d861af56545b0fbdaa",
+     "doc_f2a116c0d20ec955e20aebfc33e03d0e589ea1babf90470321d532e1170d5bb0",
+     "doc_fc8a2c4eba1bb69c6efb392e41835fc1cc0fa98d15e29ec5c2c5ff4bcb5c0e3a",
+     "doc_f2a116c0d20ec955e20aebfc33e03d0e589ea1babf90470321d532e1170d5bb0",
+     "doc_f2c544966051316b213119bf34494bcd52c72073bbb892bf81180550c87b5409"
+    ],
+    "top_texts": [
+     "This allows the male and female to hunt different types of prey animals and means that less territory is required to sup",
+     "As the only member of the genus Deroptyus, the red-fan parrot is distinguished by the deep red feathers that cover its n",
+     "They also trap the birds for food or sell them in the international bird trade. Despite this battle, the species continu"
+    ]
+   }
+  }
+ }
+}

@@ -98,8 +98,14 @@ class StoreSettings(BaseSettings):
     neo4j_user: str = Field(default="neo4j")
     neo4j_password: str = Field(default="polymath-dev", description="Neo4j password (override in .env)")
     embedding_contract_id: str = Field(
-        default="hash-embed-v1",
-        description="Active embedding contract id (a new id = a new index version)",
+        default="neural-embed-v1",
+        description=(
+            "Production default embedding contract for NEW corpora "
+            "(G1 owner decision 2026-08-25). Per-corpus authority lives "
+            "in corpora.embedding_contract_id; this default applies only "
+            "where a corpus has not been created yet. hash-embed-v1 "
+            "remains available as deterministic test/fallback provider."
+        ),
     )
 
 

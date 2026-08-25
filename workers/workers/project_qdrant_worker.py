@@ -64,6 +64,33 @@ def _active_contract():
     return active_contract()
 
 
+def _corpus_contract(conn, corpus_id: str):
+    """EMBEDDING-CONTRACT-REGISTRY-V1 (G1 owner decision): the contract
+    pinned for this corpus in Postgres is the retrieval authority. A
+    projection must never run under a different contract than the
+    vectors already stored for that corpus. Falls back to the settings
+    default only when the corpus row predates the registry."""
+    from polymath_shared.embedding_contracts import (
+        CONTRACTS,
+        SHORT_NAMES,
+        active_contract,
+    )
+
+    row = conn.execute(
+        "SELECT embedding_contract_id FROM corpora WHERE corpus_id=%s",
+        (corpus_id,),
+    ).fetchone()
+    pinned = row[0] if row else None
+    if not pinned:
+        return active_contract()
+    resolved = SHORT_NAMES.get(pinned) or CONTRACTS.get(pinned)
+    if resolved is None:
+        raise ValueError(
+            f"corpus {corpus_id!r} pins unknown embedding contract "
+            f"{pinned!r}")
+    return resolved
+
+
 EMBED_BATCH = 32  # the embedder contract bounds batches at 32 texts
 
 
@@ -414,7 +441,12 @@ def process_event(conn: Connection, event: dict) -> None:
     run_id = event["run_id"]
     corpus_id = payload.get("corpus_id")
     chunks = _chunks_for_run(conn, run_id)
-    contract = _active_contract()
+    # EMBEDDING-CONTRACT-REGISTRY-V1: resolve the pin FIRST so routing
+    # summaries and children land under the corpus's authoritative
+    # contract, never the settings default by accident.
+    _pin_corpus_id = corpus_id or (chunks[0]["corpus_id"] if chunks else None)
+    contract = (_corpus_contract(conn, _pin_corpus_id)
+                if _pin_corpus_id else _active_contract())
 
     stage_contract = stage_contract_hash(STAGE, {
         "projection": PROJECTION_QDRANT,

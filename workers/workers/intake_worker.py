@@ -109,11 +109,13 @@ def process_event(conn: Connection, event: dict) -> None:
 
         conn.execute(
             """
-            INSERT INTO corpora (corpus_id, name, config_hash, profile)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO corpora (corpus_id, name, config_hash, profile,
+                                 embedding_contract_id)
+            VALUES (%s, %s, %s, %s, %s)
             ON CONFLICT (corpus_id) DO NOTHING
             """,
-            (corpus_id, corpus_id, contract(), json.dumps(profile.model_dump())),
+            (corpus_id, corpus_id, contract(), json.dumps(profile.model_dump()),
+             get_settings().stores.embedding_contract_id),
         )
         conn.execute(
             """
