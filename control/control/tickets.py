@@ -218,8 +218,14 @@ def advance_tickets(conn: Connection) -> int:
     corpora = [r[0] for r in conn.execute(
         """SELECT DISTINCT corpus_id FROM stage_tickets
            WHERE status='pending' ORDER BY corpus_id""").fetchall()]
+    # TICK-CACHE-V1: completeness anti-joins are corpus-independent —
+    # compute ONCE for the whole tick.
+    missing_by_projection = {
+        p: _corpora_with_missing_chunk_receipts(conn, p)
+        for p in ("qdrant", "neo4j")} if corpora else {}
     for corpus_id in corpora:
-        advanced += _advance_pending_corpus(conn, corpus_id)
+        advanced += _advance_pending_corpus(
+            conn, corpus_id, missing_by_projection)
 
     # READY backfill: re-emit missing claim events, keyset on seq
     ready_rows = conn.execute(
@@ -313,17 +319,25 @@ def _corpora_with_missing_chunk_receipts(conn, projection: str) -> set[str]:
     return {r[0] for r in rows}
 
 
-def _advance_pending_corpus(conn, corpus_id: str) -> int:
-    # BULK-RECEIPT-COMPLETENESS-V1: one anti-join per projection seeds
-    # the explicit-state verdict store for EVERY pending run of this
-    # corpus; per-ticket checks stay pure cache lookups.
+def _advance_pending_corpus(conn, corpus_id: str,
+                            missing_by_projection: dict | None = None) -> int:
+    # BULK-RECEIPT-COMPLETENESS-V1 + TICK-CACHE-V1: completeness truth
+    # is GLOBAL (corpus-scoped anti-join over all chunks), so it is
+    # computed ONCE per tick by the caller and reused for every corpus.
+    # Calling it per-corpus multiplied identical 2 s anti-joins by the
+    # pending-corpus count (measured 110 s advance_tickets).
     pending_runs = [r[0] for r in conn.execute(
         """SELECT DISTINCT t.run_id FROM stage_tickets t
            WHERE t.corpus_id=%s AND t.status='pending'""",
         (corpus_id,)).fetchall()]
+    if not pending_runs:
+        return 0
+    if missing_by_projection is None:
+        missing_by_projection = {
+            p: _corpora_with_missing_chunk_receipts(conn, p)
+            for p in ("qdrant", "neo4j")}
     for projection in ("qdrant", "neo4j"):
-        corpus_is_missing = corpus_id in _corpora_with_missing_chunk_receipts(
-            conn, projection)
+        corpus_is_missing = corpus_id in missing_by_projection[projection]
         state = RECEIPT_STATE_MISSING if corpus_is_missing \
             else RECEIPT_STATE_PRESENT
         for rid in pending_runs:
@@ -460,10 +474,18 @@ def _release_expired_leases(conn: Connection) -> int:
     return len(rows)
 
 
-def generation_barrier(conn: Connection, corpus_id: str) -> dict:
+def generation_barrier(conn: Connection, corpus_id: str,
+                       missing_by_projection: dict | None = None) -> dict:
     """QUERY_READY for a corpus generation requires: all tickets DONE,
     zero pending/ready/leased/repair tickets, and projection desired ==
-    actual. Returns the barrier verdict + what blocks it."""
+    actual. Returns the barrier verdict + what blocks it.
+
+    TICK-CACHE-V1: callers looping over corpora pass precomputed
+    missing_by_projection sets so the global anti-joins run once per
+    tick, not once per corpus."""
+    missing_by_projection = missing_by_projection or {
+        p: _corpora_with_missing_chunk_receipts(conn, p)
+        for p in ("qdrant", "neo4j")}
     # BARRIER-OPEN-WORK-V2 (2026-08-24): two measured defects fixed.
     # 1) psycopg3 rewrites %s to server-side $n placeholders where tuple
     #    adaptation cannot produce an IN-list -> SyntaxError every tick
@@ -483,11 +505,9 @@ def generation_barrier(conn: Connection, corpus_id: str) -> dict:
     incomplete_receipts = 0
     run_ids = [r[0] for r in runs]
     # BULK-RECEIPT-COMPLETENESS-V1: receipt truth is corpus-scoped, so
-    # the barrier consults ONE anti-join per projection instead of
-    # looping per-run EXISTS queries.
+    # the barrier consults the (precomputed) gap sets per projection.
     for projection in ("qdrant", "neo4j"):
-        if corpus_id in _corpora_with_missing_chunk_receipts(conn,
-                                                             projection):
+        if corpus_id in missing_by_projection[projection]:
             incomplete_receipts += len(run_ids)
     return {
         "open_tickets": sum(count for _s, _st, count in pending),

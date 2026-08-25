@@ -135,9 +135,16 @@ def _corpora_with_open_barriers(conn, census) -> dict:
     corpora = {gap.corpus_id for gap in census.gaps} | {
         _corpus_of_run(conn, r) for r in census.promote
     }
+    # TICK-CACHE-V1: the global completeness anti-joins run once per
+    # tick and are shared by every per-corpus barrier verdict.
+    from control.tickets import _corpora_with_missing_chunk_receipts
+    missing_by_projection = {
+        p: _corpora_with_missing_chunk_receipts(conn, p)
+        for p in ("qdrant", "neo4j")}
     blocked = {}
     for corpus_id in sorted(corpora):
-        verdict = generation_barrier(conn, corpus_id)
+        verdict = generation_barrier(conn, corpus_id,
+                                     missing_by_projection)
         if not verdict["passed"]:
             blocked[corpus_id] = verdict
     return blocked
