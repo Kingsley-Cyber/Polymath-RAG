@@ -218,13 +218,19 @@ def test_cross_corpus_content_collision_refuses_loudly():
         assert err and "CROSS_CORPUS_CONTENT_COLLISION" in (err[0] or "")
     finally:
         with tx() as conn:
+            # complete teardown: a live control loop may have minted
+            # ticket chains / events for these runs between our
+            # transactions — leaving any behind strands control on FK
+            # violations every tick (measured 2026-08-26)
+            conn.execute("DELETE FROM stage_tickets WHERE run_id LIKE %s", ("run_ftrans_%",))
+            conn.execute("DELETE FROM outbox_events WHERE run_id LIKE %s", ("run_ftrans_%",))
             conn.execute("DELETE FROM artifacts WHERE run_id LIKE %s", ("run_ftrans_%",))
             conn.execute("DELETE FROM receipts WHERE run_id LIKE %s", ("run_ftrans_%",))
             conn.execute("DELETE FROM stage_attempts WHERE run_id LIKE %s", ("run_ftrans_%",))
+            conn.execute("DELETE FROM summary_jobs WHERE corpus_id IN ('ftrans_owner','ftrans_thief')")
             conn.execute("DELETE FROM chunks WHERE doc_id = %s", (doc_id,))
             conn.execute("DELETE FROM document_layout WHERE doc_id = %s", (doc_id,))
             conn.execute("DELETE FROM documents WHERE doc_id = %s", (doc_id,))
-            conn.execute("DELETE FROM outbox_events WHERE run_id LIKE %s", ("run_ftrans_%",))
             conn.execute("DELETE FROM runs WHERE corpus_id IN ('ftrans_owner','ftrans_thief')")
             conn.execute("DELETE FROM corpora WHERE corpus_id IN ('ftrans_owner','ftrans_thief')")
 
