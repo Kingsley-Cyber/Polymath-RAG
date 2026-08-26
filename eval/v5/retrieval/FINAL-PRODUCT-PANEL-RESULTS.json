@@ -1,0 +1,245 @@
+{
+ "panel": "final-product-panel-v1",
+ "probes": [
+  {
+   "name": "vector_fast_andromeda",
+   "route": "/retrieve",
+   "status": 200,
+   "http_ok": true,
+   "check": true,
+   "detail": "",
+   "latency_ms": {
+    "n": 5,
+    "p50": 1347.0,
+    "p95": 1353.5,
+    "max": 1355.4
+   }
+  },
+  {
+   "name": "hybrid_andromeda",
+   "route": "/retrieve",
+   "status": 200,
+   "http_ok": true,
+   "check": true,
+   "detail": "",
+   "latency_ms": {
+    "n": 5,
+    "p50": 1147.8,
+    "p95": 1167.3,
+    "max": 1175.0
+   }
+  },
+  {
+   "name": "graph_andromeda_zero_ok",
+   "route": "/retrieve",
+   "status": 200,
+   "http_ok": true,
+   "check": true,
+   "detail": "",
+   "latency_ms": {
+    "n": 5,
+    "p50": 1562.7,
+    "p95": 1570.0,
+    "max": 1575.4
+   }
+  },
+  {
+   "name": "ask_concept_andromeda",
+   "route": "/ask",
+   "status": 200,
+   "http_ok": true,
+   "check": true,
+   "detail": "",
+   "latency_ms": {
+    "n": 5,
+    "p50": 10.1,
+    "p95": 11.5,
+    "max": 12.9
+   }
+  },
+  {
+   "name": "ask_procedure_setup",
+   "route": "/ask",
+   "status": 200,
+   "http_ok": true,
+   "check": true,
+   "detail": "",
+   "latency_ms": {
+    "n": 5,
+    "p50": 10.1,
+    "p95": 11.2,
+    "max": 13.2
+   }
+  },
+  {
+   "name": "chat_supported_andromeda",
+   "route": "/chat",
+   "status": 200,
+   "http_ok": true,
+   "check": true,
+   "detail": "",
+   "latency_ms": {
+    "n": 5,
+    "p50": 3367.3,
+    "p95": 3383.8,
+    "max": 3390.3
+   }
+  },
+  {
+   "name": "chat_nonce_abstains",
+   "route": "/chat",
+   "status": 200,
+   "http_ok": true,
+   "check": true,
+   "detail": "",
+   "latency_ms": {
+    "n": 5,
+    "p50": 3366.2,
+    "p95": 3372.0,
+    "max": 3378.6
+   }
+  },
+  {
+   "name": "chat_neighbor_abstains",
+   "route": "/chat",
+   "status": 200,
+   "http_ok": true,
+   "check": true,
+   "detail": "",
+   "latency_ms": {
+    "n": 5,
+    "p50": 3371.6,
+    "p95": 3378.4,
+    "max": 3384.9
+   }
+  },
+  {
+   "name": "graph_core3_transcript_fact",
+   "route": "/retrieve",
+   "status": 200,
+   "http_ok": true,
+   "check": true,
+   "detail": "",
+   "latency_ms": {
+    "n": 5,
+    "p50": 2074.4,
+    "p95": 2085.9,
+    "max": 2089.9
+   }
+  },
+  {
+   "name": "evidence_core3_graph_bundle",
+   "route": "/evidence",
+   "status": 200,
+   "http_ok": true,
+   "check": true,
+   "detail": "",
+   "latency_ms": {
+    "n": 5,
+    "p50": 2125.5,
+    "p95": 2132.6,
+    "max": 2143.7
+   }
+  },
+  {
+   "name": "chat_core3_graph_grounded",
+   "route": "/chat",
+   "status": 200,
+   "http_ok": true,
+   "check": true,
+   "detail": "",
+   "latency_ms": {
+    "n": 5,
+    "p50": 2119.1,
+    "p95": 2146.8,
+    "max": 2149.2
+   }
+  },
+  {
+   "name": "graph_books_scale",
+   "route": "/retrieve",
+   "status": 200,
+   "http_ok": true,
+   "check": true,
+   "detail": "",
+   "latency_ms": {
+    "n": 5,
+    "p50": 4575.5,
+    "p95": 4665.7,
+    "max": 10390.7
+   }
+  },
+  {
+   "name": "semantic_readiness_qual",
+   "route": "/semantic_readiness",
+   "status": 200,
+   "http_ok": true,
+   "check": true,
+   "detail": "",
+   "latency_ms": {
+    "n": 1,
+    "p50": 31.8,
+    "p95": 31.8,
+    "max": 31.8
+   }
+  }
+ ],
+ "qual_graph_fact_count": 0,
+ "ask_map_trace": {
+  "contract": "corpus-map-planning-v1",
+  "consulted": true,
+  "scope_corpus_ids": [
+   "transcript-qual-v1"
+  ],
+  "query_terms": [
+   "andromeda"
+  ],
+  "neighborhoods": [
+   {
+    "corpus_id": "transcript-qual-v1",
+    "source": "corpus_map_entity",
+    "map_summary_id": "sum_4290f9bf92e9a34e126349cd0860442a",
+    "matched": "Andromeda",
+    "query_terms": [
+     "andromeda"
+    ],
+    "reason": "query term(s) ['andromeda'] touch mapped entity 'Andromeda'"
+   },
+   {
+    "corpus_id": "transcript-qual-v1",
+    "source": "corpus_map_concept",
+    "map_summary_id": "sum_4290f9bf92e9a34e126349cd0860442a",
+    "matched": "NEW Facebook Ads Strategy (Andromeda",
+    "query_terms": [
+     "andromeda"
+    ],
+    "reason": "query term(s) ['andromeda'] touch mapped concept 'NEW Facebook Ads Strategy (Andromeda'"
+   },
+   {
+    "corpus_id": "transcript-qual-v1",
+    "source": "corpus_map_concept",
+    "map_summary_id": "sum_4290f9bf92e9a34e126349cd0860442a",
+    "matched": "Andromeda Update",
+    "query_terms": [
+     "andromeda"
+    ],
+    "reason": "query term(s) ['andromeda'] touch mapped concept 'Andromeda Update'"
+   }
+  ],
+  "expansion_terms": []
+ },
+ "core3_graph_facts": [
+  {
+   "fact_id": "fact_35b8adc324c539150683be9bb3dfe645e71dee721474d322415b2b9d0531885f",
+   "predicate": "founded",
+   "subject_id": "ent_4fa63cf8308f229423254c0b015d332848579131d86d0befd2757fcce25ab7ba",
+   "subject": "anseloff",
+   "object_id": "ent_e42757593e6c6ae63be4ca62e4596bb60d9eee52c5f701165b5d347ee0e83f0b",
+   "object": "google collab"
+  }
+ ],
+ "core3_claim_locators": [
+  "chunk:chunk_74598cee9fecf6744a8e7fe1caf63edae2dbc5ed12dce19228381c94030fac4a@15142:15894"
+ ],
+ "failed": []
+}
