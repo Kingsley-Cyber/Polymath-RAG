@@ -139,13 +139,21 @@ def _bulk_intake_metadata(conn: Connection,
 
 
 def _archived_run_ids(conn: Connection, run_ids: list[str]) -> set[str]:
-    """Runs with a deliberately superseded (archived) ticket chain."""
+    """Runs whose scheduling lifecycle is deliberately closed: either a
+    superseded (archived) ticket chain OR membership in the
+    ARCHIVED-CORPUS-REGISTRY (the durable marker that survives runtime
+    cleanup)."""
     if not run_ids:
         return set()
+    ids = sorted(set(run_ids))
     rows = conn.execute(
         """SELECT DISTINCT run_id FROM stage_tickets
-            WHERE status='superseded' AND run_id = ANY(%s)""",
-        (sorted(set(run_ids)),),
+            WHERE status='superseded' AND run_id = ANY(%s)
+           UNION
+           SELECT r.run_id FROM runs r
+            JOIN archived_corpora ac ON ac.corpus_id = r.corpus_id
+            WHERE r.run_id = ANY(%s)""",
+        (ids, ids),
     ).fetchall()
     return {r[0] for r in rows}
 

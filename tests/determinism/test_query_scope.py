@@ -262,6 +262,8 @@ def test_archived_chain_suppression():
     assert "_archived_run_ids" in src
     helper = inspect.getsource(S._archived_run_ids)
     assert "superseded" in helper and "ANY(%s)" in helper
+    assert "archived_corpora" in helper, (
+        "registry marker must survive runtime ticket cleanup")
 
 
 def test_archived_corpora_out_of_lifecycle():
