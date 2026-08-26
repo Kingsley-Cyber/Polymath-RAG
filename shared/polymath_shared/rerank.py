@@ -28,6 +28,14 @@ RERANK_VERSION = "g3-cross-representation-v1"
 #: #3). Operational bound only — no scoring semantics change.
 RERANK_BATCH_SIZE = 16
 
+#: The batch pads to its LONGEST passage: one pathological 77,125-char
+#: chunk (release-books-v1 chunking outlier; corpus p99 = 1,245 chars)
+#: forced a ~19k-token sequence and the same 1.87 GiB allocation at
+#: ANY batch size. The cross-encoder scores relevance on a bounded
+#: prefix; the candidate itself is never altered — this bounds only
+#: the scoring input.
+RERANK_MAX_SURFACE_CHARS = 4000
+
 
 class RerankUnavailable(RuntimeError):
     """The reranker sidecar could not be reached (caller degrades)."""
@@ -38,6 +46,7 @@ def _batched_scores(client, query: str, surfaces: list[str]) -> dict:
     shape (order recomputed globally, deterministic)."""
     scores: list[float] = []
     model_id = model_revision = None
+    surfaces = [(s or "")[:RERANK_MAX_SURFACE_CHARS] for s in surfaces]
     for i in range(0, len(surfaces), RERANK_BATCH_SIZE):
         resp = client.rerank(query, surfaces[i:i + RERANK_BATCH_SIZE])
         scores.extend(float(s) for s in resp["scores"])

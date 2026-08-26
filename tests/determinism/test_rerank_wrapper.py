@@ -128,3 +128,24 @@ def test_rerank_batches_large_candidate_sets() -> None:
     _, rc_single = rerank_fused("vector retrieval", [], children,
                                 client=FakeClient(_scorer))
     assert [c["chunk_id"] for c in rc] == [c["chunk_id"] for c in rc_single]
+
+
+def test_rerank_bounds_scoring_surface_length() -> None:
+    """A pathological 77k-char chunk padded the whole sidecar batch to
+    ~19k tokens and OOM'd the MPS pool at any batch size (measured
+    2026-08-26). Scoring surfaces are bounded; the CANDIDATE text is
+    never altered."""
+    from polymath_shared.rerank import RERANK_MAX_SURFACE_CHARS
+
+    class LengthAssertingClient(FakeClient):
+        def rerank(self, query, documents, top_k=None):
+            assert all(len(d) <= RERANK_MAX_SURFACE_CHARS for d in documents)
+            return super().rerank(query, documents, top_k)
+
+    huge = "retrieval " * 20000  # ~200k chars
+    children = [{"chunk_id": "big", "text": huge},
+                {"chunk_id": "small", "text": "vector retrieval"}]
+    _, rc = rerank_fused("vector retrieval", [], children,
+                         client=LengthAssertingClient(_scorer))
+    by_id = {c["chunk_id"]: c for c in rc}
+    assert by_id["big"]["text"] == huge  # candidate untouched
