@@ -87,7 +87,8 @@ def claim_ticket_events(conn, identity: dict, event_types: list[str], limit: int
               LEFT JOIN runs r ON r.run_id = e.run_id
              WHERE e.delivered_at IS NULL
                 AND e.event_type = ANY(%s)
-                AND (t.ticket_id IS NULL OR t.status = 'ready')
+                AND (t.ticket_id IS NULL OR
+                     (t.status = 'ready' AND t.archived_at IS NULL))
                 AND NOT (e.event_id = ANY(%s))
              ORDER BY CASE WHEN r.created_at > now() - interval '15 minutes'
                            THEN 0 ELSE 1 END,
