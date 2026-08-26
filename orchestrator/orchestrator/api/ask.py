@@ -66,8 +66,21 @@ def _match_score(text: str, terms: list[str]) -> float:
 
 # ------------------------------------------------------------------ lanes
 
-def _procedures(conn, scope: "QueryScope", question: str) -> list[dict]:
+def _merge_terms(question: str, extra_terms=()) -> list[str]:
+    """Query terms + CORPUS-MAP-PLANNING-V1 expansion terms. Expansion
+    terms only ADD candidate matches against the same stored objects —
+    authority and provenance are untouched."""
     terms = _terms(question)
+    for t in extra_terms:
+        tn = _norm(t)
+        if tn and tn not in terms:
+            terms.append(tn)
+    return terms
+
+
+def _procedures(conn, scope: "QueryScope", question: str,
+                extra_terms=()) -> list[dict]:
+    terms = _merge_terms(question, extra_terms)
     where = "WHERE corpus_id = ANY(%s)"
     args: list = [list(scope.corpus_ids)]
     rows = conn.execute(
@@ -78,8 +91,11 @@ def _procedures(conn, scope: "QueryScope", question: str) -> list[dict]:
     for pid, did, cid, title, goal, steps, tools, conf, chunks in rows:
         steps_l = steps if isinstance(steps, list) else json.loads(steps or "[]")
         blob = " ".join([title or "", goal or "", *map(str, steps_l)])
-        score = round(_match_score(blob, terms) + 0.25 * float(conf or 0), 4)
-        if score > 0:
+        match = _match_score(blob, terms)
+        # candidacy requires an actual term match; confidence only
+        # RANKS matches, it never makes an unmatched object a result
+        score = round(match + 0.25 * float(conf or 0), 4)
+        if match > 0:
             scored.append({
                 "object_type": "procedure",
                 "object_id": pid,
@@ -96,8 +112,9 @@ def _procedures(conn, scope: "QueryScope", question: str) -> list[dict]:
     return sorted(scored, key=lambda r: (-r["score"], r["object_id"]))[:5]
 
 
-def _concepts(conn, scope: "QueryScope", question: str) -> list[dict]:
-    terms = _terms(question)
+def _concepts(conn, scope: "QueryScope", question: str,
+              extra_terms=()) -> list[dict]:
+    terms = _merge_terms(question, extra_terms)
     where = "WHERE corpus_id = ANY(%s)"
     args: list = [list(scope.corpus_ids)]
     rows = conn.execute(
@@ -106,9 +123,12 @@ def _concepts(conn, scope: "QueryScope", question: str) -> list[dict]:
               FROM concept_artifacts {where}""", args).fetchall()
     scored = []
     for cid_, did, cid, name, desc, domain, conf, chunks in rows:
-        score = round(_match_score(f"{name} {desc}", terms)
-                      + 0.2 * float(conf or 0), 4)
-        if score > 0:
+        match = _match_score(f"{name} {desc}", terms)
+        # candidacy requires an actual term match (confidence ranks,
+        # never admits) — without this every stored concept scored > 0
+        # for any query via the confidence bonus alone
+        score = round(match + 0.2 * float(conf or 0), 4)
+        if match > 0:
             scored.append({
                 "object_type": "concept",
                 "object_id": cid_,
@@ -123,8 +143,9 @@ def _concepts(conn, scope: "QueryScope", question: str) -> list[dict]:
     return sorted(scored, key=lambda r: (-r["score"], r["object_id"]))[:8]
 
 
-def _facts(conn, scope: "QueryScope", question: str) -> list[dict]:
-    terms = _terms(question)
+def _facts(conn, scope: "QueryScope", question: str,
+           extra_terms=()) -> list[dict]:
+    terms = _merge_terms(question, extra_terms)
     args: list = [list(scope.corpus_ids)]
     where = ("WHERE f.decision='ACCEPT' AND d.corpus_id = ANY(%s)")
     like = [f"%{t}%" for t in terms]
@@ -200,16 +221,24 @@ def ask(req: AskRequest):
         routed = classify_query(question)
         route = routed["route"]
 
+        # CORPUS-MAP-PLANNING-V1: the stored corpus map + vocabulary
+        # families become scoped navigation priors. Expansion terms add
+        # candidate matches; evidence stays authoritative.
+        from polymath_shared.corpus_map_planning import plan_with_corpus_map
+
+        map_plan = plan_with_corpus_map(conn, scope, question)
+        extra = map_plan["expansion_terms"]
+
         procedures = concepts = facts = families = []
         if route == ROUTE_PROCEDURE:
-            procedures = _procedures(conn, scope, question)
+            procedures = _procedures(conn, scope, question, extra)
         elif route == ROUTE_CONCEPT:
-            concepts = _concepts(conn, scope, question)
+            concepts = _concepts(conn, scope, question, extra)
         elif route == ROUTE_FACT:
-            facts = _facts(conn, scope, question)
+            facts = _facts(conn, scope, question, extra)
         else:  # POLYMATH
-            concepts = _concepts(conn, scope, question)[:6]
-            facts = _facts(conn, scope, question)[:6]
+            concepts = _concepts(conn, scope, question, extra)[:6]
+            facts = _facts(conn, scope, question, extra)[:6]
             families = _concept_graph(conn, scope,
                                       [c["name"] for c in concepts])
 
@@ -232,9 +261,11 @@ def ask(req: AskRequest):
         "cited_document_ids": cited_documents,
         "grounded": grounded,
         "scope": scope.as_dict(),
+        "map": map_plan,
         "latency_ms": round((time.perf_counter() - t0) * 1000, 1),
         "contracts": {
             "query_router": QUERY_ROUTER_VERSION,
             "grounding": "stored-objects-only-v1",
+            "corpus_map_planning": map_plan["contract"],
         },
     }

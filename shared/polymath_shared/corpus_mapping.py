@@ -148,8 +148,19 @@ def run_corpus_mapping_ticket(conn, *, ticket_id: str, corpus_id: str,
         """SELECT summary_id, major_entities, major_concepts, methods
            FROM document_summaries WHERE corpus_id=%s""",
         (corpus_id,)).fetchall()]
+    # KNOWLEDGE-ARTIFACT-LAYER: the builder has always accepted
+    # procedures; the production caller simply omitted them (SMART
+    # verification REQ-007). Persisted Procedure artifacts now feed the
+    # map's typed procedure entries/relations — established contract,
+    # no new relationship semantics.
+    procedures = [dict(zip(("title", "goal", "tools"), r))
+                  for r in conn.execute(
+        """SELECT title, goal, tools_json FROM procedure_artifacts
+           WHERE corpus_id=%s ORDER BY procedure_id""",
+        (corpus_id,)).fetchall()]
     cmap = build_corpus_map(corpus_id=corpus_id, document_summaries=rows,
-                            fact_degrees=fact_degrees)
+                            fact_degrees=fact_degrees,
+                            procedures=procedures)
     payload = {"summary_type": "corpus", **cmap}
     from polymath_shared.summary_layer import build_envelope
     env = build_envelope(derived_from=[r["summary_id"] for r in rows],

@@ -73,14 +73,21 @@ def test_drift_invalidates_only_dependent_summaries():
 
 
 def test_vocabulary_contamination_two_corpora_two_families():
+    # Each corpus carries the two independent supports the vocabulary
+    # guard requires (min-support=2, f267d0e) — this test pins CORPUS
+    # ISOLATION (ai_v1::model != cyber_v1::model), not the guard.
     ai = build_concept_families(
         corpus_id="ai_v1",
         parent_summaries=[{"payload": {"parent_id": "p1",
+                                       "concepts": ["model"]}},
+                          {"payload": {"parent_id": "p2",
                                        "concepts": ["model"]}}],
         document_summaries=[], accepted_concepts=[])
     cyber = build_concept_families(
         corpus_id="cyber_v1",
         parent_summaries=[{"payload": {"parent_id": "p1",
+                                       "concepts": ["model"]}},
+                          {"payload": {"parent_id": "p2",
                                        "concepts": ["model"]}}],
         document_summaries=[], accepted_concepts=[])
     assert len(ai["families"]) == 1 and len(cyber["families"]) == 1
