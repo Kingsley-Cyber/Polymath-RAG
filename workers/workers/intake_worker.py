@@ -64,7 +64,17 @@ def process_event(conn: Connection, event: dict) -> None:
     source_name = payload["source_name"]
     media_type = payload["media_type"]
 
-    raw = base64.b64decode(payload["content_b64"])
+    if payload.get("content_ref"):
+        # SPOOL-CLAIM-CHECK-V1: bytes live on the spool volume; the
+        # payload carries {store, key, sha256, bytes}. spool_read
+        # verifies the hash and refuses mismatched or missing content
+        # (fail-loud → FAILURE receipt), so a resolved reference is
+        # exactly as trustworthy as inline bytes.
+        from polymath_shared.blob_spool import spool_read
+
+        raw = spool_read(payload["content_ref"])
+    else:
+        raw = base64.b64decode(payload["content_b64"])
     normalized = normalize_document_bytes(
         raw, strip_bom=NORMALIZATION["strip_bom"], normalize_crlf=NORMALIZATION["normalize_crlf"]
     )
@@ -223,11 +233,14 @@ def process_event(conn: Connection, event: dict) -> None:
             "parent_chunks": len(parents),
         }
         writer.artifact({"routing_card": routing_card})
+        # doc_content (the full base64 body) used to ride along here.
+        # No downstream stage ever read it — every consumer works from
+        # the chunks/documents rows — so it was pure jsonb bloat: a
+        # third full copy of every document in Postgres. Dropped.
         writer.outbox(NEXT_EVENT_TYPE, {
             "run_id": run_id,
             "corpus_id": corpus_id,
             "doc_id": doc_id,
-            "doc_content": payload["content_b64"],
             "profile": profile.model_dump(),
         })
         writer.run_status("reconciling")

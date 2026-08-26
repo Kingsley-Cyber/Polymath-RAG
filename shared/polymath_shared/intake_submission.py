@@ -25,17 +25,36 @@ def canonical_intake_payload(
     corpus_id: str,
     source_name: str,
     media_type: str,
-    content_b64: str,
+    content_b64: Optional[str] = None,
     config: Optional[dict] = None,
+    content_ref: Optional[dict] = None,
 ) -> dict:
-    """The canonical payload whose hash defines run identity."""
-    return {
+    """The canonical payload whose hash defines run identity.
+
+    Exactly one content variant:
+      content_b64 — bytes inline (small texts; the original path)
+      content_ref — SPOOL-CLAIM-CHECK-V1 reference {store, key,
+                    sha256, bytes}; the sha256 is inside the payload,
+                    so run identity stays content-addressed and replays
+                    of the same file remain no-ops.
+    """
+    if (content_b64 is None) == (content_ref is None):
+        raise ValueError(
+            "exactly one of content_b64 / content_ref is required")
+    payload = {
         "corpus_id": corpus_id,
         "source_name": source_name,
         "media_type": media_type,
-        "content_b64": content_b64,
         "config": config or {},
     }
+    if content_b64 is not None:
+        payload["content_b64"] = content_b64
+    else:
+        for field in ("store", "key", "sha256", "bytes"):
+            if field not in (content_ref or {}):
+                raise ValueError(f"content_ref missing {field!r}")
+        payload["content_ref"] = content_ref
+    return payload
 
 
 def submit_intake(
@@ -45,10 +64,13 @@ def submit_intake(
     """Write one run row + intake.v1 outbox event in a single
     transaction; idempotent by content identity. Returns
     {run_id, accepted, already_exists}."""
-    try:
-        base64.b64decode(canonical_payload["content_b64"], validate=True)
-    except Exception as exc:
-        raise ValueError("content_b64 is not valid base64") from exc
+    if "content_b64" in canonical_payload:
+        try:
+            base64.b64decode(canonical_payload["content_b64"], validate=True)
+        except Exception as exc:
+            raise ValueError("content_b64 is not valid base64") from exc
+    elif "content_ref" not in canonical_payload:
+        raise ValueError("payload carries neither content_b64 nor content_ref")
 
     corpus_id = canonical_payload["corpus_id"]
     rid = run_id(corpus_id, canonical_payload)

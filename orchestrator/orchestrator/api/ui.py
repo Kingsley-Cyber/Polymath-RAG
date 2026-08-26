@@ -3,8 +3,11 @@ needs on top of the existing query product.
 
   GET  /corpora            corpus picker data (docs, readiness, purpose)
   GET  /documents          file-manager listing for one corpus
-  POST /upload             multipart upload → canonical intake (same
-                           submit_intake path as /intake; nothing new)
+  POST /upload             multipart upload → SPOOL-CLAIM-CHECK-V1:
+                           bytes stream to the spool volume, the
+                           canonical intake payload carries a content
+                           reference (same submit_intake writer path
+                           as /intake; Postgres never holds the bytes)
   GET  /synthesizers       model-selector data (the answer synthesizer
                            registry; deterministic grounded synthesis is
                            the only production entry today — the shape
@@ -23,7 +26,6 @@ Scope stays fail-closed through the same shared resolver.
 """
 from __future__ import annotations
 
-import base64
 import json
 import time
 from typing import Optional
@@ -135,29 +137,54 @@ def documents(corpus_id: str) -> dict:
     }
 
 
+_UPLOAD_EXTENSIONS = {".md", ".txt", ".html", ".pdf", ".epub", ".docx"}
+
+
 @router.post("/upload")
 async def upload(corpus_id: str = Form(...),
                  file: UploadFile = File(...)) -> dict:
-    """Multipart convenience wrapper over the canonical intake path."""
+    """SPOOL-CLAIM-CHECK-V1: stream to the spool volume in 1 MiB
+    chunks (sha256 computed in flight), then submit the canonical
+    intake payload carrying a content REFERENCE — the request body is
+    transport, never pipeline state, and Postgres never holds the
+    bytes. Same submit_intake writer path as /intake; run identity
+    stays content-addressed via the sha256 inside the payload."""
+    from polymath_shared.blob_spool import spool_write
     from polymath_shared.intake_submission import (
         canonical_intake_payload,
         submit_intake,
     )
 
-    raw = await file.read()
-    if not raw:
+    source_name = os.path.basename(file.filename or "") or "upload.bin"
+    ext = os.path.splitext(source_name)[1].lower()
+    if ext not in _UPLOAD_EXTENSIONS:
+        raise HTTPException(
+            422, f"unsupported extension {ext!r}; "
+                 f"accepted: {sorted(_UPLOAD_EXTENSIONS)}")
+    max_bytes = int(os.environ.get("POLYMATH_UPLOAD_MAX_MB", "200")) * 1024 * 1024
+
+    # Starlette's multipart parser has already streamed the body to a
+    # disk-spooled temp file in bounded chunks; file.file is its sync
+    # handle. spool_write re-streams it in 1 MiB chunks, hashing in
+    # flight — the bytes never sit in process memory as one buffer.
+    import anyio
+    file.file.seek(0, os.SEEK_END)
+    if file.file.tell() > max_bytes:
+        raise HTTPException(413, f"file exceeds {max_bytes} bytes")
+    file.file.seek(0)
+    ref = await anyio.to_thread.run_sync(spool_write, file.file)
+    if ref["bytes"] == 0:
         raise HTTPException(422, "empty file")
-    media_type = file.content_type or "application/octet-stream"
     payload = canonical_intake_payload(
         corpus_id=corpus_id,
-        source_name=file.filename or "upload.bin",
-        media_type=media_type,
-        content_b64=base64.b64encode(raw).decode(),
+        source_name=source_name,
+        media_type=file.content_type or "application/octet-stream",
+        content_ref=ref,
     )
     with tx() as conn:
         out = submit_intake(conn, payload)
-    return {**out, "corpus_id": corpus_id,
-            "source_name": file.filename, "bytes": len(raw)}
+    return {**out, "corpus_id": corpus_id, "source_name": source_name,
+            "bytes": ref["bytes"], "sha256": ref["sha256"]}
 
 
 @router.get("/synthesizers")
