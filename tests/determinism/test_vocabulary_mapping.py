@@ -37,6 +37,29 @@ def test_shared_support_merges_into_one_family():
 
 
 def test_disjoint_support_stays_separate():
+    """R2: terms with disjoint support never merge. Each concept
+    carries the two independent supports the vocabulary guard requires
+    (min-support=2, shipped f267d0e) — the guard must not be the thing
+    keeping them apart."""
+    families = build_concept_families(
+        corpus_id="ai_v1",
+        parent_summaries=_parents([
+            ("p1", ["attention mechanism"]),
+            ("p2", ["attention mechanism"]),
+            ("p3", ["retrieval augmented generation"]),
+            ("p4", ["retrieval augmented generation"]),
+        ]),
+        document_summaries=[],
+        accepted_concepts=[])
+    assert len(families["families"]) == 2
+    names = {f["canonical_name"] for f in families["families"]}
+    assert names == {"attention mechanism", "retrieval augmented generation"}
+
+
+def test_single_support_families_never_admit():
+    """VOCABULARY GUARD (owner, f267d0e): a concept mentioned by ONE
+    summary is not corpus vocabulary — families require at least two
+    independent supporting summaries."""
     families = build_concept_families(
         corpus_id="ai_v1",
         parent_summaries=_parents([
@@ -45,7 +68,21 @@ def test_disjoint_support_stays_separate():
         ]),
         document_summaries=[],
         accepted_concepts=[])
-    assert len(families["families"]) == 2
+    assert families["families"] == []
+    assert families["min_supporting_summaries"] == 2
+
+
+def test_derived_summaries_never_count_as_independent_support():
+    """Guard bypass fix (b94db70): a document summary derives from its
+    parents, so parent + own-document-summary is fake support of two."""
+    families = build_concept_families(
+        corpus_id="ai_v1",
+        parent_summaries=_parents([("p1", ["attention mechanism"])]),
+        document_summaries=[{"payload": {
+            "document_id": "d1",
+            "major_concepts": ["attention mechanism"]}}],
+        accepted_concepts=[])
+    assert families["families"] == []
 
 
 def test_forbidden_embedding_only_merge_has_no_code_path():
@@ -71,10 +108,12 @@ def test_admit_family_enforces_corpus_isolation():
 
 def test_entities_never_appear_in_vocabulary_output():
     """Strongest claim about an entity is relates_to; vocabulary output
-    carries no entity ids at all."""
+    carries no entity ids at all. (Two supports satisfy the min-support
+    guard so a family exists to admit.)"""
     families = build_concept_families(
         corpus_id="ai_v1",
-        parent_summaries=_parents([("p1", ["transformer architecture"])]),
+        parent_summaries=_parents([("p1", ["transformer architecture"]),
+                                   ("p2", ["transformer architecture"])]),
         document_summaries=[], accepted_concepts=[])
     blob = repr(families)
     assert "entity" not in blob.lower()
