@@ -93,7 +93,51 @@ def schedule_gaps(conn: Connection, census: Census) -> int:
             ([r[0] for r in chunk], [r[1] for r in chunk],
              [r[2] for r in chunk], [r[3] for r in chunk]),
         ).rowcount
+
+    _reopen_receipt_gap_tickets(conn, census)
     return scheduled
+
+
+#: RECEIPT-GAP-REOPENS-TICKET-V1 (2026-08-26). The summary waterfall
+#: writes retrieval summaries AFTER the first projection pass; the
+#: census then correctly flags the run's projection receipts as
+#: incomplete and re-arms the projection event — but claiming requires
+#: the stage ticket to be 'ready', and nothing re-opened a 'done'
+#: ticket. MEASURED LIVE: transcript-qual-v1 sat in 'degraded' with 5
+#: armed-but-unclaimable project_qdrant events while every worker
+#: polled idle. Receipts prove state; a DONE ticket whose receipts the
+#: census says are missing is not done. Re-opening is bounded to the
+#: exact (run, stage) pairs the census flagged for missing projection
+#: receipts this tick, and stops the moment receipts land (the gap
+#: disappears).
+_RECEIPT_GAP_STAGES = {
+    "project_qdrant.v1": "project_qdrant",
+    "project_neo4j.v1": "project_neo4j",
+    "project_canonical.v1": "project_canonical",
+}
+
+
+def _reopen_receipt_gap_tickets(conn: Connection, census: Census) -> int:
+    pairs = sorted({
+        (g.run_id, _RECEIPT_GAP_STAGES[g.event_type])
+        for g in census.gaps
+        if g.event_type in _RECEIPT_GAP_STAGES
+        and "receipts missing" in (g.reason or "")
+    })
+    if not pairs:
+        return 0
+    reopened = conn.execute(
+        """
+        UPDATE stage_tickets t
+           SET status = 'ready', lease_owner = NULL,
+               lease_expires_at = NULL, updated_at = now()
+          FROM unnest(%s::text[], %s::text[]) AS x(run_id, stage)
+         WHERE t.run_id = x.run_id AND t.stage = x.stage
+           AND t.status = 'done' AND t.archived_at IS NULL
+        """,
+        ([p[0] for p in pairs], [p[1] for p in pairs]),
+    ).rowcount
+    return reopened
 
 
 def _bulk_first_outbox_payload(conn: Connection, event_type: str,
