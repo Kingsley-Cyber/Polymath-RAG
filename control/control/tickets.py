@@ -123,7 +123,21 @@ def _stage_attempt_ok(conn: Connection, run_id: str, stage: str) -> bool:
         """,
         (run_id, stage),
     ).fetchone()
-    return bool(row) and row[0] == "ok"
+    if bool(row) and row[0] == "ok":
+        return True
+    # SUMMARY-ATTEMPT-EQUIVALENCE (measured Stage-K pilot): the summary
+    # layer completes tickets WITHOUT stage_attempt rows, so the ok-
+    # attempt probe is permanently False for parent/document/corpus/
+    # vocabulary stages and their successors could never advance. A
+    # durably committed DONE ticket is equivalent completion proof.
+    t = conn.execute(
+        """
+        SELECT 1 FROM stage_tickets
+         WHERE run_id=%s AND stage=%s AND status='done' LIMIT 1
+        """,
+        (run_id, stage),
+    ).fetchone()
+    return bool(t)
 
 
 def _artifacts_present(conn: Connection, run_id: str, stage: str,

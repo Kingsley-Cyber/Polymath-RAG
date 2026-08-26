@@ -277,3 +277,29 @@ def test_archived_corpora_out_of_lifecycle():
     from control import tickets as T
     elig = inspect.getsource(T.eligible_creation_corpora)
     assert "archived_corpora" in elig
+
+
+def test_done_ticket_is_completion_proof_for_attemptless_stages():
+    """SUMMARY-ATTEMPT-EQUIVALENCE: the summaries layer completes tickets
+    without stage_attempt rows; a DONE predecessor ticket must satisfy
+    _stage_attempt_ok or the summary waterfall can never advance
+    (measured live: parent_summary done -> document_summary pending
+    forever)."""
+    import inspect
+    from control import tickets as T
+
+    class Conn:
+        def __init__(self):
+            self.queries = []
+        def execute(self, sql, params=None):
+            self.queries.append(" ".join(sql.split()))
+            return self
+        def fetchone(self):
+            q = self.queries[-1]
+            if "FROM stage_attempts" in q:
+                return None              # no attempt row exists
+            if "status='done'" in q:
+                return (1,)              # durable DONE ticket exists
+            return None
+
+    assert T._stage_attempt_ok(Conn(), "run_x", "parent_summary") is True
