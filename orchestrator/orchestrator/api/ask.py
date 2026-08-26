@@ -17,6 +17,7 @@ Deterministic: fixed weights, ties broken by id.
 """
 from __future__ import annotations
 
+import json
 import time
 from typing import Optional
 

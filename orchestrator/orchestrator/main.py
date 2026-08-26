@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from .api.ask import router as ask_router
 from .api.chat import router as chat_router
 from .api.evidence import router as evidence_router
 from .api.health import router as health_router
