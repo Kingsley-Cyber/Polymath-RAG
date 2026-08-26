@@ -98,6 +98,12 @@ def load_rule_pack(path: Optional[Path] = None, *, use_resources: bool = True,
         # see core-predicates-v1.4.0.yaml.
         yaml_path = path or (_RULE_PACK_PATH.parent / "core-predicates-v1.4.0.yaml")
         compiled_name = "compiled_lexical-v1.4.0.json"
+    elif pack_version == "1.5.0":
+        # SPOKEN-RELATION-ADAPTER-V1: `created` object signature gains
+        # Technology (the creation class already accepted the pair via
+        # `developed`); shadow-qualified by eval/v5/spoken_adapter_shadow.py.
+        yaml_path = path or (_RULE_PACK_PATH.parent / "core-predicates-v1.5.0.yaml")
+        compiled_name = "compiled_lexical-v1.5.0.json"
     else:
         raise RulePackError(f"unknown rule pack version {pack_version!r}")
 

@@ -203,7 +203,7 @@ def worker_contracts() -> dict[str, Any]:
         # The ontology realization edit moved no existing fence because the
         # yaml escapes the python-module code hash; these close that hole,
         # so contract reconciliation mints successors when they change.
-        "rule_pack_file_sha": files["core-predicates-v1.4.0.yaml"],
+        "rule_pack_file_sha": files["core-predicates-v1.5.0.yaml"],
         "ontology_file_sha": files["scientific-predicate-ontology-v2.yaml"],
     }
 

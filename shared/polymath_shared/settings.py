@@ -60,16 +60,19 @@ class WorkerSettings(BaseSettings):
                     "(GLiNER evidence proposals merge with lexical anchors)",
     )
     rule_pack_version: str = Field(
-        # D2 / SCIENTIFIC-KAG-V1: docs/SEMANTIC_CONTRACTS.md declares
-        # core-predicates-v1.4.0 (research predicates, 35-type backbone).
-        # Earlier: v1.3.0
+        # SPOKEN-RELATION-ADAPTER-V1: docs/SEMANTIC_CONTRACTS.md declares
+        # core-predicates-v1.5.0 (`created` object signature gains
+        # Technology — the creation class already accepted the typed
+        # pair via `developed`; shadow-qualified 18/18 by
+        # eval/v5/spoken_adapter_shadow.py with zero negative accepts).
+        # Earlier: v1.4.0 (SCIENTIFIC-KAG-V1), v1.3.0
         # byte-frozen. Shipping 1.2.0 left I4R-D grammatical frame
         # arbitration INERT in production while the documentation said it
         # was enforced -- the drift that SEMANTIC-RUNTIME-INTEGRITY-V1
         # now makes fatal at boot. 1.3.0 adds `frames:` to has_role and
         # leads; both are NARROWING (they require specific dependency
         # patterns), so the change can only refuse, never admit more.
-        default="1.4.0",
+        default="1.5.0",
         description="Deterministic rule pack version for extraction. "
                     "1.0.1 = frozen Q1 production baseline; 1.1.0 = "
                     "candidate realistic-prose baseline (Q1-R).",

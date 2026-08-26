@@ -1,0 +1,170 @@
+{
+ "pack": "1.5.0",
+ "results": [
+  {
+   "case": "P1_transcript_verbatim",
+   "ok": true,
+   "expect": "accept",
+   "rows": [
+    {
+     "subject": "Facebook",
+     "object": "Andromeda",
+     "decision": "ACCEPT",
+     "predicate": "created",
+     "reason": ""
+    }
+   ]
+  },
+  {
+   "case": "P2_main_clause_equation",
+   "ok": true,
+   "expect": "accept",
+   "rows": [
+    {
+     "subject": "Nous Research",
+     "object": "Hermes",
+     "decision": "ACCEPT",
+     "predicate": "created",
+     "reason": ""
+    }
+   ]
+  },
+  {
+   "case": "P3_direct_antecedent_technology",
+   "ok": true,
+   "expect": "accept",
+   "rows": [
+    {
+     "subject": "Google",
+     "object": "Kubernetes",
+     "decision": "ACCEPT",
+     "predicate": "created",
+     "reason": ""
+    }
+   ]
+  },
+  {
+   "case": "P4_reduced_relative_technology",
+   "ok": true,
+   "expect": "accept",
+   "rows": [
+    {
+     "subject": "Meta",
+     "object": "PyTorch",
+     "decision": "ACCEPT",
+     "predicate": "created",
+     "reason": ""
+    }
+   ]
+  },
+  {
+   "case": "N1_role_possessive",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": []
+  },
+  {
+   "case": "N2_object_possession",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": []
+  },
+  {
+   "case": "N3_customer_possessive",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": []
+  },
+  {
+   "case": "N4_event_possessive",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": []
+  },
+  {
+   "case": "N5_possessive_copula_measured",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": []
+  },
+  {
+   "case": "N6_negation",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": [
+    {
+     "subject": "Facebook",
+     "object": "Andromeda",
+     "decision": "REJECT",
+     "predicate": null,
+     "reason": "scope_gate: negated"
+    }
+   ]
+  },
+  {
+   "case": "N7_modality",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": [
+    {
+     "subject": "Facebook",
+     "object": "Andromeda",
+     "decision": "QUALIFY",
+     "predicate": "created",
+     "reason": ""
+    }
+   ]
+  },
+  {
+   "case": "N8_attribution",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": []
+  },
+  {
+   "case": "N9_pp_modifier",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": []
+  },
+  {
+   "case": "N10_light_verb_idiom",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": []
+  },
+  {
+   "case": "N11_pronoun_subject",
+   "ok": true,
+   "expect": "none",
+   "rows": []
+  },
+  {
+   "case": "N12_narrative",
+   "ok": true,
+   "expect": "none",
+   "rows": []
+  },
+  {
+   "case": "N13_relativizer_subject_inversion",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": []
+  },
+  {
+   "case": "N14_question",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": [
+    {
+     "subject": "Facebook",
+     "object": "Andromeda",
+     "decision": "REJECT",
+     "predicate": null,
+     "reason": "scope_gate: question"
+    }
+   ]
+  }
+ ],
+ "failures": []
+}

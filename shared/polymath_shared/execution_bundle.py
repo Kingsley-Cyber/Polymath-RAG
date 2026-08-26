@@ -82,7 +82,7 @@ def semantic_file_hashes() -> dict[str, str]:
     fence until this field existed)."""
     base = ROOT / "shared" / "polymath_shared" / "rulepack"
     out: dict[str, str] = {}
-    for name in ("core-predicates-v1.4.0.yaml",
+    for name in ("core-predicates-v1.5.0.yaml",
                  "scientific-predicate-ontology-v2.yaml"):
         p = base / name
         out[name] = _sha256_file(p) if p.exists() else "missing"
@@ -123,7 +123,7 @@ def compute_execution_bundle() -> dict[str, Any]:
     bundle = {
         **git_state(),
         "semantic_authority": semantic_authority_sha256(),
-        "rule_pack_file": files["core-predicates-v1.4.0.yaml"],
+        "rule_pack_file": files["core-predicates-v1.5.0.yaml"],
         "ontology_file": files["scientific-predicate-ontology-v2.yaml"],
         "trigger_allowlist": files["trigger_allowlist"],
         "config": config_fingerprint(),

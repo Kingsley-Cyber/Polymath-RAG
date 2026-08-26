@@ -253,6 +253,12 @@ def build_candidates_kimi(
             # predicate nominal is NOT an entity has named its object;
             # the recall net must not substitute a different one.
             object_fallback_allowed = True
+            # SPOKEN-RELATION-ADAPTER-V1: an object recovered from a
+            # relative-clause antecedent fills the trigger's OBJECT GAP
+            # — that is what relativization is, and PropBank assigns
+            # the antecedent ARG1. Recorded so role assignment treats
+            # the recovered endpoint as the relativized direct object.
+            relcl_object_recovered = False
 
             # -- UD-tree primary binding ------------------------------
             if tokens:
@@ -574,6 +580,7 @@ def build_candidates_kimi(
                             objects.append(recovered_ent)
                             binding_source = \
                                 BindingSource.RELCL_ANTECEDENT
+                            relcl_object_recovered = True
                             if observer:
                                 observer.record_candidate_outcome(
                                     sl, evidence,
@@ -761,6 +768,13 @@ def build_candidates_kimi(
                                     if (child["head_i"] == tok["i"]
                                             and child["dep"] in AGENT_OBJECT_DEPS):
                                         agent_span = _token_to_entity(child, sl.entities, sl)
+                # SPOKEN-RELATION-ADAPTER-V1: the relativized object
+                # occupies the trigger's object gap — role assignment
+                # sees it as the direct object it syntactically is
+                # (PropBank ARG1 goes to the antecedent).
+                if relcl_object_recovered and obj_dep is None \
+                        and object_span is recovered_ent:
+                    obj_dep = "dobj"
 
                 role_result = assign_roles(
                     roleset=_lexical.get("roleset"),

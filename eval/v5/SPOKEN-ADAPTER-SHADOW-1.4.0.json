@@ -1,0 +1,183 @@
+{
+ "pack": "1.4.0",
+ "results": [
+  {
+   "case": "P1_transcript_verbatim",
+   "ok": false,
+   "expect": "accept",
+   "rows": [
+    {
+     "subject": "Facebook",
+     "object": "Andromeda",
+     "decision": "REJECT",
+     "predicate": null,
+     "reason": "type_violation: no signature accepts (Organization -> Technology)"
+    }
+   ]
+  },
+  {
+   "case": "P2_main_clause_equation",
+   "ok": true,
+   "expect": "accept",
+   "rows": [
+    {
+     "subject": "Nous Research",
+     "object": "Hermes",
+     "decision": "ACCEPT",
+     "predicate": "created",
+     "reason": ""
+    }
+   ]
+  },
+  {
+   "case": "P3_direct_antecedent_technology",
+   "ok": false,
+   "expect": "accept",
+   "rows": [
+    {
+     "subject": "Google",
+     "object": "Kubernetes",
+     "decision": "REJECT",
+     "predicate": null,
+     "reason": "type_violation: no signature accepts (Organization -> Technology)"
+    }
+   ]
+  },
+  {
+   "case": "P4_reduced_relative_technology",
+   "ok": false,
+   "expect": "accept",
+   "rows": [
+    {
+     "subject": "Meta",
+     "object": "PyTorch",
+     "decision": "REJECT",
+     "predicate": null,
+     "reason": "type_violation: no signature accepts (Organization -> Technology)"
+    }
+   ]
+  },
+  {
+   "case": "N1_role_possessive",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": []
+  },
+  {
+   "case": "N2_object_possession",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": []
+  },
+  {
+   "case": "N3_customer_possessive",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": []
+  },
+  {
+   "case": "N4_event_possessive",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": []
+  },
+  {
+   "case": "N5_possessive_copula_measured",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": []
+  },
+  {
+   "case": "N6_negation",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": [
+    {
+     "subject": "Facebook",
+     "object": "Andromeda",
+     "decision": "REJECT",
+     "predicate": null,
+     "reason": "scope_gate: negated"
+    }
+   ]
+  },
+  {
+   "case": "N7_modality",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": [
+    {
+     "subject": "Facebook",
+     "object": "Andromeda",
+     "decision": "REJECT",
+     "predicate": null,
+     "reason": "type_violation: no signature accepts (Organization -> Technology)"
+    }
+   ]
+  },
+  {
+   "case": "N8_attribution",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": []
+  },
+  {
+   "case": "N9_pp_modifier",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": []
+  },
+  {
+   "case": "N10_light_verb_idiom",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": []
+  },
+  {
+   "case": "N11_pronoun_subject",
+   "ok": true,
+   "expect": "none",
+   "rows": []
+  },
+  {
+   "case": "N12_narrative",
+   "ok": true,
+   "expect": "none",
+   "rows": []
+  },
+  {
+   "case": "N13_relativizer_subject_inversion",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": []
+  },
+  {
+   "case": "N14_question",
+   "ok": true,
+   "expect": "no_accept",
+   "rows": [
+    {
+     "subject": "Facebook",
+     "object": "Andromeda",
+     "decision": "REJECT",
+     "predicate": null,
+     "reason": "scope_gate: question"
+    }
+   ]
+  }
+ ],
+ "failures": [
+  [
+   "P1_transcript_verbatim",
+   "want {'subject': 'Facebook', 'predicate': 'created', 'object': 'Andromeda'}; accepted=[]"
+  ],
+  [
+   "P3_direct_antecedent_technology",
+   "want {'subject': 'Google', 'predicate': 'created', 'object': 'Kubernetes'}; accepted=[]"
+  ],
+  [
+   "P4_reduced_relative_technology",
+   "want {'subject': 'Meta', 'predicate': 'created', 'object': 'PyTorch'}; accepted=[]"
+  ]
+ ]
+}
