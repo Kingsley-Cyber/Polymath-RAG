@@ -150,6 +150,85 @@ def test_semantic_completion_missing_layers_is_incomplete():
         _cleanup()
 
 
+def test_cross_corpus_content_collision_refuses_loudly():
+    """doc_id is content-addressed globally; a document has exactly one
+    corpus. Identical content ingested into a DIFFERENT corpus must be
+    a typed loud refusal — never ON CONFLICT DO NOTHING minting a
+    query_ready run over an empty corpus (measured 2026-08-26)."""
+    import base64
+    import sys as _sys
+    from pathlib import Path as _Path
+
+    root = _Path(__file__).resolve().parents[2]
+    for extra in (root / "workers", root / "shared"):
+        if str(extra) not in _sys.path:
+            _sys.path.insert(0, str(extra))
+
+    from polymath_shared.identity import document_id, normalize_document_bytes
+    from polymath_shared.receipts import StageFailed
+    from workers.intake_worker import process_event
+
+    content = b"ZephyrLabs created the quiet engine for collision tests."
+    normalized = normalize_document_bytes(
+        content, strip_bom=True, normalize_crlf=True)
+    doc_id = document_id(normalized)
+
+    _cleanup()
+    with tx() as conn:
+        conn.execute("DELETE FROM chunks WHERE doc_id = %s", (doc_id,))
+        conn.execute("DELETE FROM documents WHERE doc_id = %s", (doc_id,))
+        conn.execute(
+            "DELETE FROM corpora WHERE corpus_id IN ('ftrans_owner','ftrans_thief')")
+        conn.execute("DELETE FROM runs WHERE corpus_id IN ('ftrans_owner','ftrans_thief')")
+        conn.execute(
+            "INSERT INTO corpora (corpus_id, name, config_hash) VALUES "
+            "('ftrans_owner', 'o', 'c'), ('ftrans_thief', 't', 'c')")
+        conn.execute(
+            "INSERT INTO runs (run_id, corpus_id, status) VALUES "
+            "('run_ftrans_own', 'ftrans_owner', 'intake'), "
+            "('run_ftrans_thief', 'ftrans_thief', 'intake')")
+
+    def _event(run_id, corpus):
+        return {"run_id": run_id, "payload": {
+            "corpus_id": corpus, "source_name": "c.md",
+            "media_type": "text/markdown",
+            "content_b64": base64.b64encode(content).decode()}}
+
+    try:
+        with tx() as conn:
+            process_event(conn, _event("run_ftrans_own", "ftrans_owner"))
+        with tx() as conn:
+            owner = conn.execute(
+                "SELECT corpus_id FROM documents WHERE doc_id = %s",
+                (doc_id,)).fetchone()
+        assert owner == ("ftrans_owner",)
+
+        with pytest.raises(StageFailed):
+            with tx() as conn:
+                process_event(conn, _event("run_ftrans_thief", "ftrans_thief"))
+        with tx() as conn:
+            # ownership unchanged; the refusal is durable in the attempt
+            owner = conn.execute(
+                "SELECT corpus_id FROM documents WHERE doc_id = %s",
+                (doc_id,)).fetchone()
+            err = conn.execute(
+                "SELECT error FROM stage_attempts WHERE run_id='run_ftrans_thief' "
+                "AND stage='intake'").fetchone()
+        assert owner == ("ftrans_owner",)
+        assert err and "CROSS_CORPUS_CONTENT_COLLISION" in (err[0] or "")
+    finally:
+        with tx() as conn:
+            conn.execute("DELETE FROM artifacts WHERE run_id LIKE %s", ("run_ftrans_%",))
+            conn.execute("DELETE FROM receipts WHERE run_id LIKE %s", ("run_ftrans_%",))
+            conn.execute("DELETE FROM stage_attempts WHERE run_id LIKE %s", ("run_ftrans_%",))
+            conn.execute("DELETE FROM chunks WHERE doc_id = %s", (doc_id,))
+            conn.execute("DELETE FROM document_layout WHERE doc_id = %s", (doc_id,))
+            conn.execute("DELETE FROM documents WHERE doc_id = %s", (doc_id,))
+            conn.execute("DELETE FROM outbox_events WHERE run_id LIKE %s", ("run_ftrans_%",))
+            conn.execute("DELETE FROM runs WHERE corpus_id IN ('ftrans_owner','ftrans_thief')")
+            conn.execute("DELETE FROM corpora WHERE corpus_id IN ('ftrans_owner','ftrans_thief')")
+
+
 def test_graph_backend_failure_is_typed_not_empty(monkeypatch):
     """Injected Neo4j failure while seeds exist: the expansion raises
     the typed GraphBackendUnavailable and the route translator turns

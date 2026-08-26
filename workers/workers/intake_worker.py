@@ -107,6 +107,24 @@ def process_event(conn: Connection, event: dict) -> None:
             layout_regions = plan.layout
             chunks = materialize_chunks(plan)
 
+        # CROSS-CORPUS-CONTENT-COLLISION (FAILURE-TRANSPARENCY-V1):
+        # doc_id is content-addressed GLOBALLY and a document belongs to
+        # exactly one corpus. Re-ingesting identical content into a
+        # DIFFERENT corpus used to hit ON CONFLICT DO NOTHING and mint a
+        # query_ready run over an EMPTY corpus — silent success with
+        # nothing ingested (measured 2026-08-26: transcript-final-v1's
+        # first run). An identity collision is a typed, loud refusal.
+        owner = conn.execute(
+            "SELECT corpus_id FROM documents WHERE doc_id = %s", (doc_id,)
+        ).fetchone()
+        if owner and owner[0] != corpus_id:
+            raise RuntimeError(
+                f"CROSS_CORPUS_CONTENT_COLLISION: content of {source_name!r} "
+                f"(doc {doc_id[:24]}…) already belongs to corpus "
+                f"{owner[0]!r}; a document has exactly one corpus. "
+                f"Query the owning corpus, or archive/restore it — never "
+                f"a silent empty ingest.")
+
         conn.execute(
             """
             INSERT INTO corpora (corpus_id, name, config_hash, profile,
