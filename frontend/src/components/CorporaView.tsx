@@ -18,7 +18,7 @@ export default function CorporaView({
 
   const refresh = useCallback(async () => {
     try {
-      setCorpora(await fetchCorpora());
+      setCorpora(await fetchCorpora(true));
     } catch {
       setCorpora([]);
     }

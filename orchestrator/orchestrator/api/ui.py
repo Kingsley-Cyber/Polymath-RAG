@@ -73,7 +73,7 @@ def _ollama_models() -> list[dict]:
 
 
 @router.get("/corpora")
-def corpora() -> dict:
+def corpora(all: bool = False) -> dict:
     with tx() as conn:
         # independent aggregates: joining documents AND runs onto
         # corpora cross-multiplies (measured: 60s+ on 12k runs)
@@ -93,10 +93,15 @@ def corpora() -> dict:
              ORDER BY c.corpus_id
             """
         ).fetchall()
+    # Default listing hides empty non-production corpora — right for
+    # the chat picker, but the corpus MANAGER must see every row or
+    # empty husks become invisible and undeletable (found as 8
+    # stragglers the 2026-08-26 purge could not see). all=true lifts
+    # the filter.
     return {"corpora": [
         {"corpus_id": r[0], "purpose": r[1], "query_enabled": r[2],
          "documents": r[3], "query_ready": r[4]}
-        for r in rows if r[3] > 0 or r[1] == "production"
+        for r in rows if all or r[3] > 0 or r[1] == "production"
     ]}
 
 
@@ -305,16 +310,22 @@ def delete_corpus(corpus_id: str, confirm: str = "") -> dict:
 
     # derived stores (best effort, reported)
     try:
-        from polymath_shared.embedding_contracts import NEURAL_EMBED_CONTRACT
-        from polymath_shared.projection_contracts import qdrant_collection_name
+        import hashlib as _hashlib
+
         from polymath_shared.stores import qdrant_client
 
+        # Sweep by corpus-hash PREFIX, not by computed contract names:
+        # computing names from the current contract registry left every
+        # older-contract collection orphaned (77 found on 2026-08-26).
+        # Collection names are polymath_<sha256(corpus_id)[:12]>_<...>,
+        # so the prefix enumerates every projection this corpus ever
+        # had, under any embedding contract.
+        prefix = f"polymath_{_hashlib.sha256(corpus_id.encode()).hexdigest()[:12]}_"
         client = qdrant_client(timeout=30)
         try:
-            for contract in (NEURAL_EMBED_CONTRACT.contract_id,):
-                name = qdrant_collection_name(corpus_id, contract)
-                if client.collection_exists(name):
-                    client.delete_collection(name)
+            for col in client.get_collections().collections:
+                if col.name.startswith(prefix):
+                    client.delete_collection(col.name)
                     removed["qdrant_collections"] = \
                         removed.get("qdrant_collections", 0) + 1
         finally:

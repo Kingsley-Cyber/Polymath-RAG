@@ -6,8 +6,10 @@ async function getJSON<T>(url: string): Promise<T> {
   return r.json();
 }
 
-export const fetchCorpora = () =>
-  getJSON<{ corpora: Corpus[] }>("/corpora").then((d) => d.corpora);
+export const fetchCorpora = (all = false) =>
+  getJSON<{ corpora: Corpus[] }>(`/corpora${all ? "?all=true" : ""}`).then(
+    (d) => d.corpora,
+  );
 
 export const fetchSynthesizers = () =>
   getJSON<{ synthesizers: Synthesizer[] }>("/synthesizers").then(
