@@ -72,8 +72,11 @@ def test_ledger_capture_does_not_move_the_semantic_bundle():
     subtoken candidate; if this hash moves, capture leaked into semantics."""
     from polymath_shared.execution import semantic_authority_sha256
 
-    # ADMISSION-IMPL-MEMO-V1 moved the authority code hash: behavior-
-    # identical memoization in concept_evidence.py, licensed by
-    # test_concept_evidence_equivalence.py plus a B8 same-corpus run
-    # with identical semantic state (perf-baseline-v1, 2026-08-21).
-    assert semantic_authority_sha256().startswith("6976e483c9934abf")
+    # Pin history: ADMISSION-IMPL-MEMO-V1 (behavior-identical
+    # memoization, licensed by test_concept_evidence_equivalence.py +
+    # B8 identical-state run) moved it to 6976e483…; SCIENTIFIC-KAG-V1
+    # slice A (9d0fce4: scientific entity ontology + concept gate) and
+    # the enforcement wiring (266aa81) moved it again — both committed,
+    # qualified semantic-layer work; bundle integrity is READY at this
+    # hash. The pin exists to catch UNNOTICED movement.
+    assert semantic_authority_sha256().startswith("557afbc3a60af163")
