@@ -29,6 +29,24 @@ Typed support lanes (D3, v2):
   - epistemic scope (attributed/speculative/hypothetical/conditional)
     survives into the rendered prose and the claims ledger.
 
+ANSWER-ADMISSION-V1 (2026-08-26): evidence RETRIEVAL is not evidence
+SUFFICIENCY. A nonce query once returned ten cited passages marked
+supported — dense similarity retrieves related-looking text for any
+string. Two deterministic gates now separate "found related text" from
+"can answer this query", reusing the codebase's existing term
+conventions (tokens() + the substring-containment convention of
+lexical_score) — no similarity thresholds:
+
+  1. TEXT per-claim: a passage may support a claim only if it contains
+     at least one query content term (len>=4, stopword-filtered).
+  2. Answer-level coverage (both lanes): the union of all supporting
+     surfaces (graph claim candidates + text passages) must contain
+     EVERY query content term, or the answer is INSUFFICIENT_EVIDENCE
+     and the system abstains. NO ANSWER > UNSUPPORTED ANSWER.
+
+Verdicts: meta.verdict = "supported" | "insufficient_evidence";
+backend failures never reach synthesis (typed 502 upstream).
+
 Determinism: pure functions of the bundle; identical input produces
 byte-identical output. Citation numbering follows first appearance of
 supporting bundle items in claim order (bundle order is deterministic).
@@ -40,8 +58,9 @@ from typing import Callable, Iterable
 from polymath_shared.identity import content_hash
 from polymath_shared.retrieval import tokens
 
-SYNTHESIS_VERSION = "deterministic-template-v2"
+SYNTHESIS_VERSION = "deterministic-template-v3"
 CHAT_CONTRACT_ID = "answer/chat_response/v2"
+ANSWER_ADMISSION_VERSION = "answer-admission-v1"
 
 ABSTENTION_MESSAGE = (
     "I don't have enough grounded evidence to answer this question."
@@ -110,6 +129,32 @@ def _text_grounded(claim_text: str, passages: list[str]) -> bool:
         return False
     lowered = claim_text.lower()
     return any(lowered in (p or "").lower() for p in passages)
+
+
+def query_content_terms(query: str) -> set[str]:
+    """The query's content terms: stopword-filtered tokens of length
+    >=4 (the existing seed/entity-surface convention). Falls back to
+    all tokens for very short queries so the gate never trivially
+    passes on an empty term set."""
+    terms = {t for t in tokens(query) if len(t) >= 4}
+    return terms or tokens(query)
+
+
+def _term_covered(term: str, surfaces: Iterable[str]) -> bool:
+    """Substring containment, the lexical_score convention: 'configure'
+    covers 'configures', 'step' covers 'steps'."""
+    t = term.lower()
+    return any(t in (s or "").lower() for s in surfaces)
+
+
+def _query_relevant(query: str, passages: list[str]) -> bool:
+    """ANSWER-ADMISSION-V1 gate 1: a passage with ZERO query content
+    terms is dense-retrieval noise — it can inform nothing about this
+    query and never supports a claim."""
+    terms = query_content_terms(query)
+    if not terms:
+        return False
+    return any(_term_covered(term, passages) for term in terms)
 
 
 def synthesize_claims(bundle: dict) -> list[dict]:
@@ -234,7 +279,15 @@ def validate_claims(proposed: Iterable, bundle: dict) -> dict:
             lane = GRAPH_LANE
         elif lanes == {TEXT_LANE}:
             passages = [_passage_of(i) for i in support_items]
-            ok = bool(support_items) and not missing and _text_grounded(raw["text"], passages)
+            ok = (
+                bool(support_items)
+                and not missing
+                and _text_grounded(raw["text"], passages)
+                # ANSWER-ADMISSION-V1 gate 1: retrieval similarity is
+                # not query relevance — the supporting passage must
+                # share at least one query content term.
+                and _query_relevant(bundle.get("query") or "", passages)
+            )
             lane = TEXT_LANE
         else:
             ok = False
@@ -313,13 +366,44 @@ def render_answer(bundle: dict, query: str, validation: dict) -> dict:
             sentence = f"{_epistemic_prefix(claim)}{claim['text']} [{citation_ids[primary]}]"
             sentences.append(sentence)
 
+    # ANSWER-ADMISSION-V1 gate 2: answer-level query coverage. The
+    # union of every supporting surface (graph claim candidates + text
+    # passages) must contain EVERY query content term. Related text
+    # that leaves part of the question untouched is not an answer.
+    support_surfaces: list[str] = []
+    for claim in validation["supported"]:
+        for iid in claim["support"]:
+            item = items_by_id.get(iid)
+            if not item:
+                continue
+            if item.get("kind") == "claim":
+                support_surfaces.append(item.get("claim_candidate") or "")
+            else:
+                support_surfaces.append(_passage_of(item))
+    uncovered = sorted(
+        term for term in query_content_terms(query)
+        if not _term_covered(term, support_surfaces)
+    ) if validation["supported"] else []
+
     has_conflict = any(c.get("conflicts_with") for c in validation["supported"])
-    if sentences or passages:
+    if (sentences or passages) and not uncovered:
         answer = " ".join(sentences + passages)
         if has_conflict:
             answer += CONFLICT_NOTE
+        verdict = "supported"
     else:
         answer = ABSTENTION_MESSAGE
+        verdict = "insufficient_evidence"
+        sentences, passages = [], []
+        citation_order, citation_ids = [], {}
+        # Claims that passed claim-level grounding but were withheld by
+        # answer-level coverage stay visible in the ledger, honestly
+        # labeled — they are grounded text, not an answer.
+        ledger = [
+            dict(row, status="withheld_insufficient_coverage")
+            if row.get("status") == "supported" else row
+            for row in ledger
+        ]
 
     citations = []
     for iid in citation_order:
@@ -333,6 +417,7 @@ def render_answer(bundle: dict, query: str, validation: dict) -> dict:
             "locators": [l for l in locators if l],
         })
 
+    supported = validation["supported"] if verdict == "supported" else []
     return {
         "answer": answer,
         "citations": citations,
@@ -340,11 +425,14 @@ def render_answer(bundle: dict, query: str, validation: dict) -> dict:
         "meta": {
             "contract_id": CHAT_CONTRACT_ID,
             "synthesis_version": SYNTHESIS_VERSION,
-            "abstained": not (sentences or passages),
-            "supported_claim_count": len(validation["supported"]),
+            "answer_admission": ANSWER_ADMISSION_VERSION,
+            "verdict": verdict,
+            "uncovered_query_terms": uncovered,
+            "abstained": verdict != "supported",
+            "supported_claim_count": len(supported),
             "unsupported_claim_count": len(validation["unsupported"]),
             "text_support_count": sum(
-                1 for c in validation["supported"] if c.get("lane") == TEXT_LANE
+                1 for c in supported if c.get("lane") == TEXT_LANE
             ),
         },
     }
