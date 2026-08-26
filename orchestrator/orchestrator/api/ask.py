@@ -53,7 +53,15 @@ def _terms(question: str) -> list[str]:
     stop = {"what", "which", "who", "how", "the", "a", "an", "is", "are",
             "was", "were", "of", "to", "for", "in", "on", "do", "does",
             "did", "and", "or", "by", "with", "this", "that", "i", "we"}
-    return [t for t in _norm(question).split(" ") if t and t not in stop]
+    # strip punctuation from each token — 'Andromeda?' must match the
+    # stored concept 'Andromeda' (measured: the panel's what-is question
+    # matched nothing because the trailing '?' survived into the term)
+    out = []
+    for t in _norm(question).split(" "):
+        t = t.strip(".,!?;:\"'()[]{}")
+        if t and t not in stop:
+            out.append(t)
+    return out
 
 
 def _match_score(text: str, terms: list[str]) -> float:

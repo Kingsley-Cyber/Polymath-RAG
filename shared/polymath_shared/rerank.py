@@ -17,9 +17,35 @@ from typing import Optional
 
 RERANK_VERSION = "g3-cross-representation-v1"
 
+#: RERANK-BATCHING-V1 (2026-08-26): one sidecar call carried EVERY
+#: candidate surface; on a book corpus the single batch allocated
+#: 1.87 GiB and blew the reranker's 3 GiB MPS pool (measured:
+#: release-books-v1 GRAPH → 500 → rerank_unavailable). The cross-
+#: encoder scores each (query, passage) pair independently, so chunked
+#: calls are SCORE-IDENTICAL; the global order is recomputed
+#: deterministically from the merged scores (ties by original index).
+#: Same remedy class as the embedder's 64-batching (book-scale finding
+#: #3). Operational bound only — no scoring semantics change.
+RERANK_BATCH_SIZE = 16
+
 
 class RerankUnavailable(RuntimeError):
     """The reranker sidecar could not be reached (caller degrades)."""
+
+
+def _batched_scores(client, query: str, surfaces: list[str]) -> dict:
+    """Score all surfaces in bounded batches; merge into one response
+    shape (order recomputed globally, deterministic)."""
+    scores: list[float] = []
+    model_id = model_revision = None
+    for i in range(0, len(surfaces), RERANK_BATCH_SIZE):
+        resp = client.rerank(query, surfaces[i:i + RERANK_BATCH_SIZE])
+        scores.extend(float(s) for s in resp["scores"])
+        model_id = resp["model_id"]
+        model_revision = resp["model_revision"]
+    order = sorted(range(len(surfaces)), key=lambda j: (-scores[j], j))
+    return {"order": order, "scores": scores,
+            "model_id": model_id, "model_revision": model_revision}
 
 
 def rerank_fused(
@@ -44,7 +70,7 @@ def rerank_fused(
     reranked_children = list(selected_children)
 
     if doc_surfaces:
-        resp = client.rerank(query, doc_surfaces)
+        resp = _batched_scores(client, query, doc_surfaces)
         order = resp["order"]
         scores = resp["scores"]
         reranked_docs = [
@@ -57,7 +83,7 @@ def rerank_fused(
         ]
 
     if child_surfaces:
-        resp = client.rerank(query, child_surfaces)
+        resp = _batched_scores(client, query, child_surfaces)
         order = resp["order"]
         scores = resp["scores"]
         reranked_children = [
