@@ -114,15 +114,21 @@ def test_concept_copula_definition_registers():
 
 
 def test_copula_statements_are_not_definitions():
-    """Status statements and pronoun/fragment subjects never become
-    concepts: definitional REGISTER, not any copula."""
+    """Status statements, spoken futures/progressives, enumeration
+    narration and pronoun/fragment subjects never become concepts:
+    definitional REGISTER, not any copula."""
     sents = [
         "The model is training on the dataset right now.",
         "This is a must-have skill for engineers.",
         "But the main thing is torch which stands for pytorch.",
         "It is a nice day outside in the mountains.",
+        "Age is going to be 28 to 65 plus for this audience.",
+        "Your trees are blocking the driveway again.",
+        "Number two is a CRM or a lead tracker.",
+        "Part three is writing ads that convert.",
     ]
     got = compile_concepts(document_id="d", corpus_id="c", sentences=sents)
     names = {c["name"].lower() for c in got}
-    assert not names & {"model", "this", "it",
+    assert not names & {"model", "this", "it", "age", "your trees",
+                        "number two", "part three",
                         "but the main thing is torch which"}, names
