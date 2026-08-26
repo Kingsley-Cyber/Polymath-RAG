@@ -371,6 +371,19 @@ def _missing_projection_receipts(conn: Connection, run_id: str, stage: str) -> l
                   JOIN documents d ON d.doc_id = c.doc_id
                   JOIN runs r ON r.corpus_id = d.corpus_id
                  WHERE r.run_id = %s AND c.tier = 'child'
+                UNION ALL
+                -- ARTIFACT-LANE-VERIFY-V1: procedure/concept routing
+                -- projections are part of the query-ready contract;
+                -- their receipts converge like every other kind.
+                SELECT p.procedure_id, 'routing_procedure'
+                  FROM procedure_artifacts p
+                  JOIN runs r ON r.corpus_id = p.corpus_id
+                 WHERE r.run_id = %s
+                UNION ALL
+                SELECT ca.concept_id, 'routing_concept'
+                  FROM concept_artifacts ca
+                  JOIN runs r ON r.corpus_id = ca.corpus_id
+                 WHERE r.run_id = %s
             )
             SELECT w.id FROM want w
              WHERE NOT EXISTS (
@@ -380,7 +393,7 @@ def _missing_projection_receipts(conn: Connection, run_id: str, stage: str) -> l
                       AND pr.active AND pr.entity_id = w.id)
             ORDER BY w.id
             """,
-            (run_id, run_id, run_id),
+            (run_id, run_id, run_id, run_id, run_id),
         ).fetchall()
         missing.extend(r[0] for r in routing_missing)
         return missing

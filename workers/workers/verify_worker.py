@@ -77,6 +77,12 @@ ROUTING_KINDS = (
     "routing_document_summary",
     "routing_section_summary",
     "routing_child",
+    # ARTIFACT-LANE-VERIFY-V1 (SMART REQ-015): procedure/concept routing
+    # projections were excluded from reconciliation — active receipts
+    # over an empty store went undetected (measured live 2026-08-26:
+    # transcript-qual-v1 held 3 active artifact receipts with 0 points).
+    "routing_procedure",
+    "routing_concept",
 )
 
 
@@ -106,10 +112,20 @@ def _desired_routing_ids(conn: Connection, corpus: str) -> dict[str, set[str]]:
         """,
         (corpus,),
     ).fetchall()
+    proc_rows = conn.execute(
+        "SELECT procedure_id FROM procedure_artifacts WHERE corpus_id = %s",
+        (corpus,),
+    ).fetchall()
+    concept_rows = conn.execute(
+        "SELECT concept_id FROM concept_artifacts WHERE corpus_id = %s",
+        (corpus,),
+    ).fetchall()
     return {
         "routing_document_summary": {r[0] for r in doc_rows},
         "routing_section_summary": {r[0] for r in section_rows},
         "routing_child": {r[0] for r in child_rows},
+        "routing_procedure": {r[0] for r in proc_rows},
+        "routing_concept": {r[0] for r in concept_rows},
     }
 
 
@@ -144,10 +160,30 @@ def _routing_receipts(conn: Connection, corpus: str) -> dict[str, set[str]]:
         """,
         (corpus,),
     ).fetchall()
+    proc_rows = conn.execute(
+        """
+        SELECT pr.entity_id FROM projection_receipts pr
+          JOIN procedure_artifacts p ON p.procedure_id = pr.entity_id
+         WHERE pr.projection = 'qdrant' AND pr.entity_kind = 'routing_procedure'
+           AND pr.active AND p.corpus_id = %s
+        """,
+        (corpus,),
+    ).fetchall()
+    concept_rows = conn.execute(
+        """
+        SELECT pr.entity_id FROM projection_receipts pr
+          JOIN concept_artifacts c ON c.concept_id = pr.entity_id
+         WHERE pr.projection = 'qdrant' AND pr.entity_kind = 'routing_concept'
+           AND pr.active AND c.corpus_id = %s
+        """,
+        (corpus,),
+    ).fetchall()
     return {
         "routing_document_summary": {r[0] for r in doc_rows},
         "routing_section_summary": {r[0] for r in section_rows},
         "routing_child": {r[0] for r in child_rows},
+        "routing_procedure": {r[0] for r in proc_rows},
+        "routing_concept": {r[0] for r in concept_rows},
     }
 
 
