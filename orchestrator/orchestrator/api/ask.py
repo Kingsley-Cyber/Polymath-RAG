@@ -191,22 +191,11 @@ def ask(req: AskRequest):
 
     with tx() as conn:
         # QUERY-SCOPE-V1: explicit, fail-closed. No scope → typed 422.
-        from polymath_shared.query_scope import (
-            QueryScopeRequired,
-            UnknownQueryScope,
-            resolve_query_scope,
-        )
-        try:
-            scope = resolve_query_scope(
-                conn,
-                corpus_id=req.corpus_id,
-                corpus_ids=req.corpus_ids,
-                workspace=req.workspace,
-                all_authorized=req.all_authorized)
-        except QueryScopeRequired:
-            raise HTTPException(422, "QUERY_SCOPE_REQUIRED")
-        except UnknownQueryScope as exc:
-            raise HTTPException(404, str(exc))
+        # One canonical resolution path shared with /retrieve, /evidence
+        # and /chat (never a second competing scope system).
+        from orchestrator.api.retrieve import resolve_http_scope
+
+        scope = resolve_http_scope(conn, req)
 
         routed = classify_query(question)
         route = routed["route"]

@@ -35,8 +35,59 @@ HIGH_MEDIUM_PREDICATES = {
 class RetrieveRequest(BaseModel):
     query: str
     corpus_id: Optional[str] = None
+    corpus_ids: Optional[list[str]] = None
+    workspace: Optional[str] = None
+    all_authorized: bool = False
     limit: int = 10
     mode: Optional[str] = None
+
+
+def resolve_http_scope(conn, req) -> "QueryScope":
+    """QUERY-SCOPE-V1 at the route boundary: every public query route
+    resolves EXACTLY ONE explicit scope before any retrieval dispatch.
+    Missing scope is a typed 422, never search-everything (the legacy
+    implicit-all path loaded 41,831 rows across 77 corpora — measured
+    by the 2026-08-26 SMART verification)."""
+    from polymath_shared.query_scope import (
+        QueryScopeRequired,
+        UnknownQueryScope,
+        resolve_query_scope,
+    )
+
+    try:
+        return resolve_query_scope(
+            conn,
+            corpus_id=getattr(req, "corpus_id", None),
+            corpus_ids=getattr(req, "corpus_ids", None),
+            workspace=getattr(req, "workspace", None),
+            all_authorized=bool(getattr(req, "all_authorized", False)))
+    except QueryScopeRequired:
+        raise HTTPException(status_code=422, detail={
+            "error_code": "QUERY_SCOPE_REQUIRED",
+            "message": "explicit query scope required: supply one of "
+                       "corpus_id / corpus_ids / workspace / all_authorized",
+        })
+    except UnknownQueryScope as exc:
+        raise HTTPException(status_code=404, detail={
+            "error_code": "QUERY_SCOPE_UNKNOWN", "message": str(exc),
+        })
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail={
+            "error_code": "QUERY_SCOPE_AMBIGUOUS", "message": str(exc),
+        })
+
+
+def single_corpus_or_422(scope, mode: str) -> str:
+    """FAST/HYBRID/GRAPH are single-corpus engines (collection-per-
+    corpus projection). A wider resolved scope fails closed — it is
+    never silently narrowed or fanned out."""
+    if len(scope.corpus_ids) != 1:
+        raise HTTPException(status_code=422, detail={
+            "error_code": "mode_requires_single_corpus",
+            "message": f"mode {mode!r} retrieves over exactly one corpus; "
+                       f"resolved scope has {len(scope.corpus_ids)}",
+        })
+    return scope.corpus_ids[0]
 
 
 @router.post("/retrieve")
@@ -44,7 +95,9 @@ async def retrieve(req: RetrieveRequest) -> dict:
     query = req.query.strip()
     if not query:
         raise HTTPException(status_code=422, detail="query is required")
-    corpus_id = req.corpus_id
+
+    with tx() as conn:
+        scope = resolve_http_scope(conn, req)
 
     # R1C: explicit production modes. FAST maps deterministically to the
     # qualified pass1-retrieval-v1 engine; LEGACY is the frozen lane
@@ -55,20 +108,21 @@ async def retrieve(req: RetrieveRequest) -> dict:
     if mode == MODE_FAST:
         from orchestrator.api.fast import fast_retrieve
 
-        return fast_retrieve(query, corpus_id)
+        return fast_retrieve(query, single_corpus_or_422(scope, mode))
     if mode == MODE_HYBRID:
         from orchestrator.api.hybrid import hybrid_fast_retrieve
 
-        return hybrid_fast_retrieve(query, corpus_id)
+        return hybrid_fast_retrieve(query, single_corpus_or_422(scope, mode))
     if mode == MODE_GRAPH:
         from orchestrator.api.graph import graph_retrieve
 
-        return graph_retrieve(query, corpus_id)
+        return graph_retrieve(query, single_corpus_or_422(scope, mode))
 
+    corpus_ids = list(scope.corpus_ids)
     with tx() as conn:
-        profiles = _fetch_profiles(conn, corpus_id)
-        parents = _fetch_parents(conn, corpus_id)
-        children_rows = _fetch_children_rows(conn, corpus_id)
+        profiles = _fetch_profiles(conn, corpus_ids)
+        parents = _fetch_parents(conn, corpus_ids)
+        children_rows = _fetch_children_rows(conn, corpus_ids)
         children = [r for r in children_rows if r["tier"] == "child"]
         parent_rows = [r for r in children_rows if r["tier"] == "parent"]
         # Parent lane scores PARENT summaries.
@@ -87,7 +141,7 @@ async def retrieve(req: RetrieveRequest) -> dict:
         return children[:limit]
 
     def child_search(limit):
-        return _qdrant_search(query, corpus_id, limit)
+        return _qdrant_search(query, corpus_ids, limit)
 
     result = run_lanes(
         query,
@@ -101,7 +155,7 @@ async def retrieve(req: RetrieveRequest) -> dict:
         _entity_surfaces(query, result),
         expand=lambda surfaces: _neo4j_expand(
             surfaces,
-            corpus_id=corpus_id,
+            corpus_ids=corpus_ids,
             preferred_chunk_ids=[c["chunk_id"] for c in result.selected_children[:10]],
         ),
     )
@@ -151,54 +205,41 @@ async def retrieve(req: RetrieveRequest) -> dict:
     }
 
 
-def _fetch_profiles(conn, corpus_id: Optional[str]) -> list[dict]:
-    if corpus_id:
-        rows = conn.execute(
-            """
-            SELECT doc_id, retrieval_profile FROM documents
-             WHERE corpus_id = %s AND retrieval_profile IS NOT NULL
-            """,
-            (corpus_id,),
-        ).fetchall()
-    else:
-        rows = conn.execute(
-            "SELECT doc_id, retrieval_profile FROM documents WHERE retrieval_profile IS NOT NULL"
-        ).fetchall()
+def _fetch_profiles(conn, corpus_ids: list[str]) -> list[dict]:
+    # QUERY-SCOPE-V1: helpers take a RESOLVED corpus set. There is no
+    # implicit-all branch — a missing scope fails at the route boundary.
+    rows = conn.execute(
+        """
+        SELECT doc_id, retrieval_profile FROM documents
+         WHERE corpus_id = ANY(%s) AND retrieval_profile IS NOT NULL
+        """,
+        (list(corpus_ids),),
+    ).fetchall()
     return [{"doc_id": r[0], "retrieval_profile": r[1] or {}} for r in rows]
 
 
-def _fetch_parents(conn, corpus_id: Optional[str]) -> list[dict]:
-    if corpus_id:
-        rows = conn.execute(
-            """
-            SELECT c.chunk_id, c.doc_id, c.summary FROM chunks c
-              JOIN documents d ON d.doc_id = c.doc_id
-             WHERE c.tier = 'parent' AND d.corpus_id = %s
-            """,
-            (corpus_id,),
-        ).fetchall()
-    else:
-        rows = conn.execute(
-            "SELECT chunk_id, doc_id, summary FROM chunks WHERE tier = 'parent'"
-        ).fetchall()
+def _fetch_parents(conn, corpus_ids: list[str]) -> list[dict]:
+    rows = conn.execute(
+        """
+        SELECT c.chunk_id, c.doc_id, c.summary FROM chunks c
+          JOIN documents d ON d.doc_id = c.doc_id
+         WHERE c.tier = 'parent' AND d.corpus_id = ANY(%s)
+        """,
+        (list(corpus_ids),),
+    ).fetchall()
     return [{"chunk_id": r[0], "doc_id": r[1], "summary": r[2]} for r in rows]
 
 
-def _fetch_children_rows(conn, corpus_id: Optional[str]) -> list[dict]:
-    if corpus_id:
-        rows = conn.execute(
-            """
-            SELECT c.chunk_id, c.doc_id, c.parent_id, c.tier, c.text, c.summary
-              FROM chunks c
-              JOIN documents d ON d.doc_id = c.doc_id
-             WHERE d.corpus_id = %s
-            """,
-            (corpus_id,),
-        ).fetchall()
-    else:
-        rows = conn.execute(
-            "SELECT chunk_id, doc_id, parent_id, tier, text, summary FROM chunks"
-        ).fetchall()
+def _fetch_children_rows(conn, corpus_ids: list[str]) -> list[dict]:
+    rows = conn.execute(
+        """
+        SELECT c.chunk_id, c.doc_id, c.parent_id, c.tier, c.text, c.summary
+          FROM chunks c
+          JOIN documents d ON d.doc_id = c.doc_id
+         WHERE d.corpus_id = ANY(%s)
+        """,
+        (list(corpus_ids),),
+    ).fetchall()
     return [
         {"chunk_id": r[0], "doc_id": r[1], "parent_id": r[2], "tier": r[3],
          "text": r[4], "summary": r[5]}
@@ -206,7 +247,7 @@ def _fetch_children_rows(conn, corpus_id: Optional[str]) -> list[dict]:
     ]
 
 
-def _qdrant_search(query: str, corpus_id: Optional[str], limit: int) -> list[dict]:
+def _qdrant_search(query: str, corpus_ids: list[str], limit: int) -> list[dict]:
     from polymath_shared.stores import qdrant_client as _qdrant_client
 
     contract = active_contract()
@@ -215,13 +256,18 @@ def _qdrant_search(query: str, corpus_id: Optional[str], limit: int) -> list[dic
         collections = [c.name for c in client.get_collections().collections]
         # Only collections of the ACTIVE contract: other contract versions
         # have different dimensions and must never be queried with this
-        # contract's vectors.
+        # contract's vectors. Scope: ONLY the resolved corpora's
+        # collections — never every collection on the server.
+        allowed = {
+            qdrant_collection_name(cid, contract.contract_id)
+            for cid in corpus_ids
+        }
         contract_suffix = f"_{contract.contract_id}"
         targets = [
             name for name in collections
             if name.startswith("polymath_")
             and name.endswith(contract_suffix)
-            and (not corpus_id or name == qdrant_collection_name(corpus_id, contract.contract_id))
+            and name in allowed
         ]
         if contract.embed_fn is not None:
             vector = contract.embed(query, "query")
@@ -284,7 +330,7 @@ def _surface_matches(surface: str, term: str) -> bool:
 def _corpus_seed_ids(
     conn,
     surfaces: list[str],
-    corpus_id: Optional[str],
+    corpus_ids: Optional[list[str]],
     preferred_chunk_ids: list[str],
 ) -> list[str]:
     """Corpus-authorized seed resolution (D2).
@@ -294,7 +340,10 @@ def _corpus_seed_ids(
     order: entities attached to the RETRIEVED evidence chunks first,
     then any entity evidenced in the active corpus; ties broken by
     entity_id for determinism. MENTION_ONLY entities can never seed
-    (they have no graph nodes). GLOBAL identity is untouched."""
+    (they have no graph nodes). GLOBAL identity is untouched.
+
+    corpus_ids=None is the UNSCOPED qualification form (eval harnesses
+    only); every production route resolves scope before reaching here."""
     from polymath_shared.neo4j_eligibility import entity_eligible_sql
 
     rows = conn.execute(
@@ -305,11 +354,12 @@ def _corpus_seed_ids(
           JOIN facts f ON f.subject_id = e.entity_id OR f.object_id = e.entity_id
           JOIN evidence ev ON ev.fact_id = f.fact_id
           JOIN documents d ON d.doc_id = ev.doc_id
-         WHERE (""" + ("" if corpus_id is None else "d.corpus_id = %s AND ") +
+         WHERE (""" + ("" if corpus_ids is None else "d.corpus_id = ANY(%s) AND ") +
         entity_eligible_sql("e") + """)
          GROUP BY e.entity_id, e.normalized_surface
         """,
-        (preferred_chunk_ids or [], *( [corpus_id] if corpus_id else [] )),
+        (preferred_chunk_ids or [],
+         *([list(corpus_ids)] if corpus_ids is not None else [])),
     ).fetchall()
     matched = [
         (bool(pref), eid) for eid, surf, pref in rows
@@ -319,24 +369,24 @@ def _corpus_seed_ids(
     return [eid for _, eid in matched[:8]]
 
 
-def _authorized_fact_ids(conn, corpus_id: Optional[str]) -> Optional[set]:
-    """Facts authorized for graph expansion under the active corpus.
+def _authorized_fact_ids(conn, corpus_ids: Optional[list[str]]) -> Optional[set]:
+    """Facts authorized for graph expansion under the resolved scope.
 
-    A fact is authorized when it is supported by evidence in the active
+    A fact is authorized when it is supported by evidence in a scoped
     corpus. Facts supported EXCLUSIVELY by another corpus are excluded
     (D2). Facts with NO evidence anywhere are INTENTIONALLY kept: an
     unresolvable reference must fail loudly in assembly (frozen R3a
-    acceptance), never be silently hidden. With no corpus scope
-    (cross-corpus route), every projected fact is authorized."""
-    if corpus_id is None:
+    acceptance), never be silently hidden. corpus_ids=None is the
+    UNSCOPED qualification form (eval harnesses only)."""
+    if corpus_ids is None:
         return None
     rows = conn.execute(
         """
         SELECT DISTINCT ev.fact_id FROM evidence ev
           JOIN documents d ON d.doc_id = ev.doc_id
-         WHERE d.corpus_id = %s
+         WHERE d.corpus_id = ANY(%s)
         """,
-        (corpus_id,),
+        (list(corpus_ids),),
     ).fetchall()
     in_scope = {r[0] for r in rows}
     # Evidence-less facts stay authorized so assembly fails loudly.
@@ -353,6 +403,7 @@ def _neo4j_expand(
     surfaces: list[str],
     corpus_id: Optional[str] = None,
     preferred_chunk_ids: Optional[list[str]] = None,
+    corpus_ids: Optional[list[str]] = None,
 ) -> list[dict]:
     """One-hop graph expansion (production, canonical bidirectional,
     corpus-authorized).
@@ -363,12 +414,19 @@ def _neo4j_expand(
     allowlist, 8-seed / 20-fact caps, dedupe by fact_id, stable
     ORDER BY fact_id. Seeds are resolved from entities attached to
     in-scope evidence (D2); facts supported exclusively by another
-    corpus are never returned (D2)."""
+    corpus are never returned (D2).
+
+    Scope: pass corpus_ids (resolved QUERY-SCOPE-V1 set) from every
+    production caller; corpus_id remains for single-corpus callers and
+    the eval qualification harnesses. Both None = UNSCOPED (eval only)."""
     from polymath_shared.stores import neo4j_driver
 
+    if corpus_ids is None and corpus_id is not None:
+        corpus_ids = [corpus_id]
+
     with tx() as conn:
-        ids = _corpus_seed_ids(conn, surfaces, corpus_id, preferred_chunk_ids or [])
-        authorized = _authorized_fact_ids(conn, corpus_id)
+        ids = _corpus_seed_ids(conn, surfaces, corpus_ids, preferred_chunk_ids or [])
+        authorized = _authorized_fact_ids(conn, corpus_ids)
 
     if not ids:
         return []

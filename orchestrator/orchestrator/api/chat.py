@@ -36,6 +36,8 @@ from .retrieve import (
     _fetch_profiles,
     _neo4j_expand,
     _qdrant_search,
+    resolve_http_scope,
+    single_corpus_or_422,
 )
 
 router = APIRouter()
@@ -44,6 +46,9 @@ router = APIRouter()
 class ChatRequest(BaseModel):
     message: str
     corpus_id: str | None = None
+    corpus_ids: list[str] | None = None
+    workspace: str | None = None
+    all_authorized: bool = False
     mode: str | None = None
 
 
@@ -52,7 +57,9 @@ async def chat(req: ChatRequest) -> dict:
     query = req.message.strip()
     if not query:
         raise HTTPException(status_code=422, detail="message is required")
-    corpus_id = req.corpus_id
+
+    with tx() as conn:
+        scope = resolve_http_scope(conn, req)
 
     # R1C: FAST mode consumes the SAME qualified Pass-1 result as
     # /retrieve and /evidence (one control-plane path). FAST excludes
@@ -66,7 +73,7 @@ async def chat(req: ChatRequest) -> dict:
         # No synthesis change: EvidenceBundle v2 semantics as-is.
         from orchestrator.api.graph import graph_retrieve
 
-        g = graph_retrieve(query, corpus_id)
+        g = graph_retrieve(query, single_corpus_or_422(scope, mode))
         graph_facts = [
             {"fact_id": f["fact_id"], "predicate": f["predicate"],
              "subject": f["subject"], "object": f["object"]}
@@ -111,11 +118,11 @@ async def chat(req: ChatRequest) -> dict:
         if mode == MODE_FAST:
             from orchestrator.api.fast import fast_retrieve
 
-            fast = fast_retrieve(query, corpus_id)
+            fast = fast_retrieve(query, single_corpus_or_422(scope, mode))
         else:
             from orchestrator.api.hybrid import hybrid_fast_retrieve
 
-            fast = hybrid_fast_retrieve(query, corpus_id)
+            fast = hybrid_fast_retrieve(query, single_corpus_or_422(scope, mode))
         child_evidence = [
             {"chunk_id": c["chunk_id"], "doc_id": c["doc_id"], "parent_id": c["parent_id"]}
             for c in fast["evidence"]
@@ -154,9 +161,10 @@ async def chat(req: ChatRequest) -> dict:
             }) from exc
         return grounded_answer(bundle, query)
 
+    corpus_ids = list(scope.corpus_ids)
     with tx() as conn:
-        profiles = _fetch_profiles(conn, corpus_id)
-        children_rows = _fetch_children_rows(conn, corpus_id)
+        profiles = _fetch_profiles(conn, corpus_ids)
+        children_rows = _fetch_children_rows(conn, corpus_ids)
         children = [r for r in children_rows if r["tier"] == "child"]
         parent_rows = [r for r in children_rows if r["tier"] == "parent"]
         parents = [
@@ -169,14 +177,14 @@ async def chat(req: ChatRequest) -> dict:
         fetch_profiles=lambda: profiles,
         fetch_parents=lambda: parents,
         fetch_children=lambda limit: children[:limit],
-        child_search=lambda limit: _qdrant_search(query, corpus_id, limit),
+        child_search=lambda limit: _qdrant_search(query, corpus_ids, limit),
     )
 
     graph_facts = graph_expansion(
         _entity_surfaces(query, result),
         expand=lambda surfaces: _neo4j_expand(
             surfaces,
-            corpus_id=corpus_id,
+            corpus_ids=corpus_ids,
             preferred_chunk_ids=[c["chunk_id"] for c in result.selected_children[:10]],
         ),
     )
