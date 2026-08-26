@@ -247,3 +247,109 @@ Predicate Compiler semantics" requires the owner), the options are:
      entity pairs declaratively) for the fresh-ingest qualification.
 
 Either closes the last gate; nothing else is blocked on it.
+
+---
+
+# CLOSEOUT ADDENDUM — SPOKEN-RELATION-ADAPTER-V1 (2026-08-26)
+
+Owner decision: **Option A authorized** — deterministic semantic
+adaptation for legitimate spoken-register relational constructions,
+with admission standards untouched. Executed and qualified.
+
+## The adapter gap (root cause, three boundaries kept distinct)
+
+DISCOVERY worked. ADAPTATION had four historically-incomplete seams,
+each measured live on the unaltered transcript sentence
+*"…Andromeda, which is the new update Facebook made."*:
+
+1. **Binding** — a relativized OBJECT was never recovered from the
+   clause's antecedent, and copular predicate nominals were never
+   bound (the recall net substituted the possessor: the measured
+   wrong (Andromeda, be, Meta) candidate). → COPULAR-ATTR binding +
+   RELCL antecedent recovery with one licensed copular-equation hop
+   (0c709ed). NOT taken: possessive→owns/developed_by (the owner's
+   KEY_NEGATIVES class; bare possession stays unasserted).
+2. **Signature** — `created` (create/make/build/design/write/produce)
+   refused Organization→Technology while sibling `developed` accepted
+   it: a lexical split, not a semantic boundary. → pack v1.5.0
+   (cde0112), shadow-qualified.
+3. **F7 orientation policy** — make/build were in the pack's own
+   `created.verbs` but never enumerated in the orientation spec, so
+   every make/build candidate died DIRECTION_UNLICENSED. → policy
+   v1.1 (f36079c); every witness/contradiction check unchanged.
+4. **F8 role positions** — the relcl-antecedent rule existed for the
+   SUBJECT side only ("RHEL, which uses Firewalld"); the OBJECT side
+   was never completed, so every relativized-object fact died
+   BINDING_ROLE. → object-side mirror + the same equation hop,
+   in F8's own vocabulary (6f5b8af).
+
+Also: the endpoint-binding surface-weak BETWEEN-NESS heuristic is
+skipped only for RELCL_ANTECEDENT-bound objects (the trigger follows
+both endpoints BY CONSTRUCTION; the candidate carries the explicit
+dependency chain the gate's sibling rules call syntactic attachment);
+distance check unchanged.
+
+## Shadow qualification (SHADOW-FIRST, precision bar: zero false accepts)
+
+`eval/v5/spoken_adapter_shadow.py` — 18 cases through the real
+pipeline pieces (live pinned parses, real pack, real binding, real
+compiler, production-faithful syntactic record): **18/18 under
+v1.5.0**; 13 hard negatives (5 possessive families incl. "Meta's
+CEO"/"John's laptop"/"OpenAI's customer"/"Google's conference" and
+the measured possessive copula, negation, modality, attribution, PP
+modifier, light-verb idiom "made headlines", pronouns, narrative,
+relativizer inversion, question) → **zero accepts under both packs**.
+v1.4.0 baseline isolates the delta to exactly the Technology
+signature (JSONs committed).
+
+## The gate, crossed — all LIVE, current pipeline, unaltered transcript
+
+- Fresh run `run_fd9ad357…` (source_name …_gate.md, same bytes):
+  **facts_passed 1 · procedures 1 · concepts 2** (7 rejections
+  remain the correct F3 spoken-junk class; nothing regressed).
+- **FRESH_FACT** `fact_e7c1d2ed56b54ae5…` = `created(facebook,
+  andromeda)` — binding_source RELCL_ANTECEDENT; F1–F8 **PASS**
+  recorded under `fact-admission-policy-v1.1` (the ledger keeps the
+  v1 REJECT beside it — the audit trail of the completion). Note:
+  the fact-admission ENFORCE flag itself remains in shadow per the
+  standing owner boundary ("flipping either flag is the owner's
+  decision"); the enforced chain's verdict for this fact is PASS, so
+  enforcement would assert it identically.
+- **NEO4J** `(facebook)-[:REL {predicate:'created', fact_id:
+  fact_e7c1…}]->(andromeda)` — projected by the standard eligible
+  path (both endpoints GLOBAL).
+- **GRAPH over HTTP** `/retrieve {mode:GRAPH}` "What did Facebook
+  make?" → graph_fact_count 1, the fresh fact.
+- **EVIDENCE** `/evidence {mode:GRAPH}` → claim "facebook created
+  andromeda" resolves to
+  `chunk:chunk_161c2c49…@2402:3508` with the verbatim span
+  ("…Andromeda, which is the new update Facebook made…").
+- **GROUNDED ANSWER** `/chat {mode:GRAPH}` → "facebook created
+  andromeda [1] …" verdict=supported, citations carry the exact
+  locator. Nonce + neighboring-topic still abstain (live).
+
+## Regression + performance
+
+- Isolated acceptance: **252 × 2 identical green** (fresh
+  schema-clone DB per run). Full parity/kimi/compiler/entity/fact-
+  admission/eligibility/provenance sweeps green. F-admission suite
+  58/58 including the new orientation and F8 pins plus inversion and
+  contradiction guards.
+- Extraction on the transcript: 16.7 s (pre-adapter run_8fd2) →
+  **14.3 s** (gate run; fact_admission 570 ms, predicate_compile
+  760 ms within it) — no adapter regression. Query panel 13/13 with
+  p50s unchanged (VECTOR 1.33 s · HYBRID 1.13 s · GRAPH 1.56–4.5 s ·
+  /ask 10–13 ms · /chat 3.35 s). Product gate 10/10.
+- Deliberate bundle re-freezes recorded for the two authority-surface
+  changes; boot integrity FATALed on the drift exactly as designed
+  before each.
+
+## §21 verdict — REVISED
+
+The single owner-gated NO-GO item is **CLOSED**. All FINAL-GATE items
+now hold: same unaltered real transcript; router cannot censor;
+PROCEDURE/CONCEPT intact; a genuinely supported named-endpoint FACT
+admitted by the current chain; projected; GRAPH-retrieved; exact
+evidence resolved; grounded answer; abstention, scope, isolated
+suite, parity, negative coverage, bounded performance, product gate —
+all green. **PRODUCTION GO.**

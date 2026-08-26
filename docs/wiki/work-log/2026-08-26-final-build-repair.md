@@ -51,3 +51,15 @@ verification baseline at f33a0ff. Full evidence:
 NO-GO on exactly one owner-gated item (spoken-register relations vs
 frozen predicate signatures — see review §21); all other final gates
 GO.
+
+## Closeout — spoken-relation adapter (owner Option A)
+
+Four historically-incomplete adaptation seams closed (binding,
+created signature, F7 orientation vocabulary, F8 object-side relcl
+mirror), each measured live, each shadow-qualified with zero
+false accepts on 13 hard negatives. Result, fully live on the
+unaltered transcript: created(facebook, andromeda) — F1–F8 PASS
+(policy v1.1) → Neo4j → public GRAPH → exact span
+chunk_161c2c49…@2402:3508 → grounded cited answer. Acceptance
+252×2; panel 13/13; product gate 10/10; extraction 16.7→14.3 s.
+Verdict revised: PRODUCTION GO.
