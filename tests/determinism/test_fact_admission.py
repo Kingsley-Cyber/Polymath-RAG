@@ -490,3 +490,51 @@ def test_every_asymmetric_pack_predicate_has_orientation_policy(pack):
         if symmetry != "symmetric" and pid not in declared:
             missing.append(pid)
     assert not missing, f"asymmetric predicates without orientation policy: {missing}"
+
+
+# --------------------------------------------------------------------------
+# SPOKEN-RELATION-ADAPTER-V1: created orientation completes the pack's
+# own verb inventory (make/build were in created.verbs but not in the
+# orientation policy — every make/build candidate died
+# DIRECTION_UNLICENSED regardless of grammar).
+# --------------------------------------------------------------------------
+
+MADE_PARSE = {"tokens": [
+    tok(0, "Facebook", "PROPN", "nsubj", 1, 0),
+    tok(1, "made", "VERB", "ROOT", 1, 9, "make"),
+    tok(2, "Andromeda", "PROPN", "dobj", 1, 14),
+]}
+
+
+def test_created_make_trigger_licenses_canonical_direction(pack):
+    v = f7_direction(ctx(predicate="created", trigger_lemma="make",
+                         trigger_surface="made",
+                         subject_type="Organization",
+                         object_type="Technology",
+                         subject_surface="Facebook",
+                         object_surface="Andromeda",
+                         subject_start=0, subject_end=8,
+                         evidence_start=9, evidence_end=13,
+                         object_start=14, object_end=23,
+                         chunk_text="Facebook made Andromeda.",
+                         parse=MADE_PARSE), pack)
+    assert v.outcome == PASS, (v.outcome, v.reason)
+
+
+def test_created_make_contradicted_direction_still_rejects(pack):
+    """The witness checks are untouched: an active clause that places
+    the candidate's object in subject position still rejects."""
+    v = f7_direction(ctx(predicate="created", trigger_lemma="make",
+                         trigger_surface="made",
+                         subject_type="Organization",
+                         object_type="Technology",
+                         subject_surface="Facebook",
+                         object_surface="Andromeda",
+                         # candidate order inverted vs the parse
+                         subject_start=14, subject_end=23,
+                         evidence_start=9, evidence_end=13,
+                         object_start=0, object_end=8,
+                         chunk_text="Facebook made Andromeda.",
+                         parse=MADE_PARSE), pack)
+    assert v.outcome == REJECT, (v.outcome, v.reason)
+    assert v.reason == "DIRECTION_CONTRADICTED"

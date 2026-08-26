@@ -4,7 +4,9 @@
 # OUT of the pack so core-predicates-v1.3.0.yaml stays byte-frozen.
 # Everything here is declarative ontology data, never code, and is
 # versioned as one unit by `policy_version`.
-policy_version: fact-admission-policy-v1
+# v1.1: SPOKEN-RELATION-ADAPTER-V1 — created orientation triggers gain
+# make/build (+ by-forms), completing the pack's own verb inventory.
+policy_version: fact-admission-policy-v1.1
 region_policy_version: region-policy-v1
 
 # ---------------------------------------------------------------------
@@ -168,9 +170,19 @@ orientation:
                          "located in", "based in", "within", "situated in"]
     inverse_triggers:   ["contains", "houses", "home to"]
   created:
+    # SPOKEN-RELATION-ADAPTER-V1: make/build added — both are in the
+    # rule pack's own `created.verbs` inventory but were never
+    # enumerated here, so every make/build-triggered candidate died
+    # F7 DIRECTION_UNLICENSED regardless of how clean its grammar was
+    # (measured: created(Facebook, Andromeda) from "the new update
+    # Facebook made"). The by-forms mirror the existing "created by"
+    # canonical/inverse duality; every F7 witness/contradiction check
+    # is unchanged.
     canonical_triggers: [create, author, write, invent, originate, design,
-                         produce, compose, "created by", "authored by"]
-    inverse_triggers:   ["created by", "authored by", "written by"]
+                         produce, compose, make, build,
+                         "created by", "authored by", "made by", "built by"]
+    inverse_triggers:   ["created by", "authored by", "written by",
+                         "made by", "built by"]
 
 # ---------------------------------------------------------------------
 # F4 — assertion mode.
