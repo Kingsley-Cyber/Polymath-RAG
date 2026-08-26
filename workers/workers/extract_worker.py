@@ -246,20 +246,32 @@ def _evidence_spans(
     pack: dict,
     mode: str,
     raw_sink: list | None = None,
-    scientific_lane_allowed: bool = True,
+    scientific_lane_prioritized: bool = True,
 ) -> list[EvidenceSpan]:
     """ADR-0008: pass 2 = GLiNER coarse proposals (may abstain) +
-    lexical trigger localization. The compiler decides either way."""
+    lexical trigger localization. The compiler decides either way.
+
+    EXTRACTION-ELIGIBILITY-V1 (owner invariant): classification may
+    PRIORITIZE; evidence determines ELIGIBILITY. The document-level
+    router never vetoes this lane — when the router deprioritizes it
+    (scientific_lane_prioritized=False), the cheap deterministic
+    trigger localization still runs, and any chunk with LOCAL
+    relational evidence proceeds through the identical discovery path.
+    Chunks with no local evidence skip the expensive GLiNER evidence
+    pass — that is the cost optimization the router is allowed to be.
+    (The prior hard veto measured: PROCEDURAL 4→0, CONCEPTUAL 6→0,
+    NARRATIVE 2→0 eligible relation spans — SMART verification P0.)"""
     from workers.evidence_proposer import (
         localize_trigger,
         merge_gliner_proposals,
         propose_evidence,
     )
 
-    if not scientific_lane_allowed:
-        return []  # ROUTER ENFORCEMENT: lane disabled for this document
-
     anchors = propose_evidence(chunk_text, chunk_id, pack)
+    if not scientific_lane_prioritized and not anchors:
+        # Deprioritized lane AND no local relational evidence: nothing
+        # here qualifies for the compiler — skip the expensive pass.
+        return []
     if mode == "hybrid":
         result = gliner.evidence_pass(chunk_text, threshold=EVIDENCE_THRESHOLD)
         if raw_sink is not None:
@@ -740,11 +752,13 @@ def process_event(conn: Connection, event: dict) -> None:
     pack = _pack()
     parser_name, parser_version = parser_identity()
 
-    # KNOWLEDGE-ROUTER enforcement (owner v1.1): when the routed mode
-    # disables scientific_predicate, relation anchors are not produced at
-    # all — the lane never enters, so nothing can fail into it. Entity
-    # pass-1/proposals are unaffected (admission still runs).
-    scientific_lane_allowed = True
+    # KNOWLEDGE-ROUTER v1.1 as a PRIORITY signal (owner correction,
+    # EXTRACTION-ELIGIBILITY-V1): a routed 'disabled' scientific lane
+    # DEPRIORITIZES relation discovery (chunks without local trigger
+    # evidence skip the expensive GLiNER evidence pass) but never
+    # vetoes it — local content evidence always reaches the compiler.
+    # Entity pass-1/proposals are unaffected (admission still runs).
+    scientific_lane_prioritized = True
     if os.environ.get("POLYMATH_PREDICATE_V2") == "enforce":
         from polymath_shared.knowledge_router.classifier import (
             classify_document)
@@ -753,7 +767,7 @@ def process_event(conn: Connection, event: dict) -> None:
                 "SELECT text FROM chunks WHERE doc_id=%s "
                 "ORDER BY chunk_index", (doc_id,)).fetchall()))
         _prof = classify_document(_doc_text)
-        scientific_lane_allowed = "scientific_predicate" not in \
+        scientific_lane_prioritized = "scientific_predicate" not in \
             _prof["routing"]["disabled"]
     manifest = ExtractionManifest(
         run_id=run_id,
@@ -962,7 +976,7 @@ def process_event(conn: Connection, event: dict) -> None:
                 evidence = _evidence_spans(
                     gliner, row["text"], row["chunk_id"], pack, proposal_mode,
                     raw_sink=raw_predicate_sink,
-                    scientific_lane_allowed=scientific_lane_allowed)
+                    scientific_lane_prioritized=scientific_lane_prioritized)
                 _counts["evidence_spans"] += len(evidence)
                 _perf["evidence_pass_s"] += _t.perf_counter() - _pt
                 # drain this chunk's raw observations into ledger rows
@@ -1543,65 +1557,72 @@ def _persist_knowledge_artifacts(conn: Connection, *, corpus_id: str,
                                  chunk_ids: list[str],
                                  durable_surfaces: list[str]) -> dict:
     """KNOWLEDGE-ARTIFACT-PERSISTENCE-V1: compile Procedure/Concept
-    artifacts behind the document router's lane policy and persist them
-    as first-class objects. They are NOT facts and never touch the
-    entity graph here; retrieval projection is the projector's job.
-    Content-addressed ids make replay idempotent."""
+    artifacts as first-class objects. They are NOT facts and never touch
+    the entity graph here; retrieval projection is the projector's job.
+    Content-addressed ids make replay idempotent.
+
+    EXTRACTION-ELIGIBILITY-V1: the compilers are the LOCAL-EVIDENCE
+    detectors — cheap, deterministic, self-gating (no procedural or
+    conceptual evidence → no artifact). Document-level classification
+    is recorded as routing metadata but never vetoes a compiler:
+    eligible content always gets evaluated."""
     from polymath_shared.knowledge_router.classifier import classify_document
     from polymath_shared.knowledge_objects.concept import compile_concepts
     from polymath_shared.knowledge_objects.procedure import compile_procedure
 
     routing = classify_document(doc_text)["routing"]
-    disabled = set(routing.get("disabled") or [])
-    counts = {"procedures": 0, "concepts": 0}
+    counts = {"procedures": 0, "concepts": 0,
+              "routing_disabled": sorted(routing.get("disabled") or [])}
 
-    if "procedure" not in disabled:
-        proc = compile_procedure(
-            document_id=doc_id, corpus_id=corpus_id, text=doc_text,
-            admitted_entities=durable_surfaces,
-            source_chunk_ids=chunk_ids)
-        if proc:
-            conn.execute(
-                """
-                INSERT INTO procedure_artifacts
-                    (procedure_id, document_id, corpus_id, title, goal,
-                     steps_json, tools_json, confidence, source_chunk_ids,
-                     generated_by_bundle_hash)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                ON CONFLICT (procedure_id) DO NOTHING
-                """,
-                (proc["artifact_id"], doc_id, corpus_id,
-                 proc.get("title", ""), proc.get("goal", ""),
-                 json.dumps(proc.get("steps", [])),
-                 json.dumps(proc.get("tools", [])),
-                 float(proc.get("confidence", 0.0)), list(chunk_ids),
-                 _bundle_hash()))
-            counts["procedures"] = 1
+    # procedure lane: always evaluated; the compiler self-gates on
+    # local procedural evidence
+    proc = compile_procedure(
+        document_id=doc_id, corpus_id=corpus_id, text=doc_text,
+        admitted_entities=durable_surfaces,
+        source_chunk_ids=chunk_ids)
+    if proc:
+        conn.execute(
+            """
+            INSERT INTO procedure_artifacts
+                (procedure_id, document_id, corpus_id, title, goal,
+                 steps_json, tools_json, confidence, source_chunk_ids,
+                 generated_by_bundle_hash)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            ON CONFLICT (procedure_id) DO NOTHING
+            """,
+            (proc["artifact_id"], doc_id, corpus_id,
+             proc.get("title", ""), proc.get("goal", ""),
+             json.dumps(proc.get("steps", [])),
+             json.dumps(proc.get("tools", [])),
+             float(proc.get("confidence", 0.0)), list(chunk_ids),
+             _bundle_hash()))
+        counts["procedures"] = 1
 
-    if "concept" not in disabled:
-        from workers.summarizer import split_sentences
-        concepts = compile_concepts(
-            document_id=doc_id, corpus_id=corpus_id,
-            sentences=split_sentences(doc_text),
-            admitted_entities=durable_surfaces,
-            source_chunk_ids=chunk_ids)
-        for c in concepts:
-            conn.execute(
-                """
-                INSERT INTO concept_artifacts
-                    (concept_id, document_id, corpus_id, name, description,
-                     domain, related_entities, source_sentence, confidence,
-                     supporting_chunks, generated_by_bundle_hash)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                ON CONFLICT (concept_id) DO NOTHING
-                """,
-                (c["artifact_id"], doc_id, corpus_id, c["name"],
-                 c.get("description", ""), c.get("domain", "general"),
-                 json.dumps(c.get("related_entities", [])),
-                 c.get("source_sentence", ""),
-                 float(c.get("confidence", 0.0)), list(chunk_ids),
-                 _bundle_hash()))
-            counts["concepts"] += 1
+    # concept lane: always evaluated; the compiler self-gates on
+    # local definitional evidence
+    from workers.summarizer import split_sentences
+    concepts = compile_concepts(
+        document_id=doc_id, corpus_id=corpus_id,
+        sentences=split_sentences(doc_text),
+        admitted_entities=durable_surfaces,
+        source_chunk_ids=chunk_ids)
+    for c in concepts:
+        conn.execute(
+            """
+            INSERT INTO concept_artifacts
+                (concept_id, document_id, corpus_id, name, description,
+                 domain, related_entities, source_sentence, confidence,
+                 supporting_chunks, generated_by_bundle_hash)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            ON CONFLICT (concept_id) DO NOTHING
+            """,
+            (c["artifact_id"], doc_id, corpus_id, c["name"],
+             c.get("description", ""), c.get("domain", "general"),
+             json.dumps(c.get("related_entities", [])),
+             c.get("source_sentence", ""),
+             float(c.get("confidence", 0.0)), list(chunk_ids),
+             _bundle_hash()))
+        counts["concepts"] += 1
     return counts
 
 
