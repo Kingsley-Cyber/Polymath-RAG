@@ -249,6 +249,10 @@ def build_candidates_kimi(
             # tokens would silently reuse the PREVIOUS sentence's head.
             trig_head = None
             binding_source = BindingSource.BOUNDED_LINEAR_RECALL
+            # SPOKEN-RELATION-ADAPTER-V1: a copular trigger whose
+            # predicate nominal is NOT an entity has named its object;
+            # the recall net must not substitute a different one.
+            object_fallback_allowed = True
 
             # -- UD-tree primary binding ------------------------------
             if tokens:
@@ -468,6 +472,116 @@ def build_candidates_kimi(
                             subjects, objects = f_subj, f_obj
                             binding_source = BindingSource.SAFE_LOCAL_PATTERN
 
+                    # -- SPOKEN-RELATION-ADAPTER-V1 -------------------
+                    # (1) COPULAR-ATTR BINDING (the COPULA-COMPLEMENT-
+                    # BINDING-V2 the 2026-08-22 handoff called for): a
+                    # copular trigger names its object in the predicate
+                    # nominal (`attr`). If the attr head maps to an
+                    # admitted entity, that IS the object — tree
+                    # evidence, not recall. If it does not, the
+                    # sentence equates the subject with a NON-ENTITY
+                    # nominal; binding any other nearby entity (the
+                    # possessor in "X is Y's Z", a PP modifier) asserts
+                    # something the text does not say, so the object
+                    # recall net is SUPPRESSED for this evidence.
+                    # Measured on transcript-qual-v1: linear recall
+                    # bound (Andromeda, be, Meta) from "Andromeda is
+                    # Meta's new retrieval engine" and (Jon Loomer, be,
+                    # Facebook) from a PP modifier — both wrong, both
+                    # previously stopped only by the type gates.
+                    if (trig_head.get("lemma") or "").lower() == "be" \
+                            and not objects:
+                        attr_toks = [
+                            t for t in tokens
+                            if t.get("head_i") == trig_head["i"]
+                            and t.get("dep") == "attr"
+                        ]
+                        if attr_toks:
+                            attr_ent = _token_to_entity(
+                                attr_toks[0], sl.entities, sl)
+                            if attr_ent is not None:
+                                objects.append(attr_ent)
+                                binding_source = BindingSource.UD_DIRECT
+                            else:
+                                object_fallback_allowed = False
+                                if observer:
+                                    observer.record_candidate_outcome(
+                                        sl, evidence,
+                                        "COPULAR_ATTR_NOT_ENTITY", {
+                                            "attr_head": attr_toks[0].get(
+                                                "text"),
+                                            "kimi_v1": True})
+
+                    # (2) RELCL OBJECT RECOVERY: a verb heading a
+                    # relative clause with an overt bound subject and
+                    # no object relativizes its object — the
+                    # antecedent noun ("the update [which] Facebook
+                    # made"). If the antecedent maps to an entity,
+                    # bind it. If the antecedent is itself the
+                    # predicate nominal of a copular relative clause
+                    # ("Andromeda, which is the new update Facebook
+                    # made"), the copula equates it with ITS
+                    # antecedent — exactly one licensed hop. Both
+                    # hops follow explicit dependency edges;
+                    # anything unresolved abstains.
+                    elif (trig_head.get("dep") in ("relcl", "acl:relcl")
+                            and subjects and not objects):
+                        antecedent = next(
+                            (t for t in tokens
+                             if t["i"] == trig_head.get("head_i")), None)
+                        recovered_ent = None
+                        hops = None
+                        if antecedent is not None:
+                            recovered_ent = _token_to_entity(
+                                antecedent, sl.entities, sl)
+                            hops = "antecedent"
+                            if recovered_ent is None \
+                                    and antecedent.get("dep") == "attr":
+                                cop = next(
+                                    (t for t in tokens
+                                     if t["i"] == antecedent.get("head_i")),
+                                    None)
+                                if cop is not None \
+                                        and (cop.get("lemma") or "").lower() == "be":
+                                    # the copula equates its predicate
+                                    # nominal with: (a) the noun a
+                                    # copular RELATIVE clause modifies
+                                    # ("Andromeda, which is the update
+                                    # Facebook made"), or (b) its own
+                                    # overt subject ("Hermes is the
+                                    # model that Nous Research built").
+                                    # Relativizer/pronoun subjects map
+                                    # to no entity and abstain.
+                                    equated = None
+                                    if cop.get("dep") in ("relcl",
+                                                          "acl:relcl"):
+                                        equated = next(
+                                            (t for t in tokens
+                                             if t["i"] == cop.get("head_i")),
+                                            None)
+                                    else:
+                                        equated = next(
+                                            (t for t in tokens
+                                             if t.get("head_i") == cop["i"]
+                                             and t.get("dep") in
+                                             SUBJECT_DEPS),
+                                            None)
+                                    if equated is not None:
+                                        recovered_ent = _token_to_entity(
+                                            equated, sl.entities, sl)
+                                        hops = "copular_equation"
+                        if recovered_ent is not None:
+                            objects.append(recovered_ent)
+                            binding_source = \
+                                BindingSource.RELCL_ANTECEDENT
+                            if observer:
+                                observer.record_candidate_outcome(
+                                    sl, evidence,
+                                    "RELCL_ANTECEDENT_BOUND", {
+                                        "object": recovered_ent.text,
+                                        "hops": hops,
+                                        "kimi_v1": True})
+
                     # -- Phase 5: record what the UD tree itself bound,
                     # BEFORE any recall net runs, so the trace separates
                     # "the tree found it" from "the window found it".
@@ -509,7 +623,7 @@ def build_candidates_kimi(
                     subjects = [left_entities[0]]
                     binding_source = BindingSource.BOUNDED_LINEAR_RECALL
 
-            if not objects:
+            if not objects and object_fallback_allowed:
                 right_entities = sorted(
                     [e for e in sl.entities
                      if e.start >= evidence.end and e.start - rel_start <= right_bound],

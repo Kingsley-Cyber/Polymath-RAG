@@ -129,6 +129,10 @@ BINDING_DISCIPLINE = {
     "CONTROL_SUBJECT": UD_PRIMARY,
     "CONTROL_OBJECT": UD_PRIMARY,
     "DISCOURSE_ANAPHORA": SAFE_FALLBACK,
+    # SPOKEN-RELATION-ADAPTER-V1: antecedent recovery follows explicit
+    # dependency edges (relcl head, copular equation) — tree evidence,
+    # not a recall window.
+    "RELCL_ANTECEDENT": UD_PRIMARY,
 }
 
 

@@ -121,6 +121,9 @@ class BindingSource(str, Enum):
     CONTROL_SUBJECT = "CONTROL_SUBJECT"
     CONTROL_OBJECT = "CONTROL_OBJECT"
     DISCOURSE_ANAPHORA = "DISCOURSE_ANAPHORA"
+    # SPOKEN-RELATION-ADAPTER-V1: object recovered from the relative
+    # clause's antecedent noun (syntactically licensed, deterministic)
+    RELCL_ANTECEDENT = "RELCL_ANTECEDENT"
 
 
 V2_BINDING_SOURCES = frozenset(
