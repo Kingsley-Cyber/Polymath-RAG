@@ -1,9 +1,11 @@
 # CURRENT STATE — Polymath V5 (evidence-first)
 
-> **FRESHNESS 2026-08-25:** status claims below describe the Aug-22
-> evidence-first baseline and are SUPERSEDED for current state by
-> `NEXT_SESSION_HANDOFF.md` (HEAD, live fleet enforce-live, artifacts +
-> summaries + /ask shipped; control-tick scaling work ongoing).
+> **FRESHNESS 2026-08-26 (FINAL):** status claims below describe the
+> Aug-22 evidence-first baseline. The authoritative CURRENT snapshot is
+> `NEXT_SESSION_HANDOFF.md` (Codex engineering handoff, HEAD a14d5fd):
+> control/performance GO+FROZEN, G1 neural embedding default,
+> QUERY-SCOPE-V1 fail-closed, modern pilot query_ready, transcript
+> relational qualification = top open item.
 > Architecture description below remains accurate.
 >
 

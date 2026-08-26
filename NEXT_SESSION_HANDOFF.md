@@ -1,260 +1,348 @@
-# NEXT_SESSION HANDOFF — 2026-08-25 (session close)
+# POLYMATH — CODEX ENGINEERING HANDOFF
 
-Read top-to-bottom, then run BOOTSTRAP. This file + Postgres are the
-authorities. Do not re-derive state from chat history.
+Written 2026-08-26 · Final agent HEAD `a14d5fd` · branch
+`architecture/evidence-first-v5` · tree clean.
+This file supersedes all previous session notes as the incoming-agent
+entry point. Read top-to-bottom, then verify against code — this
+handoff is evidence-based but not exempt from your own reconstruction.
 
-## WHERE THE PRODUCT STANDS
+---
 
-The RAG is **queryable end-to-end and enforce-live**:
+## 1. Mission
 
-```
-DOCUMENT → CONTROL PLANE → EXTRACTION (frozen, enforce)
-  → FACT / PROCEDURE / CONCEPT artifacts (persisted, bundle-stamped)
-  → PARENT → DOCUMENT → CORPUS MAP summaries (live worker)
-  → QUERY ROUTER → /ask → grounded answer
-```
+POLYMATH is an evidence-first RAG / KAG system: ingest real documents,
+preserve verbatim evidence, extract durable knowledge artifacts (FACT /
+PROCEDURE / CONCEPT) through deterministic, admission-gated compilers,
+project them into dense (Qdrant) + graph (Neo4j) substrates, and answer
+questions with grounded, citation-backed retrieval across three modes
+(VECTOR / HYBRID / GRAPH).
 
-Charter acceptance 4/4 PASS (FACT/PROCEDURE/CONCEPT/POLYMATH routes,
-grounded=True everywhere). Scientific extraction is FROZEN — do not
-touch extraction/admission/rulepack except for proven correctness bugs.
+The strategic product requirement still ahead: **real-world transcripts**
+(technical tutorials, lectures, interviews, SOPs) must feed the SAME
+FACT / PROCEDURE / CONCEPT knowledge layer and enhance Graph/KAG
+retrieval. See §16–18.
 
-## WHAT THIS SESSION DID (chronological, all committed)
+## 2. Repository state
 
-1. **P0 recovery**: killed orphan controls (one spamming PG auth-FATALs
-   11h), telemetry archived to eval/v5/scale/, bundle refrozen
-   v5-production-006→007, cutover restart kimi_v1+shadow.
-2. **CATEGORY-D closed LIVE** (e306da6): doc01 trio
-   introduced_by/trained_on/evaluated_on ACCEPT. Two new bounded fixes:
-   definite-NP aux-tail head repair (candidates.py) + C3c possession
-   inheritance + `examined` realization. Red fixtures now real
-   assertions (14/14 green).
-3. **Shadow parity PASS → PREDICATE_V2=enforce LIVE** (aafa3e0,
-   255ebb5): 4-doc s-val set matches baseline; rescue-span-preservation
-   restored (refused widening no longer deletes provider spans — was
-   ledger row 63 limitation destroying GLiNER observations).
-4. **EXECUTION-BUNDLE-FENCE-V1** (8d7371a..): every worker registers
-   execution_bundle_hash (git+dirty+authority+rulepack+ontology+config);
-   claim gate self-quarantines on disk drift; facts stamp
-   provenance.generated_by_bundle_hash; migration 0031; fence PASS
-   includes bundle uniformity. PROVEN LIVE: caught stale workers twice.
-5. **OPERATIONAL-CLEANUP-P0** (00a35c0): EVENT-ADAPTER normalizes
-   legacy payloads at claim boundary (typed single-shot failure);
-   DEAD-LETTER-ARCHIVE migration 0032 + watcher v2 excludes archived
-   historical probes.
-6. **P1 ARTIFACT PERSISTENCE** (48ece42, 0fea327): migration 0033
-   procedure_artifacts + concept_artifacts; extract compiles behind
-   router lanes with stamps; Qdrant routing_procedure/routing_concept
-   lanes verified live.
-7. **P2 SUMMARIES WORKER** (dff12ef): 'summaries' fleet worker consumes
-   the four background stages; waterfall verified 2 parents → 2 docs →
-   corpus map on genre corpus.
-8. **BARRIER SQL FIX** (67cf20c): control tick was failing EVERY tick
-   with SyntaxError once promotions existed (server-side binding vs
-   tuple IN) + superseded-history miscount in generation_barrier.
-9. **P2/P3 RETRIEVAL** (82810eb): QUERY-ROUTER-V1 (deterministic
-   lexicon) + /ask endpoint (stored-objects-only answering). Acceptance
-   4/4 PASS.
-10. **4A LOCK-CONTENTION-V2** (175db66, a965aa9): receipts-present used
-    corpus-wide anti-join COUNT per candidate ticket inside the control
-    tx; verify reconciliation moved to short autocommit read phase.
-    Heartbeat resumed after >1 day dead. Small-corpus entry works under
-    peak backlog.
-11. **4B** (c5dae0e..6ee3376): receipts verdict final form = per-run
-    EXISTS + asymmetric TTL memo (present=90s, missing=900s monotonic).
-    Measured: cold tick 762s dominated by receipt checks (96% sampling
-    attribution); census Python loop over 25k attempts/10k runs is the
-    remaining bottleneck — incremental-census redesign is now
-    telemetry-justified.
+- Branch `architecture/evidence-first-v5`; `main` frozen at v4 baseline.
+- HEAD `a14d5fd`, tree clean at handoff commit.
+- ~45-commit epoch behind this handoff: control/performance closure →
+  retrieval contracts → G1 neural cutover → query scope → modern pilot →
+  archive-lifecycle + summary-waterfall fixes.
 
-## CURRENT LIVE STATE (at handoff — updated 2026-08-25 ~13:00 UTC)
-
-**CONTROL/PERFORMANCE: GO, FROZEN.** Read
-`eval/v5/scale/CONTROL-PERFORMANCE-FINAL-CLOSEOUT.md` first.
-
-- HEAD at handoff: `9331f9a`; fence PASS 13/13 on this exact build.
-- Fleet: pipeline profile, kimi_v1 + enforce + spacy, ONE control,
-  booted detached (`disown`) — a non-detached boot was killed by shell
-  recycling once tonight ("supervisor stopped").
-- Ticks: cold seed 100 s (was 3226 s); incremental census 0.31 s;
-  steady tick 21–35 s (advance_tickets ~12 s is the largest phase and
-  the one open optimization candidate).
-- Tickets: failed ≈0 live (74+3 triaged → dead_letter_archive 129 +
-  deliberate-evidence trio; scale-10k-v1 pending/ready 3,467 archived
-  superseded per FOREGROUND-UNDER-BACKLOG). Foreground proof: probe doc
-  query_ready ≈90 s under load.
-- Receipts: RECEIPT-VERDICT-STORE-V2 semantics everywhere; corpus-scoped
-  bulk completeness (~0.23 s/tick); scheduler bulk (keys byte-identical).
-
-## SESSION LOG (2026-08-25 overnight — what happened after the correction cycle)
-
-1. Fleet restart exposed TWO live defects the component tests missed:
-   event_adapter consumed tuple rows under a dict_row cursor (extract/
-   intake crash-loop; `4bc430d`) and advance_tickets passed a stale
-   third argument — every real tick TypeErrored since the store cutover
-   (1,864 failures measured; `ad81e24`). Entry-point wiring now pinned.
-2. Cold-seed reproduced live (>100 min single tx): per-run receipt
-   EXISTS loops × bloat (documents 390k dead tuples, never analyzed).
-   Fixed by BULK-RECEIPT-COMPLETENESS-V1 (`1c872f3`): one corpus-scoped
-   anti-join per projection — measured 156 ms + 78 ms all-corpora.
-   VACUUM ANALYZE applied to hot tables.
-3. SCHEDULER-BULK-V1 (`a56df8e`): schedule_gaps 52→5 s; idempotency keys
-   byte-identical (test-pinned).
-4. FOREGROUND-UNDER-BACKLOG (`4b0fe16`, `9331f9a`): two-lane claim
-   ordering + stale scale mass archived; probe doc query_ready ≈90 s.
-5. Telemetry: census phase timings always-on; tick phases in
-   /tmp/polymath_fleet/tick_phases.jsonl (logger whitelist strips custom
-   fields); offline attribution driver eval/v5/scale/cold_tick_attribution.py.
-
-## CORRECTION CYCLE (2026-08-25, earlier — historical)
-
-King's review caught a boolean inversion in the (now REVERTED)
-RECEIPT-BUDGET-V1 patch: the verdict TTL cache stored `not present`
-while a call site read it as `present` -> a measured MISSING could
-falsely ADVANCE. Fixed by RECEIPT-VERDICT-STORE-V2: explicit
-PRESENT/MISSING states, asymmetric TTL, single representation,
-advancement consults store; cached MISSING blocks with zero DB queries.
-Tests: tests/determinism/test_receipt_verdict_store.py (5/5) + updated
-test_lock_contention_v2.py + test_incremental_census.py (13/13 total).
-
-ALSO: the focused-suite hang (>300s) was a stale control process
-holding a 28-min transaction on scheduler_cursors/receipt rows;
-recycling control fixed it. If tests hang again: check
-pg_stat_activity FIRST.
-
-53.8-minute cold-seed tick attribution: DONE this session — see §2 of
-CONTROL-PERFORMANCE-FINAL-CLOSEOUT.md (measured ≥95%).
-
-## KNOWN ISSUES (triage queue, in order)
-
-1. **74 failed intake tickets across corpora** (`KeyError:
-   'corpus_id'`, minted by restart READY-backfill emitting bare
-   payloads at 2026-08-25 02:48 UTC). Adapter now recovers corpus_id
-   from the runs row (committed post-incident). Triage:
-   - test corpora (bp-test-a 64, d7-h1-test, reconcile-1c-test,
-     vocab-probe-v2, reconcile tests ≈ 71): archive via
-     dead_letter_archive like probe-enf2.
-   - release-books-v1 (3): real data — reset tickets to ready AFTER
-     deploying current adapter so backfill re-emits WITH recovery;
-     intake will re-run from existing materialized content.
-2. **Control census Python loop** over 25k attempts / 10k active runs
-   every tick (~24-min ticks). Telemetry justifies incremental census
-   (dirty-run set from stage_attempts > watermark). This is THE next
-   engineering item before resuming scale qualification.
-3. Concept compiler glues markdown heading into first concept name
-   ("# Notes on X X" → cleaned for NEW ingests only; old rows remain).
-4. Fence blind spot note: build_sha==HEAD passes while uncommitted
-   edits age past process start — mitigated by dirty-tree flag in the
-   bundle itself; keep tree clean at boot.
-
-## BOOTSTRAP (run in order)
+## 3. Runtime environment
 
 ```bash
 cd /Users/king/Documents/polymath-rebuild/polymath-v4
 export POLYMATH_PG_DSN="postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath"
-git log --oneline -3          # expect ≥ adapter commit above
-git status                    # must be clean
-docker ps                     # postgres/redis/qdrant/neo4j up?
+git status   # must be clean before boot (dirty tree fails integrity gate)
 
-# fleet (pipeline profile = 12 slots incl. summaries; no orchestrator)
-ps aux | grep -E "control.main|workers\." | grep -v grep
-curl -s -m 3 http://127.0.0.1:8740/ready   # gliner
-curl -s -m 3 http://127.0.0.1:8744/ready   # spacy
-curl -s -m 3 http://127.0.0.1:8742/ready   # embedder
+# stores
+docker ps    # polymath-v4-{postgres,redis,qdrant,neo4j}-1
 
-# if down:
+# fleet (pipeline profile; boots supervisor -> control + workers + sidecars)
 env POLYMATH_PG_DSN="$POLYMATH_PG_DSN" POLYMATH_PROFILE=pipeline \
   POLYMATH_RELATION_PIPELINE=kimi_v1 POLYMATH_PREDICATE_V2=enforce \
   POLYMATH_SYNTAX_PROVIDER=spacy \
-  nohup bash scripts/boot_polymath.sh > /tmp/polymath_fleet/boot.log 2>&1 &
-# wait ~60s for sidecars; extract crash-loops until they answer
-
-# fence (scoped to pipeline slots; MUST be PASS 12/12):
-SLOTS=$(.venv/bin/python -c "import sys; sys.path.insert(0,'shared'); \
-  from polymath_shared.runtime_budget import profile_slots; \
-  print(','.join(profile_slots('pipeline')))")
-POLYMATH_FLEET_ONLY="$SLOTS" .venv/bin/python eval/v5/verify_live_build.py
+  nohup bash scripts/boot_polymath.sh > /tmp/polymath_fleet/boot.log 2>&1 & disown
 ```
 
-If fence shows `execution_bundle` FAIL "stale memory": code changed
-since boot — restart fleet. If FAIL "tree dirty": commit or stash first.
-Keep the working tree CLEAN whenever workers boot.
-
-## VERIFICATION COMMANDS
+Boot MUST be `disown`ed (a non-detached boot was killed by shell-session
+recycling once — measured). Verify after ~2 min:
 
 ```bash
-# fast regression core (~seconds)
-.venv/bin/python -m pytest tests/determinism/test_sval_doc01_red.py \
-  tests/determinism/test_category_d_followup.py \
-  tests/determinism/test_execution_bundle.py \
-  tests/determinism/test_lock_contention_v2.py \
-  tests/determinism/test_i4r_a_boundary.py \
-  tests/determinism/test_kimi_candidates.py -p no:cacheprovider -q
-
-# /ask smoke (direct function; orchestrator not in pipeline profile)
-POLYMATH_PG_DSN="$POLYMATH_PG_DSN" .venv/bin/python - <<'EOF'
-import sys; sys.path.insert(0,"shared"); sys.path.insert(0,"."); sys.path.insert(0,"orchestrator")
-from orchestrator.api.ask import AskRequest, ask
-r = ask(AskRequest(question="What benchmark evaluated the Orion model?"))
-print(r["route"], r["objects"]["facts"][:1])
-EOF
+SLOTS=$(.venv/bin/python -c "import sys; sys.path.insert(0,'shared'); from polymath_shared.runtime_budget import profile_slots; print(','.join(profile_slots('pipeline')))")
+POLYMATH_FLEET_ONLY="$SLOTS" .venv/bin/python eval/v5/verify_live_build.py
+# expect => PASS (13/13 enforced components)
+curl -s http://127.0.0.1:8740/ready   # gliner; 8742 embedder; 8744 spacy
+pgrep -f control.main | wc -l         # must be exactly 1
 ```
 
-## TRAPS (all live-earned; do not relearn)
+## 4. Architecture at a glance
 
-1. **Keep tree clean when workers boot** — dirty tree fails integrity
-   gate AND poisons execution_bundle uniformity.
-2. **pkill leaves PG backends**: after killing control, check
-   pg_stat_activity for orphaned long txs; cancel them.
-3. **Restart READY-backfill mints bare payloads** for tickets whose
-   original events were consumed — event_adapter must cover EVERY
-   stage's required keys (intake.v1 fixed; audit others if a new
-   KeyError class appears).
-4. **doc_id is globally unique by content hash** — tagged variants for
-   re-extraction (marker comment changes hash).
-5. **launchctl no-ops under ~/Documents (TCC)**; shell cwd resets
-   between tool calls; extract crash-loops until sidecars answer /ready
-   (wait ~60s); psql not on host PATH — use docker exec.
-6. **Multiple control.main can accumulate across restarts** — after any
-   restart, `pgrep -f control.main | wc -l` must be ≤1 per supervisor;
-   kill stragglers decisively (they hold leases/ticks).
-7. Pre-existing test failures (do NOT chase as regressions):
-   3 bundle-pin tests pin stale authority hash 6976e483 vs live
-   557afbc3; 2 vocabulary_mapping IndexErrors; syntax_provider_gate ×2
-   fail only if POLYMATH_SYNTAX_PROVIDER leaks into env.
+```
+SOURCE (pdf/epub/md/txt/html)
+  → intake_worker      normalize(NFC/BOM/CRLF) → materialize (typed failures)
+                       doc_id = content-addressed; profile routing;
+                       legacy_v1 chunker (children ≤1200c sentence-aligned,
+                       parents = fanout-4 centroid summaries); layout evidence
+  → extract_worker     GLiNER spans → rescue → identity → E1–E7 entity
+                       admission → relation candidates → predicate compiler →
+                       F1–F8 fact admission (ENFORCE) → facts+evidence;
+                       procedure/concept artifact compilation behind router lanes
+  → canonicalize/project_*   Neo4j + Qdrant + canonical projections (receipted)
+  → summaries worker   parent/document/corpus summaries + vocabulary
+  → verify_worker      store-vs-artifact reconciliation
+  → query_ready        census promotion via generation barrier
+ASK  query_scope (fail-closed) → stored-object routes (/ask today)
+     + pass1/hybrid/reach machinery (orchestrator FAST/HYBRID/GRAPH)
+```
 
-## KEY FILES QUICK MAP
+Authoritative chain order and stage specs live in
+`control/control/tickets.py::STAGE_DAG` (artifact keys there are
+contract-pinned by `tests/determinism/test_stage_dag_contract.py`).
 
-| Area | Where |
-|---|---|
-| Execution bundle | shared/polymath_shared/execution_bundle.py |
-| Event adapter | shared/polymath_shared/event_adapter.py |
-| Claim gate + TTL memos | shared/polymath_shared/worker_runtime.py |
-| Barrier/receipts fix | control/control/tickets.py (generation_barrier, _receipts_present, _runs_with_missing_receipts) |
-| Artifacts compile/persist | workers/workers/extract_worker.py (_persist_knowledge_artifacts) |
-| Summaries worker | workers/workers/summary_worker{,_impl}.py |
-| Query router + /ask | shared/polymath_shared/query_router.py, orchestrator/orchestrator/api/ask.py |
-| CATEGORY-D fixes | workers/workers/kimi_candidates.py (DEP_LABEL_ALIASES, C3c), workers/workers/candidates.py (aux-tail), rulepack ontology yaml (examined realization) |
-| Live fence | eval/v5/verify_live_build.py |
-| Waterfall report | eval/v5/scale/INGESTION-WATERFALL-V1.md |
-| Parity report | docs/wiki/plans/SHADOW-PARITY-REPORT.md |
-| Work logs | docs/wiki/work-log/2026-08-24-*.md |
+## 5. Stores
 
-## NEXT SESSION QUEUE (charter order)
+- **Postgres** — workflow authority: runs, documents, chunks,
+  retrieval_summaries, facts/evidence, procedure/concept artifacts,
+  tickets/outbox/attempts/cursors, corpora (+ purpose/query_enabled/
+  embedding_contract_id), archived_corpora, query_workspaces,
+  dead_letter_archive, projection_receipts.
+- **Qdrant** — rebuildable dense projections; collection name embeds
+  corpus-hash + embedding-contract id; routing lanes separate.
+- **Neo4j** — rebuildable graph: Document–HAS_CHUNK→Chunk structural
+  layer + eligible Fact/Entity semantic layer.
+Redis = disposable notification. Postgres receipts prove state; logs do not.
 
-1. ~~Attribute 53.8-min tick~~ DONE · 2. ~~incremental census~~ DONE
-   (0.31 s) · 3. ~~triage failed tickets~~ DONE · 4. ~~chunk/storage
-   contracts~~ DONE (docs/contracts/) · 5. ~~three-mode harness~~ DONE
-   (behavioral; judging needs sealed set) · 6. ~~G1 neural cutover~~
-   DONE+QUALIFIED (`f121b79`: registry migration 0034, default flipped,
-   hash-vs-neural 0/9 vs 6/9).
-7. **Stage-K pilot findings to close** (eval/v5/retrieval/
-   STAGE-K-PILOT-RELEASE-BOOKS.md):
-   a. OWNER DECISION: /ask no-corpus fallback returns TEST-corpus
-      artifacts (grounded=True but foreign provenance). Pick strict
-      scoping / query_ready-only / per-object corpus_id.
-   b. Fresh ingest (new small real corpus) to validate procedure/
-      concept artifact lanes end-to-end (release-books predates 0033).
-   c. Redrive 3 legacy doc summaries (admitted slice).
-8. Sealed judged set for three-mode accuracy claims.
-9. (optional, post-drain) set-based advance_tickets if ~12 s DAG walk
-   stays flagged in tick phases.
+## 6. Control plane — GO, FROZEN
+
+Incremental census (dirty-run watermark `scheduler_cursors['__census__']`,
+same-tx durable write), bulk receipt-completeness anti-joins (one
+corpus-scoped query per projection per tick), bulk gap scheduler
+(byte-identical idempotency keys), two-lane claim ordering
+(fresh-run lane → ticketed → event_id FIFO), TICK-CACHE-V1 shared
+anti-joins, ARCHIVED-CORPUS exclusions. Full report:
+`eval/v5/scale/CONTROL-PERFORMANCE-FINAL-CLOSEOUT.md`
+(cold seed 3226 s → 100 s; incremental census 0.31 s; foreground
+query_ready ≈90 s under load; GO gate 16/16 MEASURED).
+**Do not reopen without a measured regression of its acceptance contract.**
+
+## 7. Knowledge artifacts
+
+| artifact | table | compiler | provenance | retrieval |
+|---|---|---|---|---|
+| FACT | facts + evidence | predicate compiler → F1–F8 (ENFORCE) | bundle-stamped, span offsets | Neo4j eligible edges + /ask FACT route |
+| PROCEDURE | procedure_artifacts | compile_procedure behind router lane | source_chunk_ids + bundle hash | /ask PROCEDURE route + qdrant routing_procedure |
+| CONCEPT | concept_artifacts | compile_concepts behind router lane | supporting_chunks + bundle hash | /ask CONCEPT route + qdrant routing_concept |
+
+Belief/attributed statements never become universal assertions
+(F-gates + concept separation enforce this).
+
+## 8. Knowledge Router (KNOWLEDGE-ROUTER-V1.1)
+
+`shared/polymath_shared/knowledge_router/` — deterministic document-level
+classifier (`classify_document(full_text)`): metadata + structure +
+lexicon-density signals → mode confidences + routing tiers
+`always / preferred / optional / disabled`.
+
+Modes: SCIENTIFIC_RELATIONAL · PROCEDURAL · CONCEPTUAL · NARRATIVE ·
+REFERENCE. It is a COST OPTIMIZER, not a gatekeeper (owner correction
+v1.1): one ingestion engine, multiple grounded representations. Under
+`PREDICATE_V2=enforce` it can disable the scientific_predicate lane per
+document; procedure/concept lanes persist unless explicitly disabled.
+
+CRITICAL DISTINCTION: source format/genre (transcript, book, paper…) ≠
+knowledge type. A transcript may mix FACT+PROCEDURE+CONCEPT.
+
+Known placeholders: `routing_policy.py`, `confidence.py` exist but are
+EMPTY (0 lines). No historical/opinion modes. No separate per-type
+worker processes (deliberate, per owner correction).
+
+## 9. Summary intelligence
+
+CHILD (verbatim proof) → PARENT chunk (fanout-4 centroid) → PARENT
+SUMMARY rows (local orientation) → DOCUMENT SUMMARY (document
+intelligence) → CORPUS SUMMARY/MAP (navigation across accumulated
+knowledge). Vocabulary = subordinate normalization support, never a
+knowledge authority. Waterfall contract: summary stages complete
+tickets WITHOUT stage_attempt rows — advancement accepts a committed
+DONE ticket as equivalent completion proof
+(SUMMARY-ATTEMPT-EQUIVALENCE, `tickets.py::_stage_attempt_ok`).
+
+## 10. Retrieval — implemented vs intended
+
+IMPLEMENTED TODAY:
+- `/ask` stored-object routes (FACT/PROCEDURE/CONCEPT/POLYMATH) with
+  explicit fail-closed scoping (§12) — orchestrator/api/ask.py.
+- FAST/pass1: promoted Pass-1 semantic route, single implementation
+  (`shared/polymath_shared/pass1.py`, plan `pass1-retrieval-v1`) used by
+  production AND qualification; Qdrant payload filter is
+  `representation_kind` ('routing_child', 'routing_section_summary',
+  'routing_document_summary', routing_procedure/concept).
+- HYBRID: promoted plan = FAST + lexical (R1D: lexical PROMOTED, MMR
+  REJECTED λ<1.0) — `hybrid.py`.
+- GRAPH: promoted HYBRID + evidence-authorized hop-1 canonical
+  expansion, 8 seeds/20 facts SPO-preserved (`reach.py`,
+  `graph-retrieval-v1`).
+- Behavioral harness: `eval/v5/retrieval/three_mode_benchmark.py`
+  (+G1 hash-vs-neural comparator).
+
+INTENDED / NOT COMPLETE: unified EVIDENCE-BUNDLE assembly contract,
+corpus-map-guided query planning inside the orchestrator routes, BM25
+inverted index (lexical is computed Python term-overlap today),
+accuracy-judged benchmark (current results are behavioral only).
+
+## 11. Embedding G1 (owner decision executed)
+
+Production default = **neural-embed-v1**: Qwen/Qwen3-Embedding-0.6B @
+revision `97b0c614…`, 1024-dim cosine/L2, instruct prefix on QUERY side
+only. Contract is CORPUS STATE (`corpora.embedding_contract_id`,
+migration 0034); worker resolves pin before projecting; unknown pin
+raises. hash-embed-v1 retained as deterministic test/fallback provider,
+never default. Existing collections were never reinterpreted
+(measured: 71 dual-projected / 4 neural-only / 0 hash-only at flip).
+Qualification: same-query hash 0/9 vs neural 6/9 weak-labeled hits —
+`eval/v5/retrieval/G1-HASH-VS-NEURAL.md`.
+
+## 12. Query scope (QUERY-SCOPE-V1)
+
+`shared/polymath_shared/query_scope.py`: exactly one explicit mode —
+CORPUS / CORPORA / WORKSPACE (`query_workspaces` table) /
+ALL_AUTHORIZED (= purpose='production' AND query_enabled). Missing
+scope → typed `QUERY_SCOPE_REQUIRED` (HTTP 422). No implicit
+all-corpus search exists; regression-pinned. Corpora carry
+`purpose` (production/evaluation/fixture/probe) + `query_enabled`
+(migration 0035; backfilled fail-closed — only a six-corpus production
+allowlist is enabled).
+
+## 13. Corpus lifecycle
+
+`archived_corpora` (migration 0036): an archived corpus is OUTSIDE the
+scheduling lifecycle — excluded from ticket-creation rotation, from
+contract-drift reconciliation, its gaps are never re-armed, its events
+are never claimable (`archived_at` claim guard), and the registry
+survives runtime cleanup (superseded-ticket signal AND registry row are
+both consulted). Origin: scale-10k-v1's dead chains regenerated via
+drift reconciliation and repeatedly occupied the claim FIFO; archival +
+registry ended it. Restore = delete the registry row.
+
+## 14. Modern pilot (pilot-modern-v1) — measured
+
+Fresh ingest under G1 defaults: 3 real PDFs attempted (Bowart/Bernays/
+Hogan persuasion domain) → 2 ingested (Bowart PDF corrupt → typed
+CorruptedDocumentError, archived as deliberate evidence). 920 child
+chunks, 3,811-parent-scale machinery exercised, 1 PROCEDURE, 21
+CONCEPTS, **0 relation candidates / 0 facts**, full summary waterfall
+DONE, 1,129-point neural collection, Neo4j Document+Chunk substrate
+written (458+462 HAS_CHUNK), both runs query_ready.
+Interpretation warning: do NOT generalize "narrative ⇒ no facts".
+Correct status: concept/procedure extraction DEMONSTRATED on narrative
+material; FACT yield zero UNDER THE CURRENT CANDIDATE-DISCOVERY PATH;
+transcript relational coverage REQUIRES INDEPENDENT QUALIFICATION (§16).
+Full detail: `eval/v5/retrieval/STAGE-K-PILOT-RELEASE-BOOKS.md` +
+`docs/wiki/work-log/2026-08-25-stage-k-pilot.md`.
+
+Reference corpus release-books-v1 (25 technical books): 15,205 children,
+7,934 facts, 22/25 doc summaries (3 predate the summaries worker),
+neural collection 18,823 points — the FACT-heavy qualification corpus.
+
+## 15. What is frozen (do not reopen casually)
+
+- CONTROL/PERFORMANCE architecture (GO, closeout report).
+- Extraction semantics: GLiNER pin, predicate compiler trigger allowlist,
+  Harbor identity, E/F admission gates (charter-frozen).
+- G1 neural contract fields (model/revision/dim/prefix) — changes need
+  a NEW contract id + qualification.
+- RECEIPT-VERDICT-STORE-V2 semantics (MISSING delays, never advances).
+- Query-scope fail-closed contract.
+- Applied migrations (append-only; 0031–0036 are the recent epoch).
+
+## 16. What is NOT finished
+
+1. **Transcript relational qualification** (the big one — §18).
+2. Evidence-bundle assembly contract + corpus-map-guided planning in
+   orchestrator routes.
+3. BM25 inverted index (lexical = Python term-overlap today).
+4. Accuracy-judged three-mode evaluation (sealed labelled set).
+5. release-books-v1 backfills: 3 legacy doc summaries; procedure/concept
+   lanes predate migration 0033 for that corpus.
+6. Empty placeholder modules: knowledge_router/routing_policy.py,
+   confidence.py.
+7. Autovacuum/bloat operational hygiene (documents hit 38× bloat once).
+
+## 17. Transcript requirement (product north star)
+
+A transcript is a SOURCE FORMAT containing MIXED knowledge types. The
+intended behavior: supported RELATIONAL statements → FACT candidates;
+instructions → PROCEDURE; explanations/schools → CONCEPT — all through
+the existing durable knowledge layer, enhancing Graph/KAG retrieval.
+Do not build a parallel "transcript pipeline".
+
+## 18. Highest-priority next investigation
+
+Transcript relational path, strictly in this order:
+
+1. Ingest ONE realistic technical transcript (explicit relational
+   language: "X uses Y", "A configures B") into a fresh corpus.
+2. Observe: does `classify_document` permit the scientific_predicate
+   lane? (check `_prof["routing"]["disabled"]` in extract_worker).
+3. Are relation_candidates minted (>0)?
+4. If candidates>0: what do F1–F8 admit? Read rejection reasons.
+5. Only then touch anything — and NEVER loosen the frozen compiler
+   without owner decision.
+
+Outcome taxonomy: A good · B routing/wiring gap · C candidate-discovery
+coverage gap · D admission rejection inspection.
+
+## 19. Final qualification still required
+
+Fresh mixed corpus (technical + narrative + one real transcript) →
+verify ingestion → hierarchy → artifacts (all three types >0 where the
+material supports them) → summaries → corpus map → neural projection →
+graph → query_ready → scoped VECTOR/HYBRID/GRAPH panel → grounded /ask.
+
+## 20. Reports Codex must read
+
+- `eval/v5/scale/CONTROL-PERFORMANCE-FINAL-CLOSEOUT.md`
+- `eval/v5/retrieval/G1-HASH-VS-NEURAL.md`
+- `eval/v5/retrieval/STAGE-K-PILOT-RELEASE-BOOKS.md`
+- `eval/v5/retrieval/THREE-MODE-BENCHMARK-V1.md`
+- `docs/contracts/RETRIEVAL-CHUNK-HIERARCHY-V1.md`
+- `docs/contracts/RETRIEVAL-STORAGE-CONTRACT-V1.md`
+- `OVERNIGHT-PRODUCTION-READINESS-REPORT.md`
+- `eval/v5/scale/INGESTION-WATERFALL-V1.md`
+
+## 21. Tests to run first
+
+```bash
+.venv/bin/python -m pytest tests/determinism/test_knowledge_router.py \
+  tests/determinism/test_query_scope.py \
+  tests/determinism/test_embedding_contract_registry.py \
+  tests/determinism/test_stage_dag_contract.py \
+  tests/determinism/test_event_adapter_dict_cursor.py \
+  tests/determinism/test_scheduler_bulk.py \
+  tests/determinism/test_receipt_verdict_store.py \
+  tests/determinism/test_lock_contention_v2.py \
+  tests/determinism/test_incremental_census.py \
+  tests/determinism/test_claim_starvation.py \
+  -p no:cacheprovider -q
+```
+(~70 tests, seconds.) Known pre-existing failures elsewhere: 3
+bundle-pin stale-authority hashes, 2 vocabulary IndexErrors, syntax-
+provider env-leak flakes — documented traps, not regressions.
+
+## 22. Boot/fence commands
+
+See §3. Fence is mandatory after ANY commit (bundle id embeds git HEAD;
+docs-only commits still shift it). Restart is safe; workers re-drive
+idempotently — but avoid restarting mid-extraction (attempts roll back,
+receipt checkpoints survive, work redoes).
+
+## 23. Historical traps (paid for; do not rediscover blindly)
+
+- dict_row vs tuple cursor unpacking in shared SQL helpers.
+- Entry-point wiring drift between refactors (arity bug killed 1,864
+  ticks while component tests passed) — pin call sites.
+- Per-run receipt EXISTS loops / per-gap scheduling (hours → ms when
+  batched; completeness truth is CORPUS-scoped).
+- Strict FIFO claim starvation of fresh work (two-lane ordering).
+- Work-less corpora pinning the creation round-robin window.
+- Ticket chains minted after progress must reconcile history (born-done).
+- STAGE_DAG artifact-key drift vs worker payloads (contract test now).
+- Qdrant payload vocabulary: children are `representation_kind=
+  'routing_child'`; tier-only payloads are invisible to dense lanes.
+- Summary waterfall needs DONE-ticket equivalence (no attempts written).
+- Archived chains resurrect via contract-drift reconciliation unless the
+  corpus is in `archived_corpora`.
+- pkill leaves PG backends: sweep `idle in transaction` before DDL.
+- launchctl no-ops under ~/Documents (TCC); boots must be disowned.
+
+## 24. Finish definition
+
+Production GO for retrieval requires: transcript relational path
+qualified (§18 outcome A), fresh mixed-corpus qualification (§19)
+including all three artifact types from real material, sealed judged
+three-mode evaluation, evidence-bundle contract implemented, and the
+release-books backfills either done or explicitly waived. Everything
+else above is already GO'd and frozen.
