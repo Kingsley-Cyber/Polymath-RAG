@@ -75,7 +75,10 @@ sidecars:
     # Also a Qwen3 0.6B, so weights alone are ~1.11 GiB. Reranking sees
     # shorter query+passage pairs than a full chunk, but 1.5 GB could
     # never have held weights plus activations.
-    mps_gb: 3.0
+    # 3.0 was 38 MiB short in production: a 16x4000-char batch peaks at
+    # the cap exactly (observed 2026-08-26, MPS OOM at 2.97/3.00 GiB on
+    # apply_rotary_pos_emb). 3.5 gives the measured peak real headroom.
+    mps_gb: 3.5
 
 # --------------------------------------------------------------------
 # Control plane. Workers are thin; the orchestrator holds request state.
