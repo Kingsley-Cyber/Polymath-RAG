@@ -538,3 +538,76 @@ def test_created_make_contradicted_direction_still_rejects(pack):
                          parse=MADE_PARSE), pack)
     assert v.outcome == REJECT, (v.outcome, v.reason)
     assert v.reason == "DIRECTION_CONTRADICTED"
+
+
+# --------------------------------------------------------------------------
+# SPOKEN-RELATION-ADAPTER-V1: F8 object-side relative-clause mirror.
+# The subject-side antecedent rule existed ("RHEL, which uses
+# Firewalld"); the object side never did, so every relativized-object
+# fact was BINDING_ROLE-rejected regardless of grammar.
+# --------------------------------------------------------------------------
+
+# "Andromeda, which is the new update Facebook made." (real parse shape)
+RELCL_OBJ_PARSE = {"tokens": [
+    tok(0, "Andromeda", "PROPN", "ROOT", 0, 0),
+    tok(2, "which", "PRON", "nsubj", 3, 11),
+    tok(3, "is", "AUX", "relcl", 0, 17, "be"),
+    tok(4, "the", "DET", "det", 6, 20),
+    tok(5, "new", "ADJ", "amod", 6, 24),
+    tok(6, "update", "NOUN", "attr", 3, 28),
+    tok(7, "Facebook", "PROPN", "nsubj", 8, 35),
+    tok(8, "made", "VERB", "relcl", 6, 44, "make"),
+]}
+
+RELCL_TEXT_F8 = "Andromeda, which is the new update Facebook made."
+
+
+def _relcl_ctx(**kw):
+    base = dict(
+        predicate="created", trigger_lemma="make", trigger_surface="made",
+        evidence_class="creation",
+        subject_type="Organization", object_type="Technology",
+        subject_surface="Facebook", object_surface="Andromeda",
+        subject_start=35, subject_end=43,
+        evidence_start=44, evidence_end=48,
+        object_start=0, object_end=9,
+        chunk_text=RELCL_TEXT_F8, parse=RELCL_OBJ_PARSE)
+    base.update(kw)
+    return ctx(**base)
+
+
+def test_f8_relativized_object_antecedent_is_bound(pack):
+    v = f8_direct_support(_relcl_ctx(), pack)
+    assert v.outcome == PASS, (v.outcome, v.reason)
+
+
+def test_f8_relativizer_subject_never_recovers_object(pack):
+    """N13 inversion guard: 'Facebook, which made the announcement' —
+    the relativizer is the SUBJECT; the antecedent must not be read as
+    the object (that would invert the relation)."""
+    parse = {"tokens": [
+        tok(0, "Facebook", "PROPN", "ROOT", 0, 0),
+        tok(2, "which", "PRON", "nsubj", 3, 10),
+        tok(3, "made", "VERB", "relcl", 0, 16, "make"),
+        tok(4, "the", "DET", "det", 5, 21),
+        tok(5, "announcement", "NOUN", "dobj", 3, 25),
+    ]}
+    # adversarial candidate claiming created(announcement→..., Facebook)
+    v = f8_direct_support(_relcl_ctx(
+        parse=parse,
+        chunk_text="Facebook, which made the announcement, is hiring.",
+        subject_surface="Facebook", subject_start=0, subject_end=8,
+        object_surface="Facebook2", object_start=0, object_end=8,
+        evidence_start=16, evidence_end=20), pack)
+    # whatever the verdict path, the antecedent-as-object recovery must
+    # not fire: the real object position (announcement) is occupied.
+    assert v.outcome in (REJECT, PASS)
+    # the sharp assertion: a candidate whose object is the ANTECEDENT
+    # while a real dobj exists is rejected
+    v2 = f8_direct_support(_relcl_ctx(
+        parse=parse,
+        chunk_text="Facebook, which made the announcement, is hiring.",
+        subject_surface="which", subject_start=10, subject_end=15,
+        object_surface="Facebook", object_start=0, object_end=8,
+        evidence_start=16, evidence_end=20), pack)
+    assert v2.outcome == REJECT, (v2.outcome, v2.reason)

@@ -890,12 +890,44 @@ def _role_positions(ctx: FactContext, trig: dict) -> tuple[set, set]:
         # grammatical subject but the ANTECEDENT is the semantic one, so
         # the antecedent occupies the subject position too. Without this
         # every relative-clause fact was rejected as unbound.
+        _RELATIVIZERS = {"which", "that", "who", "whom"}
         rel_pronoun = any(
             t.get("dep") in _SUBJ_DEPS and t.get("pos") == "PRON"
-            and (t.get("lemma") or "").lower() in {"which", "that", "who", "whom"}
+            and (t.get("lemma") or "").lower() in _RELATIVIZERS
             for t in kids)
         if not subj or rel_pronoun:
             subj.add(head.get("head_i"))
+        # SPOKEN-RELATION-ADAPTER-V1: the OBJECT-side mirror of the rule
+        # above. When the relative clause has a REAL (non-relativizer)
+        # subject and its object position is empty or held only by the
+        # relativizer, the relativized argument IS the object and the
+        # antecedent occupies that position ("the update [which]
+        # Facebook made"). If that antecedent is the predicate nominal
+        # of a copular relative ("Andromeda, which is the new update
+        # Facebook made"), the copula equates it with ITS antecedent —
+        # the same single licensed hop the binding layer takes. A
+        # relativizer SUBJECT (N13 "Facebook, which made the
+        # announcement") never triggers this: the antecedent is the
+        # subject there, exactly as the rule above already records.
+        real_subj = any(
+            t.get("dep") in _SUBJ_DEPS
+            and not (t.get("pos") == "PRON"
+                     and (t.get("lemma") or "").lower() in _RELATIVIZERS)
+            for t in kids)
+        obj_is_relativized = not obj or all(
+            (by_i.get(o) or {}).get("pos") == "PRON"
+            and ((by_i.get(o) or {}).get("lemma") or "").lower()
+            in _RELATIVIZERS
+            for o in obj)
+        if real_subj and obj_is_relativized:
+            ante_i = head.get("head_i")
+            obj.add(ante_i)
+            ante = by_i.get(ante_i) or {}
+            if ante.get("dep") == "attr":
+                cop = by_i.get(ante.get("head_i")) or {}
+                if (cop.get("lemma") or "").lower() == "be" \
+                        and cop.get("dep") in {"acl", "relcl"}:
+                    obj.add(cop.get("head_i"))
     for t in kids:
         if t.get("dep") == "poss":
             subj.add(t.get("i"))
