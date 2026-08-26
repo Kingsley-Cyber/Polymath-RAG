@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { fetchCorpora, fetchSynthesizers, streamChat } from "./api";
 import ChatView from "./components/ChatView";
+import CorporaView from "./components/CorporaView";
 import FilesView from "./components/FilesView";
 import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
@@ -24,7 +25,7 @@ export default function App() {
   const [activeId, setActiveId] = useState<string | null>(
     () => loadChats()[0]?.id ?? null,
   );
-  const [view, setView] = useState<"chat" | "files">("chat");
+  const [view, setView] = useState<"chat" | "files" | "corpora">("chat");
   const [corpora, setCorpora] = useState<Corpus[]>([]);
   const [synths, setSynths] = useState<Synthesizer[]>([]);
   const [busy, setBusy] = useState(false);
@@ -207,6 +208,12 @@ export default function App() {
         />
         {view === "chat" ? (
           <ChatView chat={active} busy={busy} onSend={send} />
+        ) : view === "corpora" ? (
+          <CorporaView
+            onChanged={() => {
+              fetchCorpora().then(setCorpora).catch(() => {});
+            }}
+          />
         ) : (
           <FilesView
             corpus={active?.corpus ?? ""}

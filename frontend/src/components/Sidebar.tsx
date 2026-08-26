@@ -11,11 +11,11 @@ export default function Sidebar({
 }: {
   chats: Chat[];
   activeId: string | null;
-  view: "chat" | "files";
+  view: "chat" | "files" | "corpora";
   onSelect: (id: string) => void;
   onNew: () => void;
   onDelete: (id: string) => void;
-  onView: (v: "chat" | "files") => void;
+  onView: (v: "chat" | "files" | "corpora") => void;
 }) {
   return (
     <div className="sidebar">
@@ -38,6 +38,12 @@ export default function Sidebar({
           onClick={() => onView("files")}
         >
           Files
+        </button>
+        <button
+          className={`nav-tab${view === "corpora" ? " active" : ""}`}
+          onClick={() => onView("corpora")}
+        >
+          Corpora
         </button>
       </div>
       <div className="chat-list">
