@@ -34,8 +34,8 @@ from .retrieve import (
     _fetch_children_rows,
     _fetch_parents,
     _fetch_profiles,
-    _neo4j_expand,
     _qdrant_search,
+    graph_expand_or_502,
     resolve_http_scope,
     single_corpus_or_422,
 )
@@ -182,10 +182,9 @@ async def chat(req: ChatRequest) -> dict:
 
     graph_facts = graph_expansion(
         _entity_surfaces(query, result),
-        expand=lambda surfaces: _neo4j_expand(
-            surfaces,
-            corpus_ids=corpus_ids,
-            preferred_chunk_ids=[c["chunk_id"] for c in result.selected_children[:10]],
+        expand=lambda surfaces: graph_expand_or_502(
+            surfaces, corpus_ids,
+            [c["chunk_id"] for c in result.selected_children[:10]],
         ),
     )
 

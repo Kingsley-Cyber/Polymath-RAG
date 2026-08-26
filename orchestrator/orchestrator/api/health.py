@@ -26,6 +26,32 @@ async def ready(request: Request) -> dict:
     return {"ready": True, "sidecars": statuses}
 
 
+@router.get("/semantic_readiness")
+async def semantic_readiness(corpus_id: str) -> dict:
+    """SEMANTIC-READINESS-V1: the explicit semantic-completion verdict.
+
+    `query_ready` (control contract, untouched) says the blocking
+    pipeline converged; THIS says whether every semantic lane —
+    FACT/PROCEDURE/CONCEPT execution, summaries, corpus map, artifact
+    projections — completed. Zero yield is completion; failure is not.
+    """
+    from polymath_shared.db import tx
+    from polymath_shared.semantic_readiness import semantic_completion
+
+    with tx() as conn:
+        row = conn.execute(
+            "SELECT 1 FROM corpora WHERE corpus_id = %s", (corpus_id,),
+        ).fetchone()
+        if not row:
+            from fastapi import HTTPException
+
+            raise HTTPException(status_code=404, detail={
+                "error_code": "QUERY_SCOPE_UNKNOWN",
+                "message": f"corpus {corpus_id!r} not found",
+            })
+        return semantic_completion(conn, corpus_id)
+
+
 @router.get("/sidecars")
 async def sidecars(request: Request) -> dict:
     try:

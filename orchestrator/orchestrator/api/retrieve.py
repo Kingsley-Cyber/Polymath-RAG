@@ -77,6 +77,29 @@ def resolve_http_scope(conn, req) -> "QueryScope":
         })
 
 
+def graph_expand_or_502(
+    surfaces: list[str],
+    corpus_ids: list[str],
+    preferred_chunk_ids: list[str],
+) -> list[dict]:
+    """FAILURE-TRANSPARENCY-V1: one translation point from the typed
+    graph-store failure to the typed HTTP failure. GRAPH_SUCCESS with
+    zero relationships stays an empty list; a backend failure is 502."""
+    from polymath_shared.stores import GraphBackendUnavailable
+
+    try:
+        return _neo4j_expand(
+            surfaces,
+            corpus_ids=corpus_ids,
+            preferred_chunk_ids=preferred_chunk_ids,
+        )
+    except GraphBackendUnavailable as exc:
+        raise HTTPException(status_code=502, detail={
+            "error_code": "graph_backend_unavailable",
+            "message": str(exc),
+        }) from exc
+
+
 def single_corpus_or_422(scope, mode: str) -> str:
     """FAST/HYBRID/GRAPH are single-corpus engines (collection-per-
     corpus projection). A wider resolved scope fails closed — it is
@@ -153,10 +176,9 @@ async def retrieve(req: RetrieveRequest) -> dict:
 
     result.graph_facts = graph_expansion(
         _entity_surfaces(query, result),
-        expand=lambda surfaces: _neo4j_expand(
-            surfaces,
-            corpus_ids=corpus_ids,
-            preferred_chunk_ids=[c["chunk_id"] for c in result.selected_children[:10]],
+        expand=lambda surfaces: graph_expand_or_502(
+            surfaces, corpus_ids,
+            [c["chunk_id"] for c in result.selected_children[:10]],
         ),
     )
 
@@ -459,7 +481,13 @@ def _neo4j_expand(
             if authorized is not None:
                 rows = [r for r in rows if r["fact_id"] in authorized]
             return rows
-    except Exception:
-        return []
+    except Exception as exc:
+        # FAILURE-TRANSPARENCY-V1: a graph-store failure is typed and
+        # loud — it must never masquerade as a valid zero-relationship
+        # result (SMART verification REQ-014).
+        from polymath_shared.stores import GraphBackendUnavailable
+
+        raise GraphBackendUnavailable(
+            f"neo4j expansion failed: {type(exc).__name__}: {exc}") from exc
     finally:
         driver.close()

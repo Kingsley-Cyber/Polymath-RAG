@@ -102,13 +102,15 @@ def graph_retrieve(query: str, corpus_id: str) -> dict:
     evidence = result.final_evidence
 
     # qualified evidence-authorized corpus-authorized hop1 (D2 machinery)
-    from orchestrator.api.retrieve import _neo4j_expand
+    # FAILURE-TRANSPARENCY-V1: a Neo4j failure is a typed 502, never an
+    # empty "no graph knowledge" result.
+    from orchestrator.api.retrieve import graph_expand_or_502
 
     t0 = time.time()
-    graph_facts = _neo4j_expand(
+    graph_facts = graph_expand_or_502(
         _selected_surfaces(query, evidence),
-        corpus_id=corpus_id,
-        preferred_chunk_ids=[c["chunk_id"] for c in evidence],
+        [corpus_id],
+        [c["chunk_id"] for c in evidence],
     )[:GRAPH_MAX_FACTS]
     graph_ms = (time.time() - t0) * 1000
 
