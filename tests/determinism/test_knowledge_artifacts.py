@@ -71,3 +71,58 @@ def test_no_hallucinated_artifacts_empty_input():
                              title="x") is None
     assert compile_concepts(document_id="d", corpus_id="c",
                             sentences=[]) == []
+
+
+# ---- TRANSCRIPT-REGISTER-V1 fixtures (additions to the deterministic
+# ---- lists require regression fixtures — this is them) --------------
+
+def test_conversational_leads_expose_imperative_steps():
+    """Real spoken instructions hide behind leads: 'So click …',
+    'Okay, so let's run …', 'Just paste …' are steps."""
+    text = ("So click on the free notebook. Okay, so let's run the "
+            "next cell. Just paste in the model name.")
+    p = compile_procedure(document_id="d", corpus_id="c", text=text,
+                          title="transcript")
+    assert p is not None
+    assert len(p["steps"]) == 3
+
+
+def test_narrated_actions_are_not_steps():
+    """'So we run the tests' narrates; it does not instruct."""
+    assert compile_procedure(
+        document_id="d", corpus_id="c",
+        text="So we run the tests. And then I click the button.",
+        title="x") is None
+
+
+def test_concept_copula_definition_registers():
+    sents = [
+        "Fine-tuning is adjusting a base model's weights to improve "
+        "performance on specific tasks.",
+        "HTML stands for hypertext markup language.",
+        "We used Unsloth, which is an open source library to "
+        "fine-tune any models.",
+        "A vector database is a system that stores embeddings for "
+        "similarity search.",
+    ]
+    got = compile_concepts(document_id="d", corpus_id="c", sentences=sents)
+    names = {c["name"].lower() for c in got}
+    assert "fine-tuning" in names
+    assert "html" in names
+    assert "unsloth" in names
+    assert "vector database" in names
+
+
+def test_copula_statements_are_not_definitions():
+    """Status statements and pronoun/fragment subjects never become
+    concepts: definitional REGISTER, not any copula."""
+    sents = [
+        "The model is training on the dataset right now.",
+        "This is a must-have skill for engineers.",
+        "But the main thing is torch which stands for pytorch.",
+        "It is a nice day outside in the mountains.",
+    ]
+    got = compile_concepts(document_id="d", corpus_id="c", sentences=sents)
+    names = {c["name"].lower() for c in got}
+    assert not names & {"model", "this", "it",
+                        "but the main thing is torch which"}, names

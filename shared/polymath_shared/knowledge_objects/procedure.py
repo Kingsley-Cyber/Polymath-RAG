@@ -39,7 +39,7 @@ def _clean(line: str) -> str:
 
 
 def _is_imperative(sentence: str) -> bool:
-    sentence = _SEQ_START.sub("", sentence)
+    sentence = _strip_leads(sentence)
     first = sentence.split()
     if not first:
         return False
@@ -54,6 +54,25 @@ def _is_imperative(sentence: str) -> bool:
 
 
 _SEQ_START = re.compile(r"(?i)^\s*(first|next|then|finally|now)\b[, :]?\s*")
+
+#: TRANSCRIPT-REGISTER-V1: real spoken instructions arrive behind
+#: conversational leads — "So click on the free notebook", "Okay, so
+#: let's run the next cell", "Just paste in the name". The lead is
+#: noise; the imperative underneath is the step. Stripping is
+#: iterative ("Okay, so let's run…" → run) and deterministic. This is
+#: DISCOVERY register handling: MIN_STEPS and every downstream gate
+#: are unchanged, and procedures never become facts.
+_CONVERSATIONAL_LEAD = re.compile(
+    r"(?i)^\s*(?:(?:so|okay|ok|alright|and|but|just|now|then|next|first|"
+    r"finally)(?:[, :]+|\s+)|let'?s\s+|let\s+us\s+)")
+
+
+def _strip_leads(sentence: str) -> str:
+    prev = None
+    while prev != sentence:
+        prev = sentence
+        sentence = _CONVERSATIONAL_LEAD.sub("", sentence, count=1)
+    return sentence
 _STEP_INLINE = re.compile(r"(?i)\bstep\s*(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten)\b\s*[:.)]?\s*")
 
 

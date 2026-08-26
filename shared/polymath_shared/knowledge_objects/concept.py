@@ -26,7 +26,50 @@ _DEFINE_PATTERNS = (
                r"(?P<desc>[^.;]{10,200})"),
     re.compile(r"(?i)(?:the\s+)?(?:term\s+)?[\"']?(?P<name>model|threat "
                r"model|hook)[\"']?\s+(?:in |refers to)", re.I),
+    # TRANSCRIPT-REGISTER-V1: the docstring has always claimed copula
+    # definitions as a signal; these implement it for the registers
+    # real technical transcripts use. Name guards (_bad_name, article
+    # rules below) keep status statements and pronoun subjects out.
+    #   "torch ... stands for pytorch"
+    re.compile(r"(?i)^(?P<name>[^.;,]{2,60}?)\s+stands\s+for\s+"
+               r"(?P<desc>[^.;]{6,200})"),
+    #   "Fine-tuning is adjusting a base model's weights ..."
+    #   (nominal subject + copula + gerund/process complement; the
+    #   negative lookahead keeps article/demonstrative subjects out so
+    #   status statements like "The model is training ..." never
+    #   become definitions)
+    re.compile(r"(?i)^(?P<name>(?!(?:a|an|the|this|that|these|those|it|"
+               r"there)\b)[^.;,]{3,60}?)\s+(?:is|are)\s+"
+               r"(?P<desc>(?:the\s+(?:process|act|practice)\s+of\s+"
+               r"[^.;]{6,200}|\w+ing\b\s[^.;]{6,200}))"),
+    #   "Unsloth, which is an open source library to fine-tune ..."
+    #   (capitalized-run appositive: continuation words must also be
+    #   capitalized so the subject clause "We used Unsloth" never
+    #   swallows the name)
+    re.compile(r"(?P<name>[A-Z][\w'-]*(?:\s+[A-Z][\w'-]*){0,3}),\s+"
+               r"which\s+(?:is|are)\s+(?:a|an|the)?\s*"
+               r"(?P<desc>[^.;]{10,200})"),
+    #   "A vector database is a system that stores embeddings ..."
+    re.compile(r"(?i)^(?P<name>[^.;,]{3,60}?)\s+(?:is|are)\s+"
+               r"(?:a|an)\s+(?P<desc>[^.;]{10,200})"),
 )
+
+#: Subjects that make a copula sentence a STATEMENT, not a definition.
+_BAD_NAME_HEADS = frozenset(
+    "this that these those it there he she we i you they which what who "
+    "everything something anything nothing one here now today it's that's "
+    "there's and but so okay ok well because also then".split())
+
+#: A candidate name containing its own copula/relative clause is a
+#: sentence fragment, not a nominal ("the main thing is torch which").
+_NAME_CLAUSE = re.compile(r"(?i)\b(is|are|was|were|which|that)\b")
+
+
+def _bad_name(name: str) -> bool:
+    words = name.lower().split()
+    if not words or words[0] in _BAD_NAME_HEADS:
+        return True
+    return bool(_NAME_CLAUSE.search(name))
 
 _MAX_NAME = 8      # words
 _MAX_DESC = 40
@@ -69,6 +112,8 @@ def compile_concepts(*, document_id: str, corpus_id: str,
             desc = m.group("desc").strip()
             if not name or len(name.split()) > _MAX_NAME:
                 continue
+            if _bad_name(name):
+                continue  # pronoun/demonstrative subject = statement
             key = name.lower()
             if key in seen_names:
                 continue
