@@ -23,6 +23,9 @@ export default function MessageBubble({ msg }: { msg: Message }) {
           {msg.error.message}
         </div>
       )}
+      {!msg.answer && msg.pending && msg.text && (
+        <div className="bubble">{msg.text}<span className="cursor">▍</span></div>
+      )}
       {msg.answer && <AnswerBody msg={msg} />}
     </div>
   );
@@ -34,6 +37,7 @@ function AnswerBody({ msg }: { msg: Message }) {
   const r = a.retrieval;
 
   if (a.kind === "ask") return <AskBody msg={msg} />;
+  if (a.kind === "llm") return <LlmBody msg={msg} showChunks={showChunks} setShowChunks={setShowChunks} />;
 
   const res = a.result;
   const verdict: string = res?.meta?.verdict ?? "supported";
@@ -87,6 +91,78 @@ function ChunksPanel({ chunks }: { chunks: ChunkRef[] }) {
           {c.preview && <div className="chunk-preview">“{c.preview}…”</div>}
         </div>
       ))}
+    </div>
+  );
+}
+
+function extractHtml(text: string): string | null {
+  const m = text.match(/```html\n([\s\S]*?)```/);
+  if (m) return m[1];
+  const t = text.trim();
+  if (t.startsWith("<!doctype") || t.startsWith("<!DOCTYPE") || t.startsWith("<html"))
+    return t;
+  return null;
+}
+
+function LlmBody({
+  msg,
+  showChunks,
+  setShowChunks,
+}: {
+  msg: Message;
+  showChunks: boolean;
+  setShowChunks: (fn: (s: boolean) => boolean) => void;
+}) {
+  const a = msg.answer!;
+  const r = a.retrieval;
+  const text: string = a.result?.answer ?? msg.text;
+  const html = extractHtml(text);
+
+  const openHtml = () => {
+    if (!html) return;
+    const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+    window.open(url, "_blank");
+  };
+  const downloadHtml = () => {
+    if (!html) return;
+    const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+    const el = document.createElement("a");
+    el.href = url;
+    el.download = "polymath-generated.html";
+    el.click();
+  };
+
+  return (
+    <div className="bubble">
+      <div>{text}</div>
+      <div className="meta-row">
+        <span className="badge badge-mode">{r.mode}</span>
+        <span className="badge badge-generated">
+          GENERATED · {a.result?.model ?? "llm"}
+        </span>
+        {html && (
+          <>
+            <button className="chunk-chip" onClick={openHtml}>
+              ▶ Open HTML
+            </button>
+            <button className="chunk-chip" onClick={downloadHtml}>
+              ⬇ Download
+            </button>
+          </>
+        )}
+        <button
+          className="chunk-chip"
+          onClick={() => setShowChunks((s) => !s)}
+        >
+          ⛁ {r.evidence_count} chunk{r.evidence_count === 1 ? "" : "s"}
+          {typeof r.graph_fact_count === "number" && r.graph_fact_count > 0
+            ? ` · ${r.graph_fact_count} graph fact${r.graph_fact_count === 1 ? "" : "s"}`
+            : ""}
+          {" "}{showChunks ? "▾" : "▸"}
+        </button>
+        <span className="latency">{(a.latency_ms / 1000).toFixed(1)}s</span>
+      </div>
+      {showChunks && <ChunksPanel chunks={r.chunks} />}
     </div>
   );
 }

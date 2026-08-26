@@ -228,3 +228,18 @@ select, input, textarea { font: inherit; color: var(--text); }
 ::-webkit-scrollbar { width: 9px; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* LLM generation */
+.badge-generated { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+.cursor { animation: blink 0.9s step-start infinite; color: var(--accent); }
+
+/* danger zone */
+.danger { border-color: color-mix(in srgb, var(--bad) 45%, var(--border)); }
+.danger h3 { color: var(--bad); }
+.btn-danger {
+  background: color-mix(in srgb, var(--bad) 15%, transparent);
+  border: 1px solid var(--bad); color: var(--bad);
+  border-radius: 9px; padding: 7px 14px; font-weight: 700;
+}
+.btn-danger:hover { filter: brightness(1.2); }

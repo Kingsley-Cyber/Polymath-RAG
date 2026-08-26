@@ -8,7 +8,13 @@ function fmtBytes(n: number): string {
   return `${n} B`;
 }
 
-export default function FilesView({ corpus }: { corpus: string }) {
+export default function FilesView({
+  corpus,
+  onCorpusDeleted,
+}: {
+  corpus: string;
+  onCorpusDeleted?: () => void;
+}) {
   const [docs, setDocs] = useState<DocumentRow[]>([]);
   const [runs, setRuns] = useState<RunRow[]>([]);
   const [readiness, setReadiness] = useState<any>(null);
@@ -173,6 +179,42 @@ export default function FilesView({ corpus }: { corpus: string }) {
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="panel danger">
+          <h3>Danger zone</h3>
+          <div className="readiness" style={{ marginBottom: 10 }}>
+            Deleting removes this corpus everywhere: documents, chunks,
+            facts evidenced only here, summaries, the vector collection
+            and the graph substrate. There is no undo.
+          </div>
+          <button
+            className="btn-danger"
+            onClick={async () => {
+              const typed = window.prompt(
+                `Type the corpus id to delete it permanently:\n${corpus}`,
+              );
+              if (typed !== corpus) return;
+              const r = await fetch(
+                `/corpora/${encodeURIComponent(corpus)}?confirm=${encodeURIComponent(typed)}`,
+                { method: "DELETE" },
+              );
+              if (r.ok) {
+                const out = await r.json();
+                window.alert(
+                  `Deleted ${corpus}\n` +
+                    Object.entries(out.removed ?? {})
+                      .map(([k, v]) => `${k}: ${v}`)
+                      .join("\n"),
+                );
+                onCorpusDeleted?.();
+              } else {
+                window.alert(`Delete failed: ${await r.text()}`);
+              }
+            }}
+          >
+            Delete corpus “{corpus}”
+          </button>
         </div>
 
         <div className="panel">

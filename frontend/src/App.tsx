@@ -113,16 +113,40 @@ export default function App() {
           messages: c.messages.map((m) => (m.id === asstMsg.id ? fn(m) : m)),
         }));
 
+      // context for LLM generation: prior turns + evidence carried
+      // from earlier answers in THIS chat (so "build me a test from
+      // what we studied" can use the whole session's material)
+      const history = active.messages.slice(-12).map((m) => ({
+        role: m.role,
+        content:
+          m.role === "user"
+            ? m.text
+            : (m.answer?.result?.answer ?? m.text ?? "").slice(0, 4000),
+      }));
+      const seenLoc = new Set<string>();
+      const carry: { locator: string; preview: string }[] = [];
+      for (const m of [...active.messages].reverse()) {
+        for (const c of m.answer?.retrieval?.chunks ?? []) {
+          if (c.locator && !seenLoc.has(c.locator) && carry.length < 30) {
+            seenLoc.add(c.locator);
+            carry.push({ locator: c.locator, preview: c.preview ?? "" });
+          }
+        }
+      }
+
       streamChat(
         {
           message: text,
           corpus_id: active.corpus,
           mode: active.mode,
           synthesizer: active.synthesizer,
+          history,
+          carry_context: carry,
         },
         {
           onPhase: (p) =>
             patchAsst((m) => ({ ...m, phases: [...(m.phases ?? []), p] })),
+          onToken: (t) => patchAsst((m) => ({ ...m, text: m.text + t })),
           onAnswer: (a) => patchAsst((m) => ({ ...m, answer: a })),
           onError: (e) => patchAsst((m) => ({ ...m, error: e })),
           onDone: () => {
@@ -184,7 +208,14 @@ export default function App() {
         {view === "chat" ? (
           <ChatView chat={active} busy={busy} onSend={send} />
         ) : (
-          <FilesView corpus={active?.corpus ?? ""} />
+          <FilesView
+            corpus={active?.corpus ?? ""}
+            onCorpusDeleted={() => {
+              fetchCorpora().then(setCorpora).catch(() => {});
+              if (active)
+                patchChat(active.id, (c) => ({ ...c, corpus: "" }));
+            }}
+          />
         )}
       </div>
     </div>

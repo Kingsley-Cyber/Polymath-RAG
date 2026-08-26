@@ -35,6 +35,7 @@ export async function uploadFile(corpus: string, file: File) {
 
 export interface StreamHandlers {
   onPhase: (p: Phase) => void;
+  onToken: (t: string) => void;
   onAnswer: (a: ChatAnswer) => void;
   onError: (e: { error_code?: string; message?: string; status?: number }) => void;
   onDone: () => void;
@@ -43,7 +44,14 @@ export interface StreamHandlers {
 /** POST /chat/stream and dispatch SSE events. EventSource cannot POST,
  * so the stream is parsed off a fetch body reader. */
 export async function streamChat(
-  body: { message: string; corpus_id: string; mode: Mode; synthesizer: string },
+  body: {
+    message: string;
+    corpus_id: string;
+    mode: Mode;
+    synthesizer: string;
+    history: { role: string; content: string }[];
+    carry_context: { locator: string; preview: string }[];
+  },
   handlers: StreamHandlers,
   signal?: AbortSignal,
 ): Promise<void> {
@@ -89,6 +97,7 @@ export async function streamChat(
         continue;
       }
       if (event === "phase") handlers.onPhase(payload);
+      else if (event === "token") handlers.onToken(payload.token ?? "");
       else if (event === "answer") handlers.onAnswer(payload);
       else if (event === "error") handlers.onError(payload);
       else if (event === "done") handlers.onDone();

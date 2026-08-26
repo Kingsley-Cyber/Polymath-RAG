@@ -44,7 +44,7 @@ export interface Citation {
 }
 
 export interface ChatAnswer {
-  kind: "chat" | "ask";
+  kind: "chat" | "ask" | "llm";
   result: any;
   retrieval: Retrieval;
   latency_ms: number;
