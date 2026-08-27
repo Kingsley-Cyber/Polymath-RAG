@@ -609,12 +609,30 @@ def process_event(conn: Connection, event: dict) -> None:
             + neo4j_report["in_flight_fact_edges_kept"]
         )
         if loss or problem:
-            # Degraded (not failed): the census re-drives projectors and
-            # verify re-runs until the stores and receipts converge.
-            writer.run_status("degraded")
-            log.warning("verification found projection gaps; run degraded", extra={
-                "run_id": run_id, "stage": STAGE, "error_code": "projection_gaps",
-            })
+            # OPERATOR-STATE-V1: gaps are only a FAULT when no pending
+            # work explains them. While this run still has open tickets
+            # (summaries, routing, projections), missing artifacts are
+            # normal convergence — labeling that DEGRADED trained the
+            # owner to read a healthy drain as a broken system (observed
+            # repeatedly on cysa-study-v1, 2026-08-26/27). The census
+            # re-drives and verify re-runs either way; only the label
+            # honesty changes.
+            open_work = conn.execute(
+                """SELECT COUNT(*) FROM stage_tickets
+                    WHERE run_id = %s AND archived_at IS NULL
+                      AND status <> 'done' AND stage <> %s""",
+                (run_id, STAGE)).fetchone()[0]
+            if open_work:
+                writer.run_status("reconciling")
+                log.info("verification pending convergence: gaps explained "
+                         "by open work", extra={
+                    "run_id": run_id, "stage": STAGE, "error_code": None,
+                })
+            else:
+                writer.run_status("degraded")
+                log.warning("verification found projection gaps; run degraded", extra={
+                    "run_id": run_id, "stage": STAGE, "error_code": "projection_gaps",
+                })
         else:
             writer.run_status("query_ready")
 

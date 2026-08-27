@@ -91,7 +91,32 @@ def _corpus_contract(conn, corpus_id: str):
     return resolved
 
 
-EMBED_BATCH = 32  # the embedder contract bounds batches at 32 texts
+EMBED_BATCH = 16  # measured optimum: 6.9 texts/s vs 3.5 at 32 (saturation matrix 2026-08-27; contract cap is 32)
+
+# PROJECTION-TELEMETRY-V1: per-ticket attribution. project_qdrant wall
+# time was measured ~95% embedding, but the stage name hid that — every
+# second must be attributable to embed / qdrant / receipts / lookup.
+_TELEMETRY: dict = {}
+
+
+def _tel_reset() -> None:
+    _TELEMETRY.clear()
+    _TELEMETRY.update({
+        "receipt_lookup_ms": 0.0, "embed_ms": 0.0, "embed_calls": 0,
+        "embed_texts": 0, "qdrant_upsert_ms": 0.0, "qdrant_batches": 0,
+        "receipt_persist_ms": 0.0, "checkpoints": 0,
+        "representations_total": 0, "representations_already_current": 0,
+        "started": time.perf_counter(),
+    })
+
+
+def _tel(key: str, dt_ms: float = 0.0, n: int = 0) -> None:
+    if not _TELEMETRY:
+        return
+    if dt_ms:
+        _TELEMETRY[key] = _TELEMETRY.get(key, 0.0) + dt_ms
+    if n:
+        _TELEMETRY[key] = _TELEMETRY.get(key, 0) + n
 
 
 def _embed_texts(contract, texts: list[str]) -> list[list[float]]:
@@ -111,8 +136,12 @@ def _embed_texts(contract, texts: list[str]) -> list[list[float]]:
         client.verify_pin()
         out: list[list[float]] = []
         for i in range(0, len(texts), EMBED_BATCH):
+            _t0 = time.perf_counter()
             out.extend(client.embed(texts[i:i + EMBED_BATCH],
                                     "child_chunk")["vectors"])
+            _tel("embed_ms", (time.perf_counter() - _t0) * 1000)
+            _tel("embed_calls", n=1)
+            _tel("embed_texts", n=len(texts[i:i + EMBED_BATCH]))
         return out
     finally:
         client.close()
@@ -179,8 +208,11 @@ def _upsert_batched(client: QdrantClient, collection: str, points: list) -> None
     the unbatched-at-scale defect class). Transport only: same points, same
     payloads, same ids, order preserved."""
     for i in range(0, len(points), UPSERT_BATCH):
+        _t0 = time.perf_counter()
         client.upsert(collection_name=collection,
                       points=points[i:i + UPSERT_BATCH], wait=True)
+        _tel("qdrant_upsert_ms", (time.perf_counter() - _t0) * 1000)
+        _tel("qdrant_batches", n=1)
 
 
 def _write_points_checkpointed(client: QdrantClient, collection: str,
@@ -205,6 +237,7 @@ def _checkpoint_chunks(chunks: list[dict], contract) -> None:
     """Durably record a completed chunk slice, independent of the stage
     tx (points in Qdrant already survive a rollback; the receipt records
     that fact so _already_current can skip them on retry)."""
+    _t0 = time.perf_counter()
     try:
         with tx() as conn:
             for c in chunks:
@@ -221,6 +254,9 @@ def _checkpoint_chunks(chunks: list[dict], contract) -> None:
     except Exception:
         log.warning("chunk checkpoint failed; progress will be re-done",
                     extra={"error_code": "checkpoint_failed"})
+    finally:
+        _tel("receipt_persist_ms", (time.perf_counter() - _t0) * 1000)
+        _tel("checkpoints", n=1)
 
 
 def _write_points(client: QdrantClient, collection: str, chunks: list[dict], contract) -> None:
@@ -487,6 +523,7 @@ def process_event(conn: Connection, event: dict) -> None:
     payload = event["payload"]
     run_id = event["run_id"]
     corpus_id = payload.get("corpus_id")
+    _tel_reset()
     chunks = _chunks_for_run(conn, run_id)
     # EMBEDDING-CONTRACT-REGISTRY-V1: resolve the pin FIRST so routing
     # summaries and children land under the corpus's authoritative
@@ -508,6 +545,7 @@ def process_event(conn: Connection, event: dict) -> None:
             "chunk_count": len(chunks),
             "embedding_contract": contract.contract_id,
         })
+        _tel_emit_run = run_id  # settled below with final numbers
 
         # CHUNK-LANE-INCREMENTAL-V1: drop chunks whose ACTIVE receipt
         # already matches this exact projection. _chunks_for_run selects
@@ -522,7 +560,11 @@ def process_event(conn: Connection, event: dict) -> None:
                  receipt_hash(PROJECTION_QDRANT, KIND_CHUNK, c["chunk_id"],
                               CONTRACT_VERSION))
                 for c in chunks]
+            _t0 = time.perf_counter()
             _current_chunks = _already_current(conn, _wanted_chunks)
+            _tel("receipt_lookup_ms", (time.perf_counter() - _t0) * 1000)
+            _tel("representations_total", n=len(_wanted_chunks))
+            _tel("representations_already_current", n=len(_current_chunks))
             _chunk_total = len(chunks)
             chunks = [c for c in chunks
                       if (KIND_CHUNK, c["chunk_id"]) not in _current_chunks]
@@ -609,6 +651,16 @@ def process_event(conn: Connection, event: dict) -> None:
 
         # No outbox event: the control census schedules the verify stage
         # from this receipt.
+        total_ms = (time.perf_counter() - _TELEMETRY.get("started", time.perf_counter())) * 1000
+        summary = {k: (round(v, 1) if isinstance(v, float) else v)
+                   for k, v in _TELEMETRY.items() if k != "started"}
+        summary["total_ms"] = round(total_ms, 1)
+        writer.artifact({"projection_telemetry": summary})
+        log.info("projection telemetry", extra={
+            "run_id": run_id, "stage": STAGE, "error_code": None,
+            "duration_ms": summary["total_ms"]})
+        log.info("projection telemetry detail: %s", summary,
+                 extra={"run_id": run_id, "stage": STAGE, "error_code": None})
         writer.run_status("reconciling")
 
 
