@@ -181,6 +181,44 @@ def polymath_delete_corpus(corpus_id: str, confirm: str) -> dict:
     return r.json()
 
 
+@server.tool()
+def polymath_delete_document(doc_id: str, confirm: str) -> dict:
+    """Delete ONE document from its corpus everywhere (vectors, graph,
+    facts evidenced only by it, summaries, runs). confirm must equal
+    doc_id. The same file becomes re-ingestable afterward."""
+    r = httpx.delete(f"{BASE}/documents/{doc_id}",
+                     params={"confirm": confirm}, timeout=300)
+    r.raise_for_status()
+    return r.json()
+
+
+def _auth_wrapped(app):
+    """MCP-CONNECTOR-AUTH-V1: fixed API key in request headers, the
+    scheme Claude custom connectors / Grok remote tools / ChatGPT
+    connectors all support. Set POLYMATH_MCP_API_KEY to require
+    `Authorization: Bearer <key>` (or `X-API-Key: <key>`) on every MCP
+    request; unset = local-trusted mode (stdio or localhost HTTP)."""
+    key = os.environ.get("POLYMATH_MCP_API_KEY", "").strip()
+    if not key:
+        return app
+
+    async def guarded(scope, receive, send):
+        if scope["type"] == "http":
+            headers = {k.decode().lower(): v.decode()
+                       for k, v in scope.get("headers", [])}
+            presented = headers.get("authorization", "")
+            if presented.startswith("Bearer "):
+                presented = presented[len("Bearer "):]
+            if presented != key and headers.get("x-api-key", "") != key:
+                from starlette.responses import JSONResponse
+                await JSONResponse({"error": "unauthorized"},
+                                   status_code=401)(scope, receive, send)
+                return
+        await app(scope, receive, send)
+
+    return guarded
+
+
 def main() -> None:
     if "--http" in sys.argv:
         try:
@@ -189,8 +227,22 @@ def main() -> None:
             port = 7300
         import uvicorn
 
-        uvicorn.run(server.streamable_http_app(), host="127.0.0.1",
-                    port=port)
+        # stateless_http: MCP 2026-07-28 stateless core — each request
+        # self-contained, no session pinning, safe behind tunnels and
+        # scale-to-zero hosting. Bind localhost; expose via an HTTPS
+        # tunnel (cloudflared) so TLS terminates outside this process.
+        from mcp.server.transport_security import TransportSecuritySettings
+
+        app = server.streamable_http_app(
+            stateless_http=True,
+            # DNS-rebinding host pinning is deliberately OFF: the server
+            # binds localhost and is exposed only through an HTTPS tunnel
+            # with Bearer-key auth — the tunnel hostname is dynamic, and
+            # a rebinding attacker without the key gets 401 regardless.
+            transport_security=TransportSecuritySettings(
+                enable_dns_rebinding_protection=False),
+        )
+        uvicorn.run(_auth_wrapped(app), host="127.0.0.1", port=port)
     else:
         server.run("stdio")
 
