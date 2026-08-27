@@ -298,3 +298,86 @@ BUDGET: every desired set passes the existing preflight; deterministic
 BACKPRESSURE: worker counts are fixed at measured useful concurrency
   (1), so the pipeline cannot outrun itself; the embedder is the
   system's pace and everything queues durably behind it by design.
+
+═══════════════════════════════════════════════════════════════════
+# FINAL RUNTIME QUALIFICATION (2026-08-27)
+═══════════════════════════════════════════════════════════════════
+
+## Autonomy-final lifecycle (autonomy-final-v1, 721 KB fresh book, hands-off)
+
+Uploaded 19:46:09 from PROVEN true idle (all models parked, garbage +
+stuck-pending rows deliberately left in DB). Zero operator actions
+thereafter. Observed by monitor:
+
+idle → upload → GLiNER+spaCy woke ("extract: 1 open") → extraction →
+query demand woke embedder ("query 11s ago") mid-extract → extraction
+settled → GLiNER SELF-PARKED → projection → **project_qdrant worker
+KILLED** → supervisor respawned it → **embedder sidecar KILLED** →
+autopilot re-woke it on projection demand → recovery ticket skipped
+720/720 checkpointed representations (re-embedded 0 chunks; 156
+routing texts in 13.1 s) → summaries → graph → verify → query_ready →
+SEMANTIC_COMPLETE (144 parent summaries, 1 doc summary, corpus map,
+496 facts, procedures, concepts) → all models parked. Monitor
+self-terminated after recording the result.
+
+MONITOR_PURPOSE: hands-off lifecycle + dual crash test
+MONITOR_RESULT: PASS (all assertions observed)
+MONITOR_TERMINATED: YES
+
+## Query wake from true idle
+
+From all-parked: first HYBRID fails typed (embedder_unavailable,
+2.1 s) → autopilot wakes embedder + reranker on the recorded demand →
+**supported answer 27 s after the first request**. GLiNER untouched.
+Mid-ingest queries correctly fail typed (budget denies reranker while
+extract backlog exists — documented Mac constraint; Docker VM 5→4 GB
+is the owner-level unlock).
+
+Warm latencies (/chat, cysa-study-v1): FAST p50 2.0 / p95 2.0 ·
+HYBRID 2.0 / 2.8 · GRAPH 2.5 / 2.8 · nonce abstains 2.5 s with named
+uncovered terms. Query→idle: models parked after grace (watch result
+appended below).
+
+## Regression
+
+Product gate 10/10 PASS (stores, routes, sidecars, scope fail-closed
+422, SEMANTIC_COMPLETE, nonce abstains). ASK: 5 procedures via
+PROCEDURE_QUERY with corpus map consulted. GRAPH on the fresh corpus:
+supported, 13 citations. GRAPH valid-zero: typed insufficient_evidence,
+distinct from outage. Historical-garbage wake matrix: PASS 5/5.
+CONDITIONAL_RERANK: remains REJECTED. MLX: MLX_DEFERRED_AS_NEW_CONTRACT
+(bf16 candidate: 2.05x, 0.54x memory, 0.9998 query parity — awaiting
+owner contract sign-off; PyTorch/MPS retained in production).
+
+## Final measured receipt
+
+EXTRACTION fresh: 32.9 children/min (~1,975/hour)
+EMBEDDING (production backend): PyTorch/MPS, batch 16, 6.9 texts/s idle
+  / 6.2 live (~1,900 tokens/s)
+QDRANT pure write: 1,527–3,167 points/s — BOTTLENECK: NO
+PROJECTION anatomy: 98.0% embed · 0.36% qdrant · 0.2% receipts
+CRASH RECOVERY: checkpoint 64 reps · max observed replay ≤ 1 slice ·
+  latest recovery skipped 720/720, re-embedded 0
+MEMORY actual: IDLE ~3.3 GB · QUERY ~8.7 GB · INGEST ~9.4 GB ·
+  (Docker VM reservation 4.8 GB wired is the floor's largest line)
+PIPELINE fresh 721 KB book: upload → query_ready ≈ 41 min including
+  two deliberate crashes and lease-recovery windows; upload →
+  SEMANTIC_COMPLETE same window.
+
+## Owner-operator test
+
+start workers manually: NO · switch profiles: NO · start GLiNER: NO ·
+start embedder: NO · start reranker: NO · recover crashed worker: NO ·
+recover crashed model: NO.
+
+## Known open items (recorded, owner-gated)
+
+1. Reconciliation successor runs stall pending forever (carried stages
+   never materialize artifacts under the successor run_id) — P1,
+   surfaces only after contract drift; release-books' 3 stuck runs die
+   with the planned cleanup.
+2. Summary lanes are not gated on extract (fact-empty parent summaries
+   when lanes race) — DAG dependency decision.
+3. MLX-bf16 promotion as new/equivalent contract — 2x ingest embed win.
+4. Docker VM 5→4 GB (owner host setting) — enables reranker residency
+   during ingest = queryable-while-ingesting.
