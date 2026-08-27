@@ -63,10 +63,18 @@ _last_demand: dict[str, float] = {}
 
 
 def _open_work(conn, stages: tuple[str, ...]) -> int:
+    """ACTIONABLE work only (AUTOPILOT-WORKLOAD-HYGIENE-V1): what the
+    workers could legitimately claim — open ticket AND open parent run
+    AND existing corpus. Historical/test/deleted-corpus debris must
+    never wake expensive fleet resources; the first activation measured
+    216 zombie tickets doing exactly that."""
     return conn.execute(
-        """SELECT COUNT(*) FROM stage_tickets
-            WHERE stage = ANY(%s) AND archived_at IS NULL
-              AND status IN ('pending', 'ready', 'leased')""",
+        """SELECT COUNT(*) FROM stage_tickets st
+            JOIN runs r ON r.run_id = st.run_id
+            JOIN corpora c ON c.corpus_id = st.corpus_id
+            WHERE st.stage = ANY(%s) AND st.archived_at IS NULL
+              AND st.status IN ('ready', 'leased')
+              AND r.status IN ('intake', 'reconciling', 'degraded')""",
         (list(stages),)).fetchone()[0]
 
 

@@ -645,6 +645,7 @@ def refresh_corpus_runtime_state(conn, *, watermark: int | None = None) -> dict:
     # corpora with ticketless runs still count as needing service
     for r in conn.execute(
             """SELECT DISTINCT r.corpus_id FROM runs r
+               JOIN corpora c ON c.corpus_id = r.corpus_id
                WHERE r.status IN ('intake','reconciling','degraded')
                AND NOT EXISTS (SELECT 1 FROM stage_tickets t
                                WHERE t.run_id=r.run_id)""").fetchall():
@@ -713,6 +714,7 @@ def fair_ensure_tickets_backpressure_gated(conn, *,
                WHERE corpus_id=%s""", (corpus_id,))
         runs = conn.execute(
             """SELECT r.run_id FROM runs r
+               JOIN corpora c ON c.corpus_id = r.corpus_id
                WHERE r.corpus_id=%s
                AND r.status IN ('intake','reconciling','degraded')
                AND NOT EXISTS (SELECT 1 FROM stage_tickets t

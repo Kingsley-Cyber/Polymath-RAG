@@ -44,6 +44,13 @@ fi
   exit 1
 }
 
+# FLEET-AUTOPILOT-V1: with the autopilot on, slots start PARKED and
+# every desired set is budget-gated per tick inside the supervisor —
+# a static whole-fleet preflight would refuse a fleet that never
+# actually runs all at once.
+if [ "${POLYMATH_AUTOPILOT:-}" = "1" ]; then
+  echo "boot: autopilot enabled — per-tick budget gating (static preflight skipped)"
+else
 .venv/bin/python - <<'BUDGET' || exit 1
 import sys
 sys.path.insert(0, "shared")
@@ -51,6 +58,7 @@ from polymath_shared.runtime_budget import preflight
 p = preflight()
 print(f"boot: budget {p['committed_gb']} GB committed of {p['ceiling_gb']} GB ceiling")
 BUDGET
+fi
 
 # 2. everything else lives under ONE supervisor (sidecars, orchestrator,
 #    control, workers) with bounded restart + quarantine + health checks.

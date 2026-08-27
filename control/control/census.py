@@ -148,10 +148,11 @@ def compute_census(conn: Connection, *, max_attempts: int = 3,
     _t0 = _time.perf_counter()
     runs = conn.execute(
         """
-        SELECT run_id, corpus_id, status, created_at
-          FROM runs
-         WHERE status IN ('intake', 'reconciling', 'degraded')
-          ORDER BY created_at, run_id
+        SELECT r.run_id, r.corpus_id, r.status, r.created_at
+          FROM runs r
+          JOIN corpora c ON c.corpus_id = r.corpus_id
+         WHERE r.status IN ('intake', 'reconciling', 'degraded')
+          ORDER BY r.created_at, r.run_id
         """
     ).fetchall()
     timing["runs_query_ms"] = round((_time.perf_counter() - _t0) * 1000, 1)
