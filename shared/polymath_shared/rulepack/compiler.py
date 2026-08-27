@@ -93,10 +93,37 @@ def load_rule_pack(path: Optional[Path] = None, *, use_resources: bool = True,
         # shared-trigger predicates; see core-predicates-v1.3.0.yaml.
         yaml_path = path or (_RULE_PACK_PATH.parent / "core-predicates-v1.3.0.yaml")
         compiled_name = "compiled_lexical-v1.3.0.json"
+    elif pack_version == "1.4.0":
+        # SCIENTIFIC-KAG-V1: research predicates + type-ontology families;
+        # see core-predicates-v1.4.0.yaml.
+        yaml_path = path or (_RULE_PACK_PATH.parent / "core-predicates-v1.4.0.yaml")
+        compiled_name = "compiled_lexical-v1.4.0.json"
+    elif pack_version == "1.5.0":
+        # SPOKEN-RELATION-ADAPTER-V1: `created` object signature gains
+        # Technology (the creation class already accepted the pair via
+        # `developed`); shadow-qualified by eval/v5/spoken_adapter_shadow.py.
+        yaml_path = path or (_RULE_PACK_PATH.parent / "core-predicates-v1.5.0.yaml")
+        compiled_name = "compiled_lexical-v1.5.0.json"
     else:
         raise RulePackError(f"unknown rule pack version {pack_version!r}")
 
     raw = yaml.safe_load(yaml_path.read_text())
+    # SCIENTIFIC-KAG-V1: signature families resolve through the type
+    # ontology BEFORE structural validation, so a pack may author
+    # `subject_core: [ResearchArtifact]` and validate against concrete
+    # canonical types. Unknown family tokens fail loudly here.
+    from polymath_shared.type_ontology import expand_signature
+
+    for rule in raw.get("predicates", []):
+        rule["signatures"] = [
+            expand_signature(sig) for sig in (rule.get("signatures") or [])]
+    if raw.get("core_types") is not None:
+        known = set(raw["core_types"])
+        for rule in raw.get("predicates", []):
+            for sig in rule.get("signatures") or []:
+                known |= set(sig.get("subject_core") or [])
+                known |= set(sig.get("object_core") or [])
+        raw["core_types"] = sorted(known)
     resources = yaml.safe_load(_RESOURCE_INDEX_PATH.read_text())
     if not use_resources:
         return _compile_baseline(raw, resources)
@@ -380,6 +407,104 @@ def _signatures_overlap(sigs_a: list[dict], sigs_b: list[dict]) -> bool:
 # ---------------------------------------------------------------------------
 
 
+def _compile_frame_relation(candidate) -> CompilerDecision:
+    """PREDICATE-COMPILER-V2 (owner mission): compile a FRAME-anchored
+    candidate through the scientific predicate ontology.
+
+    semantic frame + typed roles -> predicate, fail-closed. Scope
+    constraints mirror the ontology: negated/speculative/conditional/
+    hypothetical/question REJECT; attributed QUALIFY. Every decision
+    reason carries the full provenance chain required by the owner:
+    semantic_frame_id, lexical_resource_source, predicate_mapping_rule,
+    subject/object types."""
+    from polymath_shared.rulepack.semantic_frames import resolve_predicate
+
+    evidence = candidate.evidence
+    scope: ScopeFlags = candidate.scope
+    source = getattr(evidence, "trigger_match_source", "") or ""
+    frame_id, _, lexical_source = source.partition("|")
+    frame_id = frame_id[6:] if frame_id.startswith("frame:") else None
+
+    def _core(side) -> str | None:
+        ct = getattr(getattr(side, "span", None), "core_type", None)
+        return getattr(ct, "value", None)
+
+    subj_type = _core(candidate.subject)
+    obj_type = _core(candidate.object)
+
+    mapping = None
+    if frame_id:
+        try:
+            mapping = resolve_predicate(
+                frame_id, subj_type, obj_type,
+                lemma_hint=getattr(evidence, "trigger_lemma", None))
+        except Exception:
+            mapping = None
+    if mapping is None:
+        return CompilerDecision(
+            decision="UNSUPPORTED",
+            reason=(f"frame_unmapped: semantic_frame_id={frame_id} "
+                    f"subject={subj_type} object={obj_type} "
+                    f"lexical_source={lexical_source or 'unknown'}"),
+            rule_id=None,
+        )
+
+    # ontology scope constraints (deterministic; mirrors pack rules)
+    if scope.negated or scope.speculative or scope.conditional \
+            or scope.hypothetical or scope.question:
+        return CompilerDecision(
+            decision="REJECT",
+            reason=(f"frame_scope_reject: negated={scope.negated} "
+                    f"speculative={scope.speculative} "
+                    f"conditional={scope.conditional} "
+                    f"hypothetical={scope.hypothetical} "
+                    f"question={scope.question}"),
+            rule_id=mapping["predicate"],
+        )
+    qualifier = "attributed_qualify" if scope.attributed else None
+
+    # Build the CanonicalFact exactly like the pack path so downstream
+    # admission/projection consume it unchanged.
+    from polymath_shared.contracts import CanonicalFact
+    from polymath_shared.identity import fact_id
+
+    subject_id = candidate.subject.resolved_entity_id
+    object_id = candidate.object.resolved_entity_id
+    if subject_id == object_id:
+        return CompilerDecision(decision="REJECT", reason="self_edge",
+                                rule_id=mapping["predicate"])
+    qualifiers = {}
+    if qualifier:
+        qualifiers["attributed"] = qualifier
+    onto_version = "scientific-predicate-ontology-v2.0.0"
+    fact = CanonicalFact(
+        fact_id=fact_id(mapping["predicate"], subject_id, object_id,
+                        qualifiers),
+        predicate=mapping["predicate"],
+        subject_id=subject_id,
+        object_id=object_id,
+        qualifiers=qualifiers,
+        decision="QUALIFY" if qualifier else "ACCEPT",
+        rule_id=mapping["predicate"],
+        rule_version=onto_version,
+        provenance={
+            "semantic_frame_id": frame_id,
+            "lexical_resource_source": lexical_source or "unknown",
+            "predicate_mapping_rule": mapping["predicate"],
+            "trigger_lemma": evidence.trigger_lemma,
+            "trigger_surface": evidence.text,
+            "orientation": "frame_role_oriented",
+            "weak": False,
+            "scope": scope.model_dump(),
+            "ontology_version": onto_version,
+            "evidence_span": [evidence.start, evidence.end],
+            "dependency_path": getattr(candidate, "roleset", None),
+        },
+    )
+    return CompilerDecision(decision=fact.decision, fact=fact,
+                            rule_id=mapping["predicate"])
+
+
 def compile_relation(
     candidate: RelationCandidate,
     syntactic: Optional[dict],
@@ -416,6 +541,15 @@ def compile_relation(
             reason=_scope_reason(scope),
             rule_id=None,
         )
+
+    # -- PREDICATE-COMPILER-V2: semantic frame lane -------------------------
+    # FRAME-classed anchors resolve frame + typed arguments -> predicate
+    # via the authored scientific ontology. Fail-closed: no valid typed
+    # mapping -> UNSUPPORTED. Provenance (semantic_frame_id, lexical
+    # resource source, mapping rule) rides the decision reason; the
+    # downstream admission gates are unchanged.
+    if (getattr(evidence, "trigger_lexical_class", "") or "").upper() == "FRAME":
+        return _compile_frame_relation(candidate)
 
     # -- stage 2: predicate candidates --------------------------------------
     matches = [
@@ -637,7 +771,10 @@ def _trigger_matches(rule: dict, evidence: Any) -> bool:
         if source == "nouns":
             return any(lemma == noun.lower() for noun in ev.get("nouns", []))
         if source == "multiword":
-            return any(phrase.lower() in text for phrase in ev.get("multiword", []))
+            return any(
+                re.search(r"(?<!\w)" + re.escape(phrase.lower()) + r"(?!\w)", text)
+                for phrase in ev.get("multiword", [])
+            )
         return False
 
     for verb in ev.get("verbs", []):
@@ -647,7 +784,7 @@ def _trigger_matches(rule: dict, evidence: Any) -> bool:
         if lemma == noun.lower():
             return True
     for phrase in ev.get("multiword", []):
-        if phrase.lower() in text:
+        if re.search(r"(?<!\w)" + re.escape(phrase.lower()) + r"(?!\w)", text):
             return True
     return False
 
@@ -802,6 +939,10 @@ def compile_relation_kimi(
             rule_id=None,
         )
 
+    # -- PREDICATE-COMPILER-V2: semantic frame lane (kimi path) -------------
+    if (getattr(evidence, "trigger_lexical_class", "") or "").upper() == "FRAME":
+        return _compile_frame_relation(candidate)
+
     # -- stage 2: predicate candidates --------------------------------------
     matches = [
         rules[rule_id]
@@ -944,6 +1085,19 @@ def _qualifiers(candidate: RelationCandidate, syntactic: Optional[dict]) -> dict
                 qualifiers["valid_from"] = temporal["valid_from"]
             if temporal.get("valid_until"):
                 qualifiers["valid_until"] = temporal["valid_until"]
+    # SCIENTIFIC-KAG-V1 phase 6: the generator captures the temporal
+    # complement from UD tokens (the parse record is retired); carry it
+    # as structured time on the fact.
+    surface = getattr(candidate, "temporal_surface", None)
+    if surface:
+        qualifiers["temporal_surface"] = surface
+        try:
+            from polymath_shared.scientific_concept import normalize_temporal
+            normalized = normalize_temporal(surface)
+            if normalized:
+                qualifiers.update(normalized)
+        except Exception:
+            pass
     return qualifiers
 
 

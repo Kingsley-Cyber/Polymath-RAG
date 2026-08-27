@@ -61,12 +61,24 @@ def predicate_endpoint_types_ok(predicate: str, subject_type: str,
 
 def surface_weak_locality_ok(trigger_start: int, trigger_end: int,
                              subject_start: int, subject_end: int,
-                             object_start: int, object_end: int) -> BindingVerdict:
+                             object_start: int, object_end: int,
+                             between_required: bool = True) -> BindingVerdict:
     """Trigger must lie between the endpoints and both endpoints must be
-    sentence-local to the trigger (no cross-sentence surface pairing)."""
+    sentence-local to the trigger (no cross-sentence surface pairing).
+
+    SPOKEN-RELATION-ADAPTER-V1: `between_required=False` is passed for
+    candidates whose OBJECT was bound through the relative-clause
+    antecedent (BindingSource.RELCL_ANTECEDENT). In "X, which Y made"
+    the trigger follows both endpoints BY CONSTRUCTION, so the
+    between-ness heuristic — a guard for pairings whose only evidence
+    is surface proximity — is categorically inapplicable: those
+    candidates carry the explicit dependency chain this gate's sibling
+    rules call "syntactic attachment". The sentence-locality distance
+    check still applies unchanged."""
     lo = min(subject_start, object_start)
     hi = max(subject_end, object_end)
-    if not (lo <= trigger_start <= hi or lo <= trigger_end <= hi):
+    if between_required and not (
+            lo <= trigger_start <= hi or lo <= trigger_end <= hi):
         return BindingVerdict(False, "trigger_outside_endpoint_span")
     if (trigger_start - subject_end) > _SURFACE_WEAK_MAX_ENDPOINT_DISTANCE and \
             (trigger_start - object_end) > _SURFACE_WEAK_MAX_ENDPOINT_DISTANCE:
@@ -221,10 +233,15 @@ def binding_gate_violation(
             return f"binding:{cv.reason}"
 
     if orientation == "surface_weak":
+        lse = getattr(candidate, "lexical_semantic_evidence", None)
+        tree_licensed_object = bool(lse and any(
+            str(getattr(b, "value", b)) == "RELCL_ANTECEDENT"
+            for b in (getattr(lse, "binding_sources", None) or [])))
         lv = surface_weak_locality_ok(
             max(0, ev.start - sentence_start), max(0, ev.end - sentence_start),
             max(0, subj_span.start - sentence_start), max(0, subj_span.end - sentence_start),
             max(0, obj_span.start - sentence_start), max(0, obj_span.end - sentence_start),
+            between_required=not tree_licensed_object,
         )
         if not lv.ok:
             return f"binding:{lv.reason}"

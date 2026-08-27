@@ -1,0 +1,124 @@
+# knowledge-types.yaml — KNOWLEDGE-ROUTER-V1.1
+#
+# OWNER CORRECTION APPLIED: the router is a COST OPTIMIZER / priority
+# system, NOT a gatekeeper. It decides what to PRIORITIZE, never what
+# exists — one ingestion engine, multiple grounded representations.
+#
+# Mode renamed FACTUAL -> SCIENTIFIC_RELATIONAL (tutorials contain
+# facts; this mode means "predicate extraction is valuable here").
+#
+# Policy tiers per mode:
+#   always    extraction runs regardless of confidence
+#   preferred high-priority lanes for this mode
+#   optional  run when confidence/budget allows
+#   disabled  off for this mode (the ONLY tier that turns anything off)
+
+version: "knowledge-router-v1.1.0"
+
+modes:
+  - SCIENTIFIC_RELATIONAL
+  - PROCEDURAL
+  - CONCEPTUAL
+  - NARRATIVE
+  - REFERENCE
+
+domains:
+  - artificial_intelligence
+  - cybersecurity
+  - commerce
+  - software_engineering
+  - finance
+  - biomedical
+  - philosophy
+  - marketing
+  - military
+  - general
+
+lexicons:
+  SCIENTIFIC_RELATIONAL:
+    - [evaluated, 2]
+    - [experiment, 2]
+    - [dataset, 2]
+    - [benchmark, 2]
+    - [results, 1]
+    - [methodology, 2]
+    - [pretrained, 2]
+    - [baseline, 1]
+    - [corpus, 2]
+    - [hypothesis, 2]
+    - [state-of-the-art, 2]
+  PROCEDURAL:
+    - [install, 2]
+    - [configure, 2]
+    - [select, 1]
+    - [step, 2]
+    - [run, 1]
+    - [execute, 2]
+    - [open, 1]
+    - [go to, 2]
+    - [paste, 2]
+    - [deploy, 2]
+    - [setup, 2]
+    - [prompt, 1]
+    - [report, 1]
+    - [workflow, 1]
+  CONCEPTUAL:
+    - [meaning, 2]
+    - [principle, 2]
+    - [philosophy, 2]
+    - [framework, 1]
+    - [argues, 2]
+    - [concept, 1]
+    - [represents, 1]
+    - [teaches, 2]
+    - [definition, 1]
+    - [doctrine, 2]
+  NARRATIVE:
+    - [hey guys, 2]
+    - [in this video, 2]
+    - [story, 1]
+
+structure_patterns:
+  PROCEDURAL:
+    - {regex: "(?im)^step\\s*\\d+", weight: 3}
+    - {regex: "(?im)^\\d+\\.\\s", weight: 2}
+    - {regex: "\\*\\*\\[\\d+:\\d+\\]\\*\\*", weight: 2}
+    - {regex: "(?i)\\b(install|configure|set up|navigate to)\\b", weight: 1}
+  SCIENTIFIC_RELATIONAL:
+    - {regex: "(?im)^#{1,3}\\s*(abstract|methodology|results|conclusion|related work)\\b", weight: 3}
+    - {regex: "(?i)\\b(we (evaluate|propose|demonstrate)|state-of-the-art)\\b", weight: 2}
+
+metadata_hints:
+  PROCEDURAL:
+    - {key: source_format, equals: youtube_transcript, weight: 2}
+  NARRATIVE:
+    - {key: source_format, equals: youtube_transcript, weight: 1}
+
+# OWNER ROUTING CONTRACT: priorities, not gates.
+# entity extraction is ALWAYS on (Entity Admission governs it anyway).
+routing_policy:
+  SCIENTIFIC_RELATIONAL:
+    always:    [entity]
+    preferred: [scientific_predicate, evidence, concept]
+    optional:  [procedure]
+    disabled:  []
+  PROCEDURAL:
+    always:    [entity]
+    preferred: [procedure, concept]
+    optional:  []
+    disabled:  [scientific_predicate]
+  CONCEPTUAL:
+    always:    [entity, concept]
+    preferred: [framework, argument]
+    optional:  []
+    disabled:  [scientific_predicate]
+  NARRATIVE:
+    always:    [entity]
+    preferred: []
+    optional:  [concept]
+    disabled:  [scientific_predicate]
+  REFERENCE:
+    always:    [entity]
+    preferred: [concept]
+    optional:  [procedure]
+    disabled:  []

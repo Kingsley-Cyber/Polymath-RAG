@@ -142,3 +142,63 @@ def test_typed_trigger_contract_fields_populated():
     for s in multi_hits:
         assert s.trigger_lexical_class == "MULTIWORD"
         assert s.trigger_predicate_id
+
+
+def test_unlike_does_not_license_like_trigger():
+    spans = triggers_for(
+        "Unlike the action phase, the investment phase concerns "
+        "the expectation of a future value."
+    )
+    assert not any(s.trigger_predicate_id == "similar_to" for s in spans)
+
+
+def test_embedded_words_do_not_fire_multiword_triggers():
+    for text in ("users likely prefer speed.",
+                 "his dislike of noise was known.",
+                 "the almanac listed dates."):
+        spans = triggers_for(text)
+        embedded = {"like", "aka", "per", "part of"}
+        assert not any(s.trigger_lemma in embedded and
+                       s.trigger_match_source == "multiword"
+                       for s in spans), f"{text}: {spans}"
+
+
+def test_genuine_like_and_similar_to_still_fire():
+    hits = triggers_for("A tablet is like a small laptop.")
+    like = [s for s in hits if s.trigger_predicate_id == "similar_to"
+            and s.trigger_match_source == "multiword"]
+    assert like and any(s.text.lower() == "like" for s in like)
+
+    sim = triggers_for("Caching is similar to memoization.")
+    hit = [s for s in sim if s.trigger_predicate_id == "similar_to"
+           and s.trigger_match_source == "multiword"]
+    assert hit
+
+
+def test_compiler_multiword_validation_is_word_bounded():
+    from polymath_shared.rulepack.compiler import _trigger_matches
+
+    rule = PACK["predicates"]["similar_to"]
+
+    class Ev:
+        evidence_class = "comparison"
+
+        def __init__(self, text):
+            self.text = text
+            self.trigger_lemma = "like"
+            self.trigger_predicate_id = "similar_to"
+            self.trigger_match_source = "multiword"
+
+    assert not _trigger_matches(rule, Ev("Unlike the action phase"))
+    assert not _trigger_matches(rule, Ev("The likely outcome"))
+    assert _trigger_matches(rule, Ev("a device like a router"))
+    assert _trigger_matches(rule, Ev("similar to its predecessor"))
+
+    class Untyped(Ev):
+        def __init__(self, text):
+            super().__init__(text)
+            self.trigger_predicate_id = None
+            self.trigger_match_source = None
+
+    assert not _trigger_matches(rule, Untyped("unlike its rival"))
+    assert _trigger_matches(rule, Untyped("nothing like the original"))

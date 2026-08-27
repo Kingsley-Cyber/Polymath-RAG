@@ -1,0 +1,132 @@
+# POLYMATH RUNTIME BUDGET — one hard ceiling for the whole repository.
+#
+# The workstation owner allocates Polymath 19 GB on a 32 GB Mac Studio
+# (13 -> 16 -> 19, each raise deliberate). 19 GB is the first figure that
+# admits the FULL FLEET, which measures 17.95 GB once every sidecar cap
+# is measured rather than estimated. Profiles remain the default: a
+# stage that never calls GLiNER should still not hold its model.
+# Everything Polymath starts must fit inside it: the Docker VM holding
+# the stores, every sidecar's model and GPU pool, the workers, and the
+# orchestrator. Exceeding it is a defect, not a tuning opportunity.
+#
+# Why this file exists: the embedder was observed holding 41.58 GiB of
+# MPS memory on a 32 GB machine because `model.encode()` was called with
+# no batch bound and PyTorch's Metal pool was never released. That is
+# what made the host thrash. A budget nobody enforces is a comment, so
+# these numbers are read at boot, exported as real limits, and checked
+# by a preflight that refuses to start an over-committed fleet.
+
+total_gb: 19.0
+
+# --------------------------------------------------------------------
+# Stores (Docker VM). The VM reserves its allocation as wired memory
+# whether or not containers use it, so this is a real cost the moment
+# Docker starts — it is the single largest line and the one most worth
+# keeping honest.
+# --------------------------------------------------------------------
+docker:
+  vm_gb: 5.0
+  containers:
+    qdrant_gb: 2.5      # vectors are mmap'd; it pages rather than pins
+    neo4j_gb: 1.0
+    postgres_gb: 1.0
+    redis_gb: 0.25
+
+# --------------------------------------------------------------------
+# Sidecars. `resident_gb` is the host RAM the process holds; `mps_gb`
+# caps its Metal pool, which is the allocation that actually ran away.
+#
+# NOT all sidecars run at once. A projection needs the embedder only; an
+# extraction needs GLiNER and spaCy. `POLYMATH_FLEET_ONLY` selects the
+# working set, and the preflight budgets only what is actually started.
+# --------------------------------------------------------------------
+# MEASURED, not estimated. `mps_gb` must cover PEAK DRIVER allocation
+# (weights plus the allocator's cached blocks), which is what the
+# watermark ratio actually governs -- not live tensors. Qwen3-Embedding
+# -0.6B measures 1.11 GiB of bfloat16 weights at rest and 3.17 GiB peak
+# under an 8x2048-token batch. An earlier 2.0 GB guess was ~40% short:
+# even 8 texts of 500 tokens reached 2.14 GiB, so every projection
+# request failed with `MPS backend out of memory` and the batch splitter
+# could not help, because a SINGLE long text already exceeded the cap.
+sidecars:
+  sidecar_embedder:
+    port: 8742          # observed to decide if this cap is actually held
+    resident_gb: 0.5      # measured host RSS ~0.30 GB; headroom for tokenizer
+    mps_gb: 3.5           # measured peak 3.17 GiB + margin
+    # Long chunk texts make attention memory scale with the SQUARE of
+    # sequence length, so batches are bounded by TOKENS, not by count.
+    max_batch_tokens: 16384
+    max_batch_texts: 8
+  sidecar_gliner:
+    port: 8740          # observed to decide if this cap is actually held
+    resident_gb: 0.8
+    # gliner_medium-v2.1: 195M params in FLOAT32, so 0.73 GiB of weights
+    # at rest and 3.02 GiB peak driver on an 8x750-token batch. The 2.0
+    # GB guess here failed extraction on /infer_batch exactly as the same
+    # guess had already failed embedding on /infer.
+    mps_gb: 3.5           # measured peak 3.02 GiB + margin
+  sidecar_spacy:
+    port: 8744          # observed to decide if this cap is actually held
+    resident_gb: 0.5
+    mps_gb: 0.0         # CPU pipeline
+  sidecar_reranker:
+    port: 8743          # observed to decide if this cap is actually held
+    resident_gb: 0.8
+    # Also a Qwen3 0.6B, so weights alone are ~1.11 GiB. Reranking sees
+    # shorter query+passage pairs than a full chunk, but 1.5 GB could
+    # never have held weights plus activations.
+    # 3.0 was 38 MiB short in production: a 16x4000-char batch peaks at
+    # the cap exactly (observed 2026-08-26, MPS OOM at 2.97/3.00 GiB on
+    # apply_rotary_pos_emb). 3.5 gives the measured peak real headroom.
+    mps_gb: 3.5
+
+# --------------------------------------------------------------------
+# Control plane. Workers are thin; the orchestrator holds request state.
+# --------------------------------------------------------------------
+control_plane:
+  per_worker_gb: 0.15
+  orchestrator_gb: 0.5
+  control_gb: 0.15
+
+# Refuse to start when the selected working set exceeds the ceiling.
+enforce_preflight: true
+# Leave this much of the budget unallocated for spikes.
+reserve_gb: 0.5
+
+# --------------------------------------------------------------------
+# PROFILES — the working sets Polymath actually runs.
+#
+# At 19 GB the full fleet (17.95 GB) fits, so profiles are once again an
+# EFFICIENCY choice rather than a necessity: no stage calls every model,
+# so a projection should not hold GLiNER resident and an extraction
+# should not hold the reranker. Select one with POLYMATH_PROFILE; omit
+# it to run everything. The preflight refuses an over-committed set
+# rather than discovering it by thrashing.
+# --------------------------------------------------------------------
+profiles:
+  projection:
+    why: "embed + upsert vectors; needs no extraction models"
+    slots: [control, qdrant, sidecar_embedder]
+  extraction:
+    why: "ingest and extract; needs GLiNER and spaCy, plus embedder for projection"
+    slots: [control, intake, profile, extract, sidecar_gliner, sidecar_spacy,
+            sidecar_embedder]
+  pipeline:
+    why: "every ingestion stage end to end: intake through verify, with the
+          extraction and embedding models. Excludes the orchestrator and
+          reranker, which serve queries and are not part of building."
+    slots: [control, intake, profile, extract, canonicalize,
+            project_canonical, neo4j, qdrant, verify, summaries,
+            sidecar_gliner, sidecar_spacy, sidecar_embedder]
+  converge:
+    why: "drive an already-extracted corpus to query_ready: project vectors,
+          canonicalize, project the graph, verify. Extraction models are not
+          called, so GLiNER, spaCy and the reranker stay unloaded."
+    slots: [control, qdrant, canonicalize, project_canonical, neo4j, verify,
+            summaries, sidecar_embedder]
+  graph:
+    why: "canonicalize and project the graph; no provider models"
+    slots: [control, canonicalize, project_canonical, neo4j, verify]
+  retrieval:
+    why: "serve queries; needs embedder for query vectors and the reranker"
+    slots: [orchestrator, sidecar_embedder, sidecar_reranker]

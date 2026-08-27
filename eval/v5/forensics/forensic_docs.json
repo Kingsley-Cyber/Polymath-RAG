@@ -1,0 +1,1227 @@
+[
+ {
+  "doc_id": "doc_991badd17bc485814d7bc839820025cda9446d81fef26f4405a4f6b2b289a8d9",
+  "source": "/Users/king/Downloads/book-optimizer/books/03_practical_threat_detection_engineering_cc8621d8.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 15569764,
+  "chunks": 531,
+  "slices": 3911,
+  "raw_proposals": 5505,
+  "hypotheses": 6769,
+  "mentions": 4829,
+  "durable_mentions": 1454,
+  "distinct_entities": 599,
+  "rel_candidates": 1022,
+  "rc_by_decision": {
+   "ACCEPT": 142,
+   "QUALIFY": 113,
+   "REJECT": 767
+  },
+  "facts": 225,
+  "perf": {
+   "chunks": 531,
+   "slices": 3911,
+   "total_s": 219.0,
+   "rescue_s": 93.22,
+   "slices_s": 0.18,
+   "syntax_s": 4.57,
+   "admission_s": 34.31,
+   "entity_pass_s": 77.46,
+   "l1_l4_writes_s": 0.16,
+   "provider_calls": 17,
+   "evidence_pass_s": 1.92,
+   "persist_mentions_s": 0.79,
+   "candidates_compile_s": 4.48
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 15:01:51.721913+00:00",
+    "2026-08-21 15:01:51.721913+00:00"
+   ],
+   "intake": [
+    "2026-08-21 13:45:24.070091+00:00",
+    "2026-08-21 13:46:11.125443+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 15:05:56.956099+00:00",
+    "2026-08-21 15:05:56.956099+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_b07a1f1fbf2a453eef26759c312b9e0d2ae555875960f1973c7953c73af5b3c3",
+  "source": "/Users/king/Downloads/book-optimizer/books/01_sanders_applied_network_security_monitoring_160e2a94.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 7775216,
+  "chunks": 864,
+  "slices": 6116,
+  "raw_proposals": 9375,
+  "hypotheses": 11908,
+  "mentions": 7852,
+  "durable_mentions": 3437,
+  "distinct_entities": 1216,
+  "rel_candidates": 1907,
+  "rc_by_decision": {
+   "ACCEPT": 266,
+   "QUALIFY": 171,
+   "REJECT": 1470
+  },
+  "facts": 392,
+  "perf": {
+   "chunks": 864,
+   "slices": 6116,
+   "total_s": 366.66,
+   "rescue_s": 168.87,
+   "slices_s": 0.32,
+   "syntax_s": 8.68,
+   "admission_s": 45.97,
+   "entity_pass_s": 126.48,
+   "l1_l4_writes_s": 0.11,
+   "provider_calls": 27,
+   "evidence_pass_s": 3.2,
+   "persist_mentions_s": 1.19,
+   "candidates_compile_s": 7.89
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 14:50:53.405446+00:00",
+    "2026-08-21 14:50:53.405446+00:00"
+   ],
+   "intake": [
+    "2026-08-21 13:45:20.851368+00:00",
+    "2026-08-21 13:46:57.250206+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 14:57:40.870895+00:00",
+    "2026-08-21 14:57:40.870895+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_0cbec94dddba0e1ae8c7328bdb87f54019d3e78480d859d861af56545b0fbdaa",
+  "source": "/Users/king/Downloads/book-optimizer/books/02_collins_network_security_through_data_analysis_6b9f94a7.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 7950909,
+  "chunks": 499,
+  "slices": 3157,
+  "raw_proposals": 5358,
+  "hypotheses": 6525,
+  "mentions": 4589,
+  "durable_mentions": 1963,
+  "distinct_entities": 932,
+  "rel_candidates": 1526,
+  "rc_by_decision": {
+   "ACCEPT": 218,
+   "QUALIFY": 95,
+   "REJECT": 1213
+  },
+  "facts": 280,
+  "perf": {
+   "chunks": 499,
+   "slices": 3157,
+   "total_s": 259.78,
+   "rescue_s": 110.46,
+   "slices_s": 0.2,
+   "syntax_s": 6.07,
+   "admission_s": 32.9,
+   "entity_pass_s": 99.58,
+   "l1_l4_writes_s": 0.17,
+   "provider_calls": 16,
+   "evidence_pass_s": 2.26,
+   "persist_mentions_s": 0.85,
+   "candidates_compile_s": 4.7
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 14:57:16.626409+00:00",
+    "2026-08-21 14:57:16.626409+00:00"
+   ],
+   "intake": [
+    "2026-08-21 13:45:22.356398+00:00",
+    "2026-08-21 13:46:28.850032+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 15:02:12.921877+00:00",
+    "2026-08-21 15:02:12.921877+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_f82291ce2d28a06717cf7dc3f306c326b2883cc2095bdd2c7d725ccefbf77704",
+  "source": "/Users/king/Downloads/book-optimizer/books/11_kleppmann_designing_data_intensive_applications_f8d541ef.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 8602734,
+  "chunks": 1271,
+  "slices": 8603,
+  "raw_proposals": 16544,
+  "hypotheses": 16512,
+  "mentions": 13950,
+  "durable_mentions": 5760,
+  "distinct_entities": 2171,
+  "rel_candidates": 3360,
+  "rc_by_decision": {
+   "ACCEPT": 442,
+   "QUALIFY": 270,
+   "REJECT": 2648
+  },
+  "facts": 634,
+  "perf": {
+   "chunks": 1271,
+   "slices": 8603,
+   "total_s": 617.46,
+   "rescue_s": 205.47,
+   "slices_s": 0.48,
+   "syntax_s": 14.05,
+   "admission_s": 181.49,
+   "entity_pass_s": 190.02,
+   "l1_l4_writes_s": 0.19,
+   "provider_calls": 40,
+   "evidence_pass_s": 5.17,
+   "persist_mentions_s": 1.11,
+   "candidates_compile_s": 13.01
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 15:33:23.579385+00:00",
+    "2026-08-21 15:33:23.579385+00:00"
+   ],
+   "intake": [
+    "2026-08-21 13:46:23.525223+00:00",
+    "2026-08-21 13:46:23.525223+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 15:44:04.603324+00:00",
+    "2026-08-21 15:44:04.603324+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_57975b66cd754267913400a92a379634f9c696167311bd29705410e37d5f8632",
+  "source": "/Users/king/Desktop/CySA_Books/01_Mastering_Cybersecurity_Bhardwaj.pdf",
+  "media_type": "application/pdf",
+  "bytes": 55910316,
+  "chunks": 404,
+  "slices": 2595,
+  "raw_proposals": 4298,
+  "hypotheses": 4260,
+  "mentions": 3433,
+  "durable_mentions": 1317,
+  "distinct_entities": 644,
+  "rel_candidates": 659,
+  "rc_by_decision": {
+   "ACCEPT": 154,
+   "QUALIFY": 87,
+   "REJECT": 418
+  },
+  "facts": 234,
+  "perf": {
+   "chunks": 404,
+   "slices": 2595,
+   "total_s": 149.22,
+   "rescue_s": 80.33,
+   "slices_s": 0.13,
+   "syntax_s": 2.91,
+   "admission_s": 9.33,
+   "entity_pass_s": 51.17,
+   "l1_l4_writes_s": 0.03,
+   "provider_calls": 13,
+   "evidence_pass_s": 1.3,
+   "persist_mentions_s": 0.21,
+   "candidates_compile_s": 2.95
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 13:45:09.805633+00:00",
+    "2026-08-21 14:23:59.800530+00:00"
+   ],
+   "intake": [
+    "2026-08-21 13:45:02.152842+00:00",
+    "2026-08-21 13:46:45.395505+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 13:48:20.172036+00:00",
+    "2026-08-21 13:48:20.172036+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_8f42e97a4b9164c1bae80d4dd8f7801d8d187097637a9ae0e0b1be921f04df58",
+  "source": "/Users/king/Downloads/book-optimizer/books/14_richards_fundamentals_of_software_architecture_bdd8ac66.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 19713902,
+  "chunks": 592,
+  "slices": 4497,
+  "raw_proposals": 9825,
+  "hypotheses": 7798,
+  "mentions": 8312,
+  "durable_mentions": 2009,
+  "distinct_entities": 752,
+  "rel_candidates": 2564,
+  "rc_by_decision": {
+   "ACCEPT": 523,
+   "QUALIFY": 203,
+   "REJECT": 1838
+  },
+  "facts": 667,
+  "perf": {
+   "chunks": 592,
+   "slices": 4497,
+   "total_s": 314.91,
+   "rescue_s": 128.95,
+   "slices_s": 0.28,
+   "syntax_s": 6.0,
+   "admission_s": 77.15,
+   "entity_pass_s": 85.43,
+   "l1_l4_writes_s": 0.26,
+   "provider_calls": 19,
+   "evidence_pass_s": 2.47,
+   "persist_mentions_s": 1.51,
+   "candidates_compile_s": 8.56
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 15:57:34.811045+00:00",
+    "2026-08-21 15:57:34.811045+00:00"
+   ],
+   "intake": [
+    "2026-08-21 13:46:36.315087+00:00",
+    "2026-08-21 13:46:36.315087+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 16:03:14.383352+00:00",
+    "2026-08-21 16:03:14.383352+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_1c4615dabc971a4537bfbbcdc0ea8b8f22652d6a90e899db175ce56e85975180",
+  "source": "/Users/king/Desktop/CySA_Books/04_Jump-start_SOC_Analyst_Wall_Rodrick.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 1866510,
+  "chunks": 169,
+  "slices": 1176,
+  "raw_proposals": 2644,
+  "hypotheses": 2281,
+  "mentions": 2489,
+  "durable_mentions": 1199,
+  "distinct_entities": 462,
+  "rel_candidates": 910,
+  "rc_by_decision": {
+   "ACCEPT": 109,
+   "QUALIFY": 114,
+   "REJECT": 687
+  },
+  "facts": 197,
+  "perf": {
+   "chunks": 169,
+   "slices": 1176,
+   "total_s": 67.23,
+   "rescue_s": 34.2,
+   "slices_s": 0.05,
+   "syntax_s": 1.62,
+   "admission_s": 6.94,
+   "entity_pass_s": 21.29,
+   "l1_l4_writes_s": 0.05,
+   "provider_calls": 6,
+   "evidence_pass_s": 0.61,
+   "persist_mentions_s": 0.23,
+   "candidates_compile_s": 1.71
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 14:19:58.525492+00:00",
+    "2026-08-21 14:35:51.774876+00:00"
+   ],
+   "intake": [
+    "2026-08-21 13:45:11.706038+00:00",
+    "2026-08-21 13:46:50.144557+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 14:37:23.282518+00:00",
+    "2026-08-21 14:37:23.282518+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_65cf5f59bcc1511e9888ab0fc333bce6f7f7bb4492811375219847fa09d44488",
+  "source": "/private/tmp/claude-501/-Users-king/17eef079-3bfc-4843-a0df-27336d0e1d3d/scratchpad/13_beyer_sre_converted.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 4974018,
+  "chunks": 952,
+  "slices": 7496,
+  "raw_proposals": 11439,
+  "hypotheses": 12722,
+  "mentions": 9958,
+  "durable_mentions": 3752,
+  "distinct_entities": 1424,
+  "rel_candidates": 2444,
+  "rc_by_decision": {
+   "ACCEPT": 385,
+   "QUALIFY": 181,
+   "REJECT": 1878
+  },
+  "facts": 518,
+  "perf": {
+   "chunks": 952,
+   "slices": 7496,
+   "total_s": 459.78,
+   "rescue_s": 196.3,
+   "slices_s": 0.45,
+   "syntax_s": 10.15,
+   "admission_s": 105.0,
+   "entity_pass_s": 126.51,
+   "l1_l4_writes_s": 0.18,
+   "provider_calls": 30,
+   "evidence_pass_s": 4.48,
+   "persist_mentions_s": 1.53,
+   "candidates_compile_s": 9.92
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 16:05:20.956553+00:00",
+    "2026-08-21 16:05:20.956553+00:00"
+   ],
+   "intake": [
+    "2026-08-21 14:38:23.236926+00:00",
+    "2026-08-21 14:42:59.723130+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 16:13:22.247873+00:00",
+    "2026-08-21 16:13:22.247873+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_f093d53e53bf2c16ea644ca0a1b5bc550b00de34e5d5d6de8f571127fd7ef647",
+  "source": "/Users/king/Downloads/book-optimizer/books/12_bellemare_building_event_driven_microservices_9538edc0.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 2899805,
+  "chunks": 554,
+  "slices": 2825,
+  "raw_proposals": 5458,
+  "hypotheses": 6830,
+  "mentions": 4663,
+  "durable_mentions": 1227,
+  "distinct_entities": 485,
+  "rel_candidates": 1514,
+  "rc_by_decision": {
+   "ACCEPT": 141,
+   "QUALIFY": 157,
+   "REJECT": 1216
+  },
+  "facts": 275,
+  "perf": {
+   "chunks": 554,
+   "slices": 2825,
+   "total_s": 237.1,
+   "rescue_s": 112.54,
+   "slices_s": 0.17,
+   "syntax_s": 5.54,
+   "admission_s": 40.59,
+   "entity_pass_s": 67.16,
+   "l1_l4_writes_s": 0.15,
+   "provider_calls": 18,
+   "evidence_pass_s": 2.31,
+   "persist_mentions_s": 0.87,
+   "candidates_compile_s": 5.57
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 15:53:26.502547+00:00",
+    "2026-08-21 15:53:26.502547+00:00"
+   ],
+   "intake": [
+    "2026-08-21 13:46:35.298462+00:00",
+    "2026-08-21 13:46:35.298462+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 15:57:58.594072+00:00",
+    "2026-08-21 15:57:58.594072+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_09af89bc18f7a308edc0dd9402090eed331dae849622a52c6f1c2b8e4bf3ae5b",
+  "source": "/Users/king/Downloads/book-optimizer/books/04_sikorski_practical_malware_analysis_4c35c520.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 10632607,
+  "chunks": 1457,
+  "slices": 10455,
+  "raw_proposals": 11392,
+  "hypotheses": 16674,
+  "mentions": 9681,
+  "durable_mentions": 5123,
+  "distinct_entities": 1778,
+  "rel_candidates": 1504,
+  "rc_by_decision": {
+   "ACCEPT": 323,
+   "QUALIFY": 126,
+   "REJECT": 1055
+  },
+  "facts": 395,
+  "perf": {
+   "chunks": 1457,
+   "slices": 10455,
+   "total_s": 537.13,
+   "rescue_s": 187.73,
+   "slices_s": 0.5,
+   "syntax_s": 12.42,
+   "admission_s": 79.1,
+   "entity_pass_s": 234.4,
+   "l1_l4_writes_s": 0.12,
+   "provider_calls": 46,
+   "evidence_pass_s": 5.19,
+   "persist_mentions_s": 0.96,
+   "candidates_compile_s": 12.05
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 15:05:38.595225+00:00",
+    "2026-08-21 15:05:38.595225+00:00"
+   ],
+   "intake": [
+    "2026-08-21 13:46:04.342657+00:00",
+    "2026-08-21 13:46:12.251501+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 15:15:02.672749+00:00",
+    "2026-08-21 15:15:02.672749+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_f2c544966051316b213119bf34494bcd52c72073bbb892bf81180550c87b5409",
+  "source": "/Users/king/Downloads/book-optimizer/books/06_brown_intelligence_driven_incident_response_cc8b3069.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 4620959,
+  "chunks": 487,
+  "slices": 3636,
+  "raw_proposals": 6758,
+  "hypotheses": 6237,
+  "mentions": 5985,
+  "durable_mentions": 1616,
+  "distinct_entities": 763,
+  "rel_candidates": 1654,
+  "rc_by_decision": {
+   "ACCEPT": 269,
+   "QUALIFY": 166,
+   "REJECT": 1219
+  },
+  "facts": 417,
+  "perf": {
+   "chunks": 487,
+   "slices": 3636,
+   "total_s": 216.14,
+   "rescue_s": 89.48,
+   "slices_s": 0.19,
+   "syntax_s": 4.72,
+   "admission_s": 41.65,
+   "entity_pass_s": 68.97,
+   "l1_l4_writes_s": 0.22,
+   "provider_calls": 16,
+   "evidence_pass_s": 1.79,
+   "persist_mentions_s": 1.31,
+   "candidates_compile_s": 5.25
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 15:20:14.428321+00:00",
+    "2026-08-21 15:20:14.428321+00:00"
+   ],
+   "intake": [
+    "2026-08-21 13:46:15.832709+00:00",
+    "2026-08-21 13:46:15.832709+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 15:24:16.737857+00:00",
+    "2026-08-21 15:24:16.737857+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_2fac912df70b6fc118d5a28311fabd1ff671e701d5a4b7f38c9d39c7b53d7210",
+  "source": "/private/tmp/claude-501/-Users-king/17eef079-3bfc-4843-a0df-27336d0e1d3d/scratchpad/02_Data_Engineering_clean2.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 827902,
+  "chunks": 535,
+  "slices": 3276,
+  "raw_proposals": 5763,
+  "hypotheses": 8677,
+  "mentions": 4380,
+  "durable_mentions": 1725,
+  "distinct_entities": 453,
+  "rel_candidates": 603,
+  "rc_by_decision": {
+   "ACCEPT": 155,
+   "QUALIFY": 86,
+   "REJECT": 362
+  },
+  "facts": 219,
+  "perf": {
+   "chunks": 535,
+   "slices": 3276,
+   "total_s": 307.98,
+   "rescue_s": 161.5,
+   "slices_s": 0.22,
+   "syntax_s": 5.81,
+   "admission_s": 15.24,
+   "entity_pass_s": 113.17,
+   "l1_l4_writes_s": 0.15,
+   "provider_calls": 17,
+   "evidence_pass_s": 2.04,
+   "persist_mentions_s": 1.81,
+   "candidates_compile_s": 3.9
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 18:20:28.095087+00:00",
+    "2026-08-21 18:25:43.517723+00:00"
+   ],
+   "intake": [
+    "2026-08-21 18:20:26.055279+00:00",
+    "2026-08-21 18:20:43.394499+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 18:26:10.015205+00:00",
+    "2026-08-21 18:26:10.015205+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_4c7ae65e639cd661b0e6f009333ace57ae9a5955bda78d12eacc23d64f2132fd",
+  "source": "/Users/king/Desktop/CySA_Books/06_Hands-On_Splunk_on_AWS_Sinha.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 17653988,
+  "chunks": 809,
+  "slices": 5661,
+  "raw_proposals": 11798,
+  "hypotheses": 11258,
+  "mentions": 8596,
+  "durable_mentions": 4148,
+  "distinct_entities": 704,
+  "rel_candidates": 1799,
+  "rc_by_decision": {
+   "ACCEPT": 495,
+   "QUALIFY": 217,
+   "REJECT": 1087
+  },
+  "facts": 653,
+  "perf": {
+   "chunks": 809,
+   "slices": 5661,
+   "total_s": 351.03,
+   "rescue_s": 183.6,
+   "slices_s": 0.35,
+   "syntax_s": 7.01,
+   "admission_s": 48.89,
+   "entity_pass_s": 95.57,
+   "l1_l4_writes_s": 0.13,
+   "provider_calls": 26,
+   "evidence_pass_s": 3.15,
+   "persist_mentions_s": 0.98,
+   "candidates_compile_s": 8.21
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 14:36:59.149460+00:00",
+    "2026-08-21 14:36:59.149460+00:00"
+   ],
+   "intake": [
+    "2026-08-21 13:45:14.516394+00:00",
+    "2026-08-21 13:46:51.772329+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 14:43:23.795679+00:00",
+    "2026-08-21 14:43:23.795679+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_5e469c77ef5fda7aa153c2ba6b65cb74268c98900af530dae53f361065203ce6",
+  "source": "/Users/king/Downloads/book-optimizer/books/07_cialdini_influence_psychology_of_persuasion_9c007aa1.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 200099,
+  "chunks": 22,
+  "slices": 173,
+  "raw_proposals": 249,
+  "hypotheses": 314,
+  "mentions": 255,
+  "durable_mentions": 25,
+  "distinct_entities": 20,
+  "rel_candidates": 54,
+  "rc_by_decision": {
+   "ACCEPT": 7,
+   "QUALIFY": 11,
+   "REJECT": 36
+  },
+  "facts": 18,
+  "perf": {
+   "chunks": 22,
+   "slices": 173,
+   "total_s": 15.48,
+   "rescue_s": 5.12,
+   "slices_s": 0.01,
+   "syntax_s": 0.49,
+   "admission_s": 0.23,
+   "entity_pass_s": 9.16,
+   "l1_l4_writes_s": 0.0,
+   "provider_calls": 1,
+   "evidence_pass_s": 0.08,
+   "persist_mentions_s": 0.03,
+   "candidates_compile_s": 0.17
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 15:23:56.502421+00:00",
+    "2026-08-21 15:23:56.502421+00:00"
+   ],
+   "intake": [
+    "2026-08-21 13:46:16.974370+00:00",
+    "2026-08-21 13:46:16.974370+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 15:24:53.390762+00:00",
+    "2026-08-21 15:24:53.390762+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_00f05454439706423fa9a25d841a16315ff0a918cfaaeafb5715cf946ed43f84",
+  "source": "/Users/king/Desktop/hermes agent/libgen-workflows/epub/02b-Bernays-Propaganda-1928.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 444190,
+  "chunks": 193,
+  "slices": 988,
+  "raw_proposals": 2337,
+  "hypotheses": 2264,
+  "mentions": 2330,
+  "durable_mentions": 764,
+  "distinct_entities": 365,
+  "rel_candidates": 1214,
+  "rc_by_decision": {
+   "ACCEPT": 173,
+   "QUALIFY": 119,
+   "REJECT": 922
+  },
+  "facts": 256,
+  "perf": {
+   "chunks": 193,
+   "slices": 988,
+   "total_s": 91.41,
+   "rescue_s": 35.42,
+   "slices_s": 0.06,
+   "syntax_s": 3.14,
+   "admission_s": 15.76,
+   "entity_pass_s": 33.29,
+   "l1_l4_writes_s": 0.08,
+   "provider_calls": 7,
+   "evidence_pass_s": 0.8,
+   "persist_mentions_s": 0.24,
+   "candidates_compile_s": 1.84
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 14:47:23.086019+00:00",
+    "2026-08-21 14:47:23.086019+00:00"
+   ],
+   "intake": [
+    "2026-08-21 13:45:20.153812+00:00",
+    "2026-08-21 13:46:54.205513+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 14:49:24.580180+00:00",
+    "2026-08-21 14:49:24.580180+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_ac90e2b8aff80ae15795a64ce6daa31dc87001f13a9c0ba0eb76a097cdd6c29f",
+  "source": "/Users/king/Downloads/book-optimizer/books/08_burns_designing_distributed_systems.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 3592559,
+  "chunks": 214,
+  "slices": 1696,
+  "raw_proposals": 2499,
+  "hypotheses": 3518,
+  "mentions": 2151,
+  "durable_mentions": 608,
+  "distinct_entities": 259,
+  "rel_candidates": 470,
+  "rc_by_decision": {
+   "ACCEPT": 65,
+   "QUALIFY": 41,
+   "REJECT": 364
+  },
+  "facts": 104,
+  "perf": {
+   "chunks": 214,
+   "slices": 1696,
+   "total_s": 92.14,
+   "rescue_s": 46.82,
+   "slices_s": 0.07,
+   "syntax_s": 1.99,
+   "admission_s": 9.96,
+   "entity_pass_s": 29.01,
+   "l1_l4_writes_s": 0.06,
+   "provider_calls": 7,
+   "evidence_pass_s": 0.82,
+   "persist_mentions_s": 0.32,
+   "candidates_compile_s": 2.07
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 15:51:54.197970+00:00",
+    "2026-08-21 15:51:54.197970+00:00"
+   ],
+   "intake": [
+    "2026-08-21 13:46:17.043596+00:00",
+    "2026-08-21 13:46:17.043596+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 15:54:02.430065+00:00",
+    "2026-08-21 15:54:02.430065+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_f2a116c0d20ec955e20aebfc33e03d0e589ea1babf90470321d532e1170d5bb0",
+  "source": "/Users/king/Desktop/hermes agent/libgen-workflows/epub/01-Bowart-Operation_Mind_Control.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 2661746,
+  "chunks": 549,
+  "slices": 4637,
+  "raw_proposals": 7922,
+  "hypotheses": 6130,
+  "mentions": 7412,
+  "durable_mentions": 5074,
+  "distinct_entities": 1790,
+  "rel_candidates": 1748,
+  "rc_by_decision": {
+   "ACCEPT": 141,
+   "QUALIFY": 69,
+   "REJECT": 1538
+  },
+  "facts": 182,
+  "perf": {
+   "chunks": 549,
+   "slices": 4637,
+   "total_s": 253.43,
+   "rescue_s": 100.03,
+   "slices_s": 0.24,
+   "syntax_s": 6.37,
+   "admission_s": 41.03,
+   "entity_pass_s": 95.05,
+   "l1_l4_writes_s": 0.15,
+   "provider_calls": 18,
+   "evidence_pass_s": 2.28,
+   "persist_mentions_s": 0.98,
+   "candidates_compile_s": 5.28
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 14:43:01.818264+00:00",
+    "2026-08-21 14:43:01.818264+00:00"
+   ],
+   "intake": [
+    "2026-08-21 13:45:16.499927+00:00",
+    "2026-08-21 13:46:53.379361+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 14:47:45.846775+00:00",
+    "2026-08-21 14:47:45.846775+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_f9d330f95d028c05def3022ba76505200f9ce884d17e1d5c9227c94e0485b95e",
+  "source": "/Users/king/Desktop/CySA_Books/05_Security_Monitoring_Wazuh_Gupta.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 35524449,
+  "chunks": 383,
+  "slices": 2333,
+  "raw_proposals": 4586,
+  "hypotheses": 5272,
+  "mentions": 3186,
+  "durable_mentions": 1532,
+  "distinct_entities": 563,
+  "rel_candidates": 684,
+  "rc_by_decision": {
+   "ACCEPT": 170,
+   "QUALIFY": 68,
+   "REJECT": 446
+  },
+  "facts": 196,
+  "perf": {
+   "chunks": 383,
+   "slices": 2333,
+   "total_s": 152.57,
+   "rescue_s": 74.19,
+   "slices_s": 0.12,
+   "syntax_s": 3.7,
+   "admission_s": 9.39,
+   "entity_pass_s": 60.03,
+   "l1_l4_writes_s": 0.03,
+   "provider_calls": 12,
+   "evidence_pass_s": 1.3,
+   "persist_mentions_s": 0.24,
+   "candidates_compile_s": 2.62
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 14:21:15.468449+00:00",
+    "2026-08-21 14:21:15.468449+00:00"
+   ],
+   "intake": [
+    "2026-08-21 13:45:12.009044+00:00",
+    "2026-08-21 13:46:50.416094+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 14:24:17.088972+00:00",
+    "2026-08-21 14:24:17.088972+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_57556d6a30cf45b6d0d49f85bcd4fd6dcfcd743650ee3494252ebafb0a36752e",
+  "source": "/Users/king/Desktop/hermes agent/libgen-workflows/epub/03-Hogan-Covert_Persuasion.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 609696,
+  "chunks": 300,
+  "slices": 2834,
+  "raw_proposals": 4366,
+  "hypotheses": 3841,
+  "mentions": 4419,
+  "durable_mentions": 2758,
+  "distinct_entities": 482,
+  "rel_candidates": 1150,
+  "rc_by_decision": {
+   "ACCEPT": 113,
+   "QUALIFY": 77,
+   "REJECT": 960
+  },
+  "facts": 156,
+  "perf": {
+   "chunks": 300,
+   "slices": 2834,
+   "total_s": 118.36,
+   "rescue_s": 44.76,
+   "slices_s": 0.14,
+   "syntax_s": 3.65,
+   "admission_s": 15.35,
+   "entity_pass_s": 47.42,
+   "l1_l4_writes_s": 0.12,
+   "provider_calls": 10,
+   "evidence_pass_s": 1.17,
+   "persist_mentions_s": 0.89,
+   "candidates_compile_s": 3.69
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 14:48:54.729084+00:00",
+    "2026-08-21 14:48:54.729084+00:00"
+   ],
+   "intake": [
+    "2026-08-21 13:45:20.397338+00:00",
+    "2026-08-21 13:46:56.679859+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 14:51:46.131853+00:00",
+    "2026-08-21 14:51:46.131853+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_94822e93e121d29e8a4687fb1a4267cc9b699dfc4d0c79e5d7df152d3212bfe1",
+  "source": "/Users/king/Downloads/book-optimizer/books/09_percival_architecture_patterns_with_python_c3ec815d.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 3149421,
+  "chunks": 382,
+  "slices": 2600,
+  "raw_proposals": 5097,
+  "hypotheses": 6058,
+  "mentions": 3827,
+  "durable_mentions": 1240,
+  "distinct_entities": 449,
+  "rel_candidates": 886,
+  "rc_by_decision": {
+   "ACCEPT": 183,
+   "QUALIFY": 74,
+   "REJECT": 629
+  },
+  "facts": 231,
+  "perf": {
+   "chunks": 382,
+   "slices": 2600,
+   "total_s": 198.18,
+   "rescue_s": 99.04,
+   "slices_s": 0.15,
+   "syntax_s": 4.95,
+   "admission_s": 15.16,
+   "entity_pass_s": 68.98,
+   "l1_l4_writes_s": 0.18,
+   "provider_calls": 12,
+   "evidence_pass_s": 1.68,
+   "persist_mentions_s": 0.7,
+   "candidates_compile_s": 4.18
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 15:24:14.551045+00:00",
+    "2026-08-21 15:24:14.551045+00:00"
+   ],
+   "intake": [
+    "2026-08-21 13:46:20.580471+00:00",
+    "2026-08-21 13:46:20.580471+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 15:28:16.088745+00:00",
+    "2026-08-21 15:28:16.088745+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_fc8a2c4eba1bb69c6efb392e41835fc1cc0fa98d15e29ec5c2c5ff4bcb5c0e3a",
+  "source": "/Users/king/Downloads/book-optimizer/books/16_burns_kubernetes_up_and_running_7f03b503.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 583237,
+  "chunks": 269,
+  "slices": 2082,
+  "raw_proposals": 2538,
+  "hypotheses": 4158,
+  "mentions": 2138,
+  "durable_mentions": 991,
+  "distinct_entities": 306,
+  "rel_candidates": 468,
+  "rc_by_decision": {
+   "ACCEPT": 75,
+   "QUALIFY": 47,
+   "REJECT": 346
+  },
+  "facts": 111,
+  "perf": {
+   "chunks": 269,
+   "slices": 2082,
+   "total_s": 136.94,
+   "rescue_s": 65.66,
+   "slices_s": 0.1,
+   "syntax_s": 3.28,
+   "admission_s": 6.22,
+   "entity_pass_s": 55.62,
+   "l1_l4_writes_s": 0.1,
+   "provider_calls": 9,
+   "evidence_pass_s": 1.03,
+   "persist_mentions_s": 0.5,
+   "candidates_compile_s": 2.43
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 16:02:53.533679+00:00",
+    "2026-08-21 16:02:53.533679+00:00"
+   ],
+   "intake": [
+    "2026-08-21 13:46:38.229021+00:00",
+    "2026-08-21 13:46:38.229021+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 16:05:39.999683+00:00",
+    "2026-08-21 16:05:39.999683+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_75a13cadf1762c4f3e601e5e9235604611a0466240fec7c7c64be82bf3445f26",
+  "source": "/Users/king/Downloads/book-optimizer/books/15_hohpe_enterprise_integration_patterns_f175d067.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 5784940,
+  "chunks": 1188,
+  "slices": 7379,
+  "raw_proposals": 4603,
+  "hypotheses": 11955,
+  "mentions": 3008,
+  "durable_mentions": 1746,
+  "distinct_entities": 360,
+  "rel_candidates": 349,
+  "rc_by_decision": {
+   "ACCEPT": 51,
+   "QUALIFY": 7,
+   "REJECT": 291
+  },
+  "facts": 44,
+  "perf": {
+   "chunks": 1188,
+   "slices": 7379,
+   "total_s": 481.77,
+   "rescue_s": 138.87,
+   "slices_s": 0.36,
+   "syntax_s": 10.38,
+   "admission_s": 23.1,
+   "entity_pass_s": 294.03,
+   "l1_l4_writes_s": 0.05,
+   "provider_calls": 38,
+   "evidence_pass_s": 4.95,
+   "persist_mentions_s": 0.5,
+   "candidates_compile_s": 6.39
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 15:43:45.617798+00:00",
+    "2026-08-21 15:43:45.617798+00:00"
+   ],
+   "intake": [
+    "2026-08-21 13:46:26.673595+00:00",
+    "2026-08-21 13:46:26.673595+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 15:52:09.155464+00:00",
+    "2026-08-21 15:52:09.155464+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_6a1b7ebebe02dc185800455d445084b46e62afd289f6da137cc609c46ddfa9ba",
+  "source": "/Users/king/Downloads/book-optimizer/books/05_nikkel_practical_linux_forensics_9121bca8.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 3189601,
+  "chunks": 714,
+  "slices": 5077,
+  "raw_proposals": 7408,
+  "hypotheses": 9248,
+  "mentions": 5382,
+  "durable_mentions": 2526,
+  "distinct_entities": 1159,
+  "rel_candidates": 1061,
+  "rc_by_decision": {
+   "ACCEPT": 231,
+   "QUALIFY": 124,
+   "REJECT": 706
+  },
+  "facts": 321,
+  "perf": {
+   "chunks": 714,
+   "slices": 5077,
+   "total_s": 322.93,
+   "rescue_s": 170.66,
+   "slices_s": 0.31,
+   "syntax_s": 7.23,
+   "admission_s": 27.6,
+   "entity_pass_s": 103.53,
+   "l1_l4_writes_s": 0.3,
+   "provider_calls": 23,
+   "evidence_pass_s": 2.69,
+   "persist_mentions_s": 0.9,
+   "candidates_compile_s": 6.42
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 15:14:43.834645+00:00",
+    "2026-08-21 15:14:43.834645+00:00"
+   ],
+   "intake": [
+    "2026-08-21 13:46:07.204338+00:00",
+    "2026-08-21 13:46:14.576379+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 15:20:34.912894+00:00",
+    "2026-08-21 15:20:34.912894+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_a598fd41fe8fbb6c6f88f7004a373ed623ba18954478a7caaffbc3d2add58e4f",
+  "source": "/Users/king/Downloads/book-optimizer/books/10_nygard_release_it_8487f6f1.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 2886972,
+  "chunks": 638,
+  "slices": 6867,
+  "raw_proposals": 8276,
+  "hypotheses": 9178,
+  "mentions": 7692,
+  "durable_mentions": 2013,
+  "distinct_entities": 869,
+  "rel_candidates": 1177,
+  "rc_by_decision": {
+   "ACCEPT": 189,
+   "QUALIFY": 82,
+   "REJECT": 906
+  },
+  "facts": 265,
+  "perf": {
+   "chunks": 638,
+   "slices": 6867,
+   "total_s": 339.46,
+   "rescue_s": 134.85,
+   "slices_s": 0.38,
+   "syntax_s": 6.93,
+   "admission_s": 77.41,
+   "entity_pass_s": 105.22,
+   "l1_l4_writes_s": 0.1,
+   "provider_calls": 20,
+   "evidence_pass_s": 3.05,
+   "persist_mentions_s": 1.02,
+   "candidates_compile_s": 7.45
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 15:27:43.656066+00:00",
+    "2026-08-21 15:27:43.656066+00:00"
+   ],
+   "intake": [
+    "2026-08-21 13:46:21.923673+00:00",
+    "2026-08-21 13:46:21.923673+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 15:34:01.804221+00:00",
+    "2026-08-21 15:34:01.804221+00:00"
+   ]
+  }
+ },
+ {
+  "doc_id": "doc_7492630459da15e7ffbb54e7c7bed8a0a5e500068b9e8ae8ab23735b48208206",
+  "source": "/Users/king/Desktop/CySA_Books/03_CompTIA_CySA+_CS0-002_CertGuide_McMillan.epub",
+  "media_type": "application/epub+zip",
+  "bytes": 20605970,
+  "chunks": 1229,
+  "slices": 9246,
+  "raw_proposals": 17115,
+  "hypotheses": 16154,
+  "mentions": 13879,
+  "durable_mentions": 4450,
+  "distinct_entities": 1943,
+  "rel_candidates": 3615,
+  "rc_by_decision": {
+   "ACCEPT": 661,
+   "QUALIFY": 358,
+   "REJECT": 2596
+  },
+  "facts": 913,
+  "perf": {
+   "chunks": 1229,
+   "slices": 9246,
+   "total_s": 548.4,
+   "rescue_s": 198.54,
+   "slices_s": 0.49,
+   "syntax_s": 10.17,
+   "admission_s": 150.77,
+   "entity_pass_s": 166.53,
+   "l1_l4_writes_s": 0.18,
+   "provider_calls": 39,
+   "evidence_pass_s": 4.21,
+   "persist_mentions_s": 0.8,
+   "candidates_compile_s": 13.6
+  },
+  "stage_windows": {
+   "extract": [
+    "2026-08-21 13:52:08.904274+00:00",
+    "2026-08-21 14:26:36.039841+00:00"
+   ],
+   "intake": [
+    "2026-08-21 13:45:08.481870+00:00",
+    "2026-08-21 13:46:38.727469+00:00"
+   ],
+   "profile_document": [
+    "2026-08-21 14:36:10.687343+00:00",
+    "2026-08-21 14:36:10.687343+00:00"
+   ]
+  }
+ }
+]

@@ -1,0 +1,308 @@
+# POLYMATH-FACT-ADMISSION-V1 — declarative policy
+#
+# Ontology metadata that the frozen relation pack does not carry, kept
+# OUT of the pack so core-predicates-v1.3.0.yaml stays byte-frozen.
+# Everything here is declarative ontology data, never code, and is
+# versioned as one unit by `policy_version`.
+# v1.1: SPOKEN-RELATION-ADAPTER-V1 — created orientation triggers gain
+# make/build (+ by-forms), completing the pack's own verb inventory.
+policy_version: fact-admission-policy-v1.1
+region_policy_version: region-policy-v1
+
+# ---------------------------------------------------------------------
+# F2 — region licensing.
+#
+# A region that cannot license relation ASSERTION can still carry
+# evidence: mentions, slices, hypotheses and text retrieval are
+# untouched. Only canonical relation candidacy fails closed here.
+# Named so a later policy version can license specific regions
+# (e.g. TABLE_FACT_POLICY) without touching code.
+# ---------------------------------------------------------------------
+regions:
+  BODY_PROSE:        {licenses_relations: true}
+  BIBLIOGRAPHY:      {licenses_relations: false, reason: REGION_BIBLIOGRAPHY}
+  INDEX:             {licenses_relations: false, reason: REGION_INDEX}
+  TABLE_OF_CONTENTS: {licenses_relations: false, reason: REGION_TOC}
+  CAPTION:           {licenses_relations: false, reason: REGION_CAPTION}
+  HEADING:           {licenses_relations: false, reason: REGION_HEADING}
+  CODE_OR_CONFIG:    {licenses_relations: false, reason: REGION_CODE}
+
+# ---------------------------------------------------------------------
+# F7 — orientation licensing.
+#
+# Each asymmetric predicate declares which lexical triggers express the
+# CANONICAL orientation and which express the INVERSE one. "X includes
+# Y" is inverse evidence for part_of, whose canonical orientation is
+# part→whole: the fact is part_of(Y, X), never part_of(X, Y).
+#
+# A flip is applied ONLY when (a) the trigger is declared inverse, and
+# (b) the flipped signature is itself licensed. Otherwise: REJECT.
+# Triggers absent from both lists leave orientation unlicensed for
+# asymmetric predicates -> REJECT(DIRECTION_UNLICENSED).
+# ---------------------------------------------------------------------
+orientation:
+  part_of:
+    canonical_triggers: [part, component, member, element, section, belong,
+                         "part of", "component of", "member of", "consists of",
+                         "comprised of", "made up of", "belongs to"]
+    inverse_triggers:   [contain, include, comprise, consist, compose,
+                         constitute, incorporate, encompass, "includes",
+                         "consist of", "made of"]
+  owns:
+    canonical_triggers: [own, owns, possess, hold, "property of"]
+    inverse_triggers:   ["owned by", "held by", "belongs to"]
+  uses:
+    canonical_triggers: [use, apply, leverage, adopt, employ, utilize, run,
+                         "use of", "usage of", "application of", "adoption of",
+                         "built with", "built on", "run on", "based on",
+                         "powered by"]
+    inverse_triggers:   ["used by", "adopted by", "employed by"]
+  depends_on:
+    canonical_triggers: [depend, rely, require, need, "depends on", "relies on",
+                         "dependent on", "requires"]
+    inverse_triggers:   ["required by", "needed by", "relied upon by"]
+  developed:
+    # `implement` deliberately absent: deploying or configuring a
+    # third-party product is not developing it ("NexaTech implemented
+    # Splunk"). That reading belongs to uses/implemented_with.
+    canonical_triggers: [develop, engineer, "developed by", "development of"]
+    inverse_triggers:   []
+  acquired:
+    canonical_triggers: [acquire, buy, purchase, absorb, acquisition, takeover]
+    inverse_triggers:   ["acquired by", "bought by", "purchased by"]
+  member_of:
+    canonical_triggers: [join, "member of", "belongs to", "part of"]
+    inverse_triggers:   ["includes", "has members", "comprises"]
+  subsidiary_of:
+    canonical_triggers: ["subsidiary of", "division of", "unit of"]
+    inverse_triggers:   ["parent of", "owns"]
+  employs:
+    canonical_triggers: [employ, hire, "works for", "employed at"]
+    inverse_triggers:   ["employed by", "hired by"]
+  # Copular and locative predicates: the trigger lemma persisted for
+  # "X is a Y" is the copula `be`, so canonical orientation must name it
+  # explicitly or every definitional fact fails orientation licensing.
+  founded:
+    # `start` deliberately absent: "started his career at Microsoft"
+    # produced founded(joe beda, microsoft). Starting AT an organisation
+    # is not founding it, and no orientation evidence distinguishes the
+    # two, so the weaker trigger does not license the stronger claim.
+    canonical_triggers: [found, establish, "co-found", "founded",
+                         "established", "incorporated"]
+    inverse_triggers:   ["founded by", "established by"]
+  stated_in:
+    canonical_triggers: [state, describe, document, report, per, note,
+                         "described in", "documented in", "stated in",
+                         "according to", "as described"]
+    inverse_triggers:   []
+  has_role:
+    canonical_triggers: [lead, serve, act, hold, "serves as", "role of",
+                         "works as", "acts as"]
+    inverse_triggers:   []
+  implemented_with:
+    canonical_triggers: [implement, build, "implemented with", "built with",
+                         "implemented in", "written in"]
+    inverse_triggers:   []
+  derived_from:
+    canonical_triggers: [derive, originate, stem, descend, "derived from",
+                         "based on", "adapted from"]
+    inverse_triggers:   []
+  influences:
+    canonical_triggers: [influence, affect, shape, impact, "influenced by"]
+    inverse_triggers:   ["influenced by", "shaped by"]
+  transforms_into:
+    canonical_triggers: [transform, convert, become, turn, "transforms into",
+                         "converted to"]
+    inverse_triggers:   []
+  causes:
+    canonical_triggers: [cause, lead, result, produce, trigger, "causes",
+                         "leads to", "results in", "gives rise to"]
+    inverse_triggers:   ["caused by", "results from", "due to"]
+  enables:
+    canonical_triggers: [enable, allow, permit, facilitate, support,
+                         "enables", "allows"]
+    inverse_triggers:   ["enabled by"]
+  measured_by:
+    canonical_triggers: [measure, quantify, assess, gauge, "measured by",
+                         "measured in", "expressed in"]
+    inverse_triggers:   ["measures"]
+  occurred_at:
+    canonical_triggers: [occur, happen, "took place", "occurred at",
+                         "occurred in", "held at"]
+    inverse_triggers:   []
+  # SCIENTIFIC-KAG-V1 (phase 4) research predicates.
+  contains_component:
+    canonical_triggers: [include, comprise, consist, compose, contain,
+                         constitute, incorporate, component, element,
+                         subcomponent]
+    inverse_triggers:   []
+  introduced:
+    canonical_triggers: [introduce]
+    inverse_triggers:   []
+  proposed:
+    canonical_triggers: [propose, present]
+    inverse_triggers:   []
+  trained_on:
+    canonical_triggers: [train]
+    inverse_triggers:   []
+  evaluated_on:
+    canonical_triggers: [evaluate]
+    inverse_triggers:   []
+  outperforms:
+    canonical_triggers: [outperform, surpass, exceed]
+    inverse_triggers:   [outperformed]
+  released_on:
+    canonical_triggers: [release]
+    inverse_triggers:   []
+  leads:
+    canonical_triggers: [lead, head, direct, manage, "leads", "heads"]
+    inverse_triggers:   ["led by", "headed by"]
+  is_a:
+    canonical_triggers: [be, "is a", "is an", "are a", "are an", "is the",
+                         "defined as", "known as"]
+    inverse_triggers:   []
+  instance_of:
+    canonical_triggers: [be, "is a", "is an", "instance of", "example of",
+                         "such as", "kind of", "type of"]
+    inverse_triggers:   [include, includes, "including"]
+  located_in:
+    canonical_triggers: [locate, base, situate, reside, live, "in", "at",
+                         "located in", "based in", "within", "situated in"]
+    inverse_triggers:   ["contains", "houses", "home to"]
+  created:
+    # SPOKEN-RELATION-ADAPTER-V1: make/build added — both are in the
+    # rule pack's own `created.verbs` inventory but were never
+    # enumerated here, so every make/build-triggered candidate died
+    # F7 DIRECTION_UNLICENSED regardless of how clean its grammar was
+    # (measured: created(Facebook, Andromeda) from "the new update
+    # Facebook made"). The by-forms mirror the existing "created by"
+    # canonical/inverse duality; every F7 witness/contradiction check
+    # is unchanged.
+    canonical_triggers: [create, author, write, invent, originate, design,
+                         produce, compose, make, build,
+                         "created by", "authored by", "made by", "built by"]
+    inverse_triggers:   ["created by", "authored by", "written by",
+                         "made by", "built by"]
+
+# ---------------------------------------------------------------------
+# F4 — assertion mode.
+#
+# English modal auxiliaries are a CLOSED grammatical class, not an
+# open-ended verb dictionary: enumerating them is linguistics, not rule
+# accretion. They are matched against the AUX dependents of the trigger's
+# governing verb (clause-local), never by document-global keyword search.
+# ---------------------------------------------------------------------
+modal_auxiliaries: [may, might, could, would, should, must, shall, can]
+
+# Contrastive / antonym markers. Scope flags detect SYNTACTIC negation
+# ("is not similar to"); they do not detect LEXICAL negation
+# ("is quite dissimilar to SNMP"), which admitted a false similar_to edge
+# in iteration 1. A closed set of contrast markers, matched against the
+# trigger's own surface, closes that without touching negation semantics.
+contrastive_markers: [dissimilar, unlike, differ, differs, different,
+                      distinct, contrary, opposed, unrelated, incompatible,
+                      unlikely, opposite, versus, "as opposed to",
+                      "in contrast", "rather than", "instead of"]
+# Modals that express possibility/hypothesis (reject as asserted fact)
+# vs. obligation/ability. Both fail assertion; kept apart so a later
+# policy can license obligation readings.
+epistemic_modals: [may, might, could, would]
+deontic_modals:   [should, must, shall, can]
+
+# Verbs whose complement clause is a proposal/consideration rather than
+# an event: "decide to use", "consider adopting", "plan to migrate".
+# Clause-local, dependency-scoped; a small closed set of attitude verbs.
+irrealis_governors: [decide, consider, plan, propose, intend, evaluate,
+                     recommend, suggest, want, attempt, try, aim, seek,
+                     hope, expect, plan]
+
+# Speech and belief verbs. A clause reported through one of these is
+# SOMEONE'S CLAIM, not the document's assertion — and the document may
+# be discrediting it: "Mayor Yorty IGNORANTLY TOLD the press Sirhan was
+# a member of ..." was admitted as an asserted membership fact. A closed
+# class of reporting verbs, matched clause-locally through the same
+# dependency machinery as the irrealis governors.
+attribution_governors: [say, tell, claim, report, allege, state, argue,
+                        believe, think, assert, insist, contend, maintain,
+                        note, observe, remark, testify, announce, declare,
+                        write, describe, accord]
+
+# ---------------------------------------------------------------------
+# F5 — predicate strength ordering.
+#
+# Relation admission must never STRENGTHEN the source meaning. A trigger
+# licensed by a weaker predicate cannot mint a stronger one, even when
+# both share an evidence class. Strength is ontology metadata: the
+# lexical resources say what the verb MEANS, this says which predicates
+# claim more than others.
+# ---------------------------------------------------------------------
+predicate_strength:
+  associated_with: 1
+  similar_to: 1
+  stated_in: 1
+  instance_of: 2
+  is_a: 2
+  part_of: 2
+  located_in: 2
+  measured_by: 2
+  uses: 3
+  depends_on: 3
+  implemented_with: 3
+  derived_from: 3
+  transforms_into: 3
+  influences: 3
+  enables: 3
+  member_of: 3
+  has_role: 3
+  employs: 4
+  leads: 4
+  owns: 4
+  created: 5
+  developed: 5
+  founded: 5
+  acquired: 5
+  subsidiary_of: 5
+  causes: 5
+  alias_of: 5
+  occurred_at: 2
+
+
+# ---------------------------------------------------------------------
+# S3 — PREDICATE ASSERTABILITY.
+#
+# Which predicates may reach T2 at all. This is stratification, not
+# suppression: a predicate listed here as t1_only still produces a fully
+# provenanced Tier-1 relation that retrieval and future reasoning can
+# use — it simply may not be ASSERTED as canonical knowledge.
+#
+# The list is evidence-driven, not taste. Measured on the 25-book
+# corpus, whole admitted population classified against evidence spans:
+#
+#   similar_to   29% supported / 71% wrong  (n=14)
+#
+# Its licensing evidence is the "comparison" class, carried by triggers
+# (`like`, `parallel`, `related to`) that mark exemplification
+# ("elements like IP addresses"), concurrency ("running in parallel
+# with") or mere association at least as often as similarity. No
+# deterministic contract available to us separates those senses, so the
+# honest tier for the whole predicate is T1.
+# ---------------------------------------------------------------------
+t1_only_predicates:
+  - similar_to
+
+# ---------------------------------------------------------------------
+# S4 — PARTICIPIAL INVERSE CONSTRUCTIONS.
+#
+# "the Bigtable data model (used in Cassandra)" means Cassandra uses the
+# model, not the reverse. A past participle modifying a noun, with the
+# other endpoint inside its prepositional complement, inverts the
+# canonical orientation. Listed per predicate as ontology metadata so
+# the mechanism stays declarative.
+# ---------------------------------------------------------------------
+participial_inverse:
+  uses: [in, by, at, throughout, across, within]
+  developed: [by]
+  created: [by]
+  founded: [by]
+  owns: [by]
+  employs: [by]

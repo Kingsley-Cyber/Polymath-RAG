@@ -122,6 +122,62 @@ def _interpret_v2(proposal_surface, core_type, span, sentence_text, syntax,
             graph_eligible(d), reason, SEMANTIC_CONTRACT_V2,
             d.resolves_to, ev)
 
+    # PRONOUN-ADMISSION-BAN (owner E-1, 2026-08-24): personal/demonstrative
+    # pronouns are never durable entities. They previously slipped through
+    # as GLOBAL ("You", "I" admitted in transcript corpora) contaminating
+    # every conversation-derived graph. Fail-closed to MENTION_ONLY with
+    # an explicit reason; no gate is weakened by this.
+    _PRONOUN_SURFACES = {"i", "you", "we", "it", "he", "she", "they",
+                         "me", "him", "her", "them", "us"}
+    if proposal_surface.strip().lower() in _PRONOUN_SURFACES:
+        d = HarborDecision(proposal_surface, AnchorKind.UNKNOWN,
+                           Referentiality.UNRESOLVED, "MENTION_ONLY",
+                           DecisionStatus.ABSTAINED)
+        return _result(d, "pronoun_admission_ban: pronouns are never "
+                          "durable entities (E-1)", {})
+
+    # SUBTOKEN-SPAN-ADMISSION-V1 (ledger 75). An empty `toks` list has TWO
+    # causes that previously shared one (wrong) outcome:
+    #
+    #   syntax truly unavailable      -> a dependency OUTAGE: retryable, and
+    #                                    the stage must fail (kept, below)
+    #   syntax PRESENT, span covers   -> a SETTLED structural fact about the
+    #   no complete token                span (nested inside a larger token,
+    #                                    e.g. `instagram` inside a URL token,
+    #                                    or overlapping nothing)
+    #
+    # identity_evidence's require_syntax guard cannot tell these apart — it
+    # only sees the empty list — so the second case raised
+    # RetryableDependencyUnavailable and failed the extract stage
+    # DETERMINISTICALLY on any URL-bearing document; retries could never
+    # succeed. The distinction is drawn HERE, where the sentence's syntax is
+    # in hand. A sub-token span abstains, fail-closed: the containing token
+    # describes the larger token, not this surface, so it is recorded as
+    # evidence but never promoted to identity — and the proposal surface is
+    # preserved verbatim, never rewritten to the containing token.
+    if not toks:
+        sent_toks = [t for t in (syntax or {}).get("tokens", [])
+                     if t.get("char_start") is not None]
+        if sent_toks:
+            containing = next((t for t in sent_toks
+                               if t["char_start"] < end and t["char_end"] > start),
+                              None)
+            d = HarborDecision(proposal_surface, AnchorKind.UNKNOWN,
+                               Referentiality.UNRESOLVED, "MENTION_ONLY",
+                               DecisionStatus.ABSTAINED)
+            return _result(
+                d,
+                "abstain: span covers no complete syntax token"
+                + (" (nested inside a larger token)" if containing
+                   else " (no overlapping token)"),
+                {"contract": "subtoken-span-admission-v1",
+                 "covering_tokens": 0,
+                 "overlapping_token": (containing["text"][:60]
+                                       if containing else None)})
+        # sentence produced NO tokens at all: that is a syntax-production
+        # failure, not a property of this span — fall through so the
+        # retryable dependency path fires exactly as before.
+
     # 1. decisive identity on the RAW proposal (never the envelope, never normalized)
     ident = identity_evidence(proposal_surface, tokens=toks, require_syntax=True,
                               heading_context=heading_context)
@@ -177,6 +233,18 @@ def _interpret_v2(proposal_surface, core_type, span, sentence_text, syntax,
                            Referentiality.GENERIC, "CORPUS_SCOPED")
         return _result(d, f"concept: {ev.kind.value}",
                        {"authority": ev.kind.value, "quote": ev.quote[:160]})
+
+    # 3b. SCIENTIFIC-KAG-V1 named-concept gate — multi-token technical
+    #     compounds and named concepts are auditable concept sources even
+    #     without a document definition ("thought generator", "Tree of
+    #     Thoughts"). Bare generic nouns and plurals decline here and fall
+    #     through to generic classification unchanged.
+    from polymath_shared.scientific_concept import named_concept_evidence
+    sci = named_concept_evidence(proposal_surface, toks)
+    if sci is not None:
+        d = HarborDecision(proposal_surface, AnchorKind.CONCEPT,
+                           Referentiality.GENERIC, "CORPUS_SCOPED")
+        return _result(d, f"scientific-concept: {sci['pattern']}", sci)
 
     # 4. GENERIC-CLASSIFICATION-V1 — attribution only. Reached ONLY after
     #    IDENTITY, LOCAL_REFERENCE and CONCEPT have all declined, so it can

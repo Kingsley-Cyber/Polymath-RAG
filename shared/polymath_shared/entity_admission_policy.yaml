@@ -1,0 +1,117 @@
+# POLYMATH-ENTITY-KNOWLEDGE-ADMISSION-V1 — declarative policy.
+#
+# Ontology/structure data only, never code. Versioned as one unit so a
+# later release can license a region or a class without a code change,
+# and so a historical replay can pin the exact policy it ran under.
+policy_version: entity-admission-policy-v3
+
+# ---------------------------------------------------------------------
+# E2 — which source regions may license an ASSERTED entity.
+#
+# Identical region vocabulary to REGION-POLICY-V1 (fact admission), on
+# purpose: one structural truth, consumed by both boundaries. A refused
+# region still keeps its mentions, spans and text retrieval — only
+# promotion to canonical knowledge is withheld.
+# ---------------------------------------------------------------------
+regions:
+  BODY_PROSE:        {licenses_entities: true}
+  BIBLIOGRAPHY:      {licenses_entities: false, reason: E_REGION_BIBLIOGRAPHY}
+  INDEX:             {licenses_entities: false, reason: E_REGION_INDEX}
+  TABLE_OF_CONTENTS: {licenses_entities: false, reason: E_REGION_TOC}
+  CAPTION:           {licenses_entities: false, reason: E_REGION_CAPTION}
+  HEADING:           {licenses_entities: false, reason: E_REGION_HEADING}
+  CODE_OR_CONFIG:    {licenses_entities: false, reason: E_REGION_CODE}
+
+# ---------------------------------------------------------------------
+# E5 — document-structure references.
+#
+# These name PARTS OF THE DOCUMENT, not things the document talks about.
+# "Figure 4-7" became a durable Document entity and then an endpoint of
+# located_in(figure 4-7, location). Matched against the WHOLE surface
+# (fullmatch), so a genuine name containing such a word — "Table Mountain",
+# "Chapter One Ltd" — is untouched.
+# ---------------------------------------------------------------------
+structural_patterns:
+  - '(?:figure|fig\.?|table|listing|example|exhibit|equation|eq\.?|algorithm|plate|chart|diagram)\s*[0-9ivxlc]+(?:[.\-–][0-9a-z]+)*\.?'
+  # appendices and annexes are lettered as often as numbered ("Appendix B")
+  - '(?:chapter|section|subsection|part|appendix|annex|volume|book|unit|module|lesson|step|figure)\s*(?:[0-9ivxlc]+|[a-z])(?:[.\-–][0-9a-z]+)*\.?'
+  - '(?:page|pp?\.)\s*[0-9]+(?:\s*[-–]\s*[0-9]+)?'
+  - '(?:footnote|endnote|note)\s*[0-9]+'
+  - '(?:chapter|section|appendix|figure|table)\s+[0-9ivxlc]+\s+of\s+this\s+(?:book|chapter|document|paper)'
+  # Self-reference to the document itself: "this book", "the following
+  # section". A determiner or an ordinal is REQUIRED — a bare "table" or
+  # "document" is a generic noun, which is Harbor's business, not a
+  # structural reference, and must not be mislabelled as one here.
+  - '(?:this|that|these|those)\s+(?:book|chapter|section|figure|table|paper|document|appendix|volume)s?'
+  - '(?:the|this|that)?\s*(?:next|previous|following|preceding|present|current|above|below|foregoing)\s+(?:book|chapter|section|figure|table|paper|document|appendix|volume)s?'
+
+# ---------------------------------------------------------------------
+# E4 — classes whose members must be NAMED by a nominal.
+#
+# An adjectival form describes without naming: "Pavlovian conditioning"
+# does not mention Pavlov, so a Person node minted from it asserts a
+# referent the sentence never used. Only naming classes are constrained;
+# Concept/Method/Process legitimately head on common nouns.
+# ---------------------------------------------------------------------
+naming_core_types:
+  - Person
+  - Organization
+  - Location
+  - Product
+  - Document
+
+# ---------------------------------------------------------------------
+# E6 — settled classes that may become asserted nodes.
+#
+# The full settled-class vocabulary minus nothing today: the gate exists
+# so an unknown or future class fails closed rather than silently
+# becoming knowledge.
+# ---------------------------------------------------------------------
+# E6 TYPE. This list must be exactly the reachable CoreType inventory --
+# no more, no less. It previously carried eight types the extractor can
+# never produce (Material, Role, Condition, Substance, Structure,
+# Phenomenon, Activity, System), which made E6 a VACUOUS SUPERSET GATE:
+# every settled class was already a member, so the gate could not refuse
+# anything while reading, from outside, like a closed inventory.
+#
+# Removing them is behaviourally identical TODAY -- all twelve reachable
+# types were admissible before and remain so. What changes is the future:
+# a thirteenth CoreType must now be admitted DELIBERATELY, because
+# test_e6_inventory_is_exactly_the_reachable_inventory fails closed until
+# someone adds it here on purpose. That is the whole point of the gate.
+admissible_core_types:
+  - Person
+  - Organization
+  - Location
+  - Product
+  - Technology
+  - Method
+  - Process
+  - Concept
+  - Document
+  - Event
+  - Measurement
+  - TimeReference
+  - ResearchGroup
+  - Paper
+  - Dataset
+  - Corpus
+  - Benchmark
+  - Metric
+  - Task
+  - Model
+  - Algorithm
+  - Framework
+  - Architecture
+  - Theory
+  - Technique
+  - Component
+  - Software
+  - Library
+  - Tool
+  - Experiment
+  - Release
+  - TrainingRun
+  - Date
+  - TimePeriod
+  - Version

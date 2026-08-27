@@ -16,7 +16,9 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import time
+from pathlib import Path
 from dataclasses import dataclass, field
 
 import psycopg
@@ -149,6 +151,8 @@ def _entity_spans(
     profile: dict,
     envelope=None,
     trace=None,
+    raw_sink: list | None = None,
+    precomputed: dict | None = None,
 ) -> tuple[list[EntitySpan], list[dict]]:
     from polymath_shared.contracts import DocumentProfile
     from polymath_shared.query_policy import provider_passes
@@ -166,7 +170,28 @@ def _entity_spans(
         labels = list(dict.fromkeys(list(base_labels) + list(pass_labels)))
         if not labels:
             continue
-        result = gliner.entity_pass(inference_text, labels, threshold=ENTITY_THRESHOLD)
+        if precomputed is not None:
+            # PHASE B2: provider output supplied by the batched transport.
+            # Everything below — raw capture, dedupe, envelope
+            # classification, label mapping — is IDENTICAL to the per-call
+            # path; only where the bytes traveled changed.
+            if tuple(labels) not in precomputed:
+                # A label-composition mismatch between the batch builder and
+                # this function would otherwise yield silently EMPTY provider
+                # results — a masked defect. Fail loudly instead.
+                raise RuntimeError(
+                    f"batched pass-1 has no result for label composition "
+                    f"{labels!r}; batch builder and _entity_spans disagree")
+            result = {"spans": precomputed[tuple(labels)]}
+        else:
+            result = gliner.entity_pass(inference_text, labels, threshold=ENTITY_THRESHOLD)
+        if raw_sink is not None:
+            # V5 L1: the provider's observations EXACTLY as returned —
+            # before dedupe, before label mapping, before envelope
+            # classification, before rescue. Paired with the composed label
+            # list so the ledger records what was actually asked.
+            for item in result.get("spans", []):
+                raw_sink.append((dict(item), tuple(labels)))
         for item in result.get("spans", []):
             key = (item["start"], item["end"])
             current = proposals.get(key)
@@ -220,9 +245,22 @@ def _evidence_spans(
     chunk_id: str,
     pack: dict,
     mode: str,
+    raw_sink: list | None = None,
+    scientific_lane_prioritized: bool = True,
 ) -> list[EvidenceSpan]:
     """ADR-0008: pass 2 = GLiNER coarse proposals (may abstain) +
-    lexical trigger localization. The compiler decides either way."""
+    lexical trigger localization. The compiler decides either way.
+
+    EXTRACTION-ELIGIBILITY-V1 (owner invariant): classification may
+    PRIORITIZE; evidence determines ELIGIBILITY. The document-level
+    router never vetoes this lane — when the router deprioritizes it
+    (scientific_lane_prioritized=False), the cheap deterministic
+    trigger localization still runs, and any chunk with LOCAL
+    relational evidence proceeds through the identical discovery path.
+    Chunks with no local evidence skip the expensive GLiNER evidence
+    pass — that is the cost optimization the router is allowed to be.
+    (The prior hard veto measured: PROCEDURAL 4→0, CONCEPTUAL 6→0,
+    NARRATIVE 2→0 eligible relation spans — SMART verification P0.)"""
     from workers.evidence_proposer import (
         localize_trigger,
         merge_gliner_proposals,
@@ -230,8 +268,15 @@ def _evidence_spans(
     )
 
     anchors = propose_evidence(chunk_text, chunk_id, pack)
+    if not scientific_lane_prioritized and not anchors:
+        # Deprioritized lane AND no local relational evidence: nothing
+        # here qualifies for the compiler — skip the expensive pass.
+        return []
     if mode == "hybrid":
         result = gliner.evidence_pass(chunk_text, threshold=EVIDENCE_THRESHOLD)
+        if raw_sink is not None:
+            for item in result.get("spans", []):
+                raw_sink.append((dict(item), ()))
         proposals = merge_gliner_proposals(chunk_text, chunk_id, result.get("spans", []))
         # Localize each proposal to a compiled trigger; unlocalizable
         # proposals compile to UNSUPPORTED downstream.
@@ -305,8 +350,8 @@ def _persist_slice_manifest(conn: Connection, doc_id: str,
     the order would still change resolution.
     """
     conn.execute("DELETE FROM sentence_slices WHERE doc_id = %s", (doc_id,))
-    for idx, (row, sl) in enumerate(ordered_slices):
-        conn.execute(
+    with conn.cursor() as _cur:                       # PHASE B6: bulk write
+        _cur.executemany(
             """
             INSERT INTO sentence_slices (doc_id, chunk_id, slice_index,
                                          chunk_start, chunk_end, in_context)
@@ -316,8 +361,8 @@ def _persist_slice_manifest(conn: Connection, doc_id: str,
                     chunk_end = EXCLUDED.chunk_end,
                     in_context = EXCLUDED.in_context
             """,
-            (doc_id, row["chunk_id"], idx, sl.sentence_start, sl.sentence_end),
-        )
+            [(doc_id, row["chunk_id"], idx, sl.sentence_start, sl.sentence_end)
+             for idx, (row, sl) in enumerate(ordered_slices)])
 
 
 def _allocate_identities(ordered_slices, corpus_id: str, doc_id: str, *,
@@ -594,6 +639,27 @@ class _SliceObserver:
             self.losses.append(code)
 
 
+def _acceptance_block(admitted_facts, durable_surfaces) -> dict:
+    """ACCEPTANCE-HARNESS-V1 against optional frozen human labels
+    (POLYMATH_ACCEPTANCE_LABELS=<path>.json). Absent labels leave the
+    gate shape with AWAITING_HUMAN_LABELS."""
+    import json as _j
+
+    from polymath_shared.acceptance_harness import score_acceptance
+
+    path = os.environ.get("POLYMATH_ACCEPTANCE_LABELS")
+    if not path or not Path(path).exists():
+        return {"contract": "acceptance-harness-v1",
+                "status": "AWAITING_HUMAN_LABELS"}
+    labels = _j.loads(Path(path).read_text())
+    scored = score_acceptance(
+        labels, admitted_entities=durable_surfaces,
+        admitted_facts=admitted_facts, admitted_events=[])
+    scored["status"] = "SCORED"
+    scored["labels_path"] = path
+    return scored
+
+
 def _syntax_evidence(
     ordered_slices: list[tuple[dict, SentenceSlice]],
 ) -> dict | None:
@@ -621,20 +687,30 @@ def _syntax_evidence(
         {"sentence_id": f"{row['chunk_id']}:{idx}", "text": sl.text}
         for idx, (row, sl) in enumerate(ordered_slices)
     ]
+    # The sidecar accepts at most 512 sentences per request; a book-sized
+    # document exceeds that in one batched call (observed: 1242 sentences ->
+    # 422). Batch client-side, preserving order, verifying identity/order
+    # PER BATCH exactly as before — same sentences, same pinned model, same
+    # per-sentence results, so this is transport, not semantics.
+    SYNTAX_BATCH = 512
     client = SpacySyntaxClient()
+    results: list[dict] = []
     try:
         client.verify_pin()
-        response = client.syntax(sentences)
+        for i in range(0, len(sentences), SYNTAX_BATCH):
+            batch = sentences[i:i + SYNTAX_BATCH]
+            response = client.syntax(batch)
+            expected_ids = [s["sentence_id"] for s in batch]
+            returned_ids = [r["sentence_id"] for r in response["results"]]
+            if returned_ids != expected_ids:
+                raise RuntimeError(
+                    "syntax sidecar returned mismatched sentence identity/order"
+                )
+            results.extend(response["results"])
     finally:
         client.close()
 
-    expected_ids = [s["sentence_id"] for s in sentences]
-    returned_ids = [r["sentence_id"] for r in response["results"]]
-    if returned_ids != expected_ids:
-        raise RuntimeError(
-            "syntax sidecar returned mismatched sentence identity/order"
-        )
-    by_id = {r["sentence_id"]: r for r in response["results"]}
+    by_id = {r["sentence_id"]: r for r in results}
     for idx, (row, sl) in enumerate(ordered_slices):
         # SentenceSlice is frozen; attach through the dataclass escape
         # hatch. The field is read by nothing on the candidate path.
@@ -645,6 +721,7 @@ def _syntax_evidence(
         "model_release": response.get("model_release"),
         "runtime": response.get("runtime"),
         "sentences": len(sentences),
+        "batches": (len(sentences) + SYNTAX_BATCH - 1) // SYNTAX_BATCH,
     }
 
 
@@ -674,6 +751,24 @@ def process_event(conn: Connection, event: dict) -> None:
 
     pack = _pack()
     parser_name, parser_version = parser_identity()
+
+    # KNOWLEDGE-ROUTER v1.1 as a PRIORITY signal (owner correction,
+    # EXTRACTION-ELIGIBILITY-V1): a routed 'disabled' scientific lane
+    # DEPRIORITIZES relation discovery (chunks without local trigger
+    # evidence skip the expensive GLiNER evidence pass) but never
+    # vetoes it — local content evidence always reaches the compiler.
+    # Entity pass-1/proposals are unaffected (admission still runs).
+    scientific_lane_prioritized = True
+    if os.environ.get("POLYMATH_PREDICATE_V2") == "enforce":
+        from polymath_shared.knowledge_router.classifier import (
+            classify_document)
+        _doc_text = "\n".join(
+            c[0] for c in (conn.cursor().execute(
+                "SELECT text FROM chunks WHERE doc_id=%s "
+                "ORDER BY chunk_index", (doc_id,)).fetchall()))
+        _prof = classify_document(_doc_text)
+        scientific_lane_prioritized = "scientific_predicate" not in \
+            _prof["routing"]["disabled"]
     manifest = ExtractionManifest(
         run_id=run_id,
         gliner_model=_GLINER_PIN["model_id"],
@@ -759,11 +854,75 @@ def process_event(conn: Connection, event: dict) -> None:
         # document proposal stream only.
         try:
             ordered_slices: list[tuple[dict, SentenceSlice]] = []
+            # PHASE B1: wall-clock attribution. Pure observability — a perf
+            # dict in the stage artifact; no semantic effect.
+            import time as _t
+            _perf = {"entity_pass_s": 0.0, "evidence_pass_s": 0.0,
+                     "slices_s": 0.0, "syntax_s": 0.0, "rescue_s": 0.0,
+                     "admission_s": 0.0, "persist_mentions_s": 0.0,
+                     "candidates_compile_s": 0.0, "l1_l4_writes_s": 0.0,
+                     "fact_admission_s": 0.0,
+                     "provider_calls": 0, "stage_t0": _t.perf_counter()}
+            # EXTRACTION-AUDIT-V1: per-stage counts for the durable audit
+            # report (timings come from _perf, monotonic perf_counter).
+            _counts = {"gliner_entity_proposals": 0, "gliner_entity_rejected": 0,
+                       "evidence_spans": 0, "mentions_persisted": 0}
+            _decision_counts: dict = {}
+            _event_facts = 0
+            _event_candidates: list = []
+            _admitted_facts: list = []
+            _durable_surfaces: list = []
+            # V5 L1 (raw-evidence-ledger-v1): provider observations captured
+            # per chunk, bulk-written once per document inside this stage
+            # transaction — so raw evidence commits with the stage receipt
+            # and rolls back with the stage. (chunk_id, item, labels) tuples.
+            raw_entity_sink: list = []
+            raw_predicate_sink: list = []
+            _raw_rows_entity: list = []
+            _raw_rows_predicate: list = []
+            from polymath_shared import raw_evidence as _raw
+
+            _gl_model = (gliner.manifest().get("identity", {}) or {}).get("model", {})
+            _contract_cache: dict = {}
+
+            def _raw_contract(labels, task):
+                key = (tuple(labels), task)
+                if key not in _contract_cache:
+                    _contract_cache[key] = _raw.provider_contract(
+                        provider="gliner",
+                        model_id=str(_gl_model.get("id")),
+                        revision=str(_gl_model.get("revision")),
+                        task=task,
+                        threshold=ENTITY_THRESHOLD if task == "entity" else EVIDENCE_THRESHOLD,
+                        labels=list(labels))
+                return _contract_cache[key]
             # EXTRACTION-CONTEXT-V1: build the envelope per focal chunk
             from polymath_shared.extraction_context import active_policy, build_envelope
             context_active = active_policy() != "C0_FOCAL_ONLY"
             doc_text_cache: dict[str, str] = {}
             child_siblings = sorted(child_chunks, key=lambda r: r["char_start"])
+            # PHASE B2: one batched provider call set per label composition
+            # for the WHOLE document (chunk-level batching; C0 policy = no
+            # envelopes on the batched path). Per-chunk calls remain the
+            # automatic path whenever envelopes are active.
+            _batched_pass1: dict = {}
+            if not context_active:
+                from polymath_shared.query_policy import provider_passes as _pp
+                from polymath_shared.contracts import DocumentProfile as _DP
+                _base = _DP(**profile_dict).label_set if profile_dict.get("label_set") else []
+                _texts = [r["text"] for r in child_chunks]
+                _gbatch = int(os.environ.get("POLYMATH_GLINER_BATCH", "32"))
+                _t_batch = _t.perf_counter()
+                for _pl in _pp():
+                    _labels = list(dict.fromkeys(list(_base) + list(_pl)))
+                    if not _labels or not _texts:
+                        continue
+                    _rows = gliner.entity_pass_batch(
+                        _texts, _labels, threshold=ENTITY_THRESHOLD, batch=_gbatch)
+                    for _r_, _row_ in zip(child_chunks, _rows):
+                        _batched_pass1.setdefault(_r_["chunk_id"], {})[tuple(_labels)] = _row_
+                _perf["entity_pass_s"] += _t.perf_counter() - _t_batch
+                _perf["provider_calls"] += (len(_texts) + _gbatch - 1) // _gbatch
             for row in child_chunks:
                 envelope = None
                 if context_active:
@@ -780,10 +939,18 @@ def process_event(conn: Connection, event: dict) -> None:
                                 r["text"] for r in sorted(child_chunks, key=lambda x: x["char_start"]))
                     envelope = build_envelope(row, child_siblings,
                                               doc_text_cache[doc_key])
+                _pt = _t.perf_counter()
                 entities, rejected = _entity_spans(
                     gliner, row["text"], row["chunk_id"], doc_id, profile_dict,
-                    envelope=envelope, trace=trace
+                    envelope=envelope, trace=trace, raw_sink=raw_entity_sink,
+                    precomputed=_batched_pass1.get(row["chunk_id"])
                 )
+                _counts["gliner_entity_proposals"] += len(entities)
+                if rejected:
+                    _counts["gliner_entity_rejected"] += len(rejected)
+                if not _batched_pass1:
+                    _perf["entity_pass_s"] += _t.perf_counter() - _pt
+                    _perf["provider_calls"] += 1
                 audit.extend(rejected)
                 # S4a EXTRACT-STAGE ORDERING: mention persistence is DEFERRED
                 # until syntax exists. A mention carries a semantic admission
@@ -805,20 +972,42 @@ def process_event(conn: Connection, event: dict) -> None:
                             char_start=ent.start, char_end=ent.end,
                             detail={"core_type": ent.core_type.value, "raw_label": ent.raw_label,
                                     "score": ent.score, "pass_kind": ent.pass_kind})
+                _pt = _t.perf_counter()
                 evidence = _evidence_spans(
-                    gliner, row["text"], row["chunk_id"], pack, proposal_mode
-                )
+                    gliner, row["text"], row["chunk_id"], pack, proposal_mode,
+                    raw_sink=raw_predicate_sink,
+                    scientific_lane_prioritized=scientific_lane_prioritized)
+                _counts["evidence_spans"] += len(evidence)
+                _perf["evidence_pass_s"] += _t.perf_counter() - _pt
+                # drain this chunk's raw observations into ledger rows
+                _raw_rows_entity.extend(
+                    _raw.proposal_row(doc_id, row["chunk_id"], item,
+                                      _raw_contract(labels, "entity"))
+                    for item, labels in raw_entity_sink)
+                raw_entity_sink.clear()
+                _raw_rows_predicate.extend(
+                    _raw.evidence_row(doc_id, row["chunk_id"], item,
+                                      _raw_contract(labels, "evidence"))
+                    for item, labels in raw_predicate_sink)
+                raw_predicate_sink.clear()
+                _pt = _t.perf_counter()
                 sentences = _sentences_of(row["text"])
                 slices = _slices(sentences, entities, evidence, corpus_id)
+                _perf["slices_s"] += _t.perf_counter() - _pt
                 for sl in slices:
                     ordered_slices.append((row, sl))
 
             doc_entity_history: list[EntitySpan] = []
+            _l4_rows: list = []
             # SYNTAX-BOOTSTRAP: after the GLiNER passes and before
             # build_candidates — annotate the same slices (one batched
             # call) when the provider is enabled; disabled records and
             # changes nothing.
+            _raw.bulk_write(conn, "raw_entity_proposals", _raw_rows_entity)
+            _raw.bulk_write(conn, "raw_predicate_evidence", _raw_rows_predicate)
+            _pt = _t.perf_counter()
             syntax_runtime = _syntax_evidence(ordered_slices)
+            _perf["syntax_s"] = _t.perf_counter() - _pt
             if syntax_runtime is not None:
                 writer.artifact({"syntax": syntax_runtime})
             # S4a: the semantic dependency boundary. Every slice now carries
@@ -843,9 +1032,19 @@ def process_event(conn: Connection, event: dict) -> None:
                 rescue_label_set = tuple(
                     DocumentProfile(**profile_dict).label_set
                 ) if profile_dict.get("label_set") else ()
+                _pt = _t.perf_counter()
                 rescue_report = apply_rescue(
                     ordered_slices, rescue_stages, rescue_label_set, _pack())
+                _perf["rescue_s"] = _t.perf_counter() - _pt
                 writer.artifact({"rescue": rescue_report})
+                # V5 L2: persist every rescue decision as a span hypothesis,
+                # idempotently, inside this stage transaction.
+                _hyp_rows = [
+                    _raw.hypothesis_row(doc_id, h)
+                    for lane in rescue_report.values() if isinstance(lane, dict)
+                    for h in lane.get("hypotheses", [])
+                ]
+                _raw.bulk_write(conn, "span_hypotheses", _hyp_rows)
 
             # SENTENCE-SLICE-MANIFEST-V1 (row 54): record WHICH slices the
             # interpreter saw, in what order, under which contract — before
@@ -856,15 +1055,55 @@ def process_event(conn: Connection, event: dict) -> None:
             # re-derivation reproduce interpretation instead of approximating
             # it.
             _persist_slice_manifest(conn, doc_id, ordered_slices)
+            # V5 P4: EVIDENCE-COMPLETE. Raw capture, syntax, slice manifest
+            # and rescue hypotheses are all durable — seal the document's
+            # evidence bundle manifest before anything settles.
+            _bundle = _raw.write_bundle(conn, doc_id)
             # S4c: THE admission boundary. It sits after syntax (S4a) AND
             # after rescue, because rescue is proposal generation too — a
             # rescued span is a candidate endpoint and must be interpreted
             # by the same authority, exactly once, not left unadmitted.
             from polymath_shared.execution import SEMANTIC_CONTRACT_V2
 
+            _pt = _t.perf_counter()
             identities = _allocate_identities(
                 ordered_slices, corpus_id, doc_id,
                 contract_version=SEMANTIC_CONTRACT_V2)
+            _perf["admission_s"] = _t.perf_counter() - _pt
+
+            # ENTITY-KNOWLEDGE-ADMISSION-V1 (E1-E7). Runs AFTER identity
+            # allocation, because the gates judge a SETTLED class and a
+            # decided admission -- never a raw provider label -- and BEFORE
+            # `_fill_parse_entities` and `_persist_mentions`, so a refused
+            # entity never reaches argument binding or the graph.
+            #
+            # A refusal demotes to MENTION_ONLY; it never drops the span.
+            # `_persist_mentions` still writes the mention row, so the
+            # surface stays readable and attributable at its offsets. Only
+            # the durable identity is withheld.
+            _pt = _t.perf_counter()
+            from workers.entity_admission_stage import apply_entity_admission
+
+            _entity_admission = apply_entity_admission(
+                conn, corpus_id, doc_id, ordered_slices, identities,
+                mention_id_for=lambda s: "mention_" + _mention_suffix(s, doc_id))
+            _perf["entity_admission_s"] = _t.perf_counter() - _pt
+            _counts["entity_admission_considered"] = int(
+                _entity_admission.get("considered", 0))
+            _counts["entity_admission_refused"] = int(
+                _entity_admission.get("rejected", 0))
+
+            # FACT-ADMISSION-V1 (F1-F8): the last court before a claim
+            # becomes asserted knowledge. Carries the ENTITY verdicts so
+            # F3 can refuse an endpoint that was never admissible and
+            # attribute the refusal to the entity layer -- "You acquired
+            # Hooked" is refused for `You`, not for `acquired`.
+            from workers.fact_admission_stage import FactAdmissionStage
+
+            _fact_stage = FactAdmissionStage(
+                corpus_id, doc_id,
+                entity_verdicts=_entity_admission.get("verdicts"))
+
             for _row, _sl in ordered_slices:
                 if _sl.parse is not None:
                     _fill_parse_entities(_sl.parse, _sl.entities, corpus_id,
@@ -877,10 +1116,17 @@ def process_event(conn: Connection, event: dict) -> None:
             # candidate, parse record or fact endpoint refers to, and it could
             # only be admitted by interpreting it a SECOND time — the very
             # divergence this cutover removes.
+            _pt = _t.perf_counter()
+            _mention_spans = [span for _row, _sl in ordered_slices
+                              for span in _sl.entities]
+            _counts["mentions_persisted"] = len(_mention_spans)
+            _durable_surfaces = sorted({s.text for s in _mention_spans})
             _persist_mentions(
                 conn, corpus_id, doc_id,
-                [span for _row, _sl in ordered_slices for span in _sl.entities],
+                _mention_spans,
                 ordered_slices=ordered_slices, identities=identities)
+            _perf["persist_mentions_s"] = _t.perf_counter() - _pt
+            _pt = _t.perf_counter()
             for slice_idx, (row, sl) in enumerate(ordered_slices):
                 slice_observer = _SliceObserver(
                     trace, row, sl, f"{row['chunk_id']}:{slice_idx}")
@@ -898,10 +1144,47 @@ def process_event(conn: Connection, event: dict) -> None:
                 doc_entity_history.extend(
                     sorted(sl.entities, key=lambda e: (e.start, e.end)))
                 for candidate in candidates:
-                    if active_pipeline() == "kimi_v1":
+                    if active_pipeline() in ("kimi_v1", "kimi_v2"):
                         decision = compile_relation_kimi(candidate, sl.parse, pack, syntax=sl.syntax)
                     else:
                         decision = compile_relation(candidate, sl.parse, pack, syntax=sl.syntax)
+                    # V5 L4 (I7): every candidate's disposition is durable —
+                    # refused relation evidence survives outside the trace.
+                    _l4_rows.append(_raw.relation_candidate_row(
+                        doc_id, row["chunk_id"], candidate, decision))
+                    _decision_counts[decision.decision] = (
+                        _decision_counts.get(decision.decision, 0) + 1)
+                    if decision.fact is not None and (
+                            decision.fact.qualifiers.get("temporal_surface")
+                            or decision.fact.predicate == "occurred_at"):
+                        _event_facts += 1
+                    # Phase 6b: event candidate generation on ACCEPTED
+                    # scientific-action facts.
+                    if (decision.decision == "ACCEPT"
+                            and decision.fact is not None):
+                        from polymath_shared.event_reification import (
+                            event_candidate,
+                        )
+                        _admitted_facts.append({
+                            "subject": candidate.subject.span.text,
+                            "predicate": decision.fact.predicate,
+                            "object": candidate.object.span.text,
+                            "chunk_id": row.get("chunk_id"),
+                            "provenance": {
+                                "trigger_surface":
+                                    decision.fact.provenance.get(
+                                        "trigger_surface"),
+                                "evidence_start": candidate.evidence.start,
+                            }})
+                        _ec = event_candidate(
+                            decision.fact.predicate,
+                            decision.fact.subject_id,
+                            decision.fact.object_id,
+                            decision.fact.qualifiers,
+                            subject_surface=candidate.subject.span.text,
+                            object_surface=candidate.object.span.text)
+                        if _ec:
+                            _event_candidates.append(_ec)
                     if trace.enabled:
                         reason = str(decision.reason or "")
                         code = ("NEGATED" if "negated" in reason else
@@ -924,13 +1207,31 @@ def process_event(conn: Connection, event: dict) -> None:
                                     "subject": candidate.subject.span.text,
                                     "object": candidate.object.span.text})
                     if decision.decision in ("ACCEPT", "QUALIFY") and decision.fact:
-                        _persist_decision(conn, row, candidate, decision,
-                                          corpus_id=corpus_id,
-                                          identities=identities)
+                        # The compiler decided the trigger MEANS this
+                        # predicate. Admission decides whether the claim may
+                        # be ASSERTED. The candidate row above is already
+                        # durable, so a refusal withholds the assertion
+                        # without losing the evidence.
+                        _pf = _t.perf_counter()
+                        _may_assert = _fact_stage.admits(
+                            row=row, candidate=candidate, decision=decision,
+                            sl=sl, identities=identities)
+                        _perf["fact_admission_s"] += _t.perf_counter() - _pf
+                        if _may_assert:
+                            _persist_decision(conn, row, candidate, decision,
+                                              corpus_id=corpus_id,
+                                              identities=identities)
                         if trace.enabled:
+                            # Report the ASSERTION, not the proposal: a fact
+                            # the admission chain withheld must not appear in
+                            # the trace as FACT_ACCEPTED.
                             trace.record(
-                                event_type="fact", decision="FACT_ACCEPTED",
-                                reason_code="FACT_ACCEPTED", doc_id=doc_id,
+                                event_type="fact",
+                                decision=("FACT_ACCEPTED" if _may_assert
+                                          else "FACT_WITHHELD"),
+                                reason_code=("FACT_ACCEPTED" if _may_assert
+                                             else "FACT_ADMISSION_REFUSED"),
+                                doc_id=doc_id,
                                 chunk_id=row["chunk_id"],
                                 sentence_id=f"{row['chunk_id']}:{slice_idx}",
                                 surface=decision.fact.subject_id,
@@ -945,6 +1246,131 @@ def process_event(conn: Connection, event: dict) -> None:
                             "object": candidate.object.span.text,
                             "evidence_class": candidate.evidence.evidence_class,
                         })
+            _perf["candidates_compile_s"] = _t.perf_counter() - _pt
+            _pt = _t.perf_counter()
+            _raw.bulk_write(conn, "relation_candidates", _l4_rows)
+            _fact_admission = _fact_stage.flush(conn)
+            _perf["l1_l4_writes_s"] += _t.perf_counter() - _pt
+            _perf["total_s"] = _t.perf_counter() - _perf.pop("stage_t0")
+            _perf = {k: (round(v, 2) if isinstance(v, float) else v)
+                     for k, v in _perf.items()}
+            _perf["chunks"] = len(child_chunks)
+            _perf["slices"] = len(ordered_slices)
+
+            # EXTRACTION-AUDIT-V1: durable per-document audit report.
+            # Monotonic timings only (perf_counter), integer milliseconds,
+            # counts for every stage boundary — the phase's auditable
+            # record, queryable via artifacts(run_id, stage='extract').
+            timing_ms = {
+                "total_ms": int(round(_perf.get("total_s", 0) * 1000)),
+                "gliner_ms": int(round((_perf.get("entity_pass_s", 0.0)
+                                        + _perf.get("evidence_pass_s", 0.0)) * 1000)),
+                "spacy_ms": int(round(_perf.get("syntax_s", 0.0) * 1000)),
+                "rescue_ms": int(round(_perf.get("rescue_s", 0.0) * 1000)),
+                "entity_admission_ms": int(round(_perf.get("entity_admission_s", 0.0) * 1000)),
+                "persist_mentions_ms": int(round(_perf.get("persist_mentions_s", 0.0) * 1000)),
+                "predicate_compile_ms": int(round(_perf.get("candidates_compile_s", 0.0) * 1000)),
+                "fact_admission_ms": int(round(_perf.get("fact_admission_s", 0.0) * 1000)),
+                "writes_ms": int(round(_perf.get("l1_l4_writes_s", 0.0) * 1000)),
+            }
+            # KNOWLEDGE-ARTIFACT-PERSISTENCE-V1: procedures/concepts as
+            # durable first-class objects, gated by router lanes only.
+            try:
+                _artifact_counts = _persist_knowledge_artifacts(
+                    conn, corpus_id=corpus_id, doc_id=doc_id,
+                    doc_text="\n".join(r["text"] for r in child_chunks),
+                    chunk_ids=[r["chunk_id"] for r in child_chunks],
+                    durable_surfaces=_durable_surfaces)
+                extraction_audit_extra = {
+                    "artifacts": _artifact_counts}
+            except Exception as exc:
+                extraction_audit_extra = {"artifacts_error": str(exc)[:200]}
+                _artifact_counts = {"procedures": 0, "concepts": 0}
+
+            extraction_audit = {
+                "contract": "extraction-audit-v1",
+                "run_id": run_id,
+                "corpus_id": corpus_id,
+                "document_id": doc_id,
+                "relation_pipeline": active_pipeline(),
+                "bytes": sum(len(r["text"]) for r in child_chunks),
+                "timing_ms": timing_ms,
+                "counts": {
+                    "chunks": len(child_chunks),
+                    "sentences": len(ordered_slices),
+                    **_counts,
+                    **_artifact_counts,
+                    "relation_candidates_by_decision": dict(_decision_counts),
+                    "facts_passed": _fact_stage.passed,
+                    "facts_qualified": _fact_stage.qualified,
+                    "facts_rejected": _fact_stage.rejected,
+                    "facts_withheld": getattr(_fact_stage, "withheld", 0),
+                },
+            }
+            writer.artifact({"extraction_audit": extraction_audit,
+                             **extraction_audit_extra})
+            # SEMANTIC-REPLAY-BENCHMARK-V1: the machine-comparable record
+            # for corpus-level regression. Contract versions + counts +
+            # rejection histograms, deterministic JSON.
+            from polymath_shared.query_policy import active_policy_version
+            from polymath_shared.execution import SEMANTIC_CONTRACT_V2
+            replay_benchmark = {
+                "contract": "semantic-replay-benchmark-v1",
+                "run_id": run_id,
+                "corpus_id": corpus_id,
+                "document_id": doc_id,
+                "pipeline_version": f"{EXTRACTOR_VERSION}+{active_pipeline()}",
+                "build_sha": os.environ.get("POLYMATH_BUILD_SHA"),
+                "entity_contract_version": SEMANTIC_CONTRACT_V2,
+                "predicate_pack_version": pack.get("pack", {}).get("version"),
+                "vocabulary_version": active_policy_version(),
+                "counts": {
+                    "fact_count": _fact_stage.passed,
+                    "fact_qualified": _fact_stage.qualified,
+                    "event_count": _event_facts,
+                    "events": [],
+                    "relation_candidates": sum(_decision_counts.values()),
+                    "mentions_persisted": _counts.get(
+                        "mentions_persisted", 0),
+                },
+                "rejection_histogram": {
+                    "entity_admission": dict(_entity_admission.get(
+                        "by_gate", {})) if _entity_admission else {},
+                    "compiler_decisions": dict(_decision_counts),
+                    "fact_admission_gates": dict(_fact_stage.by_gate),
+                    "fact_admission_reasons": {
+                        f"{r[5]}:{r[6]}": sum(
+                            1 for x in _fact_stage.rows
+                            if x[5] == r[5] and x[6] == r[6])
+                        for r in set(_fact_stage.rows)},
+                },
+            }
+            from polymath_shared.event_reification import admit_event
+            admitted_events = []
+            for ec in _event_candidates:
+                ok, reason = admit_event(ec)
+                if ok:
+                    ec["admitted"] = True
+                    ec["admission_reason"] = reason
+                    admitted_events.append(ec)
+                else:
+                    ec["admitted"] = False
+                    ec["admission_reason"] = reason
+            replay_benchmark["counts"]["event_count"] = len(admitted_events)
+            replay_benchmark["acceptance"] = _acceptance_block(
+                _admitted_facts, _durable_surfaces)
+            replay_benchmark["events"] = {
+                "admitted": admitted_events,
+                "rejected": [ec for ec in _event_candidates
+                             if not ec.get("admitted")],
+            }
+            writer.artifact({"replay_benchmark": replay_benchmark})
+            import json as _json
+            log.info("extract audit %s", _json.dumps(extraction_audit),
+                     extra={"run_id": run_id, "stage": "extract"})
+            writer.artifact({"perf": _perf})
+            log.info("extract perf", extra={"run_id": run_id, "stage": "extract",
+                                            "detail": None})
         finally:
             gliner.close()
 
@@ -987,6 +1413,11 @@ def _persist_mentions(conn: Connection, corpus_id: str, doc_id: str,
             "must carry the admission decided at the post-syntax boundary, "
             "never a second one computed here")
 
+    # PHASE B6: one executemany for the whole document instead of one
+    # INSERT per span (a book = ~8k round-trips inside the txn). Same rows,
+    # same transaction, same conflict semantics.
+    _mention_rows = []
+    _entity_rows = []
     for span in spans:
         identity = identities.get(span_identity_key(span, corpus_id))
         if identity is None:
@@ -998,7 +1429,28 @@ def _persist_mentions(conn: Connection, corpus_id: str, doc_id: str,
         norm_surface = normalized_for_lookup(span.text)
         entity_id = identity.entity_id if identity.durable else None
         mention_id = "mention_" + _mention_suffix(span, doc_id)
-        conn.execute(
+        _mention_rows.append(
+            (mention_id, corpus_id, span.doc_id or doc_id,
+             span.chunk_id, span.start, span.end, span.text,
+             norm_surface, span.core_type.value, span.score,
+             span.extractor_version, identity.admission_class, entity_id,
+             span.raw_label, QUERY_POLICY_VERSION, span.pass_kind,
+             adm.proposal_surface, adm.referential_surface,
+             adm.anchor_kind, adm.decision_status, adm.reference_basis,
+             adm.admission_reason, adm.semantic_contract))
+        # Same rule as reprocessing: an inheriting reference does not describe
+        # the identity it borrowed. Under ON CONFLICT DO NOTHING this was
+        # ORDER-dependent — whichever mention landed first defined the class —
+        # so an anchor preceded by its own reference would have been mislabelled.
+        if identity.durable and adm.reference_basis != "ANTECEDENT_RESOLVED":
+            # the entity's own surface — the envelope is a reference TO
+            # the entity, not the entity's name
+            _entity_rows.append(
+                (entity_id, span.core_type.value,
+                 normalized_for_lookup(span.text), identity.admission_class))
+
+    with conn.cursor() as _cur:
+        _cur.executemany(
             """
             INSERT INTO mentions (mention_id, corpus_id, doc_id, chunk_id,
                                   char_start, char_end, surface,
@@ -1013,34 +1465,15 @@ def _persist_mentions(conn: Connection, corpus_id: str, doc_id: str,
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                     %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (mention_id) DO NOTHING
-            """,
-            (mention_id, corpus_id, span.doc_id or doc_id,
-             span.chunk_id, span.start, span.end, span.text,
-             norm_surface, span.core_type.value, span.score,
-             span.extractor_version, identity.admission_class, entity_id,
-             span.raw_label, QUERY_POLICY_VERSION, span.pass_kind,
-             adm.proposal_surface, adm.referential_surface,
-             adm.anchor_kind, adm.decision_status, adm.reference_basis,
-             adm.admission_reason, adm.semantic_contract),
-        )
-        # Same rule as reprocessing: an inheriting reference does not describe
-        # the identity it borrowed. Under ON CONFLICT DO NOTHING this was
-        # ORDER-dependent — whichever mention landed first defined the class —
-        # so an anchor preceded by its own reference would have been mislabelled.
-        if identity.durable and adm.reference_basis != "ANTECEDENT_RESOLVED":
-            conn.execute(
+            """, _mention_rows)
+        if _entity_rows:
+            _cur.executemany(
                 """
                 INSERT INTO entities (entity_id, core_type, normalized_surface,
                                       admission_class)
                 VALUES (%s, %s, %s, %s)
                 ON CONFLICT (entity_id) DO NOTHING
-                """,
-                # the entity's own surface — the envelope is a reference TO
-                # the entity, not the entity's name
-                (entity_id, span.core_type.value,
-                 normalized_for_lookup(span.text),
-                 identity.admission_class),
-            )
+                """, _entity_rows)
 
 
 def _mention_suffix(span: EntitySpan, doc_id: str) -> str:
@@ -1093,6 +1526,106 @@ def _evidence_offsets(chunk_row: dict, candidate, decision) -> dict:
     }
 
 
+_BUNDLE_STAMP: dict | None = None
+
+
+def _bundle_hash() -> str:
+    global _BUNDLE_STAMP
+    if _BUNDLE_STAMP is None:
+        from polymath_shared.execution_bundle import (
+            bundle_id, compute_execution_bundle)
+        _BUNDLE_STAMP = bundle_id(compute_execution_bundle())
+    return _BUNDLE_STAMP
+
+
+def _stamped_provenance(provenance: dict) -> dict:
+    """EXECUTION-BUNDLE-FENCE-V1: every accepted fact records the exact
+    code+configuration bundle that produced it. Computed once per
+    process; the claim gate guarantees it cannot go stale mid-flight."""
+    global _BUNDLE_STAMP
+    if _BUNDLE_STAMP is None:
+        from polymath_shared.execution_bundle import (
+            bundle_id, compute_execution_bundle)
+        _BUNDLE_STAMP = bundle_id(compute_execution_bundle())
+    out = dict(provenance or {})
+    out.setdefault("generated_by_bundle_hash", _bundle_hash())
+    return out
+
+
+def _persist_knowledge_artifacts(conn: Connection, *, corpus_id: str,
+                                 doc_id: str, doc_text: str,
+                                 chunk_ids: list[str],
+                                 durable_surfaces: list[str]) -> dict:
+    """KNOWLEDGE-ARTIFACT-PERSISTENCE-V1: compile Procedure/Concept
+    artifacts as first-class objects. They are NOT facts and never touch
+    the entity graph here; retrieval projection is the projector's job.
+    Content-addressed ids make replay idempotent.
+
+    EXTRACTION-ELIGIBILITY-V1: the compilers are the LOCAL-EVIDENCE
+    detectors — cheap, deterministic, self-gating (no procedural or
+    conceptual evidence → no artifact). Document-level classification
+    is recorded as routing metadata but never vetoes a compiler:
+    eligible content always gets evaluated."""
+    from polymath_shared.knowledge_router.classifier import classify_document
+    from polymath_shared.knowledge_objects.concept import compile_concepts
+    from polymath_shared.knowledge_objects.procedure import compile_procedure
+
+    routing = classify_document(doc_text)["routing"]
+    counts = {"procedures": 0, "concepts": 0,
+              "routing_disabled": sorted(routing.get("disabled") or [])}
+
+    # procedure lane: always evaluated; the compiler self-gates on
+    # local procedural evidence
+    proc = compile_procedure(
+        document_id=doc_id, corpus_id=corpus_id, text=doc_text,
+        admitted_entities=durable_surfaces,
+        source_chunk_ids=chunk_ids)
+    if proc:
+        conn.execute(
+            """
+            INSERT INTO procedure_artifacts
+                (procedure_id, document_id, corpus_id, title, goal,
+                 steps_json, tools_json, confidence, source_chunk_ids,
+                 generated_by_bundle_hash)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            ON CONFLICT (procedure_id) DO NOTHING
+            """,
+            (proc["artifact_id"], doc_id, corpus_id,
+             proc.get("title", ""), proc.get("goal", ""),
+             json.dumps(proc.get("steps", [])),
+             json.dumps(proc.get("tools", [])),
+             float(proc.get("confidence", 0.0)), list(chunk_ids),
+             _bundle_hash()))
+        counts["procedures"] = 1
+
+    # concept lane: always evaluated; the compiler self-gates on
+    # local definitional evidence
+    from workers.summarizer import split_sentences
+    concepts = compile_concepts(
+        document_id=doc_id, corpus_id=corpus_id,
+        sentences=split_sentences(doc_text),
+        admitted_entities=durable_surfaces,
+        source_chunk_ids=chunk_ids)
+    for c in concepts:
+        conn.execute(
+            """
+            INSERT INTO concept_artifacts
+                (concept_id, document_id, corpus_id, name, description,
+                 domain, related_entities, source_sentence, confidence,
+                 supporting_chunks, generated_by_bundle_hash)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            ON CONFLICT (concept_id) DO NOTHING
+            """,
+            (c["artifact_id"], doc_id, corpus_id, c["name"],
+             c.get("description", ""), c.get("domain", "general"),
+             json.dumps(c.get("related_entities", [])),
+             c.get("source_sentence", ""),
+             float(c.get("confidence", 0.0)), list(chunk_ids),
+             _bundle_hash()))
+        counts["concepts"] += 1
+    return counts
+
+
 def _persist_decision(conn: Connection, chunk_row: dict, candidate, decision,
                       corpus_id: str = "eval", identities: dict | None = None) -> None:
     """S4c: fact endpoints are written from the SAME admission the mention
@@ -1113,11 +1646,21 @@ def _persist_decision(conn: Connection, chunk_row: dict, candidate, decision,
                 f"fact endpoint {span.text!r} has no admission in the "
                 "identities map — the compiler produced an endpoint the "
                 "admission boundary never interpreted")
-        if identity.admission.reference_basis == "ANTECEDENT_RESOLVED":
-            # This endpoint BORROWED its identity from an anchor (row 48).
-            # The anchor already described the entity when its own mention was
-            # persisted; describing it again from the reference would restamp
-            # a GLOBAL anchor with the reference's DOCUMENT_SCOPED scope.
+        if (identity.admission.reference_basis == "ANTECEDENT_RESOLVED"
+                and identity.durable):
+            # This endpoint BORROWED a durable identity from an anchor
+            # (row 48). The anchor already described the entity when its own
+            # mention was persisted; describing it again from the reference
+            # would restamp a GLOBAL anchor with the reference's
+            # DOCUMENT_SCOPED scope.
+            #
+            # A NON-durable resolved reference is different: it inherited
+            # NOTHING, its id is its own span-scoped mention_ identity, and
+            # no anchor ever writes that entities row — skipping here left a
+            # parked fact pointing at a missing row (FK violation, found by
+            # the first book-scale ingest). It falls through and records its
+            # own MENTION_ONLY entity row, exactly like every other parked
+            # endpoint.
             continue
         conn.execute(
             """
@@ -1138,7 +1681,7 @@ def _persist_decision(conn: Connection, chunk_row: dict, candidate, decision,
         """,
         (fact.fact_id, fact.predicate, fact.subject_id, fact.object_id,
          json.dumps(fact.qualifiers), fact.decision, fact.rule_id,
-         fact.rule_version, json.dumps(fact.provenance)),
+         fact.rule_version, json.dumps(_stamped_provenance(fact.provenance))),
     )
 
     from polymath_shared.identity import evidence_id
@@ -1163,7 +1706,14 @@ def _persist_decision(conn: Connection, chunk_row: dict, candidate, decision,
     )
 
 
-def run_forever(poll_interval_s: float = 2.0, batch_size: int = 4) -> None:
+def run_forever(poll_interval_s: float = 2.0, batch_size: int = 1) -> None:
+    """LONG-STAGE-LEASE-CORRECTNESS-V1: claim depth 1.
+
+    A worker executes tickets serially, so claiming ahead bought nothing
+    but made "held" differ from "being processed" -- and a stage running
+    past claim_ttl_s let the reaper expire the queued ones. Parallelism
+    comes from running several workers of a type.
+    """
     from polymath_shared.worker_runtime import run_worker
 
     run_worker('extract', [EVENT_TYPE], process_event,

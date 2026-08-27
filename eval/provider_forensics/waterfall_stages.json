@@ -1,0 +1,359 @@
+{
+ "stages": [
+  "boundary",
+  "missing_argument",
+  "type_reconciliation",
+  "frames"
+ ],
+ "cases": [
+  {
+   "case": "A05s",
+   "doc": "01_northvale_health.md",
+   "surface": "radiology review board",
+   "raw": null,
+   "raw_exact": false,
+   "mapped_exact": false,
+   "post_rescue": null,
+   "persisted": null
+  },
+  {
+   "case": "A07s",
+   "doc": "02_nimbus_cloud.md",
+   "surface": "Nimbus Cloud",
+   "raw": [
+    {
+     "t": "Nimbus Cloud",
+     "l": "Organization",
+     "s": 0.95
+    },
+    {
+     "t": "Nimbus Cloud",
+     "l": "Organization",
+     "s": 0.9
+    },
+    {
+     "t": "Nimbus Cloud",
+     "l": "Organization",
+     "s": 0.92
+    }
+   ],
+   "raw_exact": true,
+   "mapped_exact": true,
+   "post_rescue": null,
+   "persisted": null
+  },
+  {
+   "case": "A09s",
+   "doc": "02_nimbus_cloud.md",
+   "surface": "Nimbus billing service",
+   "raw": [
+    {
+     "t": "Nimbus",
+     "l": "Organization",
+     "s": 0.6
+    }
+   ],
+   "raw_exact": false,
+   "mapped_exact": false,
+   "post_rescue": null,
+   "persisted": null
+  },
+  {
+   "case": "A09o",
+   "doc": "02_nimbus_cloud.md",
+   "surface": "Nimbus Cloud platform",
+   "raw": [
+    {
+     "t": "Nimbus Cloud",
+     "l": "Organization",
+     "s": 0.95
+    },
+    {
+     "t": "Nimbus Cloud",
+     "l": "Organization",
+     "s": 0.9
+    },
+    {
+     "t": "Nimbus",
+     "l": "Organization",
+     "s": 0.6
+    }
+   ],
+   "raw_exact": false,
+   "mapped_exact": false,
+   "post_rescue": null,
+   "persisted": null
+  },
+  {
+   "case": "A10o",
+   "doc": "02_nimbus_cloud.md",
+   "surface": "load-testing harness",
+   "raw": null,
+   "raw_exact": false,
+   "mapped_exact": false,
+   "post_rescue": null,
+   "persisted": null
+  },
+  {
+   "case": "A14o",
+   "doc": "03_crestline_automation.md",
+   "surface": "shift scheduling model",
+   "raw": null,
+   "raw_exact": false,
+   "mapped_exact": false,
+   "post_rescue": null,
+   "persisted": null
+  },
+  {
+   "case": "A16o",
+   "doc": "03_crestline_automation.md",
+   "surface": "quality database",
+   "raw": null,
+   "raw_exact": false,
+   "mapped_exact": false,
+   "post_rescue": null,
+   "persisted": null
+  },
+  {
+   "case": "A12s",
+   "doc": "03_crestline_automation.md",
+   "surface": "Crestline plant",
+   "raw": [
+    {
+     "t": "Crestline",
+     "l": "Organization",
+     "s": 0.9
+    },
+    {
+     "t": "Crestline",
+     "l": "Organization",
+     "s": 0.94
+    },
+    {
+     "t": "Crestline",
+     "l": "Organization",
+     "s": 0.91
+    }
+   ],
+   "raw_exact": false,
+   "mapped_exact": false,
+   "post_rescue": [
+    {
+     "t": "Crestline",
+     "k": "discovery"
+    },
+    {
+     "t": "Crestline",
+     "k": "discovery"
+    }
+   ],
+   "persisted": [
+    {
+     "t": "Crestline",
+     "anchor": "IDENTITY",
+     "durable": true
+    },
+    {
+     "t": "Crestline",
+     "anchor": "IDENTITY",
+     "durable": true
+    }
+   ]
+  },
+  {
+   "case": "A11s",
+   "doc": "03_crestline_automation.md",
+   "surface": "Crestline Automation",
+   "raw": [
+    {
+     "t": "Crestline Automation",
+     "l": "Organization",
+     "s": 0.95
+    },
+    {
+     "t": "Crestline Automation",
+     "l": "Organization",
+     "s": 0.93
+    }
+   ],
+   "raw_exact": true,
+   "mapped_exact": true,
+   "post_rescue": [
+    {
+     "t": "Crestline Automation",
+     "k": "discovery"
+    }
+   ],
+   "persisted": [
+    {
+     "t": "Crestline Automation",
+     "anchor": "UNKNOWN",
+     "durable": false
+    }
+   ]
+  },
+  {
+   "case": "TYP1",
+   "doc": "02_nimbus_cloud.md",
+   "surface": "Kubernetes",
+   "raw": [
+    {
+     "t": "Kubernetes",
+     "l": "Framework",
+     "s": 0.62
+    }
+   ],
+   "raw_exact": true,
+   "mapped_exact": true,
+   "post_rescue": [
+    {
+     "t": "Kubernetes",
+     "k": "discovery"
+    }
+   ],
+   "persisted": [
+    {
+     "t": "Kubernetes",
+     "anchor": "IDENTITY",
+     "durable": true
+    }
+   ]
+  },
+  {
+   "case": "LR1",
+   "doc": "02_nimbus_cloud.md",
+   "surface": "engineering group",
+   "raw": [
+    {
+     "t": "engineering group",
+     "l": "Person",
+     "s": 0.58
+    },
+    {
+     "t": "engineering group",
+     "l": "Person",
+     "s": 0.67
+    }
+   ],
+   "raw_exact": true,
+   "mapped_exact": true,
+   "post_rescue": [
+    {
+     "t": "engineering group",
+     "k": "discovery"
+    },
+    {
+     "t": "engineering group",
+     "k": "discovery"
+    }
+   ],
+   "persisted": [
+    {
+     "t": "engineering group",
+     "anchor": "LOCAL_REFERENCE",
+     "durable": false
+    },
+    {
+     "t": "engineering group",
+     "anchor": "LOCAL_REFERENCE",
+     "durable": false
+    }
+   ]
+  },
+  {
+   "case": "LR2",
+   "doc": "03_crestline_automation.md",
+   "surface": "vision system",
+   "raw": [
+    {
+     "t": "vision system",
+     "l": "Technology",
+     "s": 0.82
+    },
+    {
+     "t": "vision system",
+     "l": "Technology",
+     "s": 0.81
+    }
+   ],
+   "raw_exact": true,
+   "mapped_exact": true,
+   "post_rescue": [
+    {
+     "t": "vision system",
+     "k": "discovery"
+    },
+    {
+     "t": "vision system",
+     "k": "discovery"
+    }
+   ],
+   "persisted": [
+    {
+     "t": "vision system",
+     "anchor": "LOCAL_REFERENCE",
+     "durable": false
+    },
+    {
+     "t": "vision system",
+     "anchor": "LOCAL_REFERENCE",
+     "durable": false
+    }
+   ]
+  },
+  {
+   "case": "LR3",
+   "doc": "03_crestline_automation.md",
+   "surface": "pump failure",
+   "raw": [
+    {
+     "t": "pump failure",
+     "l": "Event",
+     "s": 0.73
+    }
+   ],
+   "raw_exact": true,
+   "mapped_exact": true,
+   "post_rescue": [
+    {
+     "t": "pump failure",
+     "k": "discovery"
+    }
+   ],
+   "persisted": [
+    {
+     "t": "pump failure",
+     "anchor": "LOCAL_REFERENCE",
+     "durable": false
+    }
+   ]
+  },
+  {
+   "case": "LR4",
+   "doc": "03_crestline_automation.md",
+   "surface": "production stoppage",
+   "raw": [
+    {
+     "t": "production stoppage",
+     "l": "Event",
+     "s": 0.75
+    }
+   ],
+   "raw_exact": true,
+   "mapped_exact": true,
+   "post_rescue": [
+    {
+     "t": "production stoppage",
+     "k": "discovery"
+    }
+   ],
+   "persisted": [
+    {
+     "t": "production stoppage",
+     "anchor": "LOCAL_REFERENCE",
+     "durable": false
+    }
+   ]
+  }
+ ]
+}

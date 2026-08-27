@@ -1,0 +1,148 @@
+{
+ "corpus": "release-books-v1",
+ "contract": "neural-embed-v1",
+ "k": 10,
+ "captured_at": "20260825T130310Z",
+ "results": [
+  {
+   "query_id": "q01",
+   "class": "exact_fact",
+   "query": "What did Paul Graziani do before founding MathWorks?",
+   "VECTOR": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   },
+   "HYBRID": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   },
+   "GRAPH": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   }
+  },
+  {
+   "query_id": "q02",
+   "class": "identifier",
+   "query": "SOC analysts and Wazuh deployment",
+   "VECTOR": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   },
+   "HYBRID": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   },
+   "GRAPH": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   }
+  },
+  {
+   "query_id": "q03",
+   "class": "procedure",
+   "query": "How to deploy Splunk on AWS?",
+   "VECTOR": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   },
+   "HYBRID": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   },
+   "GRAPH": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   }
+  },
+  {
+   "query_id": "q04",
+   "class": "concept",
+   "query": "What is event-driven microservice communication?",
+   "VECTOR": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   },
+   "HYBRID": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   },
+   "GRAPH": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   }
+  },
+  {
+   "query_id": "q05",
+   "class": "semantic_paraphrase",
+   "query": "keeping services reliable when everything is on fire",
+   "VECTOR": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   },
+   "HYBRID": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   },
+   "GRAPH": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   }
+  },
+  {
+   "query_id": "q06",
+   "class": "broad_exploration",
+   "query": "distributed systems architecture patterns",
+   "VECTOR": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   },
+   "HYBRID": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   },
+   "GRAPH": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   }
+  },
+  {
+   "query_id": "q07",
+   "class": "relationship",
+   "query": "How does Kubernetes relate to container orchestration patterns?",
+   "VECTOR": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   },
+   "HYBRID": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   },
+   "GRAPH": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   }
+  },
+  {
+   "query_id": "q08",
+   "class": "cross_domain",
+   "query": "security monitoring lessons applicable to data engineering",
+   "VECTOR": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   },
+   "HYBRID": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   },
+   "GRAPH": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   }
+  },
+  {
+   "query_id": "q09",
+   "class": "ambiguous",
+   "query": "release it",
+   "VECTOR": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   },
+   "HYBRID": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   },
+   "GRAPH": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   }
+  },
+  {
+   "query_id": "q10",
+   "class": "no_answer",
+   "query": "the mating habits of Antarctic penguins",
+   "VECTOR": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   },
+   "HYBRID": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   },
+   "GRAPH": {
+    "error": "TypeError: EmbedderClient.embed() missing 1 required positional argument: 'representation_kind'"
+   }
+  }
+ ]
+}

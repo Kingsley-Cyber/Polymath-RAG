@@ -1,0 +1,146 @@
+[
+ {
+  "fact": "created(eric evans [Person], ddd [Product])",
+  "decision": "ACCEPT",
+  "doc": "09_percival_architecture_patterns_with_python_c3ec815d.epub",
+  "context": " We have a domain service that we can use for our first use case. But first we\u2019ll need a database\u2026 1 DDD did not originate domain modeling. Eric Evans refers to the 2002 book Object Design by Rebecca Wirfs-Brock and Alan McKean (Addison-Wesley Professional), which introduced responsibility-driven design, of which DDD is a special case dealing with the domain."
+ },
+ {
+  "fact": "acquired(i [Person], soc [Organization])",
+  "decision": "QUALIFY",
+  "doc": "04_Jump-start_SOC_Analyst_Wall_Rodrick.epub",
+  "context": "to figure out this puzzle, and from there have a large direct impact on the organization that you work for.Looking back, from the time when I was just starting out to making it to the director of SOC operations roles, I don\u2019t have any regrets because it has led me to where I am today, but there is plenty of advice that I wish I could giv"
+ },
+ {
+  "fact": "part_of(ne twork infrastructure [Technology], op erating systems and services [Technology])",
+  "decision": "ACCEPT",
+  "doc": "01_Mastering_Cybersecurity_Bhardwaj.pdf",
+  "context": "p for the ethical hacker, guiding their attack simulations and vulnerability identification efforts. The target profile needs to include: \u2022 Ne twork Infrastructure: A detailed understanding of the target network\u2019s layout, including devices, firewalls, and potential entry points. \u2022 Op erating Systems and Services: Information about the operating systems running on dif\u2011 ferent devices and the services associated with them. This can help identify vulne"
+ },
+ {
+  "fact": "uses(manjaro [Product], arch linux [Product])",
+  "decision": "ACCEPT",
+  "doc": "05_nikkel_practical_linux_forensics_9121bca8.epub",
+  "context": "software, customization, and configuration. For example, Ubuntu is based on Debian, CentOS Stream is based on Red Hat Enterprise Linux, and Manjaro is based on Arch Linux. Some distros even are based on distros that are themselves based on another distro. For example, Linux Mint is based on Ubuntu, which is b"
+ },
+ {
+  "fact": "depends_on(ip [Technology], b/ip [Technology])",
+  "decision": "ACCEPT",
+  "doc": "03_CompTIA_CySA+_CS0-002_CertGuide_McMillan.epub",
+  "context": "ond door. 10. BACnet/IP (B/IP). The BACnet standard makes exclusive use of MAC addresses for all data links, including Ethernet. To support IP, IP addresses are needed, which is why B/IP was developed. Chapter 6"
+ },
+ {
+  "fact": "stated_in(sca policy [Document], sca policy file [Document])",
+  "decision": "QUALIFY",
+  "doc": "05_Security_Monitoring_Wazuh_Gupta.epub",
+  "context": "achine. In this use case, we will check whether auditd and audit logs are protected with sufficient permissions: Requirements Reviewing the SCA policy Visualizing the alerts Requirements In order to complete the use case to perform an SCA check to Ensure Audit tools are 755 or more restrictive, the requirements are as follows: Ubuntu machine (with the Wazuh agent installed) Wazuh server Reviewing the SCA policy The SCA policy file called cis_ubuntu22-04.yml gets installed while installing the Wazuh agent package on an Ubuntu machine. This file consists of all the SCA "
+ },
+ {
+  "fact": "part_of(process [Process], ida pro [Product])",
+  "decision": "ACCEPT",
+  "doc": "04_sikorski_practical_malware_analysis_4c35c520.epub",
+  "context": "dialog in Process Monitor, 484 exploits, 245 filters explorer.exe in procmon, 44\u201346 code search for, 732 in Wireshark, 53 writing path into process, 588 Find OEP plug-in (Section Hop), 391 export address table (EAT), hooking FindCrypt2, 283 method and, 248 output, 619 export data, in IMAGE_EXPORT_DIRECTORY FindFirstFile function, 20, 456, array, 416 478\u2013479, 520, 527, 715 exported functions, 18 finding absence of, 521 networking code, 313 Exports window, in IDA Pro, 91 original entry point (OEP), $EXTERNAL_NET variable, in Snort, 303 391\u2013395 with automated tools, 391\u2013392 F manually, 392\u2013395 fake servic"
+ },
+ {
+  "fact": "acquired(they [Person], dal- las police [Organization])",
+  "decision": "QUALIFY",
+  "doc": "01-Bowart-Operation_Mind_Control.epub",
+  "context": "tinian refugee. The Los Angeles police immediately took Sirhan into custody. At first they appeared to be taking every precau- tion so that they wouldn't make the same mistakes the Dal- las police had. They taped every interrogation session with the suspect and kept him under surveillance through a closed-circuit TV camera in his cell"
+ },
+ {
+  "fact": "uses(splunk [Technology], aws services [Technology])",
+  "decision": "ACCEPT",
+  "doc": "06_Hands-On_Splunk_on_AWS_Sinha.epub",
+  "context": "This section illustrates how to configure data routing in AWS. Utilizing AWS services for data ingestion Technique: Gather and send data to Splunk using AWS services like CloudWatch Logs and Kinesis. Implementation: To optimize the data ingestion pipeline, use AWS Kinesis Firehose to stream data into Spl"
+ },
+ {
+  "fact": "uses(amazon [Organization], riak [Technology])",
+  "decision": "ACCEPT",
+  "doc": "11_kleppmann_designing_data_intensive_applications_f8d541ef.epub",
+  "context": "It once again became a fashionable architecture for databases after Amazon used it for its in-house Dynamo system [37 ]. vi Riak, Cassandra, and Voldemort are open source datastores with leaderless replication models inspired by Dynamo, so this kind of database is als"
+ },
+ {
+  "fact": "is_a(general principles of sre [Concept], data integrity [Concept])",
+  "decision": "QUALIFY",
+  "doc": "13_beyer_sre_converted.epub",
+  "context": "with the aim of detecting and fixing such issues before users notice any problems.12 General Principles of SRE as Applied to Data Integrity General principles of SRE can be applied to the specifics of data integrity and cloud computing as described in this section. Beginner\u2019s Mind Large-scale, complex services have inherent bugs that can\u2019t be fully grok"
+ },
+ {
+  "fact": "associated_with(ids engine [Technology], fast pattern matching [Method])",
+  "decision": "ACCEPT",
+  "doc": "01_sanders_applied_network_security_monitoring_160e2a94.epub",
+  "context": "two individual content matches: 1. content:\"PRIVMSG|20|\"; depth:8; 2. content:\"|3a|\"; within:30; These content matches will ensure that the IDS engine is only examining packets that already appear to be associated with IRC traffic before attempting to perform the PCRE match.Fast Pattern Matching When multiple content matches are present within a rule, Snort and Suricata will attempt to match the most unique string first so that they"
+ },
+ {
+  "fact": "uses(we [Organization], corba [Technology])",
+  "decision": "ACCEPT",
+  "doc": "15_hohpe_enterprise_integration_patterns_f175d067.epub",
+  "context": "an\u00adnel Ad\u00adapters, which are Mes\u00adsage En\u00add\u00adpoints them\u00adselves, will com\u00admu\u00adnic\u00adate with each other via CORBA. Like our choice for MQSer\u00adies, we will use CORBA rather than JNI, since it is a com\u00adpany stand\u00adard."
+ },
+ {
+  "fact": "created(you [Person], covert persuasion [Method])",
+  "decision": "QUALIFY",
+  "doc": "03-Hogan-Covert_Persuasion.epub",
+  "context": "d still craving more. The only difference is Grandmom won\u2019t tell you her secret, but Hogan and Speakman reveal every secret ingredient that you need to bring out the master persuader in you.\u201d \u2014Al \u201cThe Inspiration\u201d Duncan, professional speaker and co-author of Unleash the Greatness Within You \u201cWhen you absolutely, positively need a \u2018yes,\u2019 Covert Persuasion reveals the tools to manufacture their compliance. It is better to read this book and never use this revelatory technology than to need the"
+ },
+ {
+  "fact": "similar_to(impacket [Technology], sysinternal [Organization])",
+  "decision": "ACCEPT",
+  "doc": "03_practical_threat_detection_engineering_cc8621d8.epub",
+  "context": "Impacket (https://github.com/fortra/impacket) is described as a \u201ccollection of Python classes for working with network protocols.\" The repository contains an implementation for PsExec (https://github.com/fortra/impacket/blob/8799a1a2c42ad74423841d21ed5f4193ea54f3d5/examples/psexec.py), which very closely resembles Sysinternal\u2019s PsExec, in terms of its functionality. The following excerpt shows the output of running impacket-psexec: \u250c\u2500\u2500(examiner \u327f labhost3)-[~] \u2514\u2500"
+ },
+ {
+  "fact": "causes(groundhog day anti-pattern [Concept], email-driven architecture anti-pattern [Concept])",
+  "decision": "ACCEPT",
+  "doc": "14_richards_fundamentals_of_software_architecture_bdd8ac66.epub",
+  "context": "re anti-pattern. These three anti-patterns usually follow a progressive flow: overcoming the Covering Your Assets anti-pattern leads to the Groundhog Day anti-pattern, and overcoming this anti-pattern leads to the Email-Driven Architecture anti-pattern."
+ },
+ {
+  "fact": "uses(rhel [Product], firewalld [Technology])",
+  "decision": "ACCEPT",
+  "doc": "02_Data_Engineering_clean2.epub",
+  "context": "The following tasks allow TCP traffic on port 22 for RHEL, which uses Firewalld, and Ubuntu, which uses UFW. Save this task as tasks/firewall-allow-ssh.yml: - name: Open Port 22/TCP ansible.posix.firewalld: \u2776 state: ena"
+ },
+ {
+  "fact": "acquired(actiontec electronics [Organization], verizon [Organization])",
+  "decision": "ACCEPT",
+  "doc": "02_collins_network_security_through_data_analysis_6b9f94a7.epub",
+  "context": "ication goes from 8c:2d:aa:46:f9:71 to 00:1f:90:92:70:5a. Looking these up tells us that 8c:2d:aa belongs to Apple, and 00-1f-90 belongs to Actiontec Electronics, who make Verizon\u2019s FIOS routers.There\u2019s Less Work Than You ThinkA common analytical stumbling block comes when an analyst tries to build a complicated gener"
+ },
+ {
+  "fact": "uses(they [Person], ssh [Technology])",
+  "decision": "ACCEPT",
+  "doc": "10_nygard_release_it_8487f6f1.epub",
+  "context": "en again! With long-lived virtual machines or even physical hosts, push-based tools can be simpler to set up and administer. That\u2019s because they use commodity software like SSH rather than agents that require their own configuration and authentication techniques. The deployment tool by itself should be augmented wi"
+ },
+ {
+  "fact": "uses(us government [Organization], taxii [Technology])",
+  "decision": "ACCEPT",
+  "doc": "06_brown_intelligence_driven_incident_response_cc8b3069.epub",
+  "context": "h TAXII services to facilitate sharing, and is therefore a good choice for many organizations that receive or exchange information with the government or other organizations using STIX/TAXII."
+ },
+ {
+  "fact": "part_of(legislative committee of fourteen women\u2019s organizations [Organization], league of women voters [Organization])",
+  "decision": "ACCEPT",
+  "doc": "02b-Bernays-Propaganda-1928.epub",
+  "context": "ganda to-\u200bday is being utilized by women to achieve their programs in Washington and in the states. In Washington they are organized as the Legislative Committee of Fourteen Women\u2019s Organizations, including the League of Women Voters, the Young Women\u2019s Christian Association, the Woman\u2019s Christian Temperance Union, the Federation of Women\u2019s Clubs, etc. These organizations"
+ },
+ {
+  "fact": "located_in(figure 4-7 [Document], location [Location])",
+  "decision": "ACCEPT",
+  "doc": "12_bellemare_building_event_driven_microservices_9538edc0.epub",
+  "context": "es. This mimics what the data store client could do but does it externally to the data store to reduce load. An example of this is shown in Figure 4-7, where a User is denormalized based on User, Location, and Employer. Figure 4-7. Eventification of public User events using private User, Location, and Employer event streamsIn this example, th"
+ },
+ {
+  "fact": "associated_with(kubernetes [Technology], readiness [Concept])",
+  "decision": "ACCEPT",
+  "doc": "16_burns_kubernetes_up_and_running_7f03b503.epub",
+  "context": "The --watch option here causes the kubectl command to hang around and output any updates. This is an easy way to see how a Kubernetes object changes over time: $ kubectl get endpoints alpaca-prod --watch Now go back to your browser and hit the \u201cFail\u201d link for the readiness check. You should see that the server is not returning 500s. After three of these this server is removed from the list of endpoints for the servi"
+ },
+ {
+  "fact": "uses(microsoft [Organization], containers [Technology])",
+  "decision": "ACCEPT",
+  "doc": "08_burns_designing_distributed_systems.epub",
+  "context": "About the Author Brendan Burns is a distinguished engineer at Microsoft and a cofounder of the Kubernetes open source project. At Microsoft he works on Azure, focusing on Containers and DevOps. Prior to Microsoft, he worked at Google in the Google Cloud Platform, where he helped build APIs like Deployment Manager and Cl"
+ }
+]

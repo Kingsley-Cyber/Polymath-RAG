@@ -77,6 +77,12 @@ ROUTING_KINDS = (
     "routing_document_summary",
     "routing_section_summary",
     "routing_child",
+    # ARTIFACT-LANE-VERIFY-V1 (SMART REQ-015): procedure/concept routing
+    # projections were excluded from reconciliation — active receipts
+    # over an empty store went undetected (measured live 2026-08-26:
+    # transcript-qual-v1 held 3 active artifact receipts with 0 points).
+    "routing_procedure",
+    "routing_concept",
 )
 
 
@@ -106,10 +112,20 @@ def _desired_routing_ids(conn: Connection, corpus: str) -> dict[str, set[str]]:
         """,
         (corpus,),
     ).fetchall()
+    proc_rows = conn.execute(
+        "SELECT procedure_id FROM procedure_artifacts WHERE corpus_id = %s",
+        (corpus,),
+    ).fetchall()
+    concept_rows = conn.execute(
+        "SELECT concept_id FROM concept_artifacts WHERE corpus_id = %s",
+        (corpus,),
+    ).fetchall()
     return {
         "routing_document_summary": {r[0] for r in doc_rows},
         "routing_section_summary": {r[0] for r in section_rows},
         "routing_child": {r[0] for r in child_rows},
+        "routing_procedure": {r[0] for r in proc_rows},
+        "routing_concept": {r[0] for r in concept_rows},
     }
 
 
@@ -144,10 +160,30 @@ def _routing_receipts(conn: Connection, corpus: str) -> dict[str, set[str]]:
         """,
         (corpus,),
     ).fetchall()
+    proc_rows = conn.execute(
+        """
+        SELECT pr.entity_id FROM projection_receipts pr
+          JOIN procedure_artifacts p ON p.procedure_id = pr.entity_id
+         WHERE pr.projection = 'qdrant' AND pr.entity_kind = 'routing_procedure'
+           AND pr.active AND p.corpus_id = %s
+        """,
+        (corpus,),
+    ).fetchall()
+    concept_rows = conn.execute(
+        """
+        SELECT pr.entity_id FROM projection_receipts pr
+          JOIN concept_artifacts c ON c.concept_id = pr.entity_id
+         WHERE pr.projection = 'qdrant' AND pr.entity_kind = 'routing_concept'
+           AND pr.active AND c.corpus_id = %s
+        """,
+        (corpus,),
+    ).fetchall()
     return {
         "routing_document_summary": {r[0] for r in doc_rows},
         "routing_section_summary": {r[0] for r in section_rows},
         "routing_child": {r[0] for r in child_rows},
+        "routing_procedure": {r[0] for r in proc_rows},
+        "routing_concept": {r[0] for r in concept_rows},
     }
 
 
@@ -525,10 +561,25 @@ def process_event(conn: Connection, event: dict) -> None:
     if corpus is None:
         raise RuntimeError(f"run {run_id} not found")
 
-    qdrant_report = reconcile_qdrant(conn, run_id, corpus)
-    routing_report = reconcile_routing_qdrant(conn, corpus)
-    neo4j_report = reconcile_neo4j(conn, run_id, corpus)
-    canonical_report = reconcile_canonical(conn, run_id, corpus)
+    # LOCK-CONTENTION-V2 (2026-08-24): reconciliation used to execute all
+    # four store reconciliations on the caller's transaction connection —
+    # holding a Postgres snapshot open across MINUTES of Qdrant/Neo4j
+    # network I/O on the 10k corpus. Read phase now runs on short-lived
+    # autocommit connections; the outer transaction stays open only for
+    # the bounded write phase below (artifact + run status), which is
+    # exactly the charter's read/compute/write split.
+    import psycopg
+    from polymath_shared.settings import get_settings as _gs
+
+    def _short_conn():
+        return psycopg.connect(_gs().postgres.dsn, autocommit=True,
+                               connect_timeout=10)
+
+    with _short_conn() as rc:
+        qdrant_report = reconcile_qdrant(rc, run_id, corpus)
+        routing_report = reconcile_routing_qdrant(rc, corpus)
+        neo4j_report = reconcile_neo4j(rc, run_id, corpus)
+        canonical_report = reconcile_canonical(rc, run_id, corpus)
 
     contract = stage_contract_hash(STAGE, {"contract_version": CONTRACT_VERSION})
     with stage_transaction(conn, run_id=run_id, stage=STAGE, contract_hash=contract) as writer:
@@ -558,17 +609,42 @@ def process_event(conn: Connection, event: dict) -> None:
             + neo4j_report["in_flight_fact_edges_kept"]
         )
         if loss or problem:
-            # Degraded (not failed): the census re-drives projectors and
-            # verify re-runs until the stores and receipts converge.
-            writer.run_status("degraded")
-            log.warning("verification found projection gaps; run degraded", extra={
-                "run_id": run_id, "stage": STAGE, "error_code": "projection_gaps",
-            })
+            # OPERATOR-STATE-V1: gaps are only a FAULT when no pending
+            # work explains them. While this run still has open tickets
+            # (summaries, routing, projections), missing artifacts are
+            # normal convergence — labeling that DEGRADED trained the
+            # owner to read a healthy drain as a broken system (observed
+            # repeatedly on cysa-study-v1, 2026-08-26/27). The census
+            # re-drives and verify re-runs either way; only the label
+            # honesty changes.
+            open_work = conn.execute(
+                """SELECT COUNT(*) FROM stage_tickets
+                    WHERE run_id = %s AND archived_at IS NULL
+                      AND status <> 'done' AND stage <> %s""",
+                (run_id, STAGE)).fetchone()[0]
+            if open_work:
+                writer.run_status("reconciling")
+                log.info("verification pending convergence: gaps explained "
+                         "by open work", extra={
+                    "run_id": run_id, "stage": STAGE, "error_code": None,
+                })
+            else:
+                writer.run_status("degraded")
+                log.warning("verification found projection gaps; run degraded", extra={
+                    "run_id": run_id, "stage": STAGE, "error_code": "projection_gaps",
+                })
         else:
             writer.run_status("query_ready")
 
 
-def run_forever(poll_interval_s: float = 2.0, batch_size: int = 4) -> None:
+def run_forever(poll_interval_s: float = 2.0, batch_size: int = 1) -> None:
+    """LONG-STAGE-LEASE-CORRECTNESS-V1: claim depth 1.
+
+    A worker executes tickets serially, so claiming ahead bought nothing
+    but made "held" differ from "being processed" -- and a stage running
+    past claim_ttl_s let the reaper expire the queued ones. Parallelism
+    comes from running several workers of a type.
+    """
     from polymath_shared.worker_runtime import run_worker
 
     run_worker('verify_projections', [EVENT_TYPE], process_event,

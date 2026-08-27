@@ -6,6 +6,8 @@ dependencies = [
     "polymath-shared",
     "fastapi>=0.115,<1",
     "uvicorn>=0.30,<1",
+    # POLYMATH-UI-V1: multipart parsing for POST /upload
+    "python-multipart>=0.0.9",
 ]
 
 [tool.setuptools.packages.find]

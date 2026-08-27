@@ -38,6 +38,17 @@ from polymath_shared.rulepack.role_assignment import (
 from polymath_shared.rulepack.lexical_evidence import build_lexical_semantic_evidence
 
 # spaCy ClearNLP + UD dependency relations that fill predicate argument slots
+# DEP-LABEL NORMALIZATION (CATEGORY-D fix, measured 2026-08-24): the
+# syntax sidecar emits ClearNLP-style labels WITHOUT colons
+# (nsubjpass/auxpass) while every consumer expects UD colon style
+# (nsubj:pass). Passive subjects were therefore invisible to slot
+# assignment -- scientific passive sentences produced ZERO candidates.
+DEP_LABEL_ALIASES = {
+    "nsubjpass": "nsubj:pass",
+    "auxpass": "aux:pass",
+    "nsubjpass": "nsubj:pass",
+}
+
 SUBJECT_DEPS = frozenset({"nsubj", "nsubj:pass"})
 OBJECT_DEPS = frozenset({"dobj", "obj", "iobj"})
 OBLIQUE_DEPS = frozenset({"obl", "obl:agent", "obl:tmod"})
@@ -46,11 +57,19 @@ AGENT_OBJECT_DEPS = frozenset({"pobj", "obl"})
 
 
 def _syntax_tokens(sl: SentenceSlice) -> list[dict]:
-    """Syntax-evidence-v1 tokens sorted by char_start."""
+    """Syntax-evidence-v1 tokens sorted by char_start, dep labels
+    normalized to UD colon style (CATEGORY-D fix: sidecar emits
+    nsubjpass/auxpass without colons)."""
     syntax = getattr(sl, "syntax", None)
     if not syntax:
         return []
-    return sorted(syntax.get("tokens", []), key=lambda t: t["char_start"])
+    toks = sorted(syntax.get("tokens", []),
+                  key=lambda t: t["char_start"])
+    for t in toks:
+        dep = t.get("dep")
+        if dep:
+            t["dep"] = DEP_LABEL_ALIASES.get(dep, dep)
+    return toks
 
 
 def _trigger_head_token(
@@ -197,6 +216,7 @@ def build_candidates_kimi(
     trigger_index = _trigger_surfaces(rule_pack)
     candidates: list[RelationCandidate] = []
 
+    prev_slice_entities: list[EntitySpan] | None = None
     for sl in slices:
         sentence = sl.text
         rel_start = sl.sentence_start
@@ -229,6 +249,16 @@ def build_candidates_kimi(
             # tokens would silently reuse the PREVIOUS sentence's head.
             trig_head = None
             binding_source = BindingSource.BOUNDED_LINEAR_RECALL
+            # SPOKEN-RELATION-ADAPTER-V1: a copular trigger whose
+            # predicate nominal is NOT an entity has named its object;
+            # the recall net must not substitute a different one.
+            object_fallback_allowed = True
+            # SPOKEN-RELATION-ADAPTER-V1: an object recovered from a
+            # relative-clause antecedent fills the trigger's OBJECT GAP
+            # — that is what relativization is, and PropBank assigns
+            # the antecedent ARG1. Recorded so role assignment treats
+            # the recovered endpoint as the relativized direct object.
+            relcl_object_recovered = False
 
             # -- UD-tree primary binding ------------------------------
             if tokens:
@@ -252,6 +282,312 @@ def build_candidates_kimi(
 
                     if subjects or objects:
                         binding_source = BindingSource.UD_DIRECT
+
+                    # -- PREDICATE-COMPILER-V2 (CATEGORY-C): frame-
+                    # oriented binding replaces positional slots for
+                    # FRAME anchors. Voice-aware PropBank orientation,
+                    # bounded head-chain inheritance, controlled
+                    # pronoun resolution — all deterministic,
+                    # fail-closed on ambiguity.
+                    if (getattr(evidence, "trigger_lexical_class", "")
+                            or "").upper() == "FRAME":
+                        from polymath_shared.rulepack.frame_roles import (
+                            orient_frame_slots, head_chain_theme,
+                            resolve_pronoun_subject,
+                            resolve_definite_frame_subject,
+                            expand_compound_left,
+                        )
+                        from polymath_shared.rulepack.semantic_frames import (
+                            mappings_for_frame,
+                        )
+                        src = getattr(evidence, "trigger_match_source", "") or ""
+                        fid = src.partition("|")[0][6:] or None
+                        pat = "theme_standard"
+                        if fid:
+                            pats = {m.get("pattern", "")
+                                    for m in mappings_for_frame(fid)}
+                            if any("passive-agent" in p for p in pats):
+                                pat = "theme_by_agent"
+                            elif any(p.startswith("agent ") for p in pats):
+                                pat = "agent_theme"
+                        oriented = orient_frame_slots(
+                            tokens, trig_head, ud_args, pat)
+
+                        def _ents(toks):
+                            out = []
+                            for t in toks:
+                                e = _token_to_entity(t, sl.entities, sl)
+                                if e is not None and e not in out:
+                                    out.append(e)
+                            return out
+
+                        f_subj = _ents(oriented["fact_subject"])
+                        f_obj = _ents(oriented["fact_object"])
+                        # C3c: possessive-theme inheritance (bounded,
+                        # fail-closed). A frame slot token with a UD `poss`
+                        # child ("Orion's performance") may recover the
+                        # POSSESSOR as the slot endpoint when exactly ONE
+                        # subject-type-compatible durable entity in the
+                        # document history carries that surface. Possessive
+                        # pronouns never match (E-1); ambiguity abstains.
+                        if doc_entities_history:
+                            _PRONOUN_SURF = {"i", "you", "we", "it", "he",
+                                             "she", "they", "me", "him",
+                                             "her", "them", "us", "my",
+                                             "his", "its", "their"}
+                            for slot_name in ("subject", "object"):
+                                slot_toks = (oriented["fact_subject"] if
+                                             slot_name == "subject" else
+                                             oriented["fact_object"])
+                                allowed_c3c = set()
+                                if fid:
+                                    for m in mappings_for_frame(fid):
+                                        src = ("subject_types" if
+                                               slot_name == "subject" else
+                                               "object_types")
+                                        allowed_c3c |= {
+                                            x.lower() for x in
+                                            m.get(src, [])}
+                                recovered: list[Any] = []
+                                for st in slot_toks:
+                                    # only bare NP heads: a token already
+                                    # covered by an entity is not recoverable
+                                    if _ents([st]):
+                                        continue
+                                    for pt in [t for t in tokens
+                                               if t.get("head_i") ==
+                                               st.get("i")
+                                               and t.get("dep") == "poss"]:
+                                        surf = (pt.get("text") or "").strip()
+                                        low_l = surf.lower()
+                                        if low_l.endswith("'s"):
+                                            low_l = low_l[:-2]
+                                        # bounded alias rule (I3R-R3 family):
+                                        # the possessor must equal the FULL
+                                        # surface, the FIRST word, or the
+                                        # LAST word of exactly ONE durable
+                                        # history entity ("Orion" recovers
+                                        # "Orion Adaptive Reasoning Model").
+                                        # Pronouns never match (E-1);
+                                        # ambiguity abstains.
+                                        if not surf or low_l in \
+                                                _PRONOUN_SURF:
+                                            continue
+                                        hits: dict[str, Any] = {}
+                                        for he in doc_entities_history:
+                                            hw = he.text.lower().split()
+                                            if low_l != he.text.lower() and \
+                                                    not (hw and low_l in
+                                                         (hw[0], hw[-1])):
+                                                continue
+                                            ct = getattr(
+                                                getattr(he, "core_type",
+                                                        None), "value",
+                                                getattr(he, "core_type", ""))
+                                            if allowed_c3c and \
+                                                    str(ct).lower() not in \
+                                                    allowed_c3c:
+                                                continue
+                                            hits.setdefault(he.text, he)
+                                        if len(hits) != 1:
+                                            continue
+                                        ent_c3c = next(iter(hits.values()))
+                                        if ent_c3c not in recovered:
+                                            recovered.append(ent_c3c)
+                                        if observer:
+                                            observer.record_candidate_outcome(
+                                                sl, evidence,
+                                                "POSSESSION_BOUND",
+                                                {"slot": slot_name,
+                                                 "possessor": surf,
+                                                 "entity": ent_c3c.text,
+                                                 "kimi_v1": True})
+                                if recovered:
+                                    if slot_name == "subject":
+                                        f_subj = (f_subj or []) + recovered
+                                    else:
+                                        f_obj = (f_obj or []) + recovered
+
+                        # C2: bounded head-chain inheritance for an empty
+                        # theme slot (entity separated from its trigger
+                        # only by determiners/copulas/generic heads).
+                        if not f_subj:
+                            hc = head_chain_theme(
+                                sentence, sl.entities, evidence.start)
+                            if hc is not None:
+                                f_subj = [hc]
+                        # C3: controlled pronoun resolution — previous
+                        # sentence, exactly ONE type-compatible durable
+                        # candidate; ambiguous -> stays unbound.
+                        if not f_subj:
+                            pron_toks = [t for t in ud_args.get("subject", [])
+                                         if (t.get("lemma") or "").lower() in
+                                         {"it", "they", "this", "these"}]
+                            if pron_toks:
+                                allowed = set()
+                                if fid:
+                                    for m in mappings_for_frame(fid):
+                                        allowed |= {
+                                            s.lower() for s in
+                                            m.get("subject_types", [])}
+                                ent, note = resolve_pronoun_subject(
+                                    pron_toks[0], prev_slice_entities or [],
+                                    allowed)
+                                if ent is not None:
+                                    f_subj = [ent]
+                                if observer:
+                                    observer.record_candidate_outcome(
+                                        sl, evidence,
+                                        "PRONOUN_" +
+                                        note.split(":")[0].upper(),
+                                        {"note": note, "kimi_v1": True})
+                        # C3-definite: 'the <generic head>' subject with
+                        # no entity bound -> unique type-compatible
+                        # candidate from previous sentence (fail-closed).
+                        if not f_subj and ud_args.get("subject"):
+                            allowed = set()
+                            if fid:
+                                for m in mappings_for_frame(fid):
+                                    allowed |= {x.lower() for x in
+                                                m.get("subject_types", [])}
+                            ent2, note2 = (
+                                resolve_definite_frame_subject(
+                                    ud_args["subject"], sentence,
+                                    prev_slice_entities or [], allowed))
+                            if ent2 is not None:
+                                f_subj = [ent2]
+                            if observer and note2 != "no_subject_tokens":
+                                observer.record_candidate_outcome(
+                                    sl, evidence, "DEFINITE_" +
+                                    note2.split(":")[0].upper(),
+                                    {"note": note2, "kimi_v1": True})
+                        # C3b: widen named-modifier + typed-head chains
+                        widened = []
+                        for slot_ents in (f_subj, f_obj):
+                            widened_slot = []
+                            for e in slot_ents:
+                                w2 = expand_compound_left(sentence, e,
+                                                          evidence.start)
+                                widened_slot.append(w2 if w2 is not None
+                                                    else e)
+                            widened.append(widened_slot)
+                        if f_subj or f_obj:
+                            subjects = widened[0] or f_subj
+                            objects = widened[1] or f_obj
+                            binding_source = BindingSource.SAFE_LOCAL_PATTERN
+                            subjects, objects = f_subj, f_obj
+                            binding_source = BindingSource.SAFE_LOCAL_PATTERN
+
+                    # -- SPOKEN-RELATION-ADAPTER-V1 -------------------
+                    # (1) COPULAR-ATTR BINDING (the COPULA-COMPLEMENT-
+                    # BINDING-V2 the 2026-08-22 handoff called for): a
+                    # copular trigger names its object in the predicate
+                    # nominal (`attr`). If the attr head maps to an
+                    # admitted entity, that IS the object — tree
+                    # evidence, not recall. If it does not, the
+                    # sentence equates the subject with a NON-ENTITY
+                    # nominal; binding any other nearby entity (the
+                    # possessor in "X is Y's Z", a PP modifier) asserts
+                    # something the text does not say, so the object
+                    # recall net is SUPPRESSED for this evidence.
+                    # Measured on transcript-qual-v1: linear recall
+                    # bound (Andromeda, be, Meta) from "Andromeda is
+                    # Meta's new retrieval engine" and (Jon Loomer, be,
+                    # Facebook) from a PP modifier — both wrong, both
+                    # previously stopped only by the type gates.
+                    if (trig_head.get("lemma") or "").lower() == "be" \
+                            and not objects:
+                        attr_toks = [
+                            t for t in tokens
+                            if t.get("head_i") == trig_head["i"]
+                            and t.get("dep") == "attr"
+                        ]
+                        if attr_toks:
+                            attr_ent = _token_to_entity(
+                                attr_toks[0], sl.entities, sl)
+                            if attr_ent is not None:
+                                objects.append(attr_ent)
+                                binding_source = BindingSource.UD_DIRECT
+                            else:
+                                object_fallback_allowed = False
+                                if observer:
+                                    observer.record_candidate_outcome(
+                                        sl, evidence,
+                                        "COPULAR_ATTR_NOT_ENTITY", {
+                                            "attr_head": attr_toks[0].get(
+                                                "text"),
+                                            "kimi_v1": True})
+
+                    # (2) RELCL OBJECT RECOVERY: a verb heading a
+                    # relative clause with an overt bound subject and
+                    # no object relativizes its object — the
+                    # antecedent noun ("the update [which] Facebook
+                    # made"). If the antecedent maps to an entity,
+                    # bind it. If the antecedent is itself the
+                    # predicate nominal of a copular relative clause
+                    # ("Andromeda, which is the new update Facebook
+                    # made"), the copula equates it with ITS
+                    # antecedent — exactly one licensed hop. Both
+                    # hops follow explicit dependency edges;
+                    # anything unresolved abstains.
+                    elif (trig_head.get("dep") in ("relcl", "acl:relcl")
+                            and subjects and not objects):
+                        antecedent = next(
+                            (t for t in tokens
+                             if t["i"] == trig_head.get("head_i")), None)
+                        recovered_ent = None
+                        hops = None
+                        if antecedent is not None:
+                            recovered_ent = _token_to_entity(
+                                antecedent, sl.entities, sl)
+                            hops = "antecedent"
+                            if recovered_ent is None \
+                                    and antecedent.get("dep") == "attr":
+                                cop = next(
+                                    (t for t in tokens
+                                     if t["i"] == antecedent.get("head_i")),
+                                    None)
+                                if cop is not None \
+                                        and (cop.get("lemma") or "").lower() == "be":
+                                    # the copula equates its predicate
+                                    # nominal with: (a) the noun a
+                                    # copular RELATIVE clause modifies
+                                    # ("Andromeda, which is the update
+                                    # Facebook made"), or (b) its own
+                                    # overt subject ("Hermes is the
+                                    # model that Nous Research built").
+                                    # Relativizer/pronoun subjects map
+                                    # to no entity and abstain.
+                                    equated = None
+                                    if cop.get("dep") in ("relcl",
+                                                          "acl:relcl"):
+                                        equated = next(
+                                            (t for t in tokens
+                                             if t["i"] == cop.get("head_i")),
+                                            None)
+                                    else:
+                                        equated = next(
+                                            (t for t in tokens
+                                             if t.get("head_i") == cop["i"]
+                                             and t.get("dep") in
+                                             SUBJECT_DEPS),
+                                            None)
+                                    if equated is not None:
+                                        recovered_ent = _token_to_entity(
+                                            equated, sl.entities, sl)
+                                        hops = "copular_equation"
+                        if recovered_ent is not None:
+                            objects.append(recovered_ent)
+                            binding_source = \
+                                BindingSource.RELCL_ANTECEDENT
+                            relcl_object_recovered = True
+                            if observer:
+                                observer.record_candidate_outcome(
+                                    sl, evidence,
+                                    "RELCL_ANTECEDENT_BOUND", {
+                                        "object": recovered_ent.text,
+                                        "hops": hops,
+                                        "kimi_v1": True})
 
                     # -- Phase 5: record what the UD tree itself bound,
                     # BEFORE any recall net runs, so the trace separates
@@ -294,7 +630,7 @@ def build_candidates_kimi(
                     subjects = [left_entities[0]]
                     binding_source = BindingSource.BOUNDED_LINEAR_RECALL
 
-            if not objects:
+            if not objects and object_fallback_allowed:
                 right_entities = sorted(
                     [e for e in sl.entities
                      if e.start >= evidence.end and e.start - rel_start <= right_bound],
@@ -334,9 +670,32 @@ def build_candidates_kimi(
             # direction may invert passive pairs, a pair is viable if EITHER
             # orientation can satisfy a signature of the evidence class.
             compatible_pairs: list[tuple[EntitySpan, EntitySpan]] = []
+            is_frame = (getattr(evidence, "trigger_lexical_class", "")
+                        or "").upper() == "FRAME"
+            from polymath_shared.rulepack.frame_roles import (
+                crosses_clause_boundary as _ccb, is_copula_lemma)
+            _copula = is_copula_lemma(evidence.trigger_lemma)
             for s in subjects:
                 for o in objects:
                     if s.text == o.text and s.core_type == o.core_type:
+                        continue
+                    if (_copula
+                            and _ccb(sl.text,
+                                     min(s.end, o.end),
+                                     max(s.start, o.start))):
+                        if observer:
+                            observer.record_candidate_outcome(
+                                sl, evidence,
+                                "COPULA_CLAUSE_BOUNDARY_REJECT",
+                                {"subject": s.text, "object": o.text,
+                                 "kimi_v1": True})
+                        continue
+                    if is_frame:
+                        # PREDICATE-COMPILER-V2: frame spans skip the
+                        # rule-pack class signature precheck — the
+                        # ontology signature validation at compile time
+                        # is the authority (fail-closed there).
+                        compatible_pairs.append((s, o))
                         continue
                     forward_ok = _type_compatible(
                         s.core_type.value, o.core_type.value,
@@ -409,6 +768,13 @@ def build_candidates_kimi(
                                     if (child["head_i"] == tok["i"]
                                             and child["dep"] in AGENT_OBJECT_DEPS):
                                         agent_span = _token_to_entity(child, sl.entities, sl)
+                # SPOKEN-RELATION-ADAPTER-V1: the relativized object
+                # occupies the trigger's object gap — role assignment
+                # sees it as the direct object it syntactically is
+                # (PropBank ARG1 goes to the antecedent).
+                if relcl_object_recovered and obj_dep is None \
+                        and object_span is recovered_ent:
+                    obj_dep = "dobj"
 
                 role_result = assign_roles(
                     roleset=_lexical.get("roleset"),
@@ -510,6 +876,10 @@ def build_candidates_kimi(
                     lexical_semantic_evidence=lse,
                 ))
 
+        # C3: carry this sentence's entities for next-slice pronoun
+        # resolution (deterministic one-sentence window).
+        prev_slice_entities = list(sl.entities)
+
     return candidates
 
 
@@ -535,8 +905,9 @@ def _role_path(bound, subject_span, object_span, agent_span,
 
 
 def active_pipeline() -> str:
-    """legacy_v1 (positional binding + early type veto) or
-    kimi_v1 (UD binding + post-structural type precheck)."""
+    """legacy_v1 (positional binding + early type veto),
+    kimi_v1 (UD binding + post-structural type precheck), or
+    kimi_v2 (token-originated, UD-only binding — no recall nets)."""
     return os.environ.get("POLYMATH_RELATION_PIPELINE", "legacy_v1")
 
 
@@ -544,6 +915,9 @@ def build_candidates_dispatch(
     slices: list[SentenceSlice], **kwargs
 ) -> list[RelationCandidate]:
     """Dispatch to the active relation pipeline."""
+    if active_pipeline() == "kimi_v2":
+        from workers.kimi_v2_candidates import build_candidates_kimi_v2
+        return build_candidates_kimi_v2(slices, **kwargs)
     if active_pipeline() == "kimi_v1":
         return build_candidates_kimi(slices, **kwargs)
     from workers.candidates import build_candidates

@@ -68,6 +68,18 @@ _DEFINITE_DESCRIPTION_RE = re.compile(
 _ORG_DESCRIPTIONS = {"company", "firm", "business", "organization",
                      "vendor", "retailer", "startup", "provider",
                      "operator", "maker"}
+#: Closed-class tail words that the greedy capture swallows when the
+#: definite NP directly precedes an aux/passive trigger ("the model was
+#: trained..." -> capture "model was"). Stripping them recovers the NP
+#: head without open-class guessing. (CATEGORY-D follow-up, 2026-08-24.)
+_DEFINITE_AUX_TAIL = {
+    "was", "is", "are", "were", "be", "been", "being",
+    "have", "has", "had", "will", "would", "can", "could",
+    "may", "might", "must", "shall", "should", "do", "does", "did",
+    "not", "also", "still", "already", "often", "commonly",
+    "typically", "usually", "generally", "now", "then",
+    "first", "later", "previously",
+}
 
 
 def _resolve_definite_description(
@@ -92,6 +104,8 @@ def _resolve_definite_description(
         return None
     desc = matches[-1].group(1).lower().strip()
     words = desc.split()
+    while len(words) > 1 and words[-1] in _DEFINITE_AUX_TAIL:
+        words.pop()
     head = words[-1]
     candidates: list[EntitySpan] = []
     if head in _ORG_DESCRIPTIONS:

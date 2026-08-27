@@ -1,0 +1,115 @@
+/* POLYMATH-UI-V1 — seven themes as CSS variable palettes.
+   data-theme on <html> selects one; the picker persists it. */
+
+:root,
+[data-theme="obsidian"] {
+  --bg: #0d1017;
+  --bg-2: #141925;
+  --bg-3: #1c2333;
+  --border: #262f45;
+  --text: #dbe2f1;
+  --text-dim: #8590a8;
+  --accent: #6c9ef8;
+  --accent-soft: #6c9ef822;
+  --good: #4ade80;
+  --warn: #fbbf24;
+  --bad: #f87171;
+  --user-bubble: #22304d;
+  --shadow: 0 8px 28px #00000066;
+}
+
+[data-theme="nord"] {
+  --bg: #2e3440;
+  --bg-2: #353c4a;
+  --bg-3: #3b4252;
+  --border: #4c566a;
+  --text: #eceff4;
+  --text-dim: #9aa5b8;
+  --accent: #88c0d0;
+  --accent-soft: #88c0d022;
+  --good: #a3be8c;
+  --warn: #ebcb8b;
+  --bad: #bf616a;
+  --user-bubble: #434c5e;
+  --shadow: 0 8px 28px #00000055;
+}
+
+[data-theme="forest"] {
+  --bg: #0f1710;
+  --bg-2: #16211a;
+  --bg-3: #1e2c22;
+  --border: #2d4234;
+  --text: #d9e8dc;
+  --text-dim: #8aa392;
+  --accent: #6fd08c;
+  --accent-soft: #6fd08c22;
+  --good: #6fd08c;
+  --warn: #e8c468;
+  --bad: #e07a6a;
+  --user-bubble: #24382c;
+  --shadow: 0 8px 28px #00000066;
+}
+
+[data-theme="solar"] {
+  --bg: #002b36;
+  --bg-2: #073642;
+  --bg-3: #0d4250;
+  --border: #1c586a;
+  --text: #eee8d5;
+  --text-dim: #93a1a1;
+  --accent: #b58900;
+  --accent-soft: #b5890022;
+  --good: #859900;
+  --warn: #cb4b16;
+  --bad: #dc322f;
+  --user-bubble: #114b5c;
+  --shadow: 0 8px 28px #00000055;
+}
+
+[data-theme="rose"] {
+  --bg: #191118;
+  --bg-2: #221722;
+  --bg-3: #2d1e2c;
+  --border: #46304a;
+  --text: #f2e5f1;
+  --text-dim: #a98da8;
+  --accent: #ea9ac6;
+  --accent-soft: #ea9ac622;
+  --good: #8fd6a8;
+  --warn: #eec680;
+  --bad: #ef7f8e;
+  --user-bubble: #3b2839;
+  --shadow: 0 8px 28px #00000066;
+}
+
+[data-theme="slate"] {
+  --bg: #f2f4f8;
+  --bg-2: #ffffff;
+  --bg-3: #e8ecf3;
+  --border: #d3dae6;
+  --text: #1d2635;
+  --text-dim: #64708a;
+  --accent: #3b6fe0;
+  --accent-soft: #3b6fe01a;
+  --good: #15803d;
+  --warn: #b45309;
+  --bad: #b91c1c;
+  --user-bubble: #dde7fb;
+  --shadow: 0 8px 24px #94a3c333;
+}
+
+[data-theme="paper"] {
+  --bg: #f7f2e7;
+  --bg-2: #fffdf6;
+  --bg-3: #efe7d4;
+  --border: #ddd2b8;
+  --text: #3a3226;
+  --text-dim: #857a63;
+  --accent: #a4661b;
+  --accent-soft: #a4661b1a;
+  --good: #4d7c0f;
+  --warn: #a16207;
+  --bad: #b91c1c;
+  --user-bubble: #efe3c8;
+  --shadow: 0 8px 24px #c3b28f44;
+}

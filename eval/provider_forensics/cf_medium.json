@@ -1,0 +1,1276 @@
+{
+ "model": "medium",
+ "threshold": 0.5,
+ "load_ms": 10140.4,
+ "docs": {
+  "01_northvale_health.md": {
+   "chunk_ms_median": 79.3,
+   "chunk_ms_all": [
+    79.3
+   ],
+   "proposals": 15,
+   "spans": {
+    "chunk_c0123155428e790beab7f40a20ff6e0a5c2aa051772862cb1499da28fd8bdd3e": [
+     {
+      "text": "Northvale Health Network",
+      "start": 4,
+      "end": 28,
+      "label": "Organization",
+      "score": 0.9800899028778076
+     },
+     {
+      "text": "Northvale Health Network",
+      "start": 48,
+      "end": 72,
+      "label": "Organization",
+      "score": 0.9618363976478577
+     },
+     {
+      "text": "CareChart EMR platform",
+      "start": 82,
+      "end": 104,
+      "label": "Technology",
+      "score": 0.7273507118225098
+     },
+     {
+      "text": "Lakeshore General Hospital",
+      "start": 133,
+      "end": 159,
+      "label": "Organization",
+      "score": 0.9733691215515137
+     },
+     {
+      "text": "Austin",
+      "start": 174,
+      "end": 180,
+      "label": "Location",
+      "score": 0.9502562880516052
+     },
+     {
+      "text": "Dr. Amara Osei",
+      "start": 242,
+      "end": 256,
+      "label": "Person",
+      "score": 0.9885396361351013
+     },
+     {
+      "text": "Northvale Health Network",
+      "start": 292,
+      "end": 316,
+      "label": "Organization",
+      "score": 0.9739901423454285
+     },
+     {
+      "text": "CareConnect portal",
+      "start": 322,
+      "end": 340,
+      "label": "Technology",
+      "score": 0.7893921732902527
+     },
+     {
+      "text": "CareChart EMR",
+      "start": 356,
+      "end": 369,
+      "label": "Technology",
+      "score": 0.562259316444397
+     },
+     {
+      "text": "Lakeshore General Hospital",
+      "start": 429,
+      "end": 455,
+      "label": "Organization",
+      "score": 0.9781416058540344
+     },
+     {
+      "text": "Dr. Amara Osei",
+      "start": 481,
+      "end": 495,
+      "label": "Person",
+      "score": 0.9852847456932068
+     },
+     {
+      "text": "Riverside Clinic",
+      "start": 508,
+      "end": 524,
+      "label": "Organization",
+      "score": 0.9243045449256897
+     },
+     {
+      "text": "2015",
+      "start": 528,
+      "end": 532,
+      "label": "TimeReference",
+      "score": 0.5584151744842529
+     },
+     {
+      "text": "patient portal",
+      "start": 679,
+      "end": 693,
+      "label": "Technology",
+      "score": 0.763696014881134
+     },
+     {
+      "text": "state registry",
+      "start": 741,
+      "end": 755,
+      "label": "Organization",
+      "score": 0.6896037459373474
+     }
+    ]
+   }
+  },
+  "02_nimbus_cloud.md": {
+   "chunk_ms_median": 73.9,
+   "chunk_ms_all": [
+    73.9
+   ],
+   "proposals": 19,
+   "spans": {
+    "chunk_d757cefa21041482cf134b02c5585d6c28b9458fc44f8cfaf5f6d7584a3e9e1a": [
+     {
+      "text": "Nimbus Cloud",
+      "start": 4,
+      "end": 16,
+      "label": "Organization",
+      "score": 0.9495880603790283
+     },
+     {
+      "text": "Nimbus Cloud",
+      "start": 45,
+      "end": 57,
+      "label": "Organization",
+      "score": 0.9044034481048584
+     },
+     {
+      "text": "Kubernetes",
+      "start": 63,
+      "end": 73,
+      "label": "Framework",
+      "score": 0.6184089183807373
+     },
+     {
+      "text": "container platform",
+      "start": 93,
+      "end": 111,
+      "label": "Technology",
+      "score": 0.5483776330947876
+     },
+     {
+      "text": "Ledger billing service",
+      "start": 117,
+      "end": 139,
+      "label": "API",
+      "score": 0.5244255065917969
+     },
+     {
+      "text": "Postgres cluster",
+      "start": 155,
+      "end": 171,
+      "label": "Technology",
+      "score": 0.7895574569702148
+     },
+     {
+      "text": "operations group",
+      "start": 195,
+      "end": 211,
+      "label": "Organization",
+      "score": 0.5561656951904297
+     },
+     {
+      "text": "Nimbus",
+      "start": 257,
+      "end": 263,
+      "label": "Organization",
+      "score": 0.6004160642623901
+     },
+     {
+      "text": "Nimbus Cloud",
+      "start": 295,
+      "end": 307,
+      "label": "Organization",
+      "score": 0.917033314704895
+     },
+     {
+      "text": "engineering group",
+      "start": 322,
+      "end": 339,
+      "label": "Person",
+      "score": 0.5759891271591187
+     },
+     {
+      "text": "September outage",
+      "start": 383,
+      "end": 399,
+      "label": "Event",
+      "score": 0.7970681190490723
+     },
+     {
+      "text": "outage",
+      "start": 405,
+      "end": 411,
+      "label": "Event",
+      "score": 0.7670205235481262
+     },
+     {
+      "text": "postmortem report",
+      "start": 447,
+      "end": 464,
+      "label": "Document",
+      "score": 0.6346755027770996
+     },
+     {
+      "text": "cache layer",
+      "start": 500,
+      "end": 511,
+      "label": "Technology",
+      "score": 0.6781814694404602
+     },
+     {
+      "text": "Postgres cluster",
+      "start": 545,
+      "end": 561,
+      "label": "Technology",
+      "score": 0.7969406247138977
+     },
+     {
+      "text": "outage",
+      "start": 592,
+      "end": 598,
+      "label": "Event",
+      "score": 0.7335855960845947
+     },
+     {
+      "text": "Nimbus API gateway",
+      "start": 604,
+      "end": 622,
+      "label": "API",
+      "score": 0.6474305987358093
+     },
+     {
+      "text": "Go",
+      "start": 641,
+      "end": 643,
+      "label": "ProgrammingLanguage",
+      "score": 0.9863625168800354
+     },
+     {
+      "text": "engineering group",
+      "start": 678,
+      "end": 695,
+      "label": "Person",
+      "score": 0.6715654730796814
+     }
+    ]
+   }
+  },
+  "03_crestline_automation.md": {
+   "chunk_ms_median": 71.5,
+   "chunk_ms_all": [
+    71.5
+   ],
+   "proposals": 23,
+   "spans": {
+    "chunk_14d7b403b69bbbb8debaf4965f2c3b6271dd91af2f61d29894ad5eec39188288": [
+     {
+      "text": "Crestline Automation",
+      "start": 4,
+      "end": 24,
+      "label": "Organization",
+      "score": 0.9548835158348083
+     },
+     {
+      "text": "Crestline Automation",
+      "start": 49,
+      "end": 69,
+      "label": "Organization",
+      "score": 0.9269933104515076
+     },
+     {
+      "text": "Siemens PLCs",
+      "start": 75,
+      "end": 87,
+      "label": "Technology",
+      "score": 0.7458860278129578
+     },
+     {
+      "text": "Crestline",
+      "start": 114,
+      "end": 123,
+      "label": "Organization",
+      "score": 0.8955435156822205
+     },
+     {
+      "text": "Toledo",
+      "start": 142,
+      "end": 148,
+      "label": "Location",
+      "score": 0.9762842059135437
+     },
+     {
+      "text": "two shifts",
+      "start": 158,
+      "end": 168,
+      "label": "TimeReference",
+      "score": 0.5313923954963684
+     },
+     {
+      "text": "Maria Kowalski",
+      "start": 170,
+      "end": 184,
+      "label": "Person",
+      "score": 0.9925730228424072
+     },
+     {
+      "text": "Crestline",
+      "start": 195,
+      "end": 204,
+      "label": "Organization",
+      "score": 0.9390632510185242
+     },
+     {
+      "text": "analytics team",
+      "start": 226,
+      "end": 240,
+      "label": "Organization",
+      "score": 0.6870037317276001
+     },
+     {
+      "text": "last year",
+      "start": 276,
+      "end": 285,
+      "label": "TimeReference",
+      "score": 0.5538234114646912
+     },
+     {
+      "text": "Crestline",
+      "start": 353,
+      "end": 362,
+      "label": "Organization",
+      "score": 0.9089353680610657
+     },
+     {
+      "text": "Cobalt assembly cell",
+      "start": 377,
+      "end": 397,
+      "label": "Technology",
+      "score": 0.835573673248291
+     },
+     {
+      "text": "robotics vendor",
+      "start": 407,
+      "end": 422,
+      "label": "Organization",
+      "score": 0.6333986520767212
+     },
+     {
+      "text": "Crestline",
+      "start": 424,
+      "end": 433,
+      "label": "Organization",
+      "score": 0.918570876121521
+     },
+     {
+      "text": "vision system",
+      "start": 445,
+      "end": 458,
+      "label": "Technology",
+      "score": 0.8216187357902527
+     },
+     {
+      "text": "March",
+      "start": 486,
+      "end": 491,
+      "label": "TimeReference",
+      "score": 0.8812693953514099
+     },
+     {
+      "text": "pump failure",
+      "start": 497,
+      "end": 509,
+      "label": "Event",
+      "score": 0.7298365235328674
+     },
+     {
+      "text": "production stoppage",
+      "start": 521,
+      "end": 540,
+      "label": "Event",
+      "score": 0.7536990642547607
+     },
+     {
+      "text": "line two",
+      "start": 544,
+      "end": 552,
+      "label": "Location",
+      "score": 0.7857968807220459
+     },
+     {
+      "text": "vision system",
+      "start": 558,
+      "end": 571,
+      "label": "Technology",
+      "score": 0.8063815236091614
+     },
+     {
+      "text": "defect spike",
+      "start": 600,
+      "end": 612,
+      "label": "Event",
+      "score": 0.6909956336021423
+     },
+     {
+      "text": "Cobalt cell",
+      "start": 642,
+      "end": 653,
+      "label": "Technology",
+      "score": 0.6000178456306458
+     },
+     {
+      "text": "line one",
+      "start": 657,
+      "end": 665,
+      "label": "Location",
+      "score": 0.7610760927200317
+     }
+    ]
+   }
+  },
+  "04_brightpath_learning.md": {
+   "chunk_ms_median": 64.9,
+   "chunk_ms_all": [
+    64.9
+   ],
+   "proposals": 15,
+   "spans": {
+    "chunk_caaa0912c64832355d38a38bb1654aac9d00566af8eef99205696b9cb6490aab": [
+     {
+      "text": "Brightpath Learning",
+      "start": 4,
+      "end": 23,
+      "label": "Organization",
+      "score": 0.9952647686004639
+     },
+     {
+      "text": "Brightpath Learning",
+      "start": 40,
+      "end": 59,
+      "label": "Organization",
+      "score": 0.9890704154968262
+     },
+     {
+      "text": "Mentor assessment engine",
+      "start": 69,
+      "end": 93,
+      "label": "Technology",
+      "score": 0.829788863658905
+     },
+     {
+      "text": "Raleigh",
+      "start": 148,
+      "end": 155,
+      "label": "Location",
+      "score": 0.979877769947052
+     },
+     {
+      "text": "Daniel Okafor",
+      "start": 157,
+      "end": 170,
+      "label": "Person",
+      "score": 0.9936577677726746
+     },
+     {
+      "text": "Brightpath Learning",
+      "start": 181,
+      "end": 200,
+      "label": "Organization",
+      "score": 0.9919929504394531
+     },
+     {
+      "text": "mentor engine",
+      "start": 231,
+      "end": 244,
+      "label": "Technology",
+      "score": 0.7257179617881775
+     },
+     {
+      "text": "QBank item database",
+      "start": 260,
+      "end": 279,
+      "label": "Technology",
+      "score": 0.8321903944015503
+     },
+     {
+      "text": "Brightpath Learning",
+      "start": 301,
+      "end": 320,
+      "label": "Organization",
+      "score": 0.9912077188491821
+     },
+     {
+      "text": "Coachlight review app",
+      "start": 334,
+      "end": 355,
+      "label": "Technology",
+      "score": 0.8182798624038696
+     },
+     {
+      "text": "last spring",
+      "start": 356,
+      "end": 367,
+      "label": "TimeReference",
+      "score": 0.6529954671859741
+     },
+     {
+      "text": "retention",
+      "start": 411,
+      "end": 420,
+      "label": "Measurement",
+      "score": 0.5507053136825562
+     },
+     {
+      "text": "Mentor engine",
+      "start": 474,
+      "end": 487,
+      "label": "Technology",
+      "score": 0.7976580858230591
+     },
+     {
+      "text": "last month",
+      "start": 609,
+      "end": 619,
+      "label": "TimeReference",
+      "score": 0.6739785671234131
+     },
+     {
+      "text": "Coachlight app",
+      "start": 652,
+      "end": 666,
+      "label": "Technology",
+      "score": 0.6341449022293091
+     }
+    ]
+   }
+  },
+  "05_corval_logistics.md": {
+   "chunk_ms_median": 63.1,
+   "chunk_ms_all": [
+    63.1
+   ],
+   "proposals": 16,
+   "spans": {
+    "chunk_e3a02f162db67108fb5d68ff29766208459d107c0edd130b78ff4011b292bba2": [
+     {
+      "text": "Corval Logistics",
+      "start": 4,
+      "end": 20,
+      "label": "Organization",
+      "score": 0.9853633642196655
+     },
+     {
+      "text": "Corval Logistics",
+      "start": 49,
+      "end": 65,
+      "label": "Organization",
+      "score": 0.969636082649231
+     },
+     {
+      "text": "FreightNet routing platform",
+      "start": 75,
+      "end": 102,
+      "label": "Technology",
+      "score": 0.8305266499519348
+     },
+     {
+      "text": "Corval Freight",
+      "start": 123,
+      "end": 137,
+      "label": "Organization",
+      "score": 0.6966362595558167
+     },
+     {
+      "text": "Corval Logistics",
+      "start": 157,
+      "end": 173,
+      "label": "Organization",
+      "score": 0.9801533222198486
+     },
+     {
+      "text": "Portside warehouse",
+      "start": 179,
+      "end": 197,
+      "label": "Location",
+      "score": 0.8147424459457397
+     },
+     {
+      "text": "Oakland",
+      "start": 212,
+      "end": 219,
+      "label": "Location",
+      "score": 0.9531949162483215
+     },
+     {
+      "text": "QuickScale invoicing system",
+      "start": 239,
+      "end": 266,
+      "label": "Technology",
+      "score": 0.8426951766014099
+     },
+     {
+      "text": "FreightNet routing platform",
+      "start": 274,
+      "end": 301,
+      "label": "Technology",
+      "score": 0.872181236743927
+     },
+     {
+      "text": "June",
+      "start": 305,
+      "end": 309,
+      "label": "TimeReference",
+      "score": 0.8959090709686279
+     },
+     {
+      "text": "regional dispatchers",
+      "start": 315,
+      "end": 335,
+      "label": "Person",
+      "score": 0.7721344828605652
+     },
+     {
+      "text": "West Coast logistics consortium",
+      "start": 347,
+      "end": 378,
+      "label": "Organization",
+      "score": 0.700264573097229
+     },
+     {
+      "text": "FreightNet",
+      "start": 408,
+      "end": 418,
+      "label": "Technology",
+      "score": 0.6139187812805176
+     },
+     {
+      "text": "invoicing system",
+      "start": 474,
+      "end": 490,
+      "label": "Technology",
+      "score": 0.5981720685958862
+     },
+     {
+      "text": "billing delays",
+      "start": 519,
+      "end": 533,
+      "label": "Event",
+      "score": 0.5292879939079285
+     },
+     {
+      "text": "harbor terminal",
+      "start": 584,
+      "end": 599,
+      "label": "Location",
+      "score": 0.7424484491348267
+     }
+    ]
+   }
+  },
+  "is-the-intentional-male-another-performance.md": {
+   "chunk_ms_median": 122.3,
+   "chunk_ms_all": [
+    125.0,
+    120.2,
+    126.1,
+    111.9,
+    124.5,
+    96.4
+   ],
+   "proposals": 54,
+   "spans": {
+    "cf_is-the-intentional-m_0": [
+     {
+      "text": "intentional male",
+      "start": 19,
+      "end": 35,
+      "label": "Person",
+      "score": 0.6215533018112183
+     },
+     {
+      "text": "instagram",
+      "start": 83,
+      "end": 92,
+      "label": "Organization",
+      "score": 0.9584153294563293
+     },
+     {
+      "text": "instagram",
+      "start": 126,
+      "end": 135,
+      "label": "Organization",
+      "score": 0.96663898229599
+     },
+     {
+      "text": "2026-08-11T20:33:00",
+      "start": 149,
+      "end": 168,
+      "label": "TimeReference",
+      "score": 0.7426491379737854
+     },
+     {
+      "text": "hook",
+      "start": 225,
+      "end": 229,
+      "label": "Concept",
+      "score": 0.5059210658073425
+     },
+     {
+      "text": "sentiment",
+      "start": 256,
+      "end": 265,
+      "label": "Concept",
+      "score": 0.5413028597831726
+     },
+     {
+      "text": "takeaway",
+      "start": 267,
+      "end": 275,
+      "label": "Concept",
+      "score": 0.5316442847251892
+     },
+     {
+      "text": "Techne Writing",
+      "start": 287,
+      "end": 301,
+      "label": "Document",
+      "score": 0.8827728629112244
+     },
+     {
+      "text": "performative-male",
+      "start": 425,
+      "end": 442,
+      "label": "Concept",
+      "score": 0.6722314953804016
+     },
+     {
+      "text": "intentional-male",
+      "start": 444,
+      "end": 460,
+      "label": "Concept",
+      "score": 0.6148764491081238
+     },
+     {
+      "text": "capitalism",
+      "start": 462,
+      "end": 472,
+      "label": "Concept",
+      "score": 0.8701639175415039
+     },
+     {
+      "text": "gender",
+      "start": 474,
+      "end": 480,
+      "label": "Concept",
+      "score": 0.8286023736000061
+     },
+     {
+      "text": "masculinity",
+      "start": 482,
+      "end": 493,
+      "label": "Concept",
+      "score": 0.8773378729820251
+     },
+     {
+      "text": "philosophy",
+      "start": 495,
+      "end": 505,
+      "label": "Concept",
+      "score": 0.8263127207756042
+     },
+     {
+      "text": "intentional male",
+      "start": 550,
+      "end": 566,
+      "label": "Person",
+      "score": 0.5690692067146301
+     },
+     {
+      "text": "Techne Writing",
+      "start": 590,
+      "end": 604,
+      "label": "Document",
+      "score": 0.8496698141098022
+     },
+     {
+      "text": "intentional male",
+      "start": 673,
+      "end": 689,
+      "label": "Person",
+      "score": 0.6928467154502869
+     },
+     {
+      "text": "intentional male",
+      "start": 907,
+      "end": 923,
+      "label": "Person",
+      "score": 0.6902816295623779
+     }
+    ],
+    "cf_is-the-intentional-m_1": [
+     {
+      "text": "performative male",
+      "start": 20,
+      "end": 37,
+      "label": "Person",
+      "score": 0.5684602856636047
+     },
+     {
+      "text": "intentional male",
+      "start": 54,
+      "end": 70,
+      "label": "Person",
+      "score": 0.6971932649612427
+     },
+     {
+      "text": "performative male",
+      "start": 84,
+      "end": 101,
+      "label": "Person",
+      "score": 0.5828426480293274
+     },
+     {
+      "text": "simp",
+      "start": 705,
+      "end": 709,
+      "label": "Person",
+      "score": 0.5195146203041077
+     },
+     {
+      "text": "intentional male",
+      "start": 797,
+      "end": 813,
+      "label": "Person",
+      "score": 0.743220865726471
+     },
+     {
+      "text": "simp",
+      "start": 1147,
+      "end": 1151,
+      "label": "Person",
+      "score": 0.5493342280387878
+     }
+    ],
+    "cf_is-the-intentional-m_2": [
+     {
+      "text": "intentional male",
+      "start": 63,
+      "end": 79,
+      "label": "Person",
+      "score": 0.8623561859130859
+     },
+     {
+      "text": "performative male",
+      "start": 90,
+      "end": 107,
+      "label": "Person",
+      "score": 0.7118323445320129
+     },
+     {
+      "text": "performative male",
+      "start": 186,
+      "end": 203,
+      "label": "Person",
+      "score": 0.7123557925224304
+     },
+     {
+      "text": "intentional male",
+      "start": 224,
+      "end": 240,
+      "label": "Person",
+      "score": 0.8770095109939575
+     },
+     {
+      "text": "intentional male",
+      "start": 285,
+      "end": 301,
+      "label": "Person",
+      "score": 0.8601886630058289
+     },
+     {
+      "text": "marriage prerequisite",
+      "start": 320,
+      "end": 341,
+      "label": "Concept",
+      "score": 0.8547350168228149
+     },
+     {
+      "text": "female desirability",
+      "start": 367,
+      "end": 386,
+      "label": "Concept",
+      "score": 0.5511152744293213
+     },
+     {
+      "text": "capitalism",
+      "start": 480,
+      "end": 490,
+      "label": "Concept",
+      "score": 0.5075738430023193
+     },
+     {
+      "text": "intentional male",
+      "start": 787,
+      "end": 803,
+      "label": "Person",
+      "score": 0.8815801739692688
+     },
+     {
+      "text": "marriage prerequisite",
+      "start": 950,
+      "end": 971,
+      "label": "Concept",
+      "score": 0.8122981786727905
+     },
+     {
+      "text": "female gaze",
+      "start": 1014,
+      "end": 1025,
+      "label": "Concept",
+      "score": 0.5743700265884399
+     }
+    ],
+    "cf_is-the-intentional-m_3": [
+     {
+      "text": "Groq",
+      "start": 363,
+      "end": 367,
+      "label": "Organization",
+      "score": 0.6312397122383118
+     },
+     {
+      "text": "Techne Writing",
+      "start": 472,
+      "end": 486,
+      "label": "Organization",
+      "score": 0.6095248460769653
+     },
+     {
+      "text": "inauthenticity",
+      "start": 1019,
+      "end": 1033,
+      "label": "Concept",
+      "score": 0.7850576639175415
+     },
+     {
+      "text": "capitalism-as-identity",
+      "start": 1041,
+      "end": 1063,
+      "label": "Concept",
+      "score": 0.8162353038787842
+     }
+    ],
+    "cf_is-the-intentional-m_4": [
+     {
+      "text": "intentional male",
+      "start": 254,
+      "end": 270,
+      "label": "Person",
+      "score": 0.640093982219696
+     },
+     {
+      "text": "performative male",
+      "start": 452,
+      "end": 469,
+      "label": "Person",
+      "score": 0.5266276001930237
+     },
+     {
+      "text": "authenticity",
+      "start": 700,
+      "end": 712,
+      "label": "Concept",
+      "score": 0.5866706967353821
+     },
+     {
+      "text": "Capitalism",
+      "start": 768,
+      "end": 778,
+      "label": "Concept",
+      "score": 0.9561957716941833
+     },
+     {
+      "text": "creator",
+      "start": 850,
+      "end": 857,
+      "label": "Person",
+      "score": 0.7495555877685547
+     },
+     {
+      "text": "creator",
+      "start": 927,
+      "end": 934,
+      "label": "Person",
+      "score": 0.7704801559448242
+     },
+     {
+      "text": "capitalism",
+      "start": 1030,
+      "end": 1040,
+      "label": "Concept",
+      "score": 0.9428107738494873
+     },
+     {
+      "text": "audience",
+      "start": 1109,
+      "end": 1117,
+      "label": "Person",
+      "score": 0.5725923180580139
+     },
+     {
+      "text": "capitalism",
+      "start": 1132,
+      "end": 1142,
+      "label": "Concept",
+      "score": 0.9536830186843872
+     }
+    ],
+    "cf_is-the-intentional-m_5": [
+     {
+      "text": "demand signal",
+      "start": 30,
+      "end": 43,
+      "label": "Concept",
+      "score": 0.5297887325286865
+     },
+     {
+      "text": "monetization funnel",
+      "start": 136,
+      "end": 155,
+      "label": "Process",
+      "score": 0.5772023797035217
+     },
+     {
+      "text": "technewriting",
+      "start": 516,
+      "end": 529,
+      "label": "Organization",
+      "score": 0.5152197480201721
+     },
+     {
+      "text": "capitalism",
+      "start": 612,
+      "end": 622,
+      "label": "Concept",
+      "score": 0.8743271827697754
+     },
+     {
+      "text": "thesis",
+      "start": 720,
+      "end": 726,
+      "label": "Concept",
+      "score": 0.5304728746414185
+     },
+     {
+      "text": "capitalism",
+      "start": 785,
+      "end": 795,
+      "label": "Concept",
+      "score": 0.8846273422241211
+     }
+    ]
+   }
+  },
+  "ignore parameter in landing page report urls in google ads.md": {
+   "chunk_ms_median": 131.9,
+   "chunk_ms_all": [
+    141.4,
+    133.3,
+    130.5,
+    27.9
+   ],
+   "proposals": 25,
+   "spans": {
+    "cf_ignore parameter in _0": [
+     {
+      "text": "Google",
+      "start": 62,
+      "end": 68,
+      "label": "Organization",
+      "score": 0.542098343372345
+     },
+     {
+      "text": "youtube",
+      "start": 113,
+      "end": 120,
+      "label": "Organization",
+      "score": 0.5371420979499817
+     },
+     {
+      "text": "Google",
+      "start": 303,
+      "end": 309,
+      "label": "Organization",
+      "score": 0.5940139889717102
+     },
+     {
+      "text": "www.youtube.com",
+      "start": 334,
+      "end": 349,
+      "label": "Location",
+      "score": 0.5030080080032349
+     },
+     {
+      "text": "Tegan",
+      "start": 408,
+      "end": 413,
+      "label": "Person",
+      "score": 0.9698235392570496
+     },
+     {
+      "text": "Blueness Digital",
+      "start": 424,
+      "end": 440,
+      "label": "Organization",
+      "score": 0.8895406126976013
+     }
+    ],
+    "cf_ignore parameter in _1": [
+     {
+      "text": "landing page report",
+      "start": 4,
+      "end": 23,
+      "label": "Document",
+      "score": 0.8687146902084351
+     },
+     {
+      "text": "Google",
+      "start": 106,
+      "end": 112,
+      "label": "Organization",
+      "score": 0.9226008653640747
+     },
+     {
+      "text": "landing page report",
+      "start": 288,
+      "end": 307,
+      "label": "Document",
+      "score": 0.8655079007148743
+     },
+     {
+      "text": "URL",
+      "start": 316,
+      "end": 319,
+      "label": "Technology",
+      "score": 0.6451777219772339
+     },
+     {
+      "text": "URL",
+      "start": 464,
+      "end": 467,
+      "label": "Technology",
+      "score": 0.5045003294944763
+     },
+     {
+      "text": "client",
+      "start": 570,
+      "end": 576,
+      "label": "Organization",
+      "score": 0.5268699526786804
+     },
+     {
+      "text": "Samrush report",
+      "start": 617,
+      "end": 631,
+      "label": "Document",
+      "score": 0.9054520726203918
+     },
+     {
+      "text": "ads",
+      "start": 811,
+      "end": 814,
+      "label": "Technology",
+      "score": 0.5211969614028931
+     },
+     {
+      "text": "landing page report",
+      "start": 917,
+      "end": 936,
+      "label": "Document",
+      "score": 0.9051557779312134
+     },
+     {
+      "text": "ads",
+      "start": 942,
+      "end": 945,
+      "label": "Technology",
+      "score": 0.5679140090942383
+     },
+     {
+      "text": "Seamrush report",
+      "start": 1060,
+      "end": 1075,
+      "label": "Document",
+      "score": 0.878551721572876
+     }
+    ],
+    "cf_ignore parameter in _2": [
+     {
+      "text": "UTM",
+      "start": 289,
+      "end": 292,
+      "label": "Technology",
+      "score": 0.6683744788169861
+     },
+     {
+      "text": "Google",
+      "start": 380,
+      "end": 386,
+      "label": "Organization",
+      "score": 0.9738584160804749
+     },
+     {
+      "text": "UTM",
+      "start": 508,
+      "end": 511,
+      "label": "Technology",
+      "score": 0.7159155011177063
+     },
+     {
+      "text": "UTM parameters",
+      "start": 554,
+      "end": 568,
+      "label": "Technology",
+      "score": 0.9219391345977783
+     },
+     {
+      "text": "Google",
+      "start": 604,
+      "end": 610,
+      "label": "Organization",
+      "score": 0.983444333076477
+     },
+     {
+      "text": "UTM parameters",
+      "start": 724,
+      "end": 738,
+      "label": "Technology",
+      "score": 0.8935090899467468
+     },
+     {
+      "text": "Google",
+      "start": 837,
+      "end": 843,
+      "label": "Organization",
+      "score": 0.9674658179283142
+     },
+     {
+      "text": "UTM parameters",
+      "start": 914,
+      "end": 928,
+      "label": "Technology",
+      "score": 0.9212223291397095
+     }
+    ],
+    "cf_ignore parameter in _3": []
+   }
+  }
+ }
+}

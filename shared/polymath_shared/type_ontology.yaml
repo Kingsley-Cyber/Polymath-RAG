@@ -1,0 +1,102 @@
+# SCIENTIFIC-KAG-V1 — knowledge object hierarchy (type ontology v1).
+#
+# Declarative policy data: predicate-signature families resolve through
+# THIS file, never through code branches. Every CoreType enum member
+# must appear exactly once (closure is tested); abstract nodes carry no
+# canonical type themselves but expand to their descendant leaves in
+# signature contexts.
+#
+# Structure follows the owner's specification:
+#
+#   KnowledgeObject
+#   ├── Agent            Person · Organization · ResearchGroup
+#   ├── ResearchArtifact
+#   │     ├── Method     {Algorithm, Technique}
+#   │     ├── Model
+#   │     ├── Framework  {Architecture}
+#   │     ├── Dataset    {Corpus}
+#   │     ├── Benchmark
+#   │     ├── Experiment
+#   │     ├── Publication  -> Paper
+#   │     ├── Software   {Library, Tool}
+#   │     └── Concept
+#   ├── Theory
+#   ├── Component
+#   ├── Event            {Release, TrainingRun}
+#   ├── TimeReference    {Date, TimePeriod}
+#   ├── Measurement      {Metric}
+#   ├── Document
+#   ├── Product
+#   ├── Technology
+#   ├── Process
+#   └── Location
+
+version: type-ontology-v1
+root: KnowledgeObject
+
+nodes:
+  KnowledgeObject:
+    abstract: true
+    children: [Agent, ResearchArtifact, Theory, Component, Event,
+               TimeReference, Measurement, Document, Product, Technology,
+               Process, Location, Task, Version]
+
+  Agent:
+    abstract: true
+    children: [Person, Organization, ResearchGroup]
+  Person: {}
+  Organization: {}
+  ResearchGroup: {}
+
+  ResearchArtifact:
+    abstract: true
+    children: [Method, Model, Framework, Dataset, Benchmark, Experiment,
+               Publication, Software, Concept]
+  Method:
+    children: [Algorithm, Technique]
+  Algorithm: {}
+  Technique: {}
+  Model: {}
+  Framework:
+    children: [Architecture]
+  Architecture: {}
+  Dataset:
+    children: [Corpus]
+  Corpus: {}
+  Benchmark: {}
+  Experiment: {}
+  Publication:
+    abstract: true
+    children: [Paper]
+  Paper: {}
+  Software:
+    children: [Library, Tool]
+  Library: {}
+  Tool: {}
+  Concept: {}
+
+  Theory: {}
+  Component: {}
+
+  Event:
+    children: [Release, TrainingRun]
+  Release: {}
+  TrainingRun: {}
+
+  TimeReference:
+    children: [Date, TimePeriod]
+  Date: {}
+  TimePeriod: {}
+
+  Measurement:
+    children: [Metric]
+  Metric: {}
+
+  Document: {}
+  Product: {}
+  Technology: {}
+  Process: {}
+  Location: {}
+
+  Task: {}
+  Version: {}

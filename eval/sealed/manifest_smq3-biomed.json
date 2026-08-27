@@ -1,0 +1,100 @@
+{
+ "manifest": {
+  "code": {
+   "branch": "architecture/evidence-first-v5",
+   "commit": "9f888c4d92c3c180a42ab87ef979f79eebb82ff6",
+   "describe": "v4-semantic-freeze-37-g9f888c4",
+   "dirty_files": []
+  },
+  "contract": "sealed-multidomain-qualification-v1",
+  "documents": [
+   {
+    "byte_length": 92988,
+    "name": "A Circumplex Model of Affect.md",
+    "path": "/Volumes/Flash Drive/Rag/CORPUS/test/A Circumplex Model of Affect.md",
+    "register": "biomedical_scientific",
+    "sha256": "2f638a38ed4629d01d4f3d917288bc815b2cd91ce5f3f9b6fafdbc233ab0945f"
+   }
+  ],
+  "register_coverage": {
+   "covered": [
+    "biomedical_scientific"
+   ],
+   "missing": [
+    "technical_cyber",
+    "business_operations",
+    "academic_social_science",
+    "structurally_different"
+   ]
+  },
+  "results": {
+   "canonical_count": 6,
+   "canonical_hash": "0222460d74f901ac9afe2b55103e9acc930ca383e32a706cdaeec9e41a6d8873",
+   "corpus_id": "smq3-biomed-v1",
+   "entities_count": 493,
+   "entities_hash": "0ca4145a873c3021d44494ae321e629a273831e53c7fa79353501f994575e2c7",
+   "facts_count": 12,
+   "facts_hash": "8ce8c4c94d61e3edc3d290c2f9522864d754f18c70560533d26c6b6c9e54c83a",
+   "mentions_count": 975,
+   "mentions_hash": "996ff8f75798a95514edbe69ee5023b986cc05c055ccb66b139c714b35ab0759"
+  },
+  "runtime": {
+   "dependency_files": [
+    "control/pyproject.toml",
+    "orchestrator/pyproject.toml",
+    "pyproject.toml",
+    "shared/pyproject.toml",
+    "workers/pyproject.toml"
+   ],
+   "dependency_lock_hash": "3240e9786fa61dba036b2b8353dadbaf796e226ec1994e7733372a02ff2c5649",
+   "models": {
+    "embedder": {
+     "id": "Qwen/Qwen3-Embedding-0.6B",
+     "revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+     "weights_sha256": "c76e8d7f28ec4ce0c548bb2eac381b84491184083fbef4c915c2485e873aa4a6"
+    },
+    "gliner": {
+     "id": "urchade/gliner_medium-v2.1",
+     "revision": "40ec419335d09393f298636f471328b722c6da9e",
+     "weights_sha256": "__PIN_WEIGHTS_SHA256__"
+    },
+    "spacy": {
+     "id": "en_core_web_sm",
+     "revision": "3.8.0",
+     "weights_sha256": "92e0ab7d01be1b1c62f0cf2249d7350293cbc750d5bd75e3c86774c703e21750"
+    }
+   },
+   "platform": "macOS-26.4.1-arm64-arm-64bit",
+   "python": "3.11.15"
+  },
+  "sealed_at_utc": "re-seal after Phase B engineering closure (recorder fix + ADMISSION-IMPL-MEMO-V1 + shadow fix); semantic equivalence proven by B8 identical-state runs on perf-baseline-v1; original seal 7f018ee",
+  "semantic_bundle": {
+   "authorities": {
+    "authority_code_sha256": "9554fac4ced8aedea9b233c8816c95b32e0a4fa28be2078fc3ba184951716530",
+    "canonical_fact_gate_contract": "entity-harbor-v1",
+    "concept_evidence_contract": "concept-evidence-v1",
+    "contraction_resolution_contract": "contraction-resolution-v1",
+    "discourse_reference_contract": "discourse-reference-v1",
+    "discourse_reference_policy": "discourse-reference-policy-v1",
+    "discourse_reference_policy_sha256": "4694c626adb79bdc052298b457b204bb8d5993dbfef1724132d043bc0bce93e7",
+    "entity_harbor_contract": "entity-harbor-v1",
+    "generic_classification_contract": "generic-classification-v1",
+    "graph_eligibility_contract": "entity-harbor-v1",
+    "identity_allocation_contract": "identity-allocation-v1",
+    "identity_precision_contract": "identity-precision-v2",
+    "layout_evidence_contract": "layout-evidence-v1",
+    "referential_envelope_contract": "referential-span-v1",
+    "semantic_contract": "admission-harbor-v2",
+    "syntax_contract": "syntax-evidence-v1",
+    "syntax_model": "en_core_web_sm@3.8.0",
+    "syntax_provider": "disabled",
+    "type_identity_alignment_contract": "harbor-type-identity-alignment-v1"
+   },
+   "authority_sha256": "fd68fc57f4c18057b00f7206313ab2e6e49149c232a6943f14e736a8aef18743",
+   "bundle_sha256": "5d99a7d4f0f12116b385528464880eb0a46be8e3d3fd728cb4198a8edc47425c",
+   "semantic_contract": "admission-harbor-v2"
+  },
+  "set_name": "smq3-biomed"
+ },
+ "manifest_sha256": "c5fe74c582e5c7847c94ac716c4470e756ed7f49a34d614c5ca4bb84a5940fb7"
+}

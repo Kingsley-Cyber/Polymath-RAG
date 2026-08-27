@@ -31,10 +31,50 @@ from polymath_shared.receipts import StageFailed
 
 LEASE_SECONDS = 300
 
+#: Module-level logger.
+#:
+#: `_lease_keeper` is a module-level function whose only error path called
+#: `log.warning(...)`, but `log` was bound ONLY inside `run_worker`. The
+#: first transient renewal failure therefore raised NameError *inside the
+#: except handler*, which propagated out of the daemon thread target and
+#: killed the keeper with no join, no supervisor visibility and no log
+#: line. The lease then decayed to expiry and the reaper reclaimed a
+#: healthy worker's ticket -- re-introducing, through the error path, the
+#: exact failure LONG-STAGE-LEASE-CORRECTNESS-V1 was written to prevent.
+log = logging.getLogger("worker-runtime")
+
+#: CLAIM-STARVATION-V1. Events this process has already refused on
+#: contract grounds, excluded from the next fetch so the scan advances
+#: past them instead of re-reading the same head forever.
+#:
+#: An old `vocab-probe-v2` run pinned `semantic-query-policy-v2` and the
+#: `semantic_v2` chunker -- semantics this fleet does not run, so no
+#: worker could ever claim it. Because the claim query ordered by
+#: event_id and took the first `limit` rows, that single permanently
+#: incompatible event sat at the head of the intake queue and starved 48
+#: compatible events behind it, including an entire freshly ingested
+#: corpus. The fleet looked healthy: workers heartbeated, leases were
+#: sound, nothing errored. It simply never claimed anything.
+_REFUSED: dict[str, set[int]] = {}
+
+#: Refusals are forgotten periodically so a deliberate semantic cutover
+#: re-admits work that a previous configuration could not run.
+_REFUSED_TTL_S = 900.0
+_REFUSED_AT: dict[str, float] = {}
+
+
+def _refused_set(worker_type: str) -> set[int]:
+    now = time.time()
+    if now - _REFUSED_AT.get(worker_type, 0.0) > _REFUSED_TTL_S:
+        _REFUSED[worker_type] = set()
+        _REFUSED_AT[worker_type] = now
+    return _REFUSED.setdefault(worker_type, set())
+
 
 def claim_ticket_events(conn, identity: dict, event_types: list[str], limit: int) -> list[dict]:
     """Claim undelivered events gated by ticket readiness + worker
     compatibility. Leases the ticket for LEASE_SECONDS."""
+    refused = _refused_set(identity.get("worker_type", "?"))
     with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
         cur.execute(
             """
@@ -46,13 +86,19 @@ def claim_ticket_events(conn, identity: dict, event_types: list[str], limit: int
                 ON t.run_id = e.run_id AND t.event_type = e.event_type
               LEFT JOIN runs r ON r.run_id = e.run_id
              WHERE e.delivered_at IS NULL
-               AND e.event_type = ANY(%s)
-               AND (t.ticket_id IS NULL OR t.status = 'ready')
-             ORDER BY e.event_id
+                AND e.event_type = ANY(%s)
+                AND (t.ticket_id IS NULL OR
+                     (t.status = 'ready' AND t.archived_at IS NULL))
+                AND NOT (e.event_id = ANY(%s))
+             ORDER BY CASE WHEN r.created_at > now() - interval '15 minutes'
+                           THEN 0 ELSE 1 END,
+                      CASE WHEN t.ticket_id IS NOT NULL
+                           THEN 0 ELSE 1 END,
+                      e.event_id
              LIMIT %s
              FOR UPDATE OF e SKIP LOCKED
             """,
-            (event_types, limit),
+            (event_types, list(refused), limit),
         )
         events = cur.fetchall()
         claimed = []
@@ -62,22 +108,68 @@ def claim_ticket_events(conn, identity: dict, event_types: list[str], limit: int
                     continue
                 contract = json.loads(e["execution_contract"] or "{}")
                 if contract and not compatible(identity["contracts"], contract):
-                    logging.getLogger("worker-runtime").warning(
-                        "lease refused: worker %s incompatible with run %s contract",
-                        identity["worker_id"], e["run_id"],
-                    )
+                    # Remember it, so the NEXT fetch scans past it rather
+                    # than returning the same unclaimable head forever.
+                    first_time = e["event_id"] not in refused
+                    refused.add(e["event_id"])
+                    if first_time:
+                        logging.getLogger("worker-runtime").warning(
+                            "lease refused: worker %s incompatible with run %s "
+                            "contract; skipping event %s (%d refused this "
+                            "window)",
+                            identity["worker_id"], e["run_id"],
+                            e["event_id"], len(refused),
+                        )
                     continue
+                # LONG-STAGE-LEASE-CORRECTNESS-V1: claiming is not an
+                # attempt. `attempt` counts EXECUTIONS THAT FAILED, and is
+                # incremented by _fail_ticket or by the reaper when the
+                # executing worker disappears. Incrementing here burned the
+                # retry budget of every ticket a worker merely queued, which
+                # failed all 24 projections of release-books-v1 without a
+                # single real failure.
                 cur.execute(
                     """
                     UPDATE stage_tickets SET status='leased', lease_owner=%s,
                            lease_expires_at = now() + make_interval(secs => %s),
-                           attempt = attempt + 1, updated_at=now()
+                           updated_at=now()
                      WHERE ticket_id=%s AND status='ready'
                     """,
                     (identity["worker_id"], LEASE_SECONDS, e["ticket_id"]),
                 )
                 if cur.rowcount == 0:
                     continue  # lost the ticket race
+            # EVENT-ADAPTER-V1: normalize BEFORE handing to the stage.
+            # A legacy payload that cannot be recovered fails its ticket
+            # ONCE here (typed reason, attempt burned deterministically)
+            # instead of crash-looping a worker on a missing key.
+            from polymath_shared.event_adapter import (
+                LegacyEventUnrecoverable,
+                normalize_event,
+            )
+            try:
+                e = dict(e)
+                e["payload"] = normalize_event(
+                    cur, e["event_type"], e["payload"], e["run_id"])
+            except LegacyEventUnrecoverable as exc:
+                if e.get("ticket_id") is not None:
+                    cur.execute(
+                        """
+                        UPDATE stage_tickets
+                           SET status='failed', attempt = attempt + 1,
+                               lease_owner=NULL, lease_expires_at=NULL,
+                               last_error_note=%s, updated_at=now()
+                         WHERE ticket_id=%s AND status='leased'
+                        """,
+                        (exc.reason[:500], e["ticket_id"]),
+                    )
+                logging.getLogger("worker-runtime").error(
+                    "legacy event unrecoverable; ticket failed once",
+                    extra={"error_code": "LEGACY_EVENT_UNRECOVERABLE",
+                           "run_id": e["run_id"],
+                           "event_type": e["event_type"],
+                           "detail": str(exc)[:200]})
+                continue
             claimed.append(dict(e))
         if claimed:
             cur.execute(
@@ -97,17 +189,69 @@ def complete_ticket(conn, ticket_id: str | None) -> None:
     )
 
 
+def _lease_keeper(dsn: str, worker_id: str, ticket_id: str,
+                  ttl_s: int, stop, interval_s: float = 60.0):
+    # Renews EVERY ticket this worker holds, not just the one executing.
+    # With claim depth 1 that is the same set; keeping it owner-scoped is
+    # defence in depth so a future batching change cannot resurrect the
+    # queued-ticket starvation bug.
+    """CP2.1 lease handling for LONG stages.
+
+    A book-scale extract runs far past claim_ttl_s (300s). Without renewal
+    the control plane revokes a HEALTHY worker's lease mid-stage: the ticket
+    returns to ready (double-processing risk with >1 worker of a type), the
+    owner is falsely quarantined, and heartbeats pause because the worker
+    loop only beats BETWEEN events. This thread renews the lease and beats
+    the heart WHILE processing; it stops the moment the stage finishes, so
+    genuine death still expires the lease within one TTL.
+    """
+    import psycopg as _psycopg
+    while not stop.wait(interval_s):
+        try:
+            with _psycopg.connect(dsn, connect_timeout=5) as conn:
+                conn.execute(
+                    """UPDATE stage_tickets
+                          SET lease_expires_at = now() + make_interval(secs => %s)
+                        WHERE lease_owner = %s AND status = 'leased'""",
+                    (ttl_s, worker_id))
+                heartbeat(conn, worker_id, current_ticket=ticket_id)
+                conn.commit()
+        except Exception:
+            log.warning("lease renewal failed; will retry",
+                        extra={"error_code": "lease_renew_failed"})
+
+
 def run_worker(worker_type: str, event_types: list[str],
                process_event: Callable[..., None],
-               poll_interval_s: float = 2.0, batch_size: int = 4,
+               poll_interval_s: float = 2.0, batch_size: int = 1,
                extra_env_check: Callable[[], None] | None = None) -> None:
     """The fleet's single loop: register → heartbeat → claim gated work
     → execute → complete ticket. `process_event(conn, event)` keeps its
-    existing signature and stage logic."""
+    existing signature and stage logic.
+
+    batch_size defaults to 1 (LONG-STAGE-LEASE-CORRECTNESS-V1): a worker
+    executes tickets serially, so claiming ahead bought nothing but made
+    "held" differ from "being processed" — and a book-scale stage running
+    past claim_ttl_s let the reaper expire the queued ones. Parallelism
+    comes from running several workers of a type, which is unaffected.
+    """
     configure_logging(f"worker-{worker_type.replace('_', '-')}")
     identity = worker_identity(worker_type)
     contracts = identity["contracts"]
     log = logging.getLogger(f"worker-{worker_type}")
+    # EXECUTION-BUNDLE-FENCE-V1: pin the boot fingerprint. If the pinned
+    # surfaces change on disk while this process lives, its boot-time
+    # self-description no longer describes the code it would execute —
+    # refuse claims loudly instead of producing provenance-orphaned
+    # knowledge (measured failure class during P0.7 parity).
+    from polymath_shared.execution_bundle import (
+        bundle_id,
+        fast_code_fingerprint,
+        semantic_file_hashes,
+    )
+    boot_fingerprint = fast_code_fingerprint()
+    boot_semantic_files = semantic_file_hashes()
+    bundle_stale_reason: str | None = None
     registered = False
     while True:
         try:
@@ -118,14 +262,68 @@ def run_worker(worker_type: str, event_types: list[str],
                     log.info("registered", extra={
                         "worker_id": identity["worker_id"],
                         "build_sha": identity["build_sha"],
+                        "execution_bundle": identity["execution_bundle_id"],
                     })
                 heartbeat(conn, identity["worker_id"])
-                events = claim_ticket_events(conn, identity, event_types, batch_size)
+                if bundle_stale_reason is None:
+                    drift = None
+                    if fast_code_fingerprint() != boot_fingerprint:
+                        drift = "BUNDLE_STALE_CODE_DRIFT"
+                    else:
+                        now_files = semantic_file_hashes()
+                        if now_files != boot_semantic_files:
+                            drift = "BUNDLE_STALE_SEMANTIC_FILE_DRIFT"
+                    if drift:
+                        bundle_stale_reason = drift
+                        log.critical(
+                            "execution bundle stale; refusing claims",
+                            extra={"error_code": drift,
+                                   "worker_id": identity["worker_id"],
+                                   "bundle": identity["execution_bundle_id"]})
+                events = []
+                if bundle_stale_reason is not None:
+                    conn.execute(
+                        """
+                        UPDATE worker_registrations
+                           SET last_error = %s, status = 'quarantined'
+                         WHERE worker_id = %s
+                        """,
+                        (bundle_stale_reason, identity["worker_id"]),
+                    )
+                    log.error("claims refused while bundle is stale",
+                              extra={"error_code": bundle_stale_reason})
+                else:
+                    events = claim_ticket_events(
+                        conn, identity, event_types, batch_size)
             for event in events:
                 ticket_id = event.get("ticket_id")
+                import threading as _threading
+
+                from polymath_shared.settings import get_settings as _gs
+                _stop = _threading.Event()
+                _keeper = _threading.Thread(
+                    target=_lease_keeper,
+                    args=(_gs().postgres.dsn, identity["worker_id"], ticket_id,
+                          _gs().worker.claim_ttl_s, _stop),
+                    daemon=True)
+                _keeper.start()
+                # SELF-DEADLOCK (measured): heartbeating INSIDE the stage
+                # transaction locks this worker's own worker_registrations
+                # row for the whole stage. A 46-minute projection therefore
+                # blocked its own lease keeper (which heartbeats on a second
+                # connection) AND the control plane's staleness sweep — so
+                # the heartbeat froze, the lease expired, control stopped
+                # ticking, and the worker looked wedged while it was in fact
+                # working. The heartbeat belongs in its own short
+                # transaction, before the long one opens.
                 try:
                     with tx() as conn:
                         heartbeat(conn, identity["worker_id"], current_ticket=ticket_id)
+                except Exception:
+                    log.warning("pre-stage heartbeat failed; continuing",
+                                extra={"error_code": "heartbeat_failed"})
+                try:
+                    with tx() as conn:
                         process_event(conn, event)
                         complete_ticket(conn, ticket_id)
                     with tx() as conn:
@@ -150,6 +348,8 @@ def run_worker(worker_type: str, event_types: list[str],
                     with tx() as conn:
                         heartbeat(conn, identity["worker_id"],
                                   last_error=f"{type(exc).__name__}: {exc}")
+                finally:
+                    _stop.set()
         except psycopg.errors.OperationalError:
             log.warning("postgres unavailable; backing off",
                         extra={"error_code": "pg_unavailable"})
@@ -166,7 +366,8 @@ def _fail_ticket(ticket_id: str | None, reason: str) -> None:
             conn.execute(
                 """
                 UPDATE stage_tickets SET
-                    status = CASE WHEN attempt >= 3 THEN 'failed' ELSE 'ready' END,
+                    attempt = attempt + 1,
+                    status = CASE WHEN attempt + 1 >= 3 THEN 'failed' ELSE 'ready' END,
                     lease_owner=NULL, lease_expires_at=NULL,
                     last_error_note = %s, updated_at=now()
                  WHERE ticket_id=%s AND status='leased'

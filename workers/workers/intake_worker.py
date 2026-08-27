@@ -64,7 +64,17 @@ def process_event(conn: Connection, event: dict) -> None:
     source_name = payload["source_name"]
     media_type = payload["media_type"]
 
-    raw = base64.b64decode(payload["content_b64"])
+    if payload.get("content_ref"):
+        # SPOOL-CLAIM-CHECK-V1: bytes live on the spool volume; the
+        # payload carries {store, key, sha256, bytes}. spool_read
+        # verifies the hash and refuses mismatched or missing content
+        # (fail-loud → FAILURE receipt), so a resolved reference is
+        # exactly as trustworthy as inline bytes.
+        from polymath_shared.blob_spool import spool_read
+
+        raw = spool_read(payload["content_ref"])
+    else:
+        raw = base64.b64decode(payload["content_b64"])
     normalized = normalize_document_bytes(
         raw, strip_bom=NORMALIZATION["strip_bom"], normalize_crlf=NORMALIZATION["normalize_crlf"]
     )
@@ -107,13 +117,33 @@ def process_event(conn: Connection, event: dict) -> None:
             layout_regions = plan.layout
             chunks = materialize_chunks(plan)
 
+        # CROSS-CORPUS-CONTENT-COLLISION (FAILURE-TRANSPARENCY-V1):
+        # doc_id is content-addressed GLOBALLY and a document belongs to
+        # exactly one corpus. Re-ingesting identical content into a
+        # DIFFERENT corpus used to hit ON CONFLICT DO NOTHING and mint a
+        # query_ready run over an EMPTY corpus — silent success with
+        # nothing ingested (measured 2026-08-26: transcript-final-v1's
+        # first run). An identity collision is a typed, loud refusal.
+        owner = conn.execute(
+            "SELECT corpus_id FROM documents WHERE doc_id = %s", (doc_id,)
+        ).fetchone()
+        if owner and owner[0] != corpus_id:
+            raise RuntimeError(
+                f"CROSS_CORPUS_CONTENT_COLLISION: content of {source_name!r} "
+                f"(doc {doc_id[:24]}…) already belongs to corpus "
+                f"{owner[0]!r}; a document has exactly one corpus. "
+                f"Query the owning corpus, or archive/restore it — never "
+                f"a silent empty ingest.")
+
         conn.execute(
             """
-            INSERT INTO corpora (corpus_id, name, config_hash, profile)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO corpora (corpus_id, name, config_hash, profile,
+                                 embedding_contract_id)
+            VALUES (%s, %s, %s, %s, %s)
             ON CONFLICT (corpus_id) DO NOTHING
             """,
-            (corpus_id, corpus_id, contract(), json.dumps(profile.model_dump())),
+            (corpus_id, corpus_id, contract(), json.dumps(profile.model_dump()),
+             get_settings().stores.embedding_contract_id),
         )
         conn.execute(
             """
@@ -203,17 +233,27 @@ def process_event(conn: Connection, event: dict) -> None:
             "parent_chunks": len(parents),
         }
         writer.artifact({"routing_card": routing_card})
+        # doc_content (the full base64 body) used to ride along here.
+        # No downstream stage ever read it — every consumer works from
+        # the chunks/documents rows — so it was pure jsonb bloat: a
+        # third full copy of every document in Postgres. Dropped.
         writer.outbox(NEXT_EVENT_TYPE, {
             "run_id": run_id,
             "corpus_id": corpus_id,
             "doc_id": doc_id,
-            "doc_content": payload["content_b64"],
             "profile": profile.model_dump(),
         })
         writer.run_status("reconciling")
 
 
-def run_forever(poll_interval_s: float = 2.0, batch_size: int = 8) -> None:
+def run_forever(poll_interval_s: float = 2.0, batch_size: int = 1) -> None:
+    """LONG-STAGE-LEASE-CORRECTNESS-V1: claim depth 1.
+
+    A worker executes tickets serially, so claiming ahead bought nothing
+    but made "held" differ from "being processed" -- and a stage running
+    past claim_ttl_s let the reaper expire the queued ones. Parallelism
+    comes from running several workers of a type.
+    """
     from polymath_shared.worker_runtime import run_worker
 
     run_worker('intake', [EVENT_TYPE], process_event,

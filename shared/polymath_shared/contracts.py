@@ -31,6 +31,29 @@ class CoreType(str, Enum):
     PROCESS = "Process"
     MEASUREMENT = "Measurement"
     TIME_REFERENCE = "TimeReference"
+    RESEARCH_GROUP = "ResearchGroup"
+    PAPER = "Paper"
+    DATASET = "Dataset"
+    CORPUS = "Corpus"
+    BENCHMARK = "Benchmark"
+    METRIC = "Metric"
+    TASK = "Task"
+    MODEL = "Model"
+    ALGORITHM = "Algorithm"
+    FRAMEWORK = "Framework"
+    ARCHITECTURE = "Architecture"
+    THEORY = "Theory"
+    TECHNIQUE = "Technique"
+    COMPONENT = "Component"
+    SOFTWARE = "Software"
+    LIBRARY = "Library"
+    TOOL = "Tool"
+    EXPERIMENT = "Experiment"
+    RELEASE = "Release"
+    TRAINING_RUN = "TrainingRun"
+    DATE = "Date"
+    TIME_PERIOD = "TimePeriod"
+    VERSION = "Version"
 
 
 DecisionKind = Literal["ACCEPT", "QUALIFY", "REJECT", "AMBIGUOUS", "UNSUPPORTED", "CONFLICT"]
@@ -93,6 +116,35 @@ class BindingSource(str, Enum):
     UD_COORDINATION = "UD_COORDINATION"
     SAFE_LOCAL_PATTERN = "SAFE_LOCAL_PATTERN"
     BOUNDED_LINEAR_RECALL = "BOUNDED_LINEAR_RECALL"
+    UD_DEPENDENCY = "UD_DEPENDENCY"
+    NOMINAL_DEPENDENCY = "NOMINAL_DEPENDENCY"
+    CONTROL_SUBJECT = "CONTROL_SUBJECT"
+    CONTROL_OBJECT = "CONTROL_OBJECT"
+    DISCOURSE_ANAPHORA = "DISCOURSE_ANAPHORA"
+    # SPOKEN-RELATION-ADAPTER-V1: object recovered from the relative
+    # clause's antecedent noun (syntactically licensed, deterministic)
+    RELCL_ANTECEDENT = "RELCL_ANTECEDENT"
+
+
+V2_BINDING_SOURCES = frozenset(
+    {BindingSource.UD_DEPENDENCY, BindingSource.NOMINAL_DEPENDENCY,
+     BindingSource.CONTROL_SUBJECT, BindingSource.CONTROL_OBJECT,
+     BindingSource.DISCOURSE_ANAPHORA}
+)
+
+
+def v2_binding_refusal(candidate) -> Optional[str]:
+    """PREDICATE-COMPILER-V2 hard rule: a relation candidate exists only
+    when a spaCy token licensed it and dependency structure bound its
+    arguments. No token id -> NO_TRIGGER_TOKEN. Any binding source
+    outside the V2 set (proximity recall, surface patterns) ->
+    UNLICENSED_BINDING_SOURCE. Returns the refusal reason or None."""
+    if getattr(candidate, "trigger_token_id", None) is None:
+        return "NO_TRIGGER_TOKEN"
+    source = getattr(candidate, "binding_source", None)
+    if source not in V2_BINDING_SOURCES:
+        return "UNLICENSED_BINDING_SOURCE"
+    return None
 
 
 class RoleAssignment(BaseModel):
@@ -201,6 +253,20 @@ class RelationCandidate(BaseModel):
     sentence_text: str = ""
     sentence_start: int = 0
     sentence_index: int = 0
+    # PREDICATE-COMPILER-V2 provenance (slice 1). Optional so the frozen
+    # legacy_v1/kimi_v1 pipelines keep constructing candidates unchanged;
+    # v2_binding_refusal makes these mandatory on the V2 path only.
+    document_id: Optional[str] = None
+    sentence_id: Optional[str] = None
+    trigger_token_id: Optional[int] = None
+    subject_token_id: Optional[int] = None
+    object_token_id: Optional[int] = None
+    dependency_path: Optional[str] = None
+    binding_source: Optional[BindingSource] = None
+    # SCIENTIFIC-KAG-V1 phase 6: the temporal complement of the trigger
+    # ("in March 2023"), kept as a structured string so facts carry
+    # machine-normalizable time instead of flattened prose.
+    temporal_surface: Optional[str] = None
 
 
 class CanonicalFact(BaseModel):

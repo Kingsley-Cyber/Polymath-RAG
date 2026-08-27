@@ -1,40 +1,5 @@
 {
   "phases": {
-    "ingestion": {
-      "submitted": 5,
-      "terminal_states": {
-        "query_ready": 5
-      },
-      "wall_time_s": 220.3,
-      "docs_per_min": 1.4,
-      "documents": [
-        {
-          "doc_id": "doc_85a21d16237959a1a72ffe82eb591ff05b758a7839e23b12da356aebc5acba67",
-          "source_name": "corpus/01_northvale_health.md",
-          "content_hash": "85a21d16237959a1a72ffe82eb591ff05b758a7839e23b12da356aebc5acba67"
-        },
-        {
-          "doc_id": "doc_bb1fa6f6d94a4855e7ecef360ab4e11c08b7848cdda85f8a1459675b611d029a",
-          "source_name": "corpus/02_nimbus_cloud.md",
-          "content_hash": "bb1fa6f6d94a4855e7ecef360ab4e11c08b7848cdda85f8a1459675b611d029a"
-        },
-        {
-          "doc_id": "doc_07dfb7f0d1e1989ff25459845498ada8831cd4336de5f530ae9359d61317acb2",
-          "source_name": "corpus/03_crestline_automation.md",
-          "content_hash": "07dfb7f0d1e1989ff25459845498ada8831cd4336de5f530ae9359d61317acb2"
-        },
-        {
-          "doc_id": "doc_c1aa662574cab4c93405c709f615098b50e79a57fd497aed2c49c4cc4bc9c72c",
-          "source_name": "corpus/04_brightpath_learning.md",
-          "content_hash": "c1aa662574cab4c93405c709f615098b50e79a57fd497aed2c49c4cc4bc9c72c"
-        },
-        {
-          "doc_id": "doc_e43f6c2fe7a9a907ab8f986159bd4a7d60b7615981f4387b760a07261ebbb7d8",
-          "source_name": "corpus/05_corval_logistics.md",
-          "content_hash": "e43f6c2fe7a9a907ab8f986159bd4a7d60b7615981f4387b760a07261ebbb7d8"
-        }
-      ]
-    },
     "facts": {
       "supported_positive": {
         "gold": 26,
@@ -260,12 +225,6 @@
         "total": 18,
         "violations": []
       }
-    },
-    "provenance": {
-      "accepted_facts": 15,
-      "exact_matches": 15,
-      "all_exact": true,
-      "details": []
     }
   }
 }

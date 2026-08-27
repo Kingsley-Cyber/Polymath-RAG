@@ -1,0 +1,95 @@
+# EXTRACTION REPORT — s-validation-v1 (4-document validation set)
+Source: /Users/king/Downloads/untitled folder/S/
+Pipeline: kimi_v1 + Predicate Compiler v2 shadow · persisted corpus
+
+## Per-document results
+
+### 01_psychology_working_memory → actually "Adaptive Neural Reasoning Systems" (scientific)
+- 26 entities · **0 candidates · 0 facts**
+- CLASSIFICATION: under-extraction on scientific prose — triggers like
+  "was evaluated on" present but frame anchors absent. B-class gap
+  candidate; requires single-doc debugging (noted for next slice).
+
+### 02_technical_event_pipeline → Enterprise Cloud Incident Response (PROCEDURAL)
+- 19 entities · **PROCEDURE ARTIFACT: 4 steps** ✓
+  1. review alert metadata (resources/timestamps/identities/network)
+  2. isolate affected systems when unauthorized access suspected
+  3. document findings in incident management platform
+  4. perform recovery validation after remediation
+- 1 legacy-lane type_violation rejected (fail-closed) ✓
+
+### 03_research_notes_sleep_and_attention (hedged research notes)
+- 24 entities · 1 fact accepted (contains_component) · **6 scope-gate
+  rejections** ("attributed, negated, speculative") — the hedging
+  defense performed exactly as designed on real cautious language ✓
+
+### 04_transcript_local_rag_build (build transcript)
+- 24 entities · **3 facts**: Atlas Data Platform contains_component
+  Distributed Storage Systems / Event Processing Services / Workflow
+  Orchestration Components ✓ plausible component taxonomy
+
+## Cross-set totals
+facts 5 · procedures 1 (4 steps) · concepts 0 · scope rejections 7
+
+## Classification ledger (new items)
+- 01 zero-candidate: B-class suspect (frame anchors absent on
+  scientific prose) — needs isolated debugging before any fix.
+- Word-numeral step markers ("Step one:") — SUPPORT ADDED to procedure
+  compiler this slice (measured failure → fixture-backed).
+- Passive definitional patterns ("is often described as") — SUPPORT
+  ADDED to concept compiler (same driver).
+
+## Isolation & guards
+All four documents share one corpus: vocabulary correctly admitted 0
+families (single-document support everywhere). No cross-contamination.
+
+## DEBUG SLICE RESULT — doc01 scientific lane (2026-08-24 late)
+
+Traced path with real functions: text → anchors → frames → binding.
+
+| Stage | Result |
+|---|---|
+| v1 trigger anchors | 23 (introduced/trained/contains_component/is_a…) |
+| v2 frame anchors | creation_event · training_event · evaluation_event ✓ |
+| endpoint admission | Orion Model + ANS Lab + HorizonText Corpus + ReasonBench/LogicQA/MultiStepEval — ALL GLOBAL ✓ |
+
+CLASSIFICATION: **C — role binding/candidate generation.** Zero
+candidates emerged despite anchors + fully-admitted typed endpoints.
+A/B/D/E cleared by evidence. Exact sub-cause (suspect: slice syntax
+availability collapsing UD slots) requires instrumented rerun.
+
+Red regression fixtures committed:
+tests/determinism/test_sval_doc01_red.py — 3 expected bindings marked
+red; anchor-stage clearance tests green. Slice ends here per
+stop-condition discipline: no blind patching.
+
+## SCIENTIFIC EXTRACTION TRACE REPORT — doc01 (TASK_1 complete)
+
+Trace artifact: eval/v5/replay/scientific_trace_doc01.py +
+scientific-trace-doc01.json (real sidecar syntax + real functions).
+
+| Stage | Input | Output | Verdict |
+|---|---|---|---|
+| Router | full doc text | SCIENTIFIC_RELATIONAL 1.0 · disabled=[] | PASS — not suppressing |
+| Frame resolution | S1/S2/S3 | creation/training/evaluation_event all resolve | PASS |
+| Trigger anchors (v1) | full text | 23 anchors incl introduced/trained/benchmark | PASS |
+| Entity typing | mentions DB | Model/Org/Corpus/Benchmark all GLOBAL-admitted | PASS |
+| Role binding | anchors+entities+slices | **ZERO candidate pairs** | **FAIL — CATEGORY_D** |
+| Admission | n/a | never reached | — |
+
+Root-cause category: **D (role binding regression)**. Sub-cause
+hypotheses for instrumented rerun:
+(a) slice syntax tokens absent during that ingest → UD slots empty
+    AND linear-recall region bounds collapsed;
+(b) anchor/sentence offset misalignment between chunk tiers dropping
+    every span at slice assembly;
+(c) both — needs observer traces at binding points.
+
+Red fixtures already mark the three expected bindings
+(test_sval_doc01_red.py). No patch applied — per discipline.
+
+## ROUTER A/B note
+
+Live classification NOW: primary=SCIENTIFIC_RELATIONAL conf=1.0,
+disabled=[] → CATEGORY_A (router suppression) definitively ruled out
+for this document.

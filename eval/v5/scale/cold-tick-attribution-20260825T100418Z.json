@@ -1,0 +1,67 @@
+{
+ "label": "post-bulk-fix",
+ "captured_at": "20260825T100418Z",
+ "runs": [
+  {
+   "mode": "full",
+   "wall_ms": 79172.3,
+   "phases": {
+    "receipt_checks_ms": 10224.300000000001,
+    "receipt_queries": 0,
+    "mode": "full",
+    "runs_query_ms": 102.4,
+    "attempts_fetch_ms": 88.3,
+    "python_loop_ms": 78961.4,
+    "census_total_ms": 79170.8,
+    "runs_evaluated": 10233
+   },
+   "sql_buckets": {
+    "scheduler_cursors": {
+     "ms": 64867.4,
+     "queries": 2
+    },
+    "receipt_anti_join": {
+     "ms": 10164.8,
+     "queries": 100
+    },
+    "runs_active_scan": {
+     "ms": 99.7,
+     "queries": 1
+    },
+    "stage_attempts": {
+     "ms": 81.8,
+     "queries": 1
+    }
+   }
+  },
+  {
+   "mode": "auto",
+   "wall_ms": 307.7,
+   "phases": {
+    "receipt_checks_ms": 0.0,
+    "receipt_queries": 0,
+    "mode": "incremental",
+    "runs_query_ms": 102.3,
+    "dirty_select_ms": 20.200000000000003,
+    "python_loop_ms": 174.8,
+    "census_total_ms": 306.9,
+    "runs_evaluated": 10232
+   },
+   "sql_buckets": {
+    "stage_attempts": {
+     "ms": 174.2,
+     "queries": 210
+    },
+    "runs_active_scan": {
+     "ms": 100.2,
+     "queries": 1
+    },
+    "scheduler_cursors": {
+     "ms": 8.0,
+     "queries": 2
+    }
+   }
+  }
+ ],
+ "note": "transactions rolled back; watermark NOT touched by offline runs (full re-seeds inside its own rolled-back tx); zero durable writes"
+}

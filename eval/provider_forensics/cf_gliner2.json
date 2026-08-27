@@ -1,0 +1,1823 @@
+{
+ "model": "gliner2",
+ "threshold": 0.5,
+ "load_ms": 12004.7,
+ "docs": {
+  "01_northvale_health.md": {
+   "chunk_ms_median": 58.9,
+   "chunk_ms_all": [
+    58.9
+   ],
+   "proposals": 16,
+   "spans": {
+    "chunk_c0123155428e790beab7f40a20ff6e0a5c2aa051772862cb1499da28fd8bdd3e": [
+     {
+      "text": "Dr. Amara Osei",
+      "start": 481,
+      "end": 495,
+      "label": "Person",
+      "score": 0.9944167137145996
+     },
+     {
+      "text": "Northvale Health Network",
+      "start": 48,
+      "end": 72,
+      "label": "Organization",
+      "score": 0.9890275001525879
+     },
+     {
+      "text": "Lakeshore General Hospital",
+      "start": 429,
+      "end": 455,
+      "label": "Organization",
+      "score": 0.983666181564331
+     },
+     {
+      "text": "radiology review board",
+      "start": 395,
+      "end": 417,
+      "label": "Organization",
+      "score": 0.9494848251342773
+     },
+     {
+      "text": "Riverside Clinic",
+      "start": 508,
+      "end": 524,
+      "label": "Organization",
+      "score": 0.9375244975090027
+     },
+     {
+      "text": "state registry",
+      "start": 741,
+      "end": 755,
+      "label": "Organization",
+      "score": 0.9163647294044495
+     },
+     {
+      "text": "Austin",
+      "start": 174,
+      "end": 180,
+      "label": "Location",
+      "score": 0.9813860058784485
+     },
+     {
+      "text": "CareConnect",
+      "start": 322,
+      "end": 333,
+      "label": "Product",
+      "score": 0.815151572227478
+     },
+     {
+      "text": "CareCoordinator",
+      "start": 588,
+      "end": 603,
+      "label": "Product",
+      "score": 0.8058097958564758
+     },
+     {
+      "text": "CareChart EMR",
+      "start": 82,
+      "end": 95,
+      "label": "Technology",
+      "score": 0.9072163105010986
+     },
+     {
+      "text": "discharge",
+      "start": 762,
+      "end": 771,
+      "label": "Event",
+      "score": 0.7631446123123169
+     },
+     {
+      "text": "EMR outage",
+      "start": 649,
+      "end": 659,
+      "label": "Event",
+      "score": 0.7019429206848145
+     },
+     {
+      "text": "patient records",
+      "start": 718,
+      "end": 733,
+      "label": "Document",
+      "score": 0.8923197388648987
+     },
+     {
+      "text": "discharge",
+      "start": 762,
+      "end": 771,
+      "label": "Process",
+      "score": 0.7963583469390869
+     },
+     {
+      "text": "handoffs",
+      "start": 809,
+      "end": 817,
+      "label": "Process",
+      "score": 0.7524977326393127
+     },
+     {
+      "text": "last month",
+      "start": 854,
+      "end": 864,
+      "label": "TimeReference",
+      "score": 0.9272336959838867
+     }
+    ]
+   }
+  },
+  "02_nimbus_cloud.md": {
+   "chunk_ms_median": 63.8,
+   "chunk_ms_all": [
+    63.8
+   ],
+   "proposals": 18,
+   "spans": {
+    "chunk_d757cefa21041482cf134b02c5585d6c28b9458fc44f8cfaf5f6d7584a3e9e1a": [
+     {
+      "text": "Nimbus Cloud",
+      "start": 4,
+      "end": 16,
+      "label": "Organization",
+      "score": 0.9574354290962219
+     },
+     {
+      "text": "engineering group",
+      "start": 322,
+      "end": 339,
+      "label": "Organization",
+      "score": 0.954276442527771
+     },
+     {
+      "text": "operations group",
+      "start": 195,
+      "end": 211,
+      "label": "Organization",
+      "score": 0.9419989585876465
+     },
+     {
+      "text": "load-testing harness",
+      "start": 352,
+      "end": 372,
+      "label": "Product",
+      "score": 0.8115052580833435
+     },
+     {
+      "text": "Ledger billing service",
+      "start": 117,
+      "end": 139,
+      "label": "Product",
+      "score": 0.7976518869400024
+     },
+     {
+      "text": "Nimbus billing service",
+      "start": 257,
+      "end": 279,
+      "label": "Product",
+      "score": 0.7823346257209778
+     },
+     {
+      "text": "patch",
+      "start": 715,
+      "end": 720,
+      "label": "Product",
+      "score": 0.6957162022590637
+     },
+     {
+      "text": "Postgres cluster",
+      "start": 545,
+      "end": 561,
+      "label": "Technology",
+      "score": 0.9056655168533325
+     },
+     {
+      "text": "Kubernetes",
+      "start": 63,
+      "end": 73,
+      "label": "Technology",
+      "score": 0.6830254197120667
+     },
+     {
+      "text": "cluster",
+      "start": 739,
+      "end": 746,
+      "label": "Technology",
+      "score": 0.52120441198349
+     },
+     {
+      "text": "root cause",
+      "start": 574,
+      "end": 584,
+      "label": "Concept",
+      "score": 0.6206777691841125
+     },
+     {
+      "text": "cache layer",
+      "start": 500,
+      "end": 511,
+      "label": "Concept",
+      "score": 0.5898710489273071
+     },
+     {
+      "text": "September outage",
+      "start": 383,
+      "end": 399,
+      "label": "Event",
+      "score": 0.9449929594993591
+     },
+     {
+      "text": "outage",
+      "start": 592,
+      "end": 598,
+      "label": "Event",
+      "score": 0.8306609392166138
+     },
+     {
+      "text": "Nimbus postmortem report",
+      "start": 440,
+      "end": 464,
+      "label": "Document",
+      "score": 0.9962868690490723
+     },
+     {
+      "text": "Kubernetes",
+      "start": 63,
+      "end": 73,
+      "label": "Framework",
+      "score": 0.8851375579833984
+     },
+     {
+      "text": "Nimbus API gateway",
+      "start": 604,
+      "end": 622,
+      "label": "API",
+      "score": 0.9767065048217773
+     },
+     {
+      "text": "Go",
+      "start": 641,
+      "end": 643,
+      "label": "ProgrammingLanguage",
+      "score": 0.9969061017036438
+     }
+    ]
+   }
+  },
+  "03_crestline_automation.md": {
+   "chunk_ms_median": 57.1,
+   "chunk_ms_all": [
+    57.1
+   ],
+   "proposals": 19,
+   "spans": {
+    "chunk_14d7b403b69bbbb8debaf4965f2c3b6271dd91af2f61d29894ad5eec39188288": [
+     {
+      "text": "Maria Kowalski",
+      "start": 170,
+      "end": 184,
+      "label": "Person",
+      "score": 0.9979498982429504
+     },
+     {
+      "text": "Crestline Automation",
+      "start": 49,
+      "end": 69,
+      "label": "Organization",
+      "score": 0.9672813415527344
+     },
+     {
+      "text": "Crestline",
+      "start": 424,
+      "end": 433,
+      "label": "Organization",
+      "score": 0.8811217546463013
+     },
+     {
+      "text": "robotics vendor",
+      "start": 407,
+      "end": 422,
+      "label": "Organization",
+      "score": 0.8282868266105652
+     },
+     {
+      "text": "analytics team",
+      "start": 226,
+      "end": 240,
+      "label": "Organization",
+      "score": 0.5933078527450562
+     },
+     {
+      "text": "Toledo",
+      "start": 142,
+      "end": 148,
+      "label": "Location",
+      "score": 0.9910863041877747
+     },
+     {
+      "text": "line two",
+      "start": 544,
+      "end": 552,
+      "label": "Location",
+      "score": 0.8344703912734985
+     },
+     {
+      "text": "Cobalt assembly cell",
+      "start": 377,
+      "end": 397,
+      "label": "Product",
+      "score": 0.8613768219947815
+     },
+     {
+      "text": "Siemens PLCs",
+      "start": 75,
+      "end": 87,
+      "label": "Product",
+      "score": 0.5881387591362
+     },
+     {
+      "text": "night-shift pilot",
+      "start": 689,
+      "end": 706,
+      "label": "Product",
+      "score": 0.5723034739494324
+     },
+     {
+      "text": "vision system",
+      "start": 558,
+      "end": 571,
+      "label": "Technology",
+      "score": 0.9820402264595032
+     },
+     {
+      "text": "shift scheduling model",
+      "start": 253,
+      "end": 275,
+      "label": "Technology",
+      "score": 0.7822979092597961
+     },
+     {
+      "text": "quality database",
+      "start": 466,
+      "end": 482,
+      "label": "Technology",
+      "score": 0.5942943096160889
+     },
+     {
+      "text": "pump failure",
+      "start": 497,
+      "end": 509,
+      "label": "Event",
+      "score": 0.987838625907898
+     },
+     {
+      "text": "defect spike",
+      "start": 600,
+      "end": 612,
+      "label": "Event",
+      "score": 0.9296337962150574
+     },
+     {
+      "text": "production stoppage",
+      "start": 521,
+      "end": 540,
+      "label": "Event",
+      "score": 0.8099570274353027
+     },
+     {
+      "text": "March",
+      "start": 486,
+      "end": 491,
+      "label": "TimeReference",
+      "score": 0.6599166393280029
+     },
+     {
+      "text": "last year",
+      "start": 276,
+      "end": 285,
+      "label": "TimeReference",
+      "score": 0.6465235352516174
+     },
+     {
+      "text": "same-day",
+      "start": 316,
+      "end": 324,
+      "label": "TimeReference",
+      "score": 0.6358148455619812
+     }
+    ]
+   }
+  },
+  "04_brightpath_learning.md": {
+   "chunk_ms_median": 50.2,
+   "chunk_ms_all": [
+    50.2
+   ],
+   "proposals": 12,
+   "spans": {
+    "chunk_caaa0912c64832355d38a38bb1654aac9d00566af8eef99205696b9cb6490aab": [
+     {
+      "text": "Daniel Okafor",
+      "start": 157,
+      "end": 170,
+      "label": "Person",
+      "score": 0.9968758821487427
+     },
+     {
+      "text": "Brightpath Learning",
+      "start": 40,
+      "end": 59,
+      "label": "Organization",
+      "score": 0.9856812953948975
+     },
+     {
+      "text": "rival providers",
+      "start": 521,
+      "end": 536,
+      "label": "Organization",
+      "score": 0.5947991609573364
+     },
+     {
+      "text": "Raleigh",
+      "start": 148,
+      "end": 155,
+      "label": "Location",
+      "score": 0.9929760694503784
+     },
+     {
+      "text": "Coachlight",
+      "start": 652,
+      "end": 662,
+      "label": "Product",
+      "score": 0.8475478887557983
+     },
+     {
+      "text": "mentor",
+      "start": 231,
+      "end": 237,
+      "label": "Product",
+      "score": 0.6604869961738586
+     },
+     {
+      "text": "QBank",
+      "start": 260,
+      "end": 265,
+      "label": "Technology",
+      "score": 0.5835344791412354
+     },
+     {
+      "text": "cohorts",
+      "start": 428,
+      "end": 435,
+      "label": "Concept",
+      "score": 0.5909925103187561
+     },
+     {
+      "text": "retention",
+      "start": 411,
+      "end": 420,
+      "label": "Concept",
+      "score": 0.526840329170227
+     },
+     {
+      "text": "spaced repetition schedule",
+      "start": 373,
+      "end": 399,
+      "label": "Method",
+      "score": 0.7768764495849609
+     },
+     {
+      "text": "spaced repetition schedule",
+      "start": 373,
+      "end": 399,
+      "label": "Process",
+      "score": 0.5012083649635315
+     },
+     {
+      "text": "last month",
+      "start": 609,
+      "end": 619,
+      "label": "TimeReference",
+      "score": 0.8353503942489624
+     }
+    ]
+   }
+  },
+  "05_corval_logistics.md": {
+   "chunk_ms_median": 49.4,
+   "chunk_ms_all": [
+    49.4
+   ],
+   "proposals": 12,
+   "spans": {
+    "chunk_e3a02f162db67108fb5d68ff29766208459d107c0edd130b78ff4011b292bba2": [
+     {
+      "text": "Corval Logistics",
+      "start": 49,
+      "end": 65,
+      "label": "Organization",
+      "score": 0.9801399111747742
+     },
+     {
+      "text": "West Coast logistics consortium",
+      "start": 347,
+      "end": 378,
+      "label": "Organization",
+      "score": 0.9623436331748962
+     },
+     {
+      "text": "Corval Freight",
+      "start": 123,
+      "end": 137,
+      "label": "Organization",
+      "score": 0.9235793352127075
+     },
+     {
+      "text": "Oakland",
+      "start": 212,
+      "end": 219,
+      "label": "Location",
+      "score": 0.9554200172424316
+     },
+     {
+      "text": "harbor terminal",
+      "start": 584,
+      "end": 599,
+      "label": "Location",
+      "score": 0.9011796116828918
+     },
+     {
+      "text": "QuickScale",
+      "start": 239,
+      "end": 249,
+      "label": "Product",
+      "score": 0.6849871873855591
+     },
+     {
+      "text": "FreightNet",
+      "start": 75,
+      "end": 85,
+      "label": "Product",
+      "score": 0.6697307229042053
+     },
+     {
+      "text": "FreightNet",
+      "start": 75,
+      "end": 85,
+      "label": "Technology",
+      "score": 0.8598593473434448
+     },
+     {
+      "text": "QuickScale",
+      "start": 239,
+      "end": 249,
+      "label": "Technology",
+      "score": 0.8367805480957031
+     },
+     {
+      "text": "pricing model",
+      "start": 543,
+      "end": 556,
+      "label": "Concept",
+      "score": 0.6492919325828552
+     },
+     {
+      "text": "billing delays",
+      "start": 519,
+      "end": 533,
+      "label": "Event",
+      "score": 0.8257677555084229
+     },
+     {
+      "text": "June",
+      "start": 305,
+      "end": 309,
+      "label": "TimeReference",
+      "score": 0.6128987669944763
+     }
+    ]
+   }
+  },
+  "is-the-intentional-male-another-performance.md": {
+   "chunk_ms_median": 84.7,
+   "chunk_ms_all": [
+    89.2,
+    82.7,
+    86.8,
+    75.1,
+    87.0,
+    67.0
+   ],
+   "proposals": 116,
+   "spans": {
+    "cf_is-the-intentional-m_0": [
+     {
+      "text": "Techne Writing",
+      "start": 287,
+      "end": 301,
+      "label": "Person",
+      "score": 0.9595549702644348
+     },
+     {
+      "text": "woman",
+      "start": 832,
+      "end": 837,
+      "label": "Person",
+      "score": 0.8460962772369385
+     },
+     {
+      "text": "online",
+      "start": 895,
+      "end": 901,
+      "label": "Location",
+      "score": 0.546018123626709
+     },
+     {
+      "text": "groq whisper-large-v3-turbo",
+      "start": 347,
+      "end": 374,
+      "label": "Product",
+      "score": 0.9296534657478333
+     },
+     {
+      "text": "instagram",
+      "start": 126,
+      "end": 135,
+      "label": "Technology",
+      "score": 0.9154760837554932
+     },
+     {
+      "text": "masculinity",
+      "start": 482,
+      "end": 493,
+      "label": "Concept",
+      "score": 0.9482420086860657
+     },
+     {
+      "text": "gender",
+      "start": 474,
+      "end": 480,
+      "label": "Concept",
+      "score": 0.9463752508163452
+     },
+     {
+      "text": "philosophy",
+      "start": 495,
+      "end": 505,
+      "label": "Concept",
+      "score": 0.9315771460533142
+     },
+     {
+      "text": "capitalism",
+      "start": 462,
+      "end": 472,
+      "label": "Concept",
+      "score": 0.9298185110092163
+     },
+     {
+      "text": "intentional-male",
+      "start": 444,
+      "end": 460,
+      "label": "Concept",
+      "score": 0.895513117313385
+     },
+     {
+      "text": "performative-male",
+      "start": 425,
+      "end": 442,
+      "label": "Concept",
+      "score": 0.8824713230133057
+     },
+     {
+      "text": "verbatim",
+      "start": 628,
+      "end": 636,
+      "label": "Method",
+      "score": 0.9855944514274597
+     },
+     {
+      "text": "marriage",
+      "start": 1016,
+      "end": 1024,
+      "label": "Event",
+      "score": 0.9827385544776917
+     },
+     {
+      "text": "enriched-transcript",
+      "start": 517,
+      "end": 536,
+      "label": "Document",
+      "score": 0.7780741453170776
+     },
+     {
+      "text": "Is the intentional male another performance?",
+      "start": 543,
+      "end": 587,
+      "label": "Document",
+      "score": 0.7627964615821838
+     },
+     {
+      "text": "67",
+      "start": 321,
+      "end": 323,
+      "label": "Measurement",
+      "score": 0.5670222640037537
+     },
+     {
+      "text": "2026-08-11T20:33:00",
+      "start": 149,
+      "end": 168,
+      "label": "TimeReference",
+      "score": 0.7854680418968201
+     }
+    ],
+    "cf_is-the-intentional-m_1": [
+     {
+      "text": "women",
+      "start": 256,
+      "end": 261,
+      "label": "Person",
+      "score": 0.99638831615448
+     },
+     {
+      "text": "performative male",
+      "start": 84,
+      "end": 101,
+      "label": "Person",
+      "score": 0.9950700998306274
+     },
+     {
+      "text": "whores",
+      "start": 309,
+      "end": 315,
+      "label": "Person",
+      "score": 0.9907307028770447
+     },
+     {
+      "text": "virgins",
+      "start": 297,
+      "end": 304,
+      "label": "Person",
+      "score": 0.9806770086288452
+     },
+     {
+      "text": "intentional male",
+      "start": 797,
+      "end": 813,
+      "label": "Person",
+      "score": 0.9649716019630432
+     },
+     {
+      "text": "men",
+      "start": 337,
+      "end": 340,
+      "label": "Person",
+      "score": 0.8353025913238525
+     },
+     {
+      "text": "self-improved man",
+      "start": 1096,
+      "end": 1113,
+      "label": "Person",
+      "score": 0.8134511709213257
+     },
+     {
+      "text": "complete man",
+      "start": 495,
+      "end": 507,
+      "label": "Person",
+      "score": 0.699981153011322
+     },
+     {
+      "text": "masculine self-improvement audience",
+      "start": 881,
+      "end": 916,
+      "label": "Organization",
+      "score": 0.6156310439109802
+     },
+     {
+      "text": "gender-critique audience",
+      "start": 946,
+      "end": 970,
+      "label": "Organization",
+      "score": 0.5718274712562561
+     },
+     {
+      "text": "reel",
+      "start": 581,
+      "end": 585,
+      "label": "Product",
+      "score": 0.793080747127533
+     },
+     {
+      "text": "internet",
+      "start": 687,
+      "end": 695,
+      "label": "Technology",
+      "score": 0.92512446641922
+     },
+     {
+      "text": "tension",
+      "start": 1159,
+      "end": 1166,
+      "label": "Concept",
+      "score": 0.9217180013656616
+     },
+     {
+      "text": "aspirational identity",
+      "start": 1066,
+      "end": 1087,
+      "label": "Concept",
+      "score": 0.9155484437942505
+     },
+     {
+      "text": "expectations",
+      "start": 222,
+      "end": 234,
+      "label": "Concept",
+      "score": 0.8946750164031982
+     },
+     {
+      "text": "pejorative judgment",
+      "start": 1123,
+      "end": 1142,
+      "label": "Concept",
+      "score": 0.8893561959266663
+     },
+     {
+      "text": "diagram",
+      "start": 357,
+      "end": 364,
+      "label": "Concept",
+      "score": 0.8234865665435791
+     },
+     {
+      "text": "emotional registers",
+      "start": 1041,
+      "end": 1060,
+      "label": "Concept",
+      "score": 0.7860530018806458
+     },
+     {
+      "text": "critique",
+      "start": 831,
+      "end": 839,
+      "label": "Concept",
+      "score": 0.7682445049285889
+     },
+     {
+      "text": "engine",
+      "start": 1181,
+      "end": 1187,
+      "label": "Concept",
+      "score": 0.7516061067581177
+     },
+     {
+      "text": "signifiers",
+      "start": 130,
+      "end": 140,
+      "label": "Concept",
+      "score": 0.746902346611023
+     },
+     {
+      "text": "aspiration",
+      "start": 852,
+      "end": 862,
+      "label": "Concept",
+      "score": 0.7096229195594788
+     },
+     {
+      "text": "piece",
+      "start": 1195,
+      "end": 1200,
+      "label": "Document",
+      "score": 0.7416350245475769
+     },
+     {
+      "text": "moment",
+      "start": 397,
+      "end": 403,
+      "label": "TimeReference",
+      "score": 0.8503215909004211
+     }
+    ],
+    "cf_is-the-intentional-m_2": [
+     {
+      "text": "intentional male",
+      "start": 787,
+      "end": 803,
+      "label": "Person",
+      "score": 0.9619768261909485
+     },
+     {
+      "text": "performative male",
+      "start": 186,
+      "end": 203,
+      "label": "Person",
+      "score": 0.8836788535118103
+     },
+     {
+      "text": "whores",
+      "start": 1120,
+      "end": 1126,
+      "label": "Person",
+      "score": 0.6076170802116394
+     },
+     {
+      "text": "self-contained man",
+      "start": 620,
+      "end": 638,
+      "label": "Person",
+      "score": 0.5463604927062988
+     },
+     {
+      "text": "virgins",
+      "start": 1108,
+      "end": 1115,
+      "label": "Person",
+      "score": 0.5391685366630554
+     },
+     {
+      "text": "online",
+      "start": 938,
+      "end": 944,
+      "label": "Location",
+      "score": 0.5453305244445801
+     },
+     {
+      "text": "matcha lattes",
+      "start": 550,
+      "end": 563,
+      "label": "Product",
+      "score": 0.8950718641281128
+     },
+     {
+      "text": "online",
+      "start": 938,
+      "end": 944,
+      "label": "Technology",
+      "score": 0.9586331844329834
+     },
+     {
+      "text": "gender-double-standard symmetry",
+      "start": 1044,
+      "end": 1075,
+      "label": "Concept",
+      "score": 0.9548947215080261
+     },
+     {
+      "text": "female desirability",
+      "start": 367,
+      "end": 386,
+      "label": "Concept",
+      "score": 0.880329966545105
+     },
+     {
+      "text": "marriage prerequisite",
+      "start": 320,
+      "end": 341,
+      "label": "Concept",
+      "score": 0.8757732510566711
+     },
+     {
+      "text": "philosophical irony",
+      "start": 587,
+      "end": 606,
+      "label": "Concept",
+      "score": 0.8642739057540894
+     },
+     {
+      "text": "female gaze",
+      "start": 1014,
+      "end": 1025,
+      "label": "Concept",
+      "score": 0.8496328592300415
+     },
+     {
+      "text": "intentional male",
+      "start": 63,
+      "end": 79,
+      "label": "Concept",
+      "score": 0.8312885761260986
+     },
+     {
+      "text": "performative male",
+      "start": 186,
+      "end": 203,
+      "label": "Concept",
+      "score": 0.7970649600028992
+     },
+     {
+      "text": "capitalism critique",
+      "start": 480,
+      "end": 499,
+      "label": "Concept",
+      "score": 0.7826210856437683
+     },
+     {
+      "text": "complete man",
+      "start": 1151,
+      "end": 1163,
+      "label": "Concept",
+      "score": 0.7468893527984619
+     },
+     {
+      "text": "ideal",
+      "start": 758,
+      "end": 763,
+      "label": "Concept",
+      "score": 0.6721981167793274
+     },
+     {
+      "text": "self-sufficiency",
+      "start": 249,
+      "end": 265,
+      "label": "Concept",
+      "score": 0.6250931024551392
+     },
+     {
+      "text": "virgins",
+      "start": 1108,
+      "end": 1115,
+      "label": "Concept",
+      "score": 0.6049326062202454
+     },
+     {
+      "text": "productivity",
+      "start": 513,
+      "end": 525,
+      "label": "Concept",
+      "score": 0.6045412421226501
+     },
+     {
+      "text": "intention",
+      "start": 501,
+      "end": 510,
+      "label": "Concept",
+      "score": 0.5302037596702576
+     },
+     {
+      "text": "Socratic escalation",
+      "start": 689,
+      "end": 708,
+      "label": "Method",
+      "score": 0.8665147423744202
+     }
+    ],
+    "cf_is-the-intentional-m_3": [
+     {
+      "text": "Groq",
+      "start": 363,
+      "end": 367,
+      "label": "Person",
+      "score": 0.8885006904602051
+     },
+     {
+      "text": "man",
+      "start": 109,
+      "end": 112,
+      "label": "Person",
+      "score": 0.880362331867218
+     },
+     {
+      "text": "cultural figure",
+      "start": 818,
+      "end": 833,
+      "label": "Person",
+      "score": 0.5544755458831787
+     },
+     {
+      "text": "Techne Writing",
+      "start": 472,
+      "end": 486,
+      "label": "Organization",
+      "score": 0.7386384010314941
+     },
+     {
+      "text": "audio",
+      "start": 312,
+      "end": 317,
+      "label": "Technology",
+      "score": 0.7002924680709839
+     },
+     {
+      "text": "inauthenticity",
+      "start": 1019,
+      "end": 1033,
+      "label": "Concept",
+      "score": 0.9404897689819336
+     },
+     {
+      "text": "self-actualization",
+      "start": 1089,
+      "end": 1107,
+      "label": "Concept",
+      "score": 0.9369654059410095
+     },
+     {
+      "text": "capitalism-as-identity",
+      "start": 1041,
+      "end": 1063,
+      "label": "Concept",
+      "score": 0.869411826133728
+     },
+     {
+      "text": "individual critique",
+      "start": 159,
+      "end": 178,
+      "label": "Concept",
+      "score": 0.6213759779930115
+     },
+     {
+      "text": "intellectual curiosity",
+      "start": 880,
+      "end": 902,
+      "label": "Concept",
+      "score": 0.5912781357765198
+     },
+     {
+      "text": "performance",
+      "start": 1114,
+      "end": 1125,
+      "label": "Concept",
+      "score": 0.5871034264564514
+     },
+     {
+      "text": "existential",
+      "start": 68,
+      "end": 79,
+      "label": "Concept",
+      "score": 0.5770230889320374
+     },
+     {
+      "text": "systemic gender-structure critique",
+      "start": 182,
+      "end": 216,
+      "label": "Concept",
+      "score": 0.5607300400733948
+     },
+     {
+      "text": "66 seconds",
+      "start": 221,
+      "end": 231,
+      "label": "TimeReference",
+      "score": 0.882014811038971
+     }
+    ],
+    "cf_is-the-intentional-m_4": [
+     {
+      "text": "women",
+      "start": 572,
+      "end": 577,
+      "label": "Person",
+      "score": 0.9595726132392883
+     },
+     {
+      "text": "creator",
+      "start": 927,
+      "end": 934,
+      "label": "Person",
+      "score": 0.9325240850448608
+     },
+     {
+      "text": "male",
+      "start": 266,
+      "end": 270,
+      "label": "Person",
+      "score": 0.9160367250442505
+     },
+     {
+      "text": "audience",
+      "start": 1109,
+      "end": 1117,
+      "label": "Person",
+      "score": 0.6910844445228577
+     },
+     {
+      "text": "reel",
+      "start": 1088,
+      "end": 1092,
+      "label": "Technology",
+      "score": 0.858972430229187
+     },
+     {
+      "text": "capitalism",
+      "start": 1030,
+      "end": 1040,
+      "label": "Concept",
+      "score": 0.9799884557723999
+     },
+     {
+      "text": "authenticity",
+      "start": 700,
+      "end": 712,
+      "label": "Concept",
+      "score": 0.9288235902786255
+     },
+     {
+      "text": "identity",
+      "start": 153,
+      "end": 161,
+      "label": "Concept",
+      "score": 0.8972421884536743
+     },
+     {
+      "text": "female gaze",
+      "start": 398,
+      "end": 409,
+      "label": "Concept",
+      "score": 0.8865472674369812
+     },
+     {
+      "text": "autonomy",
+      "start": 807,
+      "end": 815,
+      "label": "Concept",
+      "score": 0.8674893379211426
+     },
+     {
+      "text": "virgin/whore",
+      "start": 598,
+      "end": 610,
+      "label": "Concept",
+      "score": 0.863411545753479
+     },
+     {
+      "text": "solo thriving",
+      "start": 968,
+      "end": 981,
+      "label": "Concept",
+      "score": 0.8427151441574097
+     },
+     {
+      "text": "double-standard symmetry",
+      "start": 493,
+      "end": 517,
+      "label": "Concept",
+      "score": 0.7647116184234619
+     },
+     {
+      "text": "appearance",
+      "start": 793,
+      "end": 803,
+      "label": "Concept",
+      "score": 0.7573942542076111
+     },
+     {
+      "text": "performance",
+      "start": 201,
+      "end": 212,
+      "label": "Concept",
+      "score": 0.7454240322113037
+     },
+     {
+      "text": "complete man",
+      "start": 543,
+      "end": 555,
+      "label": "Concept",
+      "score": 0.7318926453590393
+     },
+     {
+      "text": "self-sufficiency",
+      "start": 350,
+      "end": 366,
+      "label": "Concept",
+      "score": 0.6989622712135315
+     },
+     {
+      "text": "marriage-material",
+      "start": 293,
+      "end": 310,
+      "label": "Concept",
+      "score": 0.6862468123435974
+     },
+     {
+      "text": "freedom",
+      "start": 740,
+      "end": 747,
+      "label": "Concept",
+      "score": 0.6790967583656311
+     },
+     {
+      "text": "feminine",
+      "start": 637,
+      "end": 645,
+      "label": "Concept",
+      "score": 0.6353976130485535
+     },
+     {
+      "text": "self-possession",
+      "start": 720,
+      "end": 735,
+      "label": "Concept",
+      "score": 0.6234937906265259
+     },
+     {
+      "text": "Techne Writing",
+      "start": 61,
+      "end": 75,
+      "label": "Method",
+      "score": 0.6757308840751648
+     },
+     {
+      "text": "post",
+      "start": 916,
+      "end": 920,
+      "label": "Event",
+      "score": 0.5143029093742371
+     },
+     {
+      "text": "likes",
+      "start": 894,
+      "end": 899,
+      "label": "Measurement",
+      "score": 0.5150765776634216
+     }
+    ],
+    "cf_is-the-intentional-m_5": [
+     {
+      "text": "male",
+      "start": 599,
+      "end": 603,
+      "label": "Person",
+      "score": 0.6263159513473511
+     },
+     {
+      "text": "audience",
+      "start": 751,
+      "end": 759,
+      "label": "Organization",
+      "score": 0.6328354477882385
+     },
+     {
+      "text": "monetization funnel",
+      "start": 136,
+      "end": 155,
+      "label": "Product",
+      "score": 0.5187782049179077
+     },
+     {
+      "text": "capitalism",
+      "start": 785,
+      "end": 795,
+      "label": "Concept",
+      "score": 0.9601555466651917
+     },
+     {
+      "text": "solo thriving",
+      "start": 550,
+      "end": 563,
+      "label": "Concept",
+      "score": 0.8135198950767517
+     },
+     {
+      "text": "intent",
+      "start": 64,
+      "end": 70,
+      "label": "Concept",
+      "score": 0.6014311909675598
+     },
+     {
+      "text": "debate",
+      "start": 774,
+      "end": 780,
+      "label": "Event",
+      "score": 0.6657320857048035
+     },
+     {
+      "text": "transcript",
+      "start": 274,
+      "end": 284,
+      "label": "Document",
+      "score": 0.8594242334365845
+     },
+     {
+      "text": "Evidence Map",
+      "start": 426,
+      "end": 438,
+      "label": "Document",
+      "score": 0.8523342609405518
+     },
+     {
+      "text": "Comment",
+      "start": 441,
+      "end": 448,
+      "label": "Document",
+      "score": 0.6310990452766418
+     },
+     {
+      "text": "dialogue-starting",
+      "start": 178,
+      "end": 195,
+      "label": "Process",
+      "score": 0.5984280705451965
+     },
+     {
+      "text": "brand-building",
+      "start": 159,
+      "end": 173,
+      "label": "Process",
+      "score": 0.557634711265564
+     },
+     {
+      "text": "~60-word sparse threshold",
+      "start": 338,
+      "end": 363,
+      "label": "Measurement",
+      "score": 0.7771468162536621
+     },
+     {
+      "text": "173 words",
+      "start": 288,
+      "end": 297,
+      "label": "Measurement",
+      "score": 0.7513207793235779
+     }
+    ]
+   }
+  },
+  "ignore parameter in landing page report urls in google ads.md": {
+   "chunk_ms_median": 89.7,
+   "chunk_ms_all": [
+    99.1,
+    87.2,
+    92.3,
+    28.5
+   ],
+   "proposals": 52,
+   "spans": {
+    "cf_ignore parameter in _0": [
+     {
+      "text": "client",
+      "start": 514,
+      "end": 520,
+      "label": "Person",
+      "score": 0.9811916947364807
+     },
+     {
+      "text": "Tegan",
+      "start": 408,
+      "end": 413,
+      "label": "Person",
+      "score": 0.6065142750740051
+     },
+     {
+      "text": "Blueness Digital",
+      "start": 424,
+      "end": 440,
+      "label": "Organization",
+      "score": 0.9443192481994629
+     },
+     {
+      "text": "Google Ads",
+      "start": 62,
+      "end": 72,
+      "label": "Product",
+      "score": 0.867580235004425
+     },
+     {
+      "text": "Landing Page Report",
+      "start": 275,
+      "end": 294,
+      "label": "Product",
+      "score": 0.5704143643379211
+     },
+     {
+      "text": "platform",
+      "start": 917,
+      "end": 925,
+      "label": "Technology",
+      "score": 0.6426709890365601
+     },
+     {
+      "text": "question mark",
+      "start": 794,
+      "end": 807,
+      "label": "Concept",
+      "score": 0.9407634735107422
+     },
+     {
+      "text": "URLs",
+      "start": 572,
+      "end": 576,
+      "label": "Concept",
+      "score": 0.7798600196838379
+     },
+     {
+      "text": "404 errors",
+      "start": 592,
+      "end": 602,
+      "label": "Concept",
+      "score": 0.7462674975395203
+     },
+     {
+      "text": "UTM string",
+      "start": 730,
+      "end": 740,
+      "label": "Concept",
+      "score": 0.7230368852615356
+     },
+     {
+      "text": "URL",
+      "start": 641,
+      "end": 644,
+      "label": "Concept",
+      "score": 0.6714490652084351
+     },
+     {
+      "text": "click",
+      "start": 1124,
+      "end": 1129,
+      "label": "Concept",
+      "score": 0.5935906767845154
+     },
+     {
+      "text": "404 page",
+      "start": 1180,
+      "end": 1188,
+      "label": "Concept",
+      "score": 0.5614395141601562
+     },
+     {
+      "text": "curly bracket",
+      "start": 673,
+      "end": 686,
+      "label": "Concept",
+      "score": 0.5204021334648132
+     },
+     {
+      "text": "youtube-transcript-api",
+      "start": 160,
+      "end": 182,
+      "label": "Document",
+      "score": 0.6257967352867126
+     },
+     {
+      "text": "youtube_transcript",
+      "start": 228,
+      "end": 246,
+      "label": "Document",
+      "score": 0.5174115300178528
+     }
+    ],
+    "cf_ignore parameter in _1": [
+     {
+      "text": "client",
+      "start": 570,
+      "end": 576,
+      "label": "Person",
+      "score": 0.9409229159355164
+     },
+     {
+      "text": "ads",
+      "start": 942,
+      "end": 945,
+      "label": "Product",
+      "score": 0.8766953945159912
+     },
+     {
+      "text": "ad",
+      "start": 206,
+      "end": 208,
+      "label": "Product",
+      "score": 0.7248142957687378
+     },
+     {
+      "text": "ignore parameter",
+      "start": 1172,
+      "end": 1188,
+      "label": "Concept",
+      "score": 0.8900356888771057
+     },
+     {
+      "text": "ignore",
+      "start": 392,
+      "end": 398,
+      "label": "Concept",
+      "score": 0.8870226740837097
+     },
+     {
+      "text": "URL parameter",
+      "start": 316,
+      "end": 329,
+      "label": "Concept",
+      "score": 0.824164628982544
+     },
+     {
+      "text": "URL",
+      "start": 195,
+      "end": 198,
+      "label": "Concept",
+      "score": 0.8110872507095337
+     },
+     {
+      "text": "traffic",
+      "start": 247,
+      "end": 254,
+      "label": "Concept",
+      "score": 0.7424853444099426
+     },
+     {
+      "text": "404 error status",
+      "start": 779,
+      "end": 795,
+      "label": "Concept",
+      "score": 0.6304327845573425
+     },
+     {
+      "text": "404 page error",
+      "start": 846,
+      "end": 860,
+      "label": "Concept",
+      "score": 0.5499829053878784
+     },
+     {
+      "text": "issue",
+      "start": 159,
+      "end": 164,
+      "label": "Concept",
+      "score": 0.5033898949623108
+     },
+     {
+      "text": "issue",
+      "start": 1140,
+      "end": 1145,
+      "label": "Event",
+      "score": 0.7289734482765198
+     },
+     {
+      "text": "error",
+      "start": 783,
+      "end": 788,
+      "label": "Event",
+      "score": 0.5607030987739563
+     },
+     {
+      "text": "landing page report",
+      "start": 917,
+      "end": 936,
+      "label": "Document",
+      "score": 0.9692788124084473
+     },
+     {
+      "text": "Seamrush report",
+      "start": 1060,
+      "end": 1075,
+      "label": "Document",
+      "score": 0.9062507152557373
+     },
+     {
+      "text": "Samrush report",
+      "start": 617,
+      "end": 631,
+      "label": "Document",
+      "score": 0.9055262804031372
+     },
+     {
+      "text": "video",
+      "start": 710,
+      "end": 715,
+      "label": "Document",
+      "score": 0.8306899666786194
+     },
+     {
+      "text": "Google article",
+      "start": 106,
+      "end": 120,
+      "label": "Document",
+      "score": 0.8156315088272095
+     }
+    ],
+    "cf_ignore parameter in _2": [
+     {
+      "text": "someone",
+      "start": 1158,
+      "end": 1165,
+      "label": "Person",
+      "score": 0.5714817643165588
+     },
+     {
+      "text": "Google",
+      "start": 837,
+      "end": 843,
+      "label": "Organization",
+      "score": 0.9554221034049988
+     },
+     {
+      "text": "ad",
+      "start": 947,
+      "end": 949,
+      "label": "Product",
+      "score": 0.8105834126472473
+     },
+     {
+      "text": "ads",
+      "start": 387,
+      "end": 390,
+      "label": "Product",
+      "score": 0.501744270324707
+     },
+     {
+      "text": "UTM",
+      "start": 724,
+      "end": 727,
+      "label": "Technology",
+      "score": 0.7500942945480347
+     },
+     {
+      "text": "CRM",
+      "start": 454,
+      "end": 457,
+      "label": "Technology",
+      "score": 0.651105523109436
+     },
+     {
+      "text": "campaign settings",
+      "start": 138,
+      "end": 155,
+      "label": "Concept",
+      "score": 0.7580980658531189
+     },
+     {
+      "text": "auto applied UTM parameters",
+      "start": 541,
+      "end": 568,
+      "label": "Concept",
+      "score": 0.713121235370636
+     },
+     {
+      "text": "UTM parameters",
+      "start": 724,
+      "end": 738,
+      "label": "Concept",
+      "score": 0.6991004943847656
+     },
+     {
+      "text": "UTM parameter",
+      "start": 508,
+      "end": 521,
+      "label": "Concept",
+      "score": 0.6581664085388184
+     },
+     {
+      "text": "traffic",
+      "start": 425,
+      "end": 432,
+      "label": "Concept",
+      "score": 0.5447140336036682
+     },
+     {
+      "text": "campaign",
+      "start": 99,
+      "end": 107,
+      "label": "Event",
+      "score": 0.9762303829193115
+     },
+     {
+      "text": "comments",
+      "start": 1214,
+      "end": 1222,
+      "label": "Document",
+      "score": 0.9249328374862671
+     },
+     {
+      "text": "ignore",
+      "start": 1081,
+      "end": 1087,
+      "label": "Process",
+      "score": 0.6712857484817505
+     }
+    ],
+    "cf_ignore parameter in _3": [
+     {
+      "text": "Bye",
+      "start": 21,
+      "end": 24,
+      "label": "Person",
+      "score": 0.5307909846305847
+     },
+     {
+      "text": "chat",
+      "start": 10,
+      "end": 14,
+      "label": "Event",
+      "score": 0.9865303039550781
+     },
+     {
+      "text": "now",
+      "start": 29,
+      "end": 32,
+      "label": "TimeReference",
+      "score": 0.919885516166687
+     },
+     {
+      "text": "soon",
+      "start": 15,
+      "end": 19,
+      "label": "TimeReference",
+      "score": 0.8589186072349548
+     }
+    ]
+   }
+  }
+ }
+}

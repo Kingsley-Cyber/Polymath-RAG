@@ -1,0 +1,33 @@
+{
+ "corpus": "core-3-v1",
+ "documents": 3,
+ "queries": 8,
+ "modes": {
+  "FAST": {
+   "n": 8,
+   "p50_ms": 1959.6,
+   "p95_ms": 1997.4,
+   "top1_correct_doc": "8/8",
+   "accuracy_pct": 100.0,
+   "errors": 0
+  },
+  "HYBRID": {
+   "n": 8,
+   "p50_ms": 1957.2,
+   "p95_ms": 2016.8,
+   "top1_correct_doc": "8/8",
+   "accuracy_pct": 100.0,
+   "errors": 0
+  },
+  "GRAPH": {
+   "n": 8,
+   "p50_ms": 1980.5,
+   "p95_ms": 2030.0,
+   "top1_correct_doc": "8/8",
+   "accuracy_pct": 100.0,
+   "errors": 0,
+   "graph_facts_returned": 3
+  }
+ },
+ "note": "GRAPH returns documents under 'documents'; FAST/HYBRID under 'selected_documents'."
+}

@@ -159,14 +159,25 @@ def test_apply_boundary_accepted_expands_and_refused_abstains(fake_gliner):
     assert expanded.raw_label == "Organization" and expanded.pass_kind == "boundary_rescue"
 
 
-def test_apply_boundary_refused_marks_unresolved(fake_gliner):
+def test_apply_boundary_refused_keeps_provider_span(fake_gliner):
+    """RESCUE-SPAN-PRESERVATION-V1 (restored 2026-08-24): a refused
+    widening keeps the ORIGINAL provider span untouched. Previously this
+    pinned ledger row 63's deletion limitation, which contradicted both
+    the apply_boundary docstring and the preservation contract name.
+    Retaining the provider observation manufactures no new edges."""
     fake_gliner.responses = {"Crestline Automation": [
         {"text": "Crestline", "start": 0, "end": 9, "label": "Organization", "score": 0.9},
     ]}
     sl = _slice([_span("Crestline", 0, 9)])
     report = apply_boundary([({"chunk_id": "c1"}, sl)])
     assert report["counts"]["refused"] == 1
-    assert sl.entities == []  # BOUNDARY_UNRESOLVED (ledger row 63: known limitation)
+    surfaces = [(e.text, e.start, e.end) for e in sl.entities]
+    assert ("Crestline", 0, 9) in surfaces
+    assert all(e.pass_kind != "boundary_rescue" or e.text == "Crestline Automation"
+               for e in sl.entities)
+    hyp = report["hypotheses"][0]
+    assert hyp["status"] == "REJECTED"
+    assert hyp["disposition"] == "SUPPRESSED_SOURCE"
 
 
 def test_apply_boundary_dedups_identical_queries(fake_gliner, monkeypatch):

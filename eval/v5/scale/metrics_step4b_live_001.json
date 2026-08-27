@@ -1,0 +1,130 @@
+{
+ "contract": "addendum5-live-metrics-v1",
+ "captured_at": "2026-08-23T14:22:29.763714+00:00",
+ "queue_health": [
+  {
+   "stage": "canonicalize",
+   "status": "pending",
+   "count": 162
+  },
+  {
+   "stage": "corpus_summary",
+   "status": "pending",
+   "count": 66
+  },
+  {
+   "stage": "document_summary",
+   "status": "pending",
+   "count": 66
+  },
+  {
+   "stage": "extract",
+   "status": "done",
+   "count": 98
+  },
+  {
+   "stage": "extract",
+   "status": "leased",
+   "count": 1
+  },
+  {
+   "stage": "extract",
+   "status": "ready",
+   "count": 63
+  },
+  {
+   "stage": "intake",
+   "status": "done",
+   "count": 97
+  },
+  {
+   "stage": "intake",
+   "status": "ready",
+   "count": 65
+  },
+  {
+   "stage": "parent_summary",
+   "status": "pending",
+   "count": 66
+  },
+  {
+   "stage": "profile_document",
+   "status": "done",
+   "count": 56
+  },
+  {
+   "stage": "profile_document",
+   "status": "leased",
+   "count": 1
+  },
+  {
+   "stage": "profile_document",
+   "status": "pending",
+   "count": 61
+  },
+  {
+   "stage": "profile_document",
+   "status": "ready",
+   "count": 44
+  },
+  {
+   "stage": "project_canonical",
+   "status": "pending",
+   "count": 162
+  },
+  {
+   "stage": "project_neo4j",
+   "status": "pending",
+   "count": 162
+  },
+  {
+   "stage": "project_qdrant",
+   "status": "done",
+   "count": 4
+  },
+  {
+   "stage": "project_qdrant",
+   "status": "leased",
+   "count": 1
+  },
+  {
+   "stage": "project_qdrant",
+   "status": "pending",
+   "count": 110
+  },
+  {
+   "stage": "project_qdrant",
+   "status": "ready",
+   "count": 47
+  },
+  {
+   "stage": "verify_projections",
+   "status": "pending",
+   "count": 162
+  },
+  {
+   "stage": "vocabulary",
+   "status": "pending",
+   "count": 66
+  }
+ ],
+ "knowledge_settled": {
+  "scale-10k-v1": {
+   "documents": 2645,
+   "mentions": 7143,
+   "durable_entities": 558,
+   "relation_candidates": 0
+  },
+  "test-validation-v1": {
+   "documents": 1,
+   "mentions": 0,
+   "durable_entities": 0,
+   "relation_candidates": 0
+  }
+ },
+ "watches": {
+  "identity_explosion": "NEGATIVE \u2014 mentions/doc flat (~2.7)",
+  "starvation": "NEGATIVE \u2014 multi-stage concurrent progress",
+  "summary_stages_live": true
+ }
+}

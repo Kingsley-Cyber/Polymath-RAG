@@ -1,0 +1,205 @@
+# scientific-predicate-ontology-v2.yaml
+#
+# The AUTHORED layer of Predicate Compiler v2: which scientific relation
+# families matter to a researcher, their typed role signatures, and the
+# deterministic mapping (frame + argument types) -> predicate.
+#
+# Lexical realizations are INHERITED from the vendored resources
+# (VerbNet 3.3 / PropBank unified-2020 / FrameNet 1.7 — see
+# resource_index.yaml). Realizations marked provenance=authored-extension
+# are this repository's own scientific-register additions and are never
+# attributed to the vendored resources.
+#
+# Failure policy: every mapping lists negative examples. A candidate
+# whose argument types match no mapping is UNSUPPORTED — never guessed.
+
+version: "scientific-predicate-ontology-v2.0.0"
+
+frames:
+
+  training_event:
+    definition: "A model/system is trained, pretrained, or fine-tuned on data or with a method."
+    resource_provenance:
+      propbank: [train.01]
+      verbnet: [prepare-26.3-1]
+      framenet: [Intentionally_create]
+    realizations:
+      - {surface: train,      lemma: train,      provenance: propbank:train.01}
+      - {surface: trained,    lemma: train,      provenance: propbank:train.01}
+      - {surface: pretrain,   lemma: pretrain,   provenance: authored-extension}
+      - {surface: pretrained, lemma: pretrain,   provenance: authored-extension}
+      - {surface: pre-trained, lemma: pretrain,  provenance: authored-extension}
+      - {surface: pretraining, lemma: pretrain,  provenance: authored-extension}
+      - {surface: fine-tuned, lemma: fine-tune,  provenance: authored-extension}
+      - {surface: fine_tuned, lemma: fine-tune,  provenance: authored-extension}
+    roles:
+      agent:    {thematic: Agent,  propbank: ARG0}
+      theme:    {thematic: Theme,  propbank: ARG1}
+      resource: {thematic: Material, propbank: ARG2, prep: [on, using, with]}
+    mappings:
+      - predicate: trained_on
+        subject_types: [Model, System, Architecture]
+        object_types: [Dataset, Corpus, Benchmark]
+        pattern: "theme prep[on] resource"
+        positive_fixtures:
+          - sentence: "The BERT model was pretrained on BooksCorpus."
+            subject: BERT
+            object: BooksCorpus
+          - sentence: "GPT was trained on large datasets."
+            subject: GPT
+            object: datasets
+        negative_examples:
+          - sentence: "The model was trained with Adam."
+            reason: "optimizer is a Method, not Dataset/Corpus -> trained_with, never trained_on"
+      - predicate: trained_with
+        subject_types: [Model, System, Architecture]
+        object_types: [Method, Technology]
+        pattern: "theme prep[with/using] resource"
+        negative_examples:
+          - sentence: "BERT was trained on BooksCorpus."
+            reason: "corpus is Dataset -> trained_on, never trained_with"
+
+  evaluation_event:
+    definition: "A system/model is evaluated, benchmarked, or compared against tasks, benchmarks, or other systems."
+    resource_provenance:
+      propbank: [assess.01, compare.01]
+      verbnet: [assess-34.1]
+      framenet: [Evaluating]
+    realizations:
+      - {surface: evaluate,    lemma: evaluate,   provenance: propbank:assess.01}
+      - {surface: evaluated,   lemma: evaluate,   provenance: propbank:assess.01}
+      - {surface: assess,      lemma: assess,     provenance: propbank:assess.01}
+      - {surface: benchmark,   lemma: benchmark,  provenance: authored-extension}
+      - {surface: examines,    lemma: examine,    provenance: authored-extension}
+      - {surface: examined,    lemma: examine,    provenance: authored-extension}
+      - {surface: compared,    lemma: compare,    provenance: propbank:compare.01}
+      - {surface: compare,     lemma: compare,    provenance: propbank:compare.01}
+    roles:
+      agent:    {thematic: Agent, propbank: ARG0}
+      theme:    {thematic: Theme, propbank: ARG1}
+      standard: {thematic: Attribute, propbank: ARG2, prep: [on, against, with]}
+    mappings:
+      - predicate: evaluated_on
+        subject_types: [Model, System, Architecture, Framework, Method]
+        object_types: [Benchmark, Task, Dataset]
+        pattern: "theme prep[on] standard"
+        positive_fixtures:
+          - sentence: "Subsequent studies evaluated BERT on GLUE and SQuAD."
+            subject: BERT
+            object: GLUE
+        negative_examples:
+          - sentence: "The framework was evaluated by an external lab."
+            reason: "'by'-agent is not an evaluation target; no evaluated_on fact"
+      - predicate: compared_against
+        subject_types: [Model, System, Architecture, Method, Framework]
+        object_types: [Model, System, Architecture, Method, Framework]
+        pattern: "theme prep[against/with] standard"
+        negative_examples:
+          - sentence: "GPT may appear similar to previous systems."
+            reason: "speculative similarity is not comparison; scope gate rejects"
+
+  creation_event:
+    definition: "A model/method/framework is introduced, proposed, or presented by an agent."
+    resource_provenance:
+      propbank: [introduce.01, propose.01, present.01]
+      verbnet: [create-26.4]
+      framenet: [Intentionally_create]
+    realizations:
+      - {surface: introduced, lemma: introduce, provenance: propbank:introduce.01}
+      - {surface: introduce,  lemma: introduce, provenance: propbank:introduce.01}
+      - {surface: proposed,   lemma: propose,   provenance: propbank:propose.01}
+      - {surface: propose,    lemma: propose,   provenance: propbank:propose.01}
+      - {surface: presented,  lemma: present,   provenance: propbank:present.01}
+      - {surface: developed,  lemma: develop,   provenance: propbank:develop.02}
+      - {surface: created,    lemma: create,    provenance: propbank:create.01}
+      - {surface: create,     lemma: create,    provenance: propbank:create.01}
+    roles:
+      agent: {thematic: Agent, propbank: ARG0}
+      theme: {thematic: Theme, propbank: ARG1}
+    mappings:
+      - predicate: introduced_by
+        subject_types: [Model, System, Architecture, Framework, Method, Task]
+        object_types: [Organization, ResearchGroup, Person]
+        pattern: "theme passive-agent[by]"
+        positive_fixtures:
+          - sentence: "The BERT model was introduced by Google Research in 2018."
+            subject: BERT
+            object: Google Research
+        negative_examples:
+          - sentence: "Google Research introduced the model in 2018."
+            reason: "active voice maps direction introduced(Org, Model) via canonicalization, not introduced_by(Model, Org); compiler emits canonical form once"
+      - predicate: proposed_by
+        subject_types: [Method, Framework, Model, System, Approach]
+        object_types: [ResearchGroup, Person, Organization]
+      - predicate: created_by
+        subject_types: [Model, System, Framework, Method, Technology, Task]
+        object_types: [Organization, ResearchGroup, Person]
+        pattern: "theme passive-agent[by]"
+        positive_fixtures:
+          - sentence: "The Sentinel Detection Framework was created by Secure Horizon Labs in 2022."
+            subject: Sentinel Detection Framework
+            object: Secure Horizon Labs
+      - predicate: developed_by
+        subject_types: [Model, System, Architecture, Framework, Method,
+                        Technology]
+        object_types: [Organization, ResearchGroup, Person]
+        pattern: "theme passive-agent[by]"
+        positive_fixtures:
+          - sentence: "The Atlas Language Model was developed by Quantum Research Group."
+            subject: Atlas Language Model
+            object: Quantum Research Group
+
+  usage_event:
+    definition: "A system uses, applies, or depends on a method, component, or dataset."
+    resource_provenance:
+      propbank: [use.01, depend.01, employ.01]
+      verbnet: [use-105.1]
+      framenet: [Using]
+    realizations:
+      - {surface: use,       lemma: use,       provenance: propbank:use.01}
+      - {surface: uses,      lemma: use,       provenance: propbank:use.01}
+      - {surface: used,      lemma: use,       provenance: propbank:use.01}
+      - {surface: relies on,  lemma: rely-on,  provenance: propbank:depend.01}
+      - {surface: rely on,    lemma: rely-on,  provenance: propbank:depend.01}
+      - {surface: depends on, lemma: depend-on, provenance: propbank:depend.01}
+    roles:
+      agent:    {thematic: Agent, propbank: ARG0}
+      theme:    {thematic: Theme, propbank: ARG1}
+      resource: {thematic: Instrument, propbank: ARG2, prep: [on, with, through]}
+    mappings:
+      - predicate: uses_method
+        subject_types: [Model, System, Framework, Method]
+        object_types: [Method, Technology, Algorithm]
+        pattern: "agent theme"
+      - predicate: depends_on
+        subject_types: [Model, System, Framework, Method]
+        object_types: [Method, Technology, Dataset, Corpus]
+        pattern: "agent prep[on] resource"
+
+  release_event:
+    definition: "An artifact is released or published at a time or by an agent."
+    resource_provenance:
+      propbank: [release.01, publish.01]
+      verbnet: [send-11.1]
+      framenet: [Releasing]
+    realizations:
+      - {surface: released, lemma: release, provenance: propbank:release.01}
+      - {surface: published, lemma: publish, provenance: propbank:publish.01}
+    roles:
+      agent: {thematic: Agent, propbank: ARG0}
+      theme: {thematic: Theme, propbank: ARG1}
+      time:  {thematic: Time,  propbank: ARGM-TMP}
+    mappings:
+      - predicate: released_by
+        subject_types: [Model, System, Framework, Dataset]
+        object_types: [Organization, ResearchGroup, Person]
+      - predicate: published_on
+        subject_types: [Paper, Document, Model, Dataset]
+        object_types: [Date]
+        pattern: "theme time"
+
+# Compound head nouns that NEVER carry a relation themselves; when a
+# compound binds them to an entity modifier, the entity head inherits
+# the relation slot (deterministic; see rulepack/compound_heads.py).
+compound_head_nouns: [model, framework, architecture, method, algorithm,
+                      system, dataset, benchmark, approach, technique]

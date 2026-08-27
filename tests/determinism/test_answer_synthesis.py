@@ -99,9 +99,13 @@ CHUNKS = {
     "chunk_c1": {"chunk_id": "chunk_c1", "doc_id": "doc_c",
                  "text": "The report says AliceSmith developed GammaTech.",
                  "char_start": 0, "char_end": 47},
+    # ANSWER-ADMISSION-V1: the context passage carries query content
+    # terms — a passage sharing NO term with the query is dense noise
+    # and correctly never supports a claim (see the dedicated
+    # answer-admission tests for that behavior).
     "chunk_ctx": {"chunk_id": "chunk_ctx", "doc_id": "doc_c",
-                  "text": "context chunk with no facts", "char_start": 48,
-                  "char_end": 74},
+                  "text": "context notes on who founded AcmeCorp",
+                  "char_start": 48, "char_end": 74},
 }
 
 
@@ -169,7 +173,11 @@ def test_conflict_represented_never_arbitrated() -> None:
 
 
 def test_scoped_claim_keeps_epistemic_qualification() -> None:
-    resp = grounded_answer(_bundle(graph_facts=[_graph_fact("fact_scoped")]), QUERY)
+    # Query matches the scoped fact so answer-level coverage holds —
+    # this test pins the EPISTEMIC PREFIX behavior, not admission.
+    scoped_query = "what did AliceSmith develop"
+    resp = grounded_answer(
+        _bundle(graph_facts=[_graph_fact("fact_scoped")]), scoped_query)
     assert resp["answer"].startswith(
         "Under the stated condition, It is possible that According to the report, "
         "AliceSmith developed GammaTech [1]"
@@ -187,13 +195,13 @@ def test_text_evidence_supports_answer_independently() -> None:
     augments text, never gates it."""
     bundle = _bundle(graph_facts=[], child_evidence=[{
         "chunk_id": "chunk_ctx", "doc_id": "doc_c", "parent_id": "",
-        "text": "context chunk with no facts", "contract_ids": ["lexical-v1"],
+        "text": "context notes on who founded AcmeCorp", "contract_ids": ["lexical-v1"],
     }])
     resp = grounded_answer(bundle, QUERY)
     assert resp["meta"]["abstained"] is False
     assert resp["meta"]["text_support_count"] == 1
     assert resp["answer"].startswith("Relevant passage: \u201c")
-    assert "context chunk" in resp["answer"]
+    assert "context notes" in resp["answer"]
     assert resp["citations"], "text evidence must be cited"
     assert resp["citations"][0]["locators"] == ["chunk:chunk_ctx@48:74"]
     supported = [c for c in resp["claims"] if c["status"] == "supported"]
@@ -227,10 +235,10 @@ def test_text_claim_backed_by_text_items_is_supported() -> None:
     first-class supported claim (typed lanes, independent support)."""
     bundle = _bundle(graph_facts=[], child_evidence=[{
         "chunk_id": "chunk_ctx", "doc_id": "doc_c", "parent_id": "",
-        "text": "context chunk with no facts", "contract_ids": ["lexical-v1"],
+        "text": "context notes on who founded AcmeCorp", "contract_ids": ["lexical-v1"],
     }])
     ev_item_id = bundle_item_id(bundle["evidence_bundle"][0])
-    fake = {"text": "context chunk with no facts", "support": [ev_item_id]}
+    fake = {"text": "context notes on who founded AcmeCorp", "support": [ev_item_id]}
     resp = grounded_answer(bundle, QUERY, synthesize=lambda b: [fake])
     assert resp["claims"][0]["status"] == "supported"
     assert resp["claims"][0]["lane"] == "text"
@@ -242,10 +250,10 @@ def test_non_verbatim_text_claim_is_rejected() -> None:
     verbatim substring of its supporting text item never renders."""
     bundle = _bundle(graph_facts=[], child_evidence=[{
         "chunk_id": "chunk_ctx", "doc_id": "doc_c", "parent_id": "",
-        "text": "context chunk with no facts", "contract_ids": ["lexical-v1"],
+        "text": "context notes on who founded AcmeCorp", "contract_ids": ["lexical-v1"],
     }])
     ev_item_id = bundle_item_id(bundle["evidence_bundle"][0])
-    fake = {"text": "context chunk with invented facts", "support": [ev_item_id]}
+    fake = {"text": "context notes on invented founders", "support": [ev_item_id]}
     resp = grounded_answer(bundle, QUERY, synthesize=lambda b: [fake])
     assert resp["claims"][0]["status"] == "unsupported"
     assert resp["meta"]["abstained"] is True
@@ -255,7 +263,7 @@ def test_mixed_lane_support_is_rejected() -> None:
     """A claim mixing graph and text support is fail-closed."""
     bundle = _bundle(graph_facts=[_graph_fact("fact_f1")], child_evidence=[{
         "chunk_id": "chunk_ctx", "doc_id": "doc_c", "parent_id": "",
-        "text": "context chunk with no facts", "contract_ids": ["lexical-v1"],
+        "text": "context notes on who founded AcmeCorp", "contract_ids": ["lexical-v1"],
     }])
     ids = [bundle_item_id(i) for i in bundle["evidence_bundle"]]
     fake = {"text": "AliceSmith founded AcmeCorp", "support": ids}
@@ -268,7 +276,7 @@ def test_graph_augments_text_never_gates_it() -> None:
     follow; text still cited; both lanes counted."""
     bundle = _bundle(graph_facts=[_graph_fact("fact_f1")], child_evidence=[{
         "chunk_id": "chunk_ctx", "doc_id": "doc_c", "parent_id": "",
-        "text": "context chunk with no facts", "contract_ids": ["lexical-v1"],
+        "text": "context notes on who founded AcmeCorp", "contract_ids": ["lexical-v1"],
     }])
     resp = grounded_answer(bundle, QUERY)
     assert resp["answer"].startswith("AliceSmith founded AcmeCorp [1]")
@@ -283,7 +291,7 @@ def test_bundle_items_are_lane_typed() -> None:
     summaries become text items with deterministic locators."""
     bundle = _bundle(graph_facts=[], child_evidence=[{
         "chunk_id": "chunk_ctx", "doc_id": "doc_c", "parent_id": "",
-        "text": "context chunk with no facts", "contract_ids": ["lexical-v1"],
+        "text": "context notes on who founded AcmeCorp", "contract_ids": ["lexical-v1"],
     }], document_summaries=[{"doc_id": "doc_c", "summary": "a document summary"}],
         section_summaries=[{"chunk_id": "parent_p1", "doc_id": "doc_c", "summary": "a section summary"}])
     items = bundle["evidence_bundle"]

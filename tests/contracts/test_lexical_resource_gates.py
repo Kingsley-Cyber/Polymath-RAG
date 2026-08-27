@@ -153,9 +153,20 @@ class TestGate4SemLinkIsNotAGate:
 
 
 class TestGate5ClassMembership:
-    def test_class_member_absent_from_manual_triggers_is_found(self, pack) -> None:
-        """A verb in a cited VerbNet class but absent from the manual YAML
-        trigger list must still compile — generated membership finds it."""
+    def test_class_member_absent_from_manual_triggers_does_NOT_compile(self, pack) -> None:
+        """INVERTED. This asserted the defect as a requirement.
+
+        It read: "A verb in a cited VerbNet class but absent from the
+        manual YAML trigger list must still compile -- generated
+        membership finds it." That behaviour is precisely what turned 112
+        authored verbs into 337 compiled triggers and let `founded`
+        inherit `bake`, so "she baked a cake" could license
+        founded(she, cake).
+
+        Class membership is now a SUGGESTION. A member that nobody
+        licensed must be visible in `class_members` (nothing is lost) and
+        absent from `verbs` (nothing ships unreviewed).
+        """
         import yaml
 
         raw = yaml.safe_load(
@@ -165,18 +176,30 @@ class TestGate5ClassMembership:
             rule["id"]: set(rule["evidence"].get("verbs", []))
             for rule in raw["predicates"]
         }
+        allow_doc = yaml.safe_load(
+            (ROOT / "resources" / "predicates" / "trigger_allowlist.yaml").read_text())
         for rule_id in ("founded", "uses", "developed"):
-            members = pack["predicates"][rule_id]["evidence"]["class_members"]
+            ev = pack["predicates"][rule_id]["evidence"]
+            members = ev.get("class_members") or {}
             extra = {
-                verb for cls, verbs in members.items() for verb in verbs
+                verb
+                for verbs in members.values()
+                for verb in verbs
                 if verb not in manual.get(rule_id, set())
             }
-            assert extra, f"{rule_id}: class expansion found no members beyond manual triggers"
-            # The compiled trigger set contains them.
-            assert extra <= set(pack["predicates"][rule_id]["evidence"]["verbs"])
+            assert extra, (
+                f"{rule_id}: class membership vanished entirely. The "
+                f"suggestions are evidence and must survive even though "
+                f"they never compile.")
+            licensed = set(
+                ((allow_doc.get("predicates") or {}).get(rule_id) or {}).get("allow") or [])
+            compiled = set(ev.get("verbs") or [])
+            leaked = (extra - licensed) & compiled
+            assert not leaked, (
+                f"{rule_id}: unlicensed class members compiled into "
+                f"production triggers: {sorted(leaked)[:8]}. VerbNet may "
+                f"suggest; it may not expand.")
 
-
-class TestGate8NoFallbackEdge:
     def test_unsupported_never_becomes_associated_with(self, pack) -> None:
         from polymath_shared.contracts import (
             CoreType,

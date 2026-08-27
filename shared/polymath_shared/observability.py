@@ -124,6 +124,15 @@ BINDING_DISCIPLINE = {
     "UD_COORDINATION": UD_PRIMARY,
     "SAFE_LOCAL_PATTERN": SAFE_FALLBACK,
     "BOUNDED_LINEAR_RECALL": BOUNDED_RECALL,
+    "UD_DEPENDENCY": UD_PRIMARY,
+    "NOMINAL_DEPENDENCY": UD_PRIMARY,
+    "CONTROL_SUBJECT": UD_PRIMARY,
+    "CONTROL_OBJECT": UD_PRIMARY,
+    "DISCOURSE_ANAPHORA": SAFE_FALLBACK,
+    # SPOKEN-RELATION-ADAPTER-V1: antecedent recovery follows explicit
+    # dependency edges (relcl head, copular equation) — tree evidence,
+    # not a recall window.
+    "RELCL_ANTECEDENT": UD_PRIMARY,
 }
 
 

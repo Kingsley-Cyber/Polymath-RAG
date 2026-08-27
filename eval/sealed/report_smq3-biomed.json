@@ -1,0 +1,4300 @@
+{
+ "contract": "sealed-multidomain-qualification-v1",
+ "corpus": "smq3-biomed-v1",
+ "seal_status": "BROKEN",
+ "invariants": [
+  {
+   "invariant": "every mention carries admission-harbor-v2",
+   "layer": "B_admission",
+   "count": 0,
+   "status": "PASS"
+  },
+  {
+   "invariant": "no durable id from a non-v2 admission",
+   "layer": "B_admission",
+   "count": 0,
+   "status": "PASS"
+  },
+  {
+   "invariant": "entity id prefix agrees with admission class",
+   "layer": "C_canonicalization",
+   "count": 0,
+   "status": "PASS"
+  },
+  {
+   "invariant": "no identity fragmentation (one surface, one id)",
+   "layer": "C_canonicalization",
+   "count": 2,
+   "status": "FAIL",
+   "examples": [
+    [
+     "circumplex model",
+     "2"
+    ],
+    [
+     "lazarus",
+     "2"
+    ]
+   ]
+  },
+  {
+   "invariant": "every fact has exact-span evidence",
+   "layer": "D_relation",
+   "count": 0,
+   "status": "PASS"
+  },
+  {
+   "invariant": "no orphaned semantic rows",
+   "layer": "F_infrastructure",
+   "count": 1091,
+   "status": "FAIL"
+  },
+  {
+   "invariant": "no projected relationship has an ineligible endpoint",
+   "layer": "D_relation",
+   "status": "PASS",
+   "count": 0,
+   "projected": 2,
+   "eligible": 2,
+   "not_yet_projected": 0
+  }
+ ],
+ "invariant_failures": 2,
+ "failure_layers": [
+  "C_canonicalization",
+  "F_infrastructure"
+ ],
+ "summary": {
+  "documents": 1,
+  "durable_identities": 497,
+  "concepts": 1,
+  "abstentions": 200,
+  "canonical_facts": 2
+ },
+ "per_document": {
+  "/Volumes/Flash Drive/Rag/CORPUS/test/A Circumplex Model of Affect.md": {
+   "mentions": 975,
+   "graph_eligible": 693,
+   "abstention_rate": 0.289,
+   "anchor_kinds": {
+    "CONCEPT": 1,
+    "GENERIC": 114,
+    "IDENTITY": 685,
+    "LOCAL_REFERENCE": 24,
+    "UNKNOWN": 151
+   }
+  }
+ },
+ "durable_identities": [
+  {
+   "surface": "Abelson & Sermat",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Sermat'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Aca- demic Press",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Aca-', 'demic', 'Press'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Adler",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Adler'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Aggleton & Passingham",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Passingham'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Ahern & Schwartz",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Schwartz'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Almasy & Blangero",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Blangero'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Almasy, L.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Almasy', 'L.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Alpert",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Alpert'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Alvir",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Alvir'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "America",
+   "core_type": "Location",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['America'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "American Journal of Human Genetics",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['American', 'Journal', 'Human', 'Genetics'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "American Journal of Psychiatry",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['American', 'Journal', 'Psychiatry'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Amitai",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Amitai'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Amitai, K.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Amitai', 'K.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Amos",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Amos'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "An- derson et al.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['derson', 'et', 'al', '.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Anderson",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Anderson'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Annals of the New York Academy of Science",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['New', 'York', 'Academy', 'Science'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Archives of General Psychiatry",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['General', 'Psychiatry'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Ari- fuzzman",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Ari-'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Ashtari",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Ashtari'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Ashtari, M.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Ashtari', 'M.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Avci",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Avci'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Avci, A.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Avci'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Avon Books",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Avon', 'Books'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Avrith",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Avrith'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Axelson",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Axelson'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Babinski, J.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Babinski', 'J.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Banerjee",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Banerjee'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Banerjee, M.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Banerjee', 'M.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Baxter & Murray",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Murray'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Berman, N.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Berman', 'N.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Berntson",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Berntson'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Biederman & Spencer",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Spencer'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Biederman, J.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Biederman', 'J.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Biological Psychiatry",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Biological', 'Psychiatry'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Birmaher",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Birmaher'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Birmaher, B.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Birmaher', 'B.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Blangero, J.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Blangero', 'J.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Blumberg, H.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Blumberg', 'H.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Bogers",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Bogers'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Bogers, W.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Bogers', 'W.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Bogerts",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Bogerts'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Bogerts, B.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Bogerts', 'B.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Bowden",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Bowden'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Bradley",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Bradley'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Bradley, M.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Bradley', 'M.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Brain Research",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Brain', 'Research'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Breslau, N.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Breslau', 'N.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "British Journal of Psychiatry",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['British', 'Journal', 'Psychiatry'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Brook",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Brook'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Bullock",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Bullock'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Bullock & Russell",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Russell'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Bullock, M.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Bullock', 'M.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Burton",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Burton'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "CBF measurement",
+   "core_type": "Measurement",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['CBF'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "CNS",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['CNS'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Ca- cioppo et al.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['cioppo', 'et', 'al', '.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Cacioppo",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Cacioppo'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Cacioppo et al.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['et', 'al', '.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Cam- bridge University Press",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Cam-', 'bridge', 'University', 'Press'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Cambridge Core terms of use",
+   "core_type": "Document",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Cambridge', 'Core'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Cambridge University Press",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Cambridge', 'University', 'Press'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Case",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Case'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Charney",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Charney'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Charney, D.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Charney', 'D.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Chen- gappa",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Chen-', 'gappa'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Chopra",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Chopra'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Chopra, M.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Chopra', 'M.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Christoff",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Christoff'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Christoff, K.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Christoff', 'K.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Circumplex Model of Affect",
+   "core_type": "Concept",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Circumplex', 'Model', 'Affect'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Clark",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Clark'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Clark et al.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['et', 'al', '.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Cliff & Young",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Cliff', 'Young'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Cliff, N.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Cliff', 'N.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Cohen, P.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Cohen', 'P.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Cole",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Cole'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Cole, K.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Cole', 'K.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Columbia College of Physicians & Surgeons",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Columbia', 'College', 'Physicians', 'Surgeons'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Columbia University",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Columbia', 'University'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Crawley",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Crawley'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "DSM-IV",
+   "core_type": "Document",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['DSM', 'IV'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Damasio",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Damasio'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Davidson",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Davidson'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Davidson & Fox",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Fox'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Davis",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Davis'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Davis & Whalen",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Whalen'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Davis, M.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Davis', 'M.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Davison",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Davison'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Daw",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Daw'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Dayan",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Dayan'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Dayan, P.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Dayan', 'P.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "DeMartinis",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['DeMartinis'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "DeMartinis, N.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['DeMartinis', 'N.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "DelBello",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['DelBello'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Desai",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Desai'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Desai, P.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Desai', 'P.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Dewey",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Dewey'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Dewey, S.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Dewey', 'S.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Di- ana",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['ana'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Diana",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Diana'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Diana, M.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Diana', 'M.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Diener, E.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Diener', 'E.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Dolan",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Dolan'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Dolan, R.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Dolan', 'R.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Doyle & Faraone",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Faraone'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Dremencov, E.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Dremencov', 'E.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "EEG",
+   "core_type": "Technology",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['EEG'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Ebert, U.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Ebert', 'U.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Ekman",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Ekman'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Ekman, P.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Ekman', 'P.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Elbert, T.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Elbert', 'T.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Emotion",
+   "core_type": "Concept",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Emotion'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Evans",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Evans'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Faraone",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Faraone'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Faw- cett",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Faw-', 'cett'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Fawcett, J.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Fawcett', 'J.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Fehr, B.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Fehr', 'B.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Feldman Barrett",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Barrett'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Feldman Barrett",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Feldman', 'Barrett'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Fernandez\u2013Dols",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Fernandez', 'Dols'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Figure 3",
+   "core_type": "Document",
+   "scope": "GLOBAL",
+   "evidence": "identity: identifier/model/version structure"
+  },
+  {
+   "surface": "Fischman",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Fischman'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Fitzsimmons",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Fitzsimmons'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Fossum, T.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Fossum', 'T.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Frackowiak",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Frackowiak'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Friesen",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Friesen'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Friston",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Friston'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Fuster, J.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Fuster', 'J.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Gabrieli",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Gabrieli'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Gainotti",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Gainotti'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Gainotti, G.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Gainotti', 'G.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Gar- cia Espana",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Gar-', 'cia', 'Espana'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Garcia\u2013Rill",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Garcia', 'Rill'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Garcia\u2013Rill, E.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Garcia', 'Rill', 'E.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Gautier",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Gautier'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Gerlach",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Gerlach'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Gerlach, M.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Gerlach', 'M.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Gershon",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Gershon'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Gershon, S.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Gershon', 'S.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Gersten, M.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Gersten', 'M.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Geschwind",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Geschwind'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Geschwind, N.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Geschwind', 'N.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Gessa",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Gessa'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Gessa, G.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Gessa', 'G.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Getz",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Getz'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Ghahremani",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Ghahremani'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Ghatan",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Ghatan'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Gispan\u2013Herman",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Gispan', 'Herman'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Gispan\u2013Herman, I.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Gispan', 'Herman', 'I.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Gitelman",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Gitelman'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Globisch",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Globisch'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Globisch, J.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Globisch', 'J.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Glover",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Glover'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Gold- stein",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['stein'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Goldstein",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Goldstein'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Gore",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Gore'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Gould",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Gould'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Gould, L.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Gould'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Grace",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Grace'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Grafman",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Grafman'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Grafman, J.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Grafman', 'J.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Greenberg",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Greenberg'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Greenblatt",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Greenblatt'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Greenwald, M.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Greenwald', 'M.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Gross",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Gross'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Gruber",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Gruber'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Grune & Stratton",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Grune', 'Stratton'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Guilford Press",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Guilford', 'Press'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Gur",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Gur'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Guynn",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Guynn'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Hamm",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Hamm'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Hamm,A.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Hamm', 'A.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Harcourt",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Harcourt'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Harrari",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Harrari'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Harrari, E.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Harrari', 'E.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Harris",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Harris'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Hazlett, E.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Hazlett', 'E.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Heilman",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Heilman'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Heilman et al.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['et', 'al', '.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Heilman, K.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Heilman', 'K.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Herman",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Herman'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Hershey",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Hershey'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Hirshfeld",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Hirshfeld'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Hitchcock",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Hitchcock'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Homma",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Homma'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Homma, Y.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Homma', 'Y.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Horel",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Horel'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Houle",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Houle'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Houle, S.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Houle', 'S.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Humphreys",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Humphreys'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Hungerbuhler",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Hungerbuhler'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Ingvar",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Ingvar'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Ito",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Ito'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Itoh",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Itoh'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Itoh, K.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Itoh', 'K.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Iwata",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Iwata'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Izard",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Izard'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Jenike",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Jenike'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Jensen",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Jensen'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "John- son",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['John-'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Johnson",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Johnson'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Jones",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Jones'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Jones & Fox",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Jones', 'Fox'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Journal of Abnormal Psychology",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Journal', 'Abnormal', 'Psychology'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Journal of Affective Disorders",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Journal', 'Affective', 'Disorders'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Journal of Clinical Psychiatry",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Journal', 'Clinical', 'Psychiatry'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Journal of Comparative Physiology and Psychology",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Journal', 'Comparative', 'Physiology', 'Psychology'] (POS=PROPN, not capitaliza"
+  },
+  {
+   "surface": "Journal of Experimental Psychology",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Journal', 'Experimental', 'Psychology'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Journal of Personality and Social Psychology",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Journal', 'Personality', 'Social', 'Psychology'] (POS=PROPN, not capitalization"
+  },
+  {
+   "surface": "Journal of the American Academy of Child and Adolescent Psychiatry",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Journal', 'American', 'Academy', 'Child', 'Adolescent', 'Psychiatry'] (POS=PROP"
+  },
+  {
+   "surface": "Joy",
+   "core_type": "Concept",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Joy'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Ka- gan",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['gan'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Kagan",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Kagan'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Kagan, J.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Kagan', 'J.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Kakade",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Kakade'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Kakade, S.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Kakade', 'S.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Kalin",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Kalin'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Kaneko",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Kaneko'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Kapur",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Kapur'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Kapur, S.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Kapur', 'S.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Katz, M.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Katz', 'M.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Kaufman",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Kaufman'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Kaufman, J.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Kaufman', 'J.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Keating",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Keating'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Keil",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Keil'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Keio Journal of Medicine",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Keio', 'Journal', 'Medicine'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Kennedy",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Kennedy'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Kibar",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Kibar'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Kibar, M.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Kibar', 'M.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Kim",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Kim'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Kinahan",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Kinahan'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "King",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['King'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "King, W.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['King', 'W.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Koch & Ebert",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Ebert'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Koch, M.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Koch', 'M.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Koltzenburg",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Koltzenburg'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Kopp & Neufeld",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Neufeld'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Kopp, C.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Kopp', 'C.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Koreen",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Koreen'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Koreen, A.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Koreen', 'A.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Kosslyn",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Kosslyn'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Kravitz",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Kravitz'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Kring, Barrett, & Gard",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Kring', 'Barrett', 'Gard'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Kruger",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Kruger'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Kruger, S.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Kruger', 'S.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Krystal",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Krystal'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Kupfer",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Kupfer'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Lang",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Lang'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Lang et al.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Lang', 'et', 'al', '.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Lang et al.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['et', 'al', '.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Larsen",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Larsen'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Larsen & Diener",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Diener'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Larsen & Diener",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Larsen', 'Diener'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Larson",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Larson'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Larson, C.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Larson', 'C.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Lazarus",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Lazarus'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Lazarus",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Lazarus'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "LeDoux",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['LeDoux'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "LeDoux, J.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['LeDoux', 'J.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Lerner",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Lerner'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Lerner, G.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Lerner', 'G.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Leven- son",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Leven-', 'son'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Levine",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Levine'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "London",
+   "core_type": "Location",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['London'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Lorente, S.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Lorente', 'S.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Losch",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Losch'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Lowe",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Lowe'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "MH068318",
+   "core_type": "Document",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['MH068318'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "MHK02-74677",
+   "core_type": "Document",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['MHK02'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Macklin",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Macklin'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Mardos",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Mardos'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Martin",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Martin'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Martin, A.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Martin', 'A.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Mathew",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Mathew'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Mathis",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Mathis'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Mayberg",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Mayberg'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "McCann",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['McCann'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "McIntosh",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['McIntosh'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "McNally",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['McNally'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Mefford & Potter",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Potter'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Mefford, I.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Mefford', 'I.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Melis",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Melis'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Meminger",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Meminger'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Men- delman, A.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Men-', 'delman'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Mendel- man",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Mendel-'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Mesulam",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Mesulam'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Meyer",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Meyer'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Mick & Telch",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Telch'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Mikulis",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Mikulis'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Mills",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Mills'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Mineka",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Mineka'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Mineka, S.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Mineka', 'S.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Misantone",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Misantone'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Miseren- dino",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Miseren-', 'dino'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Miserendino",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Miserendino'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Mizuno",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Mizuno'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Mizuno, N.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Mizuno', 'N.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Mora",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Mora'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Mora, F.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Mora', 'F.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Moruzzi",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Moruzzi'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Moruzzi & Magoun",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Moruzzi', 'Magoun'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Mufson",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Mufson'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Mufson, L.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Mufson', 'L.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Mullani",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Mullani'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Muller",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Muller'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Muller, M.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Muller', 'M.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Munne",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Munne'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Muntoni",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Muntoni'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Muntoni, A.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Muntoni', 'A.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Myers & Swett",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Myers', 'Swett'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Myers, R.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Myers', 'R.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Na- kayama, Y.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Na-', 'Y.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Nakamura",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Nakamura'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Nakayama",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Nakayama'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "National Alliance for Re- search in Schizophrenia and Affective Disorders",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['National', 'Alliance', 'Re-', 'Schizophrenia', 'Affective', 'Disorders'] (POS=P"
+  },
+  {
+   "surface": "Neufeld, S.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Neufeld', 'S.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "New York",
+   "core_type": "Location",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['New', 'York'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "New York State Psychiatric Institute",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['New', 'York', 'State', 'Psychiatric', 'Institute'] (POS=PROPN, not capitalizati"
+  },
+  {
+   "surface": "Newbury Park, CA",
+   "core_type": "Location",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Newbury', 'Park', 'CA'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Newman",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Newman'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Nomoto",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Nomoto'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Ongur, D.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Ongur', 'D.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Ortony & Turner",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Turner'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Ortony, A.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Ortony', 'A.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Overall",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Overall'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Overstreet",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Overstreet'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Ox- ford University Press",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Ox-', 'ford', 'University', 'Press'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Oxford Uni- versity Press",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Oxford', 'Uni-', 'Press'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Oxford University Press",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Oxford', 'University', 'Press'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "PANAS scale",
+   "core_type": "Measurement",
+   "scope": "GLOBAL",
+   "evidence": "identity: acronym structure"
+  },
+  {
+   "surface": "PET measures",
+   "core_type": "Measurement",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['PET'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Page 13",
+   "core_type": "Document",
+   "scope": "GLOBAL",
+   "evidence": "identity: identifier/model/version structure"
+  },
+  {
+   "surface": "Panitz",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Panitz'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Panksepp",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Panksepp'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Panksepp, J.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Panksepp', 'J.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Parrish",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Parrish'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Parrish, T.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Parrish', 'T.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Peterson",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Peterson'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Peterson, B.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Peterson', 'B.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Peterson, E.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Peterson', 'E.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Petty",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Petty'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Pine",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Pine'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Pistis",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Pistis'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Pistis, M.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Pistis', 'M.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Pitman",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Pitman'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Poehlmann",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Poehlmann'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Potter, W.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Potter', 'W.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Price",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Price'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Psychiatry Research",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Psychiatry', 'Research'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "RF",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['RF'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Raichle",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Raichle'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Rauch",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Rauch'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Rauch et al.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Rauch', 'et', 'al', '.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Rauch et al.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['al', '.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Raven Press",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Raven', 'Press'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Reming- ton",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Reming-'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Remington",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Remington'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Reznick",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Reznick'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Rickels",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Rickels'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Ris- berg",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Ris-', 'berg'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Risberg",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Risberg'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Robinson",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Robinson'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Rolls",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Rolls'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Rosa, F.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Rosa', 'F.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Rosen",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Rosen'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Rosenbaum",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Rosenbaum'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Rosenstein",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Rosenstein'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Rosenstein, M.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Rosenstein', 'M.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Roth",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Roth'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Russell",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Russell'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Russell & Fehr",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Fehr'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Ryerson University",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Ryerson', 'University'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Sa- batinelli",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Sa-', 'batinelli'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Saarni, C.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Saarni', 'C.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Sabatinelli, D.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Sabatinelli', 'D.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Sackeim",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Sackeim'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Sananes",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Sananes'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Sander",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Sander'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Sander, D.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Sander', 'D.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Saron",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Saron'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Saron, C.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Saron', 'C.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Sasson",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Sasson'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Sasson, Y.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Sasson', 'Y.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Savage",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Savage'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Schaffer",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Schaffer'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Schlosberg",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Schlosberg'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Schlosberg, H.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Schlosberg', 'H.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Schultz",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Schultz'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Schultz, L.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Schultz', 'L.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Schweizer",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Schweizer'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Schweizer, E.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Schweizer', 'E.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Senulis",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Senulis'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Senulis, J.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Senulis', 'J.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Sermat, V.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Sermat', 'V.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Seymour",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Seymour'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Seymour, B.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Seymour', 'B.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Shearer",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Shearer'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Shelton",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Shelton'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Shige- moto",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Shige-'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Shigemoto, R.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Shigemoto', 'R.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Shin",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Shin'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Si- mon & Schuster",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Si-', 'mon', 'Schuster'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Sicotte",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Sicotte'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Sicotte, N.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Sicotte', 'N.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Sinclair",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Sinclair'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Sinclair,A.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Sinclair'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Skinner",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Skinner'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Skinner et al.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Skinner', 'et', 'al', '.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Small",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Small'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Small et al.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Small', 'et', 'al', '.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Snid- man",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Snid-', 'man'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Snidman, N.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Snidman', 'N.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Sobel",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Sobel'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Sobel, N.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Sobel', 'N.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Spencer, T.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Spencer', 'T.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Sroufe",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Sroufe'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Stappen",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Stappen'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Starr",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Starr'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Steriade",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Steriade'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Steriade, M.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Steriade', 'M.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Stokes",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Stokes'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Stokes, P.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Stokes', 'P.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Stolarova",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Stolarova'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Stone\u2013Elander",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Stone', 'Elander'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Strakowski",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Strakowski'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Swann",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Swann'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Swett, C., Jr.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Swett', 'C.', 'Jr.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Tanaka",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Tanaka'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Tellegen, A.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Tellegen'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Theories of Basic Emotions",
+   "core_type": "Concept",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Basic', 'Emotions'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Thomp- son",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Thomp-', 'son'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Tomkins",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Tomkins'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Tsuang",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Tsuang'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Tucker",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Tucker'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Ucles et al.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['al', '.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Ucles, Lorente, & Rosa",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Ucles', 'Lorente', 'Rosa'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Ucles, P.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Ucles', 'P.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Ueno",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Ueno'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Unit 74",
+   "core_type": "Location",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Unit'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Vaccarino",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Vaccarino'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Vaidya, J.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Vaidya', 'J.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Vaitl",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Vaitl'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Vaitl, D.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Vaitl', 'D.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Valenstein",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Valenstein'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Valenstein, E.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Valenstein', 'E.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Volkow",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Volkow'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Von Heijne",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Von', 'Heijne'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Warner et al.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Warner', 'et', 'al', '.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Warner, V.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Warner', 'V.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Watson",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Watson'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Watson & Clark",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Clark'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Watson et al.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Watson', 'et', 'al', '.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Watson et al.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['et', 'al', '.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Watson, Clark, & Tellegen",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Watson', 'Clark', 'Tellegen'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Watson, D.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Watson', 'D.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Watson, Wiese, Vaidya, & Tellegen",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Watson', 'Wiese', 'Vaidya', 'Tellegen'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Weiman",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Weiman'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Weiskrantz",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Weiskrantz'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Weiskrantz, L.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Weiskrantz', 'L.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Weissman",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Weissman'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Weizman",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Weizman'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Weizman, A.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Weizman', 'A.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Weizman, R.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Weizman', 'R.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Wellman",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Wellman'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Wellman et al.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Wellman', 'et', 'al', '.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Whiteman",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Whiteman'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Whiteman, R.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Whiteman', 'R.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Wickrama- ratne, P.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Wickrama-', 'P.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Wickramaratne",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Wickramaratne'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Widen & Russell",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Russell'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Wienbruch",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Wienbruch'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Wiethe",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Wiethe'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Wiley",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Wiley'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Wilson",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Wilson'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Wirsen\u2013Meurling",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Wirsen', 'Meurling'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Wright",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Wright'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Wu",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Wu'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Wu, H.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Wu', 'H.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Yadid",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Yadid'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Yadid, G.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Yadid', 'G.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "York Academy of Sciences",
+   "core_type": "Organization",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['York', 'Academy', 'Sciences'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Zalla",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Zalla'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Zalla, T.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Zalla', 'T.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Zimmer- man",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Zimmer-'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Zimmerman",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Zimmerman'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Zohar",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Zohar'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "Zohar, J.",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['Zohar', 'J.'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "amygdala",
+   "core_type": "Location",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['amygdala'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "circumplex model",
+   "core_type": "Concept",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['circumplex'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "cognitive schemas",
+   "core_type": "Concept",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['schemas'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "hippocampus",
+   "core_type": "Location",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['hippocampus'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "positron emis- sion tomography",
+   "core_type": "Technology",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['positron', 'emis-'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "~Feldman",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['~Feldman'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "~Gorman",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['~Gorman'] (POS=PROPN, not capitalization)"
+  },
+  {
+   "surface": "~Jones",
+   "core_type": "Person",
+   "scope": "GLOBAL",
+   "evidence": "identity: proper-noun anchor ['~Jones'] (POS=PROPN, not capitalization)"
+  }
+ ],
+ "concepts": [
+  {
+   "surface": "Affective reactivity",
+   "scope": "CORPUS_SCOPED",
+   "evidence": "concept: DOCUMENT_DEFINED"
+  }
+ ],
+ "abstentions": [
+  {
+   "surface": "2-D structure",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: quantifier '2' over a common-noun head 'structure'"
+  },
+  {
+   "surface": "Adolescent life events",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'events' (lemma 'event') with no identity anchor"
+  },
+  {
+   "surface": "Ander- son",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'son' with no identity or concept evidence"
+  },
+  {
+   "surface": "Animal studies",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'studies' (lemma 'study') with no identity anchor"
+  },
+  {
+   "surface": "Anxiety",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'Anxiety' with no identity or concept evidence"
+  },
+  {
+   "surface": "Anxiety disorders",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'disorders' (lemma 'disorder') with no identity anchor"
+  },
+  {
+   "surface": "Developmental studies",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'studies' (lemma 'study') with no identity anchor"
+  },
+  {
+   "surface": "Dremen- cov",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'cov' with no identity or concept evidence"
+  },
+  {
+   "surface": "Drevets",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'Drevets' (lemma 'drevet') with no identity anchor"
+  },
+  {
+   "surface": "Emotions",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'Emotions' (lemma 'emotion') with no identity anchor"
+  },
+  {
+   "surface": "Facial expressions",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'expressions' (lemma 'expression') with no identity anchor"
+  },
+  {
+   "surface": "Fear",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'Fear' with no identity or concept evidence"
+  },
+  {
+   "surface": "Hen- riques",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: quantifier 'Hen-' over a common-noun head 'riques'"
+  },
+  {
+   "surface": "Henriques",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'Henriques' (lemma 'henrique') with no identity anchor"
+  },
+  {
+   "surface": "Nature",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'Nature' with no identity or concept evidence"
+  },
+  {
+   "surface": "Neuroimaging paradigms",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'paradigms' (lemma 'paradigm') with no identity anchor"
+  },
+  {
+   "surface": "Neuroimaging studies",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'studies' (lemma 'study') with no identity anchor"
+  },
+  {
+   "surface": "Neurophysio- logical methods",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'methods' (lemma 'method') with no identity anchor"
+  },
+  {
+   "surface": "O\u2019Doherty",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'O\u2019Doherty' with no identity or concept evidence"
+  },
+  {
+   "surface": "Recent findings",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'findings' (lemma 'finding') with no identity anchor"
+  },
+  {
+   "surface": "Science",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'Science' with no identity or concept evidence"
+  },
+  {
+   "surface": "Social psychologists",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'psychologists' (lemma 'psychologist') with no identity anchor"
+  },
+  {
+   "surface": "Struc- tural findings",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'findings' (lemma 'finding') with no identity anchor"
+  },
+  {
+   "surface": "Thetheory of basic emotions",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'emotions' (lemma 'emotion') with no identity anchor"
+  },
+  {
+   "surface": "ablation",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'ablation' with no identity or concept evidence"
+  },
+  {
+   "surface": "activation",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'activation' with no identity or concept evidence"
+  },
+  {
+   "surface": "activity",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'activity' with no identity or concept evidence"
+  },
+  {
+   "surface": "adulthood",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'adulthood' with no identity or concept evidence"
+  },
+  {
+   "surface": "affective paradigms",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'paradigms' (lemma 'paradigm') with no identity anchor"
+  },
+  {
+   "surface": "affective states",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'states' (lemma 'state') with no identity anchor"
+  },
+  {
+   "surface": "animal researchers",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'researchers' (lemma 'researcher') with no identity anchor"
+  },
+  {
+   "surface": "antidepressant medications",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'medications' (lemma 'medication') with no identity anchor"
+  },
+  {
+   "surface": "anxiety",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'anxiety' with no identity or concept evidence"
+  },
+  {
+   "surface": "arousal",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'arousal' with no identity or concept evidence"
+  },
+  {
+   "surface": "basic emotion theories",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'theories' (lemma 'theory') with no identity anchor"
+  },
+  {
+   "surface": "basic emotion theorists",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'theorists' (lemma 'theorist') with no identity anchor"
+  },
+  {
+   "surface": "basic emotions",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'emotions' (lemma 'emotion') with no identity anchor"
+  },
+  {
+   "surface": "behavioral responses",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'responses' (lemma 'response') with no identity anchor"
+  },
+  {
+   "surface": "child",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'child' with no identity or concept evidence"
+  },
+  {
+   "surface": "children",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'children' (lemma 'child') with no identity anchor"
+  },
+  {
+   "surface": "context",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'context' with no identity or concept evidence"
+  },
+  {
+   "surface": "developmen- tal studies",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'studies' (lemma 'study') with no identity anchor"
+  },
+  {
+   "surface": "dimen- sional measures",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: quantifier 'dimen-' over a common-noun head 'measures'"
+  },
+  {
+   "surface": "dimensional approaches",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'approaches' (lemma 'approach') with no identity anchor"
+  },
+  {
+   "surface": "dimensional mod- els",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'els' (lemma 'el') with no identity anchor"
+  },
+  {
+   "surface": "dimensional models",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'models' (lemma 'model') with no identity anchor"
+  },
+  {
+   "surface": "emotion re- searchers",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'searchers' (lemma 'searcher') with no identity anchor"
+  },
+  {
+   "surface": "emotions",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'emotions' (lemma 'emotion') with no identity anchor"
+  },
+  {
+   "surface": "ex- perimental settings",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'settings' (lemma 'setting') with no identity anchor"
+  },
+  {
+   "surface": "excitement",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'excitement' with no identity or concept evidence"
+  },
+  {
+   "surface": "existing physiological measures",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'measures' (lemma 'measure') with no identity anchor"
+  },
+  {
+   "surface": "experimental approaches",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'approaches' (lemma 'approach') with no identity anchor"
+  },
+  {
+   "surface": "fear",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'fear' with no identity or concept evidence"
+  },
+  {
+   "surface": "five-factor model",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: quantifier 'five' over a common-noun head 'model'"
+  },
+  {
+   "surface": "functional imaging studies",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'studies' (lemma 'study') with no identity anchor"
+  },
+  {
+   "surface": "hopelessness",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'hopelessness' with no identity or concept evidence"
+  },
+  {
+   "surface": "lesion studies",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'studies' (lemma 'study') with no identity anchor"
+  },
+  {
+   "surface": "multidimensional scaling procedures",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'procedures' (lemma 'procedure') with no identity anchor"
+  },
+  {
+   "surface": "naturalistic environments",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'environments' (lemma 'environment') with no identity anchor"
+  },
+  {
+   "surface": "neo- cortical structures",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'structures' (lemma 'structure') with no identity anchor"
+  },
+  {
+   "surface": "neuroimaging studies",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'studies' (lemma 'study') with no identity anchor"
+  },
+  {
+   "surface": "neurophysiological changes",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'changes' (lemma 'change') with no identity anchor"
+  },
+  {
+   "surface": "nucleus accumbens",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'accumbens' (lemma 'accumben') with no identity anchor"
+  },
+  {
+   "surface": "physiological measures",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'measures' (lemma 'measure') with no identity anchor"
+  },
+  {
+   "surface": "pleasure",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'pleasure' with no identity or concept evidence"
+  },
+  {
+   "surface": "positive affective tendencies",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'tendencies' (lemma 'tendency') with no identity anchor"
+  },
+  {
+   "surface": "positively valenced emotions",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'emotions' (lemma 'emotion') with no identity anchor"
+  },
+  {
+   "surface": "preclinical studies",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'studies' (lemma 'study') with no identity anchor"
+  },
+  {
+   "surface": "preliminary empirical findings",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'findings' (lemma 'finding') with no identity anchor"
+  },
+  {
+   "surface": "psychological assessments",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'assessments' (lemma 'assessment') with no identity anchor"
+  },
+  {
+   "surface": "putative affective processes",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'processes' (lemma 'process') with no identity anchor"
+  },
+  {
+   "surface": "re- cent findings",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: quantifier 're-' over a common-noun head 'findings'"
+  },
+  {
+   "surface": "standardized affective probes",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'probes' (lemma 'probe') with no identity anchor"
+  },
+  {
+   "surface": "statistical techniques",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'techniques' (lemma 'technique') with no identity anchor"
+  },
+  {
+   "surface": "statistical tests",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'tests' (lemma 'test') with no identity anchor"
+  },
+  {
+   "surface": "subcortical structures",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'structures' (lemma 'structure') with no identity anchor"
+  },
+  {
+   "surface": "taxonomy of emotions",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'emotions' (lemma 'emotion') with no identity anchor"
+  },
+  {
+   "surface": "taxonomy of facial expressions",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'expressions' (lemma 'expression') with no identity anchor"
+  },
+  {
+   "surface": "thalamus",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'thalamus' with no identity or concept evidence"
+  },
+  {
+   "surface": "theories of basic emotions",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'emotions' (lemma 'emotion') with no identity anchor"
+  },
+  {
+   "surface": "theory of basic emotions",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: plural common noun 'emotions' (lemma 'emotion') with no identity anchor"
+  },
+  {
+   "surface": "time",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'time' with no identity or concept evidence"
+  },
+  {
+   "surface": "valence",
+   "anchor": "GENERIC",
+   "status": "RESOLVED",
+   "why": "generic: bare common-noun kind term 'valence' with no identity or concept evidence"
+  },
+  {
+   "surface": "The circumplex model of affect",
+   "anchor": "LOCAL_REFERENCE",
+   "status": "RESOLVED",
+   "why": "discourse: E4 exactly one compatible local antecedent; antecedent carries no durable identity to inherit"
+  },
+  {
+   "surface": "The circumplex model of affect",
+   "anchor": "LOCAL_REFERENCE",
+   "status": "RESOLVED",
+   "why": "discourse: no antecedent, no constituting event, no repeated bounded reference"
+  },
+  {
+   "surface": "affective circumplex",
+   "anchor": "LOCAL_REFERENCE",
+   "status": "ABSTAINED",
+   "why": "discourse: E3 multiple named anchors match"
+  },
+  {
+   "surface": "arousal dimension",
+   "anchor": "LOCAL_REFERENCE",
+   "status": "ABSTAINED",
+   "why": "discourse: E4 multiple compatible antecedents"
+  },
+  {
+   "surface": "circumplex model",
+   "anchor": "LOCAL_REFERENCE",
+   "status": "ABSTAINED",
+   "why": "discourse: E3 multiple named anchors match"
+  },
+  {
+   "surface": "cognitive processes",
+   "anchor": "LOCAL_REFERENCE",
+   "status": "RESOLVED",
+   "why": "discourse: E4 exactly one compatible local antecedent; antecedent carries no durable identity to inherit"
+  },
+  {
+   "surface": "dimensional approach",
+   "anchor": "LOCAL_REFERENCE",
+   "status": "ABSTAINED",
+   "why": "discourse: E4 multiple compatible antecedents"
+  },
+  {
+   "surface": "dimensions",
+   "anchor": "LOCAL_REFERENCE",
+   "status": "RESOLVED",
+   "why": "discourse: E4 exactly one compatible local antecedent; antecedent carries no durable identity to inherit"
+  },
+  {
+   "surface": "negative affectivity",
+   "anchor": "LOCAL_REFERENCE",
+   "status": "ABSTAINED",
+   "why": "discourse: E4 multiple compatible antecedents"
+  },
+  {
+   "surface": "right prefrontal cortex",
+   "anchor": "LOCAL_REFERENCE",
+   "status": "ABSTAINED",
+   "why": "discourse: E4 multiple compatible antecedents"
+  },
+  {
+   "surface": "subtraction method",
+   "anchor": "LOCAL_REFERENCE",
+   "status": "RESOLVED",
+   "why": "discourse: no antecedent, no constituting event, no repeated bounded reference"
+  },
+  {
+   "surface": "ventral tegmental area",
+   "anchor": "LOCAL_REFERENCE",
+   "status": "ABSTAINED",
+   "why": "discourse: E4 multiple compatible antecedents"
+  },
+  {
+   "surface": "ventral tegmental area",
+   "anchor": "LOCAL_REFERENCE",
+   "status": "RESOLVED",
+   "why": "discourse: no antecedent, no constituting event, no repeated bounded reference"
+  },
+  {
+   "surface": "10 Oct 2016",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "10 Oct 2016 at 16:32:51",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "1051 Riverside Drive",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "1948",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "1962",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "1963",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "1963",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "1970",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "1980",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "1981",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "1982",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "1983",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "1984",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "1986",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "1988",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "1988",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "1989",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "1991",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "1992",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "1993",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "1994",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "1995",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "1997",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "1998",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "1999",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "2000",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "2000",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "2001",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "2001",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "2002",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "2002",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "2003",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "2003",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "2004",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "2004",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "Babinski",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Berridge",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Bipolar comorbidity",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "Bradley",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Bremner",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Breslau",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Cacioppo",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Camras",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Circumplex model of affect",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "Clark",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Core affect",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "Damasio",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Davidson",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Daw",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Diana",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Diler",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Drevets",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Ekman",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Emotion",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "Fridja",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Harris",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Iwata",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Jensen",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Kagan",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Keil",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Mora",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Negative affectivity",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "Panksepp",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Pliszka",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Positive affectivity",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "RF",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Rauch",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Russell",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Saarni",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Thayer",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "VTA",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Valence focus",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "Warner",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "Watson",
+   "anchor": "UNKNOWN",
+   "status": "ABSTAINED",
+   "why": "abstain: span covers no complete syntax token (nested inside a larger token)"
+  },
+  {
+   "surface": "affective circumplex",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "alert- ness",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "arousal or activation dimension",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "basic emo- tion theory",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "basic emotion",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "basic emotion theory",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "circum- plex model of affect",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "circumplex model of affect",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "cognitive process",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "di- mensional models of emotion",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "dimensional models of affect",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "emotion",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "emotional processing",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "emotional valence",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "factor analysis",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "joy",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "laboratory setting",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "measures of skin conductance",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "measuring neural activity",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "multi- dimensional scaling",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "multidimensional scaling",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "parametric design",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "positron emission tomography",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "semantic knowledge",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "subjective components of emo- tion",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "subjective ratings of arousal",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "subtraction study",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "tension and energy",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "they",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  },
+  {
+   "surface": "valence and arousal",
+   "anchor": "UNKNOWN",
+   "status": "CONTEXT_REQUIRED",
+   "why": "abstain: no auditable concept or generic evidence"
+  }
+ ],
+ "canonical_facts": [
+  {
+   "predicate": "alias_of",
+   "subject": "nakamura",
+   "object": "nomoto",
+   "doc": "A Circumplex Model of Affect.md",
+   "decision": "ACCEPT"
+  },
+  {
+   "predicate": "associated_with",
+   "subject": "dsm-iv",
+   "object": "doyle & faraone",
+   "doc": "A Circumplex Model of Affect.md",
+   "decision": "ACCEPT"
+  }
+ ],
+ "verdict": null,
+ "verdict_note": "The harness does NOT set the verdict. Invariant failures are release blockers; the inventory requires adjudication by the evaluator. Choose QUALIFIED / QUALIFIED WITH KNOWN LIMITATIONS / REJECTED FOR RELEASE."
+}
+

@@ -1,0 +1,103 @@
+{
+ "stages": [
+  {
+   "stage": "S1 creation",
+   "sentence": "The Orion Adaptive Reasoning Model was introduced by the Advanced Comp",
+   "frames": [
+    [
+     "introduced",
+     "creation_event"
+    ]
+   ],
+   "n_syntax_tokens": 28,
+   "trigger_head": "introduced",
+   "ud_args": {
+    "prep_object": [
+     "Laboratory",
+     "2024",
+     "architecture"
+    ]
+   },
+   "entities_in_sentence": [
+    "Orion Adaptive Reasoning Model",
+    "Advanced Computational Intelligence Laboratory"
+   ],
+   "typed_mapping": "introduced_by"
+  },
+  {
+   "stage": "S2 training",
+   "sentence": "The model was trained on the HorizonText Research Corpus, a curated da",
+   "frames": [
+    [
+     "trained",
+     "training_event"
+    ]
+   ],
+   "n_syntax_tokens": 24,
+   "trigger_head": "trained",
+   "ud_args": {
+    "prep_object": [
+     "Corpus"
+    ]
+   },
+   "entities_in_sentence": [
+    "HorizonText Research Corpus"
+   ],
+   "typed_mapping": "trained_on"
+  },
+  {
+   "stage": "S3 evaluation",
+   "sentence": "Evaluation studies examined Orion's performance across multiple benchm",
+   "frames": [
+    [
+     "benchmark",
+     "evaluation_event"
+    ]
+   ],
+   "n_syntax_tokens": 18,
+   "trigger_head": null,
+   "ud_args": {},
+   "entities_in_sentence": [
+    "ReasonBench"
+   ],
+   "typed_mapping": "evaluated_on"
+  }
+ ],
+ "router_profile": {
+  "router_version": "knowledge-router-v1.1.0",
+  "primary_mode": "SCIENTIFIC_RELATIONAL",
+  "modes": [
+   {
+    "type": "SCIENTIFIC_RELATIONAL",
+    "confidence": 1.0
+   }
+  ],
+  "routing": {
+   "always": [
+    "entity"
+   ],
+   "preferred": [
+    "concept",
+    "evidence",
+    "scientific_predicate"
+   ],
+   "optional": [
+    "procedure"
+   ],
+   "disabled": []
+  },
+  "enabled_extractors": [
+   "concept",
+   "entity",
+   "evidence",
+   "scientific_predicate"
+  ],
+  "signals": {
+   "SCIENTIFIC_RELATIONAL": {
+    "metadata": 0.0,
+    "structure": 0.0,
+    "linguistic": 10.17
+   }
+  }
+ }
+}

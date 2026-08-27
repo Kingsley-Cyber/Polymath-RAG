@@ -12,12 +12,14 @@ never a silent guess.
 """
 from __future__ import annotations
 
+import os
 import re
 from typing import Optional
 
 _PARSER_NAME = "spacy"
 _PARSER_MODEL = "en_core_web_sm"
 
+_DIAG_ENV = "POLYMATH_SYNTAX_REGEX_DIAGNOSTIC"
 _DET_PARSER_NAME = "deterministic-syntax"
 _DET_PARSER_VERSION = "v1.1.0"
 
@@ -48,7 +50,9 @@ def parser_identity() -> tuple[str, str]:
     try:
         _get_nlp()
     except Exception:
-        return _DET_PARSER_NAME, _DET_PARSER_VERSION
+        if os.environ.get(_DIAG_ENV) == "1":
+            return _DET_PARSER_NAME, _DET_PARSER_VERSION
+        return "none", "predicate-v2-no-parse"
     return _PARSER_NAME, _PARSER_MODEL
 
 
@@ -96,7 +100,12 @@ def parse_sentence(text: str) -> Optional[dict]:
         nlp = None
 
     if nlp is None:
-        # Q1-R deterministic fallback: agent/purpose passives only.
+        # PREDICATE-COMPILER-V2 (owner decision: regex passive fallback is
+        # REMOVE_FROM_PRODUCTION). A parser failure reduces recall; it
+        # never fabricates structure. The frozen regex parser survives
+        # only behind the diagnostic flag for offline analysis.
+        if os.environ.get(_DIAG_ENV) != "1":
+            return None
         match = _PASSIVE_BY_RE.match(text.strip())
         if match:
             return _passive_record(match.group(1), match.group(2), match.group(3))

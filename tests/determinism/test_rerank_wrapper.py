@@ -90,3 +90,62 @@ def test_unavailable_reranker_is_loud(monkeypatch) -> None:
     with pytest.raises(RerankUnavailable):
         apply_rerank("q", [{"doc_id": "a", "semantic_summary": "x"}], [],
                      client_factory=boom)
+
+
+class CountingClient(FakeClient):
+    """Records batch sizes so RERANK-BATCHING-V1 is observable."""
+
+    def __init__(self, scorer) -> None:
+        super().__init__(scorer)
+        self.batch_sizes: list[int] = []
+
+    def rerank(self, query, documents, top_k=None):
+        self.batch_sizes.append(len(documents))
+        return super().rerank(query, documents, top_k)
+
+
+def test_rerank_batches_large_candidate_sets() -> None:
+    """RERANK-BATCHING-V1: one sidecar call per RERANK_BATCH_SIZE
+    surfaces (a single 40-candidate book batch blew the sidecar's MPS
+    pool — measured 2026-08-26). Scores are per-pair, so the merged
+    global order is IDENTICAL to the unbatched order; nothing is added
+    or dropped."""
+    from polymath_shared.rerank import RERANK_BATCH_SIZE
+
+    children = [
+        {"chunk_id": f"c{i:02d}", "text": f"vector {'retrieval ' * (i % 7)}x"}
+        for i in range(40)
+    ]
+    counting = CountingClient(_scorer)
+    _, rc = rerank_fused("vector retrieval", [], children, client=counting)
+
+    assert len(rc) == 40
+    assert {c["chunk_id"] for c in rc} == {c["chunk_id"] for c in children}
+    assert all(s <= RERANK_BATCH_SIZE for s in counting.batch_sizes)
+    assert len(counting.batch_sizes) == (40 + RERANK_BATCH_SIZE - 1) // RERANK_BATCH_SIZE
+
+    # order identical to a single-call client (score-identical batching)
+    _, rc_single = rerank_fused("vector retrieval", [], children,
+                                client=FakeClient(_scorer))
+    assert [c["chunk_id"] for c in rc] == [c["chunk_id"] for c in rc_single]
+
+
+def test_rerank_bounds_scoring_surface_length() -> None:
+    """A pathological 77k-char chunk padded the whole sidecar batch to
+    ~19k tokens and OOM'd the MPS pool at any batch size (measured
+    2026-08-26). Scoring surfaces are bounded; the CANDIDATE text is
+    never altered."""
+    from polymath_shared.rerank import RERANK_MAX_SURFACE_CHARS
+
+    class LengthAssertingClient(FakeClient):
+        def rerank(self, query, documents, top_k=None):
+            assert all(len(d) <= RERANK_MAX_SURFACE_CHARS for d in documents)
+            return super().rerank(query, documents, top_k)
+
+    huge = "retrieval " * 20000  # ~200k chars
+    children = [{"chunk_id": "big", "text": huge},
+                {"chunk_id": "small", "text": "vector retrieval"}]
+    _, rc = rerank_fused("vector retrieval", [], children,
+                         client=LengthAssertingClient(_scorer))
+    by_id = {c["chunk_id"]: c for c in rc}
+    assert by_id["big"]["text"] == huge  # candidate untouched

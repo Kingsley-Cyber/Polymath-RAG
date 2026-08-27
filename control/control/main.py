@@ -22,7 +22,7 @@ import psycopg
 from polymath_shared.db import tx
 from polymath_shared.logging import configure_logging
 from polymath_shared.settings import get_settings
-from control.census import compute_census
+from control.census import compute_census, pop_census_timing
 from control.heartbeat import acquire_lease, record_heartbeat, renew_lease
 from control.scheduler import apply_failures, apply_promotions, schedule_gaps
 
@@ -44,27 +44,58 @@ def tick() -> dict:
         from control import tickets as cp2_tickets
         from control.worker_supervisor import sweep as supervise
 
-        ensured = _ensure_tickets_backpressure_gated(conn)
-        advanced = cp2_tickets.advance_tickets(conn)
-        supervised = supervise(conn)
+        # TICK-PHASE-TIMING-V1: every phase is measured, not guessed.
+        import time as _t
+        phase_ms: dict[str, float] = {}
+
+        def _phase(name, fn, *a, **k):
+            _s = _t.perf_counter()
+            out = fn(*a, **k)
+            phase_ms[name] = round((_t.perf_counter() - _s) * 1000, 1)
+            return out
+
+        # STEP 1c (addendum 5e): reconcile contract drift BEFORE ticket
+        # creation, so stranded pre-upgrade runs mint successors under
+        # the CURRENT contract instead of freezing forever. Zero
+        # deletion; lineage columns record the supersession.
+        from control.reconciliation import reconcile_contract_drift
+        reconciled = _phase("reconcile", reconcile_contract_drift, conn)
+
+        ensured = _phase("ensure_tickets", _ensure_tickets_backpressure_gated,
+                         conn)
+        advanced = _phase("advance_tickets", cp2_tickets.advance_tickets, conn)
+        supervised = _phase("supervise", supervise, conn)
         census = compute_census(conn, max_attempts=settings.control.max_attempts)
+        _ct = pop_census_timing() or {}
+        phase_ms["census_total"] = _ct.get("census_total_ms", 0.0)
+        phase_ms["census_runs_query"] = _ct.get("runs_query_ms")
+        phase_ms["census_dirty_select"] = _ct.get("dirty_select_ms")
+        phase_ms["census_attempts_fetch"] = _ct.get("attempts_fetch_ms")
+        phase_ms["census_python_loop"] = _ct.get("python_loop_ms")
+        phase_ms["census_receipt_checks"] = _ct.get("receipt_checks_ms")
         # The legacy scheduler still drives FAILED-stage retries (its
         # events are idempotent against ticket events by content hash).
-        scheduled = schedule_gaps(conn, census)
-        barrier = _barrier_or_none(conn, census)
-        if barrier is None:
-            apply_promotions(conn, census)
+        scheduled = _phase("schedule_gaps", schedule_gaps, conn, census)
+        # BARRIER-V2: evaluate open barriers ONCE (the previous shape
+        # computed the per-corpus barrier set twice — once for the
+        # verdict and again inside the blocked branch; measured 3.8-4.8s
+        # of every tick in duplicate anti-joins).
+        _s = _t.perf_counter()
+        blocked = _corpora_with_open_barriers(conn, census)
+        if not blocked:
+            _phase("apply_promotions", apply_promotions, conn, census)
         else:
             # Per-corpus barrier: a blocked corpus must not freeze
             # promotion for healthy corpora — promote everything whose
             # own corpus passes the generation barrier.
-            blocked = _corpora_with_open_barriers(conn, census)
             promoted = [r for r in census.promote
                         if _corpus_of_run(conn, r) not in blocked]
             if len(promoted) != len(census.promote):
                 census = census.__class__(gaps=census.gaps, promote=promoted, fail=census.fail)
             apply_promotions(conn, census)
-        apply_failures(conn, census)
+        phase_ms["barrier_promotions"] = round(
+            (_t.perf_counter() - _s) * 1000, 1)
+        _phase("apply_failures", apply_failures, conn, census)
         record_heartbeat(conn, owner, tick_ok=True, census_size=len(census.gaps))
         return {
             "tick": "ok",
@@ -73,35 +104,22 @@ def tick() -> dict:
             "scheduled": scheduled,
             "promoted": len(census.promote),
             "failed": len(census.fail),
+            "reconciled": len(reconciled.get("reconciled", {})),
+            "phase_ms": {k: v for k, v in phase_ms.items() if v is not None},
         }
 
 
 def _ensure_tickets_backpressure_gated(conn) -> int:
-    """Create ticket chains for active runs that lack them; pause NEW
-    chains while a downstream stage's queue is at the high watermark
-    (backpressure — existing chains always complete)."""
-    from control.tickets import (
-        backpressure_paused,
-        ensure_run_tickets,
-    )
-    from polymath_shared.execution import default_execution_contract
+    """D7-5d: creation fairness + sticky hysteresis.
 
-    if backpressure_paused(conn):
-        return 0
-    rows = conn.execute(
-        """
-        SELECT r.run_id, r.corpus_id FROM runs r
-        WHERE r.status IN ('intake', 'reconciling', 'degraded')
-          AND NOT EXISTS (SELECT 1 FROM stage_tickets t WHERE t.run_id = r.run_id)
-        ORDER BY r.created_at LIMIT 32
-        """
-    ).fetchall()
-    ensured = 0
-    for run_id, corpus_id in rows:
-        ensured += len(ensure_run_tickets(
-            conn, run_id, corpus_id, default_execution_contract()))
-    return ensured
+    Per-corpus runtime state gates NEW ticket chains: pause enters at
+    >= watermark and resumes only at <= watermark/2. The creation
+    window is distributed round-robin across ELIGIBLE corpora
+    (last_creation_tick NULLS FIRST), so a saturated corpus can never
+    fill the window."""
+    from control.tickets import fair_ensure_tickets_backpressure_gated
 
+    return fair_ensure_tickets_backpressure_gated(conn, window=32)
 
 def _barrier_or_none(conn, census) -> dict | None:
     """Generation barrier (ADR-0014): block promotion of any corpus whose
@@ -117,9 +135,16 @@ def _corpora_with_open_barriers(conn, census) -> dict:
     corpora = {gap.corpus_id for gap in census.gaps} | {
         _corpus_of_run(conn, r) for r in census.promote
     }
+    # TICK-CACHE-V1: the global completeness anti-joins run once per
+    # tick and are shared by every per-corpus barrier verdict.
+    from control.tickets import _corpora_with_missing_chunk_receipts
+    missing_by_projection = {
+        p: _corpora_with_missing_chunk_receipts(conn, p)
+        for p in ("qdrant", "neo4j")}
     blocked = {}
     for corpus_id in sorted(corpora):
-        verdict = generation_barrier(conn, corpus_id)
+        verdict = generation_barrier(conn, corpus_id,
+                                     missing_by_projection)
         if not verdict["passed"]:
             blocked[corpus_id] = verdict
     return blocked
@@ -136,7 +161,32 @@ def run_forever() -> None:
     while True:
         started = time.monotonic()
         try:
+            import time as _perf, json as _json
+            _t0 = _perf.perf_counter()
             result = tick()
+            log.info('tick completed', extra={
+                'error_code': 'TICK-PHASE-TIMING-V1',
+                'duration_ms': round((_perf.perf_counter()-_t0)*1000, 1),
+                'detail': _json.dumps({
+                    'tick_result': str(result.get('tick')),
+                    'reason': str(result.get('reason'))[:40],
+                    'gaps': result.get('gaps'),
+                    'phase_ms': result.get('phase_ms')})})
+            # TICK-PHASE-TIMING-V1: the shared logger whitelists fields,
+            # so phase tables land in a sidecar JSONL instead.
+            try:
+                if isinstance(result.get("phase_ms"), dict):
+                    import json as _j2
+                    with open("/tmp/polymath_fleet/tick_phases.jsonl",
+                              "a") as _fh:
+                        _fh.write(_j2.dumps({
+                            "ts": _perf.perf_counter(),
+                            "duration_ms": round(
+                                (_perf.perf_counter()-_t0)*1000, 1),
+                            "phase_ms": result["phase_ms"],
+                        }) + "\n")
+            except Exception:
+                pass
             if result.get("tick") == "ok":
                 log.info("control tick", extra={
                     "stage": "control",

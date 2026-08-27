@@ -1,0 +1,19 @@
+{
+ "verdict": "CAPACITY_STOP",
+ "detail": "available memory below 34.0% for 3 consecutive minutes",
+ "checkpoint_before": 14497,
+ "checkpoint_after": 16033,
+ "resumed": true,
+ "rows_added": 1536,
+ "elapsed_min": 13.0,
+ "lease_faults": 0,
+ "blocked_queries": 0,
+ "query_ready": 0,
+ "tickets": {
+  "leased": 1,
+  "failed": 24,
+  "pending": 100,
+  "ready": 24,
+  "done": 75
+ }
+}
