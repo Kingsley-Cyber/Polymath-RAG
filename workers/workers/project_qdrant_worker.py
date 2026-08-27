@@ -183,6 +183,46 @@ def _upsert_batched(client: QdrantClient, collection: str, points: list) -> None
                       points=points[i:i + UPSERT_BATCH], wait=True)
 
 
+def _write_points_checkpointed(client: QdrantClient, collection: str,
+                               chunks: list[dict], contract,
+                               checkpoint_every: int = 64) -> None:
+    """CHUNK-LANE-CHECKPOINT-V1: embed/upsert/checkpoint in bounded
+    slices so worker death forfeits at most one slice, not the book.
+
+    Same shape as _write_routing_points (the routing lane received this
+    fix first, after the documented 1,705-wasted-embeds incident); the
+    chunk lane had remained all-or-nothing: receipts only at ticket
+    settlement, so every restart re-embedded everything. 64 reps at the
+    measured ~1.1 texts/s bounds replay to ~1 minute while the
+    checkpoint transaction itself costs milliseconds."""
+    for start in range(0, len(chunks), checkpoint_every):
+        slice_chunks = chunks[start:start + checkpoint_every]
+        _write_points(client, collection, slice_chunks, contract)
+        _checkpoint_chunks(slice_chunks, contract)
+
+
+def _checkpoint_chunks(chunks: list[dict], contract) -> None:
+    """Durably record a completed chunk slice, independent of the stage
+    tx (points in Qdrant already survive a rollback; the receipt records
+    that fact so _already_current can skip them on retry)."""
+    try:
+        with tx() as conn:
+            for c in chunks:
+                record_projection_attempt(
+                    conn,
+                    projection=PROJECTION_QDRANT,
+                    entity_kind=KIND_CHUNK,
+                    entity_id=c["chunk_id"],
+                    receipt_hash=receipt_hash(
+                        PROJECTION_QDRANT, KIND_CHUNK, c["chunk_id"],
+                        CONTRACT_VERSION),
+                    contract=contract.contract_id,
+                )
+    except Exception:
+        log.warning("chunk checkpoint failed; progress will be re-done",
+                    extra={"error_code": "checkpoint_failed"})
+
+
 def _write_points(client: QdrantClient, collection: str, chunks: list[dict], contract) -> None:
     vectors = _embed_texts(contract, [chunk["text"] for chunk in chunks])
     points = [
@@ -469,6 +509,27 @@ def process_event(conn: Connection, event: dict) -> None:
             "embedding_contract": contract.contract_id,
         })
 
+        # CHUNK-LANE-INCREMENTAL-V1: drop chunks whose ACTIVE receipt
+        # already matches this exact projection. _chunks_for_run selects
+        # by CORPUS, so without this filter every ticket re-embeds every
+        # corpus chunk (measured: 12 tickets x 8,351 chunks scheduled
+        # ~100k embeddings where ~8.4k were needed). The routing lane
+        # has carried the identical guard since the 19,016-chunk
+        # incident; this closes the same defect in the chunk lane.
+        if chunks:
+            _wanted_chunks = [
+                (KIND_CHUNK, c["chunk_id"],
+                 receipt_hash(PROJECTION_QDRANT, KIND_CHUNK, c["chunk_id"],
+                              CONTRACT_VERSION))
+                for c in chunks]
+            _current_chunks = _already_current(conn, _wanted_chunks)
+            _chunk_total = len(chunks)
+            chunks = [c for c in chunks
+                      if (KIND_CHUNK, c["chunk_id"]) not in _current_chunks]
+            if len(chunks) != _chunk_total:
+                log.info("chunk projection incremental",
+                         extra={"run_id": run_id, "stage": STAGE,
+                                "error_code": None})
         if chunks:
             client = QdrantClient(url=get_settings().stores.qdrant_url,
                                   timeout=QDRANT_TIMEOUT_S)
@@ -476,7 +537,7 @@ def process_event(conn: Connection, event: dict) -> None:
                 corpus_id = corpus_id or chunks[0]["corpus_id"]
                 collection = qdrant_collection_name(corpus_id, contract.contract_id)
                 _ensure_collection(client, collection, contract.dimension)
-                _write_points(client, collection, chunks, contract)
+                _write_points_checkpointed(client, collection, chunks, contract)
             finally:
                 client.close()
             for chunk in chunks:
