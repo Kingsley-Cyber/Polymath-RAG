@@ -63,17 +63,26 @@ _last_demand: dict[str, float] = {}
 
 
 def _open_work(conn, stages: tuple[str, ...]) -> int:
-    """ACTIONABLE work only (AUTOPILOT-WORKLOAD-HYGIENE-V1): what the
-    workers could legitimately claim — open ticket AND open parent run
-    AND existing corpus. Historical/test/deleted-corpus debris must
-    never wake expensive fleet resources; the first activation measured
-    216 zombie tickets doing exactly that."""
+    """ACTIONABLE work only (AUTOPILOT-WORKLOAD-HYGIENE-V1): open ticket
+    AND open parent run AND existing corpus. Historical/test/deleted-
+    corpus debris must never wake expensive fleet resources; the first
+    activation measured 216 zombie tickets doing exactly that — the
+    debris exclusion lives in the JOINs and the run-status filter.
+
+    PENDING counts as demand (STALL-2026-08-27). Narrowing this to
+    ready/leased froze the fleet: a lane whose only work was pending
+    attracted zero workers, so when the scheduler's barrier finally
+    opened there was nobody to claim — and a wedged worker holding one
+    lease satisfied its lane's demand for hours. A pending ticket of an
+    open run in an existing corpus IS future work; the cost of keeping
+    the lane warm is idle residency, the cost of parking it is a frozen
+    pipeline."""
     return conn.execute(
         """SELECT COUNT(*) FROM stage_tickets st
             JOIN runs r ON r.run_id = st.run_id
             JOIN corpora c ON c.corpus_id = st.corpus_id
             WHERE st.stage = ANY(%s) AND st.archived_at IS NULL
-              AND st.status IN ('ready', 'leased')
+              AND st.status IN ('pending', 'ready', 'leased')
               AND r.status IN ('intake', 'reconciling', 'degraded')""",
         (list(stages),)).fetchone()[0]
 
@@ -85,6 +94,14 @@ def _last_query_age_s(conn) -> float | None:
     row = conn.execute(
         "SELECT EXTRACT(EPOCH FROM now() - updated_at) "
         "FROM runtime_signals WHERE key = 'last_query'").fetchone()
+    return float(row[0]) if row else None
+
+
+def _last_ui_age_s(conn) -> float | None:
+    """Age of the frontend presence pulse (GET /ui_pulse)."""
+    row = conn.execute(
+        "SELECT EXTRACT(EPOCH FROM now() - updated_at) "
+        "FROM runtime_signals WHERE key = 'ui_active'").fetchone()
     return float(row[0]) if row else None
 
 
@@ -114,6 +131,23 @@ def desired_slots(conn, known_slots: set[str]) -> tuple[set[str], dict]:
         if not extract_demand and "sidecar_gliner" not in desired:
             desired.add("sidecar_reranker")
             reasons["sidecar_reranker"] = f"query {qage:.0f}s ago"
+
+    # UI-PRESENCE-WARMTH (2026-08-27): the frontend pulses /ui_pulse
+    # while the tab is open, and an open app means a query is coming —
+    # keep the retrieval models resident so the session's FIRST query
+    # is fast, not only the ones inside the post-query grace window.
+    # The reranker joins under the SAME memory guard as the query-grace
+    # path (never beside GLiNER — they cannot coexist inside the
+    # ceiling; the budget gate below also drops it first when over):
+    # without it, the first HYBRID/FAST query of a session failed typed
+    # `rerank_unavailable` on a parked sidecar (measured 2026-08-27).
+    uiage = _last_ui_age_s(conn)
+    if uiage is not None and uiage < QUERY_GRACE_S:
+        desired.add("sidecar_embedder")
+        reasons.setdefault("sidecar_embedder", f"ui open {uiage:.0f}s ago")
+        if not extract_demand and "sidecar_gliner" not in desired:
+            desired.add("sidecar_reranker")
+            reasons.setdefault("sidecar_reranker", f"ui open {uiage:.0f}s ago")
 
     desired &= known_slots | ALWAYS
 

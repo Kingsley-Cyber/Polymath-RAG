@@ -1,24 +1,35 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Phase } from "../types";
 
 /** Agent-zero-style reasoning trail: phase lines fade in as the engine
  * reports them; the active line carries a spinner; the trail
- * auto-collapses when the answer lands but stays reviewable. */
+ * auto-collapses when the answer lands but stays reviewable. When the
+ * model emits thinking tokens they stream live into a reasoning pane
+ * below the phase lines — the wait reads as work, not silence. */
 export default function PhaseStream({
   phases,
   live,
+  reasoning,
 }: {
   phases: Phase[];
   live: boolean;
+  reasoning?: string;
 }) {
   const [open, setOpen] = useState(true);
+  const paneRef = useRef<HTMLDivElement | null>(null);
 
   // Mirror the old chat behavior: collapse once the answer starts.
   useEffect(() => {
     if (!live) setOpen(false);
   }, [live]);
 
-  if (phases.length === 0 && !live) return null;
+  // Follow the thinking stream while live.
+  useEffect(() => {
+    if (live && paneRef.current)
+      paneRef.current.scrollTop = paneRef.current.scrollHeight;
+  }, [live, reasoning]);
+
+  if (phases.length === 0 && !live && !reasoning) return null;
 
   return (
     <div className="phases">
@@ -40,6 +51,12 @@ export default function PhaseStream({
           </>
         )}
       </div>
+      {(live || open) && reasoning && (
+        <div className="reasoning-pane" ref={paneRef}>
+          {reasoning}
+          {live && <span className="cursor">▍</span>}
+        </div>
+      )}
       {open && (
         <div>
           {phases.map((p, i) => {

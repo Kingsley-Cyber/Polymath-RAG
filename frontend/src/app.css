@@ -277,3 +277,59 @@ select, input, textarea { font: inherit; color: var(--text); }
   font-size: 12px; line-height: 1.5; white-space: pre;
   color: var(--text);
 }
+
+/* Rendered markdown inside LLM answer bubbles */
+.bubble .md { line-height: 1.65; }
+.bubble .md > *:first-child { margin-top: 0; }
+.bubble .md > *:last-child { margin-bottom: 0; }
+.bubble .md p { margin: 0 0 10px; }
+.bubble .md h1, .bubble .md h2, .bubble .md h3, .bubble .md h4 {
+  margin: 14px 0 6px; line-height: 1.3; color: var(--text);
+}
+.bubble .md h1 { font-size: 17px; }
+.bubble .md h2 { font-size: 15px; }
+.bubble .md h3, .bubble .md h4 { font-size: 13.5px; }
+.bubble .md ul, .bubble .md ol { margin: 0 0 10px; padding-left: 22px; }
+.bubble .md li { margin: 3px 0; }
+.bubble .md code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.92em; background: var(--bg-3);
+  padding: 1px 5px; border-radius: 4px;
+}
+.bubble .md blockquote {
+  margin: 0 0 10px; padding: 4px 12px;
+  border-left: 3px solid var(--accent); background: var(--bg-2);
+}
+.bubble .md table {
+  border-collapse: collapse; margin: 0 0 10px; display: block;
+  max-width: 100%; overflow-x: auto; font-size: 12.5px;
+}
+.bubble .md th, .bubble .md td {
+  border: 1px solid var(--border); padding: 4px 9px; text-align: left;
+}
+.bubble .md th { background: var(--bg-3); }
+.bubble .md hr { border: 0; border-top: 1px solid var(--border); margin: 12px 0; }
+
+/* Live model-thinking stream inside the reasoning trail */
+.reasoning-pane {
+  margin: 6px 0 4px; padding: 8px 10px;
+  max-height: 180px; overflow-y: auto;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11.5px; line-height: 1.55;
+  color: var(--text-dim, var(--text));
+  opacity: 0.75;
+  background: var(--bg-2);
+  border-left: 2px solid var(--border);
+  border-radius: 4px;
+  white-space: pre-wrap; word-break: break-word;
+}
+
+/* A lane that degraded rather than failing the query */
+.degraded-note {
+  margin-top: 8px; padding: 6px 10px;
+  font-size: 11.5px; line-height: 1.5;
+  color: var(--text); opacity: 0.8;
+  background: var(--bg-2);
+  border-left: 2px solid var(--accent);
+  border-radius: 4px;
+}

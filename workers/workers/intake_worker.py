@@ -135,6 +135,40 @@ def process_event(conn: Connection, event: dict) -> None:
                 f"Query the owning corpus, or archive/restore it — never "
                 f"a silent empty ingest.")
 
+        # DUPLICATE-DOCUMENT-GUARD-V1 layer 2 (format-independent):
+        # the SAME corpus already holds this document — either the same
+        # normalized bytes (doc_id is content-addressed) or the same
+        # extracted text under a different container format
+        # (materialization.normalized_text_sha256). Re-ingesting used
+        # to hit ON CONFLICT DO NOTHING and mint a run over the
+        # existing document — silent success the user read as a second
+        # copy. A duplicate is a typed, loud refusal that names the
+        # existing document.
+        #
+        # REPLAY EXEMPTION (measured on first activation): intake
+        # replays are a designed property — a redelivered event re-runs
+        # this stage and must land on the same rows as a no-op. The
+        # run's OWN document (same doc_id AND same source_name) is
+        # therefore never a duplicate; without this exemption the
+        # guard failed every replayed intake against its own first
+        # attempt (3 retries -> terminal failure on a healthy ingest).
+        dup = conn.execute(
+            """SELECT source_name FROM documents
+                WHERE corpus_id = %s
+                  AND (doc_id = %s OR
+                       materialization->>'normalized_text_sha256' = %s)
+                  AND NOT (doc_id = %s AND source_name = %s)
+                LIMIT 1""",
+            (corpus_id, doc_id, materialization.normalized_text_sha256,
+             doc_id, source_name),
+        ).fetchone()
+        if dup:
+            raise RuntimeError(
+                f"DUPLICATE_DOCUMENT: {source_name!r} has the same content "
+                f"as {dup[0]!r}, already in corpus {corpus_id!r} (matched "
+                f"by normalized text, independent of file format); ingest "
+                f"refused so the corpus keeps one copy.")
+
         conn.execute(
             """
             INSERT INTO corpora (corpus_id, name, config_hash, profile,

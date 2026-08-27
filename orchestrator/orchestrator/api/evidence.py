@@ -183,17 +183,20 @@ async def evidence(req: EvidenceRequest) -> dict:
     )
 
     # G3 candidate: rerank the fused candidates feeding the bundle.
+    # NEVER-ERROR-ON-A-COLD-MODEL: an unreachable reranker degrades to
+    # fusion order (same candidate set, same recall) instead of
+    # failing an answer the user is waiting on.
     from polymath_shared.rerank import RerankUnavailable, apply_rerank
+
+    from orchestrator.api.fast import _RERANK_DEGRADED
 
     try:
         _reranked_documents, selected_children = apply_rerank(
             query, result.selected_documents, result.selected_children,
         )
     except RerankUnavailable as exc:
-        raise HTTPException(status_code=502, detail={
-            "error_code": "rerank_unavailable",
-            "message": str(exc),
-        }) from exc
+        _RERANK_DEGRADED.set(str(exc)[:300])
+        selected_children = result.selected_children
 
     try:
         _evidence_order = None

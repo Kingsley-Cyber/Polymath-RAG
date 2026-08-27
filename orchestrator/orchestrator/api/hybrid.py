@@ -25,10 +25,12 @@ from polymath_shared.retrieval_modes import MODE_HYBRID, hybrid_mode_plan
 from polymath_shared.settings import get_settings
 
 from orchestrator.api.fast import (
+    _begin_retrieval,
     _embed_query,
     _ensure_fast_ready,
     _rerank_children,
     _corpus_collections,
+    degradations,
     FastSearcher,
 )
 
@@ -69,6 +71,7 @@ def hybrid_fast_retrieve(
     plan: Optional[HybridRetrievalPlan] = None,
 ) -> dict:
     """Production HYBRID: one qualified hybrid execution."""
+    _begin_retrieval()
     plan = plan or hybrid_mode_plan(MODE_HYBRID)
     if corpus_id is None:
         raise HTTPException(status_code=422, detail={
@@ -118,6 +121,7 @@ def hybrid_fast_retrieve(
             "selected_document_count": len(result.selected_documents),
             "selected_section_count": len(result.selected_sections),
             "evidence_count": len(result.final_evidence),
+            "degraded": degradations(),
         },
         "selected_documents": [
             {

@@ -41,6 +41,57 @@ class RerankUnavailable(RuntimeError):
     """The reranker sidecar could not be reached (caller degrades)."""
 
 
+def _slot_alive(name: str) -> bool | None:
+    """Best-effort read of the supervisor's slot state; None if unknown."""
+    import json
+    import os
+
+    path = os.environ.get("POLYMATH_FLEET_STATE",
+                          "/tmp/polymath_fleet/supervisor_state.json")
+    try:
+        with open(path) as fh:
+            for slot in json.load(fh).get("slots", []):
+                if slot.get("name") == name:
+                    return bool(slot.get("alive"))
+    except Exception:
+        return None
+    return None
+
+
+def _await_reranker(client) -> None:
+    """WAKE-ON-QUERY for the reranker (2026-08-27). The autopilot parks
+    the reranker when demand ends, and its measured cold start is
+    ~60 s — the first query after idle found a dead socket and failed
+    typed (`rerank_unavailable ... Connection refused`) while the query
+    itself was the wake trigger. Block for the wake: autopilot
+    reconcile ≤15 s + ~60 s cold start fits the 90 s budget.
+
+    NO POINTLESS WAITING: the reranker and GLiNER cannot coexist inside
+    the memory ceiling, so while extraction is running the autopilot
+    will NEVER wake the reranker. Waiting the full budget there buys a
+    slower path to the same degraded answer — so when GLiNER holds the
+    ceiling and the reranker is parked, return immediately and let the
+    caller degrade to fusion order."""
+    import os
+    import time
+
+    if client.ready():
+        return
+    if _slot_alive("sidecar_reranker") is False and _slot_alive("sidecar_gliner"):
+        # Extraction owns the ceiling; no wake is coming. Skip both the
+        # budget AND the client's own retry backoff — the caller
+        # degrades to fusion order either way.
+        raise RerankUnavailable(
+            "reranker parked while extraction holds the memory ceiling; "
+            "no wake is scheduled")
+    budget = float(os.environ.get("POLYMATH_RERANK_WAKE_BUDGET_S", "90"))
+    deadline = time.monotonic() + budget
+    while time.monotonic() < deadline:
+        time.sleep(2.0)
+        if client.ready():
+            return
+
+
 def _batched_scores(client, query: str, surfaces: list[str]) -> dict:
     """Score all surfaces in bounded batches; merge into one response
     shape (order recomputed globally, deterministic)."""
@@ -130,9 +181,13 @@ def apply_rerank(
     client = None
     try:
         client = client_factory() if client_factory else RerankerClient()
+        if client_factory is None:
+            _await_reranker(client)
         return rerank_fused(
             query, selected_documents, selected_children, client=client,
         )
+    except RerankUnavailable:
+        raise  # already typed and messaged (e.g. the no-wake shortcut)
     except Exception as exc:
         # Carry the MESSAGE, not just the type. `reranker unavailable:
         # AttributeError` was the only symptom of a client that could not

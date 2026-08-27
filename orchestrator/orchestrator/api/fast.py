@@ -14,7 +14,10 @@ Failure semantics (existing conventions):
 """
 from __future__ import annotations
 
+import logging
+import os
 import time
+from contextvars import ContextVar
 from typing import Optional
 
 import httpx
@@ -30,6 +33,8 @@ from polymath_shared.projection_contracts import qdrant_collection_name
 from polymath_shared.rerank import RerankUnavailable, apply_rerank
 from polymath_shared.retrieval_modes import MODE_FAST, mode_plan
 from polymath_shared.settings import get_settings
+
+log = logging.getLogger("orchestrator-retrieval")
 
 
 def _fail(detail: dict, status_code: int = 502) -> HTTPException:
@@ -121,11 +126,41 @@ def _ensure_fast_ready(corpus_id: str) -> None:
         client.close()
 
 
+#: WAKE-ON-QUERY (2026-08-27). The autopilot parks the embedder when
+#: ingest demand ends, so the FIRST query after an idle period found a
+#: dead socket and failed typed (`embedder_unavailable`) — while that
+#: very request's activity signal was what told the autopilot to wake
+#: the sidecar. Budget: the signal lands before the handler runs
+#: (orchestrator.main middleware), the supervisor reconciles within
+#: 15 s, and the measured embedder cold start is ~20 s.
+#:
+#: The embedder is a HARD dependency — no vector, no retrieval — so it
+#: cannot degrade like the reranker: the only correct behaviour is to
+#: wait. The budget is deliberately generous (owner rule: waiting on a
+#: cold model is fine, erroring is not) and env-tunable; a genuinely
+#: dead sidecar still fails typed when it expires.
+EMBED_WAKE_BUDGET_S = float(
+    os.environ.get("POLYMATH_EMBED_WAKE_BUDGET_S", "150"))
+
+
+def _await_embedder(client) -> None:
+    """Block briefly while the autopilot wakes a parked embedder; on
+    budget expiry fall through so the embed call fails typed."""
+    if client.ready():
+        return
+    deadline = time.monotonic() + EMBED_WAKE_BUDGET_S
+    while time.monotonic() < deadline:
+        time.sleep(2.0)
+        if client.ready():
+            return
+
+
 def _embed_query(query: str) -> list[float]:
     from polymath_shared.clients import EmbedderClient
 
     client = EmbedderClient()
     try:
+        _await_embedder(client)
         client.verify_pin()
         return client.embed([query], "query")["vectors"][0]
     except Exception as exc:
@@ -137,15 +172,47 @@ def _embed_query(query: str) -> list[float]:
         client.close()
 
 
+#: NEVER-ERROR-ON-A-COLD-MODEL (2026-08-27, owner rule): an idle-parked
+#: model must cost the user WAITING, never a failed query. `_embed_query`
+#: waits for the embedder because a vector is a hard dependency — no
+#: vector, no retrieval. Reranking is different: it only REORDERS what
+#: RRF fusion already produced (it can neither add nor drop candidates),
+#: so fusion order is a complete, correct answer. When the reranker
+#: cannot be reached even after the wake budget — the real case is
+#: active ingest, where GLiNER holds the memory ceiling and the
+#: autopilot deliberately refuses to wake the reranker at all — the
+#: lane DEGRADES to fusion order and says so in meta.degraded, instead
+#: of throwing `rerank_unavailable` at someone who just asked a
+#: question.
+_RERANK_DEGRADED: "ContextVar[str | None]" = ContextVar(
+    "rerank_degraded", default=None)
+
+
+def _begin_retrieval() -> None:
+    """Reset per-request degradation state (call once per retrieve)."""
+    _RERANK_DEGRADED.set(None)
+
+
+def degradations() -> list[dict]:
+    """Degradations recorded for the current request, for meta."""
+    note = _RERANK_DEGRADED.get()
+    return [] if not note else [{
+        "component": "reranker",
+        "effect": "results ordered by RRF fusion (no cross-encoder rerank); "
+                  "same candidate set, same recall",
+        "reason": note,
+    }]
+
+
 def _rerank_children(query: str, children: list[dict]) -> list[dict]:
     try:
         _, reranked = apply_rerank(query, [], children)
         return reranked
     except RerankUnavailable as exc:
-        raise _fail({
-            "error_code": "rerank_unavailable",
-            "message": str(exc),
-        }) from exc
+        _RERANK_DEGRADED.set(str(exc)[:300])
+        log.warning("reranker unavailable; degrading to fusion order",
+                    extra={"error_code": "rerank_degraded"})
+        return children
 
 
 def fast_retrieve(
@@ -155,6 +222,7 @@ def fast_retrieve(
 ) -> dict:
     """Production FAST: one qualified Pass-1 execution with explicit
     readiness, corpus filtering, and a hierarchical trace."""
+    _begin_retrieval()
     plan = plan or mode_plan(MODE_FAST)
     if corpus_id is None:
         raise _fail({
@@ -201,6 +269,7 @@ def fast_retrieve(
             "selected_document_count": len(result.selected_documents),
             "selected_section_count": len(result.selected_sections),
             "evidence_count": len(result.final_evidence),
+            "degraded": degradations(),
         },
         "selected_documents": [
             {

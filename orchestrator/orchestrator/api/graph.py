@@ -36,10 +36,12 @@ from polymath_shared.retrieval_modes import (
 from polymath_shared.settings import get_settings
 
 from orchestrator.api.fast import (
+    _begin_retrieval,
     _embed_query,
     _ensure_fast_ready,
     _rerank_children,
     _corpus_collections,
+    degradations,
     FastSearcher,
 )
 from orchestrator.api.hybrid import _lexical_search
@@ -63,6 +65,7 @@ def _selected_surfaces(query: str, evidence: list[dict]) -> list[str]:
 
 def graph_retrieve(query: str, corpus_id: str) -> dict:
     """Production GRAPH: one promoted HYBRID Pass-1 + qualified hop1."""
+    _begin_retrieval()
     if corpus_id is None:
         raise HTTPException(status_code=422, detail={
             "error_code": "corpus_required",
@@ -179,6 +182,7 @@ def graph_retrieve(query: str, corpus_id: str) -> dict:
             "document_count": len(documents),
             "evidence_count": len(evidence),
             "graph_fact_count": len(graph_facts),
+            "degraded": degradations(),
         },
         "documents": documents,
         "unassigned_rescue_evidence": [

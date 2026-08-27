@@ -184,18 +184,21 @@ async def retrieve(req: RetrieveRequest) -> dict:
 
     # G3 candidate: cross-representation reranking over the FUSED views
     # only (per-lane ablations stay untouched). Enabled via
-    # POLYMATH_G3_RERANKER=1; unavailable rerankers fail loudly.
+    # POLYMATH_G3_RERANKER=1. NEVER-ERROR-ON-A-COLD-MODEL: an
+    # unreachable reranker degrades to fusion order (same candidates,
+    # same recall — it only reorders) rather than failing the query.
     from polymath_shared.rerank import RerankUnavailable, apply_rerank
+
+    from orchestrator.api.fast import _RERANK_DEGRADED
 
     try:
         selected_documents, selected_children = apply_rerank(
             query, result.selected_documents, result.selected_children,
         )
     except RerankUnavailable as exc:
-        raise HTTPException(status_code=502, detail={
-            "error_code": "rerank_unavailable",
-            "message": str(exc),
-        }) from exc
+        _RERANK_DEGRADED.set(str(exc)[:300])
+        selected_documents = result.selected_documents
+        selected_children = result.selected_children
 
     def _hit(h) -> dict:
         return {
@@ -296,8 +299,13 @@ def _qdrant_search(query: str, corpus_ids: list[str], limit: int) -> list[dict]:
         else:
             from polymath_shared.clients import EmbedderClient
 
+            from orchestrator.api.fast import _await_embedder
+
             embedder = EmbedderClient()
             try:
+                # WAKE-ON-QUERY: give the autopilot time to start a
+                # parked embedder before the call fails typed.
+                _await_embedder(embedder)
                 vector = embedder.embed([query], "query")["vectors"][0]
             finally:
                 embedder.close()

@@ -450,6 +450,7 @@ def _emit_ticket_event(conn: Connection, tid: str, run_id: str, stage: str) -> N
         INSERT INTO outbox_events (run_id, event_type, payload, idempotency_key)
         VALUES (%s, %s, %s, %s)
         ON CONFLICT (idempotency_key) DO UPDATE SET delivered_at = NULL
+        WHERE outbox_events.delivered_at IS NOT NULL
         """,
         (run_id, event_type, json.dumps(payload), key),
     )
