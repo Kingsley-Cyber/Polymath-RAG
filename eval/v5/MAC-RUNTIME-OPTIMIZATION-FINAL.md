@@ -193,3 +193,29 @@ under the 18.5 GB ceiling (19.6 committed). Autopilot therefore gives
 extraction priority while extract backlog exists; queries during heavy
 ingest fail loudly. OWNER OPTION: Docker VM 5.0→4.0 GB (+ spaCy parked)
 would fit reranker alongside the pipeline = queryable-while-ingesting.
+
+## Phase B — FRESH projection telemetry (bench-fresh-v1, PROJECTION-TELEMETRY-V1)
+
+Recovery-attempt ticket (post-crash), measured by the stage itself:
+total 120.1 s = embed 117.7 s (98.0%) · qdrant 0.43 s (0.36%, 8 batches)
+· receipts 0.24 s + lookup 8 ms (0.2%) · control ~1.4%.
+47 embed calls · 726 texts = 6.2 texts/s live (concurrent GLiNER load;
+idle optimum 6.9). 'project_qdrant' is formally an embedding stage.
+
+## Phase C — checkpoint crash qualification: PASS
+
+Kill after 4 durable slices (256/485 chunk receipts). On supervisor
+recovery: representations_already_current = 256 — every checkpointed
+slice SKIPPED; 229 remaining chunks + routing embedded fresh; max
+replay ≤ 1 in-flight slice. Integrity: 485/485 Qdrant points, ZERO
+duplicate active receipts per (projection, kind, entity) — the 2x row
+count is the designed qdrant+neo4j projection pair — and no early
+query_ready (run stayed reconciling under OPERATOR-STATE-V1 with open
+lanes).
+  OLD_MAX_REPLAY: whole corpus pass · NEW_MAX_REPLAY: 64 reps (~10 s)
+
+## Phase D — EMBED-BATCH-16: KEEP (measured end-to-end)
+
+Live fresh projection ran 6.2 texts/s under mixed load vs 3.5 texts/s
+at the old batch-32 config = 1.77x measured, no OOM, no memory delta
+(same 3.5 GB cap). Batch 16 is the qualified transport value.
