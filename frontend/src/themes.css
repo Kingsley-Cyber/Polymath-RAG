@@ -1,21 +1,24 @@
-/* POLYMATH-UI-V1 — seven themes as CSS variable palettes.
-   data-theme on <html> selects one; the picker persists it. */
+/* POLYMATH-UI — theme palettes as CSS variables.
+   data-theme on <html> selects one; the picker persists it.
+   V3c: forest removed; obsidian deepened (true dark); three premium
+   palettes added — espresso (brown), graphite (mid mode), champagne
+   (warm light). */
 
 :root,
 [data-theme="obsidian"] {
-  --bg: #0d1017;
-  --bg-2: #141925;
-  --bg-3: #1c2333;
-  --border: #262f45;
-  --text: #dbe2f1;
-  --text-dim: #8590a8;
-  --accent: #6c9ef8;
-  --accent-soft: #6c9ef822;
-  --good: #4ade80;
-  --warn: #fbbf24;
-  --bad: #f87171;
-  --user-bubble: #22304d;
-  --shadow: 0 8px 28px #00000066;
+  --bg: #08090d;
+  --bg-2: #0e1016;
+  --bg-3: #161a24;
+  --border: #232a3a;
+  --text: #e6ebf6;
+  --text-dim: #8b95ac;
+  --accent: #7da2f5;
+  --accent-soft: #7da2f51f;
+  --good: #46d385;
+  --warn: #e8b64c;
+  --bad: #ef7b6f;
+  --user-bubble: #1d2941;
+  --shadow: 0 10px 32px #00000088;
 }
 
 [data-theme="nord"] {
@@ -34,21 +37,6 @@
   --shadow: 0 8px 28px #00000055;
 }
 
-[data-theme="forest"] {
-  --bg: #0f1710;
-  --bg-2: #16211a;
-  --bg-3: #1e2c22;
-  --border: #2d4234;
-  --text: #d9e8dc;
-  --text-dim: #8aa392;
-  --accent: #6fd08c;
-  --accent-soft: #6fd08c22;
-  --good: #6fd08c;
-  --warn: #e8c468;
-  --bad: #e07a6a;
-  --user-bubble: #24382c;
-  --shadow: 0 8px 28px #00000066;
-}
 
 [data-theme="solar"] {
   --bg: #002b36;
@@ -112,4 +100,59 @@
   --bad: #b91c1c;
   --user-bubble: #efe3c8;
   --shadow: 0 8px 24px #c3b28f44;
+}
+
+/* ── premium set (V3c) ─────────────────────────────────────────── */
+
+/* espresso — dark roasted brown, cream text, copper accent */
+[data-theme="espresso"] {
+  --bg: #17100c;
+  --bg-2: #201712;
+  --bg-3: #2b1f18;
+  --border: #403024;
+  --text: #efe4d7;
+  --text-dim: #a89583;
+  --accent: #d29a63;
+  --accent-soft: #d29a6320;
+  --good: #9dbb7d;
+  --warn: #e2b25c;
+  --bad: #d97b64;
+  --user-bubble: #35251a;
+  --shadow: 0 10px 30px #00000077;
+}
+
+/* graphite — the mid mode: medium-luminance charcoal, neither dark
+   nor light; easy in daylight without glare */
+[data-theme="graphite"] {
+  --bg: #33373e;
+  --bg-2: #3b4048;
+  --bg-3: #454b55;
+  --border: #565d69;
+  --text: #eef1f5;
+  --text-dim: #aab2bf;
+  --accent: #9db4d8;
+  --accent-soft: #9db4d824;
+  --good: #93c795;
+  --warn: #d9b877;
+  --bad: #d98d81;
+  --user-bubble: #4a5464;
+  --shadow: 0 8px 24px #00000045;
+}
+
+/* champagne — warm ivory light with espresso-brown ink and muted
+   gold accent */
+[data-theme="champagne"] {
+  --bg: #f6f0e6;
+  --bg-2: #fcf8f1;
+  --bg-3: #efe6d7;
+  --border: #d8cab4;
+  --text: #3a2e22;
+  --text-dim: #877457;
+  --accent: #a67c37;
+  --accent-soft: #a67c371f;
+  --good: #5f8f56;
+  --warn: #b3862e;
+  --bad: #b85c47;
+  --user-bubble: #ecdfc9;
+  --shadow: 0 8px 22px #6b542e22;
 }

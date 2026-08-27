@@ -1,9 +1,11 @@
 import type { Corpus, Mode, Synthesizer } from "../types";
 
 export const THEMES = [
-  { id: "obsidian", color: "#6c9ef8" },
+  { id: "obsidian", color: "#7da2f5" },
+  { id: "espresso", color: "#d29a63" },
+  { id: "graphite", color: "#9db4d8" },
+  { id: "champagne", color: "#a67c37" },
   { id: "nord", color: "#88c0d0" },
-  { id: "forest", color: "#6fd08c" },
   { id: "solar", color: "#b58900" },
   { id: "rose", color: "#ea9ac6" },
   { id: "slate", color: "#3b6fe0" },
