@@ -80,6 +80,7 @@ class Slot:
     last_probe_at: float = 0.0
     readiness_failures: int = 0
     proc: subprocess.Popen | None = None
+    parked: bool = False   # FLEET-AUTOPILOT-V1: not currently desired
     started_at: float = 0.0
     exits: list[float] = field(default_factory=list)   # exit timestamps
     restarts: int = 0
@@ -157,6 +158,17 @@ class Supervisor:
             "POLYMATH_PG_DSN",
             "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath")
         self._stop = False
+        # FLEET-AUTOPILOT-V1: demand-driven membership. When enabled,
+        # every slot starts PARKED and the reconcile loop spawns only
+        # what the measured demand policy asks for; the static
+        # POLYMATH_FLEET_ONLY/profile filter still bounds the universe.
+        self.autopilot = os.environ.get("POLYMATH_AUTOPILOT", "").strip() == "1"
+        self._autopilot_last = 0.0
+        self._autopilot_reasons: dict = {}
+        if self.autopilot:
+            for slot in self.slots:
+                if slot.name not in ("control", "orchestrator", "intake"):
+                    slot.parked = True
 
     # ------------------------------------------------------------------ ops
     def _spawn(self, slot: Slot) -> None:
@@ -252,8 +264,10 @@ class Supervisor:
 
     # ----------------------------------------------------------------- loop
     def tick(self) -> dict:
+        if self.autopilot:
+            self._autopilot_reconcile()
         for slot in self.slots:
-            if slot.quarantined:
+            if slot.quarantined or slot.parked:
                 continue
             if slot.proc is None:
                 self._spawn(slot)
@@ -332,6 +346,44 @@ class Supervisor:
         slot.restarts += 1
         self._spawn(slot)
 
+    def _autopilot_reconcile(self, interval_s: float = 15.0) -> None:
+        """OBSERVE → COMPUTE DESIRED → RECONCILE (FLEET-AUTOPILOT-V1).
+
+        Deterministic: backlog + query recency in Postgres decide which
+        slots exist. Parking terminates the process — exit is the only
+        reliable way to return MPS/Metal memory. A parked slot spawns
+        again the moment demand returns (fresh budget env per spawn)."""
+        now = time.time()
+        if now - self._autopilot_last < interval_s:
+            return
+        self._autopilot_last = now
+        try:
+            import psycopg
+
+            from control.fleet_autopilot import desired_slots
+            with psycopg.connect(self.dsn, connect_timeout=5) as conn:
+                desired, reasons = desired_slots(
+                    conn, {s.name for s in self.slots})
+        except Exception as exc:
+            log.warning("autopilot observe failed (keeping fleet): %s", exc)
+            return
+        self._autopilot_reasons = reasons
+        for slot in self.slots:
+            if slot.quarantined:
+                continue
+            want = slot.name in desired
+            alive = slot.proc is not None and slot.proc.poll() is None
+            if want and slot.parked:
+                slot.parked = False
+                log.info("autopilot: waking %s (%s)", slot.name,
+                         reasons.get(slot.name, "?"))
+            elif not want and not slot.parked:
+                slot.parked = True
+                if alive:
+                    log.info("autopilot: parking %s (no demand)", slot.name)
+                    slot.proc.terminate()
+                    slot.proc = None
+
     def state(self) -> dict:
         return {"slots": [{
             "name": s.name, "pid": s.proc.pid if s.proc else None,
@@ -351,6 +403,8 @@ class Supervisor:
         # by thrashing the workstation.
         try:
             from polymath_shared.runtime_budget import preflight
+            if self.autopilot:
+                raise RuntimeError("autopilot: per-tick budget gating")
             plan = preflight()
             log.info("runtime budget: %.2f GB committed of %.2f GB ceiling",
                      plan["committed_gb"], plan["ceiling_gb"])
