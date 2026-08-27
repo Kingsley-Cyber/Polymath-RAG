@@ -192,9 +192,253 @@ async def upload(corpus_id: str = Form(...),
             "bytes": ref["bytes"], "sha256": ref["sha256"]}
 
 
+def _llm_provider_rows() -> list[dict]:
+    """Configured LiteLLM providers (LLM-PROVIDER-LAYER-V1)."""
+    with tx() as conn:
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS llm_providers (
+                 provider_id text PRIMARY KEY,
+                 provider text NOT NULL,
+                 api_key text NOT NULL DEFAULT '',
+                 api_base text NOT NULL DEFAULT '',
+                 models jsonb NOT NULL DEFAULT '[]',
+                 enabled boolean NOT NULL DEFAULT true,
+                 created_at timestamptz NOT NULL DEFAULT now())""")
+        rows = conn.execute(
+            """SELECT provider_id, provider, api_key, api_base, models,
+                      enabled FROM llm_providers ORDER BY provider_id"""
+        ).fetchall()
+    return [{"provider_id": r[0], "provider": r[1], "api_key": r[2],
+             "api_base": r[3], "models": r[4] or [], "enabled": r[5]}
+            for r in rows]
+
+
+def _litellm_models() -> list[dict]:
+    out = []
+    for row in _llm_provider_rows():
+        if not row["enabled"]:
+            continue
+        for m in row["models"]:
+            out.append({
+                "id": f"litellm:{m}",
+                "label": f"{row['provider']} · {m.split('/', 1)[-1]}",
+                "description": "LLM generation over the retrieved evidence "
+                               "via LiteLLM (answers are GENERATED, not "
+                               "claim-validated).",
+                "kind": "litellm",
+            })
+    return out
+
+
+def _litellm_credentials(model: str) -> dict:
+    """api_key/api_base for the configured provider owning this model
+    string; first enabled provider listing the model wins."""
+    for row in _llm_provider_rows():
+        if row["enabled"] and model in row["models"]:
+            cred = {}
+            if row["api_key"]:
+                cred["api_key"] = row["api_key"]
+            if row["api_base"]:
+                cred["api_base"] = row["api_base"]
+            return cred
+    return {}
+
+
+@router.delete("/documents/{doc_id}")
+def delete_document(doc_id: str, confirm: str = "") -> dict:
+    """DOCUMENT-DELETE-V1: remove ONE document and everything derived
+    from it — PG rows, its Qdrant points, its Neo4j substrate, its runs
+    (so the same bytes are re-ingestable), and its projection receipts
+    (CRITICAL: receipts without points would make a re-ingest skip
+    re-embedding into a hole). Facts are removed only when no evidence
+    remains from other documents. Typed confirmation required."""
+    if confirm != doc_id:
+        raise HTTPException(409, {
+            "error_code": "confirmation_required",
+            "message": f"pass confirm={doc_id!r} to delete this document"})
+    removed: dict = {}
+    with tx() as conn:
+        row = conn.execute(
+            "SELECT corpus_id, source_name FROM documents WHERE doc_id=%s",
+            (doc_id,)).fetchone()
+        if not row:
+            raise HTTPException(404, {"error_code": "unknown_document",
+                                      "message": doc_id})
+        corpus_id, source_name = row
+        chunk_ids = [r[0] for r in conn.execute(
+            "SELECT chunk_id FROM chunks WHERE doc_id=%s", (doc_id,)).fetchall()]
+
+        def _del(sql, params, key, optional=False):
+            if optional:
+                conn.execute("SAVEPOINT docdel")
+            try:
+                removed[key] = removed.get(key, 0) + conn.execute(
+                    sql, params).rowcount
+            except Exception:
+                if optional:
+                    conn.execute("ROLLBACK TO SAVEPOINT docdel")
+                    removed[key] = "skipped"
+                else:
+                    raise
+
+        # facts evidenced ONLY by this document
+        orphan_facts = [r[0] for r in conn.execute(
+            """SELECT DISTINCT e.fact_id FROM evidence e
+                WHERE e.doc_id=%s AND NOT EXISTS
+                  (SELECT 1 FROM evidence e2
+                    WHERE e2.fact_id=e.fact_id AND e2.doc_id<>%s)""",
+            (doc_id, doc_id)).fetchall()]
+        _del("DELETE FROM evidence WHERE doc_id=%s", (doc_id,), "evidence")
+        if orphan_facts:
+            _del("DELETE FROM facts WHERE fact_id = ANY(%s)",
+                 (orphan_facts,), "facts")
+        for tbl in ("relation_candidates", "mentions", "sentence_slices",
+                    "document_layout", "raw_entity_proposals",
+                    "raw_predicate_evidence", "extraction_trace_events"):
+            _del(f"DELETE FROM {tbl} WHERE doc_id=%s", (doc_id,), tbl,
+                 optional=True)
+        if chunk_ids:
+            # projection receipts for this document's chunks — MUST go
+            # with the points, or re-ingest skips embedding them.
+            _del("DELETE FROM projection_receipts WHERE entity_id = ANY(%s)",
+                 (chunk_ids,), "projection_receipts", optional=True)
+            _del("DELETE FROM projection_attempts WHERE entity_id = ANY(%s)",
+                 (chunk_ids,), "projection_attempts", optional=True)
+            _del("DELETE FROM parent_summaries WHERE parent_id = ANY(%s)",
+                 (chunk_ids,), "parent_summaries", optional=True)
+        _del("DELETE FROM retrieval_summaries WHERE doc_id=%s", (doc_id,),
+             "retrieval_summaries", optional=True)
+        _del("DELETE FROM document_summaries WHERE doc_id=%s", (doc_id,),
+             "document_summaries", optional=True)
+        _del("DELETE FROM chunks WHERE doc_id=%s", (doc_id,), "chunks")
+        # runs that ingested this source into this corpus (+ their
+        # control rows) so identical bytes re-ingest cleanly
+        run_ids = [r[0] for r in conn.execute(
+            """SELECT run_id FROM runs WHERE corpus_id=%s
+                AND metadata->>'source_name' = %s""",
+            (corpus_id, source_name)).fetchall()]
+        if run_ids:
+            for tbl in ("stage_tickets", "outbox_events", "artifacts",
+                        "receipts"):
+                _del(f"DELETE FROM {tbl} WHERE run_id = ANY(%s)",
+                     (run_ids,), tbl, optional=True)
+            _del("DELETE FROM runs WHERE run_id = ANY(%s)", (run_ids,),
+                 "runs")
+        _del("DELETE FROM documents WHERE doc_id=%s", (doc_id,), "documents")
+
+    # derived stores (best effort, reported)
+    try:
+        from polymath_shared.projection_contracts import qdrant_point_uuid
+        from polymath_shared.stores import qdrant_client
+        import hashlib as _h
+
+        prefix = f"polymath_{_h.sha256(corpus_id.encode()).hexdigest()[:12]}_"
+        client = qdrant_client(timeout=60)
+        try:
+            n = 0
+            ids = [qdrant_point_uuid(cid) for cid in chunk_ids]
+            for col in client.get_collections().collections:
+                if col.name.startswith(prefix) and ids:
+                    for i in range(0, len(ids), 512):
+                        client.delete(collection_name=col.name,
+                                      points_selector=ids[i:i + 512])
+                        n += min(512, len(ids) - i)
+            removed["qdrant_points"] = len(ids)
+        finally:
+            client.close()
+    except Exception as exc:
+        removed["qdrant_error"] = str(exc)[:120]
+    try:
+        from polymath_shared.stores import neo4j_driver
+
+        with neo4j_driver() as driver:
+            with driver.session() as s:
+                out = s.run(
+                    "MATCH (c:Chunk {doc_id: $d}) DETACH DELETE c "
+                    "RETURN count(*) AS n", d=doc_id).single()
+                removed["neo4j_chunks"] = out["n"] if out else 0
+    except Exception as exc:
+        removed["neo4j_error"] = str(exc)[:120]
+    return {"deleted": doc_id, "source_name": source_name,
+            "corpus_id": corpus_id, "removed": removed}
+
+
 @router.get("/synthesizers")
 def synthesizers() -> dict:
-    return {"synthesizers": [DETERMINISTIC, *_ollama_models()]}
+    return {"synthesizers": [DETERMINISTIC, *_litellm_models(),
+                             *_ollama_models()]}
+
+
+class ProviderUpsert(BaseModel):
+    provider: str
+    api_key: str = ""
+    api_base: str = ""
+    models: list[str] = []
+    enabled: bool = True
+
+
+@router.get("/llm/providers")
+def llm_providers() -> dict:
+    rows = _llm_provider_rows()
+    for r in rows:  # never return raw keys to the browser
+        r["api_key_set"] = bool(r["api_key"])
+        r["api_key"] = (r["api_key"][-4:] if r["api_key"] else "")
+    return {"providers": rows}
+
+
+@router.post("/llm/providers")
+def llm_provider_upsert(req: ProviderUpsert) -> dict:
+    pid = req.provider.strip().lower()
+    if not pid:
+        raise HTTPException(422, "provider is required")
+    _llm_provider_rows()  # ensure table
+    with tx() as conn:
+        existing = conn.execute(
+            "SELECT api_key FROM llm_providers WHERE provider_id=%s",
+            (pid,)).fetchone()
+        # empty key on update keeps the stored key (masked round-trip)
+        key = req.api_key or (existing[0] if existing else "")
+        conn.execute(
+            """INSERT INTO llm_providers
+                 (provider_id, provider, api_key, api_base, models, enabled)
+               VALUES (%s,%s,%s,%s,%s,%s)
+               ON CONFLICT (provider_id) DO UPDATE SET
+                 provider=EXCLUDED.provider, api_key=EXCLUDED.api_key,
+                 api_base=EXCLUDED.api_base, models=EXCLUDED.models,
+                 enabled=EXCLUDED.enabled""",
+            (pid, req.provider.strip(), key, req.api_base.strip(),
+             json.dumps([m.strip() for m in req.models if m.strip()]),
+             req.enabled))
+    return {"saved": pid}
+
+
+@router.delete("/llm/providers/{provider_id}")
+def llm_provider_delete(provider_id: str) -> dict:
+    with tx() as conn:
+        n = conn.execute("DELETE FROM llm_providers WHERE provider_id=%s",
+                         (provider_id,)).rowcount
+    return {"deleted": provider_id, "existed": bool(n)}
+
+
+class LlmTest(BaseModel):
+    model: str
+
+
+@router.post("/llm/test")
+def llm_test(req: LlmTest) -> dict:
+    """One-shot connectivity/credential test for a configured model."""
+    import litellm
+
+    try:
+        out = litellm.completion(
+            model=req.model,
+            messages=[{"role": "user", "content": "Reply with exactly: ok"}],
+            max_tokens=20, timeout=30, **_litellm_credentials(req.model))
+        text = (out.choices[0].message.content or "").strip()
+        return {"ok": True, "model": req.model, "reply": text[:80]}
+    except Exception as exc:
+        return {"ok": False, "model": req.model,
+                "error": f"{type(exc).__name__}: {str(exc)[:220]}"}
 
 
 @router.delete("/corpora/{corpus_id}")
@@ -406,6 +650,71 @@ what is missing instead of inventing facts.
 not claim to be a validated source of truth."""
 
 
+def _grounded_messages(query: str, bundle: dict, graph_facts: list,
+                       history, carry_context) -> list[dict]:
+    """Shared grounded-prompt assembly for every LLM backend."""
+    ev_lines: list[str] = []
+    for item in (bundle.get("evidence_bundle") or [])[:40]:
+        span = item.get("source_span") or {}
+        loc = span.get("locator") or ""
+        text = (span.get("text") or "")[:900]
+        if loc and text:
+            ev_lines.append(f"[{loc}]\n{text}")
+    for f in graph_facts[:20]:
+        ev_lines.append(
+            f"[fact:{f.get('fact_id', '')[:24]}] "
+            f"{f.get('subject')} —{f.get('predicate')}→ {f.get('object')}")
+    carried = [
+        f"[{c.locator}]\n{c.preview}" for c in (carry_context or [])[:30]
+        if c.preview
+    ]
+    context_block = ""
+    if ev_lines:
+        context_block += ("EVIDENCE (this turn):\n" + "\n---\n".join(ev_lines))
+    if carried:
+        context_block += ("\n\nEVIDENCE (carried from earlier turns):\n"
+                          + "\n---\n".join(carried))
+    if not context_block:
+        context_block = "EVIDENCE: none retrieved for this turn."
+    messages = [{"role": "system", "content": _LLM_SYSTEM}]
+    for turn in (history or [])[-12:]:
+        if turn.role in ("user", "assistant") and turn.content:
+            messages.append({"role": turn.role,
+                             "content": turn.content[:4000]})
+    messages.append({"role": "user",
+                     "content": f"{context_block}\n\nREQUEST:\n{query}"})
+    return messages
+
+
+def _litellm_generate(model: str, query: str, bundle: dict,
+                      graph_facts: list, history, carry_context):
+    """LLM-PROVIDER-LAYER-V1: stream tokens from ANY provider through
+    LiteLLM (OpenAI-format model strings: openai/gpt-4o,
+    anthropic/claude-..., gemini/..., groq/..., ollama/...). Credentials
+    come from the configured provider row; grounding prompt identical to
+    the Ollama path. Yields {'token': str} or one {'error': ...}."""
+    import litellm
+
+    messages = _grounded_messages(query, bundle, graph_facts,
+                                  history, carry_context)
+    try:
+        stream = litellm.completion(
+            model=model, messages=messages, stream=True, timeout=300,
+            **_litellm_credentials(model))
+        for chunk in stream:
+            piece = ""
+            try:
+                piece = chunk.choices[0].delta.content or ""
+            except Exception:
+                piece = ""
+            if piece:
+                yield {"token": piece}
+    except Exception as exc:
+        yield {"error": True, "error_code": "litellm_error",
+               "message": f"{type(exc).__name__}: {str(exc)[:280]}"}
+        return
+
+
 def _ollama_generate(model: str, query: str, bundle: dict,
                      graph_facts: list, history, carry_context):
     """Stream tokens from the local Ollama daemon over a grounded
@@ -493,7 +802,12 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
         raise HTTPException(422, {"error_code": "unknown_mode",
                                   "message": f"mode {req.mode!r}"})
     synth = req.synthesizer or "deterministic-template-v3"
-    llm_model = synth[len("ollama:"):] if synth.startswith("ollama:") else None
+    llm_model = None
+    llm_backend = None
+    if synth.startswith("ollama:"):
+        llm_model, llm_backend = synth[len("ollama:"):], "ollama"
+    elif synth.startswith("litellm:"):
+        llm_model, llm_backend = synth[len("litellm:"):], "litellm"
     if synth != "deterministic-template-v3" and llm_model is None:
         raise HTTPException(422, {"error_code": "unknown_synthesizer",
                                   "message": f"{req.synthesizer!r}"})
@@ -675,7 +989,9 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                              model=llm_model,
                              carried=len(req.carry_context))
                 full: list[str] = []
-                for tok in _ollama_generate(
+                _gen = (_litellm_generate if llm_backend == "litellm"
+                        else _ollama_generate)
+                for tok in _gen(
                         llm_model, query, bundle, graph_facts,
                         req.history, req.carry_context):
                     if tok.get("error"):
@@ -693,7 +1009,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                         "meta": {
                             "verdict": "generated",
                             "abstained": False,
-                            "synthesis_version": f"ollama:{llm_model}",
+                            "synthesis_version": f"{llm_backend}:{llm_model}",
                         },
                     },
                     "retrieval": retrieval,

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { fetchCorpora, fetchSynthesizers, streamChat } from "./api";
 import ChatView from "./components/ChatView";
 import CorporaView from "./components/CorporaView";
+import ModelsView from "./components/ModelsView";
 import FilesView from "./components/FilesView";
 import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
@@ -25,7 +26,7 @@ export default function App() {
   const [activeId, setActiveId] = useState<string | null>(
     () => loadChats()[0]?.id ?? null,
   );
-  const [view, setView] = useState<"chat" | "files" | "corpora">("chat");
+  const [view, setView] = useState<"chat" | "files" | "corpora" | "models">("chat");
   const [corpora, setCorpora] = useState<Corpus[]>([]);
   const [synths, setSynths] = useState<Synthesizer[]>([]);
   const [busy, setBusy] = useState(false);
@@ -208,6 +209,12 @@ export default function App() {
         />
         {view === "chat" ? (
           <ChatView chat={active} busy={busy} onSend={send} />
+        ) : view === "models" ? (
+          <ModelsView
+            onChanged={() => {
+              fetchSynthesizers().then(setSynths).catch(() => {});
+            }}
+          />
         ) : view === "corpora" ? (
           <CorporaView
             onChanged={() => {

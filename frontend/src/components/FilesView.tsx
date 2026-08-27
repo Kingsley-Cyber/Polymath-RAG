@@ -165,6 +165,7 @@ export default function FilesView({
                 <th>Size</th>
                 <th>Chunks</th>
                 <th>Added</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -175,6 +176,26 @@ export default function FilesView({
                   <td>{fmtBytes(d.bytes)}</td>
                   <td>{d.chunks}</td>
                   <td className="mono">{d.created_at.slice(0, 19)}</td>
+                  <td>
+                    <button
+                      className="chunk-chip"
+                      title="Delete this document everywhere (vectors, graph, facts evidenced only here). Same bytes become re-ingestable."
+                      onClick={async () => {
+                        const typed = window.prompt(
+                          `Delete "${d.source_name}" from ${corpus}?\nType the doc id to confirm:\n${d.doc_id}`,
+                        );
+                        if (typed !== d.doc_id) return;
+                        const r = await fetch(
+                          `/documents/${encodeURIComponent(d.doc_id)}?confirm=${encodeURIComponent(typed)}`,
+                          { method: "DELETE" },
+                        );
+                        if (r.ok) refresh();
+                        else window.alert(`Delete failed: ${await r.text()}`);
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
