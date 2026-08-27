@@ -126,3 +126,21 @@ NOTHING). Ticket cadence ~2.5-3 min per document (~140 parents/book,
 per-parent child/fact/entity assembly through PG). Bottleneck class:
 per-ticket orchestration + DB roundtrips, NOT inference. Full profile
 after drain.
+
+## Phase 11 — conditional reranking (MEASURED, sealed 10-kind panel)
+
+release-books-v1, HYBRID, identical orchestrators (G3 on = 7200 vs
+G3 off = 7201):
+
+- top-1 citation agreement: 4/10 · identical final answers: 3/10
+  (all three = abstentions, which agree 10/10 both ways)
+- rerank latency cost: ~1.5 s warm (0.8-0.9 s → 2.2-2.5 s)
+- the earlier "reranker kept the same top passages" observation was a
+  2-query anecdote; the panel shows reranking CHANGES the outcome on
+  most queries.
+
+DECISION: CONDITIONAL_RERANK = REJECTED. No deterministic skip signal
+can preserve the qualified quality bar when 60% of orderings move; the
+~1.5 s cost is the price of the G3-qualified ranking. Abstention
+honesty is rerank-independent (10/10 verdict agreement). Revisit only
+with a much larger labeled panel.
