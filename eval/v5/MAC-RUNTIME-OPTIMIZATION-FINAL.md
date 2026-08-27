@@ -219,3 +219,82 @@ lanes).
 Live fresh projection ran 6.2 texts/s under mixed load vs 3.5 texts/s
 at the old batch-32 config = 1.77x measured, no OOM, no memory delta
 (same 3.5 GB cap). Batch 16 is the qualified transport value.
+
+## Phase A — fresh extraction record (bench-fresh-v1)
+
+485 children in 14:44 = 32.9 children/min — identical to the historical
+33/min single-worker ceiling. GLiNER rate stable post-restart. 131
+evidence rows.
+
+## Phase E — MLX qualification COMPLETE (faithful bf16 conversion)
+
+Converted the EXACT pinned production snapshot (Qwen/Qwen3-Embedding-
+0.6B @ 97b0c614) to MLX bf16 locally (upstream has no bf16 repo).
+Pooling verified identical (1_Pooling config: lasttoken, include_prompt
+= mlx-embeddings last_token_pool + l2).
+
+| backend | best texts/s | peak GPU mem | parity vs production |
+|---|---|---|---|
+| PyTorch/MPS (prod) | 6.9 (b16) | 3.5 GB cap | — |
+| MLX mxfp8 | 10.9 (b8) | 2.59 GiB | docs min .925 — rejected |
+| **MLX bf16 (pinned)** | **14.2 (b16)** | **1.88 GiB** | queries .9998 · docs mean .997 |
+
+bf16 retrieval panel: top-1 4/4 SAME, overlap@10 = 10/10 on all
+queries. Outlier diagnosis: divergence is LENGTH-dependent, not a bug —
+solo-vs-batch self-consistency 0.9998 rules out padding/pooling; a
+1,047-token dense text scores 0.971 (bf16 accumulation over long
+context). Production texts are mostly ≤400 tokens; a small dense tail
+reaches ~1,000.
+
+DECISION: PYTORCH_MPS_KEEP for existing corpora (no backend mixing
+inside a corpus). MLX-bf16 = QUALIFIED CANDIDATE — 2.05x throughput,
+0.54x memory — promotion requires owner contract-equivalence sign-off
+and whole-corpus backend homogeneity (new corpora or full re-embed).
+This is the single largest available Mac ingest win: fresh projection
+is 98% embedding, so promotion halves the ingestion tail.
+
+## Phase F — summary waterfall attribution: NOT A BOTTLENECK + one race defect
+
+Fresh doc: 97 parent summaries + document + corpus + vocabulary ALL
+settled in ~46 s (01:12:38→01:13:24). The cysa drain's ~3 min/doc was
+lease cadence + cross-doc serialization, not computation. No
+autoscaling justified.
+
+DEFECT (flagged, not fixed — control-DAG semantics are owner-gated):
+summary lanes are not gated on extract; the fresh doc's 97 parent
+summaries all contain ZERO facts because they were assembled while
+extraction was still running. cysa's summaries have facts only by
+timing luck. Proposed fix: summary tickets depend on the extract stage
+receipt. OWNER DECISION REQUIRED.
+
+## Phase G — measured service-rate table
+
+| stage | best safe rate | useful concurrency |
+|---|---|---|
+| GLiNER extract | 32.9 children/min (0.55/s) | 1 (4 workers = 32/min) |
+| Embedder (prod) | 6.9 texts/s idle · 6.2 live | 1 caller (2/3 flat) |
+| Embedder (MLX bf16 cand.) | 14.2 texts/s | 1 |
+| Qdrant write | 1,527-3,167 points/s | batch 128 |
+| Parent summaries | ~2/s measured burst | 1 |
+| Neo4j projection | not the tail (min-scale) | 1 |
+| Reranker | ~1.5 s/query overhead | n/a |
+
+Cold starts (observed): embedder ~20 s · GLiNER ~45 s · reranker ~60 s.
+Actual model memory: GLiNER 3.5 cap · embedder 3.5 cap (MLX cand 1.9) ·
+reranker 3.5 cap.
+
+## Phase H — autopilot desired-state policy (derived from G, not guessed)
+
+IDLE: stores+control+orchestrator+intake only. All models parked.
+EXTRACT BACKLOG: +gliner+spacy+extract(1)+profile. Never >1 extract worker.
+PROJECTION BACKLOG: +embedder+qdrant-worker(1). Never extra callers.
+GRAPH/SUMMARY BACKLOG: +respective worker (1 each; CPU-bound, cheap).
+QUERY (<10 min since last): +embedder; +reranker IF no extract backlog
+  (budget: gliner+reranker cannot coexist under 18.5 GB).
+DRAIN: models park 300 s after their lane's backlog reaches zero
+  (hysteresis ≥ 2x measured cold start).
+BUDGET: every desired set passes the existing preflight; deterministic
+  drop order reranker→spacy on overflow, logged.
+BACKPRESSURE: worker counts are fixed at measured useful concurrency
+  (1), so the pipeline cannot outrun itself; the embedder is the
+  system's pace and everything queues durably behind it by design.
