@@ -432,3 +432,34 @@ corpora); all source bytes verified present (17 + 6 originals + 26
 flash-drive .md); cleanup via the supported cascade, then pilot
 (technical book / procedural / conceptual / transcript / cross-domain)
 into ONE production corpus under final contracts, then full library.
+
+═══════════════════════════════════════════════════════════════════
+# REOPENED: EXTRACT-TRANSPORT-V1 (2026-08-27, owner-triggered)
+═══════════════════════════════════════════════════════════════════
+
+Reopen rule satisfied: measured production bottleneck + owner
+complaint (12-book UI ingest projected 6-7 h).
+
+MEASURED (live, during the ingest):
+- GLiNER isolated on the same MPS device: 215 ms/chunk single,
+  3.3 chunks/sec batch-8 fp32. fp16 tested: SLOWER (2.4/sec) — keep
+  fp32.
+- Pipeline delivers 0.55 chunks/sec → 6x architectural gap, NOT model
+  or device misconfiguration (manifest device=mps confirmed; in-batch
+  per-chunk cost ~280 ms matches the isolated model).
+- Attribution (last 30 active min): 72% of wall = serial infer_batch
+  round-trips (132 calls, 9.0 s avg = client batch-32 split 4x8
+  internally); 27% = rescue calls (42 calls, 10.5 s avg — the batched
+  /rescue endpoint exists but the worker underuses it); 1% = /infer.
+- Root cause: 4-5 model passes per chunk (entity pass per label
+  composition + evidence pass + rescue rounds), every pass serially
+  round-tripping a one-request-at-a-time sidecar.
+
+PLANNED FIX (transport-only, semantics byte-identical, verified on a
+probe book before production): rescue batching, pass pipelining,
+batch-shape right-sizing. Target 2-3x → 12-book corpus ~2-2.5 h on
+the Mac alone. RTX cluster remains the 10x path.
+
+Earlier "Mac ceiling = 33 children/min" is hereby corrected to: the
+CURRENT ARCHITECTURE's ceiling. The machine's model ceiling is ~6x
+higher.
