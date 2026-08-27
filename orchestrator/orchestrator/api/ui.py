@@ -363,6 +363,34 @@ def delete_document(doc_id: str, confirm: str = "") -> dict:
             "corpus_id": corpus_id, "removed": removed}
 
 
+class GeneratedPage(BaseModel):
+    name: str = "generated"
+    html: str
+
+
+@router.post("/generated")
+def save_generated(req: GeneratedPage) -> dict:
+    """GENERATED-LAUNCH-V1: persist a generated HTML artifact as a real
+    file and serve it at a stable URL — unlike a blob: URL it survives
+    refresh, can be bookmarked, and lives on disk
+    (~/PolymathRuntime/polymath-v4/generated/)."""
+    import hashlib as _h
+    import re as _re
+    from pathlib import Path
+
+    if not req.html.strip():
+        raise HTTPException(422, "html is empty")
+    gen_dir = Path(os.environ.get(
+        "POLYMATH_GENERATED_DIR",
+        str(Path.home() / "PolymathRuntime" / "polymath-v4" / "generated")))
+    gen_dir.mkdir(parents=True, exist_ok=True)
+    slug = _re.sub(r"[^a-z0-9]+", "-", req.name.lower()).strip("-")[:48]         or "generated"
+    digest = _h.sha256(req.html.encode()).hexdigest()[:10]
+    fname = f"{slug}-{digest}.html"
+    (gen_dir / fname).write_text(req.html)
+    return {"url": f"/generated/{fname}", "file": str(gen_dir / fname)}
+
+
 @router.get("/synthesizers")
 def synthesizers() -> dict:
     return {"synthesizers": [DETERMINISTIC, *_litellm_models(),

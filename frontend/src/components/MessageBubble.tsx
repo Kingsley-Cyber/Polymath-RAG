@@ -154,6 +154,32 @@ function downloadFile(code: string, lang: string) {
   setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
 
+async function launchHtml(code: string) {
+  // GENERATED-LAUNCH-V1: persist server-side and open the real URL —
+  // survives refresh, bookmarkable, and is a real file on disk.
+  // Falls back to an ephemeral blob URL if the API is unreachable.
+  try {
+    const name =
+      code.match(/<title>([^<]{1,60})<\/title>/i)?.[1] ??
+      code.match(/<h1[^>]*>([^<]{1,60})<\/h1>/i)?.[1] ??
+      "generated";
+    const r = await fetch("/generated", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, html: code }),
+    });
+    if (r.ok) {
+      const out = await r.json();
+      window.open(out.url, "_blank");
+      return;
+    }
+  } catch {
+    /* fall through to blob */
+  }
+  const url = URL.createObjectURL(new Blob([code], { type: "text/html" }));
+  window.open(url, "_blank");
+}
+
 /** Split LLM output into prose and fenced code blocks; code renders in
  * a framed block with a header bar: language, Copy, and for HTML also
  * Open + Download (saves as a real .html file in ~/Downloads). */
@@ -186,14 +212,9 @@ function LlmText({ text }: { text: string }) {
                 <>
                   <button
                     className="copy-btn"
-                    onClick={() => {
-                      const url = URL.createObjectURL(
-                        new Blob([seg.body], { type: "text/html" }),
-                      );
-                      window.open(url, "_blank");
-                    }}
+                    onClick={() => launchHtml(seg.body)}
                   >
-                    ▶ open
+                    🚀 launch
                   </button>
                   <button
                     className="copy-btn"
@@ -245,8 +266,7 @@ function LlmBody({
 
   const openHtml = () => {
     if (!html) return;
-    const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
-    window.open(url, "_blank");
+    launchHtml(html);
   };
   const downloadHtml = () => {
     if (!html) return;
@@ -270,7 +290,7 @@ function LlmBody({
         {bareHtml && (
           <>
             <button className="chunk-chip" onClick={openHtml}>
-              ▶ Open HTML
+              🚀 Launch
             </button>
             <button
               className="chunk-chip"

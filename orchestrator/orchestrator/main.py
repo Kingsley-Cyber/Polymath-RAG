@@ -83,5 +83,13 @@ _UI_DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 if _UI_DIST.exists():
     from fastapi.staticfiles import StaticFiles  # noqa: E402
 
+    from pathlib import Path as _P
+    import os as _os
+    _GEN_DIR = _P(_os.environ.get(
+        "POLYMATH_GENERATED_DIR",
+        str(_P.home() / "PolymathRuntime" / "polymath-v4" / "generated")))
+    _GEN_DIR.mkdir(parents=True, exist_ok=True)
+    app.mount("/generated", StaticFiles(directory=str(_GEN_DIR), html=True),
+              name="generated")
     app.mount("/ui", StaticFiles(directory=str(_UI_DIST), html=True),
               name="ui")
