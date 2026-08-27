@@ -381,3 +381,54 @@ recover crashed model: NO.
 3. MLX-bf16 promotion as new/equivalent contract — 2x ingest embed win.
 4. Docker VM 5→4 GB (owner host setting) — enables reranker residency
    during ingest = queryable-while-ingesting.
+
+## QUERY→IDLE closure
+
+QUERY_TO_IDLE: PASS — embedder and reranker self-parked at 20:22:13
+after query-grace expiry; stores/API/control alive; idle footprint
+restored (~3.3 GB actual + 4.8 GB Docker VM reservation).
+
+═══════════════════════════════════════════════════════════════════
+# FINAL RECEIPT — RUNTIME FROZEN
+═══════════════════════════════════════════════════════════════════
+
+START_HEAD: 58ba68d (mission continuation base; work began f33a0ff-era)
+FINAL_HEAD: (this commit)
+TREE_CLEAN: YES
+
+AUTONOMY_FINAL: PASS       TRUE_IDLE: PASS
+QUERY_WAKE: PASS (27 s)    QUERY_TO_IDLE: PASS
+CRASH_RECOVERY: PASS       CHECKPOINT_REPLAY: PASS (≤ 1×64-rep slice)
+HISTORICAL_GARBAGE_IGNORED: PASS (5/5 matrix)
+
+MANUAL_PROFILE_SWITCH_REQUIRED: NO
+MANUAL_WORKER_MANAGEMENT_REQUIRED: NO
+MANUAL_MODEL_MANAGEMENT_REQUIRED: NO
+
+QDRANT_BOTTLENECK: NO (1,527–3,167 points/s)
+EMBEDDER_BACKEND: PyTorch/MPS batch 16 (MLX-bf16 deferred as new
+  contract: 2.05x, 0.54x memory, owner sign-off pending)
+EXTRACTION_RATE: 32.9 children/min (single GLiNER; scaling measured useless)
+EMBEDDING_RATE: 6.9 texts/s idle / 6.2 live (~1,900 tokens/s)
+
+IDLE_RAM: ~3.3 GB actual   QUERY_RAM: ~8.7 GB   INGEST_RAM: ~9.4 GB
+VECTOR_LATENCY: 2.0/2.0 s  HYBRID: 2.0/2.8 s  GRAPH: 2.5/2.8 s
+CHAT: = HYBRID surface     ABSTENTION: 2.5 s, terms named
+
+FRESH upload→query_ready: ~41 min (721 KB book, incl. 2 deliberate
+  crashes + lease-recovery windows); → SEMANTIC_COMPLETE same window.
+
+SEMANTIC_REGRESSION: NONE  PRODUCT_GATE: PASS 10/10
+CONDITIONAL_RERANK: REJECTED (stands)
+PRODUCTION_RUNTIME_GO: YES
+
+REOPEN_RULE: future runtime work requires a measured production
+bottleneck or a concrete correctness defect. Open items (owner-gated):
+successor-run promotion stall (P1), summary-before-extract race gating,
+MLX-bf16 contract decision, Docker VM 5→4 GB host setting.
+
+NEXT: FRESH_PRODUCTION_CORPUS — census done (2 production + 2 benchmark
+corpora); all source bytes verified present (17 + 6 originals + 26
+flash-drive .md); cleanup via the supported cascade, then pilot
+(technical book / procedural / conceptual / transcript / cross-domain)
+into ONE production corpus under final contracts, then full library.
