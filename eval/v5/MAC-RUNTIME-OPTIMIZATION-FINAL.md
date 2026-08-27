@@ -144,3 +144,52 @@ can preserve the qualified quality bar when 60% of orderings move; the
 ~1.5 s cost is the price of the G3-qualified ranking. Abstention
 honesty is rerank-independent (10/10 verdict agreement). Revisit only
 with a much larger labeled panel.
+
+## Phase 0 — CLOSED. Full drain record (cysa-study-v1, 12 books, 8,351 chunks)
+
+Upload 08-26 11:06 → last ticket settled 08-27 00:58 (~13h52m wall,
+including the 4h drift-guard wedge, quadratic chunk-lane waste, and
+restart amplification — all since fixed). Per-stage last settlements:
+extract 18:57 · project_qdrant 00:26→00:31 (all 12 within 5 min of the
+checkpoint patch) · neo4j 00:37 · parent summaries 00:50 · document
+00:53 · corpus 00:56 · vocabulary 00:58. Final: 12/12 query_ready,
+corpus flipped production/query_enabled. Layers: 2,959 parent / 22 doc
+/ 3 corpus summary rows; 10,168 Qdrant points.
+
+Stranded-run note: one run sat 'reconciling' with all tickets done
+(post-verify lanes overwrite verify's verdict; nothing re-verifies
+promptly). The control plane's slow pass converged it in ~10 min.
+OPERATOR-STATE-V1 (ff30948) removes the false-DEGRADED half of this;
+the re-verify latency is acceptable and left unchanged.
+
+## Phase 8 — extract checkpointing: DEFERRED (analysis, not hypothesis)
+
+- Replay exposure bounded: 12-25 min per book at the measured 33
+  children/min; all extraction writes are content-addressed ON CONFLICT
+  — replay costs time, never correctness.
+- Both observed mid-extract losses were VOLUNTARY restarts, now
+  eliminated (autopilot parks GLiNER only at zero extract backlog;
+  code changes land in inter-ticket gaps).
+- No clean seam: pass 1 batches GLiNER calls by label composition
+  across the whole document, syntax evidence is one whole-doc call, and
+  the compiler passes are doc-global. A checkpoint boundary would
+  restructure the frozen semantic stage (DO_NOT_REDESIGN).
+Revisit only if unattended crash loss is actually observed.
+
+## Phase 15 — DRAIN-state actual memory (measured 00:54)
+
+Docker actual: qdrant 1.81 GB · neo4j 1.0 GB · postgres 0.25 GB ·
+redis 0.01 GB = ~3.1 GB used of 4.8 GB VM reservation. Sidecar RSS
+135-430 MB each (Metal buffers not fully visible in RSS — budget caps
+remain the honest GPU number). Workers 25-90 MB; control 92 MB.
+Whole system: 15.1 GB of 32 GB in use.
+
+## Query availability during ingest (measured constraint)
+
+ALL retrieval modes route through the reranker gate — with the pipeline
+fleet loaded (no reranker in budget), every query fails typed
+(rerank_unavailable), not just HYBRID. GLiNER + reranker cannot coexist
+under the 18.5 GB ceiling (19.6 committed). Autopilot therefore gives
+extraction priority while extract backlog exists; queries during heavy
+ingest fail loudly. OWNER OPTION: Docker VM 5.0→4.0 GB (+ spaCy parked)
+would fit reranker alongside the pipeline = queryable-while-ingesting.
