@@ -58,3 +58,71 @@ Measured before any change:
    times as the immediate before/after.
 
 (fill in as phases complete)
+
+## Phase 4 — embedder saturation (MEASURED 2026-08-27, live sidecar, idle window)
+
+Representative ~1,100-char (~280-token) production chunks:
+
+| batch | p50 ms | texts/s |
+|---|---|---|
+| 1 | 291 | 3.4 |
+| 4 | 742 | 5.4 |
+| 8 | 1,397 | 5.7 |
+| **16** | **2,321** | **6.9 ← optimum** |
+| 32 | 9,051 | 3.5 ← production config (worst measured) |
+
+Caller matrix at batch 8: 1/2/3 concurrent callers = 5.8/5.7/5.8 texts/s —
+FLAT. The sidecar serializes; caller concurrency adds nothing (same
+lesson as GLiNER, now proven for the embedder).
+
+Consequences: worker EMBED_BATCH 32→16 is a ~2x in-contract fresh-embed
+win; caller-based scaling is rejected by measurement. Mac ceiling on
+the current backend: ~6.9 texts/s ≈ 1,900 tokens/s.
+max_batch_texts=8 origin: 8ca4523 (13 GB-era memory guard) — sidecar-
+internal split; the 32-text client call pays 4 sequential internal
+batches plus overhead.
+
+## Phase 5 — MLX qualification (MEASURED)
+
+mlx-community/Qwen3-Embedding-0.6B-mxfp8 via mlx-embeddings (mlx 0.31.2),
+forced-eval timings, same 32 chunks:
+
+| batch | p50 ms | texts/s |
+|---|---|---|
+| 1 | 101 | 9.9 |
+| 8 | 736 | **10.9** |
+| 16 | 1,489 | 10.7 |
+| 32 | 4,337 | 7.4 |
+
+Peak MLX memory 2.59 GiB; l2-normalized, dim 1024; cold load 27.8 s
+(with download). Speed vs PyTorch best: 1.6x (10.9 vs 6.9).
+
+Parity vs production vectors: doc cross-impl cosine mean 0.972 /
+min 0.925; query mean 0.975. Retrieval: top-1 SAME 4/4 queries,
+overlap@5 ≥ 4/5. Faithful bf16 MLX variant does NOT exist upstream
+(only 4bit-DWQ / 8bit / mxfp8).
+
+DECISION: PYTORCH_MPS_KEEP for neural-embed-v1 (0.925 min-cosine
+forbids silent in-contract swap; mixing backends corrupts existing
+collection geometry). MLX-mxfp8 = qualified CANDIDATE for a future
+neural-embed-v2 contract (owner choice: new corpora only, or re-embed).
+
+## Phase 6 — Qdrant pure write benchmark (MEASURED)
+
+Isolated 1024-dim cosine collection, precomputed vectors, prod payloads:
+100 pts = 34 ms · 500 = 158 ms · 1,000 = 321 ms (≈3,000 points/s single
+request); 5,000 pts in production-shape 128-batches: 3.3 s wall = 1,527
+points/s. (Single 5,000-point request exceeds Qdrant's 32 MB JSON body
+limit — transport artifact, production batches at 128.)
+
+VERDICT: QDRANT_BOTTLENECK = NO. The whole 8,351-point corpus is ~3-5 s
+of Qdrant time. Qdrant optimization is closed.
+
+## Phase 7 — summary lane (observed during drain)
+
+Generation is deterministic CPU assembly (build_parent_summary — no
+model calls), content-addressed (input_hash dedup, ON CONFLICT DO
+NOTHING). Ticket cadence ~2.5-3 min per document (~140 parents/book,
+per-parent child/fact/entity assembly through PG). Bottleneck class:
+per-ticket orchestration + DB roundtrips, NOT inference. Full profile
+after drain.
