@@ -31,7 +31,10 @@ export default function App() {
   const [synths, setSynths] = useState<Synthesizer[]>([]);
   const [busy, setBusy] = useState(false);
   const [theme, setTheme] = useState(
-    () => localStorage.getItem(THEME_KEY) || "obsidian",
+    () => {
+      const saved = localStorage.getItem(THEME_KEY) || "obsidian";
+      return saved === "forest" ? "obsidian" : saved;
+    },
   );
 
   useEffect(() => {

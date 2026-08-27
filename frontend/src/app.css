@@ -243,3 +243,37 @@ select, input, textarea { font: inherit; color: var(--text); }
   border-radius: 9px; padding: 7px 14px; font-weight: 700;
 }
 .btn-danger:hover { filter: brightness(1.2); }
+
+/* ── V3c: copy buttons + code blocks ───────────────────────────── */
+.copy-btn {
+  font-size: 11px; font-weight: 600; color: var(--text-dim);
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 2px 8px; background: var(--bg-3);
+  transition: color 0.12s, border-color 0.12s;
+}
+.copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+.bubble.has-copy { position: relative; }
+.bubble-copy { position: absolute; top: -10px; right: 8px; opacity: 0; transition: opacity 0.15s; }
+.bubble.has-copy:hover .bubble-copy { opacity: 1; }
+
+.code-block {
+  margin: 10px 0; border: 1px solid var(--border); border-radius: 10px;
+  overflow: hidden; background: var(--bg-3);
+}
+.code-head {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 10px; border-bottom: 1px solid var(--border);
+  background: var(--bg-2);
+}
+.code-lang {
+  font-family: ui-monospace, monospace; font-size: 11px;
+  color: var(--accent); text-transform: lowercase; font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.code-body {
+  margin: 0; padding: 10px 12px; overflow-x: auto;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px; line-height: 1.5; white-space: pre;
+  color: var(--text);
+}

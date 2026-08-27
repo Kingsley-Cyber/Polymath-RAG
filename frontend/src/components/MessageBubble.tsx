@@ -6,7 +6,10 @@ export default function MessageBubble({ msg }: { msg: Message }) {
   if (msg.role === "user") {
     return (
       <div className="msg msg-user">
-        <div className="bubble">{msg.text}</div>
+        <div className="bubble has-copy">
+          {msg.text}
+          <div className="bubble-copy"><CopyBtn text={msg.text} /></div>
+        </div>
       </div>
     );
   }
@@ -59,6 +62,7 @@ function AnswerBody({ msg }: { msg: Message }) {
         >
           {abstained ? "ABSTAINED" : verdict.toUpperCase()}
         </span>
+        <CopyBtn text={res?.answer ?? ""} label="copy answer" />
         <button
           className="chunk-chip"
           onClick={() => setShowChunks((s) => !s)}
@@ -91,6 +95,127 @@ function ChunksPanel({ chunks }: { chunks: ChunkRef[] }) {
           {c.preview && <div className="chunk-preview">“{c.preview}…”</div>}
         </div>
       ))}
+    </div>
+  );
+}
+
+function CopyBtn({ text, label = "copy" }: { text: string; label?: string }) {
+  const [done, setDone] = useState(false);
+  return (
+    <button
+      className="copy-btn"
+      title="Copy to clipboard"
+      onClick={async (e) => {
+        e.stopPropagation();
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          ta.remove();
+        }
+        setDone(true);
+        setTimeout(() => setDone(false), 1400);
+      }}
+    >
+      {done ? "✓ copied" : `⧉ ${label}`}
+    </button>
+  );
+}
+
+const EXT: Record<string, string> = {
+  html: "html", css: "css", javascript: "js", js: "js", typescript: "ts",
+  ts: "ts", python: "py", py: "py", json: "json", bash: "sh", sh: "sh",
+  sql: "sql", yaml: "yaml", markdown: "md", md: "md",
+};
+
+function fileNameFor(code: string, lang: string): string {
+  let base = "polymath-generated";
+  const title = code.match(/<title>([^<]{1,60})<\/title>/i)?.[1]
+    ?? code.match(/<h1[^>]*>([^<]{1,60})<\/h1>/i)?.[1];
+  if (title) {
+    const slug = title.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "").slice(0, 48);
+    if (slug) base = slug;
+  }
+  return `${base}.${EXT[lang] ?? "txt"}`;
+}
+
+function downloadFile(code: string, lang: string) {
+  const mime = lang === "html" ? "text/html" : "text/plain";
+  const url = URL.createObjectURL(new Blob([code], { type: mime }));
+  const el = document.createElement("a");
+  el.href = url;
+  el.download = fileNameFor(code, lang);
+  el.click();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+/** Split LLM output into prose and fenced code blocks; code renders in
+ * a framed block with a header bar: language, Copy, and for HTML also
+ * Open + Download (saves as a real .html file in ~/Downloads). */
+function LlmText({ text }: { text: string }) {
+  const parts: { kind: "text" | "code"; lang: string; body: string }[] = [];
+  const re = /```([a-zA-Z0-9]*)\n([\s\S]*?)```/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last)
+      parts.push({ kind: "text", lang: "", body: text.slice(last, m.index) });
+    parts.push({ kind: "code", lang: (m[1] || "text").toLowerCase(), body: m[2] });
+    last = m.index + m[0].length;
+  }
+  if (last < text.length)
+    parts.push({ kind: "text", lang: "", body: text.slice(last) });
+  if (parts.length === 0) parts.push({ kind: "text", lang: "", body: text });
+  return (
+    <div>
+      {parts.map((seg, i) =>
+        seg.kind === "text" ? (
+          <span key={i}>{seg.body}</span>
+        ) : (
+          <div className="code-block" key={i}>
+            <div className="code-head">
+              <span className="code-lang">{seg.lang}</span>
+              <span className="spacer" />
+              <CopyBtn text={seg.body} label="copy code" />
+              {seg.lang === "html" && (
+                <>
+                  <button
+                    className="copy-btn"
+                    onClick={() => {
+                      const url = URL.createObjectURL(
+                        new Blob([seg.body], { type: "text/html" }),
+                      );
+                      window.open(url, "_blank");
+                    }}
+                  >
+                    ▶ open
+                  </button>
+                  <button
+                    className="copy-btn"
+                    onClick={() => downloadFile(seg.body, "html")}
+                  >
+                    ⬇ download .html
+                  </button>
+                </>
+              )}
+              {seg.lang !== "html" && (
+                <button
+                  className="copy-btn"
+                  onClick={() => downloadFile(seg.body, seg.lang)}
+                >
+                  ⬇ download
+                </button>
+              )}
+            </div>
+            <pre className="code-body">{seg.body}</pre>
+          </div>
+        ),
+      )}
     </div>
   );
 }
@@ -132,21 +257,26 @@ function LlmBody({
     el.click();
   };
 
+  const bareHtml = html && !text.includes("```");
   return (
     <div className="bubble">
-      <div>{text}</div>
+      <LlmText text={text} />
       <div className="meta-row">
         <span className="badge badge-mode">{r.mode}</span>
         <span className="badge badge-generated">
           GENERATED · {a.result?.model ?? "llm"}
         </span>
-        {html && (
+        <CopyBtn text={text} label="copy output" />
+        {bareHtml && (
           <>
             <button className="chunk-chip" onClick={openHtml}>
               ▶ Open HTML
             </button>
-            <button className="chunk-chip" onClick={downloadHtml}>
-              ⬇ Download
+            <button
+              className="chunk-chip"
+              onClick={() => downloadFile(html, "html")}
+            >
+              ⬇ Download .html
             </button>
           </>
         )}
