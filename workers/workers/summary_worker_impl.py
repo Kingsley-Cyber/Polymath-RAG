@@ -228,9 +228,18 @@ def _do_vocabulary(conn: Connection, run_id: str) -> dict:
     corpus = _corpus_of_run(conn, run_id)
     if not corpus:
         return {"status": "NO_CORPUS"}
-    parents = [dict(zip(("summary_id", "entities", "concepts", "summary"), r))
+    # VOCABULARY-PRODUCTION-CONTRACT-V1: `support_id` is REQUIRED by
+    # build_concept_families and must be the parent evidence
+    # neighbourhood (parent_id), not the summary artifact. The
+    # SUMMARY-WORKER-FLEET refactor moved this assembly from
+    # payload-wrapped artifacts to a direct DB read and dropped
+    # parent_id, so every row lost its support identity and the layer
+    # silently produced zero families. Do not remove parent_id from
+    # this SELECT.
+    parents = [dict(zip(("summary_id", "support_id", "entities",
+                         "concepts", "summary"), r))
                for r in conn.execute(
-                   """SELECT summary_id, entities, concepts, summary
+                   """SELECT summary_id, parent_id, entities, concepts, summary
                       FROM parent_summaries WHERE corpus_id=%s""",
                    (corpus,)).fetchall()]
     docs = [dict(zip(("summary_id", "major_entities", "major_concepts"), r))
