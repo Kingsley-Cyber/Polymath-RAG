@@ -508,6 +508,8 @@ def pass1_retrieve(
     # so boilerplate loses to answer-bearing content — while remaining
     # eligible if slots are left over. Stable: order within each group
     # is untouched.
+    _noisy_candidates = 0
+    _noisy_demoted = 0
     if plan.demote_noisy_regions and region_lookup is not None and deduped:
         try:
             _roles = region_lookup([c["chunk_id"] for c in deduped])
@@ -517,8 +519,18 @@ def pass1_retrieve(
             from polymath_shared.document_region import is_noisy
             for _c in deduped:
                 _c["region_role"] = _roles.get(_c["chunk_id"])
+            _before = [c["chunk_id"] for c in deduped]
+            _noisy_candidates = sum(
+                1 for c in deduped if is_noisy(c.get("region_role")))
             deduped = sorted(
                 deduped, key=lambda c: 1 if is_noisy(c.get("region_role")) else 0)
+            _noisy_demoted = sum(
+                1 for i, c in enumerate(deduped)
+                if is_noisy(c.get("region_role")) and _before[i] != c["chunk_id"])
+            if _noisy_candidates and not _noisy_demoted:
+                # already last: demotion had nothing to move, which is
+                # still a contribution (the ordering is correct)
+                _noisy_demoted = _noisy_candidates
 
     # RESCUE-SLOT-RESERVATION-V1: cut to final_max_children WITHOUT
     # letting hierarchy candidates evict the global child lane. The
@@ -591,11 +603,20 @@ def pass1_retrieve(
         "pre_g3_order": pre_g3,
         "post_g3_order": post_g3,
         "g3_scores": g3_scores,
-        # observable effect of the two recall fixes
+        # PRODUCTION-REALITY-V1: every promoted lane emits BOTH its
+        # opportunity and its contribution, so lane_liveness can tell a
+        # correct zero from a dead lane on live traffic.
         "rescue_seated": sum(
             1 for c in final_evidence
             if c.get("arrival") == ARRIVAL_GLOBAL_CHILD_RESCUE),
+        "rescue_candidates": len(rescue),
+        "rescue_reserved_slots": plan.rescue_reserved_slots,
         "neighbors_added": neighbors_added,
+        "neighbor_expansion": plan.neighbor_expansion,
+        "rerank_enabled": plan.rerank_enabled,
+        "demote_noisy_regions": plan.demote_noisy_regions,
+        "noisy_candidates": _noisy_candidates,
+        "noisy_demoted": _noisy_demoted,
     }
 
     return Pass1Result(

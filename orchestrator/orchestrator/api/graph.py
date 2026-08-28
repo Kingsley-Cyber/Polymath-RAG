@@ -43,6 +43,7 @@ from orchestrator.api.fast import (
     _ensure_fast_ready,
     _neighbor_lookup,
     _region_lookup,
+    _liveness,
     _rerank_children,
     _corpus_collections,
     degradations,
@@ -191,6 +192,9 @@ def graph_retrieve(query: str, corpus_id: str) -> dict:
             "evidence_count": len(evidence),
             "graph_fact_count": len(graph_facts),
             "degraded": degradations(),
+            "liveness": _liveness(
+                {**result.trace, "graph_seed_surfaces": _selected_surfaces(query, evidence),
+                 "graph_fact_count": len(graph_facts)}, MODE_GRAPH),
         },
         "documents": documents,
         "unassigned_rescue_evidence": [

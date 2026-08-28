@@ -243,6 +243,18 @@ def _neighbor_lookup(want: list[dict], distance: int) -> list[dict]:
     ]
 
 
+def _liveness(trace: dict, mode: str) -> dict:
+    """Evaluate promoted-lane liveness for this query's trace."""
+    from polymath_shared.lane_liveness import evaluate
+
+    out = evaluate({**trace, "mode": mode})
+    if out["suspect"]:
+        log.warning("promoted lane(s) had an opportunity and contributed "
+                    "nothing: %s", ",".join(out["suspect"]),
+                    extra={"error_code": "lane_suspect"})
+    return {"suspect": out["suspect"], "live": out["live"]}
+
+
 def _region_lookup(chunk_ids: list[str]) -> dict:
     """DOCUMENT-REGION-V1 source: persisted document role per chunk.
 
@@ -332,6 +344,11 @@ def fast_retrieve(
             "selected_section_count": len(result.selected_sections),
             "evidence_count": len(result.final_evidence),
             "degraded": degradations(),
+            # PRODUCTION-REALITY-V1: per-query lane liveness. A lane that
+            # was enabled, had a genuine opportunity and contributed
+            # nothing shows up as SUSPECT here instead of silently
+            # delivering zero for weeks.
+            "liveness": _liveness(result.trace, MODE_FAST),
         },
         "selected_documents": [
             {

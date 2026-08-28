@@ -32,6 +32,7 @@ from orchestrator.api.fast import (
     _ensure_fast_ready,
     _neighbor_lookup,
     _region_lookup,
+    _liveness,
     _rerank_children,
     _corpus_collections,
     degradations,
@@ -130,6 +131,7 @@ def hybrid_fast_retrieve(
             "selected_section_count": len(result.selected_sections),
             "evidence_count": len(result.final_evidence),
             "degraded": degradations(),
+            "liveness": _liveness(result.trace, MODE_HYBRID),
         },
         "selected_documents": [
             {
