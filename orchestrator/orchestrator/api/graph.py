@@ -35,10 +35,13 @@ from polymath_shared.retrieval_modes import (
 )
 from polymath_shared.settings import get_settings
 
+from polymath_shared.query_shape import plan_for_query
+
 from orchestrator.api.fast import (
     _begin_retrieval,
     _embed_query,
     _ensure_fast_ready,
+    _neighbor_lookup,
     _rerank_children,
     _corpus_collections,
     degradations,
@@ -88,15 +91,18 @@ def graph_retrieve(query: str, corpus_id: str) -> dict:
     try:
         searcher = FastSearcher(client, collections)
         t0 = time.time()
+        shaped = plan_for_query(
+            query,
+            HybridRetrievalPlan(**{**plan.__dict__, "corpus_ids": (corpus_id,)}),
+        )
         result = hybrid_retrieve(
             query,
-            plan=HybridRetrievalPlan(
-                **{**plan.__dict__, "corpus_ids": (corpus_id,)},
-            ),
+            plan=shaped,
             embed_query=_embed_query,
             routing_search=searcher,
             lexical_search=lambda q, k: _lexical_search(q, corpus_id, k),
-            rerank_children=_rerank_children if plan.rerank_enabled else None,
+            rerank_children=_rerank_children if shaped.rerank_enabled else None,
+            neighbor_lookup=_neighbor_lookup,
         )
         pass1_ms = (time.time() - t0) * 1000
     finally:

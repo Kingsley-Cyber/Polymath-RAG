@@ -33,6 +33,8 @@ from polymath_shared.pass1 import (
     Pass1RetrievalPlan,
     Pass1Result,
     LaneHit,
+    _expand_neighbors,
+    _truncate_reserving_rescue,
     aggregate_documents_n,
     resolve_sections,
 )
@@ -73,6 +75,14 @@ class HybridRetrievalPlan:
 
     final_max_children: int = 10
     final_max_total_items: int = 12
+
+    #: See pass1 for both. Defaults preserve HYBRID's frozen behaviour:
+    #: rescue reservation only changes WHICH candidates survive a cut
+    #: that was already happening, and neighbour expansion is off until
+    #: the depth profile turns it on.
+    rescue_reserved_slots: int = 2
+    neighbor_expansion: int = 0
+    neighbor_expansion_max: int = 8
 
 
 HYBRID_DEFAULT_PLAN = HybridRetrievalPlan()
@@ -146,6 +156,7 @@ def hybrid_retrieve(
     lexical_search: Callable[[str, int], list[LaneHit]],
     rerank_children: Optional[Callable[[str, list[dict]], list[dict]]] = None,
     summary_vectors: Optional[Callable[[str, list[str]], dict[str, list[float]]]] = None,
+    neighbor_lookup: Optional[Callable[[list[dict], int], list[dict]]] = None,
 ) -> HybridResult:
     from polymath_shared.pass1 import (
         REPRESENTATION_KIND_CHILD,
@@ -276,7 +287,12 @@ def hybrid_retrieve(
             continue
         seen_ids.add(c["chunk_id"])
         deduped.append(c)
-    deduped = deduped[: plan.final_max_children]
+    # RESCUE-SLOT-RESERVATION-V1 (see pass1): the neural and lexical
+    # rescue lanes are appended after every deepened child, so a flat
+    # cut here silently deleted both recall lanes on dense corpora.
+    deduped = _truncate_reserving_rescue(
+        deduped, plan.final_max_children,
+        getattr(plan, "rescue_reserved_slots", 2))
 
     pre_g3 = [c["chunk_id"] for c in deduped]
     post_g3 = list(pre_g3)
@@ -289,6 +305,10 @@ def hybrid_retrieve(
         deduped = sorted(deduped, key=lambda c: post_g3.index(c["chunk_id"]))
         for c in deduped:
             c["rerank_score"] = g3_scores.get(c["chunk_id"])
+
+    # NEIGHBOR-EXPANSION-V1: after G3, for the same reason as pass1.
+    deduped, neighbors_added = _expand_neighbors(
+        deduped, plan, neighbor_lookup)
 
     final_evidence: list[dict] = []
     total = 0
@@ -329,6 +349,11 @@ def hybrid_retrieve(
         "pre_g3_order": pre_g3,
         "post_g3_order": post_g3,
         "g3_scores": g3_scores,
+        "rescue_seated": sum(
+            1 for c in final_evidence
+            if c.get("arrival") in (ARRIVAL_GLOBAL_CHILD_RESCUE,
+                                    ARRIVAL_LEXICAL_RESCUE)),
+        "neighbors_added": neighbors_added,
     }
 
     return HybridResult(

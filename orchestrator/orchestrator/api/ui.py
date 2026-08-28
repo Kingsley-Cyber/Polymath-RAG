@@ -814,6 +814,15 @@ what is missing instead of inventing facts.
 - When the material has an exam angle (objectives, question formats, \
 common traps), end with a brief "for the exam" note drawn from the \
 evidence.
+- COMPLETENESS OVERRIDES BREVITY. When the user asks for ALL of \
+something — every domain, the full list, each step — enumerate every \
+item the evidence contains, verbatim and in order. Do not sample, \
+summarise, or stop at the representative few; the length rules above \
+are suspended for this case. Scan the WHOLE of each evidence block \
+before you answer, including its final lines: structured lists are \
+routinely split across blocks and continue in the next one. State \
+explicitly which items the evidence does not cover, and never imply a \
+list is complete when it is not.
 - These answers are GENERATED and are labeled as such downstream; do \
 not claim to be a validated source of truth."""
 
@@ -838,6 +847,19 @@ def _llm_system_prompt() -> str:
     )
 
 
+#: EVIDENCE-TRUNCATION-V1 (2026-08-27). Each evidence item was cut to
+#: 900 characters, but the production chunker targets 1,200 (measured
+#: corpus average 1,197) — so roughly the last quarter of EVERY chunk
+#: was silently withheld from the model. That decapitates exactly the
+#: chunks whose value sits at the end: MEASURED, the CySA objectives
+#: map chunk is 1,230 chars with subdomain 1.4 starting at character
+#: 1,061 and 1.5 at 1,144 — retrieval delivered them, the prompt
+#: builder deleted them, and the answer listed only 1.1-1.3.
+#: 1,600 covers the chunk-size distribution with headroom.
+_EVIDENCE_TEXT_CHARS = int(
+    os.environ.get("POLYMATH_EVIDENCE_TEXT_CHARS", "1600"))
+
+
 def _grounded_messages(query: str, bundle: dict, graph_facts: list,
                        history, carry_context,
                        reasoning: str | None = None,
@@ -852,7 +874,7 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
     for item in (bundle.get("evidence_bundle") or [])[:40]:
         span = item.get("source_span") or {}
         loc = span.get("locator") or ""
-        text = (span.get("text") or "")[:900]
+        text = (span.get("text") or "")[:_EVIDENCE_TEXT_CHARS]
         if loc and text:
             ev_lines.append(f"[{loc}]\n{text}")
     for f in graph_facts[:20]:

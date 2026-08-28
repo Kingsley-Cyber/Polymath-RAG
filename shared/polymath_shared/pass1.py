@@ -34,6 +34,9 @@ ARRIVAL_DOCUMENT_LED = "DOCUMENT_LED"
 ARRIVAL_SECTION_LED = "SECTION_LED"
 ARRIVAL_GLOBAL_CHILD_RESCUE = "GLOBAL_CHILD_RESCUE"
 ARRIVAL_MULTI_REPRESENTATION = "MULTI_REPRESENTATION"
+#: NEIGHBOR-EXPANSION-V1: admitted because it is adjacent to a ranked
+#: candidate, not because it was retrieved on its own merit.
+ARRIVAL_NEIGHBOR_EXPANSION = "NEIGHBOR_EXPANSION"
 
 
 @dataclass(frozen=True)
@@ -63,6 +66,34 @@ class Pass1RetrievalPlan:
 
     final_max_children: int = 10
     final_max_total_items: int = 12
+
+    #: RESCUE-SLOT-RESERVATION-V1 (2026-08-27). `global_child_rescue_max`
+    #: was structurally dead: rescue children are appended AFTER every
+    #: deepened child (up to max_documents × max_sections_per_document ×
+    #: max_children_per_section = 30 by default) and the list is then cut
+    #: to `final_max_children` = 10, so on any dense corpus the recall-
+    #: safety lane was always truncated away. MEASURED LIVE on
+    #: cysa-study-v1: 0 of 10 delivered chunks arrived via rescue
+    #: (7 MULTI_REPRESENTATION, 3 SECTION_LED) while the answer the user
+    #: asked for sat mid-document, exactly the case rescue exists to
+    #: catch. Reserving slots keeps the hierarchy dominant while
+    #: guaranteeing the global child lane can always seat its best hits.
+    #: Reservation never grows the candidate set — it only decides which
+    #: `final_max_children` survive.
+    rescue_reserved_slots: int = 2
+
+    #: NEIGHBOR-EXPANSION-V1 (2026-08-27). Number of adjacent chunks
+    #: (chunk_index ± n, same document) to admit alongside a surviving
+    #: child. Answers that run past one chunk boundary — enumerations,
+    #: objectives maps, procedures — are otherwise delivered as a
+    #: fragment: MEASURED, the CySA objectives map ends at subdomain 1.5
+    #: and domains 2/3/4 live in the NEXT chunk, which nothing pulled in.
+    #: Simulated ±1 expansion took coverage from one domain to all four.
+    #: DEFAULT 0 (off): breadth-first retrieval is correct for ordinary
+    #: questions and the frozen plan must not change under them. The
+    #: depth profile turns it on (see query_shape.enumeration_plan).
+    neighbor_expansion: int = 0
+    neighbor_expansion_max: int = 8
 
 
 PASS1_DEFAULT_PLAN = Pass1RetrievalPlan()
@@ -237,6 +268,71 @@ def resolve_sections(
     return resolved
 
 
+def _truncate_reserving_rescue(candidates: list[dict], limit: int,
+                               reserved: int) -> list[dict]:
+    """Cut to `limit`, keeping up to `reserved` seats for global-child
+    rescue candidates that the hierarchy would otherwise evict.
+
+    Order is preserved (hierarchy first, then rescue), so this only
+    changes WHICH candidates survive, never their relative order. With
+    `reserved=0`, or when nothing was rescued, or when everything fits,
+    the result is identical to a plain `candidates[:limit]`.
+    """
+    if limit <= 0 or len(candidates) <= limit:
+        return candidates[:limit] if limit >= 0 else candidates
+    rescue = [c for c in candidates
+              if c.get("arrival") == ARRIVAL_GLOBAL_CHILD_RESCUE]
+    if not rescue or reserved <= 0:
+        return candidates[:limit]
+    seats = min(reserved, len(rescue), limit)
+    hierarchy = [c for c in candidates
+                 if c.get("arrival") != ARRIVAL_GLOBAL_CHILD_RESCUE]
+    kept_ids = {c["chunk_id"] for c in hierarchy[:limit - seats]}
+    kept_ids.update(c["chunk_id"] for c in rescue[:seats])
+    return [c for c in candidates if c["chunk_id"] in kept_ids][:limit]
+
+
+def _expand_neighbors(candidates: list[dict], plan: Pass1RetrievalPlan,
+                      neighbor_lookup) -> tuple[list[dict], int]:
+    """NEIGHBOR-EXPANSION-V1: admit adjacent chunks so an answer that
+    runs past a chunk boundary arrives whole.
+
+    Neighbours are APPENDED after the ranked candidates and never
+    displace one: this raises recall without reordering anything the
+    ranker decided. Returns (candidates, added_count).
+    """
+    if plan.neighbor_expansion <= 0 or not candidates or neighbor_lookup is None:
+        return candidates, 0
+    want = [
+        {"doc_id": c["doc_id"], "chunk_id": c["chunk_id"]}
+        for c in candidates if c.get("doc_id") and c.get("chunk_id")
+    ]
+    try:
+        neighbours = neighbor_lookup(want, plan.neighbor_expansion) or []
+    except Exception:
+        return candidates, 0  # expansion is additive; never fail the query
+    have = {c["chunk_id"] for c in candidates}
+    added: list[dict] = []
+    for n in neighbours:
+        cid = n.get("chunk_id")
+        if not cid or cid in have:
+            continue
+        have.add(cid)
+        added.append({
+            "chunk_id": cid,
+            "doc_id": n.get("doc_id", ""),
+            "parent_id": n.get("parent_id", ""),
+            "text": n.get("text", ""),
+            "source_name": n.get("source_name", ""),
+            "similarity": None,
+            "arrival": ARRIVAL_NEIGHBOR_EXPANSION,
+            "document_rank": None,
+        })
+        if len(added) >= plan.neighbor_expansion_max:
+            break
+    return candidates + added, len(added)
+
+
 def pass1_retrieve(
     query: str,
     *,
@@ -244,10 +340,15 @@ def pass1_retrieve(
     embed_query: Callable[[str], list[float]],
     routing_search: Callable[[str, list[float], dict], list[dict]],
     rerank_children: Optional[Callable[[str, list[dict]], list[dict]]] = None,
+    neighbor_lookup: Optional[Callable[[list[dict], int], list[dict]]] = None,
 ) -> Pass1Result:
     """Execute Pass-1. `routing_search(collection, vector, filters)` returns
     [{payload, score}] sorted by score desc; filters: representation_kind,
-    corpus_id, and optional doc_id / parent_id."""
+    corpus_id, and optional doc_id / parent_id.
+
+    `neighbor_lookup(want, distance)` returns adjacent chunk rows for the
+    given [{doc_id, chunk_id}] seeds; only called when the plan enables
+    neighbour expansion (depth profile)."""
     from polymath_shared.embedding_contracts import NEURAL_EMBED_CONTRACT
     from polymath_shared.projection_contracts import qdrant_collection_name
 
@@ -366,7 +467,14 @@ def pass1_retrieve(
             continue
         seen_ids.add(c["chunk_id"])
         deduped.append(c)
-    deduped = deduped[:plan.final_max_children]
+
+    # RESCUE-SLOT-RESERVATION-V1: cut to final_max_children WITHOUT
+    # letting hierarchy candidates evict the global child lane. The
+    # reservation is a floor for rescue, never a quota: unused rescue
+    # slots go straight back to the hierarchy, so a corpus with no
+    # rescue hits gets byte-identical behaviour to before.
+    deduped = _truncate_reserving_rescue(
+        deduped, plan.final_max_children, plan.rescue_reserved_slots)
 
     # -- G3: candidate-set invariant (order only) ---------------------------
     pre_g3 = [c["chunk_id"] for c in deduped]
@@ -382,6 +490,12 @@ def pass1_retrieve(
         )
         for c in deduped:
             c["rerank_score"] = g3_scores.get(c["chunk_id"])
+
+    # NEIGHBOR-EXPANSION-V1 runs AFTER G3 by construction: the reranker's
+    # candidate-set invariant (asserted above) forbids changing the set
+    # it scores, and an adjacent chunk is admitted for contiguity, not
+    # for relevance — it was never a ranking candidate.
+    deduped, neighbors_added = _expand_neighbors(deduped, plan, neighbor_lookup)
 
     # bounded hierarchical final evidence: per document -> sections ->
     # children; rescue children at the end.
@@ -425,6 +539,11 @@ def pass1_retrieve(
         "pre_g3_order": pre_g3,
         "post_g3_order": post_g3,
         "g3_scores": g3_scores,
+        # observable effect of the two recall fixes
+        "rescue_seated": sum(
+            1 for c in final_evidence
+            if c.get("arrival") == ARRIVAL_GLOBAL_CHILD_RESCUE),
+        "neighbors_added": neighbors_added,
     }
 
     return Pass1Result(

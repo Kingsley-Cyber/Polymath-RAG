@@ -30,6 +30,7 @@ from polymath_shared.db import tx
 from polymath_shared.embedding_contracts import NEURAL_EMBED_CONTRACT
 from polymath_shared.pass1 import Pass1RetrievalPlan, pass1_retrieve
 from polymath_shared.projection_contracts import qdrant_collection_name
+from polymath_shared.query_shape import plan_for_query
 from polymath_shared.rerank import RerankUnavailable, apply_rerank
 from polymath_shared.retrieval_modes import MODE_FAST, mode_plan
 from polymath_shared.settings import get_settings
@@ -204,6 +205,44 @@ def degradations() -> list[dict]:
     }]
 
 
+def _neighbor_lookup(want: list[dict], distance: int) -> list[dict]:
+    """NEIGHBOR-EXPANSION-V1 source: chunks adjacent (chunk_index ± n,
+    same document, child tier) to the seed chunks.
+
+    One set-based query for the whole seed set — never a per-seed loop
+    (the repo has paid for that pattern before). Ordered deterministically
+    so the same seeds always expand to the same rows."""
+    if not want or distance <= 0:
+        return []
+    doc_ids = [w["doc_id"] for w in want]
+    chunk_ids = [w["chunk_id"] for w in want]
+    with tx() as conn:
+        rows = conn.execute(
+            """
+            WITH seeds AS (
+                SELECT c.doc_id, c.chunk_index
+                  FROM chunks c
+                  JOIN unnest(%s::text[], %s::text[]) AS w(doc_id, chunk_id)
+                    ON c.doc_id = w.doc_id AND c.chunk_id = w.chunk_id
+            )
+            SELECT DISTINCT n.chunk_id, n.doc_id, n.parent_id, n.text,
+                   d.source_name, n.chunk_index
+              FROM chunks n
+              JOIN seeds s ON n.doc_id = s.doc_id
+              JOIN documents d ON d.doc_id = n.doc_id
+             WHERE n.tier = 'child'
+               AND n.chunk_index BETWEEN s.chunk_index - %s AND s.chunk_index + %s
+             ORDER BY n.doc_id, n.chunk_index
+            """,
+            (doc_ids, chunk_ids, distance, distance),
+        ).fetchall()
+    return [
+        {"chunk_id": r[0], "doc_id": r[1], "parent_id": r[2],
+         "text": r[3], "source_name": r[4]}
+        for r in rows
+    ]
+
+
 def _rerank_children(query: str, children: list[dict]) -> list[dict]:
     try:
         _, reranked = apply_rerank(query, [], children)
@@ -246,14 +285,20 @@ def fast_retrieve(
         def routing_search(collection: str, vector: list[float], filters: dict) -> list[dict]:
             return searcher(collection, vector, filters)
 
+        # QUERY-SHAPE-V1: breadth by default; the depth profile engages
+        # only for completeness questions ("all the domains and
+        # subdomains…"), which the breadth caps structurally truncate.
+        shaped = plan_for_query(
+            query,
+            Pass1RetrievalPlan(**{**plan.__dict__, "corpus_ids": (corpus_id,)}),
+        )
         result = pass1_retrieve(
             query,
-            plan=Pass1RetrievalPlan(
-                **{**plan.__dict__, "corpus_ids": (corpus_id,)},
-            ),
+            plan=shaped,
             embed_query=_embed_query,
             routing_search=routing_search,
-            rerank_children=_rerank_children if plan.rerank_enabled else None,
+            rerank_children=_rerank_children if shaped.rerank_enabled else None,
+            neighbor_lookup=_neighbor_lookup,
         )
     finally:
         client.close()
