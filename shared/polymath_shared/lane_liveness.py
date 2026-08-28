@@ -186,3 +186,40 @@ def evaluate(trace: dict) -> dict:
         "suspect": [r["lane"] for r in results if r["status"] == STATUS_SUSPECT],
         "live": [r["lane"] for r in results if r["status"] == STATUS_LIVE],
     }
+
+
+# ==================================================== SEMANTIC LANES
+# Retrieval lanes are evaluated per-query from a trace. Ingestion lanes
+# are evaluated from DURABLE state, because their opportunities occur
+# once at ingest and must remain answerable long afterwards.
+
+STATUS_CAPPED = "LIVE_BUT_CAPPED"
+STATUS_UNOBSERVABLE = "UNOBSERVABLE"
+
+
+def semantic_lane_status(*, opportunities: int | None, accepted: int,
+                         capped_documents: int = 0,
+                         documents: int = 0) -> str:
+    """Status for an ingestion lane from durable counters.
+
+    The distinction that matters, and the one an artifact count alone
+    cannot make:
+
+      opportunities is None -> UNOBSERVABLE (no instrumentation; NOT zero)
+      opportunities == 0    -> NO_OPPORTUNITY (correct silence)
+      accepted == 0         -> SUSPECT (evidence existed, nothing came out)
+      cap binding on most   -> LIVE_BUT_CAPPED (working, but truncating
+                               real recall by construction, which is a
+                               DESIGN limit and not a defect to alert on
+                               every night)
+      otherwise             -> LIVE
+    """
+    if opportunities is None:
+        return STATUS_UNOBSERVABLE
+    if opportunities <= 0:
+        return STATUS_NO_OPPORTUNITY
+    if accepted <= 0:
+        return STATUS_SUSPECT
+    if documents and capped_documents >= documents:
+        return STATUS_CAPPED
+    return STATUS_LIVE

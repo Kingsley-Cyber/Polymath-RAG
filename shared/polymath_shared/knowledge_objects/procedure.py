@@ -91,6 +91,18 @@ def split_step_sentences(text: str) -> list[str]:
     return out
 
 
+def count_opportunities(text: str) -> int:
+    """SEMANTIC-LANE-LIVENESS-V1: how many imperative step sentences the
+    compiler SEES, before the MIN_STEPS gate. Purely diagnostic — it
+    shares the compiler's own helpers so it can never drift from what
+    compile_procedure actually evaluates, and it changes no semantics.
+
+    Distinguishes "this document had no procedural evidence" (a correct
+    zero) from "evidence existed and produced nothing" (a defect).
+    """
+    return sum(1 for s in split_step_sentences(text) if _is_imperative(s))
+
+
 def compile_procedure(*, document_id: str, corpus_id: str,
                       text: str, title: str = "",
                       admitted_entities: list[str] | None = None,

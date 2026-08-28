@@ -1574,6 +1574,20 @@ def _persist_knowledge_artifacts(conn: Connection, *, corpus_id: str,
     counts = {"procedures": 0, "concepts": 0,
               "routing_disabled": sorted(routing.get("disabled") or [])}
 
+    # SEMANTIC-LANE-LIVENESS-V1: record the OPPORTUNITY, not just the
+    # output. An artifact count alone cannot tell "12 of 12 opportunities
+    # captured" from "12 of 400", which is precisely how a lane can look
+    # alive while being deeply lossy. Counters are diagnostic and share
+    # the compilers' own helpers, so they cannot drift from what the
+    # compilers actually evaluate.
+    from polymath_shared.knowledge_objects import concept as _concept_mod
+    from polymath_shared.knowledge_objects import procedure as _procedure_mod
+    from workers.summarizer import split_sentences as _split
+
+    _doc_sentences = _split(doc_text)
+    _proc_opportunities = _procedure_mod.count_opportunities(doc_text)
+    _concept_opportunities = _concept_mod.count_opportunities(_doc_sentences)
+
     # procedure lane: always evaluated; the compiler self-gates on
     # local procedural evidence
     proc = compile_procedure(
@@ -1623,7 +1637,53 @@ def _persist_knowledge_artifacts(conn: Connection, *, corpus_id: str,
              float(c.get("confidence", 0.0)), list(chunk_ids),
              _bundle_hash()))
         counts["concepts"] += 1
+
+    _record_lane_attempt(conn, doc_id=doc_id, corpus_id=corpus_id,
+                         lane="procedure",
+                         opportunities=_proc_opportunities,
+                         accepted=counts["procedures"], capped=False)
+    _record_lane_attempt(conn, doc_id=doc_id, corpus_id=corpus_id,
+                         lane="concept",
+                         opportunities=_concept_opportunities,
+                         accepted=counts["concepts"],
+                         # compile_concepts caps at max_concepts=10;
+                         # equality means the cap truncated real recall
+                         capped=counts["concepts"] >= 10)
+    counts["procedure_opportunities"] = _proc_opportunities
+    counts["concept_opportunities"] = _concept_opportunities
     return counts
+
+
+def _record_lane_attempt(conn: Connection, *, doc_id: str, corpus_id: str,
+                         lane: str, opportunities: int, accepted: int,
+                         capped: bool) -> None:
+    """SEMANTIC-LANE-LIVENESS-V1 durable disposition.
+
+    NO_OPPORTUNITY is a CORRECT outcome and must stay distinguishable
+    from a lane that saw evidence and produced nothing (GATED) -- the
+    latter is the dead-feature signal."""
+    if opportunities <= 0:
+        disposition = "NO_OPPORTUNITY"
+    elif accepted > 0:
+        disposition = "ACCEPTED"
+    else:
+        disposition = "GATED"
+    conn.execute(
+        """
+        INSERT INTO knowledge_lane_attempts
+            (doc_id, corpus_id, lane, opportunities, accepted, capped,
+             disposition, bundle_hash)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+        ON CONFLICT (doc_id, lane) DO UPDATE SET
+            opportunities = EXCLUDED.opportunities,
+            accepted = EXCLUDED.accepted,
+            capped = EXCLUDED.capped,
+            disposition = EXCLUDED.disposition,
+            bundle_hash = EXCLUDED.bundle_hash,
+            created_at = now()
+        """,
+        (doc_id, corpus_id, lane, opportunities, accepted, capped,
+         disposition, _bundle_hash()))
 
 
 def _persist_decision(conn: Connection, chunk_row: dict, candidate, decision,

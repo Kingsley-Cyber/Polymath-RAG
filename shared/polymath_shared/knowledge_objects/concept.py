@@ -110,6 +110,23 @@ def _clean_name(name: str) -> str:
     return " ".join(out)
 
 
+def count_opportunities(sentences: list[str]) -> int:
+    """SEMANTIC-LANE-LIVENESS-V1: definitional sentences the compiler
+    SEES, before the max_concepts cap. Diagnostic only; uses the same
+    patterns compile_concepts evaluates.
+
+    Because the cap is 10/document, comparing this to `accepted` is the
+    only way to know whether the cap is truncating real recall.
+    """
+    n = 0
+    for s in sentences:
+        for pat in _DEFINE_PATTERNS:
+            if pat.search(s):
+                n += 1
+                break
+    return n
+
+
 def compile_concepts(*, document_id: str, corpus_id: str,
                      sentences: list[str],
                      domain: str = "general",

@@ -67,3 +67,66 @@ async def sidecars(request: Request) -> dict:
         }
         for name, s in registry.items()
     }
+
+
+@router.get("/health/semantic")
+def semantic_health(corpus_id: str | None = None) -> dict:
+    """POLYMATH-HEALTH-SURFACE-V1: operator answer to
+    "are the semantic lanes actually functioning?"
+
+    Reads durable state only. Reports OPPORTUNITY alongside output,
+    because an artifact count alone cannot distinguish "captured
+    everything it was shown" from "discarded 99% of it" — the blindness
+    that let several lanes sit dead while looking healthy.
+    """
+    from polymath_shared.db import tx
+    from polymath_shared.lane_liveness import semantic_lane_status
+
+    with tx() as conn:
+        scope = (corpus_id,) if corpus_id else None
+        where = "WHERE corpus_id = %s" if corpus_id else ""
+        lanes = conn.execute(
+            f"""SELECT lane,
+                       sum(opportunities)::int,
+                       sum(accepted)::int,
+                       count(*) FILTER (WHERE capped)::int,
+                       count(*)::int,
+                       max(created_at)
+                  FROM knowledge_lane_attempts {where}
+                 GROUP BY lane ORDER BY lane""",
+            scope).fetchall()
+        fact = conn.execute(
+            """SELECT
+                 (SELECT count(*) FROM relation_candidates),
+                 (SELECT count(*) FROM fact_admission_decisions),
+                 (SELECT count(*) FROM facts),
+                 (SELECT count(*) FROM evidence)""").fetchone()
+
+    out: dict = {"contract": "polymath-health-surface-v1", "lanes": {}}
+    for lane, opps, acc, capped, docs, last in lanes:
+        out["lanes"][lane] = {
+            "status": semantic_lane_status(
+                opportunities=opps, accepted=acc,
+                capped_documents=capped, documents=docs),
+            "opportunities": opps,
+            "accepted": acc,
+            "capture_ratio": round(acc / opps, 4) if opps else None,
+            "documents": docs,
+            "capped_documents": capped,
+            "last_attempt_at": str(last) if last else None,
+        }
+    # FACT has a real durable funnel (candidates -> decisions -> facts),
+    # so its liveness is measured from the funnel itself.
+    candidates, decisions, facts, evidence = fact
+    out["lanes"]["fact"] = {
+        "status": semantic_lane_status(
+            opportunities=candidates, accepted=facts),
+        "opportunities": candidates,
+        "decisions": decisions,
+        "accepted": facts,
+        "evidence_rows": evidence,
+        "capture_ratio": round(facts / candidates, 4) if candidates else None,
+    }
+    out["suspect"] = [name for name, v in out["lanes"].items()
+                      if v["status"] == "SUSPECT"]
+    return out
