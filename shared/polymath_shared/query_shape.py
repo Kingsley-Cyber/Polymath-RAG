@@ -30,7 +30,13 @@ from dataclasses import replace
 _ENUMERATION_RE = re.compile(
     r"\b("
     r"list (?:all|every|the)|"
-    r"what are (?:all|the) |"
+    # "what are all …" only. A bare "what are the …" is the shape of
+    # ordinary comparison questions ("what are the pros and cons of X",
+    # "what are the differences between X and Y", "what are the
+    # tradeoffs …"), which want a tight answer, not a 24-chunk sweep.
+    # The structure-noun branch below still catches "what are the
+    # domains and subdomains of X".
+    r"what are all\b|"
     r"name (?:all|every)|"
     r"enumerate|"
     r"all (?:of )?the \w+s\b|"
