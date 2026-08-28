@@ -92,6 +92,40 @@ def depth_plan(plan):
     )
 
 
+#: DOCUMENT-REGION-V1 escape hatch. Questions ABOUT the document rather
+#: than about its subject legitimately want the regions that default
+#: retrieval demotes. Deliberately tiny and deterministic — this is not
+#: a semantic intent classifier, just the minimum signal needed to stop
+#: demotion from making front matter unreachable.
+_METADATA_RE = re.compile(
+    r"\b("
+    r"who (wrote|authored|is the author)|about the author|"
+    r"who is the (author|editor|publisher)|"
+    r"what does (this|the) (book|document|corpus) cover|"
+    r"table of contents|what chapters|list the chapters|"
+    r"the (preface|foreword|dedication|acknowledg(e)?ments?)|"
+    r"copyright|isbn|publisher|"
+    r"(show|what is in) the (bibliography|index|references)"
+    r")",
+    re.IGNORECASE,
+)
+
+
+def is_document_metadata_query(query: str) -> bool:
+    """True for questions about the DOCUMENT (authorship, front matter,
+    contents listing) rather than its subject matter."""
+    return bool(_METADATA_RE.search(query or ""))
+
+
 def plan_for_query(query: str, plan):
-    """Pick the retrieval profile for this question. Breadth by default."""
-    return depth_plan(plan) if is_enumeration_query(query) else plan
+    """Pick the retrieval profile for this question.
+
+    Breadth by default; depth for completeness questions; and region
+    demotion is lifted entirely for document-metadata questions so
+    front matter stays reachable when it IS the answer.
+    """
+    if is_enumeration_query(query):
+        plan = depth_plan(plan)
+    if is_document_metadata_query(query):
+        plan = replace(plan, demote_noisy_regions=False)
+    return plan

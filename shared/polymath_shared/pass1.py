@@ -95,6 +95,20 @@ class Pass1RetrievalPlan:
     neighbor_expansion: int = 0
     neighbor_expansion_max: int = 8
 
+    #: DOCUMENT-REGION-V1. When true, children whose persisted
+    #: `region_role` is a demoted role (front matter, marketing, TOC,
+    #: index, bibliography, OCR placeholder) SINK to the end of the
+    #: child lane instead of competing on similarity alone.
+    #:
+    #: This is DEMOTION, never deletion: every chunk stays indexed and
+    #: still reaches the model if nothing better exists, and an explicit
+    #: document-metadata question turns the demotion off entirely (see
+    #: query_shape.is_document_metadata_query). Necessary because
+    #: similarity CANNOT separate these: MEASURED, an author biography
+    #: scored 0.5955 against the correct objectives map at 0.4894 for a
+    #: technical question, so any score floor removes the answer first.
+    demote_noisy_regions: bool = True
+
 
 PASS1_DEFAULT_PLAN = Pass1RetrievalPlan()
 
@@ -341,6 +355,7 @@ def pass1_retrieve(
     routing_search: Callable[[str, list[float], dict], list[dict]],
     rerank_children: Optional[Callable[[str, list[dict]], list[dict]]] = None,
     neighbor_lookup: Optional[Callable[[list[dict], int], list[dict]]] = None,
+    region_lookup: Optional[Callable[[list[str]], dict]] = None,
 ) -> Pass1Result:
     """Execute Pass-1. `routing_search(collection, vector, filters)` returns
     [{payload, score}] sorted by score desc; filters: representation_kind,
@@ -388,6 +403,21 @@ def pass1_retrieve(
                     text=payload.get("text", ""),
                 ))
         hits.sort(key=lambda h: (-h.raw_similarity, h.doc_id, h.parent_id))
+        # DOCUMENT-REGION-V1: sink demoted regions within the child lane
+        # BEFORE the top_k cut, so boilerplate cannot occupy the slots
+        # that answer-bearing children need. Order among non-demoted and
+        # among demoted candidates is otherwise untouched.
+        if (kind == REPRESENTATION_KIND_CHILD and plan.demote_noisy_regions
+                and region_lookup is not None and hits):
+            try:
+                roles = region_lookup([h.chunk_id for h in hits if h.chunk_id])
+            except Exception:
+                roles = {}
+            if roles:
+                from polymath_shared.document_region import is_noisy
+                hits.sort(key=lambda h: (
+                    1 if is_noisy(roles.get(h.chunk_id)) else 0,
+                    -h.raw_similarity, h.doc_id, h.parent_id))
         for rank, h in enumerate(hits):
             h.rank = rank
         return hits[:top_k]
@@ -467,6 +497,28 @@ def pass1_retrieve(
             continue
         seen_ids.add(c["chunk_id"])
         deduped.append(c)
+
+    # DOCUMENT-REGION-V1: demote at the point where candidates compete
+    # GLOBALLY. Sinking noisy children inside their own lane is not
+    # enough: per-section deepening takes only max_children_per_section
+    # candidates, so a front-matter section's children are admitted
+    # regardless of their order within that section (MEASURED: the
+    # author biography still arrived at rank 2 with lane-level demotion
+    # alone). Here ~30 candidates compete for final_max_children slots,
+    # so boilerplate loses to answer-bearing content — while remaining
+    # eligible if slots are left over. Stable: order within each group
+    # is untouched.
+    if plan.demote_noisy_regions and region_lookup is not None and deduped:
+        try:
+            _roles = region_lookup([c["chunk_id"] for c in deduped])
+        except Exception:
+            _roles = {}
+        if _roles:
+            from polymath_shared.document_region import is_noisy
+            for _c in deduped:
+                _c["region_role"] = _roles.get(_c["chunk_id"])
+            deduped = sorted(
+                deduped, key=lambda c: 1 if is_noisy(c.get("region_role")) else 0)
 
     # RESCUE-SLOT-RESERVATION-V1: cut to final_max_children WITHOUT
     # letting hierarchy candidates evict the global child lane. The

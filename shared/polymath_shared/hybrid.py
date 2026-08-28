@@ -83,6 +83,8 @@ class HybridRetrievalPlan:
     rescue_reserved_slots: int = 2
     neighbor_expansion: int = 0
     neighbor_expansion_max: int = 8
+    #: DOCUMENT-REGION-V1 (see pass1) — demote, never delete.
+    demote_noisy_regions: bool = True
 
 
 HYBRID_DEFAULT_PLAN = HybridRetrievalPlan()
@@ -157,6 +159,7 @@ def hybrid_retrieve(
     rerank_children: Optional[Callable[[str, list[dict]], list[dict]]] = None,
     summary_vectors: Optional[Callable[[str, list[str]], dict[str, list[float]]]] = None,
     neighbor_lookup: Optional[Callable[[list[dict], int], list[dict]]] = None,
+    region_lookup: Optional[Callable[[list[str]], dict]] = None,
 ) -> HybridResult:
     from polymath_shared.pass1 import (
         REPRESENTATION_KIND_CHILD,
@@ -181,6 +184,7 @@ def hybrid_retrieve(
         max_children_per_section=plan.max_children_per_section,
         global_child_rescue_max=plan.global_child_rescue_max,
         rerank_enabled=False,
+        demote_noisy_regions=getattr(plan, "demote_noisy_regions", True),
         final_max_children=plan.final_max_children,
         final_max_total_items=plan.final_max_total_items,
     )
@@ -189,6 +193,7 @@ def hybrid_retrieve(
         plan=fast_plan,
         embed_query=embed_query,
         routing_search=routing_search,
+        region_lookup=region_lookup,
         rerank_children=None,
     )
 
@@ -287,6 +292,24 @@ def hybrid_retrieve(
             continue
         seen_ids.add(c["chunk_id"])
         deduped.append(c)
+    # DOCUMENT-REGION-V1 (see pass1): HYBRID performs its OWN global cut,
+    # so the demotion must be applied here too — otherwise boilerplate
+    # that FAST correctly sinks reappears through the four-lane union
+    # (MEASURED: the author biography returned at rank 2 in HYBRID while
+    # already suppressed in FAST).
+    if (getattr(plan, "demote_noisy_regions", True)
+            and region_lookup is not None and deduped):
+        try:
+            _roles = region_lookup([c["chunk_id"] for c in deduped])
+        except Exception:
+            _roles = {}
+        if _roles:
+            from polymath_shared.document_region import is_noisy
+            for _c in deduped:
+                _c["region_role"] = _roles.get(_c["chunk_id"])
+            deduped = sorted(
+                deduped, key=lambda c: 1 if is_noisy(c.get("region_role")) else 0)
+
     # RESCUE-SLOT-RESERVATION-V1 (see pass1): the neural and lexical
     # rescue lanes are appended after every deepened child, so a flat
     # cut here silently deleted both recall lanes on dense corpora.

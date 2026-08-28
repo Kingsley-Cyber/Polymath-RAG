@@ -243,6 +243,22 @@ def _neighbor_lookup(want: list[dict], distance: int) -> list[dict]:
     ]
 
 
+def _region_lookup(chunk_ids: list[str]) -> dict:
+    """DOCUMENT-REGION-V1 source: persisted document role per chunk.
+
+    One set-based query over the bounded candidate set. A chunk with no
+    role (ingested before the contract, or a corpus not yet backfilled)
+    returns nothing and is therefore never demoted."""
+    if not chunk_ids:
+        return {}
+    with tx() as conn:
+        rows = conn.execute(
+            """SELECT chunk_id, region_role FROM chunks
+                WHERE chunk_id = ANY(%s) AND region_role IS NOT NULL""",
+            (chunk_ids,)).fetchall()
+    return {r[0]: r[1] for r in rows}
+
+
 def _rerank_children(query: str, children: list[dict]) -> list[dict]:
     try:
         _, reranked = apply_rerank(query, [], children)
@@ -299,6 +315,7 @@ def fast_retrieve(
             routing_search=routing_search,
             rerank_children=_rerank_children if shaped.rerank_enabled else None,
             neighbor_lookup=_neighbor_lookup,
+            region_lookup=_region_lookup,
         )
     finally:
         client.close()

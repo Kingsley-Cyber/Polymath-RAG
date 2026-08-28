@@ -42,6 +42,7 @@ from orchestrator.api.fast import (
     _embed_query,
     _ensure_fast_ready,
     _neighbor_lookup,
+    _region_lookup,
     _rerank_children,
     _corpus_collections,
     degradations,
@@ -103,6 +104,7 @@ def graph_retrieve(query: str, corpus_id: str) -> dict:
             lexical_search=lambda q, k: _lexical_search(q, corpus_id, k),
             rerank_children=_rerank_children if shaped.rerank_enabled else None,
             neighbor_lookup=_neighbor_lookup,
+            region_lookup=_region_lookup,
         )
         pass1_ms = (time.time() - t0) * 1000
     finally:

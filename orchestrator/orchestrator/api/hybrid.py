@@ -31,6 +31,7 @@ from orchestrator.api.fast import (
     _embed_query,
     _ensure_fast_ready,
     _neighbor_lookup,
+    _region_lookup,
     _rerank_children,
     _corpus_collections,
     degradations,
@@ -108,6 +109,7 @@ def hybrid_fast_retrieve(
             rerank_children=_rerank_children if shaped.rerank_enabled else None,
             summary_vectors=None,  # MMR rejected; lambda 1.0 promoted
             neighbor_lookup=_neighbor_lookup,
+            region_lookup=_region_lookup,
         )
         total_ms = (time.time() - t0) * 1000
     finally:
