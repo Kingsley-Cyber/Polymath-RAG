@@ -1,0 +1,1965 @@
+{
+ "contract": "cap-registry-v1",
+ "caps": [
+  {
+   "file": "control/control/main.py",
+   "line": 102,
+   "kind": "slice",
+   "value": 12,
+   "code": "\"owner\": owner[:12],",
+   "class": "other"
+  },
+  {
+   "file": "control/control/main.py",
+   "line": 102,
+   "kind": "slice2",
+   "value": 12,
+   "code": "\"owner\": owner[:12],",
+   "class": "other"
+  },
+  {
+   "file": "control/control/main.py",
+   "line": 172,
+   "kind": "slice",
+   "value": 40,
+   "code": "'reason': str(result.get('reason'))[:40],",
+   "class": "other"
+  },
+  {
+   "file": "control/control/main.py",
+   "line": 172,
+   "kind": "slice2",
+   "value": 40,
+   "code": "'reason': str(result.get('reason'))[:40],",
+   "class": "other"
+  },
+  {
+   "file": "control/control/manifest_ingest.py",
+   "line": 150,
+   "kind": "slice",
+   "value": 16,
+   "code": "entry[\"note\"] = f\"changed content; previous doc {prior[0][:16]}\u2026\"",
+   "class": "other"
+  },
+  {
+   "file": "control/control/manifest_ingest.py",
+   "line": 150,
+   "kind": "slice2",
+   "value": 16,
+   "code": "entry[\"note\"] = f\"changed content; previous doc {prior[0][:16]}\u2026\"",
+   "class": "other"
+  },
+  {
+   "file": "control/control/manifest_ingest.py",
+   "line": 154,
+   "kind": "slice",
+   "value": 24,
+   "code": "entry[\"doc_id\"] = doc_id[:24] + \"\u2026\"",
+   "class": "other"
+  },
+  {
+   "file": "control/control/manifest_ingest.py",
+   "line": 154,
+   "kind": "slice2",
+   "value": 24,
+   "code": "entry[\"doc_id\"] = doc_id[:24] + \"\u2026\"",
+   "class": "other"
+  },
+  {
+   "file": "control/control/process_supervisor.py",
+   "line": 218,
+   "kind": "slice",
+   "value": 200,
+   "code": "(f\"cp2.1 restart budget exhausted: {why}\"[:200], slot.name))",
+   "class": "other"
+  },
+  {
+   "file": "control/control/process_supervisor.py",
+   "line": 218,
+   "kind": "slice2",
+   "value": 200,
+   "code": "(f\"cp2.1 restart budget exhausted: {why}\"[:200], slot.name))",
+   "class": "other"
+  },
+  {
+   "file": "control/control/reconciliation.py",
+   "line": 242,
+   "kind": "slice",
+   "value": 16,
+   "code": "\"attempt_id\": new_run_id[:16],",
+   "class": "other"
+  },
+  {
+   "file": "control/control/reconciliation.py",
+   "line": 242,
+   "kind": "slice2",
+   "value": 16,
+   "code": "\"attempt_id\": new_run_id[:16],",
+   "class": "other"
+  },
+  {
+   "file": "control/control/snapshots.py",
+   "line": 60,
+   "kind": "slice",
+   "value": 24,
+   "code": "snapshot_id = \"snap_\" + content_hash({\"c\": corpus_id, \"h\": state})[:24]",
+   "class": "other"
+  },
+  {
+   "file": "control/control/snapshots.py",
+   "line": 60,
+   "kind": "slice2",
+   "value": 24,
+   "code": "snapshot_id = \"snap_\" + content_hash({\"c\": corpus_id, \"h\": state})[:24]",
+   "class": "other"
+  },
+  {
+   "file": "control/control/tickets.py",
+   "line": 67,
+   "kind": "slice",
+   "value": 32,
+   "code": "return \"tkt_\" + content_hash({\"run\": run_id, \"stage\": stage, \"gen\": generation})[:32]",
+   "class": "other"
+  },
+  {
+   "file": "control/control/tickets.py",
+   "line": 67,
+   "kind": "slice2",
+   "value": 32,
+   "code": "return \"tkt_\" + content_hash({\"run\": run_id, \"stage\": stage, \"gen\": generation})[:32]",
+   "class": "other"
+  },
+  {
+   "file": "control/control/tickets.py",
+   "line": 273,
+   "kind": "sql_limit",
+   "value": 256,
+   "code": "ORDER BY t.seq LIMIT 256",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/admission_interpreter.py",
+   "line": 175,
+   "kind": "slice",
+   "value": 60,
+   "code": "\"overlapping_token\": (containing[\"text\"][:60]",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/admission_interpreter.py",
+   "line": 175,
+   "kind": "slice2",
+   "value": 60,
+   "code": "\"overlapping_token\": (containing[\"text\"][:60]",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/admission_interpreter.py",
+   "line": 235,
+   "kind": "slice",
+   "value": 160,
+   "code": "{\"authority\": ev.kind.value, \"quote\": ev.quote[:160]})",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/admission_interpreter.py",
+   "line": 235,
+   "kind": "slice2",
+   "value": 160,
+   "code": "{\"authority\": ev.kind.value, \"quote\": ev.quote[:160]})",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/bundle_integrity.py",
+   "line": 239,
+   "kind": "slice",
+   "value": 16,
+   "code": "f\"{lock.get('bundle')} {current['bundle_sha256'][:16]}\")",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/bundle_integrity.py",
+   "line": 239,
+   "kind": "slice2",
+   "value": 16,
+   "code": "f\"{lock.get('bundle')} {current['bundle_sha256'][:16]}\")",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/bundle_integrity.py",
+   "line": 283,
+   "kind": "slice",
+   "value": 16,
+   "code": "print(f\"froze {lock['bundle']} = {lock['bundle_sha256'][:16]} \"",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/bundle_integrity.py",
+   "line": 283,
+   "kind": "slice2",
+   "value": 16,
+   "code": "print(f\"froze {lock['bundle']} = {lock['bundle_sha256'][:16]} \"",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/corpus_mapping.py",
+   "line": 96,
+   "kind": "slice",
+   "value": 60,
+   "code": "proc_items = [{\"item\": p.get(\"title\") or p.get(\"goal\", \"\")[:60],",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/corpus_mapping.py",
+   "line": 96,
+   "kind": "slice2",
+   "value": 60,
+   "code": "proc_items = [{\"item\": p.get(\"title\") or p.get(\"goal\", \"\")[:60],",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/corpus_mapping.py",
+   "line": 168,
+   "kind": "slice",
+   "value": 32,
+   "code": "artifact_id = \"csa_\" + content_hash({\"in\": input_hash})[:32]",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/corpus_mapping.py",
+   "line": 168,
+   "kind": "slice2",
+   "value": 32,
+   "code": "artifact_id = \"csa_\" + content_hash({\"in\": input_hash})[:32]",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/corpus_mapping.py",
+   "line": 188,
+   "kind": "slice",
+   "value": 10,
+   "code": "[e[\"item\"] for e in cmap[\"entities\"]][:10],",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/corpus_mapping.py",
+   "line": 188,
+   "kind": "slice2",
+   "value": 10,
+   "code": "[e[\"item\"] for e in cmap[\"entities\"]][:10],",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/corpus_mapping.py",
+   "line": 189,
+   "kind": "slice",
+   "value": 10,
+   "code": "[c[\"item\"] for c in cmap[\"concepts\"]][:10],",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/corpus_mapping.py",
+   "line": 189,
+   "kind": "slice2",
+   "value": 10,
+   "code": "[c[\"item\"] for c in cmap[\"concepts\"]][:10],",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/db.py",
+   "line": 28,
+   "kind": "max_const",
+   "value": 8,
+   "code": "max_size=8,",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/discourse_bridge.py",
+   "line": 26,
+   "kind": "max_const",
+   "value": 2,
+   "code": "MAX_ANAPHORA_DISTANCE = 2",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/embedding_contracts.py",
+   "line": 70,
+   "kind": "slice",
+   "value": 16,
+   "code": "})[:16]",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/embedding_contracts.py",
+   "line": 70,
+   "kind": "slice2",
+   "value": 16,
+   "code": "})[:16]",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/embedding_contracts.py",
+   "line": 120,
+   "kind": "max_const",
+   "value": 8192,
+   "code": "max_input_tokens=8192,",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/entity_admission.py",
+   "line": 164,
+   "kind": "slice",
+   "value": 16,
+   "code": "})[:16]",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/entity_admission.py",
+   "line": 164,
+   "kind": "slice2",
+   "value": 16,
+   "code": "})[:16]",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/execution_bundle.py",
+   "line": 113,
+   "kind": "slice",
+   "value": 16,
+   "code": "return h.hexdigest()[:16]",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/execution_bundle.py",
+   "line": 113,
+   "kind": "slice2",
+   "value": 16,
+   "code": "return h.hexdigest()[:16]",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/execution_bundle.py",
+   "line": 134,
+   "kind": "slice",
+   "value": 16,
+   "code": "canonical.encode()).hexdigest()[:16]",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/execution_bundle.py",
+   "line": 134,
+   "kind": "slice2",
+   "value": 16,
+   "code": "canonical.encode()).hexdigest()[:16]",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/identity.py",
+   "line": 71,
+   "kind": "slice",
+   "value": 16,
+   "code": "return receipt_id(run, stage, contract_hash)[:16]",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/identity.py",
+   "line": 71,
+   "kind": "slice2",
+   "value": 16,
+   "code": "return receipt_id(run, stage, contract_hash)[:16]",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/observability.py",
+   "line": 149,
+   "kind": "slice",
+   "value": 40,
+   "code": "return \"tev_\" + hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()[:40]",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/observability.py",
+   "line": 149,
+   "kind": "slice2",
+   "value": 40,
+   "code": "return \"tev_\" + hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()[:40]",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/projection_contracts.py",
+   "line": 78,
+   "kind": "slice",
+   "value": 12,
+   "code": "corpus_hash = hashlib.sha256(corpus_id.encode(\"utf-8\")).hexdigest()[:12]",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/projection_contracts.py",
+   "line": 78,
+   "kind": "slice2",
+   "value": 12,
+   "code": "corpus_hash = hashlib.sha256(corpus_id.encode(\"utf-8\")).hexdigest()[:12]",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/query_policy.py",
+   "line": 155,
+   "kind": "slice",
+   "value": 12,
+   "code": "legacy = tuple(t.value for t in CoreType)[:12]",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/query_policy.py",
+   "line": 155,
+   "kind": "slice2",
+   "value": 12,
+   "code": "legacy = tuple(t.value for t in CoreType)[:12]",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/query_shape.py",
+   "line": 86,
+   "kind": "max_const",
+   "value": 4,
+   "code": "max_sections_per_document=4,   # was 2",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/query_shape.py",
+   "line": 87,
+   "kind": "max_const",
+   "value": 4,
+   "code": "max_children_per_section=4,    # was 3",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/query_shape.py",
+   "line": 91,
+   "kind": "max_const",
+   "value": 8,
+   "code": "neighbor_expansion_max=8,",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/raw_evidence.py",
+   "line": 210,
+   "kind": "slice",
+   "value": 400,
+   "code": "decision.decision, str(decision.reason or \"\")[:400],",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/raw_evidence.py",
+   "line": 210,
+   "kind": "slice2",
+   "value": 400,
+   "code": "decision.decision, str(decision.reason or \"\")[:400],",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/receipts.py",
+   "line": 106,
+   "kind": "slice",
+   "value": 2000,
+   "code": "return \" <- \".join(parts)[:2000]",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/receipts.py",
+   "line": 106,
+   "kind": "slice2",
+   "value": 2000,
+   "code": "return \" <- \".join(parts)[:2000]",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/span_repair.py",
+   "line": 28,
+   "kind": "max_const",
+   "value": 3,
+   "code": "MAX_WORDS = 3",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/span_repair.py",
+   "line": 29,
+   "kind": "max_const",
+   "value": 2,
+   "code": "MAX_EXPAND = 2",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/syntax_readiness.py",
+   "line": 114,
+   "kind": "slice",
+   "value": 120,
+   "code": "f\"{type(exc).__name__}: {exc}\"[:120])",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/syntax_readiness.py",
+   "line": 114,
+   "kind": "slice2",
+   "value": 120,
+   "code": "f\"{type(exc).__name__}: {exc}\"[:120])",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/worker_runtime.py",
+   "line": 165,
+   "kind": "slice",
+   "value": 500,
+   "code": "(exc.reason[:500], e[\"ticket_id\"]),",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/worker_runtime.py",
+   "line": 165,
+   "kind": "slice2",
+   "value": 500,
+   "code": "(exc.reason[:500], e[\"ticket_id\"]),",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/worker_runtime.py",
+   "line": 172,
+   "kind": "slice",
+   "value": 200,
+   "code": "\"detail\": str(exc)[:200]})",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/worker_runtime.py",
+   "line": 172,
+   "kind": "slice2",
+   "value": 200,
+   "code": "\"detail\": str(exc)[:200]})",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/worker_runtime.py",
+   "line": 256,
+   "kind": "slice",
+   "value": 500,
+   "code": "(reason[:500], ticket_id))",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/worker_runtime.py",
+   "line": 256,
+   "kind": "slice2",
+   "value": 500,
+   "code": "(reason[:500], ticket_id))",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/worker_runtime.py",
+   "line": 257,
+   "kind": "slice",
+   "value": 500,
+   "code": "heartbeat(conn, worker_id, last_error=reason[:500])",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/worker_runtime.py",
+   "line": 257,
+   "kind": "slice2",
+   "value": 500,
+   "code": "heartbeat(conn, worker_id, last_error=reason[:500])",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/worker_runtime.py",
+   "line": 386,
+   "kind": "slice",
+   "value": 16,
+   "code": "\"attempt_id\": (event.get(\"idempotency_key\") or \"\")[:16],",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/worker_runtime.py",
+   "line": 386,
+   "kind": "slice2",
+   "value": 16,
+   "code": "\"attempt_id\": (event.get(\"idempotency_key\") or \"\")[:16],",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/worker_runtime.py",
+   "line": 427,
+   "kind": "slice",
+   "value": 500,
+   "code": "(reason[:500], ticket_id),",
+   "class": "other"
+  },
+  {
+   "file": "shared/polymath_shared/worker_runtime.py",
+   "line": 427,
+   "kind": "slice2",
+   "value": 500,
+   "code": "(reason[:500], ticket_id),",
+   "class": "other"
+  },
+  {
+   "file": "workers/workers/candidates.py",
+   "line": 47,
+   "kind": "max_const",
+   "value": 4,
+   "code": "MAX_SYNTAX_DISTANCE = 4",
+   "class": "other"
+  },
+  {
+   "file": "workers/workers/candidates.py",
+   "line": 48,
+   "kind": "max_const",
+   "value": 3,
+   "code": "MAX_LIST_MEMBERS = 3",
+   "class": "other"
+  },
+  {
+   "file": "workers/workers/document_profile_builder.py",
+   "line": 129,
+   "kind": "max_const",
+   "value": 5,
+   "code": "semantic_summary = summarize(joined, max_sentences=5, max_chars=1100)",
+   "class": "other"
+  },
+  {
+   "file": "workers/workers/document_profile_builder.py",
+   "line": 129,
+   "kind": "max_const",
+   "value": 1100,
+   "code": "semantic_summary = summarize(joined, max_sentences=5, max_chars=1100)",
+   "class": "other"
+  },
+  {
+   "file": "workers/workers/intake_worker.py",
+   "line": 102,
+   "kind": "slice",
+   "value": 4000,
+   "code": "profile = route_document(source_name, text[:4000])",
+   "class": "other"
+  },
+  {
+   "file": "workers/workers/intake_worker.py",
+   "line": 102,
+   "kind": "slice2",
+   "value": 4000,
+   "code": "profile = route_document(source_name, text[:4000])",
+   "class": "other"
+  },
+  {
+   "file": "workers/workers/intake_worker.py",
+   "line": 133,
+   "kind": "slice",
+   "value": 24,
+   "code": "f\"(doc {doc_id[:24]}\u2026) already belongs to corpus \"",
+   "class": "other"
+  },
+  {
+   "file": "workers/workers/intake_worker.py",
+   "line": 133,
+   "kind": "slice2",
+   "value": 24,
+   "code": "f\"(doc {doc_id[:24]}\u2026) already belongs to corpus \"",
+   "class": "other"
+  },
+  {
+   "file": "workers/workers/intake_worker.py",
+   "line": 265,
+   "kind": "max_const",
+   "value": 6,
+   "code": "\"document_summary\": summarize(text, max_sentences=6, max_chars=1600),",
+   "class": "other"
+  },
+  {
+   "file": "workers/workers/intake_worker.py",
+   "line": 265,
+   "kind": "max_const",
+   "value": 1600,
+   "code": "\"document_summary\": summarize(text, max_sentences=6, max_chars=1600),",
+   "class": "other"
+  },
+  {
+   "file": "workers/workers/profile_router.py",
+   "line": 28,
+   "kind": "max_const",
+   "value": 50,
+   "code": "MAX_LABELS_PER_CALL = 50  # uni-encoder budget (docx \u00a73.1)",
+   "class": "other"
+  },
+  {
+   "file": "workers/workers/profile_router.py",
+   "line": 56,
+   "kind": "slice",
+   "value": 4000,
+   "code": "key=lambda m: (-_keyword_hits(sample_text[:4000], m.keywords), m.module_id),",
+   "class": "other"
+  },
+  {
+   "file": "workers/workers/profile_router.py",
+   "line": 56,
+   "kind": "slice2",
+   "value": 4000,
+   "code": "key=lambda m: (-_keyword_hits(sample_text[:4000], m.keywords), m.module_id),",
+   "class": "other"
+  },
+  {
+   "file": "workers/workers/profile_router.py",
+   "line": 58,
+   "kind": "slice",
+   "value": 4000,
+   "code": "if scored and _keyword_hits(sample_text[:4000], scored[0].keywords) > 0:",
+   "class": "other"
+  },
+  {
+   "file": "workers/workers/profile_router.py",
+   "line": 58,
+   "kind": "slice2",
+   "value": 4000,
+   "code": "if scored and _keyword_hits(sample_text[:4000], scored[0].keywords) > 0:",
+   "class": "other"
+  },
+  {
+   "file": "workers/workers/reprocess_worker.py",
+   "line": 287,
+   "kind": "slice",
+   "value": 16,
+   "code": "\"subject\": [old[\"subject_id\"][:16], new[\"subject_id\"][:16]],",
+   "class": "other"
+  },
+  {
+   "file": "workers/workers/reprocess_worker.py",
+   "line": 287,
+   "kind": "slice",
+   "value": 16,
+   "code": "\"subject\": [old[\"subject_id\"][:16], new[\"subject_id\"][:16]],",
+   "class": "other"
+  },
+  {
+   "file": "workers/workers/reprocess_worker.py",
+   "line": 287,
+   "kind": "slice2",
+   "value": 16,
+   "code": "\"subject\": [old[\"subject_id\"][:16], new[\"subject_id\"][:16]],",
+   "class": "other"
+  },
+  {
+   "file": "workers/workers/reprocess_worker.py",
+   "line": 287,
+   "kind": "slice2",
+   "value": 16,
+   "code": "\"subject\": [old[\"subject_id\"][:16], new[\"subject_id\"][:16]],",
+   "class": "other"
+  },
+  {
+   "file": "workers/workers/reprocess_worker.py",
+   "line": 288,
+   "kind": "slice",
+   "value": 16,
+   "code": "\"object\": [old[\"object_id\"][:16], new[\"object_id\"][:16]]})",
+   "class": "other"
+  },
+  {
+   "file": "workers/workers/reprocess_worker.py",
+   "line": 288,
+   "kind": "slice",
+   "value": 16,
+   "code": "\"object\": [old[\"object_id\"][:16], new[\"object_id\"][:16]]})",
+   "class": "other"
+  },
+  {
+   "file": "workers/workers/reprocess_worker.py",
+   "line": 288,
+   "kind": "slice2",
+   "value": 16,
+   "code": "\"object\": [old[\"object_id\"][:16], new[\"object_id\"][:16]]})",
+   "class": "other"
+  },
+  {
+   "file": "workers/workers/reprocess_worker.py",
+   "line": 288,
+   "kind": "slice2",
+   "value": 16,
+   "code": "\"object\": [old[\"object_id\"][:16], new[\"object_id\"][:16]]})",
+   "class": "other"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ask.py",
+   "line": 174,
+   "kind": "sql_limit",
+   "value": 2000,
+   "code": "LIMIT 2000\"\"\", args).fetchall()",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ask.py",
+   "line": 208,
+   "kind": "slice",
+   "value": 200,
+   "code": "\"definition\": (definition or \"\")[:200]})",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ask.py",
+   "line": 208,
+   "kind": "slice2",
+   "value": 200,
+   "code": "\"definition\": (definition or \"\")[:200]})",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/chat.py",
+   "line": 187,
+   "kind": "slice",
+   "value": 10,
+   "code": "[c[\"chunk_id\"] for c in result.selected_children[:10]],",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/chat.py",
+   "line": 187,
+   "kind": "slice2",
+   "value": 10,
+   "code": "[c[\"chunk_id\"] for c in result.selected_children[:10]],",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/chat.py",
+   "line": 204,
+   "kind": "slice",
+   "value": 300,
+   "code": "_RERANK_DEGRADED.set(str(exc)[:300])",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/chat.py",
+   "line": 204,
+   "kind": "slice2",
+   "value": 300,
+   "code": "_RERANK_DEGRADED.set(str(exc)[:300])",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/evidence.py",
+   "line": 181,
+   "kind": "slice",
+   "value": 10,
+   "code": "[c[\"chunk_id\"] for c in result.selected_children[:10]],",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/evidence.py",
+   "line": 181,
+   "kind": "slice2",
+   "value": 10,
+   "code": "[c[\"chunk_id\"] for c in result.selected_children[:10]],",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/evidence.py",
+   "line": 198,
+   "kind": "slice",
+   "value": 300,
+   "code": "_RERANK_DEGRADED.set(str(exc)[:300])",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/evidence.py",
+   "line": 198,
+   "kind": "slice2",
+   "value": 300,
+   "code": "_RERANK_DEGRADED.set(str(exc)[:300])",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/fast.py",
+   "line": 279,
+   "kind": "slice",
+   "value": 300,
+   "code": "_RERANK_DEGRADED.set(str(exc)[:300])",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/fast.py",
+   "line": 279,
+   "kind": "slice2",
+   "value": 300,
+   "code": "_RERANK_DEGRADED.set(str(exc)[:300])",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/graph.py",
+   "line": 64,
+   "kind": "slice",
+   "value": 10,
+   "code": "for c in evidence[:10]:",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/graph.py",
+   "line": 64,
+   "kind": "slice2",
+   "value": 10,
+   "code": "for c in evidence[:10]:",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/graph.py",
+   "line": 68,
+   "kind": "slice",
+   "value": 12,
+   "code": "return list(dict.fromkeys(surfaces))[:12]",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/graph.py",
+   "line": 68,
+   "kind": "slice2",
+   "value": 12,
+   "code": "return list(dict.fromkeys(surfaces))[:12]",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/retrieve.py",
+   "line": 181,
+   "kind": "slice",
+   "value": 10,
+   "code": "[c[\"chunk_id\"] for c in result.selected_children[:10]],",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/retrieve.py",
+   "line": 181,
+   "kind": "slice2",
+   "value": 10,
+   "code": "[c[\"chunk_id\"] for c in result.selected_children[:10]],",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/retrieve.py",
+   "line": 199,
+   "kind": "slice",
+   "value": 300,
+   "code": "_RERANK_DEGRADED.set(str(exc)[:300])",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/retrieve.py",
+   "line": 199,
+   "kind": "slice2",
+   "value": 300,
+   "code": "_RERANK_DEGRADED.set(str(exc)[:300])",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/retrieve.py",
+   "line": 348,
+   "kind": "slice",
+   "value": 10,
+   "code": "for child in result.selected_children[:10]:",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/retrieve.py",
+   "line": 348,
+   "kind": "slice2",
+   "value": 10,
+   "code": "for child in result.selected_children[:10]:",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/retrieve.py",
+   "line": 352,
+   "kind": "slice",
+   "value": 12,
+   "code": "return list(dict.fromkeys(surfaces))[:12]",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/retrieve.py",
+   "line": 352,
+   "kind": "slice2",
+   "value": 12,
+   "code": "return list(dict.fromkeys(surfaces))[:12]",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/retrieve.py",
+   "line": 484,
+   "kind": "sql_limit",
+   "value": 20,
+   "code": "LIMIT 20",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 180,
+   "kind": "sql_limit",
+   "value": 25,
+   "code": "ORDER BY r.created_at DESC LIMIT 25\"\"\",",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 403,
+   "kind": "slice",
+   "value": 12,
+   "code": "prefix = f\"polymath_{_h.sha256(corpus_id.encode()).hexdigest()[:12]}_\"",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 403,
+   "kind": "slice2",
+   "value": 12,
+   "code": "prefix = f\"polymath_{_h.sha256(corpus_id.encode()).hexdigest()[:12]}_\"",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 418,
+   "kind": "slice",
+   "value": 120,
+   "code": "removed[\"qdrant_error\"] = str(exc)[:120]",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 418,
+   "kind": "slice2",
+   "value": 120,
+   "code": "removed[\"qdrant_error\"] = str(exc)[:120]",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 429,
+   "kind": "slice",
+   "value": 120,
+   "code": "removed[\"neo4j_error\"] = str(exc)[:120]",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 429,
+   "kind": "slice2",
+   "value": 120,
+   "code": "removed[\"neo4j_error\"] = str(exc)[:120]",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 455,
+   "kind": "slice",
+   "value": 48,
+   "code": "slug = _re.sub(r\"[^a-z0-9]+\", \"-\", req.name.lower()).strip(\"-\")[:48]         or \"generated\"",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 455,
+   "kind": "slice2",
+   "value": 48,
+   "code": "slug = _re.sub(r\"[^a-z0-9]+\", \"-\", req.name.lower()).strip(\"-\")[:48]         or \"generated\"",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 456,
+   "kind": "slice",
+   "value": 10,
+   "code": "digest = _h.sha256(req.html.encode()).hexdigest()[:10]",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 456,
+   "kind": "slice2",
+   "value": 10,
+   "code": "digest = _h.sha256(req.html.encode()).hexdigest()[:10]",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 476,
+   "kind": "slice",
+   "value": 160,
+   "code": ".strip()[:160]}",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 476,
+   "kind": "slice2",
+   "value": 160,
+   "code": ".strip()[:160]}",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 589,
+   "kind": "max_const",
+   "value": 20,
+   "code": "max_tokens=20, timeout=30, **_litellm_credentials(req.model))",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 591,
+   "kind": "slice",
+   "value": 80,
+   "code": "return {\"ok\": True, \"model\": req.model, \"reply\": text[:80]}",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 591,
+   "kind": "slice2",
+   "value": 80,
+   "code": "return {\"ok\": True, \"model\": req.model, \"reply\": text[:80]}",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 594,
+   "kind": "slice",
+   "value": 220,
+   "code": "\"error\": f\"{type(exc).__name__}: {str(exc)[:220]}\"}",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 594,
+   "kind": "slice2",
+   "value": 220,
+   "code": "\"error\": f\"{type(exc).__name__}: {str(exc)[:220]}\"}",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 720,
+   "kind": "slice",
+   "value": 12,
+   "code": "prefix = f\"polymath_{_hashlib.sha256(corpus_id.encode()).hexdigest()[:12]}_\"",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 720,
+   "kind": "slice2",
+   "value": 12,
+   "code": "prefix = f\"polymath_{_hashlib.sha256(corpus_id.encode()).hexdigest()[:12]}_\"",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 731,
+   "kind": "slice",
+   "value": 120,
+   "code": "removed[\"qdrant_error\"] = str(exc)[:120]  # type: ignore[assignment]",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 731,
+   "kind": "slice2",
+   "value": 120,
+   "code": "removed[\"qdrant_error\"] = str(exc)[:120]  # type: ignore[assignment]",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 751,
+   "kind": "slice",
+   "value": 120,
+   "code": "removed[\"neo4j_error\"] = str(exc)[:120]  # type: ignore[assignment]",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 751,
+   "kind": "slice2",
+   "value": 120,
+   "code": "removed[\"neo4j_error\"] = str(exc)[:120]  # type: ignore[assignment]",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 874,
+   "kind": "slice",
+   "value": 40,
+   "code": "for item in (bundle.get(\"evidence_bundle\") or [])[:40]:",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 874,
+   "kind": "slice2",
+   "value": 40,
+   "code": "for item in (bundle.get(\"evidence_bundle\") or [])[:40]:",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 880,
+   "kind": "slice",
+   "value": 20,
+   "code": "for f in graph_facts[:20]:",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 880,
+   "kind": "slice2",
+   "value": 20,
+   "code": "for f in graph_facts[:20]:",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 882,
+   "kind": "slice",
+   "value": 24,
+   "code": "f\"[fact:{f.get('fact_id', '')[:24]}] \"",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 882,
+   "kind": "slice2",
+   "value": 24,
+   "code": "f\"[fact:{f.get('fact_id', '')[:24]}] \"",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 885,
+   "kind": "slice",
+   "value": 30,
+   "code": "f\"[{c.locator}]\\n{c.preview}\" for c in (carry_context or [])[:30]",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 885,
+   "kind": "slice2",
+   "value": 30,
+   "code": "f\"[{c.locator}]\\n{c.preview}\" for c in (carry_context or [])[:30]",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 900,
+   "kind": "slice",
+   "value": 4000,
+   "code": "\"content\": turn.content[:4000]})",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 900,
+   "kind": "slice2",
+   "value": 4000,
+   "code": "\"content\": turn.content[:4000]})",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 946,
+   "kind": "slice",
+   "value": 280,
+   "code": "\"message\": f\"{type(exc).__name__}: {str(exc)[:280]}\"}",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 946,
+   "kind": "slice2",
+   "value": 280,
+   "code": "\"message\": f\"{type(exc).__name__}: {str(exc)[:280]}\"}",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 980,
+   "kind": "slice",
+   "value": 300,
+   "code": "\"message\": r.text[:300]}",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 980,
+   "kind": "slice2",
+   "value": 300,
+   "code": "\"message\": r.text[:300]}",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 991,
+   "kind": "slice",
+   "value": 300,
+   "code": "\"message\": str(chunk[\"error\"])[:300]}",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 991,
+   "kind": "slice2",
+   "value": 300,
+   "code": "\"message\": str(chunk[\"error\"])[:300]}",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 1006,
+   "kind": "slice",
+   "value": 300,
+   "code": "\"message\": f\"{type(exc).__name__}: {exc}\"[:300]}",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 1006,
+   "kind": "slice2",
+   "value": 300,
+   "code": "\"message\": f\"{type(exc).__name__}: {exc}\"[:300]}",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 1021,
+   "kind": "slice",
+   "value": 300,
+   "code": "\"message\": r.text[:300]}",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 1021,
+   "kind": "slice2",
+   "value": 300,
+   "code": "\"message\": r.text[:300]}",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 1032,
+   "kind": "slice",
+   "value": 300,
+   "code": "\"message\": str(chunk[\"error\"])[:300]}",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 1032,
+   "kind": "slice2",
+   "value": 300,
+   "code": "\"message\": str(chunk[\"error\"])[:300]}",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 1041,
+   "kind": "slice",
+   "value": 300,
+   "code": "\"message\": f\"{type(exc).__name__}: {exc}\"[:300]}",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 1041,
+   "kind": "slice2",
+   "value": 300,
+   "code": "\"message\": f\"{type(exc).__name__}: {exc}\"[:300]}",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 1215,
+   "kind": "slice",
+   "value": 300,
+   "code": "\"message\": str(exc)[:300]})",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 1215,
+   "kind": "slice2",
+   "value": 300,
+   "code": "\"message\": str(exc)[:300]})",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 1233,
+   "kind": "slice",
+   "value": 220,
+   "code": "\"preview\": (span.get(\"text\") or \"\")[:220],",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 1233,
+   "kind": "slice2",
+   "value": 220,
+   "code": "\"preview\": (span.get(\"text\") or \"\")[:220],",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 1307,
+   "kind": "slice",
+   "value": 300,
+   "code": "\"message\": str(exc)[:300]})",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "orchestrator/orchestrator/api/ui.py",
+   "line": 1307,
+   "kind": "slice2",
+   "value": 300,
+   "code": "\"message\": str(exc)[:300]})",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "shared/polymath_shared/retrieval.py",
+   "line": 209,
+   "kind": "slice",
+   "value": 50,
+   "code": ")[:50]",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "shared/polymath_shared/retrieval.py",
+   "line": 209,
+   "kind": "slice2",
+   "value": 50,
+   "code": ")[:50]",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "shared/polymath_shared/retrieval.py",
+   "line": 235,
+   "kind": "slice",
+   "value": 50,
+   "code": ")[:50]",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "shared/polymath_shared/retrieval.py",
+   "line": 235,
+   "kind": "slice2",
+   "value": 50,
+   "code": ")[:50]",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "shared/polymath_shared/retrieval.py",
+   "line": 256,
+   "kind": "slice",
+   "value": 10,
+   "code": "for rank, doc_id in enumerate([d for d in fused_docs if d][:10])",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "shared/polymath_shared/retrieval.py",
+   "line": 256,
+   "kind": "slice2",
+   "value": 10,
+   "code": "for rank, doc_id in enumerate([d for d in fused_docs if d][:10])",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "shared/polymath_shared/retrieval.py",
+   "line": 293,
+   "kind": "slice",
+   "value": 40,
+   "code": ")[:40]",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "shared/polymath_shared/retrieval.py",
+   "line": 293,
+   "kind": "slice2",
+   "value": 40,
+   "code": ")[:40]",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "shared/polymath_shared/retrieval.py",
+   "line": 308,
+   "kind": "slice",
+   "value": 10,
+   "code": "facts = expand(entity_surfaces[:10])",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "shared/polymath_shared/retrieval.py",
+   "line": 308,
+   "kind": "slice2",
+   "value": 10,
+   "code": "facts = expand(entity_surfaces[:10])",
+   "class": "retrieval_budget"
+  },
+  {
+   "file": "shared/polymath_shared/answer_synthesis.py",
+   "line": 83,
+   "kind": "slice",
+   "value": 16,
+   "code": "return \"bitem_\" + content_hash(item)[:16]",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/answer_synthesis.py",
+   "line": 83,
+   "kind": "slice2",
+   "value": 16,
+   "code": "return \"bitem_\" + content_hash(item)[:16]",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/concept_evidence.py",
+   "line": 186,
+   "kind": "slice",
+   "value": 200,
+   "code": "ConceptEvidenceKind.DOCUMENT_DEFINED, bare, quote=sent[:200],",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/concept_evidence.py",
+   "line": 186,
+   "kind": "slice2",
+   "value": 200,
+   "code": "ConceptEvidenceKind.DOCUMENT_DEFINED, bare, quote=sent[:200],",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/concept_evidence.py",
+   "line": 246,
+   "kind": "slice",
+   "value": 200,
+   "code": "quote=rec.get(\"gloss\", \"\")[:200],",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/concept_evidence.py",
+   "line": 246,
+   "kind": "slice2",
+   "value": 200,
+   "code": "quote=rec.get(\"gloss\", \"\")[:200],",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/concept_inventory.py",
+   "line": 31,
+   "kind": "max_const",
+   "value": 5,
+   "code": "MAX_TOKENS = 5",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/knowledge_objects/concept.py",
+   "line": 179,
+   "kind": "slice",
+   "value": 400,
+   "code": "\"description\": desc[:400],",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/knowledge_objects/concept.py",
+   "line": 179,
+   "kind": "slice2",
+   "value": 400,
+   "code": "\"description\": desc[:400],",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/knowledge_objects/concept.py",
+   "line": 182,
+   "kind": "slice",
+   "value": 300,
+   "code": "\"source_sentence\": s[:300],",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/knowledge_objects/concept.py",
+   "line": 182,
+   "kind": "slice2",
+   "value": 300,
+   "code": "\"source_sentence\": s[:300],",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/knowledge_objects/knowledge_artifact.py",
+   "line": 29,
+   "kind": "slice",
+   "value": 32,
+   "code": "return f\"{kind[:4].lower()}_{h[:32]}\"",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/knowledge_objects/knowledge_artifact.py",
+   "line": 29,
+   "kind": "slice2",
+   "value": 32,
+   "code": "return f\"{kind[:4].lower()}_{h[:32]}\"",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/parent_summary.py",
+   "line": 46,
+   "kind": "max_const",
+   "value": 4,
+   "code": "MAX_SUMMARY_FACTS = 4",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/parent_summary.py",
+   "line": 47,
+   "kind": "max_const",
+   "value": 10,
+   "code": "MAX_ENTITIES = 10",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/parent_summary.py",
+   "line": 48,
+   "kind": "max_const",
+   "value": 10,
+   "code": "MAX_CONCEPTS = 10",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/parent_summary.py",
+   "line": 79,
+   "kind": "slice",
+   "value": 180,
+   "code": "head = \" \".join(parent_text.split())[:180]",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/parent_summary.py",
+   "line": 79,
+   "kind": "slice2",
+   "value": 180,
+   "code": "head = \" \".join(parent_text.split())[:180]",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/summary_layer.py",
+   "line": 33,
+   "kind": "slice",
+   "value": 32,
+   "code": "{\"in\": input_hash, \"out\": output_hash})[:32],",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/summary_layer.py",
+   "line": 33,
+   "kind": "slice2",
+   "value": 32,
+   "code": "{\"in\": input_hash, \"out\": output_hash})[:32],",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/summary_runtime.py",
+   "line": 61,
+   "kind": "slice",
+   "value": 32,
+   "code": "artifact_id = \"psa_\" + content_hash({\"in\": input_hash})[:32]",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/summary_runtime.py",
+   "line": 61,
+   "kind": "slice2",
+   "value": 32,
+   "code": "artifact_id = \"psa_\" + content_hash({\"in\": input_hash})[:32]",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/summary_runtime.py",
+   "line": 155,
+   "kind": "slice",
+   "value": 32,
+   "code": "artifact_id = \"dsa_\" + content_hash({\"in\": input_hash})[:32]",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/summary_runtime.py",
+   "line": 155,
+   "kind": "slice2",
+   "value": 32,
+   "code": "artifact_id = \"dsa_\" + content_hash({\"in\": input_hash})[:32]",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/summary_runtime.py",
+   "line": 183,
+   "kind": "max_const",
+   "value": 5,
+   "code": "MAX_ATTEMPTS = 5",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/vocabulary_mapping.py",
+   "line": 195,
+   "kind": "slice",
+   "value": 32,
+   "code": "artifact_id = \"voc_\" + content_hash({\"in\": input_hash})[:32]",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/vocabulary_mapping.py",
+   "line": 195,
+   "kind": "slice2",
+   "value": 32,
+   "code": "artifact_id = \"voc_\" + content_hash({\"in\": input_hash})[:32]",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/vocabulary_mapping.py",
+   "line": 204,
+   "kind": "slice",
+   "value": 32,
+   "code": "\"n\": fam[\"canonical_name\"]})[:32]",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/vocabulary_mapping.py",
+   "line": 204,
+   "kind": "slice2",
+   "value": 32,
+   "code": "\"n\": fam[\"canonical_name\"]})[:32]",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/vocabulary_mapping.py",
+   "line": 219,
+   "kind": "slice",
+   "value": 16,
+   "code": "fam[\"canonical_name\"], artifact_id[:16], corpus_id,",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "shared/polymath_shared/vocabulary_mapping.py",
+   "line": 219,
+   "kind": "slice2",
+   "value": 16,
+   "code": "fam[\"canonical_name\"], artifact_id[:16], corpus_id,",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/chunker.py",
+   "line": 145,
+   "kind": "max_const",
+   "value": 6,
+   "code": "document_summary=summarize(text, max_sentences=6, max_chars=1600),",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/chunker.py",
+   "line": 145,
+   "kind": "max_const",
+   "value": 1600,
+   "code": "document_summary=summarize(text, max_sentences=6, max_chars=1600),",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/chunker.py",
+   "line": 171,
+   "kind": "max_const",
+   "value": 2,
+   "code": "\"summary\": summarize(spec.text, max_sentences=2, max_chars=420),",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/chunker.py",
+   "line": 171,
+   "kind": "max_const",
+   "value": 420,
+   "code": "\"summary\": summarize(spec.text, max_sentences=2, max_chars=420),",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/extract_worker.py",
+   "line": 209,
+   "kind": "slice",
+   "value": 80,
+   "code": "surface=item[\"text\"][:80],",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/extract_worker.py",
+   "line": 209,
+   "kind": "slice2",
+   "value": 80,
+   "code": "surface=item[\"text\"][:80],",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/extract_worker.py",
+   "line": 630,
+   "kind": "slice",
+   "value": 80,
+   "code": "surface=str(detail.get(\"subject\") or detail.get(\"object\") or evidence.text or \"\")[:80],",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/extract_worker.py",
+   "line": 630,
+   "kind": "slice2",
+   "value": 80,
+   "code": "surface=str(detail.get(\"subject\") or detail.get(\"object\") or evidence.text or \"\")[:80],",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/extract_worker.py",
+   "line": 1204,
+   "kind": "slice",
+   "value": 80,
+   "code": "surface=str(candidate.subject.span.text)[:80],",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/extract_worker.py",
+   "line": 1204,
+   "kind": "slice2",
+   "value": 80,
+   "code": "surface=str(candidate.subject.span.text)[:80],",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/extract_worker.py",
+   "line": 1206,
+   "kind": "slice",
+   "value": 200,
+   "code": "\"reason\": reason[:200],",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/extract_worker.py",
+   "line": 1206,
+   "kind": "slice2",
+   "value": 200,
+   "code": "\"reason\": reason[:200],",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/extract_worker.py",
+   "line": 1287,
+   "kind": "slice",
+   "value": 200,
+   "code": "extraction_audit_extra = {\"artifacts_error\": str(exc)[:200]}",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/extract_worker.py",
+   "line": 1287,
+   "kind": "slice2",
+   "value": 200,
+   "code": "extraction_audit_extra = {\"artifacts_error\": str(exc)[:200]}",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/semantic_chunker.py",
+   "line": 369,
+   "kind": "max_const",
+   "value": 2,
+   "code": "\"summary\": summarize(chunk_text, max_sentences=2, max_chars=420),",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/semantic_chunker.py",
+   "line": 369,
+   "kind": "max_const",
+   "value": 420,
+   "code": "\"summary\": summarize(chunk_text, max_sentences=2, max_chars=420),",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/semantic_chunker.py",
+   "line": 422,
+   "kind": "max_const",
+   "value": 2,
+   "code": "\"summary\": summarize(text, max_sentences=2, max_chars=420),",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/semantic_chunker.py",
+   "line": 422,
+   "kind": "max_const",
+   "value": 420,
+   "code": "\"summary\": summarize(text, max_sentences=2, max_chars=420),",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/summarizer.py",
+   "line": 106,
+   "kind": "max_const",
+   "value": 220,
+   "code": "child_summaries = [summarize(child, max_sentences=1, max_chars=220) for child in children]",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/summary_worker_impl.py",
+   "line": 65,
+   "kind": "slice",
+   "value": 32,
+   "code": "{\"run\": run_id, \"stage\": stage, \"gen\": 1})[:32]",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/summary_worker_impl.py",
+   "line": 65,
+   "kind": "slice2",
+   "value": 32,
+   "code": "{\"run\": run_id, \"stage\": stage, \"gen\": 1})[:32]",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/summary_worker_impl.py",
+   "line": 111,
+   "kind": "sql_limit",
+   "value": 24,
+   "code": "WHERE chunk_id = ANY(%s) LIMIT 24\"\"\",",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/summary_worker_impl.py",
+   "line": 145,
+   "kind": "slice",
+   "value": 20,
+   "code": "\"run_id\": run_id[:20], \"completed\": done})",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/summary_worker_impl.py",
+   "line": 145,
+   "kind": "slice2",
+   "value": 20,
+   "code": "\"run_id\": run_id[:20], \"completed\": done})",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/summary_worker_impl.py",
+   "line": 283,
+   "kind": "slice",
+   "value": 160,
+   "code": "\"result\": json.dumps(result)[:160]})",
+   "class": "semantic_storage"
+  },
+  {
+   "file": "workers/workers/summary_worker_impl.py",
+   "line": 283,
+   "kind": "slice2",
+   "value": 160,
+   "code": "\"result\": json.dumps(result)[:160]})",
+   "class": "semantic_storage"
+  }
+ ]
+}
