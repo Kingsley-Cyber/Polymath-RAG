@@ -10,7 +10,7 @@ state, and a work-log entry.
 | `scripts/agent_preflight.py` | governance | repository structure and metadata | nothing | `python3 scripts/agent_preflight.py` |
 | `scripts/repo_guard.py` | governance | declared paths, dependency map, work logs, optional Git diff | nothing | `python3 scripts/repo_guard.py` |
 | `scripts/wiki_worm.py` | governance | `docs/wiki/` metadata | nothing | `python3 scripts/wiki_worm.py --check` |
-| `scripts/check_install.sh` | control | loopback health endpoints | nothing | `bash scripts/check_install.sh` |
+| `scripts/check_install.sh` | control | loopback health endpoints, typed local-LLM settings, Ollama local model catalog | nothing | `bash scripts/check_install.sh` |
 | `scripts/start_kimi_stack.sh` | control | running orchestrator + sidecars | starts worker fleet in background | `./scripts/start_kimi_stack.sh` |
 | `scripts/run_i4_arm.sh` | control | running orchestrator + sidecars | restarts the worker fleet for one measurement arm (pipeline/rescue/rule-pack) | `./scripts/run_i4_arm.sh kimi_v1 on 1.3.0` |
 | `scripts/ingest.py` | control | manifest YAML + Postgres (plan/status read-only) | intake outbox submissions only (`run`; `plan`/`status` write nothing) | `python3 scripts/ingest.py plan --manifest <manifest.yaml>` |

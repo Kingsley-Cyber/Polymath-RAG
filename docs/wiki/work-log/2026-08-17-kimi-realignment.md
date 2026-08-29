@@ -85,6 +85,45 @@ and sealed I5 explicitly authorize promotion.
 - I4 frozen comparison (Phase 21) requires live services and is queued.
 - I5 remains not authorized.
 
+## 2026-08-29 LOCAL-LLM-EXTRACTION-V1 authorization
+
+### Contract
+
+The owner authorizes `LOCAL-LLM-EXTRACTION-V1` as a shadow extraction
+provider. This named gate supersedes the ADR-0016 hard-freeze prohibition on
+LLM relation classification only for the shadow lane. Model output remains
+source-attested, untrusted evidence. Deterministic identity, admission,
+persistence, predicate compilation, and graph projection remain the knowledge
+authorities. The control stage DAG and receipt semantics do not change.
+
+### Changes
+
+- Updated `docs/wiki/plans/LEXICAL-ROLE-REALIGNMENT-PLAN.md` to record the
+  owner authorization and replace the blanket LLM prohibition with this
+  scoped exception.
+- Kept all ADR-0016 lexical-role phases draft. This authorization does not
+  promote a provider or change production runtime behavior.
+
+### Proof
+
+- The plan names `LOCAL-LLM-EXTRACTION-V1` as authorized for shadow
+  implementation.
+- The hard-freeze section no longer forbids the named lane.
+- The plan retains deterministic identity, admission, persistence, compiler,
+  and graph authority.
+
+### Rejected claims
+
+- No production LLM extraction path is claimed by this governance change.
+- No model is authorized to write Neo4j or bypass fact admission.
+- No control-plane, stage-DAG, receipt, retry, or outbox change is authorized.
+
+### Open contract gaps
+
+- The local model, versioned extraction schema, sidecar manifest, worker
+  adapter, runtime budget, shadow verifier, and promotion gate remain to be
+  supplied by the implementation plan.
+
 ## In-progress completion work
 
 - shared/polymath_shared/rulepack/role_assignment.py: new module
@@ -300,3 +339,61 @@ is not", which no current outcome class encodes.
   default stays legacy_v1; no promotion is implied or requested.
 - The headroom figures above are arithmetic on the observed FP/FN sets,
   not a measured configuration.
+
+## 2026-08-29 Free-LLM local-provider connection slice
+
+### Contract
+
+The requested outcome is a disabled-by-default, local-only configuration
+that can verify the Ollama endpoint pattern documented by
+`nejib1/Free-LLM` before a future ingestion uses it. Acceptance is: typed
+settings load from the repository environment, require loopback when enabled,
+and the existing read-only installation check reports whether the configured
+model is installed locally according to Ollama `GET /api/tags`.
+
+The single owner is `control`. Its public contract is
+`POLYMATH_LOCAL_LLM_PROVIDER`, `POLYMATH_LOCAL_LLM_URL`, and
+`POLYMATH_LOCAL_LLM_MODEL`. Inputs are those settings and the provider model
+catalog. Output is a read-only connection verdict. Persistence effect is
+none. Failure modes are disabled provider, unsupported provider, missing
+model, non-loopback URL, Ollama remote-model entry, unreachable endpoint,
+invalid response, and an unadvertised model.
+
+Dependency direction is `.env` -> typed settings -> bounded shared client ->
+`scripts/check_install.sh`. The future extraction worker is a reverse
+dependent and is not changed in this slice. The verifier is the targeted
+configuration/client test plus a live read-only probe. Rollback is removal of
+the settings and probe; no receipt, stage, or database state changes.
+
+### Changes
+
+- Added typed, disabled-by-default Ollama connection settings to
+  `shared/polymath_shared/settings.py`.
+- Added a bounded, read-only `OllamaLocalClient` that verifies the selected
+  catalog entry is installed locally and records its digest.
+- Added the settings to `.env.example` and the managed scaffold template.
+- Extended `scripts/check_install.sh` and its registry entry to report the
+  local provider verdict without changing services.
+
+### Proof
+
+- Existing configuration, sidecar-client, and graph-admission suites passed:
+  34 tests.
+- The normal installation check reports `local-llm: disabled`.
+- A live probe against the running Ollama catalog refused
+  `qwen3.5:397b-cloud` because its catalog row names `remote_host`.
+- A configured non-loopback provider URL was refused before any request.
+- `git diff --check` and Python compilation passed.
+
+### Rejected claims
+
+- The Free-LLM repository is not vendored because it is a directory of
+  providers and examples, not an inference runtime or Python dependency.
+- This slice does not select a model or activate LLM extraction.
+- This slice does not change the stage DAG or graph authority.
+
+### Open contract gaps
+
+- The refactor plan must still define the extraction schema, source
+  attestation, batching, receipt artifact, model release pin, and promotion
+  gate before ingestion can consume model output.

@@ -9,8 +9,9 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 from typing import ClassVar
+from urllib.parse import urlparse
 
-from pydantic import Field, AliasChoices
+from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 #: RUNTIME-CONFIG-CONTRACT-V1 (P21, 2026-08-28).
@@ -46,6 +47,20 @@ class SidecarSettings(BaseSettings):
     embedder_url: str = Field(default="http://127.0.0.1:8742", description="Embedder sidecar")
     reranker_url: str = Field(default="http://127.0.0.1:8743", description="Reranker sidecar")
     spacy_url: str = Field(default="http://127.0.0.1:8744", description="spaCy syntax sidecar (syntax-evidence-v1)")
+    local_llm_provider: str = Field(
+        default="disabled",
+        description="Future LOCAL-LLM-EXTRACTION-V1 connection provider: "
+                    "'disabled' or 'ollama_local'. This setting does not "
+                    "activate extraction.",
+    )
+    local_llm_url: str = Field(
+        default="http://127.0.0.1:11434",
+        description="Loopback Ollama server used by the local-LLM connection probe",
+    )
+    local_llm_model: str = Field(
+        default="",
+        description="Exact locally installed Ollama model tag; required when enabled",
+    )
     syntax_provider: str = Field(
         default="disabled",
         description="Optional syntax-evidence lane behind the extract "
@@ -66,6 +81,26 @@ class SidecarSettings(BaseSettings):
         default=True,
         description="Refuse to call a sidecar whose manifest release differs from the registry pin",
     )
+
+    @model_validator(mode="after")
+    def validate_local_llm_connection(self) -> "SidecarSettings":
+        provider = self.local_llm_provider.strip()
+        if provider not in ("disabled", "ollama_local"):
+            raise ValueError(f"unknown local LLM provider: {provider}")
+        if provider == "disabled":
+            return self
+        if not self.local_llm_model.strip():
+            raise ValueError(
+                "POLYMATH_LOCAL_LLM_MODEL is required when the local LLM provider is enabled"
+            )
+        parsed = urlparse(self.local_llm_url)
+        if parsed.scheme not in ("http", "https") or parsed.hostname not in (
+            "127.0.0.1", "localhost", "::1",
+        ):
+            raise ValueError(
+                "POLYMATH_LOCAL_LLM_URL must be loopback for ollama_local"
+            )
+        return self
 
 
 class WorkerSettings(BaseSettings):
