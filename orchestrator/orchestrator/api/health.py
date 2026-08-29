@@ -130,3 +130,18 @@ def semantic_health(corpus_id: str | None = None) -> dict:
     out["suspect"] = [name for name, v in out["lanes"].items()
                       if v["status"] == "SUSPECT"]
     return out
+
+
+@router.get("/health/pipeline")
+def pipeline() -> dict:
+    """PIPELINE-BLOCKED-HEALTH-V1: BLOCKED (with cause) vs IDLE.
+
+    A quarantined fleet used to produce no signal at all — tickets
+    simply stopped moving, which reads as "nothing to do". This
+    endpoint makes a stalled pipeline say so, and say why.
+    """
+    from polymath_shared.db import tx
+    from polymath_shared.pipeline_health import pipeline_health
+
+    with tx() as conn:
+        return pipeline_health(conn)
