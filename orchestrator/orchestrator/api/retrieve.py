@@ -464,17 +464,28 @@ def _neo4j_expand(
     driver = neo4j_driver()
     try:
         with driver.session() as session:
+            # GRAPH-LIFECYCLE-V2 (P9): authorization is applied INSIDE
+            # the query, before LIMIT. It used to run in Python after
+            # the limit, so stale edges consumed answer slots and were
+            # then discarded — MEASURED on the live graph, 85 of 545
+            # REL edges (15.6%) are unauthorized and up to 8 of the 20
+            # slots in a fact_id window were garbage. That is
+            # answer-bearing evidence displaced by rows nobody may see.
+            auth_filter = "" if authorized is None else \
+                " AND r.fact_id IN $authorized"
             rows = session.run(
                 """
                 CALL () {
                     MATCH (s:Entity)-[r:REL]->(o:Entity)
                     WHERE s.entity_id IN $ids AND r.predicate IN $predicates
+                      """ + auth_filter + """
                     RETURN r.fact_id AS fact_id, r.predicate AS predicate,
                            s.entity_id AS subject_id, s.surface AS subject,
                            o.entity_id AS object_id, o.surface AS object
                     UNION
                     MATCH (s:Entity)-[r:REL]->(o:Entity)
                     WHERE o.entity_id IN $ids AND r.predicate IN $predicates
+                      """ + auth_filter + """
                     RETURN r.fact_id AS fact_id, r.predicate AS predicate,
                            s.entity_id AS subject_id, s.surface AS subject,
                            o.entity_id AS object_id, o.surface AS object
@@ -485,8 +496,11 @@ def _neo4j_expand(
                 """,
                 ids=ids,
                 predicates=sorted(HIGH_MEDIUM_PREDICATES),
+                authorized=(None if authorized is None else sorted(authorized)),
             ).data()
             if authorized is not None:
+                # belt and braces: the Cypher filter is the authority,
+                # this can only ever be a no-op now.
                 rows = [r for r in rows if r["fact_id"] in authorized]
             return rows
     except Exception as exc:
