@@ -168,7 +168,9 @@ def test_literal_coverage_has_no_unexplained_loss_or_overlap(target):
     # from the softened text. The substitution is length-preserving
     # (one "\n" -> one " "), so every offset below still indexes the
     # source; only the sentence STRINGS differ.
-    doc = _soften_wraps(DOC)
+    from workers.chunker import _break_pathological_lines, _document_units
+
+    doc, _, _ = _document_units(_break_pathological_lines(DOC))
     plan, rows = children(SEPARATOR_SOURCE, target)
     cursor, loss, overlap = 0, [], []
     for row in sorted(rows, key=lambda r: r["char_start"]):
@@ -181,10 +183,16 @@ def test_literal_coverage_has_no_unexplained_loss_or_overlap(target):
     assert loss == [], f"unexplained literal loss: {loss}"
     assert overlap == [], f"unexplained overlap: {overlap}"
 
-    sentences = split_sentences(doc)
+    # The ROUTER decides the unit type (list item / line / sentence); the
+    # PACKER must not lose whatever it produced. Those are two different
+    # properties — coverage above is checked against the SOURCE and stays
+    # independent of the router; this checks the packer against the units.
+    from workers.chunker import _document_units
+
+    _, sentences, _ = _document_units(doc)
     assigned = [i for spec in plan.children for i in spec.sentences]
-    assert len(assigned) == len(set(assigned)), "a sentence landed in two chunks"
-    assert set(assigned) == set(range(len(sentences))), "a sentence was dropped"
+    assert len(assigned) == len(set(assigned)), "a unit landed in two chunks"
+    assert set(assigned) == set(range(len(sentences))), "a unit was dropped"
     for row, spec in zip(rows, plan.children):
         for i in spec.sentences:
             assert sentences[i] in row["text"], (
@@ -412,3 +420,109 @@ def test_soft_wrap_repair_reaches_the_ingest_path():
         plan_document(WRAPPED, "doc_e2e", **CHUNK_FROZEN_PARAMS).children)
     assert "Nessus was developed by Tenable." in text
     assert "Nessus was\ndeveloped" not in text
+
+
+# ================== UNIT ROUTING (ported from polymath v3.3 tier_chunker)
+#: v3.3 treated chunking as a router: inspect the block, pick the unit type,
+#: pack whole units, never split inside one. v4 had a single strategy, which
+#: is why P2/P6 kept re-deriving pieces of this bottom-up.
+TRANSCRIPT_BLOCK = """ANALYST no punctuation here
+LEAD another spoken line
+ANALYST a third line of speech
+LEAD a fourth line
+ANALYST a fifth line"""
+
+LIST_BLOCK = """- prepare the window
+  and notify the owner
+- run the scan
+- export the findings"""
+
+
+def test_low_punct_block_routes_to_lines():
+    """ASR, chat logs, poetry, log files: sentence splitting has nothing to
+    grip, so LINES are the units."""
+    from workers.chunker import _is_low_punct_multiline, _route_units
+
+    assert _is_low_punct_multiline(TRANSCRIPT_BLOCK)
+    assert _route_units(TRANSCRIPT_BLOCK) == TRANSCRIPT_BLOCK.splitlines()
+
+
+def test_list_block_routes_to_items_with_continuations():
+    """A list item is the marker line PLUS its continuation lines — one
+    atomic unit, never split mid-item."""
+    from workers.chunker import _is_list_block, _route_units
+
+    assert _is_list_block(LIST_BLOCK)
+    items = _route_units(LIST_BLOCK)
+    assert items[0] == "- prepare the window\n  and notify the owner", items
+    assert len(items) == 3
+
+
+def test_ordinary_prose_still_routes_to_sentences():
+    from workers.chunker import _route_units
+
+    assert _route_units("Nessus scans hosts. Tenable built it.") is None
+
+
+def test_soft_wrap_repair_must_not_run_before_routing():
+    """THE ORDERING BUG, pinned. Softening first collapses transcript lines
+    into one line — unpunctuated speech looks exactly like a soft wrap — and
+    destroys the structure the low-punct router needs."""
+    from workers.chunker import _soften_wraps
+
+    collapsed = _soften_wraps(TRANSCRIPT_BLOCK)
+    assert "\n" not in collapsed, (
+        "fixture no longer exercises the interaction")
+
+    doc = f"# Notes\n\n{TRANSCRIPT_BLOCK}\n"
+    text = "".join(c.text for c in plan_document(
+        doc, "d", separator_mode=SEPARATOR_SOURCE).children)
+    assert "\nLEAD another spoken line" in text, (
+        "transcript lines were collapsed; soft-wrap repair is running "
+        "before the router again")
+    assert "here LEAD" not in text
+
+
+def test_all_three_shapes_survive_in_one_document():
+    """Prose wraps repaired, list items intact, transcript lines kept —
+    simultaneously, in one pass."""
+    doc = (f"# Notes\n\nNessus scans hosts. Nessus was\ndeveloped by Tenable."
+           f"\n\n## Checklist\n\n{LIST_BLOCK}\n\n{TRANSCRIPT_BLOCK}\n")
+    text = "".join(c.text for c in plan_document(
+        doc, "d", separator_mode=SEPARATOR_SOURCE).children)
+    assert "Nessus was developed by Tenable." in text, "prose wrap not repaired"
+    assert "- prepare the window\n  and notify the owner" in text, "list item split"
+    assert "\nLEAD another spoken line" in text, "transcript line collapsed"
+
+
+def test_pathological_line_breaking_is_length_preserving():
+    """v3.3 inserted blank lines here. v4 cannot — chunk offsets index the
+    source — so the repair swaps a space for a newline instead."""
+    from workers.chunker import _break_pathological_lines
+
+    mega = ("word " * 2000).strip()          # ~10k chars, one line
+    out = _break_pathological_lines(mega)
+    assert len(out) == len(mega), "offsets would shift"
+    assert "\n" in out, "the mega-line was not broken"
+    assert out.replace("\n", " ") == mega, "characters other than the break changed"
+
+
+def test_semantic_splitting_was_not_ported():
+    """v3.3's _semantic_deviation_split / _semantic_parent_blocks call an
+    embedder during chunking. v4 chunking is a pure function and chunk ids
+    are content-addressed; a model in that path breaks determinism."""
+    src = (ROOT / "workers" / "workers" / "chunker.py").read_text()
+    # Comments EXPLAIN what was deliberately not ported, so strip them --
+    # checking the raw text matched that explanation and failed on itself.
+    code_lines = []
+    for line in src.splitlines():
+        stripped = line.lstrip()
+        if stripped.startswith("#"):
+            continue
+        code_lines.append(line)
+    code = "\n".join(code_lines)
+    for banned in ("embed(", "_semantic_deviation_split", "_sat_split",
+                   "wtpsplit", "SentenceTransformer"):
+        assert banned not in code, (
+            f"{banned!r} is called in the chunker; chunking must stay a "
+            "pure deterministic function with content-addressed ids")

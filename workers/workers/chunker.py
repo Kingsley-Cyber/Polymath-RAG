@@ -151,6 +151,162 @@ def _reconstruct_separator(source_text: str, prev_end: int,
     return ("\n\n" if newlines >= 2 else "\n") + indent
 
 
+#: ── UNIT ROUTING, ported from polymath v3.3 tier_chunker ──────────────
+#:
+#: v3.3 treated chunking as a ROUTER: inspect each block's shape, pick the
+#: unit type (list item / line / sentence), then pack WHOLE units and never
+#: split inside one. v4 had a single strategy — sentence-split everything —
+#: which is why P2/P6 kept re-deriving pieces of this bottom-up.
+#:
+#: Ported (pure, deterministic, offset-safe):
+#:   _is_list_block / _split_list_items   list items are atomic units
+#:   _is_low_punct_multiline              ASR/chat/log text: LINES are units
+#:   _break_pathological_lines            ebook mega-lines
+#:   _route_units                         the router itself
+#:
+#: NOT ported, deliberately:
+#:   _semantic_deviation_split / _semantic_parent_blocks — these call an
+#:     embedder during chunking. v4 chunking is a pure function and chunk
+#:     ids are content-addressed; a model in that path breaks determinism.
+#:   _sat_split — punctuation-agnostic segmentation via wtpsplit. Wanted for
+#:     raw un-punctuated ASR, but it is a model dependency and needs the same
+#:     pin-and-qualify treatment as GLiNER. Separate decision.
+#:   _split_table_rows_for_children — expects v3.3's linearized "Row N:" /
+#:     "Columns:" table rendering, which v4 does not produce.
+#:
+#: MEASURED on the CySA Domain 1 transcript (523KB ASR): the low-punct router
+#: fires on 1 of 1,074 blocks, because that ASR emitted punctuation (5,987
+#: sentence-final marks over 1,085 lines). It is carried for raw transcripts
+#: and log sources where punctuation is genuinely absent.
+
+_LIST_MARKER_RE = re.compile(
+    r"^\s*(?:[-*+\u2022]\s+|\(?\d+[.)]\s+|[a-zA-Z][.)]\s+)")
+_SENT_FINAL_RE = re.compile(r"[.!?][\"')\]]?(?:\s|$)")
+
+#: v3.3 used 5_000 / 2_000 characters for Calibre/Pandoc layout mega-lines.
+_PATHOLOGICAL_LINE_CHARS = 5_000
+_PATHOLOGICAL_SLICE_CHARS = 2_000
+
+
+def _nonempty_lines(text: str) -> list[str]:
+    return [ln for ln in text.splitlines() if ln.strip()]
+
+
+def _is_list_block(text: str) -> bool:
+    """List-shaped: >=3 marker lines covering at least half the block."""
+    lines = _nonempty_lines(text)
+    if len(lines) < 3:
+        return False
+    markers = sum(1 for ln in lines if _LIST_MARKER_RE.match(ln))
+    return markers >= 3 and markers * 2 >= len(lines)
+
+
+def _split_list_items(text: str) -> list[str]:
+    """One unit per list item: the marker line plus its continuations."""
+    items: list[str] = []
+    current: list[str] = []
+    for ln in text.splitlines():
+        if not ln.strip():
+            continue
+        if _LIST_MARKER_RE.match(ln) and current:
+            items.append("\n".join(current))
+            current = [ln]
+        else:
+            current.append(ln)
+    if current:
+        items.append("\n".join(current))
+    return items
+
+
+def _is_low_punct_multiline(text: str) -> bool:
+    """Line-structured text — transcripts, chat logs, poetry, log files.
+
+    Many lines, few sentence-final marks: sentence splitting has nothing to
+    grip, so the LINES are the real units.
+    """
+    lines = _nonempty_lines(text)
+    if len(lines) < 5:
+        return False
+    return len(_SENT_FINAL_RE.findall(text)) * 3 < len(lines)
+
+
+def _break_pathological_lines(text: str) -> str:
+    """Break ebook-conversion mega-lines, LENGTH-PRESERVING.
+
+    v3.3 inserted blank lines here. v4 cannot: chunk offsets index the
+    source, so the repair swaps a single space for a newline at the break
+    point instead of inserting anything. Same length, same offsets.
+    """
+    if len(text) <= _PATHOLOGICAL_LINE_CHARS:
+        return text
+    out = list(text)
+    for m in re.finditer(r"[^\n]{%d,}" % (_PATHOLOGICAL_LINE_CHARS + 1), text):
+        start, end = m.start(), m.end()
+        pos = start + _PATHOLOGICAL_SLICE_CHARS
+        while pos < end:
+            window = text[max(start, pos - 200):pos]
+            cut = max(window.rfind(" "), window.rfind("\t"), window.rfind("|"))
+            at = (pos - (len(window) - cut)) if cut >= 0 else -1
+            if at > start and out[at] in (" ", "\t"):
+                out[at] = "\n"
+                start = at
+            pos += _PATHOLOGICAL_SLICE_CHARS
+    return "".join(out)
+
+
+def _route_units(block: str) -> list[str] | None:
+    """Pick the unit type for this block. None = ordinary prose."""
+    if _is_list_block(block):
+        return _split_list_items(block)
+    if _is_low_punct_multiline(block):
+        return _nonempty_lines(block)
+    return None
+
+
+def _document_units(text: str) -> tuple[str, list[str], list[int]]:
+    """Router-selected units with their SOURCE offsets.
+
+    Replaces the flat `split_sentences` call for CHUNK_CONTRACT_V2. Returns
+    (units, starts) in the same shape the packer already consumes, so the
+    offset, layout-projection and coverage machinery is untouched.
+    """
+    units: list[str] = []
+    starts: list[int] = []
+    cursor = 0
+    for block in re.split(r"(\n\s*\n)", text):
+        if not block.strip():
+            cursor += len(block)
+            continue
+        base = text.find(block, cursor)
+        if base < 0:
+            base = cursor
+        # ORDER MATTERS. Soft-wrap repair must run AFTER routing and only
+        # on PROSE. Running it first collapsed transcript lines into one
+        # line — unpunctuated speech looks exactly like a soft wrap — and
+        # destroyed the very structure the low-punct router needs.
+        routed = _route_units(block)
+        if routed is not None:
+            pieces = routed
+        else:
+            softened = _soften_wraps(block)
+            pieces = split_sentences(softened)
+            if softened != block:
+                # length-preserving, so offsets still index `text`; rewrite
+                # the block view so find() below locates the joined form
+                block = softened
+                text = text[:base] + softened + text[base + len(block):]
+        inner = 0
+        for piece in pieces:
+            at = block.find(piece, inner)
+            if at < 0:
+                continue
+            units.append(piece)
+            starts.append(base + at)
+            inner = at + len(piece)
+        cursor = base + len(block)
+    return text, units, starts
+
+
 def _pack_sentences_v2(
     sentences: list[str],
     starts: list[int],
@@ -288,11 +444,16 @@ def plan_document(
     the source. The two generations are never silently equated — chunk
     ids differ because the text differs, which is the point.
     """
-    # CHUNK_CONTRACT_V2 repairs soft wraps BEFORE sentence splitting.
-    # Length-preserving, so every offset below still indexes the source.
+    # CHUNK_CONTRACT_V2 prepares the source, then ROUTES units per block
+    # (v3.3 tier_chunker doctrine): list items, lines, or sentences. Both
+    # repairs are length-preserving, so every offset below still indexes
+    # the source exactly.
     if separator_mode == SEPARATOR_SOURCE:
-        text = _soften_wraps(text)
-    sentences = split_sentences(text)
+        text = _break_pathological_lines(text)
+        text, sentences, starts = _document_units(text)
+    else:
+        sentences = split_sentences(text)
+        starts = None
     contract = CHUNK_CONTRACT.get(separator_mode)
     if contract is None:
         raise ValueError(
@@ -304,11 +465,12 @@ def plan_document(
                          document_summary="", fanout=parent_fanout,
                          contract=contract)
 
-    starts: list[int] = []
-    cursor = 0
-    for sentence in sentences:
-        starts.append(text.find(sentence, cursor))
-        cursor = starts[-1] + len(sentence)
+    if starts is None:
+        starts = []
+        cursor = 0
+        for sentence in sentences:
+            starts.append(text.find(sentence, cursor))
+            cursor = starts[-1] + len(sentence)
 
     # LAYOUT-EVIDENCE-V1: detected HERE, on the materialized source text,
     # which still has its line structure. Nothing downstream may re-derive
