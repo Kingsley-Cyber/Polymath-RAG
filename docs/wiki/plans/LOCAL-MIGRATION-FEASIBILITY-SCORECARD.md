@@ -83,3 +83,37 @@ provider throttling.
   not the facts table. A future migration should stamp facts properly.
 - The 20-query eval set and sealed qualification remain unbuilt: every
   quality number above is development-class.
+
+## 5. Post-scorecard validation (same day, owner questions)
+
+**Local long-input spike (Qwen3.5-4B MLX, locked gen config, max_tokens=3000):**
+
+| input | wall | attempts | output tok | gen tok/s | entities/relations (attested) |
+|---|---|---|---|---|---|
+| ~10K tok | 42.4s | 1 | 1,382 | 32.6 | 12 / 4 (rej 8/4) |
+| ~13K tok | 63.5s | 1 | 2,144 | 33.8 | 14 / 2 (rej 4/15) |
+| ~15K tok | 76.8s | 1 | 2,584 | 33.6 | 28 / 10 (rej 4/11) |
+
+All first-attempt schema-valid, outputs self-terminating under the cap (no
+degeneration at 3K out). The 10–15K-input class WORKS on the 4B.
+
+**Concurrency drill (limiter cap 4, 8 jobs, live sidecar):** 8/8 OK, 86s,
+50.2 effective out tok/s, cap held at 4, breaker closed, no slot leaks.
+Queueing per-job walls confirm the semaphore gates before I/O.
+
+**Honest finding — local batching ceiling:** mlx_lm.server SERIALIZES
+generation, so client-side concurrency yields ~1.5x (50 vs 33 tok/s), not
+the plan's dense batch-40 241 tok/s. True batched local throughput requires
+the custom `/infer_batch` runtime (plan §4.2) — still NOT built. At
+measured speeds a 300 KB book ≈ 5×15K-token calls ≈ 6–7 min local; the
+cloud lane (which already ingested ~11K-token prompts per call in fleet
+runs, schema-valid end to end) remains the speed lane. Ollama cloud:
+tested. Ollama-as-local-engine: NOT exercised for extraction (MLX sidecar
+is the local engine; the ollama_local setting is connection-check only).
+
+**Control layer / job tracking:** run_id is the job id; stage_tickets carry
+generation/attempts/leases; stage_attempts are receipts; artifacts carry
+per-call LLM receipts (lane, model, tokens, wall, quarantine); the raw
+ledger carries per-span provider provenance; `scripts/ingest.py status`
+plus SQL is the tracking surface. The plan's dedicated provider-rollup
+tables/views and ETA remain unbuilt (deviation recorded).
