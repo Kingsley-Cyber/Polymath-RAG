@@ -161,7 +161,7 @@
     {
       "id": "P23",
       "name": "SUMMARY-IDEMPOTENCY",
-      "status": "TODO",
+      "status": "DONE",
       "needs_reingest": false,
       "blocker": true,
       "step": 3,
@@ -176,7 +176,9 @@
         "one authoritative summary row per parent; superseded rows absent or explicitly marked",
         "a contract-generation change can never leave two generations live for one parent",
         "gate mutation-tested"
-      ]
+      ],
+      "commit": "623e1e9",
+      "result": "Control plane: identity was the run-derived ticket_id, so the done-check never matched across runs and every run re-executed every parent (21,315 tickets / 3,025 input_hashes). Now keyed on (stage,input_hash) for all four stages, unique index enforces it, retries increment attempts. Persistence: parent_summaries had no authority, so 1,241 parents held two rows. Added superseded_at + partial unique index (parent_id) WHERE superseded_at IS NULL, supersede-on-write, and three readers now select the authoritative row; no recency band-aid (pinned). Applied live: summary_jobs 21,516->3,063; 1,784 authoritative summaries, exactly one per parent, 1,241 superseded and retained. Old integration test that encoded the defect was rewritten. 17-test gate, 5/5 mutations caught, suite 83 = baseline over 3 runs."
     },
     {
       "id": "P7",
