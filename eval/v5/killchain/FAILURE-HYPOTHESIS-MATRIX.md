@@ -15,12 +15,12 @@ pass — it is NOT a pass.
 | H5 | Chunking semantic damage | **FAIL (P2)** | Table header row and its data row land in DIFFERENT chunks with alignment destroyed (Python for Data Analysis, offset 468347). Same root cause as H1. |
 | H6 | Hierarchy damage | PASS | 7,085 children + 1,774 parents reconcile; no order inversions. |
 | H7 | Document-region false suppression | PASS | 13 adversarial negatives pinned; 96.0% body; objectives map protected by positive-content override. |
-| H8 | Entity observation loss | UNAUDITED | — |
-| H9 | Predicate / relation failure | UNAUDITED | — |
+| H8 | Entity observation loss | **PASS + FINDING (P2)** | offsets 100% exact (20,000 sampled); punctuated identifiers intact; 15.33% of surfaces map to multiple entity_ids (`you` -> 747). Pass 2. |
+| H9 | Predicate / relation failure | **FAIL (P1)** | 557/3,184 facts (17.5%) carry a pronoun endpoint: `you --instance_of--> microsoft`. 7 reached Neo4j; MERGE created the endpoints, so edges are answerable. Pass 2. |
 | H10 | Semantic router starvation | PASS | Both compilers evaluated unconditionally; routing recorded as metadata only. |
 | H11 | Procedure representation ceiling | **FAIL (P2)** | 965 opportunities → 12 artifacts (1.24%); one artifact per DOCUMENT; 172-step conflated artifacts at confidence 1.00. |
 | H12 | Concept representation ceiling | **FAIL (P2)** | 2,210 opportunities → 120 artifacts (5.43%); `max_concepts=10` binds in 12/12 documents. |
-| H13 | Confidence saturation | **FAIL (P3)** | `min(1.0, 0.6 + 0.05*len(steps))` saturates at 8 steps — every procedure reports 1.00 regardless of coherence. |
+| H13 | Confidence saturation | **FAIL (P3, confirmed on data)** | confidence is a CONSTANT: all 12 procedures exactly 1.00 (8..172 steps), all 121 concepts exactly 0.90. Pass 2. |
 | H14 | Dedup / canonicalization corruption | **FAIL (prior, P1)** | Vocabulary family layer merged EDR↔SIEM on co-occurrence; qualified NO-GO and left disabled. |
 | H15 | Artifact lineage failure | PASS | All artifacts carry source_chunk_ids + bundle hash; no orphans found. |
 | H16 | Summary corruption | PASS | Routing verified: both CySA books top-ranked with clear margin. |
@@ -29,7 +29,7 @@ pass — it is NOT a pass.
 | H19 | PG/Qdrant/Neo4j divergence | **PARTIAL (P4)** | Qdrant EXACT (delta 0). Neo4j holds 12,428 Fact nodes vs 3,184 PG facts — stale nodes from deleted corpora. Contained (see H26). |
 | H20 | Retrieval lane deadness | PASS | 9 lanes instrumented; chaos matrix + correct-zero cases. |
 | H21 | Retrieval score / fusion pathology | PARTIAL | Boilerplate ranking fixed (region demotion); RRF flatness (~15% spread) noted, not exploited. |
-| H22 | Exact literal lookup | UNAUDITED | — |
+| H22 | Exact literal lookup | **PASS** | `ATT&CK`, `802.11`, `Windows NT 10.0` retrieve chunks containing the literal. Pass 2. |
 | H23 | Paraphrase lookup | PASS (prior) | Depth profile + neighbour expansion resolved the measured failure. |
 | H24 | Cross-document completeness | PARTIAL | `max_documents` unchanged by depth profile (pinned); full multi-book enumeration not re-measured. |
 | H25 | Depth over-trigger | PASS | 14-case intent matrix; over-trigger found and narrowed. |
@@ -37,7 +37,7 @@ pass — it is NOT a pass.
 | H27 | Query scope failure | PASS | Zero foreign `corpus_id` values in either Qdrant collection. |
 | H28 | Reranker failure | PASS | Degrades to fusion order with typed `meta.degraded`; wake-wait verified. |
 | H29 | Evidence assembly loss | **FAIL (fixed, P1)** | 900-char evidence surface vs 1,200-char chunks — fixed to 1,600 earlier this session. |
-| H30 | Citation failure | UNAUDITED | — |
+| H30 | Citation failure | **PASS** | 10/10 locators resolved to authoritative chunks in the correct corpus; no chunk id spans corpora. Pass 2. |
 | H31 | Abstention failure | PASS | Negative control refuses and names what is missing. |
 | H32 | Competing-model collapse | PASS | IR lifecycle answer preserved NIST (4-phase) AND PICERL separately. |
 | H33 | Transcript failure | UNAUDITED | No transcript in the live corpus. |
@@ -61,8 +61,9 @@ pass — it is NOT a pass.
 
 ## Coverage
 
-Audited with evidence: **38 of 50**. Unaudited: **8** (H8, H9, H22, H30,
-H33, H36, H45, H47). Partial: **4**.
+Audited with evidence: **43 of 50** (pass 1: 38, pass 2: +5).
+Unaudited: **4** (H33 transcript, H36 batch/concurrency, H45
+irrelevant-data metamorphic, H47 order dependence). Partial: **4**.
 
 Unaudited hypotheses are listed as such deliberately — declaring them
 PASS without measurement would be the exact failure mode this audit
