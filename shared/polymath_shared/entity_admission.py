@@ -33,6 +33,56 @@ IDENTITY_CONTRACT = "entity-identity-v2"
 
 _DET = {"the", "a", "an"}
 
+#: FACT-ENDPOINT-ELIGIBILITY-V2 (2026-08-28).
+#:
+#: An UNRESOLVED closed-class pronoun is never a durable knowledge
+#: identity. It remains fully valid as raw source, as a mention, and as
+#: syntax/discourse evidence — it simply may not BE the thing a fact is
+#: about.
+#:
+#: MEASURED before this gate: 557 of 3,184 accepted facts (17.5%) carried
+#: a pronoun endpoint, producing `you --instance_of--> microsoft`,
+#: `you --founded--> organization`, `they --uses--> ssh`. Three `they`
+#: entities had additionally been admitted CORPUS_SCOPED, which let those
+#: edges reach Neo4j.
+#:
+#: Closed class only — this list can never grow to cover a domain.
+CLOSED_CLASS_PRONOUNS = frozenset({
+    "i", "you", "he", "she", "it", "we", "they", "me", "him", "her",
+    "us", "them", "this", "that", "these", "those", "who", "whom",
+    "which", "what", "myself", "yourself", "himself", "herself",
+    "itself", "ourselves", "themselves", "one", "ones",
+})
+
+
+def is_unresolved_pronoun(surface: str) -> bool:
+    """True when `surface` is a bare closed-class pronoun.
+
+    PRECISION FIRST. A naive lowercase membership test would destroy
+    real named entities, so every one of these must survive:
+
+        You.com   — contains punctuation, not a bare token
+        WeWork    — internal capital, longer than the pronoun
+        US / IT / WHO — ALL-CAPS acronym identity
+        "They Might Be Giants" — multi-token
+
+    The rule therefore fires ONLY on a single token, with no digits or
+    punctuation, that is not all-caps, whose lowercase form is in the
+    closed class. Sentence-initial "They" is still a pronoun, so
+    capitalisation of a single token is not evidence of a name.
+    """
+    s = (surface or "").strip()
+    if not s or " " in s:
+        return False
+    if not s.isalpha():                 # You.com, C3, don't
+        return False
+    if s.isupper() and len(s) > 1:      # US, IT, WHO, WE (org acronyms)
+        return False
+    if s != s.lower() and s != s.capitalize():
+        return False                    # WeWork, iPhone-style casing
+    return s.lower() in CLOSED_CLASS_PRONOUNS
+
+
 GENERIC_HEAD = frozenset({
     "system", "model", "platform", "component", "service", "data",
     "process", "application", "tool", "framework", "layer", "engine",
@@ -92,6 +142,13 @@ def content_tokens(surface: str) -> list[str]:
 
 
 def _classify(surface: str, sentence_initial: bool) -> tuple[str, tuple[str, ...]]:
+    # FACT-ENDPOINT-ELIGIBILITY-V2: a bare closed-class pronoun is
+    # evidence, never identity. Decided FIRST so no later branch
+    # (acronym, proper, discriminative) can promote it — three `they`
+    # entities had reached CORPUS_SCOPED that way and carried pronoun
+    # edges into the graph.
+    if is_unresolved_pronoun(surface):
+        return "MENTION_ONLY", ("unresolved_closed_class_pronoun",)
     toks = _tokens(surface)
     ct = content_tokens(surface)
     head_tokens = [t for t in ct if not t.isdigit()]

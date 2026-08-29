@@ -145,10 +145,41 @@ def _graph_rows(conn: Connection, run_id: str) -> dict[str, list[dict]]:
         (run_id,),
     ).fetchall()
 
+    entity_rows = [{"entity_id": r[0], "core_type": r[1], "surface": r[2]}
+                   for r in entities]
+    fact_rows = [{"fact_id": r[0], "predicate": r[1], "subject_id": r[2],
+                  "object_id": r[3]} for r in facts]
+
+    # GRAPH-ENDPOINT-GUARD-V2 (2026-08-28). Defence in depth against the
+    # measured bypass: the fact projection's
+    #   MERGE (s:Entity {entity_id: $subject_id})
+    # CREATES an endpoint node, so a fact that slipped the eligibility
+    # filter silently manufactured an Entity the canonical entity policy
+    # had refused. That is how pronoun nodes reached the live graph
+    # (`they --uses--> ssh`) while 0 pronoun ENTITIES carried a receipt.
+    #
+    # A fact may project ONLY if both endpoints are in the eligible
+    # entity set this same query produced. One authority, not two
+    # competing policies.
+    eligible = {e["entity_id"] for e in entity_rows}
+    projectable, refused = [], []
+    for f in fact_rows:
+        if f["subject_id"] in eligible and f["object_id"] in eligible:
+            projectable.append(f)
+        else:
+            refused.append(f["fact_id"])
+    if refused:
+        log.warning(
+            "graph endpoint guard refused %d fact(s) whose endpoints are "
+            "not eligible entities", len(refused),
+            extra={"error_code": "graph_endpoint_ineligible",
+                   "run_id": run_id})
+
     return {
         "docs": [{"doc_id": r[1], "chunk_id": r[0], "tier": r[2], "chunk_index": r[3]} for r in docs],
-        "entities": [{"entity_id": r[0], "core_type": r[1], "surface": r[2]} for r in entities],
-        "facts": [{"fact_id": r[0], "predicate": r[1], "subject_id": r[2], "object_id": r[3]} for r in facts],
+        "entities": entity_rows,
+        "facts": projectable,
+        "refused_facts": refused,
         "evidence": [{"evidence_id": r[0], "fact_id": r[1]} for r in evidence],
     }
 
@@ -279,6 +310,7 @@ def process_event(conn: Connection, event: dict) -> None:
             "entities": len(rows["entities"]),
             "facts": len(rows["facts"]),
             "evidence": len(rows["evidence"]),
+            "endpoint_refused_facts": len(rows.get("refused_facts") or []),
             "skipped_current": skipped_current,
         })
 
