@@ -146,7 +146,7 @@
     {
       "id": "P21",
       "name": "RUNTIME-CONFIG-DEFECT",
-      "status": "TODO",
+      "status": "DONE",
       "needs_reingest": false,
       "blocker": true,
       "step": 3,
@@ -154,7 +154,9 @@
       "acceptance": [
         "a normally-launched orchestrator serves /retrieve without manual env export",
         "misconfiguration fails loud at startup, not as a 500 per request"
-      ]
+      ],
+      "commit": "3b30379",
+      "result": "No settings class loaded .env, so all 7 fell back to built-in defaults; PG default password 'polymath' vs deployed 'polymath-dev' made every /retrieve a 500 on a normally launched orchestrator. Root cause: pydantic-settings resolves a relative env_file against CWD and the app launches from orchestrator/. Fixed with an absolutely-resolved _ENV_FILE wired into all 7 classes, plus validate_startup() in the lifespan before serving with named terminal codes (POSTGRES_CONFIG_MISSING/AUTH_FAILED/UNREACHABLE) and no password echoed. VERIFIED: normal launch serves /retrieve 200 with 10 evidence; wrong credential gives STARTUP BLOCKED + exit + health 000 + 0 password leaks. 11-test gate, 5/5 mutations caught, suite 83 = baseline."
     },
     {
       "id": "P23",
