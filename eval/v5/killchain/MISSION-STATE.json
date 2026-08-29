@@ -97,19 +97,6 @@
       "step": 2
     },
     {
-      "id": "P7",
-      "name": "ARTIFACT-CONFIDENCE-V2",
-      "status": "TODO",
-      "needs_reingest": false,
-      "goal": "Confidence is a constant (all procedures 1.00, all concepts 0.90). Either derive a defensible deterministic signal or remove it from semantic use. Length must not imply reliability.",
-      "acceptance": [
-        "no candidate gains ranking/admission advantage from a constant"
-      ],
-      "blocker": false,
-      "step": 4,
-      "note": "Constant confidence is UNIFORM, so it grants no relative ranking advantage. Not a release blocker. Handle at freeze time as a one-line decision: either drop it from semantic use or stamp it as a declared non-signal."
-    },
-    {
       "id": "P8",
       "name": "EVIDENCE-TRUNCATION",
       "status": "TODO",
@@ -149,32 +136,50 @@
       "note": "Bundle-stale quarantine reporting IDLE instead of BLOCKED masks pipeline failure. Hit twice during the audit and will be hit again by the P14 rebuild."
     },
     {
-      "id": "P11",
-      "name": "KILLCHAIN-INVARIANCE",
-      "status": "DEFERRED",
+      "id": "P21",
+      "name": "RUNTIME-CONFIG-DEFECT",
+      "status": "TODO",
       "needs_reingest": false,
-      "goal": "Close H36 batch invariance, H36 concurrency invariance, H45 same-corpus dilution, H47 order dependence (adapt with near-duplicate fixtures since the duplicate guard blocks identical content).",
+      "blocker": true,
+      "step": 3,
+      "goal": "The orchestrator does not load .env (model_config env_file=None), so it falls back to a built-in Postgres password that does not match the deployed one. /retrieve returns 500 on a normally-launched instance. This is a live pipeline failure and a P14 hazard.",
       "acceptance": [
-        "semantic output equivalent across batch sizes, worker counts and ingest order"
-      ],
-      "deferred_reason": "Batch/concurrency/order invariance. No observed symptom; this is open-ended audit work. Re-open ONLY if the P14 rebuild or P15 measurement shows non-determinism.",
-      "blocker": false
+        "a normally-launched orchestrator serves /retrieve without manual env export",
+        "misconfiguration fails loud at startup, not as a 500 per request"
+      ]
     },
     {
-      "id": "P12",
-      "name": "SEALED-SENTINEL-V2",
-      "status": "PARTIAL",
+      "id": "P23",
+      "name": "SUMMARY-IDEMPOTENCY",
+      "status": "TODO",
       "needs_reingest": false,
-      "depends_on": [
-        "P2"
+      "blocker": true,
+      "step": 3,
+      "blocks": [
+        "P13",
+        "P14"
       ],
-      "goal": "Extend the existing 4-doc sentinel to the full 17-case contents list (passive/negated/hedged/quoted facts, resolvable pronoun, 3 procedures, procedure spanning chunks, >10 concepts, nested lists, indented code, table, exact identifiers incl C++/C#/.NET, transcript turns, boilerplate negative, unsupported question). Pin expected outputs.",
+      "goal": "TWO defects, one symptom. (1) CONTROL PLANE: summary_jobs has no uniqueness beyond the surrogate ticket_id, so identical work is re-ticketed - MEASURED 21,315 PARENT_SUMMARY tickets for 3,025 distinct input_hash values (7.0x average, up to 12x for 533 hashes). (2) CODE: parent_summaries has no supersede semantics - summary_id is content-addressed under ON CONFLICT (summary_id) DO NOTHING (shared/polymath_shared/summary_runtime.py:72-79), so a parent summarised before its entities were ready and again after keeps BOTH rows with no authority marker. MEASURED: 3,025 rows for 1,784 parents; 1,241 parents hold two rows written 4h15m apart with different artifact_hash.",
+      "why_blocking": "A P14 hazard, not pre-existing clutter. The rebuild re-tickets every parent AND changes contract generation, so the same mechanism can leave one parent holding an old-contract row and a new-contract row simultaneously - exactly the half-old/half-new generation P13 must make impossible - and inflates P17 reconciliation counts. Meets the release-blocker bar under 'false knowledge' and 'pipeline failure'.",
       "acceptance": [
-        "ingested through the PUBLIC path only",
-        "every expected result explicitly pinned"
+        "identical (stage, input_hash) cannot produce a second execution",
+        "one authoritative summary row per parent; superseded rows absent or explicitly marked",
+        "a contract-generation change can never leave two generations live for one parent",
+        "gate mutation-tested"
+      ]
+    },
+    {
+      "id": "P7",
+      "name": "ARTIFACT-CONFIDENCE-V2",
+      "status": "TODO",
+      "needs_reingest": false,
+      "goal": "Confidence is a constant (all procedures 1.00, all concepts 0.90). Either derive a defensible deterministic signal or remove it from semantic use. Length must not imply reliability.",
+      "acceptance": [
+        "no candidate gains ranking/admission advantage from a constant"
       ],
-      "step": 6,
-      "blocker": true
+      "blocker": false,
+      "step": 4,
+      "note": "Constant confidence is UNIFORM, so it grants no relative ranking advantage. Not a release blocker. Handle at freeze time as a one-line decision: either drop it from semantic use or stamp it as a declared non-signal."
     },
     {
       "id": "P13",
@@ -263,7 +268,55 @@
       "carry_in": "From P5: 1,241 of 3,025 parent_summaries rows are DUPLICATES - each of those parents has an empty-entities row and a populated row, same contract_version, minutes apart. Reconciliation must decide which is authoritative and whether the empty row is projected.",
       "step": 6,
       "blocker": true,
-      "note": "Includes duplicate parent_summaries: 1,241 parents carry two rows (empty-entity + populated, same contract). VERIFIED NOT HARMFUL pre-rebuild - the superseded row never wins on recency (0 parents have an empty latest row), retrieval_summaries has 0 duplicate summary_ids, and parent_summaries.entities is read on no retrieval path. Mechanism: summary_id is content-addressed and ON CONFLICT (summary_id) DO NOTHING, so a parent summarised before entities were ready keeps both rows. Confirm the rebuild emits ONE row per parent."
+      "note": "PG/Qdrant/Neo4j exact reconciliation on the new generation. Duplicate parent_summaries are NOT a P17 cleanup item - they are a release blocker owned by P23. Verify here only that the rebuild emitted exactly one authoritative row per parent."
+    },
+    {
+      "id": "P22",
+      "name": "RELEASE-DECISION",
+      "status": "TODO",
+      "needs_reingest": false,
+      "blocker": true,
+      "step": 7,
+      "depends_on": [
+        "P14",
+        "P15",
+        "P16",
+        "P17"
+      ],
+      "goal": "Apply the release-blocker rule to everything outstanding. If no P0/P1 remains, FREEZE: stop modifying ingestion and retrieval, and write eval/v5/killchain/FINAL-SEMANTIC-CORPUS-V2-CLOSEOUT.md.",
+      "acceptance": [
+        "no finding meets the release-blocker bar",
+        "deferred findings recorded with reasons",
+        "tree clean"
+      ]
+    },
+    {
+      "id": "P11",
+      "name": "KILLCHAIN-INVARIANCE",
+      "status": "DEFERRED",
+      "needs_reingest": false,
+      "goal": "Close H36 batch invariance, H36 concurrency invariance, H45 same-corpus dilution, H47 order dependence (adapt with near-duplicate fixtures since the duplicate guard blocks identical content).",
+      "acceptance": [
+        "semantic output equivalent across batch sizes, worker counts and ingest order"
+      ],
+      "deferred_reason": "Batch/concurrency/order invariance. No observed symptom; this is open-ended audit work. Re-open ONLY if the P14 rebuild or P15 measurement shows non-determinism.",
+      "blocker": false
+    },
+    {
+      "id": "P12",
+      "name": "SEALED-SENTINEL-V2",
+      "status": "PARTIAL",
+      "needs_reingest": false,
+      "depends_on": [
+        "P2"
+      ],
+      "goal": "Extend the existing 4-doc sentinel to the full 17-case contents list (passive/negated/hedged/quoted facts, resolvable pronoun, 3 procedures, procedure spanning chunks, >10 concepts, nested lists, indented code, table, exact identifiers incl C++/C#/.NET, transcript turns, boilerplate negative, unsupported question). Pin expected outputs.",
+      "acceptance": [
+        "ingested through the PUBLIC path only",
+        "every expected result explicitly pinned"
+      ],
+      "step": 6,
+      "blocker": true
     },
     {
       "id": "P18",
@@ -301,39 +354,6 @@
       ],
       "deferred_reason": "Unknown-unknown sweep. This is precisely the open-ended discovery the owner cancelled. Replaced by the P21 release decision.",
       "blocker": false
-    },
-    {
-      "id": "P21",
-      "name": "RUNTIME-CONFIG-DEFECT",
-      "status": "TODO",
-      "needs_reingest": false,
-      "blocker": true,
-      "step": 3,
-      "goal": "The orchestrator does not load .env (model_config env_file=None), so it falls back to a built-in Postgres password that does not match the deployed one. /retrieve returns 500 on a normally-launched instance. This is a live pipeline failure and a P14 hazard.",
-      "acceptance": [
-        "a normally-launched orchestrator serves /retrieve without manual env export",
-        "misconfiguration fails loud at startup, not as a 500 per request"
-      ]
-    },
-    {
-      "id": "P22",
-      "name": "RELEASE-DECISION",
-      "status": "TODO",
-      "needs_reingest": false,
-      "blocker": true,
-      "step": 7,
-      "depends_on": [
-        "P14",
-        "P15",
-        "P16",
-        "P17"
-      ],
-      "goal": "Apply the release-blocker rule to everything outstanding. If no P0/P1 remains, FREEZE: stop modifying ingestion and retrieval, and write eval/v5/killchain/FINAL-SEMANTIC-CORPUS-V2-CLOSEOUT.md.",
-      "acceptance": [
-        "no finding meets the release-blocker bar",
-        "deferred findings recorded with reasons",
-        "tree clean"
-      ]
     }
   ],
   "release_blocker_rule": "RELEASE-BLOCKER RULE (owner, 2026-08-28). Do NOT create work because a metric is imperfect. A finding blocks release ONLY if it demonstrably causes one of: source loss, false knowledge, unsupported answers, inability to retrieve answer-bearing evidence, corpus leakage, or pipeline failure. Everything else is recorded and deferred. No further open-ended forensic audits are authorised.",
