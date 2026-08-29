@@ -9,14 +9,14 @@ import psycopg
 
 sys.path[:0] = ["shared", "workers", "."]
 DSN = "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath"
-CORPUS = "quality-probe-v1"
+CORPUS = "gliner3-probe-v1"
 random.seed(4)
 
 c = psycopg.connect(DSN, connect_timeout=5)
 doc = c.execute("SELECT doc_id FROM documents WHERE corpus_id=%s",
                 (CORPUS,)).fetchone()[0]
 src = open("/private/tmp/claude-501/-Users-king/"
-           "f32f3c52-f653-4a47-91f8-494c6fb7a472/scratchpad/domain1.md").read()
+           "f32f3c52-f653-4a47-91f8-494c6fb7a472/scratchpad/gliner3.txt").read()
 
 
 def head(t):
@@ -34,7 +34,7 @@ rows = c.execute(
     "chunk_contract_version FROM chunks WHERE doc_id=%s AND tier='child' "
     "ORDER BY chunk_index", (doc,)).fetchall()
 print(f"population: {len(rows)} child chunks")
-for cid, idx, text, a, b, ver in random.sample(rows, 4):
+for cid, idx, text, a, b, ver in random.sample(rows, min(4, len(rows))):
     glued = bool(re.search(r"[^\n]\s#+ ", text))
     frag = not text.rstrip().endswith((".", "!", "?", ":", '"'))
     print(f"\n  chunk[{idx}] {ver}  span={a}:{b}  len={len(text)}")
@@ -52,7 +52,7 @@ rows = c.execute(
 print(f"population: {len(rows)} authoritative parent summaries "
       f"(superseded: "
       f"{c.execute('SELECT count(*) FROM parent_summaries WHERE corpus_id=%s AND superseded_at IS NOT NULL',(CORPUS,)).fetchone()[0]})")
-for pid, summ, ents, cons, sup in random.sample(rows, 4):
+for pid, summ, ents, cons, sup in random.sample(rows, min(4, len(rows))):
     print(f"\n  parent {pid[:20]}  entities={len(ents or [])} concepts={len(cons or [])}")
     print(f"    summary: {w(summ, 170)}")
     print(f"    entities: {(ents or [])[:6]}")
@@ -66,7 +66,7 @@ rows = c.execute(
 tot = c.execute("SELECT count(*) FROM mentions WHERE doc_id=%s",
                 (doc,)).fetchone()[0]
 print(f"population: {len(rows)} durable surfaces from {tot} mentions")
-for surf, ctype, cls in random.sample(rows, 4):
+for surf, ctype, cls in random.sample(rows, min(4, len(rows))):
     hits = src.lower().count(surf.lower())
     print(f"  {surf!r:<40} {ctype:<14} {cls:<14} occurrences_in_source={hits}")
 
@@ -96,7 +96,7 @@ rows = c.execute("SELECT goal, steps_json, confidence FROM procedure_artifacts "
                  "WHERE document_id=%s", (doc,)).fetchall()
 print(f"population: {len(rows)} procedures (v1 would emit exactly 1)")
 import json as _j
-for goal, steps, conf in random.sample(rows, 4):
+for goal, steps, conf in random.sample(rows, min(4, len(rows))):
     st = steps if isinstance(steps, list) else _j.loads(steps or "[]")
     verbatim = all(" ".join(str(s).split()) in " ".join(src.split()) for s in st)
     print(f"\n  goal: {w(goal,110)}")
@@ -109,6 +109,6 @@ head("PHASE 6 — CONCEPTS  (4 random)")
 rows = c.execute("SELECT name, description FROM concept_artifacts "
                  "WHERE document_id=%s", (doc,)).fetchall()
 print(f"population: {len(rows)} concepts (v1 cap would be 10)")
-for name, desc in random.sample(rows, 4):
+for name, desc in random.sample(rows, min(4, len(rows))):
     print(f"  {name!r}")
     print(f"      {w(desc,140)}")
