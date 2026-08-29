@@ -117,3 +117,23 @@ per-call LLM receipts (lane, model, tokens, wall, quarantine); the raw
 ledger carries per-span provider provenance; `scripts/ingest.py status`
 plus SQL is the tracking surface. The plan's dedicated provider-rollup
 tables/views and ETA remain unbuilt (deviation recorded).
+
+## 6. True batch decode (built after the owner's config-fix report)
+
+`sidecars/local_extractor/batched_server.py` wraps mlx_lm `batch_generate`
+with the locked logits processors (report recipe: batch 40, 6.4 GB peak).
+
+Measured:
+- /infer_batch, 4 × ~13K-token prompts in ONE decode batch: 153.6 s vs
+  254 s sequential = **1.7x**; all 4 outputs clean schema JSON.
+- /v1/chat/completions micro-batching (fleet-compatible): 4 concurrent
+  client.extract calls -> 3/4 valid, 205 s = 1.2x — the win shrinks at
+  fleet-realistic local concurrency (2) and adds a failure surface.
+- Single-stream 10/13/15K-token inputs: 33 tok/s, first-attempt parses,
+  self-terminating outputs at max_tokens 3000.
+
+Decision left open: build the client-side /infer_batch path for true
+batch-40 density (est. 3-4x local; ~1 day) vs accept cloud-lane speed for
+>300 KB books and current local speed (300 KB book ≈ 6-7 min). Local
+batching only matters for the two ≤300 KB books and offline bulk runs;
+every >300 KB book already routes to cloud.
