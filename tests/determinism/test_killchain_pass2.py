@@ -194,9 +194,13 @@ def test_line_flattening_suppresses_concept_detection():
     heading glued mid-text. This is a direct contributor to the 5.43%
     concept capture ratio.
 
-    Pinned as the regression proof for the chunking fix: when structure
-    is preserved, this test's `stored` case must start detecting the
-    definition."""
+    STATUS (P2, 2026-08-28): FIXED by CHUNK_CONTRACT_V2. This test now
+    documents the FROZEN v1 contract, which still flattens and must keep
+    doing so — the comparison in
+    tests/determinism/test_chunk_structure_v2.py is meaningless if v1
+    silently stops reproducing the defect. The inversion is proved there,
+    through the real chunker, by
+    `test_v2_inverts_the_concept_suppression`."""
     import sys as _sys
     from pathlib import Path as _P
     _sys.path.insert(0, str(_P(__file__).resolve().parents[2] / "workers"))
@@ -218,8 +222,17 @@ def test_line_flattening_suppresses_concept_detection():
         "flattened form now DETECTS the definition — structure handling "
         "changed; re-measure the concept capture ratio, this defect may "
         "be fixed")
-    # SECOND MECHANISM: the splitter does not merely fail to split, it
-    # DROPS the remainder of the text after the glued heading.
-    assert len(split_sentences(stored_form)) == 1, (
+    # MECHANISM — CORRECTED at P2. An earlier revision of this comment
+    # claimed the splitter "DROPS the remainder" after a glued heading.
+    # That is false and was never measured: 203 characters go in and 203
+    # come out. The splitter FAILS TO SPLIT (its rule needs `[.!?]` then
+    # a capital or digit, and "#" is neither), so the definition stops
+    # BEGINNING a sentence and the concept patterns, which anchor on
+    # sentence start, never fire. Suppressed anchor, not deleted text.
+    parts = split_sentences(stored_form)
+    assert len(parts) == 1, (
         "sentence splitting of glued-heading text changed; the "
-        "content-loss mechanism must be re-measured")
+        "suppression mechanism must be re-measured")
+    assert sum(len(p) for p in parts) == len(stored_form), (
+        "the splitter now loses characters — that is a DIFFERENT and "
+        "more serious defect than the anchor suppression measured here")

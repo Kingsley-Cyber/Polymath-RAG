@@ -41,6 +41,139 @@ class ChunkPlan:
     fanout: int
     # layout-evidence-v1 regions in MATERIALIZED SOURCE offsets
     layout: list[dict] = field(default_factory=list)
+    #: which chunk contract produced these spans (see CHUNK_CONTRACT)
+    contract: str = "chunk-structure-v1"
+
+
+#: CHUNK-STRUCTURE-V2 (2026-08-28). The v1 packer joins every sentence
+#: with a single space, which is why 0 of 7,085 production chunks contain
+#: a newline and 74% carry a markdown heading glued mid-text.
+#:
+#: That is not cosmetic. PROVEN by controlled experiment: the identical
+#: definitional sentence is detected in source form and MISSED in stored
+#: form.
+#:
+#: MECHANISM, measured — and NOT the one the pass-3 report claimed. No
+#: characters are lost: `split_sentences` returns the glued text whole
+#: (203 chars in, 203 chars out). It FAILS TO SPLIT, because its
+#: boundary rule needs `[.!?]` followed by a capital-or-digit and "#"
+#: is neither. The definition therefore stops BEGINNING a sentence, and
+#: the concept patterns anchor on sentence start. Structure loss
+#: destroys extraction by suppressing anchors, not by deleting text.
+#:
+#: V2 does NOT blindly insert "\n". It RECONSTRUCTS the separator that
+#: actually existed, using the source offsets the packer already has:
+#: the gap between sentence i and i+1 is source_text[end_i:start_{i+1}].
+#: A paragraph break stays a paragraph break, a line break stays a line
+#: break, and an ordinary sentence gap stays a space — so code
+#: indentation, list items, table rows and transcript turns survive
+#: because they were newline-separated in the source to begin with.
+SEPARATOR_LEGACY = "legacy_space"
+SEPARATOR_SOURCE = "source_structure"
+
+CHUNK_CONTRACT_V1 = "chunk-structure-v1"
+CHUNK_CONTRACT_V2 = "chunk-structure-v2"
+
+#: A plan states which generation produced it. Chunk ids already differ
+#: (the text differs), but an id alone cannot say WHY it differs, and a
+#: half-old/half-new corpus is the failure mode P13 has to make
+#: impossible. The stamp is what makes the two generations tellable
+#: apart without re-deriving them.
+CHUNK_CONTRACT = {
+    SEPARATOR_LEGACY: CHUNK_CONTRACT_V1,
+    SEPARATOR_SOURCE: CHUNK_CONTRACT_V2,
+}
+
+
+def _reconstruct_separator(source_text: str, prev_end: int,
+                           next_start: int) -> str:
+    """The separator that actually stood between two packed sentences.
+
+    Line COUNT is normalised — one break or a paragraph break, never a
+    run of six blank lines — but the INDENTATION of the following line
+    is reproduced exactly, because that indentation is the structure.
+    `split_sentences` strips every part it returns, so a code line's
+    leading spaces and a sub-list item's offset survive nowhere else:
+    they sit in this gap, and discarding them flattens code blocks and
+    list hierarchy just as surely as the space join did.
+    """
+    if next_start <= prev_end:
+        return " "
+    gap = source_text[prev_end:next_start]
+    if gap.strip():
+        # Non-whitespace in the gap means the sentence offsets did not
+        # line up with the source (a repeated sentence resolving to an
+        # earlier occurrence). Reproduce it verbatim rather than invent
+        # a separator — literal fidelity outranks normalisation here.
+        return gap
+    newlines = gap.count("\n")
+    if not newlines:
+        return " "
+    indent = gap[gap.rindex("\n") + 1:]
+    return ("\n\n" if newlines >= 2 else "\n") + indent
+
+
+def _pack_sentences_v2(
+    sentences: list[str],
+    starts: list[int],
+    target_chars: int,
+    source_text: str,
+    layout: list[tuple[int, int]] | None = None,
+) -> list[ChunkSpec]:
+    """Structure-preserving greedy packing (CHUNK_CONTRACT_V2).
+
+    Same packing DECISIONS as v1 — never splits a sentence, same
+    target-driven flush — so chunk boundaries are comparable. Only the
+    JOIN changes: sentences are rejoined with their real separators.
+    """
+    from polymath_shared.layout_evidence import project_regions
+
+    chunks: list[ChunkSpec] = []
+    buf: list[str] = []
+    seps: list[str] = []
+    buf_len = 0
+    idxs: list[int] = []
+    first_start = 0
+    last_end = 0
+    heads: list[tuple[int, int]] = []
+
+    def _joined() -> str:
+        out = []
+        for i, s in enumerate(buf):
+            if i:
+                out.append(seps[i - 1])
+            out.append(s)
+        return "".join(out)
+
+    def _flush():
+        chunks.append(ChunkSpec(
+            text=_joined(), char_start=first_start, char_end=last_end,
+            sentences=tuple(idxs), layout_headings=tuple(heads),
+        ))
+
+    prev_end = None
+    for i, (sentence, start) in enumerate(zip(sentences, starts)):
+        end = start + len(sentence)
+        if buf and buf_len + 1 + len(sentence) > target_chars:
+            _flush()
+            buf, seps, buf_len, idxs, heads = [], [], 0, [], []
+            first_start = start
+            prev_end = None
+        if buf:
+            seps.append(_reconstruct_separator(source_text, prev_end, start))
+        # chunk-relative offset must count the REAL separators now
+        offset = 0 if not buf else len(_joined()) + len(seps[-1])
+        if layout:
+            heads.extend(project_regions(layout, start, end, offset))
+        buf.append(sentence)
+        buf_len += len(sentence)
+        idxs.append(i)
+        last_end = end
+        prev_end = end
+
+    if buf:
+        _flush()
+    return chunks
 
 
 def _pack_sentences(
@@ -103,15 +236,31 @@ def plan_document(
     *,
     child_target_chars: int = 1200,
     parent_fanout: int = 4,
+    separator_mode: str = SEPARATOR_LEGACY,
 ) -> ChunkPlan:
     """Deterministic chunk plan for one document.
 
     Pure function: no randomness, no model. `doc_id` must already be the
     content-hashed document identity (identity.document_id).
+
+    `separator_mode` selects the chunk contract. SEPARATOR_LEGACY is the
+    frozen v1 behaviour (space join) and stays the DEFAULT so nothing
+    re-identifies by accident; SEPARATOR_SOURCE is CHUNK_CONTRACT_V2,
+    which rejoins sentences with the separator that actually existed in
+    the source. The two generations are never silently equated — chunk
+    ids differ because the text differs, which is the point.
     """
     sentences = split_sentences(text)
+    contract = CHUNK_CONTRACT.get(separator_mode)
+    if contract is None:
+        raise ValueError(
+            f"unknown separator_mode {separator_mode!r}; a chunk generation "
+            f"must name its contract (one of {sorted(CHUNK_CONTRACT)})")
+
     if not sentences:
-        return ChunkPlan(doc_id=doc_id, children=[], parents=[], document_summary="", fanout=parent_fanout)
+        return ChunkPlan(doc_id=doc_id, children=[], parents=[],
+                         document_summary="", fanout=parent_fanout,
+                         contract=contract)
 
     starts: list[int] = []
     cursor = 0
@@ -126,7 +275,11 @@ def plan_document(
     from polymath_shared.layout_evidence import heading_regions
 
     layout = heading_regions(text)
-    children = _pack_sentences(sentences, starts, child_target_chars, layout)
+    if separator_mode == SEPARATOR_SOURCE:
+        children = _pack_sentences_v2(
+            sentences, starts, child_target_chars, text, layout)
+    else:
+        children = _pack_sentences(sentences, starts, child_target_chars, layout)
     parents: list[ChunkSpec] = []
     for i in range(0, len(children), parent_fanout):
         group = children[i : i + parent_fanout]
@@ -146,6 +299,7 @@ def plan_document(
         fanout=parent_fanout,
         layout=[{"kind": "heading", "char_start": a, "char_end": b}
                 for a, b in layout],
+        contract=contract,
     )
 
 
