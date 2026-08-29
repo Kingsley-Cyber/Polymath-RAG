@@ -187,3 +187,71 @@ Standing constraints, unchanged:
   sorted set of test ids, not as a count.
 
 After P22, the RAG architecture is done unless real usage exposes a regression.
+
+---
+
+## Release-engineering doctrine (owner, 2026-08-28)
+
+Four things matter before the pipeline is finished. Everything else is
+subordinate.
+
+| # | Must resolve | Why | Approach |
+|---|---|---|---|
+| 1 | **P6** FACT under-recall | may be silently destroying valid knowledge | trace to the **first rejection**; fix only that mechanism, and only if the fact should have survived |
+| 2 | **P23** summary idempotency | can mix old/new generations during the rebuild and leave summary authority ambiguous | fix ticket identity + persistence uniqueness + deterministic supersede semantics **before** reprocessing |
+| 3 | **P21** orchestrator config | correct code that boots with wrong credentials and 500s is not production-ready | one explicit config contract; fail loudly instead of falling back |
+| 4 | **P13/P14 + qualification** | V2 contracts exist in code but the live corpus is old-generation | freeze, rebuild once from `source_hash`, reconcile, then prove FAST/HYBRID/GRAPH → evidence → citation → answer |
+
+### Where to look for problems: boundaries, not random code
+
+```
+SOURCE →A→ CHUNK →B→ SEMANTIC OBSERVATION →C→ CANDIDATE →D→ ADMISSION
+→E→ DURABLE KNOWLEDGE →F→ SUMMARY/REPRESENTATION →G→ QDRANT/NEO4J
+→H→ RETRIEVAL →I→ RERANK →J→ EVIDENCE BUNDLE →K→ ANSWER/CITATION
+```
+
+At every boundary, exactly four questions:
+
+1. Can valid information disappear here?
+2. Can invalid information be created here?
+3. Can the same logical thing be produced twice?
+4. Can the component fail while appearing healthy?
+
+That is the whole search strategy. No further hypothesis brainstorms.
+
+### What is and is not a defect
+
+**Is:** wrong knowledge · lost valid knowledge · unreachable answer-bearing
+evidence · cross-corpus leakage · a pipeline that silently stops · a component
+reporting healthy while dead · duplicate data **when authority or idempotency is
+ambiguous**.
+
+**Is not:** a weird metric · a low metric · 13% exact-chunk recall when another
+authoritative chunk answers correctly · a cap that does not affect reachability ·
+old-generation data (that is not evidence new-generation code failed).
+
+### The rule that prevents symptom-chasing
+
+> **Never fix where the symptom appears until you identify the first bad
+> boundary upstream.**
+
+```
+bad answer        ≠  change the prompt
+missing chunk     ≠  raise top_k
+missing concept   ≠  raise max_concepts
+duplicate summary ≠  SELECT DISTINCT  /  ORDER BY created_at DESC LIMIT 1
+missing fact      ≠  lower the admission threshold
+```
+
+Trace backward to the first incorrect transformation, repair *that*.
+
+### Finish line
+
+P6 understood and repaired-or-closed → P23 idempotent and generation-aware →
+config deterministic → freeze → **one** rebuild → fresh source through chunks,
+facts/procedures/concepts, summaries, Qdrant/Neo4j, FAST/HYBRID/GRAPH, evidence,
+citations, correct answer.
+
+Passing with no demonstrated source loss, manufactured knowledge, corpus leakage
+or answer-breaking retrieval failure → **stop**. Reopen only when real usage or a
+targeted regression demonstrates an actual failure.
