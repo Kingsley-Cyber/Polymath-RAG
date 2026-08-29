@@ -172,3 +172,54 @@ def test_every_chunk_locator_resolves_within_its_corpus():
     assert dupes == 0, (
         f"{dupes} chunk ids resolve to MORE THAN ONE corpus — a citation "
         "could attribute evidence to the wrong corpus")
+
+
+# =============================== PASS 3 / P1: STRUCTURE LOSS SUPPRESSES KNOWLEDGE
+def test_line_flattening_suppresses_concept_detection():
+    """P1, PROVEN BY CONTROLLED EXPERIMENT (killchain pass 3).
+
+    Line-flattening is not merely cosmetic — it CAUSALLY DESTROYS
+    semantic extraction. The identical definitional sentence is detected
+    in the source form and missed in the stored form, because the
+    chunker glues the preceding sentence and the markdown heading onto
+    it, and the definition patterns anchor on the concept name:
+
+      source form : "A vulnerability scanner is a tool that inspects..."
+                    -> 1 concept opportunity
+      stored form : "...exploitation features. ## Definition A
+                     vulnerability scanner is a tool that inspects..."
+                    -> 0 concept opportunities
+
+    MEASURED BLAST RADIUS: 5,246 of 7,085 live chunks (74.0%) contain a
+    heading glued mid-text. This is a direct contributor to the 5.43%
+    concept capture ratio.
+
+    Pinned as the regression proof for the chunking fix: when structure
+    is preserved, this test's `stored` case must start detecting the
+    definition."""
+    import sys as _sys
+    from pathlib import Path as _P
+    _sys.path.insert(0, str(_P(__file__).resolve().parents[2] / "workers"))
+    from polymath_shared.knowledge_objects import concept as C
+    from workers.summarizer import split_sentences
+
+    definition = ("A vulnerability scanner is a tool that inspects hosts "
+                  "for known weaknesses and reports them without exploiting "
+                  "them.")
+    source_form = definition
+    # the EXACT stored form measured in the sentinel corpus
+    stored_form = ("Some analysts believe Nmap may eventually include "
+                   "exploitation features. ## Definition " + definition)
+
+    assert C.count_opportunities(split_sentences(source_form)) >= 1, (
+        "the definition pattern no longer matches its own canonical "
+        "form — the concept compiler contract changed")
+    assert C.count_opportunities(split_sentences(stored_form)) == 0, (
+        "flattened form now DETECTS the definition — structure handling "
+        "changed; re-measure the concept capture ratio, this defect may "
+        "be fixed")
+    # SECOND MECHANISM: the splitter does not merely fail to split, it
+    # DROPS the remainder of the text after the glued heading.
+    assert len(split_sentences(stored_form)) == 1, (
+        "sentence splitting of glued-heading text changed; the "
+        "content-loss mechanism must be re-measured")
