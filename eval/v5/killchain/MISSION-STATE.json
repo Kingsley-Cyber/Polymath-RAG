@@ -55,7 +55,7 @@
     {
       "id": "P4",
       "name": "CONCEPT-INVENTORY-V2",
-      "status": "TODO",
+      "status": "DONE",
       "needs_reingest": true,
       "depends_on": [
         "P2"
@@ -65,7 +65,9 @@
         "concept count no longer exactly 10/document by construction",
         "effect of P2 measured SEPARATELY from effect of P4",
         "no unlimited noun-phrase junk"
-      ]
+      ],
+      "commit": "413e4f2",
+      "result": "Isolated the two effects on all 18 docs from the retained spool: cap removal alone 121->975 (x8.1); structure alone 121->122 (x1.0) because the cap already pins every doc at 10; combined 121->1236. P2's real +261 was masked by the ceiling. Lifting the cap alone would admit 32% junk (fragments, bare generics, participles) - the cap was an accidental quality filter - so admission replaces it, reusing entity_admission's GENERIC_HEAD/WEAK_MODIFIERS/DEICTIC_MODIFIERS. 1236->844 admitted; 0/18 docs at exactly 10. summary_rank keeps the top-N as a slice, not a storage decision. 38-test gate, 8/8 mutations caught, suite 83 = baseline."
     },
     {
       "id": "P5",
@@ -184,7 +186,8 @@
         "all stages complete",
         "no unexplained zero in the monitor list",
         "query_ready"
-      ]
+      ],
+      "notes": "SPOOL KEY (measured at P4): retained source blobs are addressed by documents.source_hash, NOT content_hash. content_hash is the MATERIALIZED markdown and has no blob on disk \u2014 looking it up returns nothing and makes the corpus look unrecoverable. All 12 cysa-study-v1 sources are present under source_hash (spool_dir()/h[:2]/h, 26 blobs, 9.6MB)."
     },
     {
       "id": "P15",
