@@ -33,3 +33,6 @@ eval/kimi_realignment_v1/dev_matrix_results/
 # The compiled tables under resources/compiled/ ARE committed (runtime).
 resources/vendor/
 .venv-gliner2/
+
+# graphify (generated; rebuild with `graphify update .` in ~12s)
+graphify-out/
