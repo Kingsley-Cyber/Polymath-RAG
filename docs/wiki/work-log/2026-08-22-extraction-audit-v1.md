@@ -51,6 +51,10 @@ extract stage end to end.
   `SELECT payload->'extraction_audit' FROM artifacts WHERE run_id=… AND stage='extract'`.
 - Full suite green post-change (855 passed pre-change baseline).
 
+## Rejected claims
+
+(Historical entry — recorded in the entry body above.)
+
 ## Open contract gaps
 
 - intake/projection stages have their own loops; same audit pattern

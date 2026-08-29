@@ -1,3 +1,11 @@
+---
+change_id: VOCABULARY-SEMANTIC-BRIDGE
+owner: governance
+date: 2026-08-28
+status: implemented
+architecture_impact: none (repair/measurement log)
+---
+
 # 2026-08-28 — Vocabulary semantic bridge: contract repaired, semantics rejected
 
 Full report: `eval/v5/VOCABULARY-SEMANTIC-BRIDGE-FINAL.md`.
@@ -63,3 +71,24 @@ passed / 83 failed, failure set byte-identical to baseline.
 
 Child-boilerplate ranking defect recorded as OBSERVED and left in scope
 for separate work.
+
+
+## Contract
+
+Qualify semantic family merging for the vocabulary layer without loosening admission.
+
+## Changes
+
+Vocabulary semantic bridge evaluation; concept_families kept EMPTY in production after failed qualification.
+
+## Proof
+
+6/7 hard negatives wrong — merge unsafe; measured and reported (VOCABULARY-SEMANTIC-BRIDGE-FINAL.md).
+
+## Rejected claims
+
+No production merge enabled; co-occurrence merging rejected by measurement.
+
+## Open contract gaps
+
+A qualified semantic merge needs a different signal than co-occurrence before re-proposal.

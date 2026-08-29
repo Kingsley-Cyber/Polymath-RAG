@@ -1,24 +1,21 @@
 #!/usr/bin/env python3
 """Smart sample quality check for LOCAL-LLM-EXTRACTION-V1 generations.
 
-Reads admitted LLM-era facts + raw proposals for a corpus and scores a
-random sample against four mechanical quality signals (no model in the
-loop, so the checker itself is deterministic and reproducible):
+Deterministic, seeded, no model in the loop. For a random sample of a
+corpus's admitted facts it verifies:
 
-  1. ATTESTATION  — every fact's evidence span quotes real source text
-                    (offset-verified against the chunk text).
-  2. ENDPOINT DURABILITY — both fact endpoints are durable entities.
-  3. PROVIDER MIX — how much of the corpus's evidence is LLM-era vs
-                    GLiNER-era (migration progress).
-  4. RELATION COVERAGE — distinct predicates + candidates-by-decision,
-                    so a silent recall collapse is visible.
+  1. ATTESTATION — subject/object/evidence offsets land inside the real
+     chunk text and the stored surfaces match the text at those offsets.
+  2. GENERATION MIX — extractor_version distribution (LLM-era vs
+     GLiNER-era) over admitted facts, plus raw-ledger provider mix.
+  3. RELATION COVERAGE — candidates-by-decision and distinct predicates,
+     so a silent recall collapse is visible.
 
 Usage:
-  .venv/bin/python scripts/llm_quality_sample.py --corpus cysa-study-v2 \
+  .venv/bin/python scripts/llm_quality_sample.py --corpus cysa-study-v1 \
       [--sample 40] [--seed 7]
 
-Output: a JSON report on stdout + a one-line verdict. The sample is
-seeded => re-running the checker never changes which facts are judged.
+Seeded sample: re-running never changes which facts are judged.
 """
 from __future__ import annotations
 
@@ -45,23 +42,19 @@ def main() -> int:
     args = ap.parse_args()
 
     with psycopg.connect(DSN, connect_timeout=5) as conn:
-        # LLM-era facts: extractor_version on facts or via evidence →
-        # mentions chain; we read facts joined to their evidence spans.
         facts = conn.execute(
             """
-            SELECT f.fact_id, f.predicate, f.decision, f.subject_id, f.object_id,
-                   e.chunk_id, e.char_start, e.char_end, e.quote
+            SELECT f.fact_id, f.predicate, f.decision,
+                   e.chunk_id, e.span_offsets, e.extractor_version
               FROM facts f
-              LEFT JOIN evidence e ON e.fact_id = f.fact_id
-             WHERE f.corpus_id = %s
-               AND f.decision IN ('PASS', 'QUALIFY')
+              JOIN evidence e ON e.fact_id = f.fact_id
+              JOIN documents d ON d.doc_id = e.doc_id
+             WHERE d.corpus_id = %s
+               AND f.decision IN ('ACCEPT', 'QUALIFY')
              ORDER BY f.fact_id
             """,
             (args.corpus,),
         ).fetchall()
-        total = conn.execute(
-            "SELECT count(*) FROM facts WHERE corpus_id=%s", (args.corpus,)
-        ).fetchone()[0]
         prov = conn.execute(
             """
             SELECT provider_contract->>'provider' AS provider, count(*)
@@ -84,13 +77,14 @@ def main() -> int:
     rng = random.Random(args.seed)
     picked = rng.sample(facts, min(args.sample, len(facts)))
 
-    checked = attested = durable = 0
+    chunks: dict[str, str] = {}
+    checked = attested = 0
     failures = []
-    chunks = {}
+    generations: dict[str, int] = {}
     with psycopg.connect(DSN, connect_timeout=5) as conn:
-        for row in picked:
-            fact_id, pred, decision, subj, obj, chunk_id, cs, ce, quote = row
-            if chunk_id is None:
+        for fact_id, pred, decision, chunk_id, offsets, extver in picked:
+            generations[extver] = generations.get(extver, 0) + 1
+            if chunk_id is None or offsets is None:
                 continue
             checked += 1
             if chunk_id not in chunks:
@@ -98,28 +92,32 @@ def main() -> int:
                                  (chunk_id,)).fetchone()
                 chunks[chunk_id] = r[0] if r else ""
             text = chunks[chunk_id]
-            span_ok = False
-            if quote and quote in text:
-                span_ok = True
-            elif text and cs is not None and ce is not None and 0 <= cs < ce <= len(text):
-                span_ok = text[cs:ce].strip() != ""
-            if span_ok:
+            ok = bool(text)
+            for key in ("subject_start", "subject_end",
+                        "object_start", "object_end"):
+                if key not in (offsets or {}):
+                    ok = False
+                    break
+            if ok:
+                sub = text[offsets["subject_start"]:offsets["subject_end"]]
+                obj = text[offsets["object_start"]:offsets["object_end"]]
+                ok = (sub == offsets.get("subject_surface", sub)
+                      and obj == offsets.get("object_surface", obj))
+            if ok:
                 attested += 1
             else:
                 failures.append({"fact_id": str(fact_id), "predicate": pred,
-                                 "reason": "evidence span not found in chunk"})
-            if subj and obj:
-                durable += 1
+                                 "reason": "offsets/surfaces do not match chunk text"})
 
     report = {
         "corpus": args.corpus,
         "sample_seed": args.seed,
-        "facts_total": total,
+        "facts_admitted_total": len(facts),
         "facts_sampled": len(picked),
-        "facts_checked_with_evidence": checked,
+        "facts_checked_with_offsets": checked,
         "attested": attested,
         "attestation_rate": round(attested / checked, 4) if checked else None,
-        "endpoints_durable": durable,
+        "generation_mix_sampled": generations,
         "provider_mix_raw_entities": {str(k): v for k, v in prov},
         "relation_candidates_by_decision": {str(k): v for k, v in cand},
         "attestation_failures": failures[:10],

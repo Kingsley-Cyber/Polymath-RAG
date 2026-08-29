@@ -46,3 +46,10 @@ attached to the emitted fact as structured qualifiers.
 Event NODE minting (n-ary evaluation_event_001 with participant edges)
 requires an identity-layer decision — which authority mints Event
 identity. Deferred to the owner with this slice as the evidence base.
+## Rejected claims
+
+(Historical entry — recorded in the entry body above.)
+
+## Open contract gaps
+
+(Historical entry — recorded in the entry body above.)

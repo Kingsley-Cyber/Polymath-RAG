@@ -50,3 +50,23 @@ phase-attributed before another throttle was proposed.
 - RECEIPT-BUDGET: reverted; may return ONLY as a configurable defensive
   cap AFTER incremental census is proven, with DEFERRED distinct from
   FAILED/MISSING and forward-progress guarantees tested.
+
+## Contract
+
+(Historical entry — the contract it worked under is stated in the entry body above.)
+
+## Changes
+
+(Historical entry — the changes are recorded in the entry body above.)
+
+## Proof
+
+(Historical entry — the proof and measured evidence are in the entry body above.)
+
+## Rejected claims
+
+(Historical entry — none recorded beyond the entry body above.)
+
+## Open contract gaps
+
+(Historical entry — see the entry body and the CURRENT_STATE chain above.)

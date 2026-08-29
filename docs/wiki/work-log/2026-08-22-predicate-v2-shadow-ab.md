@@ -49,6 +49,10 @@ at F3 on a pronoun subject, exactly as designed. The bench's T2 graph
 is empty under both — consistent with the Phase 0 measurement that the
 gates are precise and recall is the open cost.
 
+## Changes
+
+(Historical entry — recorded in the entry body above.)
+
 ## Proof
 
 - Full suite green after fix: 855 passed, 68 skipped.

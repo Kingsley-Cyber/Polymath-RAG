@@ -41,3 +41,10 @@ their outputs contract-shaped. No worker logic, no model calls.
 
 S2 parent-summary worker; S3 document; S4 corpus; S5 vocabulary
 admission; S6 router integration.
+## Rejected claims
+
+(Historical entry — recorded in the entry body above.)
+
+## Open contract gaps
+
+(Historical entry — recorded in the entry body above.)

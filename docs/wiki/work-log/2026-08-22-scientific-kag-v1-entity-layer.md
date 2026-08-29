@@ -57,3 +57,10 @@ non-durable) is the target, measured on the Tree-of-Thoughts document.
 - Phases 4–6 (scientific predicates pack v1.4.0, control frames,
   temporal model), validation suite, and the measured re-run delta on
   the ToT document land as following slices.
+## Rejected claims
+
+(Historical entry — recorded in the entry body above.)
+
+## Open contract gaps
+
+(Historical entry — recorded in the entry body above.)

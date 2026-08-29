@@ -35,6 +35,10 @@ Implementation lives in shared/polymath_shared/discourse_bridge.py
 kimi_v2 argument binder only — no extract_worker spine change, no
 admission change, no gate change.
 
+## Changes
+
+(Historical entry — recorded in the entry body above.)
+
 ## Proof
 
 - Owner examples green: "Tree of Thoughts is a reasoning framework." /
@@ -47,3 +51,11 @@ admission change, no gate change.
 
 Phase 6 event reification; acceptance harness; 4-doc validation;
 production ingestion staging.
+
+## Rejected claims
+
+(Historical entry — recorded in the entry body above.)
+
+## Open contract gaps
+
+(Historical entry — recorded in the entry body above.)

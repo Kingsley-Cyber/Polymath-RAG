@@ -1,3 +1,11 @@
+---
+change_id: RECONCILE-LIVELOCK-FIX
+owner: governance
+date: 2026-08-27
+status: implemented
+architecture_impact: none (repair/measurement log)
+---
+
 # 2026-08-27 — Reconcile livelock diagnosed and fixed (cysa-study-v1)
 
 Symptom: 12 runs of cysa-study-v1 stuck `reconciling` for 5.5 h;
@@ -242,3 +250,24 @@ Open items for the owner:
 - 83 pre-existing test failures on this branch (5 more collect-error
   files need live sidecars); untouched by this work.
 - Changes are uncommitted on `architecture/evidence-first-v5`.
+
+
+## Contract
+
+Diagnose and fix the cysa-study-v1 reconciling livelock without changing extraction semantics.
+
+## Changes
+
+RECEIPT-GAP-REOPENS-TICKET-V1 corpus-scoping; lease-keeper wedge detection; outbox re-arm idempotency; launchd boot recovery documented (TCC-blocked).
+
+## Proof
+
+12 stuck runs converged; census promotion resumed; causal chain measured live in STALL_DIAGNOSIS_2026-08-27.md.
+
+## Rejected claims
+
+No semantic-layer change was made or claimed; the freeze was respected.
+
+## Open contract gaps
+
+Boot recovery remains launchd-hostile under ~/Documents (TCC); revisit with a detached supervisor.

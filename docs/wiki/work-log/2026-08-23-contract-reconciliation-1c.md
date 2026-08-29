@@ -251,3 +251,6 @@ negatives still produce zero frames.
 
 Rejected: loosening distance limits (used inert-gap rule instead),
 pronoun coreference beyond one sentence, any admission weakening.
+## Open contract gaps
+
+(Historical entry — recorded in the entry body above.)
