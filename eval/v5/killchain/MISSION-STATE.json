@@ -101,7 +101,7 @@
     {
       "id": "P8",
       "name": "EVIDENCE-TRUNCATION",
-      "status": "TODO",
+      "status": "DONE",
       "needs_reingest": false,
       "goal": "source_sentence[:300]. Determine display-snippet vs evidence authority; ensure full evidence hydrates from the authoritative chunk.",
       "acceptance": [
@@ -109,7 +109,9 @@
       ],
       "blocker": true,
       "step": 3,
-      "note": "Bounded check, not a redesign: prove answer-bearing content past char 300 still hydrates from the authoritative chunk. If it hydrates, close. Touches 'inability to retrieve answer-bearing evidence'."
+      "note": "Bounded check, not a redesign: prove answer-bearing content past char 300 still hydrates from the authoritative chunk. If it hydrates, close. Touches 'inability to retrieve answer-bearing evidence'.",
+      "commit": "b22efd7",
+      "result": "CLOSED NO CODE CHANGE. source_sentence is written but read by no answer path; retrieval selects supporting_chunks and Qdrant embeds name:desc. Live: 9/121 concepts at the 300 cap, 0 at the 400 desc cap, 0 without supporting_chunks, and every sampled truncated concept hydrates full text from its authoritative chunk. Snippet is display; chunk is authority. 6-test gate, 2/2 mutations caught after two real gate weaknesses were fixed. Recorded for P16: supporting_chunks is document-wide so citation is imprecise (not evidence loss)."
     },
     {
       "id": "P9",
