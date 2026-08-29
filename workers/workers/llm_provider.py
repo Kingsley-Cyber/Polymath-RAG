@@ -124,19 +124,26 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
     """
     s = get_settings().worker
     client = make_client(lane)
-    concurrency = (s.llm_concurrency_local if lane == "local"
-                   else s.llm_concurrency_cloud)
-    batches = [neighborhoods[i:i + NEIGHBORHOODS_PER_CALL]
-               for i in range(0, len(neighborhoods), NEIGHBORHOODS_PER_CALL)]
+    if lane == "local":
+        # batched transport: one neighborhood per prompt, decoded as ONE
+        # batch (server caps at MAX_BATCH=40); sequential slices beyond that
+        results = client.extract_batched(
+            [(n.nid, n.chunks) for n in neighborhoods],
+            source_bytes=source_bytes, threshold_bytes=s.cloud_min_bytes)
+        results = results if isinstance(results, list) else [results]
+    else:
+        concurrency = s.llm_concurrency_cloud
+        batches = [neighborhoods[i:i + NEIGHBORHOODS_PER_CALL]
+                   for i in range(0, len(neighborhoods), NEIGHBORHOODS_PER_CALL)]
 
-    def one(batch: list[Neighborhood]) -> LLMCallResult:
-        return client.extract(
-            [(n.nid, n.chunks) for n in batch],
-            source_bytes=source_bytes,
-            threshold_bytes=s.cloud_min_bytes)
+        def one(batch: list[Neighborhood]) -> LLMCallResult:
+            return client.extract(
+                [(n.nid, n.chunks) for n in batch],
+                source_bytes=source_bytes,
+                threshold_bytes=s.cloud_min_bytes)
 
-    with ThreadPoolExecutor(max_workers=max(1, concurrency)) as pool:
-        results = list(pool.map(one, batches))
+        with ThreadPoolExecutor(max_workers=max(1, concurrency)) as pool:
+            results = list(pool.map(one, batches))
 
     merged = NormalizedExtraction()
     views_by_nid = {n.nid: [ChunkView(cid, text) for cid, text in n.chunks]

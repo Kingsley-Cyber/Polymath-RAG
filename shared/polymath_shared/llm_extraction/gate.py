@@ -156,37 +156,115 @@ def _salvage_objects(text: str) -> list[dict]:
     return out
 
 
+def _loads_lenient(text: str) -> dict | None:
+    """json.loads with strict=False (allows literal control characters —
+    measured local-lane failure: raw newlines inside quote strings)."""
+    try:
+        v = json.loads(text, strict=False)
+        return v if isinstance(v, dict) else None
+    except Exception:
+        return None
+
+
+def _clean_entity(e: object) -> dict | None:
+    if not isinstance(e, dict):
+        return None
+    surface = e.get("surface") or e.get("name") or e.get("entity")
+    if not isinstance(surface, str) or not surface.strip():
+        return None
+    t = e.get("type") or e.get("entity_type") or "Concept"
+    quote = e.get("quote") or e.get("evidence") or surface
+    if not isinstance(quote, str) or not quote.strip():
+        return None
+    return {"surface": surface.strip()[:200], "type": str(t).strip()[:80],
+            "quote": quote.strip()[:2000]}
+
+
+def _clean_relation(r: object) -> dict | None:
+    if not isinstance(r, dict):
+        return None
+    out = {}
+    for k in ("subject", "predicate", "object", "quote"):
+        v = r.get(k)
+        if not isinstance(v, str) or not v.strip():
+            return None
+        out[k] = v.strip()
+    limit = {"subject": 200, "predicate": 120, "object": 200, "quote": 2000}
+    return {k: out[k][:limit[k]] for k in out}
+
+
+def _enforce_budgets(parsed: dict) -> dict:
+    """Per-item shape tolerance + output-budget trimming.
+
+    A malformed entry (entity-shaped relation, missing field) drops THAT
+    entry — one bad relation must not poison a whole packet of good,
+    attested proposals. Caps are budgets: over-long lists trim to the
+    contract limits instead of rejecting the extraction.
+    """
+    items = parsed.get("items")
+    if isinstance(items, list):
+        parsed["items"] = [it for it in items[:8] if isinstance(it, dict)]
+        for item in parsed["items"]:
+            ents = item.get("entities")
+            if isinstance(ents, list):
+                cleaned = [c for c in (_clean_entity(e) for e in ents) if c]
+                item["entities"] = cleaned[:80]
+            rels = item.get("relations")
+            if isinstance(rels, list):
+                cleaned = [c for c in (_clean_relation(r) for r in rels) if c]
+                item["relations"] = cleaned[:60]
+            digest = item.get("digest")
+            if isinstance(digest, dict):
+                uses = digest.get("retrieval_uses")
+                if isinstance(uses, list):
+                    digest["retrieval_uses"] = [
+                        u for u in uses if isinstance(u, str)][:3]
+                for k in ("central_claim", "main_mechanism"):
+                    v = digest.get(k)
+                    if isinstance(v, str) and len(v) > 500:
+                        digest[k] = v[:500]
+            elif digest is not None:
+                item["digest"] = {}
+    return parsed
+
+
 def sanitize(raw: str, expected_neighborhood_ids: set[str]) -> tuple[SanitizeResult,
                                                                      ExtractionPacket | None]:
-    """SANITIZE stage: thinking strip + JSON repair (truncation repair,
-    then per-object salvage) + packet parse. Returns a durable disposition
-    either way."""
+    """SANITIZE stage: thinking strip + budget enforcement + JSON repair
+    (lenient parse, truncation repair, per-object salvage) + packet parse.
+    Returns a durable disposition either way."""
     text = strip_thinking(raw)
     packet: ExtractionPacket | None = None
     salvaged = False
-    try:
-        packet = ExtractionPacket.model_validate_json(text)
-    except Exception:
+    loose = _loads_lenient(text)
+    if loose is not None:
+        try:
+            packet = ExtractionPacket.model_validate(_enforce_budgets(loose))
+        except Exception:
+            packet = None
+    if packet is None:
         repaired = _repair_truncated(text)
         if repaired is not None:
-            try:
-                packet = ExtractionPacket.model_validate_json(repaired)
-                salvaged = True
-            except Exception:
-                packet = None
-        if packet is None:
-            items: list[dict] = []
-            for obj in _salvage_objects(text):
-                if "neighborhood_id" in obj:
-                    items.append(obj)
-            if items:
+            loose = _loads_lenient(repaired)
+            if loose is not None:
                 try:
-                    packet = ExtractionPacket.model_validate({
-                        "contract": CONTRACT_ID, "profile": "volume",
-                        "items": items})
+                    packet = ExtractionPacket.model_validate(_enforce_budgets(loose))
                     salvaged = True
                 except Exception:
                     packet = None
+    if packet is None:
+        items: list[dict] = []
+        for obj in _salvage_objects(text):
+            if "neighborhood_id" in obj:
+                items.append(obj)
+        if items:
+            try:
+                packet = ExtractionPacket.model_validate({
+                    "contract": CONTRACT_ID, "profile": "volume",
+                    "items": _enforce_budgets({"items": items})["items"]})
+                salvaged = True
+            except Exception:
+                packet = None
     if packet is None:
         return (SanitizeResult(ok=False, error_class="SANITIZE_UNPARSEABLE",
                                salvaged=False, raw_chars=len(raw),

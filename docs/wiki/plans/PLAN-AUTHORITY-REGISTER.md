@@ -80,7 +80,7 @@ architecture_impact: authoritative detail extraction of the migration plan
 | 4.1.2 | parent_neighborhood = children concatenated with [chunk_id] markers, never parent row | DONE |
 | 4.1.3 | embedding_text [Parent][Header] content | DONE (untouched intake) |
 | 4.1.4 | old rows is_superseded on swap; CHUNKER flag | SUPERSEDED (no chunker swap) |
-| 4.1.5 | <15w stubs dropped; ChunkKind structural skip | MISSING (neighborhood builder) |
+| 4.1.5 | <15w stubs dropped; ChunkKind structural skip | DONE (LLM_MIN_CHUNK_WORDS=15 in neighborhood builder; ChunkKind stays superseded by intake) |
 | 4.1.6 | tables atomic; split tables repeat header | SUPERSEDED (intake chunker authority) |
 
 ## §4.2 model runtime
@@ -108,7 +108,7 @@ architecture_impact: authoritative detail extraction of the migration plan
 | 4.3.5 | digest central_claim/main_mechanism/retrieval_uses hard-capped | DONE |
 | 4.3.6 | digest consumed by summary workers (no second pass) | MISSING (digests in artifacts only) |
 | 4.3.7 | open-vocabulary types; unknown falls through, raw preserved | DONE |
-| 4.3.8 | per-item output budget scaling with input (15k-in→3k-out) | **MISSING** (flat 2500) |
+| 4.3.8 | per-item output budget scaling with input (15k-in→3k-out) | DONE (c7e98b9: output_budget_for anchors 400@800 → ~3k@15k) |
 | 4.3.9 | self-flag dense/low-confidence per item → quality tier | MISSING (no dense flag; whole-doc lane instead) |
 | 4.3.10 | profiles volume/quality (volume lean: no L/ps; quality full) | PARTIAL (profile field exists; single profile used) |
 | 4.3.11 | tier-2 supersedes tier-1 on same keys | N/A until two-tier decision |
@@ -154,12 +154,12 @@ architecture_impact: authoritative detail extraction of the migration plan
 
 | # | Detail | Status |
 |---|---|---|
-| 4.9.1 | uniform-size packing (straggler control) | **MISSING** |
+| 4.9.1 | uniform-size packing (straggler control) | DONE (c7e98b9: balanced k-bucket packing per parent + <15w stub skip) |
 | 4.9.2 | one shared system prompt (prefix reuse) | DONE (single system prompt; batched server reuses it per request) |
 | 4.9.3 | per-file resume (skip already-extracted) | PARTIAL (ticket resume; neighborhood-level skip MISSING) |
 | 4.9.4 | input-size curve spike 850/1400/2000 @ batch 40 + 15k @ 16/8/4; LOCK volume size at max passing ~28GB gate | **MISSING** (only 15k@4 and 8k@4 batches measured) |
 | 4.9.5 | BGE-M3 stand-down during window | N/A (no large window; revisit if batch-40 dense adopted) |
-| 4.9.6 | true batch_generate runtime (owner report: batch 40, 6.4GB, 241 tok/s-class) | PARTIAL (batched_server built; client wiring MISSING; 1.7x measured at batch 4 × 13K-in) |
+| 4.9.6 | true batch_generate runtime (owner report: batch 40, 6.4GB, 241 tok/s-class) | DONE (batched_server + client extract_batched wired; 6×7.5K-token neighborhoods in ONE batch = 151s, 6/6 schema-valid after per-item shape tolerance; curve points: 15k@4=1.7x, 7.5K×6@1=151s) |
 
 ## §5 retrieval quality control
 | 5.1 | eval_queries.jsonl (20 queries, seeded from manual_retrieval_needed) | MISSING |

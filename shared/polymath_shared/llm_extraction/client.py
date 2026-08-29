@@ -217,6 +217,59 @@ class LLMExtractionClient:
         return REGISTRY.lane(f"llm_{self.lane}",
                              "default", _lane_limit(self.lane))
 
+    def extract_batched(self, neighborhoods: list[tuple[str, list[tuple[str, str]]]],
+                        *, source_bytes: int, threshold_bytes: int,
+                        max_tokens: int = 2500) -> list[LLMCallResult]:
+        """LOCAL batched transport: one neighborhood per prompt, decoded in
+        a single batch_generate call (true batch parallelism, plan §4.2/§4.9).
+        Falls back to per-neighborhood sequential calls when the endpoint
+        does not advertise /infer_batch (older runtime)."""
+        decision: LaneDecision | None = None
+        if self.lane == "cloud":
+            decision = require_cloud_eligible(source_bytes, threshold_bytes)
+        limiter = self._lane_limiter()
+        expected = {nid for nid, _ in neighborhoods}
+        prompt_items = []
+        for nid, chunks in neighborhoods:
+            user_prompt = build_user_prompt([(nid, chunks)])
+            prompt_items.append((nid, user_prompt,
+                                 output_budget_for(estimate_input_tokens(user_prompt))))
+        if not prompt_items:
+            return []
+        limiter.acquire(est_tokens=sum(len(u) for _, u, _ in prompt_items) / 4.0)
+        t0 = time.perf_counter()
+        try:
+            try:
+                resp = httpx.post(
+                    f"{self.base_url}/infer_batch",
+                    json={"prompts": [{"system": SYSTEM_PROMPT, "user": u} for _, u, _ in prompt_items],
+                          "max_tokens": max(mt for _, _, mt in prompt_items)},
+                    timeout=max(self.timeout_s, 60.0 * len(prompt_items)))
+                resp.raise_for_status()
+                body = resp.json()
+            except (httpx.HTTPError, json.JSONDecodeError) as exc:
+                limiter.record_failure()
+                raise ExtractionTransportError(
+                    f"{self.lane} batched transport failed: "
+                    f"{type(exc).__name__}: {exc}") from exc
+            limiter.record_success()
+        finally:
+            limiter.release()
+        contents = [x.get("content", "") for x in body.get("results", [])]
+        if len(contents) != len(prompt_items):     # misaligned batch: refuse
+            contents = (contents + [""] * len(prompt_items))[:len(prompt_items)]
+        out: list[LLMCallResult] = []
+        for (nid, user_prompt, mt), raw in zip(prompt_items, contents):
+            s_res, packet = sanitize(raw, {nid})
+            out.append(LLMCallResult(
+                lane=self.lane, model=self.model, raw_text=raw, packet=packet,
+                sanitize=s_res,
+                wall_ms=int((time.perf_counter() - t0) * 1000),
+                attempts=1, raw_head=raw[:200],
+                error_class=None if packet is not None else "QUARANTINED_UNPARSEABLE",
+                lane_decision=decision))
+        return out
+
     def extract(self, neighborhoods: list[tuple[str, list[tuple[str, str]]]],
                 *, source_bytes: int, threshold_bytes: int,
                 max_tokens: int | None = None) -> LLMCallResult:
