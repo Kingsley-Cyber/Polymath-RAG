@@ -68,12 +68,25 @@ def run_parent_summary_ticket(conn, *, ticket_id: str, corpus_id: str,
         (artifact_id, input_hash, env["output_hash"], corpus_id,
          contract_version, worker_id, source_ids, __import__("json").dumps(
              {"envelope": env})))
+    # SUMMARY-IDEMPOTENCY-V1 (P23): exactly one AUTHORITATIVE row per
+    # parent. summary_id is content-addressed, so a parent summarised
+    # before its entities were ready and again afterwards produced two
+    # rows with nothing saying which one counts — 1,241 parents were in
+    # that state. Superseding is explicit and retains the old row; the
+    # partial unique index on (parent_id) WHERE superseded_at IS NULL
+    # makes a second live row impossible rather than merely unlikely.
+    conn.execute(
+        """UPDATE parent_summaries SET superseded_at = now()
+            WHERE parent_id = %s AND superseded_at IS NULL
+              AND summary_id <> %s""",
+        (parent_id, env["artifact_id"]))
     conn.execute(
         """INSERT INTO parent_summaries (summary_id, parent_id, corpus_id,
            artifact_hash, contract_version, created_by_worker, source_ids,
            entities, concepts, summary)
            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-           ON CONFLICT (summary_id) DO NOTHING""",
+           ON CONFLICT (summary_id) DO UPDATE
+              SET superseded_at = NULL""",
         (env["artifact_id"], parent_id, corpus_id, env["output_hash"],
          contract_version, worker_id, source_ids,
          payload["entities"], payload["concepts"], payload["summary"]))

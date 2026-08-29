@@ -41,10 +41,19 @@ def _run_docs(conn: Connection, run_id: str) -> list[str]:
         "(SELECT corpus_id FROM runs WHERE run_id=%s)", (run_id,)).fetchall()]
 
 
-def _job_done(conn: Connection, ticket_id: str) -> bool:
+def _job_done(conn: Connection, stage: str, input_hash: str) -> bool:
+    """SUMMARY-IDEMPOTENCY-V1: has this WORK been done, regardless of
+    which run asked?
+
+    This used to check by ticket_id, and the ticket id is derived from
+    the run (_stage_ticket), so it never matched across runs — every
+    run re-executed every parent. MEASURED: 21,315 tickets for 3,025
+    distinct input_hash values. The logical identity of summary work is
+    (stage, input_hash): same inputs, same contract, same answer.
+    """
     row = conn.execute(
-        "SELECT state FROM summary_jobs WHERE ticket_id=%s",
-        (ticket_id,)).fetchone()
+        "SELECT state FROM summary_jobs WHERE stage=%s AND input_hash=%s",
+        (stage, input_hash)).fetchone()
     return bool(row and row[0] == "COMPLETE")
 
 
@@ -54,7 +63,8 @@ def _ensure_job(conn: Connection, ticket_id: str, stage: str,
         """INSERT INTO summary_jobs (ticket_id, stage, corpus_id,
            input_hash, contract_version)
            VALUES (%s,%s,%s,%s,%s)
-           ON CONFLICT (ticket_id) DO NOTHING""",
+           ON CONFLICT (stage, input_hash) DO UPDATE
+              SET attempts = summary_jobs.attempts + 1""",
         (ticket_id, stage, corpus_id, input_hash, CONTRACT_VERSION))
 
 
@@ -130,7 +140,7 @@ def _do_parents(conn: Connection, run_id: str) -> dict:
             "entities": sorted(e["surface"] for e in entities),
         })
         ticket = _stage_ticket(conn, run_id, "parent_summary") + ":" + pid[-16:]
-        if _job_done(conn, ticket):
+        if _job_done(conn, "PARENT_SUMMARY", input_hash):
             continue
         _ensure_job(conn, ticket, "PARENT_SUMMARY", corpus, input_hash)
         res = run_parent_summary_ticket(
@@ -166,7 +176,7 @@ def _do_document(conn: Connection, run_id: str) -> dict:
             """SELECT summary_id FROM parent_summaries ps
                JOIN unnest(%s::text[]) AS t(pid)
                  ON ps.parent_id = t.pid
-              WHERE ps.corpus_id=%s""",
+              WHERE ps.corpus_id=%s AND ps.superseded_at IS NULL""",
             (parent_ids, corpus)).fetchall()
         ps_ids = [r[0] for r in ps_rows]
         if len(ps_ids) < len(parent_ids):
@@ -186,7 +196,7 @@ def _do_document(conn: Connection, run_id: str) -> dict:
             "events": n_events})
         ticket = _stage_ticket(conn, run_id, "document_summary") + \
             ":" + doc[-16:]
-        if _job_done(conn, ticket):
+        if _job_done(conn, "DOCUMENT_SUMMARY", input_hash):
             continue
         _ensure_job(conn, ticket, "DOCUMENT_SUMMARY", corpus, input_hash)
         res = run_document_summary_ticket(
@@ -213,7 +223,7 @@ def _do_corpus(conn: Connection, run_id: str) -> dict:
             "SELECT document_id FROM document_summaries "
             "WHERE corpus_id=%s", (corpus,)).fetchall())})
     ticket = _stage_ticket(conn, run_id, "corpus_summary")
-    if not _job_done(conn, ticket):
+    if not _job_done(conn, "CORPUS_MAPPING", input_hash):
         _ensure_job(conn, ticket, "CORPUS_MAPPING", corpus, input_hash)
         run_corpus_mapping_ticket(
             conn, ticket_id=ticket, corpus_id=corpus,
@@ -240,7 +250,8 @@ def _do_vocabulary(conn: Connection, run_id: str) -> dict:
                          "concepts", "summary"), r))
                for r in conn.execute(
                    """SELECT summary_id, parent_id, entities, concepts, summary
-                      FROM parent_summaries WHERE corpus_id=%s""",
+                      FROM parent_summaries
+                     WHERE corpus_id=%s AND superseded_at IS NULL""",
                    (corpus,)).fetchall()]
     docs = [dict(zip(("summary_id", "major_entities", "major_concepts"), r))
             for r in conn.execute(
@@ -256,7 +267,7 @@ def _do_vocabulary(conn: Connection, run_id: str) -> dict:
         "families": json.dumps(families, sort_keys=True,
                                default=str)})
     ticket = _stage_ticket(conn, run_id, "vocabulary")
-    if not _job_done(conn, ticket):
+    if not _job_done(conn, "VOCABULARY_MAPPING", input_hash):
         _ensure_job(conn, ticket, "VOCABULARY_MAPPING", corpus, input_hash)
         run_vocabulary_ticket(
             conn, ticket_id=ticket, corpus_id=corpus, input_hash=input_hash,
