@@ -179,6 +179,22 @@ def compile_procedure(*, document_id: str, corpus_id: str,
 # V1 is untouched and still reachable — compile_procedure, _is_imperative
 # and split_step_sentences all behave exactly as before.
 
+#: ARTIFACT-CONFIDENCE-V2 (P7, 2026-08-29). Confidence was
+#: min(1.0, 0.6 + 0.05 * len(steps)) — length, not reliability. It
+#: saturated at 1.0 for any procedure with 8+ steps, which under the v1
+#: one-artifact-per-document contract meant nearly all of them (live:
+#: 12 at 1.00, 1 at 0.85). Worse, ask.py ranked on it, so a longer
+#: procedure beat a shorter one for being longer.
+#:
+#: There is no defensible deterministic reliability signal available
+#: here: this compiler SELECTS verbatim source sentences, so every step
+#: is exactly as reliable as the document it came from. So confidence is
+#: declared a NON-SIGNAL — a fixed provenance-compatible value that
+#: nothing ranks or admits on. It is not in the artifact body hash, so
+#: this does not change artifact identity.
+CONFIDENCE_CONTRACT = "artifact-confidence-v2"
+DECLARED_NON_SIGNAL_CONFIDENCE = 1.0
+
 PROCEDURE_CONTRACT_V1 = "procedure-artifact-v1"
 PROCEDURE_CONTRACT_V2 = "procedure-artifact-v2"
 
@@ -431,7 +447,7 @@ def compile_procedures(*, document_id: str, corpus_id: str,
             document_id=document_id,
             corpus_id=corpus_id,
             source_chunk_ids=list(source_chunk_ids or []),
-            confidence=min(1.0, 0.6 + 0.05 * len(steps)),
+            confidence=DECLARED_NON_SIGNAL_CONFIDENCE,
             provenance={"contract": PROCEDURE_CONTRACT_V2,
                         "task_index": i},
         )
