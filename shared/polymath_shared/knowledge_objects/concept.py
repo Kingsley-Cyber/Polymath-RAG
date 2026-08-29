@@ -186,6 +186,188 @@ def compile_concepts(*, document_id: str, corpus_id: str,
             row.update(body)
             out.append(row)
             break
-        if len(out) >= max_concepts:
+        # max_concepts <= 0 means NO ceiling (CONCEPT_CONTRACT_V2 reads
+        # every sentence). A positive value keeps the frozen v1
+        # behaviour: stop scanning as soon as the cap is reached.
+        if max_concepts > 0 and len(out) >= max_concepts:
             break
+    return out
+
+
+# ======================================================================
+# CONCEPT-INVENTORY-V2 (P4, 2026-08-28)
+#
+# `max_concepts=10` was a STORAGE ceiling, not a summary limit.
+# compile_concepts stops scanning sentences the moment it has ten, so a
+# 400-page book stored ten concepts and discarded the rest unread.
+#
+# MEASURED on the live corpus: 12 of 13 documents held EXACTLY 10
+# concepts — pinned by construction — and the concept lane recorded
+# 2,210 opportunities against 120 accepted (5.4%).
+#
+# Effects isolated on all 18 documents, rebuilt from the retained spool:
+#
+#   A  v1 text, cap 10       121 concepts   (what production holds)
+#   B  v1 text, no cap       975 concepts   <- P4 alone, x8.1
+#   C  v2 text, cap 10       122 concepts   <- P2 alone, x1.0
+#   D  v2 text, no cap     1,236 concepts   <- P2+P4, x10.2
+#
+# Read C before concluding P2 did nothing: with the cap in place every
+# document is already pinned at ten, so structure preservation CANNOT
+# show up. P2's real contribution is B -> D, +261 concepts (+27%), and
+# it was invisible while the ceiling bound.
+#
+# But lifting the ceiling alone is wrong. Of those 1,236, measurement
+# showed ~28% were not concepts at all: sentence fragments ("exercises
+# as a", "found in victim environments,"), bare generics
+# ("information", "command"), participles ("touched", "running"). The
+# cap had been acting as an accidental quality filter, so removing it
+# without replacing that job would flood the inventory with exactly the
+# noun-phrase junk this phase forbids.
+#
+# So the ceiling is replaced by ADMISSION, reusing the doctrine and the
+# very lists entity_admission already uses for reference identity —
+# GENERIC_HEAD, WEAK_MODIFIERS, DEICTIC_MODIFIERS — rather than
+# inventing a parallel vocabulary. 1,236 -> 860 admitted.
+#
+# The top-N does not disappear; it stops being a storage decision.
+# Every admitted concept carries `summary_rank`, so a caller that wants
+# ten for a routing card takes the first ten and the other 850 stay
+# durable and retrievable.
+#
+# V1 is untouched: compile_concepts still caps at 10.
+
+from polymath_shared.entity_admission import (  # noqa: E402
+    DEICTIC_MODIFIERS, GENERIC_HEAD, WEAK_MODIFIERS)
+
+CONCEPT_CONTRACT_V1 = "concept-artifact-v1"
+CONCEPT_CONTRACT_V2 = "concept-inventory-v2"
+
+#: Default top-N for a routing card / document summary. A PRESENTATION
+#: limit only — it never decides what is stored.
+SUMMARY_TOP_N = 10
+
+#: Function words that cannot open or close a nominal concept name.
+#: Closed classes only: determiners, quantifiers, prepositions,
+#: conjunctions, infinitival "to", positional deictics.
+_EDGE_FUNCTION = frozenset("""
+a an the this that these those and or but nor so yet for to of in on at
+with from by about into onto over under between during through across
+against within without upon per via as if when while because although
+than then there here its his her their our your my
+all any some each every both either neither no most many much few
+several other another such next previous following above below same
+""".split())
+
+#: Discourse nouns with no concept identity of their own.
+#: entity_admission.GENERIC_HEAD already covers the infrastructure
+#: nouns; these are the ones the measurement surfaced.
+_GENERIC_EXTRA = frozenset("""
+information command id thing things way ways part parts point points
+kind kinds type types area areas case cases example examples number
+result results item items step steps issue issues topic topics
+""".split())
+
+_GENERIC_NAME = GENERIC_HEAD | _GENERIC_EXTRA
+
+#: A bare participle is not a nominal ("touched", "running").
+_BARE_PARTICIPLE = re.compile(r"(?i)^\w+(?:ing|ed)$")
+
+#: A finite verb inside the name means a sentence fragment was captured.
+_FINITE_VERB = frozenset("""
+is are was were be been being am has have had do does did can could
+will would may might must shall should make makes made use uses used
+provide provides include includes allow allows require requires
+""".split())
+
+#: Subordinators and comparatives that cannot appear INSIDE a nominal.
+#: "of", "in" and "for" deliberately are not here — they are ordinary
+#: inside a noun phrase ("chain of custody", "results of host queries").
+_INTERNAL_SUBORDINATOR = frozenset(
+    "as if when while because although though than whether unless "
+    "until since where whereas".split())
+
+#: Punctuation that only appears when the extractor sliced mid-clause.
+_FRAGMENT_PUNCT = re.compile(r"[,;:&]|[)\]}](?![\w])|[\"“”]|\((?![^)]*\))")
+
+
+def concept_name_admissible(name: str) -> tuple[bool, str]:
+    """Does `name` carry durable concept identity?
+
+    Returns (admitted, reason). Deterministic, no model. Every rule is a
+    CLOSED CLASS test — if this ever needs a domain word to work, the
+    inventory has stopped being governed by grammar and started being
+    governed by a keyword list.
+    """
+    text = (name or "").strip()
+    if not text:
+        return False, "empty"
+    tokens = text.split()
+    low = [t.lower().strip(".,;:!?") for t in tokens]
+
+    if _FRAGMENT_PUNCT.search(text):
+        return False, "punctuation_fragment"
+    if low[0] in _EDGE_FUNCTION:
+        return False, "opens_with_function_word"
+    if low[-1] in _EDGE_FUNCTION:
+        return False, "ends_with_function_word"
+    if any(t in _FINITE_VERB for t in low):
+        return False, "contains_finite_verb"
+    if any(t in _INTERNAL_SUBORDINATOR for t in low[1:-1]):
+        return False, "contains_subordinate_clause"
+    if not re.search(r"[A-Za-z]", text):
+        return False, "no_letters"
+
+    if len(tokens) == 1:
+        if _BARE_PARTICIPLE.match(text):
+            return False, "bare_participle"
+        if low[0] in _GENERIC_NAME:
+            return False, "bare_generic_noun"
+        return True, "admitted"
+
+    # Multi-token: a generic head is fine when a discriminative modifier
+    # carries the identity ("incident response program"), not when every
+    # modifier is weak or deictic ("next example", "involved system").
+    discriminative = [t for t in low[:-1]
+                      if t not in _EDGE_FUNCTION
+                      and t not in _GENERIC_NAME
+                      and t not in WEAK_MODIFIERS
+                      and t not in DEICTIC_MODIFIERS]
+    if low[-1] in _GENERIC_NAME and not discriminative:
+        return False, "generic_head_no_modifier"
+    return True, "admitted"
+
+
+def compile_concept_inventory(*, document_id: str, corpus_id: str,
+                              sentences: list[str],
+                              domain: str = "general",
+                              admitted_entities: list[str] | None = None,
+                              source_chunk_ids: list[str] | None = None,
+                              summary_top_n: int = SUMMARY_TOP_N) -> list[dict]:
+    """CONCEPT_CONTRACT_V2 — the durable inventory.
+
+    Reads EVERY sentence (no early stop) and stores every concept whose
+    name passes admission. `summary_rank` is assigned in document order,
+    so a top-N summary is a slice of the inventory rather than a
+    different, lossier extraction.
+    """
+    rows = compile_concepts(
+        document_id=document_id, corpus_id=corpus_id, sentences=sentences,
+        domain=domain, admitted_entities=admitted_entities,
+        source_chunk_ids=source_chunk_ids,
+        max_concepts=0)                     # 0 = no ceiling, see below
+
+    out: list[dict] = []
+    for row in rows:
+        ok, reason = concept_name_admissible(row["name"])
+        if not ok:
+            continue
+        row = dict(row)
+        row["provenance"] = {
+            "contract": CONCEPT_CONTRACT_V2,
+            "summary_rank": len(out),
+            "in_summary": len(out) < summary_top_n,
+            "admission": reason,
+        }
+        out.append(row)
     return out

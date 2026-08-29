@@ -1567,7 +1567,8 @@ def _persist_knowledge_artifacts(conn: Connection, *, corpus_id: str,
     is recorded as routing metadata but never vetoes a compiler:
     eligible content always gets evaluated."""
     from polymath_shared.knowledge_router.classifier import classify_document
-    from polymath_shared.knowledge_objects.concept import compile_concepts
+    from polymath_shared.knowledge_objects.concept import (
+        compile_concept_inventory)
     from polymath_shared.knowledge_objects.procedure import compile_procedures
 
     routing = classify_document(doc_text)["routing"]
@@ -1626,7 +1627,12 @@ def _persist_knowledge_artifacts(conn: Connection, *, corpus_id: str,
     # concept lane: always evaluated; the compiler self-gates on
     # local definitional evidence
     from workers.summarizer import split_sentences
-    concepts = compile_concepts(
+    # CONCEPT_CONTRACT_V2 (P4): the durable inventory. max_concepts=10
+    # used to stop the scan at ten, so a 400-page book stored ten
+    # concepts and never read the rest — 12 of 13 live documents held
+    # exactly ten by construction. Storage is now governed by name
+    # admission; the top-N survives as `summary_rank` for routing cards.
+    concepts = compile_concept_inventory(
         document_id=doc_id, corpus_id=corpus_id,
         sentences=split_sentences(doc_text),
         admitted_entities=durable_surfaces,
@@ -1637,8 +1643,8 @@ def _persist_knowledge_artifacts(conn: Connection, *, corpus_id: str,
             INSERT INTO concept_artifacts
                 (concept_id, document_id, corpus_id, name, description,
                  domain, related_entities, source_sentence, confidence,
-                 supporting_chunks, generated_by_bundle_hash)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                 supporting_chunks, provenance, generated_by_bundle_hash)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             ON CONFLICT (concept_id) DO NOTHING
             """,
             (c["artifact_id"], doc_id, corpus_id, c["name"],
@@ -1646,6 +1652,7 @@ def _persist_knowledge_artifacts(conn: Connection, *, corpus_id: str,
              json.dumps(c.get("related_entities", [])),
              c.get("source_sentence", ""),
              float(c.get("confidence", 0.0)), list(chunk_ids),
+             json.dumps(c.get("provenance", {})),
              _bundle_hash()))
         counts["concepts"] += 1
 
@@ -1657,9 +1664,12 @@ def _persist_knowledge_artifacts(conn: Connection, *, corpus_id: str,
                          lane="concept",
                          opportunities=_concept_opportunities,
                          accepted=counts["concepts"],
-                         # compile_concepts caps at max_concepts=10;
-                         # equality means the cap truncated real recall
-                         capped=counts["concepts"] >= 10)
+                         # CONCEPT_CONTRACT_V2 has no storage ceiling, so
+                         # the lane can no longer be truncated by a cap.
+                         # A shortfall now means admission refused the
+                         # candidate, which is a quality decision with a
+                         # recorded reason — not silent truncation.
+                         capped=False)
     counts["procedure_opportunities"] = _proc_opportunities
     counts["concept_opportunities"] = _concept_opportunities
     return counts
