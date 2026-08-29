@@ -131,7 +131,7 @@
     {
       "id": "P10",
       "name": "PIPELINE-BLOCKED-HEALTH",
-      "status": "TODO",
+      "status": "DONE",
       "needs_reingest": false,
       "goal": "Bundle-stale quarantine must report BLOCKED with cause, not look IDLE. Hit twice during the audit.",
       "acceptance": [
@@ -139,7 +139,9 @@
       ],
       "blocker": true,
       "step": 3,
-      "note": "Bundle-stale quarantine reporting IDLE instead of BLOCKED masks pipeline failure. Hit twice during the audit and will be hit again by the P14 rebuild."
+      "note": "Bundle-stale quarantine reporting IDLE instead of BLOCKED masks pipeline failure. Hit twice during the audit and will be hit again by the P14 rebuild.",
+      "commit": "76246df",
+      "result": "Quarantined workers recorded status+cause but nothing read it, so a blocked pipeline looked idle - cost two manual diagnoses. Added pipeline_health.py + GET /health/pipeline reporting BLOCKED (with cause and action) / HEALTHY / IDLE. Live fleet at implementation time: 2 of 2 live workers quarantined under BUNDLE_STALE_CODE_DRIFT with 1 stuck ticket, previously invisible. Two draft bugs caught by measurement: counting all 1310 registrations (981 stale) would make BLOCKED permanent, and stage_tickets.state does not exist (it is status, lowercase). BLOCKED does not require a non-empty queue. 10-test gate, 5/5 mutations caught, suite 83 = baseline."
     },
     {
       "id": "P21",
