@@ -1,7 +1,7 @@
 {
   "mission": "POLYMATH_FINAL_SEMANTIC_CORPUS_REBUILD_AND_KILLCHAIN_CLOSEOUT_V1",
   "started_head": "22d5c48",
-  "rule": "ONE production re-ingest only, after every source-dependent contract is frozen. Never re-ingest to test a contract; qualify on the sentinel first.",
+  "rule": "ONE production re-ingest only, after every source-dependent contract is frozen. Never re-ingest to test a contract; qualify on the sentinel first. RELEASE-BLOCKER RULE (owner, 2026-08-28). Do NOT create work because a metric is imperfect. A finding blocks release ONLY if it demonstrably causes one of: source loss, false knowledge, unsupported answers, inability to retrieve answer-bearing evidence, corpus leakage, or pipeline failure. Everything else is recorded and deferred. No further open-ended forensic audits are authorised.",
   "phases": [
     {
       "id": "P1",
@@ -92,7 +92,9 @@
         "clean positives recover IF a defect is proven",
         "negation/hedge/quotation hard negatives remain clean",
         "no global threshold loosening"
-      ]
+      ],
+      "blocker": true,
+      "step": 2
     },
     {
       "id": "P7",
@@ -102,7 +104,10 @@
       "goal": "Confidence is a constant (all procedures 1.00, all concepts 0.90). Either derive a defensible deterministic signal or remove it from semantic use. Length must not imply reliability.",
       "acceptance": [
         "no candidate gains ranking/admission advantage from a constant"
-      ]
+      ],
+      "blocker": false,
+      "step": 4,
+      "note": "Constant confidence is UNIFORM, so it grants no relative ranking advantage. Not a release blocker. Handle at freeze time as a one-line decision: either drop it from semantic use or stamp it as a declared non-signal."
     },
     {
       "id": "P8",
@@ -112,7 +117,10 @@
       "goal": "source_sentence[:300]. Determine display-snippet vs evidence authority; ensure full evidence hydrates from the authoritative chunk.",
       "acceptance": [
         "answer-bearing content after char 300 remains provable and citable"
-      ]
+      ],
+      "blocker": true,
+      "step": 3,
+      "note": "Bounded check, not a redesign: prove answer-bearing content past char 300 still hydrates from the authoritative chunk. If it hydrates, close. Touches 'inability to retrieve answer-bearing evidence'."
     },
     {
       "id": "P9",
@@ -122,7 +130,10 @@
       "goal": "Corpus/document deletion must prune derived graph state. Do not rely on query authorization to hide permanent garbage.",
       "acceptance": [
         "after supported delete/rebuild, PG expected eligible graph vs Neo4j actual delta = 0"
-      ]
+      ],
+      "blocker": true,
+      "step": 3,
+      "note": "Stale graph state answers queries about deleted content = false knowledge. Bounded to delete/rebuild pruning."
     },
     {
       "id": "P10",
@@ -132,17 +143,22 @@
       "goal": "Bundle-stale quarantine must report BLOCKED with cause, not look IDLE. Hit twice during the audit.",
       "acceptance": [
         "mutation: change fingerprinted source while workers run old -> health BLOCKED, cause surfaced, no false IDLE"
-      ]
+      ],
+      "blocker": true,
+      "step": 3,
+      "note": "Bundle-stale quarantine reporting IDLE instead of BLOCKED masks pipeline failure. Hit twice during the audit and will be hit again by the P14 rebuild."
     },
     {
       "id": "P11",
       "name": "KILLCHAIN-INVARIANCE",
-      "status": "TODO",
+      "status": "DEFERRED",
       "needs_reingest": false,
       "goal": "Close H36 batch invariance, H36 concurrency invariance, H45 same-corpus dilution, H47 order dependence (adapt with near-duplicate fixtures since the duplicate guard blocks identical content).",
       "acceptance": [
         "semantic output equivalent across batch sizes, worker counts and ingest order"
-      ]
+      ],
+      "deferred_reason": "Batch/concurrency/order invariance. No observed symptom; this is open-ended audit work. Re-open ONLY if the P14 rebuild or P15 measurement shows non-determinism.",
+      "blocker": false
     },
     {
       "id": "P12",
@@ -156,7 +172,9 @@
       "acceptance": [
         "ingested through the PUBLIC path only",
         "every expected result explicitly pinned"
-      ]
+      ],
+      "step": 6,
+      "blocker": true
     },
     {
       "id": "P13",
@@ -173,7 +191,9 @@
       "acceptance": [
         "no half-old/half-new generation possible",
         "full regression green"
-      ]
+      ],
+      "step": 4,
+      "blocker": true
     },
     {
       "id": "P14",
@@ -189,7 +209,9 @@
         "no unexplained zero in the monitor list",
         "query_ready"
       ],
-      "notes": "SPOOL KEY (measured at P4): retained source blobs are addressed by documents.source_hash, NOT content_hash. content_hash is the MATERIALIZED markdown and has no blob on disk \u2014 looking it up returns nothing and makes the corpus look unrecoverable. All 12 cysa-study-v1 sources are present under source_hash (spool_dir()/h[:2]/h, 26 blobs, 9.6MB). GATE: tests/determinism/test_source_recovery_key.py is now a P14 precondition - run it before starting the rebuild."
+      "notes": "SPOOL KEY (measured at P4): retained source blobs are addressed by documents.source_hash, NOT content_hash. content_hash is the MATERIALIZED markdown and has no blob on disk \u2014 looking it up returns nothing and makes the corpus look unrecoverable. All 12 cysa-study-v1 sources are present under source_hash (spool_dir()/h[:2]/h, 26 blobs, 9.6MB). GATE: tests/determinism/test_source_recovery_key.py is now a P14 precondition - run it before starting the rebuild.",
+      "step": 5,
+      "blocker": true
     },
     {
       "id": "P15",
@@ -205,7 +227,9 @@
         "concept recovery improves",
         "procedures task-coherent",
         "no unexplained literal loss"
-      ]
+      ],
+      "step": 6,
+      "blocker": true
     },
     {
       "id": "P16",
@@ -219,7 +243,9 @@
       "acceptance": [
         "routing, child proof, boilerplate demotion, exact lookup, rescue, lexical, rerank, graph hydration, citations, abstention"
       ],
-      "carry_in": "From P5: ~33% of bare entity-name queries fail to surface their evidence at top-10 in FAST or HYBRID, INDEPENDENT of the parent-summary entity cap (in-summary controls 38.8% unreachable vs omitted 30.8%). Exact-chunk recall was only ~13% while surface recall was 61-69%, i.e. the system usually returns a DIFFERENT chunk mentioning the entity. Qualify exact-term lookup here."
+      "carry_in": "From P5: ~33% of bare entity-name queries fail to surface their evidence at top-10 in FAST or HYBRID, INDEPENDENT of the parent-summary entity cap (in-summary controls 38.8% unreachable vs omitted 30.8%). Exact-chunk recall was only ~13% while surface recall was 61-69%, i.e. the system usually returns a DIFFERENT chunk mentioning the entity. Qualify exact-term lookup here.",
+      "step": 6,
+      "blocker": true
     },
     {
       "id": "P17",
@@ -234,38 +260,82 @@
         "missing=0 orphan=0 foreign=0 wrong-contract=0",
         "no stale prior-generation state"
       ],
-      "carry_in": "From P5: 1,241 of 3,025 parent_summaries rows are DUPLICATES - each of those parents has an empty-entities row and a populated row, same contract_version, minutes apart. Reconciliation must decide which is authoritative and whether the empty row is projected."
+      "carry_in": "From P5: 1,241 of 3,025 parent_summaries rows are DUPLICATES - each of those parents has an empty-entities row and a populated row, same contract_version, minutes apart. Reconciliation must decide which is authoritative and whether the empty row is projected.",
+      "step": 6,
+      "blocker": true,
+      "note": "Includes duplicate parent_summaries: 1,241 parents carry two rows (empty-entity + populated, same contract). VERIFIED NOT HARMFUL pre-rebuild - the superseded row never wins on recency (0 parents have an empty latest row), retrieval_summaries has 0 duplicate summary_ids, and parent_summaries.entities is read on no retrieval path. Mechanism: summary_id is content-addressed and ON CONFLICT (summary_id) DO NOTHING, so a parent summarised before entities were ready keeps both rows. Confirm the rebuild emits ONE row per parent."
     },
     {
       "id": "P18",
       "name": "FAULT-INJECTION",
-      "status": "TODO",
+      "status": "DEFERRED",
       "needs_reingest": false,
       "goal": "13 mutations from the mission list; each must trip a permanent gate.",
       "acceptance": [
         "no mutation stays green; strengthen any gate that survives"
-      ]
+      ],
+      "deferred_reason": "13 speculative fault injections. Deferred by the release-blocker rule; the gates added in P1-P5 are already mutation-tested.",
+      "blocker": false
     },
     {
       "id": "P19",
       "name": "CRASH-RECOVERY",
-      "status": "TODO",
+      "status": "DEFERRED",
       "needs_reingest": false,
       "goal": "Bounded kills mid-extraction, mid-persistence, mid-projection under the new contracts.",
       "acceptance": [
         "same semantic identities, no duplicates, no missing artifacts, exact reconciliation"
-      ]
+      ],
+      "deferred_reason": "Crash recovery under new contracts. No observed symptom. Re-open if the rebuild actually crashes.",
+      "blocker": false
     },
     {
       "id": "P20",
       "name": "UNKNOWN-UNKNOWN-SWEEP-AND-CLOSEOUT",
-      "status": "TODO",
+      "status": "DEFERRED",
       "needs_reingest": false,
       "goal": "Final sweep for silent-loss/silent-manufacture boundaries; write eval/v5/killchain/FINAL-SEMANTIC-CORPUS-V2-CLOSEOUT.md with the full required field list.",
       "acceptance": [
         "no known mission-scoped P0/P1/P2 deferred",
         "tree clean"
+      ],
+      "deferred_reason": "Unknown-unknown sweep. This is precisely the open-ended discovery the owner cancelled. Replaced by the P21 release decision.",
+      "blocker": false
+    },
+    {
+      "id": "P21",
+      "name": "RUNTIME-CONFIG-DEFECT",
+      "status": "TODO",
+      "needs_reingest": false,
+      "blocker": true,
+      "step": 3,
+      "goal": "The orchestrator does not load .env (model_config env_file=None), so it falls back to a built-in Postgres password that does not match the deployed one. /retrieve returns 500 on a normally-launched instance. This is a live pipeline failure and a P14 hazard.",
+      "acceptance": [
+        "a normally-launched orchestrator serves /retrieve without manual env export",
+        "misconfiguration fails loud at startup, not as a 500 per request"
+      ]
+    },
+    {
+      "id": "P22",
+      "name": "RELEASE-DECISION",
+      "status": "TODO",
+      "needs_reingest": false,
+      "blocker": true,
+      "step": 7,
+      "depends_on": [
+        "P14",
+        "P15",
+        "P16",
+        "P17"
+      ],
+      "goal": "Apply the release-blocker rule to everything outstanding. If no P0/P1 remains, FREEZE: stop modifying ingestion and retrieval, and write eval/v5/killchain/FINAL-SEMANTIC-CORPUS-V2-CLOSEOUT.md.",
+      "acceptance": [
+        "no finding meets the release-blocker bar",
+        "deferred findings recorded with reasons",
+        "tree clean"
       ]
     }
-  ]
+  ],
+  "release_blocker_rule": "RELEASE-BLOCKER RULE (owner, 2026-08-28). Do NOT create work because a metric is imperfect. A finding blocks release ONLY if it demonstrably causes one of: source loss, false knowledge, unsupported answers, inability to retrieve answer-bearing evidence, corpus leakage, or pipeline failure. Everything else is recorded and deferred. No further open-ended forensic audits are authorised.",
+  "strategy": "CONVERGENCE, not discovery. Remaining path: close the real defects -> freeze contracts -> rebuild the 12-book corpus ONCE -> prove ingest/retrieval/answer end to end -> STOP modifying ingestion and retrieval unless real usage exposes a regression."
 }
