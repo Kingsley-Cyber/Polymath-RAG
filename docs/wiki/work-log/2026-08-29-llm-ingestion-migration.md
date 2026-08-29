@@ -48,13 +48,11 @@
 | # | Task | Status | Before-notes | After-notes |
 |---|------|--------|--------------|-------------|
 | 0 | Bootstrap + green baseline | DONE | — | census fixture fix committed 99888fe; bundle READY; handoff §21 suite green |
-| 1 | LLM extraction package (contract/policy/gate/client) | IN PROGRESS | contract.py, policy.py (300KB fail-closed), gate.py (sanitize→validate→normalize), client.py written; settings + .env.example extended | — |
-| 2 | Worker seam (extract_worker llm lanes + shadow) | PENDING | next | — |
-| 3 | Model configs (long-context, locked gen config) | PENDING | owner directive 2 | — |
-| 4 | Local 4B sidecar launcher | PENDING | mlx-lm 0.31.3 installed | — |
-| 5 | Tests (contract, gate, boundary, seam) | PENDING | must be pytest-auto-discovered (CI sync) | — |
-| 6 | Cloud probe (qwen3.5:397b-cloud, no doc content) | PENDING | daemon signed in, cloud models onboarded | — |
-| 7 | Timed document tests: <300KB local + >300KB cloud + smart quality sample | PENDING | canary = Intelligence-Driven Incident Response.md (813,984 B); local candidate = Learning SQL.md (117,082 B) | — |
-| 8 | 26-book reingest (new generation, exclude ."_*) | PENDING | volume mounted, 26 files verified | — |
-| 9 | Distilled RAG architecture doc (corpus mapping layer) | PENDING | parent-level compiled summaries | — |
-| 10 | CI/CD sync + goal prompt + final report | PENDING | — | — |
+| 1 | LLM extraction package (contract/policy/gate/client) | DONE | contract.py, policy.py (300KB fail-closed), gate.py (sanitize→validate→normalize), client.py written; settings + .env.example extended | committed a4273aa + bugfix commit |
+| 2 | Worker seam (extract_worker llm lanes + shadow) | DONE | next | provider= gliner/llm_shadow/llm_live; PHASE-B2 precomputed transport; shadow cutoff admits nothing; 3 bugs found+fixed via direct process_event repro (select_lane shadowing, precomputed list contract, gliner.close() guard, evidence key default) |
+| 3 | Model configs (long-context, locked gen config) | DONE | owner directive 2 | config/extraction_models/qwen35-4b-extraction-v1.yaml (locked gen params, KV note, lane batches); enable_thinking=false wired (measured: 1600 think-tokens → 38 direct) |
+| 4 | Local 4B sidecar launcher | DONE | mlx-lm 0.31.3 installed | sidecars/local_extractor/serve_4b.sh on :8755, pinned snapshot 32f3e8ec; smoke: 11.6s, 17 entities/3 relations, 0 rejects |
+| 5 | Tests (contract, gate, boundary, seam) | DONE | must be pytest-auto-discovered (CI sync) | 21 tests green incl. no-network cloud-dispatch refusal |
+| 6 | Cloud probe | DONE | daemon signed in | qwen3.5:397b-cloud answers via daemon proxy, 1.1s, no doc content |
+| 6b | Shadow canary (fleet, real LLM) | DONE | re-armed ticket after fixes | ALL 12 stages done; 52 raw entities + 12 raw evidences; lane=local (40KB ≤ threshold); 0 quarantined; 0 mentions/candidates/facts (shadow admits nothing); provenance pinned |
+| 7 | LIVE canary (813,984B, cloud lane) | IN PROGRESS | bumped tkt_fa5b… at epoch 1788031189; llm_live fleet | extraction leased 19:20Z; timing submission→query_ready |

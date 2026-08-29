@@ -66,6 +66,8 @@ class LLMCallResult:
     tokens_out: int = 0
     attempts: int = 1
     error_class: str | None = None
+    raw_head: str = ""          # first 200 chars of the last raw response —
+                                # quarantine diagnosis without full payload
     lane_decision: LaneDecision | None = field(default=None, repr=False)
 
 
@@ -118,6 +120,12 @@ class LLMExtractionClient:
             # burns the output budget there; the chat template flag turns
             # it off (measured: 1600-token think → 38-token direct JSON).
             payload["chat_template_kwargs"] = {"enable_thinking": False}
+        else:
+            # Cloud lane (Ollama daemon proxy): same thinking-burn failure
+            # mode, different knob — measured 2026-08-29: without this the
+            # 397B spends the entire output budget thinking (finish=length,
+            # empty content); with it, direct JSON, finish=stop.
+            payload["reasoning_effort"] = "none"
         resp = httpx.post(f"{self.base_url}/v1/chat/completions",
                           json=payload, timeout=self.timeout_s)
         resp.raise_for_status()
@@ -181,10 +189,11 @@ class LLMExtractionClient:
                     lane=self.lane, model=self.model, raw_text=raw, packet=packet,
                     sanitize=s_res, wall_ms=int((time.perf_counter() - t0) * 1000),
                     tokens_in=tokens_in, tokens_out=tokens_out, attempts=attempts,
-                    lane_decision=decision)
+                    raw_head=raw[:200], lane_decision=decision)
         return LLMCallResult(
             lane=self.lane, model=self.model, raw_text=last_raw, packet=None,
             sanitize=last_sanitize or SanitizeResult(ok=False, error_class="SANITIZE_UNPARSEABLE"),
             wall_ms=int((time.perf_counter() - t0) * 1000),
             tokens_in=tokens_in, tokens_out=tokens_out, attempts=attempts,
-            error_class="QUARANTINED_UNPARSEABLE", lane_decision=decision)
+            error_class="QUARANTINED_UNPARSEABLE", raw_head=last_raw[:200],
+            lane_decision=decision)

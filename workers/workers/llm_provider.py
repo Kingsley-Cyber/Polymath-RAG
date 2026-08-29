@@ -214,4 +214,5 @@ def call_receipts(results: list[LLMCallResult]) -> list[dict]:
         "attempts": r.attempts, "ok": r.packet is not None,
         "error_class": r.error_class or r.sanitize.error_class,
         "salvaged": r.sanitize.salvaged,
+        "raw_head": (r.raw_head or "")[:200],
     } for r in results]
