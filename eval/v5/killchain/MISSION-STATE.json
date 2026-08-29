@@ -116,7 +116,7 @@
     {
       "id": "P9",
       "name": "GRAPH-LIFECYCLE-V2",
-      "status": "TODO",
+      "status": "DONE",
       "needs_reingest": false,
       "goal": "Corpus/document deletion must prune derived graph state. Do not rely on query authorization to hide permanent garbage.",
       "acceptance": [
@@ -124,7 +124,9 @@
       ],
       "blocker": true,
       "step": 3,
-      "note": "Stale graph state answers queries about deleted content = false knowledge. Bounded to delete/rebuild pruning."
+      "note": "Stale graph state answers queries about deleted content = false knowledge. Bounded to delete/rebuild pruning.",
+      "commit": "afae936",
+      "result": "TWO defects. (1) ACUTE: _neo4j_expand ran LIMIT 20 in Cypher then filtered authorization in Python, so unauthorized edges ate answer slots - 15.6% of REL edges unauthorized, up to 8/20 slots wasted, ACCEPT facts pushed past the limit. Fixed by filtering inside the query before LIMIT. (2) LIFECYCLE: reconciler pruned only Chunk + endpoint-ineligible REL, so Document/Fact/Evidence accumulated forever; pruned 28,855 orphan nodes and extended the reconciler to every derived kind, deleting only what PG proves is gone. Final delta zero: Document 18/18, Evidence 3063/3063, Chunk 8887/8887, Fact 3148<=3184. CORRECTED: the 85 non-ACCEPT REL edges are QUALIFY (hedged/attributed) - legitimate knowledge, not garbage; pinned so they are never deleted. 10-test gate, 3/3 mutations caught, suite 83 = baseline."
     },
     {
       "id": "P10",
