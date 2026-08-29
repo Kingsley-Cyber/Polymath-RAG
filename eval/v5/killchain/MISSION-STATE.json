@@ -37,7 +37,7 @@
     {
       "id": "P3",
       "name": "PROCEDURE-ARTIFACT-V2",
-      "status": "TODO",
+      "status": "DONE",
       "needs_reingest": true,
       "depends_on": [
         "P2"
@@ -48,7 +48,9 @@
         "no unrelated-task contamination",
         "deterministic ids",
         "no invented steps"
-      ]
+      ],
+      "commit": "ddc6b69",
+      "result": "Shadow-compared 4 segmentation units with the same detector: DOCUMENT/PARENT collapse 3 tasks into 1, SECTION merges the two sharing a heading, LOCAL_TASK gives 3 with 0 contamination. Also found and fixed two recall defects underneath: newline-splitting shredded hard-wrapped steps, and the open-class verb whitelist saw 5 of 20 steps. Closed-class exclusion + subject detection replaces it. Result: 3 artifacts, disjoint step sets, all 20 steps verbatim in source order, goals from goal markers; facts/boilerplate/transcript yield 0 artifacts. Worker persists every task; counter moved to v2. V1 frozen. 20-test gate, 7/7 mutations caught, suite 83 = baseline."
     },
     {
       "id": "P4",
