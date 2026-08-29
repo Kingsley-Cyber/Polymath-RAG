@@ -138,7 +138,10 @@ def test_callsite_pin_extract_worker_records_lane_attempts():
     # BOTH lanes must be measured. A weaker "count_opportunities in body"
     # check passed while one call was mutated away, because the other
     # lane still matched — caught by mutation-testing this pin.
-    assert "_procedure_mod.count_opportunities(" in body, (
+    # P3: the procedure lane compiles under PROCEDURE_ARTIFACT_V2, so
+    # its counter must be the v2 twin. The counter and the compiler have
+    # to share a contract or "accepted" can exceed "opportunities".
+    assert "_procedure_mod.count_opportunities_v2(" in body, (
         "extract worker no longer measures PROCEDURE opportunities; "
         "artifact counts alone cannot distinguish a healthy lane from "
         "one discarding 99% of its evidence")

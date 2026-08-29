@@ -1568,7 +1568,7 @@ def _persist_knowledge_artifacts(conn: Connection, *, corpus_id: str,
     eligible content always gets evaluated."""
     from polymath_shared.knowledge_router.classifier import classify_document
     from polymath_shared.knowledge_objects.concept import compile_concepts
-    from polymath_shared.knowledge_objects.procedure import compile_procedure
+    from polymath_shared.knowledge_objects.procedure import compile_procedures
 
     routing = classify_document(doc_text)["routing"]
     counts = {"procedures": 0, "concepts": 0,
@@ -1585,23 +1585,33 @@ def _persist_knowledge_artifacts(conn: Connection, *, corpus_id: str,
     from workers.summarizer import split_sentences as _split
 
     _doc_sentences = _split(doc_text)
-    _proc_opportunities = _procedure_mod.count_opportunities(doc_text)
+    # V2 counter for a V2 compiler. Measuring opportunities with the v1
+    # whitelist while compiling with the v2 detector would report more
+    # artifacts ACCEPTED than opportunities SEEN — a lane that looks
+    # like it manufactures evidence.
+    _proc_opportunities = _procedure_mod.count_opportunities_v2(
+        doc_text, frozenset(e.lower() for e in (durable_surfaces or ())))
     _concept_opportunities = _concept_mod.count_opportunities(_doc_sentences)
 
     # procedure lane: always evaluated; the compiler self-gates on
-    # local procedural evidence
-    proc = compile_procedure(
-        document_id=doc_id, corpus_id=corpus_id, text=doc_text,
-        admitted_entities=durable_surfaces,
-        source_chunk_ids=chunk_ids)
-    if proc:
+    # local procedural evidence.
+    #
+    # PROCEDURE_ARTIFACT_V2 (P3): one artifact per LOCAL TASK, not one
+    # per document. A runbook page holding three separate tasks used to
+    # collapse into a single artifact whose goal was the first task's
+    # second step. Artifact ids stay content-addressed, so N rows per
+    # document remain idempotent on replay.
+    for proc in compile_procedures(
+            document_id=doc_id, corpus_id=corpus_id, text=doc_text,
+            admitted_entities=durable_surfaces,
+            source_chunk_ids=chunk_ids):
         conn.execute(
             """
             INSERT INTO procedure_artifacts
                 (procedure_id, document_id, corpus_id, title, goal,
                  steps_json, tools_json, confidence, source_chunk_ids,
-                 generated_by_bundle_hash)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                 provenance, generated_by_bundle_hash)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             ON CONFLICT (procedure_id) DO NOTHING
             """,
             (proc["artifact_id"], doc_id, corpus_id,
@@ -1609,8 +1619,9 @@ def _persist_knowledge_artifacts(conn: Connection, *, corpus_id: str,
              json.dumps(proc.get("steps", [])),
              json.dumps(proc.get("tools", [])),
              float(proc.get("confidence", 0.0)), list(chunk_ids),
+             json.dumps(proc.get("provenance", {})),
              _bundle_hash()))
-        counts["procedures"] = 1
+        counts["procedures"] += 1
 
     # concept lane: always evaluated; the compiler self-gates on
     # local definitional evidence
