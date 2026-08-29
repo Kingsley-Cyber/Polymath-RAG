@@ -72,12 +72,14 @@
     {
       "id": "P5",
       "name": "PARENT-SUMMARY-ENTITY-CAP",
-      "status": "TODO",
+      "status": "DONE",
       "needs_reingest": false,
       "goal": "MAX_ENTITIES=10 binds on 58.6% of parent summaries. Determine routing-only vs semantic loss; repair only if entities become unreachable to navigation.",
       "acceptance": [
         "entities excluded from the top-10 summary still reachable via authoritative child/artifact evidence"
-      ]
+      ],
+      "commit": "e51985d",
+      "result": "OUTCOME A - routing-only cap, NO CHANGE. 280 cases, 11 parents (26-67 durable entities), FAST+HYBRID, all lanes live. In-summary controls 38.8% unreachable vs omitted 30.8% => omission moves reachability -8.0pp (omitted fare slightly better). Mechanism: parent_summaries.entities is read on no retrieval path and never enters embedded routing text; omitted evidence recovered via MULTI_REPRESENTATION/GLOBAL_CHILD_RESCUE/SECTION_LED. Separate finding routed to P16: ~33% of bare entity-name queries miss at top-10 regardless of the cap. Also pinned SOURCE-RECOVERY-KEY-V1 (source_hash not content_hash; 12/12 vs 0/12) as a P14 precondition. 11 tests, 6/6 mutations caught, suite 83 = baseline."
     },
     {
       "id": "P6",
@@ -187,7 +189,7 @@
         "no unexplained zero in the monitor list",
         "query_ready"
       ],
-      "notes": "SPOOL KEY (measured at P4): retained source blobs are addressed by documents.source_hash, NOT content_hash. content_hash is the MATERIALIZED markdown and has no blob on disk \u2014 looking it up returns nothing and makes the corpus look unrecoverable. All 12 cysa-study-v1 sources are present under source_hash (spool_dir()/h[:2]/h, 26 blobs, 9.6MB)."
+      "notes": "SPOOL KEY (measured at P4): retained source blobs are addressed by documents.source_hash, NOT content_hash. content_hash is the MATERIALIZED markdown and has no blob on disk \u2014 looking it up returns nothing and makes the corpus look unrecoverable. All 12 cysa-study-v1 sources are present under source_hash (spool_dir()/h[:2]/h, 26 blobs, 9.6MB). GATE: tests/determinism/test_source_recovery_key.py is now a P14 precondition - run it before starting the rebuild."
     },
     {
       "id": "P15",
@@ -216,7 +218,8 @@
       "goal": "FAST/HYBRID/GRAPH over the 13-case panel plus code, table, procedure and transcript structure-retrieval proofs.",
       "acceptance": [
         "routing, child proof, boilerplate demotion, exact lookup, rescue, lexical, rerank, graph hydration, citations, abstention"
-      ]
+      ],
+      "carry_in": "From P5: ~33% of bare entity-name queries fail to surface their evidence at top-10 in FAST or HYBRID, INDEPENDENT of the parent-summary entity cap (in-summary controls 38.8% unreachable vs omitted 30.8%). Exact-chunk recall was only ~13% while surface recall was 61-69%, i.e. the system usually returns a DIFFERENT chunk mentioning the entity. Qualify exact-term lookup here."
     },
     {
       "id": "P17",
@@ -230,7 +233,8 @@
       "acceptance": [
         "missing=0 orphan=0 foreign=0 wrong-contract=0",
         "no stale prior-generation state"
-      ]
+      ],
+      "carry_in": "From P5: 1,241 of 3,025 parent_summaries rows are DUPLICATES - each of those parents has an empty-entities row and a populated row, same contract_version, minutes apart. Reconciliation must decide which is authoritative and whether the empty row is projected."
     },
     {
       "id": "P18",
