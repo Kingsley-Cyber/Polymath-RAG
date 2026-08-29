@@ -247,6 +247,7 @@ def _evidence_spans(
     mode: str,
     raw_sink: list | None = None,
     scientific_lane_prioritized: bool = True,
+    precomputed_evidence: list | None = None,
 ) -> list[EvidenceSpan]:
     """ADR-0008: pass 2 = GLiNER coarse proposals (may abstain) +
     lexical trigger localization. The compiler decides either way.
@@ -268,6 +269,19 @@ def _evidence_spans(
     )
 
     anchors = propose_evidence(chunk_text, chunk_id, pack)
+    if precomputed_evidence is not None:
+        # LOCAL-LLM-EXTRACTION-V1: gated LLM relation proposals replace the
+        # GLiNER evidence pass. The compiler's authority is unchanged —
+        # each proposal still localizes to a compiled trigger inside its
+        # verbatim quote, and unlocalizable proposals compile to
+        # UNSUPPORTED exactly as GLiNER's always did.
+        proposals = [localize_trigger(p, pack) for p in precomputed_evidence]
+        merged = {s.text: s for s in anchors}
+        for p in proposals:
+            key = p.text
+            if key not in merged:
+                merged[key] = p
+        return sorted(merged.values(), key=lambda s: (s.start, s.end))
     if not scientific_lane_prioritized and not anchors:
         # Deprioritized lane AND no local relational evidence: nothing
         # here qualifies for the compiler — skip the expensive pass.
@@ -752,6 +766,17 @@ def process_event(conn: Connection, event: dict) -> None:
     pack = _pack()
     parser_name, parser_version = parser_identity()
 
+    # LOCAL-LLM-EXTRACTION-V1 (owner-authorized 2026-08-29): provider
+    # selection. 'gliner' keeps the frozen default path byte-identical;
+    # 'llm_shadow' records gated proposals and admits nothing; 'llm_live'
+    # feeds gated proposals into the UNCHANGED identity → admission →
+    # compiler → fact pipeline. GLiNER is retired from the LLM path — the
+    # model proposes; deterministic Python still validates and admits.
+    provider_mode = get_settings().worker.extraction_provider
+    if provider_mode not in ("gliner", "llm_shadow", "llm_live"):
+        raise ValueError(f"unknown extraction provider: {provider_mode}")
+    llm_mode = provider_mode != "gliner"
+
     # KNOWLEDGE-ROUTER v1.1 as a PRIORITY signal (owner correction,
     # EXTRACTION-ELIGIBILITY-V1): a routed 'disabled' scientific lane
     # DEPRIORITIZES relation discovery (chunks without local trigger
@@ -795,6 +820,11 @@ def process_event(conn: Connection, event: dict) -> None:
         "binding_gates": "endpoint-binding-v1",
         "provenance_contract": "exact-evidence-v1",
         "gliner_pin": _GLINER_PIN,
+        "extraction_provider": provider_mode,
+        "llm_extraction_contract": (
+            {"contract": "polymath-extraction-v1",
+             "cloud_min_bytes": get_settings().worker.cloud_min_bytes}
+            if llm_mode else None),
         # Temporal durability (semantic-query-policy-v1): the extraction
         # contract identity includes EVERY input that can change semantic
         # output — provider-facing vocabulary policy, syntax contract,
@@ -843,8 +873,11 @@ def process_event(conn: Connection, event: dict) -> None:
         ]
         child_chunks = [row for row in chunks if row["tier"] == "child"]
 
-        gliner = GlinerClient()
-        gliner.verify_pin()
+        if not llm_mode:
+            gliner = GlinerClient()
+            gliner.verify_pin()
+        else:
+            gliner = None  # GLiNER retired from the LLM path (owner, 2026-08-29)
         audit: list[dict] = []
 
         # I3R-R3: two-pass extraction — pass A gathers the full document
@@ -882,19 +915,32 @@ def process_event(conn: Connection, event: dict) -> None:
             _raw_rows_predicate: list = []
             from polymath_shared import raw_evidence as _raw
 
-            _gl_model = (gliner.manifest().get("identity", {}) or {}).get("model", {})
+            _gl_model = (gliner.manifest().get("identity", {}) or {}).get("model", {}) if gliner else {}
+            _llm_model_id = ""
+            _llm_revision = "polymath-extraction-v1"
+            _llm_lane = ""
             _contract_cache: dict = {}
 
             def _raw_contract(labels, task):
                 key = (tuple(labels), task)
                 if key not in _contract_cache:
-                    _contract_cache[key] = _raw.provider_contract(
-                        provider="gliner",
-                        model_id=str(_gl_model.get("id")),
-                        revision=str(_gl_model.get("revision")),
-                        task=task,
-                        threshold=ENTITY_THRESHOLD if task == "entity" else EVIDENCE_THRESHOLD,
-                        labels=list(labels))
+                    if llm_mode:
+                        contract = _raw.provider_contract(
+                            provider=f"llm:{_llm_lane}",
+                            model_id=_llm_model_id,
+                            revision=_llm_revision,
+                            task=task,
+                            threshold=1.0,
+                            labels=list(labels))
+                    else:
+                        contract = _raw.provider_contract(
+                            provider="gliner",
+                            model_id=str(_gl_model.get("id")),
+                            revision=str(_gl_model.get("revision")),
+                            task=task,
+                            threshold=ENTITY_THRESHOLD if task == "entity" else EVIDENCE_THRESHOLD,
+                            labels=list(labels))
+                    _contract_cache[key] = contract
                 return _contract_cache[key]
             # EXTRACTION-CONTEXT-V1: build the envelope per focal chunk
             from polymath_shared.extraction_context import active_policy, build_envelope
@@ -906,7 +952,10 @@ def process_event(conn: Connection, event: dict) -> None:
             # envelopes on the batched path). Per-chunk calls remain the
             # automatic path whenever envelopes are active.
             _batched_pass1: dict = {}
-            if not context_active:
+            _llm_evidence: dict = {}
+            _llm_receipts: list = []
+            _lane_decision: dict | None = None
+            if not llm_mode and not context_active:
                 from polymath_shared.query_policy import provider_passes as _pp
                 from polymath_shared.contracts import DocumentProfile as _DP
                 _base = _DP(**profile_dict).label_set if profile_dict.get("label_set") else []
@@ -923,9 +972,72 @@ def process_event(conn: Connection, event: dict) -> None:
                         _batched_pass1.setdefault(_r_["chunk_id"], {})[tuple(_labels)] = _row_
                 _perf["entity_pass_s"] += _t.perf_counter() - _t_batch
                 _perf["provider_calls"] += (len(_texts) + _gbatch - 1) // _gbatch
+            if llm_mode:
+                # LOCAL-LLM-EXTRACTION-V1: one gated LLM pass replaces the
+                # GLiNER passes. Lane selection + dispatch both enforce the
+                # 300 KB cloud boundary (fail closed). Proposals enter the
+                # identical downstream path via the PHASE B2 precomputed
+                # transport; rejections are durable, never silent.
+                from workers import llm_provider as _llm
+                from polymath_shared.query_policy import provider_passes as _pp
+                from polymath_shared.contracts import DocumentProfile as _DP
+                _base = _DP(**profile_dict).label_set if profile_dict.get("label_set") else []
+                _compositions = [
+                    tuple(_labels) for _labels in
+                    (list(dict.fromkeys(list(_base) + list(_pl))) for _pl in _pp())
+                    if _labels]
+                _src = conn.execute(
+                    "SELECT byte_length FROM documents WHERE doc_id=%s",
+                    (doc_id,)).fetchone()
+                source_bytes = int(_src[0]) if _src and _src[0] is not None else 0
+                _decision = _llm.select_lane(source_bytes)
+                _lane_decision = {"lane": _decision.lane,
+                                  "source_bytes": _decision.source_bytes,
+                                  "threshold": _decision.threshold,
+                                  "reason": _decision.reason}
+                _t_llm = _t.perf_counter()
+                _neighborhoods = _llm.build_neighborhoods(child_chunks)
+                _results, _merged = _llm.run_proposals(
+                    _neighborhoods, lane=_decision.lane, source_bytes=source_bytes)
+                _perf["llm_extract_s"] = _t.perf_counter() - _t_llm
+                _llm_receipts = _llm.call_receipts(_results)
+                _llm_model_id = _results[0].model if _results else ""
+                _llm_lane = _decision.lane
+                _batched_pass1 = _llm.to_precomputed_entities(
+                    _merged, _compositions, [r["chunk_id"] for r in child_chunks])
+                _llm_evidence = {
+                    cid: [sp.model_dump() for sp in spans]
+                    for cid, spans in _llm.to_evidence_spans(_merged).items()}
+                _llm_entity_items, _llm_evidence_items = _llm.ledger_items(_merged)
+                _raw_rows_entity.extend(
+                    _raw.proposal_row(doc_id, cid, item,
+                                      _raw_contract((), "entity"))
+                    for cid, item in _llm_entity_items)
+                _raw_rows_predicate.extend(
+                    _raw.evidence_row(doc_id, cid, item,
+                                      _raw_contract((), "evidence"))
+                    for cid, item in _llm_evidence_items)
+                _counts["llm_entities"] = _merged.stats.get("entities", 0)
+                _counts["llm_relations"] = _merged.stats.get("relations", 0)
+                _counts["llm_rejected"] = len(_merged.rejections)
+                _counts["llm_type_coercions"] = len(_merged.coercions)
+                _llm_artifact = {
+                    "provider": provider_mode,
+                    "lane_decision": _lane_decision,
+                    "calls": _llm_receipts,
+                    "stats": _merged.stats,
+                    "rejections": _merged.rejections[:200],
+                    "coercions": _merged.coercions[:200],
+                    "digests": _merged.digests[:400],
+                    "neighborhoods": len(_neighborhoods),
+                }
+                writer.artifact({"llm_extraction": _llm_artifact})
+                _perf["provider_calls"] += len(_results)
             for row in child_chunks:
                 envelope = None
-                if context_active:
+                if context_active and not llm_mode:
+                    # LLM lane: proposals are already chunk-relative from the
+                    # gate; envelope remapping is a GLiNER-coordinate concern.
                     doc_key = row["doc_id"]
                     if doc_key not in doc_text_cache:
                         doc_row = conn.execute(
@@ -976,7 +1088,10 @@ def process_event(conn: Connection, event: dict) -> None:
                 evidence = _evidence_spans(
                     gliner, row["text"], row["chunk_id"], pack, proposal_mode,
                     raw_sink=raw_predicate_sink,
-                    scientific_lane_prioritized=scientific_lane_prioritized)
+                    scientific_lane_prioritized=scientific_lane_prioritized,
+                    precomputed_evidence=(
+                        [EvidenceSpan(**e) for e in _llm_evidence[row["chunk_id"]]]
+                        if llm_mode else None))
                 _counts["evidence_spans"] += len(evidence)
                 _perf["evidence_pass_s"] += _t.perf_counter() - _pt
                 # drain this chunk's raw observations into ledger rows
@@ -1005,6 +1120,27 @@ def process_event(conn: Connection, event: dict) -> None:
             # changes nothing.
             _raw.bulk_write(conn, "raw_entity_proposals", _raw_rows_entity)
             _raw.bulk_write(conn, "raw_predicate_evidence", _raw_rows_predicate)
+            if provider_mode == "llm_shadow":
+                # SHADOW: proposals are durably recorded (raw ledger +
+                # artifacts above), production admits NOTHING. No mentions,
+                # no candidates, no facts, no projections — the doc still
+                # completes its stage so the shadow corpus advances and the
+                # shadow lane is measurable end to end.
+                if trace.enabled:
+                    trace.count("llm_shadow_proposals",
+                                _counts.get("llm_entities", 0)
+                                + _counts.get("llm_relations", 0))
+                    _shadow_funnel = trace.funnel()
+                    _shadow_written = trace.flush(conn)
+                    writer.artifact({"trace": {
+                        "mode": trace.mode, "events_written": _shadow_written,
+                        "funnel": _shadow_funnel}})
+                writer.artifact({
+                    "shadow": True,
+                    "admitted": 0,
+                    "note": ("llm_shadow: gated proposals recorded; "
+                             "admission intentionally not run")})
+                return
             _pt = _t.perf_counter()
             syntax_runtime = _syntax_evidence(ordered_slices)
             _perf["syntax_s"] = _t.perf_counter() - _pt

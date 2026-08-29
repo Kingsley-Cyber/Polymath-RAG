@@ -1,0 +1,58 @@
+# LOCAL-LLM-EXTRACTION-V1 — model configuration (owner directive: model
+# configs are versioned files). Locked generation parameters are decision 18
+# of the authoritative migration plan (measured 2026-08-29: 0% degeneration,
+# self-terminating JSON; frequency penalties REJECTED — they kill the
+# name/type/brace tokens that must repeat per object).
+#
+# LONG-CONTEXT SPEED LEVER: Qwen3.5-4B is hybrid linear/full-attention —
+# only 8 of 32 layers grow KV, so 15k tokens ≈ 469 MB KV (measured). Larger
+# evidence neighborhoods are therefore cheap; the binding constraint is the
+# per-item OUTPUT budget, not input length. The neighborhood cap lives in
+# POLYMATH_WORKER_LLM_MAX_NEIGHBORHOOD_CHARS (default 7000 chars ≈ 1,150
+# tokens ≈ the 850w parent unit).
+
+contract: polymath-extraction-v1
+
+local:
+  runtime: mlx_lm.server            # host-native MLX, OpenAI-compatible /v1
+  model: mlx-community/Qwen3.5-4B-MLX-4bit
+  model_hf_cache: models--mlx-community--Qwen3.5-4B-MLX-4bit
+  model_snapshot: 32f3e8ecf65426fc3306969496342d504bfa13f3
+  model_size_gb: 2.83               # 4bit weights; KV grows only during batches
+  port: 8755
+  quantization: prequantized-4bit   # never dequantize; turboquant is the
+                                    # load-time fallback if a release ships fp16
+  generation:                       # LOCKED — change only with a new A/B record
+    max_tokens: 2500
+    repetition_penalty: 1.15
+    repetition_context_size: 400
+    temperature: 0.0
+    enable_thinking: false
+  batch:
+    neighborhoods_per_call: 4      # items per request; provenance never mixes
+    concurrency: 2                 # in-flight requests, local lane
+    kv_note: >-
+      15k-token input ≈ 469 MB KV (hybrid attention). Batch is bounded by the
+      32 GB unified window (plan §2.5), not by KV.
+
+cloud:
+  via: ollama-daemon-proxy         # local daemon relays under the signed-in
+                                   # account; no API key in this repository
+  url: http://127.0.0.1:11434
+  model: qwen3.5:397b-cloud
+  profile: quality
+  batch:
+    neighborhoods_per_call: 4
+    concurrency: 6
+  ram_local_gb: 0                  # remote inference; exempt from the
+                                   # two-local-windows rule
+
+boundary:
+  cloud_min_bytes: 300000          # owner rule: <=300KB never leaves the machine
+  enforcement: selection-and-dispatch
+  failure_mode: fail-closed
+
+output_budget:
+  entities_max_per_neighborhood: 80
+  relations_max_per_neighborhood: 60
+  digest_caps: {central_claim: 1_sentence, main_mechanism: 1_sentence, retrieval_uses: 3}

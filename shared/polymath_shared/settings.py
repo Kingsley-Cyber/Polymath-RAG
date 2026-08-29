@@ -61,6 +61,26 @@ class SidecarSettings(BaseSettings):
         default="",
         description="Exact locally installed Ollama model tag; required when enabled",
     )
+    llm_local_extract_url: str = Field(
+        default="http://127.0.0.1:8755",
+        description="LOCAL-LLM-EXTRACTION-V1: OpenAI-compatible endpoint of the "
+                    "local MLX extraction sidecar (loopback only)",
+    )
+    llm_local_extract_model: str = Field(
+        default="mlx-community/Qwen3.5-4B-MLX-4bit",
+        description="Pinned local extraction model served by the MLX sidecar",
+    )
+    llm_cloud_url: str = Field(
+        default="http://127.0.0.1:11434",
+        description="LOCAL-LLM-EXTRACTION-V1 cloud lane: OpenAI-compatible "
+                    "endpoint (the local Ollama daemon proxies cloud models "
+                    "under the signed-in account). Loopback enforced.",
+    )
+    llm_cloud_model: str = Field(
+        default="qwen3.5:397b-cloud",
+        description="Pinned cloud quality-lane model tag (verify with a "
+                    "one-token probe; no document content in probes)",
+    )
     syntax_provider: str = Field(
         default="disabled",
         description="Optional syntax-evidence lane behind the extract "
@@ -112,6 +132,29 @@ class WorkerSettings(BaseSettings):
         default="lexical",
         description="ADR-0008: 'lexical' (pass 2 abstains) or 'hybrid' "
                     "(GLiNER evidence proposals merge with lexical anchors)",
+    )
+    extraction_provider: str = Field(
+        default="gliner",
+        description="LOCAL-LLM-EXTRACTION-V1: 'gliner' (frozen default, "
+                    "byte-identical behavior), 'llm_shadow' (LLM proposals "
+                    "recorded, nothing admitted), or 'llm_live' (LLM "
+                    "proposals enter the unchanged admission pipeline).",
+    )
+    cloud_min_bytes: int = Field(
+        default=300_000,
+        description="Owner rule 2026-08-29: documents at or below this size "
+                    "can never select or dispatch a cloud provider "
+                    "(enforced at selection AND dispatch, fail closed).",
+    )
+    llm_concurrency_local: int = Field(
+        default=2, description="Parallel in-flight extraction calls, local lane")
+    llm_concurrency_cloud: int = Field(
+        default=6, description="Parallel in-flight extraction calls, cloud lane")
+    llm_max_neighborhood_chars: int = Field(
+        default=7_000,
+        description="Cap on one evidence neighborhood (parent's children "
+                    "concatenated); oversized parents split into multiple "
+                    "neighborhoods so provenance stays chunk-scoped",
     )
     rule_pack_version: str = Field(
         # SPOKEN-RELATION-ADAPTER-V1: docs/SEMANTIC_CONTRACTS.md declares
