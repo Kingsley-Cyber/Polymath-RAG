@@ -24,6 +24,21 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # RUNTIME-CONFIG-CONTRACT-V1 (P21): validate configuration and the
+    # workflow authority BEFORE serving. A wrong Postgres credential
+    # used to start cleanly and then return HTTP 500 on every
+    # /retrieve, burning a 30s pool timeout per request with the real
+    # cause visible only in the log. Fail loud here instead.
+    from polymath_shared.startup_contract import (
+        StartupContractError, validate_startup)
+
+    try:
+        app.state.startup_contract = validate_startup()
+    except StartupContractError as exc:
+        logger.critical("STARTUP BLOCKED", extra={"error_code": exc.code,
+                                               "detail": exc.detail})
+        raise
+
     app.state.sidecars = load_sidecar_registry()
     yield
 

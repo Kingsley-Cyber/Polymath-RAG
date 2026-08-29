@@ -7,14 +7,33 @@ are never logged.
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 from typing import ClassVar
 
 from pydantic import Field, AliasChoices
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+#: RUNTIME-CONFIG-CONTRACT-V1 (P21, 2026-08-28).
+#:
+#: There is ONE place a process gets its configuration: the environment,
+#: seeded from the repo `.env`. It is resolved ABSOLUTELY, from this
+#: file's location, because pydantic-settings resolves a relative
+#: env_file against the working directory — and the orchestrator is
+#: launched from `orchestrator/`, where no `.env` exists. That single
+#: detail is why every settings class silently fell back to its
+#: built-in defaults.
+#:
+#: MEASURED consequence: PostgresSettings.dsn defaulted to password
+#: "polymath" while the deployment uses "polymath-dev", so a normally
+#: launched orchestrator authenticated with the wrong credential and
+#: every /retrieve returned HTTP 500 — 30s of pool timeouts per
+#: request, with the real cause ("password authentication failed")
+#: visible only in the server log.
+_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
+
 
 class PostgresSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="POLYMATH_PG_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="POLYMATH_PG_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
     dsn: str = Field(
         default="postgresql://polymath:polymath@127.0.0.1:5432/polymath",
         description="libpq DSN for the workflow authority",
@@ -22,7 +41,7 @@ class PostgresSettings(BaseSettings):
 
 
 class SidecarSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
     gliner_url: str = Field(default="http://127.0.0.1:8740", description="GLiNER two-pass runtime")
     embedder_url: str = Field(default="http://127.0.0.1:8742", description="Embedder sidecar")
     reranker_url: str = Field(default="http://127.0.0.1:8743", description="Reranker sidecar")
@@ -50,7 +69,7 @@ class SidecarSettings(BaseSettings):
 
 
 class WorkerSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="POLYMATH_WORKER_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="POLYMATH_WORKER_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
     poll_interval_s: float = Field(default=2.0, description="Outbox poll interval")
     batch_size: int = Field(default=8, description="Max outbox events per poll")
     claim_ttl_s: int = Field(default=300, description="Stage lease TTL")
@@ -88,14 +107,14 @@ class WorkerSettings(BaseSettings):
 
 
 class ControlSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="POLYMATH_CONTROL_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="POLYMATH_CONTROL_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
     tick_interval_s: float = Field(default=10.0, description="Census tick interval")
     lease_ttl_s: int = Field(default=30, description="Controller lease TTL")
     max_attempts: int = Field(default=3, description="Stage attempts before failed")
 
 
 class StoreSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
     qdrant_url: str = Field(default="http://127.0.0.1:6334", description="Qdrant projection store")
     neo4j_uri: str = Field(default="bolt://127.0.0.1:7688", description="Neo4j projection store")
     neo4j_user: str = Field(default="neo4j")
@@ -123,7 +142,7 @@ class RescueSettings(BaseSettings):
         "boundary", "missing_argument", "type_reconciliation", "frames",
     )
 
-    model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
     rescue: str = Field(default="off", description="Rescue policy stages (I4R)")
 
     def enabled_stages(self) -> tuple[str, ...]:
@@ -143,7 +162,7 @@ class RescueSettings(BaseSettings):
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
     env: str = Field(default="local", description="local | prod")
     log_level: str = Field(default="INFO")
     postgres: PostgresSettings = Field(default_factory=PostgresSettings)
