@@ -184,3 +184,48 @@ def test_callsite_pin_worker_stores_the_inventory():
         "the capped v1 compiler is back on the write path")
     assert 'capped=counts["concepts"] >= 10' not in body, (
         "the lane still reports a storage cap that no longer exists")
+
+
+# ============================ TRANSCRIPT STAMPS ARE NOT PART OF A NAME
+def test_transcript_stamp_is_stripped_from_the_concept_name():
+    """REGRESSION, found by test_artifact_persistence_ignores_router_disabled
+    after P4 landed. A spoken-source sentence leads with "**[03:00]**",
+    which was glued to the front of the extracted name. Admission then
+    correctly refused it as a punctuation fragment — so a REAL concept
+    with a real definition was silently lost.
+
+    The gate was right; the name was malformed upstream of it. This is
+    the first-bad-boundary fix, not a loosened gate."""
+    from polymath_shared.knowledge_objects.concept import _clean_name
+
+    assert _clean_name("**[03:00]** Retrieval augmented generation") == \
+        "Retrieval augmented generation"
+    assert _clean_name("[12:34] Zero trust") == "Zero trust"
+    assert _clean_name("**[1:02:33]** Kill chain") == "Kill chain"
+    # a heading is still stripped, and an ordinary name is untouched
+    assert _clean_name("## Threat model") == "Threat model"
+    assert _clean_name("Retrieval augmented generation") == \
+        "Retrieval augmented generation"
+
+
+def test_a_defined_concept_in_a_transcript_survives_end_to_end():
+    """The behaviour the regression actually cost: a definition spoken
+    in a transcript must reach the inventory."""
+    from workers.summarizer import split_sentences
+
+    text = ("**[03:00]** Retrieval augmented generation is a technique "
+            "that grounds model outputs in retrieved documents.")
+    inv = compile_concept_inventory(document_id="d", corpus_id="c",
+                                    sentences=split_sentences(text))
+    names = {c["name"] for c in inv}
+    assert "Retrieval augmented generation" in names, (
+        f"transcript-defined concept lost; got {names}")
+
+
+def test_the_gate_still_refuses_the_malformed_name():
+    """The stamp must be removed upstream, NOT tolerated by admission —
+    a name that still carries one is still a fragment."""
+    ok, why = concept_name_admissible("**[03:00]** Retrieval augmented generation")
+    assert not ok and why == "punctuation_fragment", (
+        "admission was loosened to accept stamped names instead of "
+        "fixing the extraction")

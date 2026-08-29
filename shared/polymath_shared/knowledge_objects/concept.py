@@ -97,10 +97,23 @@ _MAX_NAME = 8      # words
 _MAX_DESC = 40
 
 
+#: Transcript stamps ("**[03:00]**") lead a spoken-source sentence, so
+#: they end up glued to the front of the extracted concept name. The
+#: procedure compiler has always stripped them; the concept compiler did
+#: not. MEASURED: "**[03:00]** Retrieval augmented generation" — a real
+#: concept with a real definition — was refused by name admission as a
+#: punctuation fragment, so the concept was LOST. The gate was right;
+#: the name was malformed upstream of it.
+_NAME_TRANSCRIPT_STAMP = re.compile(r"^\s*\*{0,2}\[\d+:\d+(?::\d+)?\]\*{0,2}\s*")
+
+
 def _clean_name(name: str) -> str:
-    """Strip markdown-heading glue and collapse immediate repeats
-    ('# Notes on X X' -> 'X') so concept names are clean nouns."""
-    n = re.sub(r"^#+\s*", "", (name or "").strip())
+    """Strip markdown-heading glue and transcript stamps, and collapse
+    immediate repeats ('# Notes on X X' -> 'X'), so concept names are
+    clean nouns."""
+    n = (name or "").strip()
+    n = _NAME_TRANSCRIPT_STAMP.sub("", n)
+    n = re.sub(r"^#+\s*", "", n).strip()
     words = n.split()
     out: list[str] = []
     for w in words:
