@@ -31,7 +31,8 @@ from polymath_shared.receipts import (
     stage_contract_hash,
     stage_transaction,
 )
-from workers.chunker import materialize_chunks, plan_document
+from workers.chunker import (SEPARATOR_SOURCE, materialize_chunks,
+                             plan_document)
 from workers.summarizer import summarize
 from workers.profile_router import route_document
 
@@ -39,9 +40,17 @@ STAGE = "intake"
 EVENT_TYPE = "intake.v1"
 NEXT_EVENT_TYPE = "chunked.v1"
 
+#: CHUNK-STRUCTURE-V2 promoted to the ingest contract (P13 decision
+#: taken early so the new-document quality probe measures the real
+#: generation instead of V2 artifacts sitting on V1 flattened chunks).
+#:
+#: Existing corpora are NOT touched: their rows keep whatever contract
+#: produced them, and chunk ids are content-addressed, so nothing
+#: re-identifies. Only NEW ingests get V2.
 CHUNK_FROZEN_PARAMS = {
     "child_target_chars": 1200,
     "parent_fanout": 4,
+    "separator_mode": SEPARATOR_SOURCE,
 }
 NORMALIZATION = {"strip_bom": True, "normalize_crlf": True, "nfc": True}
 ROUTER_VERSION = "1.0.0"

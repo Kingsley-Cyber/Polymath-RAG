@@ -368,3 +368,47 @@ def test_v1_is_not_softened():
     assert n1 > n2, (
         f"v1 no longer shreds wrapped sentences ({n1} units vs V2 {n2}) — "
         "either v1 changed or the repair stopped joining")
+
+
+# ============================== END-TO-END: V2 IS THE INGEST CONTRACT
+def test_ingest_produces_chunk_contract_v2():
+    """E2E PIN. Implementing and gating V2 is not the same as shipping
+    it. Until CHUNK_FROZEN_PARAMS selects V2, every new ingest still
+    emits v1 and the P2/P6 fixes reach nothing."""
+    from workers.intake_worker import CHUNK_FROZEN_PARAMS
+    from workers.chunker import CHUNK_CONTRACT_V2
+
+    assert CHUNK_FROZEN_PARAMS.get("separator_mode") == SEPARATOR_SOURCE, (
+        "the ingest path does not select V2; new documents would be "
+        "chunked under the frozen v1 contract")
+    plan = plan_document(WRAPPED, "doc_e2e", **CHUNK_FROZEN_PARAMS)
+    assert plan.contract == CHUNK_CONTRACT_V2
+
+
+def test_ingest_stamps_the_contract_on_every_row():
+    """All 8,887 live chunk rows have chunk_contract_version NULL: the
+    column was plumbed through intake but materialize_chunks never
+    emitted the key, so row.get() always returned None. Without the
+    stamp there is no way to tell generations apart after a rebuild."""
+    from workers.intake_worker import CHUNK_FROZEN_PARAMS
+    from workers.chunker import CHUNK_CONTRACT_V2
+
+    rows = materialize_chunks(
+        plan_document(WRAPPED, "doc_e2e", **CHUNK_FROZEN_PARAMS))
+    assert rows, "no rows materialized"
+    stamps = {r.get("chunk_contract_version") for r in rows}
+    assert stamps == {CHUNK_CONTRACT_V2}, (
+        f"chunk rows are not stamped with their contract: {stamps}")
+
+
+def test_soft_wrap_repair_reaches_the_ingest_path():
+    """The P6 fix lives in the V2 path only, so it reaches production
+    ONLY because V2 is now the ingest contract. This is the test that
+    would have caught 'implemented but not shipped'."""
+    from workers.intake_worker import CHUNK_FROZEN_PARAMS
+
+    text = "".join(
+        c.text for c in
+        plan_document(WRAPPED, "doc_e2e", **CHUNK_FROZEN_PARAMS).children)
+    assert "Nessus was developed by Tenable." in text
+    assert "Nessus was\ndeveloped" not in text
