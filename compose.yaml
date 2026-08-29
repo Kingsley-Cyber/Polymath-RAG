@@ -9,6 +9,9 @@ services:
       POSTGRES_USER: polymath
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: polymath
+    # The 12-process host-native fleet + control + operator tooling
+    # saturates the 100-connection default (measured 2026-08-29).
+    command: ["postgres", "-c", "max_connections=250"]
     volumes:
       - ./stores/postgres/data:/var/lib/postgresql/data
       - ./stores/postgres/migrations:/docker-entrypoint-initdb.d:ro

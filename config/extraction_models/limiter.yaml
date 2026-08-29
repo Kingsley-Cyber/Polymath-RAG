@@ -1,0 +1,21 @@
+# Adaptive limiter seeds — LOCAL-LLM-EXTRACTION-V1 (2026-08-29).
+# Static numbers are seeds + ceilings; adaptive=true lets the controller
+# move the effective limit within [min, max] at runtime (AIMD: +1 per 8
+# clean successes, x0.5 on 429/503/timeout, Retry-After honored).
+# Keyed per (provider, api_key) — multi-key pools scale linearly.
+providers:
+  mlx_local:
+    kind: concurrency      # local bottleneck = GPU/VRAM concurrency
+    init: 2
+    min: 1
+    max: 4
+    adaptive: true
+  ollama_cloud:
+    kind: rate             # cloud bottleneck = rate (RPM + TPM)
+    rpm: 120               # seed bucket; header-sync refines it live
+    tpm: 200000
+    conc_cap: 8            # safety ceiling; AIMD moves within [min, cap]
+    min: 2
+    max: 8
+    adaptive: true
+    use_headers: true      # throttle proactively from rate-limit headers

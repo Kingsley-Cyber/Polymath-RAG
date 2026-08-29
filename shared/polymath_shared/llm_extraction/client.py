@@ -29,10 +29,42 @@ from polymath_shared.llm_extraction.contract import (
     SanitizeResult,
 )
 from polymath_shared.llm_extraction.gate import sanitize
+from polymath_shared.llm_extraction.limiter import REGISTRY, ProviderLimit
 from polymath_shared.llm_extraction.policy import (
     LaneDecision,
     require_cloud_eligible,
 )
+
+# Lane → limiter spec seeds (config/extraction_models/limiter.yaml is the
+# editable source of truth; these are the code-level fallbacks).
+_LANE_LIMITS = {
+    "local": ProviderLimit(kind="concurrency", init=2, min=1, max=4,
+                           adaptive=True),
+    "cloud": ProviderLimit(kind="rate", rpm=120, tpm=200000, conc_cap=8,
+                           min=2, max=8, adaptive=True, use_headers=True),
+}
+_LIMITER_CONFIG = None
+
+
+def _lane_limit(lane: str) -> ProviderLimit:
+    global _LIMITER_CONFIG
+    if _LIMITER_CONFIG is None:
+        try:
+            import yaml
+            path = (_limiter_config_path())
+            _LIMITER_CONFIG = yaml.safe_load(path.read_text())["providers"]
+        except Exception:
+            _LIMITER_CONFIG = {}
+    cfg = (_LIMITER_CONFIG or {}).get(
+        "mlx_local" if lane == "local" else "ollama_cloud")
+    if cfg:
+        return ProviderLimit(**{**_LANE_LIMITS[lane].__dict__, **cfg})
+    return _LANE_LIMITS[lane]
+
+
+def _limiter_config_path():
+    from pathlib import Path
+    return Path(__file__).resolve().parents[3] / "config" / "extraction_models" / "limiter.yaml"
 
 def _ontology_text() -> str:
     try:
@@ -166,6 +198,10 @@ class LLMExtractionClient:
         return {"ok": True, "lane": self.lane, "model": self.model,
                 "wall_ms": wall_ms, "served_model": body.get("model")}
 
+    def _lane_limiter(self):
+        return REGISTRY.lane(f"llm_{self.lane}",
+                             "default", _lane_limit(self.lane))
+
     def extract(self, neighborhoods: list[tuple[str, list[tuple[str, str]]]],
                 *, source_bytes: int, threshold_bytes: int,
                 max_tokens: int = 2500) -> LLMCallResult:
@@ -173,12 +209,17 @@ class LLMExtractionClient:
 
         DISPATCH BOUNDARY: the cloud lane refuses to send anything for a
         source at or below the threshold — before any network I/O.
+        ADAPTIVE LIMITING: the call passes the lane's AdaptiveLimiter
+        (concurrency slot for local; RPM/TPM buckets for cloud) with AIMD
+        feedback from the outcome.
         """
         decision: LaneDecision | None = None
         if self.lane == "cloud":
             decision = require_cloud_eligible(source_bytes, threshold_bytes)
         user_prompt = build_user_prompt(neighborhoods)
         expected = {nid for nid, _ in neighborhoods}
+        limiter = self._lane_limiter()
+        est_tokens = len(user_prompt) / 4.0 + max_tokens / 2.0
         attempts = 0
         last_raw = ""
         last_sanitize: SanitizeResult | None = None
@@ -186,15 +227,40 @@ class LLMExtractionClient:
         t0 = time.perf_counter()
         while attempts < self.max_attempts:
             attempts += 1
+            if not limiter.acquire(est_tokens=est_tokens):
+                # breaker open or non-blocking saturation: report as
+                # throttle so the caller can requeue; no network I/O made
+                return LLMCallResult(
+                    lane=self.lane, model=self.model, raw_text="",
+                    packet=None,
+                    sanitize=SanitizeResult(ok=False, error_class="LIMITER_REFUSED"),
+                    wall_ms=int((time.perf_counter() - t0) * 1000),
+                    attempts=attempts, error_class="LIMITER_REFUSED",
+                    lane_decision=decision)
             try:
                 raw, tin, tout = self._chat(
                     user_prompt + ("\n\nYour previous reply was not valid "
                                    "JSON under the contract. Re-read the schema "
                                    "and answer again." if attempts > 1 else ""),
                     max_tokens)
+            except httpx.HTTPStatusError as exc:
+                status = exc.response.status_code
+                limiter.record_failure(
+                    retry_after=exc.response.headers.get("retry-after"),
+                    headers=dict(exc.response.headers))
+                limiter.release()
+                if status in (429, 502, 503, 504) and attempts < self.max_attempts:
+                    time.sleep(min(float(exc.response.headers.get("retry-after", 0) or 1.5), 15.0))
+                    continue
+                raise ExtractionTransportError(
+                    f"{self.lane} transport failed: HTTP {status}") from exc
             except (httpx.HTTPError, json.JSONDecodeError, KeyError) as exc:
+                limiter.record_failure()
+                limiter.release()
                 raise ExtractionTransportError(
                     f"{self.lane} transport failed: {type(exc).__name__}: {exc}") from exc
+            limiter.record_success()
+            limiter.release()
             last_raw = raw
             tokens_in += tin
             tokens_out += tout
