@@ -21,7 +21,7 @@ if [[ ! -d "${MODEL_PATH}" ]]; then
   exit 1
 fi
 
-PY="$(cd "$(dirname "$0")/.." && pwd)/.venv/bin/python"
+PY="$(cd "$(dirname "$0")/../.." && pwd)/.venv/bin/python"
 if [[ ! -x "${PY}" ]]; then PY="$(command -v python3)"; fi
 
 echo "serving ${MODEL_PATH} on 127.0.0.1:${PORT}"

@@ -280,7 +280,10 @@ def test_precomputed_covers_every_chunk_and_composition() -> None:
                                   all_chunk_ids=["chunk_a", "chunk_b", "chunk_z"])
     for cid in ("chunk_a", "chunk_b", "chunk_z"):
         assert set(pre[cid].keys()) == {("Product",), ("Product", "Concept")}
-    assert pre["chunk_a"][("Product",)]["spans"]
+    # GLiNER batch contract: plain span list per composition
+    assert isinstance(pre["chunk_a"][("Product",)], list)
+    assert pre["chunk_a"][("Product",)][0]["text"] == "FortiGate"
+    assert pre["chunk_z"][("Product",)] == []
 
 
 def test_evidence_spans_are_chunk_ordered() -> None:

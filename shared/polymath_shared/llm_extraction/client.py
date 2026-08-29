@@ -114,6 +114,10 @@ class LLMExtractionClient:
             # while preserving the JSON-structural repetition per object.
             payload["repetition_penalty"] = 1.15
             payload["repetition_context_size"] = 400
+            # Qwen3.5 emits thinking into a separate `reasoning` field and
+            # burns the output budget there; the chat template flag turns
+            # it off (measured: 1600-token think → 38-token direct JSON).
+            payload["chat_template_kwargs"] = {"enable_thinking": False}
         resp = httpx.post(f"{self.base_url}/v1/chat/completions",
                           json=payload, timeout=self.timeout_s)
         resp.raise_for_status()

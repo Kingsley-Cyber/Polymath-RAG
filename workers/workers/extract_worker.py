@@ -1090,7 +1090,7 @@ def process_event(conn: Connection, event: dict) -> None:
                     raw_sink=raw_predicate_sink,
                     scientific_lane_prioritized=scientific_lane_prioritized,
                     precomputed_evidence=(
-                        [EvidenceSpan(**e) for e in _llm_evidence[row["chunk_id"]]]
+                        [EvidenceSpan(**e) for e in _llm_evidence.get(row["chunk_id"], [])]
                         if llm_mode else None))
                 _counts["evidence_spans"] += len(evidence)
                 _perf["evidence_pass_s"] += _t.perf_counter() - _pt
@@ -1508,7 +1508,8 @@ def process_event(conn: Connection, event: dict) -> None:
             log.info("extract perf", extra={"run_id": run_id, "stage": "extract",
                                             "detail": None})
         finally:
-            gliner.close()
+            if gliner is not None:
+                gliner.close()  # LLM lane: no GLiNER client is constructed
 
         writer.artifact({"audit": audit})
         if trace.enabled:

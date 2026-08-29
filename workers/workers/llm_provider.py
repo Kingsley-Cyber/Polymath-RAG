@@ -25,7 +25,9 @@ from polymath_shared.llm_extraction.gate import (
     NormalizedExtraction,
     validate_and_normalize,
 )
-from polymath_shared.llm_extraction.policy import select_lane
+from polymath_shared.llm_extraction.policy import (
+    select_lane as _policy_select_lane,
+)
 from polymath_shared.settings import get_settings
 
 LLM_ENTITY_VERSION = "polymath-extraction-v1-entity"
@@ -82,7 +84,7 @@ def build_neighborhoods(child_chunks: list[dict],
 
 def select_lane(source_bytes: int):
     """Selection boundary (documents.byte_length is the durable input)."""
-    return select_lane(source_bytes, get_settings().worker.cloud_min_bytes)
+    return _policy_select_lane(source_bytes, get_settings().worker.cloud_min_bytes)
 
 
 def make_client(lane: str) -> LLMExtractionClient:
@@ -160,8 +162,11 @@ def to_precomputed_entities(merged: NormalizedExtraction,
     if all_chunk_ids is not None:
         spans_by_chunk.update({cid: spans_by_chunk.get(cid, [])
                                for cid in all_chunk_ids})
+    # GLiNER batch contract: the per-composition value is the PLAIN span
+    # list (entity_pass_batch rows are list[span-dict]); _entity_spans
+    # wraps it in {"spans": ...} itself.
     return {
-        cid: {tuple(labels): {"spans": spans} for labels in label_compositions}
+        cid: {tuple(labels): spans for labels in label_compositions}
         for cid, spans in spans_by_chunk.items()
     }
 
