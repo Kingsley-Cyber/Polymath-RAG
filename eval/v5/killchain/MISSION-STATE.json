@@ -84,7 +84,7 @@
     {
       "id": "P6",
       "name": "FACT-RECALL-DIAGNOSIS",
-      "status": "TODO",
+      "status": "DONE",
       "needs_reingest": false,
       "goal": "Sentinel clean SVO sentences produced 3 relation candidates and 0 accepted facts. Trace each to its FIRST rejecting mechanism and classify CORRECT_REJECTION vs a real defect.",
       "acceptance": [
@@ -94,7 +94,9 @@
         "no global threshold loosening"
       ],
       "blocker": true,
-      "step": 2
+      "step": 2,
+      "commit": "4336f1a",
+      "result": "Traced to FIRST divergence: fact_admission_decisions had 0 rows - admission never ran. All 3 candidates died at the rulepack modality gate with scope_gate:negated. Root cause one boundary upstream: v1 flattening glued a heading mid-text so the sentence slice spanned 3 units (135 chars) and 'does not' from a DIFFERENT sentence set negated=True. All 3 rejections were CORRECT given corrupt input - a chunking defect, not an admission defect. No threshold loosened, admission untouched (pinned). SECOND FINDING: V2 alone would have made it WORSE - preserved newlines + newline-splitting shredded hard-wrapped prose (7 of 20 slices, splitting 'Nessus was'/'developed by Tenable'). Fixed with length-preserving _soften_wraps in the V2 path only. After: 4/4 positives ACCEPT, negation REJECT, refutation QUALIFY(attributed), hedge QUALIFY(speculative). 12+4 tests, 4/4 mutations caught, suite 83 = baseline."
     },
     {
       "id": "P8",
