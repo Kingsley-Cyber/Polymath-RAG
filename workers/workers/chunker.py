@@ -14,6 +14,7 @@ matches.
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 
 from polymath_shared.identity import chunk_id
@@ -83,6 +84,43 @@ CHUNK_CONTRACT = {
     SEPARATOR_LEGACY: CHUNK_CONTRACT_V1,
     SEPARATOR_SOURCE: CHUNK_CONTRACT_V2,
 }
+
+
+#: A newline that only wrapped a line is PRESENTATION, not structure.
+#: P6 proved the cost of treating it as structure: on hard-wrapped
+#: source, `split_sentences` splits on every newline, so
+#: "Nessus was\ndeveloped by Tenable." becomes two fragments and the
+#: fact can never be built. V1 hid this because its space join
+#: accidentally reassembled the wrap; V2 preserves newlines, so V2 has
+#: to tell a wrap from a break.
+#:
+#: The substitution is LENGTH-PRESERVING (one "\n" -> one " "), so every
+#: char offset into the source stays exactly valid. That is why this is
+#: a substitution and not an unwrap-and-reflow.
+_WRAP_HARD_LINE = re.compile(r"^\s*(?:[-*+]\s|\d+[.)]\s|#{1,6}\s|\||>|\s{4,})")
+
+
+def _soften_wraps(text: str) -> str:
+    """Turn soft line wraps into spaces, leaving structure alone.
+
+    A newline is a SOFT wrap only when the line it ends does not close a
+    sentence and neither side opens a structural unit (heading, list
+    item, table row, quote, indented code). Blank-line paragraph breaks
+    are never touched.
+    """
+    lines = text.split("\n")
+    out: list[str] = []
+    for i, line in enumerate(lines):
+        out.append(line)
+        if i + 1 >= len(lines):
+            continue
+        nxt = lines[i + 1]
+        soft = (line.strip() and nxt.strip()
+                and not re.search(r"[.!?:;]\s*$", line)
+                and not _WRAP_HARD_LINE.match(line)
+                and not _WRAP_HARD_LINE.match(nxt))
+        out.append(" " if soft else "\n")
+    return "".join(out)
 
 
 def _reconstruct_separator(source_text: str, prev_end: int,
@@ -250,6 +288,10 @@ def plan_document(
     the source. The two generations are never silently equated — chunk
     ids differ because the text differs, which is the point.
     """
+    # CHUNK_CONTRACT_V2 repairs soft wraps BEFORE sentence splitting.
+    # Length-preserving, so every offset below still indexes the source.
+    if separator_mode == SEPARATOR_SOURCE:
+        text = _soften_wraps(text)
     sentences = split_sentences(text)
     contract = CHUNK_CONTRACT.get(separator_mode)
     if contract is None:

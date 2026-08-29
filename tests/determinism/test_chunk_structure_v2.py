@@ -33,6 +33,7 @@ from polymath_shared.knowledge_objects import concept as C  # noqa: E402
 from workers.chunker import (  # noqa: E402
     SEPARATOR_LEGACY,
     SEPARATOR_SOURCE,
+    _soften_wraps,
     materialize_chunks,
     plan_document,
 )
@@ -163,19 +164,24 @@ def test_indentation_is_reproduced_not_normalised_away():
 # =================================================== LITERAL FIDELITY
 @pytest.mark.parametrize("target", [200, 400, 1200])
 def test_literal_coverage_has_no_unexplained_loss_or_overlap(target):
+    # V2 softens soft wraps before splitting, so its sentence units come
+    # from the softened text. The substitution is length-preserving
+    # (one "\n" -> one " "), so every offset below still indexes the
+    # source; only the sentence STRINGS differ.
+    doc = _soften_wraps(DOC)
     plan, rows = children(SEPARATOR_SOURCE, target)
     cursor, loss, overlap = 0, [], []
     for row in sorted(rows, key=lambda r: r["char_start"]):
-        if row["char_start"] > cursor and DOC[cursor:row["char_start"]].strip():
-            loss.append(DOC[cursor:row["char_start"]][:60])
+        if row["char_start"] > cursor and doc[cursor:row["char_start"]].strip():
+            loss.append(doc[cursor:row["char_start"]][:60])
         if row["char_start"] < cursor:
             overlap.append((row["char_start"], cursor))
         cursor = max(cursor, row["char_end"])
-    assert not DOC[cursor:].strip(), "content after the last chunk"
+    assert not doc[cursor:].strip(), "content after the last chunk"
     assert loss == [], f"unexplained literal loss: {loss}"
     assert overlap == [], f"unexplained overlap: {overlap}"
 
-    sentences = split_sentences(DOC)
+    sentences = split_sentences(doc)
     assigned = [i for spec in plan.children for i in spec.sentences]
     assert len(assigned) == len(set(assigned)), "a sentence landed in two chunks"
     assert set(assigned) == set(range(len(sentences))), "a sentence was dropped"
@@ -199,17 +205,40 @@ def test_heading_offsets_still_point_at_headings(target):
 
 
 @pytest.mark.parametrize("target", [200, 400, 1200])
-def test_packing_decisions_are_identical_across_contracts(target):
-    """Only the JOIN changes. Same chunk count, same spans, same
-    sentence grouping — so v1/v2 output is comparable and the measured
-    gain cannot be an artefact of different boundaries."""
+def test_both_contracts_cover_the_source_completely(target):
+    """The cross-contract invariant, corrected at P6.
+
+    The original form of this test asserted the two contracts produce
+    IDENTICAL packing. That stopped being true — and stopped being
+    desirable — once V2 began repairing soft wraps: v1 splits a
+    hard-wrapped sentence into two fragments, V2 keeps it whole, so the
+    sentence counts legitimately differ (26 vs 25 on this fixture).
+
+    What must still hold is coverage: neither contract may lose or
+    duplicate source, and V2 must never produce MORE units than v1,
+    because softening only ever joins.
+    """
     p1, r1 = children(SEPARATOR_LEGACY, target)
     p2, r2 = children(SEPARATOR_SOURCE, target)
-    assert len(r1) == len(r2)
-    assert ([(r["char_start"], r["char_end"]) for r in r1]
-            == [(r["char_start"], r["char_end"]) for r in r2])
-    assert ([s.sentences for s in p1.children]
-            == [s.sentences for s in p2.children])
+
+    for plan, rows, doc in ((p1, r1, DOC), (p2, r2, _soften_wraps(DOC))):
+        cursor = 0
+        for row in sorted(rows, key=lambda r: r["char_start"]):
+            assert row["char_start"] >= cursor or not doc[
+                row["char_start"]:cursor].strip(), "overlap"
+            cursor = max(cursor, row["char_end"])
+        assert not doc[cursor:].strip(), "content after the last chunk"
+
+    assert r1[0]["char_start"] == r2[0]["char_start"] == 0
+    assert r1[-1]["char_end"] == r2[-1]["char_end"], (
+        "the contracts end at different source offsets — one of them is "
+        "dropping trailing content")
+    n1 = sum(len(c.sentences) for c in p1.children)
+    n2 = sum(len(c.sentences) for c in p2.children)
+    assert n2 <= n1, (
+        f"V2 produced MORE sentence units ({n2}) than v1 ({n1}) — "
+        "softening must only ever join, never split")
+    assert len(r2) <= len(r1), "V2 produced more chunks from larger units"
 
 
 # ============================================== THE OLD CONTRACT IS FROZEN
@@ -252,3 +281,90 @@ def test_contracts_produce_different_chunk_ids():
     ids1 = {r["chunk_id"] for r in children(SEPARATOR_LEGACY)[1]}
     ids2 = {r["chunk_id"] for r in children(SEPARATOR_SOURCE)[1]}
     assert not (ids1 & ids2), "a v2 chunk reused a v1 identity"
+
+
+# ===================================== SOFT WRAP REPAIR (found by P6)
+#: Hard-wrapped prose — the shape of real markdown, and the case the
+#: original V2 draft got wrong. Discovered while tracing P6: V2 preserves
+#: newlines, `split_sentences` splits on every newline, so a wrapped
+#: sentence became two fragments. On the sentinel that shredded 7 of 20
+#: units and split "Nessus was" / "developed by Tenable." apart, which
+#: destroys the fact outright. v1 hid it by joining everything with
+#: spaces.
+WRAPPED = """# Notes
+
+Nessus scans network hosts for known vulnerabilities. Nessus was
+developed by Tenable. The scanner produces a report for each host.
+
+Nmap uses TCP SYN probes to
+determine port state.
+
+## Config
+
+    def scan(target):
+        return probe(target)
+
+- first item that wraps
+  onto a continuation line
+- second item
+"""
+
+
+def _wrapped_sentences(mode):
+    plan = plan_document(WRAPPED, "doc_wrap", separator_mode=mode)
+    return split_sentences("".join(c.text for c in plan.children))
+
+
+def test_soft_wraps_do_not_shred_sentences():
+    """THE REGRESSION. A sentence broken by line wrapping must come back
+    whole under V2, or fact extraction sees fragments and builds
+    nothing."""
+    sents = _wrapped_sentences(SEPARATOR_SOURCE)
+    assert "Nessus was developed by Tenable." in sents, (
+        f"wrapped sentence still shredded: {sents}")
+    assert "Nmap uses TCP SYN probes to determine port state." in sents
+    for fragment in ("Nessus was", "Nmap uses TCP SYN probes to"):
+        assert fragment not in sents, f"fragment {fragment!r} survived"
+
+
+def test_soften_wraps_is_length_preserving():
+    """Offsets must stay valid, so the repair substitutes one newline
+    for one space and never reflows."""
+    out = _soften_wraps(WRAPPED)
+    assert len(out) == len(WRAPPED)
+    assert all(a == b or (a == "\n" and b == " ")
+               for a, b in zip(WRAPPED, out))
+
+
+def test_structure_is_not_softened_away():
+    """Only WRAPS soften. Paragraph breaks, headings, list items and
+    code lines are structure and must survive."""
+    out = _soften_wraps(WRAPPED)
+    assert "\n\n" in out, "paragraph breaks collapsed"
+    assert "\n## Config" in out, "heading collapsed into prose"
+    assert "\n    def scan(target):" in out, "code line collapsed"
+    assert "\n- second item" in out, "list item collapsed"
+    # a wrapped list continuation is still a wrap, but must not eat the
+    # bullet that follows it
+    assert "\n- first item that wraps" in out
+
+
+def test_v1_is_not_softened():
+    """The frozen contract must not gain wrap repair.
+
+    Note where v1's shredding actually lives: v1 splits the SOURCE into
+    fragments too, but then joins them with spaces, so re-splitting v1
+    chunk TEXT hands back whole sentences. That accident is why the
+    wrap defect was invisible until V2 preserved newlines. The frozen
+    properties to hold are therefore: no newline in v1 chunk text, and
+    strictly more sentence UNITS than V2 produces."""
+    v1_plan = plan_document(WRAPPED, "doc_wrap", separator_mode=SEPARATOR_LEGACY)
+    v2_plan = plan_document(WRAPPED, "doc_wrap", separator_mode=SEPARATOR_SOURCE)
+    v1_text = "".join(c.text for c in v1_plan.children)
+    assert "\n" not in v1_text, (
+        "v1 chunk text gained a newline — it is no longer the frozen contract")
+    n1 = sum(len(c.sentences) for c in v1_plan.children)
+    n2 = sum(len(c.sentences) for c in v2_plan.children)
+    assert n1 > n2, (
+        f"v1 no longer shreds wrapped sentences ({n1} units vs V2 {n2}) — "
+        "either v1 changed or the repair stopped joining")
