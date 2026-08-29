@@ -183,7 +183,7 @@
     {
       "id": "P7",
       "name": "ARTIFACT-CONFIDENCE-V2",
-      "status": "TODO",
+      "status": "DONE",
       "needs_reingest": false,
       "goal": "Confidence is a constant (all procedures 1.00, all concepts 0.90). Either derive a defensible deterministic signal or remove it from semantic use. Length must not imply reliability.",
       "acceptance": [
@@ -191,7 +191,9 @@
       ],
       "blocker": false,
       "step": 4,
-      "note": "Constant confidence is UNIFORM, so it grants no relative ranking advantage. Not a release blocker. Handle at freeze time as a one-line decision: either drop it from semantic use or stamp it as a declared non-signal."
+      "note": "Constant confidence is UNIFORM, so it grants no relative ranking advantage. Not a release blocker. Handle at freeze time as a one-line decision: either drop it from semantic use or stamp it as a declared non-signal.",
+      "commit": "824691a",
+      "result": "Confidence was worse than a constant: procedure confidence was min(1.0, 0.6+0.05*len(steps)) - a LENGTH function that saturated at 1.0 for 8+ steps (hence looking constant under v1's one-per-document contract) - and ask.py ranked on it, so longer procedures outranked shorter ones. Concept 0.9 was a true constant and could not discriminate. Removed from semantic use in both scorers and replaced the V2 derivation with a declared non-signal; no reliability signal was invented because these compilers select verbatim source. Not in the body hash, so identity unchanged. V1 frozen with its length derivation. 10-test gate, 3/3 mutations caught, suite 83 = baseline."
     },
     {
       "id": "P13",
