@@ -33,8 +33,13 @@ from polymath_shared.settings import get_settings
 LLM_ENTITY_VERSION = "polymath-extraction-v1-entity"
 LLM_EVIDENCE_VERSION = "polymath-extraction-v1-evidence"
 LLM_RELATION_CLASS = "llm_relation"
+LLM_MIN_CHUNK_WORDS = 15          # <15-word stubs are structural noise
 
 NEIGHBORHOODS_PER_CALL = 4
+
+
+def _word_count(text: str) -> int:
+    return len(text.split())
 
 
 @dataclass
@@ -49,18 +54,26 @@ class Neighborhood:
 
 def build_neighborhoods(child_chunks: list[dict],
                         max_chars: int | None = None) -> list[Neighborhood]:
-    """Group children by parent (source order) into evidence neighborhoods.
+    """Group children by parent (source order) into BALANCED neighborhoods.
 
-    The stored parent row is a generated SUMMARY, never sent to the model —
-    the model reads the parent's CHILD CHUNKS (the evidence neighborhood).
-    Oversized parents split into multiple neighborhoods so provenance stays
-    chunk-scoped and per-item output budgets stay meaningful.
+    Two plan §4.9 properties:
+    * **Uniform-size packing (straggler control):** each parent's children
+      are distributed into k = ceil(chars/cap) buckets of near-equal size
+      instead of greedy fill — no ragged tail neighborhood holds the batch.
+    * **Structural noise skip:** <15-word stubs never enter an LLM
+      neighborhood (they stay in the corpus for retrieval; only the
+      extraction input skips them).
+
+    The stored parent row (a generated summary) is never sent — the model
+    reads the parent's CHILD CHUNKS.
     """
     if max_chars is None:
         max_chars = get_settings().worker.llm_max_neighborhood_chars
     order: list[str] = []
     by_parent: dict[str, list[dict]] = {}
     for row in sorted(child_chunks, key=lambda r: (r["char_start"], r["chunk_id"])):
+        if _word_count(row["text"]) < LLM_MIN_CHUNK_WORDS:
+            continue
         pid = row["parent_id"] or f"__orphan__{row['chunk_id']}"
         if pid not in by_parent:
             by_parent[pid] = []
@@ -69,16 +82,19 @@ def build_neighborhoods(child_chunks: list[dict],
     out: list[Neighborhood] = []
     for pid in order:
         rows = by_parent[pid]
-        buf: list[tuple[str, str]] = []
+        total = sum(len(r["text"]) for r in rows)
+        k = max(1, -(-total // max_chars))          # ceil division
+        target = -(-total // k)
+        buckets: list[list[tuple[str, str]]] = [[]]
         size = 0
         for row in rows:
-            if buf and size + len(row["text"]) > max_chars:
-                out.append(Neighborhood(nid=f"{pid}:{len(out)}", chunks=buf))
-                buf, size = [], 0
-            buf.append((row["chunk_id"], row["text"]))
+            if buckets[-1] and size + len(row["text"]) > target and len(buckets) < k:
+                buckets.append([])
+                size = 0
+            buckets[-1].append((row["chunk_id"], row["text"]))
             size += len(row["text"])
-        if buf:
-            out.append(Neighborhood(nid=f"{pid}:{len(out)}", chunks=buf))
+        for b in buckets:
+            out.append(Neighborhood(nid=f"{pid}:{len(out)}", chunks=b))
     return out
 
 

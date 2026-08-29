@@ -269,20 +269,39 @@ def test_cloud_client_dispatch_guard_blocks_network() -> None:
 # ---------------------------------------------------------------------------
 
 def _chunks() -> list[dict]:
+    w = "alpha beta gamma delta epsilon zeta "   # >15 words per chunk
     return [
-        {"chunk_id": "c1", "parent_id": "p1", "text": "a" * 50, "char_start": 0},
-        {"chunk_id": "c2", "parent_id": "p1", "text": "b" * 50, "char_start": 50},
-        {"chunk_id": "c3", "parent_id": "p2", "text": "c" * 7000, "char_start": 100},
-        {"chunk_id": "c4", "parent_id": None, "text": "d" * 10, "char_start": 7500},
+        {"chunk_id": "c1", "parent_id": "p1", "text": w * 3, "char_start": 0},
+        {"chunk_id": "c2", "parent_id": "p1", "text": w * 3, "char_start": len(w) * 3},
+        {"chunk_id": "c3", "parent_id": "p2", "text": w * 200, "char_start": 100},
+        {"chunk_id": "c4", "parent_id": None, "text": w * 3, "char_start": 7500},
     ]
 
 
 def test_neighborhoods_group_split_and_orphans() -> None:
     ns = build_neighborhoods(_chunks(), max_chars=100)
     p1 = [n for n in ns if n.nid.startswith("p1")]
-    assert len(p1) == 1 and {cid for cid, _ in p1[0].chunks} == {"c1", "c2"}
+    assert {cid for n in p1 for cid, _ in n.chunks} == {"c1", "c2"}
     assert any(n.nid.startswith("p2:") for n in ns)          # oversized split
     assert any(n.nid.startswith("__orphan__") for n in ns)   # no parent: still read
+
+
+def test_neighborhoods_balanced_and_stub_skipped() -> None:
+    # plan §4.9 uniform packing: parent split into k near-EQUAL buckets
+    # (ragged tail eliminated); <15-word stubs skipped entirely
+    chunks = [
+        {"chunk_id": f"c{i}", "parent_id": "p1",
+         "text": "word " * 400, "char_start": i * 2400}     # 2,000 chars, real words
+        for i in range(5)]                                  # 10,000 chars total
+    chunks.append({"chunk_id": "stub", "parent_id": "p2",
+                   "text": "tiny", "char_start": 99999})
+    ns = build_neighborhoods(chunks, max_chars=2500)
+    p1 = [n for n in ns if n.nid.startswith("p1")]
+    assert len(p1) == 4                                     # k = ceil(10000/2500)
+    sizes = [n.char_len for n in p1]
+    assert max(sizes) - min(sizes) <= 2000                  # near-uniform
+    assert all(n.chunks for n in ns)                        # no empty buckets
+    assert not any(n.nid.startswith("p2") for n in ns)      # stub skipped
 
 
 def test_precomputed_covers_every_chunk_and_composition() -> None:
@@ -305,6 +324,14 @@ def test_evidence_spans_are_chunk_ordered() -> None:
     spans = to_evidence_spans(merged)["chunk_a"]
     assert spans and spans[0].evidence_class == "llm_relation"
     assert spans[0].extractor_version == "polymath-extraction-v1-evidence"
+
+
+def test_output_budget_scales_with_input() -> None:
+    from polymath_shared.llm_extraction.client import output_budget_for
+    assert output_budget_for(800) == 400            # plan anchor: 800-in → 400
+    assert output_budget_for(15_000) >= 2990        # 15k-in → ~3k-out cap
+    assert output_budget_for(1150) == 463           # 850w neighborhood unit
+    assert output_budget_for(10) == 400             # floor
 
 
 def test_user_prompt_carries_chunk_markers() -> None:

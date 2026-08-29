@@ -123,6 +123,21 @@ class ExtractionTransportError(RuntimeError):
     """The endpoint was unreachable or repeatedly returned garbage."""
 
 
+def output_budget_for(input_tokens: float) -> int:
+    """Per-item output budget that scales with input volume (plan §4.9).
+
+    Anchored: ~400 tokens at 800-token input, up to 3,000 at 15,000-token
+    input. Lean pressure never silently loses facts — content that can't
+    fit the budget shows up as rejections/flags downstream, and the dense
+    items are the quality lane's job.
+    """
+    return int(max(400, min(3000, 253 + 0.183 * input_tokens)))
+
+
+def estimate_input_tokens(user_prompt: str) -> int:
+    return max(1, int(len(user_prompt) / 4.0))
+
+
 def build_user_prompt(neighborhoods: list[tuple[str, list[tuple[str, str]]]]) -> str:
     """neighborhoods: (neighborhood_id, [(chunk_id, text), ...]) — the
     evidence neighborhood with chunk markers."""
@@ -204,7 +219,7 @@ class LLMExtractionClient:
 
     def extract(self, neighborhoods: list[tuple[str, list[tuple[str, str]]]],
                 *, source_bytes: int, threshold_bytes: int,
-                max_tokens: int = 2500) -> LLMCallResult:
+                max_tokens: int | None = None) -> LLMCallResult:
         """One extraction call over the given neighborhoods.
 
         DISPATCH BOUNDARY: the cloud lane refuses to send anything for a
@@ -212,14 +227,18 @@ class LLMExtractionClient:
         ADAPTIVE LIMITING: the call passes the lane's AdaptiveLimiter
         (concurrency slot for local; RPM/TPM buckets for cloud) with AIMD
         feedback from the outcome.
+        OUTPUT BUDGET: scales with input volume when max_tokens is None
+        (plan §4.9 per-item budget).
         """
         decision: LaneDecision | None = None
         if self.lane == "cloud":
             decision = require_cloud_eligible(source_bytes, threshold_bytes)
         user_prompt = build_user_prompt(neighborhoods)
+        if max_tokens is None:
+            max_tokens = output_budget_for(estimate_input_tokens(user_prompt))
         expected = {nid for nid, _ in neighborhoods}
         limiter = self._lane_limiter()
-        est_tokens = len(user_prompt) / 4.0 + max_tokens / 2.0
+        est_tokens = estimate_input_tokens(user_prompt) + max_tokens / 2.0
         attempts = 0
         last_raw = ""
         last_sanitize: SanitizeResult | None = None
