@@ -1,0 +1,198 @@
+{
+  "mission": "POLYMATH_FINAL_SEMANTIC_CORPUS_REBUILD_AND_KILLCHAIN_CLOSEOUT_V1",
+  "started_head": "22d5c48",
+  "rule": "ONE production re-ingest only, after every source-dependent contract is frozen. Never re-ingest to test a contract; qualify on the sentinel first.",
+  "phases": [
+    {
+      "id": "P1",
+      "name": "FACT-ENDPOINT-ELIGIBILITY-V2",
+      "status": "DONE",
+      "commit": "d40b9d7",
+      "needs_reingest": false,
+      "gate": "tests/determinism/test_fact_endpoint_eligibility.py",
+      "result": "557 pronoun facts retired, 0 remaining; graph purged (9 edges, 8 nodes); both gates mutation-tested"
+    },
+    {
+      "id": "P2",
+      "name": "CHUNK-STRUCTURE-V2",
+      "status": "TODO",
+      "needs_reingest": true,
+      "blocks": ["P3", "P4", "P12"],
+      "goal": "New versioned chunk contract preserving meaningful source separators: paragraph breaks, headings, list items, code lines, table rows, transcript turns. NOT a naive newline join - reconstruct the separator that actually existed using materialized source offsets.",
+      "acceptance": [
+        "old contract untouched; new CHUNK_CONTRACT_V2 version stamped",
+        "heading never glued to following prose",
+        "split_sentences does not drop content after a heading token",
+        "test_line_flattening_suppresses_concept_detection INVERTS",
+        "literal coverage: zero unexplained loss, zero unexplained overlap",
+        "code indentation, table header/row relationship, list hierarchy, transcript turns survive"
+      ]
+    },
+    {
+      "id": "P3",
+      "name": "PROCEDURE-ARTIFACT-V2",
+      "status": "TODO",
+      "needs_reingest": true,
+      "depends_on": ["P2"],
+      "goal": "Local task granularity instead of one-artifact-per-document. Shadow-compare DOCUMENT vs SECTION vs PARENT_NEIGHBOURHOOD vs LOCAL_TASK_SEGMENTATION; promote the smallest deterministic mechanism that preserves goal coherence, step order and source locality.",
+      "acceptance": [
+        "sentinel_procedures.md yields 3 coherent artifacts with disjoint step sets",
+        "no unrelated-task contamination",
+        "deterministic ids",
+        "no invented steps"
+      ]
+    },
+    {
+      "id": "P4",
+      "name": "CONCEPT-INVENTORY-V2",
+      "status": "TODO",
+      "needs_reingest": true,
+      "depends_on": ["P2"],
+      "goal": "Separate durable concept inventory from the summary top-N. max_concepts=10 stops being a storage ceiling; admission quality still governs.",
+      "acceptance": [
+        "concept count no longer exactly 10/document by construction",
+        "effect of P2 measured SEPARATELY from effect of P4",
+        "no unlimited noun-phrase junk"
+      ]
+    },
+    {
+      "id": "P5",
+      "name": "PARENT-SUMMARY-ENTITY-CAP",
+      "status": "TODO",
+      "needs_reingest": false,
+      "goal": "MAX_ENTITIES=10 binds on 58.6% of parent summaries. Determine routing-only vs semantic loss; repair only if entities become unreachable to navigation.",
+      "acceptance": ["entities excluded from the top-10 summary still reachable via authoritative child/artifact evidence"]
+    },
+    {
+      "id": "P6",
+      "name": "FACT-RECALL-DIAGNOSIS",
+      "status": "TODO",
+      "needs_reingest": false,
+      "goal": "Sentinel clean SVO sentences produced 3 relation candidates and 0 accepted facts. Trace each to its FIRST rejecting mechanism and classify CORRECT_REJECTION vs a real defect.",
+      "acceptance": [
+        "first rejecting mechanism identified per candidate",
+        "clean positives recover IF a defect is proven",
+        "negation/hedge/quotation hard negatives remain clean",
+        "no global threshold loosening"
+      ]
+    },
+    {
+      "id": "P7",
+      "name": "ARTIFACT-CONFIDENCE-V2",
+      "status": "TODO",
+      "needs_reingest": false,
+      "goal": "Confidence is a constant (all procedures 1.00, all concepts 0.90). Either derive a defensible deterministic signal or remove it from semantic use. Length must not imply reliability.",
+      "acceptance": ["no candidate gains ranking/admission advantage from a constant"]
+    },
+    {
+      "id": "P8",
+      "name": "EVIDENCE-TRUNCATION",
+      "status": "TODO",
+      "needs_reingest": false,
+      "goal": "source_sentence[:300]. Determine display-snippet vs evidence authority; ensure full evidence hydrates from the authoritative chunk.",
+      "acceptance": ["answer-bearing content after char 300 remains provable and citable"]
+    },
+    {
+      "id": "P9",
+      "name": "GRAPH-LIFECYCLE-V2",
+      "status": "TODO",
+      "needs_reingest": false,
+      "goal": "Corpus/document deletion must prune derived graph state. Do not rely on query authorization to hide permanent garbage.",
+      "acceptance": ["after supported delete/rebuild, PG expected eligible graph vs Neo4j actual delta = 0"]
+    },
+    {
+      "id": "P10",
+      "name": "PIPELINE-BLOCKED-HEALTH",
+      "status": "TODO",
+      "needs_reingest": false,
+      "goal": "Bundle-stale quarantine must report BLOCKED with cause, not look IDLE. Hit twice during the audit.",
+      "acceptance": ["mutation: change fingerprinted source while workers run old -> health BLOCKED, cause surfaced, no false IDLE"]
+    },
+    {
+      "id": "P11",
+      "name": "KILLCHAIN-INVARIANCE",
+      "status": "TODO",
+      "needs_reingest": false,
+      "goal": "Close H36 batch invariance, H36 concurrency invariance, H45 same-corpus dilution, H47 order dependence (adapt with near-duplicate fixtures since the duplicate guard blocks identical content).",
+      "acceptance": ["semantic output equivalent across batch sizes, worker counts and ingest order"]
+    },
+    {
+      "id": "P12",
+      "name": "SEALED-SENTINEL-V2",
+      "status": "PARTIAL",
+      "needs_reingest": false,
+      "depends_on": ["P2"],
+      "goal": "Extend the existing 4-doc sentinel to the full 17-case contents list (passive/negated/hedged/quoted facts, resolvable pronoun, 3 procedures, procedure spanning chunks, >10 concepts, nested lists, indented code, table, exact identifiers incl C++/C#/.NET, transcript turns, boilerplate negative, unsupported question). Pin expected outputs.",
+      "acceptance": ["ingested through the PUBLIC path only", "every expected result explicitly pinned"]
+    },
+    {
+      "id": "P13",
+      "name": "FREEZE-CONTRACTS",
+      "status": "TODO",
+      "needs_reingest": false,
+      "depends_on": ["P2", "P3", "P4", "P7"],
+      "goal": "Stamp and freeze CHUNK_CONTRACT_V2, FACT_ENDPOINT_ELIGIBILITY_V2, PROCEDURE_ARTIFACT_V2, CONCEPT_ARTIFACT_V2, confidence contract. Full suite green BEFORE production rebuild.",
+      "acceptance": ["no half-old/half-new generation possible", "full regression green"]
+    },
+    {
+      "id": "P14",
+      "name": "PRODUCTION-REBUILD-ONCE",
+      "status": "TODO",
+      "needs_reingest": true,
+      "depends_on": ["P13"],
+      "goal": "Rebuild cysa-study-v1 ONCE from the retained spool as a new generation. Preserve the old generation until the new one qualifies.",
+      "acceptance": ["all stages complete", "no unexplained zero in the monitor list", "query_ready"]
+    },
+    {
+      "id": "P15",
+      "name": "POST-REBUILD-MEASUREMENT",
+      "status": "TODO",
+      "needs_reingest": false,
+      "depends_on": ["P14"],
+      "goal": "OLD vs NEW comparison across structure preservation, fact yield, pronoun junk, procedure size distribution, concept capture, graph.",
+      "acceptance": ["pronoun facts ~0", "concept recovery improves", "procedures task-coherent", "no unexplained literal loss"]
+    },
+    {
+      "id": "P16",
+      "name": "RETRIEVAL-QUALIFICATION",
+      "status": "TODO",
+      "needs_reingest": false,
+      "depends_on": ["P14"],
+      "goal": "FAST/HYBRID/GRAPH over the 13-case panel plus code, table, procedure and transcript structure-retrieval proofs.",
+      "acceptance": ["routing, child proof, boilerplate demotion, exact lookup, rescue, lexical, rerank, graph hydration, citations, abstention"]
+    },
+    {
+      "id": "P17",
+      "name": "RECONCILIATION",
+      "status": "TODO",
+      "needs_reingest": false,
+      "depends_on": ["P14"],
+      "goal": "PG/Qdrant/Neo4j exact reconciliation on the new generation.",
+      "acceptance": ["missing=0 orphan=0 foreign=0 wrong-contract=0", "no stale prior-generation state"]
+    },
+    {
+      "id": "P18",
+      "name": "FAULT-INJECTION",
+      "status": "TODO",
+      "needs_reingest": false,
+      "goal": "13 mutations from the mission list; each must trip a permanent gate.",
+      "acceptance": ["no mutation stays green; strengthen any gate that survives"]
+    },
+    {
+      "id": "P19",
+      "name": "CRASH-RECOVERY",
+      "status": "TODO",
+      "needs_reingest": false,
+      "goal": "Bounded kills mid-extraction, mid-persistence, mid-projection under the new contracts.",
+      "acceptance": ["same semantic identities, no duplicates, no missing artifacts, exact reconciliation"]
+    },
+    {
+      "id": "P20",
+      "name": "UNKNOWN-UNKNOWN-SWEEP-AND-CLOSEOUT",
+      "status": "TODO",
+      "needs_reingest": false,
+      "goal": "Final sweep for silent-loss/silent-manufacture boundaries; write eval/v5/killchain/FINAL-SEMANTIC-CORPUS-V2-CLOSEOUT.md with the full required field list.",
+      "acceptance": ["no known mission-scoped P0/P1/P2 deferred", "tree clean"]
+    }
+  ]
+}
