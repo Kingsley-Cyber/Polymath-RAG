@@ -70,6 +70,34 @@ def enforcing() -> bool:
     return os.environ.get(ENFORCE_ENV, "0") == "1"
 
 
+#: FACT-ENDPOINT-ENFORCEMENT-V1 (2026-08-29).
+#:
+#: The admission chain runs in SHADOW by default: it records every
+#: decision and withholds nothing. That is the right default for gates
+#: still being qualified — but NOT for endpoint eligibility, which is
+#: the difference between knowledge and noise.
+#:
+#: MEASURED on a YouTube transcript ingested as a quality probe: the
+#: chain recorded 148 decisions, 147 of them REJECT with F3_ENDPOINTS
+#: firing 135 times — and 114 facts were written anyway, because shadow
+#: returns True unconditionally. 33 of 148 distinct accepted-fact
+#: endpoints (22%) were closed-class pronouns:
+#:     you --uses--> http
+#:     grock --similar_to--> i
+#:     you --created--> reliable
+#: Entity admission was correct throughout ("i"/"it" were MENTION_ONLY
+#: with mention_* ids); nothing enforced it at the fact boundary.
+#:
+#: Transcripts are dense in I/you/we/they/it, so this source type is
+#: exactly what exposes it. `you --uses--> http` is false knowledge
+#: whether the source is a book or a lecture.
+#:
+#: These gates therefore enforce even in shadow. They are refusals of
+#: INELIGIBLE ENDPOINTS, not quality judgements: an endpoint with no
+#: durable identity cannot be the thing a fact is about.
+ALWAYS_ENFORCED_GATES = frozenset({"F3_ENDPOINTS"})
+
+
 def _region_policy_version() -> str | None:
     try:
         from polymath_shared.source_region import REGION_POLICY_VERSION
@@ -177,7 +205,11 @@ class FactAdmissionStage:
 
         # QUALIFY is never asserted knowledge (R4). It is retained as T1.
         may_assert = outcome == "PASS"
-        withheld = self.enforce and not may_assert
+        # FACT-ENDPOINT-ENFORCEMENT-V1: an ineligible endpoint is refused
+        # even while the rest of the chain is still in shadow.
+        hard_refusal = (outcome not in ("PASS", "QUALIFY")
+                        and verdict.gate in ALWAYS_ENFORCED_GATES)
+        withheld = (self.enforce and not may_assert) or hard_refusal
         if withheld:
             self.withheld += 1
 
@@ -192,6 +224,8 @@ class FactAdmissionStage:
             FACT_ADMISSION_CONTRACT, pol["policy_version"],
             _region_policy_version(),
         ))
+        if hard_refusal:
+            return False
         return (not self.enforce) or may_assert
 
     # -- persistence --------------------------------------------------------

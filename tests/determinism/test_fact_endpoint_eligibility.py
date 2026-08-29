@@ -98,17 +98,71 @@ def test_pronoun_can_never_receive_a_durable_admission_class():
 # ==================================================== LEDGER STATE
 @pg_required
 def test_no_active_fact_has_a_pronoun_endpoint():
-    """GATE: unresolved pronoun accepted fact endpoints = 0."""
+    """GATE: unresolved pronoun accepted fact endpoints = 0.
+
+    DERIVED FROM THE AUTHORITATIVE SET, not a hand-written list. The
+    first version of this test hardcoded 12 surfaces while
+    CLOSED_CLASS_PRONOUNS held 29, so it reported GREEN while `i` and
+    `it` were live fact endpoints on a freshly ingested transcript —
+    both of them in the 17 it never checked. A gate that enumerates a
+    subset of the thing it guards is a false green.
+    """
+    conn = _pg()
+    with conn:
+        rows = conn.execute(
+            """SELECT DISTINCT e.normalized_surface
+                 FROM facts f
+                 JOIN entities e ON e.entity_id IN (f.subject_id, f.object_id)
+                WHERE f.decision <> 'REJECT'""").fetchall()
+    offenders = sorted({r[0] for r in rows if is_unresolved_pronoun(r[0] or "")})
+    assert not offenders, (
+        f"{len(offenders)} pronoun surfaces are live fact endpoints: "
+        f"{offenders[:12]}")
+
+
+@pg_required
+def test_no_active_fact_has_a_mention_only_endpoint():
+    """An endpoint with no durable identity cannot be what a fact is
+    about. MEASURED before FACT-ENDPOINT-ENFORCEMENT-V1: the admission
+    chain recorded 147 rejections and enforced none of them, because it
+    runs in shadow by default."""
     conn = _pg()
     with conn:
         n = conn.execute(
             """SELECT count(*) FROM facts f
-                 JOIN entities e ON e.entity_id IN (f.subject_id, f.object_id)
                 WHERE f.decision <> 'REJECT'
-                  AND e.normalized_surface IN
-                      ('you','we','they','he','she','them','him','her',
-                       'this','that','these','those')""").fetchone()[0]
-    assert n == 0, f"{n} active facts still carry a pronoun endpoint"
+                  AND (f.subject_id LIKE 'mention\\_%'
+                    OR f.object_id LIKE 'mention\\_%')""").fetchone()[0]
+    assert n == 0, f"{n} active facts carry a MENTION_ONLY endpoint"
+
+
+def test_the_gate_covers_the_whole_closed_class():
+    """Pin the derivation itself: this test must not drift back into a
+    hand-maintained subset."""
+    src = Path(__file__).read_text()
+    body = src[src.index("def test_no_active_fact_has_a_pronoun_endpoint"):]
+    body = body[:body.index("\n@pg_required", 1)]
+    assert "is_unresolved_pronoun" in body, (
+        "the pronoun gate no longer derives from the authoritative "
+        "closed-class set")
+    assert "normalized_surface IN (" not in body, (
+        "the gate is enumerating surfaces again; it will go green on the "
+        "pronouns it forgot to list")
+
+
+def test_endpoint_gate_enforces_even_in_shadow():
+    """The chain is shadow-by-default, which is right for gates still
+    being qualified and wrong for endpoint eligibility."""
+    from workers.fact_admission_stage import ALWAYS_ENFORCED_GATES
+
+    assert "F3_ENDPOINTS" in ALWAYS_ENFORCED_GATES, (
+        "endpoint eligibility is advisory again; ineligible endpoints "
+        "will be written as durable facts while the chain records that "
+        "it refused them")
+    stage_src = (ROOT / "workers" / "workers"
+                 / "fact_admission_stage.py").read_text()
+    assert "if hard_refusal:\n            return False" in stage_src, (
+        "a hard refusal no longer withholds the assertion")
 
 
 @pg_required
