@@ -34,7 +34,19 @@ from polymath_shared.llm_extraction.policy import (
     require_cloud_eligible,
 )
 
-SYSTEM_PROMPT = """You are an information extraction engine. You read source text and reply with ONE JSON object and nothing else — no prose, no markdown fences.
+def _ontology_text() -> str:
+    try:
+        from polymath_shared.llm_extraction.ontology import prompt_block
+        return prompt_block()
+    except Exception:  # pragma: no cover — ontology is in-repo; never fires
+        return ""
+
+
+def _system_prompt() -> str:
+    return SYSTEM_PROMPT_TEMPLATE.replace("{{ONTOLOGY}}", _ontology_text())
+
+
+SYSTEM_PROMPT_TEMPLATE = """You are an information extraction engine. You read source text and reply with ONE JSON object and nothing else — no prose, no markdown fences.
 
 Output schema (contract polymath-extraction-v1):
 {"contract":"polymath-extraction-v1","profile":"volume","items":[{"neighborhood_id":"<repeat the id exactly>","entities":[{"surface":"...","type":"...","quote":"..."}],"relations":[{"subject":"...","predicate":"...","object":"...","quote":"..."}],"digest":{"central_claim":"...","main_mechanism":"...","retrieval_uses":["..."]}}]}
@@ -43,7 +55,9 @@ Rules:
 1. quote fields MUST be copied VERBATIM from the source text (exact substring; may be the full sentence). Never paraphrase, never invent.
 2. surface/subject/object MUST appear verbatim inside the source text.
 3. type is open vocabulary — use the most specific natural type (e.g. Product, Organization, Protocol, Attack, Person, Certification, Concept). Do not force-fit.
-4. predicate is the relation's own verb phrase as the text expresses it (e.g. "reported", "requires", "mitigated_by").
+4. predicate MUST be exactly one of these enum ids (UPPERCASE, with underscores), chosen by the definitions given:
+{{ONTOLOGY}}
+   If the relation's meaning is a performing/actioning verb not covered above, use ACTS_ON. Use RELATED_TO only when nothing else fits — keep it rare.
 5. Extract facts the text states. If the text does not state a relation, output none. Quality over quantity; stay lean.
 6. digest: central_claim ≤ 1 sentence; main_mechanism ≤ 1 sentence; retrieval_uses ≤ 3 short strings (what queries this passage should answer).
 7. One item per neighborhood_id, exactly as given.
@@ -52,6 +66,8 @@ LOCKED generation config (plan decision 18, config/extraction_models/qwen35-4b-e
 the local lane sends repetition_penalty=1.15 with repetition_context_size=400 —
 this kills exact-repeat degeneration while preserving the JSON-structural
 repetition the contract requires."""
+
+SYSTEM_PROMPT = _system_prompt()
 
 
 @dataclass

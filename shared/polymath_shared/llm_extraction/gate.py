@@ -369,6 +369,14 @@ def validate_and_normalize(packet: ExtractionPacket,
                     "error_class": "UNATTESTED_RELATION_QUOTE",
                     "neighborhood_id": item.neighborhood_id})
                 continue
+            from polymath_shared.llm_extraction.ontology import normalize_predicate
+            canon_pred, pred_method = normalize_predicate(rel.predicate)
+            if pred_method == "related_fallback":
+                out.stats_fallbacks = getattr(out, "stats_fallbacks", 0) + 1
+                out.coercions.append({
+                    "kind": "predicate_fallback", "raw": rel.predicate,
+                    "canonical": canon_pred,
+                    "neighborhood_id": item.neighborhood_id})
             missing = [name for name in (rel.subject, rel.object)
                        if not _locate(name, anchor)]
             if missing:
@@ -382,7 +390,8 @@ def validate_and_normalize(packet: ExtractionPacket,
                 continue
             out.evidence_by_chunk.setdefault(anchor.chunk_id, []).append({
                 "start": q_span[0], "end": q_span[1], "text": anchor.text[q_span[0]:q_span[1]],
-                "evidence_class": "llm_relation", "predicate": rel.predicate,
+                "evidence_class": "llm_relation", "predicate": canon_pred,
+                "predicate_raw": rel.predicate, "predicate_method": pred_method,
                 "subject": rel.subject, "object": rel.object, "score": 1.0})
             n_rel += 1
             # Endpoint mentions co-present with the relation quote: emit

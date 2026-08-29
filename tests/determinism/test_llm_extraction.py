@@ -173,7 +173,10 @@ def test_gate_locates_and_normalizes() -> None:
                for e in out.entities_by_chunk["chunk_b"])
     ev = out.evidence_by_chunk["chunk_a"][0]
     assert CHUNK_A[ev["start"]:ev["end"]] == ev["text"]
-    assert ev["predicate"] == "reported"
+    # "reported" canonicalizes onto ACTS_ON (action affecting Y); raw kept
+    assert ev["predicate"] == "ACTS_ON"
+    assert ev["predicate_raw"] == "reported"
+    assert ev["predicate_method"] == "alias"
 
 
 def test_gate_rejects_unattested_entity() -> None:
@@ -219,6 +222,16 @@ def test_map_core_type_policy_fallback_default() -> None:
     assert map_core_type("Product")[1] == "policy"
     assert map_core_type("system") == ("Technology", "fallback")
     assert map_core_type("flibble")[1] == "concept_default"
+
+
+def test_predicate_ontology_enum_and_fallback() -> None:
+    from polymath_shared.llm_extraction.ontology import (
+        LAST_RESORT, RELATION_ONTOLOGY, normalize_predicate)
+    assert len(RELATION_ONTOLOGY) == 18
+    assert normalize_predicate("REQUIRES") == ("REQUIRES", "enum")
+    assert normalize_predicate("depends on") == ("REQUIRES", "alias")
+    assert normalize_predicate("is a kind of") == ("IS_A", "alias")
+    assert normalize_predicate("wibble") == (LAST_RESORT, "related_fallback")
 
 
 # ---------------------------------------------------------------------------
