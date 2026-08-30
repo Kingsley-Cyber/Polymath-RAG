@@ -395,7 +395,6 @@ def validate_and_normalize(packet: ExtractionPacket,
     n_ent = n_rel = n_ent_rej = n_rel_rej = 0
     for item in packet.items:
         views = neighborhoods.get(item.neighborhood_id, [])
-        by_id = {v.chunk_id: v for v in views}
         for ent in item.entities:
             placed = False
             for view in views:

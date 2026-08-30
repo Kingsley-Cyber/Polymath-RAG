@@ -34,9 +34,6 @@ BREAKER_WINDOW = 10                  # ... across the last N outcomes
 BREAKER_COOLDOWN_S = 30.0            # open → half-open after this long
 
 
-class LimiterUnavailable(RuntimeError):
-    """The lane's limiter refuses the call (breaker open / saturated)."""
-
 
 @dataclass
 class ProviderLimit:

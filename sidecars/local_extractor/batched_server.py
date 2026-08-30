@@ -102,7 +102,6 @@ def infer_batch():
                 logits_processors=_state["logits_processors"])
             outs.append({"content": txt, "stop_reason": "sequential"})
     wall = __import__("time").perf_counter() - t0
-    gen_tokens = sum(len(o["content"].split()) for o in outs)  # rough, cheap
     return jsonify({"results": outs, "wall_s": round(wall, 2),
                     "batch": len(outs)})
 

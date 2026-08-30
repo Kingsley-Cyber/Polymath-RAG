@@ -24,7 +24,6 @@ from dataclasses import dataclass, field
 import httpx
 
 from polymath_shared.llm_extraction.contract import (
-    CONTRACT_ID,
     ExtractionPacket,
     SanitizeResult,
 )
@@ -228,7 +227,6 @@ class LLMExtractionClient:
         if self.lane == "cloud":
             decision = require_cloud_eligible(source_bytes, threshold_bytes)
         limiter = self._lane_limiter()
-        expected = {nid for nid, _ in neighborhoods}
         prompt_items = []
         for nid, chunks in neighborhoods:
             user_prompt = build_user_prompt([(nid, chunks)])
