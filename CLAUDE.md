@@ -3,7 +3,8 @@
 Governance and file-ownership rules live in `AGENTS.md` (read it). This file
 is the working style the owner expects, distilled from the 2026-08-29/30
 sessions. Start every session with
-`docs/wiki/plans/CONTINUITY-PACKET-<latest>.md`.
+`docs/wiki/plans/CONTINUITY-PACKET-2026-08-30-S3.md` (the latest packet; it
+names the fleet environment and the bootstrap commands).
 
 ## Way of working
 1. **Measure before you touch.** Read the code path AND the live state (DB,
