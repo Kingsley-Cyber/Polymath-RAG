@@ -171,3 +171,43 @@ only). Extract contract identity gains `coverage` + `region_role_sha256`.
   `length` if it recurs.
 - Quiz-framing relations that are declarative ("X is different") are model
   judgment errors the gate cannot see; measured on the rerun.
+
+
+## Correction 2026-08-30 (rerun, session 3) — defects found by running it
+Append-only correction to the record above; nothing earlier is rewritten.
+
+**Contract.** Additive: `raw_evidence.bundle_manifest/write_bundle(require_slices=)`;
+verify `semantic_gaps` count; `worker_runtime.claim_ticket_events` fails
+closed on missing tickets (TICKET-GATE-FAIL-CLOSED-V1); `census.chain_verdict`
+(CENSUS-FIRST-GAP-V1); delete endpoints `lock_timeout 5s` → 409
+`runs_in_flight` (DELETE-LOCK-TIMEOUT-V1); `delete_corpus` purges receipts
+for every projected id (PROJECTION-RECEIPT-PURGE-V2).
+
+**Changes.** `51dd9b2` (bundle + verify), this commit (gate, census,
+delete). Tests: `test_census_chain_verdict.py` (4),
+`tests/integration/test_ticket_gate_fail_closed.py` (DB, rolled back).
+
+**Proof (measured on the live rerun).** Extract failed at 09:30:49 and
+09:42:19 with `IncompleteEvidence: no sentence-slice manifest` (receipt
+text); verify failed with `TypeError: can only concatenate list (not
+"int") to list`. SC-200 `stage_attempts`: profile/canonicalize/
+project_canonical/project_neo4j at 09:19:58–59, extract still `ready`;
+its legacy events were enqueued 09:19:57 and its ticket chain minted at
+09:20 — CySA+/SQL had chains and their identical events stayed
+undelivered. `pg_stat_activity` during the owner's delete: two extract
+connections `idle in transaction` (747 s / 435 s), the DELETEs waiting
+on `transactionid`; killing the workers released them and all pending
+deletes returned 200. After the delete: 904 `projection_receipts` with no
+live entity (453 section cards, 293 procedures, 139 concepts, …) while
+the Qdrant collection was gone.
+
+**Rejected claims.** "The `write_bundle` ordering was introduced by the
+coverage-hardening commit" — no: `git blame` puts line 1139 on `7251e77`
+(LLM-DIRECT-FACTS-V1); it was never executed live before this rerun. "A
+second extract worker changes extraction outputs" — no: per-document,
+deterministic; only wall-clock changes.
+
+**Open contract gaps.** Lane assist (§9.4) is still a manual second
+worker; the `question_bank` region rule over-fires on non-quiz books
+(stems ≥ 2 → tighten to ≥ 3); the corpus delete does not remove Neo4j
+`Chunk`/`Document` nodes (the verifier reconciles them as orphans later).
