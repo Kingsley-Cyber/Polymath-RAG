@@ -236,13 +236,19 @@ class LLMExtractionClient:
             return []
         limiter.acquire(est_tokens=sum(len(u) for _, u, _ in prompt_items) / 4.0)
         t0 = time.perf_counter()
+        # timeout scales with TOTAL tokens (input + worst-case output) at a
+        # conservative local decode rate — a few huge prompts need minutes,
+        # not the per-request default (measured: 3x15K-token batch ≈ 3-4 min)
+        total_est = sum(estimate_input_tokens(u) for _, u, _ in prompt_items) \
+            + sum(mt for _, _, mt in prompt_items)
+        batch_timeout = max(self.timeout_s, 60.0 + (total_est / 25.0) * 2.0)
         try:
             try:
                 resp = httpx.post(
                     f"{self.base_url}/infer_batch",
                     json={"prompts": [{"system": SYSTEM_PROMPT, "user": u} for _, u, _ in prompt_items],
                           "max_tokens": max(mt for _, _, mt in prompt_items)},
-                    timeout=max(self.timeout_s, 60.0 * len(prompt_items)))
+                    timeout=batch_timeout)
                 resp.raise_for_status()
                 body = resp.json()
             except (httpx.HTTPError, json.JSONDecodeError) as exc:
