@@ -37,6 +37,8 @@ LLM_MIN_CHUNK_WORDS = 15          # <15-word stubs are structural noise
 
 NEIGHBORHOODS_PER_CALL = 4
 
+_MD_HEADING_RE = __import__("re").compile(r"^#{1,6}\s+(.+)$", __import__("re").MULTILINE)
+
 
 def _word_count(text: str) -> int:
     return len(text.split())
@@ -52,27 +54,41 @@ class Neighborhood:
         return sum(len(t) for _, t in self.chunks)
 
 
+def _chunk_heading_kind(text: str) -> str:
+    """ChunkKind via the v3.3 section classifier (Docling lineage): the
+    markdown headings inside the child text are its heading path."""
+    from workers.chunk_kind import classify_heading
+    headings = [m.group(1).strip() for m in _MD_HEADING_RE.finditer(text)]
+    return classify_heading(headings)
+
+
 def build_neighborhoods(child_chunks: list[dict],
                         max_chars: int | None = None) -> list[Neighborhood]:
     """Group children by parent (source order) into BALANCED neighborhoods.
 
-    Two plan §4.9 properties:
+    Three v3.3/Docling-lineage structure rules:
+    * **ChunkKind noise skip:** children classified TOC / bibliography /
+      index / appendix / front/back matter never enter an LLM neighborhood
+      (the dominant token cost for zero extraction value; they stay in the
+      corpus for retrieval).
     * **Uniform-size packing (straggler control):** each parent's children
-      are distributed into k = ceil(chars/cap) buckets of near-equal size
-      instead of greedy fill — no ragged tail neighborhood holds the batch.
-    * **Structural noise skip:** <15-word stubs never enter an LLM
-      neighborhood (they stay in the corpus for retrieval; only the
-      extraction input skips them).
+      are distributed into k = ceil(chars/cap) buckets of near-equal size.
+    * **Structural noise skip:** <15-word stubs are skipped too.
 
     The stored parent row (a generated summary) is never sent — the model
     reads the parent's CHILD CHUNKS.
     """
+    from workers.chunk_kind import is_noisy
     if max_chars is None:
         max_chars = get_settings().worker.llm_max_neighborhood_chars
     order: list[str] = []
     by_parent: dict[str, list[dict]] = {}
+    skipped_noise = 0
     for row in sorted(child_chunks, key=lambda r: (r["char_start"], r["chunk_id"])):
         if _word_count(row["text"]) < LLM_MIN_CHUNK_WORDS:
+            continue
+        if is_noisy(_chunk_heading_kind(row["text"])):
+            skipped_noise += 1
             continue
         pid = row["parent_id"] or f"__orphan__{row['chunk_id']}"
         if pid not in by_parent:

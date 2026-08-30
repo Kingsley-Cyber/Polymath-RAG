@@ -49,7 +49,7 @@ architecture_impact: authoritative detail extraction of the migration plan
 | 1.13 | Borrow, don't build: Instructor ADOPT; KGGen clustering BORROW; Docling-via-fork CANONICAL; LightRAG REJECT; thinking strip ours | PARTIAL (**Instructor: DEVIATED to direct client**; **KGGen clustering MISSING**; thinking strip ✓; Docling superseded by REQ-003) |
 | 1.14 | Stateless per call; 4bit load; corpus_entities + entity_links merge ladder; 850w default volume unit; 15k spike | PARTIAL (stateless ✓; 4bit ✓; **merge ladder MISSING**; volume unit = 7,000-char neighborhoods DEVIATED from 850w; 15k spike run 2026-08-29 at batch 4 only) |
 | 1.15 | Single-pass full schema: e/m/r + L latent + ps prompt seeds; open-vocabulary types; latent namespace | PARTIAL (e/r/digest ✓; **m by chunk:sentence DEVIATED to quotes**; **L latent MISSING**; **ps prompt seeds MISSING**; open vocabulary ✓ with raw labels preserved) |
-| 1.16 | Canonical chunker = 3.3 tier_chunker fork; tables atomic; ChunkKind noise skip; <15w drop | SUPERSEDED (REQ-003: live chunker kept); **<15w stub drop + structural noise skip MISSING in neighborhood builder** |
+| 1.16 | Canonical chunker = 3.3 tier_chunker fork; tables atomic; ChunkKind noise skip; <15w drop | DONE at the neighborhood layer (chunk_kind.py ported from v3.3 section_classifier; noisy kinds skip LLM extraction; <15w stub skip; tables atomic — children never split) |
 | 1.17 | Three-layer graph L0/L1/L2; query modes local/bridge/propagation; latent miner | MISSING (P4 scope; owner-unblessed PROPOSED) |
 | 1.18 | Generation lock-in: max_tokens=2500, rep_penalty=1.15, rep_ctx=400, thinking off; truncated-JSON salvage | DONE (locked config + salvage; spike showed clean at 3000 out on 15K-in) |
 
@@ -80,7 +80,7 @@ architecture_impact: authoritative detail extraction of the migration plan
 | 4.1.2 | parent_neighborhood = children concatenated with [chunk_id] markers, never parent row | DONE |
 | 4.1.3 | embedding_text [Parent][Header] content | DONE (untouched intake) |
 | 4.1.4 | old rows is_superseded on swap; CHUNKER flag | SUPERSEDED (no chunker swap) |
-| 4.1.5 | <15w stubs dropped; ChunkKind structural skip | DONE (LLM_MIN_CHUNK_WORDS=15 in neighborhood builder; ChunkKind stays superseded by intake) |
+| 4.1.5 | <15w stubs dropped; ChunkKind structural skip | DONE (chunk_kind.py: full v3.3 taxonomy — TOC/bibliography/index/appendix/front/back matter skipped from LLM extraction; body/code/table/output/caption kept) |
 | 4.1.6 | tables atomic; split tables repeat header | SUPERSEDED (intake chunker authority) |
 
 ## §4.2 model runtime
