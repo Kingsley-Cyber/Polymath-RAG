@@ -273,6 +273,15 @@ def sanitize(raw: str, expected_neighborhood_ids: set[str]) -> tuple[SanitizeRes
                                salvaged=False, raw_chars=len(raw),
                                detail="no valid packet after sanitize/salvage"),
                 None)
+    # One-neighborhood-per-call transport (alias "n1"): an empty id is
+    # unambiguous when exactly one neighborhood was sent — assign it.
+    # (Measured 2026-08-30: under grammar masking the 4B sometimes emits
+    # neighborhood_id:"" while the rest of the item is perfect.)
+    if len(expected_neighborhood_ids) == 1:
+        only = next(iter(expected_neighborhood_ids))
+        for i in packet.items:
+            if not i.neighborhood_id:
+                i.neighborhood_id = only
     unknown = {i.neighborhood_id for i in packet.items} - expected_neighborhood_ids
     if unknown:
         # Drop ONLY the items that name an unknown neighborhood — one
