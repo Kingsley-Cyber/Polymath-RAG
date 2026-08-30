@@ -403,3 +403,15 @@ deleted; machine 90% free. Both runs complete at ticket level; promotion
 waited on the census's 900 s MISSING-receipt cache. Plan §9 records the
 owner's hardening track: GLiNER full retirement, embed-early DAG split,
 job-level completion + lane assist, supervised lifecycle.
+
+**2026-08-30 07:15 — local lane truncation (owner: "you missed the model config").**
+Cross-reference locked (decision 18) vs in effect: rep-penalty 1.15/400 ✔,
+thinking off ✔ both lanes, temperature 0 ✔ — but `max_tokens` in effect
+was `output_budget_for(input)` = 484 per parent (locked 2,500). Live probe,
+same Learning SQL parent: 484 → finish=length, salvaged, 3 relations;
+2,500 → self-terminated at 841 tokens, clean, 9 relations. Fixed: cap =
+2,500 per neighborhood (+700/extra on cloud), batch accounting by expected
+output (900), `finish_reason` + `calls_truncated` in receipts. Relation
+schema adherence confirmed on both lanes: ledger predicates 100% on-enum
+(cloud 245 rows/16 predicates, 1 raw fallback; local 25/11, 3 raw
+fallbacks); probe raw emissions 8/9 on-enum. Register 4.3.8 SUPERSEDED.

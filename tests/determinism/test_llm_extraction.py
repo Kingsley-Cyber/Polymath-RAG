@@ -333,10 +333,12 @@ def test_evidence_spans_are_chunk_ordered() -> None:
 
 def test_output_budget_scales_with_input() -> None:
     from polymath_shared.llm_extraction.client import output_budget_for
-    assert output_budget_for(800) == 400            # plan anchor: 800-in → 400
-    assert output_budget_for(15_000) >= 2990        # 15k-in → ~3k-out cap
-    assert output_budget_for(1150) == 463           # 850w neighborhood unit
-    assert output_budget_for(10) == 400             # floor
+    # decision 18: the LOCKED cap per neighborhood; input size never lowers it
+    # (the input-scaled budget truncated the local lane — measured 2026-08-30)
+    assert output_budget_for(800) == 2500
+    assert output_budget_for(15_000) == 2500
+    assert output_budget_for(1150, neighborhoods=1) == 2500
+    assert output_budget_for(1150, neighborhoods=4) == 2500 + 3 * 700
 
 
 def test_user_prompt_carries_chunk_markers() -> None:

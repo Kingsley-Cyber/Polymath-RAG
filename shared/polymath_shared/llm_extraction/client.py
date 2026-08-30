@@ -44,6 +44,9 @@ from polymath_shared.llm_extraction.policy import (
 # only with a new A/B record, and expect every document to re-extract.
 GENERATION_CONFIG: dict = {
     "temperature": 0.0,
+    "max_tokens": 2500,                 # per parent neighborhood (decision 18)
+    "extra_tokens_per_neighborhood": 700,   # cloud multi-neighborhood calls
+    "expected_output_tokens": 900,      # for batch-budget accounting only
     "local": {"repetition_penalty": 1.15, "repetition_context_size": 400,
               "enable_thinking": False},
     "cloud": {"reasoning_effort": "none"},
@@ -154,6 +157,7 @@ class LLMCallResult:
     # budget the call ran under — the climb is provable from receipts.
     limiter_effective: int | None = None
     batch_tokens_cap: int | None = None
+    finish_reason: str | None = None    # "stop" | "length" (truncated) | None (unknown)
 
 
 # Local batched lane: tokens per /infer_batch call. The ENV values are the
@@ -180,15 +184,20 @@ class ExtractionTransportError(RuntimeError):
     """The endpoint was unreachable or repeatedly returned garbage."""
 
 
-def output_budget_for(input_tokens: float) -> int:
-    """Per-item output budget that scales with input volume (plan §4.9).
+def output_budget_for(input_tokens: float, neighborhoods: int = 1) -> int:
+    """Output cap per call = the LOCKED max_tokens (decision 18) per
+    neighborhood, plus room for each additional neighborhood in the call.
 
-    Anchored: ~400 tokens at 800-token input, up to 3,000 at 15,000-token
-    input. Lean pressure never silently loses facts — content that can't
-    fit the budget shows up as rejections/flags downstream, and the dense
-    items are the quality lane's job.
-    """
-    return int(max(400, min(3000, 253 + 0.183 * input_tokens)))
+    The former input-scaled budget (~400 tokens at an 800-token input)
+    TRUNCATED the local lane: MEASURED 2026-08-30 on one Learning SQL
+    parent — cap 484 → finish=length, salvaged JSON, 3 relations; cap
+    2500 → self-terminated at 841 tokens, clean JSON, 9 relations. With
+    repetition_penalty=1.15 the model self-terminates (config-fix report:
+    ~600–840 tokens per parent), so the cap is a safety ceiling, never the
+    working budget. `input_tokens` is kept for the signature; it no longer
+    lowers the cap."""
+    g = GENERATION_CONFIG
+    return int(g["max_tokens"] + g["extra_tokens_per_neighborhood"] * max(0, neighborhoods - 1))
 
 
 def estimate_input_tokens(user_prompt: str) -> int:
@@ -236,6 +245,7 @@ class LLMExtractionClient:
         self.base_url = url.rstrip("/")
         self.timeout_s = timeout_s
         self.max_attempts = max_attempts
+        self._last_finish_reason: str | None = None
 
     # -- transport ---------------------------------------------------------
 
@@ -273,6 +283,7 @@ class LLMExtractionClient:
         choice = (body.get("choices") or [{}])[0]
         content = (choice.get("message") or {}).get("content") or ""
         usage = body.get("usage") or {}
+        self._last_finish_reason = choice.get("finish_reason")
         return content, int(usage.get("prompt_tokens", 0)), int(usage.get("completion_tokens", 0))
 
     # -- public API --------------------------------------------------------
@@ -322,8 +333,12 @@ class LLMExtractionClient:
         sub_batches: list[list[tuple[str, str, int]]] = []
         cur: list[tuple[str, str, int]] = []
         cur_tokens = 0
+        expected_out = GENERATION_CONFIG["expected_output_tokens"]
         for item in prompt_items:
-            itok = estimate_input_tokens(item[1]) + item[2]
+            # budget by EXPECTED output (the model self-terminates), not
+            # by the safety cap — otherwise a 2,500 cap would shrink every
+            # batch to two prompts while ~850 tokens are actually produced
+            itok = estimate_input_tokens(item[1]) + min(item[2], expected_out)
             if cur and cur_tokens + itok > cap:
                 sub_batches.append(cur)
                 cur, cur_tokens = [], 0
@@ -422,7 +437,8 @@ class LLMExtractionClient:
                 error_class=None if packet is not None else _quarantine_class(s_res),
                 lane_decision=decision,
                 limiter_effective=limiter.effective,
-                batch_tokens_cap=cap))
+                batch_tokens_cap=cap,
+                finish_reason=row.get("stop_reason")))
         return out
 
     def extract(self, neighborhoods: list[tuple[str, list[tuple[str, str]]]],
@@ -444,7 +460,7 @@ class LLMExtractionClient:
         aliased, aliases = alias_neighborhoods(neighborhoods)
         user_prompt = build_user_prompt(aliased)
         if max_tokens is None:
-            max_tokens = output_budget_for(estimate_input_tokens(user_prompt))
+            max_tokens = output_budget_for(estimate_input_tokens(user_prompt), len(neighborhoods))
         result = self._extract_prompt(user_prompt, set(aliases), max_tokens, decision)
         restore_neighborhood_ids(result.packet, aliases)
         return result
@@ -520,7 +536,8 @@ class LLMExtractionClient:
                     sanitize=s_res, wall_ms=int((time.perf_counter() - t0) * 1000),
                     tokens_in=tokens_in, tokens_out=tokens_out, attempts=attempts,
                     raw_head=raw[:200], lane_decision=decision,
-                    limiter_effective=limiter.effective)
+                    limiter_effective=limiter.effective,
+                    finish_reason=self._last_finish_reason)
             nudge = _retry_nudge(s_res)
         return LLMCallResult(
             lane=self.lane, model=self.model, raw_text=last_raw, packet=None,

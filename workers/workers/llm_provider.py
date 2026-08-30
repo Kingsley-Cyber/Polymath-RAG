@@ -258,6 +258,7 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
             merged.stats[k] = merged.stats.get(k, 0) + v
     merged.stats["calls"] = len(results)
     merged.stats["calls_quarantined"] = sum(1 for r in results if r.packet is None)
+    merged.stats["calls_truncated"] = sum(1 for r in results if r.finish_reason == "length")
     # The controller's trajectory over THIS document, durable in the stage
     # artifact: where the lane started, where it ended, and whether the
     # value is persisted (so the climb is provable and survives restarts).
@@ -369,6 +370,7 @@ def call_receipts(results: list[LLMCallResult]) -> list[dict]:
         "attempts": r.attempts, "ok": r.packet is not None,
         "limiter_effective": r.limiter_effective,
         "batch_tokens_cap": r.batch_tokens_cap,
+        "finish_reason": r.finish_reason,
         "error_class": r.error_class or r.sanitize.error_class,
         "salvaged": r.sanitize.salvaged,
         "raw_head": (r.raw_head or "")[:200],
