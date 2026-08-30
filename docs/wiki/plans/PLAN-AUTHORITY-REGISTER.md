@@ -40,7 +40,7 @@ architecture_impact: authoritative detail extraction of the migration plan
 | 1.4 | Model sees evidence neighborhoods, never parent summary rows | DONE (build_neighborhoods) |
 | 1.5 | Summaries route / vocabulary translates / chunks prove | DONE (same as 0.1) |
 | 1.6 | Legacy compat: passage_concepts five buckets; extractor_version separates generations | PARTIAL (buckets ✓; **extractor_version does NOT distinguish LLM-era facts — MISSING stamp**) |
-| 1.7 | Two-tier extraction: 4B dense volume runs WHOLE pass; quality tier re-extracts flagged | **MISSING as designed** (built single-lane: >300KB whole-doc to cloud; ≤300KB local). Owner to decide: keep single-lane or implement flagged/dense two-tier. |
+| 1.7 | Two-tier extraction: 4B dense volume runs WHOLE pass; quality tier re-extracts flagged | **SUPERSEDED by owner decision 2026-08-29: single-lane adopted** (>300KB→cloud whole-doc, ≤300KB→local; measured 6m34s). Two-tier flagged/dense machinery will NOT be built. Three-layer graph (1.17) also IGNORED by owner. Scope: wave = cyber books already in corpus (original 12); the 14 backfilled non-cyber books are held out of extraction. |
 | 1.8 | Shadow lane before promotion (benchmark gate) | DEVIATED (see 0.8) |
 | 1.9 | Rejected claims locked (no concurrent local windows; no parent rows to model; no LLM→Neo4j) | DONE (respected) |
 | 1.10 | Cloud quality lane routed by file size; >300KB→cloud; no cap at launch | DONE (selection+dispatch enforced) |

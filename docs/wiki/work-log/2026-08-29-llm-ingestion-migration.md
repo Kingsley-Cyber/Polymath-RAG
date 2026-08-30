@@ -63,9 +63,11 @@ architecture_impact: extraction provider seam (LOCAL-LLM-EXTRACTION-V1)
 | 11 | Smart quality sample | DONE | scripts/llm_quality_sample.py; 40/40 attested, PASS |
 | 12 | Owner test: local (6KB business doc) | DONE | query_ready (misc-owner-test-v1), local lane |
 | 13 | Owner test: cloud (SC-200, 331,996B) | DONE | cloud lane, 302 entities/102 relations, 18 calls |
-| 14 | 26-book LLM generation | IN PROGRESS | 9 bumped + 14 backfilled (submitted); 3 done prior; fleet extracting |
+| 14 | Book wave (owner-scoped) | IN PROGRESS | OWNER DECISION: single-lane adopted (two-tier superseded); scope = original 12 cyber books in corpus; 14 non-cyber backfilled books moved to archived cysa-backlog-v1 (restore = delete registry row); 3 LLM-done + 9 armed; wave clock /tmp/wave_t0 |
 | 15 | True canary (Intelligence-Driven 813,984B) | IN PROGRESS | extract done; run reconciling |
 | 16 | Graphify re-run + goal prompt + final report | PENDING | — |
+| 17 | Plan Authority Register (a9e8b9a) | DONE | 34 DONE/9 DEVIATED/8 SUPERSEDED/17 PARTIAL/24 MISSING at creation; items 1+2 closed (c7e98b9, af2470e) |
+| 18 | Register 1.16/4.1.5: v3.3 ChunkKind structure layer | DONE | 7f447e9: TOC/bib/index/appendix/front/back-matter skip LLM extraction; tables atomic; <15w skip |
 
 ## Contract
 
