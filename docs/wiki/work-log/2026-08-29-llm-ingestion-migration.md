@@ -303,3 +303,13 @@ at query time. Enrichment never a readiness dependency.
 **Open contract gaps.** Owner decisions §7 (lane rule for enrichment,
 exposure as flag, `/ask` consumption of `extract{}`, orphan children) are
 assumed defaults until confirmed; P6 cases must be owner-authored.
+
+**Plan v1.1 (2026-08-30, owner Part 3).** Design target frozen: FAST
+unchanged; HYBRID is the consumer (latent = RESCUE union of parent ids,
+never RRF votes); GRAPH inherits. Lean six-output contract, stripped input
+(children only, real token ceiling), two vectors per parent
+(`latent_abstraction`, `latent_transfer`), caps 8/8 → ≤3 parents. Code facts
+recorded: lexical parents in HYBRID are not deepened (latent needs an
+explicit child filter search); `_truncate_reserving_rescue` reserves only
+`GLOBAL_CHILD_RESCUE` (latent needs reserved seats). Implementation gated on
+owner e2e validation of the base, then a per-file mapping pass.
