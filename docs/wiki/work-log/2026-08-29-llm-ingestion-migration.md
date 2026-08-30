@@ -313,3 +313,38 @@ recorded: lexical parents in HYBRID are not deepened (latent needs an
 explicit child filter search); `_truncate_reserving_rescue` reserves only
 `GLOBAL_CHILD_RESCUE` (latent needs reserved seats). Implementation gated on
 owner e2e validation of the base, then a per-file mapping pass.
+
+## 2026-08-30 — base validation, session 1: STALE-PROJECTION-TOLERANCE-V1
+
+**Owner report.** First UI query on `cysa-study-v1` (HYBRID) failed:
+`UnresolvedDocumentError unresolved document: doc_51f6c85f… (document summary)`.
+**Root cause (measured).** The 14 non-cyber backfills moved out of the
+corpus (owner decision 2026-08-29) left their derived state behind:
+3,576 of 15,735 Qdrant routing points (23%; 2,535 section cards, 1,026
+children, 15 document cards) and 2,780 `retrieval_summaries` rows point at
+documents no longer in the corpus. Any routing hit on a ghost aborted the
+whole answer. Contributing defect: `DELETE /documents` purges Qdrant points
+by `chunk_id` only — routing cards are keyed by `summary_id`, so every
+document delete leaves its document/section cards behind.
+**Changes.** `evidence_assembly.assemble_evidence_bundle(unresolved=…)`:
+optional sink; TEXT-lane hits whose document/chunk no longer resolves are
+skipped + logged (`error_code=stale_projection`); graph-lane facts still
+raise; default strict (contract + `/evidence` unchanged).
+`stale_projection_degradation()` → `retrieval.degraded` on `/chat/stream`;
+`/chat` uses the sink (response contract has no slot; log only).
+`delete_document` captures `retrieval_summaries.summary_id` before deleting
+and purges those points too. New `scripts/purge_orphan_projections.py`
+(dry-run default; `--apply`) for existing ghosts. Test
+`test_evidence_assembly_stale.py` (3).
+**Also this session.** Orchestrator was not running (no supervisor slot
+spawned it) → started; reranker `:8743` down → started; 8 workers
+self-quarantined `BUNDLE_STALE_CODE_DRIFT` after today's commits →
+restarted (all healthy on one bundle); 6 `project_qdrant` tickets `failed`
+at attempt 3 (embedder `/infer` 500 during the sidecar crash loop) —
+re-queue prepared via `control.tickets._emit_ticket_event`, awaiting owner.
+**Proof.** Replay of the owner's query via `POST /chat/stream` (HYBRID):
+answer returned; `degraded=[projection: 10 stale hits from 2 documents
+skipped]`, 20 live evidence chunks. Dry-run purge: 3,576 points / 2,780 +
+40 + 1 rows. Tests: stale suite 3/3, contract + assembler suites green.
+**Open.** Owner to run the purge `--apply` and approve the ticket re-queue;
+answer quality of the enumeration query is the owner's validation item.

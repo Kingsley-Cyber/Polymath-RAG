@@ -28,6 +28,8 @@ coexist as separate items. Identical inputs produce identical output.
 """
 from __future__ import annotations
 
+import logging
+
 from typing import Callable, Optional
 
 ASSEMBLY_VERSION = "2.0.0"
@@ -89,6 +91,30 @@ class MissingProvenanceError(AssemblyError):
         self.missing = missing
 
 
+log = logging.getLogger("polymath.evidence_assembly")
+
+
+def _skip(sink: list[dict], entry: dict) -> None:
+    """Record a stale routing hit (document/chunk gone) instead of failing."""
+    sink.append(entry)
+    log.warning("stale projection hit skipped: %s", entry,
+                extra={"error_code": "stale_projection"})
+
+
+def stale_projection_degradation(unresolved: list[dict]) -> list[dict]:
+    """meta.degraded entry for skipped stale hits (empty when none)."""
+    if not unresolved:
+        return []
+    docs = sorted({e.get("doc_id") for e in unresolved if e.get("doc_id")})
+    return [{
+        "component": "projection",
+        "effect": f"{len(unresolved)} stale routing hit(s) from {len(docs)} "
+                  "deleted/moved document(s) skipped; answer built from live evidence only",
+        "reason": "stale_projection: run scripts/purge_orphan_projections.py --apply",
+        "doc_ids": docs[:20],
+    }]
+
+
 def assemble_evidence_bundle(
     query: str,
     graph_facts: list[dict],
@@ -102,6 +128,7 @@ def assemble_evidence_bundle(
     evidence_order: Optional[list[str]] = None,
     document_summaries: Optional[list[dict]] = None,
     section_summaries: Optional[list[dict]] = None,
+    unresolved: Optional[list[dict]] = None,
 ) -> dict:
     """Assemble the R3a bundle (v2 typed lanes). Pure and deterministic
     given the resolvers.
@@ -126,6 +153,15 @@ def assemble_evidence_bundle(
 
     Resolvers return None for a missing row; the assembler raises the
     matching typed error instead of emitting an unsupported claim.
+
+    STALE-PROJECTION-TOLERANCE-V1 (2026-08-30): when `unresolved` is a
+    list, TEXT-lane items (document/section summaries, child chunks)
+    whose document or chunk no longer resolves are SKIPPED and recorded
+    there — a routing hit on a deleted document is a projection defect,
+    not evidence, and must not fail the whole answer (MEASURED: 23% of
+    the production routing collection pointed at moved-out documents).
+    Graph-lane facts still raise: a fact citing a missing document is an
+    integrity breach. Default None keeps the strict contract.
     """
     items: list[dict] = []
 
@@ -196,6 +232,9 @@ def assemble_evidence_bundle(
         doc_id = row["doc_id"]
         doc = resolve_document(doc_id)
         if doc is None:
+            if unresolved is not None:
+                _skip(unresolved, {"kind": "document_summary", "doc_id": doc_id})
+                continue
             raise UnresolvedDocumentError(doc_id, "document summary")
         summary = row["summary"] or ""
         items.append({
@@ -236,6 +275,9 @@ def assemble_evidence_bundle(
         doc_id = row.get("doc_id") or ""
         doc = resolve_document(doc_id)
         if doc is None:
+            if unresolved is not None:
+                _skip(unresolved, {"kind": "section_summary", "doc_id": doc_id, "chunk_id": chunk_id})
+                continue
             raise UnresolvedDocumentError(doc_id, f"section summary {chunk_id}")
         summary = row["summary"] or ""
         items.append({
@@ -279,9 +321,15 @@ def assemble_evidence_bundle(
         seen_chunks.add(chunk_id)
         chunk = resolve_chunk(chunk_id)
         if chunk is None:
+            if unresolved is not None:
+                _skip(unresolved, {"kind": "child_chunk", "chunk_id": chunk_id, "doc_id": row.get("doc_id") or ""})
+                continue
             raise UnresolvedChunkError(chunk_id, "retrieved child evidence")
         doc = resolve_document(row.get("doc_id") or chunk.get("doc_id") or "")
         if doc is None:
+            if unresolved is not None:
+                _skip(unresolved, {"kind": "child_chunk", "chunk_id": chunk_id, "doc_id": row.get("doc_id") or chunk.get("doc_id") or ""})
+                continue
             raise UnresolvedDocumentError(
                 row.get("doc_id") or chunk.get("doc_id") or "",
                 f"evidence chunk {chunk_id}",

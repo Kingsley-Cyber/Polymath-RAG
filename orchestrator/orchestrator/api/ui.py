@@ -374,6 +374,13 @@ def delete_document(doc_id: str, confirm: str = "") -> dict:
                  (chunk_ids,), "projection_attempts", optional=True)
             _del("DELETE FROM parent_summaries WHERE parent_id = ANY(%s)",
                  (chunk_ids,), "parent_summaries", optional=True)
+        # routing-summary points are keyed by summary_id, not chunk_id:
+        # capture them BEFORE the rows go, or the Qdrant purge below misses
+        # every document/section routing card (MEASURED 2026-08-30: 2,550
+        # ghost routing cards in the production collection).
+        summary_ids = [r[0] for r in conn.execute(
+            "SELECT summary_id FROM retrieval_summaries WHERE doc_id=%s",
+            (doc_id,)).fetchall()]
         _del("DELETE FROM retrieval_summaries WHERE doc_id=%s", (doc_id,),
              "retrieval_summaries", optional=True)
         _del("DELETE FROM document_summaries WHERE doc_id=%s", (doc_id,),
@@ -404,7 +411,8 @@ def delete_document(doc_id: str, confirm: str = "") -> dict:
         client = qdrant_client(timeout=60)
         try:
             n = 0
-            ids = [qdrant_point_uuid(cid) for cid in chunk_ids]
+            ids = ([qdrant_point_uuid(cid) for cid in chunk_ids]
+                   + [qdrant_point_uuid(sid) for sid in summary_ids])
             for col in client.get_collections().collections:
                 if col.name.startswith(prefix) and ids:
                     for i in range(0, len(ids), 512):
@@ -1198,6 +1206,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                 ]
 
             yield _phase("assemble", "Assembling the evidence bundle…")
+            stale: list[dict] = []
             try:
                 bundle = assemble_evidence_bundle(
                     query, graph_facts, evidence_rows,
@@ -1209,6 +1218,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                     resolve_chunk=_resolve_chunk,
                     document_summaries=document_summaries,
                     section_summaries=section_summaries,
+                    unresolved=stale,
                 )
             except AssemblyError as exc:
                 yield _sse("error", {"error_code": type(exc).__name__,
@@ -1233,6 +1243,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                     "preview": (span.get("text") or "")[:220],
                 })
             from orchestrator.api.fast import degradations
+            from polymath_shared.evidence_assembly import stale_projection_degradation
 
             retrieval = {
                 "mode": "VECTOR" if ui_mode == "FAST" else ui_mode,
@@ -1242,7 +1253,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                 # NEVER-ERROR-ON-A-COLD-MODEL: a lane that degraded
                 # (e.g. reranker parked behind extraction) still answers
                 # — the UI says so instead of the query failing.
-                "degraded": degradations(),
+                "degraded": degradations() + stale_projection_degradation(stale),
             }
 
             if llm_model is not None:

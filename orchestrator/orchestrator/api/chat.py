@@ -96,6 +96,7 @@ async def chat(req: ChatRequest) -> dict:
             for d in g["documents"] for s in d["sections"]
         ]
         try:
+            stale: list[dict] = []
             bundle = assemble_evidence_bundle(
                 query,
                 graph_facts,
@@ -106,6 +107,7 @@ async def chat(req: ChatRequest) -> dict:
                 resolve_entity=lambda eid: _resolve_entity(eid),
                 resolve_document=lambda did: _resolve_document(did),
                 resolve_chunk=lambda cid: _resolve_chunk(cid),
+                unresolved=stale,
                 document_summaries=document_summaries,
                 section_summaries=section_summaries,
             )
@@ -142,6 +144,7 @@ async def chat(req: ChatRequest) -> dict:
                 {"chunk_id": r[0], "doc_id": r[1], "summary": r[2] or ""} for r in rows
             ]
         try:
+            stale: list[dict] = []
             bundle = assemble_evidence_bundle(
                 query,
                 [],
@@ -152,6 +155,7 @@ async def chat(req: ChatRequest) -> dict:
                 resolve_entity=lambda eid: _resolve_entity(eid),
                 resolve_document=lambda did: _resolve_document(did),
                 resolve_chunk=lambda cid: _resolve_chunk(cid),
+                unresolved=stale,
                 document_summaries=document_summaries,
                 section_summaries=section_summaries,
             )
@@ -208,6 +212,7 @@ async def chat(req: ChatRequest) -> dict:
         _evidence_order = None
         if selected_children and all("rerank_score" in c for c in selected_children):
             _evidence_order = [c["chunk_id"] for c in selected_children]
+        stale: list[dict] = []
         bundle = assemble_evidence_bundle(
             query,
             graph_facts,
@@ -218,6 +223,7 @@ async def chat(req: ChatRequest) -> dict:
             resolve_entity=lambda eid: _resolve_entity(eid),
             resolve_document=lambda did: _resolve_document(did),
             resolve_chunk=lambda cid: _resolve_chunk(cid),
+            unresolved=stale,
             document_summaries=[
                 {"doc_id": p["doc_id"],
                  "summary": (p.get("retrieval_profile") or {}).get("semantic_summary") or ""}
