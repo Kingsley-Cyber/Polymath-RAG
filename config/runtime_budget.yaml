@@ -115,7 +115,7 @@ profiles:
     why: "every ingestion stage end to end: intake through verify, with the
           extraction and embedding models. Excludes the orchestrator and
           reranker, which serve queries and are not part of building."
-    slots: [control, intake, profile, extract, canonicalize,
+    slots: [control, intake, profile, extract, extract2, canonicalize,
             project_canonical, neo4j, qdrant, verify, compile_objects,
             summaries, sidecar_gliner, sidecar_spacy, sidecar_embedder]
   converge:
