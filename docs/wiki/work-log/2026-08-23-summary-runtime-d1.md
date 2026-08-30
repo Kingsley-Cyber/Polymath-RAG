@@ -30,3 +30,10 @@ the live store; all six tables verified via information_schema.
 ## Open gaps
 
 D2-D6 workers/lifecycle; dedup slices; projections; acceptance tests.
+## Rejected claims
+
+(Historical entry — recorded in the entry body above.)
+
+## Open contract gaps
+
+(Historical entry — recorded in the entry body above.)

@@ -31,7 +31,8 @@ from polymath_shared.receipts import (
     stage_contract_hash,
     stage_transaction,
 )
-from workers.chunker import materialize_chunks, plan_document
+from workers.chunker import (SEPARATOR_SOURCE, materialize_chunks,
+                             plan_document)
 from workers.summarizer import summarize
 from workers.profile_router import route_document
 
@@ -39,9 +40,17 @@ STAGE = "intake"
 EVENT_TYPE = "intake.v1"
 NEXT_EVENT_TYPE = "chunked.v1"
 
+#: CHUNK-STRUCTURE-V2 promoted to the ingest contract (P13 decision
+#: taken early so the new-document quality probe measures the real
+#: generation instead of V2 artifacts sitting on V1 flattened chunks).
+#:
+#: Existing corpora are NOT touched: their rows keep whatever contract
+#: produced them, and chunk ids are content-addressed, so nothing
+#: re-identifies. Only NEW ingests get V2.
 CHUNK_FROZEN_PARAMS = {
     "child_target_chars": 1200,
     "parent_fanout": 4,
+    "separator_mode": SEPARATOR_SOURCE,
 }
 NORMALIZATION = {"strip_bom": True, "normalize_crlf": True, "nfc": True}
 ROUTER_VERSION = "1.0.0"
@@ -134,6 +143,40 @@ def process_event(conn: Connection, event: dict) -> None:
                 f"{owner[0]!r}; a document has exactly one corpus. "
                 f"Query the owning corpus, or archive/restore it — never "
                 f"a silent empty ingest.")
+
+        # DUPLICATE-DOCUMENT-GUARD-V1 layer 2 (format-independent):
+        # the SAME corpus already holds this document — either the same
+        # normalized bytes (doc_id is content-addressed) or the same
+        # extracted text under a different container format
+        # (materialization.normalized_text_sha256). Re-ingesting used
+        # to hit ON CONFLICT DO NOTHING and mint a run over the
+        # existing document — silent success the user read as a second
+        # copy. A duplicate is a typed, loud refusal that names the
+        # existing document.
+        #
+        # REPLAY EXEMPTION (measured on first activation): intake
+        # replays are a designed property — a redelivered event re-runs
+        # this stage and must land on the same rows as a no-op. The
+        # run's OWN document (same doc_id AND same source_name) is
+        # therefore never a duplicate; without this exemption the
+        # guard failed every replayed intake against its own first
+        # attempt (3 retries -> terminal failure on a healthy ingest).
+        dup = conn.execute(
+            """SELECT source_name FROM documents
+                WHERE corpus_id = %s
+                  AND (doc_id = %s OR
+                       materialization->>'normalized_text_sha256' = %s)
+                  AND NOT (doc_id = %s AND source_name = %s)
+                LIMIT 1""",
+            (corpus_id, doc_id, materialization.normalized_text_sha256,
+             doc_id, source_name),
+        ).fetchone()
+        if dup:
+            raise RuntimeError(
+                f"DUPLICATE_DOCUMENT: {source_name!r} has the same content "
+                f"as {dup[0]!r}, already in corpus {corpus_id!r} (matched "
+                f"by normalized text, independent of file format); ingest "
+                f"refused so the corpus keeps one copy.")
 
         conn.execute(
             """

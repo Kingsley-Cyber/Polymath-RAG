@@ -72,6 +72,11 @@ SOURCE (pdf/epub/md/txt/html)
                        procedure/concept artifact compilation behind router lanes
   → canonicalize/project_*   Neo4j + Qdrant + canonical projections (receipted)
   → summaries worker   parent/document/corpus summaries + vocabulary
+                       (VOCABULARY: contract repaired 2026-08-28; family
+                        SEMANTICS failed qualification — merges on
+                        co-occurrence, 6/7 hard negatives wrong.
+                        concept_families stays EMPTY in production by
+                        decision. eval/v5/VOCABULARY-SEMANTIC-BRIDGE-FINAL.md)
   → verify_worker      store-vs-artifact reconciliation
   → query_ready        census promotion via generation barrier
 ASK  query_scope (fail-closed) → stored-object routes (/ask today)

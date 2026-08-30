@@ -43,15 +43,17 @@ import os
 OLLAMA_URL = os.environ.get("POLYMATH_OLLAMA_URL",
                             "http://127.0.0.1:11434")
 
-DETERMINISTIC = {
-    "id": "deterministic-template-v3",
-    "label": "Deterministic · grounded",
-    "description": "Claim-validated assembly from stored evidence. "
-                   "Every sentence cites a bundle item; unsupported "
-                   "queries abstain.",
-    "kind": "deterministic",
-    "default": True,
-}
+#: STUDY-DEFAULT-2026-08-27. New chats inherit the FIRST list entry
+#: (frontend App.tsx uses synths[0]). The default is the fastest
+#: capable LLM present (measured TTFT over this corpus: deepseek-v4-
+#: flash 3.6 s vs kimi-k2.7 7.8 s), overridable without a deploy.
+#:
+#: The deterministic stitcher (`deterministic-template-v3`) is no
+#: longer OFFERED (owner request 2026-08-27): its verbatim quote
+#: assembly is audit output, not an answer. The execution path is kept
+#: for API callers that name it explicitly.
+_PREFERRED_DEFAULT = os.environ.get(
+    "POLYMATH_DEFAULT_SYNTHESIZER", "ollama:deepseek-v4-flash:cloud")
 
 
 def _ollama_models() -> list[dict]:
@@ -81,7 +83,8 @@ def corpora(all: bool = False) -> dict:
             """
             SELECT c.corpus_id, c.purpose, c.query_enabled,
                    COALESCE(d.docs, 0),
-                   COALESCE(r.ready, 0) > 0
+                   COALESCE(r.ready, 0) > 0,
+                   c.name
               FROM corpora c
               LEFT JOIN (SELECT corpus_id, COUNT(*) AS docs
                            FROM documents GROUP BY corpus_id) d
@@ -100,9 +103,42 @@ def corpora(all: bool = False) -> dict:
     # the filter.
     return {"corpora": [
         {"corpus_id": r[0], "purpose": r[1], "query_enabled": r[2],
-         "documents": r[3], "query_ready": r[4]}
+         "documents": r[3], "query_ready": r[4],
+         "name": r[5] or r[0]}
         for r in rows if all or r[3] > 0 or r[1] == "production"
     ]}
+
+
+class RenameCorpusRequest(BaseModel):
+    name: str
+
+
+@router.patch("/corpora/{corpus_id}")
+def rename_corpus(corpus_id: str, req: RenameCorpusRequest) -> dict:
+    """Rename a corpus's DISPLAY NAME only. `corpus_id` is immutable
+    identity: it keys the FK chains, run scoping, and the derived
+    Qdrant collection names — renaming identity would orphan the
+    stores. The display name is presentation, safe to change freely."""
+    name = req.name.strip()
+    if not name:
+        raise HTTPException(422, {
+            "error_code": "invalid_name",
+            "message": "name must be non-empty"})
+    if len(name) > 120:
+        raise HTTPException(422, {
+            "error_code": "invalid_name",
+            "message": "name must be 120 characters or fewer"})
+    with tx() as conn:
+        row = conn.execute(
+            """UPDATE corpora SET name = %s, updated_at = now()
+                WHERE corpus_id = %s
+            RETURNING corpus_id, name""",
+            (name, corpus_id)).fetchone()
+        if not row:
+            raise HTTPException(404, {
+                "error_code": "QUERY_SCOPE_UNKNOWN",
+                "message": f"corpus {corpus_id!r} not found"})
+    return {"corpus_id": row[0], "name": row[1]}
 
 
 @router.get("/documents")
@@ -127,8 +163,21 @@ def documents(corpus_id: str) -> dict:
             """,
             (corpus_id,)).fetchall()
         runs = conn.execute(
-            """SELECT run_id, status, created_at FROM runs
-                WHERE corpus_id = %s ORDER BY created_at DESC LIMIT 25""",
+            """SELECT r.run_id, r.status, r.created_at,
+                      COALESCE(
+                        (SELECT re.error FROM receipts re
+                          WHERE re.run_id = r.run_id
+                            AND re.status = 'failed'
+                            AND re.error IS NOT NULL
+                          ORDER BY re.wall_clock DESC LIMIT 1),
+                        (SELECT t.last_error_note FROM stage_tickets t
+                          WHERE t.run_id = r.run_id
+                            AND t.last_error_note IS NOT NULL
+                          ORDER BY t.updated_at DESC LIMIT 1)
+                      ) AS error
+                 FROM runs r
+                WHERE r.corpus_id = %s
+                ORDER BY r.created_at DESC LIMIT 25""",
             (corpus_id,)).fetchall()
     return {
         "corpus_id": corpus_id,
@@ -137,7 +186,8 @@ def documents(corpus_id: str) -> dict:
              "bytes": r[3], "created_at": str(r[4]), "chunks": r[5]}
             for r in rows
         ],
-        "runs": [{"run_id": r[0], "status": r[1], "created_at": str(r[2])}
+        "runs": [{"run_id": r[0], "status": r[1], "created_at": str(r[2]),
+                  "error": r[3]}
                  for r in runs],
     }
 
@@ -180,6 +230,24 @@ async def upload(corpus_id: str = Form(...),
     ref = await anyio.to_thread.run_sync(spool_write, file.file)
     if ref["bytes"] == 0:
         raise HTTPException(422, "empty file")
+    # DUPLICATE-DOCUMENT-GUARD-V1 layer 1 (byte-identical): the
+    # uploaded file's raw sha256 matches documents.source_hash (the
+    # original-bytes hash intake records), so this exact file —
+    # whatever it is named — is already in the corpus. Refuse loudly
+    # instead of minting a run that silently no-ops into the existing
+    # content-addressed document. Layer 2 (same text, different
+    # container format) lives in the intake worker where the extracted
+    # text exists.
+    with tx() as conn:
+        dup = conn.execute(
+            """SELECT source_name FROM documents
+                WHERE corpus_id = %s AND source_hash = %s LIMIT 1""",
+            (corpus_id, ref["sha256"])).fetchone()
+    if dup:
+        raise HTTPException(409, {
+            "error_code": "duplicate_document",
+            "message": f"this exact file is already in the corpus as "
+                       f"{dup[0]!r}; upload skipped"})
     payload = canonical_intake_payload(
         corpus_id=corpus_id,
         source_name=source_name,
@@ -391,10 +459,67 @@ def save_generated(req: GeneratedPage) -> dict:
     return {"url": f"/generated/{fname}", "file": str(gen_dir / fname)}
 
 
+@router.get("/reasoning_modes")
+def reasoning_modes() -> dict:
+    """The v3.3 reasoning layer's curated modes for the UI dropdown,
+    plus every raw template id for power-user blends."""
+    from orchestrator.api.reasoning import CURATED_MODES, REASONING_TEMPLATES
+
+    def _label(mode: str) -> str:
+        return mode.replace("_", " ")
+
+    return {
+        "modes": [
+            {"id": m, "label": _label(m),
+             "description": (REASONING_TEMPLATES.get(m) or
+                             "no template — model answers directly")
+             .strip()[:160]}
+            for m in CURATED_MODES
+        ],
+        "blend_pool": sorted(REASONING_TEMPLATES.keys()),
+        "default": os.environ.get("POLYMATH_REASONING_MODE", "none"),
+    }
+
+
+@router.get("/ui_pulse")
+def ui_pulse() -> dict:
+    """UI-PRESENCE-WARMTH (2026-08-27). The frontend pings this while
+    the tab is open and visible; the autopilot keeps the embedder
+    resident while the signal is fresh, so the FIRST query of a session
+    never pays the ~20 s sidecar cold start. Closing the app lets the
+    signal age out and the model park as before."""
+    with tx() as conn:
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS runtime_signals (
+                 key text PRIMARY KEY, updated_at timestamptz NOT NULL)""")
+        conn.execute(
+            """INSERT INTO runtime_signals VALUES ('ui_active', now())
+               ON CONFLICT (key) DO UPDATE SET updated_at = now()""")
+    return {"ok": True}
+
+
 @router.get("/synthesizers")
 def synthesizers() -> dict:
-    return {"synthesizers": [DETERMINISTIC, *_litellm_models(),
-                             *_ollama_models()]}
+    entries = [*_litellm_models(), *_ollama_models()]
+    # Move the preferred study default to the front (new chats take
+    # synths[0]).
+    for i, e in enumerate(entries):
+        if e["id"] == _PREFERRED_DEFAULT:
+            entries.insert(0, entries.pop(i))
+            break
+    if not entries:
+        # Model daemons unreachable: still offer the preferred id so
+        # the UI has something to submit; generation fails typed if it
+        # is truly down.
+        entries = [{
+            "id": _PREFERRED_DEFAULT,
+            "label": _PREFERRED_DEFAULT.split(":", 1)[-1],
+            "description": "model daemon currently unreachable",
+            "kind": _PREFERRED_DEFAULT.split(":", 1)[0],
+        }]
+    for e in entries:
+        e["default"] = e["id"] == entries[0]["id"]
+    return {"synthesizers": entries}
 
 
 class ProviderUpsert(BaseModel):
@@ -647,7 +772,12 @@ class StreamChatRequest(BaseModel):
     workspace: Optional[str] = None
     all_authorized: bool = False
     mode: Optional[str] = "HYBRID"        # VECTOR|HYBRID|GRAPH|ASK
-    synthesizer: Optional[str] = "deterministic-template-v3"
+    synthesizer: Optional[str] = None  # None -> _PREFERRED_DEFAULT
+    # v3.3 reasoning layer (orchestrator.api.reasoning): a mode key
+    # from REASONING_TEMPLATES, plus an optional power-user blend.
+    # None -> POLYMATH_REASONING_MODE env, default "none".
+    reasoning: Optional[str] = None
+    reasoning_blend: list[str] = []
     # LLM generation context: prior conversation turns and evidence
     # chunks carried from earlier answers in this chat, so a request
     # like "build a PBQ test from what we just studied" can use the
@@ -660,32 +790,91 @@ def _sse(event: str, data: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 
 
-_LLM_SYSTEM = """You are Polymath's generation layer over an \
+#: Grounding core: the non-negotiable evidence contract. The STYLE
+#: layer appended below (POLYMATH_STYLE_PROMPT, ported verbatim from
+#: polymath v3.3) governs the answer's visual grammar; where the two
+#: conflict — notably citations — the grounding core wins.
+_LLM_GROUNDING = """You are Polymath's generation layer over an \
 evidence-first retrieval system. You receive EVIDENCE blocks retrieved \
 from the user's own corpus (current turn + material carried from \
-earlier turns of this session).
+earlier turns of this session). The user is STUDYING this material — \
+teach it, never inventory it.
 
-Rules:
-- Ground everything you produce in the provided evidence. When you use \
-a piece of evidence, reference its [locator] so the user can audit it.
+Grounding rules (non-negotiable; they override anything below):
+- Everything you assert must come from the provided evidence. Cite by \
+appending [locator] at the END of the sentence or paragraph a claim \
+comes from — never interrupt a sentence with a citation, never open \
+with boilerplate like "Based on the evidence in your corpus".
 - If the user asks you to BUILD something (a quiz, a PBQ-style HTML \
 test, flashcards, a study plan, code), build it fully, drawing the \
 substance from the evidence. Emit complete artifacts (e.g., a full \
 self-contained HTML document in an ```html code block).
 - If the evidence does not contain what the user needs, say exactly \
 what is missing instead of inventing facts.
+- When the material has an exam angle (objectives, question formats, \
+common traps), end with a brief "for the exam" note drawn from the \
+evidence.
+- COMPLETENESS OVERRIDES BREVITY. When the user asks for ALL of \
+something — every domain, the full list, each step — enumerate every \
+item the evidence contains, verbatim and in order. Do not sample, \
+summarise, or stop at the representative few; the length rules above \
+are suspended for this case. Scan the WHOLE of each evidence block \
+before you answer, including its final lines: structured lists are \
+routinely split across blocks and continue in the next one. State \
+explicitly which items the evidence does not cover, and never imply a \
+list is complete when it is not.
 - These answers are GENERATED and are labeled as such downstream; do \
 not claim to be a validated source of truth."""
 
 
+def _llm_system_prompt() -> str:
+    """Grounding core + the v3.3 style layer + date context (the v3.3
+    freshness block minus its live-web lines — v4 has no web lane)."""
+    from datetime import datetime
+
+    from orchestrator.api.polymath_style import POLYMATH_STYLE_PROMPT
+
+    current = datetime.now().astimezone()
+    return (
+        f"{_LLM_GROUNDING}\n\n{POLYMATH_STYLE_PROMPT}\n\n"
+        "Date and source freshness:\n"
+        f"- Today's date is {current.strftime('%Y-%m-%d')} "
+        f"({current.tzname() or 'local time'}). Interpret relative dates "
+        "like today, latest, recent, current, yesterday, and last year "
+        "against this date.\n"
+        "- Do not reject older sources when they are primary, historical, "
+        "or the user is asking about stable theory."
+    )
+
+
+#: EVIDENCE-TRUNCATION-V1 (2026-08-27). Each evidence item was cut to
+#: 900 characters, but the production chunker targets 1,200 (measured
+#: corpus average 1,197) — so roughly the last quarter of EVERY chunk
+#: was silently withheld from the model. That decapitates exactly the
+#: chunks whose value sits at the end: MEASURED, the CySA objectives
+#: map chunk is 1,230 chars with subdomain 1.4 starting at character
+#: 1,061 and 1.5 at 1,144 — retrieval delivered them, the prompt
+#: builder deleted them, and the answer listed only 1.1-1.3.
+#: 1,600 covers the chunk-size distribution with headroom.
+_EVIDENCE_TEXT_CHARS = int(
+    os.environ.get("POLYMATH_EVIDENCE_TEXT_CHARS", "1600"))
+
+
 def _grounded_messages(query: str, bundle: dict, graph_facts: list,
-                       history, carry_context) -> list[dict]:
-    """Shared grounded-prompt assembly for every LLM backend."""
+                       history, carry_context,
+                       reasoning: str | None = None,
+                       reasoning_blend: list[str] | None = None) -> list[dict]:
+    """Shared grounded-prompt assembly for every LLM backend.
+
+    `reasoning`/`reasoning_blend` apply the v3.3 reasoning layer
+    (orchestrator.api.reasoning, ported verbatim): templates prepend to
+    the user prompt after the RAG context is assembled — the exact
+    v3.3 composition point."""
     ev_lines: list[str] = []
     for item in (bundle.get("evidence_bundle") or [])[:40]:
         span = item.get("source_span") or {}
         loc = span.get("locator") or ""
-        text = (span.get("text") or "")[:900]
+        text = (span.get("text") or "")[:_EVIDENCE_TEXT_CHARS]
         if loc and text:
             ev_lines.append(f"[{loc}]\n{text}")
     for f in graph_facts[:20]:
@@ -704,18 +893,25 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
                           + "\n---\n".join(carried))
     if not context_block:
         context_block = "EVIDENCE: none retrieved for this turn."
-    messages = [{"role": "system", "content": _LLM_SYSTEM}]
+    messages = [{"role": "system", "content": _llm_system_prompt()}]
     for turn in (history or [])[-12:]:
         if turn.role in ("user", "assistant") and turn.content:
             messages.append({"role": turn.role,
                              "content": turn.content[:4000]})
-    messages.append({"role": "user",
-                     "content": f"{context_block}\n\nREQUEST:\n{query}"})
+    from orchestrator.api.reasoning import apply_reasoning
+
+    user_content = apply_reasoning(
+        f"{context_block}\n\nREQUEST:\n{query}",
+        mode=reasoning or os.environ.get("POLYMATH_REASONING_MODE", "none"),
+        blend=reasoning_blend)
+    messages.append({"role": "user", "content": user_content})
     return messages
 
 
 def _litellm_generate(model: str, query: str, bundle: dict,
-                      graph_facts: list, history, carry_context):
+                      graph_facts: list, history, carry_context,
+                      reasoning: str | None = None,
+                      reasoning_blend: list[str] | None = None):
     """LLM-PROVIDER-LAYER-V1: stream tokens from ANY provider through
     LiteLLM (OpenAI-format model strings: openai/gpt-4o,
     anthropic/claude-..., gemini/..., groq/..., ollama/...). Credentials
@@ -724,17 +920,25 @@ def _litellm_generate(model: str, query: str, bundle: dict,
     import litellm
 
     messages = _grounded_messages(query, bundle, graph_facts,
-                                  history, carry_context)
+                                  history, carry_context,
+                                  reasoning, reasoning_blend)
     try:
         stream = litellm.completion(
             model=model, messages=messages, stream=True, timeout=300,
             **_litellm_credentials(model))
         for chunk in stream:
             piece = ""
+            rpiece = ""
             try:
-                piece = chunk.choices[0].delta.content or ""
+                delta = chunk.choices[0].delta
+                piece = delta.content or ""
+                # REASONING-STREAM-V1: providers that expose model
+                # thinking surface it as reasoning_content.
+                rpiece = getattr(delta, "reasoning_content", None) or ""
             except Exception:
                 piece = ""
+            if rpiece:
+                yield {"reasoning": rpiece}
             if piece:
                 yield {"token": piece}
     except Exception as exc:
@@ -744,43 +948,67 @@ def _litellm_generate(model: str, query: str, bundle: dict,
 
 
 def _ollama_generate(model: str, query: str, bundle: dict,
-                     graph_facts: list, history, carry_context):
+                     graph_facts: list, history, carry_context,
+                     reasoning: str | None = None,
+                     reasoning_blend: list[str] | None = None):
     """Stream tokens from the local Ollama daemon over a grounded
-    prompt. Yields {'token': str} pieces or one {'error': ...}."""
+    prompt. Yields {'token': str} pieces or one {'error': ...}.
+
+    Prompt assembly is the SHARED builder — this function previously
+    duplicated it inline, which let the two backends drift."""
     import httpx
 
-    ev_lines: list[str] = []
-    for item in (bundle.get("evidence_bundle") or [])[:40]:
-        span = item.get("source_span") or {}
-        loc = span.get("locator") or ""
-        text = (span.get("text") or "")[:900]
-        if loc and text:
-            ev_lines.append(f"[{loc}]\n{text}")
-    for f in graph_facts[:20]:
-        ev_lines.append(
-            f"[fact:{f.get('fact_id', '')[:24]}] "
-            f"{f.get('subject')} —{f.get('predicate')}→ {f.get('object')}")
-    carried = [
-        f"[{c.locator}]\n{c.preview}" for c in (carry_context or [])[:30]
-        if c.preview
-    ]
+    messages = _grounded_messages(query, bundle, graph_facts,
+                                  history, carry_context,
+                                  reasoning, reasoning_blend)
 
-    context_block = ""
-    if ev_lines:
-        context_block += ("EVIDENCE (this turn):\n" + "\n---\n".join(ev_lines))
-    if carried:
-        context_block += ("\n\nEVIDENCE (carried from earlier turns):\n"
-                          + "\n---\n".join(carried))
-    if not context_block:
-        context_block = "EVIDENCE: none retrieved for this turn."
+    try:
+        with httpx.stream(
+                "POST", f"{OLLAMA_URL}/api/chat",
+                json={"model": model, "messages": messages, "stream": True,
+                      "think": True},
+                timeout=httpx.Timeout(300, connect=10)) as r:
+            if r.status_code != 200:
+                r.read()
+                # REASONING-STREAM-V1: `think` is rejected by models
+                # without a thinking mode — retry once without it
+                # rather than failing the chat.
+                if "think" in r.text.lower():
+                    yield from _ollama_stream_plain(model, messages)
+                    return
+                yield {"error": True, "error_code": "ollama_error",
+                       "message": r.text[:300]}
+                return
+            for line in r.iter_lines():
+                if not line:
+                    continue
+                try:
+                    chunk = json.loads(line)
+                except Exception:
+                    continue
+                if chunk.get("error"):
+                    yield {"error": True, "error_code": "ollama_error",
+                           "message": str(chunk["error"])[:300]}
+                    return
+                msg = chunk.get("message") or {}
+                # REASONING-STREAM-V1: thinking tokens stream to the UI
+                # reasoning card; they are never part of the answer.
+                rpiece = msg.get("thinking", "")
+                if rpiece:
+                    yield {"reasoning": rpiece}
+                piece = msg.get("content", "")
+                if piece:
+                    yield {"token": piece}
+                if chunk.get("done"):
+                    return
+    except Exception as exc:
+        yield {"error": True, "error_code": "ollama_unavailable",
+               "message": f"{type(exc).__name__}: {exc}"[:300]}
 
-    messages = [{"role": "system", "content": _LLM_SYSTEM}]
-    for turn in (history or [])[-12:]:
-        if turn.role in ("user", "assistant") and turn.content:
-            messages.append({"role": turn.role,
-                             "content": turn.content[:4000]})
-    messages.append({"role": "user",
-                     "content": f"{context_block}\n\nREQUEST:\n{query}"})
+
+def _ollama_stream_plain(model: str, messages: list[dict]):
+    """Fallback stream without `think` for models that reject it."""
+    import httpx
 
     try:
         with httpx.stream(
@@ -829,7 +1057,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
     if ui_mode not in ("FAST", "HYBRID", "GRAPH", "ASK"):
         raise HTTPException(422, {"error_code": "unknown_mode",
                                   "message": f"mode {req.mode!r}"})
-    synth = req.synthesizer or "deterministic-template-v3"
+    synth = req.synthesizer or _PREFERRED_DEFAULT
     llm_model = None
     llm_backend = None
     if synth.startswith("ollama:"):
@@ -1004,11 +1232,17 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                     "kind": item.get("text_kind") or item.get("kind"),
                     "preview": (span.get("text") or "")[:220],
                 })
+            from orchestrator.api.fast import degradations
+
             retrieval = {
                 "mode": "VECTOR" if ui_mode == "FAST" else ui_mode,
                 "evidence_count": len(evidence_rows),
                 "graph_fact_count": len(graph_facts),
                 "chunks": chunk_inventory,
+                # NEVER-ERROR-ON-A-COLD-MODEL: a lane that degraded
+                # (e.g. reranker parked behind extraction) still answers
+                # — the UI says so instead of the query failing.
+                "degraded": degradations(),
             }
 
             if llm_model is not None:
@@ -1021,10 +1255,16 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                         else _ollama_generate)
                 for tok in _gen(
                         llm_model, query, bundle, graph_facts,
-                        req.history, req.carry_context):
+                        req.history, req.carry_context,
+                        req.reasoning, req.reasoning_blend):
                     if tok.get("error"):
                         yield _sse("error", tok)
                         return
+                    rpiece = tok.get("reasoning", "")
+                    if rpiece:
+                        # streams into the UI's reasoning card; never
+                        # part of the recorded answer
+                        yield _sse("reasoning", {"text": rpiece})
                     piece = tok.get("token", "")
                     if piece:
                         full.append(piece)

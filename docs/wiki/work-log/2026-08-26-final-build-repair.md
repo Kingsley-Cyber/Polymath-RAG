@@ -1,3 +1,12 @@
+---
+change_id: FINAL-BUILD-P0-REPAIRS
+owner: governance
+date: 2026-08-26
+status: implemented
+architecture_impact: none (repair/measurement log)
+last_reviewed: 2026-08-29
+---
+
 # 2026-08-26 — Final build: P0 repairs + transcript qualification
 
 Mission POLYMATH_FINAL_BUILD_REPAIR_AND_QUALIFICATION, from the SMART
@@ -63,3 +72,23 @@ unaltered transcript: created(facebook, andromeda) — F1–F8 PASS
 chunk_161c2c49…@2402:3508 → grounded cited answer. Acceptance
 252×2; panel 13/13; product gate 10/10; extraction 16.7→14.3 s.
 Verdict revised: PRODUCTION GO.
+
+## Contract
+
+(Historical entry — the contract it worked under is stated in the entry body above.)
+
+## Changes
+
+(Historical entry — the changes are recorded in the entry body above.)
+
+## Proof
+
+(Historical entry — the proof and measured evidence are in the entry body above.)
+
+## Rejected claims
+
+(Historical entry — none recorded beyond the entry body above.)
+
+## Open contract gaps
+
+(Historical entry — see the entry body and the CURRENT_STATE chain above.)

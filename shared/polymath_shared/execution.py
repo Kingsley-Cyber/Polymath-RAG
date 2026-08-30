@@ -269,22 +269,37 @@ def register_worker(conn: Connection, identity: dict[str, Any]) -> None:
     )
 
 
+#: Sentinel distinguishing "leave current_ticket alone" (the default)
+#: from an explicit None ("clear it"). The old COALESCE(%s, ...) form
+#: could never clear: a worker that finished a stage kept advertising
+#: its last ticket forever, which made every idle worker look mid-stage
+#: (measured while diagnosing STALL-2026-08-27).
+_TICKET_UNSET = object()
+
+
 def heartbeat(conn: Connection, worker_id: str, *,
-              current_ticket: str | None = None,
+              current_ticket: object = _TICKET_UNSET,
               processed_count: int | None = None,
               last_error: str | None = None) -> None:
-    """Touch the registration; revive from stale on activity."""
+    """Touch the registration; revive from stale on activity.
+
+    `processed_count` is a DELTA, not an absolute: pass 1 per completed
+    ticket. (It was previously assigned verbatim, so every worker
+    reported a lifetime count of exactly 1 regardless of throughput.)
+    """
+    set_ticket = current_ticket is not _TICKET_UNSET
+    ticket_value = current_ticket if set_ticket else None
     conn.execute(
         """
         UPDATE worker_registrations SET
             heartbeat_at = now(),
             status = CASE WHEN status = 'stale' THEN 'healthy' ELSE status END,
-            current_ticket = COALESCE(%s, current_ticket),
-            processed_count = COALESCE(%s, processed_count),
+            current_ticket = CASE WHEN %s THEN %s ELSE current_ticket END,
+            processed_count = processed_count + COALESCE(%s, 0),
             last_error = %s
         WHERE worker_id = %s
         """,
-        (current_ticket, processed_count, last_error, worker_id),
+        (set_ticket, ticket_value, processed_count, last_error, worker_id),
     )
 
 

@@ -44,3 +44,10 @@ policy v3 / kimi_v2: predicate_pack_version=1.4.0,
 vocabulary=semantic-query-policy-v3,
 rejection_histogram.entity_admission={E7_DURABILITY: 12}.
 Full suite green post-change.
+## Rejected claims
+
+(Historical entry — recorded in the entry body above.)
+
+## Open contract gaps
+
+(Historical entry — recorded in the entry body above.)

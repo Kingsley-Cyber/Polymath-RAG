@@ -4,6 +4,7 @@ owner: governance
 date: 2026-08-25
 status: implemented
 architecture_impact: claim ordering policy change; stale scale mass archived
+last_reviewed: 2026-08-29
 ---
 
 # FOREGROUND-UNDER-BACKLOG (2026-08-25)

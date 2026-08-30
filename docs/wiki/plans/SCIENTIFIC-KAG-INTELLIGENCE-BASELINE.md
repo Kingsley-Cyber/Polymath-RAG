@@ -1,3 +1,12 @@
+---
+change_id: SCIENTIFIC-KAG-INTELLIGENCE-BASELINE
+owner: governance
+date: 2026-08-23
+status: reference
+architecture_impact: none (documentation; front matter added 2026-08-29 governance cleanup)
+last_reviewed: 2026-08-29
+---
+
 # SCIENTIFIC KAG INTELLIGENCE BASELINE REPORT (draft 1 — 2026-08-24)
 
 Replay mode: transaction-scoped production replay (real sidecars, real

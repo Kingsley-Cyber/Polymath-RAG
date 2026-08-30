@@ -1,3 +1,12 @@
+---
+change_id: COMBINED-EXTRACTION-REPORT
+owner: governance
+date: 2026-08-23
+status: reference
+architecture_impact: none (documentation; front matter added 2026-08-29 governance cleanup)
+last_reviewed: 2026-08-29
+---
+
 # COMBINED EXTRACTION REPORT — all ingested corpora (2026-08-24)
 
 Five corpora through the production path under v2 shadow (all lanes).

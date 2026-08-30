@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { fetchCorpora } from "../api";
+import { fetchCorpora, renameCorpus } from "../api";
 import type { Corpus } from "../types";
 
 /** Corpus manager: every corpus in the store, with single and bulk
@@ -48,6 +48,22 @@ export default function CorporaView({
     }
     setLog((l) => [`✓ deleted ${id}`, ...l].slice(0, 20));
     return true;
+  };
+
+  const renameOne = async (c: Corpus) => {
+    const typed = window.prompt(
+      `Rename corpus (display name only — the id ${c.corpus_id} is immutable):`,
+      c.name || c.corpus_id,
+    );
+    if (typed === null) return;
+    try {
+      const r = await renameCorpus(c.corpus_id, typed);
+      setLog((l) => [`✓ renamed ${c.corpus_id} → "${r.name}"`, ...l].slice(0, 20));
+    } catch (e) {
+      setLog((l) => [`✗ rename ${c.corpus_id}: ${e}`, ...l].slice(0, 20));
+    }
+    await refresh();
+    onChanged?.();
   };
 
   const confirmAndDelete = async (ids: string[]) => {
@@ -104,7 +120,12 @@ export default function CorporaView({
                     />
                   </td>
                   <td>
-                    <b>{c.corpus_id}</b>
+                    <b>{c.name || c.corpus_id}</b>
+                    {c.name && c.name !== c.corpus_id && (
+                      <div className="mono" style={{ opacity: 0.6 }}>
+                        {c.corpus_id}
+                      </div>
+                    )}
                     {busy === c.corpus_id && (
                       <span className="mono"> deleting…</span>
                     )}
@@ -121,6 +142,12 @@ export default function CorporaView({
                     </span>
                   </td>
                   <td>
+                    <button
+                      className="chunk-chip"
+                      onClick={() => renameOne(c)}
+                    >
+                      ✎ rename
+                    </button>{" "}
                     <button
                       className="chunk-chip"
                       onClick={() => confirmAndDelete([c.corpus_id])}

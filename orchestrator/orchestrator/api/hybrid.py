@@ -24,11 +24,18 @@ from polymath_shared.retrieval import lexical_score
 from polymath_shared.retrieval_modes import MODE_HYBRID, hybrid_mode_plan
 from polymath_shared.settings import get_settings
 
+from polymath_shared.query_shape import plan_for_query
+
 from orchestrator.api.fast import (
+    _begin_retrieval,
     _embed_query,
     _ensure_fast_ready,
+    _neighbor_lookup,
+    _region_lookup,
+    _liveness,
     _rerank_children,
     _corpus_collections,
+    degradations,
     FastSearcher,
 )
 
@@ -69,6 +76,7 @@ def hybrid_fast_retrieve(
     plan: Optional[HybridRetrievalPlan] = None,
 ) -> dict:
     """Production HYBRID: one qualified hybrid execution."""
+    _begin_retrieval()
     plan = plan or hybrid_mode_plan(MODE_HYBRID)
     if corpus_id is None:
         raise HTTPException(status_code=422, detail={
@@ -89,16 +97,20 @@ def hybrid_fast_retrieve(
     try:
         searcher = FastSearcher(client, collections)
         t0 = time.time()
+        shaped = plan_for_query(
+            query,
+            HybridRetrievalPlan(**{**plan.__dict__, "corpus_ids": (corpus_id,)}),
+        )
         result = hybrid_retrieve(
             query,
-            plan=HybridRetrievalPlan(
-                **{**plan.__dict__, "corpus_ids": (corpus_id,)},
-            ),
+            plan=shaped,
             embed_query=_embed_query,
             routing_search=searcher,
             lexical_search=lambda q, k: _lexical_search(q, corpus_id, k),
-            rerank_children=_rerank_children if plan.rerank_enabled else None,
+            rerank_children=_rerank_children if shaped.rerank_enabled else None,
             summary_vectors=None,  # MMR rejected; lambda 1.0 promoted
+            neighbor_lookup=_neighbor_lookup,
+            region_lookup=_region_lookup,
         )
         total_ms = (time.time() - t0) * 1000
     finally:
@@ -118,6 +130,8 @@ def hybrid_fast_retrieve(
             "selected_document_count": len(result.selected_documents),
             "selected_section_count": len(result.selected_sections),
             "evidence_count": len(result.final_evidence),
+            "degraded": degradations(),
+            "liveness": _liveness(result.trace, MODE_HYBRID),
         },
         "selected_documents": [
             {

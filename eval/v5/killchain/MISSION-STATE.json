@@ -1,0 +1,375 @@
+{
+  "mission": "POLYMATH_FINAL_SEMANTIC_CORPUS_REBUILD_AND_KILLCHAIN_CLOSEOUT_V1",
+  "started_head": "22d5c48",
+  "rule": "ONE production re-ingest only, after every source-dependent contract is frozen. Never re-ingest to test a contract; qualify on the sentinel first. RELEASE-BLOCKER RULE (owner, 2026-08-28). Do NOT create work because a metric is imperfect. A finding blocks release ONLY if it demonstrably causes one of: source loss, false knowledge, unsupported answers, inability to retrieve answer-bearing evidence, corpus leakage, or pipeline failure. Everything else is recorded and deferred. No further open-ended forensic audits are authorised.",
+  "phases": [
+    {
+      "id": "P1",
+      "name": "FACT-ENDPOINT-ELIGIBILITY-V2",
+      "status": "DONE",
+      "commit": "d40b9d7",
+      "needs_reingest": false,
+      "gate": "tests/determinism/test_fact_endpoint_eligibility.py",
+      "result": "557 pronoun facts retired, 0 remaining; graph purged (9 edges, 8 nodes); both gates mutation-tested"
+    },
+    {
+      "id": "P2",
+      "name": "CHUNK-STRUCTURE-V2",
+      "status": "DONE",
+      "needs_reingest": true,
+      "blocks": [
+        "P3",
+        "P4",
+        "P12"
+      ],
+      "goal": "New versioned chunk contract preserving meaningful source separators: paragraph breaks, headings, list items, code lines, table rows, transcript turns. NOT a naive newline join - reconstruct the separator that actually existed using materialized source offsets.",
+      "acceptance": [
+        "old contract untouched; new CHUNK_CONTRACT_V2 version stamped",
+        "heading never glued to following prose",
+        "split_sentences does not drop content after a heading token",
+        "test_line_flattening_suppresses_concept_detection INVERTS",
+        "literal coverage: zero unexplained loss, zero unexplained overlap",
+        "code indentation, table header/row relationship, list hierarchy, transcript turns survive"
+      ],
+      "commit": "dfb0dfd",
+      "result": "V2 reconstructs real source separators (line count normalised, indentation reproduced). Mechanism corrected: split_sentences loses 0 chars, it fails to split, suppressing the sentence-start anchor. Fixture: concepts 1->3, procedures 0->1, glued headings 1->0; code/table/list/transcript survive; zero literal loss or overlap at 200/400/1200; heading offsets valid; packing decisions identical to v1. v1 default byte-identical and frozen; CHUNK_CONTRACT_V1/V2 stamped, unknown mode fails loud. 27-test gate, 5/5 mutations caught. Suite 83 failed = baseline."
+    },
+    {
+      "id": "P3",
+      "name": "PROCEDURE-ARTIFACT-V2",
+      "status": "DONE",
+      "needs_reingest": true,
+      "depends_on": [
+        "P2"
+      ],
+      "goal": "Local task granularity instead of one-artifact-per-document. Shadow-compare DOCUMENT vs SECTION vs PARENT_NEIGHBOURHOOD vs LOCAL_TASK_SEGMENTATION; promote the smallest deterministic mechanism that preserves goal coherence, step order and source locality.",
+      "acceptance": [
+        "sentinel_procedures.md yields 3 coherent artifacts with disjoint step sets",
+        "no unrelated-task contamination",
+        "deterministic ids",
+        "no invented steps"
+      ],
+      "commit": "ddc6b69",
+      "result": "Shadow-compared 4 segmentation units with the same detector: DOCUMENT/PARENT collapse 3 tasks into 1, SECTION merges the two sharing a heading, LOCAL_TASK gives 3 with 0 contamination. Also found and fixed two recall defects underneath: newline-splitting shredded hard-wrapped steps, and the open-class verb whitelist saw 5 of 20 steps. Closed-class exclusion + subject detection replaces it. Result: 3 artifacts, disjoint step sets, all 20 steps verbatim in source order, goals from goal markers; facts/boilerplate/transcript yield 0 artifacts. Worker persists every task; counter moved to v2. V1 frozen. 20-test gate, 7/7 mutations caught, suite 83 = baseline."
+    },
+    {
+      "id": "P4",
+      "name": "CONCEPT-INVENTORY-V2",
+      "status": "DONE",
+      "needs_reingest": true,
+      "depends_on": [
+        "P2"
+      ],
+      "goal": "Separate durable concept inventory from the summary top-N. max_concepts=10 stops being a storage ceiling; admission quality still governs.",
+      "acceptance": [
+        "concept count no longer exactly 10/document by construction",
+        "effect of P2 measured SEPARATELY from effect of P4",
+        "no unlimited noun-phrase junk"
+      ],
+      "commit": "413e4f2",
+      "result": "Isolated the two effects on all 18 docs from the retained spool: cap removal alone 121->975 (x8.1); structure alone 121->122 (x1.0) because the cap already pins every doc at 10; combined 121->1236. P2's real +261 was masked by the ceiling. Lifting the cap alone would admit 32% junk (fragments, bare generics, participles) - the cap was an accidental quality filter - so admission replaces it, reusing entity_admission's GENERIC_HEAD/WEAK_MODIFIERS/DEICTIC_MODIFIERS. 1236->844 admitted; 0/18 docs at exactly 10. summary_rank keeps the top-N as a slice, not a storage decision. 38-test gate, 8/8 mutations caught, suite 83 = baseline."
+    },
+    {
+      "id": "P5",
+      "name": "PARENT-SUMMARY-ENTITY-CAP",
+      "status": "DONE",
+      "needs_reingest": false,
+      "goal": "MAX_ENTITIES=10 binds on 58.6% of parent summaries. Determine routing-only vs semantic loss; repair only if entities become unreachable to navigation.",
+      "acceptance": [
+        "entities excluded from the top-10 summary still reachable via authoritative child/artifact evidence"
+      ],
+      "commit": "e51985d",
+      "result": "OUTCOME A - routing-only cap, NO CHANGE. 280 cases, 11 parents (26-67 durable entities), FAST+HYBRID, all lanes live. In-summary controls 38.8% unreachable vs omitted 30.8% => omission moves reachability -8.0pp (omitted fare slightly better). Mechanism: parent_summaries.entities is read on no retrieval path and never enters embedded routing text; omitted evidence recovered via MULTI_REPRESENTATION/GLOBAL_CHILD_RESCUE/SECTION_LED. Separate finding routed to P16: ~33% of bare entity-name queries miss at top-10 regardless of the cap. Also pinned SOURCE-RECOVERY-KEY-V1 (source_hash not content_hash; 12/12 vs 0/12) as a P14 precondition. 11 tests, 6/6 mutations caught, suite 83 = baseline."
+    },
+    {
+      "id": "P6",
+      "name": "FACT-RECALL-DIAGNOSIS",
+      "status": "DONE",
+      "needs_reingest": false,
+      "goal": "Sentinel clean SVO sentences produced 3 relation candidates and 0 accepted facts. Trace each to its FIRST rejecting mechanism and classify CORRECT_REJECTION vs a real defect.",
+      "acceptance": [
+        "first rejecting mechanism identified per candidate",
+        "clean positives recover IF a defect is proven",
+        "negation/hedge/quotation hard negatives remain clean",
+        "no global threshold loosening"
+      ],
+      "blocker": true,
+      "step": 2,
+      "commit": "4336f1a",
+      "result": "Traced to FIRST divergence: fact_admission_decisions had 0 rows - admission never ran. All 3 candidates died at the rulepack modality gate with scope_gate:negated. Root cause one boundary upstream: v1 flattening glued a heading mid-text so the sentence slice spanned 3 units (135 chars) and 'does not' from a DIFFERENT sentence set negated=True. All 3 rejections were CORRECT given corrupt input - a chunking defect, not an admission defect. No threshold loosened, admission untouched (pinned). SECOND FINDING: V2 alone would have made it WORSE - preserved newlines + newline-splitting shredded hard-wrapped prose (7 of 20 slices, splitting 'Nessus was'/'developed by Tenable'). Fixed with length-preserving _soften_wraps in the V2 path only. After: 4/4 positives ACCEPT, negation REJECT, refutation QUALIFY(attributed), hedge QUALIFY(speculative). 12+4 tests, 4/4 mutations caught, suite 83 = baseline."
+    },
+    {
+      "id": "P8",
+      "name": "EVIDENCE-TRUNCATION",
+      "status": "DONE",
+      "needs_reingest": false,
+      "goal": "source_sentence[:300]. Determine display-snippet vs evidence authority; ensure full evidence hydrates from the authoritative chunk.",
+      "acceptance": [
+        "answer-bearing content after char 300 remains provable and citable"
+      ],
+      "blocker": true,
+      "step": 3,
+      "note": "Bounded check, not a redesign: prove answer-bearing content past char 300 still hydrates from the authoritative chunk. If it hydrates, close. Touches 'inability to retrieve answer-bearing evidence'.",
+      "commit": "b22efd7",
+      "result": "CLOSED NO CODE CHANGE. source_sentence is written but read by no answer path; retrieval selects supporting_chunks and Qdrant embeds name:desc. Live: 9/121 concepts at the 300 cap, 0 at the 400 desc cap, 0 without supporting_chunks, and every sampled truncated concept hydrates full text from its authoritative chunk. Snippet is display; chunk is authority. 6-test gate, 2/2 mutations caught after two real gate weaknesses were fixed. Recorded for P16: supporting_chunks is document-wide so citation is imprecise (not evidence loss)."
+    },
+    {
+      "id": "P9",
+      "name": "GRAPH-LIFECYCLE-V2",
+      "status": "DONE",
+      "needs_reingest": false,
+      "goal": "Corpus/document deletion must prune derived graph state. Do not rely on query authorization to hide permanent garbage.",
+      "acceptance": [
+        "after supported delete/rebuild, PG expected eligible graph vs Neo4j actual delta = 0"
+      ],
+      "blocker": true,
+      "step": 3,
+      "note": "Stale graph state answers queries about deleted content = false knowledge. Bounded to delete/rebuild pruning.",
+      "commit": "afae936",
+      "result": "TWO defects. (1) ACUTE: _neo4j_expand ran LIMIT 20 in Cypher then filtered authorization in Python, so unauthorized edges ate answer slots - 15.6% of REL edges unauthorized, up to 8/20 slots wasted, ACCEPT facts pushed past the limit. Fixed by filtering inside the query before LIMIT. (2) LIFECYCLE: reconciler pruned only Chunk + endpoint-ineligible REL, so Document/Fact/Evidence accumulated forever; pruned 28,855 orphan nodes and extended the reconciler to every derived kind, deleting only what PG proves is gone. Final delta zero: Document 18/18, Evidence 3063/3063, Chunk 8887/8887, Fact 3148<=3184. CORRECTED: the 85 non-ACCEPT REL edges are QUALIFY (hedged/attributed) - legitimate knowledge, not garbage; pinned so they are never deleted. 10-test gate, 3/3 mutations caught, suite 83 = baseline."
+    },
+    {
+      "id": "P10",
+      "name": "PIPELINE-BLOCKED-HEALTH",
+      "status": "DONE",
+      "needs_reingest": false,
+      "goal": "Bundle-stale quarantine must report BLOCKED with cause, not look IDLE. Hit twice during the audit.",
+      "acceptance": [
+        "mutation: change fingerprinted source while workers run old -> health BLOCKED, cause surfaced, no false IDLE"
+      ],
+      "blocker": true,
+      "step": 3,
+      "note": "Bundle-stale quarantine reporting IDLE instead of BLOCKED masks pipeline failure. Hit twice during the audit and will be hit again by the P14 rebuild.",
+      "commit": "76246df",
+      "result": "Quarantined workers recorded status+cause but nothing read it, so a blocked pipeline looked idle - cost two manual diagnoses. Added pipeline_health.py + GET /health/pipeline reporting BLOCKED (with cause and action) / HEALTHY / IDLE. Live fleet at implementation time: 2 of 2 live workers quarantined under BUNDLE_STALE_CODE_DRIFT with 1 stuck ticket, previously invisible. Two draft bugs caught by measurement: counting all 1310 registrations (981 stale) would make BLOCKED permanent, and stage_tickets.state does not exist (it is status, lowercase). BLOCKED does not require a non-empty queue. 10-test gate, 5/5 mutations caught, suite 83 = baseline."
+    },
+    {
+      "id": "P21",
+      "name": "RUNTIME-CONFIG-DEFECT",
+      "status": "DONE",
+      "needs_reingest": false,
+      "blocker": true,
+      "step": 3,
+      "goal": "The orchestrator does not load .env (model_config env_file=None), so it falls back to a built-in Postgres password that does not match the deployed one. /retrieve returns 500 on a normally-launched instance. This is a live pipeline failure and a P14 hazard.",
+      "acceptance": [
+        "a normally-launched orchestrator serves /retrieve without manual env export",
+        "misconfiguration fails loud at startup, not as a 500 per request"
+      ],
+      "commit": "3b30379",
+      "result": "No settings class loaded .env, so all 7 fell back to built-in defaults; PG default password 'polymath' vs deployed 'polymath-dev' made every /retrieve a 500 on a normally launched orchestrator. Root cause: pydantic-settings resolves a relative env_file against CWD and the app launches from orchestrator/. Fixed with an absolutely-resolved _ENV_FILE wired into all 7 classes, plus validate_startup() in the lifespan before serving with named terminal codes (POSTGRES_CONFIG_MISSING/AUTH_FAILED/UNREACHABLE) and no password echoed. VERIFIED: normal launch serves /retrieve 200 with 10 evidence; wrong credential gives STARTUP BLOCKED + exit + health 000 + 0 password leaks. 11-test gate, 5/5 mutations caught, suite 83 = baseline."
+    },
+    {
+      "id": "P23",
+      "name": "SUMMARY-IDEMPOTENCY",
+      "status": "DONE",
+      "needs_reingest": false,
+      "blocker": true,
+      "step": 3,
+      "blocks": [
+        "P13",
+        "P14"
+      ],
+      "goal": "TWO defects, one symptom. (1) CONTROL PLANE: summary_jobs has no uniqueness beyond the surrogate ticket_id, so identical work is re-ticketed - MEASURED 21,315 PARENT_SUMMARY tickets for 3,025 distinct input_hash values (7.0x average, up to 12x for 533 hashes). (2) CODE: parent_summaries has no supersede semantics - summary_id is content-addressed under ON CONFLICT (summary_id) DO NOTHING (shared/polymath_shared/summary_runtime.py:72-79), so a parent summarised before its entities were ready and again after keeps BOTH rows with no authority marker. MEASURED: 3,025 rows for 1,784 parents; 1,241 parents hold two rows written 4h15m apart with different artifact_hash.",
+      "why_blocking": "A P14 hazard, not pre-existing clutter. The rebuild re-tickets every parent AND changes contract generation, so the same mechanism can leave one parent holding an old-contract row and a new-contract row simultaneously - exactly the half-old/half-new generation P13 must make impossible - and inflates P17 reconciliation counts. Meets the release-blocker bar under 'false knowledge' and 'pipeline failure'.",
+      "acceptance": [
+        "identical (stage, input_hash) cannot produce a second execution",
+        "one authoritative summary row per parent; superseded rows absent or explicitly marked",
+        "a contract-generation change can never leave two generations live for one parent",
+        "gate mutation-tested"
+      ],
+      "commit": "623e1e9",
+      "result": "Control plane: identity was the run-derived ticket_id, so the done-check never matched across runs and every run re-executed every parent (21,315 tickets / 3,025 input_hashes). Now keyed on (stage,input_hash) for all four stages, unique index enforces it, retries increment attempts. Persistence: parent_summaries had no authority, so 1,241 parents held two rows. Added superseded_at + partial unique index (parent_id) WHERE superseded_at IS NULL, supersede-on-write, and three readers now select the authoritative row; no recency band-aid (pinned). Applied live: summary_jobs 21,516->3,063; 1,784 authoritative summaries, exactly one per parent, 1,241 superseded and retained. Old integration test that encoded the defect was rewritten. 17-test gate, 5/5 mutations caught, suite 83 = baseline over 3 runs."
+    },
+    {
+      "id": "P7",
+      "name": "ARTIFACT-CONFIDENCE-V2",
+      "status": "DONE",
+      "needs_reingest": false,
+      "goal": "Confidence is a constant (all procedures 1.00, all concepts 0.90). Either derive a defensible deterministic signal or remove it from semantic use. Length must not imply reliability.",
+      "acceptance": [
+        "no candidate gains ranking/admission advantage from a constant"
+      ],
+      "blocker": false,
+      "step": 4,
+      "note": "Constant confidence is UNIFORM, so it grants no relative ranking advantage. Not a release blocker. Handle at freeze time as a one-line decision: either drop it from semantic use or stamp it as a declared non-signal.",
+      "commit": "824691a",
+      "result": "Confidence was worse than a constant: procedure confidence was min(1.0, 0.6+0.05*len(steps)) - a LENGTH function that saturated at 1.0 for 8+ steps (hence looking constant under v1's one-per-document contract) - and ask.py ranked on it, so longer procedures outranked shorter ones. Concept 0.9 was a true constant and could not discriminate. Removed from semantic use in both scorers and replaced the V2 derivation with a declared non-signal; no reliability signal was invented because these compilers select verbatim source. Not in the body hash, so identity unchanged. V1 frozen with its length derivation. 10-test gate, 3/3 mutations caught, suite 83 = baseline."
+    },
+    {
+      "id": "P13",
+      "name": "FREEZE-CONTRACTS",
+      "status": "TODO",
+      "needs_reingest": false,
+      "depends_on": [
+        "P2",
+        "P3",
+        "P4",
+        "P7"
+      ],
+      "goal": "Stamp and freeze CHUNK_CONTRACT_V2, FACT_ENDPOINT_ELIGIBILITY_V2, PROCEDURE_ARTIFACT_V2, CONCEPT_ARTIFACT_V2, confidence contract. Full suite green BEFORE production rebuild.",
+      "acceptance": [
+        "no half-old/half-new generation possible",
+        "full regression green"
+      ],
+      "step": 4,
+      "blocker": true
+    },
+    {
+      "id": "P14",
+      "name": "PRODUCTION-REBUILD-ONCE",
+      "status": "TODO",
+      "needs_reingest": true,
+      "depends_on": [
+        "P13"
+      ],
+      "goal": "Rebuild cysa-study-v1 ONCE from the retained spool as a new generation. Preserve the old generation until the new one qualifies.",
+      "acceptance": [
+        "all stages complete",
+        "no unexplained zero in the monitor list",
+        "query_ready"
+      ],
+      "notes": "SPOOL KEY (measured at P4): retained source blobs are addressed by documents.source_hash, NOT content_hash. content_hash is the MATERIALIZED markdown and has no blob on disk \u2014 looking it up returns nothing and makes the corpus look unrecoverable. All 12 cysa-study-v1 sources are present under source_hash (spool_dir()/h[:2]/h, 26 blobs, 9.6MB). GATE: tests/determinism/test_source_recovery_key.py is now a P14 precondition - run it before starting the rebuild.",
+      "step": 5,
+      "blocker": true
+    },
+    {
+      "id": "P15",
+      "name": "POST-REBUILD-MEASUREMENT",
+      "status": "TODO",
+      "needs_reingest": false,
+      "depends_on": [
+        "P14"
+      ],
+      "goal": "OLD vs NEW comparison across structure preservation, fact yield, pronoun junk, procedure size distribution, concept capture, graph.",
+      "acceptance": [
+        "pronoun facts ~0",
+        "concept recovery improves",
+        "procedures task-coherent",
+        "no unexplained literal loss"
+      ],
+      "step": 6,
+      "blocker": true
+    },
+    {
+      "id": "P16",
+      "name": "RETRIEVAL-QUALIFICATION",
+      "status": "TODO",
+      "needs_reingest": false,
+      "depends_on": [
+        "P14"
+      ],
+      "goal": "FAST/HYBRID/GRAPH over the 13-case panel plus code, table, procedure and transcript structure-retrieval proofs.",
+      "acceptance": [
+        "routing, child proof, boilerplate demotion, exact lookup, rescue, lexical, rerank, graph hydration, citations, abstention"
+      ],
+      "carry_in": "From P5: ~33% of bare entity-name queries fail to surface their evidence at top-10 in FAST or HYBRID, INDEPENDENT of the parent-summary entity cap (in-summary controls 38.8% unreachable vs omitted 30.8%). Exact-chunk recall was only ~13% while surface recall was 61-69%, i.e. the system usually returns a DIFFERENT chunk mentioning the entity. Qualify exact-term lookup here.",
+      "step": 6,
+      "blocker": true
+    },
+    {
+      "id": "P17",
+      "name": "RECONCILIATION",
+      "status": "TODO",
+      "needs_reingest": false,
+      "depends_on": [
+        "P14"
+      ],
+      "goal": "PG/Qdrant/Neo4j exact reconciliation on the new generation.",
+      "acceptance": [
+        "missing=0 orphan=0 foreign=0 wrong-contract=0",
+        "no stale prior-generation state"
+      ],
+      "carry_in": "From P5: 1,241 of 3,025 parent_summaries rows are DUPLICATES - each of those parents has an empty-entities row and a populated row, same contract_version, minutes apart. Reconciliation must decide which is authoritative and whether the empty row is projected.",
+      "step": 6,
+      "blocker": true,
+      "note": "PG/Qdrant/Neo4j exact reconciliation on the new generation. Duplicate parent_summaries are NOT a P17 cleanup item - they are a release blocker owned by P23. Verify here only that the rebuild emitted exactly one authoritative row per parent."
+    },
+    {
+      "id": "P22",
+      "name": "RELEASE-DECISION",
+      "status": "TODO",
+      "needs_reingest": false,
+      "blocker": true,
+      "step": 7,
+      "depends_on": [
+        "P14",
+        "P15",
+        "P16",
+        "P17"
+      ],
+      "goal": "Apply the release-blocker rule to everything outstanding. If no P0/P1 remains, FREEZE: stop modifying ingestion and retrieval, and write eval/v5/killchain/FINAL-SEMANTIC-CORPUS-V2-CLOSEOUT.md.",
+      "acceptance": [
+        "no finding meets the release-blocker bar",
+        "deferred findings recorded with reasons",
+        "tree clean"
+      ]
+    },
+    {
+      "id": "P11",
+      "name": "KILLCHAIN-INVARIANCE",
+      "status": "DEFERRED",
+      "needs_reingest": false,
+      "goal": "Close H36 batch invariance, H36 concurrency invariance, H45 same-corpus dilution, H47 order dependence (adapt with near-duplicate fixtures since the duplicate guard blocks identical content).",
+      "acceptance": [
+        "semantic output equivalent across batch sizes, worker counts and ingest order"
+      ],
+      "deferred_reason": "Batch/concurrency/order invariance. No observed symptom; this is open-ended audit work. Re-open ONLY if the P14 rebuild or P15 measurement shows non-determinism.",
+      "blocker": false
+    },
+    {
+      "id": "P12",
+      "name": "SEALED-SENTINEL-V2",
+      "status": "PARTIAL",
+      "needs_reingest": false,
+      "depends_on": [
+        "P2"
+      ],
+      "goal": "Extend the existing 4-doc sentinel to the full 17-case contents list (passive/negated/hedged/quoted facts, resolvable pronoun, 3 procedures, procedure spanning chunks, >10 concepts, nested lists, indented code, table, exact identifiers incl C++/C#/.NET, transcript turns, boilerplate negative, unsupported question). Pin expected outputs.",
+      "acceptance": [
+        "ingested through the PUBLIC path only",
+        "every expected result explicitly pinned"
+      ],
+      "step": 6,
+      "blocker": true
+    },
+    {
+      "id": "P18",
+      "name": "FAULT-INJECTION",
+      "status": "DEFERRED",
+      "needs_reingest": false,
+      "goal": "13 mutations from the mission list; each must trip a permanent gate.",
+      "acceptance": [
+        "no mutation stays green; strengthen any gate that survives"
+      ],
+      "deferred_reason": "13 speculative fault injections. Deferred by the release-blocker rule; the gates added in P1-P5 are already mutation-tested.",
+      "blocker": false
+    },
+    {
+      "id": "P19",
+      "name": "CRASH-RECOVERY",
+      "status": "DEFERRED",
+      "needs_reingest": false,
+      "goal": "Bounded kills mid-extraction, mid-persistence, mid-projection under the new contracts.",
+      "acceptance": [
+        "same semantic identities, no duplicates, no missing artifacts, exact reconciliation"
+      ],
+      "deferred_reason": "Crash recovery under new contracts. No observed symptom. Re-open if the rebuild actually crashes.",
+      "blocker": false
+    },
+    {
+      "id": "P20",
+      "name": "UNKNOWN-UNKNOWN-SWEEP-AND-CLOSEOUT",
+      "status": "DEFERRED",
+      "needs_reingest": false,
+      "goal": "Final sweep for silent-loss/silent-manufacture boundaries; write eval/v5/killchain/FINAL-SEMANTIC-CORPUS-V2-CLOSEOUT.md with the full required field list.",
+      "acceptance": [
+        "no known mission-scoped P0/P1/P2 deferred",
+        "tree clean"
+      ],
+      "deferred_reason": "Unknown-unknown sweep. This is precisely the open-ended discovery the owner cancelled. Replaced by the P21 release decision.",
+      "blocker": false
+    }
+  ],
+  "release_blocker_rule": "RELEASE-BLOCKER RULE (owner, 2026-08-28). Do NOT create work because a metric is imperfect. A finding blocks release ONLY if it demonstrably causes one of: source loss, false knowledge, unsupported answers, inability to retrieve answer-bearing evidence, corpus leakage, or pipeline failure. Everything else is recorded and deferred. No further open-ended forensic audits are authorised.",
+  "strategy": "CONVERGENCE, not discovery. Remaining path: close the real defects -> freeze contracts -> rebuild the 12-book corpus ONCE -> prove ingest/retrieval/answer end to end -> STOP modifying ingestion and retrieval unless real usage exposes a regression."
+}

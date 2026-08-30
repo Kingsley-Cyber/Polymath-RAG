@@ -251,6 +251,18 @@ export default function FilesView({
                     </span>
                   </td>
                   <td className="mono">{r.created_at.slice(0, 19)}</td>
+                  <td>
+                    {r.error && (
+                      <span
+                        className="phase-detail"
+                        title={r.error}
+                        style={{ color: "var(--accent)" }}
+                      >
+                        {r.error.slice(0, 70)}
+                        {r.error.length > 70 ? "…" : ""}
+                      </span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -1,15 +1,32 @@
 ---
 owner: worker
 last_reviewed: 2026-08-17
-last_touched: 2026-08-17
+last_touched: 2026-08-29
 status: draft
 ---
 
 # Implementation Plan: Lexical-Role Realignment (ADR-0016)
 
-Status: DRAFT — not authorized for implementation. This plan records
-the concrete steps to realign the pipeline to the Kimi architecture
-per ADR-0016. A named gate must authorize each phase.
+Status: DRAFT for the lexical-role phases below. Owner authorization was
+granted on 2026-08-29 for the `LOCAL-LLM-EXTRACTION-V1` shadow lane only.
+Every other phase still requires its own named gate.
+
+## LOCAL-LLM-EXTRACTION-V1 owner authorization
+
+`LOCAL-LLM-EXTRACTION-V1` supersedes the LLM-classification prohibition in
+the ADR-0016 hard freeze for a shadow extraction provider. The local model may
+propose source-attested entity spans, relation evidence, endpoint pairings,
+and candidate relation classes under a versioned extraction contract.
+
+Model output remains untrusted evidence. Deterministic code retains authority
+over canonical identity, admission, persistence, predicate selection, fact
+identity, and graph projection. No sidecar may write Neo4j or bypass entity or
+fact admission. The control stage DAG, stage receipts, retries, idempotency,
+and outbox semantics remain unchanged.
+
+This authorization permits implementation and qualification of the shadow
+lane. It does not promote the lane, change the production provider, authorize
+direct model-to-graph writes, or authorize the other ADR-0016 phases.
 
 ## Summary of what changes
 
@@ -256,8 +273,13 @@ admission; canonical identity; predicate inventory/meanings; ontology
 signatures (merely to improve scores); negation/modality policy; graph
 projection; retrieval; I4 gold/scorer; frozen artifacts.
 
-DO NOT: switch to GLiNER2; add GLiREL/Relex/LLM/embedding relation
-classification/neural coreference; begin I5; auto-promote.
+DO NOT: switch the production provider to GLiNER2; add GLiREL/Relex/embedding
+relation classification/neural coreference; begin I5; auto-promote.
+
+AUTHORIZED EXCEPTION: `LOCAL-LLM-EXTRACTION-V1` may add local-LLM relation
+classification in a shadow provider under the owner authorization above.
+Its output is evidence for deterministic compilation and admission, never
+settled graph knowledge.
 
 ### Governance
 

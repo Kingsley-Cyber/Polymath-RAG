@@ -1,0 +1,53 @@
+{
+ "contract": "representation-reconciliation-v1",
+ "corpora": {
+  "cysa-study-v1": {
+   "pg": {
+    "routing_child": 7085,
+    "routing_document_summary": 12,
+    "routing_section_summary": 1774,
+    "routing_procedure": 12,
+    "routing_concept": 120
+   },
+   "qdrant": {
+    "routing_child": 7085,
+    "routing_document_summary": 12,
+    "routing_section_summary": 1774,
+    "routing_procedure": 12,
+    "routing_concept": 120
+   },
+   "foreign_corpus_ids_in_collection": [],
+   "delta": {
+    "routing_child": 0,
+    "routing_document_summary": 0,
+    "routing_section_summary": 0,
+    "routing_procedure": 0,
+    "routing_concept": 0
+   }
+  },
+  "vocab-canary-v1": {
+   "pg": {
+    "routing_child": 15,
+    "routing_document_summary": 2,
+    "routing_section_summary": 5,
+    "routing_procedure": 0,
+    "routing_concept": 1
+   },
+   "qdrant": {
+    "routing_child": 15,
+    "routing_document_summary": 2,
+    "routing_section_summary": 5,
+    "routing_procedure": 0,
+    "routing_concept": 1
+   },
+   "foreign_corpus_ids_in_collection": [],
+   "delta": {
+    "routing_child": 0,
+    "routing_document_summary": 0,
+    "routing_section_summary": 0,
+    "routing_procedure": 0,
+    "routing_concept": 0
+   }
+  }
+ }
+}

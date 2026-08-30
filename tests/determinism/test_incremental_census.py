@@ -67,6 +67,7 @@ def _seed_run(conn, run_id: str, *, stages_ok: int = 0,
               attempts_for_last: int = 1,
               age_minutes: float = 0.0) -> None:
     """Insert an active run + synthetic attempt history."""
+    _ensure_probe_corpus(conn)
     conn.execute(
         """INSERT INTO runs (run_id, corpus_id, status, created_at)
            VALUES (%s,'census-probe','intake',
@@ -91,10 +92,37 @@ def _seed_run(conn, run_id: str, *, stages_ok: int = 0,
                  "ok" if k < attempts_for_last - 1 else "ok"))
 
 
+_PROBE_CORPUS_CREATED = False
+
+
+def _ensure_probe_corpus(conn):
+    """Register the probe corpus.
+
+    control.census scopes to registered corpora (JOIN corpora, QUERY-SCOPE
+    epoch): an unregistered corpus is invisible to the census by design,
+    so the fixture must create the corpora row, not assume yesterday's
+    schema.
+    """
+    global _PROBE_CORPUS_CREATED
+    if _PROBE_CORPUS_CREATED:
+        return
+    row = conn.execute(
+        """INSERT INTO corpora (corpus_id, name, config_hash, purpose)
+           VALUES ('census-probe','census-probe','probe','probe')
+           ON CONFLICT (corpus_id) DO NOTHING
+           RETURNING corpus_id"""
+    ).fetchone()
+    _PROBE_CORPUS_CREATED = row is not None
+
+
 def _cleanup(conn, run_ids):
+    global _PROBE_CORPUS_CREATED
     conn.execute("DELETE FROM stage_attempts WHERE run_id = ANY(%s)",
                  (run_ids,))
     conn.execute("DELETE FROM runs WHERE run_id = ANY(%s)", (run_ids,))
+    if _PROBE_CORPUS_CREATED:
+        conn.execute("DELETE FROM corpora WHERE corpus_id='census-probe'")
+        _PROBE_CORPUS_CREATED = False
     conn.execute("DELETE FROM scheduler_cursors WHERE stage=%s",
                  (_CENSUS_CURSOR_STAGE,))
 

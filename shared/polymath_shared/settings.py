@@ -7,26 +7,83 @@ are never logged.
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 from typing import ClassVar
+from urllib.parse import urlparse
 
-from pydantic import Field, AliasChoices
+from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+#: RUNTIME-CONFIG-CONTRACT-V1 (P21, 2026-08-28).
+#:
+#: There is ONE place a process gets its configuration: the environment,
+#: seeded from the repo `.env`. It is resolved ABSOLUTELY, from this
+#: file's location, because pydantic-settings resolves a relative
+#: env_file against the working directory — and the orchestrator is
+#: launched from `orchestrator/`, where no `.env` exists. That single
+#: detail is why every settings class silently fell back to its
+#: built-in defaults.
+#:
+#: MEASURED consequence: PostgresSettings.dsn defaulted to password
+#: "polymath" while the deployment uses "polymath-dev", so a normally
+#: launched orchestrator authenticated with the wrong credential and
+#: every /retrieve returned HTTP 500 — 30s of pool timeouts per
+#: request, with the real cause ("password authentication failed")
+#: visible only in the server log.
+_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 
 
 class PostgresSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="POLYMATH_PG_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="POLYMATH_PG_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
     dsn: str = Field(
         default="postgresql://polymath:polymath@127.0.0.1:5432/polymath",
         description="libpq DSN for the workflow authority",
     )
 
 
+_LOOPBACK_HOSTS = ("127.0.0.1", "localhost", "::1")
+
+
 class SidecarSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
     gliner_url: str = Field(default="http://127.0.0.1:8740", description="GLiNER two-pass runtime")
     embedder_url: str = Field(default="http://127.0.0.1:8742", description="Embedder sidecar")
     reranker_url: str = Field(default="http://127.0.0.1:8743", description="Reranker sidecar")
     spacy_url: str = Field(default="http://127.0.0.1:8744", description="spaCy syntax sidecar (syntax-evidence-v1)")
+    local_llm_provider: str = Field(
+        default="disabled",
+        description="Future LOCAL-LLM-EXTRACTION-V1 connection provider: "
+                    "'disabled' or 'ollama_local'. This setting does not "
+                    "activate extraction.",
+    )
+    local_llm_url: str = Field(
+        default="http://127.0.0.1:11434",
+        description="Loopback Ollama server used by the local-LLM connection probe",
+    )
+    local_llm_model: str = Field(
+        default="",
+        description="Exact locally installed Ollama model tag; required when enabled",
+    )
+    llm_local_extract_url: str = Field(
+        default="http://127.0.0.1:8755",
+        description="LOCAL-LLM-EXTRACTION-V1: OpenAI-compatible endpoint of the "
+                    "local MLX extraction sidecar (loopback only)",
+    )
+    llm_local_extract_model: str = Field(
+        default="mlx-community/Qwen3.5-4B-MLX-4bit",
+        description="Pinned local extraction model served by the MLX sidecar",
+    )
+    llm_cloud_url: str = Field(
+        default="http://127.0.0.1:11434",
+        description="LOCAL-LLM-EXTRACTION-V1 cloud lane: OpenAI-compatible "
+                    "endpoint (the local Ollama daemon proxies cloud models "
+                    "under the signed-in account). Loopback enforced.",
+    )
+    llm_cloud_model: str = Field(
+        default="qwen3.5:397b-cloud",
+        description="Pinned cloud quality-lane model tag (verify with a "
+                    "one-token probe; no document content in probes)",
+    )
     syntax_provider: str = Field(
         default="disabled",
         description="Optional syntax-evidence lane behind the extract "
@@ -48,9 +105,46 @@ class SidecarSettings(BaseSettings):
         description="Refuse to call a sidecar whose manifest release differs from the registry pin",
     )
 
+    @model_validator(mode="after")
+    def validate_llm_extraction_endpoints(self) -> "SidecarSettings":
+        """LOCAL-LLM-EXTRACTION-V1 boundary: BOTH extraction endpoints are
+        loopback, unconditionally. The 'local' lane carries every document
+        at or below the 300 KB rule — a LAN host here would move those
+        documents off the machine under a 'local' label; the 'cloud' lane
+        is the local Ollama daemon (the daemon relays), never a remote
+        URL configured from this process."""
+        for name, url in (("POLYMATH_LLM_LOCAL_EXTRACT_URL", self.llm_local_extract_url),
+                          ("POLYMATH_LLM_CLOUD_URL", self.llm_cloud_url)):
+            parsed = urlparse(url)
+            if parsed.scheme not in ("http", "https") or parsed.hostname not in _LOOPBACK_HOSTS:
+                raise ValueError(
+                    f"{name} must be a loopback URL (got {url!r}); the 300 KB "
+                    "rule forbids extraction endpoints off this machine")
+        return self
+
+    @model_validator(mode="after")
+    def validate_local_llm_connection(self) -> "SidecarSettings":
+        provider = self.local_llm_provider.strip()
+        if provider not in ("disabled", "ollama_local"):
+            raise ValueError(f"unknown local LLM provider: {provider}")
+        if provider == "disabled":
+            return self
+        if not self.local_llm_model.strip():
+            raise ValueError(
+                "POLYMATH_LOCAL_LLM_MODEL is required when the local LLM provider is enabled"
+            )
+        parsed = urlparse(self.local_llm_url)
+        if parsed.scheme not in ("http", "https") or parsed.hostname not in (
+            "127.0.0.1", "localhost", "::1",
+        ):
+            raise ValueError(
+                "POLYMATH_LOCAL_LLM_URL must be loopback for ollama_local"
+            )
+        return self
+
 
 class WorkerSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="POLYMATH_WORKER_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="POLYMATH_WORKER_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
     poll_interval_s: float = Field(default=2.0, description="Outbox poll interval")
     batch_size: int = Field(default=8, description="Max outbox events per poll")
     claim_ttl_s: int = Field(default=300, description="Stage lease TTL")
@@ -58,6 +152,33 @@ class WorkerSettings(BaseSettings):
         default="lexical",
         description="ADR-0008: 'lexical' (pass 2 abstains) or 'hybrid' "
                     "(GLiNER evidence proposals merge with lexical anchors)",
+    )
+    extraction_provider: str = Field(
+        default="gliner",
+        description="LOCAL-LLM-EXTRACTION-V1: 'gliner' (frozen default, "
+                    "byte-identical behavior), 'llm_shadow' (LLM proposals "
+                    "recorded, nothing admitted), or 'llm_live' (LLM "
+                    "proposals enter the unchanged admission pipeline).",
+    )
+    cloud_min_bytes: int = Field(
+        default=300_000,
+        ge=300_000,
+        description="Owner rule 2026-08-29: documents at or below this size "
+                    "can never select or dispatch a cloud provider "
+                    "(enforced at selection AND dispatch, fail closed). "
+                    "300,000 is a FLOOR: the value may be raised, never "
+                    "lowered (policy.effective_threshold clamps again).",
+    )
+    llm_concurrency_local: int = Field(
+        default=2, description="Parallel in-flight extraction calls, local lane")
+    llm_concurrency_cloud: int = Field(
+        default=6, description="Parallel in-flight extraction calls, cloud lane")
+    llm_max_neighborhood_chars: int = Field(
+        default=60_000,
+        description="Target evidence-neighborhood size (~15K tokens, "
+                    "owner directive 2026-08-29: large inputs on BOTH lanes "
+                    "for speed). Builder balances to near-uniform buckets "
+                    "under this cap; local 15K-token inputs measured clean.",
     )
     rule_pack_version: str = Field(
         # SPOKEN-RELATION-ADAPTER-V1: docs/SEMANTIC_CONTRACTS.md declares
@@ -88,14 +209,14 @@ class WorkerSettings(BaseSettings):
 
 
 class ControlSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="POLYMATH_CONTROL_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="POLYMATH_CONTROL_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
     tick_interval_s: float = Field(default=10.0, description="Census tick interval")
     lease_ttl_s: int = Field(default=30, description="Controller lease TTL")
     max_attempts: int = Field(default=3, description="Stage attempts before failed")
 
 
 class StoreSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
     qdrant_url: str = Field(default="http://127.0.0.1:6334", description="Qdrant projection store")
     neo4j_uri: str = Field(default="bolt://127.0.0.1:7688", description="Neo4j projection store")
     neo4j_user: str = Field(default="neo4j")
@@ -123,7 +244,7 @@ class RescueSettings(BaseSettings):
         "boundary", "missing_argument", "type_reconciliation", "frames",
     )
 
-    model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
     rescue: str = Field(default="off", description="Rescue policy stages (I4R)")
 
     def enabled_stages(self) -> tuple[str, ...]:
@@ -143,7 +264,7 @@ class RescueSettings(BaseSettings):
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
     env: str = Field(default="local", description="local | prod")
     log_level: str = Field(default="INFO")
     postgres: PostgresSettings = Field(default_factory=PostgresSettings)

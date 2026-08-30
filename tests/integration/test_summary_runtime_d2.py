@@ -51,18 +51,61 @@ def test_lifecycle_and_idempotency():
                               ).fetchone()[0]
         assert n_rows == 1
 
-        # same input again -> EXISTING, no duplicate artifact
-        # (a retried attempt arrives on its OWN ticket)
+        # SUMMARY-IDEMPOTENCY-V1 (P23): a second ticket for the SAME
+        # logical work is refused by the database, not merely
+        # discouraged. This block previously did the opposite — it
+        # inserted a second ticket and commented that "a retried attempt
+        # arrives on its OWN ticket", which is exactly how 21,315
+        # tickets accumulated for 3,025 distinct input_hash values.
+        import psycopg.errors as _pgerr
+
+        # A SAVEPOINT, not a rollback: the whole test runs in one
+        # transaction, so rolling back would also undo the completed
+        # run we are about to assert on.
+        with conn.transaction(force_rollback=True):
+            try:
+                conn.execute("""INSERT INTO summary_jobs (ticket_id, stage,
+                    corpus_id, input_hash, contract_version)
+                    VALUES (%s,'PARENT_SUMMARY','summary-d1-test',%s,
+                    'admission-harbor-v2')""", (ticket + "_b", input_hash))
+            except _pgerr.UniqueViolation:
+                refused = True
+            else:
+                refused = False
+        assert refused, (
+            "a second ticket for the same (stage, input_hash) was "
+            "accepted — the control plane can re-execute settled work")
+
+        # a retry is an ATTEMPT on the existing job, never a new job
         conn.execute("""INSERT INTO summary_jobs (ticket_id, stage,
             corpus_id, input_hash, contract_version)
             VALUES (%s,'PARENT_SUMMARY','summary-d1-test',%s,
-            'admission-harbor-v2')""", (ticket + "_b", input_hash))
-        r2 = _run_ticket(conn, ticket + "_b", input_hash)
-        assert r2["status"] == "EXISTING"
+            'admission-harbor-v2')
+            ON CONFLICT (stage, input_hash) DO UPDATE
+               SET attempts = summary_jobs.attempts + 1""",
+            (ticket + "_b", input_hash))
+        jobs, attempts = conn.execute(
+            "SELECT count(*), max(attempts) FROM summary_jobs "
+            "WHERE stage='PARENT_SUMMARY' AND input_hash=%s",
+            (input_hash,)).fetchone()
+        assert jobs == 1, f"{jobs} jobs exist for one logical unit of work"
+        assert attempts >= 1, "the retry was not recorded as an attempt"
+
+        # Re-running settled work is a no-op. The status is now
+        # SKIPPED_NOT_CLAIMABLE rather than EXISTING, because a second
+        # ticket can no longer be created to carry the retry — the
+        # settled job itself is simply not claimable again. Both mean
+        # "no duplicate work"; what matters is the row counts below.
+        r2 = _run_ticket(conn, ticket, input_hash)
+        assert r2["status"] in ("EXISTING", "SKIPPED_NOT_CLAIMABLE"), r2
         n_after = conn.execute("SELECT count(*) FROM parent_summaries "
                                "WHERE corpus_id='summary-d1-test'"
                                ).fetchone()[0]
         assert n_after == 1
+        live = conn.execute("SELECT count(*) FROM parent_summaries "
+                            "WHERE corpus_id='summary-d1-test' "
+                            "AND superseded_at IS NULL").fetchone()[0]
+        assert live == 1, "more than one authoritative summary for a parent"
         arts = conn.execute("SELECT count(*) FROM summary_artifacts "
                             "WHERE corpus_id='summary-d1-test'"
                             ).fetchone()[0]

@@ -61,7 +61,8 @@ def semantic_completion(conn, corpus_id: str) -> dict:
         "SELECT COUNT(DISTINCT document_id) FROM document_summaries WHERE corpus_id = %s",
         (corpus_id,)).fetchone()[0]
     parent_summaries = conn.execute(
-        "SELECT COUNT(*) FROM parent_summaries WHERE corpus_id = %s",
+        "SELECT COUNT(*) FROM parent_summaries WHERE corpus_id = %s "
+        "AND superseded_at IS NULL",
         (corpus_id,)).fetchone()[0]
     corpus_map_rows = conn.execute(
         "SELECT COUNT(*) FROM corpus_summaries WHERE corpus_id = %s",

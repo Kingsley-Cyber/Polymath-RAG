@@ -1,3 +1,12 @@
+---
+change_id: V5-PHASE0-REALITY-MAP
+owner: governance
+date: 2026-08-21
+status: reference
+architecture_impact: none (documentation; front matter added 2026-08-29 governance cleanup)
+last_reviewed: 2026-08-29
+---
+
 # PHASE 0 — REALITY MAP (read-only; verified 2026-08-21)
 
 Baseline: `architecture/evidence-first-v5` @ 09db18f · authority `3981fcff…`

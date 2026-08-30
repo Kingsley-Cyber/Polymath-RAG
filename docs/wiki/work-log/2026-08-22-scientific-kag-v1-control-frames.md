@@ -58,3 +58,10 @@ verbatim trio joins the validation suite once v1.4.0 lands.
 
 Phase 4 pack v1.4.0 + type ontology hierarchy; phase 6 temporal model;
 acceptance harness; validation suite.
+## Rejected claims
+
+(Historical entry — recorded in the entry body above.)
+
+## Open contract gaps
+
+(Historical entry — recorded in the entry body above.)

@@ -35,11 +35,18 @@ from polymath_shared.retrieval_modes import (
 )
 from polymath_shared.settings import get_settings
 
+from polymath_shared.query_shape import plan_for_query
+
 from orchestrator.api.fast import (
+    _begin_retrieval,
     _embed_query,
     _ensure_fast_ready,
+    _neighbor_lookup,
+    _region_lookup,
+    _liveness,
     _rerank_children,
     _corpus_collections,
+    degradations,
     FastSearcher,
 )
 from orchestrator.api.hybrid import _lexical_search
@@ -63,6 +70,7 @@ def _selected_surfaces(query: str, evidence: list[dict]) -> list[str]:
 
 def graph_retrieve(query: str, corpus_id: str) -> dict:
     """Production GRAPH: one promoted HYBRID Pass-1 + qualified hop1."""
+    _begin_retrieval()
     if corpus_id is None:
         raise HTTPException(status_code=422, detail={
             "error_code": "corpus_required",
@@ -85,15 +93,19 @@ def graph_retrieve(query: str, corpus_id: str) -> dict:
     try:
         searcher = FastSearcher(client, collections)
         t0 = time.time()
+        shaped = plan_for_query(
+            query,
+            HybridRetrievalPlan(**{**plan.__dict__, "corpus_ids": (corpus_id,)}),
+        )
         result = hybrid_retrieve(
             query,
-            plan=HybridRetrievalPlan(
-                **{**plan.__dict__, "corpus_ids": (corpus_id,)},
-            ),
+            plan=shaped,
             embed_query=_embed_query,
             routing_search=searcher,
             lexical_search=lambda q, k: _lexical_search(q, corpus_id, k),
-            rerank_children=_rerank_children if plan.rerank_enabled else None,
+            rerank_children=_rerank_children if shaped.rerank_enabled else None,
+            neighbor_lookup=_neighbor_lookup,
+            region_lookup=_region_lookup,
         )
         pass1_ms = (time.time() - t0) * 1000
     finally:
@@ -179,6 +191,10 @@ def graph_retrieve(query: str, corpus_id: str) -> dict:
             "document_count": len(documents),
             "evidence_count": len(evidence),
             "graph_fact_count": len(graph_facts),
+            "degraded": degradations(),
+            "liveness": _liveness(
+                {**result.trace, "graph_seed_surfaces": _selected_surfaces(query, evidence),
+                 "graph_fact_count": len(graph_facts)}, MODE_GRAPH),
         },
         "documents": documents,
         "unassigned_rescue_evidence": [

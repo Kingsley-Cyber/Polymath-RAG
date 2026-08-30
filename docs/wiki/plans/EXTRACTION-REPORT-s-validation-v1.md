@@ -1,3 +1,12 @@
+---
+change_id: EXTRACTION-REPORT-S-VALIDATION-V1
+owner: governance
+date: 2026-08-23
+status: reference
+architecture_impact: none (documentation; front matter added 2026-08-29 governance cleanup)
+last_reviewed: 2026-08-29
+---
+
 # EXTRACTION REPORT — s-validation-v1 (4-document validation set)
 Source: /Users/king/Downloads/untitled folder/S/
 Pipeline: kimi_v1 + Predicate Compiler v2 shadow · persisted corpus

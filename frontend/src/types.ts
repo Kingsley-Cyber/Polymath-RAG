@@ -2,6 +2,8 @@ export type Mode = "VECTOR" | "HYBRID" | "GRAPH" | "ASK";
 
 export interface Corpus {
   corpus_id: string;
+  /** Display name; server falls back to corpus_id when unset. */
+  name: string;
   purpose: string;
   query_enabled: boolean;
   documents: number;
@@ -29,12 +31,20 @@ export interface ChunkRef {
   preview?: string;
 }
 
+export interface Degradation {
+  component: string;
+  effect: string;
+  reason: string;
+}
+
 export interface Retrieval {
   mode: string;
   evidence_count: number;
   graph_fact_count?: number;
   chunks: ChunkRef[];
   counts?: Record<string, number>;
+  /** Lanes that degraded rather than failing (e.g. parked reranker). */
+  degraded?: Degradation[];
 }
 
 export interface Citation {
@@ -55,6 +65,8 @@ export interface Message {
   role: "user" | "assistant";
   text: string;
   phases?: Phase[];
+  /** Streamed model thinking (reasoning card), never part of the answer. */
+  reasoning?: string;
   answer?: ChatAnswer;
   error?: { error_code?: string; message?: string };
   pending?: boolean;
@@ -68,7 +80,15 @@ export interface Chat {
   corpus: string;
   mode: Mode;
   synthesizer: string;
+  /** v3.3 reasoning-layer mode key; "none" answers directly. */
+  reasoning?: string;
   messages: Message[];
+}
+
+export interface ReasoningModeInfo {
+  id: string;
+  label: string;
+  description: string;
 }
 
 export interface DocumentRow {
@@ -84,4 +104,6 @@ export interface RunRow {
   run_id: string;
   status: string;
   created_at: string;
+  /** Latest stage failure note (e.g. a duplicate-document refusal). */
+  error?: string | null;
 }

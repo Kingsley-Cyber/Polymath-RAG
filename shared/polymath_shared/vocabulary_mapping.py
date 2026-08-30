@@ -28,6 +28,44 @@ def _norm(term: str) -> str:
     return " ".join((term or "").lower().split())
 
 
+class MissingSupportIdentity(ValueError):
+    """A parent-summary row carried no usable independent-support id.
+
+    Raised instead of falling back to a shared sentinel: a silent
+    fallback made EVERY row share one support identity, which merged
+    the whole corpus into one component and then failed the
+    min_support>=2 guard, producing zero families with no error
+    (VOCABULARY-PRODUCTION-CONTRACT-REGRESSION-V1).
+    """
+
+
+def _support_identity(payload: dict, row: dict) -> str:
+    """The ONE independent semantic support of a parent summary.
+
+    Support identity is the PARENT EVIDENCE NEIGHBOURHOOD — the parent
+    chunk — never the summary artifact. MEASURED on cysa-study-v1:
+    3,016 parent_summaries rows cover only 1,775 distinct parent_ids
+    (1,241 parents carry two summary rows under the same contract
+    version). Keying support on `summary_id` would therefore let ONE
+    neighbourhood corroborate itself and clear the min_support>=2
+    precision guard — the exact "duplicate support fakes corroboration"
+    failure the guard exists to prevent.
+
+    Accepted, in order: an explicit `support_id`, else `parent_id`
+    (the legacy artifact shape, formally the same identity). A row with
+    neither raises: silent collapse is what caused the regression.
+    """
+    sid = payload.get("support_id") or row.get("support_id") \
+        or payload.get("parent_id") or row.get("parent_id")
+    if not sid:
+        raise MissingSupportIdentity(
+            "parent summary row has neither support_id nor parent_id; "
+            f"keys={sorted(set(payload) | set(row))!r}. Support identity "
+            "must be the parent evidence neighbourhood — summary_id is "
+            "NOT equivalent (parents carry multiple summary rows).")
+    return str(sid)
+
+
 def build_concept_families(*, corpus_id: str, parent_summaries: list[dict],
                            document_summaries: list[dict],
                            accepted_concepts: list[str]) -> dict:
@@ -41,7 +79,7 @@ def build_concept_families(*, corpus_id: str, parent_summaries: list[dict],
     support: dict[str, dict[str, set]] = {}
     for ps in parent_summaries:
         p = ps.get("payload", ps)
-        sid = p.get("parent_id") or ps.get("artifact_id")
+        sid = _support_identity(p, ps)
         for cpt in p.get("concepts", []):
             support.setdefault(_norm(cpt), {
                 "summaries": set(), "surfaces": set()})

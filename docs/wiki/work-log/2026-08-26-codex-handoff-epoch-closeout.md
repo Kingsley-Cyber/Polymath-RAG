@@ -4,6 +4,7 @@ owner: governance
 date: 2026-08-26
 status: complete
 architecture_impact: none (documentation/handoff epoch record)
+last_reviewed: 2026-08-29
 ---
 
 # EPOCH CLOSEOUT — control/performance → G1 → scope → pilot (2026-08-25/26)

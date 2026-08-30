@@ -247,6 +247,7 @@ def _evidence_spans(
     mode: str,
     raw_sink: list | None = None,
     scientific_lane_prioritized: bool = True,
+    precomputed_evidence: list | None = None,
 ) -> list[EvidenceSpan]:
     """ADR-0008: pass 2 = GLiNER coarse proposals (may abstain) +
     lexical trigger localization. The compiler decides either way.
@@ -268,6 +269,24 @@ def _evidence_spans(
     )
 
     anchors = propose_evidence(chunk_text, chunk_id, pack)
+    if precomputed_evidence is not None:
+        # LOCAL-LLM-EXTRACTION-V1: gated LLM relation proposals replace the
+        # GLiNER evidence pass. The compiler's authority is unchanged —
+        # each proposal still localizes to a compiled trigger inside its
+        # verbatim quote, and unlocalizable proposals compile to
+        # UNSUPPORTED exactly as GLiNER's always did.
+        # RECORDED DEVIATION (PLAN-AUTHORITY-REGISTER 4.2.10): in llm_*
+        # modes the proposals merge regardless of evidence_proposal_mode
+        # ('lexical' governs the GLiNER pass-2 only) and regardless of the
+        # router's deprioritization skip (that skip saved a GLiNER call;
+        # there is no call to save here).
+        proposals = [localize_trigger(p, pack) for p in precomputed_evidence]
+        merged = {s.text: s for s in anchors}
+        for p in proposals:
+            key = p.text
+            if key not in merged:
+                merged[key] = p
+        return sorted(merged.values(), key=lambda s: (s.start, s.end))
     if not scientific_lane_prioritized and not anchors:
         # Deprioritized lane AND no local relational evidence: nothing
         # here qualifies for the compiler — skip the expensive pass.
@@ -288,6 +307,46 @@ def _evidence_spans(
                 merged[key] = p
         return sorted(merged.values(), key=lambda s: (s.start, s.end))
     return anchors
+
+
+def _llm_contract_identity() -> dict:
+    from workers import llm_provider
+    return llm_provider.contract_identity()
+
+
+def _clip_to_sentences(spans: list[EvidenceSpan],
+                       chunk_text: str) -> tuple[list[EvidenceSpan], list[dict]]:
+    """LOCAL-LLM-EXTRACTION-V1: an LLM relation quote may span sentences
+    (the contract says "sentence(s)"), but `_slices` binds evidence to ONE
+    sentence — a crossing quote would never reach the compiler and would
+    vanish without a record. Clip every crossing span to exact per-sentence
+    slices (each still a verbatim source substring; trigger fields reset so
+    localization re-runs on the clipped text) and record the split in the
+    audit. Spans already inside one sentence pass through untouched."""
+    sentences = _sentences_of(chunk_text)
+    out: list[EvidenceSpan] = []
+    audit: list[dict] = []
+    for sp in spans:
+        if any(s >= 0 and sp.start >= s and sp.end <= e for s, e in sentences.offsets):
+            out.append(sp)
+            continue
+        pieces: list[tuple[int, int]] = []
+        for s, e in sentences.offsets:
+            if s < 0:
+                continue
+            ps, pe = max(sp.start, s), min(sp.end, e)
+            if pe - ps >= 2 and chunk_text[ps:pe].strip():
+                pieces.append((ps, pe))
+        for ps, pe in pieces:
+            out.append(sp.model_copy(update={
+                "start": ps, "end": pe, "text": chunk_text[ps:pe],
+                "trigger_lemma": None, "trigger_lexical_class": None,
+                "trigger_predicate_id": None, "trigger_match_source": None}))
+        audit.append({"kind": "llm_evidence_clipped",
+                      "reason": "EVIDENCE_CROSSES_SENTENCE",
+                      "chunk_id": sp.chunk_id, "start": sp.start, "end": sp.end,
+                      "pieces": [[ps, pe] for ps, pe in pieces]})
+    return out, audit
 
 
 def _slices(
@@ -742,15 +801,32 @@ def process_event(conn: Connection, event: dict) -> None:
 
     trace = TraceCollector(trace_mode(), run_id, extraction_contracts())
 
-    rescue_stages = get_settings().rescue_policy.enabled_stages()
-    if rescue_stages and get_settings().sidecars.syntax_provider != "spacy":
-        raise RuntimeError(
-            "POLYMATH_RESCUE enabled but POLYMATH_SYNTAX_PROVIDER != spacy — "
-            "rescue requires syntax evidence; refusing to extract without it"
-        )
-
+    # LOCAL-LLM-EXTRACTION-V1 (owner-authorized 2026-08-29): provider
+    # selection. 'gliner' keeps the frozen default path byte-identical;
+    # 'llm_shadow' records gated proposals and admits nothing; 'llm_live'
+    # feeds gated proposals into the UNCHANGED identity → admission →
     pack = _pack()
     parser_name, parser_version = parser_identity()
+
+    provider_mode = get_settings().worker.extraction_provider
+    if provider_mode not in ("gliner", "llm_shadow", "llm_live"):
+        raise ValueError(f"unknown extraction provider: {provider_mode}")
+    llm_mode = provider_mode != "gliner"
+
+    # GLiNER is retired from the LLM path (owner directive 2026-08-29): the
+    # I4R rescue lane re-queries the GLiNER model per slice — a pure
+    # dependency + latency tax on proposals that never came from GLiNER.
+    if llm_mode:
+        rescue_stages: tuple = ()
+    else:
+        rescue_stages = get_settings().rescue_policy.enabled_stages()
+        if rescue_stages and get_settings().sidecars.syntax_provider != "spacy":
+            raise RuntimeError(
+                "POLYMATH_RESCUE enabled but POLYMATH_SYNTAX_PROVIDER != spacy — "
+                "rescue requires syntax evidence; refusing to extract without it"
+            )
+    # compiler → fact pipeline. GLiNER is retired from the LLM path — the
+    # model proposes; deterministic Python still validates and admits.
 
     # KNOWLEDGE-ROUTER v1.1 as a PRIORITY signal (owner correction,
     # EXTRACTION-ELIGIBILITY-V1): a routed 'disabled' scientific lane
@@ -795,6 +871,13 @@ def process_event(conn: Connection, event: dict) -> None:
         "binding_gates": "endpoint-binding-v1",
         "provenance_contract": "exact-evidence-v1",
         "gliner_pin": _GLINER_PIN,
+        "extraction_provider": provider_mode,
+        # LLM lane: EVERY input that changes the model's output is hashed
+        # (models, prompt, ontology, type fallbacks, generation config,
+        # neighborhood shape, chunk-kind rules, limiter seeds) — exactly as
+        # gliner_pin is for the frozen path. None on the gliner path keeps
+        # that contract hash byte-identical.
+        "llm_extraction_contract": (_llm_contract_identity() if llm_mode else None),
         # Temporal durability (semantic-query-policy-v1): the extraction
         # contract identity includes EVERY input that can change semantic
         # output — provider-facing vocabulary policy, syntax contract,
@@ -843,8 +926,11 @@ def process_event(conn: Connection, event: dict) -> None:
         ]
         child_chunks = [row for row in chunks if row["tier"] == "child"]
 
-        gliner = GlinerClient()
-        gliner.verify_pin()
+        if not llm_mode:
+            gliner = GlinerClient()
+            gliner.verify_pin()
+        else:
+            gliner = None  # GLiNER retired from the LLM path (owner, 2026-08-29)
         audit: list[dict] = []
 
         # I3R-R3: two-pass extraction — pass A gathers the full document
@@ -882,19 +968,32 @@ def process_event(conn: Connection, event: dict) -> None:
             _raw_rows_predicate: list = []
             from polymath_shared import raw_evidence as _raw
 
-            _gl_model = (gliner.manifest().get("identity", {}) or {}).get("model", {})
+            _gl_model = (gliner.manifest().get("identity", {}) or {}).get("model", {}) if gliner else {}
+            _llm_model_id = ""
+            _llm_revision = "polymath-extraction-v1"
+            _llm_lane = ""
             _contract_cache: dict = {}
 
             def _raw_contract(labels, task):
                 key = (tuple(labels), task)
                 if key not in _contract_cache:
-                    _contract_cache[key] = _raw.provider_contract(
-                        provider="gliner",
-                        model_id=str(_gl_model.get("id")),
-                        revision=str(_gl_model.get("revision")),
-                        task=task,
-                        threshold=ENTITY_THRESHOLD if task == "entity" else EVIDENCE_THRESHOLD,
-                        labels=list(labels))
+                    if llm_mode:
+                        contract = _raw.provider_contract(
+                            provider=f"llm:{_llm_lane}",
+                            model_id=_llm_model_id,
+                            revision=_llm_revision,
+                            task=task,
+                            threshold=1.0,
+                            labels=list(labels))
+                    else:
+                        contract = _raw.provider_contract(
+                            provider="gliner",
+                            model_id=str(_gl_model.get("id")),
+                            revision=str(_gl_model.get("revision")),
+                            task=task,
+                            threshold=ENTITY_THRESHOLD if task == "entity" else EVIDENCE_THRESHOLD,
+                            labels=list(labels))
+                    _contract_cache[key] = contract
                 return _contract_cache[key]
             # EXTRACTION-CONTEXT-V1: build the envelope per focal chunk
             from polymath_shared.extraction_context import active_policy, build_envelope
@@ -906,7 +1005,10 @@ def process_event(conn: Connection, event: dict) -> None:
             # envelopes on the batched path). Per-chunk calls remain the
             # automatic path whenever envelopes are active.
             _batched_pass1: dict = {}
-            if not context_active:
+            _llm_evidence: dict = {}
+            _llm_receipts: list = []
+            _lane_decision: dict | None = None
+            if not llm_mode and not context_active:
                 from polymath_shared.query_policy import provider_passes as _pp
                 from polymath_shared.contracts import DocumentProfile as _DP
                 _base = _DP(**profile_dict).label_set if profile_dict.get("label_set") else []
@@ -923,9 +1025,82 @@ def process_event(conn: Connection, event: dict) -> None:
                         _batched_pass1.setdefault(_r_["chunk_id"], {})[tuple(_labels)] = _row_
                 _perf["entity_pass_s"] += _t.perf_counter() - _t_batch
                 _perf["provider_calls"] += (len(_texts) + _gbatch - 1) // _gbatch
+            if llm_mode:
+                # LOCAL-LLM-EXTRACTION-V1: one gated LLM pass replaces the
+                # GLiNER passes. Lane selection + dispatch both enforce the
+                # 300 KB cloud boundary (fail closed). Proposals enter the
+                # identical downstream path via the PHASE B2 precomputed
+                # transport; rejections are durable, never silent.
+                from workers import llm_provider as _llm
+                from polymath_shared.query_policy import provider_passes as _pp
+                from polymath_shared.contracts import DocumentProfile as _DP
+                _base = _DP(**profile_dict).label_set if profile_dict.get("label_set") else []
+                _compositions = [
+                    tuple(_labels) for _labels in
+                    (list(dict.fromkeys(list(_base) + list(_pl))) for _pl in _pp())
+                    if _labels]
+                _src = conn.execute(
+                    "SELECT byte_length FROM documents WHERE doc_id=%s",
+                    (doc_id,)).fetchone()
+                source_bytes = int(_src[0]) if _src and _src[0] is not None else 0
+                _decision = _llm.select_lane(source_bytes)
+                _lane_decision = {"lane": _decision.lane,
+                                  "source_bytes": _decision.source_bytes,
+                                  "threshold": _decision.threshold,
+                                  "reason": _decision.reason}
+                _t_llm = _t.perf_counter()
+                _neighborhoods = _llm.build_neighborhoods(child_chunks)
+                _results, _merged = _llm.run_proposals(
+                    _neighborhoods, lane=_decision.lane, source_bytes=source_bytes)
+                _perf["llm_extract_s"] = _t.perf_counter() - _t_llm
+                _llm_receipts = _llm.call_receipts(_results)
+                _llm_model_id = _results[0].model if _results else ""
+                _llm_lane = _decision.lane
+                _batched_pass1 = _llm.to_precomputed_entities(
+                    _merged, _compositions, [r["chunk_id"] for r in child_chunks])
+                _llm_evidence = {
+                    cid: [sp.model_dump() for sp in spans]
+                    for cid, spans in _llm.to_evidence_spans(_merged).items()}
+                _llm_entity_items, _llm_evidence_items = _llm.ledger_items(_merged)
+                _raw_rows_entity.extend(
+                    _raw.proposal_row(doc_id, cid, item,
+                                      _raw_contract((), "entity"))
+                    for cid, item in _llm_entity_items)
+                _raw_rows_predicate.extend(
+                    _raw.evidence_row(doc_id, cid, item,
+                                      _raw_contract((), "evidence"))
+                    for cid, item in _llm_evidence_items)
+                _counts["llm_entities"] = _merged.stats.get("entities", 0)
+                _counts["llm_relations"] = _merged.stats.get("relations", 0)
+                _counts["llm_rejected"] = len(_merged.rejections)
+                _counts["llm_type_coercions"] = len(_merged.coercions)
+                _rej_by_class: dict = {}
+                for _rj in _merged.rejections:
+                    _k = _rj.get("error_class", "UNKNOWN")
+                    _rej_by_class[_k] = _rej_by_class.get(_k, 0) + 1
+                _merged.stats["rejections_by_class"] = _rej_by_class
+                _llm_artifact = {
+                    "provider": provider_mode,
+                    "lane_decision": _lane_decision,
+                    "calls": _llm_receipts,
+                    "stats": _merged.stats,
+                    "rejections_preview": _merged.rejections[:200],
+                    "coercions_preview": _merged.coercions[:200],
+                    "digests": _merged.digests[:400],
+                    "neighborhoods": len(_neighborhoods),
+                }
+                # Rejections are the durable record of what the model
+                # proposed and the gate refused — the FULL lists persist
+                # (separate artifact keys), never a truncated preview only.
+                writer.artifact({"llm_extraction": _llm_artifact,
+                                 "llm_rejections": _merged.rejections,
+                                 "llm_coercions": _merged.coercions})
+                _perf["provider_calls"] += len(_results)
             for row in child_chunks:
                 envelope = None
-                if context_active:
+                if context_active and not llm_mode:
+                    # LLM lane: proposals are already chunk-relative from the
+                    # gate; envelope remapping is a GLiNER-coordinate concern.
                     doc_key = row["doc_id"]
                     if doc_key not in doc_text_cache:
                         doc_row = conn.execute(
@@ -940,9 +1115,14 @@ def process_event(conn: Connection, event: dict) -> None:
                     envelope = build_envelope(row, child_siblings,
                                               doc_text_cache[doc_key])
                 _pt = _t.perf_counter()
+                # LLM lane: the raw ledger row for each proposal was written
+                # ONCE above (open-vocabulary type preserved); the per-
+                # composition sink would write it again per composition
+                # with the core label — no sink in llm modes.
                 entities, rejected = _entity_spans(
                     gliner, row["text"], row["chunk_id"], doc_id, profile_dict,
-                    envelope=envelope, trace=trace, raw_sink=raw_entity_sink,
+                    envelope=envelope, trace=trace,
+                    raw_sink=None if llm_mode else raw_entity_sink,
                     precomputed=_batched_pass1.get(row["chunk_id"])
                 )
                 _counts["gliner_entity_proposals"] += len(entities)
@@ -963,7 +1143,9 @@ def process_event(conn: Connection, event: dict) -> None:
                         reason_code="GLINER_PROPOSED", doc_id=doc_id,
                         chunk_id=row["chunk_id"],
                         detail={"proposals": len(entities), "rejected_labels": len(rejected)})
-                    for ent in entities:
+                    # llm_shadow admits NOTHING: no ADMITTED_* events may be
+                    # traced for proposals that never reach admission.
+                    for ent in (entities if provider_mode != "llm_shadow" else ()):
                         trace.record(
                             event_type="admission",
                             decision="ADMITTED_MENTION_ONLY",  # corrected below by class
@@ -973,10 +1155,20 @@ def process_event(conn: Connection, event: dict) -> None:
                             detail={"core_type": ent.core_type.value, "raw_label": ent.raw_label,
                                     "score": ent.score, "pass_kind": ent.pass_kind})
                 _pt = _t.perf_counter()
+                _pre_evidence = None
+                if llm_mode:
+                    _pre_evidence, _clip_audit = _clip_to_sentences(
+                        [EvidenceSpan(**e) for e in _llm_evidence.get(row["chunk_id"], [])],
+                        row["text"])
+                    if _clip_audit:
+                        audit.extend(_clip_audit)
+                        _counts["llm_evidence_clipped"] = (
+                            _counts.get("llm_evidence_clipped", 0) + len(_clip_audit))
                 evidence = _evidence_spans(
                     gliner, row["text"], row["chunk_id"], pack, proposal_mode,
                     raw_sink=raw_predicate_sink,
-                    scientific_lane_prioritized=scientific_lane_prioritized)
+                    scientific_lane_prioritized=scientific_lane_prioritized,
+                    precomputed_evidence=_pre_evidence)
                 _counts["evidence_spans"] += len(evidence)
                 _perf["evidence_pass_s"] += _t.perf_counter() - _pt
                 # drain this chunk's raw observations into ledger rows
@@ -1005,6 +1197,28 @@ def process_event(conn: Connection, event: dict) -> None:
             # changes nothing.
             _raw.bulk_write(conn, "raw_entity_proposals", _raw_rows_entity)
             _raw.bulk_write(conn, "raw_predicate_evidence", _raw_rows_predicate)
+            if provider_mode == "llm_shadow":
+                # SHADOW: proposals are durably recorded (raw ledger +
+                # artifacts above), production admits NOTHING. No mentions,
+                # no candidates, no facts, no projections — the doc still
+                # completes its stage so the shadow corpus advances and the
+                # shadow lane is measurable end to end.
+                if trace.enabled:
+                    trace.count("llm_shadow_proposals",
+                                _counts.get("llm_entities", 0)
+                                + _counts.get("llm_relations", 0))
+                    _shadow_funnel = trace.funnel()
+                    _shadow_written = trace.flush(conn)
+                    writer.artifact({"trace": {
+                        "mode": trace.mode, "events_written": _shadow_written,
+                        "funnel": _shadow_funnel}})
+                writer.artifact({
+                    "audit": audit,
+                    "shadow": True,
+                    "admitted": 0,
+                    "note": ("llm_shadow: gated proposals recorded; "
+                             "admission intentionally not run")})
+                return
             _pt = _t.perf_counter()
             syntax_runtime = _syntax_evidence(ordered_slices)
             _perf["syntax_s"] = _t.perf_counter() - _pt
@@ -1372,7 +1586,8 @@ def process_event(conn: Connection, event: dict) -> None:
             log.info("extract perf", extra={"run_id": run_id, "stage": "extract",
                                             "detail": None})
         finally:
-            gliner.close()
+            if gliner is not None:
+                gliner.close()  # LLM lane: no GLiNER client is constructed
 
         writer.artifact({"audit": audit})
         if trace.enabled:
@@ -1567,27 +1782,52 @@ def _persist_knowledge_artifacts(conn: Connection, *, corpus_id: str,
     is recorded as routing metadata but never vetoes a compiler:
     eligible content always gets evaluated."""
     from polymath_shared.knowledge_router.classifier import classify_document
-    from polymath_shared.knowledge_objects.concept import compile_concepts
-    from polymath_shared.knowledge_objects.procedure import compile_procedure
+    from polymath_shared.knowledge_objects.concept import (
+        compile_concept_inventory)
+    from polymath_shared.knowledge_objects.procedure import compile_procedures
 
     routing = classify_document(doc_text)["routing"]
     counts = {"procedures": 0, "concepts": 0,
               "routing_disabled": sorted(routing.get("disabled") or [])}
 
+    # SEMANTIC-LANE-LIVENESS-V1: record the OPPORTUNITY, not just the
+    # output. An artifact count alone cannot tell "12 of 12 opportunities
+    # captured" from "12 of 400", which is precisely how a lane can look
+    # alive while being deeply lossy. Counters are diagnostic and share
+    # the compilers' own helpers, so they cannot drift from what the
+    # compilers actually evaluate.
+    from polymath_shared.knowledge_objects import concept as _concept_mod
+    from polymath_shared.knowledge_objects import procedure as _procedure_mod
+    from workers.summarizer import split_sentences as _split
+
+    _doc_sentences = _split(doc_text)
+    # V2 counter for a V2 compiler. Measuring opportunities with the v1
+    # whitelist while compiling with the v2 detector would report more
+    # artifacts ACCEPTED than opportunities SEEN — a lane that looks
+    # like it manufactures evidence.
+    _proc_opportunities = _procedure_mod.count_opportunities_v2(
+        doc_text, frozenset(e.lower() for e in (durable_surfaces or ())))
+    _concept_opportunities = _concept_mod.count_opportunities(_doc_sentences)
+
     # procedure lane: always evaluated; the compiler self-gates on
-    # local procedural evidence
-    proc = compile_procedure(
-        document_id=doc_id, corpus_id=corpus_id, text=doc_text,
-        admitted_entities=durable_surfaces,
-        source_chunk_ids=chunk_ids)
-    if proc:
+    # local procedural evidence.
+    #
+    # PROCEDURE_ARTIFACT_V2 (P3): one artifact per LOCAL TASK, not one
+    # per document. A runbook page holding three separate tasks used to
+    # collapse into a single artifact whose goal was the first task's
+    # second step. Artifact ids stay content-addressed, so N rows per
+    # document remain idempotent on replay.
+    for proc in compile_procedures(
+            document_id=doc_id, corpus_id=corpus_id, text=doc_text,
+            admitted_entities=durable_surfaces,
+            source_chunk_ids=chunk_ids):
         conn.execute(
             """
             INSERT INTO procedure_artifacts
                 (procedure_id, document_id, corpus_id, title, goal,
                  steps_json, tools_json, confidence, source_chunk_ids,
-                 generated_by_bundle_hash)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                 provenance, generated_by_bundle_hash)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             ON CONFLICT (procedure_id) DO NOTHING
             """,
             (proc["artifact_id"], doc_id, corpus_id,
@@ -1595,13 +1835,19 @@ def _persist_knowledge_artifacts(conn: Connection, *, corpus_id: str,
              json.dumps(proc.get("steps", [])),
              json.dumps(proc.get("tools", [])),
              float(proc.get("confidence", 0.0)), list(chunk_ids),
+             json.dumps(proc.get("provenance", {})),
              _bundle_hash()))
-        counts["procedures"] = 1
+        counts["procedures"] += 1
 
     # concept lane: always evaluated; the compiler self-gates on
     # local definitional evidence
     from workers.summarizer import split_sentences
-    concepts = compile_concepts(
+    # CONCEPT_CONTRACT_V2 (P4): the durable inventory. max_concepts=10
+    # used to stop the scan at ten, so a 400-page book stored ten
+    # concepts and never read the rest — 12 of 13 live documents held
+    # exactly ten by construction. Storage is now governed by name
+    # admission; the top-N survives as `summary_rank` for routing cards.
+    concepts = compile_concept_inventory(
         document_id=doc_id, corpus_id=corpus_id,
         sentences=split_sentences(doc_text),
         admitted_entities=durable_surfaces,
@@ -1612,8 +1858,8 @@ def _persist_knowledge_artifacts(conn: Connection, *, corpus_id: str,
             INSERT INTO concept_artifacts
                 (concept_id, document_id, corpus_id, name, description,
                  domain, related_entities, source_sentence, confidence,
-                 supporting_chunks, generated_by_bundle_hash)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                 supporting_chunks, provenance, generated_by_bundle_hash)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             ON CONFLICT (concept_id) DO NOTHING
             """,
             (c["artifact_id"], doc_id, corpus_id, c["name"],
@@ -1621,9 +1867,59 @@ def _persist_knowledge_artifacts(conn: Connection, *, corpus_id: str,
              json.dumps(c.get("related_entities", [])),
              c.get("source_sentence", ""),
              float(c.get("confidence", 0.0)), list(chunk_ids),
+             json.dumps(c.get("provenance", {})),
              _bundle_hash()))
         counts["concepts"] += 1
+
+    _record_lane_attempt(conn, doc_id=doc_id, corpus_id=corpus_id,
+                         lane="procedure",
+                         opportunities=_proc_opportunities,
+                         accepted=counts["procedures"], capped=False)
+    _record_lane_attempt(conn, doc_id=doc_id, corpus_id=corpus_id,
+                         lane="concept",
+                         opportunities=_concept_opportunities,
+                         accepted=counts["concepts"],
+                         # CONCEPT_CONTRACT_V2 has no storage ceiling, so
+                         # the lane can no longer be truncated by a cap.
+                         # A shortfall now means admission refused the
+                         # candidate, which is a quality decision with a
+                         # recorded reason — not silent truncation.
+                         capped=False)
+    counts["procedure_opportunities"] = _proc_opportunities
+    counts["concept_opportunities"] = _concept_opportunities
     return counts
+
+
+def _record_lane_attempt(conn: Connection, *, doc_id: str, corpus_id: str,
+                         lane: str, opportunities: int, accepted: int,
+                         capped: bool) -> None:
+    """SEMANTIC-LANE-LIVENESS-V1 durable disposition.
+
+    NO_OPPORTUNITY is a CORRECT outcome and must stay distinguishable
+    from a lane that saw evidence and produced nothing (GATED) -- the
+    latter is the dead-feature signal."""
+    if opportunities <= 0:
+        disposition = "NO_OPPORTUNITY"
+    elif accepted > 0:
+        disposition = "ACCEPTED"
+    else:
+        disposition = "GATED"
+    conn.execute(
+        """
+        INSERT INTO knowledge_lane_attempts
+            (doc_id, corpus_id, lane, opportunities, accepted, capped,
+             disposition, bundle_hash)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+        ON CONFLICT (doc_id, lane) DO UPDATE SET
+            opportunities = EXCLUDED.opportunities,
+            accepted = EXCLUDED.accepted,
+            capped = EXCLUDED.capped,
+            disposition = EXCLUDED.disposition,
+            bundle_hash = EXCLUDED.bundle_hash,
+            created_at = now()
+        """,
+        (doc_id, corpus_id, lane, opportunities, accepted, capped,
+         disposition, _bundle_hash()))
 
 
 def _persist_decision(conn: Connection, chunk_row: dict, candidate, decision,

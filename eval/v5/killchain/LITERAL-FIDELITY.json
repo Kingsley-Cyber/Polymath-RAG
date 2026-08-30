@@ -1,0 +1,221 @@
+{
+ "contract": "literal-fidelity-v1",
+ "documents": [
+  {
+   "document": "Applied Incident Response.md",
+   "children": 848,
+   "source_bytes": 1026786,
+   "covered_chars": 1019889,
+   "span_min": 0,
+   "span_max": 1020815,
+   "gap_count": 847,
+   "gap_chars": 926,
+   "first_gap": [
+    1258,
+    1259
+   ],
+   "overlap_count": 0,
+   "duplicate_chunk_ids": 0,
+   "order_inversions": 0,
+   "starts_at_zero": true
+  },
+  {
+   "document": "CompTIA CySA+ Practice Tests Exam CS0-003.md",
+   "children": 695,
+   "source_bytes": 838705,
+   "covered_chars": 837221,
+   "span_min": 0,
+   "span_max": 837965,
+   "gap_count": 694,
+   "gap_chars": 744,
+   "first_gap": [
+    1245,
+    1246
+   ],
+   "overlap_count": 0,
+   "duplicate_chunk_ids": 0,
+   "order_inversions": 0,
+   "starts_at_zero": true
+  },
+  {
+   "document": "Exam Ref SC-200 Microsoft Security Operation",
+   "children": 276,
+   "source_bytes": 331996,
+   "covered_chars": 330804,
+   "span_min": 0,
+   "span_max": 331106,
+   "gap_count": 275,
+   "gap_chars": 302,
+   "first_gap": [
+    1226,
+    1227
+   ],
+   "overlap_count": 0,
+   "duplicate_chunk_ids": 0,
+   "order_inversions": 0,
+   "starts_at_zero": true
+  },
+  {
+   "document": "Intelligence-Driven Incident Response.md",
+   "children": 675,
+   "source_bytes": 802823,
+   "covered_chars": 797035,
+   "span_min": 0,
+   "span_max": 797742,
+   "gap_count": 674,
+   "gap_chars": 707,
+   "first_gap": [
+    1172,
+    1173
+   ],
+   "overlap_count": 0,
+   "duplicate_chunk_ids": 0,
+   "order_inversions": 0,
+   "starts_at_zero": true
+  },
+  {
+   "document": "Learning SQL.md",
+   "children": 93,
+   "source_bytes": 114351,
+   "covered_chars": 112478,
+   "span_min": 0,
+   "span_max": 112624,
+   "gap_count": 92,
+   "gap_chars": 146,
+   "first_gap": [
+    1212,
+    1213
+   ],
+   "overlap_count": 0,
+   "duplicate_chunk_ids": 0,
+   "order_inversions": 0,
+   "starts_at_zero": true
+  },
+  {
+   "document": "Microsoft Sentinel in Action.md",
+   "children": 460,
+   "source_bytes": 547352,
+   "covered_chars": 545938,
+   "span_min": 0,
+   "span_max": 546426,
+   "gap_count": 459,
+   "gap_chars": 488,
+   "first_gap": [
+    1215,
+    1216
+   ],
+   "overlap_count": 0,
+   "duplicate_chunk_ids": 0,
+   "order_inversions": 0,
+   "starts_at_zero": true
+  },
+  {
+   "document": "Mike Chapple, David Seidl - CompTIA CySA+ St",
+   "children": 938,
+   "source_bytes": 1139510,
+   "covered_chars": 1131833,
+   "span_min": 0,
+   "span_max": 1133226,
+   "gap_count": 937,
+   "gap_chars": 1393,
+   "first_gap": [
+    1213,
+    1214
+   ],
+   "overlap_count": 0,
+   "duplicate_chunk_ids": 0,
+   "order_inversions": 0,
+   "starts_at_zero": true
+  },
+  {
+   "document": "Practical Packet Analysis.md",
+   "children": 400,
+   "source_bytes": 481464,
+   "covered_chars": 478499,
+   "span_min": 0,
+   "span_max": 478914,
+   "gap_count": 399,
+   "gap_chars": 415,
+   "first_gap": [
+    1242,
+    1243
+   ],
+   "overlap_count": 0,
+   "duplicate_chunk_ids": 0,
+   "order_inversions": 0,
+   "starts_at_zero": true
+  },
+  {
+   "document": "Python Crash Course.md",
+   "children": 826,
+   "source_bytes": 1025126,
+   "covered_chars": 1011352,
+   "span_min": 0,
+   "span_max": 1012587,
+   "gap_count": 825,
+   "gap_chars": 1235,
+   "first_gap": [
+    1243,
+    1244
+   ],
+   "overlap_count": 0,
+   "duplicate_chunk_ids": 0,
+   "order_inversions": 0,
+   "starts_at_zero": true
+  },
+  {
+   "document": "Python for Data Analysis.md",
+   "children": 752,
+   "source_bytes": 934269,
+   "covered_chars": 926759,
+   "span_min": 0,
+   "span_max": 928237,
+   "gap_count": 751,
+   "gap_chars": 1478,
+   "first_gap": [
+    1176,
+    1177
+   ],
+   "overlap_count": 0,
+   "duplicate_chunk_ids": 0,
+   "order_inversions": 0,
+   "starts_at_zero": true
+  },
+  {
+   "document": "Splunk 9.x Enterprise Certified Admin Guide.",
+   "children": 363,
+   "source_bytes": 440428,
+   "covered_chars": 438443,
+   "span_min": 0,
+   "span_max": 438838,
+   "gap_count": 362,
+   "gap_chars": 395,
+   "first_gap": [
+    1208,
+    1209
+   ],
+   "overlap_count": 0,
+   "duplicate_chunk_ids": 0,
+   "order_inversions": 0,
+   "starts_at_zero": true
+  },
+  {
+   "document": "The Definitive Guide to KQL.md",
+   "children": 759,
+   "source_bytes": 923904,
+   "covered_chars": 917906,
+   "span_min": 0,
+   "span_max": 918797,
+   "gap_count": 758,
+   "gap_chars": 891,
+   "first_gap": [
+    1239,
+    1240
+   ],
+   "overlap_count": 0,
+   "duplicate_chunk_ids": 0,
+   "order_inversions": 0,
+   "starts_at_zero": true
+  }
+ ]
+}

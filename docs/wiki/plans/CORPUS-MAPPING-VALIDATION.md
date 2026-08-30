@@ -1,3 +1,12 @@
+---
+change_id: CORPUS-MAPPING-VALIDATION
+owner: governance
+date: 2026-08-23
+status: reference
+architecture_impact: none (documentation; front matter added 2026-08-29 governance cleanup)
+last_reviewed: 2026-08-29
+---
+
 # CORPUS_MAPPING_VALIDATION_REPORT (2026-08-24)
 
 Harness: eval/v5/replay/corpus_mapping_validation.py — multi-document

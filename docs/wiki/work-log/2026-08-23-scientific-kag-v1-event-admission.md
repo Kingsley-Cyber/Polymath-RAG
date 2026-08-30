@@ -45,3 +45,10 @@ record and countable.
   agent+artifact promotes release_event; bare pair without time
   abstains.
 - Full suite: 881 -> 886 passed.
+## Rejected claims
+
+(Historical entry — recorded in the entry body above.)
+
+## Open contract gaps
+
+(Historical entry — recorded in the entry body above.)

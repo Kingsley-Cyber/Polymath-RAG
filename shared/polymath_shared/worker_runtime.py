@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import time
 from typing import Any, Callable
 
@@ -189,8 +190,22 @@ def complete_ticket(conn, ticket_id: str | None) -> None:
     )
 
 
+#: STAGE-DEADLINE-WATCHDOG-V1 (STALL-2026-08-27). Hard ceiling on one
+#: stage execution. The keeper below renews the lease and heartbeats
+#: WHILE the stage runs — which means a stage frozen inside a hung call
+#: is indistinguishable from a healthy busy worker: lease never
+#: expires, reaper never fires, autopilot sees the lane served.
+#: MEASURED LIVE: nine workers of eight types sat wedged on one ticket
+#: each for up to 4 h (tkt_1418981e wedged two successive
+#: project_qdrant workers back-to-back) while the fleet froze around
+#: them. The deadline must clear the longest LEGITIMATE stage — the
+#: documented corpus routing pass is ~2.3 h — so the default is 4 h.
+_STAGE_DEADLINE_S = float(os.environ.get("POLYMATH_STAGE_DEADLINE_S", "14400"))
+
+
 def _lease_keeper(dsn: str, worker_id: str, ticket_id: str,
-                  ttl_s: int, stop, interval_s: float = 60.0):
+                  ttl_s: int, stop, interval_s: float = 60.0,
+                  deadline_s: float | None = None):
     # Renews EVERY ticket this worker holds, not just the one executing.
     # With claim depth 1 that is the same set; keeping it owner-scoped is
     # defence in depth so a future batching change cannot resurrect the
@@ -204,9 +219,46 @@ def _lease_keeper(dsn: str, worker_id: str, ticket_id: str,
     loop only beats BETWEEN events. This thread renews the lease and beats
     the heart WHILE processing; it stops the moment the stage finishes, so
     genuine death still expires the lease within one TTL.
+
+    STAGE-DEADLINE-WATCHDOG-V1: renewal is NOT unconditional. Past
+    `deadline_s` the stage is declared wedged: the ticket is failed with
+    a typed note (burning one attempt, returning it to ready below the
+    retry cap), the registration records the reason, and the PROCESS
+    exits — a thread frozen in a hung C call cannot be interrupted from
+    Python, so process death is the only real release. The supervisor
+    respawns a clean worker; CP2.1 SIGKILL-recovery semantics make the
+    abort safe (attempts roll back, receipt checkpoints survive).
     """
     import psycopg as _psycopg
+    if deadline_s is None:
+        deadline_s = _STAGE_DEADLINE_S
+    deadline_at = time.monotonic() + deadline_s
     while not stop.wait(interval_s):
+        if time.monotonic() >= deadline_at:
+            reason = (f"STAGE_DEADLINE_EXCEEDED: ticket {ticket_id} ran "
+                      f"past {deadline_s:.0f}s; worker exiting")
+            log.critical(reason, extra={
+                "error_code": "STAGE_DEADLINE_EXCEEDED",
+                "worker_id": worker_id})
+            try:
+                with _psycopg.connect(dsn, connect_timeout=5) as conn:
+                    if ticket_id:
+                        conn.execute(
+                            """
+                            UPDATE stage_tickets SET
+                                attempt = attempt + 1,
+                                status = CASE WHEN attempt + 1 >= 3
+                                              THEN 'failed' ELSE 'ready' END,
+                                lease_owner=NULL, lease_expires_at=NULL,
+                                last_error_note = %s, updated_at=now()
+                             WHERE ticket_id=%s AND status='leased'
+                            """,
+                            (reason[:500], ticket_id))
+                    heartbeat(conn, worker_id, last_error=reason[:500])
+                    conn.commit()
+            except Exception:
+                pass  # the exit itself frees the wedge either way
+            os._exit(70)
         try:
             with _psycopg.connect(dsn, connect_timeout=5) as conn:
                 conn.execute(

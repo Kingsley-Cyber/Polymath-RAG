@@ -1,3 +1,12 @@
+---
+change_id: SUMMARY-RUNTIME-FIX-REPORT
+owner: governance
+date: 2026-08-23
+status: reference
+architecture_impact: none (documentation; front matter added 2026-08-29 governance cleanup)
+last_reviewed: 2026-08-29
+---
+
 # SUMMARY_RUNTIME_FIX_REPORT (2026-08-24)
 
 ## Defects — corrected diagnosis first

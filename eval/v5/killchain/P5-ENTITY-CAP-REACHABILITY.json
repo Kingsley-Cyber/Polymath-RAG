@@ -1,0 +1,49 @@
+{
+  "phase": "P5 PARENT-SUMMARY-ENTITY-CAP",
+  "question": "Can information about entity #11+ become unreachable BECAUSE it was omitted from the parent summary?",
+  "metric": "omitted_entity_query_recall",
+  "sample": {
+    "cases": 280,
+    "parents": 11,
+    "corpus": "cysa-study-v1",
+    "modes": [
+      "FAST",
+      "HYBRID"
+    ],
+    "limit": 10,
+    "parent_durable_entity_range": [
+      26,
+      67
+    ]
+  },
+  "in_summary_control": {
+    "n": 85,
+    "exact_any_mode": 12.9,
+    "parent_any_mode": 12.9,
+    "surface_any_mode": 61.2,
+    "unreachable": 38.8
+  },
+  "omitted_entity_11_plus": {
+    "n": 195,
+    "exact_any_mode": 13.3,
+    "parent_any_mode": 13.3,
+    "surface_any_mode": 69.2,
+    "unreachable": 30.8
+  },
+  "difference_attributable_to_omission_pp": -8.0,
+  "recovery_routes_for_omitted": {
+    "MULTI_REPRESENTATION": 36,
+    "GLOBAL_CHILD_RESCUE": 8,
+    "SECTION_LED": 4
+  },
+  "verdict": "OUTCOME_A_ROUTING_ONLY_CAP",
+  "action": "DO NOT CHANGE MAX_ENTITIES",
+  "separate_finding": "~33% of bare entity-name queries do not surface their evidence at top-10 in either mode, INDEPENDENT of summary membership (control 38.8% unreachable vs omitted 30.8%). Belongs to P16 RETRIEVAL-QUALIFICATION, not to the entity cap.",
+  "degradations_observed": "none. All lanes live for every query: document_summary_routing, section_summary_routing, global_child, reranker, lexical (HYBRID), plus region_demotion and global_child_rescue where applicable. Reranker confirmed genuinely active (real g3 scores, pre_g3_order != post_g3_order). The result is therefore measured with the full lane set, not a degraded one.",
+  "mechanism": [
+    "parent_summaries.entities is read on NO retrieval path (zero references in pass1.py, hybrid.py, api/fast.py, api/retrieve.py).",
+    "Section routing embeds retrieval_summaries.summary_text, which is prose extracted from the source. The entity list is a separate payload field and never enters the embedded text.",
+    "Therefore membership in the top-10 entity list cannot influence whether a section is routed to. The empirical contrast confirms it: omission changes unreachability by -8.0 points, i.e. omitted entities fare slightly BETTER than in-summary controls.",
+    "Recovery of omitted evidence arrives via MULTI_REPRESENTATION (36), GLOBAL_CHILD_RESCUE (8) and SECTION_LED (4) - never via a summary-entity lookup, because no such lookup exists."
+  ]
+}

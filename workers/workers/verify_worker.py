@@ -348,6 +348,50 @@ def reconcile_neo4j(conn: Connection, run_id: str, corpus: str) -> dict:
                 session.run(
                     "MATCH ()-[r:REL {fact_id: $id}]->() DELETE r", id=fact_id
                 )
+            # GRAPH-LIFECYCLE-V2 (P9): the reconciler used to prune
+            # orphan Chunk nodes and endpoint-ineligible REL edges, and
+            # nothing else. MEASURED on the live graph before this:
+            # 10,124 of 10,142 Document nodes and 9,280 of 12,428 Fact
+            # nodes referenced rows that no longer exist in Postgres,
+            # and 85 REL edges pointed at facts that are not ACCEPTED.
+            # Deletion pruned Chunks, so the garbage was invisible in
+            # chunk counts while it kept competing for graph slots.
+            #
+            # Prune only what Postgres can PROVE is gone: a node whose
+            # id has no row at all. Anything still present in PG — even
+            # pending — is in flight and is kept, the same doctrine the
+            # chunk branch above uses.
+            live_docs = {r[0] for r in conn.execute(
+                "SELECT doc_id FROM documents").fetchall()}
+            doc_ids = {r["id"] for r in session.run(
+                "MATCH (n:Document) RETURN n.doc_id AS id") if r["id"]}
+            for stale in (doc_ids - live_docs):
+                session.run(
+                    "MATCH (n:Document {doc_id: $id}) DETACH DELETE n",
+                    id=stale)
+
+            live_facts = {r[0] for r in conn.execute(
+                "SELECT fact_id FROM facts").fetchall()}
+            node_facts = {r["id"] for r in session.run(
+                "MATCH (n:Fact) RETURN n.fact_id AS id") if r["id"]}
+            for stale in (node_facts - live_facts):
+                session.run(
+                    "MATCH (n:Fact {fact_id: $id}) DETACH DELETE n", id=stale)
+
+            live_evidence = {r[0] for r in conn.execute(
+                "SELECT evidence_id FROM evidence").fetchall()}
+            node_evidence = {r["id"] for r in session.run(
+                "MATCH (n:Evidence) RETURN n.evidence_id AS id") if r["id"]}
+            for stale in (node_evidence - live_evidence):
+                session.run(
+                    "MATCH (n:Evidence {evidence_id: $id}) DETACH DELETE n",
+                    id=stale)
+
+            # REL edges whose fact no longer exists in PG at all.
+            for stale in (edge_ids - live_facts):
+                session.run(
+                    "MATCH ()-[r:REL {fact_id: $id}]->() DELETE r", id=stale)
+
             erroneous = fact_receipts & ineligible_facts
             if erroneous:
                 conn.execute(

@@ -113,3 +113,52 @@ def spool_read(ref: dict) -> bytes:
             f"SPOOL_INTEGRITY_MISMATCH: {ref.get('key')!r} is {len(raw)} "
             f"bytes, reference claims {ref['bytes']}")
     return raw
+
+
+# ======================================================================
+# SOURCE-RECOVERY-KEY-V1 (P5, 2026-08-28)
+#
+# A `documents` row carries TWO hashes and only one of them addresses a
+# spool object:
+#
+#   source_hash   sha256 of the ORIGINAL uploaded bytes. This is the
+#                 spool key. The blob exists.
+#   content_hash  sha256 of the MATERIALIZED text produced from those
+#                 bytes. Nothing ever wrote a spool object under it.
+#
+# MEASURED on cysa-study-v1: 0 of 12 documents resolve via content_hash;
+# 12 of 12 resolve via source_hash. Reaching for content_hash returns
+# "not found" for every document at once, which does not read like a
+# lookup bug — it reads like the retained corpus is gone. That is a
+# recoverable rebuild misreported as a data-loss event, and it is
+# exactly the mistake to not make while performing the ONE production
+# rebuild.
+#
+# So recovery goes through one function rather than through whichever
+# hash a caller happens to have in scope.
+
+SOURCE_RECOVERY_KEY = "source_hash"
+
+
+def document_source_ref(document) -> dict:
+    """Claim-check reference for a document's retained ORIGINAL bytes.
+
+    `document` is a mapping from the `documents` table (a psycopg dict
+    row or any Mapping). The key is ALWAYS source_hash — see
+    SOURCE-RECOVERY-KEY-V1 above for why content_hash is not a spool
+    address.
+    """
+    sha = str(document.get(SOURCE_RECOVERY_KEY) or "").strip()
+    if not sha:
+        raise SpoolMissingError(
+            "SOURCE_HASH_MISSING: document "
+            f"{document.get('doc_id')!r} has no {SOURCE_RECOVERY_KEY}; its "
+            "original bytes cannot be recovered from the spool. Do NOT "
+            "fall back to content_hash — that hash addresses the "
+            "materialized text and has no spool object.")
+    return {"store": SPOOL_STORE, "key": f"{sha[:2]}/{sha}", "sha256": sha}
+
+
+def read_document_source(document) -> bytes:
+    """The retained original bytes for `document`, integrity-checked."""
+    return spool_read(document_source_ref(document))

@@ -104,3 +104,10 @@ Continuation packet: docs/contexts/session-packet-2026-08-25.md
 Handoff: NEXT_SESSION_HANDOFF.md (rewritten at closeout)
 Next engineering item: incremental census (telemetry-justified), then
 contract freezes + three-mode benchmark + real-corpus pilot.
+## Rejected claims
+
+(Historical entry — recorded in the entry body above.)
+
+## Open contract gaps
+
+(Historical entry — recorded in the entry body above.)

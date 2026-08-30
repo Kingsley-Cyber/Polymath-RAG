@@ -1,3 +1,12 @@
+---
+change_id: EXTRACTION-REPORT-SHOPIFY-MCP-TRANSCRIPT-V1
+owner: governance
+date: 2026-08-23
+status: reference
+architecture_impact: none (documentation; front matter added 2026-08-29 governance cleanup)
+last_reviewed: 2026-08-29
+---
+
 # EXTRACTION REPORT — shopify-mcp-transcript-v1
 Source: /Volumes/Flash Drive/markbuildsbrands_transcripts/
         "i make 150kmo from 3 businesses - heres the one id start today.md"

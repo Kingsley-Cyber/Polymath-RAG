@@ -23,3 +23,20 @@ check_http embedder http://127.0.0.1:8742/ready
 check_http reranker http://127.0.0.1:8743/ready
 check_http orchestrator http://127.0.0.1:8000/health
 check_http control http://127.0.0.1:7100/health
+
+.venv/bin/python - <<'PY'
+from polymath_shared.clients import probe_local_llm
+
+try:
+    report = probe_local_llm()
+except Exception as exc:
+    print(f"local-llm: unavailable ({type(exc).__name__}: {exc})")
+else:
+    if report["status"] == "disabled":
+        print("local-llm: disabled")
+    else:
+        print(
+            "local-llm: ready "
+            f"model={report['model']} digest={report['digest']}"
+        )
+PY

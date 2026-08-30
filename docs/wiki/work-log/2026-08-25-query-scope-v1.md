@@ -4,6 +4,7 @@ owner: orchestrator
 date: 2026-08-25
 status: implemented
 architecture_impact: /ask gains explicit fail-closed scoping; corpora gain purpose/query_enabled classification; workspaces table added
+last_reviewed: 2026-08-29
 ---
 
 # QUERY-SCOPE-V1 (2026-08-25)

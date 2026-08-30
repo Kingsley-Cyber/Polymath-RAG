@@ -100,9 +100,13 @@ def _procedures(conn, scope: "QueryScope", question: str,
         steps_l = steps if isinstance(steps, list) else json.loads(steps or "[]")
         blob = " ".join([title or "", goal or "", *map(str, steps_l)])
         match = _match_score(blob, terms)
-        # candidacy requires an actual term match; confidence only
-        # RANKS matches, it never makes an unmatched object a result
-        score = round(match + 0.25 * float(conf or 0), 4)
+        # ARTIFACT-CONFIDENCE-V2 (P7): confidence no longer ranks.
+        # It was min(1.0, 0.6 + 0.05 * len(steps)) — a LENGTH function.
+        # A longer procedure outranked a shorter one for being longer,
+        # which is not reliability. Under PROCEDURE_ARTIFACT_V2 that is
+        # actively wrong: the 10-step containment task would outrank the
+        # 5-step credential rotation on length alone.
+        score = round(match, 4)
         if match > 0:
             scored.append({
                 "object_type": "procedure",
@@ -132,10 +136,11 @@ def _concepts(conn, scope: "QueryScope", question: str,
     scored = []
     for cid_, did, cid, name, desc, domain, conf, chunks in rows:
         match = _match_score(f"{name} {desc}", terms)
-        # candidacy requires an actual term match (confidence ranks,
-        # never admits) — without this every stored concept scored > 0
-        # for any query via the confidence bonus alone
-        score = round(match + 0.2 * float(conf or 0), 4)
+        # ARTIFACT-CONFIDENCE-V2 (P7): concept confidence is a hardcoded
+        # 0.9 for every concept. A constant adds the same amount to every
+        # candidate, so it cannot discriminate — it only looked like a
+        # signal. Removed from scoring.
+        score = round(match, 4)
         if match > 0:
             scored.append({
                 "object_type": "concept",

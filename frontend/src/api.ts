@@ -1,4 +1,4 @@
-import type { ChatAnswer, Corpus, DocumentRow, Mode, Phase, RunRow, Synthesizer } from "./types";
+import type { ChatAnswer, Corpus, DocumentRow, Mode, Phase, ReasoningModeInfo, RunRow, Synthesizer } from "./types";
 
 async function getJSON<T>(url: string): Promise<T> {
   const r = await fetch(url);
@@ -11,9 +11,25 @@ export const fetchCorpora = (all = false) =>
     (d) => d.corpora,
   );
 
+/** Rename a corpus's display name (identity is immutable). */
+export async function renameCorpus(corpus: string, name: string) {
+  const r = await fetch(`/corpora/${encodeURIComponent(corpus)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  if (!r.ok) throw new Error(`rename → ${r.status}: ${await r.text()}`);
+  return r.json() as Promise<{ corpus_id: string; name: string }>;
+}
+
 export const fetchSynthesizers = () =>
   getJSON<{ synthesizers: Synthesizer[] }>("/synthesizers").then(
     (d) => d.synthesizers,
+  );
+
+export const fetchReasoningModes = () =>
+  getJSON<{ modes: ReasoningModeInfo[]; default: string }>(
+    "/reasoning_modes",
   );
 
 export const fetchDocuments = (corpus: string) =>
@@ -38,6 +54,8 @@ export async function uploadFile(corpus: string, file: File) {
 export interface StreamHandlers {
   onPhase: (p: Phase) => void;
   onToken: (t: string) => void;
+  /** Model thinking tokens — streamed into the reasoning card. */
+  onReasoning?: (t: string) => void;
   onAnswer: (a: ChatAnswer) => void;
   onError: (e: { error_code?: string; message?: string; status?: number }) => void;
   onDone: () => void;
@@ -51,6 +69,7 @@ export async function streamChat(
     corpus_id: string;
     mode: Mode;
     synthesizer: string;
+    reasoning?: string;
     history: { role: string; content: string }[];
     carry_context: { locator: string; preview: string }[];
   },
@@ -100,6 +119,8 @@ export async function streamChat(
       }
       if (event === "phase") handlers.onPhase(payload);
       else if (event === "token") handlers.onToken(payload.token ?? "");
+      else if (event === "reasoning")
+        handlers.onReasoning?.(payload.text ?? "");
       else if (event === "answer") handlers.onAnswer(payload);
       else if (event === "error") handlers.onError(payload);
       else if (event === "done") handlers.onDone();

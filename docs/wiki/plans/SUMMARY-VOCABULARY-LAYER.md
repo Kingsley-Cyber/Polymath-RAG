@@ -1,3 +1,12 @@
+---
+change_id: SUMMARY-VOCABULARY-LAYER
+owner: governance
+date: 2026-08-22
+status: reference
+architecture_impact: none (documentation; front matter added 2026-08-29 governance cleanup)
+last_reviewed: 2026-08-29
+---
+
 # SCIENTIFIC-KAG-V1 — Summary Intelligence & Vocabulary Layer (design of record)
 
 > Owner-issued 2026-08-23. This document is the work order for the

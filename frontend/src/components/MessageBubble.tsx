@@ -1,6 +1,27 @@
 import { useState } from "react";
-import type { ChunkRef, Message } from "../types";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import type { ChunkRef, Message, Retrieval } from "../types";
 import PhaseStream from "./PhaseStream";
+
+/** Compact raw grounding locators for reading. The model cites with
+ * [chunk_<hash>@start:end] — ~80 characters mid-prose. Matched
+ * citations become [n] pointing at the evidence panel's numbering;
+ * unmatched ones collapse to a short tag. Full locators stay available
+ * via "copy output" and the ⛁ evidence panel. */
+function compactCitations(body: string, chunks: ChunkRef[]): string {
+  const index = new Map<string, number>();
+  chunks.forEach((c, i) => {
+    if (c.locator) index.set(c.locator, i + 1);
+  });
+  return body.replace(/\[([^\[\]\s]{12,})\]/g, (whole, loc: string) => {
+    const n = index.get(loc);
+    if (n !== undefined) return `[${n}]`;
+    if (loc.startsWith("fact:")) return "[fact]";
+    if (loc.startsWith("chunk_") || loc.startsWith("doc_")) return "[ref]";
+    return whole;
+  });
+}
 
 export default function MessageBubble({ msg }: { msg: Message }) {
   if (msg.role === "user") {
@@ -16,7 +37,11 @@ export default function MessageBubble({ msg }: { msg: Message }) {
   return (
     <div className="msg msg-assistant">
       {(msg.phases?.length || msg.pending) && (
-        <PhaseStream phases={msg.phases ?? []} live={!!msg.pending} />
+        <PhaseStream
+          phases={msg.phases ?? []}
+          live={!!msg.pending}
+          reasoning={msg.reasoning}
+        />
       )}
       {msg.error && (
         <div className="bubble">
@@ -55,6 +80,7 @@ function AnswerBody({ msg }: { msg: Message }) {
           nothing in this corpus covers: {uncovered.join(", ")}
         </div>
       )}
+      <DegradedNote retrieval={r} />
       <div className="meta-row">
         <span className="badge badge-mode">{r.mode}</span>
         <span
@@ -77,6 +103,23 @@ function AnswerBody({ msg }: { msg: Message }) {
         <span className="latency">{(a.latency_ms / 1000).toFixed(1)}s</span>
       </div>
       {showChunks && <ChunksPanel chunks={r.chunks} />}
+    </div>
+  );
+}
+
+/** A lane that degraded instead of failing (e.g. the reranker parked
+ * behind extraction). The answer is real and complete — this states
+ * plainly what was skipped, so a quiet downgrade is never invisible. */
+function DegradedNote({ retrieval }: { retrieval: Retrieval }) {
+  const items = retrieval.degraded ?? [];
+  if (items.length === 0) return null;
+  return (
+    <div className="degraded-note">
+      {items.map((d, i) => (
+        <div key={i} title={d.reason}>
+          ⚠ {d.component} unavailable — {d.effect}
+        </div>
+      ))}
     </div>
   );
 }
@@ -183,7 +226,7 @@ async function launchHtml(code: string) {
 /** Split LLM output into prose and fenced code blocks; code renders in
  * a framed block with a header bar: language, Copy, and for HTML also
  * Open + Download (saves as a real .html file in ~/Downloads). */
-function LlmText({ text }: { text: string }) {
+function LlmText({ text, chunks = [] }: { text: string; chunks?: ChunkRef[] }) {
   const parts: { kind: "text" | "code"; lang: string; body: string }[] = [];
   const re = /```([a-zA-Z0-9]*)\n([\s\S]*?)```/g;
   let last = 0;
@@ -201,7 +244,11 @@ function LlmText({ text }: { text: string }) {
     <div>
       {parts.map((seg, i) =>
         seg.kind === "text" ? (
-          <span key={i}>{seg.body}</span>
+          <div className="md" key={i}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {compactCitations(seg.body, chunks)}
+            </ReactMarkdown>
+          </div>
         ) : (
           <div className="code-block" key={i}>
             <div className="code-head">
@@ -280,7 +327,8 @@ function LlmBody({
   const bareHtml = html && !text.includes("```");
   return (
     <div className="bubble">
-      <LlmText text={text} />
+      <LlmText text={text} chunks={r.chunks} />
+      <DegradedNote retrieval={r} />
       <div className="meta-row">
         <span className="badge badge-mode">{r.mode}</span>
         <span className="badge badge-generated">

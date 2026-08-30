@@ -1,3 +1,12 @@
+---
+change_id: SUMMARY-INTELLIGENCE-READINESS
+owner: governance
+date: 2026-08-23
+status: reference
+architecture_impact: none (documentation; front matter added 2026-08-29 governance cleanup)
+last_reviewed: 2026-08-29
+---
+
 # SUMMARY INTELLIGENCE READINESS REPORT (draft 1 — 2026-08-24)
 
 Replay: transaction-scoped waterfall on TEST.md successor

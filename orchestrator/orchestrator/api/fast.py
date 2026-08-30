@@ -14,7 +14,10 @@ Failure semantics (existing conventions):
 """
 from __future__ import annotations
 
+import logging
+import os
 import time
+from contextvars import ContextVar
 from typing import Optional
 
 import httpx
@@ -27,9 +30,12 @@ from polymath_shared.db import tx
 from polymath_shared.embedding_contracts import NEURAL_EMBED_CONTRACT
 from polymath_shared.pass1 import Pass1RetrievalPlan, pass1_retrieve
 from polymath_shared.projection_contracts import qdrant_collection_name
+from polymath_shared.query_shape import plan_for_query
 from polymath_shared.rerank import RerankUnavailable, apply_rerank
 from polymath_shared.retrieval_modes import MODE_FAST, mode_plan
 from polymath_shared.settings import get_settings
+
+log = logging.getLogger("orchestrator-retrieval")
 
 
 def _fail(detail: dict, status_code: int = 502) -> HTTPException:
@@ -121,11 +127,41 @@ def _ensure_fast_ready(corpus_id: str) -> None:
         client.close()
 
 
+#: WAKE-ON-QUERY (2026-08-27). The autopilot parks the embedder when
+#: ingest demand ends, so the FIRST query after an idle period found a
+#: dead socket and failed typed (`embedder_unavailable`) — while that
+#: very request's activity signal was what told the autopilot to wake
+#: the sidecar. Budget: the signal lands before the handler runs
+#: (orchestrator.main middleware), the supervisor reconciles within
+#: 15 s, and the measured embedder cold start is ~20 s.
+#:
+#: The embedder is a HARD dependency — no vector, no retrieval — so it
+#: cannot degrade like the reranker: the only correct behaviour is to
+#: wait. The budget is deliberately generous (owner rule: waiting on a
+#: cold model is fine, erroring is not) and env-tunable; a genuinely
+#: dead sidecar still fails typed when it expires.
+EMBED_WAKE_BUDGET_S = float(
+    os.environ.get("POLYMATH_EMBED_WAKE_BUDGET_S", "150"))
+
+
+def _await_embedder(client) -> None:
+    """Block briefly while the autopilot wakes a parked embedder; on
+    budget expiry fall through so the embed call fails typed."""
+    if client.ready():
+        return
+    deadline = time.monotonic() + EMBED_WAKE_BUDGET_S
+    while time.monotonic() < deadline:
+        time.sleep(2.0)
+        if client.ready():
+            return
+
+
 def _embed_query(query: str) -> list[float]:
     from polymath_shared.clients import EmbedderClient
 
     client = EmbedderClient()
     try:
+        _await_embedder(client)
         client.verify_pin()
         return client.embed([query], "query")["vectors"][0]
     except Exception as exc:
@@ -137,15 +173,113 @@ def _embed_query(query: str) -> list[float]:
         client.close()
 
 
+#: NEVER-ERROR-ON-A-COLD-MODEL (2026-08-27, owner rule): an idle-parked
+#: model must cost the user WAITING, never a failed query. `_embed_query`
+#: waits for the embedder because a vector is a hard dependency — no
+#: vector, no retrieval. Reranking is different: it only REORDERS what
+#: RRF fusion already produced (it can neither add nor drop candidates),
+#: so fusion order is a complete, correct answer. When the reranker
+#: cannot be reached even after the wake budget — the real case is
+#: active ingest, where GLiNER holds the memory ceiling and the
+#: autopilot deliberately refuses to wake the reranker at all — the
+#: lane DEGRADES to fusion order and says so in meta.degraded, instead
+#: of throwing `rerank_unavailable` at someone who just asked a
+#: question.
+_RERANK_DEGRADED: "ContextVar[str | None]" = ContextVar(
+    "rerank_degraded", default=None)
+
+
+def _begin_retrieval() -> None:
+    """Reset per-request degradation state (call once per retrieve)."""
+    _RERANK_DEGRADED.set(None)
+
+
+def degradations() -> list[dict]:
+    """Degradations recorded for the current request, for meta."""
+    note = _RERANK_DEGRADED.get()
+    return [] if not note else [{
+        "component": "reranker",
+        "effect": "results ordered by RRF fusion (no cross-encoder rerank); "
+                  "same candidate set, same recall",
+        "reason": note,
+    }]
+
+
+def _neighbor_lookup(want: list[dict], distance: int) -> list[dict]:
+    """NEIGHBOR-EXPANSION-V1 source: chunks adjacent (chunk_index ± n,
+    same document, child tier) to the seed chunks.
+
+    One set-based query for the whole seed set — never a per-seed loop
+    (the repo has paid for that pattern before). Ordered deterministically
+    so the same seeds always expand to the same rows."""
+    if not want or distance <= 0:
+        return []
+    doc_ids = [w["doc_id"] for w in want]
+    chunk_ids = [w["chunk_id"] for w in want]
+    with tx() as conn:
+        rows = conn.execute(
+            """
+            WITH seeds AS (
+                SELECT c.doc_id, c.chunk_index
+                  FROM chunks c
+                  JOIN unnest(%s::text[], %s::text[]) AS w(doc_id, chunk_id)
+                    ON c.doc_id = w.doc_id AND c.chunk_id = w.chunk_id
+            )
+            SELECT DISTINCT n.chunk_id, n.doc_id, n.parent_id, n.text,
+                   d.source_name, n.chunk_index
+              FROM chunks n
+              JOIN seeds s ON n.doc_id = s.doc_id
+              JOIN documents d ON d.doc_id = n.doc_id
+             WHERE n.tier = 'child'
+               AND n.chunk_index BETWEEN s.chunk_index - %s AND s.chunk_index + %s
+             ORDER BY n.doc_id, n.chunk_index
+            """,
+            (doc_ids, chunk_ids, distance, distance),
+        ).fetchall()
+    return [
+        {"chunk_id": r[0], "doc_id": r[1], "parent_id": r[2],
+         "text": r[3], "source_name": r[4]}
+        for r in rows
+    ]
+
+
+def _liveness(trace: dict, mode: str) -> dict:
+    """Evaluate promoted-lane liveness for this query's trace."""
+    from polymath_shared.lane_liveness import evaluate
+
+    out = evaluate({**trace, "mode": mode})
+    if out["suspect"]:
+        log.warning("promoted lane(s) had an opportunity and contributed "
+                    "nothing: %s", ",".join(out["suspect"]),
+                    extra={"error_code": "lane_suspect"})
+    return {"suspect": out["suspect"], "live": out["live"]}
+
+
+def _region_lookup(chunk_ids: list[str]) -> dict:
+    """DOCUMENT-REGION-V1 source: persisted document role per chunk.
+
+    One set-based query over the bounded candidate set. A chunk with no
+    role (ingested before the contract, or a corpus not yet backfilled)
+    returns nothing and is therefore never demoted."""
+    if not chunk_ids:
+        return {}
+    with tx() as conn:
+        rows = conn.execute(
+            """SELECT chunk_id, region_role FROM chunks
+                WHERE chunk_id = ANY(%s) AND region_role IS NOT NULL""",
+            (chunk_ids,)).fetchall()
+    return {r[0]: r[1] for r in rows}
+
+
 def _rerank_children(query: str, children: list[dict]) -> list[dict]:
     try:
         _, reranked = apply_rerank(query, [], children)
         return reranked
     except RerankUnavailable as exc:
-        raise _fail({
-            "error_code": "rerank_unavailable",
-            "message": str(exc),
-        }) from exc
+        _RERANK_DEGRADED.set(str(exc)[:300])
+        log.warning("reranker unavailable; degrading to fusion order",
+                    extra={"error_code": "rerank_degraded"})
+        return children
 
 
 def fast_retrieve(
@@ -155,6 +289,7 @@ def fast_retrieve(
 ) -> dict:
     """Production FAST: one qualified Pass-1 execution with explicit
     readiness, corpus filtering, and a hierarchical trace."""
+    _begin_retrieval()
     plan = plan or mode_plan(MODE_FAST)
     if corpus_id is None:
         raise _fail({
@@ -178,14 +313,21 @@ def fast_retrieve(
         def routing_search(collection: str, vector: list[float], filters: dict) -> list[dict]:
             return searcher(collection, vector, filters)
 
+        # QUERY-SHAPE-V1: breadth by default; the depth profile engages
+        # only for completeness questions ("all the domains and
+        # subdomains…"), which the breadth caps structurally truncate.
+        shaped = plan_for_query(
+            query,
+            Pass1RetrievalPlan(**{**plan.__dict__, "corpus_ids": (corpus_id,)}),
+        )
         result = pass1_retrieve(
             query,
-            plan=Pass1RetrievalPlan(
-                **{**plan.__dict__, "corpus_ids": (corpus_id,)},
-            ),
+            plan=shaped,
             embed_query=_embed_query,
             routing_search=routing_search,
-            rerank_children=_rerank_children if plan.rerank_enabled else None,
+            rerank_children=_rerank_children if shaped.rerank_enabled else None,
+            neighbor_lookup=_neighbor_lookup,
+            region_lookup=_region_lookup,
         )
     finally:
         client.close()
@@ -201,6 +343,12 @@ def fast_retrieve(
             "selected_document_count": len(result.selected_documents),
             "selected_section_count": len(result.selected_sections),
             "evidence_count": len(result.final_evidence),
+            "degraded": degradations(),
+            # PRODUCTION-REALITY-V1: per-query lane liveness. A lane that
+            # was enabled, had a genuine opportunity and contributed
+            # nothing shows up as SUSPECT here instead of silently
+            # delivering zero for weeks.
+            "liveness": _liveness(result.trace, MODE_FAST),
         },
         "selected_documents": [
             {

@@ -1,4 +1,4 @@
-import type { Corpus, Mode, Synthesizer } from "../types";
+import type { Corpus, Mode, ReasoningModeInfo, Synthesizer } from "../types";
 
 export const THEMES = [
   { id: "obsidian", color: "#7da2f5" },
@@ -20,10 +20,13 @@ export default function TopBar({
   mode,
   synthesizers,
   synthesizer,
+  reasoningModes,
+  reasoning,
   theme,
   onCorpus,
   onMode,
   onSynthesizer,
+  onReasoning,
   onTheme,
 }: {
   corpora: Corpus[];
@@ -31,10 +34,13 @@ export default function TopBar({
   mode: Mode;
   synthesizers: Synthesizer[];
   synthesizer: string;
+  reasoningModes: ReasoningModeInfo[];
+  reasoning: string;
   theme: string;
   onCorpus: (c: string) => void;
   onMode: (m: Mode) => void;
   onSynthesizer: (s: string) => void;
+  onReasoning: (r: string) => void;
   onTheme: (t: string) => void;
 }) {
   return (
@@ -45,7 +51,7 @@ export default function TopBar({
           <option value="">— select —</option>
           {corpora.map((c) => (
             <option key={c.corpus_id} value={c.corpus_id}>
-              {c.corpus_id} ({c.documents}
+              {c.name || c.corpus_id} ({c.documents}
               {c.query_ready ? " · ready" : " · not ready"})
             </option>
           ))}
@@ -74,6 +80,21 @@ export default function TopBar({
           ))}
         </div>
       </div>
+      {reasoningModes.length > 0 && (
+        <div className="control">
+          <label>Reasoning</label>
+          <select
+            value={reasoning}
+            onChange={(e) => onReasoning(e.target.value)}
+          >
+            {reasoningModes.map((r) => (
+              <option key={r.id} value={r.id} title={r.description}>
+                {r.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <div className="control">
         <label>Model</label>
         <select

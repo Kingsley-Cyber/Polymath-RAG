@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { fetchCorpora, fetchSynthesizers, streamChat } from "./api";
+import { fetchCorpora, fetchReasoningModes, fetchSynthesizers, streamChat } from "./api";
 import ChatView from "./components/ChatView";
 import CorporaView from "./components/CorporaView";
 import ModelsView from "./components/ModelsView";
 import FilesView from "./components/FilesView";
 import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
-import type { Chat, Corpus, Message, Mode, Synthesizer } from "./types";
+import type { Chat, Corpus, Message, Mode, ReasoningModeInfo, Synthesizer } from "./types";
 
 const STORE = "polymath.chats.v1";
 const THEME_KEY = "polymath.theme";
@@ -15,7 +15,14 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 function loadChats(): Chat[] {
   try {
-    return JSON.parse(localStorage.getItem(STORE) || "[]");
+    const chats: Chat[] = JSON.parse(localStorage.getItem(STORE) || "[]");
+    // The deterministic stitcher is no longer offered; saved chats
+    // pointing at it fall through to the server's default LLM.
+    return chats.map((c) =>
+      c.synthesizer === "deterministic-template-v3"
+        ? { ...c, synthesizer: "" }
+        : c,
+    );
   } catch {
     return [];
   }
@@ -29,6 +36,7 @@ export default function App() {
   const [view, setView] = useState<"chat" | "files" | "corpora" | "models">("chat");
   const [corpora, setCorpora] = useState<Corpus[]>([]);
   const [synths, setSynths] = useState<Synthesizer[]>([]);
+  const [reasoningModes, setReasoningModes] = useState<ReasoningModeInfo[]>([]);
   const [busy, setBusy] = useState(false);
   const [theme, setTheme] = useState(
     () => {
@@ -46,19 +54,31 @@ export default function App() {
     localStorage.setItem(STORE, JSON.stringify(chats.slice(0, 60)));
   }, [chats]);
 
+  // Presence pulse: while the tab is open and visible, the autopilot
+  // keeps the embedder warm so the first query never pays a sidecar
+  // cold start. Ages out server-side when the app closes.
+  useEffect(() => {
+    const pulse = () => {
+      if (document.visibilityState === "visible")
+        fetch("/ui_pulse").catch(() => {});
+    };
+    pulse();
+    const t = setInterval(pulse, 60_000);
+    document.addEventListener("visibilitychange", pulse);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", pulse);
+    };
+  }, []);
+
   useEffect(() => {
     fetchCorpora().then(setCorpora).catch(() => setCorpora([]));
     fetchSynthesizers()
       .then(setSynths)
-      .catch(() =>
-        setSynths([
-          {
-            id: "deterministic-template-v3",
-            label: "Deterministic · grounded",
-            description: "",
-          },
-        ]),
-      );
+      .catch(() => setSynths([]));
+    fetchReasoningModes()
+      .then((d) => setReasoningModes(d.modes))
+      .catch(() => setReasoningModes([]));
   }, []);
 
   const active = useMemo(
@@ -77,8 +97,8 @@ export default function App() {
       created: Date.now(),
       corpus: active?.corpus ?? "",
       mode: active?.mode ?? "HYBRID",
-      synthesizer:
-        active?.synthesizer ?? synths[0]?.id ?? "deterministic-template-v3",
+      synthesizer: active?.synthesizer || synths[0]?.id || "",
+      reasoning: active?.reasoning ?? "none",
       messages: [],
     };
     setChats((cs) => [c, ...cs]);
@@ -145,6 +165,10 @@ export default function App() {
           corpus_id: active.corpus,
           mode: active.mode,
           synthesizer: active.synthesizer,
+          reasoning:
+            active.reasoning && active.reasoning !== "none"
+              ? active.reasoning
+              : undefined,
           history,
           carry_context: carry,
         },
@@ -152,6 +176,8 @@ export default function App() {
           onPhase: (p) =>
             patchAsst((m) => ({ ...m, phases: [...(m.phases ?? []), p] })),
           onToken: (t) => patchAsst((m) => ({ ...m, text: m.text + t })),
+          onReasoning: (t) =>
+            patchAsst((m) => ({ ...m, reasoning: (m.reasoning ?? "") + t })),
           onAnswer: (a) => patchAsst((m) => ({ ...m, answer: a })),
           onError: (e) => patchAsst((m) => ({ ...m, error: e })),
           onDone: () => {
@@ -197,7 +223,7 @@ export default function App() {
           corpus={active?.corpus ?? ""}
           mode={active?.mode ?? "HYBRID"}
           synthesizers={synths}
-          synthesizer={active?.synthesizer ?? synths[0]?.id ?? ""}
+          synthesizer={active?.synthesizer || synths[0]?.id || ""}
           theme={theme}
           onCorpus={(v) =>
             active && patchChat(active.id, (c) => ({ ...c, corpus: v }))
@@ -207,6 +233,11 @@ export default function App() {
           }
           onSynthesizer={(s) =>
             active && patchChat(active.id, (c) => ({ ...c, synthesizer: s }))
+          }
+          reasoningModes={reasoningModes}
+          reasoning={active?.reasoning ?? "none"}
+          onReasoning={(r) =>
+            active && patchChat(active.id, (c) => ({ ...c, reasoning: r }))
           }
           onTheme={setTheme}
         />

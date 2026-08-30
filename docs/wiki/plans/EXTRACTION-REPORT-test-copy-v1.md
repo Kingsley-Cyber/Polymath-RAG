@@ -1,3 +1,12 @@
+---
+change_id: EXTRACTION-REPORT-TEST-COPY-V1
+owner: governance
+date: 2026-08-23
+status: reference
+architecture_impact: none (documentation; front matter added 2026-08-29 governance cleanup)
+last_reviewed: 2026-08-29
+---
+
 # EXTRACTION REPORT — TEST copy.md (corpus test-copy-v1)
 
 Ingested through the production path with the v2 intelligence stack

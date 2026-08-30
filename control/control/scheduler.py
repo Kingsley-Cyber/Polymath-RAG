@@ -80,6 +80,10 @@ def schedule_gaps(conn: Connection, census: Census) -> int:
         # ON CONFLICT resets delivered_at so a retry after a failed stage
         # actually re-delivers: the payload is identical (same content
         # hash), so the same outbox row is re-armed, never duplicated.
+        # The WHERE guard makes re-arming an already-armed row a no-op:
+        # without it every gap rewrote its row EVERY tick — dead tuples
+        # bloated outbox_events to 206 MB over 204 live rows and pushed
+        # the id sequence past 155M (measured, STALL-2026-08-27).
         scheduled += conn.execute(
             """
             INSERT INTO outbox_events (run_id, event_type, payload,
@@ -89,6 +93,7 @@ def schedule_gaps(conn: Connection, census: Census) -> int:
               FROM unnest(%s::text[], %s::text[], %s::text[], %s::text[])
                    AS x(run_id, event_type, payload, idempotency_key)
             ON CONFLICT (idempotency_key) DO UPDATE SET delivered_at = NULL
+            WHERE outbox_events.delivered_at IS NOT NULL
             """,
             ([r[0] for r in chunk], [r[1] for r in chunk],
              [r[2] for r in chunk], [r[3] for r in chunk]),
@@ -106,10 +111,18 @@ def schedule_gaps(conn: Connection, census: Census) -> int:
 #: ticket. MEASURED LIVE: transcript-qual-v1 sat in 'degraded' with 5
 #: armed-but-unclaimable project_qdrant events while every worker
 #: polled idle. Receipts prove state; a DONE ticket whose receipts the
-#: census says are missing is not done. Re-opening is bounded to the
-#: exact (run, stage) pairs the census flagged for missing projection
-#: receipts this tick, and stops the moment receipts land (the gap
-#: disappears).
+#: census says are missing is not done. Re-opening stops the moment
+#: receipts land (the gap disappears).
+#:
+#: ONE RE-DRIVE PER (CORPUS, STAGE) — STALL-2026-08-27. The desired
+#: state these stages project is CORPUS-scoped (census and verify both
+#: join through runs.corpus_id), so re-opening every flagged run's
+#: ticket dispatched the identical corpus-wide projection N times over.
+#: MEASURED LIVE: cysa-study-v1 (12 runs, one corpus) rewrote each
+#: neo4j entity ~20x per 15 minutes — 286k receipt writes over 14.6k
+#: distinct entities — while pending tickets starved behind the
+#: receipt barrier. One open ticket per (corpus, stage) carries the
+#: whole re-drive; further reopens wait until it settles.
 _RECEIPT_GAP_STAGES = {
     "project_qdrant.v1": "project_qdrant",
     "project_neo4j.v1": "project_neo4j",
@@ -118,25 +131,42 @@ _RECEIPT_GAP_STAGES = {
 
 
 def _reopen_receipt_gap_tickets(conn: Connection, census: Census) -> int:
-    pairs = sorted({
-        (g.run_id, _RECEIPT_GAP_STAGES[g.event_type])
-        for g in census.gaps
-        if g.event_type in _RECEIPT_GAP_STAGES
-        and "receipts missing" in (g.reason or "")
-    })
-    if not pairs:
+    flagged: dict[tuple[str, str], set[str]] = {}
+    for g in census.gaps:
+        if (g.event_type in _RECEIPT_GAP_STAGES
+                and "receipts missing" in (g.reason or "")):
+            key = (g.corpus_id, _RECEIPT_GAP_STAGES[g.event_type])
+            flagged.setdefault(key, set()).add(g.run_id)
+    if not flagged:
         return 0
-    reopened = conn.execute(
-        """
-        UPDATE stage_tickets t
-           SET status = 'ready', lease_owner = NULL,
-               lease_expires_at = NULL, updated_at = now()
-          FROM unnest(%s::text[], %s::text[]) AS x(run_id, stage)
-         WHERE t.run_id = x.run_id AND t.stage = x.stage
-           AND t.status = 'done' AND t.archived_at IS NULL
-        """,
-        ([p[0] for p in pairs], [p[1] for p in pairs]),
-    ).rowcount
+    reopened = 0
+    for (corpus_id, stage), run_ids in sorted(flagged.items()):
+        # A re-drive already in flight (any open ticket for this
+        # corpus+stage) covers the corpus-scoped desired state; do not
+        # stack duplicates behind it.
+        open_row = conn.execute(
+            """SELECT 1 FROM stage_tickets
+                WHERE corpus_id = %s AND stage = %s
+                  AND archived_at IS NULL
+                  AND status IN ('pending', 'ready', 'leased', 'repair')
+                LIMIT 1""",
+            (corpus_id, stage)).fetchone()
+        if open_row:
+            continue
+        reopened += conn.execute(
+            """
+            UPDATE stage_tickets
+               SET status = 'ready', lease_owner = NULL,
+                   lease_expires_at = NULL, updated_at = now()
+             WHERE ticket_id = (
+                   SELECT ticket_id FROM stage_tickets
+                    WHERE corpus_id = %s AND stage = %s
+                      AND run_id = ANY(%s)
+                      AND status = 'done' AND archived_at IS NULL
+                    ORDER BY run_id LIMIT 1)
+            """,
+            (corpus_id, stage, sorted(run_ids)),
+        ).rowcount
     return reopened
 
 

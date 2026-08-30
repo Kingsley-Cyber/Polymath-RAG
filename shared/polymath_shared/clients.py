@@ -27,6 +27,10 @@ class SidecarUnavailable(RuntimeError):
     """
 
 
+class LocalLlmConnectionError(RuntimeError):
+    """Configured local model is absent, remote, or contract-invalid."""
+
+
 #: Read budget for GPU inference calls. Connect and pool stay short (see
 #: SidecarClient.__init__) so a dead or restarted sidecar is still detected
 #: in seconds; only the READ phase is patient. Measured need: on the shared
@@ -139,6 +143,83 @@ class SidecarClient:
 
     def infer(self, payload: dict[str, Any]) -> dict[str, Any]:
         return self.request("POST", "/infer", json=payload).json()
+
+
+class OllamaLocalClient(SidecarClient):
+    """Read-only LOCAL-LLM-EXTRACTION-V1 connection verifier.
+
+    Free-LLM documents Ollama's local OpenAI-compatible endpoint. The
+    native model catalog is used for preflight because it distinguishes a
+    downloaded model from an Ollama remote-model alias.
+    """
+
+    def __init__(self) -> None:
+        settings = get_settings().sidecars
+        super().__init__(
+            settings.local_llm_url,
+            timeout=settings.sidecar_timeout_s,
+            require_pin=False,
+        )
+        self.model = settings.local_llm_model.strip()
+
+    def models(self) -> list[dict[str, Any]]:
+        try:
+            payload = self.request("GET", "/api/tags", attempts=2).json()
+        except ValueError as exc:
+            raise LocalLlmConnectionError(
+                "Ollama /api/tags did not return JSON"
+            ) from exc
+        models = payload.get("models")
+        if not isinstance(models, list):
+            raise LocalLlmConnectionError(
+                "Ollama /api/tags response has no models list"
+            )
+        return [dict(item) for item in models if isinstance(item, dict)]
+
+    def configured_release(self) -> dict[str, str]:
+        if not self.model:
+            raise LocalLlmConnectionError("no local Ollama model is configured")
+        match = next(
+            (
+                item for item in self.models()
+                if item.get("name") == self.model or item.get("model") == self.model
+            ),
+            None,
+        )
+        if match is None:
+            raise LocalLlmConnectionError(
+                f"configured Ollama model {self.model!r} is not installed"
+            )
+        if match.get("remote_host") or match.get("remote_model"):
+            raise LocalLlmConnectionError(
+                f"configured Ollama model {self.model!r} is remote; local-only mode refuses it"
+            )
+        digest = str(match.get("digest") or "").strip()
+        if not digest:
+            raise LocalLlmConnectionError(
+                f"configured Ollama model {self.model!r} has no release digest"
+            )
+        return {"model": self.model, "digest": digest}
+
+    def verify_pin(self) -> None:
+        self.configured_release()
+
+    def ready(self) -> bool:
+        try:
+            self.configured_release()
+            return True
+        except Exception:
+            return False
+
+
+def probe_local_llm() -> dict[str, str]:
+    """Return the read-only local provider connection verdict."""
+    settings = get_settings().sidecars
+    if settings.local_llm_provider == "disabled":
+        return {"status": "disabled"}
+    with OllamaLocalClient() as client:
+        release = client.configured_release()
+    return {"status": "ready", **release}
 
 
 class GlinerClient(SidecarClient):

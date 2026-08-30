@@ -49,6 +49,10 @@ Document alongside Paper; TimeReference alongside Date/TimePeriod.
    compiled_lexical-v1.4.0.json; bundle re-frozen v5-production-005
    (bdfec5d02b7f1b06).
 
+## Changes
+
+(Historical entry — recorded in the entry body above.)
+
 ## Proof
 
 - Direction tests green: trained_on(BERT, BooksCorpus) ACCEPT;
@@ -61,3 +65,11 @@ Document alongside Paper; TimeReference alongside Date/TimePeriod.
 ## Open gaps
 
 P6 live validation on real text; acceptance harness; 4-doc suite.
+
+## Rejected claims
+
+(Historical entry — recorded in the entry body above.)
+
+## Open contract gaps
+
+(Historical entry — recorded in the entry body above.)

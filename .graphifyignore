@@ -1,0 +1,11 @@
+# Vendored/interpreter trees — not this project's source.
+.venv/
+.venv-gliner2/
+sidecars/*/.venv/
+sidecars/**/site-packages/
+node_modules/
+__pycache__/
+*.pyc
+graphify-out/
+# large generated corpora / spool artifacts
+raw/

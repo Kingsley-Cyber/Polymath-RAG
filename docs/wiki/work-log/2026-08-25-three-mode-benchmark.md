@@ -4,6 +4,7 @@ owner: governance
 date: 2026-08-25
 status: implemented
 architecture_impact: none
+last_reviewed: 2026-08-29
 ---
 
 # THREE-MODE BENCHMARK V1 HARNESS (2026-08-25)

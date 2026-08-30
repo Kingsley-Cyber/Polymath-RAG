@@ -4,6 +4,7 @@ owner: control
 date: 2026-08-25
 status: implemented
 architecture_impact: none
+last_reviewed: 2026-08-29
 ---
 
 # SCHEDULER-BULK-V1 (2026-08-25)
