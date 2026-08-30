@@ -41,7 +41,8 @@ def run_parent_summary_ticket(conn, *, ticket_id: str, corpus_id: str,
                               children: list[dict],
                               facts: list[dict],
                               entities: list[dict],
-                              source_ids: list[str]) -> dict:
+                              source_ids: list[str],
+                              compiled: dict | None = None) -> dict:
     if not _claim(conn, ticket_id, worker_id):
         return {"status": "SKIPPED_NOT_CLAIMABLE"}
 
@@ -56,7 +57,7 @@ def run_parent_summary_ticket(conn, *, ticket_id: str, corpus_id: str,
 
     env = build_parent_summary(parent_id=parent_id, parent_text=parent_text,
                                children=children, facts=facts,
-                               entities=entities)
+                               entities=entities, compiled=compiled)
     payload = env["payload"]
     artifact_id = "psa_" + content_hash({"in": input_hash})[:32]
     conn.execute(

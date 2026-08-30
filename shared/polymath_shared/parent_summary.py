@@ -12,36 +12,7 @@ from polymath_shared.scientific_concept import (
 )
 from polymath_shared.summary_layer import build_envelope
 
-_REL_PHRASE = {
-    "trained_on": "was trained on",
-    "evaluated_on": "was evaluated on",
-    "released_on": "was released on",
-    "published_on": "was published on",
-    "occurred_at": "occurred at",
-    "introduced": "introduces",
-    "proposed": "proposes",
-    "uses": "uses",
-    "uses_method": "uses the method",
-    "contains_component": "includes",
-    "part_of": "is part of",
-    "member_of": "is a member of",
-    "is_a": "is a",
-    "instance_of": "is an instance of",
-    "similar_to": "is similar to",
-    "located_in": "is located in",
-    "derived_from": "derives from",
-    "acquired": "acquired",
-    "created": "created",
-    "developed": "developed",
-    # PREDICATE-COMPILER-V2 predicates (scientific-kag-v2.0): the frame
-    # lane emits these; composition must render them or facts vanish.
-    "introduced_by": "was introduced by",
-    "proposed_by": "was proposed by",
-    "evaluated_against": "was evaluated against",
-    "compared_against": "was compared against",
-    "depends_on": "depends on",
-    "uses_component": "uses",
-}
+from polymath_shared.summary_compiler import RELATION_PHRASES as _REL_PHRASE  # noqa: E402
 
 MAX_SUMMARY_FACTS = 4
 MAX_ENTITIES = 10
@@ -59,10 +30,34 @@ def _fact_sentence(fact: dict) -> str | None:
 
 def build_parent_summary(*, parent_id: str, parent_text: str,
                          children: list[dict], facts: list[dict],
-                         entities: list[dict]) -> dict:
+                         entities: list[dict], compiled: dict | None = None) -> dict:
     """children: [{id, text}]; facts: [{predicate, subject_surface,
     object_surface}]; entities: [{surface, core_type}] (durable only).
-    Returns the envelope with payload fields per design-of-record."""
+    `compiled` (SUMMARY-COMPILER-V1): the parent's active routing card
+    {summary_id, plain_summary, relations[{text,...}], keywords} — when
+    present it IS the summary (one compiler, no second head/concept
+    scan). Returns the envelope with payload fields per design-of-record."""
+    if compiled and (compiled.get("plain_summary") or compiled.get("relations")):
+        rel_texts = [r.get("text") if isinstance(r, dict) else str(r)
+                     for r in (compiled.get("relations") or [])]
+        rel_texts = [r for r in rel_texts if r][:MAX_SUMMARY_FACTS]
+        durable = sorted({e["surface"] for e in entities
+                          if e.get("surface")
+                          and e.get("admission_class", "GLOBAL") != "MENTION_ONLY"})
+        entity_surfaces = durable[:MAX_ENTITIES]
+        payload = {
+            "summary_type": "parent",
+            "parent_id": parent_id,
+            "entities": entity_surfaces,
+            "concepts": list(compiled.get("keywords") or [])[:MAX_CONCEPTS],
+            "summary": (compiled.get("plain_summary") or " ".join(rel_texts)).strip(),
+            "fact_count": len(rel_texts),
+            "fact_sentences": rel_texts,
+            "compiled_from": compiled.get("summary_id"),
+            "variant": compiled.get("variant") or "deterministic",
+        }
+        return build_envelope(derived_from=[c["id"] for c in children], payload=payload)
+
     sentences = []
     seen = set()
     for fact in facts:
@@ -178,12 +173,4 @@ def re_finditer_candidates(text: str) -> list[str]:
             if not any(cs <= m.start() and m.end() <= ce
                        for cs, ce in seen_spans):
                 out.append(cand)
-    return out
-    # lowercase technical compounds ("self-attention layers"): hyphenated
-    for m in re.finditer(r"\b[a-z]+(?:-[a-z]+)+\b", text):
-        cand = m.group(0)
-        if named_concept_evidence(cand.replace("-", " ")) or \
-                any(part in ("attention", "search", "training",
-                             "learning") for part in cand.split("-")):
-            out.append(cand)
     return out

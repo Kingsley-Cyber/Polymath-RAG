@@ -1102,7 +1102,7 @@ def process_event(conn: Connection, event: dict) -> None:
                     "stats": _merged.stats,
                     "rejections_preview": _merged.rejections[:200],
                     "coercions_preview": _merged.coercions[:200],
-                    "digests": _merged.digests[:400],
+                    "digests": _merged.digests,   # SUMMARY-COMPILER-V1 reads every one
                     "neighborhoods": len(_neighborhoods),
                     # EXTRACTION-COVERAGE-V1: the per-neighborhood ledger the
                     # census reads (via stats) and the operator reads (here).

@@ -93,14 +93,14 @@ def _desired_routing_ids(conn: Connection, corpus: str) -> dict[str, set[str]]:
     doc_rows = conn.execute(
         """
         SELECT rs.summary_id FROM retrieval_summaries rs
-         WHERE rs.corpus_id = %s AND rs.kind = 'document_retrieval_summary'
+         WHERE rs.corpus_id = %s AND rs.kind = 'document_retrieval_summary' AND rs.active
         """,
         (corpus,),
     ).fetchall()
     section_rows = conn.execute(
         """
         SELECT rs.summary_id FROM retrieval_summaries rs
-         WHERE rs.corpus_id = %s AND rs.kind = 'section_retrieval_summary'
+         WHERE rs.corpus_id = %s AND rs.kind = 'section_retrieval_summary' AND rs.active
         """,
         (corpus,),
     ).fetchall()
@@ -599,6 +599,39 @@ def reconcile_canonical(conn: Connection, run_id: str, corpus: str) -> dict:
     }
 
 
+def reconcile_summaries(conn: Connection, corpus: str) -> dict:
+    """SUMMARY-COVERAGE-CHECK-V1: every prose-bearing parent has an ACTIVE
+    section card, and no active card's coverage receipt reports an
+    uncovered child. Pre-v3 rows (empty coverage) are not judged."""
+    from polymath_shared.region_role import is_summarizable
+    parents = conn.execute(
+        """SELECT p.chunk_id, p.region_role FROM chunks p
+             JOIN documents d ON d.doc_id = p.doc_id
+            WHERE d.corpus_id = %s AND p.tier = 'parent'""",
+        (corpus,)).fetchall()
+    live = [pid for pid, role in parents if is_summarizable(role)]
+    cards = conn.execute(
+        """SELECT parent_id, variant, coverage FROM retrieval_summaries
+            WHERE corpus_id = %s AND kind = 'section_retrieval_summary' AND active""",
+        (corpus,)).fetchall()
+    by_parent = {pid: (variant, cov or {}) for pid, variant, cov in cards}
+    without_card = sorted(pid for pid in live if pid not in by_parent)
+    uncovered = sorted(pid for pid, (_v, cov) in by_parent.items() if cov.get("uncovered"))
+    variants: dict[str, int] = {}
+    for _pid, (variant, _cov) in by_parent.items():
+        variants[variant or "deterministic"] = variants.get(variant or "deterministic", 0) + 1
+    return {
+        "contract": "summary-coverage-check-v1",
+        "parents_live": len(live),
+        "parents_with_card": sum(1 for pid in live if pid in by_parent),
+        "parents_without_card": len(without_card),
+        "parents_without_card_ids": without_card[:20],
+        "cards_uncovered": len(uncovered),
+        "cards_uncovered_ids": uncovered[:20],
+        "variants": variants,
+    }
+
+
 def reconcile_ontology(conn: Connection, run_id: str, corpus: str) -> dict:
     """ONTOLOGY-DURABLE-CHECK-V1 (owner 2026-08-30): the gate normalizes
     predicates at extraction time; this proves it from DURABLE state so a
@@ -688,6 +721,7 @@ def process_event(conn: Connection, event: dict) -> None:
         neo4j_report = reconcile_neo4j(rc, run_id, corpus)
         canonical_report = reconcile_canonical(rc, run_id, corpus)
         ontology_report = reconcile_ontology(rc, run_id, corpus)
+        summaries_report = reconcile_summaries(rc, corpus)
 
     contract = stage_contract_hash(STAGE, {"contract_version": CONTRACT_VERSION})
     with stage_transaction(conn, run_id=run_id, stage=STAGE, contract_hash=contract) as writer:
@@ -697,6 +731,7 @@ def process_event(conn: Connection, event: dict) -> None:
             "neo4j": neo4j_report,
             "canonical": canonical_report,
             "ontology": ontology_report,
+            "summaries": summaries_report,
         })
 
         loss = (
@@ -721,6 +756,10 @@ def process_event(conn: Connection, event: dict) -> None:
             + ontology_report["off_enum_rows"]
             + ontology_report["unknown_predicates"]
             + ontology_report["ledger_without_evidence"]
+            # SUMMARY-COVERAGE-CHECK-V1: a prose parent without an active
+            # card, or a card that starved a child, is a routing gap.
+            + summaries_report["parents_without_card"]
+            + summaries_report["cards_uncovered"]
         )
         if loss or problem:
             # OPERATOR-STATE-V1: gaps are only a FAULT when no pending

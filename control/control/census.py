@@ -392,13 +392,13 @@ def _missing_projection_receipts(conn: Connection, run_id: str, stage: str) -> l
                   FROM retrieval_summaries rs
                   JOIN runs r ON r.corpus_id = rs.corpus_id
                  WHERE r.run_id = %s
-                   AND rs.kind = 'document_retrieval_summary'
+                   AND rs.kind = 'document_retrieval_summary' AND rs.active
                 UNION ALL
                 SELECT rs.summary_id, 'routing_section_summary'
                   FROM retrieval_summaries rs
                   JOIN runs r ON r.corpus_id = rs.corpus_id
                  WHERE r.run_id = %s
-                   AND rs.kind = 'section_retrieval_summary'
+                   AND rs.kind = 'section_retrieval_summary' AND rs.active
                 UNION ALL
                 SELECT c.chunk_id, 'routing_child'
                   FROM chunks c

@@ -124,6 +124,23 @@ def _mentions_for_chunks(conn: Connection, chunk_ids: list[str]) -> list[dict]:
     return [{"surface": s, "core_type": c} for s, c in rows]
 
 
+def _compiled_card(conn: Connection, parent_id: str) -> dict | None:
+    """SUMMARY-COMPILER-V1: the parent's ACTIVE routing card, the single
+    summary authority S2 consumes (no second summarizer here)."""
+    row = conn.execute(
+        """SELECT summary_id, variant, plain_summary, relations, keywords
+             FROM retrieval_summaries
+            WHERE parent_id = %s AND kind = 'section_retrieval_summary' AND active
+            LIMIT 1""",
+        (parent_id,)).fetchone()
+    if not row:
+        return None
+    rel = row[3] if isinstance(row[3], list) else json.loads(row[3] or "[]")
+    kw = row[4] if isinstance(row[4], list) else json.loads(row[4] or "[]")
+    return {"summary_id": row[0], "variant": row[1], "plain_summary": row[2] or "",
+            "relations": rel, "keywords": kw}
+
+
 def _do_parents(conn: Connection, run_id: str) -> dict:
     corpus = _corpus_of_run(conn, run_id)
     if not corpus:
@@ -133,11 +150,13 @@ def _do_parents(conn: Connection, run_id: str) -> dict:
     for pid, slot in _parents_of_docs(conn, docs).items():
         facts = _facts_for_chunks(conn, slot["chunk_ids"])
         entities = _mentions_for_chunks(conn, slot["chunk_ids"])
+        compiled = _compiled_card(conn, pid)
         children_text = "\n".join(c["text"] for c in slot["children"])
         input_hash = "in_" + _content_hash({
             "parent": pid, "children": children_text,
             "facts": sorted(json.dumps(f, sort_keys=True) for f in facts),
             "entities": sorted(e["surface"] for e in entities),
+            "card": compiled["summary_id"] if compiled else None,
         })
         ticket = _stage_ticket(conn, run_id, "parent_summary") + ":" + pid[-16:]
         if _job_done(conn, "PARENT_SUMMARY", input_hash):
@@ -148,7 +167,7 @@ def _do_parents(conn: Connection, run_id: str) -> dict:
             input_hash=input_hash, contract_version=CONTRACT_VERSION,
             worker_id="summary-worker", parent_text=children_text,
             children=slot["children"], facts=facts, entities=entities,
-            source_ids=list(slot["chunk_ids"]))
+            source_ids=list(slot["chunk_ids"]), compiled=compiled)
         if res.get("status") in ("COMPLETE", "EXISTING"):
             done += 1
     log.info("parent summaries settled", extra={
