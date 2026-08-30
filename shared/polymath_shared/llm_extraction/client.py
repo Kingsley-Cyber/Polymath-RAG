@@ -388,8 +388,20 @@ class LLMExtractionClient:
         if not prompt_items:
             return []
         # LEAN profile for the local lane: index-encoded contract cuts
-        # output tokens (quotes only on relations; output tokens are the wall)
-        use_lean = self.lane == "local"
+        # output tokens (quotes only on relations; output tokens are the wall).
+        # LEAN-COVERAGE-GATE (measured 2026-08-30 22:1x, first-hand): on real
+        # book neighborhoods the 4B degenerates the index arrays
+        # ([299,"PRODUCES",[300,...]] nesting, runaway indices) into invalid
+        # JSON on ~50-90% of calls — rep-penalty on/off/soft all measured
+        # non-causal (2/4, 2/4, 3/4 parse). The earlier "0 salvage" receipt
+        # was survivorship (5 returned calls measured, 19 dropped ignored);
+        # live corpus receipts: 40/40 and 19/24 neighborhoods DROPPED.
+        # LEAN stays the default (owner's experiment continues via the JSON
+        # grammar mask); POLYMATH_LEAN_LOCAL=off runs the proven flat
+        # contract until the mask makes LEAN parse-safe.
+        use_lean = (self.lane == "local"
+                    and os.environ.get("POLYMATH_LEAN_LOCAL", "on").lower()
+                    not in ("0", "off", "false"))
         # BATCH TOTAL-TOKEN CAP (measured 2026-08-29): a 45K-token batch
         # OOMs Metal when the fleet is resident on the shared GPU. Chunk
         # prompts so each HTTP call stays under the ADAPTIVE cap: clean
