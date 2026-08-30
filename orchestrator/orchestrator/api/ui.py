@@ -314,6 +314,16 @@ def _litellm_credentials(model: str) -> dict:
 
 @router.delete("/documents/{doc_id}")
 def delete_document(doc_id: str, confirm: str = "") -> dict:
+    """DELETE-LOCK-TIMEOUT-V1 wrapper: a bounded wait on in-flight stage
+    locks, 409 `runs_in_flight` instead of a silent hang."""
+    try:
+        return _delete_document_tx(doc_id, confirm)
+    except Exception as exc:                      # noqa: BLE001
+        _raise_if_lock_timeout(exc, f"delete document {doc_id[:24]}")
+        raise
+
+
+def _delete_document_tx(doc_id: str, confirm: str = "") -> dict:
     """DOCUMENT-DELETE-V1: remove ONE document and everything derived
     from it — PG rows, its Qdrant points, its Neo4j substrate, its runs
     (so the same bytes are re-ingestable), and its projection receipts
@@ -326,6 +336,7 @@ def delete_document(doc_id: str, confirm: str = "") -> dict:
             "message": f"pass confirm={doc_id!r} to delete this document"})
     removed: dict = {}
     with tx() as conn:
+        _lock_timeout_or_409(conn, "delete document")
         row = conn.execute(
             "SELECT corpus_id, source_name FROM documents WHERE doc_id=%s",
             (doc_id,)).fetchone()
@@ -602,6 +613,25 @@ def llm_test(req: LlmTest) -> dict:
                 "error": f"{type(exc).__name__}: {str(exc)[:220]}"}
 
 
+def _lock_timeout_or_409(conn, what: str) -> None:
+    """DELETE-LOCK-TIMEOUT-V1 (measured 2026-08-30): a stage transaction
+    (extract holds one for the whole document, 12+ minutes) locks the
+    run/ticket rows; a delete waited on them silently while the UI showed
+    nothing. Bound the wait and say why."""
+    conn.execute("SET LOCAL lock_timeout = '5s'")
+
+
+def _raise_if_lock_timeout(exc: Exception, what: str) -> None:
+    import psycopg
+
+    if isinstance(exc, psycopg.errors.LockNotAvailable):
+        raise HTTPException(409, {
+            "error_code": "runs_in_flight",
+            "message": f"{what}: a stage transaction holds locks on this "
+                       "corpus (extraction in progress). Stop the workers "
+                       "or wait for the stage to finish, then retry."})
+
+
 @router.delete("/corpora/{corpus_id}")
 def delete_corpus(corpus_id: str, confirm: str = "") -> dict:
     """OWNER-DESTRUCTIVE: remove a corpus and everything derived from
@@ -617,7 +647,16 @@ def delete_corpus(corpus_id: str, confirm: str = "") -> dict:
             "error_code": "confirmation_required",
             "message": "pass confirm=<corpus_id> to delete"})
     removed: dict[str, int] = {}
+    try:
+        return _delete_corpus_tx(corpus_id, removed)
+    except Exception as exc:                      # noqa: BLE001
+        _raise_if_lock_timeout(exc, f"delete corpus {corpus_id!r}")
+        raise
+
+
+def _delete_corpus_tx(corpus_id: str, removed: dict) -> dict:
     with tx() as conn:
+        _lock_timeout_or_409(conn, "delete corpus")
         row = conn.execute("SELECT 1 FROM corpora WHERE corpus_id=%s",
                            (corpus_id,)).fetchone()
         if not row:
@@ -626,6 +665,27 @@ def delete_corpus(corpus_id: str, confirm: str = "") -> dict:
         doc_ids = [r[0] for r in conn.execute(
             "SELECT doc_id FROM documents WHERE corpus_id=%s",
             (corpus_id,)).fetchall()]
+        # PROJECTION-RECEIPT-PURGE-V2 (measured 2026-08-30): receipts are
+        # keyed by the PROJECTED id — chunk ids, but also routing-card
+        # summary ids, procedure/concept ids, fact/evidence ids. The
+        # corpus delete purged chunk/doc ids only, so 904 receipts
+        # survived the collection drop; ids are content-addressed, so a
+        # re-ingest would have seen them as current and skipped
+        # re-embedding into a hole. Every projected id goes.
+        projected_ids: list[str] = []
+        for sql in (
+            "SELECT summary_id FROM retrieval_summaries WHERE corpus_id=%s",
+            "SELECT procedure_id FROM procedure_artifacts WHERE corpus_id=%s",
+            "SELECT concept_id FROM concept_artifacts WHERE corpus_id=%s",
+            "SELECT canonical_id::text FROM canonical_entities WHERE corpus_id=%s",
+        ):
+            try:
+                conn.execute("SAVEPOINT ids_sp")
+                projected_ids.extend(r[0] for r in conn.execute(sql, (corpus_id,)).fetchall())
+                conn.execute("RELEASE SAVEPOINT ids_sp")
+            except Exception:
+                conn.execute("ROLLBACK TO SAVEPOINT ids_sp")
+                conn.execute("RELEASE SAVEPOINT ids_sp")
         run_ids = [r[0] for r in conn.execute(
             "SELECT run_id FROM runs WHERE corpus_id=%s",
             (corpus_id,)).fetchall()]
@@ -681,6 +741,15 @@ def delete_corpus(corpus_id: str, confirm: str = "") -> dict:
         if doc_ids:
             _del("DELETE FROM projection_receipts WHERE entity_id = ANY(%s)",
                  (doc_ids,), "projection_receipts")
+            _del("""DELETE FROM projection_receipts WHERE entity_id IN (
+                        SELECT ev.evidence_id FROM evidence ev WHERE ev.doc_id = ANY(%s))""",
+                 (doc_ids,), "projection_receipts", optional=True)
+        if projected_ids:
+            _del("DELETE FROM projection_receipts WHERE entity_id = ANY(%s)",
+                 (projected_ids,), "projection_receipts")
+        if orphan_facts:
+            _del("DELETE FROM projection_receipts WHERE entity_id = ANY(%s)",
+                 (orphan_facts,), "projection_receipts", optional=True)
         for t, col in (("retrieval_summaries", "corpus_id"),
                        ("parent_summaries", "corpus_id"),
                        ("document_summaries", "corpus_id"),

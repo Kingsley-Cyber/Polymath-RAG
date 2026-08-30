@@ -88,8 +88,15 @@ def claim_ticket_events(conn, identity: dict, event_types: list[str], limit: int
               LEFT JOIN runs r ON r.run_id = e.run_id
              WHERE e.delivered_at IS NULL
                 AND e.event_type = ANY(%s)
-                AND (t.ticket_id IS NULL OR
-                     (t.status = 'ready' AND t.archived_at IS NULL))
+                -- TICKET-GATE-FAIL-CLOSED-V1 (measured 2026-08-30): an
+                -- event with NO ticket row used to pass through (legacy
+                -- harness compatibility). The legacy census emits events
+                -- for every missing stage one tick after intake, and a
+                -- run whose chain is minted one tick late had nothing to
+                -- hold them: SC-200 ran profile/canonicalize/neo4j/verify
+                -- BEFORE extract. No ticket => not claimable, full stop.
+                AND t.ticket_id IS NOT NULL
+                AND t.status = 'ready' AND t.archived_at IS NULL
                 AND NOT (e.event_id = ANY(%s))
              ORDER BY CASE WHEN r.created_at > now() - interval '15 minutes'
                            THEN 0 ELSE 1 END,
@@ -104,6 +111,8 @@ def claim_ticket_events(conn, identity: dict, event_types: list[str], limit: int
         events = cur.fetchall()
         claimed = []
         for e in events:
+            if e["ticket_id"] is None:
+                continue                    # fail closed (see the query)
             if e["ticket_id"] is not None:
                 if e["ticket_status"] != "ready":
                     continue

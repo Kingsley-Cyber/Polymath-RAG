@@ -33,6 +33,21 @@ sessions. Start every session with
   (`pgrep -f "workers\.[a-z_]*_worker" | xargs kill -TERM;
   pgrep -f project_neo4j | xargs kill -TERM`). `control.main` caches census
   verdicts — restart it if completed runs sit at `reconciling`.
+- Hand-started processes (orchestrator, extra extract workers, the batched
+  server) MUST carry the fleet environment or they compute a different
+  execution contract (lease refused / wrong query policy): export
+  `POLYMATH_PROFILE=pipeline POLYMATH_SYNTAX_PROVIDER=spacy
+  POLYMATH_QUERY_POLICY=semantic-query-policy-v3 POLYMATH_RESCUE=on
+  POLYMATH_WORKER_RULE_PACK_VERSION=1.5.0 POLYMATH_CHUNKER=legacy_v1
+  POLYMATH_RELATION_PIPELINE=kimi_v1 POLYMATH_PREDICATE_V2=enforce` (read
+  the supervised worker's env with `ps -E -p <pid>` to be sure). zsh does
+  NOT word-split `$VAR` for `env` — write the assignments inline.
+- A UI/API delete blocks on the extract stage's transaction (held for the
+  whole document); it now returns 409 `runs_in_flight` after 5 s. Stop the
+  extract workers first if you need the delete now.
+- Lane parallelism today = number of extract worker processes (one per
+  supervised slot). A second one started by hand takes the next ready
+  ticket; the local lane still serializes at the batched server.
 - Merge `main` from the worktree `../polymath-v4-main`; never `git checkout`
   in the live tree. Commit messages end with the Co-Authored-By /
   Claude-Session trailers; never push without asking unless the owner

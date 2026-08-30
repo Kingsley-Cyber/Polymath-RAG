@@ -263,28 +263,14 @@ def compute_census(conn: Connection, *, max_attempts: int = 3,
             ))
             continue
 
-        complete = True
-        for stage in STAGE_CHAIN:
-            outcome = last_by_stage.get(stage, (None, None))[0]
-            if outcome == "ok":
-                continue
-            if outcome == "failed" and count_by_stage.get(stage, 0) < max_attempts:
-                census.gaps.append(Gap(
-                    run_id=run_id, corpus_id=corpus_id, stage=stage,
-                    event_type=STAGE_EVENTS[stage],
-                    reason=f"stage {stage} failed; retry {count_by_stage.get(stage, 0)}/{max_attempts}",
-                ))
-                complete = False
-            elif outcome == "failed":
-                census.fail.append(run_id)
-                complete = False
-            else:
-                complete = False
-                census.gaps.append(Gap(
-                    run_id=run_id, corpus_id=corpus_id, stage=stage,
-                    event_type=STAGE_EVENTS[stage],
-                    reason=f"stage {stage} missing",
-                ))
+        gaps, complete, failed = chain_verdict(
+            last_by_stage, count_by_stage, max_attempts=max_attempts)
+        for stage, reason in gaps:
+            census.gaps.append(Gap(
+                run_id=run_id, corpus_id=corpus_id, stage=stage,
+                event_type=STAGE_EVENTS[stage], reason=reason))
+        if failed:
+            census.fail.append(run_id)
 
         if complete and not census.fail:
             # Projection receipt census: an ok projection stage can still
@@ -339,6 +325,33 @@ def compute_census(conn: Connection, *, max_attempts: int = 3,
     timing["runs_evaluated"] = len(runs)
     _LAST_TIMING = timing
     return census
+
+
+def chain_verdict(last_by_stage: dict, count_by_stage: dict, *,
+                  max_attempts: int = 3) -> tuple[list[tuple[str, str]], bool, bool]:
+    """Pure chain walk: (gaps [(stage, reason)], complete, failed).
+
+    CENSUS-FIRST-GAP-V1 (measured 2026-08-30): the walk used to emit a
+    gap for EVERY stage without an attempt, so one tick after intake the
+    scheduler enqueued profile/canonicalize/neo4j/verify events all at
+    once — ordering rested entirely on the ticket gate. Now the walk
+    stops at the first stage that is not ok: a failed stage within its
+    retry budget is the gap; beyond the budget the run fails; a missing
+    stage is the one gap and nothing after it is emitted."""
+    gaps: list[tuple[str, str]] = []
+    for stage in STAGE_CHAIN:
+        outcome = last_by_stage.get(stage, (None, None))[0]
+        if outcome == "ok":
+            continue
+        if outcome == "failed" and count_by_stage.get(stage, 0) < max_attempts:
+            gaps.append((stage, f"stage {stage} failed; retry "
+                                f"{count_by_stage.get(stage, 0)}/{max_attempts}"))
+            return gaps, False, False
+        if outcome == "failed":
+            return gaps, False, True
+        gaps.append((stage, f"stage {stage} missing"))
+        return gaps, False, False
+    return gaps, True, False
 
 
 def extraction_stats(conn: Connection, run_id: str) -> dict | None:
