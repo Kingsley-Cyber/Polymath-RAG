@@ -275,6 +275,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_term_surface_gate.py", "py", None),
     ("tests/integration/test_census_dirty_signal.py", "py", None),
     ("tests/integration/test_compile_objects_stage.py", "py", None),
+    ("tests/integration/test_chunk_sweep_scope.py", "py", None),
     ("tests/determinism/test_sparse_bm25.py", "py", None),
     ("workers/workers/compile_objects_worker.py", "py", None),
     ("shared/polymath_shared/sparse_bm25.py", "py", None),

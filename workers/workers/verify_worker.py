@@ -295,7 +295,17 @@ def reconcile_qdrant(conn: Connection, run_id: str, corpus: str) -> dict:
         store_ids: set[str] = set()
         try:
             points, _ = client.scroll(collection_name=collection, limit=100_000, with_vectors=False)
-            store_ids = {str(p.payload.get("chunk_id")) for p in points if p.payload}
+            # CHUNK-SWEEP-SCOPE-V1 (measured live 2026-08-30 15:14): this
+            # reconciler owns CHUNK points only. Entity cards, routing
+            # summaries and knowledge-object cards carry chunk_id=None;
+            # str(None) == "None" was never a receipt and never desired,
+            # so every such point was classified a true orphan and
+            # DELETED — 94 routing_entity cards vanished minutes after
+            # projection once both lanes resolved to one collection.
+            # A point without a chunk_id is another lane's point: the
+            # routing reconciler owns it; this sweep must not see it.
+            store_ids = {str(p.payload.get("chunk_id")) for p in points
+                         if p.payload and p.payload.get("chunk_id")}
         except Exception:
             store_ids = set()
     finally:
@@ -318,9 +328,12 @@ def reconcile_qdrant(conn: Connection, run_id: str, corpus: str) -> dict:
         client = _qdrant_client()
         try:
             points, _ = client.scroll(collection_name=collection, limit=100_000, with_vectors=False)
+            # CHUNK-SWEEP-SCOPE-V1: deletion candidates are chunk-lane
+            # points ONLY (non-null chunk_id) — see the guard above.
             orphan_point_ids = [
                 p.id for p in points
-                if p.payload and str(p.payload.get("chunk_id")) in true_orphans
+                if p.payload and p.payload.get("chunk_id")
+                and str(p.payload.get("chunk_id")) in true_orphans
             ]
             if orphan_point_ids:
                 client.delete(collection_name=collection, points_selector=orphan_point_ids)

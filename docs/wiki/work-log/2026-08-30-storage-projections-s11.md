@@ -95,6 +95,18 @@ given: stamping → entity cards → BM25 sparse → compile_objects.
   sparse vectors present in the (sparse-native) collection, stamped rows
   queryable by `extractor_version='llm-direct-v1'`.
 
+### Addendum (same session, found by first-hand output sampling)
+
+CHUNK-SWEEP-SCOPE-V1: the live re-ingest projected 94 entity cards at
+15:13 and verify DELETED them at 15:14 — `reconcile_qdrant` (chunk lane)
+collected store ids as `str(payload.chunk_id)`, so every point without a
+chunk_id ("None") was a "true orphan". Latent for months because the
+lanes lived in separate collections; today's corpus pin resolved both to
+ONE collection. Fix: chunk sweep sees only points WITH a chunk_id;
+pinned by `test_chunk_sweep_scope` (genuine chunk orphan swept, card
+survives). The phantom card receipts self-heal through the next verify's
+routing reconciliation (lost → cleared → reopen → re-project).
+
 ## Rejected claims
 
 - "Facts were indistinguishable by generation" — PARTIALLY REJECTED by
