@@ -179,7 +179,7 @@ def local_batch_budget():
     """The process-wide (and, with a store attached, fleet-wide) batch
     budget for the local lane."""
     seed = int(os.environ.get(LOCAL_BATCH_TOKENS_SEED_ENV, "28000"))
-    ceiling = int(os.environ.get(LOCAL_BATCH_TOKENS_MAX_ENV, "40000"))
+    ceiling = int(os.environ.get(LOCAL_BATCH_TOKENS_MAX_ENV, "72000"))
     return REGISTRY.budget("llm_local:batch_tokens", seed=seed,
                            floor=LOCAL_BATCH_TOKENS_FLOOR,
                            ceiling=max(seed, ceiling), step=LOCAL_BATCH_TOKENS_STEP)
