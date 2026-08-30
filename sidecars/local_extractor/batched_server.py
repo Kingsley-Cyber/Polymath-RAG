@@ -85,16 +85,22 @@ def load_model() -> None:
         # decode step. Fail-open: if the mask cannot compile, generation
         # proceeds with prompt+gate enforcement only (measured 2026-08-30:
         # 37% of local calls needed salvage repair without it).
-        try:
-            from json_mask import make_json_mask
-            _mask = make_json_mask(_state["tok"])
-            if _mask is not None:
-                processors = processors + [_mask]
-                print("json grammar mask: ON", file=sys.stderr)
-            else:
-                print("json grammar mask: unavailable (fail-open)", file=sys.stderr)
-        except Exception as exc:  # noqa: BLE001
-            print(f"json grammar mask failed to load: {exc} (fail-open)", file=sys.stderr)
+        import os as _os
+        if _os.environ.get("POLYMATH_JSON_MASK", "on").lower() in ("0", "off", "false"):
+            print("json grammar mask: DISABLED by env (PERF 2026-08-30: "
+                  "per-step prefix re-decode cost quadratic at batch scale "
+                  "— pending incremental-state fix)", file=sys.stderr)
+        else:
+            try:
+                from json_mask import make_json_mask
+                _mask = make_json_mask(_state["tok"])
+                if _mask is not None:
+                    processors = processors + [_mask]
+                    print("json grammar mask: ON", file=sys.stderr)
+                else:
+                    print("json grammar mask: unavailable (fail-open)", file=sys.stderr)
+            except Exception as exc:  # noqa: BLE001
+                print(f"json grammar mask failed to load: {exc} (fail-open)", file=sys.stderr)
         _state["logits_processors"] = processors
         try:
             from mlx_lm.generate import batch_generate
