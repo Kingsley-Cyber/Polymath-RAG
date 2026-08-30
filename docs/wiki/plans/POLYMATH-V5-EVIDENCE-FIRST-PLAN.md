@@ -1,3 +1,12 @@
+---
+change_id: POLYMATH-V5-EVIDENCE-FIRST-PLAN
+owner: governance
+date: 2026-08-21
+status: reference
+architecture_impact: none (documentation; front matter added 2026-08-29 governance cleanup)
+last_reviewed: 2026-08-29
+---
+
 # POLYMATH V5 — EVIDENCE-FIRST SEMANTIC PIPELINE
 
 **Status: DIRECTIVE — no phase started.**

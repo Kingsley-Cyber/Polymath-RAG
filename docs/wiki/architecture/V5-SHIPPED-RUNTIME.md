@@ -1,3 +1,12 @@
+---
+change_id: V5-SHIPPED-RUNTIME
+owner: governance
+date: 2026-08-21
+status: reference
+architecture_impact: none (documentation; front matter added 2026-08-29 governance cleanup)
+last_reviewed: 2026-08-29
+---
+
 # V5 SHIPPED RUNTIME — actual system diagram
 
 ```

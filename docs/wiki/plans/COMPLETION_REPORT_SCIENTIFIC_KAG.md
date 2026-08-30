@@ -1,3 +1,12 @@
+---
+change_id: COMPLETION-REPORT-SCIENTIFIC-KAG
+owner: governance
+date: 2026-08-23
+status: reference
+architecture_impact: none (documentation; front matter added 2026-08-29 governance cleanup)
+last_reviewed: 2026-08-29
+---
+
 # COMPLETION REPORT — Scientific KAG Production Hardening
 **Date:** 2026-08-23 · **Branch:** architecture/evidence-first-v5 · **Tests:** 928 green / 0 failed
 

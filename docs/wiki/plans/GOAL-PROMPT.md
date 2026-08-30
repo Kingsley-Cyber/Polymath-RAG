@@ -1,3 +1,12 @@
+---
+change_id: GOAL-PROMPT
+owner: governance
+date: 2026-08-29
+status: reference
+architecture_impact: none (documentation; front matter added 2026-08-29 governance cleanup)
+last_reviewed: 2026-08-29
+---
+
 # GOAL PROMPT — Polymath LLM ingestion: finish, verify, report
 
 Paste this into a fresh session to continue the work. Context files to read

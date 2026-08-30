@@ -1,3 +1,12 @@
+---
+change_id: SCIENTIFIC-KAG-FINAL-READINESS
+owner: governance
+date: 2026-08-23
+status: reference
+architecture_impact: none (documentation; front matter added 2026-08-29 governance cleanup)
+last_reviewed: 2026-08-29
+---
+
 # SCIENTIFIC KAG FINAL READINESS REPORT (2026-08-24)
 
 ## 1 Executive Summary

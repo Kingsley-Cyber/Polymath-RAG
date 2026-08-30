@@ -1,3 +1,12 @@
+---
+change_id: TEST-MD-EXTRACTION-ANALYSIS
+owner: governance
+date: 2026-08-23
+status: reference
+architecture_impact: none (documentation; front matter added 2026-08-29 governance cleanup)
+last_reviewed: 2026-08-29
+---
+
 # TEST.md EXTRACTION QUALITY ANALYSIS — STEP 5 (first scored run)
 **Corpus:** test-validation-v1 · **Pipeline:** kimi_v2 + policy v3 + pack v1.4.0
 

@@ -1,3 +1,12 @@
+---
+change_id: RAG-GONOGO-RESULTS
+owner: governance
+date: 2026-08-23
+status: reference
+architecture_impact: none (documentation; front matter added 2026-08-29 governance cleanup)
+last_reviewed: 2026-08-29
+---
+
 # RAG GO/NO-GO VALIDATION RESULTS (2026-08-24)
 
 Harness: eval/v5/rag_gonogo.py — 8 hypotheses scored against live

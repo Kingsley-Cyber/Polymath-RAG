@@ -4,6 +4,7 @@ owner: governance
 date: 2026-08-27
 status: implemented
 architecture_impact: none (repair/measurement log)
+last_reviewed: 2026-08-29
 ---
 
 # 2026-08-27 — Reconcile livelock diagnosed and fixed (cysa-study-v1)

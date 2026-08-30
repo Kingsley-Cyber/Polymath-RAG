@@ -4,6 +4,7 @@ owner: governance
 date: 2026-08-25
 status: implemented
 architecture_impact: embedding contract authority moves from application setting to per-corpus state in Postgres; production default flips to neural
+last_reviewed: 2026-08-29
 ---
 
 # EMBEDDING-CONTRACT-REGISTRY-V1 (G1 cutover, 2026-08-25)

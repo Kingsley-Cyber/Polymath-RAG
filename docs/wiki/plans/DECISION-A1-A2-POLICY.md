@@ -1,3 +1,12 @@
+---
+change_id: DECISION-A1-A2-POLICY
+owner: governance
+date: 2026-08-23
+status: reference
+architecture_impact: none (documentation; front matter added 2026-08-29 governance cleanup)
+last_reviewed: 2026-08-29
+---
+
 # POLICY DECISION REPORTS (owner-directed, 2026-08-24)
 
 ## DECISION A1 — Scientific Entity Registries

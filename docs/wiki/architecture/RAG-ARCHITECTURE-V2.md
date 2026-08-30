@@ -4,6 +4,7 @@ owner: governance
 date: 2026-08-29
 status: distilled-reference
 architecture_impact: documentation of live architecture
+last_reviewed: 2026-08-29
 ---
 
 # RAG ARCHITECTURE V2 — the corpus mapping layer (distilled)

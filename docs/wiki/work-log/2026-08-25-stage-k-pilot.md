@@ -4,6 +4,7 @@ owner: governance
 date: 2026-08-25
 status: implemented
 architecture_impact: none (measurement + report)
+last_reviewed: 2026-08-29
 ---
 
 # STAGE-K PILOT — release-books-v1 (2026-08-25)

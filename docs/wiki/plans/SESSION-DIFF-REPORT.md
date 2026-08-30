@@ -4,6 +4,7 @@ owner: governance
 date: 2026-08-29
 status: complete
 architecture_impact: LOCAL-LLM-EXTRACTION-V1 implementation (code analyzer input)
+last_reviewed: 2026-08-29
 ---
 
 # SESSION DIFF REPORT — LOCAL-LLM-EXTRACTION-V1 implementation

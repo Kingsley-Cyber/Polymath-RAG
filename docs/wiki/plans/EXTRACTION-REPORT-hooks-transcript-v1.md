@@ -1,3 +1,12 @@
+---
+change_id: EXTRACTION-REPORT-HOOKS-TRANSCRIPT-V1
+owner: governance
+date: 2026-08-23
+status: reference
+architecture_impact: none (documentation; front matter added 2026-08-29 governance cleanup)
+last_reviewed: 2026-08-29
+---
+
 # EXTRACTION REPORT — hooks-transcript-v1
 Source: /Volumes/Flash Drive/markbuildsbrands_transcripts/
         "how to create unlimited hooks with ai that print money in just 49 sec.md"

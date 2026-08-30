@@ -1,3 +1,12 @@
+---
+change_id: ROLE-BINDING-REPORT
+owner: governance
+date: 2026-08-23
+status: reference
+architecture_impact: none (documentation; front matter added 2026-08-29 governance cleanup)
+last_reviewed: 2026-08-29
+---
+
 # ROLE BINDING REPORT — CATEGORY-C fixes (2026-08-23)
 
 BERT evaluated_on GLUE

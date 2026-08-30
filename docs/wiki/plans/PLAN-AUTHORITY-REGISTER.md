@@ -4,6 +4,7 @@ owner: governance
 date: 2026-08-29
 status: living
 architecture_impact: authoritative detail extraction of the migration plan
+last_reviewed: 2026-08-29
 ---
 
 # PLAN AUTHORITY REGISTER — every normative detail, tagged

@@ -1,3 +1,12 @@
+---
+change_id: PREDICATE-COMPILER-V2
+owner: governance
+date: 2026-08-23
+status: reference
+architecture_impact: none (documentation; front matter added 2026-08-29 governance cleanup)
+last_reviewed: 2026-08-29
+---
+
 # PREDICATE COMPILER V2 — semantic compilation architecture
 
 Status: implemented this slice · Owner directive 2026-08-23 ·

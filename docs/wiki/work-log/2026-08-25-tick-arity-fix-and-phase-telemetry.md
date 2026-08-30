@@ -4,6 +4,7 @@ owner: control
 date: 2026-08-25
 status: implemented
 architecture_impact: none
+last_reviewed: 2026-08-29
 ---
 
 # TICK-ARITY-FIX-AND-PHASE-TELEMETRY (2026-08-25)

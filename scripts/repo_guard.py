@@ -21,6 +21,8 @@ IGNORED_NAMES = {
     ".venv",
     "__pycache__",
     "weights.digest",
+    "node_modules",      # frontend/node_modules (git-ignored, 5k files)
+    "graphify-out",      # graphify cache (git-ignored)
 }
 IGNORED_PREFIXES = (
     "stores/postgres/data/",

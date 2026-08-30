@@ -4,6 +4,7 @@ owner: governance
 date: 2026-08-29
 status: decision-required
 architecture_impact: scores LOCAL-LLM-EXTRACTION-V1 production readiness
+last_reviewed: 2026-08-29
 ---
 
 # FEASIBILITY & COMPLETION READINESS SCORECARD

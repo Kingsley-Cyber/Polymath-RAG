@@ -4,6 +4,7 @@ owner: control
 date: 2026-08-25
 status: implemented
 architecture_impact: advancement-phase receipt evaluation is now corpus-scoped set-based; verdict-store semantics unchanged
+last_reviewed: 2026-08-29
 ---
 
 # BULK-RECEIPT-COMPLETENESS-V1 (2026-08-25)

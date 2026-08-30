@@ -1,3 +1,12 @@
+---
+change_id: SHADOW-PARITY-REPORT
+owner: governance
+date: 2026-08-24
+status: reference
+architecture_impact: none (documentation; front matter added 2026-08-29 governance cleanup)
+last_reviewed: 2026-08-29
+---
+
 # SHADOW PARITY REPORT — PREDICATE_V2 shadow → enforce gate
 
 Date: 2026-08-24 · Branch `architecture/evidence-first-v5` · HEAD at time

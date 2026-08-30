@@ -4,6 +4,7 @@ owner: governance
 date: 2026-08-29
 status: in-progress
 architecture_impact: extraction provider seam (LOCAL-LLM-EXTRACTION-V1)
+last_reviewed: 2026-08-29
 ---
 
 # WORK LOG — LOCAL-LLM INGESTION MIGRATION (goal mode, 2026-08-29)
@@ -249,3 +250,18 @@ controller is climbing and the climb is durable. The pre-restart lease
 supervisor's stale-lease tick. Governance: new files declared in the
 scaffold TREE, `llm_quality_sample.py` registered in scripts/README.md
 (repo_guard: 0 undeclared among this session's files).
+
+## 2026-08-30 — governance cleanup pass (owner-requested)
+
+**Contract.** Make the three repository guards pass without weakening them.
+**Changes.** `repo_guard`: ignore git-ignored trees (`node_modules`,
+`graphify-out` — 5,148 phantom "undeclared" files). Scaffold `TREE`: 450
+tracked-but-undeclared files declared (key=None: ownership only, never
+generated). `scripts/README.md`: 6 unregistered scripts registered with
+their read/mutate contracts. Wiki: front matter added to 26 documents
+(`status: reference`, `date` = first-commit date), `last_reviewed:
+2026-08-29` added to 19 (metadata only — no record body rewritten).
+**Proof.** `repo_guard: ok`, `preflight: ok`, `wiki_worm --check` clean
+(one open refactor ledger reported, not an error); 61 LLM tests green.
+**Open.** `docs/wiki/refactors/0011-pipeline-cleanup-ledger.md` remains
+an open refactor by its own status.

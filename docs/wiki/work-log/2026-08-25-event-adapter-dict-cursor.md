@@ -4,6 +4,7 @@ owner: governance
 date: 2026-08-25
 status: implemented
 architecture_impact: none
+last_reviewed: 2026-08-29
 ---
 
 # EVENT-ADAPTER-DICT-CURSOR FIX (2026-08-25)

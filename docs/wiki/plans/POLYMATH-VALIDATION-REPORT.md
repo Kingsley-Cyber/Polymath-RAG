@@ -1,3 +1,12 @@
+---
+change_id: POLYMATH-VALIDATION-REPORT
+owner: governance
+date: 2026-08-23
+status: reference
+architecture_impact: none (documentation; front matter added 2026-08-29 governance cleanup)
+last_reviewed: 2026-08-29
+---
+
 # POLYMATH VALIDATION REPORT — mixed corpus polymath-validation-v1
 (2026-08-24 · transaction-scoped production replay, v2 stack, COMMITTED)
 

@@ -4,6 +4,7 @@ owner: governance
 date: 2026-08-25
 status: implemented
 architecture_impact: none (documentation of actual behavior)
+last_reviewed: 2026-08-29
 ---
 
 # RETRIEVAL CONTRACT AUDITS — CHUNK HIERARCHY + STORAGE (2026-08-25)
