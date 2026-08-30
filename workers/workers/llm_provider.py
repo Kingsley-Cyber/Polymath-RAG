@@ -250,11 +250,23 @@ def ledger_items(merged: NormalizedExtraction) -> tuple[list[tuple], list[tuple]
     return entity_items, evidence_items
 
 
+def _limiter_effective(lane: str) -> int:
+    """AIMD observability: the lane's current effective concurrency, recorded
+    per call so the controller's behavior is verifiable, not invisible."""
+    try:
+        from polymath_shared.llm_extraction.client import _lane_limit
+        from polymath_shared.llm_extraction.limiter import REGISTRY
+        return REGISTRY.lane(f"llm_{lane}", "default", _lane_limit(lane)).effective
+    except Exception:
+        return -1
+
+
 def call_receipts(results: list[LLMCallResult]) -> list[dict]:
     return [{
         "lane": r.lane, "model": r.model, "wall_ms": r.wall_ms,
         "tokens_in": r.tokens_in, "tokens_out": r.tokens_out,
         "attempts": r.attempts, "ok": r.packet is not None,
+        "limiter_effective": (r.lane and _limiter_effective(r.lane)),
         "error_class": r.error_class or r.sanitize.error_class,
         "salvaged": r.sanitize.salvaged,
         "raw_head": (r.raw_head or "")[:200],

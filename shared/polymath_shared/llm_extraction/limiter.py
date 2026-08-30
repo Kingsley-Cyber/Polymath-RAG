@@ -27,7 +27,7 @@ import time
 from dataclasses import dataclass, field
 
 # AIMD constants (TCP-flavored)
-SUCCESS_STREAK_FOR_INCREASE = 8      # +1 slot per K clean successes
+SUCCESS_STREAK_FOR_INCREASE = 4      # +1 slot per K clean successes
 DECREASE_FACTOR = 0.5                # ×0.5 on throttle/timeout
 BREAKER_ERROR_RATE = 0.5             # open when >50% of window failed
 BREAKER_WINDOW = 10                  # ... across the last N outcomes
