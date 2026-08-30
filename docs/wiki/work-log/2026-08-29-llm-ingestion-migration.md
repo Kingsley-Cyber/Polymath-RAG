@@ -348,3 +348,19 @@ skipped]`, 20 live evidence chunks. Dry-run purge: 3,576 points / 2,780 +
 40 + 1 rows. Tests: stale suite 3/3, contract + assembler suites green.
 **Open.** Owner to run the purge `--apply` and approve the ticket re-queue;
 answer quality of the enumeration query is the owner's validation item.
+
+**2026-08-30 owner directives (base validation, session 2).** Three-layer
+graph design REJECTED (never blessed) — removed from
+LATENT-TRANSFER-LAYER-V1-PLAN (D13, no Phase F) and register 1.17/4.6.1.
+Canonical chunker = polymath v3.3 `tier_chunker` (Docling fork, no OCR)
+— plan D15 + Phase 0 (re-ingest), register 1.16/4.1.1. Model setup
+distilled from the 2026-08-29 config-fix report into plan §1.6 (D16).
+Measured on the 2-document re-ingest: GLiNER not called by any stage;
+spaCy called by `extract` only (syntax-evidence-v1 for admission).
+Operational: workers self-quarantine on ANY edit under shared/, workers/,
+control/ (mtime-based fingerprint) — fleet restarted twice this session;
+rule adopted: no edits to those dirs during an ingest, restart after every
+code commit, merge `main` from a separate worktree. Stale
+`projection_receipts` (68,993) from the corpus delete removed before the
+first projection wrote (0 fresh receipts at that instant); Neo4j still
+holds the old graph (purge pending owner approval).

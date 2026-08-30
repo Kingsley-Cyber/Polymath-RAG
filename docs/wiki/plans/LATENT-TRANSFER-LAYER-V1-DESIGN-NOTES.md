@@ -159,7 +159,7 @@ abstraction, mechanism, affordance, pseudo-query, analogy, concept-sense.
 Key combination = mechanism + affordance + global abstraction (more than
 RAPTOR/LiteSemRAG).
 
-### Graph model (DEFERRED — explicitly "delay changing Neo4j")
+### Graph model (REJECTED — owner 2026-08-30: the three-layer graph design was never blessed and is removed from all plans; recorded here only as what the adapter proposed)
 Proposed node types `(:Chunk)(:Parent)(:Document)(:Concept)(:Entity)(:Frame)
 (:Mechanism)(:Abstraction)(:PseudoQuery)(:ConceptSense)`; edges `CHILD_OF,
 ABSTRACTS, EVOKES_FRAME, HAS_ROLE, REALIZES_MECHANISM, ANSWERS,
@@ -350,3 +350,27 @@ then implement. Base is NOT yet validated.
 - `pass1._truncate_reserving_rescue` (`pass1.py:285`) reserves seats ONLY
   for `GLOBAL_CHILD_RESCUE`; lexical rescue is not reserved today. Latent
   rescue children must be seat-reserved or dense corpora evict them.
+
+
+---
+
+## Part 4 — owner directives 2026-08-30 (post Part 3)
+
+1. **Three-layer graph design removed.** L0/L1/L2, PPR/Connect-4 query modes,
+   community reports, mechanism/abstraction graph nodes: never blessed;
+   struck from the plan (D13) and the register (1.17, 4.6.1).
+2. **Canonical chunker = polymath v3.3 `tier_chunker`** — a fork of
+   Docling without OCR support. Heading-bounded parents ~850 w / 1,400 w
+   max, tables atomic, ChunkKind noise skip. v4 `semantic_chunker` is
+   interim; swap = re-ingest (plan Phase 0, D15).
+3. **Model setup distilled** from "Parent-Chunk Extraction: Config Fix
+   Report" (2026-08-29) into plan §1.6 (D16): Qwen3.5-4B MLX 4-bit; the two
+   bugs (parser discarding truncated JSON; no repetition penalty → 45%
+   degeneration) and their fixes (salvage parser; `repetition_penalty=1.15`,
+   `repetition_context_size=400`); parent-sized units are the local lane;
+   batch 40 / 6.4 GB; 300 w vs parent entity diff = noise removal, not loss;
+   open items: full-file timing, corpus entity dedup + `promote()`, 600 w test.
+4. **GLiNER/spaCy in `llm_live` (measured on the 2026-08-30 ingest):**
+   GLiNER is not called by any stage; spaCy is called only by `extract` for
+   syntax-evidence-v1, which admission-harbor-v2 requires to decide on the
+   LLM's proposals. The LLM proposes; deterministic syntax + compiler admit.
