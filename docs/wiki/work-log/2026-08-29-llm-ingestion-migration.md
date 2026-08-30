@@ -265,3 +265,15 @@ their read/mutate contracts. Wiki: front matter added to 26 documents
 (one open refactor ledger reported, not an error); 61 LLM tests green.
 **Open.** `docs/wiki/refactors/0011-pipeline-cleanup-ledger.md` remains
 an open refactor by its own status.
+
+**Post-merge verification (2026-08-30 05:23 UTC).** Worker restarted at a
+ticket boundary (tkt_961df684 → done, attempt 1, nothing lost): pid 28519,
+`build_sha` = 41ef3b6 = HEAD. Controller state RESTORED across the restart
+(not re-seeded): `llm_cloud[default]` 16, `llm_local:batch_tokens` 20000,
+`llm_local[default]` 4 — the durability claim is now measured, not
+asserted. Measured cloud lane (perf.llm_extract_s): run_8c445b 49 calls in
+156 s (13.7× parallelism, limiter climbed 3→15 in-book), run_a81be6 38
+calls in 132 s (13.2×, 15→16). The static RPM/TPM buckets are NOT binding
+(≈6.3K tokens/call measured; seed allows ~27 calls/min) — an earlier
+hypothesis that they were is withdrawn. Local batch budget: seed 28000
+→ one GPU-OOM → 14000 → climbing (16000 → 18000 → 20000), persisted.
