@@ -151,10 +151,11 @@ class WorkerSettings(BaseSettings):
     llm_concurrency_cloud: int = Field(
         default=6, description="Parallel in-flight extraction calls, cloud lane")
     llm_max_neighborhood_chars: int = Field(
-        default=7_000,
-        description="Cap on one evidence neighborhood (parent's children "
-                    "concatenated); oversized parents split into multiple "
-                    "neighborhoods so provenance stays chunk-scoped",
+        default=60_000,
+        description="Target evidence-neighborhood size (~15K tokens, "
+                    "owner directive 2026-08-29: large inputs on BOTH lanes "
+                    "for speed). Builder balances to near-uniform buckets "
+                    "under this cap; local 15K-token inputs measured clean.",
     )
     rule_pack_version: str = Field(
         # SPOKEN-RELATION-ADAPTER-V1: docs/SEMANTIC_CONTRACTS.md declares

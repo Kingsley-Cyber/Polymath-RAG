@@ -132,25 +132,33 @@ def make_client(lane: str) -> LLMExtractionClient:
 
 def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                   source_bytes: int) -> tuple[list[LLMCallResult], NormalizedExtraction]:
-    """Extract every neighborhood through the gate (concurrent, bounded).
+    """Extract every neighborhood through the gate.
 
     Returns per-call receipts plus the merged, validated, worker-shaped
     extraction. Parse failures surface as QUARANTINED call results — never
     as silently missing evidence.
+
+    LOCAL: one neighborhood per prompt through /infer_batch (true batch
+    decode). CLOUD: pool sized at the limiter's CEILING, gated at the
+    limiter's EFFECTIVE limit — AIMD moves the effective concurrency within
+    [min, max] as the provider proves clean (climb) or throttles (halve),
+    so the controller is live, not decorative.
     """
     s = get_settings().worker
     client = make_client(lane)
+    limiter = client._lane_limiter()
+    views_by_nid = {n.nid: [ChunkView(cid, text) for cid, text in n.chunks]
+                    for n in neighborhoods}
+
     if lane == "local":
-        # batched transport: one neighborhood per prompt, decoded as ONE
-        # batch (server caps at MAX_BATCH=40); sequential slices beyond that
         results = client.extract_batched(
             [(n.nid, n.chunks) for n in neighborhoods],
             source_bytes=source_bytes, threshold_bytes=s.cloud_min_bytes)
         results = results if isinstance(results, list) else [results]
     else:
-        concurrency = s.llm_concurrency_cloud
         batches = [neighborhoods[i:i + NEIGHBORHOODS_PER_CALL]
                    for i in range(0, len(neighborhoods), NEIGHBORHOODS_PER_CALL)]
+        pool_size = min(len(batches), limiter.spec.conc_cap or limiter.spec.max) or 1
 
         def one(batch: list[Neighborhood]) -> LLMCallResult:
             return client.extract(
@@ -158,18 +166,14 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                 source_bytes=source_bytes,
                 threshold_bytes=s.cloud_min_bytes)
 
-        with ThreadPoolExecutor(max_workers=max(1, concurrency)) as pool:
+        with ThreadPoolExecutor(max_workers=pool_size) as pool:
             results = list(pool.map(one, batches))
 
     merged = NormalizedExtraction()
-    views_by_nid = {n.nid: [ChunkView(cid, text) for cid, text in n.chunks]
-                    for n in neighborhoods}
-    packets = []
     for r in results:
-        if r.packet is not None:
-            packets.append((r.packet, views_by_nid))
-    for packet, views in packets:
-        partial = validate_and_normalize(packet, views)
+        if r.packet is None:
+            continue
+        partial = validate_and_normalize(r.packet, views_by_nid)
         for key in ("entities_by_chunk", "evidence_by_chunk"):
             target = getattr(merged, key)
             for cid, items in getattr(partial, key).items():

@@ -151,11 +151,13 @@ class AdaptiveLimiter:
     def __init__(self, name: str, spec: ProviderLimit) -> None:
         self.name = name
         self.spec = spec
-        if spec.kind == "rate" and spec.conc_cap:
-            seed, ceil = spec.conc_cap, spec.conc_cap
+        if spec.kind == "rate":
+            ceil = spec.conc_cap or spec.max
+            seed = spec.init or ceil          # AIMD seeds LOW and climbs
         else:
             seed, ceil = spec.init, spec.max
         ceil = max(ceil, spec.min)
+        seed = max(spec.min, min(seed, ceil))
         self._floor = spec.min
         self._ceil = ceil
         self._sem = _DynamicSemaphore(seed)

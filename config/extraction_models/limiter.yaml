@@ -19,3 +19,5 @@ providers:
     max: 8
     adaptive: true
     use_headers: true      # throttle proactively from rate-limit headers
+    init: 3                # AIMD starts LOW and climbs to the ceiling on
+                           # clean successes — that is what makes it live

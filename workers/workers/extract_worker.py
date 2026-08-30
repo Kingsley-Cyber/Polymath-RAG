@@ -756,26 +756,32 @@ def process_event(conn: Connection, event: dict) -> None:
 
     trace = TraceCollector(trace_mode(), run_id, extraction_contracts())
 
-    rescue_stages = get_settings().rescue_policy.enabled_stages()
-    if rescue_stages and get_settings().sidecars.syntax_provider != "spacy":
-        raise RuntimeError(
-            "POLYMATH_RESCUE enabled but POLYMATH_SYNTAX_PROVIDER != spacy — "
-            "rescue requires syntax evidence; refusing to extract without it"
-        )
-
-    pack = _pack()
-    parser_name, parser_version = parser_identity()
-
     # LOCAL-LLM-EXTRACTION-V1 (owner-authorized 2026-08-29): provider
     # selection. 'gliner' keeps the frozen default path byte-identical;
     # 'llm_shadow' records gated proposals and admits nothing; 'llm_live'
     # feeds gated proposals into the UNCHANGED identity → admission →
-    # compiler → fact pipeline. GLiNER is retired from the LLM path — the
-    # model proposes; deterministic Python still validates and admits.
+    pack = _pack()
+    parser_name, parser_version = parser_identity()
+
     provider_mode = get_settings().worker.extraction_provider
     if provider_mode not in ("gliner", "llm_shadow", "llm_live"):
         raise ValueError(f"unknown extraction provider: {provider_mode}")
     llm_mode = provider_mode != "gliner"
+
+    # GLiNER is retired from the LLM path (owner directive 2026-08-29): the
+    # I4R rescue lane re-queries the GLiNER model per slice — a pure
+    # dependency + latency tax on proposals that never came from GLiNER.
+    if llm_mode:
+        rescue_stages: tuple = ()
+    else:
+        rescue_stages = get_settings().rescue_policy.enabled_stages()
+        if rescue_stages and get_settings().sidecars.syntax_provider != "spacy":
+            raise RuntimeError(
+                "POLYMATH_RESCUE enabled but POLYMATH_SYNTAX_PROVIDER != spacy — "
+                "rescue requires syntax evidence; refusing to extract without it"
+            )
+    # compiler → fact pipeline. GLiNER is retired from the LLM path — the
+    # model proposes; deterministic Python still validates and admits.
 
     # KNOWLEDGE-ROUTER v1.1 as a PRIORITY signal (owner correction,
     # EXTRACTION-ELIGIBILITY-V1): a routed 'disabled' scientific lane
