@@ -57,8 +57,8 @@ GENERATION_CONFIG: dict = {
 _LANE_LIMITS = {
     "local": ProviderLimit(kind="concurrency", init=2, min=1, max=4,
                            adaptive=True),
-    "cloud": ProviderLimit(kind="rate", rpm=120, tpm=200000, conc_cap=8,
-                           min=2, max=8, adaptive=True, use_headers=True),
+    "cloud": ProviderLimit(kind="rate", rpm=120, tpm=200000, conc_cap=18,
+                           min=2, max=18, adaptive=True, use_headers=True),
 }
 _LIMITER_CONFIG = None
 
