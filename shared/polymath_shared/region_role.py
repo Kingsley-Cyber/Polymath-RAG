@@ -56,6 +56,10 @@ NOISE_ROLES: frozenset[str] = frozenset({
     ROLE_LINKS,
 })
 
+#: retrievable evidence that is NOT summary material: dumps and listings
+#: stay child cards, never routing sentences.
+NON_SUMMARY_ROLES: frozenset[str] = NOISE_ROLES | frozenset({ROLE_OUTPUT, ROLE_CODE})
+
 #: heading kinds (workers.chunk_kind) that map 1:1 onto a noise role
 _HEADING_NOISE_KINDS: frozenset[str] = frozenset({
     ROLE_INDEX, ROLE_TOC, ROLE_BIBLIOGRAPHY, ROLE_APPENDIX,
@@ -180,6 +184,11 @@ def is_noise(role: str | None) -> bool:
     return bool(role) and role in NOISE_ROLES
 
 
+def is_summarizable(role: str | None) -> bool:
+    """NULL (pre-hardening rows) counts as prose."""
+    return not role or role not in NON_SUMMARY_ROLES
+
+
 def parent_role(child_roles: list[str | None]) -> tuple[str, str]:
     """A parent is noise only when EVERY child is noise (then it takes the
     most common child noise role); otherwise it is prose-bearing. A
@@ -190,7 +199,10 @@ def parent_role(child_roles: list[str | None]) -> tuple[str, str]:
     if all(is_noise(r) for r in roles):
         role = Counter(roles).most_common(1)[0][0]
         return role, "all_children_noise"
-    live = [r for r in roles if not is_noise(r)]
+    if not any(is_summarizable(r) for r in roles):
+        role = Counter(r for r in roles if not is_noise(r)).most_common(1)[0][0]
+        return role, "no_summarizable_children"
+    live = [r for r in roles if is_summarizable(r)]
     if live and sum(1 for r in live if r == ROLE_QUESTION_BANK) * 2 > len(live):
         return ROLE_QUESTION_BANK, "majority_question_bank"
     return ROLE_BODY, "has_prose_children"

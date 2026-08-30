@@ -317,11 +317,11 @@ def _routing_rows(conn: Connection, run_id: str) -> list[dict]:
     rows = conn.execute(
         """
         SELECT rs.summary_id, rs.kind, rs.summary_text, rs.corpus_id, rs.doc_id,
-               rs.parent_id, d.source_name
+               rs.parent_id, d.source_name, rs.variant
           FROM retrieval_summaries rs
           JOIN documents d ON d.doc_id = rs.doc_id
           JOIN runs r ON r.corpus_id = rs.corpus_id
-         WHERE r.run_id = %s
+         WHERE r.run_id = %s AND rs.active
          ORDER BY rs.doc_id, rs.parent_id NULLS FIRST
         """,
         (run_id,),
@@ -337,6 +337,7 @@ def _routing_rows(conn: Connection, run_id: str) -> list[dict]:
             "doc_id": row[4],
             "parent_id": row[5],
             "source_name": row[6],
+            "variant": row[7],
         })
     children = conn.execute(
         """
@@ -514,6 +515,7 @@ def _write_routing_slice(client: QdrantClient, collection: str, rows: list[dict]
                 "source_name": r["source_name"],
                 "embedding_contract": contract.contract_id,
                 "text": r["text"],
+                "variant": r.get("variant") or "",
             },
         ))
     _upsert_batched(client, collection, points)
