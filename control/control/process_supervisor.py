@@ -38,13 +38,11 @@ log = logging.getLogger("cp21")
 # supervision to EVERY long-lived runtime component: sidecars and the
 # orchestrator die and restart under the same bounded policy as workers.
 FLEET: list = [
-    # ---- neural sidecars (started FIRST: workers verify their pins) ------
-    {"name": "sidecar_gliner", "argv": ["{python}", "-m", "uvicorn",
-        "server:app", "--host", "127.0.0.1", "--port", "8740"],
-     "cwd": "sidecars/gliner_runtime", "health_url": "http://127.0.0.1:8740/ready"},
-    {"name": "sidecar_spacy", "argv": [".venv/bin/python", "-m", "uvicorn",
-        "server:app", "--host", "127.0.0.1", "--port", "8744"],
-     "cwd": "sidecars/spacy_runtime", "health_url": "http://127.0.0.1:8744/ready"},
+    # ---- neural sidecars ------
+    # sidecar_gliner + sidecar_spacy REMOVED (owner directive 2026-08-30:
+    # "never come up again") — GLiNER retired in llm_live, spaCy's slice
+    # interpreter skipped in llm mode; their GPU residency cost the batched
+    # 4B ~3x decode throughput. Rollback = revert this commit.
     {"name": "sidecar_embedder", "argv": ["{python}", "-m", "uvicorn",
         "server:app", "--host", "127.0.0.1", "--port", "8742"],
      "cwd": "sidecars/embedder", "health_url": "http://127.0.0.1:8742/ready"},

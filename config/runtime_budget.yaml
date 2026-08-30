@@ -109,7 +109,7 @@ profiles:
     slots: [control, qdrant, sidecar_embedder]
   extraction:
     why: "ingest and extract; needs GLiNER and spaCy, plus embedder for projection"
-    slots: [control, intake, profile, extract, sidecar_gliner, sidecar_spacy,
+    slots: [control, intake, profile, extract,
             sidecar_embedder]
   pipeline:
     why: "every ingestion stage end to end: intake through verify, with the
