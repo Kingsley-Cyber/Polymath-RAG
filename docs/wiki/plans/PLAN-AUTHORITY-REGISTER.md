@@ -121,6 +121,9 @@ last_reviewed: 2026-08-29
 | 4.3.15 | REGION-ROLE-V1: chunker-independent `chunks.region_role` (noise_ocr/index/toc/legal/stub/question_bank/output/code/body); noise never enters a neighborhood or a routing summary | DONE (calibrated on 1,024 live chunks; thresholds hashed into the extract contract) |
 | 4.4.8 | SUMMARY-COMPILER-V1 (owner spec 2026-08-30): one model-free compiler for section/document routing cards — verbatim sentences with offsets, triple-aware ranking + relation capsule, TF-IDF salience against the document background, coverage-first over children / ordered regions, Jaccard dedupe, source order, hard bound, keywords, one serialized embed text; the extractor's digest is the LLM adapter (active variant when clean, deterministic card always persisted; `retrieval_summaries.active`); S2 parent summaries consume the card; verifier gates on starved children and missing cards | DONE (17 tests; live dry run 206/206 cards, 61 llm_digest active) |
 | 4.3.16 | ONTOLOGY-DURABLE-CHECK-V1: verifier proves ledger predicates ⊆ ontology, `unknown_predicates == 0`, every llm_live ledger relation has an `evidence` row; off-enum/fact-less relations degrade the run | DONE (pre-hardening runs reported, not judged) |
+| 4.3.17 | TERM-SURFACE-GATE (owner 2026-08-30): entity surfaces and relation endpoints must be TERMS — ≤8 words, no sentence punctuation, strengthened by exact-token clause-aux/clause-opener tests (case-sensitive; "IS NOT NULL"/"The Open Group" survive); rejection classes `NON_TERM_SURFACE`/`NON_TERM_ENDPOINT` | DONE (measured pre-landing: SQL 10/128, CySA+ 118/2624 caught, 0 false positives; known misses pinned in test_term_surface_gate; work-log 2026-08-30-control-plane-hardening) |
+| 4.3.18 | TRANSPORT-RETRY-500-V1: a single transient 500 from the lane daemon retries once with backoff instead of failing the whole extract stage; repeat still fails closed | DONE (measured trigger: one Ollama 500 burned a 6-min cloud stage; receipt 7d46676d) |
+| 4.3.19 | require_slices relaxation (llm_live): the evidence bundle for llm_live documents carries NO sentence-slice manifest (`write_bundle(require_slices=False)`) — the bundle is the raw ledger over chunks; the GLiNER-era "required evidence — may not be reconstructed" contract does NOT hold for the LLM era | DEVIATED (recorded 2026-08-30; either the LLM era grows its own slice-equivalent interpreter view or this stays the documented contract — owner call, see §10.2) |
 
 ## §4.4 summaries + vocabulary
 
@@ -147,6 +150,8 @@ last_reviewed: 2026-08-29
 | 4.7.3 | long-stage rule: claim_depth=1 + keeper renewal ≤claim_ttl/2, heartbeat OUTSIDE txn | DONE (existing in-flight keeper; observed renewing) |
 | 4.7.4 | extraction_proposals keyed (parent_id, extractor_version) → per-file resume | PARTIAL (ticket-level resume ✓; parent-level skip MISSING) |
 | 4.7.5 | shadow = same edge, different write target; promotion flips provider, no state-machine edit | DONE |
+| 4.7.6 | CENSUS-DIRTY-SIGNAL-V2: incremental-census dirtiness tracks `stage_tickets.updated_at` as well as `stage_attempts` (summary stages write no attempts); gap verdicts are NEVER cached; per-run `failed` (not the global fail list) gates promotion | DONE (measured trigger: both cysa runs pinned at `reconciling` with 24/24 tickets done; unstuck in 6 s by the forced full pass; pinned by test_census_dirty_signal) |
+| 4.7.7 | HASH-FENCE-V2: the worker code fence fingerprints file CONTENT (sha256, stat-cached), not `size:mtime_ns` — a byte-identical rewrite (pytest restoring the ontology yaml) can no longer quarantine the fleet | DONE (replaces the "tests trip the stale-code fence" CLAUDE.md trap with a structural fix) |
 
 ## §4.8 provider layer
 
@@ -198,7 +203,7 @@ Authoritative section added to the migration plan
 
 | # | Detail | Status |
 |---|---|---|
-| 10.1 | Wire `_persist_knowledge_artifacts` into llm_live (deterministic CONCEPT/PROCEDURE compilers, model-free, opportunity accounting preserved) | **MISSING — the direct migration, ships first** (measured: 0 concepts / 0 procedures on llm_live re-ingest) |
+| 10.1 | Wire `_persist_knowledge_artifacts` into llm_live (deterministic CONCEPT/PROCEDURE compilers, model-free, opportunity accounting preserved) | DONE (2026-08-30 KNOWLEDGE-ARTIFACT-LLM-V1: wired before the llm_live artifact write, gate-admitted surfaces as durable_surfaces, counts + `knowledge_artifacts_s` in the artifact; e2e receipt = next ingest's concepts/procedures counts) |
 | 10.2 | Parent Semantic Compiler: one bounded forward pass per parent → summary + abstraction(1) + mechanisms(≤3) + affordances(≤3) + pseudo_queries(≤4); qual budget 1/2/2/3 = 8 latent vectors | MISSING (Adapter 2 contract; supersedes the digest adapter once active) |
 | 10.3 | summary_vector stays PURE; enrichment = separate object keyed parent_id + source_content_hash + version | design fixed |
 | 10.4 | Latent Qdrant namespaces first; Neo4j unchanged in phase 1 | design fixed (owner, Adapter 2) |
