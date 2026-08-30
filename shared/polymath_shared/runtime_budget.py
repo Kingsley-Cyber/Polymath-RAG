@@ -83,6 +83,13 @@ def mps_denominator_gb() -> float:
     return (physical_gb() or 32.0) * 0.78
 
 
+def _sidecar_spec(slot: str) -> dict:
+    """Budget spec for a slot; numbered siblings (extract2) inherit the
+    base slot's spec so parallel lanes run under identical bounds."""
+    sidecars = budget().get("sidecars") or {}
+    return sidecars.get(slot) or sidecars.get(slot.rstrip("0123456789")) or {}
+
+
 def mps_env(slot: str) -> dict[str, str]:
     """Environment that bounds one sidecar's Metal pool.
 
@@ -90,7 +97,7 @@ def mps_env(slot: str) -> dict[str, str]:
     returning blocks before it hits the wall instead of raising `MPS
     backend out of memory` mid-batch.
     """
-    spec = (budget().get("sidecars") or {}).get(slot) or {}
+    spec = _sidecar_spec(slot)
     cap_gb = float(spec.get("mps_gb", 0) or 0)
     if cap_gb <= 0:
         # No GPU budget: keep the runtime off Metal entirely.
@@ -106,7 +113,7 @@ def mps_env(slot: str) -> dict[str, str]:
 
 def batch_bounds(slot: str) -> tuple[int, int]:
     """(max_batch_texts, max_batch_tokens) for a sidecar."""
-    spec = (budget().get("sidecars") or {}).get(slot) or {}
+    spec = _sidecar_spec(slot)
     return (int(spec.get("max_batch_texts", 8) or 8),
             int(spec.get("max_batch_tokens", 16384) or 16384))
 

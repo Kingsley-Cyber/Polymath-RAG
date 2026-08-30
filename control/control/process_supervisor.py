@@ -61,6 +61,11 @@ FLEET: list = [
     ("intake", "workers.intake_worker"),
     ("profile", "workers.profile_worker"),
     ("extract", "workers.extract_worker"),
+    # Second extract slot: lanes run in parallel (cloud books are remote —
+    # no GPU contention; local books queue at the one GPU window at the
+    # sidecar). Measured 2026-08-30: a local book sat 'ready' ~1 min with
+    # no claimer while the single slot held the cloud book.
+    ("extract2", "workers.extract_worker"),
     ("canonicalize", "workers.canonicalize_worker"),
     ("project_canonical", "workers.project_canonical_worker"),
     ("neo4j", "workers.project_neo4j_worker"),
