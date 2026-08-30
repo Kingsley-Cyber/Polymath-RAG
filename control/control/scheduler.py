@@ -240,6 +240,28 @@ def apply_promotions(conn: Connection, census: Census) -> None:
         )
 
 
+def apply_degrades(conn: Connection, census: Census) -> int:
+    """EXTRACTION-COVERAGE-V1: a run the census refused to promote is
+    marked degraded with its reasons in runs.metadata (durable, read by
+    /semantic_readiness). Idempotent: an unchanged reason set is a no-op."""
+    import json
+    changed = 0
+    for run_id, reasons in sorted(census.degrade.items()):
+        payload = json.dumps(sorted(reasons))
+        cur = conn.execute(
+            """UPDATE runs
+                  SET status = 'degraded', updated_at = now(),
+                      metadata = coalesce(metadata, '{}'::jsonb)
+                                 || jsonb_build_object('degraded_reasons', %s::jsonb,
+                                                       'degraded_contract', 'extraction-coverage-v1')
+                WHERE run_id = %s
+                  AND status IN ('intake', 'reconciling', 'degraded')
+                  AND coalesce(metadata->'degraded_reasons', 'null'::jsonb) IS DISTINCT FROM %s::jsonb""",
+            (payload, run_id, payload))
+        changed += cur.rowcount
+    return changed
+
+
 def apply_failures(conn: Connection, census: Census) -> None:
     for run_id in census.fail:
         conn.execute(

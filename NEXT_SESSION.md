@@ -1,5 +1,10 @@
 # Next session — handoff
 
+> **FRESHNESS 2026-08-30 (LIVE POINTER):** superseded. Start from
+> `docs/wiki/plans/CONTINUITY-PACKET-2026-08-30.md`, then `CLAUDE.md`.
+> The bootstrap commands below still hold; the "where I stopped" section
+> describes 2026-08-22 and is kept for history only.
+
 **Date:** 2026-08-22 · **Branch:** `architecture/evidence-first-v5` ·
 **HEAD:** `f655c07`
 

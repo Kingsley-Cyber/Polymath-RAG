@@ -54,6 +54,37 @@ def semantic_completion(conn, corpus_id: str) -> dict:
     artifact_lane_failures = [
         {"run_id": rid, "error": err} for rid, err in failures]
 
+    # EXTRACTION-COVERAGE-V1: the same verdict the census uses as its
+    # promotion barrier, shown per run. HARD reasons (dropped /
+    # unaccounted neighborhoods) are FAILED execution, not zero yield.
+    from polymath_shared.extraction_coverage import coverage_verdict
+    from polymath_shared.settings import get_settings
+    floor = float(get_settings().control.extraction_coverage_floor)
+    ext_rows = conn.execute(
+        """SELECT r.run_id, r.status, r.metadata->>'source_name',
+                  a.payload->'llm_extraction'->'stats',
+                  r.metadata->'degraded_reasons'
+             FROM runs r
+             LEFT JOIN LATERAL (
+                 SELECT payload FROM artifacts x
+                  WHERE x.run_id = r.run_id AND x.stage = 'extract'
+                    AND jsonb_exists(x.payload, 'llm_extraction')
+                  ORDER BY x.created_at DESC LIMIT 1) a ON TRUE
+            WHERE r.corpus_id = %s
+            ORDER BY r.created_at, r.run_id""",
+        (corpus_id,)).fetchall()
+    extraction = []
+    for rid, status, source_name, stats, degraded_reasons in ext_rows:
+        v = coverage_verdict(stats, floor=floor)
+        v.update({"run_id": rid, "status": status, "source_name": source_name,
+                  "degraded_reasons": degraded_reasons})
+        extraction.append(v)
+    extraction_failures = [
+        {"run_id": e["run_id"], "source_name": e["source_name"], "reasons": e["reasons"]}
+        for e in extraction if not e["ok"]]
+    warnings = [f"{e['source_name'] or e['run_id'][:20]}: {w}"
+                for e in extraction for w in e["warnings"]]
+
     docs = conn.execute(
         "SELECT COUNT(*) FROM documents WHERE corpus_id = %s",
         (corpus_id,)).fetchone()[0]
@@ -118,7 +149,7 @@ def semantic_completion(conn, corpus_id: str) -> dict:
     if unprojected_concepts:
         pending.append(f"unprojected_concepts_{unprojected_concepts}")
 
-    if artifact_lane_failures:
+    if artifact_lane_failures or extraction_failures:
         verdict = FAILED
     elif pending:
         verdict = INCOMPLETE
@@ -131,6 +162,9 @@ def semantic_completion(conn, corpus_id: str) -> dict:
         "verdict": verdict,
         "pending": pending,
         "artifact_lane_failures": artifact_lane_failures,
+        "extraction": extraction,
+        "extraction_failures": extraction_failures,
+        "warnings": warnings,
         "runs": run_counts,
         "counts": {
             "documents": docs,

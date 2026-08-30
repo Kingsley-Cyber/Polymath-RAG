@@ -213,6 +213,13 @@ class ControlSettings(BaseSettings):
     tick_interval_s: float = Field(default=10.0, description="Census tick interval")
     lease_ttl_s: int = Field(default=30, description="Controller lease TTL")
     max_attempts: int = Field(default=3, description="Stage attempts before failed")
+    extraction_coverage_floor: float = Field(
+        default=0.0, ge=0.0, le=1.0,
+        description="EXTRACTION-COVERAGE-V1 soft floor on parents_with_extraction/"
+                    "parents_total. 0 = report only. Never blocks promotion "
+                    "(zero yield is completion); breaches surface as warnings "
+                    "in /semantic_readiness. Owner sets it from measured runs.",
+    )
 
 
 class StoreSettings(BaseSettings):

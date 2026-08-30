@@ -1,5 +1,12 @@
 # CURRENT STATE — Polymath V5 (evidence-first)
 
+> **FRESHNESS 2026-08-30 (LIVE POINTER):** this file is a historical
+> snapshot (HEAD `f655c07`, bundle -002, rule pack 1.3.0). The live
+> hand-off is `docs/wiki/plans/CONTINUITY-PACKET-2026-08-30.md` + the
+> repo `CLAUDE.md`; live state is probed, never read from prose:
+> `shared/polymath_shared/bundle_integrity.py` (bundle v5-production-001,
+> rule pack 1.5.0) and `eval/v5/implementation_plan.py`.
+
 > **FRESHNESS 2026-08-26 (FINAL):** status claims below describe the
 > Aug-22 evidence-first baseline. The authoritative CURRENT snapshot is
 > `NEXT_SESSION_HANDOFF.md` (Codex engineering handoff, HEAD a14d5fd):

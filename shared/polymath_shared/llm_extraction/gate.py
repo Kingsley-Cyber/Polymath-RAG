@@ -445,6 +445,28 @@ class NormalizedExtraction:
     rejections: list[dict] = field(default_factory=list)
     coercions: list[dict] = field(default_factory=list)
     stats: dict = field(default_factory=dict)
+    # EXTRACTION-COVERAGE-V1: one durable disposition per neighborhood sent
+    dispositions: list[dict] = field(default_factory=list)
+
+
+_INTERROGATIVE_RE = re.compile(
+    r"^\s*(which|what|who|whom|whose|where|when|why|how)\b", re.IGNORECASE)
+
+
+def is_interrogative(quote: str) -> bool:
+    """INTERROGATIVE-ATTESTATION (owner 2026-08-30): a relation whose only
+    attestation is a question stem or an answer-option list is not a
+    stated fact. MEASURED: practice-test stems ("Which one of the
+    following is NOT a phase … ? Domination") became OPPOSES facts. The
+    rule is deliberately narrow — a quote that ends with '?' or that
+    opens with an interrogative word and contains '?' — so declarative
+    prose ("X is not a Y.") is never touched."""
+    q = (quote or "").strip()
+    if not q:
+        return False
+    if q.endswith("?"):
+        return True
+    return "?" in q and bool(_INTERROGATIVE_RE.match(q))
 
 
 def validate_and_normalize(packet: ExtractionPacket,
@@ -510,6 +532,14 @@ def validate_and_normalize(packet: ExtractionPacket,
                     "kind": "relation", "predicate": rel.predicate,
                     "subject": rel.subject, "object": rel.object,
                     "error_class": "UNATTESTED_RELATION_QUOTE",
+                    "neighborhood_id": item.neighborhood_id})
+                continue
+            if is_interrogative(anchor.text[q_span[0]:q_span[1]]):
+                n_rel_rej += 1
+                out.rejections.append({
+                    "kind": "relation", "predicate": rel.predicate,
+                    "subject": rel.subject, "object": rel.object,
+                    "error_class": "INTERROGATIVE_ATTESTATION",
                     "neighborhood_id": item.neighborhood_id})
                 continue
             from polymath_shared.llm_extraction.ontology import normalize_predicate

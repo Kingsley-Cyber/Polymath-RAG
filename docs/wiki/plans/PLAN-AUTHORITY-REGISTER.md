@@ -115,6 +115,10 @@ last_reviewed: 2026-08-29
 | 4.3.10 | profiles volume/quality (volume lean: no L/ps; quality full) | PARTIAL (profile field exists; single profile used) |
 | 4.3.11 | tier-2 supersedes tier-1 on same keys | N/A until two-tier decision |
 | 4.3.12 | P3 cross-genre probe (one non-exam doc) | MISSING |
+| 4.3.13 | EXTRACTION-COVERAGE-V1 (owner 2026-08-30 "checks are mandatory, grounded in the control plane"): every neighborhood sent has a durable disposition; incomplete/missing/quarantined re-issued once singly; `dropped`/`unaccounted` block `query_ready` in the census (run → `degraded`, reasons in `runs.metadata`); soft coverage floor `POLYMATH_CONTROL_EXTRACTION_COVERAGE_FLOOR` reports only | DONE (measured trigger: 118/181 CySA+ parents empty, pattern X...X...; work-log 2026-08-30-extraction-coverage-hardening) |
+| 4.3.14 | INTERROGATIVE-ATTESTATION: relations attested only by a question stem are rejected at the gate; prompt rule 8 tells the model the same | DONE (owner delegated the call; narrow rule — declarative "X is not Y" untouched) |
+| 4.3.15 | REGION-ROLE-V1: chunker-independent `chunks.region_role` (noise_ocr/index/toc/legal/stub/question_bank/output/code/body); noise never enters a neighborhood or a routing summary | DONE (calibrated on 1,024 live chunks; thresholds hashed into the extract contract) |
+| 4.3.16 | ONTOLOGY-DURABLE-CHECK-V1: verifier proves ledger predicates ⊆ ontology, `unknown_predicates == 0`, every llm_live ledger relation has an `evidence` row; off-enum/fact-less relations degrade the run | DONE (pre-hardening runs reported, not judged) |
 
 ## §4.4 summaries + vocabulary
 

@@ -599,6 +599,69 @@ def reconcile_canonical(conn: Connection, run_id: str, corpus: str) -> dict:
     }
 
 
+def reconcile_ontology(conn: Connection, run_id: str, corpus: str) -> dict:
+    """ONTOLOGY-DURABLE-CHECK-V1 (owner 2026-08-30): the gate normalizes
+    predicates at extraction time; this proves it from DURABLE state so a
+    bad deploy cannot pass silently.
+      off_enum               ledger rows whose predicate is not one of the
+                             17 ontology ids (+RELATED_TO)
+      unknown_predicates     llm_direct guard counter (never expected > 0)
+      ledger_without_evidence llm_live relations in the raw ledger with no
+                             `evidence` row at the same quote offsets — a
+                             relation that never became a fact
+      related_to_share       reported (soft; the ontology says keep rare)
+    Pre-hardening runs (no llm_direct artifact) are reported, not judged."""
+    from polymath_shared.llm_extraction.ontology import RELATION_ONTOLOGY
+    rows = conn.execute(
+        """SELECT rpe.provider_label, COUNT(*)
+             FROM raw_predicate_evidence rpe
+             JOIN documents d ON d.doc_id = rpe.doc_id
+            WHERE d.corpus_id = %s AND rpe.provider_label LIKE 'llm_relation:%%'
+            GROUP BY 1""",
+        (corpus,)).fetchall()
+    total = sum(int(n) for _, n in rows)
+    off_enum = {lab: int(n) for lab, n in rows
+                if lab.split(":", 1)[1] not in RELATION_ONTOLOGY}
+    related = sum(int(n) for lab, n in rows if lab == "llm_relation:RELATED_TO")
+    direct = conn.execute(
+        """SELECT a.payload->'llm_direct' FROM artifacts a
+            WHERE a.run_id = %s AND a.stage = 'extract'
+              AND jsonb_exists(a.payload, 'llm_direct')
+            ORDER BY a.created_at DESC LIMIT 1""",
+        (run_id,)).fetchone()
+    applicable = bool(direct and direct[0])
+    unknown = int((direct[0] or {}).get("unknown_predicates") or 0) if applicable else 0
+    ledger_without_evidence = 0
+    if applicable:
+        doc = conn.execute(
+            """SELECT d.doc_id FROM documents d
+                 JOIN runs r ON r.corpus_id = d.corpus_id
+                WHERE r.run_id = %s AND d.source_name = r.metadata->>'source_name'
+                LIMIT 1""",
+            (run_id,)).fetchone()
+        if doc:
+            ledger_without_evidence = int(conn.execute(
+                """SELECT COUNT(*) FROM raw_predicate_evidence rpe
+                    WHERE rpe.doc_id = %s AND rpe.provider_label LIKE 'llm_relation:%%'
+                      AND NOT EXISTS (
+                          SELECT 1 FROM evidence e
+                           WHERE e.doc_id = rpe.doc_id AND e.chunk_id = rpe.chunk_id
+                             AND (e.span_offsets->>'evidence_start')::int = rpe.char_start
+                             AND (e.span_offsets->>'evidence_end')::int = rpe.char_end)""",
+                (doc[0],)).fetchone()[0])
+    return {
+        "contract": "ontology-durable-check-v1",
+        "applicable": applicable,
+        "ledger_rows": total,
+        "off_enum": off_enum,
+        "off_enum_rows": sum(off_enum.values()),
+        "unknown_predicates": unknown,
+        "ledger_without_evidence": ledger_without_evidence,
+        "related_to_rows": related,
+        "related_to_share": round(related / total, 4) if total else 0.0,
+    }
+
+
 def process_event(conn: Connection, event: dict) -> None:
     run_id = event["run_id"]
     corpus = _run_identity(conn, run_id)
@@ -624,6 +687,7 @@ def process_event(conn: Connection, event: dict) -> None:
         routing_report = reconcile_routing_qdrant(rc, corpus)
         neo4j_report = reconcile_neo4j(rc, run_id, corpus)
         canonical_report = reconcile_canonical(rc, run_id, corpus)
+        ontology_report = reconcile_ontology(rc, run_id, corpus)
 
     contract = stage_contract_hash(STAGE, {"contract_version": CONTRACT_VERSION})
     with stage_transaction(conn, run_id=run_id, stage=STAGE, contract_hash=contract) as writer:
@@ -632,6 +696,7 @@ def process_event(conn: Connection, event: dict) -> None:
             "routing_qdrant": routing_report,
             "neo4j": neo4j_report,
             "canonical": canonical_report,
+            "ontology": ontology_report,
         })
 
         loss = (
@@ -651,6 +716,11 @@ def process_event(conn: Connection, event: dict) -> None:
             # has not converged yet — keep the run non-terminal so the
             # census re-drives the projector.
             + neo4j_report["in_flight_fact_edges_kept"]
+            # ONTOLOGY-DURABLE-CHECK-V1: an off-enum or fact-less relation
+            # is a semantic gap; the run degrades instead of promoting.
+            + ontology_report["off_enum_rows"]
+            + ontology_report["unknown_predicates"]
+            + ontology_report["ledger_without_evidence"]
         )
         if loss or problem:
             # OPERATOR-STATE-V1: gaps are only a FAULT when no pending

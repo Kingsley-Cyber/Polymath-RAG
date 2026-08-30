@@ -24,7 +24,12 @@ from polymath_shared.logging import configure_logging
 from polymath_shared.settings import get_settings
 from control.census import compute_census, pop_census_timing
 from control.heartbeat import acquire_lease, record_heartbeat, renew_lease
-from control.scheduler import apply_failures, apply_promotions, schedule_gaps
+from control.scheduler import (
+    apply_degrades,
+    apply_failures,
+    apply_promotions,
+    schedule_gaps,
+)
 
 log = logging.getLogger("control")
 
@@ -65,7 +70,9 @@ def tick() -> dict:
                          conn)
         advanced = _phase("advance_tickets", cp2_tickets.advance_tickets, conn)
         supervised = _phase("supervise", supervise, conn)
-        census = compute_census(conn, max_attempts=settings.control.max_attempts)
+        census = compute_census(
+            conn, max_attempts=settings.control.max_attempts,
+            coverage_floor=settings.control.extraction_coverage_floor)
         _ct = pop_census_timing() or {}
         phase_ms["census_total"] = _ct.get("census_total_ms", 0.0)
         phase_ms["census_runs_query"] = _ct.get("runs_query_ms")
@@ -91,11 +98,13 @@ def tick() -> dict:
             promoted = [r for r in census.promote
                         if _corpus_of_run(conn, r) not in blocked]
             if len(promoted) != len(census.promote):
-                census = census.__class__(gaps=census.gaps, promote=promoted, fail=census.fail)
+                census = census.__class__(gaps=census.gaps, promote=promoted,
+                                          fail=census.fail, degrade=census.degrade)
             apply_promotions(conn, census)
         phase_ms["barrier_promotions"] = round(
             (_t.perf_counter() - _s) * 1000, 1)
         _phase("apply_failures", apply_failures, conn, census)
+        _phase("apply_degrades", apply_degrades, conn, census)
         record_heartbeat(conn, owner, tick_ok=True, census_size=len(census.gaps))
         return {
             "tick": "ok",
@@ -104,6 +113,7 @@ def tick() -> dict:
             "scheduled": scheduled,
             "promoted": len(census.promote),
             "failed": len(census.fail),
+            "degraded": len(census.degrade),
             "reconciled": len(reconciled.get("reconciled", {})),
             "phase_ms": {k: v for k, v in phase_ms.items() if v is not None},
         }
