@@ -334,6 +334,9 @@ def _delete_document_tx(doc_id: str, confirm: str = "") -> dict:
     # source_name — a 64-char content hash is not human-typable, which made
     # the delete button look dead (silent no-op on mismatch). Also 400-class
     # for a bad confirm (409 was semantically wrong).
+    # DELETE-WINS: cancel this document's in-flight stages first
+    with tx() as _q:
+        _quiesce_doc(_q, doc_id)
     removed: dict = {}
     with tx() as conn:
         _lock_timeout_or_409(conn, "delete document")
@@ -638,6 +641,50 @@ def _raise_if_lock_timeout(exc: Exception, what: str) -> None:
 
 
 @router.delete("/corpora/{corpus_id}")
+def _quiesce_doc(conn, doc_id: str) -> None:
+    """DELETE-WINS for a single document: supersede its in-flight tickets
+    so workers stop claiming while the delete proceeds."""
+    conn.execute(
+        """UPDATE stage_tickets t
+              SET status = 'superseded', lease_owner = NULL,
+                  lease_expires_at = NULL
+            WHERE t.status IN ('pending','ready','leased')
+              AND t.run_id IN (SELECT run_id FROM outbox_events
+                                WHERE event_type = 'chunked.v1'
+                                  AND payload->>'doc_id' = %s)""",
+        (doc_id,))
+
+
+def _quiesce_corpus(conn, corpus_id: str) -> dict:
+    """DELETE-WINS (owner directive 2026-08-30): a corpus delete must
+    succeed even with stages in flight. Cancel every non-terminal ticket
+    (superseded = unclaimable; the machinery already tolerates the
+    status), drop leases, and SIGTERM the extract workers IF they hold
+    this corpus's leases — their stage transactions roll back cleanly
+    (idempotent stage design) and the supervisor respawns them into an
+    empty claim queue. Returns a summary for the delete receipt."""
+    import subprocess
+    rows = conn.execute(
+        """SELECT stage, status FROM stage_tickets
+            WHERE corpus_id = %s AND status IN ('pending','ready','leased')""",
+        (corpus_id,)).fetchall()
+    leased_stages = sorted({r[0] for r in rows if r[1] == "leased"})
+    conn.execute(
+        """UPDATE stage_tickets
+              SET status = 'superseded', lease_owner = NULL,
+                  lease_expires_at = NULL
+            WHERE corpus_id = %s AND status IN ('pending','ready','leased')""",
+        (corpus_id,))
+    kicked = 0
+    if "extract" in leased_stages:
+        # best-effort, single-box: respawned workers find no claimable tickets
+        r = subprocess.run(["pkill", "-f", "workers.extract_worker"],
+                           capture_output=True)
+        kicked = 1  # pkill returns count-unstable across platforms; report act
+    return {"tickets_cancelled": len(rows), "stages_leased": leased_stages,
+            "workers_kicked": kicked}
+
+
 def delete_corpus(corpus_id: str, confirm: str = "") -> dict:
     """OWNER-DESTRUCTIVE: remove a corpus and everything derived from
     it — PG rows, the Qdrant collection, and its Neo4j substrate.
@@ -651,6 +698,10 @@ def delete_corpus(corpus_id: str, confirm: str = "") -> dict:
         raise HTTPException(422, {
             "error_code": "confirmation_required",
             "message": "pass confirm=<corpus_id> to delete"})
+    # DELETE-WINS: quiesce in-flight stages before touching rows so the
+    # owner never waits out (or 409s on) running work.
+    with tx() as _q:
+        quiesce = _quiesce_corpus(_q, corpus_id)
     removed: dict[str, int] = {}
     try:
         return _delete_corpus_tx(corpus_id, removed)
