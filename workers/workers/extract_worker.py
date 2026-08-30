@@ -1136,7 +1136,9 @@ def process_event(conn: Connection, event: dict) -> None:
                     merged=_merged, lane=_decision.lane, model=_llm_model_id,
                     stamp=_stamped_provenance)
                 _perf["l1_l4_writes_s"] += _t.perf_counter() - _pt
-                _bundle = _raw.write_bundle(conn, doc_id)
+                # llm_live has no sentence-slice interpreter view; the
+                # bundle is the raw ledger over the chunks (see raw_evidence).
+                _bundle = _raw.write_bundle(conn, doc_id, require_slices=False)
                 _perf["total_s"] = _t.perf_counter() - _perf.pop("stage_t0")
                 _perf["chunks"] = len(child_chunks)
                 _counts["facts_direct"] = _direct_stats["written"]["facts"]

@@ -751,17 +751,19 @@ def process_event(conn: Connection, event: dict) -> None:
             # has not converged yet — keep the run non-terminal so the
             # census re-drives the projector.
             + neo4j_report["in_flight_fact_edges_kept"]
-            # ONTOLOGY-DURABLE-CHECK-V1: an off-enum or fact-less relation
-            # is a semantic gap; the run degrades instead of promoting.
-            + ontology_report["off_enum_rows"]
-            + ontology_report["unknown_predicates"]
-            + ontology_report["ledger_without_evidence"]
-            # SUMMARY-COVERAGE-CHECK-V1: a prose parent without an active
-            # card, or a card that starved a child, is a routing gap.
-            + summaries_report["parents_without_card"]
-            + summaries_report["cards_uncovered"]
         )
-        if loss or problem:
+        # ONTOLOGY-DURABLE-CHECK-V1 + SUMMARY-COVERAGE-CHECK-V1: semantic
+        # gaps are COUNTS (the reports above are id lists); an off-enum or
+        # fact-less relation, a prose parent without an active card, or a
+        # card that starved a child degrades the run instead of promoting.
+        semantic_gaps = (
+            int(ontology_report["off_enum_rows"])
+            + int(ontology_report["unknown_predicates"])
+            + int(ontology_report["ledger_without_evidence"])
+            + int(summaries_report["parents_without_card"])
+            + int(summaries_report["cards_uncovered"])
+        )
+        if loss or problem or semantic_gaps:
             # OPERATOR-STATE-V1: gaps are only a FAULT when no pending
             # work explains them. While this run still has open tickets
             # (summaries, routing, projections), missing artifacts are

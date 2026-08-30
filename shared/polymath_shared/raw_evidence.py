@@ -141,7 +141,12 @@ class IncompleteEvidence(RuntimeError):
     Reconstructing the gap with a heuristic is exactly what V5 forbids."""
 
 
-def bundle_manifest(conn: Any, doc_id: str) -> dict:
+def bundle_manifest(conn: Any, doc_id: str, *, require_slices: bool = True) -> dict:
+    """`require_slices=False` is the LLM-DIRECT (llm_live) contract: the
+    syntax/slice interpreter never runs there, so the bundle's evidence is
+    the raw ledger (proposals + predicate evidence) over the chunks; a
+    missing slice manifest is expected, not a gap. MEASURED 2026-08-30:
+    the first live llm_live ingest failed every extract attempt here."""
     members, counts = {}, {}
     for name, sql in _BUNDLE_MEMBERS:
         rows = conn.execute(sql, (doc_id,)).fetchall()
@@ -149,7 +154,7 @@ def bundle_manifest(conn: Any, doc_id: str) -> dict:
         members[name] = content_hash({"rows": [list(map(str, r)) for r in rows]})
     if counts["chunks"] == 0:
         raise IncompleteEvidence(f"{doc_id}: no chunks — nothing to bundle")
-    if counts["sentence_slices"] == 0:
+    if require_slices and counts["sentence_slices"] == 0:
         raise IncompleteEvidence(
             f"{doc_id}: no sentence-slice manifest — the interpreter view is "
             "required evidence (sentence-slice-manifest-v1) and may not be "
@@ -160,9 +165,9 @@ def bundle_manifest(conn: Any, doc_id: str) -> dict:
             "member_hashes": members, "counts": counts}
 
 
-def write_bundle(conn: Any, doc_id: str) -> dict:
+def write_bundle(conn: Any, doc_id: str, *, require_slices: bool = True) -> dict:
     import json
-    m = bundle_manifest(conn, doc_id)
+    m = bundle_manifest(conn, doc_id, require_slices=require_slices)
     conn.execute(
         """
         INSERT INTO document_evidence_bundles
