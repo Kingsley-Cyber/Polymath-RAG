@@ -128,6 +128,7 @@ Rules:
 5. Extract facts the text states. If the text does not state a relation, output none. Quality over quantity; stay lean.
 6. digest: central_claim ≤ 1 sentence; main_mechanism ≤ 1 sentence; retrieval_uses ≤ 3 short strings (what queries this passage should answer).
 7. One item per neighborhood_id, exactly as given.
+8. Never derive an entity or relation from a question stem, quiz prompt, or answer-option list (e.g. "Which of the following…", lettered choices). Extract only from declarative statements and explanations.
 
 LOCKED generation config (plan decision 18, config/extraction_models/qwen35-4b-extraction-v1.yaml):
 the local lane sends repetition_penalty=1.15 with repetition_context_size=400 —
@@ -158,6 +159,10 @@ class LLMCallResult:
     limiter_effective: int | None = None
     batch_tokens_cap: int | None = None
     finish_reason: str | None = None    # "stop" | "length" (truncated) | None (unknown)
+    # EXTRACTION-COVERAGE-V1: the REAL neighborhood ids this call carried,
+    # in prompt order — the accounting authority for "sent vs returned".
+    neighborhood_ids: list[str] = field(default_factory=list)
+    reissue: bool = False               # second (single-neighborhood) pass
 
 
 # Local batched lane: tokens per /infer_batch call. The ENV values are the
@@ -416,8 +421,12 @@ class LLMExtractionClient:
             out.extend(self._infer_batch_call(prompt_items[half:], limiter, decision, cap))
             return out
         if status == 404:
-            return [self._extract_prompt(u, {nid}, mt, decision)
-                    for nid, u, mt in prompt_items]
+            fallback: list[LLMCallResult] = []
+            for nid, u, mt in prompt_items:
+                one = self._extract_prompt(u, {nid}, mt, decision)
+                one.neighborhood_ids = [nid]
+                fallback.append(one)
+            return fallback
         results = body.get("results")
         rows = [dict(x or {}) for x in results] if isinstance(results, list) else []
         if len(rows) != len(prompt_items):         # misaligned batch: refuse
@@ -438,7 +447,8 @@ class LLMExtractionClient:
                 lane_decision=decision,
                 limiter_effective=limiter.effective,
                 batch_tokens_cap=cap,
-                finish_reason=row.get("stop_reason")))
+                finish_reason=row.get("stop_reason"),
+                neighborhood_ids=[nid]))
         return out
 
     def extract(self, neighborhoods: list[tuple[str, list[tuple[str, str]]]],
@@ -463,6 +473,7 @@ class LLMExtractionClient:
             max_tokens = output_budget_for(estimate_input_tokens(user_prompt), len(neighborhoods))
         result = self._extract_prompt(user_prompt, set(aliases), max_tokens, decision)
         restore_neighborhood_ids(result.packet, aliases)
+        result.neighborhood_ids = [nid for nid, _ in neighborhoods]
         return result
 
     def _extract_prompt(self, user_prompt: str, expected: set[str],

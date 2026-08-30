@@ -51,6 +51,10 @@ class Census:
     gaps: list[Gap] = field(default_factory=list)
     promote: list[str] = field(default_factory=list)
     fail: list[str] = field(default_factory=list)
+    # EXTRACTION-COVERAGE-V1: runs whose chain is complete but whose
+    # extract stage recorded dropped/unaccounted neighborhoods. They are
+    # NOT promoted; the scheduler marks them degraded with these reasons.
+    degrade: dict[str, list[str]] = field(default_factory=dict)
 
 
 # INCREMENTAL-CENSUS-V1 (2026-08-25): the routine control pass no longer
@@ -118,7 +122,8 @@ def _epoch_us(dt) -> int:
 
 
 def compute_census(conn: Connection, *, max_attempts: int = 3,
-                   mode: str | None = None) -> Census:
+                   mode: str | None = None,
+                   coverage_floor: float = 0.0) -> Census:
     """Deterministic census over non-terminal runs.
 
     Sort orders are explicit (ISSUES_REPORT §2.3 fix): runs by created
@@ -227,6 +232,8 @@ def compute_census(conn: Connection, *, max_attempts: int = 3,
                     census.promote.append(run_id)
                 if verdict["fail"]:
                     census.fail.append(run_id)
+                if verdict.get("degrade"):
+                    census.degrade[run_id] = list(verdict["degrade"])
                 continue
             # no prior verdict (cache cold after restart): fall through to
             # full per-run evaluation using cached history; history cache
@@ -297,7 +304,14 @@ def compute_census(conn: Connection, *, max_attempts: int = 3,
                     complete = False
 
         if complete and not census.fail:
-            census.promote.append(run_id)
+            # EXTRACTION-COVERAGE-V1 promotion barrier (control plane is
+            # the authority): a complete chain whose extract stage
+            # dropped or lost track of neighborhoods is never query_ready.
+            reasons = _extraction_barrier(conn, run_id, coverage_floor)
+            if reasons:
+                census.degrade[run_id] = reasons
+            else:
+                census.promote.append(run_id)
 
         # INCREMENTAL-CENSUS-V1: remember each run's derived outcome so
         # unchanged runs can be replayed verbatim next tick.
@@ -305,6 +319,7 @@ def compute_census(conn: Connection, *, max_attempts: int = 3,
             "gaps": [g for g in census.gaps if g.run_id == run_id],
             "promote": run_id in census.promote,
             "fail": run_id in census.fail,
+            "degrade": census.degrade.get(run_id),
         }
 
     # prune cache entries for runs that left the active set
@@ -324,6 +339,24 @@ def compute_census(conn: Connection, *, max_attempts: int = 3,
     timing["runs_evaluated"] = len(runs)
     _LAST_TIMING = timing
     return census
+
+
+def extraction_stats(conn: Connection, run_id: str) -> dict | None:
+    """The extract stage's neighborhood accounting (latest artifact), or
+    None when the run predates EXTRACTION-COVERAGE-V1 / ran GLiNER."""
+    row = conn.execute(
+        """SELECT a.payload->'llm_extraction'->'stats'
+             FROM artifacts a
+            WHERE a.run_id = %s AND a.stage = 'extract'
+              AND jsonb_exists(a.payload, 'llm_extraction')
+            ORDER BY a.created_at DESC LIMIT 1""",
+        (run_id,)).fetchone()
+    return row[0] if row and row[0] else None
+
+
+def _extraction_barrier(conn: Connection, run_id: str, floor: float) -> list[str]:
+    from polymath_shared.extraction_coverage import coverage_verdict
+    return list(coverage_verdict(extraction_stats(conn, run_id), floor=floor)["reasons"])
 
 
 def _missing_projection_receipts(conn: Connection, run_id: str, stage: str) -> list[str]:

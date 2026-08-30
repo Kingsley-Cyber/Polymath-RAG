@@ -43,6 +43,13 @@ sessions. Start every session with
   `repetition_penalty=1.15`, ctx 400, thinking off, temperature 0.
   The gate is the only authority; gated relations become facts
   (`workers/llm_direct.py`).
+- Extraction coverage is MANDATORY (EXTRACTION-COVERAGE-V1): the extract
+  artifact's `llm_extraction.stats.neighborhoods_*` + `neighborhood_dispositions`
+  are the accounting; the census refuses `query_ready` on `dropped`/`unaccounted`
+  (run → `degraded`, reasons in `runs.metadata.degraded_reasons`, visible in
+  `/semantic_readiness.extraction`). Never "fix" a degraded run by hand —
+  re-ingest the document. `chunks.region_role` (REGION-ROLE-V1) decides
+  what is sent to the LLM and what becomes a routing summary.
 - Controllers persist in `llm_controller_state`; receipts carry
   `limiter_effective`, `batch_tokens_cap`, `finish_reason` — read them
   before guessing at throughput or truncation.

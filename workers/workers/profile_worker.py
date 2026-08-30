@@ -61,13 +61,14 @@ def _parents_for_doc(conn: Connection, doc_id: str) -> list[dict]:
 def _children_for_doc(conn: Connection, doc_id: str) -> list[dict]:
     rows = conn.execute(
         """
-        SELECT chunk_id, parent_id, text FROM chunks
+        SELECT chunk_id, parent_id, text, region_role FROM chunks
          WHERE doc_id = %s AND tier = 'child'
          ORDER BY chunk_index
         """,
         (doc_id,),
     ).fetchall()
-    return [{"chunk_id": r[0], "parent_id": r[1], "text": r[2]} for r in rows]
+    return [{"chunk_id": r[0], "parent_id": r[1], "text": r[2], "region_role": r[3]}
+            for r in rows]
 
 
 def _persist_retrieval_summaries(
@@ -90,6 +91,17 @@ def _persist_retrieval_summaries(
         summary_id,
     )
 
+    # REGION-ROLE-V1: noise regions (OCR garbage, index, TOC, legal, stubs)
+    # never become routing text. MEASURED 2026-08-30: the Learning SQL
+    # document card was 1,594 chars of OCR garbage. A parent whose
+    # children are all noise gets no section card and does not feed the
+    # document card; NULL roles (pre-hardening rows) are treated as prose.
+    from polymath_shared.region_role import is_noise as _is_noise
+    children = [c for c in children if not _is_noise(c.get("region_role"))]
+    live_parent_ids = {c["parent_id"] for c in children}
+    parents = [p for p in parents if p["chunk_id"] in live_parent_ids]
+    if not parents:
+        return
     doc_text, doc_prov = document_retrieval_summary(parents, doc_id=doc_id)
     conn.execute(
         """

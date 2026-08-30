@@ -224,46 +224,52 @@ def process_event(conn: Connection, event: dict) -> None:
                 (doc_id, region["kind"], region["char_start"], region["char_end"]),
             )
 
-        # Parents first, then children: children carry parent_id foreign
-        # keys, so the parent rows must exist before the FK is checked.
-        for row in chunks:
-            if row["tier"] != "parent":
-                continue
-            conn.execute(
-                """
-                INSERT INTO chunks (chunk_id, doc_id, parent_id, chunk_index, tier,
-                                    text, summary, char_start, char_end,
-                                    chunk_contract_version, provider, heading_path, token_count,
-                                    layout_map)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (chunk_id) DO NOTHING
-                """,
-                (row["chunk_id"], row["doc_id"], row["parent_id"], row["chunk_index"],
-                 row["tier"], row["text"], row["summary"], row["char_start"], row["char_end"],
-                 row.get("chunk_contract_version"), row.get("provider"),
-                 json.dumps(row["heading_path"]) if row.get("heading_path") else None,
-                 row.get("token_count"),
-                 json.dumps(row["layout_map"]) if row.get("layout_map") is not None else None),
-            )
+        # REGION-ROLE-V1: a durable, chunker-independent role per chunk
+        # (region_role/region_reason/region_contract; migration 0037 had
+        # the columns, nothing wrote them). Children are classified from
+        # text shape + heading kind; a parent is noise only when every
+        # child is. Extraction, summaries and routing all read this.
+        from polymath_shared.region_role import (
+            REGION_CONTRACT, classify_region, parent_role)
+        from workers.chunk_kind import classify_heading
+
+        child_roles_by_parent: dict[str, list[str]] = {}
         for row in chunks:
             if row["tier"] != "child":
                 continue
-            conn.execute(
-                """
+            role, reason = classify_region(
+                row["text"], classify_heading(row.get("heading_path")))
+            row["region_role"], row["region_reason"] = role, reason
+            child_roles_by_parent.setdefault(row["parent_id"] or "", []).append(role)
+        for row in chunks:
+            if row["tier"] == "parent":
+                row["region_role"], row["region_reason"] = parent_role(
+                    child_roles_by_parent.get(row["chunk_id"], []))
+
+        # Parents first, then children: children carry parent_id foreign
+        # keys, so the parent rows must exist before the FK is checked.
+        _INSERT_CHUNK = """
                 INSERT INTO chunks (chunk_id, doc_id, parent_id, chunk_index, tier,
                                     text, summary, char_start, char_end,
                                     chunk_contract_version, provider, heading_path, token_count,
-                                    layout_map)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                    layout_map, region_role, region_reason, region_contract)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (chunk_id) DO NOTHING
-                """,
-                (row["chunk_id"], row["doc_id"], row["parent_id"], row["chunk_index"],
-                 row["tier"], row["text"], row["summary"], row["char_start"], row["char_end"],
-                 row.get("chunk_contract_version"), row.get("provider"),
-                 json.dumps(row["heading_path"]) if row.get("heading_path") else None,
-                 row.get("token_count"),
-                 json.dumps(row["layout_map"]) if row.get("layout_map") is not None else None),
-            )
+                """
+        for tier in ("parent", "child"):
+            for row in chunks:
+                if row["tier"] != tier:
+                    continue
+                conn.execute(
+                    _INSERT_CHUNK,
+                    (row["chunk_id"], row["doc_id"], row["parent_id"], row["chunk_index"],
+                     row["tier"], row["text"], row["summary"], row["char_start"], row["char_end"],
+                     row.get("chunk_contract_version"), row.get("provider"),
+                     json.dumps(row["heading_path"]) if row.get("heading_path") else None,
+                     row.get("token_count"),
+                     json.dumps(row["layout_map"]) if row.get("layout_map") is not None else None,
+                     row.get("region_role"), row.get("region_reason"), REGION_CONTRACT),
+                )
 
         children = [r for r in chunks if r["tier"] == "child"]
         parents = [r for r in chunks if r["tier"] == "parent"]

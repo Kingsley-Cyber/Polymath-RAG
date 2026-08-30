@@ -264,7 +264,7 @@ class Supervisor:
 
     # ----------------------------------------------------------------- loop
     def tick(self) -> dict:
-        if self.autopilot:
+        if getattr(self, "autopilot", False):
             self._autopilot_reconcile()
         for slot in self.slots:
             if slot.quarantined or slot.parked:

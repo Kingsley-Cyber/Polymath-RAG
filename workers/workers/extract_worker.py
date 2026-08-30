@@ -927,7 +927,7 @@ def process_event(conn: Connection, event: dict) -> None:
         chunk_rows = conn.execute(
             """
             SELECT chunk_id, doc_id, parent_id, tier, text, summary,
-                   char_start, char_end, layout_map
+                   char_start, char_end, layout_map, region_role
               FROM chunks
              WHERE doc_id = %s
              ORDER BY chunk_index
@@ -937,7 +937,7 @@ def process_event(conn: Connection, event: dict) -> None:
         chunks = [
             {"chunk_id": r[0], "doc_id": r[1], "parent_id": r[2], "tier": r[3],
              "text": r[4], "summary": r[5], "char_start": r[6], "char_end": r[7],
-             "layout_map": r[8]}
+             "layout_map": r[8], "region_role": r[9]}
             for r in chunk_rows
         ]
         child_chunks = [row for row in chunks if row["tier"] == "child"]
@@ -1104,7 +1104,14 @@ def process_event(conn: Connection, event: dict) -> None:
                     "coercions_preview": _merged.coercions[:200],
                     "digests": _merged.digests[:400],
                     "neighborhoods": len(_neighborhoods),
+                    # EXTRACTION-COVERAGE-V1: the per-neighborhood ledger the
+                    # census reads (via stats) and the operator reads (here).
+                    "neighborhood_dispositions": _merged.dispositions,
                 }
+                for _k in ("neighborhoods_sent", "neighborhoods_returned",
+                           "neighborhoods_dropped", "neighborhoods_unaccounted",
+                           "parents_total", "parents_with_extraction"):
+                    _counts[_k] = _merged.stats.get(_k, 0)
                 # Rejections are the durable record of what the model
                 # proposed and the gate refused — the FULL lists persist
                 # (separate artifact keys), never a truncated preview only.
