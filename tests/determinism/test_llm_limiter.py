@@ -24,10 +24,10 @@ def test_concurrency_aimd_increase() -> None:
     lim = AdaptiveLimiter("local", ProviderLimit(
         kind="concurrency", init=2, min=1, max=4))
     assert lim.effective == 2
-    for _ in range(8):
+    for _ in range(4):
         lim.record_success()
-    assert lim.effective == 3            # additive increase
-    for _ in range(8):
+    assert lim.effective == 3            # additive increase (K=4)
+    for _ in range(4):
         lim.record_success()
     assert lim.effective == 4
     for _ in range(16):
