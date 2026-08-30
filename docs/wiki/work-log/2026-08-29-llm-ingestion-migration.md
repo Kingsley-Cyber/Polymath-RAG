@@ -377,3 +377,15 @@ active/cache/peak GB. After restart: wired 4.9 GB, 81% free, server 2.2 GB.
 Also stopped the unused GLiNER sidecar and a stray hung pytest. Ticket for
 Learning SQL re-queued (its last two attempts hit the server's restart
 window: `ConnectError [Errno 61]`).
+
+**2026-08-30 07:00 — breaker fail-fast burned retries; GLiNER boot dependency.**
+The OOM storm opened the local lane's breaker; `LIMITER_REFUSED → stage
+failure` then let the census retry the ticket within seconds against the
+still-open breaker (30 s cooldown) — three attempts dead in under a
+minute. Fix: `AdaptiveLimiter.acquire(block=True)` now WAITS for the
+half-open probe (≤ `BREAKER_WAIT_MAX_S`=75 s) before refusing; refusal is
+the last resort (test `test_11b`). Separately, `extract_worker` resolved
+the GLiNER pin at import time by calling the sidecar even in llm modes —
+with the idle sidecar stopped the worker could not boot; llm modes now
+record the explicit `retired-in-llm-mode` pin (still hashed) without any
+network call. Fleet restarted; Learning SQL ticket re-queued.
