@@ -337,3 +337,28 @@ def test_output_budget_scales_with_input() -> None:
 def test_user_prompt_carries_chunk_markers() -> None:
     prompt = build_user_prompt([("p1:0", [("c1", "hello"), ("c2", "world")])])
     assert "[chunk:c1]" in prompt and "[chunk:c2]" in prompt
+
+
+def test_ws_collapsed_match_stores_exact_source_slice() -> None:
+    # double space in source vs single space in the model surface: the
+    # stored span text must be the EXACT source slice (downstream sentence
+    # comparison demands byte-exact frame agreement)
+    chunk = "where  operator bindings fail the pipeline stops early."
+    view = ChunkView("c_ws", chunk)
+    hit = _locate_ws(view, "where operator")
+    assert hit, "collapsed match should find it"
+    s, e = hit
+    assert chunk[s:e] == "where  operator"
+    # and the gate emits that slice as text
+    from polymath_shared.llm_extraction.gate import sanitize as _s, validate_and_normalize as _v
+    raw = _packet_json(entity_quote=chunk, relation_quote=chunk)
+    _, packet = _s(raw, {"p1:0"})
+    out = _v(packet, {"p1:0": [view]})
+    for spans in out.entities_by_chunk.values():
+        for sp in spans:
+            assert chunk[sp["start"]:sp["end"]] == sp["text"]
+
+
+def _locate_ws(view, needle):
+    from polymath_shared.llm_extraction.gate import _locate
+    return _locate(needle, view)

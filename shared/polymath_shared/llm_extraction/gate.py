@@ -420,8 +420,12 @@ def validate_and_normalize(packet: ExtractionPacket,
                     # label is the CANONICAL core type (the worker's
                     # _map_label passes core names through untouched);
                     # raw_type preserves the open-vocabulary proposal.
+                    # text is the EXACT source slice — the model's surface
+                    # may differ in whitespace (ws-collapsed matching), and
+                    # downstream sentence comparison demands byte-exact
+                    # span/frame agreement.
                     out.entities_by_chunk.setdefault(view.chunk_id, []).append({
-                        "start": s, "end": e, "text": ent.surface,
+                        "start": s, "end": e, "text": view.text[s:e],
                         "label": core, "raw_type": ent.type, "score": 1.0})
                     n_ent += 1
                     placed = True
@@ -491,7 +495,7 @@ def validate_and_normalize(packet: ExtractionPacket,
                         "surface": name, "raw_type": name, "core": core,
                         "method": method + "_endpoint",
                         "neighborhood_id": item.neighborhood_id})
-                existing.append({"start": s, "end": e, "text": name,
+                existing.append({"start": s, "end": e, "text": anchor.text[s:e],
                                  "label": name, "score": 1.0})
                 n_ent += 1
         out.digests.append({
