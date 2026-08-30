@@ -29,6 +29,12 @@ HIGH_MEDIUM_PREDICATES = {
     "implemented_with", "causes", "enables", "influences", "depends_on",
     "is_a", "instance_of", "part_of", "located_in", "occurred_at",
     "measured_by", "transforms_into", "derived_from",
+    # LLM-DIRECT-FACTS-V1: the relation ontology (17 + RELATED_TO) as
+    # stored by workers/llm_direct.py — uppercase enum ids.
+    "IS_A", "PART_OF", "HAS_PROPERTY", "SAME_AS", "USES", "REQUIRES",
+    "PRODUCES", "CAUSES", "REGULATES", "CORRELATES_WITH", "CONSTRAINED_BY",
+    "PRECEDES", "MEASURES", "LOCATED_IN", "ALTERNATIVE_TO", "OPPOSES",
+    "ACTS_ON", "RELATED_TO",
 }
 
 

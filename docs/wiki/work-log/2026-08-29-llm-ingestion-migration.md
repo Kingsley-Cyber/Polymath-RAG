@@ -415,3 +415,23 @@ output (900), `finish_reason` + `calls_truncated` in receipts. Relation
 schema adherence confirmed on both lanes: ledger predicates 100% on-enum
 (cloud 245 rows/16 predicates, 1 raw fallback; local 25/11, 3 raw
 fallbacks); probe raw emissions 8/9 on-enum. Register 4.3.8 SUPERSEDED.
+
+**2026-08-30 07:25 — LLM-DIRECT-FACTS-V1 (owner: "the predicate compiler makes no sense under LLM extraction").**
+Measured: 283 cloud + local gated relations → 3 admitted facts through
+the GLiNER/spaCy-era compiler + harbor. New `workers/llm_direct.py`:
+gated relations become facts by identity — entities
+`entity_id(core_type, normalized_surface)` (same key as every writer, so
+one surface across documents = one row; core_type keeps same-name
+different things apart; alias/cross-corpus merging stays canonicalize's
+job), mentions with corpus_id + doc_id + exact offsets, facts
+`fact_id(predicate, s, o)` (symmetric predicates endpoint-ordered) so the
+same relation from N documents aggregates onto one fact with N evidence
+rows (exact-evidence-v1 offsets), `rule_id=llm-relation-v1`,
+`decision=ACCEPT`, provenance {lane, model, predicate_raw/method,
+bundle}. `llm_live` now materializes and returns before the
+syntax/slices/candidates/compiler/admission chain; `llm_shadow`
+unchanged. Contract identity gains `materialization=llm-direct-facts-v1`
+(re-extraction on next ingest). GRAPH expansion allowlist gains the 17
+enum ids. DB-backed test (rolled back): FKs, idempotency, cross-document
+aggregation, exact offsets. Also: control.main stale caches held two
+completed runs at `reconciling` — restarting it promoted both (→ §9.5).

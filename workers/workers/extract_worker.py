@@ -1112,6 +1112,47 @@ def process_event(conn: Connection, event: dict) -> None:
                                  "llm_rejections": _merged.rejections,
                                  "llm_coercions": _merged.coercions})
                 _perf["provider_calls"] += len(_results)
+            if provider_mode == "llm_live":
+                # LLM-DIRECT-FACTS-V1 (owner 2026-08-30): gated LLM relations
+                # ARE the facts. The compiler/harbor chain below adjudicated
+                # GLiNER+spaCy proposals; over attested, ontology-typed LLM
+                # relations it was a second authority that discarded 283 of
+                # 286 (measured). The deterministic gate remains the only
+                # filter; everything it passed is persisted by identity.
+                from workers import llm_direct as _direct
+                _raw.bulk_write(conn, "raw_entity_proposals", _raw_rows_entity)
+                _raw.bulk_write(conn, "raw_predicate_evidence", _raw_rows_predicate)
+                _pt = _t.perf_counter()
+                _direct_stats = _direct.materialize(
+                    conn, corpus_id=corpus_id, doc_id=doc_id,
+                    chunk_rows={r["chunk_id"]: r for r in child_chunks},
+                    merged=_merged, lane=_decision.lane, model=_llm_model_id,
+                    stamp=_stamped_provenance)
+                _perf["l1_l4_writes_s"] += _t.perf_counter() - _pt
+                _bundle = _raw.write_bundle(conn, doc_id)
+                _perf["total_s"] = _t.perf_counter() - _perf.pop("stage_t0")
+                _perf["chunks"] = len(child_chunks)
+                _counts["facts_direct"] = _direct_stats["written"]["facts"]
+                _counts["mentions_direct"] = _direct_stats["written"]["mentions"]
+                writer.artifact({
+                    "llm_direct": _direct_stats,
+                    "counts": _counts,
+                    "perf": {k: (round(v, 2) if isinstance(v, float) else v)
+                             for k, v in _perf.items()},
+                    "audit": audit,
+                    "evidence_bundle": _bundle,
+                })
+                if trace.enabled:
+                    trace.count("chunks", len(child_chunks))
+                    trace.count("llm_direct_facts", _direct_stats["seen"]["facts"])
+                    _fun = trace.funnel()
+                    _wr = trace.flush(conn)
+                    writer.artifact({"trace": {"mode": trace.mode,
+                                               "events_written": _wr, "funnel": _fun}})
+                log.info("extract llm-direct %s", json.dumps(_direct_stats["seen"]),
+                         extra={"run_id": run_id, "stage": "extract", "detail": None})
+                writer.run_status("reconciling")
+                return
             for row in child_chunks:
                 envelope = None
                 if context_active and not llm_mode:

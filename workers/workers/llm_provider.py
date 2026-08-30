@@ -170,6 +170,8 @@ def contract_identity() -> dict:
             "noisy": list(NOISY_KINDS),
             "rules": [[r.pattern, kind] for r, kind in _RULES]}),
         "limiter_seeds": {lane: asdict(_lane_limit(lane)) for lane in ("local", "cloud")},
+        "materialization": ("llm-direct-facts-v1" if s.worker.extraction_provider == "llm_live"
+                            else "compiler"),
         "entity_version": LLM_ENTITY_VERSION,
         "evidence_version": LLM_EVIDENCE_VERSION,
     }
