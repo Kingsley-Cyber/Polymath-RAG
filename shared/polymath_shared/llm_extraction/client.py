@@ -135,6 +135,59 @@ the local lane sends repetition_penalty=1.15 with repetition_context_size=400 �
 this kills exact-repeat degeneration while preserving the JSON-structural
 repetition the contract requires."""
 
+LEAN_SYSTEM_PROMPT = """You are an information extraction engine. You read source text and reply with ONE JSON object and nothing else — no prose, no markdown fences.
+
+Output schema (contract polymath-extraction-v1, LEAN form — entities by index, quotes only on relations):
+{"contract":"polymath-extraction-v1","profile":"volume","items":[{"id":"n1","e":[["surface","TYPE"],...],"r":[[0,"PREDICATE",1,"verbatim quote"],...],"digest":{"central_claim":"...","main_mechanism":"...","retrieval_uses":["..."]}}]}
+
+Rules:
+1. "e" is the entity array: [surface, TYPE] pairs. Surface MUST appear verbatim in the source text. TYPE is one of: Person, Organization, Location, Product, Technology, Concept, Method, Event, Document, Process, Measurement, TimeReference — or a more specific natural type.
+2. "r" relations reference entity INDICES: [subject_idx, PREDICATE, object_idx, quote]. The quote MUST be copied VERBATIM from the source. PREDICATE must be exactly one of: IS_A, PART_OF, HAS_PROPERTY, SAME_AS, USES, REQUIRES, PRODUCES, CAUSES, REGULATES, CORRELATES_WITH, CONSTRAINED_BY, PRECEDES, MEASURES, LOCATED_IN, ALTERNATIVE_TO, OPPOSES, ACTS_ON. Use RELATED_TO only as a last resort.
+3. Disambiguation: applying/imposing a rule on X = CONSTRAINED_BY (nothing new is created). "consists of/composed of" = PART_OF. PRODUCES = creates a NEW output. "not responsible for / not the root cause" = OPPOSES.
+4. No output without input: extract only what the text states. Stay lean — no padding, no repetition. Entities without relations are fine.
+5. digest: central_claim ≤ 1 sentence; main_mechanism ≤ 1 sentence; retrieval_uses ≤ 3 short strings.
+6. One item only, with "id":"n1" exactly."""
+
+
+def _lean_expand(obj: dict) -> dict:
+    """Expand the LEAN index form into the standard flat packet shape so
+    the shared gate/validation path is unchanged. Surfaces attest as their
+    own quote (the gate locates them in the chunk verbatim); relation
+    quotes carry through for attestation."""
+    items_in = obj.get("items") or []
+    items_out = []
+    for it in items_in:
+        ents = it.get("e") or []
+        rels = it.get("r") or []
+        entities = []
+        for pair in ents:
+            if isinstance(pair, (list, tuple)) and len(pair) >= 2 \
+                    and isinstance(pair[0], str) and isinstance(pair[1], str):
+                entities.append({"surface": pair[0][:200], "type": pair[1][:80],
+                                 "quote": pair[0][:2000]})
+        relations = []
+        for r in rels:
+            if isinstance(r, (list, tuple)) and len(r) >= 4:
+                si, pred, oi, quote = r[0], r[1], r[2], r[3]
+                try:
+                    si, oi = int(si), int(oi)
+                except (TypeError, ValueError):
+                    continue
+                if not (0 <= si < len(entities) and 0 <= oi < len(entities)):
+                    continue
+                if not isinstance(pred, str) or not isinstance(quote, str):
+                    continue
+                relations.append({"subject": entities[si]["surface"],
+                                  "predicate": pred[:120],
+                                  "object": entities[oi]["surface"],
+                                  "quote": quote[:2000]})
+        items_out.append({"neighborhood_id": it.get("id") or it.get("neighborhood_id") or "",
+                          "entities": entities, "relations": relations,
+                          "digest": it.get("digest") or {}})
+    return {"contract": "polymath-extraction-v1", "profile": "volume",
+            "items": items_out}
+
+
 SYSTEM_PROMPT = _system_prompt()
 
 
@@ -440,6 +493,16 @@ class LLMExtractionClient:
         wall_ms = int((time.perf_counter() - t0) * 1000)
         for (nid, user_prompt, mt), row in zip(prompt_items, rows):
             raw = str(row.get("content", ""))
+            if use_lean and raw.lstrip().startswith("{"):
+                import json as _json
+                try:
+                    loose = _json.loads(raw, strict=False)
+                except Exception:
+                    loose = None
+                if isinstance(loose, dict) and loose.get("items") \
+                        and isinstance(loose["items"][0], dict) \
+                        and "e" in loose["items"][0]:
+                    raw = _json.dumps(_lean_expand(loose))
             s_res, packet = sanitize(raw, {"n1"})
             packet = restore_neighborhood_ids(packet, {"n1": nid})
             out.append(LLMCallResult(
