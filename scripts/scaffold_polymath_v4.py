@@ -271,6 +271,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_llm_controller.py", "py", None),
     ("workers/workers/chunk_kind.py", "py", None),
     ("workers/workers/llm_direct.py", "py", None),
+    ("CLAUDE.md", "md", None),
+    ("docs/wiki/plans/CONTINUITY-PACKET-2026-08-30.md", "md", None),
     ("tests/integration/test_llm_direct_facts.py", "py", None),
     # 2026-08-30 LATENT-TRANSFER-LAYER-V1 planning documents
     ("docs/wiki/plans/LATENT-TRANSFER-LAYER-V1-PLAN.md", "md", None),
