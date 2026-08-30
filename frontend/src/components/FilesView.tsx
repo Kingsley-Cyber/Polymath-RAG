@@ -8,6 +8,33 @@ function fmtBytes(n: number): string {
   return `${n} B`;
 }
 
+
+/** Human lines for readiness pending-codes (in-flight vs broken). */
+const PENDING_LABELS: Record<string, string> = {
+  no_query_ready_run: "final census pending",
+  document_summaries_0_of_2: "document summaries queued",
+  no_parent_summaries: "parent summaries queued",
+  no_corpus_map: "corpus map queued",
+  unprojected_procedures_61: "procedures compiled — awaiting projection",
+  unprojected_concepts_15: "concepts compiled — awaiting projection",
+};
+function pendingLabel(code: string): string {
+  if (PENDING_LABELS[code]) return PENDING_LABELS[code];
+  if (code.startsWith("unprojected_procedures")) return "procedures compiled — awaiting projection";
+  if (code.startsWith("unprojected_concepts")) return "concepts compiled — awaiting projection";
+  if (code.startsWith("document_summaries")) return "document summaries queued";
+  return code.replace(/_/g, " ");
+}
+function verdictLine(r: any): string {
+  if (!r) return "";
+  const busy = (r.pending ?? []).length > 0
+    && (r.pending ?? []).every((p: string) =>
+      /queued|map|census|summar|unprojected|no_query_ready/.test(pendingLabel(p)));
+  if (r.verdict === "SEMANTIC_COMPLETE") return "✓ complete — corpus is query-ready";
+  if (busy) return "⏳ ingesting — downstream stages in flight, not an error";
+  return "incomplete";
+}
+
 export default function FilesView({
   corpus,
   onCorpusDeleted,
@@ -134,6 +161,9 @@ export default function FilesView({
         {readiness && (
           <div className="panel">
             <h3>Semantic readiness</h3>
+            <p style={{ opacity: 0.85, fontSize: 13 }}>
+              {verdictLine(readiness)}
+            </p>
             <div className="readiness">
               <span
                 className={`status-pill ${
@@ -164,7 +194,7 @@ export default function FilesView({
             </div>
             {readiness.pending?.length > 0 && (
               <div className="phase-detail" style={{ marginTop: 6 }}>
-                pending: {readiness.pending.join(", ")}
+                in flight: {readiness.pending.map(pendingLabel).join(" · ")}
               </div>
             )}
           </div>
