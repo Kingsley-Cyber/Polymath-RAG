@@ -191,6 +191,21 @@ last_reviewed: 2026-08-29
 | 9.2 | Literal objects storage shape: typed value nodes (recommended) | MISSING (contract allows literal objects; storage still entity-endpoint-only) |
 | 9.8 | query lane slot reserved | PARTIAL (limiter lanes reserved; no query-time LLM) |
 
+## §10 Concept & procedure migration with the LLM lane (rev 5, 2026-08-30)
+
+Authoritative section added to the migration plan
+(/Users/king/Downloads/polymath-v4-local-migration-plan.md §10). Register items:
+
+| # | Detail | Status |
+|---|---|---|
+| 10.1 | Wire `_persist_knowledge_artifacts` into llm_live (deterministic CONCEPT/PROCEDURE compilers, model-free, opportunity accounting preserved) | **MISSING — the direct migration, ships first** (measured: 0 concepts / 0 procedures on llm_live re-ingest) |
+| 10.2 | Parent Semantic Compiler: one bounded forward pass per parent → summary + abstraction(1) + mechanisms(≤3) + affordances(≤3) + pseudo_queries(≤4); qual budget 1/2/2/3 = 8 latent vectors | MISSING (Adapter 2 contract; supersedes the digest adapter once active) |
+| 10.3 | summary_vector stays PURE; enrichment = separate object keyed parent_id + source_content_hash + version | design fixed |
+| 10.4 | Latent Qdrant namespaces first; Neo4j unchanged in phase 1 | design fixed (owner, Adapter 2) |
+| 10.5 | Latent retrieval = additive seed generator → parent_ids → EXISTING evidence pipeline; fail-open, 100–300ms budget, per-channel flags, retrieval_mode baseline|baseline_plus_latent | design fixed |
+| 10.6 | Per-channel attribution + P6 LATENT_TRANSFER_RECALL suite (LatentRecall@K, CrossDomainRecall@K, FalseAnalogyRate, AnswerLift ±latent) — separate from ordinary retrieval eval | MISSING |
+| 10.7 | LLM-native extract.procedures (Adapter 1) DEFERRED unless opportunity accounting proves deterministic compiler gaps | decided |
+
 ## Completion tally (normative details)
 
 - DONE: 34 · DEVIATED: 9 · SUPERSEDED: 8 · PARTIAL: 17 · **MISSING: 24**

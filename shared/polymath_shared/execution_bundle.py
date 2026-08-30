@@ -96,10 +96,25 @@ def config_fingerprint() -> dict[str, str]:
     return {k: os.environ.get(k, "") for k in _CONFIG_ENV_KEYS}
 
 
+#: HASH-FENCE-V2 content cache: rel -> (size, mtime_ns, sha256). A file
+#: whose stat is unchanged reuses its hash; a touched file is re-read.
+_CONTENT_HASH_CACHE: dict[str, tuple[int, int, str]] = {}
+
+
 def fast_code_fingerprint() -> str:
-    """Cheap drift detector over the pinned code surfaces. Includes
-    mtime_ns: content-preserving touches still invalidate the claim
-    gate's assumption that boot-time reads describe current disk."""
+    """Content-hash drift detector over the pinned code surfaces.
+
+    HASH-FENCE-V2 (2026-08-30): V1 fingerprinted rel:size:mtime_ns, so a
+    content-preserving rewrite tripped the fence — MEASURED: the
+    determinism suite re-serializes the ontology yaml byte-identically,
+    and one `pytest` run quarantined the entire fleet
+    (BUNDLE_STALE_CODE_DRIFT) while the control plane idled for hours.
+    Every other integrity authority in this repo is content-addressed
+    (bundle hash, contracts, artifact ids); the fence now matches:
+    same bytes => same fingerprint, regardless of touches. The per-file
+    cache keyed on (size, mtime_ns) keeps the steady-state per-poll cost
+    at one stat() per pinned file; only files whose stat changed are
+    re-read and re-hashed."""
     h = hashlib.sha256()
     for d in _FINGERPRINT_DIRS:
         if not d.exists():
@@ -109,7 +124,16 @@ def fast_code_fingerprint() -> str:
                 continue
             st = p.stat()
             rel = str(p.relative_to(ROOT))
-            h.update(f"{rel}:{st.st_size}:{st.st_mtime_ns}".encode())
+            cached = _CONTENT_HASH_CACHE.get(rel)
+            if cached and cached[0] == st.st_size and cached[1] == st.st_mtime_ns:
+                sha = cached[2]
+            else:
+                try:
+                    sha = _sha256_file(p)
+                except OSError:
+                    sha = "unreadable"  # distinct value: drift, loudly
+                _CONTENT_HASH_CACHE[rel] = (st.st_size, st.st_mtime_ns, sha)
+            h.update(f"{rel}:{sha}".encode())
     return h.hexdigest()[:16]
 
 

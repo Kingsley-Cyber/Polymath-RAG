@@ -511,7 +511,14 @@ class LLMExtractionClient:
                     limiter.record_failure(
                         retry_after=exc.response.headers.get("retry-after"),
                         headers=dict(exc.response.headers))
-                    if status in (429, 502, 503, 504) and attempts < self.max_attempts:
+                    # TRANSPORT-RETRY-500-V1 (measured 2026-08-30): one
+                    # transient Ollama 500 raised ExtractionTransportError
+                    # and failed the ENTIRE extract stage — 6 minutes of
+                    # cloud spend burned, the document re-run on the
+                    # ticket's second attempt. A daemon-proxy 500 is as
+                    # transient as 502/503; the limiter already recorded
+                    # the failure (backoff), and a repeat still fails closed.
+                    if status in (429, 500, 502, 503, 504) and attempts < self.max_attempts:
                         retry_delay = min(
                             parse_retry_after(exc.response.headers.get("retry-after")) or 1.5,
                             15.0)

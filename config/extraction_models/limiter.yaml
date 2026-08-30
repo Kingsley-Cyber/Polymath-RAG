@@ -14,11 +14,15 @@ providers:
     kind: rate             # cloud bottleneck = rate (RPM + TPM)
     rpm: 120               # seed bucket; header-sync refines it live
     tpm: 200000
-    conc_cap: 16           # CEILING the controller may climb to — the real
+    conc_cap: 32           # CEILING the controller may climb to — the real
                            # limit is FOUND from 429s (x0.5), not configured;
-                           # the found value persists (llm_controller_state)
+                           # the found value persists (llm_controller_state).
+                           # Raised 16->32 (2026-08-30): the cysa ingest hit
+                           # 16 with ZERO 429s in 6 min — the cap was binding
+                           # before the provider ever throttled, so the
+                           # controller never found the real limit.
     min: 2
-    max: 16
+    max: 32
     adaptive: true
     use_headers: true      # throttle proactively from rate-limit headers
     init: 3                # AIMD starts LOW and climbs to the ceiling on

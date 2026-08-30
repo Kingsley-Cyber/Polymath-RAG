@@ -1136,6 +1136,32 @@ def process_event(conn: Connection, event: dict) -> None:
                     merged=_merged, lane=_decision.lane, model=_llm_model_id,
                     stamp=_stamped_provenance)
                 _perf["l1_l4_writes_s"] += _t.perf_counter() - _pt
+                # KNOWLEDGE-ARTIFACT-LLM-V1 (owner 2026-08-30): the
+                # GLiNER→LLM migration orphaned the concept/procedure
+                # lane — _persist_knowledge_artifacts ran only in the
+                # legacy branch, so every llm_live document wrote
+                # concept_artifacts=0 / procedure_artifacts=0 (measured:
+                # cysa-study-v1, counts had no procedures/concepts keys).
+                # The compilers are deterministic local-evidence
+                # detectors with no GLiNER/spaCy dependency; the gate's
+                # admitted surfaces stand in for the legacy
+                # _durable_surfaces (same role: admission-passed names).
+                _pt = _t.perf_counter()
+                _llm_surfaces = sorted({
+                    m["text"]
+                    for spans in _merged.entities_by_chunk.values()
+                    for m in spans})
+                try:
+                    _artifact_counts = _persist_knowledge_artifacts(
+                        conn, corpus_id=corpus_id, doc_id=doc_id,
+                        doc_text="\n".join(r["text"] for r in child_chunks),
+                        chunk_ids=[r["chunk_id"] for r in child_chunks],
+                        durable_surfaces=_llm_surfaces)
+                except Exception as exc:
+                    _artifact_counts = {"procedures": 0, "concepts": 0,
+                                        "artifacts_error": str(exc)[:200]}
+                _perf["knowledge_artifacts_s"] = _t.perf_counter() - _pt
+                _counts.update(_artifact_counts)
                 # llm_live has no sentence-slice interpreter view; the
                 # bundle is the raw ledger over the chunks (see raw_evidence).
                 _bundle = _raw.write_bundle(conn, doc_id, require_slices=False)
