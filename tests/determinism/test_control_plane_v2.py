@@ -31,6 +31,9 @@ def test_stage_dag_covers_the_production_chain_in_order():
         "verify_projections",
         # SUMMARY-VOCABULARY-LAYER: background intelligence stages,
         # non-blocking (knowledge=READY while summaries=DEGRADED).
+        # COMPILE-OBJECTS-STAGE-V1 (§11, 2026-08-30): the deterministic
+        # concept/procedure compilers as their own non-blocking stage.
+        "compile_objects",
         "parent_summary", "document_summary", "corpus_summary",
         "vocabulary",
     ]

@@ -52,6 +52,10 @@ from polymath_shared.llm_extraction.ontology import RELATION_ONTOLOGY
 from polymath_shared.query_policy import QUERY_POLICY_VERSION
 
 CONTRACT = "llm-direct-facts-v1"
+# GENERATION-STAMPING-V1 (§11 L0): the indexable generation id on
+# entities.extractor_version / facts.extractor_version. The provenance
+# JSON keeps the full stamp (contract, lane, model, bundle hash).
+EXTRACTOR_VERSION = "llm-direct-v1"
 RULE_ID = "llm-relation-v1"
 RULE_VERSION = "relation-ontology-v1"
 ADMISSION_CLASS = "CORPUS_SCOPED"
@@ -84,7 +88,9 @@ def materialize(conn, *, corpus_id: str, doc_id: str, chunk_rows: dict[str, dict
     id is content-derived and every insert is ON CONFLICT DO NOTHING, so a
     replay writes zero rows. Returns counts for the stage artifact."""
     stamp = stamp or (lambda p: p)
+    bundle_hash = stamp({}).get("generated_by_bundle_hash")
     ent_rows: dict[str, tuple] = {}
+    raw_types_by_eid: dict[str, set[str]] = {}
     mention_rows: dict[str, tuple] = {}
     fact_rows: dict[str, tuple] = {}
     evidence_rows: dict[str, tuple] = {}
@@ -103,6 +109,8 @@ def materialize(conn, *, corpus_id: str, doc_id: str, chunk_rows: dict[str, dict
             norm = normalized_for_lookup(surface)
             eid = _entity_id(core, norm)
             ent_rows.setdefault(eid, (eid, core, norm, ADMISSION_CLASS, doc_id))
+            if e.get("raw_type"):
+                raw_types_by_eid.setdefault(eid, set()).add(str(e["raw_type"]))
             mid = _mention_id(doc_id, cid, core, e["start"], e["end"])
             mention_rows.setdefault(mid, (
                 mid, corpus_id, doc_id, cid, int(e["start"]), int(e["end"]), surface, norm,
@@ -143,7 +151,7 @@ def materialize(conn, *, corpus_id: str, doc_id: str, chunk_rows: dict[str, dict
             })
             fact_rows.setdefault(fid, (
                 fid, pred, sid, oid, "{}", "ACCEPT", RULE_ID, RULE_VERSION,
-                json.dumps(provenance, sort_keys=True)))
+                json.dumps(provenance, sort_keys=True), EXTRACTOR_VERSION))
             quote = (int(ev["start"]), int(ev["end"]))
             s_off = _endpoint_offsets(subj_s, view, quote)
             o_off = _endpoint_offsets(obj_s, view, quote)
@@ -171,11 +179,33 @@ def materialize(conn, *, corpus_id: str, doc_id: str, chunk_rows: dict[str, dict
     written = {"entities": 0, "mentions": 0, "facts": 0, "evidence": 0}
     with conn.cursor() as cur:
         for eid_row in ent_rows.values():
+            eid = eid_row[0]
+            raw_types = json.dumps(sorted(raw_types_by_eid.get(eid, ())))
+            # GENERATION-STAMPING-V1: raw_types is a deterministic SET
+            # UNION (the open vocabulary is preserved, never flattened);
+            # the containment guard keeps replays at rowcount 0 so
+            # idempotency stays observable in `written`.
             cur.execute(
                 """INSERT INTO entities (entity_id, core_type, normalized_surface,
-                                         admission_class, first_seen_doc)
-                   VALUES (%s, %s, %s, %s, %s) ON CONFLICT (entity_id) DO NOTHING""",
-                eid_row)
+                                         admission_class, first_seen_doc,
+                                         extractor_version, generated_by_bundle_hash,
+                                         raw_types)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                   ON CONFLICT (entity_id) DO UPDATE SET
+                       raw_types = (
+                           SELECT coalesce(jsonb_agg(DISTINCT t.v ORDER BY t.v),
+                                           '[]'::jsonb)
+                             FROM jsonb_array_elements_text(
+                                      entities.raw_types || EXCLUDED.raw_types)
+                                  AS t(v)),
+                       extractor_version = coalesce(entities.extractor_version,
+                                                    EXCLUDED.extractor_version),
+                       generated_by_bundle_hash = coalesce(
+                           entities.generated_by_bundle_hash,
+                           EXCLUDED.generated_by_bundle_hash)
+                   WHERE NOT entities.raw_types @> EXCLUDED.raw_types
+                      OR entities.extractor_version IS NULL""",
+                eid_row + (EXTRACTOR_VERSION, bundle_hash, raw_types))
             written["entities"] += cur.rowcount
         for m in mention_rows.values():
             cur.execute(
@@ -191,8 +221,10 @@ def materialize(conn, *, corpus_id: str, doc_id: str, chunk_rows: dict[str, dict
         for f in fact_rows.values():
             cur.execute(
                 """INSERT INTO facts (fact_id, predicate, subject_id, object_id, qualifiers,
-                                      decision, rule_id, rule_version, provenance)
-                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (fact_id) DO NOTHING""", f)
+                                      decision, rule_id, rule_version, provenance,
+                                      extractor_version)
+                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                   ON CONFLICT (fact_id) DO NOTHING""", f)
             written["facts"] += cur.rowcount
         for e in evidence_rows.values():
             cur.execute(

@@ -66,6 +66,7 @@ FLEET: list = [
     ("neo4j", "workers.project_neo4j_worker"),
     ("qdrant", "workers.project_qdrant_worker"),
     ("verify", "workers.verify_worker"),
+    ("compile_objects", "workers.compile_objects_worker"),
     ("summaries", "workers.summary_worker"),
 ]
 

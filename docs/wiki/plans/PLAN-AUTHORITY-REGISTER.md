@@ -211,6 +211,47 @@ Authoritative section added to the migration plan
 | 10.6 | Per-channel attribution + P6 LATENT_TRANSFER_RECALL suite (LatentRecall@K, CrossDomainRecall@K, FalseAnalogyRate, AnswerLift ±latent) — separate from ordinary retrieval eval | MISSING |
 | 10.7 | LLM-native extract.procedures (Adapter 1) DEFERRED unless opportunity accounting proves deterministic compiler gaps | decided |
 
+## §11 One authority, three projections — storage model + governing principle (owner 2026-08-30)
+
+Governing principle (owner, verbatim intent): **the model proposes;
+deterministic Python owns truth.** The LLM never writes a store, never
+assigns a canonical id, never becomes a survival dependency. Identity,
+admission, the predicate contract, projections, and the control plane are
+deterministic; the model is swappable, the guarantees are not.
+
+### §11.0 Contract audit — is the governing design embedded in the control plane? (verified against code 2026-08-30, session 4)
+
+| Claim | Where enforced | Verdict |
+|---|---|---|
+| Lane from durable `documents.byte_length`, ≤300 KB local; enforced at selection AND dispatch | `policy.py` `CLOUD_MIN_BYTES=300_000` clamped floor; `select_lane` + `require_cloud_eligible` raises `CloudBoundaryViolation` immediately before the socket | CONTRACTED |
+| Local = GPU window: batched decode, OOM-halving, concurrency 1–4 | `client._infer_batch_call` (500→halve after slot release, budget `record_oom`), `limiter.yaml mlx_local max:4` | CONTRACTED |
+| Cloud = rate problem: RPM/TPM buckets before send, AIMD, header sync, breaker | `AdaptiveLimiter` (closed→open→half-open one-probe breaker, `use_headers`), `ollama_cloud` seeds init 3 | CONTRACTED (ceiling raised 16→32 this session — it saturated with ZERO 429s, masking the discoverable limit) |
+| Parent unit: model reads child chunks concatenated, never the stored parent row | extract neighborhoods built from `tier='child'` rows; gate `ChunkView`s are children | CONTRACTED |
+| Noise never enters an LLM call | `chunks.region_role` (REGION-ROLE-V1) + neighborhood packing filters | CONTRACTED (4.3.15) |
+| Output budget scales with input; generation config locked | `output_budget_for`; `GENERATION_CONFIG` = temp 0, rep_penalty 1.15, ctx 400, local `enable_thinking:false`, cloud `reasoning_effort:none` | CONTRACTED |
+| Closed predicate enum, exact→alias→RELATED_TO, every fallback recorded | 74-entry `PREDICATE_ALIASES` + patterns; gate counts `predicate_fallbacks`; `predicate_raw`+`predicate_method` persisted on every evidence row AND in facts.provenance | CONTRACTED |
+| Off-enum can never become a stored predicate | gate normalizes; `llm_direct` guards `pred not in RELATION_ONTOLOGY` (counted, never expected); verifier `ontology{}` degrades off-enum runs (4.3.16) | CONTRACTED |
+| No-think guaranteed twice | engine-layer per lane (above) + `strip_thinking` at the gate | CONTRACTED |
+| One control plane: tickets→leases→receipts→census, idempotent, kill-9 resume, lease keeper | `stage_transaction`/receipts, `_lease_keeper`, ticket DAG; census stuck-run class killed by CENSUS-DIRTY-SIGNAL-V2 (4.7.6) | CONTRACTED |
+| Coverage accounted, not assumed | EXTRACTION-COVERAGE-V1 dispositions + census promotion barrier (4.3.13) | CONTRACTED |
+| Shadow before trust | `llm_shadow` admits nothing; promotion = provider flip (4.7.5) | CONTRACTED |
+| Graph hits ground to chunks; identity-admitted facts only | `Fact→Evidence→Chunk` rows written by identity in `llm_direct`; projector reads facts table only | CONTRACTED |
+| Deterministic floor: summaries, concepts, procedures model-free | SUMMARY-COMPILER-V1 (4.4.8) + compile_objects stage (11.4) | CONTRACTED |
+| Entities carry generation + open vocabulary (de-flattening) | was MISSING — closed by 11.1 | BUILT 2026-08-30 |
+| Graph extractions first-class in FAST routing | was MISSING — closed by 11.2 | BUILT 2026-08-30 |
+| Exact-name lexical recall (BM25) | was MISSING — 11.3 | BUILT (projection side) 2026-08-30 |
+
+### §11 register items
+
+| # | Detail | Status |
+|---|---|---|
+| 11.1 | GENERATION-STAMPING-V1 (closes 1.6): migration 0042 — `entities.extractor_version/generated_by_bundle_hash/raw_types(jsonb set-union, containment-guarded for observable idempotency)`, `facts.extractor_version` (indexed); `llm_direct` writes `llm-direct-v1` | DONE (2026-08-30 s4) |
+| 11.2 | ROUTING-ENTITY-CARDS-V1: one content-addressed card per (entity, corpus) — surface + aliases + core type + predicate capsule; `representation_kind='routing_entity'`, payload `{entity_id, corpus_id, doc_ids}`; shared id derivation `projection_contracts.entity_card_id` (projector writes, verifier reconciles — one derivation); full receipt/incremental/reconcile parity with the other routing lanes | DONE (2026-08-30 s4) |
+| 11.3 | SPARSE-BM25-V1: named `bm25` sparse vector (server-side IDF) on the routing collection; deterministic shared tokenizer `polymath_shared/sparse_bm25.py` (index side and query side MUST import the same function); children index attested entity surfaces + parent head; MEASURED: qdrant 1.13.4 cannot add sparse to an existing collection → new collections sparse-native, `scripts/migrate_routing_sparse.py` (copy-out/recreate/copy-back, dense preserved, owner-gated `--apply`) migrates legacy; legacy collections log `SPARSE_LANE_SKIPPED_LEGACY_COLLECTION`, never fail | DONE projection-side (2026-08-30 s4); query-side fusion = §4.5 work, PARTIAL |
+| 11.4 | COMPILE-OBJECTS-STAGE-V1: concept/procedure compilers as their own non-blocking ticket stage (`compile_objects.v1`, after verify, before summaries) — own contract hash, attempts, receipts, artifact, opportunity accounting; supersedes the llm_live bolt-on (removed); legacy GLiNER inline call stays frozen behind the seam; supervisor slot + pipeline/converge profiles | DONE (2026-08-30 s4) |
+| 11.5 | L0 authority hardening: `predicate_raw`/`predicate_method`/`raw_type` were already persisted per row (audit); remaining L0 item = none | DONE by audit |
+| 11.6 | Query-side: FAST reads `routing_entity` cards; HYBRID fuses the `bm25` sparse lane (same tokenizer import) | MISSING (next session, §4.5) |
+
 ## Completion tally (normative details)
 
 - DONE: 34 · DEVIATED: 9 · SUPERSEDED: 8 · PARTIAL: 17 · **MISSING: 24**

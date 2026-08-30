@@ -83,6 +83,10 @@ ROUTING_KINDS = (
     # transcript-qual-v1 held 3 active artifact receipts with 0 points).
     "routing_procedure",
     "routing_concept",
+    # ROUTING-ENTITY-CARDS-V1 (§11 L1): entity cards reconcile like every
+    # other routing lane — active receipts over an empty store must be
+    # detected, and lost points re-drive the projector.
+    "routing_entity",
 )
 
 
@@ -120,12 +124,21 @@ def _desired_routing_ids(conn: Connection, corpus: str) -> dict[str, set[str]]:
         "SELECT concept_id FROM concept_artifacts WHERE corpus_id = %s",
         (corpus,),
     ).fetchall()
+    from polymath_shared.projection_contracts import entity_card_id
+    entity_rows = conn.execute(
+        """
+        SELECT DISTINCT m.entity_id FROM mentions m
+         WHERE m.corpus_id = %s AND m.entity_id IS NOT NULL
+        """,
+        (corpus,),
+    ).fetchall()
     return {
         "routing_document_summary": {r[0] for r in doc_rows},
         "routing_section_summary": {r[0] for r in section_rows},
         "routing_child": {r[0] for r in child_rows},
         "routing_procedure": {r[0] for r in proc_rows},
         "routing_concept": {r[0] for r in concept_rows},
+        "routing_entity": {entity_card_id(r[0], corpus) for r in entity_rows},
     }
 
 
@@ -178,12 +191,33 @@ def _routing_receipts(conn: Connection, corpus: str) -> dict[str, set[str]]:
         """,
         (corpus,),
     ).fetchall()
+    # entity cards: receipts are corpus-scoped by the shared id
+    # derivation itself (the id embeds the corpus), so membership in the
+    # desired id set IS the corpus scope.
+    from polymath_shared.projection_contracts import entity_card_id
+    desired_cards = {
+        entity_card_id(r[0], corpus)
+        for r in conn.execute(
+            """SELECT DISTINCT m.entity_id FROM mentions m
+                WHERE m.corpus_id = %s AND m.entity_id IS NOT NULL""",
+            (corpus,)).fetchall()}
+    card_rows = []
+    if desired_cards:
+        card_rows = conn.execute(
+            """
+            SELECT pr.entity_id FROM projection_receipts pr
+             WHERE pr.projection = 'qdrant' AND pr.entity_kind = 'routing_entity'
+               AND pr.active AND pr.entity_id = ANY(%s)
+            """,
+            (sorted(desired_cards),),
+        ).fetchall()
     return {
         "routing_document_summary": {r[0] for r in doc_rows},
         "routing_section_summary": {r[0] for r in section_rows},
         "routing_child": {r[0] for r in child_rows},
         "routing_procedure": {r[0] for r in proc_rows},
         "routing_concept": {r[0] for r in concept_rows},
+        "routing_entity": {r[0] for r in card_rows},
     }
 
 

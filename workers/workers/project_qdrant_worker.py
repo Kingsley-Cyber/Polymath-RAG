@@ -26,7 +26,20 @@ import time
 import psycopg
 from psycopg import Connection
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, PointStruct, VectorParams
+from qdrant_client.models import (
+    Distance,
+    Modifier,
+    PointStruct,
+    SparseVector,
+    SparseVectorParams,
+    VectorParams,
+)
+
+from polymath_shared.sparse_bm25 import (
+    SPARSE_CONTRACT_VERSION,
+    SPARSE_VECTOR_NAME,
+    sparse_vector,
+)
 
 from polymath_shared.db import tx
 from polymath_shared.logging import configure_logging
@@ -156,12 +169,43 @@ def _collection_exists(client: QdrantClient, name: str) -> bool:
 
 
 def _ensure_collection(client: QdrantClient, name: str, dim: int) -> None:
+    # SPARSE-BM25-V1 (§11 L1): new collections are sparse-native — a named
+    # `bm25` sparse vector with server-side IDF. MEASURED (qdrant 1.13.4):
+    # an EXISTING collection cannot gain a sparse vector via
+    # update_collection (400 "Not existing vector name"), so legacy
+    # collections stay dense-only until scripts/migrate_routing_sparse.py
+    # recreates them; _collection_has_sparse gates writes per collection.
     if _collection_exists(client, name):
         return
     client.create_collection(
         collection_name=name,
         vectors_config=VectorParams(size=dim, distance=Distance.COSINE),
+        sparse_vectors_config={
+            SPARSE_VECTOR_NAME: SparseVectorParams(modifier=Modifier.IDF)},
     )
+
+
+_SPARSE_CAPABLE: dict[str, bool] = {}
+
+
+def _collection_has_sparse(client: QdrantClient, name: str) -> bool:
+    cached = _SPARSE_CAPABLE.get(name)
+    if cached is not None:
+        return cached
+    try:
+        info = client.get_collection(name)
+        sparse = getattr(info.config.params, "sparse_vectors", None) or {}
+        ok = SPARSE_VECTOR_NAME in sparse
+    except Exception:
+        ok = False
+    _SPARSE_CAPABLE[name] = ok
+    if not ok:
+        log.warning(
+            "collection %s has no %s sparse vector; lexical lane skipped "
+            "(run scripts/migrate_routing_sparse.py to migrate)",
+            name, SPARSE_VECTOR_NAME,
+            extra={"error_code": "SPARSE_LANE_SKIPPED_LEGACY_COLLECTION"})
+    return ok
 
 
 def _chunks_for_run(conn: Connection, run_id: str) -> list[dict]:
@@ -301,8 +345,91 @@ ROUTING_KIND_CHILD = "routing_child"
 # KNOWLEDGE-ARTIFACT-PERSISTENCE-V1: typed knowledge-object lanes.
 ROUTING_KIND_PROCEDURE = "routing_procedure"
 ROUTING_KIND_CONCEPT = "routing_concept"
+# ROUTING-ENTITY-CARDS-V1 (§11 L1): graph extractions as first-class FAST
+# citizens — one card per (entity, corpus): surface + aliases + core type
+# + predicate capsule. A query naming "FortiGate" routes via the card
+# without hoping a child chunk embeds the name.
+ROUTING_KIND_ENTITY = "routing_entity"
 
-ROUTING_CONTRACT_VERSION = "1.0.0"
+ROUTING_CONTRACT_VERSION = "1.1.0"
+
+_ENTITY_CARD_MAX_ALIASES = 6
+_ENTITY_CARD_MAX_RELATIONS = 6
+_ENTITY_CARD_MAX_CHARS = 600
+
+
+def _entity_card_rows(conn: Connection, run_id: str) -> list[dict]:
+    """One bounded, content-addressed routing card per (entity, corpus).
+
+    Aliases = the distinct attested mention surfaces; the predicate
+    capsule = the entity's top fact predicates with their counterpart
+    surfaces (evidence-weighted). Both queries are corpus-scoped through
+    the run and batched — never one query per entity."""
+    from polymath_shared.projection_contracts import entity_card_id
+
+    ents = conn.execute(
+        """
+        SELECT m.entity_id, m.core_type, m.corpus_id,
+               array_agg(DISTINCT m.surface) AS surfaces,
+               array_agg(DISTINCT m.doc_id) AS doc_ids,
+               count(*) AS mention_count
+          FROM mentions m
+          JOIN runs r ON r.corpus_id = m.corpus_id
+         WHERE r.run_id = %s AND m.entity_id IS NOT NULL
+         GROUP BY 1, 2, 3
+         ORDER BY 1
+        """,
+        (run_id,),
+    ).fetchall()
+    if not ents:
+        return []
+    capsule: dict[str, list[tuple[str, str, int]]] = {}
+    rels = conn.execute(
+        """
+        SELECT x.eid, f.predicate, e2.normalized_surface, count(*) AS c
+          FROM facts f
+          JOIN evidence ev ON ev.fact_id = f.fact_id
+          JOIN documents d ON d.doc_id = ev.doc_id
+          JOIN runs r ON r.corpus_id = d.corpus_id AND r.run_id = %s
+          CROSS JOIN LATERAL (VALUES (f.subject_id, f.object_id),
+                                     (f.object_id, f.subject_id)) AS x(eid, other)
+          JOIN entities e2 ON e2.entity_id = x.other
+         GROUP BY 1, 2, 3
+         ORDER BY 1, 4 DESC, 2, 3
+        """,
+        (run_id,),
+    ).fetchall()
+    for eid, pred, other, c in rels:
+        capsule.setdefault(eid, []).append((pred, other, c))
+    out = []
+    for eid, core, corpus_id, surfaces, doc_ids, mention_count in ents:
+        surfaces = sorted({s for s in surfaces if s},
+                          key=lambda s: (len(s), s))
+        primary = surfaces[0] if surfaces else eid
+        aliases = [s for s in surfaces[1:] if s != primary]
+        text = f"{primary} [{core}]."
+        if aliases:
+            text += " Also known as: " + \
+                "; ".join(aliases[:_ENTITY_CARD_MAX_ALIASES]) + "."
+        caps = capsule.get(eid) or []
+        if caps:
+            text += " Relations: " + "; ".join(
+                f"{pred} {other}" for pred, other, _c in
+                caps[:_ENTITY_CARD_MAX_RELATIONS]) + "."
+        text = text[:_ENTITY_CARD_MAX_CHARS]
+        out.append({
+            "summary_id": entity_card_id(eid, corpus_id),
+            "representation_kind": ROUTING_KIND_ENTITY,
+            "text": text,
+            "sparse_text": text,
+            "corpus_id": corpus_id,
+            "doc_id": sorted(doc_ids)[0] if doc_ids else "",
+            "doc_ids": sorted(doc_ids),
+            "entity_id": eid,
+            "parent_id": None,
+            "source_name": "",
+        })
+    return out
 
 
 def _routing_rows(conn: Connection, run_id: str) -> list[dict]:
@@ -413,6 +540,43 @@ def _routing_rows(conn: Connection, run_id: str) -> list[dict]:
             "parent_id": None,
             "source_name": sname or "",
         })
+    # ROUTING-ENTITY-CARDS-V1 (§11 L1)
+    out.extend(_entity_card_rows(conn, run_id))
+    # SPARSE-BM25-V1 index-text augmentation: children index their
+    # attested entity surfaces + the parent's opening line, so HYBRID
+    # gets exact-name recall on the acronym-dense corpus. Dense embed
+    # text stays r["text"] — augmentation is the LEXICAL lane only.
+    surfaces_by_chunk: dict[str, str] = dict(conn.execute(
+        """
+        SELECT m.chunk_id, string_agg(DISTINCT m.surface, ' ')
+          FROM mentions m
+          JOIN runs r ON r.corpus_id = m.corpus_id
+         WHERE r.run_id = %s
+         GROUP BY 1
+        """,
+        (run_id,),
+    ).fetchall())
+    parent_head: dict[str, str] = dict(conn.execute(
+        """
+        SELECT c.chunk_id, left(c.text, 120)
+          FROM chunks c
+          JOIN documents d ON d.doc_id = c.doc_id
+          JOIN runs r ON r.corpus_id = d.corpus_id
+         WHERE r.run_id = %s AND c.tier = 'parent'
+        """,
+        (run_id,),
+    ).fetchall())
+    for r in out:
+        if r.get("sparse_text"):
+            continue
+        if r["representation_kind"] == ROUTING_KIND_CHILD:
+            r["sparse_text"] = " ".join(filter(None, (
+                r["text"],
+                surfaces_by_chunk.get(r.get("chunk_id") or ""),
+                parent_head.get(r.get("parent_id") or ""))))
+        else:
+            r["sparse_text"] = " ".join(filter(None, (
+                r["text"], r.get("source_name"))))
     return out
 
 
@@ -499,25 +663,34 @@ def _write_routing_slice(client: QdrantClient, collection: str, rows: list[dict]
     vectors: list[list[float]] = []
     for i in range(0, len(rows), batch_limit):
         vectors.extend(_embed_texts(contract, [r["text"] for r in rows[i:i + batch_limit]]))
+    sparse_ok = _collection_has_sparse(client, collection)
     points = []
     for i, r in enumerate(rows):
         point_id = qdrant_point_uuid(r["summary_id"] or r["chunk_id"])
-        points.append(PointStruct(
-            id=point_id,
-            vector=vectors[i],
-            payload={
-                "summary_id": r["summary_id"],
-                "chunk_id": r.get("chunk_id"),
-                "representation_kind": r["representation_kind"],
-                "corpus_id": r["corpus_id"],
-                "doc_id": r["doc_id"],
-                "parent_id": r["parent_id"] or "",
-                "source_name": r["source_name"],
-                "embedding_contract": contract.contract_id,
-                "text": r["text"],
-                "variant": r.get("variant") or "",
-            },
-        ))
+        payload = {
+            "summary_id": r["summary_id"],
+            "chunk_id": r.get("chunk_id"),
+            "representation_kind": r["representation_kind"],
+            "corpus_id": r["corpus_id"],
+            "doc_id": r["doc_id"],
+            "parent_id": r["parent_id"] or "",
+            "source_name": r["source_name"],
+            "embedding_contract": contract.contract_id,
+            "text": r["text"],
+            "variant": r.get("variant") or "",
+        }
+        # ROUTING-ENTITY-CARDS-V1 payload contract
+        if r.get("entity_id"):
+            payload["entity_id"] = r["entity_id"]
+        if r.get("doc_ids"):
+            payload["doc_ids"] = r["doc_ids"]
+        if sparse_ok:
+            idx, vals = sparse_vector(r.get("sparse_text") or r["text"])
+            vector = {"": vectors[i],
+                      SPARSE_VECTOR_NAME: SparseVector(indices=idx, values=vals)}
+        else:
+            vector = vectors[i]
+        points.append(PointStruct(id=point_id, vector=vector, payload=payload))
     _upsert_batched(client, collection, points)
 
 

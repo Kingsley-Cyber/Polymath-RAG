@@ -103,3 +103,13 @@ def test_direct_facts_land_and_aggregate_across_documents(conn) -> None:
     # mentions carry corpus + document provenance
     m = conn.execute("SELECT corpus_id, doc_id, entity_id FROM mentions WHERE doc_id='doc_llmdirect_a' AND surface='FortiGate'").fetchone()
     assert m[0] == corpus and m[2] is not None
+    # GENERATION-STAMPING-V1 (§11 L0 / register 11.1): the generation is
+    # indexable on the rows themselves, and the open type vocabulary is
+    # preserved as a deterministic set union, never flattened.
+    fev = conn.execute("SELECT extractor_version FROM facts WHERE fact_id=%s", (fid,)).fetchone()[0]
+    assert fev == "llm-direct-v1"
+    ent = conn.execute(
+        "SELECT extractor_version, raw_types FROM entities WHERE entity_id=%s",
+        (m[2],)).fetchone()
+    assert ent[0] == "llm-direct-v1"
+    assert isinstance(ent[1], list) and "Product" in ent[1]
