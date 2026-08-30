@@ -281,6 +281,11 @@ class LLMExtractionClient:
             # 397B spends the entire output budget thinking (finish=length,
             # empty content); with it, direct JSON, finish=stop.
             payload["reasoning_effort"] = GENERATION_CONFIG["cloud"]["reasoning_effort"]
+            # Structured output (measured 2026-08-30): json_object mode is
+            # honored by the daemon (guaranteed-parseable JSON — the salvage
+            # path should approach zero); json_schema strict:true is
+            # SILENTLY IGNORED for this model — never rely on it.
+            payload["response_format"] = {"type": "json_object"}
         resp = httpx.post(f"{self.base_url}/v1/chat/completions",
                           json=payload, timeout=self.timeout_s)
         resp.raise_for_status()

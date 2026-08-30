@@ -112,9 +112,33 @@ def _alias_patterns() -> list[tuple[re.Pattern[str], str]]:
 _ALIAS_PATTERNS = _alias_patterns()
 
 
+# Contrastive disambiguation for adjacent enum slots — measured error
+# classes from the 2026-08-30 production receipts (PRODUCES misfires,
+# "consists of" landing on HAS_PROPERTY, RELATED_TO fallback rate 31% on
+# the 4B / 4% on the 397B). Contrasts teach CHOICE, not vocabulary.
+PROMPT_CONTRASTS: tuple[str, ...] = (
+    "CONSTRAINED_BY, never PRODUCES: applying/adding/imposing a rule or "
+    "constraint on X (e.g. 'apply NOT NULL on the column') means X "
+    "CONSTRAINED_BY the constraint — nothing new is created.",
+    "PART_OF, not HAS_PROPERTY: 'consists of / composed of / made up of / "
+    "contains' expresses composition — the parts are PART_OF the whole.",
+    "PRODUCES means creates a NEW output that did not exist before "
+    "('generates reports', 'produces alerts'). Supplying, offering or "
+    "hosting something existing is USES or ACTS_ON.",
+    "OPPOSES is correct for explicit contrast or counteraction: 'not "
+    "responsible for', 'not the root cause', 'prevents', 'counteracts'.",
+    "RELATED_TO is the LAST RESORT ONLY — if any other id above fits "
+    "even loosely, use that id instead.",
+)
+
+
 def prompt_block() -> str:
-    """The prompt fragment that teaches the enum (id + definition)."""
+    """The prompt fragment that teaches the enum (id + definition + the
+    measured contrastive disambiguations)."""
     lines = [f"{pid}: {defn}" for pid, defn in RELATION_ONTOLOGY.items()]
+    lines.append("")
+    lines.append("Disambiguation rules (follow exactly):")
+    lines.extend(f"- {c}" for c in PROMPT_CONTRASTS)
     return "\n".join(lines)
 
 
