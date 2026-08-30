@@ -10,6 +10,8 @@ state, and a work-log entry.
 | `scripts/agent_preflight.py` | governance | repository structure and metadata | nothing | `python3 scripts/agent_preflight.py` |
 | `scripts/repo_guard.py` | governance | declared paths, dependency map, work logs, optional Git diff | nothing | `python3 scripts/repo_guard.py` |
 | `scripts/wiki_worm.py` | governance | `docs/wiki/` metadata | nothing | `python3 scripts/wiki_worm.py --check` |
+| `scripts/quality_sample_dump.py` | governance | chunks, retrieval_summaries, parent_summaries, mentions, raw ledger, extract digests | a markdown dump at the given path (outside the repo unless you choose `eval/quality/`) | `.venv/bin/python scripts/quality_sample_dump.py "<source_name>" 20260830 /tmp/sample.md` |
+| `scripts/read_extract_artifact.py` | governance | extract artifacts, mentions, evidence, facts | nothing | `.venv/bin/python scripts/read_extract_artifact.py "CompTIA%" eval/quality/2026-08-30-session3/baseline_cysa-study-v1.json` |
 | `scripts/check_install.sh` | control | loopback health endpoints, typed local-LLM settings, Ollama local model catalog | nothing | `bash scripts/check_install.sh` |
 | `scripts/llm_quality_sample.py` | control | Postgres (facts, evidence, raw ledger, relation candidates) — read-only, seeded sample | nothing | `.venv/bin/python scripts/llm_quality_sample.py --corpus <corpus_id>` |
 | `scripts/backfill_document_regions.py` | control | Postgres `chunks.text` (immutable) | `chunks` document-region roles, only with `--apply` (dry-run default; idempotent) | `python scripts/backfill_document_regions.py --corpus <corpus_id> [--apply]` |

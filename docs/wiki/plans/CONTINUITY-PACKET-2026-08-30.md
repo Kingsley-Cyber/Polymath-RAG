@@ -9,6 +9,12 @@ last_reviewed: 2026-08-30
 
 # CONTINUITY PACKET — 2026-08-30 (hand-off to the next session)
 
+> **SUPERSEDED 2026-08-30 (session 3):** start from
+> `CONTINUITY-PACKET-2026-08-30-S3.md` — it carries the bootstrap commands,
+> the fleet environment, what landed (coverage hardening, summary compiler,
+> ticket gate), the traps, and the next actions. This file stays for the
+> 2026-08-29/30 history it records.
+
 Read this first, then `CLAUDE.md` (operating rules), then
 `docs/wiki/plans/LATENT-TRANSFER-LAYER-V1-PLAN.md` (§0, §1.6, §9) and the
 tail of `docs/wiki/work-log/2026-08-29-llm-ingestion-migration.md`. Every
