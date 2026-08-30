@@ -58,8 +58,10 @@ INGESTION: 4 children → one compact LLM call → {summary, children[].gist, ab
 | D10 | Flags: `POLYMATH_WORKER_LATENT_RETRIEVAL_ENABLED=false` default + request `latent` override (HYBRID/GRAPH only; FAST ignores). Modes, `plan_version`s, `DEFAULT_MODE=LEGACY` frozen. | Pt2, G1/G2 golden |
 | D11 | Enrichment is a NON-BLOCKING summary-family stage; never a readiness dependency. Query time is deterministic (no LLM). | Pt1, Pt2 |
 | D12 | Its own P6 LATENT_TRANSFER_RECALL suite with per-channel attribution; channels/kinds that add nothing are removed. | Pt2 |
-| D13 | Neo4j unchanged in v1 (phase F later, gated on P6). | Pt2, Pt3 §2 |
-| D14 | LLM transport = the extraction lane (`llm_extraction/client.py`, controller, limiter), same 300 KB rule on `documents.byte_length`; provider default `disabled`. | owner rules 2026-08-29 |
+| D13 | Neo4j unchanged. There is NO graph-layer phase: the three-layer graph design (L0/L1/L2, PPR/Connect-4 modes, community reports, mechanism/abstraction nodes) was never blessed and is REMOVED from every plan (owner 2026-08-30). GRAPH mode stays HYBRID + the existing canonical hop-1 expansion. | owner 2026-08-30 |
+| D14 | LLM transport = the extraction lane (`llm_extraction/client.py`, controller, limiter), same byte rule on `documents.byte_length` (floor 300 KB, set 450 KB); provider default `disabled`. | owner rules 2026-08-29 |
+| D15 | **Canonical chunker = polymath v3.3 `tier_chunker`** (a Docling fork without OCR support): heading-bounded parents ~850 w target / 1,400 w max, tables atomic, ChunkKind noise skip, <15-word stub drop. The v4 `semantic_chunker` (fan-out 4, ~1,200-char children) is the INTERIM chunker; the swap is a re-ingest and is scheduled as its own change (§4 Phase 0). Enrichment always compiles ONE canonical parent per call. | owner 2026-08-30; register 1.16/4.1.1 |
+| D16 | Local model setup is LOCKED to the 2026-08-29 config-fix result (§1.6): Qwen3.5-4B MLX 4-bit, `repetition_penalty=1.15 / repetition_context_size=400 / max_tokens=2500 / enable_thinking=false`, batch 40, salvage parser, dedup, noise filter. Enrichment reuses it unchanged. | Parent-Chunk Extraction: Config Fix Report |
 
 ## 1. Contracts
 
@@ -111,6 +113,20 @@ LatentRescue: parents: list[LatentParent(parent_id, doc_id, source_name, best_sc
 - Deepening (inside `hybrid_retrieve`): for each latent parent, `routing_search(collection, qvec, {representation_kind: "routing_child", corpus_id, parent_id})[:max_children_per_section]` — the same filtered-child primitive pass-1 uses — producing candidates with `arrival="LATENT_RESCUE"`, `latent_rank`, `latent_channels`.
 - Union: appended after neural + lexical rescue, deduped by `chunk_id`, region demotion applied as today, then `_truncate_reserving_rescue` with `latent_reserved_slots` (default 2) so the lane can seat its best hits (`pass1.py:285` currently reserves for `GLOBAL_CHILD_RESCUE` only → generalize with a `rescue_arrivals` parameter; default behaviour unchanged).
 - Rerank and `final_max_total_items` cut unchanged; `trace["latent"] = {parents, channels, degraded, latency_ms, admitted_chunk_ids}`.
+
+
+### 1.6 Model setup — local lane (LOCKED; distilled from "Parent-Chunk Extraction: Config Fix Report", 2026-08-29)
+| Item | Locked value | Why (measured) |
+|---|---|---|
+| Model | `mlx-community/Qwen3.5-4B-MLX-4bit`, pinned snapshot `32f3e8ec…` (`sidecars/local_extractor/batched_server.py`) | hybrid linear/full attention: only 8 of 32 layers grow KV → 15 K tokens ≈ 469 MB; input size is not the constraint |
+| Unit of work | ONE parent-sized, heading-bounded chunk per prompt (~850 w target / 1,400 w max = canonical `tier_chunker` parent, D15) | ~5× fewer chunks and ~10× fewer batches than 300 w on the same text; entities 56 vs 63 = noise removal, not loss (parent caught 7 editor names 300 w fragmented; 300 w invented `city`, `ZIP code`, `the Wiley logo`) |
+| Generation | `max_tokens=2500`, `repetition_penalty=1.15`, `repetition_context_size=400`, `enable_thinking=false`, temperature 0 | baseline: 45% consecutive-repeat degeneration, every chunk hit the cap; frequency penalties killed JSON structure tokens (15 entities); rep-penalty 1.15 → 0% degeneration, self-terminates ~600 tokens, clean JSON |
+| Batch | 40 prompts per `batch_generate` (peak 6.4 GB on 32 GB) — served by `/infer_batch`; the AIMD batch-token budget (`llm_controller_state`, seed 28 K tokens/call, halves on GPU-OOM) bounds it when the fleet is resident | a 45 K-token batch OOMed Metal with GLiNER/spaCy/embedder co-resident |
+| Parsing | `json.loads` → truncation repair → per-object salvage → dedup entities by normalized name, relations by (subj, pred, obj) (`llm_extraction/gate.py`) | a parser that discarded truncated JSON was the original "0 entities" bug |
+| Noise filter | drop chunks < 15 words; ChunkKind structural skip (TOC / copyright / cover / license / index / bibliography) from `chunk_kind.py` | dominant token cost for zero value |
+| Lanes | ≤ byte threshold (floor 300 KB, set 450 KB) → local batch; above → cloud (Qwen3.5-397B via the Ollama daemon), both under the persisted AIMD controller | owner rule; controller measured 13–14× cloud parallelism |
+| Enrichment | same model, same generation lock, `max_tokens` 700 (qualification) / 900 (production) per parent, ≈2 K tokens per parent call | Part 3 budget |
+Still open from the report (tracked in the register, not this plan): real full-file completion time on the 838 KB book at batch 40; corpus-level entity dedup + `promote()` merge layer (recovers recurring certs missed in one chunk); optional 600 w middle-ground test.
 
 ## 2. Component map
 
@@ -171,7 +187,6 @@ D  rescue.py → pass1 truncation param → hybrid plan/engine → retrieval_mod
    → api/hybrid.py + api/graph.py wiring → request flag (4 routes) → MCP/UI passthrough
                                                                         unit-testable after A with fakes; live after C
 E  eval/v5/latent_transfer (P6) → channel/kind attribution → keep/kill decision   needs D on a corpus with B+C run
-F  (later, gated on E) Neo4j Mechanism/Abstraction nodes, ANALOG_OF/BRIDGES, cross-domain abstraction forest
 ```
 Runtime deps: MLX batched server `/infer_batch` (local) or Ollama daemon (cloud) through the existing controller (`llm_controller_state`); embedder sidecar (batch 32, `project_qdrant_worker.py:122`); Qdrant routing collection under `NEURAL_EMBED_CONTRACT`; Postgres.
 
@@ -205,8 +220,8 @@ Runtime deps: MLX batched server `/infer_batch` (local) or Ollama daemon (cloud)
 3. Attribution: unique relevant hits per kind (`latent_abstraction` vs `latent_transfer`) and, if later added, `latent_question`. Kill rule: a kind with ≤5% unique relevant hits is dropped from projection.
 4. Exit: `LATENT-TRANSFER-P6-RESULTS.md`; owner GO/NO-GO to set `latent_retrieval_enabled=true` per corpus.
 
-### Phase F — graph layer (out of scope; sequencing only)
-Mechanism/Abstraction nodes, `ANALOG_OF`/`BRIDGES`, cross-document abstraction forest, deterministic hop expansion seeded by latent parents — only if P6 shows the two-vector sidecar leaves cross-domain recall on the table.
+### Phase 0 (scheduled separately) — canonical chunker swap
+Adopt v3.3 `tier_chunker` (D15) as the v4 chunker: new `chunk_contract_version`, re-ingest, all projections rebuilt from the raw documents (everything derived is rebuildable). Enrichment units then equal canonical parents. Not a prerequisite for phases A–E (the compiler takes any parent; the input ceiling guards oversized ones).
 
 ## 5. Flags, rollout, rollback
 - Ingestion: `POLYMATH_WORKER_ENRICHMENT_PROVIDER=disabled|llm` (default disabled → stage completes `DISABLED`), `POLYMATH_WORKER_ENRICHMENT_PROFILE=qualification|production`, `POLYMATH_WORKER_ENRICHMENT_INPUT_TOKEN_CEILING=6000`.
@@ -232,4 +247,4 @@ Mechanism/Abstraction nodes, `ANALOG_OF`/`BRIDGES`, cross-document abstraction f
 
 ## 8. Exit criteria for the layer
 - Disabled: every existing retrieval/summary/projection test unchanged; all `plan_version`s unchanged; zero extra Qdrant points; FAST output identical with or without the flag.
-- Enabled on the canary corpus: ≥95% parents READY; P6 LatentRecall@10 ≥ baseline + 0.15 absolute on the cross-domain subset; FalseAnalogyRate ≤ 10%; P95 latent lane ≤ 250 ms; zero 5xx attributable to the lane; GRAPH inherits latent children without touching Neo4j.
+- Enabled on the canary corpus: ≥95% parents READY; P6 LatentRecall@10 ≥ baseline + 0.15 absolute on the cross-domain subset; FalseAnalogyRate ≤ 10%; P95 latent lane ≤ 250 ms; zero 5xx attributable to the lane; GRAPH inherits latent children without touching Neo4j (no graph-layer work exists in this plan).

@@ -50,8 +50,8 @@ last_reviewed: 2026-08-29
 | 1.13 | Borrow, don't build: Instructor ADOPT; KGGen clustering BORROW; Docling-via-fork CANONICAL; LightRAG REJECT; thinking strip ours | PARTIAL (**Instructor: DEVIATED to direct client**; **KGGen clustering MISSING**; thinking strip ✓; Docling superseded by REQ-003) |
 | 1.14 | Stateless per call; 4bit load; corpus_entities + entity_links merge ladder; 850w default volume unit; 15k spike | PARTIAL (stateless ✓; 4bit ✓; **merge ladder MISSING**; volume unit = 7,000-char neighborhoods DEVIATED from 850w; 15k spike run 2026-08-29 at batch 4 only) |
 | 1.15 | Single-pass full schema: e/m/r + L latent + ps prompt seeds; open-vocabulary types; latent namespace | PARTIAL (e/r/digest ✓; **m by chunk:sentence DEVIATED to quotes**; **L latent MISSING**; **ps prompt seeds MISSING**; open vocabulary ✓ with raw labels preserved) |
-| 1.16 | Canonical chunker = 3.3 tier_chunker fork; tables atomic; ChunkKind noise skip; <15w drop | DONE at the neighborhood layer (chunk_kind.py ported from v3.3 section_classifier; noisy kinds skip LLM extraction; <15w stub skip; tables atomic — children never split) |
-| 1.17 | Three-layer graph L0/L1/L2; query modes local/bridge/propagation; latent miner | MISSING (P4 scope; owner-unblessed PROPOSED) |
+| 1.16 | Canonical chunker = 3.3 tier_chunker fork; tables atomic; ChunkKind noise skip; <15w drop | **OWNER DIRECTIVE 2026-08-30: v3.3 `tier_chunker` (Docling fork, no OCR) IS the canonical chunker; swap scheduled as LATENT-TRANSFER-LAYER-V1-PLAN Phase 0 (re-ingest).** Previously: DONE at the neighborhood layer (chunk_kind.py ported from v3.3 section_classifier; noisy kinds skip LLM extraction; <15w stub skip; tables atomic — children never split) |
+| 1.17 | Three-layer graph L0/L1/L2; query modes local/bridge/propagation; latent miner | **REJECTED (owner 2026-08-30: never blessed; removed from all plans)** |
 | 1.18 | Generation lock-in: max_tokens=2500, rep_penalty=1.15, rep_ctx=400, thinking off; truncated-JSON salvage | DONE (locked config + salvage; spike showed clean at 3000 out on 15K-in) |
 
 ## §2 current-state audit → §2.5 memory
@@ -77,7 +77,7 @@ last_reviewed: 2026-08-29
 
 | # | Detail | Status |
 |---|---|---|
-| 4.1.1 | merge_volume_chunks 850w target / 1400w hard max | DEVIATED (7,000-char neighborhoods; uniform packing MISSING) |
+| 4.1.1 | merge_volume_chunks 850w target / 1400w hard max | DEVIATED at present (neighborhood packing over v4 children); becomes DONE with the tier_chunker swap (1.16, owner 2026-08-30) |
 | 4.1.2 | parent_neighborhood = children concatenated with [chunk_id] markers, never parent row | DONE |
 | 4.1.3 | embedding_text [Parent][Header] content | DONE (untouched intake) |
 | 4.1.4 | old rows is_superseded on swap; CHUNKER flag | SUPERSEDED (no chunker swap) |
@@ -133,7 +133,7 @@ last_reviewed: 2026-08-29
 | 4.5.1 | RetrievalConfig kd/ks/λ; RETRIEVAL_MODE flat|hierarchical; eval gate MRR+0.05 | MISSING (P4; retrieval untouched) |
 
 ## §4.6 graph RAG
-| 4.6.1 | L0/L1/L2; query modes; PPR Connect-4; latent miner; community deferred | MISSING (owner-unblessed PROPOSED) |
+| 4.6.1 | L0/L1/L2; query modes; PPR Connect-4; latent miner; community deferred | **REJECTED (owner 2026-08-30: never blessed; removed from all plans)** |
 
 ## §4.7 control-plane schema
 | 4.7.1 | ingest_jobs/doc_stages/model_events/extraction_proposals/provider_calls tables | SUPERSEDED (receipts/ledger/artifacts) |
@@ -199,4 +199,4 @@ last_reviewed: 2026-08-29
 6. 4.3.6 digest → parent routing cards (corpus mapping layer wiring)
 7. 4.3.3/4.3.4/4.4.6/4.4.7 latent + prompt seeds (quality profile)
 8. 5.1/5.3/5.4 eval set + benchmark gate + MRR harness
-9. 4.6 graph modes (owner blessing required)
+9. ~~4.6 graph modes~~ REJECTED by owner 2026-08-30
