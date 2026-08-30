@@ -398,3 +398,18 @@ def test_4_micro_batch_failure_answers_every_item_once() -> None:
         srv._split_messages([{"role": "user"}])
     assert srv._split_messages([{"role": "system", "content": "s"},
                                 {"role": "user", "content": "u"}]) == ("s", "u")
+
+
+def test_11b_blocking_acquire_waits_out_the_breaker() -> None:
+    lim = _rate()
+    for _ in range(10):
+        lim.record_failure()
+    assert lim.breaker_open
+    assert not lim.acquire(block=False)               # non-blocking: refused at once
+    lim._breaker.cooldown_s = 0.2
+    t0 = time.perf_counter()
+    assert lim.acquire(block=True)                    # waited for half-open, took the probe
+    assert 0.1 <= time.perf_counter() - t0 < 5.0
+    lim.record_success()
+    lim.release()
+    assert not lim.breaker_open

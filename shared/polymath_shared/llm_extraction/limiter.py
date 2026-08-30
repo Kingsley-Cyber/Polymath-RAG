@@ -44,6 +44,7 @@ BREAKER_ERROR_RATE = 0.5             # open when >50% of window failed
 BREAKER_WINDOW = 10                  # ... across the last N outcomes
 BREAKER_COOLDOWN_S = 30.0            # open → half-open after this long
 RETRY_AFTER_MAX_S = 60.0             # never honor a Retry-After beyond this
+BREAKER_WAIT_MAX_S = 75.0            # blocking acquire waits this long for a half-open probe
 BUDGET_STREAK_FOR_INCREASE = 4       # batch budget: +step per K clean batches
 
 
@@ -327,6 +328,14 @@ class AdaptiveLimiter:
         time.sleep(min(delay, RETRY_AFTER_MAX_S))
         return True
 
+    def _wait_for_breaker(self) -> bool:
+        deadline = _now() + BREAKER_WAIT_MAX_S
+        while _now() < deadline:
+            time.sleep(min(1.0, max(0.05, self._breaker.cooldown_s / 10)))
+            if self._breaker.allow():
+                return True
+        return False
+
     def acquire(self, est_tokens: float = 0.0, block: bool = True) -> bool:
         """Take the concurrency slot + rate tokens. Returns False when
         non-blocking and the lane is saturated, when the breaker is open,
@@ -335,7 +344,14 @@ class AdaptiveLimiter:
         if not self._honor_retry_after(block):
             return False
         if not self._breaker.allow():
-            return False
+            # BREAKER-WAIT (measured 2026-08-30): failing fast here turned
+            # one OOM storm into a dead ticket — every stage retry hit the
+            # still-open breaker within seconds and burned its attempt.
+            # A BLOCKING caller waits for the cooldown and takes the
+            # half-open probe itself; only a non-blocking caller (or a
+            # breaker that stays open past BREAKER_WAIT_MAX_S) is refused.
+            if not block or not self._wait_for_breaker():
+                return False
         if block:
             self._sem.acquire()
         elif not self._sem.try_acquire():

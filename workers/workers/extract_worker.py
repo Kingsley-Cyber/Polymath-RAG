@@ -72,10 +72,26 @@ log = logging.getLogger("extract")
 _rule_pack = None
 
 
+GLINER_RETIRED_PIN = {"model_id": "retired-in-llm-mode",
+                      "revision": "retired-in-llm-mode"}
+
+
 def _gliner_pin() -> dict:
     """I3R-R7: the actual immutable GLiNER identity from the sidecar's
     /manifest (canonical production configuration source) — never a
-    template placeholder."""
+    template placeholder.
+
+    LLM modes (owner directive 2026-08-29: GLiNER is retired from the
+    LLM path) record the explicit RETIRED pin and never touch the
+    sidecar — MEASURED 2026-08-30: with the unused GLiNER sidecar
+    stopped, the extract worker could not even import (boot-time
+    manifest call), so an idle sidecar had become a hard dependency of a
+    path that never calls it. The pin still enters the contract hash, so
+    gliner ↔ llm re-runs remain distinguishable."""
+    from polymath_shared.settings import get_settings
+
+    if get_settings().worker.extraction_provider != "gliner":
+        return dict(GLINER_RETIRED_PIN)
     try:
         from polymath_shared.clients import GlinerClient
 
