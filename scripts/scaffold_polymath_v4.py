@@ -296,6 +296,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-08-30-extraction-coverage-hardening.md", "md", None),
     ("docs/wiki/work-log/2026-08-30-summary-compiler.md", "md", None),
     ("docs/wiki/work-log/2026-08-30-control-plane-hardening.md", "md", None),
+    ("docs/wiki/plans/CONTINUITY-PACKET-2026-08-30-S4.md", "md", None),
     ("workers/workers/project_qdrant_worker.py", "py", None),
     ("workers/workers/project_neo4j_worker.py", "py", None),
     ("workers/workers/verify_worker.py", "py", None),

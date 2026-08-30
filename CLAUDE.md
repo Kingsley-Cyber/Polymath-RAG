@@ -3,7 +3,7 @@
 Governance and file-ownership rules live in `AGENTS.md` (read it). This file
 is the working style the owner expects, distilled from the 2026-08-29/30
 sessions. Start every session with
-`docs/wiki/plans/CONTINUITY-PACKET-2026-08-30-S3.md` (the latest packet; it
+`docs/wiki/plans/CONTINUITY-PACKET-2026-08-30-S4.md` (the latest packet; it
 names the fleet environment and the bootstrap commands).
 
 ## Way of working
@@ -49,11 +49,11 @@ names the fleet environment and the bootstrap commands).
 - Lane parallelism today = number of extract worker processes (one per
   supervised slot). A second one started by hand takes the next ready
   ticket; the local lane still serializes at the batched server.
-- The stale-code fence is mtime-based over `.py/.yaml` in the three trees:
-  the TEST SUITE rewrites `shared/polymath_shared/rulepack/scientific-predicate-ontology-v2.yaml`
-  (same bytes, new mtime) and quarantines every worker. Run tests BEFORE a
-  fleet restart, never after; check `worker_registrations.status` after any
-  test run.
+- The stale-code fence is CONTENT-HASH based (HASH-FENCE-V2, 2026-08-30)
+  over `.py/.yaml` in the three trees: same bytes never trip it, so the
+  test suite is fence-safe. Real edits under `shared/polymath_shared`,
+  `workers/workers`, `control/control` still quarantine every live worker —
+  restart the fleet after every commit touching those trees.
 - Merge `main` from the worktree `../polymath-v4-main`; never `git checkout`
   in the live tree. Commit messages end with the Co-Authored-By /
   Claude-Session trailers; never push without asking unless the owner
