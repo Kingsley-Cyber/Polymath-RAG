@@ -387,6 +387,9 @@ class LLMExtractionClient:
                                  output_budget_for(estimate_input_tokens(user_prompt))))
         if not prompt_items:
             return []
+        # LEAN profile for the local lane: index-encoded contract cuts
+        # output tokens (quotes only on relations; output tokens are the wall)
+        use_lean = self.lane == "local"
         # BATCH TOTAL-TOKEN CAP (measured 2026-08-29): a 45K-token batch
         # OOMs Metal when the fleet is resident on the shared GPU. Chunk
         # prompts so each HTTP call stays under the ADAPTIVE cap: clean
@@ -411,11 +414,12 @@ class LLMExtractionClient:
             sub_batches.append(cur)
         results: list[LLMCallResult] = []
         for sb in sub_batches:
-            results.extend(self._infer_batch_call(sb, limiter, decision, cap))
+            results.extend(self._infer_batch_call(sb, limiter, decision, cap, use_lean))
         return results
 
     def _infer_batch_call(self, prompt_items, limiter, decision,
-                          cap: int | None = None) -> list[LLMCallResult]:
+                          cap: int | None = None,
+                          use_lean: bool = False) -> list[LLMCallResult]:
         """One /infer_batch call.
 
         GPU-OOM (500) halves the sub-batch and retries — AFTER the limiter
@@ -438,9 +442,10 @@ class LLMExtractionClient:
         status: int | None = None
         try:
             try:
+                sys_prompt = LEAN_SYSTEM_PROMPT if use_lean else SYSTEM_PROMPT
                 resp = httpx.post(
                     f"{self.base_url}/infer_batch",
-                    json={"prompts": [{"system": SYSTEM_PROMPT, "user": u,
+                    json={"prompts": [{"system": sys_prompt, "user": u,
                                        "max_tokens": mt}
                                       for _, u, mt in prompt_items],
                           "max_tokens": max(mt for _, _, mt in prompt_items)},
@@ -475,8 +480,8 @@ class LLMExtractionClient:
             if budget is not None:
                 budget.record_oom()
             half = len(prompt_items) // 2
-            out = self._infer_batch_call(prompt_items[:half], limiter, decision, cap)
-            out.extend(self._infer_batch_call(prompt_items[half:], limiter, decision, cap))
+            out = self._infer_batch_call(prompt_items[:half], limiter, decision, cap, use_lean)
+            out.extend(self._infer_batch_call(prompt_items[half:], limiter, decision, cap, use_lean))
             return out
         if status == 404:
             fallback: list[LLMCallResult] = []
