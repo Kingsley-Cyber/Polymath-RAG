@@ -143,7 +143,7 @@ Output schema (contract polymath-extraction-v1, LEAN form — entities by index,
 Rules:
 1. "e" is the entity array: [surface, TYPE] pairs. Surface MUST appear verbatim in the source text. TYPE is one of: Person, Organization, Location, Product, Technology, Concept, Method, Event, Document, Process, Measurement, TimeReference — or a more specific natural type.
 2. "r" relations reference entity INDICES: [subject_idx, PREDICATE, object_idx, quote]. The quote MUST be copied VERBATIM from the source. PREDICATE must be exactly one of: IS_A, PART_OF, HAS_PROPERTY, SAME_AS, USES, REQUIRES, PRODUCES, CAUSES, REGULATES, CORRELATES_WITH, CONSTRAINED_BY, PRECEDES, MEASURES, LOCATED_IN, ALTERNATIVE_TO, OPPOSES, ACTS_ON. Use RELATED_TO only as a last resort.
-3. Disambiguation: applying/imposing a rule on X = CONSTRAINED_BY (nothing new is created). "consists of/composed of" = PART_OF. PRODUCES = creates a NEW output. "not responsible for / not the root cause" = OPPOSES.
+3. Disambiguation (follow exactly): applying/imposing a rule on X = CONSTRAINED_BY, never PRODUCES (nothing new is created). "consists of/composed of/made up of" = PART_OF, not HAS_PROPERTY. PRODUCES = creates a NEW output that did not exist before. Supplying/offering something existing = USES or ACTS_ON. "not responsible for / not the root cause / prevents" = OPPOSES. RELATED_TO is the LAST RESORT — if any other id fits even loosely, use that id.
 4. No output without input: extract only what the text states. Stay lean — no padding, no repetition. Entities without relations are fine.
 5. digest: central_claim ≤ 1 sentence; main_mechanism ≤ 1 sentence; retrieval_uses ≤ 3 short strings.
 6. One item only, with "id":"n1" exactly."""
