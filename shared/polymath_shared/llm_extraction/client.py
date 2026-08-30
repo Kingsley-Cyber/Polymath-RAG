@@ -18,6 +18,7 @@ Probes carry no document content: `probe()` sends a one-token ping only.
 from __future__ import annotations
 
 import json
+import os
 import time
 from dataclasses import dataclass, field
 
@@ -234,11 +235,32 @@ class LLMExtractionClient:
                                  output_budget_for(estimate_input_tokens(user_prompt))))
         if not prompt_items:
             return []
+        # BATCH TOTAL-TOKEN CAP (measured 2026-08-29): a 45K-token batch
+        # OOMs Metal when the fleet is resident on the shared GPU. Chunk
+        # prompts so each HTTP call stays under the cap; on a GPU-OOM 500
+        # the call HALVES and retries (batch-size AIMD).
+        cap = int(os.environ.get("POLYMATH_LLM_LOCAL_BATCH_TOKENS", "28000"))
+        sub_batches: list[list[tuple[str, str, int]]] = []
+        cur: list[tuple[str, str, int]] = []
+        cur_tokens = 0
+        for item in prompt_items:
+            itok = estimate_input_tokens(item[1]) + item[2]
+            if cur and cur_tokens + itok > cap:
+                sub_batches.append(cur)
+                cur, cur_tokens = [], 0
+            cur.append(item)
+            cur_tokens += itok
+        if cur:
+            sub_batches.append(cur)
+        results: list[LLMCallResult] = []
+        for sb in sub_batches:
+            results.extend(self._infer_batch_call(sb, limiter, decision))
+        return results
+
+    def _infer_batch_call(self, prompt_items, limiter, decision) -> list[LLMCallResult]:
+        """One /infer_batch call; GPU-OOM (500) halves the sub-batch."""
         limiter.acquire(est_tokens=sum(len(u) for _, u, _ in prompt_items) / 4.0)
         t0 = time.perf_counter()
-        # timeout scales with TOTAL tokens (input + worst-case output) at a
-        # conservative local decode rate — a few huge prompts need minutes,
-        # not the per-request default (measured: 3x15K-token batch ≈ 3-4 min)
         total_est = sum(estimate_input_tokens(u) for _, u, _ in prompt_items) \
             + sum(mt for _, _, mt in prompt_items)
         batch_timeout = max(self.timeout_s, 60.0 + (total_est / 25.0) * 2.0)
@@ -251,6 +273,17 @@ class LLMExtractionClient:
                     timeout=batch_timeout)
                 resp.raise_for_status()
                 body = resp.json()
+            except httpx.HTTPStatusError as exc:
+                limiter.record_failure()
+                if (exc.response.status_code == 500
+                        and len(prompt_items) > 1):
+                    half = len(prompt_items) // 2
+                    out = self._infer_batch_call(prompt_items[:half], limiter, decision)
+                    out.extend(self._infer_batch_call(prompt_items[half:], limiter, decision))
+                    return out
+                raise ExtractionTransportError(
+                    f"{self.lane} batched transport failed: "
+                    f"HTTP {exc.response.status_code}") from exc
             except (httpx.HTTPError, json.JSONDecodeError) as exc:
                 limiter.record_failure()
                 raise ExtractionTransportError(
