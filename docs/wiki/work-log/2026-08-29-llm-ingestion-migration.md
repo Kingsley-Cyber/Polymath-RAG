@@ -364,3 +364,16 @@ code commit, merge `main` from a separate worktree. Stale
 `projection_receipts` (68,993) from the corpus delete removed before the
 first projection wrote (0 fresh receipts at that instant); Neo4j still
 holds the old graph (purge pending owner approval).
+
+**2026-08-30 06:40 — MLX cache bloat (owner: "device is lagging bad").**
+Measured: 7% free, 28.7 GB wired, 16.8 GB swap; the idle batched server
+(pid 16132) held 24 GB — MLX's buffer cache retains every past peak. The
+local extraction of Learning SQL had already OOMed (33 × `/infer_batch`
+500, batch budget halved 22 000 → 4 000, stage failed). Fix in
+`batched_server.py`: `mx.set_cache_limit(1 GB)`, `mx.set_memory_limit(12 GB)`
+(over-limit → error → 500 → client AIMD halves, instead of swapping the
+machine), `mx.clear_cache()` after every batch; `/ready` now reports
+active/cache/peak GB. After restart: wired 4.9 GB, 81% free, server 2.2 GB.
+Also stopped the unused GLiNER sidecar and a stray hung pytest. Ticket for
+Learning SQL re-queued (its last two attempts hit the server's restart
+window: `ConnectError [Errno 61]`).
