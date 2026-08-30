@@ -248,3 +248,38 @@ Adopt v3.3 `tier_chunker` (D15) as the v4 chunker: new `chunk_contract_version`,
 ## 8. Exit criteria for the layer
 - Disabled: every existing retrieval/summary/projection test unchanged; all `plan_version`s unchanged; zero extra Qdrant points; FAST output identical with or without the flag.
 - Enabled on the canary corpus: ≥95% parents READY; P6 LatentRecall@10 ≥ baseline + 0.15 absolute on the cross-domain subset; FalseAnalogyRate ≤ 10%; P95 latent lane ≤ 250 ms; zero 5xx attributable to the lane; GRAPH inherits latent children without touching Neo4j (no graph-layer work exists in this plan).
+
+## 9. INGESTION-RUNTIME-HARDENING (owner directives 2026-08-30, base-validation session) — prerequisite track
+
+These are base-pipeline changes the owner asked for during validation. They
+are NOT part of the latent layer but must land before it (the latent layer
+inherits the extraction lanes and the DAG). Each item names the files it
+touches; the same "no edits under shared/workers/control while an ingest
+runs; restart the fleet after every commit" rule applies.
+
+### 9.1 Measured extraction token sizes (2026-08-30 re-ingest, 2 documents)
+| Lane | Unit sent | Per call | Totals |
+|---|---|---|---|
+| unit | one parent neighborhood = the parent's 4 children ≈ 4.7 K chars ≈ **1.2 K tokens** (CySA+: 721 children → 181 neighborhoods, median 4,648 chars; Learning SQL: 97 → 25). The 60,000-char cap never engages: parents are the unit. | — | — |
+| cloud (CySA+, 838 KB) | 4 neighborhoods + system prompt | tokens_in median **5,860**, max **11,738**; tokens_out median ~1,000 | 46 calls, 290,724 in / 40,719 out; 769 entities, 258 relations admitted to the gate; 132 / 111 rejected unattested; 0 quarantined; limiter at 16, 13–14× parallel |
+| local (Learning SQL, 114 KB) | 1–3 neighborhoods per `/infer_batch` under the AIMD batch budget (6 K → 10 K tokens during the run) | 17–33 s per call; tokens not recorded (fixed: client now stores the server's `prompt_tokens/completion_tokens`) | 25 calls, **5 quarantined (20%)** = `SANITIZE_UNKNOWN_NEIGHBORHOOD` — the 4B model dropped the `:0` suffix of the 70-char id (fixed: prompts now carry `n1…nk`, mapped back in the client); 30 entities / 25 relations = 1.2 / 1.0 per neighborhood vs cloud 4.25 / 1.43 — **local yield is 3.5× lower**; this is the "holds its own production weight" question and needs a controlled A/B on the same document (cloud vs local) before local carries production alone. |
+
+### 9.2 GLiNER retirement (full migration; owner 2026-08-30)
+Scope (18 files reference GLiNER): `workers/workers/extract_worker.py` (69 refs: `gliner` provider mode, `_entity_spans`/`_evidence_spans` GLiNER branches, `_GLINER_PIN`, manifest fields), `rescue.py` (19), `evidence_proposer.py` (9, `merge_gliner_proposals`), `reprocess_worker.py`, `profile_router.py`, `fact_admission_stage.py`, `kimi_v2_candidates.py`; `shared/polymath_shared/{clients.py GlinerClient, settings.py gliner_url, query_policy.py provider passes, contracts.py ExtractionManifest gliner_*, span_repair.py, referential_span.py, rerank.py (_slot_alive gliner), observability.py}`; `control/control/{process_supervisor.py sidecar_gliner slot, fleet_autopilot.py extract-demand set}`; `orchestrator/api/health.py`, `registry.py`, `sidecars/gliner_runtime/`, tests. Plan: (1) `extraction_provider` default → `llm_live`, `gliner` mode removed (contract hash keeps `gliner_pin=retired`); (2) delete the sidecar dir, supervisor slot, autopilot membership, readiness entry, `GlinerClient`; (3) rescue lane (I4R) becomes llm-only or is removed (it re-queried GLiNER per slice); (4) `ExtractionManifest.gliner_*` → `extractor_*`; (5) delete the 9 GLiNER weight caches (~14 GB: `~/.cache/huggingface/hub/models--*gliner*`); (6) register 6.1 → DONE. Byte-identity of the frozen gliner path is no longer a goal (owner).
+
+### 9.3 Chunk-and-embed early (owner: "after parent and child chunks are identified, child chunks are embedded while extraction begins")
+Today `STAGE_DAG` (`control/control/tickets.py:24-30`) is intake → extract → profile_document → project_qdrant → …; child embeddings wait for extraction. Change: split `project_qdrant` into `embed_chunks` (chunk lane; depends only on `intake` — `chunk_count` artifact + `qdrant` chunk receipts) and `project_routing` (routing cards; depends on `profile_document`). `workers/workers/project_qdrant_worker.py:522 process_event` already separates the chunk lane and the routing lane internally — the split is at the DAG/event level (`tickets.py STAGE_DAG`, `_STAGE_SPEC`, `census.py STAGE_CHAIN`, `reconciliation.py STAGE_CONTRACT_DEPENDENCIES`, `fleet_autopilot.py` stage groups, verifier keys `qdrant`/`routing_qdrant`). Result: embeddings run in parallel with cloud/local extraction; FAST readiness is unchanged (still needs routing cards).
+
+### 9.4 Job-level completion + lane assist (owner)
+- **Job = the set of documents submitted together** (a manifest / one UI upload batch): a `ingest_jobs(job_id, corpus_id, doc_ids[], status)` record; `query_ready` promotion stays per run, but the corpus/job is `COMPLETE` only when every member run is `query_ready` (10 files → all 10). Surface in `/semantic_readiness` and the UI.
+- **Lane assignment by file size first** (existing: `select_lane(byte_length)`), then **assist**: when one lane's queue is empty and the other still has extract tickets, the idle lane takes the next ticket regardless of size — cloud may take small files; local may take a big file only if its neighborhoods fit the local budget (they always do: the unit is one parent). Implementation: extract tickets carry `lane`; the extract worker runs two claim loops (one per lane, `llm_concurrency_*`); `select_lane` becomes `preferred_lane`; a claim from the non-preferred lane is allowed when the preferred lane has no idle capacity (`llm_controller_state` effective vs in-flight). The byte rule stays a **privacy** rule for the cloud direction only (≤ threshold never leaves the machine; above threshold MAY run locally).
+- **Local must hold its own weight**: the A/B in 9.1 is the gate; until local yield is within an owner-set band of cloud on the same document, assist is cloud→local only for files the cloud lane is allowed to take.
+
+### 9.5 Deterministic lifecycle under the control plane (owner)
+- Orchestrator and the batched local server become supervised slots (the orchestrator slot exists in `process_supervisor.py:55` but was never spawned this session; the batched server has no slot at all — both were started by hand).
+- Startup order: stores → sidecars (embedder, spaCy, reranker) → batched server → control → workers → orchestrator; readiness = `/ready` per slot; a worker that boots against a stale bundle exits 3 (already) and the supervisor's restart budget must not quarantine it for that (it currently does after 6 exits/300 s).
+- Shutdown after job: when the job is COMPLETE and no query demand for `QUERY_GRACE_S`, the autopilot parks the batched server and extraction sidecars (frees ~3–6 GB); re-wake on the next intake event.
+- Memory discipline: `batched_server.py` cache/memory caps (landed 2026-08-30) are the reference; every MLX slot declares its ceiling in `config/runtime_budget.yaml` (register 4.2.5).
+
+### 9.6 Landed during validation (2026-08-30)
+Stale-projection tolerance + orphan purge; delete_document routing-card purge; MLX cache/memory caps; breaker wait on blocking acquire; GLiNER pin no longer a boot dependency in llm modes; short neighborhood aliases (`n1…`) + batched token accounting.

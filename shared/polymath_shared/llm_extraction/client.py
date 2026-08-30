@@ -195,6 +195,25 @@ def estimate_input_tokens(user_prompt: str) -> int:
     return max(1, int(len(user_prompt) / 4.0))
 
 
+def alias_neighborhoods(neighborhoods: list[tuple[str, list[tuple[str, str]]]]
+                        ) -> tuple[list[tuple[str, list[tuple[str, str]]]], dict[str, str]]:
+    """SHORT-ID CONTRACT (measured 2026-08-30): the local 4B model dropped
+    the ':0' suffix of 70-char neighborhood ids in 5 of 25 calls, and every
+    such packet was quarantined as SANITIZE_UNKNOWN_NEIGHBORHOOD. The model
+    is never asked to echo a hash again: prompts carry `n1`, `n2`, … and the
+    client maps them back to the real ids before the gate."""
+    aliases = {f"n{i + 1}": nid for i, (nid, _) in enumerate(neighborhoods)}
+    return [(alias, chunks) for alias, (_, chunks) in zip(aliases, neighborhoods)], aliases
+
+
+def restore_neighborhood_ids(packet, aliases: dict[str, str]):
+    """Map alias ids back to real neighborhood ids (in place)."""
+    if packet is not None:
+        for item in packet.items:
+            item.neighborhood_id = aliases.get(item.neighborhood_id, item.neighborhood_id)
+    return packet
+
+
 def build_user_prompt(neighborhoods: list[tuple[str, list[tuple[str, str]]]]) -> str:
     """neighborhoods: (neighborhood_id, [(chunk_id, text), ...]) — the
     evidence neighborhood with chunk markers."""
@@ -288,7 +307,8 @@ class LLMExtractionClient:
         limiter = self._lane_limiter()
         prompt_items = []
         for nid, chunks in neighborhoods:
-            user_prompt = build_user_prompt([(nid, chunks)])
+            # one neighborhood per prompt → its alias is always "n1"
+            user_prompt = build_user_prompt([("n1", chunks)])
             prompt_items.append((nid, user_prompt,
                                  output_budget_for(estimate_input_tokens(user_prompt))))
         if not prompt_items:
@@ -384,17 +404,20 @@ class LLMExtractionClient:
             return [self._extract_prompt(u, {nid}, mt, decision)
                     for nid, u, mt in prompt_items]
         results = body.get("results")
-        contents = [str((x or {}).get("content", "")) for x in results] \
-            if isinstance(results, list) else []
-        if len(contents) != len(prompt_items):     # misaligned batch: refuse
-            contents = (contents + [""] * len(prompt_items))[:len(prompt_items)]
+        rows = [dict(x or {}) for x in results] if isinstance(results, list) else []
+        if len(rows) != len(prompt_items):         # misaligned batch: refuse
+            rows = (rows + [{}] * len(prompt_items))[:len(prompt_items)]
         out: list[LLMCallResult] = []
-        for (nid, user_prompt, mt), raw in zip(prompt_items, contents):
-            s_res, packet = sanitize(raw, {nid})
+        wall_ms = int((time.perf_counter() - t0) * 1000)
+        for (nid, user_prompt, mt), row in zip(prompt_items, rows):
+            raw = str(row.get("content", ""))
+            s_res, packet = sanitize(raw, {"n1"})
+            packet = restore_neighborhood_ids(packet, {"n1": nid})
             out.append(LLMCallResult(
                 lane=self.lane, model=self.model, raw_text=raw, packet=packet,
-                sanitize=s_res,
-                wall_ms=int((time.perf_counter() - t0) * 1000),
+                sanitize=s_res, wall_ms=wall_ms,
+                tokens_in=int(row.get("prompt_tokens") or 0),
+                tokens_out=int(row.get("completion_tokens") or 0),
                 attempts=1, raw_head=raw[:200],
                 error_class=None if packet is not None else _quarantine_class(s_res),
                 lane_decision=decision,
@@ -418,11 +441,13 @@ class LLMExtractionClient:
         decision: LaneDecision | None = None
         if self.lane == "cloud":
             decision = require_cloud_eligible(source_bytes, threshold_bytes)
-        user_prompt = build_user_prompt(neighborhoods)
+        aliased, aliases = alias_neighborhoods(neighborhoods)
+        user_prompt = build_user_prompt(aliased)
         if max_tokens is None:
             max_tokens = output_budget_for(estimate_input_tokens(user_prompt))
-        expected = {nid for nid, _ in neighborhoods}
-        return self._extract_prompt(user_prompt, expected, max_tokens, decision)
+        result = self._extract_prompt(user_prompt, set(aliases), max_tokens, decision)
+        restore_neighborhood_ids(result.packet, aliases)
+        return result
 
     def _extract_prompt(self, user_prompt: str, expected: set[str],
                         max_tokens: int, decision: LaneDecision | None) -> LLMCallResult:

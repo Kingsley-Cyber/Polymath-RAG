@@ -413,3 +413,21 @@ def test_11b_blocking_acquire_waits_out_the_breaker() -> None:
     lim.record_success()
     lim.release()
     assert not lim.breaker_open
+
+
+def test_short_neighborhood_aliases_round_trip(monkeypatch) -> None:
+    """The model sees n1/n2 and the gate receives the real ids back."""
+    from polymath_shared.llm_extraction.client import alias_neighborhoods, build_user_prompt
+    hoods = [("chunk_" + "a" * 64 + ":0", [("c1", CH)]), ("chunk_" + "b" * 64 + ":1", [("c2", CH)])]
+    aliased, aliases = alias_neighborhoods(hoods)
+    assert [a for a, _ in aliased] == ["n1", "n2"] and aliases["n2"] == hoods[1][0]
+    prompt = build_user_prompt(aliased)
+    assert "[neighborhood:n1]" in prompt and "chunk_aaaa" not in prompt
+    client = LLMExtractionClient("local", url="http://127.0.0.1:1", model="m")
+    raw = json.dumps({"contract": "polymath-extraction-v1", "profile": "volume",
+                      "items": [{"neighborhood_id": "n2", "entities": [
+                          {"surface": "FortiGate", "type": "Product", "quote": CH}],
+                          "relations": [], "digest": {}}]})
+    monkeypatch.setattr(client, "_chat", lambda *a, **k: (raw, 10, 5))
+    res = client.extract(hoods, source_bytes=10, threshold_bytes=CLOUD_MIN_BYTES)
+    assert res.packet is not None and res.packet.items[0].neighborhood_id == hoods[1][0]
