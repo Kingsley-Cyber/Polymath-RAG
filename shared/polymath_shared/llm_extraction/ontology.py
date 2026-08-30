@@ -11,6 +11,8 @@ fallback so vocabulary drift is visible, never silent.
 """
 from __future__ import annotations
 
+import re
+
 from polymath_shared.llm_extraction.contract import RelationProposal
 
 # (id, definition) — definitions are the owner's phrasing, verbatim.
@@ -88,12 +90,26 @@ def normalize_predicate(raw: str) -> tuple[str, str]:
     hit = PREDICATE_ALIASES.get(key.lower().replace(" ", "_"))
     if hit:
         return hit, "alias"
-    # substring pass for phrasal emissions ("is a kind of", "part of the")
-    low = key.lower()
-    for alias, target in PREDICATE_ALIASES.items():
-        if alias in low:
+    # Phrasal pass ("is a kind of", "part of the"): TOKEN-BOUNDED so "has"
+    # cannot fire inside "has_no_effect_on", "part" inside "counterpart",
+    # "before" inside "not before". Longest alias first, then table order.
+    low = key.lower().replace("_", " ")
+    for pattern, target in _ALIAS_PATTERNS:
+        if pattern.search(low):
             return target, "alias"
     return LAST_RESORT, "related_fallback"
+
+
+def _alias_patterns() -> list[tuple[re.Pattern[str], str]]:
+    items = list(PREDICATE_ALIASES.items())
+    # stable sort: longest alias wins ties by insertion order
+    items.sort(key=lambda kv: -len(kv[0]))
+    return [(re.compile(r"(?<![a-z0-9])" + re.escape(alias.replace("_", " "))
+                        + r"(?![a-z0-9])"), target)
+            for alias, target in items]
+
+
+_ALIAS_PATTERNS = _alias_patterns()
 
 
 def prompt_block() -> str:

@@ -75,22 +75,26 @@ def test_rate_conc_cap_is_the_safety_ceiling() -> None:
         kind="rate", rpm=1000, tpm=None, conc_cap=2, min=2, max=8,
         adaptive=False))
     lim._sem.set_limit(2)
-    acquired = []
+    # non-blocking acquires never wait and never leak: exactly conc_cap
+    # succeed while held (no background threads — a blocked non-daemon
+    # thread would keep the interpreter alive and hang the test run)
+    got = [lim.acquire(est_tokens=0, block=False) for _ in range(6)]
+    assert got == [True, True, False, False, False, False]
+    assert lim._sem.held == 2
+    for _ in range(2):
+        lim.release()
+    assert lim._sem.held == 0
+    # a blocking acquire proceeds once a slot is free
+    done = []
 
     def grab():
-        if lim.acquire(est_tokens=0, block=True):
-            acquired.append(1)
-
-    threads = [threading.Thread(target=grab) for _ in range(6)]
-    for t in threads:
-        t.start()
-    import time
-    time.sleep(0.3)
-    assert len(acquired) == 2            # capped at conc_cap while held
-    for _ in acquired:
+        done.append(lim.acquire(est_tokens=0, block=True))
         lim.release()
-    for t in threads:
-        t.join(timeout=2)
+
+    t = threading.Thread(target=grab, daemon=True)
+    t.start()
+    t.join(timeout=2)
+    assert done == [True]
 
 
 def test_header_sync_throttles_before_429() -> None:

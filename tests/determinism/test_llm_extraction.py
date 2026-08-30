@@ -297,8 +297,13 @@ def test_neighborhoods_balanced_and_stub_skipped() -> None:
                    "text": "tiny", "char_start": 99999})
     ns = build_neighborhoods(chunks, max_chars=2500)
     p1 = [n for n in ns if n.nid.startswith("p1")]
-    assert len(p1) == 4                                     # k = ceil(10000/2500)
+    # k = ceil(10000/2500) = 4 is the PLAN; five indivisible 2,000-char
+    # children cannot pack into four ≤2,500-char buckets, and the hard cap
+    # wins over the plan (audit 2026-08-29 #7: the old code let the last
+    # planned bucket absorb 4,000 chars). Balanced where possible, capped always.
+    assert len(p1) == 5
     sizes = [n.char_len for n in p1]
+    assert max(sizes) <= 2500                               # hard cap respected
     assert max(sizes) - min(sizes) <= 2000                  # near-uniform
     assert all(n.chunks for n in ns)                        # no empty buckets
     assert not any(n.nid.startswith("p2") for n in ns)      # stub skipped

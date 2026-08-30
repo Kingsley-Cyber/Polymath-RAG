@@ -275,6 +275,11 @@ def _evidence_spans(
         # each proposal still localizes to a compiled trigger inside its
         # verbatim quote, and unlocalizable proposals compile to
         # UNSUPPORTED exactly as GLiNER's always did.
+        # RECORDED DEVIATION (PLAN-AUTHORITY-REGISTER 4.2.10): in llm_*
+        # modes the proposals merge regardless of evidence_proposal_mode
+        # ('lexical' governs the GLiNER pass-2 only) and regardless of the
+        # router's deprioritization skip (that skip saved a GLiNER call;
+        # there is no call to save here).
         proposals = [localize_trigger(p, pack) for p in precomputed_evidence]
         merged = {s.text: s for s in anchors}
         for p in proposals:
@@ -302,6 +307,46 @@ def _evidence_spans(
                 merged[key] = p
         return sorted(merged.values(), key=lambda s: (s.start, s.end))
     return anchors
+
+
+def _llm_contract_identity() -> dict:
+    from workers import llm_provider
+    return llm_provider.contract_identity()
+
+
+def _clip_to_sentences(spans: list[EvidenceSpan],
+                       chunk_text: str) -> tuple[list[EvidenceSpan], list[dict]]:
+    """LOCAL-LLM-EXTRACTION-V1: an LLM relation quote may span sentences
+    (the contract says "sentence(s)"), but `_slices` binds evidence to ONE
+    sentence — a crossing quote would never reach the compiler and would
+    vanish without a record. Clip every crossing span to exact per-sentence
+    slices (each still a verbatim source substring; trigger fields reset so
+    localization re-runs on the clipped text) and record the split in the
+    audit. Spans already inside one sentence pass through untouched."""
+    sentences = _sentences_of(chunk_text)
+    out: list[EvidenceSpan] = []
+    audit: list[dict] = []
+    for sp in spans:
+        if any(s >= 0 and sp.start >= s and sp.end <= e for s, e in sentences.offsets):
+            out.append(sp)
+            continue
+        pieces: list[tuple[int, int]] = []
+        for s, e in sentences.offsets:
+            if s < 0:
+                continue
+            ps, pe = max(sp.start, s), min(sp.end, e)
+            if pe - ps >= 2 and chunk_text[ps:pe].strip():
+                pieces.append((ps, pe))
+        for ps, pe in pieces:
+            out.append(sp.model_copy(update={
+                "start": ps, "end": pe, "text": chunk_text[ps:pe],
+                "trigger_lemma": None, "trigger_lexical_class": None,
+                "trigger_predicate_id": None, "trigger_match_source": None}))
+        audit.append({"kind": "llm_evidence_clipped",
+                      "reason": "EVIDENCE_CROSSES_SENTENCE",
+                      "chunk_id": sp.chunk_id, "start": sp.start, "end": sp.end,
+                      "pieces": [[ps, pe] for ps, pe in pieces]})
+    return out, audit
 
 
 def _slices(
@@ -827,10 +872,12 @@ def process_event(conn: Connection, event: dict) -> None:
         "provenance_contract": "exact-evidence-v1",
         "gliner_pin": _GLINER_PIN,
         "extraction_provider": provider_mode,
-        "llm_extraction_contract": (
-            {"contract": "polymath-extraction-v1",
-             "cloud_min_bytes": get_settings().worker.cloud_min_bytes}
-            if llm_mode else None),
+        # LLM lane: EVERY input that changes the model's output is hashed
+        # (models, prompt, ontology, type fallbacks, generation config,
+        # neighborhood shape, chunk-kind rules, limiter seeds) — exactly as
+        # gliner_pin is for the frozen path. None on the gliner path keeps
+        # that contract hash byte-identical.
+        "llm_extraction_contract": (_llm_contract_identity() if llm_mode else None),
         # Temporal durability (semantic-query-policy-v1): the extraction
         # contract identity includes EVERY input that can change semantic
         # output — provider-facing vocabulary policy, syntax contract,
@@ -1027,17 +1074,27 @@ def process_event(conn: Connection, event: dict) -> None:
                 _counts["llm_relations"] = _merged.stats.get("relations", 0)
                 _counts["llm_rejected"] = len(_merged.rejections)
                 _counts["llm_type_coercions"] = len(_merged.coercions)
+                _rej_by_class: dict = {}
+                for _rj in _merged.rejections:
+                    _k = _rj.get("error_class", "UNKNOWN")
+                    _rej_by_class[_k] = _rej_by_class.get(_k, 0) + 1
+                _merged.stats["rejections_by_class"] = _rej_by_class
                 _llm_artifact = {
                     "provider": provider_mode,
                     "lane_decision": _lane_decision,
                     "calls": _llm_receipts,
                     "stats": _merged.stats,
-                    "rejections": _merged.rejections[:200],
-                    "coercions": _merged.coercions[:200],
+                    "rejections_preview": _merged.rejections[:200],
+                    "coercions_preview": _merged.coercions[:200],
                     "digests": _merged.digests[:400],
                     "neighborhoods": len(_neighborhoods),
                 }
-                writer.artifact({"llm_extraction": _llm_artifact})
+                # Rejections are the durable record of what the model
+                # proposed and the gate refused — the FULL lists persist
+                # (separate artifact keys), never a truncated preview only.
+                writer.artifact({"llm_extraction": _llm_artifact,
+                                 "llm_rejections": _merged.rejections,
+                                 "llm_coercions": _merged.coercions})
                 _perf["provider_calls"] += len(_results)
             for row in child_chunks:
                 envelope = None
@@ -1058,9 +1115,14 @@ def process_event(conn: Connection, event: dict) -> None:
                     envelope = build_envelope(row, child_siblings,
                                               doc_text_cache[doc_key])
                 _pt = _t.perf_counter()
+                # LLM lane: the raw ledger row for each proposal was written
+                # ONCE above (open-vocabulary type preserved); the per-
+                # composition sink would write it again per composition
+                # with the core label — no sink in llm modes.
                 entities, rejected = _entity_spans(
                     gliner, row["text"], row["chunk_id"], doc_id, profile_dict,
-                    envelope=envelope, trace=trace, raw_sink=raw_entity_sink,
+                    envelope=envelope, trace=trace,
+                    raw_sink=None if llm_mode else raw_entity_sink,
                     precomputed=_batched_pass1.get(row["chunk_id"])
                 )
                 _counts["gliner_entity_proposals"] += len(entities)
@@ -1081,7 +1143,9 @@ def process_event(conn: Connection, event: dict) -> None:
                         reason_code="GLINER_PROPOSED", doc_id=doc_id,
                         chunk_id=row["chunk_id"],
                         detail={"proposals": len(entities), "rejected_labels": len(rejected)})
-                    for ent in entities:
+                    # llm_shadow admits NOTHING: no ADMITTED_* events may be
+                    # traced for proposals that never reach admission.
+                    for ent in (entities if provider_mode != "llm_shadow" else ()):
                         trace.record(
                             event_type="admission",
                             decision="ADMITTED_MENTION_ONLY",  # corrected below by class
@@ -1091,13 +1155,20 @@ def process_event(conn: Connection, event: dict) -> None:
                             detail={"core_type": ent.core_type.value, "raw_label": ent.raw_label,
                                     "score": ent.score, "pass_kind": ent.pass_kind})
                 _pt = _t.perf_counter()
+                _pre_evidence = None
+                if llm_mode:
+                    _pre_evidence, _clip_audit = _clip_to_sentences(
+                        [EvidenceSpan(**e) for e in _llm_evidence.get(row["chunk_id"], [])],
+                        row["text"])
+                    if _clip_audit:
+                        audit.extend(_clip_audit)
+                        _counts["llm_evidence_clipped"] = (
+                            _counts.get("llm_evidence_clipped", 0) + len(_clip_audit))
                 evidence = _evidence_spans(
                     gliner, row["text"], row["chunk_id"], pack, proposal_mode,
                     raw_sink=raw_predicate_sink,
                     scientific_lane_prioritized=scientific_lane_prioritized,
-                    precomputed_evidence=(
-                        [EvidenceSpan(**e) for e in _llm_evidence.get(row["chunk_id"], [])]
-                        if llm_mode else None))
+                    precomputed_evidence=_pre_evidence)
                 _counts["evidence_spans"] += len(evidence)
                 _perf["evidence_pass_s"] += _t.perf_counter() - _pt
                 # drain this chunk's raw observations into ledger rows
@@ -1142,6 +1213,7 @@ def process_event(conn: Connection, event: dict) -> None:
                         "mode": trace.mode, "events_written": _shadow_written,
                         "funnel": _shadow_funnel}})
                 writer.artifact({
+                    "audit": audit,
                     "shadow": True,
                     "admitted": 0,
                     "note": ("llm_shadow: gated proposals recorded; "

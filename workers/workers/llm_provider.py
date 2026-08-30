@@ -17,6 +17,7 @@ from dataclasses import dataclass
 
 from polymath_shared.contracts import EvidenceSpan
 from polymath_shared.llm_extraction.client import (
+    ExtractionTransportError,
     LLMCallResult,
     LLMExtractionClient,
 )
@@ -25,6 +26,7 @@ from polymath_shared.llm_extraction.gate import (
     NormalizedExtraction,
     validate_and_normalize,
 )
+from polymath_shared.llm_extraction.limiter import REGISTRY
 from polymath_shared.llm_extraction.policy import (
     select_lane as _policy_select_lane,
 )
@@ -104,14 +106,73 @@ def build_neighborhoods(child_chunks: list[dict],
         buckets: list[list[tuple[str, str]]] = [[]]
         size = 0
         for row in rows:
-            if buckets[-1] and size + len(row["text"]) > target and len(buckets) < k:
+            n = len(row["text"])
+            # `target` balances the k planned buckets; `max_chars` is the
+            # HARD cap — a bucket may exceed it only when a single child
+            # does (children are never split). Without the hard-cap test
+            # the last planned bucket absorbed every remaining child.
+            if buckets[-1] and (
+                    (size + n > target and len(buckets) < k)
+                    or size + n > max_chars):
                 buckets.append([])
                 size = 0
             buckets[-1].append((row["chunk_id"], row["text"]))
-            size += len(row["text"])
+            size += n
         for b in buckets:
             out.append(Neighborhood(nid=f"{pid}:{len(out)}", chunks=b))
     return out
+
+
+def contract_identity() -> dict:
+    """Every LLM-lane input that can change semantic output, for the
+    extract stage's contract hash (the GLiNER path hashes its model pin
+    the same way). A change to any of these must yield a NEW receipt so
+    the document is re-extracted and old facts stay attributable."""
+    from dataclasses import asdict
+
+    from polymath_shared.identity import content_hash
+    from polymath_shared.llm_extraction.client import (
+        GENERATION_CONFIG,
+        SYSTEM_PROMPT,
+        _lane_limit,
+        output_budget_for,
+    )
+    from polymath_shared.llm_extraction.contract import CONTRACT_ID
+    from polymath_shared.llm_extraction.gate import (
+        LLM_TYPE_FALLBACKS,
+        MAX_MENTIONS_PER_SURFACE,
+    )
+    from polymath_shared.llm_extraction.ontology import (
+        PREDICATE_ALIASES,
+        RELATION_ONTOLOGY,
+    )
+
+    from workers.chunk_kind import _RULES, NOISY_KINDS
+
+    s = get_settings()
+    return {
+        "contract": CONTRACT_ID,
+        "cloud_min_bytes": s.worker.cloud_min_bytes,
+        "models": {"local": s.sidecars.llm_local_extract_model,
+                   "cloud": s.sidecars.llm_cloud_model},
+        "neighborhood": {"max_chars": s.worker.llm_max_neighborhood_chars,
+                         "per_call": NEIGHBORHOODS_PER_CALL,
+                         "min_chunk_words": LLM_MIN_CHUNK_WORDS},
+        "prompt_sha256": content_hash({"system": SYSTEM_PROMPT}),
+        "ontology_sha256": content_hash({"enum": RELATION_ONTOLOGY,
+                                         "aliases": PREDICATE_ALIASES}),
+        "type_fallbacks_sha256": content_hash({"fallbacks": LLM_TYPE_FALLBACKS,
+                                               "max_mentions": MAX_MENTIONS_PER_SURFACE}),
+        "generation": {**GENERATION_CONFIG,
+                       "output_budget_anchors": [output_budget_for(800),
+                                                 output_budget_for(15_000)]},
+        "chunk_kind_sha256": content_hash({
+            "noisy": list(NOISY_KINDS),
+            "rules": [[r.pattern, kind] for r, kind in _RULES]}),
+        "limiter_seeds": {lane: asdict(_lane_limit(lane)) for lane in ("local", "cloud")},
+        "entity_version": LLM_ENTITY_VERSION,
+        "evidence_version": LLM_EVIDENCE_VERSION,
+    }
 
 
 def select_lane(source_bytes: int):
@@ -145,10 +206,12 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
     so the controller is live, not decorative.
     """
     s = get_settings().worker
+    _ensure_controller_store()
     client = make_client(lane)
     limiter = client._lane_limiter()
     views_by_nid = {n.nid: [ChunkView(cid, text) for cid, text in n.chunks]
                     for n in neighborhoods}
+    controller_before = _controller_snapshot(lane, limiter)
 
     if lane == "local":
         results = client.extract_batched(
@@ -169,6 +232,16 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
         with ThreadPoolExecutor(max_workers=pool_size) as pool:
             results = list(pool.map(one, batches))
 
+    # A limiter refusal (breaker open / Retry-After hold) is an
+    # INFRASTRUCTURE condition, not a model disposition: it must fail the
+    # stage (StageFailed → ticket retry), never complete the document with
+    # those neighborhoods silently missing.
+    refused = [r for r in results if r.error_class == "LIMITER_REFUSED"]
+    if refused:
+        raise ExtractionTransportError(
+            f"{lane} lane refused {len(refused)}/{len(results)} call(s) "
+            "(breaker open or rate hold); stage must retry, not complete")
+
     merged = NormalizedExtraction()
     for r in results:
         if r.packet is None:
@@ -185,7 +258,43 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
             merged.stats[k] = merged.stats.get(k, 0) + v
     merged.stats["calls"] = len(results)
     merged.stats["calls_quarantined"] = sum(1 for r in results if r.packet is None)
+    # The controller's trajectory over THIS document, durable in the stage
+    # artifact: where the lane started, where it ended, and whether the
+    # value is persisted (so the climb is provable and survives restarts).
+    merged.stats["controller"] = {
+        "before": controller_before,
+        "after": _controller_snapshot(lane, limiter),
+        "persisted": REGISTRY.store_attached,
+    }
     return results, merged
+
+
+_STORE_ATTACHED = False
+
+
+def _ensure_controller_store() -> None:
+    """Attach the Postgres-backed controller store once per process, so
+    the AIMD state (cloud concurrency, local batch budget) restores from
+    the last run instead of the yaml seed. Fail-soft: the store logs once
+    and the controllers run in-memory if the table/DB is unavailable."""
+    global _STORE_ATTACHED
+    if _STORE_ATTACHED:
+        return
+    from polymath_shared.llm_extraction.state_store import PostgresControllerStore
+    REGISTRY.attach_store(PostgresControllerStore(get_settings().postgres.dsn))
+    _STORE_ATTACHED = True
+
+
+def _controller_snapshot(lane: str, limiter) -> dict:
+    snap = {"lane": lane, "limiter_effective": limiter.effective,
+            "limiter_ceiling": limiter._ceil, "limiter_floor": limiter._floor,
+            "breaker_open": limiter.breaker_open}
+    if lane == "local":
+        from polymath_shared.llm_extraction.client import local_batch_budget
+        budget = local_batch_budget()
+        snap["batch_tokens_cap"] = budget.effective
+        snap["batch_tokens_ceiling"] = budget.ceiling
+    return snap
 
 
 def to_precomputed_entities(merged: NormalizedExtraction,
@@ -250,23 +359,16 @@ def ledger_items(merged: NormalizedExtraction) -> tuple[list[tuple], list[tuple]
     return entity_items, evidence_items
 
 
-def _limiter_effective(lane: str) -> int:
-    """AIMD observability: the lane's current effective concurrency, recorded
-    per call so the controller's behavior is verifiable, not invisible."""
-    try:
-        from polymath_shared.llm_extraction.client import _lane_limit
-        from polymath_shared.llm_extraction.limiter import REGISTRY
-        return REGISTRY.lane(f"llm_{lane}", "default", _lane_limit(lane)).effective
-    except Exception:
-        return -1
-
-
 def call_receipts(results: list[LLMCallResult]) -> list[dict]:
+    """Per-call receipts. `limiter_effective` / `batch_tokens_cap` are the
+    values captured AT THE CALL by the client (never a registry lookup
+    after the fact), so the AIMD climb is readable straight from artifacts."""
     return [{
         "lane": r.lane, "model": r.model, "wall_ms": r.wall_ms,
         "tokens_in": r.tokens_in, "tokens_out": r.tokens_out,
         "attempts": r.attempts, "ok": r.packet is not None,
-        "limiter_effective": (r.lane and _limiter_effective(r.lane)),
+        "limiter_effective": r.limiter_effective,
+        "batch_tokens_cap": r.batch_tokens_cap,
         "error_class": r.error_class or r.sanitize.error_class,
         "salvaged": r.sanitize.salvaged,
         "raw_head": (r.raw_head or "")[:200],

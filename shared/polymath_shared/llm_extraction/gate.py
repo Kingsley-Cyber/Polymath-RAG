@@ -173,7 +173,10 @@ def _clean_entity(e: object) -> dict | None:
     if not isinstance(surface, str) or not surface.strip():
         return None
     t = e.get("type") or e.get("entity_type") or "Concept"
-    quote = e.get("quote") or e.get("evidence") or surface
+    # An entity WITHOUT a quote is dropped, never repaired: synthesizing
+    # the quote from the surface would invent the attestation context the
+    # model never emitted (a truncated stream cuts the quote field first).
+    quote = e.get("quote") or e.get("evidence")
     if not isinstance(quote, str) or not quote.strip():
         return None
     return {"surface": surface.strip()[:200], "type": str(t).strip()[:80],
@@ -272,10 +275,21 @@ def sanitize(raw: str, expected_neighborhood_ids: set[str]) -> tuple[SanitizeRes
                 None)
     unknown = {i.neighborhood_id for i in packet.items} - expected_neighborhood_ids
     if unknown:
-        return (SanitizeResult(ok=False, error_class="SANITIZE_UNKNOWN_NEIGHBORHOOD",
-                               salvaged=salvaged, raw_chars=len(raw),
-                               detail=f"model referenced unknown ids: {sorted(unknown)[:4]}"),
-                None)
+        # Drop ONLY the items that name an unknown neighborhood — one
+        # hallucinated id must not discard the attested proposals of the
+        # other neighborhoods in the same call. Nothing usable left → the
+        # call is quarantined under its own error class.
+        kept = [i for i in packet.items if i.neighborhood_id in expected_neighborhood_ids]
+        if not kept:
+            return (SanitizeResult(ok=False, error_class="SANITIZE_UNKNOWN_NEIGHBORHOOD",
+                                   salvaged=salvaged, raw_chars=len(raw),
+                                   detail=f"model referenced unknown ids: {sorted(unknown)[:4]}"),
+                    None)
+        packet = packet.model_copy(update={"items": kept})
+        return (SanitizeResult(ok=True, salvaged=True, raw_chars=len(raw),
+                               detail=(f"dropped {len(unknown)} item(s) with unknown "
+                                       f"ids: {sorted(unknown)[:4]}")),
+                packet)
     return (SanitizeResult(ok=True, salvaged=salvaged, raw_chars=len(raw)), packet)
 
 
@@ -294,49 +308,93 @@ class ChunkView:
     index_map: list[int] = field(init=False)
 
     def __post_init__(self) -> None:
-        self.collapsed = ""
-        self.index_map = []
+        collapsed: list[str] = []
+        index_map: list[int] = []
         last_ws = True
         for i, ch in enumerate(self.text):
             if ch.isspace():
                 if not last_ws:
-                    self.collapsed += " "
-                    self.index_map.append(i)
+                    collapsed.append(" ")
+                    index_map.append(i)
                 last_ws = True
             else:
-                self.collapsed += ch
-                self.index_map.append(i)
+                collapsed.append(ch)
+                index_map.append(i)
                 last_ws = False
-        if not self.index_map:
-            self.index_map = [0] * len(self.collapsed)
+        self.collapsed = "".join(collapsed)
+        self.index_map = index_map
+
+
+def _aligned(text: str, s: int, e: int) -> bool:
+    """Token-boundary check: an attested hit may not start or end INSIDE
+    a word ("host" inside "hostname" is not a mention of "host"). A needle
+    that itself starts/ends with punctuation is boundary-free on that side."""
+    starts_inside = s > 0 and text[s - 1].isalnum() and text[s].isalnum()
+    ends_inside = e < len(text) and text[e - 1].isalnum() and text[e].isalnum()
+    return not (starts_inside or ends_inside)
+
+
+def _iter_exact(needle: str, haystack: str):
+    """Yield every boundary-aligned exact occurrence, in source order."""
+    if not needle:
+        return
+    pos = haystack.find(needle)
+    while pos != -1:
+        end = pos + len(needle)
+        if _aligned(haystack, pos, end):
+            yield pos, end
+        pos = haystack.find(needle, pos + 1)
+
+
+def _find_all_exact(needle: str, haystack: str, limit: int) -> list[tuple[int, int]]:
+    hits: list[tuple[int, int]] = []
+    for hit in _iter_exact(needle, haystack):
+        hits.append(hit)
+        if len(hits) >= limit:
+            break
+    return hits
 
 
 def _find_exact(needle: str, haystack: str) -> tuple[int, int] | None:
-    pos = haystack.find(needle)
-    if pos == -1:
-        return None
-    return pos, pos + len(needle)
+    hits = _find_all_exact(needle, haystack, 1)
+    return hits[0] if hits else None
+
+
+def _find_all_ws_collapsed(needle: str, view: ChunkView,
+                           limit: int) -> list[tuple[int, int]]:
+    """Locate needle modulo whitespace runs; return EXACT source offsets
+    (boundary-aligned in the collapsed text, which preserves every
+    non-whitespace character and therefore every word boundary)."""
+    n_collapsed = _WS_RE.sub(" ", needle.strip())
+    if len(n_collapsed) < 4:
+        return []
+    hits: list[tuple[int, int]] = []
+    for pos, end_pos in _iter_exact(n_collapsed, view.collapsed):
+        start_src = view.index_map[pos]
+        end_src = view.index_map[end_pos - 1] + 1
+        hits.append((start_src, end_src))
+        if len(hits) >= limit:
+            break
+    return hits
 
 
 def _find_ws_collapsed(needle: str, view: ChunkView) -> tuple[int, int] | None:
-    """Locate needle modulo whitespace runs; return EXACT source offsets."""
-    n_collapsed = _WS_RE.sub(" ", needle.strip())
-    if len(n_collapsed) < 4:
-        return None
-    pos = view.collapsed.find(n_collapsed)
-    if pos == -1:
-        return None
-    start_src = view.index_map[pos]
-    end_pos = pos + len(n_collapsed) - 1
-    end_src = view.index_map[end_pos] + 1
-    return start_src, end_src
+    hits = _find_all_ws_collapsed(needle, view, 1)
+    return hits[0] if hits else None
+
+
+def _locate_all(needle: str, view: ChunkView, limit: int) -> list[tuple[int, int]]:
+    """Exact hits win; whitespace-collapsed hits only when there is no
+    exact hit (never mixed, so the two never double-count one span)."""
+    hits = _find_all_exact(needle, view.text, limit)
+    if hits:
+        return hits
+    return _find_all_ws_collapsed(needle, view, limit)
 
 
 def _locate(needle: str, view: ChunkView) -> tuple[int, int] | None:
-    hit = _find_exact(needle, view.text)
-    if hit:
-        return hit
-    return _find_ws_collapsed(needle, view)
+    hits = _locate_all(needle, view, 1)
+    return hits[0] if hits else None
 
 
 # Open-vocabulary fallback (documented, raw label preserved everywhere).
@@ -392,30 +450,34 @@ class NormalizedExtraction:
 def validate_and_normalize(packet: ExtractionPacket,
                            neighborhoods: dict[str, list[ChunkView]]) -> NormalizedExtraction:
     out = NormalizedExtraction()
-    n_ent = n_rel = n_ent_rej = n_rel_rej = 0
+    n_ent = n_rel = n_ent_rej = n_rel_rej = n_pred_fallback = 0
     for item in packet.items:
         views = neighborhoods.get(item.neighborhood_id, [])
         for ent in item.entities:
             placed = False
+            core, method = map_core_type(ent.type)
             for view in views:
                 q = _locate(ent.quote, view)
                 if not q:
                     continue
-                hits: list[tuple[int, int]] = []
-                in_quote = _find_exact(ent.surface, view.text[q[0]:q[1]])
-                if in_quote:
-                    hits.append((q[0] + in_quote[0], q[0] + in_quote[1]))
-                else:
-                    whole = _locate(ent.surface, view)
-                    if whole:
-                        hits.append(whole)
-                for (s, e) in hits[:MAX_MENTIONS_PER_SURFACE]:
-                    core, method = map_core_type(ent.type)
-                    if method != "policy":
-                        out.coercions.append({
-                            "surface": ent.surface, "raw_type": ent.type,
-                            "core": core, "method": method,
-                            "neighborhood_id": item.neighborhood_id})
+                # Mentions INSIDE the attested quote first (boundary-
+                # aligned, up to the cap); only when the surface is absent
+                # from its own quote fall back to the chunk at large.
+                hits = [(q[0] + s, q[0] + e) for s, e in _find_all_exact(
+                    ent.surface, view.text[q[0]:q[1]], MAX_MENTIONS_PER_SURFACE)]
+                if not hits:
+                    hits = _locate_all(ent.surface, view, MAX_MENTIONS_PER_SURFACE)
+                if not hits:
+                    continue
+                if method != "policy":
+                    out.coercions.append({
+                        "surface": ent.surface, "raw_type": ent.type,
+                        "core": core, "method": method,
+                        "neighborhood_id": item.neighborhood_id})
+                existing = out.entities_by_chunk.setdefault(view.chunk_id, [])
+                for (s, e) in hits:
+                    if any(x["start"] == s and x["end"] == e for x in existing):
+                        continue
                     # label is the CANONICAL core type (the worker's
                     # _map_label passes core names through untouched);
                     # raw_type preserves the open-vocabulary proposal.
@@ -423,7 +485,7 @@ def validate_and_normalize(packet: ExtractionPacket,
                     # may differ in whitespace (ws-collapsed matching), and
                     # downstream sentence comparison demands byte-exact
                     # span/frame agreement.
-                    out.entities_by_chunk.setdefault(view.chunk_id, []).append({
+                    existing.append({
                         "start": s, "end": e, "text": view.text[s:e],
                         "label": core, "raw_type": ent.type, "score": 1.0})
                     n_ent += 1
@@ -453,7 +515,7 @@ def validate_and_normalize(packet: ExtractionPacket,
             from polymath_shared.llm_extraction.ontology import normalize_predicate
             canon_pred, pred_method = normalize_predicate(rel.predicate)
             if pred_method == "related_fallback":
-                out.stats_fallbacks = getattr(out, "stats_fallbacks", 0) + 1
+                n_pred_fallback += 1
                 out.coercions.append({
                     "kind": "predicate_fallback", "raw": rel.predicate,
                     "canonical": canon_pred,
@@ -486,16 +548,20 @@ def validate_and_normalize(packet: ExtractionPacket,
                 existing = out.entities_by_chunk.setdefault(anchor.chunk_id, [])
                 if any(x["start"] == s and x["end"] == e for x in existing):
                     continue
-                core, method = map_core_type(
-                    next((en.type for en in item.entities
-                          if en.surface == name), name))
+                raw_type = next((en.type for en in item.entities
+                                 if en.surface == name), name)
+                core, method = map_core_type(raw_type)
                 if method != "policy":
                     out.coercions.append({
-                        "surface": name, "raw_type": name, "core": core,
+                        "surface": name, "raw_type": raw_type, "core": core,
                         "method": method + "_endpoint",
                         "neighborhood_id": item.neighborhood_id})
+                # label MUST be the canonical core type — the worker's
+                # _map_label rejects anything else ("no core mapping"),
+                # which would silently discard every endpoint mention.
                 existing.append({"start": s, "end": e, "text": anchor.text[s:e],
-                                 "label": name, "score": 1.0})
+                                 "label": core, "raw_type": raw_type,
+                                 "score": 1.0})
                 n_ent += 1
         out.digests.append({
             "neighborhood_id": item.neighborhood_id,
@@ -503,6 +569,7 @@ def validate_and_normalize(packet: ExtractionPacket,
     out.stats = {
         "entities": n_ent, "relations": n_rel,
         "entities_rejected": n_ent_rej, "relations_rejected": n_rel_rej,
+        "predicate_fallbacks": n_pred_fallback,
         "neighborhoods": len(packet.items),
     }
     return out

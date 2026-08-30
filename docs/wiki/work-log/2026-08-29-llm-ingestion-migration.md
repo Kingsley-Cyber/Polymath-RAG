@@ -119,3 +119,133 @@ enforced at selection AND dispatch, fail closed.
 - 8-min SLO: best measured 6m34s on a 481KB-normalized book; the full
   813,984B canary run is still reconciling. Seal an eval set before any
   general-speed or general-quality claim.
+
+## 2026-08-29 (late) — adversarial audit of 6a8bf11..8f33ada, all findings fixed
+
+**Contract.** Audit of the LOCAL-LLM-EXTRACTION-V1 session diff (18 commits +
+4 follow-ups) against the seven audit priorities; every finding fixed in
+place, one regression test per finding
+(`tests/determinism/test_llm_audit_fixes.py`, 22 tests). No plan detail
+changed; one unrecorded deviation now recorded (register 4.2.10).
+
+**Changes (by finding).**
+- gate.py — #1 endpoint mentions carry the canonical core `label` (were the
+  surface string → rejected by `_map_label`); #9 attestation is token-boundary
+  aligned (`_aligned`/`_iter_exact`; "host" no longer attests inside
+  "hostname"); #19 an entity without a quote is dropped, never given a
+  synthesized quote; #23 up to `MAX_MENTIONS_PER_SURFACE` boundary-aligned
+  mentions per surface (inside the quote first); #24 `stats.predicate_fallbacks`;
+  #20 an unknown neighborhood id drops THAT item only; #32 ChunkView linear build.
+- client.py — #14 limiter slot released in `finally` on every exit
+  (`_extract_prompt`); malformed body shape is a transport error; #20 receipts
+  carry the sanitize class (`_quarantine_class`), retry nudge names the fault;
+  #26 404 on /infer_batch falls back to per-neighborhood calls; #30
+  `ProviderLimit.from_config` ignores unknown yaml keys; NEW (post-audit
+  commit 5f5d54b): GPU-OOM halving now recurses AFTER releasing the slot
+  (held slot + halved limit deadlocked); `GENERATION_CONFIG` is one constant.
+- limiter.py — #11 breaker half-open admits exactly one probe (success →
+  closed, failure → re-open); #12 buckets never sleep under their lock,
+  oversized requests clamp to capacity (no infinite wait); #13 non-blocking
+  acquire uses `try_acquire` (no TOCTOU → blocking); #21 Retry-After holds
+  the lane (`not_before`); #22 RPM token refunded when TPM refuses.
+- batched_server.py — #4 generation failure answers every queued item once
+  (HTTP 500 body), bad `messages` → 400 before enqueue; #5 `_GEN_LOCK`
+  serializes every decode; #15/#27 per-item budgets (batch decodes to the
+  largest, each item cut to its own; honest `finish_reason`/`stop_reason`,
+  real `completion_tokens`, `max_tokens` clamped to
+  POLYMATH_LLM_LOCAL_MAX_TOKENS); #28 size trigger at MICRO_BATCH_MAX.
+- policy.py / settings.py — #6 `CLOUD_MIN_BYTES` is a FLOOR at both
+  boundaries (`effective_threshold`; settings `ge=300_000`); both extraction
+  endpoints validated loopback unconditionally.
+- llm_provider.py — #7 packing honors the hard cap (a bucket exceeds it only
+  when one child does); #3 `LIMITER_REFUSED` raises `ExtractionTransportError`
+  (stage fails → ticket retries; never completes with missing neighborhoods);
+  #2 `contract_identity()` — models, prompt, ontology + aliases, type
+  fallbacks, generation config, neighborhood shape, chunk-kind rules,
+  limiter seeds — hashed into the extract stage contract (gliner path
+  byte-identical: still `None`).
+- extract_worker.py — #8 no raw-ledger double write in llm modes
+  (`raw_sink=None`); #10 multi-sentence quotes clipped to exact per-sentence
+  slices + `llm_evidence_clipped` audit/count; #16 no `ADMITTED_*` trace
+  events in `llm_shadow`, audit artifact written in shadow; #17 full
+  rejection/coercion lists persist (`llm_rejections`, `llm_coercions` keys)
+  with `stats.rejections_by_class`; #29 deviation recorded (register 4.2.10).
+- ontology.py — #25 phrasal alias pass is token-bounded, longest alias first.
+- tests — #18 `test_rate_conc_cap_is_the_safety_ceiling` no longer leaks
+  blocked non-daemon threads (the suite could not exit);
+  `test_neighborhoods_balanced_and_stub_skipped` now asserts the hard cap
+  (it had enshrined the overflow). `llm_quality_sample.py` reads the DSN from
+  settings (#31).
+
+**Proof.** `pytest --noconftest tests/determinism/test_llm_extraction.py
+tests/determinism/test_llm_limiter.py tests/determinism/test_llm_audit_fixes.py`
+→ 25 + 8 + 22 passed, process exits. `ruff` count per touched file ≤ HEAD
+baseline (remaining hits are pre-existing style classes).
+
+**Rejected claims.** "Uniform k-bucket packing" cannot hold with indivisible
+children larger than cap/k; the hard cap wins. Limiter seeds are hashed on
+the owner's instruction even though they are not semantic inputs — changing
+them re-extracts.
+
+**Open contract gaps.** Shadow-mode DB assertions (zero mentions/candidates/
+facts, zero ADMITTED_* trace rows) and the batch-composition determinism
+drill (same neighborhood alone vs. inside a batch-40 decode) need the live
+stack; not covered by the pure suite. The extract-stage contract hash
+changes for every llm_* document (intended: the old hash omitted the model).
+
+## 2026-08-29 (late, 2) — durable adaptive controller (owner flag: "the concurrency code is dead")
+
+**Contract.** The controller must FIND the highest safe concurrency and
+KEEP it: state survives worker restarts/reboots, the local lane's real
+throughput knob (tokens per batched call) adapts the same way, and every
+call receipt proves the value it ran under. Owner also set the cloud
+boundary to 450,000 B (`.env`: `POLYMATH_WORKER_CLOUD_MIN_BYTES=450000`;
+the 300,000 floor stands — the value may only be raised).
+
+**Evidence (DB, before this change).** Every `llm_extraction.calls[*]
+.limiter_effective` in `artifacts` is `None` (the receipt code shipped in
+1c30e24 was never running: the single extract worker, pid 7248, predates
+it). Learning SQL = run_a07106 (114 KB, local): 24 neighborhoods / 6
+calls / 440 s, 2 calls quarantined, extract receipt `committed` at
+20:36:56 (a later contract-bumped attempt failed 02:25). On the local
+lane sub-batches run SEQUENTIALLY (`extract_batched` → one `/infer_batch`
+per sub-batch) and the server serializes decodes, so "concurrency" there
+was never the limiter — it is the batch-token cap, which had no ascent
+(env constant 28K; OOM halved the call, not the cap).
+
+**Changes.**
+- `stores/postgres/migrations/0040_llm_controller_state.sql` — `llm_controller_state(key, state jsonb, updated_at)`; APPLIED to the live DB (idempotent).
+- `limiter.py` — `ControllerStore` protocol; `AdaptiveLimiter.state()/restore()` + on-change emit; NEW `AdaptiveBudget` (AIMD over a scalar: +step per 4 clean batches, ×0.5 on OOM); `LimiterRegistry.attach_store()` restores every lane/budget on creation (or at attach) and persists on every change.
+- `state_store.py` — `PostgresControllerStore` (autocommit, own connection, never inside a stage txn; fail-soft with one warning).
+- `client.py` — local batch cap = `local_batch_budget().effective` (seed `POLYMATH_LLM_LOCAL_BATCH_TOKENS`=28000, ceiling `POLYMATH_LLM_LOCAL_BATCH_TOKENS_MAX`=40000, floor 4000, step 2000); OOM → `budget.record_oom()` + halve-and-retry; clean batch → `record_success()`. `LLMCallResult.limiter_effective` / `batch_tokens_cap` captured AT the call.
+- `llm_provider.py` — store attached once per process (`_ensure_controller_store`); `stats.controller = {before, after, persisted}` in the stage artifact; receipts use the captured values (no post-hoc registry lookup).
+- `config/extraction_models/limiter.yaml` — cloud `conc_cap`/`max` 8 → 16: the ceiling is a bound the controller may climb to; the real limit is found from 429s and persisted.
+- tests: `tests/determinism/test_llm_controller.py` (6): restart restores the found ceiling, clamp to [floor, ceiling], late attach restores, budget AIMD + persistence, batched client sizes calls from the budget and climbs, receipts carry captured values.
+
+**Proof.** 4 suites green (25 + 8 + 22 + 6). Live store round-trip on
+`llm_controller_state` (save → load → upsert → delete) OK; unreachable DSN
+→ one warning, `None`, no exception.
+
+**Rejected claims.** "Concurrency climbs on the local lane" — it cannot
+while sub-batches are sequential and the server serializes decodes; the
+batch budget is the local lane's controller. Runtime effective values are
+NOT in the stage contract hash (they are not semantic inputs; the yaml
+seeds are).
+
+**Open contract gaps.** The running extract worker (pid 7248) and the
+batched server must be RESTARTED to run this code — until then receipts
+keep showing `limiter_effective: None`. First run after restart seeds from
+yaml (no history yet); the second run restores. The cloud ceiling of 16 is
+a bound, not a measurement — the first 429 will halve and persist.
+
+**Restart proof (2026-08-30 04:28 UTC).** Extract worker 7248 (build
+1c30e24) terminated → supervisor restarted it as pid 16134 (build 8f33ada +
+working tree); batched server 3707 → 16132, `/ready` reports `max_tokens`
+(new code). Worker re-registered, leased tkt_4d84b61d (attempt 1), first
+cloud calls OK. `llm_controller_state` row `llm_cloud[default]` appeared
+at 04:28:46 with effective=4 (yaml seed 3 → +1 after 4 clean calls) — the
+controller is climbing and the climb is durable. The pre-restart lease
+(tkt_24951d62, owner 7248) returns to READY at its 04:33 expiry via the
+supervisor's stale-lease tick. Governance: new files declared in the
+scaffold TREE, `llm_quality_sample.py` registered in scripts/README.md
+(repo_guard: 0 undeclared among this session's files).

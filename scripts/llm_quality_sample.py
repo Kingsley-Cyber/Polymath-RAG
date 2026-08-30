@@ -31,7 +31,9 @@ sys.path.insert(0, str(ROOT / "control"))
 
 import psycopg  # noqa: E402
 
-DSN = "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath"
+from polymath_shared.settings import get_settings  # noqa: E402
+
+DSN = get_settings().postgres.dsn      # never a credential literal in a script
 
 
 def main() -> int:

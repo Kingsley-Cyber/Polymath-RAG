@@ -41,6 +41,9 @@ class PostgresSettings(BaseSettings):
     )
 
 
+_LOOPBACK_HOSTS = ("127.0.0.1", "localhost", "::1")
+
+
 class SidecarSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
     gliner_url: str = Field(default="http://127.0.0.1:8740", description="GLiNER two-pass runtime")
@@ -103,6 +106,23 @@ class SidecarSettings(BaseSettings):
     )
 
     @model_validator(mode="after")
+    def validate_llm_extraction_endpoints(self) -> "SidecarSettings":
+        """LOCAL-LLM-EXTRACTION-V1 boundary: BOTH extraction endpoints are
+        loopback, unconditionally. The 'local' lane carries every document
+        at or below the 300 KB rule — a LAN host here would move those
+        documents off the machine under a 'local' label; the 'cloud' lane
+        is the local Ollama daemon (the daemon relays), never a remote
+        URL configured from this process."""
+        for name, url in (("POLYMATH_LLM_LOCAL_EXTRACT_URL", self.llm_local_extract_url),
+                          ("POLYMATH_LLM_CLOUD_URL", self.llm_cloud_url)):
+            parsed = urlparse(url)
+            if parsed.scheme not in ("http", "https") or parsed.hostname not in _LOOPBACK_HOSTS:
+                raise ValueError(
+                    f"{name} must be a loopback URL (got {url!r}); the 300 KB "
+                    "rule forbids extraction endpoints off this machine")
+        return self
+
+    @model_validator(mode="after")
     def validate_local_llm_connection(self) -> "SidecarSettings":
         provider = self.local_llm_provider.strip()
         if provider not in ("disabled", "ollama_local"):
@@ -142,9 +162,12 @@ class WorkerSettings(BaseSettings):
     )
     cloud_min_bytes: int = Field(
         default=300_000,
+        ge=300_000,
         description="Owner rule 2026-08-29: documents at or below this size "
                     "can never select or dispatch a cloud provider "
-                    "(enforced at selection AND dispatch, fail closed).",
+                    "(enforced at selection AND dispatch, fail closed). "
+                    "300,000 is a FLOOR: the value may be raised, never "
+                    "lowered (policy.effective_threshold clamps again).",
     )
     llm_concurrency_local: int = Field(
         default=2, description="Parallel in-flight extraction calls, local lane")

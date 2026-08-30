@@ -262,6 +262,12 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_llm_extraction.py", "py", None),
     ("tests/determinism/test_llm_limiter.py", "py", None),
     ("scripts/llm_quality_sample.py", "py", None),
+    # 2026-08-29 audit fixes + durable adaptive controller
+    ("shared/polymath_shared/llm_extraction/state_store.py", "py", None),
+    ("stores/postgres/migrations/0040_llm_controller_state.sql", "sql", None),
+    ("tests/determinism/test_llm_audit_fixes.py", "py", None),
+    ("tests/determinism/test_llm_controller.py", "py", None),
+    ("workers/workers/chunk_kind.py", "py", None),
     ("docs/wiki/architecture/RAG-ARCHITECTURE-V2.md", "md", None),
     ("docs/wiki/work-log/2026-08-29-llm-ingestion-migration.md", "md", None),
     ("workers/workers/project_qdrant_worker.py", "py", None),

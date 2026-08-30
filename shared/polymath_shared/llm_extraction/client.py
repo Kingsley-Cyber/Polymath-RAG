@@ -29,11 +29,25 @@ from polymath_shared.llm_extraction.contract import (
     SanitizeResult,
 )
 from polymath_shared.llm_extraction.gate import sanitize
-from polymath_shared.llm_extraction.limiter import REGISTRY, ProviderLimit
+from polymath_shared.llm_extraction.limiter import (
+    REGISTRY,
+    ProviderLimit,
+    parse_retry_after,
+)
 from polymath_shared.llm_extraction.policy import (
     LaneDecision,
     require_cloud_eligible,
 )
+
+# LOCKED generation config (plan decision 18). Hashed into the extract
+# stage contract via workers.llm_provider.contract_identity — change it
+# only with a new A/B record, and expect every document to re-extract.
+GENERATION_CONFIG: dict = {
+    "temperature": 0.0,
+    "local": {"repetition_penalty": 1.15, "repetition_context_size": 400,
+              "enable_thinking": False},
+    "cloud": {"reasoning_effort": "none"},
+}
 
 # Lane → limiter spec seeds (config/extraction_models/limiter.yaml is the
 # editable source of truth; these are the code-level fallbacks).
@@ -58,8 +72,26 @@ def _lane_limit(lane: str) -> ProviderLimit:
     cfg = (_LIMITER_CONFIG or {}).get(
         "mlx_local" if lane == "local" else "ollama_cloud")
     if cfg:
-        return ProviderLimit(**{**_LANE_LIMITS[lane].__dict__, **cfg})
+        return ProviderLimit.from_config(_LANE_LIMITS[lane], cfg)
     return _LANE_LIMITS[lane]
+
+
+def _quarantine_class(s_res: SanitizeResult | None) -> str:
+    """Receipt error class for a call whose packet did not survive
+    sanitize: the sanitize disposition itself unless it was the generic
+    unparseable case (SANITIZE_UNKNOWN_NEIGHBORHOOD must not be masked)."""
+    if s_res is None or s_res.error_class in (None, "SANITIZE_UNPARSEABLE"):
+        return "QUARANTINED_UNPARSEABLE"
+    return s_res.error_class
+
+
+def _retry_nudge(s_res: SanitizeResult | None) -> str:
+    if s_res is not None and s_res.error_class == "SANITIZE_UNKNOWN_NEIGHBORHOOD":
+        return ("\n\nYour previous reply referenced neighborhood ids that "
+                "were not given. Use ONLY the neighborhood_id values "
+                "provided, exactly as written, and answer again.")
+    return ("\n\nYour previous reply was not valid JSON under the "
+            "contract. Re-read the schema and answer again.")
 
 
 def _limiter_config_path():
@@ -117,6 +149,31 @@ class LLMCallResult:
     raw_head: str = ""          # first 200 chars of the last raw response —
                                 # quarantine diagnosis without full payload
     lane_decision: LaneDecision | None = field(default=None, repr=False)
+    # Controller observability, captured AT THE CALL (not looked up later):
+    # the lane's effective concurrency and, local lane, the batch-token
+    # budget the call ran under — the climb is provable from receipts.
+    limiter_effective: int | None = None
+    batch_tokens_cap: int | None = None
+
+
+# Local batched lane: tokens per /infer_batch call. The ENV values are the
+# SEED (known-clean with the fleet resident, measured 2026-08-29) and the
+# CEILING; the AdaptiveBudget climbs from the persisted effective toward the
+# ceiling and halves on GPU-OOM. 45K OOMed with the fleet resident.
+LOCAL_BATCH_TOKENS_SEED_ENV = "POLYMATH_LLM_LOCAL_BATCH_TOKENS"
+LOCAL_BATCH_TOKENS_MAX_ENV = "POLYMATH_LLM_LOCAL_BATCH_TOKENS_MAX"
+LOCAL_BATCH_TOKENS_FLOOR = 4_000
+LOCAL_BATCH_TOKENS_STEP = 2_000
+
+
+def local_batch_budget():
+    """The process-wide (and, with a store attached, fleet-wide) batch
+    budget for the local lane."""
+    seed = int(os.environ.get(LOCAL_BATCH_TOKENS_SEED_ENV, "28000"))
+    ceiling = int(os.environ.get(LOCAL_BATCH_TOKENS_MAX_ENV, "40000"))
+    return REGISTRY.budget("llm_local:batch_tokens", seed=seed,
+                           floor=LOCAL_BATCH_TOKENS_FLOOR,
+                           ceiling=max(seed, ceiling), step=LOCAL_BATCH_TOKENS_STEP)
 
 
 class ExtractionTransportError(RuntimeError):
@@ -170,25 +227,26 @@ class LLMExtractionClient:
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_prompt},
             ],
-            "temperature": 0.0,
+            "temperature": GENERATION_CONFIG["temperature"],
             "max_tokens": max_tokens,
             "stream": False,
         }
         if self.lane == "local":
+            local = GENERATION_CONFIG["local"]
             # LOCKED (plan decision 18): kills exact-repeat degeneration
             # while preserving the JSON-structural repetition per object.
-            payload["repetition_penalty"] = 1.15
-            payload["repetition_context_size"] = 400
+            payload["repetition_penalty"] = local["repetition_penalty"]
+            payload["repetition_context_size"] = local["repetition_context_size"]
             # Qwen3.5 emits thinking into a separate `reasoning` field and
             # burns the output budget there; the chat template flag turns
             # it off (measured: 1600-token think → 38-token direct JSON).
-            payload["chat_template_kwargs"] = {"enable_thinking": False}
+            payload["chat_template_kwargs"] = {"enable_thinking": local["enable_thinking"]}
         else:
             # Cloud lane (Ollama daemon proxy): same thinking-burn failure
             # mode, different knob — measured 2026-08-29: without this the
             # 397B spends the entire output budget thinking (finish=length,
             # empty content); with it, direct JSON, finish=stop.
-            payload["reasoning_effort"] = "none"
+            payload["reasoning_effort"] = GENERATION_CONFIG["cloud"]["reasoning_effort"]
         resp = httpx.post(f"{self.base_url}/v1/chat/completions",
                           json=payload, timeout=self.timeout_s)
         resp.raise_for_status()
@@ -237,9 +295,10 @@ class LLMExtractionClient:
             return []
         # BATCH TOTAL-TOKEN CAP (measured 2026-08-29): a 45K-token batch
         # OOMs Metal when the fleet is resident on the shared GPU. Chunk
-        # prompts so each HTTP call stays under the cap; on a GPU-OOM 500
-        # the call HALVES and retries (batch-size AIMD).
-        cap = int(os.environ.get("POLYMATH_LLM_LOCAL_BATCH_TOKENS", "28000"))
+        # prompts so each HTTP call stays under the ADAPTIVE cap: clean
+        # batches raise it (+step per K), a GPU-OOM 500 halves it AND the
+        # call retries in halves — the budget persists across restarts.
+        cap = local_batch_budget().effective
         sub_batches: list[list[tuple[str, str, int]]] = []
         cur: list[tuple[str, str, int]] = []
         cur_tokens = 0
@@ -254,45 +313,79 @@ class LLMExtractionClient:
             sub_batches.append(cur)
         results: list[LLMCallResult] = []
         for sb in sub_batches:
-            results.extend(self._infer_batch_call(sb, limiter, decision))
+            results.extend(self._infer_batch_call(sb, limiter, decision, cap))
         return results
 
-    def _infer_batch_call(self, prompt_items, limiter, decision) -> list[LLMCallResult]:
-        """One /infer_batch call; GPU-OOM (500) halves the sub-batch."""
-        limiter.acquire(est_tokens=sum(len(u) for _, u, _ in prompt_items) / 4.0)
+    def _infer_batch_call(self, prompt_items, limiter, decision,
+                          cap: int | None = None) -> list[LLMCallResult]:
+        """One /infer_batch call.
+
+        GPU-OOM (500) halves the sub-batch and retries — AFTER the limiter
+        slot is released (recursing while holding the slot deadlocks once
+        record_failure halves the limit to 1) — and halves the persisted
+        batch budget so the NEXT document starts below the OOM point; a
+        clean batch feeds the budget's climb. 404 means an older runtime
+        without /infer_batch: fall back to per-neighborhood calls through
+        the OpenAI-compatible path (the documented fallback)."""
+        budget = local_batch_budget() if self.lane == "local" else None
+        if not limiter.acquire(est_tokens=sum(len(u) for _, u, _ in prompt_items) / 4.0):
+            raise ExtractionTransportError(
+                f"{self.lane} lane refused the batched call (breaker open "
+                "or rate hold); stage must retry")
         t0 = time.perf_counter()
         total_est = sum(estimate_input_tokens(u) for _, u, _ in prompt_items) \
             + sum(mt for _, _, mt in prompt_items)
         batch_timeout = max(self.timeout_s, 60.0 + (total_est / 25.0) * 2.0)
+        body: dict = {}
+        status: int | None = None
         try:
             try:
                 resp = httpx.post(
                     f"{self.base_url}/infer_batch",
-                    json={"prompts": [{"system": SYSTEM_PROMPT, "user": u} for _, u, _ in prompt_items],
+                    json={"prompts": [{"system": SYSTEM_PROMPT, "user": u,
+                                       "max_tokens": mt}
+                                      for _, u, mt in prompt_items],
                           "max_tokens": max(mt for _, _, mt in prompt_items)},
                     timeout=batch_timeout)
                 resp.raise_for_status()
                 body = resp.json()
+                if not isinstance(body, dict):
+                    raise ExtractionTransportError(
+                        f"{self.lane} batched transport returned a non-object body")
             except httpx.HTTPStatusError as exc:
-                limiter.record_failure()
-                if (exc.response.status_code == 500
-                        and len(prompt_items) > 1):
-                    half = len(prompt_items) // 2
-                    out = self._infer_batch_call(prompt_items[:half], limiter, decision)
-                    out.extend(self._infer_batch_call(prompt_items[half:], limiter, decision))
-                    return out
-                raise ExtractionTransportError(
-                    f"{self.lane} batched transport failed: "
-                    f"HTTP {exc.response.status_code}") from exc
+                status = exc.response.status_code
+                limiter.record_failure(
+                    retry_after=exc.response.headers.get("retry-after"),
+                    headers=dict(exc.response.headers))
+                halve = status == 500 and len(prompt_items) > 1
+                if not halve and status != 404:
+                    raise ExtractionTransportError(
+                        f"{self.lane} batched transport failed: "
+                        f"HTTP {status}") from exc
             except (httpx.HTTPError, json.JSONDecodeError) as exc:
                 limiter.record_failure()
                 raise ExtractionTransportError(
                     f"{self.lane} batched transport failed: "
                     f"{type(exc).__name__}: {exc}") from exc
-            limiter.record_success()
+            else:
+                limiter.record_success()
+                if budget is not None:
+                    budget.record_success()
         finally:
             limiter.release()
-        contents = [x.get("content", "") for x in body.get("results", [])]
+        if status == 500:
+            if budget is not None:
+                budget.record_oom()
+            half = len(prompt_items) // 2
+            out = self._infer_batch_call(prompt_items[:half], limiter, decision, cap)
+            out.extend(self._infer_batch_call(prompt_items[half:], limiter, decision, cap))
+            return out
+        if status == 404:
+            return [self._extract_prompt(u, {nid}, mt, decision)
+                    for nid, u, mt in prompt_items]
+        results = body.get("results")
+        contents = [str((x or {}).get("content", "")) for x in results] \
+            if isinstance(results, list) else []
         if len(contents) != len(prompt_items):     # misaligned batch: refuse
             contents = (contents + [""] * len(prompt_items))[:len(prompt_items)]
         out: list[LLMCallResult] = []
@@ -303,8 +396,10 @@ class LLMExtractionClient:
                 sanitize=s_res,
                 wall_ms=int((time.perf_counter() - t0) * 1000),
                 attempts=1, raw_head=raw[:200],
-                error_class=None if packet is not None else "QUARANTINED_UNPARSEABLE",
-                lane_decision=decision))
+                error_class=None if packet is not None else _quarantine_class(s_res),
+                lane_decision=decision,
+                limiter_effective=limiter.effective,
+                batch_tokens_cap=cap))
         return out
 
     def extract(self, neighborhoods: list[tuple[str, list[tuple[str, str]]]],
@@ -327,49 +422,68 @@ class LLMExtractionClient:
         if max_tokens is None:
             max_tokens = output_budget_for(estimate_input_tokens(user_prompt))
         expected = {nid for nid, _ in neighborhoods}
+        return self._extract_prompt(user_prompt, expected, max_tokens, decision)
+
+    def _extract_prompt(self, user_prompt: str, expected: set[str],
+                        max_tokens: int, decision: LaneDecision | None) -> LLMCallResult:
+        """The retry loop behind `extract`. Slot discipline: the limiter
+        slot is released in a `finally` on EVERY exit (transport error,
+        malformed body shape, retryable status), never leaked."""
         limiter = self._lane_limiter()
         est_tokens = estimate_input_tokens(user_prompt) + max_tokens / 2.0
         attempts = 0
         last_raw = ""
         last_sanitize: SanitizeResult | None = None
         tokens_in = tokens_out = 0
+        nudge = ""
         t0 = time.perf_counter()
         while attempts < self.max_attempts:
             attempts += 1
             if not limiter.acquire(est_tokens=est_tokens):
-                # breaker open or non-blocking saturation: report as
-                # throttle so the caller can requeue; no network I/O made
+                # breaker open / rate hold: no network I/O made. The caller
+                # (run_proposals) turns this into a stage failure so the
+                # ticket retries — it is never a completed extraction.
                 return LLMCallResult(
                     lane=self.lane, model=self.model, raw_text="",
                     packet=None,
                     sanitize=SanitizeResult(ok=False, error_class="LIMITER_REFUSED"),
                     wall_ms=int((time.perf_counter() - t0) * 1000),
                     attempts=attempts, error_class="LIMITER_REFUSED",
-                    lane_decision=decision)
+                    lane_decision=decision, limiter_effective=limiter.effective)
+            retry_delay: float | None = None
             try:
-                raw, tin, tout = self._chat(
-                    user_prompt + ("\n\nYour previous reply was not valid "
-                                   "JSON under the contract. Re-read the schema "
-                                   "and answer again." if attempts > 1 else ""),
-                    max_tokens)
-            except httpx.HTTPStatusError as exc:
-                status = exc.response.status_code
-                limiter.record_failure(
-                    retry_after=exc.response.headers.get("retry-after"),
-                    headers=dict(exc.response.headers))
+                try:
+                    raw, tin, tout = self._chat(user_prompt + nudge, max_tokens)
+                except httpx.HTTPStatusError as exc:
+                    status = exc.response.status_code
+                    limiter.record_failure(
+                        retry_after=exc.response.headers.get("retry-after"),
+                        headers=dict(exc.response.headers))
+                    if status in (429, 502, 503, 504) and attempts < self.max_attempts:
+                        retry_delay = min(
+                            parse_retry_after(exc.response.headers.get("retry-after")) or 1.5,
+                            15.0)
+                    else:
+                        raise ExtractionTransportError(
+                            f"{self.lane} transport failed: HTTP {status}") from exc
+                except (httpx.HTTPError, json.JSONDecodeError, KeyError) as exc:
+                    limiter.record_failure()
+                    raise ExtractionTransportError(
+                        f"{self.lane} transport failed: {type(exc).__name__}: {exc}") from exc
+                except Exception as exc:
+                    # malformed body SHAPE (non-numeric usage, non-dict
+                    # choice, ...): a transport fault, not a model fault
+                    limiter.record_failure()
+                    raise ExtractionTransportError(
+                        f"{self.lane} transport returned a malformed body: "
+                        f"{type(exc).__name__}: {exc}") from exc
+                else:
+                    limiter.record_success()
+            finally:
                 limiter.release()
-                if status in (429, 502, 503, 504) and attempts < self.max_attempts:
-                    time.sleep(min(float(exc.response.headers.get("retry-after", 0) or 1.5), 15.0))
-                    continue
-                raise ExtractionTransportError(
-                    f"{self.lane} transport failed: HTTP {status}") from exc
-            except (httpx.HTTPError, json.JSONDecodeError, KeyError) as exc:
-                limiter.record_failure()
-                limiter.release()
-                raise ExtractionTransportError(
-                    f"{self.lane} transport failed: {type(exc).__name__}: {exc}") from exc
-            limiter.record_success()
-            limiter.release()
+            if retry_delay is not None:
+                time.sleep(retry_delay)         # slot already released
+                continue
             last_raw = raw
             tokens_in += tin
             tokens_out += tout
@@ -380,11 +494,13 @@ class LLMExtractionClient:
                     lane=self.lane, model=self.model, raw_text=raw, packet=packet,
                     sanitize=s_res, wall_ms=int((time.perf_counter() - t0) * 1000),
                     tokens_in=tokens_in, tokens_out=tokens_out, attempts=attempts,
-                    raw_head=raw[:200], lane_decision=decision)
+                    raw_head=raw[:200], lane_decision=decision,
+                    limiter_effective=limiter.effective)
+            nudge = _retry_nudge(s_res)
         return LLMCallResult(
             lane=self.lane, model=self.model, raw_text=last_raw, packet=None,
             sanitize=last_sanitize or SanitizeResult(ok=False, error_class="SANITIZE_UNPARSEABLE"),
             wall_ms=int((time.perf_counter() - t0) * 1000),
             tokens_in=tokens_in, tokens_out=tokens_out, attempts=attempts,
-            error_class="QUARANTINED_UNPARSEABLE", raw_head=last_raw[:200],
-            lane_decision=decision)
+            error_class=_quarantine_class(last_sanitize), raw_head=last_raw[:200],
+            lane_decision=decision, limiter_effective=limiter.effective)

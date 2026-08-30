@@ -96,6 +96,7 @@ architecture_impact: authoritative detail extraction of the migration plan
 | 4.2.7 | .env OLLAMA key; no key → fall back | SUPERSEDED (daemon auth; no key handling needed) |
 | 4.2.8 | model_events + window management | DEVIATED (window receipts in artifacts; no table, no automation) |
 | 4.2.9 | one request may batch multiple neighborhoods; provenance never mixes | DONE (NEIGHBORHOODS_PER_CALL=4; items per neighborhood) |
+| 4.2.10 | ADR-0008 `evidence_proposal_mode` ('lexical' = pass 2 abstains) and the router deprioritization skip apply to the LLM evidence lane | DEVIATED (recorded 2026-08-29 audit): in `llm_shadow`/`llm_live` the gated LLM relation proposals merge with lexical anchors regardless of `evidence_proposal_mode` (the mode governs the GLiNER pass-2 only) and regardless of `scientific_lane_prioritized` (that skip saved a GLiNER call; there is no call to save). Both inputs stay in the contract hash. |
 
 ## §4.3 extraction contract
 
