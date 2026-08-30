@@ -94,10 +94,16 @@ def claim_ticket_events(conn, identity: dict, event_types: list[str], limit: int
                 -- for every missing stage one tick after intake, and a
                 -- run whose chain is minted one tick late had nothing to
                 -- hold them: SC-200 ran profile/canonicalize/neo4j/verify
-                -- BEFORE extract. No ticket => not claimable, full stop
-                -- (a LEFT-JOIN miss leaves t.status NULL, which fails
-                -- the equality below — no separate null test needed).
-                AND t.status = 'ready' AND t.archived_at IS NULL
+                -- BEFORE extract. No ticket => not claimable (a LEFT-JOIN
+                -- miss leaves t.status NULL, which fails the equality).
+                -- The ONE exception is the entry stage: the orchestrator
+                -- emits intake.v1 at upload, the intake stage creates the
+                -- corpus row, and the ticket chain is minted only for runs
+                -- whose corpus exists — intake has no predecessor, so it
+                -- carries no ordering risk (measured 2026-08-30 13:32:
+                -- two uploads sat in `intake` forever under the strict gate).
+                AND ((t.status = 'ready' AND t.archived_at IS NULL)
+                     OR (t.ticket_id IS NULL AND e.event_type = 'intake.v1'))
                 AND NOT (e.event_id = ANY(%s))
              ORDER BY CASE WHEN r.created_at > now() - interval '15 minutes'
                            THEN 0 ELSE 1 END,
@@ -112,7 +118,7 @@ def claim_ticket_events(conn, identity: dict, event_types: list[str], limit: int
         events = cur.fetchall()
         claimed = []
         for e in events:
-            if e["ticket_id"] is None:
+            if e["ticket_id"] is None and e["event_type"] != "intake.v1":
                 continue                    # fail closed (see the query)
             if e["ticket_id"] is not None:
                 if e["ticket_status"] != "ready":

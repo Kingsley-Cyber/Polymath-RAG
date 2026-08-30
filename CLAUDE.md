@@ -48,6 +48,11 @@ sessions. Start every session with
 - Lane parallelism today = number of extract worker processes (one per
   supervised slot). A second one started by hand takes the next ready
   ticket; the local lane still serializes at the batched server.
+- The stale-code fence is mtime-based over `.py/.yaml` in the three trees:
+  the TEST SUITE rewrites `shared/polymath_shared/rulepack/scientific-predicate-ontology-v2.yaml`
+  (same bytes, new mtime) and quarantines every worker. Run tests BEFORE a
+  fleet restart, never after; check `worker_registrations.status` after any
+  test run.
 - Merge `main` from the worktree `../polymath-v4-main`; never `git checkout`
   in the live tree. Commit messages end with the Co-Authored-By /
   Claude-Session trailers; never push without asking unless the owner
