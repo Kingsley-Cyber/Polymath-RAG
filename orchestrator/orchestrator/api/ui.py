@@ -640,7 +640,6 @@ def _raise_if_lock_timeout(exc: Exception, what: str) -> None:
                        "or wait for the stage to finish, then retry."})
 
 
-@router.delete("/corpora/{corpus_id}")
 def _quiesce_doc(conn, doc_id: str) -> None:
     """DELETE-WINS for a single document: supersede its in-flight tickets
     so workers stop claiming while the delete proceeds."""
@@ -685,6 +684,8 @@ def _quiesce_corpus(conn, corpus_id: str) -> dict:
             "workers_kicked": kicked}
 
 
+
+@router.delete("/corpora/{corpus_id}")
 def delete_corpus(corpus_id: str, confirm: str = "") -> dict:
     """OWNER-DESTRUCTIVE: remove a corpus and everything derived from
     it — PG rows, the Qdrant collection, and its Neo4j substrate.
