@@ -48,7 +48,9 @@ export async function uploadFile(corpus: string, file: File) {
   form.append("file", file);
   const r = await fetch("/upload", { method: "POST", body: form });
   if (!r.ok) throw new Error(`upload → ${r.status}: ${await r.text()}`);
-  return r.json() as Promise<{ run_id: string; accepted: boolean }>;
+  return r.json() as Promise<{
+    run_id: string; accepted: boolean; already_exists?: boolean;
+  }>;
 }
 
 export interface StreamHandlers {

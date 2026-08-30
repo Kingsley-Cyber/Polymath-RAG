@@ -330,10 +330,10 @@ def _delete_document_tx(doc_id: str, confirm: str = "") -> dict:
     (CRITICAL: receipts without points would make a re-ingest skip
     re-embedding into a hole). Facts are removed only when no evidence
     remains from other documents. Typed confirmation required."""
-    if confirm != doc_id:
-        raise HTTPException(409, {
-            "error_code": "confirmation_required",
-            "message": f"pass confirm={doc_id!r} to delete this document"})
+    # UI-CONTRACT-FIX 2026-08-30: the confirm token is the doc_id OR the
+    # source_name — a 64-char content hash is not human-typable, which made
+    # the delete button look dead (silent no-op on mismatch). Also 400-class
+    # for a bad confirm (409 was semantically wrong).
     removed: dict = {}
     with tx() as conn:
         _lock_timeout_or_409(conn, "delete document")
@@ -344,6 +344,11 @@ def _delete_document_tx(doc_id: str, confirm: str = "") -> dict:
             raise HTTPException(404, {"error_code": "unknown_document",
                                       "message": doc_id})
         corpus_id, source_name = row
+        if confirm not in (doc_id, source_name):
+            raise HTTPException(400, {
+                "error_code": "confirmation_required",
+                "message": f"pass confirm='{doc_id}' or the file name "
+                           f"'{source_name}' to delete this document"})
         chunk_ids = [r[0] for r in conn.execute(
             "SELECT chunk_id FROM chunks WHERE doc_id=%s", (doc_id,)).fetchall()]
 

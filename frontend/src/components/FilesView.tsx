@@ -52,7 +52,9 @@ export default function FilesView({
         setUploads((u) =>
           u.map((x) =>
             x.name === file.name
-              ? { ...x, state: "ingesting", run: out.run_id }
+              ? { ...x, state: out.already_exists
+                    ? "already in corpus — no new run"
+                    : "ingesting", run: out.run_id }
               : x,
           ),
         );
@@ -182,15 +184,19 @@ export default function FilesView({
                       title="Delete this document everywhere (vectors, graph, facts evidenced only here). Same bytes become re-ingestable."
                       onClick={async () => {
                         const typed = window.prompt(
-                          `Delete "${d.source_name}" from ${corpus}?\nType the doc id to confirm:\n${d.doc_id}`,
+                          `Delete "${d.source_name}" from ${corpus}?\nType the file name to confirm:\n${d.source_name}`,
                         );
-                        if (typed !== d.doc_id) return;
+                        if (typed !== d.source_name && typed !== d.doc_id) return;
                         const r = await fetch(
                           `/documents/${encodeURIComponent(d.doc_id)}?confirm=${encodeURIComponent(typed)}`,
                           { method: "DELETE" },
                         );
-                        if (r.ok) refresh();
-                        else window.alert(`Delete failed: ${await r.text()}`);
+                        if (r.ok) { refresh(); return; }
+                        const body = await r.json().catch(() => ({}));
+                        if (body?.detail?.error_code === "runs_in_flight")
+                          window.alert("Extraction is in flight for this document — retry once ingestion finishes.");
+                        else
+                          window.alert(`Delete failed: ${body?.detail?.message ?? r.status}`);
                       }}
                     >
                       ✕
