@@ -277,3 +277,29 @@ calls in 132 s (13.2×, 15→16). The static RPM/TPM buckets are NOT binding
 (≈6.3K tokens/call measured; seed allows ~27 calls/min) — an earlier
 hypothesis that they were is withdrawn. Local batch budget: seed 28000
 → one GPU-OOM → 14000 → climbing (16000 → 18000 → 20000), persisted.
+
+## 2026-08-30 — LATENT-TRANSFER-LAYER-V1: plan authored (no runtime change)
+
+**Contract.** Owner supplied two design documents (`~/Downloads/Adapter.txt`,
+`~/Downloads/Adapter 2.md`), each ingested in its own pass; produce an
+implementation plan with file references, dependency order and execution
+notes. Owner sequence: plan → owner tests the current base (UI, MCP, query
+time, ingestion, extraction) → build.
+**Changes.** `docs/wiki/plans/LATENT-TRANSFER-LAYER-V1-PLAN.md` (decisions
+D1–D12, contracts, component map with verified path:line anchors,
+dependency graph, phases A–E + deferred F, flags/rollback, test matrix,
+open decisions with assumed defaults, exit criteria);
+`LATENT-TRANSFER-LAYER-V1-DESIGN-NOTES.md` (ingestion record, Part 1 ↔
+Part 2 reconciliation); `docs/wiki/architecture/QUERY-TIME-MAP-2026-08-30.md`
+(code map of every query-time/retrieval/projection seam at main@8f418d7).
+**Proof.** Every path:line in the plan was read from code this session
+(`summary_runtime.py:36`, `summary_worker_impl.py:80/127/279`,
+`tickets.py:43-52`, `project_qdrant_worker.py:295-303/308/419/495`,
+`pass1.py:33-39/43/246/350`, `hybrid.py:48/152`, `retrieval_modes.py:19-56`,
+`fast.py:53/285`, `retrieve.py:35/116-142`). Guards green after TREE update.
+**Rejected claims.** No new retrieval mode (modes/`plan_version` frozen;
+latent is a plan flag + request override). No Neo4j change in v1. No LLM
+at query time. Enrichment never a readiness dependency.
+**Open contract gaps.** Owner decisions §7 (lane rule for enrichment,
+exposure as flag, `/ask` consumption of `extract{}`, orphan children) are
+assumed defaults until confirmed; P6 cases must be owner-authored.
