@@ -389,3 +389,17 @@ the GLiNER pin at import time by calling the sidecar even in llm modes —
 with the idle sidecar stopped the worker could not boot; llm modes now
 record the explicit `retired-in-llm-mode` pin (still hashed) without any
 network call. Fleet restarted; Learning SQL ticket re-queued.
+
+**2026-08-30 07:10 — re-ingest measured; relex removed; owner directives.**
+Extraction unit = one parent neighborhood ≈ 1.2 K tokens (parents are
+the unit; the 60 K-char cap never engages). Cloud: 4 neighborhoods/call,
+tokens_in median 5,860 / max 11,738, 46 calls, 769 ent / 258 rel, 0
+quarantined. Local: 25 calls, 5 quarantined = the 4B model dropped the
+`:0` id suffix → SHORT-ID contract (`n1…`) + batched token accounting
+landed; local yield 1.2 ent/neighborhood vs cloud 4.25 — A/B required
+before local carries production alone. Relex (polymath_v3.3 launchd
+agents, ~5 GB resident) booted out, plists parked, venv + relex weights
+deleted; machine 90% free. Both runs complete at ticket level; promotion
+waited on the census's 900 s MISSING-receipt cache. Plan §9 records the
+owner's hardening track: GLiNER full retirement, embed-early DAG split,
+job-level completion + lane assist, supervised lifecycle.
