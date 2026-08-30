@@ -45,6 +45,8 @@ MODEL_ID = "mlx-community/Qwen3.5-4B-MLX-4bit"
 MAX_BATCH = int(os.environ.get("POLYMATH_LLM_LOCAL_BATCH", "40"))
 SERVER_MAX_TOKENS = int(os.environ.get("POLYMATH_LLM_LOCAL_MAX_TOKENS", "4096"))
 DEFAULT_MAX_TOKENS = 2500
+CACHE_LIMIT_BYTES = int(float(os.environ.get("POLYMATH_LLM_LOCAL_CACHE_GB", "1.0")) * 2**30)
+MEMORY_LIMIT_BYTES = int(float(os.environ.get("POLYMATH_LLM_LOCAL_MEMORY_GB", "12.0")) * 2**30)
 GATE_WAIT_S = 1800.0
 
 from flask import Flask, jsonify, request
@@ -63,6 +65,18 @@ def load_model() -> None:
         from mlx_lm import load
         from mlx_lm.sample_utils import make_logits_processors
         _state["mx"] = mx
+        # MEMORY DISCIPLINE (measured 2026-08-30): MLX's buffer cache keeps
+        # every past allocation peak — the idle server sat at 24 GB wired
+        # on a 32 GB machine (7% free, 16.8 GB swap) and the next batch
+        # OOMed Metal (33 × HTTP 500). Cap the cache, cap total Metal
+        # memory (an over-limit allocation raises → 500 → the client's
+        # batch-budget AIMD halves, instead of the whole machine swapping),
+        # and give the cache back after every batch.
+        try:
+            mx.set_cache_limit(CACHE_LIMIT_BYTES)
+            mx.set_memory_limit(MEMORY_LIMIT_BYTES)
+        except Exception as exc:  # noqa: BLE001 — older mlx: best effort
+            print(f"mlx memory limits unavailable: {exc}", file=sys.stderr)
         _state["model"], _state["tok"] = load(MODEL_PATH)
         _state["logits_processors"] = make_logits_processors(
             repetition_penalty=1.15, repetition_context_size=400)
@@ -125,6 +139,10 @@ def _generate(token_lists: list[list[int]], budgets: list[int]) -> list[dict]:
             texts = [generate(_state["model"], tok, prompt=tl, max_tokens=b,
                               logits_processors=_state["logits_processors"])
                      for tl, b in zip(token_lists, budgets)]
+    try:
+        _state["mx"].clear_cache()      # return the batch's buffers to the OS
+    except Exception:  # noqa: BLE001
+        pass
     if len(texts) != len(token_lists):
         raise RuntimeError(
             f"batch_generate returned {len(texts)} texts for {len(token_lists)} prompts")
@@ -169,8 +187,19 @@ def models():
 
 @app.get("/ready")
 def ready():
+    mem = {}
+    try:
+        mx = _state.get("mx")
+        if mx is not None:
+            mem = {"active_gb": round(mx.get_active_memory() / 2**30, 2),
+                   "cache_gb": round(mx.get_cache_memory() / 2**30, 2),
+                   "peak_gb": round(mx.get_peak_memory() / 2**30, 2)}
+    except Exception:  # noqa: BLE001
+        pass
     return jsonify({"ready": True, "batched": True, "max_batch": MAX_BATCH,
-                    "max_tokens": SERVER_MAX_TOKENS})
+                    "max_tokens": SERVER_MAX_TOKENS, "memory": mem,
+                    "limits_gb": {"cache": CACHE_LIMIT_BYTES / 2**30,
+                                  "memory": MEMORY_LIMIT_BYTES / 2**30}})
 
 
 # ---------------------------------------------------------------------------
