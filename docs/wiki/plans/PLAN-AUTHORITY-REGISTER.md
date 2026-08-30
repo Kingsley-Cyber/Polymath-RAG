@@ -110,7 +110,7 @@ last_reviewed: 2026-08-29
 | 4.3.5 | digest central_claim/main_mechanism/retrieval_uses hard-capped | DONE |
 | 4.3.6 | digest consumed by summary workers (no second pass) | MISSING (digests in artifacts only) |
 | 4.3.7 | open-vocabulary types; unknown falls through, raw preserved | DONE |
-| 4.3.8 | per-item output budget scaling with input (15k-in→3k-out) | DONE (c7e98b9: output_budget_for anchors 400@800 → ~3k@15k) |
+| 4.3.8 | per-item output budget scaling with input (15k-in→3k-out) | **SUPERSEDED by measurement 2026-08-30**: the input-scaled cap (484 tokens per parent) truncated the local lane (finish=length, 3 relations) where the locked 2,500 cap self-terminated at 841 tokens with 9 relations. Cap = decision-18 `max_tokens=2500` per neighborhood (+700 per extra neighborhood on cloud calls); batches are budgeted by expected output (~900), not the cap; `finish_reason` recorded per call. |
 | 4.3.9 | self-flag dense/low-confidence per item → quality tier | MISSING (no dense flag; whole-doc lane instead) |
 | 4.3.10 | profiles volume/quality (volume lean: no L/ps; quality full) | PARTIAL (profile field exists; single profile used) |
 | 4.3.11 | tier-2 supersedes tier-1 on same keys | N/A until two-tier decision |
