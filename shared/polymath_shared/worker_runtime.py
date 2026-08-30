@@ -94,8 +94,9 @@ def claim_ticket_events(conn, identity: dict, event_types: list[str], limit: int
                 -- for every missing stage one tick after intake, and a
                 -- run whose chain is minted one tick late had nothing to
                 -- hold them: SC-200 ran profile/canonicalize/neo4j/verify
-                -- BEFORE extract. No ticket => not claimable, full stop.
-                AND t.ticket_id IS NOT NULL
+                -- BEFORE extract. No ticket => not claimable, full stop
+                -- (a LEFT-JOIN miss leaves t.status NULL, which fails
+                -- the equality below — no separate null test needed).
                 AND t.status = 'ready' AND t.archived_at IS NULL
                 AND NOT (e.event_id = ANY(%s))
              ORDER BY CASE WHEN r.created_at > now() - interval '15 minutes'
