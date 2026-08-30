@@ -29,7 +29,7 @@ def conn():
 
 def test_event_without_ticket_is_not_claimable(conn) -> None:
     corpus, run = "gate-test-corpus", "run_gate_test_0001"
-    conn.execute("INSERT INTO corpora (corpus_id, name) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+    conn.execute("INSERT INTO corpora (corpus_id, name, config_hash) VALUES (%s, %s, 'gate-test') ON CONFLICT DO NOTHING",
                  (corpus, corpus))
     conn.execute("INSERT INTO runs (run_id, corpus_id, status, metadata) VALUES (%s, %s, 'intake', '{}')",
                  (run, corpus))
