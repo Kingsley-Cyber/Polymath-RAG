@@ -37,7 +37,7 @@ last_reviewed: 2026-08-29
 |---|---|---|
 | 1.1 | Postgres is the control plane (no new infra) | DONE |
 | 1.2 | Model = process: 4B pinned sidecar `/infer_batch` (load→batches→release); 35B oMLX lifecycle | DEVIATED (batch_generate server built 2026-08-29; window lifecycle automation MISSING — manual start/stop) |
-| 1.3 | Model proposes; Python validates; refuse unattested | DONE |
+| 1.3 | Model proposes; Python validates; refuse unattested | DONE — and since 2026-08-30 (owner): in `llm_live` the validated relations ARE the facts (LLM-DIRECT-FACTS-V1, `workers/llm_direct.py`); the GLiNER-era predicate compiler / admission-harbor chain is bypassed for LLM proposals (it admitted 3 of 286 attested relations). Identity: entities by (core_type, normalized surface), facts by (predicate, subject, object) → cross-document aggregation by id; mentions carry corpus_id + doc_id. |
 | 1.4 | Model sees evidence neighborhoods, never parent summary rows | DONE (build_neighborhoods) |
 | 1.5 | Summaries route / vocabulary translates / chunks prove | DONE (same as 0.1) |
 | 1.6 | Legacy compat: passage_concepts five buckets; extractor_version separates generations | PARTIAL (buckets ✓; **extractor_version does NOT distinguish LLM-era facts — MISSING stamp**) |
