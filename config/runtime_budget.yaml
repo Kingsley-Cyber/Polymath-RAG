@@ -117,7 +117,12 @@ profiles:
           reranker, which serve queries and are not part of building."
     slots: [control, intake, profile, extract, extract2, canonicalize,
             project_canonical, neo4j, qdrant, verify, compile_objects,
-            summaries, sidecar_gliner, sidecar_spacy, sidecar_embedder]
+            summaries, sidecar_embedder]
+    # 2026-08-30: sidecar_gliner + sidecar_spacy REMOVED from the pipeline
+    # profile — GLiNER is retired in llm_live (pin non-boot-critical since
+    # 3134548) and llm_live skips the spaCy slice interpreter (51dd9b2).
+    # Measured: with both resident, batched 4B decode ran ~76 tok/s
+    # aggregate vs the 241 idle-GPU bench. Rollback: re-add both slots.
   converge:
     why: "drive an already-extracted corpus to query_ready: project vectors,
           canonicalize, project the graph, verify. Extraction models are not
