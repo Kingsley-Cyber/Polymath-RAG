@@ -27,7 +27,10 @@ export default function CorporaView({
   useEffect(() => {
     refresh();
     const t = setInterval(refresh, 15_000);
-    return () => clearInterval(t);
+    const onVis = () => { if (document.visibilityState === "visible") refresh(); };
+    document.addEventListener("visibilitychange", onVis);
+    return () => { clearInterval(t);
+      document.removeEventListener("visibilitychange", onVis); };
   }, [refresh]);
 
   const toggle = (id: string) =>

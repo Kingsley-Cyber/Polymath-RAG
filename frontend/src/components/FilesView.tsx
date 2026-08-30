@@ -39,9 +39,22 @@ export default function FilesView({
 
   useEffect(() => {
     refresh();
-    const t = setInterval(refresh, 12_000);
-    return () => clearInterval(t);
-  }, [refresh]);
+    // Poll fast while any run/upload is active, slow when idle; refetch
+    // immediately when the tab regains focus (staleness fix 2026-08-30).
+    let alive = true;
+    const tick = async () => {
+      if (!alive) return;
+      const busy = uploads.some((u) => u.state === "uploading…" || u.state === "ingesting")
+        || (runs ?? []).some((r: any) => r.status !== "query_ready" && r.status !== "failed");
+      refresh();
+      timer = setTimeout(tick, busy ? 4_000 : 12_000);
+    };
+    let timer = setTimeout(tick, 4_000);
+    const onVis = () => { if (document.visibilityState === "visible") refresh(); };
+    document.addEventListener("visibilitychange", onVis);
+    return () => { alive = false; clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVis); };
+  }, [refresh, uploads, runs]);
 
   const handleFiles = async (files: FileList | null) => {
     if (!files || !corpus) return;
