@@ -78,8 +78,24 @@ def load_model() -> None:
         except Exception as exc:  # noqa: BLE001 — older mlx: best effort
             print(f"mlx memory limits unavailable: {exc}", file=sys.stderr)
         _state["model"], _state["tok"] = load(MODEL_PATH)
-        _state["logits_processors"] = make_logits_processors(
+        processors = make_logits_processors(
             repetition_penalty=1.15, repetition_context_size=400)
+        # JSON-GRAMMAR-MASK-V1: structurally-illegal tokens (prose outside
+        # JSON, markdown fences, stray punctuation) masked to -inf at every
+        # decode step. Fail-open: if the mask cannot compile, generation
+        # proceeds with prompt+gate enforcement only (measured 2026-08-30:
+        # 37% of local calls needed salvage repair without it).
+        try:
+            from json_mask import make_json_mask
+            _mask = make_json_mask(_state["tok"])
+            if _mask is not None:
+                processors = processors + [_mask]
+                print("json grammar mask: ON", file=sys.stderr)
+            else:
+                print("json grammar mask: unavailable (fail-open)", file=sys.stderr)
+        except Exception as exc:  # noqa: BLE001
+            print(f"json grammar mask failed to load: {exc} (fail-open)", file=sys.stderr)
+        _state["logits_processors"] = processors
         try:
             from mlx_lm.generate import batch_generate
             _state["batch_generate"] = batch_generate

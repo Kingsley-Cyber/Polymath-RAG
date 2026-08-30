@@ -259,6 +259,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("config/extraction_models/limiter.yaml", "yaml", None),
     ("tests/determinism/test_llm_extraction.py", "py", None),
     ("tests/determinism/test_llm_limiter.py", "py", None),
+    ("tests/determinism/test_json_mask.py", "py", None),
+    ("sidecars/local_extractor/json_mask.py", "py", None),
     ("scripts/llm_quality_sample.py", "py", None),
     ("scripts/purge_orphan_projections.py", "py", None),
     ("tests/determinism/test_evidence_assembly_stale.py", "py", None),
