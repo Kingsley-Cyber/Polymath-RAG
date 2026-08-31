@@ -103,3 +103,30 @@ empty string, never raises. Response shape grows; nothing removed.
 Independent of the ingestion-lane work (extract2, ceiling 72K, lean
 prompt). Backend ~half day, frontend ~half day. Can start immediately in
 a fresh session pointed at this file.
+
+## 8. Drift check vs HEAD 62bcc9d (2026-08-30, post-RETRIEVAL-FULL-FIX-V1)
+
+The §1 table was verified BEFORE commits 24d65f9 + 37777c4 landed on the
+same contract points. Re-verified live at HEAD; the plan survives intact,
+with these corrections and additions:
+
+- **source_name:"" is NOT yet fixed** — probed live at HEAD: FAST
+  evidence items still ship `source_name: ''` (selected_sections carry
+  the real name). The fix is §3.1/§3.2 work for the implementing
+  session, not something to assume done.
+- **§1B response grew (additive)**: `evidence[]` items now carry
+  `document_rank`; the response adds `entity_card_lane[]`; `meta` adds
+  `entity_card_votes`, `liveness`, and — MULTI-CORPUS-FAST-V1 —
+  `meta.corpus_ids` (list) while `meta.corpus_id` is **null when the
+  scope is >1 corpus**. Frontend must key off `meta.corpus_ids`, never
+  assume a single corpus id.
+- **§1C partially superseded on the chat path**: CITATION-TAGS-V1
+  (24d65f9) — /chat/stream answers now cite `[S1]..[Sn]` tags with a
+  SOURCE TAGS legend in the prompt; the §4.1 Sources panel should map
+  `[S#]` → evidence bundle entries. `answer_synthesis.py` locators are
+  still raw ids (verified at HEAD) — §3.3 stands.
+- **Volume**: depth-profile answers now ship up to 32 evidence rows and
+  the synthesis bundle caps at 48×2000 chars (EVIDENCE-BUDGET-V2) — the
+  Sources panel needs scroll/collapse at that scale.
+- Plan version is `pass1-retrieval-v2`; response-shape tests in §5 must
+  pin the ADDITIVE stance against v2, not the v1 field list.
