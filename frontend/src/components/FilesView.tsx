@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
+  enrichCorpus,
+  enrichDocument,
   fetchCorpora,
   fetchDocuments,
   fetchReadiness,
@@ -258,6 +260,20 @@ export default function FilesView({
               >
                 {queryEnabled ? "Hide from retrieval" : "Enable retrieval"}
               </button>
+              <button
+                className="chunk-chip"
+                title="Enrich every document: latent abstractions, mechanisms and transfer questions per section. Extends retrieval reach; re-click only re-processes changed sections."
+                onClick={async () => {
+                  try {
+                    await enrichCorpus(corpus);
+                    window.alert("Enrichment queued for the whole corpus — sections gain latent retrieval surfaces as it completes.");
+                  } catch (e: any) {
+                    window.alert(`Enrich failed: ${String(e.message)}`);
+                  }
+                }}
+              >
+                ✨ Enrich corpus
+              </button>
             </div>
           </div>
         )}
@@ -381,6 +397,20 @@ function DocRows({
             onClick={() => navigator.clipboard?.writeText(d.doc_id)}
           >
             ⧉ id
+          </button>{" "}
+          <button
+            className="chunk-chip"
+            title="Enrich this document's sections (latent retrieval surfaces)"
+            onClick={async () => {
+              try {
+                await enrichDocument(d.doc_id);
+                window.alert(`Enrichment queued for ${d.source_name}.`);
+              } catch (e: any) {
+                window.alert(`Enrich failed: ${String(e.message)}`);
+              }
+            }}
+          >
+            ✨
           </button>{" "}
           <button
             className="chunk-chip"

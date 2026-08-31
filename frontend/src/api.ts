@@ -71,6 +71,21 @@ export async function setQueryEnabled(corpus: string, enabled: boolean) {
   return r.json() as Promise<{ corpus_id: string; query_enabled: boolean }>;
 }
 
+/** §0a enrichment triggers — corpus- and document-scoped. */
+export async function enrichCorpus(corpus: string) {
+  const r = await fetch(`/corpora/${encodeURIComponent(corpus)}/enrich`,
+    { method: "POST" });
+  if (!r.ok) throw new Error(`enrich → ${r.status}`);
+  return r.json();
+}
+
+export async function enrichDocument(docId: string) {
+  const r = await fetch(`/documents/${encodeURIComponent(docId)}/enrich`,
+    { method: "POST" });
+  if (!r.ok) throw new Error(`enrich → ${r.status}`);
+  return r.json();
+}
+
 export async function uploadFile(corpus: string, file: File) {
   const form = new FormData();
   form.append("corpus_id", corpus);
