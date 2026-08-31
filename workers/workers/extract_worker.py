@@ -1067,7 +1067,15 @@ def process_event(conn: Connection, event: dict) -> None:
                 _t_llm = _t.perf_counter()
                 _neighborhoods = _llm.build_neighborhoods(child_chunks)
                 _results, _merged = _llm.run_proposals(
-                    _neighborhoods, lane=_decision.lane, source_bytes=source_bytes)
+                    _neighborhoods, lane=_decision.lane,
+                    source_bytes=source_bytes, doc_id=doc_id)
+                if _decision.lane == "cloud":
+                    # EXTRACTION-POOL-V1: the deterministic endpoint this
+                    # doc routed to, durable in the stage artifact.
+                    from polymath_shared.llm_extraction.pool import (
+                        select_cloud_endpoint as _sel_ep,
+                    )
+                    _lane_decision["endpoint"] = _sel_ep(doc_id).name
                 _perf["llm_extract_s"] = _t.perf_counter() - _t_llm
                 _llm_receipts = _llm.call_receipts(_results)
                 _llm_model_id = _results[0].model if _results else ""

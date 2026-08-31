@@ -295,10 +295,14 @@ class LLMExtractionClient:
     """One client, two lanes. `lane` selects endpoint + model pin."""
 
     def __init__(self, lane: str, *, url: str, model: str,
-                 timeout_s: float = 180.0, max_attempts: int = 2) -> None:
+                 timeout_s: float = 180.0, max_attempts: int = 2,
+                 limiter_key: str = "default") -> None:
         if lane not in ("local", "cloud"):
             raise ValueError(f"unknown lane: {lane!r}")
         self.lane = lane
+        # EXTRACTION-POOL-V1: each cloud endpoint throttles independently
+        # (a slow provider must not drag the pool's AIMD budget down).
+        self.limiter_key = limiter_key
         self.model = model
         self.base_url = url.rstrip("/")
         self.timeout_s = timeout_s
@@ -366,7 +370,7 @@ class LLMExtractionClient:
 
     def _lane_limiter(self):
         return REGISTRY.lane(f"llm_{self.lane}",
-                             "default", _lane_limit(self.lane))
+                             self.limiter_key, _lane_limit(self.lane))
 
     def extract_batched(self, neighborhoods: list[tuple[str, list[tuple[str, str]]]],
                         *, source_bytes: int, threshold_bytes: int,

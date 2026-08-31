@@ -198,6 +198,14 @@ class Supervisor:
         except Exception:
             log.warning("no runtime budget for slot %s; starting uncapped",
                         slot.name)
+        # LANE-AFFINITY-STEAL-V1: the first extract slot works the local
+        # lane, every further extract slot works the cloud lane (extra
+        # cloud providers scale by adding extractN slots). Both steal
+        # the other lane when their own backlog is dry.
+        if slot.name == "extract":
+            child_env.setdefault("POLYMATH_EXTRACT_AFFINITY", "local")
+        elif slot.name.startswith("extract"):
+            child_env.setdefault("POLYMATH_EXTRACT_AFFINITY", "cloud")
         slot.proc = subprocess.Popen(
             argv, cwd=cwd,
             stdout=out, stderr=subprocess.STDOUT,
