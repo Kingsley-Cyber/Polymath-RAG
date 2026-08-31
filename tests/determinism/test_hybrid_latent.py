@@ -90,6 +90,11 @@ def test_latent_lane_admits_original_children_only():
                for c in result.final_evidence)
     trace = result.trace["latent"]
     assert trace["enabled"] and trace["parents"][0]["parent_id"] == "p_latent"
+    # LATENT-DIAGNOSTICS-V1: survival attribution present and truthful
+    assert trace["parents_nominated"] == 1
+    assert trace["parents_survived"] == 1
+    assert trace["children_admitted"] == len(latent_items)
+    assert trace["kinds"] == {"abstraction": 1}
 
 
 def test_disabled_flag_is_byte_identical_to_no_machinery():

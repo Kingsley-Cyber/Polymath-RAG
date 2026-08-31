@@ -417,26 +417,13 @@ def _extraction_barrier(conn: Connection, run_id: str, floor: float) -> list[str
 
 def _missing_projection_receipts(conn: Connection, run_id: str, stage: str) -> list[str]:
     if stage == "project_qdrant":
-        rows = conn.execute(
-            """
-            SELECT c.chunk_id FROM chunks c
-              JOIN documents d ON d.doc_id = c.doc_id
-              JOIN runs r ON r.corpus_id = d.corpus_id
-             WHERE r.run_id = %s
-               AND c.tier = 'child'  -- F6 PARENT-POINT-RETIREMENT: the
-               -- chunk lane projects children only; the census want-set
-               -- must match or every run wedges at reconciling with
-               -- "65 projection receipts missing" (measured 2026-08-31,
-               -- the exact §5.2 same-change warning this violated)
-               AND NOT EXISTS (
-                   SELECT 1 FROM projection_receipts pr
-                    WHERE pr.projection = 'qdrant'
-                      AND pr.entity_kind = 'chunk'
-                      AND pr.active
-                      AND pr.entity_id = c.chunk_id)
-            """,
-            (run_id,),
-        ).fetchall()
+        # WANT-SET-AUTHORITY-V1: children-only rule owned by
+        # polymath_shared.projection_want (three-copy drift, 2026-08-31)
+        from polymath_shared.projection_want import (
+            missing_chunk_receipts_for_run,
+        )
+        rows = [(cid,) for cid in
+                missing_chunk_receipts_for_run(conn, run_id, "qdrant")]
         missing = [r[0] for r in rows]
         # R1B: neural routing representations are production dependencies
         # for a query-ready corpus — their receipts must also converge.

@@ -48,17 +48,10 @@ def _run_identity(conn: Connection, run_id: str) -> str | None:
 
 
 def _desired_chunk_ids(conn: Connection, run_id: str) -> list[str]:
-    rows = conn.execute(
-        """
-        SELECT c.chunk_id FROM chunks c
-          JOIN documents d ON d.doc_id = c.doc_id
-          JOIN runs r ON r.corpus_id = d.corpus_id
-         WHERE r.run_id = %s AND c.tier = 'child'  -- F6: parents retired
-         ORDER BY c.chunk_id
-        """,
-        (run_id,),
-    ).fetchall()
-    return [r[0] for r in rows]
+    # WANT-SET-AUTHORITY-V1: the rule lives in projection_want, nowhere
+    # else (the three-copy drift wedged promotion, 2026-08-31).
+    from polymath_shared.projection_want import desired_chunk_ids
+    return desired_chunk_ids(conn, run_id, "qdrant")
 
 
 def _receipt_chunk_ids(conn: Connection, corpus: str, projection: str) -> list[str]:

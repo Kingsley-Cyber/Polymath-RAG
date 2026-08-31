@@ -1,31 +1,88 @@
-# P6 LATENT-TRANSFER recall suite (plan Phase E).
-# OWNER-AUTHORED gate: these seed cases are DRAFTS from the build
-# session — replace/extend to >=20 owner cases before the GO/NO-GO.
-# Schema per case:
-#   query: the cross-domain question
-#   obvious_domains: what a baseline retrieval naturally reaches
-#   latent_domains: where the latent lane should REACH (the Laban test)
-#   acceptable_mechanisms: mechanism phrasings that count as a hit
-#   forbidden_shortcuts: lexical overlaps that would make the case trivial
-#   expected_parent_ids: filled after enrichment (or left empty = judged
-#     by domain reach only)
-version: p6-cases-v0-draft
+# P6 LATENT-TRANSFER recall suite (roadmap Session C).
+# 20 cases, AI-drafted per the owner's delegation pattern, over the live
+# corpus (AWS for Solutions Architects + Learning SQL). Each query uses
+# vocabulary DIFFERENT from the source while the underlying principle
+# exists in it; forbidden_shortcuts are the lexical giveaways a case
+# must not lean on to count as transfer.
+version: p6-cases-v1
 cases:
   - query: "how do systems automatically move things to cheaper storage as they age"
     obvious_domains: [aws-storage]
-    latent_domains: [sql-archiving]
-    acceptable_mechanisms: ["rules watch age and trigger transitions"]
-    forbidden_shortcuts: ["lifecycle", "S3"]
-    expected_parent_ids: []
+    latent_domains: [cost-optimization]
+    forbidden_shortcuts: ["lifecycle", "S3", "Glacier"]
   - query: "what should i do when extracted text comes out as garbage"
-    obvious_domains: [sql-data-quality]
-    latent_domains: [aws-ocr, ingestion]
-    acceptable_mechanisms: ["garbage in garbage out", "source quality bounds output"]
+    obvious_domains: [data-quality]
+    latent_domains: [ingestion]
     forbidden_shortcuts: ["OCR"]
-    expected_parent_ids: []
   - query: "principles for deciding how much management to keep in-house versus outsource"
     obvious_domains: [aws-service-models]
     latent_domains: [business-operations]
-    acceptable_mechanisms: ["management boundary determines the model"]
     forbidden_shortcuts: ["IaaS", "PaaS", "SaaS"]
-    expected_parent_ids: []
+  - query: "how can a library keep two catalogs from disagreeing about the same book"
+    obvious_domains: [sql-integrity]
+    latent_domains: [record-keeping]
+    forbidden_shortcuts: ["foreign key", "constraint"]
+  - query: "ways to make a shop resilient when one supplier suddenly fails"
+    obvious_domains: [aws-availability]
+    latent_domains: [supply-chain]
+    forbidden_shortcuts: ["availability zone", "region", "failover"]
+  - query: "how to grant a new employee only the access their job needs"
+    obvious_domains: [aws-iam]
+    latent_domains: [organizational-security]
+    forbidden_shortcuts: ["IAM", "policy"]
+  - query: "organizing a warehouse so any item can be found by a short label"
+    obvious_domains: [sql-schemas]
+    latent_domains: [physical-organization]
+    forbidden_shortcuts: ["schema", "namespace", "catalog"]
+  - query: "how to answer questions about combined information from two separate ledgers"
+    obvious_domains: [sql-joins]
+    latent_domains: [accounting]
+    forbidden_shortcuts: ["JOIN", "table"]
+  - query: "keeping a diary of every change so mistakes can be undone"
+    obvious_domains: [sql-transactions]
+    latent_domains: [operations]
+    forbidden_shortcuts: ["transaction", "rollback", "commit"]
+  - query: "how do you charge people only for what they actually use"
+    obvious_domains: [aws-pricing]
+    latent_domains: [billing-models]
+    forbidden_shortcuts: ["pay-as-you-go", "EC2"]
+  - query: "spreading customers across several counters so no line gets too long"
+    obvious_domains: [aws-load-balancing]
+    latent_domains: [queueing]
+    forbidden_shortcuts: ["load balancer", "ELB"]
+  - query: "how can rules check that an entered value is within a sensible range"
+    obvious_domains: [sql-constraints]
+    latent_domains: [validation]
+    forbidden_shortcuts: ["CHECK", "constraint"]
+  - query: "renting tools for a weekend project instead of buying them"
+    obvious_domains: [aws-cloud-economics]
+    latent_domains: [capex-opex]
+    forbidden_shortcuts: ["on-premises", "cloud computing"]
+  - query: "how to find every customer who never placed an order"
+    obvious_domains: [sql-outer-joins]
+    latent_domains: [gap-analysis]
+    forbidden_shortcuts: ["LEFT JOIN", "NULL"]
+  - query: "practicing the fire drill before the building actually burns"
+    obvious_domains: [aws-disaster-recovery]
+    latent_domains: [preparedness]
+    forbidden_shortcuts: ["disaster recovery", "backup"]
+  - query: "why copying the same phone number into ten address books causes trouble"
+    obvious_domains: [sql-normalization]
+    latent_domains: [duplication]
+    forbidden_shortcuts: ["normalization", "redundancy"]
+  - query: "how a doorman list decides who may enter which room"
+    obvious_domains: [aws-security-groups]
+    latent_domains: [access-control]
+    forbidden_shortcuts: ["security group", "firewall"]
+  - query: "summing up each region's results without listing every sale"
+    obvious_domains: [sql-aggregation]
+    latent_domains: [reporting]
+    forbidden_shortcuts: ["GROUP BY", "aggregate"]
+  - query: "keeping a scratch copy to experiment on without touching the original"
+    obvious_domains: [sql-views-temp]
+    latent_domains: [safe-experimentation]
+    forbidden_shortcuts: ["view", "temporary table"]
+  - query: "growing the kitchen automatically when more orders arrive at dinner time"
+    obvious_domains: [aws-autoscaling]
+    latent_domains: [elastic-capacity]
+    forbidden_shortcuts: ["auto scaling", "elastic"]

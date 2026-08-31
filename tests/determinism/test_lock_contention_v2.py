@@ -36,10 +36,14 @@ def test_uses_exists_form_not_count():
     anti-join per projection; pin the same discipline on the new surface.
     """
     import inspect
-    from control import tickets
-    src = inspect.getsource(tickets._corpora_with_missing_chunk_receipts)
+    # WANT-SET-AUTHORITY-V1: the anti-join SQL moved into the shared
+    # authority; the discipline is pinned where the SQL now lives.
+    from polymath_shared import projection_want
+    src = inspect.getsource(
+        projection_want.corpora_with_missing_chunk_receipts)
     assert "NOT EXISTS" in src
     assert "COUNT(*)" not in src
+    from control import tickets
     # single-run path shares the EXISTS discipline
     src2 = inspect.getsource(tickets._receipts_present)
     assert "NOT EXISTS" in src2

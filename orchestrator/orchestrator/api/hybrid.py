@@ -191,6 +191,10 @@ def hybrid_fast_retrieve(
 
     latency_ms = {k: round(v, 1) for k, v in searcher.latency.items()}
     latency_ms["total"] = round(total_ms, 1)
+    from orchestrator.api.fast import _presentation_joins
+    _p = _presentation_joins(
+        [c["chunk_id"] for c in result.final_evidence],
+        [c["doc_id"] for c in result.final_evidence])
     return {
         "query": query,
         "meta": {
@@ -244,11 +248,17 @@ def hybrid_fast_retrieve(
                 "chunk_id": c["chunk_id"],
                 "doc_id": c["doc_id"],
                 "parent_id": c["parent_id"],
-                "source_name": c["source_name"],
+                # UI-V3 §1B (roadmap B4): same presentation join as FAST
+                "source_name": c["source_name"] or _p.get(
+                    c["doc_id"], {}).get("source_name", ""),
                 "arrival": c.get("arrival"),
                 "document_rank": c.get("document_rank"),
                 "g3_score": c.get("rerank_score"),
                 "locator": f"chunk:{c['chunk_id']}",
+                "title": _p.get(c["chunk_id"], {}).get("title", ""),
+                "heading_path": _p.get(c["chunk_id"], {}).get("heading_path", ""),
+                "human_locator": _p.get(c["chunk_id"], {}).get("human_locator", ""),
+                "text": (c.get("text") or "")[:240],
             }
             for c in result.final_evidence
         ],

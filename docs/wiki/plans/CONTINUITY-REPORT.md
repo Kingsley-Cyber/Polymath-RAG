@@ -20,7 +20,15 @@ Read order: this file → `CLAUDE.md` → the two newest work-logs.
 
 ## Latest checkpoint (2026-08-31, LATENT LAYER LIVE + AUTO-ENRICH, commit f54d51c+)
 
-NEXT WORK ORDER: `SESSION-ROADMAP.md` (owner-approved 2026-08-31) —
+ROADMAP EXECUTED 2026-08-31: Sessions A (reliability — want-set
+authority, reconciliation E2E [1C carry-gap REFUTED], semantic
+failover + row-truth done, corpus 65/65 READY) + B (query-path —
+single embed, survival diagnostics end-to-end + UI chip, HYBRID
+presentation, GRAPH latent silent-drop fixed, ✨ toggle) + C (P6 run:
+**survival 78%**, +3.0 evidence/case, both kinds alive, ~20 ms delta).
+OWNER GATE OPEN: GO = latent_retrieval_enabled=true. Remaining after
+GO: Phase 0 chunker+re-ingest; pseudo-query split only if attribution
+demands. Original order was: `SESSION-ROADMAP.md` —
 Session A control reliability (1C carry-gap e2e test, ONE want-set
 authority, parse-reject failover) → Session B query-path (HYBRID
 presentation, latent diagnostics, toggle, single embed) → Session C P6

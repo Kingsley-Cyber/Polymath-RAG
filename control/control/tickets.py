@@ -353,27 +353,12 @@ def _corpora_with_missing_chunk_receipts(conn, projection: str) -> set[str]:
     Semantics unchanged: MISSING only DELAYS advancement; a cached/
     derived MISSING can never create advancement (VERDICT-STORE-V2).
     """
-    # F6 PARENT-POINT-RETIREMENT: the qdrant chunk lane projects
-    # CHILDREN only — parents in the qdrant want-set here kept every
-    # corpus barrier-blocked at reconciling (measured 2026-08-31: the
-    # third copy of this want-set; census._missing_projection_receipts
-    # and verify._desired_chunk_ids were the other two).
-    tier_clause = "AND c.tier = 'child'" if projection == "qdrant" else ""
-    rows = conn.execute(
-        f"""
-        SELECT DISTINCT d.corpus_id
-          FROM chunks c
-          JOIN documents d ON d.doc_id = c.doc_id
-         WHERE NOT EXISTS (
-             SELECT 1 FROM projection_receipts pr
-              WHERE pr.projection = %s AND pr.active
-                AND pr.entity_kind = 'chunk'
-                AND pr.entity_id = c.chunk_id)
-           {tier_clause}
-        """,
-        (projection,),
-    ).fetchall()
-    return {r[0] for r in rows}
+    # WANT-SET-AUTHORITY-V1: rule owned by projection_want (the third
+    # copy of the F6 rule lived here and wedged the barrier, 2026-08-31).
+    from polymath_shared.projection_want import (
+        corpora_with_missing_chunk_receipts,
+    )
+    return corpora_with_missing_chunk_receipts(conn, projection)
 
 
 def _advance_pending_corpus(conn, corpus_id: str,

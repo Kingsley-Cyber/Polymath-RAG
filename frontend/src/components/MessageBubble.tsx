@@ -88,6 +88,7 @@ function AnswerBody({ msg }: { msg: Message }) {
         >
           {abstained ? "ABSTAINED" : verdict.toUpperCase()}
         </span>
+        <LatentChip retrieval={r} />
         <CopyBtn text={res?.answer ?? ""} label="copy answer" />
         <button
           className="chunk-chip"
@@ -110,6 +111,25 @@ function AnswerBody({ msg }: { msg: Message }) {
 /** A lane that degraded instead of failing (e.g. the reranker parked
  * behind extraction). The answer is real and complete — this states
  * plainly what was skipped, so a quiet downgrade is never invisible. */
+/** LATENT-DIAGNOSTICS chip: nominated -> survived -> admitted. */
+function LatentChip({ retrieval }: { retrieval: Retrieval }) {
+  const l = retrieval.latent;
+  if (!l || !l.enabled) return null;
+  const nom = l.parents_nominated ?? 0;
+  const sur = l.parents_survived ?? 0;
+  const kids = l.children_admitted ?? 0;
+  return (
+    <span
+      className="chunk-chip"
+      title={`Latent lane: ${nom} section(s) nominated, ${sur} survived rerank, ${kids} chunk(s) admitted${
+        l.kinds ? ` · ${Object.entries(l.kinds).map(([k, v]) => `${k}:${v}`).join(" ")}` : ""}${
+        l.degraded ? ` · degraded: ${l.degraded}` : ""}`}
+    >
+      ✨ {sur}/{nom} · {kids}
+    </span>
+  );
+}
+
 function DegradedNote({ retrieval }: { retrieval: Retrieval }) {
   const items = retrieval.degraded ?? [];
   if (items.length === 0) return null;
@@ -364,6 +384,7 @@ function LlmBody({
         <span className="badge badge-generated">
           GENERATED · {a.result?.model ?? "llm"}
         </span>
+        <LatentChip retrieval={r} />
         <CopyBtn text={text} label="copy output" />
         {bareHtml && (
           <>

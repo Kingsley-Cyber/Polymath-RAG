@@ -138,3 +138,56 @@ def test_compiler_transport_error_and_silence_are_durable():
     out = compile_parents(complete, parents, BOUNDS, 6000)
     assert out[0].status == "INVALID" and out[0].error_class == "LIMITER_REFUSED"
     assert out[1].status == "INVALID" and out[1].error_class == "ENRICH_NO_RESPONSE"
+
+
+def test_semantic_failover_one_retry_only():
+    from polymath_shared.latent.compiler import (
+        compile_with_semantic_failover,
+    )
+    calls = {"a": 0, "b": 0}
+
+    def lane_a(items):
+        calls["a"] += len(items)
+        return [(i, "utter garbage not json", None) for i, *_ in items]
+
+    def lane_b(items):
+        calls["b"] += len(items)
+        return [(i, _payload(children=[
+            {"ref": 0, "gist": "Recovered gist from the other lane."}]), None)
+            for i, *_ in items]
+
+    parents = [ParentInput("p1", [("c1", 0, "some source text here")])]
+    out, recovered = compile_with_semantic_failover(
+        lane_a, lane_b, parents, BOUNDS, 6000)
+    assert recovered == 1 and out[0].status == "READY"
+    assert calls == {"a": 1, "b": 1}            # exactly one cross-lane retry
+
+    # both lanes garbage -> typed failure carrying BOTH dispositions
+    out2, rec2 = compile_with_semantic_failover(
+        lane_a, lane_a, parents, BOUNDS, 6000)
+    assert rec2 == 0 and out2[0].status == "INVALID"
+    assert "primary=ENRICH_UNPARSEABLE" in out2[0].detail
+
+
+def test_source_conditions_never_failover():
+    from polymath_shared.latent.compiler import (
+        compile_with_semantic_failover,
+    )
+    fb_calls = []
+
+    def lane_a(items):
+        return [(i, _payload(children=[
+            {"ref": 0, "gist": "fine gist for the small one."}]), None)
+            for i, *_ in items]
+
+    def lane_b(items):
+        fb_calls.extend(items)
+        return []
+
+    parents = [ParentInput("p_big", [("c1", 0, "word " * 40_000)]),
+               ParentInput("p_ok", [("c2", 0, "small source text")])]
+    out, recovered = compile_with_semantic_failover(
+        lane_a, lane_b, parents, BOUNDS, 6000)
+    assert out[0].error_class == "ENRICH_INPUT_OVER_CEILING"
+    assert not fb_calls                          # bad source: no retry
+    assert out[1].status == "READY" and recovered == 0
