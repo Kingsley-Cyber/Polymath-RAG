@@ -234,11 +234,16 @@ REJECTED (concepts that do not fit this codebase):
   enrichment. If a bounded relation snapshot is ever SENT as context,
   record its hash in provenance — it never drives staleness.
 - **A new UniversalRequest/adapter layer** — the seams exist:
-  `LLMExtractionClient` + the endpoint pool (per-endpoint quirks = the
-  capability tiers; Tier-A json_schema is already measured unreliable
-  on the primary) + `complete_batched(system_prompt=…)` built for this
-  exact stage. Enrichment inherits Groq/NVIDIA/etc. from
-  MULTI-PROVIDER-AUTH-V1 with zero adapter work.
+  `LLMExtractionClient` + the endpoint pool + `complete_batched
+  (system_prompt=…)` built for this exact stage. Enrichment inherits
+  Groq/NVIDIA/etc. from MULTI-PROVIDER-AUTH-V1 with zero adapter work.
+  The design's capability negotiation IS adopted, as config not code
+  (STRUCTURED-CAPABILITY-V1): every endpoint declares
+  `structured: schema|json|text`; "schema" is accepted but dispatches
+  as json-object until a strict-schema canary passes per provider
+  (measured: the primary silently ignores json_schema strict:true), and
+  local parse→validate→sanitize runs REGARDLESS of level — provider
+  structured output is an optimization, the validator is the contract.
 - **Wider schema (principles/transfer/uses, caps 3/3/3/4)** — PARKED as
   V2 candidates gated on the P6 eval. §1.1's frozen field list stands
   because every field maps to one of the TWO projection kinds (§1.4);
