@@ -55,6 +55,16 @@ class CloudEndpoint:
     # per-endpoint payload quirks (see config/cloud_providers.json _doc)
     reasoning_effort: str | None = None
     json_mode: bool = True
+    # STRUCTURED-CAPABILITY-V1: the strongest output method this endpoint
+    # supports — "schema" (native strict JSON Schema), "json" (object
+    # mode), "text" (prompt-only). Local parse→validate→sanitize ALWAYS
+    # runs regardless of level: provider structured output is an
+    # optimization, our validator is the contract. "schema" is accepted
+    # in config but currently DOWNGRADED to "json" at dispatch (measured:
+    # the primary daemon silently ignores json_schema strict:true) until
+    # a provider passes a strict-schema canary; the field exists so that
+    # upgrade is a config flip, not a code change.
+    structured: str = "json"
 
     @property
     def limiter_key(self) -> str:
@@ -64,8 +74,13 @@ class CloudEndpoint:
 
     @property
     def cloud_opts(self) -> dict:
+        if self.structured == "schema":
+            _log_once(("schema-downgrade", self.name),
+                      "endpoint %r declares structured='schema'; dispatching "
+                      "as json-object mode until a strict-schema canary "
+                      "passes", self.name)
         return {"reasoning_effort": self.reasoning_effort,
-                "json_mode": self.json_mode}
+                "json_mode": self.structured in ("schema", "json")}
 
 
 def _resolve_key(env_name: str) -> str | None:
@@ -88,6 +103,19 @@ def _resolve_key(env_name: str) -> str | None:
 
 
 _ROSTER_LOGGED: set[tuple] = set()
+
+
+def _structured_level(e: dict) -> str:
+    """Capability negotiation input: explicit `structured` wins; legacy
+    `json_mode: false` means "text"; default "json"."""
+    level = str(e.get("structured") or "").strip().lower()
+    if level:
+        if level not in ("schema", "json", "text"):
+            raise ValueError(
+                f"structured must be schema|json|text, got {level!r} "
+                f"for {e.get('name')!r}")
+        return level
+    return "json" if e.get("json_mode", True) else "text"
 
 
 def _configured_providers() -> list[CloudEndpoint]:
@@ -123,7 +151,8 @@ def _configured_providers() -> list[CloudEndpoint]:
         out.append(CloudEndpoint(
             name=name, url=url, model=model, api_key=key,
             reasoning_effort=e.get("reasoning_effort"),
-            json_mode=bool(e.get("json_mode", True))))
+            json_mode=bool(e.get("json_mode", True)),
+            structured=_structured_level(e)))
     return out
 
 
@@ -166,7 +195,8 @@ def cloud_endpoints() -> list[CloudEndpoint]:
                 name=name, url=url, model=model,
                 api_key=_resolve_key(key_env) if key_env else None,
                 reasoning_effort=e.get("reasoning_effort"),
-                json_mode=bool(e.get("json_mode", True))))
+                json_mode=bool(e.get("json_mode", True)),
+                structured=_structured_level(e)))
     roster.sort(key=lambda ep: ep.name)
     names = [ep.name for ep in roster]
     if len(set(names)) != len(names):
@@ -190,5 +220,5 @@ def pool_fingerprint() -> list[dict]:
     re-modeled must show up in the extraction contract."""
     return [{"name": ep.name, "url": ep.url, "model": ep.model,
              "reasoning_effort": ep.reasoning_effort,
-             "json_mode": ep.json_mode}
+             "structured": ep.structured}
             for ep in cloud_endpoints()]

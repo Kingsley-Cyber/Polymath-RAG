@@ -191,3 +191,39 @@ def test_keys_never_leak_into_fingerprint_or_repr(pool_env, monkeypatch,
     fp = _json.dumps(pool.pool_fingerprint())
     assert "sk-SECRET" not in fp
     assert "sk-SECRET" not in repr(pool.cloud_endpoints())
+
+
+def test_structured_capability_negotiation(pool_env, monkeypatch, tmp_path):
+    # STRUCTURED-CAPABILITY-V1: explicit level wins; legacy json_mode
+    # maps to json/text; "schema" is accepted but DISPATCHES as json
+    # (json_mode True) until a strict-schema canary passes; bad levels
+    # fail loudly.
+    import json as _json
+
+    from polymath_shared.llm_extraction import pool
+    pf = tmp_path / "providers.json"
+    monkeypatch.setattr(pool, "_PROVIDERS_FILE", pf)
+    monkeypatch.setenv("T_CAP_KEY", "k")
+    pf.write_text(_json.dumps({"providers": [
+        {"name": "a-schema", "url": "http://a", "model": "m",
+         "api_key_env": "T_CAP_KEY", "structured": "schema"},
+        {"name": "b-json", "url": "http://b", "model": "m",
+         "api_key_env": "T_CAP_KEY"},
+        {"name": "c-text", "url": "http://c", "model": "m",
+         "api_key_env": "T_CAP_KEY", "json_mode": False},
+    ]}))
+    pool_env(None)
+    by = {ep.name: ep for ep in pool.cloud_endpoints()}
+    assert by["a-schema"].structured == "schema"
+    assert by["a-schema"].cloud_opts["json_mode"] is True   # downgraded dispatch
+    assert by["b-json"].structured == "json"
+    assert by["c-text"].structured == "text"
+    assert by["c-text"].cloud_opts["json_mode"] is False
+    fp = {e["name"]: e for e in pool.pool_fingerprint()}
+    assert fp["a-schema"]["structured"] == "schema"          # contract input
+
+    pf.write_text(_json.dumps({"providers": [
+        {"name": "bad", "url": "http://x", "model": "m",
+         "api_key_env": "T_CAP_KEY", "structured": "yaml"}]}))
+    with pytest.raises(ValueError):
+        pool.cloud_endpoints()

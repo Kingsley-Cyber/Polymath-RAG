@@ -7,7 +7,9 @@
     "NO SECRETS IN THIS FILE — api_key_env names the variable, never the value.",
     "url omits /v1 (the client appends /v1/chat/completions).",
     "reasoning_effort null = omit the field (strict APIs 400 on unsupported",
-    "params); json_mode = request response_format json_object.",
+    "params). structured = capability level: schema|json|text (strongest",
+    "the provider supports; 'schema' dispatches as 'json' until a strict-",
+    "schema canary passes). Local validation always runs regardless.",
     "The settings primary (Ollama daemon) is NOT listed here; it is always",
     "in the roster. Models re-pinnable at will — a change shows up in the",
     "extraction contract via pool_fingerprint()."
@@ -20,7 +22,7 @@
       "model": "openai/gpt-oss-120b",
       "api_key_env": "GROQ_API_KEY",
       "reasoning_effort": "low",
-      "json_mode": true
+      "structured": "json"
     },
     {
       "name": "nvidia",
@@ -29,7 +31,7 @@
       "model": "meta/llama-3.3-70b-instruct",
       "api_key_env": "NVIDIA_API_KEY",
       "reasoning_effort": null,
-      "json_mode": true
+      "structured": "json"
     }
   ]
 }
