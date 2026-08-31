@@ -22,7 +22,7 @@ Read order: this file → `CLAUDE.md` → the two newest work-logs.
 
 ```bash
 cd /Users/king/Documents/polymath-rebuild/polymath-v4
-git log --oneline -5          # expect HEAD >= 0ea4cf8 on architecture/evidence-first-v5
+git log --oneline -5          # expect HEAD >= da8f2d0 on architecture/evidence-first-v5
 set -a; . ./.env; set +a
 .venv/bin/python scripts/agent_preflight.py && .venv/bin/python scripts/repo_guard.py && .venv/bin/python scripts/wiki_worm.py --check
 .venv/bin/python shared/polymath_shared/bundle_integrity.py     # READY, rule pack 1.5.0
@@ -100,6 +100,33 @@ parent_summary 206 — every point carries the `bm25` named sparse vector.
 **Stamping**: 1,245 facts + 3,005 entities queryable by
 `extractor_version='llm-direct-v1'`; entities carry `raw_types` (open
 vocabulary preserved as a deterministic set union).
+
+## 2b. Checkpoint addendum (late session 4 — pushed to GitHub at this merge)
+
+Landed after the golden run, all measured first-hand and work-logged:
+- PREFIX-KV-CACHE-V1 (`12acd05`): system-prompt KV cached across batch
+  calls on :8755 — 8 → 46 tok/s effective at production shape.
+- WORKER-QUARANTINE-AUTOHEAL-V1 (`a66629d`): the supervisor bounces its
+  own fence-quarantined children (they heartbeat forever and never
+  exit); the quarantine-after-commit trap class is dead.
+- LEAN-COVERAGE-GATE (`359500b`): LEAN index encoding degenerates to
+  invalid JSON on 50–90% of real-book calls (the "0 salvage" receipt was
+  survivorship over 5 surviving calls; live receipts dropped 40/40 +
+  19/24). Fleet runs POLYMATH_LEAN_LOCAL=off (flat contract) until the
+  JSON grammar mask makes LEAN parse-safe; the owner's lean default is
+  untouched in code.
+- QUERY-PATH-S11-6-PHASE1 (`4868e37`) + chat fixes (`da8f2d0`):
+  child-lane kind filters (post-§11 pollution), BM25 sparse lexical lane
+  (shared tokenizer), ENTITY-CARD-LANE-V1 with stable doc boost,
+  rerank wake budget 90s→5s (the 113 s answers), CITATION-TAGS-V1
+  ([S#] tags — "[chunk 67313]" was instructed, not hallucinated),
+  NO-THINK-CHAT-V1 (v4-flash streams thinking inline via the daemon).
+  Measured end state: FAST 2.0 s, chat 4.9 s, clean citations.
+- Serve-side env additions (hand-started orchestrator):
+  POLYMATH_RERANK_WAKE_BUDGET_S=5, POLYMATH_LEAN_LOCAL=off; upload
+  defaults are probe/query_enabled=false — a corpus must be ENABLED
+  before retrieval sees it (this, not a bug, is "retrieval returns
+  nothing" on a fresh corpus).
 
 ## 3. Architecture now (details: PLAN-AUTHORITY-REGISTER §11 + §11.0 audit)
 
