@@ -337,6 +337,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/v5/latent_transfer/LATENT-TRANSFER-P6-RESULTS.md", "md", None),
     ("docs/wiki/work-log/2026-08-31-latent-phases-a-d.md", "md", None),
     ("docs/wiki/work-log/2026-08-31-enrichment-concurrency.md", "md", None),
+    ("docs/wiki/work-log/2026-08-31-census-wedge-restoration.md", "md", None),
     ("config/cloud_providers.json", "json", None),
     ("scripts/probe_cloud_endpoints.py", "py", None),
     ("docs/wiki/plans/CONTINUITY-REPORT.md", "md", None),

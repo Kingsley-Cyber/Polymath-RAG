@@ -285,6 +285,12 @@ def advance_tickets(conn: Connection) -> int:
         """
     ).fetchall()
     for seq, tid, run_id, stage in ready_rows:
+        if stage not in _STAGE_SPEC:
+            # OWNER-TRIGGERED stages (parent_enrichment, §0a) live outside
+            # STAGE_DAG and mint their OWN events at the button; sweeping
+            # them here KeyError'd the whole advance phase (measured
+            # 2026-08-31: census dead 2h, every corpus frozen mid-chain).
+            continue
         _emit_ticket_event(conn, tid, run_id, stage)
         conn.execute(
             """INSERT INTO scheduler_cursors (stage, corpus_id, last_seq)
@@ -347,8 +353,14 @@ def _corpora_with_missing_chunk_receipts(conn, projection: str) -> set[str]:
     Semantics unchanged: MISSING only DELAYS advancement; a cached/
     derived MISSING can never create advancement (VERDICT-STORE-V2).
     """
+    # F6 PARENT-POINT-RETIREMENT: the qdrant chunk lane projects
+    # CHILDREN only — parents in the qdrant want-set here kept every
+    # corpus barrier-blocked at reconciling (measured 2026-08-31: the
+    # third copy of this want-set; census._missing_projection_receipts
+    # and verify._desired_chunk_ids were the other two).
+    tier_clause = "AND c.tier = 'child'" if projection == "qdrant" else ""
     rows = conn.execute(
-        """
+        f"""
         SELECT DISTINCT d.corpus_id
           FROM chunks c
           JOIN documents d ON d.doc_id = c.doc_id
@@ -357,6 +369,7 @@ def _corpora_with_missing_chunk_receipts(conn, projection: str) -> set[str]:
               WHERE pr.projection = %s AND pr.active
                 AND pr.entity_kind = 'chunk'
                 AND pr.entity_id = c.chunk_id)
+           {tier_clause}
         """,
         (projection,),
     ).fetchall()
