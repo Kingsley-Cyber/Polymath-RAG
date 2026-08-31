@@ -27,10 +27,14 @@ def persist_compiled_parent(conn, *, corpus_id: str, doc_id: str,
     existing row for the same logical work is EXISTING, no new row."""
     existing = conn.execute(
         "SELECT enrichment_id, status FROM parent_enrichments "
-        "WHERE input_hash=%s AND status <> 'STALE'",
+        "WHERE input_hash=%s AND status = 'READY'",
         (input_hash,)).fetchone()
     if existing:
         return {"status": "EXISTING", "enrichment_id": existing[0]}
+    # an INVALID row with this input_hash does NOT block a retry — a
+    # transient transport failure (429 storm, measured 2026-08-31) must
+    # be recoverable by re-clicking the button; a successful retry
+    # UPGRADES the same content-addressed row in place.
 
     enrichment_id = "penr_" + content_hash({"in": input_hash})[:32]
     if compiled.status == "READY" and compiled.output is not None:
@@ -53,7 +57,16 @@ def persist_compiled_parent(conn, *, corpus_id: str, doc_id: str,
                 questions, gist_coverage, status)
                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
                        'READY')
-               ON CONFLICT (enrichment_id) DO NOTHING""",
+               ON CONFLICT (enrichment_id) DO UPDATE SET
+                   summary=EXCLUDED.summary, children=EXCLUDED.children,
+                   abstraction=EXCLUDED.abstraction,
+                   mechanisms=EXCLUDED.mechanisms,
+                   affordances=EXCLUDED.affordances,
+                   questions=EXCLUDED.questions,
+                   gist_coverage=EXCLUDED.gist_coverage,
+                   provider=EXCLUDED.provider, model=EXCLUDED.model,
+                   error_class=NULL, status='READY', superseded_at=NULL
+               WHERE parent_enrichments.status='INVALID'""",
             (enrichment_id, compiled.parent_id, corpus_id, doc_id,
              compiled.source_child_ids, compiled.source_hash, input_hash,
              COMPILER_CONTRACT, provider, model, PROMPT_VERSION,

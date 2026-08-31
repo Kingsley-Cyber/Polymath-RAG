@@ -78,7 +78,16 @@ def _refused_set(worker_type: str) -> set[int]:
 #: must run over mixed-era corpora (§0b): parent enrichment's artifact
 #: identity hashes its OWN inputs (children + prompt + model contract),
 #: so a code-era mismatch cannot silently blur provenance.
-CONTRACT_EXEMPT_EVENTS = frozenset({"parent_enrichment.v1"})
+CONTRACT_EXEMPT_EVENTS = frozenset({
+    "parent_enrichment.v1",
+    # verify_projections is receipt/store reconciliation ONLY (its
+    # module contract: semantic truth is read-only there) — era-safe by
+    # design, and REQUIRED across eras: latent projection re-arms
+    # projection on old runs, whose verify must then reconverge the
+    # corpus (measured 2026-08-31: query_ready stuck at reconciling
+    # because verify.v1 was era-refused).
+    "verify.v1",
+})
 
 
 def _era_exempt(event: dict) -> bool:
