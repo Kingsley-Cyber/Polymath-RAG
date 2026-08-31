@@ -80,12 +80,33 @@ def test_malformed_roster_fails_loudly(pool_env):
             cloud_endpoints()
 
 
-def test_pool_never_widens_cloud_eligibility(pool_env):
-    # More providers change WHO serves a cloud doc, never WHETHER a doc
-    # is cloud-eligible: the owner boundary answers that alone.
+def test_lane_matrix_cloud_assist_v2(pool_env):
+    # Owner rule v2 (2026-08-30): the threshold is a THROUGHPUT router.
+    # Big -> cloud always; small -> local unless a cloud-affinity worker
+    # holds it (assist). The pool never changes the matrix.
     pool_env(EXTRAS)
-    assert select_lane(CLOUD_MIN_BYTES).lane == "local"
-    assert select_lane(CLOUD_MIN_BYTES + 1).lane == "cloud"
+    big, small = CLOUD_MIN_BYTES + 1, CLOUD_MIN_BYTES
+    assert select_lane(big).lane == "cloud"
+    assert select_lane(big, affinity="local").lane == "cloud"   # no exceptions
+    assert select_lane(small).lane == "local"
+    assert select_lane(small, affinity="local").lane == "local"
+    d = select_lane(small, affinity="cloud")
+    assert d.lane == "cloud" and d.assist                        # the assist
+    assert not select_lane(big).assist
+
+
+def test_dispatch_guard_verifies_assist_intent(pool_env):
+    # A sub-threshold cloud call passes ONLY with the explicit assist
+    # flag; anything else is a caller bug and still fails loudly.
+    from polymath_shared.llm_extraction.policy import (
+        CloudBoundaryViolation,
+        require_cloud_eligible,
+    )
+    pool_env(None)
+    require_cloud_eligible(CLOUD_MIN_BYTES + 1)                  # big: fine
+    require_cloud_eligible(CLOUD_MIN_BYTES, assist=True)         # assist: fine
+    with pytest.raises(CloudBoundaryViolation):
+        require_cloud_eligible(CLOUD_MIN_BYTES)                  # no intent
 
 
 def test_fingerprint_tracks_roster(pool_env):

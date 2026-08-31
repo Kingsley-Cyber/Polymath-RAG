@@ -313,6 +313,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_extraction_pool.py", "py", None),
     ("tests/integration/test_lane_affinity_steal.py", "py", None),
     ("docs/wiki/work-log/2026-08-30-extraction-pool.md", "md", None),
+    ("docs/wiki/work-log/2026-08-30-cloud-assist.md", "md", None),
     ("docs/wiki/plans/CONTINUITY-REPORT.md", "md", None),
     ("docs/wiki/plans/RETRIEVAL-AUDIT-PRD.md", "md", None),
     ("docs/wiki/plans/MASTER-BUILD-SEQUENCE.md", "md", None),

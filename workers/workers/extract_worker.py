@@ -1059,7 +1059,11 @@ def process_event(conn: Connection, event: dict) -> None:
                     "SELECT byte_length FROM documents WHERE doc_id=%s",
                     (doc_id,)).fetchone()
                 source_bytes = int(_src[0]) if _src and _src[0] is not None else 0
-                _decision = _llm.select_lane(source_bytes)
+                # CLOUD-ASSIST-V1: the worker's lane affinity rides into
+                # the decision — an idle cloud lane assists small docs.
+                _affinity = os.environ.get(
+                    "POLYMATH_EXTRACT_AFFINITY", "").strip() or None
+                _decision = _llm.select_lane(source_bytes, affinity=_affinity)
                 _lane_decision = {"lane": _decision.lane,
                                   "source_bytes": _decision.source_bytes,
                                   "threshold": _decision.threshold,
@@ -1068,7 +1072,8 @@ def process_event(conn: Connection, event: dict) -> None:
                 _neighborhoods = _llm.build_neighborhoods(child_chunks)
                 _results, _merged = _llm.run_proposals(
                     _neighborhoods, lane=_decision.lane,
-                    source_bytes=source_bytes, doc_id=doc_id)
+                    source_bytes=source_bytes, doc_id=doc_id,
+                    assist=_decision.assist)
                 if _decision.lane == "cloud":
                     # EXTRACTION-POOL-V1: the deterministic endpoint this
                     # doc routed to, durable in the stage artifact.
