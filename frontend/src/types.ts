@@ -29,6 +29,11 @@ export interface ChunkRef {
   doc_id?: string;
   kind?: string;
   preview?: string;
+  // UI-V3: human identity (empty on pre-presentation payloads)
+  source_name?: string;
+  title?: string;
+  heading_path?: string;
+  human_locator?: string;
 }
 
 export interface Degradation {

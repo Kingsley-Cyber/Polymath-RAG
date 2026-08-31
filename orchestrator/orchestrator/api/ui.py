@@ -141,6 +141,77 @@ def rename_corpus(corpus_id: str, req: RenameCorpusRequest) -> dict:
     return {"corpus_id": row[0], "name": row[1]}
 
 
+class QueryEnableRequest(BaseModel):
+    query_enabled: bool
+
+
+@router.patch("/corpora/{corpus_id}/query_enabled")
+def set_query_enabled(corpus_id: str, req: QueryEnableRequest) -> dict:
+    """UI-V3 F13: the retrieval-visibility toggle, surfaced. Upload
+    defaults hide new corpora (purpose='probe', query_enabled=false —
+    QUERY-SCOPE-V1 by design); the owner hit that as "retrieval
+    constantly fails". This flips ONLY query_enabled; purpose remains a
+    separate governance decision."""
+    with tx() as conn:
+        row = conn.execute(
+            """UPDATE corpora SET query_enabled = %s, updated_at = now()
+                WHERE corpus_id = %s
+            RETURNING corpus_id, query_enabled""",
+            (req.query_enabled, corpus_id)).fetchone()
+        if not row:
+            raise HTTPException(404, {
+                "error_code": "QUERY_SCOPE_UNKNOWN",
+                "message": f"corpus {corpus_id!r} not found"})
+    return {"corpus_id": row[0], "query_enabled": row[1]}
+
+
+@router.get("/documents/{doc_id}/sections")
+def document_sections(doc_id: str) -> dict:
+    """UI-V3 §4.2: the document -> section tree, straight from the
+    compiled parent cards (retrieval_summaries, ONE-SUMMARY-AUTHORITY).
+    Heading comes from the parent chunk's heading_path; NULL (legacy
+    ingests) falls back to the card's summary head — the tree always
+    renders (PRD §2)."""
+    with tx() as conn:
+        rows = conn.execute(
+            """
+            SELECT rs.parent_id, rs.plain_summary, rs.summary_text,
+                   rs.keywords, rs.coverage,
+                   c.heading_path, c.chunk_index
+              FROM retrieval_summaries rs
+              LEFT JOIN chunks c ON c.chunk_id = rs.parent_id
+             WHERE rs.doc_id = %s
+               AND rs.kind = 'section_retrieval_summary' AND rs.active
+             ORDER BY COALESCE(c.chunk_index, 0), rs.parent_id
+            """,
+            (doc_id,),
+        ).fetchall()
+        kids = dict(conn.execute(
+            """SELECT parent_id, COUNT(*) FROM chunks
+                WHERE doc_id = %s AND tier = 'child' GROUP BY parent_id""",
+            (doc_id,),
+        ).fetchall())
+    sections = []
+    for pid, plain, full, kw, cov, path_raw, idx in rows:
+        if isinstance(path_raw, (list, tuple)):
+            path = " › ".join(str(x) for x in path_raw if x)
+        else:
+            path = str(path_raw) if path_raw else ""
+        summary = (plain or full or "").strip()
+        title = (path.rsplit("›", 1)[-1].strip() if path
+                 else (summary.split(". ")[0][:80] if summary else pid[:16]))
+        sections.append({
+            "parent_id": pid,
+            "title": title,
+            "heading_path": path,
+            "summary": summary[:400],
+            "keywords": (kw or [])[:8] if isinstance(kw, list) else [],
+            "coverage": cov,
+            "children": int(kids.get(pid, 0)),
+        })
+    return {"doc_id": doc_id, "sections": sections}
+
+
 @router.get("/documents")
 def documents(corpus_id: str) -> dict:
     with tx() as conn:
@@ -1382,11 +1453,19 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                 if not loc or cid in seen:
                     continue
                 seen.add(cid)
+                pres = item.get("presentation") or {}
                 chunk_inventory.append({
                     "locator": loc,
                     "doc_id": item.get("source_document_id"),
                     "kind": item.get("text_kind") or item.get("kind"),
                     "preview": (span.get("text") or "")[:220],
+                    # UI-V3 §4.1: human identity for the Sources panel;
+                    # raw locator/ids demote to the provenance expander.
+                    "source_name": (item.get("applicability") or {}).get(
+                        "source_name") or "",
+                    "title": pres.get("title") or "",
+                    "heading_path": pres.get("heading_path") or "",
+                    "human_locator": pres.get("human_locator") or "",
                 })
             from orchestrator.api.fast import degradations
             from polymath_shared.evidence_assembly import stale_projection_degradation

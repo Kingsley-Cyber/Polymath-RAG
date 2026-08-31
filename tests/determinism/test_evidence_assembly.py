@@ -313,3 +313,50 @@ def test_bundle_ordering_is_deterministic_for_identical_inputs() -> None:
     assert kinds == ["claim", "claim", "evidence"]
     ids = [i["knowledge_id"] for i in _assemble(graph_facts=graph, child_evidence=child)["evidence_bundle"]]
     assert ids == ["fact_conflict", "fact_f1", "chunk_c1"]
+
+
+def test_presentation_fields_are_additive_and_null_safe() -> None:
+    """UI-V3 §3.1: every item carries presentation {title, heading_path,
+    human_locator}; NULL heading_path (legacy rows) degrades to
+    source-name-only, empty strings, never a raise."""
+    # legacy chunk (no heading_path key at all)
+    bundle = _assemble(child_evidence=[
+        {"chunk_id": "chunk_a1", "doc_id": "doc_a", "contract_ids": []}])
+    items = bundle["evidence_bundle"]
+    assert all("presentation" in i for i in items)
+    child = next(i for i in items if i["text_kind"] == "child_chunk")
+    assert child["presentation"] == {
+        "title": "", "heading_path": "", "human_locator": "a.txt"}
+
+    # chunk WITH a heading path -> title is the leaf, locator composes
+    CHUNKS["chunk_hp"] = {
+        "chunk_id": "chunk_hp", "doc_id": "doc_a",
+        "text": "Zoned text.", "char_start": 100, "char_end": 111,
+        "heading_path": ["Chapter 1", "Cloud Models"]}
+    try:
+        bundle2 = _assemble(child_evidence=[
+            {"chunk_id": "chunk_hp", "doc_id": "doc_a", "contract_ids": []}])
+        child2 = next(i for i in bundle2["evidence_bundle"]
+                      if i["text_kind"] == "child_chunk")
+        assert child2["presentation"]["title"] == "Cloud Models"
+        assert child2["presentation"]["heading_path"] == \
+            "Chapter 1 \u203a Cloud Models"
+        assert child2["presentation"]["human_locator"] == \
+            "a.txt \u203a Cloud Models"
+    finally:
+        del CHUNKS["chunk_hp"]
+
+    # document summaries: title IS the source name
+    bundle3 = _assemble(child_evidence=[])
+    # (claim items present; verify doc-summary path via a summary row)
+    from polymath_shared.evidence_assembly import assemble_evidence_bundle
+    b4 = assemble_evidence_bundle(
+        QUERY, [], [],
+        resolve_fact=lambda f: None, resolve_evidence=lambda f: [],
+        resolve_entity=lambda e: None,
+        resolve_document=lambda did: DOCUMENTS.get(did),
+        resolve_chunk=lambda cid: CHUNKS.get(cid),
+        document_summaries=[{"doc_id": "doc_a", "summary": "About A."}])
+    ds = b4["evidence_bundle"][0]
+    assert ds["presentation"]["human_locator"] == "a.txt"
+    assert ds["presentation"]["title"] == "a.txt"

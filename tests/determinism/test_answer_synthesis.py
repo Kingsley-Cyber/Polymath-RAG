@@ -146,6 +146,7 @@ def test_direct_answer_is_grounded_and_cited() -> None:
         "bundle_item_ids": claims[0]["support"],
         "source_document_ids": ["doc_a"],
         "locators": ["chunk:chunk_a1@0:27"],
+        "human_locators": ["a.txt"],
     }]
 
 

@@ -124,20 +124,50 @@ function DegradedNote({ retrieval }: { retrieval: Retrieval }) {
   );
 }
 
+/** UI-V3 Sources panel (v3.3 style): each source leads with its human
+ * identity — document name › section — and the verbatim quote. Raw
+ * chunk locators and ids live behind a per-row provenance expander, so
+ * internal machinery never occupies the default view. Rows without
+ * presentation fields (pre-UI-V3 payloads) fall back to the locator. */
 function ChunksPanel({ chunks }: { chunks: ChunkRef[] }) {
   if (chunks.length === 0)
     return <div className="chunks-panel">no evidence items retained</div>;
   return (
     <div className="chunks-panel">
       {chunks.map((c, i) => (
-        <div className="chunk-row" key={i}>
-          <div className="chunk-loc">
-            [{i + 1}] {c.locator}
-            {c.kind ? `  ·  ${c.kind}` : ""}
-          </div>
-          {c.preview && <div className="chunk-preview">“{c.preview}…”</div>}
-        </div>
+        <SourceRow key={i} n={i + 1} c={c} />
       ))}
+    </div>
+  );
+}
+
+function SourceRow({ n, c }: { n: number; c: ChunkRef }) {
+  const [showProv, setShowProv] = useState(false);
+  const human = c.human_locator || c.source_name || "";
+  return (
+    <div className="chunk-row">
+      <div className="chunk-loc">
+        [{n}] {human ? <b>{human}</b> : c.locator}
+        {c.kind ? `  ·  ${c.kind}` : ""}
+        <button
+          className="copy-btn"
+          style={{ marginLeft: 8 }}
+          title="Raw locator and ids"
+          onClick={() => setShowProv((s) => !s)}
+        >
+          {showProv ? "▾ provenance" : "▸ provenance"}
+        </button>
+        <CopyBtn text={c.preview ?? ""} label="quote" />
+      </div>
+      {c.preview && <div className="chunk-preview">“{c.preview}…”</div>}
+      {showProv && (
+        <div className="chunk-loc" style={{ opacity: 0.7, fontSize: "0.85em" }}>
+          {c.locator}
+          {c.doc_id ? `  ·  ${c.doc_id}` : ""}
+          {c.heading_path ? `  ·  ${c.heading_path}` : ""}
+          <CopyBtn text={c.locator} label="locator" />
+        </div>
+      )}
     </div>
   );
 }

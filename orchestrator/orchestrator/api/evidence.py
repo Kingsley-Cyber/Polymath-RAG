@@ -300,7 +300,8 @@ def _resolve_document(doc_id: str) -> Optional[dict]:
 def _resolve_chunk(chunk_id: str) -> Optional[dict]:
     with tx() as conn:
         row = conn.execute(
-            "SELECT chunk_id, doc_id, text, char_start, char_end FROM chunks WHERE chunk_id = %s",
+            "SELECT chunk_id, doc_id, text, char_start, char_end, "
+            "heading_path FROM chunks WHERE chunk_id = %s",
             (chunk_id,),
         ).fetchone()
     if row is None:
@@ -308,4 +309,5 @@ def _resolve_chunk(chunk_id: str) -> Optional[dict]:
     return {
         "chunk_id": row[0], "doc_id": row[1], "text": row[2],
         "char_start": row[3], "char_end": row[4],
+        "heading_path": row[5],
     }

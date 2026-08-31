@@ -319,6 +319,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-08-30-nvidia-dual-lane.md", "md", None),
     ("docs/wiki/work-log/2026-08-30-groq-extraction-fleet.md", "md", None),
     ("docs/wiki/work-log/2026-08-30-cross-provider-failover.md", "md", None),
+    ("docs/wiki/work-log/2026-08-30-ui-v3-presentation.md", "md", None),
     ("config/cloud_providers.json", "json", None),
     ("scripts/probe_cloud_endpoints.py", "py", None),
     ("docs/wiki/plans/CONTINUITY-REPORT.md", "md", None),
@@ -1293,7 +1294,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/v5/wipe_corpus_v5.py", "py", None),
     # frontend
     ("frontend/.gitignore", "gitignore", None),
-    ("frontend/dist/assets/index-DlCwo-eH.js", "js", None),
+    ("frontend/dist/assets/index-D3PJSuv-.js", "js", None),
     ("frontend/dist/assets/index-DM5QBXlf.css", "css", None),
     ("frontend/dist/index.html", "html", None),
     ("frontend/index.html", "html", None),

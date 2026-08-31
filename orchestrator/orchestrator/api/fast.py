@@ -376,6 +376,44 @@ def _rerank_children(query: str, children: list[dict]) -> list[dict]:
         return children
 
 
+def _presentation_joins(chunk_ids: list[str],
+                        doc_ids: list[str]) -> dict:
+    """UI-V3 §3.2 (best-effort, fail-open): one query each for the
+    chunks' heading paths and the documents' names; returns
+    {chunk_id|doc_id: {...}} for response decoration. NULL heading_path
+    (legacy ingests) degrades to source-name-only human locators."""
+    out: dict = {}
+    if not chunk_ids and not doc_ids:
+        return out
+    try:
+        with tx() as conn:
+            for did, name in conn.execute(
+                    "SELECT doc_id, source_name FROM documents "
+                    "WHERE doc_id = ANY(%s)", (sorted(set(doc_ids)),)):
+                out[did] = {"source_name": name or ""}
+            rows = conn.execute(
+                "SELECT c.chunk_id, c.heading_path, d.source_name "
+                "FROM chunks c JOIN documents d ON d.doc_id = c.doc_id "
+                "WHERE c.chunk_id = ANY(%s)",
+                (sorted(set(chunk_ids)),)).fetchall()
+        for cid, path_raw, name in rows:
+            if isinstance(path_raw, (list, tuple)):
+                path = " › ".join(str(x) for x in path_raw if x)
+            else:
+                path = str(path_raw) if path_raw else ""
+            title = path.rsplit("›", 1)[-1].strip() if path else ""
+            human = (f"{name} › {title}" if (name and title)
+                     else (name or ""))
+            out[cid] = {"title": title, "heading_path": path,
+                        "human_locator": human}
+    except Exception as exc:            # presentation must never fail a query
+        import logging as _logging
+        _logging.getLogger("fast").warning(
+            "presentation join failed open: %s: %s",
+            type(exc).__name__, exc)
+    return out
+
+
 def fast_retrieve(
     query: str,
     corpus_id,
@@ -458,6 +496,9 @@ def fast_retrieve(
         client.close()
 
     latency_ms = {k: round(v, 1) for k, v in searcher.latency.items()}
+    _p = _presentation_joins(
+        [c["chunk_id"] for c in result.final_evidence],
+        [c["doc_id"] for c in result.final_evidence])
     return {
         "query": query,
         "meta": {
@@ -517,11 +558,19 @@ def fast_retrieve(
                 "chunk_id": c["chunk_id"],
                 "doc_id": c["doc_id"],
                 "parent_id": c["parent_id"],
-                "source_name": c["source_name"],
+                # UI-V3 §1B: child routing points carry no source_name in
+                # their payload — the durable documents row does; the
+                # presentation join fixes the measured source_name:"" bug.
+                "source_name": c["source_name"] or _p.get(
+                    c["doc_id"], {}).get("source_name", ""),
                 "arrival": c.get("arrival"),
                 "document_rank": c.get("document_rank"),
                 "g3_score": c.get("rerank_score"),
                 "locator": f"chunk:{c['chunk_id']}",
+                "title": _p.get(c["chunk_id"], {}).get("title", ""),
+                "heading_path": _p.get(c["chunk_id"], {}).get("heading_path", ""),
+                "human_locator": _p.get(c["chunk_id"], {}).get("human_locator", ""),
+                "text": (c.get("text") or "")[:240],
             }
             for c in result.final_evidence
         ],
