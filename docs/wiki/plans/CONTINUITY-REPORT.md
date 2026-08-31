@@ -18,7 +18,22 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → `CLAUDE.md` → the two newest work-logs.
 
-## Latest checkpoint (2026-08-30, RETRIEVAL-FULL-FIX-V1, commit 37777c4)
+## Latest checkpoint (2026-08-30 late, CROSS-PROVIDER-FAILOVER-V1, commit 35168e7)
+
+PROVIDER INFRASTRUCTURE COMPLETE (work-logs: extraction-pool,
+cloud-assist, multi-provider-auth, nvidia-latent-pin, nvidia-dual-lane,
+groq-extraction-fleet, cross-provider-failover). Extraction cloud =
+primary + groq1-4 (qwen3.8-27b, strict JSON schema level-1) + nvidia2
+(super-120b); enrichment pin group = [nvidia (lightning, reasoning
+none), groq5] — all owner accounts, per-account AIMD buckets
+(limiter.yaml), lane affinity + stealing + assist live, deterministic
+ring failover (EXTRACTION_LANE_FAILOVER), keys in gitignored .env,
+registry = config/cloud_providers.json (key drop = activation). Latent
+plan carries §0a buttons, §0b mixed-era union contract, §1.7 wire
+reconciliation. Phase B transport work is now ZERO — the enrichment
+compiler plugs into select_endpoint_for_stage + complete_batched.
+
+## Previous checkpoint (2026-08-30, RETRIEVAL-FULL-FIX-V1, commit 37777c4)
 
 Audit findings F2/F6/F7/F8/F10/F11/F12 fixed and live-verified on top of
 the F1/F3/F4/F5/F9 baseline — see work-log
