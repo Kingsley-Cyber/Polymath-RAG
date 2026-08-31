@@ -378,22 +378,34 @@ def _rerank_children(query: str, children: list[dict]) -> list[dict]:
 
 def fast_retrieve(
     query: str,
-    corpus_id: str,
+    corpus_id,
     plan: Optional[Pass1RetrievalPlan] = None,
 ) -> dict:
     """Production FAST: one qualified Pass-1 execution with explicit
-    readiness, corpus filtering, and a hierarchical trace."""
+    readiness, corpus filtering, and a hierarchical trace.
+
+    MULTI-CORPUS-FAST-V1 (audit F8): `corpus_id` is a corpus id or a
+    list of them. The pass1 engine already fans lanes out per corpus
+    (per-corpus rank cut, similarity merge), so a wider authorized
+    scope retrieves instead of 422ing. Readiness stays PER CORPUS and
+    fails closed — one unready corpus fails the whole query rather
+    than silently narrowing the scope. HYBRID/GRAPH remain
+    single-corpus engines (in-memory lexical scan / graph seeding are
+    corpus-local) and keep the 422 gate."""
     _begin_retrieval()
     plan = plan or mode_plan(MODE_FAST)
-    if corpus_id is None:
+    corpus_ids = [corpus_id] if isinstance(corpus_id, str) \
+        else list(corpus_id or [])
+    if not corpus_ids:
         raise _fail({
             "error_code": "corpus_required",
-            "message": "FAST requires an explicit corpus_id (authorized corpus scope)",
+            "message": "FAST requires an explicit corpus scope (authorized corpus ids)",
         }, status_code=422)
 
-    _ensure_fast_ready(corpus_id)
+    for cid in corpus_ids:
+        _ensure_fast_ready(cid)
 
-    collections = _corpus_collections([corpus_id])
+    collections = _corpus_collections(corpus_ids)
     try:
         client = QdrantClient(url=get_settings().stores.qdrant_url, timeout=60)
     except Exception as exc:
@@ -412,7 +424,8 @@ def fast_retrieve(
         # subdomains…"), which the breadth caps structurally truncate.
         shaped = plan_for_query(
             query,
-            Pass1RetrievalPlan(**{**plan.__dict__, "corpus_ids": (corpus_id,)}),
+            Pass1RetrievalPlan(**{**plan.__dict__,
+                                  "corpus_ids": tuple(corpus_ids)}),
         )
         result = pass1_retrieve(
             query,
@@ -423,39 +436,24 @@ def fast_retrieve(
             neighbor_lookup=_neighbor_lookup,
             region_lookup=_region_lookup,
         )
-        # ENTITY-CARD-LANE-V1 (§11.6 phase 1): graph extractions as FAST
-        # citizens — a query naming an entity routes via its routing_entity
-        # card (surface + aliases + predicate capsule) instead of hoping a
-        # child chunk embeds the name. Advisory + fail-open: card doc-votes
-        # STABLY re-rank the engine's selected documents (engine order
-        # preserved within vote groups); the cards themselves are returned
-        # for the ask layer. Sparse (exact-name, shared tokenizer) and
-        # dense both consulted.
+        # ENTITY-CARD-LANE (pass1-retrieval-v2): the card lane is now a
+        # FUSED fourth RRF lane inside the engine — its votes show up in
+        # rrf_contributions["routing_entity"], not as a post-hoc re-sort
+        # (the advisory doc-vote re-rank this replaced double-counted
+        # against RRF and hid attribution). The probe below only
+        # SURFACES the matched cards for the ask layer and the
+        # response; it never reorders documents. Fail-open.
         entity_cards: list[dict] = []
-        try:
-            entity_cards = entity_card_probe(
-                client, collections, corpus_id, query, _embed_query(query))
-        except Exception as exc:        # advisory lane: never fails the query
-            import logging as _logging
-            _logging.getLogger("fast").warning(
-                "entity card lane failed open: %s: %s",
-                type(exc).__name__, exc)
-            entity_cards = []
-        if entity_cards:
+        qvec_cards = _embed_query(query)
+        for cid in corpus_ids:
             try:
-                votes: dict[str, int] = {}
-                for card in entity_cards:
-                    for d in card["doc_ids"]:
-                        votes[d] = votes.get(d, 0) + 1
-                if votes:
-                    result.selected_documents = sorted(
-                        result.selected_documents,
-                        key=lambda d: -votes.get(d.doc_id, 0))
-            except Exception as exc:    # cards still returned; boost skipped
+                entity_cards.extend(entity_card_probe(
+                    client, collections, cid, query, qvec_cards))
+            except Exception as exc:    # display lane: never fails the query
                 import logging as _logging
                 _logging.getLogger("fast").warning(
-                    "entity card doc-boost failed open: %s: %s",
-                    type(exc).__name__, exc)
+                    "entity card display probe failed open (%s): %s: %s",
+                    cid, type(exc).__name__, exc)
     finally:
         client.close()
 
@@ -465,7 +463,8 @@ def fast_retrieve(
         "meta": {
             "mode": MODE_FAST,
             "plan_version": result.plan.plan_version,
-            "corpus_id": corpus_id,
+            "corpus_id": corpus_ids[0] if len(corpus_ids) == 1 else None,
+            "corpus_ids": corpus_ids,
             "rrf_k": result.plan.rrf_k,
             "selected_document_count": len(result.selected_documents),
             "selected_section_count": len(result.selected_sections),

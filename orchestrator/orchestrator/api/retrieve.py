@@ -109,9 +109,11 @@ def graph_expand_or_502(
 
 
 def single_corpus_or_422(scope, mode: str) -> str:
-    """FAST/HYBRID/GRAPH are single-corpus engines (collection-per-
-    corpus projection). A wider resolved scope fails closed — it is
-    never silently narrowed or fanned out."""
+    """HYBRID/GRAPH are single-corpus engines (in-memory lexical scan
+    and graph seeding are corpus-local). A wider resolved scope fails
+    closed — never silently narrowed. FAST no longer uses this gate:
+    MULTI-CORPUS-FAST-V1 (audit F8) fans the pass1 lanes out per
+    corpus."""
     if len(scope.corpus_ids) != 1:
         raise HTTPException(status_code=422, detail={
             "error_code": "mode_requires_single_corpus",
@@ -139,7 +141,7 @@ async def retrieve(req: RetrieveRequest) -> dict:
     if mode == MODE_FAST:
         from orchestrator.api.fast import fast_retrieve
 
-        return fast_retrieve(query, single_corpus_or_422(scope, mode))
+        return fast_retrieve(query, list(scope.corpus_ids))  # F8: multi-corpus
     if mode == MODE_HYBRID:
         from orchestrator.api.hybrid import hybrid_fast_retrieve
 

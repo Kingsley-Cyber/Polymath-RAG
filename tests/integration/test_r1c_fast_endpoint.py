@@ -118,7 +118,7 @@ def test_fast_endpoint_one_path_isolation_and_determinism():
             assert r1.status_code == 200, r1.text
             body = r1.json()
             assert body["meta"]["mode"] == "FAST"
-            assert body["meta"]["plan_version"] == "pass1-retrieval-v1"
+            assert body["meta"]["plan_version"] == "pass1-retrieval-v2"
             assert body["selected_documents"], "no documents selected"
             assert body["selected_sections"], "no sections resolved"
             assert body["evidence"], "no evidence returned"

@@ -53,7 +53,8 @@ def _desired_chunk_ids(conn: Connection, run_id: str) -> list[str]:
         SELECT c.chunk_id FROM chunks c
           JOIN documents d ON d.doc_id = c.doc_id
           JOIN runs r ON r.corpus_id = d.corpus_id
-         WHERE r.run_id = %s ORDER BY c.chunk_id
+         WHERE r.run_id = %s AND c.tier = 'child'  -- F6: parents retired
+         ORDER BY c.chunk_id
         """,
         (run_id,),
     ).fetchall()

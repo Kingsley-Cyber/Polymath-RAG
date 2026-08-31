@@ -25,6 +25,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from polymath_shared.db import tx
+from polymath_shared.knowledge_objects.concept import object_name_admissible
 from polymath_shared.query_router import (
     QUERY_ROUTER_VERSION,
     ROUTE_CONCEPT,
@@ -154,6 +155,11 @@ def _procedures(conn, scope: "QueryScope", question: str,
     scored = []
     for pid, did, cid, title, goal, steps, tools, conf, chunks in rows:
         steps_l = steps if isinstance(steps, list) else json.loads(steps or "[]")
+        # OBJECT-NAME-CONTRACT-V2 (audit F12): rows compiled under the
+        # GLiNER-era contract carry glue titles ("… Path DevOps"). The
+        # steps are still evidence — keep the row, fix the display name.
+        if not (title and object_name_admissible(title)[0]):
+            title = f"Procedure ({len(steps_l)} steps)"
         blob = " ".join([title or "", goal or "", *map(str, steps_l)])
         match = _match_score(blob, terms)
         # ARTIFACT-CONFIDENCE-V2 (P7): confidence no longer ranks.
@@ -197,6 +203,8 @@ def _concepts(conn, scope: "QueryScope", question: str,
     vec_ranks = _vector_object_ranks(question, scope, "routing_concept")
     scored = []
     for cid_, did, cid, name, desc, domain, conf, chunks in rows:
+        if not object_name_admissible(name or "")[0]:
+            continue  # F12: stale GLiNER-era junk name — never serve it
         match = _match_score(f"{name} {desc}", terms)
         # ARTIFACT-CONFIDENCE-V2 (P7): concept confidence is a hardcoded
         # 0.9 for every concept. A constant adds the same amount to every

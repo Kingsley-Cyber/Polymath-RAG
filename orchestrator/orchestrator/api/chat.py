@@ -120,7 +120,7 @@ async def chat(req: ChatRequest) -> dict:
         if mode == MODE_FAST:
             from orchestrator.api.fast import fast_retrieve
 
-            fast = fast_retrieve(query, single_corpus_or_422(scope, mode))
+            fast = fast_retrieve(query, list(scope.corpus_ids))  # F8: multi-corpus
         else:
             from orchestrator.api.hybrid import hybrid_fast_retrieve
 

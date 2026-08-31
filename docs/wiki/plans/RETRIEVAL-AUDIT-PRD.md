@@ -81,3 +81,34 @@ owner states breadth/depth targets, then **F8**, then **F14**.
    evidence contains (F7+F10, owner-stated targets).
 6. Kill the reranker: queries degrade within 5 s AND the supervisor
    restarts it within its window (F9).
+
+## Status (2026-08-30, RETRIEVAL-FULL-FIX-V1)
+
+FIXED + acceptance-verified earlier this day (RETRIEVAL-BASELINE-ELITE-V1):
+F1, F3, F4, F5, F9.
+
+FIXED this pass (work-log 2026-08-30-retrieval-full-fix.md):
+- **F2** — routing_entity is a fused fourth RRF lane (`pass1-retrieval-v2`);
+  advisory doc-vote re-sort removed; attribution in
+  `rrf_contributions["routing_entity"]`.
+- **F6** — chunk lane children-only (projector + verifier want-set in the
+  same change, per the §5.2 warning); the 65 live parent points retired
+  via `scripts/retire_parent_points.py` (receipts superseded first).
+- **F7+F10** — owner delegated the numbers ("a ai planned something…
+  adheres to me as a style of retrieval"): BREADTH-V2 plan defaults
+  (12/24 lanes, 3 sections/doc, 12 final children, 15 total) and
+  DEPTH-V2 completeness profile (8 sections/doc, 28 final children, 32
+  total, lanes 24/40) sized to a full chapter run; synthesis budget
+  2,000 chars × 48 items so found evidence ships.
+- **F8** — MULTI-CORPUS-FAST-V1: fast_retrieve takes the authorized
+  scope; per-corpus readiness fails closed; HYBRID/GRAPH stay
+  single-corpus by design (documented at `single_corpus_or_422`).
+- **F11** — `tests/determinism/test_sparse_tokenizer_contract.py` pins
+  the shared-tokenizer import + value-pins the derivation.
+- **F12** — OBJECT-NAME-CONTRACT-V2: `object_name_admissible`
+  (shared `is_term_surface` + repeated-content-token rejection) gates
+  compile time AND /ask serve time, so stale GLiNER-era rows stop
+  surfacing without waiting for recompilation.
+
+OPEN: F13 (UI toggle — owner UI PRD territory), F14 (latent build,
+MASTER-BUILD-SEQUENCE).

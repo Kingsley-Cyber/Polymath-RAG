@@ -209,6 +209,11 @@ def _collection_has_sparse(client: QdrantClient, name: str) -> bool:
 
 
 def _chunks_for_run(conn: Connection, run_id: str) -> list[dict]:
+    # PARENT-POINT-RETIREMENT (audit F6, register drop item): the chunk
+    # lane projects CHILDREN only. Parent-tier points ("parent_summary")
+    # duplicated the compiled section cards, cost an embed per parent per
+    # corpus pass, and polluted unfiltered searches. Sections route via
+    # routing_section_summary; children prove.
     rows = conn.execute(
         """
         SELECT c.chunk_id, c.doc_id, c.parent_id, c.chunk_index, c.tier,
@@ -216,7 +221,7 @@ def _chunks_for_run(conn: Connection, run_id: str) -> list[dict]:
           FROM chunks c
           JOIN documents d ON d.doc_id = c.doc_id
           JOIN runs r ON r.corpus_id = d.corpus_id
-         WHERE r.run_id = %s
+         WHERE r.run_id = %s AND c.tier = 'child'
          ORDER BY c.chunk_index
         """,
         (run_id,),

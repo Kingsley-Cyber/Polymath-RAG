@@ -170,6 +170,8 @@ def compile_concepts(*, document_id: str, corpus_id: str,
                 continue
             if _bad_name(name):
                 continue  # pronoun/demonstrative subject = statement
+            if not object_name_admissible(name)[0]:
+                continue  # F12: clause/glue names never become objects
             if pat is _GERUND_COPULA and not _nominal_head(name):
                 continue  # "Age is going to be 28…" narrates; only a
                 # nominalization subject makes gerund-copula a definition
@@ -304,6 +306,44 @@ _INTERNAL_SUBORDINATOR = frozenset(
 _FRAGMENT_PUNCT = re.compile(r"[,;:&]|[)\]}](?![\w])|[\"“”]|\((?![^)]*\))")
 
 
+#: Function words that legitimately repeat inside one nominal
+#: ("chain of custody of evidence"); everything else repeating is glue
+#: junk from the extraction-era contract ("AWS Cloud DevOps Engineer
+#: Path DevOps" — measured live in /ask winners, 2026-08-30).
+_REPEATABLE_TOKENS = frozenset(
+    "of the a an and or for in on to with".split())
+
+
+def object_name_admissible(name: str) -> tuple[bool, str]:
+    """OBJECT-NAME-CONTRACT-V2 (audit F12): the naming gate every
+    compiled knowledge-object NAME must pass, shared by concept and
+    procedure compilers AND the /ask serve path (stale GLiNER-era rows
+    are filtered at read time until recompiled).
+
+    Two rules on top of the term-surface gate:
+      - the name must be a TERM (owner law: <=8 words, no sentence
+        punctuation, no clause shape) — imported from the extraction
+        gate so both contracts share ONE definition of "term";
+      - no repeated content token anywhere in the name (adjacent or
+        not) — repetition in a nominal is always concatenation glue.
+    """
+    from polymath_shared.llm_extraction.gate import is_term_surface
+
+    text = (name or "").strip()
+    if not text:
+        return False, "empty"
+    if not is_term_surface(text):
+        return False, "not_a_term_surface"
+    seen: set[str] = set()
+    for tok in (t.lower().strip(".,;:!?") for t in text.split()):
+        if tok in _REPEATABLE_TOKENS or not tok:
+            continue
+        if tok in seen:
+            return False, "repeated_content_token"
+        seen.add(tok)
+    return True, "admitted"
+
+
 def concept_name_admissible(name: str) -> tuple[bool, str]:
     """Does `name` carry durable concept identity?
 
@@ -318,6 +358,9 @@ def concept_name_admissible(name: str) -> tuple[bool, str]:
     tokens = text.split()
     low = [t.lower().strip(".,;:!?") for t in tokens]
 
+    ok, reason = object_name_admissible(text)
+    if not ok:
+        return False, reason
     if _FRAGMENT_PUNCT.search(text):
         return False, "punctuation_fragment"
     if low[0] in _EDGE_FUNCTION:

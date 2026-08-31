@@ -435,8 +435,17 @@ def compile_procedures(*, document_id: str, corpus_id: str,
                     e.lower() not in [t.lower() for t in tools]:
                 tools.append(e)
 
+        # OBJECT-NAME-CONTRACT-V2 (audit F12): a document title that
+        # fails the shared name gate (clause-shaped, or glue-repeated
+        # tokens like "AWS Cloud DevOps Engineer Path DevOps") never
+        # becomes a procedure title; the deterministic fallback does.
+        from polymath_shared.knowledge_objects.concept import (
+            object_name_admissible,
+        )
+        safe_title = title if (title and object_name_admissible(title)[0]) \
+            else f"Procedure ({len(steps)} steps)"
         body = {
-            "title": title or f"Procedure ({len(steps)} steps)",
+            "title": safe_title,
             "goal": task["goal"].rstrip("."),
             "tools": tools,
             "steps": steps,

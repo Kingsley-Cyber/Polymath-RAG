@@ -991,8 +991,12 @@ def _llm_system_prompt() -> str:
 #: 1,061 and 1.5 at 1,144 — retrieval delivered them, the prompt
 #: builder deleted them, and the answer listed only 1.1-1.3.
 #: 1,600 covers the chunk-size distribution with headroom.
+# EVIDENCE-BUDGET-V2 (audit F10): 2,000 covers the measured chunk-size
+# distribution (avg 1,197, target 1,200) with real headroom — 1,600 still
+# clipped long-tail chunks whose value sits at the end. Item COUNT is the
+# depth lever (plan v2 final caps); chars per item just stops truncation.
 _EVIDENCE_TEXT_CHARS = int(
-    os.environ.get("POLYMATH_EVIDENCE_TEXT_CHARS", "1600"))
+    os.environ.get("POLYMATH_EVIDENCE_TEXT_CHARS", "2000"))
 
 
 def _grounded_messages(query: str, bundle: dict, graph_facts: list,
@@ -1011,7 +1015,7 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
     # real locators for the trace/UI.
     ev_lines: list[str] = []
     legend: list[str] = []
-    for item in (bundle.get("evidence_bundle") or [])[:40]:
+    for item in (bundle.get("evidence_bundle") or [])[:48]:
         span = item.get("source_span") or {}
         loc = span.get("locator") or ""
         text = (span.get("text") or "")[:_EVIDENCE_TEXT_CHARS]

@@ -24,11 +24,23 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
 
-PLAN_VERSION = "pass1-retrieval-v1"
+# PASS1-RETRIEVAL-V2 (2026-08-30): entity cards join document fusion as a
+# fourth RRF lane (audit F2), and the breadth caps are re-derived from the
+# owner's retrieval style rather than inherited constants (audit F7):
+# "summaries for breadth AND depth", "teach it, never inventory it",
+# "completeness overrides brevity". Derivation, measured on live corpora
+# (parents ~24-40/book at ~850w, ~5 children/parent, chunks ~1.2K chars):
+#   - sections are the teaching unit -> 3 sections/doc breadth (was 2) and
+#     a deeper section lane (12) so section context outranks stray children
+#   - child lane 24 (was 20): rescue pool scales with the deeper descent
+#   - final evidence 12/15 (was 10/12): fits the synthesis budget at 2K
+#     chars/item while adding one more proving child per answer
+PLAN_VERSION = "pass1-retrieval-v2"
 
 REPRESENTATION_KIND_DOCUMENT_SUMMARY = "routing_document_summary"
 REPRESENTATION_KIND_SECTION_SUMMARY = "routing_section_summary"
 REPRESENTATION_KIND_CHILD = "routing_child"
+REPRESENTATION_KIND_ENTITY_CARD = "routing_entity"
 
 ARRIVAL_DOCUMENT_LED = "DOCUMENT_LED"
 ARRIVAL_SECTION_LED = "SECTION_LED"
@@ -51,21 +63,28 @@ class Pass1RetrievalPlan:
     document_summary_enabled: bool = True
     document_summary_top_k: int = 10
     section_summary_enabled: bool = True
-    section_summary_top_k: int = 10
+    section_summary_top_k: int = 12
     global_child_enabled: bool = True
-    global_child_top_k: int = 20
+    global_child_top_k: int = 24
+
+    # ENTITY-CARD-LANE (audit F2): graph extractions vote in document
+    # fusion — one card ranks, every document it evidences receives its
+    # RRF contribution (bounded per card).
+    entity_card_enabled: bool = True
+    entity_card_top_k: int = 8
+    entity_card_max_docs_per_card: int = 4
 
     rrf_k: int = 60
 
     max_documents: int = 5
-    max_sections_per_document: int = 2
+    max_sections_per_document: int = 3
     max_children_per_section: int = 3
     global_child_rescue_max: int = 3
 
     rerank_enabled: bool = True
 
-    final_max_children: int = 10
-    final_max_total_items: int = 12
+    final_max_children: int = 12
+    final_max_total_items: int = 15
 
     #: RESCUE-SLOT-RESERVATION-V1 (2026-08-27). `global_child_rescue_max`
     #: was structurally dead: rescue children are appended AFTER every
@@ -132,6 +151,7 @@ class DocumentCandidate:
     doc_id: str
     corpus_id: str
     document_summary_hits: list[LaneHit] = field(default_factory=list)
+    entity_card_hits: list[LaneHit] = field(default_factory=list)
     section_summary_hits: list[LaneHit] = field(default_factory=list)
     global_child_hits: list[LaneHit] = field(default_factory=list)
     child_lexical_hits: list[LaneHit] = field(default_factory=list)
@@ -154,6 +174,8 @@ class DocumentCandidate:
             kinds.append(REPRESENTATION_KIND_CHILD)
         if self.child_lexical_hits:
             kinds.append("child_lexical")
+        if self.entity_card_hits:
+            kinds.append(REPRESENTATION_KIND_ENTITY_CARD)
         return kinds
 
 
@@ -214,6 +236,7 @@ def aggregate_documents_n(
             REPRESENTATION_KIND_SECTION_SUMMARY: "section_summary_hits",
             REPRESENTATION_KIND_CHILD: "global_child_hits",
             "child_lexical": "child_lexical_hits",
+            REPRESENTATION_KIND_ENTITY_CARD: "entity_card_hits",
         }[kind]
         seen: set[str] = set()
         for hit in lane:
@@ -399,6 +422,26 @@ def pass1_retrieve(
             rows = routing_search(collection or "", qvec, filters)[:top_k]
             for i, row in enumerate(rows):
                 payload = row.get("payload") or {}
+                # ENTITY-CARD-LANE (F2): a card votes for EVERY document
+                # it evidences (payload doc_ids, bounded) — one LaneHit
+                # per (card, doc) at the card's rank, so RRF attributes
+                # the vote per document.
+                if kind == REPRESENTATION_KIND_ENTITY_CARD:
+                    if i >= plan.entity_card_top_k:
+                        continue          # votes expand; the CARD pool stays capped
+                    docs = list(payload.get("doc_ids") or [])
+                    if not docs and payload.get("doc_id"):
+                        docs = [payload["doc_id"]]
+                    for d in docs[:plan.entity_card_max_docs_per_card]:
+                        hits.append(LaneHit(
+                            representation_kind=kind, rank=i,
+                            raw_similarity=float(row.get("score") or 0.0),
+                            corpus_id=payload.get("corpus_id", cid or ""),
+                            doc_id=d, parent_id="", chunk_id="",
+                            summary_id=payload.get("summary_id") or "",
+                            source_name=payload.get("source_name", ""),
+                            text=payload.get("text", "")))
+                    continue
                 hits.append(LaneHit(
                     representation_kind=kind,
                     rank=i,
@@ -438,7 +481,23 @@ def pass1_retrieve(
     child_lane = search(REPRESENTATION_KIND_CHILD, plan.global_child_top_k) \
         if plan.global_child_enabled else []
 
-    documents = aggregate_documents(doc_lane, section_lane, child_lane, plan.rrf_k)
+    # ENTITY-CARD-LANE (F2): one card ranks once; every document it
+    # evidences receives that rank's RRF vote (bounded per card). The
+    # card payload carries doc_ids[]; the LaneHit doc_id is expanded so
+    # aggregate_documents_n attributes the vote per document. Cards are
+    # ROUTING only — they never become evidence (children prove).
+    card_lane: list[LaneHit] = []
+    if plan.entity_card_enabled:
+        # search() expands each card into per-document votes (doc_ids)
+        card_lane = search(REPRESENTATION_KIND_ENTITY_CARD,
+                           plan.entity_card_top_k * plan.entity_card_max_docs_per_card)
+
+    documents = aggregate_documents_n(
+        [(REPRESENTATION_KIND_DOCUMENT_SUMMARY, doc_lane),
+         (REPRESENTATION_KIND_SECTION_SUMMARY, section_lane),
+         (REPRESENTATION_KIND_CHILD, child_lane),
+         (REPRESENTATION_KIND_ENTITY_CARD, card_lane)],
+        k=plan.rrf_k)
     selected_documents = documents[:plan.max_documents]
     selected_sections = resolve_sections(selected_documents, plan.max_sections_per_document)
 
