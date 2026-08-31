@@ -65,6 +65,10 @@ class CloudEndpoint:
     # a provider passes a strict-schema canary; the field exists so that
     # upgrade is a config flip, not a code change.
     structured: str = "json"
+    # DEDICATED-V1: a dedicated endpoint serves ONLY stages pinned to it
+    # (stage_pins); it never joins the general extraction sharding — its
+    # rate budget is reserved for its stage.
+    dedicated: bool = False
 
     @property
     def limiter_key(self) -> str:
@@ -74,12 +78,11 @@ class CloudEndpoint:
 
     @property
     def cloud_opts(self) -> dict:
-        if self.structured == "schema":
-            _log_once(("schema-downgrade", self.name),
-                      "endpoint %r declares structured='schema'; dispatching "
-                      "as json-object mode until a strict-schema canary "
-                      "passes", self.name)
+        # "schema" now DISPATCHES level-1 (client sends the packet
+        # json_schema) — declare it only after a live canary on that
+        # provider+model (STRICT-SCHEMA-V1; verified Groq qwen3.8-27b).
         return {"reasoning_effort": self.reasoning_effort,
+                "structured": self.structured,
                 "json_mode": self.structured in ("schema", "json")}
 
 
@@ -152,7 +155,8 @@ def _configured_providers() -> list[CloudEndpoint]:
             name=name, url=url, model=model, api_key=key,
             reasoning_effort=e.get("reasoning_effort"),
             json_mode=bool(e.get("json_mode", True)),
-            structured=_structured_level(e)))
+            structured=_structured_level(e),
+            dedicated=bool(e.get("dedicated", False))))
     return out
 
 
@@ -257,8 +261,15 @@ def select_endpoint_for_stage(stage: str, doc_id: str) -> CloudEndpoint:
 
 
 def select_cloud_endpoint(doc_id: str) -> CloudEndpoint:
-    """Deterministic doc -> endpoint assignment over the enabled roster."""
-    roster = cloud_endpoints()
+    """Deterministic doc -> endpoint assignment over the enabled,
+    NON-DEDICATED roster (dedicated endpoints serve only their pinned
+    stages — DEDICATED-V1)."""
+    roster = [ep for ep in cloud_endpoints() if not ep.dedicated]
+    if not roster:
+        roster = cloud_endpoints()   # everything dedicated: fail open, loudly
+        _log_once(("all-dedicated",),
+                  "every cloud endpoint is dedicated; general dispatch "
+                  "falling back to the full roster")
     if len(roster) == 1:
         return roster[0]
     digest = hashlib.blake2b((doc_id or "").encode(), digest_size=8).digest()
@@ -270,5 +281,5 @@ def pool_fingerprint() -> list[dict]:
     re-modeled must show up in the extraction contract."""
     return [{"name": ep.name, "url": ep.url, "model": ep.model,
              "reasoning_effort": ep.reasoning_effort,
-             "structured": ep.structured}
+             "structured": ep.structured, "dedicated": ep.dedicated}
             for ep in cloud_endpoints()]

@@ -65,3 +65,53 @@ providers:
     init: 2
     adaptive: true
     use_headers: true
+  groq1:                  # unlinked account 1 — own bucket
+    kind: rate
+    rpm: 30
+    tpm: 120000
+    conc_cap: 6
+    min: 1
+    max: 6
+    init: 2
+    adaptive: true
+    use_headers: true
+  groq2:                  # unlinked account 2 — own bucket
+    kind: rate
+    rpm: 30
+    tpm: 120000
+    conc_cap: 6
+    min: 1
+    max: 6
+    init: 2
+    adaptive: true
+    use_headers: true
+  groq3:                  # unlinked account 3 — own bucket
+    kind: rate
+    rpm: 30
+    tpm: 120000
+    conc_cap: 6
+    min: 1
+    max: 6
+    init: 2
+    adaptive: true
+    use_headers: true
+  groq4:                  # unlinked account 4 — own bucket
+    kind: rate
+    rpm: 30
+    tpm: 120000
+    conc_cap: 6
+    min: 1
+    max: 6
+    init: 2
+    adaptive: true
+    use_headers: true
+  groq5:                  # unlinked account 5 — own bucket
+    kind: rate
+    rpm: 30
+    tpm: 120000
+    conc_cap: 6
+    min: 1
+    max: 6
+    init: 2
+    adaptive: true
+    use_headers: true

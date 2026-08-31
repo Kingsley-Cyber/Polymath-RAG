@@ -293,3 +293,31 @@ def test_stage_pin_group_shards_and_degrades_loudly(pool_env, monkeypatch,
     monkeypatch.delenv("T_NV1", raising=False)  # all dark
     with pytest.raises(pool.PinnedProviderUnavailable):
         pool.select_endpoint_for_stage("parent_enrichment", "d0")
+
+
+def test_dedicated_endpoints_excluded_from_general_sharding(pool_env,
+                                                            monkeypatch,
+                                                            tmp_path):
+    # DEDICATED-V1: dedicated endpoints serve only their pinned stages;
+    # general extraction sharding never touches them.
+    import json as _json
+
+    from polymath_shared.llm_extraction import pool
+    pf = tmp_path / "providers.json"
+    monkeypatch.setattr(pool, "_PROVIDERS_FILE", pf)
+    monkeypatch.setenv("T_DK", "k")
+    pf.write_text(_json.dumps({
+        "stage_pins": {"parent_enrichment": ["nv"]},
+        "providers": [
+            {"name": "g1", "url": "http://g1", "model": "m",
+             "api_key_env": "T_DK", "structured": "schema"},
+            {"name": "nv", "url": "http://n", "model": "m",
+             "api_key_env": "T_DK", "dedicated": True}]}))
+    pool_env(None)
+    general = {pool.select_cloud_endpoint(f"d{i}").name for i in range(30)}
+    assert "nv" not in general               # reserved for its stage
+    assert pool.select_endpoint_for_stage(
+        "parent_enrichment", "d0").name == "nv"
+    # level-1 endpoints carry the structured level into dispatch opts
+    g1 = [ep for ep in pool.cloud_endpoints() if ep.name == "g1"][0]
+    assert g1.cloud_opts["structured"] == "schema"

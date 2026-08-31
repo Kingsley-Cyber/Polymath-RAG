@@ -3,34 +3,74 @@
     "EXTRACTION-POOL pre-configured cloud providers (MULTI-PROVIDER-AUTH-V1).",
     "A provider JOINS the pool automatically when its api_key_env resolves",
     "(process env first, then the repo .env) AND enabled is not false.",
-    "Setup for a new provider = paste its key into .env — nothing else.",
-    "NO SECRETS IN THIS FILE — api_key_env names the variable, never the value.",
+    "Setup for a new provider = paste its key into .env \u2014 nothing else.",
+    "NO SECRETS IN THIS FILE \u2014 api_key_env names the variable, never the value.",
     "url omits /v1 (the client appends /v1/chat/completions).",
     "reasoning_effort null = omit the field (strict APIs 400 on unsupported",
     "params). structured = capability level: schema|json|text (strongest",
     "the provider supports; 'schema' dispatches as 'json' until a strict-",
     "schema canary passes). Local validation always runs regardless.",
     "The settings primary (Ollama daemon) is NOT listed here; it is always",
-    "in the roster. Models re-pinnable at will — a change shows up in the",
+    "in the roster. Models re-pinnable at will \u2014 a change shows up in the",
     "extraction contract via pool_fingerprint().",
     "stage_pins DEDICATES a stage to one provider (owner 2026-08-30:",
     "parent_enrichment -> nvidia). A pinned stage NEVER silently reroutes:",
     "if the pinned provider is parked/unavailable its jobs fail loudly",
     "with PINNED_PROVIDER_UNAVAILABLE (enrichment is backfillable by",
-    "design). Unpinned stages shard across the pool as normal."
+    "design). Unpinned stages shard across the pool as normal.",
+    "groq1..groq5 = five UNLINKED owner accounts (own rate each), the baseline extraction fleet on qwen/qwen3.8-27b, strict schema (level-1, live-verified). nvidia/nvidia2 dedicated:true = enrichment only, excluded from extraction sharding."
   ],
   "stage_pins": {
-    "parent_enrichment": ["nvidia", "nvidia2"]
+    "parent_enrichment": [
+      "nvidia",
+      "nvidia2"
+    ]
   },
   "providers": [
     {
-      "name": "groq",
+      "name": "groq1",
       "enabled": true,
       "url": "https://api.groq.com/openai",
-      "model": "openai/gpt-oss-120b",
-      "api_key_env": "GROQ_API_KEY",
-      "reasoning_effort": "low",
-      "structured": "json"
+      "model": "qwen/qwen3.8-27b",
+      "api_key_env": "GROQ_API_KEY_1",
+      "reasoning_effort": "none",
+      "structured": "schema"
+    },
+    {
+      "name": "groq2",
+      "enabled": true,
+      "url": "https://api.groq.com/openai",
+      "model": "qwen/qwen3.8-27b",
+      "api_key_env": "GROQ_API_KEY_2",
+      "reasoning_effort": "none",
+      "structured": "schema"
+    },
+    {
+      "name": "groq3",
+      "enabled": true,
+      "url": "https://api.groq.com/openai",
+      "model": "qwen/qwen3.8-27b",
+      "api_key_env": "GROQ_API_KEY_3",
+      "reasoning_effort": "none",
+      "structured": "schema"
+    },
+    {
+      "name": "groq4",
+      "enabled": true,
+      "url": "https://api.groq.com/openai",
+      "model": "qwen/qwen3.8-27b",
+      "api_key_env": "GROQ_API_KEY_4",
+      "reasoning_effort": "none",
+      "structured": "schema"
+    },
+    {
+      "name": "groq5",
+      "enabled": true,
+      "url": "https://api.groq.com/openai",
+      "model": "qwen/qwen3.8-27b",
+      "api_key_env": "GROQ_API_KEY_5",
+      "reasoning_effort": "none",
+      "structured": "schema"
     },
     {
       "name": "nvidia",
@@ -39,7 +79,8 @@
       "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
       "api_key_env": "NVIDIA_API_KEY",
       "reasoning_effort": "none",
-      "structured": "json"
+      "structured": "json",
+      "dedicated": true
     },
     {
       "name": "nvidia2",
@@ -48,7 +89,8 @@
       "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
       "api_key_env": "NVIDIA_API_KEY_2",
       "reasoning_effort": "none",
-      "structured": "json"
+      "structured": "json",
+      "dedicated": true
     }
   ]
 }

@@ -363,7 +363,18 @@ class LLMExtractionClient:
             # entirely (unsupported params can 400 on strict APIs).
             if self.cloud_opts.get("reasoning_effort") is not None:
                 payload["reasoning_effort"] = self.cloud_opts["reasoning_effort"]
-            if self.cloud_opts.get("json_mode", True):
+            # STRICT-SCHEMA-V1: level-1 endpoints get the full packet
+            # schema (live-verified per provider before config declares
+            # "schema"); level-2 gets json_object; level-3 neither. The
+            # local gate validates identically in every case.
+            if self.cloud_opts.get("structured") == "schema":
+                from polymath_shared.llm_extraction.contract import (
+                    EXTRACTION_JSON_SCHEMA,
+                )
+                payload["response_format"] = {
+                    "type": "json_schema",
+                    "json_schema": EXTRACTION_JSON_SCHEMA}
+            elif self.cloud_opts.get("json_mode", True):
                 payload["response_format"] = {"type": "json_object"}
         resp = httpx.post(f"{self.base_url}/v1/chat/completions",
                           json=payload, timeout=self.timeout_s,
