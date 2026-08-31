@@ -30,6 +30,9 @@ from polymath_shared.llm_extraction.limiter import REGISTRY
 from polymath_shared.llm_extraction.policy import (
     select_lane as _policy_select_lane,
 )
+from polymath_shared.llm_extraction.pool import (
+    pool_fingerprint as _pool_fingerprint,
+)
 from polymath_shared.settings import get_settings
 
 LLM_ENTITY_VERSION = "polymath-extraction-v1-entity"
@@ -162,6 +165,10 @@ def contract_identity() -> dict:
         "cloud_min_bytes": s.worker.cloud_min_bytes,
         "models": {"local": s.sidecars.llm_local_extract_model,
                    "cloud": s.sidecars.llm_cloud_model},
+        # EXTRACTION-POOL-V1: the roster is contract input — adding,
+        # removing, or re-modeling a provider changes what a cloud doc
+        # may be extracted by.
+        "cloud_pool": _pool_fingerprint(),
         "neighborhood": {"max_chars": s.worker.llm_max_neighborhood_chars,
                          "per_call": NEIGHBORHOODS_PER_CALL,
                          "min_chunk_words": LLM_MIN_CHUNK_WORDS},
@@ -198,19 +205,26 @@ def select_lane(source_bytes: int):
     return _policy_select_lane(source_bytes, get_settings().worker.cloud_min_bytes)
 
 
-def make_client(lane: str) -> LLMExtractionClient:
+def make_client(lane: str, doc_id: str = "") -> LLMExtractionClient:
     s = get_settings().sidecars
     if lane == "local":
         return LLMExtractionClient(
             "local", url=s.llm_local_extract_url, model=s.llm_local_extract_model)
     if lane == "cloud":
-        return LLMExtractionClient(
-            "cloud", url=s.llm_cloud_url, model=s.llm_cloud_model)
+        # EXTRACTION-POOL-V1: deterministic doc -> endpoint over the
+        # enabled roster (one endpoint == exactly the old behavior).
+        from polymath_shared.llm_extraction.pool import select_cloud_endpoint
+        ep = select_cloud_endpoint(doc_id)
+        client = LLMExtractionClient(
+            "cloud", url=ep.url, model=ep.model, limiter_key=ep.limiter_key)
+        client.endpoint_name = ep.name
+        return client
     raise ValueError(f"unknown lane: {lane!r}")
 
 
 def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
-                  source_bytes: int) -> tuple[list[LLMCallResult], NormalizedExtraction]:
+                  source_bytes: int,
+                  doc_id: str = "") -> tuple[list[LLMCallResult], NormalizedExtraction]:
     """Extract every neighborhood through the gate.
 
     Returns per-call receipts plus the merged, validated, worker-shaped
@@ -225,7 +239,9 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
     """
     s = get_settings().worker
     _ensure_controller_store()
-    client = make_client(lane)
+    # doc_id engages pool routing; the bare call keeps the frozen
+    # single-endpoint shape (and the test doubles that pin it).
+    client = make_client(lane, doc_id) if doc_id else make_client(lane)
     limiter = client._lane_limiter()
     views_by_nid = {n.nid: [ChunkView(cid, text) for cid, text in n.chunks]
                     for n in neighborhoods}

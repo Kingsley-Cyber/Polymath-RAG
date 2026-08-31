@@ -72,9 +72,30 @@ def _refused_set(worker_type: str) -> set[int]:
     return _REFUSED.setdefault(worker_type, set())
 
 
-def claim_ticket_events(conn, identity: dict, event_types: list[str], limit: int) -> list[dict]:
+def claim_ticket_events(conn, identity: dict, event_types: list[str], limit: int,
+                        lane_affinity: str | None = None) -> list[dict]:
     """Claim undelivered events gated by ticket readiness + worker
-    compatibility. Leases the ticket for LEASE_SECONDS."""
+    compatibility. Leases the ticket for LEASE_SECONDS.
+
+    LANE-AFFINITY-STEAL-V1 (owner 2026-08-30): when `lane_affinity` is
+    "local" or "cloud", the FIRST pass claims only events whose run
+    belongs to that extraction lane (a run is cloud-lane iff it contains
+    at least one cloud-eligible document by the owner's byte boundary);
+    when the home lane has nothing claimable, a SECOND pass claims from
+    any lane — the steal — and logs it (silent-fallback accounting).
+    Affinity never blocks work: an affine worker always drains the
+    global queue once its own lane is dry.
+    """
+    lane_sql, lane_params = "", []
+    if lane_affinity in ("local", "cloud"):
+        from polymath_shared.llm_extraction.policy import effective_threshold
+        from polymath_shared.settings import get_settings as _gs
+        threshold = effective_threshold(_gs().worker.cloud_min_bytes)
+        exists = ("EXISTS (SELECT 1 FROM documents d "
+                  "WHERE d.corpus_id = r.corpus_id AND d.byte_length > %s)")
+        lane_sql = ("AND " + exists if lane_affinity == "cloud"
+                    else "AND NOT " + exists)
+        lane_params = [threshold]
     refused = _refused_set(identity.get("worker_type", "?"))
     with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
         cur.execute(
@@ -105,6 +126,7 @@ def claim_ticket_events(conn, identity: dict, event_types: list[str], limit: int
                 AND ((t.status = 'ready' AND t.archived_at IS NULL)
                      OR (t.ticket_id IS NULL AND e.event_type = 'intake.v1'))
                 AND NOT (e.event_id = ANY(%s))
+                {lane_sql}
              ORDER BY CASE WHEN r.created_at > now() - interval '15 minutes'
                            THEN 0 ELSE 1 END,
                       CASE WHEN t.ticket_id IS NOT NULL
@@ -112,8 +134,8 @@ def claim_ticket_events(conn, identity: dict, event_types: list[str], limit: int
                       e.event_id
              LIMIT %s
              FOR UPDATE OF e SKIP LOCKED
-            """,
-            (event_types, list(refused), limit),
+            """.format(lane_sql=lane_sql),
+            (event_types, list(refused), *lane_params, limit),
         )
         events = cur.fetchall()
         claimed = []
@@ -193,6 +215,17 @@ def claim_ticket_events(conn, identity: dict, event_types: list[str], limit: int
                 "UPDATE outbox_events SET delivered_at=now() WHERE event_id = ANY(%s)",
                 ([e["event_id"] for e in claimed],),
             )
+    if not claimed and lane_affinity in ("local", "cloud"):
+        # LANE-AFFINITY-STEAL-V1: home lane dry — steal from the global
+        # queue. Counted + surfaced, never silent.
+        stolen = claim_ticket_events(conn, identity, event_types, limit)
+        if stolen:
+            logging.getLogger("worker-runtime").info(
+                "lane steal: %s-affinity worker %s claimed %d event(s) "
+                "from the other lane",
+                lane_affinity, identity.get("worker_id", "?"), len(stolen),
+                extra={"error_code": "LANE_STEAL_CLAIM"})
+        return stolen
     return claimed
 
 
@@ -320,6 +353,16 @@ def run_worker(worker_type: str, event_types: list[str],
     boot_fingerprint = fast_code_fingerprint()
     boot_semantic_files = semantic_file_hashes()
     bundle_stale_reason: str | None = None
+    # LANE-AFFINITY-STEAL-V1: only the extract stage has lanes; other
+    # worker types ignore the env entirely.
+    lane_affinity = (os.environ.get("POLYMATH_EXTRACT_AFFINITY", "").strip()
+                     or None) if worker_type == "extract" else None
+    if lane_affinity and lane_affinity not in ("local", "cloud"):
+        raise ValueError(
+            f"POLYMATH_EXTRACT_AFFINITY must be local|cloud, got {lane_affinity!r}")
+    if lane_affinity:
+        log.info("extract lane affinity: %s (steals when home lane is dry)",
+                 lane_affinity)
     registered = False
     while True:
         try:
@@ -362,7 +405,8 @@ def run_worker(worker_type: str, event_types: list[str],
                               extra={"error_code": bundle_stale_reason})
                 else:
                     events = claim_ticket_events(
-                        conn, identity, event_types, batch_size)
+                        conn, identity, event_types, batch_size,
+                        lane_affinity=lane_affinity)
             for event in events:
                 ticket_id = event.get("ticket_id")
                 import threading as _threading

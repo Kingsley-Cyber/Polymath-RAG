@@ -84,6 +84,15 @@ class SidecarSettings(BaseSettings):
         description="Pinned cloud quality-lane model tag (verify with a "
                     "one-token probe; no document content in probes)",
     )
+    llm_cloud_extra_endpoints: str = Field(
+        default="",
+        description="EXTRACTION-POOL-V1: additional cloud providers as a "
+                    'JSON list [{"name","url","model"}]. Each joins the '
+                    "deterministic doc->endpoint router with its own AIMD "
+                    "limiter lane. The 300 KB owner boundary applies to "
+                    "every endpoint here — extras widen throughput, never "
+                    "eligibility.",
+    )
     syntax_provider: str = Field(
         default="disabled",
         description="Optional syntax-evidence lane behind the extract "
