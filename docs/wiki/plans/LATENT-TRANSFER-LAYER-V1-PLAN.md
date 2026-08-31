@@ -51,6 +51,39 @@ enqueues the non-blocking stage tickets for the scope — the stage,
 gate, storage and projection are unchanged from this plan; only the
 TRIGGER moves from chain-advancement to explicit owner action.
 
+## 0b. Owner contract directive (2026-08-30): MIXED-ERA UNION SEMANTICS
+
+**Retrieval reads what exists, per document, per layer.** Enrichment is
+additive per-parent; ABSENCE IS INVISIBLE at query time. If a document's
+enriched layer exists, it is included in retrieval; if not, the base
+layers retrieve alone — no discrimination, no special-casing, no
+penalty in either direction. An enriched document simply has one more
+way to be FOUND; every lane still grounds to the same verbatim
+children.
+
+This is the union semantics Adapter 2 already specifies
+(`baseline ∪ latent`), promoted to a NAMED CONTRACT because the live
+corpus already demonstrates the mixed-era half: AWS for Solutions
+Architects (60 facts / 175 LLM-era raw rows) and Learning SQL (46 / 79)
+sit in one index, answer the same queries through identical
+FAST/HYBRID/GRAPH lanes, and neither is advantaged by extraction era.
+
+**What Phase E MUST pin (test contract, non-negotiable):** same query,
+mixed corpus — one enriched document, one base-only document —
+1. both retrievable through every lane, neither advantaged by STYLE
+   (era/layer-presence), only by content;
+2. the base-only document's results are BYTE-IDENTICAL to a corpus
+   where enrichment does not exist at all (absence truly invisible —
+   no empty-lane penalty, no liveness noise, no rank shift);
+3. the enriched document's latent hits ground to its ORIGINAL children
+   (latent text is never evidence);
+4. deleting a document's enrichments returns it to base behavior
+   exactly (additive means removable).
+
+Combined with §0a: the corpus is EXPECTED to be permanently mixed-era —
+buttons enrich scopes incrementally, so mixed is the steady state, not
+a migration window. Design and test for it as the normal case.
+
 ## 0. Frozen design target (Part 3)
 
 ```
