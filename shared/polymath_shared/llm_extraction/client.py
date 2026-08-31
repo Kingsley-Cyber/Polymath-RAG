@@ -374,14 +374,16 @@ class LLMExtractionClient:
 
     def extract_batched(self, neighborhoods: list[tuple[str, list[tuple[str, str]]]],
                         *, source_bytes: int, threshold_bytes: int,
-                        max_tokens: int = 2500) -> list[LLMCallResult]:
+                        max_tokens: int = 2500,
+                        assist: bool = False) -> list[LLMCallResult]:
         """LOCAL batched transport: one neighborhood per prompt, decoded in
         a single batch_generate call (true batch parallelism, plan §4.2/§4.9).
         Falls back to per-neighborhood sequential calls when the endpoint
         does not advertise /infer_batch (older runtime)."""
         decision: LaneDecision | None = None
         if self.lane == "cloud":
-            decision = require_cloud_eligible(source_bytes, threshold_bytes)
+            decision = require_cloud_eligible(source_bytes, threshold_bytes,
+                                              assist=assist)
         limiter = self._lane_limiter()
         prompt_items = []
         for nid, chunks in neighborhoods:
@@ -551,7 +553,8 @@ class LLMExtractionClient:
 
     def extract(self, neighborhoods: list[tuple[str, list[tuple[str, str]]]],
                 *, source_bytes: int, threshold_bytes: int,
-                max_tokens: int | None = None) -> LLMCallResult:
+                max_tokens: int | None = None,
+                assist: bool = False) -> LLMCallResult:
         """One extraction call over the given neighborhoods.
 
         DISPATCH BOUNDARY: the cloud lane refuses to send anything for a
@@ -564,7 +567,8 @@ class LLMExtractionClient:
         """
         decision: LaneDecision | None = None
         if self.lane == "cloud":
-            decision = require_cloud_eligible(source_bytes, threshold_bytes)
+            decision = require_cloud_eligible(source_bytes, threshold_bytes,
+                                              assist=assist)
         aliased, aliases = alias_neighborhoods(neighborhoods)
         user_prompt = build_user_prompt(aliased)
         if max_tokens is None:

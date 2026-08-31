@@ -6,9 +6,11 @@ and the existing pipeline; identity, Harbor admission, E1–E7, the predicate
 compiler, and F1–F8 are untouched. The model proposes; Python validates
 (gate.py) and the frozen deterministic layer still decides everything.
 
-Lane routing follows the 300 KB boundary policy (fail closed, enforced
-again at dispatch inside the client): source <= threshold stays local,
-above it MAY use cloud.
+Lane routing follows the byte-threshold THROUGHPUT policy (owner v2,
+2026-08-30): above the threshold always cloud; at/below prefers local,
+and rides the cloud pool as an explicit ASSIST when the claiming worker
+has cloud affinity (its own lane was dry). The dispatch guard inside
+the client verifies assist intent on every sub-threshold cloud call.
 """
 from __future__ import annotations
 
@@ -200,9 +202,13 @@ def _region_fingerprint() -> dict:
     return contract_fingerprint()
 
 
-def select_lane(source_bytes: int):
-    """Selection boundary (documents.byte_length is the durable input)."""
-    return _policy_select_lane(source_bytes, get_settings().worker.cloud_min_bytes)
+def select_lane(source_bytes: int, affinity: str | None = None):
+    """Selection boundary (documents.byte_length is the durable input;
+    CLOUD-ASSIST-V1: the claiming worker's lane affinity rides along so
+    an idle cloud lane assists the local backlog)."""
+    return _policy_select_lane(source_bytes,
+                               get_settings().worker.cloud_min_bytes,
+                               affinity=affinity)
 
 
 def make_client(lane: str, doc_id: str = "") -> LLMExtractionClient:
@@ -224,7 +230,8 @@ def make_client(lane: str, doc_id: str = "") -> LLMExtractionClient:
 
 def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                   source_bytes: int,
-                  doc_id: str = "") -> tuple[list[LLMCallResult], NormalizedExtraction]:
+                  doc_id: str = "",
+                  assist: bool = False) -> tuple[list[LLMCallResult], NormalizedExtraction]:
     """Extract every neighborhood through the gate.
 
     Returns per-call receipts plus the merged, validated, worker-shaped
@@ -261,7 +268,8 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
             return client.extract(
                 [(n.nid, n.chunks) for n in batch],
                 source_bytes=source_bytes,
-                threshold_bytes=s.cloud_min_bytes)
+                threshold_bytes=s.cloud_min_bytes,
+                assist=assist)
 
         with ThreadPoolExecutor(max_workers=pool_size) as pool:
             results = list(pool.map(one, batches))
@@ -287,7 +295,7 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
     if todo:
         reissue_results = _reissue(
             client, todo, lane=lane, source_bytes=source_bytes,
-            threshold_bytes=s.cloud_min_bytes,
+            threshold_bytes=s.cloud_min_bytes, assist=assist,
             pool_size=(min(len(todo), limiter.spec.conc_cap or limiter.spec.max) or 1)
             if lane == "cloud" else 1)
         _raise_if_refused(reissue_results, lane)
@@ -413,7 +421,8 @@ def _dispose(results: list[LLMCallResult], sent_ids: list[str]) -> tuple[dict, d
 
 
 def _reissue(client: LLMExtractionClient, todo: list[Neighborhood], *, lane: str,
-             source_bytes: int, threshold_bytes: int, pool_size: int) -> list[LLMCallResult]:
+             source_bytes: int, threshold_bytes: int, pool_size: int,
+             assist: bool = False) -> list[LLMCallResult]:
     """Second pass: ONE neighborhood per call (the truncation failure mode
     cannot recur inside a single-neighborhood budget), bounded to one
     pass — a neighborhood that fails twice is recorded, not retried."""
@@ -425,7 +434,7 @@ def _reissue(client: LLMExtractionClient, todo: list[Neighborhood], *, lane: str
     else:
         def one(n: Neighborhood) -> LLMCallResult:
             return client.extract([(n.nid, n.chunks)], source_bytes=source_bytes,
-                                  threshold_bytes=threshold_bytes)
+                                  threshold_bytes=threshold_bytes, assist=assist)
         with ThreadPoolExecutor(max_workers=max(1, pool_size)) as pool:
             out = list(pool.map(one, todo))
     for r in out:
