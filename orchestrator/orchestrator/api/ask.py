@@ -25,6 +25,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from polymath_shared.db import tx
+from polymath_shared.knowledge_objects.concept import object_name_admissible
 from polymath_shared.query_router import (
     QUERY_ROUTER_VERSION,
     ROUTE_CONCEPT,
@@ -86,6 +87,61 @@ def _merge_terms(question: str, extra_terms=()) -> list[str]:
     return terms
 
 
+
+def _vector_object_ranks(question: str, scope, kind: str) -> dict[str, int]:
+    """VECTOR-OBJECT-MATCH-V1 (audit F3): rank concept/procedure objects
+    by the SAME machinery FAST uses — dense + sparse over their routing
+    points (routing_concept / routing_procedure) — instead of substring
+    fractions. Returns {object_id: rank} (0 = best); empty on any
+    failure so the term-match path still answers (fail-open)."""
+    try:
+        from qdrant_client import QdrantClient
+        from qdrant_client.models import (
+            FieldCondition, Filter, MatchValue, SparseVector,
+        )
+        from polymath_shared.settings import get_settings
+        from polymath_shared.sparse_bm25 import SPARSE_VECTOR_NAME, sparse_vector
+        from orchestrator.api.fast import _corpus_collections, _embed_query
+
+        qvec = _embed_query(question)
+        si, svals = sparse_vector(question)
+        best: dict[str, float] = {}
+        client = QdrantClient(url=get_settings().stores.qdrant_url, timeout=20)
+        try:
+            for corpus_id, collection in _corpus_collections(
+                    list(scope.corpus_ids)).items():
+                flt = Filter(must=[
+                    FieldCondition(key="representation_kind",
+                                   match=MatchValue(value=kind)),
+                    FieldCondition(key="corpus_id",
+                                   match=MatchValue(value=corpus_id)),
+                ])
+                probes = [(qvec, None)]
+                if si:
+                    probes.append((SparseVector(indices=si, values=svals),
+                                   SPARSE_VECTOR_NAME))
+                for qv, using in probes:
+                    try:
+                        pts = client.query_points(
+                            collection_name=collection, query=qv, using=using,
+                            query_filter=flt, limit=8,
+                            with_payload=["summary_id"]).points
+                    except Exception:
+                        continue
+                    for p in pts:
+                        oid = (p.payload or {}).get("summary_id")
+                        if oid:
+                            sc = float(p.score or 0.0)
+                            if sc > best.get(oid, -1.0):
+                                best[oid] = sc
+        finally:
+            client.close()
+        ordered = sorted(best.items(), key=lambda kv: -kv[1])
+        return {oid: i for i, (oid, _) in enumerate(ordered)}
+    except Exception:
+        return {}
+
+
 def _procedures(conn, scope: "QueryScope", question: str,
                 extra_terms=()) -> list[dict]:
     terms = _merge_terms(question, extra_terms)
@@ -95,9 +151,15 @@ def _procedures(conn, scope: "QueryScope", question: str,
         f"""SELECT procedure_id, document_id, corpus_id, title, goal,
                    steps_json, tools_json, confidence, source_chunk_ids
               FROM procedure_artifacts {where}""", args).fetchall()
+    vec_ranks = _vector_object_ranks(question, scope, "routing_procedure")
     scored = []
     for pid, did, cid, title, goal, steps, tools, conf, chunks in rows:
         steps_l = steps if isinstance(steps, list) else json.loads(steps or "[]")
+        # OBJECT-NAME-CONTRACT-V2 (audit F12): rows compiled under the
+        # GLiNER-era contract carry glue titles ("… Path DevOps"). The
+        # steps are still evidence — keep the row, fix the display name.
+        if not (title and object_name_admissible(title)[0]):
+            title = f"Procedure ({len(steps_l)} steps)"
         blob = " ".join([title or "", goal or "", *map(str, steps_l)])
         match = _match_score(blob, terms)
         # ARTIFACT-CONFIDENCE-V2 (P7): confidence no longer ranks.
@@ -107,8 +169,10 @@ def _procedures(conn, scope: "QueryScope", question: str,
         # actively wrong: the 10-step containment task would outrank the
         # 5-step credential rotation on length alone.
         score = round(match, 4)
-        if match > 0:
+        vrank = vec_ranks.get(pid)
+        if match > 0 or vrank is not None:
             scored.append({
+                "_vrank": vrank if vrank is not None else 999,
                 "object_type": "procedure",
                 "object_id": pid,
                 "document_id": did,
@@ -121,7 +185,10 @@ def _procedures(conn, scope: "QueryScope", question: str,
                 "source_chunk_ids": chunks,
                 "score": score,
             })
-    return sorted(scored, key=lambda r: (-r["score"], r["object_id"]))[:5]
+    out = sorted(scored, key=lambda r: (r["_vrank"], -r["score"], r["object_id"]))[:5]
+    for r in out:
+        r.pop("_vrank", None)
+    return out
 
 
 def _concepts(conn, scope: "QueryScope", question: str,
@@ -133,16 +200,21 @@ def _concepts(conn, scope: "QueryScope", question: str,
         f"""SELECT concept_id, document_id, corpus_id, name, description,
                    domain, confidence, supporting_chunks
               FROM concept_artifacts {where}""", args).fetchall()
+    vec_ranks = _vector_object_ranks(question, scope, "routing_concept")
     scored = []
     for cid_, did, cid, name, desc, domain, conf, chunks in rows:
+        if not object_name_admissible(name or "")[0]:
+            continue  # F12: stale GLiNER-era junk name — never serve it
         match = _match_score(f"{name} {desc}", terms)
         # ARTIFACT-CONFIDENCE-V2 (P7): concept confidence is a hardcoded
         # 0.9 for every concept. A constant adds the same amount to every
         # candidate, so it cannot discriminate — it only looked like a
         # signal. Removed from scoring.
         score = round(match, 4)
-        if match > 0:
+        vrank = vec_ranks.get(cid_)
+        if match > 0 or vrank is not None:
             scored.append({
+                "_vrank": vrank if vrank is not None else 999,
                 "object_type": "concept",
                 "object_id": cid_,
                 "document_id": did,
@@ -153,7 +225,10 @@ def _concepts(conn, scope: "QueryScope", question: str,
                 "supporting_chunks": chunks,
                 "score": score,
             })
-    return sorted(scored, key=lambda r: (-r["score"], r["object_id"]))[:8]
+    out = sorted(scored, key=lambda r: (r["_vrank"], -r["score"], r["object_id"]))[:8]
+    for r in out:
+        r.pop("_vrank", None)
+    return out
 
 
 def _facts(conn, scope: "QueryScope", question: str,

@@ -87,6 +87,7 @@ def graph_expand_or_502(
     surfaces: list[str],
     corpus_ids: list[str],
     preferred_chunk_ids: list[str],
+    seed_entity_ids: list[str] | None = None,
 ) -> list[dict]:
     """FAILURE-TRANSPARENCY-V1: one translation point from the typed
     graph-store failure to the typed HTTP failure. GRAPH_SUCCESS with
@@ -98,6 +99,7 @@ def graph_expand_or_502(
             surfaces,
             corpus_ids=corpus_ids,
             preferred_chunk_ids=preferred_chunk_ids,
+            seed_entity_ids=seed_entity_ids,
         )
     except GraphBackendUnavailable as exc:
         raise HTTPException(status_code=502, detail={
@@ -107,9 +109,11 @@ def graph_expand_or_502(
 
 
 def single_corpus_or_422(scope, mode: str) -> str:
-    """FAST/HYBRID/GRAPH are single-corpus engines (collection-per-
-    corpus projection). A wider resolved scope fails closed — it is
-    never silently narrowed or fanned out."""
+    """HYBRID/GRAPH are single-corpus engines (in-memory lexical scan
+    and graph seeding are corpus-local). A wider resolved scope fails
+    closed — never silently narrowed. FAST no longer uses this gate:
+    MULTI-CORPUS-FAST-V1 (audit F8) fans the pass1 lanes out per
+    corpus."""
     if len(scope.corpus_ids) != 1:
         raise HTTPException(status_code=422, detail={
             "error_code": "mode_requires_single_corpus",
@@ -137,7 +141,7 @@ async def retrieve(req: RetrieveRequest) -> dict:
     if mode == MODE_FAST:
         from orchestrator.api.fast import fast_retrieve
 
-        return fast_retrieve(query, single_corpus_or_422(scope, mode))
+        return fast_retrieve(query, list(scope.corpus_ids))  # F8: multi-corpus
     if mode == MODE_HYBRID:
         from orchestrator.api.hybrid import hybrid_fast_retrieve
 
@@ -153,12 +157,9 @@ async def retrieve(req: RetrieveRequest) -> dict:
         parents = _fetch_parents(conn, corpus_ids)
         children_rows = _fetch_children_rows(conn, corpus_ids)
         children = [r for r in children_rows if r["tier"] == "child"]
-        parent_rows = [r for r in children_rows if r["tier"] == "parent"]
-        # Parent lane scores PARENT summaries.
-        parents = [
-            {"chunk_id": r["chunk_id"], "doc_id": r["doc_id"], "summary": r["summary"]}
-            for r in parent_rows
-        ]
+        # ONE-SUMMARY-AUTHORITY (audit F5): the parent lane scores the
+        # compiled cards from _fetch_parents — the chunks.summary
+        # override that shadowed it is gone.
 
     def fetch_profiles():
         return profiles
@@ -250,10 +251,20 @@ def _fetch_profiles(conn, corpus_ids: list[str]) -> list[dict]:
 
 
 def _fetch_parents(conn, corpus_ids: list[str]) -> list[dict]:
+    """ONE-SUMMARY-AUTHORITY (audit F5, verified drift): this lane used
+    to score chunks.summary while FAST routed on the compiled cards —
+    two different texts for the same parent. retrieval_summaries ACTIVE
+    rows are the declared authority (register 4.4.8); chunks.summary is
+    the fallback for parents the compiler has not carded."""
     rows = conn.execute(
         """
-        SELECT c.chunk_id, c.doc_id, c.summary FROM chunks c
+        SELECT c.chunk_id, c.doc_id,
+               COALESCE(rs.summary_text, c.summary) AS summary
+          FROM chunks c
           JOIN documents d ON d.doc_id = c.doc_id
+          LEFT JOIN retrieval_summaries rs
+                 ON rs.parent_id = c.chunk_id AND rs.active
+                AND rs.kind = 'section_retrieval_summary'
          WHERE c.tier = 'parent' AND d.corpus_id = ANY(%s)
         """,
         (list(corpus_ids),),
@@ -382,6 +393,7 @@ def _corpus_seed_ids(
     surfaces: list[str],
     corpus_ids: Optional[list[str]],
     preferred_chunk_ids: list[str],
+    seed_entity_ids: Optional[list[str]] = None,
 ) -> list[str]:
     """Corpus-authorized seed resolution (D2).
 
@@ -411,12 +423,22 @@ def _corpus_seed_ids(
         (preferred_chunk_ids or [],
          *([list(corpus_ids)] if corpus_ids is not None else [])),
     ).fetchall()
+    # CARD-SEEDS-V1 (audit F1, measured): token surfaces split multiword
+    # entities ("Amazon S3" -> 'amazon' + dropped 's3') and junk unigrams
+    # burned the 8-seed cap -> 0 facts on entity questions. Entity ids
+    # resolved via routing_entity cards seed FIRST (still restricted to
+    # the corpus-authorized eligible rows fetched above — the card lane
+    # proposes, this authorization decides); surface matching remains the
+    # fallback vocabulary.
+    card_set = set(seed_entity_ids or [])
+    card_seeds = sorted(eid for eid, _surf, _pref in rows if eid in card_set)
     matched = [
         (bool(pref), eid) for eid, surf, pref in rows
-        if any(_surface_matches(surf, term) for term in surfaces)
+        if eid not in card_set
+        and any(_surface_matches(surf, term) for term in surfaces)
     ]
     matched.sort(key=lambda x: (not x[0], x[1]))
-    return [eid for _, eid in matched[:8]]
+    return (card_seeds + [eid for _, eid in matched])[:8]
 
 
 def _authorized_fact_ids(conn, corpus_ids: Optional[list[str]]) -> Optional[set]:
@@ -454,6 +476,7 @@ def _neo4j_expand(
     corpus_id: Optional[str] = None,
     preferred_chunk_ids: Optional[list[str]] = None,
     corpus_ids: Optional[list[str]] = None,
+    seed_entity_ids: Optional[list[str]] = None,
 ) -> list[dict]:
     """One-hop graph expansion (production, canonical bidirectional,
     corpus-authorized).
@@ -475,7 +498,8 @@ def _neo4j_expand(
         corpus_ids = [corpus_id]
 
     with tx() as conn:
-        ids = _corpus_seed_ids(conn, surfaces, corpus_ids, preferred_chunk_ids or [])
+        ids = _corpus_seed_ids(conn, surfaces, corpus_ids, preferred_chunk_ids or [],
+                               seed_entity_ids or [])
         authorized = _authorized_fact_ids(conn, corpus_ids)
 
     if not ids:

@@ -479,7 +479,12 @@ class Supervisor:
 def main() -> None:
     from polymath_shared.logging import configure_logging
     configure_logging("cp21-supervisor")
-    Supervisor().run_forever()
+    # SERVE-SUPERVISOR-V1 (audit F9): a second supervisor instance runs
+    # the query-serving slots (POLYMATH_FLEET_ONLY=orchestrator,
+    # sidecar_reranker); POLYMATH_FLEET_DIR gives it its own state file
+    # and slot logs so the two instances never clobber each other.
+    fleet_dir = os.environ.get("POLYMATH_FLEET_DIR")
+    Supervisor(log_dir=fleet_dir).run_forever()
 
 
 if __name__ == "__main__":

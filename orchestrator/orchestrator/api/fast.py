@@ -45,10 +45,21 @@ def _fail(detail: dict, status_code: int = 502) -> HTTPException:
 class FastSearcher:
     """Corpus-filtered neural routing search (payload filters)."""
 
-    def __init__(self, client: QdrantClient, collections: dict[str, str]):
+    def __init__(self, client: QdrantClient, collections: dict[str, str],
+                 query: str | None = None):
         self.client = client
         self.collections = collections
         self.latency: dict[str, float] = {}
+        # SPARSE-BREADTH-V1: one tokenization per query, shared tokenizer
+        self._sparse_query = None
+        if query:
+            try:
+                from polymath_shared.sparse_bm25 import sparse_vector
+                idx, vals = sparse_vector(query)
+                if idx:
+                    self._sparse_query = (idx, vals)
+            except Exception:
+                self._sparse_query = None
 
     def _search(self, collection: str, vector: list[float], filters: dict, limit: int) -> list[dict]:
         must = [
@@ -80,6 +91,40 @@ class FastSearcher:
             self.latency[key] = self.latency.get(key, 0.0) + (time.time() - t0) * 1000
         out = [{"payload": p.payload, "score": p.score} for p in points]
         out.sort(key=lambda r: -(r["score"] or 0.0))
+        # SPARSE-BREADTH-V1 (audit F4): every routing lane gets a bm25
+        # companion probe — exact-name queries stop depending on embedding
+        # luck at the ROUTING tier. Dense ordering stays authoritative
+        # (scores are not comparable across spaces); sparse-only hits the
+        # dense lane missed APPEND after it, a pure recall addition where
+        # RRF can still vote them up. Fail-open: legacy dense-only
+        # collections skip silently.
+        if self._sparse_query is not None:
+            t1 = time.time()
+            try:
+                from qdrant_client.models import SparseVector
+                from polymath_shared.sparse_bm25 import SPARSE_VECTOR_NAME
+                spts = self.client.query_points(
+                    collection_name=collection,
+                    query=SparseVector(indices=self._sparse_query[0],
+                                       values=self._sparse_query[1]),
+                    using=SPARSE_VECTOR_NAME,
+                    query_filter=Filter(must=must, must_not=must_not),
+                    limit=limit,
+                    with_payload=True,
+                ).points
+                seen = {(r["payload"] or {}).get("summary_id")
+                        or (r["payload"] or {}).get("chunk_id") for r in out}
+                for p in spts:
+                    pl = p.payload or {}
+                    key_id = pl.get("summary_id") or pl.get("chunk_id")
+                    if key_id not in seen:
+                        out.append({"payload": pl, "score": p.score})
+                        seen.add(key_id)
+            except Exception:
+                pass
+            finally:
+                self.latency["sparse"] = self.latency.get("sparse", 0.0) \
+                    + (time.time() - t1) * 1000
         return out
 
     def __call__(self, collection: str, vector: list[float], filters: dict) -> list[dict]:
@@ -87,6 +132,55 @@ class FastSearcher:
         # (single-corpus FAST) — the engine passes the collection the
         # service selected.
         return self._search(collection, vector, filters, limit=50)
+
+
+def entity_card_probe(client, collections: dict[str, str], corpus_id: str,
+                      query: str, qvec: list[float],
+                      limit: int = 8) -> list[dict]:
+    """ENTITY-CARD-PROBE (shared): dense + sparse search over
+    routing_entity cards, deduped by card keeping the best score.
+    Consumers: FAST's advisory lane, GRAPH seed resolution (F1). Returns
+    [{card_id, entity_id, doc_ids, text, score, lane}] best-first."""
+    from qdrant_client.models import (
+        FieldCondition, Filter, MatchValue, SparseVector,
+    )
+    from polymath_shared.sparse_bm25 import (
+        SPARSE_VECTOR_NAME, sparse_vector as _sv,
+    )
+    card_filter = Filter(must=[
+        FieldCondition(key="representation_kind",
+                       match=MatchValue(value="routing_entity")),
+        FieldCondition(key="corpus_id", match=MatchValue(value=corpus_id)),
+    ])
+    seen: dict[str, dict] = {}
+    si, svals = _sv(query)
+    for collection in collections.values():
+        probes = [(qvec, None)]
+        if si:
+            probes.append((SparseVector(indices=si, values=svals),
+                           SPARSE_VECTOR_NAME))
+        for qv, using in probes:
+            try:
+                pts = client.query_points(
+                    collection_name=collection, query=qv, using=using,
+                    query_filter=card_filter, limit=limit,
+                    with_payload=True).points
+            except Exception:
+                continue
+            for p in pts:
+                pl = p.payload or {}
+                cid = pl.get("summary_id") or str(p.id)
+                cur = seen.get(cid)
+                if cur is None or float(p.score or 0) > cur["score"]:
+                    seen[cid] = {
+                        "card_id": cid,
+                        "entity_id": pl.get("entity_id", ""),
+                        "doc_ids": pl.get("doc_ids") or [],
+                        "text": pl.get("text", ""),
+                        "score": float(p.score or 0.0),
+                        "lane": "sparse" if using else "dense",
+                    }
+    return sorted(seen.values(), key=lambda c: -c["score"])[:limit]
 
 
 def _corpus_collections(corpus_ids: list[str]) -> dict[str, str]:
@@ -284,22 +378,34 @@ def _rerank_children(query: str, children: list[dict]) -> list[dict]:
 
 def fast_retrieve(
     query: str,
-    corpus_id: str,
+    corpus_id,
     plan: Optional[Pass1RetrievalPlan] = None,
 ) -> dict:
     """Production FAST: one qualified Pass-1 execution with explicit
-    readiness, corpus filtering, and a hierarchical trace."""
+    readiness, corpus filtering, and a hierarchical trace.
+
+    MULTI-CORPUS-FAST-V1 (audit F8): `corpus_id` is a corpus id or a
+    list of them. The pass1 engine already fans lanes out per corpus
+    (per-corpus rank cut, similarity merge), so a wider authorized
+    scope retrieves instead of 422ing. Readiness stays PER CORPUS and
+    fails closed — one unready corpus fails the whole query rather
+    than silently narrowing the scope. HYBRID/GRAPH remain
+    single-corpus engines (in-memory lexical scan / graph seeding are
+    corpus-local) and keep the 422 gate."""
     _begin_retrieval()
     plan = plan or mode_plan(MODE_FAST)
-    if corpus_id is None:
+    corpus_ids = [corpus_id] if isinstance(corpus_id, str) \
+        else list(corpus_id or [])
+    if not corpus_ids:
         raise _fail({
             "error_code": "corpus_required",
-            "message": "FAST requires an explicit corpus_id (authorized corpus scope)",
+            "message": "FAST requires an explicit corpus scope (authorized corpus ids)",
         }, status_code=422)
 
-    _ensure_fast_ready(corpus_id)
+    for cid in corpus_ids:
+        _ensure_fast_ready(cid)
 
-    collections = _corpus_collections([corpus_id])
+    collections = _corpus_collections(corpus_ids)
     try:
         client = QdrantClient(url=get_settings().stores.qdrant_url, timeout=60)
     except Exception as exc:
@@ -308,7 +414,7 @@ def fast_retrieve(
             "message": f"qdrant unavailable: {type(exc).__name__}",
         }) from exc
     try:
-        searcher = FastSearcher(client, collections)
+        searcher = FastSearcher(client, collections, query=query)
 
         def routing_search(collection: str, vector: list[float], filters: dict) -> list[dict]:
             return searcher(collection, vector, filters)
@@ -318,7 +424,8 @@ def fast_retrieve(
         # subdomains…"), which the breadth caps structurally truncate.
         shaped = plan_for_query(
             query,
-            Pass1RetrievalPlan(**{**plan.__dict__, "corpus_ids": (corpus_id,)}),
+            Pass1RetrievalPlan(**{**plan.__dict__,
+                                  "corpus_ids": tuple(corpus_ids)}),
         )
         result = pass1_retrieve(
             query,
@@ -329,80 +436,24 @@ def fast_retrieve(
             neighbor_lookup=_neighbor_lookup,
             region_lookup=_region_lookup,
         )
-        # ENTITY-CARD-LANE-V1 (§11.6 phase 1): graph extractions as FAST
-        # citizens — a query naming an entity routes via its routing_entity
-        # card (surface + aliases + predicate capsule) instead of hoping a
-        # child chunk embeds the name. Advisory + fail-open: card doc-votes
-        # STABLY re-rank the engine's selected documents (engine order
-        # preserved within vote groups); the cards themselves are returned
-        # for the ask layer. Sparse (exact-name, shared tokenizer) and
-        # dense both consulted.
+        # ENTITY-CARD-LANE (pass1-retrieval-v2): the card lane is now a
+        # FUSED fourth RRF lane inside the engine — its votes show up in
+        # rrf_contributions["routing_entity"], not as a post-hoc re-sort
+        # (the advisory doc-vote re-rank this replaced double-counted
+        # against RRF and hid attribution). The probe below only
+        # SURFACES the matched cards for the ask layer and the
+        # response; it never reorders documents. Fail-open.
         entity_cards: list[dict] = []
-        try:
-            from qdrant_client.models import (
-                FieldCondition, Filter, MatchValue, SparseVector,
-            )
-            from polymath_shared.sparse_bm25 import (
-                SPARSE_VECTOR_NAME, sparse_vector as _sv,
-            )
-            card_filter = Filter(must=[
-                FieldCondition(key="representation_kind",
-                               match=MatchValue(value="routing_entity")),
-                FieldCondition(key="corpus_id",
-                               match=MatchValue(value=corpus_id)),
-            ])
-            seen_cards: dict[str, dict] = {}
-            qvec = _embed_query(query)
-            si, svals = _sv(query)
-            for collection in collections.values():
-                probes = [(qvec, None)]
-                if si:
-                    probes.append((SparseVector(indices=si, values=svals),
-                                   SPARSE_VECTOR_NAME))
-                for qv, using in probes:
-                    try:
-                        pts = client.query_points(
-                            collection_name=collection, query=qv, using=using,
-                            query_filter=card_filter, limit=8,
-                            with_payload=True).points
-                    except Exception:
-                        continue
-                    for p in pts:
-                        pl = p.payload or {}
-                        cid = pl.get("summary_id") or str(p.id)
-                        cur = seen_cards.get(cid)
-                        if cur is None or float(p.score or 0) > cur["score"]:
-                            seen_cards[cid] = {
-                                "card_id": cid,
-                                "entity_id": pl.get("entity_id", ""),
-                                "doc_ids": pl.get("doc_ids") or [],
-                                "text": pl.get("text", ""),
-                                "score": float(p.score or 0.0),
-                                "lane": "sparse" if using else "dense",
-                            }
-            entity_cards = sorted(seen_cards.values(),
-                                  key=lambda c: -c["score"])[:8]
-        except Exception as exc:        # advisory lane: never fails the query
-            import logging as _logging
-            _logging.getLogger("fast").warning(
-                "entity card lane failed open: %s: %s",
-                type(exc).__name__, exc)
-            entity_cards = []
-        if entity_cards:
+        qvec_cards = _embed_query(query)
+        for cid in corpus_ids:
             try:
-                votes: dict[str, int] = {}
-                for card in entity_cards:
-                    for d in card["doc_ids"]:
-                        votes[d] = votes.get(d, 0) + 1
-                if votes:
-                    result.selected_documents = sorted(
-                        result.selected_documents,
-                        key=lambda d: -votes.get(d.doc_id, 0))
-            except Exception as exc:    # cards still returned; boost skipped
+                entity_cards.extend(entity_card_probe(
+                    client, collections, cid, query, qvec_cards))
+            except Exception as exc:    # display lane: never fails the query
                 import logging as _logging
                 _logging.getLogger("fast").warning(
-                    "entity card doc-boost failed open: %s: %s",
-                    type(exc).__name__, exc)
+                    "entity card display probe failed open (%s): %s: %s",
+                    cid, type(exc).__name__, exc)
     finally:
         client.close()
 
@@ -412,7 +463,8 @@ def fast_retrieve(
         "meta": {
             "mode": MODE_FAST,
             "plan_version": result.plan.plan_version,
-            "corpus_id": corpus_id,
+            "corpus_id": corpus_ids[0] if len(corpus_ids) == 1 else None,
+            "corpus_ids": corpus_ids,
             "rrf_k": result.plan.rrf_k,
             "selected_document_count": len(result.selected_documents),
             "selected_section_count": len(result.selected_sections),

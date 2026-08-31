@@ -81,12 +81,20 @@ def depth_plan(plan):
     neighbour expansion so a run that crosses a chunk boundary arrives
     whole. Nothing here changes scoring, fusion, or ordering.
     """
+    # DEPTH-V2 (audit F7, derived from the owner's completeness law):
+    # "when the user asks for ALL of something — enumerate every item the
+    # evidence contains." A depth answer must be able to carry an entire
+    # book-section run: at ~850w parents and ~5 children each, 8 sections
+    # x 4 children = 32 candidates covers the largest measured contiguous
+    # structure (a full objectives map) before the final cut.
     return replace(
         plan,
-        max_sections_per_document=4,   # was 2
-        max_children_per_section=4,    # was 3
-        final_max_children=16,         # was 10
-        final_max_total_items=24,      # was 12 (dead code at 10 children)
+        section_summary_top_k=24,      # the section lane IS the depth spine
+        global_child_top_k=40,
+        max_sections_per_document=8,   # was 4 — whole-chapter runs
+        max_children_per_section=4,
+        final_max_children=28,         # was 16
+        final_max_total_items=32,      # was 24
         neighbor_expansion=1,          # off by default; ±1 chunk here
         neighbor_expansion_max=8,
     )

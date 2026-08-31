@@ -91,7 +91,7 @@ def graph_retrieve(query: str, corpus_id: str) -> dict:
             "message": f"qdrant unavailable: {type(exc).__name__}",
         }) from exc
     try:
-        searcher = FastSearcher(client, collections)
+        searcher = FastSearcher(client, collections, query=query)
         t0 = time.time()
         shaped = plan_for_query(
             query,
@@ -118,11 +118,30 @@ def graph_retrieve(query: str, corpus_id: str) -> dict:
     # empty "no graph knowledge" result.
     from orchestrator.api.retrieve import graph_expand_or_502
 
+    # CARD-SEEDS-V1 (audit F1): resolve seed entities via the entity-card
+    # lane (dense+sparse over routing_entity) — multiword entities arrive
+    # whole instead of as token scraps; card ids are still validated
+    # against corpus-authorized eligibility inside seed resolution.
+    card_seed_ids: list[str] = []
+    try:
+        from orchestrator.api.fast import entity_card_probe
+        _card_client = QdrantClient(url=get_settings().stores.qdrant_url,
+                                    timeout=30)
+        try:
+            cards = entity_card_probe(_card_client, collections, corpus_id,
+                                      query, _embed_query(query))
+        finally:
+            _card_client.close()
+        card_seed_ids = [c["entity_id"] for c in cards if c.get("entity_id")]
+    except Exception:
+        card_seed_ids = []            # fail-open to surface seeding
+
     t0 = time.time()
     graph_facts = graph_expand_or_502(
         _selected_surfaces(query, evidence),
         [corpus_id],
         [c["chunk_id"] for c in evidence],
+        seed_entity_ids=card_seed_ids,
     )[:GRAPH_MAX_FACTS]
     graph_ms = (time.time() - t0) * 1000
 

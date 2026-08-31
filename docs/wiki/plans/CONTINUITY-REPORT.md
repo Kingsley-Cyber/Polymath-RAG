@@ -18,6 +18,25 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → `CLAUDE.md` → the two newest work-logs.
 
+## Latest checkpoint (2026-08-30, RETRIEVAL-FULL-FIX-V1, commit 37777c4)
+
+Audit findings F2/F6/F7/F8/F10/F11/F12 fixed and live-verified on top of
+the F1/F3/F4/F5/F9 baseline — see work-log
+`2026-08-30-retrieval-full-fix.md` and the Status section at the end of
+`RETRIEVAL-AUDIT-PRD.md`. Retrieval plan is now `pass1-retrieval-v2`
+(fused routing_entity RRF lane; BREADTH-V2/DEPTH-V2 caps); chunk lane is
+children-only (65 parent points retired via
+`scripts/retire_parent_points.py`); FAST is multi-corpus;
+OBJECT-NAME-CONTRACT-V2 gates concept/procedure names at compile AND
+/ask serve time. Open: F13 (UI toggle), F14/latent build
+(MASTER-BUILD-SEQUENCE), the UI overhaul — a fresh session implements
+`UI-V3-PRESENTATION-PRD.md` (read its §8 drift check FIRST: source_name
+bug still live, meta.corpus_ids, [S#] tags, v2 evidence volume) —
+and pre-existing
+test_llm_controller.py::test_batched_client_sizes_calls_from_the_budget
+failure (other session's territory), stale object rows retire fully on
+the next compile_objects re-run (enrichment button).
+
 ## 0. Bootstrap (run these before reasoning)
 
 ```bash
