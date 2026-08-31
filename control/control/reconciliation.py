@@ -32,6 +32,7 @@ import json
 import logging
 
 from psycopg import Connection
+from psycopg.errors import UniqueViolation
 
 from polymath_shared.execution import default_execution_contract
 from polymath_shared.identity import content_hash
@@ -142,8 +143,26 @@ def reconcile_contract_drift(conn: Connection) -> dict:
             continue
 
         new_run_id = successor_run_id(old_run_id, current)
-        minted = _mint_successor(conn, old_run_id, new_run_id,
-                                 corpus_id, old_pin, current, metadata)
+        # TICK-SURVIVAL (2026-08-31 control-plane wedge): one bad
+        # lineage must never kill the whole tick. Live failure mode: a
+        # PARKED successor husk from the outage restoration (status
+        # superseded, superseded_by NULL) still occupied the
+        # one-successor pointer, so the INSERT hit
+        # runs_one_successor_idx and EVERY control tick rolled back —
+        # census and ticketing died with it. Savepoint per run; the
+        # occupied pointer is a skip, not a crash (the detach is the
+        # owner's move — scripts/reingest_corpus.py).
+        try:
+            with conn.transaction():
+                minted = _mint_successor(conn, old_run_id, new_run_id,
+                                         corpus_id, old_pin, current,
+                                         metadata)
+        except UniqueViolation:
+            result["skipped"][old_run_id] = "successor_pointer_occupied"
+            log.warning("reconcile skipped %s: one-successor pointer "
+                        "occupied (parked husk? detach via "
+                        "reingest_corpus.py)", old_run_id)
+            continue
         if minted:
             result["reconciled"][old_run_id] = new_run_id
         else:

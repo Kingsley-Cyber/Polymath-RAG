@@ -85,6 +85,21 @@ stale-stage regeneration, generation purge, census receipt re-arm,
 promotion. Executed on cysa-study-v1 (2 runs); receipts in
 CONTINUITY-REPORT.
 
+SECOND WEDGE (same rollout): the stranded runs then sat 30 min
+untouched — every control tick was DYING on
+`runs_one_successor_idx`: the outage-night restoration had parked
+successor husks (status superseded, superseded_by NULL) that still
+OCCUPIED the one-successor pointer of each original, so the mint's
+INSERT violated the index, the tick transaction rolled back, and
+census/ticketing died with it (control.log: "control tick failed"
+UniqueViolation every tick). Fix, both halves regression-pinned in
+test_reconciliation_convergence.py: (1) TICK-SURVIVAL — per-run
+savepoint in reconcile_contract_drift; an occupied pointer is a SKIP
+(`successor_pointer_occupied`), never a tick-killer; (2) the owner
+trigger detaches dead husks (supersedes_run_id → NULL, row and
+evidence preserved) before stranding. Applied live: 2 husks
+detached, control loop bounced onto the guarded code.
+
 ## Rejected claims
 - "The settings flip alone drives the re-ingest through contract
   reconciliation" — REFUTED LIVE (11 min, zero movement): both

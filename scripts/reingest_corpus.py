@@ -52,7 +52,7 @@ def main() -> int:
             SELECT run_id, status, execution_contract::text
               FROM runs
              WHERE corpus_id = %s
-               AND status = 'query_ready'
+               AND status IN ('query_ready', 'reconciling')
                AND superseded_by_run_id IS NULL
             """,
             (args.corpus_id,)).fetchall()
@@ -61,20 +61,33 @@ def main() -> int:
         if fresh:
             print(f"already on current contract (untouched): {fresh}")
         if not stale:
-            print("nothing to re-ingest: no query_ready run pins a "
-                  "stale contract")
+            print("nothing to re-ingest: no live run pins a stale contract")
             return 0
         for run_id, status in stale:
             print(f"{'EXECUTE' if args.execute else 'DRY-RUN'}: "
                   f"{run_id} ({status}) -> reconciling + intake re-armed")
             if not args.execute:
                 continue
+            # DEAD-SUCCESSOR DETACH: a parked husk from a past
+            # restoration (status superseded, superseded_by NULL) can
+            # still occupy the one-successor pointer; reconciliation
+            # would then skip this run forever (successor_pointer_
+            # occupied — the 2026-08-31 control-plane wedge). Detach
+            # the husk (row and evidence preserved; only the lineage
+            # pointer clears) so a fresh successor can mint.
+            detached = conn.execute(
+                "UPDATE runs SET supersedes_run_id=NULL, updated_at=now() "
+                "WHERE supersedes_run_id=%s AND status='superseded' "
+                "AND superseded_by_run_id IS NULL", (run_id,)).rowcount
+            if detached:
+                print(f"  dead successor husks detached: {detached}")
             conn.execute(
                 "UPDATE runs SET status='reconciling', updated_at=now() "
                 "WHERE run_id=%s AND status='query_ready'", (run_id,))
             armed = conn.execute(
                 "UPDATE stage_tickets SET status='ready', updated_at=now() "
-                "WHERE run_id=%s AND stage='intake'", (run_id,)).rowcount
+                "WHERE run_id=%s AND stage='intake' AND status<>'ready'",
+                (run_id,)).rowcount
             print(f"  intake tickets re-armed: {armed}")
         if args.execute:
             conn.commit()
