@@ -56,6 +56,25 @@ export default function TopBar({
             </option>
           ))}
         </select>
+        <button
+          className="chunk-chip"
+          title="Create a new corpus: pick an id, then drop files into it in the Files tab — the corpus is created on first upload."
+          onClick={() => {
+            const id = window.prompt(
+              "New corpus id (lowercase letters, digits, dashes):");
+            if (!id) return;
+            const slug = id.trim().toLowerCase();
+            if (!/^[a-z0-9][a-z0-9-]{1,60}$/.test(slug)) {
+              window.alert("Invalid id — use lowercase letters, digits, dashes.");
+              return;
+            }
+            onCorpus(slug);
+            window.alert(
+              `Corpus "${slug}" selected. Go to Files and drop documents in — the corpus is created with the first upload.`);
+          }}
+        >
+          ＋ new
+        </button>
       </div>
       <div className="control">
         <label>Retrieval</label>

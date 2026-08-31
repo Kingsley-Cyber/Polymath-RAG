@@ -103,6 +103,10 @@ export interface DocumentRow {
   bytes: number;
   created_at: string;
   chunks: number;
+  // enrichment indicator (UI-V3): sections vs latent-enriched sections
+  parents?: number;
+  enriched?: number;
+  enrich_failed?: number;
 }
 
 export interface RunRow {

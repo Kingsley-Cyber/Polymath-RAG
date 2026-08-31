@@ -169,6 +169,11 @@ class WorkerSettings(BaseSettings):
                     "recorded, nothing admitted), or 'llm_live' (LLM "
                     "proposals enter the unchanged admission pipeline).",
     )
+    enrichment_auto: bool = Field(
+        default=True,
+        description="AUTO-ENRICH-ON-INGEST: mint parent_enrichment on "
+                    "run promotion to query_ready (census tick = the "
+                    "control timer). Buttons remain the gap-filler.")
     enrichment_provider: str = Field(
         default="llm",
         description="parent_enrichment stage: 'llm' (the pinned cloud "
