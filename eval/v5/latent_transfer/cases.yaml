@@ -1,0 +1,31 @@
+# P6 LATENT-TRANSFER recall suite (plan Phase E).
+# OWNER-AUTHORED gate: these seed cases are DRAFTS from the build
+# session — replace/extend to >=20 owner cases before the GO/NO-GO.
+# Schema per case:
+#   query: the cross-domain question
+#   obvious_domains: what a baseline retrieval naturally reaches
+#   latent_domains: where the latent lane should REACH (the Laban test)
+#   acceptable_mechanisms: mechanism phrasings that count as a hit
+#   forbidden_shortcuts: lexical overlaps that would make the case trivial
+#   expected_parent_ids: filled after enrichment (or left empty = judged
+#     by domain reach only)
+version: p6-cases-v0-draft
+cases:
+  - query: "how do systems automatically move things to cheaper storage as they age"
+    obvious_domains: [aws-storage]
+    latent_domains: [sql-archiving]
+    acceptable_mechanisms: ["rules watch age and trigger transitions"]
+    forbidden_shortcuts: ["lifecycle", "S3"]
+    expected_parent_ids: []
+  - query: "what should i do when extracted text comes out as garbage"
+    obvious_domains: [sql-data-quality]
+    latent_domains: [aws-ocr, ingestion]
+    acceptable_mechanisms: ["garbage in garbage out", "source quality bounds output"]
+    forbidden_shortcuts: ["OCR"]
+    expected_parent_ids: []
+  - query: "principles for deciding how much management to keep in-house versus outsource"
+    obvious_domains: [aws-service-models]
+    latent_domains: [business-operations]
+    acceptable_mechanisms: ["management boundary determines the model"]
+    forbidden_shortcuts: ["IaaS", "PaaS", "SaaS"]
+    expected_parent_ids: []

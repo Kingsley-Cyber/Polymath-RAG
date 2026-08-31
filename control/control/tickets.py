@@ -57,6 +57,11 @@ STAGE_DAG: list[tuple[str, str, tuple[str, ...], tuple[str, ...]]] = [
 NON_BLOCKING_STAGES = frozenset({
     "compile_objects",
     "parent_summary", "document_summary", "corpus_summary", "vocabulary",
+    # LATENT-TRANSFER-LAYER-V1 §0a: OWNER-TRIGGERED — its tickets are
+    # minted by the enrichment buttons, never by chain advancement, so
+    # it is deliberately ABSENT from STAGE_DAG. Non-blocking so a
+    # lingering enrichment ticket can never hold promotion.
+    "parent_enrichment",
 })
 
 

@@ -134,10 +134,13 @@ def hybrid_fast_retrieve(
     query: str,
     corpus_id: str,
     plan: Optional[HybridRetrievalPlan] = None,
+    latent: "bool | None" = None,
 ) -> dict:
     """Production HYBRID: one qualified hybrid execution."""
+    from polymath_shared.retrieval_modes import apply_latent
+
     _begin_retrieval()
-    plan = plan or hybrid_mode_plan(MODE_HYBRID)
+    plan = apply_latent(plan or hybrid_mode_plan(MODE_HYBRID), latent)
     if corpus_id is None:
         raise HTTPException(status_code=422, detail={
             "error_code": "corpus_required",
@@ -161,6 +164,15 @@ def hybrid_fast_retrieve(
             query,
             HybridRetrievalPlan(**{**plan.__dict__, "corpus_ids": (corpus_id,)}),
         )
+
+        def _latent_rescue(qvec, skip_parents):
+            from polymath_shared.latent.rescue import latent_rescue_parents
+            _coll = collections[corpus_id]
+            return latent_rescue_parents(
+                qvec, corpus_id=corpus_id, plan=shaped,
+                routing_search=lambda _c, v, f: searcher(_coll, v, f),
+                skip_parent_ids=skip_parents)
+
         result = hybrid_retrieve(
             query,
             plan=shaped,
@@ -171,6 +183,7 @@ def hybrid_fast_retrieve(
             summary_vectors=None,  # MMR rejected; lambda 1.0 promoted
             neighbor_lookup=_neighbor_lookup,
             region_lookup=_region_lookup,
+            latent_rescue=_latent_rescue if shaped.latent_enabled else None,
         )
         total_ms = (time.time() - t0) * 1000
     finally:
@@ -192,6 +205,7 @@ def hybrid_fast_retrieve(
             "evidence_count": len(result.final_evidence),
             "degraded": degradations(),
             "liveness": _liveness(result.trace, MODE_HYBRID),
+            "latent": result.trace.get("latent"),
         },
         "selected_documents": [
             {

@@ -46,6 +46,7 @@ class RetrieveRequest(BaseModel):
     all_authorized: bool = False
     limit: int = 10
     mode: Optional[str] = None
+    latent: Optional[bool] = None
 
 
 def resolve_http_scope(conn, req) -> "QueryScope":
@@ -145,11 +146,13 @@ async def retrieve(req: RetrieveRequest) -> dict:
     if mode == MODE_HYBRID:
         from orchestrator.api.hybrid import hybrid_fast_retrieve
 
-        return hybrid_fast_retrieve(query, single_corpus_or_422(scope, mode))
+        return hybrid_fast_retrieve(query, single_corpus_or_422(scope, mode),
+                                    latent=req.latent)
     if mode == MODE_GRAPH:
         from orchestrator.api.graph import graph_retrieve
 
-        return graph_retrieve(query, single_corpus_or_422(scope, mode))
+        return graph_retrieve(query, single_corpus_or_422(scope, mode),
+                               latent=req.latent)
 
     corpus_ids = list(scope.corpus_ids)
     with tx() as conn:

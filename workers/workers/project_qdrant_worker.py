@@ -547,6 +547,11 @@ def _routing_rows(conn: Connection, run_id: str) -> list[dict]:
         })
     # ROUTING-ENTITY-CARDS-V1 (§11 L1)
     out.extend(_entity_card_rows(conn, run_id))
+    # LATENT-TRANSFER-LAYER-V1 Phase C: two points per READY enrichment
+    # (latent_abstraction / latent_transfer), chunk_id-free by design —
+    # CHUNK-SWEEP-SCOPE-V1 keeps the chunk sweep away from them (C5).
+    from polymath_shared.latent.projection import latent_rows as _latent_rows
+    out.extend(_latent_rows(conn, run_id))
     # SPARSE-BM25-V1 index-text augmentation: children index their
     # attested entity surfaces + the parent's opening line, so HYBRID
     # gets exact-name recall on the acronym-dense corpus. Dense embed
@@ -822,6 +827,40 @@ def process_event(conn: Connection, event: dict) -> None:
                     ),
                     contract=routing_contract.contract_id,
                 )
+
+        # LATENT STALE cleanup (Phase C): a superseded enrichment's two
+        # points leave the store, then the row flips STALE -> INVALID —
+        # explicit retirement, since active receipts shield points from
+        # the orphan sweep (the F6 lesson).
+        if corpus_id:
+            from polymath_shared.latent.projection import (
+                stale_point_ids as _stale_latent,
+            )
+            _stale = _stale_latent(conn, corpus_id)
+            if _stale:
+                client = QdrantClient(url=get_settings().stores.qdrant_url,
+                                      timeout=QDRANT_TIMEOUT_S)
+                try:
+                    _coll = qdrant_collection_name(
+                        corpus_id, NEURAL_EMBED_CONTRACT.contract_id)
+                    client.delete(
+                        collection_name=_coll,
+                        points_selector=[qdrant_point_uuid(sid)
+                                         for _, sid in _stale])
+                finally:
+                    client.close()
+                from polymath_shared.receipts import (
+                    supersede_projection_claims,
+                )
+                supersede_projection_claims(
+                    conn, projection=PROJECTION_QDRANT,
+                    entity_ids=sorted({sid for _, sid in _stale}))
+                conn.execute(
+                    "UPDATE parent_enrichments SET status='INVALID' "
+                    "WHERE enrichment_id = ANY(%s) AND status='STALE'",
+                    (sorted({eid for eid, _ in _stale}),))
+                log.info("latent stale points retired", extra={
+                    "run_id": run_id, "stage": STAGE, "error_code": None})
 
         crash_after = int(os.environ.get("POLYMATH_TEST_CRASH_AFTER_POINTS", "0"))
         if crash_after and len(chunks) >= crash_after:

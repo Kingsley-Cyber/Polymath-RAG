@@ -72,6 +72,29 @@ def _refused_set(worker_type: str) -> set[int]:
     return _REFUSED.setdefault(worker_type, set())
 
 
+#: Stages exempt from the run-era compatibility pin. The semantic-bundle
+#: fence makes an INGEST run's processing atomic across one code era —
+#: right for extraction, wrong for ADDITIVE owner-triggered stages that
+#: must run over mixed-era corpora (§0b): parent enrichment's artifact
+#: identity hashes its OWN inputs (children + prompt + model contract),
+#: so a code-era mismatch cannot silently blur provenance.
+CONTRACT_EXEMPT_EVENTS = frozenset({"parent_enrichment.v1"})
+
+
+def _era_exempt(event: dict) -> bool:
+    """True when this event may claim across the run-era pin: the
+    enrichment stage itself, and a project_qdrant event MINTED BY the
+    enrichment hand-off (payload-tagged) — latent points carry their
+    own receipts + the corpus-pinned embedding contract, and receipt
+    incrementality means nothing else re-projects."""
+    if event.get("event_type") in CONTRACT_EXEMPT_EVENTS:
+        return True
+    if event.get("event_type") == "project_qdrant.v1":
+        payload = event.get("payload") or {}
+        return isinstance(payload, dict) and             payload.get("reason") == "latent_projection"
+    return False
+
+
 def claim_ticket_events(conn, identity: dict, event_types: list[str], limit: int,
                         lane_affinity: str | None = None) -> list[dict]:
     """Claim undelivered events gated by ticket readiness + worker
@@ -146,7 +169,9 @@ def claim_ticket_events(conn, identity: dict, event_types: list[str], limit: int
                 if e["ticket_status"] != "ready":
                     continue
                 contract = json.loads(e["execution_contract"] or "{}")
-                if contract and not compatible(identity["contracts"], contract):
+                if (not _era_exempt(e)
+                        and contract
+                        and not compatible(identity["contracts"], contract)):
                     # Remember it, so the NEXT fetch scans past it rather
                     # than returning the same unclaimable head forever.
                     first_time = e["event_id"] not in refused

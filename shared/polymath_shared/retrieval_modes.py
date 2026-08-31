@@ -45,6 +45,22 @@ def hybrid_mode_plan(mode: str) -> HybridRetrievalPlan:
     raise ValueError(f"mode {mode!r} has no hybrid plan")
 
 
+def apply_latent(plan: HybridRetrievalPlan,
+                 enabled: "bool | None") -> HybridRetrievalPlan:
+    """LATENT-TRANSFER-LAYER-V1 D10: per-request `latent` flag overrides
+    the settings default; None inherits. EXPOSED_MODES/DEFAULT_MODE/
+    validate_mode UNCHANGED — latent is a plan knob, not a mode."""
+    from dataclasses import replace
+
+    if enabled is None:
+        from polymath_shared.settings import get_settings
+        enabled = bool(getattr(get_settings().worker,
+                               "latent_retrieval_enabled", False))
+    if enabled == plan.latent_enabled:
+        return plan
+    return replace(plan, latent_enabled=enabled)
+
+
 # R1F: GRAPH = promoted HYBRID + the already-qualified evidence-authorized
 # corpus-authorized canonical bidirectional hop1 graph expansion
 # (D2 machinery: 8 seeds / 20 facts, HIGH_MEDIUM, SPO preserved).

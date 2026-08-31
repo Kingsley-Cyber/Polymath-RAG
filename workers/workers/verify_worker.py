@@ -88,6 +88,10 @@ ROUTING_KINDS = (
     # other routing lane — active receipts over an empty store must be
     # detected, and lost points re-drive the projector.
     "routing_entity",
+    # LATENT-TRANSFER-LAYER-V1 Phase C (C5): latent points reconcile per
+    # the entity-card template — desired = READY enrichments x 2 kinds.
+    "latent_abstraction",
+    "latent_transfer",
 )
 
 
@@ -133,7 +137,19 @@ def _desired_routing_ids(conn: Connection, corpus: str) -> dict[str, set[str]]:
         """,
         (corpus,),
     ).fetchall()
+    from polymath_shared.latent.projection import latent_point_id
+    latent_rows_db = conn.execute(
+        "SELECT enrichment_id FROM parent_enrichments "
+        "WHERE corpus_id = %s AND status = 'READY'",
+        (corpus,),
+    ).fetchall()
     return {
+        "latent_abstraction": {
+            latent_point_id(r[0], "latent_abstraction")
+            for r in latent_rows_db},
+        "latent_transfer": {
+            latent_point_id(r[0], "latent_transfer")
+            for r in latent_rows_db},
         "routing_document_summary": {r[0] for r in doc_rows},
         "routing_section_summary": {r[0] for r in section_rows},
         "routing_child": {r[0] for r in child_rows},
@@ -212,7 +228,32 @@ def _routing_receipts(conn: Connection, corpus: str) -> dict[str, set[str]]:
             """,
             (sorted(desired_cards),),
         ).fetchall()
+    # latent kinds: receipts scoped by desired-id membership, like the
+    # entity cards (the point id embeds the enrichment id, whose row is
+    # corpus-scoped — membership IS the scope).
+    from polymath_shared.latent.projection import latent_point_id
+    latent_desired: set[str] = set()
+    for (eid,) in conn.execute(
+            "SELECT enrichment_id FROM parent_enrichments "
+            "WHERE corpus_id = %s AND status = 'READY'",
+            (corpus,)).fetchall():
+        latent_desired.add(latent_point_id(eid, "latent_abstraction"))
+        latent_desired.add(latent_point_id(eid, "latent_transfer"))
+    latent_receipts: dict[str, set[str]] = {
+        "latent_abstraction": set(), "latent_transfer": set()}
+    if latent_desired:
+        for (rid, kind) in conn.execute(
+                """SELECT pr.entity_id, pr.entity_kind
+                     FROM projection_receipts pr
+                    WHERE pr.projection = 'qdrant'
+                      AND pr.entity_kind IN ('latent_abstraction',
+                                             'latent_transfer')
+                      AND pr.active AND pr.entity_id = ANY(%s)""",
+                (sorted(latent_desired),)).fetchall():
+            latent_receipts[kind].add(rid)
     return {
+        "latent_abstraction": latent_receipts["latent_abstraction"],
+        "latent_transfer": latent_receipts["latent_transfer"],
         "routing_document_summary": {r[0] for r in doc_rows},
         "routing_section_summary": {r[0] for r in section_rows},
         "routing_child": {r[0] for r in child_rows},

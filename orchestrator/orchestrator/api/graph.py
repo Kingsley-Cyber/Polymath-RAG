@@ -68,7 +68,8 @@ def _selected_surfaces(query: str, evidence: list[dict]) -> list[str]:
     return list(dict.fromkeys(surfaces))[:12]
 
 
-def graph_retrieve(query: str, corpus_id: str) -> dict:
+def graph_retrieve(query: str, corpus_id: str,
+                   latent: "bool | None" = None) -> dict:
     """Production GRAPH: one promoted HYBRID Pass-1 + qualified hop1."""
     _begin_retrieval()
     if corpus_id is None:

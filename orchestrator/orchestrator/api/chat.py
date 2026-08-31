@@ -50,6 +50,7 @@ class ChatRequest(BaseModel):
     workspace: str | None = None
     all_authorized: bool = False
     mode: str | None = None
+    latent: bool | None = None
 
 
 @router.post("/chat")
@@ -73,7 +74,8 @@ async def chat(req: ChatRequest) -> dict:
         # No synthesis change: EvidenceBundle v2 semantics as-is.
         from orchestrator.api.graph import graph_retrieve
 
-        g = graph_retrieve(query, single_corpus_or_422(scope, mode))
+        g = graph_retrieve(query, single_corpus_or_422(scope, mode),
+                           latent=getattr(req, 'latent', None))
         graph_facts = [
             {"fact_id": f["fact_id"], "predicate": f["predicate"],
              "subject": f["subject"], "object": f["object"]}
@@ -124,7 +126,8 @@ async def chat(req: ChatRequest) -> dict:
         else:
             from orchestrator.api.hybrid import hybrid_fast_retrieve
 
-            fast = hybrid_fast_retrieve(query, single_corpus_or_422(scope, mode))
+            fast = hybrid_fast_retrieve(query, single_corpus_or_422(scope, mode),
+                                        latent=getattr(req, 'latent', None))
         child_evidence = [
             {"chunk_id": c["chunk_id"], "doc_id": c["doc_id"], "parent_id": c["parent_id"]}
             for c in fast["evidence"]

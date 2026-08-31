@@ -42,6 +42,10 @@ from polymath_shared.pass1 import (
 HYBRID_PLAN_VERSION = "hybrid-retrieval-v1"
 
 ARRIVAL_LEXICAL_RESCUE = "LEXICAL_RESCUE"
+# Phase D: imported at module level — a function-local import here
+# shadows the name for the WHOLE function scope (the graph.py
+# _embed_query failure class, measured twice now).
+from polymath_shared.latent.rescue import ARRIVAL_LATENT_RESCUE  # noqa: E402
 
 
 @dataclass(frozen=True)
@@ -75,6 +79,15 @@ class HybridRetrievalPlan:
 
     final_max_children: int = 10
     final_max_total_items: int = 12
+
+    # LATENT-TRANSFER-LAYER-V1 Phase D — defaults keep hybrid-retrieval-v1
+    # FROZEN: latent_enabled=False means byte-identical behavior.
+    latent_enabled: bool = False
+    latent_abstraction_top_k: int = 8
+    latent_transfer_top_k: int = 8
+    latent_max_parents: int = 3
+    latent_reserved_slots: int = 2
+    latent_budget_ms: int = 250
 
     #: See pass1 for both. Defaults preserve HYBRID's frozen behaviour:
     #: rescue reservation only changes WHICH candidates survive a cut
@@ -160,6 +173,7 @@ def hybrid_retrieve(
     summary_vectors: Optional[Callable[[str, list[str]], dict[str, list[float]]]] = None,
     neighbor_lookup: Optional[Callable[[list[dict], int], list[dict]]] = None,
     region_lookup: Optional[Callable[[list[str]], dict]] = None,
+    latent_rescue: Optional[Callable[[list[float], frozenset], "object"]] = None,
 ) -> HybridResult:
     from polymath_shared.pass1 import (
         REPRESENTATION_KIND_CHILD,
@@ -270,6 +284,62 @@ def hybrid_retrieve(
             "lexical_rank": hit.rank,
         })
 
+    # LATENT RESCUE (Phase D): enrichment ROUTES, children PROVE. The
+    # lane's parents deepen through their ORIGINAL children; latent text
+    # never becomes a candidate. Fail-open; absence invisible (§0b).
+    rescue_latent: dict[str, dict] = {}
+    latent_trace: dict = {"enabled": bool(plan.latent_enabled)}
+    if plan.latent_enabled and latent_rescue is not None:
+        # resolve the corpus collection the same way pass1 does — the
+        # searcher expects a REAL collection name, "" 404s (measured).
+        from polymath_shared.embedding_contracts import NEURAL_EMBED_CONTRACT
+        from polymath_shared.projection_contracts import (
+            qdrant_collection_name,
+        )
+        _corpus = (plan.corpus_ids or ("",))[0]
+        _collection = (qdrant_collection_name(
+            _corpus, NEURAL_EMBED_CONTRACT.contract_id) if _corpus else "")
+        qvec_latent = embed_query(query)
+        section_parents = frozenset(
+            s_["parent_id"] for s_ in fast.selected_sections)
+        lr = latent_rescue(qvec_latent, section_parents)
+        latent_trace.update({
+            "parents": [{"parent_id": p.parent_id,
+                         "channels": dict(p.channels)}
+                        for p in lr.parents],
+            "degraded": lr.degraded,
+            "latency_ms": round(lr.latency_ms, 1)})
+        corpus_filter = (plan.corpus_ids or (None,))[0]
+        for lp in lr.parents:
+            try:
+                rows = routing_search(_collection, qvec_latent, {
+                    "representation_kind": "routing_child",
+                    "corpus_id": corpus_filter,
+                    "parent_id": lp.parent_id,
+                })[: plan.max_children_per_section]
+            except Exception:
+                latent_trace["degraded"] = "deepen_failed"
+                rows = []
+            for rank, row in enumerate(rows):
+                payload = row.get("payload") or {}
+                cid = payload.get("chunk_id") or ""
+                if (not cid or cid in deepened or cid in rescue_neural
+                        or cid in rescue_lexical or cid in rescue_latent):
+                    continue
+                rescue_latent[cid] = {
+                    "chunk_id": cid,
+                    "doc_id": payload.get("doc_id") or lp.doc_id,
+                    "parent_id": lp.parent_id,
+                    "text": payload.get("text") or "",
+                    "source_name": payload.get("source_name")
+                                   or lp.source_name,
+                    "similarity": float(row.get("score") or 0.0),
+                    "arrival": ARRIVAL_LATENT_RESCUE,
+                    "latent_rank": rank,
+                    "latent_channels": dict(lp.channels),
+                }
+        latent_trace["admitted_chunk_ids"] = sorted(rescue_latent)
+
     final_candidates: list[dict] = []
     for doc in selected_documents:
         doc_children = [c for c in deepened.values() if c["doc_id"] == doc.doc_id]
@@ -283,6 +353,8 @@ def hybrid_retrieve(
     for c in sorted(rescue_neural.values(), key=lambda c: c.get("global_rank", 10**9)):
         final_candidates.append(dict(c))
     for c in sorted(rescue_lexical.values(), key=lambda c: c.get("lexical_rank", 10**9)):
+        final_candidates.append(dict(c))
+    for c in sorted(rescue_latent.values(), key=lambda c: c.get("latent_rank", 10**9)):
         final_candidates.append(dict(c))
 
     seen_ids: set[str] = set()
@@ -313,9 +385,17 @@ def hybrid_retrieve(
     # RESCUE-SLOT-RESERVATION-V1 (see pass1): the neural and lexical
     # rescue lanes are appended after every deepened child, so a flat
     # cut here silently deleted both recall lanes on dense corpora.
-    deduped = _truncate_reserving_rescue(
-        deduped, plan.final_max_children,
-        getattr(plan, "rescue_reserved_slots", 2))
+    if rescue_latent:
+        deduped = _truncate_reserving_rescue(
+            deduped, plan.final_max_children,
+            getattr(plan, "rescue_reserved_slots", 2)
+            + plan.latent_reserved_slots,
+            rescue_arrivals=(ARRIVAL_GLOBAL_CHILD_RESCUE,
+                             ARRIVAL_LATENT_RESCUE))
+    else:
+        deduped = _truncate_reserving_rescue(
+            deduped, plan.final_max_children,
+            getattr(plan, "rescue_reserved_slots", 2))
 
     pre_g3 = [c["chunk_id"] for c in deduped]
     post_g3 = list(pre_g3)
@@ -349,6 +429,7 @@ def hybrid_retrieve(
             total += 1
 
     trace = {
+        "latent": latent_trace,
         "plan": plan.plan_version,
         "rrf_k": plan.rrf_k,
         "mmr_enabled": plan.mmr_enabled,

@@ -18,7 +18,7 @@ from workers.summary_worker_impl import process_event
 def main() -> None:
     run_worker(
         "summaries",
-        ["parent_summary.v1", "document_summary.v1",
+        ["parent_enrichment.v1", "parent_summary.v1", "document_summary.v1",
          "corpus_summary.v1", "vocabulary.v1"],
         process_event,
     )
