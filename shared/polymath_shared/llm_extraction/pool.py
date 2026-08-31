@@ -206,6 +206,37 @@ def cloud_endpoints() -> list[CloudEndpoint]:
     return roster
 
 
+class PinnedProviderUnavailable(RuntimeError):
+    """A stage is DEDICATED to a provider that is not active (no key /
+    enabled:false / missing from the registry). Loud by design — a
+    dedicated stage must never silently spend another provider."""
+
+
+def stage_pin(stage: str) -> str | None:
+    try:
+        raw = json.loads(_PROVIDERS_FILE.read_text())
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+    pin = (raw.get("stage_pins") or {}).get(stage)
+    return str(pin).strip() if pin else None
+
+
+def select_endpoint_for_stage(stage: str, doc_id: str) -> CloudEndpoint:
+    """STAGE-PIN-V1 (owner 2026-08-30): a stage with a pin gets EXACTLY
+    that provider; a pinned-but-inactive provider fails loudly. Unpinned
+    stages shard by doc hash like any cloud dispatch."""
+    pin = stage_pin(stage)
+    if pin is None:
+        return select_cloud_endpoint(doc_id)
+    for ep in cloud_endpoints():
+        if ep.name == pin:
+            return ep
+    raise PinnedProviderUnavailable(
+        f"stage {stage!r} is dedicated to provider {pin!r}, which is not "
+        f"active (no key in .env, enabled:false, or absent from "
+        f"config/cloud_providers.json) — activate it or remove the pin")
+
+
 def select_cloud_endpoint(doc_id: str) -> CloudEndpoint:
     """Deterministic doc -> endpoint assignment over the enabled roster."""
     roster = cloud_endpoints()

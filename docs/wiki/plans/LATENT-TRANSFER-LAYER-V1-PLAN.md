@@ -186,7 +186,7 @@ LatentRescue: parents: list[LatentParent(parent_id, doc_id, source_name, best_sc
 | Parsing | `json.loads` → truncation repair → per-object salvage → dedup entities by normalized name, relations by (subj, pred, obj) (`llm_extraction/gate.py`) | a parser that discarded truncated JSON was the original "0 entities" bug |
 | Noise filter | drop chunks < 15 words; ChunkKind structural skip (TOC / copyright / cover / license / index / bibliography) from `chunk_kind.py` | dominant token cost for zero value |
 | Lanes | ≤ byte threshold (floor 300 KB, set 450 KB) → local batch; above → cloud (Qwen3.5-397B via the Ollama daemon), both under the persisted AIMD controller | owner rule; controller measured 13–14× cloud parallelism |
-| Enrichment | same model, same generation lock, `max_tokens` 700 (qualification) / 900 (production) per parent, ≈2 K tokens per parent call | Part 3 budget |
+| Enrichment | ~~same model~~ SUPERSEDED (owner 2026-08-30): enrichment transport is the DEDICATED `nvidia` pool endpoint via `select_endpoint_for_stage("parent_enrichment", …)` (STAGE-PIN-V1, config/cloud_providers.json stage_pins) — never sharded, never silently rerouted; pinned-but-parked fails loudly. Budget unchanged: `max_tokens` 700 (qualification) / 900 (production) per parent | owner directive + Part 3 budget |
 Still open from the report (tracked in the register, not this plan): real full-file completion time on the 838 KB book at batch 40; corpus-level entity dedup + `promote()` merge layer (recovers recurring certs missed in one chunk); optional 600 w middle-ground test.
 
 ### 1.7 Wire-contract reconciliation (owner review 2026-08-30)
