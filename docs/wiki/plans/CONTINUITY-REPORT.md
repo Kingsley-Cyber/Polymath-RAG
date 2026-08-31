@@ -18,7 +18,23 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → `CLAUDE.md` → the two newest work-logs.
 
-## Latest checkpoint (2026-08-30 late, CROSS-PROVIDER-FAILOVER-V1, commit 35168e7)
+## Latest checkpoint (2026-08-31, LATENT LAYER LIVE, commit e4da0b2+)
+
+THE BIG SESSION: UI-V3 executed (Sources panel, section trees, F13
+toggle, source_name bug dead — work-log 2026-08-30-ui-v3-presentation);
+latent plan re-anchored (C1 satisfied); LATENT-TRANSFER-LAYER Phases
+A–E built and LIVE-PROVEN (work-log 2026-08-31-latent-phases-a-d): 24
+READY enrichments + 48 latent points on cysa-study-v1, cross-domain
+reach measured (3 parents / 9 original children per query, +2 unique
+evidence per P6 case), §0a enrich buttons in the UI (corpus ✨ +
+per-doc ✨). latent_retrieval_enabled stays FALSE until the owner
+authors ≥20 P6 cases and calls GO (harness:
+eval/v5/latent_transfer/p6_latent_transfer_recall.py). Phase 0
+(tier_chunker swap + re-ingest) deliberately deferred per the plan.
+Era-fence law: parent_enrichment.v1 + payload-tagged latent projection
+claims are exempt from the run-era pin (§0b mixed-era requirement).
+
+## Previous checkpoint (2026-08-30 late, CROSS-PROVIDER-FAILOVER-V1, commit 35168e7)
 
 PROVIDER INFRASTRUCTURE COMPLETE (work-logs: extraction-pool,
 cloud-assist, multi-provider-auth, nvidia-latent-pin, nvidia-dual-lane,
