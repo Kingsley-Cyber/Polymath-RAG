@@ -20,7 +20,7 @@
     "design). Unpinned stages shard across the pool as normal."
   ],
   "stage_pins": {
-    "parent_enrichment": "nvidia"
+    "parent_enrichment": ["nvidia", "nvidia2"]
   },
   "providers": [
     {
@@ -38,6 +38,15 @@
       "url": "https://integrate.api.nvidia.com",
       "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
       "api_key_env": "NVIDIA_API_KEY",
+      "reasoning_effort": "none",
+      "structured": "json"
+    },
+    {
+      "name": "nvidia2",
+      "enabled": true,
+      "url": "https://integrate.api.nvidia.com",
+      "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+      "api_key_env": "NVIDIA_API_KEY_2",
       "reasoning_effort": "none",
       "structured": "json"
     }

@@ -45,6 +45,16 @@ providers:
     init: 2
     adaptive: true
     use_headers: true
+  nvidia2:                 # second UNLINKED account — own separate rate
+    kind: rate
+    rpm: 36
+    tpm: 150000
+    conc_cap: 4
+    min: 1
+    max: 4
+    init: 2
+    adaptive: true
+    use_headers: true
   groq:
     kind: rate
     rpm: 30                # free-tier reality; AIMD climbs if headers allow
