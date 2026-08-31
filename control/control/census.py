@@ -423,6 +423,11 @@ def _missing_projection_receipts(conn: Connection, run_id: str, stage: str) -> l
               JOIN documents d ON d.doc_id = c.doc_id
               JOIN runs r ON r.corpus_id = d.corpus_id
              WHERE r.run_id = %s
+               AND c.tier = 'child'  -- F6 PARENT-POINT-RETIREMENT: the
+               -- chunk lane projects children only; the census want-set
+               -- must match or every run wedges at reconciling with
+               -- "65 projection receipts missing" (measured 2026-08-31,
+               -- the exact §5.2 same-change warning this violated)
                AND NOT EXISTS (
                    SELECT 1 FROM projection_receipts pr
                     WHERE pr.projection = 'qdrant'
