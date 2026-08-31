@@ -41,6 +41,15 @@ churn through jobs."
   replay-stable, reduced-not-rerouted, all-dark raises); determinism
   suite at the 8-failure pre-existing baseline.
 
+## Rejected claims
+- "Load-balance the two accounts by live queue depth" — rejected:
+  runtime load routing breaks replay determinism (a crash would
+  re-enrich the same parent on the other account); blake2b doc-sharding
+  is even in expectation and replay-stable.
+- "One shared limiter for both accounts" — rejected: the accounts are
+  UNLINKED with individual rate limits; a shared bucket would throttle
+  both when one hits its edge.
+
 ## Open contract gaps
 - Both accounts share one Postgres AIMD state namespace keyed by
   limiter lane name — correct as long as endpoint names stay unique.
