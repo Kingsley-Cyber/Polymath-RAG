@@ -63,7 +63,12 @@ ADDITIVE rescue lane — enrichment routes, children prove.
   Fail-open, 250 ms budget.
 - **Phases**: A contract/prompt/gate/compiler (pure) → B ingestion stage
   → C projection → D rescue lane wiring → E P6 recall suite with
-  per-channel keep/kill. Phase 0 (before corpus-wide enrichment):
+  per-channel keep/kill.
+- **§0b MIXED-ERA UNION CONTRACT (owner 2026-08-30)**: retrieval reads
+  what exists, per document, per layer — enrichment additive
+  per-parent, absence INVISIBLE at query time; mixed-era is the steady
+  state (button-triggered scopes), and Phase E must pin base-only ==
+  no-enrichment-world byte-identically. Full text in the latent plan §0b. Phase 0 (before corpus-wide enrichment):
   canonical `tier_chunker` swap + re-ingest.
 - **Pre-built tonight (its two riskiest diffs)**:
   ADDITIVE-SEED-SEAM-V1 (`pass1._truncate_reserving_rescue(rescue_arrivals=…)`)
