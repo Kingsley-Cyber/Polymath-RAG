@@ -29,7 +29,10 @@ children-only (65 parent points retired via
 `scripts/retire_parent_points.py`); FAST is multi-corpus;
 OBJECT-NAME-CONTRACT-V2 gates concept/procedure names at compile AND
 /ask serve time. Open: F13 (UI toggle), F14/latent build
-(MASTER-BUILD-SEQUENCE), pre-existing
+(MASTER-BUILD-SEQUENCE), the UI overhaul — a fresh session implements
+`UI-V3-PRESENTATION-PRD.md` (read its §8 drift check FIRST: source_name
+bug still live, meta.corpus_ids, [S#] tags, v2 evidence volume) —
+and pre-existing
 test_llm_controller.py::test_batched_client_sizes_calls_from_the_budget
 failure (other session's territory), stale object rows retire fully on
 the next compile_objects re-run (enrichment button).
