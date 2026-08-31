@@ -7,11 +7,84 @@ architecture_impact: none (ordering authority aggregating RETRIEVAL-AUDIT-PRD + 
 last_reviewed: 2026-08-30
 ---
 
-# MASTER BUILD SEQUENCE — audit fixes × latent layer × UI overhaul, de-conflicted
+# MASTER BUILD SEQUENCE — the consolidated report (audit findings × latent layer × UI overhaul)
 
-Three plans now target overlapping code. This document is the ONE
-ordering authority; each plan keeps its own spec. Aggregated to minimize
-rework before the owner implements the latent layer.
+**This is the one full read**: every audit finding with location and
+dependency, the future build's decisions and phases, the UI overhaul,
+the collisions between them, and the de-conflicted order. Deep specs
+stay in their own files (RETRIEVAL-AUDIT-PRD.md · LATENT-TRANSFER-
+LAYER-V1-PLAN.md · UI-V3-PRESENTATION-PRD.md); this document is
+sufficient to plan and start any step without opening them.
+
+## Part I — Audit findings (premise: extraction quality is high; all live-probed)
+
+| # | Sev | Finding | Location | Dependency |
+|---|---|---|---|---|
+| F1 | P0 | Graph seeding is token soup — "what uses Amazon S3" seeded unigrams (`s3` dropped by len>3, junk burned the 8-seed cap) → 0 facts from 106; the graph never consults the entity registry | graph.py:56, retrieve.py:347 | entity cards + entities table (exist) |
+| F2 | P0 | Entity cards advisory-only — absent from pass1 RRF, HYBRID, GRAPH seeding, /ask | fast.py card block; pass1.py fusion | FENCED; now plugs into ADDITIVE-SEED-SEAM-V1 |
+| F3 | P0 | /ask object matching = substring fraction — foreign-key question returned an AWS DevOps concept; FACT route shares the scorer | ask.py:67/:98/:136 | routing_concept/procedure points already in Qdrant |
+| F4 | P1 | Breadth routing dense-only — no sparse probe on doc/section summary lanes; exact-name breadth = embedding luck | fast.py:55 FastSearcher | bm25 already on summary points; shared tokenizer |
+| F5 | P1 | Two summary authorities — legacy parent lane scores chunks.summary, FAST routes on compiled cards (verified different texts) | retrieve.py:252 | retrieval_summaries = declared authority (4.4.8) |
+| F6 | P1 | 65 parent_summary points dead weight in the collection | project_qdrant_worker._write_points | verifier/census want-set changes in SAME commit |
+| F7 | P1 | Depth = regex heuristic; breadth caps are global constants (docs 5 / sections 2 / children 3 / final 10-12) | pass1.py:43-68, query_shape.py:120 | OWNER breadth/depth numbers |
+| F8 | P1 | FAST/HYBRID/GRAPH single-corpus; cross-corpus falls to legacy lane | retrieve.py:137-148 | after F2 (fuse per-corpus pass1) |
+| F9 | P1 | Serve processes unsupervised (reranker/orchestrator hand-started; dead-reranker 113s class) | process_supervisor SLOTS; runtime_budget profiles | none — run POLYMATH_PROFILE=retrieval supervisor |
+| F10 | P1 | Synthesis evidence budget bounds depth (1,600 chars/item, 10 final children, 30 carried) | ui.py:993; pass1 finals | rides F7's numbers |
+| F11 | P2 | Sparse-tokenizer contract untested (future lanes could fork it) | test_sparse_bm25.py extension | none |
+| F12 | P2 | Junk object NAMES amplified by F3 ("AWS Cloud DevOps Engineer Path DevOps") | knowledge_objects/concept.py naming | TERM-SURFACE-GATE rule class |
+| F13 | P2 | Upload defaults hide corpora from retrieval (probe/query_enabled=false) | ui.py upload; query_scope.py:84 | UI toggle or upload param |
+| F14 | P2 | Latent transfer layer not built (roadmap — Part II) | register §10.2/§11.6 | F2's seam (done) |
+
+Acceptance criteria live in RETRIEVAL-AUDIT-PRD.md §Acceptance; the live
+artifact page mirrors this table.
+
+## Part II — The future build (LATENT-TRANSFER-LAYER-V1, frozen v1.1) in brief
+
+Goal: latent connections (Laban↔cinematography-class reach) as an
+ADDITIVE rescue lane — enrichment routes, children prove.
+
+- **Ingestion**: one compact LLM call per parent (children in →
+  `{summary, per-child gists, abstraction, ≤2 mechanisms, ≤2 affordances,
+  ≤3 questions}` out), gated by its own sanitize (`ENRICH_*` reject
+  classes), persisted to `parent_enrichments` (migration **0043**) —
+  never `retrieval_summaries`. Non-blocking summary-family stage
+  `parent_enrichment.v1`.
+- **Projection**: exactly two new kinds per parent —
+  `latent_abstraction`, `latent_transfer` — into the EXISTING routing
+  collection, payload-filtered, receipts + STALE cleanup. Points carry
+  `chunk_id=None` → **depends on CHUNK-SWEEP-SCOPE-V1** (without it the
+  verifier deletes them; measured on entity cards) and Phase C must
+  extend ROUTING_KINDS + reconciliation per the routing_entity template.
+- **Query time**: HYBRID-only rescue (GRAPH inherits): two filtered
+  searches (top_k 8 each, same qvec) → dedupe → ≤3 latent parent_ids →
+  those parents' ORIGINAL children → union with baseline → rerank.
+  Latent text is NEVER evidence. FAST byte-identical always; everything
+  byte-identical when `POLYMATH_WORKER_LATENT_RETRIEVAL_ENABLED=false`.
+  Fail-open, 250 ms budget.
+- **Phases**: A contract/prompt/gate/compiler (pure) → B ingestion stage
+  → C projection → D rescue lane wiring → E P6 recall suite with
+  per-channel keep/kill. Phase 0 (before corpus-wide enrichment):
+  canonical `tier_chunker` swap + re-ingest.
+- **Pre-built tonight (its two riskiest diffs)**:
+  ADDITIVE-SEED-SEAM-V1 (`pass1._truncate_reserving_rescue(rescue_arrivals=…)`)
+  and BATCH-API-STABILIZATION-V1 (`client.complete_batched` + per-call
+  `system_prompt`, live-smoked). Its line anchors are STALE vs
+  `463f52d` — the plan's own mapping-pass gate must re-anchor at HEAD.
+
+## Part III — UI overhaul (UI-V3-PRESENTATION-PRD) in brief
+
+Presentation only + two additive response fields: evidence items gain
+`title / heading_path / human_locator` (joins from chunks.heading_path,
+documents.source_name, card heads; NULL-safe), answers render a v3.3
+Sources panel (human names, verbatim quotes, provenance behind an
+expander), documents render as document → section tree from the parent
+cards. No retrieval contract change — which holds only if its backend
+fields ride the same orchestrator pass as F1/F3/F4/F5 (collision C8).
+
+## Part IV — Collisions and resolutions
+
+Three plans target overlapping code; this section is why the order below
+exists.
 
 ## Collisions found (and what was done about them, 2026-08-30)
 
