@@ -30,3 +30,28 @@ providers:
     use_headers: true      # throttle proactively from rate-limit headers
     init: 3                # AIMD starts LOW and climbs to the ceiling on
                            # clean successes — that is what makes it live
+  # Per-ENDPOINT seeds (EXTRACTION-POOL): a pool endpoint whose name
+  # matches a key here gets its own seed; otherwise it inherits
+  # ollama_cloud. AIMD still governs at runtime (x0.5 on 429/503,
+  # Retry-After honored, header sync) — these are starting buckets and
+  # ceilings, not hard schedules.
+  nvidia:                  # owner 2026-08-30: dedicated latent/enrichment
+    kind: rate
+    rpm: 36                # ~35-38 RPM initial per owner directive
+    tpm: 150000
+    conc_cap: 4            # worker-controlled concurrency; small ceiling
+    min: 1
+    max: 4
+    init: 2
+    adaptive: true
+    use_headers: true
+  groq:
+    kind: rate
+    rpm: 30                # free-tier reality; AIMD climbs if headers allow
+    tpm: 120000
+    conc_cap: 8
+    min: 1
+    max: 8
+    init: 2
+    adaptive: true
+    use_headers: true

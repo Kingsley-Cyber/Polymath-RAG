@@ -36,9 +36,9 @@
       "name": "nvidia",
       "enabled": true,
       "url": "https://integrate.api.nvidia.com",
-      "model": "meta/llama-3.3-70b-instruct",
+      "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
       "api_key_env": "NVIDIA_API_KEY",
-      "reasoning_effort": null,
+      "reasoning_effort": "none",
       "structured": "json"
     }
   ]

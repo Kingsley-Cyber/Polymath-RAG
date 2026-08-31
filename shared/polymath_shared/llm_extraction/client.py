@@ -63,7 +63,10 @@ _LANE_LIMITS = {
 _LIMITER_CONFIG = None
 
 
-def _lane_limit(lane: str) -> ProviderLimit:
+def _lane_limit(lane: str, provider: str | None = None) -> ProviderLimit:
+    """Seed for a lane — or, when `provider` names a pool endpoint with
+    its own block in limiter.yaml, that endpoint's seed (falls back to
+    the lane default). AIMD governs at runtime either way."""
     global _LIMITER_CONFIG
     if _LIMITER_CONFIG is None:
         try:
@@ -72,7 +75,8 @@ def _lane_limit(lane: str) -> ProviderLimit:
             _LIMITER_CONFIG = yaml.safe_load(path.read_text())["providers"]
         except Exception:
             _LIMITER_CONFIG = {}
-    cfg = (_LIMITER_CONFIG or {}).get(
+    table = _LIMITER_CONFIG or {}
+    cfg = (table.get(provider) if provider else None) or table.get(
         "mlx_local" if lane == "local" else "ollama_cloud")
     if cfg:
         return ProviderLimit.from_config(_LANE_LIMITS[lane], cfg)
@@ -389,8 +393,11 @@ class LLMExtractionClient:
                 "wall_ms": wall_ms, "served_model": body.get("model")}
 
     def _lane_limiter(self):
-        return REGISTRY.lane(f"llm_{self.lane}",
-                             self.limiter_key, _lane_limit(self.lane))
+        return REGISTRY.lane(
+            f"llm_{self.lane}", self.limiter_key,
+            _lane_limit(self.lane,
+                        None if self.limiter_key == "default"
+                        else self.limiter_key))
 
     def extract_batched(self, neighborhoods: list[tuple[str, list[tuple[str, str]]]],
                         *, source_bytes: int, threshold_bytes: int,

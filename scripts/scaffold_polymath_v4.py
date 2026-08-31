@@ -315,6 +315,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-08-30-extraction-pool.md", "md", None),
     ("docs/wiki/work-log/2026-08-30-cloud-assist.md", "md", None),
     ("docs/wiki/work-log/2026-08-30-multi-provider-auth.md", "md", None),
+    ("docs/wiki/work-log/2026-08-30-nvidia-latent-pin.md", "md", None),
     ("config/cloud_providers.json", "json", None),
     ("scripts/probe_cloud_endpoints.py", "py", None),
     ("docs/wiki/plans/CONTINUITY-REPORT.md", "md", None),
