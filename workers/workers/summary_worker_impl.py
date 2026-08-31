@@ -366,12 +366,37 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
                 return c
 
             primary = _client(0)
-            results = []
-            for item_id, system, user, max_tokens in items:
+            # ENRICHMENT-CONCURRENCY-V1 (owner 2026-08-31): worker-
+            # controlled parallelism sized from the LIMITER SPEC of the
+            # doc's pinned endpoint (conc_cap, the owner's per-account
+            # ceiling) — the limiter still gates each call, so this is
+            # the ceiling, not a schedule. Sequential was the measured
+            # gap: 40 parents x ~30 s = ~20 min; conc 4 => ~5 min.
+            from concurrent.futures import ThreadPoolExecutor
+
+            from polymath_shared.llm_extraction.client import _lane_limit
+            spec = _lane_limit("cloud", None if primary.limiter_key ==
+                               "default" else primary.limiter_key)
+            width = max(1, min(spec.conc_cap or 4, len(items)))
+
+            def _retryable(err):
+                # 429 IS retryable/failover-able (measured 2026-08-31:
+                # a conc-4 burst 429'd 30/40 AWS parents into durable
+                # INVALID because 429 was missing from this set — the
+                # exact failure the cross-provider group exists for).
+                return err in ("LIMITER_REFUSED", "HTTP_429") or                     (err or "").startswith(
+                        ("HTTP_5", "Connect", "ReadTimeout"))
+
+            def _one(item):
+                import time as _time
+                item_id, system, user, max_tokens = item
                 raw, err = primary.complete_one(
                     user, system_prompt=system, max_tokens=max_tokens)
-                if err in ("LIMITER_REFUSED",) or (err or "").startswith(
-                        ("HTTP_5", "Connect", "ReadTimeout")):
+                if err == "HTTP_429":           # backoff, retry same lane
+                    _time.sleep(10.0)
+                    raw, err = primary.complete_one(
+                        user, system_prompt=system, max_tokens=max_tokens)
+                if _retryable(err):
                     fb = _client(1)
                     if fb.endpoint_name != primary.endpoint_name:
                         log.warning("enrichment lane failover: %s -> %s (%s)",
@@ -381,7 +406,15 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
                         raw, err = fb.complete_one(
                             user, system_prompt=system,
                             max_tokens=max_tokens)
-                results.append((item_id, raw, err))
+                        if err == "HTTP_429":
+                            _time.sleep(10.0)
+                            raw, err = fb.complete_one(
+                                user, system_prompt=system,
+                                max_tokens=max_tokens)
+                return (item_id, raw, err)
+
+            with ThreadPoolExecutor(max_workers=width) as pool:
+                results = list(pool.map(_one, items))
             return results
 
         from polymath_shared.llm_extraction.pool import (
