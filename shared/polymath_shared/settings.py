@@ -231,12 +231,14 @@ class WorkerSettings(BaseSettings):
                     "candidate realistic-prose baseline (Q1-R).",
     )
     chunker: str = Field(
-        default="legacy_v1",
+        default="tier_v3",
         validation_alias=AliasChoices("chunker", "POLYMATH_CHUNKER"),
-        description="Chunking provider (SEMANTIC-CHUNKING-V2): "
-                    "legacy_v1 (production default) or semantic_v2 "
-                    "(qualification candidate; promotion is separately "
-                    "authorized).",
+        description="Chunking provider. tier_v3 (TIER-CHUNKER-V3, the "
+                    "production default — owner GO 2026-08-31, latent "
+                    "plan D15 Phase 0: heading-bounded parents with "
+                    "real section text and heading_path, byte-exact "
+                    "offsets); legacy_v1 (pre-Phase-0 baseline); "
+                    "semantic_v2 (retired qualification candidate).",
     )
 
 

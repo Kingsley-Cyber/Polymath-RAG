@@ -59,8 +59,10 @@ log = logging.getLogger("intake")
 
 
 def contract() -> str:
+    from workers.tier_chunker import TIER_FROZEN_PARAMS
     return stage_contract_hash(STAGE, {
         "chunk_frozen": CHUNK_FROZEN_PARAMS,
+        "tier_frozen": TIER_FROZEN_PARAMS,
         "normalization": NORMALIZATION,
         "router_version": ROUTER_VERSION,
     })
@@ -110,9 +112,17 @@ def process_event(conn: Connection, event: dict) -> None:
 
         profile = route_document(source_name, text[:4000])
         chunker_provider = get_settings().worker.chunker
-        if chunker_provider not in ("legacy_v1", "semantic_v2"):
+        if chunker_provider not in ("legacy_v1", "semantic_v2", "tier_v3"):
             raise ValueError(f"unknown chunking provider: {chunker_provider}")
-        if chunker_provider == "semantic_v2":
+        layout_regions: list = []      # legacy-only projection (LAYOUT-EVIDENCE-V1)
+        if chunker_provider == "tier_v3":
+            # TIER-CHUNKER-V3 (chunk-structure-v3, latent plan D15
+            # Phase 0): heading-bounded parents carrying REAL section
+            # text + real heading_path, byte-exact offsets throughout.
+            from workers.tier_chunker import tier_chunk_rows
+
+            chunks = tier_chunk_rows(text, doc_id)
+        elif chunker_provider == "semantic_v2":
             # SEMANTIC-CHUNKING-V2 (chunk-contract-v2): structure-
             # constrained semantic chunking; headings NEVER enter chunk
             # body text. Chonkie is a library dependency — Polymath
@@ -245,6 +255,23 @@ def process_event(conn: Connection, event: dict) -> None:
             if row["tier"] == "parent":
                 row["region_role"], row["region_reason"] = parent_role(
                     child_roles_by_parent.get(row["chunk_id"], []))
+
+        # GENERATION-PURGE (Phase 0): chunk ids are content-addressed,
+        # so a chunker swap re-identifies EVERYTHING and the ON CONFLICT
+        # DO NOTHING below would leave the old generation's rows live
+        # beside the new ones — retrieval would mix chunker generations.
+        # Rows from any OTHER contract generation die here, scoped to
+        # this doc; evidence rows cascade, projection want-sets sweep
+        # the orphaned points on the next verify.
+        if chunks:
+            purged = conn.execute(
+                "DELETE FROM chunks WHERE doc_id = %s "
+                "AND chunk_contract_version IS DISTINCT FROM %s",
+                (doc_id, chunks[0].get("chunk_contract_version")),
+            ).rowcount
+            if purged:
+                log.info("generation purge: %d stale chunk rows for %s",
+                         purged, doc_id[:16])
 
         # Parents first, then children: children carry parent_id foreign
         # keys, so the parent rows must exist before the FK is checked.

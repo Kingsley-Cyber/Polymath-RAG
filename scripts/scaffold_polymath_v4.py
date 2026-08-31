@@ -1558,6 +1558,10 @@ TREE: list[tuple[str, str, str | None]] = [
     ("workers/workers/reprocess_worker.py", "py", None),
     ("workers/workers/summary_worker.py", "py", None),
     ("workers/workers/summary_worker_impl.py", "py", None),
+    # TIER-CHUNKER-V3 (latent plan D15 Phase 0)
+    ("workers/workers/tier_chunker.py", "py", None),
+    ("tests/determinism/test_tier_chunker.py", "py", None),
+    ("docs/wiki/work-log/2026-08-31-tier-chunker-v3.md", "md", None),
 ]
 
 
