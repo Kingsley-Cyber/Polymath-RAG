@@ -22,6 +22,22 @@ last_reviewed: 2026-08-30
 > notes with citations of exactly where/what changes (this plan is the
 > skeleton for that mapping, not a substitute); (3) then build phases
 > A→E. The base is NOT yet validated.
+>
+> **ANCHOR STALENESS (2026-08-30, session 4):** every path:line below was
+> read on `main@463f52d`; session 4 moved several of them (client.py
+> signatures, tickets.py STAGE_DAG gained `compile_objects`,
+> project_qdrant_worker gained entity cards + sparse, pass1 truncation).
+> The mapping pass required by the gate above must re-anchor against
+> CURRENT HEAD. Two Phase B/D items are ALREADY BUILT ahead of this plan
+> (see MASTER-BUILD-SEQUENCE.md C3/C4): `pass1._truncate_reserving_rescue`
+> now takes `rescue_arrivals` (ADDITIVE-SEED-SEAM-V1), and
+> `llm_extraction/client.py` has the `system_prompt` override +
+> `complete_batched` (BATCH-API-STABILIZATION-V1, live-smoked). Hard new
+> dependency: latent points carry `chunk_id=None` and would have been
+> DELETED by the pre-CHUNK-SWEEP-SCOPE-V1 verifier (measured on entity
+> cards) — that fix (`0ea4cf8`) is REQUIRED, and Phase C must extend
+> ROUTING_KINDS + reconciliation for both latent kinds per the
+> `routing_entity` template.
 
 ## 0. Frozen design target (Part 3)
 
@@ -141,7 +157,7 @@ Still open from the report (tracked in the register, not this plan): real full-f
 | `shared/polymath_shared/latent/runtime.py` | `run_parent_enrichment_ticket(conn, *, ticket_id, corpus_id, doc_id, parent_id, input_hash, compiled, worker_id, provider, model)` — claim → EXISTING on input_hash → persist artifact + row → STALE previous → job COMPLETE/FAILED; mirrors `summary_runtime.py:36-100` |
 | `shared/polymath_shared/latent/projection.py` | `latent_rows(conn, run_id) -> list[dict]` (READY rows of the run's corpus, two rows per enrichment), `stale_point_ids(conn, corpus_id)` |
 | `shared/polymath_shared/latent/rescue.py` | §1.5 `latent_rescue_parents`, `LatentRescue`, `LatentParent`, `ARRIVAL_LATENT_RESCUE="LATENT_RESCUE"` |
-| `stores/postgres/migrations/0041_parent_enrichments.sql` | `parent_enrichments(enrichment_id PK, parent_id, corpus_id, doc_id, source_child_ids TEXT[], source_hash, input_hash, compiler_contract, provider, model, prompt_version, summary, children JSONB, abstraction, mechanisms JSONB, affordances JSONB, questions JSONB, status CHECK IN (READY,STALE,INVALID), created_at, superseded_at)`; partial unique index `(parent_id) WHERE status='READY'`; indexes doc_id/corpus_id; `summary_jobs` stage CHECK extended with `PARENT_ENRICHMENT` |
+| `stores/postgres/migrations/0043_parent_enrichments.sql` (renumbered 2026-08-30; 0041/0042 applied) | `parent_enrichments(enrichment_id PK, parent_id, corpus_id, doc_id, source_child_ids TEXT[], source_hash, input_hash, compiler_contract, provider, model, prompt_version, summary, children JSONB, abstraction, mechanisms JSONB, affordances JSONB, questions JSONB, status CHECK IN (READY,STALE,INVALID), created_at, superseded_at)`; partial unique index `(parent_id) WHERE status='READY'`; indexes doc_id/corpus_id; `summary_jobs` stage CHECK extended with `PARENT_ENRICHMENT` |
 | `config/latent/parent-enrichment-v1.yaml` | bounds profiles, input ceiling, rescue caps/budget defaults (settings read it; env overrides) |
 | `eval/v5/latent_transfer/cases.yaml`, `eval/v5/latent_transfer/p6_latent_transfer_recall.py` | P6 suite (§5) |
 | `tests/determinism/test_latent_contract_gate.py`, `test_latent_rescue.py`, `test_hybrid_latent.py`, `test_latent_projection.py` | pure suites (§6) |

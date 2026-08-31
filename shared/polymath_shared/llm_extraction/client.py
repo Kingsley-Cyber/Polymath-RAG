@@ -431,7 +431,8 @@ class LLMExtractionClient:
 
     def _infer_batch_call(self, prompt_items, limiter, decision,
                           cap: int | None = None,
-                          use_lean: bool = False) -> list[LLMCallResult]:
+                          use_lean: bool = False,
+                          system_prompt: str | None = None) -> list[LLMCallResult]:
         """One /infer_batch call.
 
         GPU-OOM (500) halves the sub-batch and retries — AFTER the limiter
@@ -454,7 +455,13 @@ class LLMExtractionClient:
         status: int | None = None
         try:
             try:
-                sys_prompt = LEAN_SYSTEM_PROMPT if use_lean else SYSTEM_PROMPT
+                # BATCH-API-STABILIZATION-V1 (pre-refactor for
+                # LATENT-TRANSFER-LAYER-V1 Phase B): an explicit
+                # system_prompt overrides the profile selection so future
+                # compilers (parent enrichment) reuse this transport
+                # without re-threading a new flag through the recursion.
+                sys_prompt = system_prompt or (
+                    LEAN_SYSTEM_PROMPT if use_lean else SYSTEM_PROMPT)
                 resp = httpx.post(
                     f"{self.base_url}/infer_batch",
                     json={"prompts": [{"system": sys_prompt, "user": u,
@@ -492,8 +499,10 @@ class LLMExtractionClient:
             if budget is not None:
                 budget.record_oom()
             half = len(prompt_items) // 2
-            out = self._infer_batch_call(prompt_items[:half], limiter, decision, cap, use_lean)
-            out.extend(self._infer_batch_call(prompt_items[half:], limiter, decision, cap, use_lean))
+            out = self._infer_batch_call(prompt_items[:half], limiter, decision, cap,
+                                         use_lean, system_prompt)
+            out.extend(self._infer_batch_call(prompt_items[half:], limiter, decision, cap,
+                                              use_lean, system_prompt))
             return out
         if status == 404:
             fallback: list[LLMCallResult] = []
@@ -560,6 +569,83 @@ class LLMExtractionClient:
         restore_neighborhood_ids(result.packet, aliases)
         result.neighborhood_ids = [nid for nid, _ in neighborhoods]
         return result
+
+    def complete_batched(self, items: list[tuple[str, str, str, int]],
+                         ) -> list[tuple[str, str, str | None]]:
+        """BATCH-API-STABILIZATION-V1 (the LATENT-TRANSFER-LAYER-V1
+        Phase-B contract, built ahead of it): raw batched completion for
+        non-extraction compilers. items = (id, system, user, max_tokens);
+        returns (id, raw_text, error_class|None) in input order. Reuses
+        the lane limiter, the adaptive batch-token budget, and GPU-OOM
+        halving; performs NO sanitize/parse — the caller's gate owns the
+        contract. Per-item system prompts ride the sidecar's native
+        per-prompt `system` field."""
+        budget = local_batch_budget() if self.lane == "local" else None
+        limiter = self._lane_limiter()
+        cap = budget.effective if budget is not None else None
+
+        def run(batch: list[tuple[str, str, str, int]]
+                ) -> list[tuple[str, str, str | None]]:
+            if not limiter.acquire(
+                    est_tokens=sum(len(u) for _, _, u, _ in batch) / 4.0):
+                return [(i, "", "LIMITER_REFUSED") for i, _, _, _ in batch]
+            status: int | None = None
+            body: dict = {}
+            try:
+                try:
+                    resp = httpx.post(
+                        f"{self.base_url}/infer_batch",
+                        json={"prompts": [
+                            {"system": sys_p, "user": u, "max_tokens": mt}
+                            for _, sys_p, u, mt in batch],
+                            "max_tokens": max(mt for _, _, _, mt in batch)},
+                        timeout=max(self.timeout_s, 120.0))
+                    resp.raise_for_status()
+                    body = resp.json()
+                except httpx.HTTPStatusError as exc:
+                    status = exc.response.status_code
+                    limiter.record_failure(
+                        retry_after=exc.response.headers.get("retry-after"),
+                        headers=dict(exc.response.headers))
+                    if not (status == 500 and len(batch) > 1):
+                        return [(i, "", f"TRANSPORT_HTTP_{status}")
+                                for i, _, _, _ in batch]
+                except (httpx.HTTPError, json.JSONDecodeError) as exc:
+                    limiter.record_failure()
+                    return [(i, "", f"TRANSPORT_{type(exc).__name__}")
+                            for i, _, _, _ in batch]
+                else:
+                    limiter.record_success()
+                    if budget is not None:
+                        budget.record_success()
+            finally:
+                limiter.release()
+            if status == 500:                      # GPU OOM: halve and retry
+                if budget is not None:
+                    budget.record_oom()
+                half = len(batch) // 2
+                return run(batch[:half]) + run(batch[half:])
+            rows = body.get("results")
+            rows = list(rows) if isinstance(rows, list) else []
+            rows = (rows + [{}] * len(batch))[:len(batch)]
+            return [(i, str((r or {}).get("content", "")),
+                     None if (r or {}).get("content") else "EMPTY_COMPLETION")
+                    for (i, _, _, _), r in zip(batch, rows)]
+
+        out: list[tuple[str, str, str | None]] = []
+        cur: list[tuple[str, str, str, int]] = []
+        cur_tokens = 0
+        for item in items:
+            itok = estimate_input_tokens(item[2]) + min(
+                item[3], GENERATION_CONFIG["expected_output_tokens"])
+            if cur and cap is not None and cur_tokens + itok > cap:
+                out.extend(run(cur))
+                cur, cur_tokens = [], 0
+            cur.append(item)
+            cur_tokens += itok
+        if cur:
+            out.extend(run(cur))
+        return out
 
     def _extract_prompt(self, user_prompt: str, expected: set[str],
                         max_tokens: int, decision: LaneDecision | None) -> LLMCallResult:

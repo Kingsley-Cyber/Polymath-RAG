@@ -283,9 +283,18 @@ def resolve_sections(
 
 
 def _truncate_reserving_rescue(candidates: list[dict], limit: int,
-                               reserved: int) -> list[dict]:
-    """Cut to `limit`, keeping up to `reserved` seats for global-child
-    rescue candidates that the hierarchy would otherwise evict.
+                               reserved: int,
+                               rescue_arrivals: tuple[str, ...] = (
+                                   ARRIVAL_GLOBAL_CHILD_RESCUE,),
+                               ) -> list[dict]:
+    """Cut to `limit`, keeping up to `reserved` seats for rescue-lane
+    candidates that the hierarchy would otherwise evict.
+
+    ADDITIVE-SEED-SEAM-V1 (pre-refactor for LATENT-TRANSFER-LAYER-V1
+    Phase D, spec'd there verbatim): `rescue_arrivals` generalizes the
+    reservation to any additive seed lane (latent rescue, entity-card
+    rescue) — the default keeps today's behavior byte-identical, and
+    every future lane plugs in here instead of forking this function.
 
     Order is preserved (hierarchy first, then rescue), so this only
     changes WHICH candidates survive, never their relative order. With
@@ -295,12 +304,12 @@ def _truncate_reserving_rescue(candidates: list[dict], limit: int,
     if limit <= 0 or len(candidates) <= limit:
         return candidates[:limit] if limit >= 0 else candidates
     rescue = [c for c in candidates
-              if c.get("arrival") == ARRIVAL_GLOBAL_CHILD_RESCUE]
+              if c.get("arrival") in rescue_arrivals]
     if not rescue or reserved <= 0:
         return candidates[:limit]
     seats = min(reserved, len(rescue), limit)
     hierarchy = [c for c in candidates
-                 if c.get("arrival") != ARRIVAL_GLOBAL_CHILD_RESCUE]
+                 if c.get("arrival") not in rescue_arrivals]
     kept_ids = {c["chunk_id"] for c in hierarchy[:limit - seats]}
     kept_ids.update(c["chunk_id"] for c in rescue[:seats])
     return [c for c in candidates if c["chunk_id"] in kept_ids][:limit]
