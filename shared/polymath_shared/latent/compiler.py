@@ -97,3 +97,52 @@ def compile_parents(
         if cp.status == "PENDING":     # transport never returned it
             cp.status, cp.error_class = "INVALID", "ENRICH_NO_RESPONSE"
     return [out[p.parent_id] for p in parents]
+
+
+def compile_with_semantic_failover(
+    complete_primary,
+    complete_fallback,
+    parents: list[ParentInput],
+    bounds: EnrichmentBounds,
+    input_token_ceiling: int,
+) -> tuple[list[CompiledParent], int]:
+    """SEMANTIC-FAILOVER-V1 (roadmap A3): a valid HTTP response carrying
+    garbage no longer stops dead. Parents whose FIRST compile fails with
+    a model-repairable class (SEMANTIC_FAILOVER_ELIGIBLE — plus any
+    transport error class the primary surfaced) get EXACTLY ONE retry
+    through `complete_fallback` (the other group lane), re-gated
+    identically. Never more than one cross-lane retry — no model-repair
+    loop. Source conditions (input over ceiling) never retry.
+
+    Returns (compiled, semantic_failovers) — the count is surfaced, per
+    the silent-fallback accounting law."""
+    from polymath_shared.latent.gate import (
+        SEMANTIC_FAILOVER_INELIGIBLE,
+    )
+
+    compiled = compile_parents(complete_primary, parents, bounds,
+                               input_token_ceiling)
+    if complete_fallback is None:
+        return compiled, 0
+    by_id = {cp.parent_id: cp for cp in compiled}
+    retry = [p for p in parents
+             if by_id[p.parent_id].status == "INVALID"
+             and by_id[p.parent_id].error_class
+             not in SEMANTIC_FAILOVER_INELIGIBLE]
+    if not retry:
+        return compiled, 0
+    second = compile_parents(complete_fallback, retry, bounds,
+                             input_token_ceiling)
+    recovered = 0
+    for cp in second:
+        prior = by_id[cp.parent_id]
+        if cp.status == "READY":
+            recovered += 1
+            by_id[cp.parent_id] = cp
+        else:
+            # keep the fallback's disposition but remember both lanes
+            cp.detail = (f"primary={prior.error_class}; "
+                         f"fallback={cp.error_class}"
+                         + (f" ({cp.detail})" if cp.detail else ""))
+            by_id[cp.parent_id] = cp
+    return [by_id[p.parent_id] for p in parents], recovered

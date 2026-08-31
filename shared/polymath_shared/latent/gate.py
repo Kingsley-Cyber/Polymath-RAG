@@ -31,6 +31,21 @@ from polymath_shared.llm_extraction.gate import (
     strip_thinking,
 )
 
+#: SEMANTIC-FAILOVER-V1 (roadmap A3): reject classes another MODEL
+#: might repair (model-specific output failures) vs conditions of the
+#: SOURCE that no model can fix. "Retrying another model cannot repair
+#: a bad source."
+SEMANTIC_FAILOVER_ELIGIBLE = frozenset({
+    "ENRICH_UNPARSEABLE",
+    "ENRICH_UNKNOWN_REF",
+    "ENRICH_GISTS_BELOW_FLOOR",
+    "ENRICH_EMPTY",
+    "ENRICH_NO_RESPONSE",
+})
+SEMANTIC_FAILOVER_INELIGIBLE = frozenset({
+    "ENRICH_INPUT_OVER_CEILING",
+})
+
 _CTRL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
 _WS_RE = re.compile(r"\s+")
 

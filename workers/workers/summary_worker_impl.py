@@ -304,7 +304,10 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
     sharding. Idempotent on (stage, input_hash): a re-click enriches
     only parents whose children or contract changed. Event payload may
     carry doc_id to scope one document (§0a document button)."""
-    from polymath_shared.latent.compiler import ParentInput, compile_parents
+    from polymath_shared.latent.compiler import (
+        ParentInput,
+        compile_with_semantic_failover,
+    )
     from polymath_shared.latent.contract import (
         PRODUCTION_BOUNDS,
         QUALIFICATION_BOUNDS,
@@ -423,19 +426,58 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
         ep0 = _sel("parent_enrichment", doc)
         model_contract = f"{ep0.name}:{ep0.model}"
 
+        def _enrichment_done(ih: str) -> bool:
+            # ROW-TRUTH-DONE (A3 follow-through): job-state alone lied —
+            # a pre-fix run marked COMPLETE against an INVALID row and
+            # the sweep skipped it forever. Done means: a READY row
+            # exists, or the failure is a SOURCE condition no model can
+            # repair. Everything else stays retryable on every sweep.
+            from polymath_shared.latent.gate import (
+                SEMANTIC_FAILOVER_INELIGIBLE,
+            )
+            row = conn.execute(
+                "SELECT status, error_class FROM parent_enrichments "
+                "WHERE input_hash=%s AND status IN ('READY','INVALID') "
+                "ORDER BY (status='READY') DESC LIMIT 1", (ih,)).fetchone()
+            if row is None:
+                return _job_done(conn, "PARENT_ENRICHMENT", ih)
+            if row[0] == "READY":
+                return True
+            return row[1] in SEMANTIC_FAILOVER_INELIGIBLE
+
         todo: list[ParentInput] = []
         hashes: dict[str, str] = {}
         for p in parents:
             from polymath_shared.latent.gate import source_hash as _sh
             ih = input_hash_for(_sh(p.children), model_contract)
             hashes[p.parent_id] = ih
-            if _job_done(conn, "PARENT_ENRICHMENT", ih):
+            if _enrichment_done(ih):
                 existing += 1
                 continue
             todo.append(p)
         if not todo:
             continue
-        compiled = compile_parents(_complete, todo, bounds, ceiling)
+
+        def _complete_fb(items, _doc=doc):
+            # SEMANTIC-FAILOVER-V1: the OTHER group lane, gate-rejects
+            # only; one retry, re-gated identically.
+            fb = _client(1)
+            if fb.endpoint_name == _client(0).endpoint_name:
+                return [(i, "", "ENRICH_NO_RESPONSE") for i, *_ in items]
+            out = []
+            for item_id, system, user, max_tokens in items:
+                raw, err = fb.complete_one(
+                    user, system_prompt=system, max_tokens=max_tokens)
+                out.append((item_id, raw, err))
+            return out
+
+        compiled, semantic_failovers = compile_with_semantic_failover(
+            _complete, _complete_fb, todo, bounds, ceiling)
+        if semantic_failovers:
+            log.warning(
+                "enrichment semantic failover recovered %d parent(s) on "
+                "the other lane", semantic_failovers,
+                extra={"error_code": "ENRICHMENT_SEMANTIC_FAILOVER"})
         for cp in compiled:
             ih = hashes[cp.parent_id]
             ticket = (_stage_ticket(conn, run_id, "parent_enrichment")
