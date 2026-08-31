@@ -187,9 +187,11 @@ class WorkerSettings(BaseSettings):
         description="Reject (durable INVALID) any parent whose rendered "
                     "enrichment input exceeds this — never truncate")
     latent_retrieval_enabled: bool = Field(
-        default=False,
-        description="Query-time latent rescue default (per-request "
-                    "`latent` flag overrides). OFF until P6 GO")
+        default=True,
+        description="Query-time latent rescue default for HYBRID/GRAPH "
+                    "(per-request `latent` flag overrides). OWNER GO "
+                    "2026-08-31 on P6: survival 78%, +3.0 evidence/case, "
+                    "~20 ms delta. FAST stays the frozen baseline.")
     cloud_min_bytes: int = Field(
         default=300_000,
         ge=300_000,

@@ -18,38 +18,63 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → `CLAUDE.md` → the two newest work-logs.
 
-## Latest checkpoint (2026-08-31, LATENT LAYER LIVE + AUTO-ENRICH, commit f54d51c+)
+## Latest checkpoint (2026-08-31 — LATENT GO SHIPPED; the mega-session pack)
 
-ROADMAP EXECUTED 2026-08-31: Sessions A (reliability — want-set
-authority, reconciliation E2E [1C carry-gap REFUTED], semantic
-failover + row-truth done, corpus 65/65 READY) + B (query-path —
-single embed, survival diagnostics end-to-end + UI chip, HYBRID
-presentation, GRAPH latent silent-drop fixed, ✨ toggle) + C (P6 run:
-**survival 78%**, +3.0 evidence/case, both kinds alive, ~20 ms delta).
-OWNER GATE OPEN: GO = latent_retrieval_enabled=true. Remaining after
-GO: Phase 0 chunker+re-ingest; pseudo-query split only if attribution
-demands. Original order was: `SESSION-ROADMAP.md` —
-Session A control reliability (1C carry-gap e2e test, ONE want-set
-authority, parse-reject failover) → Session B query-path (HYBRID
-presentation, latent diagnostics, toggle, single embed) → Session C P6
-(≥20 owner cases, headline metric = nomination→child-survival) → GO
-gates. Enhanced-summary swap REJECTED by owner ("leave the summaries").
+**STATE: the latent transfer layer is LIVE AND DEFAULT-ON for
+HYBRID/GRAPH** (owner GO 2026-08-31 on P6: survival 78% [47/60], +3.0
+unique evidence/case, both kinds alive [abstraction 55 / transfer 27
+nominations], ~20 ms delta, 0 failures — results in
+eval/v5/latent_transfer/LATENT-TRANSFER-P6-RESULTS.md). FAST stays the
+frozen non-latent baseline BY DESIGN. Per-request `latent:false` opts
+out; the ✨ toggle in the query bar controls it per chat; answers show
+the "✨ survived/nominated · chunks" chip.
 
-## Earlier checkpoint (2026-08-31, LATENT LAYER LIVE, commit e4da0b2+)
+WHAT THIS MEGA-SESSION SHIPPED (work-logs, in order): UI-V3 executed
+(Sources panel, section trees, F13 toggle, source_name fix) → latent
+Phases A–E + §0a buttons (2026-08-31-latent-phases-a-d) → enrichment
+concurrency + 429 ladder (…-enrichment-concurrency) → census wedge
+restoration (…-census-wedge-restoration) → auto-enrich at promotion +
+enrichment UI badges/＋Add-files/＋new-corpus (…-auto-enrich-ui) →
+SESSION A reliability: projection_want = ONE want-set authority,
+reconciliation E2E (**1C carry-gap REFUTED** — outage was census bugs,
+now regression-pinned), semantic failover + row-truth done, corpus
+65/65 READY (…-session-a-reliability) → SESSION B query path: single
+embed (Pass1Result.qvec), survival diagnostics end-to-end, HYBRID
+presentation joins, **GRAPH latent silent-drop FIXED**, UI toggle+chip
+(…-session-b-query-path) → SESSION C P6 (…-session-c-p6).
 
-THE BIG SESSION: UI-V3 executed (Sources panel, section trees, F13
-toggle, source_name bug dead — work-log 2026-08-30-ui-v3-presentation);
-latent plan re-anchored (C1 satisfied); LATENT-TRANSFER-LAYER Phases
-A–E built and LIVE-PROVEN (work-log 2026-08-31-latent-phases-a-d): 24
-READY enrichments + 48 latent points on cysa-study-v1, cross-domain
-reach measured (3 parents / 9 original children per query, +2 unique
-evidence per P6 case), §0a enrich buttons in the UI (corpus ✨ +
-per-doc ✨). latent_retrieval_enabled stays FALSE until the owner
-authors ≥20 P6 cases and calls GO (harness:
-eval/v5/latent_transfer/p6_latent_transfer_recall.py). Phase 0
-(tier_chunker swap + re-ingest) deliberately deferred per the plan.
-Era-fence law: parent_enrichment.v1 + payload-tagged latent projection
-claims are exempt from the run-era pin (§0b mixed-era requirement).
+STANDING LAWS ADDED THIS SESSION: §0b mixed-era union (absence
+invisible; byte-identical pins in test_hybrid_latent); era-fence
+exemptions = parent_enrichment.v1 + verify.v1 + payload-tagged latent
+projection ONLY; owner-triggered stages live OUTSIDE STAGE_DAG and the
+census sweep skips them; want-set rule text exists ONCE in
+projection_want.py; enrichment done-ness reads ROWS not job flags.
+
+PROVIDER FLEET (unchanged since the provider day): extraction = primary
++ groq1-4 (qwen3.8-27b strict schema) + nvidia2 (super-120b); enrichment
+pinned to [nvidia lightning, groq5] with semantic+transport failover;
+keys in gitignored .env; registry config/cloud_providers.json.
+
+REMAINING (in order):
+1. Phase 0: tier_chunker swap + re-ingest (owner-scheduled; also
+   populates heading_path → real section titles).
+2. pseudo-query latent_query split ONLY if future attribution demands
+   (currently transfer earns its keep at 27 nominations).
+3. FalseAnalogyRate labeled-negative suite (optional follow-up).
+4. Pre-existing 8 test failures (llm_controller = other session; sval
+   x3 want the retired spaCy sidecar → candidates for skip-if-absent).
+5. Materializer gaps, NO plan yet: scanned-PDF OCR; DOCX tables
+   silently dropped.
+6. Watch items: first corpus-scale ingest on the 5-Groq fleet (AIMD
+   lanes, *_LANE_FAILOVER counters near zero = healthy).
+
+OPERATIONAL NOTES for the next session: serve orchestrator + fleet
+restart procedures unchanged (supervisor POLYMATH_PROFILE=pipeline
+POLYMATH_LEAN_LOCAL=off; serve supervisor separate). Respawn RACE: a
+curl fired immediately after pkill can hit the dying process — poll
+/openapi.json then wait ~5 s before trusting responses. Guard exits are
+pipe-masked if you chain with `;` — run repo_guard.py UNPIPED before
+commit (bitten twice).
 
 ## Previous checkpoint (2026-08-30 late, CROSS-PROVIDER-FAILOVER-V1, commit 35168e7)
 
