@@ -40,9 +40,69 @@ from orchestrator.api.fast import (
 )
 
 
+def _sparse_lexical_search(query: str, corpus_id: str, top_k: int) -> list[LaneHit]:
+    """SPARSE-BM25 child lexical lane (§11.6): query the routing
+    collection's named `bm25` sparse vector with the SHARED tokenizer —
+    server-side IDF scoring over the augmented index text (chunk text +
+    attested entity surfaces + parent head). Raises on any shortfall so
+    the caller can fall back to the in-memory scan (legacy dense-only
+    collections)."""
+    from qdrant_client.models import (
+        FieldCondition, Filter, MatchValue, SparseVector,
+    )
+    from polymath_shared.sparse_bm25 import SPARSE_VECTOR_NAME, sparse_vector
+
+    idx, vals = sparse_vector(query)
+    if not idx:
+        return []
+    collections = _corpus_collections([corpus_id])
+    client = QdrantClient(url=get_settings().stores.qdrant_url, timeout=30)
+    try:
+        out: list[LaneHit] = []
+        flt = Filter(must=[
+            FieldCondition(key="representation_kind",
+                           match=MatchValue(value="routing_child")),
+            FieldCondition(key="corpus_id", match=MatchValue(value=corpus_id)),
+        ])
+        for collection in collections:
+            pts = client.query_points(
+                collection_name=collection,
+                query=SparseVector(indices=idx, values=vals),
+                using=SPARSE_VECTOR_NAME,
+                query_filter=flt,
+                limit=top_k,
+                with_payload=True,
+            ).points
+            for i, p in enumerate(pts):
+                pl = p.payload or {}
+                out.append(LaneHit(
+                    representation_kind="child_lexical", rank=i,
+                    raw_similarity=float(p.score or 0.0), corpus_id=corpus_id,
+                    doc_id=pl.get("doc_id", ""),
+                    parent_id=pl.get("parent_id", ""),
+                    chunk_id=pl.get("chunk_id", ""),
+                    summary_id="", source_name=pl.get("source_name", ""),
+                    text=pl.get("text", ""),
+                ))
+        out.sort(key=lambda h: (-h.raw_similarity, h.chunk_id))
+        for i, h in enumerate(out):
+            h.rank = i
+        return out[:top_k]
+    finally:
+        client.close()
+
+
 def _lexical_search(query: str, corpus_id: str, top_k: int) -> list[LaneHit]:
-    """Independent HYBRID child lexical lane (exact terminology),
-    corpus-filtered, reusing the existing lexical_score primitive."""
+    """HYBRID child lexical lane: BM25 sparse first (§11.6 — uses the
+    projected index, exact-name recall on the augmented text); the
+    in-memory `lexical_score` scan remains the fallback for legacy
+    dense-only collections."""
+    try:
+        hits = _sparse_lexical_search(query, corpus_id, top_k)
+        if hits:
+            return hits
+    except Exception:
+        pass  # legacy collection without the bm25 vector: fall through
     with tx() as conn:
         rows = conn.execute(
             """
