@@ -169,6 +169,22 @@ class WorkerSettings(BaseSettings):
                     "recorded, nothing admitted), or 'llm_live' (LLM "
                     "proposals enter the unchanged admission pipeline).",
     )
+    enrichment_provider: str = Field(
+        default="llm",
+        description="parent_enrichment stage: 'llm' (the pinned cloud "
+                    "group) or 'disabled' (stage returns DISABLED)")
+    enrichment_profile: str = Field(
+        default="qualification",
+        description="EnrichmentBounds profile: qualification (700 tok) "
+                    "or production (900 tok)")
+    enrichment_input_token_ceiling: int = Field(
+        default=6000,
+        description="Reject (durable INVALID) any parent whose rendered "
+                    "enrichment input exceeds this — never truncate")
+    latent_retrieval_enabled: bool = Field(
+        default=False,
+        description="Query-time latent rescue default (per-request "
+                    "`latent` flag overrides). OFF until P6 GO")
     cloud_min_bytes: int = Field(
         default=300_000,
         ge=300_000,

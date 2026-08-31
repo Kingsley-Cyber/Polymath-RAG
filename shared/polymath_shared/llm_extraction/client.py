@@ -334,11 +334,12 @@ class LLMExtractionClient:
 
     # -- transport ---------------------------------------------------------
 
-    def _chat(self, user_prompt: str, max_tokens: int) -> tuple[str, int, int]:
+    def _chat(self, user_prompt: str, max_tokens: int,
+              system_prompt: str | None = None) -> tuple[str, int, int]:
         payload = {
             "model": self.model,
             "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "system", "content": system_prompt or SYSTEM_PROMPT},
                 {"role": "user", "content": user_prompt},
             ],
             "temperature": GENERATION_CONFIG["temperature"],
@@ -367,7 +368,10 @@ class LLMExtractionClient:
             # schema (live-verified per provider before config declares
             # "schema"); level-2 gets json_object; level-3 neither. The
             # local gate validates identically in every case.
-            if self.cloud_opts.get("structured") == "schema":
+            if (self.cloud_opts.get("structured") == "schema"
+                    and system_prompt is None):
+                # the packet schema belongs to the EXTRACTION prompt only;
+                # custom-system callers (enrichment) get json_object.
                 from polymath_shared.llm_extraction.contract import (
                     EXTRACTION_JSON_SCHEMA,
                 )
@@ -402,6 +406,36 @@ class LLMExtractionClient:
         body = resp.json()
         return {"ok": True, "lane": self.lane, "model": self.model,
                 "wall_ms": wall_ms, "served_model": body.get("model")}
+
+    def complete_one(self, user_prompt: str, *, system_prompt: str,
+                     max_tokens: int) -> tuple[str, str | None]:
+        """ENRICHMENT-TRANSPORT-V1: one custom-system completion through
+        the lane limiter (acquire → call → AIMD record). Returns
+        (raw_text, error_class|None) — the caller's gate parses; this
+        method never interprets content. Cloud lanes only (the local
+        batched path goes through complete_batched)."""
+        limiter = self._lane_limiter()
+        if not limiter.acquire(est_tokens=len(user_prompt) / 4.0):
+            return "", "LIMITER_REFUSED"
+        try:
+            text, _ti, _to = self._chat(user_prompt, max_tokens,
+                                        system_prompt=system_prompt)
+            limiter.record_success()
+            return text, None
+        except httpx.HTTPStatusError as exc:
+            limiter.record_failure(
+                retry_after=exc.response.headers.get("retry-after"),
+                headers=dict(exc.response.headers))
+            return "", f"HTTP_{exc.response.status_code}"
+        except Exception as exc:
+            limiter.record_failure()
+            return "", type(exc).__name__
+        finally:
+            # the acquire takes a CONCURRENCY SLOT (conc_cap); leaking it
+            # deadlocked the enrichment stage at 2 calls (measured live:
+            # threads parked in acquire forever). Same finally-release
+            # contract as extract_batched.
+            limiter.release()
 
     def _lane_limiter(self):
         return REGISTRY.lane(

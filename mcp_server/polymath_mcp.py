@@ -81,6 +81,7 @@ def polymath_query(
     question: str,
     corpus_id: str,
     mode: str = "HYBRID",
+    latent: bool | None = None,
 ) -> dict:
     """Ask a grounded question against one corpus.
 
@@ -95,8 +96,10 @@ def polymath_query(
     if mode == "ASK":
         return _post("/ask", {"question": question, "corpus_id": corpus_id})
     m = "FAST" if mode == "VECTOR" else mode
-    return _post("/chat", {"message": question, "corpus_id": corpus_id,
-                           "mode": m})
+    body = {"message": question, "corpus_id": corpus_id, "mode": m}
+    if latent is not None:
+        body["latent"] = latent
+    return _post("/chat", body)
 
 
 @server.tool()
@@ -104,13 +107,16 @@ def polymath_retrieve(
     query: str,
     corpus_id: str,
     mode: str = "HYBRID",
+    latent: bool | None = None,
 ) -> dict:
     """Raw retrieval trace (documents, sections, evidence chunks, graph
     relationships) without answer synthesis. Useful when the agent
     wants source material to work with directly."""
     m = "FAST" if mode.upper() == "VECTOR" else mode.upper()
-    return _post("/retrieve", {"query": query, "corpus_id": corpus_id,
-                               "mode": m})
+    body = {"query": query, "corpus_id": corpus_id, "mode": m}
+    if latent is not None:
+        body["latent"] = latent
+    return _post("/retrieve", body)
 
 
 @server.tool()

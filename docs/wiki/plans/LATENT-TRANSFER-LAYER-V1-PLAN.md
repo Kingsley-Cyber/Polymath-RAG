@@ -269,7 +269,27 @@ REJECTED (concepts that do not fit this codebase):
 | `tests/determinism/test_latent_contract_gate.py`, `test_latent_rescue.py`, `test_hybrid_latent.py`, `test_latent_projection.py` | pure suites (§6) |
 | `tests/integration/test_latent_enrichment_stage.py` | DB-backed stage test |
 
-### 2.2 Modified files (line anchors verified on main@463f52d)
+### 2.2 Modified files (RE-ANCHORED at HEAD ae579e5, 2026-08-30 mapping pass — C1 gate SATISFIED)
+
+Mapping-pass result: EVERY planned symbol exists at HEAD; only line
+numbers drifted. Fresh anchors: `_parents_of_docs:80`, `_do_parents:144`,
+`_DISPATCH:298`, `_job_done:44`; `summary_worker.py:21` event list;
+`tickets.py STAGE_DAG:24` (gained compile_objects — insert
+parent_enrichment AFTER parent_summary:50) + `NON_BLOCKING_STAGES:57`;
+`fleet_autopilot.py:47`; `reconciliation.py:59`; `settings.py
+WorkerSettings:155`; `project_qdrant_worker.py ROUTING_CONTRACT:359`;
+`hybrid.py plan:48 / hybrid_retrieve:152`; `retrieval_modes.py:42`;
+`fast.py FastSearcher:45`; api `hybrid.py:133`, `graph.py:71`,
+`retrieve.py:41`, `ui.py StreamChatRequest:973`; `mcp:80/:103`.
+TWO rows are ALREADY BUILT and drop from the diff: `client.py`
+complete_batched(:619)+system_prompt (BATCH-API-STABILIZATION-V1) and
+`pass1.py rescue_arrivals:310` (ADDITIVE-SEED-SEAM-V1). NOTE post-plan
+reality: enrichment transport is now the PINNED cross-provider group
+(§1.6 superseded row) — `_do_enrichment` calls
+`select_endpoint_for_stage("parent_enrichment", doc_id)` instead of
+`select_lane`, and per-endpoint clients come from the pool.
+
+#### Original table (v1.1, anchors from main@463f52d — line numbers stale, semantics unchanged)
 | Path:line | Change |
 |---|---|
 | `workers/workers/summary_worker_impl.py:80` | ADD `_parents_of_docs_for_enrichment()` selecting `chunk_id, parent_id, chunk_index, text` (`tier='child' AND parent_id IS NOT NULL ORDER BY chunk_index`) — heading/offsets not needed in v1.1 |

@@ -101,6 +101,7 @@ export async function streamChat(
     mode: Mode;
     synthesizer: string;
     reasoning?: string;
+    latent?: boolean;                 // LATENT-TRANSFER D10 flag
     history: { role: string; content: string }[];
     carry_context: { locator: string; preview: string }[];
   },

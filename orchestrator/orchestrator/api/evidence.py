@@ -67,7 +67,8 @@ async def evidence(req: EvidenceRequest) -> dict:
     if mode == MODE_GRAPH:
         from orchestrator.api.graph import graph_retrieve
 
-        g = graph_retrieve(query, single_corpus_or_422(scope, mode))
+        g = graph_retrieve(query, single_corpus_or_422(scope, mode),
+                           latent=getattr(req, 'latent', None))
         graph_facts = [
             {"fact_id": f["fact_id"], "predicate": f["predicate"],
              "subject": f["subject"], "object": f["object"]}
@@ -116,7 +117,8 @@ async def evidence(req: EvidenceRequest) -> dict:
         else:
             from orchestrator.api.hybrid import hybrid_fast_retrieve
 
-            fast = hybrid_fast_retrieve(query, single_corpus_or_422(scope, mode))
+            fast = hybrid_fast_retrieve(query, single_corpus_or_422(scope, mode),
+                                        latent=getattr(req, 'latent', None))
         child_evidence = [
             {"chunk_id": c["chunk_id"], "doc_id": c["doc_id"], "parent_id": c["parent_id"]}
             for c in fast["evidence"]

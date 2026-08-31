@@ -295,11 +295,165 @@ def _do_vocabulary(conn: Connection, run_id: str) -> dict:
     return {"status": "COMPLETE"}
 
 
+def _do_enrichment(conn: Connection, run_id: str) -> dict:
+    """LATENT-TRANSFER-LAYER-V1 Phase B — parent_enrichment.v1.
+
+    OWNER-TRIGGERED (§0a): tickets for this stage are minted by the
+    enrichment buttons, never by chain advancement. Transport is the
+    PINNED cross-provider group (STAGE-PIN-V1) — never the extraction
+    sharding. Idempotent on (stage, input_hash): a re-click enriches
+    only parents whose children or contract changed. Event payload may
+    carry doc_id to scope one document (§0a document button)."""
+    from polymath_shared.latent.compiler import ParentInput, compile_parents
+    from polymath_shared.latent.contract import (
+        PRODUCTION_BOUNDS,
+        QUALIFICATION_BOUNDS,
+    )
+    from polymath_shared.latent.runtime import (
+        input_hash_for,
+        persist_compiled_parent,
+    )
+    from polymath_shared.settings import get_settings
+
+    settings = get_settings().worker
+    if getattr(settings, "enrichment_provider", "disabled") == "disabled":
+        return {"status": "DISABLED"}
+    corpus = _corpus_of_run(conn, run_id)
+    if not corpus:
+        return {"status": "NO_CORPUS"}
+    scope_doc = None
+    row = conn.execute(
+        "SELECT payload FROM outbox_events WHERE run_id=%s AND "
+        "event_type='parent_enrichment.v1' ORDER BY event_id DESC LIMIT 1",
+        (run_id,)).fetchone()
+    if row and isinstance(row[0], dict):
+        scope_doc = row[0].get("doc_id") or None
+    docs = [scope_doc] if scope_doc else _run_docs(conn, run_id)
+    bounds = (PRODUCTION_BOUNDS
+              if getattr(settings, "enrichment_profile", "qualification")
+              == "production" else QUALIFICATION_BOUNDS)
+    ceiling = int(getattr(settings, "enrichment_input_token_ceiling", 6000))
+
+    ready = invalid = existing = 0
+    for doc in docs:
+        parents: list[ParentInput] = []
+        for pid, slot in _parents_of_docs(conn, [doc]).items():
+            parents.append(ParentInput(
+                parent_id=pid,
+                children=[(c["id"], i, c["text"]) for i, c in
+                          enumerate(slot["children"])]))
+        if not parents:
+            continue
+
+        def _complete(items, _doc=doc):
+            # ENRICHMENT-TRANSPORT-V1: pinned group endpoint per doc,
+            # ring failover once WITHIN the group on a dead lane.
+            from polymath_shared.llm_extraction.client import (
+                LLMExtractionClient,
+            )
+            from polymath_shared.llm_extraction.pool import (
+                select_endpoint_for_stage,
+            )
+
+            def _client(offset):
+                ep = select_endpoint_for_stage(
+                    "parent_enrichment", _doc, ring_offset=offset)
+                c = LLMExtractionClient(
+                    "cloud", url=ep.url, model=ep.model,
+                    limiter_key=ep.limiter_key, api_key=ep.api_key,
+                    cloud_opts=ep.cloud_opts)
+                c.endpoint_name = ep.name
+                return c
+
+            primary = _client(0)
+            results = []
+            for item_id, system, user, max_tokens in items:
+                raw, err = primary.complete_one(
+                    user, system_prompt=system, max_tokens=max_tokens)
+                if err in ("LIMITER_REFUSED",) or (err or "").startswith(
+                        ("HTTP_5", "Connect", "ReadTimeout")):
+                    fb = _client(1)
+                    if fb.endpoint_name != primary.endpoint_name:
+                        log.warning("enrichment lane failover: %s -> %s (%s)",
+                                    primary.endpoint_name, fb.endpoint_name,
+                                    err, extra={"error_code":
+                                                "ENRICHMENT_LANE_FAILOVER"})
+                        raw, err = fb.complete_one(
+                            user, system_prompt=system,
+                            max_tokens=max_tokens)
+                results.append((item_id, raw, err))
+            return results
+
+        from polymath_shared.llm_extraction.pool import (
+            select_endpoint_for_stage as _sel,
+        )
+        ep0 = _sel("parent_enrichment", doc)
+        model_contract = f"{ep0.name}:{ep0.model}"
+
+        todo: list[ParentInput] = []
+        hashes: dict[str, str] = {}
+        for p in parents:
+            from polymath_shared.latent.gate import source_hash as _sh
+            ih = input_hash_for(_sh(p.children), model_contract)
+            hashes[p.parent_id] = ih
+            if _job_done(conn, "PARENT_ENRICHMENT", ih):
+                existing += 1
+                continue
+            todo.append(p)
+        if not todo:
+            continue
+        compiled = compile_parents(_complete, todo, bounds, ceiling)
+        for cp in compiled:
+            ih = hashes[cp.parent_id]
+            ticket = (_stage_ticket(conn, run_id, "parent_enrichment")
+                      + ":" + cp.parent_id[-16:])
+            _ensure_job(conn, ticket, "PARENT_ENRICHMENT", corpus, ih)
+            res = persist_compiled_parent(
+                conn, corpus_id=corpus, doc_id=doc, compiled=cp,
+                input_hash=ih, provider=f"llm:{ep0.name}", model=ep0.model)
+            state = "COMPLETE" if res["status"] in ("READY", "EXISTING")                 else "FAILED"
+            conn.execute(
+                "UPDATE summary_jobs SET state=%s, completed_at=now() "
+                "WHERE stage='PARENT_ENRICHMENT' AND input_hash=%s",
+                (state, ih))
+            if res["status"] == "READY":
+                ready += 1
+            elif res["status"] == "EXISTING":
+                existing += 1
+            else:
+                invalid += 1
+    if ready:
+        # Phase C hand-off: new READY enrichments need their two points
+        # projected. Re-arm the run's project_qdrant ticket + event —
+        # projection is receipt-incremental, so this re-embeds ONLY the
+        # new latent rows, nothing else.
+        conn.execute(
+            """UPDATE stage_tickets SET status='ready', lease_owner=NULL,
+                      lease_expires_at=NULL, updated_at=now()
+                WHERE run_id=%s AND stage='project_qdrant'
+                  AND status IN ('done','failed')""", (run_id,))
+        conn.execute(
+            """INSERT INTO outbox_events (run_id, event_type, payload,
+                   idempotency_key)
+               VALUES (%s,'project_qdrant.v1',%s,%s)
+               ON CONFLICT (idempotency_key)
+               DO UPDATE SET delivered_at=NULL""",
+            (run_id, json.dumps({"run_id": run_id,
+                                 "reason": "latent_projection"}),
+             f"enrich-project:{run_id}"))
+    log.info("parent enrichment settled", extra={
+        "run_id": run_id[:20], "ready": ready, "invalid": invalid,
+        "existing": existing})
+    return {"status": "COMPLETE", "ready": ready, "invalid": invalid,
+            "existing": existing}
+
+
 _DISPATCH = {
     "parent_summary.v1": _do_parents,
     "document_summary.v1": _do_document,
     "corpus_summary.v1": _do_corpus,
     "vocabulary.v1": _do_vocabulary,
+    "parent_enrichment.v1": _do_enrichment,
 }
 
 

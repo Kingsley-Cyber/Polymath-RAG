@@ -165,6 +165,71 @@ def set_query_enabled(corpus_id: str, req: QueryEnableRequest) -> dict:
     return {"corpus_id": row[0], "query_enabled": row[1]}
 
 
+def _mint_enrichment(conn, corpus_id: str, doc_id: str | None) -> dict:
+    """ENRICHMENT-BUTTON-V1 (§0a): mint/re-arm the owner-triggered
+    parent_enrichment ticket + event for a scope. One ticket per
+    (run, stage); re-click re-arms it and re-opens the event — the
+    stage's (stage, input_hash) idempotency makes re-sweeps cheap
+    (only changed parents re-enrich)."""
+    from polymath_shared.identity import content_hash
+    run = conn.execute(
+        """SELECT run_id FROM runs WHERE corpus_id=%s
+            ORDER BY (status='query_ready') DESC, created_at DESC LIMIT 1""",
+        (corpus_id,)).fetchone()
+    if not run:
+        raise HTTPException(404, {
+            "error_code": "no_run_for_corpus",
+            "message": f"corpus {corpus_id!r} has no runs to enrich"})
+    run_id = run[0]
+    ticket_id = "tkt_" + content_hash(
+        {"run": run_id, "stage": "parent_enrichment"})[:40]
+    conn.execute(
+        """INSERT INTO stage_tickets (ticket_id, run_id, corpus_id, stage,
+               event_type, status)
+           VALUES (%s,%s,%s,'parent_enrichment','parent_enrichment.v1',
+                   'ready')
+           ON CONFLICT (ticket_id) DO UPDATE
+              SET status='ready', lease_owner=NULL, lease_expires_at=NULL,
+                  archived_at=NULL, archived_reason=NULL, updated_at=now()""",
+        (ticket_id, run_id, corpus_id))
+    key = f"enrich:{run_id}:{doc_id or '*'}"
+    payload = {"run_id": run_id}
+    if doc_id:
+        payload["doc_id"] = doc_id
+    conn.execute(
+        """INSERT INTO outbox_events (run_id, event_type, payload,
+               idempotency_key)
+           VALUES (%s,'parent_enrichment.v1',%s,%s)
+           ON CONFLICT (idempotency_key)
+           DO UPDATE SET delivered_at=NULL, payload=EXCLUDED.payload""",
+        (run_id, json.dumps(payload), key))
+    return {"run_id": run_id, "ticket_id": ticket_id,
+            "scope": doc_id or "corpus"}
+
+
+@router.post("/corpora/{corpus_id}/enrich")
+def enrich_corpus(corpus_id: str) -> dict:
+    """§0a corpus button: enrich every document of the corpus."""
+    with tx() as conn:
+        out = _mint_enrichment(conn, corpus_id, None)
+    return {"status": "queued", **out}
+
+
+@router.post("/documents/{doc_id}/enrich")
+def enrich_document(doc_id: str) -> dict:
+    """§0a document button: enrich one document."""
+    with tx() as conn:
+        row = conn.execute(
+            "SELECT corpus_id FROM documents WHERE doc_id=%s",
+            (doc_id,)).fetchone()
+        if not row:
+            raise HTTPException(404, {
+                "error_code": "unknown_document",
+                "message": f"document {doc_id!r} not found"})
+        out = _mint_enrichment(conn, row[0], doc_id)
+    return {"status": "queued", **out}
+
+
 @router.get("/documents/{doc_id}/sections")
 def document_sections(doc_id: str) -> dict:
     """UI-V3 §4.2: the document -> section tree, straight from the
@@ -977,6 +1042,7 @@ class StreamChatRequest(BaseModel):
     workspace: Optional[str] = None
     all_authorized: bool = False
     mode: Optional[str] = "HYBRID"        # VECTOR|HYBRID|GRAPH|ASK
+    latent: Optional[bool] = None         # LATENT-TRANSFER D10 flag
     synthesizer: Optional[str] = None  # None -> _PREFERRED_DEFAULT
     # v3.3 reasoning layer (orchestrator.api.reasoning): a mode key
     # from REASONING_TEMPLATES, plus an optional power-user blend.
@@ -1356,7 +1422,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
             graph_facts: list = []
             if ui_mode == "GRAPH":
                 from orchestrator.api.graph import graph_retrieve
-                g = graph_retrieve(query, corpus_id)
+                g = graph_retrieve(query, corpus_id, latent=req.latent)
                 evidence_rows = [
                     {"chunk_id": c["chunk_id"], "doc_id": d["doc_id"],
                      "parent_id": s["parent_id"]}
@@ -1395,7 +1461,8 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                     fast = fast_retrieve(query, corpus_id)
                 else:
                     from orchestrator.api.hybrid import hybrid_fast_retrieve
-                    fast = hybrid_fast_retrieve(query, corpus_id)
+                    fast = hybrid_fast_retrieve(query, corpus_id,
+                                                latent=req.latent)
                 evidence_rows = [
                     {"chunk_id": c["chunk_id"], "doc_id": c["doc_id"],
                      "parent_id": c["parent_id"]}
