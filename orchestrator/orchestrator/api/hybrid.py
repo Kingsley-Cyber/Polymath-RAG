@@ -155,7 +155,7 @@ def hybrid_fast_retrieve(
             "message": f"qdrant unavailable: {type(exc).__name__}",
         }) from exc
     try:
-        searcher = FastSearcher(client, collections)
+        searcher = FastSearcher(client, collections, query=query)
         t0 = time.time()
         shaped = plan_for_query(
             query,

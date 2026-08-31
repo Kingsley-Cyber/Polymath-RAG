@@ -39,6 +39,18 @@ last_reviewed: 2026-08-30
 > ROUTING_KINDS + reconciliation for both latent kinds per the
 > `routing_entity` template.
 
+## 0a. Owner trigger directive (2026-08-30, supersedes automatic-stage sequencing where they differ)
+
+Enrichment is OWNER-TRIGGERED, not automatic at ingest: a button at the
+CORPUS level and a button at the DOCUMENT level each mint the
+`parent_enrichment.v1` work for their scope (corpus button = every
+document; document button = that document only). Query-time latent
+rescue then extends retrieval when the request's `latent` flag (D10) is
+on. Implementation shape: the buttons call an orchestrator endpoint that
+enqueues the non-blocking stage tickets for the scope — the stage,
+gate, storage and projection are unchanged from this plan; only the
+TRIGGER moves from chain-advancement to explicit owner action.
+
 ## 0. Frozen design target (Part 3)
 
 ```

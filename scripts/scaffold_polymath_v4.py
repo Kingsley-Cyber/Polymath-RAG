@@ -305,6 +305,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-08-30-storage-projections-s11.md", "md", None),
     ("docs/wiki/work-log/2026-08-30-prefix-kv-cache.md", "md", None),
     ("docs/wiki/work-log/2026-08-30-query-path-s11-6.md", "md", None),
+    ("docs/wiki/work-log/2026-08-30-retrieval-baseline-elite.md", "md", None),
     ("docs/wiki/plans/CONTINUITY-REPORT.md", "md", None),
     ("docs/wiki/plans/RETRIEVAL-AUDIT-PRD.md", "md", None),
     ("docs/wiki/plans/MASTER-BUILD-SEQUENCE.md", "md", None),
