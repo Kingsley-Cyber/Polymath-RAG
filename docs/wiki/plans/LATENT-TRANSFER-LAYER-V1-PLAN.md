@@ -189,6 +189,62 @@ LatentRescue: parents: list[LatentParent(parent_id, doc_id, source_name, best_sc
 | Enrichment | same model, same generation lock, `max_tokens` 700 (qualification) / 900 (production) per parent, ≈2 K tokens per parent call | Part 3 budget |
 Still open from the report (tracked in the register, not this plan): real full-file completion time on the 838 KB book at batch 40; corpus-level entity dedup + `promote()` merge layer (recovers recurring certs missed in one chunk); optional 600 w middle-ground test.
 
+### 1.7 Wire-contract reconciliation (owner review 2026-08-30)
+
+The owner brought an outside provider-agnostic design ("parent-latent-v1",
+drafted without codebase knowledge); reviewed against this plan, its
+acceptance DISCIPLINE is adopted and its non-fitting concepts are
+explicitly rejected here so the implementing session builds from ONE
+reconciled spec:
+
+ADOPTED (amends/extends the contracts above):
+- **Integer child refs** in the model payload (0,1,2,…) mapped back to
+  real chunk_ids by the worker — the model never reproduces long ids
+  (same aliasing trick the extraction client already uses for
+  neighborhood ids; reuse that machinery). §1.1's `children[].id`
+  becomes the ref integer on the wire; `source_child_ids[]` keeps the
+  real ids in system metadata.
+- **Subset-hard, coverage-floor gists** — AMENDS §1.2
+  `ENRICH_GISTS_INCOMPLETE`: an UNKNOWN or DUPLICATE ref stays a hard
+  reject; a MISSING gist is a counted coverage shortfall (durable
+  disposition, EXTRACTION-COVERAGE-V1 pattern) with a floor, not a
+  binary reject. Rationale: the LEAN survivorship lesson — exact-match
+  rejection on real model output silently drops whole parents; the
+  design's own "no ingestion failure, backfill later" stance demands
+  the floor.
+- **Model may never produce** ids, provenance, hashes, timestamps,
+  storage identity — already the law here (`finalize()`, content-
+  addressed ids); restated as a §1.1 invariant.
+- **Two-attempt repair cap** (normal → stricter-format retry →
+  durable INVALID). Matches the existing reissue-once pattern; no
+  repair loops.
+- **Deterministic acceptance, not deterministic generation**: the model
+  may vary; parse→validate→sanitize→canonicalize→hash may not.
+  Canonicalization/hashing = `identity.content_hash` ONLY (a second
+  hand-rolled json.dumps convention is the entity-id hyphen/underscore
+  fork class).
+
+REJECTED (concepts that do not fit this codebase):
+- **One combined extraction+enrichment call** — §0a makes enrichment
+  button-triggered LATER over already-extracted mixed-era parents;
+  different granularity, staleness cadence, and failure modes. Stays
+  split.
+- **Relations in source_hash** — §1.3 already hashes children+compiler
+  only; relations churn faster than children and must not stale every
+  enrichment. If a bounded relation snapshot is ever SENT as context,
+  record its hash in provenance — it never drives staleness.
+- **A new UniversalRequest/adapter layer** — the seams exist:
+  `LLMExtractionClient` + the endpoint pool (per-endpoint quirks = the
+  capability tiers; Tier-A json_schema is already measured unreliable
+  on the primary) + `complete_batched(system_prompt=…)` built for this
+  exact stage. Enrichment inherits Groq/NVIDIA/etc. from
+  MULTI-PROVIDER-AUTH-V1 with zero adapter work.
+- **Wider schema (principles/transfer/uses, caps 3/3/3/4)** — PARKED as
+  V2 candidates gated on the P6 eval. §1.1's frozen field list stands
+  because every field maps to one of the TWO projection kinds (§1.4);
+  fields without a projection mapping are dead storage (the
+  extraction-vs-metadata-gap failure class).
+
 ## 2. Component map
 
 ### 2.1 New files
