@@ -344,6 +344,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/integration/test_reconciliation_convergence.py", "py", None),
     ("tests/determinism/test_projection_want_authority.py", "py", None),
     ("docs/wiki/work-log/2026-08-31-session-a-reliability.md", "md", None),
+    ("docs/wiki/work-log/2026-08-31-session-b-query-path.md", "md", None),
     ("shared/polymath_shared/latent/trigger.py", "py", None),
     ("config/cloud_providers.json", "json", None),
     ("scripts/probe_cloud_endpoints.py", "py", None),
@@ -1319,7 +1320,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/v5/wipe_corpus_v5.py", "py", None),
     # frontend
     ("frontend/.gitignore", "gitignore", None),
-    ("frontend/dist/assets/index-BG_Yl5QB.js", "js", None),
+    ("frontend/dist/assets/index-Vam9Ktyg.js", "js", None),
     ("frontend/dist/assets/index-DM5QBXlf.css", "css", None),
     ("frontend/dist/index.html", "html", None),
     ("frontend/index.html", "html", None),

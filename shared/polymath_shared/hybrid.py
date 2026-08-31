@@ -299,7 +299,9 @@ def hybrid_retrieve(
         _corpus = (plan.corpus_ids or ("",))[0]
         _collection = (qdrant_collection_name(
             _corpus, NEURAL_EMBED_CONTRACT.contract_id) if _corpus else "")
-        qvec_latent = embed_query(query)
+        # SINGLE-EMBED-V1: reuse pass1's vector; re-embed only if an
+        # older engine result lacks it (fail-safe).
+        qvec_latent = getattr(fast, "qvec", None) or embed_query(query)
         section_parents = frozenset(
             s_["parent_id"] for s_ in fast.selected_sections)
         lr = latent_rescue(qvec_latent, section_parents)
@@ -428,6 +430,27 @@ def hybrid_retrieve(
             final_evidence.append(c)
             total += 1
 
+    # LATENT-DIAGNOSTICS-V1 (roadmap B5): survival attribution — the
+    # P6 headline metric's raw material. Nominated = parents the lane
+    # proposed; survived = nominated parents with >=1 ORIGINAL child in
+    # the FINAL evidence (post-rerank, post-cut); children_admitted =
+    # latent-arrival items that shipped; kinds = per-channel nomination.
+    if latent_trace.get("enabled"):
+        _nominated = {p["parent_id"] for p in latent_trace.get("parents", [])}
+        _final_latent = [c for c in final_evidence
+                         if c.get("arrival") == "LATENT_RESCUE"]
+        _survived = {c.get("parent_id") for c in _final_latent} & _nominated
+        _kinds: dict = {}
+        for p in latent_trace.get("parents", []):
+            for k in p.get("channels", {}):
+                short = k.replace("latent_", "")
+                _kinds[short] = _kinds.get(short, 0) + 1
+        latent_trace.update({
+            "parents_nominated": len(_nominated),
+            "parents_survived": len(_survived),
+            "children_admitted": len(_final_latent),
+            "kinds": _kinds,
+        })
     trace = {
         "latent": latent_trace,
         "plan": plan.plan_version,

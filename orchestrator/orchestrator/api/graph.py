@@ -94,10 +94,24 @@ def graph_retrieve(query: str, corpus_id: str,
     try:
         searcher = FastSearcher(client, collections, query=query)
         t0 = time.time()
+        from polymath_shared.retrieval_modes import apply_latent
         shaped = plan_for_query(
             query,
             HybridRetrievalPlan(**{**plan.__dict__, "corpus_ids": (corpus_id,)}),
         )
+        # GRAPH INHERITS LATENT (plan §1.5): same rescue closure as the
+        # HYBRID service — an earlier wiring accepted the flag but
+        # silently dropped it (caught by the B5 diagnostics pass).
+        shaped = apply_latent(shaped, latent)
+
+        def _latent_rescue(qvec, skip_parents):
+            from polymath_shared.latent.rescue import latent_rescue_parents
+            _coll = collections[corpus_id]
+            return latent_rescue_parents(
+                qvec, corpus_id=corpus_id, plan=shaped,
+                routing_search=lambda _c, v, f: searcher(_coll, v, f),
+                skip_parent_ids=skip_parents)
+
         result = hybrid_retrieve(
             query,
             plan=shaped,
@@ -107,6 +121,7 @@ def graph_retrieve(query: str, corpus_id: str,
             rerank_children=_rerank_children if shaped.rerank_enabled else None,
             neighbor_lookup=_neighbor_lookup,
             region_lookup=_region_lookup,
+            latent_rescue=_latent_rescue if shaped.latent_enabled else None,
         )
         pass1_ms = (time.time() - t0) * 1000
     finally:
@@ -212,6 +227,7 @@ def graph_retrieve(query: str, corpus_id: str,
             "evidence_count": len(evidence),
             "graph_fact_count": len(graph_facts),
             "degraded": degradations(),
+            "latent": result.trace.get("latent"),
             "liveness": _liveness(
                 {**result.trace, "graph_seed_surfaces": _selected_surfaces(query, evidence),
                  "graph_fact_count": len(graph_facts)}, MODE_GRAPH),

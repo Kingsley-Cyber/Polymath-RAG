@@ -1410,9 +1410,11 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
             yield _phase("retrieve", f"{ui_mode} retrieval over "
                                      f"{corpus_id}…", mode=ui_mode)
             graph_facts: list = []
+            latent_meta = None
             if ui_mode == "GRAPH":
                 from orchestrator.api.graph import graph_retrieve
                 g = graph_retrieve(query, corpus_id, latent=req.latent)
+                latent_meta = (g.get("meta") or {}).get("latent")
                 evidence_rows = [
                     {"chunk_id": c["chunk_id"], "doc_id": d["doc_id"],
                      "parent_id": s["parent_id"]}
@@ -1453,6 +1455,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                     from orchestrator.api.hybrid import hybrid_fast_retrieve
                     fast = hybrid_fast_retrieve(query, corpus_id,
                                                 latent=req.latent)
+                latent_meta = (fast.get("meta") or {}).get("latent")
                 evidence_rows = [
                     {"chunk_id": c["chunk_id"], "doc_id": c["doc_id"],
                      "parent_id": c["parent_id"]}
@@ -1531,6 +1534,9 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                 "mode": "VECTOR" if ui_mode == "FAST" else ui_mode,
                 "evidence_count": len(evidence_rows),
                 "graph_fact_count": len(graph_facts),
+                # LATENT-DIAGNOSTICS-V1 (roadmap B5): the survival
+                # attribution frame the UI chip + P6 read.
+                "latent": latent_meta,
                 "chunks": chunk_inventory,
                 # NEVER-ERROR-ON-A-COLD-MODEL: a lane that degraded
                 # (e.g. reranker parked behind extraction) still answers

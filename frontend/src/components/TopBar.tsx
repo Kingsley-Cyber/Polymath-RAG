@@ -22,6 +22,8 @@ export default function TopBar({
   synthesizer,
   reasoningModes,
   reasoning,
+  latent,
+  onLatent,
   theme,
   onCorpus,
   onMode,
@@ -36,6 +38,8 @@ export default function TopBar({
   synthesizer: string;
   reasoningModes: ReasoningModeInfo[];
   reasoning: string;
+  latent: boolean;
+  onLatent: (v: boolean) => void;
   theme: string;
   onCorpus: (c: string) => void;
   onMode: (m: Mode) => void;
@@ -79,6 +83,13 @@ export default function TopBar({
       <div className="control">
         <label>Retrieval</label>
         <div className="mode-pills">
+          <button
+            className={`mode-pill${latent ? " active" : ""}`}
+            onClick={() => onLatent(!latent)}
+            title="Latent rescue: cross-domain abstractions nominate extra sections; their ORIGINAL text competes as evidence. HYBRID/GRAPH only."
+          >
+            ✨
+          </button>
           {MODES.map((m) => (
             <button
               key={m}

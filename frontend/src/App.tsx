@@ -169,6 +169,7 @@ export default function App() {
             active.reasoning && active.reasoning !== "none"
               ? active.reasoning
               : undefined,
+          latent: active.latent,
           history,
           carry_context: carry,
         },
@@ -242,6 +243,10 @@ export default function App() {
             active && patchChat(active.id, (c) => ({ ...c, synthesizer: s }))
           }
           reasoningModes={reasoningModes}
+          latent={active?.latent ?? false}
+          onLatent={(v: boolean) =>
+            active && patchChat(active.id, (c) => ({ ...c, latent: v }))
+          }
           reasoning={active?.reasoning ?? "none"}
           onReasoning={(r) =>
             active && patchChat(active.id, (c) => ({ ...c, reasoning: r }))

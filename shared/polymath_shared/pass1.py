@@ -193,6 +193,9 @@ class Pass1Result:
     rescue_children: list[dict]
     final_evidence: list[dict]
     trace: dict
+    # SINGLE-EMBED-V1 (roadmap B7): the ONE query vector, exposed so
+    # downstream lanes (latent rescue) reuse it instead of re-embedding.
+    qvec: list[float] = None
 
 
 def _rrf_score(rank: int, k: int) -> float:
@@ -700,4 +703,5 @@ def pass1_retrieve(
         rescue_children=list(rescue.values()),
         final_evidence=final_evidence,
         trace=trace,
+        qvec=qvec,
     )

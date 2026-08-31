@@ -50,6 +50,15 @@ export interface Retrieval {
   counts?: Record<string, number>;
   /** Lanes that degraded rather than failing (e.g. parked reranker). */
   degraded?: Degradation[];
+  /** LATENT-DIAGNOSTICS-V1: survival attribution for the latent lane. */
+  latent?: {
+    enabled: boolean;
+    parents_nominated?: number;
+    parents_survived?: number;
+    children_admitted?: number;
+    kinds?: Record<string, number>;
+    degraded?: string | null;
+  } | null;
 }
 
 export interface Citation {
@@ -87,6 +96,8 @@ export interface Chat {
   synthesizer: string;
   /** v3.3 reasoning-layer mode key; "none" answers directly. */
   reasoning?: string;
+  /** LATENT rescue flag (HYBRID/GRAPH); undefined inherits the server default. */
+  latent?: boolean;
   messages: Message[];
 }
 
