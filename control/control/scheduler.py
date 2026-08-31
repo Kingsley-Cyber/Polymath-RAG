@@ -234,10 +234,34 @@ def _archived_run_ids(conn: Connection, run_ids: list[str]) -> set[str]:
 
 def apply_promotions(conn: Connection, census: Census) -> None:
     for run_id in census.promote:
-        conn.execute(
-            "UPDATE runs SET status = 'query_ready', updated_at = now() WHERE run_id = %s AND status != 'query_ready'",
+        cur = conn.execute(
+            "UPDATE runs SET status = 'query_ready', updated_at = now() WHERE run_id = %s AND status != 'query_ready' RETURNING corpus_id",
             (run_id,),
         )
+        row = cur.fetchone()
+        if row is None:
+            continue
+        # AUTO-ENRICH-ON-INGEST (owner 2026-08-31): the census tick is
+        # the control timer; PROMOTION is the trigger point — retrieval
+        # is up first, parents are settled, and input_hash idempotency
+        # makes every re-promotion a cheap no-op sweep. Fail-open: an
+        # enrichment mint must never break promotion.
+        try:
+            from polymath_shared.settings import get_settings
+            w = get_settings().worker
+            if (getattr(w, "enrichment_auto", True)
+                    and getattr(w, "enrichment_provider", "disabled")
+                    != "disabled"):
+                from polymath_shared.latent.trigger import (
+                    mint_parent_enrichment,
+                )
+                mint_parent_enrichment(conn, corpus_id=row[0],
+                                       run_id=run_id)
+        except Exception:
+            import logging
+            logging.getLogger("control-schedule").warning(
+                "auto-enrich mint failed open for %s", run_id[:20],
+                extra={"error_code": "AUTO_ENRICH_MINT_FAILED"})
 
 
 def apply_degrades(conn: Connection, census: Census) -> int:

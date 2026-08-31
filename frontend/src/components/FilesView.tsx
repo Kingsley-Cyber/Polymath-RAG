@@ -139,7 +139,24 @@ export default function FilesView({
     <div className="files">
       <div className="files-inner">
         <div className="panel">
-          <h3>Upload → {corpus}</h3>
+          <h3>
+            Upload → {corpus}
+            <button
+              className="chunk-chip"
+              style={{ marginLeft: 10 }}
+              title="Add files to this corpus"
+              onClick={() => {
+                const inp = document.createElement("input");
+                inp.type = "file";
+                inp.multiple = true;
+                inp.accept = ".md,.txt,.html,.pdf,.epub,.docx";
+                inp.onchange = () => handleFiles(inp.files);
+                inp.click();
+              }}
+            >
+              ＋ Add files
+            </button>
+          </h3>
           <div
             className={`dropzone${drag ? " drag" : ""}`}
             onDragOver={(e) => {
@@ -260,20 +277,38 @@ export default function FilesView({
               >
                 {queryEnabled ? "Hide from retrieval" : "Enable retrieval"}
               </button>
-              <button
-                className="chunk-chip"
-                title="Enrich every document: latent abstractions, mechanisms and transfer questions per section. Extends retrieval reach; re-click only re-processes changed sections."
-                onClick={async () => {
-                  try {
-                    await enrichCorpus(corpus);
-                    window.alert("Enrichment queued for the whole corpus — sections gain latent retrieval surfaces as it completes.");
-                  } catch (e: any) {
-                    window.alert(`Enrich failed: ${String(e.message)}`);
-                  }
-                }}
-              >
-                ✨ Enrich corpus
-              </button>
+              {(() => {
+                const totalParents = docs.reduce(
+                  (n, d) => n + (d.parents ?? 0), 0);
+                const totalEnriched = docs.reduce(
+                  (n, d) => n + (d.enriched ?? 0), 0);
+                const remaining = totalParents - totalEnriched;
+                if (totalParents > 0 && remaining <= 0)
+                  return (
+                    <span className="status-pill st-query_ready"
+                          title="Every section carries latent retrieval surfaces">
+                      ✨ fully enriched
+                    </span>
+                  );
+                if (remaining <= 0) return null;
+                return (
+                  <button
+                    className="chunk-chip"
+                    title="Enrich remaining sections: latent abstractions, mechanisms and transfer questions. Auto-runs after ingest; this re-sweeps anything that failed or changed."
+                    onClick={async () => {
+                      try {
+                        await enrichCorpus(corpus);
+                        window.alert(
+                          `Enrichment queued — ${remaining} section${remaining === 1 ? "" : "s"} remaining.`);
+                      } catch (e: any) {
+                        window.alert(`Enrich failed: ${String(e.message)}`);
+                      }
+                    }}
+                  >
+                    ✨ Enrich ({remaining} remaining)
+                  </button>
+                );
+              })()}
             </div>
           </div>
         )}
@@ -384,7 +419,8 @@ function DocRows({
           <button className="chunk-chip" onClick={toggle} style={{ marginRight: 6 }}>
             {open ? "▾" : "▸"}
           </button>
-          {d.source_name}
+          {d.source_name}{" "}
+          <EnrichBadge d={d} />
         </td>
         <td className="mono">{d.media_type}</td>
         <td>{fmtBytes(d.bytes)}</td>
@@ -398,20 +434,7 @@ function DocRows({
           >
             ⧉ id
           </button>{" "}
-          <button
-            className="chunk-chip"
-            title="Enrich this document's sections (latent retrieval surfaces)"
-            onClick={async () => {
-              try {
-                await enrichDocument(d.doc_id);
-                window.alert(`Enrichment queued for ${d.source_name}.`);
-              } catch (e: any) {
-                window.alert(`Enrich failed: ${String(e.message)}`);
-              }
-            }}
-          >
-            ✨
-          </button>{" "}
+          <EnrichCell d={d} />{" "}
           <button
             className="chunk-chip"
             title="Delete this document everywhere (vectors, graph, facts evidenced only here). Same bytes become re-ingestable."
@@ -476,5 +499,55 @@ function DocRows({
         </tr>
       )}
     </>
+  );
+}
+
+
+/** Enrichment indicator: sections that carry latent retrieval surfaces.
+ * Green = every section enriched; amber = partial (auto-enrich runs at
+ * ingest; failures/edits leave a remainder); nothing = no sections yet. */
+function EnrichBadge({ d }: { d: DocumentRow }) {
+  const parents = d.parents ?? 0;
+  const enriched = d.enriched ?? 0;
+  if (parents === 0) return null;
+  if (enriched >= parents)
+    return (
+      <span className="status-pill st-query_ready"
+            title="All sections carry latent retrieval surfaces">
+        ✨ enriched
+      </span>
+    );
+  return (
+    <span className="status-pill st-reconciling"
+          title={`${enriched} of ${parents} sections enriched${
+            (d.enrich_failed ?? 0) > 0
+              ? ` · ${d.enrich_failed} failed (re-run below)` : ""}`}>
+      ✨ {enriched}/{parents}
+    </span>
+  );
+}
+
+/** The per-document enrich button renders ONLY while sections remain
+ * un-enriched (ingest errors, transient provider failures, edits). */
+function EnrichCell({ d }: { d: DocumentRow }) {
+  const parents = d.parents ?? 0;
+  const enriched = d.enriched ?? 0;
+  const remaining = parents - enriched;
+  if (parents === 0 || remaining <= 0) return null;
+  return (
+    <button
+      className="chunk-chip"
+      title={`Enrich ${remaining} remaining section${remaining === 1 ? "" : "s"} (latent retrieval surfaces)`}
+      onClick={async () => {
+        try {
+          await enrichDocument(d.doc_id);
+          window.alert(`Enrichment queued for ${d.source_name} — ${remaining} section${remaining === 1 ? "" : "s"} remaining.`);
+        } catch (e: any) {
+          window.alert(`Enrich failed: ${String(e.message)}`);
+        }
+      }}
+    >
+      ✨ {remaining}
+    </button>
   );
 }

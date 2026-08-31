@@ -219,7 +219,14 @@ export default function App() {
       />
       <div className="main">
         <TopBar
-          corpora={corpora}
+          corpora={
+            active?.corpus &&
+            !corpora.some((c) => c.corpus_id === active.corpus)
+              ? [...corpora,
+                 { corpus_id: active.corpus, name: active.corpus,
+                   documents: 0, query_ready: false } as any]
+              : corpora
+          }
           corpus={active?.corpus ?? ""}
           mode={active?.mode ?? "HYBRID"}
           synthesizers={synths}

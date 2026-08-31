@@ -166,12 +166,9 @@ def set_query_enabled(corpus_id: str, req: QueryEnableRequest) -> dict:
 
 
 def _mint_enrichment(conn, corpus_id: str, doc_id: str | None) -> dict:
-    """ENRICHMENT-BUTTON-V1 (§0a): mint/re-arm the owner-triggered
-    parent_enrichment ticket + event for a scope. One ticket per
-    (run, stage); re-click re-arms it and re-opens the event — the
-    stage's (stage, input_hash) idempotency makes re-sweeps cheap
-    (only changed parents re-enrich)."""
-    from polymath_shared.identity import content_hash
+    """ENRICHMENT-BUTTON-V1 (§0a): shared mint (latent/trigger.py) —
+    same path AUTO-ENRICH uses at promotion."""
+    from polymath_shared.latent.trigger import mint_parent_enrichment
     run = conn.execute(
         """SELECT run_id FROM runs WHERE corpus_id=%s
             ORDER BY (status='query_ready') DESC, created_at DESC LIMIT 1""",
@@ -180,31 +177,8 @@ def _mint_enrichment(conn, corpus_id: str, doc_id: str | None) -> dict:
         raise HTTPException(404, {
             "error_code": "no_run_for_corpus",
             "message": f"corpus {corpus_id!r} has no runs to enrich"})
-    run_id = run[0]
-    ticket_id = "tkt_" + content_hash(
-        {"run": run_id, "stage": "parent_enrichment"})[:40]
-    conn.execute(
-        """INSERT INTO stage_tickets (ticket_id, run_id, corpus_id, stage,
-               event_type, status)
-           VALUES (%s,%s,%s,'parent_enrichment','parent_enrichment.v1',
-                   'ready')
-           ON CONFLICT (ticket_id) DO UPDATE
-              SET status='ready', lease_owner=NULL, lease_expires_at=NULL,
-                  archived_at=NULL, archived_reason=NULL, updated_at=now()""",
-        (ticket_id, run_id, corpus_id))
-    key = f"enrich:{run_id}:{doc_id or '*'}"
-    payload = {"run_id": run_id}
-    if doc_id:
-        payload["doc_id"] = doc_id
-    conn.execute(
-        """INSERT INTO outbox_events (run_id, event_type, payload,
-               idempotency_key)
-           VALUES (%s,'parent_enrichment.v1',%s,%s)
-           ON CONFLICT (idempotency_key)
-           DO UPDATE SET delivered_at=NULL, payload=EXCLUDED.payload""",
-        (run_id, json.dumps(payload), key))
-    return {"run_id": run_id, "ticket_id": ticket_id,
-            "scope": doc_id or "corpus"}
+    return mint_parent_enrichment(conn, corpus_id=corpus_id,
+                                  run_id=run[0], doc_id=doc_id)
 
 
 @router.post("/corpora/{corpus_id}/enrich")
@@ -289,9 +263,21 @@ def documents(corpus_id: str) -> dict:
             """
             SELECT d.doc_id, d.source_name, d.media_type, d.byte_length,
                    d.created_at,
-                   COUNT(c.chunk_id) FILTER (WHERE c.tier='child') AS children
+                   COUNT(DISTINCT c.chunk_id) FILTER (WHERE c.tier='child') AS children,
+                   COUNT(DISTINCT c.parent_id)
+                       FILTER (WHERE c.tier='child') AS parents,
+                   COUNT(DISTINCT pe.parent_id)
+                       FILTER (WHERE pe.status='READY') AS enriched,
+                   COUNT(DISTINCT pe.parent_id)
+                       FILTER (WHERE pe.status='INVALID'
+                               AND NOT EXISTS (
+                                   SELECT 1 FROM parent_enrichments pr
+                                    WHERE pr.parent_id = pe.parent_id
+                                      AND pr.status='READY'))
+                       AS enrich_failed
               FROM documents d
               LEFT JOIN chunks c ON c.doc_id = d.doc_id
+              LEFT JOIN parent_enrichments pe ON pe.doc_id = d.doc_id
              WHERE d.corpus_id = %s
              GROUP BY d.doc_id, d.source_name, d.media_type, d.byte_length,
                       d.created_at
@@ -319,7 +305,11 @@ def documents(corpus_id: str) -> dict:
         "corpus_id": corpus_id,
         "documents": [
             {"doc_id": r[0], "source_name": r[1], "media_type": r[2],
-             "bytes": r[3], "created_at": str(r[4]), "chunks": r[5]}
+             "bytes": r[3], "created_at": str(r[4]), "chunks": r[5],
+             # UI-V3 enrichment indicator: parents vs READY vs
+             # unrecovered INVALID — the doc ✨ button renders only
+             # while remaining > 0
+             "parents": r[6], "enriched": r[7], "enrich_failed": r[8]}
             for r in rows
         ],
         "runs": [{"run_id": r[0], "status": r[1], "created_at": str(r[2]),
