@@ -296,7 +296,9 @@ class LLMExtractionClient:
 
     def __init__(self, lane: str, *, url: str, model: str,
                  timeout_s: float = 180.0, max_attempts: int = 2,
-                 limiter_key: str = "default") -> None:
+                 limiter_key: str = "default",
+                 api_key: str | None = None,
+                 cloud_opts: dict | None = None) -> None:
         if lane not in ("local", "cloud"):
             raise ValueError(f"unknown lane: {lane!r}")
         self.lane = lane
@@ -307,7 +309,24 @@ class LLMExtractionClient:
         self.base_url = url.rstrip("/")
         self.timeout_s = timeout_s
         self.max_attempts = max_attempts
+        # MULTI-PROVIDER-AUTH-V1: remote providers (Groq, NVIDIA, …)
+        # authenticate per request; the loopback daemons never see a key.
+        self.api_key = api_key
+        # Per-endpoint payload quirks. Defaults reproduce the primary
+        # (Ollama daemon) behavior BYTE-IDENTICALLY; OpenAI-compatible
+        # remotes override: reasoning_effort=None omits the field (many
+        # reject unknown/unsupported params), json_mode toggles
+        # response_format json_object.
+        self.cloud_opts = cloud_opts if cloud_opts is not None else {
+            "reasoning_effort": GENERATION_CONFIG["cloud"]["reasoning_effort"],
+            "json_mode": True,
+        }
         self._last_finish_reason: str | None = None
+
+    def _headers(self) -> dict:
+        if self.api_key:
+            return {"Authorization": f"Bearer {self.api_key}"}
+        return {}
 
     # -- transport ---------------------------------------------------------
 
@@ -333,18 +352,18 @@ class LLMExtractionClient:
             # it off (measured: 1600-token think → 38-token direct JSON).
             payload["chat_template_kwargs"] = {"enable_thinking": local["enable_thinking"]}
         else:
-            # Cloud lane (Ollama daemon proxy): same thinking-burn failure
-            # mode, different knob — measured 2026-08-29: without this the
-            # 397B spends the entire output budget thinking (finish=length,
-            # empty content); with it, direct JSON, finish=stop.
-            payload["reasoning_effort"] = GENERATION_CONFIG["cloud"]["reasoning_effort"]
-            # Structured output (measured 2026-08-30): json_object mode is
-            # honored by the daemon (guaranteed-parseable JSON — the salvage
-            # path should approach zero); json_schema strict:true is
-            # SILENTLY IGNORED for this model — never rely on it.
-            payload["response_format"] = {"type": "json_object"}
+            # Cloud lane: per-endpoint quirks. The primary (Ollama daemon)
+            # keeps reasoning_effort (thinking-burn fix, measured
+            # 2026-08-29) + json_object (measured 2026-08-30). Remote
+            # providers set their own — None omits reasoning_effort
+            # entirely (unsupported params can 400 on strict APIs).
+            if self.cloud_opts.get("reasoning_effort") is not None:
+                payload["reasoning_effort"] = self.cloud_opts["reasoning_effort"]
+            if self.cloud_opts.get("json_mode", True):
+                payload["response_format"] = {"type": "json_object"}
         resp = httpx.post(f"{self.base_url}/v1/chat/completions",
-                          json=payload, timeout=self.timeout_s)
+                          json=payload, timeout=self.timeout_s,
+                          headers=self._headers())
         resp.raise_for_status()
         body = resp.json()
         choice = (body.get("choices") or [{}])[0]
@@ -361,7 +380,8 @@ class LLMExtractionClient:
         payload = {"model": self.model, "messages": [
             {"role": "user", "content": "ping"}], "max_tokens": 1, "stream": False}
         resp = httpx.post(f"{self.base_url}/v1/chat/completions",
-                          json=payload, timeout=min(self.timeout_s, 30.0))
+                          json=payload, timeout=min(self.timeout_s, 30.0),
+                          headers=self._headers())
         wall_ms = int((time.perf_counter() - t0) * 1000)
         resp.raise_for_status()
         body = resp.json()

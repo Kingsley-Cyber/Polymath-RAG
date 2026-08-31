@@ -222,7 +222,9 @@ def make_client(lane: str, doc_id: str = "") -> LLMExtractionClient:
         from polymath_shared.llm_extraction.pool import select_cloud_endpoint
         ep = select_cloud_endpoint(doc_id)
         client = LLMExtractionClient(
-            "cloud", url=ep.url, model=ep.model, limiter_key=ep.limiter_key)
+            "cloud", url=ep.url, model=ep.model, limiter_key=ep.limiter_key,
+            api_key=ep.api_key,
+            cloud_opts=ep.cloud_opts if ep.name != "primary" else None)
         client.endpoint_name = ep.name
         return client
     raise ValueError(f"unknown lane: {lane!r}")
