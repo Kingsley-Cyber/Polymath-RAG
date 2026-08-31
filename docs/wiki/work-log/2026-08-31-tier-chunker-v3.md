@@ -72,14 +72,25 @@ preserved; its mechanism is not.
 - Live rollout receipts recorded below in "Live rollout".
 
 ## Live rollout
-(filled in the same session — see CONTINUITY-REPORT for the current
-state) Fleet restarted on the new code; reconciliation minted
-successors for the legacy-pinned runs; intake regenerated both docs
-under chunk-structure-v3 with the generation purge removing the 321
-legacy rows; census drove the chain to query_ready; auto-enrich
-re-minted enrichments for the new canonical parents.
+Fleet restarted on the new code (contract advertises tier_v3), then
+the flip alone moved NOTHING for 11 minutes — refuted live: the
+reconciler rescues STRANDED runs only (status intake/reconciling/
+degraded AND open tickets); a healthy query_ready run is historical
+by design, so a deliberate generation swap needs an owner trigger.
+Added `scripts/reingest_corpus.py` (REINGEST-TRIGGER-V1): makes a
+corpus's live stale-pinned runs stranded ON PURPOSE (status →
+reconciling, intake ticket re-armed; the era fence protects the
+claim window), then the PROVEN pipeline does the rest — successors,
+stale-stage regeneration, generation purge, census receipt re-arm,
+promotion. Executed on cysa-study-v1 (2 runs); receipts in
+CONTINUITY-REPORT.
 
 ## Rejected claims
+- "The settings flip alone drives the re-ingest through contract
+  reconciliation" — REFUTED LIVE (11 min, zero movement): both
+  eligibility gates exclude healthy runs (status not in the stranded
+  set; no open tickets). The A1 E2E proved the CARRY mechanics, not
+  healthy-run eligibility. First-class fix: reingest_corpus.py.
 - "Port the v3.3 tier_chunker module wholesale" — rejected (owner
   ratified the native route): the module rewrites text and would
   regress the §8 offset contract; it also drags in the docling
