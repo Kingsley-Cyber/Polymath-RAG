@@ -18,12 +18,13 @@
     "if the pinned provider is parked/unavailable its jobs fail loudly",
     "with PINNED_PROVIDER_UNAVAILABLE (enrichment is backfillable by",
     "design). Unpinned stages shard across the pool as normal.",
-    "groq1..groq5 = five UNLINKED owner accounts (own rate each), the baseline extraction fleet on qwen/qwen3.8-27b, strict schema (level-1, live-verified). nvidia/nvidia2 dedicated:true = enrichment only, excluded from extraction sharding."
+    "groq1..groq5 = five UNLINKED owner accounts (own rate each), the baseline extraction fleet on qwen/qwen3.8-27b, strict schema (level-1, live-verified). nvidia/nvidia2 dedicated:true = enrichment only, excluded from extraction sharding.",
+    "CROSS-PROVIDER-V1 (owner 2026-08-30): one lane swapped each way \u2014 extraction shards over groq1-4 + nvidia2 + primary; enrichment pin group = [nvidia, groq5]. A whole-provider outage never stalls either stage, and dispatch failover walks the ring."
   ],
   "stage_pins": {
     "parent_enrichment": [
       "nvidia",
-      "nvidia2"
+      "groq5"
     ]
   },
   "providers": [
@@ -70,7 +71,8 @@
       "model": "qwen/qwen3.8-27b",
       "api_key_env": "GROQ_API_KEY_5",
       "reasoning_effort": "none",
-      "structured": "schema"
+      "structured": "schema",
+      "dedicated": true
     },
     {
       "name": "nvidia",
@@ -86,11 +88,11 @@
       "name": "nvidia2",
       "enabled": true,
       "url": "https://integrate.api.nvidia.com",
-      "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+      "model": "nvidia/nemotron-3-super-120b-a12b",
       "api_key_env": "NVIDIA_API_KEY_2",
       "reasoning_effort": "none",
       "structured": "json",
-      "dedicated": true
+      "dedicated": false
     }
   ]
 }
