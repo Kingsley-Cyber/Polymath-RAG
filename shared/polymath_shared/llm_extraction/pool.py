@@ -232,7 +232,8 @@ def stage_pin(stage: str) -> list[str] | None:
     return [str(x).strip() for x in pin if str(x).strip()]
 
 
-def select_endpoint_for_stage(stage: str, doc_id: str) -> CloudEndpoint:
+def select_endpoint_for_stage(stage: str, doc_id: str,
+                              ring_offset: int = 0) -> CloudEndpoint:
     """STAGE-PIN-V1: a pinned stage dispatches ONLY within its pin group
     — deterministic doc-hash sharding across the group's ACTIVE members
     (each unlinked account is its own rate bucket and AIMD lane). A
@@ -254,26 +255,34 @@ def select_endpoint_for_stage(stage: str, doc_id: str) -> CloudEndpoint:
         _log_once(("pin-partial", stage, tuple(dark)),
                   "stage %r pin group running at reduced capacity: %s "
                   "inactive", stage, ", ".join(dark))
-    if len(active) == 1:
-        return active[0]
+    return _ring_pick(active, doc_id, ring_offset)
+
+
+def _ring_pick(roster: list[CloudEndpoint], doc_id: str,
+               ring_offset: int) -> CloudEndpoint:
+    """LANE-FAILOVER-V1: deterministic ring — the doc's home lane is
+    hash(doc) into the sorted roster; ring_offset walks forward for
+    failover retries, so attempt N of a doc always lands on the same
+    Nth fallback (replay-stable failover, cross-provider whenever the
+    ring crosses providers)."""
+    if len(roster) == 1:
+        return roster[0]
     digest = hashlib.blake2b((doc_id or "").encode(), digest_size=8).digest()
-    return active[int.from_bytes(digest, "big") % len(active)]
+    idx = (int.from_bytes(digest, "big") + ring_offset) % len(roster)
+    return roster[idx]
 
 
-def select_cloud_endpoint(doc_id: str) -> CloudEndpoint:
+def select_cloud_endpoint(doc_id: str, ring_offset: int = 0) -> CloudEndpoint:
     """Deterministic doc -> endpoint assignment over the enabled,
     NON-DEDICATED roster (dedicated endpoints serve only their pinned
-    stages — DEDICATED-V1)."""
+    stages — DEDICATED-V1). ring_offset > 0 = failover walk."""
     roster = [ep for ep in cloud_endpoints() if not ep.dedicated]
     if not roster:
         roster = cloud_endpoints()   # everything dedicated: fail open, loudly
         _log_once(("all-dedicated",),
                   "every cloud endpoint is dedicated; general dispatch "
                   "falling back to the full roster")
-    if len(roster) == 1:
-        return roster[0]
-    digest = hashlib.blake2b((doc_id or "").encode(), digest_size=8).digest()
-    return roster[int.from_bytes(digest, "big") % len(roster)]
+    return _ring_pick(roster, doc_id, ring_offset)
 
 
 def pool_fingerprint() -> list[dict]:

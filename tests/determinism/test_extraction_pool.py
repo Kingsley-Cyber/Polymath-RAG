@@ -321,3 +321,39 @@ def test_dedicated_endpoints_excluded_from_general_sharding(pool_env,
     # level-1 endpoints carry the structured level into dispatch opts
     g1 = [ep for ep in pool.cloud_endpoints() if ep.name == "g1"][0]
     assert g1.cloud_opts["structured"] == "schema"
+
+
+def test_failover_ring_is_deterministic_and_crosses_lanes(pool_env,
+                                                          monkeypatch,
+                                                          tmp_path):
+    # LANE-FAILOVER-V1: ring_offset walks the SAME eligible set —
+    # attempt N of a doc always lands on the same Nth fallback, the
+    # fallback is a different lane, and pin groups fail over WITHIN
+    # the group (cross-provider when the group is).
+    import json as _json
+
+    from polymath_shared.llm_extraction import pool
+    pf = tmp_path / "providers.json"
+    monkeypatch.setattr(pool, "_PROVIDERS_FILE", pf)
+    monkeypatch.setenv("T_FK", "k")
+    pf.write_text(_json.dumps({
+        "stage_pins": {"parent_enrichment": ["nv", "g9"]},
+        "providers": [
+            {"name": "g8", "url": "http://g8", "model": "m",
+             "api_key_env": "T_FK"},
+            {"name": "g9", "url": "http://g9", "model": "m",
+             "api_key_env": "T_FK", "dedicated": True},
+            {"name": "nv", "url": "http://n", "model": "m",
+             "api_key_env": "T_FK", "dedicated": True}]}))
+    pool_env(None)
+    home = pool.select_cloud_endpoint("dX").name
+    fb = pool.select_cloud_endpoint("dX", ring_offset=1).name
+    assert home != fb or home == "primary"     # >=2 lanes => different
+    assert pool.select_cloud_endpoint("dX", 1).name == fb   # stable
+    # dedicated lanes stay out of the extraction ring even on failover
+    ring = {pool.select_cloud_endpoint("dX", o).name for o in range(4)}
+    assert "g9" not in ring and "nv" not in ring
+    # pin-group failover stays INSIDE the group
+    s0 = pool.select_endpoint_for_stage("parent_enrichment", "dX").name
+    s1 = pool.select_endpoint_for_stage("parent_enrichment", "dX", 1).name
+    assert {s0, s1} == {"nv", "g9"}

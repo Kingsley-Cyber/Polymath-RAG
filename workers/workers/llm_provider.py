@@ -211,7 +211,8 @@ def select_lane(source_bytes: int, affinity: str | None = None):
                                affinity=affinity)
 
 
-def make_client(lane: str, doc_id: str = "") -> LLMExtractionClient:
+def make_client(lane: str, doc_id: str = "",
+                ring_offset: int = 0) -> LLMExtractionClient:
     s = get_settings().sidecars
     if lane == "local":
         return LLMExtractionClient(
@@ -220,7 +221,7 @@ def make_client(lane: str, doc_id: str = "") -> LLMExtractionClient:
         # EXTRACTION-POOL-V1: deterministic doc -> endpoint over the
         # enabled roster (one endpoint == exactly the old behavior).
         from polymath_shared.llm_extraction.pool import select_cloud_endpoint
-        ep = select_cloud_endpoint(doc_id)
+        ep = select_cloud_endpoint(doc_id, ring_offset)
         client = LLMExtractionClient(
             "cloud", url=ep.url, model=ep.model, limiter_key=ep.limiter_key,
             api_key=ep.api_key,
@@ -266,12 +267,58 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                    for i in range(0, len(neighborhoods), NEIGHBORHOODS_PER_CALL)]
         pool_size = min(len(batches), limiter.spec.conc_cap or limiter.spec.max) or 1
 
+        # LANE-FAILOVER-V1 (owner 2026-08-30: "if a lane fails its picked
+        # up… cross provider. ensuring the job is always getting done"):
+        # a batch whose HOME lane dies (transport error after the
+        # client's own retries, or a limiter refusal — breaker open /
+        # Retry-After hold) is retried ONCE on the next ring endpoint,
+        # which is a DIFFERENT account and often a different provider.
+        # Counted + logged, never silent. The ticket-level retry remains
+        # the outer loop; this stops one dead lane failing whole stages.
+        _fallback: dict = {}
+
+        def _fallback_client():
+            if "c" not in _fallback:
+                try:
+                    fb = make_client(lane, doc_id, ring_offset=1)
+                except TypeError:
+                    fb = None      # narrowed test double: no ring, no failover
+                _fallback["c"] = (
+                    None if fb is None or getattr(fb, "endpoint_name", None) ==
+                    getattr(client, "endpoint_name", None) else fb)
+            return _fallback["c"]
+
         def one(batch: list[Neighborhood]) -> LLMCallResult:
-            return client.extract(
-                [(n.nid, n.chunks) for n in batch],
-                source_bytes=source_bytes,
-                threshold_bytes=s.cloud_min_bytes,
-                assist=assist)
+            import logging as _logging
+            payload = [(n.nid, n.chunks) for n in batch]
+            try:
+                r = client.extract(payload, source_bytes=source_bytes,
+                                   threshold_bytes=s.cloud_min_bytes,
+                                   assist=assist)
+            except ExtractionTransportError as exc:
+                fb = _fallback_client()
+                if fb is None:
+                    raise
+                _logging.getLogger("llm-provider").warning(
+                    "lane failover: %s -> %s after transport failure (%s)",
+                    getattr(client, "endpoint_name", client.lane),
+                    fb.endpoint_name, str(exc)[:120],
+                    extra={"error_code": "EXTRACTION_LANE_FAILOVER"})
+                return fb.extract(payload, source_bytes=source_bytes,
+                                  threshold_bytes=s.cloud_min_bytes,
+                                  assist=assist)
+            if r.error_class == "LIMITER_REFUSED":
+                fb = _fallback_client()
+                if fb is not None:
+                    _logging.getLogger("llm-provider").warning(
+                        "lane failover: %s -> %s after limiter refusal",
+                        getattr(client, "endpoint_name", client.lane),
+                        fb.endpoint_name,
+                        extra={"error_code": "EXTRACTION_LANE_FAILOVER"})
+                    return fb.extract(payload, source_bytes=source_bytes,
+                                      threshold_bytes=s.cloud_min_bytes,
+                                      assist=assist)
+            return r
 
         with ThreadPoolExecutor(max_workers=pool_size) as pool:
             results = list(pool.map(one, batches))
