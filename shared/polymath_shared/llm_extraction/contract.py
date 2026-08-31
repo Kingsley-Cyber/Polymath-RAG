@@ -115,3 +115,78 @@ class SanitizeResult(BaseModel):
     salvaged: bool = False
     raw_chars: int = 0
     detail: str = ""
+
+
+# STRICT-SCHEMA-V1: the volume-profile packet as a strict JSON Schema for
+# level-1 structured output (STRUCTURED-CAPABILITY-V1 "schema" endpoints;
+# live-verified on Groq qwen/qwen3.8-27b). Deliberately boring: no oneOf,
+# no dynamic keys, additionalProperties false everywhere, every property
+# required (strict-mode rule). The LOCAL gate remains the contract —
+# this only raises the floor of what the provider returns.
+EXTRACTION_JSON_SCHEMA: dict = {
+    "name": "polymath_extraction_v1",
+    "strict": True,
+    "schema": {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["contract", "profile", "items"],
+        "properties": {
+            "contract": {"type": "string"},
+            "profile": {"type": "string"},
+            "items": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": ["neighborhood_id", "entities",
+                                 "relations", "digest"],
+                    "properties": {
+                        "neighborhood_id": {"type": "string"},
+                        "entities": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": False,
+                                "required": ["surface", "type", "quote"],
+                                "properties": {
+                                    "surface": {"type": "string"},
+                                    "type": {"type": "string"},
+                                    "quote": {"type": "string"},
+                                },
+                            },
+                        },
+                        "relations": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": False,
+                                "required": ["subject", "predicate",
+                                             "object", "quote"],
+                                "properties": {
+                                    "subject": {"type": "string"},
+                                    "predicate": {"type": "string"},
+                                    "object": {"type": "string"},
+                                    "quote": {"type": "string"},
+                                },
+                            },
+                        },
+                        "digest": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "required": ["central_claim", "main_mechanism",
+                                         "retrieval_uses"],
+                            "properties": {
+                                "central_claim": {"type": "string"},
+                                "main_mechanism": {"type": "string"},
+                                "retrieval_uses": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    },
+}
