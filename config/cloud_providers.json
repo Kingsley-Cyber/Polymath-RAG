@@ -12,8 +12,16 @@
     "schema canary passes). Local validation always runs regardless.",
     "The settings primary (Ollama daemon) is NOT listed here; it is always",
     "in the roster. Models re-pinnable at will — a change shows up in the",
-    "extraction contract via pool_fingerprint()."
+    "extraction contract via pool_fingerprint().",
+    "stage_pins DEDICATES a stage to one provider (owner 2026-08-30:",
+    "parent_enrichment -> nvidia). A pinned stage NEVER silently reroutes:",
+    "if the pinned provider is parked/unavailable its jobs fail loudly",
+    "with PINNED_PROVIDER_UNAVAILABLE (enrichment is backfillable by",
+    "design). Unpinned stages shard across the pool as normal."
   ],
+  "stage_pins": {
+    "parent_enrichment": "nvidia"
+  },
   "providers": [
     {
       "name": "groq",

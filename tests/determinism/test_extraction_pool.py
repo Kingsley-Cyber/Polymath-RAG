@@ -227,3 +227,34 @@ def test_structured_capability_negotiation(pool_env, monkeypatch, tmp_path):
          "api_key_env": "T_CAP_KEY", "structured": "yaml"}]}))
     with pytest.raises(ValueError):
         pool.cloud_endpoints()
+
+
+def test_stage_pin_dedicates_and_fails_loudly(pool_env, monkeypatch, tmp_path):
+    # STAGE-PIN-V1: pinned stage -> exactly that provider; pinned but
+    # inactive -> loud PinnedProviderUnavailable (never silent reroute);
+    # unpinned stages shard as normal.
+    import json as _json
+
+    from polymath_shared.llm_extraction import pool
+    pf = tmp_path / "providers.json"
+    monkeypatch.setattr(pool, "_PROVIDERS_FILE", pf)
+    pf.write_text(_json.dumps({
+        "stage_pins": {"parent_enrichment": "nvidia"},
+        "providers": [
+            {"name": "nvidia", "url": "http://n", "model": "m",
+             "api_key_env": "T_PIN_KEY"}]}))
+    pool_env(None)
+
+    monkeypatch.delenv("T_PIN_KEY", raising=False)   # parked: no key
+    with pytest.raises(pool.PinnedProviderUnavailable):
+        pool.select_endpoint_for_stage("parent_enrichment", "doc_x")
+
+    monkeypatch.setenv("T_PIN_KEY", "nvapi-test")    # key drop = dedicated
+    ep = pool.select_endpoint_for_stage("parent_enrichment", "doc_x")
+    assert ep.name == "nvidia"
+    # every doc goes to the pin — no sharding on a dedicated stage
+    assert {pool.select_endpoint_for_stage("parent_enrichment", f"d{i}").name
+            for i in range(8)} == {"nvidia"}
+    # unpinned stage still shards over the whole roster
+    assert pool.select_endpoint_for_stage("extract", "doc_x").name in {
+        "nvidia", "primary"}
