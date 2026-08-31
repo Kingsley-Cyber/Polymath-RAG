@@ -73,8 +73,22 @@ enumerate), and F12 confirmed stale GLiNER-era naming contract.
   "Chain of Custody of Evidence" admits (function words may repeat).
 - retire_parent_points.py output: "cysa-study-v1: retired 65 parent
   points" — exactly the audit's count.
-- Live acceptance after restart recorded below the fold of
-  RETRIEVAL-AUDIT-PRD.md status column.
+- LIVE acceptance (post-restart, serve orchestrator :7200):
+  - FAST "what uses Amazon S3": plan `pass1-retrieval-v2`, top doc's
+    rrf_contributions include `routing_entity: 0.0164` — card lane
+    fused AND attributable (F2).
+  - DEPTH "list all the CySA+ exam domains and all their subdomains":
+    16 sections, **32 evidence items** — the full depth budget engaged
+    (F7); previously capped at 10-16.
+  - GRAPH same query: 7 graph_relationships — F1 baseline preserved.
+  - /ask "aws cloud devops engineer path": CONCEPT route, every served
+    name passes object_name_admissible; the junk winner is gone (F12).
+  - /chat/stream FAST: streamed clean, latency_ms 4072 — within the
+    4.9 s baseline despite the 2000×48 evidence budget (F10).
+  - Multi-corpus FAST (F8) could not be exercised live — cysa-study-v1
+    is the only corpus in this DB; the single-corpus path through the
+    new list plumbing is proven above, per-corpus fan-out is
+    unit-covered in test_pass1.
 
 ## Rejected claims
 - "Verify will clean parent points on its own" — false: they hold
