@@ -256,6 +256,21 @@ deterministic; the model is swappable, the guarantees are not.
 | 11.9 | CLOUD-ASSIST-V1 (owner rule v2, 2026-08-30, SUPERSEDES the 2026-08-29 exfiltration framing): byte threshold = throughput router — big docs always cloud; small docs prefer local but ride the cloud pool as an explicit ASSIST when a cloud-affinity worker holds them (own lane dry). Dispatch guard verifies assist INTENT (still fail-closed on caller bugs). Lane is operational not replay-deterministic; artifact records lane+reason+endpoint | DONE (2026-08-30, work-log 2026-08-30-cloud-assist.md) |
 | 11.10 | MULTI-PROVIDER-AUTH-V1: committed provider registry config/cloud_providers.json (Groq LIVE on openai/gpt-oss-120b, extraction canary GREEN; NVIDIA pre-configured, parked until NVIDIA_API_KEY in .env). Auto-gate: key drop = activation, logged never silent. Bearer auth per endpoint, per-endpoint payload quirks, keys excluded from fingerprints/repr. extract3 cloud-affinity slot. Preflight scripts/probe_cloud_endpoints.py | DONE (2026-08-30, work-log 2026-08-30-multi-provider-auth.md) |
 
+## §13 Enrichment lane scheduling & isolation (rev 6, 2026-08-30)
+
+Authoritative section added to the migration plan (§13). Design decided:
+
+| # | Detail | Status |
+|---|---|---|
+| 13.1 | External, in compile_objects (NOT native to extract) | DECIDED |
+| 13.2 | Dedicated `llm_enrich` lane, separate provider/key — own AIMD/buckets/breaker, zero interaction with baseline cloud lane | DECIDED (provider/key choice pending owner) |
+| 13.3 | ARM-ON-DRAIN: enrichment tickets arm per corpus when extract tickets all done | design fixed |
+| 13.4 | BASELINE PREEMPTS: no enrichment claims while any extract ticket is ready/leased | design fixed |
+| 13.5 | LOCAL ASSIST: manual, owner-deployed, post-drain only (GPU window belongs to baseline) | design fixed |
+| 13.6 | Contract: parent-semantic-compiler-v1, bounded 1/3/3/4 = 8 latent vectors/parent; gate = coverage + refs⊆input + malformed-reject; (parent, source_hash, contract) keyed; STALE on diff | design fixed |
+| 13.7 | SWEEP = re-arm compile_objects corpus-wide; DIFF = source_hash compare → STALE → regenerate | design fixed |
+| 13.8 | Implementation: enrichment compiler inside compile_objects worker; no new stage, no new subsystem | build pending |
+
 ## Completion tally (normative details)
 
 - DONE: 34 · DEVIATED: 9 · SUPERSEDED: 8 · PARTIAL: 17 · **MISSING: 24**
