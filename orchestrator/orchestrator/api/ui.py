@@ -936,9 +936,10 @@ teach it, never inventory it.
 
 Grounding rules (non-negotiable; they override anything below):
 - Everything you assert must come from the provided evidence. Cite by \
-appending [locator] at the END of the sentence or paragraph a claim \
-comes from — never interrupt a sentence with a citation, never open \
-with boilerplate like "Based on the evidence in your corpus".
+appending the evidence tag — e.g. [S2] — at the END of the sentence or \
+paragraph a claim comes from; use ONLY the [S#] tags given, never raw \
+chunk ids or page guesses. Never interrupt a sentence with a citation, \
+never open with boilerplate like "Based on the evidence in your corpus".
 - If the user asks you to BUILD something (a quiz, a PBQ-style HTML \
 test, flashcards, a study plan, code), build it fully, drawing the \
 substance from the evidence. Emit complete artifacts (e.g., a full \
@@ -1004,13 +1005,20 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
     (orchestrator.api.reasoning, ported verbatim): templates prepend to
     the user prompt after the RAG context is assembled — the exact
     v3.3 composition point."""
+    # CITATION-TAGS-V1 (measured 2026-08-30): raw locators instructed as
+    # citation labels leaked into answers as "[chunk 67313]" — the model
+    # now cites stable [S1]..[Sn] tags; the legend maps tags back to the
+    # real locators for the trace/UI.
     ev_lines: list[str] = []
+    legend: list[str] = []
     for item in (bundle.get("evidence_bundle") or [])[:40]:
         span = item.get("source_span") or {}
         loc = span.get("locator") or ""
         text = (span.get("text") or "")[:_EVIDENCE_TEXT_CHARS]
         if loc and text:
-            ev_lines.append(f"[{loc}]\n{text}")
+            tag = f"S{len(ev_lines) + 1}"
+            ev_lines.append(f"[{tag}]\n{text}")
+            legend.append(f"[{tag}] = {loc}")
     for f in graph_facts[:20]:
         ev_lines.append(
             f"[fact:{f.get('fact_id', '')[:24]}] "
@@ -1022,6 +1030,7 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
     context_block = ""
     if ev_lines:
         context_block += ("EVIDENCE (this turn):\n" + "\n---\n".join(ev_lines))
+        context_block += ("\n\nSOURCE TAGS:\n" + "\n".join(legend))
     if carried:
         context_block += ("\n\nEVIDENCE (carried from earlier turns):\n"
                           + "\n---\n".join(carried))
@@ -1099,8 +1108,15 @@ def _ollama_generate(model: str, query: str, bundle: dict,
     try:
         with httpx.stream(
                 "POST", f"{OLLAMA_URL}/api/chat",
+                # NO-THINK-CHAT-V1 (measured 2026-08-30): deepseek-v4-flash
+                # via the daemon streams its reasoning INLINE as content
+                # (the daemon cannot separate it for this model), so answers
+                # opened with "The user is asking... Let me synthesize...".
+                # Default off; POLYMATH_CHAT_THINK=on restores the
+                # reasoning-card behavior for models that separate cleanly.
                 json={"model": model, "messages": messages, "stream": True,
-                      "think": True},
+                      "think": os.environ.get("POLYMATH_CHAT_THINK", "off")
+                               .lower() in ("1", "on", "true")},
                 timeout=httpx.Timeout(300, connect=10)) as r:
             if r.status_code != 200:
                 r.read()
