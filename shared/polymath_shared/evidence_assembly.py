@@ -220,6 +220,7 @@ def assemble_evidence_bundle(
                     "source_name": doc.get("source_name"),
                     "conditions": conditions,
                 },
+                "presentation": _presentation(doc, chunk, None),
                 "retrieval": {"lanes": [GRAPH_LANE], "score": None},
             })
 
@@ -263,6 +264,7 @@ def assemble_evidence_bundle(
                 "source_name": doc.get("source_name"),
                 "conditions": [],
             },
+            "presentation": _presentation(doc, None, TEXT_KIND_DOCUMENT_SUMMARY),
             "retrieval": {"lanes": [DOCUMENT_SUMMARY_LANE], "score": None},
         })
 
@@ -306,6 +308,8 @@ def assemble_evidence_bundle(
                 "source_name": doc.get("source_name"),
                 "conditions": [],
             },
+            "presentation": _presentation(doc, {"heading_path": None},
+                                          TEXT_KIND_SECTION_SUMMARY),
             "retrieval": {"lanes": [SECTION_SUMMARY_LANE], "score": None},
         })
 
@@ -356,6 +360,7 @@ def assemble_evidence_bundle(
                 "source_name": doc.get("source_name"),
                 "conditions": [],
             },
+            "presentation": _presentation(doc, chunk, TEXT_KIND_CHILD_CHUNK),
             "retrieval": {"lanes": lanes, "score": None},
         })
 
@@ -386,6 +391,29 @@ def assemble_evidence_bundle(
             "text_evidence_count": sum(1 for i in items if i.get("lane") == TEXT_LANE),
         },
     }
+
+
+def _presentation(doc: dict | None, chunk: dict | None,
+                  text_kind: str | None) -> dict:
+    """UI-V3 §3.1 additive presentation fields — best-effort, a missing
+    join renders EMPTY STRING, never raises (legacy rows have NULL
+    heading_path; the tree still renders via the fallbacks the UI
+    applies). `heading_path` is the chunk's stored path (new ingests);
+    `title` is its leaf; `human_locator` = "source › section"."""
+    source = (doc or {}).get("source_name") or ""
+    path = ""
+    raw = (chunk or {}).get("heading_path")
+    if isinstance(raw, (list, tuple)):
+        path = " › ".join(str(x) for x in raw if x)
+    elif raw:
+        path = str(raw)
+    title = path.rsplit("›", 1)[-1].strip() if path else ""
+    if text_kind == "document_summary":
+        title = source
+        human = source
+    else:
+        human = f"{source} › {title}" if (source and title) else source
+    return {"title": title, "heading_path": path, "human_locator": human}
 
 
 def _source_span(chunk: dict, ev: dict) -> dict:

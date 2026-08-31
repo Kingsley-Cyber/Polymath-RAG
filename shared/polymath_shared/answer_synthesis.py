@@ -410,11 +410,15 @@ def render_answer(bundle: dict, query: str, validation: dict) -> dict:
         item = items_by_id[iid]
         doc_ids = [item.get("source_document_id") or ""]
         locators = [(item.get("source_span") or {}).get("locator") or ""]
+        # UI-V3 §3.3: the human locator rides beside the raw locator —
+        # additive, empty when the bundle item predates presentation.
+        human = (item.get("presentation") or {}).get("human_locator") or ""
         citations.append({
             "citation_id": citation_ids[iid],
             "bundle_item_ids": [iid],
             "source_document_ids": [d for d in doc_ids if d],
             "locators": [l for l in locators if l],
+            "human_locators": [human] if human else [],
         })
 
     supported = validation["supported"] if verdict == "supported" else []

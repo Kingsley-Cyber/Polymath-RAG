@@ -42,6 +42,35 @@ export const fetchReadiness = (corpus: string) =>
     `/semantic_readiness?corpus_id=${encodeURIComponent(corpus)}`,
   );
 
+export interface SectionRow {
+  parent_id: string;
+  title: string;
+  heading_path: string;
+  summary: string;
+  keywords: string[];
+  coverage: unknown;
+  children: number;
+}
+
+export const fetchSections = (docId: string) =>
+  getJSON<{ doc_id: string; sections: SectionRow[] }>(
+    `/documents/${encodeURIComponent(docId)}/sections`,
+  );
+
+/** UI-V3 F13: flip retrieval visibility for a corpus. */
+export async function setQueryEnabled(corpus: string, enabled: boolean) {
+  const r = await fetch(
+    `/corpora/${encodeURIComponent(corpus)}/query_enabled`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query_enabled: enabled }),
+    },
+  );
+  if (!r.ok) throw new Error(`query_enabled → ${r.status}`);
+  return r.json() as Promise<{ corpus_id: string; query_enabled: boolean }>;
+}
+
 export async function uploadFile(corpus: string, file: File) {
   const form = new FormData();
   form.append("corpus_id", corpus);

@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
-import { fetchDocuments, fetchReadiness, uploadFile } from "../api";
+import {
+  fetchCorpora,
+  fetchDocuments,
+  fetchReadiness,
+  fetchSections,
+  setQueryEnabled,
+  uploadFile,
+} from "../api";
+import type { SectionRow } from "../api";
 import type { DocumentRow, RunRow } from "../types";
 
 function fmtBytes(n: number): string {
@@ -45,6 +53,7 @@ export default function FilesView({
   const [docs, setDocs] = useState<DocumentRow[]>([]);
   const [runs, setRuns] = useState<RunRow[]>([]);
   const [readiness, setReadiness] = useState<any>(null);
+  const [queryEnabled, setQueryEnabledState] = useState<boolean | null>(null);
   const [drag, setDrag] = useState(false);
   const [uploads, setUploads] = useState<
     { name: string; state: string; run?: string }[]
@@ -57,6 +66,10 @@ export default function FilesView({
       setDocs(d.documents);
       setRuns(d.runs);
       setReadiness(await fetchReadiness(corpus));
+      const row = (await fetchCorpora(true)).find(
+        (c) => c.corpus_id === corpus,
+      );
+      setQueryEnabledState(row ? !!(row as any).query_enabled : null);
     } catch {
       setDocs([]);
       setRuns([]);
@@ -215,41 +228,39 @@ export default function FilesView({
             </thead>
             <tbody>
               {docs.map((d) => (
-                <tr key={d.doc_id}>
-                  <td>{d.source_name}</td>
-                  <td className="mono">{d.media_type}</td>
-                  <td>{fmtBytes(d.bytes)}</td>
-                  <td>{d.chunks}</td>
-                  <td className="mono">{d.created_at.slice(0, 19)}</td>
-                  <td>
-                    <button
-                      className="chunk-chip"
-                      title="Delete this document everywhere (vectors, graph, facts evidenced only here). Same bytes become re-ingestable."
-                      onClick={async () => {
-                        const typed = window.prompt(
-                          `Delete "${d.source_name}" from ${corpus}?\nType the file name to confirm:\n${d.source_name}`,
-                        );
-                        if (typed !== d.source_name && typed !== d.doc_id) return;
-                        const r = await fetch(
-                          `/documents/${encodeURIComponent(d.doc_id)}?confirm=${encodeURIComponent(typed)}`,
-                          { method: "DELETE" },
-                        );
-                        if (r.ok) { refresh(); return; }
-                        const body = await r.json().catch(() => ({}));
-                        if (body?.detail?.error_code === "runs_in_flight")
-                          window.alert("Extraction is in flight for this document — retry once ingestion finishes.");
-                        else
-                          window.alert(`Delete failed: ${body?.detail?.message ?? r.status}`);
-                      }}
-                    >
-                      ✕
-                    </button>
-                  </td>
-                </tr>
+                <DocRows key={d.doc_id} d={d} corpus={corpus} refresh={refresh} />
               ))}
             </tbody>
           </table>
         </div>
+
+
+        {queryEnabled !== null && (
+          <div className="panel">
+            <h3>Retrieval visibility</h3>
+            <div className="readiness" style={{ alignItems: "center", gap: 10 }}>
+              <span
+                className={`status-pill ${queryEnabled ? "st-query_ready" : "st-reconciling"}`}
+              >
+                {queryEnabled ? "ENABLED" : "HIDDEN"}
+              </span>
+              <span style={{ opacity: 0.85, fontSize: 13 }}>
+                {queryEnabled
+                  ? "This corpus answers chat and retrieval queries."
+                  : "Uploads default to hidden — chat cannot see this corpus until enabled."}
+              </span>
+              <button
+                className="chunk-chip"
+                onClick={async () => {
+                  const out = await setQueryEnabled(corpus, !queryEnabled);
+                  setQueryEnabledState(out.query_enabled);
+                }}
+              >
+                {queryEnabled ? "Hide from retrieval" : "Enable retrieval"}
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="panel danger">
           <h3>Danger zone</h3>
@@ -319,5 +330,121 @@ export default function FilesView({
         </div>
       </div>
     </div>
+  );
+}
+
+
+/** UI-V3 §4.2: a document row that expands into its section tree —
+ * section title + card summary + child count, hash ids demoted to a
+ * copy affordance. Sections come from the compiled parent cards
+ * (ONE-SUMMARY-AUTHORITY); legacy docs without heading_path render
+ * summary-head titles (PRD §2 NULL fallback). */
+function DocRows({
+  d,
+  corpus,
+  refresh,
+}: {
+  d: DocumentRow;
+  corpus: string;
+  refresh: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [sections, setSections] = useState<SectionRow[] | null>(null);
+  const toggle = async () => {
+    const next = !open;
+    setOpen(next);
+    if (next && sections === null) {
+      try {
+        setSections((await fetchSections(d.doc_id)).sections);
+      } catch {
+        setSections([]);
+      }
+    }
+  };
+  return (
+    <>
+      <tr>
+        <td>
+          <button className="chunk-chip" onClick={toggle} style={{ marginRight: 6 }}>
+            {open ? "▾" : "▸"}
+          </button>
+          {d.source_name}
+        </td>
+        <td className="mono">{d.media_type}</td>
+        <td>{fmtBytes(d.bytes)}</td>
+        <td>{d.chunks}</td>
+        <td className="mono">{d.created_at.slice(0, 19)}</td>
+        <td>
+          <button
+            className="chunk-chip"
+            title="Copy document id"
+            onClick={() => navigator.clipboard?.writeText(d.doc_id)}
+          >
+            ⧉ id
+          </button>{" "}
+          <button
+            className="chunk-chip"
+            title="Delete this document everywhere (vectors, graph, facts evidenced only here). Same bytes become re-ingestable."
+            onClick={async () => {
+              const typed = window.prompt(
+                `Delete "${d.source_name}" from ${corpus}?\nType the file name to confirm:\n${d.source_name}`,
+              );
+              if (typed !== d.source_name && typed !== d.doc_id) return;
+              const r = await fetch(
+                `/documents/${encodeURIComponent(d.doc_id)}?confirm=${encodeURIComponent(typed)}`,
+                { method: "DELETE" },
+              );
+              if (r.ok) { refresh(); return; }
+              const body = await r.json().catch(() => ({}));
+              if (body?.detail?.error_code === "runs_in_flight")
+                window.alert("Extraction is in flight for this document — retry once ingestion finishes.");
+              else
+                window.alert(`Delete failed: ${body?.detail?.message ?? r.status}`);
+            }}
+          >
+            ✕
+          </button>
+        </td>
+      </tr>
+      {open && (
+        <tr>
+          <td colSpan={6} style={{ padding: "0 0 8px 28px" }}>
+            {sections === null ? (
+              <div className="phase-detail">loading sections…</div>
+            ) : sections.length === 0 ? (
+              <div className="phase-detail">no compiled sections yet</div>
+            ) : (
+              <div className="chunks-panel">
+                {sections.map((sec) => (
+                  <div className="chunk-row" key={sec.parent_id}>
+                    <div className="chunk-loc">
+                      <b>{sec.title}</b>
+                      {"  ·  "}{sec.children} chunk{sec.children === 1 ? "" : "s"}
+                      <button
+                        className="copy-btn"
+                        title="Copy section (parent) id"
+                        onClick={() =>
+                          navigator.clipboard?.writeText(sec.parent_id)
+                        }
+                      >
+                        ⧉ id
+                      </button>
+                    </div>
+                    {sec.summary && (
+                      <div className="chunk-preview">{sec.summary}</div>
+                    )}
+                    {sec.keywords.length > 0 && (
+                      <div className="phase-detail">
+                        {sec.keywords.join(" · ")}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </td>
+        </tr>
+      )}
+    </>
   );
 }
