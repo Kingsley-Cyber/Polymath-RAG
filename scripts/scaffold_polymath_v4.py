@@ -345,6 +345,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_projection_want_authority.py", "py", None),
     ("docs/wiki/work-log/2026-08-31-session-a-reliability.md", "md", None),
     ("docs/wiki/work-log/2026-08-31-session-b-query-path.md", "md", None),
+    ("docs/wiki/work-log/2026-08-31-session-c-p6.md", "md", None),
     ("shared/polymath_shared/latent/trigger.py", "py", None),
     ("config/cloud_providers.json", "json", None),
     ("scripts/probe_cloud_endpoints.py", "py", None),
