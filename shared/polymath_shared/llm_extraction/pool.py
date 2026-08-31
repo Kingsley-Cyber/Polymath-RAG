@@ -212,29 +212,48 @@ class PinnedProviderUnavailable(RuntimeError):
     dedicated stage must never silently spend another provider."""
 
 
-def stage_pin(stage: str) -> str | None:
+def stage_pin(stage: str) -> list[str] | None:
+    """The pin for a stage as a GROUP (a single name is a group of one).
+    DUAL-LANE (owner 2026-08-30): unlinked accounts with separate rate
+    buckets pin as a list and shard the stage's docs between them."""
     try:
         raw = json.loads(_PROVIDERS_FILE.read_text())
     except (FileNotFoundError, json.JSONDecodeError):
         return None
     pin = (raw.get("stage_pins") or {}).get(stage)
-    return str(pin).strip() if pin else None
+    if not pin:
+        return None
+    if isinstance(pin, str):
+        return [pin.strip()]
+    return [str(x).strip() for x in pin if str(x).strip()]
 
 
 def select_endpoint_for_stage(stage: str, doc_id: str) -> CloudEndpoint:
-    """STAGE-PIN-V1 (owner 2026-08-30): a stage with a pin gets EXACTLY
-    that provider; a pinned-but-inactive provider fails loudly. Unpinned
-    stages shard by doc hash like any cloud dispatch."""
+    """STAGE-PIN-V1: a pinned stage dispatches ONLY within its pin group
+    — deterministic doc-hash sharding across the group's ACTIVE members
+    (each unlinked account is its own rate bucket and AIMD lane). A
+    partially-dark group runs on the remaining members (logged once);
+    an entirely-dark group fails loudly — a dedicated stage never
+    silently spends an unpinned provider. Unpinned stages shard the
+    whole roster."""
     pin = stage_pin(stage)
     if pin is None:
         return select_cloud_endpoint(doc_id)
-    for ep in cloud_endpoints():
-        if ep.name == pin:
-            return ep
-    raise PinnedProviderUnavailable(
-        f"stage {stage!r} is dedicated to provider {pin!r}, which is not "
-        f"active (no key in .env, enabled:false, or absent from "
-        f"config/cloud_providers.json) — activate it or remove the pin")
+    active = [ep for ep in cloud_endpoints() if ep.name in pin]
+    if not active:
+        raise PinnedProviderUnavailable(
+            f"stage {stage!r} is dedicated to {pin!r}, none of which are "
+            f"active (no key in .env, enabled:false, or absent from "
+            f"config/cloud_providers.json) — activate one or remove the pin")
+    if len(active) < len(pin):
+        dark = sorted(set(pin) - {ep.name for ep in active})
+        _log_once(("pin-partial", stage, tuple(dark)),
+                  "stage %r pin group running at reduced capacity: %s "
+                  "inactive", stage, ", ".join(dark))
+    if len(active) == 1:
+        return active[0]
+    digest = hashlib.blake2b((doc_id or "").encode(), digest_size=8).digest()
+    return active[int.from_bytes(digest, "big") % len(active)]
 
 
 def select_cloud_endpoint(doc_id: str) -> CloudEndpoint:

@@ -258,3 +258,38 @@ def test_stage_pin_dedicates_and_fails_loudly(pool_env, monkeypatch, tmp_path):
     # unpinned stage still shards over the whole roster
     assert pool.select_endpoint_for_stage("extract", "doc_x").name in {
         "nvidia", "primary"}
+
+
+def test_stage_pin_group_shards_and_degrades_loudly(pool_env, monkeypatch,
+                                                    tmp_path):
+    # DUAL-LANE pin groups: docs shard deterministically across ACTIVE
+    # members; a partially-dark group runs on the rest; all-dark raises.
+    import json as _json
+
+    from polymath_shared.llm_extraction import pool
+    pf = tmp_path / "providers.json"
+    monkeypatch.setattr(pool, "_PROVIDERS_FILE", pf)
+    pf.write_text(_json.dumps({
+        "stage_pins": {"parent_enrichment": ["nvidia", "nvidia2"]},
+        "providers": [
+            {"name": "nvidia", "url": "http://n1", "model": "m",
+             "api_key_env": "T_NV1"},
+            {"name": "nvidia2", "url": "http://n2", "model": "m",
+             "api_key_env": "T_NV2"}]}))
+    pool_env(None)
+    monkeypatch.setenv("T_NV1", "k1")
+    monkeypatch.setenv("T_NV2", "k2")
+    names = {pool.select_endpoint_for_stage("parent_enrichment", f"d{i}").name
+             for i in range(40)}
+    assert names == {"nvidia", "nvidia2"}       # both lanes churn
+    first = pool.select_endpoint_for_stage("parent_enrichment", "d7").name
+    assert all(pool.select_endpoint_for_stage("parent_enrichment", "d7").name
+               == first for _ in range(5))      # replay-stable
+
+    monkeypatch.delenv("T_NV2", raising=False)  # one account dark
+    assert {pool.select_endpoint_for_stage("parent_enrichment", f"d{i}").name
+            for i in range(10)} == {"nvidia"}   # reduced, not rerouted
+
+    monkeypatch.delenv("T_NV1", raising=False)  # all dark
+    with pytest.raises(pool.PinnedProviderUnavailable):
+        pool.select_endpoint_for_stage("parent_enrichment", "d0")
