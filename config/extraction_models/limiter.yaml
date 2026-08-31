@@ -14,11 +14,18 @@ providers:
     kind: rate             # cloud bottleneck = rate (RPM + TPM)
     rpm: 120               # seed bucket; header-sync refines it live
     tpm: 200000
-    conc_cap: 16           # CEILING the controller may climb to — the real
-                           # limit is FOUND from 429s (x0.5), not configured;
-                           # the found value persists (llm_controller_state)
+    conc_cap: 18           # CEILING pinned just UNDER the measured provider
+                           # edge (~19-20 concurrent triggers 429s). The
+                           # 32-era probe policy found the edge but paid for
+                           # every probe: burst past 19 -> 429 -> halve to
+                           # ~5 -> minutes climbing back (receipts 2026-08-30:
+                           # eff 5->19, 21 lifetime decreases). Capping at 18
+                           # trades a sliver of peak concurrency for zero
+                           # 429 storms. The found value still persists in
+                           # llm_controller_state; raise the cap only with a
+                           # measured reason (new provider tier, second key).
     min: 2
-    max: 16
+    max: 18
     adaptive: true
     use_headers: true      # throttle proactively from rate-limit headers
     init: 3                # AIMD starts LOW and climbs to the ceiling on

@@ -79,6 +79,20 @@ def test_fast_fingerprint_detects_touched_source(tmp_path):
     assert fast_code_fingerprint() == fp_before
 
 
+def test_fast_fingerprint_ignores_content_preserving_touch():
+    """HASH-FENCE-V2 (2026-08-30): same bytes + new mtime must NOT move
+    the fingerprint. MEASURED: one pytest run (this very suite restoring
+    the ontology yaml byte-identically) quarantined the entire fleet as
+    BUNDLE_STALE_CODE_DRIFT under the V1 mtime fingerprint, and the
+    control plane idled for hours."""
+    real = ROOT / "shared" / "polymath_shared" / "rulepack" / \
+        "scientific-predicate-ontology-v2.yaml"
+    fp_before = fast_code_fingerprint()
+    original = real.read_bytes()
+    real.write_bytes(original)          # same bytes, new mtime_ns
+    assert fast_code_fingerprint() == fp_before
+
+
 def test_claim_gate_refuses_stale_worker():
     """Charter test 2: changed code + old worker => refusal. The gate is
     the run_worker loop's drift check; exercise its decision core,

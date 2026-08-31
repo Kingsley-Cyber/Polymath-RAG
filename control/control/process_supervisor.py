@@ -38,13 +38,11 @@ log = logging.getLogger("cp21")
 # supervision to EVERY long-lived runtime component: sidecars and the
 # orchestrator die and restart under the same bounded policy as workers.
 FLEET: list = [
-    # ---- neural sidecars (started FIRST: workers verify their pins) ------
-    {"name": "sidecar_gliner", "argv": ["{python}", "-m", "uvicorn",
-        "server:app", "--host", "127.0.0.1", "--port", "8740"],
-     "cwd": "sidecars/gliner_runtime", "health_url": "http://127.0.0.1:8740/ready"},
-    {"name": "sidecar_spacy", "argv": [".venv/bin/python", "-m", "uvicorn",
-        "server:app", "--host", "127.0.0.1", "--port", "8744"],
-     "cwd": "sidecars/spacy_runtime", "health_url": "http://127.0.0.1:8744/ready"},
+    # ---- neural sidecars ------
+    # sidecar_gliner + sidecar_spacy REMOVED (owner directive 2026-08-30:
+    # "never come up again") — GLiNER retired in llm_live, spaCy's slice
+    # interpreter skipped in llm mode; their GPU residency cost the batched
+    # 4B ~3x decode throughput. Rollback = revert this commit.
     {"name": "sidecar_embedder", "argv": ["{python}", "-m", "uvicorn",
         "server:app", "--host", "127.0.0.1", "--port", "8742"],
      "cwd": "sidecars/embedder", "health_url": "http://127.0.0.1:8742/ready"},
@@ -61,11 +59,17 @@ FLEET: list = [
     ("intake", "workers.intake_worker"),
     ("profile", "workers.profile_worker"),
     ("extract", "workers.extract_worker"),
+    # Second extract slot: lanes run in parallel (cloud books are remote —
+    # no GPU contention; local books queue at the one GPU window at the
+    # sidecar). Measured 2026-08-30: a local book sat 'ready' ~1 min with
+    # no claimer while the single slot held the cloud book.
+    ("extract2", "workers.extract_worker"),
     ("canonicalize", "workers.canonicalize_worker"),
     ("project_canonical", "workers.project_canonical_worker"),
     ("neo4j", "workers.project_neo4j_worker"),
     ("qdrant", "workers.project_qdrant_worker"),
     ("verify", "workers.verify_worker"),
+    ("compile_objects", "workers.compile_objects_worker"),
     ("summaries", "workers.summary_worker"),
 ]
 
@@ -304,12 +308,56 @@ class Supervisor:
         failures are required before restarting so a single slow response
         under load never causes a restart storm.
         """
-        if not slot.health_url or slot.proc is None:
+        if slot.proc is None:
             return
         now = time.time()
         if now - slot.last_probe_at < self.readiness_interval_s:
             return
         slot.last_probe_at = now
+        if not slot.health_url:
+            # WORKER-QUARANTINE-AUTOHEAL-V1 (measured 2026-08-30 22:03):
+            # a fence-quarantined worker (BUNDLE_STALE_CODE_DRIFT) keeps
+            # heartbeating while refusing every claim, so it looks alive
+            # to every existing check and NEVER exits — after a fenced
+            # commit, every non-crashed slot sat refusing claims and an
+            # owner upload "disappeared" (intake events undelivered, no
+            # corpus row). The code on disk is exactly what the fence is
+            # protecting; a respawn loads it. Restart budget still applies
+            # via the exit window, so a genuinely flapping slot follows
+            # the normal quarantine law.
+            try:
+                import psycopg
+                with psycopg.connect(self.dsn, connect_timeout=5) as conn:
+                    # pid alone identifies THIS slot's child (slot names
+                    # do not match worker_type strings, e.g. "profile"
+                    # vs "profile_document")
+                    row = conn.execute(
+                        """SELECT COUNT(*) FROM worker_registrations
+                            WHERE pid = %s AND status = 'quarantined'
+                              AND heartbeat_at > now() - interval '30 seconds'""",
+                        (slot.proc.pid,)).fetchone()
+                if row and row[0]:
+                    log.error(
+                        "slot %s fence-quarantined (stale bundle): "
+                        "restarting onto current code", slot.name)
+                    slot.exits.append(now)
+                    if not self._restart_allowed(slot):
+                        self._quarantine(
+                            slot, "fence-quarantine restarts exceeded budget")
+                        return
+                    try:
+                        slot.proc.terminate()
+                        slot.proc.wait(timeout=15)
+                    except Exception:
+                        try:
+                            slot.proc.kill()
+                        except Exception:
+                            pass
+                    slot.restarts += 1
+                    self._spawn(slot)
+            except Exception:  # noqa: BLE001 — health probe must never kill the loop
+                pass
+            return
         ready = False
         try:
             import httpx

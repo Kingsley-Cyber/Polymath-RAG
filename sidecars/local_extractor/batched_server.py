@@ -78,8 +78,30 @@ def load_model() -> None:
         except Exception as exc:  # noqa: BLE001 — older mlx: best effort
             print(f"mlx memory limits unavailable: {exc}", file=sys.stderr)
         _state["model"], _state["tok"] = load(MODEL_PATH)
-        _state["logits_processors"] = make_logits_processors(
+        processors = make_logits_processors(
             repetition_penalty=1.15, repetition_context_size=400)
+        # JSON-GRAMMAR-MASK-V1: structurally-illegal tokens (prose outside
+        # JSON, markdown fences, stray punctuation) masked to -inf at every
+        # decode step. Fail-open: if the mask cannot compile, generation
+        # proceeds with prompt+gate enforcement only (measured 2026-08-30:
+        # 37% of local calls needed salvage repair without it).
+        import os as _os
+        if _os.environ.get("POLYMATH_JSON_MASK", "on").lower() in ("0", "off", "false"):
+            print("json grammar mask: DISABLED by env (PERF 2026-08-30: "
+                  "per-step prefix re-decode cost quadratic at batch scale "
+                  "— pending incremental-state fix)", file=sys.stderr)
+        else:
+            try:
+                from json_mask import make_json_mask
+                _mask = make_json_mask(_state["tok"])
+                if _mask is not None:
+                    processors = processors + [_mask]
+                    print("json grammar mask: ON", file=sys.stderr)
+                else:
+                    print("json grammar mask: unavailable (fail-open)", file=sys.stderr)
+            except Exception as exc:  # noqa: BLE001
+                print(f"json grammar mask failed to load: {exc} (fail-open)", file=sys.stderr)
+        _state["logits_processors"] = processors
         try:
             from mlx_lm.generate import batch_generate
             _state["batch_generate"] = batch_generate
@@ -122,6 +144,70 @@ def _finalize(tok, text: str, budget: int) -> dict:
             "completion_tokens": len(ids)}
 
 
+# ---------------------------------------------------------------------------
+# PREFIX-KV-CACHE-V1 (measured 2026-08-30): every prompt in a batch repeats
+# the same rendered system prompt (~0.5-1K tokens of a ~2.2K prompt), and
+# prefill runs at ~536 tok/s — nearly half of every batch's prefill was
+# re-computing identical tokens. The longest common TOKEN prefix of the
+# batch is prefilled ONCE into a KV cache (kept across calls, keyed by the
+# prefix hash) and every sequence decodes from suffix-only prompts.
+# Measured: batch-4 probe 17.3s -> 13.0s wall (+1.0s one-time build);
+# savings grow with batch size. batch_generate does not mutate provided
+# caches, so ONE cache object seeds every sequence (verified: repeat calls
+# byte-identical). Greedy outputs may flip on near-ties vs full prefill —
+# MEASURED CONTROL: full-prefill output already differs across batch
+# compositions (batch4 != batch2 != batch1, reruns stable), and production
+# batch packing varies run to run, so this adds no new nondeterminism
+# class. Disable with POLYMATH_PREFIX_CACHE=off.
+_PREFIX_CACHES: dict = {}          # prefix token tuple -> cache
+_PREFIX_CACHE_MAX = 4
+_PREFIX_MIN_TOKENS = 64
+_PREFIX_CACHE_ENABLED = os.environ.get(
+    "POLYMATH_PREFIX_CACHE", "on").lower() not in ("0", "off", "false")
+
+
+def _common_token_prefix(token_lists: list[list[int]]) -> int:
+    n = min(len(t) for t in token_lists)
+    first = token_lists[0]
+    i = 0
+    while i < n - 1 and all(t[i] == first[i] for t in token_lists):
+        i += 1
+    return i                       # < min length: every suffix keeps >= 1 token
+
+
+def _prefix_cache_for(prefix: list[int]):
+    """Build (or fetch) the KV cache for a token prefix. GPU work — call
+    with _GEN_LOCK held."""
+    key = tuple(prefix)
+    hit = _PREFIX_CACHES.get(key)
+    if hit is not None:
+        return hit
+    from mlx_lm.models.cache import make_prompt_cache
+    mx = _state["mx"]
+    cache = make_prompt_cache(_state["model"])
+    ids = mx.array(prefix)[None]
+    for j in range(0, len(prefix), 2048):
+        _state["model"](ids[:, j:j + 2048], cache=cache)
+    mx.eval([c.state for c in cache])
+    if len(_PREFIX_CACHES) >= _PREFIX_CACHE_MAX:
+        _PREFIX_CACHES.pop(next(iter(_PREFIX_CACHES)))
+    _PREFIX_CACHES[key] = cache
+    return cache
+
+
+def _longest_stored_prefix(prompt: list[int]) -> tuple[int, object] | None:
+    """A single prompt never BUILDS a cache (its 'prefix' would be its own
+    unique content and would churn the LRU) — it may only reuse a prefix a
+    real batch already established."""
+    best = None
+    for key, cache in _PREFIX_CACHES.items():
+        n = len(key)
+        if n < len(prompt) and prompt[:n] == list(key):
+            if best is None or n > best[0]:
+                best = (n, cache)
+    return best
+
+
 def _generate(token_lists: list[list[int]], budgets: list[int]) -> list[dict]:
     """ONE serialized generation over the model for a batch of prompts."""
     load_model()
@@ -129,8 +215,28 @@ def _generate(token_lists: list[list[int]], budgets: list[int]) -> list[dict]:
     bg = _state.get("batch_generate")
     with _GEN_LOCK:
         if bg is not None:
-            response = bg(_state["model"], tok, token_lists,
-                          max_tokens=max(budgets),
+            prompts, caches = token_lists, None
+            if _PREFIX_CACHE_ENABLED:
+                try:
+                    if len(token_lists) >= 2:
+                        lcp = _common_token_prefix(token_lists)
+                        if lcp >= _PREFIX_MIN_TOKENS:
+                            pc = _prefix_cache_for(token_lists[0][:lcp])
+                            prompts = [t[lcp:] for t in token_lists]
+                            caches = [pc] * len(token_lists)
+                    else:
+                        hit = _longest_stored_prefix(token_lists[0])
+                        if hit is not None and hit[0] >= _PREFIX_MIN_TOKENS:
+                            prompts = [token_lists[0][hit[0]:]]
+                            caches = [hit[1]]
+                except Exception as exc:  # noqa: BLE001 — fail-open to full prefill
+                    print(f"prefix cache failed (full prefill): {exc}",
+                          file=sys.stderr)
+                    prompts, caches = token_lists, None
+            response = bg(_state["model"], tok, prompts,
+                          prompt_caches=caches,
+                          max_tokens=budgets,          # per-sequence budgets
+                          completion_batch_size=MAX_BATCH,
                           logits_processors=_state["logits_processors"])
             texts = getattr(response, "texts", None) or (
                 response if isinstance(response, list) else [str(response)])

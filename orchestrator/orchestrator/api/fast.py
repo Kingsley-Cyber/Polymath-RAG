@@ -329,6 +329,80 @@ def fast_retrieve(
             neighbor_lookup=_neighbor_lookup,
             region_lookup=_region_lookup,
         )
+        # ENTITY-CARD-LANE-V1 (§11.6 phase 1): graph extractions as FAST
+        # citizens — a query naming an entity routes via its routing_entity
+        # card (surface + aliases + predicate capsule) instead of hoping a
+        # child chunk embeds the name. Advisory + fail-open: card doc-votes
+        # STABLY re-rank the engine's selected documents (engine order
+        # preserved within vote groups); the cards themselves are returned
+        # for the ask layer. Sparse (exact-name, shared tokenizer) and
+        # dense both consulted.
+        entity_cards: list[dict] = []
+        try:
+            from qdrant_client.models import (
+                FieldCondition, Filter, MatchValue, SparseVector,
+            )
+            from polymath_shared.sparse_bm25 import (
+                SPARSE_VECTOR_NAME, sparse_vector as _sv,
+            )
+            card_filter = Filter(must=[
+                FieldCondition(key="representation_kind",
+                               match=MatchValue(value="routing_entity")),
+                FieldCondition(key="corpus_id",
+                               match=MatchValue(value=corpus_id)),
+            ])
+            seen_cards: dict[str, dict] = {}
+            qvec = _embed_query(query)
+            si, svals = _sv(query)
+            for collection in collections.values():
+                probes = [(qvec, None)]
+                if si:
+                    probes.append((SparseVector(indices=si, values=svals),
+                                   SPARSE_VECTOR_NAME))
+                for qv, using in probes:
+                    try:
+                        pts = client.query_points(
+                            collection_name=collection, query=qv, using=using,
+                            query_filter=card_filter, limit=8,
+                            with_payload=True).points
+                    except Exception:
+                        continue
+                    for p in pts:
+                        pl = p.payload or {}
+                        cid = pl.get("summary_id") or str(p.id)
+                        cur = seen_cards.get(cid)
+                        if cur is None or float(p.score or 0) > cur["score"]:
+                            seen_cards[cid] = {
+                                "card_id": cid,
+                                "entity_id": pl.get("entity_id", ""),
+                                "doc_ids": pl.get("doc_ids") or [],
+                                "text": pl.get("text", ""),
+                                "score": float(p.score or 0.0),
+                                "lane": "sparse" if using else "dense",
+                            }
+            entity_cards = sorted(seen_cards.values(),
+                                  key=lambda c: -c["score"])[:8]
+        except Exception as exc:        # advisory lane: never fails the query
+            import logging as _logging
+            _logging.getLogger("fast").warning(
+                "entity card lane failed open: %s: %s",
+                type(exc).__name__, exc)
+            entity_cards = []
+        if entity_cards:
+            try:
+                votes: dict[str, int] = {}
+                for card in entity_cards:
+                    for d in card["doc_ids"]:
+                        votes[d] = votes.get(d, 0) + 1
+                if votes:
+                    result.selected_documents = sorted(
+                        result.selected_documents,
+                        key=lambda d: -votes.get(d.doc_id, 0))
+            except Exception as exc:    # cards still returned; boost skipped
+                import logging as _logging
+                _logging.getLogger("fast").warning(
+                    "entity card doc-boost failed open: %s: %s",
+                    type(exc).__name__, exc)
     finally:
         client.close()
 
@@ -349,7 +423,12 @@ def fast_retrieve(
             # nothing shows up as SUSPECT here instead of silently
             # delivering zero for weeks.
             "liveness": _liveness(result.trace, MODE_FAST),
+            "entity_card_votes": len(entity_cards),
         },
+        "entity_card_lane": [
+            {k: v for k, v in c.items() if k != "doc_ids"}
+            for c in entity_cards
+        ],
         "selected_documents": [
             {
                 "doc_id": d.doc_id,

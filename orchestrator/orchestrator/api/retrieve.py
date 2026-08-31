@@ -316,11 +316,25 @@ def _qdrant_search(query: str, corpus_ids: list[str], limit: int) -> list[dict]:
             finally:
                 embedder.close()
         out: list[dict] = []
+        # CHILD-LANE-KIND-FILTER (measured 2026-08-30): the §11 build put
+        # entity cards, procedures, concepts and summaries into the SAME
+        # collection; an unfiltered dense search let every kind compete in
+        # the child lane and surfaced them as empty-chunk_id junk rows.
+        # This lane is the CHILD lane: children only, scoped to the
+        # resolved corpora.
+        from qdrant_client.models import FieldCondition, Filter, MatchAny, MatchValue
+        child_filter = Filter(must=[
+            FieldCondition(key="representation_kind",
+                           match=MatchValue(value="routing_child")),
+            FieldCondition(key="corpus_id",
+                           match=MatchAny(any=list(corpus_ids))),
+        ])
         for collection in targets:
             try:
                 hits = client.query_points(
                     collection_name=collection,
                     query=vector,
+                    query_filter=child_filter,
                     limit=limit,
                     with_payload=True,
                 ).points

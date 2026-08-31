@@ -32,3 +32,4 @@ contract names that mutation and requires an explicit operator flag.
 | `scripts/flatten_resources.py` | governance | verified vendor archives | `resources/compiled/<contract>/` | `python3 scripts/flatten_resources.py` |
 | `scripts/compile_predicate_rules.py` | governance | rules YAML + compiled tables | `compiled_lexical.json` | `python3 scripts/compile_predicate_rules.py` |
 | `scripts/trace_report.py` | worker | extraction_trace_events (analysis only) | nothing (stdout) | `.venv/bin/python scripts/trace_report.py surface <run_id> "<surface>"` |
+- `scripts/migrate_routing_sparse.py` — SPARSE-BM25-V1 legacy-collection migration: copy-out → recreate sparse-native (`bm25` named sparse vector, IDF) → copy-back with dense vectors preserved (no re-embedding). Owner-gated: dry run by default, `--apply` to migrate. Usage: `.venv/bin/python scripts/migrate_routing_sparse.py <corpus_id> [--apply]`.

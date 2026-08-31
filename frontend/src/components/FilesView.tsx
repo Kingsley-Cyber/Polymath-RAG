@@ -8,6 +8,33 @@ function fmtBytes(n: number): string {
   return `${n} B`;
 }
 
+
+/** Human lines for readiness pending-codes (in-flight vs broken). */
+const PENDING_LABELS: Record<string, string> = {
+  no_query_ready_run: "final census pending",
+  document_summaries_0_of_2: "document summaries queued",
+  no_parent_summaries: "parent summaries queued",
+  no_corpus_map: "corpus map queued",
+  unprojected_procedures_61: "procedures compiled — awaiting projection",
+  unprojected_concepts_15: "concepts compiled — awaiting projection",
+};
+function pendingLabel(code: string): string {
+  if (PENDING_LABELS[code]) return PENDING_LABELS[code];
+  if (code.startsWith("unprojected_procedures")) return "procedures compiled — awaiting projection";
+  if (code.startsWith("unprojected_concepts")) return "concepts compiled — awaiting projection";
+  if (code.startsWith("document_summaries")) return "document summaries queued";
+  return code.replace(/_/g, " ");
+}
+function verdictLine(r: any): string {
+  if (!r) return "";
+  const busy = (r.pending ?? []).length > 0
+    && (r.pending ?? []).every((p: string) =>
+      /queued|map|census|summar|unprojected|no_query_ready/.test(pendingLabel(p)));
+  if (r.verdict === "SEMANTIC_COMPLETE") return "✓ complete — corpus is query-ready";
+  if (busy) return "⏳ ingesting — downstream stages in flight, not an error";
+  return "incomplete";
+}
+
 export default function FilesView({
   corpus,
   onCorpusDeleted,
@@ -39,9 +66,22 @@ export default function FilesView({
 
   useEffect(() => {
     refresh();
-    const t = setInterval(refresh, 12_000);
-    return () => clearInterval(t);
-  }, [refresh]);
+    // Poll fast while any run/upload is active, slow when idle; refetch
+    // immediately when the tab regains focus (staleness fix 2026-08-30).
+    let alive = true;
+    const tick = async () => {
+      if (!alive) return;
+      const busy = uploads.some((u) => u.state === "uploading…" || u.state === "ingesting")
+        || (runs ?? []).some((r: any) => r.status !== "query_ready" && r.status !== "failed");
+      refresh();
+      timer = setTimeout(tick, busy ? 4_000 : 12_000);
+    };
+    let timer = setTimeout(tick, 4_000);
+    const onVis = () => { if (document.visibilityState === "visible") refresh(); };
+    document.addEventListener("visibilitychange", onVis);
+    return () => { alive = false; clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVis); };
+  }, [refresh, uploads, runs]);
 
   const handleFiles = async (files: FileList | null) => {
     if (!files || !corpus) return;
@@ -52,7 +92,9 @@ export default function FilesView({
         setUploads((u) =>
           u.map((x) =>
             x.name === file.name
-              ? { ...x, state: "ingesting", run: out.run_id }
+              ? { ...x, state: out.already_exists
+                    ? "already in corpus — no new run"
+                    : "ingesting", run: out.run_id }
               : x,
           ),
         );
@@ -119,6 +161,9 @@ export default function FilesView({
         {readiness && (
           <div className="panel">
             <h3>Semantic readiness</h3>
+            <p style={{ opacity: 0.85, fontSize: 13 }}>
+              {verdictLine(readiness)}
+            </p>
             <div className="readiness">
               <span
                 className={`status-pill ${
@@ -149,7 +194,7 @@ export default function FilesView({
             </div>
             {readiness.pending?.length > 0 && (
               <div className="phase-detail" style={{ marginTop: 6 }}>
-                pending: {readiness.pending.join(", ")}
+                in flight: {readiness.pending.map(pendingLabel).join(" · ")}
               </div>
             )}
           </div>
@@ -182,15 +227,19 @@ export default function FilesView({
                       title="Delete this document everywhere (vectors, graph, facts evidenced only here). Same bytes become re-ingestable."
                       onClick={async () => {
                         const typed = window.prompt(
-                          `Delete "${d.source_name}" from ${corpus}?\nType the doc id to confirm:\n${d.doc_id}`,
+                          `Delete "${d.source_name}" from ${corpus}?\nType the file name to confirm:\n${d.source_name}`,
                         );
-                        if (typed !== d.doc_id) return;
+                        if (typed !== d.source_name && typed !== d.doc_id) return;
                         const r = await fetch(
                           `/documents/${encodeURIComponent(d.doc_id)}?confirm=${encodeURIComponent(typed)}`,
                           { method: "DELETE" },
                         );
-                        if (r.ok) refresh();
-                        else window.alert(`Delete failed: ${await r.text()}`);
+                        if (r.ok) { refresh(); return; }
+                        const body = await r.json().catch(() => ({}));
+                        if (body?.detail?.error_code === "runs_in_flight")
+                          window.alert("Extraction is in flight for this document — retry once ingestion finishes.");
+                        else
+                          window.alert(`Delete failed: ${body?.detail?.message ?? r.status}`);
                       }}
                     >
                       ✕

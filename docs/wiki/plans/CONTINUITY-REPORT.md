@@ -1,0 +1,215 @@
+---
+change_id: CONTINUITY-REPORT
+owner: governance
+date: 2026-08-30
+status: living
+architecture_impact: none (the single session bootstrap — updated in place, never forked into dated copies)
+last_reviewed: 2026-08-30
+---
+
+# CONTINUITY REPORT — the single bootstrap (golden-run edition)
+
+**This is the ONLY session hand-off document.** Every dated packet,
+NEXT_SESSION file, status report, and stall diagnosis has been deleted —
+if you find one, it is stale by definition; this file supersedes it.
+Update THIS file in place at session end. History lives in
+`docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
+(the completion contract; never delete rows).
+
+Read order: this file → `CLAUDE.md` → the two newest work-logs.
+
+## 0. Bootstrap (run these before reasoning)
+
+```bash
+cd /Users/king/Documents/polymath-rebuild/polymath-v4
+git log --oneline -5          # expect HEAD >= da8f2d0 on architecture/evidence-first-v5
+set -a; . ./.env; set +a
+.venv/bin/python scripts/agent_preflight.py && .venv/bin/python scripts/repo_guard.py && .venv/bin/python scripts/wiki_worm.py --check
+.venv/bin/python shared/polymath_shared/bundle_integrity.py     # READY, rule pack 1.5.0
+# fleet truth (never trust this file for live state):
+.venv/bin/python -c "import os,psycopg; c=psycopg.connect(os.environ['POLYMATH_PG_DSN']).cursor(); c.execute(\"select worker_type,status,count(*),count(distinct left(execution_bundle_hash,12)) from worker_registrations where heartbeat_at>now()-interval '60 seconds' group by 1,2 order by 1\"); print(c.fetchall())"
+curl -s 127.0.0.1:7200/ready
+```
+Expect 10–11 healthy workers (incl. `compile_objects`), ONE bundle hash.
+The test suite is fence-safe (HASH-FENCE-V2 is content-hash): running
+pytest can no longer quarantine the fleet. Real edits under
+`shared/polymath_shared`, `workers/workers`, `control/control` still
+quarantine every live worker — restart the fleet after each commit
+touching those trees.
+
+## 1. Production state (2026-08-30 end of session 4)
+
+| Item | Value |
+|---|---|
+| Branch | `architecture/evidence-first-v5` @ `0ea4cf8` (main via worktree `../polymath-v4-main`; NEVER `git checkout` in the live tree) |
+| Migrations applied | through `0042_generation_stamping.sql` (apply pattern: `docker exec -i polymath-v4-postgres-1 psql -U polymath -d polymath -f - < stores/postgres/migrations/<file>.sql`) |
+| Stores | Postgres `:5432` · Qdrant `:6334` (app; `.env` 6333 is compose-side) · Neo4j bolt `:7688` · Redis `:6379` |
+| Fleet | ONE supervisor (`scripts/run_fleet_supervised.sh` → `control.process_supervisor`), slots: control, intake, profile, extract, canonicalize, project_canonical, neo4j, qdrant, verify, **compile_objects**, summaries (+ orchestrator slot). Hand-started extras when needed: second `workers.extract_worker` (lane parallelism) |
+| Orchestrator | `:7200`, uvicorn from `orchestrator/` dir |
+| UI | Vite dev server `:5173` → http://localhost:5173/ui/ (proxies to :7200). `:3000` is the owner's Hermes WhatsApp bridge — NOT Polymath |
+| Sidecars | embedder `:8742/:8082`, reranker `:8743`, spaCy `:8744`, batched MLX extraction `:8755`, ollama daemon `:11434` (cloud proxy) |
+| Corpus | `cysa-study-v1` (owner-created 15:03Z): Learning SQL.md + CySA+ CS0-003.md, both `query_ready`, `SEMANTIC_COMPLETE` |
+
+**Fleet restart procedure** (after any commit touching fenced trees):
+```bash
+pkill -f "process_supervisor"; sleep 2
+pkill -f "\.venv/bin/python -m workers\."   # matches relative AND absolute cmdlines — a
+pkill -f "\.venv/bin/python -m control\."   # narrower pattern left a stale zombie worker once
+pkill -f "uvicorn orchestrator.main"; sleep 3
+cd /Users/king/Documents/polymath-rebuild/polymath-v4
+env POLYMATH_PROFILE=pipeline POLYMATH_SYNTAX_PROVIDER=spacy POLYMATH_QUERY_POLICY=semantic-query-policy-v3 POLYMATH_RESCUE=on POLYMATH_WORKER_RULE_PACK_VERSION=1.5.0 POLYMATH_CHUNKER=legacy_v1 POLYMATH_RELATION_PIPELINE=kimi_v1 POLYMATH_PREDICATE_V2=enforce POLYMATH_MAX_BATCH_TEXTS=8 POLYMATH_MAX_BATCH_TOKENS=16384 POLYMATH_MPS_CAP_GB=0 POLYMATH_PG_DSN="postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath" nohup scripts/run_fleet_supervised.sh kimi_v1 on 1.5.0 legacy_v1 > /private/tmp/polymath_fleet/bootN.log 2>&1 &
+cd orchestrator && env <same env> nohup ../.venv/bin/python -m uvicorn orchestrator.main:app --host 127.0.0.1 --port 7200 > /private/tmp/polymath_fleet/orchestrator.log 2>&1 &
+```
+The env block is MANDATORY for anything hand-started (write assignments
+inline; zsh does not word-split `$VAR` for `env`). Verify: one bundle
+hash across healthy workers, and the PID actually changed.
+
+## 2. THE GOLDEN RUN (reference numbers — compare yours against these)
+
+Owner upload 15:03Z, both books one corpus, zero manual intervention,
+survived a mid-ingest fleet restart, `SEMANTIC_COMPLETE` ~15:27Z.
+
+**Readiness counts**: documents 2 · parent_summaries 206 ·
+facts_accepted 1,245 · **procedures 261 · concepts 139** (the
+compile_objects stage's first production output).
+
+**Learning SQL (local lane, 114 KB)** — full 13-stage chain in ~12 min:
+31 calls (all `finish=stop`, 0 truncated, 11 salvaged), coverage 19/24
+parents, dropped 0, unaccounted 0; 116 mentions, 46 facts; term gate
+7 `NON_TERM_SURFACE` + 24 `NON_TERM_ENDPOINT`. Batching: 8 calls per
+~105 s `/infer_batch` (~13 s/neighborhood amortized); local batch-token
+budget climbed 20K→26K during the run. Real raw output begins
+`{"contract":"polymath-extraction-v1",...` — the 4B obeys the schema but
+needs JSON salvage on ~1/3 of calls (lenient parser handles it).
+
+**CySA+ (cloud lane, 838 KB)** — extract ~16 min: 129 calls
+(117 stop / 11 length / 1 quarantined, every truncation accounted),
+coverage 172/175, dropped 0, unaccounted 0; 3,773 mentions, 1,199 facts,
+all 18 predicates, `unknown_predicates 0`; term gate 15 + 179
+rejections. Cloud physics measured live: ~70 s per call, ~13
+completions/min, 7+ parallel sockets, and the FIRST real provider 429
+ever observed (the old conc ceiling of 16 had masked it; ceiling now 32
+so AIMD discovers the true limit).
+
+**Store end-state** (one sparse-native collection,
+`polymath_44965b6577fd_embed_e794ec4cab197a3f`): routing_entity
+**2,969** · routing_child 818 · routing_procedure 261 · routing_concept
+139 · routing_section_summary 199 · routing_document_summary 2 ·
+parent_summary 206 — every point carries the `bm25` named sparse vector.
+
+**Stamping**: 1,245 facts + 3,005 entities queryable by
+`extractor_version='llm-direct-v1'`; entities carry `raw_types` (open
+vocabulary preserved as a deterministic set union).
+
+## 2b. Checkpoint addendum (late session 4 — pushed to GitHub at this merge)
+
+Landed after the golden run, all measured first-hand and work-logged:
+- PREFIX-KV-CACHE-V1 (`12acd05`): system-prompt KV cached across batch
+  calls on :8755 — 8 → 46 tok/s effective at production shape.
+- WORKER-QUARANTINE-AUTOHEAL-V1 (`a66629d`): the supervisor bounces its
+  own fence-quarantined children (they heartbeat forever and never
+  exit); the quarantine-after-commit trap class is dead.
+- LEAN-COVERAGE-GATE (`359500b`): LEAN index encoding degenerates to
+  invalid JSON on 50–90% of real-book calls (the "0 salvage" receipt was
+  survivorship over 5 surviving calls; live receipts dropped 40/40 +
+  19/24). Fleet runs POLYMATH_LEAN_LOCAL=off (flat contract) until the
+  JSON grammar mask makes LEAN parse-safe; the owner's lean default is
+  untouched in code.
+- QUERY-PATH-S11-6-PHASE1 (`4868e37`) + chat fixes (`da8f2d0`):
+  child-lane kind filters (post-§11 pollution), BM25 sparse lexical lane
+  (shared tokenizer), ENTITY-CARD-LANE-V1 with stable doc boost,
+  rerank wake budget 90s→5s (the 113 s answers), CITATION-TAGS-V1
+  ([S#] tags — "[chunk 67313]" was instructed, not hallucinated),
+  NO-THINK-CHAT-V1 (v4-flash streams thinking inline via the daemon).
+  Measured end state: FAST 2.0 s, chat 4.9 s, clean citations.
+- Serve-side env additions (hand-started orchestrator):
+  POLYMATH_RERANK_WAKE_BUDGET_S=5, POLYMATH_LEAN_LOCAL=off; upload
+  defaults are probe/query_enabled=false — a corpus must be ENABLED
+  before retrieval sees it (this, not a bug, is "retrieval returns
+  nothing" on a fresh corpus).
+
+## 3. Architecture now (details: PLAN-AUTHORITY-REGISTER §11 + §11.0 audit)
+
+The governing principle — **the model proposes; deterministic Python
+owns truth** — is audited claim-by-claim in register §11.0 (claim →
+enforcement point → verdict). Built this session: GENERATION-STAMPING-V1
+(11.1), ROUTING-ENTITY-CARDS-V1 (11.2, shared `entity_card_id`
+derivation), SPARSE-BM25-V1 projection side (11.3, shared tokenizer
+`shared/polymath_shared/sparse_bm25.py` — query side MUST import the
+same function), COMPILE-OBJECTS-STAGE-V1 (11.4, non-blocking DAG stage).
+Session-4 control-plane fixes: CENSUS-DIRTY-SIGNAL-V2 (stuck-run class
+dead), HASH-FENCE-V2, TRANSPORT-RETRY-500-V1, TERM-SURFACE-GATE,
+CHUNK-SWEEP-SCOPE-V1.
+
+## 4. Open work, ranked
+
+1. **§11.6 query-side** (register MISSING): FAST reads `routing_entity`
+   cards; HYBRID fuses the `bm25` sparse lane. One hard rule: import
+   `sparse_bm25.tokenize/sparse_vector` — a second tokenizer silently
+   zeroes recall.
+2. Term-gate residue: noun/verb-phrase junk ("Clear it", "criteria set
+   by the programmer") passes the narrow deterministic rule and now
+   reaches entity cards — needs the POS-grade check (spaCy sidecar
+   exists) or owner acceptance.
+3. Legacy corpora sparse migration:
+   `scripts/migrate_routing_sparse.py <corpus> --apply` (new corpora are
+   sparse-native automatically).
+4. compile_objects backfill for pre-existing query_ready runs does NOT
+   happen automatically (terminal runs are never re-minted) — owner
+   decision per corpus.
+5. Owner decisions carried: Neo4j purge of deleted-corpus nodes, GLiNER
+   retirement (§6), `com.polymath.apple-ml` is a Hermes dependency —
+   do not stop it without changing Hermes.
+6. Test debt: summary_runtime_d3/d4 + fact_endpoint hermeticity vs a
+   populated DB; 8 `orchestrator.orchestrator` collection errors under
+   full-suite runs (sys.path interaction, pre-existing).
+
+## 5. Test baseline (full suite, `-o addopts="" --continue-on-collection-errors`)
+
+~1,554 pass. KNOWN failing (pre-existing, attributed): chat_response
+contract ×2, embed_batching, fact_endpoint ×2 (data-dependent),
+graph_lifecycle qualified, summary_runtime_d3/d4 (not hermetic vs live
+DB) + the 8 collection errors above. Anything OUTSIDE this list is new
+— attribute before shipping (throwaway-worktree replay at the parent
+commit is the proven method).
+
+## 6. Traps that cost real time (measured, all sessions)
+
+- **Concurrent sessions share this repo.** A sibling session's
+  `git add -A` swept in-progress work into its commit once. Commit
+  narrowly and early; on "my changes vanished", read `git log --stat`
+  before touching the stash.
+- Cross-corpus content collision is fail-loud by design: identical bytes
+  belong to exactly ONE corpus. Re-ingesting the same file needs unique
+  bytes or a delete first (delete during extract → 409 until the stage
+  transaction ends).
+- The extract stage holds ONE Postgres transaction per document (10–16
+  min on a book) — `idle in transaction` on
+  `SELECT byte_length FROM documents` is its healthy signature, and
+  tickets can look `ready` from outside mid-stage.
+- Diagnose run-row churn with a short-lived BEFORE-UPDATE audit trigger,
+  not by polling (`runs.updated_at` can read non-monotonic under
+  concurrent touches).
+- Old registrations linger `quarantined` after a fleet kill until the
+  heartbeat window ages them out — count `status='healthy'` + fresh
+  heartbeat only.
+- macOS: no `setsid`/`timeout`; `nohup … &` + `disown` (zsh);
+  `find -newermt` needs ISO timestamps; a supervisor's own log file
+  mtime advances constantly — never use it as a `-newer` reference.
+- The worker's nohup stdout is block-buffered — a silent worker log does
+  NOT mean a dead worker; the ollama/server wire logs and `lsof -i` are
+  ground truth.
+- Both retrieval lanes can resolve to ONE Qdrant collection (corpus pin
+  == neural contract). Any reconciler sweeping that collection must
+  scope to its OWN lane's points (CHUNK-SWEEP-SCOPE-V1 exists because
+  the chunk sweep deleted 94 entity cards).
+
+## 7. Key files
+
+`control/control/{census,scheduler,tickets,main,process_supervisor}.py` ·
+`shared/polymath_shared/{execution_bundle,sparse_bm25,projection_contracts,worker_runtime,receipts}.py` ·
+`shared/polymath_shared/llm_extraction/{client,gate,policy,ontology,limiter}.py` ·
+`workers/workers/{extract_worker,llm_direct,compile_objects_worker,project_qdrant_worker,verify_worker}.py` ·
+`config/extraction_models/limiter.yaml` · `config/runtime_budget.yaml` ·
+`scripts/{read_extract_artifact,quality_sample_dump,migrate_routing_sparse}.py` ·
+work-logs `2026-08-30-{extraction-coverage-hardening,summary-compiler,control-plane-hardening,storage-projections-s11}.md`.

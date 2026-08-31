@@ -217,7 +217,10 @@ def test_many_events_one_run_dedup(conn):
         # count evaluations indirectly: fresh-history queries for this run
         real_execute = conn.execute
         def counting(sql, *a, **k):
-            if isinstance(sql, str) and "run_id = ANY" in sql:
+            # history fetches specifically — CENSUS-DIRTY-SIGNAL-V2 added
+            # a stage_tickets watermark query that also uses run_id=ANY
+            if isinstance(sql, str) and "run_id = ANY" in sql \
+                    and "stage_attempts" in sql:
                 evals["n"] += 1
             return real_execute(sql, *a, **k)
         conn.execute = counting

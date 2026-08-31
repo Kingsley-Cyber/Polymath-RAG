@@ -330,10 +330,13 @@ def _delete_document_tx(doc_id: str, confirm: str = "") -> dict:
     (CRITICAL: receipts without points would make a re-ingest skip
     re-embedding into a hole). Facts are removed only when no evidence
     remains from other documents. Typed confirmation required."""
-    if confirm != doc_id:
-        raise HTTPException(409, {
-            "error_code": "confirmation_required",
-            "message": f"pass confirm={doc_id!r} to delete this document"})
+    # UI-CONTRACT-FIX 2026-08-30: the confirm token is the doc_id OR the
+    # source_name — a 64-char content hash is not human-typable, which made
+    # the delete button look dead (silent no-op on mismatch). Also 400-class
+    # for a bad confirm (409 was semantically wrong).
+    # DELETE-WINS: cancel this document's in-flight stages first
+    with tx() as _q:
+        _quiesce_doc(_q, doc_id)
     removed: dict = {}
     with tx() as conn:
         _lock_timeout_or_409(conn, "delete document")
@@ -344,6 +347,11 @@ def _delete_document_tx(doc_id: str, confirm: str = "") -> dict:
             raise HTTPException(404, {"error_code": "unknown_document",
                                       "message": doc_id})
         corpus_id, source_name = row
+        if confirm not in (doc_id, source_name):
+            raise HTTPException(400, {
+                "error_code": "confirmation_required",
+                "message": f"pass confirm='{doc_id}' or the file name "
+                           f"'{source_name}' to delete this document"})
         chunk_ids = [r[0] for r in conn.execute(
             "SELECT chunk_id FROM chunks WHERE doc_id=%s", (doc_id,)).fetchall()]
 
@@ -632,6 +640,51 @@ def _raise_if_lock_timeout(exc: Exception, what: str) -> None:
                        "or wait for the stage to finish, then retry."})
 
 
+def _quiesce_doc(conn, doc_id: str) -> None:
+    """DELETE-WINS for a single document: supersede its in-flight tickets
+    so workers stop claiming while the delete proceeds."""
+    conn.execute(
+        """UPDATE stage_tickets t
+              SET status = 'superseded', lease_owner = NULL,
+                  lease_expires_at = NULL
+            WHERE t.status IN ('pending','ready','leased')
+              AND t.run_id IN (SELECT run_id FROM outbox_events
+                                WHERE event_type = 'chunked.v1'
+                                  AND payload->>'doc_id' = %s)""",
+        (doc_id,))
+
+
+def _quiesce_corpus(conn, corpus_id: str) -> dict:
+    """DELETE-WINS (owner directive 2026-08-30): a corpus delete must
+    succeed even with stages in flight. Cancel every non-terminal ticket
+    (superseded = unclaimable; the machinery already tolerates the
+    status), drop leases, and SIGTERM the extract workers IF they hold
+    this corpus's leases — their stage transactions roll back cleanly
+    (idempotent stage design) and the supervisor respawns them into an
+    empty claim queue. Returns a summary for the delete receipt."""
+    import subprocess
+    rows = conn.execute(
+        """SELECT stage, status FROM stage_tickets
+            WHERE corpus_id = %s AND status IN ('pending','ready','leased')""",
+        (corpus_id,)).fetchall()
+    leased_stages = sorted({r[0] for r in rows if r[1] == "leased"})
+    conn.execute(
+        """UPDATE stage_tickets
+              SET status = 'superseded', lease_owner = NULL,
+                  lease_expires_at = NULL
+            WHERE corpus_id = %s AND status IN ('pending','ready','leased')""",
+        (corpus_id,))
+    kicked = 0
+    if "extract" in leased_stages:
+        # best-effort, single-box: respawned workers find no claimable tickets
+        r = subprocess.run(["pkill", "-f", "workers.extract_worker"],
+                           capture_output=True)
+        kicked = 1  # pkill returns count-unstable across platforms; report act
+    return {"tickets_cancelled": len(rows), "stages_leased": leased_stages,
+            "workers_kicked": kicked}
+
+
+
 @router.delete("/corpora/{corpus_id}")
 def delete_corpus(corpus_id: str, confirm: str = "") -> dict:
     """OWNER-DESTRUCTIVE: remove a corpus and everything derived from
@@ -646,6 +699,10 @@ def delete_corpus(corpus_id: str, confirm: str = "") -> dict:
         raise HTTPException(422, {
             "error_code": "confirmation_required",
             "message": "pass confirm=<corpus_id> to delete"})
+    # DELETE-WINS: quiesce in-flight stages before touching rows so the
+    # owner never waits out (or 409s on) running work.
+    with tx() as _q:
+        quiesce = _quiesce_corpus(_q, corpus_id)
     removed: dict[str, int] = {}
     try:
         return _delete_corpus_tx(corpus_id, removed)
@@ -879,9 +936,10 @@ teach it, never inventory it.
 
 Grounding rules (non-negotiable; they override anything below):
 - Everything you assert must come from the provided evidence. Cite by \
-appending [locator] at the END of the sentence or paragraph a claim \
-comes from — never interrupt a sentence with a citation, never open \
-with boilerplate like "Based on the evidence in your corpus".
+appending the evidence tag — e.g. [S2] — at the END of the sentence or \
+paragraph a claim comes from; use ONLY the [S#] tags given, never raw \
+chunk ids or page guesses. Never interrupt a sentence with a citation, \
+never open with boilerplate like "Based on the evidence in your corpus".
 - If the user asks you to BUILD something (a quiz, a PBQ-style HTML \
 test, flashcards, a study plan, code), build it fully, drawing the \
 substance from the evidence. Emit complete artifacts (e.g., a full \
@@ -947,13 +1005,20 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
     (orchestrator.api.reasoning, ported verbatim): templates prepend to
     the user prompt after the RAG context is assembled — the exact
     v3.3 composition point."""
+    # CITATION-TAGS-V1 (measured 2026-08-30): raw locators instructed as
+    # citation labels leaked into answers as "[chunk 67313]" — the model
+    # now cites stable [S1]..[Sn] tags; the legend maps tags back to the
+    # real locators for the trace/UI.
     ev_lines: list[str] = []
+    legend: list[str] = []
     for item in (bundle.get("evidence_bundle") or [])[:40]:
         span = item.get("source_span") or {}
         loc = span.get("locator") or ""
         text = (span.get("text") or "")[:_EVIDENCE_TEXT_CHARS]
         if loc and text:
-            ev_lines.append(f"[{loc}]\n{text}")
+            tag = f"S{len(ev_lines) + 1}"
+            ev_lines.append(f"[{tag}]\n{text}")
+            legend.append(f"[{tag}] = {loc}")
     for f in graph_facts[:20]:
         ev_lines.append(
             f"[fact:{f.get('fact_id', '')[:24]}] "
@@ -965,6 +1030,7 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
     context_block = ""
     if ev_lines:
         context_block += ("EVIDENCE (this turn):\n" + "\n---\n".join(ev_lines))
+        context_block += ("\n\nSOURCE TAGS:\n" + "\n".join(legend))
     if carried:
         context_block += ("\n\nEVIDENCE (carried from earlier turns):\n"
                           + "\n---\n".join(carried))
@@ -1042,8 +1108,15 @@ def _ollama_generate(model: str, query: str, bundle: dict,
     try:
         with httpx.stream(
                 "POST", f"{OLLAMA_URL}/api/chat",
+                # NO-THINK-CHAT-V1 (measured 2026-08-30): deepseek-v4-flash
+                # via the daemon streams its reasoning INLINE as content
+                # (the daemon cannot separate it for this model), so answers
+                # opened with "The user is asking... Let me synthesize...".
+                # Default off; POLYMATH_CHAT_THINK=on restores the
+                # reasoning-card behavior for models that separate cleanly.
                 json={"model": model, "messages": messages, "stream": True,
-                      "think": True},
+                      "think": os.environ.get("POLYMATH_CHAT_THINK", "off")
+                               .lower() in ("1", "on", "true")},
                 timeout=httpx.Timeout(300, connect=10)) as r:
             if r.status_code != 200:
                 r.read()

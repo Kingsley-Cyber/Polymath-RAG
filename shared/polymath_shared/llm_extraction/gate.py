@@ -273,6 +273,15 @@ def sanitize(raw: str, expected_neighborhood_ids: set[str]) -> tuple[SanitizeRes
                                salvaged=False, raw_chars=len(raw),
                                detail="no valid packet after sanitize/salvage"),
                 None)
+    # One-neighborhood-per-call transport (alias "n1"): an empty id is
+    # unambiguous when exactly one neighborhood was sent — assign it.
+    # (Measured 2026-08-30: under grammar masking the 4B sometimes emits
+    # neighborhood_id:"" while the rest of the item is perfect.)
+    if len(expected_neighborhood_ids) == 1:
+        only = next(iter(expected_neighborhood_ids))
+        for i in packet.items:
+            if not i.neighborhood_id:
+                i.neighborhood_id = only
     unknown = {i.neighborhood_id for i in packet.items} - expected_neighborhood_ids
     if unknown:
         # Drop ONLY the items that name an unknown neighborhood — one
@@ -452,6 +461,63 @@ class NormalizedExtraction:
 _INTERROGATIVE_RE = re.compile(
     r"^\s*(which|what|who|whom|whose|where|when|why|how)\b", re.IGNORECASE)
 
+_SENTENCE_PUNCT_RE = re.compile(r"[?!;]|\.\s|\.$")
+_TERM_MAX_WORDS = 8
+# Exact-token, case-sensitive membership: the lowercase rows match
+# mid-sentence clause fragments; the capitalized rows are the unambiguous
+# clause starters that never begin a real term. Uppercase keywords
+# ("IS NOT NULL", "WHEN"), capitalized proper names ("The Open Group"),
+# and hyphenated tokens ("In-memory") never match.
+_CLAUSE_AUX = frozenset({
+    "is", "are", "was", "were", "be", "been", "being",
+    "has", "have", "had", "do", "does", "did",
+    "will", "would", "should", "could", "can", "cannot", "may", "might",
+    "must", "shall",
+    "won't", "don't", "didn't", "doesn't", "isn't", "aren't", "wasn't",
+    "weren't", "hasn't", "haven't", "hadn't", "can't", "couldn't",
+    "shouldn't", "wouldn't", "mustn't",
+})
+_CLAUSE_OPENERS = frozenset({
+    "if", "when", "while", "because", "although", "unless", "whether",
+    "that", "this", "these", "those", "there", "it", "you", "we", "they",
+    "he", "she", "i", "in", "on", "at", "of", "for", "with", "by", "to",
+    "from", "as", "during", "within", "most", "some", "all", "each",
+    "every", "any", "and", "or", "but", "so", "then", "also", "however",
+    "the", "a", "an",
+    "If", "When", "While", "Because", "Although", "Unless", "Whether",
+    "You", "We", "They", "He", "She", "There", "However", "Then", "Also",
+})
+
+
+def is_term_surface(surface: str) -> bool:
+    """TERM-SURFACE-GATE (owner 2026-08-30): an entity surface or a
+    relation endpoint must be a TERM, not a clause. MEASURED: the local
+    4B lane emitted clause-length surfaces ("If you won't specify any
+    value") joined by RELATED_TO, which then leak into the cards'
+    relation and keyword capsules. Owner rule: <= 8 words and no
+    sentence punctuation; strengthened (measured necessary — the owner's
+    own flagship example is 6 words with no punctuation) by two
+    exact-token tests on multi-word surfaces: a lowercase finite
+    auxiliary anywhere, or a clause-opening function word first.
+    Measured on the live corpus: Learning SQL 10/128 surfaces caught,
+    zero false positives; CySA+ (cloud) 118/2624 caught — code
+    snippets, list-of-alternatives fragments, and quiz answer clauses,
+    with the caught set free of real terms by eye."""
+    s = (surface or "").strip()
+    if not s:
+        return False
+    toks = s.split()
+    if len(toks) > _TERM_MAX_WORDS:
+        return False
+    if _SENTENCE_PUNCT_RE.search(s):
+        return False
+    if len(toks) >= 2:
+        if toks[0] in _CLAUSE_OPENERS:
+            return False
+        if any(t in _CLAUSE_AUX for t in toks):
+            return False
+    return True
+
 
 def is_interrogative(quote: str) -> bool:
     """INTERROGATIVE-ATTESTATION (owner 2026-08-30): a relation whose only
@@ -476,6 +542,13 @@ def validate_and_normalize(packet: ExtractionPacket,
     for item in packet.items:
         views = neighborhoods.get(item.neighborhood_id, [])
         for ent in item.entities:
+            if not is_term_surface(ent.surface):
+                n_ent_rej += 1
+                out.rejections.append({
+                    "kind": "entity", "surface": ent.surface,
+                    "error_class": "NON_TERM_SURFACE",
+                    "neighborhood_id": item.neighborhood_id})
+                continue
             placed = False
             core, method = map_core_type(ent.type)
             for view in views:
@@ -519,6 +592,19 @@ def validate_and_normalize(packet: ExtractionPacket,
                     "error_class": "UNATTESTED_ENTITY",
                     "neighborhood_id": item.neighborhood_id})
         for rel in item.relations:
+            # Cheapest check first — a junk endpoint makes the relation
+            # junk regardless of attestation.
+            bad_endpoints = [n for n in (rel.subject, rel.object)
+                             if not is_term_surface(n)]
+            if bad_endpoints:
+                n_rel_rej += 1
+                out.rejections.append({
+                    "kind": "relation", "predicate": rel.predicate,
+                    "subject": rel.subject, "object": rel.object,
+                    "error_class": "NON_TERM_ENDPOINT",
+                    "detail": bad_endpoints,
+                    "neighborhood_id": item.neighborhood_id})
+                continue
             anchor: ChunkView | None = None
             q_span: tuple[int, int] | None = None
             for view in views:

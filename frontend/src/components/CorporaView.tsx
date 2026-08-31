@@ -27,7 +27,10 @@ export default function CorporaView({
   useEffect(() => {
     refresh();
     const t = setInterval(refresh, 15_000);
-    return () => clearInterval(t);
+    const onVis = () => { if (document.visibilityState === "visible") refresh(); };
+    document.addEventListener("visibilitychange", onVis);
+    return () => { clearInterval(t);
+      document.removeEventListener("visibilitychange", onVis); };
   }, [refresh]);
 
   const toggle = (id: string) =>
@@ -43,7 +46,12 @@ export default function CorporaView({
       { method: "DELETE" },
     );
     if (!r.ok) {
-      setLog((l) => [`✗ ${id}: ${r.status}`, ...l].slice(0, 20));
+      const body = await r.json().catch(() => ({}));
+      const why = body?.detail?.error_code === "runs_in_flight"
+        ? "extraction in flight — retry after ingestion completes"
+        : body?.detail?.message ?? r.status;
+      setLog((l) => [`✗ ${id}: ${why}`, ...l].slice(0, 20));
+      window.alert(`Delete failed: ${why}`);
       return false;
     }
     setLog((l) => [`✓ deleted ${id}`, ...l].slice(0, 20));

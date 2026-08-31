@@ -83,6 +83,10 @@ ROUTING_KINDS = (
     # transcript-qual-v1 held 3 active artifact receipts with 0 points).
     "routing_procedure",
     "routing_concept",
+    # ROUTING-ENTITY-CARDS-V1 (§11 L1): entity cards reconcile like every
+    # other routing lane — active receipts over an empty store must be
+    # detected, and lost points re-drive the projector.
+    "routing_entity",
 )
 
 
@@ -120,12 +124,21 @@ def _desired_routing_ids(conn: Connection, corpus: str) -> dict[str, set[str]]:
         "SELECT concept_id FROM concept_artifacts WHERE corpus_id = %s",
         (corpus,),
     ).fetchall()
+    from polymath_shared.projection_contracts import entity_card_id
+    entity_rows = conn.execute(
+        """
+        SELECT DISTINCT m.entity_id FROM mentions m
+         WHERE m.corpus_id = %s AND m.entity_id IS NOT NULL
+        """,
+        (corpus,),
+    ).fetchall()
     return {
         "routing_document_summary": {r[0] for r in doc_rows},
         "routing_section_summary": {r[0] for r in section_rows},
         "routing_child": {r[0] for r in child_rows},
         "routing_procedure": {r[0] for r in proc_rows},
         "routing_concept": {r[0] for r in concept_rows},
+        "routing_entity": {entity_card_id(r[0], corpus) for r in entity_rows},
     }
 
 
@@ -178,12 +191,33 @@ def _routing_receipts(conn: Connection, corpus: str) -> dict[str, set[str]]:
         """,
         (corpus,),
     ).fetchall()
+    # entity cards: receipts are corpus-scoped by the shared id
+    # derivation itself (the id embeds the corpus), so membership in the
+    # desired id set IS the corpus scope.
+    from polymath_shared.projection_contracts import entity_card_id
+    desired_cards = {
+        entity_card_id(r[0], corpus)
+        for r in conn.execute(
+            """SELECT DISTINCT m.entity_id FROM mentions m
+                WHERE m.corpus_id = %s AND m.entity_id IS NOT NULL""",
+            (corpus,)).fetchall()}
+    card_rows = []
+    if desired_cards:
+        card_rows = conn.execute(
+            """
+            SELECT pr.entity_id FROM projection_receipts pr
+             WHERE pr.projection = 'qdrant' AND pr.entity_kind = 'routing_entity'
+               AND pr.active AND pr.entity_id = ANY(%s)
+            """,
+            (sorted(desired_cards),),
+        ).fetchall()
     return {
         "routing_document_summary": {r[0] for r in doc_rows},
         "routing_section_summary": {r[0] for r in section_rows},
         "routing_child": {r[0] for r in child_rows},
         "routing_procedure": {r[0] for r in proc_rows},
         "routing_concept": {r[0] for r in concept_rows},
+        "routing_entity": {r[0] for r in card_rows},
     }
 
 
@@ -261,7 +295,17 @@ def reconcile_qdrant(conn: Connection, run_id: str, corpus: str) -> dict:
         store_ids: set[str] = set()
         try:
             points, _ = client.scroll(collection_name=collection, limit=100_000, with_vectors=False)
-            store_ids = {str(p.payload.get("chunk_id")) for p in points if p.payload}
+            # CHUNK-SWEEP-SCOPE-V1 (measured live 2026-08-30 15:14): this
+            # reconciler owns CHUNK points only. Entity cards, routing
+            # summaries and knowledge-object cards carry chunk_id=None;
+            # str(None) == "None" was never a receipt and never desired,
+            # so every such point was classified a true orphan and
+            # DELETED — 94 routing_entity cards vanished minutes after
+            # projection once both lanes resolved to one collection.
+            # A point without a chunk_id is another lane's point: the
+            # routing reconciler owns it; this sweep must not see it.
+            store_ids = {str(p.payload.get("chunk_id")) for p in points
+                         if p.payload and p.payload.get("chunk_id")}
         except Exception:
             store_ids = set()
     finally:
@@ -284,9 +328,12 @@ def reconcile_qdrant(conn: Connection, run_id: str, corpus: str) -> dict:
         client = _qdrant_client()
         try:
             points, _ = client.scroll(collection_name=collection, limit=100_000, with_vectors=False)
+            # CHUNK-SWEEP-SCOPE-V1: deletion candidates are chunk-lane
+            # points ONLY (non-null chunk_id) — see the guard above.
             orphan_point_ids = [
                 p.id for p in points
-                if p.payload and str(p.payload.get("chunk_id")) in true_orphans
+                if p.payload and p.payload.get("chunk_id")
+                and str(p.payload.get("chunk_id")) in true_orphans
             ]
             if orphan_point_ids:
                 client.delete(collection_name=collection, points_selector=orphan_point_ids)

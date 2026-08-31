@@ -71,6 +71,14 @@ def receipt_hash(projection: str, entity_kind: str, source_id: str, contract_ver
     return projection_id(projection, entity_kind, source_id, contract_version)
 
 
+def entity_card_id(entity_id: str, corpus_id: str) -> str:
+    """ROUTING-ENTITY-CARDS-V1 (§11 L1): the content-addressed id of one
+    (entity, corpus) routing card. SHARED derivation — the projector
+    writes it and the verifier reconciles against it; deriving it in two
+    places is the same-concept-different-vocabulary bug class."""
+    return "entcard_" + content_hash({"entity": entity_id, "corpus": corpus_id})
+
+
 def qdrant_collection_name(corpus_id: str, contract_id: str) -> str:
     """Deterministic collection name. Corpus ids are namespaced by hash
     so exotic corpus names cannot collide; the contract id pins the

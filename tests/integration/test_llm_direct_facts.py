@@ -79,8 +79,9 @@ def test_direct_facts_land_and_aggregate_across_documents(conn) -> None:
                                    chunk_rows=rows_a, merged=merged, lane="local", model="m")
     assert again["written"] == {"entities": 0, "mentions": 0, "facts": 0, "evidence": 0}
     # symmetric predicate: endpoints ordered by entity id
-    sym = conn.execute("SELECT subject_id, object_id FROM facts WHERE predicate='CORRELATES_WITH' "
-                       "AND provenance->>'contract'='llm-direct-facts-v1'").fetchall()
+    sym = conn.execute("SELECT DISTINCT f.subject_id, f.object_id FROM facts f "
+                       "JOIN evidence e ON e.fact_id=f.fact_id WHERE f.predicate='CORRELATES_WITH' "
+                       "AND f.provenance->>'contract'='llm-direct-facts-v1' AND e.doc_id='doc_llmdirect_a'").fetchall()
     assert sym and all(s < o for s, o in sym)
     # second document, same relation → same fact, new evidence row
     rows_b = _seed(conn, "doc_llmdirect_b", "chunk_llmdirect_b")
@@ -88,8 +89,10 @@ def test_direct_facts_land_and_aggregate_across_documents(conn) -> None:
     b = llm_direct.materialize(conn, corpus_id=corpus, doc_id="doc_llmdirect_b",
                                chunk_rows=rows_b, merged=merged_b, lane="cloud", model="m2")
     assert b["written"]["facts"] == 0 and b["written"]["evidence"] == 2
-    fid = conn.execute("SELECT fact_id FROM facts WHERE predicate='REQUIRES' "
-                       "AND provenance->>'contract'='llm-direct-facts-v1' LIMIT 1").fetchone()[0]
+    fid = conn.execute("SELECT f.fact_id FROM facts f JOIN evidence e ON e.fact_id=f.fact_id "
+                       "WHERE f.predicate='REQUIRES' "
+                       "AND f.provenance->>'contract'='llm-direct-facts-v1' "
+                       "AND e.doc_id='doc_llmdirect_a' LIMIT 1").fetchone()[0]
     docs = {r[0] for r in conn.execute("SELECT doc_id FROM evidence WHERE fact_id=%s", (fid,)).fetchall()}
     assert docs == {"doc_llmdirect_a", "doc_llmdirect_b"}
     # evidence offsets are exact source slices
@@ -100,3 +103,13 @@ def test_direct_facts_land_and_aggregate_across_documents(conn) -> None:
     # mentions carry corpus + document provenance
     m = conn.execute("SELECT corpus_id, doc_id, entity_id FROM mentions WHERE doc_id='doc_llmdirect_a' AND surface='FortiGate'").fetchone()
     assert m[0] == corpus and m[2] is not None
+    # GENERATION-STAMPING-V1 (§11 L0 / register 11.1): the generation is
+    # indexable on the rows themselves, and the open type vocabulary is
+    # preserved as a deterministic set union, never flattened.
+    fev = conn.execute("SELECT extractor_version FROM facts WHERE fact_id=%s", (fid,)).fetchone()[0]
+    assert fev == "llm-direct-v1"
+    ent = conn.execute(
+        "SELECT extractor_version, raw_types FROM entities WHERE entity_id=%s",
+        (m[2],)).fetchone()
+    assert ent[0] == "llm-direct-v1"
+    assert isinstance(ent[1], list) and "Product" in ent[1]

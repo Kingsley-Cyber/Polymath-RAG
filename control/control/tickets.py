@@ -40,6 +40,11 @@ STAGE_DAG: list[tuple[str, str, tuple[str, ...], tuple[str, ...]]] = [
     # SUMMARY-VOCABULARY-LAYER: background intelligence stages. They run
     # AFTER settlement consumes nothing from the critical ingestion path:
     # a failure degrades summaries to DEGRADED, never blocks QUERY_READY.
+    # COMPILE-OBJECTS-STAGE-V1 (§11): the deterministic concept/procedure
+    # compilers as their own provider-agnostic stage — no longer a
+    # bolt-on call inside the extract branch. Consumes admitted mentions
+    # + chunk text; identical under either provider era.
+    ("compile_objects", "compile_objects.v1", (), ()),
     ("parent_summary", "parent_summary.v1", (), ()),
     ("document_summary", "document_summary.v1", (), ()),
     ("corpus_summary", "corpus_summary.v1", (), ()),
@@ -50,6 +55,7 @@ STAGE_DAG: list[tuple[str, str, tuple[str, ...], tuple[str, ...]]] = [
 # (SUMMARY-VOCABULARY-LAYER production rule: knowledge=READY while
 # summaries=DEGRADED).
 NON_BLOCKING_STAGES = frozenset({
+    "compile_objects",
     "parent_summary", "document_summary", "corpus_summary", "vocabulary",
 })
 

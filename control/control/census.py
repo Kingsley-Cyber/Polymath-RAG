@@ -63,6 +63,22 @@ class Census:
 # clears happen inside stage transactions that record attempts — so runs
 # without post-watermark attempts reuse their previous tick's verdict.
 #
+# CENSUS-DIRTY-SIGNAL-V2 (measured 2026-08-30): that premise was FALSE
+# for the ticket-DAG stages outside STAGE_CHAIN — the summary stages
+# complete their tickets WITHOUT writing stage_attempts. A run whose
+# verify attempt landed while summary cards were still pending cached a
+# non-promote verdict and, with no later attempt ever arriving, replayed
+# it FOREVER: chain done, tickets done, run pinned at `reconciling`
+# (cysa-study-v1, both runs, 13:48→14:01 until a forced full pass).
+# Two guards, both required:
+#   1. dirtiness also tracks stage_tickets.updated_at (ticket closes,
+#      leases, re-readies mark the run for re-evaluation), and the
+#      watermark advances over ticket time too;
+#   2. a verdict carrying GAPS is never cached — gaps are transient by
+#      definition, and a replayed gap re-arms outbox events every tick
+#      for work nobody can claim (the ticket gate refuses non-ready
+#      tickets), churning workers forever.
+#
 #   NORMAL OPERATION              RECOVERY / AUDIT
 #   incremental (dirty only)      full sweep
 #
@@ -165,11 +181,21 @@ def compute_census(conn: Connection, *, max_attempts: int = 3,
     if mode == "incremental":
         overlap_us = 1_000_000  # 1s replay window; derivation is idempotent
         _t0 = _time.perf_counter()
+        lookback = f"{(_time.time()*1e6 - wm_us + overlap_us)/1e6:.3f} seconds"
         changed = {
             r[0] for r in conn.execute(
                 """SELECT DISTINCT run_id FROM stage_attempts
                    WHERE started_at > now() - %s::interval""",
-                (f"{(_time.time()*1e6 - wm_us + overlap_us)/1e6:.3f} seconds",),
+                (lookback,),
+            ).fetchall()}
+        # CENSUS-DIRTY-SIGNAL-V2: ticket transitions (close, lease,
+        # re-ready) change promotability without any stage_attempt —
+        # the summary stages write none at all.
+        changed |= {
+            r[0] for r in conn.execute(
+                """SELECT DISTINCT run_id FROM stage_tickets
+                   WHERE updated_at > now() - %s::interval""",
+                (lookback,),
             ).fetchall()}
         timing["dirty_select_ms"] = round(
             (_time.perf_counter() - _t0) * 1000, 1)
@@ -272,7 +298,7 @@ def compute_census(conn: Connection, *, max_attempts: int = 3,
         if failed:
             census.fail.append(run_id)
 
-        if complete and not census.fail:
+        if complete and not failed:
             # Projection receipt census: an ok projection stage can still
             # have missing receipts (store loss cleared by VERIFY). Re-arm
             # the stage so the projector re-drives (PLAN Phase F gate 1/2).
@@ -289,7 +315,7 @@ def compute_census(conn: Connection, *, max_attempts: int = 3,
                     ))
                     complete = False
 
-        if complete and not census.fail:
+        if complete and not failed:
             # EXTRACTION-COVERAGE-V1 promotion barrier (control plane is
             # the authority): a complete chain whose extract stage
             # dropped or lost track of neighborhoods is never query_ready.
@@ -301,12 +327,19 @@ def compute_census(conn: Connection, *, max_attempts: int = 3,
 
         # INCREMENTAL-CENSUS-V1: remember each run's derived outcome so
         # unchanged runs can be replayed verbatim next tick.
-        _VERDICT_CACHE[run_id] = {
-            "gaps": [g for g in census.gaps if g.run_id == run_id],
-            "promote": run_id in census.promote,
-            "fail": run_id in census.fail,
-            "degrade": census.degrade.get(run_id),
-        }
+        # CENSUS-DIRTY-SIGNAL-V2: a verdict with gaps is NEVER cached —
+        # gaps resolve through state the dirty signal may not see, and a
+        # replayed gap re-arms unclaimable outbox events every tick.
+        run_gaps = [g for g in census.gaps if g.run_id == run_id]
+        if run_gaps:
+            _VERDICT_CACHE.pop(run_id, None)
+        else:
+            _VERDICT_CACHE[run_id] = {
+                "gaps": [],
+                "promote": run_id in census.promote,
+                "fail": run_id in census.fail,
+                "degrade": census.degrade.get(run_id),
+            }
 
     # prune cache entries for runs that left the active set
     active_ids = {r[0] for r in runs}
@@ -314,6 +347,16 @@ def compute_census(conn: Connection, *, max_attempts: int = 3,
         if stale not in active_ids:
             _VERDICT_CACHE.pop(stale, None)
             _HISTORY_CACHE.pop(stale, None)
+
+    # CENSUS-DIRTY-SIGNAL-V2: the watermark must advance over ticket
+    # time too, or a ticket close after the last stage_attempt keeps its
+    # run permanently dirty (harmless but a full re-derivation per tick).
+    if active_ids:
+        row = conn.execute(
+            "SELECT max(updated_at) FROM stage_tickets WHERE run_id = ANY(%s)",
+            (sorted(active_ids),)).fetchone()
+        if row and row[0] is not None:
+            max_seen_us = max(max_seen_us, _epoch_us(row[0]))
 
     # Full passes SEED the watermark; incremental passes advance it.
     # Written inside the caller's transaction so a crash rolls the

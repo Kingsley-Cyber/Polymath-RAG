@@ -1136,6 +1136,12 @@ def process_event(conn: Connection, event: dict) -> None:
                     merged=_merged, lane=_decision.lane, model=_llm_model_id,
                     stamp=_stamped_provenance)
                 _perf["l1_l4_writes_s"] += _t.perf_counter() - _pt
+                # COMPILE-OBJECTS-STAGE-V1 (§11): the concept/procedure
+                # compilers moved to their own provider-agnostic stage
+                # (workers/compile_objects_worker.py, ticket
+                # compile_objects.v1). The one-session KNOWLEDGE-ARTIFACT-
+                # LLM-V1 bolt-on that lived here is superseded; the stage
+                # consumes the mentions this branch persists below.
                 # llm_live has no sentence-slice interpreter view; the
                 # bundle is the raw ledger over the chunks (see raw_evidence).
                 _bundle = _raw.write_bundle(conn, doc_id, require_slices=False)

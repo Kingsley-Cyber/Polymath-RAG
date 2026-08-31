@@ -109,21 +109,26 @@ profiles:
     slots: [control, qdrant, sidecar_embedder]
   extraction:
     why: "ingest and extract; needs GLiNER and spaCy, plus embedder for projection"
-    slots: [control, intake, profile, extract, sidecar_gliner, sidecar_spacy,
+    slots: [control, intake, profile, extract,
             sidecar_embedder]
   pipeline:
     why: "every ingestion stage end to end: intake through verify, with the
           extraction and embedding models. Excludes the orchestrator and
           reranker, which serve queries and are not part of building."
-    slots: [control, intake, profile, extract, canonicalize,
-            project_canonical, neo4j, qdrant, verify, summaries,
-            sidecar_gliner, sidecar_spacy, sidecar_embedder]
+    slots: [control, intake, profile, extract, extract2, canonicalize,
+            project_canonical, neo4j, qdrant, verify, compile_objects,
+            summaries, sidecar_embedder]
+    # 2026-08-30: sidecar_gliner + sidecar_spacy REMOVED from the pipeline
+    # profile — GLiNER is retired in llm_live (pin non-boot-critical since
+    # 3134548) and llm_live skips the spaCy slice interpreter (51dd9b2).
+    # Measured: with both resident, batched 4B decode ran ~76 tok/s
+    # aggregate vs the 241 idle-GPU bench. Rollback: re-add both slots.
   converge:
     why: "drive an already-extracted corpus to query_ready: project vectors,
           canonicalize, project the graph, verify. Extraction models are not
           called, so GLiNER, spaCy and the reranker stay unloaded."
     slots: [control, qdrant, canonicalize, project_canonical, neo4j, verify,
-            summaries, sidecar_embedder]
+            compile_objects, summaries, sidecar_embedder]
   graph:
     why: "canonicalize and project the graph; no provider models"
     slots: [control, canonicalize, project_canonical, neo4j, verify]
