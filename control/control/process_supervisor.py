@@ -64,6 +64,10 @@ FLEET: list = [
     # sidecar). Measured 2026-08-30: a local book sat 'ready' ~1 min with
     # no claimer while the single slot held the cloud book.
     ("extract2", "workers.extract_worker"),
+    # Third extract slot (MULTI-PROVIDER-AUTH-V1): a second cloud-affinity
+    # worker so a multi-provider pool gets real cloud parallelism, not
+    # just sharding. Costs one queue-poller when the pool is one deep.
+    ("extract3", "workers.extract_worker"),
     ("canonicalize", "workers.canonicalize_worker"),
     ("project_canonical", "workers.project_canonical_worker"),
     ("neo4j", "workers.project_neo4j_worker"),

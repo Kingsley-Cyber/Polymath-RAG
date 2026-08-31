@@ -7,10 +7,9 @@ is lane-affinity claiming in worker_runtime.claim_ticket_events.
 
 Design laws:
 
-  - The 300 KB owner boundary (policy.py) is UNTOUCHED: pool selection
-    only ever runs for documents the policy already routed to the cloud
-    lane, and `require_cloud_eligible` still guards every dispatch. More
-    providers widen cloud THROUGHPUT, never cloud ELIGIBILITY.
+  - Lane policy is policy.py's alone (owner rule v2: throughput router +
+    explicit assist); the pool only decides WHICH cloud endpoint serves
+    a cloud dispatch, never whether a document may go cloud.
   - Endpoint choice is DETERMINISTIC per document (blake2b(doc_id) over
     the enabled roster, sorted by name): a crash/replay re-selects the
     same endpoint, receipts stay attributable, and N providers shard the
@@ -18,21 +17,31 @@ Design laws:
   - One endpoint (today's config) degenerates to exactly the old
     behavior — same url, same model, same limiter key.
 
-Registering a new provider = one JSON entry in
-POLYMATH_LLM_CLOUD_EXTRA_ENDPOINTS:
-
-  [{"name": "deepseek-a", "url": "https://…/v1", "model": "deepseek-chat-x"}]
-
-Each extra endpoint gets its own AIMD limiter lane (keyed by name), so a
-slow provider throttles itself without dragging the others down.
+Registering a new provider (MULTI-PROVIDER-AUTH-V1): the durable way is
+config/cloud_providers.json — Groq and NVIDIA ship pre-configured there,
+and a provider ACTIVATES the moment its api_key_env resolves (process
+env, then the repo .env). POLYMATH_LLM_CLOUD_EXTRA_ENDPOINTS remains as
+an env-only override lane for ad-hoc endpoints. Each endpoint gets its
+own AIMD limiter lane (keyed by name), so a slow provider throttles
+itself without dragging the others down. Keys are runtime auth material:
+never in this file, never in fingerprints, never in logs.
 """
 from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass
+import logging
+import os
+from dataclasses import dataclass, field
+from pathlib import Path
 
 from polymath_shared.settings import get_settings
+
+log = logging.getLogger("extraction-pool")
+
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+_PROVIDERS_FILE = _REPO_ROOT / "config" / "cloud_providers.json"
+_ENV_FILE = _REPO_ROOT / ".env"
 
 
 @dataclass(frozen=True)
@@ -40,12 +49,88 @@ class CloudEndpoint:
     name: str
     url: str
     model: str
+    # MULTI-PROVIDER-AUTH-V1: the key is runtime auth material — excluded
+    # from repr and NEVER part of pool_fingerprint()/contract identity.
+    api_key: str | None = field(default=None, repr=False)
+    # per-endpoint payload quirks (see config/cloud_providers.json _doc)
+    reasoning_effort: str | None = None
+    json_mode: bool = True
 
     @property
     def limiter_key(self) -> str:
         # the primary keeps the historical limiter lane ("default") so
         # its AIMD state and seeds carry over; extras get their own.
         return "default" if self.name == "primary" else self.name
+
+    @property
+    def cloud_opts(self) -> dict:
+        return {"reasoning_effort": self.reasoning_effort,
+                "json_mode": self.json_mode}
+
+
+def _resolve_key(env_name: str) -> str | None:
+    """Process env first, then the repo .env (gitignored) — the fleet's
+    workers inherit the supervisor's env, which may predate a key drop,
+    so the .env file is the durable source."""
+    value = os.environ.get(env_name, "").strip()
+    if value:
+        return value
+    try:
+        for line in _ENV_FILE.read_text().splitlines():
+            line = line.strip()
+            if line.startswith(f"{env_name}="):
+                v = line.split("=", 1)[1].strip().strip("'\"")
+                if v:
+                    return v
+    except OSError:
+        pass
+    return None
+
+
+_ROSTER_LOGGED: set[tuple] = set()
+
+
+def _configured_providers() -> list[CloudEndpoint]:
+    """Providers from config/cloud_providers.json. AUTO-GATE: a provider
+    joins iff enabled is not false AND its key resolves — setup for a
+    new provider is pasting the key into .env. The gate is surfaced,
+    never silent: every roster composition is logged once."""
+    try:
+        raw = json.loads(_PROVIDERS_FILE.read_text())
+    except FileNotFoundError:
+        return []
+    except json.JSONDecodeError as exc:
+        raise ValueError(
+            f"{_PROVIDERS_FILE} is not valid JSON: {exc}")
+    out: list[CloudEndpoint] = []
+    for e in raw.get("providers") or []:
+        name = str(e.get("name") or "").strip()
+        if not name or name == "primary":
+            raise ValueError(f"provider needs a non-reserved name: {e!r}")
+        if e.get("enabled") is False:
+            continue
+        key_env = str(e.get("api_key_env") or "").strip()
+        key = _resolve_key(key_env) if key_env else None
+        if key_env and not key:
+            _log_once(("parked", name),
+                      "cloud provider %r parked: %s not set (drop the key "
+                      "in .env to activate)", name, key_env)
+            continue
+        url = str(e.get("url") or "").strip()
+        model = str(e.get("model") or "").strip()
+        if not (url and model):
+            raise ValueError(f"provider {name!r} needs url+model: {e!r}")
+        out.append(CloudEndpoint(
+            name=name, url=url, model=model, api_key=key,
+            reasoning_effort=e.get("reasoning_effort"),
+            json_mode=bool(e.get("json_mode", True))))
+    return out
+
+
+def _log_once(token: tuple, msg: str, *args) -> None:
+    if token not in _ROSTER_LOGGED:
+        _ROSTER_LOGGED.add(token)
+        log.info(msg, *args)
 
 
 def cloud_endpoints() -> list[CloudEndpoint]:
@@ -55,6 +140,7 @@ def cloud_endpoints() -> list[CloudEndpoint]:
     a silently-dropped provider would look like a half-speed pool."""
     s = get_settings().sidecars
     roster = [CloudEndpoint("primary", s.llm_cloud_url, s.llm_cloud_model)]
+    roster.extend(_configured_providers())
     raw = (getattr(s, "llm_cloud_extra_endpoints", "") or "").strip()
     if raw:
         try:
@@ -75,11 +161,18 @@ def cloud_endpoints() -> list[CloudEndpoint]:
             if name == "primary":
                 raise ValueError("'primary' is reserved for the settings "
                                  "endpoint; pick another name")
-            roster.append(CloudEndpoint(name, url, model))
+            key_env = str(e.get("api_key_env") or "").strip()
+            roster.append(CloudEndpoint(
+                name=name, url=url, model=model,
+                api_key=_resolve_key(key_env) if key_env else None,
+                reasoning_effort=e.get("reasoning_effort"),
+                json_mode=bool(e.get("json_mode", True))))
     roster.sort(key=lambda ep: ep.name)
     names = [ep.name for ep in roster]
     if len(set(names)) != len(names):
         raise ValueError(f"duplicate cloud endpoint names: {names}")
+    _log_once(("roster", tuple(names)),
+              "cloud extraction pool: %s", ", ".join(names))
     return roster
 
 
@@ -95,5 +188,7 @@ def select_cloud_endpoint(doc_id: str) -> CloudEndpoint:
 def pool_fingerprint() -> list[dict]:
     """Roster identity for contract_identity(): a provider added/removed/
     re-modeled must show up in the extraction contract."""
-    return [{"name": ep.name, "url": ep.url, "model": ep.model}
+    return [{"name": ep.name, "url": ep.url, "model": ep.model,
+             "reasoning_effort": ep.reasoning_effort,
+             "json_mode": ep.json_mode}
             for ep in cloud_endpoints()]

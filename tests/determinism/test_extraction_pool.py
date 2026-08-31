@@ -23,7 +23,13 @@ EXTRAS = json.dumps([
 
 
 @pytest.fixture
-def pool_env(monkeypatch):
+def pool_env(monkeypatch, tmp_path):
+    # isolate from the machine's real providers file, .env keys, and
+    # process env — these tests pin the MECHANISM, not this machine
+    from polymath_shared.llm_extraction import pool
+    monkeypatch.setattr(pool, "_PROVIDERS_FILE", tmp_path / "providers.json")
+    monkeypatch.setattr(pool, "_ENV_FILE", tmp_path / "dotenv")
+
     def set_extras(value: str | None):
         if value is None:
             monkeypatch.delenv("POLYMATH_LLM_CLOUD_EXTRA_ENDPOINTS",
@@ -128,3 +134,60 @@ def test_make_client_carries_endpoint_identity(pool_env):
         assert c.lane == "cloud"
         seen.add((c.endpoint_name, c.model, c.limiter_key))
     assert len(seen) == 3
+
+
+def test_providers_file_auto_gate(pool_env, monkeypatch, tmp_path):
+    # MULTI-PROVIDER-AUTH-V1: a configured provider joins ONLY when its
+    # key resolves; enabled:false parks it even with a key.
+    import json as _json
+
+    from polymath_shared.llm_extraction import pool
+    pf = tmp_path / "providers.json"
+    monkeypatch.setattr(pool, "_PROVIDERS_FILE", pf)
+    pf.write_text(_json.dumps({"providers": [
+        {"name": "groq", "enabled": True, "url": "http://g", "model": "m1",
+         "api_key_env": "T_GROQ_KEY", "reasoning_effort": "low"},
+        {"name": "nvidia", "enabled": True, "url": "http://n", "model": "m2",
+         "api_key_env": "T_NVIDIA_KEY"},
+        {"name": "parked", "enabled": False, "url": "http://p", "model": "m3",
+         "api_key_env": "T_GROQ_KEY"},
+    ]}))
+    pool_env(None)
+    monkeypatch.delenv("T_NVIDIA_KEY", raising=False)
+    monkeypatch.setenv("T_GROQ_KEY", "sk-test")
+    names = [ep.name for ep in pool.cloud_endpoints()]
+    assert names == ["groq", "primary"]          # nvidia keyless, parked off
+    groq = pool.cloud_endpoints()[0]
+    assert groq.api_key == "sk-test"
+    assert groq.reasoning_effort == "low"
+    monkeypatch.setenv("T_NVIDIA_KEY", "nvapi-test")
+    assert [ep.name for ep in pool.cloud_endpoints()] == [
+        "groq", "nvidia", "primary"]             # key drop = activation
+
+
+def test_key_resolves_from_dotenv_file(pool_env, monkeypatch, tmp_path):
+    from polymath_shared.llm_extraction import pool
+    dotenv = tmp_path / "dotenv"
+    monkeypatch.setattr(pool, "_ENV_FILE", dotenv)
+    monkeypatch.delenv("T_DOTENV_KEY", raising=False)
+    dotenv.write_text("# comment\nT_DOTENV_KEY=file-value\n")
+    assert pool._resolve_key("T_DOTENV_KEY") == "file-value"
+    monkeypatch.setenv("T_DOTENV_KEY", "env-wins")
+    assert pool._resolve_key("T_DOTENV_KEY") == "env-wins"
+
+
+def test_keys_never_leak_into_fingerprint_or_repr(pool_env, monkeypatch,
+                                                  tmp_path):
+    import json as _json
+
+    from polymath_shared.llm_extraction import pool
+    pf = tmp_path / "providers.json"
+    monkeypatch.setattr(pool, "_PROVIDERS_FILE", pf)
+    pf.write_text(_json.dumps({"providers": [
+        {"name": "groq", "url": "http://g", "model": "m1",
+         "api_key_env": "T_GROQ_KEY"}]}))
+    pool_env(None)
+    monkeypatch.setenv("T_GROQ_KEY", "sk-SECRET")
+    fp = _json.dumps(pool.pool_fingerprint())
+    assert "sk-SECRET" not in fp
+    assert "sk-SECRET" not in repr(pool.cloud_endpoints())

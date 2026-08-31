@@ -1,0 +1,35 @@
+{
+  "_doc": [
+    "EXTRACTION-POOL pre-configured cloud providers (MULTI-PROVIDER-AUTH-V1).",
+    "A provider JOINS the pool automatically when its api_key_env resolves",
+    "(process env first, then the repo .env) AND enabled is not false.",
+    "Setup for a new provider = paste its key into .env — nothing else.",
+    "NO SECRETS IN THIS FILE — api_key_env names the variable, never the value.",
+    "url omits /v1 (the client appends /v1/chat/completions).",
+    "reasoning_effort null = omit the field (strict APIs 400 on unsupported",
+    "params); json_mode = request response_format json_object.",
+    "The settings primary (Ollama daemon) is NOT listed here; it is always",
+    "in the roster. Models re-pinnable at will — a change shows up in the",
+    "extraction contract via pool_fingerprint()."
+  ],
+  "providers": [
+    {
+      "name": "groq",
+      "enabled": true,
+      "url": "https://api.groq.com/openai",
+      "model": "openai/gpt-oss-120b",
+      "api_key_env": "GROQ_API_KEY",
+      "reasoning_effort": "low",
+      "json_mode": true
+    },
+    {
+      "name": "nvidia",
+      "enabled": true,
+      "url": "https://integrate.api.nvidia.com",
+      "model": "meta/llama-3.3-70b-instruct",
+      "api_key_env": "NVIDIA_API_KEY",
+      "reasoning_effort": null,
+      "json_mode": true
+    }
+  ]
+}
