@@ -339,6 +339,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-08-31-enrichment-concurrency.md", "md", None),
     ("docs/wiki/work-log/2026-08-31-census-wedge-restoration.md", "md", None),
     ("docs/wiki/work-log/2026-08-31-auto-enrich-ui.md", "md", None),
+    ("docs/wiki/plans/SESSION-ROADMAP.md", "md", None),
     ("shared/polymath_shared/latent/trigger.py", "py", None),
     ("config/cloud_providers.json", "json", None),
     ("scripts/probe_cloud_endpoints.py", "py", None),

@@ -18,7 +18,16 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → `CLAUDE.md` → the two newest work-logs.
 
-## Latest checkpoint (2026-08-31, LATENT LAYER LIVE, commit e4da0b2+)
+## Latest checkpoint (2026-08-31, LATENT LAYER LIVE + AUTO-ENRICH, commit f54d51c+)
+
+NEXT WORK ORDER: `SESSION-ROADMAP.md` (owner-approved 2026-08-31) —
+Session A control reliability (1C carry-gap e2e test, ONE want-set
+authority, parse-reject failover) → Session B query-path (HYBRID
+presentation, latent diagnostics, toggle, single embed) → Session C P6
+(≥20 owner cases, headline metric = nomination→child-survival) → GO
+gates. Enhanced-summary swap REJECTED by owner ("leave the summaries").
+
+## Earlier checkpoint (2026-08-31, LATENT LAYER LIVE, commit e4da0b2+)
 
 THE BIG SESSION: UI-V3 executed (Sources panel, section trees, F13
 toggle, source_name bug dead — work-log 2026-08-30-ui-v3-presentation);
