@@ -38,9 +38,14 @@ CALLS: list[tuple[str, int]] = []          # (lane_name, batch_size)
 FAIL_413: set = set()
 
 
-def _result():
+from types import SimpleNamespace
+
+
+def _result(parsed=True):
     return LLMCallResult(lane="cloud", model="m", raw_text="{}",
-                         packet=None,
+                         packet=(SimpleNamespace(entities=[], relations=[],
+                                                 digests=[], items=[])
+                                 if parsed else None),
                          sanitize=SanitizeResult(ok=False,
                                                  error_class="EMPTY"),
                          wall_ms=1)
@@ -159,6 +164,19 @@ def test_output_truncation_splits_like_payload(monkeypatch):
     sizes = [s for _, s in CALLS]
     assert any(s > 1 for s in sizes)            # the truncated batch
     assert sum(1 for s in sizes if s == 1) >= 4  # split down to singles
+
+
+def test_quarantine_semantic_escape_once_cross_host(monkeypatch):
+    class QuarantineOnGroq(FakeClient):
+        def extract(self, payload, **_kw):
+            CALLS.append((self.endpoint_name, len(payload)))
+            return _result(parsed=not self.endpoint_name.startswith("g"))
+    monkeypatch.setattr(llm, "LLMExtractionClient", QuarantineOnGroq)
+    _run(n=4, active_rank=0, active_docs=4)   # slice = g0/g1 (quarantine)
+    lanes = [name for name, _ in CALLS]
+    # exactly one cross-host escape per quarantined batch, non-groq
+    assert any(not ln.startswith("g") for ln in lanes)
+    assert sum(1 for ln in lanes if not ln.startswith("g")) <= 2
 
 
 def test_deterministic_dispatch():

@@ -68,6 +68,14 @@ class ProviderLimit:
     conc_cap: int | None = None  # rate kind: safety concurrency ceiling
     adaptive: bool = True
     use_headers: bool = False
+    # FLEET-V3: requests-per-DAY budget (provider daily quota, e.g.
+    # gemini free tier) — acquire refuses once spent, the ladder
+    # routes around; resets at UTC midnight. None = unlimited.
+    rpd: int | None = None
+    # FLEET-V3: provider FAMILY for the shared circuit — four healthy
+    # keys on one throttled project 429 together; per-lane AIMD can't
+    # see that. Lanes of one family share a damp signal.
+    family: str | None = None
 
     @classmethod
     def from_config(cls, base: ProviderLimit, cfg: dict | None) -> ProviderLimit:
@@ -134,6 +142,16 @@ class _TokenBucket:
         """Hand back tokens taken for a call that was never made."""
         with self._lock:
             self.tokens = min(self.capacity, self.tokens + float(n))
+
+    def adopt_capacity(self, new_cap: float) -> bool:
+        """FLEET-V3 header-declared ceiling adoption: grow-only — the
+        provider's own declared limit raises the configured seed. The
+        caller clamps against the safety multiple."""
+        with self._lock:
+            if new_cap > self.capacity:
+                self.capacity = float(new_cap)
+                return True
+        return False
 
     def sync_remaining(self, remaining: float) -> None:
         """Header sync: trust the provider's own budget report."""
@@ -248,6 +266,81 @@ class _Breaker:
             return self.opened_at is not None
 
 
+#: FLEET-V3 family circuit tuning
+FAMILY_FAILURE_THRESHOLD = 8      # correlated failures ...
+FAMILY_WINDOW_S = 30.0            # ... inside this window ...
+FAMILY_COOLDOWN_S = 45.0          # ... open the family this long
+FAMILY_REFRESH_S = 10.0           # cross-process re-read cadence
+CEILING_ADOPT_MAX_MULTIPLE = 4    # never adopt past seed x this
+
+
+class _FamilyGate:
+    """Shared per-family damp signal (FLEET-V3): correlated failures
+    across a provider family open a family-wide cooldown, persisted
+    through the controller store so every worker process sees it.
+    Deliberately NOT a scheduler — a boolean gate with a cooldown,
+    fail-open on any store trouble."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._failures: dict[str, list[float]] = {}
+        self._open_until: dict[str, float] = {}
+        self._last_read: dict[str, float] = {}
+
+    def note_failure(self, family: str, store) -> None:
+        now = _now()
+        with self._lock:
+            window = [ts for ts in self._failures.get(family, [])
+                      if now - ts <= FAMILY_WINDOW_S]
+            window.append(now)
+            self._failures[family] = window
+            if (len(window) >= FAMILY_FAILURE_THRESHOLD
+                    and self._open_until.get(family, 0.0) < now):
+                self._open_until[family] = now + FAMILY_COOLDOWN_S
+                self._failures[family] = []
+                if store is not None:
+                    try:
+                        store.save(f"family:{family}", {
+                            "open_for_s": FAMILY_COOLDOWN_S,
+                            "opened_wall": time.time()})
+                    except Exception:
+                        pass
+
+    def allowed(self, family: str, store) -> bool:
+        now = _now()
+        with self._lock:
+            if self._open_until.get(family, 0.0) > now:
+                return False
+            if (store is not None
+                    and now - self._last_read.get(family, 0.0)
+                    > FAMILY_REFRESH_S):
+                self._last_read[family] = now
+                try:
+                    state = store.load(f"family:{family}") or {}
+                    opened = float(state.get("opened_wall") or 0.0)
+                    open_for = float(state.get("open_for_s") or 0.0)
+                    remaining = opened + open_for - time.time()
+                    if remaining > 0:
+                        self._open_until[family] = now + remaining
+                        return False
+                except Exception:
+                    pass
+        return True
+
+
+FAMILY_GATE = _FamilyGate()
+
+
+def _registry_store():
+    """The registry's attached controller store (None before attach) —
+    resolved lazily so the family gate works from any process that
+    attached persistence, and fails open everywhere else."""
+    try:
+        return REGISTRY._store
+    except Exception:
+        return None
+
+
 class AdaptiveLimiter:
     """One lane's adaptive limiter. Keyed per (provider, api_key) by the
     registry so multi-key pools scale linearly."""
@@ -276,6 +369,11 @@ class AdaptiveLimiter:
         self._decreases = 0
         self._last_logged_decreases = 0
         self._on_change: Callable[[dict], None] | None = None
+        # FLEET-V3: daily budget + header-adopted ceilings
+        self._day = time.strftime("%Y-%m-%d", time.gmtime())
+        self._day_count = 0
+        self._adopted_rpm: float | None = None
+        self._adopted_tpm: float | None = None
 
     # -- durable state -----------------------------------------------------
 
@@ -283,7 +381,10 @@ class AdaptiveLimiter:
         with self._lock:
             return {"effective": self._effective, "streak": self._streak,
                     "floor": self._floor, "ceiling": self._ceil,
-                    "increases": self._increases, "decreases": self._decreases}
+                    "increases": self._increases, "decreases": self._decreases,
+                    "day": self._day, "day_count": self._day_count,
+                    "adopted_rpm": self._adopted_rpm,
+                    "adopted_tpm": self._adopted_tpm}
 
     def restore(self, state: dict | None) -> bool:
         """Adopt a persisted effective limit (clamped into [floor, ceil]).
@@ -300,6 +401,16 @@ class AdaptiveLimiter:
             self._streak = 0
             self._increases = int(state.get("increases", 0) or 0)
             self._decreases = int(state.get("decreases", 0) or 0)
+            today = time.strftime("%Y-%m-%d", time.gmtime())
+            if state.get("day") == today:
+                self._day, self._day_count = today, int(
+                    state.get("day_count", 0) or 0)
+            for attr, bucket in (("adopted_rpm", self._rpm),
+                                 ("adopted_tpm", self._tpm)):
+                val = state.get(attr)
+                if val and bucket is not None:
+                    bucket.adopt_capacity(float(val))
+                    setattr(self, "_" + attr, float(val))
             self._sem.set_limit(self._effective)
         return True
 
@@ -343,6 +454,9 @@ class AdaptiveLimiter:
         leaves anything held."""
         if not self._honor_retry_after(block):
             return False
+        if self.spec.family and not FAMILY_GATE.allowed(
+                self.spec.family, _registry_store()):
+            return False        # family cooldown: correlated 429 storm
         if not self._breaker.allow():
             # BREAKER-WAIT (measured 2026-08-30): failing fast here turned
             # one OOM storm into a dead ticket — every stage retry hit the
@@ -366,6 +480,20 @@ class AdaptiveLimiter:
                 if self._rpm is not None:
                     self._rpm.refund(1.0)         # no call will be made
                 refused = True
+            if not refused and self.spec.rpd:
+                with self._lock:
+                    today = time.strftime("%Y-%m-%d", time.gmtime())
+                    if today != self._day:
+                        self._day, self._day_count = today, 0
+                    if self._day_count >= self.spec.rpd:
+                        refused = True      # daily quota spent
+                    else:
+                        self._day_count += 1
+                if refused:
+                    if self._rpm is not None:
+                        self._rpm.refund(1.0)
+                    if self._tpm is not None and est_tokens > 0:
+                        self._tpm.refund(est_tokens)
             if refused:
                 self._sem.release()
                 self._breaker.release_probe()
@@ -396,6 +524,8 @@ class AdaptiveLimiter:
 
     def record_failure(self, retry_after: float | str | None = None,
                        headers: dict | None = None) -> None:
+        if self.spec.family:
+            FAMILY_GATE.note_failure(self.spec.family, _registry_store())
         changed = False
         with self._lock:
             self._breaker.record(False)
@@ -417,6 +547,28 @@ class AdaptiveLimiter:
     def _sync_headers(self, headers: dict | None) -> None:
         if not headers or not self.spec.use_headers:
             return
+        # FLEET-V3 CEILING ADOPTION (owner 2026-09-01): when the
+        # provider DECLARES its limit above our configured seed, adopt
+        # theirs — clamped to seed x CEILING_ADOPT_MAX_MULTIPLE. Grow-
+        # only, zero probing (a 429 response carries these headers at
+        # exactly the moment the edge is found).
+        for key, bucket, seed, attr in (
+                ("x-ratelimit-limit-requests", self._rpm,
+                 self.spec.rpm, "_adopted_rpm"),
+                ("x-ratelimit-limit-tokens", self._tpm,
+                 self.spec.tpm, "_adopted_tpm")):
+            if bucket is None or seed is None or key not in headers:
+                continue
+            try:
+                declared = float(headers[key])
+            except (TypeError, ValueError):
+                continue
+            cap = min(declared, seed * CEILING_ADOPT_MAX_MULTIPLE)
+            if bucket.adopt_capacity(cap):
+                setattr(self, attr, cap)
+                log.info(
+                    "%s adopted provider-declared %s: %s (seed %s)",
+                    self.name, key, int(cap), seed)
         for key, bucket in (("x-ratelimit-remaining-requests", self._rpm),
                             ("x-ratelimit-remaining-tokens", self._tpm),
                             ("anthropic-ratelimit-tokens-remaining", self._tpm)):

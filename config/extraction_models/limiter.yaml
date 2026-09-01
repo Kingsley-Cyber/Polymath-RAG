@@ -37,6 +37,7 @@ providers:
   # ceilings, not hard schedules.
   nvidia:                  # owner 2026-08-30: dedicated latent/enrichment
     kind: rate
+    family: nvidia
     rpm: 36                # ~35-38 RPM initial per owner directive
     tpm: 150000
     conc_cap: 4            # worker-controlled concurrency; small ceiling
@@ -47,6 +48,7 @@ providers:
     use_headers: true
   nvidia2:                 # second UNLINKED account — own separate rate
     kind: rate
+    family: nvidia
     rpm: 36
     tpm: 150000
     conc_cap: 4
@@ -67,6 +69,7 @@ providers:
     use_headers: true
   groq1:                  # unlinked account 1 — own bucket
     kind: rate
+    family: groq
     rpm: 30
     tpm: 120000
     conc_cap: 6
@@ -77,6 +80,7 @@ providers:
     use_headers: true
   groq2:                  # unlinked account 2 — own bucket
     kind: rate
+    family: groq
     rpm: 30
     tpm: 120000
     conc_cap: 6
@@ -87,6 +91,7 @@ providers:
     use_headers: true
   groq3:                  # unlinked account 3 — own bucket
     kind: rate
+    family: groq
     rpm: 30
     tpm: 120000
     conc_cap: 6
@@ -97,6 +102,7 @@ providers:
     use_headers: true
   groq4:                  # unlinked account 4 — own bucket
     kind: rate
+    family: groq
     rpm: 30
     tpm: 120000
     conc_cap: 6
@@ -107,6 +113,7 @@ providers:
     use_headers: true
   groq5:                  # unlinked account 5 — own bucket
     kind: rate
+    family: groq
     rpm: 30
     tpm: 120000
     conc_cap: 6
@@ -117,6 +124,8 @@ providers:
     use_headers: true
   gemini1:              # AI Studio account key 1 — own bucket
     kind: rate
+    family: gemini
+    rpd: 2000
     rpm: 12
     tpm: 120000
     conc_cap: 3
@@ -125,6 +134,8 @@ providers:
     init: 1
   gemini2:              # AI Studio account key 2 — own bucket
     kind: rate
+    family: gemini
+    rpd: 2000
     rpm: 12
     tpm: 120000
     conc_cap: 3
@@ -133,6 +144,8 @@ providers:
     init: 1
   gemini3:              # AI Studio account key 3 — own bucket
     kind: rate
+    family: gemini
+    rpd: 2000
     rpm: 12
     tpm: 120000
     conc_cap: 3
@@ -141,6 +154,8 @@ providers:
     init: 1
   gemini4:              # AI Studio account key 4 — own bucket
     kind: rate
+    family: gemini
+    rpd: 2000
     rpm: 12
     tpm: 120000
     conc_cap: 3
@@ -149,6 +164,8 @@ providers:
     init: 1
   gemini5:              # AI Studio account key 5 — own bucket
     kind: rate
+    family: gemini
+    rpd: 2000
     rpm: 12
     tpm: 120000
     conc_cap: 3
@@ -157,6 +174,8 @@ providers:
     init: 1
   gemini6:              # AI Studio account key 6 — own bucket
     kind: rate
+    family: gemini
+    rpd: 2000
     rpm: 12
     tpm: 120000
     conc_cap: 3
