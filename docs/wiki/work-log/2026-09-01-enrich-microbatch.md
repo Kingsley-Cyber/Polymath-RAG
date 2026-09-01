@@ -81,3 +81,29 @@ enrichment bottleneck (979 parents ≈ 16+ min at one-per-call).
   json-mode canary before joining as third lanes.
 - The stopped equivalence bench should re-run after resume for the
   tiering table.
+
+## AMENDMENT — PER-BATCH PERSIST (534cccb, owner-directed "FIX THE PER BATCH PERSIST")
+The live retest proved the persist grain wrong: enrichment persisted
+per-DOCUMENT after the full compile, so each of four worker bounces
+that day discarded a whole document's already-paid compiled work
+(0 rows after 4 bounces despite hundreds of successful LLM calls).
+
+Fix: `compile_parents_microbatched(..., on_compiled=)` — a callback
+seam that emits each batch's CompiledParents the moment the batch
+gates (also fired at the single-parent ladder floor); callback
+exceptions are swallowed so persistence failures can never corrupt a
+compile. `compile_microbatched_with_hard_case` passes it through the
+first pass. The worker's `_persist_ready_now` persists each READY
+parent immediately in its OWN committed transaction
+(`polymath_shared.db.tx`): ensure-job + `persist_compiled_parent` +
+summary_jobs COMPLETE, deduped via a `_persisted` set; the tail loop
+skips already-persisted parents. Crash cost is now ≤ one microbatch
+(6-8 parents), not a document.
+
+Proof: test_enrich_microbatch grew to 11 green —
+`test_on_compiled_fires_per_batch_before_return` (every parent lands
+via the callback across the 8+2 batch split) and
+`test_on_compiled_survives_callback_errors` (a raising callback
+leaves every compile READY). Live: rows accumulated continuously
+through the 05:10:39Z deploy window (67 READY by 05:20Z with zero
+loss across the bounce).
