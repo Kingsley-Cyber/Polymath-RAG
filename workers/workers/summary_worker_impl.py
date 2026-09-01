@@ -348,51 +348,50 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
         if not parents:
             continue
 
-        def _complete(items, _doc=doc):
-            # ENRICHMENT-TRANSPORT-V1: pinned group endpoint per doc,
-            # ring failover once WITHIN the group on a dead lane.
-            from polymath_shared.llm_extraction.client import (
-                LLMExtractionClient,
-            )
-            from polymath_shared.llm_extraction.pool import (
-                select_endpoint_for_stage,
-            )
+        # ENRICH-PARENT-SHARD-V1 (owner 2026-09-01 "it should be
+        # smart"): the lane is chosen per PARENT, not per document —
+        # every pin-group lane churns even on a single-document job.
+        # Shard key = parent_id (deterministic: the same parent always
+        # lands on the same lane, so its enrichment identity stays
+        # stable across retries); 429 ladder = backoff -> same lane ->
+        # the parent's ring-adjacent OTHER lane.
+        from polymath_shared.llm_extraction.client import (
+            LLMExtractionClient,
+            _lane_limit,
+        )
+        from polymath_shared.llm_extraction.pool import (
+            select_endpoint_for_stage as _sel,
+        )
 
-            def _client(offset):
-                ep = select_endpoint_for_stage(
-                    "parent_enrichment", _doc, ring_offset=offset)
+        _lane_clients: dict[str, LLMExtractionClient] = {}
+
+        def _client_for(pid: str, offset: int = 0):
+            ep = _sel("parent_enrichment", pid, ring_offset=offset)
+            c = _lane_clients.get(ep.name)
+            if c is None:
                 c = LLMExtractionClient(
                     "cloud", url=ep.url, model=ep.model,
                     limiter_key=ep.limiter_key, api_key=ep.api_key,
                     cloud_opts=ep.cloud_opts)
                 c.endpoint_name = ep.name
-                return c
+                _lane_clients[ep.name] = c
+            return c
 
-            primary = _client(0)
-            # ENRICHMENT-CONCURRENCY-V1 (owner 2026-08-31): worker-
-            # controlled parallelism sized from the LIMITER SPEC of the
-            # doc's pinned endpoint (conc_cap, the owner's per-account
-            # ceiling) — the limiter still gates each call, so this is
-            # the ceiling, not a schedule. Sequential was the measured
-            # gap: 40 parents x ~30 s = ~20 min; conc 4 => ~5 min.
+        def _complete(items, _doc=doc):
+            import time as _time
             from concurrent.futures import ThreadPoolExecutor
-
-            from polymath_shared.llm_extraction.client import _lane_limit
-            spec = _lane_limit("cloud", None if primary.limiter_key ==
-                               "default" else primary.limiter_key)
-            width = max(1, min(spec.conc_cap or 4, len(items)))
 
             def _retryable(err):
                 # 429 IS retryable/failover-able (measured 2026-08-31:
                 # a conc-4 burst 429'd 30/40 AWS parents into durable
-                # INVALID because 429 was missing from this set — the
-                # exact failure the cross-provider group exists for).
-                return err in ("LIMITER_REFUSED", "HTTP_429") or                     (err or "").startswith(
+                # INVALID because 429 was missing from this set).
+                return err in ("LIMITER_REFUSED", "HTTP_429") or \
+                    (err or "").startswith(
                         ("HTTP_5", "Connect", "ReadTimeout"))
 
             def _one(item):
-                import time as _time
                 item_id, system, user, max_tokens = item
+                primary = _client_for(item_id)
                 raw, err = primary.complete_one(
                     user, system_prompt=system, max_tokens=max_tokens)
                 if err == "HTTP_429":           # backoff, retry same lane
@@ -400,7 +399,7 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
                     raw, err = primary.complete_one(
                         user, system_prompt=system, max_tokens=max_tokens)
                 if _retryable(err):
-                    fb = _client(1)
+                    fb = _client_for(item_id, 1)
                     if fb.endpoint_name != primary.endpoint_name:
                         log.warning("enrichment lane failover: %s -> %s (%s)",
                                     primary.endpoint_name, fb.endpoint_name,
@@ -416,15 +415,22 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
                                 max_tokens=max_tokens)
                 return (item_id, raw, err)
 
+            # width = SUM of the involved lanes' concurrency caps (each
+            # lane still self-gates through its own AIMD limiter — this
+            # is a pool sizing, never a schedule).
+            involved: dict[str, LLMExtractionClient] = {}
+            for item in items:
+                c = _client_for(item[0])
+                involved[c.endpoint_name] = c
+            width = 0
+            for c in involved.values():
+                spec = _lane_limit("cloud", None if c.limiter_key ==
+                                   "default" else c.limiter_key)
+                width += max(1, spec.conc_cap or 2)
+            width = max(1, min(width, len(items), 12))
             with ThreadPoolExecutor(max_workers=width) as pool:
                 results = list(pool.map(_one, items))
             return results
-
-        from polymath_shared.llm_extraction.pool import (
-            select_endpoint_for_stage as _sel,
-        )
-        ep0 = _sel("parent_enrichment", doc)
-        model_contract = f"{ep0.name}:{ep0.model}"
 
         def _enrichment_done(ih: str) -> bool:
             # ROW-TRUTH-DONE (A3 follow-through): job-state alone lied —
@@ -445,11 +451,14 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
                 return True
             return row[1] in SEMANTIC_FAILOVER_INELIGIBLE
 
+
         todo: list[ParentInput] = []
         hashes: dict[str, str] = {}
         for p in parents:
             from polymath_shared.latent.gate import source_hash as _sh
-            ih = input_hash_for(_sh(p.children), model_contract)
+            ep_p = _sel("parent_enrichment", p.parent_id)
+            ih = input_hash_for(_sh(p.children),
+                                f"{ep_p.name}:{ep_p.model}")
             hashes[p.parent_id] = ih
             if _enrichment_done(ih):
                 existing += 1
@@ -459,13 +468,14 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
             continue
 
         def _complete_fb(items, _doc=doc):
-            # SEMANTIC-FAILOVER-V1: the OTHER group lane, gate-rejects
-            # only; one retry, re-gated identically.
-            fb = _client(1)
-            if fb.endpoint_name == _client(0).endpoint_name:
-                return [(i, "", "ENRICH_NO_RESPONSE") for i, *_ in items]
+            # SEMANTIC-FAILOVER-V1: the parent's OTHER lane, gate-
+            # rejects only; one retry, re-gated identically.
             out = []
             for item_id, system, user, max_tokens in items:
+                fb = _client_for(item_id, 1)
+                if fb.endpoint_name == _client_for(item_id).endpoint_name:
+                    out.append((item_id, "", "ENRICH_NO_RESPONSE"))
+                    continue
                 raw, err = fb.complete_one(
                     user, system_prompt=system, max_tokens=max_tokens)
                 out.append((item_id, raw, err))
@@ -483,9 +493,11 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
             ticket = (_stage_ticket(conn, run_id, "parent_enrichment")
                       + ":" + cp.parent_id[-16:])
             _ensure_job(conn, ticket, "PARENT_ENRICHMENT", corpus, ih)
+            ep_cp = _sel("parent_enrichment", cp.parent_id)
             res = persist_compiled_parent(
                 conn, corpus_id=corpus, doc_id=doc, compiled=cp,
-                input_hash=ih, provider=f"llm:{ep0.name}", model=ep0.model)
+                input_hash=ih, provider=f"llm:{ep_cp.name}",
+                model=ep_cp.model)
             state = "COMPLETE" if res["status"] in ("READY", "EXISTING")                 else "FAILED"
             conn.execute(
                 "UPDATE summary_jobs SET state=%s, completed_at=now() "

@@ -115,3 +115,51 @@ providers:
     init: 2
     adaptive: true
     use_headers: true
+  gemini1:              # AI Studio account key 1 — own bucket
+    kind: rate
+    rpm: 12
+    tpm: 120000
+    conc_cap: 3
+    min: 1
+    max: 3
+    init: 1
+  gemini2:              # AI Studio account key 2 — own bucket
+    kind: rate
+    rpm: 12
+    tpm: 120000
+    conc_cap: 3
+    min: 1
+    max: 3
+    init: 1
+  gemini3:              # AI Studio account key 3 — own bucket
+    kind: rate
+    rpm: 12
+    tpm: 120000
+    conc_cap: 3
+    min: 1
+    max: 3
+    init: 1
+  gemini4:              # AI Studio account key 4 — own bucket
+    kind: rate
+    rpm: 12
+    tpm: 120000
+    conc_cap: 3
+    min: 1
+    max: 3
+    init: 1
+  gemini5:              # AI Studio account key 5 — own bucket
+    kind: rate
+    rpm: 12
+    tpm: 120000
+    conc_cap: 3
+    min: 1
+    max: 3
+    init: 1
+  gemini6:              # AI Studio account key 6 — own bucket
+    kind: rate
+    rpm: 12
+    tpm: 120000
+    conc_cap: 3
+    min: 1
+    max: 3
+    init: 1

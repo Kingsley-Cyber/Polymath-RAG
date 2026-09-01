@@ -4,7 +4,7 @@ owner: governance
 date: 2026-08-30
 status: living
 architecture_impact: none (the single session bootstrap — updated in place, never forked into dated copies)
-last_reviewed: 2026-08-30
+last_reviewed: 2026-09-01
 ---
 
 # CONTINUITY REPORT — the single bootstrap (golden-run edition)
@@ -18,7 +18,91 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → `CLAUDE.md` → the two newest work-logs.
 
-## Latest checkpoint (2026-08-31 — LATENT GO SHIPPED; the mega-session pack)
+## Latest checkpoint (2026-09-01 — PHASE 0 + MCP + GEMINI FLEET + SMART PIPELINE)
+
+**STATE: chunk-structure-v3 is LIVE** (TIER-CHUNKER-V3, owner GO):
+both docs re-ingested as heading-bounded real-text parents (67 parents
+/ 429 children, 100% heading_path, page-range labels, 0 legacy rows),
+runs query_ready on tier_v3, latent verified end-to-end on the new
+generation (3 nominated → 2 survived, both kinds). Enrichment
+60/67 READY across ALL FOUR pin lanes (parent-sharding receipt:
+nvidia 19 / gemini5 17 / groq5 16 / gemini6 8); 7 gate-reject INVALID
+re-minted for retry. P6 RE-QUALIFIED on the new chunks: survival 70% (42/60), +2.9
+evidence/case, kinds abstraction 52/transfer 39 (transfer UP from
+27), ~38 ms delta, 0 failures — above the 55% bar, GO stands
+(measured with 7/67 enrichments still pending retry).
+
+WHAT THIS SESSION SHIPPED (work-log order):
+- TIER-CHUNKER-V3 (2026-08-31-tier-chunker-v3): native chunk-
+  structure-v3 — level-aware walker, page-scaffold merge (v3.3 OCR
+  rule), hard 1,400 w cap via paragraph→sentence→word chain,
+  GENERATION-PURGE at intake (ON CONFLICT DO NOTHING would mix
+  chunker generations), byte-exact offsets everywhere. D15 amended:
+  native implementation, NOT a v3.3 port (the module rewrites text —
+  §8 offset contract).
+- REINGEST-TRIGGER-V1 (scripts/reingest_corpus.py): the reconciler
+  rescues STRANDED runs only — healthy query_ready runs need the
+  owner trigger (status → reconciling + intake re-arm + dead-husk
+  detach). REFUTED-LIVE: "the settings flip alone re-ingests".
+- TICK-SURVIVAL: parked successor husks occupied the one-successor
+  pointer → every control tick died on runs_one_successor_idx (census
+  + ticketing dead ~30 min). Per-run savepoint = skip not crash;
+  trigger detaches husks; both regression-pinned
+  (test_reconciliation_convergence).
+- POLYMATH-MCP-V1 (2026-08-31-polymath-mcp-v1): MCP server :8930
+  (streamable-http, bearer, host allowlist) — list_corpora/retrieve/
+  ask as THIN calls to the orchestrator API; LaunchAgent
+  com.polymath.mcp; mcp.kingsleylab.xyz REVIVED on the live tunnel
+  (v33 origin dead, 530); Hermes polymath entry → local :8930; owner
+  added the claude.ai connector.
+- GEMINI-FLEET-V1 (2026-09-01-gemini-fleet): 6 AI Studio lanes on
+  gemini-3.1-flash-lite (owner re-pin; 2.5-flash-lite retired
+  upstream; AQ.-format keys ARE valid key material) — gemini1-4
+  extraction, gemini5-6 enrichment; pin group = nvidia+groq5+
+  gemini5+gemini6; AIMD seeds rpm 12/conc 3.
+- SMART-PIPELINE-V1 (2026-09-01-smart-pipeline, owner-reviewed
+  design): enrichment lane per PARENT; enrichment mints at INTAKE-
+  done (overlap; promotion mint = backstop) + RESCUE clause for
+  consumed-event/open-ticket strands (found live: a crash-loop burned
+  deliveries and NOTHING healed it); GET /fleet + Fleet tab (lanes/
+  AIMD/workers/queue/coverage); depth-aware extraction spread (per-
+  doc affinity when queue deep; ring spread only when lanes would
+  idle; unknown depth NEVER spreads). Central scheduler brain
+  REJECTED by design review.
+- Fix in passing: semantic-failover fallback referenced a name
+  outside its scope (NameError killed enrichment once any parent
+  crossed lanes — path first exercised by groq5 429 pressure).
+
+STANDING LAWS REINFORCED: run guards UNPIPED (a ;-chain let a commit
+past a failed guard AGAIN — third strike, fix-forward 303626c); the
+frontend dist asset hash lives in the scaffold TREE, so every `npm
+run build` needs the TREE entry updated; a worker edited under a
+running process self-quarantines (BUNDLE_STALE_CODE_DRIFT = stale-
+process guard doing its job — bounce, don't exempt).
+
+PROVIDER FLEET NOW: extraction shard = gemini1-4 + groq1-4 + nvidia2
++ primary (10 lanes; nvidia2 flaps 503 upstream — ring covers, watch
+item); enrichment pin = nvidia + groq5 + gemini5 + gemini6; keys ONLY
+in gitignored .env (GEMINI_API_KEY_1..6 added).
+
+REMAINING (in order):
+1. Watch first corpus-scale ingest: depth-spread receipts
+   (EXTRACTION_DEPTH_SPREAD log lines), *_LANE_FAILOVER counters,
+   gemini free-tier daily caps.
+2. Persist per-lane failover counters for the fleet board (cosmetic).
+3. Materializer gaps, NO plan: scanned-PDF OCR; DOCX tables dropped.
+4. Pre-existing test debt: llm_controller (other session), sval ×3
+   (retired spaCy sidecar), contracts ×3, summary d3/d4 stateful, 8
+   full-tree collection errors (import shadowing; per-dir runs clean).
+5. FalseAnalogyRate labeled-negative suite (optional).
+
+OPERATIONAL NOTES: MCP server = LaunchAgent com.polymath.mcp on :8930
+(logs /private/tmp/polymath_fleet/mcp.log; key = POLYMATH_MCP_API_KEY
+in v4 .env = POLYMATH_MCP_TOKEN in ~/.hermes/.env). Orchestrator
+respawn race unchanged (poll /openapi.json + ~5 s). Fleet board =
+/ui Fleet tab or GET /fleet.
+
+## Previous checkpoint (2026-08-31 — LATENT GO SHIPPED; the mega-session pack)
 
 **STATE: the latent transfer layer is LIVE AND DEFAULT-ON for
 HYBRID/GRAPH** (owner GO 2026-08-31 on P6: survival 78% [47/60], +3.0

@@ -1321,7 +1321,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/v5/wipe_corpus_v5.py", "py", None),
     # frontend
     ("frontend/.gitignore", "gitignore", None),
-    ("frontend/dist/assets/index-Vam9Ktyg.js", "js", None),
+    ("frontend/dist/assets/index-BwFJjFJ4.js", "js", None),
     ("frontend/dist/assets/index-DM5QBXlf.css", "css", None),
     ("frontend/dist/index.html", "html", None),
     ("frontend/index.html", "html", None),
@@ -1558,6 +1558,21 @@ TREE: list[tuple[str, str, str | None]] = [
     ("workers/workers/reprocess_worker.py", "py", None),
     ("workers/workers/summary_worker.py", "py", None),
     ("workers/workers/summary_worker_impl.py", "py", None),
+    # TIER-CHUNKER-V3 (latent plan D15 Phase 0)
+    ("workers/workers/tier_chunker.py", "py", None),
+    ("tests/determinism/test_tier_chunker.py", "py", None),
+    ("docs/wiki/work-log/2026-08-31-tier-chunker-v3.md", "md", None),
+    ("scripts/reingest_corpus.py", "py", None),
+    # POLYMATH-MCP-V1
+    ("orchestrator/orchestrator/mcp_server.py", "py", None),
+    ("docs/wiki/work-log/2026-08-31-polymath-mcp-v1.md", "md", None),
+    ("docs/wiki/work-log/2026-09-01-gemini-fleet.md", "md", None),
+    # SMART-PIPELINE-V1 (parent-shard, early-kick, fleet board, depth spread)
+    ("orchestrator/orchestrator/api/fleet.py", "py", None),
+    ("frontend/src/components/FleetView.tsx", "tsx", None),
+    ("tests/integration/test_auto_enrich_early.py", "py", None),
+    ("tests/determinism/test_depth_spread.py", "py", None),
+    ("docs/wiki/work-log/2026-09-01-smart-pipeline.md", "md", None),
 ]
 
 

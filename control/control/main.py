@@ -28,6 +28,7 @@ from control.scheduler import (
     apply_degrades,
     apply_failures,
     apply_promotions,
+    auto_enrich_on_chunks,
     schedule_gaps,
 )
 
@@ -69,6 +70,9 @@ def tick() -> dict:
         ensured = _phase("ensure_tickets", _ensure_tickets_backpressure_gated,
                          conn)
         advanced = _phase("advance_tickets", cp2_tickets.advance_tickets, conn)
+        # ENRICH-EARLY-KICK-V1: mint enrichment the tick intake lands,
+        # so it overlaps the rest of the chain (promotion mint = backstop)
+        _phase("auto_enrich_early", auto_enrich_on_chunks, conn)
         supervised = _phase("supervise", supervise, conn)
         census = compute_census(
             conn, max_attempts=settings.control.max_attempts,

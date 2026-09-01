@@ -166,6 +166,46 @@ def test_contract_drift_converges_without_manual_repin(conn) -> None:
     assert status == "query_ready"
 
 
+def test_occupied_successor_pointer_skips_instead_of_killing_tick(conn) -> None:
+    """TICK-SURVIVAL regression (2026-08-31 control-plane wedge): a
+    PARKED successor husk (status superseded, superseded_by NULL) from
+    a past restoration occupies the one-successor pointer. The mint
+    hits runs_one_successor_idx — that must be a per-run SKIP, never a
+    tick-killing exception (the live wedge rolled back every control
+    tick; census and ticketing died with it)."""
+    tag = uuid.uuid4().hex[:8]
+    current = default_execution_contract()
+    old_pin = dict(current)
+    old_pin["query_policy"] = "husk-test-old-policy"
+    corpus, old_run = _mk_completed_run(conn, tag, old_pin)
+
+    # the husk: occupies supersedes_run_id=old_run, itself dead
+    conn.execute(
+        "INSERT INTO runs (run_id, corpus_id, status, metadata, "
+        "execution_contract, supersedes_run_id) "
+        "VALUES (%s,%s,'superseded','{}',%s,%s)",
+        (f"run_husk_{tag}", corpus, json.dumps(old_pin, sort_keys=True),
+         old_run))
+
+    out = reconcile_contract_drift(conn)      # must not raise
+    assert out["skipped"].get(old_run) == "successor_pointer_occupied"
+    assert old_run not in out["reconciled"]
+
+    # a later tick still reconciles OTHER stranded runs fine
+    corpus2, other_run = _mk_completed_run(conn, tag + "b", old_pin)
+    out2 = reconcile_contract_drift(conn)
+    assert other_run in out2["reconciled"]
+    assert out2["skipped"].get(old_run) == "successor_pointer_occupied"
+
+    # the owner detach (what reingest_corpus.py does) unblocks it
+    conn.execute(
+        "UPDATE runs SET supersedes_run_id=NULL "
+        "WHERE supersedes_run_id=%s AND status='superseded' "
+        "AND superseded_by_run_id IS NULL", (old_run,))
+    out3 = reconcile_contract_drift(conn)
+    assert old_run in out3["reconciled"]
+
+
 def test_stale_stage_regenerates_instead_of_carrying(conn) -> None:
     tag = uuid.uuid4().hex[:8]
     current = default_execution_contract()
