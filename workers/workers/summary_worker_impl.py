@@ -306,7 +306,7 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
     carry doc_id to scope one document (§0a document button)."""
     from polymath_shared.latent.compiler import (
         ParentInput,
-        compile_with_semantic_failover,
+        compile_with_hard_case_escape,
     )
     from polymath_shared.latent.contract import (
         PRODUCTION_BOUNDS,
@@ -481,13 +481,44 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
                 out.append((item_id, raw, err))
             return out
 
-        compiled, semantic_failovers = compile_with_semantic_failover(
-            _complete, _complete_fb, todo, bounds, ceiling)
+        def _complete_escape(items, _doc=doc):
+            # ENRICH-HARD-CASE-V1: the bounded MINIMAL escape on the
+            # parent's ring+2 lane — guaranteed cross-FAMILY in the
+            # 4-lane pin group (the 7/67 lesson: ring-adjacent lanes
+            # can be the same model family, so "both lanes rejected"
+            # really meant "one family rejected twice").
+            out = []
+            for item_id, system, user, max_tokens in items:
+                esc = _client_for(item_id, 2)
+                if esc.endpoint_name in (
+                        _client_for(item_id).endpoint_name,
+                        _client_for(item_id, 1).endpoint_name):
+                    out.append((item_id, "", "ENRICH_NO_RESPONSE"))
+                    continue
+                raw, err = esc.complete_one(
+                    user, system_prompt=system, max_tokens=max_tokens)
+                out.append((item_id, raw, err))
+            return out
+
+        compiled, semantic_failovers, hard_recovered, hard_terminal = \
+            compile_with_hard_case_escape(
+                _complete, _complete_fb, _complete_escape, todo, bounds,
+                ceiling)
         if semantic_failovers:
             log.warning(
                 "enrichment semantic failover recovered %d parent(s) on "
                 "the other lane", semantic_failovers,
                 extra={"error_code": "ENRICHMENT_SEMANTIC_FAILOVER"})
+        if hard_recovered:
+            log.warning(
+                "hard-case escape recovered %d parent(s) on the minimal "
+                "contract (cross-family lane)", hard_recovered,
+                extra={"error_code": "ENRICHMENT_HARD_CASE_RECOVERED"})
+        if hard_terminal:
+            log.warning(
+                "%d parent(s) terminal ENRICH_HARD_CASE (three lanes "
+                "rejected; sweeps will stop retrying)", hard_terminal,
+                extra={"error_code": "ENRICHMENT_HARD_CASE_TERMINAL"})
         for cp in compiled:
             ih = hashes[cp.parent_id]
             ticket = (_stage_ticket(conn, run_id, "parent_enrichment")

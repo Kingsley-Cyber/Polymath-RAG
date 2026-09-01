@@ -1577,6 +1577,9 @@ TREE: list[tuple[str, str, str | None]] = [
     ("shared/polymath_shared/evidence_utility.py", "py", None),
     ("tests/determinism/test_evidence_utility.py", "py", None),
     ("docs/wiki/work-log/2026-09-01-evidence-utility.md", "md", None),
+    # ENRICH-HARD-CASE-V1
+    ("tests/integration/test_enrichment_persist.py", "py", None),
+    ("docs/wiki/work-log/2026-09-01-enrich-hard-case.md", "md", None),
 ]
 
 

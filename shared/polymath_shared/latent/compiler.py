@@ -38,6 +38,10 @@ class CompiledParent:
     gist_coverage: float = 0.0
     raw_head: str = ""
     child_ref_map: dict = field(default_factory=dict)   # ref -> chunk_id
+    # ENRICH-HARD-CASE-V1: which compiler contract produced the output
+    # (persisted verbatim — a minimal escape never masquerades as full)
+    contract: str = "parent-enrichment-v1"
+    prompt_version: str = ""
 
 
 def _estimate_tokens(text: str) -> int:
@@ -146,3 +150,110 @@ def compile_with_semantic_failover(
                          + (f" ({cp.detail})" if cp.detail else ""))
             by_id[cp.parent_id] = cp
     return [by_id[p.parent_id] for p in parents], recovered
+
+
+MINIMAL_CONTRACT = "parent-enrichment-minimal-v1"
+
+
+def compile_minimal_parents(
+    complete,
+    parents: list[ParentInput],
+    bounds: EnrichmentBounds,
+    input_token_ceiling: int,
+) -> list[CompiledParent]:
+    """The bounded ENRICH-HARD-CASE escape pass: the MINIMAL contract
+    (abstraction + transfer only) through one lane. Same transport
+    shape, its own prompt + gate, tight output budget."""
+    from polymath_shared.latent.gate import sanitize_minimal_enrichment
+    from polymath_shared.latent.prompt import (
+        MINIMAL_PROMPT_VERSION,
+        MINIMAL_SYSTEM_PROMPT,
+    )
+    out: dict[str, CompiledParent] = {}
+    items = []
+    for p in parents:
+        sh = source_hash(p.children)
+        ids = [cid for cid, _, _ in p.children]
+        wire = [(i, text) for i, (_, _, text) in enumerate(p.children)]
+        user = render_parent_input(p.parent_id, wire)
+        cp = CompiledParent(
+            parent_id=p.parent_id, status="PENDING",
+            source_hash=sh, source_child_ids=ids,
+            child_ref_map={i: cid for i, (cid, _, _)
+                           in enumerate(p.children)},
+            contract=MINIMAL_CONTRACT,
+            prompt_version=MINIMAL_PROMPT_VERSION)
+        if _estimate_tokens(MINIMAL_SYSTEM_PROMPT + user) > input_token_ceiling:
+            cp.status, cp.error_class = "INVALID", "ENRICH_INPUT_OVER_CEILING"
+            out[p.parent_id] = cp
+            continue
+        out[p.parent_id] = cp
+        items.append((p.parent_id, MINIMAL_SYSTEM_PROMPT, user,
+                      min(bounds.max_tokens, 400)))
+    if items:
+        for pid, raw, err in complete(items):
+            cp = out[pid]
+            cp.raw_head = (raw or "")[:200]
+            if err:
+                cp.status, cp.error_class = "INVALID", err
+                continue
+            gate, output = sanitize_minimal_enrichment(raw, bounds)
+            if gate.ok:
+                cp.status, cp.output = "READY", output
+            else:
+                cp.status = "INVALID"
+                cp.error_class, cp.detail = gate.error_class, gate.detail
+    for cp in out.values():
+        if cp.status == "PENDING":
+            cp.status, cp.error_class = "INVALID", "ENRICH_NO_RESPONSE"
+    return [out[p.parent_id] for p in parents]
+
+
+def compile_with_hard_case_escape(
+    complete_primary,
+    complete_fallback,
+    complete_escape,
+    parents: list[ParentInput],
+    bounds: EnrichmentBounds,
+    input_token_ceiling: int,
+) -> tuple[list[CompiledParent], int, int, int]:
+    """ENRICH-HARD-CASE-V1 state machine (owner design 2026-09-01):
+
+        lane A -> reject -> lane B (semantic failover, unchanged)
+                 -> reject -> ONE minimal escape on a THIRD lane
+                             -> reject -> ENRICH_HARD_CASE (terminal
+                                by row-truth; sweeps stop retrying)
+
+    Source conditions (over ceiling) never reach the escape. Returns
+    (compiled, semantic_failovers, hard_recovered, hard_terminal) —
+    every count surfaced, per the silent-fallback accounting law."""
+    from polymath_shared.latent.gate import (
+        SEMANTIC_FAILOVER_INELIGIBLE,
+    )
+    compiled, failovers = compile_with_semantic_failover(
+        complete_primary, complete_fallback, parents, bounds,
+        input_token_ceiling)
+    if complete_escape is None:
+        return compiled, failovers, 0, 0
+    by_id = {cp.parent_id: cp for cp in compiled}
+    escape = [p for p in parents
+              if by_id[p.parent_id].status == "INVALID"
+              and by_id[p.parent_id].error_class
+              not in SEMANTIC_FAILOVER_INELIGIBLE]
+    if not escape:
+        return compiled, failovers, 0, 0
+    third = compile_minimal_parents(complete_escape, escape, bounds,
+                                    input_token_ceiling)
+    hard_recovered = hard_terminal = 0
+    for cp in third:
+        prior = by_id[cp.parent_id]
+        if cp.status == "READY":
+            hard_recovered += 1
+            by_id[cp.parent_id] = cp
+        else:
+            hard_terminal += 1
+            prior.error_class = "ENRICH_HARD_CASE"
+            prior.detail = (f"{prior.detail}; "
+                            f"escape={cp.error_class}").strip("; ")
+    return ([by_id[p.parent_id] for p in parents], failovers,
+            hard_recovered, hard_terminal)
