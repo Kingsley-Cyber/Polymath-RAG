@@ -51,6 +51,7 @@ class ChatRequest(BaseModel):
     all_authorized: bool = False
     mode: str | None = None
     latent: bool | None = None
+    utility: bool | None = None
 
 
 @router.post("/chat")
@@ -75,7 +76,8 @@ async def chat(req: ChatRequest) -> dict:
         from orchestrator.api.graph import graph_retrieve
 
         g = graph_retrieve(query, single_corpus_or_422(scope, mode),
-                           latent=getattr(req, 'latent', None))
+                           latent=getattr(req, 'latent', None),
+                           utility=getattr(req, 'utility', None))
         graph_facts = [
             {"fact_id": f["fact_id"], "predicate": f["predicate"],
              "subject": f["subject"], "object": f["object"]}
@@ -127,7 +129,8 @@ async def chat(req: ChatRequest) -> dict:
             from orchestrator.api.hybrid import hybrid_fast_retrieve
 
             fast = hybrid_fast_retrieve(query, single_corpus_or_422(scope, mode),
-                                        latent=getattr(req, 'latent', None))
+                                        latent=getattr(req, 'latent', None),
+                           utility=getattr(req, 'utility', None))
         child_evidence = [
             {"chunk_id": c["chunk_id"], "doc_id": c["doc_id"], "parent_id": c["parent_id"]}
             for c in fast["evidence"]

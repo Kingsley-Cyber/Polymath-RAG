@@ -186,6 +186,15 @@ class WorkerSettings(BaseSettings):
         default=6000,
         description="Reject (durable INVALID) any parent whose rendered "
                     "enrichment input exceeds this — never truncate")
+    evidence_utility_enabled: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("evidence_utility_enabled",
+                                      "POLYMATH_EVIDENCE_UTILITY"),
+        description="EVIDENCE-UTILITY-V1 default for HYBRID/GRAPH "
+                    "(qualification candidate; per-request `utility` "
+                    "flag overrides; promotion to default-on is a "
+                    "separate owner GO).",
+    )
     latent_retrieval_enabled: bool = Field(
         default=True,
         description="Query-time latent rescue default for HYBRID/GRAPH "

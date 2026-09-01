@@ -61,6 +61,22 @@ def apply_latent(plan: HybridRetrievalPlan,
     return replace(plan, latent_enabled=enabled)
 
 
+def apply_utility(plan: HybridRetrievalPlan,
+                  enabled: "bool | None") -> HybridRetrievalPlan:
+    """EVIDENCE-UTILITY-V1: per-request `utility` flag overrides the
+    settings default; None inherits. A plan knob, not a mode — same
+    contract shape as apply_latent."""
+    from dataclasses import replace
+
+    if enabled is None:
+        from polymath_shared.settings import get_settings
+        enabled = bool(getattr(get_settings().worker,
+                               "evidence_utility_enabled", False))
+    if enabled == getattr(plan, "evidence_utility_enabled", False):
+        return plan
+    return replace(plan, evidence_utility_enabled=enabled)
+
+
 # R1F: GRAPH = promoted HYBRID + the already-qualified evidence-authorized
 # corpus-authorized canonical bidirectional hop1 graph expansion
 # (D2 machinery: 8 seeds / 20 facts, HIGH_MEDIUM, SPO preserved).

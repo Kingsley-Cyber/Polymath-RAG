@@ -135,12 +135,15 @@ def hybrid_fast_retrieve(
     corpus_id: str,
     plan: Optional[HybridRetrievalPlan] = None,
     latent: "bool | None" = None,
+    utility: "bool | None" = None,
 ) -> dict:
     """Production HYBRID: one qualified hybrid execution."""
-    from polymath_shared.retrieval_modes import apply_latent
+    from polymath_shared.retrieval_modes import apply_latent, apply_utility
 
     _begin_retrieval()
-    plan = apply_latent(plan or hybrid_mode_plan(MODE_HYBRID), latent)
+    plan = apply_utility(
+        apply_latent(plan or hybrid_mode_plan(MODE_HYBRID), latent),
+        utility)
     if corpus_id is None:
         raise HTTPException(status_code=422, detail={
             "error_code": "corpus_required",
@@ -210,6 +213,7 @@ def hybrid_fast_retrieve(
             "degraded": degradations(),
             "liveness": _liveness(result.trace, MODE_HYBRID),
             "latent": result.trace.get("latent"),
+            "evidence_utility": result.trace.get("evidence_utility"),
         },
         "selected_documents": [
             {
