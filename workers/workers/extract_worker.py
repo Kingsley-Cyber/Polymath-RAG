@@ -1070,21 +1070,54 @@ def process_event(conn: Connection, event: dict) -> None:
                                   "reason": _decision.reason}
                 _t_llm = _t.perf_counter()
                 _neighborhoods = _llm.build_neighborhoods(child_chunks)
-                # EXTRACT-DEPTH-SPREAD-V1: how many OTHER extract docs
-                # are waiting decides affinity vs spread inside
-                # run_proposals (0/1 => idle lanes => spread this doc).
-                _qdepth = None
+                # EXTRACTION-THROUGHPUT-V2: rank slicing + receipts.
+                # rank = this ticket's position among the LEASED extract
+                # tickets (deterministic given the DB at dispatch);
+                # active = leased+ready extract docs sizing the slice.
+                _qdepth = _rank = _active = None
+                _cache = None
                 if _decision.lane == "cloud":
                     _qdepth = conn.execute(
                         "SELECT count(*) FROM stage_tickets "
                         "WHERE stage='extract' "
                         "AND status IN ('pending','ready')").fetchone()[0]
+                    _leased = [r[0] for r in conn.execute(
+                        "SELECT ticket_id FROM stage_tickets "
+                        "WHERE stage='extract' AND status='leased' "
+                        "ORDER BY ticket_id")]
+                    _tid = event.get("ticket_id")
+                    _rank = (_leased.index(_tid)
+                             if _tid in _leased else 0)
+                    _active = max(1, len(_leased) + _qdepth)
+
+                    from polymath_shared.db import tx as _tx
+
+                    def _cache_get(key):
+                        with _tx() as _c:
+                            row = _c.execute(
+                                "SELECT raw_text FROM "
+                                "extraction_call_receipts "
+                                "WHERE receipt_id=%s", (key,)).fetchone()
+                        return row[0] if row else None
+
+                    def _cache_put(key, did, lane_name, model, raw):
+                        with _tx() as _c:
+                            _c.execute(
+                                "INSERT INTO extraction_call_receipts "
+                                "(receipt_id, doc_id, lane, model, "
+                                "raw_text) VALUES (%s,%s,%s,%s,%s) "
+                                "ON CONFLICT (receipt_id) DO NOTHING",
+                                (key, did, lane_name, model, raw))
+
+                    _cache = (_cache_get, _cache_put)
                 try:
                     _results, _merged = _llm.run_proposals(
                         _neighborhoods, lane=_decision.lane,
                         source_bytes=source_bytes, doc_id=doc_id,
-                        assist=_decision.assist, queue_depth=_qdepth)
-                except TypeError:   # narrowed test double: no depth param
+                        assist=_decision.assist, queue_depth=_qdepth,
+                        active_rank=_rank, active_docs=_active,
+                        call_cache=_cache)
+                except TypeError:   # narrowed test double: old signature
                     _results, _merged = _llm.run_proposals(
                         _neighborhoods, lane=_decision.lane,
                         source_bytes=source_bytes, doc_id=doc_id,

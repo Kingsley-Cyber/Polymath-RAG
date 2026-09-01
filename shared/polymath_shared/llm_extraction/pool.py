@@ -69,6 +69,11 @@ class CloudEndpoint:
     # (stage_pins); it never joins the general extraction sharding — its
     # rate budget is reserved for its stage.
     dedicated: bool = False
+    # EXTRACTION-THROUGHPUT-V2: the lane's request PAYLOAD budget in
+    # characters — batch packing never exceeds it, so provider 413s
+    # become impossible instead of survivable (39 groq 413s measured
+    # in one 4-book ingest before this existed).
+    request_char_budget: int = 60000
 
     @property
     def limiter_key(self) -> str:
@@ -156,7 +161,8 @@ def _configured_providers() -> list[CloudEndpoint]:
             reasoning_effort=e.get("reasoning_effort"),
             json_mode=bool(e.get("json_mode", True)),
             structured=_structured_level(e),
-            dedicated=bool(e.get("dedicated", False))))
+            dedicated=bool(e.get("dedicated", False)),
+            request_char_budget=int(e.get("request_char_budget", 60000))))
     return out
 
 
@@ -292,3 +298,28 @@ def pool_fingerprint() -> list[dict]:
              "reasoning_effort": ep.reasoning_effort,
              "structured": ep.structured, "dedicated": ep.dedicated}
             for ep in cloud_endpoints()]
+
+
+def cloud_ring() -> list[CloudEndpoint]:
+    """The non-dedicated shard ring in stable (sorted) order — the
+    universe THROUGHPUT-V2 slices over."""
+    ring = [e for e in cloud_endpoints() if not e.dedicated]
+    return ring or cloud_endpoints()
+
+
+def select_cloud_endpoint_abs(index: int) -> CloudEndpoint:
+    """Absolute ring pick (EXTRACTION-THROUGHPUT-V2): rank-based lane
+    slicing needs collision-free ABSOLUTE positions, not hash-relative
+    offsets (two docs' hash+offset walks can collide; two ranks
+    cannot)."""
+    ring = cloud_ring()
+    return ring[index % len(ring)]
+
+
+def home_ring_index(doc_id: str) -> int:
+    """The doc's deterministic home position on the ring (same digest
+    as _ring_pick) — the fallback base when no rank is available."""
+    ring = cloud_ring()
+    digest = hashlib.blake2b((doc_id or "").encode(),
+                             digest_size=8).digest()
+    return int.from_bytes(digest, "big") % len(ring)

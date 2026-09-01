@@ -759,9 +759,13 @@ class LLMExtractionClient:
                     raw, tin, tout = self._chat(user_prompt + nudge, max_tokens)
                 except httpx.HTTPStatusError as exc:
                     status = exc.response.status_code
-                    limiter.record_failure(
-                        retry_after=exc.response.headers.get("retry-after"),
-                        headers=dict(exc.response.headers))
+                    # THROUGHPUT-V2: 413 is a PAYLOAD condition, not a
+                    # rate condition — halving the AIMD limit for it
+                    # starved healthy lanes (measured 2026-09-01).
+                    if status != 413:
+                        limiter.record_failure(
+                            retry_after=exc.response.headers.get("retry-after"),
+                            headers=dict(exc.response.headers))
                     # TRANSPORT-RETRY-500-V1 (measured 2026-08-30): one
                     # transient Ollama 500 raised ExtractionTransportError
                     # and failed the ENTIRE extract stage — 6 minutes of
@@ -815,3 +819,22 @@ class LLMExtractionClient:
             tokens_in=tokens_in, tokens_out=tokens_out, attempts=attempts,
             error_class=_quarantine_class(last_sanitize), raw_head=last_raw[:200],
             lane_decision=decision, limiter_effective=limiter.effective)
+
+
+    def extract_from_raw(self, neighborhoods: list[tuple[str, list[tuple[str, str]]]],
+                         raw_text: str) -> "LLMCallResult":
+        """EXTRACTION-RECEIPT-REPLAY (THROUGHPUT-V2): rebuild a call
+        result from a CACHED raw response — no network, the exact same
+        sanitize path as a live call, so a replay is byte-equivalent
+        to the call that produced it."""
+        aliased, aliases = alias_neighborhoods(neighborhoods)
+        s_res, packet = sanitize(raw_text, set(aliases))
+        result = LLMCallResult(
+            lane=self.lane, model=self.model, raw_text=raw_text,
+            packet=packet, sanitize=s_res, wall_ms=0, attempts=0,
+            raw_head=raw_text[:200],
+            error_class=(None if packet is not None
+                         else _quarantine_class(s_res)))
+        restore_neighborhood_ids(result.packet, aliases)
+        result.neighborhood_ids = [nid for nid, _ in neighborhoods]
+        return result
