@@ -20,7 +20,8 @@
   "design). Unpinned stages shard across the pool as normal.",
   "groq1..groq5 = five UNLINKED owner accounts (own rate each), the baseline extraction fleet on qwen/qwen3.8-27b, strict schema (level-1, live-verified). nvidia/nvidia2 dedicated:true = enrichment only, excluded from extraction sharding.",
   "CROSS-PROVIDER-V1 (owner 2026-08-30): one lane swapped each way \u2014 extraction shards over groq1-4 + nvidia2 + primary; enrichment pin group = [nvidia, groq5]. A whole-provider outage never stalls either stage, and dispatch failover walks the ring.",
-  "gemini1..gemini6 = Google AI Studio keys on gemini-3.1-flash-lite (owner 2026-09-01 re-pin \u2014 cheaper than 3.5-flash-lite, strict-schema canary green; the 2.5-flash-lite the owner linked is retired for new users \u2014 3.5-flash-lite is the current cheapest lite tier, strict-schema canary GREEN via the OpenAI-compat endpoint; the compat layer tolerates the client's /v1 suffix so url ends at /v1beta/openai). gemini1-4 shard extraction; gemini5-6 are dedicated enrichment lanes added to the parent_enrichment pin group."
+  "gemini1..gemini6 = Google AI Studio keys on gemini-3.1-flash-lite (owner 2026-09-01 re-pin \u2014 cheaper than 3.5-flash-lite, strict-schema canary green; the 2.5-flash-lite the owner linked is retired for new users \u2014 3.5-flash-lite is the current cheapest lite tier, strict-schema canary GREEN via the OpenAI-compat endpoint; the compat layer tolerates the client's /v1 suffix so url ends at /v1beta/openai). gemini1-4 shard extraction; gemini5-6 are dedicated enrichment lanes added to the parent_enrichment pin group.",
+  "request_char_budget (THROUGHPUT-V2): per-lane payload budget in chars; batch packing respects it so provider 413s cannot happen (groq 18000 measured from the 2026-09-01 413 storm; gemini's 1M-token context takes 120000; nvidia 60000)."
  ],
  "stage_pins": {
   "parent_enrichment": [
@@ -38,7 +39,8 @@
    "model": "qwen/qwen3.8-27b",
    "api_key_env": "GROQ_API_KEY_1",
    "reasoning_effort": "none",
-   "structured": "schema"
+   "structured": "schema",
+   "request_char_budget": 18000
   },
   {
    "name": "groq2",
@@ -47,7 +49,8 @@
    "model": "qwen/qwen3.8-27b",
    "api_key_env": "GROQ_API_KEY_2",
    "reasoning_effort": "none",
-   "structured": "schema"
+   "structured": "schema",
+   "request_char_budget": 18000
   },
   {
    "name": "groq3",
@@ -56,7 +59,8 @@
    "model": "qwen/qwen3.8-27b",
    "api_key_env": "GROQ_API_KEY_3",
    "reasoning_effort": "none",
-   "structured": "schema"
+   "structured": "schema",
+   "request_char_budget": 18000
   },
   {
    "name": "groq4",
@@ -65,7 +69,8 @@
    "model": "qwen/qwen3.8-27b",
    "api_key_env": "GROQ_API_KEY_4",
    "reasoning_effort": "none",
-   "structured": "schema"
+   "structured": "schema",
+   "request_char_budget": 18000
   },
   {
    "name": "groq5",
@@ -75,7 +80,8 @@
    "api_key_env": "GROQ_API_KEY_5",
    "reasoning_effort": "none",
    "structured": "schema",
-   "dedicated": true
+   "dedicated": true,
+   "request_char_budget": 18000
   },
   {
    "name": "nvidia",
@@ -85,7 +91,8 @@
    "api_key_env": "NVIDIA_API_KEY",
    "reasoning_effort": "none",
    "structured": "json",
-   "dedicated": true
+   "dedicated": true,
+   "request_char_budget": 60000
   },
   {
    "name": "nvidia2",
@@ -95,7 +102,8 @@
    "api_key_env": "NVIDIA_API_KEY_2",
    "reasoning_effort": "none",
    "structured": "json",
-   "dedicated": false
+   "dedicated": false,
+   "request_char_budget": 60000
   },
   {
    "name": "gemini1",
@@ -104,7 +112,8 @@
    "model": "gemini-3.1-flash-lite",
    "reasoning_effort": null,
    "structured": "schema",
-   "api_key_env": "GEMINI_API_KEY_1"
+   "api_key_env": "GEMINI_API_KEY_1",
+   "request_char_budget": 120000
   },
   {
    "name": "gemini2",
@@ -113,7 +122,8 @@
    "model": "gemini-3.1-flash-lite",
    "reasoning_effort": null,
    "structured": "schema",
-   "api_key_env": "GEMINI_API_KEY_2"
+   "api_key_env": "GEMINI_API_KEY_2",
+   "request_char_budget": 120000
   },
   {
    "name": "gemini3",
@@ -122,7 +132,8 @@
    "model": "gemini-3.1-flash-lite",
    "reasoning_effort": null,
    "structured": "schema",
-   "api_key_env": "GEMINI_API_KEY_3"
+   "api_key_env": "GEMINI_API_KEY_3",
+   "request_char_budget": 120000
   },
   {
    "name": "gemini4",
@@ -131,7 +142,8 @@
    "model": "gemini-3.1-flash-lite",
    "reasoning_effort": null,
    "structured": "schema",
-   "api_key_env": "GEMINI_API_KEY_4"
+   "api_key_env": "GEMINI_API_KEY_4",
+   "request_char_budget": 120000
   },
   {
    "name": "gemini5",
@@ -141,7 +153,8 @@
    "reasoning_effort": null,
    "structured": "schema",
    "api_key_env": "GEMINI_API_KEY_5",
-   "dedicated": true
+   "dedicated": true,
+   "request_char_budget": 120000
   },
   {
    "name": "gemini6",
@@ -151,7 +164,8 @@
    "reasoning_effort": null,
    "structured": "schema",
    "api_key_env": "GEMINI_API_KEY_6",
-   "dedicated": true
+   "dedicated": true,
+   "request_char_budget": 120000
   }
  ]
 }

@@ -1585,6 +1585,10 @@ TREE: list[tuple[str, str, str | None]] = [
     ("orchestrator/orchestrator/api/wildcard.py", "py", None),
     ("tests/determinism/test_divergent.py", "py", None),
     ("docs/wiki/work-log/2026-09-01-divergent-retrieval.md", "md", None),
+    # EXTRACTION-THROUGHPUT-V2
+    ("stores/postgres/migrations/0044_extraction_call_receipts.sql", "sql", None),
+    ("tests/determinism/test_throughput_v2.py", "py", None),
+    ("docs/wiki/work-log/2026-09-01-extraction-throughput-v2.md", "md", None),
 ]
 
 

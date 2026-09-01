@@ -248,6 +248,9 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                   doc_id: str = "",
                   assist: bool = False,
                   queue_depth: int | None = None,
+                  active_rank: int | None = None,
+                  active_docs: int | None = None,
+                  call_cache: tuple | None = None,
                   ) -> tuple[list[LLMCallResult], NormalizedExtraction]:
     """Extract every neighborhood through the gate.
 
@@ -263,145 +266,198 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
     """
     s = get_settings().worker
     _ensure_controller_store()
-    # doc_id engages pool routing; the bare call keeps the frozen
-    # single-endpoint shape (and the test doubles that pin it).
-    client = make_client(lane, doc_id) if doc_id else make_client(lane)
-    limiter = client._lane_limiter()
     views_by_nid = {n.nid: [ChunkView(cid, text) for cid, text in n.chunks]
                     for n in neighborhoods}
-    controller_before = _controller_snapshot(lane, limiter)
 
     if lane == "local":
+        # doc_id engages pool routing; the bare call keeps the frozen
+        # single-endpoint shape (and the test doubles that pin it).
+        client = make_client(lane, doc_id) if doc_id else make_client(lane)
+        limiter = client._lane_limiter()
+        controller_before = _controller_snapshot(lane, limiter)
         results = client.extract_batched(
             [(n.nid, n.chunks) for n in neighborhoods],
             source_bytes=source_bytes, threshold_bytes=s.cloud_min_bytes)
         results = results if isinstance(results, list) else [results]
-    elif lane == "cloud" and spread_decision(
-            queue_depth, doc_id, len(neighborhoods)):
-        # EXTRACT-DEPTH-SPREAD-V1 (owner 2026-09-01, agreed design):
-        # WORK-CONSERVING dispatch. When the extract queue is deep,
-        # per-doc lane affinity holds (fleet already saturated, and one
-        # doc = one model keeps its extraction style internally
-        # consistent). Only when lanes would otherwise IDLE — no other
-        # doc waiting — does a single document spread its batches
-        # round-robin across the shard ring, trading per-doc model
-        # consistency for not wasting 9 idle lanes. Every lane still
-        # self-gates through its own AIMD limiter; a dead or refused
-        # lane fails over to the ring-adjacent one, counted, like the
-        # affinity path below.
+    else:
+        # EXTRACTION-THROUGHPUT-V2 (owner-blessed 2026-09-01). The
+        # 4-book live post-mortem: 74 cloud calls -> 39x413 + 23x429 +
+        # 12x200, one lane serving two colliding docs while six idled,
+        # effective concurrency ~1, and every stage failure re-bought
+        # the whole document. Four mechanics replace the old per-doc
+        # single-lane dispatch:
+        #   RANK SLICING   each active doc owns a disjoint slice of the
+        #                  ring (rank * n_lanes .. +n_lanes), n_lanes =
+        #                  ring // active_docs -- a lone doc takes the
+        #                  whole fleet, a full queue degrades to per-doc
+        #                  affinity, and ranks cannot collide.
+        #   SIZE PACKING   batches pack to the slice's smallest
+        #                  request_char_budget -- 413s cannot happen by
+        #                  construction; a single oversize neighborhood
+        #                  routes alone to the biggest-budget lane.
+        #   RECEIPTS       every parsed call's raw response persists
+        #                  content-addressed; a stage retry REPLAYS
+        #                  cached raws through the same sanitize path
+        #                  and only pays for calls it never made.
+        #   413 LADDER     split -> halves on the same lane -> single
+        #                  still over -> cross-HOST escape (never the
+        #                  same provider family; never a rate signal).
         import logging as _logging
-        batches = [neighborhoods[i:i + NEIGHBORHOODS_PER_CALL]
-                   for i in range(0, len(neighborhoods), NEIGHBORHOODS_PER_CALL)]
-        from polymath_shared.llm_extraction.pool import cloud_endpoints
-        ring = max(1, len([e for e in cloud_endpoints()
-                           if not getattr(e, "dedicated", False)]))
-        _spread_clients: dict = {}
+        from polymath_shared.identity import content_hash as _chash
+        from polymath_shared.llm_extraction.pool import (
+            cloud_ring,
+            home_ring_index,
+            select_cloud_endpoint_abs,
+        )
 
-        def _client_at(off: int):
-            c = _spread_clients.get(off % ring)
+        ring_eps = cloud_ring()
+        ring_n = max(1, len(ring_eps))
+        known_active = active_docs if active_docs is not None else (
+            (queue_depth + 1) if queue_depth is not None else None)
+        n_lanes = (max(1, ring_n // max(1, known_active))
+                   if known_active is not None else 1)
+        base = (active_rank * n_lanes
+                if active_rank is not None else home_ring_index(doc_id))
+
+        _abs_clients: dict = {}
+
+        def _client_abs(idx):
+            idx %= ring_n
+            c = _abs_clients.get(idx)
             if c is None:
-                c = make_client(lane, doc_id, ring_offset=off % ring)
-                _spread_clients[off % ring] = c
+                ep = select_cloud_endpoint_abs(idx)
+                c = LLMExtractionClient(
+                    "cloud", url=ep.url, model=ep.model,
+                    limiter_key=ep.limiter_key, api_key=ep.api_key,
+                    cloud_opts=ep.cloud_opts if ep.name != "primary" else None)
+                c.endpoint_name = ep.name
+                c.base_url = ep.url
+                c.request_char_budget = ep.request_char_budget
+                _abs_clients[idx] = c
             return c
 
-        _logging.getLogger("llm-provider").info(
-            "depth spread: %d batches across %d lanes (queue_depth=%d)",
-            len(batches), min(ring, len(batches)), queue_depth,
-            extra={"error_code": "EXTRACTION_DEPTH_SPREAD"})
+        slice_idx = [base + s for s in range(n_lanes)]
+        slice_budget = min(
+            getattr(select_cloud_endpoint_abs(i), "request_char_budget",
+                    60000) for i in slice_idx)
+        big_i = max(range(ring_n), key=lambda i: getattr(
+            select_cloud_endpoint_abs(i), "request_char_budget", 0))
 
-        def one_spread(ib):
-            idx, batch = ib
-            home = _client_at(idx)
+        # SIZE PACKING: greedy by chars within the slice budget, capped
+        # at NEIGHBORHOODS_PER_CALL; oversize singles go to the escape.
+        batches: list[list[Neighborhood]] = []
+        oversize: list[Neighborhood] = []
+        buf: list[Neighborhood] = []
+        buf_chars = 0
+        for n in neighborhoods:
+            if n.char_len > slice_budget:
+                oversize.append(n)
+                continue
+            if buf and (buf_chars + n.char_len > slice_budget
+                        or len(buf) >= NEIGHBORHOODS_PER_CALL):
+                batches.append(buf)
+                buf, buf_chars = [], 0
+            buf.append(n)
+            buf_chars += n.char_len
+        if buf:
+            batches.append(buf)
+
+        cache_get = call_cache[0] if call_cache else None
+        cache_put = call_cache[1] if call_cache else None
+        _ident = _chash({"contract": contract_identity()})
+        _stats = {"cache_hits": 0, "splits": 0, "escapes": 0}
+
+        def _key(batch):
+            return "ecr_" + _chash({
+                "ident": _ident,
+                "batch": [(n.nid, n.chunks) for n in batch]})[:40]
+
+        def _call(client, batch):
             payload = [(n.nid, n.chunks) for n in batch]
-            try:
-                r = home.extract(payload, source_bytes=source_bytes,
-                                 threshold_bytes=s.cloud_min_bytes,
-                                 assist=assist)
-            except ExtractionTransportError as exc:
-                fb = _client_at(idx + 1)
-                if fb.endpoint_name == home.endpoint_name:
-                    raise
-                _logging.getLogger("llm-provider").warning(
-                    "lane failover: %s -> %s after transport failure (%s)",
-                    home.endpoint_name, fb.endpoint_name, str(exc)[:120],
-                    extra={"error_code": "EXTRACTION_LANE_FAILOVER"})
-                return fb.extract(payload, source_bytes=source_bytes,
-                                  threshold_bytes=s.cloud_min_bytes,
-                                  assist=assist)
-            if r.error_class == "LIMITER_REFUSED":
-                fb = _client_at(idx + 1)
-                if fb.endpoint_name != home.endpoint_name:
-                    _logging.getLogger("llm-provider").warning(
-                        "lane failover: %s -> %s after limiter refusal",
-                        home.endpoint_name, fb.endpoint_name,
-                        extra={"error_code": "EXTRACTION_LANE_FAILOVER"})
-                    return fb.extract(payload, source_bytes=source_bytes,
-                                      threshold_bytes=s.cloud_min_bytes,
-                                      assist=assist)
-            return r
-
-        with ThreadPoolExecutor(max_workers=min(len(batches), 16)) as pool:
-            results = list(pool.map(one_spread, list(enumerate(batches))))
-    else:
-        batches = [neighborhoods[i:i + NEIGHBORHOODS_PER_CALL]
-                   for i in range(0, len(neighborhoods), NEIGHBORHOODS_PER_CALL)]
-        pool_size = min(len(batches), limiter.spec.conc_cap or limiter.spec.max) or 1
-
-        # LANE-FAILOVER-V1 (owner 2026-08-30: "if a lane fails its picked
-        # up… cross provider. ensuring the job is always getting done"):
-        # a batch whose HOME lane dies (transport error after the
-        # client's own retries, or a limiter refusal — breaker open /
-        # Retry-After hold) is retried ONCE on the next ring endpoint,
-        # which is a DIFFERENT account and often a different provider.
-        # Counted + logged, never silent. The ticket-level retry remains
-        # the outer loop; this stops one dead lane failing whole stages.
-        _fallback: dict = {}
-
-        def _fallback_client():
-            if "c" not in _fallback:
+            key = _key(batch)
+            if cache_get is not None:
                 try:
-                    fb = make_client(lane, doc_id, ring_offset=1)
-                except TypeError:
-                    fb = None      # narrowed test double: no ring, no failover
-                _fallback["c"] = (
-                    None if fb is None or getattr(fb, "endpoint_name", None) ==
-                    getattr(client, "endpoint_name", None) else fb)
-            return _fallback["c"]
+                    raw = cache_get(key)
+                except Exception:
+                    raw = None
+                if raw:
+                    _stats["cache_hits"] += 1
+                    return client.extract_from_raw(payload, raw)
+            r = client.extract(payload, source_bytes=source_bytes,
+                               threshold_bytes=s.cloud_min_bytes,
+                               assist=assist)
+            if cache_put is not None and r.packet is not None:
+                try:
+                    cache_put(key, doc_id, r.lane, r.model, r.raw_text)
+                except Exception:
+                    pass
+            return r
 
-        def one(batch: list[Neighborhood]) -> LLMCallResult:
-            import logging as _logging
-            payload = [(n.nid, n.chunks) for n in batch]
+        def _dispatch(batch, lane_i, depth=0):
+            client = _client_abs(lane_i)
             try:
-                r = client.extract(payload, source_bytes=source_bytes,
-                                   threshold_bytes=s.cloud_min_bytes,
-                                   assist=assist)
+                r = _call(client, batch)
             except ExtractionTransportError as exc:
-                fb = _fallback_client()
-                if fb is None:
+                if "413" in str(exc):
+                    _stats["splits"] += 1
+                    if len(batch) > 1:
+                        half = len(batch) // 2
+                        return (_dispatch(batch[:half], lane_i, depth)
+                                + _dispatch(batch[half:], lane_i, depth))
+                    from urllib.parse import urlparse
+                    home = urlparse(getattr(client, "base_url", "")
+                                    or "").netloc
+                    for off in range(1, ring_n):
+                        alt = _client_abs(lane_i + off)
+                        if urlparse(getattr(alt, "base_url", "")
+                                    or "").netloc != home:
+                            _stats["escapes"] += 1
+                            return [_call(alt, batch)]
+                    raise
+                if depth >= 1:
+                    raise
+                fb = _client_abs(lane_i + n_lanes)   # outside own slice
+                if fb.endpoint_name == client.endpoint_name:
                     raise
                 _logging.getLogger("llm-provider").warning(
                     "lane failover: %s -> %s after transport failure (%s)",
-                    getattr(client, "endpoint_name", client.lane),
-                    fb.endpoint_name, str(exc)[:120],
+                    client.endpoint_name, fb.endpoint_name, str(exc)[:120],
                     extra={"error_code": "EXTRACTION_LANE_FAILOVER"})
-                return fb.extract(payload, source_bytes=source_bytes,
-                                  threshold_bytes=s.cloud_min_bytes,
-                                  assist=assist)
-            if r.error_class == "LIMITER_REFUSED":
-                fb = _fallback_client()
-                if fb is not None:
+                return _dispatch(batch, lane_i + n_lanes, depth + 1)
+            if r.error_class == "LIMITER_REFUSED" and depth < 1:
+                fb = _client_abs(lane_i + n_lanes)
+                if fb.endpoint_name != client.endpoint_name:
                     _logging.getLogger("llm-provider").warning(
                         "lane failover: %s -> %s after limiter refusal",
-                        getattr(client, "endpoint_name", client.lane),
-                        fb.endpoint_name,
+                        client.endpoint_name, fb.endpoint_name,
                         extra={"error_code": "EXTRACTION_LANE_FAILOVER"})
-                    return fb.extract(payload, source_bytes=source_bytes,
-                                      threshold_bytes=s.cloud_min_bytes,
-                                      assist=assist)
-            return r
+                    return _dispatch(batch, lane_i + n_lanes, depth + 1)
+            return [r]
 
+        # the doc's BASE lane serves the shared tail (reissues +
+        # controller snapshot); per-batch dispatch stays per-lane
+        client = _client_abs(base)
+        limiter = (client._lane_limiter()
+                   if hasattr(client, "_lane_limiter") else None)
+        controller_before = (_controller_snapshot(lane, limiter)
+                             if limiter is not None else {})
+        work = ([(b, slice_idx[i % n_lanes]) for i, b in enumerate(batches)]
+                + [([n], big_i) for n in oversize])
+        pool_size = max(1, min(len(work), 4 * n_lanes, 24))
+        _logging.getLogger("llm-provider").info(
+            "throughput-v2 dispatch: %d batches (+%d oversize) over %d "
+            "lane(s) [base %d/%d], budget %d chars, pool %d",
+            len(batches), len(oversize), n_lanes, base % ring_n, ring_n,
+            slice_budget, pool_size,
+            extra={"error_code": "EXTRACTION_V2_DISPATCH"})
         with ThreadPoolExecutor(max_workers=pool_size) as pool:
-            results = list(pool.map(one, batches))
+            results = [r for rs in pool.map(
+                lambda w: _dispatch(w[0], w[1]), work) for r in rs]
+        if _stats["cache_hits"] or _stats["splits"] or _stats["escapes"]:
+            _logging.getLogger("llm-provider").info(
+                "throughput-v2: %(cache_hits)d cached, %(splits)d "
+                "splits, %(escapes)d escapes", _stats,
+                extra={"error_code": "EXTRACTION_V2_STATS"})
 
     # A limiter refusal (breaker open / Retry-After hold) is an
     # INFRASTRUCTURE condition, not a model disposition: it must fail the
@@ -425,7 +481,9 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
         reissue_results = _reissue(
             client, todo, lane=lane, source_bytes=source_bytes,
             threshold_bytes=s.cloud_min_bytes, assist=assist,
-            pool_size=(min(len(todo), limiter.spec.conc_cap or limiter.spec.max) or 1)
+            pool_size=(min(len(todo),
+                           (limiter.spec.conc_cap or limiter.spec.max)
+                           if limiter is not None else 4) or 1)
             if lane == "cloud" else 1)
         _raise_if_refused(reissue_results, lane)
         items2, disp2 = _dispose(reissue_results, [n.nid for n in todo])
@@ -491,7 +549,8 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
     # value is persisted (so the climb is provable and survives restarts).
     merged.stats["controller"] = {
         "before": controller_before,
-        "after": _controller_snapshot(lane, limiter),
+        "after": (_controller_snapshot(lane, limiter)
+                  if limiter is not None else {}),
         "persisted": REGISTRY.store_attached,
     }
     return results, merged
