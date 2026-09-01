@@ -1563,6 +1563,9 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_tier_chunker.py", "py", None),
     ("docs/wiki/work-log/2026-08-31-tier-chunker-v3.md", "md", None),
     ("scripts/reingest_corpus.py", "py", None),
+    # POLYMATH-MCP-V1
+    ("orchestrator/orchestrator/mcp_server.py", "py", None),
+    ("docs/wiki/work-log/2026-08-31-polymath-mcp-v1.md", "md", None),
 ]
 
 
