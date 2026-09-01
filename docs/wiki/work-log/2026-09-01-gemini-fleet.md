@@ -14,15 +14,16 @@ Owner 2026-09-01: six Google AI Studio credentials — "4 for
 extractions and 2 for enrichment using the cheapest model", linking
 gemini-2.5-flash-lite. Live probe found 2.5-flash-lite RETIRED for
 new users (404 "no longer available to new users"); the current
-cheapest lite tier is **gemini-3.5-flash-lite** — adopted as the
-closest match to the owner's stated intent (cheapest). Credential
+cheapest lite tier was first read as **gemini-3.5-flash-lite**; the
+owner then re-pinned to **gemini-3.1-flash-lite** ("its cheaper",
+2026-09-01) — strict-schema canary green on 3.1 before the re-pin. Credential
 formats: one classic AIza key + five AQ.-format keys — ALL SIX
 authenticate against the Generative Language API (the AQ. format is
 valid key material, not OAuth debris).
 
 ## Changes
 - `config/cloud_providers.json`: gemini1..gemini6 on
-  gemini-3.5-flash-lite via the OpenAI-compat endpoint
+  gemini-3.1-flash-lite (owner re-pin; initially 3.5-flash-lite) via the OpenAI-compat endpoint
   (`…/v1beta/openai` — the compat layer tolerates the client's
   hardcoded `/v1/chat/completions` suffix, LIVE-VERIFIED, so zero
   client changes). `structured: "schema"` (strict json_schema canary
@@ -45,8 +46,10 @@ valid key material, not OAuth debris).
   shard = [gemini1-4, groq1-4, nvidia2, primary]; `stage_pin
   ('parent_enrichment')` = [nvidia, groq5, gemini5, gemini6];
   dispatch over 24 doc ids shards across all four pin lanes.
-- Strict-schema wire canary on gemini-3.5-flash-lite: exact
-  requested object returned at temperature 0.
+- Strict-schema wire canary green on BOTH 3.5-flash-lite and the
+  final 3.1-flash-lite pin: exact requested object at temperature 0;
+  all-lane preflight green on 3.1 (a single transient gemini4
+  ReadTimeout cleared on rerun).
 
 ## Rejected claims
 - "Pin gemini-2.5-flash-lite as the owner linked" — impossible:
