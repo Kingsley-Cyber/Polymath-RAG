@@ -460,9 +460,31 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
 
         def _complete_fb(items, _doc=doc):
             # SEMANTIC-FAILOVER-V1: the OTHER group lane, gate-rejects
-            # only; one retry, re-gated identically.
-            fb = _client(1)
-            if fb.endpoint_name == _client(0).endpoint_name:
+            # only; one retry, re-gated identically. Builds its own
+            # lane clients — `_client` lives inside `_complete`'s
+            # scope and is NOT visible here (live NameError 2026-09-01
+            # killed every enrichment job the moment the first parent
+            # semantically failed over; the path had never fired
+            # before groq5's 429 pressure pushed one through).
+            from polymath_shared.llm_extraction.client import (
+                LLMExtractionClient,
+            )
+            from polymath_shared.llm_extraction.pool import (
+                select_endpoint_for_stage,
+            )
+
+            def _lane(offset):
+                ep = select_endpoint_for_stage(
+                    "parent_enrichment", _doc, ring_offset=offset)
+                c = LLMExtractionClient(
+                    "cloud", url=ep.url, model=ep.model,
+                    limiter_key=ep.limiter_key, api_key=ep.api_key,
+                    cloud_opts=ep.cloud_opts)
+                c.endpoint_name = ep.name
+                return c
+
+            fb = _lane(1)
+            if fb.endpoint_name == _lane(0).endpoint_name:
                 return [(i, "", "ENRICH_NO_RESPONSE") for i, *_ in items]
             out = []
             for item_id, system, user, max_tokens in items:
