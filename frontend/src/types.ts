@@ -1,4 +1,4 @@
-export type Mode = "VECTOR" | "HYBRID" | "GRAPH" | "ASK";
+export type Mode = "VECTOR" | "HYBRID" | "GRAPH" | "WILDCARD";
 
 export interface Corpus {
   corpus_id: string;
@@ -42,8 +42,21 @@ export interface Degradation {
   reason: string;
 }
 
+export interface WildcardBridge {
+  parent_id: string;
+  doc_id: string;
+  source_name: string;
+  principle: string;
+  why_it_may_transfer: string;
+  source_evidence: { chunk_id?: string; text: string; source_name?: string };
+  scores?: Record<string, number | null>;
+  channels?: string[];
+}
+
 export interface Retrieval {
   mode: string;
+  /** DIVERGENT-RETRIEVAL-V1: labelled derived insights, never evidence. */
+  wildcard?: WildcardBridge[] | null;
   evidence_count: number;
   graph_fact_count?: number;
   chunks: ChunkRef[];

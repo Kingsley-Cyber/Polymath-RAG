@@ -12,7 +12,7 @@ export const THEMES = [
   { id: "paper", color: "#a4661b" },
 ];
 
-const MODES: Mode[] = ["VECTOR", "HYBRID", "GRAPH", "ASK"];
+const MODES: Mode[] = ["VECTOR", "HYBRID", "GRAPH", "WILDCARD"];
 
 export default function TopBar({
   corpora,
