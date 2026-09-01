@@ -549,7 +549,15 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
         compiled, semantic_failovers, hard_recovered, hard_terminal = \
             compile_microbatched_with_hard_case(
                 _complete, _complete_fb, _complete_escape, todo, bounds,
-                ceiling, on_compiled=_persist_ready_now)
+                ceiling, on_compiled=_persist_ready_now,
+                # MICROBATCH-CONCURRENCY-V1: run batches concurrently
+                # across the pinned lane group (parent-shard puts
+                # different batches on different lanes; each lane still
+                # self-gates through its own AIMD limiter). Live E2E
+                # measured the sequential loop at ~5.3 parents/min —
+                # a 2h49m tail for 884 parents with 5 lanes idle.
+                max_concurrency=int(getattr(
+                    settings, "enrichment_batch_concurrency", 5)))
         if semantic_failovers:
             log.warning(
                 "enrichment semantic failover recovered %d parent(s) on "

@@ -49,6 +49,7 @@ class _FlakyClient:
 
 
 def _client(monkeypatch, fake):
+    SidecarClient._refused_until.clear()  # breaker is class-shared state
     c = SidecarClient.__new__(SidecarClient)
     c.base_url = "http://sidecar"
     c._timeout = httpx.Timeout(30.0, connect=5.0, pool=5.0)
@@ -239,3 +240,64 @@ def test_embedder_batches_by_tokens_and_releases_metal():
               if isinstance(c, ast.Call) and isinstance(c.func, ast.Name)}
     assert "_token_bounded_batches" in called
     assert "_release_mps" in called
+
+
+# ------------------------------------------------- FAIL-FAST-BREAKER-V1
+
+def test_refused_never_sleeps(monkeypatch):
+    """Connection refused is instant + deterministic within a tick:
+    backoff sleeps buy nothing (the 97s-query incident anatomy)."""
+    slept = []
+    monkeypatch.setattr("time.sleep", lambda s: slept.append(s))
+    fake = _FlakyClient(fail_times=99, exc=httpx.ConnectError("refused"))
+    c = _client(monkeypatch, fake)
+    with pytest.raises(SidecarUnavailable):
+        c.request("POST", "/infer", json={}, attempts=3)
+    assert slept == [], "refused connections must not back off"
+    assert fake.calls == 3
+
+
+def test_busy_sidecar_still_backs_off(monkeypatch):
+    """ReadTimeout = the sidecar is ALIVE but busy/mid-restart; the
+    original patience (P0-C) stays."""
+    slept = []
+    monkeypatch.setattr("time.sleep", lambda s: slept.append(s))
+    fake = _FlakyClient(fail_times=99, exc=httpx.ReadTimeout("busy"))
+    c = _client(monkeypatch, fake)
+    with pytest.raises(SidecarUnavailable):
+        c.request("POST", "/infer", json={}, attempts=3)
+    assert len(slept) == 2, "timeout retries keep their backoff sleeps"
+
+
+def test_terminal_refusal_opens_breaker_and_skips_next_call(monkeypatch):
+    monkeypatch.setattr("time.sleep", lambda *_: None)
+    fake = _FlakyClient(fail_times=99, exc=httpx.ConnectError("refused"))
+    c = _client(monkeypatch, fake)
+    with pytest.raises(SidecarUnavailable):
+        c.request("POST", "/infer", json={}, attempts=3)
+    calls_after_trip = fake.calls
+    with pytest.raises(SidecarUnavailable) as e:
+        c.request("POST", "/infer", json={})
+    assert fake.calls == calls_after_trip, "open breaker must not hit the wire"
+    assert "breaker open" in str(e.value)
+
+
+def test_breaker_expires_and_success_closes_it(monkeypatch):
+    monkeypatch.setattr("time.sleep", lambda *_: None)
+    fake = _FlakyClient(fail_times=3, exc=httpx.ConnectError("refused"))
+    c = _client(monkeypatch, fake)
+    with pytest.raises(SidecarUnavailable):
+        c.request("POST", "/infer", json={}, attempts=3)
+    # expire the breaker window manually (monotonic clock)
+    SidecarClient._refused_until["http://sidecar"] = 0.0
+    assert c.request("POST", "/infer", json={}).json() == {"ok": True}
+    assert "http://sidecar" not in SidecarClient._refused_until
+
+
+def test_timeout_failures_never_open_the_breaker(monkeypatch):
+    monkeypatch.setattr("time.sleep", lambda *_: None)
+    fake = _FlakyClient(fail_times=99, exc=httpx.ReadTimeout("busy"))
+    c = _client(monkeypatch, fake)
+    with pytest.raises(SidecarUnavailable):
+        c.request("POST", "/infer", json={}, attempts=3)
+    assert "http://sidecar" not in SidecarClient._refused_until

@@ -170,3 +170,81 @@ def test_zero_overlap_passage_never_supports():
         _bundle(query, child_chunk_ids=["chunk_adm_related"]), query)
     assert resp["meta"]["abstained"] is True
     assert all(c["status"] == "unsupported" for c in resp["claims"])
+
+
+# ---------------------------------------------------------- ADMISSION-V2
+
+from polymath_shared.answer_synthesis import (  # noqa: E402
+    _term_covered,
+    query_content_terms,
+)
+
+CHUNKS["chunk_adm_habit"] = {
+    "chunk_id": "chunk_adm_habit", "doc_id": "doc_adm",
+    "text": ("This book is about habits: automatic processes learned "
+             "from repeated responses to stable contexts."),
+    "char_start": 211, "char_end": 310}
+CHUNKS["chunk_adm_jtbd"] = {
+    "chunk_id": "chunk_adm_jtbd", "doc_id": "doc_adm",
+    "text": ("Customers hire products for jobs to be done; the theory "
+             "predicts repeat purchases whenever the job recurs."),
+    "char_start": 311, "char_end": 420}
+
+
+def test_v2a_compound_covered_by_spaced_form():
+    assert _term_covered(
+        "jobs-to-be-done",
+        ["customers hire products for jobs to be done"])
+
+
+def test_v2a_compound_covered_by_subterms_across_surfaces():
+    assert _term_covered(
+        "habit-formation",
+        ["habit strength grows with repetition",
+         "the formation of routines is contextual"])
+
+
+def test_v2a_compound_not_covered_without_evidence():
+    assert not _term_covered("jobs-to-be-done", ["long walks in mountains"])
+
+
+def test_v2b_relation_words_never_required():
+    terms = query_content_terms(
+        "How do habits and jobs-to-be-done theory together explain "
+        "repeat purchases?")
+    assert "together" not in terms and "explain" not in terms
+    assert {"habits", "jobs-to-be-done", "theory", "repeat",
+            "purchases"} <= terms
+
+
+def test_v2c_quorum_tolerates_one_rare_term_of_five():
+    query = "when did AliceSmith found AcmeCorp research startup"
+    resp = grounded_answer(
+        _bundle(query, child_chunk_ids=["chunk_adm_para"]), query)
+    assert resp["meta"]["verdict"] == "supported"
+    assert resp["meta"]["abstained"] is False
+    assert resp["meta"]["uncovered_query_terms"] == ["startup"]
+
+
+def test_v2c_majority_uncovered_still_abstains():
+    query = ("when did AliceSmith found AcmeCorp fintech startup "
+             "venture")
+    resp = grounded_answer(
+        _bundle(query, child_chunk_ids=["chunk_adm_para"]), query)
+    assert resp["meta"]["verdict"] == "insufficient_evidence"
+    assert resp["meta"]["abstained"] is True
+
+
+def test_v2_live_regression_habits_jtbd_answers():
+    """The exact live abstention that motivated v2: cross-doc
+    synthesis where one query term is hyphenated and the relation
+    words never appear verbatim in the evidence."""
+    query = ("How do habits and jobs-to-be-done theory together "
+             "explain repeat purchases?")
+    resp = grounded_answer(
+        _bundle(query, child_chunk_ids=["chunk_adm_habit",
+                                        "chunk_adm_jtbd"]), query)
+    assert resp["meta"]["verdict"] == "supported"
+    assert resp["meta"]["abstained"] is False
+    assert resp["meta"]["uncovered_query_terms"] == []
+    assert resp["citations"]

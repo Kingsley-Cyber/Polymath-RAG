@@ -44,6 +44,26 @@ lexical_score) — no similarity thresholds:
      EVERY query content term, or the answer is INSUFFICIENT_EVIDENCE
      and the system abstains. NO ANSWER > UNSUPPORTED ANSWER.
 
+ANSWER-ADMISSION-V2 (2026-09-01): the v1 gates abstained on plainly
+answerable questions for three lexical reasons found live (ecom-meta
+battery: "How do habits and jobs-to-be-done theory together explain
+repeat purchases?" abstained with 14 grounded claims withheld):
+  a. tokens() keeps hyphenated compounds whole, so the query term
+     "jobs-to-be-done" could never be covered by sources that write
+     "jobs to be done" — a compound now also counts as covered when
+     its spaced form appears, or when ALL of its content sub-tokens
+     are covered.
+  b. Relation words ("together", "explain", "compare"...) state the
+     question's requested RELATION, not its content — evidence about
+     both sides rarely repeats them verbatim. They are no longer
+     required of the evidence (never required, still allowed).
+  c. All-or-abstain coverage let ONE rare term veto an otherwise
+     grounded answer. Gate 2 now requires >=75% coverage (uncovered
+     <= len(terms)//4): queries of <=3 content terms still require
+     every term (nonce regressions unchanged); longer questions
+     tolerate one uncovered term per four. meta.uncovered_query_terms
+     stays honest either way.
+
 Verdicts: meta.verdict = "supported" | "insufficient_evidence";
 backend failures never reach synthesis (typed 502 upstream).
 
@@ -60,7 +80,20 @@ from polymath_shared.retrieval import tokens
 
 SYNTHESIS_VERSION = "deterministic-template-v3"
 CHAT_CONTRACT_ID = "answer/chat_response/v2"
-ANSWER_ADMISSION_VERSION = "answer-admission-v1"
+ANSWER_ADMISSION_VERSION = "answer-admission-v2"
+
+#: Words that state the question's requested RELATION between content
+#: terms rather than content itself ("how do X and Y TOGETHER EXPLAIN
+#: Z"). Evidence that answers the question rarely repeats them
+#: verbatim, so they are never REQUIRED of the supporting surfaces.
+#: Deliberately small and meta-linguistic: a word that could name a
+#: domain concept (influence, cause, effect) does NOT belong here.
+_RELATION_WORDS = frozenset(
+    "together jointly explain explains explained explaining describe "
+    "describes discuss discusses summarize summarizes compare compares "
+    "comparison contrast contrasts relate relates related relationship "
+    "relationships connection connections versus difference differences "
+    "differ differs overall respectively".split())
 
 ABSTENTION_MESSAGE = (
     "I don't have enough grounded evidence to answer this question."
@@ -133,18 +166,42 @@ def _text_grounded(claim_text: str, passages: list[str]) -> bool:
 
 def query_content_terms(query: str) -> set[str]:
     """The query's content terms: stopword-filtered tokens of length
-    >=4 (the existing seed/entity-surface convention). Falls back to
-    all tokens for very short queries so the gate never trivially
-    passes on an empty term set."""
-    terms = {t for t in tokens(query) if len(t) >= 4}
-    return terms or tokens(query)
+    >=4 (the existing seed/entity-surface convention), minus relation
+    words (v2b — they name the asked-for relation, not content). Falls
+    back to all tokens for very short queries so the gate never
+    trivially passes on an empty term set."""
+    toks = tokens(query)
+    terms = {t for t in toks if len(t) >= 4 and t not in _RELATION_WORDS}
+    return terms or {t for t in toks if t not in _RELATION_WORDS} or toks
+
+
+def _compound_subterms(term: str) -> list[str]:
+    """Content sub-tokens of a hyphen/underscore compound ('jobs-to-
+    be-done' -> ['jobs', 'done']); [] for a plain term."""
+    if "-" not in term and "_" not in term:
+        return []
+    parts = [p for p in term.replace("_", "-").split("-") if p]
+    return [p for p in parts if len(p) >= 4 and p not in _RELATION_WORDS]
 
 
 def _term_covered(term: str, surfaces: Iterable[str]) -> bool:
     """Substring containment, the lexical_score convention: 'configure'
-    covers 'configures', 'step' covers 'steps'."""
+    covers 'configures', 'step' covers 'steps'. v2a: a hyphenated
+    compound is also covered by its spaced form ('jobs to be done')
+    or by every one of its content sub-tokens appearing somewhere in
+    the surfaces — sources normalize hyphens freely."""
     t = term.lower()
-    return any(t in (s or "").lower() for s in surfaces)
+    lowered = [(s or "").lower() for s in surfaces]
+    if any(t in s for s in lowered):
+        return True
+    if "-" in t or "_" in t:
+        spaced = t.replace("_", " ").replace("-", " ")
+        if any(spaced in s for s in lowered):
+            return True
+        subs = _compound_subterms(t)
+        if subs and all(any(sub in s for s in lowered) for sub in subs):
+            return True
+    return False
 
 
 def _query_relevant(query: str, passages: list[str]) -> bool:
@@ -380,13 +437,19 @@ def render_answer(bundle: dict, query: str, validation: dict) -> dict:
                 support_surfaces.append(item.get("claim_candidate") or "")
             else:
                 support_surfaces.append(_passage_of(item))
+    required_terms = query_content_terms(query)
     uncovered = sorted(
-        term for term in query_content_terms(query)
+        term for term in required_terms
         if not _term_covered(term, support_surfaces)
     ) if validation["supported"] else []
 
+    # v2c quorum: >=75% of content terms covered. <=3 terms -> 0
+    # uncovered allowed (nonce behavior unchanged); one uncovered term
+    # tolerated per four content terms beyond that.
+    coverage_ok = len(uncovered) <= len(required_terms) // 4
+
     has_conflict = any(c.get("conflicts_with") for c in validation["supported"])
-    if (sentences or passages) and not uncovered:
+    if (sentences or passages) and coverage_ok:
         answer = " ".join(sentences + passages)
         if has_conflict:
             answer += CONFLICT_NOTE

@@ -223,3 +223,67 @@ def test_hard_case_integration_routes_item_failures():
     assert all(cp.status == "READY" for cp in out)
     assert all(cp.contract == "parent-enrichment-minimal-v1"
                for cp in out)
+
+
+# ------------------------------------------- MICROBATCH-CONCURRENCY-V1
+
+def test_concurrent_batches_all_ready_and_ordered():
+    """max_concurrency>1 runs whole batches in parallel; results keep
+    input order and every parent still gates independently."""
+    import threading
+    calls, active, peak = [], [0], [0]
+    lock = threading.Lock()
+
+    def transport(items):
+        import time as _t
+        with lock:
+            active[0] += 1
+            peak[0] = max(peak[0], active[0])
+            calls.append(len(items))
+        _t.sleep(0.05)                       # force overlap window
+        out = _ok_transport(items)
+        with lock:
+            active[0] -= 1
+        return out
+
+    parents = [_parent(f"P{i}") for i in range(24)]   # 3 batches of 8
+    out = compile_parents_microbatched(transport, parents, BOUNDS, 6000,
+                                       max_concurrency=3)
+    assert [cp.parent_id for cp in out] == [p.parent_id for p in parents]
+    assert all(cp.status == "READY" for cp in out)
+    assert peak[0] >= 2, "batches never overlapped"
+
+
+def test_concurrent_on_compiled_lands_every_parent():
+    import threading
+    landed, lock = [], threading.Lock()
+
+    def cb(cp):
+        with lock:
+            landed.append(cp.parent_id)
+
+    parents = [_parent(f"P{i}") for i in range(20)]
+    compile_parents_microbatched(_ok_transport, parents, BOUNDS, 6000,
+                                 max_concurrency=4, on_compiled=cb)
+    assert sorted(landed) == sorted(p.parent_id for p in parents)
+
+
+def test_concurrency_default_stays_sequential():
+    import threading
+    active, peak = [0], [0]
+    lock = threading.Lock()
+
+    def transport(items):
+        import time as _t
+        with lock:
+            active[0] += 1
+            peak[0] = max(peak[0], active[0])
+        _t.sleep(0.01)
+        out = _ok_transport(items)
+        with lock:
+            active[0] -= 1
+        return out
+
+    parents = [_parent(f"P{i}") for i in range(16)]
+    compile_parents_microbatched(transport, parents, BOUNDS, 6000)
+    assert peak[0] == 1, "default must stay strictly sequential"
