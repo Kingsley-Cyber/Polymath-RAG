@@ -257,3 +257,161 @@ def compile_with_hard_case_escape(
                             f"escape={cp.error_class}").strip("; ")
     return ([by_id[p.parent_id] for p in parents], failovers,
             hard_recovered, hard_terminal)
+
+
+def compile_parents_microbatched(
+    complete,
+    parents: list[ParentInput],
+    bounds: EnrichmentBounds,
+    input_token_ceiling: int,
+    max_per_call: int = 8,
+) -> list[CompiledParent]:
+    """ENRICH-MICROBATCH-V1 (owner 2026-09-01): token-aware batches of
+    item-isolated parents through ONE call each; per-item validation
+    via sanitize_microbatch (which reuses the per-parent gate); split
+    ladder 8→4→2→1 on envelope-level failure (transport error or an
+    unparseable envelope) so one pathological section degrades to the
+    proven single-parent path instead of poisoning its batchmates.
+    Partial acceptance is intrinsic: every item gets its own
+    CompiledParent, and callers persist READY ones regardless of what
+    happened to their batchmates."""
+    from polymath_shared.latent.prompt import (
+        MICROBATCH_PROMPT_VERSION,
+        MICROBATCH_SYSTEM_PROMPT,
+        render_microbatch_input,
+    )
+
+    # per-parent scaffolding + individual ceiling checks (single-parent
+    # semantics preserved exactly)
+    meta: dict[str, dict] = {}
+    eligible: list[ParentInput] = []
+    out: dict[str, CompiledParent] = {}
+    for p in parents:
+        sh = source_hash(p.children)
+        ids = [cid for cid, _, _ in p.children]
+        wire = [(i, text) for i, (_, _, text) in enumerate(p.children)]
+        cp = CompiledParent(
+            parent_id=p.parent_id, status="PENDING",
+            source_hash=sh, source_child_ids=ids,
+            child_ref_map={i: cid for i, (cid, _, _)
+                           in enumerate(p.children)},
+            prompt_version=MICROBATCH_PROMPT_VERSION)
+        est = _estimate_tokens(render_microbatch_input(
+            [(p.parent_id, wire)]))
+        if est > input_token_ceiling:
+            cp.status = "INVALID"
+            cp.error_class = "ENRICH_INPUT_OVER_CEILING"
+            cp.detail = f"input over {input_token_ceiling} tokens"
+        out[p.parent_id] = cp
+        meta[p.parent_id] = {"wire": wire, "est": est,
+                             "refs": [i for i, _ in wire], "p": p}
+        if cp.status == "PENDING":
+            eligible.append(p)
+
+    # token-aware packing (batch input stays under the ceiling too)
+    batches: list[list[ParentInput]] = []
+    buf: list[ParentInput] = []
+    buf_est = _estimate_tokens(MICROBATCH_SYSTEM_PROMPT)
+    for p in eligible:
+        est = meta[p.parent_id]["est"]
+        if buf and (len(buf) >= max_per_call
+                    or buf_est + est > input_token_ceiling):
+            batches.append(buf)
+            buf, buf_est = [], _estimate_tokens(MICROBATCH_SYSTEM_PROMPT)
+        buf.append(p)
+        buf_est += est
+    if buf:
+        batches.append(buf)
+
+    def _run_batch(batch: list[ParentInput]) -> None:
+        if len(batch) == 1:
+            # ladder floor: the proven single-parent compiler
+            single = compile_parents(complete, batch, bounds,
+                                     input_token_ceiling)
+            out[batch[0].parent_id] = single[0]
+            return
+        user = render_microbatch_input(
+            [(p.parent_id, meta[p.parent_id]["wire"]) for p in batch])
+        max_tokens = min(bounds.max_tokens * len(batch) + 200, 8000)
+        rows = complete([(batch[0].parent_id, MICROBATCH_SYSTEM_PROMPT,
+                          user, max_tokens)])
+        raw, err = "", "ENRICH_NO_RESPONSE"
+        for _bid, r, e in rows:
+            raw, err = r, e
+            break
+        if err or not raw:
+            half = len(batch) // 2               # split ladder
+            _run_batch(batch[:half])
+            _run_batch(batch[half:])
+            return
+        from polymath_shared.latent.gate import sanitize_microbatch
+        expected = {p.parent_id: meta[p.parent_id]["refs"] for p in batch}
+        gated = sanitize_microbatch(raw, expected, bounds)
+        envelope_dead = all(
+            g.error_class == "ENRICH_UNPARSEABLE"
+            for g, _o in gated.values())
+        if envelope_dead and len(batch) > 1:
+            half = len(batch) // 2
+            _run_batch(batch[:half])
+            _run_batch(batch[half:])
+            return
+        for p in batch:
+            gate, output = gated[p.parent_id]
+            cp = out[p.parent_id]
+            cp.raw_head = (raw or "")[:200]
+            cp.gist_coverage = gate.gist_coverage
+            if gate.ok:
+                cp.status, cp.output = "READY", output
+            else:
+                cp.status = "INVALID"
+                cp.error_class, cp.detail = gate.error_class, gate.detail
+
+    for batch in batches:
+        _run_batch(batch)
+    for cp in out.values():
+        if cp.status == "PENDING":
+            cp.status, cp.error_class = "INVALID", "ENRICH_NO_RESPONSE"
+    return [out[p.parent_id] for p in parents]
+
+
+def compile_microbatched_with_hard_case(
+    complete_primary,
+    complete_fallback,
+    complete_escape,
+    parents: list[ParentInput],
+    bounds: EnrichmentBounds,
+    input_token_ceiling: int,
+    max_per_call: int = 8,
+) -> tuple[list[CompiledParent], int, int, int]:
+    """Microbatch first; every INVALID-but-model-repairable parent then
+    walks the EXISTING single-parent ladder (semantic failover on the
+    other lane → cross-family minimal escape → typed terminal). One
+    contract, one failure taxonomy, two granularities."""
+    from polymath_shared.latent.gate import SEMANTIC_FAILOVER_INELIGIBLE
+
+    compiled = compile_parents_microbatched(
+        complete_primary, parents, bounds, input_token_ceiling,
+        max_per_call=max_per_call)
+    by_id = {cp.parent_id: cp for cp in compiled}
+    retry = [p for p in parents
+             if by_id[p.parent_id].status == "INVALID"
+             and by_id[p.parent_id].error_class
+             not in SEMANTIC_FAILOVER_INELIGIBLE]
+    if not retry:
+        return compiled, 0, 0, 0
+    second, failovers, hard_rec, hard_term = compile_with_hard_case_escape(
+        complete_fallback or complete_primary,
+        complete_fallback, complete_escape, retry, bounds,
+        input_token_ceiling)
+    for cp in second:
+        prior = by_id[cp.parent_id]
+        if cp.status == "READY":
+            by_id[cp.parent_id] = cp
+        else:
+            cp.detail = (f"microbatch={prior.error_class}; "
+                         f"{cp.detail}").strip("; ")
+            by_id[cp.parent_id] = cp
+    recovered = sum(1 for p in retry
+                    if by_id[p.parent_id].status == "READY")
+    return ([by_id[p.parent_id] for p in parents], failovers,
+            recovered, hard_term)

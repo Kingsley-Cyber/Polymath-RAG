@@ -306,7 +306,7 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
     carry doc_id to scope one document (§0a document button)."""
     from polymath_shared.latent.compiler import (
         ParentInput,
-        compile_with_hard_case_escape,
+        compile_microbatched_with_hard_case,
     )
     from polymath_shared.latent.contract import (
         PRODUCTION_BOUNDS,
@@ -345,6 +345,22 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
                 parent_id=pid,
                 children=[(c["id"], i, c["text"]) for i, c in
                           enumerate(slot["children"])]))
+        if not parents:
+            continue
+        # ENRICH-ELIGIBILITY (fleet review, owner-blessed): never pay
+        # cloud inference to abstract TOC/bibliography/front-matter —
+        # the same deterministic region roles extraction already skips.
+        from polymath_shared.region_role import is_noise as _is_noise
+        _roles = dict(conn.execute(
+            "SELECT chunk_id, region_role FROM chunks "
+            "WHERE chunk_id = ANY(%s)",
+            ([p.parent_id for p in parents],)).fetchall())
+        _before = len(parents)
+        parents = [p for p in parents
+                   if not _is_noise(_roles.get(p.parent_id))]
+        if _before - len(parents):
+            log.info("enrichment eligibility: skipped %d noise "
+                     "parent(s) of %d", _before - len(parents), _before)
         if not parents:
             continue
 
@@ -501,7 +517,7 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
             return out
 
         compiled, semantic_failovers, hard_recovered, hard_terminal = \
-            compile_with_hard_case_escape(
+            compile_microbatched_with_hard_case(
                 _complete, _complete_fb, _complete_escape, todo, bounds,
                 ceiling)
         if semantic_failovers:

@@ -5,6 +5,8 @@ ONE JSON object. It may reference children ONLY by their numbers; it
 may not produce ids, metadata, or anything outside the schema."""
 from __future__ import annotations
 
+import json
+
 PROMPT_VERSION = "parent-enrichment-prompt-v1"
 
 SYSTEM_PROMPT = """You are a knowledge abstraction engine. You read a numbered sequence of passages from ONE section of a document and reply with ONE JSON object and nothing else - no prose, no markdown fences.
@@ -51,3 +53,34 @@ Return exactly this shape:
 {"abstraction": "<the section's domain-independent principle in 1-3 plain sentences>", "transfer": "<1-2 sentences on where else this principle applies and what questions it answers>"}
 
 Rules: plain declarative language; no lists; no keys other than abstraction and transfer; both values non-empty."""
+
+
+MICROBATCH_PROMPT_VERSION = "parent-enrichment-microbatch-v1"
+
+#: ENRICH-MICROBATCH-V1 (owner 2026-09-01, amends the one-parent-per-
+#: call D-row): 6-8 ITEM-ISOLATED parents per call — gemini free tier
+#: is RPM-scarce and TPM-rich, so batching converts the workload into
+#: the shape the quota permits. Each item is validated INDEPENDENTLY
+#: by the existing per-parent gate; a bad item never re-buys its
+#: batchmates.
+MICROBATCH_SYSTEM_PROMPT = """You are a knowledge abstraction engine. The user message contains SEVERAL INDEPENDENT document sections, each labelled ITEM <parent_ref>. For EACH item, produce the SAME enrichment object you would produce for that section alone. Reply with ONE JSON object and nothing else - no prose, no markdown fences:
+
+{"items": [{"parent_ref": "<the item's label>", "summary": "...", "children": [{"ref": <int>, "gist": "..."}], "abstraction": "...", "mechanisms": ["..."], "affordances": ["..."], "questions": ["..."]}]}
+
+STRICT ISOLATION RULES:
+- exactly ONE output item per input item; use each item's parent_ref verbatim; never invent, drop, or duplicate a parent_ref
+- child "ref" integers refer ONLY to the numbered passages INSIDE that same item
+- never mix content between items; each item's fields must be supported by that item's own passages alone
+Field meanings (per item, identical to the single-section task): summary = 1-2 sentences; children = one gist per numbered passage; abstraction = the section's domain-independent principle; mechanisms = how it works; affordances = where else it applies; questions = questions this section answers."""
+
+
+def render_microbatch_input(parents: "list[tuple[str, list[tuple[int, str]]]]") -> str:
+    """The user prompt: ITEM <ref> blocks, each with its own numbered
+    passages (per-item ordinals — the isolation contract)."""
+    blocks = []
+    for parent_ref, wire in parents:
+        passages = "\n".join(f"[{i}] {text}" for i, text in wire)
+        blocks.append(f"ITEM {parent_ref}\n{passages}")
+    return json.dumps({"task": "enrich each item independently",
+                       "version": MICROBATCH_PROMPT_VERSION}) + \
+        "\n\n" + "\n\n".join(blocks)
