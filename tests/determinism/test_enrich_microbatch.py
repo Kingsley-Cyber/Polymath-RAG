@@ -169,6 +169,32 @@ def test_ceiling_checked_per_parent_not_per_batch():
     assert by["P_ok"].status == "READY"
 
 
+def test_on_compiled_fires_per_batch_before_return():
+    landed = []
+
+    def transport(items):
+        return _ok_transport(items)
+
+    parents = [_parent(f"P{i}") for i in range(10)]   # 2 batches of 8+2
+    compile_parents_microbatched(
+        transport, parents, BOUNDS, 6000,
+        on_compiled=lambda cp: landed.append(cp.parent_id))
+    assert sorted(landed) == sorted(p.parent_id for p in parents)
+
+
+def test_on_compiled_survives_callback_errors():
+    def transport(items):
+        return _ok_transport(items)
+
+    def boom(cp):
+        raise RuntimeError("persist store down")
+
+    parents = [_parent(f"P{i}") for i in range(3)]
+    out = compile_parents_microbatched(transport, parents, BOUNDS, 6000,
+                                       on_compiled=boom)
+    assert all(cp.status == "READY" for cp in out)   # compile unharmed
+
+
 def test_hard_case_integration_routes_item_failures():
     def bad_batch(items):                       # every item comes back empty
         rows = []

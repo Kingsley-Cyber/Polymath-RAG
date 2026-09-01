@@ -265,6 +265,7 @@ def compile_parents_microbatched(
     bounds: EnrichmentBounds,
     input_token_ceiling: int,
     max_per_call: int = 8,
+    on_compiled=None,
 ) -> list[CompiledParent]:
     """ENRICH-MICROBATCH-V1 (owner 2026-09-01): token-aware batches of
     item-isolated parents through ONE call each; per-item validation
@@ -323,12 +324,28 @@ def compile_parents_microbatched(
     if buf:
         batches.append(buf)
 
+    def _emit(batch: list[ParentInput]) -> None:
+        # PER-BATCH PERSIST SEAM (owner 2026-09-01 "fix the per batch
+        # persist"): hand each batch's compiled parents to the caller
+        # THE MOMENT they gate — a crash or bounce mid-document keeps
+        # every batch already landed (measured: four bounces each threw
+        # away a whole document's compiled-but-unpersisted work).
+        if on_compiled is None:
+            return
+        for p in batch:
+            try:
+                on_compiled(out[p.parent_id])
+            except Exception:
+                pass                        # persistence is the caller's
+                                            # duty; never kill the compile
+
     def _run_batch(batch: list[ParentInput]) -> None:
         if len(batch) == 1:
             # ladder floor: the proven single-parent compiler
             single = compile_parents(complete, batch, bounds,
                                      input_token_ceiling)
             out[batch[0].parent_id] = single[0]
+            _emit(batch)
             return
         user = render_microbatch_input(
             [(p.parent_id, meta[p.parent_id]["wire"]) for p in batch])
@@ -365,6 +382,7 @@ def compile_parents_microbatched(
             else:
                 cp.status = "INVALID"
                 cp.error_class, cp.detail = gate.error_class, gate.detail
+        _emit(batch)
 
     for batch in batches:
         _run_batch(batch)
@@ -382,6 +400,7 @@ def compile_microbatched_with_hard_case(
     bounds: EnrichmentBounds,
     input_token_ceiling: int,
     max_per_call: int = 8,
+    on_compiled=None,
 ) -> tuple[list[CompiledParent], int, int, int]:
     """Microbatch first; every INVALID-but-model-repairable parent then
     walks the EXISTING single-parent ladder (semantic failover on the
@@ -391,7 +410,7 @@ def compile_microbatched_with_hard_case(
 
     compiled = compile_parents_microbatched(
         complete_primary, parents, bounds, input_token_ceiling,
-        max_per_call=max_per_call)
+        max_per_call=max_per_call, on_compiled=on_compiled)
     by_id = {cp.parent_id: cp for cp in compiled}
     retry = [p for p in parents
              if by_id[p.parent_id].status == "INVALID"
