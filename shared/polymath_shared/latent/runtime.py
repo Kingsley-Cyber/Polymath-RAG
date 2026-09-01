@@ -65,11 +65,15 @@ def persist_compiled_parent(conn, *, corpus_id: str, doc_id: str,
                    questions=EXCLUDED.questions,
                    gist_coverage=EXCLUDED.gist_coverage,
                    provider=EXCLUDED.provider, model=EXCLUDED.model,
+                   compiler_contract=EXCLUDED.compiler_contract,
+                   prompt_version=EXCLUDED.prompt_version,
                    error_class=NULL, status='READY', superseded_at=NULL
                WHERE parent_enrichments.status='INVALID'""",
             (enrichment_id, compiled.parent_id, corpus_id, doc_id,
              compiled.source_child_ids, compiled.source_hash, input_hash,
-             COMPILER_CONTRACT, provider, model, PROMPT_VERSION,
+             getattr(compiled, 'contract', None) or COMPILER_CONTRACT,
+             provider, model,
+             getattr(compiled, 'prompt_version', None) or PROMPT_VERSION,
              out.summary, json.dumps(children), out.abstraction,
              json.dumps(out.mechanisms), json.dumps(out.affordances),
              json.dumps(out.questions), compiled.gist_coverage))
@@ -81,10 +85,15 @@ def persist_compiled_parent(conn, *, corpus_id: str, doc_id: str,
             source_hash, input_hash, compiler_contract, provider, model,
             prompt_version, gist_coverage, error_class, status)
            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'INVALID')
-           ON CONFLICT (enrichment_id) DO NOTHING""",
+           ON CONFLICT (enrichment_id) DO UPDATE SET
+               error_class=EXCLUDED.error_class,
+               provider=EXCLUDED.provider, model=EXCLUDED.model
+             WHERE parent_enrichments.status='INVALID'""",
         (enrichment_id, compiled.parent_id, corpus_id, doc_id,
          compiled.source_child_ids, compiled.source_hash, input_hash,
-         COMPILER_CONTRACT, provider, model, PROMPT_VERSION,
+         getattr(compiled, 'contract', None) or COMPILER_CONTRACT,
+             provider, model,
+             getattr(compiled, 'prompt_version', None) or PROMPT_VERSION,
          compiled.gist_coverage, compiled.error_class))
     return {"status": "INVALID", "enrichment_id": enrichment_id,
             "error_class": compiled.error_class}

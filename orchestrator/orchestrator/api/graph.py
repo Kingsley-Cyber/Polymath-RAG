@@ -69,7 +69,8 @@ def _selected_surfaces(query: str, evidence: list[dict]) -> list[str]:
 
 
 def graph_retrieve(query: str, corpus_id: str,
-                   latent: "bool | None" = None) -> dict:
+                   latent: "bool | None" = None,
+                   utility: "bool | None" = None) -> dict:
     """Production GRAPH: one promoted HYBRID Pass-1 + qualified hop1."""
     _begin_retrieval()
     if corpus_id is None:
@@ -103,6 +104,8 @@ def graph_retrieve(query: str, corpus_id: str,
         # HYBRID service — an earlier wiring accepted the flag but
         # silently dropped it (caught by the B5 diagnostics pass).
         shaped = apply_latent(shaped, latent)
+        from polymath_shared.retrieval_modes import apply_utility
+        shaped = apply_utility(shaped, utility)
 
         def _latent_rescue(qvec, skip_parents):
             from polymath_shared.latent.rescue import latent_rescue_parents

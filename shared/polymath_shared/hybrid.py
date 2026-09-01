@@ -94,6 +94,18 @@ class HybridRetrievalPlan:
     #: that was already happening, and neighbour expansion is off until
     #: the depth profile turns it on.
     rescue_reserved_slots: int = 2
+    # EVIDENCE-UTILITY-V1 (owner 2026-09-01) — False keeps the frozen
+    # cut byte-identical. When on: the pre-rerank cut becomes bounded-
+    # lookahead set composition (parent saturation, requirement
+    # coverage, redundancy veto; original order = the relevance tier)
+    # and latent survivors must WIN their final seats post-G3 against
+    # the cross-encoder's own numbers (seats guarantee candidacy, not
+    # final admission).
+    evidence_utility_enabled: bool = False
+    eu_parent_saturation: int = 2
+    eu_redundancy_veto: float = 0.6
+    eu_lookahead: int = 12
+    eu_latent_margin: float = 0.05
     neighbor_expansion: int = 0
     neighbor_expansion_max: int = 8
     #: DOCUMENT-REGION-V1 (see pass1) — demote, never delete.
@@ -387,7 +399,26 @@ def hybrid_retrieve(
     # RESCUE-SLOT-RESERVATION-V1 (see pass1): the neural and lexical
     # rescue lanes are appended after every deepened child, so a flat
     # cut here silently deleted both recall lanes on dense corpora.
-    if rescue_latent:
+    eu_trace: dict = {"enabled": False}
+    if getattr(plan, "evidence_utility_enabled", False):
+        # EVIDENCE-UTILITY-V1: same seat floors, smarter body — the
+        # non-reserved seats are composed, not sliced.
+        from polymath_shared.evidence_utility import (
+            derive_requirements,
+            utility_cut,
+        )
+        _arrivals = ((ARRIVAL_GLOBAL_CHILD_RESCUE, ARRIVAL_LATENT_RESCUE)
+                     if rescue_latent else (ARRIVAL_GLOBAL_CHILD_RESCUE,))
+        _reserved = (getattr(plan, "rescue_reserved_slots", 2)
+                     + (plan.latent_reserved_slots if rescue_latent else 0))
+        deduped, eu_trace = utility_cut(
+            deduped, plan.final_max_children,
+            reserved=_reserved, rescue_arrivals=_arrivals,
+            requirements=derive_requirements(query),
+            parent_saturation=plan.eu_parent_saturation,
+            redundancy_veto=plan.eu_redundancy_veto,
+            lookahead=plan.eu_lookahead)
+    elif rescue_latent:
         deduped = _truncate_reserving_rescue(
             deduped, plan.final_max_children,
             getattr(plan, "rescue_reserved_slots", 2)
@@ -410,6 +441,18 @@ def hybrid_retrieve(
         deduped = sorted(deduped, key=lambda c: post_g3.index(c["chunk_id"]))
         for c in deduped:
             c["rerank_score"] = g3_scores.get(c["chunk_id"])
+
+    # EVIDENCE-UTILITY-V1 latent competition: only HERE do cross-lane
+    # comparable relevance numbers exist (G3's own scores) — a latent
+    # survivor keeps its seat by clearing the weakest non-latent
+    # survivor (within margin) or covering a novel parent.
+    if (getattr(plan, "evidence_utility_enabled", False)
+            and rescue_latent and deduped):
+        from polymath_shared.evidence_utility import latent_competition
+        deduped, _lc = latent_competition(
+            deduped, latent_arrival=ARRIVAL_LATENT_RESCUE,
+            margin=plan.eu_latent_margin)
+        eu_trace.update(_lc)
 
     # NEIGHBOR-EXPANSION-V1: after G3, for the same reason as pass1.
     deduped, neighbors_added = _expand_neighbors(
@@ -453,6 +496,7 @@ def hybrid_retrieve(
         })
     trace = {
         "latent": latent_trace,
+        "evidence_utility": eu_trace,
         "plan": plan.plan_version,
         "rrf_k": plan.rrf_k,
         "mmr_enabled": plan.mmr_enabled,

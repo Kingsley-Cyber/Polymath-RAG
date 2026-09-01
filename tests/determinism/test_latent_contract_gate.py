@@ -169,6 +169,91 @@ def test_semantic_failover_one_retry_only():
     assert "primary=ENRICH_UNPARSEABLE" in out2[0].detail
 
 
+def test_minimal_gate_accepts_and_rejects():
+    from polymath_shared.latent.gate import sanitize_minimal_enrichment
+    good = ('{"abstraction": "Automated policies migrate resources '
+            'between cost tiers as their value decays over time.", '
+            '"transfer": "Applies to caches, archives and staffing '
+            'rotations."}')
+    gate, out = sanitize_minimal_enrichment(good, BOUNDS)
+    assert gate.ok and out.abstraction.startswith("Automated")
+    assert out.mechanisms and "caches" in out.mechanisms[0]
+    assert out.children == [] and out.summary == ""
+    from polymath_shared.latent.gate import transfer_text
+    assert transfer_text(out).startswith("Mechanisms: Applies to")
+    bad, _ = sanitize_minimal_enrichment('{"abstraction": "too short",'
+                                         ' "transfer": "x"}', BOUNDS)
+    assert not bad.ok and bad.error_class == "ENRICH_EMPTY"
+    junk, _ = sanitize_minimal_enrichment("not json", BOUNDS)
+    assert not junk.ok and junk.error_class == "ENRICH_UNPARSEABLE"
+
+
+def test_hard_case_escape_recovers_on_minimal_contract():
+    from polymath_shared.latent.compiler import (
+        MINIMAL_CONTRACT,
+        compile_with_hard_case_escape,
+    )
+
+    def garbage(items):
+        return [(i, "utter garbage", None) for i, *_ in items]
+
+    def minimal_ok(items):
+        return [(i, '{"abstraction": "Everything decays toward the '
+                    'cheapest tier that still meets its access needs.", '
+                    '"transfer": "Applies to storage, staffing and '
+                    'inventory."}', None) for i, *_ in items]
+
+    parents = [ParentInput("p1", [("c1", 0, "some source text here")])]
+    out, fo, rec, term = compile_with_hard_case_escape(
+        garbage, garbage, minimal_ok, parents, BOUNDS, 6000)
+    assert rec == 1 and term == 0
+    assert out[0].status == "READY"
+    assert out[0].contract == MINIMAL_CONTRACT      # never masquerades
+
+
+def test_hard_case_terminal_after_three_lanes():
+    from polymath_shared.latent.compiler import (
+        compile_with_hard_case_escape,
+    )
+    from polymath_shared.latent.gate import SEMANTIC_FAILOVER_INELIGIBLE
+
+    def garbage(items):
+        return [(i, "junk", None) for i, *_ in items]
+
+    parents = [ParentInput("p1", [("c1", 0, "some source text here")])]
+    out, _, rec, term = compile_with_hard_case_escape(
+        garbage, garbage, garbage, parents, BOUNDS, 6000)
+    assert rec == 0 and term == 1
+    assert out[0].status == "INVALID"
+    assert out[0].error_class == "ENRICH_HARD_CASE"
+    assert "escape=" in out[0].detail
+    # terminal by row-truth: sweeps must stop retrying this class
+    assert "ENRICH_HARD_CASE" in SEMANTIC_FAILOVER_INELIGIBLE
+
+
+def test_hard_case_escape_never_fires_for_source_conditions():
+    from polymath_shared.latent.compiler import (
+        compile_with_hard_case_escape,
+    )
+    calls = []
+
+    def ok(items):
+        return [(i, _payload(children=[{"ref": 0, "gist": "g" * 25}]),
+                 None) for i, *_ in items]
+
+    def escape(items):
+        calls.extend(items)
+        return []
+
+    parents = [ParentInput("p_big", [("c1", 0, "word " * 40_000)]),
+               ParentInput("p_ok", [("c2", 0, "small text here")])]
+    out, _, rec, term = compile_with_hard_case_escape(
+        ok, ok, escape, parents, BOUNDS, 6000)
+    assert out[0].error_class == "ENRICH_INPUT_OVER_CEILING"
+    assert not calls and rec == 0 and term == 0
+    assert out[1].status == "READY"
+
+
 def test_source_conditions_never_failover():
     from polymath_shared.latent.compiler import (
         compile_with_semantic_failover,

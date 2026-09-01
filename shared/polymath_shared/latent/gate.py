@@ -44,6 +44,10 @@ SEMANTIC_FAILOVER_ELIGIBLE = frozenset({
 })
 SEMANTIC_FAILOVER_INELIGIBLE = frozenset({
     "ENRICH_INPUT_OVER_CEILING",
+    # ENRICH-HARD-CASE-V1: both group lanes AND the cross-family
+    # minimal escape rejected this source — terminal by row-truth, so
+    # sweeps stop hammering it (the 7/67 endless-retry lesson).
+    "ENRICH_HARD_CASE",
 })
 
 _CTRL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
@@ -154,3 +158,36 @@ def sanitize_enrichment(
             children=sorted(gists, key=lambda g: g.ref),
             abstraction=abstraction,
             mechanisms=mech, affordances=aff, questions=qs)
+
+
+def sanitize_minimal_enrichment(
+    raw: str,
+    bounds: EnrichmentBounds,
+) -> tuple[EnrichmentGateResult, EnrichmentOutput | None]:
+    """ENRICH-HARD-CASE-V1 escape gate: accept ONLY a tight
+    {abstraction, transfer} object — the two retrieval surfaces the
+    latent projection actually mints. Aggressive: non-empty prose of
+    real length for both, hard char caps, nothing else honored. The
+    output maps transfer into `mechanisms` so transfer_text() renders
+    it; summary/children stay empty (this is NOT the full contract
+    and is persisted under the minimal compiler contract)."""
+    cleaned = _WS_RE.sub(" ", _CTRL_RE.sub("", strip_thinking(raw or "")))
+    obj = _loads_lenient(raw or "")
+    if not isinstance(obj, dict):
+        return EnrichmentGateResult(
+            ok=False, error_class="ENRICH_UNPARSEABLE",
+            detail="minimal: not a JSON object",
+            raw_chars=len(cleaned)), None
+    abstraction = _WS_RE.sub(" ", str(obj.get("abstraction") or "")).strip()
+    transfer = _WS_RE.sub(" ", str(obj.get("transfer") or "")).strip()
+    if len(abstraction) < 40 or len(transfer) < 20:
+        return EnrichmentGateResult(
+            ok=False, error_class="ENRICH_EMPTY",
+            detail=f"minimal: abstraction {len(abstraction)}ch / "
+                   f"transfer {len(transfer)}ch below floors",
+            raw_chars=len(cleaned)), None
+    out = EnrichmentOutput(
+        summary="", children=[],
+        abstraction=abstraction[:600],
+        mechanisms=[transfer[:400]], affordances=[], questions=[])
+    return EnrichmentGateResult(ok=True, raw_chars=len(cleaned)), out
