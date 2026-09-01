@@ -135,3 +135,15 @@ profiles:
   retrieval:
     why: "serve queries; needs embedder for query vectors and the reranker"
     slots: [orchestrator, sidecar_embedder, sidecar_reranker]
+  serve:
+    why: "the production standing state: the full ingestion pipeline AND
+          query serving in one supervised tree. Exists because leaving
+          the box in `pipeline` after a build silently degrades every
+          query (2026-09-01: reranker down -> ~97s/query retry-sleep
+          storms + RRF-only ordering while health stayed green). Fits
+          the ceiling: 15.75 GB committed against 18.5 (verified by
+          test_runtime_budget_profiles_all_fit_the_ceiling)."
+    slots: [control, intake, profile, extract, extract2, extract3,
+            canonicalize, project_canonical, neo4j, qdrant, verify,
+            compile_objects, summaries, sidecar_embedder,
+            sidecar_reranker, orchestrator]

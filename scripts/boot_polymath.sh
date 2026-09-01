@@ -23,7 +23,10 @@ done
 # 1b. RUNTIME BUDGET. Polymath is allocated a fixed share of this
 # workstation (config/runtime_budget.yaml). Select a profile so only the
 # models the current stage calls are resident:
-#   POLYMATH_PROFILE=projection|converge|extraction|graph|retrieval
+#   POLYMATH_PROFILE=projection|converge|extraction|graph|retrieval|serve
+#   (no profile = full fleet; `serve` = the ceiling-checked standing
+#   state: pipeline + reranker + orchestrator. NEVER leave a box on a
+#   build profile after the build — queries degrade silently, 2026-09-01)
 # The supervisor runs a preflight and REFUSES to start an over-committed
 # working set rather than discovering it by thrashing the machine.
 if [ -n "${POLYMATH_PROFILE:-}" ]; then

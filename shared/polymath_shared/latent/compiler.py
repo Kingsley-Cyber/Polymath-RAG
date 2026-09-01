@@ -266,6 +266,7 @@ def compile_parents_microbatched(
     input_token_ceiling: int,
     max_per_call: int = 8,
     on_compiled=None,
+    max_concurrency: int = 1,
 ) -> list[CompiledParent]:
     """ENRICH-MICROBATCH-V1 (owner 2026-09-01): token-aware batches of
     item-isolated parents through ONE call each; per-item validation
@@ -275,7 +276,16 @@ def compile_parents_microbatched(
     proven single-parent path instead of poisoning its batchmates.
     Partial acceptance is intrinsic: every item gets its own
     CompiledParent, and callers persist READY ones regardless of what
-    happened to their batchmates."""
+    happened to their batchmates.
+
+    MICROBATCH-CONCURRENCY-V1 (2026-09-01, from the live E2E: 884
+    parents took 2h49m at ~5.3/min because batches ran strictly one
+    after another while five pinned lanes sat idle): max_concurrency>1
+    runs whole batches concurrently. Safe by construction — each
+    parent belongs to exactly ONE batch, so out[] writes are disjoint;
+    a batch's split ladder stays sequential inside its own thread; the
+    returned list keeps input order regardless of completion order.
+    Default 1 preserves the qualified sequential behavior."""
     from polymath_shared.latent.prompt import (
         MICROBATCH_PROMPT_VERSION,
         MICROBATCH_SYSTEM_PROMPT,
@@ -384,8 +394,14 @@ def compile_parents_microbatched(
                 cp.error_class, cp.detail = gate.error_class, gate.detail
         _emit(batch)
 
-    for batch in batches:
-        _run_batch(batch)
+    if max_concurrency > 1 and len(batches) > 1:
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(
+                max_workers=min(max_concurrency, len(batches))) as pool:
+            list(pool.map(_run_batch, batches))
+    else:
+        for batch in batches:
+            _run_batch(batch)
     for cp in out.values():
         if cp.status == "PENDING":
             cp.status, cp.error_class = "INVALID", "ENRICH_NO_RESPONSE"
@@ -401,16 +417,20 @@ def compile_microbatched_with_hard_case(
     input_token_ceiling: int,
     max_per_call: int = 8,
     on_compiled=None,
+    max_concurrency: int = 1,
 ) -> tuple[list[CompiledParent], int, int, int]:
     """Microbatch first; every INVALID-but-model-repairable parent then
     walks the EXISTING single-parent ladder (semantic failover on the
     other lane → cross-family minimal escape → typed terminal). One
-    contract, one failure taxonomy, two granularities."""
+    contract, one failure taxonomy, two granularities.
+    max_concurrency applies to the first (microbatch) pass only — the
+    repair ladder is the rare tail and stays sequential."""
     from polymath_shared.latent.gate import SEMANTIC_FAILOVER_INELIGIBLE
 
     compiled = compile_parents_microbatched(
         complete_primary, parents, bounds, input_token_ceiling,
-        max_per_call=max_per_call, on_compiled=on_compiled)
+        max_per_call=max_per_call, on_compiled=on_compiled,
+        max_concurrency=max_concurrency)
     by_id = {cp.parent_id: cp for cp in compiled}
     retry = [p for p in parents
              if by_id[p.parent_id].status == "INVALID"

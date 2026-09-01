@@ -114,9 +114,31 @@ class SidecarClient:
             pass
         self._client = httpx.Client(base_url=self.base_url, timeout=self._timeout)
 
+    #: FAIL-FAST-BREAKER-V1 (2026-09-01, from the 97s-query live
+    #: incident): when NOTHING is listening (connection refused), the
+    #: 2s+4s backoff sleeps below bought no recovery — refused is
+    #: instant and deterministic within a tick — yet every call site
+    #: paid ~6s, and a retrieval that consults the reranker at many
+    #: points paid ~97s per query while degrading correctly. Refused
+    #: connections now retry without sleeping, and a terminal
+    #: refused-failure opens a per-host breaker: for the next
+    #: _BREAKER_OPEN_S seconds every request to that host raises
+    #: SidecarUnavailable IMMEDIATELY, feeding the caller's existing
+    #: degraded path at full speed. Any success closes the breaker.
+    #: ReadTimeout/5xx keep the original sleep-backoff semantics — a
+    #: BUSY or mid-restart sidecar still deserves patience (P0-C).
+    _BREAKER_OPEN_S = 15.0
+    _refused_until: dict[str, float] = {}
+
     def request(self, method: str, path: str, *, attempts: int = 3,
                 **kwargs: Any) -> httpx.Response:
         """Bounded, pool-invalidating request. Terminal failure is typed."""
+        opened = SidecarClient._refused_until.get(self.base_url, 0.0)
+        remaining = opened - time.monotonic()
+        if remaining > 0:
+            raise SidecarUnavailable(
+                f"{self.base_url}{path} skipped: connection-refused "
+                f"breaker open for {remaining:.1f}s more")
         last: Exception | None = None
         for attempt in range(attempts):
             try:
@@ -125,6 +147,7 @@ class SidecarClient:
                 # the narrower interface that test doubles implement.
                 r = getattr(self._client, method.lower())(path, **kwargs)
                 r.raise_for_status()
+                SidecarClient._refused_until.pop(self.base_url, None)
                 return r
             except self._RETRYABLE as exc:
                 last = exc
@@ -135,8 +158,11 @@ class SidecarClient:
                     raise
                 last = exc
                 self._reset_pool()
-            if attempt < attempts - 1:
+            if attempt < attempts - 1 and not isinstance(last, httpx.ConnectError):
                 time.sleep(min(2.0 * (2 ** attempt), 8.0))
+        if isinstance(last, httpx.ConnectError):
+            SidecarClient._refused_until[self.base_url] = (
+                time.monotonic() + self._BREAKER_OPEN_S)
         raise SidecarUnavailable(
             f"{self.base_url}{path} unreachable after {attempts} attempts: "
             f"{type(last).__name__}: {last}")

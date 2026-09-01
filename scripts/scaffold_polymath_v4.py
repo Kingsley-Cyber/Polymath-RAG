@@ -1598,6 +1598,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_enrich_microbatch.py", "py", None),
     ("docs/wiki/work-log/2026-09-01-enrich-microbatch.md", "md", None),
     ("docs/wiki/work-log/2026-09-01-fleet-hardening.md", "md", None),
+    ("docs/wiki/work-log/2026-09-01-production-speed-sweep.md", "md", None),
 ]
 
 
