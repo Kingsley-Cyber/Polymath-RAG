@@ -1594,11 +1594,14 @@ TREE: list[tuple[str, str, str | None]] = [
     ("stores/postgres/migrations/0045_receipt_gate_status.sql", "sql", None),
     ("tests/determinism/test_fleet_v3_limits.py", "py", None),
     ("eval/v5/fleet/provider_equivalence.py", "py", None),
+    ("eval/v5/fleet/PROVIDER-EQUIVALENCE-RESULTS.md", "md", None),
+    ("tests/determinism/test_fleet_autopilot_demand.py", "py", None),
     ("docs/wiki/work-log/2026-09-01-extraction-fleet-v3.md", "md", None),
     ("tests/determinism/test_enrich_microbatch.py", "py", None),
     ("docs/wiki/work-log/2026-09-01-enrich-microbatch.md", "md", None),
     ("docs/wiki/work-log/2026-09-01-fleet-hardening.md", "md", None),
     ("docs/wiki/work-log/2026-09-01-production-speed-sweep.md", "md", None),
+    ("docs/wiki/work-log/2026-09-01-autopilot-tail-demand.md", "md", None),
 ]
 
 

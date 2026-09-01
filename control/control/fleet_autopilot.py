@@ -45,8 +45,11 @@ LANES = [
                "verify_projections"),
      {"canonicalize", "project_canonical", "neo4j", "verify"}),
     ("summary", ("parent_summary", "document_summary", "corpus_summary",
-                 "vocabulary"),
+                 "vocabulary", "parent_enrichment"),
      {"summaries"}),
+    # AUTOPILOT-TAIL-DEMAND-V1 (2026-09-01): compile_objects had no lane
+    # at all — its ready ticket could never wake its worker.
+    ("compile", ("compile_objects",), {"compile_objects"}),
 ]
 
 #: Grace before a demand-resident slot is parked after demand ends.
@@ -77,13 +80,22 @@ def _open_work(conn, stages: tuple[str, ...]) -> int:
     open run in an existing corpus IS future work; the cost of keeping
     the lane warm is idle residency, the cost of parking it is a frozen
     pipeline."""
+    # AUTOPILOT-TAIL-DEMAND-V1 (2026-09-01): 'query_ready' belongs in
+    # the run-status filter. query_ready is the CHAIN's terminal, not
+    # the RUN's — enrichment, compile_objects, summaries and vocabulary
+    # are non-blocking BY DESIGN and still hold open tickets after the
+    # flip. Measured live: the moment Atomic Habits went query_ready
+    # (13:29:02Z) every tail ticket stopped counting as demand,
+    # summaries was parked at 13:30:28Z with parent_enrichment=ready,
+    # and the tail froze for 45+ minutes with zero workers.
     return conn.execute(
         """SELECT COUNT(*) FROM stage_tickets st
             JOIN runs r ON r.run_id = st.run_id
             JOIN corpora c ON c.corpus_id = st.corpus_id
             WHERE st.stage = ANY(%s) AND st.archived_at IS NULL
               AND st.status IN ('pending', 'ready', 'leased')
-              AND r.status IN ('intake', 'reconciling', 'degraded')""",
+              AND r.status IN ('intake', 'reconciling', 'degraded',
+                               'query_ready')""",
         (list(stages),)).fetchone()[0]
 
 
