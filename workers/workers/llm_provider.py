@@ -424,6 +424,16 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                     client.endpoint_name, fb.endpoint_name, str(exc)[:120],
                     extra={"error_code": "EXTRACTION_LANE_FAILOVER"})
                 return _dispatch(batch, lane_i + n_lanes, depth + 1)
+            if (getattr(r, "finish_reason", None) == "length"
+                    and len(batch) > 1):
+                # OUTPUT-AWARE SPLIT (fleet review 2026-09-01): a dense
+                # batch can overflow the OUTPUT budget even when the
+                # request payload fits — truncation is a payload-class
+                # condition (split), never provider health.
+                _stats["splits"] += 1
+                half = len(batch) // 2
+                return (_dispatch(batch[:half], lane_i, depth)
+                        + _dispatch(batch[half:], lane_i, depth))
             if r.error_class == "LIMITER_REFUSED" and depth < 1:
                 fb = _client_abs(lane_i + n_lanes)
                 if fb.endpoint_name != client.endpoint_name:

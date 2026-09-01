@@ -146,6 +146,21 @@ def test_413_splits_then_escapes_cross_host():
     assert escaped and all(s == 1 for s in escaped)
 
 
+def test_output_truncation_splits_like_payload(monkeypatch):
+    class TruncClient(FakeClient):
+        def extract(self, payload, **_kw):
+            CALLS.append((self.endpoint_name, len(payload)))
+            r = _result()
+            if len(payload) > 1:
+                r.finish_reason = "length"
+            return r
+    monkeypatch.setattr(llm, "LLMExtractionClient", TruncClient)
+    _run(n=4, active_rank=0, active_docs=4)
+    sizes = [s for _, s in CALLS]
+    assert any(s > 1 for s in sizes)            # the truncated batch
+    assert sum(1 for s in sizes if s == 1) >= 4  # split down to singles
+
+
 def test_deterministic_dispatch():
     _run(n=8, active_rank=1, active_docs=2)
     first = sorted(CALLS)

@@ -62,6 +62,21 @@ document; the failed ticket waited ≥6 min for re-arm.
   under V2 — same corpus, before/after timing recorded in the
   continuity report when it lands.
 
+## Post-review hardening (same day, owner-directed)
+- FRESH-BUDGET invariant PINNED (test_reconciliation_convergence):
+  a strike-exhausted old ticket never poisons the successor — new
+  contract → new budget; old attempts → immutable audit. Verified
+  ALREADY structural (per-run ticket ids mint fresh rows); the pin
+  keeps refactors honest. The review's diagram assumed a gap that
+  does not exist.
+- `scripts/retry_failed_stage.py` (RETRY-TOOL-V1): the first-class
+  SAME-contract strike reset (replaces the hand-SQL used live when
+  the 413 fix landed without drift).
+- OUTPUT-AWARE SPLIT: finish_reason=length on a multi-item batch now
+  splits like a payload condition (dense sections overflow OUTPUT
+  budgets even when input fits) — the review's "your next failure
+  mode isn't 413" point, closed same-day, test-pinned.
+
 ## Rejected claims
 - "Rotate ring offsets to fix collisions" — ranks, not rotations:
   hash+offset walks can still collide; disjoint rank slices cannot.
