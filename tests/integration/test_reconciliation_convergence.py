@@ -206,6 +206,38 @@ def test_occupied_successor_pointer_skips_instead_of_killing_tick(conn) -> None:
     assert old_run in out3["reconciled"]
 
 
+def test_successor_gets_fresh_failure_budget(conn) -> None:
+    """FRESH-BUDGET invariant (owner 2026-09-01): NEW execution
+    contract → NEW failure budget; OLD attempts → immutable audit
+    history. A run whose stage burned its whole strike budget under a
+    failure class the new contract fixed must NOT arrive at the
+    successor pre-poisoned. Holds structurally today (per-run ticket
+    ids mint fresh rows) — this pin keeps a refactor from ever
+    carrying attempt counters across the lineage."""
+    tag = uuid.uuid4().hex[:8]
+    current = default_execution_contract()
+    old_pin = dict(current)
+    old_pin["rule_pack"] = "budget-test-old-rules"   # extract regenerates
+    corpus, old_run = _mk_completed_run(conn, tag, old_pin)
+    # the old run's extract ticket: strike budget EXHAUSTED
+    conn.execute(
+        "UPDATE stage_tickets SET status='failed', attempt=3 "
+        "WHERE run_id=%s AND stage='extract'", (old_run,))
+
+    out = reconcile_contract_drift(conn)
+    successor = out["reconciled"][old_run]
+
+    st, att = conn.execute(
+        "SELECT status, attempt FROM stage_tickets "
+        "WHERE run_id=%s AND stage='extract'", (successor,)).fetchone()
+    assert st != "failed" and att == 0        # fresh budget
+    # the audit history survives untouched on the OLD run
+    old_att = conn.execute(
+        "SELECT attempt FROM stage_tickets WHERE run_id=%s "
+        "AND stage='extract'", (old_run,)).fetchone()[0]
+    assert old_att == 3
+
+
 def test_stale_stage_regenerates_instead_of_carrying(conn) -> None:
     tag = uuid.uuid4().hex[:8]
     current = default_execution_contract()

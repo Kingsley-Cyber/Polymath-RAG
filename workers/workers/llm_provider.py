@@ -387,7 +387,13 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                                threshold_bytes=s.cloud_min_bytes,
                                assist=assist)
             if cache_put is not None and r.packet is not None:
+                accepted = sum(
+                    len(getattr(r.packet, f, None) or [])
+                    for f in ("entities", "relations", "digests"))
                 try:
+                    cache_put(key, doc_id, r.lane, r.model, r.raw_text,
+                              accepted)
+                except TypeError:            # older 5-arg cache double
                     cache_put(key, doc_id, r.lane, r.model, r.raw_text)
                 except Exception:
                     pass
@@ -424,6 +430,43 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                     client.endpoint_name, fb.endpoint_name, str(exc)[:120],
                     extra={"error_code": "EXTRACTION_LANE_FAILOVER"})
                 return _dispatch(batch, lane_i + n_lanes, depth + 1)
+            if (getattr(r, "finish_reason", None) == "length"
+                    and len(batch) > 1):
+                # OUTPUT-AWARE SPLIT (fleet review 2026-09-01): a dense
+                # batch can overflow the OUTPUT budget even when the
+                # request payload fits — truncation is a payload-class
+                # condition (split), never provider health.
+                _stats["splits"] += 1
+                half = len(batch) // 2
+                return (_dispatch(batch[:half], lane_i, depth)
+                        + _dispatch(batch[half:], lane_i, depth))
+            if (r.packet is None
+                    and r.error_class != "LIMITER_REFUSED"
+                    and depth < 1):
+                # FLEET-V3 SEMANTIC ESCAPE (PARSED ≠ ACCEPTED): a call
+                # that quarantined — valid transport, unusable output —
+                # gets EXACTLY ONE try on a different HOST (different
+                # model family), the enrichment hard-case pattern
+                # ported to extraction. Keep whichever parses.
+                from urllib.parse import urlparse
+                home = urlparse(getattr(client, "base_url", "")
+                                or "").netloc
+                for off in range(1, ring_n):
+                    alt = _client_abs(lane_i + off)
+                    if urlparse(getattr(alt, "base_url", "")
+                                or "").netloc != home:
+                        _stats["escapes"] += 1
+                        _logging.getLogger("llm-provider").warning(
+                            "semantic escape: %s -> %s (quarantined)",
+                            client.endpoint_name, alt.endpoint_name,
+                            extra={"error_code":
+                                   "EXTRACTION_SEMANTIC_ESCAPE"})
+                        try:
+                            r2 = _call(alt, batch)
+                        except ExtractionTransportError:
+                            break
+                        return [r2 if r2.packet is not None else r]
+                return [r]
             if r.error_class == "LIMITER_REFUSED" and depth < 1:
                 fb = _client_abs(lane_i + n_lanes)
                 if fb.endpoint_name != client.endpoint_name:

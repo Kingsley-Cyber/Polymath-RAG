@@ -1589,6 +1589,15 @@ TREE: list[tuple[str, str, str | None]] = [
     ("stores/postgres/migrations/0044_extraction_call_receipts.sql", "sql", None),
     ("tests/determinism/test_throughput_v2.py", "py", None),
     ("docs/wiki/work-log/2026-09-01-extraction-throughput-v2.md", "md", None),
+    ("scripts/retry_failed_stage.py", "py", None),
+    # EXTRACTION-FLEET-V3
+    ("stores/postgres/migrations/0045_receipt_gate_status.sql", "sql", None),
+    ("tests/determinism/test_fleet_v3_limits.py", "py", None),
+    ("eval/v5/fleet/provider_equivalence.py", "py", None),
+    ("docs/wiki/work-log/2026-09-01-extraction-fleet-v3.md", "md", None),
+    ("tests/determinism/test_enrich_microbatch.py", "py", None),
+    ("docs/wiki/work-log/2026-09-01-enrich-microbatch.md", "md", None),
+    ("docs/wiki/work-log/2026-09-01-fleet-hardening.md", "md", None),
 ]
 
 

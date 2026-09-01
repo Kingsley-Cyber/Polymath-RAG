@@ -306,7 +306,7 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
     carry doc_id to scope one document (§0a document button)."""
     from polymath_shared.latent.compiler import (
         ParentInput,
-        compile_with_hard_case_escape,
+        compile_microbatched_with_hard_case,
     )
     from polymath_shared.latent.contract import (
         PRODUCTION_BOUNDS,
@@ -345,6 +345,22 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
                 parent_id=pid,
                 children=[(c["id"], i, c["text"]) for i, c in
                           enumerate(slot["children"])]))
+        if not parents:
+            continue
+        # ENRICH-ELIGIBILITY (fleet review, owner-blessed): never pay
+        # cloud inference to abstract TOC/bibliography/front-matter —
+        # the same deterministic region roles extraction already skips.
+        from polymath_shared.region_role import is_noise as _is_noise
+        _roles = dict(conn.execute(
+            "SELECT chunk_id, region_role FROM chunks "
+            "WHERE chunk_id = ANY(%s)",
+            ([p.parent_id for p in parents],)).fetchall())
+        _before = len(parents)
+        parents = [p for p in parents
+                   if not _is_noise(_roles.get(p.parent_id))]
+        if _before - len(parents):
+            log.info("enrichment eligibility: skipped %d noise "
+                     "parent(s) of %d", _before - len(parents), _before)
         if not parents:
             continue
 
@@ -500,10 +516,40 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
                 out.append((item_id, raw, err))
             return out
 
+        _persisted: set = set()
+
+        def _persist_ready_now(cp):
+            # PER-BATCH PERSIST (owner 2026-09-01): READY parents land
+            # in their OWN COMMITTED transaction the moment their batch
+            # gates — a bounce or crash mid-document keeps every batch
+            # already landed (four bounces today each threw away a
+            # whole document's compiled work). INVALIDs wait for the
+            # hard-case pass; EXISTING/dup upserts are idempotent.
+            if cp.status != "READY" or cp.parent_id in _persisted:
+                return
+            ih = hashes.get(cp.parent_id)
+            if ih is None:
+                return
+            from polymath_shared.db import tx as _ptx
+            ticket = (_stage_ticket(conn, run_id, "parent_enrichment")
+                      + ":" + cp.parent_id[-16:])
+            ep_cp = _sel("parent_enrichment", cp.parent_id)
+            with _ptx() as _c:
+                _ensure_job(_c, ticket, "PARENT_ENRICHMENT", corpus, ih)
+                persist_compiled_parent(
+                    _c, corpus_id=corpus, doc_id=doc, compiled=cp,
+                    input_hash=ih, provider=f"llm:{ep_cp.name}",
+                    model=ep_cp.model)
+                _c.execute(
+                    "UPDATE summary_jobs SET state='COMPLETE', "
+                    "completed_at=now() WHERE stage='PARENT_ENRICHMENT' "
+                    "AND input_hash=%s", (ih,))
+            _persisted.add(cp.parent_id)
+
         compiled, semantic_failovers, hard_recovered, hard_terminal = \
-            compile_with_hard_case_escape(
+            compile_microbatched_with_hard_case(
                 _complete, _complete_fb, _complete_escape, todo, bounds,
-                ceiling)
+                ceiling, on_compiled=_persist_ready_now)
         if semantic_failovers:
             log.warning(
                 "enrichment semantic failover recovered %d parent(s) on "
@@ -520,6 +566,9 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
                 "rejected; sweeps will stop retrying)", hard_terminal,
                 extra={"error_code": "ENRICHMENT_HARD_CASE_TERMINAL"})
         for cp in compiled:
+            if cp.parent_id in _persisted:
+                ready += 1                  # landed per-batch already
+                continue
             ih = hashes[cp.parent_id]
             ticket = (_stage_ticket(conn, run_id, "parent_enrichment")
                       + ":" + cp.parent_id[-16:])

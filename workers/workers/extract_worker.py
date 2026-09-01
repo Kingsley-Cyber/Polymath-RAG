@@ -1081,14 +1081,25 @@ def process_event(conn: Connection, event: dict) -> None:
                         "SELECT count(*) FROM stage_tickets "
                         "WHERE stage='extract' "
                         "AND status IN ('pending','ready')").fetchone()[0]
-                    _leased = [r[0] for r in conn.execute(
-                        "SELECT ticket_id FROM stage_tickets "
-                        "WHERE stage='extract' AND status='leased' "
-                        "ORDER BY ticket_id")]
+                    # RANK-STABILITY (live bug 2026-09-01): ranks
+                    # derived from currently-LEASED tickets race — each
+                    # early claimer saw mostly itself, every doc got
+                    # rank 0, and four books collapsed onto ONE lane.
+                    # The rank set must be TIMING-STABLE: all OPEN
+                    # extract tickets of live runs, ordered by id —
+                    # identical from every observer regardless of who
+                    # claimed when.
+                    _open = [r[0] for r in conn.execute(
+                        "SELECT t.ticket_id FROM stage_tickets t "
+                        "JOIN runs r ON r.run_id = t.run_id "
+                        "WHERE t.stage='extract' "
+                        "AND t.status IN ('pending','ready','leased') "
+                        "AND r.superseded_by_run_id IS NULL "
+                        "ORDER BY t.ticket_id")]
                     _tid = event.get("ticket_id")
-                    _rank = (_leased.index(_tid)
-                             if _tid in _leased else 0)
-                    _active = max(1, len(_leased) + _qdepth)
+                    _rank = (_open.index(_tid)
+                             if _tid in _open else 0)
+                    _active = max(1, len(_open))
 
                     from polymath_shared.db import tx as _tx
 
@@ -1100,14 +1111,17 @@ def process_event(conn: Connection, event: dict) -> None:
                                 "WHERE receipt_id=%s", (key,)).fetchone()
                         return row[0] if row else None
 
-                    def _cache_put(key, did, lane_name, model, raw):
+                    def _cache_put(key, did, lane_name, model, raw,
+                                   accepted=None):
                         with _tx() as _c:
                             _c.execute(
                                 "INSERT INTO extraction_call_receipts "
                                 "(receipt_id, doc_id, lane, model, "
-                                "raw_text) VALUES (%s,%s,%s,%s,%s) "
+                                "raw_text, accepted_count) "
+                                "VALUES (%s,%s,%s,%s,%s,%s) "
                                 "ON CONFLICT (receipt_id) DO NOTHING",
-                                (key, did, lane_name, model, raw))
+                                (key, did, lane_name, model, raw,
+                                 accepted))
 
                     _cache = (_cache_get, _cache_put)
                 try:

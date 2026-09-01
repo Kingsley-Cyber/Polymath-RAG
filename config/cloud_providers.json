@@ -21,14 +21,17 @@
   "groq1..groq5 = five UNLINKED owner accounts (own rate each), the baseline extraction fleet on qwen/qwen3.8-27b, strict schema (level-1, live-verified). nvidia/nvidia2 dedicated:true = enrichment only, excluded from extraction sharding.",
   "CROSS-PROVIDER-V1 (owner 2026-08-30): one lane swapped each way \u2014 extraction shards over groq1-4 + nvidia2 + primary; enrichment pin group = [nvidia, groq5]. A whole-provider outage never stalls either stage, and dispatch failover walks the ring.",
   "gemini1..gemini6 = Google AI Studio keys on gemini-3.1-flash-lite (owner 2026-09-01 re-pin \u2014 cheaper than 3.5-flash-lite, strict-schema canary green; the 2.5-flash-lite the owner linked is retired for new users \u2014 3.5-flash-lite is the current cheapest lite tier, strict-schema canary GREEN via the OpenAI-compat endpoint; the compat layer tolerates the client's /v1 suffix so url ends at /v1beta/openai). gemini1-4 shard extraction; gemini5-6 are dedicated enrichment lanes added to the parent_enrichment pin group.",
-  "request_char_budget (THROUGHPUT-V2): per-lane payload budget in chars; batch packing respects it so provider 413s cannot happen (groq 18000 measured from the 2026-09-01 413 storm; gemini's 1M-token context takes 120000; nvidia 60000)."
+  "request_char_budget (THROUGHPUT-V2): per-lane payload budget in chars; batch packing respects it so provider 413s cannot happen (groq 18000 measured from the 2026-09-01 413 storm; gemini's 1M-token context takes 120000; nvidia 60000).",
+  "GEMINI-VARIANT-LANES (owner 2026-09-01 'ensure all gemini keys call the available gemini models'): Google quotas are PER MODEL per key, so gemini{n}b runs gemini-3.5-flash-lite on the SAME key as gemini{n} (3.1-flash-lite) with an independent quota \u2014 12 gemini lanes from 6 keys. 2.5-lite family retired upstream; non-lite flashes failed the strict-schema canary (parked pending a json-mode canary). groq: request budget 7000 chars + limiter TPM 8000 = the PROVIDER-DECLARED truth (header probe 2026-09-01); groq5 REMOVED from the enrichment pin (8K TPM = ~4 enrichment calls/min = pure failover churn).",
+  "GROQ PARKED from the extraction ring (owner speed directive 2026-09-01): 8K TPM declared = a dead-weight slice under rank slicing (one unlucky doc per pass drew an all-groq slice). dedicated:true with no pin = reserved; re-enters by flipping the flag if the tier ever changes."
  ],
  "stage_pins": {
   "parent_enrichment": [
    "nvidia",
-   "groq5",
    "gemini5",
-   "gemini6"
+   "gemini5b",
+   "gemini6",
+   "gemini6b"
   ]
  },
  "providers": [
@@ -40,7 +43,8 @@
    "api_key_env": "GROQ_API_KEY_1",
    "reasoning_effort": "none",
    "structured": "schema",
-   "request_char_budget": 18000
+   "request_char_budget": 7000,
+   "dedicated": true
   },
   {
    "name": "groq2",
@@ -50,7 +54,8 @@
    "api_key_env": "GROQ_API_KEY_2",
    "reasoning_effort": "none",
    "structured": "schema",
-   "request_char_budget": 18000
+   "request_char_budget": 7000,
+   "dedicated": true
   },
   {
    "name": "groq3",
@@ -60,7 +65,8 @@
    "api_key_env": "GROQ_API_KEY_3",
    "reasoning_effort": "none",
    "structured": "schema",
-   "request_char_budget": 18000
+   "request_char_budget": 7000,
+   "dedicated": true
   },
   {
    "name": "groq4",
@@ -70,7 +76,8 @@
    "api_key_env": "GROQ_API_KEY_4",
    "reasoning_effort": "none",
    "structured": "schema",
-   "request_char_budget": 18000
+   "request_char_budget": 7000,
+   "dedicated": true
   },
   {
    "name": "groq5",
@@ -81,7 +88,7 @@
    "reasoning_effort": "none",
    "structured": "schema",
    "dedicated": true,
-   "request_char_budget": 18000
+   "request_char_budget": 7000
   },
   {
    "name": "nvidia",
@@ -166,6 +173,72 @@
    "api_key_env": "GEMINI_API_KEY_6",
    "dedicated": true,
    "request_char_budget": 120000
+  },
+  {
+   "name": "gemini1b",
+   "enabled": true,
+   "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+   "model": "gemini-3.5-flash-lite",
+   "api_key_env": "GEMINI_API_KEY_1",
+   "reasoning_effort": null,
+   "structured": "schema",
+   "request_char_budget": 120000,
+   "dedicated": false
+  },
+  {
+   "name": "gemini2b",
+   "enabled": true,
+   "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+   "model": "gemini-3.5-flash-lite",
+   "api_key_env": "GEMINI_API_KEY_2",
+   "reasoning_effort": null,
+   "structured": "schema",
+   "request_char_budget": 120000,
+   "dedicated": false
+  },
+  {
+   "name": "gemini3b",
+   "enabled": true,
+   "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+   "model": "gemini-3.5-flash-lite",
+   "api_key_env": "GEMINI_API_KEY_3",
+   "reasoning_effort": null,
+   "structured": "schema",
+   "request_char_budget": 120000,
+   "dedicated": false
+  },
+  {
+   "name": "gemini4b",
+   "enabled": true,
+   "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+   "model": "gemini-3.5-flash-lite",
+   "api_key_env": "GEMINI_API_KEY_4",
+   "reasoning_effort": null,
+   "structured": "schema",
+   "request_char_budget": 120000,
+   "dedicated": false
+  },
+  {
+   "name": "gemini5b",
+   "enabled": true,
+   "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+   "model": "gemini-3.5-flash-lite",
+   "api_key_env": "GEMINI_API_KEY_5",
+   "reasoning_effort": null,
+   "structured": "schema",
+   "request_char_budget": 120000,
+   "dedicated": true
+  },
+  {
+   "name": "gemini6b",
+   "enabled": true,
+   "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+   "model": "gemini-3.5-flash-lite",
+   "api_key_env": "GEMINI_API_KEY_6",
+   "reasoning_effort": null,
+   "structured": "schema",
+   "request_char_budget": 120000,
+   "dedicated": true
   }
  ]
 }

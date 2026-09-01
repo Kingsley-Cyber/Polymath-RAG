@@ -191,3 +191,45 @@ def sanitize_minimal_enrichment(
         abstraction=abstraction[:600],
         mechanisms=[transfer[:400]], affordances=[], questions=[])
     return EnrichmentGateResult(ok=True, raw_chars=len(cleaned)), out
+
+
+def sanitize_microbatch(
+    raw: str,
+    expected: "dict[str, list[int]]",
+    bounds: EnrichmentBounds,
+) -> "dict[str, tuple[EnrichmentGateResult, EnrichmentOutput | None]]":
+    """ENRICH-MICROBATCH-V1 envelope gate. Envelope discipline here;
+    ITEM validation is the EXISTING per-parent gate, unchanged — one
+    contract, two transports. Missing item → ENRICH_NO_RESPONSE;
+    duplicate/invented parent_refs are dropped (first wins / ignored);
+    an unparseable envelope fails every expected ref as
+    ENRICH_UNPARSEABLE (the compiler's split ladder handles it)."""
+    import json as _json
+
+    obj = _loads_lenient(raw or "")
+    out: dict = {}
+    if not isinstance(obj, dict) or not isinstance(obj.get("items"), list):
+        for ref in expected:
+            out[ref] = (EnrichmentGateResult(
+                ok=False, error_class="ENRICH_UNPARSEABLE",
+                detail="microbatch: envelope not {items: [...]}"), None)
+        return out
+    seen: set = set()
+    by_ref: dict = {}
+    for item in obj["items"]:
+        if not isinstance(item, dict):
+            continue
+        ref = str(item.get("parent_ref") or "")
+        if ref not in expected or ref in seen:
+            continue                       # invented or duplicate ref
+        seen.add(ref)
+        by_ref[ref] = {k: v for k, v in item.items() if k != "parent_ref"}
+    for ref, refs in expected.items():
+        item = by_ref.get(ref)
+        if item is None:
+            out[ref] = (EnrichmentGateResult(
+                ok=False, error_class="ENRICH_NO_RESPONSE",
+                detail="microbatch: item missing from envelope"), None)
+            continue
+        out[ref] = sanitize_enrichment(_json.dumps(item), refs, bounds)
+    return out
