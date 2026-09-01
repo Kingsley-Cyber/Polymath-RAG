@@ -232,6 +232,72 @@ def _archived_run_ids(conn: Connection, run_ids: list[str]) -> set[str]:
     return {r[0] for r in rows}
 
 
+def auto_enrich_on_chunks(conn: Connection) -> int:
+    """ENRICH-EARLY-KICK-V1 (owner 2026-09-01 "enrichment should auto
+    start ... and be smart"): the mint moves UP the pipeline — as soon
+    as a run's intake ticket is done its parents exist (chunk rows are
+    written by the intake stage), and enrichment is post-hoc and
+    additive (§0b absence-invisible), so it overlaps extraction and
+    projection instead of waiting for promotion. The promotion-time
+    mint in apply_promotions stays as the gap-filling backstop. FIRST
+    mint only (NOT EXISTS guard): mint_parent_enrichment re-arms on
+    conflict, so sweeping runs that already hold the ticket would
+    re-open finished work every tick. Fail-open per run."""
+    from polymath_shared.settings import get_settings
+    w = get_settings().worker
+    if (not getattr(w, "enrichment_auto", True)
+            or getattr(w, "enrichment_provider", "disabled") == "disabled"):
+        return 0
+    rows = conn.execute(
+        """
+        SELECT r.run_id, r.corpus_id
+          FROM runs r
+          JOIN stage_tickets t ON t.run_id = r.run_id
+               AND t.stage = 'intake' AND t.status = 'done'
+         WHERE r.status IN ('intake', 'reconciling', 'degraded',
+                            'query_ready')
+           AND r.superseded_by_run_id IS NULL
+           AND NOT EXISTS (SELECT 1 FROM stage_tickets e
+                            WHERE e.run_id = r.run_id
+                              AND e.stage = 'parent_enrichment')
+           AND NOT EXISTS (SELECT 1 FROM archived_corpora ac
+                            WHERE ac.corpus_id = r.corpus_id)
+        """).fetchall()
+    # RESCUE clause: a ticket left 'ready'/'failed' whose event was
+    # already CONSUMED is unreachable — no worker will ever see it
+    # (measured 2026-09-01: a crash-looping handler burned the two
+    # tier_v3 runs' deliveries; tickets sat ready forever). Re-minting
+    # re-opens the event; the NOT EXISTS stops this firing again once
+    # an undelivered event is waiting, and DONE tickets are never
+    # touched (row-truth: ready/failed = owed work by definition).
+    stranded = conn.execute(
+        """
+        SELECT t.run_id, t.corpus_id
+          FROM stage_tickets t
+         WHERE t.stage = 'parent_enrichment'
+           AND t.status IN ('ready', 'failed')
+           AND NOT EXISTS (SELECT 1 FROM outbox_events e
+                            WHERE e.run_id = t.run_id
+                              AND e.event_type = 'parent_enrichment.v1'
+                              AND e.delivered_at IS NULL)
+        """).fetchall()
+    minted = 0
+    for run_id, corpus_id in list(rows) + list(stranded):
+        try:
+            from polymath_shared.latent.trigger import (
+                mint_parent_enrichment,
+            )
+            mint_parent_enrichment(conn, corpus_id=corpus_id,
+                                   run_id=run_id)
+            minted += 1
+        except Exception:
+            import logging
+            logging.getLogger("control-schedule").warning(
+                "early enrich mint failed open for %s", run_id[:20],
+                extra={"error_code": "AUTO_ENRICH_MINT_FAILED"})
+    return minted
+
+
 def apply_promotions(conn: Connection, census: Census) -> None:
     for run_id in census.promote:
         cur = conn.execute(

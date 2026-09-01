@@ -12,6 +12,7 @@ from fastapi import FastAPI
 from .api.ask import router as ask_router
 from .api.chat import router as chat_router
 from .api.evidence import router as evidence_router
+from .api.fleet import router as fleet_router
 from .api.health import router as health_router
 from .api.intake import router as intake_router
 from .api.retrieve import router as retrieve_router
@@ -96,6 +97,7 @@ app.include_router(evidence_router)
 app.include_router(chat_router)
 app.include_router(ask_router)
 app.include_router(ui_router)
+app.include_router(fleet_router)
 
 # Serve the built web UI at /ui when a build exists (single-port product).
 from pathlib import Path  # noqa: E402

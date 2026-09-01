@@ -1070,10 +1070,25 @@ def process_event(conn: Connection, event: dict) -> None:
                                   "reason": _decision.reason}
                 _t_llm = _t.perf_counter()
                 _neighborhoods = _llm.build_neighborhoods(child_chunks)
-                _results, _merged = _llm.run_proposals(
-                    _neighborhoods, lane=_decision.lane,
-                    source_bytes=source_bytes, doc_id=doc_id,
-                    assist=_decision.assist)
+                # EXTRACT-DEPTH-SPREAD-V1: how many OTHER extract docs
+                # are waiting decides affinity vs spread inside
+                # run_proposals (0/1 => idle lanes => spread this doc).
+                _qdepth = None
+                if _decision.lane == "cloud":
+                    _qdepth = conn.execute(
+                        "SELECT count(*) FROM stage_tickets "
+                        "WHERE stage='extract' "
+                        "AND status IN ('pending','ready')").fetchone()[0]
+                try:
+                    _results, _merged = _llm.run_proposals(
+                        _neighborhoods, lane=_decision.lane,
+                        source_bytes=source_bytes, doc_id=doc_id,
+                        assist=_decision.assist, queue_depth=_qdepth)
+                except TypeError:   # narrowed test double: no depth param
+                    _results, _merged = _llm.run_proposals(
+                        _neighborhoods, lane=_decision.lane,
+                        source_bytes=source_bytes, doc_id=doc_id,
+                        assist=_decision.assist)
                 if _decision.lane == "cloud":
                     # EXTRACTION-POOL-V1: the deterministic endpoint this
                     # doc routed to, durable in the stage artifact.

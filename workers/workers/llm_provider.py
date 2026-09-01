@@ -231,10 +231,24 @@ def make_client(lane: str, doc_id: str = "",
     raise ValueError(f"unknown lane: {lane!r}")
 
 
+def spread_decision(queue_depth: int | None, doc_id: str,
+                    n_neighborhoods: int) -> bool:
+    """EXTRACT-DEPTH-SPREAD-V1 decision, pure: spread ONLY when lanes
+    would otherwise idle — no other extract doc waiting (depth <= 1
+    counts this doc's own just-consumed ticket at most), the doc is
+    pool-routed (doc_id set), and there is more than one batch to
+    spread. Unknown depth (None) NEVER spreads: per-doc affinity is
+    the safe default and the frozen single-endpoint test shape."""
+    return (queue_depth is not None and queue_depth <= 1
+            and bool(doc_id) and n_neighborhoods > NEIGHBORHOODS_PER_CALL)
+
+
 def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                   source_bytes: int,
                   doc_id: str = "",
-                  assist: bool = False) -> tuple[list[LLMCallResult], NormalizedExtraction]:
+                  assist: bool = False,
+                  queue_depth: int | None = None,
+                  ) -> tuple[list[LLMCallResult], NormalizedExtraction]:
     """Extract every neighborhood through the gate.
 
     Returns per-call receipts plus the merged, validated, worker-shaped
@@ -262,6 +276,72 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
             [(n.nid, n.chunks) for n in neighborhoods],
             source_bytes=source_bytes, threshold_bytes=s.cloud_min_bytes)
         results = results if isinstance(results, list) else [results]
+    elif lane == "cloud" and spread_decision(
+            queue_depth, doc_id, len(neighborhoods)):
+        # EXTRACT-DEPTH-SPREAD-V1 (owner 2026-09-01, agreed design):
+        # WORK-CONSERVING dispatch. When the extract queue is deep,
+        # per-doc lane affinity holds (fleet already saturated, and one
+        # doc = one model keeps its extraction style internally
+        # consistent). Only when lanes would otherwise IDLE — no other
+        # doc waiting — does a single document spread its batches
+        # round-robin across the shard ring, trading per-doc model
+        # consistency for not wasting 9 idle lanes. Every lane still
+        # self-gates through its own AIMD limiter; a dead or refused
+        # lane fails over to the ring-adjacent one, counted, like the
+        # affinity path below.
+        import logging as _logging
+        batches = [neighborhoods[i:i + NEIGHBORHOODS_PER_CALL]
+                   for i in range(0, len(neighborhoods), NEIGHBORHOODS_PER_CALL)]
+        from polymath_shared.llm_extraction.pool import cloud_endpoints
+        ring = max(1, len([e for e in cloud_endpoints()
+                           if not getattr(e, "dedicated", False)]))
+        _spread_clients: dict = {}
+
+        def _client_at(off: int):
+            c = _spread_clients.get(off % ring)
+            if c is None:
+                c = make_client(lane, doc_id, ring_offset=off % ring)
+                _spread_clients[off % ring] = c
+            return c
+
+        _logging.getLogger("llm-provider").info(
+            "depth spread: %d batches across %d lanes (queue_depth=%d)",
+            len(batches), min(ring, len(batches)), queue_depth,
+            extra={"error_code": "EXTRACTION_DEPTH_SPREAD"})
+
+        def one_spread(ib):
+            idx, batch = ib
+            home = _client_at(idx)
+            payload = [(n.nid, n.chunks) for n in batch]
+            try:
+                r = home.extract(payload, source_bytes=source_bytes,
+                                 threshold_bytes=s.cloud_min_bytes,
+                                 assist=assist)
+            except ExtractionTransportError as exc:
+                fb = _client_at(idx + 1)
+                if fb.endpoint_name == home.endpoint_name:
+                    raise
+                _logging.getLogger("llm-provider").warning(
+                    "lane failover: %s -> %s after transport failure (%s)",
+                    home.endpoint_name, fb.endpoint_name, str(exc)[:120],
+                    extra={"error_code": "EXTRACTION_LANE_FAILOVER"})
+                return fb.extract(payload, source_bytes=source_bytes,
+                                  threshold_bytes=s.cloud_min_bytes,
+                                  assist=assist)
+            if r.error_class == "LIMITER_REFUSED":
+                fb = _client_at(idx + 1)
+                if fb.endpoint_name != home.endpoint_name:
+                    _logging.getLogger("llm-provider").warning(
+                        "lane failover: %s -> %s after limiter refusal",
+                        home.endpoint_name, fb.endpoint_name,
+                        extra={"error_code": "EXTRACTION_LANE_FAILOVER"})
+                    return fb.extract(payload, source_bytes=source_bytes,
+                                      threshold_bytes=s.cloud_min_bytes,
+                                      assist=assist)
+            return r
+
+        with ThreadPoolExecutor(max_workers=min(len(batches), 16)) as pool:
+            results = list(pool.map(one_spread, list(enumerate(batches))))
     else:
         batches = [neighborhoods[i:i + NEIGHBORHOODS_PER_CALL]
                    for i in range(0, len(neighborhoods), NEIGHBORHOODS_PER_CALL)]

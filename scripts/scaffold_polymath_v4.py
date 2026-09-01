@@ -1567,6 +1567,12 @@ TREE: list[tuple[str, str, str | None]] = [
     ("orchestrator/orchestrator/mcp_server.py", "py", None),
     ("docs/wiki/work-log/2026-08-31-polymath-mcp-v1.md", "md", None),
     ("docs/wiki/work-log/2026-09-01-gemini-fleet.md", "md", None),
+    # SMART-PIPELINE-V1 (parent-shard, early-kick, fleet board, depth spread)
+    ("orchestrator/orchestrator/api/fleet.py", "py", None),
+    ("frontend/src/components/FleetView.tsx", "tsx", None),
+    ("tests/integration/test_auto_enrich_early.py", "py", None),
+    ("tests/determinism/test_depth_spread.py", "py", None),
+    ("docs/wiki/work-log/2026-09-01-smart-pipeline.md", "md", None),
 ]
 
 
