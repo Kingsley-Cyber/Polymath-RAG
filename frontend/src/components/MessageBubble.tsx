@@ -81,6 +81,7 @@ function AnswerBody({ msg }: { msg: Message }) {
         </div>
       )}
       <DegradedNote retrieval={r} />
+      <WildcardCards retrieval={r} />
       <div className="meta-row">
         <span className="badge badge-mode">{r.mode}</span>
         <span
@@ -112,6 +113,37 @@ function AnswerBody({ msg }: { msg: Message }) {
  * behind extraction). The answer is real and complete — this states
  * plainly what was skipped, so a quiet downgrade is never invisible. */
 /** LATENT-DIAGNOSTICS chip: nominated -> survived -> admitted. */
+function WildcardCards({ retrieval }: { retrieval: Retrieval }) {
+  // DIVERGENT-RETRIEVAL-V1: derived insights, clearly labelled, each
+  // grounded by its real source passage — never mixed into evidence.
+  const bridges = retrieval.wildcard ?? [];
+  if (!bridges.length) return null;
+  return (
+    <div className="wildcard-cards">
+      {bridges.map((b, i) => (
+        <div key={i} className="wildcard-card panel" style={{ marginTop: 8 }}>
+          <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 4 }}>
+            🃏 wildcard · derived insight · {b.source_name}
+          </div>
+          <div style={{ fontWeight: 600 }}>{b.principle}</div>
+          {b.why_it_may_transfer && (
+            <div style={{ marginTop: 4, fontSize: 13, opacity: 0.9 }}>
+              {b.why_it_may_transfer}
+            </div>
+          )}
+          <div
+            className="phase-detail"
+            style={{ marginTop: 6, fontSize: 12, opacity: 0.8 }}
+            title="The real source passage grounding this bridge"
+          >
+            source: “{b.source_evidence?.text?.slice(0, 240)}…”
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function LatentChip({ retrieval }: { retrieval: Retrieval }) {
   const l = retrieval.latent;
   if (!l || !l.enabled) return null;

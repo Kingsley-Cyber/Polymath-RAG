@@ -1335,7 +1335,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
     ui_mode = (req.mode or "HYBRID").upper()
     if ui_mode == "VECTOR":
         ui_mode = "FAST"
-    if ui_mode not in ("FAST", "HYBRID", "GRAPH", "ASK"):
+    if ui_mode not in ("FAST", "HYBRID", "GRAPH", "ASK", "WILDCARD"):
         raise HTTPException(422, {"error_code": "unknown_mode",
                                   "message": f"mode {req.mode!r}"})
     synth = req.synthesizer or _PREFERRED_DEFAULT
@@ -1411,6 +1411,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                                      f"{corpus_id}…", mode=ui_mode)
             graph_facts: list = []
             latent_meta = None
+            wildcard_lane = None
             if ui_mode == "GRAPH":
                 from orchestrator.api.graph import graph_retrieve
                 g = graph_retrieve(query, corpus_id, latent=req.latent)
@@ -1448,9 +1449,17 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                     for d in g["documents"] for s in d["sections"]
                 ]
             else:
+                wildcard_lane = None
                 if ui_mode == "FAST":
                     from orchestrator.api.fast import fast_retrieve
                     fast = fast_retrieve(query, corpus_id)
+                elif ui_mode == "WILDCARD":
+                    # DIVERGENT-RETRIEVAL-V1: the answer evidence IS
+                    # FAST (wildcard never displaces it); the bridges
+                    # ride the separate `wildcard` lane.
+                    from orchestrator.api.wildcard import wildcard_retrieve
+                    fast = wildcard_retrieve(query, corpus_id)
+                    wildcard_lane = fast.get("wildcard") or []
                 else:
                     from orchestrator.api.hybrid import hybrid_fast_retrieve
                     fast = hybrid_fast_retrieve(query, corpus_id,
@@ -1464,6 +1473,12 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                 yield _phase("retrieve_done", "Evidence selected",
                              evidence_count=len(evidence_rows),
                              lane_sizes=fast["trace"].get("lane_sizes"))
+                if wildcard_lane is not None:
+                    yield _phase(
+                        "wildcard",
+                        f"{len(wildcard_lane)} frontier bridge(s) beyond "
+                        f"the obvious neighborhood",
+                        bridges=len(wildcard_lane))
                 document_summaries = [
                     {"doc_id": d["doc_id"],
                      "summary": (d.get("document_summary") or {}).get("text", "")}
@@ -1537,6 +1552,11 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                 # LATENT-DIAGNOSTICS-V1 (roadmap B5): the survival
                 # attribution frame the UI chip + P6 read.
                 "latent": latent_meta,
+                # DIVERGENT-RETRIEVAL-V1: labelled DERIVED insights with
+                # their real source children attached (owner-blessed
+                # §0b carve-out) — never part of `chunks` evidence.
+                "wildcard": (wildcard_lane
+                             if ui_mode == "WILDCARD" else None),
                 "chunks": chunk_inventory,
                 # NEVER-ERROR-ON-A-COLD-MODEL: a lane that degraded
                 # (e.g. reranker parked behind extraction) still answers

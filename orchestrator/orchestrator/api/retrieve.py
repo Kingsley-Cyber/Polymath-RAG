@@ -156,6 +156,11 @@ async def retrieve(req: RetrieveRequest) -> dict:
         return graph_retrieve(query, single_corpus_or_422(scope, mode),
                                latent=req.latent,
                                utility=req.utility)
+    from polymath_shared.retrieval_modes import MODE_WILDCARD
+    if mode == MODE_WILDCARD:
+        from orchestrator.api.wildcard import wildcard_retrieve
+
+        return wildcard_retrieve(query, single_corpus_or_422(scope, mode))
 
     corpus_ids = list(scope.corpus_ids)
     with tx() as conn:

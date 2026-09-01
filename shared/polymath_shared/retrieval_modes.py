@@ -21,7 +21,14 @@ MODE_HYBRID = "HYBRID"
 MODE_GRAPH = "GRAPH"
 MODE_LEGACY = "LEGACY"
 
-EXPOSED_MODES = (MODE_FAST, MODE_HYBRID, MODE_GRAPH, MODE_LEGACY)
+#: DIVERGENT-RETRIEVAL-V1 (owner-blessed 2026-09-01): a TRUE fourth
+#: mode — a different optimization objective (source-grounded
+#: serendipity), not a plan knob. Evidence = FAST, untouched; the
+#: `wildcard` lane rides separately and never displaces evidence.
+MODE_WILDCARD = "WILDCARD"
+
+EXPOSED_MODES = (MODE_FAST, MODE_HYBRID, MODE_GRAPH, MODE_WILDCARD,
+                 MODE_LEGACY)
 
 DEFAULT_MODE = MODE_LEGACY  # frozen regression default; FAST/HYBRID are explicit
 

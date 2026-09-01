@@ -1321,7 +1321,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/v5/wipe_corpus_v5.py", "py", None),
     # frontend
     ("frontend/.gitignore", "gitignore", None),
-    ("frontend/dist/assets/index-BwFJjFJ4.js", "js", None),
+    ("frontend/dist/assets/index-CK4OPCAt.js", "js", None),
     ("frontend/dist/assets/index-DM5QBXlf.css", "css", None),
     ("frontend/dist/index.html", "html", None),
     ("frontend/index.html", "html", None),
@@ -1580,6 +1580,11 @@ TREE: list[tuple[str, str, str | None]] = [
     # ENRICH-HARD-CASE-V1
     ("tests/integration/test_enrichment_persist.py", "py", None),
     ("docs/wiki/work-log/2026-09-01-enrich-hard-case.md", "md", None),
+    # DIVERGENT-RETRIEVAL-V1 (WILDCARD mode)
+    ("shared/polymath_shared/divergent.py", "py", None),
+    ("orchestrator/orchestrator/api/wildcard.py", "py", None),
+    ("tests/determinism/test_divergent.py", "py", None),
+    ("docs/wiki/work-log/2026-09-01-divergent-retrieval.md", "md", None),
 ]
 
 
