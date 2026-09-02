@@ -86,6 +86,7 @@ sidecars:
 control_plane:
   per_worker_gb: 0.15
   orchestrator_gb: 0.5
+  # mcp (POLYMATH-MCP-V2) is a thin proxy: costed at per_worker_gb (0.15)
   control_gb: 0.15
 
 # Refuse to start when the selected working set exceeds the ceiling.
@@ -134,7 +135,7 @@ profiles:
     slots: [control, canonicalize, project_canonical, neo4j, verify]
   retrieval:
     why: "serve queries; needs embedder for query vectors and the reranker"
-    slots: [orchestrator, sidecar_embedder, sidecar_reranker]
+    slots: [orchestrator, mcp, sidecar_embedder, sidecar_reranker]
   serve:
     why: "the production standing state: the full ingestion pipeline AND
           query serving in one supervised tree. Exists because leaving
@@ -146,4 +147,4 @@ profiles:
     slots: [control, intake, profile, extract, extract2, extract3,
             canonicalize, project_canonical, neo4j, qdrant, verify,
             compile_objects, summaries, sidecar_embedder,
-            sidecar_reranker, orchestrator]
+            sidecar_reranker, orchestrator, mcp]

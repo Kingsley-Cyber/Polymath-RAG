@@ -35,7 +35,7 @@ log = logging.getLogger("fleet-autopilot")
 
 #: Slots that are always resident: the authority/control loop, the API,
 #: and intake (0.15 GB — uploads must always be accepted).
-ALWAYS = {"control", "orchestrator", "intake"}
+ALWAYS = {"control", "orchestrator", "intake", "mcp"}   # mcp: the agent surface (POLYMATH-MCP-V2)
 
 #: lane -> (stages that signal demand, slots the lane needs)
 LANES = [
