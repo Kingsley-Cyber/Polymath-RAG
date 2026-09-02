@@ -61,6 +61,18 @@ thinkingmachines/inkling-small:free, ibm-granite/granite-4.1-8b.
   130 s); inkling-small:free F (HTTP 403 "only available on agentic
   harnesses"). Full tables + per-model diagnosis:
   eval/v5/fleet/QUICK-GRADE-2026-09-02.md.
+- OWNER FOLLOW-UP (same day): failures removed from the roster; three free
+  slugs added; qwen3.7-flash re-graded with thinking off (B 0.766) AND
+  run through the 8-chunk production canary with CANARY_REASONING=none:
+  PASS in 70 s (8/8 extraction at 5.3 s mean, 103–130 tok/s, 0 limiter
+  wait; enrichment 8/8 gist 1.00; facts 15.4/1Kw). LFM-2.5-2.6b F —
+  reasoning mandatory, empties the 2,500 budget (valid JSON only at
+  max_tokens 10k, 31 s). Gemma-4 :free on OpenRouter: HTTP 400 "API key
+  not valid" upstream (route broken, not the models). Gemma-4 direct on
+  Google: extraction 0.784/0.773 (best measured, 0 hallucination) but
+  enrichment UNPARSEABLE — thinking cannot be disabled and the compat
+  endpoint inlines <thought> into content (HOLD for a native adapter).
+  Tool gained per-model `model@effort` specs. Tables: QUICK-GRADE-2026-09-02.md.
 
 ## Rejected claims
 - Deriving the answer key from the strongest model's output — that grades
