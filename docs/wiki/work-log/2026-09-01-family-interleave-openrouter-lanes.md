@@ -124,6 +124,20 @@ EXTRACTION-FLEET-V3 — the condition is met.
   up throughout (same pid); FAST query during the extraction answered
   in 11.8 s with degraded=[] (vs 91–95 s degraded before the fix).
 
+- FINAL RECEIPT, Blue Ocean (482 KB, terminal 08:07:45Z): extraction
+  served by SIX lanes across four families on one document —
+  gemini-3.1-flash-lite 9, mistral-small-2603 8, gemini-3.5-flash-lite 7,
+  ministral-14b 3, nemotron-120b 2, qwen3.5-397b 2. Enrichment 99/99
+  READY across all seven pin lanes; the OpenRouter lanes took the two
+  largest shares (openrouter1 19, openrouter2 16). Timeline caveat: this
+  run absorbed the stale-key 401 (attempt 1), the lone-doc 503 wrap
+  (attempt 2), two fence restarts from my mid-run edits, and the
+  single summaries worker serving four runs' tails serially through
+  the autopilot-stall window — query_ready 06:12:56Z, enrichment tail
+  closed 08:06Z. Not a clean speed number; the lane mix is the receipt.
+  OPEN: summaries has one slot for all runs' tails — the same
+  scale-out shape as extract2/3 is the obvious follow-up (not built).
+
 ## Rejected claims
 - Interleaving by lane NAME order — a name sort is exactly the
   family-block ring that produced the all-groq slice; the ring must be
