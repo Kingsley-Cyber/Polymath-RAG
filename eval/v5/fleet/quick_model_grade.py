@@ -13,6 +13,7 @@ through the PRODUCTION client + gate + enrichment compiler, graded on:
 
     QUICK_MODELS="a/b,c/d" [QUICK_URL=https://openrouter.ai/api]
     [QUICK_KEY_ENV=OPENROUTER_API_KEY] [QUICK_BUDGET_S=120] [QUICK_REASONING=none|low]
+    model specs may carry a per-model reasoning effort: "vendor/model@none"
         .venv/bin/python eval/v5/fleet/quick_model_grade.py
 
 Rubric (pre-registered, transparent):
@@ -40,13 +41,16 @@ for sub in ("shared", "workers"):
 
 KEY_FILE = pathlib.Path(os.environ.get(
     "QUICK_KEY_FILE", ROOT / "eval" / "v5" / "fleet" / "quick_grade_answer_key.json"))
+# Owner 2026-09-02 "REMOVE ALL FAILURES": the F-graded slugs of pass 1
+# (llama-3.1-8b, granite-4.1-8b, ling-3.0-flash, inkling-small:free) are
+# out. A "model@effort" spec pins a reasoning effort for that model only
+# (reasoning models must run with thinking off: "qwen/qwen3.7-flash@none").
 DEFAULT_MODELS = [
+    "qwen/qwen3.7-flash@none",
     "ibm-granite/granite-4.0-h-micro",
-    "inclusionai/ling-3.0-flash",
-    "meta-llama/llama-3.1-8b-instruct",
-    "qwen/qwen3.7-flash",
-    "thinkingmachines/inkling-small:free",
-    "ibm-granite/granite-4.1-8b",
+    "liquid/lfm-2.5-2.6b:free",
+    "google/gemma-4-31b-it:free",
+    "google/gemma-4-26b-a4b-it:free",
     "mistralai/mistral-small-2603",        # reference row (known-good lane)
 ]
 
@@ -121,17 +125,19 @@ def grade_enrichment(cp, key: dict) -> dict:
             "gist_coverage": round(gist, 2), "score": round(score, 3)}
 
 
-def run_model(model: str, url: str, api_key: str, key: dict, budget_s: float, out: dict) -> None:
+def run_model(spec: str, url: str, api_key: str, key: dict, budget_s: float, out: dict) -> None:
     from polymath_shared.latent.compiler import ParentInput, compile_parents_microbatched
     from polymath_shared.latent.contract import PRODUCTION_BOUNDS
     from polymath_shared.llm_extraction.client import LLMExtractionClient
     from polymath_shared.llm_extraction.gate import ChunkView, validate_and_normalize
 
     t0 = time.perf_counter()
-    res = {"model": model, "chunks": {}, "enrich": {}, "errors": []}
+    model, _, effort = spec.partition("@")
+    effort = effort or os.environ.get("QUICK_REASONING", "")
+    res = {"model": spec, "chunks": {}, "enrich": {}, "errors": []}
     opts = {"structured": "json"}
-    if os.environ.get("QUICK_REASONING"):
-        opts["reasoning_effort"] = os.environ["QUICK_REASONING"]   # reasoning models: turn thinking off/down
+    if effort:
+        opts["reasoning_effort"] = effort      # reasoning models: turn thinking off/down
     ex = LLMExtractionClient("cloud", url=url, model=model, api_key=api_key,
                              limiter_key=f"quick:{model}", cloud_opts=opts)
     invalid = False
@@ -203,7 +209,7 @@ def run_model(model: str, url: str, api_key: str, key: dict, budget_s: float, ou
     res.update({"extraction_score": round(ex_score, 3), "enrichment_score": ge["score"],
                 "overall": round(overall, 3), "grade": letter, "total_s": round(total, 1),
                 "over_budget": over_budget})
-    out[model] = res
+    out[spec] = res
 
 
 def main() -> int:

@@ -59,6 +59,12 @@ receipts.
 | gemma-3-4b-it @ OpenRouter | model@host | **OUT (owner 2026-09-02)** | 26.8 f/1Kw extraction but single provider + 0/8 enrichment; owner declined the paced extraction-only lane — never wired |
 | Qwen2.5-7B-Instruct @ SiliconFlow serverless | model@host | **OUT (owner 2026-09-02)** | decomposed (work-log 2026-09-02-siliconflow-decomposition): ~30 s queue before the first token on every call, 16–18 tok/s, degenerate output to the 2,500 cap — the endpoint, not the Mac, not our limiter, not the model. Key removed from .env (no consumer) |
 | Qwen2.5-7B-Instruct @ OpenRouter (same weights) | model | **OUT (owner 2026-09-02)** | passes the format gate (canary PASS, 8/8, 97 s) but the A/B vs mistral-small-2603 on the same chunks: half the facts, a third–half of the entities, rejections dominated by fabricated grounding (UNATTESTED_RELATION_QUOTE 32 / ENDPOINT 19), zero Person entities, 4 predicate types, 2× run-to-run swing at temp 0 on a single-provider pool (Phala), slower per kept fact. Never wired; removed from evaluation |
+| meta-llama/llama-3.1-8b-instruct @ OpenRouter | model@host | **OUT (owner 2026-09-02, "remove all failures")** | quick grade F: 44–50 % hallucinated proposals, no relations on chunk B, enrichment envelope EMPTY (matches the 09-01 campaign) |
+| ibm-granite/granite-4.1-8b @ OpenRouter | model@host | **OUT (owner 2026-09-02)** | quick grade F: recall 0.5/0.25, zero relations, 38–68 % hallucination, gists below floor |
+| inclusionai/ling-3.0-flash @ OpenRouter | model@host | **OUT (owner 2026-09-02)** | quick grade F: upstream 429 on 6/7 calls across two passes; the one answer took 130 s (reasoning model, ≈19 tok/s) |
+| thinkingmachines/inkling-small:free @ OpenRouter | model@host | **OUT (owner 2026-09-02)** | HTTP 403 "only available on agentic harnesses" — not an API model on this key |
+| qwen/qwen3.7-flash @ OpenRouter | model@host | **CANDIDATE — quick grade B (0.787) with thinking OFF only** | reasoning model: as-is it spends the whole output budget on reasoning tokens; with reasoning_effort none: 15 s, enrichment = reference, extraction recall 0.67/0.75, 22–27 % unattested. Canary with CANARY_REASONING=none: see QUICK-GRADE-2026-09-02.md |
+| ibm-granite/granite-4.0-h-micro @ OpenRouter | model@host | **HOLD — enrichment-only curiosity (quick grade B)** | enrichment READY 7/8 gist 1.0 at $0.02/$0.11; extraction too weak; 57 s on a single provider |
 
 ## Owner decisions this scrub asks for
 1. ~~Local-lane rule~~ — DECIDED 2026-09-02: CLOUD-FIRST-V1 blessed
