@@ -58,7 +58,7 @@ receipts.
 | mistral-nemo, ling-3.0-flash, llama-3.1-8b, granite ×2, lunaris, mythomax | model@host | **CUT** | campaign FAIL (capacity or capability) |
 | gemma-3-4b-it @ OpenRouter | model@host | **HOLD** | 26.8 f/1Kw extraction but single provider + 0/8 enrichment; paced extraction-only lane if wanted |
 | Qwen2.5-7B-Instruct @ SiliconFlow serverless | model@host | **DROP THE ENDPOINT** | decomposed 2026-09-02 (work-log 2026-09-02-siliconflow-decomposition): ~30 s queue before the first token on EVERY call, 16–18 tok/s, and degenerate output (token corruption, runs to the 2,500 cap) — the "150–158 s/call" was the endpoint, not the Mac, not our limiter, not the model |
-| Qwen2.5-7B-Instruct @ OpenRouter (same weights) | model@host | **PASS production gates — bulk/speed tier** | identical payload: TTFT 0.5 s, 53–61 tok/s, 8/8 extraction in 3.8–10.9 s, 0 limiter wait, finish=stop ×8; density 13.4 facts/1Kw (gemini-lite class, below mistral-small 24–26); enrichment 6/8 READY, gist 0.96; VERDICT PASS 97 s. A cheap 7B carrier, never the quality anchor |
+| Qwen2.5-7B-Instruct @ OpenRouter (same weights) | model@host | **PASSES the gate, NOT RECOMMENDED** | identical payload: TTFT 0.5 s, 53–61 tok/s, canary PASS (8/8, 97 s). But the A/B against mistral-small-2603 on the same chunks: 23–46 vs 79 entities, 14–23 vs 30–32 facts, rejections dominated by fabricated grounding (UNATTESTED_RELATION_QUOTE 32 / ENDPOINT 19), zero Person entities, 4 predicate types, 2× run-to-run swing at temp 0, and slower (6.8–10.7 s vs 3.7–3.9 s) because the gate discards most of what it emits. A 7B buys nothing here that the 24B pool does not do cheaper per KEPT fact |
 
 ## Owner decisions this scrub asks for
 1. ~~Local-lane rule~~ — DECIDED 2026-09-02: CLOUD-FIRST-V1 blessed

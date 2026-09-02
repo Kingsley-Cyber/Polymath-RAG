@@ -89,6 +89,28 @@ calls, plus limiter wait, plus retry sleep. None of that was reported.
   ENRICH_NO_RESPONSE), gist 0.96; **VERDICT PASS, total 97 s** (budget
   240; passes the standard 180 too). Same model, same prompt, same
   chunks: 6 s clean at OpenRouter vs 165 s degenerate at SiliconFlow.
+- 7B WEAKNESS PROFILE (A/B, same 8 chunks, same OpenRouter key, json
+  mode, temperature 0, two passes each) — qwen-2.5-7b vs mistral-small-2603:
+
+  | measure | qwen-2.5-7b (pass 1 / pass 2) | mistral-small-2603 (pass 1 / pass 2) |
+  |---|---|---|
+  | unique entities kept | 23 / 46 | 79 / 79 |
+  | unique facts kept | 14 / 23 | 30 / 32 |
+  | gate rejections | 29 / 59 | 15 / 40 |
+  | dominant rejection | UNATTESTED_RELATION_QUOTE 32 + UNATTESTED_RELATION_ENDPOINT 19 (fabricated grounding) | NON_TERM_ENDPOINT 12 + NON_TERM_SURFACE 7 (phrase-boundary) |
+  | Person entities | 0 | 16 |
+  | predicate types used | 4 (HAS_PROPERTY-heavy) | 8 |
+  | mean wall | 6.8 s / 10.7 s | 3.7 s / 3.9 s |
+  | worst chunk (221 tok) | 0 ent / 13 rej, then 7 ent / 14 rel / 49 rej in 43 s | 7 ent / 2 rel / 13 rej in 5.9 s |
+
+  Reading: the 7B's failures are GROUNDING failures — it invents
+  evidence quotes and relation endpoints that are not in the chunk
+  (the gate's unattested classes), it drops whole entity classes
+  (no Person at all), uses a narrow predicate vocabulary, degrades on
+  the denser chunks, and is unstable run to run at temperature 0
+  (2× swing) where the 24B is flat. It is also SLOWER on this pool
+  because it emits many candidates the gate then discards. The gate
+  keeps the graph clean either way; the cost is recall and time.
 - PROBE A (the original client path against SiliconFlow with timed
   limiter waits) was killed after 20 min still blocked in the SSL read
   of a non-streaming POST: it added no information beyond B2 and, being
