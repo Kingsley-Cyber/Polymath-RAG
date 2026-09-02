@@ -1596,6 +1596,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("control/control/stall_tracer.py", "py", None),
     ("scripts/trace_stalls.py", "py", None),
     ("tests/determinism/test_stall_tracer.py", "py", None),
+    ("tests/determinism/test_control_watchdog.py", "py", None),
     ("tests/determinism/test_fleet_v3_limits.py", "py", None),
     ("eval/v5/fleet/provider_equivalence.py", "py", None),
     ("eval/v5/fleet/PROVIDER-EQUIVALENCE-RESULTS.md", "md", None),
