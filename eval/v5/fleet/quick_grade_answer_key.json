@@ -4,7 +4,7 @@
     "entities: each gold entity lists every acceptable surface form; a model's kept entity matches if it fuzzy-matches ANY name.",
     "relations: subject/object list acceptable surfaces; predicates = CANONICAL ontology ids (17 + RELATED_TO) that earn full credit; any other predicate on the right pair = half credit; reversed pair = half credit.",
     "also_acceptable: correct but lower-value entities that count toward precision, not recall.",
-    "enrichment.must_cover: 8 core terms (substring-matched on normalized text) that a faithful gist of BOTH children mentions; calibrated so the reference lane (mistral-small-2603) scores 7-8/8, not 8/8 by construction.",
+    "enrichment_cases: TWO parents graded and averaged — the easy 2-child parent (8 must-cover terms) and the hard 8-child OnStar parent (10 terms). Added 2026-09-02 after ministral-3b passed the single easy parent but failed 7 of 8 real parents in the canary.",
     "Chunk texts are embedded so the test needs no database; text_sha256 pins them."
   ],
   "chunks": {
@@ -303,28 +303,82 @@
       "text_sha256": "39d7eb76081640944c42464b61d216480b312b7c5a32006e9ea09ac292e9bdf8"
     }
   },
-  "enrichment": {
-    "parent_id": "chunk_5d646a64f4935a196b30138b604f8189e4aca67c36a6a6355d340a216ef9a838",
-    "book": "The_Innovators_Dilemma_Christensen.md",
-    "children": [
-      {
-        "chunk_id": "chunk_3f8bf592314039ac7063196f49cd0a7974ea9c7b015e95414ad9a63cbf1678b0",
-        "text": "IDEO’s Tom Kelley, author of *The Art of Innovation,* has written that “the Anthropologist’s role is the single biggest source of innovation at IDEO.” Why does he believe this? Anthropologists have developed techniques to study humans in their natural environments and learn from their behavior. Pretending that you are an anthropologist can be especially powerful when you watch someone in a particular circumstance trying to “do a job,” to use Clayton Christensen’s terminology in *The Innovator’s Solution*. Christensen has argued that customers—people and companies—have “jobs” that arise regularly and need to get done. When customers become aware of a job that they need to get done, they look around for a product or service that they can “hire.” When people have a job to do, they set out to hire something or someone to do the job as effectively, conveniently, and cheaply as possible."
-      },
-      {
-        "chunk_id": "chunk_d38f216bd829af63b7c192a3ac205cc83423e92f79f9c5215b25be9dd3898c6f",
-        "text": "Tata’s experience with the Nano illustrates this idea. Ratan Tata’s initial observation of the Indian family on a scooter in the rain led him to realize that the scooter wasn’t doing a very good *job* at transporting the family in a safe or dry manner. They needed a vehicle like a car that would provide more protection. This led to years of experimenting to create an affordable car that would be within reach of these middle-class families. But just being able to build an affordable car wasn’t enough. To truly put Indian customers in the driver’s seat, Tata needed to provide a set of complementary services that were critical to a customer’s ability to buy a car, finance it, insure it, learn to operate it safely, and then drive it home. Tata’s success was borne of two types of observations: one about the job to be done (transport families safely in a vehicle they could afford) and one about how to actually put a middle-class Indian in the driver’s seat (take the cars to the village markets and provide the necessary services so the customer could operate the vehicle within a single day)."
-      }
-    ],
-    "must_cover": [
-      "Tata",
-      "Nano",
-      "anthropolog",
-      "IDEO",
-      "job",
-      "services",
-      "affordab",
-      "famil"
-    ]
-  }
+  "enrichment_cases": [
+    {
+      "parent_id": "chunk_5d646a64f4935a196b30138b604f8189e4aca67c36a6a6355d340a216ef9a838",
+      "book": "The_Innovators_Dilemma_Christensen.md",
+      "children": [
+        {
+          "chunk_id": "chunk_3f8bf592314039ac7063196f49cd0a7974ea9c7b015e95414ad9a63cbf1678b0",
+          "text": "IDEO’s Tom Kelley, author of *The Art of Innovation,* has written that “the Anthropologist’s role is the single biggest source of innovation at IDEO.” Why does he believe this? Anthropologists have developed techniques to study humans in their natural environments and learn from their behavior. Pretending that you are an anthropologist can be especially powerful when you watch someone in a particular circumstance trying to “do a job,” to use Clayton Christensen’s terminology in *The Innovator’s Solution*. Christensen has argued that customers—people and companies—have “jobs” that arise regularly and need to get done. When customers become aware of a job that they need to get done, they look around for a product or service that they can “hire.” When people have a job to do, they set out to hire something or someone to do the job as effectively, conveniently, and cheaply as possible."
+        },
+        {
+          "chunk_id": "chunk_d38f216bd829af63b7c192a3ac205cc83423e92f79f9c5215b25be9dd3898c6f",
+          "text": "Tata’s experience with the Nano illustrates this idea. Ratan Tata’s initial observation of the Indian family on a scooter in the rain led him to realize that the scooter wasn’t doing a very good *job* at transporting the family in a safe or dry manner. They needed a vehicle like a car that would provide more protection. This led to years of experimenting to create an affordable car that would be within reach of these middle-class families. But just being able to build an affordable car wasn’t enough. To truly put Indian customers in the driver’s seat, Tata needed to provide a set of complementary services that were critical to a customer’s ability to buy a car, finance it, insure it, learn to operate it safely, and then drive it home. Tata’s success was borne of two types of observations: one about the job to be done (transport families safely in a vehicle they could afford) and one about how to actually put a middle-class Indian in the driver’s seat (take the cars to the village markets and provide the necessary services so the customer could operate the vehicle within a single day)."
+        }
+      ],
+      "must_cover": [
+        "Tata",
+        "Nano",
+        "anthropolog",
+        "IDEO",
+        "job",
+        "services",
+        "affordab",
+        "famil"
+      ],
+      "label": "easy: 2 children (IDEO anthropologist + Tata Nano), 376 tok"
+    },
+    {
+      "label": "hard: 8 children (OnStar / Jobs Theory / hurricanes Katrina-Rita / 911 severity), 1,052 tok",
+      "parent_id": "chunk_7e686a47125b6a8d6b8fe53071bb301670e7419071d7bfb422c651b942490124",
+      "book": "Competing_Against_Luck_Christensen.md",
+      "children": [
+        {
+          "chunk_id": "chunk_00fe95a213540853fefaa8d5e9ef0345438997531cd82c51ea2171c48c9eed64",
+          "text": "Once GM’s OnStar team figured out that customers were hiring the service for peace of mind while driving, that clarity shifted\nthe organization’s focus from cool new “brochure ware” features to genuinely targeted customer benefits that aligned with\nthe Job to Be Done. It was a focus that played out not just in what and how OnStar designed into its service, but the everyday\ndecisions made by employees in all parts of the organization. In an organization like GM, where OnStar was formed, there are\npotentially limitless possibilities for how a service like OnStar could develop. But should it? Having clarity of Jobs to\n Be Done actually made it easier to decide what did and didn’t belong in the OnStar suite of benefits and services. *What to pursue, what not to pursue? Which technical priorities were most important? Which didn’t add value? How do we talk\nto our customers? How do we make sure dealers aren’t obstacles to the job customers are hiring us to do?* “The real challenge is how do you get this herd of energy—your team—lining up on a future road map, some of which you can’t\nyet see. Jobs Theory helps you do that,” says Chet Huber, OnStar’s founding CEO. “It’s crazy powerful, if you get that right.”"
+        },
+        {
+          "chunk_id": "chunk_09d2559c07901cf5a196cb175443121ae138fca98f5f97f71f8fa5f06408bfb4",
+          "text": "Here’s an example of the two-sided compass in action. After discussions with emergency room physicians showed that providing\n911 responders with advance information about the severity of a car accident they were responding to had the potential to\nsave lives, Huber’s team eagerly rallied around that goal with new processes. It was a very difficult technical problem to\nsolve—what information was needed to determine how serious a car accident has been? It would require a complex algorithm and\nthe ability to determine the relevant information automatically. *The change in velocity.**The use of seat belts.**The direction of the force.* *How many cars were involved?* And so on. “I remember the discussion with the engineers,” Huber recalls. “I was a little bit nervous—it was clearly the\nright thing to *try* to do, but it was likely to be really hard and very expensive. But in a relatively short period of time, they came back and\nsaid, ‘We think we can figure this out.’ And it wasn’t because I told them to go work nights and weekends to figure it out.\nIt was because they knew what was at stake and that it was perfectly aligned with the job we were being hired to do. This\nwasn’t figuring out how to beam latte coupons to Starbucks into the OnStar unit. This would save lives.”"
+        },
+        {
+          "chunk_id": "chunk_13c729a2aa383666bf72e2cccb7913879f98ca484ba651c0f3f6fe635e384d93",
+          "text": "As was true for Intuit’s Cook, Huber found the power of focusing his team around the Job to Be Done extended beyond knowing\nwhat features and benefits made most sense. The clarity of a Job to Be Done actually motivated employees to do their best\nwork because they clearly understood why that mattered. When the arrow on the “two-sided compass” shifts to point more clearly\nat a deeper understanding of the job, so too must the other side of it, aligning with a better job spec."
+        },
+        {
+          "chunk_id": "chunk_2bb2219c10c26d6932d09a34faad1e8b818a4e1d18969946a17c10bce0c740d7",
+          "text": "By the time Rita was approaching, OnStar realized what was happening, that these weren’t individual subscriber issues but\nregional crisis events. And while you couldn’t envision any more powerful call to action to buy a service upgrade than being\ncaught in a hurricane, it just didn’t feel right to the people delivering the services—it wasn’t consistent with the job they\n were being hired to do. So the employee in charge of that part of the OnStar business simply made a decision to immediately\noffer anybody calling from a crisis area all the services that OnStar offered, without requiring any upgrades to her current\nplan. It was so clearly the right decision, Huber says, “it was about a fifteen-second conversation in my office. I can’t\nimagine many organizations in which that would be possible.”"
+        },
+        {
+          "chunk_id": "chunk_3ce8871b49ea45a2c54bd1011a8ffd8d58e404b18180c099626307c1738f91e4",
+          "text": "Not least because making the decision—and executing it—are two different things. The way the OnStar system had been designed\nand built at that point made it technically difficult for an employee to just declare that everyone in the affected zone would\n automatically receive all the services that OnStar offers. OnStar had to create imperfect workarounds—“we had to cobble it\ntogether with duct tape and Velcro to make it work,” Huber recalls. For example, OnStar had to create a system that would\ndetect all calls coming from a regional crisis area and divert them to a specialized call center team that would have access\nto valuable real-time information, such as the best evacuation routes or current weather forecasts. Making that happen was\nnot simple. But the difficulty of the challenge never undermined the clarity of its purpose. It gave his team laser focus.\nAs Huber sees it, the Job to Be Done served as a compass."
+        },
+        {
+          "chunk_id": "chunk_790c80632412e0df84fb11b3979a95186b2de80500ba1040f8cb09db0baca9ae",
+          "text": "For example, Hurricanes Katrina and Rita hitting the Gulf Coast less than a month apart in 2005 triggered a whole series of\nnew experiences and processes essential to keeping the peace-of-mind promise. When Katrina hit, OnStar was new enough that\nit hadn’t had the experience of intersecting with a natural disaster. When the call center started getting flooded with calls,\n all kinds of previously unconsidered problems were flagged. A panicked customer would call in the middle of getting on the\nroad and be told that their OnStar plan didn’t include getting real-time directions. So initially, OnStar required that customers\nbuy an upgrade to access the plan that gave directions."
+        },
+        {
+          "chunk_id": "chunk_b39e9ebc519c49ef0ce3dc3deb8d480c0021c3be05b5adceac082ad660ed71d2",
+          "text": "“Whenever something came up that we had never thought about, but clearly intersected with this compass heading, people just\ndid it. They just got on it,” Huber says. “You didn’t get the normal reaction, ‘Don’t give me one more thing to do.’” Instead,\nHuber says—like what Cook found at Intuit—the team would often be energized by the focus."
+        },
+        {
+          "chunk_id": "chunk_c8230e2f06ba8937c7d4ed2fe52615914f075a402849b724311f6e99e24c6b3b",
+          "text": "Until they zoned in on the Job to Be Done, Huber and his team were picking and choosing among all kinds of cool bells and\n whistles that OnStar *technically* could offer. Optimizing around the Job to Be Done, Huber says, might have seemed to narrow the team’s focus in a way that\nwas limiting—but in reality, it provided helpful clarity. Less time and energy were spent evaluating options. “The focus you\nget greatly simplifies.”"
+        }
+      ],
+      "must_cover": [
+        "OnStar",
+        "Huber",
+        "job",
+        "compass",
+        "hurricane",
+        "911",
+        "call center",
+        "upgrade",
+        "focus",
+        "peace of mind"
+      ]
+    }
+  ]
 }

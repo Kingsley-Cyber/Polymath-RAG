@@ -7,8 +7,8 @@ through the PRODUCTION client + gate + enrichment compiler, graded on:
   extraction   entity recall / precision vs the key, relation recall
                (pair + predicate), grounding (share of proposals the gate
                rejected as unattested), JSON validity, attempts, wall
-  enrichment   envelope READY?, must-cover term coverage, gist_coverage,
-               wall
+  enrichment   TWO parents (easy 2-child, hard 8-child): envelope READY?,
+               must-cover term coverage, gist_coverage; scored as the mean
   production   per-model wall budget (QUICK_BUDGET_S, default 120 s)
 
     QUICK_MODELS="a/b,c/d" [QUICK_URL=https://openrouter.ai/api]
@@ -185,16 +185,30 @@ def run_model(spec: str, url: str, api_key: str, key: dict, budget_s: float, out
             outl.append((item_id, raw, err))
         return outl
 
-    par = key["enrichment"]
-    parent = ParentInput(par["parent_id"], [(c["chunk_id"], i, c["text"]) for i, c in enumerate(par["children"])])
+    cases = key.get("enrichment_cases") or [key["enrichment"]]
     t = time.perf_counter()
+    per_case = []
+    # PRODUCTION SHAPE: all case parents go through ONE compile call, so the
+    # compiler packs them into microbatches exactly as the worker does
+    # (ceiling 6000). One-parent-per-call let ministral-3b pass here while
+    # it failed 7/8 real batches in the canary (2026-09-02).
+    parents = [ParentInput(par["parent_id"], [(c["chunk_id"], i, c["text"]) for i, c in enumerate(par["children"])])
+               for par in cases]
+    by_id = {}
     try:
-        compiled = compile_parents_microbatched(transport, [parent], PRODUCTION_BOUNDS, 6000, max_concurrency=1)
-        cp = compiled[0] if compiled else None
+        for cp in compile_parents_microbatched(transport, parents, PRODUCTION_BOUNDS, 6000, max_concurrency=1):
+            by_id[cp.parent_id] = cp
     except Exception as exc:  # noqa: BLE001
-        cp = None; res["errors"].append(f"enrich: {type(exc).__name__}: {str(exc)[:80]}")
-    ge = grade_enrichment(cp, par)
-    ge.update({"wall_s": round(time.perf_counter() - t, 1), "capacity": dict(ecap)})
+        res["errors"].append(f"enrich: {type(exc).__name__}: {str(exc)[:80]}")
+    for par in cases:
+        g = grade_enrichment(by_id.get(par["parent_id"]), par); g["case"] = par.get("label", par["parent_id"][:16]); per_case.append(g)
+    # the grade is the MEAN over cases; envelope/terms/gist shown per case (easy/hard)
+    ge = {"score": round(sum(g["score"] for g in per_case) / len(per_case), 3),
+          "envelope": " / ".join(g["envelope"] for g in per_case),
+          "covered": " / ".join(g["covered"] for g in per_case),
+          "gist_coverage": " / ".join(str(g["gist_coverage"]) for g in per_case),
+          "term_coverage": round(sum(g["term_coverage"] for g in per_case) / len(per_case), 2),
+          "cases": per_case, "wall_s": round(time.perf_counter() - t, 1), "capacity": dict(ecap)}
     res["enrich"] = ge
 
     total = time.perf_counter() - t0
