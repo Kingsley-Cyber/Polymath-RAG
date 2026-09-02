@@ -57,7 +57,8 @@ receipts.
 | local Qwen3.5-4B (MLX) | model@host | **DEMOTED (CLOUD-FIRST-V1 blessed, floor 0)** | 76 % quarantine on its only run today vs 0–5 % cloud; owner rule "≤300 KB never cloud" (2026-08-29) predates the free 12-lane cloud fleet — **owner decision** |
 | mistral-nemo, ling-3.0-flash, llama-3.1-8b, granite ×2, lunaris, mythomax | model@host | **CUT** | campaign FAIL (capacity or capability) |
 | gemma-3-4b-it @ OpenRouter | model@host | **HOLD** | 26.8 f/1Kw extraction but single provider + 0/8 enrichment; paced extraction-only lane if wanted |
-| Qwen2.5-7B-Instruct @ SiliconFlow | model@host | **CUT** | 150–158 s per extraction-length call in both schema and json mode, 0/8 answered inside budget, outputs quarantined (canaried 2026-09-02 on the owner's key; measured 15–21 tok/s at a 1 K-token prompt, so extraction-length packets take minutes) |
+| Qwen2.5-7B-Instruct @ SiliconFlow serverless | model@host | **DROP THE ENDPOINT** | decomposed 2026-09-02 (work-log 2026-09-02-siliconflow-decomposition): ~30 s queue before the first token on EVERY call, 16–18 tok/s, and degenerate output (token corruption, runs to the 2,500 cap) — the "150–158 s/call" was the endpoint, not the Mac, not our limiter, not the model |
+| Qwen2.5-7B-Instruct @ OpenRouter (same weights) | model@host | **EVALUATE** (canary result in the work-log) | identical payload: TTFT 0.5 s, 52–55 tok/s, valid sane JSON in 4–10 s per call; the model stays in the pool evaluation |
 
 ## Owner decisions this scrub asks for
 1. ~~Local-lane rule~~ — DECIDED 2026-09-02: CLOUD-FIRST-V1 blessed
