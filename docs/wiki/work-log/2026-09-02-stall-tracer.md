@@ -46,6 +46,18 @@ itself, on the tick, with the diagnosis attached.
    ge=30), register-recorded.
 4. `scripts/trace_stalls.py` — operator view: control-plane heartbeat
    age, stored open traces, and a live read-only collect (rolled back).
+5. CONTROL-HEARTBEAT-WATCHDOG-V1 (process_supervisor): the one stall the
+   tracer cannot see about itself. The supervisor's health check for
+   the control slot was `process exists`; a control.main that is alive
+   but not completing ticks (lease never taken, every tick failing —
+   1,864 consecutive failed ticks on 08-31 — a wedged connection) was
+   never restarted, and no tracer ran. Now the supervisor probes
+   `control_owners.last_seen_at` every 30 s (record_heartbeat runs only
+   on tick_ok, so it IS the successful-tick signal); no completed tick
+   for `stall_threshold_s` after a boot grace of the same length →
+   restart under the normal restart budget (`control_heartbeat_stale`,
+   pure). ACTIVATES ON THE NEXT SUPERVISOR RESTART — the running
+   supervisor (started before this change) does not reload code.
 
 ## Proof
 - tests/determinism/test_stall_tracer.py 8 green (real DB, rolled back):
@@ -57,6 +69,10 @@ itself, on the tick, with the diagnosis attached.
   not re-inserted, resolved when cleared; pure diagnoses deterministic.
 - test_fleet_autopilot_demand + test_incremental_census +
   test_supervisor_env_overlay: 14 green after the wiring.
+- tests/determinism/test_control_watchdog.py 6 green: fresh never stale;
+  stale after grace; boot grace masks; missing row = stale after grace;
+  determinism; wiring pins (probe → heartbeat check → control_owners →
+  pure decision → budgeted respawn).
 - FIRST LIVE COLLECT (read-only, before deploy): 6 stalled units, all
   RUN_NO_TICKET_CHAIN — six non-superseded runs at `intake` whose
   corpus row no longer exists (census_probe_rollback 08-27; four
@@ -81,11 +97,12 @@ itself, on the tick, with the diagnosis attached.
   keeps the rule legible.
 
 ## Open contract gaps
-- CORPUS-DELETE cascade: runs (and their status) survive the corpus row.
-  The six phantom runs are debris; removing them is a data mutation the
-  owner decides: `DELETE FROM runs r WHERE r.status='intake' AND NOT
-  EXISTS (SELECT 1 FROM corpora c WHERE c.corpus_id=r.corpus_id) AND NOT
-  EXISTS (SELECT 1 FROM stage_tickets t WHERE t.run_id=r.run_id)`.
+- CORPUS-DELETE cascade: runs (and their status) survive the corpus row —
+  the six phantom runs were that debris. OWNER-AUTHORIZED DELETE 09:09Z
+  (guarded transaction: exactly 6 or abort): 6 runs + 5 outbox_events +
+  5 stage_attempts removed; 0 remaining. The tracer resolved all six
+  episodes on the next tick (resolved_at 09:09:20Z) — live receipt of the
+  resolve path. The cascade itself (corpus delete → runs) is still open.
 - The supervisor state file is best-effort (`/tmp/polymath_fleet/
   supervisor_state.json`); when absent, READY diagnoses fall back to
   READY_UNCLAIMED with `slots_alive` omitted.

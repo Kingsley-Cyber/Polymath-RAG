@@ -120,6 +120,22 @@ def _dotenv_overlay(path) -> dict:
     return out
 
 
+def control_heartbeat_stale(heartbeat_age_s: float | None, uptime_s: float,
+                            threshold_s: float) -> bool:
+    """CONTROL-HEARTBEAT-WATCHDOG-V1 (owner law 2026-09-02: nothing may sit
+    stuck > 3 min unnoticed). The control plane's own liveness is a
+    successful tick (record_heartbeat runs only on tick_ok), so a control
+    process that is alive but not ticking — lease never acquired, every
+    tick failing (measured 2026-08-31: 1,864 consecutive failed ticks), a
+    wedged connection — is a stall the stall tracer cannot see about
+    itself. Stale = no successful tick for threshold_s, judged only after
+    the process has had threshold_s to boot and take the lease. A missing
+    heartbeat row (None) counts as stale once the grace has passed."""
+    if uptime_s < threshold_s:
+        return False
+    return heartbeat_age_s is None or heartbeat_age_s > threshold_s
+
+
 def _release_leases_of_pid(dsn: str, pid: int, note: str) -> int:
     """GRACEFUL-LEASE-HANDBACK-V1 (2026-09-02): when the supervisor
     itself stops a worker (fence restart onto current code, shutdown),
@@ -209,6 +225,14 @@ class Supervisor:
         # Slow cadence: the probe is a real forward pass.
         self.readiness_interval_s = readiness_interval_s
         self.readiness_failures_before_restart = readiness_failures_before_restart
+        # CONTROL-HEARTBEAT-WATCHDOG-V1 knobs (owner law: 3 minutes).
+        self.control_probe_interval_s = 30.0
+        try:
+            from polymath_shared.settings import get_settings
+            self.control_stall_threshold_s = float(
+                getattr(get_settings().control, "stall_threshold_s", 180))
+        except Exception:  # noqa: BLE001
+            self.control_stall_threshold_s = 180.0
         self.window_s = window_s
         self.backoff_s = backoff_s
         self.health_timeout_s = health_timeout_s
@@ -370,6 +394,41 @@ class Supervisor:
         self._write_state()
         return self.state()
 
+    def _check_control_heartbeat(self, slot: Slot, now: float) -> None:
+        """CONTROL-HEARTBEAT-WATCHDOG-V1: restart control when it has not
+        completed a tick for stall_threshold_s (see control_heartbeat_stale).
+        Restart budget applies exactly as for a crashed slot."""
+        try:
+            import psycopg
+            with psycopg.connect(self.dsn, connect_timeout=5) as conn:
+                row = conn.execute(
+                    "SELECT EXTRACT(EPOCH FROM now() - MAX(last_seen_at)) "
+                    "FROM control_owners").fetchone()
+            age = float(row[0]) if row and row[0] is not None else None
+        except Exception:  # noqa: BLE001 — the probe must never kill the loop
+            return
+        if not control_heartbeat_stale(age, now - slot.started_at,
+                                       self.control_stall_threshold_s):
+            return
+        log.error("control heartbeat stale (%s s without a completed tick, "
+                  "threshold %s s): restarting control",
+                  "none" if age is None else int(age),
+                  int(self.control_stall_threshold_s))
+        slot.exits.append(now)
+        if not self._restart_allowed(slot):
+            self._quarantine(slot, "control heartbeat restarts exceeded budget")
+            return
+        try:
+            slot.proc.terminate()
+            slot.proc.wait(timeout=15)
+        except Exception:
+            try:
+                slot.proc.kill()
+            except Exception:
+                pass
+        slot.restarts += 1
+        self._spawn(slot)
+
     def _check_readiness(self, slot: Slot) -> None:
         """Probe a live service slot's readiness on a slow cadence.
 
@@ -381,9 +440,16 @@ class Supervisor:
         if slot.proc is None:
             return
         now = time.time()
-        if now - slot.last_probe_at < self.readiness_interval_s:
+        # The control probe is one cheap SQL read, so it runs on its own
+        # fast cadence; service probes cost a forward pass and stay slow.
+        interval = (self.control_probe_interval_s if slot.name == "control"
+                    else self.readiness_interval_s)
+        if now - slot.last_probe_at < interval:
             return
         slot.last_probe_at = now
+        if slot.name == "control":
+            self._check_control_heartbeat(slot, now)
+            return
         if not slot.health_url:
             # WORKER-QUARANTINE-AUTOHEAL-V1 (measured 2026-08-30 22:03):
             # a fence-quarantined worker (BUNDLE_STALE_CODE_DRIFT) keeps
