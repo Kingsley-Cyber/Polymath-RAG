@@ -88,6 +88,13 @@ blocks out of limiter.yaml, 6 GROQ keys + the SiliconFlow key out of .env, AIMD 
 llm_cloud[groq1-4] deleted. Pool now: primary qwen3.5-397b, openrouter1/2 (mistral-
 small-2603 / ministral-14b), gemini1-4(+b) lites, nvidia2 nemotron-super; enrichment
 pin nvidia + gemini5/5b/6/6b + openrouter1/2. Work-log 2026-09-02-provider-removals.
+OPENROUTER-LANE-3 (owner 2026-09-02): qwen/qwen3.7-flash wired as openrouter3 on the
+SECOND OpenRouter key (OPENROUTER_API_KEY_2) with reasoning_effort none (MANDATORY —
+reasoning model), structured json; ring = 13 lanes, enrichment pin = 8. Canary PASS
+70 s. Receipt run pending — watch extraction_call_receipts for openrouter3 on the
+next ingest. Gemma-4 on Google = HOLD (best extraction, inline <thought> blocks
+enrichment; needs a native adapter). Standing tools: eval/v5/fleet/quick_model_grade.py
+(answer-keyed 5-minute grade) + provider_canary.py (CANARY_REASONING=none for thinkers).
 
 OPEN (owner gates + debt): TCC grant; ~~gpt-oss-20b as groq escape rep;
 gemma-3-4b paced extraction-only lane~~ (both REMOVED by owner 2026-09-02); 40-chunk equivalence pass with
