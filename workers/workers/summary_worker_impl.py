@@ -36,9 +36,15 @@ def _corpus_of_run(conn: Connection, run_id: str) -> str | None:
 
 
 def _run_docs(conn: Connection, run_id: str) -> list[str]:
+    """Every document of the run's corpus (enrichment is a corpus sweep),
+    the RUN'S OWN document FIRST — ENRICH-OWN-DOC-FIRST (2026-09-02): a
+    fresh upload sat behind the sweep of nine finished books."""
     return [r[0] for r in conn.execute(
-        "SELECT doc_id FROM documents d WHERE d.corpus_id="
-        "(SELECT corpus_id FROM runs WHERE run_id=%s)", (run_id,)).fetchall()]
+        """SELECT d.doc_id FROM documents d
+            WHERE d.corpus_id = (SELECT corpus_id FROM runs WHERE run_id = %s)
+            ORDER BY (d.source_name = (SELECT metadata->>'source_name' FROM runs
+                                        WHERE run_id = %s)) DESC,
+                     d.created_at""", (run_id, run_id)).fetchall()]
 
 
 def _job_done(conn: Connection, stage: str, input_hash: str) -> bool:
@@ -324,7 +330,8 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
         QUALIFICATION_BOUNDS,
     )
     from polymath_shared.latent.runtime import (
-        input_hash_for,
+        enrichment_contract_id,
+    input_hash_for,
         persist_compiled_parent,
     )
     from polymath_shared.settings import get_settings
@@ -483,9 +490,10 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
         hashes: dict[str, str] = {}
         for p in parents:
             from polymath_shared.latent.gate import source_hash as _sh
-            ep_p = _sel("parent_enrichment", p.parent_id)
-            ih = input_hash_for(_sh(p.children),
-                                f"{ep_p.name}:{ep_p.model}")
+            # ENRICH-IDENTITY-V2: identity = content + contract, never the
+            # lane (the lane used to be here — every pin change re-enriched
+            # the corpus).
+            ih = input_hash_for(_sh(p.children), enrichment_contract_id(bounds))
             hashes[p.parent_id] = ih
             if _enrichment_done(ih):
                 existing += 1

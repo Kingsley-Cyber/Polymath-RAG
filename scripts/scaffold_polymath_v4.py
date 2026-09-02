@@ -1595,6 +1595,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("stores/postgres/migrations/0046_stall_traces.sql", "sql", None),
     ("control/control/stall_tracer.py", "py", None),
     ("scripts/trace_stalls.py", "py", None),
+    ("scripts/migrate_enrichment_identity.py", "py", None),
+    ("tests/determinism/test_enrichment_identity.py", "py", None),
     ("tests/determinism/test_stall_tracer.py", "py", None),
     ("tests/determinism/test_control_watchdog.py", "py", None),
     ("tests/determinism/test_enrichment_concurrency_setting.py", "py", None),
