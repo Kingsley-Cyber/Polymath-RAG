@@ -122,6 +122,9 @@ per-call budget 1.3×/parent+300, doubled once on a likely truncation; .env
 POLYMATH_WORKER_ENRICHMENT_PROFILE=production. READ THE ENRICHMENT TRACE FIRST when
 enrichment looks slow: `grep -a 'ENRICH_CALL\|ENRICH_BATCH\|microbatch gated'
 /tmp/polymath_fleet/summaries.log` (lane, wall, finish=length/stop, splits, gate yield).
+SIDECAR-READINESS-GATE-V1: workers wait for a sidecar's /ready (120 s) before spending an
+attempt; SidecarUnavailable releases the ticket WITHOUT an attempt (+15 s backoff). A
+`failed` ticket from the pre-gate era → `scripts/retry_failed_stage.py <corpus> <stage> --execute`.
 
 OPEN (owner gates + debt): TCC grant; ~~gpt-oss-20b as groq escape rep;
 gemma-3-4b paced extraction-only lane~~ (both REMOVED by owner 2026-09-02); 40-chunk equivalence pass with

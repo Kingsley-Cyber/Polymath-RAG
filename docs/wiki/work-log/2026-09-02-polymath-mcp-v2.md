@@ -76,6 +76,11 @@ fix what is not production-ready.
   control plane raised during the ingest — including the enrichment
   ticket stuck behind a corpus-wide re-enrichment, which led to
   ENRICH-IDENTITY-V2 (work-log 2026-09-02-enrich-identity-v2).
+  Full tail as the agent saw it: `document_status` reached
+  open_stages=[] / enrichment 54/54 at 12:18:41Z (+1,581 s from upload),
+  after three defects found and fixed on the way (lane-in-identity
+  re-enrichment, truncated enrichment budgets, the booting-sidecar retry
+  burn). Query-readiness itself was +390 s.
 
 ## Rejected claims
 - Putting the key in the plist's EnvironmentVariables — a second copy of a
