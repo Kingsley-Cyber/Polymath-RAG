@@ -64,9 +64,10 @@ answers with citations in ~3 s.
   (1/106 → ok+warning; 8/10 → reason; 10/100 warning, 11/100 reason);
   existing dropped/unaccounted/soft-floor assertions unchanged and
   green. Three tests in that file fail for a PRE-EXISTING reason
-  unrelated to this change (POLYMATH_CLOUD_MIN_BYTES=450000 in the
-  shell env vs the tests' 300,001-byte fixture — same class as
-  test_llm_audit_fixes test_3, already in the triage chip).
+  unrelated to this change: they read the PRODUCTION threshold
+  (.env POLYMATH_WORKER_CLOUD_MIN_BYTES=450000) against a
+  300,001-byte fixture — tests outside the pipeline, same class as
+  test_llm_audit_fixes test_3, already in the triage chip.
 - Deploy: control.main bounced 08:12:59Z. LIVE RECEIPT 21 s later
   (08:13:22Z): Alchemy → query_ready (1/106 drop tolerated);
   Netnography and the Gambling rerun → status now `degraded` (were
