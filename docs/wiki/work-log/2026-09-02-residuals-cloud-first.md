@@ -112,6 +112,15 @@ graph be used for the writer hunt.
   gemini-3.5 ×1 (interleave). This morning the same two files on the
   local lane: 16/18 and 13/17 calls quarantined, 8/10 and 6/10
   neighborhoods dropped, both degraded.
+- test_graph_lifecycle_v2::test_qualified_edges_are_kept_not_deleted,
+  CLASSIFIED at rest: PRE-EXISTING, not caused by today's deletes. The
+  only QUALIFY facts in the DB are 9 rows from 2026-08-20 (NULL
+  extractor_version, ZERO evidence rows — orphans the reconciler is
+  right not to project); the live llm-direct-v1 path has written
+  1,491 ACCEPT / 0 QUALIFY facts since 08-30, so the pin had no live
+  producer. Its precondition now counts EVIDENCED QUALIFY facts
+  (skips honestly until a producer exists). The other two DB-state
+  failures passed on rerun at rest.
 - GRACEFUL-LEASE-HANDBACK: no live receipt yet — the 08:46:05Z fence
   restart found the summaries slot holding no lease (its ticket was
   `failed`, not `leased`); the next fence restart under a lease is
@@ -127,6 +136,12 @@ graph be used for the writer hunt.
   next respawn.
 
 ## Open contract gaps
+- DB debris, pre-existing, NOT touched (data mutation = owner call): 6
+  non-superseded runs at `intake` with 0 tickets and no corpus row
+  (census_probe_rollback 08-27, four sentinel_*.md 08-29, Learning SQL
+  e2e 08-30) — invisible to `_open_work` (it joins open tickets), so
+  no slot leak; 150 ACCEPT facts without evidence (46 legacy, 104
+  llm-direct from 08-30), none from today's deletes.
 - `_release_leases_of_pid` has no DB unit test (fixture columns for
   worker_registrations/stage_tickets not modeled in the harness); live
   receipt = the next fence restart's log line.
