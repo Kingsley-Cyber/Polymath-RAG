@@ -125,6 +125,10 @@ enrichment looks slow: `grep -a 'ENRICH_CALL\|ENRICH_BATCH\|microbatch gated'
 SIDECAR-READINESS-GATE-V1: workers wait for a sidecar's /ready (120 s) before spending an
 attempt; SidecarUnavailable releases the ticket WITHOUT an attempt (+15 s backoff). A
 `failed` ticket from the pre-gate era → `scripts/retry_failed_stage.py <corpus> <stage> --execute`.
+SUMMARIES-SCALE-OUT-V1: `summaries2` slot wakes on ≥2 open summary-lane tickets. LAUNCHD
+AUTO-BOOT still blocked by TCC (bash denied ~/Documents): owner must grant Full Disk Access
+to /bin/bash (then `launchctl kickstart -k gui/501/com.polymath.v5`) or relocate the checkout;
+until then relaunch the supervisor manually after a reboot (command above).
 
 OPEN (owner gates + debt): TCC grant; ~~gpt-oss-20b as groq escape rep;
 gemma-3-4b paced extraction-only lane~~ (both REMOVED by owner 2026-09-02); 40-chunk equivalence pass with
