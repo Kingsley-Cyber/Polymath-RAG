@@ -54,6 +54,13 @@ FLEET: list = [
     {"name": "orchestrator", "argv": ["{python}", "-m", "uvicorn",
         "orchestrator.main:app", "--host", "127.0.0.1", "--port", "7200"],
      "cwd": "orchestrator", "health_url": "http://127.0.0.1:7200/health"},
+    # ---- MCP (POLYMATH-MCP-V2) -------------------------------------------
+    # Supervised here, NOT by launchd: under launchd, bash is denied
+    # ~/Documents (macOS TCC) so `. .env` fails and the server booted
+    # keyless for two days (measured 2026-09-02: public mirror answered
+    # tools/call to anyone). The supervisor's spawn overlays .env itself.
+    {"name": "mcp", "argv": ["{python}", "-m", "orchestrator.mcp_server"],
+     "cwd": "orchestrator", "health_url": "http://127.0.0.1:8930/health"},
     # ---- control + workers (health = fresh registration heartbeat) ------
     ("control", "control.main"),
     ("intake", "workers.intake_worker"),
