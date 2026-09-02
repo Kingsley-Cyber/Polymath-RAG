@@ -30,7 +30,8 @@ COUNTERS = (
 DROP_TOLERANCE = 0.10
 
 
-def coverage_verdict(stats: dict | None, *, floor: float = 0.0) -> dict:
+def coverage_verdict(stats: dict | None, *, floor: float = 0.0,
+                     drop_tolerance: float | None = None) -> dict:
     out = {"contract": COVERAGE_CONTRACT, "known": False, "ok": True,
            "reasons": [], "warnings": [], "coverage": None}
     if not stats or "neighborhoods_sent" not in stats:
@@ -60,7 +61,8 @@ def coverage_verdict(stats: dict | None, *, floor: float = 0.0) -> dict:
     if dropped > 0:
         frac = dropped / sent if sent else 1.0
         tag = f"extraction_dropped_neighborhoods_{dropped}"
-        (out["reasons"] if frac > DROP_TOLERANCE else out["warnings"]).append(tag)
+        tol = DROP_TOLERANCE if drop_tolerance is None else float(drop_tolerance)
+        (out["reasons"] if frac > tol else out["warnings"]).append(tag)
     if out["coverage"] is not None and floor > 0 and out["coverage"] < floor:
         out["warnings"].append(
             f"extraction_coverage_{out['coverage']:.2f}_below_floor_{floor:.2f}")

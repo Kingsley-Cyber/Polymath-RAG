@@ -139,7 +139,8 @@ def _epoch_us(dt) -> int:
 
 def compute_census(conn: Connection, *, max_attempts: int = 3,
                    mode: str | None = None,
-                   coverage_floor: float = 0.0) -> Census:
+                   coverage_floor: float = 0.0,
+                   drop_tolerance: float | None = None) -> Census:
     """Deterministic census over non-terminal runs.
 
     Sort orders are explicit (ISSUES_REPORT §2.3 fix): runs by created
@@ -330,7 +331,8 @@ def compute_census(conn: Connection, *, max_attempts: int = 3,
             # EXTRACTION-COVERAGE-V1 promotion barrier (control plane is
             # the authority): a complete chain whose extract stage
             # dropped or lost track of neighborhoods is never query_ready.
-            reasons = _extraction_barrier(conn, run_id, coverage_floor)
+            reasons = _extraction_barrier(conn, run_id, coverage_floor,
+                                          drop_tolerance)
             if reasons:
                 census.degrade[run_id] = reasons
             else:
@@ -421,9 +423,11 @@ def extraction_stats(conn: Connection, run_id: str) -> dict | None:
     return row[0] if row and row[0] else None
 
 
-def _extraction_barrier(conn: Connection, run_id: str, floor: float) -> list[str]:
+def _extraction_barrier(conn: Connection, run_id: str, floor: float,
+                        drop_tolerance: float | None = None) -> list[str]:
     from polymath_shared.extraction_coverage import coverage_verdict
-    return list(coverage_verdict(extraction_stats(conn, run_id), floor=floor)["reasons"])
+    return list(coverage_verdict(extraction_stats(conn, run_id), floor=floor,
+                                 drop_tolerance=drop_tolerance)["reasons"])
 
 
 def _missing_projection_receipts(conn: Connection, run_id: str, stage: str) -> list[str]:

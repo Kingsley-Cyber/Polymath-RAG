@@ -96,6 +96,56 @@ class Slot:
     last_exit_code: int | None = None
 
 
+def _dotenv_overlay(path) -> dict:
+    """KEY=VALUE lines of a .env file (comments/blank skipped, optional
+    surrounding quotes stripped). Pure; missing file -> {}."""
+    out: dict = {}
+    try:
+        text = Path(path).read_text()
+    except (FileNotFoundError, OSError):
+        return out
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        if line.startswith("export "):
+            line = line[len("export "):]
+        key, _, value = line.partition("=")
+        key = key.strip()
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+            value = value[1:-1]
+        if key:
+            out[key] = value
+    return out
+
+
+def _release_leases_of_pid(dsn: str, pid: int, note: str) -> int:
+    """GRACEFUL-LEASE-HANDBACK-V1 (2026-09-02): when the supervisor
+    itself stops a worker (fence restart onto current code, shutdown),
+    the worker did not vanish — so its leases go back to `ready` WITHOUT
+    consuming an attempt. Left alone, the heartbeat stops, the expiry
+    sweep marks the owner stale and charges attempt+1: two fence
+    restarts cost Blue Ocean two of its three attempts."""
+    try:
+        import psycopg
+        with psycopg.connect(dsn, connect_timeout=5) as conn:
+            cur = conn.execute(
+                """UPDATE stage_tickets t
+                      SET status = 'ready', lease_owner = NULL,
+                          lease_expires_at = NULL,
+                          last_error_note = %s, updated_at = now()
+                     FROM worker_registrations w
+                    WHERE w.pid = %s AND t.lease_owner = w.worker_id
+                      AND t.status = 'leased'""",
+                (note, pid))
+            n = cur.rowcount
+            conn.commit()
+            return n
+    except Exception:  # noqa: BLE001 — never block a stop on bookkeeping
+        return 0
+
+
 class Supervisor:
     #: Optional slot allowlist, e.g. POLYMATH_FLEET_ONLY="control,qdrant,
     #: sidecar_embedder". A targeted run should not hold models it will
@@ -196,6 +246,14 @@ class Supervisor:
         # embedder once held 41.58 GiB of Metal pool on a 32 GB machine
         # because nothing capped it.
         child_env = os.environ.copy()
+        # ENV-OVERLAY-ON-SPAWN-V1 (2026-09-02): children used to inherit
+        # the supervisor's BOOT snapshot, so a rotated key in .env was
+        # invisible until a full fleet restart — measured: openrouter
+        # lanes 401'd on a replaced key and struck a document. Every
+        # spawn/respawn now overlays the current .env; the fence restart
+        # onto current code therefore also picks up current secrets.
+        child_env.update(_dotenv_overlay(
+            Path(__file__).resolve().parents[2] / ".env"))
         try:
             from polymath_shared.runtime_budget import export_env
             child_env.update(export_env(slot.name))
@@ -357,6 +415,13 @@ class Supervisor:
                         self._quarantine(
                             slot, "fence-quarantine restarts exceeded budget")
                         return
+                    released = _release_leases_of_pid(
+                        self.dsn, slot.proc.pid,
+                        "released: fence restart onto current code "
+                        "(no retry consumed)")
+                    if released:
+                        log.info("slot %s: %d lease(s) handed back before "
+                                 "fence restart", slot.name, released)
                     try:
                         slot.proc.terminate()
                         slot.proc.wait(timeout=15)

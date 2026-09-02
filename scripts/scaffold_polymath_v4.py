@@ -1602,6 +1602,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-02-census-uncached-dirty.md", "md", None),
     ("docs/wiki/work-log/2026-09-02-receipt-accepted-count-fix.md", "md", None),
     ("docs/wiki/work-log/2026-09-02-gambling-e2e-coverage-tolerance.md", "md", None),
+    ("tests/determinism/test_supervisor_env_overlay.py", "py", None),
+    ("docs/wiki/work-log/2026-09-02-residuals-cloud-first.md", "md", None),
     ("docs/wiki/work-log/2026-09-01-provider-pool-campaign.md", "md", None),
     ("tests/determinism/test_fleet_autopilot_demand.py", "py", None),
     ("docs/wiki/work-log/2026-09-01-extraction-fleet-v3.md", "md", None),

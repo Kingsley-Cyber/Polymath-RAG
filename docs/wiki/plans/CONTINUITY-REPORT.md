@@ -53,6 +53,16 @@ WHAT SHIPPED (work-log order; register 11.36–11.39):
   > nvidia 16.3 > gemini 12.1; pairwise agreement 0.01–0.10 (the
   interleave trigger). Graphify refreshed (14,729 nodes; deepseek).
 
+LATE 2026-09-02 (after the checkpoint above): CLOUD-FIRST-V1 blessed and
+live (cloud_min_bytes floor 0 in policy/settings/.env — small books no
+longer land on the 4B local lane by worker luck); the "unknown writer"
+root-caused (every chain worker's run_status('reconciling') overwrote
+verdicts → STATUS-MONOTONE-V1); ENV-OVERLAY-ON-SPAWN (key rotation needs
+no fleet restart); GRACEFUL-LEASE-HANDBACK (fence restarts cost no
+attempts); extraction_drop_tolerance setting (0.10); DOCUMENT-DELETE
+purges extraction receipts; SPLIT-KEEPS-PARTIAL; census uncached-dirty +
+degrade idempotency; PROVIDER-SCRUB verdicts. Work-logs 2026-09-02-*.
+
 OPEN (owner gates + debt): TCC grant; gpt-oss-20b as groq escape rep;
 gemma-3-4b paced extraction-only lane; 40-chunk equivalence pass with
 openrouter lanes; enrichment_batch_concurrency 5 vs 7-lane pin; six
