@@ -4,7 +4,7 @@ owner: governance
 date: 2026-08-30
 status: living
 architecture_impact: none (the single session bootstrap — updated in place, never forked into dated copies)
-last_reviewed: 2026-09-01
+last_reviewed: 2026-09-02
 ---
 
 # CONTINUITY REPORT — the single bootstrap (golden-run edition)
@@ -18,7 +18,49 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → `CLAUDE.md` → the two newest work-logs.
 
-## Latest checkpoint (2026-09-01 — PHASE 0 + MCP + GEMINI FLEET + SMART PIPELINE)
+## Latest checkpoint (2026-09-02 — PRODUCTION SWEEP + AUTOPILOT FIXES + INTERLEAVE + OPENROUTER LANES)
+
+**STATE: production-shaped.** ecom-meta-v1 = 9 books (4 original +
+Atomic Habits, Blue Ocean, Alchemy, Netnography, Psychology of
+Gambling). Fleet = ONE supervised autopilot tree booted by
+scripts/boot_polymath.sh (full fleet, no profile) with the CURRENT
+.env; launchd auto-boot is still TCC-blocked (owner must grant bash
+Full Disk Access, then `launchctl kickstart -k gui/501/com.polymath.v5`).
+Query serving: FAST/HYBRID ~2.5–3 s warm, WILDCARD ~12 s, MCP :8930
+green (init 0.01 / list 0.04 / retrieve 2.4 / ask 2.9 s); chat
+answers cross-doc questions (ANSWER-ADMISSION-V2). Upload→query_ready
+for a 500 KB book ≈ 5 min; enrichment ~37 parents/min (7-lane pin).
+
+WHAT SHIPPED (work-log order; register 11.36–11.39):
+- PRODUCTION-SPEED-SWEEP-0901: ANSWER-ADMISSION-V2 (compound coverage,
+  relation words never required, 75% quorum), FAIL-FAST-BREAKER-V1
+  (refused = no sleeps + 15 s host breaker), `serve` profile,
+  MICROBATCH-CONCURRENCY-V1 (5.3 → ~37 parents/min).
+- AUTOPILOT-TAIL-DEMAND-V1: query_ready runs keep attracting workers;
+  parent_enrichment wakes summaries; compile_objects has a lane.
+- PROVIDER-POOL-CAMPAIGN-0901: 14 models canaried; standing tool
+  eval/v5/fleet/provider_canary.py (capacity ≠ quality, 180 s budget).
+  Survivors: mistral-small-2603, ministral-14b-2512 (wired),
+  gemma-3-4b (extraction-only candidate), gpt-oss-20b (groq escape rep
+  candidate). Scoreboard + OpenRouter lessons in that work-log.
+- FAMILY-INTERLEAVE-V1 + OPENROUTER-LANES-V1 (owner-blessed): SWRR
+  ring by provider host; openrouter1/2 in ring + enrichment pin. Plus
+  four fixes the receipt runs exposed: LANE-AUTH-QUARANTINE (401/403),
+  TRANSPORT-FAILOVER-CROSS-HOST (lone-doc wrap), EXTRACT-SCALE-OUT
+  (1 worker/open ticket, cap 3), RERANKER-DURING-INGEST (GLiNER-era
+  park rule retired: 91–95 s queries during ingest → 11.8 s).
+- Equivalence bench (40 chunks): qwen3.5-397b 28.6 f/1Kw > groq 19.6
+  > nvidia 16.3 > gemini 12.1; pairwise agreement 0.01–0.10 (the
+  interleave trigger). Graphify refreshed (14,729 nodes; deepseek).
+
+OPEN (owner gates + debt): TCC grant; gpt-oss-20b as groq escape rep;
+gemma-3-4b paced extraction-only lane; 40-chunk equivalence pass with
+openrouter lanes; enrichment_batch_concurrency 5 vs 7-lane pin; six
+PRE-EXISTING determinism failures (killchain gaps, sval ×3,
+test_llm_audit_fixes test_3 threshold, test_llm_controller stale fake)
+— chip spawned; no regressions from this session.
+
+## Previous checkpoint (2026-09-01 — PHASE 0 + MCP + GEMINI FLEET + SMART PIPELINE)
 
 **STATE: chunk-structure-v3 is LIVE** (TIER-CHUNKER-V3, owner GO):
 both docs re-ingested as heading-bounded real-text parents (67 parents
@@ -379,6 +421,18 @@ commit is the proven method).
   == neural contract). Any reconciler sweeping that collection must
   scope to its OWN lane's points (CHUNK-SWEEP-SCOPE-V1 exists because
   the chunk sweep deleted 94 entity cards).
+
+- **Key rotation needs a fleet bounce.** Workers inherit the
+  SUPERVISOR's env snapshot; a new key in .env is invisible until
+  boot_polymath.sh runs again (2026-09-02: openrouter lanes 401'd on a
+  replaced key; before LANE-AUTH-QUARANTINE that struck a document).
+- **No code edits while a run is open.** The stale-bundle fence
+  restarts workers onto current code the moment workers/ or shared/
+  change — it cost Blue Ocean an extract attempt (2026-09-02). Edit
+  docs freely; stage code patches in scratch and apply at terminal.
+- **`pgrep -f "polymath-v4/.venv.*process_supervisor"` misses the
+  supervisor** (its argv is the relative `.venv/bin/python`); grep
+  `control.process_supervisor` alone.
 
 ## 7. Key files
 
