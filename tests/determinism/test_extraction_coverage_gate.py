@@ -328,3 +328,23 @@ def test_contract_identity_pins_coverage_and_region_rules() -> None:
     ident = llm_provider.contract_identity()
     assert ident["coverage"] == "extraction-coverage-v1"
     assert len(ident["region_role_sha256"]) == 64
+
+
+def test_drop_tolerance_small_loss_promotes_large_loss_blocks() -> None:
+    """COVERAGE-DROP-TOLERANCE-V1 (2026-09-02): 1 dropped neighborhood of
+    106 (a 515 KB book, coverage 0.906) must not hold a document back
+    forever; 8 dropped of 10 (the local-lane collapse) must."""
+    small = coverage_verdict({"neighborhoods_sent": 106, "neighborhoods_dropped": 1,
+                              "parents_total": 106, "parents_with_extraction": 96})
+    assert small["ok"] and small["reasons"] == []
+    assert small["warnings"] == ["extraction_dropped_neighborhoods_1"]
+    large = coverage_verdict({"neighborhoods_sent": 10, "neighborhoods_dropped": 8,
+                              "parents_total": 10, "parents_with_extraction": 2})
+    assert not large["ok"]
+    assert large["reasons"] == ["extraction_dropped_neighborhoods_8"]
+    # exactly at the tolerance is still a warning; one over is a reason
+    at = coverage_verdict({"neighborhoods_sent": 100, "neighborhoods_dropped": 10,
+                           "parents_total": 100, "parents_with_extraction": 90})
+    over = coverage_verdict({"neighborhoods_sent": 100, "neighborhoods_dropped": 11,
+                             "parents_total": 100, "parents_with_extraction": 89})
+    assert at["ok"] and not over["ok"]

@@ -24,6 +24,12 @@ COUNTERS = (
 )
 
 
+#: COVERAGE-DROP-TOLERANCE-V1: dropped neighborhoods block promotion only
+#: above this fraction of neighborhoods_sent; below it they are warnings.
+#: The configured coverage floor stays SOFT (report-only) as documented.
+DROP_TOLERANCE = 0.10
+
+
 def coverage_verdict(stats: dict | None, *, floor: float = 0.0) -> dict:
     out = {"contract": COVERAGE_CONTRACT, "known": False, "ok": True,
            "reasons": [], "warnings": [], "coverage": None}
@@ -39,9 +45,22 @@ def coverage_verdict(stats: dict | None, *, floor: float = 0.0) -> dict:
     if counters["neighborhoods_unaccounted"] > 0:
         out["reasons"].append(
             f"extraction_unaccounted_neighborhoods_{counters['neighborhoods_unaccounted']}")
-    if counters["neighborhoods_dropped"] > 0:
-        out["reasons"].append(
-            f"extraction_dropped_neighborhoods_{counters['neighborhoods_dropped']}")
+    # COVERAGE-DROP-TOLERANCE-V1 (2026-09-02): a dropped neighborhood is
+    # permanent loss of PART of a document, not of the document. The
+    # absolute rule (any drop -> never query_ready) held a 515 KB book
+    # back forever over 1 dropped neighborhood of 106 (coverage 0.906)
+    # while correctly blocking books that lost 60-80 % on the local
+    # lane. Drops now block promotion only above DROP_TOLERANCE of the
+    # neighborhoods sent; smaller losses are recorded as warnings. The
+    # configured coverage floor stays soft (report-only) exactly as its
+    # setting documents. Unaccounted neighborhoods stay a hard reason:
+    # that is an accounting bug.
+    dropped = counters["neighborhoods_dropped"]
+    sent = counters["neighborhoods_sent"]
+    if dropped > 0:
+        frac = dropped / sent if sent else 1.0
+        tag = f"extraction_dropped_neighborhoods_{dropped}"
+        (out["reasons"] if frac > DROP_TOLERANCE else out["warnings"]).append(tag)
     if out["coverage"] is not None and floor > 0 and out["coverage"] < floor:
         out["warnings"].append(
             f"extraction_coverage_{out['coverage']:.2f}_below_floor_{floor:.2f}")

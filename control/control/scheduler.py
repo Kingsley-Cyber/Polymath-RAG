@@ -346,7 +346,13 @@ def apply_degrades(conn: Connection, census: Census) -> int:
                                                        'degraded_contract', 'extraction-coverage-v1')
                 WHERE run_id = %s
                   AND status IN ('intake', 'reconciling', 'degraded')
-                  AND coalesce(metadata->'degraded_reasons', 'null'::jsonb) IS DISTINCT FROM %s::jsonb""",
+                  -- DEGRADE-IDEMPOTENCY-FIX (2026-09-02): the no-op test
+                  -- compared reasons only, so a run whose status had been
+                  -- reset to reconciling (successor/re-arm) with the same
+                  -- reasons already recorded was never re-marked — two
+                  -- runs sat at reconciling with degraded_reasons set.
+                  AND (status <> 'degraded'
+                       OR coalesce(metadata->'degraded_reasons', 'null'::jsonb) IS DISTINCT FROM %s::jsonb)""",
             (payload, run_id, payload))
         changed += cur.rowcount
     return changed
