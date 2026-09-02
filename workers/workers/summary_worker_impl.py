@@ -426,6 +426,19 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
             def _one(item):
                 item_id, system, user, max_tokens = item
                 primary = _client_for(item_id)
+                _t0 = _time.perf_counter()
+                _res = _one_inner(item, primary)
+                _raw, _err = _res[1], _res[2]
+                log.info("enrichment call: lane=%s model=%s max_tokens=%d wall=%.1fs "
+                         "err=%s raw_len=%d finish=%s",
+                         primary.endpoint_name, primary.model, max_tokens,
+                         _time.perf_counter() - _t0, _err, len(_raw or ""),
+                         getattr(primary, "_last_finish_reason", None),
+                         extra={"error_code": "ENRICH_CALL"})
+                return _res
+
+            def _one_inner(item, primary):
+                item_id, system, user, max_tokens = item
                 raw, err = primary.complete_one(
                     user, system_prompt=system, max_tokens=max_tokens)
                 if err == "HTTP_429":           # backoff, retry same lane
