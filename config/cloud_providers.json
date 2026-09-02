@@ -25,7 +25,8 @@
     "GEMINI-VARIANT-LANES (owner 2026-09-01 'ensure all gemini keys call the available gemini models'): Google quotas are PER MODEL per key, so gemini{n}b runs gemini-3.5-flash-lite on the SAME key as gemini{n} (3.1-flash-lite) with an independent quota \u2014 12 gemini lanes from 6 keys. 2.5-lite family retired upstream; non-lite flashes failed the strict-schema canary (parked pending a json-mode canary). groq: request budget 7000 chars + limiter TPM 8000 = the PROVIDER-DECLARED truth (header probe 2026-09-01); groq5 REMOVED from the enrichment pin (8K TPM = ~4 enrichment calls/min = pure failover churn).",
     "GROQ PARKED from the extraction ring (owner speed directive 2026-09-01): 8K TPM declared = a dead-weight slice under rank slicing (one unlucky doc per pass drew an all-groq slice). dedicated:true with no pin = reserved; re-enters by flipping the flag if the tier ever changes.",
     "PROVIDER-REMOVALS-0902: owner removed the groq host (groq1-5, qwen3.8-27b) and the gemma-3-4b candidate on 2026-09-02; keys dropped from .env; limiter blocks removed.",
-    "OPENROUTER-LANE-3 (owner 2026-09-02 'which ones work well and should be wired'): qwen/qwen3.7-flash on the owner's SECOND OpenRouter key, reasoning_effort none is MANDATORY (a reasoning model: with thinking on it spends the whole output budget on reasoning tokens and returns nothing). Canary PASS 70 s (8/8 extraction 5.3 s mean, 103-130 tok/s; enrichment 8/8 gist 1.00); structured 'json' (strict schema not canaried). In the extraction ring AND the parent_enrichment pin."
+    "OPENROUTER-LANE-3 (owner 2026-09-02 'which ones work well and should be wired'): qwen/qwen3.7-flash on the owner's SECOND OpenRouter key, reasoning_effort none is MANDATORY (a reasoning model: with thinking on it spends the whole output budget on reasoning tokens and returns nothing). Canary PASS 70 s (8/8 extraction 5.3 s mean, 103-130 tok/s; enrichment 8/8 gist 1.00); structured 'json' (strict schema not canaried). In the extraction ring AND the parent_enrichment pin.",
+    "OPENROUTER-ENRICHMENT-LANES-V1 (owner 2026-09-02 'both will be for enrichment lane since enrichment is slow'): openrouter5 = mistral-small-24b-instruct-2501 on the owner's THIRD OpenRouter key, dedicated:true (enrichment pin only, never extraction sharding), json; canary PASS on that key (8/8 + 8/8, 121 s). openrouter4 (ministral-3b-2512) is reserved for the same key IF its canary passes enrichment (first run 4/8)."
   ],
   "stage_pins": {
     "parent_enrichment": [
@@ -36,7 +37,8 @@
       "gemini6b",
       "openrouter1",
       "openrouter2",
-      "openrouter3"
+      "openrouter3",
+      "openrouter5"
     ]
   },
   "providers": [
@@ -221,6 +223,17 @@
       "reasoning_effort": "none",
       "structured": "json",
       "dedicated": false,
+      "request_char_budget": 100000
+    },
+    {
+      "name": "openrouter5",
+      "enabled": true,
+      "url": "https://openrouter.ai/api",
+      "model": "mistralai/mistral-small-24b-instruct-2501",
+      "api_key_env": "OPENROUTER_API_KEY_3",
+      "reasoning_effort": null,
+      "structured": "json",
+      "dedicated": true,
       "request_char_budget": 100000
     }
   ]

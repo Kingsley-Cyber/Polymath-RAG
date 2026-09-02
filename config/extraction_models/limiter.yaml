@@ -205,3 +205,12 @@ providers:
     min: 1
     max: 4
     init: 2
+  openrouter5:             # OpenRouter THIRD key — mistral-small-24b-2501, enrichment pin only
+    kind: rate
+    family: openrouter
+    rpm: 60
+    tpm: 500000
+    conc_cap: 4
+    min: 1
+    max: 4
+    init: 2

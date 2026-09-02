@@ -95,6 +95,13 @@ reasoning model), structured json; ring = 13 lanes, enrichment pin = 8. Canary P
 next ingest. Gemma-4 on Google = HOLD (best extraction, inline <thought> blocks
 enrichment; needs a native adapter). Standing tools: eval/v5/fleet/quick_model_grade.py
 (answer-keyed 5-minute grade) + provider_canary.py (CANARY_REASONING=none for thinkers).
+OPENROUTER-ENRICHMENT-LANES-V1 + ENRICHMENT-CONCURRENCY-SETTING (owner 2026-09-02):
+third OpenRouter key (OPENROUTER_API_KEY_3) → openrouter5 = mistral-small-24b-2501,
+dedicated, enrichment pin only (pin = 9 lanes). ministral-3b-2512 FAILED enrichment on
+real parents twice (4/8, 1/8) — not wired; the 2-chunk quick grade is optimistic on
+enrichment (one small parent). `enrichment_batch_concurrency` had never been declared
+(stuck at 5): now a WorkerSettings field, .env POLYMATH_WORKER_ENRICHMENT_BATCH_
+CONCURRENCY=9 (= pin size) — the real lever for slow enrichment.
 
 OPEN (owner gates + debt): TCC grant; ~~gpt-oss-20b as groq escape rep;
 gemma-3-4b paced extraction-only lane~~ (both REMOVED by owner 2026-09-02); 40-chunk equivalence pass with
