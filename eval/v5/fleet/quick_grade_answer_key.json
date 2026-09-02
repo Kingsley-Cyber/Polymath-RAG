@@ -1,0 +1,330 @@
+{
+  "_doc": [
+    "QUICK-MODEL-GRADE-V1 answer key. Hand-authored 2026-09-02 from the chunk text (not from any model's output).",
+    "entities: each gold entity lists every acceptable surface form; a model's kept entity matches if it fuzzy-matches ANY name.",
+    "relations: subject/object list acceptable surfaces; predicates = CANONICAL ontology ids (17 + RELATED_TO) that earn full credit; any other predicate on the right pair = half credit; reversed pair = half credit.",
+    "also_acceptable: correct but lower-value entities that count toward precision, not recall.",
+    "enrichment.must_cover: 8 core terms (substring-matched on normalized text) that a faithful gist of BOTH children mentions; calibrated so the reference lane (mistral-small-2603) scores 7-8/8, not 8/8 by construction.",
+    "Chunk texts are embedded so the test needs no database; text_sha256 pins them."
+  ],
+  "chunks": {
+    "A": {
+      "chunk_id": "chunk_00fe95a213540853fefaa8d5e9ef0345438997531cd82c51ea2171c48c9eed64",
+      "book": "Competing_Against_Luck_Christensen.md",
+      "text": "Once GM’s OnStar team figured out that customers were hiring the service for peace of mind while driving, that clarity shifted\nthe organization’s focus from cool new “brochure ware” features to genuinely targeted customer benefits that aligned with\nthe Job to Be Done. It was a focus that played out not just in what and how OnStar designed into its service, but the everyday\ndecisions made by employees in all parts of the organization. In an organization like GM, where OnStar was formed, there are\npotentially limitless possibilities for how a service like OnStar could develop. But should it? Having clarity of Jobs to\n Be Done actually made it easier to decide what did and didn’t belong in the OnStar suite of benefits and services. *What to pursue, what not to pursue? Which technical priorities were most important? Which didn’t add value? How do we talk\nto our customers? How do we make sure dealers aren’t obstacles to the job customers are hiring us to do?* “The real challenge is how do you get this herd of energy—your team—lining up on a future road map, some of which you can’t\nyet see. Jobs Theory helps you do that,” says Chet Huber, OnStar’s founding CEO. “It’s crazy powerful, if you get that right.”",
+      "key": {
+        "entities": [
+          {
+            "names": [
+              "OnStar",
+              "GM's OnStar",
+              "OnStar team",
+              "OnStar suite of benefits and services"
+            ],
+            "type": "Product/Organization"
+          },
+          {
+            "names": [
+              "GM",
+              "General Motors"
+            ],
+            "type": "Organization"
+          },
+          {
+            "names": [
+              "Chet Huber",
+              "Huber"
+            ],
+            "type": "Person"
+          },
+          {
+            "names": [
+              "Jobs Theory",
+              "Job to Be Done",
+              "Jobs to Be Done",
+              "JTBD"
+            ],
+            "type": "Concept"
+          },
+          {
+            "names": [
+              "peace of mind",
+              "peace of mind while driving"
+            ],
+            "type": "Concept"
+          },
+          {
+            "names": [
+              "dealers"
+            ],
+            "type": "Organization/Concept"
+          }
+        ],
+        "also_acceptable": [
+          "customers",
+          "employees",
+          "road map",
+          "future road map",
+          "technical priorities",
+          "brochure ware",
+          "brochure ware features",
+          "founding CEO",
+          "CEO",
+          "team",
+          "service",
+          "organization",
+          "customer benefits"
+        ],
+        "relations": [
+          {
+            "subject": [
+              "OnStar",
+              "GM's OnStar"
+            ],
+            "object": [
+              "GM",
+              "General Motors"
+            ],
+            "predicates": [
+              "PART_OF",
+              "LOCATED_IN"
+            ]
+          },
+          {
+            "subject": [
+              "Chet Huber",
+              "Huber"
+            ],
+            "object": [
+              "OnStar"
+            ],
+            "predicates": [
+              "PART_OF",
+              "ACTS_ON",
+              "REGULATES"
+            ]
+          },
+          {
+            "subject": [
+              "OnStar"
+            ],
+            "object": [
+              "peace of mind",
+              "peace of mind while driving"
+            ],
+            "predicates": [
+              "PRODUCES",
+              "HAS_PROPERTY",
+              "CAUSES"
+            ]
+          },
+          {
+            "subject": [
+              "Jobs Theory",
+              "Job to Be Done",
+              "Jobs to Be Done"
+            ],
+            "object": [
+              "clarity",
+              "focus",
+              "road map",
+              "future road map",
+              "team"
+            ],
+            "predicates": [
+              "PRODUCES",
+              "CAUSES",
+              "ACTS_ON",
+              "HAS_PROPERTY"
+            ]
+          }
+        ]
+      },
+      "text_sha256": "b2a6f40b4148120aad7ac2c1d62939739d304e736251ea3bc85d6f67f88bfdfb"
+    },
+    "B": {
+      "chunk_id": "chunk_d38f216bd829af63b7c192a3ac205cc83423e92f79f9c5215b25be9dd3898c6f",
+      "book": "The_Innovators_Dilemma_Christensen.md",
+      "text": "Tata’s experience with the Nano illustrates this idea. Ratan Tata’s initial observation of the Indian family on a scooter in the rain led him to realize that the scooter wasn’t doing a very good *job* at transporting the family in a safe or dry manner. They needed a vehicle like a car that would provide more protection. This led to years of experimenting to create an affordable car that would be within reach of these middle-class families. But just being able to build an affordable car wasn’t enough. To truly put Indian customers in the driver’s seat, Tata needed to provide a set of complementary services that were critical to a customer’s ability to buy a car, finance it, insure it, learn to operate it safely, and then drive it home. Tata’s success was borne of two types of observations: one about the job to be done (transport families safely in a vehicle they could afford) and one about how to actually put a middle-class Indian in the driver’s seat (take the cars to the village markets and provide the necessary services so the customer could operate the vehicle within a single day).\n\n---",
+      "key": {
+        "entities": [
+          {
+            "names": [
+              "Tata",
+              "Tata Motors",
+              "Tata Group"
+            ],
+            "type": "Organization"
+          },
+          {
+            "names": [
+              "Nano",
+              "Tata Nano"
+            ],
+            "type": "Product"
+          },
+          {
+            "names": [
+              "Ratan Tata"
+            ],
+            "type": "Person"
+          },
+          {
+            "names": [
+              "scooter"
+            ],
+            "type": "Product/Concept"
+          },
+          {
+            "names": [
+              "affordable car",
+              "car",
+              "affordable vehicle"
+            ],
+            "type": "Product/Concept"
+          },
+          {
+            "names": [
+              "complementary services",
+              "set of complementary services",
+              "necessary services"
+            ],
+            "type": "Concept"
+          },
+          {
+            "names": [
+              "middle-class families",
+              "middle-class Indian",
+              "Indian family",
+              "Indian customers",
+              "middle class"
+            ],
+            "type": "Concept/Group"
+          },
+          {
+            "names": [
+              "village markets"
+            ],
+            "type": "Location/Concept"
+          }
+        ],
+        "also_acceptable": [
+          "India",
+          "Indian",
+          "job to be done",
+          "job",
+          "driver's seat",
+          "vehicle",
+          "rain",
+          "family",
+          "customer",
+          "customers",
+          "finance",
+          "insure",
+          "protection",
+          "safety"
+        ],
+        "relations": [
+          {
+            "subject": [
+              "Tata",
+              "Tata Motors"
+            ],
+            "object": [
+              "Nano",
+              "Tata Nano"
+            ],
+            "predicates": [
+              "PRODUCES"
+            ]
+          },
+          {
+            "subject": [
+              "Ratan Tata"
+            ],
+            "object": [
+              "Tata",
+              "Tata Motors",
+              "Tata Group"
+            ],
+            "predicates": [
+              "PART_OF",
+              "ACTS_ON",
+              "REGULATES"
+            ]
+          },
+          {
+            "subject": [
+              "Nano",
+              "Tata Nano"
+            ],
+            "object": [
+              "affordable car",
+              "car",
+              "affordable vehicle"
+            ],
+            "predicates": [
+              "IS_A"
+            ]
+          },
+          {
+            "subject": [
+              "Tata",
+              "Tata Motors"
+            ],
+            "object": [
+              "complementary services",
+              "necessary services",
+              "set of complementary services"
+            ],
+            "predicates": [
+              "REQUIRES",
+              "PRODUCES",
+              "USES",
+              "ACTS_ON"
+            ]
+          },
+          {
+            "subject": [
+              "car",
+              "affordable car",
+              "Nano"
+            ],
+            "object": [
+              "scooter"
+            ],
+            "predicates": [
+              "ALTERNATIVE_TO",
+              "OPPOSES"
+            ]
+          }
+        ]
+      },
+      "text_sha256": "39d7eb76081640944c42464b61d216480b312b7c5a32006e9ea09ac292e9bdf8"
+    }
+  },
+  "enrichment": {
+    "parent_id": "chunk_5d646a64f4935a196b30138b604f8189e4aca67c36a6a6355d340a216ef9a838",
+    "book": "The_Innovators_Dilemma_Christensen.md",
+    "children": [
+      {
+        "chunk_id": "chunk_3f8bf592314039ac7063196f49cd0a7974ea9c7b015e95414ad9a63cbf1678b0",
+        "text": "IDEO’s Tom Kelley, author of *The Art of Innovation,* has written that “the Anthropologist’s role is the single biggest source of innovation at IDEO.” Why does he believe this? Anthropologists have developed techniques to study humans in their natural environments and learn from their behavior. Pretending that you are an anthropologist can be especially powerful when you watch someone in a particular circumstance trying to “do a job,” to use Clayton Christensen’s terminology in *The Innovator’s Solution*. Christensen has argued that customers—people and companies—have “jobs” that arise regularly and need to get done. When customers become aware of a job that they need to get done, they look around for a product or service that they can “hire.” When people have a job to do, they set out to hire something or someone to do the job as effectively, conveniently, and cheaply as possible."
+      },
+      {
+        "chunk_id": "chunk_d38f216bd829af63b7c192a3ac205cc83423e92f79f9c5215b25be9dd3898c6f",
+        "text": "Tata’s experience with the Nano illustrates this idea. Ratan Tata’s initial observation of the Indian family on a scooter in the rain led him to realize that the scooter wasn’t doing a very good *job* at transporting the family in a safe or dry manner. They needed a vehicle like a car that would provide more protection. This led to years of experimenting to create an affordable car that would be within reach of these middle-class families. But just being able to build an affordable car wasn’t enough. To truly put Indian customers in the driver’s seat, Tata needed to provide a set of complementary services that were critical to a customer’s ability to buy a car, finance it, insure it, learn to operate it safely, and then drive it home. Tata’s success was borne of two types of observations: one about the job to be done (transport families safely in a vehicle they could afford) and one about how to actually put a middle-class Indian in the driver’s seat (take the cars to the village markets and provide the necessary services so the customer could operate the vehicle within a single day)."
+      }
+    ],
+    "must_cover": [
+      "Tata",
+      "Nano",
+      "anthropolog",
+      "IDEO",
+      "job",
+      "services",
+      "affordab",
+      "famil"
+    ]
+  }
+}
