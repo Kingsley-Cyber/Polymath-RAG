@@ -66,12 +66,13 @@ def _await_reranker(client) -> None:
     itself was the wake trigger. Block for the wake: autopilot
     reconcile ≤15 s + ~60 s cold start fits the 90 s budget.
 
-    NO POINTLESS WAITING: the reranker and GLiNER cannot coexist inside
-    the memory ceiling, so while extraction is running the autopilot
-    will NEVER wake the reranker. Waiting the full budget there buys a
-    slower path to the same degraded answer — so when GLiNER holds the
-    ceiling and the reranker is parked, return immediately and let the
-    caller degrade to fusion order."""
+    NO POINTLESS WAITING: only a RESIDENT GLiNER (the one model the
+    reranker cannot share the ceiling with) means no wake is coming —
+    return immediately and let the caller degrade to fusion order.
+    RERANKER-DURING-INGEST-V1 (2026-09-02): extraction demand itself no
+    longer parks the reranker (that GLiNER-era autopilot rule made
+    every query during an ingest wait this whole budget — measured
+    91–95 s per query with the sidecar parked and no GLiNER alive)."""
     import os
     import time
 

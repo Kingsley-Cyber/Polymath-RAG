@@ -4,9 +4,11 @@ OBSERVE (Postgres backlog + query recency) → COMPUTE DESIRED STATE →
 RECONCILE (the supervisor parks/spawns slots). No LLM, no heuristics —
 every rule encodes a MEASURED system behavior:
 
-- extract workers do not scale: 1 worker = 33 children/min, 4 workers =
-  32 children/min aggregate (GLiNER serializes; measured 2026-08-26).
-  Desired extract concurrency is therefore 1, never more.
+- extract workers did not scale under GLiNER (1 worker = 33 children/min,
+  4 workers = 32; measured 2026-08-26). Under llm_live cloud extraction
+  they do (rank-sliced lanes): EXTRACT-SCALE-OUT-V1 wakes one extract
+  worker per open extract ticket, capped at 3 (extract, extract2,
+  extract3).
 - embedder callers do not scale: 1/2/3 callers = 5.8/5.7/5.8 texts/s
   (measured 2026-08-27). One projection worker saturates it.
 - models are demand-resident: a sidecar exists only while a lane that
@@ -37,8 +39,11 @@ ALWAYS = {"control", "orchestrator", "intake"}
 
 #: lane -> (stages that signal demand, slots the lane needs)
 LANES = [
-    ("extract", ("profile_document", "extract"),
-     {"sidecar_gliner", "sidecar_spacy", "extract", "profile"}),
+    # GLiNER + spaCy left the extract lane with llm_live (2026-08-30:
+    # GLiNER retired, spaCy slice interpreter skipped) — keeping them
+    # here made "sidecar_gliner in desired" true during every ingest,
+    # which is what kept parking the reranker (RERANKER-DURING-INGEST-V1).
+    ("extract", ("profile_document", "extract"), {"extract", "profile"}),
     ("embed", ("project_qdrant",),
      {"sidecar_embedder", "qdrant"}),
     ("graph", ("canonicalize", "project_canonical", "project_neo4j",
@@ -130,6 +135,18 @@ def desired_slots(conn, known_slots: set[str]) -> tuple[set[str], dict]:
             _last_demand.update({s: now for s in slots})
             if lane == "extract":
                 extract_demand = True
+                # EXTRACT-SCALE-OUT-V1 (2026-09-01): the "1 extract
+                # worker, never more" rule was measured under GLiNER
+                # (serialized on one GPU). llm_live extraction is cloud
+                # rank-sliced BY DESIGN for several workers — with one
+                # worker, two uploaded books extract one after the other
+                # (measured live: the second sat `ready` while the first
+                # ran). One worker per open extract ticket, capped at 3.
+                n_extract = _open_work(conn, ("extract",))
+                extra = [f"extract{i}"
+                         for i in range(2, min(int(n_extract), 3) + 1)]
+                _last_demand.update({s: now for s in extra})
+                slots = set(slots) | set(extra)
         for s in slots:
             if now - _last_demand.get(s, -1e9) < (
                     MODEL_GRACE_S if s.startswith("sidecar_") else 30.0):
@@ -140,7 +157,12 @@ def desired_slots(conn, known_slots: set[str]) -> tuple[set[str], dict]:
     if qage is not None and qage < QUERY_GRACE_S:
         desired.add("sidecar_embedder")
         reasons.setdefault("sidecar_embedder", f"query {qage:.0f}s ago")
-        if not extract_demand and "sidecar_gliner" not in desired:
+        # RERANKER-DURING-INGEST-V1 (2026-09-02): extract demand no
+        # longer parks the reranker — that guard encoded the GLiNER
+        # memory conflict; only a resident GLiNER still excludes it,
+        # and the budget gate below drops it first if a set does not
+        # fit. Measured: queries hung to timeout for a whole ingest.
+        if "sidecar_gliner" not in desired:
             desired.add("sidecar_reranker")
             reasons["sidecar_reranker"] = f"query {qage:.0f}s ago"
 
@@ -157,7 +179,7 @@ def desired_slots(conn, known_slots: set[str]) -> tuple[set[str], dict]:
     if uiage is not None and uiage < QUERY_GRACE_S:
         desired.add("sidecar_embedder")
         reasons.setdefault("sidecar_embedder", f"ui open {uiage:.0f}s ago")
-        if not extract_demand and "sidecar_gliner" not in desired:
+        if "sidecar_gliner" not in desired:
             desired.add("sidecar_reranker")
             reasons.setdefault("sidecar_reranker", f"ui open {uiage:.0f}s ago")
 
