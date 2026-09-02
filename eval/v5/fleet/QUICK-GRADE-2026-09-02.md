@@ -111,3 +111,13 @@ Verdict: **HOLD — not wireable through the current client**. Becomes a serious
 ## Pass 5 — owner's second OpenRouter key (paid tier, no limit) on the free slugs
 
 Same result as with the first key: `google/gemma-4-31b-it:free` and `gemma-4-26b-a4b-it:free` → HTTP 400 in < 1 s (Google upstream: "API key not valid" — OpenRouter's own Google credential for the free Gemma-4 route, not the owner's account); `liquid/lfm-2.5-2.6b:free` → UNPARSEABLE / ENRICH_EMPTY again (mandatory reasoning). The route is broken on OpenRouter's side regardless of which of our keys calls it. The second key is stored as `OPENROUTER_API_KEY_2` (production lanes still use `OPENROUTER_API_KEY`); it could back a second OpenRouter lane pair if more OpenRouter capacity is ever wanted.
+
+## Pass 6 — owner pricing question: mistral-small-24b-2501, ministral-3b-2512, mistral-nemo
+
+| model | list price in/out per M | grade | overall | extract | enrich | ent recall A/B | ent prec A/B | rel recall A/B | halluc A/B | envelope | terms | total s |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| mistralai/mistral-small-24b-instruct-2501 | $0.05 / $0.08 | **A** | 0.83 | 0.705 | 0.956 | 0.5/0.75 | 1.0/1.0 | 0.38/0.7 | 0.0/0.13 | READY | 7/8 | 15.8 |
+| mistralai/ministral-3b-2512 | $0.10 / $0.10 | **B** | 0.796 | 0.591 | 1.0 | 0.5/0.75 | 1.0/0.83 | 0.25/0.2 | 0.0/0.19 | READY | 8/8 | 8.8 |
+| mistralai/mistral-nemo | $0.019 / $0.030 | **F** | 0.218 | 0.436 | 0.0 | 0.17/0.62 | 0.5/0.8 | 0.0/0.4 | 0.11/0.14 | INVALID: UNPARSEABLE | 0/8 | 77.8 |
+
+Tokens per $1 at our measured extraction mix (~1,200 in : 600 out per call): mistral-small-2501 ≈ 16.7M tokens (≈ 9,300 calls, ≈ 50 five-hundred-KB books); ministral-3b ≈ 10M tokens (≈ 5,600 calls, ≈ 35 books); mistral-nemo ≈ 44M tokens (≈ 24,600 calls, ≈ 150 books). Price is not the constraint for this pipeline; latency and grounding are. mistral-nemo confirms its 2026-09-01 campaign result (1.0 f/1Kw, 2/8 answered, 32 s/call): 78 s for two chunks, half its entities off-key, enrichment unparseable. mistral-small-2501 passes cleanly (superseded in the pool by 2603, a valid fallback). ministral-3b is the surprise: 8/8 enrichment terms, gist 1.0, 8.8 s — a cheap enrichment-lane candidate pending the 8-chunk canary.
