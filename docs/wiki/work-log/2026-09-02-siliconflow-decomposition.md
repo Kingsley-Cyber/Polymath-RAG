@@ -111,6 +111,10 @@ calls, plus limiter wait, plus retry sleep. None of that was reported.
   (2× swing) where the 24B is flat. It is also SLOWER on this pool
   because it emits many candidates the gate then discards. The gate
   keeps the graph clean either way; the cost is recall and time.
+  Pool check: `qwen/qwen-2.5-7b-instruct` on OpenRouter routes to ONE
+  provider (Phala, quantization undisclosed, $0.10/$0.20 per M), so the
+  2× run-to-run swing is the model at temperature 0, not routing — and
+  a single-provider slug is one throttle from a storm (scrub rule 3).
 - PROBE A (the original client path against SiliconFlow with timed
   limiter waits) was killed after 20 min still blocked in the SSL read
   of a non-streaming POST: it added no information beyond B2 and, being
