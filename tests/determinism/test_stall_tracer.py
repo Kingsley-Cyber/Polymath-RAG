@@ -123,6 +123,29 @@ def test_pending_names_the_predecessor_it_waits_on(conn):
     assert t_extract  # the extract ticket is traced on its own
 
 
+def test_pending_behind_live_work_is_not_a_stall(conn):
+    """STALL-TRACER-V1.1: a pending ticket whose predecessor is LEASED by a
+    heartbeating worker is waiting on live work; the same ticket behind a
+    predecessor whose holder is gone IS traced."""
+    run_id = _run(conn)
+    _ticket(conn, run_id, "intake", "done")
+    conn.execute(
+        """INSERT INTO worker_registrations (worker_id, worker_type, pid, host)
+           VALUES ('w-live-pred', 'extract', 4343, 'probe')
+           ON CONFLICT (worker_id) DO UPDATE SET heartbeat_at = now()""")
+    t_extract = _ticket(conn, run_id, "extract", "leased", lease_owner="w-live-pred")
+    conn.execute("UPDATE stage_tickets SET lease_expires_at = now() + interval '10 min' "
+                 "WHERE ticket_id = %s", (t_extract,))
+    t_pending = _ticket(conn, run_id, "profile_document", "pending")
+    ids = {s.unit_id for s in collect_stalls(conn, threshold_s=180)}
+    assert t_pending not in ids, "queued behind live work must not be traced"
+    # the holder dies -> the dependent is traced again
+    conn.execute("UPDATE worker_registrations SET heartbeat_at = now() - interval '10 min' "
+                 "WHERE worker_id = 'w-live-pred'")
+    s = _by_id(collect_stalls(conn, threshold_s=180), t_pending)
+    assert s.diagnosis == "PENDING_ON_PREDECESSOR" and s.detail["predecessor_ticket_status"] == "leased"
+
+
 def test_runs_without_open_work(conn):
     r_nochain = _run(conn, status="intake")
     r_degraded = _run(conn, status="degraded")

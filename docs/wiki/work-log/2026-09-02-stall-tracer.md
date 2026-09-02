@@ -95,6 +95,19 @@ itself, on the tick, with the diagnosis attached.
   collect) and 6 `stall traced` WARNING lines; no tracer fault. The
   pipeline itself is idle: 0 open tickets, 0 in-flight summary jobs.
 
+## Postscript — V1.1 (same day, from the first real ingest it watched)
+A 310 KB book raised nine PENDING_ON_PREDECESSOR traces at 203 s for
+tickets queued behind a project_qdrant that a live worker was executing
+(748 children take > 3 min to embed). Those tickets were waiting on live
+work, not stuck: `diagnose_pending` now returns None when the blocking
+predecessor is LEASED by a worker whose heartbeat is fresh; the
+predecessor itself is traced (LEASED_LONG_RUNNING) once IT crosses the
+threshold, and the dependents are traced again the moment the holder's
+heartbeat goes stale. Test: test_pending_behind_live_work_is_not_a_stall.
+The same ingest also produced the tracer's first root-caused defect:
+parent_enrichment READY_NO_CLAIM_EVENT / LEASED_LONG_RUNNING → the
+lane-in-identity re-enrichment storm (work-log 2026-09-02-enrich-identity-v2).
+
 ## Rejected claims
 - Auto-remediation (re-emitting events, releasing leases, deleting
   debris) from the tracer — the owner asked for identification and
