@@ -78,6 +78,9 @@ graph be used for the writer hunt.
    `summary_jobs_pkey`. Fix: a stale job for the same ticket with a
    different input is superseded before the upsert; and DOCUMENT-DELETE
    now purges summary_jobs for the runs' tickets (before stage_tickets).
+   The cascade also purges parent_enrichments (rows keyed by
+   content-addressed parent ids had survived and were reused by the
+   re-ingest — correct by idempotency, not a clean slate).
 
 ## Proof
 - test_supervisor_env_overlay.py 3 green (parser, missing file, spawn
@@ -100,8 +103,19 @@ graph be used for the writer hunt.
   (re-verify at rest) + test_syntax_readiness_v3 ×2 that PASSED on
   immediate rerun (DB-state flake, not code). The four 450 KB-threshold
   failures from earlier today now pass under the cloud-first floor.
-- From-zero Gambling + Netnography receipts on the cloud-first fleet:
-  appended below when terminal.
+- LIVE RECEIPT, CLOUD-FIRST-V1 (delete + re-upload of BOTH books at
+  08:37:36Z, ingested concurrently): both runs query_ready at 08:42:48Z
+  (312 s), both on the CLOUD lane, 0 quarantined, 0 dropped —
+  Gambling 5 calls, 81 entities / 26 relations (extract done +83 s);
+  Netnography 6 calls, 47 entities / 12 relations (extract done
+  +233 s). Lane mix per book: mistral-small-2603 ×3, gemini-3.1 ×1,
+  gemini-3.5 ×1 (interleave). This morning the same two files on the
+  local lane: 16/18 and 13/17 calls quarantined, 8/10 and 6/10
+  neighborhoods dropped, both degraded.
+- GRACEFUL-LEASE-HANDBACK: no live receipt yet — the 08:46:05Z fence
+  restart found the summaries slot holding no lease (its ticket was
+  `failed`, not `leased`); the next fence restart under a lease is
+  the receipt (log line "lease(s) handed back").
 
 ## Rejected claims
 - Per-run watermarks for the census — the uncached-dirty clause covers

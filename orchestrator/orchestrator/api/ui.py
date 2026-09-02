@@ -517,6 +517,12 @@ def _delete_document_tx(doc_id: str, confirm: str = "") -> dict:
         # delete was not the clean slate it claims to be.
         _del("DELETE FROM extraction_call_receipts WHERE doc_id=%s",
              (doc_id,), "extraction_call_receipts", optional=True)
+        # DELETE-PURGES-ENRICHMENTS (2026-09-02): parent_enrichments are
+        # keyed by content-addressed parent ids; rows from a deleted
+        # document survived and were reused by the re-ingest (identical
+        # inputs → identical answers, so correct — but not a clean slate).
+        _del("DELETE FROM parent_enrichments WHERE doc_id=%s",
+             (doc_id,), "parent_enrichments", optional=True)
         if chunk_ids:
             # projection receipts for this document's chunks — MUST go
             # with the points, or re-ingest skips embedding them.

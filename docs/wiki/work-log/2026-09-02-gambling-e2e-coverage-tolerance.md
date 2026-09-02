@@ -73,6 +73,13 @@ answers with citations in ~3 s.
   Netnography and the Gambling rerun → status now `degraded` (were
   pinned at reconciling with reasons set; 60–80 % drops still block).
 
+## Postscript — what was SUPPOSED to happen, now measured (cloud-first)
+Same file, from zero, after CLOUD-FIRST-V1 (08:37:36Z, ingested beside
+Netnography): cloud lane, 5 calls, 0 quarantined, 0 dropped, 81 entities /
+26 relations, extraction done at +83 s, query_ready at +312 s (two books
+concurrently), enrichment 10/10. Versus the local-lane run above: 18
+calls, 16 quarantined, 8/10 dropped, 23/0, degraded at +310 s.
+
 ## Rejected claims
 - Making the coverage floor hard — contradicts the setting's own
   contract ("never blocks promotion"); the tolerance amends the DROP
