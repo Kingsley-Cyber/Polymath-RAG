@@ -22,7 +22,15 @@ def enrichment_contract_id(bounds) -> str:
     corpus (measured 2026-09-02: 1,309 rows/day for 1,374 parents).
     scripts/migrate_enrichment_identity.py re-keys existing rows; keep its
     formula identical to this one."""
-    return f"{COMPILER_CONTRACT}|tokens={int(getattr(bounds, 'max_tokens', bounds))}"
+    # ENRICH-BUDGET-V2 (2026-09-02): the OUTPUT SHAPE is the contract; the
+    # token budget is a serving knob (qualification 700 / production 900
+    # produce the same valid object), so switching profiles must not
+    # re-enrich a corpus either.
+    shape = "/".join(str(getattr(bounds, f)) for f in (
+        "summary_chars", "gist_chars", "abstraction_chars", "mechanism_chars",
+        "affordance_chars", "question_chars", "max_mechanisms",
+        "max_affordances", "max_questions", "gist_coverage_floor"))
+    return f"{COMPILER_CONTRACT}|shape={shape}"
 
 
 def input_hash_for(source_hash: str, contract_id: str) -> str:

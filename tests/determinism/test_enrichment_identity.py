@@ -26,11 +26,15 @@ def test_identity_ignores_the_lane_and_tracks_the_contract():
     a = input_hash_for(sh, enrichment_contract_id(QUALIFICATION_BOUNDS))
     b = input_hash_for(sh, enrichment_contract_id(QUALIFICATION_BOUNDS))
     assert a == b                                       # deterministic
-    # a different output contract IS a different identity
-    assert a != input_hash_for(sh, enrichment_contract_id(PRODUCTION_BOUNDS))
+    # ENRICH-BUDGET-V2: the token budget is a serving knob, not the contract —
+    # the 700/900 profiles produce the same valid object and share the identity
+    assert a == input_hash_for(sh, enrichment_contract_id(PRODUCTION_BOUNDS))
+    # a different OUTPUT SHAPE is a different identity
+    from dataclasses import replace
+    assert a != input_hash_for(sh, enrichment_contract_id(replace(QUALIFICATION_BOUNDS, gist_chars=999)))
     # a different source IS a different identity
     assert a != input_hash_for("sh_" + "b" * 20, enrichment_contract_id(QUALIFICATION_BOUNDS))
-    assert enrichment_contract_id(QUALIFICATION_BOUNDS) == "parent-enrichment-v1|tokens=700"
+    assert enrichment_contract_id(QUALIFICATION_BOUNDS) == "parent-enrichment-v1|shape=1000/320/400/240/200/160/2/2/3/0.8"
 
 
 def test_worker_no_longer_hashes_the_lane():
@@ -43,7 +47,7 @@ def test_migration_formula_matches_runtime():
     import migrate_enrichment_identity as mig
     sh = "sh_" + "c" * 20
     assert mig.lane_free_hash(sh, 700) == input_hash_for(sh, enrichment_contract_id(QUALIFICATION_BOUNDS))
-    assert mig.lane_free_hash(sh, 900) == input_hash_for(sh, enrichment_contract_id(PRODUCTION_BOUNDS))
+    assert mig.lane_free_hash(sh, 900) == mig.lane_free_hash(sh, 700)   # budget is not identity
 
 
 @pytest.fixture()
