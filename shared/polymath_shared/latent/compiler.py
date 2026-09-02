@@ -55,9 +55,10 @@ def call_budget(bounds, n_parents: int) -> int:
 
 
 def _looks_truncated(raw: str, max_tokens: int) -> bool:
-    """A response that already spans ~3 chars per budgeted token almost
-    certainly ended on the cap (finish_reason is not on this seam)."""
-    return len(raw) >= 3 * max_tokens
+    """A response that already spans ~2 chars per budgeted token almost
+    certainly ended on the cap (finish_reason is not on this seam; JSON-
+    heavy lanes such as nemotron run at ~2.2 chars/token, gemini ~4.7)."""
+    return len(raw) >= 2 * max_tokens
 
 
 def _estimate_tokens(text: str) -> int:
@@ -389,18 +390,6 @@ def compile_parents_microbatched(
         for _bid, r, e in rows:
             raw, err = r, e
             break
-        if not err and raw and _looks_truncated(raw, max_tokens) and max_tokens < 8000:
-            retry_tokens = min(max_tokens * 2, 8000)
-            log.warning("microbatch retry: %d parents, likely truncated "
-                        "(raw_len=%d at %d tokens) -> %d tokens",
-                        len(batch), len(raw), max_tokens, retry_tokens,
-                        extra={"error_code": "ENRICH_BATCH_TRUNCATED"})
-            rows = complete([(batch[0].parent_id, MICROBATCH_SYSTEM_PROMPT,
-                              user, retry_tokens)])
-            for _bid, r, e in rows:
-                if not e and r:
-                    raw, err, max_tokens = r, e, retry_tokens
-                break
         if err or not raw:
             # ENRICH-CALL-VISIBILITY (2026-09-02): the ladder was silent —
             # 29 parents ground through splits for 20 min with no log line.
@@ -417,6 +406,25 @@ def compile_parents_microbatched(
         envelope_dead = all(
             g.error_class == "ENRICH_UNPARSEABLE"
             for g, _o in gated.values())
+        if envelope_dead and _looks_truncated(raw, max_tokens) and max_tokens < 8000:
+            # ENRICH-BUDGET-V2: a dead envelope that already spans the budget
+            # was cut off — splitting re-issues the same shortfall per half;
+            # one doubled re-ask fixes it in a single call.
+            retry_tokens = min(max_tokens * 2, 8000)
+            log.warning("microbatch retry: %d parents, envelope dead and likely "
+                        "truncated (raw_len=%d at %d tokens) -> %d tokens",
+                        len(batch), len(raw), max_tokens, retry_tokens,
+                        extra={"error_code": "ENRICH_BATCH_TRUNCATED"})
+            rows = complete([(batch[0].parent_id, MICROBATCH_SYSTEM_PROMPT,
+                              user, retry_tokens)])
+            for _bid, r, e in rows:
+                if not e and r:
+                    raw, max_tokens = r, retry_tokens
+                    gated = sanitize_microbatch(raw, expected, bounds)
+                    envelope_dead = all(
+                        g.error_class == "ENRICH_UNPARSEABLE"
+                        for g, _o in gated.values())
+                break
         if envelope_dead and len(batch) > 1:
             log.warning("microbatch split: %d parents, envelope unparseable "
                         "(raw_len=%d head=%r)", len(batch), len(raw), raw[:80],

@@ -25,8 +25,27 @@ def test_call_budget_headroom_and_cap():
 
 
 def test_looks_truncated_is_a_chars_per_token_heuristic():
-    assert _looks_truncated("x" * 9000, 3000) is True
+    assert _looks_truncated("x" * 6000, 3000) is True      # 2 chars/token = at the cap
     assert _looks_truncated("x" * 2000, 3000) is False
+
+
+def test_valid_long_envelope_is_not_re_asked():
+    """The doubled re-ask fires only when the envelope is DEAD — a complete,
+    parseable envelope that happens to be long costs exactly one call."""
+    parents = [_parent(f"Q{i}", n_children=2) for i in range(3)]
+    calls = []
+
+    def transport(items):
+        out = []
+        for item_id, system, user, max_tokens in items:
+            calls.append(max_tokens)
+            refs = {p.parent_id: [0, 1] for p in parents}
+            env = json.dumps({"items": [_item(r, rs) for r, rs in refs.items()]})
+            out.append((item_id, env + " " * (2 * max_tokens), None))   # long but valid
+        return out
+
+    out = compile_parents_microbatched(transport, parents, PRODUCTION_BOUNDS, 6000)
+    assert [cp.status for cp in out] == ["READY"] * 3 and len(calls) == 1
 
 
 def test_likely_truncated_envelope_is_retried_with_a_bigger_budget_before_splitting():
@@ -40,7 +59,7 @@ def test_likely_truncated_envelope_is_retried_with_a_bigger_budget_before_splitt
             first_budget = call_budget(PRODUCTION_BOUNDS, 4)
             if max_tokens == first_budget:
                 # an envelope cut off at the cap: long, unparseable
-                out.append((item_id, "{\"items\": [" + "x" * (3 * first_budget), None))
+                out.append((item_id, "{\"items\": [" + "x" * (2 * first_budget), None))
             else:
                 # the doubled budget: a complete, valid microbatch envelope
                 refs = {p.parent_id: [0, 1] for p in parents}
