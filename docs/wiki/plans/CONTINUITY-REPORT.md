@@ -117,6 +117,11 @@ to include the LANE — every pin change re-enriched the whole corpus (1,309 row
 Identity is now source+prompt+contract/bounds; `scripts/migrate_enrichment_identity.py`
 re-keyed 2,506 rows; a run's enrichment sweep now starts with its OWN document. If a
 worker restart ever persists old-style rows, re-run the script (idempotent, SKIP LOCKED).
+ENRICH-BUDGET-V2 (same hour): identity is the output SHAPE now (700/900 profiles share it);
+per-call budget 1.3×/parent+300, doubled once on a likely truncation; .env
+POLYMATH_WORKER_ENRICHMENT_PROFILE=production. READ THE ENRICHMENT TRACE FIRST when
+enrichment looks slow: `grep -a 'ENRICH_CALL\|ENRICH_BATCH\|microbatch gated'
+/tmp/polymath_fleet/summaries.log` (lane, wall, finish=length/stop, splits, gate yield).
 
 OPEN (owner gates + debt): TCC grant; ~~gpt-oss-20b as groq escape rep;
 gemma-3-4b paced extraction-only lane~~ (both REMOVED by owner 2026-09-02); 40-chunk equivalence pass with

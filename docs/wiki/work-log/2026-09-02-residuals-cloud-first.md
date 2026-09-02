@@ -121,7 +121,12 @@ graph be used for the writer hunt.
   producer. Its precondition now counts EVIDENCED QUALIFY facts
   (skips honestly until a producer exists). The other two DB-state
   failures passed on rerun at rest.
-- GRACEFUL-LEASE-HANDBACK: no live receipt yet — the 08:46:05Z fence
+- GRACEFUL-LEASE-HANDBACK: LIVE RECEIPTS 2026-09-02 — three operator
+  restarts of the summaries worker (11:56, 12:06, 12:10 UTC) via the
+  supervisor helper each logged "1 lease(s) handed back"; the
+  parent_enrichment ticket returned to ready with attempt unchanged and
+  the respawned worker resumed it within seconds.
+- (earlier note) GRACEFUL-LEASE-HANDBACK: no live receipt yet — the 08:46:05Z fence
   restart found the summaries slot holding no lease (its ticket was
   `failed`, not `leased`); the next fence restart under a lease is
   the receipt (log line "lease(s) handed back").
