@@ -2,7 +2,7 @@
 change_id: SILICONFLOW-DECOMPOSITION + CANARY-LIMITER-ISOLATION + CANARY-CALL-DECOMP
 owner: governance
 date: 2026-09-02
-status: complete (measurements below)
+status: complete — owner decision 2026-09-02: Qwen2.5-7B REMOVED from evaluation (never wired); SiliconFlow key removed from .env
 architecture_impact: provider_canary.py (own limiter row per canary host; per-call decomposition output); PROVIDER-SCRUB verdict for Qwen2.5-7B split into endpoint vs model
 last_reviewed: 2026-09-02
 ---
