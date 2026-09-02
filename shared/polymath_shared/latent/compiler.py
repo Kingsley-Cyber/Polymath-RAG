@@ -9,6 +9,10 @@ any call (ENRICH_INPUT_OVER_CEILING is a durable skip, never a silent
 truncation)."""
 from __future__ import annotations
 
+import logging
+
+log = logging.getLogger("polymath.enrich.compiler")
+
 from dataclasses import dataclass, field
 
 from polymath_shared.latent.contract import (
@@ -367,6 +371,11 @@ def compile_parents_microbatched(
             raw, err = r, e
             break
         if err or not raw:
+            # ENRICH-CALL-VISIBILITY (2026-09-02): the ladder was silent —
+            # 29 parents ground through splits for 20 min with no log line.
+            log.warning("microbatch split: %d parents, transport err=%s raw_len=%d",
+                        len(batch), err or "EMPTY", len(raw or ""),
+                        extra={"error_code": "ENRICH_BATCH_SPLIT"})
             half = len(batch) // 2               # split ladder
             _run_batch(batch[:half])
             _run_batch(batch[half:])
@@ -378,6 +387,9 @@ def compile_parents_microbatched(
             g.error_class == "ENRICH_UNPARSEABLE"
             for g, _o in gated.values())
         if envelope_dead and len(batch) > 1:
+            log.warning("microbatch split: %d parents, envelope unparseable "
+                        "(raw_len=%d head=%r)", len(batch), len(raw), raw[:80],
+                        extra={"error_code": "ENRICH_BATCH_SPLIT"})
             half = len(batch) // 2
             _run_batch(batch[:half])
             _run_batch(batch[half:])
@@ -392,6 +404,11 @@ def compile_parents_microbatched(
             else:
                 cp.status = "INVALID"
                 cp.error_class, cp.detail = gate.error_class, gate.detail
+        n_ok = sum(1 for p in batch if out[p.parent_id].status == "READY")
+        log.info("microbatch gated: %d parents -> %d READY, %d INVALID (%s)",
+                 len(batch), n_ok, len(batch) - n_ok,
+                 ",".join(sorted({out[p.parent_id].error_class or "" for p in batch
+                                  if out[p.parent_id].status != "READY"})) or "-")
         _emit(batch)
 
     if max_concurrency > 1 and len(batches) > 1:
