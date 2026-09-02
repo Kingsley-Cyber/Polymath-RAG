@@ -36,8 +36,9 @@ openrouter2 112/112 at gist 0.98 with ZERO transient failures; nvidia
 are speed, quota and first-pass cleanliness.
 
 **Receipt `accepted_count`:** 0 on all 495 receipts today — the metric is
-dead (sums packet fields that do not exist under those names); fix filed
-this session. Tiering below therefore uses bench + artifact stats, not
+dead (summed packet fields that do not exist under those names); FIXED
+this session (RECEIPT-ACCEPTED-COUNT-FIX, 13 tests green) — receipts from
+the next worker spawn onward carry proposal counts. Tiering below therefore uses bench + artifact stats, not
 receipts.
 
 ## Verdicts (level → decision)

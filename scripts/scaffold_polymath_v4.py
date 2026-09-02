@@ -1600,6 +1600,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_family_interleave.py", "py", None),
     ("docs/wiki/work-log/2026-09-01-family-interleave-openrouter-lanes.md", "md", None),
     ("docs/wiki/work-log/2026-09-02-census-uncached-dirty.md", "md", None),
+    ("docs/wiki/work-log/2026-09-02-receipt-accepted-count-fix.md", "md", None),
     ("docs/wiki/work-log/2026-09-01-provider-pool-campaign.md", "md", None),
     ("tests/determinism/test_fleet_autopilot_demand.py", "py", None),
     ("docs/wiki/work-log/2026-09-01-extraction-fleet-v3.md", "md", None),

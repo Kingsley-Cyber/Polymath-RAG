@@ -387,7 +387,17 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                                threshold_bytes=s.cloud_min_bytes,
                                assist=assist)
             if cache_put is not None and r.packet is not None:
+                # RECEIPT-ACCEPTED-COUNT-FIX (2026-09-02): the packet is
+                # ExtractionPacket(items=[ExtractionItem(entities,
+                # relations)...]) — the old flat field names never
+                # existed, so every receipt recorded 0 (495/495 on the
+                # day the scrub read them). Count proposals per item;
+                # keep the flat fallback for older packet doubles.
+                _items = getattr(r.packet, "items", None) or []
                 accepted = sum(
+                    len(getattr(it, "entities", None) or [])
+                    + len(getattr(it, "relations", None) or [])
+                    for it in _items) if _items else sum(
                     len(getattr(r.packet, f, None) or [])
                     for f in ("entities", "relations", "digests"))
                 try:
