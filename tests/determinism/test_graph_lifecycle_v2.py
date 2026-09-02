@@ -183,10 +183,14 @@ def test_qualified_edges_are_kept_not_deleted():
     import psycopg
     conn = psycopg.connect(DSN, connect_timeout=5)
     with conn:
+        # Only evidenced QUALIFY facts are projectable; an orphan (no
+        # evidence row) is legitimately pruned by this same reconciler.
         qualified = {r[0] for r in conn.execute(
-            "SELECT fact_id FROM facts WHERE decision='QUALIFY'").fetchall()}
+            "SELECT DISTINCT f.fact_id FROM facts f "
+            "JOIN evidence e ON e.fact_id = f.fact_id "
+            "WHERE f.decision='QUALIFY'").fetchall()}
     if not qualified:
-        pytest.skip("no QUALIFY facts in this corpus")
+        pytest.skip("no evidenced QUALIFY facts in this corpus")
     driver = _neo4j()
     with driver.session() as s:
         edges = {r["f"] for r in s.run(
