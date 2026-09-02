@@ -62,6 +62,29 @@ defect to trace to root cause. Traced, fixed, re-keyed, verified.
   lane-free (old parents resolve as EXISTING).
 - Tail receipt (54/54 + summary tickets): appended below when settled.
 
+## Postscript — ENRICH-BUDGET-V2 + ENRICH-CALL-VISIBILITY (same hour)
+With the identity fixed, the new book still sat at 25/54 for 10 minutes
+while the worker made 2–8 calls a minute and logged nothing — the
+microbatch ladder had no logging at all. Added one INFO line per
+enrichment call (lane, model, max_tokens, wall, err, raw_len, finish)
+and WARNING/INFO on every split / gated batch. First 90 s of trace:
+`finish=length` on gemini-3.1-flash-lite at 700 tokens (raw 3,300–3,450
+chars), on qwen3.7-flash at 2,300 (3 parents), on nemotron at 2,300;
+every truncated envelope failed the gate (GISTS_BELOW_FLOOR /
+UNPARSEABLE), the ladder split, and the single-parent retries truncated
+again. mistral-small fit — which is why some parents landed. The live
+profile was still `qualification` (700). Fix: identity = the output
+SHAPE (chars/limits/floor — identical across profiles), never the token
+budget, so switching profiles does not re-enrich; per-call budget
+1.3×/parent + 300 (cap 8000); a likely-truncated envelope (≥ 3 chars per
+budgeted token) is retried ONCE with a doubled budget before any split;
+`.env` POLYMATH_WORKER_ENRICHMENT_PROFILE=production. Rows re-keyed to
+the shape identity (2,543, 0 locked). First 2 min after the restart:
+6 calls, finish stop 5 / length 1, 1 split, 0 truncation retries needed,
+StoryBrand 37 → 45/54 READY. GRACEFUL-LEASE-HANDBACK live receipts: the
+three operator restarts today each logged "1 lease(s) handed back"
+(11:56, 12:06, 12:10) — attempt counter untouched.
+
 ## Rejected claims
 - Keeping the lane in the identity "so a better model can re-enrich" — a
   re-enrichment policy is a contract/bounds change (which IS in the
@@ -71,6 +94,12 @@ defect to trace to root cause. Traced, fixed, re-keyed, verified.
   identity it costs a SELECT per parent, so ordering fixes the latency.
 
 ## Open contract gaps
+- 89 INVALID rows today carry a NULL error_class (the persist path
+  stores compiled.error_class; some caller passes None) — a receipt gap.
+- One summaries slot serializes enrichment (45–83 s per call on the slow
+  lanes) AND every summary stage; parent_summary sat READY_UNCLAIMED
+  behind enrichment. A demand-driven `summaries2` slot (like the extract
+  scale-out) is the next lever.
 - ENRICH-TXN-SCOPE: the outer enrichment ticket transaction holds row
   locks for the whole sweep (23 min measured); per-batch persists commit
   in their own transactions, the outer one should not touch
