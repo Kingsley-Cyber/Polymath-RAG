@@ -67,6 +67,7 @@ receipts.
 | ibm-granite/granite-4.0-h-micro @ OpenRouter | model@host | **HOLD — enrichment-only curiosity (quick grade B)** | enrichment READY 7/8 gist 1.0 at $0.02/$0.11; extraction too weak; 57 s on a single provider |
 | liquid/lfm-2.5-2.6b:free @ OpenRouter | model@host | **OUT (quick grade F)** | reasoning mandatory and cannot be disabled; empties the 2,500 output budget on reasoning; only answers with ≥8k max_tokens (31 s/chunk). Contract mismatch |
 | google/gemma-4-31b-it:free, gemma-4-26b-a4b-it:free @ OpenRouter | host route | **BROKEN UPSTREAM (HTTP 400 "API key not valid" from Google via OpenRouter)** | not the models — both are live on Google AI Studio under our Gemini keys; graded there directly (QUICK-GRADE-2026-09-02.md pass 4) |
+| gemma-4-26b-a4b-it, gemma-4-31b-it @ Google AI Studio (direct, our Gemini keys) | model@host | **HOLD — best extraction measured, enrichment structurally blocked** | extraction score 0.784 / 0.773 (> reference 0.762), 0 % hallucination, relation recall up to 0.75; but Gemma-4 thinking cannot be disabled on Google and the compat endpoint inlines `<thought>…</thought>` into content, eating the 900-token enrichment envelope (UNPARSEABLE both models). Needs a Google-native adapter that drops thought parts. 13–43 s per chunk today |
 
 ## Owner decisions this scrub asks for
 1. ~~Local-lane rule~~ — DECIDED 2026-09-02: CLOUD-FIRST-V1 blessed
