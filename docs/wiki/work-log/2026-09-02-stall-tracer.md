@@ -56,8 +56,10 @@ itself, on the tick, with the diagnosis attached.
    on tick_ok, so it IS the successful-tick signal); no completed tick
    for `stall_threshold_s` after a boot grace of the same length →
    restart under the normal restart budget (`control_heartbeat_stale`,
-   pure). ACTIVATES ON THE NEXT SUPERVISOR RESTART — the running
-   supervisor (started before this change) does not reload code.
+   pure). Activated by restarting the supervisor at 09:12:12Z (pipeline
+   idle; SIGTERM → children terminated → relaunch with the same env:
+   `set -a; source .env; set +a; POLYMATH_AUTOPILOT=1 nohup .venv/bin/python
+   -m control.process_supervisor >> /tmp/polymath_fleet/supervisor.log &`).
 
 ## Proof
 - tests/determinism/test_stall_tracer.py 8 green (real DB, rolled back):
@@ -73,6 +75,14 @@ itself, on the tick, with the diagnosis attached.
   stale after grace; boot grace masks; missing row = stale after grace;
   determinism; wiring pins (probe → heartbeat check → control_owners →
   pure decision → budgeted respawn).
+- LIVE PROBE, CONTROL-HEARTBEAT-WATCHDOG-V1 (prediction stated first:
+  restart within 180–210 s): control.main pid 4145 frozen with SIGSTOP
+  at 09:12:45Z, pipeline idle. Supervisor at 09:15:45Z: "control
+  heartbeat stale (182 s without a completed tick, threshold 180 s):
+  restarting control"; new control pid 4867, first tick 09:15:56Z;
+  frozen pid gone (terminate → kill path). Freeze-to-recovery 191 s.
+  Restart budget: control slot restarts=1, not quarantined; open stall
+  episodes stayed 0; orchestrator served throughout.
 - FIRST LIVE COLLECT (read-only, before deploy): 6 stalled units, all
   RUN_NO_TICKET_CHAIN — six non-superseded runs at `intake` whose
   corpus row no longer exists (census_probe_rollback 08-27; four

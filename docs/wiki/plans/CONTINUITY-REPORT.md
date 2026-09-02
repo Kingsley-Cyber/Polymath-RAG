@@ -73,8 +73,15 @@ stuck: `.venv/bin/python scripts/trace_stalls.py` (heartbeat age + open
 traces + live read-only collect). Also fixed: DOCUMENT-DELETE now purges
 parent_enrichments; the lifecycle QUALIFY pin counts evidenced facts only
 (9 legacy orphan QUALIFY rows from 08-20 were its whole precondition).
-Open owner decisions: 6 phantom `intake` runs of deleted corpora (CORPUS-
-DELETE cascade gap; SQL in the stall-tracer work-log).
+The 6 phantom `intake` runs of deleted corpora were deleted on owner order
+(09:09Z; the CORPUS-DELETE → runs cascade gap itself is still open).
+CONTROL-HEARTBEAT-WATCHDOG-V1: the supervisor restarts a control.main
+that completes no tick for stall_threshold_s (probe every 30 s; boot
+grace = threshold) — LIVE-PROVEN 09:15:45Z (SIGSTOP probe, recovery in
+191 s). The supervisor was restarted 09:12:12Z to activate it (launch:
+`set -a; source .env; set +a; POLYMATH_AUTOPILOT=1 nohup .venv/bin/python
+-m control.process_supervisor >> /tmp/polymath_fleet/supervisor.log &`
+from the repo root; com.polymath.v5 launchd is NOT running it).
 
 OPEN (owner gates + debt): TCC grant; gpt-oss-20b as groq escape rep;
 gemma-3-4b paced extraction-only lane; 40-chunk equivalence pass with
