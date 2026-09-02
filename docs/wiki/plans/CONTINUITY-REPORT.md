@@ -63,6 +63,19 @@ attempts); extraction_drop_tolerance setting (0.10); DOCUMENT-DELETE
 purges extraction receipts; SPLIT-KEEPS-PARTIAL; census uncached-dirty +
 degrade idempotency; PROVIDER-SCRUB verdicts. Work-logs 2026-09-02-*.
 
+LATER 2026-09-02 — OWNER LAW + STALL-TRACER-V1: "any work stuck for more
+than 3 min is a definite issue — trace it, never let it run." The control
+tick now has an evidence-only `trace_stalls` phase (control/stall_tracer.py,
+table `stall_traces`, setting control.stall_threshold_s=180): every ticket /
+run / summary job older than the threshold gets a deterministic diagnosis
+from the scheduler's own predicates. READ IT FIRST when anything looks
+stuck: `.venv/bin/python scripts/trace_stalls.py` (heartbeat age + open
+traces + live read-only collect). Also fixed: DOCUMENT-DELETE now purges
+parent_enrichments; the lifecycle QUALIFY pin counts evidenced facts only
+(9 legacy orphan QUALIFY rows from 08-20 were its whole precondition).
+Open owner decisions: 6 phantom `intake` runs of deleted corpora (CORPUS-
+DELETE cascade gap; SQL in the stall-tracer work-log).
+
 OPEN (owner gates + debt): TCC grant; gpt-oss-20b as groq escape rep;
 gemma-3-4b paced extraction-only lane; 40-chunk equivalence pass with
 openrouter lanes; enrichment_batch_concurrency 5 vs 7-lane pin; six

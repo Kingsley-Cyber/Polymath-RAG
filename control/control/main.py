@@ -24,6 +24,7 @@ from polymath_shared.logging import configure_logging
 from polymath_shared.settings import get_settings
 from control.census import compute_census, pop_census_timing
 from control.heartbeat import acquire_lease, record_heartbeat, renew_lease
+from control.stall_tracer import trace_stalls
 from control.scheduler import (
     apply_degrades,
     apply_failures,
@@ -110,6 +111,17 @@ def tick() -> dict:
             (_t.perf_counter() - _s) * 1000, 1)
         _phase("apply_failures", apply_failures, conn, census)
         _phase("apply_degrades", apply_degrades, conn, census)
+        # STALL-TRACER-V1: diagnose every unit older than the threshold;
+        # evidence only, never a mutation of the unit.
+        # Evidence-only: a tracer fault must never abort the tick, so it
+        # runs inside its own savepoint and degrades to a logged error.
+        stalls: dict = {}
+        try:
+            with conn.transaction():
+                stalls = _phase("trace_stalls", trace_stalls, conn, census,
+                                threshold_s=int(getattr(settings.control, "stall_threshold_s", 180)))
+        except Exception as exc:  # noqa: BLE001
+            log.error("stall tracer failed", extra={"error_code": type(exc).__name__})
         record_heartbeat(conn, owner, tick_ok=True, census_size=len(census.gaps))
         return {
             "tick": "ok",
@@ -119,6 +131,7 @@ def tick() -> dict:
             "promoted": len(census.promote),
             "failed": len(census.fail),
             "degraded": len(census.degrade),
+            "stalls": stalls.get("stalls", 0),
             "reconciled": len(reconciled.get("reconciled", {})),
             "phase_ms": {k: v for k, v in phase_ms.items() if v is not None},
         }
