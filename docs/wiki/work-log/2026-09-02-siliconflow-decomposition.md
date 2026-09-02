@@ -80,8 +80,21 @@ calls, plus limiter wait, plus retry sleep. None of that was reported.
   serving/quantization fault, not a 7B capability limit) and runs to
   the cap. The same weights via OpenRouter answer the same packet
   cleanly in 4–10 s. No limiter, no Mac, no retry in this measurement.
-- PROBE A (real client path, limiter waits timed) and the OpenRouter
-  production canary of the same model: appended below when they land.
+- CANARY (production gates, the model-vs-endpoint CONTROL): the SAME
+  Qwen2.5-7B weights via OpenRouter `qwen/qwen-2.5-7b-instruct`, json
+  mode, with the new per-call decomposition — extraction 8/8 answered,
+  limiter wait 0.0 s on every call, walls 3.8–10.9 s (mean 6.4 s),
+  53–61 output tok/s, finish=stop ×8, one nudge retry; facts 13.4/1Kw,
+  entities 35.0/1Kw, 19 gate rejections; enrichment 6/8 READY (2
+  ENRICH_NO_RESPONSE), gist 0.96; **VERDICT PASS, total 97 s** (budget
+  240; passes the standard 180 too). Same model, same prompt, same
+  chunks: 6 s clean at OpenRouter vs 165 s degenerate at SiliconFlow.
+- PROBE A (the original client path against SiliconFlow with timed
+  limiter waits) was killed after 20 min still blocked in the SSL read
+  of a non-streaming POST: it added no information beyond B2 and, being
+  written before the isolation fix, was charging failures to
+  production's `llm_cloud[default]` row. The canary above shows the
+  client path adds no limiter wait (0.0 s) when the endpoint is sane.
 
 ## Rejected claims
 - "The Mac is slow" — the Mac sends one HTTP request; every second is
