@@ -1617,6 +1617,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-02-siliconflow-decomposition.md", "md", None),
     ("docs/wiki/work-log/2026-09-02-provider-removals.md", "md", None),
     ("docs/wiki/work-log/2026-09-02-quick-model-grade.md", "md", None),
+    ("docs/wiki/work-log/2026-09-02-openrouter-lane-3.md", "md", None),
     ("docs/wiki/work-log/2026-09-01-provider-pool-campaign.md", "md", None),
     ("tests/determinism/test_fleet_autopilot_demand.py", "py", None),
     ("docs/wiki/work-log/2026-09-01-extraction-fleet-v3.md", "md", None),
