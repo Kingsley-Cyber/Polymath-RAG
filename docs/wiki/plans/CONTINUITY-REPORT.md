@@ -102,6 +102,16 @@ real parents twice (4/8, 1/8) — not wired; the 2-chunk quick grade is optimist
 enrichment (one small parent). `enrichment_batch_concurrency` had never been declared
 (stuck at 5): now a WorkerSettings field, .env POLYMATH_WORKER_ENRICHMENT_BATCH_
 CONCURRENCY=9 (= pin size) — the real lever for slow enrichment.
+POLYMATH-MCP-V2 (owner 2026-09-02): the MCP Hermes uses is now a SUPERVISED fleet slot
+`mcp` (ALWAYS), not launchd — launchd bash cannot read ~/Documents (TCC) so the V1 agent
+ran KEYLESS with an open gate on the public mirror for two days. V2 = fail-closed 503
+without key / 401 wrong bearer; 8 tools (upload_document, upload_text, list_documents,
+document_status, corpus_status, list_corpora, retrieve, ask — corpus_id REQUIRED);
+orchestrator GET /status?corpus_id&source_name returns run + stages + enrichment + open
+stall traces. Hermes config unchanged (127.0.0.1:8930/mcp, POLYMATH_MCP_TOKEN).
+`launchctl disable gui/501/com.polymath.mcp` done. TRAP (cost an outage today): NEVER put
+an inline comment on a .env value line — pydantic-settings keeps it as the value; run
+`get_settings()` as a smoke test after every .env edit.
 
 OPEN (owner gates + debt): TCC grant; ~~gpt-oss-20b as groq escape rep;
 gemma-3-4b paced extraction-only lane~~ (both REMOVED by owner 2026-09-02); 40-chunk equivalence pass with
