@@ -43,6 +43,11 @@ can't use it and it fails." Owner correction that reshaped the method:
 | granite-4.1-8b / 4.0-h-micro (OR) | 4–7 | 18–44 | 0–5/8 | 11–33 s | FAIL |
 | lunaris-8b / mythomax-13b (OR) | 3–6 | 9–30 | 0/8 | 6–10 s | FAIL (roleplay tunes) |
 
+Acceptance of the in-repo tool (eval/v5/fleet/provider_canary.py, run
+after commit): mistral-small-2603 PASS — 8/8 answered, 23.7 f/1Kw,
+80.3 e/1Kw, 4.7 s/call, 7/8 enriched at gist 0.97, 59 s total, zero
+capacity events — reproduces the scratchpad canary within noise.
+
 ## Lessons (production use of OpenRouter)
 1. URL base is `https://openrouter.ai/api` — the client appends
    `/v1/chat/completions`; `/api/v1` doubles to 404 (the owner's
