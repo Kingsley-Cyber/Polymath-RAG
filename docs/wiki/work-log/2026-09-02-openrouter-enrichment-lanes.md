@@ -56,8 +56,9 @@ first; a lane that fails the enrichment floor is not wired.
   queue on the same lanes' AIMD limiters; nothing is gained.
 
 ## Open contract gaps
-- QUICK-MODEL-GRADE enrichment optimism: add the 8-child OnStar parent as a
-  second enrichment case so the grade sees a hard parent.
+- ~~QUICK-MODEL-GRADE enrichment optimism~~ — CLOSED same day: second hard
+  parent + both parents in one microbatch call; ministral-3b now grades C
+  with ENRICH_NO_RESPONSE, matching the canary.
 - Receipt run for openrouter5 on the next ingest (extraction_call_receipts
   will not show it — enrichment writes parent_enrichments; check the lane
   column there).

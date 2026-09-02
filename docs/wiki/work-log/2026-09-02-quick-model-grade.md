@@ -84,8 +84,18 @@ thinkingmachines/inkling-small:free, ibm-granite/granite-4.1-8b.
 - A higher budget for slow models — the owner's rule is production
   readiness; five minutes for all is the test.
 
+## Postscript — enrichment section hardened (same day)
+ministral-3b-2512 scored B on the single 2-child parent and then failed
+the canary's enrichment 4/8 and 1/8. Two changes: a second, hard
+enrichment case (8-child OnStar parent, 10 must-cover terms) and BOTH
+parents compiled in ONE `compile_parents_microbatched` call so the
+compiler packs them exactly as the worker does. Re-check: reference A
+0.836 (READY/READY); ministral-3b C 0.531 with ENRICH_NO_RESPONSE on the
+batch — the grade now points the same way as the canary.
+
 ## Open contract gaps
-- Two chunks are a smoke grade, not a benchmark; a model that passes here
-  still needs the 8-chunk canary and a receipt run before a lane is wired.
+- Two chunks and two parents are a screen, not a benchmark; a model that
+  passes here still needs the 8-chunk canary and a receipt run before a
+  lane is wired (ministral-3b is the proof).
 - Relation recall is strict about direction (reversed = half credit);
   some gold relations are legitimately expressible both ways.
