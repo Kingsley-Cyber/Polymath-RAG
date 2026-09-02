@@ -90,6 +90,20 @@ def test_extract_scales_out_one_worker_per_open_ticket_capped_at_3():
     assert "extract4" not in five
 
 
+def test_summaries_scale_out_on_two_open_summary_tickets():
+    """SUMMARIES-SCALE-OUT-V1: one open summary-lane ticket = one worker;
+    two or more (a run's enrichment plus its parent_summary, or two runs)
+    = a second worker; never a third."""
+    from control.fleet_autopilot import desired_slots
+    known = {"summaries", "summaries2", "compile_objects"}
+    one, _ = desired_slots(_FakeConn({"parent_enrichment": 1}), known)
+    two, _ = desired_slots(_FakeConn({"parent_enrichment": 1, "parent_summary": 1}), known)
+    many, _ = desired_slots(_FakeConn({"parent_enrichment": 3, "document_summary": 2}), known)
+    assert "summaries" in one and "summaries2" not in one
+    assert {"summaries", "summaries2"} <= two
+    assert {"summaries", "summaries2"} <= many and "summaries3" not in many
+
+
 def test_reranker_stays_warm_during_ingest_when_queries_are_recent():
     """RERANKER-DURING-INGEST-V1: extract demand must not park the
     reranker (GLiNER-era rule); only a resident GLiNER excludes it."""
