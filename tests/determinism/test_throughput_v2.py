@@ -232,3 +232,33 @@ def test_lone_doc_transport_failure_fails_over_cross_host(monkeypatch):
     lanes = [name for name, _ in CALLS]
     assert any(not ln.startswith("g") for ln in lanes), \
         "503 on the home family never reached another host"
+
+
+def test_receipt_accepted_count_counts_packet_items(monkeypatch):
+    """RECEIPT-ACCEPTED-COUNT-FIX: receipts must record the proposal count
+    of the REAL packet shape (items[].entities/relations); the old flat
+    field names recorded 0 on every receipt (495/495 on 2026-09-02)."""
+    from polymath_shared.llm_extraction.contract import (
+        EntityProposal,
+        ExtractionItem,
+        ExtractionPacket,
+    )
+
+    class ItemsClient(FakeClient):
+        def extract(self, payload, **_kw):
+            CALLS.append((self.endpoint_name, len(payload)))
+            r = _result()
+            r.packet = ExtractionPacket(items=[
+                ExtractionItem(
+                    neighborhood_id=nid,
+                    entities=[EntityProposal(surface="Acme", type="ORG",
+                                             quote="Acme")])
+                for nid, _chunks in payload])
+            return r
+
+    puts = []
+    cache = (lambda key: None, lambda *a: puts.append(a))
+    monkeypatch.setattr(llm, "LLMExtractionClient", ItemsClient)
+    _run(n=4, active_rank=0, active_docs=4, call_cache=cache)
+    assert puts, "cache_put never called"
+    assert all(len(a) == 6 and a[5] >= 1 for a in puts), puts
