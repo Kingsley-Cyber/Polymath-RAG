@@ -156,6 +156,11 @@ class WorkerSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="POLYMATH_WORKER_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
     poll_interval_s: float = Field(default=2.0, description="Outbox poll interval")
     batch_size: int = Field(default=8, description="Max outbox events per poll")
+    enrichment_batch_concurrency: int = Field(
+        default=5, ge=1, le=32,
+        description="MICROBATCH-CONCURRENCY-V1: parent-enrichment batches compiled in "
+                    "parallel across the pinned lane group. Was read via getattr with a "
+                    "hard 5 and never declared (2026-09-02) — size it to the pin")
     claim_ttl_s: int = Field(default=300, description="Stage lease TTL")
     evidence_proposal_mode: str = Field(
         default="lexical",
