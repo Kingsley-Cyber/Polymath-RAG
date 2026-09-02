@@ -1592,6 +1592,10 @@ TREE: list[tuple[str, str, str | None]] = [
     ("scripts/retry_failed_stage.py", "py", None),
     # EXTRACTION-FLEET-V3
     ("stores/postgres/migrations/0045_receipt_gate_status.sql", "sql", None),
+    ("stores/postgres/migrations/0046_stall_traces.sql", "sql", None),
+    ("control/control/stall_tracer.py", "py", None),
+    ("scripts/trace_stalls.py", "py", None),
+    ("tests/determinism/test_stall_tracer.py", "py", None),
     ("tests/determinism/test_fleet_v3_limits.py", "py", None),
     ("eval/v5/fleet/provider_equivalence.py", "py", None),
     ("eval/v5/fleet/PROVIDER-EQUIVALENCE-RESULTS.md", "md", None),
@@ -1605,6 +1609,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_supervisor_env_overlay.py", "py", None),
     ("tests/determinism/test_summary_job_idempotency.py", "py", None),
     ("docs/wiki/work-log/2026-09-02-residuals-cloud-first.md", "md", None),
+    ("docs/wiki/work-log/2026-09-02-stall-tracer.md", "md", None),
     ("docs/wiki/work-log/2026-09-01-provider-pool-campaign.md", "md", None),
     ("tests/determinism/test_fleet_autopilot_demand.py", "py", None),
     ("docs/wiki/work-log/2026-09-01-extraction-fleet-v3.md", "md", None),

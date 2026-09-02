@@ -256,6 +256,10 @@ class ControlSettings(BaseSettings):
     tick_interval_s: float = Field(default=10.0, description="Census tick interval")
     lease_ttl_s: int = Field(default=30, description="Controller lease TTL")
     max_attempts: int = Field(default=3, description="Stage attempts before failed")
+    stall_threshold_s: int = Field(
+        default=180, ge=30,
+        description="STALL-TRACER-V1: a ticket/run/summary job that has not "
+                    "advanced for this many seconds is traced every tick")
     extraction_drop_tolerance: float = Field(
         default=0.10, ge=0.0, le=1.0,
         description="COVERAGE-DROP-TOLERANCE-V1: dropped neighborhoods block "
