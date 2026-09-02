@@ -190,7 +190,24 @@ class _StageWrite:
             (self.run_id, event_type, json.dumps(payload), key),
         )
 
+    #: STATUS-MONOTONE-V1 (2026-09-02): every chain worker writes
+    #: "reconciling" when its stage completes. A late tail stage (a
+    #: census-re-armed project_qdrant at 08:06:26Z) overwrote a run the
+    #: census had just marked `degraded` — the "unknown writer" that
+    #: pinned degraded runs at reconciling. "reconciling" is a progress
+    #: marker, not a verdict: it may only be written over intake /
+    #: reconciling. Verdict writes (degraded, query_ready, failed) are
+    #: explicit and unrestricted.
+    _PROGRESS_STATUSES = frozenset({"reconciling"})
+
     def run_status(self, status: str) -> None:
+        if status in self._PROGRESS_STATUSES:
+            self.conn.execute(
+                "UPDATE runs SET status = %s, updated_at = now() "
+                "WHERE run_id = %s AND status IN ('intake', 'reconciling')",
+                (status, self.run_id),
+            )
+            return
         self.conn.execute(
             "UPDATE runs SET status = %s, updated_at = now() WHERE run_id = %s",
             (status, self.run_id),

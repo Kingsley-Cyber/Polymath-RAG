@@ -510,6 +510,13 @@ def _delete_document_tx(doc_id: str, confirm: str = "") -> dict:
                     "raw_predicate_evidence", "extraction_trace_events"):
             _del(f"DELETE FROM {tbl} WHERE doc_id=%s", (doc_id,), tbl,
                  optional=True)
+        # DELETE-PURGES-EXTRACTION-RECEIPTS (2026-09-02): the LLM call
+        # receipts are content-addressed per (contract, neighborhood), so
+        # leaving them made a deleted+re-ingested document REPLAY its old
+        # raw output — correct, but every speed measurement lied and the
+        # delete was not the clean slate it claims to be.
+        _del("DELETE FROM extraction_call_receipts WHERE doc_id=%s",
+             (doc_id,), "extraction_call_receipts", optional=True)
         if chunk_ids:
             # projection receipts for this document's chunks — MUST go
             # with the points, or re-ingest skips embedding them.

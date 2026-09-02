@@ -76,7 +76,8 @@ def tick() -> dict:
         supervised = _phase("supervise", supervise, conn)
         census = compute_census(
             conn, max_attempts=settings.control.max_attempts,
-            coverage_floor=settings.control.extraction_coverage_floor)
+            coverage_floor=settings.control.extraction_coverage_floor,
+            drop_tolerance=getattr(settings.control, "extraction_drop_tolerance", None))
         _ct = pop_census_timing() or {}
         phase_ms["census_total"] = _ct.get("census_total_ms", 0.0)
         phase_ms["census_runs_query"] = _ct.get("runs_query_ms")

@@ -202,8 +202,8 @@ class WorkerSettings(BaseSettings):
                     "2026-08-31 on P6: survival 78%, +3.0 evidence/case, "
                     "~20 ms delta. FAST stays the frozen baseline.")
     cloud_min_bytes: int = Field(
-        default=300_000,
-        ge=300_000,
+        default=0,
+        ge=0,
         description="Owner rule 2026-08-29: documents at or below this size "
                     "can never select or dispatch a cloud provider "
                     "(enforced at selection AND dispatch, fail closed). "
@@ -256,6 +256,13 @@ class ControlSettings(BaseSettings):
     tick_interval_s: float = Field(default=10.0, description="Census tick interval")
     lease_ttl_s: int = Field(default=30, description="Controller lease TTL")
     max_attempts: int = Field(default=3, description="Stage attempts before failed")
+    extraction_drop_tolerance: float = Field(
+        default=0.10, ge=0.0, le=1.0,
+        description="COVERAGE-DROP-TOLERANCE-V1: dropped neighborhoods block "
+                    "promotion only above this fraction of neighborhoods_sent; "
+                    "smaller permanent losses are recorded as warnings. "
+                    "Owner-tunable; value recorded in the register.",
+    )
     extraction_coverage_floor: float = Field(
         default=0.0, ge=0.0, le=1.0,
         description="EXTRACTION-COVERAGE-V1 soft floor on parents_with_extraction/"

@@ -492,8 +492,31 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                 # condition (split), never provider health.
                 _stats["splits"] += 1
                 half = len(batch) // 2
-                return (_dispatch(batch[:half], lane_i, depth)
-                        + _dispatch(batch[half:], lane_i, depth))
+                halves = (_dispatch(batch[:half], lane_i, depth)
+                          + _dispatch(batch[half:], lane_i, depth))
+                # SPLIT-KEEPS-PARTIAL (2026-09-02): the truncated call
+                # already returned complete items for every neighborhood
+                # before its cut point; discarding them lost data when
+                # the split singles quarantined (pinned by
+                # test_incomplete_partial_is_kept_when_reissue_fails).
+                # Split results win; the partial back-fills ONLY the
+                # neighborhoods the split could not return, so the
+                # coverage pass sees the cut item as `incomplete` and
+                # re-issues it exactly as before the split existed.
+                if r.packet is not None:
+                    covered = {i.neighborhood_id for h in halves
+                               if h.packet is not None for i in h.packet.items}
+                    keep = [i for i in r.packet.items
+                            if i.neighborhood_id not in covered]
+                    if keep:
+                        try:
+                            r.packet = r.packet.model_copy(update={"items": keep})
+                        except Exception:
+                            pass
+                        r.neighborhood_ids = [n.nid for n in batch
+                                              if n.nid not in covered]
+                        halves = halves + [r]
+                return halves
             if (r.packet is None
                     and r.error_class != "LIMITER_REFUSED"
                     and depth < 1):

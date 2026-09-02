@@ -108,11 +108,33 @@ class _Lane:
                              finish_reason=self.finish if len(ids) > 1 else "stop")
 
 
-def _run(monkeypatch, lane):
-    monkeypatch.setattr(llm_provider, "make_client", lambda _lane: lane)
+def _wire_cloud(monkeypatch, lane):
+    """HERMETIC-LANE-DOUBLE (2026-09-02): the THROUGHPUT-V2 cloud branch
+    builds its clients through LLMExtractionClient over the shard ring —
+    it never calls make_client — so patching make_client left these
+    tests hitting REAL endpoints (they passed or failed by whatever the
+    live fleet answered). One fake endpoint + the fake as the client
+    factory makes both the first pass and the reissue pass land on
+    `lane`."""
+    from types import SimpleNamespace
+    from polymath_shared.llm_extraction import pool as pool_mod
+    ep = SimpleNamespace(name="fake", url="http://fake.test", model="m",
+                         limiter_key="fake", api_key=None, cloud_opts=None,
+                         request_char_budget=60000)
+    monkeypatch.setattr(pool_mod, "cloud_ring", lambda: [ep])
+    monkeypatch.setattr(pool_mod, "select_cloud_endpoint_abs", lambda i: ep)
+    monkeypatch.setattr(pool_mod, "home_ring_index", lambda d: 0)
+    monkeypatch.setattr(llm_provider, "LLMExtractionClient",
+                        lambda *a, **k: lane)
+    monkeypatch.setattr(llm_provider, "make_client", lambda *a, **k: lane)
+    monkeypatch.setattr(llm_provider, "contract_identity", lambda: {"t": "cov"})
     monkeypatch.setattr(llm_provider, "_ensure_controller_store", lambda: None)
+
+
+def _run(monkeypatch, lane):
+    _wire_cloud(monkeypatch, lane)
     return llm_provider.run_proposals(_neighborhoods(), lane="cloud",
-                                      source_bytes=CLOUD_MIN_BYTES + 1)
+                                      source_bytes=1_000_000)
 
 
 def _disp(merged) -> dict[str, str]:
@@ -153,14 +175,19 @@ def test_permanent_loss_is_recorded_as_dropped_never_raised(monkeypatch) -> None
     assert coverage_verdict(st)["reasons"] == ["extraction_dropped_neighborhoods_1"]
 
 
-def test_truncated_call_marks_last_item_incomplete_and_reissues(monkeypatch) -> None:
+def test_truncated_call_splits_then_singles_return_everything(monkeypatch) -> None:
+    """EXTRACTION-THROUGHPUT-V2 OUTPUT-AWARE SPLIT: a truncated multi-item
+    call splits down to singles (which answer whole); nothing needs the
+    second-pass reissue and nothing is dropped. (Pre-V2 this test pinned
+    'mark last item incomplete then reissue it'.)"""
     lane = _Lane(lambda ids: _raw([i.split(":")[0] for i in ids]), finish="length")
     _results, merged = _run(monkeypatch, lane)
     st = merged.stats
-    assert st["calls_truncated"] == 1
-    assert st["neighborhoods_reissued"] == 1 and st["neighborhoods_recovered"] == 1
-    assert _disp(merged)["p4:0"] == "reissued_returned"
-    assert lane.calls[1] == ("p4:0",)
+    assert len(lane.calls) > 4                        # the split ladder ran
+    assert st["neighborhoods_returned"] == 4 and st["neighborhoods_dropped"] == 0
+    assert st["neighborhoods_reissued"] == 0
+    assert ("p4:0",) in lane.calls                    # split reached singles
+    assert all(v in ("returned", "returned_empty") for v in _disp(merged).values())
 
 
 def test_salvaged_call_is_treated_like_a_truncated_one(monkeypatch) -> None:
@@ -188,10 +215,15 @@ def test_incomplete_partial_is_kept_when_reissue_fails(monkeypatch) -> None:
         return None
     lane = _Lane(script, finish="length")
     _results, merged = _run(monkeypatch, lane)
-    assert _disp(merged)["p4:0"] == "incomplete_kept"
-    assert merged.stats["neighborhoods_incomplete_kept"] == 1
+    # SPLIT-KEEPS-PARTIAL: the split halves are truncated too and their
+    # singles quarantine, so each half's cut item back-fills from the
+    # partial and is honestly marked incomplete (p2, p4); nothing drops.
+    d = _disp(merged)
+    assert d["p4:0"] == "incomplete_kept" and d["p2:0"] == "incomplete_kept"
+    assert d["p1:0"] == "returned" and d["p3:0"] == "returned"
+    assert merged.stats["neighborhoods_incomplete_kept"] == 2
     assert merged.stats["neighborhoods_dropped"] == 0
-    assert merged.stats["relations"] == 4          # the partial's relation survives
+    assert merged.stats["relations"] == 4          # every partial relation survives
 
 
 def test_limiter_refusal_on_reissue_still_fails_the_stage(monkeypatch) -> None:

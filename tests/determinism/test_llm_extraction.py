@@ -239,19 +239,25 @@ def test_predicate_ontology_enum_and_fallback() -> None:
 # ---------------------------------------------------------------------------
 
 def test_select_lane_boundary() -> None:
-    assert select_lane(CLOUD_MIN_BYTES).lane == "local"      # at: local only
-    assert select_lane(CLOUD_MIN_BYTES - 1).lane == "local"
-    assert select_lane(CLOUD_MIN_BYTES + 1).lane == "cloud"
+    # CLOUD-FIRST-V1 (owner-blessed 2026-09-02): the floor is 0 — every
+    # non-empty document rides the cloud ring; only a 0-byte source is
+    # "at threshold" (local, degenerate). A raised threshold still works.
+    assert CLOUD_MIN_BYTES == 0
+    assert select_lane(CLOUD_MIN_BYTES).lane == "local"      # 0 bytes: degenerate
+    assert select_lane(1).lane == "cloud"
+    assert select_lane(47_000).lane == "cloud"               # a small book
+    assert select_lane(47_000, threshold=300_000).lane == "local"  # raised floor
     with pytest.raises(ValueError):
         select_lane(-1)
 
 
-def test_dispatch_boundary_refuses_small_source() -> None:
+def test_dispatch_boundary_refuses_only_empty_source() -> None:
+    require_cloud_eligible(1)                                # passes
     require_cloud_eligible(CLOUD_MIN_BYTES + 1)              # passes
     with pytest.raises(CloudBoundaryViolation):
-        require_cloud_eligible(CLOUD_MIN_BYTES)              # at threshold: refused
+        require_cloud_eligible(CLOUD_MIN_BYTES)              # 0 bytes: refused
     with pytest.raises(CloudBoundaryViolation):
-        require_cloud_eligible(1)
+        require_cloud_eligible(10, threshold=300_000)        # raised floor holds
 
 
 def test_cloud_client_dispatch_guard_blocks_network() -> None:
@@ -259,9 +265,11 @@ def test_cloud_client_dispatch_guard_blocks_network() -> None:
         "cloud", url="http://127.0.0.1:1", model="qwen3.5:397b-cloud")
     # Dispatch boundary fires BEFORE any I/O: a violation must raise even
     # though the endpoint is unroutable — prove no request is attempted.
+    # CLOUD-FIRST-V1: the floor is 0, so the guard is exercised with a
+    # RAISED threshold (an owner may still raise it) — same property.
     with pytest.raises(CloudBoundaryViolation):
         client.extract([("p1:0", [("c1", CHUNK_A)])],
-                       source_bytes=10, threshold_bytes=CLOUD_MIN_BYTES)
+                       source_bytes=10, threshold_bytes=300_000)
 
 
 # ---------------------------------------------------------------------------

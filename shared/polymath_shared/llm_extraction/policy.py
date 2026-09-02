@@ -34,7 +34,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-CLOUD_MIN_BYTES = 300_000
+# CLOUD-FIRST-V1 (owner-blessed 2026-09-02): floor 0 — every document
+# rides the cloud ring; the 4B local lane measured 76-89% quarantine on
+# small books while cloud lanes measured 0-5%. The 2026-08-29 rule
+# (300_000) assumed scarce, paid cloud; the fleet is 14 cheap lanes,
+# family-interleaved, and small-doc lane choice was worker-affinity luck.
+CLOUD_MIN_BYTES = 0
 
 LANES = ("local", "cloud")
 

@@ -54,14 +54,14 @@ receipts.
 | nvidia nemotron-3-super-120b (ring) | model@host | **KEEP, overflow tier** | clean but 28.8 s/call |
 | nvidia nemotron-3.5-lightning (pin) | model@host | **KEEP** | 99 % READY enrichment |
 | groq host (qwen3.8-27b, 5 keys) | host | **CUT from production; keep ONE key for the escape rep** | 8 K TPM ceiling + 32 % quarantine; gpt-oss-20b on groq is the only groq model that passed (escape-only) |
-| local Qwen3.5-4B (MLX) | model@host | **DEMOTE to escape-of-last-resort** | 76 % quarantine on its only run today vs 0–5 % cloud; owner rule "≤300 KB never cloud" (2026-08-29) predates the free 12-lane cloud fleet — **owner decision** |
+| local Qwen3.5-4B (MLX) | model@host | **DEMOTED (CLOUD-FIRST-V1 blessed, floor 0)** | 76 % quarantine on its only run today vs 0–5 % cloud; owner rule "≤300 KB never cloud" (2026-08-29) predates the free 12-lane cloud fleet — **owner decision** |
 | mistral-nemo, ling-3.0-flash, llama-3.1-8b, granite ×2, lunaris, mythomax | model@host | **CUT** | campaign FAIL (capacity or capability) |
 | gemma-3-4b-it @ OpenRouter | model@host | **HOLD** | 26.8 f/1Kw extraction but single provider + 0/8 enrichment; paced extraction-only lane if wanted |
 | Qwen2.5-7B-Instruct @ SiliconFlow | model@host | **CUT** | 150–158 s per extraction-length call in both schema and json mode, 0/8 answered inside budget, outputs quarantined (canaried 2026-09-02 on the owner's key; measured 15–21 tok/s at a 1 K-token prompt, so extraction-length packets take minutes) |
 
 ## Owner decisions this scrub asks for
-1. Local-lane rule: allow ≤300 KB docs onto cloud (lower/remove the
-   `cloud_min_bytes` floor) or keep local-first with a quarantine-rate
-   escape to cloud. Today it silently degrades small documents.
+1. ~~Local-lane rule~~ — DECIDED 2026-09-02: CLOUD-FIRST-V1 blessed
+   (floor 0; every document rides the cloud ring; local no longer
+   size-selected). Receipts in work-log 2026-09-02-residuals-cloud-first.
 2. Groq: reduce to one key (escape rep = gpt-oss-20b) or drop the host.
 3. gemma-3-4b: wire as paced extraction-only lane, or leave out.

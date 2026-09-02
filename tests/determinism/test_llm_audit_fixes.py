@@ -146,12 +146,13 @@ def test_25_alias_pass_is_token_bounded() -> None:
 # ---------------------------------------------------------------------------
 
 def test_6_threshold_is_a_floor_at_both_boundaries() -> None:
-    assert select_lane(10, threshold=0).lane == "local"
-    assert select_lane(CLOUD_MIN_BYTES, threshold=0).lane == "local"
+    # CLOUD-FIRST-V1: the floor is 0; a configured threshold may only RAISE it.
+    assert select_lane(10, threshold=0).lane == "cloud"
+    assert select_lane(CLOUD_MIN_BYTES, threshold=0).lane == "local"      # 0 bytes
     assert select_lane(CLOUD_MIN_BYTES + 1, threshold=0).lane == "cloud"
     assert select_lane(CLOUD_MIN_BYTES + 1, threshold=500_000).lane == "local"  # raised
     with pytest.raises(CloudBoundaryViolation):
-        require_cloud_eligible(10, threshold=0)
+        require_cloud_eligible(0, threshold=0)
     with pytest.raises(ValueError):
         select_lane(10, threshold=-1)
 
@@ -164,8 +165,11 @@ def test_6_settings_refuse_non_loopback_endpoints_and_lowered_rule() -> None:
     with pytest.raises(ValidationError):
         SidecarSettings(llm_cloud_url="https://api.example.com")
     SidecarSettings(llm_local_extract_url="http://localhost:8755")
+    # CLOUD-FIRST-V1 (2026-09-02): 0 is the floor now (every document
+    # rides the cloud ring); negatives are still refused, raising still works.
+    WorkerSettings(cloud_min_bytes=0)
     with pytest.raises(ValidationError):
-        WorkerSettings(cloud_min_bytes=0)
+        WorkerSettings(cloud_min_bytes=-1)
     WorkerSettings(cloud_min_bytes=500_000)
 
 
@@ -213,13 +217,26 @@ def test_3_limiter_refusal_fails_the_stage_instead_of_completing(monkeypatch) ->
                 sanitize=SanitizeResult(ok=False, error_class="LIMITER_REFUSED"),
                 wall_ms=0, error_class="LIMITER_REFUSED")
 
-    monkeypatch.setattr(llm_provider, "make_client", lambda lane: _Fake())
+    # HERMETIC-LANE-DOUBLE: the cloud branch builds clients via
+    # LLMExtractionClient over the ring, never make_client.
+    from types import SimpleNamespace
+    from polymath_shared.llm_extraction import pool as pool_mod
+    ep = SimpleNamespace(name="fake", url="http://fake.test", model="m",
+                         limiter_key="fake", api_key=None, cloud_opts=None,
+                         request_char_budget=60000)
+    fake = _Fake()
+    monkeypatch.setattr(pool_mod, "cloud_ring", lambda: [ep])
+    monkeypatch.setattr(pool_mod, "select_cloud_endpoint_abs", lambda i: ep)
+    monkeypatch.setattr(pool_mod, "home_ring_index", lambda d: 0)
+    monkeypatch.setattr(llm_provider, "LLMExtractionClient", lambda *a, **k: fake)
+    monkeypatch.setattr(llm_provider, "make_client", lambda *a, **k: fake)
+    monkeypatch.setattr(llm_provider, "contract_identity", lambda: {"t": "audit"})
     # never attach the LIVE Postgres store from a unit test (it would
     # persist this test's limiter state into the fleet's controller row)
     monkeypatch.setattr(llm_provider, "_ensure_controller_store", lambda: None)
     n = llm_provider.Neighborhood(nid="p:0", chunks=[("c", CH)])
     with pytest.raises(ExtractionTransportError):
-        llm_provider.run_proposals([n], lane="cloud", source_bytes=CLOUD_MIN_BYTES + 1)
+        llm_provider.run_proposals([n], lane="cloud", source_bytes=1_000_000)
 
 
 # ---------------------------------------------------------------------------
