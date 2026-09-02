@@ -74,3 +74,25 @@ over budget or an invalid packet on either chunk = F.
 | mistralai/mistral-small-2603 (reference) | **A** | 0.82–0.827 across two runs in 11–12 s; calibrates the key's ceiling |
 
 Reproduce: `.venv/bin/python eval/v5/fleet/quick_model_grade.py` (defaults to these seven; `QUICK_MODELS=`, `QUICK_REASONING=none`, `QUICK_BUDGET_S=`).
+
+## Canary — qwen/qwen3.7-flash, json mode, reasoning OFF (`CANARY_REASONING=none`, 8 chunks + 8 parents, 180 s budget)
+
+- Extraction 8/8 answered, walls 3.1–9.4 s (mean 5.3 s), **103–130 output tok/s** (fastest lane measured to date), limiter wait 0.0 s, finish=stop ×8, one nudge retry; facts 15.4/1Kw, entities 50.5/1Kw, 17 gate rejections.
+- Enrichment 8/8 READY, gist 1.00, per-call 12.6–21.8 s (mean 16.3 s).
+- **VERDICT PASS, total 70 s** (budget 180). Density sits between gemini-3.1-flash-lite (12.1) and ministral-14b (23.7); the model is unusable without the reasoning-off flag (as-is it burns the entire output budget on reasoning tokens).
+
+## Pass 3 — owner: failures removed; three free slugs added; qwen with thinking off
+
+| model | grade | overall | extract | enrich | ent recall A/B | ent prec A/B | rel recall A/B | halluc A/B | envelope | terms | gist | total s |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| mistralai/mistral-small-2603 (reference) | **A** | 0.837 | 0.762 | 0.912 | 0.83/1.0 | 0.94/1.0 | 0.38/0.3 | 0.0/0.0 | READY | 6/8 | 1.0 | 11.8 |
+| qwen/qwen3.7-flash@none | **B** | 0.766 | 0.576 | 0.956 | 0.5/0.75 | 1.0/1.0 | 0.0/0.4 | 0.33/0.36 | READY | 7/8 | 1.0 | 14.6 |
+| ibm-granite/granite-4.0-h-micro | **B** | 0.731 | 0.506 | 0.956 | 0.17/0.75 | 1.0/1.0 | 0.0/0.3 | 0.0/0.45 | READY | 7/8 | 1.0 | 57.5 |
+| liquid/lfm-2.5-2.6b:free | **F** | 0.456 | 0.0 | 0.912 | ERR | ERR | ERR | ERR | READY | 6/8 | 1.0 | 89.8 |
+| google/gemma-4-31b-it:free (OpenRouter) | **F** | 0.0 | – | – | ERR | ERR | ERR | ERR | INVALID: HTTP_400 | 0/8 | 0 | 0.7 |
+| google/gemma-4-26b-a4b-it:free (OpenRouter) | **F** | 0.0 | – | – | ERR | ERR | ERR | ERR | INVALID: HTTP_400 | 0/8 | 0 | 0.9 |
+
+Diagnoses (raw calls, five payload variants each):
+- **Gemma-4 :free on OpenRouter** — every variant (as-is, no response_format, reasoning off, merged system role) returns the SAME upstream error from Google AI Studio: `API key not valid. Please pass a valid API key.` OpenRouter's free Gemma-4 route is broken on their side, not our payload. Both models ARE listed on Google AI Studio under the owner's own Gemini keys (`gemma-4-31b-it`, `gemma-4-26b-a4b-it`) — graded there directly in pass 4.
+- **liquid/lfm-2.5-2.6b:free** — reasoning is MANDATORY on this endpoint (`reasoning: {enabled: false}` → 400 "cannot be disabled"). Under the production output budget (2,500) it spends all 2,500 tokens reasoning and returns empty content (finish=length, both chunks, both attempts). With max_tokens 10,000 it does produce valid contract JSON: 4,160 reasoning + 538 content tokens in 31 s — i.e. it needs a ≥8k output budget per chunk and ~3× the reference's latency. Enrichment (900-token envelope) worked: READY 6/8, gist 1.0. F under the production contract; a contract change, not a model fix.
+- **qwen/qwen3.7-flash@none** — B again (0.766 vs 0.787 earlier; the usual run-to-run spread). Production canary with reasoning off: PASS in 70 s (section above).
