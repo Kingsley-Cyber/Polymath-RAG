@@ -1596,6 +1596,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/v5/fleet/provider_equivalence.py", "py", None),
     ("eval/v5/fleet/PROVIDER-EQUIVALENCE-RESULTS.md", "md", None),
     ("eval/v5/fleet/provider_canary.py", "py", None),
+    ("tests/determinism/test_family_interleave.py", "py", None),
+    ("docs/wiki/work-log/2026-09-01-family-interleave-openrouter-lanes.md", "md", None),
     ("docs/wiki/work-log/2026-09-01-provider-pool-campaign.md", "md", None),
     ("tests/determinism/test_fleet_autopilot_demand.py", "py", None),
     ("docs/wiki/work-log/2026-09-01-extraction-fleet-v3.md", "md", None),

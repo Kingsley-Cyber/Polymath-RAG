@@ -300,11 +300,58 @@ def pool_fingerprint() -> list[dict]:
             for ep in cloud_endpoints()]
 
 
+def _family_of(ep: CloudEndpoint) -> str:
+    """Provider family = URL host (the same key the equivalence bench
+    and the semantic-escape 'different HOST' rule use)."""
+    from urllib.parse import urlparse
+    return urlparse(ep.url).netloc or ep.name
+
+
+def interleave_by_family(endpoints: list[CloudEndpoint]) -> list[CloudEndpoint]:
+    """FAMILY-INTERLEAVE-V1 (owner-blessed 2026-09-01 on the equivalence
+    bench: pairwise fact agreement 0.01–0.10 — each family extracts a
+    mostly different fact set, so a document sliced onto ONE family
+    forfeits what the others would have found).
+
+    Smooth weighted round-robin over families (nginx SWRR): every
+    family advances a counter by its lane count each step and the
+    leader emits its next lane, so a large family (8 gemini lanes) is
+    spread evenly across the ring and small families (nvidia, primary,
+    openrouter) land at even intervals instead of clumping. Any
+    contiguous rank slice therefore carries a family MIX, and the
+    worker's round-robin over slice lanes sends consecutive batches
+    of one document to different families.
+
+    Deterministic: families and lanes are sorted, ties broken by
+    family name — the ring is a pure function of config, so every
+    worker computes the identical order (RANK-STABILITY holds)."""
+    groups: dict[str, list[CloudEndpoint]] = {}
+    for ep in sorted(endpoints, key=lambda e: e.name):
+        groups.setdefault(_family_of(ep), []).append(ep)
+    if len(groups) <= 1:
+        return sorted(endpoints, key=lambda e: e.name)
+    weights = {fam: len(lanes) for fam, lanes in groups.items()}
+    total = sum(weights.values())
+    current = {fam: 0 for fam in groups}
+    cursors = {fam: 0 for fam in groups}
+    out: list[CloudEndpoint] = []
+    for _ in range(total):
+        for fam in sorted(groups):
+            if cursors[fam] < len(groups[fam]):
+                current[fam] += weights[fam]
+        live = [f for f in sorted(groups) if cursors[f] < len(groups[f])]
+        pick = max(live, key=lambda f: (current[f], -sorted(groups).index(f)))
+        current[pick] -= total
+        out.append(groups[pick][cursors[pick]])
+        cursors[pick] += 1
+    return out
+
+
 def cloud_ring() -> list[CloudEndpoint]:
-    """The non-dedicated shard ring in stable (sorted) order — the
-    universe THROUGHPUT-V2 slices over."""
+    """The non-dedicated shard ring in FAMILY-INTERLEAVED deterministic
+    order — the universe THROUGHPUT-V2 slices over."""
     ring = [e for e in cloud_endpoints() if not e.dedicated]
-    return ring or cloud_endpoints()
+    return interleave_by_family(ring or cloud_endpoints())
 
 
 def select_cloud_endpoint_abs(index: int) -> CloudEndpoint:

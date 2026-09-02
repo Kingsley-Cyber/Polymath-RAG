@@ -399,11 +399,39 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                     pass
             return r
 
+        # LANE-AUTH-QUARANTINE-V1 (2026-09-01): a lane answering 401/403
+        # is DEAD for this run (revoked/rotated key, wrong env
+        # snapshot) — measured live: one openrouter 401 struck a whole
+        # document's extract stage to failed. Auth failure is a lane
+        # property, never a document property: quarantine the lane and
+        # escape cross-host, like 413's terminal path.
+        _dead: set = set()
+
         def _dispatch(batch, lane_i, depth=0):
             client = _client_abs(lane_i)
             try:
                 r = _call(client, batch)
             except ExtractionTransportError as exc:
+                if "HTTP 401" in str(exc) or "HTTP 403" in str(exc):
+                    if client.endpoint_name not in _dead:
+                        _dead.add(client.endpoint_name)
+                        _logging.getLogger("llm-provider").warning(
+                            "lane %s quarantined for this run: %s",
+                            client.endpoint_name, str(exc)[:100],
+                            extra={"error_code":
+                                   "EXTRACTION_LANE_AUTH_DEAD"})
+                    from urllib.parse import urlparse
+                    home = urlparse(getattr(client, "base_url", "")
+                                    or "").netloc
+                    for off in range(1, ring_n):
+                        alt = _client_abs(lane_i + off)
+                        if alt.endpoint_name in _dead:
+                            continue
+                        if urlparse(getattr(alt, "base_url", "")
+                                    or "").netloc != home:
+                            _stats["escapes"] += 1
+                            return _dispatch(batch, lane_i + off, depth)
+                    raise
                 if "413" in str(exc):
                     _stats["splits"] += 1
                     if len(batch) > 1:
@@ -422,14 +450,30 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                     raise
                 if depth >= 1:
                     raise
-                fb = _client_abs(lane_i + n_lanes)   # outside own slice
-                if fb.endpoint_name == client.endpoint_name:
+                # TRANSPORT-FAILOVER-CROSS-HOST (2026-09-01, live: a lone
+                # document's n_lanes == ring, so lane_i + n_lanes wrapped
+                # to the SAME lane and one transient gemini 503 failed
+                # the whole attempt). Fail over to the first live lane
+                # on a DIFFERENT host — a 5xx is a host condition.
+                from urllib.parse import urlparse
+                home = urlparse(getattr(client, "base_url", "")
+                                or "").netloc
+                fb = None
+                for off in range(1, ring_n):
+                    cand = _client_abs(lane_i + off)
+                    if cand.endpoint_name in _dead:
+                        continue
+                    if urlparse(getattr(cand, "base_url", "")
+                                or "").netloc != home:
+                        fb, fb_off = cand, off
+                        break
+                if fb is None:
                     raise
                 _logging.getLogger("llm-provider").warning(
                     "lane failover: %s -> %s after transport failure (%s)",
                     client.endpoint_name, fb.endpoint_name, str(exc)[:120],
                     extra={"error_code": "EXTRACTION_LANE_FAILOVER"})
-                return _dispatch(batch, lane_i + n_lanes, depth + 1)
+                return _dispatch(batch, lane_i + fb_off, depth + 1)
             if (getattr(r, "finish_reason", None) == "length"
                     and len(batch) > 1):
                 # OUTPUT-AWARE SPLIT (fleet review 2026-09-01): a dense

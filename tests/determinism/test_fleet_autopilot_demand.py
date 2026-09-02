@@ -50,3 +50,59 @@ def test_query_ready_runs_still_count_as_demand():
     # the historical statuses stay — this is an addition, not a swap
     for s in ("'intake'", "'reconciling'", "'degraded'"):
         assert s in sql
+
+
+class _FakeCursor:
+    def __init__(self, row):
+        self._row = row
+
+    def fetchone(self):
+        return self._row
+
+
+class _FakeConn:
+    """Answers _open_work by stage family; query/ui signals absent."""
+
+    def __init__(self, open_by_stage):
+        self.open_by_stage = open_by_stage
+
+    def execute(self, sql, params=None):
+        if "FROM stage_tickets" in sql:
+            stages = params[0]
+            n = sum(self.open_by_stage.get(st, 0) for st in stages)
+            return _FakeCursor((n,))
+        if "runtime_signals" in sql and "SELECT" in sql:
+            return _FakeCursor(None)
+        return _FakeCursor(None)
+
+
+def test_extract_scales_out_one_worker_per_open_ticket_capped_at_3():
+    from control.fleet_autopilot import desired_slots
+    known = {"extract", "extract2", "extract3", "profile", "sidecar_gliner",
+             "sidecar_spacy", "sidecar_embedder", "qdrant"}
+    # a lone document holds profile_document AND extract open: still ONE worker
+    one, _ = desired_slots(_FakeConn({"extract": 1, "profile_document": 1}), known)
+    two, _ = desired_slots(_FakeConn({"extract": 2, "profile_document": 2}), known)
+    five, _ = desired_slots(_FakeConn({"extract": 5, "profile_document": 5}), known)
+    assert "extract" in one and "extract2" not in one
+    assert {"extract", "extract2"} <= two and "extract3" not in two
+    assert {"extract", "extract2", "extract3"} <= five
+    assert "extract4" not in five
+
+
+def test_reranker_stays_warm_during_ingest_when_queries_are_recent():
+    """RERANKER-DURING-INGEST-V1: extract demand must not park the
+    reranker (GLiNER-era rule); only a resident GLiNER excludes it."""
+    from control.fleet_autopilot import desired_slots
+
+    class _Conn(_FakeConn):
+        def execute(self, sql, params=None):
+            if "runtime_signals" in sql and "last_query" in sql:
+                return _FakeCursor((30.0,))          # queried 30 s ago
+            return super().execute(sql, params)
+
+    known = {"extract", "profile", "sidecar_embedder", "sidecar_reranker",
+             "sidecar_gliner", "sidecar_spacy", "qdrant"}
+    got, reasons = desired_slots(_Conn({"extract": 1, "profile_document": 1}), known)
+    assert "extract" in got
+    assert "sidecar_reranker" in got, reasons

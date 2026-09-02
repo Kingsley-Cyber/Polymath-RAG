@@ -185,3 +185,50 @@ def test_deterministic_dispatch():
     CALLS.clear()
     _run(n=8, active_rank=1, active_docs=2)
     assert sorted(CALLS) == first
+
+
+def test_auth_failure_quarantines_lane_never_the_document(monkeypatch):
+    """LANE-AUTH-QUARANTINE-V1: a lane answering 401 (rotated key,
+    stale env snapshot) is dead for the run; its batches escape
+    cross-host and the document still completes. Live 2026-09-01: one
+    openrouter 401 struck a whole extract stage to failed."""
+    from polymath_shared.llm_extraction.client import ExtractionTransportError
+
+    class AuthDeadOnGroq(FakeClient):
+        def extract(self, payload, **_kw):
+            CALLS.append((self.endpoint_name, len(payload)))
+            if self.endpoint_name.startswith("g"):
+                raise ExtractionTransportError(
+                    "cloud transport failed: HTTP 401 <- Client error "
+                    "'401 Unauthorized'")
+            return _result()
+
+    monkeypatch.setattr(llm, "LLMExtractionClient", AuthDeadOnGroq)
+    _run(n=4, active_rank=0, active_docs=4)      # slice = the g family
+    lanes = [name for name, _ in CALLS]
+    assert any(not ln.startswith("g") for ln in lanes), "no cross-host escape"
+    # every batch that hit a dead lane was carried by a live host
+    assert sum(1 for ln in lanes if not ln.startswith("g")) >= \
+        len({ln for ln in lanes if ln.startswith("g")})
+
+
+def test_lone_doc_transport_failure_fails_over_cross_host(monkeypatch):
+    """A lone document owns the whole ring (n_lanes == ring), so the old
+    lane_i + n_lanes failover wrapped onto the SAME lane and one
+    transient 503 failed the attempt (live 2026-09-01). Failover must
+    reach a different host."""
+    from polymath_shared.llm_extraction.client import ExtractionTransportError
+
+    class FiveOhThreeOnGroq(FakeClient):
+        def extract(self, payload, **_kw):
+            CALLS.append((self.endpoint_name, len(payload)))
+            if self.endpoint_name.startswith("g"):
+                raise ExtractionTransportError(
+                    "cloud transport failed: HTTP 503 <- Server error")
+            return _result()
+
+    monkeypatch.setattr(llm, "LLMExtractionClient", FiveOhThreeOnGroq)
+    _run(n=4, active_rank=0, active_docs=1)      # lone doc: whole ring
+    lanes = [name for name, _ in CALLS]
+    assert any(not ln.startswith("g") for ln in lanes), \
+        "503 on the home family never reached another host"
