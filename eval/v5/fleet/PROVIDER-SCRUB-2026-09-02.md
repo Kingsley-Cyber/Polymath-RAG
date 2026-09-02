@@ -57,6 +57,7 @@ receipts.
 | local Qwen3.5-4B (MLX) | model@host | **DEMOTE to escape-of-last-resort** | 76 % quarantine on its only run today vs 0–5 % cloud; owner rule "≤300 KB never cloud" (2026-08-29) predates the free 12-lane cloud fleet — **owner decision** |
 | mistral-nemo, ling-3.0-flash, llama-3.1-8b, granite ×2, lunaris, mythomax | model@host | **CUT** | campaign FAIL (capacity or capability) |
 | gemma-3-4b-it @ OpenRouter | model@host | **HOLD** | 26.8 f/1Kw extraction but single provider + 0/8 enrichment; paced extraction-only lane if wanted |
+| Qwen2.5-7B-Instruct @ SiliconFlow | model@host | **CUT** | 150–158 s per extraction-length call in both schema and json mode, 0/8 answered inside budget, outputs quarantined (canaried 2026-09-02 on the owner's key; measured 15–21 tok/s at a 1 K-token prompt, so extraction-length packets take minutes) |
 
 ## Owner decisions this scrub asks for
 1. Local-lane rule: allow ≤300 KB docs onto cloud (lower/remove the
