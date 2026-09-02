@@ -119,7 +119,12 @@ def diagnose_leased(row: dict, now: datetime) -> tuple[str, dict]:
     return "LEASED_LONG_RUNNING", detail
 
 
-def diagnose_pending(conn, row: dict, chain: dict[str, str]) -> tuple[str, dict]:
+def diagnose_pending(conn, row: dict, chain: dict) -> tuple[str, dict] | None:
+    """chain: stage -> status | (status, holder_alive). Returns None when the
+    ticket is merely queued behind a predecessor a LIVE worker is executing
+    (STALL-TRACER-V1.1, 2026-09-02: the OnStar-sized book raised nine
+    PENDING_ON_PREDECESSOR traces for tickets waiting on a project_qdrant
+    that was legitimately running)."""
     from control.tickets import (DAG_ORDER, _STAGE_SPEC, _artifacts_present,
                                  _receipts_present, _stage_attempt_ok)
     stage = row["stage"]
@@ -129,9 +134,13 @@ def diagnose_pending(conn, row: dict, chain: dict[str, str]) -> tuple[str, dict]
     preds = DAG_ORDER[:DAG_ORDER.index(stage)]
     for pr in preds:
         if not _stage_attempt_ok(conn, row["run_id"], pr):
+            entry = chain.get(pr, "no ticket")
+            p_status, holder_alive = (entry if isinstance(entry, tuple) else (entry, False))
+            if p_status == "leased" and holder_alive:
+                return None
             return "PENDING_ON_PREDECESSOR", {
                 "predecessor": pr,
-                "predecessor_ticket_status": chain.get(pr, "no ticket")}
+                "predecessor_ticket_status": p_status}
     for pr in preds:
         _evt, art, rec = _STAGE_SPEC[pr]
         if not _artifacts_present(conn, row["run_id"], pr, art):
@@ -200,10 +209,21 @@ def collect_stalls(conn, *, census=None, threshold_s: int = STALL_THRESHOLD_S,
             code, detail = diagnose_leased(row, now)
         else:
             if row["run_id"] not in chains:
-                chains[row["run_id"]] = dict(conn.execute(
-                    "SELECT stage, status FROM stage_tickets WHERE run_id = %s "
-                    "ORDER BY seq", (row["run_id"],)).fetchall())
-            code, detail = diagnose_pending(conn, row, chains[row["run_id"]])
+                # stage -> (status, holder heartbeat fresh?) — a pending
+                # ticket behind a predecessor that is LEASED by a live worker
+                # is waiting on live work, not stalled (the predecessor is
+                # traced itself once IT crosses the threshold).
+                chains[row["run_id"]] = {r[0]: (r[1], bool(r[2])) for r in conn.execute(
+                    """SELECT t.stage, t.status,
+                              (w.heartbeat_at > now() - make_interval(secs => %s))
+                         FROM stage_tickets t
+                         LEFT JOIN worker_registrations w ON w.worker_id = t.lease_owner
+                        WHERE t.run_id = %s ORDER BY t.seq""",
+                    (OWNER_STALE_S, row["run_id"])).fetchall()}
+            res = diagnose_pending(conn, row, chains[row["run_id"]])
+            if res is None:
+                continue        # waiting on live work — not a stall
+            code, detail = res
         detail["ticket_status"] = row["status"]
         if row.get("last_error_note"):
             detail["last_error_note"] = row["last_error_note"]
