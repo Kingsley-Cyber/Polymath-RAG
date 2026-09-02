@@ -14,10 +14,24 @@ from polymath_shared.latent.contract import COMPILER_CONTRACT
 from polymath_shared.latent.prompt import PROMPT_VERSION, prompt_hash
 
 
-def input_hash_for(source_hash: str, model_contract: str) -> str:
+def enrichment_contract_id(bounds) -> str:
+    """ENRICH-IDENTITY-V2: the contract half of an enrichment's identity —
+    compiler contract + output bounds. NEVER the lane: the lane is
+    provenance (provider/model columns). With the lane inside the hash,
+    every pin-group change re-sharded parents and re-enriched the whole
+    corpus (measured 2026-09-02: 1,309 rows/day for 1,374 parents).
+    scripts/migrate_enrichment_identity.py re-keys existing rows; keep its
+    formula identical to this one."""
+    return f"{COMPILER_CONTRACT}|tokens={int(getattr(bounds, 'max_tokens', bounds))}"
+
+
+def input_hash_for(source_hash: str, contract_id: str) -> str:
+    """Identity of one parent's enrichment: source content + prompt +
+    contract id (see enrichment_contract_id). Same inputs, same contract,
+    same answer — regardless of which lane produced it."""
     return content_hash({"source": source_hash,
                          "prompt": prompt_hash(),
-                         "model": model_contract})
+                         "model": contract_id})
 
 
 def persist_compiled_parent(conn, *, corpus_id: str, doc_id: str,
