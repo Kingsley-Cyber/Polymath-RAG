@@ -60,7 +60,13 @@ defect to trace to root cause. Traced, fixed, re-keyed, verified.
   2.5 min while "new rows for old books in the last 3 min" decayed 61 → 0:
   the corpus-wide re-enrichment STOPPED the moment identities were
   lane-free (old parents resolve as EXISTING).
-- Tail receipt (54/54 + summary tickets): appended below when settled.
+- TAIL RECEIPT: StoryBrand enrichment 54/54 READY at 12:15:21Z (lanes:
+  openrouter1 ×11, openrouter3 ×8, gemini5 ×7, openrouter5 ×6, nvidia ×6,
+  openrouter2 ×5, gemini6b ×4, gemini6 ×4, gemini5b ×3 — both new lanes
+  carried real work); 0 old-book rows since the identity fix; the latent
+  re-projection then hit the booting-embedder race (work-log
+  2026-09-02-sidecar-readiness-gate), was reset, and every stage of the
+  run was done at 12:18:41Z with 0 open stall episodes.
 
 ## Postscript — ENRICH-BUDGET-V2 + ENRICH-CALL-VISIBILITY (same hour)
 With the identity fixed, the new book still sat at 25/54 for 10 minutes

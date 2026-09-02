@@ -480,20 +480,36 @@ def run_worker(worker_type: str, event_types: list[str],
                         "attempt_id": (event.get("idempotency_key") or "")[:16],
                     })
                 except StageFailed as exc:
-                    log.error(str(exc), extra={
-                        "run_id": event.get("run_id"), "stage": worker_type,
-                        "error_code": "stage_failed",
-                    })
-                    _fail_ticket(ticket_id, str(exc))
+                    if _is_sidecar_unavailable(exc):
+                        _release_ticket_transient(ticket_id, str(exc))
+                        time.sleep(_TRANSIENT_BACKOFF_S)
+                    else:
+                        log.error(str(exc), extra={
+                            "run_id": event.get("run_id"), "stage": worker_type,
+                            "error_code": "stage_failed",
+                        })
+                        _fail_ticket(ticket_id, str(exc))
                 except Exception as exc:
-                    log.exception("processing failed", extra={
-                        "run_id": event.get("run_id"),
-                        "error_code": type(exc).__name__,
-                    })
-                    _fail_ticket(ticket_id, f"{type(exc).__name__}: {exc}")
-                    with tx() as conn:
-                        heartbeat(conn, identity["worker_id"],
-                                  last_error=f"{type(exc).__name__}: {exc}")
+                    if _is_sidecar_unavailable(exc):
+                        # SIDECAR-READINESS-GATE-V1: infrastructure that is
+                        # booting/absent is not a stage failure — hand the
+                        # ticket back without spending an attempt and back
+                        # off one breaker window before the next poll.
+                        _release_ticket_transient(
+                            ticket_id, f"{type(exc).__name__}: {exc}")
+                        with tx() as conn:
+                            heartbeat(conn, identity["worker_id"],
+                                      last_error=f"transient: {type(exc).__name__}: {exc}"[:500])
+                        time.sleep(_TRANSIENT_BACKOFF_S)
+                    else:
+                        log.exception("processing failed", extra={
+                            "run_id": event.get("run_id"),
+                            "error_code": type(exc).__name__,
+                        })
+                        _fail_ticket(ticket_id, f"{type(exc).__name__}: {exc}")
+                        with tx() as conn:
+                            heartbeat(conn, identity["worker_id"],
+                                      last_error=f"{type(exc).__name__}: {exc}")
                 finally:
                     _stop.set()
         except psycopg.errors.OperationalError:
@@ -502,6 +518,47 @@ def run_worker(worker_type: str, event_types: list[str],
         except Exception as exc:
             log.exception("worker loop failed", extra={"error_code": type(exc).__name__})
         time.sleep(poll_interval_s)
+
+
+#: SIDECAR-READINESS-GATE-V1: one breaker window between transient retries
+#: (measured 2026-09-02: three attempts burned in eight seconds against a
+#: booting embedder).
+_TRANSIENT_BACKOFF_S = 15.0
+
+
+def _is_sidecar_unavailable(exc: BaseException) -> bool:
+    """SidecarUnavailable anywhere in the cause chain = transient infra."""
+    from polymath_shared.clients import SidecarUnavailable
+    seen = 0
+    while exc is not None and seen < 8:
+        if isinstance(exc, SidecarUnavailable):
+            return True
+        exc = exc.__cause__ or exc.__context__
+        seen += 1
+    return False
+
+
+def _release_ticket_transient(ticket_id: str | None, reason: str) -> None:
+    """Hand a leased ticket back to READY without consuming an attempt —
+    the retry budget counts EXECUTIONS THAT FAILED, and a sidecar that is
+    still booting did not execute anything."""
+    if not ticket_id:
+        return
+    log.warning("ticket released without consuming an attempt (transient): %s",
+                reason[:200], extra={"error_code": "TICKET_TRANSIENT_RELEASE"})
+    try:
+        with tx() as conn:
+            conn.execute(
+                """
+                UPDATE stage_tickets SET
+                    status='ready', lease_owner=NULL, lease_expires_at=NULL,
+                    last_error_note = %s, updated_at=now()
+                 WHERE ticket_id=%s AND status='leased'
+                """,
+                (("transient, no attempt consumed: " + reason)[:500], ticket_id),
+            )
+    except Exception:
+        pass
 
 
 def _fail_ticket(ticket_id: str | None, reason: str) -> None:

@@ -97,6 +97,24 @@ class SidecarClient:
         except Exception:
             return False
 
+    def wait_ready(self, timeout_s: float = 120.0, poll_s: float = 2.0) -> bool:
+        """SIDECAR-READINESS-GATE-V1 (measured 2026-09-02): the autopilot
+        wakes a projection worker and its sidecar in the same tick; the
+        worker claimed its ticket and failed it THREE times in eight
+        seconds while the embedder was still loading (breaker open), so a
+        routine latent re-projection burned its whole retry budget and the
+        summary tail behind it froze. A worker that depends on a sidecar
+        waits for /ready (bounded) before it spends an attempt. Polls
+        BYPASS the breaker; success clears the breaker for this host."""
+        deadline = time.monotonic() + timeout_s
+        while True:
+            if self.ready():
+                SidecarClient._refused_until.pop(self.base_url, None)
+                return True
+            if time.monotonic() >= deadline:
+                return False
+            time.sleep(poll_s)
+
     # -- transport resilience (P0-C) ----------------------------------------
 
     #: Transport-level faults worth retrying on a FRESH pool. A sidecar
