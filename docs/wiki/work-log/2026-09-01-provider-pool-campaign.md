@@ -42,6 +42,7 @@ can't use it and it fails." Owner correction that reshaped the method:
 | llama-3.1-8b (OR) | 5.1 | 50 | 0/8 | 5 s | FAIL |
 | granite-4.1-8b / 4.0-h-micro (OR) | 4–7 | 18–44 | 0–5/8 | 11–33 s | FAIL |
 | lunaris-8b / mythomax-13b (OR) | 3–6 | 9–30 | 0/8 | 6–10 s | FAIL (roleplay tunes) |
+| Qwen2.5-7B-Instruct @ SiliconFlow (owner-supplied key, 2026-09-02) | 0 answered | — | 0/8 (budget) | **150–158 s/call** | FAIL both modes (schema + json): 2 answers in the 180 s budget, both quarantined; raw liveness probe was <1 s, so the endpoint is fine for short outputs and collapses on extraction-length generations |
 
 Acceptance of the in-repo tool (eval/v5/fleet/provider_canary.py, run
 after commit): mistral-small-2603 PASS — 8/8 answered, 23.7 f/1Kw,
