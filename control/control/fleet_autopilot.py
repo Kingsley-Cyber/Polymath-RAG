@@ -147,6 +147,17 @@ def desired_slots(conn, known_slots: set[str]) -> tuple[set[str], dict]:
                          for i in range(2, min(int(n_extract), 3) + 1)]
                 _last_demand.update({s: now for s in extra})
                 slots = set(slots) | set(extra)
+            if lane == "summary" and int(n) >= 2:
+                # SUMMARIES-SCALE-OUT-V1 (2026-09-02): ONE summaries worker
+                # serialized a run's enrichment (45–105 s per call on the
+                # slow pin lanes) AND every summary stage — parent_summary
+                # sat READY_UNCLAIMED behind enrichment for the whole tail
+                # (traced on the StoryBrand ingest). Two or more open
+                # summary-lane tickets → a second worker; tickets are
+                # lease-exclusive and enrichment persistence is idempotent
+                # on the content identity, so two sweeps never double-pay.
+                _last_demand.update({"summaries2": now})
+                slots = set(slots) | {"summaries2"}
         for s in slots:
             if now - _last_demand.get(s, -1e9) < (
                     MODEL_GRACE_S if s.startswith("sidecar_") else 30.0):

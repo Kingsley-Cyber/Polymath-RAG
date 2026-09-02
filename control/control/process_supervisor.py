@@ -82,6 +82,8 @@ FLEET: list = [
     ("verify", "workers.verify_worker"),
     ("compile_objects", "workers.compile_objects_worker"),
     ("summaries", "workers.summary_worker"),
+    # SUMMARIES-SCALE-OUT-V1: second summaries worker, demand-driven by the autopilot
+    ("summaries2", "workers.summary_worker"),
 ]
 
 
