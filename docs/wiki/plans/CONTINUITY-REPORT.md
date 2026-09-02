@@ -112,6 +112,11 @@ stall traces. Hermes config unchanged (127.0.0.1:8930/mcp, POLYMATH_MCP_TOKEN).
 `launchctl disable gui/501/com.polymath.mcp` done. TRAP (cost an outage today): NEVER put
 an inline comment on a .env value line — pydantic-settings keeps it as the value; run
 `get_settings()` as a smoke test after every .env edit.
+ENRICH-IDENTITY-V2 (2026-09-02, found by the MCP upload test): the enrichment identity used
+to include the LANE — every pin change re-enriched the whole corpus (1,309 rows in a day).
+Identity is now source+prompt+contract/bounds; `scripts/migrate_enrichment_identity.py`
+re-keyed 2,506 rows; a run's enrichment sweep now starts with its OWN document. If a
+worker restart ever persists old-style rows, re-run the script (idempotent, SKIP LOCKED).
 
 OPEN (owner gates + debt): TCC grant; ~~gpt-oss-20b as groq escape rep;
 gemma-3-4b paced extraction-only lane~~ (both REMOVED by owner 2026-09-02); 40-chunk equivalence pass with

@@ -66,8 +66,16 @@ fix what is not production-ready.
   PUBLIC mirror, 200 with the key (8 tools) on both; `document_status`
   via MCP on an existing book → query_ready, 14 stages, enrichment 10/10.
 - Autopilot/budget/supervisor/watchdog tests 36 green after the slot.
-- E2E (Building_a_StoryBrand_Miller.md, 310 KB, via `upload_document` →
-  `document_status` polling → `ask`): appended below.
+- E2E AS HERMES (Building_a_StoryBrand_Miller.md, 310 KB): `upload_document`
+  0.1 s → run_id; `document_status` every 30 s showed intake → extract
+  (22 cloud calls across 7 models incl. the new openrouter3 lane) →
+  projections → **query_ready at +390 s** (748 children / 54 parents);
+  `ask` (scoped) 25.3 s cold (reranker wake) then 2.5 s, 20 and 19
+  citations, all from the new book (`human_locators`); `list_documents`
+  shows the row. The status tool also surfaced the stall traces the
+  control plane raised during the ingest — including the enrichment
+  ticket stuck behind a corpus-wide re-enrichment, which led to
+  ENRICH-IDENTITY-V2 (work-log 2026-09-02-enrich-identity-v2).
 
 ## Rejected claims
 - Putting the key in the plist's EnvironmentVariables — a second copy of a
