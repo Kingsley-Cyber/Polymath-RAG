@@ -59,6 +59,17 @@ def _job_done(conn: Connection, stage: str, input_hash: str) -> bool:
 
 def _ensure_job(conn: Connection, ticket_id: str, stage: str,
                 corpus_id: str, input_hash: str) -> None:
+    # SUMMARY-JOB-IDEMPOTENCY-V1 (2026-09-02): summary_jobs' PRIMARY KEY is
+    # ticket_id, but the only conflict arbiter here was (stage, input_hash).
+    # A delete + re-ingest of identical bytes mints the SAME ticket ids
+    # (content-addressed runs) with a NEW input_hash, so the insert hit
+    # the pkey and parent_summary failed 3/3 attempts on Gambling. A
+    # stale job for this ticket with a different input is superseded
+    # first; the (stage, input_hash) upsert then behaves as before.
+    conn.execute(
+        "DELETE FROM summary_jobs WHERE ticket_id = %s "
+        "AND input_hash IS DISTINCT FROM %s",
+        (ticket_id, input_hash))
     conn.execute(
         """INSERT INTO summary_jobs (ticket_id, stage, corpus_id,
            input_hash, contract_version)

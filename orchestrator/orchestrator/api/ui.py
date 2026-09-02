@@ -545,6 +545,15 @@ def _delete_document_tx(doc_id: str, confirm: str = "") -> dict:
                 AND metadata->>'source_name' = %s""",
             (corpus_id, source_name)).fetchall()]
         if run_ids:
+            # DELETE-PURGES-SUMMARY-JOBS (2026-09-02): summary_jobs rows are
+            # keyed by '<stage ticket>:<parent suffix>' and outlived the
+            # delete; identical bytes re-ingest under the SAME ticket ids
+            # and collided on the pkey (parent_summary failed 3/3).
+            _del("""DELETE FROM summary_jobs
+                     WHERE split_part(ticket_id, ':', 1) IN
+                           (SELECT ticket_id FROM stage_tickets
+                             WHERE run_id = ANY(%s))""",
+                 (run_ids,), "summary_jobs", optional=True)
             for tbl in ("stage_tickets", "outbox_events", "artifacts",
                         "receipts"):
                 _del(f"DELETE FROM {tbl} WHERE run_id = ANY(%s)",

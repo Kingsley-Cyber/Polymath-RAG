@@ -69,6 +69,16 @@ graph be used for the writer hunt.
    a single fake endpoint + the fake as the client factory; the two
    pre-V2 truncation pins rewritten to the split contract.
 
+9. SUMMARY-JOB-IDEMPOTENCY-V1 + DELETE-PURGES-SUMMARY-JOBS (found by the
+   cloud-first receipt run): summary_jobs' PRIMARY KEY is ticket_id, but
+   `_ensure_job`'s only conflict arbiter was (stage, input_hash). A delete
+   + re-ingest of identical bytes mints the SAME ticket ids
+   (content-addressed runs) with a NEW input_hash, so the insert hit the
+   pkey — Gambling's parent_summary failed 3/3 attempts on
+   `summary_jobs_pkey`. Fix: a stale job for the same ticket with a
+   different input is superseded before the upsert; and DOCUMENT-DELETE
+   now purges summary_jobs for the runs' tickets (before stage_tickets).
+
 ## Proof
 - test_supervisor_env_overlay.py 3 green (parser, missing file, spawn
   wiring pin); test_incremental_census 5; test_fleet_autopilot_demand 6;
@@ -77,6 +87,8 @@ graph be used for the writer hunt.
   llm_extraction, extraction_pool, llm_audit_fixes updated to the
   cloud-first floor and the hermetic doubles — green (counts in the
   commit message).
+- tests/determinism/test_summary_job_idempotency.py 1 green (real DB,
+  rolled back: same ticket + new input supersedes; same input = one row).
 - LIVE RECEIPT, ENV-OVERLAY-ON-SPAWN-V1: a probe variable appended to
   .env AFTER the fleet booted was present in the environment of the
   next respawned child (control.main pid 95405: value matched); probe
