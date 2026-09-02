@@ -23,7 +23,8 @@
     "gemini1..gemini6 = Google AI Studio keys on gemini-3.1-flash-lite (owner 2026-09-01 re-pin \u2014 cheaper than 3.5-flash-lite, strict-schema canary green; the 2.5-flash-lite the owner linked is retired for new users \u2014 3.5-flash-lite is the current cheapest lite tier, strict-schema canary GREEN via the OpenAI-compat endpoint; the compat layer tolerates the client's /v1 suffix so url ends at /v1beta/openai). gemini1-4 shard extraction; gemini5-6 are dedicated enrichment lanes added to the parent_enrichment pin group.",
     "request_char_budget (THROUGHPUT-V2): per-lane payload budget in chars; batch packing respects it so provider 413s cannot happen (groq 18000 measured from the 2026-09-01 413 storm; gemini's 1M-token context takes 120000; nvidia 60000).",
     "GEMINI-VARIANT-LANES (owner 2026-09-01 'ensure all gemini keys call the available gemini models'): Google quotas are PER MODEL per key, so gemini{n}b runs gemini-3.5-flash-lite on the SAME key as gemini{n} (3.1-flash-lite) with an independent quota \u2014 12 gemini lanes from 6 keys. 2.5-lite family retired upstream; non-lite flashes failed the strict-schema canary (parked pending a json-mode canary). groq: request budget 7000 chars + limiter TPM 8000 = the PROVIDER-DECLARED truth (header probe 2026-09-01); groq5 REMOVED from the enrichment pin (8K TPM = ~4 enrichment calls/min = pure failover churn).",
-    "GROQ PARKED from the extraction ring (owner speed directive 2026-09-01): 8K TPM declared = a dead-weight slice under rank slicing (one unlucky doc per pass drew an all-groq slice). dedicated:true with no pin = reserved; re-enters by flipping the flag if the tier ever changes."
+    "GROQ PARKED from the extraction ring (owner speed directive 2026-09-01): 8K TPM declared = a dead-weight slice under rank slicing (one unlucky doc per pass drew an all-groq slice). dedicated:true with no pin = reserved; re-enters by flipping the flag if the tier ever changes.",
+    "PROVIDER-REMOVALS-0902: owner removed the groq host (groq1-5, qwen3.8-27b) and the gemma-3-4b candidate on 2026-09-02; keys dropped from .env; limiter blocks removed."
   ],
   "stage_pins": {
     "parent_enrichment": [
@@ -37,61 +38,6 @@
     ]
   },
   "providers": [
-    {
-      "name": "groq1",
-      "enabled": true,
-      "url": "https://api.groq.com/openai",
-      "model": "qwen/qwen3.8-27b",
-      "api_key_env": "GROQ_API_KEY_1",
-      "reasoning_effort": "none",
-      "structured": "schema",
-      "request_char_budget": 7000,
-      "dedicated": true
-    },
-    {
-      "name": "groq2",
-      "enabled": true,
-      "url": "https://api.groq.com/openai",
-      "model": "qwen/qwen3.8-27b",
-      "api_key_env": "GROQ_API_KEY_2",
-      "reasoning_effort": "none",
-      "structured": "schema",
-      "request_char_budget": 7000,
-      "dedicated": true
-    },
-    {
-      "name": "groq3",
-      "enabled": true,
-      "url": "https://api.groq.com/openai",
-      "model": "qwen/qwen3.8-27b",
-      "api_key_env": "GROQ_API_KEY_3",
-      "reasoning_effort": "none",
-      "structured": "schema",
-      "request_char_budget": 7000,
-      "dedicated": true
-    },
-    {
-      "name": "groq4",
-      "enabled": true,
-      "url": "https://api.groq.com/openai",
-      "model": "qwen/qwen3.8-27b",
-      "api_key_env": "GROQ_API_KEY_4",
-      "reasoning_effort": "none",
-      "structured": "schema",
-      "request_char_budget": 7000,
-      "dedicated": true
-    },
-    {
-      "name": "groq5",
-      "enabled": true,
-      "url": "https://api.groq.com/openai",
-      "model": "qwen/qwen3.8-27b",
-      "api_key_env": "GROQ_API_KEY_5",
-      "reasoning_effort": "none",
-      "structured": "schema",
-      "dedicated": true,
-      "request_char_budget": 7000
-    },
     {
       "name": "nvidia",
       "enabled": true,

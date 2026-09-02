@@ -82,9 +82,15 @@ grace = threshold) — LIVE-PROVEN 09:15:45Z (SIGSTOP probe, recovery in
 `set -a; source .env; set +a; POLYMATH_AUTOPILOT=1 nohup .venv/bin/python
 -m control.process_supervisor >> /tmp/polymath_fleet/supervisor.log &`
 from the repo root; com.polymath.v5 launchd is NOT running it).
+PROVIDER-REMOVALS-0902 (owner): Qwen2.5-7B (SiliconFlow + OpenRouter), gemma-3-4b
+and the WHOLE groq host removed — groq1-5 lanes out of cloud_providers.json, groq
+blocks out of limiter.yaml, 6 GROQ keys + the SiliconFlow key out of .env, AIMD rows
+llm_cloud[groq1-4] deleted. Pool now: primary qwen3.5-397b, openrouter1/2 (mistral-
+small-2603 / ministral-14b), gemini1-4(+b) lites, nvidia2 nemotron-super; enrichment
+pin nvidia + gemini5/5b/6/6b + openrouter1/2. Work-log 2026-09-02-provider-removals.
 
-OPEN (owner gates + debt): TCC grant; gpt-oss-20b as groq escape rep;
-gemma-3-4b paced extraction-only lane; 40-chunk equivalence pass with
+OPEN (owner gates + debt): TCC grant; ~~gpt-oss-20b as groq escape rep;
+gemma-3-4b paced extraction-only lane~~ (both REMOVED by owner 2026-09-02); 40-chunk equivalence pass with
 openrouter lanes; enrichment_batch_concurrency 5 vs 7-lane pin; six
 PRE-EXISTING determinism failures (killchain gaps, sval ×3,
 test_llm_audit_fixes test_3 threshold, test_llm_controller stale fake)
