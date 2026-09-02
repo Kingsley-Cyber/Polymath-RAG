@@ -48,6 +48,18 @@ class CompiledParent:
     prompt_version: str = ""
 
 
+def call_budget(bounds, n_parents: int) -> int:
+    """ENRICH-BUDGET-V2: output budget for a call carrying n parents —
+    30 % headroom per parent + 300 for the envelope, capped at 8000."""
+    return min(int(bounds.max_tokens * max(1, n_parents) * 1.3) + 300, 8000)
+
+
+def _looks_truncated(raw: str, max_tokens: int) -> bool:
+    """A response that already spans ~3 chars per budgeted token almost
+    certainly ended on the cap (finish_reason is not on this seam)."""
+    return len(raw) >= 3 * max_tokens
+
+
 def _estimate_tokens(text: str) -> int:
     from polymath_shared.llm_extraction.client import estimate_input_tokens
     return estimate_input_tokens(text)
@@ -83,7 +95,7 @@ def compile_parents(
             parent_id=p.parent_id, status="PENDING",
             source_hash=sh, source_child_ids=ids,
             child_ref_map=ref_maps[p.parent_id])
-        items.append((p.parent_id, SYSTEM_PROMPT, user, bounds.max_tokens))
+        items.append((p.parent_id, SYSTEM_PROMPT, user, call_budget(bounds, 1)))
 
     if items:
         for pid, raw, err in complete(items):
@@ -363,13 +375,32 @@ def compile_parents_microbatched(
             return
         user = render_microbatch_input(
             [(p.parent_id, meta[p.parent_id]["wire"]) for p in batch])
-        max_tokens = min(bounds.max_tokens * len(batch) + 200, 8000)
+        # ENRICH-BUDGET-V2 (measured 2026-09-02 with per-call logging):
+        # at 700*n+200 the verbose lanes (gemini-lite, qwen3.7, nemotron)
+        # hit finish=length on nearly every batch, the truncated envelope
+        # failed the gate, the ladder split, and single-parent retries
+        # truncated again — 29 of 54 parents ground for 20+ minutes. A
+        # 30 % headroom per parent plus a one-shot doubling on a likely
+        # truncation (raw already ~3 chars per budgeted token) ends it.
+        max_tokens = call_budget(bounds, len(batch))
         rows = complete([(batch[0].parent_id, MICROBATCH_SYSTEM_PROMPT,
                           user, max_tokens)])
         raw, err = "", "ENRICH_NO_RESPONSE"
         for _bid, r, e in rows:
             raw, err = r, e
             break
+        if not err and raw and _looks_truncated(raw, max_tokens) and max_tokens < 8000:
+            retry_tokens = min(max_tokens * 2, 8000)
+            log.warning("microbatch retry: %d parents, likely truncated "
+                        "(raw_len=%d at %d tokens) -> %d tokens",
+                        len(batch), len(raw), max_tokens, retry_tokens,
+                        extra={"error_code": "ENRICH_BATCH_TRUNCATED"})
+            rows = complete([(batch[0].parent_id, MICROBATCH_SYSTEM_PROMPT,
+                              user, retry_tokens)])
+            for _bid, r, e in rows:
+                if not e and r:
+                    raw, err, max_tokens = r, e, retry_tokens
+                break
         if err or not raw:
             # ENRICH-CALL-VISIBILITY (2026-09-02): the ladder was silent —
             # 29 parents ground through splits for 20 min with no log line.

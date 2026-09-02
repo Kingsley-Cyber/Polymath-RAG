@@ -38,8 +38,11 @@ from polymath_shared.settings import get_settings  # noqa: E402
 
 
 def contract_id(max_tokens: int) -> str:
-    # MUST match polymath_shared.latent.runtime.enrichment_contract_id
-    return f"{COMPILER_CONTRACT}|tokens={int(max_tokens)}"
+    # MUST match polymath_shared.latent.runtime.enrichment_contract_id —
+    # the output SHAPE (identical across the 700/900 profiles), never the
+    # token budget. max_tokens is accepted for CLI symmetry and ignored.
+    from polymath_shared.latent.runtime import enrichment_contract_id
+    return enrichment_contract_id(QUALIFICATION_BOUNDS)
 
 
 def lane_free_hash(source_hash: str, max_tokens: int) -> str:
