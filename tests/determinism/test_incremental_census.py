@@ -265,3 +265,29 @@ def test_watermark_survives_rollback(conn):
     except RuntimeError:
         pass
     assert _watermark_read(conn) == wm_before
+
+
+def test_uncached_active_run_is_always_reevaluated(conn):
+    """CENSUS-UNCACHED-DIRTY-V1: a run whose only verdict was a GAP (never
+    cached) and whose last mutation already fell under the global
+    watermark must still be evaluated on the next incremental pass.
+    Live 2026-09-02: Netnography's projection closed at T while a
+    sibling's later ticket had advanced the watermark past T in the
+    same tick — chain complete, pinned at `reconciling` forever."""
+    from control.census import _VERDICT_CACHE as vc
+    run_id = f"run_probe_uncached_{uuid.uuid4().hex[:10]}"
+    try:
+        # seed a fresh watermark with the run ABSENT, then insert the
+        # run with attempts far older than that watermark
+        _seed_watermark(conn)
+        _seed_run(conn, run_id, stages_ok=len(CHAIN), attempts_for_last=0,
+                  age_minutes=30.0)
+        vc.pop(run_id, None)
+        census = compute_census(conn, mode="incremental")
+        evaluated = (run_id in vc) or any(
+            getattr(g, "run_id", None) == run_id for g in census.gaps
+        ) or run_id in census.promote or run_id in census.degrade
+        assert evaluated, ("uncached active run skipped by the incremental "
+                           "dirty signal")
+    finally:
+        _cleanup(conn, [run_id])

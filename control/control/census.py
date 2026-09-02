@@ -203,6 +203,17 @@ def compute_census(conn: Connection, *, max_attempts: int = 3,
         new_runs = {r[0] for r in runs
                     if _epoch_us(r[3]) > wm_us - overlap_us}
         changed |= new_runs
+        # CENSUS-UNCACHED-DIRTY-V1 (2026-09-02): an ACTIVE run with no
+        # cached verdict is dirty by definition. Gap verdicts are never
+        # cached (V2 guard 2), so a run evaluated mid-projection carried
+        # no verdict; when its last ticket closed at T and a sibling
+        # run's later ticket had already advanced the GLOBAL watermark
+        # past T within the same tick, its close fell under the
+        # lookback and it was never re-evaluated — Netnography sat at
+        # `reconciling` with every chain stage done while its sibling
+        # promoted 5 s later. Re-evaluating uncached actives costs one
+        # verdict per stuck run and closes every variant of the race.
+        changed |= {r[0] for r in runs if r[0] not in _VERDICT_CACHE}
     else:
         changed = None  # full sweep
 
