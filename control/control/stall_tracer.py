@@ -252,12 +252,15 @@ def collect_stalls(conn, *, census=None, threshold_s: int = STALL_THRESHOLD_S,
                (SELECT count(*) FROM stage_tickets b
                   JOIN worker_registrations bw ON bw.worker_id = b.lease_owner
                  WHERE b.stage = t.stage AND b.status = 'leased'
-                   AND bw.heartbeat_at > now() - make_interval(secs => 90)) AS stage_busy_live,
+                   AND bw.heartbeat_at > now() - make_interval(secs => 90)
+                   AND split_part(b.lease_owner, '-', 1) = COALESCE(
+                         (SELECT split_part(b3.lease_owner, '-', 1) FROM stage_tickets b3
+                           WHERE b3.stage = t.stage AND b3.lease_owner IS NOT NULL
+                           ORDER BY b3.updated_at DESC LIMIT 1), '')) AS stage_busy_live,
                (SELECT count(*) FROM worker_registrations lw
                  WHERE lw.heartbeat_at > now() - make_interval(secs => 90)
                    AND lw.worker_type = COALESCE(
-                         (SELECT bw2.worker_type FROM stage_tickets b2
-                            JOIN worker_registrations bw2 ON bw2.worker_id = b2.lease_owner
+                         (SELECT split_part(b2.lease_owner, '-', 1) FROM stage_tickets b2
                            WHERE b2.stage = t.stage AND b2.lease_owner IS NOT NULL
                            ORDER BY b2.updated_at DESC LIMIT 1), '')) AS stage_capacity_live,
                (SELECT count(*) FROM worker_registrations wr
@@ -299,12 +302,15 @@ def collect_stalls(conn, *, census=None, threshold_s: int = STALL_THRESHOLD_S,
                                AND (SELECT count(*) FROM stage_tickets b
                                       JOIN worker_registrations bw ON bw.worker_id = b.lease_owner
                                      WHERE b.stage = t.stage AND b.status = 'leased'
-                                       AND bw.heartbeat_at > now() - make_interval(secs => 90)) >=
+                                       AND bw.heartbeat_at > now() - make_interval(secs => 90)
+                                       AND split_part(b.lease_owner, '-', 1) = COALESCE(
+                                             (SELECT split_part(b3.lease_owner, '-', 1) FROM stage_tickets b3
+                                               WHERE b3.stage = t.stage AND b3.lease_owner IS NOT NULL
+                                               ORDER BY b3.updated_at DESC LIMIT 1), '')) >=
                                    GREATEST(1, (SELECT count(*) FROM worker_registrations lw
                                      WHERE lw.heartbeat_at > now() - make_interval(secs => 90)
                                        AND lw.worker_type = COALESCE(
-                                             (SELECT bw2.worker_type FROM stage_tickets b2
-                                                JOIN worker_registrations bw2 ON bw2.worker_id = b2.lease_owner
+                                             (SELECT split_part(b2.lease_owner, '-', 1) FROM stage_tickets b2
                                                WHERE b2.stage = t.stage AND b2.lease_owner IS NOT NULL
                                                ORDER BY b2.updated_at DESC LIMIT 1), ''))))
                          FROM stage_tickets t

@@ -279,6 +279,20 @@ expansion, canonicalization and identity.
    Postgres rows were purged before the successor's projection) — re-check
    after P6, real defects if they persist; `test_llm_controller` is the
    pre-existing batched-client double.
+11. **RECEIPT-LOOKUP-BATCH-V1 (found by the tracer during P6).** Four ecom
+   runs failed `project_qdrant` at 17:30Z with `psycopg.OperationalError:
+   number of parameters must be between 0 and 65535`: the projector's
+   already-current lookup sent one VALUES list over the CORPUS-wide want
+   set (3 bind parameters per row), and the re-chunked corpus crossed
+   libpq's ceiling. The lookup is batched (10,000 rows per query, same
+   result set; test_receipt_lookup_batch). The four stages were retried
+   after the fleet restart (`scripts/retry_failed_stage.py`).
+   STALL-TRACER-V1.3 final shape: capacity and busyness are judged per
+   worker TYPE from the lease-owner prefix (`<type>-<pid>-<hash>`; the
+   registrations join broke whenever pruning or a restart removed the
+   holder's row), the chain carries a per-ticket live-work flag (leased by
+   a live holder, or claimable and queued behind a saturated lane), and
+   the probe tests own their capacity so the live fleet cannot skew them.
 
 ## Rejected claims
 - "The type flattening is a data-loss bug." `entities.raw_types` already

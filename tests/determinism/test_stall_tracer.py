@@ -256,10 +256,10 @@ def test_ready_queued_behind_a_saturated_lane_is_not_a_stall(conn):
     run_a = _run(conn); run_b = _run(conn)
     conn.execute(
         """INSERT INTO worker_registrations (worker_id, worker_type, pid, host)
-           VALUES ('w-busy-1', 'extract-probe', 5151, 'probe')
+           VALUES ('extractprobe-5151-a', 'extractprobe', 5151, 'probe')
            ON CONFLICT (worker_id) DO UPDATE SET heartbeat_at = now()""")
     _ticket(conn, run_a, "intake", "done"); _ticket(conn, run_b, "intake", "done")
-    t_busy = _ticket(conn, run_a, "extract", "leased", lease_owner="w-busy-1")
+    t_busy = _ticket(conn, run_a, "extract", "leased", lease_owner="extractprobe-5151-a")
     # the probe holder is the stage's most recent lease -> capacity is judged by ITS worker type,
     # so live-fleet registrations (and their post-restart ghosts) cannot skew the probe
     conn.execute("UPDATE stage_tickets SET lease_expires_at = now() + interval '10 min', updated_at = now() "
@@ -271,8 +271,11 @@ def test_ready_queued_behind_a_saturated_lane_is_not_a_stall(conn):
         (run_b, '{"run_id": "%s"}' % run_b, "idem_probe_" + uuid.uuid4().hex[:12]))   # per-RUN event, no ticket_id
     ids = {s.unit_id for s in collect_stalls(conn, threshold_s=180)}
     assert t_queued not in ids, "queued behind the only (busy) extract worker must not be traced"
-    # the worker frees up (lease released) -> the ready ticket IS traced again
-    conn.execute("UPDATE stage_tickets SET status='done', lease_owner=NULL WHERE ticket_id = %s", (t_busy,))
+    # a second, IDLE worker of the same type appears -> the lane has capacity, the ticket IS traced
+    conn.execute(
+        """INSERT INTO worker_registrations (worker_id, worker_type, pid, host)
+           VALUES ('extractprobe-5152-c', 'extractprobe', 5152, 'probe')
+           ON CONFLICT (worker_id) DO UPDATE SET heartbeat_at = now()""")
     s = _by_id(collect_stalls(conn, threshold_s=180), t_queued)
     assert s.diagnosis == "READY_UNCLAIMED"          # per-run event counted as a pending claim event
 
@@ -283,10 +286,10 @@ def test_dependents_of_a_queued_predecessor_are_not_traced(conn):
     run_a = _run(conn); run_b = _run(conn)
     conn.execute(
         """INSERT INTO worker_registrations (worker_id, worker_type, pid, host)
-           VALUES ('w-busy-2', 'extract-probe', 5252, 'probe')
+           VALUES ('extractprobe-5252-b', 'extractprobe', 5252, 'probe')
            ON CONFLICT (worker_id) DO UPDATE SET heartbeat_at = now()""")
     _ticket(conn, run_a, "intake", "done"); _ticket(conn, run_b, "intake", "done")
-    t_busy = _ticket(conn, run_a, "extract", "leased", lease_owner="w-busy-2")
+    t_busy = _ticket(conn, run_a, "extract", "leased", lease_owner="extractprobe-5252-b")
     conn.execute("UPDATE stage_tickets SET lease_expires_at = now() + interval '10 min', updated_at = now() "
                  "WHERE ticket_id = %s", (t_busy,))
     t_queued = _ticket(conn, run_b, "extract", "ready")
