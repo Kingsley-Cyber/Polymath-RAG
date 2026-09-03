@@ -140,15 +140,22 @@ def test_truncated_concepts_still_hydrate_full_text():
             "LIMIT 10").fetchall()
         if not rows:
             pytest.skip("no truncated concepts in this corpus")
+        import re
+        _ws = re.compile(r"\s+")
+        # hydration is defined up to whitespace: chunk generations normalise
+        # line breaks differently (measured 2026-09-03: a concept recorded
+        # under chunk-structure-v2 text is present in the v3 chunk with the
+        # same words and different whitespace), and every attestation path
+        # in the gate already matches whitespace-collapsed.
         unhydrated = []
         for cid, snippet, chunks in rows:
-            probe = snippet[:120]
+            probe = _ws.sub(" ", snippet[:120]).strip()
             found = False
             for chunk_id in (chunks or []):
                 text = conn.execute(
                     "SELECT text FROM chunks WHERE chunk_id=%s",
                     (chunk_id,)).fetchone()
-                if text and probe in text[0]:
+                if text and probe in _ws.sub(" ", text[0]):
                     found = True
                     break
             if not found:
