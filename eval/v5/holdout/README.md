@@ -5,7 +5,8 @@ self-consistency. Two sets:
 
 - `dev_questions.json` — development seed set, written by the executor from
   the corpora. NEVER release evidence; the grader writes
-  `DEV-RESULTS-<date>.json` next to it.
+  `DEV-RESULTS-<timestamp>.json` under `/private/tmp/polymath_fleet/holdout/`
+  (`POLYMATH_HOLDOUT_OUT`), never into the repository.
 - `sealed/<name>.json` — owner-supplied, written without looking at retrieval
   output, hashed (sha256 of the file bytes). Only a sealed run may write
   `eval/v5/release_evidence/sealed_holdout.json` (release_gates SEALED_HOLDOUT):
