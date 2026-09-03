@@ -63,6 +63,11 @@ law: a run pinned to an older semantic bundle cannot have a stage re-armed
 (every worker refuses the lease) — repair old-era corpora with
 `--blue-green`, never by flipping tickets. `facts_direct` counts NEW rows;
 read `facts_existing` beside it before calling an extraction empty.
+PORTABILITY-V1 (item 14): a fresh clone passes guard + imports + integrity;
+`.env.example` is canon; boot/fleet scripts export `.env` and nothing else
+(the old v3 query-policy export made boot-launched runs pin a different
+contract — v1 is the live contract). New machine: `cp .env.example .env`,
+fill keys, `docker compose up -d`, `scripts/boot_polymath.sh`.
 
 ## Latest checkpoint (2026-09-03 — QUERY RECEIPTS + RUN-SCOPED RECEIPTS + RELEASE EVIDENCE)
 
@@ -417,7 +422,7 @@ touching those trees.
 | Item | Value |
 |---|---|
 | Branch | `architecture/evidence-first-v5` @ `0ea4cf8` (main via worktree `../polymath-v4-main`; NEVER `git checkout` in the live tree) |
-| Migrations applied | through `0042_generation_stamping.sql` (apply pattern: `docker exec -i polymath-v4-postgres-1 psql -U polymath -d polymath -f - < stores/postgres/migrations/<file>.sql`) |
+| Migrations applied | through `0050_generation_swap.sql` (2026-09-03; 0047 query receipts, 0048/0049 receipt finish_reason + contract_ident, 0050 per-generation chunk uniqueness + blue/green run index). Existing installs apply each pending file in order: `docker exec -i polymath-v4-postgres-1 psql -U polymath -d polymath -v ON_ERROR_STOP=1 < stores/postgres/migrations/<file>.sql`; a fresh install runs every file in `stores/postgres/migrations/` in name order (all are idempotent `IF NOT EXISTS`/`ADD COLUMN IF NOT EXISTS` after 0002). |
 | Stores | Postgres `:5432` · Qdrant `:6334` (app; `.env` 6333 is compose-side) · Neo4j bolt `:7688` · Redis `:6379` |
 | Fleet | ONE supervisor (`scripts/run_fleet_supervised.sh` → `control.process_supervisor`), slots: control, intake, profile, extract, canonicalize, project_canonical, neo4j, qdrant, verify, **compile_objects**, summaries (+ orchestrator slot). Hand-started extras when needed: second `workers.extract_worker` (lane parallelism) |
 | Orchestrator | `:7200`, uvicorn from `orchestrator/` dir |

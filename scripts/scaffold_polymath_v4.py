@@ -622,7 +622,6 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/decisions/0017-llm-direct-canon.md", "md", None),
     ("docs/wiki/plans/LEXICAL-ROLE-REALIGNMENT-PLAN.md", "md", None),
     ("eval/model_qual/run_candidate.py", "py", None),
-    ("scripts/run_i4_arm.sh", "sh", None),
     ("eval/doc_audit/PLAN.md", "md", None),
     ("eval/doc_audit/KEY_B.json", "json", None),
     ("eval/doc_audit/harness.py", "py", None),
