@@ -61,7 +61,17 @@ request, so "is retrieval healthy?" could not be answered from the system.
    telemetry of the resumed attempt) → `release_evidence/incrementality.json`;
    `eval/v5/replay_full.py --record-evidence` (full counts) →
    `release_evidence/exact_replay.json`.
-5. Auto-boot: `scripts/autoboot.sh` (commit 05f71ce) — the command. It
+5. FENCE-PATH-AWARE-V1 (`eval/v5/verify_live_build.py`): the GLiNER
+   (:8740) and spaCy (:8744) sidecars are enforced only when the
+   configured path calls them (extraction_provider == gliner /
+   syntax_provider == spacy); production is llm_live, where both are
+   idle by contract, and every fence run had failed on "nothing
+   listening" for components nothing on the live path used. They are
+   reported as advisory now. Observation for the owner: the
+   com.polymath.apple-ml LaunchAgent is running (pid 62119) but neither
+   port is listening — harmless under llm_live, a defect if the syntax
+   path is ever re-enabled.
+6. Auto-boot: `scripts/autoboot.sh` (commit 05f71ce) — the command. It
    probes TCC with a throwaway launchd agent; the probe still reports
    CANNOT_READ, so launchd bash cannot read the checkout under
    ~/Documents and the owner's Full Disk Access grant has not landed
@@ -87,7 +97,8 @@ request, so "is retrieval healthy?" could not be answered from the system.
   QUERY_SCOPE_UNKNOWN. `GET /queries` 9 ms; `scripts/query_log.py`
   prints the per-mode table; MCP session (bearer, streamable-http)
   lists 9 tools and `recent_queries` returns count + summary.
-- verify_product_readiness: PASS 8/8 (embedder_ready and reranker_ready
+- verify_live_build (after the final bounce onto 76e2735+fence): see the
+  FENCE line below. verify_product_readiness: PASS 8/8 (embedder_ready and reranker_ready
   now green with the sidecars resident).
 - FAST_HYBRID evidence: 12 probes, all HTTP 200, foreign-corpus hits = 0
   on every probe including cross-topic and nonce; topical top document =

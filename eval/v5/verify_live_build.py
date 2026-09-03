@@ -41,14 +41,38 @@ DSN = os.environ.get(
 
 #: (slot, listening port, source file that must predate the process)
 SERVICES = [
-    ("sidecar_gliner", 8740, "sidecars/gliner_runtime/server.py"),
     ("sidecar_embedder", 8742, "sidecars/embedder/server.py"),
-    ("sidecar_spacy", 8744, "sidecars/spacy_runtime/server.py"),
     ("orchestrator", 7200, "orchestrator/orchestrator/main.py"),
 ]
 
 #: reranker is a separately-owned runtime; identity is reported, not enforced.
 ADVISORY = [("sidecar_reranker", 8743, None)]
+
+
+def _configured_extraction_sidecars() -> None:
+    """FENCE-PATH-AWARE-V1 (2026-09-03): the GLiNER (:8740) and spaCy
+    (:8744) sidecars are execution components ONLY on the paths that call
+    them — extraction_provider == "gliner" and syntax_provider == "spacy".
+    Production runs llm_live (facts are llm-direct-v1; sentence_slices
+    empty), where both are idle by contract; enforcing them failed every
+    fence run with "nothing listening" while nothing on the live path
+    needed them. Enforced when configured, advisory otherwise."""
+    provider = syntax = None
+    try:
+        sys.path.insert(0, str(ROOT / "shared"))
+        from polymath_shared.settings import get_settings
+        s = get_settings()
+        provider = getattr(s.worker, "extraction_provider", None)
+        syntax = getattr(s.sidecars, "syntax_provider", None)
+    except Exception:
+        pass
+    gl = ("sidecar_gliner", 8740, "sidecars/gliner_runtime/server.py")
+    sp = ("sidecar_spacy", 8744, "sidecars/spacy_runtime/server.py")
+    (SERVICES if provider == "gliner" else ADVISORY).insert(0, gl)
+    (SERVICES if syntax == "spacy" else ADVISORY).insert(0, sp)
+
+
+_configured_extraction_sidecars()
 
 
 def head_sha() -> str:
