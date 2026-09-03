@@ -51,6 +51,12 @@ class RetrieveRequest(BaseModel):
     mode: Optional[str] = None
     latent: Optional[bool] = None
     utility: Optional[bool] = None
+    # RETRIEVE-EVIDENCE-ROWS-V1: contract-ready rows (id, verbatim text, title,
+    # auditable source, timecodes, document summaries, attested graph facts)
+    evidence: bool = False
+    # EXPLORE (ideation): breadth over precision — per-document cap, document
+    # interleaving, one entity hop into other documents. Implies evidence=True.
+    explore: bool = False
 
 
 def resolve_http_scope(conn, req) -> "QueryScope":
@@ -141,6 +147,11 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
     # route retained for regression (G1/G2 golden contracts).
     from polymath_shared.retrieval_modes import MODE_FAST, MODE_GRAPH, MODE_HYBRID, validate_mode
 
+    # mode=EXPLORE is the ideation view of the default lane path (evidence rows,
+    # breadth); it is not a retrieval_modes engine.
+    if (req.mode or "").strip().upper() == "EXPLORE":
+        req = req.model_copy(update={"mode": None, "explore": True, "evidence": True,
+                                     "limit": max(int(req.limit or 12), 24)})
     mode = validate_mode(req.mode)
     if mode == MODE_FAST:
         from orchestrator.api.fast import fast_retrieve
@@ -233,7 +244,7 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
             "why": h.why,
         }
 
-    return {
+    out = {
         "query": query,
         # Per-lane ablation BEFORE fusion (G2 gate 2).
         "document_lane": [_hit(h) for h in result.document_ranking[: req.limit]],
@@ -248,6 +259,13 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
         ],
         "graph_facts": result.graph_facts,
     }
+    if req.evidence or req.explore:
+        from orchestrator.api.evidence_rows import build_evidence_rows
+        with tx() as conn:
+            out["evidence_rows"] = build_evidence_rows(conn, out, corpus_ids, limit=req.limit,
+                                                       explore=bool(req.explore))
+        out["evidence_contract"] = "retrieve-evidence-rows-v1"
+    return out
 
 
 def _fetch_profiles(conn, corpus_ids: list[str]) -> list[dict]:

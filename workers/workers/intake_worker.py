@@ -25,6 +25,7 @@ from polymath_shared.db import tx
 from polymath_shared.identity import document_id, normalize_document_bytes
 from polymath_shared.logging import configure_logging
 from polymath_shared.settings import get_settings
+from polymath_shared.frontmatter import parse_frontmatter as _parse_frontmatter
 from polymath_shared.receipts import (
     StageFailed,
     claim_events,
@@ -204,8 +205,8 @@ def process_event(conn: Connection, event: dict) -> None:
             """
             INSERT INTO documents (doc_id, corpus_id, source_name, media_type,
                                    byte_length, content_hash, profile,
-                                   source_hash, materialization, source_map)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                   source_hash, materialization, source_map, frontmatter)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
             ON CONFLICT (doc_id) DO NOTHING
             """,
             (doc_id, corpus_id, source_name, media_type,
@@ -219,7 +220,8 @@ def process_event(conn: Connection, event: dict) -> None:
                  "original_byte_length": materialization.original_byte_length,
                  "warnings": materialization.warnings,
              }),
-             json.dumps(materialization.source_map)),
+             json.dumps(materialization.source_map),
+             json.dumps(_parse_frontmatter(normalized.decode("utf-8", "replace")[:4000]))),
         )
 
         # LAYOUT-EVIDENCE-V1: the authoritative record, in materialized

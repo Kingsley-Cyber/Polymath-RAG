@@ -214,10 +214,17 @@ async def corpus_status(corpus_id: str) -> dict:
 
 @mcp.tool()
 async def retrieve(query: str, corpus_id: str, mode: str = "HYBRID",
-                   limit: int = 10, latent: Optional[bool] = None) -> dict:
+                   limit: int = 10, latent: Optional[bool] = None,
+                   explore: bool = False) -> dict:
     """Retrieve evidence chunks for a query within ONE corpus. mode:
-    FAST | HYBRID | GRAPH. latent=false disables the cross-domain
-    latent lane for this call (HYBRID/GRAPH run it by default)."""
+    FAST | HYBRID | GRAPH | EXPLORE. latent=false disables the cross-domain
+    latent lane for this call (HYBRID/GRAPH run it by default).
+    explore=true (or mode=EXPLORE) returns contract-ready `evidence_rows`
+    (id, verbatim text, title, auditable source, timecodes, document
+    summaries, attested graph facts) with breadth across documents — the
+    ideation view an agent consumes directly."""
+    if explore:
+        mode = "EXPLORE"
     body: dict[str, Any] = {"query": query, "mode": mode, "limit": limit,
                             "corpus_id": corpus_id}
     if latent is not None:
@@ -225,6 +232,16 @@ async def retrieve(query: str, corpus_id: str, mode: str = "HYBRID",
     out = await _orch("POST", "/retrieve", json=body)
     if "error" in out:
         return out
+    if out.get("evidence_rows") is not None:
+        rows = []
+        for r in out["evidence_rows"]:
+            r = dict(r)
+            for k in ("text", "text_clean"):
+                if isinstance(r.get(k), str) and len(r[k]) > 1200:
+                    r[k] = r[k][:1200]
+            rows.append(r)
+        return {"evidence_rows": rows, "evidence_contract": out.get("evidence_contract"),
+                "graph_facts": len(out.get("graph_facts") or [])}
     hits = out.get("evidence") or out.get("hits") or []
     return {
         "evidence": [_trim_hit(h) for h in hits],

@@ -1,0 +1,122 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "polymath/contracts/retrieve/v1/evidence_row.schema.json",
+ "title": "retrieve-evidence-rows-v1 row",
+ "description": "One contract-ready evidence row from POST /retrieve with evidence=true or mode=EXPLORE. Every row is re-resolvable by id and carries a human-auditable source (title \u00b7 channel \u00b7 date \u00b7 timecode), never a filesystem path.",
+ "type": "object",
+ "required": [
+  "id",
+  "kind",
+  "doc_id",
+  "title",
+  "source",
+  "text",
+  "text_clean",
+  "lanes",
+  "score"
+ ],
+ "properties": {
+  "id": {
+   "type": "string"
+  },
+  "kind": {
+   "enum": [
+    "chunk",
+    "document",
+    "graph_fact",
+    "graph_hop"
+   ]
+  },
+  "doc_id": {
+   "type": "string"
+  },
+  "corpus_id": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "title": {
+   "type": "string"
+  },
+  "source": {
+   "type": "string"
+  },
+  "text": {
+   "type": "string"
+  },
+  "text_clean": {
+   "type": "string"
+  },
+  "timecode": {
+   "type": [
+    "object",
+    "null"
+   ],
+   "properties": {
+    "start": {
+     "type": "string"
+    },
+    "end": {
+     "type": "string"
+    },
+    "start_s": {
+     "type": "integer"
+    },
+    "end_s": {
+     "type": "integer"
+    }
+   }
+  },
+  "heading_path": {},
+  "char_start": {
+   "type": [
+    "integer",
+    "null"
+   ]
+  },
+  "char_end": {
+   "type": [
+    "integer",
+    "null"
+   ]
+  },
+  "tier": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "lanes": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "score": {
+   "type": "number"
+  },
+  "document": {
+   "type": "object"
+  },
+  "summary": {
+   "type": "object"
+  },
+  "fact": {
+   "type": "object"
+  },
+  "via_fact": {
+   "type": "object"
+  },
+  "evidence": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "doc_id",
+     "chunk_id"
+    ]
+   }
+  }
+ }
+}
