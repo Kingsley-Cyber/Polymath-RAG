@@ -205,10 +205,40 @@ def _verdict_put(key, state: str) -> None:
     _RECEIPT_VERDICT_STORE[key] = (_time.monotonic(), state)
 
 
+#: RUN-SCOPED-RECEIPTS-V1 (2026-09-03, found by STALL-TRACER on the
+#: incrementality probe): receipt completeness was a CORPUS-wide anti-join
+#: for every stage, so document B (query_ready, fully projected) held
+#: parent_summary PENDING for > 5 min while document C of the same corpus
+#: was still extracting. Per-document stages are gated on the run's OWN
+#: document; only these two corpus-level stages wait for the whole corpus.
+CORPUS_STAGES = ("corpus_summary", "vocabulary")
+
+
+def receipt_scope_for(stage: str) -> str:
+    return "corpus" if stage in CORPUS_STAGES else "run"
+
+
+def _run_doc_ids(conn: Connection, run_id: str) -> list[str]:
+    """The run's own document(s): matched by (corpus, metadata.source_name).
+    Empty for legacy runs without a source_name → callers fall back to
+    corpus scope (the pre-V1 behaviour)."""
+    rows = conn.execute(
+        """SELECT d.doc_id FROM runs r
+             JOIN documents d ON d.corpus_id = r.corpus_id
+                             AND d.source_name = r.metadata->>'source_name'
+            WHERE r.run_id = %s ORDER BY d.doc_id""", (run_id,)).fetchall()
+    return [r[0] for r in rows]
+
+
 def _receipts_present(conn: Connection, run_id: str, corpus_id: str,
                       projection: str,
-                      cache: dict | None = None) -> bool:
+                      cache: dict | None = None, scope: str = "corpus") -> bool:
     """Desired == actual for this projection (per-object).
+
+    scope="run" (RUN-SCOPED-RECEIPTS-V1): only the run's own document's
+    chunks are checked; scope="corpus": every chunk of the corpus (the
+    barrier corpus_summary / vocabulary need). A run without a resolvable
+    document degrades to corpus scope.
 
     RECEIPT-VERDICT-STORE-V2: the authoritative cross-tick cache is the
     explicit-state store (PRESENT/MISSING with asymmetric TTL). The
@@ -216,25 +246,42 @@ def _receipts_present(conn: Connection, run_id: str, corpus_id: str,
     callers; both layers share the same EXISTS query shape pinned by
     tests. A stale MISSING delays advancement; it can never create it.
     """
-    cache_key = (run_id, projection)
-    state = _verdict_get(cache_key)
-    if state is not None:
-        return state == RECEIPT_STATE_PRESENT
-    row = conn.execute(
-        """
-        SELECT NOT EXISTS (
-          SELECT 1 FROM chunks c
-             JOIN documents d ON d.doc_id = c.doc_id
-             JOIN runs r ON r.corpus_id = d.corpus_id
-            WHERE r.run_id = %s
-              AND NOT EXISTS (SELECT 1 FROM projection_receipts pr
-                              WHERE pr.projection = %s AND pr.active
-                                AND pr.entity_kind = 'chunk'
-                                AND pr.entity_id = c.chunk_id)
-              LIMIT 1)
-        """,
-        (run_id, projection),
-    ).fetchone()
+    # cache before any query: a cached verdict must decide without the DB
+    # (RECEIPT-VERDICT-STORE-V2 pin). Corpus PRESENT implies run PRESENT.
+    corpus_state = _verdict_get((run_id, projection))
+    if scope == "corpus" or corpus_state == RECEIPT_STATE_PRESENT:
+        if corpus_state is not None:
+            return corpus_state == RECEIPT_STATE_PRESENT
+        doc_ids = []
+    else:
+        run_state = _verdict_get((run_id, projection, "run"))
+        if run_state is not None:
+            return run_state == RECEIPT_STATE_PRESENT
+        doc_ids = _run_doc_ids(conn, run_id)
+        if not doc_ids and corpus_state is not None:
+            return corpus_state == RECEIPT_STATE_PRESENT
+    cache_key = (run_id, projection, "run") if doc_ids else (run_id, projection)
+    if doc_ids:
+        # the SAME want rule the bulk corpus check and the projector use
+        # (projection_want: qdrant wants child chunks only, neo4j all tiers)
+        from polymath_shared.projection_want import missing_chunk_receipts_for_docs
+        row = (not missing_chunk_receipts_for_docs(conn, doc_ids, projection),)
+    else:
+        row = conn.execute(
+            """
+            SELECT NOT EXISTS (
+              SELECT 1 FROM chunks c
+                 JOIN documents d ON d.doc_id = c.doc_id
+                 JOIN runs r ON r.corpus_id = d.corpus_id
+                WHERE r.run_id = %s
+                  AND NOT EXISTS (SELECT 1 FROM projection_receipts pr
+                                  WHERE pr.projection = %s AND pr.active
+                                    AND pr.entity_kind = 'chunk'
+                                    AND pr.entity_id = c.chunk_id)
+                  LIMIT 1)
+            """,
+            (run_id, projection),
+        ).fetchone()
     result = bool(row) and bool(row[0])
     _verdict_put(cache_key,
                  RECEIPT_STATE_PRESENT if result else RECEIPT_STATE_MISSING)
@@ -406,15 +453,19 @@ def _try_advance_one(conn, tid: str, run_id: str, stage: str) -> bool:
             if not _artifacts_present(conn, run_id, pr, art):
                 ok = False
                 break
+            scope = receipt_scope_for(stage)
             for projection in rec:
-                key = (run_id, projection)
+                # corpus scope reads the bulk per-tick verdict (rid, projection);
+                # run scope keeps its own key so a sibling's missing chunks
+                # never veto this document's stages (RUN-SCOPED-RECEIPTS-V1)
+                key = (run_id, projection) if scope == "corpus" else (run_id, projection, "run")
                 state = _verdict_get(key)
                 if state == RECEIPT_STATE_MISSING:
                     ok = False          # stale MISSING delays; never advances
                     break
                 if state is None:
                     present = _receipts_present(
-                        conn, run_id, _corpus_of(conn, run_id), projection)
+                        conn, run_id, _corpus_of(conn, run_id), projection, scope=scope)
                     _verdict_put(key, RECEIPT_STATE_PRESENT
                                  if present else RECEIPT_STATE_MISSING)
                     if not present:

@@ -77,6 +77,8 @@ def replay_facts(conn, doc_id: str, corpus_id: str, profile: dict):
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--corpus", required=True)
+    ap.add_argument("--record-evidence", action="store_true",
+                    help="write eval/v5/release_evidence/exact_replay.json (release_gates EXACT_REPLAY)")
     a = ap.parse_args()
     report = {"corpus": a.corpus, "docs": 0, "replayed_facts": 0,
               "production_facts": 0, "missing": [], "extra": []}
@@ -96,8 +98,25 @@ def main() -> int:
     report["production_facts"] = len(prod)
     report["missing"] = sorted(prod - replayed)[:8]
     report["extra"] = sorted(replayed - prod)[:8]
+    report["missing_count"] = len(prod - replayed)
+    report["extra_count"] = len(replayed - prod)
     report["verdict"] = "IDENTICAL" if replayed == prod else "DIVERGENT"
     print(json.dumps(report, indent=1))
+    if a.record_evidence:
+        # release_gates.gate_exact_replay contract: integer extra/missing +
+        # declared_exceptions (fact ids the contract explicitly tolerates —
+        # none declared: set equality is the claim).
+        import datetime
+        out = Path(__file__).resolve().parent / "release_evidence" / "exact_replay.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps({
+            "corpus": a.corpus, "docs": report["docs"],
+            "replayed_facts": report["replayed_facts"], "production_facts": report["production_facts"],
+            "extra": report["extra_count"], "missing": report["missing_count"],
+            "declared_exceptions": [], "verdict": report["verdict"],
+            "recorded_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+            "producer": "eval/v5/replay_full.py --record-evidence"}, indent=1))
+        print(f"evidence written: {out}")
     return 0 if replayed == prod else 1
 
 

@@ -21,10 +21,11 @@ import json
 import time
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from polymath_shared.db import tx
+from polymath_shared.query_receipts import Timer, record_query_receipt
 from polymath_shared.knowledge_objects.concept import object_name_admissible
 from polymath_shared.query_router import (
     QUERY_ROUTER_VERSION,
@@ -291,8 +292,7 @@ def _concept_graph(conn, scope: "QueryScope",
 
 # ---------------------------------------------------------------- route
 
-@router.post("/ask")
-def ask(req: AskRequest):
+def _ask_impl(req: AskRequest):
     t0 = time.perf_counter()
     question = (req.question or "").strip()
     if not question:
@@ -357,3 +357,29 @@ def ask(req: AskRequest):
             "corpus_map_planning": map_plan["contract"],
         },
     }
+
+
+@router.post("/ask")
+def ask(req: AskRequest, request: Request):
+    """QUERY-RECEIPTS-V1 wrapper: serve exactly as before, then record one
+    durable receipt (latency, scope, verdict, citations, error) — best
+    effort, off the critical path (see polymath_shared.query_receipts)."""
+    scope_corpora = [req.corpus_id] if req.corpus_id else list(req.corpus_ids or [])
+    scope_kind = ("corpus" if req.corpus_id else "corpora" if req.corpus_ids
+                  else "workspace" if req.workspace else "all_authorized" if req.all_authorized else None)
+    client = request.headers.get("user-agent", "")
+    with Timer() as t:
+        try:
+            out = _ask_impl(req)
+        except Exception as exc:  # noqa: BLE001 — record, then re-raise unchanged
+            detail = getattr(exc, "detail", None)
+            record_query_receipt(tx, kind="ask", question=req.question, req=req,
+                                 scope_corpora=scope_corpora, scope_kind=scope_kind,
+                                 wall_ms=(time.perf_counter() - t.t0) * 1000.0,
+                                 error=f"{type(exc).__name__}: {detail if detail is not None else exc}",
+                                 client=client)
+            raise
+    record_query_receipt(tx, kind="ask", question=req.question, req=req,
+                         scope_corpora=scope_corpora, scope_kind=scope_kind,
+                         wall_ms=t.ms, out=out, client=client)
+    return out

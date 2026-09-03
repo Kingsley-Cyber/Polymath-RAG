@@ -65,6 +65,33 @@ def missing_chunk_receipts_for_run(conn, run_id: str,
     return [r[0] for r in rows]
 
 
+def missing_chunk_receipts_for_docs(conn, doc_ids: list[str],
+                                    projection: str) -> list[str]:
+    """RUN-SCOPED-RECEIPTS-V1 (2026-09-03): desired chunk ids of THESE
+    documents lacking an active receipt under the projection. Note that
+    `missing_chunk_receipts_for_run` joins the run's whole CORPUS (every
+    document sharing the corpus) — that is the census barrier's semantics;
+    a document's own downstream stages must be gated on the document."""
+    if not doc_ids:
+        return []
+    tier = chunk_tier_sql(projection)
+    clause = f"AND {tier}" if tier else ""
+    rows = conn.execute(
+        f"""
+        SELECT c.chunk_id FROM chunks c
+         WHERE c.doc_id = ANY(%s) {clause}
+           AND NOT EXISTS (
+               SELECT 1 FROM projection_receipts pr
+                WHERE pr.projection = %s
+                  AND pr.entity_kind = 'chunk'
+                  AND pr.active
+                  AND pr.entity_id = c.chunk_id)
+        """,
+        (list(doc_ids), projection),
+    ).fetchall()
+    return [r[0] for r in rows]
+
+
 def corpora_with_missing_chunk_receipts(conn, projection: str) -> set[str]:
     """Barrier gate (BULK-RECEIPT-COMPLETENESS-V1 shape preserved): one
     set-based anti-join answering ALL corpora at once."""

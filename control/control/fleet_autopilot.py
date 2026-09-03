@@ -35,7 +35,13 @@ log = logging.getLogger("fleet-autopilot")
 
 #: Slots that are always resident: the authority/control loop, the API,
 #: and intake (0.15 GB — uploads must always be accepted).
-ALWAYS = {"control", "orchestrator", "intake", "mcp"}   # mcp: the agent surface (POLYMATH-MCP-V2)
+# QUERY-PATH-RESIDENT-V1 (2026-09-03): the embedder and reranker ARE the
+# query product (PRODUCT-READINESS-GATE checks both /ready; the 2026-09-01
+# lesson: reranker parked -> 97 s queries while health stayed green; today:
+# 25-80 s first query after idle). They stay resident; the budget gate still
+# drops them first if a set does not fit the ceiling.
+ALWAYS = {"control", "orchestrator", "intake", "mcp",
+          "sidecar_embedder", "sidecar_reranker"}
 
 #: lane -> (stages that signal demand, slots the lane needs)
 LANES = [

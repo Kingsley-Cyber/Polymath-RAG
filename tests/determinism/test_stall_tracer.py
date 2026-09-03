@@ -13,8 +13,9 @@ sys.path.insert(0, str(ROOT / "control"))
 import psycopg
 import pytest
 
-from control.stall_tracer import (Stall, collect_stalls, diagnose_leased,
-                                  diagnose_ready, persist_traces)
+from control.stall_tracer import (Stall, _live_sibling_runs, collect_stalls,
+                                  diagnose_leased, diagnose_pending, diagnose_ready,
+                                  persist_traces)
 
 DSN = "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath"
 CORPUS = "census-probe"
@@ -205,3 +206,37 @@ def test_pure_diagnoses_are_deterministic():
     assert diagnose_leased(dict(leased, lease_expires_at=now - timedelta(seconds=1)), now)[0] \
         == "LEASED_EXPIRED_NOT_RELEASED"
     assert Stall("ticket", "t1", now, 200, "X").key == "ticket:t1"
+
+
+def test_corpus_barrier_behind_live_sibling_run_is_not_a_stall(conn, monkeypatch):
+    """STALL-TRACER-V1.2: corpus_summary/vocabulary wait for EVERY document
+    of the corpus to be projected (the receipt predicate is corpus-scoped).
+    While a sibling run is converging with live work the barrier ticket is
+    waiting, not stuck; once the sibling goes quiet it IS traced and names
+    the sibling. Measured 2026-09-03 on the incrementality probe."""
+    import control.tickets as tk
+    monkeypatch.setattr(tk, "_stage_attempt_ok", lambda *a, **k: True)
+    monkeypatch.setattr(tk, "_artifacts_present", lambda *a, **k: True)
+    monkeypatch.setattr(tk, "_receipts_present", lambda *a, **k: False)
+    run_a = _run(conn, status="query_ready")
+    t_barrier = _ticket(conn, run_a, "corpus_summary", "pending")
+    row = {"run_id": run_a, "corpus_id": CORPUS, "stage": "corpus_summary", "ticket_id": t_barrier}
+    # sibling run B with a ticket that changed state 30 s ago -> live work
+    run_b = _run(conn, age_s=30)
+    t_b = _ticket(conn, run_b, "extract", "ready", age_s=30)
+    assert _live_sibling_runs(conn, row, 180) == [run_b]
+    assert diagnose_pending(conn, row, {}, threshold_s=180) is None
+    # sibling goes quiet (no state change for 10 min, nothing leased) -> traced, naming it
+    conn.execute("UPDATE stage_tickets SET updated_at = now() - interval '10 min' WHERE ticket_id = %s", (t_b,))
+    assert _live_sibling_runs(conn, row, 180) == []
+    diag, detail = diagnose_pending(conn, row, {}, threshold_s=180)
+    assert diag == "PENDING_ADVANCE_BLOCKED" and detail["missing"] == "receipts"
+    assert detail["sibling_runs_open"] == [run_b]
+    # a quiet sibling whose ticket is LEASED by a heartbeating worker is live again
+    conn.execute(
+        """INSERT INTO worker_registrations (worker_id, worker_type, pid, host)
+           VALUES ('w-live-sib', 'extract', 4444, 'probe')
+           ON CONFLICT (worker_id) DO UPDATE SET heartbeat_at = now()""")
+    conn.execute("UPDATE stage_tickets SET status = 'leased', lease_owner = 'w-live-sib' WHERE ticket_id = %s", (t_b,))
+    assert _live_sibling_runs(conn, row, 180) == [run_b]
+    assert diagnose_pending(conn, row, {}, threshold_s=180) is None

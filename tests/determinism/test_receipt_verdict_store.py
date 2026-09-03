@@ -73,6 +73,11 @@ def test_cached_missing_blocks_advancement_without_db(monkeypatch):
     import control.tickets as T
 
     _verdict_put((("run_missing", "qdrant")), RECEIPT_STATE_MISSING)
+    # RUN-SCOPED-RECEIPTS-V1: canonicalize is a per-document stage, so its
+    # decision reads the run-scoped key; a corpus-wide MISSING alone no
+    # longer vetoes a document's own stages (that was the B-blocked-by-C
+    # defect). Both keys cached MISSING -> no database, no advancement.
+    _verdict_put((("run_missing", "qdrant", "run")), RECEIPT_STATE_MISSING)
 
     class ExplodingConn:
         def execute(self, *a, **k):
