@@ -18,7 +18,7 @@ from polymath_shared.admission_interpreter import (
     AdmissionResult, UnknownAdmissionContract, interpret_admission,
 )
 from polymath_shared.execution import SEMANTIC_CONTRACT_V1_1, SEMANTIC_CONTRACT_V2
-from polymath_shared.syntax_readiness import RetryableDependencyUnavailable
+from polymath_shared.identity_evidence import RetryableDependencyUnavailable
 
 
 def _syntax(pairs, text):

@@ -74,7 +74,7 @@ MODEL_GRACE_S = 300.0
 QUERY_GRACE_S = 600.0
 
 #: Deterministic drop order when the desired set exceeds the budget.
-DROP_ORDER = ["sidecar_reranker", "sidecar_spacy"]
+DROP_ORDER = ["sidecar_reranker"]
 
 _last_demand: dict[str, float] = {}
 
@@ -182,9 +182,8 @@ def desired_slots(conn, known_slots: set[str]) -> tuple[set[str], dict]:
         # memory conflict; only a resident GLiNER still excludes it,
         # and the budget gate below drops it first if a set does not
         # fit. Measured: queries hung to timeout for a whole ingest.
-        if "sidecar_gliner" not in desired:
-            desired.add("sidecar_reranker")
-            reasons["sidecar_reranker"] = f"query {qage:.0f}s ago"
+        desired.add("sidecar_reranker")
+        reasons["sidecar_reranker"] = f"query {qage:.0f}s ago"
 
     # UI-PRESENCE-WARMTH (2026-08-27): the frontend pulses /ui_pulse
     # while the tab is open, and an open app means a query is coming —
@@ -199,7 +198,7 @@ def desired_slots(conn, known_slots: set[str]) -> tuple[set[str], dict]:
     if uiage is not None and uiage < QUERY_GRACE_S:
         desired.add("sidecar_embedder")
         reasons.setdefault("sidecar_embedder", f"ui open {uiage:.0f}s ago")
-        if "sidecar_gliner" not in desired:
+        if True:   # GLiNER sidecar deleted (ADR-0017); no memory conflict remains
             desired.add("sidecar_reranker")
             reasons.setdefault("sidecar_reranker", f"ui open {uiage:.0f}s ago")
 

@@ -172,9 +172,8 @@ def test_readiness_endpoints_are_structurally_sound():
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[2] / "sidecars"
-    servers = [root / "spacy_runtime" / "server.py",
-               root / "gliner_runtime" / "server.py",
-               root / "embedder" / "server.py"]
+    # spacy/gliner runtimes deleted 2026-09-03 (LLM-DIRECT-CANON, ADR-0017)
+    servers = [root / "embedder" / "server.py"]
     for path in servers:
         tree = ast.parse(path.read_text())
         fn = next((n for n in ast.walk(tree)

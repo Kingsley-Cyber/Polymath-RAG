@@ -175,9 +175,10 @@ def test_admission_gates_stay_closed_class():
 def test_callsite_pin_worker_stores_the_inventory():
     """PIN. A compiler with no ceiling is pointless if the worker still
     calls the capped one."""
-    src = (ROOT / "workers" / "workers" / "extract_worker.py").read_text()
+    src = (ROOT / "workers" / "workers" / "knowledge_artifacts.py").read_text()  # persister moved out of extract_worker 2026-09-03 (ADR-0017)
     start = src.index("def _persist_knowledge_artifacts")
-    body = src[start:src.index("\ndef ", start + 1)]
+    _end = src.find("\ndef ", start + 1)   # the persister is the module's last def
+    body = src[start:_end if _end != -1 else len(src)]
     assert "compile_concept_inventory(" in body, (
         "the worker no longer stores the durable inventory")
     assert "compile_concepts(" not in body, (

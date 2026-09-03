@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import re
 
-from polymath_shared.rulepack.compound_heads import (
+from polymath_shared.compound_heads import (
     compound_head_nouns, is_generic_head)
 
 _TOKEN = re.compile(r"[A-Za-z0-9][A-Za-z0-9\-]*")

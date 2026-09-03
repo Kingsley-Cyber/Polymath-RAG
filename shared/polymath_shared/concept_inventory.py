@@ -57,24 +57,7 @@ _STOP = frozenset(
 )
 # clause/punctuation boundaries for candidate termination
 _BOUNDARY_RE = re.compile(r"[.!?;:,()\"']")
-def _verb_inventory() -> frozenset:
-    try:
-        from polymath_shared.rulepack import load_rule_pack
-        verbs: set = set()
-        for rule in load_rule_pack()["predicates"].values():
-            for v in rule.get("evidence", {}).get("verbs", []):
-                verbs.add(v.lower())
-            for m in rule.get("evidence", {}).get("multiword", []):
-                for w in m.split():
-                    wl = w.lower()
-                    if wl in _STOP:
-                        continue
-                    verbs.add(wl)
-        return frozenset(verbs)
-    except Exception:
-        return frozenset()
-
-_VERBS = _verb_inventory()
+from polymath_shared.verb_inventory import VERBS as _VERBS   # frozen 2026-09-03 (ADR-0017)
 
 # grammatical function-verb closed class for the verbal-fragment guard
 # (versioned policy, NOT a domain ontology; identity normalization is

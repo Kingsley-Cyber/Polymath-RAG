@@ -31,7 +31,7 @@ CLIENTS = [obj for name, obj in vars(C).items()
 
 def test_at_least_the_known_clients_are_discovered():
     names = {c.__name__ for c in CLIENTS}
-    assert {"SidecarClient", "GlinerClient", "EmbedderClient",
+    assert {"SidecarClient", "EmbedderClient",
             "RerankerClient"} <= names, f"client discovery broke: {names}"
 
 

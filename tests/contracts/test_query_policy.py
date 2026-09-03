@@ -93,14 +93,3 @@ def test_entity_span_preserves_raw_label():
     typed = span.model_copy(update={"raw_label": "Company", "pass_kind": "boundary_rescue"})
     assert typed.core_type.value == "Organization"  # canonical never changes
     assert typed.raw_label == "Company"  # provider wording preserved
-
-
-def test_no_provider_aliases_hardcoded_in_deterministic_code():
-    """§1/§9 guard: the compiler and rescue code never branch on provider
-    alias words. Provider wording belongs to the policy data alone."""
-    import workers.rescue as rescue_module
-    import polymath_shared.rulepack  # noqa: F401
-
-    source = Path(rescue_module.__file__).read_text()
-    for alias in ("Company", "Corporation", "Business"):
-        assert alias not in source, f"provider alias {alias!r} hardcoded in rescue code"

@@ -72,12 +72,13 @@ def test_d3_lifecycle_lineage_and_idempotency():
         assert state == "COMPLETE"
 
         # idempotency leg on a retried ticket
-        conn.execute("""INSERT INTO summary_jobs (ticket_id, stage,
-            corpus_id, input_hash, contract_version)
-            VALUES (%s,'DOCUMENT_SUMMARY',%s,%s,'admission-harbor-v2')""",
-            (ticket + "_b", CORPUS, ih))
+        # idempotency leg: a RETRIED ticket is the same content-addressed
+        # ticket re-armed by the controller (P23 SUMMARY-IDEMPOTENCY-V1:
+        # (stage, input_hash) is unique, so no second job row exists)
+        conn.execute("UPDATE summary_jobs SET state='RETRY_WAIT' "
+                     "WHERE ticket_id=%s", (ticket,))
         r2 = run_document_summary_ticket(
-            conn, ticket_id=ticket + "_b", corpus_id=CORPUS,
+            conn, ticket_id=ticket, corpus_id=CORPUS,
             document_id="doc_9", input_hash=ih,
             contract_version="admission-harbor-v2", worker_id="d3w",
             parent_summary_ids=[p1, p2])

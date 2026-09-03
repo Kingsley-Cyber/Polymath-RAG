@@ -119,25 +119,22 @@ def _seed_facts(run: str) -> None:
     """Seed the run's facts through the REAL compiler path (gold inputs,
     no GLiNER needed): entities + facts + evidence rows, exactly as the
     extract stage writes them."""
-    from polymath_shared.contracts import (
-        CoreType,
-        EntityCandidate,
-        EntitySpan,
-        EvidenceSpan,
-        RelationCandidate,
-        ScopeFlags,
-    )
-    from polymath_shared.rulepack import compile_relation, load_rule_pack
-    from polymath_shared.rulepack.compiler import canonical_entity_id
-    from polymath_shared.identity import evidence_id
+    from types import SimpleNamespace
 
-    pack = load_rule_pack()
+    from polymath_shared.identity import entity_id, evidence_id, fact_id
+
+    # LLM-DIRECT-CANON (ADR-0017): facts are hand-built the way llm_direct.materialize
+    # writes them (no rule pack, no compiler); the projection under test only
+    # needs durable rows with stable identities.
+    predicate_of = {"creation": "founded", "usage_application": "uses",
+                    "composition": "component_of", "leadership_governance": "leads",
+                    "dependency": "depends_on"}
     triples = [
-        ("Sarah", "Person", "Polaris", "Organization", "founded", "creation", "found"),
-        ("Polaris", "Organization", "M3 chip", "Technology", "runs on", "usage_application", "run"),
-        ("chip", "Technology", "laptop", "Technology", "component of", "composition", "component"),
-        ("Sarah", "Person", "Polaris", "Organization", "CEO of", "leadership_governance", "serve"),
-        ("laptop", "Technology", "chip", "Technology", "depends on", "dependency", "depend"),
+        ("Sarah", "Person", "Polaris", "Organization", "founded", "creation"),
+        ("Polaris", "Organization", "M3 chip", "Technology", "runs on", "usage_application"),
+        ("chip", "Technology", "laptop", "Technology", "component of", "composition"),
+        ("Sarah", "Person", "Polaris", "Organization", "CEO of", "leadership_governance"),
+        ("laptop", "Technology", "chip", "Technology", "depends on", "dependency"),
     ]
     with tx() as conn:
         doc_id = conn.execute(
@@ -148,29 +145,16 @@ def _seed_facts(run: str) -> None:
             (doc_id,),
         ).fetchone()[0]
 
-        for subj, subj_type, obj, obj_type, ev_text, ev_class, lemma in triples:
-            subject_span = EntitySpan(
-                doc_id=doc_id, chunk_id=chunk, start=0, end=len(subj),
-                text=subj, core_type=CoreType(subj_type), score=0.9, extractor_version="test",
+        for subj, subj_type, obj, obj_type, ev_text, ev_class in triples:
+            predicate = predicate_of[ev_class]
+            subject_id = entity_id(subj_type, subj.lower())
+            object_id = entity_id(obj_type, obj.lower())
+            fact = SimpleNamespace(
+                fact_id=fact_id(predicate, subject_id, object_id, {}),
+                predicate=predicate, subject_id=subject_id, object_id=object_id,
+                qualifiers={}, rule_id="llm_direct", rule_version="attestation-levels-v1",
+                provenance={"source": "integration-test", "evidence_text": ev_text},
             )
-            object_span = EntitySpan(
-                doc_id=doc_id, chunk_id=chunk, start=0, end=len(obj),
-                text=obj, core_type=CoreType(obj_type), score=0.9, extractor_version="test",
-            )
-            evidence = EvidenceSpan(
-                chunk_id=chunk, start=0, end=len(ev_text), text=ev_text,
-                evidence_class=ev_class, trigger_lemma=lemma, score=1.0, extractor_version="test",
-            )
-            candidate = RelationCandidate(
-                evidence=evidence,
-                subject=EntityCandidate(span=subject_span, resolved_entity_id=canonical_entity_id(subject_span.core_type, subj)),
-                object=EntityCandidate(span=object_span, resolved_entity_id=canonical_entity_id(object_span.core_type, obj)),
-                scope=ScopeFlags(),
-                ontology_profile="core",
-            )
-            decision = compile_relation(candidate, None, pack)
-            assert decision.fact is not None, f"{subj} {ev_text} {obj}: {decision.reason}"
-            fact = decision.fact
             conn.execute(
                 "INSERT INTO entities (entity_id, core_type, normalized_surface) VALUES (%s,%s,%s) ON CONFLICT DO NOTHING",
                 (fact.subject_id, subj_type, subj),

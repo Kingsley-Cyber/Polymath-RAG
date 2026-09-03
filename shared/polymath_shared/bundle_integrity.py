@@ -57,9 +57,11 @@ PRODUCTION_DIRS = ("workers", "control", "orchestrator", "sidecars")
 #: Every file whose bytes can change what the system means.
 BUNDLE_MEMBERS = (
     "shared/polymath_shared/entity_admission_policy.yaml",
-    "shared/polymath_shared/fact_admission_policy.yaml",
     "shared/polymath_shared/entity_knowledge_admission.py",
-    "shared/polymath_shared/fact_admission.py",
+    # LLM-DIRECT-CANON (ADR-0017): the gate is the sole durability authority
+    # and llm_direct.materialize the only fact writer.
+    "shared/polymath_shared/llm_extraction/gate.py",
+    "workers/workers/llm_direct.py",
     "shared/polymath_shared/identity_allocation.py",
     "shared/polymath_shared/entity_harbor.py",
     "shared/polymath_shared/admission_interpreter.py",
@@ -133,7 +135,6 @@ def write_lock(label: str = "v5-production-001") -> dict:
         "members": b["members"],
         "entity_policy": "E1-E7",
         "fact_policy": "F1-F8",
-        "predicate_pack": _declared_rule_pack() or "unknown",
     }
     LOCK.parent.mkdir(parents=True, exist_ok=True)
     LOCK.write_text(json.dumps(lock, indent=1) + "\n")
@@ -164,8 +165,8 @@ def _production_callers(module: str) -> list[str]:
 
 def call_graph_census() -> dict[str, list[str]]:
     return {
-        "entity_admission": _production_callers("entity_knowledge_admission"),
-        "fact_admission": _production_callers("fact_admission"),
+        # LLM-DIRECT-CANON: the extraction gate IS the admission boundary.
+        "extraction_gate": _production_callers("llm_extraction.gate"),
     }
 
 
@@ -173,33 +174,6 @@ def call_graph_census() -> dict[str, list[str]]:
 # configuration coherence
 # ---------------------------------------------------------------------------
 
-def _declared_rule_pack() -> str | None:
-    doc = ROOT / "docs" / "SEMANTIC_CONTRACTS.md"
-    if not doc.exists():
-        return None
-    m = re.search(r"core-predicates-v([0-9.]+)\.yaml", doc.read_text())
-    return m.group(1) if m else None
-
-
-def _loaded_rule_pack() -> str | None:
-    """The rule pack the runtime actually defaults to.
-
-    Read by locating the field and taking the first `default="..."` after
-    it, rather than by one regex spanning both. A single pattern had to
-    skip an intervening comment, the comment contained parentheses, the
-    character class stopped at the first one, and the function returned
-    None -- which made the coherence check pass by ACCIDENT. A drift
-    detector that fails open is worse than none, because it is believed.
-    """
-    src_path = ROOT / "shared" / "polymath_shared" / "settings.py"
-    if not src_path.exists():
-        return None
-    text = src_path.read_text()
-    at = text.find("rule_pack_version")
-    if at < 0:
-        return None
-    m = re.search(r'default\s*=\s*"([^"]+)"', text[at:at + 2000])
-    return m.group(1) if m else None
 
 
 # ---------------------------------------------------------------------------
@@ -242,14 +216,7 @@ def validate(*, require_activation: bool | None = None) -> Report:
         rep.add(FATAL, "bundle_members",
                 f"declared semantic authorities absent: {current['missing']}")
 
-    declared, loaded = _declared_rule_pack(), _loaded_rule_pack()
-    if declared and loaded and declared != loaded:
-        rep.add(FATAL, "rule_pack",
-                f"documentation declares core-predicates-v{declared} "
-                f"byte-frozen; runtime loads v{loaded}. This exact drift "
-                f"left frame arbitration inert in production.")
-    elif declared:
-        rep.add(OK, "rule_pack", f"declared and loaded agree: v{declared}")
+    # (rule-pack coherence check retired with the pack — ADR-0017, 2026-09-03)
 
     census = call_graph_census()
     if require_activation is None:

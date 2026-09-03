@@ -45,8 +45,8 @@ def test_ontology_edit_moves_the_bundle(monkeypatch, tmp_path):
     """The ontology yaml escaped every pre-existing fence (measured).
     The file-hash layer must catch it."""
     before = compute_execution_bundle()["ontology_file"]
-    real = ROOT / "shared" / "polymath_shared" / "rulepack" / \
-        "scientific-predicate-ontology-v2.yaml"
+    real = ROOT / "config" / "ontology" / \
+        "scientific-predicate-ontology-v2.yaml"   # relocated 2026-09-03 (rulepack deleted)
     original = real.read_bytes()
     try:
         real.write_bytes(original + b"\n# fence-probe\n")
@@ -59,13 +59,13 @@ def test_ontology_edit_moves_the_bundle(monkeypatch, tmp_path):
 
 def test_config_drift_moves_the_bundle(monkeypatch):
     base = compute_execution_bundle()["config"]
-    monkeypatch.setenv("POLYMATH_RESCUE", "off")
+    monkeypatch.setenv("POLYMATH_EXTRACTION_ATTESTATION", "strict")
     drifted = config_fingerprint()
-    assert drifted["POLYMATH_RESCUE"] == "off"
+    assert drifted["POLYMATH_EXTRACTION_ATTESTATION"] == "strict"
     # the bundle dict itself embeds config; simulate via hash comparison
     h1 = json.dumps(base, sort_keys=True)
     h2 = json.dumps(drifted, sort_keys=True)
-    assert h1 != h2 or base.get("POLYMATH_RESCUE") == "off"
+    assert h1 != h2 or base.get("POLYMATH_EXTRACTION_ATTESTATION") == "strict"
 
 
 def test_fast_fingerprint_detects_touched_source(tmp_path):
@@ -85,8 +85,8 @@ def test_fast_fingerprint_ignores_content_preserving_touch():
     the ontology yaml byte-identically) quarantined the entire fleet as
     BUNDLE_STALE_CODE_DRIFT under the V1 mtime fingerprint, and the
     control plane idled for hours."""
-    real = ROOT / "shared" / "polymath_shared" / "rulepack" / \
-        "scientific-predicate-ontology-v2.yaml"
+    real = ROOT / "config" / "ontology" / \
+        "scientific-predicate-ontology-v2.yaml"   # relocated 2026-09-03 (rulepack deleted)
     fp_before = fast_code_fingerprint()
     original = real.read_bytes()
     real.write_bytes(original)          # same bytes, new mtime_ns

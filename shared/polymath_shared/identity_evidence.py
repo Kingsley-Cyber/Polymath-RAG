@@ -62,6 +62,12 @@ _ACRONYM_RE = re.compile(r"^[A-Z][A-Z0-9]{1,}$")
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z]*\d[A-Za-z0-9.\-]*$")
 
 
+class RetryableDependencyUnavailable(Exception):
+    """A required dependency is momentarily unavailable; the stage may be
+    retried without spending an attempt (moved here from the retired
+    syntax_readiness module — LLM-DIRECT-CANON, ADR-0017)."""
+
+
 def _content(tokens: list[dict]) -> list[dict]:
     return [t for t in tokens if t.get("pos") not in {"PUNCT", "SPACE"}]
 
@@ -95,7 +101,6 @@ def identity_evidence(surface: str, *, tokens: list[dict] | None = None,
     capitalization that title-casing could not have produced (`PostgreSQL`).
     """
     if require_syntax and not tokens:
-        from polymath_shared.syntax_readiness import RetryableDependencyUnavailable
 
         raise RetryableDependencyUnavailable(
             f"identity_evidence({surface!r}) under admission-harbor-v2 requires "

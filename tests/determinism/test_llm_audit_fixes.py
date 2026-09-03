@@ -64,14 +64,6 @@ def _packet(entities=None, relations=None, nid="n") -> str:
 # gate (#1, #9, #19, #23, #24, #20)
 # ---------------------------------------------------------------------------
 
-def test_1_endpoint_mentions_carry_core_label_the_worker_accepts() -> None:
-    from workers.extract_worker import _map_label, _pack
-    _, p = sanitize(_packet(), {"n"})
-    out = validate_and_normalize(p, {"n": [ChunkView("c", CH)]})
-    obj = [e for e in out.entities_by_chunk["c"] if e["text"] == "VPN tunnel errors"]
-    assert obj and obj[0]["label"] == "Concept" and obj[0]["raw_type"] == "VPN tunnel errors"
-    for e in out.entities_by_chunk["c"]:
-        assert _map_label(e["label"], _pack()) is not None, e
 
 
 def test_9_attestation_is_token_boundary_aligned() -> None:
@@ -339,20 +331,6 @@ def test_30_from_config_ignores_unknown_keys() -> None:
 # extract_worker (#10)
 # ---------------------------------------------------------------------------
 
-def test_10_multi_sentence_quote_is_clipped_and_recorded() -> None:
-    from polymath_shared.contracts import EvidenceSpan
-    from workers.extract_worker import _clip_to_sentences, _sentences_of, _slices
-    txt = "FortiGate reported errors. The SOC verified the host."
-    sp = EvidenceSpan(chunk_id="c", start=0, end=len(txt), text=txt,
-                      evidence_class="llm_relation", score=1.0, extractor_version="v")
-    clipped, audit = _clip_to_sentences([sp], txt)
-    assert [c.text for c in clipped] == ["FortiGate reported errors.",
-                                         "The SOC verified the host."]
-    assert all(txt[c.start:c.end] == c.text for c in clipped)
-    assert audit and audit[0]["reason"] == "EVIDENCE_CROSSES_SENTENCE"
-    assert sum(len(s.evidence) for s in _slices(_sentences_of(txt), [], clipped)) == 2
-    single = sp.model_copy(update={"end": 26, "text": txt[:26]})
-    assert _clip_to_sentences([single], txt) == ([single], [])
 
 
 # ---------------------------------------------------------------------------

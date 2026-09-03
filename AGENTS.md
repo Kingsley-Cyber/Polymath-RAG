@@ -170,17 +170,16 @@ polymath-v4/
 │   ├── contracts.py                   CoreType, EntitySpan, EvidenceSpan, …
 │   ├── entity_knowledge_admission.py  E1–E7  ← IDENTITY authority
 │   ├── entity_admission_policy.yaml   E-gate policy (v2)
-│   ├── fact_admission.py              F1–F8  ← TRUTH authority
-│   ├── fact_admission_policy.yaml     F-gate policy
+│   ├── llm_extraction/gate.py         ← TRUTH authority (LLM-DIRECT-CANON, ADR-0017)
+│   ├── llm_extraction/contract.py     schema + ontology the LLM extracts against
 │   ├── identity_allocation.py         durable-id allocation, canonical_type()
 │   ├── entity_harbor.py               graph eligibility
 │   ├── admission_interpreter.py       MENTION_ONLY / scoped / global
 │   ├── raw_evidence.py                L1–L4 ledger row builders
 │   ├── retrieval.py                   FAST/HYBRID/GRAPH lanes
-│   └── rulepack/                      ← PREDICATE authority
-│       ├── core-predicates-v1.3.0.yaml   28 predicates (LOADED VERSION)
-│       ├── compiler.py                   compile_relation, _trigger_matches
-│       └── role_assignment.py            subject/object binding
+│   ├── compound_heads.py              compound head nouns (config/ontology yaml)
+│   └── verb_inventory.py              frozen verb set for concept termination
+│   (rulepack/ DELETED 2026-09-03 — the LLM proposes predicates; the gate attests)
 │
 ├── resources/
 │   ├── predicates/trigger_allowlist.yaml  ← TRIGGER authority (allow/deny/suggested)
@@ -188,7 +187,7 @@ polymath-v4/
 │
 ├── scripts/
 │   ├── boot_polymath.sh               THE boot path (integrity gate → supervisor)
-│   ├── compile_predicate_rules.py     gate 1-5; gate 5 = suggestion-only
+│   ├── reingest_corpus.py             supersede + re-arm a corpus under a new contract
 │   └── ingest.py                      manifest-driven ingestion CLI
 │
 ├── control/control/
@@ -199,17 +198,16 @@ polymath-v4/
 │
 ├── workers/workers/                   ← DURABLE STAGES, one per pipeline step
 │   ├── extract_worker.py              THE pipeline spine (see 5.1)
-│   ├── entity_admission_stage.py      calls E1–E7, emits endpoint verdicts
-│   ├── fact_admission_stage.py        calls F1–F8, gates the assertion
-│   ├── candidates.py                  relation candidate generation
-│   ├── rescue.py                      span widening hypotheses
+│   ├── llm_provider.py                lanes, receipts, run_proposals (gate inside)
+│   ├── llm_direct.py                  the ONLY fact writer (materialize)
+│   ├── knowledge_artifacts.py         Procedure/Concept persister (compile_objects)
 │   └── project_{neo4j,qdrant,canonical}_worker.py
 │
 ├── sidecars/                          ← MODELS. Untrusted evidence only.
-│   ├── gliner_runtime/                candidate spans      (port 8740)
 │   ├── embedder/                      vectors              (8742)
 │   ├── reranker/                      retrieval rerank     (8743)
-│   └── spacy_runtime/                 syntax evidence      (8744)
+│   └── local_extractor/               local LLM lane       (8755)
+│   (gliner_runtime/ + spacy_runtime/ DELETED 2026-09-03 — ADR-0017)
 │
 ├── stores/postgres/migrations/        0001…0022 (0022 = entity decisions)
 │

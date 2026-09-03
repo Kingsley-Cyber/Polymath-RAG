@@ -32,7 +32,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 #: visible only in the server log.
 _ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 
-
 class PostgresSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="POLYMATH_PG_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
     dsn: str = Field(
@@ -40,16 +39,12 @@ class PostgresSettings(BaseSettings):
         description="libpq DSN for the workflow authority",
     )
 
-
 _LOOPBACK_HOSTS = ("127.0.0.1", "localhost", "::1")
-
 
 class SidecarSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
-    gliner_url: str = Field(default="http://127.0.0.1:8740", description="GLiNER two-pass runtime")
     embedder_url: str = Field(default="http://127.0.0.1:8742", description="Embedder sidecar")
     reranker_url: str = Field(default="http://127.0.0.1:8743", description="Reranker sidecar")
-    spacy_url: str = Field(default="http://127.0.0.1:8744", description="spaCy syntax sidecar (syntax-evidence-v1)")
     local_llm_provider: str = Field(
         default="disabled",
         description="Future LOCAL-LLM-EXTRACTION-V1 connection provider: "
@@ -92,14 +87,6 @@ class SidecarSettings(BaseSettings):
                     "limiter lane. The 300 KB owner boundary applies to "
                     "every endpoint here — extras widen throughput, never "
                     "eligibility.",
-    )
-    syntax_provider: str = Field(
-        default="disabled",
-        description="Optional syntax-evidence lane behind the extract "
-                    "worker's GLiNER pass: 'disabled' (production default, "
-                    "byte-identical behavior) or 'spacy'. When 'spacy', a "
-                    "missing syntax sidecar fails LOUDLY — no silent "
-                    "fallback (SYNTAX-BOOTSTRAP).",
     )
     g3_reranker: bool = Field(
         default=True,
@@ -151,7 +138,6 @@ class SidecarSettings(BaseSettings):
             )
         return self
 
-
 class WorkerSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="POLYMATH_WORKER_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
     poll_interval_s: float = Field(default=2.0, description="Outbox poll interval")
@@ -162,18 +148,11 @@ class WorkerSettings(BaseSettings):
                     "parallel across the pinned lane group. Was read via getattr with a "
                     "hard 5 and never declared (2026-09-02) — size it to the pin")
     claim_ttl_s: int = Field(default=300, description="Stage lease TTL")
-    evidence_proposal_mode: str = Field(
-        default="lexical",
-        description="ADR-0008: 'lexical' (pass 2 abstains) or 'hybrid' "
-                    "(GLiNER evidence proposals merge with lexical anchors)",
-    )
     extraction_provider: str = Field(
         default="llm_live",
         description="LLM-DIRECT-CANON (ADR-0017, 2026-09-03): 'llm_live' is the "
-                    "canonical and default extraction path. Historical: 'gliner' (span tagger, "
-                    "byte-identical behavior), 'llm_shadow' (LLM proposals "
-                    "recorded, nothing admitted), or 'llm_live' (LLM "
-                    "proposals enter the unchanged admission pipeline).",
+                    "only extraction path; the GLiNER/spaCy span-tagger code was "
+                    "deleted on 2026-09-03.",
     )
     enrichment_auto: bool = Field(
         default=True,
@@ -227,24 +206,6 @@ class WorkerSettings(BaseSettings):
                     "for speed). Builder balances to near-uniform buckets "
                     "under this cap; local 15K-token inputs measured clean.",
     )
-    rule_pack_version: str = Field(
-        # SPOKEN-RELATION-ADAPTER-V1: docs/SEMANTIC_CONTRACTS.md declares
-        # core-predicates-v1.5.0 (`created` object signature gains
-        # Technology — the creation class already accepted the typed
-        # pair via `developed`; shadow-qualified 18/18 by
-        # eval/v5/spoken_adapter_shadow.py with zero negative accepts).
-        # Earlier: v1.4.0 (SCIENTIFIC-KAG-V1), v1.3.0
-        # byte-frozen. Shipping 1.2.0 left I4R-D grammatical frame
-        # arbitration INERT in production while the documentation said it
-        # was enforced -- the drift that SEMANTIC-RUNTIME-INTEGRITY-V1
-        # now makes fatal at boot. 1.3.0 adds `frames:` to has_role and
-        # leads; both are NARROWING (they require specific dependency
-        # patterns), so the change can only refuse, never admit more.
-        default="1.5.0",
-        description="Deterministic rule pack version for extraction. "
-                    "1.0.1 = frozen Q1 production baseline; 1.1.0 = "
-                    "candidate realistic-prose baseline (Q1-R).",
-    )
     chunker: str = Field(
         default="tier_v3",
         validation_alias=AliasChoices("chunker", "POLYMATH_CHUNKER"),
@@ -255,7 +216,6 @@ class WorkerSettings(BaseSettings):
                     "offsets); legacy_v1 (pre-Phase-0 baseline); "
                     "semantic_v2 (retired qualification candidate).",
     )
-
 
 class ControlSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="POLYMATH_CONTROL_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
@@ -281,7 +241,6 @@ class ControlSettings(BaseSettings):
                     "in /semantic_readiness. Owner sets it from measured runs.",
     )
 
-
 class StoreSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
     qdrant_url: str = Field(default="http://127.0.0.1:6334", description="Qdrant projection store")
@@ -299,37 +258,6 @@ class StoreSettings(BaseSettings):
         ),
     )
 
-
-class RescueSettings(BaseSettings):
-    """I4R rescue policy (POLYMATH_RESCUE). 'off' (production default)
-    is byte-identical extraction. 'on' enables every stage; a comma list
-    enables a subset: boundary, missing_argument, type_reconciliation,
-    frames. Any enabled stage requires POLYMATH_SYNTAX_PROVIDER=spacy
-    and fails loudly when syntax evidence is unavailable."""
-
-    RESCUE_STAGES: ClassVar[tuple[str, ...]] = (
-        "boundary", "missing_argument", "type_reconciliation", "frames",
-    )
-
-    model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
-    rescue: str = Field(default="off", description="Rescue policy stages (I4R)")
-
-    def enabled_stages(self) -> tuple[str, ...]:
-        value = self.rescue.strip()
-        if value == "off":
-            return ()
-        if value == "on":
-            return self.RESCUE_STAGES
-        stages = tuple(s.strip() for s in value.split(",") if s.strip())
-        unknown = [s for s in stages if s not in self.RESCUE_STAGES]
-        if unknown:
-            raise ValueError(f"unknown POLYMATH_RESCUE stages: {unknown}")
-        return stages
-
-    def stage_enabled(self, stage: str) -> bool:
-        return stage in self.enabled_stages()
-
-
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
     env: str = Field(default="local", description="local | prod")
@@ -339,11 +267,7 @@ class Settings(BaseSettings):
     sidecars: SidecarSettings = Field(default_factory=SidecarSettings)
     worker: WorkerSettings = Field(default_factory=WorkerSettings)
     # Field name deliberately != "rescue": POLYMATH_RESCUE belongs to the
-    # nested RescueSettings field, and a colliding outer name would make
-    # pydantic-settings JSON-decode the stage string as a nested model.
-    rescue_policy: RescueSettings = Field(default_factory=RescueSettings)
     control: ControlSettings = Field(default_factory=ControlSettings)
-
 
 @lru_cache
 def get_settings() -> Settings:

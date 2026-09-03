@@ -150,21 +150,6 @@ def test_the_gate_covers_the_whole_closed_class():
         "pronouns it forgot to list")
 
 
-def test_endpoint_gate_enforces_even_in_shadow():
-    """The chain is shadow-by-default, which is right for gates still
-    being qualified and wrong for endpoint eligibility."""
-    from workers.fact_admission_stage import ALWAYS_ENFORCED_GATES
-
-    assert "F3_ENDPOINTS" in ALWAYS_ENFORCED_GATES, (
-        "endpoint eligibility is advisory again; ineligible endpoints "
-        "will be written as durable facts while the chain records that "
-        "it refused them")
-    stage_src = (ROOT / "workers" / "workers"
-                 / "fact_admission_stage.py").read_text()
-    assert "if hard_refusal:\n            return False" in stage_src, (
-        "a hard refusal no longer withholds the assertion")
-
-
 @pytest.mark.skip(reason="historical GLiREL-era relation_candidates pin — LLM-DIRECT-CANON (ADR-0017); the llm-direct path writes no relation candidates")
 @pg_required
 def test_retirement_preserved_raw_observations_and_dispositions():

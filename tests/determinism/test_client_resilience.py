@@ -147,11 +147,10 @@ def test_inference_clients_are_connect_fast_and_read_patient():
     the ticket. Connect stays short so a dead sidecar is still caught
     immediately; only the read phase is patient."""
     from polymath_shared.clients import (
-        INFERENCE_READ_TIMEOUT_S, EmbedderClient, GlinerClient,
-        SpacySyntaxClient,
+        INFERENCE_READ_TIMEOUT_S, EmbedderClient,
     )
     assert INFERENCE_READ_TIMEOUT_S >= 120.0
-    for factory in (EmbedderClient, GlinerClient, SpacySyntaxClient):
+    for factory in (EmbedderClient,):   # GLiNER/spaCy clients retired (ADR-0017)
         c = factory()
         try:
             assert c._timeout.read == INFERENCE_READ_TIMEOUT_S

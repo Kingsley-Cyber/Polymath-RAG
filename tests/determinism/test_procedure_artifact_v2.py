@@ -242,9 +242,10 @@ def test_callsite_pin_worker_persists_every_task():
     """PIN. A compiler that can emit three artifacts is worthless if the
     worker still writes one. The v1 call site assigned
     `counts["procedures"] = 1` — a literal that cannot count."""
-    src = (ROOT / "workers" / "workers" / "extract_worker.py").read_text()
+    src = (ROOT / "workers" / "workers" / "knowledge_artifacts.py").read_text()  # persister moved out of extract_worker 2026-09-03 (ADR-0017)
     start = src.index("def _persist_knowledge_artifacts")
-    body = src[start:src.index("\ndef ", start + 1)]
+    _end = src.find("\ndef ", start + 1)   # the persister is the module's last def
+    body = src[start:_end if _end != -1 else len(src)]
     assert "for proc in compile_procedures(" in body, (
         "the worker no longer iterates tasks — only one procedure "
         "artifact per document can reach the ledger")

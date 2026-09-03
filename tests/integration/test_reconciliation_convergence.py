@@ -217,7 +217,7 @@ def test_successor_gets_fresh_failure_budget(conn) -> None:
     tag = uuid.uuid4().hex[:8]
     current = default_execution_contract()
     old_pin = dict(current)
-    old_pin["rule_pack"] = "budget-test-old-rules"   # extract regenerates
+    old_pin["semantic_bundle"] = "budget-test-old-bundle"   # extract regenerates
     corpus, old_run = _mk_completed_run(conn, tag, old_pin)
     # the old run's extract ticket: strike budget EXHAUSTED
     conn.execute(
@@ -242,7 +242,7 @@ def test_stale_stage_regenerates_instead_of_carrying(conn) -> None:
     tag = uuid.uuid4().hex[:8]
     current = default_execution_contract()
     old_pin = dict(current)
-    old_pin["rule_pack"] = "reconv-old-rules"   # extract-family goes stale
+    old_pin["semantic_bundle"] = "reconv-old-bundle"   # extract-family goes stale
     corpus, old_run = _mk_completed_run(conn, tag, old_pin)
 
     out = reconcile_contract_drift(conn)

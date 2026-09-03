@@ -89,6 +89,36 @@ Re-extraction never deletes: identities are content hashes, replays write 0 rows
    are down already; it may still serve the sibling repo's embed/rerank —
    not touched here).
 
+## Phase B — GENERATION-SWAP-V1 (blue/green re-ingest; owner 2026-09-03)
+
+Contract: a contract change never takes a corpus offline. Today
+`reingest_corpus.py --execute` supersedes the run and intake purges the old
+generation's chunk rows, so `/chat` answers 502 `corpus_not_ready` until the
+successor converges (P6 measured: minutes for a study deck, hours for a book).
+
+Design (each step a test, then the live drill on cysa-study-v1 with a
+`/chat` watch loop that must never see a 502):
+1. Migration 0050: `chunks.generation_run_id text` (+ index), stamped by
+   intake; NULL = legacy generation (visible).
+2. `reconciliation.mint_shadow_successor`: the successor is minted with
+   `runs.metadata.blue_green = true` and the predecessor STAYS `query_ready`;
+   intake skips the GENERATION-PURGE for blue/green runs.
+3. Visibility filter (one helper, applied in `_resolve_chunk`, the FAST
+   lane SQL, the HYBRID lane SQL and `retrieve._fetch_*_rows`): a chunk is
+   servable iff its generation run is NULL, `query_ready` or `superseded`
+   — never while the generation is still in flight.
+4. Swap hook in `scheduler.apply_promotions` after the successor becomes
+   `query_ready`: supersede the predecessor (+ its open tickets) in the same
+   transaction, then purge the old generation's chunks
+   (`chunk_contract_version IS DISTINCT FROM <new>` for the run's docs) AND
+   sweep what derives from them — Neo4j Chunk/Evidence nodes with no
+   Postgres row, `concept_artifacts`/`procedure_artifacts` whose
+   `supporting_chunks` no longer exist (the persister becomes an upsert
+   that refreshes `supporting_chunks`, so the successor's `compile_objects`
+   re-grounds them). These two sweeps close the post-P6 lifecycle findings
+   (work-log item 12).
+5. `reingest_corpus.py --blue-green` (dry-run default) drives it.
+
 ## Phase receipts (appended as they land)
 - 2026-09-03 P0–P2 landed (4a4b67d, a611961): ADR-0017, architecture canon
   section, CLAUDE.md law, `llm_live` default; ATTESTATION-LEVELS-V1 with
@@ -121,3 +151,9 @@ Re-extraction never deletes: identities are content hashes, replays write 0 rows
 - 2026-09-03 P6 running. Lesson: `reingest_corpus` takes the corpus offline
   (502 corpus_not_ready) until convergence because intake purges the old
   generation. Next slice: BLUE/GREEN RE-INGEST (shadow corpus id + alias swap).
+- 2026-09-03 P4 FINAL (owner: "delete the retired code"): the retired path is
+  DELETED, not parked — see work-log 2026-09-03-llm-direct-canon item 12
+  (RETIREMENT-DELETE-V1): extract worker 1,986 → 324 lines, 52 files
+  removed, 20 relocated, +393 / −17,752, semantic bundle lock re-frozen
+  `v5-production-002-llm-direct`, census now asks for a production caller
+  of the GATE. Phase B (GENERATION-SWAP-V1) designed above; execution next.

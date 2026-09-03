@@ -32,7 +32,7 @@ sys.path.insert(0, str(ROOT / "shared"))
 from polymath_shared import runtime_budget as rb  # noqa: E402
 
 EMBEDDER = ROOT / "sidecars" / "embedder" / "server.py"
-GLINER = ROOT / "sidecars" / "gliner_runtime" / "server.py"
+# (GLiNER sidecar deleted 2026-09-03 — LLM-DIRECT-CANON, ADR-0017)
 METAL = ROOT / "shared" / "polymath_shared" / "metal.py"
 
 
@@ -210,7 +210,7 @@ def test_every_gpu_sidecar_uses_the_shared_discipline():
     pool release, which is exactly how GLiNER came to 500 on
     /infer_batch after the embedder had already been fixed.
     """
-    for path in (EMBEDDER, GLINER):
+    for path in (EMBEDDER,):
         src = path.read_text()
         assert "run_adaptive" in src, (
             f"{path.parent.name} does not route inference through "
