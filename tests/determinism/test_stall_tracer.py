@@ -256,11 +256,14 @@ def test_ready_queued_behind_a_saturated_lane_is_not_a_stall(conn):
     run_a = _run(conn); run_b = _run(conn)
     conn.execute(
         """INSERT INTO worker_registrations (worker_id, worker_type, pid, host)
-           VALUES ('w-busy-1', 'extract', 5151, 'probe')
+           VALUES ('w-busy-1', 'extract-probe', 5151, 'probe')
            ON CONFLICT (worker_id) DO UPDATE SET heartbeat_at = now()""")
     _ticket(conn, run_a, "intake", "done"); _ticket(conn, run_b, "intake", "done")
     t_busy = _ticket(conn, run_a, "extract", "leased", lease_owner="w-busy-1")
-    conn.execute("UPDATE stage_tickets SET lease_expires_at = now() + interval '10 min' WHERE ticket_id = %s", (t_busy,))
+    # the probe holder is the stage's most recent lease -> capacity is judged by ITS worker type,
+    # so live-fleet registrations (and their post-restart ghosts) cannot skew the probe
+    conn.execute("UPDATE stage_tickets SET lease_expires_at = now() + interval '10 min', updated_at = now() "
+                 "WHERE ticket_id = %s", (t_busy,))
     t_queued = _ticket(conn, run_b, "extract", "ready")
     conn.execute(
         """INSERT INTO outbox_events (run_id, event_type, payload, idempotency_key)
@@ -280,11 +283,12 @@ def test_dependents_of_a_queued_predecessor_are_not_traced(conn):
     run_a = _run(conn); run_b = _run(conn)
     conn.execute(
         """INSERT INTO worker_registrations (worker_id, worker_type, pid, host)
-           VALUES ('w-busy-2', 'extract', 5252, 'probe')
+           VALUES ('w-busy-2', 'extract-probe', 5252, 'probe')
            ON CONFLICT (worker_id) DO UPDATE SET heartbeat_at = now()""")
     _ticket(conn, run_a, "intake", "done"); _ticket(conn, run_b, "intake", "done")
     t_busy = _ticket(conn, run_a, "extract", "leased", lease_owner="w-busy-2")
-    conn.execute("UPDATE stage_tickets SET lease_expires_at = now() + interval '10 min' WHERE ticket_id = %s", (t_busy,))
+    conn.execute("UPDATE stage_tickets SET lease_expires_at = now() + interval '10 min', updated_at = now() "
+                 "WHERE ticket_id = %s", (t_busy,))
     t_queued = _ticket(conn, run_b, "extract", "ready")
     conn.execute(
         """INSERT INTO outbox_events (run_id, event_type, payload, idempotency_key)
