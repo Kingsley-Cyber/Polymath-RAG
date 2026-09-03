@@ -125,7 +125,11 @@ def main() -> int:
         EVIDENCE.parent.mkdir(parents=True, exist_ok=True)
         EVIDENCE.write_text(json.dumps(summary, indent=1)); print(f"SEALED evidence written: {EVIDENCE}")
     else:
-        out = HERE / f"DEV-RESULTS-{dt.date.today().isoformat()}.json"
+        # dev results are working files, never repository content (the repo
+        # guard declares every tracked file; a dated result would churn it)
+        out_dir = pathlib.Path(os.environ.get("POLYMATH_HOLDOUT_OUT", "/private/tmp/polymath_fleet/holdout"))
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out = out_dir / f"DEV-RESULTS-{dt.datetime.now().strftime('%Y-%m-%dT%H%M%S')}.json"
         out.write_text(json.dumps(summary, indent=1)); print(f"dev results (NOT evidence): {out}")
     return 0 if (sup >= 90 and wrong <= 5 and unexplained == 0 and all(v == 0 for v in zero.values())) else 1
 
