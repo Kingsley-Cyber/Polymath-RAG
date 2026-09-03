@@ -114,14 +114,16 @@ def process_event(conn: Connection, event: dict) -> None:
         chunker_provider = get_settings().worker.chunker
         if chunker_provider not in ("legacy_v1", "semantic_v2", "tier_v3"):
             raise ValueError(f"unknown chunking provider: {chunker_provider}")
-        layout_regions: list = []      # legacy-only projection (LAYOUT-EVIDENCE-V1)
+        layout_regions: list = []      # LAYOUT-EVIDENCE-V1 (legacy) + CHUNK-GAP-ACCOUNTING-V1 (tier_v3)
         if chunker_provider == "tier_v3":
             # TIER-CHUNKER-V3 (chunk-structure-v3, latent plan D15
             # Phase 0): heading-bounded parents carrying REAL section
             # text + real heading_path, byte-exact offsets throughout.
-            from workers.tier_chunker import tier_chunk_rows
+            from workers.tier_chunker import tier_chunk_layout
 
-            chunks = tier_chunk_rows(text, doc_id)
+            # CHUNK-GAP-ACCOUNTING-V1: dropped stubs / heading lines are
+            # layout evidence, persisted below with the legacy headings
+            chunks, layout_regions = tier_chunk_layout(text, doc_id)
         elif chunker_provider == "semantic_v2":
             # SEMANTIC-CHUNKING-V2 (chunk-contract-v2): structure-
             # constrained semantic chunking; headings NEVER enter chunk

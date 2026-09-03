@@ -195,20 +195,40 @@ def test_child_spans_have_no_large_unexplained_gaps():
     whitespace) is a literal-fidelity defect."""
     conn = _pg()
     with conn:
-        worst = conn.execute(
+        gaps = conn.execute(
             """WITH ordered AS (
                  SELECT doc_id, char_start, char_end,
                         lag(char_end) OVER (PARTITION BY doc_id
                                             ORDER BY char_start) AS prev_end
                    FROM chunks WHERE tier='child')
-               SELECT coalesce(max(char_start - prev_end), 0)
+               SELECT doc_id, prev_end, char_start
                  FROM ordered WHERE prev_end IS NOT NULL
-                  AND char_start > prev_end""").fetchone()[0]
+                  AND char_start - prev_end > 128""").fetchall()
+        # CHUNK-GAP-ACCOUNTING-V1 (2026-09-03): a gap is UNEXPLAINED only where
+        # no layout evidence covers it. The tier chunker drops title pages,
+        # part dividers and heading lines by doctrine and now records every
+        # such span in document_layout (heading / dropped_stub /
+        # dropped_empty); those bytes are accounted for, not lost.
+        worst = 0
+        for doc_id, a, b in gaps:
+            regions = conn.execute(
+                """SELECT char_start, char_end FROM document_layout
+                    WHERE doc_id=%s AND char_end > %s AND char_start < %s
+                    ORDER BY char_start""", (doc_id, a, b)).fetchall()
+            covered, cursor = 0, a
+            for s, e in regions:
+                s, e = max(s, cursor), min(e, b)
+                if e > s:
+                    covered += e - s
+                    cursor = e
+            worst = max(worst, (b - a) - covered)
     # MEASURED ceiling: the largest real gap is 70 chars, inside a
     # pandas output table in "Python for Data Analysis" — column
     # ALIGNMENT whitespace, not prose (the boundary chunks are a table
     # header row and its data row). 128 stays far below paragraph scale,
     # so genuinely dropped prose would still trip this.
     assert worst <= 128, (
-        f"largest inter-child gap is {worst} chars — beyond whitespace "
-        "alignment; source prose may be dropped between chunks")
+        f"largest UNEXPLAINED inter-child gap is {worst} chars — beyond whitespace "
+        "alignment and not covered by layout evidence; source prose may be dropped "
+        "between chunks (documents chunked before CHUNK-GAP-ACCOUNTING-V1 carry no "
+        "dropped-span evidence until re-ingested)")

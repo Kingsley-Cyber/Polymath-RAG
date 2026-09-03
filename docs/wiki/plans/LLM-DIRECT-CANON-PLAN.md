@@ -114,3 +114,7 @@ Re-extraction never deletes: identities are content hashes, replays write 0 rows
   (f34ddb6, migration 0048). Canary 3 (first fully-ledgered document): replay IDENTICAL, 103/103 facts,
   extra 0 / missing 0 → EXACT_REPLAY PASS; the same responses under `strict`
   lose 27 facts (26 %).
+- 2026-09-03 P4 complete (owner: "retire 3, delete 2"): apple-ml LaunchAgent
+  retired (disabled, plist kept); 29 interpreter-path test files deleted
+  (list in the work-log); interpreter harnesses moved to `eval/historical/`.
+  Retired CODE remains behind the gliner provider branch — next owner call.

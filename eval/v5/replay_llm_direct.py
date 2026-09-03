@@ -64,11 +64,12 @@ class _CaptureConn:
     def cursor(self): return _CaptureCursor(self.sink)
 
 
-def _window_keys(neighborhoods) -> dict:
-    """key -> contiguous window (≤ NEIGHBORHOODS_PER_CALL) under the provider's key rule."""
+def _window_keys(neighborhoods, ident: str | None = None) -> dict:
+    """key -> contiguous window (≤ NEIGHBORHOODS_PER_CALL) under the provider's
+    key rule, for the given contract identity (default: the live one)."""
     from workers import llm_provider as lp
     from polymath_shared.identity import content_hash as _chash
-    ident = _chash({"contract": lp.contract_identity()})
+    ident = ident or _chash({"contract": lp.contract_identity()})
     per_call = int(getattr(lp, "NEIGHBORHOODS_PER_CALL", 8) or 8)
     out = {}
     for i in range(len(neighborhoods)):
@@ -124,11 +125,23 @@ def replay_doc(conn, doc_id: str, policy: str | None = None) -> dict:
     chunk_rows = {r["chunk_id"]: r for r in rows}
     neighborhoods = llm_provider.build_neighborhoods(children)
     receipts = conn.execute(
-        "SELECT receipt_id, lane, model FROM extraction_call_receipts WHERE doc_id=%s ORDER BY created_at, receipt_id",
-        (doc_id,)).fetchall()
+        "SELECT receipt_id, lane, model, contract_ident FROM extraction_call_receipts WHERE doc_id=%s "
+        "ORDER BY created_at, receipt_id", (doc_id,)).fetchall()
     lane = receipts[0][1] if receipts else "cloud"
-    windows = _window_keys(neighborhoods)
-    batches = {k: w for k, w in windows.items() if k in {r[0] for r in receipts}}
+    windows = _window_keys(neighborhoods)                       # live-era keys (what run_proposals will ask for)
+    receipt_ids = {r[0] for r in receipts}
+    # ERA TRANSLATION: a receipt is keyed under the identity that was live
+    # when it was written. Map every live-era key to the same window's key
+    # under each era present on this document (NULL = the live era).
+    eras = {r[3] for r in receipts if r[3]} or set()
+    era_keys: dict[str, str] = {}
+    for era in eras:
+        for k_old, w in _window_keys(neighborhoods, era).items():
+            if k_old in receipt_ids:
+                k_live = next((k for k, w2 in windows.items() if [n.nid for n in w2] == [n.nid for n in w]), None)
+                if k_live:
+                    era_keys[k_live] = k_old
+    batches = {k: w for k, w in windows.items() if k in receipt_ids or k in era_keys}
     # finish_reason per response: the ledger column (new receipts) or the
     # extract artifact's per-call record matched by raw_head (older ones)
     fr_by_head: dict[str, str] = {}
@@ -143,7 +156,7 @@ def replay_doc(conn, doc_id: str, policy: str | None = None) -> dict:
 
     def cache_get(key):
         row = conn.execute("SELECT raw_text, finish_reason FROM extraction_call_receipts WHERE receipt_id=%s",
-                           (key,)).fetchone()
+                           (era_keys.get(key, key),)).fetchone()
         if row:
             hits["n"] += 1
             raw, fr = row[0], row[1]
@@ -195,6 +208,7 @@ def replay_doc(conn, doc_id: str, policy: str | None = None) -> dict:
             "neighborhoods": len(neighborhoods), "receipts": len(receipts), "receipts_matched": len(batches),
             "cache_hits": hits["n"], "cache_misses": len(hits["miss"]), "missed_batches": hits["miss"][:6],
             "finish_reason_sources": {"ledger": hits["fr_from_ledger"], "artifact": hits["fr_from_artifact"]},
+            "eras_on_document": sorted(eras), "era_translated_keys": len(era_keys),
             "error": error,
             "attestation_policy": attestation_policy(),
             "replayed_facts": len(replayed), "production_facts": len(prod),

@@ -135,6 +135,11 @@ def build_neighborhoods(child_chunks: list[dict],
     return out
 
 
+def _attestation_policy() -> str:
+    from polymath_shared.llm_extraction.gate import attestation_policy
+    return attestation_policy()
+
+
 def contract_identity() -> dict:
     """Every LLM-lane input that can change semantic output, for the
     extract stage's contract hash (the GLiNER path hashes its model pin
@@ -188,6 +193,11 @@ def contract_identity() -> dict:
         "limiter_seeds": {lane: asdict(_lane_limit(lane)) for lane in ("local", "cloud")},
         "materialization": ("llm-direct-facts-v1" if s.worker.extraction_provider == "llm_live"
                             else "compiler"),
+        # LLM-DIRECT-CANON (ADR-0017): the gate is part of the extraction
+        # contract — a gate change re-extracts under contract drift and
+        # keeps old facts attributable to the gate that admitted them.
+        "gate": {"version": "attestation-levels-v1",
+                 "attestation_policy": _attestation_policy()},
         # EXTRACTION-COVERAGE-V1 + REGION-ROLE-V1: accounting and region
         # thresholds change what is sent and what counts as returned.
         "coverage": "extraction-coverage-v1",
@@ -243,6 +253,27 @@ def spread_decision(queue_depth: int | None, doc_id: str,
             and bool(doc_id) and n_neighborhoods > NEIGHBORHOODS_PER_CALL)
 
 
+def _wait_local_ready(base_url: str, timeout_s: float = 180.0, poll_s: float = 3.0) -> bool:
+    """LOCAL-LANE-READINESS (2026-09-03): the batched 4B server is a supervised
+    slot now; it loads its model for ~60 s after a boot. Spending an attempt
+    against a loading server is the same defect SIDECAR-READINESS-GATE-V1
+    fixed for the projector. Bounded wait; returns False on timeout and lets
+    the call fail loudly as before."""
+    import time as _time
+    import urllib.request as _u
+    url = (base_url or "").rstrip("/") + "/ready"
+    t0 = _time.monotonic()
+    while _time.monotonic() - t0 < timeout_s:
+        try:
+            with _u.urlopen(url, timeout=3) as r:
+                if r.status == 200:
+                    return True
+        except Exception:  # noqa: BLE001
+            pass
+        _time.sleep(poll_s)
+    return False
+
+
 def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                   source_bytes: int,
                   doc_id: str = "",
@@ -275,6 +306,7 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
         client = make_client(lane, doc_id) if doc_id else make_client(lane)
         limiter = client._lane_limiter()
         controller_before = _controller_snapshot(lane, limiter)
+        _wait_local_ready(getattr(client, "base_url", None) or s.sidecars.llm_local_extract_url)
         results = client.extract_batched(
             [(n.nid, n.chunks) for n in neighborhoods],
             source_bytes=source_bytes, threshold_bytes=s.cloud_min_bytes)
@@ -406,19 +438,16 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                     for it in _items) if _items else sum(
                     len(getattr(r.packet, f, None) or [])
                     for f in ("entities", "relations", "digests"))
-                try:
-                    cache_put(key, doc_id, r.lane, r.model, r.raw_text,
-                              accepted, getattr(r, "finish_reason", None))
-                except TypeError:
+                _put_args = (key, doc_id, r.lane, r.model, r.raw_text,
+                             accepted, getattr(r, "finish_reason", None), _ident)
+                for n_args in (8, 7, 6, 5):          # newest ledger first; older doubles
                     try:
-                        cache_put(key, doc_id, r.lane, r.model, r.raw_text,
-                                  accepted)
-                    except TypeError:        # older 5-arg cache double
-                        cache_put(key, doc_id, r.lane, r.model, r.raw_text)
+                        cache_put(*_put_args[:n_args])
+                        break
+                    except TypeError:
+                        continue
                     except Exception:
-                        pass
-                except Exception:
-                    pass
+                        break
             return r
 
         # LANE-AUTH-QUARANTINE-V1 (2026-09-01): a lane answering 401/403
