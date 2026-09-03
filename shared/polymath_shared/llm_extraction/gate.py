@@ -15,6 +15,7 @@ computes offsets; Python does.
 from __future__ import annotations
 
 import json
+import os
 import re
 from dataclasses import dataclass, field
 
@@ -423,6 +424,78 @@ LLM_TYPE_FALLBACKS: dict[str, str] = {
 }
 
 
+# ---------------------------------------------------------------------------
+# ATTESTATION-LEVELS-V1 (LLM-DIRECT-CANON, ADR-0017, 2026-09-03)
+#
+# The span-tagger rule "a relation endpoint must be a substring of the chunk
+# that holds the quote" rejected 787 relations in 20 documents (the largest
+# single rejection class after unattested entities), most of them correct:
+# the subject sat in the neighbouring chunk, or the model wrote the list
+# phrase the sentence implies. Endpoint attestation is now a recorded LEVEL:
+#   quote        the surface is inside the attested quote
+#   anchor       elsewhere in the chunk that holds the quote
+#   neighborhood in another chunk of the same neighborhood the model saw
+#   document     in a chunk of another neighborhood of the same packet
+#   abstract     not located anywhere, but EVERY content token of the
+#                surface occurs in the anchor chunk (a paraphrase/list of
+#                what the sentence says, never an import of outside facts)
+# An endpoint with no token support stays UNATTESTED_RELATION_ENDPOINT.
+# Policy: POLYMATH_EXTRACTION_ATTESTATION=tiered (default) | strict
+# (quote/anchor only — the pre-canon behaviour, kept for rollback).
+# ---------------------------------------------------------------------------
+ATTESTATION_LEVELS = ("quote", "anchor", "neighborhood", "document", "abstract")
+_STRICT_LEVELS = frozenset({"quote", "anchor"})
+_TOKEN_RE = re.compile(r"[a-z0-9]+")
+_TOKEN_STOP = frozenset({
+    "the", "and", "for", "with", "that", "this", "from", "into", "onto", "over",
+    "under", "than", "then", "its", "their", "his", "her", "our", "your", "are",
+    "was", "were", "been", "being", "has", "have", "had", "not", "but", "any",
+    "all", "some", "such", "each", "per", "via", "etc", "also",
+})
+
+
+def attestation_policy() -> str:
+    v = (os.environ.get("POLYMATH_EXTRACTION_ATTESTATION") or "tiered").strip().lower()
+    return "strict" if v == "strict" else "tiered"
+
+
+def _content_tokens(surface: str) -> list[str]:
+    return [t for t in _TOKEN_RE.findall((surface or "").lower())
+            if len(t) >= 3 and t not in _TOKEN_STOP]
+
+
+def _tokens_supported(surface: str, text: str) -> bool:
+    toks = _content_tokens(surface)
+    if not toks:
+        return False
+    low = (text or "").lower()
+    return all(re.search(r"(?<![a-z0-9])" + re.escape(t) + r"(?![a-z0-9])", low) for t in toks)
+
+
+def attest_endpoint(name: str, anchor: "ChunkView", q_span: tuple[int, int],
+                    views: list["ChunkView"],
+                    all_views: list["ChunkView"] | None = None,
+                    policy: str | None = None) -> str | None:
+    """The attestation level of one relation endpoint, or None when the
+    surface has no support at all (invention). Pure; deterministic."""
+    policy = policy or attestation_policy()
+    if _find_exact(name, anchor.text[q_span[0]:q_span[1]]):
+        return "quote"
+    if _locate(name, anchor):
+        return "anchor"
+    if policy == "strict":
+        return None
+    for v in views:
+        if v is not anchor and _locate(name, v):
+            return "neighborhood"
+    for v in (all_views or ()):
+        if v is not anchor and v not in views and _locate(name, v):
+            return "document"
+    if _tokens_supported(name, anchor.text):
+        return "abstract"
+    return None
+
+
 def map_core_type(raw_label: str) -> tuple[str, str]:
     """Route an open-vocabulary type to a canonical core type.
 
@@ -539,6 +612,9 @@ def validate_and_normalize(packet: ExtractionPacket,
                            neighborhoods: dict[str, list[ChunkView]]) -> NormalizedExtraction:
     out = NormalizedExtraction()
     n_ent = n_rel = n_ent_rej = n_rel_rej = n_pred_fallback = 0
+    policy = attestation_policy()
+    all_views = [v for vs in neighborhoods.values() for v in vs]
+    n_att = {lvl: 0 for lvl in ATTESTATION_LEVELS}
     for item in packet.items:
         views = neighborhoods.get(item.neighborhood_id, [])
         for ent in item.entities:
@@ -636,22 +712,26 @@ def validate_and_normalize(packet: ExtractionPacket,
                     "kind": "predicate_fallback", "raw": rel.predicate,
                     "canonical": canon_pred,
                     "neighborhood_id": item.neighborhood_id})
-            missing = [name for name in (rel.subject, rel.object)
-                       if not _locate(name, anchor)]
+            levels = {name: attest_endpoint(name, anchor, q_span, views, all_views, policy)
+                      for name in (rel.subject, rel.object)}
+            missing = [name for name, lvl in levels.items() if lvl is None]
             if missing:
                 n_rel_rej += 1
                 out.rejections.append({
                     "kind": "relation", "predicate": rel.predicate,
                     "subject": rel.subject, "object": rel.object,
                     "error_class": "UNATTESTED_RELATION_ENDPOINT",
-                    "detail": missing,
+                    "detail": missing, "attestation_policy": policy,
                     "neighborhood_id": item.neighborhood_id})
                 continue
+            for lvl in levels.values():
+                n_att[lvl] += 1
             out.evidence_by_chunk.setdefault(anchor.chunk_id, []).append({
                 "start": q_span[0], "end": q_span[1], "text": anchor.text[q_span[0]:q_span[1]],
                 "evidence_class": "llm_relation", "predicate": canon_pred,
                 "predicate_raw": rel.predicate, "predicate_method": pred_method,
-                "subject": rel.subject, "object": rel.object, "score": 1.0})
+                "subject": rel.subject, "object": rel.object, "score": 1.0,
+                "attestation": {"subject": levels[rel.subject], "object": levels[rel.object]}})
             n_rel += 1
             # Endpoint mentions co-present with the relation quote: emit
             # additional real mentions inside the quote so the sentence
@@ -687,5 +767,7 @@ def validate_and_normalize(packet: ExtractionPacket,
         "entities_rejected": n_ent_rej, "relations_rejected": n_rel_rej,
         "predicate_fallbacks": n_pred_fallback,
         "neighborhoods": len(packet.items),
+        "attestation_policy": policy,
+        "endpoint_attestation": dict(n_att),
     }
     return out

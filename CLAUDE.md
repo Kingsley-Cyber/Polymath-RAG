@@ -36,12 +36,11 @@ names the fleet environment and the bootstrap commands).
   verdicts — restart it if completed runs sit at `reconciling`.
 - Hand-started processes (orchestrator, extra extract workers, the batched
   server) MUST carry the fleet environment or they compute a different
-  execution contract (lease refused / wrong query policy): export
-  `POLYMATH_PROFILE=pipeline POLYMATH_SYNTAX_PROVIDER=spacy
-  POLYMATH_QUERY_POLICY=semantic-query-policy-v3 POLYMATH_RESCUE=on
-  POLYMATH_WORKER_RULE_PACK_VERSION=1.5.0 POLYMATH_CHUNKER=legacy_v1
-  POLYMATH_RELATION_PIPELINE=kimi_v1 POLYMATH_PREDICATE_V2=enforce` (read
-  the supervised worker's env with `ps -E -p <pid>` to be sure). zsh does
+  execution contract (lease refused / wrong query policy): source the fleet `.env`
+  (`set -a; source .env; set +a`) — it is the ONLY execution contract
+  (LLM-DIRECT-CANON, ADR-0017: `POLYMATH_WORKER_EXTRACTION_PROVIDER=llm_live`;
+  the spaCy / rescue / rule-pack / GLiNER knobs are historical and must NOT
+  be set). Read the supervised worker's env with `ps -E -p <pid>` to be sure. zsh does
   NOT word-split `$VAR` for `env` — write the assignments inline.
 - A UI/API delete blocks on the extract stage's transaction (held for the
   whole document); it now returns 409 `runs_in_flight` after 5 s. Stop the
@@ -58,6 +57,12 @@ names the fleet environment and the bootstrap commands).
   in the live tree. Commit messages end with the Co-Authored-By /
   Claude-Session trailers; never push without asking unless the owner
   already said "push and merge".
+- Extraction canon = LLM-direct (ADR-0017, plan `docs/wiki/plans/LLM-DIRECT-CANON-PLAN.md`):
+  `llm_live` is the default and only canonical provider; the LLM gate is the
+  sole authority; endpoint attestation is a recorded LEVEL (quote › anchor ›
+  neighborhood › document › abstract-with-token-support), never a veto;
+  GLiNER / spaCy / sentence-slice / rule-pack contracts are history and are
+  never enforced by a gate, fence or test.
 - Extraction: `llm_live` on both lanes; byte rule floor 300 KB (set 450 KB)
   is a PRIVACY rule (≤ threshold never leaves the machine); generation is
   LOCKED (plan §1.6): `max_tokens=2500` per neighborhood,
@@ -85,7 +90,7 @@ names the fleet environment and the bootstrap commands).
 
 ## Priorities the owner has set (2026-08-30)
 Base e2e validation first (UI, MCP, query, ingestion, extraction) → GLiNER +
-spaCy full retirement → embed-early DAG, job-level completion + lane assist,
+spaCy full retirement (IN PROGRESS 2026-09-03: LLM-DIRECT-CANON P0–P6) → embed-early DAG, job-level completion + lane assist,
 supervised lifecycle (plan §9) → latent transfer layer (plan phases A–E).
 The three-layer graph design is rejected; v3.3 `tier_chunker` is the
 canonical chunker (swap = re-ingest).

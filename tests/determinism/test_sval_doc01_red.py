@@ -22,6 +22,11 @@ sys.path.insert(0, str(ROOT / "shared"))
 import pytest
 import yaml
 
+# LLM-DIRECT-CANON (ADR-0017, 2026-09-03): these fixtures exercise the
+# GLiNER/spaCy candidate + role-binding path, which is history. Kept for
+# forensics; never a gate. Owner may delete (plan P4).
+pytestmark = pytest.mark.skip(reason="historical GLiNER/spaCy candidate path — LLM-DIRECT-CANON (ADR-0017)")
+
 import os
 
 @pytest.fixture(autouse=True)

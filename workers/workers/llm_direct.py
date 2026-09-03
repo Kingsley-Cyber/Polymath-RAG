@@ -97,7 +97,9 @@ def materialize(conn, *, corpus_id: str, doc_id: str, chunk_rows: dict[str, dict
     fact_rows: dict[str, tuple] = {}
     evidence_rows: dict[str, tuple] = {}
     type_by_surface: dict[str, str] = {}
+    type_by_norm: dict[str, str] = {}
     unknown_predicates = 0
+    endpoint_levels: dict[str, int] = {}
     # LLM-DIRECT-PRONOUN-GATE-V1 (2026-09-02): an unresolved closed-class
     # pronoun is evidence, never durable knowledge (fact_admission R-pronoun).
     # The GLiNER-era path enforced it in entity admission; the llm-direct
@@ -118,6 +120,7 @@ def materialize(conn, *, corpus_id: str, doc_id: str, chunk_rows: dict[str, dict
                 continue
             type_by_surface.setdefault(surface, core)
             norm = normalized_for_lookup(surface)
+            type_by_norm.setdefault(norm, core)
             eid = _entity_id(core, norm)
             ent_rows.setdefault(eid, (eid, core, norm, ADMISSION_CLASS, doc_id))
             if e.get("raw_type"):
@@ -145,8 +148,18 @@ def materialize(conn, *, corpus_id: str, doc_id: str, chunk_rows: dict[str, dict
             if is_unresolved_pronoun(subj_s) or is_unresolved_pronoun(obj_s):
                 pronoun_endpoints_dropped += 1
                 continue
-            subj_core = type_by_surface.get(subj_s) or map_core_type(subj_s)[0]
-            obj_core = type_by_surface.get(obj_s) or map_core_type(obj_s)[0]
+            # ATTESTATION-LEVELS-V1: an endpoint that was never placed as an
+            # entity (cross-chunk / abstract) takes the type of the same
+            # surface wherever it WAS placed; otherwise Concept. (The old
+            # fallback routed the SURFACE through the TYPE mapper.)
+            subj_core = (type_by_surface.get(subj_s)
+                         or type_by_norm.get(normalized_for_lookup(subj_s)) or "Concept")
+            obj_core = (type_by_surface.get(obj_s)
+                        or type_by_norm.get(normalized_for_lookup(obj_s)) or "Concept")
+            att = ev.get("attestation") or {}
+            for lvl in att.values():
+                if lvl:
+                    endpoint_levels[lvl] = endpoint_levels.get(lvl, 0) + 1
             sid = _entity_id(subj_core, normalized_for_lookup(subj_s))
             oid = _entity_id(obj_core, normalized_for_lookup(obj_s))
             if pred in SYMMETRIC_PREDICATES and oid < sid:
@@ -162,6 +175,8 @@ def materialize(conn, *, corpus_id: str, doc_id: str, chunk_rows: dict[str, dict
                 "predicate_raw": ev.get("predicate_raw"),
                 "predicate_method": ev.get("predicate_method"),
                 "gate": "polymath-extraction-v1",
+                "gate_version": "attestation-levels-v1",
+                "endpoint_attestation": att or None,
             })
             fact_rows.setdefault(fid, (
                 fid, pred, sid, oid, "{}", "ACCEPT", RULE_ID, RULE_VERSION,
@@ -181,6 +196,7 @@ def materialize(conn, *, corpus_id: str, doc_id: str, chunk_rows: dict[str, dict
                 "object_surface": obj_s, "object_start": o_off[0], "object_end": o_off[1],
                 "predicate_raw": ev.get("predicate_raw"),
                 "predicate_method": ev.get("predicate_method"),
+                "endpoint_attestation": att or None,
             }
             evid = _evidence_id(fid, doc_id, cid,
                                 {"chunk": int(row.get("char_start") or 0), "quote": list(quote)},
@@ -255,5 +271,6 @@ def materialize(conn, *, corpus_id: str, doc_id: str, chunk_rows: dict[str, dict
         "unknown_predicates": unknown_predicates,
         "pronoun_entities_dropped": pronoun_entities_dropped,
         "pronoun_endpoints_dropped": pronoun_endpoints_dropped,
+        "endpoint_attestation": endpoint_levels,
         "predicates": sorted({f[1] for f in fact_rows.values()}),
     }
