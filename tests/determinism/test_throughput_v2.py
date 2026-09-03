@@ -261,4 +261,7 @@ def test_receipt_accepted_count_counts_packet_items(monkeypatch):
     monkeypatch.setattr(llm, "LLMExtractionClient", ItemsClient)
     _run(n=4, active_rank=0, active_docs=4, call_cache=cache)
     assert puts, "cache_put never called"
-    assert all(len(a) == 6 and a[5] >= 1 for a in puts), puts
+    # RECEIPT-COMPLETENESS-V1 (2026-09-03): the ledger also carries finish_reason
+    # as a 7th argument (older 6-arg cache doubles still accepted by the provider)
+    assert all(len(a) in (6, 7) and a[5] >= 1 for a in puts), puts
+    assert all(len(a) == 7 for a in puts), "finish_reason must be offered to the ledger"

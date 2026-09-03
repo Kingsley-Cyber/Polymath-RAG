@@ -822,7 +822,7 @@ class LLMExtractionClient:
 
 
     def extract_from_raw(self, neighborhoods: list[tuple[str, list[tuple[str, str]]]],
-                         raw_text: str) -> "LLMCallResult":
+                         raw_text: str, finish_reason: str | None = None) -> "LLMCallResult":
         """EXTRACTION-RECEIPT-REPLAY (THROUGHPUT-V2): rebuild a call
         result from a CACHED raw response — no network, the exact same
         sanitize path as a live call, so a replay is byte-equivalent
@@ -835,6 +835,13 @@ class LLMExtractionClient:
             raw_head=raw_text[:200],
             error_class=(None if packet is not None
                          else _quarantine_class(s_res)))
+        if finish_reason is not None:
+            # RECEIPT-COMPLETENESS-V1: a replayed call keeps the transport
+            # fact the disposition rules read ("length" = truncated).
+            try:
+                result.finish_reason = finish_reason
+            except Exception:  # noqa: BLE001 — frozen result doubles
+                pass
         restore_neighborhood_ids(result.packet, aliases)
         result.neighborhood_ids = [nid for nid, _ in neighborhoods]
         return result

@@ -1112,16 +1112,16 @@ def process_event(conn: Connection, event: dict) -> None:
                         return row[0] if row else None
 
                     def _cache_put(key, did, lane_name, model, raw,
-                                   accepted=None):
+                                   accepted=None, finish_reason=None):
                         with _tx() as _c:
                             _c.execute(
                                 "INSERT INTO extraction_call_receipts "
                                 "(receipt_id, doc_id, lane, model, "
-                                "raw_text, accepted_count) "
-                                "VALUES (%s,%s,%s,%s,%s,%s) "
+                                "raw_text, accepted_count, finish_reason) "
+                                "VALUES (%s,%s,%s,%s,%s,%s,%s) "
                                 "ON CONFLICT (receipt_id) DO NOTHING",
                                 (key, did, lane_name, model, raw,
-                                 accepted))
+                                 accepted, finish_reason))
 
                     _cache = (_cache_get, _cache_put)
                 try:
