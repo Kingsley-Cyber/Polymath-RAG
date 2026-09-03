@@ -504,6 +504,23 @@ def _child_spans_for_parent(text: str, parent: _ParentSpan,
 
 def tier_chunk_rows(text: str, doc_id: str,
                     params: dict | None = None) -> list[dict]:
+    """Rows only (the historical surface). See tier_chunk_layout."""
+    rows, _layout = tier_chunk_layout(text, doc_id, params)
+    return rows
+
+
+def tier_chunk_layout(text: str, doc_id: str,
+                      params: dict | None = None) -> tuple[list[dict], list[dict]]:
+    # CHUNK-GAP-ACCOUNTING-V1 (2026-09-03): the rows AND the layout evidence
+    # that explains every byte no child covers. The v3.3 doctrine drops
+    # sub-stub sections (title pages, part dividers, heading-only pages) and
+    # keeps heading lines out of child text; before this, those drops were
+    # recorded nowhere, so the literal-fidelity check read a 522-char title
+    # page as possibly lost prose. Every such span is returned as a layout
+    # region — kind `heading`, `dropped_stub` (section under
+    # parent_stub_words of body) or `dropped_empty` (parent with no child
+    # span) — and intake persists it in `document_layout`. Rows are
+    # byte-identical to tier_chunk_rows: same ids, same order.
     """Chunk rows for one document under chunk-structure-v3: heading-
     bounded parents carrying REAL section text, exact-substring
     children, real heading_path on every row. Same row shape/ordering
@@ -513,16 +530,25 @@ def tier_chunk_rows(text: str, doc_id: str,
     if params:
         p.update(params)
 
-    sections = _merge_page_sections(text, _sections(walk_regions(text)), p)
+    regions = walk_regions(text)
+    layout: list[dict] = [{"kind": "heading", "char_start": r.start, "char_end": r.end}
+                          for r in regions if r.kind == "heading" and r.end > r.start]
+    sections = _merge_page_sections(text, _sections(regions), p)
     kept: list[tuple[_ParentSpan, list[tuple[int, int]]]] = []
     for section in sections:
         body_words = sum(_words(r.text) for r in section.regions
                          if r.kind != "heading")
         if body_words < p["parent_stub_words"]:
-            continue                            # stub / heading-only section
+            if section.regions:                 # stub / heading-only section: recorded, not lost
+                layout.append({"kind": "dropped_stub",
+                               "char_start": min(r.start for r in section.regions),
+                               "char_end": max(r.end for r in section.regions)})
+            continue
         for parent in _parent_spans(text, section, p):
             child_spans = _child_spans_for_parent(text, parent, p)
             if not child_spans:
+                layout.append({"kind": "dropped_empty",
+                               "char_start": parent.start, "char_end": parent.end})
                 continue
             kept.append((parent, child_spans))
 
@@ -580,7 +606,9 @@ def tier_chunk_rows(text: str, doc_id: str,
             children[k]["parent_id"] = parent_row["chunk_id"]
 
     _validate(rows, text)
-    return rows
+    layout = sorted({(d["kind"], d["char_start"], d["char_end"]) for d in layout
+                     if d["char_end"] > d["char_start"]})
+    return rows, [{"kind": k, "char_start": a, "char_end": b} for k, a, b in layout]
 
 
 def _validate(rows: list[dict], source: str) -> None:

@@ -435,11 +435,18 @@ def _missing_projection_receipts(conn: Connection, run_id: str, stage: str) -> l
         # WANT-SET-AUTHORITY-V1: children-only rule owned by
         # polymath_shared.projection_want (three-copy drift, 2026-08-31)
         from polymath_shared.projection_want import (
+            missing_chunk_receipts_for_docs,
             missing_chunk_receipts_for_run,
         )
-        rows = [(cid,) for cid in
-                missing_chunk_receipts_for_run(conn, run_id, "qdrant")]
-        missing = [r[0] for r in rows]
+        # RUN-SCOPED-RECEIPTS-V1 (census side, 2026-09-03): a run's
+        # promotion waits for ITS document's chunk receipts, not for every
+        # document of the corpus (the advance predicate got the same fix
+        # after document B sat ~17 min behind sibling uploads). Legacy runs
+        # without a resolvable document keep the corpus-wide check.
+        from control.tickets import _run_doc_ids
+        doc_ids = _run_doc_ids(conn, run_id)
+        missing = (missing_chunk_receipts_for_docs(conn, doc_ids, "qdrant") if doc_ids
+                   else missing_chunk_receipts_for_run(conn, run_id, "qdrant"))
         # R1B: neural routing representations are production dependencies
         # for a query-ready corpus — their receipts must also converge.
         # SET-BASED ANTI-JOIN: this used to be a per-entity SELECT loop

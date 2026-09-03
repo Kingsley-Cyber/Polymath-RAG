@@ -2,7 +2,7 @@
 change_id: LLM-DIRECT-CANON (P0–P3, P5; P4 partial)
 owner: governance
 date: 2026-09-03
-status: P0–P3 + P5 complete (receipts below); P4 partial; P6 owner decision
+status: P0–P6 (P6 launched 2026-09-03 — receipts below); owner findings resolved
 architecture_impact: LLM-direct extraction declared canon (ADR-0017); tiered endpoint attestation replaces the anchor-chunk veto; open vocabulary projected to the graph; replay and grading re-based on the raw-response ledger and gold questions
 last_reviewed: 2026-09-03
 ---
@@ -78,12 +78,44 @@ expansion, canonicalization and identity.
    the network, and decodes any missed batch by the provider's own key
    rule. Local-lane documents go through `extract_batched`, which has no
    cache seam — not replayable yet (declared).
-5. **P4 retirement (partial).** `test_sval_doc01_red.py` skip-marked
-   (historical candidate/role-binding path). Fence already path-aware
-   (FENCE-PATH-AWARE-V1). Remaining: move `retrieval_validation.py`,
-   `replay_full.py`, `shadow_settlement.py` to `eval/historical/`; guard
-   `syntax_readiness` / `rescue` behind the gliner provider; runtime-budget
-   entries marked historical (owner decisions on deletion pending).
+5. **P4 retirement (owner 2026-09-03: "retire 3, delete 2").**
+   - `com.polymath.apple-ml` LaunchAgent booted out and disabled (it served
+     the sibling stack's embed :8082 / rerank :8081 / arbiter :8085; its
+     GLiNER :8740 and spaCy :8744 were already dead; nothing in v4 uses any
+     of them — the v4 sidecars are supervised slots on :8742/:8743 and the
+     local batched lane on :8755 is a separate process). Plist kept;
+     rollback = `launchctl enable gui/501/com.polymath.apple-ml &&
+     launchctl bootstrap gui/501 ~/Library/LaunchAgents/com.polymath.apple-ml.plist`.
+   - 29 test files deleted — every file whose subject is the retired
+     rule-pack / syntax-interpreter / GLiNER-rescue path (docstrings and
+     imports checked one by one): sval_doc01_red, kimi_candidates,
+     kimi_v2_candidates, kimi_role_direction, syntax_batching,
+     syntax_readiness_v3, i3r_r1/r2/r3, i4r_a/b/c/d, q1r_v110_revision,
+     spoken_relation_adapter, compiler, fact_scope_recall,
+     category_d_followup, discourse_bridge, span_hypotheses,
+     reference_completion, lexical_semantic_evidence, scientific_predicates,
+     predicate_compiler_v2 (determinism); syntax_provider_gate,
+     trigger_compilation, lexical_resource_gates, phase_h_harness
+     (contracts); spacy_syntax_sidecar (integration). KEPT on purpose:
+     admission/identity tests (entity_admission, fact_admission,
+     admission_interpreter_s4, s4b, subtoken_span_admission,
+     admission_projection — the identity boundary canonicalization still
+     uses), execution_bundle, extraction_observability, batched_pass1 and
+     the sidecar/supervisor tests (current infrastructure), killchain
+     (mixed, holds the CHUNK-GAP defect), latent_rescue (the latent layer,
+     not GLiNER rescue), layout_and_slice_evidence (layout evidence is
+     current), query_policy (the core-type ontology the gate maps into),
+     and the `tests/historical_boundary.py` pin helper (still used by two
+     kept files).
+   - `replay_full.py`, `shadow_settlement.py`, `retrieval_validation.py`
+     moved to `eval/historical/` with a README; the rescue lane was
+     already unreachable under llm_live (`rescue_stages = ()`); the two
+     sidecars stay in `runtime_budget.yaml` as caps only.
+   - NOT deleted (next step, owner call): the retired CODE itself —
+     `workers/candidates.py`, `kimi_*`, `syntax.py`, `rescue.py`,
+     `polymath_shared/rulepack/`, `syntax_readiness.py`,
+     `sidecars/{spacy,gliner}_runtime` — still imported by the
+     `extraction_provider=gliner` branch of `extract_worker.py`.
 6. **P5 grading** (`eval/v5/holdout/`): answer-level grader over `/chat`
    (expected document cited + required phrase present, abstention
    correctness, zero-tolerance counters: foreign-corpus citations, answers
@@ -139,6 +171,58 @@ expansion, canonicalization and identity.
   cited Blue Ocean but the grader's required phrases were too narrow.
   Development numbers only; the sealed set is the owner's.
 
+## Round 2 (owner 2026-09-03: "I agree with all 3 decisions, fix the chunker bug, and your findings need to be resolved")
+1. **P6 re-extraction is now a real mechanism.** `reingest_corpus.py` re-arms
+   intake and lets contract drift decide which stages regenerate; the
+   extract stage's contract (`contract_identity()`) did not contain the
+   gate, so a gate change would have CARRIED the old extraction. The
+   identity now carries `gate = {version, attestation_policy}` — a gate
+   change is a contract change. Receipt keys derive from the identity, so
+   every receipt records `contract_ident` (migration 0049; 88 receipts
+   keyed under the pre-change identity were stamped by reproducing their
+   keys) and the ledger replay translates a window to the key of the era
+   the document was extracted in. <<P6>>
+2. **CHUNK-GAP-ACCOUNTING-V1 (the chunker bug).** The killchain fidelity
+   check (`test_child_spans_have_no_large_unexplained_gaps`) failed on a
+   522-char gap. Forensics from the spool: the gaps are title pages, part
+   dividers and heading lines that the tier chunker (`tier_v3`) drops by
+   the v3.3 doctrine (sub-stub sections under 15 body words; heading lines
+   never enter child text) — recorded NOWHERE, so doctrine and data loss
+   were indistinguishable (Innovator's Dilemma had 0 `document_layout`
+   rows; the tier path never persisted layout at all). Fix:
+   `tier_chunk_layout()` returns rows + layout evidence (`heading`,
+   `dropped_stub`, `dropped_empty`), intake persists it, the layout
+   contract is v2, and the fidelity check now measures the UNEXPLAINED
+   gap (not covered by layout evidence). Rows and chunk ids are
+   byte-identical to before. Existing documents carry no dropped-span
+   evidence until re-ingested — P6 does that.
+3. **Census promotion run-scoped** (`census._missing_projection_receipts`):
+   the same corpus-barrier defect as this morning's advance predicate,
+   now closed on the promotion side (legacy runs without a resolvable
+   document keep the corpus-wide check).
+4. **Privacy floor restored:** `POLYMATH_WORKER_CLOUD_MIN_BYTES=450000`
+   (was 0 — every document went to the cloud lanes). Documents at or
+   under 450 KB stay on the local lane.
+5. **Local lane supervised and budgeted:** the batched 4B server on :8755
+   had run as a hand-started process for 3 days 18 h outside the
+   supervisor and outside `runtime_budget.yaml`. It is now the
+   `local_extractor` slot (ALWAYS resident; health :8755/ready; memory
+   cap 10 GB via `POLYMATH_LLM_LOCAL_MEMORY_GB`), the retired GLiNER/spaCy
+   caps are gone, and the fleet budget is 29 GB on the 32 GB machine
+   (serve profile 27.55 / 28.5 ceiling). `run_proposals` waits for
+   :8755/ready before the first local call (the projector's readiness
+   gate, ported).
+6. **The abstentions were not a gate defect.** Learning SQL lives in
+   cysa-study-v1 (the dev question pointed at ecom-meta-v1), its text is
+   partly OCR noise and holds one child mentioning JOIN; the AWS book
+   never mentions "shared responsibility" or "vulnerability scan". The
+   admission gate abstained correctly on ungrounded questions. The dev
+   set is re-grounded in phrases the books contain: supported 90 %,
+   wrong 0 %, unexplained 1 (`sb-02` "call to action": StoryBrand holds
+   28 matching children, chat abstained — the one genuine case, open).
+7. **Decisions executed:** apple-ml LaunchAgent retired; 29 interpreter-
+   path test files deleted (list above); P6 launched.
+
 ## Rejected claims
 - "The type flattening is a data-loss bug." `entities.raw_types` already
   kept the open vocabulary as a set union; the loss was in projection and
@@ -156,5 +240,8 @@ expansion, canonicalization and identity.
   `test_batched_client_sizes_calls_from_the_budget` (batched-client test
   double out of date).
 - Census promotion (`missing_chunk_receipts_for_run`) is still corpus-scoped.
-- Owner decisions: P6 re-extraction of ecom-meta-v1 + cysa-study-v1 under the
-  new gate; delete vs skip historical tests; retire the apple-ml LaunchAgent.
+- `sb-02` (StoryBrand "call to action") abstains although 28 children match —
+  the one unexplained dev-holdout case after re-grounding.
+- Retired code (`workers/candidates.py`, `kimi_*`, `syntax.py`, `rescue.py`,
+  `polymath_shared/rulepack/`, `syntax_readiness.py`, the two sidecar runtimes)
+  is still importable behind the gliner provider branch.

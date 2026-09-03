@@ -21,7 +21,10 @@ from __future__ import annotations
 
 import re
 
-LAYOUT_CONTRACT = "layout-evidence-v1"
+# layout-evidence-v2 (2026-09-03, CHUNK-GAP-ACCOUNTING-V1): layout evidence
+# also records the spans the tier chunker drops (dropped_stub / dropped_empty)
+# and every heading line, so no byte is unaccounted for.
+LAYOUT_CONTRACT = "layout-evidence-v2"
 
 _ATX = re.compile(r"^[ \t]{0,3}#{1,6}[ \t]+\S", re.M)
 _SETEXT_RULE = re.compile(r"^[ \t]{0,3}(=+|-{2,})[ \t]*$")

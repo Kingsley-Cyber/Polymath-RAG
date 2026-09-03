@@ -16,7 +16,14 @@
 # these numbers are read at boot, exported as real limits, and checked
 # by a preflight that refuses to start an over-committed fleet.
 
-total_gb: 19.0
+# 2026-09-03 LLM-DIRECT-CANON: the local extraction lane (batched 4B on
+# :8755, memory-capped at 10 GB) is now a supervised slot INSIDE this budget;
+# it had run outside it for days. GLiNER/spaCy caps removed (retired).
+# 32 GB machine: 29 GB fleet + Docker VM (caps are ceilings, not usage;
+# the same processes ran unaccounted at the same caps for days), ~3 GB
+# for the OS and the desktop. Autopilot parks the reranker first when the
+# desired set exceeds this.
+total_gb: 29.0
 
 # --------------------------------------------------------------------
 # Stores (Docker VM). The VM reserves its allocation as wired memory
@@ -57,18 +64,12 @@ sidecars:
     # sequence length, so batches are bounded by TOKENS, not by count.
     max_batch_tokens: 16384
     max_batch_texts: 8
-  sidecar_gliner:
-    port: 8740          # observed to decide if this cap is actually held
-    resident_gb: 0.8
-    # gliner_medium-v2.1: 195M params in FLOAT32, so 0.73 GiB of weights
-    # at rest and 3.02 GiB peak driver on an 8x750-token batch. The 2.0
-    # GB guess here failed extraction on /infer_batch exactly as the same
-    # guess had already failed embedding on /infer.
-    mps_gb: 3.5           # measured peak 3.02 GiB + margin
-  sidecar_spacy:
-    port: 8744          # observed to decide if this cap is actually held
-    resident_gb: 0.5
-    mps_gb: 0.0         # CPU pipeline
+  local_extractor:
+    port: 8755          # observed to decide if this cap is actually held
+    resident_gb: 1.5      # python + tokenizer; weights live in MLX memory
+    # mlx-community/Qwen3.5-4B-MLX-4bit batched server; its own limit is
+    # POLYMATH_LLM_LOCAL_MEMORY_GB (set 10) + 1 GB cache
+    mps_gb: 10.0
   sidecar_reranker:
     port: 8743          # observed to decide if this cap is actually held
     resident_gb: 0.8
@@ -111,7 +112,7 @@ profiles:
   extraction:
     why: "ingest and extract; needs GLiNER and spaCy, plus embedder for projection"
     slots: [control, intake, profile, extract,
-            sidecar_embedder]
+            sidecar_embedder, local_extractor]
   pipeline:
     why: "every ingestion stage end to end: intake through verify, with the
           extraction and embedding models. Excludes the orchestrator and
@@ -147,4 +148,4 @@ profiles:
     slots: [control, intake, profile, extract, extract2, extract3,
             canonicalize, project_canonical, neo4j, qdrant, verify,
             compile_objects, summaries, summaries2, sidecar_embedder,
-            sidecar_reranker, orchestrator, mcp]
+            sidecar_reranker, orchestrator, mcp, local_extractor]

@@ -32,11 +32,12 @@ grading is re-based on gold questions (`eval/v5/holdout/`, sealed set
 owner-supplied). Canary on a real 111 KB book: relation survival 52 % → 82 %,
 abstract endpoints 3 %, junk 0. Dev holdout: 60 % supported, 0 wrong, three
 abstentions on answerable questions (answerability gate — next finding to
-trace). Owner decisions open: re-extract the two production corpora under the
-new gate (P6), delete vs skip the historical tests, retire the apple-ml
-LaunchAgent. NOTE: `POLYMATH_WORKER_CLOUD_MIN_BYTES=0` in the fleet `.env`
-sends every document to the cloud lanes (the ≤ threshold privacy floor is
-effectively off) — an owner setting, flagged.
+trace). Owner decisions executed 2026-09-03: apple-ml agent RETIRED, 29
+interpreter-path tests DELETED, P6 re-extraction LAUNCHED (cysa-study-v1 then
+ecom-meta-v1; watch `scripts/trace_stalls.py` and `/status`). Findings closed:
+CHUNK-GAP-ACCOUNTING-V1 (dropped spans are layout evidence), census promotion
+run-scoped, cloud floor back to 450 KB, local lane supervised (`local_extractor`,
+29 GB budget), abstentions were question/data grounding (dev holdout 90 %). The privacy floor is back: `POLYMATH_WORKER_CLOUD_MIN_BYTES=450000`.
 
 ## Latest checkpoint (2026-09-03 — QUERY RECEIPTS + RUN-SCOPED RECEIPTS + RELEASE EVIDENCE)
 

@@ -263,5 +263,5 @@ def test_receipt_accepted_count_counts_packet_items(monkeypatch):
     assert puts, "cache_put never called"
     # RECEIPT-COMPLETENESS-V1 (2026-09-03): the ledger also carries finish_reason
     # as a 7th argument (older 6-arg cache doubles still accepted by the provider)
-    assert all(len(a) in (6, 7) and a[5] >= 1 for a in puts), puts
-    assert all(len(a) == 7 for a in puts), "finish_reason must be offered to the ledger"
+    assert all(len(a) in (6, 7, 8) and a[5] >= 1 for a in puts), puts
+    assert all(len(a) == 8 for a in puts), "finish_reason and contract_ident must be offered to the ledger"

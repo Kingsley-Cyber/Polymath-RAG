@@ -41,7 +41,10 @@ log = logging.getLogger("fleet-autopilot")
 # 25-80 s first query after idle). They stay resident; the budget gate still
 # drops them first if a set does not fit the ceiling.
 ALWAYS = {"control", "orchestrator", "intake", "mcp",
-          "sidecar_embedder", "sidecar_reranker"}
+          "sidecar_embedder", "sidecar_reranker",
+          # the local extraction lane loads a 4B model (~60 s); resident so the
+          # privacy path is never a cold start (LLM-DIRECT-CANON 2026-09-03)
+          "local_extractor"}
 
 #: lane -> (stages that signal demand, slots the lane needs)
 LANES = [
