@@ -598,6 +598,10 @@ def _routing_rows(conn: Connection, run_id: str) -> list[dict]:
 
 
 
+#: 3 bind parameters per want row; 10,000 rows = 30,001 parameters, under the 65,535 ceiling
+_RECEIPT_LOOKUP_BATCH = 10_000
+
+
 def _already_current(conn, wanted: list[tuple[str, str, str]]) -> set[tuple[str, str]]:
     """(entity_kind, entity_id) pairs whose ACTIVE receipt already matches
     the hash this projection would write.
@@ -615,18 +619,27 @@ def _already_current(conn, wanted: list[tuple[str, str, str]]) -> set[tuple[str,
     """
     if not wanted:
         return set()
-    rows = conn.execute(
-        """
-        SELECT pr.entity_kind, pr.entity_id
-          FROM projection_receipts pr
-          JOIN (VALUES %s) AS w(kind, eid, rhash)
-            ON pr.entity_kind = w.kind AND pr.entity_id = w.eid
-           AND pr.receipt_hash = w.rhash
-         WHERE pr.projection = %%s AND pr.active
-        """ % ",".join(["(%s,%s,%s)"] * len(wanted)),
-        [v for triple in wanted for v in triple] + [PROJECTION_QDRANT],
-    ).fetchall()
-    return {(k, e) for k, e in rows}
+    # RECEIPT-LOOKUP-BATCH-V1 (2026-09-03, P6 re-extraction): one VALUES list
+    # over the corpus-wide want set is 3 bind parameters per row; the
+    # re-chunked ecom corpus crossed libpq's 65,535-parameter ceiling and
+    # four runs failed project_qdrant with "number of parameters must be
+    # between 0 and 65535". Look up in bounded batches; same result set.
+    out: set[tuple[str, str]] = set()
+    for i in range(0, len(wanted), _RECEIPT_LOOKUP_BATCH):
+        part = wanted[i:i + _RECEIPT_LOOKUP_BATCH]
+        rows = conn.execute(
+            """
+            SELECT pr.entity_kind, pr.entity_id
+              FROM projection_receipts pr
+              JOIN (VALUES %s) AS w(kind, eid, rhash)
+                ON pr.entity_kind = w.kind AND pr.entity_id = w.eid
+               AND pr.receipt_hash = w.rhash
+             WHERE pr.projection = %%s AND pr.active
+            """ % ",".join(["(%s,%s,%s)"] * len(part)),
+            [v for triple in part for v in triple] + [PROJECTION_QDRANT],
+        ).fetchall()
+        out.update((k, e) for k, e in rows)
+    return out
 
 
 def _write_routing_points(client: QdrantClient, collection: str, rows: list[dict],
