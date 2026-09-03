@@ -55,6 +55,8 @@ CONTRACT = "llm-direct-facts-v1"
 # GENERATION-STAMPING-V1 (§11 L0): the indexable generation id on
 # entities.extractor_version / facts.extractor_version. The provenance
 # JSON keeps the full stamp (contract, lane, model, bundle hash).
+from polymath_shared.entity_admission import is_unresolved_pronoun
+
 EXTRACTOR_VERSION = "llm-direct-v1"
 RULE_ID = "llm-relation-v1"
 RULE_VERSION = "relation-ontology-v1"
@@ -96,6 +98,12 @@ def materialize(conn, *, corpus_id: str, doc_id: str, chunk_rows: dict[str, dict
     evidence_rows: dict[str, tuple] = {}
     type_by_surface: dict[str, str] = {}
     unknown_predicates = 0
+    # LLM-DIRECT-PRONOUN-GATE-V1 (2026-09-02): an unresolved closed-class
+    # pronoun is evidence, never durable knowledge (fact_admission R-pronoun).
+    # The GLiNER-era path enforced it in entity admission; the llm-direct
+    # path wrote 13 ACCEPT facts with 'me'/'we'/'you'/'i' endpoints.
+    pronoun_entities_dropped = 0
+    pronoun_endpoints_dropped = 0
 
     # -- entities + mentions -------------------------------------------------
     for cid, items in merged.entities_by_chunk.items():
@@ -105,6 +113,9 @@ def materialize(conn, *, corpus_id: str, doc_id: str, chunk_rows: dict[str, dict
         for e in items:
             core = e["label"]
             surface = e["text"]
+            if is_unresolved_pronoun(surface):
+                pronoun_entities_dropped += 1
+                continue
             type_by_surface.setdefault(surface, core)
             norm = normalized_for_lookup(surface)
             eid = _entity_id(core, norm)
@@ -131,6 +142,9 @@ def materialize(conn, *, corpus_id: str, doc_id: str, chunk_rows: dict[str, dict
                 unknown_predicates += 1      # the gate normalizes; this is a guard, never expected
                 continue
             subj_s, obj_s = ev["subject"], ev["object"]
+            if is_unresolved_pronoun(subj_s) or is_unresolved_pronoun(obj_s):
+                pronoun_endpoints_dropped += 1
+                continue
             subj_core = type_by_surface.get(subj_s) or map_core_type(subj_s)[0]
             obj_core = type_by_surface.get(obj_s) or map_core_type(obj_s)[0]
             sid = _entity_id(subj_core, normalized_for_lookup(subj_s))
@@ -239,5 +253,7 @@ def materialize(conn, *, corpus_id: str, doc_id: str, chunk_rows: dict[str, dict
                  "facts": len(fact_rows), "evidence": len(evidence_rows)},
         "written": written,
         "unknown_predicates": unknown_predicates,
+        "pronoun_entities_dropped": pronoun_entities_dropped,
+        "pronoun_endpoints_dropped": pronoun_endpoints_dropped,
         "predicates": sorted({f[1] for f in fact_rows.values()}),
     }

@@ -147,7 +147,8 @@ def _embed_texts(contract, texts: list[str]) -> list[list[float]]:
     client = EmbedderClient()
     try:
         # SIDECAR-READINESS-GATE-V1: a booting embedder is not a stage failure
-        if not client.wait_ready(timeout_s=float(os.environ.get(
+        _wait = getattr(client, "wait_ready", None)
+        if _wait is not None and not _wait(timeout_s=float(os.environ.get(
                 "POLYMATH_SIDECAR_READY_WAIT_S", "120"))):
             from polymath_shared.clients import SidecarUnavailable
             raise SidecarUnavailable(

@@ -24,7 +24,10 @@ def test_embeds_are_batched_and_order_preserved(monkeypatch):
     monkeypatch.setattr(C, "EmbedderClient", lambda: fake)
     texts = [f"chunk {i}" for i in range(700)]
     vectors = _embed_texts(_Contract(), texts)
-    assert fake.calls == [32] * 21 + [28]
+    # batch size is the worker's measured optimum (EMBED_BATCH), not a literal
+    from workers.project_qdrant_worker import EMBED_BATCH
+    n = sum(fake.calls); full, rem = divmod(n, EMBED_BATCH)
+    assert fake.calls == [EMBED_BATCH] * full + ([rem] if rem else [])
     assert len(vectors) == 700
     assert vectors[0] == [float(hash("chunk 0") % 97)]
     assert vectors[-1] == [float(hash("chunk 699") % 97)]
