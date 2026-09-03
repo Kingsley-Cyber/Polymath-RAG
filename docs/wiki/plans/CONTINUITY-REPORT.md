@@ -20,6 +20,8 @@ Read order: this file → `CLAUDE.md` → the two newest work-logs.
 
 ## Latest checkpoint (2026-09-03 late — LLM-DIRECT CANON)
 
+**CORPUS-PLAN-V1 + CAPABILITIES-V1 (2026-09-03 latest, register 11.67).** `GET /capabilities` (contracts, additive) and `POST /retrieve/plan` (one signal → 3–5 reformulations → merged evidence rows with `query_ids`); MCP `capabilities`/`compile_plan`/`retrieve_evidence`. Parity with TRAIL OS pinned by `contracts/retrieve/v1/corpus_plan_fixture.json`. Next per the owner plan: field-evidence corpus ingest, then typed rows (friction/behavior/workaround/purchase_language) behind a 1-doc canary.
+
 **RETRIEVE-EVIDENCE-ROWS-V1 (2026-09-03 latest, register 11.66).** `/retrieve`
 returns contract-ready evidence when asked: `{"query", "corpus_id", "evidence": true}`
 or `"mode": "EXPLORE"` (breadth: per-doc cap 2, interleaved, graph hops) →

@@ -251,6 +251,57 @@ async def retrieve(query: str, corpus_id: str, mode: str = "HYBRID",
 
 
 @mcp.tool()
+async def capabilities() -> dict:
+    """What this Polymath serves (CAPABILITIES-V1): version and the contracts
+    an agent or skill can switch on — retrieve-evidence-rows, corpus-plan,
+    explore, typed-rows, field-evidence-corpus. Probe once, then decide."""
+    return await _orch("GET", "/capabilities")
+
+
+def _trim_rows(rows: list) -> list:
+    out = []
+    for r in rows or []:
+        r = dict(r)
+        for k in ("text", "text_clean"):
+            if isinstance(r.get(k), str) and len(r[k]) > 1200:
+                r[k] = r[k][:1200]
+        out.append(r)
+    return out
+
+
+@mcp.tool()
+async def compile_plan(signal: str, corpus_id: str, limit: int = 24, explore: bool = True,
+                       communities: Optional[list[str]] = None) -> dict:
+    """CORPUS-PLAN-V1: send ONE signal; Polymath compiles 3-5 deterministic
+    reformulations (seed / tension / communities / invariant / contrast),
+    runs each through the EXPLORE evidence view and returns the merged rows
+    stamped with the query ids that found them, plus the plan itself."""
+    body: dict[str, Any] = {"signal": signal, "corpus_id": corpus_id, "limit": limit, "explore": explore,
+                            "communities": list(communities or [])}
+    out = await _orch("POST", "/retrieve/plan", json=body)
+    if "error" in out:
+        return out
+    return {"plan": out.get("plan"), "plan_contract": out.get("plan_contract"),
+            "evidence_rows": _trim_rows(out.get("evidence_rows")), "evidence_contract": out.get("evidence_contract"),
+            "per_query": out.get("per_query"), "errors": out.get("errors")}
+
+
+@mcp.tool()
+async def retrieve_evidence(query: str, corpus_id: str, limit: int = 12, explore: bool = False) -> dict:
+    """RETRIEVE-EVIDENCE-ROWS-V1: contract-ready evidence rows for one query
+    (id, verbatim text, title, auditable source, timecodes, document
+    summaries, attested graph facts). explore=true = breadth across documents."""
+    body: dict[str, Any] = {"query": query, "corpus_id": corpus_id, "limit": limit, "evidence": True}
+    if explore:
+        body["mode"] = "EXPLORE"
+    out = await _orch("POST", "/retrieve", json=body)
+    if "error" in out:
+        return out
+    return {"evidence_rows": _trim_rows(out.get("evidence_rows")), "evidence_contract": out.get("evidence_contract"),
+            "graph_facts": len(out.get("graph_facts") or [])}
+
+
+@mcp.tool()
 async def ask(question: str, corpus_id: str, mode: str = "HYBRID",
               latent: Optional[bool] = None) -> dict:
     """Ask a question of ONE corpus and get the grounded RAG answer with

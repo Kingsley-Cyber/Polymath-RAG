@@ -11,7 +11,9 @@ from fastapi import FastAPI
 
 from .api.ask import router as ask_router
 from .api.queries import router as queries_router
+from .api.capabilities import router as capabilities_router
 from .api.chat import router as chat_router
+from .api.corpus_plan import router as corpus_plan_router
 from .api.evidence import router as evidence_router
 from .api.fleet import router as fleet_router
 from .api.health import router as health_router
@@ -94,6 +96,8 @@ async def _query_activity_signal(request, call_next):
 app.include_router(health_router)
 app.include_router(intake_router)
 app.include_router(retrieve_router)
+app.include_router(corpus_plan_router)
+app.include_router(capabilities_router)
 app.include_router(evidence_router)
 app.include_router(chat_router)
 app.include_router(ask_router)
