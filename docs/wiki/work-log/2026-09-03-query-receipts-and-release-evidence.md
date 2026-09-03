@@ -97,8 +97,9 @@ request, so "is retrieval healthy?" could not be answered from the system.
   QUERY_SCOPE_UNKNOWN. `GET /queries` 9 ms; `scripts/query_log.py`
   prints the per-mode table; MCP session (bearer, streamable-http)
   lists 9 tools and `recent_queries` returns count + summary.
-- verify_live_build (after the final bounce onto 76e2735+fence): see the
-  FENCE line below. verify_product_readiness: PASS 8/8 (embedder_ready and reranker_ready
+- FENCE: verify_live_build PASS 4/4 enforced after the final bounce onto
+  ffac550 (intake/summaries on HEAD, embedder + orchestrator listening,
+  execution_bundle fresh; gliner/spacy advisory). verify_product_readiness: PASS 8/8 (embedder_ready and reranker_ready
   now green with the sidecars resident).
 - FAST_HYBRID evidence: 12 probes, all HTTP 200, foreign-corpus hits = 0
   on every probe including cross-topic and nonce; topical top document =
