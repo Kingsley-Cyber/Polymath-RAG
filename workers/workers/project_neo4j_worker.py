@@ -69,6 +69,7 @@ PROJECTION_QUERIES = [
     """
     MERGE (e:Entity {entity_id: $entity_id})
       ON CREATE SET e.core_type = $core_type, e.surface = $surface
+      SET e.raw_types = $raw_types, e.display_type = $display_type
     """,
     # Fact traversal edges (Subject)-[:REL {fact_id}]->(Object): one edge
     # per fact (docx §18 — the traversal edge carries the fact id).
@@ -77,6 +78,7 @@ PROJECTION_QUERIES = [
     MERGE (o:Entity {entity_id: $object_id})
     MERGE (s)-[r:REL {fact_id: $fact_id}]->(o)
       ON CREATE SET r.predicate = $predicate
+      SET r.predicate_raw = $predicate_raw
     """,
     # Fact -> Evidence provenance links
     """
@@ -97,6 +99,30 @@ def _apply_constraints(driver) -> None:
             session.run(statement)
 
 
+def _raw_types_list(v) -> list[str]:
+    if v is None:
+        return []
+    if isinstance(v, str):
+        try:
+            import json as _json
+            v = _json.loads(v)
+        except Exception:  # noqa: BLE001
+            return []
+    return sorted({str(x) for x in v if x})
+
+
+def display_type(core_type: str, raw_types: list[str]) -> str:
+    """OPEN-VOCAB-SURFACED (LLM-DIRECT-CANON P2): the most specific type the
+    model actually said, when it is more specific than the core index type
+    (a Concept whose raw types are {Protocol} displays as Protocol). Pure,
+    deterministic: first differing raw type in sorted order."""
+    core = (core_type or "").strip()
+    for rt in raw_types or ():
+        if rt and rt.strip().lower() != core.lower():
+            return rt.strip()
+    return core
+
+
 def _graph_rows(conn: Connection, run_id: str) -> dict[str, list[dict]]:
     docs = conn.execute(
         """
@@ -111,7 +137,7 @@ def _graph_rows(conn: Connection, run_id: str) -> dict[str, list[dict]]:
     ).fetchall()
     entities = conn.execute(
         """
-        SELECT DISTINCT e.entity_id, e.core_type, e.normalized_surface
+        SELECT DISTINCT e.entity_id, e.core_type, e.normalized_surface, e.raw_types
           FROM facts f
           JOIN evidence ev ON ev.fact_id = f.fact_id
           JOIN documents d ON d.doc_id = ev.doc_id
@@ -124,7 +150,8 @@ def _graph_rows(conn: Connection, run_id: str) -> dict[str, list[dict]]:
     ).fetchall()
     facts = conn.execute(
         """
-        SELECT f.fact_id, f.predicate, f.subject_id, f.object_id, f.decision
+        SELECT f.fact_id, f.predicate, f.subject_id, f.object_id, f.decision,
+               f.provenance->>'predicate_raw'
           FROM facts f
           JOIN evidence e ON e.fact_id = f.fact_id
           JOIN documents d ON d.doc_id = e.doc_id
@@ -145,10 +172,13 @@ def _graph_rows(conn: Connection, run_id: str) -> dict[str, list[dict]]:
         (run_id,),
     ).fetchall()
 
-    entity_rows = [{"entity_id": r[0], "core_type": r[1], "surface": r[2]}
+    entity_rows = [{"entity_id": r[0], "core_type": r[1], "surface": r[2],
+                    "raw_types": _raw_types_list(r[3]),
+                    "display_type": display_type(r[1], _raw_types_list(r[3]))}
                    for r in entities]
     fact_rows = [{"fact_id": r[0], "predicate": r[1], "subject_id": r[2],
-                  "object_id": r[3]} for r in facts]
+                  "object_id": r[3], "predicate_raw": r[5] if len(r) > 5 else None}
+                 for r in facts]
 
     # GRAPH-ENDPOINT-GUARD-V2 (2026-08-28). Defence in depth against the
     # measured bypass: the fact projection's

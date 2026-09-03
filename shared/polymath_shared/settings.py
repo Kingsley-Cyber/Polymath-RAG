@@ -168,8 +168,9 @@ class WorkerSettings(BaseSettings):
                     "(GLiNER evidence proposals merge with lexical anchors)",
     )
     extraction_provider: str = Field(
-        default="gliner",
-        description="LOCAL-LLM-EXTRACTION-V1: 'gliner' (frozen default, "
+        default="llm_live",
+        description="LLM-DIRECT-CANON (ADR-0017, 2026-09-03): 'llm_live' is the "
+                    "canonical and default extraction path. Historical: 'gliner' (span tagger, "
                     "byte-identical behavior), 'llm_shadow' (LLM proposals "
                     "recorded, nothing admitted), or 'llm_live' (LLM "
                     "proposals enter the unchanged admission pipeline).",

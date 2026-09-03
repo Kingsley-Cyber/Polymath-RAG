@@ -103,13 +103,32 @@ which the locked `repetition_penalty=1.15` config achieved: 0%
 degeneration, self-terminating ~600-token outputs), and a routing digest
 per neighborhood.
 
-## GLiNER: retired
+## Extraction canon: LLM-direct (ADR-0017, 2026-09-03)
 
-With the LLM lanes live, GLiNER is not part of ingestion at all
-(`POLYMATH_WORKER_EXTRACTION_PROVIDER=gliner` remains as the frozen
-rollback default until the owner retires it). The measured justification:
-GLiNER's own probe produced 4 candidates / 0 facts on clean technical
-prose while the 4B produces hundreds of attested proposals per book.
+`llm_live` is the default and only canonical extraction provider
+(`extractor_version = llm-direct-v1`); the LLM gate
+(`llm_extraction/gate.py`) is the sole authority and `llm_direct.materialize`
+is the only fact writer. A fact is durable knowledge iff its QUOTE is
+attested verbatim in the document; endpoint attestation is a recorded
+LEVEL — quote › anchor › neighborhood › document › abstract (every content
+token present in the anchor chunk) — never a veto. Junk surfaces,
+unattested quotes and interrogatives remain hard rejections. The open
+vocabulary (`entities.raw_types`, `provenance.predicate_raw`) is projected
+to the graph and displayed; core types and the predicate enum are the
+INDEX vocabulary. Replay is graded from the stored raw LLM responses
+(`extraction_call_receipts`), retrieval from gold questions — never from
+the interpreter view or fact-tuple self-consistency. Plan of record:
+`docs/wiki/plans/LLM-DIRECT-CANON-PLAN.md`.
+
+## GLiNER + spaCy: history
+
+The span-tagger path (`extraction_provider=gliner`, spaCy syntax-evidence-v1,
+sentence-slice manifest, rule-pack replay) stays selectable for forensics
+and is never enforced by a gate, fence or test. Measured justification for
+the move: GLiNER's own probe produced 4 candidates / 0 facts on clean
+technical prose while the LLM lanes produce hundreds of attested proposals
+per book; under the tagger's locality rule 54 % of correct LLM relations
+were being rejected (2026-09-03).
 
 ## Provenance and recoverability
 
