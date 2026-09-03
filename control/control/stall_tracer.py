@@ -81,11 +81,19 @@ def _age(ts: datetime | None, now: datetime) -> int | None:
     return None if ts is None else int((now - ts).total_seconds())
 
 
-def diagnose_ready(row: dict, slots_alive: dict[str, bool] | None) -> tuple[str, dict]:
+def diagnose_ready(row: dict, slots_alive: dict[str, bool] | None) -> tuple[str, dict] | None:
     lane, slots = lane_slots(row["stage"])
+    # STALL-TRACER-V1.3 (2026-09-03): P6 re-extraction put 7 extract tickets
+    # READY behind 3 busy extract workers and 6 enrichment tickets behind 2
+    # busy summary workers — capacity queues, not stalls. When every live
+    # worker of the ticket's type holds a lease, the ticket is waiting on
+    # live work (the leased siblings are traced if THEY exceed the threshold).
+    cap = int(row.get("stage_capacity_live") or 0)
+    busy = int(row.get("stage_busy_live") or 0)
     base = {"lane": lane, "slots": sorted(slots), "attempt": row.get("attempt"),
             "live_workers": row.get("live_workers")}
     if not row.get("claim_event_pending"):
+        # no claim event is a scheduler defect whatever the lane's load
         base["note"] = ("no undelivered claim event for this ticket: the "
                         "advance phase's READY backfill has not re-emitted it")
         return "READY_NO_CLAIM_EVENT", base
@@ -93,6 +101,8 @@ def diagnose_ready(row: dict, slots_alive: dict[str, bool] | None) -> tuple[str,
         base["slots_alive"] = {s: bool(slots_alive.get(s)) for s in sorted(slots)}
         base["note"] = "claim event pending but no slot of its lane is alive (autopilot demand or budget)"
         return "READY_NO_LIVE_SLOT", base
+    if cap > 0 and busy >= cap:
+        return None                     # claimable, queued behind a saturated lane
     if slots_alive is not None:
         base["slots_alive"] = {s: bool(slots_alive.get(s)) for s in sorted(slots)}
     base["note"] = ("claim event pending and a lane slot is alive: the worker's "
@@ -236,7 +246,19 @@ def collect_stalls(conn, *, census=None, threshold_s: int = STALL_THRESHOLD_S,
                EXISTS (SELECT 1 FROM outbox_events e
                         WHERE e.run_id = t.run_id AND e.event_type = t.event_type
                           AND e.delivered_at IS NULL
-                          AND e.payload->>'ticket_id' = t.ticket_id) AS claim_event_pending,
+                          AND (e.payload->>'ticket_id' = t.ticket_id
+                               OR e.payload->>'ticket_id' IS NULL)) AS claim_event_pending,
+               (SELECT count(*) FROM stage_tickets b
+                  JOIN worker_registrations bw ON bw.worker_id = b.lease_owner
+                 WHERE b.stage = t.stage AND b.status = 'leased'
+                   AND bw.heartbeat_at > now() - make_interval(secs => 90)) AS stage_busy_live,
+               (SELECT count(*) FROM worker_registrations lw
+                 WHERE lw.heartbeat_at > now() - make_interval(secs => 90)
+                   AND lw.worker_type = COALESCE(
+                         (SELECT bw2.worker_type FROM stage_tickets b2
+                            JOIN worker_registrations bw2 ON bw2.worker_id = b2.lease_owner
+                           WHERE b2.stage = t.stage AND b2.lease_owner IS NOT NULL
+                           ORDER BY b2.updated_at DESC LIMIT 1), '')) AS stage_capacity_live,
                (SELECT count(*) FROM worker_registrations wr
                  WHERE wr.heartbeat_at > now() - make_interval(secs => %s)) AS live_workers
           FROM stage_tickets t
@@ -249,7 +271,10 @@ def collect_stalls(conn, *, census=None, threshold_s: int = STALL_THRESHOLD_S,
     chains: dict[str, dict[str, str]] = {}
     for row in tickets:
         if row["status"] == "ready":
-            code, detail = diagnose_ready(row, slots_alive)
+            res = diagnose_ready(row, slots_alive)
+            if res is None:
+                continue
+            code, detail = res
         elif row["status"] == "leased":
             code, detail = diagnose_leased(row, now)
         else:

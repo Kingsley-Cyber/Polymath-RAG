@@ -690,7 +690,6 @@ TREE: list[tuple[str, str, str | None]] = [
     ("resources/discourse/discourse-reference-policy-v1.json", "json", None),
     ("tests/determinism/test_discourse_reference_v1.py", "py", None),
     ("tests/determinism/test_entity_harbor_contract.py", "py", None),
-    ("tests/determinism/test_kimi_observability_phase5.py", "py", None),
     ("eval/kimi_realignment_v1/REPORT.md", "md", None),
     ("docs/wiki/work-log/2026-08-17-kimi-realignment.md", "md", None),
     ("docs/wiki/experiments/0007-lexical-compiler-alignment.md", "md", None),

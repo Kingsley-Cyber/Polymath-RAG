@@ -244,6 +244,41 @@ expansion, canonicalization and identity.
    28 matching children, chat abstained — the one genuine case, open).
 7. **Decisions executed:** apple-ml LaunchAgent retired; 29 interpreter-
    path test files deleted (list above); P6 launched.
+8. **STALL-TRACER-V1.3 (from watching P6).** Two false-positive classes:
+   READY_NO_CLAIM_EVENT on `parent_enrichment` (owner-triggered stages mint
+   per-RUN claim events whose payload has no `ticket_id`; the tracer's
+   anti-join required one — 6/6 "eventless" tickets had a pending event),
+   and READY_UNCLAIMED on extract tickets queued behind 3 busy extract
+   workers. The claim-event predicate now accepts per-run events, and a
+   claimable READY ticket whose lane has every live worker leased is a
+   queue, not a stall (checked AFTER the no-event and no-live-slot
+   defects, which stay traced). Tests: test_stall_tracer 11.
+9. **P6 makes the corpus unqueryable while it converges.** `reingest_corpus`
+   supersedes every run and intake re-chunks (GENERATION-PURGE removes the
+   old rows), so `/retrieve` and `/chat` answer 502 `corpus_not_ready` for
+   ecom-meta-v1 and cysa-study-v1 until the successors are query_ready —
+   by the serving contract (fast.py), not a fault. The two 502s I first
+   read as a reranker cold start were this. Recommendation (plan, next
+   slice): blue/green re-ingest — regenerate into a shadow corpus id and
+   swap the alias when converged, so a contract change never takes the
+   product down.
+10. **Full determinism + contracts suite after the deletions (1 run, P6 in
+   flight):** 12 failures → classified: 4 contract tests validate a LIVE
+   /chat response against the v2 schemas and the schemas lagged the
+   runtime (`meta.verdict`, `answer_admission`, `uncovered_query_terms`,
+   `citation.human_locators`, claim status `withheld_insufficient_coverage`,
+   evidence-item `presentation`) — schemas updated, the tests need a
+   query_ready corpus to re-run; `test_raw_evidence_ledger` pins the
+   semantic-authority hash, which ATTESTATION-LEVELS-V1 moved on purpose —
+   pin moved with the reason; `test_kimi_observability_phase5` imported a
+   deleted interpreter-path test — deleted (30th file);
+   `test_fact_endpoint_eligibility::test_retirement_preserved_raw_observations…`
+   is the GLiREL-era relation_candidates pin — skip-marked (ADR-0017);
+   `test_evidence_truncation` and `test_graph_lifecycle_v2` read live data
+   mid-purge (concepts whose chunks were regenerated; Neo4j nodes whose
+   Postgres rows were purged before the successor's projection) — re-check
+   after P6, real defects if they persist; `test_llm_controller` is the
+   pre-existing batched-client double.
 
 ## Rejected claims
 - "The type flattening is a data-loss bug." `entities.raw_types` already

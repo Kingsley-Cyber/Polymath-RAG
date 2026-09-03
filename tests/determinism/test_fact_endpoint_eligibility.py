@@ -165,6 +165,7 @@ def test_endpoint_gate_enforces_even_in_shadow():
         "a hard refusal no longer withholds the assertion")
 
 
+@pytest.mark.skip(reason="historical GLiREL-era relation_candidates pin — LLM-DIRECT-CANON (ADR-0017); the llm-direct path writes no relation candidates")
 @pg_required
 def test_retirement_preserved_raw_observations_and_dispositions():
     """Retirement is not deletion: the pronoun remains valid evidence,
