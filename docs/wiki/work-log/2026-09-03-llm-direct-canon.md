@@ -2,7 +2,7 @@
 change_id: LLM-DIRECT-CANON (P0–P3, P5; P4 partial)
 owner: governance
 date: 2026-09-03
-status: in progress — phase receipts below
+status: P0–P3 + P5 complete (receipts below); P4 partial; P6 owner decision
 architecture_impact: LLM-direct extraction declared canon (ADR-0017); tiered endpoint attestation replaces the anchor-chunk veto; open vocabulary projected to the graph; replay and grading re-based on the raw-response ledger and gold questions
 last_reviewed: 2026-09-03
 ---
@@ -60,7 +60,24 @@ expansion, canonicalization and identity.
    ledger (`extraction_call_receipts.raw_text`) → sanitize → gate →
    materialize against a capturing connection → fact-id set vs production;
    `--record-evidence` writes the EXACT_REPLAY evidence naming the gate
-   version. <<REPLAY>>
+   version. RECEIPT-COMPLETENESS-V1 came out of building it: on
+   canary 1 only 9 of 14 responses had been receipted — reissue calls
+   bypassed the ledger on both the write and the read side — so a ledger
+   replay could cover 14 of 19 neighborhoods (`_reissue` now goes through
+   the receipt-aware `_call` wrapper: reissues are read from and written
+   to the ledger like first-pass calls). Canary 2 then stored 14/14
+   receipts, but the replay still diverged (extra 47 / missing 9): the
+   disposition rules read `finish_reason` ("length" = truncated call →
+   split, last item re-issued) and the ledger did not carry it; the
+   artifact's per-call `raw_head` match is an unreliable bridge (identical
+   200-char prefixes). Migration 0048 adds `finish_reason` to the receipt
+   ledger; the writer, the provider's cache seam and
+   `LLMExtractionClient.extract_from_raw` carry it both ways. The replay
+   harness drives `run_proposals` itself (same batching, alias maps,
+   splits, dispositions), answers every call from the ledger, forbids
+   the network, and decodes any missed batch by the provider's own key
+   rule. Local-lane documents go through `extract_batched`, which has no
+   cache seam — not replayable yet (declared).
 5. **P4 retirement (partial).** `test_sval_doc01_red.py` skip-marked
    (historical candidate/role-binding path). Fence already path-aware
    (FENCE-PATH-AWARE-V1). Remaining: move `retrieval_validation.py`,
@@ -101,7 +118,17 @@ expansion, canonicalization and identity.
   reversed), every sampled endpoint was a real term the sentence is about —
   the attestation level itself was right 20/20. Target ≥ 18/20 on the strict
   reading: MISSED BY ONE, on a dimension this change does not touch.
-- Replay receipt: <<REPLAY-RECEIPT>>
+- Replay receipt: canary 3 (same book, fresh nonce, first document
+  whose ledger carries `finish_reason`): 13 calls (6 reissues, 2 truncated,
+  1 salvaged), 13/13 receipts with finish_reason; replay through
+  `run_proposals` from the ledger, 15 cache hits / 0 misses, dispositions
+  reproduced (returned 13, reissued 4, incomplete_kept 2) → **IDENTICAL:
+  103 replayed = 103 production facts, extra 0, missing 0**
+  (`release_evidence/exact_replay.json`, gate EXACT_REPLAY PASS). The SAME
+  stored responses re-gated under `strict` (the pre-canon anchor-chunk rule)
+  yield 79 relations / 76 facts — 27 facts (26 %) of what the LLM correctly
+  proposed would have been discarded; the tiered levels on this document:
+  quote 134 / anchor 47 / neighborhood 15 / document 2 / abstract 14.
 - Dev holdout (not release evidence): 10 dev questions, HYBRID chat: supported 6, wrong 0,
   unexplained 4, zero-tolerance clean (0 foreign citations, 0 answers
   without citations, 0 errors), p50 2.6 s. The four unexplained are the

@@ -1,0 +1,17 @@
+{
+ "contract": "LLM-DIRECT-REPLAY-V1 (raw-response ledger \u2192 sanitize \u2192 gate \u2192 materialize)",
+ "gate_version": "attestation-levels-v1",
+ "attestation_policy": "tiered",
+ "corpus": null,
+ "docs": [
+  "doc_4f9729224b3c16254588bf86b256fed6fa2b8d5aff75a2c97c301e6aa50a3f93"
+ ],
+ "replayed_facts": 103,
+ "production_facts": 103,
+ "extra": 0,
+ "missing": 0,
+ "declared_exceptions": [],
+ "verdict": "IDENTICAL",
+ "recorded_at": "2026-09-03T16:00:26+00:00",
+ "producer": "eval/v5/replay_llm_direct.py --record-evidence"
+}

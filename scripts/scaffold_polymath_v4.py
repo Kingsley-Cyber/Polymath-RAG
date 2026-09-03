@@ -1282,6 +1282,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/v5/release_evidence/core3_retrieval_baseline.json", "json", None),
     ("eval/v5/release_evidence/retrieval_fast_hybrid.json", "json", None),
     ("eval/v5/release_evidence/incrementality.json", "json", None),
+    ("eval/v5/release_evidence/exact_replay.json", "json", None),
     ("eval/v5/release_gates.py", "py", None),
     ("eval/v5/replay/artifact_validation.py", "py", None),
     ("eval/v5/replay/corpus_mapping_validation.py", "py", None),

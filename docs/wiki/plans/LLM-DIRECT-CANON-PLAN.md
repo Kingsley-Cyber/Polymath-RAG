@@ -107,5 +107,10 @@ Re-extraction never deletes: identities are content hashes, replays write 0 rows
   run: supported 60 %, wrong 0 %, unexplained 4 (three abstentions on
   answerable questions → answerability-gate finding, one grader phrase too
   narrow), zero-tolerance clean. Not release evidence.
-- 2026-09-03 P3: `eval/v5/replay_llm_direct.py` — receipt of the first
-  IDENTICAL/DIVERGENT run recorded in the work-log.
+- 2026-09-03 P3: `eval/v5/replay_llm_direct.py` drives the provider's own
+  pipeline from the raw-response ledger. Building it found
+  RECEIPT-COMPLETENESS-V1 (reissue calls were never receipted; the ledger
+  lacked `finish_reason`, which the disposition rules read) — fixed
+  (f34ddb6, migration 0048). Canary 3 (first fully-ledgered document): replay IDENTICAL, 103/103 facts,
+  extra 0 / missing 0 → EXACT_REPLAY PASS; the same responses under `strict`
+  lose 27 facts (26 %).
