@@ -446,6 +446,29 @@ expansion, canonicalization and identity.
    probe matched) — the test now compares whitespace-collapsed text, the
    same rule every attestation path in the gate uses; PASSES.
 
+14. **PORTABILITY-V1 (owner: "commit and merge so when others use it it
+   works").** A fresh `git clone` of main was exercised: imports of the 21
+   touched modules pass, `bundle_integrity --strict` READY, but
+   `repo_guard.py` FAILED in the clone on 7 paths the TREE declares that
+   `.gitignore` had kept out of every commit (`resources/vendor/.gitkeep`
+   and six i3/i4/i4r verify evidence logs) — force-tracked now. Also fixed
+   for the next user: `.env.example` still told them to set the deleted
+   GLiNER/spaCy/rescue knobs and lacked the canon ones (now `llm_live`,
+   `tiered` attestation, floor 0, local-lane memory, query policy
+   documented); `scripts/boot_polymath.sh` and `run_fleet_supervised.sh`
+   exported the retired knobs AND `POLYMATH_QUERY_POLICY=…-v3`, so a
+   boot-launched fleet pinned a different execution contract from a
+   `.env`-launched one (measured: 5 runs on v3 vs 100+ on v1, the settings
+   default) — both scripts now export `.env` and nothing else;
+   `check_install.sh` probed the deleted GLiNER sidecar and the wrong
+   orchestrator port (8000; it is 7200) — now embedder, reranker,
+   local-extractor (parked when idle), orchestrator :7200, MCP :8930;
+   `run_i4_arm.sh` and `start_kimi_stack.sh` (launchers of the deleted
+   rescue/kimi paths) deleted. Schema for a fresh install: `compose.yaml`
+   mounts `stores/postgres/migrations` into `docker-entrypoint-initdb.d`,
+   so a new database applies everything through 0050 on first start;
+   existing installs apply pending files by hand (continuity table).
+
 ## Rejected claims
 - "The type flattening is a data-loss bug." `entities.raw_types` already
   kept the open vocabulary as a set union; the loss was in projection and

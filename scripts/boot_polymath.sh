@@ -4,12 +4,15 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 export POLYMATH_PG_DSN="${POLYMATH_PG_DSN:-postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath}"
-export POLYMATH_SYNTAX_PROVIDER="${POLYMATH_SYNTAX_PROVIDER:-spacy}"
-export POLYMATH_QUERY_POLICY="${POLYMATH_QUERY_POLICY:-semantic-query-policy-v3}"
-export POLYMATH_RESCUE="${POLYMATH_RESCUE:-on}"
-export POLYMATH_WORKER_RULE_PACK_VERSION="${POLYMATH_WORKER_RULE_PACK_VERSION:-1.5.0}"
-export POLYMATH_CHUNKER="${POLYMATH_CHUNKER:-legacy_v1}"
-export POLYMATH_RELATION_PIPELINE="${POLYMATH_RELATION_PIPELINE:-legacy_v1}"
+# LLM-DIRECT-CANON (ADR-0017, 2026-09-03): the retired GLiNER/spaCy/rule-pack
+# knobs are gone (SYNTAX_PROVIDER, RESCUE, RULE_PACK_VERSION, RELATION_PIPELINE,
+# the legacy CHUNKER fingerprint). `.env` is the ONLY execution contract
+# (CLAUDE.md): export it here so a boot-launched fleet pins the same
+# contract as a manually started one.
+# No knob defaults beyond .env: every live run pins semantic-query-policy-v1
+# (the settings default); the v3 export this script used to add flipped the
+# execution contract for the 5 runs that happened to boot through it.
+if [ -f .env ]; then set -a; . ./.env; set +a; fi
 
 # 1. stores
 docker compose up -d postgres redis qdrant neo4j 2>/dev/null || true

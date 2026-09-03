@@ -30,8 +30,6 @@ state, and a work-log entry.
 | `scripts/run_fleet_supervised.sh` | control | running stores | stops nohup-managed fleets, starts the process supervisor (bounded restart, quarantine) | `./scripts/run_fleet_supervised.sh [pipeline] [rescue] [rule_pack] [chunker]` |
 | `scripts/semantic_lane_census.py` | control | durable Postgres state via the compilers' own helpers (no model calls) | nothing (`--backfill` writes census rows) | `python scripts/semantic_lane_census.py --corpus <corpus_id> [--backfill]` |
 | `scripts/purge_orphan_projections.py` | control | Qdrant routing collections + Postgres derived rows vs `documents` | deletes orphan points/rows (documents deleted or moved) only with `--apply` (dry-run default; idempotent) | `.venv/bin/python scripts/purge_orphan_projections.py [--apply] [--corpus <id>]` |
-| `scripts/start_kimi_stack.sh` | control | running orchestrator + sidecars | starts worker fleet in background | `./scripts/start_kimi_stack.sh` |
-| `scripts/run_i4_arm.sh` | control | running orchestrator + sidecars | restarts the worker fleet for one measurement arm (pipeline/rescue/rule-pack) | `./scripts/run_i4_arm.sh kimi_v1 on 1.3.0` |
 | `scripts/ingest.py` | control | manifest YAML + Postgres (plan/status read-only) | intake outbox submissions only (`run`; `plan`/`status` write nothing) | `python3 scripts/ingest.py plan --manifest <manifest.yaml>` |
 
 No script may commit, push, delete, migrate, or repair services unless its

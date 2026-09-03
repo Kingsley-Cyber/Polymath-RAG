@@ -1,0 +1,80 @@
+[freeze] verifying frozen hashes
+[freeze] ok: 11 files, pack 1.2.0
+[ingestion] wiping i4-fresh-acceptance-v1
+[ingestion] submitted=5
+[wait] i4-fresh-acceptance-v1: {'intake': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[ingestion] converged: {'query_ready': 5} in 60s
+[control_chain] ok=True across 5 runs
+[entities] raw=0.818 mention=0.818 referential=1.0 graph=1.0 wrong_type=5
+[facts] TP=10 FP=10 FN=16 P=0.5 R=0.385 | envelope 7/8 | must-not 18/18
+[provenance] 18/18 accepted facts exact-span verified
+[graph] eligible=18 projected=18 missing=0 orphan=2
+[qdrant] chunk_pts=10 routing_pts=15 kinds={'routing_section_summary': 5, 'routing_child': 5, 'routing_document_summary': 5} foreign=0
+[replay] submitted=0 hash_equal=True
+[wait] i4-fresh-acceptance-v1: {'intake': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[order] reversed ingest hash_equal=True
+[wait] i4-fresh-acceptance-v1: {'intake': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[concurrency] 5 parallel intakes hash_equal=True
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[interrupt] recovered 5/5 hash_equal=True
+[reconstruction] stores destroyed + 5 runs invalidated
+[wait] i4-fresh-acceptance-v1: {'degraded': 5}
+[wait] i4-fresh-acceptance-v1: {'degraded': 5}
+[wait] i4-fresh-acceptance-v1: {'degraded': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[reconstruction] reconverged hash_equal=True
+[race_fixture] in-flight edge kept=True
+[retrieval] 30/30 top-5
+[isolation] foreign artifacts=0
+[wait] i4-fresh-acceptance-v1: {'intake': 1, 'query_ready': 5}
+[wait] i4-fresh-acceptance-v1: {'query_ready': 5, 'reconciling': 1}
+[wait] i4-fresh-acceptance-v1: {'query_ready': 5, 'reconciling': 1}
+[wait] i4-fresh-acceptance-v1: {'query_ready': 5, 'reconciling': 1}
+[wait] i4-fresh-acceptance-v1: {'query_ready': 5, 'reconciling': 1}
+[wait] i4-fresh-acceptance-v1: {'query_ready': 5, 'reconciling': 1}
+[wait] i4-fresh-acceptance-v1: {'query_ready': 5, 'reconciling': 1}
+[versioning] ERROR: only '%s', '%b', '%t' are allowed as placeholders, got '%0'
+[versioning] new versions=2 replay_noop=True
+[freeze] verifying frozen hashes
+[freeze] ok: 11 files, pack 1.2.0
+[ingestion] wiping i4-fresh-acceptance-v1
+[ingestion] submitted=5
+[wait] i4-fresh-acceptance-v1: {'intake': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[ingestion] converged: {'query_ready': 5} in 40s
+[facts] TP=12 FP=7 FN=14 P=0.632 R=0.462 | envelope 6/8 | must-not 18/18
+[provenance] 18/18 accepted facts exact-span verified
+[freeze] verifying frozen hashes
+[freeze] ok: 11 files, pack 1.2.0
+[ingestion] wiping i4-fresh-acceptance-v1
+[ingestion] submitted=5
+[wait] i4-fresh-acceptance-v1: {'intake': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[wait] i4-fresh-acceptance-v1: {'reconciling': 5}
+[ingestion] converged: {'query_ready': 5} in 50s
+[facts] TP=12 FP=6 FN=14 P=0.667 R=0.462 | envelope 7/8 | must-not 18/18
+[provenance] 17/17 accepted facts exact-span verified

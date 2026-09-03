@@ -1,0 +1,564 @@
+[freeze] verifying corpus + gold hashes
+[freeze] ERROR: [Errno 2] No such file or directory: '/Users/king/Documents/polymath-rebuild/polymath-v4/eval/i3_5doc/corpus/corpus/01_harborpay_oauth_incident.md'
+[freeze] verifying corpus + gold hashes
+[freeze] ERROR: [Errno 2] No such file or directory: '/Users/king/Documents/polymath-rebuild/polymath-v4/eval/i3_5doc/gold/gold/entity_gold.json'
+[freeze] verifying corpus + gold hashes
+[freeze] ok: 5 docs, manifest manifest_15532fc5bbe
+[freeze] ERROR: [Errno 2] No such file or directory: '/Users/king/Documents/polymath-rebuild/polymath-v4/shared/polymath_shared/compiler.py'
+[freeze] verifying corpus + gold hashes
+[freeze] ok: 5 docs, manifest manifest_15532fc5bbe
+[freeze] contracts hashed: 16 entries
+[ingestion] wiping i3-five-doc-v1
+[ingestion] submitted=0
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[wait] i3-five-doc-v1: {}
+[ingestion] ERROR: i3-five-doc-v1 did not converge: {}
+[freeze] verifying corpus + gold hashes
+[freeze] ok: 5 docs, manifest manifest_62574af466e
+[freeze] contracts hashed: 16 entries
+[ingestion] wiping i3-five-doc-v1
+[ingestion] submitted=5
+[ingestion] ERROR: dictionary update sequence element #0 has length 6; 2 is required
+[ingestion] wiping i3-five-doc-v1
+[ingestion] submitted=5
+[wait] i3-five-doc-v1: {'intake': 5}
+[wait] i3-five-doc-v1: {'degraded': 1, 'reconciling': 4}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[ingestion] converged: {'query_ready': 5} in 40s
+[control_chain] ok=True across 5 runs
+[entities] P=0.0 R=0.0 F1=0.0 (tp=0 fp=0 fn=42 wrong_type=0)
+[facts] P=0.0 R=0.0 F1=0.0 (tp=0 fp=8 fn=3) ownership={'NO_ENDPOINT': 3}
+[negatives] 13/13 passed
+[hygiene] generic-looking nodes=0 mention-only-projected=0
+[provenance] 0/4 sampled facts exact-match evidence
+[qdrant] points=15 kinds={'?': 15} foreign=0 dupes=0
+[neo4j] eligible=4 graph_rels=0 missing=4 orphan=0 dup=0
+[entities] ERROR: 'normalized_surface'
+[facts] P=0.0 R=0.0 F1=0.0 (tp=0 fp=8 fn=3) ownership={'NO_ENDPOINT': 3}
+[negatives] 13/13 passed
+[hygiene] generic-looking nodes=0 mention-only-projected=0
+[provenance] ERROR: cannot access local variable 'text' where it is not associated with a value
+[qdrant] chunk_pts=15 routing_pts=20 kinds={'routing_document_summary': 5, 'routing_child': 10, 'routing_section_summary': 5} foreign=0 dupes=10
+[neo4j] eligible=4 graph_rels=322 missing=3 orphan=321 dup=0
+[entities] P=0.444 R=0.098 F1=0.16 (tp=4 fp=4 fn=37 wrong_type=1)
+[provenance] 0/4 sampled facts exact-match evidence
+[qdrant] ERROR: name 'dupes' is not defined
+[neo4j] ERROR: name 'graph_facts' is not defined
+[qdrant] chunk_pts=15 routing_pts=20 kinds={'routing_document_summary': 5, 'routing_child': 10, 'routing_section_summary': 5} foreign=0
+[neo4j] ERROR: name 'graph_facts' is not defined
+[neo4j] eligible=4 graph_rels=322 missing=3 orphan=0 dup=0
+[retrieval] 30/30 rows gold-doc top-5
+[retrieval] 30/30 rows gold-doc top-5
+[freeze] verifying corpus + gold hashes
+[freeze] ok: 5 docs, manifest manifest_62574af466e
+[freeze] contracts hashed: 16 entries
+[ingestion] wiping i3-five-doc-v1
+[ingestion] submitted=5
+[wait] i3-five-doc-v1: {'intake': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'query_ready': 1, 'reconciling': 4}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[ingestion] converged: {'query_ready': 5} in 50s
+[control_chain] ok=True across 5 runs
+[entities] P=0.444 R=0.098 F1=0.16 (tp=4 fp=4 fn=37 wrong_type=1)
+[facts] P=0.0 R=0.0 F1=0.0 (tp=0 fp=8 fn=3) ownership={'NO_ENDPOINT': 3}
+[negatives] 13/13 passed
+[hygiene] generic-looking nodes=0 mention-only-projected=0
+[provenance] 0/4 sampled facts exact-match evidence
+[qdrant] chunk_pts=15 routing_pts=20 kinds={'routing_document_summary': 5, 'routing_child': 10, 'routing_section_summary': 5} foreign=0
+[neo4j] eligible=4 graph_rels=325 missing=0 orphan=0 dup=0
+[replay] submitted=0 docs 5->5 facts 8->8 hash_equal=True
+[wait] i3-five-doc-v1: {'intake': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[order] reversed-order ingest hash_equal=True
+[wait] i3-five-doc-v1: {'intake': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[concurrency] 5 concurrent intakes hash_equal=True
+[interrupt] crash-injected failed qdrant attempts=5
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'query_ready': 1, 'reconciling': 4}
+[wait] i3-five-doc-v1: {'query_ready': 1, 'reconciling': 4}
+[wait] i3-five-doc-v1: {'query_ready': 1, 'reconciling': 4}
+[interrupt] recovered 5/5 hash_equal=True
+[reconstruction] stores destroyed + claims superseded; waiting for census reschedule
+[reconstruction] reconverged hash_equal=False
+[retrieval] ERROR: name 'graph_fact_ids' is not defined
+[isolation] foreign docs=0 chunks=0 facts=0
+[wait] i3-five-doc-v1: {'intake': 1, 'query_ready': 5}
+[wait] i3-five-doc-v1: {'query_ready': 5, 'reconciling': 1}
+[wait] i3-five-doc-v1: {'query_ready': 5, 'reconciling': 1}
+[wait] i3-five-doc-v1: {'query_ready': 5, 'reconciling': 1}
+[wait] i3-five-doc-v1: {'query_ready': 5, 'reconciling': 1}
+[versioning] new versions=1 replay_noop=True
+[retrieval] 30/30 rows gold-doc top-5
+[reconstruction] stores destroyed + claims superseded; waiting for census reschedule
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[wait] i3-five-doc-v1: {'query_ready': 6}
+[freeze] verifying corpus + gold hashes
+[freeze] ok: 5 docs, manifest manifest_62574af466e
+[freeze] contracts hashed: 16 entries
+[entities] P=0.444 R=0.098 F1=0.16 (tp=4 fp=4 fn=37 wrong_type=1)
+[facts] P=0.0 R=0.0 F1=0.0 (tp=0 fp=8 fn=3) ownership={'NO_ENDPOINT': 3}
+[negatives] 13/13 passed
+[hygiene] generic-looking nodes=0 mention-only-projected=0
+[provenance] 0/4 sampled facts exact-match evidence
+[qdrant] chunk_pts=0 routing_pts=20 kinds={'routing_document_summary': 5, 'routing_child': 10, 'routing_section_summary': 5} foreign=0
+[neo4j] eligible=4 graph_rels=325 missing=0 orphan=0 dup=0
+[replay] submitted=0 docs 5->5 facts 8->8 hash_equal=True
+[isolation] foreign docs=0 chunks=0 facts=0
+[retrieval] 30/30 rows gold-doc top-5
+[freeze] verifying corpus + gold hashes
+[freeze] ok: 5 docs, manifest manifest_62574af466e
+[freeze] contracts hashed: 16 entries
+[ingestion] wiping i3-five-doc-v1
+[ingestion] submitted=5
+[wait] i3-five-doc-v1: {'intake': 5}
+[wait] i3-five-doc-v1: {'degraded': 4, 'reconciling': 1}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[ingestion] converged: {'query_ready': 5} in 40s
+[control_chain] ok=True across 5 runs
+[entities] P=0.0 R=0.0 F1=0.0 (tp=0 fp=0 fn=42 wrong_type=0)
+[facts] P=0.0 R=0.0 F1=0.0 (tp=0 fp=0 fn=3) ownership={'NO_ENDPOINT': 3}
+[negatives] 13/13 passed
+[hygiene] generic-looking nodes=0 mention-only-projected=0
+[provenance] 0/0 sampled facts exact-match evidence
+[qdrant] chunk_pts=15 routing_pts=20 kinds={'routing_document_summary': 5, 'routing_child': 10, 'routing_section_summary': 5} foreign=0
+[neo4j] eligible=0 graph_rels=324 missing=0 orphan=0 dup=0
+[ingestion] wiping i3-five-doc-v1
+[ingestion] submitted=5
+[wait] i3-five-doc-v1: {'intake': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[ingestion] converged: {'query_ready': 5} in 60s
+[control_chain] ok=True across 5 runs
+[entities] P=0.0 R=0.0 F1=0.0 (tp=0 fp=0 fn=42 wrong_type=0)
+[facts] P=0.0 R=0.0 F1=0.0 (tp=0 fp=0 fn=3) ownership={'NO_ENDPOINT': 3}
+[negatives] 13/13 passed
+[hygiene] generic-looking nodes=0 mention-only-projected=0
+[provenance] 0/0 sampled facts exact-match evidence
+[qdrant] chunk_pts=15 routing_pts=20 kinds={'routing_document_summary': 5, 'routing_child': 10, 'routing_section_summary': 5} foreign=0
+[neo4j] eligible=0 graph_rels=324 missing=0 orphan=0 dup=0
+[replay] submitted=0 docs 5->5 facts 0->0 hash_equal=True
+[wait] i3-five-doc-v1: {'intake': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[order] reversed-order ingest hash_equal=True
+[wait] i3-five-doc-v1: {'intake': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'degraded': 2, 'reconciling': 3}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[concurrency] 5 concurrent intakes hash_equal=True
+[interrupt] crash-injected failed qdrant attempts=5
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'query_ready': 1, 'reconciling': 4}
+[wait] i3-five-doc-v1: {'query_ready': 1, 'reconciling': 4}
+[wait] i3-five-doc-v1: {'query_ready': 1, 'reconciling': 4}
+[interrupt] recovered 5/5 hash_equal=True
+[reconstruction] stores destroyed + 5 runs invalidated; waiting for census re-drive
+[wait] i3-five-doc-v1: {'degraded': 5}
+[wait] i3-five-doc-v1: {'degraded': 5}
+[wait] i3-five-doc-v1: {'degraded': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[wait] i3-five-doc-v1: {'reconciling': 5}
+[reconstruction] reconverged hash_equal=True
+[retrieval] 30/30 rows gold-doc top-5
+[isolation] foreign docs=0 chunks=0 facts=0
+[wait] i3-five-doc-v1: {'intake': 1, 'query_ready': 5}
+[wait] i3-five-doc-v1: {'query_ready': 5, 'reconciling': 1}
+[wait] i3-five-doc-v1: {'query_ready': 5, 'reconciling': 1}
+[wait] i3-five-doc-v1: {'query_ready': 5, 'reconciling': 1}
+[versioning] new versions=1 replay_noop=True
+[entities] P=0.0 R=0.0 F1=0.0 (tp=0 fp=0 fn=42 wrong_type=0)
+[facts] P=0.0 R=0.0 F1=0.0 (tp=0 fp=0 fn=3) ownership={'NO_ENDPOINT': 3}
+[negatives] 13/13 passed
+[hygiene] generic-looking nodes=0 mention-only-projected=0
+[provenance] 0/0 sampled facts exact-match evidence
+[qdrant] chunk_pts=15 routing_pts=20 kinds={'routing_document_summary': 5, 'routing_child': 10, 'routing_section_summary': 5} foreign=0
+[neo4j] eligible=0 graph_rels=324 missing=0 orphan=0 dup=0
+[replay] submitted=0 docs 5->5 facts 0->0 hash_equal=True

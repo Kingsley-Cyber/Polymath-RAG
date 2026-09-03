@@ -18,11 +18,12 @@ check_tcp postgres 5432
 check_http qdrant http://127.0.0.1:6333/healthz
 check_http neo4j http://127.0.0.1:7474
 check_tcp redis 6379
-check_http gliner-runtime http://127.0.0.1:8740/ready
+# (gliner-runtime :8740 and spacy :8744 deleted 2026-09-03 — LLM-DIRECT-CANON)
 check_http embedder http://127.0.0.1:8742/ready
 check_http reranker http://127.0.0.1:8743/ready
-check_http orchestrator http://127.0.0.1:8000/health
-check_http control http://127.0.0.1:7100/health
+check_http "local-extractor (parked when no extraction is queued)" http://127.0.0.1:8755/ready
+check_http orchestrator http://127.0.0.1:7200/health
+check_http mcp http://127.0.0.1:8930/health
 
 .venv/bin/python - <<'PY'
 from polymath_shared.clients import probe_local_llm
