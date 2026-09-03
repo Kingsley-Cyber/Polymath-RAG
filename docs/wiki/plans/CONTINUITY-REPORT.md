@@ -25,7 +25,9 @@ Read order: this file → `CLAUDE.md` → the two newest work-logs.
 settings default; the anchor-chunk endpoint veto is gone
 (ATTESTATION-LEVELS-V1: level recorded per endpoint, `strict` env rollback);
 Neo4j carries `raw_types` / `display_type` / `predicate_raw`; replay is
-re-based on the raw-response ledger (`eval/v5/replay_llm_direct.py`);
+re-based on the raw-response ledger (`eval/v5/replay_llm_direct.py`; canary 3
+replays IDENTICAL 103/103 → EXACT_REPLAY PASS; reissues and `finish_reason`
+now receipted, migration 0048);
 grading is re-based on gold questions (`eval/v5/holdout/`, sealed set
 owner-supplied). Canary on a real 111 KB book: relation survival 52 % → 82 %,
 abstract endpoints 3 %, junk 0. Dev holdout: 60 % supported, 0 wrong, three
