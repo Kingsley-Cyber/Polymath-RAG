@@ -202,7 +202,6 @@ TREE: list[tuple[str, str, str | None]] = [
     ("scripts/README.md", "md", "SCRIPTS_README"),
     ("scripts/scaffold_polymath_v4.py", "self", None),
     ("scripts/check_install.sh", "md", "_CHECK_INSTALL_SH"),
-    ("scripts/start_kimi_stack.sh", "sh", "_START_KIMI_STACK_SH"),
     ("scripts/wiki_worm.py", "py", "_WIKI_WORM"),
     ("scripts/agent_preflight.py", "py", "_AGENT_PREFLIGHT"),
     ("scripts/repo_guard.py", "py", "_REPO_GUARD"),
