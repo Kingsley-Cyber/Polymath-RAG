@@ -49,7 +49,12 @@ to see before and after."
 ## Proof
 
 - Parity: Polymath `compile_plan(signal)` == TRAIL fixture ids/kinds/queries (5 queries).
-- Live probe after restart: see the receipt appended below by the session.
+- Live probe after restart (fleet 2026-09-03, main f7083ea): `GET /capabilities` → backend polymath, contracts
+  retrieve-evidence-rows v1 / corpus-plan v1 / explore true / typed-rows [] / field-evidence-corpus null.
+  `POST /retrieve/plan` on mark-builds-brands-v1 with the purple-ocean signal: 5 reformulations
+  (seed, tension, communities, invariant, contrast; ids identical to TRAIL's local plan), 50 merged rows
+  (35 chunk, 6 document, 9 attested graph_fact), 22 rows found by more than one reformulation, 0 errors, 58 s.
+- `pytest tests/integration/test_retrieve_plan_capabilities.py tests/determinism/test_corpus_plan.py` → 6 passed live.
 - Consumer: TRAIL OS v1.4.0 probes `/capabilities`, uses `/retrieve/plan` in
   native mode, records `corpus_backend {mode, version, plan_source,
   plan_parity}` in the run state; `--generic` forces the docs/18 path as the
