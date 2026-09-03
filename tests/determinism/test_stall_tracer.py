@@ -272,3 +272,24 @@ def test_ready_queued_behind_a_saturated_lane_is_not_a_stall(conn):
     conn.execute("UPDATE stage_tickets SET status='done', lease_owner=NULL WHERE ticket_id = %s", (t_busy,))
     s = _by_id(collect_stalls(conn, threshold_s=180), t_queued)
     assert s.diagnosis == "READY_UNCLAIMED"          # per-run event counted as a pending claim event
+
+
+def test_dependents_of_a_queued_predecessor_are_not_traced(conn):
+    """STALL-TRACER-V1.3: pending tickets behind a READY predecessor that is
+    itself queued behind a saturated lane are waiting on live work."""
+    run_a = _run(conn); run_b = _run(conn)
+    conn.execute(
+        """INSERT INTO worker_registrations (worker_id, worker_type, pid, host)
+           VALUES ('w-busy-2', 'extract', 5252, 'probe')
+           ON CONFLICT (worker_id) DO UPDATE SET heartbeat_at = now()""")
+    _ticket(conn, run_a, "intake", "done"); _ticket(conn, run_b, "intake", "done")
+    t_busy = _ticket(conn, run_a, "extract", "leased", lease_owner="w-busy-2")
+    conn.execute("UPDATE stage_tickets SET lease_expires_at = now() + interval '10 min' WHERE ticket_id = %s", (t_busy,))
+    t_queued = _ticket(conn, run_b, "extract", "ready")
+    conn.execute(
+        """INSERT INTO outbox_events (run_id, event_type, payload, idempotency_key)
+           VALUES (%s, 'extract.v1', %s::jsonb, %s)""",
+        (run_b, '{"ticket_id": "%s"}' % t_queued, "idem_probe_" + uuid.uuid4().hex[:12]))
+    t_dep = _ticket(conn, run_b, "profile_document", "pending")
+    ids = {s.unit_id for s in collect_stalls(conn, threshold_s=180)}
+    assert t_queued not in ids and t_dep not in ids
