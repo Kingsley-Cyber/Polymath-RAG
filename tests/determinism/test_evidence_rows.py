@@ -47,3 +47,9 @@ def test_clean_summary_strips_path_prefix_with_spaces_and_dots():
     assert clean_summary(raw) == "you should make one product"
     assert clean_summary("Blue_Ocean_Strategy.md — Untapped value.") == "Untapped value."
     assert clean_summary("No prefix here.") == "No prefix here."
+
+
+def test_clean_summary_drops_inline_timecode_markers():
+    from orchestrator.api.evidence_rows import clean_summary
+    raw = "x.md — You should make your **[16:51]** sales message as long **[16:53]** as it needs to be"
+    assert clean_summary(raw) == "You should make your sales message as long as it needs to be"
