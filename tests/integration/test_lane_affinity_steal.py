@@ -81,8 +81,11 @@ def test_affinity_prefers_home_lane_then_steals(conn) -> None:
 
 
 def test_local_affinity_mirrors(conn) -> None:
-    local_run = _mk_lane_run(conn, "loc2", 1_000)
-    cloud_run = _mk_lane_run(conn, "cld2", THRESHOLD * 2)
+    # lane membership is byte_length > THRESHOLD (policy.effective_threshold);
+    # under CLOUD-FIRST-V1 (floor 0) a 1,000-byte document is CLOUD-lane, so
+    # the boundary values are used exactly as in the first test.
+    local_run = _mk_lane_run(conn, "loc2", THRESHOLD)
+    cloud_run = _mk_lane_run(conn, "cld2", THRESHOLD + 1)
     identity = worker_identity("extract")
 
     got = claim_ticket_events(conn, identity, ["chunked.v1"], 1,

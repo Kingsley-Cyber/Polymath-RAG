@@ -96,9 +96,6 @@ def semantic_authorities() -> dict[str, Any]:
         # contract governs regeneration is what makes reprocessing
         # deterministic: old rows parsed with model X and new rows with
         # model Y under one execution_contract would defeat replay.
-        "syntax_contract": "syntax-evidence-v1",
-        "syntax_provider": s.sidecars.syntax_provider,
-        "syntax_model": _syntax_model_pin(),
     }
 
 
@@ -116,7 +113,6 @@ _SEMANTIC_AUTHORITY_MODULES = (
     "identity_evidence",
     "layout_evidence",
     "referential_span",
-    "syntax_readiness",
 )
 
 
@@ -154,22 +150,6 @@ def semantic_authority_sha256() -> str:
     return hashlib.sha256(body.encode()).hexdigest()
 
 
-def _syntax_model_pin() -> str | None:
-    """Model identity the syntax sidecar reports, or None when unavailable.
-
-    S2 records it; S3 makes availability a hard precondition.
-    """
-    try:
-        import httpx
-
-        from polymath_shared.settings import get_settings
-        r = httpx.get(f"{get_settings().sidecars.spacy_url}/manifest", timeout=3)
-        m = r.json().get("identity", {}).get("model", {})
-        return f"{m.get('id')}@{m.get('revision')}" if m else None
-    except Exception:
-        return None
-
-
 def semantic_bundle_sha256() -> str:
     """One hash over the whole semantic authority surface."""
     import hashlib
@@ -190,10 +170,6 @@ def worker_contracts() -> dict[str, Any]:
     files = semantic_file_hashes()
     return {
         "query_policy": active_policy_version(),
-        "rule_pack": s.worker.rule_pack_version,
-        "syntax_provider": s.sidecars.syntax_provider,
-        "rescue_stages": sorted(s.rescue_policy.enabled_stages()),
-        "gliner_url": s.sidecars.gliner_url,
         "chunker": s.worker.chunker,
         # SEMANTIC-BUNDLE-WORKER-FENCE-V1: what semantics this process can
         # actually execute. A worker alive but running older code advertises
@@ -203,7 +179,6 @@ def worker_contracts() -> dict[str, Any]:
         # The ontology realization edit moved no existing fence because the
         # yaml escapes the python-module code hash; these close that hole,
         # so contract reconciliation mints successors when they change.
-        "rule_pack_file_sha": files["core-predicates-v1.5.0.yaml"],
         "ontology_file_sha": files["scientific-predicate-ontology-v2.yaml"],
     }
 
@@ -303,26 +278,6 @@ def heartbeat(conn: Connection, worker_id: str, *,
     )
 
 
-_SYNTAX_CAP_CACHE: dict[str, Any] = {"cap": None}
-
-
-def syntax_capability(max_age_s: float = 15.0):
-    """Worker's current syntax capability, probed at most every `max_age_s`.
-
-    Cached so the claim loop does not hammer the sidecar, but short enough
-    that a dead sidecar stops the worker claiming V2 tickets promptly.
-    """
-    import time as _t
-
-    from polymath_shared.syntax_readiness import probe_syntax
-
-    cap = _SYNTAX_CAP_CACHE.get("cap")
-    if cap is None or (_t.time() - cap.checked_at) > max_age_s:
-        cap = probe_syntax()
-        _SYNTAX_CAP_CACHE["cap"] = cap
-    return cap
-
-
 def compatible(worker_contracts: dict[str, Any],
               execution_contract: dict[str, Any]) -> bool:
     """Lease rule: the worker must run the build the run pinned (when
@@ -341,23 +296,11 @@ def compatible(worker_contracts: dict[str, Any],
     want_bundle = execution_contract.get("semantic_bundle")
     if want_bundle is not None and worker_contracts.get("semantic_bundle") != want_bundle:
         return False
-    for key in ("query_policy", "rule_pack", "syntax_provider", "chunker"):
+    for key in ("query_policy", "chunker"):
         want = execution_contract.get(key)
         if want is not None and worker_contracts.get(key) != want:
             return False
-    want_rescue = execution_contract.get("rescue_stages")
-    if want_rescue is not None and sorted(want_rescue) != sorted(worker_contracts.get("rescue_stages", [])):
-        return False
-    # S3 (B) CLAIM ELIGIBILITY: an admission-harbor-v2 ticket is claimable
-    # only by a worker whose CURRENT, FRESH capability satisfies the syntax
-    # dependency. Leaving it pending beats claiming then repeatedly releasing.
-    # Contracts without a semantic_contract are unaffected.
-    from polymath_shared.syntax_readiness import claim_eligible, requires_syntax
-
-    if requires_syntax(execution_contract):
-        ok, _why = claim_eligible(execution_contract, syntax_capability())
-        if not ok:
-            return False
+    # (S3 syntax claim-eligibility retired with the spaCy sidecar — ADR-0017.)
     return True
 
 

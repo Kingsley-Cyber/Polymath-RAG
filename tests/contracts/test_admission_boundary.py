@@ -71,37 +71,19 @@ def test_production_never_imports_evaluation():
 # 2. The admission boundaries must have production callers
 # ---------------------------------------------------------------------------
 
-def test_entity_admission_has_a_production_caller():
-    callers = BI.call_graph_census()["entity_admission"]
+def test_extraction_gate_has_a_production_caller():
+    """LLM-DIRECT-CANON (ADR-0017): the extraction gate is the admission
+    boundary. It must be reachable from production, not only from eval/."""
+    callers = BI.call_graph_census()["extraction_gate"]
     assert callers, (
-        "ENTITY-KNOWLEDGE-ADMISSION-V1 has zero production callers. It "
-        "exists in source and does not run. Implementation is not "
-        "activation: this is NOT_IMPLEMENTED.")
-
-
-def test_fact_admission_has_a_production_caller():
-    callers = BI.call_graph_census()["fact_admission"]
-    assert callers, (
-        "FACT-ADMISSION-V1 has zero production callers. Production ships "
-        "the unadmitted graph while the shadow harness reports 14.5% "
-        "wrong -- a number that describes nothing the system does. "
-        "This was xfail while A3 was open; it flipped to a hard assertion "
-        "the moment F1-F8 was wired, and must never be relaxed again.")
+        "llm_extraction.gate has zero production callers. The boundary "
+        "exists in source and does not run: NOT_IMPLEMENTED.")
+    assert any(c.endswith("workers/workers/llm_direct.py") for c in callers), callers
 
 
 # ---------------------------------------------------------------------------
 # 3. Configuration coherence
 # ---------------------------------------------------------------------------
-
-def test_declared_rule_pack_is_the_loaded_rule_pack():
-    declared, loaded = BI._declared_rule_pack(), BI._loaded_rule_pack()
-    assert declared and loaded, "could not resolve both versions"
-    assert declared == loaded, (
-        f"documentation declares core-predicates-v{declared} byte-frozen "
-        f"while the runtime loads v{loaded}. This drift left grammatical "
-        f"frame arbitration inert in production while the docs said it "
-        f"was enforced.")
-
 
 def test_semantic_bundle_lock_exists_and_matches_the_tree():
     lock = BI.read_lock()

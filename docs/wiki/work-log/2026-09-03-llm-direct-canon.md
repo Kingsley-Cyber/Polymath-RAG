@@ -294,6 +294,52 @@ expansion, canonicalization and identity.
    a live holder, or claimable and queued behind a saturated lane), and
    the probe tests own their capacity so the live fleet cannot skew them.
 
+12. **RETIREMENT-DELETE-V1 (owner: "delete the retired code").** The
+   GLiNER/spaCy/rule-pack path is gone from the tree, not parked behind a
+   provider branch. `extract_worker.py` is rewritten LLM-direct only
+   (1,986 → 324 lines; `EXTRACTOR_VERSION = llm-direct-worker-v2`; a
+   non-`llm_live` provider raises instead of falling through). Deleted:
+   `sidecars/gliner_runtime/`, `sidecars/spacy_runtime/`, their toml pins,
+   4 v1 extraction schemas, 9 workers (`candidates`, `kimi_candidates`,
+   `kimi_v2_candidates`, `syntax`, `rescue`, `evidence_proposer`,
+   `fact_admission_stage`, `reprocess_worker`, `entity_admission_stage`),
+   `polymath_shared/{syntax_readiness,discourse_bridge,fact_admission}.py`,
+   the whole `polymath_shared/rulepack/` package and its yaml packs,
+   `fact_admission_policy.yaml`, `scripts/compile_predicate_rules.py`,
+   `tests/historical_boundary.py` and 14 more retired-path test files
+   (`git log --diff-filter=D` for the list). Relocated, not deleted:
+   `compound_heads.py` (the 10 compound head nouns, now read from
+   `config/ontology/scientific-predicate-ontology-v2.yaml`),
+   `verb_inventory.py` (the 190 verbs the rule pack used to supply at
+   import time, frozen as data — the old loader fell back to an EMPTY set
+   on any import error, a silent fallback), `workers/knowledge_artifacts.py`
+   (the Procedure/Concept persister the `compile_objects` stage imports; it
+   lived inside the extract worker), and 18 eval harnesses under
+   `eval/historical/`. Settings lost `gliner_url`, `spacy_url`,
+   `syntax_provider`, `evidence_proposal_mode`, `rule_pack_version` and the
+   `RescueSettings` block; the execution contract lost `rule_pack`,
+   `syntax_provider`, `rescue_stages`, `gliner_url`, `rule_pack_file_sha`
+   and the S3 syntax claim gate; `STAGE_CONTRACT_DEPENDENCIES` and the
+   config-drift env list follow. `bundle_integrity` now pins
+   `llm_extraction/gate.py` + `workers/llm_direct.py` as authorities and its
+   census asks for a production caller of the GATE (three: extract worker,
+   llm_provider, llm_direct); the semantic bundle lock was re-frozen
+   deliberately as `v5-production-002-llm-direct` (members changed:
+   `fact_admission.py` gone, gate + writer added; `admission_interpreter.py`
+   lost its spaCy readiness assert). Tests were retargeted rather than
+   deleted wherever the invariant survives: compatibility gating on
+   `chunker`/`query_policy`, staleness on `semantic_bundle`, the two
+   semantic-authority pins moved (`7b7fbcd284b47850`), the projection
+   reconstruction fixture builds facts the way `llm_direct.materialize`
+   writes them, the lane-affinity test uses the policy boundary for both
+   lanes (a 1,000-byte document is CLOUD-lane under floor 0), and the two
+   summary idempotency tests now retry the SAME content-addressed ticket
+   (their second-job-row leg predates the 08-28 `(stage, input_hash)`
+   unique index — a test that had been failing since P23, not since today).
+   AGENTS.md's tree, the TREE in `scaffold_polymath_v4.py` (45 rows removed,
+   19 renamed, 3 added) and `scripts/README.md` follow the tree.
+   Net: 117 tracked files, +393 / −17,752 lines.
+
 ## Rejected claims
 - "The type flattening is a data-loss bug." `entities.raw_types` already
   kept the open vocabulary as a set union; the loss was in projection and
@@ -313,6 +359,15 @@ expansion, canonicalization and identity.
 - Census promotion (`missing_chunk_receipts_for_run`) is still corpus-scoped.
 - `sb-02` (StoryBrand "call to action") abstains although 28 children match —
   the one unexplained dev-holdout case after re-grounding.
-- Retired code (`workers/candidates.py`, `kimi_*`, `syntax.py`, `rescue.py`,
-  `polymath_shared/rulepack/`, `syntax_readiness.py`, the two sidecar runtimes)
-  is still importable behind the gliner provider branch.
+- ~~Retired code still importable behind the gliner provider branch~~ —
+  DELETED (item 12, RETIREMENT-DELETE-V1).
+- Lifecycle findings surfaced by the post-P6 invariant tests (both are the
+  purge's doing, not the extractor's): Neo4j keeps 437 Evidence + 1,697 Chunk
+  nodes whose Postgres rows the intake purge deleted
+  (`test_no_derived_node_outlives_its_postgres_row`), and one
+  `concept_artifacts` row keeps `supporting_chunks` from the purged
+  generation because the persister is `ON CONFLICT DO NOTHING` on a
+  content-addressed id (`test_truncated_concepts_still_hydrate_full_text`).
+  Both belong to GENERATION-SWAP-V1: the swap must sweep derived nodes and
+  refresh derived artifacts for every replaced chunk. `test_llm_controller`
+  (batched-client double) remains the pre-existing failure.

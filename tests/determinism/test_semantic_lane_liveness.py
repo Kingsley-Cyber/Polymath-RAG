@@ -132,9 +132,10 @@ def test_callsite_pin_extract_worker_records_lane_attempts():
     row shape to its consumer. Here the risk is that a refactor stops
     RECORDING opportunities, which would silently return the lanes to
     output-only counting and re-hide truncation."""
-    src = (ROOT / "workers" / "workers" / "extract_worker.py").read_text()
+    src = (ROOT / "workers" / "workers" / "knowledge_artifacts.py").read_text()  # persister moved out of extract_worker 2026-09-03 (ADR-0017)
     start = src.index("def _persist_knowledge_artifacts")
-    body = src[start:src.index("\ndef ", start + 1)]
+    _end = src.find("\ndef ", start + 1)   # the persister is the module's last def
+    body = src[start:_end if _end != -1 else len(src)]
     # BOTH lanes must be measured. A weaker "count_opportunities in body"
     # check passed while one call was mutated away, because the other
     # lane still matched — caught by mutation-testing this pin.

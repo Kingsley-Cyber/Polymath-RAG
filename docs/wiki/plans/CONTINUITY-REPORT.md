@@ -42,6 +42,18 @@ run-scoped, local lane supervised (`local_extractor`, 29 GB budget, wakes with
 extraction), abstentions were question/data grounding (dev holdout 90 %).
 CLOUD-FIRST-V1 (floor 0) stands — owner-blessed 2026-09-02; do not "restore"
 a privacy floor, the threshold is a throughput router (policy.py). `POLYMATH_WORKER_CLOUD_MIN_BYTES=0` is the owner's CLOUD-FIRST-V1 setting.
+P6 CONVERGED (cysa-study-v1 2 query_ready, ecom-meta-v1 10 query_ready; both
+answer again). RETIRED CODE DELETED 2026-09-03 (work-log item 12): there is no
+gliner provider branch, no rule pack, no syntax sidecar — `extract_worker.py`
+is 324 lines of LLM-direct; the Procedure/Concept persister lives in
+`workers/knowledge_artifacts.py`; the semantic bundle lock is
+`v5-production-002-llm-direct` (re-freeze deliberately with
+`python -m polymath_shared.bundle_integrity --freeze <label>` when an
+authority changes, never silently). NEXT SLICE = GENERATION-SWAP-V1
+(blue/green re-ingest, designed in LLM-DIRECT-CANON-PLAN.md "Phase B"); it
+also owns the two post-P6 lifecycle findings (orphan Neo4j Chunk/Evidence
+nodes, stale `concept_artifacts.supporting_chunks`), which are why
+`test_graph_lifecycle_v2` and `test_evidence_truncation` fail today.
 
 ## Latest checkpoint (2026-09-03 — QUERY RECEIPTS + RUN-SCOPED RECEIPTS + RELEASE EVIDENCE)
 

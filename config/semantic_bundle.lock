@@ -1,17 +1,16 @@
 {
- "bundle": "v5-production-001",
- "bundle_sha256": "510e9941806e2a389556d41c1ef915eb0fabb7a82e327ba8eb6888bbe18baff6",
+ "bundle": "v5-production-002-llm-direct",
+ "bundle_sha256": "31ed8cc69f09801aa16495a3677b4bf6e05a89186e8ba5e81b0c17b47489c10a",
  "members": {
   "shared/polymath_shared/entity_admission_policy.yaml": "94e128e73f9e5abacb06c9f3304a585aa0d39f5b96dbbd711b52f20b580db165",
-  "shared/polymath_shared/fact_admission_policy.yaml": "2aeeddc415af115ba0686d8614230b1457bdded83d5d9ad044a6934e06e4c18b",
   "shared/polymath_shared/entity_knowledge_admission.py": "91e478e995982faaae0676fe6ce541e11ef04295ef8adcf83d42555872d75ae6",
-  "shared/polymath_shared/fact_admission.py": "31b74e047b2664e8e001251824aff3e47873ab6f52021852ec21e8dd60d5a616",
+  "shared/polymath_shared/llm_extraction/gate.py": "18ca5fb3f0e87b892833f59ef07fc2da7b73f645142df8d74f12279d354b1c00",
+  "workers/workers/llm_direct.py": "4211d1bcd571c0725d48b69f1def46de5a107dd80ed16217024bdd41b9eb34f7",
   "shared/polymath_shared/identity_allocation.py": "e3f429bbea4c1f38100fd57e5e26ee237f777b036ca109a49d238b21e88c15c9",
   "shared/polymath_shared/entity_harbor.py": "377b6d82e1d55da57aa53d5eb52b93f23c34d511092a9753962fda94cc933259",
-  "shared/polymath_shared/admission_interpreter.py": "854570e7f2f7859559c465ff18b2d3576831b2bc144b12a8040fa00dff1bd45b",
+  "shared/polymath_shared/admission_interpreter.py": "42c8adcbba995e62b25f74b57d308df711c3246d492c235e2e66351a9d442808",
   "shared/polymath_shared/source_region.py": "2bac84a90d3ed19305eb8da13ec668052aa5aab258736cf86469137afd75e09f"
  },
  "entity_policy": "E1-E7",
- "fact_policy": "F1-F8",
- "predicate_pack": "1.5.0"
+ "fact_policy": "F1-F8"
 }

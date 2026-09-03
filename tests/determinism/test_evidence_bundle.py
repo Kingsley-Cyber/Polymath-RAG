@@ -63,4 +63,4 @@ def test_bundle_does_not_move_the_semantic_bundle_hash():
     # the enforcement wiring (266aa81) moved it again — both committed,
     # qualified semantic-layer work; bundle integrity is READY at this
     # hash. The pin exists to catch UNNOTICED movement.
-    assert semantic_authority_sha256().startswith("557afbc3a60af163")
+    assert semantic_authority_sha256().startswith("7b7fbcd284b47850")  # re-pinned 2026-09-03: LLM-DIRECT-CANON deletion — admission_interpreter lost its spaCy readiness assert, identity_evidence owns RetryableDependencyUnavailable (ADR-0017)

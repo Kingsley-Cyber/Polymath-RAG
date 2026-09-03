@@ -58,10 +58,6 @@ STAGE_CONTRACT_DEPENDENCIES: dict[str, tuple[str, ...]] = {
     "intake": ("chunker",),
     "extract": (
         "semantic_bundle",   # entity/evidence semantics
-        "rule_pack",         # predicate candidates + compilation
-        "syntax_provider",   # syntax evidence feeding candidates
-        "rescue_stages",     # span rescue hypotheses
-        "gliner_url",        # which model instance produced spans
         "chunker",
     ),
     "profile_document": ("semantic_bundle",),

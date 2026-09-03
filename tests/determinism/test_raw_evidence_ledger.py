@@ -42,31 +42,6 @@ def test_entity_and_evidence_namespaces_are_disjoint():
     assert evidence_row("d1", "c1", ITEM, CONTRACT)[0].startswith("rawev_")
 
 
-def test_capture_is_pre_dedupe_and_pre_mapping():
-    """_entity_spans dedupes by span and drops unmapped labels; the sink must
-    see EVERYTHING the provider returned."""
-    from polymath_shared.contracts import CoreType  # noqa: F401  (import guard)
-    from workers.extract_worker import _entity_spans
-
-    class _Fake:
-        def entity_pass(self, text, labels, threshold):
-            return {"spans": [
-                {"start": 0, "end": 6, "text": "Nimbus", "label": "Organization", "score": 0.6},
-                {"start": 0, "end": 6, "text": "Nimbus", "label": "Organization", "score": 0.9},
-                {"start": 10, "end": 14, "text": "zzzz", "label": "NoSuchLabel", "score": 0.8},
-            ]}
-
-    sink: list = []
-    spans, rejected = _entity_spans(
-        _Fake(), "Nimbus is zzzz here", "c1", "d1",
-        {"label_set": ["Organization"], "profile_id": "core",
-         "core_labels": ["Organization"], "active_modules": []},
-        raw_sink=sink)
-    assert len(sink) == 3, "sink must capture pre-dedupe, pre-mapping"
-    assert len(spans) == 1 and spans[0].score == 0.9
-    assert any(r["reason"] == "no core mapping for label" for r in rejected)
-
-
 def test_ledger_capture_does_not_move_the_semantic_bundle():
     """Phase 2 is evidence plumbing. The recorded baseline is the qualified
     subtoken candidate; if this hash moves, capture leaked into semantics."""
@@ -82,4 +57,4 @@ def test_ledger_capture_does_not_move_the_semantic_bundle():
     # LLM-DIRECT-CANON (ADR-0017, 2026-09-03): ATTESTATION-LEVELS-V1 changed
     # the gate (llm_extraction/gate.py is semantic authority) — a NOTICED,
     # committed, canary-measured move (work-log 2026-09-03-llm-direct-canon).
-    assert semantic_authority_sha256().startswith("a45bb99bf1bdf7d8")
+    assert semantic_authority_sha256().startswith("7b7fbcd284b47850")  # re-pinned 2026-09-03: LLM-DIRECT-CANON deletion — admission_interpreter lost its spaCy readiness assert, identity_evidence owns RetryableDependencyUnavailable (ADR-0017)

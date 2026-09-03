@@ -1,7 +1,0 @@
-[spacy-syntax]
-display_name = "spaCy syntax runtime (en_core_web_sm, NER disabled)"
-release = "syntax-evidence-v1"
-manifest_url = "http://127.0.0.1:8744/manifest"
-contract = "contracts/sidecar/v1/manifest.schema.json"
-device = "cpu"
-owner = "sidecar-cpu"

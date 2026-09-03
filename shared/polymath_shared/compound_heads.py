@@ -17,7 +17,22 @@ from __future__ import annotations
 
 import re
 
-from polymath_shared.rulepack.semantic_frames import compound_head_nouns
+from functools import lru_cache
+from pathlib import Path
+
+_ONTOLOGY_PATH = Path(__file__).resolve().parents[2] / "config" / "ontology" / "scientific-predicate-ontology-v2.yaml"
+
+
+@lru_cache(maxsize=1)
+def compound_head_nouns() -> frozenset[str]:
+    """Compound-head noun inventory from the scientific predicate ontology
+    (relocated to config/ontology when the rule-pack package was retired —
+    LLM-DIRECT-CANON, ADR-0017, 2026-09-03). The splitter is the only live
+    consumer; the ontology yaml is hashed into the execution bundle."""
+    import yaml
+    with _ONTOLOGY_PATH.open() as fh:
+        onto = yaml.safe_load(fh) or {}
+    return frozenset(onto.get("compound_head_nouns", []))
 
 _WORD_RE = re.compile(r"[A-Za-z][A-Za-z0-9_\-]*")
 

@@ -267,55 +267,6 @@ def probe_local_llm() -> dict[str, str]:
     return {"status": "ready", **release}
 
 
-class GlinerClient(SidecarClient):
-    """Client for the GLiNER two-pass runtime (sidecar gliner-runtime)."""
-
-    def __init__(self, pin_release: str | None = None) -> None:
-        super().__init__(get_settings().sidecars.gliner_url,
-                         timeout=INFERENCE_READ_TIMEOUT_S,
-                         pin_release=pin_release)
-
-    def entity_pass(self, text: str, labels: list[str], threshold: float = 0.5) -> dict[str, Any]:
-        return self.infer({"task": "entity", "text": text, "labels": labels, "threshold": threshold})
-
-    def entity_pass_batch(self, texts: list[str], labels: list[str],
-                          threshold: float = 0.5,
-                          batch: int = 32) -> list[list[dict[str, Any]]]:
-        """PHASE B2 batched pass-1 transport. One HTTP request carries up to
-        `batch` chunk texts; the sidecar executes them under its startup-
-        probed mode (true model batch only when bit-equivalent, else a
-        server-side loop). Results align 1:1 with input order."""
-        out: list[list[dict[str, Any]]] = []
-        for i in range(0, len(texts), batch):
-            body = self.request("POST", "/infer_batch", json={
-                "task": "entity", "texts": texts[i:i + batch],
-                "labels": labels, "threshold": threshold}).json()
-            out.extend([[dict(sp) for sp in row] for row in body["results"]])
-        if len(out) != len(texts):
-            raise RuntimeError(
-                f"batch entity pass returned {len(out)} results for {len(texts)} texts")
-        return out
-
-    def evidence_pass(self, text: str, threshold: float = 0.5) -> dict[str, Any]:
-        return self.infer({"task": "evidence", "text": text, "labels": [], "threshold": threshold})
-
-    def infer_rescue_batch(
-        self, requests: list[dict[str, Any]]
-    ) -> list[list[dict[str, Any]]]:
-        """I4R targeted rescue: batched (text, labels, threshold)
-        re-queries against the same resident model via POST /rescue.
-        Grouping by label-set fingerprint happens server-side per item;
-        results align 1:1 with the input order. The caller decides what
-        to ask; the model decides what it is."""
-        results = self.request(
-            "POST", "/rescue", json={"requests": requests}).json().get("results", [])
-        if len(results) != len(requests):
-            raise RuntimeError(
-                f"rescue batch returned {len(results)} results for {len(requests)} requests"
-            )
-        return [item.get("spans", []) for item in results]
-
-
 class EmbedderClient(SidecarClient):
     """Client for the embedder sidecar. Returns vectors tagged with the
     frozen contract id — an index can only be replayed by the identical
@@ -331,32 +282,6 @@ class EmbedderClient(SidecarClient):
             "texts": texts,
             "representation_kind": representation_kind,
         })
-
-
-class SpacySyntaxClient(SidecarClient):
-    """Client for the spaCy syntax sidecar (syntax-evidence-v1).
-
-    Sends the extract worker's EXISTING sentence slices for batched
-    annotation and validates the versioned contract id on every
-    response. The sidecar never proposes entities or predicates; the
-    evidence it returns is syntax only, with offsets relative to the
-    supplied sentence text."""
-
-    CONTRACT_ID = "syntax-evidence-v1"
-
-    def __init__(self, pin_release: str | None = None) -> None:
-        super().__init__(get_settings().sidecars.spacy_url,
-                         timeout=INFERENCE_READ_TIMEOUT_S,
-                         pin_release=pin_release)
-
-    def syntax(self, sentences: list[dict[str, str]]) -> dict[str, Any]:
-        response = self.infer({"sentences": sentences})
-        if response.get("contract") != self.CONTRACT_ID:
-            raise RuntimeError(
-                f"syntax sidecar returned contract {response.get('contract')!r}, "
-                f"expected {self.CONTRACT_ID!r}"
-            )
-        return response
 
 
 class RerankerClient(SidecarClient):

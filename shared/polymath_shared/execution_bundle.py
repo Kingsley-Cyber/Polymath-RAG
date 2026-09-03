@@ -34,15 +34,11 @@ _FINGERPRINT_SUFFIXES = {".py", ".yaml", ".yml"}
 #: change here must change the bundle hash (config drift detection).
 _CONFIG_ENV_KEYS = (
     "POLYMATH_QUERY_POLICY",
-    "POLYMATH_RESCUE",
     "POLYMATH_CHUNKER",
-    "POLYMATH_WORKER_RULE_PACK_VERSION",
-    "POLYMATH_RELATION_PIPELINE",
-    "POLYMATH_PREDICATE_V2",
-    "POLYMATH_SYNTAX_PROVIDER",
-    "POLYMATH_ENTITY_ADMISSION_ENFORCE",
-    "POLYMATH_FACT_ADMISSION_ENFORCE",
     "POLYMATH_EXTRACTION_CONTEXT",
+    # LLM-DIRECT-CANON (ADR-0017): the knobs that change what the sole path means
+    "POLYMATH_WORKER_EXTRACTION_PROVIDER",
+    "POLYMATH_EXTRACTION_ATTESTATION",
 )
 
 
@@ -80,12 +76,11 @@ def semantic_file_hashes() -> dict[str, str]:
     NOT python modules and therefore escape the semantic-authority code
     hash (measured: the ontology realization edit moved no existing
     fence until this field existed)."""
-    base = ROOT / "shared" / "polymath_shared" / "rulepack"
+    # LLM-DIRECT-CANON (2026-09-03): the rule-pack package is deleted; the
+    # scientific ontology yaml (compound-head inventory) lives in config/.
     out: dict[str, str] = {}
-    for name in ("core-predicates-v1.5.0.yaml",
-                 "scientific-predicate-ontology-v2.yaml"):
-        p = base / name
-        out[name] = _sha256_file(p) if p.exists() else "missing"
+    p = ROOT / "config" / "ontology" / "scientific-predicate-ontology-v2.yaml"
+    out["scientific-predicate-ontology-v2.yaml"] = _sha256_file(p) if p.exists() else "missing"
     allow = ROOT / "resources" / "predicates" / "trigger_allowlist.yaml"
     out["trigger_allowlist"] = (_sha256_file(allow)
                                 if allow.exists() else "missing")
@@ -147,7 +142,7 @@ def compute_execution_bundle() -> dict[str, Any]:
     bundle = {
         **git_state(),
         "semantic_authority": semantic_authority_sha256(),
-        "rule_pack_file": files["core-predicates-v1.5.0.yaml"],
+        "rule_pack_file": "",
         "ontology_file": files["scientific-predicate-ontology-v2.yaml"],
         "trigger_allowlist": files["trigger_allowlist"],
         "config": config_fingerprint(),

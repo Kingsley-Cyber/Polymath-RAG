@@ -79,10 +79,9 @@ def test_semantic_authorities_cover_the_required_surface():
                      "referential_envelope_contract", "discourse_reference_contract",
                      "discourse_reference_policy_sha256", "concept_evidence_contract",
                      "contraction_resolution_contract", "graph_eligibility_contract",
-                     "canonical_fact_gate_contract", "syntax_contract",
-                     "syntax_provider", "syntax_model"):
+                     "canonical_fact_gate_contract"):
         assert required in a, required
-        assert a[required] is not None or required == "syntax_model"
+        assert a[required] is not None
 
 
 def test_bundle_hash_changes_when_any_authority_changes():
@@ -106,15 +105,6 @@ def test_historical_and_v2_contracts_are_distinguishable():
     assert SEMANTIC_CONTRACT_V1_1 == "admission-v1.1"
     assert SEMANTIC_CONTRACT_V2 == "admission-harbor-v2"
     assert SEMANTIC_CONTRACT_V1_1 != SEMANTIC_CONTRACT_V2
-
-
-def test_syntax_is_pinned_but_not_yet_live():
-    """S2 records which spaCy contract governs regeneration. S3 makes the
-    dependency operational — S2 must not enable it."""
-    a = semantic_authorities()
-    assert a["syntax_contract"] == "syntax-evidence-v1"
-    # production default is still disabled; S2 changes no runtime behaviour
-    assert worker_contracts()["syntax_provider"] == a["syntax_provider"]
 
 
 def test_no_v2_identities_are_created_by_s2():

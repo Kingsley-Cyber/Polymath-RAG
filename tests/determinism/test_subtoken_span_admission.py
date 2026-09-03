@@ -14,7 +14,7 @@ import pytest
 
 from polymath_shared.admission_interpreter import interpret_admission
 from polymath_shared.execution import SEMANTIC_CONTRACT_V2
-from polymath_shared.syntax_readiness import RetryableDependencyUnavailable
+from polymath_shared.identity_evidence import RetryableDependencyUnavailable
 
 URL = "https://www.instagram.com/reel/Db6oeigMDgZ/"
 SENT = f"source_url: {URL} platform notes"

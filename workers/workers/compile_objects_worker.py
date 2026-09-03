@@ -57,7 +57,7 @@ def _run_documents(conn: Connection, run_id: str) -> list[str]:
 
 
 def process_event(conn: Connection, event: dict) -> None:
-    from workers.extract_worker import _persist_knowledge_artifacts
+    from workers.knowledge_artifacts import _persist_knowledge_artifacts
 
     run_id = event["run_id"]
     row = conn.execute(

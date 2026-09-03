@@ -55,26 +55,23 @@ def test_worker_identity_and_contracts_shape():
     assert identity["worker_type"] == "extract"
     assert identity["pid"] > 0 and identity["host"]
     contracts = worker_contracts()
-    for key in ("query_policy", "rule_pack", "syntax_provider", "rescue_stages"):
+    for key in ("query_policy", "chunker", "semantic_bundle", "ontology_file_sha"):
         assert key in contracts
 
 
 def test_compatibility_gating():
     worker = {"build_sha": "abc", "query_policy": "semantic-query-policy-v1",
-              "rule_pack": "1.2.0", "syntax_provider": "disabled",
-              "rescue_stages": []}
+              "chunker": "tier-chunker-v3"}
     # identical run contract -> lease granted
     assert compatible(worker, {"worker_build": "abc",
                                "query_policy": "semantic-query-policy-v1",
-                               "rule_pack": "1.2.0",
-                               "syntax_provider": "disabled",
-                               "rescue_stages": []})
+                               "chunker": "tier-chunker-v3"})
     # stale build -> REFUSED (the 12-hour-old-worker class)
     assert not compatible(worker, {"worker_build": "def"})
-    # different rescue stages -> REFUSED (experiment isolation)
-    assert not compatible(worker, {"rescue_stages": ["boundary"]})
-    # different rule pack -> REFUSED
-    assert not compatible(worker, {"rule_pack": "1.3.0"})
+    # different chunker contract -> REFUSED (byte identity of chunks)
+    assert not compatible(worker, {"chunker": "tier-chunker-v2"})
+    # different query policy -> REFUSED
+    assert not compatible(worker, {"query_policy": "semantic-query-policy-v2"})
     # unspecified requirements pass (legacy runs)
     assert compatible(worker, {})
 

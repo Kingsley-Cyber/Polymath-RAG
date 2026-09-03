@@ -101,12 +101,10 @@ def _interpret_v2(proposal_surface, core_type, span, sentence_text, syntax,
     from polymath_shared.execution import SEMANTIC_CONTRACT_V2
     from polymath_shared.identity_evidence import identity_evidence
     from polymath_shared.referential_span import derive
-    from polymath_shared.syntax_readiness import assert_syntax_available
 
-    # S3 (C): the execution assertion. A sidecar can die between claim and
-    # use; nothing semantic may be produced without syntax.
-    assert_syntax_available({"semantic_contract": SEMANTIC_CONTRACT_V2}, syntax,
-                            where="admission-harbor-v2 interpretation")
+    # (The S3 syntax-availability assertion was retired with the spaCy
+    # sidecar — LLM-DIRECT-CANON, ADR-0017, 2026-09-03: the LLM output is
+    # the semantics; `syntax` is optional evidence when present.)
 
     start, end = span if span else (0, len(proposal_surface))
     env = derive(proposal_surface, start, end, sentence_text or proposal_surface, syntax)

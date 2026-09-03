@@ -40,9 +40,7 @@ def run_env():
         c.execute(
             "INSERT INTO runs (run_id, corpus_id, status) VALUES (%s, %s, 'intake') "
             "ON CONFLICT DO NOTHING", (run_id, CORPUS))
-        contract = {"worker_build": "cptest", "query_policy": "semantic-query-policy-v1",
-                    "rule_pack": "1.2.0", "syntax_provider": "disabled",
-                    "rescue_stages": []}
+        contract = {"worker_build": "cptest", "query_policy": "semantic-query-policy-v1",}
         ensure_run_tickets(c, run_id, CORPUS, contract)
     yield run_id, contract
     with tx() as c:
@@ -82,10 +80,7 @@ def test_ticket_chain_explicit_handoff_and_barrier(run_env):
     run_id, contract = run_env
     identity = {"worker_id": "w-cp2-1", "worker_type": "intake",
                 "contracts": {"build_sha": "cptest",
-                              "query_policy": "semantic-query-policy-v1",
-                              "rule_pack": "1.2.0",
-                              "syntax_provider": "disabled",
-                              "rescue_stages": []}}
+                              "query_policy": "semantic-query-policy-v1"}}
 
     # intake ticket born ready: its event is claimable immediately
     with tx() as c:
@@ -144,9 +139,7 @@ def test_incompatible_worker_is_refused_the_lease(run_env):
 
     run_id, _contract = run_env
     stale = {"worker_id": "w-cp2-stale", "worker_type": "intake",
-             "contracts": {"build_sha": "OLD", "query_policy": "semantic-query-policy-v1",
-                           "rule_pack": "1.2.0", "syntax_provider": "disabled",
-                           "rescue_stages": []}}
+             "contracts": {"build_sha": "OLD", "query_policy": "semantic-query-policy-v1",}}
     with tx() as c:
         events = claim_ticket_events(c, stale, ["intake.v1"], 4)
     assert not any(e["run_id"] == run_id for e in events), \

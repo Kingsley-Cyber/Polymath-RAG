@@ -299,9 +299,6 @@ def extraction_contracts() -> dict:
         "extraction_contract_hash": "pinned-per-stage-attempt",
         "chunk_contract_hash": s.worker.chunker,
         "query_policy_version": QUERY_POLICY_VERSION,
-        "syntax_contract_version": "syntax-evidence-v1",
-        "rescue_policy_version": ",".join(sorted(s.rescue_policy.enabled_stages())) or "off",
-        "rule_pack_version": s.worker.rule_pack_version,
         # Without this, legacy_v1 and kimi_v1 runs of the SAME corpus at the
         # same pack produce byte-identical envelopes, so the second arm's
         # events collide on trace_event_id and are dropped by ON CONFLICT.

@@ -78,13 +78,6 @@ def _await_reranker(client) -> None:
 
     if client.ready():
         return
-    if _slot_alive("sidecar_reranker") is False and _slot_alive("sidecar_gliner"):
-        # Extraction owns the ceiling; no wake is coming. Skip both the
-        # budget AND the client's own retry backoff — the caller
-        # degrades to fusion order either way.
-        raise RerankUnavailable(
-            "reranker parked while extraction holds the memory ceiling; "
-            "no wake is scheduled")
     budget = float(os.environ.get("POLYMATH_RERANK_WAKE_BUDGET_S", "90"))
     deadline = time.monotonic() + budget
     while time.monotonic() < deadline:

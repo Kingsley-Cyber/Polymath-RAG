@@ -92,7 +92,7 @@ names the fleet environment and the bootstrap commands).
 
 ## Priorities the owner has set (2026-08-30)
 Base e2e validation first (UI, MCP, query, ingestion, extraction) → GLiNER +
-spaCy full retirement (IN PROGRESS 2026-09-03: LLM-DIRECT-CANON P0–P6) → embed-early DAG, job-level completion + lane assist,
+spaCy full retirement (DONE 2026-09-03: LLM-DIRECT-CANON P0–P6 + RETIREMENT-DELETE-V1, code deleted; Phase B blue/green next) → embed-early DAG, job-level completion + lane assist,
 supervised lifecycle (plan §9) → latent transfer layer (plan phases A–E).
 The three-layer graph design is rejected; v3.3 `tier_chunker` is the
 canonical chunker (swap = re-ingest).
