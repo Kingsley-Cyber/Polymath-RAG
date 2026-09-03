@@ -149,10 +149,8 @@ def diagnose_pending(conn, row: dict, chain: dict,
         if not _stage_attempt_ok(conn, row["run_id"], pr):
             entry = chain.get(pr, "no ticket")
             p_status, holder_alive = (entry if isinstance(entry, tuple) else (entry, False))
-            if p_status == "leased" and holder_alive:
-                return None
-            if p_status == "ready" and pr in (saturated or ()):
-                return None                 # V1.3: queued behind a saturated lane = live work
+            if holder_alive and p_status in ("leased", "ready"):
+                return None                 # live work: leased by a live holder, or claimable and queued (V1.3)
             return "PENDING_ON_PREDECESSOR", {
                 "predecessor": pr,
                 "predecessor_ticket_status": p_status}
@@ -241,7 +239,6 @@ def collect_stalls(conn, *, census=None, threshold_s: int = STALL_THRESHOLD_S,
     now = conn.execute("SELECT now()").fetchone()[0]
     out: list[Stall] = []
 
-    saturated_stages: set[str] = set()      # STALL-TRACER-V1.3: queued-behind-busy stages this tick
     tickets = _rows(conn.execute(
         """
         SELECT t.ticket_id, t.run_id, t.corpus_id, t.stage, t.status, t.attempt,
@@ -277,8 +274,7 @@ def collect_stalls(conn, *, census=None, threshold_s: int = STALL_THRESHOLD_S,
         if row["status"] == "ready":
             res = diagnose_ready(row, slots_alive)
             if res is None:
-                saturated_stages.add(row["stage"])
-                continue
+                continue        # claimable, queued behind a saturated lane (V1.3)
             code, detail = res
         elif row["status"] == "leased":
             code, detail = diagnose_leased(row, now)
@@ -288,15 +284,34 @@ def collect_stalls(conn, *, census=None, threshold_s: int = STALL_THRESHOLD_S,
                 # ticket behind a predecessor that is LEASED by a live worker
                 # is waiting on live work, not stalled (the predecessor is
                 # traced itself once IT crosses the threshold).
-                chains[row["run_id"]] = {r[0]: (r[1], bool(r[2])) for r in conn.execute(
+                # STALL-TRACER-V1.3: a READY predecessor that is claimable and
+                # queued behind a saturated lane is live work too (computed
+                # per ticket here, independent of visit order or age).
+                chains[row["run_id"]] = {r[0]: (r[1], bool(r[2]) or bool(r[3])) for r in conn.execute(
                     """SELECT t.stage, t.status,
-                              (w.heartbeat_at > now() - make_interval(secs => %s))
+                              (t.status = 'leased' AND w.heartbeat_at > now() - make_interval(secs => %s)),
+                              (t.status = 'ready'
+                               AND EXISTS (SELECT 1 FROM outbox_events e
+                                            WHERE e.run_id = t.run_id AND e.event_type = t.event_type
+                                              AND e.delivered_at IS NULL
+                                              AND (e.payload->>'ticket_id' = t.ticket_id
+                                                   OR e.payload->>'ticket_id' IS NULL))
+                               AND (SELECT count(*) FROM stage_tickets b
+                                      JOIN worker_registrations bw ON bw.worker_id = b.lease_owner
+                                     WHERE b.stage = t.stage AND b.status = 'leased'
+                                       AND bw.heartbeat_at > now() - make_interval(secs => 90)) >=
+                                   GREATEST(1, (SELECT count(*) FROM worker_registrations lw
+                                     WHERE lw.heartbeat_at > now() - make_interval(secs => 90)
+                                       AND lw.worker_type = COALESCE(
+                                             (SELECT bw2.worker_type FROM stage_tickets b2
+                                                JOIN worker_registrations bw2 ON bw2.worker_id = b2.lease_owner
+                                               WHERE b2.stage = t.stage AND b2.lease_owner IS NOT NULL
+                                               ORDER BY b2.updated_at DESC LIMIT 1), ''))))
                          FROM stage_tickets t
                          LEFT JOIN worker_registrations w ON w.worker_id = t.lease_owner
                         WHERE t.run_id = %s ORDER BY t.seq""",
                     (OWNER_STALE_S, row["run_id"])).fetchall()}
-            res = diagnose_pending(conn, row, chains[row["run_id"]], threshold_s=threshold_s,
-                                   saturated=saturated_stages)
+            res = diagnose_pending(conn, row, chains[row["run_id"]], threshold_s=threshold_s)
             if res is None:
                 continue        # waiting on live work — not a stall
             code, detail = res
