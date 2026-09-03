@@ -18,6 +18,24 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → `CLAUDE.md` → the two newest work-logs.
 
+## Latest checkpoint (2026-09-03 late — LLM-DIRECT CANON)
+
+**Extraction canon = LLM-direct (ADR-0017).** Read
+`docs/wiki/plans/LLM-DIRECT-CANON-PLAN.md` first. Landed: `llm_live` is the
+settings default; the anchor-chunk endpoint veto is gone
+(ATTESTATION-LEVELS-V1: level recorded per endpoint, `strict` env rollback);
+Neo4j carries `raw_types` / `display_type` / `predicate_raw`; replay is
+re-based on the raw-response ledger (`eval/v5/replay_llm_direct.py`);
+grading is re-based on gold questions (`eval/v5/holdout/`, sealed set
+owner-supplied). Canary on a real 111 KB book: relation survival 52 % → 82 %,
+abstract endpoints 3 %, junk 0. Dev holdout: 60 % supported, 0 wrong, three
+abstentions on answerable questions (answerability gate — next finding to
+trace). Owner decisions open: re-extract the two production corpora under the
+new gate (P6), delete vs skip the historical tests, retire the apple-ml
+LaunchAgent. NOTE: `POLYMATH_WORKER_CLOUD_MIN_BYTES=0` in the fleet `.env`
+sends every document to the cloud lanes (the ≤ threshold privacy floor is
+effectively off) — an owner setting, flagged.
+
 ## Latest checkpoint (2026-09-03 — QUERY RECEIPTS + RUN-SCOPED RECEIPTS + RELEASE EVIDENCE)
 
 **STATE: production-shaped, query path instrumented.** Every served

@@ -88,3 +88,24 @@ Re-extraction never deletes: identities are content hashes, replays write 0 rows
 3. Retire the `com.polymath.apple-ml` LaunchAgent (its GLiNER/spaCy ports
    are down already; it may still serve the sibling repo's embed/rerank —
    not touched here).
+
+## Phase receipts (appended as they land)
+- 2026-09-03 P0–P2 landed (4a4b67d, a611961): ADR-0017, architecture canon
+  section, CLAUDE.md law, `llm_live` default; ATTESTATION-LEVELS-V1 with
+  `strict` rollback; open vocabulary projected to Neo4j; 42 tests green;
+  historical sval fixtures skip-marked.
+- 2026-09-03 P1 CANARY (Learning SQL, 111 KB, 144 children, cloud lane
+  mistral-small-2603 — the fleet's cloud floor is 0 B today): 130 relations
+  kept / 29 rejected; UNATTESTED_RELATION_ENDPOINT 0 (was 36 of 86 on the
+  same text under the old rule); endpoint levels quote 150 / anchor 69 /
+  neighborhood 31 / document 1 / abstract 9; survival among non-junk
+  proposals 82 % (baseline 52 %; target ≥ 70 % MET); abstract share 3 %
+  (≤ 25 % MET); junk in accepted 0 (MET); inspection of 20 beyond-anchor
+  relations 17/20 correct (target 18/20 MISSED BY ONE — the misses are the
+  model's predicate choice, endpoints right 20/20).
+- 2026-09-03 P5 landed: `eval/v5/holdout/` grader + dev seed set. First dev
+  run: supported 60 %, wrong 0 %, unexplained 4 (three abstentions on
+  answerable questions → answerability-gate finding, one grader phrase too
+  narrow), zero-tolerance clean. Not release evidence.
+- 2026-09-03 P3: `eval/v5/replay_llm_direct.py` — receipt of the first
+  IDENTICAL/DIVERGENT run recorded in the work-log.

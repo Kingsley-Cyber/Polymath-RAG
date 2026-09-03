@@ -606,6 +606,31 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                            if limiter is not None else 4) or 1)
             if lane == "cloud" else 1)
         _raise_if_refused(reissue_results, lane)
+        # RECEIPT-COMPLETENESS-V1 (LLM-DIRECT-CANON P3, 2026-09-03): reissue
+        # calls bypassed the receipt ledger, so 5 of 14 responses on the
+        # canary document were never stored and a ledger replay could
+        # cover only 14 of 19 neighborhoods. Every response that produced
+        # a packet is receipted under the same key rule as a first-pass call.
+        try:
+            _cp, _kf = cache_put, _key            # bound on the receipted (cloud) path only
+        except (NameError, UnboundLocalError):
+            _cp = _kf = None
+        if _cp is not None and _kf is not None:
+            for r in reissue_results:
+                if r.packet is None:
+                    continue
+                batch = [by_nid[nid] for nid in (getattr(r, "neighborhood_ids", None) or []) if nid in by_nid]
+                if not batch:
+                    continue
+                _items = getattr(r.packet, "items", None) or []
+                accepted = sum(len(getattr(it, "entities", None) or []) + len(getattr(it, "relations", None) or [])
+                               for it in _items)
+                try:
+                    _cp(_kf(batch), doc_id, r.lane, r.model, r.raw_text, accepted)
+                except TypeError:
+                    _cp(_kf(batch), doc_id, r.lane, r.model, r.raw_text)
+                except Exception:
+                    pass
         items2, disp2 = _dispose(reissue_results, [n.nid for n in todo])
         for n in todo:
             nid = n.nid

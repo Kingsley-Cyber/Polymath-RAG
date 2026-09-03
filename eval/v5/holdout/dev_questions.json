@@ -1,0 +1,12 @@
+[
+ {"id": "sb-01", "corpus_id": "ecom-meta-v1", "question": "In the StoryBrand framework, what role should a brand play in the customer's story: the hero or the guide?", "expected_docs": ["StoryBrand"], "must_include_any": ["guide"], "must_not_include": ["the brand is the hero"], "expects_abstain": false},
+ {"id": "sb-02", "corpus_id": "ecom-meta-v1", "question": "What are the seven parts of the StoryBrand framework?", "expected_docs": ["StoryBrand"], "must_include_any": ["character", "problem", "guide", "plan", "call to action"], "expects_abstain": false},
+ {"id": "id-01", "corpus_id": "ecom-meta-v1", "question": "According to The Innovator's Dilemma, why do well-managed companies fail when facing disruptive technologies?", "expected_docs": ["Innovators_Dilemma"], "must_include_any": ["disruptive", "customers", "sustaining"], "expects_abstain": false},
+ {"id": "ah-01", "corpus_id": "ecom-meta-v1", "question": "What are the four laws of behavior change in Atomic Habits?", "expected_docs": ["Atomic"], "must_include_any": ["obvious", "attractive", "easy", "satisfying"], "expects_abstain": false},
+ {"id": "bo-01", "corpus_id": "ecom-meta-v1", "question": "What is a blue ocean in Blue Ocean Strategy, as opposed to a red ocean?", "expected_docs": ["Blue_Ocean"], "must_include_any": ["uncontested", "competition irrelevant", "new market"], "expects_abstain": false},
+ {"id": "sql-01", "corpus_id": "ecom-meta-v1", "question": "In SQL, what is the difference between an inner join and an outer join?", "expected_docs": ["Learning SQL"], "must_include_any": ["inner join", "outer join", "null"], "expects_abstain": false},
+ {"id": "aws-01", "corpus_id": "cysa-study-v1", "question": "What does the AWS shared responsibility model say the customer is responsible for?", "expected_docs": ["AWS"], "must_include_any": ["shared responsibility", "customer", "data"], "expects_abstain": false},
+ {"id": "cysa-01", "corpus_id": "cysa-study-v1", "question": "How does a vulnerability scan differ from a penetration test?", "expected_docs": ["CySA", "cysa"], "must_include_any": ["exploit", "vulnerabilit"], "expects_abstain": false},
+ {"id": "nonce-01", "corpus_id": "cysa-study-v1", "question": "What is the capital of the moon colony Zorblax?", "expected_docs": [], "must_include_any": [], "expects_abstain": true},
+ {"id": "nonce-02", "corpus_id": "ecom-meta-v1", "question": "What is the boiling point of unobtainium at sea level?", "expected_docs": [], "must_include_any": [], "expects_abstain": true}
+]
