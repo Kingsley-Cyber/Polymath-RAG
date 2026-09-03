@@ -181,7 +181,21 @@ expansion, canonicalization and identity.
    every receipt records `contract_ident` (migration 0049; 88 receipts
    keyed under the pre-change identity were stamped by reproducing their
    keys) and the ledger replay translates a window to the key of the era
-   the document was extracted in. <<P6>>
+   the document was extracted in. P6 LAUNCHED 17:05Z: `reingest_corpus.py cysa-study-v1 --execute`
+   → the next control tick superseded both runs and minted successors;
+   intake re-ran within 30 s (the two documents now carry
+   `document_layout` rows `dropped_stub` 2 + `heading` 220 (AWS) and
+   `dropped_stub` 3 + `heading` 216 (Learning SQL) — the first documents
+   under CHUNK-GAP-ACCOUNTING-V1) and extract re-leased on the new
+   contract (receipts stamped with the new `contract_ident`).
+   `reingest_corpus.py ecom-meta-v1 --execute` at 17:09Z: 10 runs
+   reconciling, intake and extract tickets flowing. The 15-minute
+   450 KB floor detour (item 4) changed the identity twice; runs that
+   finished a stage under the interim identity are re-minted once more
+   by contract drift — bounded extra calls, no manual repair. Progress:
+   `/status?corpus_id=…`, `scripts/trace_stalls.py`, and per-lane
+   receipts (`extraction_call_receipts.created_at`). Completion is hours
+   (cloud ring, ~8,500 children, then projection, summaries, enrichment).
 2. **CHUNK-GAP-ACCOUNTING-V1 (the chunker bug).** The killchain fidelity
    check (`test_child_spans_have_no_large_unexplained_gaps`) failed on a
    522-char gap. Forensics from the spool: the gaps are title pages, part
