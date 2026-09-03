@@ -286,6 +286,14 @@ def process_event(conn: Connection, event: dict) -> None:
         _perf["chunks"] = len(child_chunks)
         _counts["facts_direct"] = _direct_stats["written"]["facts"]
         _counts["mentions_direct"] = _direct_stats["written"]["mentions"]
+        # HONEST-COUNTER (2026-09-03 blue/green drill): `written` counts NEW
+        # rows; a receipt-cached replay of an already-durable document writes
+        # 0 and used to read as "0 facts". Proposals that were already durable
+        # are counted separately so 0 written / N existing is legible.
+        _counts["facts_existing"] = (_direct_stats["seen"]["facts"]
+                                     - _direct_stats["written"]["facts"])
+        _counts["mentions_existing"] = (_direct_stats["seen"]["mentions"]
+                                        - _direct_stats["written"]["mentions"])
         writer.artifact({
             "llm_direct": _direct_stats,
             "counts": _counts,

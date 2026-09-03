@@ -405,6 +405,46 @@ expansion, canonicalization and identity.
    fleet re-grounds every corpus's artifacts once after this restart. The
    sweep script clears what no re-run can re-ground (dry run by default;
    receipt below).
+   **DRILL RECEIPT (cysa-study-v1, 2 documents, 294 KB, both live runs on
+   the pre-`extraction_gate` pin).** `/chat` probed every 5 s from 18:41:26Z
+   (FAST). 18:41:33Z `reingest_corpus.py cysa-study-v1 --execute --blue-green`
+   minted two shadow successors (predecessors stayed `query_ready`: 2 serving
+   throughout; regenerated = every stage but intake, since `semantic_bundle`
+   and `extraction_gate` both moved). Both successors `query_ready` and
+   swapped at 18:45:08Z (3 min 35 s after mint; extraction on the cloud
+   lane), predecessors `superseded` with `superseded_by` set,
+   `hidden_generations` empty, chunk rows 496 before and after (same
+   chunker → `purged_chunks 0`, the swap logged both reports). Availability:
+   31 probes, 31 × HTTP 200, 0 × 502, mean 3.5 s, max 25 s (one slow probe
+   while extraction shared the lane). Answers: on-topic questions (the
+   corpus holds *AWS for Solutions Architects* and *Learning SQL*, not
+   security content — the probe question about SIEMs correctly abstained
+   before AND after) returned 4 citations pre-swap and 4 post-swap, same
+   passages. Extraction: the Learning SQL successor wrote 180 new facts
+   (a different model answered the same neighborhoods); the AWS successor
+   wrote 0 — every proposal was receipt-cached and already durable (166
+   facts on the document, 0 created) — which the artifact reported as
+   `facts_direct 0`. Counter made honest: `facts_existing`/`mentions_existing`
+   (seen − written) now sit beside `facts_direct` (this commit).
+   **Era-fence lesson (measured):** re-arming a done `compile_objects`
+   ticket on a run pinned to an older era is refused by every worker
+   ("lease refused: incompatible with run", 17 tickets, one refusal per
+   2 s) — the semantic-bundle fence is per run, not per stage. Reverted
+   (tickets back to `done`, events marked delivered; the canary, pinned to
+   the current era, re-ran fine under `knowledge-artifact-persistence-v2`).
+   Old-era artifacts are therefore RE-GROUNDED by `sweep_orphan_derivatives.py`
+   (to the document's current child chunks — the persister's own
+   semantics), never re-compiled; a blue/green re-ingest is the full repair.
+   **SWEEP RECEIPT:** `sweep_orphan_derivatives.py --execute` deleted 1,697
+   orphan Neo4j `Chunk` nodes (0 orphan `Evidence` — the P6 evidence orphans
+   had already been swept by the successors' verify stage) and re-grounded
+   119 concept + 445 procedure artifacts (0 deleted: every document still
+   has chunks). Re-run: `test_no_derived_node_outlives_its_postgres_row`
+   PASSES; `test_truncated_concepts_still_hydrate_full_text` still named one
+   concept whose 120-char probe differs from the current chunk only in
+   whitespace (recorded under the v2 chunker's line breaks; the 60-char
+   probe matched) — the test now compares whitespace-collapsed text, the
+   same rule every attestation path in the gate uses; PASSES.
 
 ## Rejected claims
 - "The type flattening is a data-loss bug." `entities.raw_types` already
@@ -436,13 +476,7 @@ expansion, canonicalization and identity.
 - ecom-meta-v1 still pins the pre-`extraction_gate` contract (10 runs); its
   blue/green re-extraction is an owner cost decision:
   `scripts/reingest_corpus.py ecom-meta-v1 --execute --blue-green`.
-- Lifecycle findings surfaced by the post-P6 invariant tests (both are the
-  purge's doing, not the extractor's): Neo4j keeps 437 Evidence + 1,697 Chunk
-  nodes whose Postgres rows the intake purge deleted
-  (`test_no_derived_node_outlives_its_postgres_row`), and one
-  `concept_artifacts` row keeps `supporting_chunks` from the purged
-  generation because the persister is `ON CONFLICT DO NOTHING` on a
-  content-addressed id (`test_truncated_concepts_still_hydrate_full_text`).
-  Both belong to GENERATION-SWAP-V1: the swap must sweep derived nodes and
-  refresh derived artifacts for every replaced chunk. `test_llm_controller`
-  (batched-client double) remains the pre-existing failure.
+- ~~Post-P6 lifecycle findings (orphan Neo4j nodes, stale concept
+  supporting_chunks)~~ — CLOSED by item 13 (swap sweeps + persister upsert +
+  the one-off sweep receipt). `test_llm_controller` (batched-client double)
+  remains the pre-existing failure.

@@ -56,12 +56,13 @@ execution contract now carries `extraction_gate`, so a gate/attestation
 change IS contract drift — that is why every pre-2026-09-03-evening run
 "pins a stale contract": expected, and the trigger `--blue-green` consumes.
 ecom-meta-v1 (10 runs) is still on the old pin — owner cost decision.
-Post-P6 lifecycle findings (orphan Neo4j Chunk/Evidence nodes; stale
-`concept_artifacts.supporting_chunks`) are owned by the swap's sweeps and
-the persister upsert; the one-off backlog is cleared by the drill/sweep
-receipt in the work-log (if `test_graph_lifecycle_v2` still fails, run the
-sweep in `control.generation_swap._sweep_stores` semantics over the
-orphan set — never DETACH DELETE by hand without the ids from Postgres).
+Drill GREEN on cysa-study-v1 (swap 3.5 min after mint, 31/31 probes 200).
+Post-P6 backlog CLEARED (`scripts/sweep_orphan_derivatives.py --execute`:
+1,697 orphan Chunk nodes deleted, 564 artifacts re-grounded). Era-fence
+law: a run pinned to an older semantic bundle cannot have a stage re-armed
+(every worker refuses the lease) — repair old-era corpora with
+`--blue-green`, never by flipping tickets. `facts_direct` counts NEW rows;
+read `facts_existing` beside it before calling an extraction empty.
 
 ## Latest checkpoint (2026-09-03 — QUERY RECEIPTS + RUN-SCOPED RECEIPTS + RELEASE EVIDENCE)
 

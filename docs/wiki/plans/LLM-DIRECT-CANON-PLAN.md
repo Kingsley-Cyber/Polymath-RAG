@@ -164,4 +164,7 @@ Design (each step a test, then the live drill on cysa-study-v1 with a
   upsert. Found + fixed the CONTRACT-DRIFT BLIND SPOT (execution contract
   carried no LLM-gate key). Canary on the deleted tree: 1 doc → query_ready
   in 117 s, 63 llm_direct facts. Live drill receipt below.
+- 2026-09-03 Phase B DRILL GREEN: cysa-study-v1 blue/green — mint 18:41:33Z,
+  swap 18:45:08Z, 31/31 `/chat` probes 200, 0 × 502, predecessors served
+  throughout, answers identical pre/post. Receipt: work-log item 13.
 

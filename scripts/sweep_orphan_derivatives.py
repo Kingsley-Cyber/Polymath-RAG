@@ -11,8 +11,12 @@ semantics, from Postgres truth, never by hand:
   * Neo4j `Chunk` nodes whose `chunk_id` has no `chunks` row and
     `Evidence` nodes whose `evidence_id` has no `evidence` row → DETACH DELETE
   * `concept_artifacts` / `procedure_artifacts` whose every supporting chunk
-    is gone → DELETE (the successor's compile_objects re-grounds survivors
-    through the persister upsert)
+    is gone → RE-GROUND to the document's current child chunks (that is the
+    persister's own semantics: `supporting_chunks`/`source_chunk_ids` are the
+    document's chunk ids at compile time); DELETE only when the document has
+    no chunks at all. Runs pinned to an older era cannot be re-armed (the
+    era fence refuses the lease); re-grounding is the only repair short of a
+    blue/green re-ingest.
 
     python scripts/sweep_orphan_derivatives.py            # dry run (counts)
     python scripts/sweep_orphan_derivatives.py --execute
@@ -68,12 +72,21 @@ def main() -> int:
         print(f"ungrounded derived artifacts: {stale}")
         if args.execute:
             for table, col in (("concept_artifacts", "supporting_chunks"), ("procedure_artifacts", "source_chunk_ids")):
-                n = conn.execute(
+                regrounded = conn.execute(
+                    f"""UPDATE {table} a
+                           SET {col} = sub.ids
+                          FROM (SELECT c.doc_id, array_agg(c.chunk_id ORDER BY c.chunk_index) AS ids
+                                  FROM chunks c WHERE c.tier = 'child' GROUP BY c.doc_id) sub
+                         WHERE sub.doc_id = a.document_id
+                           AND COALESCE(array_length(a.{col}, 1), 0) > 0
+                           AND NOT EXISTS (SELECT 1 FROM chunks c WHERE c.chunk_id = ANY(a.{col}))"""
+                ).rowcount
+                deleted = conn.execute(
                     f"""DELETE FROM {table} a
                          WHERE COALESCE(array_length(a.{col}, 1), 0) > 0
                            AND NOT EXISTS (SELECT 1 FROM chunks c WHERE c.chunk_id = ANY(a.{col}))"""
                 ).rowcount
-                print(f"  deleted {n} from {table}")
+                print(f"  {table}: re-grounded {regrounded}, deleted (document has no chunks) {deleted}")
             conn.commit()
         else:
             conn.rollback()
