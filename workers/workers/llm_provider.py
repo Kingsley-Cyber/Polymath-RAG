@@ -24,6 +24,7 @@ from polymath_shared.llm_extraction.client import (
     LLMExtractionClient,
 )
 from polymath_shared.llm_extraction.gate import (
+    GATE_VERSION,
     ChunkView,
     NormalizedExtraction,
     validate_and_normalize,
@@ -196,7 +197,7 @@ def contract_identity() -> dict:
         # LLM-DIRECT-CANON (ADR-0017): the gate is part of the extraction
         # contract — a gate change re-extracts under contract drift and
         # keeps old facts attributable to the gate that admitted them.
-        "gate": {"version": "attestation-levels-v1",
+        "gate": {"version": GATE_VERSION,
                  "attestation_policy": _attestation_policy()},
         # EXTRACTION-COVERAGE-V1 + REGION-ROLE-V1: accounting and region
         # thresholds change what is sent and what counts as returned.

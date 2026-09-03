@@ -340,6 +340,72 @@ expansion, canonicalization and identity.
    19 renamed, 3 added) and `scripts/README.md` follow the tree.
    Net: 117 tracked files, +393 / −17,752 lines.
 
+13. **GENERATION-SWAP-V1 (owner: "do the blue/green reingest") + the
+   post-deletion canary.** Canary first: a fresh one-document corpus
+   (`canary-llm-direct-0903`, Meyer's vector-database chapter, 14 KB)
+   submitted through `scripts/ingest.py` on the deleted tree went
+   `query_ready` in 117 s; the extract artifact is `llm_direct`
+   (63 facts, 117 entities, 12 of 12 neighborhoods accounted, 0
+   unaccounted); FAST answers in 1.3 s with 9 citations, HYBRID with 7.
+   One compound question ("what problem do they solve AND how do they
+   index") abstained — the answerability gate, same class as the dev
+   holdout finding (question grounding), not the extractor.
+   Blue/green: `reingest_corpus.py --execute` took a corpus offline because
+   it strands the serving run (502 `corpus_not_ready` until the successor
+   converges; P6 measured minutes for cysa, hours for a book). Now
+   `--blue-green` mints a SHADOW successor beside the serving run
+   (`control.reconciliation.mint_shadow_successor`: predecessor untouched,
+   `runs.metadata.blue_green = {supersedes, generation,
+   predecessor_generation, regenerated/carried stages}`); intake skips the
+   GENERATION-PURGE for such runs, so when the chunker changed the new
+   generation's rows coexist with the serving rows — migration 0050 makes
+   `(doc_id, chunk_index)` unique PER GENERATION (`COALESCE(chunk_contract_version,'')`)
+   and `chunk_id` stays the content-addressed key; readers hide in-flight
+   generations (`polymath_shared.generation.chunk_visible_sql`, a
+   parameter-free correlated NOT EXISTS pasted into the FAST neighbor
+   expansion, the HYBRID lexical fallback, both `retrieve` row loaders,
+   `_resolve_chunk` and the evidence-chunk lookups in chat/evidence;
+   Qdrant lanes add one `must_not chunk_contract_version = g` per hidden
+   generation — new points carry the field, legacy points pass);
+   promotion swaps atomically (`control.generation_swap.swap` inside
+   `apply_promotions`' transaction: predecessor + open tickets superseded,
+   old-generation chunk rows purged for every re-chunked document,
+   `concept_artifacts`/`procedure_artifacts` with no surviving supporting
+   chunk removed, `blue_green.swapped_at` stamped; Neo4j Chunk/Evidence
+   nodes and Qdrant points of the purged rows swept best-effort — a sweep
+   failure is logged, never rolls the promotion back). The persister now
+   UPSERTs (`supporting_chunks`/`source_chunk_ids` refreshed on replay)
+   instead of `DO NOTHING`, which is what left one concept pointing at
+   purged chunks after P6 (item 12's finding). Extraction-only successors
+   (same chunker) share the chunk rows: nothing is hidden, the swap purges
+   nothing; the FACT tier is not generation-isolated mid-swap (old facts
+   keep their evidence on the shared rows) — documented gap, see below.
+   **CONTRACT-DRIFT BLIND SPOT (found while designing the drill):** the
+   execution contract had no key for the LLM gate — `contract_identity()`
+   (receipts) carried it, `default_execution_contract()` did not — so a
+   gate/attestation change was invisible to `reconcile_contract_drift` and
+   `reingest_corpus.py` answered "nothing to re-ingest" after the very
+   change that needs one (P6 only worked because `semantic_bundle` moved in
+   the same commit). `worker_contracts()` now carries
+   `extraction_gate = <GATE_VERSION>/<attestation policy>` (one constant,
+   `gate.GATE_VERSION`, shared with the receipt identity); `extract`
+   depends on it and on `ontology_file_sha` (it did not!), and
+   project_neo4j/canonicalize/project_canonical depend on it in place of
+   the dead `rule_pack` key. Consequence: every live run now pins a stale
+   contract; healthy `query_ready` runs are never touched by the reconciler
+   (no open tickets), which is exactly the condition `--blue-green` consumes.
+   Two more consequences of the same reading: `compile_objects` had NO
+   declared contract dependencies, so a successor always carried it and the
+   Procedure/Concept artifacts of a re-chunked corpus were never re-grounded
+   (the dry run of the new `scripts/sweep_orphan_derivatives.py` found 121
+   concepts + 445 procedures pointing only at purged chunks, and 1,697
+   orphan Neo4j Chunk nodes from P6); it now depends on
+   `semantic_bundle`/`extraction_gate`/`chunker`, and its persistence
+   contract is `knowledge-artifact-persistence-v2` (the upsert), so the
+   fleet re-grounds every corpus's artifacts once after this restart. The
+   sweep script clears what no re-run can re-ground (dry run by default;
+   receipt below).
+
 ## Rejected claims
 - "The type flattening is a data-loss bug." `entities.raw_types` already
   kept the open vocabulary as a set union; the loss was in projection and
@@ -361,6 +427,15 @@ expansion, canonicalization and identity.
   the one unexplained dev-holdout case after re-grounding.
 - ~~Retired code still importable behind the gliner provider branch~~ —
   DELETED (item 12, RETIREMENT-DELETE-V1).
+- Fact-tier generation isolation: an extraction-only blue/green successor
+  writes its facts beside the predecessor's (both evidenced on the shared
+  chunk rows; `materialize` is insert-only). The swap does not purge the
+  old extraction's facts/evidence. Next: stamp evidence rows with the
+  successor run's `extraction_gate`/contract identity and purge the
+  predecessor's at swap.
+- ecom-meta-v1 still pins the pre-`extraction_gate` contract (10 runs); its
+  blue/green re-extraction is an owner cost decision:
+  `scripts/reingest_corpus.py ecom-meta-v1 --execute --blue-green`.
 - Lifecycle findings surfaced by the post-P6 invariant tests (both are the
   purge's doing, not the extractor's): Neo4j keeps 437 Evidence + 1,697 Chunk
   nodes whose Postgres rows the intake purge deleted

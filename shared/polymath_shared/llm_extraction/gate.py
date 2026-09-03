@@ -443,6 +443,12 @@ LLM_TYPE_FALLBACKS: dict[str, str] = {
 # Policy: POLYMATH_EXTRACTION_ATTESTATION=tiered (default) | strict
 # (quote/anchor only — the pre-canon behaviour, kept for rollback).
 # ---------------------------------------------------------------------------
+#: LLM-DIRECT-CANON: the gate contract. Part of the extraction receipt identity
+#: (llm_provider.contract_identity) AND of the execution contract
+#: (execution.worker_contracts["extraction_gate"]), so a gate change is contract
+#: drift the reconciler can see (GENERATION-SWAP-V1).
+GATE_VERSION = "attestation-levels-v1"
+
 ATTESTATION_LEVELS = ("quote", "anchor", "neighborhood", "document", "abstract")
 _STRICT_LEVELS = frozenset({"quote", "anchor"})
 _TOKEN_RE = re.compile(r"[a-z0-9]+")

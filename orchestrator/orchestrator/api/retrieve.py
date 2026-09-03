@@ -16,6 +16,7 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from polymath_shared.db import tx
+from polymath_shared.generation import chunk_visible_sql
 from polymath_shared.embedding_contracts import active_contract
 from polymath_shared.projection_contracts import qdrant_collection_name
 from polymath_shared.retrieval import graph_expansion, run_lanes
@@ -278,6 +279,7 @@ def _fetch_parents(conn, corpus_ids: list[str]) -> list[dict]:
                  ON rs.parent_id = c.chunk_id AND rs.active
                 AND rs.kind = 'section_retrieval_summary'
          WHERE c.tier = 'parent' AND d.corpus_id = ANY(%s)
+           AND """ + chunk_visible_sql("c", "d") + """
         """,
         (list(corpus_ids),),
     ).fetchall()
@@ -291,6 +293,7 @@ def _fetch_children_rows(conn, corpus_ids: list[str]) -> list[dict]:
           FROM chunks c
           JOIN documents d ON d.doc_id = c.doc_id
          WHERE d.corpus_id = ANY(%s)
+           AND """ + chunk_visible_sql("c", "d") + """
         """,
         (list(corpus_ids),),
     ).fetchall()

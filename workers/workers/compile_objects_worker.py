@@ -69,7 +69,10 @@ def process_event(conn: Connection, event: dict) -> None:
 
     contract = stage_contract_hash(STAGE, {
         "contract_version": CONTRACT_VERSION,
-        "persistence": "knowledge-artifact-persistence-v1",
+        # v2 (2026-09-03, GENERATION-SWAP-V1): the persister UPSERTs, refreshing
+        # supporting_chunks/source_chunk_ids on replay instead of DO NOTHING —
+        # a new contract hash, so every corpus re-grounds its artifacts once.
+        "persistence": "knowledge-artifact-persistence-v2",
     })
 
     with stage_transaction(conn, run_id=run_id, stage=STAGE,

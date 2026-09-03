@@ -224,7 +224,7 @@ def _chunks_for_run(conn: Connection, run_id: str) -> list[dict]:
     rows = conn.execute(
         """
         SELECT c.chunk_id, c.doc_id, c.parent_id, c.chunk_index, c.tier,
-               c.text, c.summary, d.corpus_id
+               c.text, c.summary, d.corpus_id, c.chunk_contract_version
           FROM chunks c
           JOIN documents d ON d.doc_id = c.doc_id
           JOIN runs r ON r.corpus_id = d.corpus_id
@@ -243,6 +243,7 @@ def _chunks_for_run(conn: Connection, run_id: str) -> list[dict]:
             "text": row[5],
             "summary": row[6],
             "corpus_id": row[7],
+            "chunk_contract_version": row[8],
         }
         for row in rows
     ]
@@ -327,6 +328,9 @@ def _write_points(client: QdrantClient, collection: str, chunks: list[dict], con
                 "parent_id": chunk["parent_id"] or "",
                 "corpus_id": chunk["corpus_id"],
                 "tier": chunk["tier"],
+                # GENERATION-SWAP-V1: the chunk generation, so readers can hide
+                # a blue/green successor's points while it is in flight
+                "chunk_contract_version": chunk.get("chunk_contract_version"),
                 # PAYLOAD-VOCABULARY-UNIFICATION (measured Stage-K pilot):
                 # production retrieval filters representation_kind
                 # ('routing_child' per pass1.py); tier-only payloads made
@@ -480,7 +484,8 @@ def _routing_rows(conn: Connection, run_id: str) -> list[dict]:
         })
     children = conn.execute(
         """
-        SELECT c.chunk_id, c.doc_id, c.parent_id, c.text, d.corpus_id
+        SELECT c.chunk_id, c.doc_id, c.parent_id, c.text, d.corpus_id,
+               c.chunk_contract_version
           FROM chunks c
           JOIN documents d ON d.doc_id = c.doc_id
           JOIN runs r ON r.corpus_id = d.corpus_id
@@ -499,6 +504,7 @@ def _routing_rows(conn: Connection, run_id: str) -> list[dict]:
             "parent_id": row[2],
             "source_name": "",
             "chunk_id": row[0],
+            "chunk_contract_version": row[5],
         })
     # KNOWLEDGE-ARTIFACT-PERSISTENCE-V1: typed knowledge-object lanes.
     # Procedures and concepts project as first-class retrieval objects
@@ -708,6 +714,7 @@ def _write_routing_slice(client: QdrantClient, collection: str, rows: list[dict]
             "embedding_contract": contract.contract_id,
             "text": r["text"],
             "variant": r.get("variant") or "",
+            "chunk_contract_version": r.get("chunk_contract_version"),
         }
         # ROUTING-ENTITY-CARDS-V1 payload contract
         if r.get("entity_id"):

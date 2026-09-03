@@ -28,6 +28,7 @@ from qdrant_client.models import FieldCondition, Filter, MatchValue
 
 from polymath_shared.db import tx
 from polymath_shared.embedding_contracts import NEURAL_EMBED_CONTRACT
+from polymath_shared.generation import chunk_visible_sql, hidden_generations
 from polymath_shared.pass1 import Pass1RetrievalPlan, pass1_retrieve
 from polymath_shared.projection_contracts import qdrant_collection_name
 from polymath_shared.query_shape import plan_for_query
@@ -61,6 +62,20 @@ class FastSearcher:
             except Exception:
                 self._sparse_query = None
 
+    def _hidden_for(self, corpus_id: str | None) -> list[str]:
+        if not corpus_id:
+            return []
+        cache = getattr(self, "_hidden_cache", None)
+        if cache is None:
+            cache = self._hidden_cache = {}
+        if corpus_id not in cache:
+            try:
+                with tx() as conn:
+                    cache[corpus_id] = hidden_generations(conn, corpus_id)
+            except Exception:  # noqa: BLE001 — never fail a query on the guard
+                cache[corpus_id] = []
+        return cache[corpus_id]
+
     def _search(self, collection: str, vector: list[float], filters: dict, limit: int) -> list[dict]:
         must = [
             FieldCondition(key="representation_kind",
@@ -70,6 +85,11 @@ class FastSearcher:
             if filters.get(key):
                 must.append(FieldCondition(key=key, match=MatchValue(value=filters[key])))
         must_not = []
+        # GENERATION-SWAP-V1: hide chunk generations a blue/green successor
+        # is still building (legacy points without the field pass).
+        for g in self._hidden_for(filters.get("corpus_id")):
+            must_not.append(FieldCondition(key="chunk_contract_version",
+                                           match=MatchValue(value=g)))
         if filters.get("exclude_doc_ids"):
             from qdrant_client.models import MatchAny
             must_not.append(FieldCondition(
@@ -326,6 +346,7 @@ def _neighbor_lookup(want: list[dict], distance: int) -> list[dict]:
               JOIN documents d ON d.doc_id = n.doc_id
              WHERE n.tier = 'child'
                AND n.chunk_index BETWEEN s.chunk_index - %s AND s.chunk_index + %s
+               AND """ + chunk_visible_sql("n", "d") + """
              ORDER BY n.doc_id, n.chunk_index
             """,
             (doc_ids, chunk_ids, distance, distance),

@@ -59,12 +59,17 @@ STAGE_CONTRACT_DEPENDENCIES: dict[str, tuple[str, ...]] = {
     "extract": (
         "semantic_bundle",   # entity/evidence semantics
         "chunker",
+        "extraction_gate",   # LLM gate version + attestation policy (ADR-0017)
+        "ontology_file_sha", # the ontology the LLM extracts against
     ),
     "profile_document": ("semantic_bundle",),
+    # Procedure/Concept artifacts are compiled from the chunk rows and the
+    # admitted entity surfaces: they follow the chunker and the extraction.
+    "compile_objects": ("semantic_bundle", "extraction_gate", "chunker"),
     "project_qdrant": ("semantic_bundle",),   # embeddings of chunks
-    "project_neo4j": ("semantic_bundle", "rule_pack"),  # settled facts
-    "canonicalize": ("semantic_bundle", "rule_pack"),
-    "project_canonical": ("semantic_bundle", "rule_pack"),
+    "project_neo4j": ("semantic_bundle", "extraction_gate"),  # settled facts
+    "canonicalize": ("semantic_bundle", "extraction_gate"),
+    "project_canonical": ("semantic_bundle", "extraction_gate"),
     "verify_projections": (),
     "parent_summary": ("semantic_bundle",),
     "document_summary": ("semantic_bundle",),
@@ -258,6 +263,87 @@ def _mint_successor(conn: Connection, old_run_id: str, new_run_id: str,
     })
     _ = carried  # recorded in successor metadata; verifier asserts it
     return True
+
+
+def mint_shadow_successor(conn: Connection, old_run_id: str, *,
+                          generation: str) -> str | None:
+    """GENERATION-SWAP-V1 (blue/green): mint the successor of a LIVE
+    query_ready run WITHOUT retiring it. The predecessor keeps serving;
+    the successor converges beside it (`runs.metadata.blue_green` marks
+    it: intake skips the GENERATION-PURGE, readers hide its chunk
+    generation while it is in flight); `control.generation_swap.swap`
+    retires the predecessor in the promotion transaction.
+
+    `generation` is the chunk contract the successor's intake will write
+    (the caller knows the chunker; control does not import workers).
+    Returns the successor id, or None when the predecessor already has
+    a successor (the one-successor pointer is occupied)."""
+    row = conn.execute(
+        """SELECT corpus_id, execution_contract::text, metadata::text, status
+             FROM runs WHERE run_id=%s""", (old_run_id,)).fetchone()
+    if row is None:
+        raise ValueError(f"unknown run {old_run_id}")
+    corpus_id, pin_text, metadata_text, status = row
+    if status != "query_ready":
+        raise ValueError(f"{old_run_id} is {status}, not query_ready — "
+                         "blue/green needs a serving predecessor")
+    old_pin = json.loads(pin_text or "{}")
+    metadata = json.loads(metadata_text or "{}")
+    current = default_execution_contract()
+    new_run_id = successor_run_id(old_run_id, current)
+    if conn.execute("SELECT 1 FROM runs WHERE run_id=%s", (new_run_id,)).fetchone():
+        return None
+    if conn.execute("SELECT 1 FROM runs WHERE supersedes_run_id=%s",
+                    (old_run_id,)).fetchone():
+        return None
+    stale = _stale_stages(old_pin, current)
+    successor_metadata = dict(metadata)
+    successor_metadata["blue_green"] = {
+        "supersedes": old_run_id,
+        "generation": generation,
+        "predecessor_generation": _run_generation(conn, old_run_id),
+        "regenerated_stages": sorted(stale),
+        "carried_stages": sorted(
+            s for s in STAGE_CONTRACT_DEPENDENCIES if s not in stale),
+    }
+    successor_metadata.pop("reconciliation", None)
+    conn.execute(
+        """INSERT INTO runs (run_id, corpus_id, status, metadata,
+                            execution_contract, supersedes_run_id)
+           VALUES (%s, %s, 'reconciling', %s, %s, %s)""",
+        (new_run_id, corpus_id, json.dumps(successor_metadata),
+         json.dumps(current, sort_keys=True), old_run_id))
+    # the predecessor is NOT touched: no status change, no ticket change
+    _carry_completed_stages(conn, old_run_id, new_run_id, corpus_id, stale)
+    conn.execute(
+        """INSERT INTO outbox_events
+               (run_id, event_type, payload, idempotency_key)
+            SELECT %s, e.event_type, e.payload,
+                   %s || e.idempotency_key::text
+              FROM outbox_events e
+             WHERE e.run_id=%s AND e.event_type='intake.v1'
+            ON CONFLICT (idempotency_key) DO NOTHING""",
+        (new_run_id, content_hash({"carried_to": new_run_id,
+                                   "kind": "intake"}), old_run_id))
+    from control.tickets import ensure_run_tickets
+    ensure_run_tickets(conn, new_run_id, corpus_id, dict(current))
+    log.info("blue/green successor minted", extra={
+        "run_id": old_run_id, "stage": "reconcile", "error_code": None,
+        "attempt_id": new_run_id[:16]})
+    return new_run_id
+
+
+def _run_generation(conn: Connection, run_id: str) -> str | None:
+    """The chunk contract the run's documents are chunked under (read
+    from the rows, the only authority)."""
+    row = conn.execute(
+        """SELECT c.chunk_contract_version
+             FROM chunks c
+             JOIN documents d ON d.doc_id = c.doc_id
+             JOIN runs r ON r.corpus_id = d.corpus_id
+            WHERE r.run_id = %s
+            GROUP BY 1 ORDER BY count(*) DESC LIMIT 1""", (run_id,)).fetchone()
+    return row[0] if row else None
 
 
 def _carry_completed_stages(conn: Connection, old_run_id: str,

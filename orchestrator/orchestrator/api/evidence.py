@@ -20,6 +20,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from polymath_shared.db import tx
+from polymath_shared.generation import chunk_visible_sql
 from polymath_shared.evidence_assembly import (
     AssemblyError,
     assemble_evidence_bundle,
@@ -130,7 +131,8 @@ async def evidence(req: EvidenceRequest) -> dict:
         parent_ids = [s["parent_id"] for s in fast["selected_sections"]]
         with tx() as conn:
             rows = conn.execute(
-                "SELECT chunk_id, doc_id, summary FROM chunks WHERE chunk_id = ANY(%s)",
+                "SELECT c.chunk_id, c.doc_id, c.summary FROM chunks c JOIN documents d ON d.doc_id = c.doc_id "
+                "WHERE c.chunk_id = ANY(%s) AND " + chunk_visible_sql("c", "d"),
                 (parent_ids,),
             ).fetchall()
             section_summaries = [
@@ -302,8 +304,9 @@ def _resolve_document(doc_id: str) -> Optional[dict]:
 def _resolve_chunk(chunk_id: str) -> Optional[dict]:
     with tx() as conn:
         row = conn.execute(
-            "SELECT chunk_id, doc_id, text, char_start, char_end, "
-            "heading_path FROM chunks WHERE chunk_id = %s",
+            "SELECT c.chunk_id, c.doc_id, c.text, c.char_start, c.char_end, "
+            "c.heading_path FROM chunks c JOIN documents d ON d.doc_id = c.doc_id "
+            "WHERE c.chunk_id = %s AND " + chunk_visible_sql("c", "d"),
             (chunk_id,),
         ).fetchone()
     if row is None:

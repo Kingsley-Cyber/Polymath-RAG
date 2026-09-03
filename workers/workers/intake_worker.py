@@ -265,7 +265,11 @@ def process_event(conn: Connection, event: dict) -> None:
         # Rows from any OTHER contract generation die here, scoped to
         # this doc; evidence rows cascade, projection want-sets sweep
         # the orphaned points on the next verify.
-        if chunks:
+        # GENERATION-SWAP-V1: a blue/green successor converges beside the
+        # serving generation; its old-generation rows are purged by the swap
+        # at promotion (control.generation_swap), never here.
+        from polymath_shared.generation import is_blue_green_run
+        if chunks and not is_blue_green_run(conn, run_id):
             purged = conn.execute(
                 "DELETE FROM chunks WHERE doc_id = %s "
                 "AND chunk_contract_version IS DISTINCT FROM %s",

@@ -307,6 +307,11 @@ def apply_promotions(conn: Connection, census: Census) -> None:
         row = cur.fetchone()
         if row is None:
             continue
+        # GENERATION-SWAP-V1: a blue/green successor retires its predecessor
+        # in THIS transaction (atomic with the promotion; a failure rolls the
+        # tick back and the successor stays hidden). No-op for other runs.
+        from control.generation_swap import swap as _generation_swap
+        _generation_swap(conn, run_id, row[0])
         # AUTO-ENRICH-ON-INGEST (owner 2026-08-31): the census tick is
         # the control timer; PROMOTION is the trigger point — retrieval
         # is up first, parents are settled, and input_hash idempotency

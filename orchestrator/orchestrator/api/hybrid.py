@@ -18,6 +18,7 @@ from fastapi import HTTPException
 from qdrant_client import QdrantClient
 
 from polymath_shared.db import tx
+from polymath_shared.generation import chunk_visible_sql as _chunk_visible_sql
 from polymath_shared.hybrid import HybridRetrievalPlan, hybrid_retrieve
 from polymath_shared.pass1 import LaneHit
 from polymath_shared.retrieval import lexical_score
@@ -59,11 +60,15 @@ def _sparse_lexical_search(query: str, corpus_id: str, top_k: int) -> list[LaneH
     client = QdrantClient(url=get_settings().stores.qdrant_url, timeout=30)
     try:
         out: list[LaneHit] = []
+        from polymath_shared.generation import hidden_generations
+        with tx() as _conn:
+            _hidden = hidden_generations(_conn, corpus_id)
         flt = Filter(must=[
             FieldCondition(key="representation_kind",
                            match=MatchValue(value="routing_child")),
             FieldCondition(key="corpus_id", match=MatchValue(value=corpus_id)),
-        ])
+        ], must_not=[FieldCondition(key="chunk_contract_version",
+                                    match=MatchValue(value=g)) for g in _hidden])
         for collection in collections:
             pts = client.query_points(
                 collection_name=collection,
@@ -110,6 +115,7 @@ def _lexical_search(query: str, corpus_id: str, top_k: int) -> list[LaneHit]:
               FROM chunks ch
               JOIN documents d ON d.doc_id = ch.doc_id
              WHERE d.corpus_id = %s AND ch.tier = 'child'
+               AND """ + _chunk_visible_sql("ch", "d") + """
             """,
             (corpus_id,),
         ).fetchall()
