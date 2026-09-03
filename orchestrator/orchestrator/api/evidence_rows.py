@@ -35,6 +35,16 @@ _TS = re.compile(r"\*\*\[(\d+):(\d{2})(?::(\d{2}))?\]\*\*\s*")
 from polymath_shared.frontmatter import parse_frontmatter  # noqa: E402  (single source, shared with intake)
 
 
+_SUMMARY_PREFIX = re.compile(r"^\s*(?:/[^\n—]*?|[^\n—/]*?)\.(?:md|txt|pdf|epub|html?|srt|vtt)\s+[—-]\s+", re.I)
+
+
+def clean_summary(text: str) -> str:
+    """Document summaries are written as `<source path or file> — <summary>`;
+    the path is provenance we already carry in `source`, never evidence text.
+    Handles paths with spaces and dots in the file name."""
+    return _SUMMARY_PREFIX.sub("", text or "", count=1).strip()
+
+
 def strip_timecodes(text: str) -> tuple[str, Optional[dict]]:
     """Remove transcript markers from the text; report first/last timecode."""
     if not text or "**[" not in text:
@@ -265,9 +275,7 @@ def build_evidence_rows(conn, response: dict, corpus_ids: list[str], *, limit: i
         if not doc or not doc.get("summary") or not (doc["summary"].get("summary") or "").strip():
             continue
         s = doc["summary"]
-        summ = re.sub(r"^\s*\S+\.(?:md|txt|pdf|epub|html?)\s+[—-]\s+", "", s["summary"] or "").strip()
-        summ = re.sub(r"^/[^ ]+\s+[—-]\s+", "", summ)          # absolute path prefix
-        s = {**s, "summary": summ}
+        s = {**s, "summary": clean_summary(s["summary"] or "")}
         rows.append({"id": f"doc:{d['doc_id']}", "kind": "document", "doc_id": d["doc_id"],
                      "corpus_id": doc.get("corpus_id"), "title": doc["title"],
                      "source": _source_label(doc["title"], doc.get("frontmatter") or {}, None, None) + " · document summary",

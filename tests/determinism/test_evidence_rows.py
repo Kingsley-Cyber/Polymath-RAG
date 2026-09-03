@@ -38,3 +38,12 @@ def test_titles_never_fall_back_to_a_filesystem_path():
     assert display_title({"title": "Hooked"}, "/Users/x/Hooked.md", "doc_1") == "Hooked"
     assert display_title({}, "/Users/king/Documents/x/8 years of marketing advice.md", "doc_1") == "8 years of marketing advice"
     assert display_title({}, None, "doc_1") == "doc_1"
+
+
+def test_clean_summary_strips_path_prefix_with_spaces_and_dots():
+    from orchestrator.api.evidence_rows import clean_summary
+    raw = ("/Users/king/Documents/Hermes Agent/Workspace Output/Transcripts/2026/2026-07/Mark Builds Brands/"
+           "1 product. 3 ai tools. i make 23kday. no original thoughts needed.md — you should make one product")
+    assert clean_summary(raw) == "you should make one product"
+    assert clean_summary("Blue_Ocean_Strategy.md — Untapped value.") == "Untapped value."
+    assert clean_summary("No prefix here.") == "No prefix here."
