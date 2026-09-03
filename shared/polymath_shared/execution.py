@@ -180,7 +180,17 @@ def worker_contracts() -> dict[str, Any]:
         # yaml escapes the python-module code hash; these close that hole,
         # so contract reconciliation mints successors when they change.
         "ontology_file_sha": files["scientific-predicate-ontology-v2.yaml"],
+        # GENERATION-SWAP-V1 (2026-09-03): the LLM gate is the sole durability
+        # authority (ADR-0017); a gate/attestation change must be contract
+        # drift the reconciler can see, or `reingest_corpus.py` reports
+        # "nothing to re-ingest" after the very change that needs one.
+        "extraction_gate": _extraction_gate_contract(),
     }
+
+
+def _extraction_gate_contract() -> str:
+    from polymath_shared.llm_extraction.gate import GATE_VERSION, attestation_policy
+    return f"{GATE_VERSION}/{attestation_policy()}"
 
 
 def worker_identity(worker_type: str) -> dict[str, Any]:

@@ -49,11 +49,19 @@ is 324 lines of LLM-direct; the Procedure/Concept persister lives in
 `workers/knowledge_artifacts.py`; the semantic bundle lock is
 `v5-production-002-llm-direct` (re-freeze deliberately with
 `python -m polymath_shared.bundle_integrity --freeze <label>` when an
-authority changes, never silently). NEXT SLICE = GENERATION-SWAP-V1
-(blue/green re-ingest, designed in LLM-DIRECT-CANON-PLAN.md "Phase B"); it
-also owns the two post-P6 lifecycle findings (orphan Neo4j Chunk/Evidence
-nodes, stale `concept_artifacts.supporting_chunks`), which are why
-`test_graph_lifecycle_v2` and `test_evidence_truncation` fail today.
+authority changes, never silently). GENERATION-SWAP-V1 BUILT (work-log item 13): re-ingest a corpus WITHOUT an
+outage with `scripts/reingest_corpus.py <corpus> --execute --blue-green`
+(shadow successor beside the serving run; promotion swaps atomically). The
+execution contract now carries `extraction_gate`, so a gate/attestation
+change IS contract drift — that is why every pre-2026-09-03-evening run
+"pins a stale contract": expected, and the trigger `--blue-green` consumes.
+ecom-meta-v1 (10 runs) is still on the old pin — owner cost decision.
+Post-P6 lifecycle findings (orphan Neo4j Chunk/Evidence nodes; stale
+`concept_artifacts.supporting_chunks`) are owned by the swap's sweeps and
+the persister upsert; the one-off backlog is cleared by the drill/sweep
+receipt in the work-log (if `test_graph_lifecycle_v2` still fails, run the
+sweep in `control.generation_swap._sweep_stores` semantics over the
+orphan set — never DETACH DELETE by hand without the ids from Postgres).
 
 ## Latest checkpoint (2026-09-03 — QUERY RECEIPTS + RUN-SCOPED RECEIPTS + RELEASE EVIDENCE)
 

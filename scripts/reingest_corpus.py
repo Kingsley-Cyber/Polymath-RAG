@@ -20,6 +20,15 @@ reconciliation supersedes the ticket on its tick.
 
     python scripts/reingest_corpus.py <corpus_id>            # dry run
     python scripts/reingest_corpus.py <corpus_id> --execute
+    python scripts/reingest_corpus.py <corpus_id> --execute --blue-green
+
+GENERATION-SWAP-V1 (`--blue-green`, 2026-09-03): the corpus never goes
+offline. Instead of stranding the live run, a shadow successor is minted
+beside it (`control.reconciliation.mint_shadow_successor`): the serving run
+keeps answering, the successor converges in parallel (its chunk generation
+hidden from readers while in flight), and promotion swaps the two
+atomically (`control.generation_swap`): predecessor superseded, old
+generation purged, derived nodes/points swept.
 """
 from __future__ import annotations
 
@@ -42,6 +51,9 @@ def main() -> int:
     ap.add_argument("corpus_id")
     ap.add_argument("--execute", action="store_true",
                     help="apply (default: dry-run print)")
+    ap.add_argument("--blue-green", action="store_true",
+                    help="mint a shadow successor beside the serving run "
+                         "(no outage) instead of stranding it")
     args = ap.parse_args()
 
     current = json.dumps(default_execution_contract(), sort_keys=True)
@@ -62,6 +74,31 @@ def main() -> int:
             print(f"already on current contract (untouched): {fresh}")
         if not stale:
             print("nothing to re-ingest: no live run pins a stale contract")
+            return 0
+        if args.blue_green:
+            sys.path.insert(0, str(ROOT / "control"))
+            sys.path.insert(0, str(ROOT / "workers"))
+            from control.reconciliation import mint_shadow_successor
+            from workers.tier_chunker import CHUNK_CONTRACT_V3
+            for run_id, status in stale:
+                if status != "query_ready":
+                    print(f"SKIP {run_id}: {status} (blue/green needs a "
+                          f"serving predecessor; use the plain mode)")
+                    continue
+                print(f"{'EXECUTE' if args.execute else 'DRY-RUN'}: "
+                      f"{run_id} (query_ready, keeps serving) -> shadow "
+                      f"successor under {CHUNK_CONTRACT_V3}")
+                if not args.execute:
+                    continue
+                new_id = mint_shadow_successor(conn, run_id,
+                                               generation=CHUNK_CONTRACT_V3)
+                print(f"  successor: {new_id or 'NOT MINTED (pointer occupied)'}")
+            if args.execute:
+                conn.commit()
+                print("done — the successors converge beside the serving runs; "
+                      "promotion swaps them (watch runs.metadata.blue_green)")
+            else:
+                conn.rollback()
             return 0
         for run_id, status in stale:
             print(f"{'EXECUTE' if args.execute else 'DRY-RUN'}: "

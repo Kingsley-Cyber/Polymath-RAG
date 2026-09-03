@@ -119,7 +119,10 @@ def _persist_knowledge_artifacts(conn: Connection, *, corpus_id: str,
                  steps_json, tools_json, confidence, source_chunk_ids,
                  provenance, generated_by_bundle_hash)
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-            ON CONFLICT (procedure_id) DO NOTHING
+            ON CONFLICT (procedure_id) DO UPDATE SET
+                source_chunk_ids = EXCLUDED.source_chunk_ids,
+                provenance = EXCLUDED.provenance,
+                generated_by_bundle_hash = EXCLUDED.generated_by_bundle_hash
             """,
             (proc["artifact_id"], doc_id, corpus_id,
              proc.get("title", ""), proc.get("goal", ""),
@@ -151,7 +154,10 @@ def _persist_knowledge_artifacts(conn: Connection, *, corpus_id: str,
                  domain, related_entities, source_sentence, confidence,
                  supporting_chunks, provenance, generated_by_bundle_hash)
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-            ON CONFLICT (concept_id) DO NOTHING
+            ON CONFLICT (concept_id) DO UPDATE SET
+                supporting_chunks = EXCLUDED.supporting_chunks,
+                provenance = EXCLUDED.provenance,
+                generated_by_bundle_hash = EXCLUDED.generated_by_bundle_hash
             """,
             (c["artifact_id"], doc_id, corpus_id, c["name"],
              c.get("description", ""), c.get("domain", "general"),

@@ -16,6 +16,7 @@ from pydantic import BaseModel
 
 from polymath_shared.answer_synthesis import grounded_answer
 from polymath_shared.db import tx
+from polymath_shared.generation import chunk_visible_sql
 from polymath_shared.evidence_assembly import (
     AssemblyError,
     assemble_evidence_bundle,
@@ -144,7 +145,8 @@ async def _chat_impl(req: ChatRequest) -> dict:
         parent_ids = [s["parent_id"] for s in fast["selected_sections"]]
         with tx() as conn:
             rows = conn.execute(
-                "SELECT chunk_id, doc_id, summary FROM chunks WHERE chunk_id = ANY(%s)",
+                "SELECT c.chunk_id, c.doc_id, c.summary FROM chunks c JOIN documents d ON d.doc_id = c.doc_id "
+                "WHERE c.chunk_id = ANY(%s) AND " + chunk_visible_sql("c", "d"),
                 (parent_ids,),
             ).fetchall()
             section_summaries = [

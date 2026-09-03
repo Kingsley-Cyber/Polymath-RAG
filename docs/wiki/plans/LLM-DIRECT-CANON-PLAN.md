@@ -157,3 +157,11 @@ Design (each step a test, then the live drill on cysa-study-v1 with a
   removed, 20 relocated, +393 / −17,752, semantic bundle lock re-frozen
   `v5-production-002-llm-direct`, census now asks for a production caller
   of the GATE. Phase B (GENERATION-SWAP-V1) designed above; execution next.
+- 2026-09-03 Phase B BUILT: GENERATION-SWAP-V1 (work-log item 13) — shadow
+  successor (`mint_shadow_successor`), migration 0050 (per-generation
+  uniqueness), reader guard (`polymath_shared.generation`), promotion swap
+  (`control.generation_swap`), `reingest_corpus.py --blue-green`, persister
+  upsert. Found + fixed the CONTRACT-DRIFT BLIND SPOT (execution contract
+  carried no LLM-gate key). Canary on the deleted tree: 1 doc → query_ready
+  in 117 s, 63 llm_direct facts. Live drill receipt below.
+
