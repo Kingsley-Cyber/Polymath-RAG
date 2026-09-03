@@ -63,7 +63,11 @@ The full suite reported 12 failures. Classification:
 - Targeted reruns after the fixes: pronoun gate test green; pronoun
   eligibility gate green (0 active pronoun endpoints); embed batching,
   batched pass1, sidecar readiness gate, census module all green.
-- Full suite (final, post-fix): appended below.
+- FULL SUITE, final (post-fix code, 1,617 collected): summary line not emitted; see failure list.
+  9 failures, all classified above: evidence_truncation (re-ingest orphan
+  artifact), retirement/relation_candidates (GLiREL-era table), killchain gaps,
+  llm_controller stale fake, sval doc01 ×3, syntax_readiness_v3 ×2 (DB-state
+  flake; pass on rerun). Zero failures attributable to today's changes.
 
 ## Rejected claims
 - "Bug free / 100 % ready" — not a claim any evidence supports for a
