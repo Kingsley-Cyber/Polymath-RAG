@@ -67,6 +67,11 @@ pull and breadth." Consumer = TRAIL OS `corpus_retrieve` (docs/18 contract
   EXPLORE across mark-builds-brands-v1 + ecom-meta-v1 = 38 rows over 11
   documents (17 chunk, 10 document, 11 graph_fact with provenance, 0 graph_hop).
 - `scripts/repo_guard.py` → `repo guard: ok` (unpiped).
+- Document rows verified path-free and marker-free after two follow-up commits
+  (`clean_summary`: paths with spaces/dots, inline `**[16:51]**` markers; probe 6/6 clean).
+- Consumer run (TRAIL OS v1.2.0 adapter, 5 compiled reformulations × 2 corpora,
+  EXPLORE): 161 rows in 92 s — 93 chunk, 16 document, 52 attested graph_fact,
+  0 graph_hop; 48 rows found by more than one reformulation (provenance kept).
 - Consumer proof lives in TRAIL OS (`python/corpus_polymath.py`
   `rows_from_evidence_rows`, harness section 13): rows map 1:1 onto the
   docs/18 contract with `can_establish` / `cannot_establish` and query provenance.
