@@ -129,6 +129,12 @@ SUMMARIES-SCALE-OUT-V1: `summaries2` slot wakes on ≥2 open summary-lane ticket
 AUTO-BOOT still blocked by TCC (bash denied ~/Documents): owner must grant Full Disk Access
 to /bin/bash (then `launchctl kickstart -k gui/501/com.polymath.v5`) or relocate the checkout;
 until then relaunch the supervisor manually after a reboot (command above).
+READINESS-SWEEP-0902: llm-direct now drops pronoun entities/endpoints (13 live facts retired);
+REJECT facts are graph-INELIGIBLE (fact_eligible_sql) so retirement reaches the graph on the
+next verify; census tests purge their probe rows. Known pre-existing test failures are listed
+in work-log 2026-09-02-readiness-sweep (sval ×3, killchain gaps, llm_controller fake,
+relation_candidates GLiREL-era pin, re-ingest orphan concept artifacts). No system is
+"100 % bug free" — say what is measured.
 
 OPEN (owner gates + debt): TCC grant; ~~gpt-oss-20b as groq escape rep;
 gemma-3-4b paced extraction-only lane~~ (both REMOVED by owner 2026-09-02); 40-chunk equivalence pass with
