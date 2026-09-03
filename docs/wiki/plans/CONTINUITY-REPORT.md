@@ -20,6 +20,15 @@ Read order: this file → `CLAUDE.md` → the two newest work-logs.
 
 ## Latest checkpoint (2026-09-03 late — LLM-DIRECT CANON)
 
+**RETRIEVE-EVIDENCE-ROWS-V1 (2026-09-03 latest, register 11.66).** `/retrieve`
+returns contract-ready evidence when asked: `{"query", "corpus_id", "evidence": true}`
+or `"mode": "EXPLORE"` (breadth: per-doc cap 2, interleaved, graph hops) →
+`evidence_rows` with human sources (title · channel · date · timecode) and
+attested graph facts. Frontmatter lives in `documents.frontmatter` (migration
+0051, stamped at intake; backfill script for old corpora). Consumer: TRAIL OS
+`corpus_polymath.py`. Work-log `2026-09-03-retrieve-evidence-rows.md`.
+
+
 **Extraction canon = LLM-direct (ADR-0017).** Read
 `docs/wiki/plans/LLM-DIRECT-CANON-PLAN.md` first. Landed: `llm_live` is the
 settings default; the anchor-chunk endpoint veto is gone
