@@ -52,8 +52,25 @@ def fleet_status(conn: Connection) -> dict:
     }
 
 
+#: REGISTRATION-RETENTION-V1 (2026-09-03): every spawn registers a new
+#: worker_id and nothing ever deleted the row — 3,145 dead registrations
+#: (pids long gone) sat beside 1 live one and the build fence listed them
+#: as stale workers. A registration whose heartbeat is older than this is
+#: a dead process; keep 24 h for forensics, then drop it.
+REGISTRATION_RETENTION_S = 24 * 3600
+
+
+def prune_dead_registrations(conn: Connection, retention_s: int = REGISTRATION_RETENTION_S) -> int:
+    cur = conn.execute(
+        """DELETE FROM worker_registrations
+            WHERE heartbeat_at < now() - make_interval(secs => %s)""",
+        (retention_s,))
+    return cur.rowcount or 0
+
+
 def sweep(conn: Connection) -> dict:
-    """One supervision pass: mark stale, revoke their leases."""
+    """One supervision pass: mark stale, revoke their leases, prune the dead."""
     stale = mark_stale_workers(conn)
     revoked = sum(revoke_leases_for(conn, w) for w in stale)
-    return {"stale": stale, "revoked_leases": revoked}
+    pruned = prune_dead_registrations(conn)
+    return {"stale": stale, "revoked_leases": revoked, "pruned_registrations": pruned}

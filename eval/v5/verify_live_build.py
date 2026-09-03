@@ -114,13 +114,19 @@ def check_workers(sha: str, max_heartbeat_age_s: int = 180) -> list[dict]:
                 ORDER BY worker_type, heartbeat_at DESC""").fetchall()
     seen = set()
     for wtype, wid, pid, build, status, bundle, age in rows:
-        if wtype in seen:
-            continue          # newest registration per type
-        seen.add(wtype)
         fresh = age is not None and age <= max_heartbeat_age_s
-        ok = bool(build == sha and fresh)
-        why = ("" if build == sha else f"build {build} != HEAD {sha}") \
-            or ("" if fresh else f"heartbeat {age:.0f}s old")
+        if not fresh:
+            # REGISTRATION-RETENTION-V1: a registration past the heartbeat
+            # window is a dead process (every spawn registers a new
+            # worker_id; the supervisor prunes rows after 24 h). Dead rows
+            # are not workers — only a LIVE worker on the wrong build fails
+            # the fence. Measured 2026-09-03: 3,145 dead rows beside 1 live.
+            continue
+        if wtype in seen:
+            continue          # newest live registration per type
+        seen.add(wtype)
+        ok = bool(build == sha)
+        why = "" if build == sha else f"build {build} != HEAD {sha}"
         out.append({
             "component": wtype, "kind": "worker", "pid": pid,
             "build_sha": build, "expected": sha,

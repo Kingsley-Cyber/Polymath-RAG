@@ -4,7 +4,7 @@ owner: governance
 date: 2026-08-30
 status: living
 architecture_impact: none (the single session bootstrap — updated in place, never forked into dated copies)
-last_reviewed: 2026-09-02
+last_reviewed: 2026-09-03
 ---
 
 # CONTINUITY REPORT — the single bootstrap (golden-run edition)
@@ -17,6 +17,34 @@ Update THIS file in place at session end. History lives in
 (the completion contract; never delete rows).
 
 Read order: this file → `CLAUDE.md` → the two newest work-logs.
+
+## Latest checkpoint (2026-09-03 — QUERY RECEIPTS + RUN-SCOPED RECEIPTS + RELEASE EVIDENCE)
+
+**STATE: production-shaped, query path instrumented.** Every served
+/chat, /ask, /retrieve now writes one `query_receipts` row (latency,
+scope, mode, status ok/abstained/error, verdict, citations, error);
+read it with `scripts/query_log.py`, `GET /queries`, or the MCP tool
+`recent_queries` (MCP advertises 9 tools). Sidecars (embedder/reranker)
+are ALWAYS resident (`fleet_autopilot.ALWAYS`); verify_product_readiness
+PASS 8/8. Dead worker registrations are pruned after 24 h and the build
+fence ignores them. Scheduler fix RUN-SCOPED-RECEIPTS-V1: a document's
+downstream stages wait only for ITS chunks' projection receipts; only
+corpus_summary/vocabulary wait for the whole corpus (found by the
+STALL-TRACER during the incrementality probe — B's summaries were held
+~17 min by sibling uploads; unblocked 34 s after the fix went live).
+STALL-TRACER-V1.2 mirrors that scope and does not trace corpus-barrier
+tickets waiting on live sibling work.
+
+Release gates (`eval/v5/release_gates.py --corpus ecom-meta-v1`):
+FAST_HYBRID PASS (producer `eval/v5/retrieval/record_fast_hybrid_evidence.py`);
+INCREMENTALITY PASS (43 changed → 125 projected; identical re-upload = 0 new work; mid-projection SIGTERM resumed: the 64 receipted chunks skipped, 985 embeds vs 1,067 uninterrupted) (producer `eval/v5/measure_incrementality.py`);
+EXACT_REPLAY UNPROVEN by design (replay_full needs the syntax-interpreter
+view; production facts are llm-direct-v1, sentence_slices = 0);
+BOOT_RECOVERY owner-blocked (launchd bash cannot read ~/Documents — run
+`scripts/autoboot.sh`, grant Full Disk Access to /bin/bash, re-run);
+SEALED_HOLDOUT owner-supplied. Probe corpus probe-incr-2026-09-03-7760
+is left in place (CORPUS-DELETE cascade gap). Read work-log
+2026-09-03-query-receipts-and-release-evidence first.
 
 ## Latest checkpoint (2026-09-02 — PRODUCTION SWEEP + AUTOPILOT FIXES + INTERLEAVE + OPENROUTER LANES)
 

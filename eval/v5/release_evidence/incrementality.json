@@ -1,0 +1,69 @@
+{
+ "corpus": "probe-incr-2026-09-03-7760",
+ "started_at": "2026-09-03T09:44:52+00:00",
+ "producer": "eval/v5/measure_incrementality.py",
+ "steps": {
+  "A": {
+   "run_id": "run_32ddcba59afe4ca02591f253ce8a9374b881decb934c896435acd5044dd78658",
+   "status": "query_ready",
+   "wall_s": 161,
+   "children": 40,
+   "chunks": 42,
+   "projection_receipts": 122
+  },
+  "A_identical": {
+   "already_exists": true,
+   "same_run": true,
+   "new_runs": 0,
+   "new_receipts": 0
+  },
+  "B": {
+   "run_id": "run_5bb2df2b8a29a7659895f130df0e2419c2dbf1292c17f8f89e5b0f3ba95eeaa7",
+   "status": "query_ready",
+   "wall_s": 120,
+   "children": 41,
+   "chunks": 43,
+   "projection_receipts": 125,
+   "rows_changed": 43,
+   "rows_projected": 125
+  },
+  "C": {
+   "run_id": "run_df783e458a39a1eebe1099e95336bfc952f254ddeca3e756d609a71778a1fef6",
+   "source_name": "probe_C_28692.md",
+   "status": "query_ready",
+   "wall_s": 344,
+   "children": 480,
+   "chunks": 500,
+   "projection_receipts": 1460,
+   "kill": {
+    "done": true,
+    "pids": [
+     193
+    ],
+    "receipts_at_kill": 64,
+    "at_s": 162
+   },
+   "project_qdrant_attempt": 0,
+   "telemetry_attempts": 1,
+   "embed_texts_total": 985,
+   "last_attempt": {
+    "embed_texts": 985,
+    "representations_total": 1041,
+    "representations_already_current": 625,
+    "qdrant_batches": 12
+   },
+   "resume_budget": {
+    "baseline_embed_texts": 1067,
+    "embed_budget": 1035,
+    "embed_texts_total": 985,
+    "rejudged_at": "2026-09-03T09:53:18+00:00"
+   }
+  }
+ },
+ "reused_from": "2026-09-03T09:43:11+00:00",
+ "rows_changed": 43,
+ "rows_projected": 125,
+ "zero_delta_new_receipts": 0,
+ "resume_no_recompute": true,
+ "recorded_at": "2026-09-03T09:53:18+00:00"
+}

@@ -259,6 +259,22 @@ async def ask(question: str, corpus_id: str, mode: str = "HYBRID",
 
 # -------------------------------------------------------------------- app
 
+@mcp.tool()
+async def recent_queries(corpus_id: str, limit: int = 20, since_h: float = 24.0,
+                         kind: Optional[str] = None) -> dict:
+    """What was asked of this corpus recently and how it went (QUERY-RECEIPTS-V1):
+    each served /chat, /ask or /retrieve with its latency (wall_ms), mode,
+    status (ok / abstained / error), citation count and error text, plus a
+    per-mode summary (count, p50/p95 ms, abstained, errors). Use it to verify
+    a question you just asked was served, or to spot slow/abstaining modes."""
+    if not corpus_id or not corpus_id.strip():
+        raise ValueError("corpus_id is required")
+    params: dict[str, Any] = {"corpus_id": corpus_id, "limit": int(limit), "since_h": float(since_h)}
+    if kind:
+        params["kind"] = kind
+    return await _orch("GET", "/queries", params=params)
+
+
 def build_app():
     """ASGI app: FastMCP streamable-http + FAIL-CLOSED bearer gate +
     open /health."""
@@ -305,7 +321,8 @@ def build_app():
 
 
 _TOOL_NAMES = ("list_corpora", "list_documents", "upload_document", "upload_text",
-               "document_status", "corpus_status", "retrieve", "ask")
+               "document_status", "corpus_status", "retrieve", "ask",
+               "recent_queries")
 
 
 def main() -> None:

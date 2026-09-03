@@ -119,14 +119,16 @@ def diagnose_leased(row: dict, now: datetime) -> tuple[str, dict]:
     return "LEASED_LONG_RUNNING", detail
 
 
-def diagnose_pending(conn, row: dict, chain: dict) -> tuple[str, dict] | None:
+def diagnose_pending(conn, row: dict, chain: dict,
+                     threshold_s: int = STALL_THRESHOLD_S) -> tuple[str, dict] | None:
     """chain: stage -> status | (status, holder_alive). Returns None when the
     ticket is merely queued behind a predecessor a LIVE worker is executing
     (STALL-TRACER-V1.1, 2026-09-02: the OnStar-sized book raised nine
     PENDING_ON_PREDECESSOR traces for tickets waiting on a project_qdrant
     that was legitimately running)."""
     from control.tickets import (DAG_ORDER, _STAGE_SPEC, _artifacts_present,
-                                 _receipts_present, _stage_attempt_ok)
+                                 _receipts_present, _stage_attempt_ok,
+                                 receipt_scope_for)
     stage = row["stage"]
     if stage not in DAG_ORDER:
         return "PENDING_OWNER_STAGE", {
@@ -146,13 +148,56 @@ def diagnose_pending(conn, row: dict, chain: dict) -> tuple[str, dict] | None:
         if not _artifacts_present(conn, row["run_id"], pr, art):
             return "PENDING_ADVANCE_BLOCKED", {
                 "predecessor": pr, "missing": "artifacts", "keys": list(art)}
+        scope = receipt_scope_for(stage)
         for projection in rec:
-            if not _receipts_present(conn, row["run_id"], row["corpus_id"], projection):
+            if not _receipts_present(conn, row["run_id"], row["corpus_id"], projection, scope=scope):
+                # STALL-TRACER-V1.2 (2026-09-03): the receipt predicate is a
+                # CORPUS barrier (corpus_summary / vocabulary wait for every
+                # document in the corpus to be projected). While a sibling
+                # run in the same corpus is still converging with live work,
+                # this ticket is waiting, not stuck — the sibling's own
+                # tickets carry the diagnosis if THEY stall. Measured: the
+                # incrementality probe's second document raised
+                # PENDING_ADVANCE_BLOCKED on the first document's
+                # corpus_summary 224 s after it went query_ready.
+                # RUN-SCOPED-RECEIPTS-V1: per-document stages are gated on
+                # their own document — missing receipts there are a defect
+                # regardless of siblings; only corpus stages wait on them.
+                if scope == "corpus" and _live_sibling_runs(conn, row, threshold_s):
+                    return None
                 return "PENDING_ADVANCE_BLOCKED", {
-                    "predecessor": pr, "missing": "receipts", "projection": projection}
+                    "predecessor": pr, "missing": "receipts", "projection": projection,
+                    "scope": scope, "sibling_runs_open": _open_sibling_runs(conn, row)}
     return "PENDING_ADVANCE_NOT_REACHED", {
         "note": ("predecessors complete and evidenced; the advance phase has not "
                  "visited this ticket (phase failing, or cursor wrapped)")}
+
+
+def _live_sibling_runs(conn, row: dict, threshold_s: int) -> list[str]:
+    """Other runs of the same corpus that are still converging with LIVE
+    work: a ticket leased by a worker whose heartbeat is fresh, or any
+    ticket whose state changed within the threshold."""
+    rows = conn.execute(
+        """
+        SELECT DISTINCT s.run_id
+          FROM stage_tickets s
+          LEFT JOIN worker_registrations w ON w.worker_id = s.lease_owner
+         WHERE s.corpus_id = %s AND s.run_id <> %s
+           AND s.status IN ('ready', 'leased', 'pending')
+           AND (
+                (s.status = 'leased' AND w.heartbeat_at > now() - make_interval(secs => 90))
+             OR s.updated_at > now() - make_interval(secs => %s)
+           )
+        """, (row["corpus_id"], row["run_id"], threshold_s)).fetchall()
+    return sorted(r[0] for r in rows)
+
+
+def _open_sibling_runs(conn, row: dict) -> list[str]:
+    rows = conn.execute(
+        """SELECT DISTINCT run_id FROM stage_tickets
+            WHERE corpus_id = %s AND run_id <> %s AND status IN ('ready', 'leased', 'pending')""",
+        (row["corpus_id"], row["run_id"])).fetchall()
+    return sorted(r[0] for r in rows)[:8]
 
 
 def diagnose_run(row: dict, census_gaps: list[str]) -> tuple[str, dict]:
@@ -220,7 +265,7 @@ def collect_stalls(conn, *, census=None, threshold_s: int = STALL_THRESHOLD_S,
                          LEFT JOIN worker_registrations w ON w.worker_id = t.lease_owner
                         WHERE t.run_id = %s ORDER BY t.seq""",
                     (OWNER_STALE_S, row["run_id"])).fetchall()}
-            res = diagnose_pending(conn, row, chains[row["run_id"]])
+            res = diagnose_pending(conn, row, chains[row["run_id"]], threshold_s=threshold_s)
             if res is None:
                 continue        # waiting on live work — not a stall
             code, detail = res

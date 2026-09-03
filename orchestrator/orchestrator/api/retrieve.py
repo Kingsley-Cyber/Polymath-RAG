@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from polymath_shared.db import tx
@@ -20,6 +20,8 @@ from polymath_shared.embedding_contracts import active_contract
 from polymath_shared.projection_contracts import qdrant_collection_name
 from polymath_shared.retrieval import graph_expansion, run_lanes
 from polymath_shared.settings import get_settings
+
+from polymath_shared.query_receipts import Timer, record_query_receipt
 
 router = APIRouter()
 
@@ -125,8 +127,7 @@ def single_corpus_or_422(scope, mode: str) -> str:
     return scope.corpus_ids[0]
 
 
-@router.post("/retrieve")
-async def retrieve(req: RetrieveRequest) -> dict:
+async def _retrieve_impl(req: RetrieveRequest) -> dict:
     query = req.query.strip()
     if not query:
         raise HTTPException(status_code=422, detail="query is required")
@@ -568,3 +569,28 @@ def _neo4j_expand(
             f"neo4j expansion failed: {type(exc).__name__}: {exc}") from exc
     finally:
         driver.close()
+
+
+@router.post("/retrieve")
+async def retrieve(req: RetrieveRequest, request: Request) -> dict:
+    """QUERY-RECEIPTS-V1 wrapper: serve exactly as before, then record one
+    durable receipt (latency, scope, mode, verdict, citations, error) —
+    best effort, off the critical path (see polymath_shared.query_receipts)."""
+    question = req.query
+    scope_corpora, scope_kind = (([req.corpus_id] if getattr(req, "corpus_id", None) else list(getattr(req, "corpus_ids", None) or [])), ("corpus" if getattr(req, "corpus_id", None) else "corpora" if getattr(req, "corpus_ids", None) else "workspace" if getattr(req, "workspace", None) else "all_authorized" if getattr(req, "all_authorized", False) else None))
+    client = request.headers.get("user-agent", "")
+    with Timer() as t:
+        try:
+            out = await _retrieve_impl(req)
+        except Exception as exc:  # noqa: BLE001 — record, then re-raise unchanged
+            detail = getattr(exc, "detail", None)
+            record_query_receipt(tx, kind="retrieve", question=question, req=req,
+                                 scope_corpora=scope_corpora, scope_kind=scope_kind,
+                                 wall_ms=(__import__("time").perf_counter() - t.t0) * 1000.0,
+                                 error=f"{type(exc).__name__}: {detail if detail is not None else exc}",
+                                 client=client)
+            raise
+    record_query_receipt(tx, kind="retrieve", question=question, req=req,
+                         scope_corpora=scope_corpora, scope_kind=scope_kind,
+                         wall_ms=t.ms, out=out, client=client)
+    return out
