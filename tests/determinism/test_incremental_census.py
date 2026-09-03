@@ -51,10 +51,36 @@ def _seed_watermark(conn):
     compute_census(conn, mode="full")
 
 
+PROBE_CORPUS = "census-probe"
+
+
+def _purge_probe_rows(c) -> None:
+    """TEST-HYGIENE (2026-09-02): this module runs autocommit (the census
+    tick commits internally), so every probe run it seeds persisted —
+    `census_probe_rollback` and friends showed up in production as
+    RUN_NO_TICKET_CHAIN stalls and were hand-deleted twice. Purge every
+    probe row on teardown; production rows never use this corpus id."""
+    ids = [r[0] for r in c.execute(
+        "SELECT run_id FROM runs WHERE corpus_id = %s OR run_id = 'census_probe_rollback'",
+        (PROBE_CORPUS,)).fetchall()]
+    if ids:
+        for table in ("outbox_events", "stage_attempts", "stage_tickets", "receipts"):
+            try:
+                c.execute(f"DELETE FROM {table} WHERE run_id = ANY(%s)", (ids,))
+            except Exception:
+                pass
+        c.execute("DELETE FROM runs WHERE run_id = ANY(%s)", (ids,))
+    c.execute("DELETE FROM scheduler_cursors WHERE corpus_id = %s", (PROBE_CORPUS,))
+    c.execute("DELETE FROM corpora WHERE corpus_id = %s", (PROBE_CORPUS,))
+
+
 @pytest.fixture()
 def conn():
     with psycopg.connect(DSN, autocommit=True) as c:
-        yield c
+        try:
+            yield c
+        finally:
+            _purge_probe_rows(c)
 
 
 import datetime as _dt

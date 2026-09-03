@@ -33,8 +33,8 @@ def test_wait_ready_gives_up_after_the_budget_without_raising(monkeypatch):
 
 def test_projection_worker_gates_before_the_first_embedder_call():
     src = (ROOT / "workers" / "workers" / "project_qdrant_worker.py").read_text()
-    assert "client.wait_ready(" in src
-    assert src.index("client.wait_ready(") < src.index("client.verify_pin()")
+    assert 'getattr(client, "wait_ready", None)' in src      # tolerant of fakes/legacy clients
+    assert src.index('getattr(client, "wait_ready", None)') < src.index("client.verify_pin()")
 
 
 def test_runtime_releases_a_sidecar_unavailable_ticket_without_burning_an_attempt():

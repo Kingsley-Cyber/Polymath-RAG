@@ -151,11 +151,12 @@ class SidecarClient:
     def request(self, method: str, path: str, *, attempts: int = 3,
                 **kwargs: Any) -> httpx.Response:
         """Bounded, pool-invalidating request. Terminal failure is typed."""
-        opened = SidecarClient._refused_until.get(self.base_url, 0.0)
+        _bkey = getattr(self, "base_url", None) or ""   # breaker key; some clients skip SidecarClient.__init__
+        opened = SidecarClient._refused_until.get(_bkey, 0.0)
         remaining = opened - time.monotonic()
         if remaining > 0:
             raise SidecarUnavailable(
-                f"{self.base_url}{path} skipped: connection-refused "
+                f"{_bkey}{path} skipped: connection-refused "
                 f"breaker open for {remaining:.1f}s more")
         last: Exception | None = None
         for attempt in range(attempts):
@@ -165,7 +166,7 @@ class SidecarClient:
                 # the narrower interface that test doubles implement.
                 r = getattr(self._client, method.lower())(path, **kwargs)
                 r.raise_for_status()
-                SidecarClient._refused_until.pop(self.base_url, None)
+                SidecarClient._refused_until.pop(_bkey, None)
                 return r
             except self._RETRYABLE as exc:
                 last = exc
@@ -179,10 +180,10 @@ class SidecarClient:
             if attempt < attempts - 1 and not isinstance(last, httpx.ConnectError):
                 time.sleep(min(2.0 * (2 ** attempt), 8.0))
         if isinstance(last, httpx.ConnectError):
-            SidecarClient._refused_until[self.base_url] = (
+            SidecarClient._refused_until[_bkey] = (
                 time.monotonic() + self._BREAKER_OPEN_S)
         raise SidecarUnavailable(
-            f"{self.base_url}{path} unreachable after {attempts} attempts: "
+            f"{_bkey}{path} unreachable after {attempts} attempts: "
             f"{type(last).__name__}: {last}")
 
     def infer(self, payload: dict[str, Any]) -> dict[str, Any]:
