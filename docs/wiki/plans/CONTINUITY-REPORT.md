@@ -36,8 +36,10 @@ trace). Owner decisions executed 2026-09-03: apple-ml agent RETIRED, 29
 interpreter-path tests DELETED, P6 re-extraction LAUNCHED (cysa-study-v1 then
 ecom-meta-v1; watch `scripts/trace_stalls.py` and `/status`). Findings closed:
 CHUNK-GAP-ACCOUNTING-V1 (dropped spans are layout evidence), census promotion
-run-scoped, cloud floor back to 450 KB, local lane supervised (`local_extractor`,
-29 GB budget), abstentions were question/data grounding (dev holdout 90 %). The privacy floor is back: `POLYMATH_WORKER_CLOUD_MIN_BYTES=450000`.
+run-scoped, local lane supervised (`local_extractor`, 29 GB budget, wakes with
+extraction), abstentions were question/data grounding (dev holdout 90 %).
+CLOUD-FIRST-V1 (floor 0) stands — owner-blessed 2026-09-02; do not "restore"
+a privacy floor, the threshold is a throughput router (policy.py). `POLYMATH_WORKER_CLOUD_MIN_BYTES=0` is the owner's CLOUD-FIRST-V1 setting.
 
 ## Latest checkpoint (2026-09-03 — QUERY RECEIPTS + RUN-SCOPED RECEIPTS + RELEASE EVIDENCE)
 

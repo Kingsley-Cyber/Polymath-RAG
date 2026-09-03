@@ -41,10 +41,7 @@ log = logging.getLogger("fleet-autopilot")
 # 25-80 s first query after idle). They stay resident; the budget gate still
 # drops them first if a set does not fit the ceiling.
 ALWAYS = {"control", "orchestrator", "intake", "mcp",
-          "sidecar_embedder", "sidecar_reranker",
-          # the local extraction lane loads a 4B model (~60 s); resident so the
-          # privacy path is never a cold start (LLM-DIRECT-CANON 2026-09-03)
-          "local_extractor"}
+          "sidecar_embedder", "sidecar_reranker"}
 
 #: lane -> (stages that signal demand, slots the lane needs)
 LANES = [
@@ -52,7 +49,10 @@ LANES = [
     # GLiNER retired, spaCy slice interpreter skipped) — keeping them
     # here made "sidecar_gliner in desired" true during every ingest,
     # which is what kept parking the reranker (RERANKER-DURING-INGEST-V1).
-    ("extract", ("profile_document", "extract"), {"extract", "profile"}),
+    # local_extractor: the batched 4B lane is supervised now (LLM-DIRECT-CANON
+    # 2026-09-03); under CLOUD-FIRST-V1 (floor 0) it is the assist/fallback lane,
+    # so it wakes with extraction demand instead of holding 10 GB while idle.
+    ("extract", ("profile_document", "extract"), {"extract", "profile", "local_extractor"}),
     ("embed", ("project_qdrant",),
      {"sidecar_embedder", "qdrant"}),
     ("graph", ("canonicalize", "project_canonical", "project_neo4j",
