@@ -38,11 +38,18 @@ from polymath_shared.frontmatter import parse_frontmatter  # noqa: E402  (single
 _SUMMARY_PREFIX = re.compile(r"^\s*(?:/[^\n—]*?|[^\n—/]*?)\.(?:md|txt|pdf|epub|html?|srt|vtt)\s+[—-]\s+", re.I)
 
 
+_INLINE_TIMECODE = re.compile(r"\s*\*{0,2}\[\d{1,2}:\d{2}(?::\d{2})?\]\*{0,2}\s*")
+
+
 def clean_summary(text: str) -> str:
     """Document summaries are written as `<source path or file> — <summary>`;
     the path is provenance we already carry in `source`, never evidence text.
-    Handles paths with spaces and dots in the file name."""
-    return _SUMMARY_PREFIX.sub("", text or "", count=1).strip()
+    Handles paths with spaces and dots in the file name. Inline transcript
+    markers such as `**[16:51]**` are removed (the summary is a reading, not
+    a location — chunk rows carry the real timecode)."""
+    out = _SUMMARY_PREFIX.sub("", text or "", count=1)
+    out = _INLINE_TIMECODE.sub(" ", out)
+    return re.sub(r"[ \t]{2,}", " ", out).strip()
 
 
 def strip_timecodes(text: str) -> tuple[str, Optional[dict]]:
