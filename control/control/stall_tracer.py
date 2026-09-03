@@ -130,7 +130,8 @@ def diagnose_leased(row: dict, now: datetime) -> tuple[str, dict]:
 
 
 def diagnose_pending(conn, row: dict, chain: dict,
-                     threshold_s: int = STALL_THRESHOLD_S) -> tuple[str, dict] | None:
+                     threshold_s: int = STALL_THRESHOLD_S,
+                     saturated: set | None = None) -> tuple[str, dict] | None:
     """chain: stage -> status | (status, holder_alive). Returns None when the
     ticket is merely queued behind a predecessor a LIVE worker is executing
     (STALL-TRACER-V1.1, 2026-09-02: the OnStar-sized book raised nine
@@ -150,6 +151,8 @@ def diagnose_pending(conn, row: dict, chain: dict,
             p_status, holder_alive = (entry if isinstance(entry, tuple) else (entry, False))
             if p_status == "leased" and holder_alive:
                 return None
+            if p_status == "ready" and pr in (saturated or ()):
+                return None                 # V1.3: queued behind a saturated lane = live work
             return "PENDING_ON_PREDECESSOR", {
                 "predecessor": pr,
                 "predecessor_ticket_status": p_status}
@@ -238,6 +241,7 @@ def collect_stalls(conn, *, census=None, threshold_s: int = STALL_THRESHOLD_S,
     now = conn.execute("SELECT now()").fetchone()[0]
     out: list[Stall] = []
 
+    saturated_stages: set[str] = set()      # STALL-TRACER-V1.3: queued-behind-busy stages this tick
     tickets = _rows(conn.execute(
         """
         SELECT t.ticket_id, t.run_id, t.corpus_id, t.stage, t.status, t.attempt,
@@ -273,6 +277,7 @@ def collect_stalls(conn, *, census=None, threshold_s: int = STALL_THRESHOLD_S,
         if row["status"] == "ready":
             res = diagnose_ready(row, slots_alive)
             if res is None:
+                saturated_stages.add(row["stage"])
                 continue
             code, detail = res
         elif row["status"] == "leased":
@@ -290,7 +295,8 @@ def collect_stalls(conn, *, census=None, threshold_s: int = STALL_THRESHOLD_S,
                          LEFT JOIN worker_registrations w ON w.worker_id = t.lease_owner
                         WHERE t.run_id = %s ORDER BY t.seq""",
                     (OWNER_STALE_S, row["run_id"])).fetchall()}
-            res = diagnose_pending(conn, row, chains[row["run_id"]], threshold_s=threshold_s)
+            res = diagnose_pending(conn, row, chains[row["run_id"]], threshold_s=threshold_s,
+                                   saturated=saturated_stages)
             if res is None:
                 continue        # waiting on live work — not a stall
             code, detail = res
