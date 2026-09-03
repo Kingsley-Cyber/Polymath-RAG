@@ -78,6 +78,13 @@ def test_ready_without_claim_event_and_without_live_slot(conn):
         """INSERT INTO outbox_events (run_id, event_type, payload, idempotency_key)
            VALUES (%s, 'extract.v1', %s::jsonb, %s)""",
         (run_id, '{"ticket_id": "%s"}' % tid, "idem_probe_" + uuid.uuid4().hex[:12]))
+    # V1.3: the live fleet may have every extract worker busy (P6 was running
+    # when this was written) — give the lane one idle worker so the probe
+    # ticket is judged claimable rather than queued behind saturation
+    conn.execute(
+        """INSERT INTO worker_registrations (worker_id, worker_type, pid, host)
+           VALUES ('w-idle-probe', 'extract', 6161, 'probe')
+           ON CONFLICT (worker_id) DO UPDATE SET heartbeat_at = now()""")
     dead = collect_stalls(conn, threshold_s=180,
                           slots_alive={"extract": False, "profile": False, "extract2": False})
     assert _by_id(dead, tid).diagnosis == "READY_NO_LIVE_SLOT"
@@ -240,3 +247,28 @@ def test_corpus_barrier_behind_live_sibling_run_is_not_a_stall(conn, monkeypatch
     conn.execute("UPDATE stage_tickets SET status = 'leased', lease_owner = 'w-live-sib' WHERE ticket_id = %s", (t_b,))
     assert _live_sibling_runs(conn, row, 180) == [run_b]
     assert diagnose_pending(conn, row, {}, threshold_s=180) is None
+
+
+def test_ready_queued_behind_a_saturated_lane_is_not_a_stall(conn):
+    """STALL-TRACER-V1.3: every live worker of the ticket's type holds a lease
+    -> the READY ticket is queued behind live work. Owner-triggered stages
+    mint per-RUN claim events (no ticket_id in the payload) — those count."""
+    run_a = _run(conn); run_b = _run(conn)
+    conn.execute(
+        """INSERT INTO worker_registrations (worker_id, worker_type, pid, host)
+           VALUES ('w-busy-1', 'extract', 5151, 'probe')
+           ON CONFLICT (worker_id) DO UPDATE SET heartbeat_at = now()""")
+    _ticket(conn, run_a, "intake", "done"); _ticket(conn, run_b, "intake", "done")
+    t_busy = _ticket(conn, run_a, "extract", "leased", lease_owner="w-busy-1")
+    conn.execute("UPDATE stage_tickets SET lease_expires_at = now() + interval '10 min' WHERE ticket_id = %s", (t_busy,))
+    t_queued = _ticket(conn, run_b, "extract", "ready")
+    conn.execute(
+        """INSERT INTO outbox_events (run_id, event_type, payload, idempotency_key)
+           VALUES (%s, 'extract.v1', %s::jsonb, %s)""",
+        (run_b, '{"run_id": "%s"}' % run_b, "idem_probe_" + uuid.uuid4().hex[:12]))   # per-RUN event, no ticket_id
+    ids = {s.unit_id for s in collect_stalls(conn, threshold_s=180)}
+    assert t_queued not in ids, "queued behind the only (busy) extract worker must not be traced"
+    # the worker frees up (lease released) -> the ready ticket IS traced again
+    conn.execute("UPDATE stage_tickets SET status='done', lease_owner=NULL WHERE ticket_id = %s", (t_busy,))
+    s = _by_id(collect_stalls(conn, threshold_s=180), t_queued)
+    assert s.diagnosis == "READY_UNCLAIMED"          # per-run event counted as a pending claim event

@@ -79,4 +79,7 @@ def test_ledger_capture_does_not_move_the_semantic_bundle():
     # the enforcement wiring (266aa81) moved it again — both committed,
     # qualified semantic-layer work; bundle integrity is READY at this
     # hash. The pin exists to catch UNNOTICED movement.
-    assert semantic_authority_sha256().startswith("557afbc3a60af163")
+    # LLM-DIRECT-CANON (ADR-0017, 2026-09-03): ATTESTATION-LEVELS-V1 changed
+    # the gate (llm_extraction/gate.py is semantic authority) — a NOTICED,
+    # committed, canary-measured move (work-log 2026-09-03-llm-direct-canon).
+    assert semantic_authority_sha256().startswith("a45bb99bf1bdf7d8")

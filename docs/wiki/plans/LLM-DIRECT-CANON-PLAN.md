@@ -118,3 +118,6 @@ Re-extraction never deletes: identities are content hashes, replays write 0 rows
   retired (disabled, plist kept); 29 interpreter-path test files deleted
   (list in the work-log); interpreter harnesses moved to `eval/historical/`.
   Retired CODE remains behind the gliner provider branch — next owner call.
+- 2026-09-03 P6 running. Lesson: `reingest_corpus` takes the corpus offline
+  (502 corpus_not_ready) until convergence because intake purges the old
+  generation. Next slice: BLUE/GREEN RE-INGEST (shadow corpus id + alias swap).

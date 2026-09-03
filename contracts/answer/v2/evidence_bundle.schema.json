@@ -4,28 +4,58 @@
   "title": "EvidenceBundle",
   "description": "R3a output (v2, typed support lanes): a deterministic bundle where every item carries an explicit evidence lane. GRAPH items (lane=graph, kind=claim) are compiler/expanded facts with full provenance. TEXT items (lane=text, kind=evidence) are first-class textual evidence: document summary, section summary, child chunk, lexical/dense retrieval evidence. Either lane may support an answer independently; graph evidence augments textual retrieval, never gates it. Assembled by shared/polymath_shared/evidence_assembly.py; served by POST /evidence. R3a assembles evidence; it never decides final answer prose (R3b).",
   "type": "object",
-  "required": ["query", "evidence_bundle"],
+  "required": [
+    "query",
+    "evidence_bundle"
+  ],
   "properties": {
-    "query": {"type": "string"},
+    "query": {
+      "type": "string"
+    },
     "evidence_bundle": {
       "type": "array",
-      "items": {"$ref": "#/$defs/evidence_item"}
+      "items": {
+        "$ref": "#/$defs/evidence_item"
+      }
     },
     "meta": {
       "type": "object",
       "properties": {
-        "contract_id": {"type": "string"},
-        "assembly_version": {"type": "string"},
+        "contract_id": {
+          "type": "string"
+        },
+        "assembly_version": {
+          "type": "string"
+        },
         "ordering": {
           "description": "Ordering policy: identity (R3a default) or rerank (G3 candidate ordering hint).",
-          "enum": ["identity", "rerank"]
+          "enum": [
+            "identity",
+            "rerank"
+          ]
         },
-        "claim_count": {"type": "integer", "minimum": 0},
-        "evidence_count": {"type": "integer", "minimum": 0},
-        "graph_claim_count": {"type": "integer", "minimum": 0},
-        "text_evidence_count": {"type": "integer", "minimum": 0}
+        "claim_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "evidence_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "graph_claim_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "text_evidence_count": {
+          "type": "integer",
+          "minimum": 0
+        }
       },
-      "required": ["contract_id", "assembly_version", "ordering"]
+      "required": [
+        "contract_id",
+        "assembly_version",
+        "ordering"
+      ]
     }
   },
   "$defs": {
@@ -49,64 +79,161 @@
       "properties": {
         "lane": {
           "description": "Typed support lane (D3): 'graph' = compiler/expanded facts; 'text' = document/section/chunk textual evidence. Lanes are independent; graph augments text, never gates it.",
-          "enum": ["graph", "text"]
+          "enum": [
+            "graph",
+            "text"
+          ]
         },
-        "kind": {"enum": ["claim", "evidence"]},
+        "kind": {
+          "enum": [
+            "claim",
+            "evidence"
+          ]
+        },
         "text_kind": {
           "description": "Text evidence granularity. Required for lane=text (document_summary / section_summary / child_chunk); null for lane=graph.",
-          "enum": ["document_summary", "section_summary", "child_chunk", null]
+          "enum": [
+            "document_summary",
+            "section_summary",
+            "child_chunk",
+            null
+          ]
         },
         "claim_candidate": {
           "description": "Subject PREDICATE object surface for claims; null for evidence-only items (no synthetic claims).",
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "knowledge_id": {
           "description": "Stable knowledge identifier: fact_id for claims, chunk_id/document/section identity for text evidence.",
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "fact_id": {"type": ["string", "null"]},
+        "fact_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "entity_ids": {
-          "type": ["object", "null"],
+          "type": [
+            "object",
+            "null"
+          ],
           "properties": {
-            "subject_id": {"type": "string"},
-            "object_id": {"type": "string"}
+            "subject_id": {
+              "type": "string"
+            },
+            "object_id": {
+              "type": "string"
+            }
           },
-          "required": ["subject_id", "object_id"],
+          "required": [
+            "subject_id",
+            "object_id"
+          ],
           "additionalProperties": false
         },
-        "predicate": {"type": ["string", "null"]},
-        "source_document_id": {"type": "string"},
-        "source_span": {"$ref": "#/$defs/source_span"},
-        "provenance": {"type": "object"},
-        "epistemics": {"$ref": "#/$defs/epistemics"},
-        "applicability": {"$ref": "#/$defs/applicability"},
+        "predicate": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_document_id": {
+          "type": "string"
+        },
+        "source_span": {
+          "$ref": "#/$defs/source_span"
+        },
+        "provenance": {
+          "type": "object"
+        },
+        "epistemics": {
+          "$ref": "#/$defs/epistemics"
+        },
+        "applicability": {
+          "$ref": "#/$defs/applicability"
+        },
         "retrieval": {
           "type": "object",
-          "required": ["lanes", "score"],
+          "required": [
+            "lanes",
+            "score"
+          ],
           "properties": {
-            "lanes": {"type": "array", "items": {"type": "string"}},
-            "score": {"type": ["number", "null"]}
+            "lanes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "score": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
           },
           "additionalProperties": false
+        },
+        "presentation": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": true,
+          "description": "UI-V3 presentation hints for this evidence item (non-semantic)"
         }
       },
       "additionalProperties": false
     },
     "source_span": {
       "type": "object",
-      "required": ["text", "locator", "chunk_id", "char_start", "char_end", "offsets_source"],
+      "required": [
+        "text",
+        "locator",
+        "chunk_id",
+        "char_start",
+        "char_end",
+        "offsets_source"
+      ],
       "properties": {
-        "text": {"type": "string"},
+        "text": {
+          "type": "string"
+        },
         "locator": {
           "description": "Deterministic locator: chunk:<chunk_id>@<char_start>:<char_end> (document-level offsets) for child chunks; doc:<doc_id> for document summaries; section:<parent_chunk_id> for section summaries.",
           "type": "string"
         },
-        "chunk_id": {"type": ["string", "null"]},
-        "char_start": {"type": ["integer", "null"]},
-        "char_end": {"type": ["integer", "null"]},
+        "chunk_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "char_start": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "char_end": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
         "offsets_source": {
           "description": "Granularity of persisted offsets; 'chunk' for child chunks, 'summary' for generated summaries.",
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "span_offsets": {
           "description": "Raw persisted span offsets (evidence.span_offsets JSONB), uninterpreted.",
@@ -117,32 +244,93 @@
     },
     "epistemics": {
       "type": "object",
-      "required": ["decision"],
+      "required": [
+        "decision"
+      ],
       "properties": {
         "decision": {
           "description": "facts.decision for claims; 'evidence' for evidence-only items.",
-          "enum": ["ACCEPT", "QUALIFY", "REJECT", "AMBIGUOUS", "UNSUPPORTED", "CONFLICT", "evidence"]
+          "enum": [
+            "ACCEPT",
+            "QUALIFY",
+            "REJECT",
+            "AMBIGUOUS",
+            "UNSUPPORTED",
+            "CONFLICT",
+            "evidence"
+          ]
         },
-        "certainty": {"type": ["string", "null"]},
-        "negated": {"type": ["boolean", "null"]},
-        "attributed": {"type": ["boolean", "null"]},
-        "attribution_source": {"type": ["string", "null"]},
-        "comparison": {"type": ["boolean", "null"]},
-        "valid_from": {"type": ["string", "null"]},
-        "valid_until": {"type": ["string", "null"]}
+        "certainty": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "negated": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "attributed": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "attribution_source": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "comparison": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "valid_from": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "valid_until": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       },
       "additionalProperties": false
     },
     "applicability": {
       "type": "object",
-      "required": ["corpus_id", "source_name", "conditions"],
+      "required": [
+        "corpus_id",
+        "source_name",
+        "conditions"
+      ],
       "properties": {
-        "corpus_id": {"type": ["string", "null"]},
-        "source_name": {"type": ["string", "null"]},
+        "corpus_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "conditions": {
           "description": "Deterministic scope conditions (speculative, hypothetical, attributed, conditional, comparison, question).",
           "type": "array",
-          "items": {"type": "string"}
+          "items": {
+            "type": "string"
+          }
         }
       },
       "additionalProperties": false

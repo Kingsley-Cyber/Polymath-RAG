@@ -34,7 +34,9 @@ abstract endpoints 3 %, junk 0. Dev holdout: 60 % supported, 0 wrong, three
 abstentions on answerable questions (answerability gate — next finding to
 trace). Owner decisions executed 2026-09-03: apple-ml agent RETIRED, 29
 interpreter-path tests DELETED, P6 re-extraction LAUNCHED (cysa-study-v1 then
-ecom-meta-v1; watch `scripts/trace_stalls.py` and `/status`). Findings closed:
+ecom-meta-v1; watch `scripts/trace_stalls.py` and `/status`). WHILE P6 CONVERGES BOTH
+CORPORA ANSWER 502 corpus_not_ready — by contract, not a fault; do not "fix" the
+serving path, wait for query_ready (next slice: blue/green re-ingest). Findings closed:
 CHUNK-GAP-ACCOUNTING-V1 (dropped spans are layout evidence), census promotion
 run-scoped, local lane supervised (`local_extractor`, 29 GB budget, wakes with
 extraction), abstentions were question/data grounding (dev holdout 90 %).
