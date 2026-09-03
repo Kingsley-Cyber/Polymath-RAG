@@ -14,7 +14,14 @@ Neo4j-eligible, shared by the three consumers that must agree:
 Rule:
   an entity is eligible iff admission_class != 'MENTION_ONLY'
   (NULL = legacy pre-0007 rows are eligible);
-  a fact is eligible iff BOTH endpoints are eligible entities.
+  a fact is eligible iff BOTH endpoints are eligible entities
+  AND its decision is not REJECT (GRAPH-ELIGIBILITY-DECISION-V1,
+  2026-09-02: REL edges carry only predicate + fact_id and the GRAPH lane
+  does not consult decisions, so a retired fact stayed servable; 13
+  pronoun-endpoint facts retired to REJECT kept their 13 edges through a
+  reconcile). QUALIFY stays eligible (hedged knowledge is projected and
+  withheld by authorization — P9). REJECT = Postgres proving the edge is
+  not knowledge; the verify reconciler removes it.
 MENTION_ONLY-dependent facts stay parked in Postgres by design.
 
 S4c — why this is NOT a second eligibility authority. SQL cannot call
@@ -48,7 +55,14 @@ def fact_eligible_sql(f_alias: str = "f") -> str:
         f" AND EXISTS (SELECT 1 FROM entities {f_alias}_o"
         f" WHERE {f_alias}_o.entity_id = {f_alias}.object_id"
         f" AND {f_alias}_o.admission_class IS DISTINCT FROM 'MENTION_ONLY')"
+        f" AND {f_alias}.decision <> 'REJECT'"
     )
+
+
+def fact_eligible_from_row(subject_class: str | None, object_class: str | None,
+                           decision: str = "ACCEPT") -> bool:
+    """Pure predicate over a fact row: endpoint classes + decision."""
+    return fact_eligible_from_classes(subject_class, object_class) and decision != "REJECT"
 
 
 def fact_eligible_from_classes(subject_class: str | None,

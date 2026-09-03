@@ -16,6 +16,7 @@ if sys_path not in sys.path:
 from polymath_shared.neo4j_eligibility import (  # noqa: E402
     entity_eligible_sql,
     fact_eligible_from_classes,
+    fact_eligible_from_row,
     fact_eligible_sql,
     ineligible_fact_ids_sql,
 )
@@ -55,3 +56,15 @@ def test_sql_predicates_agree_with_pure_predicate_on_classes():
     f = fact_eligible_sql("f")
     assert "IS DISTINCT FROM 'MENTION_ONLY'" in f
     assert f.count("IS DISTINCT FROM 'MENTION_ONLY'") == 2
+
+
+def test_rejected_facts_are_graph_ineligible_qualified_stay():
+    """GRAPH-ELIGIBILITY-DECISION-V1: a REJECT decision is Postgres proving
+    the edge is not knowledge; QUALIFY is hedged knowledge and stays."""
+    assert fact_eligible_from_row("GLOBAL", "GLOBAL", "ACCEPT")
+    assert fact_eligible_from_row("GLOBAL", "GLOBAL", "QUALIFY")
+    assert not fact_eligible_from_row("GLOBAL", "GLOBAL", "REJECT")
+    assert not fact_eligible_from_row("MENTION_ONLY", "GLOBAL", "ACCEPT")
+    f = fact_eligible_sql("f")
+    assert "f.decision <> 'REJECT'" in f
+    assert "QUALIFY" not in f

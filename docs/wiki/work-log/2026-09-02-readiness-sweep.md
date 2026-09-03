@@ -47,6 +47,18 @@ The full suite reported 12 failures. Classification:
    compile_objects never superseded the old artifacts (cascade gap, not
    from today's deletes).
 
+5. GRAPH-ELIGIBILITY-DECISION-V1 (found while retiring the 13): REL edges
+   carry only predicate + fact_id, the GRAPH lane does not consult
+   decisions, and the P9 reconciler keeps any edge whose fact row still
+   exists — so the retired facts kept their 13 edges through a reconcile
+   and stayed servable. `fact_eligible_sql` (the ONE predicate shared by
+   projector, census and verify) now also requires `decision <> 'REJECT'`;
+   QUALIFY stays eligible (P9 pin). Reconcile after the change: 0 edges
+   carry any of the 96 REJECT facts (1,562 REL edges remain).
+6. Graph/PG test debris noted, not touched: `fact_d2a_shared`,
+   `fact_d2a_use`, `fact_d2b_use` (tests/integration/test_corpus_scoped_graph.py)
+   are committed fixtures with live edges — owner call to purge.
+
 ## Proof
 - Targeted reruns after the fixes: pronoun gate test green; pronoun
   eligibility gate green (0 active pronoun endpoints); embed batching,
