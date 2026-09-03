@@ -200,18 +200,26 @@ expansion, canonicalization and identity.
    the same corpus-barrier defect as this morning's advance predicate,
    now closed on the promotion side (legacy runs without a resolvable
    document keep the corpus-wide check).
-4. **Privacy floor restored:** `POLYMATH_WORKER_CLOUD_MIN_BYTES=450000`
-   (was 0 — every document went to the cloud lanes). Documents at or
-   under 450 KB stay on the local lane.
+4. **Cloud floor — finding RETRACTED.** I had flagged
+   `POLYMATH_WORKER_CLOUD_MIN_BYTES=0` as "the privacy floor is off" and
+   set it to 450 KB. `llm_extraction/policy.py` records the owner's own
+   decisions: rule v2 (2026-08-30) made the threshold a THROUGHPUT router,
+   not a privacy boundary, and CLOUD-FIRST-V1 (owner-blessed 2026-09-02)
+   set the floor to 0 because the local 4B lane measured 76–89 %
+   quarantine on small books against 0–5 % on the cloud lanes. The 450 KB
+   setting was reverted to 0 within the hour (the fleet ran with it for
+   ~15 min; cysa's documents still rode cloud via assist). The stale
+   "privacy rule" sentence in CLAUDE.md is corrected.
 5. **Local lane supervised and budgeted:** the batched 4B server on :8755
    had run as a hand-started process for 3 days 18 h outside the
    supervisor and outside `runtime_budget.yaml`. It is now the
    `local_extractor` slot (ALWAYS resident; health :8755/ready; memory
    cap 10 GB via `POLYMATH_LLM_LOCAL_MEMORY_GB`), the retired GLiNER/spaCy
    caps are gone, and the fleet budget is 29 GB on the 32 GB machine
-   (serve profile 27.55 / 28.5 ceiling). `run_proposals` waits for
-   :8755/ready before the first local call (the projector's readiness
-   gate, ported).
+   (serve profile 27.55 / 28.5 ceiling). Under CLOUD-FIRST-V1 it is the
+   assist/fallback lane, so it wakes with the extract lane instead of
+   holding 10 GB while idle. `run_proposals` waits for :8755/ready before
+   the first local call (the projector's readiness gate, ported).
 6. **The abstentions were not a gate defect.** Learning SQL lives in
    cysa-study-v1 (the dev question pointed at ecom-meta-v1), its text is
    partly OCR noise and holds one child mentioning JOIN; the AWS book

@@ -63,8 +63,10 @@ names the fleet environment and the bootstrap commands).
   neighborhood › document › abstract-with-token-support), never a veto;
   GLiNER / spaCy / sentence-slice / rule-pack contracts are history and are
   never enforced by a gate, fence or test.
-- Extraction: `llm_live` on both lanes; byte rule floor 300 KB (set 450 KB)
-  is a PRIVACY rule (≤ threshold never leaves the machine); generation is
+- Extraction: `llm_live` on both lanes; the byte threshold is a THROUGHPUT
+  router (owner rule v2, 2026-08-30) and CLOUD-FIRST-V1 (owner-blessed
+  2026-09-02) sets the floor to 0 — every document rides the cloud ring; the
+  supervised local 4B lane (`local_extractor`) is the assist/fallback; generation is
   LOCKED (plan §1.6): `max_tokens=2500` per neighborhood,
   `repetition_penalty=1.15`, ctx 400, thinking off, temperature 0.
   The gate is the only authority; gated relations become facts
