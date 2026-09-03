@@ -64,6 +64,22 @@ class _CaptureConn:
     def cursor(self): return _CaptureCursor(self.sink)
 
 
+def _window_keys(neighborhoods) -> dict:
+    """key -> contiguous window (≤ NEIGHBORHOODS_PER_CALL) under the provider's key rule."""
+    from workers import llm_provider as lp
+    from polymath_shared.identity import content_hash as _chash
+    ident = _chash({"contract": lp.contract_identity()})
+    per_call = int(getattr(lp, "NEIGHBORHOODS_PER_CALL", 8) or 8)
+    out = {}
+    for i in range(len(neighborhoods)):
+        for k in range(1, per_call + 1):
+            batch = neighborhoods[i:i + k]
+            if len(batch) < k:
+                break
+            out["ecr_" + _chash({"ident": ident, "batch": [(n.nid, n.chunks) for n in batch]})[:40]] = batch
+    return out
+
+
 def _recover_batches(neighborhoods, receipt_ids: set[str]):
     """Recover each receipt's batch WITHOUT trusting today's limiter state:
     production packs CONTIGUOUS neighborhoods (≤ NEIGHBORHOODS_PER_CALL) and
@@ -86,18 +102,19 @@ def _recover_batches(neighborhoods, receipt_ids: set[str]):
 
 
 def replay_doc(conn, doc_id: str, policy: str | None = None) -> dict:
-    """LLM-DIRECT-REPLAY-V1: every stored raw response for the document is
-    re-run through the SAME sanitize/alias path as a live call
-    (`LLMExtractionClient.extract_from_raw`), items are merged per
-    neighborhood with production's rule (a later response for the same
-    neighborhood replaces the earlier one), then gate → materialize against
-    a capturing connection. No network, no writes."""
+    """LLM-DIRECT-REPLAY-V1: run the provider's OWN `run_proposals` with its
+    receipt-cache seam — the same batching, alias maps, dispositions and
+    reissue rules as production — with every call answered from
+    `extraction_call_receipts` and the network forbidden; then gate →
+    materialize against a capturing connection. No network, no writes.
+    `_recover_batches` is the coverage diagnostic (which receipts exist)."""
     if policy:
         os.environ["POLYMATH_EXTRACTION_ATTESTATION"] = policy
-    from polymath_shared.llm_extraction.client import LLMExtractionClient
-    from polymath_shared.llm_extraction.gate import ChunkView, attestation_policy, validate_and_normalize
+    from polymath_shared.llm_extraction import client as _client_mod
+    from polymath_shared.llm_extraction.gate import attestation_policy
     from workers import llm_direct, llm_provider
-    corpus_id = conn.execute("SELECT corpus_id FROM documents WHERE doc_id=%s", (doc_id,)).fetchone()[0]
+    corpus_id, byte_length = conn.execute(
+        "SELECT corpus_id, byte_length FROM documents WHERE doc_id=%s", (doc_id,)).fetchone()
     cols = ["chunk_id", "doc_id", "parent_id", "chunk_index", "tier", "text", "char_start", "char_end",
             "region_role", "heading_path", "token_count"]
     rows = [dict(zip(cols, r)) for r in conn.execute(
@@ -106,33 +123,64 @@ def replay_doc(conn, doc_id: str, policy: str | None = None) -> dict:
     children = [r for r in rows if r["tier"] == "child"]
     chunk_rows = {r["chunk_id"]: r for r in rows}
     neighborhoods = llm_provider.build_neighborhoods(children)
-    views_by_nid = {n.nid: [ChunkView(cid, text) for cid, text in n.chunks] for n in neighborhoods}
     receipts = conn.execute(
-        "SELECT receipt_id, lane, model, raw_text, created_at FROM extraction_call_receipts WHERE doc_id=%s "
-        "ORDER BY created_at, receipt_id", (doc_id,)).fetchall()
-    batches = _recover_batches(neighborhoods, {r[0] for r in receipts})
-    unmatched = [r[0] for r in receipts if r[0] not in batches]
-    items: dict[str, object] = {}
-    template = None; lane = model = None; quarantined = 0
-    for rid_, l, m, raw, _ts in receipts:
-        if rid_ not in batches:
-            continue
-        client = LLMExtractionClient.__new__(LLMExtractionClient)   # no transport: extract_from_raw only reads lane/model
-        client.lane, client.model = l, m
-        res = client.extract_from_raw([(n.nid, n.chunks) for n in batches[rid_]], raw or "")
-        if res.packet is None:
-            quarantined += 1; continue
-        template = template or res.packet; lane, model = l, m
-        for it in res.packet.items:
-            if it.neighborhood_id in views_by_nid:
-                items[it.neighborhood_id] = it
-    ordered = [items[n.nid] for n in neighborhoods if n.nid in items]
-    merged = (validate_and_normalize(template.model_copy(update={"items": ordered}), views_by_nid)
-              if template is not None and ordered else None)
+        "SELECT receipt_id, lane, model FROM extraction_call_receipts WHERE doc_id=%s ORDER BY created_at, receipt_id",
+        (doc_id,)).fetchall()
+    lane = receipts[0][1] if receipts else "cloud"
+    windows = _window_keys(neighborhoods)
+    batches = {k: w for k, w in windows.items() if k in {r[0] for r in receipts}}
+    # finish_reason per response: the ledger column (new receipts) or the
+    # extract artifact's per-call record matched by raw_head (older ones)
+    fr_by_head: dict[str, str] = {}
+    art = conn.execute(
+        """SELECT a.payload->'llm_extraction'->'calls' FROM artifacts a
+            JOIN runs r ON r.run_id=a.run_id JOIN documents d ON d.corpus_id=r.corpus_id AND d.source_name=r.metadata->>'source_name'
+           WHERE a.stage='extract' AND d.doc_id=%s ORDER BY a.created_at DESC LIMIT 1""", (doc_id,)).fetchone()
+    for call in (art[0] if art and isinstance(art[0], list) else []):
+        if isinstance(call, dict) and call.get("raw_head"):
+            fr_by_head[call["raw_head"]] = call.get("finish_reason")
+    hits = {"n": 0, "miss": [], "fr_from_ledger": 0, "fr_from_artifact": 0}
+
+    def cache_get(key):
+        row = conn.execute("SELECT raw_text, finish_reason FROM extraction_call_receipts WHERE receipt_id=%s",
+                           (key,)).fetchone()
+        if row:
+            hits["n"] += 1
+            raw, fr = row[0], row[1]
+            if fr is not None:
+                hits["fr_from_ledger"] += 1
+            elif raw and raw[:200] in fr_by_head:
+                fr = fr_by_head[raw[:200]]; hits["fr_from_artifact"] += 1
+            return (raw, fr)
+        hits["miss"].append([n.nid[-10:] for n in windows.get(key, [])] or key[:16])
+        return None
+
+    def cache_put(*a, **k):
+        return None
+
+    def _no_network(*a, **k):
+        raise RuntimeError("replay attempted a network call — no receipt for that batch")
+
+    saved = (_client_mod.LLMExtractionClient.extract, getattr(_client_mod.LLMExtractionClient, "extract_batched", None))
+    _client_mod.LLMExtractionClient.extract = _no_network
+    if saved[1] is not None:
+        _client_mod.LLMExtractionClient.extract_batched = _no_network
+    error = None; results = []; merged = None
+    try:
+        results, merged = llm_provider.run_proposals(
+            neighborhoods, lane=lane, source_bytes=int(byte_length or 0), doc_id=doc_id,
+            call_cache=(cache_get, cache_put))
+    except Exception as exc:  # noqa: BLE001
+        error = f"{type(exc).__name__}: {str(exc)[:200]}"
+    finally:
+        _client_mod.LLMExtractionClient.extract = saved[0]
+        if saved[1] is not None:
+            _client_mod.LLMExtractionClient.extract_batched = saved[1]
     cap = _CaptureConn(); stats = {}
     if merged is not None:
+        model = next((r.model for r in results if getattr(r, "model", None)), "replay")
         stats = llm_direct.materialize(cap, corpus_id=corpus_id, doc_id=doc_id, chunk_rows=chunk_rows,
-                                       merged=merged, lane=lane or "replay", model=model or "replay")
+                                       merged=merged, lane=lane, model=model)
     replayed = cap.sink.get("facts", set())
     prod = {r[0] for r in conn.execute(
         """SELECT DISTINCT f.fact_id FROM facts f JOIN evidence ev ON ev.fact_id=f.fact_id
@@ -145,12 +193,17 @@ def replay_doc(conn, doc_id: str, policy: str | None = None) -> dict:
                       if isinstance(x, dict) and x.get("disposition") in ("incomplete_kept", "dropped", "unaccounted"))
     return {"doc_id": doc_id, "corpus_id": corpus_id, "lane": lane, "children": len(children),
             "neighborhoods": len(neighborhoods), "receipts": len(receipts), "receipts_matched": len(batches),
-            "receipts_unmatched": unmatched, "receipts_quarantined": quarantined,
-            "neighborhoods_with_items": len(ordered), "attestation_policy": attestation_policy(),
+            "cache_hits": hits["n"], "cache_misses": len(hits["miss"]), "missed_batches": hits["miss"][:6],
+            "finish_reason_sources": {"ledger": hits["fr_from_ledger"], "artifact": hits["fr_from_artifact"]},
+            "error": error,
+            "attestation_policy": attestation_policy(),
             "replayed_facts": len(replayed), "production_facts": len(prod),
             "extra": len(replayed - prod), "missing": len(prod - replayed),
             "declared_exception_neighborhoods": declared,
-            "gate_stats": ({k: merged.stats.get(k) for k in ("relations", "relations_rejected", "endpoint_attestation")}
+            "dispositions": (dict(__import__("collections").Counter(d["disposition"] for d in merged.dispositions))
+                             if merged is not None and getattr(merged, "dispositions", None) else {}),
+            "gate_stats": ({k: merged.stats.get(k) for k in ("relations", "relations_rejected", "endpoint_attestation",
+                                                              "neighborhoods_sent", "neighborhoods_reissued", "neighborhoods_dropped")}
                            if merged is not None else {}),
             "materialize": {k: stats.get(k) for k in ("seen", "endpoint_attestation")}}
 

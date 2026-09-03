@@ -42,7 +42,7 @@ def test_capturing_connection_records_fact_ids_without_a_database():
 
 def test_reissue_responses_are_receipted_under_the_same_key_rule():
     src = (ROOT / "workers" / "workers" / "llm_provider.py").read_text()
-    i = src.index("_raise_if_refused(reissue_results, lane)")
-    after = src[i:i + 1500]
-    assert "for r in reissue_results:" in after and "_cp(_kf(batch)" in after and "RECEIPT-COMPLETENESS-V1" in after, \
-        "reissue results must be written to the receipt ledger with the provider's key rule"
+    site = src[src.index("reissue_results = _reissue("):][:400]
+    assert "call=_reissue_call" in site, "reissues must go through the receipt-aware call wrapper"
+    body = src[src.index("def _reissue("):][:2200]
+    assert "return call(client, [n])" in body and "RECEIPT-COMPLETENESS-V1" in body

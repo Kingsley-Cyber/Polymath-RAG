@@ -382,7 +382,13 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                     raw = None
                 if raw:
                     _stats["cache_hits"] += 1
-                    return client.extract_from_raw(payload, raw)
+                    fr = None
+                    if isinstance(raw, tuple):          # (raw_text, finish_reason) from a ledger-aware cache
+                        raw, fr = raw[0], raw[1]
+                    try:
+                        return client.extract_from_raw(payload, raw, finish_reason=fr)
+                    except TypeError:                   # legacy client doubles
+                        return client.extract_from_raw(payload, raw)
             r = client.extract(payload, source_bytes=source_bytes,
                                threshold_bytes=s.cloud_min_bytes,
                                assist=assist)
@@ -402,9 +408,15 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                     for f in ("entities", "relations", "digests"))
                 try:
                     cache_put(key, doc_id, r.lane, r.model, r.raw_text,
-                              accepted)
-                except TypeError:            # older 5-arg cache double
-                    cache_put(key, doc_id, r.lane, r.model, r.raw_text)
+                              accepted, getattr(r, "finish_reason", None))
+                except TypeError:
+                    try:
+                        cache_put(key, doc_id, r.lane, r.model, r.raw_text,
+                                  accepted)
+                    except TypeError:        # older 5-arg cache double
+                        cache_put(key, doc_id, r.lane, r.model, r.raw_text)
+                    except Exception:
+                        pass
                 except Exception:
                     pass
             return r
@@ -598,39 +610,18 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
     todo = [by_nid[nid] for nid in by_nid if disp.get(nid) in _REISSUE_DISPOSITIONS]
     reissue_results: list[LLMCallResult] = []
     if todo:
+        try:
+            _reissue_call = _call                    # bound on the receipted (cloud) path
+        except (NameError, UnboundLocalError):
+            _reissue_call = None
         reissue_results = _reissue(
             client, todo, lane=lane, source_bytes=source_bytes,
-            threshold_bytes=s.cloud_min_bytes, assist=assist,
+            threshold_bytes=s.cloud_min_bytes, assist=assist, call=_reissue_call,
             pool_size=(min(len(todo),
                            (limiter.spec.conc_cap or limiter.spec.max)
                            if limiter is not None else 4) or 1)
             if lane == "cloud" else 1)
         _raise_if_refused(reissue_results, lane)
-        # RECEIPT-COMPLETENESS-V1 (LLM-DIRECT-CANON P3, 2026-09-03): reissue
-        # calls bypassed the receipt ledger, so 5 of 14 responses on the
-        # canary document were never stored and a ledger replay could
-        # cover only 14 of 19 neighborhoods. Every response that produced
-        # a packet is receipted under the same key rule as a first-pass call.
-        try:
-            _cp, _kf = cache_put, _key            # bound on the receipted (cloud) path only
-        except (NameError, UnboundLocalError):
-            _cp = _kf = None
-        if _cp is not None and _kf is not None:
-            for r in reissue_results:
-                if r.packet is None:
-                    continue
-                batch = [by_nid[nid] for nid in (getattr(r, "neighborhood_ids", None) or []) if nid in by_nid]
-                if not batch:
-                    continue
-                _items = getattr(r.packet, "items", None) or []
-                accepted = sum(len(getattr(it, "entities", None) or []) + len(getattr(it, "relations", None) or [])
-                               for it in _items)
-                try:
-                    _cp(_kf(batch), doc_id, r.lane, r.model, r.raw_text, accepted)
-                except TypeError:
-                    _cp(_kf(batch), doc_id, r.lane, r.model, r.raw_text)
-                except Exception:
-                    pass
         items2, disp2 = _dispose(reissue_results, [n.nid for n in todo])
         for n in todo:
             nid = n.nid
@@ -755,7 +746,7 @@ def _dispose(results: list[LLMCallResult], sent_ids: list[str]) -> tuple[dict, d
 
 def _reissue(client: LLMExtractionClient, todo: list[Neighborhood], *, lane: str,
              source_bytes: int, threshold_bytes: int, pool_size: int,
-             assist: bool = False) -> list[LLMCallResult]:
+             assist: bool = False, call=None) -> list[LLMCallResult]:
     """Second pass: ONE neighborhood per call (the truncation failure mode
     cannot recur inside a single-neighborhood budget), bounded to one
     pass — a neighborhood that fails twice is recorded, not retried."""
@@ -766,6 +757,14 @@ def _reissue(client: LLMExtractionClient, todo: list[Neighborhood], *, lane: str
         out = out if isinstance(out, list) else [out]
     else:
         def one(n: Neighborhood) -> LLMCallResult:
+            # RECEIPT-COMPLETENESS-V1 (LLM-DIRECT-CANON P3): when the caller
+            # hands us its receipt-aware call wrapper, a reissue is read
+            # from / written to the raw-response ledger exactly like a
+            # first-pass call, so a ledger replay follows production's own
+            # disposition path (the canary's replay could not: reissues
+            # bypassed the ledger on both the read and the write side).
+            if call is not None:
+                return call(client, [n])
             return client.extract([(n.nid, n.chunks)], source_bytes=source_bytes,
                                   threshold_bytes=threshold_bytes, assist=assist)
         with ThreadPoolExecutor(max_workers=max(1, pool_size)) as pool:
