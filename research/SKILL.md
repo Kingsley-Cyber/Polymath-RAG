@@ -1,7 +1,7 @@
 ---
 name: opportunity-research
 description: "USE THIS whenever the user asks for product leads, product ideas/ideation, opportunities, niches, what to sell, or a research run over Polymath/the corpus. Run the controller (init → step → submit …); NEVER improvise a brief by querying Polymath directly — the corpus is one evidence lane, the graph enforces evidence, allocation and a 3–6 product portfolio."
-version: 1.6.0
+version: 1.7.0
 platforms: [macos, linux]
 metadata:
   hermes:
@@ -197,11 +197,11 @@ The child inherits this SKILL.md; the controller keeps it honest.
 | hypothesize | reason | prompts/bridge_hypothesis.md → submit `hypotheses` |
 | challenge | reason | prompts/contradiction.md → submit `challenges` + updated `hypotheses`; REJECTED needs a contradicted gap or spent budget — a starved hypothesis stays CHALLENGED (docs/20 §1) |
 | gaps | transform | just `step` (compiles gaps + research queries) |
-| web_research | agent | first `python3 python/field_evidence.py --state run.json --out cands.json` (past field evidence for the open gaps, docs/21 step 3; review before submitting), then run compiled `queries` in `allocation_rank` order (starved hypotheses first, docs/20 §1) → submit `observations` per prompts/evidence_judgment.md; `status` shows threads per gap and per hypothesis |
+| web_research | agent | first `python3 python/field_evidence.py --state run.json --out cands.json` (past field evidence, docs/21), then run compiled `queries` in `allocation_rank` order — each query names its channel and the exact `tools` to run (reddit, amazon_reviews, youtube, tiktok, xiaohongshu, twitter, forum; docs/24) — → submit `observations` per prompts/evidence_judgment.md with the channel's `identity`; `status` shows threads per gap and per hypothesis |
 | curate | transform | just `step` (dedupe, close/contradict gaps, count rounds) |
 | mechanism | reason | prompts/mechanism_mapping.md → submit `mechanisms` + `product_candidates` |
 | product_ideation | reason | prompts/product_ideation.md → submit `product_concepts`: 3–6 concepts on SUPPORTED mechanisms, distinct form factors, ≥2 variations each, `evidence_refs` = observation ids (docs/19 portfolio law) |
-| supplier_search | agent | `data.sourcing_plan` = one search job PER CONCEPT (compiled on entry) → Alibaba per concept → submit `supplier_candidates` each with `concept_id` (price_raw, moq_raw, url, images); a concept with no candidate is reported UNSOURCED, never covered by another concept's listing (docs/20 §2) |
+| supplier_search | agent | `data.sourcing_plan` = one job PER CONCEPT PER CHANNEL (Alibaba + CJdropshipping, docs/24 §2): `python3 python/sourcing_exa.py --state run.json --out cands.json` then submit `supplier_candidates` each with `concept_id` + `channel` (price_raw, moq_raw verbatim, url); CJ rows default MOQ 1; an unsourced concept is reported, never covered by another concept's listing |
 | normalize_supplier | transform | just `step` |
 | qualify | gate | just `step` → verdict + `leads[]` + `data.utilization` (the evidence receipt, docs/21; also in `status`, `triage-run --markdown`, report) |
 

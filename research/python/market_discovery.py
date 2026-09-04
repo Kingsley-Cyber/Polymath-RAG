@@ -103,13 +103,9 @@ def market_gaps(state: dict, policies: dict) -> str:
                          "required_evidence_roles": list(_WHITESPACE_GAP_ROLES),
                          "required_freshness": ["FAST", "LIVE"]})
             added_g += 1
-            for channel, tpl, family, why, expected in _ex._CHANNEL_TEMPLATES:
-                queries.append({"id": stable_id("mq", gid, channel), "gap_id": gid,
-                                "query": tpl.format(q=q), "channel": channel,
-                                "source_family": family, "why_this_source": why,
-                                "expected_evidence_roles": expected,
-                                "cannot_satisfy": ["SUPPLIER_AVAILABILITY", "PRICE_EVIDENCE",
-                                                    "MOQ_EVIDENCE"]})
+            # docs/24: same channel set + tool chains as hypothesis gaps
+            for cq in _ex.channel_queries(gid, q, state, policies, id_prefix="mq"):
+                queries.append(cq)
                 added_q += 1
     open_n = len([g for g in gaps if g["status"] == "open"])
     return f"compiled {added_g} whitespace gaps, {added_q} queries ({open_n} open)"

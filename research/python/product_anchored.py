@@ -95,13 +95,10 @@ def bridge_gaps(state: dict, policies: dict) -> str:
                      "required_evidence_roles": list(_BRIDGE_GAP_ROLES),
                      "required_freshness": ["FAST", "LIVE"]})
         added_g += 1
-        for channel, tpl, family, why, expected in _ex._CHANNEL_TEMPLATES:
-            queries.append({"id": stable_id("bq", gid, channel), "gap_id": gid,
-                            "query": tpl.format(q=f"{b.get('market_scope')} {q[:60]}"),
-                            "channel": channel, "source_family": family,
-                            "why_this_source": why,
-                            "expected_evidence_roles": expected,
-                            "cannot_satisfy": ["SUPPLIER_AVAILABILITY", "PRICE_EVIDENCE"]})
+        # docs/24: same channel set + tool chains; the market scope is part of the search string
+        for cq in _ex.channel_queries(gid, f"{b.get('market_scope')} {q[:60]}", state, policies, id_prefix="bq"):
+            cq["question"] = q
+            queries.append(cq)
             added_q += 1
     open_n = len([g for g in gaps if g["status"] == "open"])
     return f"compiled {added_g} bridge gaps, {added_q} queries ({open_n} open)"

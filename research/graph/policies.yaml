@@ -14,9 +14,12 @@ supplier:
   require_price: true
   require_moq: true
   max_leads: 8
+  moq_default_by_channel: {cjdropshipping: 1}   # docs/24 §2: dropship = single units
   require_mechanism_fit: true   # docs/19: a lead pairs a supplier with the mechanism it embodies, not with every mechanism
-sourcing:                      # docs/20 §2: one sourcing job per concept
+sourcing:                      # docs/20 §2: one sourcing job per concept — per channel (docs/24 §2)
   min_candidates_per_concept: 1
+  channels: [alibaba, cjdropshipping]
+evidence_channels: [reddit, amazon_reviews, youtube, tiktok, xiaohongshu, twitter, forum]   # docs/24 §1: compiled per gap, in this priority
 ideation:                      # docs/19: the product SET
   min_concepts: 3
   max_concepts: 6

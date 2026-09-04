@@ -2120,8 +2120,9 @@ _sp["data"]["product_concepts"] = [
     {"id": "pcB", "mechanism_id": "m1", "name": "Collar loop", "form_factor": "garment-integrated collar", "target_moment": "t", "variations": [{"name": "Collar loop soft"}, {"name": "Collar loop stiff"}], "evidence_refs": ["a1"]},
     {"id": "pcC", "mechanism_id": "m1", "name": "Desk puck", "form_factor": "tabletop puck", "target_moment": "t", "variations": [{"name": "Puck mini"}, {"name": "Puck max"}], "evidence_refs": ["a1"]}]
 _note14 = executors.EXECUTORS["python.sourcing_plan_compiler"](_sp, pol)
-ok(len(_sp["data"]["sourcing_plan"]) == 3 and "Clip mic lite" in _sp["data"]["sourcing_plan"][0]["search_terms"] and "DJI Mic class" in _sp["data"]["sourcing_plan"][0]["search_terms"],
-   "sourcing plan: one job per concept with variation + candidate terms")
+ok(len(_sp["data"]["sourcing_plan"]) == 3 * len(pol["sourcing"]["channels"]) and "Clip mic lite" in _sp["data"]["sourcing_plan"][0]["search_terms"] and "DJI Mic class" in _sp["data"]["sourcing_plan"][0]["search_terms"]
+   and {j["channel"] for j in _sp["data"]["sourcing_plan"]} == set(pol["sourcing"]["channels"]),
+   "sourcing plan: one job per concept PER CHANNEL (alibaba + cjdropshipping) with variation + candidate terms")
 ok(g["nodes"]["supplier_search"].get("on_enter") == "python.sourcing_plan_compiler", "supplier_search compiles its sourcing plan on entry")
 _sp["data"]["supplier_candidates"] = [
     {"id": "s1", "product_name": "Wireless Clip Mic Kit", "supplier_name": "A", "price_raw": "US $9.90", "moq_raw": "50 pcs", "url": "u", "concept_id": "pcA"},
@@ -2439,6 +2440,47 @@ try:
     os.remove(os.path.join(ROOT, "registry", "patches", "maint_t18.diff"))
 except OSError:
     pass
+
+# ---------------------------------------------------------------------------
+# 19. docs/24 — evidence channels with tool chains; sourcing on Alibaba + CJdropshipping
+# ---------------------------------------------------------------------------
+_gq19 = {"run_id": "gq19", "data": {"communities": ["r/PCOS"], "hypotheses": [{"id": "h1", "status": "CHALLENGED", "gaps": ["do PCOS users say tweezers fail on coarse chin hair?"]}],
+         "gaps": [{"id": "g19", "hypothesis_id": "h1", "question": "do PCOS users say tweezers fail on coarse chin hair?", "status": "open", "required_evidence_roles": ["FRICTION_EVIDENCE"]}], "queries": []}}
+executors.gap_compiler(_gq19, pol)
+_q19 = {q["channel"]: q for q in _gq19["data"]["queries"]}
+ok(set(_q19) == set(pol["evidence_channels"]) and [q["channel"] for q in _gq19["data"]["queries"]] == pol["evidence_channels"],
+   f"every enabled evidence channel is compiled per gap, in policy order ({list(_q19)})")
+ok(all(q.get("tools") and q.get("identity") and q.get("source_family") for q in _q19.values()) and "opencli amazon discussion" in " ".join(_q19["amazon_reviews"]["tools"])
+   and "opencli youtube comments" in " ".join(_q19["youtube"]["tools"]) and "opencli xiaohongshu comments" in " ".join(_q19["xiaohongshu"]["tools"]),
+   "each channel query carries the exact tool chain, the identity key and the source family")
+ok(_q19["amazon_reviews"]["source_family"] == "review" and "FRICTION_EVIDENCE" not in _q19["amazon_reviews"]["expected_evidence_roles"] and "PRODUCT_COMPLAINT" in _q19["amazon_reviews"]["expected_evidence_roles"],
+   "amazon reviews are the review family: product complaints, never life-without-the-product friction")
+_pol19 = copy.deepcopy(pol); _pol19["evidence_channels"] = ["reddit", "amazon_reviews"]
+_gq19b = copy.deepcopy(_gq19); _gq19b["data"]["queries"] = []; _gq19b["data"]["gaps"][0]["id"] = "g19b"; _gq19b["data"]["hypotheses"][0]["gaps"] = ["another gap question about coarse chin hair"]
+executors.gap_compiler(_gq19b, _pol19)
+ok({q["channel"] for q in _gq19b["data"]["queries"] if q["gap_id"] != "g19"} == {"reddit", "amazon_reviews"}, "channels are a policy switch: disabling one removes its queries")
+import verifiers as _vf
+_rev_ok = {"id": "r1", "gap_id": "g19", "source": "amazon.com/dp/B0X", "quote_ref": "broke after a week so I tape it", "evidence_roles": ["PRODUCT_COMPLAINT", "WORKAROUND_EVIDENCE"],
+           "freshness": {"class": "LIVE"}, "source_identity": {"source_family": "review", "platform": "amazon", "author_key": "reviewer_a", "thread_key": "B0X"}}
+_a1, _e1 = _vf.admit_observations([_rev_ok], pol)
+_a2, _e2 = _vf.admit_observations([dict(_rev_ok, id="r2", evidence_roles=["FRICTION_EVIDENCE"])], pol)
+ok(not _e1 and _e2 and any("may not establish FRICTION_EVIDENCE" in e for e in _e2), "an Amazon review is admitted for complaint/workaround and refused for FRICTION_EVIDENCE")
+_sp19 = _models.new_state("src19", "sourcing channels"); _sp19["node"] = "normalize_supplier"
+_sp19["data"]["mechanisms"] = [{"id": "m1", "name": "wearable-wireless-audio", "status": "SUPPORTED", "hypothesis_id": "h1", "supporting_observation_ids": ["a1"]}]
+_sp19["data"]["product_concepts"] = [{"id": "pcA", "mechanism_id": "m1", "name": "Clip mic", "form_factor": "wearable clip", "target_moment": "t", "variations": [{"name": "lite"}, {"name": "pro"}], "evidence_refs": ["a1"]}]
+_sp19["data"]["supplier_candidates"] = [
+    {"id": "s_cj", "product_name": "Wireless Clip Mic", "supplier_name": "CJ", "price_raw": "$4.20", "moq_raw": "not shown in listing snippet", "url": "https://cjdropshipping.com/product/wireless-clip-mic-p-1A2B3C4D.html", "concept_id": "pcA", "mechanism_id": "m1", "channel": "cjdropshipping"},
+    {"id": "s_ali", "product_name": "Wireless Clip Mic Kit", "supplier_name": "Shenzhen", "price_raw": "US $3.10", "moq_raw": "not shown in listing snippet", "url": "https://www.alibaba.com/product-detail/x_1601000000000.html", "concept_id": "pcA", "mechanism_id": "m1", "channel": "alibaba"}]
+executors.supplier(_sp19, pol)
+_by19 = {s["id"]: s for s in _sp19["data"]["supplier_candidates"]}
+ok(_by19["s_cj"]["moq_units"] == 1 and "default" in _by19["s_cj"].get("moq_note", "") and _by19["s_ali"]["moq_units"] is None,
+   "a CJdropshipping row without MOQ text defaults to 1 (said so on the row); an Alibaba row does not")
+import sourcing_exa as _sx
+_cj = _sx.parse_listing("cjdropshipping", {"title": "Wireless Clip Mic | CJ", "url": "https://cjdropshipping.com/product/wireless-clip-mic-p-1A2B3C4D.html", "text": "Price: $4.20 ships from US warehouse"})
+_al = _sx.parse_listing("alibaba", {"title": "Clip Mic Kit", "url": "https://www.alibaba.com/product-detail/Clip-Mic_1601234567890.html", "text": "US $3.10-3.90 / piece Min. order: 50 pieces"})
+ok(_cj and _cj["channel"] == "cjdropshipping" and _cj["price_raw"] == "$4.20" and _cj["moq_raw"] == _sx.NOT_SHOWN
+   and _al and _al["moq_raw"].lower().startswith("min. order") and _sx.parse_listing("alibaba", {"title": "x", "url": "https://example.com/p", "text": ""}) is None,
+   "the sourcing helper parses CJ and Alibaba listing URLs, keeps price/MOQ verbatim, and never invents a missing value")
 
 if FAILS:
     print(f"\n{len(FAILS)} CHECKS FAILED: " + "; ".join(FAILS[:8]))
