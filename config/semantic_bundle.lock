@@ -1,10 +1,10 @@
 {
- "bundle": "v5-production-004-typed-claims",
- "bundle_sha256": "19de664ca8e36f6665640192173a34b34a6388374795fbfdd51f08c18981fbea",
+ "bundle": "v5-production-005-typed-claims-sanitizer",
+ "bundle_sha256": "1dd175874dda4f9cd0c62a57fdd1fba739cfdc4f43a36099b4c3de7c1174be63",
  "members": {
   "shared/polymath_shared/entity_admission_policy.yaml": "94e128e73f9e5abacb06c9f3304a585aa0d39f5b96dbbd711b52f20b580db165",
   "shared/polymath_shared/entity_knowledge_admission.py": "91e478e995982faaae0676fe6ce541e11ef04295ef8adcf83d42555872d75ae6",
-  "shared/polymath_shared/llm_extraction/gate.py": "961773191408a3ae7a3dd6a9524cfbc83013035495a3453a13ef7d3fd5b8241a",
+  "shared/polymath_shared/llm_extraction/gate.py": "29b6341ad5a1f1c9f53842264fcf212e7bf066433893a8e87f41e8b515791077",
   "workers/workers/llm_direct.py": "0799a0d67dbb28addbde12fdabd39ecb79888b87a0c7fd71d0f7a01d06c2faa9",
   "shared/polymath_shared/identity_allocation.py": "e3f429bbea4c1f38100fd57e5e26ee237f777b036ca109a49d238b21e88c15c9",
   "shared/polymath_shared/entity_harbor.py": "377b6d82e1d55da57aa53d5eb52b93f23c34d511092a9753962fda94cc933259",

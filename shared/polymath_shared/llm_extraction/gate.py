@@ -194,7 +194,13 @@ def _clean_relation(r: object) -> dict | None:
             return None
         out[k] = v.strip()
     limit = {"subject": 200, "predicate": 120, "object": 200, "quote": 2000}
-    return {k: out[k][:limit[k]] for k in out}
+    cleaned = {k: out[k][:limit[k]] for k in out}
+    # TYPED-CLAIMS-V1: the optional claim kind survives sanitation when valid;
+    # anything else is dropped silently (never poisons the relation).
+    ck = r.get("claim_kind")
+    if isinstance(ck, str) and ck.strip().lower() in ("friction", "behavior", "workaround", "purchase_language"):
+        cleaned["claim_kind"] = ck.strip().lower()
+    return cleaned
 
 
 def _enforce_budgets(parsed: dict) -> dict:
