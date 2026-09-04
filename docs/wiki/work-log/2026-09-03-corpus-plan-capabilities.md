@@ -76,3 +76,30 @@ to see before and after."
 - `field-evidence-corpus` is null: the ledger-ingest script (step 3) is not built.
 - `/retrieve/plan` runs reformulations sequentially; 5 queries × 2 corpora took
   ~90 s through the adapter — acceptable for a research lane, not for chat.
+
+
+## Addendum — CHAT-EVIDENCE-ROWS-V1 (2026-09-03 late)
+
+Owner: "for this workflow i want my full power rag system to be used for my
+agent ideation." The plan endpoint and EXPLORE view are retrieval; the full
+answer path is `/chat` (hybrid retrieval, rerank, graph + latent lanes,
+answer admission, synthesis with citations). `/chat` now takes
+`evidence: true` and returns, next to `answer / citations / claims / meta`,
+the same chunks, documents and facts as `evidence_rows` in the
+RETRIEVE-EVIDENCE-ROWS-V1 shape — built from the answer's own bundle, never
+a second retrieval. `/capabilities.chat-evidence = v1`; MCP `ask(...,
+evidence=True)`. Abstentions (`meta.abstained`, `uncovered_query_terms`)
+are returned as-is: an ideation question the corpus cannot ground is a
+finding, and the rows still show what was retrieved.
+
+Corpus naming: ids stay immutable identity; `GET /corpora` carries the
+display `name`; `PATCH /corpora/{id}` renames; `ingest_field_evidence.py
+--corpus-name` reuses a corpus by name or mints `c_<hash>` and names it.
+Consumers resolve names → ids through the listing.
+
+Probe receipts (live, HYBRID + latent): field-evidence-v1 ideation question
+→ abstained (uncovered terms frictions/organizers/workarounds; 21 claims
+withheld); mark-builds-brands-v1 "what makes an ugly landing page convert"
+→ supported, 10 citations, 6 s; ecom-meta-v1 → supported, 21 citations, 7 s.
+Note for a later slice: `citations[].human_locators` still print a
+filesystem path for transcripts; the evidence rows do not.

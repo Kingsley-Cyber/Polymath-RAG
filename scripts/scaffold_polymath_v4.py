@@ -334,6 +334,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/integration/test_generation_swap_lineage.py", "py", None),
     ("tests/integration/test_retrieve_evidence_rows.py", "py", None),
     ("tests/integration/test_retrieve_plan_capabilities.py", "py", None),
+    ("tests/integration/test_chat_evidence_rows.py", "py", None),
     ("tests/determinism/test_projection_want_authority.py", "py", None),
     ("docs/wiki/work-log/2026-08-31-session-a-reliability.md", "md", None),
     ("docs/wiki/work-log/2026-08-31-session-b-query-path.md", "md", None),
