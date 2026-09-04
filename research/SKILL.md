@@ -1,7 +1,7 @@
 ---
 name: opportunity-research
 description: "USE THIS whenever the user asks for product leads, product ideas/ideation, opportunities, niches, what to sell, or a research run over Polymath/the corpus. Run the controller (init → step → submit …); NEVER improvise a brief by querying Polymath directly — the corpus is one evidence lane, the graph enforces evidence, allocation and a 3–6 product portfolio."
-version: 2.1.0
+version: 2.1.1
 platforms: [macos, linux]
 metadata:
   hermes:

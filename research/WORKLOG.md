@@ -1492,3 +1492,17 @@ demoted to a diagnostic; docs/26.
 **Kept from v2.0.0:** everything about authority (THIN / ANCHOR clusters,
 FIELD_ANCHORED situations, lived anchors, provenance verdicts). Only the
 framing that gave sources fixed jobs is gone.
+
+---
+
+## 2026-09-04 — v2.1.1: senior-review regressions (each defect has a failing-then-passing check)
+
+1. Fail-closed relevance: unclassified rows are never lineage (hops, analogies, structure / observation / primitive refs); `hypothesize` may classify rows it cites (`row_relevance` merges).
+2. Referential validation: every latent-structure / corpus-observation / primitive evidence_ref must exist, be classified, and not be IRRELEVANT.
+3. `field_originated` = field lineage AND not `corpus_named` (token overlap with a large corpus no longer disqualifies ordinary nouns).
+4. `hypothesis_death` requires a FIELD cause; "rejected after a round" no longer counts.
+5. `irrelevant_source_rejection` requires a configured trap text retrieved, classified IRRELEVANT and referenced by nothing; NOT_EVALUATED without one.
+6. Document scope: `--document-id` on init and the adapter, threaded into retrieve + plan; policy B — no unscoped /chat while a scope is active.
+7. Generative rule: a named population is never required.
+8. Mirror: `tests/mirror_check.py` parity receipt; standalone TRAIL_AGENT_AUTORESEARCH brought to byte parity with CI; GitHub Actions receipt for the research harness in Polymath.
+Harness: 496 checks (section 22).
