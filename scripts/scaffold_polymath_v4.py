@@ -200,6 +200,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/contracts/test_sidecar_manifest.py", "py", "_TEST_SIDECAR_MANIFEST"),
     ("tests/contracts/test_idempotency.py", "py", "_TEST_IDEMPOTENCY"),
     ("tests/determinism/test_canonical_hashing.py", "py", "_TEST_CANONICAL_HASHING"),
+    ("tests/determinism/test_document_scoped_retrieve.py", "py", None),
 
     # ── Ops scripts ───────────────────────────────────────────────────────
     ("scripts/README.md", "md", "SCRIPTS_README"),
@@ -1603,6 +1604,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-03-typed-claims-field-evidence.md", "md", None),
     ("docs/wiki/work-log/2026-09-03-research-package.md", "md", None),
     ("docs/wiki/work-log/2026-09-04-lived-world-v2.md", "md", None),
+    ("docs/wiki/work-log/2026-09-04-document-scoped-retrieve.md", "md", None),
     ("docs/wiki/work-log/2026-09-01-provider-pool-campaign.md", "md", None),
     ("tests/determinism/test_fleet_autopilot_demand.py", "py", None),
     ("docs/wiki/work-log/2026-09-01-extraction-fleet-v3.md", "md", None),

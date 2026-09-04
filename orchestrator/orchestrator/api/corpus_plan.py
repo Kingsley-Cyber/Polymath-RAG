@@ -132,6 +132,8 @@ class PlanRequest(BaseModel):
     communities: list[str] = []
     min_queries: int = 3
     max_queries: int = 5
+    # DOCUMENT-SCOPED-RETRIEVE-V1: threaded into every reformulation's retrieve
+    document_ids: Optional[list[str]] = None
 
 
 @router.post("/retrieve/plan")
@@ -150,7 +152,8 @@ async def retrieve_plan(req: PlanRequest) -> dict:
     for q in plan:
         for cid in corpus_ids:
             rreq = RetrieveRequest(query=q["query"], corpus_id=cid, limit=int(req.limit),
-                                   mode="EXPLORE" if req.explore else None, evidence=True)
+                                   mode="EXPLORE" if req.explore else None, evidence=True,
+                                   document_ids=req.document_ids)
             try:
                 out = await _retrieve_impl(rreq)
             except HTTPException as exc:
@@ -168,6 +171,9 @@ async def retrieve_plan(req: PlanRequest) -> dict:
                 merged[rid] = dict(row, query_ids=[q["id"]], corpus_id=row.get("corpus_id") or cid)
                 new += 1
             per_query.append({"query_id": q["id"], "kind": q["kind"], "corpus_id": cid, "new_rows": new})
-    return {"plan": plan, "plan_contract": "corpus-plan-v1",
-            "evidence_rows": list(merged.values()), "evidence_contract": "retrieve-evidence-rows-v1",
-            "corpus_ids": corpus_ids, "per_query": per_query, "errors": errors}
+    out = {"plan": plan, "plan_contract": "corpus-plan-v1",
+           "evidence_rows": list(merged.values()), "evidence_contract": "retrieve-evidence-rows-v1",
+           "corpus_ids": corpus_ids, "per_query": per_query, "errors": errors}
+    if req.document_ids:
+        out["document_ids"] = list(req.document_ids)  # the filter as applied (additive)
+    return out

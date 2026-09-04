@@ -15,12 +15,17 @@ from fastapi import APIRouter
 
 router = APIRouter()
 
-API_DATE = "2026-09-03"
+API_DATE = "2026-09-04"
 CONTRACTS = {
     "retrieve-evidence-rows": "v1",      # POST /retrieve evidence=true / mode=EXPLORE
     "corpus-plan": "v1",                 # POST /retrieve/plan
     "chat-evidence": "v1",               # POST /chat evidence=true → answer + citations + evidence_rows
     "explore": True,
+    # DOCUMENT-SCOPED-RETRIEVE-V1: POST /retrieve (default lane, EXPLORE) and
+    # POST /retrieve/plan accept `document_ids` — rows come only from those
+    # documents inside the resolved corpus scope; FAST/HYBRID/GRAPH answer
+    # 422 document_filter_unsupported.
+    "document_ids": True,
     "field-evidence-corpus": None,       # corpus_id of the ingested field-evidence ledger — none yet
 }
 ENDPOINTS = ["/retrieve", "/retrieve/plan", "/capabilities", "/chat", "/ask"]
