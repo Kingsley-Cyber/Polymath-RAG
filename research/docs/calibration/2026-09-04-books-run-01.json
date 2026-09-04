@@ -1,0 +1,354 @@
+{
+ "run_id": "calib_books_01",
+ "date": "2026-09-04",
+ "corpus": "polymath:ecom-meta-v1",
+ "verdict": "QUALIFIED_LEADS",
+ "acceptance_pass": false,
+ "statuses": {
+  "corpus_independence": "PASS",
+  "heterogeneous_source_reasoning": "FAIL",
+  "noun_echo_resistance": "NOT_TRIGGERED",
+  "legitimate_echo_survival": "PASS",
+  "latent_population_discovery": "PASS",
+  "field_originated_opportunity": "PASS",
+  "irrelevant_source_rejection": "PASS",
+  "hypothesis_death": "PASS"
+ },
+ "checks": {
+  "corpus_independence": {
+   "status": "PASS",
+   "hits": [
+    "Dose-state keychain fob",
+    "Empty-means-taken dose cup",
+    "One-dose exposure organiser",
+    "Salted edamame protein pack",
+    "Unflavoured protein coffee sachet"
+   ],
+   "kept_concepts": 5
+  },
+  "heterogeneous_source_reasoning": {
+   "status": "FAIL",
+   "rows_from_configured_docs": 20
+  },
+  "noun_echo_resistance": {
+   "status": "NOT_TRIGGERED",
+   "refused": []
+  },
+  "legitimate_echo_survival": {
+   "status": "PASS",
+   "survivors": [
+    "Salted edamame protein pack",
+    "Unflavoured protein coffee sachet"
+   ]
+  },
+  "latent_population_discovery": {
+   "status": "PASS",
+   "communities": [
+    "ADHD",
+    "functionalprint",
+    "Guitar",
+    "guitarlessons",
+    "AskWomenOver60"
+   ]
+  },
+  "field_originated_opportunity": {
+   "status": "PASS",
+   "concepts": [
+    "Dose-state keychain fob",
+    "Empty-means-taken dose cup",
+    "One-dose exposure organiser",
+    "Salted edamame protein pack",
+    "Unflavoured protein coffee sachet"
+   ]
+  },
+  "irrelevant_source_rejection": {
+   "status": "PASS",
+   "trap_rows_retrieved": 2,
+   "note": null
+  },
+  "hypothesis_death": {
+   "status": "PASS",
+   "field_caused": [
+    "h_capacity_units"
+   ],
+   "rejected_without_field_cause": [
+    "h_instrument_in_reach"
+   ]
+  }
+ },
+ "diagnostics": {
+  "cited_share_of_shelf": 0.475,
+  "documents_cited": 19,
+  "documents_retrieved": 40,
+  "mechanism_only_contributions": 29,
+  "example_rows_cited": 6,
+  "provenance_verdicts": {
+   "GROUNDED": 5
+  }
+ },
+ "hypotheses": [
+  {
+   "id": "h_dose_trace",
+   "status": "SUPPORTED",
+   "grounding": "LIVED",
+   "anchors": 1
+  },
+  {
+   "id": "h_one_dose_exposure",
+   "status": "SUPPORTED",
+   "grounding": "LIVED",
+   "anchors": 1
+  },
+  {
+   "id": "h_capacity_units",
+   "status": "REJECTED",
+   "grounding": "LIVED",
+   "anchors": 2
+  },
+  {
+   "id": "h_instrument_in_reach",
+   "status": "REJECTED",
+   "grounding": "CORPUS_ONLY",
+   "anchors": 0
+  },
+  {
+   "id": "h_protein_units",
+   "status": "SUPPORTED",
+   "grounding": null,
+   "anchors": 2
+  }
+ ],
+ "concepts": [
+  {
+   "id": "pc_fob",
+   "name": "Dose-state keychain fob",
+   "verdict": "GROUNDED",
+   "independent_voices": 8,
+   "communities": [
+    "adhd",
+    "buyitforlife",
+    "chronicillness"
+   ],
+   "field_originated": true,
+   "corpus_named": false
+  },
+  {
+   "id": "pc_cup",
+   "name": "Empty-means-taken dose cup",
+   "verdict": "GROUNDED",
+   "independent_voices": 8,
+   "communities": [
+    "adhd",
+    "buyitforlife",
+    "chronicillness"
+   ],
+   "field_originated": true,
+   "corpus_named": false
+  },
+  {
+   "id": "pc_box",
+   "name": "One-dose exposure organiser",
+   "verdict": "GROUNDED",
+   "independent_voices": 7,
+   "communities": [
+    "buyitforlife",
+    "chronicillness",
+    "functionalprint",
+    "supplements"
+   ],
+   "field_originated": true,
+   "corpus_named": false
+  },
+  {
+   "id": "pc_edamame",
+   "name": "Salted edamame protein pack",
+   "verdict": "GROUNDED",
+   "independent_voices": 15,
+   "communities": [
+    "mounjaro",
+    "zepbound"
+   ],
+   "field_originated": true,
+   "corpus_named": false
+  },
+  {
+   "id": "pc_sachet",
+   "name": "Unflavoured protein coffee sachet",
+   "verdict": "GROUNDED",
+   "independent_voices": 15,
+   "communities": [
+    "mounjaro",
+    "zepbound"
+   ],
+   "field_originated": true,
+   "corpus_named": false
+  }
+ ],
+ "leads": [
+  {
+   "concept": "One-dose exposure organiser",
+   "channel": "alibaba",
+   "price_usd_low": 0.3,
+   "moq_units": 500
+  },
+  {
+   "concept": "Empty-means-taken dose cup",
+   "channel": "alibaba",
+   "price_usd_low": 0.04,
+   "moq_units": 10000
+  },
+  {
+   "concept": "Dose-state keychain fob",
+   "channel": "alibaba",
+   "price_usd_low": 0.82,
+   "moq_units": 50
+  },
+  {
+   "concept": "Salted edamame protein pack",
+   "channel": "alibaba",
+   "price_usd_low": 5.47,
+   "moq_units": 1000
+  },
+  {
+   "concept": "Unflavoured protein coffee sachet",
+   "channel": "alibaba",
+   "price_usd_low": 0.1,
+   "moq_units": 200
+  },
+  {
+   "concept": "One-dose exposure organiser",
+   "channel": "alibaba",
+   "price_usd_low": 0.97,
+   "moq_units": 500
+  },
+  {
+   "concept": "Empty-means-taken dose cup",
+   "channel": "alibaba",
+   "price_usd_low": 4.0,
+   "moq_units": 1
+  },
+  {
+   "concept": "Dose-state keychain fob",
+   "channel": "alibaba",
+   "price_usd_low": 0.2,
+   "moq_units": 100
+  }
+ ],
+ "lived_world": {
+  "leads": 62,
+  "leads_by_lane": {
+   "CORPUS": 24,
+   "LATENT": 6,
+   "REGISTRY": 6,
+   "FIELD_RECORDS": 10,
+   "OPEN_FIELD": 16
+  },
+  "leads_by_status": {
+   "NOMINATED": 58,
+   "INSTANTIATED": 4
+  },
+  "seed_population_leads": 4,
+  "latent_leads": 6,
+  "latent_leads_instantiated": 0,
+  "field_records": 78,
+  "records_by_origin": {
+   "PRIOR_RUN": 42,
+   "CHANNEL": 36
+  },
+  "participant_cards": 72,
+  "clusters_by_authority": {
+   "ANCHOR": 4,
+   "THIN": 11
+  },
+  "clusters_outside_seed": 15,
+  "situations_by_authority": {
+   "FIELD_ANCHORED": 5,
+   "RECONSTRUCTED": 2
+  },
+  "unknowns_preserved": 20,
+  "corpus_questions": 12,
+  "rounds": 1,
+  "loop": {
+   "continue": false,
+   "rounds": 1,
+   "anchors": 4,
+   "records": 78,
+   "elapsed_min": 6.8,
+   "remaining_eligible": 60,
+   "reason": "4 ANCHOR clusters satisfy min 2"
+  }
+ },
+ "corpus_contribution": {
+  "relevance_receipts": {
+   "STRUCTURAL_ANALOGY": 38,
+   "SEMANTIC_MATCH": 43,
+   "IRRELEVANT": 80,
+   "LEXICAL_MATCH": 11
+  },
+  "rows_classified_irrelevant": 80,
+  "rows_retrieved": 358,
+  "rows_cited": 43,
+  "documents_retrieved": 40,
+  "documents_cited": 19,
+  "cited_share_of_shelf": 0.475,
+  "cited_by_document": {
+   "doc_2b277aa49b3a8cc524949d5d64804ab504fdc314430ec615298f9fe8b7486b7c": 15,
+   "doc_c6560827ab483d643dbb0ce0139c63dd6bad9f35793f5dc14ffdb1192963b1e1": 4,
+   "doc_be6104e610e4269b31cd71169af2b2fcf6b9731d7f942aaadec0a5da65dabe98": 4,
+   "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8": 4,
+   "doc_2edbddab84feebeb9c99be3d1d523b543229923e65dafa98cef783529fa2aa39": 2,
+   "doc_1058ed6aee32a88ef86a0d1e5f2a100ad8d00a82fc68fa3db4f3e05e0151d1cd": 1,
+   "doc_59ffd2c2102822b27bfc12725f40affec459eee9a0b7d3e968f50908b70a7280": 1,
+   "doc_f7218b6e1836f497a78cc5455a8750de1a110626b3abb48ad8cb62208f22c8db": 1,
+   "doc_81f648e845ad236168fd08d3870c20c3f1c5fa4b1479b5b298e26e2c62d1e58c": 1,
+   "doc_473e52c9e937b5668cdc9701a4ca407cf1efb922c95f414f5b51240b00efdb0e": 1,
+   "doc_f3cfd81a5f1c4d6e3a27db292d5d1bdb056d484d025a7d2e652ffa50198d0e9a": 1,
+   "doc_19a01eb88e7aa8f8e969f6f301977b5440445e78aa72a41ed211f0ef17ece133": 1,
+   "doc_5ddfbd09c14ed65122b9fbb79387bb8a9360052ba86a1b83c6a52371e6471f59": 1,
+   "doc_f87ab5ad33de28bc16348ecd412dc032e5a2cb1ded4cffaaeefd4e97d0ad9eb7": 1,
+   "doc_4c07a7fb33a269e93c9da308e0f6a388412c49af52f30fe4723faf8300bd0da2": 1,
+   "doc_055407411e606a9a6e43ace98c97674ff51513f7e2dc704b5c2ca88019f1948d": 1,
+   "doc_06263d7f728c7ed19ed60f8e94a5884f6a19e8ae8494b96533227955e4d2d0ad": 1,
+   "doc_0618702e2ec9a849d42a0b2c0d8c03f7f05281c7d609248044beb18ea57e6238": 1,
+   "doc_d444fe46dc5f0cee6e2307d2b222ba8d45a1921e1ecc0034b63d5145536085df": 1
+  },
+  "example_rows_retrieved": 41,
+  "example_rows_cited": 6,
+  "mechanism_only_contributions": 29,
+  "question_level_rows": 221
+ },
+ "interpretation": {
+  "latent_structures": 9,
+  "by_kind": {
+   "TRANSFERABLE_INVARIANT": 1,
+   "FAILURE_MODE": 1,
+   "ADAPTATION": 1,
+   "OBJECT_INTERACTION": 1,
+   "ACCESS_PROBLEM": 1,
+   "TRADEOFF": 1,
+   "WORKAROUND": 1,
+   "CAUSAL_MECHANISM": 1,
+   "ROUTINE": 1
+  },
+  "corpus_observations": {
+   "OBSERVED_PRODUCT": 2,
+   "EXAMPLE": 2,
+   "NAMED_POPULATION": 2
+  },
+  "rows_classified": 172,
+  "relevance": {
+   "STRUCTURAL_ANALOGY": 38,
+   "SEMANTIC_MATCH": 43,
+   "LEXICAL_MATCH": 11,
+   "IRRELEVANT": 80
+  }
+ },
+ "rounds": {
+  "research": 3
+ },
+ "trap_text": "Anton Wolff",
+ "heterogeneous_docs": [
+  "Alchemy"
+ ],
+ "harness_at_run": "research v2.1.1 (498 checks)"
+}

@@ -1506,3 +1506,6 @@ framing that gave sources fixed jobs is gone.
 7. Generative rule: a named population is never required.
 8. Mirror: `tests/mirror_check.py` parity receipt; standalone TRAIL_AGENT_AUTORESEARCH brought to byte parity with CI; GitHub Actions receipt for the research harness in Polymath.
 Harness: 496 checks (section 22).
+
+**Calibration run 01 (2026-09-04, books corpus):** QUALIFIED_LEADS, 5 GROUNDED concepts, canaries 7 of 8 PASS; canary 2 (heterogeneous-source reasoning) FAIL — the novel's twenty retrieved passages were classified IRRELEVANT and nothing was built on them. Receipt: `docs/calibration/2026-09-04-books-run-01.md`.
+
