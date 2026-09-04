@@ -57,6 +57,20 @@ class RetrieveRequest(BaseModel):
     # EXPLORE (ideation): breadth over precision — per-document cap, document
     # interleaving, one entity hop into other documents. Implies evidence=True.
     explore: bool = False
+    # DOCUMENT-SCOPED-RETRIEVE-V1: optional restriction to a subset of the
+    # resolved scope's documents — their chunks, their summaries and the graph
+    # facts their chunks attest. None or [] = no filter (the pre-filter path,
+    # byte for byte); an id outside the scope yields nothing, never an error.
+    document_ids: Optional[list[str]] = None
+
+
+def document_filter(req) -> Optional[list[str]]:
+    """DOCUMENT-SCOPED-RETRIEVE-V1: the normalised document filter of a
+    request — None when absent or empty, else the de-duplicated non-blank
+    ids in request order."""
+    ids = [d.strip() for d in (getattr(req, "document_ids", None) or [])
+           if isinstance(d, str) and d.strip()]
+    return list(dict.fromkeys(ids)) or None
 
 
 def resolve_http_scope(conn, req) -> "QueryScope":
@@ -99,6 +113,7 @@ def graph_expand_or_502(
     corpus_ids: list[str],
     preferred_chunk_ids: list[str],
     seed_entity_ids: list[str] | None = None,
+    document_ids: list[str] | None = None,
 ) -> list[dict]:
     """FAILURE-TRANSPARENCY-V1: one translation point from the typed
     graph-store failure to the typed HTTP failure. GRAPH_SUCCESS with
@@ -111,6 +126,7 @@ def graph_expand_or_502(
             corpus_ids=corpus_ids,
             preferred_chunk_ids=preferred_chunk_ids,
             seed_entity_ids=seed_entity_ids,
+            document_ids=document_ids,
         )
     except GraphBackendUnavailable as exc:
         raise HTTPException(status_code=502, detail={
@@ -145,7 +161,8 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
     # R1C: explicit production modes. FAST maps deterministically to the
     # qualified pass1-retrieval-v1 engine; LEGACY is the frozen lane
     # route retained for regression (G1/G2 golden contracts).
-    from polymath_shared.retrieval_modes import MODE_FAST, MODE_GRAPH, MODE_HYBRID, validate_mode
+    from polymath_shared.retrieval_modes import (
+        MODE_FAST, MODE_GRAPH, MODE_HYBRID, MODE_LEGACY, validate_mode)
 
     # mode=EXPLORE is the ideation view of the default lane path (evidence rows,
     # breadth); it is not a retrieval_modes engine.
@@ -153,6 +170,16 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
         req = req.model_copy(update={"mode": None, "explore": True, "evidence": True,
                                      "limit": max(int(req.limit or 12), 24)})
     mode = validate_mode(req.mode)
+    # DOCUMENT-SCOPED-RETRIEVE-V1: the filter is honoured by the default lane
+    # (and EXPLORE, which rides it). The FAST/HYBRID/GRAPH/WILDCARD engines
+    # fail closed with a typed 422 — never a silently unfiltered result.
+    doc_ids = document_filter(req)
+    if doc_ids and mode != MODE_LEGACY:
+        raise HTTPException(status_code=422, detail={
+            "error_code": "document_filter_unsupported",
+            "message": "document_ids is honoured by the default lane and "
+                       f"mode=EXPLORE; mode {mode!r} does not support it",
+        })
     if mode == MODE_FAST:
         from orchestrator.api.fast import fast_retrieve
 
@@ -177,9 +204,9 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
 
     corpus_ids = list(scope.corpus_ids)
     with tx() as conn:
-        profiles = _fetch_profiles(conn, corpus_ids)
-        parents = _fetch_parents(conn, corpus_ids)
-        children_rows = _fetch_children_rows(conn, corpus_ids)
+        profiles = _fetch_profiles(conn, corpus_ids, document_ids=doc_ids)
+        parents = _fetch_parents(conn, corpus_ids, document_ids=doc_ids)
+        children_rows = _fetch_children_rows(conn, corpus_ids, document_ids=doc_ids)
         children = [r for r in children_rows if r["tier"] == "child"]
         # ONE-SUMMARY-AUTHORITY (audit F5): the parent lane scores the
         # compiled cards from _fetch_parents — the chunks.summary
@@ -195,7 +222,7 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
         return children[:limit]
 
     def child_search(limit):
-        return _qdrant_search(query, corpus_ids, limit)
+        return _qdrant_search(query, corpus_ids, limit, document_ids=doc_ids)
 
     result = run_lanes(
         query,
@@ -210,6 +237,7 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
         expand=lambda surfaces: graph_expand_or_502(
             surfaces, corpus_ids,
             [c["chunk_id"] for c in result.selected_children[:10]],
+            document_ids=doc_ids,
         ),
     )
 
@@ -259,34 +287,50 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
         ],
         "graph_facts": result.graph_facts,
     }
+    if doc_ids:
+        out["document_ids"] = list(doc_ids)  # the filter as applied (additive)
     if req.evidence or req.explore:
         from orchestrator.api.evidence_rows import build_evidence_rows
         with tx() as conn:
             out["evidence_rows"] = build_evidence_rows(conn, out, corpus_ids, limit=req.limit,
-                                                       explore=bool(req.explore))
+                                                       explore=bool(req.explore),
+                                                       document_ids=doc_ids)
         out["evidence_contract"] = "retrieve-evidence-rows-v1"
     return out
 
 
-def _fetch_profiles(conn, corpus_ids: list[str]) -> list[dict]:
+def _document_clause(document_ids: Optional[list[str]], column: str) -> tuple[str, list]:
+    """DOCUMENT-SCOPED-RETRIEVE-V1: the SQL restriction (and its parameter)
+    for an optional document filter. Empty when there is none, so every
+    unfiltered statement stays byte-identical to the pre-filter one."""
+    if not document_ids:
+        return "", []
+    return f" AND {column} = ANY(%s)", [list(document_ids)]
+
+
+def _fetch_profiles(conn, corpus_ids: list[str],
+                    document_ids: Optional[list[str]] = None) -> list[dict]:
     # QUERY-SCOPE-V1: helpers take a RESOLVED corpus set. There is no
     # implicit-all branch — a missing scope fails at the route boundary.
+    clause, extra = _document_clause(document_ids, "doc_id")
     rows = conn.execute(
         """
         SELECT doc_id, retrieval_profile FROM documents
          WHERE corpus_id = ANY(%s) AND retrieval_profile IS NOT NULL
-        """,
-        (list(corpus_ids),),
+        """ + clause,
+        (list(corpus_ids), *extra),
     ).fetchall()
     return [{"doc_id": r[0], "retrieval_profile": r[1] or {}} for r in rows]
 
 
-def _fetch_parents(conn, corpus_ids: list[str]) -> list[dict]:
+def _fetch_parents(conn, corpus_ids: list[str],
+                   document_ids: Optional[list[str]] = None) -> list[dict]:
     """ONE-SUMMARY-AUTHORITY (audit F5, verified drift): this lane used
     to score chunks.summary while FAST routed on the compiled cards —
     two different texts for the same parent. retrieval_summaries ACTIVE
     rows are the declared authority (register 4.4.8); chunks.summary is
     the fallback for parents the compiler has not carded."""
+    clause, extra = _document_clause(document_ids, "c.doc_id")
     rows = conn.execute(
         """
         SELECT c.chunk_id, c.doc_id,
@@ -298,13 +342,15 @@ def _fetch_parents(conn, corpus_ids: list[str]) -> list[dict]:
                 AND rs.kind = 'section_retrieval_summary'
          WHERE c.tier = 'parent' AND d.corpus_id = ANY(%s)
            AND """ + chunk_visible_sql("c", "d") + """
-        """,
-        (list(corpus_ids),),
+        """ + clause,
+        (list(corpus_ids), *extra),
     ).fetchall()
     return [{"chunk_id": r[0], "doc_id": r[1], "summary": r[2]} for r in rows]
 
 
-def _fetch_children_rows(conn, corpus_ids: list[str]) -> list[dict]:
+def _fetch_children_rows(conn, corpus_ids: list[str],
+                         document_ids: Optional[list[str]] = None) -> list[dict]:
+    clause, extra = _document_clause(document_ids, "c.doc_id")
     rows = conn.execute(
         """
         SELECT c.chunk_id, c.doc_id, c.parent_id, c.tier, c.text, c.summary
@@ -312,8 +358,8 @@ def _fetch_children_rows(conn, corpus_ids: list[str]) -> list[dict]:
           JOIN documents d ON d.doc_id = c.doc_id
          WHERE d.corpus_id = ANY(%s)
            AND """ + chunk_visible_sql("c", "d") + """
-        """,
-        (list(corpus_ids),),
+        """ + clause,
+        (list(corpus_ids), *extra),
     ).fetchall()
     return [
         {"chunk_id": r[0], "doc_id": r[1], "parent_id": r[2], "tier": r[3],
@@ -322,7 +368,8 @@ def _fetch_children_rows(conn, corpus_ids: list[str]) -> list[dict]:
     ]
 
 
-def _qdrant_search(query: str, corpus_ids: list[str], limit: int) -> list[dict]:
+def _qdrant_search(query: str, corpus_ids: list[str], limit: int,
+                   document_ids: Optional[list[str]] = None) -> list[dict]:
     from polymath_shared.stores import qdrant_client as _qdrant_client
 
     contract = active_contract()
@@ -367,12 +414,18 @@ def _qdrant_search(query: str, corpus_ids: list[str], limit: int) -> list[dict]:
         # This lane is the CHILD lane: children only, scoped to the
         # resolved corpora.
         from qdrant_client.models import FieldCondition, Filter, MatchAny, MatchValue
-        child_filter = Filter(must=[
+        must = [
             FieldCondition(key="representation_kind",
                            match=MatchValue(value="routing_child")),
             FieldCondition(key="corpus_id",
                            match=MatchAny(any=list(corpus_ids))),
-        ])
+        ]
+        if document_ids:
+            # DOCUMENT-SCOPED-RETRIEVE-V1: a payload filter Qdrant applies
+            # before `limit` — never a post-hoc trim of a full page.
+            must.append(FieldCondition(key="doc_id",
+                                       match=MatchAny(any=list(document_ids))))
+        child_filter = Filter(must=must)
         for collection in targets:
             try:
                 hits = client.query_points(
@@ -427,6 +480,7 @@ def _corpus_seed_ids(
     corpus_ids: Optional[list[str]],
     preferred_chunk_ids: list[str],
     seed_entity_ids: Optional[list[str]] = None,
+    document_ids: Optional[list[str]] = None,
 ) -> list[str]:
     """Corpus-authorized seed resolution (D2).
 
@@ -441,6 +495,9 @@ def _corpus_seed_ids(
     only); every production route resolves scope before reaching here."""
     from polymath_shared.neo4j_eligibility import entity_eligible_sql
 
+    # DOCUMENT-SCOPED-RETRIEVE-V1: seeds come only from evidence in the
+    # filtered documents (the clause is empty without a filter).
+    doc_clause, doc_params = _document_clause(document_ids, "ev.doc_id")
     rows = conn.execute(
         """
         SELECT DISTINCT e.entity_id, e.normalized_surface,
@@ -450,11 +507,12 @@ def _corpus_seed_ids(
           JOIN evidence ev ON ev.fact_id = f.fact_id
           JOIN documents d ON d.doc_id = ev.doc_id
          WHERE (""" + ("" if corpus_ids is None else "d.corpus_id = ANY(%s) AND ") +
-        entity_eligible_sql("e") + """)
+        entity_eligible_sql("e") + ")" + doc_clause + """
          GROUP BY e.entity_id, e.normalized_surface
         """,
         (preferred_chunk_ids or [],
-         *([list(corpus_ids)] if corpus_ids is not None else [])),
+         *([list(corpus_ids)] if corpus_ids is not None else []),
+         *doc_params),
     ).fetchall()
     # CARD-SEEDS-V1 (audit F1, measured): token surfaces split multiword
     # entities ("Amazon S3" -> 'amazon' + dropped 's3') and junk unigrams
@@ -474,7 +532,8 @@ def _corpus_seed_ids(
     return (card_seeds + [eid for _, eid in matched])[:8]
 
 
-def _authorized_fact_ids(conn, corpus_ids: Optional[list[str]]) -> Optional[set]:
+def _authorized_fact_ids(conn, corpus_ids: Optional[list[str]],
+                         document_ids: Optional[list[str]] = None) -> Optional[set]:
     """Facts authorized for graph expansion under the resolved scope.
 
     A fact is authorized when it is supported by evidence in a scoped
@@ -485,13 +544,16 @@ def _authorized_fact_ids(conn, corpus_ids: Optional[list[str]]) -> Optional[set]
     UNSCOPED qualification form (eval harnesses only)."""
     if corpus_ids is None:
         return None
+    # DOCUMENT-SCOPED-RETRIEVE-V1: a fact is authorized by evidence in the
+    # filtered documents only (facts attested exclusively elsewhere drop out).
+    clause, extra = _document_clause(document_ids, "ev.doc_id")
     rows = conn.execute(
         """
         SELECT DISTINCT ev.fact_id FROM evidence ev
           JOIN documents d ON d.doc_id = ev.doc_id
          WHERE d.corpus_id = ANY(%s)
-        """,
-        (list(corpus_ids),),
+        """ + clause,
+        (list(corpus_ids), *extra),
     ).fetchall()
     in_scope = {r[0] for r in rows}
     # Evidence-less facts stay authorized so assembly fails loudly.
@@ -510,9 +572,11 @@ def _neo4j_expand(
     preferred_chunk_ids: Optional[list[str]] = None,
     corpus_ids: Optional[list[str]] = None,
     seed_entity_ids: Optional[list[str]] = None,
+    document_ids: Optional[list[str]] = None,
 ) -> list[dict]:
     """One-hop graph expansion (production, canonical bidirectional,
-    corpus-authorized).
+    corpus-authorized; document_ids narrows seeds and authorization to
+    evidence in those documents — DOCUMENT-SCOPED-RETRIEVE-V1).
 
     Two DIRECTED clauses preserve stored fact orientation by
     construction; an incoming edge only makes the EXISTING fact
@@ -532,8 +596,8 @@ def _neo4j_expand(
 
     with tx() as conn:
         ids = _corpus_seed_ids(conn, surfaces, corpus_ids, preferred_chunk_ids or [],
-                               seed_entity_ids or [])
-        authorized = _authorized_fact_ids(conn, corpus_ids)
+                               seed_entity_ids or [], document_ids=document_ids)
+        authorized = _authorized_fact_ids(conn, corpus_ids, document_ids=document_ids)
 
     if not ids:
         return []
