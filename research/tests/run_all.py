@@ -253,14 +253,18 @@ rc, out = submit(pos, "population_scout", {"community_leads": [
      "community_key": "Dance", "nominated_by": ["reddit search 'teaching class mic' → 5 posts in r/Dance"],
      "authority": "LEAD", "status": "NOMINATED", "why": "instructors teach while moving, nobody nominated them", "expected_frictions": ["movement_restriction"]}]})
 ok(rc == 0, f"open-field CommunityLeads admitted ({out.get('schema_errors', '')[:1]})")
+_cl_state = json.load(open(pos))
+_cl_dance = next(l for l in _cl_state["data"]["community_leads"] if l["id"] == "cl_dance")
+ok(_cl_dance.get("channel_queries") and any(q["channel"] == "reddit" and q.get("subreddit_hints") == ["Dance"] and q.get("tools") for q in _cl_dance["channel_queries"]),
+   "an agent-submitted community lead gets its channel tool chains compiled at submit, scoped to its community (live defect 2026-09-04: '4 leads, 0 channel queries')")
 rc, out = submit(pos, "population_scout", {"community_leads": [dict(pstate["data"]["population_leads"][0], id="bad_lead", kind="COMMUNITY", authority="DEMAND")]})
 ok(rc == 1, "a lead claiming DEMAND authority is rejected — a lead never establishes demand")
 ctl("step", "--state", pos)            # scout -> population_queue
 rc, out = ctl("step", "--state", pos)  # queue -> community_instantiate
 pq = json.load(open(pos))["population_queue"]
 ok(out.get("advanced_to") == "community_instantiate" and pq["round"] == 1 and 1 <= len(pq["batch"]) <= 4
-   and pq["batch"][0] in ("cl_creators", "cl_dance"),
-   f"VOI queue hands ONE batch, open-field non-seed leads first ({pq['batch'][:2]})")
+   and pq["batch"][0] in ("cl_creators", "cl_dance") and pq["batch_queries"] > 0,
+   f"VOI queue hands ONE batch, open-field non-seed leads first, never with zero channel queries ({pq['batch'][:2]}, {pq['batch_queries']} queries)")
 def _rec(i, lead, comm, fam, author, thread, roles, moment=None, products=None, workaround=""):
     return {"id": f"fr_{lead}_{i}", "lead_id": lead, "source": f"reddit.com/r/{comm}/{thread}", "quote_ref": f"real quote {lead} {i}",
             "community": f"r/{comm}", "problem": f"{fam} while filming {i}", "workaround": workaround, "friction_family": fam,

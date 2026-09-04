@@ -322,9 +322,22 @@ def eligible_leads(state: dict, policies: dict) -> list[str]:
     return out
 
 
+def ensure_lead_queries(state: dict, policies: dict) -> int:
+    """Leads the AGENT submitted (population_scout) arrive without compiled
+    channel queries — measured live 2026-09-04: a round handed out '4 leads,
+    0 channel queries'. Compile for any lead lacking them; deterministic."""
+    n = 0
+    for lead in all_leads(state):
+        if not lead.get("channel_queries"):
+            lead["channel_queries"] = _compile_lead_queries(lead, state, policies)
+            n += 1
+    return n
+
+
 def queue(state: dict, policies: dict) -> str:
     """Executor python.population_queue — hands the agent ONE batch."""
     lw = _lw(policies)
+    ensure_lead_queries(state, policies)
     prev = state.get("population_queue") or {}
     batch = eligible_leads(state, policies)[: int(lw.get("batch_size", 4))]
     by_id = lead_by_id(state)
