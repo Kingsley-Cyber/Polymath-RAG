@@ -304,6 +304,10 @@ def cmd_submit(args):
         if key in ("population_leads", "community_leads"):
             import lived_world as _lw
             errors += [f"lead: {e}" for e in _lw.validate_leads(items, state)]
+            if not errors:
+                for l in items:          # agent-submitted leads get their tool chains compiled here (docs/24 + docs/25)
+                    if isinstance(l, dict) and not l.get("channel_queries"):
+                        l["channel_queries"] = _lw._compile_lead_queries(l, state, pol_now)
         if key == "field_records":
             import lived_world as _lw
             errors += [f"record: {e}" for e in _lw.validate_records(items, state, pol_now)]
