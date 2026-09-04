@@ -1434,3 +1434,35 @@ default to MOQ 1, said on the row; leads, report and receipt carry the channel.
 **Law kept:** an Amazon review is a product complaint or request, never
 FRICTION_EVIDENCE about life without the product; a dropship listing is a
 supplier fact, never demand.
+
+---
+
+## 2026-09-04 — v2.0.0: LIVED-WORLD-V2 — population discovery before ideation (docs/25)
+
+**Owner:** accept the stress-test correction; the field co-generates the
+opportunity space; typed evidence cards with authority by independent records;
+corpus at friction/mechanism level; provenance instead of category blacklists;
+schemas before authority labels; a VOI work queue instead of fan-out;
+calibration that proves semantics.
+
+**What landed:** seven schemas (population_lead, field_record,
+participant_evidence_card, lived_evidence_cluster, lived_situation,
+community_world_model, product_slot) enforced at submit; `lived_world.py`
+(nominate / queue / cards / gate / validators / corpus questions) and
+`provenance.py` (CORPUS_EXAMPLE tagging, lineage verdicts, cited-contribution
+receipt); nine new nodes in the product graph with rounds bounded by
+max_rounds, stagnation and wall clock; hypotheses name their lane
+(`lived_anchor_ids` or CORPUS_ONLY); qualify excludes echo leads and can end
+`CORPUS_ECHO_UNGROUNDED`; utilization and the report carry lived-world,
+corpus-contribution and provenance sections; `field_evidence.py --leads`;
+`corpus_polymath.py --questions` (automatic at corpus_mechanisms);
+`tests/calibration_acceptance.py`. Loadout outputs are now schema-checked too.
+
+**Measured before the change (why):** six transcripts = 12 product nouns vs
+1,369 method terms; CSV re-clusters into its own three hypotheses; 53/177
+authors left one row; three unrelated lives pulled 18 of 19 books; the
+observation schema required a gap_id, so the field could not propose.
+
+**Not done here:** the calibration run itself (owner-run against the same six
+transcripts; pass = a product they never name); a `calibration` policy block
+beyond the script defaults; document-scoped retrieve (separate Polymath slice).

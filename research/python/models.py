@@ -146,6 +146,16 @@ def new_state(run_id: str, signal: str = "") -> dict:
             "corpus_backend": {},
             "corpus_answers": [],
             "utilization": {},
+            # LIVED-WORLD-V2 (docs/25): population discovery before ideation
+            "population_leads": [],
+            "community_leads": [],
+            "field_records": [],
+            "participant_cards": [],
+            "lived_clusters": [],
+            "lived_situations": [],
+            "corpus_questions": [],
+            "example_terms": [],
+            "provenance": [],
         },
     }
 

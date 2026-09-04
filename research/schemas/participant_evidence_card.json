@@ -1,0 +1,76 @@
+{
+ "title": "participant_evidence_card",
+ "description": "ParticipantEvidenceCard (docs/25 \u00a73): every record one real (platform, author) left, bundled. Never a biography \u2014 what is not recorded stays unknown.",
+ "required": [
+  "id",
+  "platform",
+  "author_key",
+  "record_ids",
+  "record_count",
+  "thread_count",
+  "communities",
+  "roles_present"
+ ],
+ "properties": {
+  "id": {
+   "type": "string"
+  },
+  "platform": {
+   "type": "string"
+  },
+  "author_key": {
+   "type": "string"
+  },
+  "record_ids": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "type": "string"
+   }
+  },
+  "record_count": {
+   "type": "integer",
+   "minimum": 1
+  },
+  "thread_count": {
+   "type": "integer",
+   "minimum": 1
+  },
+  "communities": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "roles_present": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "freshness_classes": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "lead_ids": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "products_named": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "unknowns": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  }
+ }
+}

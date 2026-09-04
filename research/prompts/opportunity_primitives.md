@@ -33,3 +33,14 @@ Frictions should use registry friction-family names when they genuinely match
 (e.g. occupied_hand, movement_restriction) — that unlocks cross-domain transfer.
 Transferable invariants are the bridge fuel: "a tool should interfere as little
 as possible with the activity it enables" — no invariant, no cross-domain leap.
+
+## Population leads (docs/25 §1)
+Also submit `primitives.population_leads[]`: every population, activity or
+context the rows NAME or clearly imply ("shift workers", "new parents",
+"weekend club runners", "people who inject weekly") as
+`{name, why, evidence_refs: [row ids], activities: [], contexts: [], frictions: []}`.
+These are PLACES TO LOOK for the field lane — leads, never demand. A book that
+mentions a population nominates it; only real records can instantiate it.
+Name populations outside the one the signal itself describes whenever the
+rows support it: that is where non-obvious products come from.
+

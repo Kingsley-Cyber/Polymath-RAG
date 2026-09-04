@@ -29,3 +29,22 @@ SUPPLY_TRANSFER_LED. Do not force everything through market→problem→solution
 demand can already exist and be rerouted; a shift/trend generates hypotheses
 only through its BEHAVIORAL consequences. Genesis controls emphasis, never
 evidence authority.
+
+## Lived anchors (docs/25 §5 — LIVED-WORLD-V2)
+
+Two lanes fed this run: the corpus (mechanisms, drivers, analogies, named
+examples) and the lived world (`lived_clusters`, `lived_situations`,
+`field_records` from real people). A hypothesis must say which lane grounds
+it: `lived_anchor_ids: [cluster ids with authority ANCHOR]` — or, when no
+ANCHOR cluster supports it, `grounding: CORPUS_ONLY`. THIN clusters cannot
+anchor; cite their record ids in `hop_refs` if they inform a hop and say what
+the field must still confirm in `gaps`. Policy `portfolio.min_lived_anchored`
+hypotheses must anchor in lived clusters whenever anchors exist.
+
+Corpus rows tagged `CORPUS_EXAMPLE` (a brand or product the source used as an
+illustration) may back a hop about a MECHANISM; a hypothesis whose target
+is that example's own product category with no lived anchor is legal to
+write but its products end as CORPUS_ECHO_UNGROUNDED unless the field grounds
+them independently. Prefer bridges the corpus never spelled out: the corpus
+supplies the mechanism, the lived world supplies the noun.
+

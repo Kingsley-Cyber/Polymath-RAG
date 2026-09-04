@@ -41,7 +41,8 @@ def _known_data_keys() -> set:
     keys |= {"handoff_packet", "satisfaction", "run_identity", "registry_snapshot",
              "evidence_authority_rules", "frontier_rankings", "research_plan",
              "loadout", "loadout_receipt", "signal_divergences", "promoted_scopes",
-             "product_seed", "market_seed"}
+             "product_seed", "market_seed",
+             "population_queue", "population_loop", "excluded_leads"}   # docs/25 state-level keys
     return keys
 
 

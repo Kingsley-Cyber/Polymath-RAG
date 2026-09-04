@@ -47,6 +47,11 @@ _PRIORITY = {
     "demand_gaps": 1, "demand_reroutes": 1, "capture_assessments": 1,
     "field_signals": 2, "commerce_signals": 2, "query_nodes": 2,
     "trend_signals": 3, "corpus_signals": 3, "supply_signals": 3,
+    # LIVED-WORLD-V2 (docs/25): clusters and situations are decision-critical;
+    # raw records and leads are evidence-tier; questions/examples are priors
+    "lived_clusters": 1, "lived_situations": 1, "provenance": 1,
+    "field_records": 2, "population_leads": 2, "community_leads": 2,
+    "participant_cards": 3, "corpus_questions": 3, "example_terms": 3,
 }
 # historical branches are P4 by default (contradicted items stay visible —
 # they are decision-critical; only dead branches drop)

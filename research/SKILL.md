@@ -1,7 +1,7 @@
 ---
 name: opportunity-research
 description: "USE THIS whenever the user asks for product leads, product ideas/ideation, opportunities, niches, what to sell, or a research run over Polymath/the corpus. Run the controller (init → step → submit …); NEVER improvise a brief by querying Polymath directly — the corpus is one evidence lane, the graph enforces evidence, allocation and a 3–6 product portfolio."
-version: 1.7.0
+version: 2.0.0
 platforms: [macos, linux]
 metadata:
   hermes:
@@ -194,7 +194,15 @@ The child inherits this SKILL.md; the controller keeps it honest.
 | understand | reason | prompts/latent_interpretation.md → submit `signal` |
 | corpus | retrieve | `python3 python/corpus_polymath.py --state run.json --out payload.json` — probes `/capabilities`; a native Polymath ANSWERS each compiled reformulation through the full RAG (`/chat evidence=true`: rerank, graph + latent lanes, synthesis with citations) → `corpus_evidence` rows + `corpus_answers` (docs/22; `--via plan` = rows only, `--generic` = docs/18 control). Corpora may be named by display name. Submit `corpus_evidence` (+ `corpus_backend`, `corpus_answers`) |
 | lenses | transform | just `step` (python selects lenses) |
-| hypothesize | reason | prompts/bridge_hypothesis.md → submit `hypotheses` |
+| population_nominate | transform | just `step` — corpus / registry / signal / prior field rows propose `population_leads` + `community_leads` (authority LEAD, never demand; docs/25 §1) |
+| population_scout | agent | prompts/population_scout.md → run each lead's `channel_queries` to find WHERE these people talk (+ anything current nobody nominated) → submit `community_leads` (source_lane OPEN_FIELD, search receipts in `nominated_by`); `capability_failure` for a dead channel |
+| population_queue | transform | just `step` — VOI-ranked batch in `population_queue.batch` (seed population discounted; sequential, no fan-out) |
+| community_instantiate | agent | first `python3 python/field_evidence.py --state run.json --leads --out prior.json` (prior field rows → `field_records`, origin PRIOR_RUN), then run the batch leads' `channel_queries` (tools per channel, docs/24) → submit `field_records` per prompts/community_instantiate.md (schema field_record.json: lead_id, quote_ref, roles, freshness, source_identity, products_named) |
+| evidence_cards | transform | just `step` — ParticipantEvidenceCards + LivedEvidenceClusters (THIN / ANCHOR by `lived_world.anchor_threshold`; unknowns listed) |
+| population_gate | gate | just `step` — another round until `min_anchor_clusters`, bounded by max_rounds / stagnation / wall clock; `status` shows `lived_world` |
+| lived_situations | reason | prompts/lived_situation.md → submit `lived_situations` (FIELD_ANCHORED only on ANCHOR clusters with FIELD_OBSERVATION refs; RECONSTRUCTED keeps `unknowns`; the validator rejects biographies) |
+| corpus_mechanisms | retrieve | `python3 python/corpus_polymath.py --state run.json --out payload.json` (question mode is automatic at this node: `data.corpus_questions`, friction / mechanism level, never per person; rows stamped `question_id`, CORPUS_EXAMPLE rows tagged) → submit `corpus_evidence` (+ `corpus_answers`) or `capability_failure` |
+| hypothesize | reason | prompts/bridge_hypothesis.md → submit `hypotheses` — each names `lived_anchor_ids` (ANCHOR clusters) or `grounding: CORPUS_ONLY`; ≥ `portfolio.min_lived_anchored` anchored when anchors exist (docs/25 §5) |
 | challenge | reason | prompts/contradiction.md → submit `challenges` + updated `hypotheses`; REJECTED needs a contradicted gap or spent budget — a starved hypothesis stays CHALLENGED (docs/20 §1) |
 | gaps | transform | just `step` (compiles gaps + research queries) |
 | web_research | agent | first `python3 python/field_evidence.py --state run.json --out cands.json` (past field evidence, docs/21), then run compiled `queries` in `allocation_rank` order — each query names its channel and the exact `tools` to run (reddit, amazon_reviews, youtube, tiktok, xiaohongshu, twitter, forum; docs/24) — → submit `observations` per prompts/evidence_judgment.md with the channel's `identity`; `status` shows threads per gap and per hypothesis |
@@ -203,7 +211,23 @@ The child inherits this SKILL.md; the controller keeps it honest.
 | product_ideation | reason | prompts/product_ideation.md → submit `product_concepts`: 3–6 concepts on SUPPORTED mechanisms, distinct form factors, ≥2 variations each, `evidence_refs` = observation ids (docs/19 portfolio law) |
 | supplier_search | agent | `data.sourcing_plan` = one job PER CONCEPT PER CHANNEL (Alibaba + CJdropshipping, docs/24 §2): `python3 python/sourcing_exa.py --state run.json --out cands.json` then submit `supplier_candidates` each with `concept_id` + `channel` (price_raw, moq_raw verbatim, url); CJ rows default MOQ 1; an unsourced concept is reported, never covered by another concept's listing |
 | normalize_supplier | transform | just `step` |
-| qualify | gate | just `step` → verdict + `leads[]` + `data.utilization` (the evidence receipt, docs/21; also in `status`, `triage-run --markdown`, report) |
+| qualify | gate | just `step` → verdict + `leads[]` + `data.utilization` (evidence receipt incl. lived_world / corpus_contribution / provenance, docs/21 + docs/25) + `data.provenance` per concept; leads whose concept is CORPUS_ECHO_UNGROUNDED land in `excluded_leads` with the reason |
+
+## Lived world (docs/25 — LIVED-WORLD-V2)
+
+- **The field co-generates.** Population discovery runs BEFORE hypotheses: leads
+  are places to look (never demand); only external `field_records` instantiate
+  them; clusters are ANCHOR by independent records and threads, THIN otherwise.
+- **No biographies.** A ParticipantEvidenceCard is what one real author left.
+  Silence stays an unknown and becomes a research question.
+- **Corpus at question level.** `corpus_mechanisms` asks "what explains this
+  workaround / what analogous constraint exists" per cluster; contribution is
+  measured by CITED rows, never documents returned.
+- **Provenance, not blacklists.** A concept overlapping a corpus example is
+  legal when ≥3 independent voices from ≥2 communities ground it; lineage
+  `corpus example → same noun → same-noun search` is CORPUS_ECHO_UNGROUNDED.
+- **Calibration:** `python3 tests/calibration_acceptance.py --state run.json`
+  must pass before a run's leads are believed (six semantic receipts, §8).
 
 ## Corpus lane + flywheel (docs/19)
 

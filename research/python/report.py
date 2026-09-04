@@ -71,6 +71,8 @@ def build_model(state: dict) -> dict:
         "product_concepts": d.get("product_concepts") or [],
         "sourcing_coverage": d.get("sourcing_coverage") or [],
         "utilization": d.get("utilization") or {},
+        "provenance": d.get("provenance") or [],
+        "excluded_leads": d.get("excluded_leads") or [],
         "corpus_answers": d.get("corpus_answers") or [],
         "held_rejected": [{"id": h["id"], "mechanism": h.get("target_mechanism"),
                            "status": h.get("status")} for h in other],
@@ -422,6 +424,17 @@ def render(model: dict, layout: str = "FULL_RESEARCH", summary_md: str | None = 
         out.append("<table class=\"util\">" + "".join(
             f"<tr><td>{_e(row.split('|')[1].strip())}</td><td>{_e(row.split('|')[2].strip())}</td></tr>"
             for row in _util.to_markdown(model["utilization"]).splitlines()[2:]) + "</table>")
+    _pv = (model.get("utilization") or {}).get("provenance") or {}
+    _prov_rows = (model.get("provenance") or [])
+    if _prov_rows:
+        out.append("<h2>Provenance</h2><div class='scroll'><table><tr><th>concept</th><th>verdict</th><th>voices</th><th>communities</th><th>lived anchors</th><th>corpus example overlap</th><th>field-originated</th></tr>"
+                   + "".join(f"<tr><td>{_e(r.get('concept'))}</td><td>{_e(r.get('verdict'))}</td><td class='num'>{r.get('independent_voices')}</td>"
+                             f"<td>{_e(', '.join(r.get('communities') or []))}</td><td class='num'>{len(r.get('lived_anchor_ids') or [])}</td>"
+                             f"<td>{_e(', '.join(r.get('example_overlap') or []) or '—')}</td><td>{'yes' if r.get('field_originated') else 'no'}</td></tr>" for r in _prov_rows)
+                   + "</table></div>")
+    if model.get("excluded_leads"):
+        out.append("<p class='why'>Excluded as CORPUS_ECHO_UNGROUNDED (lineage was corpus example → same noun → same-noun search only): "
+                   + _e("; ".join(str(l.get("product_name")) for l in model["excluded_leads"])) + "</p>")
     out.append("<h2>Qualified Leads</h2>")
     if not model["leads"]:
         out.append("<p>No leads qualified — see verdict and unresolved items.</p>")
