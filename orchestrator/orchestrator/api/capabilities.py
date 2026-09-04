@@ -36,9 +36,32 @@ def _version() -> str:
         return "unknown"
 
 
+def _live_contracts() -> dict:
+    """Contracts that depend on what the stores hold: the field-evidence corpus
+    (a query_ready corpus whose id starts with field-evidence) and the claim
+    kinds the extractor has actually emitted. Best effort; never raises."""
+    c = dict(CONTRACTS)
+    try:
+        from polymath_shared.db import tx
+        with tx() as conn:
+            row = conn.execute(
+                """SELECT r.corpus_id FROM runs r
+                    WHERE r.corpus_id LIKE 'field-evidence%%' AND r.status = 'query_ready'
+                    ORDER BY r.updated_at DESC LIMIT 1""").fetchone()
+            if row:
+                c["field-evidence-corpus"] = row[0]
+            kinds = conn.execute(
+                """SELECT DISTINCT qualifiers->>'claim_kind' FROM facts
+                    WHERE qualifiers ? 'claim_kind' AND qualifiers->>'claim_kind' <> '' LIMIT 8""").fetchall()
+            c["typed-rows"] = sorted(k[0] for k in kinds if k and k[0])
+    except Exception:  # noqa: BLE001
+        pass
+    return c
+
+
 def capabilities_payload() -> dict:
     return {"backend": "polymath", "version": _version(), "api": API_DATE,
-            "contracts": dict(CONTRACTS), "endpoints": list(ENDPOINTS), "mcp_tools": list(MCP_TOOLS)}
+            "contracts": _live_contracts(), "endpoints": list(ENDPOINTS), "mcp_tools": list(MCP_TOOLS)}
 
 
 @router.get("/capabilities")

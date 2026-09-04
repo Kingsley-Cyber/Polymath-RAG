@@ -1506,6 +1506,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("scripts/reingest_corpus.py", "py", None),
     ("scripts/sweep_orphan_derivatives.py", "py", None),
     ("scripts/backfill_frontmatter.py", "py", None),
+    ("scripts/ingest_field_evidence.py", "py", None),
     # POLYMATH-MCP-V1
     ("orchestrator/orchestrator/mcp_server.py", "py", None),
     ("docs/wiki/work-log/2026-08-31-polymath-mcp-v1.md", "md", None),
@@ -1564,6 +1565,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_generation_swap.py", "py", None),
     ("tests/determinism/test_evidence_rows.py", "py", None),
     ("tests/determinism/test_corpus_plan.py", "py", None),
+    ("tests/determinism/test_typed_claims.py", "py", None),
     ("tests/determinism/test_control_watchdog.py", "py", None),
     ("tests/determinism/test_enrichment_concurrency_setting.py", "py", None),
     ("tests/determinism/test_mcp_server_v2.py", "py", None),
@@ -1598,6 +1600,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-03-llm-direct-canon.md", "md", None),
     ("docs/wiki/work-log/2026-09-03-retrieve-evidence-rows.md", "md", None),
     ("docs/wiki/work-log/2026-09-03-corpus-plan-capabilities.md", "md", None),
+    ("docs/wiki/work-log/2026-09-03-typed-claims-field-evidence.md", "md", None),
     ("docs/wiki/work-log/2026-09-01-provider-pool-campaign.md", "md", None),
     ("tests/determinism/test_fleet_autopilot_demand.py", "py", None),
     ("docs/wiki/work-log/2026-09-01-extraction-fleet-v3.md", "md", None),

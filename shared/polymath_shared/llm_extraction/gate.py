@@ -736,6 +736,7 @@ def validate_and_normalize(packet: ExtractionPacket,
                 "start": q_span[0], "end": q_span[1], "text": anchor.text[q_span[0]:q_span[1]],
                 "evidence_class": "llm_relation", "predicate": canon_pred,
                 "predicate_raw": rel.predicate, "predicate_method": pred_method,
+                "claim_kind": getattr(rel, "claim_kind", None),
                 "subject": rel.subject, "object": rel.object, "score": 1.0,
                 "attestation": {"subject": levels[rel.subject], "object": levels[rel.object]}})
             n_rel += 1
