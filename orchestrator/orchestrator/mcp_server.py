@@ -29,6 +29,16 @@ Env:  POLYMATH_MCP_PORT (8930)  POLYMATH_MCP_API_KEY (bearer)
 """
 from __future__ import annotations
 
+import json
+
+import re
+
+import sys
+
+import tempfile
+
+import subprocess
+
 import logging
 import os
 from pathlib import Path
@@ -60,7 +70,8 @@ mcp = MCPServer(
     name="polymath",
     instructions=(
         "Polymath v4 — evidence-first RAG over King's corpora. FOR PRODUCT-OPPORTUNITY RESEARCH, IDEATION OR LEADS: "
-        "do NOT improvise a brief from these tools — run the Hermes skill `opportunity-research` (TRAIL OS); "
+        "do NOT improvise a brief from retrieve/ask — run the controlled research run with the research_* tools "
+        "(research_init → research_step/research_submit, research_corpus at the corpus node, research_report at the end); "
         "these tools are its evidence layer and a summary of retrieved rows is not evidence. Workflow: "
         "list_corpora() to pick a corpus_id; upload_document(path, corpus_id) "
         "or upload_text(...) to ingest; poll document_status(corpus_id, "
@@ -303,6 +314,125 @@ async def retrieve_evidence(query: str, corpus_id: str, limit: int = 12, explore
             "graph_facts": len(out.get("graph_facts") or [])}
 
 
+
+# ------------------------------------------------------------------ research (TRAIL OS, research/ package)
+_RESEARCH_ROOT = Path(__file__).resolve().parents[2] / "research"
+_RESEARCH_STATE = _RESEARCH_ROOT / "state"
+_RESEARCH_DB = _RESEARCH_STATE / "mcp_runs.sqlite3"
+
+
+def _research_env() -> dict:
+    env = dict(os.environ)
+    env["OPPORTUNITY_RESEARCH_DB"] = str(_RESEARCH_DB)
+    env.setdefault("POLYMATH_URL", ORCH)
+    return env
+
+
+def _research_state_path(run_id: str) -> Path:
+    if not re.fullmatch(r"[A-Za-z0-9_.-]{1,80}", run_id or ""):
+        raise ValueError("run_id must be [A-Za-z0-9_.-]{1,80}")
+    _RESEARCH_STATE.mkdir(parents=True, exist_ok=True)
+    return _RESEARCH_STATE / f"{run_id}.json"
+
+
+def _research_cli(*args: str, timeout: int = 600) -> dict:
+    r = subprocess.run([sys.executable, str(_RESEARCH_ROOT / "python" / "controller.py"), *args],
+                       capture_output=True, text=True, cwd=str(_RESEARCH_ROOT), env=_research_env(), timeout=timeout)
+    try:
+        out = json.loads(r.stdout) if r.stdout.strip() else {}
+    except json.JSONDecodeError:
+        out = {"raw": r.stdout[-2000:]}
+    if r.returncode not in (0, 1) or (not out and r.stderr):
+        out = {"ok": False, "error": (r.stderr or r.stdout)[-1200:], **({} if isinstance(out, dict) else {})}
+    out.setdefault("exit", r.returncode)
+    return out
+
+
+@mcp.tool()
+async def research_init(signal: str, corpora: str, run_id: str) -> dict:
+    """START a controlled opportunity-research run (TRAIL OS, research/ package).
+    This is THE way to do product-opportunity research over Polymath: the graph
+    enforces evidence authority, independence, allocation across hypotheses and
+    a 3-6 product portfolio. `corpora` = comma-separated corpus ids or display
+    names (e.g. "Mark Builds Brands,ecom-meta-v1"). Then loop research_step /
+    research_submit; use research_corpus for the corpus node; research_report at
+    the end. A brief written from retrieve/ask alone is NOT a run."""
+    st = _research_state_path(run_id)
+    if st.exists():
+        return {"ok": False, "error": f"run {run_id!r} exists; pick a new run_id or continue it with research_step"}
+    out = _research_cli("init", "--state", str(st), "--signal", signal, "--corpus", "polymath:" + corpora)
+    out["run_id"] = run_id
+    return out
+
+
+@mcp.tool()
+async def research_step(run_id: str) -> dict:
+    """Advance the run one edge. When the node needs your output, the reply
+    carries `needs` (prompt_file, submit_keys) and a frozen `context_envelope` —
+    produce exactly those keys and call research_submit. Deterministic nodes
+    run themselves."""
+    return _research_cli("step", "--state", str(_research_state_path(run_id)))
+
+
+@mcp.tool()
+async def research_submit(run_id: str, node: str, payload: dict) -> dict:
+    """Submit a node's outputs (e.g. {"hypotheses": [...]}) or {"capability_failure": {...}}.
+    The controller validates schemas and laws and REJECTS what does not hold —
+    read `schema_errors` and fix, never bypass."""
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False)
+        p = f.name
+    try:
+        return _research_cli("submit", "--state", str(_research_state_path(run_id)), "--node", node, "--file", p)
+    finally:
+        try:
+            os.unlink(p)
+        except OSError:
+            pass
+
+
+@mcp.tool()
+async def research_status(run_id: str) -> dict:
+    """Where the run is, what it needs, per-gap independent threads, the
+    allocation table, and (at the end) the evidence-utilization receipt."""
+    return _research_cli("status", "--state", str(_research_state_path(run_id)))
+
+
+@mcp.tool()
+async def research_corpus(run_id: str, generic: bool = False) -> dict:
+    """Run the corpus lane FOR the run at its corpus node: the full RAG answers
+    each compiled reformulation (/chat evidence=true) plus EXPLORE rows, then
+    the payload is submitted. generic=true forces the docs/18 control lane."""
+    st = _research_state_path(run_id)
+    out_p = _RESEARCH_STATE / f"{run_id}_corpus_payload.json"
+    args = [sys.executable, str(_RESEARCH_ROOT / "python" / "corpus_polymath.py"), "--state", str(st), "--out", str(out_p)] + (["--generic"] if generic else [])
+    r = subprocess.run(args, capture_output=True, text=True, cwd=str(_RESEARCH_ROOT), env=_research_env(), timeout=1800)
+    note_line = r.stdout.strip().splitlines()[-1] if r.stdout.strip() else ""
+    try:
+        note = json.loads(note_line)
+    except json.JSONDecodeError:
+        note = {"raw": (r.stdout or r.stderr)[-800:]}
+    if not out_p.exists():
+        return {"ok": False, "error": "adapter produced no payload", "note": note, "stderr": r.stderr[-600:]}
+    sub = _research_cli("submit", "--state", str(st), "--node", "corpus", "--file", str(out_p))
+    return {"ok": bool(sub.get("ok")), "adapter": note, "submit": sub}
+
+
+@mcp.tool()
+async def research_report(run_id: str) -> dict:
+    """Build the report model, render the HTML report and the triage table
+    (with the evidence-utilization receipt) for a finished or stuck run."""
+    st = _research_state_path(run_id)
+    model_p = _RESEARCH_STATE / f"{run_id}_report_model.json"
+    html_p = _RESEARCH_STATE / f"{run_id}_report.html"
+    rep = str(_RESEARCH_ROOT / "python" / "report.py")
+    b = subprocess.run([sys.executable, rep, "build", "--state", str(st), "--out", str(model_p)], capture_output=True, text=True, cwd=str(_RESEARCH_ROOT), env=_research_env(), timeout=300)
+    r = subprocess.run([sys.executable, rep, "render", "--model", str(model_p), "--out", str(html_p)], capture_output=True, text=True, cwd=str(_RESEARCH_ROOT), env=_research_env(), timeout=300)
+    t = subprocess.run([sys.executable, str(_RESEARCH_ROOT / "python" / "controller.py"), "triage-run", "--state", str(st), "--markdown"], capture_output=True, text=True, cwd=str(_RESEARCH_ROOT), env=_research_env(), timeout=300)
+    return {"ok": b.returncode == 0 and r.returncode == 0, "report_html": str(html_p) if html_p.exists() else None,
+            "report_model": str(model_p) if model_p.exists() else None, "triage_markdown": t.stdout[-6000:], "triage_exit": t.returncode,
+            "errors": (b.stderr + r.stderr)[-600:] or None}
+
 @mcp.tool()
 async def ask(question: str, corpus_id: str, mode: str = "HYBRID",
               latent: Optional[bool] = None, evidence: bool = False) -> dict:
@@ -394,6 +524,12 @@ _TOOL_NAMES = ("list_corpora", "list_documents", "upload_document", "upload_text
                "document_status", "corpus_status", "retrieve", "ask",
                "recent_queries",
     "capabilities", "compile_plan", "retrieve_evidence",
+    "research_init",
+    "research_step",
+    "research_submit",
+    "research_status",
+    "research_corpus",
+    "research_report",
 )
 
 

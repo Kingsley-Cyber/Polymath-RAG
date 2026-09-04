@@ -25,6 +25,11 @@ IGNORED_NAMES = {
     "graphify-out",      # graphify cache (git-ignored)
 }
 IGNORED_PREFIXES = (
+    # research/ package runtime artifacts (compiled snapshot, run state, review patches) — never source
+    "research/state/",
+    "research/registry/compiled/",
+    "research/registry/patches/",
+    "research/candidates/",
     "stores/postgres/data/",
     "stores/qdrant/data/",
     "stores/neo4j/data/",
@@ -35,7 +40,7 @@ IGNORED_PREFIXES = (
     "resources/vendor/propbank-frames.zip",
     "resources/vendor/semlink.zip",
 )
-IGNORED_SUFFIXES = (".egg-info", ".pid")
+IGNORED_SUFFIXES = (".egg-info", ".pid", ".sqlite3")
 MODULE_OWNERS = {
     "control": "control",
     "orchestrator": "orchestrator",

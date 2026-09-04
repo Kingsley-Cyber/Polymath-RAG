@@ -42,3 +42,4 @@ research/registry/patches/
 research/registry/research_evidence.csv
 research/**/*.sqlite3
 research/candidates/
+research/state/

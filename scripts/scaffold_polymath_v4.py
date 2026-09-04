@@ -1614,7 +1614,6 @@ TREE: list[tuple[str, str, str | None]] = [
     ("research/README.md", "md", None),
     ("research/SKILL.md", "md", None),
     ("research/WORKLOG.md", "md", None),
-    ("research/candidates/.gitkeep", "txt", None),
     ("research/docs/01-architecture.txt", "txt", None),
     ("research/docs/02-loop-plane.txt", "txt", None),
     ("research/docs/03-memory-layer.txt", "txt", None),
