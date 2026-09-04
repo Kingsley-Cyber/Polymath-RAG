@@ -429,7 +429,7 @@ def render(model: dict, layout: str = "FULL_RESEARCH", summary_md: str | None = 
         hi = f" – {l['price_usd_high']}" if l.get("price_usd_high") not in (None, l.get("price_usd_low")) else ""
         out.append(f"""<div class="card"><h3>{i}. {_e(l['product_name'])}</h3>
 <div class="econ">${l['price_usd_low']}{hi} / unit · MOQ {l['moq_units']:,}</div>
-<div class="why">Mechanism: {_e(l['mechanism'].replace('_', ' '))} · Supplier: {_e(l['supplier_name'])}
+<div class="why">Mechanism: {_e(l['mechanism'].replace('_', ' '))} · {_e(l.get('channel') or 'alibaba')} · Supplier: {_e(l['supplier_name'])}
 · evidence score {l['evidence_score']}<br>{_e(l.get('url') or '')}</div></div>""")
 
     if layout == "FULL_RESEARCH":

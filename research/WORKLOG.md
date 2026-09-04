@@ -1413,3 +1413,24 @@ commits (section 18 proves it with hashes).
 **One-visit rule:** a thin discovery candidate earns exactly one research
 visit, counted from history, then it is held. Same shape as the allocation
 law: a bar you can reach, never a loop you can live in.
+
+---
+
+## 2026-09-03 — v1.7.0: evidence channels with tool chains; sourcing on Alibaba + CJdropshipping (docs/24)
+
+**Owner:** Amazon comments, Reddit, TikTok and the wider social set through
+agent-reach for evidence; CJdropshipping beside Alibaba for sourcing; all
+streamlined into the run.
+
+**What landed:** every gap now compiles one query per enabled channel
+(policy-ordered) carrying the exact OpenCLI/agent-reach tool chain, the
+source family, the identity key and the freshness source. The authority
+table already knew `review` and `supplier` families — what was missing was
+the plumbing, so an agent had to improvise which tool to run. Instagram and
+Facebook are deliberately NOT compiled (no post/comment search). Sourcing
+plans are per concept per channel; `sourcing_exa.py` runs them; CJ rows
+default to MOQ 1, said on the row; leads, report and receipt carry the channel.
+
+**Law kept:** an Amazon review is a product complaint or request, never
+FRICTION_EVIDENCE about life without the product; a dropship listing is a
+supplier fact, never demand.

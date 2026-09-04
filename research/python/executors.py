@@ -188,17 +188,51 @@ def triage(state: dict, policies: dict) -> str:
 # ------------------------------------------------------ gaps + query compile --
 # channel -> (template, source_family, why, expected roles). Every query
 # declares WHY its source was chosen and what it CANNOT satisfy (docs/04 §8).
+# docs/24 §1 — evidence CHANNELS. Each carries the exact tool chain an agent runs
+# (OpenCLI / agent-reach verbs verified 2026-09-03), the source family (docs/04
+# authority decides what it may establish), and how independence is keyed.
+# Enabled/ordered by policies.evidence_channels; the query form is SHORT keywords.
 _CHANNEL_TEMPLATES = [
-    ("reddit",  'site:reddit.com "{q}"', "community",
+    ("reddit", "{q}", "community",
      "first-person complaint, workaround, and comparison language",
-     ["FRICTION_EVIDENCE", "WORKAROUND_EVIDENCE", "PRODUCT_COMPARISON", "PURCHASE_INTENT"]),
-    ("youtube", "youtube comments: {q}", "community",
+     ["FRICTION_EVIDENCE", "WORKAROUND_EVIDENCE", "PRODUCT_COMPARISON", "PURCHASE_INTENT"],
+     {"tools": ['opencli reddit search "{q}" --subreddit <hint> --sort relevance --time year --limit 10 -f json',
+                "opencli reddit read <post-id> -f json"],
+      "identity": "platform=reddit author_key=u/<author> thread_key=<post-id>", "freshness": "post date → LIVE ≤90d / FAST ≤2y"}),
+    ("amazon_reviews", "{q}", "review",
+     "post-purchase language: what broke, what they did instead, what they compared it to",
+     ["PRODUCT_COMPLAINT", "WORKAROUND_EVIDENCE", "PRODUCT_COMPARISON", "PRODUCT_REQUEST", "CURRENT_PRODUCT_REFERENCE"],
+     {"tools": ['opencli amazon search "{q}" -f json', "opencli amazon discussion <asin-or-url> -f json"],
+      "identity": "platform=amazon author_key=<reviewer> thread_key=<ASIN>", "freshness": "review date",
+      "law": "a review is a product complaint or request, never FRICTION_EVIDENCE about life without the product (docs/04)"}),
+    ("youtube", "{q}", "community",
      "creator-audience discussion under demonstration videos",
-     ["FRICTION_EVIDENCE", "BEHAVIOR_SUPPORT", "WORKAROUND_EVIDENCE"]),
-    ("forum",   '"{q}" forum OR community', "community",
+     ["FRICTION_EVIDENCE", "BEHAVIOR_SUPPORT", "WORKAROUND_EVIDENCE"],
+     {"tools": ['opencli youtube search "{q}" -f json', "opencli youtube comments <video-url> -f json"],
+      "identity": "platform=youtube author_key=<channel/handle> thread_key=<video-id>", "freshness": "comment date"}),
+    ("tiktok", "{q}", "community",
+     "short-video captions and on-screen text where people show the workaround",
+     ["BEHAVIOR_SUPPORT", "WORKAROUND_EVIDENCE", "FRICTION_EVIDENCE"],
+     {"tools": ['opencli tiktok search "{q}" -f json'],
+      "identity": "platform=tiktok author_key=@<creator> thread_key=<video-id>", "freshness": "video date",
+      "limits": "OpenCLI reads videos, not their comment threads — quote the caption/on-screen text, or read comments through the browser lane"}),
+    ("xiaohongshu", "{q}", "community",
+     "consumer notes + threaded comments (Chinese; translate the quote, keep the original)",
+     ["BEHAVIOR_SUPPORT", "WORKAROUND_EVIDENCE", "FRICTION_EVIDENCE", "PRODUCT_COMPARISON"],
+     {"tools": ['opencli xiaohongshu search "{q}" -f json', "opencli xiaohongshu comments <note-id> -f json"],
+      "identity": "platform=xiaohongshu author_key=<user> thread_key=<note-id>", "freshness": "note date"}),
+    ("twitter", "{q}", "community",
+     "public complaint and comparison language in threads",
+     ["FRICTION_EVIDENCE", "PRODUCT_COMPARISON", "PURCHASE_INTENT"],
+     {"tools": ['opencli twitter search "{q}" -f json', "opencli twitter thread <tweet-id> -f json"],
+      "identity": "platform=twitter author_key=@<handle> thread_key=<tweet-id>", "freshness": "tweet date"}),
+    ("forum", "{q} forum", "community",
      "niche practitioners describing real behavior and adaptations",
-     ["BEHAVIOR_SUPPORT", "WORKAROUND_EVIDENCE", "FRICTION_EVIDENCE"]),
+     ["BEHAVIOR_SUPPORT", "WORKAROUND_EVIDENCE", "FRICTION_EVIDENCE"],
+     {"tools": ['mcporter call exa.web_search_exa query="{q} forum" numResults=10', 'curl -s "https://r.jina.ai/<url>"'],
+      "identity": "platform=<forum host> author_key=<handle> thread_key=<thread url>", "freshness": "post date"}),
 ]
+# not compiled (honest): instagram — OpenCLI searches USERS only, no post/comment search; facebook — groups need membership
 _GAP_DEFAULT_ROLES = ["FRICTION_EVIDENCE", "WORKAROUND_EVIDENCE",
                       "BEHAVIOR_SUPPORT", "PURCHASE_INTENT"]
 _GAP_STOP = {"evidence", "missing", "intermediate", "does", "do", "they", "their", "what", "which", "where", "when",
@@ -216,6 +250,30 @@ def _gap_keywords(question: str, n: int = 8) -> list[str]:
             continue
         out.append(tl)
     return out[:n]
+
+
+def channel_queries(gid: str, question: str, state: dict, policies: dict, id_prefix: str = "q") -> list[dict]:
+    """docs/24: one query per enabled evidence channel (policy order) for one gap.
+    The SHORT keyword form is the search string; every row names the exact tool
+    chain, the identity key and the freshness source for its channel."""
+    kw = _gap_keywords(question)
+    short = " ".join(kw[:6])
+    hints = list(state["data"].get("communities") or [])
+    enabled = list(policies.get("evidence_channels") or [t[0] for t in _CHANNEL_TEMPLATES])
+    out = []
+    for channel, tpl, family, why, expected, how in sorted((t for t in _CHANNEL_TEMPLATES if t[0] in enabled), key=lambda t: enabled.index(t[0])):
+        out.append({
+            "id": stable_id(id_prefix, gid, channel), "gap_id": gid,
+            # docs/19: the question is NOT the search string
+            "query": tpl.format(q=short), "question": question, "keywords": kw,
+            "subreddit_hints": hints[:6] if channel == "reddit" else [],
+            "tools": [t.replace("{q}", short) for t in how.get("tools") or []],
+            "identity": how.get("identity"), "freshness_hint": how.get("freshness"),
+            **({"law": how["law"]} if how.get("law") else {}), **({"limits": how["limits"]} if how.get("limits") else {}),
+            "channel": channel, "source_family": family, "why_this_source": why,
+            "expected_evidence_roles": expected,
+            "cannot_satisfy": ["SUPPLIER_AVAILABILITY", "PRICE_EVIDENCE", "MOQ_EVIDENCE", "CURRENT_PRODUCT_REFERENCE"]})
+    return out
 
 
 def gap_compiler(state: dict, policies: dict) -> str:
@@ -248,22 +306,8 @@ def gap_compiler(state: dict, policies: dict) -> str:
                 gaps[-1]["registry_query_grammars"] = [
                     {"id": t["id"], "grammar": t["grammar"], "goal": t["evidence_goal"],
                      "expected_roles": t["expected_roles"]} for t in _grammars[:6]]
-            kw = _gap_keywords(gap_q)
-            short = " ".join(kw[:6])
-            hints = list(state["data"].get("communities") or [])
-            for channel, tpl, family, why, expected in _CHANNEL_TEMPLATES:
-                queries.append({
-                    "id": stable_id("q", gid, channel), "gap_id": gid,
-                    # docs/19: the question is NOT the search string — the short
-                    # keyword form is what a search box (or OpenCLI) understands
-                    "query": short if channel in ("reddit", "forum") else tpl.format(q=short),
-                    "question": gap_q, "keywords": kw,
-                    "subreddit_hints": hints[:6] if channel == "reddit" else [],
-                    "channel": channel,
-                    "source_family": family, "why_this_source": why,
-                    "expected_evidence_roles": expected,
-                    "cannot_satisfy": ["SUPPLIER_AVAILABILITY", "PRICE_EVIDENCE",
-                                        "MOQ_EVIDENCE", "CURRENT_PRODUCT_REFERENCE"]})
+            for cq in channel_queries(gid, gap_q, state, policies):
+                queries.append(cq)
                 added_q += 1
     # docs/20 §1: allocation — starved hypotheses first, queries interleaved
     import allocation as _alloc
@@ -388,6 +432,14 @@ def _num(s: str) -> float | None:
         return None
 
 
+_SOURCING_TOOLS = {
+    "alibaba": ['python3 python/sourcing_exa.py --state run.json --out cands.json --channels alibaba',
+                'mcporter call exa.web_search_exa query="<term> site:alibaba.com wholesale MOQ price" numResults=6'],
+    "cjdropshipping": ['python3 python/sourcing_exa.py --state run.json --out cands.json --channels cjdropshipping',
+                       'mcporter call exa.web_search_exa query="<term> site:cjdropshipping.com" numResults=6'],
+}
+
+
 def sourcing_plan_compiler(state: dict, policies: dict) -> str:
     """docs/20 §2: one sourcing job PER CONCEPT, compiled the moment the run
     arrives at supplier_search. The agent searches each concept's terms and
@@ -395,6 +447,7 @@ def sourcing_plan_compiler(state: dict, policies: dict) -> str:
     as UNSOURCED — never quietly covered by another concept's listing."""
     d = state["data"]
     pol = policies.get("sourcing") or {}
+    channels = list(pol.get("channels") or ["alibaba", "cjdropshipping"])
     mechs = {m.get("id"): m for m in d.get("mechanisms") or []}
     plan = []
     for c in d.get("product_concepts") or []:
@@ -402,13 +455,16 @@ def sourcing_plan_compiler(state: dict, policies: dict) -> str:
         terms += [v.get("name") for v in c.get("variations") or [] if isinstance(v, dict)]
         terms += [p.get("name") for p in d.get("product_candidates") or [] if p.get("mechanism_id") == c.get("mechanism_id")]
         terms = list(dict.fromkeys(str(t).strip() for t in terms if t))
-        plan.append({"id": f"sp_{c.get('id')}", "concept_id": c.get("id"), "concept": c.get("name"),
-                     "mechanism_id": c.get("mechanism_id"), "mechanism": (mechs.get(c.get("mechanism_id")) or {}).get("name"),
-                     "search_terms": terms[:8], "min_candidates": int(pol.get("min_candidates_per_concept", 1)),
-                     "rule": "search Alibaba for THIS concept; every candidate carries concept_id; price_raw / moq_raw verbatim; "
-                             "if nothing on the market fits, submit nothing for it — an unsourced concept is a finding"})
+        for ch in channels:
+            plan.append({"id": f"sp_{c.get('id')}_{ch}", "concept_id": c.get("id"), "concept": c.get("name"), "channel": ch,
+                         "mechanism_id": c.get("mechanism_id"), "mechanism": (mechs.get(c.get("mechanism_id")) or {}).get("name"),
+                         "search_terms": terms[:8], "min_candidates": int(pol.get("min_candidates_per_concept", 1)),
+                         "tools": _SOURCING_TOOLS.get(ch, []),
+                         "rule": f"search {ch} for THIS concept; every candidate carries concept_id + channel; price_raw / moq_raw verbatim "
+                                 f"({'CJ: per-unit price incl. processing, MOQ is usually 1 — record ship-from warehouse' if ch == 'cjdropshipping' else 'Alibaba: tier price + MOQ text as shown'}); "
+                                 "if nothing fits, submit nothing for it — an unsourced concept is a finding"})
     d["sourcing_plan"] = plan
-    return f"sourcing plan: {len(plan)} concepts, one search job each ({sum(len(p['search_terms']) for p in plan)} terms) — no borrowing across concepts"
+    return f"sourcing plan: {len(plan)} jobs = {len(plan)//max(1,len(channels))} concepts × {channels} — no borrowing across concepts"
 
 
 def _resolve_concept(s: dict, d: dict) -> None:
@@ -456,6 +512,10 @@ def supplier(state: dict, policies: dict) -> str:
         lo, hi = _parse_price(s.get("price_raw", ""))
         s["price_usd_low"], s["price_usd_high"] = lo, hi
         s["moq_units"] = _parse_moq(s.get("moq_raw", ""))
+        # docs/24 §2: dropship channels sell single units — a missing MOQ means 1, said so on the row
+        _defaults = (policies.get("supplier") or {}).get("moq_default_by_channel") or {}
+        if not s["moq_units"] and s.get("channel") in _defaults:
+            s["moq_units"] = int(_defaults[s["channel"]]); s["moq_note"] = f"{s['channel']} default MOQ {s['moq_units']}"
         _resolve_concept(s, state["data"])
         normalized.append(s)
     state["data"]["supplier_candidates"] = normalized
@@ -505,7 +565,7 @@ def scoring(state: dict, policies: dict) -> str:
                 "concept_id": concept.get("id") if concept else None,
                 "concept": concept.get("name") if concept else None,
                 "mechanism": mech["name"], "mechanism_id": mech["id"],
-                "product_name": s["product_name"], "supplier_name": s["supplier_name"],
+                "product_name": s["product_name"], "supplier_name": s["supplier_name"], "channel": s.get("channel") or "alibaba",
                 "url": s.get("url"), "images": s.get("images"),
                 "price_usd_low": s["price_usd_low"], "price_usd_high": s["price_usd_high"],
                 "moq_units": s["moq_units"], "evidence_score": score,

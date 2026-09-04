@@ -52,6 +52,7 @@ def compute(state: dict) -> dict:
                       "cited_by_claim_kind": dict(collections.Counter((rows_by_id.get(r) or {}).get("claim_kind") for r in prim_refs + hop_refs if (rows_by_id.get(r) or {}).get("claim_kind")))},
         "analogies_by_authority": dict(collections.Counter(a.get("authority") for a in d.get("cross_domain_analogies") or [])),
         "observations": {"total": len(obs), "by_source_family": dict(collections.Counter((o.get("source_identity") or {}).get("source_family") for o in obs)),
+                         "by_platform": dict(collections.Counter((o.get("source_identity") or {}).get("platform") for o in obs)),
                          "by_freshness": dict(collections.Counter((o.get("freshness") or {}).get("class") for o in obs)),
                          "distinct_threads": len(threads), "with_query_provenance": sum(1 for o in obs if o.get("query_id") or o.get("query_used")),
                          "from_corpus_rows": len(from_corpus)},
@@ -60,7 +61,7 @@ def compute(state: dict) -> dict:
         "rounds": dict(state.get("rounds") or {}),
         "leads": {"total": len(leads), "by_concept": dict(collections.Counter(l.get("concept") or l.get("concept_id") for l in leads)),
                   "concepts_with_leads": len({l.get("concept_id") for l in leads if l.get("concept_id")}), "concepts": len(concepts),
-                  "mechanisms_with_leads": len({l.get("mechanism_id") for l in leads}), "mechanisms_supported": sum(1 for m in d.get("mechanisms") or [] if m.get("status") == "SUPPORTED")},
+                  "mechanisms_with_leads": len({l.get("mechanism_id") for l in leads}), "by_channel": dict(collections.Counter(l.get("channel") or "alibaba" for l in leads)), "mechanisms_supported": sum(1 for m in d.get("mechanisms") or [] if m.get("status") == "SUPPORTED")},
         "registry_candidates_by_kind": dict(collections.Counter(c.get("kind") for c in d.get("registry_candidates") or [])),
     }
 
@@ -79,6 +80,7 @@ def to_markdown(u: dict) -> str:
              f"| observation freshness | {o['by_freshness']} |",
              f"| gaps (status, with corpus support) | {gp['total']} {gp['by_status']}, corpus-supported {gp['with_corpus_support']} |",
              f"| research rounds | {u['rounds'].get('research')} |",
-             f"| leads across concepts / mechanisms | {ld['total']} leads, {ld['concepts_with_leads']}/{ld['concepts']} concepts, {ld['mechanisms_with_leads']}/{ld['mechanisms_supported']} mechanisms |",
+             f"| leads across concepts / mechanisms / channels | {ld['total']} leads, {ld['concepts_with_leads']}/{ld['concepts']} concepts, {ld['mechanisms_with_leads']}/{ld['mechanisms_supported']} mechanisms, {ld.get('by_channel', {})} |",
+             f"| observations by platform | {o.get('by_platform', {})} |",
              f"| registry candidates | {u['registry_candidates_by_kind']} |"]
     return "\n".join(lines)
