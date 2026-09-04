@@ -55,7 +55,19 @@ identical row sets (159/159, parity true).
 ## Proof
 - Unit: test_typed_claims (contract, schema+prompts, lean expand, evidence rows) + pronoun gate + materialization contract green.
 - Field corpus ingest: 283 observations → 43 thread documents → 43 intake runs (receipt appended below).
-- Canary + blue/green receipts: appended below by the session.
+- Canary 1 (`canary-llm-direct-0903`, technical chapter) after the first restart: converged, 0 typed facts. Traced
+  to TWO causes, both fixed the same hour: (1) `gate._clean_relation` rebuilds relations from a fixed key tuple, so
+  `claim_kind` was dropped before `ExtractionPacket.model_validate` — fixed, unit-tested, bundle re-frozen
+  `v5-production-005-typed-claims-sanitizer`; (2) the prompt/schema change was not part of the extraction contract,
+  so `--blue-green` CARRIED the extract stage (`carried_stages` incl. extract, `regenerated_stages: []`; 6 "extract ok"
+  attempts in 0 s = receipt replays) — fixed by appending `|typed_claims=v1` to `_extraction_gate_contract()`.
+- In-process probe on a FIELD_OBS paragraph (cloud lane, gemini-3.5-flash-lite, 1.4 s): raw response contains
+  `claim_kind`; sanitized packet keeps it (`Epilator ALTERNATIVE_TO shaving · claim_kind=workaround`).
+- Field corpus ingest: 283 observations → 43 thread documents → 43 runs; the first 13 typed facts appeared on
+  field documents extracted after the prompt went live (`/capabilities.typed-rows` = behavior, friction,
+  purchase_language, workaround).
+- Typed re-extraction receipts (mark-builds-brands-v1, ecom-meta-v1, field-evidence-v1 under `typed_claims=v1`)
+  and the Arm 2 / Arm 3 measurements: appended below by the session once converged.
 
 ## Rejected claims
 - "Derive claim kinds at read time with a lexicon" — rejected: that is the
