@@ -1,0 +1,443 @@
+# Hermes Preference Control Plane (docs/16). The skill's SAFE degrees of
+# freedom, declared — Hermes discovers controls by READING this (settings.py
+# describe), explains them, and compiles plain-English preferences into
+# validated patches. Hermes never edits graph/policy/code files.
+#
+# Every setting: label, description, level (USER_SAFE | ADVANCED_SAFE |
+# SYSTEM_LOCKED), type (enum -> allowed[] / integer -> min..max), default,
+# modes it applies to (absent = all), mutability (INIT_ONLY | DURING_RUN |
+# BEFORE_PORTFOLIO), cost_effect, affects, cannot_affect.
+#
+# The standing law: users control DESIRED stopping conditions and emphasis;
+# φ retains absolute safety ceilings (system_limits in policies.yaml),
+# stagnation detection, and every evidence/authority rule.
+settings_schema:
+
+  # ── shared emphasis controls ────────────────────────────────────────────
+  research_depth:
+    label: Research depth
+    description: >
+      How hard the run works per question — query budgets, per-gap effort,
+      and how reluctantly it settles.
+    level: USER_SAFE
+    type: enum
+    allowed: [FAST, BALANCED, DEEP, EXHAUSTIVE]
+    default: BALANCED
+    mutability: DURING_RUN
+    cost_effect: DEEP/EXHAUSTIVE increase runtime substantially
+    affects: [research agent effort, query budgets, settle reluctance]
+    cannot_affect: [evidence authority, gap-closing thresholds]
+
+  community_strength:
+    label: Community research strength
+    description: >
+      How much independent community evidence the run seeks before treating
+      community understanding as grounded.
+    level: USER_SAFE
+    type: enum
+    allowed: [LIGHT, STANDARD, STRONG, VERY_STRONG]
+    default: STANDARD
+    mutability: DURING_RUN
+    cost_effect: VERY_STRONG increases runtime (more threads, more contradiction search)
+    affects: [comment query budget, thread coverage, contradiction search effort]
+    cannot_affect: [minimum independence (3 sources), prevalence inference rules]
+
+  open_discovery:
+    label: Open discovery
+    description: >
+      How much budget goes to unanchored exploration versus validating what
+      is already suspected. HIGH favors weird, insider, non-obvious finds.
+    level: USER_SAFE
+    type: enum
+    allowed: [LOW, NORMAL, HIGH]
+    default: NORMAL
+    mutability: INIT_ONLY
+    cost_effect: HIGH increases runtime and lowers per-lead predictability
+    affects: [blind-lane budget, frontier exploration appetite]
+    cannot_affect: [lane isolation, evidence requirements for promotion]
+
+  supplier_depth:
+    label: Supplier research depth
+    description: How much effort goes into Alibaba/CJ sourcing detail.
+    level: USER_SAFE
+    type: enum
+    allowed: [LIGHT, STANDARD, DEEP]
+    default: STANDARD
+    mutability: DURING_RUN
+    cost_effect: DEEP increases runtime
+    affects: [supplier queries per candidate, offer comparison breadth]
+    cannot_affect: [price/MOQ requirements for QUALIFIED, supplier evidence roles]
+
+  contradiction_strength:
+    label: Contradiction search strength
+    description: How aggressively the run hunts evidence AGAINST its own hypotheses.
+    level: USER_SAFE
+    type: enum
+    allowed: [STANDARD, STRONG]
+    default: STANDARD
+    mutability: DURING_RUN
+    cost_effect: STRONG increases runtime
+    affects: [contradiction query budget, challenge emphasis]
+    cannot_affect: [contradiction admission rules, L4 independence]
+
+  corpus_influence:
+    label: Corpus influence
+    description: >
+      How much the second-brain corpus shapes hypothesis GENERATION. Never
+      changes what corpus knowledge may prove.
+    level: USER_SAFE
+    type: enum
+    allowed: [LIGHT, BALANCED, STRONG]
+    default: BALANCED
+    mutability: INIT_ONLY
+    cost_effect: neutral
+    affects: [corpus retrieval budget, analogy generation appetite]
+    cannot_affect: [corpus evidence authority (corpus never proves current markets)]
+
+  trends:
+    label: Trend research
+    description: Search-attention research intensity (Google Trends lane).
+    level: USER_SAFE
+    type: enum
+    allowed: [OFF, AUTO, STRONG]
+    default: AUTO
+    mutability: INIT_ONLY
+    cost_effect: neutral
+    affects: [trend lane budget]
+    cannot_affect: [SEARCH_INTEREST never becoming demand evidence]
+
+  report_angle_count:
+    label: Report angle count
+    description: How many creative/market angles the commercial-intelligence portfolio keeps.
+    level: USER_SAFE
+    type: integer
+    min: 3
+    max: 8
+    default: 8
+    mutability: DURING_RUN
+    cost_effect: neutral
+    affects: [angle portfolio size]
+    cannot_affect: [angle evidence grading, dedupe, genericness rejection]
+
+  # ── OPPORTUNITY_RESEARCH ────────────────────────────────────────────────
+  opportunity_research.max_research_rounds:
+    label: Research rounds (opportunity)
+    description: Desired cap on gap-research loops. The policy ceiling (3) always binds.
+    level: ADVANCED_SAFE
+    type: integer
+    min: 1
+    max: 3
+    default: 3
+    modes: [opportunity_research]
+    mutability: INIT_ONLY
+    cost_effect: fewer rounds = faster, possibly PROVISIONAL verdicts
+    affects: [gap-research loop bound]
+    cannot_affect: [what counts as closing a gap]
+
+  opportunity_research.max_leads:
+    label: Final lead count
+    description: How many qualified leads the report keeps.
+    level: USER_SAFE
+    type: integer
+    min: 3
+    max: 10
+    default: 8
+    modes: [opportunity_research]
+    mutability: DURING_RUN
+    cost_effect: neutral
+    affects: [lead list length]
+    cannot_affect: [qualification tier rules]
+
+  opportunity_research.hypothesis_breadth:
+    label: Hypothesis portfolio breadth
+    description: Desired hypothesis count within the constitutional 3-6 portfolio.
+    level: USER_SAFE
+    type: integer
+    min: 3
+    max: 6
+    default: 4
+    modes: [opportunity_research]
+    mutability: INIT_ONLY
+    cost_effect: more hypotheses = more research surface
+    affects: [portfolio target communicated to generation]
+    cannot_affect: [3-6 bounds, distinct-mechanism law, bridge admissibility]
+
+  # ── NICHE_LOADOUT ───────────────────────────────────────────────────────
+  niche_loadout.discovery_product_target:
+    label: Product discovery target
+    description: >
+      Keep the discovery loop digging until this many slot candidates exist —
+      within hard round/stagnation ceilings. Discovery quantity, NOT final
+      collection size.
+    level: USER_SAFE
+    type: integer
+    min: 5
+    max: 30
+    default: 10
+    modes: [niche_loadout]
+    mutability: DURING_RUN
+    cost_effect: higher targets extend the discovery loop
+    affects: [discovery-loop continue condition]
+    cannot_affect: [loop ceilings (system_limits), evidence rules, final 3-6 contract]
+
+  niche_loadout.final_product_target:
+    label: Final loadout size
+    description: Desired final collection size inside the constitutional 3-6 contract.
+    level: USER_SAFE
+    type: integer
+    min: 3
+    max: 6
+    default: 6
+    modes: [niche_loadout]
+    mutability: BEFORE_PORTFOLIO
+    cost_effect: neutral
+    affects: [portfolio F(S) selection cap]
+    cannot_affect: [3-6 contract, portfolio quality math, insider fidelity gate]
+
+  niche_loadout.experience_profiles:
+    label: Experience perspectives
+    description: How many experience-level perspectives the world model develops.
+    level: USER_SAFE
+    type: integer
+    min: 2
+    max: 4
+    default: 3
+    modes: [niche_loadout]
+    mutability: INIT_ONLY
+    cost_effect: more profiles = longer lived-situation rounds
+    affects: [world-model breadth request]
+    cannot_affect: [lived-situation evidence requirements]
+
+  # ── MARKET_DISCOVERY ────────────────────────────────────────────────────
+  market_discovery.breadth:
+    label: Market breadth
+    description: How wide the lattice casts across niches and intersections.
+    level: USER_SAFE
+    type: enum
+    allowed: [NARROW, BALANCED, BROAD]
+    default: BALANCED
+    modes: [market_discovery]
+    mutability: INIT_ONLY
+    cost_effect: BROAD increases runtime
+    affects: [lane query budgets, lattice width]
+    cannot_affect: [evidence authority, promotion requirements]
+
+  market_discovery.retained_markets:
+    label: Market scopes retained
+    description: How many promoted scopes the run may return (3-8).
+    level: USER_SAFE
+    type: integer
+    min: 3
+    max: 8
+    default: 8
+    modes: [market_discovery]
+    mutability: DURING_RUN
+    cost_effect: neutral
+    affects: [promotion cap]
+    cannot_affect: [promotion evidence requirements]
+
+  market_discovery.max_research_rounds:
+    label: Research rounds (market)
+    description: Desired cap on targeted-research loops.
+    level: ADVANCED_SAFE
+    type: integer
+    min: 1
+    max: 3
+    default: 2
+    modes: [market_discovery]
+    mutability: INIT_ONLY
+    cost_effect: fewer rounds = faster, more PROPOSED whitespace left untested
+    affects: [targeted-research loop bound]
+    cannot_affect: [whitespace state transition rules]
+
+  market_discovery.diversity:
+    label: Frontier diversity emphasis
+    description: How hard selection avoids near-duplicate scopes.
+    level: ADVANCED_SAFE
+    type: enum
+    allowed: [LOW, NORMAL, HIGH]
+    default: NORMAL
+    modes: [market_discovery]
+    mutability: INIT_ONLY
+    cost_effect: neutral
+    affects: [diversity penalty λ in frontier selection]
+    cannot_affect: [M(s) receipts, robustness checks]
+
+  # ── PRODUCT_ANCHORED_DISCOVERY ──────────────────────────────────────────
+  product_anchored.market_breadth:
+    label: Market exploration breadth
+    description: How many meanings/markets θ is asked to propose.
+    level: USER_SAFE
+    type: enum
+    allowed: [FOCUSED, BALANCED, BROAD]
+    default: BALANCED
+    modes: [product_anchored]
+    mutability: INIT_ONLY
+    cost_effect: BROAD increases runtime
+    affects: [meaning/bridge generation breadth]
+    cannot_affect: [reverse-fit weights, proof requirements]
+
+  product_anchored.meaning_exploration:
+    label: Meaning exploration
+    description: How creative the use-meaning decomposition may get.
+    level: USER_SAFE
+    type: enum
+    allowed: [CONSERVATIVE, BALANCED, CREATIVE]
+    default: BALANCED
+    modes: [product_anchored]
+    mutability: INIT_ONLY
+    cost_effect: neutral
+    affects: [meaning-space generation]
+    cannot_affect: [evidence needed to support a meaning (creative ≠ weaker proof)]
+
+  product_anchored.market_bridges_target:
+    label: Market bridges retained
+    description: How many diverse product-market bridges get research budget.
+    level: USER_SAFE
+    type: integer
+    min: 2
+    max: 5
+    default: 3
+    modes: [product_anchored]
+    mutability: INIT_ONLY
+    cost_effect: more bridges = more community research
+    affects: [reverse-fit retention count]
+    cannot_affect: [R(n|p) receipts, diversity math]
+
+  product_anchored.max_research_rounds:
+    label: Research rounds (product)
+    description: Desired cap on evidence-correction loops.
+    level: ADVANCED_SAFE
+    type: integer
+    min: 1
+    max: 3
+    default: 2
+    modes: [product_anchored]
+    mutability: INIT_ONLY
+    cost_effect: fewer rounds = faster
+    affects: [evidence-correction loop bound]
+    cannot_affect: [bridge state transition rules]
+
+  product_anchored.competition_depth:
+    label: Competition analysis depth
+    description: Commerce-scan effort on competitors/pricing.
+    level: USER_SAFE
+    type: enum
+    allowed: [LIGHT, STANDARD, DEEP]
+    default: STANDARD
+    modes: [product_anchored]
+    mutability: DURING_RUN
+    cost_effect: DEEP increases runtime
+    affects: [commerce scan effort]
+    cannot_affect: [saturation feature semantics]
+
+  product_anchored.adjacent_discovery:
+    label: Adjacent-market discovery
+    description: How much attention goes to adjacent products/markets found along the way.
+    level: USER_SAFE
+    type: enum
+    allowed: [OFF, NORMAL, HIGH]
+    default: NORMAL
+    modes: [product_anchored]
+    mutability: DURING_RUN
+    cost_effect: HIGH adds exploration time
+    affects: [adjacency capture emphasis in reframe]
+    cannot_affect: [bridge qualification]
+
+  product_anchored.reframe_aggressiveness:
+    label: Reframing aggressiveness
+    description: How boldly the run challenges the user's original positioning.
+    level: USER_SAFE
+    type: enum
+    allowed: [CONSERVATIVE, STANDARD, BOLD]
+    default: STANDARD
+    modes: [product_anchored]
+    mutability: INIT_ONLY
+    cost_effect: neutral
+    affects: [reframe emphasis]
+    cannot_affect: [reframe verdicts (evidence decides, always)]
+
+  # ── constitutional (SYSTEM_LOCKED): visible, explainable, never settable ─
+  evidence.min_independent_sources:
+    label: Minimum independent sources
+    level: SYSTEM_LOCKED
+    default: 3
+    reason: independence is an evidence law, not a preference
+
+  evidence.min_total_observations:
+    label: Evidence floor
+    level: SYSTEM_LOCKED
+    default: 5
+    reason: the evidence floor cannot be negotiated per run
+
+  authority_laws:
+    label: Authority laws
+    level: SYSTEM_LOCKED
+    default: policies.yaml#authority_laws
+    reason: supplier≠demand, trends≠sales, comments≠prevalence, seller claims≠facts
+
+  source_suitability:
+    label: Source suitability matrix
+    level: SYSTEM_LOCKED
+    default: policies.yaml#source_suitability
+    reason: a source proves only what it is qualified to prove
+
+  loadout.final_collection_contract:
+    label: Final collection contract (3-6)
+    level: SYSTEM_LOCKED
+    default: 3-6 products
+    reason: >
+      the loadout IS a curated set; want a bigger catalog? that is an expanded
+      shortlist in the report, never a bigger final collection
+
+  evaluator_independence:
+    label: Fresh evaluator independence (L4)
+    level: SYSTEM_LOCKED
+    default: fresh subagent, sanitized dossier
+    reason: the generator may never grade its own work
+
+  system_limits:
+    label: Loop safety ceilings
+    level: SYSTEM_LOCKED
+    default: policies.yaml#system_limits
+    reason: >
+      "loop until X" means attempt X within deterministic ceilings
+      (max rounds, stagnation detection, budgets) — never run forever
+
+# ── behavioral presets: convenience bundles, never separate logic paths ────
+presets:
+  FAST_SCAN:
+    research_depth: FAST
+    community_strength: LIGHT
+    supplier_depth: LIGHT
+    opportunity_research.max_research_rounds: 1
+    market_discovery.max_research_rounds: 1
+    product_anchored.max_research_rounds: 1
+  BALANCED: {}
+  DEEP_INSIDER:
+    research_depth: DEEP
+    community_strength: VERY_STRONG
+    open_discovery: HIGH
+    niche_loadout.discovery_product_target: 15
+  BLUE_OCEAN:
+    open_discovery: HIGH
+    corpus_influence: STRONG
+    market_discovery.breadth: BROAD
+    market_discovery.diversity: HIGH
+  TREND_SCOUT:
+    trends: STRONG
+    market_discovery.breadth: BROAD
+  EVIDENCE_MAX:
+    research_depth: EXHAUSTIVE
+    community_strength: VERY_STRONG
+    contradiction_strength: STRONG
+  STORE_BUILDER:
+    niche_loadout.discovery_product_target: 20
+    niche_loadout.final_product_target: 6
+    report_angle_count: 8
+    supplier_depth: DEEP
+  PRODUCT_MARKET_HUNT:
+    product_anchored.market_breadth: BROAD
+    product_anchored.market_bridges_target: 5
+    product_anchored.adjacent_discovery: HIGH
+    product_anchored.meaning_exploration: CREATIVE

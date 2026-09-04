@@ -1,0 +1,19 @@
+{
+  "$id": "product_meaning",
+  "title": "ProductMeaning — one object, competing market meanings; do not make them agree (docs/13)",
+  "type": "object",
+  "required": ["id", "type", "job"],
+  "properties": {
+    "id": {"type": "string"},
+    "type": {"enum": ["FUNCTIONAL", "COLLECTOR", "HOBBY", "RITUAL", "IDENTITY",
+                      "AESTHETIC", "GIFT", "PERFORMANCE", "CONVENIENCE"]},
+    "interaction": {"type": "string"},
+    "lived_situation": {"type": "string"},
+    "job": {"type": "string"},
+    "possible_participants": {"type": "array"},
+    "origin": {"type": "string"},
+    "inference_distance": {"type": "number"},
+    "state": {"enum": ["PROPOSED", "SUPPORTED", "REFINED", "CONTRADICTED"]},
+    "evidence_refs": {"type": "array"}
+  }
+}

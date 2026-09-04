@@ -1,0 +1,26 @@
+{
+ "title": "mechanism",
+ "required": [
+  "id",
+  "name",
+  "hypothesis_id",
+  "supporting_observation_ids",
+  "status"
+ ],
+ "properties": {
+  "status": {
+   "enum": [
+    "PROPOSED",
+    "SUPPORTED",
+    "REJECTED"
+   ],
+   "type": "string"
+  },
+  "id": {
+   "type": "string"
+  },
+  "evidence_refs": {
+   "type": "array"
+  }
+ }
+}

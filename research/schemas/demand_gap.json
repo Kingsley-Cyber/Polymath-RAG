@@ -1,0 +1,17 @@
+{
+  "$id": "demand_gap",
+  "title": "DemandGap — typed mismatch between demand and current supply (docs/17)",
+  "type": "object",
+  "required": ["id", "gap_type", "basis"],
+  "properties": {
+    "id": {"type": "string"},
+    "scope_id": {"type": "string"},
+    "gap_type": {"enum": ["UNMET_NEED", "UNDERSERVED_NEED", "SEGMENT_GAP",
+                          "POSITIONING_GAP", "CURATION_GAP", "EXPERIENCE_GAP",
+                          "VALUE_GAP", "IDENTITY_GAP", "CHANNEL_GAP",
+                          "TECHNOLOGY_GAP"]},
+    "basis": {"type": "string"},
+    "evidence_refs": {"type": "array"},
+    "state": {"enum": ["PROPOSED", "SUPPORTED", "CONTRADICTED"]}
+  }
+}

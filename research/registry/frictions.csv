@@ -1,0 +1,7 @@
+id,activity_id,description
+mic-tether,audio-capture,wired lav or handheld mic restricts movement and gesture
+setup-time,audio-capture,audio rig setup discourages spontaneous recording
+wind-noise,on-the-move-recording,outdoor voice capture ruined by wind
+carry-bulk,gear-transport,gear too bulky for movement-heavy sessions
+access-speed,gear-transport,cannot reach the right item without stopping
+weather-risk,gear-protection,sudden weather threatens electronics

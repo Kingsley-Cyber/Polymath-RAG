@@ -1,0 +1,26 @@
+{
+ "title": "approval",
+ "required": [
+  "candidate_id",
+  "decision"
+ ],
+ "properties": {
+  "candidate_id": {
+   "type": "string"
+  },
+  "decision": {
+   "type": "string",
+   "enum": [
+    "approve",
+    "reject",
+    "hold"
+   ]
+  },
+  "note": {
+   "type": "string"
+  },
+  "approver": {
+   "type": "string"
+  }
+ }
+}

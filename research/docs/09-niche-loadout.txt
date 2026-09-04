@@ -1,0 +1,1859 @@
+Yes. I would not change the purpose of the current CSVs. The missing piece is a thin granularity overlay that lets the existing atomic seeds live under niches, sub-niches, activities, and sub-activities.
+
+The clean mental model is:
+
+NICHE
+  ↓
+SUBNICHE
+  ↓
+CONTEXT / SEGMENT
+  ↓
+ACTIVITY
+  ↓
+SUB-ACTIVITY
+  ↓
+ATOMIC TASK
+  ↓
+BODY / HAND / OBJECT STATE
+  ↓
+FRICTION
+  ↓
+WORKAROUND
+  ↓
+SHARED PREDICATE
+  ↓
+PHYSICAL JOB
+  ↓
+PRODUCT TERRITORY
+  ↓
+PRODUCT SLOT
+  ↓
+SELLABLE PRODUCT
+
+Your existing outdoor_activity_niche_seed is already strongest near the bottom of this chain. It should stay that way. It does not need to become the niche taxonomy.
+
+The key distinction
+
+There are really two kinds of granularity:
+
+AUDIENCE GRANULARITY
+
+runner
+↓
+trail runner
+↓
+ultrarunner
+
+and:
+
+ACTIVITY GRANULARITY
+
+running
+↓
+long-distance running
+↓
+aid-station transition
+↓
+retrieve nutrition while continuing movement
+
+They should be related, but not collapsed into one hierarchy.
+
+A trail runner can perform activities also performed by road runners. A soldier can perform activities that overlap with hikers. A parent-runner may share most running activities with another runner but have additional transition/carry constraints.
+
+So under the hood, this should be graph-like and many-to-many, even if the UI presents a tree.
+
+The minimal addition to the current registry
+
+I would add only two conceptual registry layers.
+
+NicheScope
+ScopeActivity
+
+Everything else you already have can remain where it is.
+
+Conceptually:
+
+niche_scope:
+  scope_id: runner_trail_ultra
+  name: Ultramarathon Trail Runners
+
+  type: SUBNICHE
+
+  parent_scope_id: runner_trail
+
+  status: ACTIVE
+
+And:
+
+scope_activity:
+  scope_id: runner_trail_ultra
+  activity_id: long_distance_running
+
+  relationship: CORE
+
+The same activity can belong to:
+
+road distance runners
+trail runners
+ultrarunners
+soldier endurance athletes
+hybrid athletes
+
+without creating five copies of the activity.
+
+Then activities themselves can descend
+
+Your activity system needs the same capability.
+
+running
+│
+├── training run
+│   ├── easy run
+│   ├── tempo run
+│   ├── interval workout
+│   └── long run
+│
+├── race
+│
+├── warm-up
+│
+├── recovery
+│
+└── equipment preparation
+
+And each activity can break into sub-activities:
+
+LONG RUN
+│
+├── dress / prepare
+├── carry essentials
+├── maintain pace
+├── hydrate
+├── consume nutrition
+├── regulate temperature
+├── handle sweat
+├── navigate
+└── transition to recovery
+
+Then your existing atomic seed grain takes over:
+
+sub-activity:
+carry essentials
+
+atomic task:
+retrieve phone without stopping
+
+context:
+during repetitive running stride
+
+body state:
+arms actively counter-swinging
+
+friction:
+stored object bounces / interrupts movement
+
+workaround:
+tight waistband / handheld carry / belt
+
+shared predicates:
+retain
+access
+carry
+
+physical job:
+retain small object while preserving stride
+
+Now you have an extremely powerful product-generation coordinate.
+
+How the current CSVs fit
+
+The existing files should each remain specialized:
+
+Existing CSV	Role after granularity
+outdoor_activity_niche_seed	Leaf-level atomic situations: task/context/body/friction/workaround/predicate/product-territory reasoning seeds
+activity_taxonomy	Navigation over domains and activities; eventually supports activity/sub-activity relationships or compiles with a small activity-relation layer
+friction_library	Universal reusable friction primitives shared across niches/sub-niches/activities
+search_query_templates	Search grammar; now can be instantiated with niche + sub-niche + activity + atomic task + evidence goal
+scoring_rubric	Unchanged; ranks admissible opportunities
+niche_candidates	Opportunity theses/priors, not the canonical niche hierarchy
+product_territories	Shared physical solution space reached after friction/physical-job reasoning
+source_registry	Research routing by evidence role and potentially niche/activity context
+seasonal_calendar	Cross-cutting context applied to any niche/sub-niche/activity
+
+The important correction is:
+
+niche_candidates.csv should not become your master list of niches.
+
+It's a candidate/opportunity thesis asset.
+
+Your new NicheScope layer owns:
+
+niche
+sub-niche
+intersection scope
+provisional/open-world scope
+Don't modify the 1,386-row outdoor file to force this
+
+Keep it.
+
+Eventually, the registry compiler should support multiple seed packs implementing the same atomic schema:
+
+AtomicActivitySeed
+
+├── outdoor_activity_niche_seed.csv
+├── creator_activity_niche_seed.csv
+├── runner_activity_niche_seed.csv
+├── pet_activity_niche_seed.csv
+├── beauty_activity_niche_seed.csv
+└── ...
+
+You do not need to create those now.
+
+The architectural requirement for registry.py is simply:
+
+Be able to compile multiple sources implementing the same AtomicActivitySeed contract.
+
+Runtime sees one compiled registry regardless of which CSV pack provided the row.
+
+Granularity should dynamically create more opportunity options
+
+This is where it becomes valuable for Niche Loadout.
+
+Start:
+
+RUNNERS
+
+The broad niche might generate:
+
+running apparel
+carry
+hydration
+recovery
+visibility
+
+Descend:
+
+RUNNERS
+↓
+TRAIL RUNNERS
+
+Now you discover:
+
+terrain
+mud
+navigation
+long-duration carry
+weather changes
+foot protection
+nutrition access
+
+Descend differently:
+
+RUNNERS
+↓
+RUN-CLUB / STYLE-ORIENTED RUNNERS
+
+Now:
+
+appearance
+social identity
+current silhouettes
+matching sets
+post-run social transition
+
+Descend:
+
+RUNNERS
+↓
+RUNNER × SOLDIER
+
+Now:
+
+mandatory PT
+formation context
+issued gear
+cold-weather constraints
+visibility rules
+equipment transition
+
+Same root niche.
+
+Completely different physical-product surfaces.
+
+But don't descend just because a narrower label exists
+
+The graph should ask:
+
+Does this split reveal a materially new:
+
+activity?
+context?
+constraint?
+friction?
+workaround?
+insider signal?
+physical job?
+product slot?
+content angle?
+
+If no:
+
+COLLAPSE_TO_PARENT
+
+If yes:
+
+KEEP_BRANCH
+
+This is the right definition of useful granularity.
+
+Not:
+
+“Can I think of another adjective?”
+
+Add OpportunitySurfaceGain
+
+You don't need a final commercial score for this.
+
+Just a deterministic receipt describing what changed.
+
+Example:
+
+granularity_split:
+  parent:
+    runners
+
+  child:
+    trail_runners
+
+  delta:
+    new_activities: 4
+    new_contexts: 3
+    new_frictions: 5
+    new_physical_jobs: 4
+    new_product_slots: 6
+    new_insider_signals: 3
+
+  disposition:
+    KEEP_BRANCH
+
+Compare:
+
+granularity_split:
+  parent:
+    recreational_runners
+
+  child:
+    recreational_runners_age_31_32
+
+  delta:
+    new_activities: 0
+    new_contexts: 0
+    new_frictions: 0
+    new_physical_jobs: 0
+    new_product_slots: 0
+
+  disposition:
+    COLLAPSE_TO_PARENT
+
+That prevents persona/taxonomy bloat.
+
+Sub-activities are arguably even more valuable than sub-niches
+
+This is a key point.
+
+A sub-niche gives you a different population.
+
+A sub-activity gives you a different lived moment.
+
+Physical products are often caused more directly by the second.
+
+For example:
+
+TRAIL RUNNER
+
+is useful.
+
+But:
+
+trail runner
+↓
+long run
+↓
+consume nutrition without stopping
+
+is where you find:
+
+quick-access storage
+soft flasks
+gel retention
+one-hand opening mechanisms
+waste retention
+
+So for physical-product generation:
+
+SubNiche
+      +
+SubActivity
+
+is often a very strong combination.
+
+This fits perfectly with ExperienceProfiles
+
+The profile should receive a granular scope, not merely:
+
+"You are a runner."
+
+Better:
+
+experience_profile:
+  niche: runners
+
+  subniche:
+    trail_distance_runners
+
+  activity:
+    long_run
+
+  subactivity:
+    carry_and_access_nutrition
+
+  context:
+    hot_weather
+
+  experience_level:
+    high_frequency
+
+Then the lived-experience pass can reason about a bounded situation.
+
+That's much less likely to hallucinate vague personas.
+
+And life intersections remain orthogonal
+
+This is where the later job / lifestyle / relational idea still helps.
+
+Don't create a hierarchy like:
+
+Runner
+↓
+Soldier runner
+↓
+Married soldier runner
+↓
+Married soldier runner who lifts
+
+Instead:
+
+PRIMARY SCOPE
+
+Runner
+→ Trail Runner
+→ Long Run
+→ Nutrition Access
+
++
+
+OPTIONAL LIFE INTERSECTION
+
+Role:
+Soldier
+
+Lifestyle:
+Strength training
+
+Relational:
+Dog owner
+
+Only activate an intersection if it changes the opportunity surface.
+
+So hierarchy gives you vertical granularity.
+
+Life dimensions give you horizontal granularity.
+
+Both feed the ExperienceProfile.
+
+The Niche Loadout graph should therefore have two expansion operators
+VERTICAL EXPANSION
+niche
+→ sub-niche
+→ activity
+→ sub-activity
+→ atomic task
+
+and:
+
+LATERAL EXPANSION
+role/job
+lifestyle/hobby
+household/relationship
+context/season
+
+Then:
+
+Vertical scope
++
+selected lateral dimensions
+↓
+ExperienceProfile
+
+That's much richer than either approach alone.
+
+The controlled loop should not explore everything
+
+For one Niche Loadout run, I would make the defaults something like:
+
+granularity_budget:
+
+  subniche_candidates:
+    consider: 4-8
+    retain: 2-4
+
+  activity_branches_per_scope:
+    consider: 4-8
+    retain: 2-4
+
+  subactivity_branches:
+    retain_when_opportunity_gain: true
+
+  life_intersections:
+    consider: 4-6
+    simulate: 1-2
+
+  experience_profiles:
+    target: 3
+    maximum: 4
+
+These should be policy values, not hard-coded law.
+
+The principle is more important:
+
+Generate broadly, simulate narrowly.
+
+You want enough branching to reveal interesting opportunity surfaces, then quickly prune.
+
+Field research can add new branches
+
+This remains essential.
+
+Hermes starts with:
+
+runner
+→ recreational distance
+
+Then comments repeatedly reveal:
+
+run-club runners
+
+with materially different:
+
+style preferences
+social rituals
+post-run activities
+product preferences
+
+Create:
+
+SUBNICHE_CANDIDATE
+
+and use it provisionally.
+
+Likewise comments might reveal:
+
+"after long runs I..."
+
+and expose a new recurring:
+
+SUBACTIVITY_CANDIDATE
+
+Current run can explore it.
+
+Registry Maintenance later decides if it becomes permanent.
+
+That is how the CSV registry should grow
+
+Opportunity execution emits:
+
+SUBNICHE_CANDIDATE
+ACTIVITY_CANDIDATE
+SUBACTIVITY_CANDIDATE
+ATOMIC_TASK_CANDIDATE
+
+SQLite accumulates them.
+
+Registry Maintenance asks:
+
+Does this recur?
+Is it distinct?
+Does it materially improve opportunity reasoning?
+Can existing concepts represent it?
+
+Then:
+
+EXISTING
+ALIAS
+MERGE
+HOLD
+PROMOTE
+REJECT
+
+If promoted, it enters the appropriate registry representation/new seed pack.
+
+So your system naturally gets more granular over time because real research keeps discovering distinctions that matter commercially.
+
+The best long-term registry isn't a giant niche tree
+
+It should look conceptually like:
+
+             NICHE SCOPES
+                 │
+         many-to-many links
+                 │
+              ACTIVITIES
+                 │
+              subactivity
+                 │
+             ATOMIC TASKS
+                 │
+        ┌────────┼─────────┐
+        ▼        ▼         ▼
+    friction  workaround  predicates
+        │        │         │
+        └────────┼─────────┘
+                 ▼
+           PHYSICAL JOBS
+                 │
+         PRODUCT TERRITORIES
+
+Then runtime composes:
+
+scope
++
+activity path
++
+context
++
+life intersection
+
+for the current investigation.
+
+You get tremendous diversity without creating millions of permanent persona records.
+
+What I would give Fable
+
+Preserve the current CSV responsibilities. Add granularity as a thin graph overlay rather than rewriting outdoor_activity_niche_seed.csv. Model audience granularity through NicheScope (NICHE, SUBNICHE, provisional/intersection scopes) and activity granularity through activities → sub-activities → atomic tasks. Bind scopes to activities many-to-many; the same activity can belong to multiple niches/sub-niches. Treat the existing 1,386-row seed file as an AtomicActivitySeed pack representing leaf-level situations, not as the canonical niche hierarchy.
+
+During Niche Loadout, explore both vertical granularity (niche → sub-niche → activity → sub-activity → atomic task) and bounded lateral intersections (role/job, lifestyle/hobby, relational/household, season/context). Retain a branch only when increased granularity creates materially new activities, constraints, frictions, workarounds, insider signals, physical jobs, ProductSlots, or content angles. Generate broadly and prune aggressively before lived-experience simulation.
+
+Allow live comments/reviews/transcripts to create SUBNICHE_CANDIDATE, ACTIVITY_CANDIDATE, SUBACTIVITY_CANDIDATE, and ATOMIC_TASK_CANDIDATE objects. Use them provisionally during the current run; never mutate the active registry. The separate Registry Maintenance Loop aggregates these candidates across runs, deduplicates and tests their reasoning usefulness, then promotes approved concepts into future registry snapshots. registry.py should support multiple same-schema AtomicActivitySeed packs as the registry diversifies beyond outdoor.
+
+o φ searched the strongest frontier instead of wandering. It also kept evidence strength, inference confidence, and prediction probability separate instead of collapsing everything into one confidence number.
+
+That is the piece the current NICHE_LOADOUT design is almost at, but not fully.
+
+Right now it has excellent semantics:
+
+niche
+→ subniche
+→ activity
+→ subactivity
+→ lived moment
+→ ExperienceProfiles
+→ abduction
+→ comments/current field
+→ correction
+→ physical jobs
+→ ProductSlots
+→ 3–6 products
+
+What it still needs is a mathematical search-and-selection layer controlling which branches are worth exploring, which evidence question should be researched next, and which 3–6 products constitute the best set.
+
+I would add three formulas. Then I would consider it at or above the earlier architecture.
+
+1. Frontier Utility: decide where reasoning should go next
+
+θ can propose lots of things:
+
+trail runners
+run-club runners
+runner × soldier
+runner × lifter
+hot-weather running
+race day
+post-run recovery
+nutrition access
+stride interference
+...
+
+φ should not explore them equally.
+
+Give every proposed reasoning branch a deterministic Frontier Utility:
+
+U(b∣s)=αΔJ+βΔF+γΔP+δI+ϵX+ζC−λR−μD−νK
+
+Where conceptually:
+
+ΔJ = new physical-job information
+ΔF = new friction/workaround information
+ΔP = new ProductSlot information
+
+I  = insider specificity
+X  = cross-domain transfer strength
+C  = commerce reachability
+
+R  = redundancy with already explored branches
+D  = unsupported inference distance
+K  = expected research cost
+
+This is not an opportunity score.
+
+It's:
+
+“How valuable is it to think one step further down this branch?”
+
+That makes your granularity system mathematically controlled.
+
+For example:
+
+RUNNERS
+├─ Trail runners              U=.81 → explore
+├─ Runner × Soldier           U=.76 → explore
+├─ Runners aged 31–32         U=.08 → prune
+├─ Runner × Lifter            U=.64 → maybe
+└─ Runner × Gamer             U=.17 → prune
+
+And the same thing works for subactivities:
+
+long run
+├─ nutrition access           .84
+├─ phone retention            .78
+├─ post-run wet clothing      .63
+└─ tying shoes again          .19
+
+This gives you what the earlier design called highest-value frontier search.
+
+That is much better than arbitrary max_depth=3.
+
+You still keep maximum depth as a safety budget, but marginal opportunity gain determines whether a branch deserves another hop.
+
+2. Value of Information: decide what Hermes researches next
+
+This may be the single most valuable mathematical addition.
+
+Suppose Round 1 produces four hypotheses:
+
+H1 high-split shorts solve stride interference
+H2 belt solves phone bounce
+H3 cooling accessory solves heat discomfort
+H4 recovery carrier solves wet-clothing transition
+
+You do not want four equally expensive research loops.
+
+Ask:
+
+Which unanswered question, if researched, is most likely to change our decision?
+
+That's Value of Information / Bayesian experimental design.
+
+Formally, the ideal version is expected information gain:
+
+EIG(q)=H(B)−E
+r∼q
+	​
+
+[H(B∣r)]
+
+Meaning:
+
+uncertainty before query
+-
+expected uncertainty after query
+
+Then account for cost and decision importance:
+
+Priority(q)=
+ResearchCost(q)
+EIG(q)×DecisionImpact(q)×GapImportance(q)
+	​
+
+
+Now your comments loop gets very intelligent.
+
+Imagine:
+
+Question A:
+"Do runners actually complain about stride restriction?"
+
+High decision impact
+Low research cost
+High evidence gap
+
+→ research immediately
+
+
+Question B:
+"What exact fabric blend do suppliers offer?"
+
+Hypothesis isn't even behaviorally validated yet
+
+→ defer
+
+
+Question C:
+"Is this aesthetic currently spreading among run clubs?"
+
+Could distinguish performance hypothesis
+from fashion/trend hypothesis
+
+→ high information value
+
+This is how you get short loops without shallow reasoning.
+
+The agent doesn't research less because you've arbitrarily capped it.
+
+It researches less because it chooses the questions with the highest expected information gain first.
+
+That is a substantial difference.
+
+Initially, don't pretend your probabilities are perfectly calibrated. Use a deterministic proxy:
+
+expected_source_yield
+× missing_role_importance
+× decision_impact
+÷ expected_cost
+
+Your SQLite telemetry can eventually learn:
+
+Reddit + WORKAROUND_EVIDENCE
+→ historically high yield
+
+Amazon + PRODUCT_COMPLAINT
+→ historically high yield
+
+Alibaba + FRICTION_EVIDENCE
+→ historically useless
+
+Then those expected-yield estimates become empirical.
+
+That becomes actual learning from execution, rather than a static prompt.
+
+3. Portfolio optimization: choose the 3–6 products as a set
+
+This is the other major mathematical opportunity.
+
+Right now you can rank products individually.
+
+But your business model isn't:
+
+find the #1 product.
+
+It's:
+
+construct the strongest 3–6-item niche loadout.
+
+Those are different optimization problems.
+
+If the six individually highest-ranked products are:
+
+split shorts
+2-in-1 shorts
+compression shorts
+lightweight shorts
+running shorts with pocket
+race shorts
+
+you technically found six strong products and built a terrible collection.
+
+So optimize the set.
+
+Use a submodular-style collection objective:
+
+F(S)=
+j
+∑
+	​
+
+w
+j
+	​
+
+min(1,C
+j
+	​
+
+(S))+
+r
+∑
+	​
+
+v
+r
+	​
+
+min(1,C
+r
+	​
+
+(S))+κ
+p∈S
+∑
+	​
+
+Q(p)−λ
+i<j
+∑
+	​
+
+Sim(p
+i
+	​
+
+,p
+j
+	​
+
+)
+
+where:
+
+S      = selected 3–6 products
+
+Cj(S)  = coverage of physical job j
+Cr(S)  = coverage of collection role r
+
+Q(p)   = individual product quality
+
+Sim    = redundancy between products
+
+So the algorithm rewards:
+
+physical-job coverage
+collection-role coverage
+strong individual products
+
+and penalizes:
+
+redundancy
+
+For example, a better runner collection might become:
+
+INSIDER GEM
+high-split running shorts
+→ stride freedom
+
+UTILITY
+low-bounce running belt
+→ retain/access essentials
+
+DISCOVERY
+specific physical anti-chafe product
+→ reduce skin/fabric interference
+
+COMPLEMENT
+ventilated wet-gear carrying solution
+→ post-run transition
+
+Four products.
+
+Four related lived moments.
+
+Several physical jobs.
+
+One coherent person.
+
+That's substantially better than four products independently scoring 88/100.
+
+This is the machine-learning/math concept closest to submodular maximization / diversity-aware ranking. You could also implement a simpler Maximum Marginal Relevance formulation initially. I would not introduce anything heavier yet.
+
+Then add typed reasoning modes back in
+
+There was another reason the earlier design felt different: it wasn't asking one generic model pass to “reason.”
+
+The previous architecture explicitly separated:
+
+DEDUCTIVE
+INDUCTIVE
+ABDUCTIVE
+ANALOGICAL
+PREDICTIVE
+
+reasoning.
+
+That should survive here, but in a very practical way.
+
+For NICHE_LOADOUT:
+
+ABDUCTION
+"What hidden lived friction might exist?"
+
+ANALOGY
+"Where else does this physical structure occur?"
+
+INDUCTION
+"What recurring pattern is actually appearing
+across independent comments/reviews?"
+
+DEDUCTION
+"Given ecommerce sellability rules,
+can this candidate legally pass?"
+
+PREDICTION
+"Does current evidence support this being
+an emerging product/style behavior?"
+
+That is stronger than:
+
+LLM_REASONING
+
+because each mode has a different contract and different evidence requirements.
+
+Your earlier Reasoning Seed work explicitly anticipated functional, psychological/cultural, and capability-driven opportunity paths rather than forcing every opportunity through a single friction chain.
+
+That is also important for this new mode.
+
+One thing I would NOT do: fake Bayesian precision
+
+You could mathematically define:
+
+P(product will succeed) = .783
+
+right now.
+
+I wouldn't.
+
+You do not yet have enough calibrated historical outcomes for that probability to mean what it claims.
+
+Keep the earlier decomposed architecture:
+
+behavioral support
+mechanism support
+field/currentness support
+commercial support
+supplier support
+
+The previous reasoning design explicitly warned against collapsing culturally supported but commercially weak hypotheses into a single confidence value.
+
+Once you have many real:
+
+runs
+→ recommendations
+→ ads
+→ clicks
+→ conversion
+→ revenue
+→ failures
+
+then you can train/calibrate:
+
+P(commercial success∣features)
+
+with actual data.
+
+Until then, use mathematical ranking and search control—not fake predictive probabilities.
+
+And there's a beautiful role for your three life dimensions
+
+The job / lifestyle / household idea can become mathematical too.
+
+Don't ask:
+
+Should Runner × Soldier be a persona?
+
+Ask:
+
+Gain(Soldier∣Runner)
+
+Meaning:
+
+When Soldier is added to Runner, how much does the opportunity surface change?
+
+Approximate it deterministically:
+
+Gain(L∣N)=w
+a
+	​
+
+ΔActivities+w
+f
+	​
+
+ΔFrictions+w
+j
+	​
+
+ΔJobs+w
+s
+	​
+
+ΔSlots+w
+i
+	​
+
+ΔInsiderSignals
+
+So:
+
+Runner × Soldier
+new activities = 3
+new constraints = 5
+new physical jobs = 4
+new slots = 6
+
+→ HIGH conditional gain
+→ activate ExperienceProfile
+
+while:
+
+Runner × Gamer
+new activities = 0
+new frictions = 0
+new physical jobs = 0
+
+→ LOW gain
+→ don't activate
+
+This is the formal version of:
+
+Add another perspective only if it changes the opportunity surface.
+
+Later, once you have sufficient telemetry, you can investigate true statistical measures such as conditional mutual information. Do not pretend to compute mutual information from a handful of semantic examples now.
+
+The complete system becomes much cleaner
+                     NICHE
+                       ↓
+              GRANULARITY FRONTIER
+                       ↓
+            θ proposes candidate branches
+                       ↓
+              FRONTIER UTILITY U(b)
+                 /              \
+              prune            explore
+                                ↓
+                      EXPERIENCE PROFILES
+                                ↓
+                       LIVED EXPERIENCE R1
+                                ↓
+                abductive + analogical hypotheses
+                                ↓
+                       EVIDENCE GAPS
+                                ↓
+                     VALUE OF INFORMATION
+                                ↓
+                   highest-value query first
+                                ↓
+                       CURRENT FIELD
+                                ↓
+                 inductive pattern detection
+                                ↓
+                       LIVED EXPERIENCE R2
+                                ↓
+                         PRODUCT SLOTS
+                                ↓
+                         candidates
+                                ↓
+                  sellability / evidence gates
+                                ↓
+                     candidate quality Q(p)
+                                ↓
+                PORTFOLIO SET OPTIMIZATION
+                                ↓
+                      BEST 3–6 LOADOUT
+
+That's the architecture I would lock.
+
+My assessment
+
+The current semantic design is already extremely strong. The earlier system felt “weirdly good” because we eventually added a layer that said:
+
+Don't just describe a reasoning graph. Search it intelligently.
+
+The Niche Loadout design needs the same treatment.
+
+The three formal pieces I would add are:
+
+Frontier Utility for where to think next, Value of Information for what to research next, and diversity/coverage optimization for which 3–6 products belong together.
+
+Once those are present, I would consider this at least at the same level as the original latent-opportunity reasoning design, and arguably stronger, because now the mathematical controller governs not just a single bridge to a product, but a granular lived-experience search that culminates in a coherent physical-product portfolio.
+
+The formulaic insight is essentially:
+
+θ generates the possibility space. φ turns that possibility space into an optimization problem.
+
+The desired reaction is not merely:
+
+“These are good hiking products.”
+
+It is:
+
+“Whoever built this has clearly dealt with hiking with kids / a wet-weather FTX / trying to run 10 miles with a phone bouncing around.”
+
+That requires optimizing for community-native specificity.
+
+The key shift is:
+
+NICHE LOADOUT
+≠
+products relevant to a demographic
+
+NICHE LOADOUT
+=
+products selected from an accurate model
+of how people in that community actually live
+the activity
+Add a first-class CommunityWorldModel
+
+Before products, the mode should build:
+
+COMMUNITY WORLD MODEL
+
+WHO
+├─ niche
+├─ sub-niches
+├─ experience levels
+├─ meaningful intersections
+└─ relational groups
+
+WHAT THEY DO
+├─ activities
+├─ sub-activities
+├─ atomic tasks
+├─ rituals
+├─ preparation
+├─ transitions
+└─ recovery / maintenance
+
+WHERE / WHEN
+├─ environments
+├─ seasons
+├─ duration
+├─ social setting
+├─ work vs recreation
+└─ abnormal/extreme contexts
+
+WHAT THEY DEAL WITH
+├─ constraints
+├─ recurring annoyances
+├─ accepted inconveniences
+├─ workarounds
+├─ equipment interactions
+├─ failure modes
+└─ tradeoffs
+
+WHAT THEY VALUE
+├─ convenience
+├─ performance
+├─ comfort
+├─ aesthetics
+├─ identity
+├─ discretion
+├─ durability
+└─ status / belonging
+
+HOW INSIDERS TALK
+├─ vocabulary
+├─ shorthand
+├─ recurring jokes
+├─ complaints
+├─ comparisons
+└─ "everyone knows..." truths
+
+Then products are downstream.
+
+Experience level needs to be first-class
+
+Your running example makes this obvious.
+
+“Runner” is too broad.
+
+RUNNERS
+├─ beginner
+├─ developing
+├─ intermediate
+├─ experienced
+├─ high-mileage
+└─ competitive
+
+Those people don't necessarily have the same problems.
+
+A beginner might care about:
+
+what to carry
+chafing
+phone storage
+hydration confusion
+comfort
+basic recovery
+
+A high-mileage runner might care about:
+
+bounce after 90 minutes
+nutrition access without breaking rhythm
+sweat saturation
+fabric interference
+toe/foot management
+weather adaptation
+high-volume recovery
+
+A 3-mile runner and someone regularly running 15 miles should not receive the same loadout merely because both are RUNNER.
+
+So add:
+
+experience_state:
+  level:
+    BEGINNER | DEVELOPING | INTERMEDIATE | ADVANCED | SPECIALIST
+
+  activity_volume:
+  duration:
+  frequency:
+  environment:
+
+Don't infer expertise solely from years. Actual activity pattern matters more.
+
+Activities should have a journey
+
+This is another big authenticity multiplier.
+
+For hiking:
+
+BEFORE
+├─ route planning
+├─ weather
+├─ packing
+├─ loading vehicle
+└─ dressing
+
+ARRIVAL
+├─ unload
+├─ organize
+├─ children/friends regroup
+└─ last-minute gear changes
+
+DURING
+├─ move
+├─ carry
+├─ access
+├─ eat
+├─ hydrate
+├─ navigate
+├─ regulate temperature
+├─ manage children/pets
+└─ handle unexpected conditions
+
+BREAKS / TRANSITIONS
+├─ remove layers
+├─ retrieve food
+├─ reorganize
+├─ treat discomfort
+└─ pack things again
+
+AFTER
+├─ dirty/wet equipment
+├─ transportation
+├─ cleanup
+├─ drying
+├─ storage
+└─ recovery
+
+Generic ecommerce concentrates almost entirely on DURING.
+
+Insider-level collections often find excellent products in:
+
+BEFORE
+TRANSITION
+AFTER
+
+because those are less obvious.
+
+Social configuration matters too
+
+“Hiking” changes when the participant configuration changes.
+
+solo hiking
+hiking with partner
+hiking with friends
+hiking with young children
+hiking with older children
+hiking with dog
+organized group hike
+military movement / FTX
+
+These are not cosmetic personas.
+
+They change the physical system.
+
+For example:
+
+HIKING SOLO
+→ optimize your own carry/access
+
+HIKING WITH CHILDREN
+→ additional objects
+→ unpredictable stops
+→ snack access
+→ spare clothing
+→ hand availability
+→ carrying someone else's equipment
+→ safety/visibility
+→ boredom
+→ cleanup
+
+HIKING WITH FRIENDS
+→ shared equipment
+→ social stops
+→ group organization
+→ food/comfort
+→ photography
+
+ARMY FTX
+→ issued equipment constraints
+→ camouflage/discretion
+→ mandatory load
+→ extended duration
+→ field hygiene
+→ sleep
+→ cold/wet exposure
+→ compatibility with issued gear
+
+That is why:
+
+Hiking × Family
+
+deserves its own opportunity surface.
+
+Add LivedSituation
+
+I think this should become one of the most important semantic objects.
+
+lived_situation:
+  niche: hikers
+
+  subniche:
+    family_hikers
+
+  experience_level:
+    intermediate
+
+  activity:
+    day_hike
+
+  moment:
+    mid_hike_break
+
+  environment:
+    warm_weather
+
+  participants:
+    - adult
+    - young_child
+
+  body_state:
+    - warm
+    - carrying_pack
+    - hands_partially_occupied
+
+  object_state:
+    - snacks_inside_pack
+    - child's_layer_removed
+    - water_needed
+
+  constraints:
+    - frequent_interruptions
+    - limited_free_hands
+    - shared_supplies
+
+  inferred_frictions:
+    - repeated_pack_access
+    - loose_item_management
+
+  authority:
+    SIMULATED_HYPOTHESIS
+
+Then comments/current evidence correct it.
+
+A niche loadout should be built from several LivedSituations, not from one description of the niche.
+
+The strongest products often bridge several moments
+
+This is a useful product-quality criterion.
+
+Suppose a product helps:
+
+packing
++
+during-activity access
++
+post-activity organization
+
+That's potentially stronger than something useful for five seconds.
+
+Call it:
+
+MOMENT_COVERAGE
+
+Product A:
+
+1 niche moment
+
+Product B:
+
+4 recurring niche moments
+
+B potentially deserves more collection priority, assuming the jobs are real.
+
+Add an InsiderFidelity objective
+
+This is where I would formalize the “damn, they understand us” goal.
+
+Not necessarily one fake percentage, but a deterministic coverage receipt.
+
+Conceptually:
+
+IF(L)=w
+s
+	​
+
+S+w
+a
+	​
+
+A+w
+r
+	​
+
+R+w
+c
+	​
+
+C+w
+l
+	​
+
+L+w
+e
+	​
+
+E+w
+p
+	​
+
+P−λG
+
+Where:
+
+S = situation specificity
+A = activity / atomic-task coverage
+R = ritual/workaround realism
+C = constraint fidelity
+L = insider-language grounding
+E = experience-level differentiation
+P = product-to-lived-job traceability
+
+G = genericness penalty
+
+The exact weights should remain configurable until you have real performance data.
+
+But the important thing is what it evaluates.
+
+Genericness deserves an explicit penalty
+
+This could substantially improve output.
+
+A loadout should lose points when products would appear in almost any shallow “Top 10 X Products” article.
+
+For hiking:
+
+backpack
+boots
+water bottle
+flashlight
+jacket
+
+may all be relevant.
+
+But without a deeper reason, the collection is generic.
+
+Compare:
+
+PRODUCT:
+water bottle
+
+WHY:
+hikers need water
+
+versus:
+
+PRODUCT:
+specific accessible hydration mechanism
+
+WHY:
+family hikers repeatedly stop because children
+need water while the adult carrying shared gear
+already has limited hand availability
+
+The latter has a traceable lived situation.
+
+So require every loadout item to answer:
+
+Why THIS product?
+Why THIS sub-niche?
+Why THIS activity?
+Why THIS moment?
+Why THIS physical job?
+Why now/currently?
+
+If those answers collapse to:
+
+"because runners use it"
+
+penalize heavily.
+
+Add an Outsider Obviousness dimension
+
+This complements Insider Fidelity.
+
+LOW outsider obviousness
+= valuable insider gem
+
+HIGH outsider obviousness
+= generic category product
+
+You still need some obvious utility products.
+
+But your strongest collections should contain at least one or two products where:
+
+Someone outside the niche would probably not have thought to recommend this.
+
+Your heated inserts are a perfect example:
+
+Generic:
+"Buy warmer gloves."
+
+Insider:
+"Keep the required outer system,
+replace/augment the hidden layer."
+
+That should score very high on:
+
+INSIDER_SPECIFICITY
+SILENT_UPGRADE
+LOW_OUTSIDER_OBVIOUSNESS
+Comments should be used to acquire culture, not only complaints
+
+This is another important refinement.
+
+Your comment research should extract:
+
+FRICTIONS
+WORKAROUNDS
+PRODUCT REQUESTS
+PRODUCT TRENDS
+
+but also:
+
+INSIDER_LANGUAGE
+RITUALS
+NORMS
+TRADEOFFS
+JOKES
+BEGINNER_MISTAKES
+EXPERT_PREFERENCES
+ACCEPTED_SUFFERING
+STATUS SIGNALS
+"EVERYONE KNOWS" TRUTHS
+
+Example:
+
+beginner:
+"Why don't people just use X?"
+
+experienced members:
+"Because once you're 10 miles in..."
+
+That difference is extremely valuable.
+
+It reveals experience-conditioned truth.
+
+Capture disagreements instead of averaging them
+
+A community isn't one person.
+
+For example:
+
+RUNNING SHORTS
+
+Group A:
+pockets are essential
+
+Group B:
+pockets ruin minimal feel / create bounce
+
+Group C:
+style matters heavily
+
+Group D:
+only performance matters
+
+Do not resolve that into:
+
+“Runners like functional shorts.”
+
+Instead produce:
+
+PREFERENCE CLUSTERS
+
+and possibly different sub-niche loadouts.
+
+This makes the site feel much more credible because actual communities contain tradeoffs.
+
+Product collections should therefore be scope-specific
+
+Instead of one:
+
+RUNNER COLLECTION
+
+you can have:
+
+Runner Essentials
+Beginner Running
+Long-Distance Running
+Hot-Weather Running
+Run-Club Running
+Runner × Lifter
+Runner × Dog Owner
+Race-Day Loadout
+Post-Run Recovery
+
+Not every one needs its own storefront.
+
+But they can be collection/content objects underneath the same niche storefront.
+
+That gives your commerce structure depth.
+
+The 3–6 products should cover a mini-story
+
+This is another way to create community-native assortment.
+
+Instead of independently picking four great products, compose:
+
+PRODUCT 1
+solves a recurring obvious friction
+
+PRODUCT 2
+solves an insider-only friction
+
+PRODUCT 3
+is a current/emerging discovery
+
+PRODUCT 4
+supports transition/recovery
+
+PRODUCT 5
+optional identity/social product
+
+For a family hiking loadout, the collection could intentionally span:
+
+PREPARATION
+DURING MOVEMENT
+CHILD INTERRUPTION
+WEATHER CHANGE
+AFTER-HIKE CLEANUP
+
+Now the collection tells a lived story.
+
+That is much harder to imitate with generic dropshipping research.
+
+Add one final verifier: Community Skeptic
+
+Your L4 fresh evaluator should get a specialized prompt for this mode:
+
+Assume the storefront owner is an outsider trying to sound like an insider. Find the places where the collection exposes them.
+
+Evaluate:
+
+generic recommendations
+incorrect terminology
+implausible lived situations
+fake specificity
+missing obvious community constraint
+products insiders wouldn't actually use
+beginner advice presented as expert insight
+wrong experience-level assumptions
+forced family/job/hobby intersection
+contradictions between products
+
+Return:
+
+PASS
+REVISE
+FAIL_INSIDER_FIDELITY
+
+This could be extremely useful.
+
+Because the target isn't only factual correctness.
+
+It's:
+
+Would someone who actually participates in this activity notice that we don't understand it?
+
+I would make this the actual Niche Loadout success contract
+
+Not merely:
+
+3–6 sourceable products found
+
+Instead:
+
+LOADOUT_READY
+requires:
+
+✓ coherent niche/sub-niche scope
+✓ meaningful experience level/context
+✓ enough lived-situation coverage
+✓ actual field evidence
+✓ insider-language/context grounding
+✓ at least one non-obvious insider product signal
+✓ multiple distinct physical jobs
+✓ 3–6 sellable physical products
+✓ collection coherence
+✓ product → lived-moment traceability
+✓ Community Skeptic passes
+
+Then you get what you're describing.
+
+The deeper objective
+
+Your competitive advantage should not be:
+
+“We have products for hikers.”
+
+It should be:
+
+“We have mapped the little situations that only become obvious after you have actually done this activity repeatedly.”
+
+Those little situations are where products come from:
+
+the thing you always have to stop to retrieve
+
+the layer everyone quietly replaces
+
+the equipment everyone modifies
+
+the bag that works until you bring children
+
+the clothing cut experienced runners migrate toward
+
+the item nobody buys until their first long-distance attempt
+
+the workaround soldiers use because the issued solution technically works but practically sucks
+
+the object that becomes annoying only after two hours
+
+the thing beginners overpack
+
+the thing experienced participants refuse to carry
+
+That is the real insider-commerce signal.
+
+So I would make CommunityWorldModel → LivedSituations → Experience-conditioned field correction → Insider Fidelity the centerpiece of the mode.
+
+The product finder is downstream of that.
+
+If you nail that layer, the storefront should feel less like “someone researched hiking products” and more like “someone who hikes built this collection.”

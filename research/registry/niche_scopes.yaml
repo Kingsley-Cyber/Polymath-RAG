@@ -1,0 +1,22 @@
+# Granularity overlay (docs/09): AUDIENCE granularity (NicheScope) is separate
+# from ACTIVITY granularity (activities -> sub-activities -> atomic tasks in
+# the seed packs). Many-to-many underneath, tree in presentation. This file is
+# a STARTER — growth happens via SUBNICHE/ACTIVITY/SUBACTIVITY candidates
+# through the maintenance lifecycle, never by a run editing this file.
+scopes:
+  - {scope_id: runners, name: Runners, type: NICHE, parent: null, status: ACTIVE}
+  - {scope_id: runners_trail, name: Trail Runners, type: SUBNICHE, parent: runners, status: ACTIVE}
+  - {scope_id: runners_trail_ultra, name: Ultramarathon Trail Runners, type: SUBNICHE, parent: runners_trail, status: ACTIVE}
+  - {scope_id: runners_runclub, name: Run-Club / Style-Oriented Runners, type: SUBNICHE, parent: runners, status: ACTIVE}
+  - {scope_id: hikers, name: Hikers, type: NICHE, parent: null, status: ACTIVE}
+  - {scope_id: hikers_family, name: Family Hikers, type: SUBNICHE, parent: hikers, status: ACTIVE}
+  - {scope_id: creators, name: Content Creators, type: NICHE, parent: null, status: ACTIVE}
+  - {scope_id: creators_walk, name: Walk-and-Talk Creators, type: SUBNICHE, parent: creators, status: ACTIVE}
+scope_activity:   # many-to-many; same activity serves many scopes
+  - {scope_id: runners, activity_id: act-walking-neighborhood-walking, relationship: ADJACENT}
+  - {scope_id: hikers_family, activity_id: act-walking-neighborhood-walking, relationship: CORE}
+life_dimensions:  # LATERAL expansion axes — orthogonal, never a hierarchy
+  role: [soldier, nurse, tradesperson, teacher, remote_worker]
+  lifestyle: [strength_training, film_photography, gardening, analog_tools]
+  relational: [parent_young_children, dog_owner, caregiver]
+  context: [hot_weather, cold_wet, night, travel]

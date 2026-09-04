@@ -1,0 +1,15 @@
+{
+  "$id": "product_claim",
+  "title": "ProductClaim — quarantined user/seller positioning; guides research, never gets evidence authority for free (docs/13)",
+  "type": "object",
+  "required": ["id", "claim", "origin", "state"],
+  "properties": {
+    "id": {"type": "string"},
+    "claim": {"type": "string"},
+    "origin": {"enum": ["USER", "SELLER", "MARKETPLACE", "CORPUS", "COMMUNITY"]},
+    "claim_type": {"enum": ["FUNCTION", "HEALTH", "CULTURAL", "MATERIAL",
+                            "ORIGIN", "PERFORMANCE", "MARKET"]},
+    "state": {"enum": ["UNVERIFIED", "SUPPORTED", "PARTIAL", "CONTRADICTED"]},
+    "evidence_refs": {"type": "array"}
+  }
+}

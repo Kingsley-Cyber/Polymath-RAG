@@ -1,0 +1,1063 @@
+Yes. I would make this a **third research mode**, upstream of both `OPPORTUNITY_RESEARCH` and `NICHE_LOADOUT`.
+
+But I would not call its primary purpose `MARKET_ANALYSIS`, because analysis implies you already know what market you are analyzing. What you are describing is more valuable:
+
+> **MARKET_DISCOVERY — discover promising market → niche → sub-niche opportunity surfaces, then decide which ones deserve deep investigation.**
+
+Then market analysis is a major stage/report inside that mode.
+
+The key design change is that I would **not choose corpus-first or external-first globally**.
+
+Use **independent discovery lanes**, then merge them. That avoids the biggest hidden failure mode: whichever source goes first anchors everything that follows.
+
+```text
+                     MARKET SEED
+                         │
+          ┌──────────────┼──────────────┐
+          │              │              │
+          ▼              ▼              ▼
+      FIELD-FIRST    CORPUS-FIRST    SUPPLY-FIRST
+          │              │              │
+  Trends/current     Polymath       Alibaba/product
+  web/comments       + registry     category universe
+          │              │              │
+          └──────────────┼──────────────┘
+                         ▼
+                  MARKET CANDIDATES
+                         ↓
+               NICHE / SUBNICHE MAP
+                         ↓
+                 WHITESPACE SEARCH
+                         ↓
+                 PROMOTE BEST AREAS
+                    /             \
+                   ▼               ▼
+           NICHE_LOADOUT    OPPORTUNITY_RESEARCH
+```
+
+That is stronger than either:
+
+```text
+Google Trends → corpus
+```
+
+or:
+
+```text
+corpus → Google Trends
+```
+
+because each path catches things the others inherently miss.
+
+## The three discovery lanes
+
+### 1. `FIELD_FIRST`
+
+This tells you **what is happening now**.
+
+Start with a broad market:
+
+```text
+Running
+Pets
+Home organization
+Outdoor recreation
+Beauty
+Automotive enthusiasts
+Parents
+Creators
+```
+
+Then inspect current signals:
+
+```text
+search-interest movement
+related/rising terminology
+communities
+recent conversations
+comments
+current products
+product reviews
+current aesthetics
+questions people repeatedly ask
+things people recently switched to
+```
+
+Outputs:
+
+```text
+QUERY_CLUSTER
+CURRENT_TOPIC
+EMERGING_PRODUCT
+COMMUNITY
+SUBNICHE_CANDIDATE
+TREND_SIGNAL
+CURRENT_FRICTION
+STYLE_SIGNAL
+```
+
+This is where a product like high-split running shorts can emerge even though Polymath knew nothing about it.
+
+---
+
+### 2. `CORPUS_FIRST`
+
+This is where Polymath becomes strangely useful.
+
+Don't ask Polymath:
+
+> “What running products should I sell?”
+
+Ask it for **transferable structures**:
+
+```text
+behaviors
+constraints
+adaptations
+physical interactions
+recurring human tradeoffs
+workarounds
+identity mechanisms
+social rituals
+coordination problems
+attention patterns
+comfort/performance conflicts
+```
+
+Then transfer those into the selected market.
+
+Example:
+
+```text
+Corpus concept:
+equipment layering under external constraint
+
+Invariant:
+visible/required outer system cannot change
+
+Possible running transfer:
+required/desired silhouette stays,
+hidden functional layer changes
+```
+
+Or:
+
+```text
+Corpus:
+behavior around interruption cost
+
+Invariant:
+people dislike repeatedly stopping
+a primary activity to access an object
+
+Running:
+nutrition / phone / water access
+
+Family hiking:
+snacks / clothing / water / child items
+```
+
+This is the lane that can generate **blue-ocean hypotheses** rather than merely reporting current trends.
+
+---
+
+### 3. `SUPPLY_FIRST`
+
+Your Alibaba category universe gets a very useful second function here.
+
+But Alibaba categories should remain a **supply ontology**, not the definition of a market.
+
+For example:
+
+```text
+Apparel & Accessories
+Sports & Entertainment
+Luggage, Bags & Cases
+Consumer Electronics
+Pet Supplies
+...
+```
+
+can be traversed to ask:
+
+> What physical mechanisms/products exist that might solve jobs in this market but are not currently framed for that market?
+
+That's reverse discovery:
+
+```text
+PRODUCT / PRODUCT FAMILY
+        ↓
+mechanism
+        ↓
+physical job
+        ↓
+which markets experience this job?
+        ↓
+which niche/subniche has the strongest fit?
+```
+
+This can create excellent unexpected transfers.
+
+But:
+
+> **Alibaba listing = product/supply existence, never market demand.**
+
+Same constitutional rule.
+
+---
+
+# The overlooked concept is really a `Market Lattice`
+
+Do not make:
+
+```text
+Market
+→ niche
+→ subniche
+→ subsubniche
+```
+
+a giant tree.
+
+You need multiple axes.
+
+For example:
+
+```text
+RUNNING
+
+Activity:
+├── short-distance
+├── distance
+├── trail
+├── racing
+└── recovery
+
+Experience:
+├── beginner
+├── intermediate
+├── high-mileage
+└── competitive
+
+Social:
+├── solo
+├── run-club
+├── couples
+├── family
+└── dog-running
+
+Life intersection:
+├── runner × soldier
+├── runner × lifter
+├── runner × traveler
+└── runner × parent
+
+Context:
+├── hot weather
+├── winter
+├── night
+├── urban
+└── trail
+```
+
+The interesting markets often occur at **intersections**:
+
+```text
+RUNNER
+×
+HIGH MILEAGE
+×
+HOT WEATHER
+```
+
+or:
+
+```text
+HIKER
+×
+FAMILY
+×
+DAY HIKE
+```
+
+or:
+
+```text
+RUNNER
+×
+SOLDIER
+×
+WINTER PT
+```
+
+That becomes:
+
+```text
+MarketScope
+```
+
+rather than another permanent taxonomy node.
+
+---
+
+# Google Trends should primarily operate on a `Query Graph`
+
+This is another piece I would add.
+
+Don't just ask Trends about one keyword.
+
+Start:
+
+```text
+running
+```
+
+Then build:
+
+```text
+QUERY GRAPH
+
+running
+├── running shorts
+│   ├── split running shorts
+│   ├── 3 inch running shorts
+│   ├── 2 inch running shorts
+│   └── running shorts no liner
+│
+├── running belt
+│   ├── no bounce running belt
+│   └── running belt phone
+│
+├── trail running
+└── run club
+```
+
+Each query has lineage:
+
+```yaml
+query_node:
+  query: "high split running shorts"
+
+  discovered_from:
+    RELATED_QUERY
+
+  parent:
+    "running shorts"
+
+  signal_types:
+    - PRODUCT
+    - STYLE
+    - PERFORMANCE
+
+  trend_state:
+    ...
+
+  community_matches:
+    ...
+
+  product_matches:
+    ...
+```
+
+Then θ can propose **new queries**, but φ keeps the query graph bounded.
+
+---
+
+# Query expansion should use multiple mechanisms
+
+Do not rely solely on AI-generated queries.
+
+Use:
+
+```text
+Google/current search related terms
+community vocabulary
+comments
+product titles
+marketplace terminology
+Polymath concepts
+registry predicates/frictions
+θ-generated hypotheses
+```
+
+Then merge and deduplicate.
+
+That gives you:
+
+```text
+Observed query vocabulary
++
+inferred query vocabulary
+```
+
+with clear provenance.
+
+---
+
+# Important correction: separate `search interest` and `search volume`
+
+Architecturally, don't make:
+
+```text
+Google Trends = volume
+```
+
+a hard assumption.
+
+Create separate signal types:
+
+```text
+SEARCH_INTEREST
+SEARCH_VOLUME
+```
+
+If a provider gives true/estimated absolute volume later, plug it in.
+
+If only relative interest is available:
+
+```text
+SEARCH_VOLUME = UNKNOWN
+```
+
+Nothing breaks.
+
+That makes the provider architecture future-proof:
+
+```text
+TrendProvider
+KeywordVolumeProvider
+CommunityProvider
+MarketplaceProvider
+```
+
+all optional capabilities.
+
+---
+
+# The key market object should be `MarketSignalBundle`
+
+For a candidate niche:
+
+```yaml
+market_signal_bundle:
+  scope:
+    market: running
+    niche: distance_running
+    subniche: high_mileage_hot_weather
+
+  search:
+    trend_signals: []
+    query_clusters: []
+    volume_signals: []
+
+  community:
+    communities: []
+    comment_clusters: []
+    insider_language: []
+    preference_clusters: []
+
+  commerce:
+    current_products: []
+    product_families: []
+    price_ranges: []
+    complaints: []
+
+  supply:
+    relevant_categories: []
+    supplier_presence: []
+    mechanism_families: []
+
+  corpus:
+    transferable_invariants: []
+    behavioral_mechanisms: []
+    analogous_domains: []
+
+  contradictions: []
+```
+
+Now no source dominates the market thesis.
+
+---
+
+# Then explicitly search for **mismatch**
+
+This is where the “blue ocean” part becomes much stronger.
+
+Most market tools rank what's popular.
+
+Your system should rank **mismatches between signals**.
+
+Examples:
+
+### Search/community interest + weak products
+
+```text
+people care
++
+existing solutions repeatedly criticized
+=
+PRODUCT WHITESPACE
+```
+
+### Strong workaround behavior + weak dedicated category
+
+```text
+people DIY / repurpose / modify
++
+few purpose-built products
+=
+MECHANISM WHITESPACE
+```
+
+### Stable market + changing product preference
+
+```text
+running is stable
++
+current shorts silhouette changing
+=
+PRODUCT EVOLUTION OPPORTUNITY
+```
+
+### Strong sub-niche culture + generic retail
+
+```text
+distinct community
++
+distinct vocabulary/rituals
++
+shops sell generic products
+=
+CURATION WHITESPACE
+```
+
+This last one is particularly relevant to Niche Loadout.
+
+---
+
+# Add `WhitespaceHypothesis`
+
+Something like:
+
+```yaml
+whitespace_hypothesis:
+  scope:
+    run_club_runners
+
+  type:
+    CURATION_WHITESPACE
+
+  observed_mismatch:
+    >
+    Community exhibits distinct aesthetic,
+    terminology and product preferences,
+    while general running retailers present
+    largely performance-generic assortments.
+
+  signals:
+    community_strength: ...
+    currentness: ...
+    product_differentiation: ...
+    workaround_density: ...
+
+  product_territories:
+    - ...
+
+  evidence_refs:
+    - ...
+
+  next_validation:
+    - ...
+```
+
+Types could stay small:
+
+```text
+PRODUCT_WHITESPACE
+MECHANISM_WHITESPACE
+CURATION_WHITESPACE
+SUBNICHE_WHITESPACE
+PRICE_VALUE_WHITESPACE
+STYLE_WHITESPACE
+CONTEXT_WHITESPACE
+```
+
+---
+
+# This mode should optimize markets, not products
+
+Do not use your final product scoring rubric here.
+
+Create a decomposed `MarketExplorationReceipt`:
+
+```text
+Current attention
+Community density
+Sub-niche distinctiveness
+Lived-problem richness
+Workaround richness
+Physical-job richness
+Product adjacency
+Supply reachability
+Current product weakness
+Trend durability
+Seasonality
+Corpus transfer potential
+Insider specificity
+Competition/saturation
+Researchability
+```
+
+Then use a **routing utility**, not a claim of success probability.
+
+Conceptually:
+
+[
+M(s)=
+\alpha A+
+\beta C+
+\gamma W+
+\delta J+
+\epsilon T+
+\zeta S+
+\eta X
+------
+
+## \lambda R
+
+\mu Sat
+]
+
+where:
+
+```text
+A   current attention
+C   community richness
+W   whitespace/mismatch
+J   physical-job richness
+T   temporal/current signal
+S   sourceability
+X   cross-domain latent-transfer potential
+
+R   redundancy
+Sat saturation/commodity pressure
+```
+
+Again:
+
+> **This means “worth digging into,” not “will make money.”**
+
+---
+
+# Corpus becomes more useful at the market level than I initially gave it credit for
+
+I agree with your intuition here.
+
+At individual product validation, current external evidence often matters more.
+
+But during **market ideation**, a large unrelated second-brain corpus is extremely valuable because you're asking:
+
+> “What non-obvious structures from anywhere in human behavior, design, work, hobbies, culture, biomechanics, logistics, psychology, etc. might produce physical-product opportunities here?”
+
+That's exactly where distant knowledge has leverage.
+
+I would therefore give `MARKET_DISCOVERY` **two independent starting paths**:
+
+```text
+OUTSIDE-IN
+current market → current signals → hypotheses
+
+INSIDE-OUT
+corpus invariant → target-market transfer → hypotheses
+```
+
+Then require both to hit external reality before promotion.
+
+---
+
+# Do not let the corpus contaminate open discovery
+
+This is the subtle implementation rule.
+
+For one research branch:
+
+```text
+BLIND_FIELD_DISCOVERY
+```
+
+the worker must **not see corpus hypotheses**.
+
+Otherwise:
+
+```text
+Polymath says X
+→ agent searches X
+→ finds X
+```
+
+and you get confirmation bias.
+
+So:
+
+```text
+Lane A:
+blind current-world discovery
+
+Lane B:
+corpus-generated opportunity hypotheses
+
+Lane C:
+supply reverse-discovery
+```
+
+remain isolated until:
+
+```text
+MERGE_SIGNALS
+```
+
+This is a major design improvement.
+
+---
+
+# A full `MARKET_DISCOVERY` graph could be very clean
+
+```text
+START
+ ↓
+MARKET_SEED
+ ↓
+RESOLVE MARKET SCOPE
+ ↓
+MAP RELEVANT COMMERCE CATEGORIES
+ ↓
+────────────────────────────────
+PARALLEL DISCOVERY
+────────────────────────────────
+
+A. BLIND FIELD
+   Trends
+   current search
+   communities
+   current products
+
+B. CORPUS
+   Polymath
+   registry
+   structural analogies
+   transferable invariants
+
+C. SUPPLY
+   Alibaba categories
+   product families
+   mechanism discovery
+
+ ↓
+MERGE MARKET SIGNALS
+ ↓
+BUILD QUERY GRAPH
+ ↓
+BUILD MARKET / NICHE LATTICE
+ ↓
+FRONTIER UTILITY + DIVERSITY
+ ↓
+retain promising niches/subniches
+ ↓
+COMMENTS / COMMUNITY SAMPLING
+ ↓
+WHITESPACE / MISMATCH MINING
+ ↓
+TARGETED TREND CHECKS
+ ↓
+TARGETED CURRENT-PRODUCT CHECKS
+ ↓
+MARKET ANALYSIS
+ ↓
+COMMUNITY / COMMERCE SKEPTIC
+ ↓
+PROMOTE 3–8 MARKET SCOPES
+ ↓
+MARKET_DISCOVERY_REPORT
+```
+
+Then each promoted scope offers:
+
+```text
+→ Spawn Niche Loadout
+→ Spawn Opportunity Research
+→ Hold
+→ Reject
+```
+
+---
+
+# Keep its loops tiny too
+
+Only:
+
+### Market frontier loop
+
+```text
+market
+→ niche
+→ sub-niche
+```
+
+Continue while marginal market/opportunity information increases.
+
+### Query discovery loop
+
+```text
+seed query
+→ related/current/community query
+→ one more useful expansion
+```
+
+Stop on saturation.
+
+### Evidence-gap loop
+
+VOI selects a handful of questions needed to decide whether the candidate deserves promotion.
+
+That's enough.
+
+---
+
+# Market Discovery should not deeply source everything
+
+This is important for efficiency.
+
+Its job isn't to run Alibaba sourcing qualification for 30 niches.
+
+Use a shallow check:
+
+```text
+Is there plausible physical product/supplier territory?
+YES / NO / UNKNOWN
+```
+
+Only when promoted does:
+
+```text
+NICHE_LOADOUT
+```
+
+or:
+
+```text
+OPPORTUNITY_RESEARCH
+```
+
+do deep sourcing.
+
+Otherwise market ideation becomes extremely expensive.
+
+---
+
+# Report output should be a market map
+
+Something like:
+
+```text
+MARKET DISCOVERY — RUNNING
+
+1. Market state
+2. Current search/query landscape
+3. Recent/rising topic clusters
+4. Major communities
+5. Niche map
+6. Sub-niche map
+7. Activity/context intersections
+8. Current product landscape
+9. Recurring complaints/workarounds
+10. Current style/product shifts
+11. Corpus-derived latent opportunities
+12. Supply-derived unexpected mechanisms
+13. Whitespace hypotheses
+14. Saturated/commodity areas
+15. Top market scopes to investigate
+16. Why each is worth investigating
+17. Evidence and contradictions
+18. Recommended next mode
+```
+
+Then maybe:
+
+```text
+#1 Run-club / style-oriented runners
+→ NICHE_LOADOUT
+
+#2 High-mileage hot-weather runners
+→ OPPORTUNITY_RESEARCH on stride/carry apparel
+
+#3 Runner × dog owner
+→ NICHE_LOADOUT
+
+#4 Generic running hydration
+→ HOLD / saturated
+```
+
+That is a very actionable research artifact.
+
+---
+
+# Google Trends has a special place, but not the central place
+
+I would frame sources as:
+
+```text
+GOOGLE TRENDS
+"What is search attention doing?"
+
+COMMUNITIES / COMMENTS
+"What are people living, saying and changing?"
+
+CURRENT WEB / MARKETPLACES
+"What currently exists and how is it positioned?"
+
+ALIBABA / SUPPLY
+"What physical implementations can actually exist/source?"
+
+POLYMATH
+"What latent structures and non-obvious transfers
+might everybody else be missing?"
+```
+
+None replaces the others.
+
+And none alone defines the market.
+
+---
+
+# The most overlooked design: **query migration**
+
+One thing I'd explicitly guard against is thinking:
+
+```text
+keyword declining
+=
+market declining
+```
+
+Language changes.
+
+People may move from:
+
+```text
+jogging shorts
+→ running shorts
+→ split shorts
+```
+
+or a brand/product term may replace a generic term.
+
+So Trends research should reason over:
+
+```text
+QUERY CLUSTERS
+```
+
+not isolated strings.
+
+The market signal belongs to the semantic concept:
+
+```text
+minimal high-mobility running shorts
+```
+
+which may have multiple query representations.
+
+That's a major safeguard.
+
+---
+
+# Another overlooked signal: **community-to-search divergence**
+
+This could be especially valuable.
+
+Examples:
+
+```text
+community discussion rising
++
+Google interest still low
+```
+
+could mean:
+
+```text
+EARLY_EMERGENCE
+```
+
+whereas:
+
+```text
+Google interest high
++
+community excitement low
++
+huge commodity supply
+```
+
+could mean:
+
+```text
+MATURE / SATURATED
+```
+
+Or:
+
+```text
+community workaround density high
++
+searches framed as problems, not products
+```
+
+could indicate:
+
+```text
+PRE-CATEGORY OPPORTUNITY
+```
+
+That's much more interesting than merely finding top Google Trends terms.
+
+You can explicitly model:
+
+```text
+SignalDivergence
+```
+
+between:
+
+```text
+search
+community
+commerce
+supply
+```
+
+**Disagreement between channels is itself information.**
+
+That may be the missing concept you were feeling.
+
+---
+
+# I would therefore add four concepts
+
+To finish the design:
+
+**`MarketLattice`** — markets/niches/sub-niches/intersections without rigid taxonomy.
+
+**`QueryGraph`** — evolving terminology/current topics with provenance.
+
+**`WhitespaceHypothesis`** — explicit mismatch between community/search/product/supply/corpus signals.
+
+**`SignalDivergence`** — differences between channels become first-class discovery signals instead of noise.
+
+Those four turn this from “Google Trends research” into a genuine **latent market discovery engine**.
+
+And the deeper architecture becomes:
+
+> **Current-world sources tell you what is visible. Polymath tells you what could be invisibly connected. Supply sources tell you what can physically exist. The Market Discovery graph searches the disagreement and empty spaces between them.**
+
+That should sit **before** Niche Loadout and Opportunity Research, producing the markets and sub-niches worth spending the expensive deeper loops on.

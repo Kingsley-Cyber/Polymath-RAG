@@ -1,0 +1,207 @@
+# Hard numeric gates evaluated by deterministic Python — the model never
+# negotiates these.
+evidence:
+  min_independent_sources: 3      # observations from distinct sources to close a gap
+  min_total_observations: 5       # floor before any mechanism may be declared supported
+  max_research_rounds: 3          # web_research → curate → challenge loops before forced verdict
+  allocation:                     # docs/20 §1: starvation is not refutation
+    enforce_no_starved_rejection: true
+bridge:
+  max_inference_hops_without_evidence: 2
+  require_hop_refs: true         # docs/19: when true, hops before the boundary must cite corpus/observation ids (hop_refs)
+  require_evidence_boundary: true # every hypothesis must declare first_inference_at
+supplier:
+  require_price: true
+  require_moq: true
+  max_leads: 8
+  require_mechanism_fit: true   # docs/19: a lead pairs a supplier with the mechanism it embodies, not with every mechanism
+sourcing:                      # docs/20 §2: one sourcing job per concept
+  min_candidates_per_concept: 1
+ideation:                      # docs/19: the product SET
+  min_concepts: 3
+  max_concepts: 6
+  min_variations: 2
+corpus:                        # docs/19: corpus_plan reformulations
+  min_queries: 3
+  max_queries: 5
+scoring:
+  min_mechanism_support: 3        # supporting observations per mechanism
+  purchase_language_bonus: 2      # observations with purchase language count extra
+
+# ── Evidence-authority layer (docs/04-evidence-authority.txt, 2026-08-10) ──
+# Relevance determines whether evidence is worth considering; evidentiary
+# authority determines what it may ESTABLISH. Never interchangeable.
+evidence_roles:
+  valid: [MECHANISM_SUPPORT, BEHAVIOR_SUPPORT, FRICTION_EVIDENCE, WORKAROUND_EVIDENCE,
+          PURCHASE_INTENT, PRODUCT_REQUEST, PRODUCT_COMPLAINT, PRODUCT_COMPARISON,
+          PRODUCT_MODIFICATION, CONTRADICTION, CURRENT_PRODUCT_REFERENCE,
+          PRODUCT_DELTA_SUPPORT, SUPPLIER_AVAILABILITY, PRICE_EVIDENCE, MOQ_EVIDENCE,
+          CUSTOMIZATION_EVIDENCE, FULFILLMENT_EVIDENCE, INSIDER_LANGUAGE]
+knowledge_roles:
+  valid: [BEHAVIORAL, CULTURAL, COMMUNITY, PATTERN, TECHNICAL, COMMERCE,
+          CONSUMER_FIELD, SUPPLIER, HISTORICAL]
+freshness_classes: [EVERGREEN, SLOW, FAST, LIVE]
+
+source_suitability:
+  corpus_evergreen:
+    may_support: [MECHANISM_SUPPORT, BEHAVIOR_SUPPORT, CONTRADICTION]
+  community:          # reddit / forums / youtube comments
+    may_support: [FRICTION_EVIDENCE, WORKAROUND_EVIDENCE, PRODUCT_REQUEST,
+                  PURCHASE_INTENT, BEHAVIOR_SUPPORT, PRODUCT_COMPARISON,
+                  PRODUCT_MODIFICATION, CONTRADICTION, INSIDER_LANGUAGE]
+  review:             # amazon and marketplace reviews / Q&A
+    may_support: [PRODUCT_COMPLAINT, PRODUCT_COMPARISON, PRODUCT_DELTA_SUPPORT,
+                  CURRENT_PRODUCT_REFERENCE, WORKAROUND_EVIDENCE, PRODUCT_REQUEST,
+                  PURCHASE_INTENT, CONTRADICTION]
+  marketplace_listing: # amazon/CJ listings as product references
+    may_support: [CURRENT_PRODUCT_REFERENCE, PRICE_EVIDENCE]
+  supplier:           # alibaba / CJ supplier side
+    may_support: [SUPPLIER_AVAILABILITY, PRICE_EVIDENCE, MOQ_EVIDENCE,
+                  CUSTOMIZATION_EVIDENCE, FULFILLMENT_EVIDENCE, INSIDER_LANGUAGE]
+
+freshness_requirements:      # claim-relative, not document-relative
+  MECHANISM_SUPPORT:        [EVERGREEN, SLOW, FAST, LIVE]
+  BEHAVIOR_SUPPORT:         [FAST, LIVE]
+  FRICTION_EVIDENCE:        [FAST, LIVE]
+  WORKAROUND_EVIDENCE:      [FAST, LIVE]
+  PURCHASE_INTENT:          [FAST, LIVE]
+  PRODUCT_REQUEST:          [FAST, LIVE]
+  PRODUCT_COMPLAINT:        [FAST, LIVE]
+  PRODUCT_COMPARISON:       [FAST, LIVE]
+  PRODUCT_MODIFICATION:     [FAST, LIVE]
+  CONTRADICTION:            [EVERGREEN, SLOW, FAST, LIVE]
+  INSIDER_LANGUAGE:         [FAST, LIVE]
+  CURRENT_PRODUCT_REFERENCE: [LIVE]
+  PRODUCT_DELTA_SUPPORT:    [FAST, LIVE]
+  SUPPLIER_AVAILABILITY:    [LIVE]
+  PRICE_EVIDENCE:           [LIVE]
+  MOQ_EVIDENCE:             [LIVE]
+  CUSTOMIZATION_EVIDENCE:   [LIVE]
+  FULFILLMENT_EVIDENCE:     [LIVE]
+
+physical_product_requirements:   # role COVERAGE, not evidence counts
+  mechanism:        {required: true,  roles: [MECHANISM_SUPPORT]}
+  real_behavior:    {required: true,  roles: [BEHAVIOR_SUPPORT, WORKAROUND_EVIDENCE]}
+  friction_or_desire: {required: true, roles: [FRICTION_EVIDENCE, PRODUCT_REQUEST, PURCHASE_INTENT]}
+  contradiction_search: {required: true, roles: [CONTRADICTION], allow_empty_after_search: true}
+  supplier:         {required_for: [SOURCING_READY, QUALIFIED_LEAD], roles: [SUPPLIER_AVAILABILITY]}
+  price:            {required_for: [SOURCING_READY, QUALIFIED_LEAD], roles: [PRICE_EVIDENCE]}
+
+independence_defaults:
+  minimum_independent_groups: 3     # distinct (platform,author) groups per requirement
+  minimum_source_families: 1
+
+# ── Breadth layer (docs/07): corpus -> primitives -> portfolio -> triage ──
+breadth:
+  max_cross_domain_analogies: 8
+  require_invariant_for_transfer: true   # no shared invariant -> no expansion
+portfolio:
+  min_hypotheses: 3                      # cover mechanism FAMILIES, not variants
+  max_hypotheses: 6
+  max_exploratory: 1                     # one EXPLORATORY_TRANSFER allowed
+  distinct_target_mechanisms: true       # five magnetic clips = one hypothesis
+triage:
+  max_research_ready: 3                  # info-gain budget: research the few that teach most
+  min_priority: 2                        # below this -> HOLD (prior, never evidence)
+
+# ── Context Engineering (docs/10): the window is a projection, not memory ──
+context:
+  hard_invariants:
+    - physical_ecommerce_products_only
+    - evidence_authority            # roles + suitability decide, never vibes
+    - no_registry_mutation_in_run
+    - 3_to_6_product_portfolio
+    - backfill_recovers_never_researches
+  budgets:
+    max_chars: 60000                # deterministic trim: P4 -> P3 -> P2, never P0/P1
+
+# ── Commercial Intelligence (docs/11): θ generates angles, φ admits them ──
+commercial_intelligence:
+  angle_types: [MARKET, PRODUCT, STYLE, COLLECTION, AD]
+  hook_types: [INSIDER_PROBLEM, HIDDEN_UPGRADE, DISCOVERY, PERFORMANCE,
+               IDENTITY_STYLE, CONVENIENCE, CONTRARIAN, SEASONAL, TRANSITION,
+               BEGINNER_MISTAKE, EXPERT_PREFERENCE, COMPARISON, VALUE]
+  grounded_min_refs: 2              # >=2 resolving refs -> GROUNDED; 1 -> PARTIAL; 0 -> SPECULATIVE
+  dedupe_jaccard: 0.6               # normalized thesis-token overlap above this = duplicate
+  genericness_lexicon: [help, helps, better, improve, improves, easier, great,
+                        quality, "must have", "game changer", best, amazing,
+                        upgrade your, boost, enhance, perfect]
+  genericness_reject: 0.34          # fraction of thesis tokens that are generic
+  angle_portfolio:
+    size_min: 3
+    size_max: 8
+    hook_coverage_weight: 1.0       # optimize the SET: distinct hook types, not top-N scores
+    redundancy_penalty: 0.8
+  classifications: [OBSERVED, INFERRED, SIMULATED, CURRENT_SIGNAL,
+                    WORKING_HYPOTHESIS, CREATIVE_RECOMMENDATION]
+  chain_links: [evidence, observation, interpretation, market_implication,
+                product_implication, ad_implication]
+
+# ── MARKET_DISCOVERY (docs/12, docs/14) ──────────────────────────────────
+market_discovery:
+  max_research_rounds: 2
+  frontier:                         # M(s): "worth digging into", never "will make money"
+    weights: {attention: 1.0, community: 1.2, whitespace: 1.3, job_richness: 1.0,
+              currentness: 0.8, sourceability: 0.7, transfer: 0.6,
+              redundancy: -0.8, saturation: -1.0}
+    explore_threshold: 0.55
+    maybe_threshold: 0.35
+    diversity_lambda: 0.5           # M'(s) = M(s) - λ·max Sim(s, selected)
+    retain_min: 3
+    retain_max: 8
+  divergence:                       # channel disagreement thresholds
+    high: 0.6
+    low: 0.4
+  robustness:
+    perturbation: 0.2               # ±20% one-weight-at-a-time rank stability
+
+# ── PRODUCT_ANCHORED_DISCOVERY (docs/13, docs/14) ────────────────────────
+product_anchored:
+  max_research_rounds: 2
+  reverse_fit:                      # R(n|p): research-budget routing only
+    weights: {mechanism_fit: 1.0, job_fit: 1.0, community_richness: 1.2,
+              language_coherence: 0.8, currentness: 0.6, differentiation: 0.8,
+              ecommerce_compatibility: 0.7, assumption_distance: -0.9,
+              saturation: -0.8, redundancy: -0.7}
+    explore_threshold: 0.5
+    maybe_threshold: 0.3
+    diversity_lambda: 0.5
+    bridge_target: 3                # top bridges must be meaningfully DIFFERENT markets
+  robustness:
+    perturbation: 0.2
+
+# ── System-locked authority laws (docs/14 §34) — never user-disableable ──
+authority_laws:
+  - supplier_listing_never_demand
+  - trends_never_sales
+  - comments_never_prevalence
+  - simulation_never_evidence
+  - corpus_relevance_never_market_proof
+  - seller_claims_never_facts
+  - failed_search_never_contradiction
+  - single_viral_thread_never_independent
+
+# ── System safety ceilings (docs/16) — SYSTEM_LOCKED, never user-settable ──
+# "Loop until X" = attempt X within THESE; stagnation always wins.
+system_limits:
+  loadout_discovery_rounds_max: 3   # extra discovery loops beyond the first pass
+
+# ── Registry flywheel + gap analysis (docs/17) ───────────────────────────
+opportunity_genesis:            # research EMPHASIS only — never evidence authority
+  valid: [PROBLEM_LED, SHIFT_LED, TREND_LED, DEMAND_REROUTE, CAPABILITY_LED,
+          WORKAROUND_LED, COMMUNITY_LED, SUPPLY_TRANSFER_LED]
+maintenance_triggers:           # deterministic; SYSTEM behavior, not user knobs
+  recurrence_min_runs: 2
+  negative_min_runs: 2
+  query_yield_min_runs: 2
+  source_yield_min_runs: 2
+capture_feasibility:            # decomposed dims -> categorical routing judgment
+  weights: {competitor_fragmentation: 1.0, differentiation_clarity: 1.0,
+            niche_specificity: 0.8, organic_contentability: 0.8,
+            visual_demonstrability: 0.7, creator_channel_fit: 0.7,
+            supplier_flexibility: 0.6, margin_room: 0.8,
+            incumbent_lock_in: -1.0, switching_friction: -0.7,
+            trust_barrier: -0.8, regulatory_burden: -1.0}
+  easy_threshold: 0.6
+  plausible_threshold: 0.4
+  difficult_threshold: 0.2      # below this -> HOSTILE

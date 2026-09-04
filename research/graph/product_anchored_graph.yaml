@@ -1,0 +1,179 @@
+# PRODUCT_ANCHORED_DISCOVERY Control Graph (docs/13, docs/14 §13).
+# Inverted niche research: "I already have this product — in whose lived
+# world does it already make sense?" Never product -> invented persona.
+# The blind field lane may not see the user's story, the seller's claims, or
+# θ's meaning hypotheses; contracts + frozen envelopes enforce that durably.
+graph:
+  id: product_anchored
+  version: 1.0.0
+  entry: product_intake
+
+nodes:
+  product_intake:
+    type: reason
+    prompt: product_intake
+    outputs: [product_seed]
+    context:
+      require: [run_identity]
+      prefer: [signal, handoff_packet]
+      exclude: [field_signals, corpus_signals, commerce_signals]
+
+  identity_resolution:              # canonical name + aliases BEFORE any framing
+    type: agent
+    executor: hermes_existing_web_stack
+    outputs: [product_identity]
+    context:
+      require: [product_seed]
+      exclude: [product_meanings, market_bridges]
+
+  identity_gate:
+    type: gate
+    executor: python.identity_gate
+
+  claim_quarantine:                 # seller copy -> UNVERIFIED ProductClaims
+    type: transform
+    executor: python.claim_quarantine
+    checkpoint: CLAIMS_QUARANTINED
+
+  pa_query_graph:
+    type: reason
+    prompt: query_graph
+    outputs: [query_nodes]
+    context:
+      require: [product_identity]
+      exclude: [product_seed, product_claims]
+
+  blind_field:                      # BLIND: identity + aliases ONLY
+    type: agent
+    executor: hermes_existing_web_stack
+    outputs: [field_signals]
+    context:
+      require: [product_identity, query_nodes]
+      prefer: [evidence_authority_rules]
+      exclude: [product_seed, product_claims, corpus_signals, commerce_signals,
+                product_meanings, market_bridges]
+
+  corpus_lane:                      # the corpus expands the meaning space
+    type: retrieve
+    executor: corpus_retrieve
+    outputs: [corpus_signals]
+    context:
+      require: [product_identity]
+      prefer: [registry_snapshot]
+      exclude: [field_signals, commerce_signals, product_claims]
+
+  commerce_scan:                    # marketplaces, competitors, price structure
+    type: agent
+    executor: hermes_existing_web_stack
+    outputs: [commerce_signals]
+    context:
+      require: [product_identity, query_nodes]
+      exclude: [field_signals, corpus_signals]
+
+  merge_signals:
+    type: transform
+    executor: python.merge_product_signals
+    checkpoint: LANES_MERGED
+
+  meanings:                         # use-meaning decomposition: COMPETING meanings
+    type: reason
+    prompt: product_meanings
+    outputs: [product_meanings]
+    context:
+      require: [product_identity, field_signals, corpus_signals, commerce_signals]
+      prefer: [product_claims]
+
+  bridges:
+    type: reason
+    prompt: market_bridges
+    outputs: [market_bridges]
+    context:
+      require: [product_meanings, product_identity]
+      prefer: [field_signals, commerce_signals]
+
+  reverse_fit:                      # R(n|p) + diversity + robustness receipts
+    type: transform
+    executor: python.reverse_fit_gate
+    checkpoint: BRIDGES_RANKED
+
+  community_research:
+    type: agent
+    executor: hermes_existing_web_stack
+    outputs: [observations]
+    context:
+      require: [market_bridges]
+      prefer: [query_nodes, evidence_authority_rules]
+      exclude: [corpus_signals, product_claims]
+
+  revise_bridges:                   # evidence moves states, θ never does
+    type: transform
+    executor: python.revise_bridges
+
+  bridge_gaps:
+    type: transform
+    executor: python.bridge_gaps
+
+  targeted_research:
+    type: agent
+    executor: hermes_existing_web_stack
+    outputs: [observations]
+    context:
+      require: [queries, gaps]
+      prefer: [evidence_authority_rules]
+      exclude: [product_claims, corpus_signals, product_meanings]
+
+  reframe:                          # claim-audit verdict on the user's frame
+    type: reason
+    prompt: market_reframe
+    outputs: [market_reframes]
+    optional_outputs: [demand_reroutes]
+    context:
+      require: [market_bridges, product_claims]
+      prefer: [observations, product_meanings]
+
+  skeptic:
+    type: agent
+    executor: fresh_skeptical_evaluator
+    prompt: product_market_skeptic
+    outputs: [evaluations]
+    sanitize: dossier
+    context:
+      require: [product_identity, market_bridges]
+      prefer: [observations, market_reframes, product_claims]
+      exclude: [corpus_signals]
+
+  apply_skeptic:
+    type: transform
+    executor: python.apply_market_evaluations
+
+  bridge_gate:
+    type: gate
+    executor: python.market_bridge_gate
+    checkpoint: PRODUCT_ANCHORED_COMPLETE
+
+  stop:
+    type: terminal
+
+edges:
+  - {from: product_intake,      to: identity_resolution}
+  - {from: identity_resolution, to: identity_gate}
+  - {from: identity_gate,       to: claim_quarantine,  when: identity_resolved}
+  - {from: identity_gate,       to: stop,              when: identity_unresolved}
+  - {from: claim_quarantine,    to: pa_query_graph}
+  - {from: pa_query_graph,      to: blind_field}
+  - {from: blind_field,         to: corpus_lane}
+  - {from: corpus_lane,         to: commerce_scan}
+  - {from: commerce_scan,       to: merge_signals}
+  - {from: merge_signals,       to: meanings}
+  - {from: meanings,            to: bridges}
+  - {from: bridges,             to: reverse_fit}
+  - {from: reverse_fit,         to: community_research}
+  - {from: community_research,  to: revise_bridges}
+  - {from: revise_bridges,      to: bridge_gaps}
+  - {from: bridge_gaps,         to: targeted_research, when: pa_research_needed}
+  - {from: bridge_gaps,         to: reframe,           when: pa_research_done}
+  - {from: targeted_research,   to: revise_bridges}
+  - {from: reframe,             to: skeptic}
+  - {from: skeptic,             to: apply_skeptic}
+  - {from: apply_skeptic,       to: bridge_gate}
+  - {from: bridge_gate,         to: stop}

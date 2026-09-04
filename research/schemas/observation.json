@@ -1,0 +1,85 @@
+{
+ "title": "observation",
+ "required": [
+  "id",
+  "gap_id",
+  "source",
+  "quote_ref",
+  "community",
+  "problem",
+  "evidence_roles",
+  "freshness",
+  "source_identity"
+ ],
+ "properties": {
+  "purchase_language": {
+   "type": "boolean"
+  },
+  "workaround": {
+   "type": "string"
+  },
+  "desired_outcome": {},
+  "context": {},
+  "activity": {},
+  "contradicts": {
+   "type": "boolean"
+  },
+  "freshness": {
+   "required": [
+    "class"
+   ],
+   "type": "object",
+   "properties": {
+    "class": {
+     "type": "string"
+    }
+   }
+  },
+  "source_identity": {
+   "required": [
+    "source_family",
+    "platform"
+   ],
+   "type": "object",
+   "properties": {
+    "platform": {
+     "type": "string"
+    },
+    "author_key": {
+     "type": "string"
+    },
+    "thread_key": {
+     "type": "string"
+    },
+    "source_family": {
+     "type": "string"
+    }
+   }
+  },
+  "knowledge_roles": {
+   "description": "what kind of knowledge this contributes"
+  },
+  "evidence_roles": {
+   "description": "what this item is allowed to establish HERE",
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "id": {
+   "type": "string"
+  },
+  "gap_id": {
+   "type": "string"
+  },
+  "quote_ref": {
+   "type": "string"
+  },
+  "source": {
+   "type": "string"
+  },
+  "problem": {
+   "type": "string"
+  }
+ }
+}

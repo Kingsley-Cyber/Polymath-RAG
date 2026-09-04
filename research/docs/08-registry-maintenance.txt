@@ -1,0 +1,1111 @@
+Yes. What you are describing is the missing second lifecycle:
+
+Opportunity Loop discovers opportunities. Registry Maintenance Loop learns from those executions and grows/repairs the CSV reasoning substrate.
+
+I would add this now, but not inside the current opportunity Control Graph and not by letting Hermes directly edit CSVs during a product investigation.
+
+The clean architecture is:
+
+                    ACTIVE CSV REGISTRY v17
+                            │
+                            ▼
+                   OPPORTUNITY RUNS
+                            │
+              ┌─────────────┴─────────────┐
+              │                           │
+        known priors used          novel things discovered
+                                          │
+                                          ▼
+                                  REGISTRY CANDIDATES
+                                     in SQLite
+                                          │
+                                          ▼
+                              REGISTRY MAINTENANCE GRAPH
+                                          │
+                               normalize / dedupe /
+                               research / falsify /
+                               diversify / validate
+                                          │
+                           ┌──────────────┼──────────────┐
+                           ▼              ▼              ▼
+                        REJECT          MERGE         PROMOTE
+                                                         │
+                                                         ▼
+                                                   CSV PATCH
+                                                         │
+                                                         ▼
+                                                  registry.py
+                                                     compile
+                                                         │
+                                                         ▼
+                                              RegistrySnapshot v18
+                                                         │
+                                                         ▼
+                                                   future runs
+
+The important rule is:
+
+The registry can grow because of execution, but the active registry does not mutate inside the execution that discovered the new knowledge.
+
+That prevents self-modifying reasoning while preserving continuous learning.
+
+What your CSV system actually is
+
+Fable's recap is useful because these files have different jobs. They should not all grow the same way.
+
+CSV	What it represents	Typical growth
+outdoor_activity_niche_seed	Atomic activity/task/context/friction/workaround reasoning situations	New atomic situations
+friction_library	Reusable friction families and observable patterns	Rare new friction primitives
+search_query_templates	Reusable search grammar by evidence goal	Better query strategies
+scoring_rubric	The scoring law	Very rarely; governance change
+niche_candidates	Pre-researched opportunity/niche hypotheses with priors + kill tests	New candidate theses
+product_territories	Abstract physical solution spaces	New reusable physical-product territories
+activity_taxonomy	Navigation/domain organization	New activities/domains
+source_registry	Where/how research can happen	New source types/ecosystems
+seasonal_calendar	Timing context	New seasonal patterns
+
+And your large 1,386-row file is particularly important because it is not really a "product list."
+
+One row represents roughly:
+
+Niche / activity
+      ↓
+participant
+      ↓
+atomic task
+      ↓
+context/environment
+      ↓
+body/hands state
+      ↓
+suspected friction
+      ↓
+workaround
+      ↓
+shared physical predicates
+      ↓
+possible product territory
+
+That is why it is useful for abduction.
+
+1. Add a separate Registry Maintenance Graph
+
+I would call it conceptually:
+
+registry_maintenance_graph
+
+It should be a separate authored Control Graph because it solves a different problem.
+
+Opportunity graph:
+
+knowledge
+→ hypothesis
+→ research
+→ physical product
+→ qualification
+
+Registry graph:
+
+discoveries from many runs
+→ decide what is reusable
+→ maintain reasoning substrate
+
+Do not mix the two.
+
+The maintenance graph should look approximately like:
+
+START
+  ↓
+COLLECT_REGISTRY_CANDIDATES
+  ↓
+NORMALIZE_CANDIDATES
+  ↓
+RESOLVE_CANDIDATE_TYPE
+  ↓
+DEDUPLICATE
+  │
+  ├── exact existing concept
+  │       ↓
+  │   ATTACH_NEW_EVIDENCE
+  │
+  ├── probable alias
+  │       ↓
+  │     MERGE_REVIEW
+  │
+  └── genuinely novel
+          ↓
+      NOVELTY_CHECK
+          ↓
+      REUSABILITY_CHECK
+          ↓
+      DIVERSIFICATION_CHECK
+          ↓
+      EVIDENCE_REQUIREMENTS
+          ↓
+      RESEARCH / FALSIFICATION
+          ↓
+      PROMOTION_SATISFACTION
+          │
+     ┌────┼────────┐
+     ▼    ▼        ▼
+   REJECT HOLD    PROMOTE
+                   │
+                   ▼
+              HUMAN APPROVAL
+                   │
+                   ▼
+                 PATCH
+                   │
+                   ▼
+           REGISTRY COMPILE
+                   │
+                   ▼
+            REGRESSION TEST
+                   │
+                   ▼
+         PUBLISH NEW SNAPSHOT
+                   │
+                   ▼
+                  END
+
+Same graph-engineering philosophy as the opportunity system.
+
+2. Then wrap that in a Registry Maintenance Loop
+
+The graph describes one maintenance pass.
+
+The loop determines whether another pass is needed.
+
+Registry candidates
+       ↓
+maintenance graph
+       ↓
+verification
+       ↓
+candidate state changed?
+       │
+   ┌───┴────┐
+   │        │
+  YES       NO
+   │        │
+repeat   stagnation?
+             │
+        ┌────┴────┐
+        ▼         ▼
+      stop      research
+
+The maintenance loop needs:
+
+goal:
+  all_candidates_resolved_or_held: true
+  registry_compiles: true
+  regression_tests_pass: true
+
+budgets:
+  max_candidates_per_cycle: policy
+  max_research_rounds: policy
+  max_new_rows_per_cycle: policy
+
+stagnation:
+  no_progress_cycles: policy
+
+terminals:
+  - MAINTENANCE_COMPLETE
+  - NO_CHANGES
+  - NEEDS_APPROVAL
+  - STALLED
+  - BLOCKED
+  - EXHAUSTED
+
+Do not hardcode the numbers yet.
+
+3. Execution should continuously emit registry candidates
+
+During an opportunity run, Hermes may discover something that your registry doesn't know.
+
+Example:
+
+Creator audio investigation
+        ↓
+new recurring behavior:
+creators repeatedly reposition transmitters
+during wardrobe changes
+
+The opportunity run can emit:
+
+registry_candidate:
+  candidate_type: ACTIVITY
+
+  value:
+    reposition wearable recording hardware
+    during wardrobe changes
+
+  origin:
+    run_id: run_184
+    node_id: behavior_19
+
+  evidence_refs:
+    - ev_44
+    - ev_51
+    - ev_62
+
+  status:
+    DISCOVERED
+
+But it does not modify:
+
+activity_taxonomy.csv
+
+during run_184.
+
+It merely creates a candidate.
+
+4. Candidate types should correspond to reusable registry knowledge
+
+At minimum, maintenance should recognize:
+
+NICHE_CANDIDATE
+ACTIVITY_CANDIDATE
+ATOMIC_TASK_CANDIDATE
+
+FRICTION_CANDIDATE
+WORKAROUND_PATTERN_CANDIDATE
+
+SHARED_PREDICATE_CANDIDATE
+PHYSICAL_JOB_CANDIDATE
+
+PRODUCT_TERRITORY_CANDIDATE
+
+QUERY_TEMPLATE_CANDIDATE
+
+SOURCE_CANDIDATE
+SEASONAL_PATTERN_CANDIDATE
+
+Not everything discovered deserves promotion.
+
+For example:
+
+Specific Alibaba SKU
+
+does not become a registry primitive.
+
+But:
+
+magnetic removable attachment
+
+might become a reusable product/mechanism territory if it repeatedly appears across domains.
+
+5. New niche discovery needs a special expansion loop
+
+This is probably closest to what you're describing.
+
+Suppose multiple open-world investigations discover:
+
+AI-heavy creators who deliberately retain analog tools
+
+Your system currently may say:
+
+niche_resolution = UNRESOLVED
+
+That's correct.
+
+But now maintenance should notice:
+
+UNRESOLVED concept appeared in:
+run 91
+run 104
+run 128
+run 141
+
+and create:
+
+NICHE_CANDIDATE
+
+Then it should not stop at adding the niche name.
+
+It should expand the niche into the same atomic reasoning structure that makes your existing 1,386 rows valuable.
+
+The niche-growth loop becomes:
+
+NEW NICHE
+   ↓
+Who participates?
+   ↓
+What recurring activities do they perform?
+   ↓
+What atomic tasks occur inside those activities?
+   ↓
+In what contexts?
+   ↓
+What is the body doing?
+   ↓
+What are the hands doing?
+   ↓
+What objects are involved?
+   ↓
+What environmental constraints exist?
+   ↓
+What frictions recur?
+   ↓
+What workarounds appear?
+   ↓
+What shared predicates exist?
+   ↓
+What physical jobs appear?
+   ↓
+What product territories are plausible?
+
+That produces actual reasoning seeds, not merely:
+
+niche = AI creators
+6. This is how diversification should happen
+
+You don't want growth to simply mean:
+
+outdoor rows:
+1,386 → 20,000
+
+while everything remains outdoor.
+
+Maintenance should calculate registry coverage.
+
+Conceptually:
+
+domain coverage
+activity coverage
+friction coverage
+shared-predicate coverage
+physical-job coverage
+product-territory coverage
+open-world unresolved frequency
+
+Suppose actual opportunity runs show:
+
+Outdoor              dense registry coverage
+
+Creator economy       sparse
+
+Home organization     sparse
+
+Pet care              almost none
+
+Beauty routines       none
+
+but those sparse domains keep appearing in real investigations.
+
+The diversification loop can say:
+
+CREATOR ECONOMY
+high execution frequency
+low registry prior coverage
+high unresolved concept rate
+
+→ diversification candidate
+
+Then specifically research/construct atomic activity seeds for that area.
+
+That's much better than randomly asking an LLM:
+
+Give me 1,000 new niches.
+
+7. Diversification should therefore be demand-driven
+
+Use actual runtime deficits.
+
+A useful signal is:
+
+registry_support_rate
+
+per domain/niche.
+
+For example:
+
+Creator investigations:
+42 runs
+
+EXACT registry resolution:       3
+INFERRED:                       7
+UNRESOLVED:                    32
+
+That's a strong growth signal.
+
+Likewise:
+
+Physical Job:
+attach object during motion
+
+appeared:
+29 runs
+
+existing relevant seeds:
+2
+
+That suggests more seed coverage around that physical job may be valuable.
+
+8. But allow deliberate diversification too
+
+There should also be a manual mode:
+
+Expand the registry into pet owners.
+
+or:
+
+Build atomic reasoning coverage around home beauty routines.
+
+This runs the same maintenance/growth graph, except the trigger is intentional rather than execution-derived.
+
+MANUAL DOMAIN
+     ↓
+activity discovery
+     ↓
+atomic task decomposition
+     ↓
+friction mapping
+     ↓
+workaround research
+     ↓
+shared predicates
+     ↓
+seed candidates
+
+Same validation.
+
+No separate system.
+
+9. Your existing outdoor_activity_niche_seed should become one seed pack conceptually
+
+I would not rename or migrate it now.
+
+But because it is specifically called:
+
+outdoor_activity_niche_seed
+
+do not eventually dump creator/audio/pet/beauty activities into an "outdoor" CSV.
+
+Instead teach registry.py that multiple files may implement the same seed schema.
+
+Conceptually later:
+
+seed packs
+│
+├── outdoor_activity_niche_seed.csv
+├── creator_activity_niche_seed.csv
+├── home_activity_niche_seed.csv
+└── pet_activity_niche_seed.csv
+
+or a future consolidated canonical file if you decide that is cleaner.
+
+The important abstraction is:
+
+AtomicActivitySeed schema
+
+not the current filename.
+
+Do not restructure the current CSV today.
+
+Just make the compiler capable of accepting additional same-schema seed packs when diversification begins.
+
+10. This also prevents one monstrous CSV
+
+Eventually:
+
+outdoor     1,386
+creator     2,100
+home        3,700
+pets        1,800
+beauty      2,500
+...
+
+You don't necessarily want:
+
+activity_niche_seed.csv
+= 150,000 rows edited by everyone
+
+Git CSV can remain the source of truth while the compiler combines logical packs:
+
+CSV seed packs
+       ↓
+registry.py
+       ↓
+one RegistrySnapshot
+       ↓
+one runtime index
+
+The runtime doesn't care which source file a row came from.
+
+11. Shared predicates are where diversification becomes powerful
+
+Suppose the existing outdoor registry already knows:
+
+carry
+retain
+access
+protect
+stabilize
+organize
+attach
+
+Now a creator niche appears.
+
+Instead of learning from zero:
+
+creator task:
+carry lighting equipment
+
+can map to:
+
+predicate = carry
+
+and immediately inherit structural analogies from:
+
+hiking
+fishing
+kayaking
+photography
+camping
+
+Maintenance can then ask:
+
+Is this really a new primitive?
+
+Often:
+
+NO
+
+It's a new domain instantiation of an existing primitive.
+
+That means registry growth stays compact.
+
+12. Prefer new combinations over new primitives
+
+This is a major growth law.
+
+Suppose Hermes discovers:
+
+creator
++
+occupied_hand
++
+access
++
+small recording hardware
+
+You usually do not need:
+
+NEW friction
+NEW predicate
+NEW mechanism
+
+You need a new atomic seed using existing primitives.
+
+So maintenance checks:
+
+Does the primitive already exist?
+        │
+       YES
+        ↓
+reuse primitive
+add new domain/task instantiation
+
+Only create a new primitive when the existing vocabulary genuinely cannot represent it.
+
+This prevents ontology explosion.
+
+13. Distinguish horizontal and vertical growth
+
+This will make Fable's implementation much clearer.
+
+Horizontal growth
+
+New domains/niches/activities using existing reasoning primitives.
+
+Outdoor
+Creator
+Pets
+Beauty
+Home
+Automotive
+...
+
+This should happen relatively freely.
+
+Vertical growth
+
+New primitives:
+
+new friction family
+new shared predicate
+new physical job
+new query grammar
+new scoring dimension
+
+This should have a much higher promotion bar.
+
+Because changing a primitive influences many existing rows.
+
+14. Use different promotion difficulty by candidate type
+
+For example:
+
+ATOMIC ACTIVITY SEED
+promotion risk: LOW
+
+NICHE / ACTIVITY
+promotion risk: LOW-MEDIUM
+
+PRODUCT TERRITORY
+promotion risk: MEDIUM
+
+FRICTION FAMILY
+promotion risk: HIGH
+
+SHARED PREDICATE
+promotion risk: HIGH
+
+QUERY TEMPLATE
+promotion risk: MEDIUM
+
+SOURCE REGISTRY CHANGE
+promotion risk: HIGH
+
+SCORING RUBRIC CHANGE
+promotion risk: VERY HIGH
+
+That can determine how much evidence/review is required.
+
+Do not let an ordinary opportunity run casually invent:
+
+new scoring dimension
+
+and promote it.
+
+15. Maintenance should use your evidence-authority system too
+
+A registry candidate should have an evidence contract.
+
+Example:
+
+registry_candidate:
+  candidate_type: FRICTION_FAMILY
+
+  proposed_value:
+    attachment_interference
+
+  evidence:
+    roles:
+      - FRICTION_EVIDENCE
+      - WORKAROUND_EVIDENCE
+
+  independence:
+    runs: 4
+    source_families: 3
+    authors: 19
+
+  falsification:
+    ...
+
+  status:
+    CANDIDATE
+
+A model saying:
+
+This seems like an important friction.
+
+is not enough.
+
+The maintenance loop asks:
+
+Do multiple independent situations require this primitive, or can existing friction families already represent them?
+
+16. Deduplication becomes a major maintenance responsibility
+
+As growth begins, you'll eventually discover:
+
+hands occupied
+occupied hand
+hand unavailable
+hands committed
+limited free hands
+
+The maintenance graph should resolve:
+
+NEW
+ALIAS
+MERGE
+EXISTING
+
+Before promotion.
+
+Conceptually:
+
+candidate
+   ↓
+exact normalized match
+   ↓ no
+alias lookup
+   ↓ no
+structural similarity
+   ↓
+θ semantic comparison
+   ↓
+independent verification
+   ↓
+NEW / MERGE
+
+θ can propose semantic equivalence.
+
+Python checks IDs/structure.
+
+Human approval handles the final active registry mutation initially.
+
+17. Maintenance should also remove rot
+
+Growth isn't only adding rows.
+
+A proper maintenance graph handles:
+
+duplicate concepts
+orphan references
+bad IDs
+deprecated concepts
+merged concepts
+unused query templates
+poor-yield query templates
+obsolete source references
+stale seasonal assumptions
+broken scoring references
+invalid aliases
+
+So its job is:
+
+GROW
++
+REPAIR
++
+MERGE
++
+DEPRECATE
++
+VALIDATE
+
+not merely append.
+
+18. Never hard-delete historical concepts
+
+If:
+
+friction_A
+
+gets replaced by:
+
+friction_B
+
+use:
+
+status: MERGED
+merged_into: friction_B
+
+because old SQLite runs may reference friction_A.
+
+Likewise:
+
+DEPRECATED
+
+instead of deletion.
+
+Your old runs remain explainable.
+
+19. Growth candidates can live in the SQLite layer you just built
+
+You don't need another database.
+
+The existing Work Graph can emit nodes like:
+
+NICHE_CANDIDATE
+ACTIVITY_CANDIDATE
+FRICTION_CANDIDATE
+PRODUCT_TERRITORY_CANDIDATE
+
+SQLite already gives you:
+
+run provenance
+events
+work nodes
+evidence
+verification receipts
+
+So the maintenance loop can aggregate candidate nodes across completed runs.
+
+That is an important payoff from the durability layer Fable just finished.
+
+20. A candidate should accumulate evidence across runs
+
+Example:
+
+candidate:
+creator_wardrobe_audio_attachment
+
+Run 1:
+
+1 relevant observation
+
+Run 2:
+
+4 more
+
+Run 3:
+
+same physical job in another creator niche
+
+Maintenance doesn't create three candidates.
+
+It resolves all three into one candidate record conceptually:
+
+Creator wardrobe audio attachment behavior
+
+observed across:
+3 runs
+2 platforms
+7 authors
+
+related predicates:
+attach
+retain
+access
+
+related friction:
+attachment interference
+
+status:
+PROMOTION_ELIGIBLE
+
+Now the registry genuinely learns from repeated experience.
+
+21. niche_candidates should similarly compound
+
+That CSV isn't merely a dump of every speculative niche.
+
+A newly discovered niche starts in SQLite:
+
+DISCOVERED
+
+Then:
+
+DEDUPLICATED
+RESEARCHED
+CHALLENGED
+FALSIFIED / SURVIVED
+
+Only an adequately supported candidate becomes an active row/versioned candidate asset.
+
+And its numerical dimensions remain:
+
+seed_prior
+
+until evidence-backed scoring is available.
+
+22. Add a Registry Diversity Receipt
+
+The maintenance satisfaction layer should produce something like:
+
+registry_diversity:
+  domains:
+    outdoor:
+      active_seed_rows: 1386
+      unresolved_run_rate: low
+
+    creator:
+      active_seed_rows: 0
+      unresolved_run_rate: high
+
+    home:
+      active_seed_rows: 0
+      unresolved_run_rate: medium
+
+  friction_coverage:
+    occupied_hand:
+      usage: high
+      seed_coverage: medium
+
+    attachment_interference:
+      usage: high
+      seed_coverage: low
+
+  recommended_growth:
+    - creator_atomic_activity_pack
+    - attachment_interference_validation
+
+This does not automatically modify anything.
+
+It tells the maintenance graph where the registry is thin relative to actual use.
+
+23. Query-template maintenance can learn from telemetry
+
+Your SQLite actions give you:
+
+query template
+source
+evidence role
+result yield
+
+Over many runs:
+
+Template A
+WORKAROUND_EVIDENCE / Reddit
+high yield
+
+Template B
+WORKAROUND_EVIDENCE / Reddit
+near zero yield
+
+The maintenance loop can create:
+
+QUERY_TEMPLATE_REVISION_CANDIDATE
+
+It should not silently change the template.
+
+Same pattern:
+
+runtime experience
+↓
+candidate
+↓
+maintenance evaluation
+↓
+Git promotion
+24. Even source_registry can grow this way
+
+Suppose Hermes repeatedly discovers that:
+
+a particular enthusiast forum
+
+provides exceptional:
+
+WORKAROUND_EVIDENCE
+
+The runtime records telemetry.
+
+Maintenance may propose:
+
+source_candidate:
+  domain: creator_audio
+  source: specialist_forum_x
+
+  useful_for:
+    - WORKAROUND_EVIDENCE
+    - FRICTION_EVIDENCE
+
+  observed_yield:
+    ...
+
+  status:
+    CANDIDATE
+
+Only after approval does it become an active source-registry entry.
+
+25. Scoring rubric should almost never be autonomous
+
+This is a boundary I'd make very explicit.
+
+Maintenance may detect:
+
+Dimension X has been useless across 100 runs.
+
+It can create:
+
+SCORING_POLICY_REVIEW_CANDIDATE
+
+But no loop should autonomously rewrite:
+
+weights
+dimensions
+hard gates
+evidence authority
+
+Those are constitutional rules.
+
+They require deliberate review.
+
+26. Run snapshots remain immutable
+
+Suppose:
+
+run_100
+
+starts on:
+
+registry v17
+
+During that run it discovers 20 excellent new candidates.
+
+Maintenance subsequently publishes:
+
+registry v18
+
+run_100 remains:
+
+v17
+
+Future:
+
+run_101
+
+uses:
+
+v18
+
+Never mutate an active run's reasoning substrate underneath it.
+
+Your new SQLite config-drift architecture makes this particularly clean.
+
+27. This becomes a compounding system
+
+The full long-term architecture is now:
+
+                    POLYMATH
+                       │
+                       ▼
+                 OPPORTUNITY RUN
+                       │
+           ┌───────────┼────────────┐
+           │           │            │
+        registry     web          θ reasoning
+         priors     evidence
+           │           │            │
+           └───────────┼────────────┘
+                       ▼
+                 PRODUCT LEADS
+                       │
+                       │
+               novel structures
+                       ▼
+               REGISTRY CANDIDATES
+                       │
+                       ▼
+              MAINTENANCE GRAPH
+                       │
+            ┌──────────┼──────────┐
+            ▼          ▼          ▼
+          reject      merge     promote
+                                  │
+                                  ▼
+                           ACTIVE REGISTRY
+                                  │
+                                  ▼
+                         SMARTER FUTURE RUNS
+
+That's the compounding flywheel you're aiming for.
+
+What I would tell Fable now
+
+Add registry growth/maintenance as a separate lifecycle from opportunity research. Opportunity executions may emit RegistryCandidate objects whenever they encounter a novel niche, activity, atomic task, friction, workaround pattern, shared predicate, physical job, product territory, query strategy, source, or seasonal pattern. Those discoveries persist in the existing SQLite Work Graph but must never mutate the active CSV registry inside the discovering run.
+
+Create a Registry Maintenance Control Graph whose responsibilities are candidate collection across runs, normalization, deduplication/alias resolution, novelty and reusability analysis, evidence/falsification, diversification-gap analysis, promotion eligibility, human approval, CSV patch generation, registry compilation, regression validation, and publication of a new immutable RegistrySnapshot. Wrap that graph in a bounded maintenance loop with progress, budgets, stagnation and named terminal states.
+
+For new niches, do not merely add a niche name. Expand supported niches into atomic activity/task/context/body-state/friction/workaround/shared-predicate seed candidates matching the reasoning grain of the existing 1,386-row outdoor seed corpus. Prefer horizontal growth—new domains instantiated using existing friction/predicate/physical-job primitives—over constantly inventing new primitives. New friction families, predicates, query grammars and especially scoring changes require progressively stronger governance.
+
+Do not rename or restructure outdoor_activity_niche_seed.csv now. Treat it as the first implementation of an AtomicActivitySeed schema. registry.py should eventually be capable of compiling multiple same-schema seed packs so future creator, home, pet, beauty, automotive, or other domains can diversify the registry without contaminating the existing outdoor source file.
+
+Registry growth should be demand-driven by real execution wherever possible: repeated UNRESOLVED resolutions, recurring candidate concepts, frequently used physical predicates with low seed coverage, repeated friction/workaround patterns, and poor registry support for frequently investigated domains should generate diversification candidates. Manual diversification requests should use the same graph and validation process.
+
+The active registry is conservative; the candidate pool may be aggressive. Runtime discovers. Maintenance evaluates. Git promotes. registry.py compiles. Future runs consume the new version.

@@ -1,0 +1,12 @@
+name: opportunity-research
+version: 1.0.0
+architecture: v1-FROZEN   # docs/15: no new layers; qualification + telemetry-driven fixes only
+qualification: examples/architecture_qualification.v1.json   # 0 invariant violations, 4 modes
+kind: hermes-skill
+entry: SKILL.md
+control_graph: graph/control_graph.yaml
+policies: graph/policies.yaml
+runner: python/controller.py
+python: hermes-agent venv (yaml only; no third-party deps)
+state_dir: candidates/
+registry: registry/   # git-authoritative; runtime writes RegistryCandidate objects, never rows

@@ -1,0 +1,38 @@
+{
+ "title": "supplier_candidate",
+ "required": [
+  "id",
+  "product_name",
+  "supplier_name",
+  "price_raw",
+  "moq_raw",
+  "url"
+ ],
+ "properties": {
+  "images": {
+   "type": "array"
+  },
+  "variants": {
+   "type": "array"
+  },
+  "customizable": {},
+  "id": {
+   "type": "string"
+  },
+  "product_name": {
+   "type": "string"
+  },
+  "supplier_name": {
+   "type": "string"
+  },
+  "price_raw": {
+   "type": "string"
+  },
+  "moq_raw": {
+   "type": "string"
+  },
+  "url": {
+   "type": "string"
+  }
+ }
+}

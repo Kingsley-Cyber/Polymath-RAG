@@ -1,0 +1,39 @@
+# NICHE_LOADOUT mode policies (docs/09). Weights are CONFIG, not law —
+# tune after real runs; never fake Bayesian precision (no P(success)=.78).
+frontier_utility:            # U(b|s): is thinking one hop down this branch worth it?
+  weights: {new_jobs: 3.0, new_frictions: 2.5, new_slots: 2.0, insider_specificity: 2.0,
+            transfer_strength: 1.0, commerce_reachability: 1.0,
+            redundancy: -2.5, inference_distance: -1.5, research_cost: -1.0}
+  explore_threshold: 0.55
+  maybe_threshold: 0.35
+value_of_information:        # deterministic proxy until telemetry calibrates yields
+  formula: expected_source_yield * missing_role_importance * decision_impact / expected_cost
+  default_source_yield: {community: 0.7, review: 0.6, marketplace_listing: 0.4, supplier: 0.2}
+granularity_budget:
+  subniche_consider: 8
+  subniche_retain: 4
+  activity_branches_retain: 4
+  life_intersections_consider: 6
+  life_intersections_simulate: 2
+  experience_profiles_target: 3
+  experience_profiles_max: 4
+surface_gain:                # Gain(child|parent): KEEP_BRANCH vs COLLAPSE_TO_PARENT
+  weights: {new_activities: 1.0, new_contexts: 0.8, new_frictions: 1.2,
+            new_physical_jobs: 1.2, new_product_slots: 1.0, new_insider_signals: 0.8}
+  keep_threshold: 2.0
+portfolio:                   # F(S): choose the SET, not the top-N list
+  size_min: 3
+  size_max: 6
+  weights: {job_coverage: 2.0, role_coverage: 1.5, quality: 1.0, redundancy_penalty: 2.0,
+            moment_coverage: 0.8}
+  collection_roles: [INSIDER_GEM, UTILITY, DISCOVERY, COMPLEMENT, IDENTITY]
+insider_fidelity:            # IF(L) receipt dimensions + genericness penalty
+  weights: {situation_specificity: 1.0, task_coverage: 1.0, workaround_realism: 1.2,
+            constraint_fidelity: 1.0, insider_language: 1.2, experience_differentiation: 0.8,
+            traceability: 1.5, genericness_penalty: -2.0}
+  pass_threshold: 4.0
+loadout_ready:               # the success contract — every box or no LOADOUT_READY
+  requires: [coherent_scope, experience_context, lived_situation_coverage, field_evidence,
+             insider_language_grounding, non_obvious_item_present, distinct_physical_jobs,
+             sellable_products_3_6, collection_coherence, moment_traceability,
+             community_skeptic_pass]

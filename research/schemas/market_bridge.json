@@ -1,0 +1,66 @@
+{
+  "$id": "market_bridge",
+  "title": "MarketBridge \u2014 product -> meaning -> job -> market; the object this mode actually evaluates (docs/13)",
+  "type": "object",
+  "required": [
+    "id",
+    "meaning_id",
+    "market_scope"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "meaning_id": {
+      "type": "string"
+    },
+    "market_scope": {
+      "type": "string"
+    },
+    "niche": {
+      "type": "string"
+    },
+    "subniche": {
+      "type": "string"
+    },
+    "jobs": {
+      "type": "array"
+    },
+    "lived_situations": {
+      "type": "array"
+    },
+    "features": {
+      "type": "object"
+    },
+    "supporting_evidence": {
+      "type": "array"
+    },
+    "contradicting_evidence": {
+      "type": "array"
+    },
+    "state": {
+      "enum": [
+        "PROPOSED",
+        "RETAINED",
+        "PRUNED",
+        "SUPPORTED",
+        "REFINED",
+        "WEAK",
+        "CONTRADICTED",
+        "UNSUPPORTED"
+      ]
+    },
+    "genesis": {
+      "enum": [
+        "PROBLEM_LED",
+        "SHIFT_LED",
+        "TREND_LED",
+        "DEMAND_REROUTE",
+        "CAPABILITY_LED",
+        "WORKAROUND_LED",
+        "COMMUNITY_LED",
+        "SUPPLY_TRANSFER_LED"
+      ]
+    }
+  }
+}

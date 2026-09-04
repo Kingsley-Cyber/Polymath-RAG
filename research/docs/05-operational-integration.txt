@@ -1,0 +1,1066 @@
+Yes. Given the 31/31 state, I would **not change the reasoning design now**. The next slice should be operational integration: Hermes-native web execution, bounded multi-agent research, then report generation. The reasoning laws are already doing the important work.
+
+The loop work supports exactly this direction: the harness should supply tools and execution, while the external loop owns goals, verification, memory, budgets, and terminal behavior. 
+
+## 1. Hermes web integration should be an adapter, not another web layer
+
+Fable should bind the existing `WEB_RESEARCH` / product / supplier actions directly to **whatever Hermes already uses for search, browsing, Camoufox, page traversal, and site-specific interaction**.
+
+The opportunity skill should never implement:
+
+```text
+new browser
+new scraper
+new search client
+new session manager
+new CAPTCHA/browser logic
+```
+
+Instead:
+
+```text
+Control Graph
+      ↓
+controller.py step
+      ↓
+ResearchAction
+      ↓
+Hermes native web capability
+      ↓
+structured ResearchResult
+      ↓
+controller.py submit
+```
+
+A controller action should be capability-oriented rather than tool-oriented:
+
+```yaml
+action:
+  action_type: WEB_RESEARCH
+
+  objective:
+    find first-person evidence of creators
+    modifying microphone attachment systems
+
+  gap_ids:
+    - gap_17
+
+  required_evidence_roles:
+    - FRICTION_EVIDENCE
+    - WORKAROUND_EVIDENCE
+
+  source_scope:
+    allow:
+      - reddit
+      - youtube
+
+  query_plan:
+    - ...
+
+  traversal_policy:
+    max_pages: 5
+    max_threads: 12
+    max_comment_depth: 4
+
+  stop_when:
+    - evidence_requirement_satisfied
+    - source_saturated
+```
+
+Hermes then decides how its **existing tool surface** fulfills that request.
+
+That keeps your opportunity system independent from whatever browser implementation Hermes changes to later.
+
+---
+
+# 2. Add a Hermes capability binding check
+
+This is worth making explicit before calling the system production-ready.
+
+At skill initialization, resolve capabilities such as:
+
+```text
+SEARCH_WEB
+BROWSE_PAGE
+INTERACTIVE_BROWSER
+EXTRACT_PAGE
+TRAVERSE_COMMENTS
+OPEN_PRODUCT_PAGE
+CAPTURE_IMAGE
+```
+
+The skill does not care whether underneath that is:
+
+```text
+Camoufox
+another browser
+a search provider
+a native Hermes tool
+```
+
+It cares whether the capability exists.
+
+If a required capability isn't available:
+
+```text
+BLOCKED_CAPABILITY_UNAVAILABLE
+```
+
+not a hallucinated fallback.
+
+This also belongs in the `doctor` check we discussed.
+
+---
+
+# 3. Multi-agent should happen *inside Hermes*, not beside Hermes
+
+I think your best architecture is:
+
+```text
+                    YOU
+                     │
+                     ▼
+             PRIMARY HERMES
+        opportunity-research skill
+                     │
+                     ▼
+             φ / CONTROLLER
+                     │
+          finds independent gaps
+                     │
+       ┌─────────────┼─────────────┐
+       ▼             ▼             ▼
+ Research Agent  Research Agent  Research Agent
+   comments        products       contradiction
+       │             │             │
+       ▼             ▼             ▼
+  Hermes tools    Hermes tools    Hermes tools
+       │             │             │
+       └─────────────┼─────────────┘
+                     ▼
+              structured results
+                     │
+                     ▼
+             PRIMARY CONTROLLER
+                     │
+              admits / rejects
+                     │
+                     ▼
+                 Work Graph
+```
+
+You still interact with **one Hermes**.
+
+The extra agents are workers created for bounded research branches.
+
+You should not need to personally open:
+
+```text
+Hermes A
+Hermes B
+Hermes C
+Hermes D
+```
+
+and manage them.
+
+---
+
+# 4. The parent Hermes remains the only coordinator
+
+This is an important law.
+
+Subagents may:
+
+```text
+search
+browse
+inspect comments
+inspect products
+collect evidence
+perform scoped semantic evaluation
+```
+
+They may **not**:
+
+```text
+advance the Control Graph
+declare research satisfied
+change loop state
+qualify a final lead
+alter policy
+write registry records
+approve their own findings
+```
+
+Architecture:
+
+```text
+PRIMARY HERMES
+      ↓
+controller.py
+      ↓
+ResearchDirective
+      ↓
+SUBAGENT
+      ↓
+ResearchBundle
+      ↓
+controller submit
+      ↓
+φ verification
+```
+
+The controller remains the authority.
+
+This makes parallelism safe.
+
+---
+
+# 5. Parallelize by evidence deficit
+
+Do not create generic personas like:
+
+```text
+Agent 1
+Agent 2
+Agent 3
+```
+
+The Work Graph should determine the division of work.
+
+Suppose the candidate currently lacks:
+
+```text
+WORKAROUND_EVIDENCE
+PRODUCT_DELTA_SUPPORT
+SUPPLIER_AVAILABILITY
+CONTRADICTION
+```
+
+The controller can create four independent assignments:
+
+```text
+Branch A
+Reddit / forums
+→ WORKAROUND_EVIDENCE
+
+
+Branch B
+Amazon reviews
+→ PRODUCT_DELTA_SUPPORT
+
+
+Branch C
+CJ + Alibaba
+→ SUPPLIER_AVAILABILITY
+
+
+Branch D
+Reddit / YouTube / web
+→ CONTRADICTION
+```
+
+These are genuinely parallel because they satisfy independent evidence requirements.
+
+---
+
+# 6. Don't parallelize dependent reasoning steps
+
+Bad:
+
+```text
+agent A generates product mechanism
+
+agent B searches suppliers for that mechanism
+
+simultaneously
+```
+
+B might execute before A's mechanism is admitted.
+
+Instead:
+
+```text
+θ mechanism generation
+      ↓
+verification
+      ↓
+mechanism admitted
+      ↓
+fan out:
+    ├─ current products
+    ├─ product complaints
+    ├─ suppliers
+    └─ contradictions
+```
+
+The Control Graph determines the dependency boundary.
+
+That is one of the direct benefits of keeping the graph explicit rather than letting agent conversation itself become the workflow. The prompt-graph source specifically treats dependencies, branching, merging and execution semantics as properties of the authored graph. 
+
+---
+
+# 7. Add branch identity to the existing action model
+
+You shouldn't need a large schema change.
+
+Just make actions capable of carrying:
+
+```yaml
+action:
+  action_id: act_91
+
+  branch_id: branch_supplier_01
+
+  parent_action_id: null
+
+  evidence_requirement_ids:
+    - er_supplier
+
+  agent_role:
+    SUPPLIER_RESEARCH
+
+  status: PENDING
+```
+
+For fan-out:
+
+```text
+research_cycle_4
+├── branch_behavior
+├── branch_product_delta
+├── branch_supplier
+└── branch_contradiction
+```
+
+Then the controller waits only on the branches required for the relevant satisfaction policy.
+
+---
+
+# 8. Each subagent receives a very narrow directive
+
+Something like:
+
+```yaml
+research_directive:
+  branch_id: branch_workaround_01
+
+  objective:
+    >
+    Find first-person reports of creators
+    modifying or replacing microphone attachment
+    methods because of clothing or movement problems.
+
+  required_evidence_roles:
+    - FRICTION_EVIDENCE
+    - WORKAROUND_EVIDENCE
+
+  allowed_sources:
+    - reddit
+    - youtube
+
+  forbidden_conclusions:
+    - market_size
+    - opportunity_quality
+    - supplier_feasibility
+
+  query_budget: 8
+
+  source_budget:
+    threads: 12
+    comments: 100
+
+  stop_when:
+    - role_coverage_reached
+    - source_saturated
+    - query_budget_exhausted
+
+  return:
+    schema: research_bundle.v1
+```
+
+The worker knows exactly what it is trying to establish.
+
+---
+
+# 9. Subagents return evidence, not opinions
+
+Return:
+
+```yaml
+research_bundle:
+  branch_id: branch_workaround_01
+
+  queries_executed:
+    - ...
+
+  observations:
+    - source:
+        ...
+      text:
+        ...
+      proposed_evidence_roles:
+        - FRICTION_EVIDENCE
+
+  product_signals:
+    - ...
+
+  contradictions:
+    - ...
+
+  source_summary:
+    pages_seen: 16
+    qualifying_items: 7
+
+  terminal:
+    state: SATURATED
+```
+
+Not:
+
+> "I think this is a great opportunity."
+
+φ decides what gets admitted.
+
+---
+
+# 10. Multi-agent merging should be deterministic
+
+Don't send all four agent narratives to another LLM and ask:
+
+> "What did we learn?"
+
+Merge structurally.
+
+```text
+ResearchBundle A
+ResearchBundle B
+ResearchBundle C
+ResearchBundle D
+        ↓
+schema verification
+        ↓
+source suitability
+        ↓
+dedupe
+        ↓
+independence grouping
+        ↓
+evidence-role admission
+        ↓
+Product Intake
+        ↓
+Work Graph update
+        ↓
+satisfaction recomputation
+```
+
+θ can later synthesize an explanation from that canonical state.
+
+But **canonical state does not come from prose aggregation**.
+
+---
+
+# 11. Independent L4 evaluator fits naturally as another Hermes agent
+
+This solves one of the remaining readiness gaps.
+
+Do:
+
+```text
+Generator Hermes context
+      ↓
+BridgeHypothesis
+      ↓
+L1/L2 Python checks
+      ↓
+FRESH EVALUATOR AGENT
+      ↓
+PASS / REVISE / REJECT
+```
+
+The evaluator should not receive the generator's full persuasive context.
+
+Give it:
+
+```text
+source evidence
+bridge path
+inference boundaries
+competing paths
+gaps
+```
+
+and skeptical instructions.
+
+The loop literature's generator/evaluator separation is particularly relevant here: the agent that generated an answer is a poor sole judge of that answer, so the checker should be structurally separated. 
+
+---
+
+# 12. You should still be able to use Hermes normally
+
+This matters.
+
+Don't make the entire Hermes installation permanently become the opportunity engine.
+
+It should remain a skill invocation:
+
+```text
+/opportunity-research ...
+```
+
+or whatever Hermes's actual skill invocation convention is.
+
+Outside that:
+
+```text
+Hermes remains Hermes.
+```
+
+The opportunity loop owns state only for a specific:
+
+```text
+run_id
+```
+
+So:
+
+```text
+normal Hermes conversation
+```
+
+and:
+
+```text
+opportunity run_123
+```
+
+are separate.
+
+You should be able to ask Hermes:
+
+> What's the status of my creator-audio investigation?
+
+and it reads the workflow state.
+
+Or:
+
+> Start a new opportunity run from this transcript.
+
+and it creates another run.
+
+Or:
+
+> Stop research on run 123.
+
+and it closes/pauses the loop through the controller.
+
+---
+
+# 13. HTML reporting is a good addition
+
+I would absolutely support this, but again **don't turn HTML into workflow truth**.
+
+Use:
+
+```text
+SQLite / Work Graph
+        ↓
+ReportModel JSON
+        ↓
+HTML renderer
+        ↓
+report.html
+```
+
+Not:
+
+```text
+LLM remembers investigation
+        ↓
+writes whatever HTML it remembers
+```
+
+---
+
+# 14. Add a `ReportRequest`
+
+You want custom reports, so make reporting request-driven.
+
+For example:
+
+```yaml
+report_request:
+  run_id: run_123
+
+  format:
+    - html
+
+  audience:
+    owner
+
+  title:
+    Creator Audio Physical Product Opportunity
+
+  sections:
+    - executive_summary
+    - opportunity_thesis
+    - reasoning_path
+    - evidence_coverage
+    - consumer_language
+    - contradictions
+    - product_candidates
+    - product_comparison
+    - supplier_offers
+    - product_images
+    - unresolved_gaps
+    - final_verdict
+    - research_audit
+
+  include:
+    source_links: true
+    direct_quotes: true
+    product_images: true
+    supplier_links: true
+    rejected_candidates: true
+    graph_visualization: true
+
+  detail_level:
+    deep
+
+  custom_instruction:
+    >
+    Emphasize the strongest physical products,
+    why each exists, what actual users complained
+    about, and where I can currently source it.
+```
+
+Now you can ask Hermes naturally:
+
+> Build me a detailed HTML report for run 123. Focus on the top three products, include pictures, supplier links, prices, comments, and explain why each product emerged.
+
+Hermes compiles that into `ReportRequest`.
+
+---
+
+# 15. Separate report facts from report prose
+
+The report pipeline should have two stages.
+
+### Deterministic report data
+
+Build:
+
+```json
+{
+  "run": {},
+  "verdict": {},
+  "hypotheses": [],
+  "evidence_coverage": {},
+  "observations": [],
+  "products": [],
+  "suppliers": [],
+  "contradictions": [],
+  "gaps": []
+}
+```
+
+This must be reproducible.
+
+### θ narrative
+
+Then allow θ to write:
+
+```text
+executive summary
+reasoning explanation
+why this matters
+comparison narrative
+```
+
+but only from the `ReportModel`.
+
+No new facts may appear during report writing.
+
+---
+
+# 16. The HTML report should be a research dashboard
+
+For your specific workflow I'd make the HTML roughly:
+
+```text
+┌──────────────────────────────────────────┐
+│ OPPORTUNITY REPORT                       │
+│ Creator Audio / run_123                  │
+│ PROVISIONAL_PRODUCT_LEAD                 │
+└──────────────────────────────────────────┘
+
+
+OPPORTUNITY THESIS
+Why this investigation exists.
+
+
+REASONING BRIDGE
+Storytelling
+→ performative delivery
+→ movement
+→ physical audio requirement
+→ attachment mechanism
+
+
+EVIDENCE COVERAGE
+
+Behavior          ✓ SATISFIED
+Friction          ✓ SATISFIED
+Workaround        ✓ SATISFIED
+Contradiction     ✓ SATISFIED
+Product delta     ✓ SATISFIED
+Supplier          ✓ SATISFIED
+Price             ✓ SATISFIED
+
+
+WHAT USERS ACTUALLY SAID
+
+[Reddit]
+"I hate clipping..."
+
+[YouTube]
+"Where did she get..."
+
+
+PRODUCT 1
+┌──────────────────────────────────┐
+│ [IMAGE]                          │
+│ Magnetic transmitter holder      │
+│                                  │
+│ Physical job                     │
+│ Mechanism                        │
+│ Why it emerged                   │
+│ Product delta                    │
+│                                  │
+│ Amazon refs                      │
+│ CJ offer                         │
+│ Alibaba offers                   │
+│ Price / MOQ                      │
+└──────────────────────────────────┘
+
+
+PRODUCT 2
+...
+
+
+CONTRADICTION / RED TEAM
+...
+
+
+REJECTED PRODUCTS
+...
+
+
+UNRESOLVED QUESTIONS
+...
+
+
+RESEARCH AUDIT
+queries
+sources
+cycles
+agent branches
+evidence counts
+```
+
+That would be substantially more useful than a markdown summary.
+
+---
+
+# 17. Include the Work Graph visually in HTML
+
+Not full Neo4j.
+
+Only the important path:
+
+```text
+Source Insight
+    ↓
+Behavior
+    ↓
+Friction
+    ↓
+Physical Job
+    ↓
+Mechanism
+    ↓
+ProductCandidate
+    ↓
+SupplierOffer
+```
+
+And visually distinguish:
+
+```text
+evidence-backed edge
+inferred edge
+contradicted edge
+```
+
+The report renderer can generate a lightweight SVG or HTML/CSS graph from structured Work Graph data.
+
+No graph database needed.
+
+---
+
+# 18. Product cards should preserve discovery origin
+
+This is important for your use case.
+
+Every product card should show:
+
+```text
+DISCOVERED FROM
+
+Corpus reasoning
+or
+Reddit workaround
+or
+Amazon review
+or
+Alibaba alternative implementation
+or
+CJ product exploration
+```
+
+For example:
+
+```text
+Magnetic transmitter shell
+
+Discovery:
+Reddit workaround
+
+Reason:
+3 independent creators described replacing
+or bypassing standard clips.
+
+Later supplier match:
+Alibaba
+```
+
+This lets you see whether your latent reasoning engine is actually discovering opportunities or whether web research is doing most of the useful product discovery.
+
+---
+
+# 19. Report multiple candidates, including failures
+
+Don't let the report become sales copy.
+
+Show:
+
+```text
+ADVANCED
+HOLD
+COMMODITY_ONLY
+REJECTED
+```
+
+Example:
+
+```text
+Compact handheld mic
+REJECTED
+Reason:
+hands-free preference dominated.
+
+Magnetic transmitter holder
+ADVANCED
+
+Decorative mic windscreen
+HOLD
+Reason:
+strong aesthetic interest,
+weak friction/purchase evidence.
+```
+
+This makes the report useful for decision-making.
+
+---
+
+# 20. Custom HTML requests should not require new code each time
+
+The user-facing model should accept things like:
+
+> Make the report shorter.
+
+> Only show qualified products.
+
+> Focus on comments and supplier pictures.
+
+> Include all rejected paths.
+
+> Make it investor style.
+
+> Make it a sourcing report.
+
+Those become:
+
+```text
+ReportRequest configuration
+```
+
+not a new report template every time.
+
+You can have a few layout modes:
+
+```text
+FULL_RESEARCH
+PRODUCT_SHORTLIST
+SOURCING
+EXECUTIVE
+AUDIT
+```
+
+plus custom section selection.
+
+---
+
+# 21. Keep HTML generation out of the Control Graph's critical path
+
+Important.
+
+A research run can reach:
+
+```text
+QUALIFIED_PRODUCT_LEAD
+```
+
+even if HTML rendering fails.
+
+Report generation is downstream:
+
+```text
+RUN TERMINAL
+     ↓
+optional ReportRequest
+     ↓
+report generation
+```
+
+The report must never affect the research verdict.
+
+---
+
+# 22. Images
+
+For physical products, images matter.
+
+Report records should support:
+
+```text
+image_url
+source
+listing_id
+local_capture_path
+content_hash where captured
+```
+
+Then HTML product cards can display:
+
+```text
+Amazon reference image
+CJ image
+Alibaba image
+```
+
+where the existing Hermes web tooling was able to capture them.
+
+Don't store the binary images in SQLite.
+
+Store references/paths.
+
+---
+
+# 23. The final unattended architecture
+
+This is what I'd now target:
+
+```text
+YOU
+ │
+ │ one Hermes request
+ ▼
+PRIMARY HERMES
+ │
+ ▼
+OPPORTUNITY SKILL
+ │
+ ▼
+φ CONTROLLER + SQLITE
+ │
+ ├─────────────── LOOP ─────────────────┐
+ │                                      │
+ ▼                                      │
+CONTROL GRAPH                           │
+ │                                      │
+ ├─ θ reasoning                         │
+ │                                      │
+ ├─ Polymath                            │
+ │                                      │
+ └─ evidence deficits                   │
+        │                               │
+        ▼                               │
+     FAN OUT                            │
+  ┌─────┼─────┬─────┐                  │
+  ▼     ▼     ▼     ▼                  │
+agent agent agent agent                 │
+  │     │     │     │                  │
+  └─ Hermes native web ───────────────┐ │
+                                      │ │
+                                      ▼ │
+                               ResearchBundles
+                                      │
+                                      ▼
+                           deterministic merge
+                                      │
+                                      ▼
+                              Work Graph update
+                                      │
+                                      ▼
+                               satisfaction
+                                      │
+                        ┌─────────────┴──────┐
+                        │                    │
+                     continue             terminal
+                        │                    │
+                        └────────────────────┘
+                                             ↓
+                                  optional ReportRequest
+                                             ↓
+                                     ReportModel JSON
+                                             ↓
+                                      custom HTML
+```
+
+---
+
+## What I would tell Fable to do next
+
+In this order:
+
+1. **Do not retune the evidence laws yet.** Run the first real supervised cases.
+2. **Bind Control Graph actions to Hermes's existing web/browser capabilities.**
+3. **Implement SQLite durability, crash-resume, idempotency and config-drift blocking.**
+4. **Add branch-aware actions so independent evidence deficits can fan out to multiple Hermes subagents/workers.**
+5. **Implement the independent L4 skeptical evaluator as a fresh bounded agent.**
+6. **Finish reverse-chain Product Intake.**
+7. **Enforce loop budgets and stagnation.**
+8. **Then add `ReportRequest → ReportModel → custom HTML`.**
+
+I agree with Fable's current readiness call: **the reasoning kernel looks ready for supervised canaries; the remaining gap is execution hardening.** I would use those first real investigations specifically to tune source suitability and satisfaction thresholds, while building the Hermes-native execution and persistence pieces around them.
+
+The key multi-agent law should be:
+
+> **Hermes remains the harness and user interface. The controller owns the investigation. Subagents own bounded evidence-gathering assignments. No subagent owns workflow state or final conclusions.**
+
+And the reporting law:
+
+> **Reports are views over canonical investigation state. HTML may be customized freely; facts, verdicts and evidence coverage may not be recreated or altered during presentation.**
