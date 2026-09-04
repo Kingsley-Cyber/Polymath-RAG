@@ -89,9 +89,15 @@ every mandatory canary for the mode is PASS and no non-advisory canary is FAIL:
 | 7 | irrelevant_source_rejection | a configured KNOWN trap row (`--trap-text`) was retrieved, classified IRRELEVANT and referenced by nothing | mandatory |
 | 8 | hypothesis_death | ≥1 corpus-derived hypothesis (hops cite corpus rows) ended REJECTED BECAUSE of field evidence (contradicting observation on its gap, or a challenge / evaluation citing admitted field refs) | mandatory |
 
-The run passes when every mandatory canary for the mode is PASS and no
-non-advisory canary is FAIL. Every concept carries a receipt with
-`corpus_named`, `corpus_example_overlap` and `field_origin` exposed separately.
+The run passes when every mandatory canary for the mode is PASS (or
+NOT_TRIGGERED for a structural reason: a zero-product outcome — no kept
+concept and no SUPPORTED mechanism, Law 12 — leaves corpus_independence and
+field_originated_opportunity nothing to measure; a run that nominated no
+OPEN_FIELD lead leaves open_field_population_discovery nothing to measure) and
+no non-advisory canary is FAIL. NOT_EVALUATED never satisfies a mandatory
+canary. The report names the untriggered ones in `not_triggered_mandatory`.
+Every concept carries a receipt with `corpus_named`, `corpus_example_overlap`
+and `field_origin` exposed separately.
 
 **Field origin (deterministic, `provenance.field_origin`)** — FIELD_NAMED: a
 participant explicitly named it (a `products_named` entry equal to the concept

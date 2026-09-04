@@ -23,6 +23,32 @@ DOSSIER_HYP_FIELDS = ["id", "source", "path", "target_mechanism", "invariant",
                       "status", "exploratory"]
 
 
+def _field_summaries(d: dict) -> list[dict]:
+    """docs/25 §5: field records and observations are citable lanes; the fresh
+    evaluator must be able to read what the participant actually said. Quote,
+    problem, workaround, community and roles — never a demand claim."""
+    out = []
+    for r in (d.get("field_records") or []) + (d.get("observations") or []):
+        if not isinstance(r, dict) or not r.get("id"):
+            continue
+        roles = list(r.get("evidence_roles") or [])
+        out.append({"id": r["id"], "lane": "field_record" if "lead_id" in r else "observation",
+                    "summary": " | ".join(x for x in (f"quote: {r.get('quote_ref')}" if r.get("quote_ref") else "",
+                                                     f"problem: {r.get('problem')}" if r.get("problem") else "",
+                                                     f"workaround: {r.get('workaround')}" if r.get("workaround") else "",
+                                                     f"products named: {', '.join(r.get('products_named') or [])}" if r.get("products_named") else "") if x),
+                    "community": r.get("community"), "evidence_roles": roles, "freshness": (r.get("freshness") or {}).get("class"),
+                    "contradicts": bool(r.get("contradicts")),
+                    "can_establish": [x for x in ("friction", "workaround", "behavior") if any(x.upper() in ro for ro in roles)] or ["context"],
+                    "cannot_establish": ["current_demand", "current_purchase_intent", "current_supplier_availability"]})
+    for st in d.get("latent_structures") or []:
+        if isinstance(st, dict) and st.get("id"):
+            out.append({"id": st["id"], "lane": "latent_structure", "summary": f"{st.get('kind')}: {st.get('text')}",
+                        "evidence_refs": list(st.get("evidence_refs") or []), "can_establish": ["latent_hypothesis"],
+                        "cannot_establish": ["current_demand", "field_truth"]})
+    return out
+
+
 def build_dossier(state: dict) -> dict:
     d = state["data"]
     return {
@@ -31,7 +57,7 @@ def build_dossier(state: dict) -> dict:
             {"id": e.get("id"), "summary": e.get("summary"),
              "can_establish": e.get("can_establish"),
              "cannot_establish": e.get("cannot_establish")}
-            for e in d.get("corpus_evidence") or []],
+            for e in d.get("corpus_evidence") or []] + _field_summaries(d),
         "primitives": {k: v for k, v in (d.get("primitives") or {}).items()
                        if k in ("behaviors", "constraints", "frictions",
                                 "physical_jobs", "transferable_invariants")},
@@ -39,7 +65,7 @@ def build_dossier(state: dict) -> dict:
                     for h in d.get("hypotheses") or []
                     if h.get("status") in ("WORKING_HYPOTHESIS", "WORKING_ANALOGY", "CHALLENGED")],
         "competing_paths_note": "bridges above compete with each other; judge each independently",
-        "field_observations_exist": bool(d.get("observations")),
+        "field_observations_exist": bool(d.get("observations") or d.get("field_records")),
         "forbidden": ["generating new opportunities", "promoting evidence",
                       "trusting unstated generator reasoning"],
     }

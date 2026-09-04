@@ -45,6 +45,12 @@ def evidence_sufficient(state: dict, policies: dict) -> bool:
     gaps = state["data"]["gaps"]
     if not gaps:
         return False  # no gaps compiled yet means nothing was challenged, not sufficiency
+    if not _live_hypothesis_ids(state):
+        # EVERY bridge is REJECTED / HOLD (measured 2026-09-04 on the novel-seeded calibration, budget
+        # left): no live open gap can force research and no live supported gap exists, so without this
+        # law neither edge fires and the run stalls. Evidence is as sufficient as it will ever get — the
+        # mechanism node pronounces NO_DEFENSIBLE_BRIDGE (Law 12: zero products is a valid outcome).
+        return True
     cap = _opp_rounds_cap(state, policies)
     if _open_gaps(state) and state["rounds"]["research"] < cap:
         return False

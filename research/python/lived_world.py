@@ -660,8 +660,11 @@ def summary(state: dict) -> dict:
     return {"leads": len(leads), "leads_by_lane": dict(collections.Counter(l.get("source_lane") for l in leads)),
             "leads_by_status": dict(collections.Counter(l.get("status") for l in leads)),
             "seed_population_leads": sum(1 for l in leads if l.get("seed_population")),
-            "latent_leads": sum(1 for l in leads if l.get("search_mode") == "LATENT"),
-            "latent_leads_instantiated": sum(1 for l in leads if l.get("search_mode") == "LATENT" and l.get("record_ids")),
+            # LATENT = the population lead searched by structure language (search_mode) OR the community lead the scout
+            # resolved it to (source_lane LATENT) — the same definition canary 5b (latent_population_resolution) uses
+            "latent_leads": sum(1 for l in leads if l.get("search_mode") == "LATENT" or l.get("source_lane") == "LATENT"),
+            "latent_leads_instantiated": sum(1 for l in leads if (l.get("search_mode") == "LATENT" or l.get("source_lane") == "LATENT")
+                                             and l.get("status") == "INSTANTIATED" and l.get("record_ids")),
             "field_records": len(d.get("field_records") or []),
             "records_by_origin": dict(collections.Counter(r.get("origin") or "CHANNEL" for r in d.get("field_records") or [])),
             "participant_cards": len(d.get("participant_cards") or []),

@@ -1934,7 +1934,11 @@ _x["rounds"]["research"] = 1
 ok(_tr12.evaluate("evidence_sufficient", _x, pol) is False, "with budget left and open gaps, research continues")
 _x["data"]["gaps"][0]["status"] = "supported"
 _x["data"]["hypotheses"][0]["status"] = "REJECTED"
-ok(_tr12.evaluate("evidence_sufficient", _x, pol) is False, "a supported gap of a REJECTED bridge does not count as sufficiency")
+ok(_tr12.evaluate("evidence_sufficient", _x, pol) is True and _tr12.evaluate("material_gap_exists", _x, pol) is False,
+   "the ONLY bridge REJECTED (budget left): the run proceeds to mechanism to pronounce NO_DEFENSIBLE_BRIDGE — never the silent stall this assertion used to encode (corrected 2026-09-04)")
+_x["data"]["hypotheses"].append({"id": "hy", "status": "CHALLENGED", "gaps": ["q2"]}); _x["data"]["gaps"].append({"id": "gy", "hypothesis_id": "hy", "status": "open", "question": "q2"})
+ok(_tr12.evaluate("evidence_sufficient", _x, pol) is False, "a supported gap of a REJECTED bridge does not count as sufficiency while a LIVE bridge still has open gaps and budget")
+_x["data"]["hypotheses"].pop(); _x["data"]["gaps"].pop()
 _x["data"]["hypotheses"][0]["status"] = "CHALLENGED"
 ok(_tr12.evaluate("evidence_sufficient", _x, pol) is True, "a supported gap of a LIVE bridge with enough observations is sufficiency")
 
@@ -3149,6 +3153,103 @@ rc5c, out5c = submit(_ns, "corpus", _p5)
 ok(rc5c == 0 and out5c.get("recorded") == "CAPABILITY_FAILURE" and json.load(open(_ns))["capability_failures"][-1]["capability"] == "document_scoped_corpus_retrieval",
    "the controller records the fail-closed scope as a CAPABILITY_FAILURE coverage deficit — honest, never silent")
 _nsrv.shutdown()
+# 23g. LIVE DEFECT (novel calibration 2026-09-04): the bridge prompt says "cite the structure ids you build on" but the
+# controller's known-id set for hop_refs held only rows / observations / records / clusters — an admitted latent
+# structure id was refused as "unknown". Python owns the law: admitted latent_structures and corpus_observations are citable.
+_hs = os.path.join(tmp, "hopstruct.json")
+ctl("init", "--state", _hs, "--signal", "hop refs may cite admitted latent structures")
+_hss = json.load(open(_hs)); _hss["node"] = "hypothesize"
+_hss["data"]["corpus_evidence"] = [{"id": "rowA", "summary": "a classified row"}]
+_hss["data"]["row_relevance"] = {"rowA": "SEMANTIC_MATCH"}
+_hss["data"]["primitives"] = {"generative_signal": True}
+_hss["data"]["latent_structures"] = [{"id": "st_admitted", "kind": "ACCESS_PROBLEM", "text": "t", "evidence_refs": ["rowA"], "authority": "LATENT_HYPOTHESIS"}]
+_hss["data"]["corpus_observations"] = [{"id": "co_admitted", "kind": "OBSERVED_PRODUCT", "name": "washcloth", "evidence_refs": ["rowA"], "evidentiary_authority": "NONE_FOR_CURRENT_DEMAND"}]
+json.dump(_hss, open(_hs, "w"))
+_hb = lambda hid, refs1: dict(_hf(hid, ["rowA"]), evidence_boundary={"first_inference_at": "c"}, hop_refs={"0": ["rowA"], "1": refs1})   # hops 0 and 1 are evidence-side and validated
+rc, out = submit(_hs, "hypothesize", {"hypotheses": [_hb("h1", ["st_admitted"]), _hb("h2", ["co_admitted"]), _hb("h3", ["rowA"])]})
+ok(rc == 0, f"an evidence-side hop may cite an ADMITTED latent structure or corpus observation id ({out.get('schema_errors')})")
+_hss["node"] = "hypothesize"; json.dump(_hss, open(_hs, "w"))
+rc, out = submit(_hs, "hypothesize", {"hypotheses": [_hb("h1", ["st_ghost"]), _hb("h2", ["rowA"]), _hb("h3", ["rowA"])]})
+ok(rc == 1 and any("unknown ids" in e or "does not exist" in e for e in out.get("schema_errors", [])), "a hop citing a structure id that was never admitted is still refused")
+# 23h. LIVE DEFECT (novel calibration 2026-09-04, seen in run 01 too): the L4 dossier carried only corpus rows, so every
+# hop-0 field_record ref and every latent structure a hop cited was unverifiable to the fresh evaluator. The dossier must
+# summarise every citable lane — field records (quote, problem, workaround, community, roles) and admitted latent structures.
+import evaluator as _evm  # noqa: E402
+_ds = copy.deepcopy(_cs); _ds["data"]["latent_structures"] = [{"id": "st_d", "kind": "ACCESS_PROBLEM", "text": "cloth out of reach", "evidence_refs": ["c2"], "authority": "LATENT_HYPOTHESIS"}]
+_ds["data"]["hypotheses"] = [{"id": "h_d", "status": "WORKING_HYPOTHESIS", "path": ["a", "b", "c"], "hop_refs": {"0": ["f0"], "1": ["st_d", "c2"]}, "evidence_boundary": {"first_inference_at": "c"}}]
+_dos = _evm.build_dossier(_ds); _ids = {e["id"] for e in _dos["evidence_summaries"]}
+ok({"f0", "st_d", "c2"} <= _ids, f"the dossier summarises field records and admitted latent structures a hop cites, not only corpus rows ({sorted(_ids)[:6]})")
+_f0 = next(e for e in _dos["evidence_summaries"] if e["id"] == "f0")
+ok("magnetic pill caddy" in json.dumps(_f0) and _f0.get("lane") == "field_record" and "current_demand" not in (_f0.get("can_establish") or []),
+   "a field-record summary carries the participant's quote / workaround and its lane, and never claims current demand")
+ok(_dos["field_observations_exist"] is True, "field_observations_exist is true when field records exist (the evaluator must know field evidence is in play)")
+# 23i. LIVE DEFECT (novel calibration 2026-09-04): every hypothesis REJECTED on field evidence with research budget LEFT —
+# `material_gap_exists` is false (no live open gap) and `evidence_sufficient` was false (no live supported gap), so neither
+# edge out of `gaps` fired and the run went silent. Law: when no live bridge remains, the evidence is as sufficient as it
+# will ever get and the mechanism node must pronounce NO_DEFENSIBLE_BRIDGE (Law 12: zero products is a valid outcome).
+_dead = {"data": {"hypotheses": [{"id": "hA", "status": "REJECTED"}, {"id": "hB", "status": "REJECTED"}],
+                  "gaps": [{"id": "gA", "hypothesis_id": "hA", "status": "open"}, {"id": "gB", "hypothesis_id": "hB", "status": "contradicted"}],
+                  "observations": [{"id": "o1"}], "mechanisms": []}, "rounds": {"research": 1}, "settings": {}}
+ok(_tr12.evaluate("material_gap_exists", _dead, pol) is False, "dead bridges' gaps are moot: no research round is forced")
+ok(_tr12.evaluate("evidence_sufficient", _dead, pol) is True, "with every bridge REJECTED and budget left, evidence is sufficient — the run proceeds to mechanism to pronounce NO_DEFENSIBLE_BRIDGE instead of stalling")
+_alive = copy.deepcopy(_dead); _alive["data"]["hypotheses"][0]["status"] = "CHALLENGED"
+ok(_tr12.evaluate("material_gap_exists", _alive, pol) is True and _tr12.evaluate("evidence_sufficient", _alive, pol) is False, "one live bridge with an open gap and budget left still researches (the law did not loosen)")
+# 23j. LIVE DEFECT (novel calibration 2026-09-04): at `mechanism` with every bridge REJECTED the agent submitted one PROPOSED
+# mechanism and `product_candidates: []` (nothing supported → nothing to list). `step` treated the EMPTY submitted list as
+# "not submitted", compiled the envelope, and the envelope dropped the REJECTED hypotheses and declared `hypotheses` missing —
+# BLOCKED_CONTEXT_INCOMPLETE on a run whose only remaining duty was to pronounce NO_DEFENSIBLE_BRIDGE.
+_nd = os.path.join(tmp, "nodefense.json")
+ctl("init", "--state", _nd, "--signal", "all bridges dead")
+_nds = json.load(open(_nd)); _nds["node"] = "mechanism"; _nds["rounds"] = {"research": 2}
+_nds["data"]["hypotheses"] = [{"id": "hA", "status": "REJECTED", "path": ["a", "b", "c"]}, {"id": "hB", "status": "REJECTED", "path": ["a", "b", "c"]}]
+_nds["data"]["gaps"] = [{"id": "gA", "hypothesis_id": "hA", "status": "contradicted"}, {"id": "gB", "hypothesis_id": "hB", "status": "open"}]
+_nds["data"]["observations"] = [{"id": "oA", "gap_id": "gA", "contradicts": True}]
+_nds["data"]["primitives"] = {"generative_signal": True}
+_nds["history"] = (_nds.get("history") or []) + [{"node": "mechanism", "event": "advance", "to": "mechanism"}]
+json.dump(_nds, open(_nd, "w"))
+_envd = ctxmod.compile_envelope(_nds, graphmod.load_graph(), pol, "mechanism")
+ok(_envd["status"] != "BLOCKED_CONTEXT_INCOMPLETE" and _envd["manifest"].get("all_rejected") == ["hypotheses"],
+   f"the mechanism envelope with every hypothesis REJECTED is compilable — the dead bridges EXIST, they are the context for NO_DEFENSIBLE_BRIDGE ({_envd['status']}, {_envd['manifest'].get('deficits')})")
+rc, out = submit(_nd, "mechanism", {"mechanisms": [{"id": "mX", "name": "x", "hypothesis_id": "hA", "status": "PROPOSED", "supporting_observation_ids": ["oA"]}], "product_candidates": []})
+ok(rc == 0, f"a PROPOSED-only mechanism with an EMPTY product_candidates list is accepted ({out.get('schema_errors')})")
+rc, out = ctl("step", "--state", _nd)
+ok(rc == 0 and out.get("advanced_to") == "stop" and json.load(open(_nd)).get("verdict") == "NO_DEFENSIBLE_BRIDGE",
+   f"an empty list SUBMITTED this visit satisfies the node; the run advances to stop with NO_DEFENSIBLE_BRIDGE instead of BLOCKED_CONTEXT_INCOMPLETE ({out.get('error') or out.get('advanced_to')}, verdict={json.load(open(_nd)).get('verdict')})")
+# 23k. LIVE DEFECT (novel calibration 2026-09-04): the utilization receipt said `latent_leads_instantiated: 0` while three
+# LATENT-lane community leads were INSTANTIATED with records — the summary counted only `search_mode: LATENT` population leads.
+# The receipt and canary 5b must count the same thing: source_lane LATENT OR search_mode LATENT.
+_lsum = _models20.new_state("lsum", "s")
+_lsum["data"]["population_leads"] = [{"id": "p1", "kind": "POPULATION", "name": "who repeatedly experiences: x", "source_lane": "LATENT", "search_mode": "LATENT", "latent_structure_id": "st1", "nominated_by": ["st1"], "authority": "LEAD", "status": "NOMINATED", "record_ids": []}]
+_lsum["data"]["community_leads"] = [{"id": "c1", "kind": "COMMUNITY", "name": "r/x", "community_key": "x", "source_lane": "LATENT", "latent_structure_id": "st1", "nominated_by": ["scout"], "authority": "LEAD", "status": "INSTANTIATED", "record_ids": ["f1"]},
+                                    {"id": "c2", "kind": "COMMUNITY", "name": "r/y", "community_key": "y", "source_lane": "OPEN_FIELD", "nominated_by": ["scout"], "authority": "LEAD", "status": "INSTANTIATED", "record_ids": ["f2"]}]
+_lsm = _lwm.summary(_lsum)
+ok(_lsm["latent_leads"] == 2 and _lsm["latent_leads_instantiated"] == 1, f"the lived-world summary counts LATENT-lane community leads as latent and their instantiation ({_lsm['latent_leads']}, {_lsm['latent_leads_instantiated']})")
+# 23l. CANARY SEMANTICS (novel calibration 2026-09-04, Law 12): a run that legitimately ends with ZERO products
+# (mechanisms exist, none SUPPORTED, no concepts) has nothing for corpus_independence / field_originated_opportunity to
+# measure — they are NOT_TRIGGERED, never FAIL; and open_field_population_discovery is NOT_TRIGGERED when no OPEN_FIELD
+# lead was ever nominated (all discovery ran through LATENT resolution). Mandatory canaries may be NOT_TRIGGERED only for
+# these structural reasons, and the report names them. The law does not loosen when concepts exist.
+_zp = copy.deepcopy(_lp)   # from 23a: LATENT lead resolved, structure admitted, field record back-referenced
+_zp["data"]["product_concepts"] = []; _zp["data"]["leads"] = []; _zp["data"]["excluded_leads"] = []
+_zp["data"]["mechanisms"] = [{"id": "m0", "hypothesis_id": "h_dead", "status": "PROPOSED", "supporting_observation_ids": []}]
+_zp["data"]["community_leads"] = [l for l in _zp["data"]["community_leads"] if l.get("source_lane") != "OPEN_FIELD"]
+_zp["data"]["corpus_evidence"].append({"id": "c5", "kind": "chunk", "doc_id": "N", "summary": "a routine from the novel", "text": "a routine from the novel", "tags": ["chunk"]})
+_zp["data"]["latent_structures"] = [{"id": "st_q", "kind": "ACCESS_PROBLEM", "text": "one hand busy", "evidence_refs": ["c5"], "authority": "LATENT_HYPOTHESIS"}]
+_zp["data"]["row_relevance"]["c5"] = "STRUCTURAL_ANALOGY"      # c3 (the pillow scene) stays the IRRELEVANT, unreferenced trap
+_rz = _cal.evaluate(_zp, _pol20, heterogeneous_docs={"N"}, trap_texts={"pillow scene"}, mode="SOURCE_AGNOSTIC_CALIBRATION")
+ok(_rz["statuses"]["corpus_independence"] == "NOT_TRIGGERED" and _rz["statuses"]["field_originated_opportunity"] == "NOT_TRIGGERED"
+   and "zero-product" in (_rz["checks"]["corpus_independence"].get("note") or ""),
+   f"zero-product outcome: concept canaries are NOT_TRIGGERED with the reason named ({_rz['statuses']['corpus_independence']}, {_rz['statuses']['field_originated_opportunity']})")
+ok(_rz["statuses"]["open_field_population_discovery"] == "NOT_TRIGGERED" and "no OPEN_FIELD lead" in (_rz["checks"]["open_field_population_discovery"].get("note") or ""),
+   "no OPEN_FIELD lead nominated at all: open-field discovery is NOT_TRIGGERED, not FAIL")
+ok(_rz["pass"] is True and set(_rz["not_triggered_mandatory"]) == {"corpus_independence", "field_originated_opportunity", "open_field_population_discovery"},
+   f"a LATENT → real population → real field → field-killed run with zero products PASSES source-agnostic calibration and names the untriggered mandatory canaries ({_rz['statuses']})")
+_zp2 = copy.deepcopy(_zp); _zp2["data"]["community_leads"].append({"id": "lo", "kind": "COMMUNITY", "name": "r/o", "community_key": "o", "source_lane": "OPEN_FIELD", "nominated_by": ["s"], "authority": "LEAD", "status": "EXHAUSTED", "record_ids": []})
+ok(_cal.evaluate(_zp2, _pol20, heterogeneous_docs={"N"}, trap_texts={"pillow scene"}, mode="SOURCE_AGNOSTIC_CALIBRATION")["statuses"]["open_field_population_discovery"] == "FAIL",
+   "an OPEN_FIELD lead nominated but never instantiated is still a FAIL (the law did not loosen)")
+_zp3 = copy.deepcopy(_cs); _zp3["data"]["product_concepts"] = [c for c in _zp3["data"]["product_concepts"] if c["id"] == "pc_echo"]
+ok(_cal.evaluate(_zp3, _pol20, trap_texts={"pillow scene"})["statuses"]["corpus_independence"] == "FAIL",
+   "with concepts present and none corpus-independent, corpus_independence still FAILS")
 
 if FAILS:
     print(f"\n{len(FAILS)} CHECKS FAILED: " + "; ".join(FAILS[:8]))

@@ -104,10 +104,16 @@ def evaluate(state: dict, policies: dict, seed_communities: set | None = None, h
     recs = {r["id"]: r for r in d.get("field_records") or [] if isinstance(r, dict) and r.get("id")}
     structs = {s["id"] for s in d.get("latent_structures") or [] if isinstance(s, dict) and s.get("id")}
 
+    # Law 12: a run that legitimately ends with ZERO products (no kept concept and no SUPPORTED mechanism) has
+    # nothing for the concept canaries to measure — NOT_TRIGGERED, never FAIL. Computed from state facts, never
+    # from the verdict label.
+    zero_product = not kept and not any(isinstance(m, dict) and m.get("status") == "SUPPORTED" for m in d.get("mechanisms") or [])
+    ZP_NOTE = "zero-product outcome (no kept concept, no SUPPORTED mechanism): nothing to measure — Law 12, a valid result"
     checks = {}
     # 1 corpus independence (presence receipts consumed through lineage)
     free = [r["concept"] for r in kept if r.get("corpus_named") is False]
-    checks["corpus_independence"] = {"status": "PASS" if free else "FAIL", "hits": free[:5], "kept_concepts": len(kept),
+    checks["corpus_independence"] = {"status": "NOT_TRIGGERED" if zero_product else ("PASS" if free else "FAIL"), "hits": free[:5], "kept_concepts": len(kept),
+                                     "note": ZP_NOTE if zero_product else None,
                                      "presence_audited": sum(1 for r in kept if r.get("corpus_presence")),
                                      "named_by_presence_only": [r["concept"] for r in kept if r.get("corpus_presence") and r["corpus_presence"].get("named")
                                                                 and not _prov.corpus_named(concepts[r["concept_id"]], state)["named"]][:5]}
@@ -141,10 +147,13 @@ def evaluate(state: dict, policies: dict, seed_communities: set | None = None, h
                                                     "triggered_by": {"corpus_named": sum(1 for r in overlapping if r.get("corpus_named")),
                                                                      "corpus_example_overlap": sum(1 for r in overlapping if r.get("example_overlap"))}}
     # 5a open-field population discovery
-    open_field = [l for l in _leads(state) if l.get("source_lane") == "OPEN_FIELD" and l.get("status") == "INSTANTIATED"
+    open_field_nominated = [l for l in _leads(state) if l.get("source_lane") == "OPEN_FIELD"]
+    open_field = [l for l in open_field_nominated if l.get("status") == "INSTANTIATED"
                   and l.get("record_ids") and _norm(l.get("community_key") or l.get("name")) not in seed]
-    checks["open_field_population_discovery"] = {"status": "PASS" if open_field else "FAIL",
-                                                 "communities": [l.get("community_key") or l.get("name") for l in open_field][:5]}
+    checks["open_field_population_discovery"] = {"status": "PASS" if open_field else ("FAIL" if open_field_nominated else "NOT_TRIGGERED"),
+                                                 "communities": [l.get("community_key") or l.get("name") for l in open_field][:5],
+                                                 "open_field_leads_nominated": len(open_field_nominated),
+                                                 "note": None if open_field_nominated else "no OPEN_FIELD lead was nominated in this run (discovery ran through LATENT resolution)"}
     # 5b latent population resolution — LATENT STRUCTURE → POPULATION → REAL FIELD EVIDENCE, every link checked
     resolved, unresolved = [], []
     for l in _leads(state):
@@ -172,7 +181,8 @@ def evaluate(state: dict, policies: dict, seed_communities: set | None = None, h
                                               "note": None if (resolved or unresolved) else "no LATENT lead was nominated in this run"}
     # 6 field-originated opportunity deepened by the corpus
     fo = [r for r in kept if r.get("field_originated") and (r.get("hop_cites_corpus") or hop_rows(hyps.get(r.get("hypothesis_id")) or {}))]
-    checks["field_originated_opportunity"] = {"status": "PASS" if fo else "FAIL", "concepts": [r["concept"] for r in fo][:5],
+    checks["field_originated_opportunity"] = {"status": "NOT_TRIGGERED" if zero_product else ("PASS" if fo else "FAIL"), "concepts": [r["concept"] for r in fo][:5],
+                                              "note": ZP_NOTE if zero_product else None,
                                               "field_originated_total": sum(1 for r in kept if r.get("field_originated")),
                                               "origins": {r["concept"]: (r.get("field_origin") or {}).get("origin") for r in kept}}
     # 7 irrelevant-source rejection — a KNOWN retrieval trap must have been retrieved, classified IRRELEVANT,
@@ -221,7 +231,10 @@ def evaluate(state: dict, policies: dict, seed_communities: set | None = None, h
                                   "rejected_without_field_cause": dead_without_cause[:5]}
 
     statuses = {k: v["status"] for k, v in checks.items()}
-    overall = all(statuses.get(k) == "PASS" for k in mandatory if k in statuses) \
+    # a mandatory canary may be NOT_TRIGGERED only for the structural reasons above (zero-product outcome, no OPEN_FIELD
+    # nomination); NOT_EVALUATED never satisfies a mandatory canary. The untriggered ones are named in the report.
+    not_triggered_mandatory = sorted(k for k in mandatory if statuses.get(k) == "NOT_TRIGGERED")
+    overall = all(statuses.get(k) in ("PASS", "NOT_TRIGGERED") for k in mandatory if k in statuses) \
         and not any(s == "FAIL" for k, s in statuses.items() if k not in advisory)
     concept_receipts = [{"concept_id": r.get("concept_id"), "concept": r.get("concept"), "verdict": r.get("verdict"),
                          "corpus_named": r.get("corpus_named"), "corpus_named_by": r.get("corpus_named_by"),
@@ -231,7 +244,8 @@ def evaluate(state: dict, policies: dict, seed_communities: set | None = None, h
                          "independent_voices": r.get("independent_voices"), "communities": r.get("communities")} for r in prov]
     cc = _prov.corpus_contribution(state)
     return {"run_id": state.get("run_id"), "verdict": state.get("verdict"), "mode": mode, "pass": overall,
-            "mandatory": mandatory, "advisory": advisory, "statuses": statuses, "checks": checks,
+            "mandatory": mandatory, "advisory": advisory, "not_triggered_mandatory": not_triggered_mandatory, "zero_product_outcome": zero_product,
+            "statuses": statuses, "checks": checks,
             "concept_receipts": concept_receipts, "seed_communities": sorted(seed),
             "diagnostics": {"cited_share_of_shelf": cc["cited_share_of_shelf"], "documents_cited": cc["documents_cited"],
                             "documents_retrieved": cc["documents_retrieved"], "mechanism_only_contributions": cc["mechanism_only_contributions"],

@@ -260,6 +260,9 @@ def cmd_submit(args):
             # docs/25: field records and lived clusters are citable lanes too
             known |= {r.get("id") for r in state["data"].get("field_records") or [] if isinstance(r, dict)}
             known |= {c.get("id") for c in state["data"].get("lived_clusters") or [] if isinstance(c, dict)}
+            # docs/26: ADMITTED latent structures and corpus observations back hops as hypotheses (evidence boundary applies)
+            known |= {x.get("id") for x in state["data"].get("latent_structures") or [] if isinstance(x, dict)}
+            known |= {x.get("id") for x in state["data"].get("corpus_observations") or [] if isinstance(x, dict)}
             errors += [f"bridge: {e}" for e in bridge.validate_all(items, pol_now, known_ids=known)]
             if args.node == "hypothesize":
                 # docs/26 §2 LINEAGE LAW (fail-closed): a corpus row cited by a hop must be
@@ -394,7 +397,12 @@ def cmd_step(args):
             _emit({"ok": False, "error": f"no executor {spec.get('executor')!r}"}); return 1
         note = fn(state, pol)
     elif ntype in ("reason", "retrieve", "agent"):
-        missing = [k for k in node_required_keys(g, node) if not state["data"].get(k)]
+        # a key MERGED by a submit at this node is satisfied even when its value is an empty list —
+        # "nothing to list" (no supported mechanism → no product_candidates) is a legitimate answer,
+        # never "not submitted yet" (measured 2026-09-04: NO_DEFENSIBLE_BRIDGE blocked at mechanism)
+        _submitted_here = {k for h in state.get("history") or [] if h.get("node") == node and h.get("event") == "submit"
+                           for k in (h.get("keys") or [])}
+        missing = [k for k in node_required_keys(g, node) if not state["data"].get(k) and k not in _submitted_here]
         # PER-VISIT SUBMISSION (measured 2026-09-03 on a live run): a loop node
         # re-entered with last round's outputs still in state advanced on a
         # bare `step`, burning a research round with zero new evidence. Nodes
@@ -479,6 +487,10 @@ def cmd_step(args):
             terminal = graphmod.node_spec(g, e["to"]).get("type") == "terminal"
             if terminal:
                 state["status"] = "stopped"
+                if e.get("when") == "no_defensible_bridge" and not state.get("verdict"):
+                    # the edge IS the pronouncement (Law 12): mechanisms exist, none SUPPORTED — a valid, named outcome,
+                    # never the anonymous fallback (measured 2026-09-04: novel calibration ended STOPPED_WITHOUT_QUALIFICATION)
+                    state["verdict"] = "NO_DEFENSIBLE_BRIDGE"
                 if not state.get("verdict"):
                     state["verdict"] = "STOPPED_WITHOUT_QUALIFICATION"
             models.save_state(state, args.state)

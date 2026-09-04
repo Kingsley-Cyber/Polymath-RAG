@@ -191,10 +191,19 @@ def compile_envelope(state: dict, g: dict, pol: dict, node: str | None = None) -
         raise ValueError(f"contract for {node!r} both requires and excludes {sorted(bad)}")
 
     brief = build_run_brief(state, g, pol)
-    working, sources, deficits, backfilled = {}, {}, [], []
+    working, sources, deficits, backfilled, all_rejected = {}, {}, [], [], []
     for key in require + prefer:
         val, src, was_backfilled = _resolve_key(key, state, g, pol, contract)
         empty = val in (None, "", {}) or val == []
+        raw = state["data"].get(key) if key in state["data"] else None
+        if empty and key in require and isinstance(raw, list) and raw:
+            # the required objects EXIST but every one is REJECTED / dropped (measured 2026-09-04: all bridges
+            # dead at `mechanism`) — that is context, not a deficit: the node must pronounce on the dead set
+            all_rejected.append(key)
+            working[key] = _sanitize(key, [{k: v for k, v in x.items() if k in ("id", "status", "path", "target_mechanism", "invariant")}
+                                           for x in raw if isinstance(x, dict)], spec)
+            sources[key] = "state (all rejected)"
+            continue
         if empty and key in require:
             deficits.append({"key": key,
                              "owner": _SPECIAL_OWNERS.get(key, "graph_routing"),
@@ -241,7 +250,7 @@ def compile_envelope(state: dict, g: dict, pol: dict, node: str | None = None) -
         "backfilled": backfilled,
         "excluded_due_to_budget": excluded_budget,
         "required_contract_complete": not deficits,
-        "deficits": deficits,
+        "deficits": deficits, "all_rejected": all_rejected,
         "context_hash": _hash(core),
         "compiled_at": models.now(),
     }

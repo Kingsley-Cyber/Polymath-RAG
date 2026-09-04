@@ -3,6 +3,8 @@ title: "WORK LOG — LIVED-WORLD-V2: population discovery before ideation"
 change_id: LIVED-WORLD-V2
 date: 2026-09-04
 owner: governance
+last_reviewed: 2026-09-04
+last_touched: 2026-09-04
 status: shipped
 register: 11.72
 package: research/

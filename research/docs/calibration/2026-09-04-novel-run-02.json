@@ -1,0 +1,733 @@
+{
+ "run_id": "calib_novel_02",
+ "date": "2026-09-04",
+ "mode": "SOURCE_AGNOSTIC_CALIBRATION",
+ "corpus": "polymath:ecom-meta-v1",
+ "document_scope": [
+  "doc_57aab6bb6dade6048ed10f63c4237e48f150b040ebb156c77a88279595ee40ae"
+ ],
+ "seed": {
+  "document": "Always Alchemy (Hart) — doc_57aab6bb6dade6048ed10f63c4237e48f150b040ebb156c77a88279595ee40ae",
+  "section": "OEBPS/part0031.xhtml, chapter 'Genetic Karma'",
+  "seed_row": "polymath:chunk:chunk_039bff94ff56aea5e56ec5811b9fa6fdc0c1cd459bf9f13f28d738488f5f1247",
+  "passage": "a father feeding his toddler porridge fifteen minutes before her first nursery drop-off; bib streaked with porridge; searching for a clean washcloth; his sweater written off"
+ },
+ "persisted_verdict": "STOPPED_WITHOUT_QUALIFICATION",
+ "deterministic_disposition": "NO_DEFENSIBLE_BRIDGE (edge no_defensible_bridge fired: 1 mechanism PROPOSED, 0 SUPPORTED, 0 concepts; the persisted label is the pre-fix fallback — terminal runs are immutable)",
+ "acceptance_pass": true,
+ "statuses": {
+  "corpus_independence": "NOT_TRIGGERED",
+  "heterogeneous_source_reasoning": "PASS",
+  "noun_echo_resistance": "NOT_TRIGGERED",
+  "legitimate_corpus_overlap_survival": "NOT_TRIGGERED",
+  "open_field_population_discovery": "NOT_TRIGGERED",
+  "latent_population_resolution": "PASS",
+  "field_originated_opportunity": "NOT_TRIGGERED",
+  "irrelevant_source_rejection": "PASS",
+  "hypothesis_death": "PASS"
+ },
+ "not_triggered_mandatory": [
+  "corpus_independence",
+  "field_originated_opportunity",
+  "open_field_population_discovery"
+ ],
+ "checks": {
+  "corpus_independence": {
+   "status": "NOT_TRIGGERED",
+   "hits": [],
+   "kept_concepts": 0,
+   "note": "zero-product outcome (no kept concept, no SUPPORTED mechanism): nothing to measure — Law 12, a valid result",
+   "presence_audited": 0,
+   "named_by_presence_only": []
+  },
+  "heterogeneous_source_reasoning": {
+   "status": "PASS",
+   "structures": [
+    "st_cloth_reach",
+    "st_clothing_exposure",
+    "st_meal_vs_clock",
+    "st_mess_to_door",
+    "st_protect_or_delegate"
+   ],
+   "hypotheses": [
+    "h_adult_barrier",
+    "h_cloth_station",
+    "h_exit_residue",
+    "h_handover_folder"
+   ],
+   "rows_from_configured_docs": 81,
+   "rows_relevant": 7,
+   "rows_irrelevant": 74,
+   "rows_unclassified": 0
+  },
+  "noun_echo_resistance": {
+   "status": "NOT_TRIGGERED",
+   "refused": [],
+   "weakly_grounded_kept": []
+  },
+  "legitimate_corpus_overlap_survival": {
+   "status": "NOT_TRIGGERED",
+   "survivors": [],
+   "wrongly_excluded": [],
+   "triggered_by": {
+    "corpus_named": 0,
+    "corpus_example_overlap": 0
+   }
+  },
+  "open_field_population_discovery": {
+   "status": "NOT_TRIGGERED",
+   "communities": [],
+   "open_field_leads_nominated": 0,
+   "note": "no OPEN_FIELD lead was nominated in this run (discovery ran through LATENT resolution)"
+  },
+  "latent_population_resolution": {
+   "status": "PASS",
+   "resolved": [
+    {
+     "lead_id": "cl_daddit",
+     "latent_structure_id": "st_mess_to_door",
+     "community": "daddit",
+     "records_back_referenced": 12,
+     "reasons": []
+    },
+    {
+     "lead_id": "cl_beyondthebump",
+     "latent_structure_id": "st_protect_or_delegate",
+     "community": "beyondthebump",
+     "records_back_referenced": 12,
+     "reasons": []
+    },
+    {
+     "lead_id": "cl_fosterparents",
+     "latent_structure_id": "st_first_handover_alone",
+     "community": "Fosterparents",
+     "records_back_referenced": 6,
+     "reasons": []
+    }
+   ],
+   "unresolved": [
+    {
+     "lead_id": "c29a97770917",
+     "latent_structure_id": "st_cloth_reach",
+     "community": "who repeatedly experiences: cleaning a small child's face and hands after a meal needs a clean clo",
+     "records_back_referenced": 0,
+     "reasons": [
+      "status 'EXHAUSTED', not INSTANTIATED",
+      "no record_ids"
+     ]
+    },
+    {
+     "lead_id": "e645b3ea4a47",
+     "latent_structure_id": "st_clothing_exposure",
+     "community": "who repeatedly experiences: the adult's own good clothing is exposed while feeding, wiping and lif",
+     "records_back_referenced": 0,
+     "reasons": [
+      "status 'NOMINATED', not INSTANTIATED",
+      "no record_ids"
+     ]
+    },
+    {
+     "lead_id": "fc163284a40f",
+     "latent_structure_id": "st_meal_vs_clock",
+     "community": "who repeatedly experiences: the child sets the pace and outcome of the meal (declares herself full",
+     "records_back_referenced": 0,
+     "reasons": [
+      "status 'NOMINATED', not INSTANTIATED",
+      "no record_ids"
+     ]
+    },
+    {
+     "lead_id": "64b37ee561d4",
+     "latent_structure_id": "st_mess_to_door",
+     "community": "who repeatedly experiences: meal → clean-up → check own clothes → leave: a fixed sequence compress",
+     "records_back_referenced": 0,
+     "reasons": [
+      "status 'NOMINATED', not INSTANTIATED",
+      "no record_ids"
+     ]
+    },
+    {
+     "lead_id": "6cc43e5590ab",
+     "latent_structure_id": "st_protect_or_delegate",
+     "community": "who repeatedly experiences: when clothing matters and the hands are committed to a task, protectio",
+     "records_back_referenced": 0,
+     "reasons": [
+      "status 'NOMINATED', not INSTANTIATED",
+      "no record_ids"
+     ]
+    },
+    {
+     "lead_id": "b26e419b0e10",
+     "latent_structure_id": "st_first_handover_alone",
+     "community": "who repeatedly experiences: the first handover of a child to institutional care is done alone by c",
+     "records_back_referenced": 0,
+     "reasons": [
+      "status 'NOMINATED', not INSTANTIATED",
+      "no record_ids"
+     ]
+    },
+    {
+     "lead_id": "cl_toddlers",
+     "latent_structure_id": "st_cloth_reach",
+     "community": "toddlers",
+     "records_back_referenced": 0,
+     "reasons": [
+      "status 'NOMINATED', not INSTANTIATED",
+      "no record_ids"
+     ]
+    },
+    {
+     "lead_id": "cl_parenting",
+     "latent_structure_id": "st_meal_vs_clock",
+     "community": "Parenting",
+     "records_back_referenced": 0,
+     "reasons": [
+      "status 'NOMINATED', not INSTANTIATED",
+      "no record_ids"
+     ]
+    }
+   ],
+   "latent_leads": 21,
+   "note": null
+  },
+  "field_originated_opportunity": {
+   "status": "NOT_TRIGGERED",
+   "concepts": [],
+   "note": "zero-product outcome (no kept concept, no SUPPORTED mechanism): nothing to measure — Law 12, a valid result",
+   "field_originated_total": 0,
+   "origins": {}
+  },
+  "irrelevant_source_rejection": {
+   "status": "PASS",
+   "trap_rows_retrieved": 1,
+   "unclassified": [],
+   "misclassified": [],
+   "leaked_downstream": [],
+   "note": null
+  },
+  "hypothesis_death": {
+   "status": "PASS",
+   "field_caused": [
+    "h_adult_barrier",
+    "h_exit_residue"
+   ],
+   "rejected_without_field_cause": [
+    "h_cloth_station",
+    "h_handover_folder"
+   ]
+  }
+ },
+ "corpus_rows": {
+  "retrieved": 81,
+  "from_novel": 81,
+  "classified": 81,
+  "relevance": {
+   "IRRELEVANT": 74,
+   "SEMANTIC_MATCH": 4,
+   "STRUCTURAL_ANALOGY": 3
+  }
+ },
+ "latent_structures": [
+  {
+   "id": "st_cloth_reach",
+   "kind": "ACCESS_PROBLEM",
+   "refs": [
+    "polymath:chunk:chunk_039bff94ff56aea5e56ec5811b9fa6fdc0c1cd459bf9f13f28d738488f5f1247"
+   ]
+  },
+  {
+   "id": "st_clothing_exposure",
+   "kind": "TRADEOFF",
+   "refs": [
+    "polymath:chunk:chunk_039bff94ff56aea5e56ec5811b9fa6fdc0c1cd459bf9f13f28d738488f5f1247",
+    "polymath:chunk:chunk_0f185341ae3bf9fd6f28c1075d9c5eb2ef94dafe5daf36aff8e90a437db55112",
+    "polymath:chunk:chunk_0c140c67a2d0615ab559e417c2df5be4cd8b0f4dcf8f6858a15bd3800e089792"
+   ]
+  },
+  {
+   "id": "st_meal_vs_clock",
+   "kind": "COORDINATION_PROBLEM",
+   "refs": [
+    "polymath:chunk:chunk_0d7f2680c70f4a169b50261525890eeeec482b7b4e368edbf6f800b104107dc4",
+    "polymath:chunk:chunk_039bff94ff56aea5e56ec5811b9fa6fdc0c1cd459bf9f13f28d738488f5f1247"
+   ]
+  },
+  {
+   "id": "st_mess_to_door",
+   "kind": "TRANSITION",
+   "refs": [
+    "polymath:chunk:chunk_039bff94ff56aea5e56ec5811b9fa6fdc0c1cd459bf9f13f28d738488f5f1247",
+    "polymath:chunk:chunk_023cbef17d8fd21787e937159e5a6d64c196279b863eb1735f6de0f1d012a821"
+   ]
+  },
+  {
+   "id": "st_protect_or_delegate",
+   "kind": "TRANSFERABLE_INVARIANT",
+   "refs": [
+    "polymath:chunk:chunk_0f185341ae3bf9fd6f28c1075d9c5eb2ef94dafe5daf36aff8e90a437db55112",
+    "polymath:chunk:chunk_07b9fd8cbed448bfadb0bf442dc76a38c2ec14a316b0c2a491395738f05c85da",
+    "polymath:chunk:chunk_039bff94ff56aea5e56ec5811b9fa6fdc0c1cd459bf9f13f28d738488f5f1247"
+   ]
+  },
+  {
+   "id": "st_first_handover_alone",
+   "kind": "DESIRE",
+   "refs": [
+    "polymath:chunk:chunk_023cbef17d8fd21787e937159e5a6d64c196279b863eb1735f6de0f1d012a821",
+    "polymath:chunk:chunk_039bff94ff56aea5e56ec5811b9fa6fdc0c1cd459bf9f13f28d738488f5f1247"
+   ]
+  }
+ ],
+ "corpus_observations": [
+  {
+   "id": "co_washcloth",
+   "kind": "OBSERVED_PRODUCT",
+   "name": "washcloth"
+  },
+  {
+   "id": "co_loro_piana",
+   "kind": "EXAMPLE",
+   "name": "Loro Piana sweater"
+  },
+  {
+   "id": "co_honey_dipper",
+   "kind": "OBSERVED_PRODUCT",
+   "name": "honey jar with wooden dipper"
+  }
+ ],
+ "leads": {
+  "total": 27,
+  "by_lane": {
+   "LATENT": 21,
+   "REGISTRY": 6
+  },
+  "by_status": {
+   "EXHAUSTED": 1,
+   "NOMINATED": 23,
+   "INSTANTIATED": 3
+  },
+  "latent_population_leads": [
+   {
+    "id": "c29a97770917",
+    "structure": "st_cloth_reach",
+    "status": "EXHAUSTED"
+   },
+   {
+    "id": "e645b3ea4a47",
+    "structure": "st_clothing_exposure",
+    "status": "NOMINATED"
+   },
+   {
+    "id": "fc163284a40f",
+    "structure": "st_meal_vs_clock",
+    "status": "NOMINATED"
+   },
+   {
+    "id": "64b37ee561d4",
+    "structure": "st_mess_to_door",
+    "status": "NOMINATED"
+   },
+   {
+    "id": "6cc43e5590ab",
+    "structure": "st_protect_or_delegate",
+    "status": "NOMINATED"
+   },
+   {
+    "id": "b26e419b0e10",
+    "structure": "st_first_handover_alone",
+    "status": "NOMINATED"
+   }
+  ],
+  "community_leads_from_latent": [
+   {
+    "id": "cl_toddlers",
+    "community": "r/toddlers",
+    "structure": "st_cloth_reach",
+    "status": "NOMINATED",
+    "records": 0
+   },
+   {
+    "id": "cl_parenting",
+    "community": "r/Parenting",
+    "structure": "st_meal_vs_clock",
+    "status": "NOMINATED",
+    "records": 0
+   },
+   {
+    "id": "cl_mommit",
+    "community": "r/Mommit",
+    "structure": "st_meal_vs_clock",
+    "status": "NOMINATED",
+    "records": 0
+   },
+   {
+    "id": "cl_daddit",
+    "community": "r/daddit",
+    "structure": "st_mess_to_door",
+    "status": "INSTANTIATED",
+    "records": 12
+   },
+   {
+    "id": "cl_singlemoms",
+    "community": "r/singlemoms",
+    "structure": "st_mess_to_door",
+    "status": "NOMINATED",
+    "records": 0
+   },
+   {
+    "id": "cl_newparents",
+    "community": "r/NewParents",
+    "structure": "st_mess_to_door",
+    "status": "NOMINATED",
+    "records": 0
+   },
+   {
+    "id": "cl_preschoolers",
+    "community": "r/Preschoolers",
+    "structure": "st_cloth_reach",
+    "status": "NOMINATED",
+    "records": 0
+   },
+   {
+    "id": "cl_montessori",
+    "community": "r/Montessori",
+    "structure": "st_cloth_reach",
+    "status": "NOMINATED",
+    "records": 0
+   },
+   {
+    "id": "cl_beyondthebump",
+    "community": "r/beyondthebump",
+    "structure": "st_protect_or_delegate",
+    "status": "INSTANTIATED",
+    "records": 12
+   },
+   {
+    "id": "cl_moderatelygranolamoms",
+    "community": "r/moderatelygranolamoms",
+    "structure": "st_protect_or_delegate",
+    "status": "NOMINATED",
+    "records": 0
+   },
+   {
+    "id": "cl_ukparenting",
+    "community": "r/UKParenting",
+    "structure": "st_first_handover_alone",
+    "status": "NOMINATED",
+    "records": 0
+   },
+   {
+    "id": "cl_attachmentparenting",
+    "community": "r/AttachmentParenting",
+    "structure": "st_first_handover_alone",
+    "status": "NOMINATED",
+    "records": 0
+   },
+   {
+    "id": "cl_fosterparents",
+    "community": "r/Fosterparents",
+    "structure": "st_first_handover_alone",
+    "status": "INSTANTIATED",
+    "records": 6
+   },
+   {
+    "id": "cl_nanny",
+    "community": "r/Nanny",
+    "structure": "st_clothing_exposure",
+    "status": "NOMINATED",
+    "records": 0
+   },
+   {
+    "id": "cl_whattoexpect",
+    "community": "What To Expect community forums",
+    "structure": "st_meal_vs_clock",
+    "status": "NOMINATED",
+    "records": 0
+   }
+  ]
+ },
+ "chain": [
+  {
+   "source_rows": [
+    "polymath:chunk:chunk_039bff94ff56aea5e56ec5811b9fa6fdc0c1cd459bf9f13f28d738488f5f1247",
+    "polymath:chunk:chunk_023cbef17d8fd21787e937159e5a6d64c196279b863eb1735f6de0f1d012a821"
+   ],
+   "latent_structure": {
+    "id": "st_mess_to_door",
+    "kind": "TRANSITION"
+   },
+   "latent_population_lead": "64b37ee561d4",
+   "community_lead": {
+    "id": "cl_daddit",
+    "community": "r/daddit",
+    "source_lane": "LATENT",
+    "status": "INSTANTIATED"
+   },
+   "field_records": 12,
+   "independent_voices": 4,
+   "hypotheses": [
+    {
+     "id": "h_exit_residue",
+     "status": "REJECTED"
+    }
+   ]
+  },
+  {
+   "source_rows": [
+    "polymath:chunk:chunk_0f185341ae3bf9fd6f28c1075d9c5eb2ef94dafe5daf36aff8e90a437db55112",
+    "polymath:chunk:chunk_07b9fd8cbed448bfadb0bf442dc76a38c2ec14a316b0c2a491395738f05c85da",
+    "polymath:chunk:chunk_039bff94ff56aea5e56ec5811b9fa6fdc0c1cd459bf9f13f28d738488f5f1247"
+   ],
+   "latent_structure": {
+    "id": "st_protect_or_delegate",
+    "kind": "TRANSFERABLE_INVARIANT"
+   },
+   "latent_population_lead": "6cc43e5590ab",
+   "community_lead": {
+    "id": "cl_beyondthebump",
+    "community": "r/beyondthebump",
+    "source_lane": "LATENT",
+    "status": "INSTANTIATED"
+   },
+   "field_records": 12,
+   "independent_voices": 3,
+   "hypotheses": [
+    {
+     "id": "h_adult_barrier",
+     "status": "REJECTED"
+    }
+   ]
+  },
+  {
+   "source_rows": [
+    "polymath:chunk:chunk_023cbef17d8fd21787e937159e5a6d64c196279b863eb1735f6de0f1d012a821",
+    "polymath:chunk:chunk_039bff94ff56aea5e56ec5811b9fa6fdc0c1cd459bf9f13f28d738488f5f1247"
+   ],
+   "latent_structure": {
+    "id": "st_first_handover_alone",
+    "kind": "DESIRE"
+   },
+   "latent_population_lead": "b26e419b0e10",
+   "community_lead": {
+    "id": "cl_fosterparents",
+    "community": "r/Fosterparents",
+    "source_lane": "LATENT",
+    "status": "INSTANTIATED"
+   },
+   "field_records": 6,
+   "independent_voices": 3,
+   "hypotheses": [
+    {
+     "id": "h_handover_folder",
+     "status": "REJECTED"
+    }
+   ]
+  }
+ ],
+ "field_records": 30,
+ "clusters": [
+  {
+   "community": "beyondthebump",
+   "authority": "ANCHOR",
+   "records": 12,
+   "voices": 3,
+   "threads": 3
+  },
+  {
+   "community": "daddit",
+   "authority": "ANCHOR",
+   "records": 12,
+   "voices": 4,
+   "threads": 4
+  },
+  {
+   "community": "fosterparents",
+   "authority": "ANCHOR",
+   "records": 6,
+   "voices": 3,
+   "threads": 3
+  }
+ ],
+ "lived_situations": [
+  {
+   "id": "ls_btb_arrival",
+   "authority": "FIELD_ANCHORED",
+   "moment": "ARRIVAL"
+  },
+  {
+   "id": "ls_btb_before_out",
+   "authority": "FIELD_ANCHORED",
+   "moment": "BEFORE"
+  },
+  {
+   "id": "ls_btb_meal",
+   "authority": "FIELD_ANCHORED",
+   "moment": "DURING"
+  },
+  {
+   "id": "ls_daddit_morning",
+   "authority": "FIELD_ANCHORED",
+   "moment": "BEFORE"
+  },
+  {
+   "id": "ls_daddit_mess",
+   "authority": "FIELD_ANCHORED",
+   "moment": "DURING"
+  },
+  {
+   "id": "ls_foster_handover",
+   "authority": "FIELD_ANCHORED",
+   "moment": "TRANSITION"
+  }
+ ],
+ "hypotheses": [
+  {
+   "id": "h_adult_barrier",
+   "status": "REJECTED",
+   "genesis": "WORKAROUND_LED",
+   "lived_anchor_ids": [
+    "c59ed1f54e9d"
+   ],
+   "gaps": [
+    [
+     "c4e54456d748",
+     "supported"
+    ],
+    [
+     "333b3779b84f",
+     "supported"
+    ],
+    [
+     "1dbe8e1b6212",
+     "contradicted"
+    ],
+    [
+     "5be0d6b906c8",
+     "supported"
+    ],
+    [
+     "4d6f47e91288",
+     "supported"
+    ],
+    [
+     "21c55c8f6dce",
+     "supported"
+    ]
+   ]
+  },
+  {
+   "id": "h_cloth_station",
+   "status": "REJECTED",
+   "genesis": "PROBLEM_LED",
+   "lived_anchor_ids": [
+    "c59ed1f54e9d"
+   ],
+   "gaps": []
+  },
+  {
+   "id": "h_exit_residue",
+   "status": "REJECTED",
+   "genesis": "WORKAROUND_LED",
+   "lived_anchor_ids": [
+    "8d19925a7ec3"
+   ],
+   "gaps": [
+    [
+     "7fd2bdc43333",
+     "open"
+    ],
+    [
+     "4d149ffc3756",
+     "contradicted"
+    ],
+    [
+     "da83b3d6988e",
+     "open"
+    ],
+    [
+     "5e8eecf9fbb9",
+     "contradicted"
+    ],
+    [
+     "a4c5cf27ee0a",
+     "open"
+    ],
+    [
+     "9a0af786b33d",
+     "open"
+    ]
+   ]
+  },
+  {
+   "id": "h_handover_folder",
+   "status": "REJECTED",
+   "genesis": "PROBLEM_LED",
+   "lived_anchor_ids": [
+    "6366e891a418"
+   ],
+   "gaps": []
+  }
+ ],
+ "evaluations": [
+  {
+   "hypothesis_id": "h_adult_barrier",
+   "verdict": "REVISE"
+  },
+  {
+   "hypothesis_id": "h_cloth_station",
+   "verdict": "REJECT"
+  },
+  {
+   "hypothesis_id": "h_exit_residue",
+   "verdict": "REVISE"
+  },
+  {
+   "hypothesis_id": "h_handover_folder",
+   "verdict": "REJECT"
+  }
+ ],
+ "observations": {
+  "total": 39,
+  "contradicting": 13,
+  "communities": [
+   "lilhelperusa.com",
+   "modaliv.com",
+   "pivlor.com",
+   "r/Mommit",
+   "r/NewParents",
+   "r/beyondthebump",
+   "r/toddlers"
+  ]
+ },
+ "mechanisms": [
+  {
+   "id": "m_mess_shedding_garment",
+   "status": "PROPOSED"
+  }
+ ],
+ "product_concepts": 0,
+ "research_rounds": {
+  "research": 2
+ },
+ "population_loop": {
+  "continue": false,
+  "rounds": 1,
+  "anchors": 3,
+  "records": 30,
+  "elapsed_min": 6.7,
+  "remaining_eligible": 23,
+  "reason": "3 ANCHOR clusters satisfy min 2"
+ },
+ "field_direction_recorded": "adult garments chosen or designed to hide and shed toddler mess (print, dark, washable) — volunteered by participants, not a product of this run",
+ "live_defects_fixed_during_run": [
+  "hop_refs refused admitted latent-structure ids (controller known-id set)",
+  "L4 dossier carried no field-record or structure summaries (evaluator.build_dossier)",
+  "all bridges REJECTED with budget left stalled at gaps (transitions.evidence_sufficient)",
+  "an EMPTY submitted output list read as 'not submitted' and the envelope declared all-rejected hypotheses missing (controller step, context envelope)",
+  "no_defensible_bridge edge reached the terminal without its verdict (controller advance)",
+  "lived-world summary counted only search_mode LATENT leads (lived_world.summary)",
+  "zero-product runs FAILED concept canaries (calibration_acceptance: NOT_TRIGGERED, named in not_triggered_mandatory)"
+ ],
+ "harness_at_run": "ALL 555 CHECKS PASSED",
+ "operator_note": null
+}

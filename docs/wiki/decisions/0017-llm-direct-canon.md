@@ -1,3 +1,9 @@
+---
+owner: governance
+last_reviewed: 2026-09-04
+last_touched: 2026-09-04
+status: accepted
+---
 # ADR-0017 — LLM-direct extraction is the canon
 
 - **Status:** accepted 2026-09-03 (owner directive; supersedes the span-tagger contracts of ADR-0005 / ADR-0011 / ADR-0015 wherever they conflict)
