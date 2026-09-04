@@ -12,7 +12,11 @@ import re
 
 _FM_LINE = re.compile(r'^([A-Za-z_][A-Za-z0-9_]*):\s*"?(.*?)"?\s*$', re.M)
 FRONTMATTER_KEYS = ("title", "channel", "upload_date", "video_id", "url", "author",
-                    "source_file", "source_type", "date", "duration")
+                    "source_file", "source_type", "date", "duration",
+                    # FIELD-EVIDENCE-CORPUS-V1: thread identity + export provenance a consumer
+                    # needs to rebuild author/thread independence and freshness
+                    "platform", "thread_key", "community", "source_url", "source_family",
+                    "exported_at", "run_ids", "field_evidence")
 
 
 def parse_frontmatter(text: str) -> dict:

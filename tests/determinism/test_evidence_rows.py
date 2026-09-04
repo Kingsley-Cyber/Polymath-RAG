@@ -53,3 +53,9 @@ def test_clean_summary_drops_inline_timecode_markers():
     from orchestrator.api.evidence_rows import clean_summary
     raw = "x.md — You should make your **[16:51]** sales message as long **[16:53]** as it needs to be"
     assert clean_summary(raw) == "You should make your sales message as long as it needs to be"
+
+
+def test_field_evidence_frontmatter_keys_are_kept():
+    from polymath_shared.frontmatter import parse_frontmatter
+    fm = parse_frontmatter('---\ntitle: "r/PCOS · 1pon609"\nplatform: reddit\nthread_key: 1pon609\ncommunity: PCOS\nsource_url: https://www.reddit.com/r/PCOS/comments/1pon609/\nexported_at: 2026-09-03\nfield_evidence: v1\n---\n# body')
+    assert fm["thread_key"] == "1pon609" and fm["platform"] == "reddit" and fm["exported_at"] == "2026-09-03" and fm["field_evidence"] == "v1"
