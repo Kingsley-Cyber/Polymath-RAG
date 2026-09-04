@@ -279,6 +279,8 @@ rc, out = submit(pos, "community_instantiate", {"field_records": [dict(recs[0], 
 ok(rc == 1 and any("not a nominated lead" in e for e in out.get("schema_errors", [])), "a field record must belong to a nominated lead")
 rc, out = submit(pos, "community_instantiate", {"field_records": recs})
 ok(rc == 0, f"field records admitted through the evidence contract ({out.get('schema_errors', '')[:1]})")
+rc_dup, out_dup = submit(pos, "community_instantiate", {"field_records": [dict(recs[0], id="fr_late_add", quote_ref="a record that arrived in a second payload")]})
+ok(rc_dup == 1 and out_dup.get("error") == "IDEMPOTENCY_CONFLICT", "a second, different payload in the same visit is refused as IDEMPOTENCY_CONFLICT — one payload per visit (live 2026-09-04)")
 ctl("step", "--state", pos)            # instantiate -> evidence_cards
 rc, out = ctl("step", "--state", pos)  # cards -> population_gate
 pstate = json.load(open(pos))
