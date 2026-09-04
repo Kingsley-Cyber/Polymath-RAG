@@ -1793,6 +1793,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("research/tests/fixtures/evidence_rows_sample.json", "json", None),
     ("research/tests/run_all.py", "py", None),
     ("research/tests/calibration_acceptance.py", "py", None),
+    ("research/tests/mirror_check.py", "py", None),
 ]
 
 
