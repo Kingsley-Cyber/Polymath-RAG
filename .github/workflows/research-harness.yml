@@ -1,0 +1,30 @@
+name: research-harness
+# The opportunity-research package (research/) is dependency-free apart from PyYAML.
+# This is the GitHub receipt for every commit that touches it: doctor + the full
+# deterministic harness (stub servers, no network, no live Polymath needed).
+on:
+  push:
+    paths: ["research/**", ".github/workflows/research-harness.yml"]
+  pull_request:
+    paths: ["research/**", ".github/workflows/research-harness.yml"]
+jobs:
+  harness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pyyaml
+      - name: doctor (fail-closed config lint)
+        run: python3 research/python/controller.py doctor
+      - name: harness (every check, continue-on-fail then non-zero exit)
+        env:
+          RUN_ALL_CONTINUE: "1"
+        run: python3 research/tests/run_all.py | tail -n 5; test ${PIPESTATUS[0]} -eq 0
+      - name: receipt
+        if: always()
+        run: |
+          python3 research/tests/run_all.py > harness.log 2>&1 || true
+          tail -n 1 harness.log

@@ -201,11 +201,16 @@ def lineage(concept: dict, state: dict, policies: dict) -> dict:
             named |= _toks(p)
         named |= _toks(r.get("workaround"))
     content = {t for t in ctoks if len(t) >= 4}
-    field_originated = bool(content) and not (content & corpus_toks) and bool(content & named)
+    # docs/26 §6 canary 6: field-originated = positive FIELD lineage (the noun lives in what
+    # people named or rigged) AND the corpus never NAMED it (corpus_named) — not "zero token
+    # overlap with the whole corpus", which no ordinary noun survives at 100 books
+    field_lineage = bool(content & named)
+    field_originated = field_lineage and not corpus_named(concept, state)["named"]
     named = corpus_named(concept, state)
     return {"concept_id": concept.get("id"), "concept": concept.get("name"), "hypothesis_id": hyp.get("id"),
             "verdict": verdict, "independent_voices": voices, "communities": sorted(communities),
             "corpus_named": named["named"], "corpus_named_by": named["phrase_hits"] or named["observation_overlap"],
+            "field_lineage": field_lineage,
             "hop_cites_corpus": bool([rid for v in (hyp.get("hop_refs") or {}).values() for rid in v or [] if str(rid).startswith("polymath:") or rid in {r.get("id") for r in d.get("corpus_evidence") or [] if isinstance(r, dict)}]),
             "field_record_refs": len(field_refs), "gap_observation_refs": len(gap_refs),
             "lived_anchor_ids": anchors, "example_overlap": overlap, "field_originated": field_originated,

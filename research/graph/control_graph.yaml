@@ -119,6 +119,7 @@ nodes:
     type: reason
     prompt: bridge_hypothesis     # PORTFOLIO: 3-6 across distinct mechanism families; lived anchors (docs/25 §5)
     outputs: [hypotheses]
+    optional_outputs: [row_relevance]   # docs/26 §2: classify the rows a hop cites (merges; fail-closed lineage)
     context:
       require: [signal, primitives]
       prefer: [lived_situations, lived_clusters, lenses, cross_domain_analogies, corpus_evidence, corpus_questions,

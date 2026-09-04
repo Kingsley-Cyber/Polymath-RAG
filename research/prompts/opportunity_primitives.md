@@ -61,7 +61,9 @@ not only its topic. Typed rows (`typed:friction` …) and rows tagged
 `field_evidence` are the strongest rows a primitive can cite; cite rows —
 primitives without a row are opinions. Frictions use registry family names
 when they genuinely match; transferable invariants are the bridge fuel.
-`generative_signal: false` only when no human population or activity can be
-identified at all — no people, no object interaction, no physical world in the
-passage. Never force ecommerce out of pure ideas; never refuse a leap because
-the document did not spell it out.
+`generative_signal: false` only when no meaningful latent structure,
+interaction, constraint, behavior, mechanism, transferable invariant or other
+searchable opportunity primitive can be extracted.
+A named population is never required — a structure with no population becomes
+a population search (LATENT PROBLEM → population). Never force ecommerce out
+of pure ideas; never refuse a leap because the document did not spell it out.

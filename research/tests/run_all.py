@@ -2069,7 +2069,9 @@ _st13d = {"data": {"corpus_evidence": [
     {"id": "polymath:graph_fact:f1", "kind": "graph_fact", "tags": ["graph_fact", "corpus_evergreen"], "title": "Dog hiking guide",
      "summary": "hikers attach the leash to a hip belt to keep both hands free", "source": "polymath/x · Dog hiking guide",
      "fact": {"subject": "leash", "predicate": "attach", "object": "hip belt"}},
-    {"id": "polymath:chunk:c1", "kind": "chunk", "tags": ["chunk", "corpus_evergreen"], "summary": "attach the leash to a belt", "source": "s"}]}}
+    {"id": "polymath:chunk:c1", "kind": "chunk", "tags": ["chunk", "corpus_evergreen"], "summary": "attach the leash to a belt", "source": "s"}],
+    # docs/26 §2 (fail-closed): only CLASSIFIED rows may become analogies — the graph row is classified, the chunk is not
+    "row_relevance": {"polymath:graph_fact:f1": "STRUCTURAL_ANALOGY"}}}
 _prim13 = {"shared_predicates": ["attach", "access"], "frictions": ["occupied_hand"], "behaviors": ["performer keeps both hands free while speaking"],
            "physical_jobs": ["capture audio hands free"]}
 _an13 = executors._corpus_analogies(_st13d, _prim13, 5)
@@ -2487,8 +2489,9 @@ _srv2.shutdown()
 
 # the documents seed, they do not bound: the primitives prompt must ask about the PEOPLE and allow inferred physical jobs
 _pp = open(os.path.join(ROOT, "prompts", "opportunity_primitives.md"), encoding="utf-8").read()
-ok("inferred:" in _pp and "population" in _pp and "AFTER its evidence boundary" in _pp and "no human population or activity" in _pp,
-   "primitives prompt reasons about the population, allows inferred physical jobs behind the evidence boundary, refuses only when no people at all")
+ok("inferred:" in _pp and "population" in _pp and "AFTER its evidence boundary" in _pp and "A named population is never required" in _pp
+   and "no human population or activity" not in _pp,
+   "primitives prompt reasons about people AND objects, allows inferred jobs behind the evidence boundary, and never requires a named population (docs/26 item 8)")
 
 # ---------------------------------------------------------------------------
 # 18. docs/23 — registry maintenance: candidates -> deterministic review -> L5 approval -> patch, never a live edit
@@ -2745,7 +2748,7 @@ ok(len(_recs) == 1 and _recs[0]["lead_id"] == "lz" and _recs[0]["origin"] == "PR
    and _recs[0]["freshness"]["class"] == "LIVE" and not _lwm.validate_records(_recs, _fs, _pol20),
    "prior field rows map to their community's lead with the original author and recomputed freshness, and pass the record contract")
 # 20i. the calibration acceptance test runs on a finished state and reports per-criterion receipts
-_acc = subprocess.run([PY, os.path.join(ROOT, "tests", "calibration_acceptance.py"), "--state", pos, "--heterogeneous-docs", "Some Novel"], capture_output=True, text=True)
+_acc = subprocess.run([PY, os.path.join(ROOT, "tests", "calibration_acceptance.py"), "--state", pos, "--heterogeneous-docs", "Some Novel", "--trap-text", "pillow"], capture_output=True, text=True)
 _rep = json.loads(_acc.stdout)
 ok(set(_rep["statuses"]) == {"corpus_independence", "heterogeneous_source_reasoning", "noun_echo_resistance", "legitimate_echo_survival",
                               "latent_population_discovery", "field_originated_opportunity", "irrelevant_source_rejection", "hypothesis_death"}
@@ -2757,10 +2760,14 @@ ok(_rep["statuses"]["corpus_independence"] == "PASS" and _rep["statuses"]["laten
    f"the synthetic walk earns the mandatory canaries and reports untriggered ones honestly ({_rep['statuses']})")
 ok(_rep["statuses"]["heterogeneous_source_reasoning"] == "FAIL" and _rep["pass"] is False,
    "a configured heterogeneous document that nothing built on FAILS canary 2 and the run (the novel row was IRRELEVANT here)")
-_acc2 = subprocess.run([PY, os.path.join(ROOT, "tests", "calibration_acceptance.py"), "--state", pos], capture_output=True, text=True)
+_acc2 = subprocess.run([PY, os.path.join(ROOT, "tests", "calibration_acceptance.py"), "--state", pos, "--trap-text", "pillow"], capture_output=True, text=True)
 _rep2 = json.loads(_acc2.stdout)
 ok(_rep2["statuses"]["heterogeneous_source_reasoning"] == "NOT_EVALUATED" and _rep2["pass"] is True and _acc2.returncode == 0,
    "without configured heterogeneous documents canary 2 is NOT_EVALUATED and the synthetic walk passes")
+_acc3 = subprocess.run([PY, os.path.join(ROOT, "tests", "calibration_acceptance.py"), "--state", pos], capture_output=True, text=True)
+_rep3 = json.loads(_acc3.stdout)
+ok(_rep3["statuses"]["irrelevant_source_rejection"] == "NOT_EVALUATED" and _rep3["pass"] is False,
+   "without a configured trap canary 7 is NOT_EVALUATED and a mandatory canary cannot be passed by vibes (item 6)")
 ok(doctor.run()["ok"], "doctor green over the lived-world surface")
 
 # ---------------------------------------------------------------------------
@@ -2797,23 +2804,150 @@ ok(_pvm.corpus_named({"name": "Compression socks for nurses", "form_factor": "so
    "corpus_named: a bigram or an observed-product overlap names the concept; a different noun is corpus-independent")
 # canary statuses on synthetic states
 _cs = copy.deepcopy(_ps); _cs["rounds"] = {"research": 1}
-_cs["data"]["row_relevance"] = {"c2": "IRRELEVANT"}
+_cs["data"]["corpus_evidence"].append({"id": "c3", "kind": "chunk", "doc_id": "N", "summary": "the pillow scene from the novel", "text": "the pillow scene from the novel", "tags": ["chunk"]})
+_cs["data"]["row_relevance"] = {"c2": "STRUCTURAL_ANALOGY", "c3": "IRRELEVANT"}   # c2 is cited by h_ok's hop; c3 is the known trap, untouched
 _cs["data"]["community_leads"] = [{"id": "lz", "kind": "COMMUNITY", "name": "r/Zepbound", "community_key": "Zepbound", "source_lane": "OPEN_FIELD", "nominated_by": ["search"], "authority": "LEAD", "status": "INSTANTIATED", "record_ids": ["f0"]}]
 _cs["data"]["hypotheses"].append({"id": "h_dead", "status": "REJECTED", "hop_refs": {"0": ["c2"]}})
 _cs["data"]["gaps"] = [{"id": "g_dead", "hypothesis_id": "h_dead", "status": "contradicted"}]
 _cs["data"]["observations"].append({"id": "o_c", "gap_id": "g_dead", "contradicts": True, "community": "r/x", "quote_ref": "q", "problem": "p", "evidence_roles": ["CONTRADICTION"], "freshness": {"class": "LIVE"}, "source_identity": {"source_family": "community", "platform": "reddit", "author_key": "z", "thread_key": "zt"}})
 sys.path.insert(0, os.path.join(ROOT, "tests"))
 import calibration_acceptance as _cal  # noqa: E402
-_rep21 = _cal.evaluate(_cs, _pol20)
+_rep21 = _cal.evaluate(_cs, _pol20, trap_texts={"pillow scene"})
 ok(_rep21["statuses"]["noun_echo_resistance"] == "PASS" and _rep21["statuses"]["legitimate_echo_survival"] == "PASS"
    and _rep21["statuses"]["latent_population_discovery"] == "PASS" and _rep21["statuses"]["irrelevant_source_rejection"] == "PASS"
    and _rep21["statuses"]["hypothesis_death"] == "PASS",
    f"canaries 3/4/5/7/8 PASS on a state that refused an echo, kept a grounded echo, instantiated an open-field community, marked a row irrelevant and killed a corpus hypothesis ({_rep21['statuses']})")
 _cs2 = copy.deepcopy(_cs); _cs2["data"]["row_relevance"] = {}
-ok(_cal.evaluate(_cs2, _pol20)["statuses"]["irrelevant_source_rejection"] == "FAIL" and _cal.evaluate(_cs2, _pol20)["pass"] is False,
+ok(_cal.evaluate(_cs2, _pol20, trap_texts={"pillow scene"})["statuses"]["irrelevant_source_rejection"] == "FAIL" and _cal.evaluate(_cs2, _pol20, trap_texts={"pillow scene"})["pass"] is False,
    "a run that forced every retrieved passage into play FAILS canary 7 and the calibration")
 ok("cited_share_of_shelf" in _rep21["diagnostics"] and "cited_share_of_shelf" not in _rep21["statuses"], "shelf share is a diagnostic, never a gate")
 ok(doctor.run()["ok"], "doctor green over the docs/26 surface")
+
+# ---------------------------------------------------------------------------
+# 22. senior-review regressions (2026-09-04): fail-closed relevance, referential lineage, field_originated,
+#     field-caused death, known-trap containment, document scope + policy B, population-free generative rule
+# ---------------------------------------------------------------------------
+# 22a. fail-closed relevance at hypothesize: an UNCLASSIFIED corpus row cannot be a hop; classifying it in the same payload heals it
+_fc = os.path.join(tmp, "failclosed.json")
+ctl("init", "--state", _fc, "--signal", "fail-closed relevance probe")
+_fcs = json.load(open(_fc)); _fcs["node"] = "hypothesize"
+_fcs["data"]["corpus_evidence"] = [{"id": "rowA", "summary": "a classified row"}, {"id": "rowB", "summary": "an unclassified row"}, {"id": "rowC", "summary": "a dead row"}]
+_fcs["data"]["row_relevance"] = {"rowA": "STRUCTURAL_ANALOGY", "rowC": "IRRELEVANT"}
+_fcs["data"]["primitives"] = {"generative_signal": True}
+json.dump(_fcs, open(_fc, "w"))
+_hf = lambda hid, refs: {"id": hid, "source": "s", "path": ["a", "b", "c", "d"], "target_mechanism": f"mech_{hid}", "evidence_boundary": {"first_inference_at": "a"},
+                         "gaps": ["g1", "g2"], "status": "WORKING_HYPOTHESIS", "alternatives": ["x"], "falsifiers": ["y"], "grounding": "CORPUS_ONLY", "hop_refs": {"1": refs}}
+rc, out = submit(_fc, "hypothesize", {"hypotheses": [_hf("h1", ["rowB"]), _hf("h2", ["rowA"]), _hf("h3", ["rowA"])]})
+ok(rc == 1 and any("UNCLASSIFIED" in e for e in out.get("schema_errors", [])), "an unclassified corpus row cited as a hop is refused — relevance is fail-closed (item 2)")
+rc, out = submit(_fc, "hypothesize", {"hypotheses": [_hf("h1", ["rowC"]), _hf("h2", ["rowA"]), _hf("h3", ["rowA"])]})
+ok(rc == 1 and any("IRRELEVANT" in e for e in out.get("schema_errors", [])), "an IRRELEVANT row cited as a hop is refused")
+rc, out = submit(_fc, "hypothesize", {"hypotheses": [_hf("h1", ["nope_999"]), _hf("h2", ["rowA"]), _hf("h3", ["rowA"])]})
+ok(rc == 1 and any("does not exist" in e for e in out.get("schema_errors", [])), "a hop citing a row that does not exist is refused")
+rc, out = submit(_fc, "hypothesize", {"row_relevance": {"rowB": "SEMANTIC_MATCH"}, "hypotheses": [_hf("h1", ["rowB"]), _hf("h2", ["rowA"]), _hf("h3", ["rowA"])]})
+ok(rc == 0 and json.load(open(_fc))["data"]["row_relevance"].get("rowB") == "SEMANTIC_MATCH" and json.load(open(_fc))["data"]["row_relevance"].get("rowA") == "STRUCTURAL_ANALOGY",
+   "hypothesize may classify the rows it cites in the same payload; the map MERGES, earlier classifications survive")
+# 22b. referential validation of interpretation refs at primitives (item 3)
+_rf = os.path.join(tmp, "refs.json")
+ctl("init", "--state", _rf, "--signal", "referential probe")
+_rfs = json.load(open(_rf)); _rfs["node"] = "primitives"
+_rfs["data"]["corpus_evidence"] = [{"id": "r1", "summary": "one"}, {"id": "r2", "summary": "two"}, {"id": "r3", "summary": "three"}]
+json.dump(_rfs, open(_rf, "w"))
+_ls = lambda refs: {"id": "s1", "kind": "ACCESS_PROBLEM", "text": "t", "evidence_refs": refs, "authority": "LATENT_HYPOTHESIS"}
+_co = lambda refs: {"id": "o1", "kind": "OBSERVED_PRODUCT", "name": "socks", "evidence_refs": refs, "evidentiary_authority": "NONE_FOR_CURRENT_DEMAND"}
+_pr = lambda ls, co, rel: {"primitives": {"generative_signal": True, "latent_structures": [ls], "corpus_observations": [co], "row_relevance": rel}}
+rc, out = submit(_rf, "primitives", _pr(_ls(["nonexistent_row_999"]), _co(["r1"]), {"r1": "SEMANTIC_MATCH"}))
+ok(rc == 1 and any("does not exist" in e and "latent_structures" in e for e in out.get("schema_errors", [])), "a latent structure citing a nonexistent row is refused (item 3)")
+rc, out = submit(_rf, "primitives", _pr(_ls(["r2"]), _co(["r1"]), {"r1": "SEMANTIC_MATCH"}))
+ok(rc == 1 and any("UNCLASSIFIED" in e and "latent_structures" in e for e in out.get("schema_errors", [])), "a latent structure citing an unclassified row is refused")
+rc, out = submit(_rf, "primitives", _pr(_ls(["r1"]), _co(["r3"]), {"r1": "SEMANTIC_MATCH", "r3": "IRRELEVANT"}))
+ok(rc == 1 and any("IRRELEVANT" in e and "corpus_observations" in e for e in out.get("schema_errors", [])), "a corpus observation citing an IRRELEVANT row is refused")
+rc, out = submit(_rf, "primitives", {"primitives": {"generative_signal": True, "evidence_refs": {"behaviors": ["r2"]}, "row_relevance": {"r1": "SEMANTIC_MATCH"}}})
+ok(rc == 1 and any("primitives.evidence_refs.behaviors" in e for e in out.get("schema_errors", [])), "classic primitives evidence_refs obey the same lineage law")
+rc, out = submit(_rf, "primitives", _pr(_ls(["r1"]), _co(["r1"]), {"r1": "SEMANTIC_MATCH", "r3": "IRRELEVANT"}))
+ok(rc == 0 and json.load(open(_rf))["data"]["latent_structures"][0]["id"] == "s1", "classified, existing, non-irrelevant refs are accepted and mirrored")
+# 22c. analogies require classification (fail-closed), not merely non-IRRELEVANT
+_st22 = _models20.new_state("an22", "s"); _st22["data"]["primitives"] = {"transferable_invariants": ["x"], "shared_predicates": ["access"], "frictions": ["occupied_hand"], "physical_jobs": ["reach item"]}
+_st22["data"]["corpus_evidence"] = [{"id": "gfU", "kind": "graph_fact", "tags": ["graph_fact"], "title": "Unclassified", "fact": {"subject": "reach", "predicate": "REQUIRES", "object": "item access"}, "summary": "reach REQUIRES item access"},
+                                    {"id": "gfC", "kind": "graph_fact", "tags": ["graph_fact"], "title": "Classified", "fact": {"subject": "reach", "predicate": "REQUIRES", "object": "item hands"}, "summary": "reach REQUIRES item hands"}]
+_st22["data"]["row_relevance"] = {"gfC": "SEMANTIC_MATCH"}
+ok([a["seed_id"] for a in executors._corpus_analogies(_st22, _st22["data"]["primitives"], 8)] == ["gfC"], "structural_lookup analogies come only from CLASSIFIED rows — unclassified rows are readable, never lineage")
+# 22d. field_originated uses corpus_named, not zero overlap with the whole corpus (item 4)
+_fo = _models20.new_state("fo22", "s"); _fod = _fo["data"]
+_fod["corpus_evidence"] = [{"id": "c1", "text": "a magnetic closure keeps the running vest shut; a sleeve of fabric hides the zip", "summary": "magnetic closure running vest sleeve"}]
+_fod["hypotheses"] = [{"id": "h", "status": "SUPPORTED", "hop_refs": {"0": ["c1"]}}]; _fod["mechanisms"] = [{"id": "m", "hypothesis_id": "h", "status": "SUPPORTED"}]
+_fod["field_records"] = [{"id": f"f{i}", "lead_id": "l", "community": c, "quote_ref": "q", "problem": "gels leak", "workaround": "rubber-bands a gel sleeve to the strap", "products_named": ["magnetic gel sleeve"],
+                          "evidence_roles": ["WORKAROUND_EVIDENCE"], "freshness": {"class": "LIVE"}, "source_identity": {"source_family": "community", "platform": "reddit", "author_key": f"a{i}", "thread_key": f"t{i}"}}
+                         for i, c in enumerate(["r/running", "r/running", "r/trailrunning"])]
+_fod["product_concepts"] = [{"id": "pc", "mechanism_id": "m", "name": "Magnetic gel sleeve", "form_factor": "strap sleeve", "evidence_refs": ["f0", "f1", "f2"]}]
+_ln = _pvm.lineage(_fod["product_concepts"][0], _fo, _pol20)
+ok(_ln["field_originated"] is True and _ln["corpus_named"] is False and _ln["field_lineage"] is True,
+   "a field-named noun sharing ordinary tokens ('magnetic', 'sleeve') with the corpus is still field-originated — corpus_named decides, not token overlap (item 4)")
+_fod["corpus_observations"] = [{"id": "o", "kind": "OBSERVED_PRODUCT", "name": "magnetic gel sleeve", "evidence_refs": ["c1"], "evidentiary_authority": "NONE_FOR_CURRENT_DEMAND"}]
+ok(_pvm.lineage(_fod["product_concepts"][0], _fo, _pol20)["field_originated"] is False, "once the corpus NAMED the product it is no longer field-originated")
+# 22e. hypothesis_death requires a field cause (item 5)
+_hd = copy.deepcopy(_cs); _hd["rounds"] = {"research": 2}
+_hd["data"]["hypotheses"] = [{"id": "h_dead", "status": "REJECTED", "hop_refs": {"0": ["c2"]}}]
+_hd["data"]["gaps"] = [{"id": "g_dead", "hypothesis_id": "h_dead", "status": "open"}]
+_hd["data"]["observations"] = [o for o in _hd["data"]["observations"] if not o.get("contradicts")]; _hd["data"]["challenges"] = []; _hd["data"]["evaluations"] = []
+_r_hd = _cal.evaluate(_hd, _pol20, trap_texts={"pillow scene"})
+ok(_r_hd["statuses"]["hypothesis_death"] == "FAIL" and _r_hd["checks"]["hypothesis_death"]["rejected_without_field_cause"] == ["h_dead"],
+   "a corpus hypothesis rejected after two rounds with NO field cause does not satisfy hypothesis_death (item 5)")
+_hd["data"]["challenges"] = [{"id": "ch", "hypothesis_id": "h_dead", "verdict": "REJECTED", "argument": "field says no", "evidence_refs": ["o0"]}]
+ok(_cal.evaluate(_hd, _pol20, trap_texts={"pillow scene"})["statuses"]["hypothesis_death"] == "PASS", "a challenge that rejects it citing admitted field evidence counts as field-caused death")
+# 22f. known-trap containment (item 6)
+_tp = copy.deepcopy(_cs)   # c3 = the known trap ("pillow scene"): classified IRRELEVANT, referenced by nothing
+ok(_cal.evaluate(_tp, _pol20, trap_texts={"pillow scene"})["statuses"]["irrelevant_source_rejection"] == "PASS", "a retrieved trap that is classified IRRELEVANT and untouched downstream PASSES canary 7")
+_tp2 = copy.deepcopy(_tp); _tp2["data"]["latent_structures"] = [{"id": "s", "kind": "FRICTION", "text": "t", "evidence_refs": ["c3"], "authority": "LATENT_HYPOTHESIS"}]
+_r7 = _cal.evaluate(_tp2, _pol20, trap_texts={"pillow scene"})
+ok(_r7["statuses"]["irrelevant_source_rejection"] == "FAIL" and _r7["checks"]["irrelevant_source_rejection"]["leaked_downstream"] == ["c3"], "a trap referenced by a latent structure FAILS canary 7 (leak is visible)")
+_tp3 = copy.deepcopy(_tp); _tp3["data"]["row_relevance"] = {}
+ok(_cal.evaluate(_tp3, _pol20, trap_texts={"pillow scene"})["checks"]["irrelevant_source_rejection"]["unclassified"] == ["c3"], "an unclassified trap FAILS canary 7 — silence is not resistance")
+ok(_cal.evaluate(_tp, _pol20, trap_texts={"never retrieved text"})["statuses"]["irrelevant_source_rejection"] == "FAIL", "a trap the retrieval never returned FAILS canary 7 with an explicit note")
+# 22g. document scope threads into retrieve + plan and skips the unscoped /chat (item 7, policy B)
+class _ScopeStub(http.server.BaseHTTPRequestHandler):
+    calls = []
+    def log_message(self, *a): pass
+    def _send(self, code, body):
+        data = json.dumps(body).encode(); self.send_response(code); self.send_header("content-type", "application/json"); self.send_header("content-length", str(len(data))); self.end_headers(); self.wfile.write(data)
+    def do_GET(self):
+        if self.path == "/capabilities":
+            return self._send(200, {"backend": "polymath", "version": "stub", "contracts": {"retrieve-evidence-rows": "v1", "corpus-plan": "v1", "chat-evidence": "v1", "document_ids": True}})
+        return self._send(404, {"detail": "no"})
+    def do_POST(self):
+        n = int(self.headers.get("content-length") or 0); body = json.loads(self.rfile.read(n) or b"{}")
+        _ScopeStub.calls.append((self.path, body))
+        rows = [dict(r) for r in _SAMPLE["evidence_rows"]]
+        if self.path == "/retrieve/plan":
+            return self._send(200, {"plan": _PLANFIX["expected"], "evidence_rows": [dict(r, query_ids=[_PLANFIX["expected"][0]["id"]]) for r in rows]})
+        if self.path == "/retrieve":
+            return self._send(200, dict(_SAMPLE))
+        if self.path == "/chat":
+            return self._send(200, {"answer": "unscoped", "evidence_rows": rows, "meta": {}})
+        return self._send(404, {"detail": "no"})
+_sk = socket.socket(); _sk.bind(("127.0.0.1", 0)); _sport = _sk.getsockname()[1]; _sk.close()
+_ssrv = http.server.ThreadingHTTPServer(("127.0.0.1", _sport), _ScopeStub); threading.Thread(target=_ssrv.serve_forever, daemon=True).start()
+_sc22 = os.path.join(tmp, "scope.json")
+rc, out = ctl("init", "--state", _sc22, "--signal", _PLANFIX["signal"], "--corpus", "polymath:stubcorp", "--document-id", "docA", "--document-id", "docB")
+ok(rc == 0 and json.load(open(_sc22)).get("document_scope") == ["docA", "docB"], "init records a document scope on the run")
+ctl("step", "--state", _sc22)
+_sout = os.path.join(tmp, "scope_payload.json")
+def _sadapter(*extra):
+    r = subprocess.run([PY, os.path.join(ROOT, "python", "corpus_polymath.py"), "--state", _sc22, "--url", f"http://127.0.0.1:{_sport}", "--out", _sout, *extra], capture_output=True, text=True)
+    _note = next((json.loads(l) for l in reversed(r.stderr.strip().splitlines()) if l.startswith("{")), {"stderr": r.stderr[-400:]})
+    return _note, (json.load(open(_sout)) if os.path.exists(_sout) else {})
+_ScopeStub.calls.clear(); _n1, _p1 = _sadapter()                       # default --via chat
+ok(not any(p == "/chat" for p, _ in _ScopeStub.calls) and any(p == "/retrieve/plan" and b.get("document_ids") == ["docA", "docB"] for p, b in _ScopeStub.calls)
+   and (_p1.get("corpus_backend") or {}).get("chat_skipped") and _n1.get("document_scope") == ["docA", "docB"],
+   "with a document scope the adapter never calls the unscoped /chat and threads document_ids into /retrieve/plan (policy B)")
+_ScopeStub.calls.clear(); _n2, _p2 = _sadapter("--generic", "--document-id", "docC")
+ok(all(b.get("document_ids") == ["docC", "docA", "docB"] for p, b in _ScopeStub.calls if p == "/retrieve") and any(p == "/retrieve" for p, _ in _ScopeStub.calls),
+   "the generic per-query path threads the CLI ∪ run scope into every /retrieve body")
+_ssrv.shutdown()
+# 22h. the population-free generative rule is in the prompt and the old requirement is gone (item 8)
+_pp22 = open(os.path.join(ROOT, "prompts", "opportunity_primitives.md"), encoding="utf-8").read()
+ok("A named population is never required" in _pp22 and "LATENT PROBLEM → population" in _pp22 and "no human population or activity" not in _pp22,
+   "generative_signal rule: a latent structure without any population is generative (item 8)")
+ok(doctor.run()["ok"], "doctor green over the senior-review regressions")
 
 if FAILS:
     print(f"\n{len(FAILS)} CHECKS FAILED: " + "; ".join(FAILS[:8]))
