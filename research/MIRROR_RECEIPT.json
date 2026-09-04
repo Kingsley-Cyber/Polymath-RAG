@@ -1,15 +1,15 @@
 {
  "reference": {
   "path": "/Users/king/Documents/polymath-rebuild/polymath-v4-main/research",
-  "commit": "b8823b5",
-  "version": "2.1.1",
-  "files": 179
+  "commit": "97947a6",
+  "version": "2.1.2",
+  "files": 183
  },
  "standalone": {
   "path": "/Users/king/Documents/polymath-rebuild/TRAIL_AGENT_AUTORESEARCH",
-  "commit": "d3d5976",
-  "version": "2.1.1",
-  "files_compared": 179
+  "commit": "08f764f",
+  "version": "2.1.2",
+  "files_compared": 183
  },
  "missing_in_standalone": [],
  "drift": [],
@@ -18,7 +18,7 @@
   "path": "/Users/king/.hermes/skills/business/opportunity-research",
   "resolves_to": "/Users/king/Documents/polymath-rebuild/polymath-v4-main/research",
   "is": "reference",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "drift_vs_reference": []
  },
  "parity": true
