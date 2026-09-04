@@ -495,3 +495,26 @@ Procedure:
 3. Every section-20 label from §8.1 you could not reproduce, with the reason.
 4. Files you changed that are NOT in the §9 manifest, and why.
 5. What you did not do.
+
+---
+
+## 13. v2.1.0 addendum — source-agnostic interpretation (docs/26) — mirror this too
+
+Reference: Polymath main after 2026-09-04 evening (`research/` v2.1.0). Add to the manifest of §9:
+`docs/26_source_agnostic_interpretation.md`, `schemas/latent_structure.json`, `schemas/corpus_observation.json`,
+and the v2.1.0 versions of `python/{lived_world,provenance,controller,executors,utilization,corpus_polymath}.py`,
+`prompts/{opportunity_primitives,population_scout,bridge_hypothesis,latent_interpretation}.md`,
+`graph/policies.yaml` (`corpus.relevance_classes`, `corpus.interpretation_kinds`, `lived_world.nominate_max_latent`,
+`LATENT` source yield, `calibration` block), `tests/calibration_acceptance.py`, `tests/run_all.py` (section 21).
+Spec in one paragraph: primitives carry `latent_structures[]` (24 kinds, authority LATENT_HYPOTHESIS),
+`corpus_observations[]` (OBSERVED_PRODUCT | EXAMPLE | NAMED_POPULATION, authority NONE_FOR_CURRENT_DEMAND) and
+`row_relevance {row_id: LEXICAL_MATCH | SEMANTIC_MATCH | STRUCTURAL_ANALOGY | IRRELEVANT}`; the controller validates
+them, mirrors them into `data.latent_structures / corpus_observations / row_relevance`, stamps `relevance` on rows,
+and rejects hop_refs citing IRRELEVANT rows; `structural_lookup` skips IRRELEVANT rows; `population_nominate` adds
+NAMED leads from `possible_populations` and `search_mode: LATENT` leads (source_lane LATENT, queries from the
+structure text) from searchable kinds, capped by `nominate_max_latent`; provenance gains `observation_terms`,
+`corpus_named(concept)` (bigram in corpus text, or ≥2 tokens / a brand token shared with observations) and
+`hop_cites_corpus`; the acceptance script evaluates the eight canaries of docs/26 §6 and reports shelf share as a
+diagnostic only. Harness section 21 must cover: both schemas, primitives mirror + rejection of an unknown relevance
+class, LATENT lead nomination with structure-language queries, IRRELEVANT rows refused in hop_refs and skipped by
+analogies, `corpus_named` true/false cases, and the canary statuses (PASS / NOT_TRIGGERED / FAIL) on synthetic states.

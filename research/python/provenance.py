@@ -72,8 +72,36 @@ def tag_corpus_examples(rows: list[dict], example_terms: list | None = None) -> 
                 tags.append(EXAMPLE_TAG)
             r["tags"] = tags
             r["example_terms"] = sorted(found)
+            r["corpus_observation"] = {"observed_entities": sorted(found), "semantic_role": "EXAMPLE",
+                                       "evidentiary_authority": "NONE_FOR_CURRENT_DEMAND"}   # docs/26 §3: recorded, never stripped
             n += 1
     return n
+
+
+def observation_terms(state: dict) -> set:
+    """docs/26 §3: products / examples / populations the corpus NAMED, as θ
+    recorded them (corpus_observations) — recorded, never stripped."""
+    out = set()
+    for o in state["data"].get("corpus_observations") or []:
+        if isinstance(o, dict) and o.get("kind") in ("OBSERVED_PRODUCT", "EXAMPLE"):
+            out |= _toks(o.get("name"))
+    return out
+
+
+def corpus_named(concept: dict, state: dict) -> dict:
+    """Canary 1 (docs/26 §6): is this concept explicitly NAMED by a source
+    passage? True when a bigram of its name occurs in corpus text, or it shares
+    a brand token / two tokens with a recorded corpus observation or example."""
+    name = str(concept.get("name") or "").lower()
+    words = [w for w in re.findall(r"[a-z][a-z\-]+", name) if w not in _STOP]
+    bigrams = {f"{a} {b}" for a, b in zip(words, words[1:])}
+    text = " ".join(str(r.get("text") or r.get("summary") or "").lower() for r in state["data"].get("corpus_evidence") or []
+                    if isinstance(r, dict) and "field_evidence" not in (r.get("tags") or []))
+    phrase_hits = sorted(b for b in bigrams if b in text)
+    ctoks = concept_tokens(concept)
+    obs = ctoks & (observation_terms(state) | corpus_example_terms(state))
+    named = bool(phrase_hits) or len(obs) >= 2 or bool(ctoks & corpus_example_terms(state))
+    return {"named": named, "phrase_hits": phrase_hits, "observation_overlap": sorted(obs)}
 
 
 def corpus_example_terms(state: dict) -> set:
@@ -105,7 +133,7 @@ def corpus_example_row_tokens(state: dict) -> set:
 
 def example_overlap(concept: dict, state: dict) -> list:
     ctoks = concept_tokens(concept)
-    brand = ctoks & corpus_example_terms(state)
+    brand = ctoks & (corpus_example_terms(state) | observation_terms(state))
     rows = ctoks & corpus_example_row_tokens(state)
     strong = {t for t in rows if len(t) >= 6}
     hits = brand | strong | (rows if len(rows) >= 2 else set())
@@ -174,8 +202,11 @@ def lineage(concept: dict, state: dict, policies: dict) -> dict:
         named |= _toks(r.get("workaround"))
     content = {t for t in ctoks if len(t) >= 4}
     field_originated = bool(content) and not (content & corpus_toks) and bool(content & named)
+    named = corpus_named(concept, state)
     return {"concept_id": concept.get("id"), "concept": concept.get("name"), "hypothesis_id": hyp.get("id"),
             "verdict": verdict, "independent_voices": voices, "communities": sorted(communities),
+            "corpus_named": named["named"], "corpus_named_by": named["phrase_hits"] or named["observation_overlap"],
+            "hop_cites_corpus": bool([rid for v in (hyp.get("hop_refs") or {}).values() for rid in v or [] if str(rid).startswith("polymath:") or rid in {r.get("id") for r in d.get("corpus_evidence") or [] if isinstance(r, dict)}]),
             "field_record_refs": len(field_refs), "gap_observation_refs": len(gap_refs),
             "lived_anchor_ids": anchors, "example_overlap": overlap, "field_originated": field_originated,
             "seed_population_only": bool(cited) and all(
@@ -243,7 +274,9 @@ def corpus_contribution(state: dict) -> dict:
         concept_toks |= concept_tokens(c)
     mech_only = [rid for rid in cited_rows
                  if EXAMPLE_TAG not in (rows[rid].get("tags") or []) and not (_toks(rows[rid].get("summary")) & concept_toks)]
-    return {"rows_retrieved": len(rows), "rows_cited": len(cited_rows),
+    rel = collections.Counter(r.get("relevance") for r in rows.values() if r.get("relevance"))
+    return {"relevance_receipts": dict(rel), "rows_classified_irrelevant": rel.get("IRRELEVANT", 0),
+            "rows_retrieved": len(rows), "rows_cited": len(cited_rows),
             "documents_retrieved": len(by_doc_ret), "documents_cited": len(by_doc_cit),
             "cited_share_of_shelf": round(len(by_doc_cit) / max(1, len(by_doc_ret)), 3),
             "cited_by_document": dict(by_doc_cit.most_common()),

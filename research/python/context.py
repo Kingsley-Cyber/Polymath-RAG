@@ -52,6 +52,7 @@ _PRIORITY = {
     "lived_clusters": 1, "lived_situations": 1, "provenance": 1,
     "field_records": 2, "population_leads": 2, "community_leads": 2,
     "participant_cards": 3, "corpus_questions": 3, "example_terms": 3,
+    "latent_structures": 1, "corpus_observations": 2, "row_relevance": 3,   # docs/26
 }
 # historical branches are P4 by default (contradicted items stay visible —
 # they are decision-critical; only dead branches drop)

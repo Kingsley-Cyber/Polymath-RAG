@@ -34,6 +34,10 @@ corpus:                        # docs/19: corpus_plan reformulations
     - "What analogous constraint exists elsewhere for {friction}?"
     - "Why do people keep doing {behavior} despite {friction}?"
   max_questions: 12
+  relevance_classes: [LEXICAL_MATCH, SEMANTIC_MATCH, STRUCTURAL_ANALOGY, IRRELEVANT]   # docs/26 §2 axis 1 — θ classifies, φ enforces (IRRELEVANT rows are never citable)
+  interpretation_kinds: [ACTIVITY, ROUTINE, OBJECT, OBJECT_INTERACTION, BODY_STATE, ENVIRONMENT, CONSTRAINT, FRICTION, DESIRE, TRADEOFF,
+                         ADAPTATION, WORKAROUND, SOCIAL_DYNAMIC, IDENTITY_SIGNAL, TRANSITION, FAILURE_MODE, REPETITION, COORDINATION_PROBLEM,
+                         ACCESS_PROBLEM, COMFORT_PROBLEM, STATUS_PROBLEM, ATTENTION_PROBLEM, TRANSFERABLE_INVARIANT, CAUSAL_MECHANISM]
 scoring:
   min_mechanism_support: 3        # supporting observations per mechanism
   purchase_language_bonus: 2      # observations with purchase language count extra
@@ -230,10 +234,16 @@ lived_world:
   stagnation_rounds: 1           # rounds with no new record and no new ANCHOR before stopping
   seed_population_discount: 0.5  # VOI multiplier for leads that restate the signal's own population
   nominate_max_registry: 6       # registry situations nominated per run (predicate/friction overlap)
+  nominate_max_latent: 6         # docs/26 §4: latent structures searched for their population (LATENT PROBLEM → population)
   value_of_information:
-    default_source_yield: {SIGNAL: 0.8, FIELD_RECORDS: 0.7, OPEN_FIELD: 0.7, CORPUS: 0.6, REGISTRY: 0.5}
+    default_source_yield: {SIGNAL: 0.8, FIELD_RECORDS: 0.7, OPEN_FIELD: 0.7, CORPUS: 0.6, LATENT: 0.6, REGISTRY: 0.5}
 provenance:                      # docs/25 §7: lineage decides what may count, never a category blacklist
   min_independent_voices: 3      # per concept, over the field records + observations it cites
   min_communities: 2
   echo_verdict: CORPUS_ECHO_UNGROUNDED
+calibration:                     # docs/26 §6: the eight canaries — bridge behaviour, never shelf composition
+  mandatory: [corpus_independence, latent_population_discovery, field_originated_opportunity, irrelevant_source_rejection, hypothesis_death]
+  conditional: [noun_echo_resistance, legitimate_echo_survival]
+  evaluated_when_configured: [heterogeneous_source_reasoning]
+  min_independent_voices: 3
 

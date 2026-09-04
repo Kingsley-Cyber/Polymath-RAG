@@ -1,0 +1,50 @@
+{
+ "title": "corpus_observation",
+ "description": "docs/26 \u00a73: a thing the corpus NAMED \u2014 a product, an example brand, a population. Recorded, never stripped; evidentiary authority for current demand is always none. A named product may still win if the field grounds it independently.",
+ "required": [
+  "id",
+  "kind",
+  "name",
+  "evidence_refs",
+  "evidentiary_authority"
+ ],
+ "properties": {
+  "id": {
+   "type": "string"
+  },
+  "kind": {
+   "enum": [
+    "OBSERVED_PRODUCT",
+    "EXAMPLE",
+    "NAMED_POPULATION"
+   ]
+  },
+  "name": {
+   "type": "string"
+  },
+  "evidence_refs": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "type": "string"
+   }
+  },
+  "job_served": {
+   "type": "string"
+  },
+  "mechanism": {
+   "type": "string"
+  },
+  "populations_sharing_job": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "evidentiary_authority": {
+   "enum": [
+    "NONE_FOR_CURRENT_DEMAND"
+   ]
+  }
+ }
+}

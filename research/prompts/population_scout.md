@@ -27,3 +27,12 @@ come from community_instantiate; never invent a community you did not see in a
 result; if a channel is unavailable submit `capability_failure` for it and
 keep the rest. Prefer communities OUTSIDE the population the signal itself
 named; the seed population is already in the queue at a discount.
+
+## Latent leads (docs/26 §4 — LATENT PROBLEM → population)
+A lead with `search_mode: LATENT` names no group: its `channel_queries` carry
+the structure's own language ("frequent access, occupied hands, in motion").
+Run them and read WHO shows up — which communities keep describing that
+structure. Submit those as CommunityLeads with `latent_structure_id` copied
+from the lead and the search receipts in `nominated_by`. A latent lead that
+surfaces nobody is EXHAUSTED; say so.
+

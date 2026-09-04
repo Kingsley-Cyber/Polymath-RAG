@@ -48,3 +48,13 @@ write but its products end as CORPUS_ECHO_UNGROUNDED unless the field grounds
 them independently. Prefer bridges the corpus never spelled out: the corpus
 supplies the mechanism, the lived world supplies the noun.
 
+## Any source may seed a bridge (docs/26)
+The corpus is not a mechanism dispenser and the field is not a noun dispenser.
+A latent structure from a novel, a constraint from a manual, a workaround from
+a comment, a named product from a book, a shift from a trend — any of them may
+start a path. What differs by source is AUTHORITY, never permission:
+`latent_structures` and `corpus_observations` back hops as hypotheses
+(evidence_boundary applies), field records back frictions, only current
+communities and listings establish demand and supply. Cite the structure ids
+and row ids you build on; never cite a row classified IRRELEVANT.
+

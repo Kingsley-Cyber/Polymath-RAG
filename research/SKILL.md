@@ -1,7 +1,7 @@
 ---
 name: opportunity-research
 description: "USE THIS whenever the user asks for product leads, product ideas/ideation, opportunities, niches, what to sell, or a research run over Polymath/the corpus. Run the controller (init → step → submit …); NEVER improvise a brief by querying Polymath directly — the corpus is one evidence lane, the graph enforces evidence, allocation and a 3–6 product portfolio."
-version: 2.0.0
+version: 2.1.0
 platforms: [macos, linux]
 metadata:
   hermes:
@@ -191,8 +191,9 @@ The child inherits this SKILL.md; the controller keeps it honest.
 
 | node | type | you do |
 |---|---|---|
-| understand | reason | prompts/latent_interpretation.md → submit `signal` |
+| understand | reason | prompts/latent_interpretation.md → submit `signal` (+ optional `communities`, `example_terms` — recorded as observations, never stripped) |
 | corpus | retrieve | `python3 python/corpus_polymath.py --state run.json --out payload.json` — probes `/capabilities`; a native Polymath ANSWERS each compiled reformulation through the full RAG (`/chat evidence=true`: rerank, graph + latent lanes, synthesis with citations) → `corpus_evidence` rows + `corpus_answers` (docs/22; `--via plan` = rows only, `--generic` = docs/18 control). Corpora may be named by display name. Submit `corpus_evidence` (+ `corpus_backend`, `corpus_answers`) |
+| primitives | reason | prompts/opportunity_primitives.md → submit `primitives` incl. `latent_structures` (typed, any source), `corpus_observations`, `row_relevance`, `population_leads` (docs/26) |
 | lenses | transform | just `step` (python selects lenses) |
 | population_nominate | transform | just `step` — corpus / registry / signal / prior field rows propose `population_leads` + `community_leads` (authority LEAD, never demand; docs/25 §1) |
 | population_scout | agent | prompts/population_scout.md → run each lead's `channel_queries` to find WHERE these people talk (+ anything current nobody nominated) → submit `community_leads` (source_lane OPEN_FIELD, search receipts in `nominated_by`); `capability_failure` for a dead channel |
@@ -212,6 +213,22 @@ The child inherits this SKILL.md; the controller keeps it honest.
 | supplier_search | agent | `data.sourcing_plan` = one job PER CONCEPT PER CHANNEL (Alibaba + CJdropshipping, docs/24 §2): `python3 python/sourcing_exa.py --state run.json --out cands.json` then submit `supplier_candidates` each with `concept_id` + `channel` (price_raw, moq_raw verbatim, url); CJ rows default MOQ 1; an unsourced concept is reported, never covered by another concept's listing |
 | normalize_supplier | transform | just `step` |
 | qualify | gate | just `step` → verdict + `leads[]` + `data.utilization` (evidence receipt incl. lived_world / corpus_contribution / provenance, docs/21 + docs/25) + `data.provenance` per concept; leads whose concept is CORPUS_ECHO_UNGROUNDED land in `excluded_leads` with the reason |
+
+## Source-agnostic interpretation (docs/26)
+
+- **Any source may generate; authority differs, permission does not.** At
+  `primitives` θ extracts typed `latent_structures` from novels, manuals,
+  transcripts and books alike, records named products/examples/populations as
+  `corpus_observations` (never stripped, no authority for demand), and
+  classifies `row_relevance` — a row marked IRRELEVANT can never back a hop.
+- **Both directions.** Named populations become leads; a structure with no
+  population becomes a `search_mode: LATENT` lead the scout resolves to real
+  communities by its friction language.
+- **Calibration = eight canaries** (`tests/calibration_acceptance.py`, docs/26
+  §6): corpus independence, heterogeneous-source reasoning, echo resistance,
+  legitimate echo survival, latent population discovery, field-originated
+  opportunity, irrelevant-source rejection, hypothesis death. Shelf share is
+  reported, never gated.
 
 ## Lived world (docs/25 — LIVED-WORLD-V2)
 
