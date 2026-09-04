@@ -1660,6 +1660,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("research/graph/settings_schema.yaml", "yaml", None),
     ("research/loop.yaml", "yaml", None),
     ("research/manifest.yaml", "yaml", None),
+    ("research/MIRROR_RECEIPT.json", "json", None),
     ("research/prompts/bridge_hypothesis.md", "md", None),
     ("research/prompts/community_instantiate.md", "md", None),
     ("research/prompts/population_scout.md", "md", None),
