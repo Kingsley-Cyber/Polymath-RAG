@@ -1,0 +1,2096 @@
+SQLite is a good fit here, and I would make one architectural distinction explicit:
+
+> **Hermes memory is agent memory. SQLite is opportunity-loop memory.**
+
+They should not compete or synchronize continuously.
+
+The loop sources require memory to survive outside the conversation so an unattended loop can recover progress and decisions; they explicitly distinguish the harness's internal agent cycle from the external loop specification containing goal, verification, stopping rules, and memory.  The prompt-graph source separately requires the graph itself to remain an explicit, inspectable artifact rather than becoming hidden inside runtime state. 
+
+SQLite is my implementation recommendation; the sources do **not** mandate SQLite.
+
+# 1. Lock the four kinds of memory
+
+This is the cleanest way to prevent the system from slowly becoming confused about authority.
+
+| Memory                 | Purpose                                                        | Authority                |
+| ---------------------- | -------------------------------------------------------------- | ------------------------ |
+| **Hermes memory**      | General agent knowledge, learned preferences, reusable context | Hermes                   |
+| **Polymath**           | Long-term evidence/second-brain knowledge                      | Polymath                 |
+| **Git registry**       | Niches, activities, lenses, motifs, policies                   | Curated registry         |
+| **Opportunity SQLite** | Exact state of an opportunity investigation                    | Opportunity skill/Python |
+
+The critical rule:
+
+```text
+Hermes memory can make Hermes smarter.
+
+SQLite must make the workflow resumable.
+```
+
+If Hermes's general memory were completely cleared halfway through a run, this command should still know **exactly** what needs to happen:
+
+```bash
+controller.py step --run run_123
+```
+
+Likewise, Hermes memory must never be able to say:
+
+> "I remember we already validated that hypothesis."
+
+if SQLite says it hasn't passed the required checks.
+
+That's the separation.
+
+---
+
+# 2. SQLite is almost ideal for this
+
+You don't need another dependency.
+
+Python already ships:
+
+```python
+import sqlite3
+```
+
+No database server.
+
+No Docker container.
+
+No Mongo deployment.
+
+No Redis.
+
+No SQLAlchemy.
+
+For what we're storing—probably thousands or tens of thousands of compact records per investigation rather than terabytes—SQLite is more than enough.
+
+And because the loop source emphasizes persistent state outside the conversation, a tiny transactional database is actually stronger than a mutable `run1.json` file. 
+
+---
+
+# 3. Do not put the database inside the skill directory
+
+This is a small implementation detail that matters.
+
+Don't do:
+
+```text
+~/.hermes/skills/business/opportunity-research/
+└── opportunity.sqlite
+```
+
+If Hermes upgrades/reinstalls/replaces the skill, state could accidentally get blown away.
+
+Instead:
+
+```text
+~/.hermes/
+├── skills/
+│   └── business/
+│       └── opportunity-research/
+│
+└── state/
+    └── opportunity-research/
+        ├── opportunity.sqlite3
+        ├── backups/
+        └── exports/
+```
+
+Allow an override:
+
+```text
+OPPORTUNITY_RESEARCH_DB=
+```
+
+but the default should be:
+
+```text
+~/.hermes/state/opportunity-research/opportunity.sqlite3
+```
+
+---
+
+# 4. The existing code only needs three additions
+
+Fable's current code:
+
+```text
+python/
+├── controller.py
+├── graph.py
+├── transitions.py
+├── executors.py
+├── models.py
+└── tests/
+    └── run_all.py
+```
+
+I would now make it:
+
+```text
+python/
+├── controller.py
+├── graph.py
+├── transitions.py
+├── executors.py
+├── models.py
+│
+├── memory.py             ← SQLite boundary
+├── verifiers.py          ← verification receipts
+├── satisfaction.py       ← loop completion/progress
+│
+└── tests/
+    └── run_all.py
+
+sql/
+└── 001_initial.sql
+```
+
+Do **not** scatter SQL across `controller.py`.
+
+`memory.py` is the only module allowed to know SQLite exists.
+
+That gives you:
+
+```text
+controller
+    ↓
+WorkRepository interface
+    ↓
+memory.py
+    ↓
+sqlite3
+```
+
+If you ever replace SQLite, the controller doesn't change.
+
+---
+
+# 5. Do not store the Control Graph in SQLite
+
+Another important distinction:
+
+```text
+control_graph.yaml
+policies.yaml
+loop.yaml
+```
+
+remain authored artifacts.
+
+SQLite stores:
+
+```text
+which graph version this run uses
+which node the run is on
+what happened
+what evidence was found
+what hypotheses exist
+what remains unsatisfied
+```
+
+It does **not** become the source of the workflow definition.
+
+So:
+
+```text
+YAML
+= rules
+
+SQLite
+= state
+```
+
+This preserves the new graph-engineering principle that the computational structure must remain independently authored, inspectable, versionable, and executable. 
+
+---
+
+# 6. Keep the SQLite schema surprisingly small
+
+I would use **seven tables**.
+
+Not one table per concept.
+
+Not 30 relational tables.
+
+```text
+schema_meta
+runs
+work_nodes
+work_edges
+actions
+events
+checks
+```
+
+That is enough to represent virtually the entire system.
+
+## `runs`
+
+One row per opportunity investigation.
+
+```text
+run_id
+status
+terminal_reason
+
+current_graph_node
+revision
+cycle
+
+objective
+seed_type
+seed_value
+
+control_graph_hash
+loop_spec_hash
+policy_hash
+registry_hash
+skill_version
+
+theta_model
+theta_prompt_hash
+
+queries_used
+research_rounds_used
+supplier_queries_used
+
+no_progress_cycles
+progress_signature
+
+created_at
+updated_at
+terminal_at
+```
+
+This is the tiny materialized "where am I right now?" record.
+
+---
+
+# 7. `work_nodes` is your Work Graph
+
+Don't make a separate table for:
+
+```text
+hypotheses
+gaps
+observations
+queries
+mechanisms
+products
+suppliers
+```
+
+They are all typed Work Graph nodes.
+
+Example:
+
+```text
+work_nodes
+
+node_id
+run_id
+node_type
+status
+authority_class
+semantic_hash
+payload_json
+created_cycle
+updated_cycle
+created_at
+updated_at
+```
+
+`node_type` can contain:
+
+```text
+EVIDENCE_REF
+OBSERVATION
+DRIVER
+PRESSURE
+BEHAVIOR
+ADAPTATION
+FRICTION
+LATENT_VALUE
+
+BRIDGE_HYPOTHESIS
+ALTERNATIVE_HYPOTHESIS
+CONTRADICTION
+
+EVIDENCE_GAP
+RESEARCH_QUERY
+
+PRODUCT_MECHANISM
+PRODUCT_CANDIDATE
+SUPPLIER_CANDIDATE
+
+NICHE_CANDIDATE
+MARKET_IDENTIFIER_CANDIDATE
+```
+
+And `authority_class`:
+
+```text
+EVIDENCE_REF
+OBSERVED
+WORKING_HYPOTHESIS
+WORKING_ANALOGY
+PROVISIONAL
+VALIDATED
+REJECTED
+```
+
+This is your temporary Work Graph stored relationally without needing Neo4j.
+
+---
+
+# 8. `work_edges` gives it actual graph structure
+
+```text
+edge_id
+run_id
+
+from_node_id
+to_node_id
+
+relationship
+
+basis_type
+authority_class
+
+evidence_refs_json
+unsupported
+status
+
+created_cycle
+created_at
+```
+
+For example:
+
+```text
+storytelling
+    ↓ MAY_ENABLE
+performative_delivery
+    ↓ MAY_INCREASE
+physical_expression
+    ↓ MAY_CREATE_NEED
+low_interference_audio
+```
+
+The first edge might be evidence-supported.
+
+The next could be inferred.
+
+So an edge records:
+
+```yaml
+basis_type: ABDUCTIVE
+unsupported: true
+authority_class: WORKING_HYPOTHESIS
+```
+
+Then `gap_compiler` sees:
+
+```text
+unsupported = true
+```
+
+and creates an `EVIDENCE_GAP`.
+
+This gives you the exact bridge-path semantics you've wanted without polluting Polymath Neo4j.
+
+---
+
+# 9. `actions` is one of the most important tables
+
+This is how the controller talks to Hermes.
+
+Every outside action goes here before Hermes performs it:
+
+```text
+action_id
+run_id
+graph_node
+
+action_type
+
+idempotency_key
+
+status:
+    PENDING
+    RUNNING
+    SUCCEEDED
+    FAILED
+    REJECTED
+
+request_json
+result_json
+
+request_hash
+result_hash
+
+attempt_count
+
+created_at
+started_at
+completed_at
+```
+
+Examples of `action_type`:
+
+```text
+POLYMATH_RETRIEVAL
+
+THETA_HYPOTHESIS
+THETA_MECHANISM
+SEMANTIC_EVALUATION
+
+WEB_SEARCH
+SITE_TRAVERSAL
+COMMENT_RESEARCH
+
+PRODUCT_RESEARCH
+ALIBABA_SEARCH
+
+HUMAN_APPROVAL
+```
+
+This is how you safely walk away.
+
+---
+
+# 10. Why actions must be persisted **before** execution
+
+This is a subtle failure condition Fable should absolutely implement correctly.
+
+Suppose:
+
+```text
+controller step
+    ↓
+tells Hermes:
+search Reddit for query Q
+    ↓
+Hermes crashes
+```
+
+If the request only existed in terminal output, the system has forgotten it.
+
+Instead:
+
+```text
+controller step
+    ↓
+BEGIN TRANSACTION
+    ↓
+create action A
+status=PENDING
+    ↓
+commit
+    ↓
+print action A to Hermes
+```
+
+Now if Hermes crashes:
+
+```bash
+controller.py step --run run_123
+```
+
+returns **the same pending action**.
+
+It does not generate another query.
+
+That's real loop durability.
+
+---
+
+# 11. `submit` must also be idempotent
+
+Imagine Hermes executes Alibaba research and successfully gets results.
+
+Then:
+
+```text
+submit
+```
+
+times out after SQLite commits.
+
+Hermes assumes the submission failed and retries.
+
+Without idempotency:
+
+```text
+product A inserted twice
+supplier A counted twice
+query budget decremented twice
+```
+
+Bad.
+
+Instead:
+
+```text
+idempotency_key =
+hash(
+    run_id
+    + graph_node
+    + action_type
+    + semantic_input_hash
+)
+```
+
+`actions.idempotency_key` gets a:
+
+```sql
+UNIQUE
+```
+
+constraint.
+
+The second submission returns:
+
+```text
+ALREADY_APPLIED
+```
+
+provided its result hash matches.
+
+If the same action ID arrives with a different payload:
+
+```text
+IDEMPOTENCY_CONFLICT
+```
+
+and stop.
+
+---
+
+# 12. `events` is the audit timeline
+
+This should be append-only.
+
+```text
+event_id
+run_id
+sequence
+
+event_type
+actor
+
+subject_id
+action_id
+
+payload_json
+payload_hash
+
+created_at
+```
+
+Example history:
+
+```text
+001 RUN_CREATED
+002 POLYMATH_CONTEXT_REQUESTED
+003 POLYMATH_CONTEXT_RECEIVED
+004 HYPOTHESIS_PROPOSED
+005 HYPOTHESIS_RULE_REJECTED
+006 HYPOTHESIS_PROPOSED
+007 HYPOTHESIS_ADMITTED
+008 GAP_CREATED
+009 QUERY_COMPILED
+010 QUERY_EXECUTED
+011 COMMENT_ADMITTED
+012 COMMENT_DUPLICATE_REJECTED
+013 RESEARCH_SATISFACTION_UPDATED
+014 SOURCE_ESCALATED
+015 HYPOTHESIS_CONTRADICTED
+...
+```
+
+That gives you the morning-after answer to:
+
+> What exactly did Hermes do while I was gone?
+
+without reading a massive model transcript.
+
+The loop sources emphasize that loop memory should preserve progress and decisions outside the conversation; this is the structured version of that principle.
+
+---
+
+# 13. `checks` unifies verification and satisfaction
+
+This is a useful simplification.
+
+Don't make:
+
+```text
+verification table
+satisfaction table
+approval table
+```
+
+All are checks.
+
+```text
+check_id
+run_id
+
+subject_type
+subject_id
+
+check_type
+policy_version
+
+verification_level
+
+status
+
+metrics_json
+reason_codes_json
+
+input_hash
+
+created_at
+```
+
+Examples:
+
+```text
+check_type = HYPOTHESIS_ADMISSIBILITY
+check_type = COMMENT_SATISFACTION
+check_type = QUERY_SATURATION
+check_type = RESEARCH_SATISFACTION
+check_type = MECHANISM_SATISFACTION
+check_type = SUPPLIER_COMPLETENESS
+check_type = HUMAN_APPROVAL
+```
+
+And:
+
+```text
+verification_level:
+
+L1_DETERMINISTIC
+L2_POLICY
+L3_FIELD_EVIDENCE
+L4_MODEL_EVALUATOR
+L5_HUMAN
+```
+
+That maps cleanly onto the loop research's verification ladder rather than hiding all "confidence" in one score. The loop sources put verification—not generation—at the center of reliable autonomous loops. 
+
+---
+
+# 14. What SQLite should **not** store
+
+This is how it stays light.
+
+Do not put into SQLite:
+
+```text
+full Polymath documents
+Qdrant vectors
+Neo4j graph copies
+
+raw entire Reddit pages
+raw entire YouTube pages
+WARC captures
+
+screenshots
+Alibaba product images
+
+large browser traces
+Camoufox click logs
+
+entire Hermes conversations
+```
+
+Instead SQLite stores references:
+
+```yaml
+evidence_ref:
+  system: polymath
+  corpus_id: ...
+  doc_id: ...
+  chunk_id: ...
+  hash: ...
+
+web_ref:
+  url: ...
+  captured_at: ...
+  source_type: reddit
+  content_hash: ...
+
+product:
+  image_urls:
+    - ...
+```
+
+For useful comments, I *would* store the selected observation text itself because they're small:
+
+```text
+"wish this clip didn't pull my shirt down..."
+```
+
+plus:
+
+```text
+URL
+author hash
+thread ID
+timestamp
+source
+```
+
+You don't need the entire page.
+
+---
+
+# 15. Don't store images as BLOBs
+
+For Alibaba:
+
+```text
+product picture
+```
+
+should be represented as:
+
+```json
+{
+  "image_url": "...",
+  "local_path": null,
+  "content_hash": null
+}
+```
+
+If Hermes captures it locally:
+
+```text
+local_path =
+~/.hermes/state/opportunity-research/artifacts/...
+```
+
+SQLite stores the path and hash.
+
+Not the actual binary.
+
+---
+
+# 16. SQLite should not replace Hermes's browser history
+
+Likewise, don't record:
+
+```text
+clicked element 17
+scrolled 900px
+opened tab 3
+clicked next
+```
+
+unless you're debugging browser automation.
+
+That's Hermes/Camoufox execution telemetry.
+
+Our memory should remember semantic research progression:
+
+```text
+Query Q executed
+    ↓
+Reddit thread R inspected
+    ↓
+18 comments read
+    ↓
+4 qualifying observations admitted
+    ↓
+1 new workaround found
+```
+
+That is what changes the next loop turn.
+
+---
+
+# 17. Use one SQLite database, not one per run
+
+Do:
+
+```text
+opportunity.sqlite3
+```
+
+containing every run.
+
+Not:
+
+```text
+run1.sqlite
+run2.sqlite
+run3.sqlite
+```
+
+A shared database lets you eventually ask:
+
+```text
+Have we already researched this exact query?
+
+Has this product mechanism repeatedly appeared?
+
+Does this niche candidate recur across runs?
+
+Which queries consistently have zero yield?
+```
+
+But previous-run information should initially be **advisory**, not a hard reason to skip new research.
+
+Markets change.
+
+---
+
+# 18. Don't turn SQLite into another knowledge base
+
+This is important.
+
+Cross-run recurring information may produce:
+
+```text
+RegistryCandidate
+```
+
+but SQLite does not become the permanent knowledge authority.
+
+The lifecycle remains:
+
+```text
+SQLite work history
+       ↓
+recurring validated pattern
+       ↓
+RegistryCandidate
+       ↓
+review
+       ↓
+CSV/YAML registry
+```
+
+or:
+
+```text
+validated external knowledge
+       ↓
+Polymath
+```
+
+The Opportunity Driver source similarly separates the opportunity working representation from Polymath's role as the evidence system. 
+
+---
+
+# 19. Configure SQLite for exactly this workload
+
+Every connection should initialize:
+
+```sql
+PRAGMA foreign_keys = ON;
+PRAGMA journal_mode = WAL;
+PRAGMA synchronous = FULL;
+PRAGMA busy_timeout = 5000;
+```
+
+I would use `FULL`, not `NORMAL`, initially.
+
+Your write rate is tiny.
+
+I'd rather make the unattended workflow slightly more durable than save milliseconds.
+
+`WAL` means reads and writes interfere less.
+
+`busy_timeout` prevents a short-lived overlapping CLI command from immediately throwing "database locked."
+
+---
+
+# 20. Use short-lived connections
+
+Your CLI naturally supports this.
+
+```text
+controller init
+    open
+    transaction
+    close
+
+controller step
+    open
+    transaction
+    close
+
+controller submit
+    open
+    transaction
+    close
+
+controller status
+    open read-only
+    close
+```
+
+No daemon database pool.
+
+No background SQLite service.
+
+---
+
+# 21. One logical writer per run
+
+SQLite itself serializes writes, but two Hermes processes could still both try to advance one run logically.
+
+For v1, enforce:
+
+> **At most one PENDING action per run.**
+
+Use a partial unique index:
+
+```sql
+CREATE UNIQUE INDEX ...
+ON actions(run_id)
+WHERE status IN ('PENDING', 'RUNNING');
+```
+
+Then two controllers cannot independently tell Hermes two different things are "next."
+
+Later, if you deliberately implement parallel research branches, change this to:
+
+```text
+one pending action per branch
+```
+
+Don't start there.
+
+---
+
+# 22. Make `step` almost entirely deterministic
+
+This is the core behavior Fable should implement.
+
+Conceptually:
+
+```text
+STEP(run)
+
+1. Load run.
+2. Verify graph/policy/loop hashes.
+3. If terminal → return terminal.
+4. If pending action exists → return same action.
+5. Recompute relevant satisfaction checks.
+6. Evaluate no-progress condition.
+7. Evaluate budget condition.
+8. Determine current graph node.
+9. Evaluate legal outgoing transitions.
+10. Choose deterministic transition.
+11. If local Python node:
+       execute
+       persist
+       repeat from #5.
+12. If external action required:
+       persist PENDING action
+       return it.
+13. If terminal condition reached:
+       persist terminal receipt
+       return terminal.
+```
+
+No semantic LLM decisions in `step`.
+
+---
+
+# 23. `submit` should be equally strict
+
+```text
+SUBMIT(run, action, result)
+
+1. Is this action actually pending?
+2. Does action belong to this run?
+3. Is result schema correct?
+4. Does result hash match an already-submitted result?
+5. If duplicate exact result:
+       return existing receipt.
+6. If duplicate conflicting result:
+       reject.
+7. Run deterministic verifier.
+8. Store admitted/rejected Work Graph deltas.
+9. Store verification receipts.
+10. Update budgets.
+11. Append event(s).
+12. Increment run revision.
+13. Mark action terminal.
+14. Commit everything atomically.
+```
+
+If anything fails before commit:
+
+```text
+nothing changes
+```
+
+That's the advantage SQLite gives you over mutable JSON state.
+
+---
+
+# 24. Do not silently resume against changed control files
+
+This is a small but critical detail.
+
+At `init`, hash:
+
+```text
+control_graph.yaml
+loop.yaml
+policies.yaml
+relevant schemas
+registry build
+prompts
+```
+
+Store those hashes on the run.
+
+Later:
+
+```text
+controller step
+```
+
+checks them.
+
+If `control_graph.yaml` changed while Hermes was halfway through a run:
+
+```text
+CONFIG_DRIFT
+```
+
+Do **not** silently run an old Work Graph through new control rules.
+
+Return:
+
+```text
+BLOCKED_CONFIG_DRIFT
+```
+
+You can later build explicit migration.
+
+For v1, blocking is safer.
+
+---
+
+# 25. The same applies to prompts/models
+
+For θ hypothesis generation, save:
+
+```text
+model ID
+prompt hash
+input hash
+output hash
+```
+
+Not the complete prompt forever if you don't want to.
+
+But enough to know:
+
+> Hypothesis H was generated by model M using prompt version P against evidence state E.
+
+This helps when Fable later changes the hypothesis prompt and suddenly output quality changes.
+
+---
+
+# 26. Treat every research cycle as causally frozen
+
+The closed-loop quality source has one especially transferable design principle: feedback from one cycle is propagated into the **next** cycle rather than retroactively changing the state used to produce the current result, preserving temporal causality. 
+
+Apply that here.
+
+```text
+Cycle 3:
+Evidence state E3
+→ hypotheses
+→ research
+→ new observations
+
+New observations DO NOT rewrite E3.
+
+They produce:
+
+Cycle 4:
+Evidence state E4
+```
+
+So don't mutate old checks.
+
+Append:
+
+```text
+ResearchSatisfaction cycle=3
+ResearchSatisfaction cycle=4
+```
+
+This makes debugging much easier.
+
+---
+
+# 27. Satisfaction should never be one mutable number
+
+Do not store:
+
+```text
+research_score = 0.84
+```
+
+Store the receipt:
+
+```json
+{
+  "qualifying_comments": 17,
+  "independent_authors": 12,
+  "independent_threads": 6,
+  "independent_platforms": 3,
+  "complaints": 7,
+  "workarounds": 4,
+  "purchase_language": 2,
+  "counterexamples": 3,
+  "saturation": 0.91,
+  "status": "SATISFIED"
+}
+```
+
+Then later when you change the policy from:
+
+```text
+minimum independent threads = 4
+```
+
+to:
+
+```text
+minimum independent threads = 6
+```
+
+you can recompute against the original metrics.
+
+---
+
+# 28. Progress must also be based on meaningful deltas
+
+Don't define progress as:
+
+```text
+Hermes made another tool call.
+```
+
+Progress means something in the Work Graph changed.
+
+For example:
+
+```text
+open gaps decreased
+
+or
+
+supported edges increased
+
+or
+
+contradicted paths increased
+
+or
+
+independent source groups increased
+
+or
+
+new signal class appeared
+
+or
+
+mechanism alternatives narrowed
+
+or
+
+supplier completeness increased
+```
+
+Build a deterministic canonical representation:
+
+```text
+supported_edge_ids
+contradicted_edge_ids
+open_gap_ids
+evidence_class_counts
+source_group_counts
+active_mechanism_ids
+supplier_completeness
+```
+
+hash it:
+
+```text
+progress_signature
+```
+
+Same meaningful signature twice:
+
+```text
+no_progress_cycles += 1
+```
+
+Two or three consecutive no-progress cycles:
+
+```text
+STALLED
+```
+
+The loop-engineering source explicitly places both a budget ceiling and a no-progress detector around the loop. 
+
+---
+
+# 29. Query memory needs a little care
+
+Normalize queries before comparing them.
+
+For example:
+
+```text
+"wireless handheld microphone creator complaints"
+
+"creator complaints wireless handheld microphone"
+```
+
+should probably be considered equivalent enough for repetition tracking.
+
+But don't overdo fuzzy matching initially.
+
+Use:
+
+```text
+exact canonical query hash
++
+query_family
++
+site
++
+gap_id
+```
+
+Store:
+
+```text
+yield:
+  results_seen
+  qualifying_observations
+  new_signal_classes
+  duplicates
+```
+
+Then:
+
+```text
+same query + same source + same gap
+```
+
+never gets executed twice accidentally.
+
+A reformulated query gets a new action but points back to:
+
+```text
+parent_query_id
+```
+
+---
+
+# 30. Website traversal memory should be semantic, not click-level
+
+For each site research action, remember:
+
+```text
+site
+query
+entry URL
+page/thread/product IDs visited
+depth reached
+results inspected
+qualifying observations
+stop reason
+```
+
+Stop reasons should be typed:
+
+```text
+SATISFIED
+SATURATED
+PAGE_LIMIT
+DEPTH_LIMIT
+LOW_YIELD
+SOURCE_EXHAUSTED
+BLOCKED
+CAPABILITY_FAILURE
+```
+
+This makes website research deterministic at the **research-control level** without trying to micromanage Camoufox.
+
+---
+
+# 31. Comment identity and dedup need stable IDs
+
+Comments can recur in:
+
+```text
+search results
+same thread loaded twice
+quotes/reposts
+multiple browser paths
+```
+
+A comment node should include:
+
+```text
+platform
+thread_id
+comment_id where available
+author identifier/hash
+normalized text
+timestamp if available
+URL
+```
+
+Stable identity:
+
+```text
+platform_comment_id
+```
+
+when available.
+
+Fallback:
+
+```text
+sha256(
+    platform
+    + thread_id
+    + normalized_author
+    + normalized_text
+)
+```
+
+Then you can count:
+
+```text
+raw comments = 90
+
+unique comments = 61
+
+independent authors = 37
+
+qualifying observations = 18
+```
+
+rather than letting duplicates inflate evidence.
+
+---
+
+# 32. Do not count comments as independent market facts
+
+This remains an important original rule.
+
+Comments contribute:
+
+```text
+consumer language
+observed complaint
+workaround
+behavior
+comparison
+purchase-seeking language
+```
+
+They don't independently establish:
+
+```text
+"There is a $50M market."
+```
+
+Your older reasoning architecture explicitly classified comments as volatile evidence rather than standalone proof of a niche or opportunity. 
+
+---
+
+# 33. Alibaba products need the same dedup discipline
+
+Stable product identity is tricky because listings can be duplicated.
+
+Start with:
+
+```text
+marketplace
+listing_id
+supplier_id
+normalized_title
+```
+
+Separate:
+
+```text
+ProductCandidate
+```
+
+from:
+
+```text
+SupplierOffer
+```
+
+because five suppliers may sell effectively the same product.
+
+Conceptually:
+
+```text
+ProductMechanism
+      ↓
+ProductCandidate
+      ↓
+SupplierOffer A
+SupplierOffer B
+SupplierOffer C
+```
+
+This will prevent the system from reporting:
+
+> 15 product options
+
+when it's actually one white-label product from 15 factories.
+
+---
+
+# 34. Don't put final scoring inside θ
+
+TrailSignal's existing architecture is very explicit that an LLM must never compute or write the opportunity score and that derived records need lineage.
+
+That remains a useful rule even though this is now a Hermes skill.
+
+θ can produce:
+
+```text
+semantic interpretation
+hypothesis
+mechanism
+counter-hypothesis
+```
+
+Python can calculate:
+
+```text
+coverage
+independence
+MOQ feasibility
+price thresholds
+evidence completeness
+policy gates
+```
+
+If you later create a weighted opportunity score, make it deterministic.
+
+---
+
+# 35. Human approval should itself be a persisted action
+
+Don't special-case it in chat.
+
+Controller returns:
+
+```json
+{
+  "action_type": "HUMAN_APPROVAL",
+  "subject": "registry_candidate_123",
+  "requested_disposition": "PROMOTE_NICHE"
+}
+```
+
+Then you—or Hermes via an explicit approval interface—submit:
+
+```json
+{
+  "decision": "APPROVE",
+  "note": "Distinct community and recurring activities confirmed."
+}
+```
+
+SQLite stores an L5 check.
+
+Now approval is part of the reproducible loop rather than something the model vaguely remembers you said.
+
+---
+
+# 36. Keep the registry outside SQLite authority
+
+Runtime candidate:
+
+```text
+SQLite
+RegistryCandidate
+```
+
+Approved registry:
+
+```text
+CSV/YAML in Git
+```
+
+Then the next run pins:
+
+```text
+registry_hash
+```
+
+The runtime DB can remember that candidate 123 was approved, but the **active reasoning registry changes only after the source CSV/YAML changes**.
+
+---
+
+# 37. Existing `candidates/run1.json` should stop being canonical
+
+Don't maintain two writable state systems.
+
+I would migrate from:
+
+```text
+candidates/run1.json
+```
+
+to:
+
+```text
+SQLite = canonical
+```
+
+But preserve JSON export:
+
+```bash
+controller.py status \
+  --run run_123 \
+  --format json
+```
+
+or:
+
+```text
+exports/run_123.json
+```
+
+for human inspection.
+
+Rule:
+
+```text
+SQLite → JSON export
+
+never:
+
+SQLite ↔ JSON two-way mutation
+```
+
+One source of workflow truth.
+
+---
+
+# 38. Backups can remain tiny
+
+Before applying a schema migration:
+
+```python
+sqlite3.Connection.backup(...)
+```
+
+to:
+
+```text
+backups/pre-migration-20260809.sqlite3
+```
+
+Optionally create another backup when a run reaches a terminal state.
+
+Don't build an elaborate backup service.
+
+SQLite's built-in backup API is enough.
+
+---
+
+# 39. Add schema migrations from the beginning
+
+Even if there is only one migration now:
+
+```text
+sql/
+└── 001_initial.sql
+```
+
+`schema_meta`:
+
+```text
+schema_version = 1
+```
+
+Later:
+
+```text
+002_add_registry_candidates.sql
+003_add_cross_run_metrics.sql
+```
+
+Don't have `memory.py` silently issue:
+
+```sql
+ALTER TABLE ...
+```
+
+when fields are missing.
+
+Version it.
+
+---
+
+# 40. No SQL business logic
+
+Another rule for Fable:
+
+**No SQLite triggers implementing workflow semantics.**
+
+Don't hide:
+
+```text
+if comment count >= 12
+then mark satisfied
+```
+
+inside SQL.
+
+The database should enforce:
+
+```text
+types
+uniqueness
+foreign keys
+atomicity
+```
+
+Python owns:
+
+```text
+meaning
+policy
+state transitions
+satisfaction
+```
+
+Otherwise your actual control plane becomes impossible to inspect.
+
+---
+
+# 41. `controller.py` must remain the single transition authority
+
+Even `executors.py` cannot independently advance state.
+
+Correct:
+
+```text
+controller
+    ↓
+executor
+    ↓
+result
+    ↓
+controller validates
+    ↓
+memory transaction
+```
+
+Incorrect:
+
+```text
+executor
+    ↓
+updates SQLite current_node directly
+```
+
+Only `controller.py` calls the transition operation.
+
+`memory.py` performs the persistence transaction but doesn't decide the next state.
+
+---
+
+# 42. A failed executor is not a failed hypothesis
+
+This subtlety needs explicit error classes.
+
+Example:
+
+```text
+Reddit search failed
+```
+
+does **not** mean:
+
+```text
+hypothesis rejected
+```
+
+It means:
+
+```text
+ACTION_FAILED
+```
+
+and possibly:
+
+```text
+SOURCE_CAPABILITY_FAILURE
+```
+
+The hypothesis remains:
+
+```text
+UNPROVEN
+```
+
+Likewise:
+
+```text
+no Alibaba result
+```
+
+could mean:
+
+```text
+supplier search query poor
+source blocked
+product doesn't exist
+```
+
+Those aren't interchangeable.
+
+Keep failure classes separate from semantic verdicts.
+
+---
+
+# 43. Absence of evidence should remain `UNPROVEN`
+
+Don't let:
+
+```text
+zero Reddit comments found
+```
+
+become:
+
+```text
+DISPROVEN
+```
+
+You already had this invariant in the broader reasoning design.
+
+Use:
+
+```text
+SUPPORTED
+CONTRADICTED
+UNPROVEN
+```
+
+Contradiction requires actual counter-evidence.
+
+---
+
+# 44. Separate terminal state from product verdict
+
+Run terminal:
+
+```text
+SUCCESS
+NO_DEFENSIBLE_BRIDGE
+REJECTED
+BLOCKED
+STALLED
+EXHAUSTED
+NEEDS_APPROVAL
+```
+
+Product verdict:
+
+```text
+QUALIFIED
+PROVISIONAL
+WEAK
+REJECTED
+```
+
+A run can successfully terminate with:
+
+```text
+SUCCESS
+```
+
+because it correctly determined:
+
+```text
+product hypothesis rejected
+```
+
+"Success" means:
+
+> The loop accomplished its verifiable research goal.
+
+Not:
+
+> We found something to sell.
+
+That is an important loop-engineering distinction.
+
+---
+
+# 45. The morning-after report should be generated from SQLite
+
+When you return, Hermes should be able to show:
+
+```text
+RUN
+run_123
+
+TERMINAL
+SUCCESS
+
+CYCLES
+5 / 8
+
+POLYMATH
+17 evidence refs used
+
+HYPOTHESES
+6 proposed
+2 structurally rejected
+2 semantically rejected
+2 externally researched
+
+RESEARCH
+14 queries
+3 source families
+63 unique comments
+19 qualifying observations
+4 contradictions
+
+MECHANISMS
+3 considered
+1 survived
+
+SUPPLIER SEARCH
+8 listings
+4 unique suppliers
+2 product-family duplicates
+
+RESULT
+1 provisional product lead
+
+UNRESOLVED
+purchase-intent evidence remains moderate
+```
+
+Everything in that report should be reproducible from SQLite.
+
+No model memory required.
+
+---
+
+# 46. The most important new tests for Fable
+
+The 16 tests are a good start. I would make sure the eventual suite contains these failure modes:
+
+| Test                                            | Required behavior              |
+| ----------------------------------------------- | ------------------------------ |
+| Hermes crashes after `step`                     | Same pending action returned   |
+| Hermes retries identical `submit`               | No duplicate mutation          |
+| Hermes submits different result for same action | Hard conflict                  |
+| `control_graph.yaml` changes mid-run            | Block config drift             |
+| SQLite locked for 100 ms                        | Wait/retry, don't corrupt      |
+| Invalid Work edge                               | Reject                         |
+| Hypothesis exceeds inference-hop budget         | Reject/revise                  |
+| `first_inference_at` isn't an edge              | Reject                         |
+| Same comment found twice                        | Count once                     |
+| 100 comments from one thread                    | Independence gate fails        |
+| Research adds no meaningful state twice         | `STALLED`                      |
+| Query budget exhausted                          | `EXHAUSTED`, never success     |
+| Website unavailable                             | `BLOCKED` or escalate          |
+| No research result                              | `UNPROVEN`, not disproven      |
+| Strong counter-evidence                         | Hypothesis contradicted        |
+| Alibaba listing lacks MOQ                       | Supplier satisfaction fails    |
+| Same physical product from five suppliers       | One candidate, five offers     |
+| Human promotion required                        | `NEEDS_APPROVAL`               |
+| Hermes memory erased mid-run                    | Run resumes correctly          |
+| Process killed during SQLite transaction        | No partial state               |
+| Old terminal run `step` called                  | Same immutable terminal result |
+
+Those are the tests that make "I walked away" credible.
+
+---
+
+# 47. One optional command I would add
+
+Fable currently has:
+
+```text
+init
+status
+submit
+step
+```
+
+Those are enough for runtime.
+
+I would add:
+
+```text
+doctor
+```
+
+because this will save significant debugging.
+
+```bash
+controller.py doctor
+```
+
+checks:
+
+```text
+SQLite opens
+PRAGMA quick_check passes
+schema version supported
+
+control graph valid
+loop spec valid
+policies valid
+
+schemas load
+hashes calculate
+
+registry available if enabled
+
+Hermes paths available
+Polymath MCP capability declared
+```
+
+It doesn't run research.
+
+It tells you whether the skill is internally healthy.
+
+---
+
+# 48. One thing I would *not* add yet: autonomous cross-run learning
+
+SQLite makes this tempting:
+
+> Let the system automatically change its own policies based on prior runs.
+
+Don't.
+
+Initially, use past runs for:
+
+```text
+analytics
+candidate discovery
+query hints
+registry candidate proposals
+```
+
+but not:
+
+```text
+automatic threshold modification
+automatic traversal-rule modification
+automatic prompt replacement
+```
+
+That's where unattended loops can become self-corrupting.
+
+The loop literature emphasizes that autonomy increases the importance of sharp evaluators and retained human checkpoints, not the opposite. 
+
+---
+
+# 49. Later, you can add Experience Memory without changing this architecture
+
+Once you have enough runs, SQLite can surface things like:
+
+```text
+Query template X:
+high yield on Reddit
+
+Query template Y:
+consistently useless
+
+Lens Mobility:
+frequently useful for creator tools
+
+Reasoning motif:
+hands occupied → hands-free
+validated across 7 independent domains
+
+Alibaba query formulation:
+better supplier recall
+```
+
+Those become **candidates for reusable skill/registry knowledge**.
+
+But they promote outward:
+
+```text
+SQLite history
+    ↓
+candidate
+    ↓
+review/evaluation
+    ↓
+Git registry / skill update
+```
+
+They don't silently alter the current loop.
+
+That is how the system compounds without drifting.
+
+---
+
+# What I would hand Fable as the persistence lock
+
+> **Add SQLite as local workflow memory, not agent memory and not knowledge memory. Place the database outside the skill installation directory. `memory.py` is the sole SQLite adapter. `controller.py` remains the sole transition authority. The Control Graph, Loop Specification, policies, schemas and registry remain Git/YAML/CSV artifacts and are hash-pinned into each run. SQLite stores runs, temporary Work Graph nodes and edges, external actions, append-only events, and verification/satisfaction receipts. Persist every external action before giving it to Hermes; make submission idempotent; make transition writes atomic; never infer semantic truth from infrastructure failure; never treat lack of evidence as contradiction; never resume against changed graph/policy hashes; never store large source documents/images/browser telemetry; and make every terminal state, research decision and product lead reconstructable without Hermes conversational memory.**
+
+And the final memory architecture becomes:
+
+```text
+                    HERMES MEMORY
+                general agent knowledge
+                         │
+                         │ contextual help
+                         ▼
+                    HERMES AGENT
+                         │
+       ┌─────────────────┼────────────────┐
+       │                 │                │
+       ▼                 ▼                ▼
+   POLYMATH          SQLITE           GIT REGISTRY
+ long-term facts    current work     reusable priors
+ evidence memory    loop memory      reasoning memory
+       │                 │                │
+       └─────────────────┼────────────────┘
+                         ▼
+                 OPPORTUNITY SKILL
+                         │
+                         ▼
+                    CONTROL GRAPH
+                         │
+                         ▼
+                      LOOPS
+```
+
+**SQLite is therefore not a fifth intelligence system. It is just the small durable notebook φ needs so Hermes can forget the conversation, crash, restart, or run unattended without forgetting where the investigation actually stands.**

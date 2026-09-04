@@ -20,6 +20,8 @@ Read order: this file → `CLAUDE.md` → the two newest work-logs.
 
 ## Latest checkpoint (2026-09-03 late — LLM-DIRECT CANON)
 
+**RESEARCH-PACKAGE-V1 (2026-09-03 latest, register 11.71).** TRAIL OS is now `research/` in this repo (run its harness with `python3 research/tests/run_all.py`; doctor `python3 research/python/controller.py doctor`). Hermes skill dir symlinks here. Polymath ↔ research stay import-free; contracts are the seam.
+
 **CHAT-EVIDENCE-ROWS-V1 (2026-09-03 latest, register 11.70).** `/chat` `evidence: true` = full answer path + contract rows in one call; TRAIL's corpus lane uses it by default (`--via chat`); corpus display names via GET/PATCH /corpora. Extraction untouched (typed claims reverted).
 
 **FIELD-EVIDENCE-CORPUS-V1 + TYPED-CLAIMS-V1 (2026-09-03 latest, register 11.68–11.69).** `scripts/ingest_field_evidence.py` (TRAIL observations → `field-evidence-v1` thread docs); TYPED-CLAIMS-V1 was built and then REVERTED the same night on the owner's call (the RAG's extraction is never changed for a consumer; consumers ASK the RAG via /chat). Bundle lock `v5-production-006-extraction-restored`. The field-evidence corpus stands. Work-log `2026-09-03-typed-claims-field-evidence.md`.

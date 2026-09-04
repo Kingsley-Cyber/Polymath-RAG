@@ -1,0 +1,3 @@
+{"signal": "A corpus about medieval monastery brewing schedules and barrel cooperage economics.",
+ "expected_verdict": "NO_DEFENSIBLE_BRIDGE",
+ "note": "negative control — the skill must abstain, not force a product"}

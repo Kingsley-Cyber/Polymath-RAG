@@ -1,0 +1,34 @@
+{
+ "title": "evaluation",
+ "required": [
+  "id",
+  "hypothesis_id",
+  "verdict",
+  "reasons"
+ ],
+ "properties": {
+  "verdict": {
+   "enum": [
+    "PASS",
+    "REVISE",
+    "REJECT"
+   ],
+   "type": "string"
+  },
+  "missing_intermediates": {
+   "type": "array"
+  },
+  "decisive_falsifier": {
+   "type": "string"
+  },
+  "hypothesis_id": {
+   "type": "string"
+  },
+  "reasons": {
+   "type": "array"
+  },
+  "id": {
+   "type": "string"
+  }
+ }
+}

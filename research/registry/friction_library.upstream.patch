@@ -1,0 +1,16 @@
+--- /Users/king/trail-signal-os/data/friction_library.csv	2026-07-20 19:27:14
++++ friction_library.csv	2026-08-10 00:39:21
+@@ -29,3 +29,13 @@
+ fr-28,multi_person_coordination,"One organizer manages several people, routines, or dependencies.","time, errors, drops, contamination, discomfort, trips, or abandonment",DIY; modified; cut; taped; tied; repurposed; carried separately
+ fr-29,low_dexterity,Grip strength or joint mobility makes standard controls difficult.,"time, errors, drops, contamination, discomfort, trips, or abandonment",DIY; modified; cut; taped; tied; repurposed; carried separately
+ fr-30,rest_access,A participant needs frequent stable rest where fixed seating is absent.,"time, errors, drops, contamination, discomfort, trips, or abandonment",DIY; modified; cut; taped; tied; repurposed; carried separately
++fr-31,animal_support,"Managing gear, restraint, or care for an animal companion while performing the activity.","leash tangles, spills, dropped items, interrupted control",DIY; modified; cut; taped; tied; repurposed; carried separately
++fr-32,cleanup,"Post-activity cleaning of gear, surfaces, or site before transport or storage.","time, residue, contamination spread, skipped cleaning",DIY; modified; cut; taped; tied; repurposed; carried separately
++fr-33,field_workstation,"No stable work surface in the field; tasks performed on ground, lap, or improvised supports.","drops, spills, posture strain, task abandonment",DIY; modified; cut; taped; tied; repurposed; carried separately
++fr-34,gear_staging,Arranging gear in usable order before or during an activity phase.,"search time, missed items, re-packing, sequence errors",DIY; modified; cut; taped; tied; repurposed; carried separately
++fr-35,hot_tool_staging,Safe temporary placement of hot or hazardous tools mid-task.,"burns, melted surfaces, unsafe placement, cooling waits",DIY; modified; cut; taped; tied; repurposed; carried separately
++fr-36,loading_access,"Moving gear in and out of vehicles, packs, or storage at transition points.","trips, strain, repeated loads, forgotten items",DIY; modified; cut; taped; tied; repurposed; carried separately
++fr-37,seasonal_storage,Storing activity gear across long seasonal gaps without degradation or loss.,"corrosion, lost parts, degraded consumables, space conflicts",DIY; modified; cut; taped; tied; repurposed; carried separately
++fr-38,stationary_exposure,"Prolonged fixed-position exposure to cold, heat, wind, or wet while the activity requires stillness.","shivering, breaks, early quit, numb extremities",DIY; modified; cut; taped; tied; repurposed; carried separately
++fr-39,tool_access,Reaching the correct tool mid-task without stopping or losing working position.,"time, drops, position loss, task interruption",DIY; modified; cut; taped; tied; repurposed; carried separately
++fr-40,tool_transport,"Carrying tool sets between home, vehicle, and worksite repeatedly.","weight, disorganization, damage, multiple trips",DIY; modified; cut; taped; tied; repurposed; carried separately

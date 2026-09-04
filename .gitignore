@@ -36,3 +36,9 @@ resources/vendor/
 
 # graphify (generated; rebuild with `graphify update .` in ~12s)
 graphify-out/
+# research/ package (TRAIL OS): review artifacts and local ledgers stay out of git
+research/registry/compiled/
+research/registry/patches/
+research/registry/research_evidence.csv
+research/**/*.sqlite3
+research/candidates/

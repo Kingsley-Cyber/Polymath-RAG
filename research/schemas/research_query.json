@@ -1,0 +1,24 @@
+{
+ "title": "research_query",
+ "required": [
+  "id",
+  "gap_id",
+  "query",
+  "channel"
+ ],
+ "properties": {
+  "channel": {
+   "enum": [
+    "reddit",
+    "youtube",
+    "forum",
+    "reviews",
+    "web",
+    "x"
+   ]
+  },
+  "id": {
+   "type": "string"
+  }
+ }
+}

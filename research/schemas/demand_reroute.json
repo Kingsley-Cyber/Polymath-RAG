@@ -1,0 +1,20 @@
+{
+  "$id": "demand_reroute",
+  "title": "DemandReroute — existing demand captured through a new route (docs/17 §13)",
+  "type": "object",
+  "required": ["id", "existing_demand", "reroute_dimension", "target_scope"],
+  "properties": {
+    "id": {"type": "string"},
+    "existing_demand": {"type": "string"},
+    "incumbent_solution": {"type": "string"},
+    "current_positioning": {"type": "string"},
+    "reroute_dimension": {"enum": ["SEGMENT", "IDENTITY", "CHANNEL", "FORMAT",
+                                   "AESTHETIC", "OCCASION", "VALUE", "BUNDLE",
+                                   "EXPERIENCE"]},
+    "target_scope": {"type": "string"},
+    "new_positioning": {"type": "string"},
+    "why_existing_demand_transfers": {"type": "string"},
+    "evidence_refs": {"type": "array"},
+    "state": {"enum": ["PROPOSED", "SUPPORTED", "CONTRADICTED"]}
+  }
+}

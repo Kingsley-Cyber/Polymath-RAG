@@ -1,0 +1,33 @@
+At this point, I would **stop adding major architecture**. You have enough. The remaining work should be about proving that the system behaves correctly end-to-end rather than inventing another layer.
+
+The strongest next move is to tell Fable: **freeze the architecture as v1 and enter qualification.**
+
+### What I would still require before calling it production-ready
+
+1. **Strict configuration validation.** Every graph, loop, policy, settings file, registry YAML/CSV, prompt contract, and schema should fail closed on duplicate YAML keys, unknown node types, invalid references, impossible transitions, missing ContextContracts, unsupported settings, conflicting settings, unknown EvidenceRoles, and schema drift. The implementation transcript you showed had places that looked like duplicate YAML declarations, so a duplicate-key parser/linter is worth making a hard test. 
+
+2. **One adversarial E2E canary for every mode.** Do not test only happy paths. Run `OPPORTUNITY_RESEARCH`, `NICHE_LOADOUT`, `MARKET_DISCOVERY`, and `PRODUCT_ANCHORED_DISCOVERY` with deliberately planted traps. For example: supplier evidence masquerading as demand, one viral thread masquerading as independent consensus, six variants of one product, a trend absent from Polymath but present externally, a product whose user's original positioning is wrong, failed search being mistaken for contradiction, stale current-market evidence, and a generic niche collection that should fail Insider Fidelity.
+
+3. **Cross-mode handoff tests.** This is now important because the modes are composable. Test `MARKET_DISCOVERY → NICHE_LOADOUT`, `MARKET_DISCOVERY → OPPORTUNITY_RESEARCH`, `PRODUCT_ANCHORED → NICHE_LOADOUT`, and `PRODUCT_ANCHORED → OPPORTUNITY_RESEARCH`. Verify that the child receives only a frozen `HandoffPacket`, not the parent's entire context, and that evidence authority survives intact.
+
+4. **Capability failure tests.** Google Trends unavailable? Continue. Alibaba blocked? Return sourcing incomplete, not fake success. A community site can't be scraped? Record `CAPABILITY_FAILURE`/coverage deficit. Polymath temporarily unavailable? Either block only a genuinely required step or continue where the graph permits. No optional external capability should accidentally become a hidden workflow dependency.
+
+5. **Settings qualification.** The settings concept now needs to become an actual schema, not only YAML conventions. Every setting should declare `USER_SAFE | ADVANCED_SAFE | SYSTEM_LOCKED`, allowed values, default, whether it is mutable mid-run, what it affects, and what it explicitly cannot affect. Resolve preset + user overrides once and snapshot the resolved settings/hash into SQLite. Test that a user can make research stricter or broader but cannot weaken evidence laws.
+
+6. **Replay/recovery qualification.** Delete chat history. Delete `working_context.md`. Restart Hermes. Change nothing else. `controller.py step --run X` should recover the same pending action and frozen ContextEnvelope. Then intentionally crash after `PENDING`, after browser execution but before submit, and during submit. No duplicated research or corrupted state.
+
+7. **Claim-authority regression suite.** Create permanent tests for your constitutional rules: `Alibaba ≠ demand`, `Google Trends ≠ sales`, `comments ≠ prevalence`, `corpus ≠ current market proof`, `simulation ≠ evidence`, `seller/user claim ≠ verified fact`, `NO_EVIDENCE_FOUND ≠ contradiction`, and `report/creative recommendation ≠ evidence`. These tests are more important than another scoring formula.
+
+8. **Operational controls.** Add explicit cancel/abandon, pause/resume, budget exhausted, blocked capability, stalled, and partial-report behavior. A user should never need to kill a process because a research loop is behaving badly. Every loop already has budgets; make sure the controller has human-operable lifecycle controls around them.
+
+After those pass, the remaining work is optimization rather than architecture. Let SQLite accumulate telemetry for query yield by source/EvidenceRole, research cost, comment independence yield, Trends usefulness, frontier pruning, formula sensitivity, product-set marginal contribution, and which branches ultimately survive. That data can later improve expected-yield priors, but **do not self-tune active policies yet**.
+
+I would also require Fable to generate one final **Architecture Qualification Report** after the canaries. It should state each mode's graph path, loops exercised, actions generated, context recovery result, evidence-role coverage, optional capability failures, terminal state, report generated, registry candidates emitted, cross-mode handoffs, and any invariant violations. If the report says zero invariant violations across adversarial fixtures, that is a meaningful stopping condition.
+
+There are also three things I would deliberately **not** do now: do not add more CSVs, do not add another database/graph system, and do not invent more formulas until real runs expose a missing decision function. Your runtime semantic objects belong in SQLite; registry growth should remain evidence-driven through maintenance.
+
+So the phase transition I would give Fable is:
+
+> **Architecture freeze → config qualification → adversarial semantic canaries → crash/replay tests → cross-mode handoff tests → capability-degradation tests → first real research runs → telemetry-driven fixes only.**
+
+If those pass, I would consider the skill architecture complete enough to start using it seriously. The highest risk now is no longer “we forgot a clever concept”; it is **a beautiful architecture producing subtly wrong real-world research because a boundary, transition, or evidence rule was not exercised under hostile conditions.**

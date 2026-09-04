@@ -1,0 +1,2572 @@
+{
+ "run_id": "run_derive_002",
+ "created_at": "2026-08-10T07:24:18+00:00",
+ "node": "stop",
+ "status": "stopped",
+ "rounds": {
+  "research": 3
+ },
+ "history": [
+  {
+   "node": "understand",
+   "event": "submit",
+   "keys": [
+    "signal"
+   ],
+   "at": "2026-08-10T07:24:18+00:00"
+  },
+  {
+   "node": "understand",
+   "event": "advance",
+   "to": "polymath",
+   "note": null,
+   "at": "2026-08-10T07:24:18+00:00"
+  },
+  {
+   "node": "polymath",
+   "event": "submit",
+   "keys": [
+    "polymath_evidence"
+   ],
+   "at": "2026-08-10T07:24:18+00:00"
+  },
+  {
+   "node": "polymath",
+   "event": "advance",
+   "to": "primitives",
+   "note": null,
+   "at": "2026-08-10T07:24:19+00:00"
+  },
+  {
+   "node": "primitives",
+   "event": "submit",
+   "keys": [
+    "primitives"
+   ],
+   "at": "2026-08-10T07:24:19+00:00"
+  },
+  {
+   "node": "primitives",
+   "event": "advance",
+   "to": "signal_gate",
+   "note": null,
+   "at": "2026-08-10T07:24:19+00:00"
+  },
+  {
+   "node": "signal_gate",
+   "event": "advance",
+   "to": "lenses",
+   "note": "generative signal present: 2 physical jobs, 2 invariants",
+   "at": "2026-08-10T07:24:19+00:00"
+  },
+  {
+   "node": "lenses",
+   "event": "advance",
+   "to": "structural_lookup",
+   "note": "selected 4 lenses: performance, mobility, embodiment, minimal-interference",
+   "at": "2026-08-10T07:24:19+00:00"
+  },
+  {
+   "node": "structural_lookup",
+   "event": "advance",
+   "to": "hypothesize",
+   "note": "8 cross-domain structural analogies attached (invariant-bounded)",
+   "at": "2026-08-10T07:24:19+00:00"
+  },
+  {
+   "node": "hypothesize",
+   "event": "submit",
+   "keys": [
+    "hypotheses"
+   ],
+   "at": "2026-08-10T07:25:02+00:00"
+  },
+  {
+   "node": "hypothesize",
+   "event": "advance",
+   "to": "challenge",
+   "note": null,
+   "at": "2026-08-10T07:25:02+00:00"
+  },
+  {
+   "node": "challenge",
+   "event": "submit",
+   "keys": [
+    "challenges"
+   ],
+   "at": "2026-08-10T07:25:02+00:00"
+  },
+  {
+   "node": "challenge",
+   "event": "advance",
+   "to": "triage",
+   "note": null,
+   "at": "2026-08-10T07:25:02+00:00"
+  },
+  {
+   "node": "triage",
+   "event": "advance",
+   "to": "gaps",
+   "note": "triage: 3 research-ready, 1 held (priority is a prior, not evidence)",
+   "at": "2026-08-10T07:25:02+00:00"
+  },
+  {
+   "node": "gaps",
+   "event": "advance",
+   "to": "web_research",
+   "note": "compiled 7 new gaps, 21 queries (7 open)",
+   "at": "2026-08-10T07:25:02+00:00"
+  },
+  {
+   "node": "web_research",
+   "event": "submit",
+   "keys": [
+    "observations"
+   ],
+   "at": "2026-08-10T07:26:58+00:00"
+  },
+  {
+   "node": "web_research",
+   "event": "advance",
+   "to": "curate",
+   "note": null,
+   "at": "2026-08-10T07:26:58+00:00"
+  },
+  {
+   "node": "curate",
+   "event": "advance",
+   "to": "challenge",
+   "note": "curated 13 unique observations; gaps supported+3 contradicted+0; round 1; coverage missing: ['mechanism']",
+   "at": "2026-08-10T07:27:21+00:00"
+  },
+  {
+   "node": "challenge",
+   "event": "submit",
+   "keys": [
+    "challenges",
+    "hypotheses"
+   ],
+   "at": "2026-08-10T07:27:21+00:00"
+  },
+  {
+   "node": "challenge",
+   "event": "advance",
+   "to": "triage",
+   "note": null,
+   "at": "2026-08-10T07:27:21+00:00"
+  },
+  {
+   "node": "triage",
+   "event": "advance",
+   "to": "gaps",
+   "note": "triage: 0 research-ready, 0 held (priority is a prior, not evidence)",
+   "at": "2026-08-10T07:27:21+00:00"
+  },
+  {
+   "node": "gaps",
+   "event": "advance",
+   "to": "web_research",
+   "note": "compiled 0 new gaps, 0 queries (4 open)",
+   "at": "2026-08-10T07:27:21+00:00"
+  },
+  {
+   "node": "web_research",
+   "event": "advance",
+   "to": "curate",
+   "note": null,
+   "at": "2026-08-10T07:27:22+00:00"
+  },
+  {
+   "node": "curate",
+   "event": "advance",
+   "to": "challenge",
+   "note": "curated 13 unique observations; gaps supported+0 contradicted+0; round 2; coverage missing: ['mechanism']",
+   "at": "2026-08-10T07:27:22+00:00"
+  },
+  {
+   "node": "challenge",
+   "event": "advance",
+   "to": "triage",
+   "note": null,
+   "at": "2026-08-10T07:27:22+00:00"
+  },
+  {
+   "node": "triage",
+   "event": "advance",
+   "to": "gaps",
+   "note": "triage: 0 research-ready, 0 held (priority is a prior, not evidence)",
+   "at": "2026-08-10T07:27:22+00:00"
+  },
+  {
+   "node": "gaps",
+   "event": "advance",
+   "to": "web_research",
+   "note": "compiled 0 new gaps, 0 queries (4 open)",
+   "at": "2026-08-10T07:27:22+00:00"
+  },
+  {
+   "node": "web_research",
+   "event": "advance",
+   "to": "curate",
+   "note": null,
+   "at": "2026-08-10T07:27:22+00:00"
+  },
+  {
+   "node": "curate",
+   "event": "advance",
+   "to": "challenge",
+   "note": "curated 13 unique observations; gaps supported+0 contradicted+0; round 3; coverage missing: ['mechanism']",
+   "at": "2026-08-10T07:27:22+00:00"
+  },
+  {
+   "node": "challenge",
+   "event": "advance",
+   "to": "triage",
+   "note": null,
+   "at": "2026-08-10T07:27:22+00:00"
+  },
+  {
+   "node": "triage",
+   "event": "advance",
+   "to": "gaps",
+   "note": "triage: 0 research-ready, 0 held (priority is a prior, not evidence)",
+   "at": "2026-08-10T07:27:22+00:00"
+  },
+  {
+   "node": "gaps",
+   "event": "advance",
+   "to": "mechanism",
+   "note": "compiled 0 new gaps, 0 queries (4 open)",
+   "at": "2026-08-10T07:27:22+00:00"
+  },
+  {
+   "node": "mechanism",
+   "event": "submit",
+   "keys": [
+    "mechanisms",
+    "product_candidates"
+   ],
+   "at": "2026-08-10T07:27:38+00:00"
+  },
+  {
+   "node": "mechanism",
+   "event": "advance",
+   "to": "supplier_search",
+   "note": null,
+   "at": "2026-08-10T07:27:38+00:00"
+  },
+  {
+   "node": "supplier_search",
+   "event": "submit",
+   "keys": [
+    "supplier_candidates"
+   ],
+   "at": "2026-08-10T07:28:35+00:00"
+  },
+  {
+   "node": "supplier_search",
+   "event": "advance",
+   "to": "normalize_supplier",
+   "note": null,
+   "at": "2026-08-10T07:28:35+00:00"
+  },
+  {
+   "node": "normalize_supplier",
+   "event": "advance",
+   "to": "qualify",
+   "note": "normalized 3 suppliers (3 with parsed price+MOQ)",
+   "at": "2026-08-10T07:28:35+00:00"
+  },
+  {
+   "node": "qualify",
+   "event": "advance",
+   "to": "stop",
+   "note": "verdict: QUALIFIED_LEADS (tier=QUALIFIED_LEAD, 6 leads)",
+   "at": "2026-08-10T07:28:35+00:00"
+  }
+ ],
+ "verdict": "QUALIFIED_LEADS",
+ "data": {
+  "signal": "Situationist derive / urban drifting. LATENT INTERPRETATION: beneath the theory is a PRACTICE with physical shape: long unplanned walks through cities (hours, variable weather), deliberate refusal of phone navigation and algorithmic mediation, heightened observation, and a strong documentation impulse — practitioners record impressions (notes, sketches, film photos, voice) WITHOUT interrupting the drift. The tension: documentation and carry needs vs. the drift's demand for unencumbered, unmediated movement. Living communities: psychogeography groups, flaneur/urban-walking culture, urbex, film-photography walkers, 'analog walk' practitioners, one-bag/EDC walkers. This joins King's validated 'analog backlash / friction objects' vertical: people deliberately choosing physical tools against algorithmic mediation.",
+  "polymath_evidence": [
+   {
+    "id": "dev_1",
+    "summary": "Debord: derive = technique of rapid passage through varied ambiances; drop usual motives for movement; let attractions of the terrain direct you",
+    "source": "seed-theory (Polymath MCP pending)",
+    "knowledge_roles": [
+     "CULTURAL",
+     "BEHAVIORAL"
+    ],
+    "can_establish": [
+     "behavioral_mechanism"
+    ],
+    "cannot_establish": [
+     "current_demand"
+    ]
+   },
+   {
+    "id": "dev_2",
+    "summary": "Psychogeography practice traditions: walkers document ambiances via notes, sketches, photographs; the record is part of the practice",
+    "source": "seed-theory",
+    "knowledge_roles": [
+     "BEHAVIORAL",
+     "HISTORICAL"
+    ],
+    "can_establish": [
+     "behavioral_mechanism"
+    ],
+    "cannot_establish": [
+     "current_demand"
+    ]
+   },
+   {
+    "id": "dev_3",
+    "summary": "King's validated vertical: anti-algorithm 'friction objects' — typewriters, film cameras, paper notebooks — chosen deliberately against AI mediation; buying-intent patterns previously observed",
+    "source": "prior-run knowledge (mnemosyne)",
+    "knowledge_roles": [
+     "CONSUMER_FIELD",
+     "PATTERN"
+    ],
+    "can_establish": [
+     "conceptual_pattern"
+    ],
+    "cannot_establish": [
+     "current_demand"
+    ]
+   }
+  ],
+  "primitives": {
+   "generative_signal": true,
+   "drivers": [
+    "anti-algorithmic mediation",
+    "desire for unfiltered urban experience"
+   ],
+   "behaviors": [
+    "hours-long unplanned city walking",
+    "documenting impressions mid-walk without stopping the drift",
+    "refusing phone navigation"
+   ],
+   "adaptations": [
+    "carrying pocket notebooks and film cameras instead of using the phone",
+    "improvised quick-access carry for capture tools"
+   ],
+   "constraints": [
+    "documentation must not interrupt movement",
+    "tools must work standing, walking, in weather",
+    "no screens"
+   ],
+   "frictions": [
+    "access_latency",
+    "occupied_hand",
+    "carry_load"
+   ],
+   "workarounds": [
+    "chest-slung cameras",
+    "rubber-banded notebook+pen",
+    "jacket-pocket systems"
+   ],
+   "physical_interactions": [
+    "draw and stow capture tools repeatedly while walking"
+   ],
+   "physical_jobs": [
+    "capture an impression within seconds without breaking stride",
+    "carry analog tools comfortably for hours"
+   ],
+   "latent_values": [
+    "presence",
+    "unmediated perception",
+    "ritual and identity signaling of the analog walker"
+   ],
+   "transferable_invariants": [
+    "a frequently needed small object must be retrievable without interrupting the primary activity",
+    "documentation tools should disappear until the moment of use"
+   ],
+   "unresolved_questions": [
+    "do urban walkers complain about capture/carry friction?",
+    "is there purchase language in walking/photo/notebook communities?"
+   ],
+   "shared_predicates": [
+    "access",
+    "carry",
+    "retain"
+   ]
+  },
+  "cross_domain_analogies": [
+   {
+    "seed_id": "seed-0002",
+    "domain": "walking_running_movement",
+    "activity": "Neighborhood walking",
+    "task": "access phone or small essentials",
+    "friction_family": "access_latency",
+    "workaround_hypothesis": "holding item in hand or using improvised clip",
+    "product_territory": "one-handed access pouch or mount",
+    "matched": {
+     "predicate": "access",
+     "friction": "access_latency"
+    },
+    "authority": "SEED_HYPOTHESIS"
+   },
+   {
+    "seed_id": "seed-1261",
+    "domain": "outdoors_with_animals",
+    "activity": "Dog hiking",
+    "task": "manage leash and supplies",
+    "friction_family": "occupied_hand",
+    "workaround_hypothesis": "overfilled pockets and wrist loops",
+    "product_territory": "one-hand animal-walk carry system",
+    "matched": {
+     "predicate": "access",
+     "friction": "occupied_hand"
+    },
+    "authority": "SEED_HYPOTHESIS"
+   },
+   {
+    "seed_id": "seed-1321",
+    "domain": "adaptive_lower_intensity",
+    "activity": "Senior walking",
+    "task": "access essentials while using aid",
+    "friction_family": "occupied_hand",
+    "workaround_hypothesis": "hanging bags and caregiver carrying",
+    "product_territory": "mobility-aid compatible access module",
+    "matched": {
+     "predicate": "access",
+     "friction": "occupied_hand"
+    },
+    "authority": "SEED_HYPOTHESIS"
+   },
+   {
+    "seed_id": "seed-0261",
+    "domain": "paddling_boating_water",
+    "activity": "Recreational kayaking",
+    "task": "load or launch equipment",
+    "friction_family": "carry_load",
+    "workaround_hypothesis": "improvised straps and dragging",
+    "product_territory": "modular carry and launch-assist system",
+    "matched": {
+     "predicate": "access",
+     "friction": "carry_load"
+    },
+    "authority": "SEED_HYPOTHESIS"
+   },
+   {
+    "seed_id": "seed-0549",
+    "domain": "foraging_collecting",
+    "activity": "Mushroom foraging",
+    "task": "carry increasing irregular weight",
+    "friction_family": "carry_load",
+    "workaround_hypothesis": "multiple bags and hand carrying",
+    "product_territory": "load-distributing specimen carrier",
+    "matched": {
+     "predicate": "access",
+     "friction": "carry_load"
+    },
+    "authority": "SEED_HYPOTHESIS"
+   },
+   {
+    "seed_id": "seed-0615",
+    "domain": "garden_yard_homestead",
+    "activity": "Vegetable gardening",
+    "task": "move harvest, debris, or materials",
+    "friction_family": "carry_load",
+    "workaround_hypothesis": "buckets, tarps, wheelbarrow overload",
+    "product_territory": "modular washable carry system",
+    "matched": {
+     "predicate": "access",
+     "friction": "carry_load"
+    },
+    "authority": "SEED_HYPOTHESIS"
+   },
+   {
+    "seed_id": "seed-0824",
+    "domain": "outdoor_spectating_waiting",
+    "activity": "Youth soccer spectating",
+    "task": "carry seat, food, and clothing",
+    "friction_family": "carry_load",
+    "workaround_hypothesis": "wagons and mismatched bags",
+    "product_territory": "single-trip modular sideline carrier",
+    "matched": {
+     "predicate": "access",
+     "friction": "carry_load"
+    },
+    "authority": "SEED_HYPOTHESIS"
+   },
+   {
+    "seed_id": "seed-0884",
+    "domain": "picnic_park_temporary_setup",
+    "activity": "Park picnics",
+    "task": "transport mixed supplies",
+    "friction_family": "carry_load",
+    "workaround_hypothesis": "wagons and grocery bags",
+    "product_territory": "terrain-aware modular carrier",
+    "matched": {
+     "predicate": "access",
+     "friction": "carry_load"
+    },
+    "authority": "SEED_HYPOTHESIS"
+   }
+  ],
+  "lenses": [
+   {
+    "name": "performance",
+    "question": "What does excelling at this in front of others require physically?"
+   },
+   {
+    "name": "mobility",
+    "question": "What breaks when the person cannot stay still?"
+   },
+   {
+    "name": "embodiment",
+    "question": "Which body parts are occupied, and what competes for them?"
+   },
+   {
+    "name": "minimal-interference",
+    "question": "What tool disappears from awareness when it works?"
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "dh_sling",
+    "source": "derive_documentation_tension",
+    "path": [
+     "unmediated_urban_walking",
+     "documentation_without_stopping",
+     "seconds_scale_tool_access",
+     "body_slung_quick_access_carry"
+    ],
+    "target_mechanism": "body_slung_quick_access_capture_carry",
+    "evidence_boundary": {
+     "first_inference_at": "documentation_without_stopping"
+    },
+    "gaps": [
+     "walkers/photographers complain about capture-tool access while moving",
+     "improvised chest/sling carry workarounds visible in communities",
+     "purchase language for quick-access analog carry"
+    ],
+    "alternatives": [
+     "jacket pockets are good enough"
+    ],
+    "falsifiers": [
+     "no access-speed complaints"
+    ],
+    "status": "SUPPORTED"
+   },
+   {
+    "id": "dh_onehand",
+    "source": "derive_documentation_tension",
+    "path": [
+     "unmediated_urban_walking",
+     "standing_walking_notation",
+     "two_hands_unavailable",
+     "one_hand_analog_capture_tool"
+    ],
+    "target_mechanism": "one_hand_analog_capture_instrument",
+    "evidence_boundary": {
+     "first_inference_at": "standing_walking_notation"
+    },
+    "gaps": [
+     "evidence people struggle writing/sketching while standing or walking",
+     "existing one-hand notation products or DIY attempts"
+    ],
+    "alternatives": [
+     "voice memos"
+    ],
+    "falsifiers": [
+     "no demand for standing notation"
+    ],
+    "status": "HOLD"
+   },
+   {
+    "id": "dh_tether",
+    "source": "cross_domain_transfer",
+    "path": [
+     "repeated_draw_and_stow_cycles",
+     "drop_and_fumble_risk_while_moving",
+     "retractable_tool_tether_retention"
+    ],
+    "target_mechanism": "retractable_analog_tool_tether",
+    "invariant": "a frequently needed small object must be retrievable without interrupting the primary activity",
+    "evidence_boundary": {
+     "first_inference_at": "drop_and_fumble_risk_while_moving"
+    },
+    "gaps": [
+     "pen/tool drop complaints during mobile use",
+     "badge-reel/tether repurposing for pens or cameras in the wild"
+    ],
+    "alternatives": [
+     "cap-and-pocket suffices; tethers read as corporate not ritual"
+    ],
+    "falsifiers": [
+     "no tether repurposing found anywhere in walking/photo/EDC communities"
+    ],
+    "status": "HOLD",
+    "research_priority": 4
+   },
+   {
+    "id": "dh_kit",
+    "source": "analog_backlash_vertical",
+    "exploratory": true,
+    "path": [
+     "anti_algorithm_identity",
+     "ritualized_analog_practice",
+     "curated_drift_kit_as_ritual_object"
+    ],
+    "target_mechanism": "curated_analog_drift_kit",
+    "evidence_boundary": {
+     "first_inference_at": "ritualized_analog_practice"
+    },
+    "gaps": [
+     "evidence people assemble/buy curated analog walking kits (notebook+pen+film bundles)",
+     "identity/ritual purchase language in analog-walking communities"
+    ],
+    "alternatives": [
+     "people curate their own; bundles read as merch"
+    ],
+    "falsifiers": [
+     "kit products ridiculed or ignored"
+    ],
+    "status": "SUPPORTED"
+   }
+  ],
+  "challenges": [
+   {
+    "id": "dch_1",
+    "hypothesis_id": "dh_sling",
+    "argument": "Sling/chest carry is a crowded photo-accessory space; delta must come from ANALOG-specific quick-draw (notebook+film) not another camera bag. Keep, demand delta evidence.",
+    "verdict": "WORKING_HYPOTHESIS"
+   },
+   {
+    "id": "dch_2",
+    "hypothesis_id": "dh_onehand",
+    "argument": "Standing notation friction is real in field professions (registry: field_recording seeds) but consumer demand unproven. Keep — high info gain.",
+    "verdict": "WORKING_HYPOTHESIS"
+   },
+   {
+    "id": "dch_3",
+    "hypothesis_id": "dh_tether",
+    "argument": "Corpus precedent: retractable tether appears in engineering sources; badge-reel repurposing is cheap to check. Keep — fast falsification.",
+    "verdict": "WORKING_HYPOTHESIS"
+   },
+   {
+    "id": "dch_4",
+    "hypothesis_id": "dh_kit",
+    "argument": "Ritual-kit is identity merchandise until proven otherwise; strongest alternative explanation (self-curation). Wildcard retained for info gain.",
+    "verdict": "WORKING_ANALOGY"
+   },
+   {
+    "id": "dch_5",
+    "hypothesis_id": "dh_sling",
+    "argument": "Workaround-to-product proven: an artist manufactured her own walking-sketcher bag (Walkit), self-assembled kit bags documented across 3 community sources, friction evidenced. SUPPORTED.",
+    "verdict": "SUPPORTED"
+   },
+   {
+    "id": "dch_6",
+    "hypothesis_id": "dh_kit",
+    "argument": "Field evidence PROMOTES the analogy: LOCHBY sells exactly this kit; Etsy category exists; buying guides active. Self-curation remains the competing delta angle (kit must beat self-assembly on curation quality). SUPPORTED with that caveat recorded.",
+    "verdict": "SUPPORTED"
+   },
+   {
+    "id": "dch_7",
+    "hypothesis_id": "dh_onehand",
+    "argument": "Standing-support friction evidenced (clipboards) but one-hand instrument demand unproven this round. HOLD — unproven, not disproven.",
+    "verdict": "HOLD"
+   }
+  ],
+  "gaps": [
+   {
+    "id": "a340c3347cd8",
+    "hypothesis_id": "dh_sling",
+    "question": "walkers/photographers complain about capture-tool access while moving",
+    "status": "supported",
+    "required_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "PURCHASE_INTENT"
+    ],
+    "required_freshness": [
+     "FAST",
+     "LIVE"
+    ],
+    "registry_query_grammars": [
+     {
+      "id": "q-complaint",
+      "grammar": "{activity} {task} annoying",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-hard-to",
+      "grammar": "{activity} hard to {task}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-wish",
+      "grammar": "{activity} wish it had {friction_family}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-workaround",
+      "grammar": "{activity} {task} DIY modification",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-cut",
+      "grammar": "{activity} cut sewed taped repurposed",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-gloves",
+      "grammar": "{activity} {task} with gloves",
+      "goal": "context",
+      "expected_roles": [
+       "BEHAVIOR_SUPPORT"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "cfe337b785af",
+    "hypothesis_id": "dh_sling",
+    "question": "improvised chest/sling carry workarounds visible in communities",
+    "status": "supported",
+    "required_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "PURCHASE_INTENT"
+    ],
+    "required_freshness": [
+     "FAST",
+     "LIVE"
+    ],
+    "registry_query_grammars": [
+     {
+      "id": "q-complaint",
+      "grammar": "{activity} {task} annoying",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-hard-to",
+      "grammar": "{activity} hard to {task}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-wish",
+      "grammar": "{activity} wish it had {friction_family}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-workaround",
+      "grammar": "{activity} {task} DIY modification",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-cut",
+      "grammar": "{activity} cut sewed taped repurposed",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-gloves",
+      "grammar": "{activity} {task} with gloves",
+      "goal": "context",
+      "expected_roles": [
+       "BEHAVIOR_SUPPORT"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "3da90f72ece3",
+    "hypothesis_id": "dh_sling",
+    "question": "purchase language for quick-access analog carry",
+    "status": "supported",
+    "required_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "PURCHASE_INTENT"
+    ],
+    "required_freshness": [
+     "FAST",
+     "LIVE"
+    ],
+    "registry_query_grammars": [
+     {
+      "id": "q-complaint",
+      "grammar": "{activity} {task} annoying",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-hard-to",
+      "grammar": "{activity} hard to {task}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-wish",
+      "grammar": "{activity} wish it had {friction_family}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-workaround",
+      "grammar": "{activity} {task} DIY modification",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-cut",
+      "grammar": "{activity} cut sewed taped repurposed",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-gloves",
+      "grammar": "{activity} {task} with gloves",
+      "goal": "context",
+      "expected_roles": [
+       "BEHAVIOR_SUPPORT"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "e4aa1f322200",
+    "hypothesis_id": "dh_onehand",
+    "question": "evidence people struggle writing/sketching while standing or walking",
+    "status": "open",
+    "required_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "PURCHASE_INTENT"
+    ],
+    "required_freshness": [
+     "FAST",
+     "LIVE"
+    ],
+    "registry_query_grammars": [
+     {
+      "id": "q-complaint",
+      "grammar": "{activity} {task} annoying",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-hard-to",
+      "grammar": "{activity} hard to {task}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-wish",
+      "grammar": "{activity} wish it had {friction_family}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-workaround",
+      "grammar": "{activity} {task} DIY modification",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-cut",
+      "grammar": "{activity} cut sewed taped repurposed",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-gloves",
+      "grammar": "{activity} {task} with gloves",
+      "goal": "context",
+      "expected_roles": [
+       "BEHAVIOR_SUPPORT"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "485560afddcb",
+    "hypothesis_id": "dh_onehand",
+    "question": "existing one-hand notation products or DIY attempts",
+    "status": "open",
+    "required_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "PURCHASE_INTENT"
+    ],
+    "required_freshness": [
+     "FAST",
+     "LIVE"
+    ],
+    "registry_query_grammars": [
+     {
+      "id": "q-complaint",
+      "grammar": "{activity} {task} annoying",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-hard-to",
+      "grammar": "{activity} hard to {task}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-wish",
+      "grammar": "{activity} wish it had {friction_family}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-workaround",
+      "grammar": "{activity} {task} DIY modification",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-cut",
+      "grammar": "{activity} cut sewed taped repurposed",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-gloves",
+      "grammar": "{activity} {task} with gloves",
+      "goal": "context",
+      "expected_roles": [
+       "BEHAVIOR_SUPPORT"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "251a10e00c33",
+    "hypothesis_id": "dh_kit",
+    "question": "evidence people assemble/buy curated analog walking kits (notebook+pen+film bundles)",
+    "status": "open",
+    "required_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "PURCHASE_INTENT"
+    ],
+    "required_freshness": [
+     "FAST",
+     "LIVE"
+    ],
+    "registry_query_grammars": [
+     {
+      "id": "q-complaint",
+      "grammar": "{activity} {task} annoying",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-hard-to",
+      "grammar": "{activity} hard to {task}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-wish",
+      "grammar": "{activity} wish it had {friction_family}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-workaround",
+      "grammar": "{activity} {task} DIY modification",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-cut",
+      "grammar": "{activity} cut sewed taped repurposed",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-gloves",
+      "grammar": "{activity} {task} with gloves",
+      "goal": "context",
+      "expected_roles": [
+       "BEHAVIOR_SUPPORT"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "0c37a1de864f",
+    "hypothesis_id": "dh_kit",
+    "question": "identity/ritual purchase language in analog-walking communities",
+    "status": "open",
+    "required_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "PURCHASE_INTENT"
+    ],
+    "required_freshness": [
+     "FAST",
+     "LIVE"
+    ],
+    "registry_query_grammars": [
+     {
+      "id": "q-complaint",
+      "grammar": "{activity} {task} annoying",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-hard-to",
+      "grammar": "{activity} hard to {task}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-wish",
+      "grammar": "{activity} wish it had {friction_family}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-workaround",
+      "grammar": "{activity} {task} DIY modification",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-cut",
+      "grammar": "{activity} cut sewed taped repurposed",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-gloves",
+      "grammar": "{activity} {task} with gloves",
+      "goal": "context",
+      "expected_roles": [
+       "BEHAVIOR_SUPPORT"
+      ]
+     }
+    ]
+   }
+  ],
+  "queries": [
+   {
+    "id": "0e30a5d9f256",
+    "gap_id": "a340c3347cd8",
+    "query": "site:reddit.com \"walkers/photographers complain about capture-tool access while moving\"",
+    "channel": "reddit",
+    "source_family": "community",
+    "why_this_source": "first-person complaint, workaround, and comparison language",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "PRODUCT_COMPARISON",
+     "PURCHASE_INTENT"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "99ce140b356d",
+    "gap_id": "a340c3347cd8",
+    "query": "youtube comments: walkers/photographers complain about capture-tool access while moving",
+    "channel": "youtube",
+    "source_family": "community",
+    "why_this_source": "creator-audience discussion under demonstration videos",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "d3d1fb4769ca",
+    "gap_id": "a340c3347cd8",
+    "query": "\"walkers/photographers complain about capture-tool access while moving\" forum OR community",
+    "channel": "forum",
+    "source_family": "community",
+    "why_this_source": "niche practitioners describing real behavior and adaptations",
+    "expected_evidence_roles": [
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE",
+     "FRICTION_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "0c817b24da9c",
+    "gap_id": "cfe337b785af",
+    "query": "site:reddit.com \"improvised chest/sling carry workarounds visible in communities\"",
+    "channel": "reddit",
+    "source_family": "community",
+    "why_this_source": "first-person complaint, workaround, and comparison language",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "PRODUCT_COMPARISON",
+     "PURCHASE_INTENT"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "41e2ae38fdc2",
+    "gap_id": "cfe337b785af",
+    "query": "youtube comments: improvised chest/sling carry workarounds visible in communities",
+    "channel": "youtube",
+    "source_family": "community",
+    "why_this_source": "creator-audience discussion under demonstration videos",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "aeba8f61b70c",
+    "gap_id": "cfe337b785af",
+    "query": "\"improvised chest/sling carry workarounds visible in communities\" forum OR community",
+    "channel": "forum",
+    "source_family": "community",
+    "why_this_source": "niche practitioners describing real behavior and adaptations",
+    "expected_evidence_roles": [
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE",
+     "FRICTION_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "aae2bcee2724",
+    "gap_id": "3da90f72ece3",
+    "query": "site:reddit.com \"purchase language for quick-access analog carry\"",
+    "channel": "reddit",
+    "source_family": "community",
+    "why_this_source": "first-person complaint, workaround, and comparison language",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "PRODUCT_COMPARISON",
+     "PURCHASE_INTENT"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "afdd0f29001a",
+    "gap_id": "3da90f72ece3",
+    "query": "youtube comments: purchase language for quick-access analog carry",
+    "channel": "youtube",
+    "source_family": "community",
+    "why_this_source": "creator-audience discussion under demonstration videos",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "d11d7d51330c",
+    "gap_id": "3da90f72ece3",
+    "query": "\"purchase language for quick-access analog carry\" forum OR community",
+    "channel": "forum",
+    "source_family": "community",
+    "why_this_source": "niche practitioners describing real behavior and adaptations",
+    "expected_evidence_roles": [
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE",
+     "FRICTION_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "5f9f001e3d36",
+    "gap_id": "e4aa1f322200",
+    "query": "site:reddit.com \"evidence people struggle writing/sketching while standing or walking\"",
+    "channel": "reddit",
+    "source_family": "community",
+    "why_this_source": "first-person complaint, workaround, and comparison language",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "PRODUCT_COMPARISON",
+     "PURCHASE_INTENT"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "c523da989d4c",
+    "gap_id": "e4aa1f322200",
+    "query": "youtube comments: evidence people struggle writing/sketching while standing or walking",
+    "channel": "youtube",
+    "source_family": "community",
+    "why_this_source": "creator-audience discussion under demonstration videos",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "9720dcea85c2",
+    "gap_id": "e4aa1f322200",
+    "query": "\"evidence people struggle writing/sketching while standing or walking\" forum OR community",
+    "channel": "forum",
+    "source_family": "community",
+    "why_this_source": "niche practitioners describing real behavior and adaptations",
+    "expected_evidence_roles": [
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE",
+     "FRICTION_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "6a3dc0275ee9",
+    "gap_id": "485560afddcb",
+    "query": "site:reddit.com \"existing one-hand notation products or DIY attempts\"",
+    "channel": "reddit",
+    "source_family": "community",
+    "why_this_source": "first-person complaint, workaround, and comparison language",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "PRODUCT_COMPARISON",
+     "PURCHASE_INTENT"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "f8d9b3845b1c",
+    "gap_id": "485560afddcb",
+    "query": "youtube comments: existing one-hand notation products or DIY attempts",
+    "channel": "youtube",
+    "source_family": "community",
+    "why_this_source": "creator-audience discussion under demonstration videos",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "b180c50344a0",
+    "gap_id": "485560afddcb",
+    "query": "\"existing one-hand notation products or DIY attempts\" forum OR community",
+    "channel": "forum",
+    "source_family": "community",
+    "why_this_source": "niche practitioners describing real behavior and adaptations",
+    "expected_evidence_roles": [
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE",
+     "FRICTION_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "722cecab52ca",
+    "gap_id": "251a10e00c33",
+    "query": "site:reddit.com \"evidence people assemble/buy curated analog walking kits (notebook+pen+film bundles)\"",
+    "channel": "reddit",
+    "source_family": "community",
+    "why_this_source": "first-person complaint, workaround, and comparison language",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "PRODUCT_COMPARISON",
+     "PURCHASE_INTENT"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "f6d4923b3b36",
+    "gap_id": "251a10e00c33",
+    "query": "youtube comments: evidence people assemble/buy curated analog walking kits (notebook+pen+film bundles)",
+    "channel": "youtube",
+    "source_family": "community",
+    "why_this_source": "creator-audience discussion under demonstration videos",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "2df6bc3e0cf5",
+    "gap_id": "251a10e00c33",
+    "query": "\"evidence people assemble/buy curated analog walking kits (notebook+pen+film bundles)\" forum OR community",
+    "channel": "forum",
+    "source_family": "community",
+    "why_this_source": "niche practitioners describing real behavior and adaptations",
+    "expected_evidence_roles": [
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE",
+     "FRICTION_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "895a6fee89a8",
+    "gap_id": "0c37a1de864f",
+    "query": "site:reddit.com \"identity/ritual purchase language in analog-walking communities\"",
+    "channel": "reddit",
+    "source_family": "community",
+    "why_this_source": "first-person complaint, workaround, and comparison language",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "PRODUCT_COMPARISON",
+     "PURCHASE_INTENT"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "6f5f2f11bc6e",
+    "gap_id": "0c37a1de864f",
+    "query": "youtube comments: identity/ritual purchase language in analog-walking communities",
+    "channel": "youtube",
+    "source_family": "community",
+    "why_this_source": "creator-audience discussion under demonstration videos",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "256d40e25dc1",
+    "gap_id": "0c37a1de864f",
+    "query": "\"identity/ritual purchase language in analog-walking communities\" forum OR community",
+    "channel": "forum",
+    "source_family": "community",
+    "why_this_source": "niche practitioners describing real behavior and adaptations",
+    "expected_evidence_roles": [
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE",
+     "FRICTION_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   }
+  ],
+  "observations": [
+   {
+    "id": "do1",
+    "gap_id": "a340c3347cd8",
+    "source": "thedesignsketchbook.com/how-to-draw-with-proper-standing-posture/",
+    "quote_ref": "The Standing Posture Guide That Makes Sketching Easier — draw without shaking",
+    "community": "urban sketchers",
+    "problem": "capturing while standing/moving is hard enough to need technique guides",
+    "evidence_roles": [
+     "FRICTION_EVIDENCE"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "community",
+     "platform": "designsketchbook",
+     "author_key": "tds_author"
+    }
+   },
+   {
+    "id": "do2",
+    "gap_id": "a340c3347cd8",
+    "source": "cravepainting.com/blog/urban-sketching-pitfalls",
+    "quote_ref": "7 Urban Sketching Pitfalls and How to easily Avoid them",
+    "community": "urban sketchers",
+    "problem": "documented recurring field-capture pitfalls",
+    "evidence_roles": [
+     "FRICTION_EVIDENCE"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "community",
+     "platform": "cravepainting",
+     "author_key": "cp_author"
+    }
+   },
+   {
+    "id": "do3",
+    "gap_id": "a340c3347cd8",
+    "source": "urbansketchers.org/2018/04/12/drawing-like-note/",
+    "quote_ref": "Drawing like a note — on-location capture as rapid notation",
+    "community": "Urban Sketchers global",
+    "problem": "capture must be fast, notation-like, mid-walk",
+    "evidence_roles": [
+     "BEHAVIOR_SUPPORT"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "community",
+     "platform": "urbansketchers.org",
+     "author_key": "usk_blog"
+    }
+   },
+   {
+    "id": "do4",
+    "gap_id": "cfe337b785af",
+    "source": "lizsteel.com/walkit-sketching-bags/",
+    "quote_ref": "Walkit bags developed by artist Cecilia Simonyi specifically for outdoor artists — cross body or waist, elastic loops keep tools handy",
+    "community": "sketching community",
+    "problem": "no existing bag served walking artists",
+    "workaround": "artist designed and produced her own carry system",
+    "evidence_roles": [
+     "WORKAROUND_EVIDENCE",
+     "PRODUCT_MODIFICATION"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "community",
+     "platform": "lizsteel",
+     "author_key": "cecilia_simonyi"
+    }
+   },
+   {
+    "id": "do5",
+    "gap_id": "cfe337b785af",
+    "source": "larrydmarshall.com/urban-sketchers-kit-bag/",
+    "quote_ref": "Urban Sketcher's Kit Bag — personal kit assembly documented",
+    "community": "urban sketchers",
+    "problem": "assembling own carry from generic pouches",
+    "workaround": "self-assembled kit bag",
+    "evidence_roles": [
+     "WORKAROUND_EVIDENCE"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "community",
+     "platform": "larrydmarshall",
+     "author_key": "larry_m"
+    }
+   },
+   {
+    "id": "do6",
+    "gap_id": "cfe337b785af",
+    "source": "awristeddevelopment.substack.com/p/exploring-the-world-of-edc/comments",
+    "quote_ref": "EDC pouches as notebook holster with accessory pockets",
+    "community": "EDC",
+    "problem": "generic pouches repurposed as capture-tool holsters",
+    "workaround": "pouch-as-holster",
+    "evidence_roles": [
+     "WORKAROUND_EVIDENCE",
+     "BEHAVIOR_SUPPORT"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "community",
+     "platform": "substack-edc",
+     "author_key": "awristed"
+    }
+   },
+   {
+    "id": "do7",
+    "gap_id": "3da90f72ece3",
+    "source": "urbansketchingworld.com/urban-sketching-travel-kit/",
+    "quote_ref": "Urban Sketching Travel Kit — recommended buying list",
+    "community": "urban sketchers",
+    "problem": "active buying guidance for walk-capture kit",
+    "evidence_roles": [
+     "PURCHASE_INTENT"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "review",
+     "platform": "urbansketchingworld",
+     "author_key": "usw_guide"
+    },
+    "purchase_language": true
+   },
+   {
+    "id": "do8",
+    "gap_id": "3da90f72ece3",
+    "source": "lochby.com/blogs/blog/my-urban-sketching-kit",
+    "quote_ref": "The Artist on the Move: Urban Sketching and Travel Art Essentials",
+    "community": "sketching buyers",
+    "problem": "vendor + community converging on move-capture kit purchases",
+    "evidence_roles": [
+     "PURCHASE_INTENT",
+     "PRODUCT_DELTA_SUPPORT"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "review",
+     "platform": "lochby-blog",
+     "author_key": "lochby"
+    },
+    "purchase_language": true
+   },
+   {
+    "id": "do9",
+    "gap_id": "3da90f72ece3",
+    "source": "watercolorsbymonika.com/sketch-kit-whats-inside/",
+    "quote_ref": "What's inside my urban sketch kit and my favorite supplies",
+    "community": "sketching community",
+    "problem": "kit contents shared with buying links",
+    "evidence_roles": [
+     "PURCHASE_INTENT"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "community",
+     "platform": "watercolorsbymonika",
+     "author_key": "monika"
+    }
+   },
+   {
+    "id": "do10",
+    "gap_id": "251a10e00c33",
+    "source": "lochby.com/products/urban-sketchers-kit",
+    "quote_ref": "LOCHBY Urban Sketchers' Kit — waxed canvas, elastic loops for 4-6 pens, notebook pockets",
+    "community": "sketching buyers",
+    "problem": "curated analog capture kit exists commercially",
+    "evidence_roles": [
+     "CURRENT_PRODUCT_REFERENCE",
+     "PRICE_EVIDENCE"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "marketplace_listing",
+     "platform": "lochby",
+     "author_key": "lochby_sku"
+    }
+   },
+   {
+    "id": "do11",
+    "gap_id": "251a10e00c33",
+    "source": "etsy.com/market/urban_sketch_kit",
+    "quote_ref": "Etsy market: urban sketch kit",
+    "community": "craft buyers",
+    "problem": "marketplace category exists for curated sketch kits",
+    "evidence_roles": [
+     "CURRENT_PRODUCT_REFERENCE"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "marketplace_listing",
+     "platform": "etsy",
+     "author_key": "etsy_market"
+    }
+   },
+   {
+    "id": "do12",
+    "gap_id": "0c37a1de864f",
+    "source": "lizsteel.com/sketching-tools/",
+    "quote_ref": "Sketching Tools — identity-level tool discourse in the community",
+    "community": "sketching community",
+    "problem": "tools as identity/ritual objects",
+    "evidence_roles": [
+     "BEHAVIOR_SUPPORT"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "community",
+     "platform": "lizsteel",
+     "author_key": "lizsteel_tools"
+    }
+   },
+   {
+    "id": "do13",
+    "gap_id": "e4aa1f322200",
+    "source": "sketchbooks.org/urban-sketching-for-beginners/",
+    "quote_ref": "portable clipboard optional but helpful; little notebooks that fit in a pocket",
+    "community": "urban sketchers",
+    "problem": "standing support surface is a known need",
+    "workaround": "portable clipboards",
+    "evidence_roles": [
+     "WORKAROUND_EVIDENCE",
+     "FRICTION_EVIDENCE"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "community",
+     "platform": "sketchbooks.org",
+     "author_key": "sbo_guide"
+    }
+   }
+  ],
+  "mechanisms": [
+   {
+    "id": "dmech_sling",
+    "name": "body_slung_quick_access_capture_carry",
+    "hypothesis_id": "dh_sling",
+    "supporting_observation_ids": [
+     "do1",
+     "do2",
+     "do3",
+     "do4",
+     "do5",
+     "do6",
+     "do7",
+     "do8",
+     "do9"
+    ],
+    "status": "SUPPORTED",
+    "notes": "workaround-to-product proven (Walkit artist-made bag), LOCHBY commercial validation, friction + purchase intent multi-source"
+   },
+   {
+    "id": "dmech_kit",
+    "name": "curated_analog_drift_kit",
+    "hypothesis_id": "dh_kit",
+    "supporting_observation_ids": [
+     "do7",
+     "do8",
+     "do9",
+     "do10",
+     "do11",
+     "do12"
+    ],
+    "status": "SUPPORTED",
+    "notes": "LOCHBY + Etsy market prove category; delta = curation for the WALKING/psychogeography identity, not desk sketchers"
+   }
+  ],
+  "product_candidates": [
+   {
+    "id": "dpc_lochby",
+    "mechanism_id": "dmech_kit",
+    "name": "LOCHBY Urban Sketchers Kit",
+    "validation_note": "premium waxed-canvas incumbent"
+   },
+   {
+    "id": "dpc_walkit",
+    "mechanism_id": "dmech_sling",
+    "name": "Walkit sketching bag",
+    "validation_note": "artist-made cross-body walking carry — the mechanism productized"
+   },
+   {
+    "id": "dpc_fieldnotes",
+    "mechanism_id": "dmech_kit",
+    "name": "Field Notes Streetscapes edition",
+    "validation_note": "notebook brand already targeting urban walkers"
+   }
+  ],
+  "supplier_candidates": [
+   {
+    "id": "dsup_1",
+    "product_name": "Waxed canvas EDC pocket organizer (custom graphics)",
+    "supplier_name": "Hangzhou AILU Traveling Goods Co., Ltd.",
+    "price_raw": "$5.54 - 8.00",
+    "moq_raw": "200 pieces",
+    "url": "alibaba.com/showroom/waxed-canvas-pouch.html",
+    "customizable": "logo + graphics, 7-day processing",
+    "price_usd_low": 5.54,
+    "price_usd_high": 8.0,
+    "moq_units": 200
+   },
+   {
+    "id": "dsup_2",
+    "product_name": "Waxed Canvas EDC Pocket Organizer Compact",
+    "supplier_name": "Alibaba listing 1600639166555",
+    "price_raw": "$4.20",
+    "moq_raw": "100 pcs",
+    "url": "alibaba.com/product-detail/Waxed-Canvas-EDC-Pocket-Organizer-Compact_1600639166555.html",
+    "price_usd_low": 4.2,
+    "price_usd_high": 4.2,
+    "moq_units": 100
+   },
+   {
+    "id": "dsup_3",
+    "product_name": "Canvas zipper pouch (low-MOQ tier)",
+    "supplier_name": "Alibaba waxed-canvas showroom suppliers",
+    "price_raw": "$3.10",
+    "moq_raw": "10 pieces",
+    "url": "alibaba.com/showroom/waxed-canvas-zipper-pouch-unisex.html",
+    "price_usd_low": 3.1,
+    "price_usd_high": 3.1,
+    "moq_units": 10
+   }
+  ],
+  "leads": [
+   {
+    "id": "06623aa8f975",
+    "mechanism": "body_slung_quick_access_capture_carry",
+    "mechanism_id": "dmech_sling",
+    "product_name": "Waxed canvas EDC pocket organizer (custom graphics)",
+    "supplier_name": "Hangzhou AILU Traveling Goods Co., Ltd.",
+    "url": "alibaba.com/showroom/waxed-canvas-pouch.html",
+    "images": null,
+    "price_usd_low": 5.54,
+    "price_usd_high": 8.0,
+    "moq_units": 200,
+    "evidence_score": 13,
+    "supporting_quotes": [
+     "The Standing Posture Guide That Makes Sketching Easier — draw without shaking",
+     "7 Urban Sketching Pitfalls and How to easily Avoid them",
+     "Drawing like a note — on-location capture as rapid notation",
+     "Walkit bags developed by artist Cecilia Simonyi specifically for outdoor artists — cross body or waist, elastic loops keep tools handy",
+     "Urban Sketcher's Kit Bag — personal kit assembly documented"
+    ]
+   },
+   {
+    "id": "bfb44ca9e491",
+    "mechanism": "body_slung_quick_access_capture_carry",
+    "mechanism_id": "dmech_sling",
+    "product_name": "Waxed Canvas EDC Pocket Organizer Compact",
+    "supplier_name": "Alibaba listing 1600639166555",
+    "url": "alibaba.com/product-detail/Waxed-Canvas-EDC-Pocket-Organizer-Compact_1600639166555.html",
+    "images": null,
+    "price_usd_low": 4.2,
+    "price_usd_high": 4.2,
+    "moq_units": 100,
+    "evidence_score": 13,
+    "supporting_quotes": [
+     "The Standing Posture Guide That Makes Sketching Easier — draw without shaking",
+     "7 Urban Sketching Pitfalls and How to easily Avoid them",
+     "Drawing like a note — on-location capture as rapid notation",
+     "Walkit bags developed by artist Cecilia Simonyi specifically for outdoor artists — cross body or waist, elastic loops keep tools handy",
+     "Urban Sketcher's Kit Bag — personal kit assembly documented"
+    ]
+   },
+   {
+    "id": "aec5032ed247",
+    "mechanism": "body_slung_quick_access_capture_carry",
+    "mechanism_id": "dmech_sling",
+    "product_name": "Canvas zipper pouch (low-MOQ tier)",
+    "supplier_name": "Alibaba waxed-canvas showroom suppliers",
+    "url": "alibaba.com/showroom/waxed-canvas-zipper-pouch-unisex.html",
+    "images": null,
+    "price_usd_low": 3.1,
+    "price_usd_high": 3.1,
+    "moq_units": 10,
+    "evidence_score": 13,
+    "supporting_quotes": [
+     "The Standing Posture Guide That Makes Sketching Easier — draw without shaking",
+     "7 Urban Sketching Pitfalls and How to easily Avoid them",
+     "Drawing like a note — on-location capture as rapid notation",
+     "Walkit bags developed by artist Cecilia Simonyi specifically for outdoor artists — cross body or waist, elastic loops keep tools handy",
+     "Urban Sketcher's Kit Bag — personal kit assembly documented"
+    ]
+   },
+   {
+    "id": "1c6d216c9fd3",
+    "mechanism": "curated_analog_drift_kit",
+    "mechanism_id": "dmech_kit",
+    "product_name": "Waxed canvas EDC pocket organizer (custom graphics)",
+    "supplier_name": "Hangzhou AILU Traveling Goods Co., Ltd.",
+    "url": "alibaba.com/showroom/waxed-canvas-pouch.html",
+    "images": null,
+    "price_usd_low": 5.54,
+    "price_usd_high": 8.0,
+    "moq_units": 200,
+    "evidence_score": 10,
+    "supporting_quotes": [
+     "Urban Sketching Travel Kit — recommended buying list",
+     "The Artist on the Move: Urban Sketching and Travel Art Essentials",
+     "What's inside my urban sketch kit and my favorite supplies",
+     "LOCHBY Urban Sketchers' Kit — waxed canvas, elastic loops for 4-6 pens, notebook pockets",
+     "Etsy market: urban sketch kit"
+    ]
+   },
+   {
+    "id": "a1fe7112fb18",
+    "mechanism": "curated_analog_drift_kit",
+    "mechanism_id": "dmech_kit",
+    "product_name": "Waxed Canvas EDC Pocket Organizer Compact",
+    "supplier_name": "Alibaba listing 1600639166555",
+    "url": "alibaba.com/product-detail/Waxed-Canvas-EDC-Pocket-Organizer-Compact_1600639166555.html",
+    "images": null,
+    "price_usd_low": 4.2,
+    "price_usd_high": 4.2,
+    "moq_units": 100,
+    "evidence_score": 10,
+    "supporting_quotes": [
+     "Urban Sketching Travel Kit — recommended buying list",
+     "The Artist on the Move: Urban Sketching and Travel Art Essentials",
+     "What's inside my urban sketch kit and my favorite supplies",
+     "LOCHBY Urban Sketchers' Kit — waxed canvas, elastic loops for 4-6 pens, notebook pockets",
+     "Etsy market: urban sketch kit"
+    ]
+   },
+   {
+    "id": "b232c5af57cf",
+    "mechanism": "curated_analog_drift_kit",
+    "mechanism_id": "dmech_kit",
+    "product_name": "Canvas zipper pouch (low-MOQ tier)",
+    "supplier_name": "Alibaba waxed-canvas showroom suppliers",
+    "url": "alibaba.com/showroom/waxed-canvas-zipper-pouch-unisex.html",
+    "images": null,
+    "price_usd_low": 3.1,
+    "price_usd_high": 3.1,
+    "moq_units": 10,
+    "evidence_score": 10,
+    "supporting_quotes": [
+     "Urban Sketching Travel Kit — recommended buying list",
+     "The Artist on the Move: Urban Sketching and Travel Art Essentials",
+     "What's inside my urban sketch kit and my favorite supplies",
+     "LOCHBY Urban Sketchers' Kit — waxed canvas, elastic loops for 4-6 pens, notebook pockets",
+     "Etsy market: urban sketch kit"
+    ]
+   }
+  ],
+  "registry_candidates": []
+ },
+ "satisfaction_history": [
+  {
+   "requirements": {
+    "mechanism": {
+     "roles_required": [
+      "MECHANISM_SUPPORT"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": false
+    },
+    "real_behavior": {
+     "roles_required": [
+      "BEHAVIOR_SUPPORT",
+      "WORKAROUND_EVIDENCE"
+     ],
+     "roles_present": [
+      "BEHAVIOR_SUPPORT",
+      "WORKAROUND_EVIDENCE"
+     ],
+     "supporting_ids": [
+      "do12",
+      "do13",
+      "do3",
+      "do4",
+      "do5",
+      "do6"
+     ],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "friction_or_desire": {
+     "roles_required": [
+      "FRICTION_EVIDENCE",
+      "PRODUCT_REQUEST",
+      "PURCHASE_INTENT"
+     ],
+     "roles_present": [
+      "FRICTION_EVIDENCE",
+      "PURCHASE_INTENT"
+     ],
+     "supporting_ids": [
+      "do1",
+      "do13",
+      "do2",
+      "do7",
+      "do8",
+      "do9"
+     ],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "contradiction_search": {
+     "roles_required": [
+      "CONTRADICTION"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "supplier": {
+     "roles_required": [
+      "SUPPLIER_AVAILABILITY"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": false,
+     "required_for": [
+      "SOURCING_READY",
+      "QUALIFIED_LEAD"
+     ],
+     "satisfied": false
+    },
+    "price": {
+     "roles_required": [
+      "PRICE_EVIDENCE"
+     ],
+     "roles_present": [
+      "PRICE_EVIDENCE"
+     ],
+     "supporting_ids": [
+      "do10"
+     ],
+     "required_now": false,
+     "required_for": [
+      "SOURCING_READY",
+      "QUALIFIED_LEAD"
+     ],
+     "satisfied": true
+    }
+   },
+   "independence": {
+    "independent_groups": 13,
+    "source_families": 3
+   },
+   "core_satisfied": false,
+   "missing": [
+    "mechanism"
+   ],
+   "computed_at": "2026-08-10T07:27:21+00:00",
+   "cycle": 1
+  },
+  {
+   "requirements": {
+    "mechanism": {
+     "roles_required": [
+      "MECHANISM_SUPPORT"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": false
+    },
+    "real_behavior": {
+     "roles_required": [
+      "BEHAVIOR_SUPPORT",
+      "WORKAROUND_EVIDENCE"
+     ],
+     "roles_present": [
+      "BEHAVIOR_SUPPORT",
+      "WORKAROUND_EVIDENCE"
+     ],
+     "supporting_ids": [
+      "do12",
+      "do13",
+      "do3",
+      "do4",
+      "do5",
+      "do6"
+     ],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "friction_or_desire": {
+     "roles_required": [
+      "FRICTION_EVIDENCE",
+      "PRODUCT_REQUEST",
+      "PURCHASE_INTENT"
+     ],
+     "roles_present": [
+      "FRICTION_EVIDENCE",
+      "PURCHASE_INTENT"
+     ],
+     "supporting_ids": [
+      "do1",
+      "do13",
+      "do2",
+      "do7",
+      "do8",
+      "do9"
+     ],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "contradiction_search": {
+     "roles_required": [
+      "CONTRADICTION"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "supplier": {
+     "roles_required": [
+      "SUPPLIER_AVAILABILITY"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": false,
+     "required_for": [
+      "SOURCING_READY",
+      "QUALIFIED_LEAD"
+     ],
+     "satisfied": false
+    },
+    "price": {
+     "roles_required": [
+      "PRICE_EVIDENCE"
+     ],
+     "roles_present": [
+      "PRICE_EVIDENCE"
+     ],
+     "supporting_ids": [
+      "do10"
+     ],
+     "required_now": false,
+     "required_for": [
+      "SOURCING_READY",
+      "QUALIFIED_LEAD"
+     ],
+     "satisfied": true
+    }
+   },
+   "independence": {
+    "independent_groups": 13,
+    "source_families": 3
+   },
+   "core_satisfied": false,
+   "missing": [
+    "mechanism"
+   ],
+   "computed_at": "2026-08-10T07:27:22+00:00",
+   "cycle": 2
+  },
+  {
+   "requirements": {
+    "mechanism": {
+     "roles_required": [
+      "MECHANISM_SUPPORT"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": false
+    },
+    "real_behavior": {
+     "roles_required": [
+      "BEHAVIOR_SUPPORT",
+      "WORKAROUND_EVIDENCE"
+     ],
+     "roles_present": [
+      "BEHAVIOR_SUPPORT",
+      "WORKAROUND_EVIDENCE"
+     ],
+     "supporting_ids": [
+      "do12",
+      "do13",
+      "do3",
+      "do4",
+      "do5",
+      "do6"
+     ],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "friction_or_desire": {
+     "roles_required": [
+      "FRICTION_EVIDENCE",
+      "PRODUCT_REQUEST",
+      "PURCHASE_INTENT"
+     ],
+     "roles_present": [
+      "FRICTION_EVIDENCE",
+      "PURCHASE_INTENT"
+     ],
+     "supporting_ids": [
+      "do1",
+      "do13",
+      "do2",
+      "do7",
+      "do8",
+      "do9"
+     ],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "contradiction_search": {
+     "roles_required": [
+      "CONTRADICTION"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "supplier": {
+     "roles_required": [
+      "SUPPLIER_AVAILABILITY"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": false,
+     "required_for": [
+      "SOURCING_READY",
+      "QUALIFIED_LEAD"
+     ],
+     "satisfied": false
+    },
+    "price": {
+     "roles_required": [
+      "PRICE_EVIDENCE"
+     ],
+     "roles_present": [
+      "PRICE_EVIDENCE"
+     ],
+     "supporting_ids": [
+      "do10"
+     ],
+     "required_now": false,
+     "required_for": [
+      "SOURCING_READY",
+      "QUALIFIED_LEAD"
+     ],
+     "satisfied": true
+    }
+   },
+   "independence": {
+    "independent_groups": 13,
+    "source_families": 3
+   },
+   "core_satisfied": false,
+   "missing": [
+    "mechanism"
+   ],
+   "computed_at": "2026-08-10T07:27:22+00:00",
+   "cycle": 3
+  },
+  {
+   "requirements": {
+    "mechanism": {
+     "roles_required": [
+      "MECHANISM_SUPPORT"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "real_behavior": {
+     "roles_required": [
+      "BEHAVIOR_SUPPORT",
+      "WORKAROUND_EVIDENCE"
+     ],
+     "roles_present": [
+      "BEHAVIOR_SUPPORT",
+      "WORKAROUND_EVIDENCE"
+     ],
+     "supporting_ids": [
+      "do12",
+      "do13",
+      "do3",
+      "do4",
+      "do5",
+      "do6"
+     ],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "friction_or_desire": {
+     "roles_required": [
+      "FRICTION_EVIDENCE",
+      "PRODUCT_REQUEST",
+      "PURCHASE_INTENT"
+     ],
+     "roles_present": [
+      "FRICTION_EVIDENCE",
+      "PURCHASE_INTENT"
+     ],
+     "supporting_ids": [
+      "do1",
+      "do13",
+      "do2",
+      "do7",
+      "do8",
+      "do9"
+     ],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "contradiction_search": {
+     "roles_required": [
+      "CONTRADICTION"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "supplier": {
+     "roles_required": [
+      "SUPPLIER_AVAILABILITY"
+     ],
+     "roles_present": [
+      "SUPPLIER_AVAILABILITY"
+     ],
+     "supporting_ids": [
+      "dsup_1",
+      "dsup_2",
+      "dsup_3"
+     ],
+     "required_now": false,
+     "required_for": [
+      "SOURCING_READY",
+      "QUALIFIED_LEAD"
+     ],
+     "satisfied": true
+    },
+    "price": {
+     "roles_required": [
+      "PRICE_EVIDENCE"
+     ],
+     "roles_present": [
+      "PRICE_EVIDENCE"
+     ],
+     "supporting_ids": [
+      "do10",
+      "dsup_1",
+      "dsup_2",
+      "dsup_3"
+     ],
+     "required_now": false,
+     "required_for": [
+      "SOURCING_READY",
+      "QUALIFIED_LEAD"
+     ],
+     "satisfied": true
+    }
+   },
+   "independence": {
+    "independent_groups": 13,
+    "source_families": 3
+   },
+   "core_satisfied": true,
+   "missing": [],
+   "computed_at": "2026-08-10T07:28:35+00:00",
+   "cycle": 3
+  }
+ ],
+ "satisfaction": {
+  "requirements": {
+   "mechanism": {
+    "roles_required": [
+     "MECHANISM_SUPPORT"
+    ],
+    "roles_present": [],
+    "supporting_ids": [],
+    "required_now": true,
+    "required_for": [],
+    "satisfied": true
+   },
+   "real_behavior": {
+    "roles_required": [
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE"
+    ],
+    "roles_present": [
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE"
+    ],
+    "supporting_ids": [
+     "do12",
+     "do13",
+     "do3",
+     "do4",
+     "do5",
+     "do6"
+    ],
+    "required_now": true,
+    "required_for": [],
+    "satisfied": true
+   },
+   "friction_or_desire": {
+    "roles_required": [
+     "FRICTION_EVIDENCE",
+     "PRODUCT_REQUEST",
+     "PURCHASE_INTENT"
+    ],
+    "roles_present": [
+     "FRICTION_EVIDENCE",
+     "PURCHASE_INTENT"
+    ],
+    "supporting_ids": [
+     "do1",
+     "do13",
+     "do2",
+     "do7",
+     "do8",
+     "do9"
+    ],
+    "required_now": true,
+    "required_for": [],
+    "satisfied": true
+   },
+   "contradiction_search": {
+    "roles_required": [
+     "CONTRADICTION"
+    ],
+    "roles_present": [],
+    "supporting_ids": [],
+    "required_now": true,
+    "required_for": [],
+    "satisfied": true
+   },
+   "supplier": {
+    "roles_required": [
+     "SUPPLIER_AVAILABILITY"
+    ],
+    "roles_present": [
+     "SUPPLIER_AVAILABILITY"
+    ],
+    "supporting_ids": [
+     "dsup_1",
+     "dsup_2",
+     "dsup_3"
+    ],
+    "required_now": false,
+    "required_for": [
+     "SOURCING_READY",
+     "QUALIFIED_LEAD"
+    ],
+    "satisfied": true
+   },
+   "price": {
+    "roles_required": [
+     "PRICE_EVIDENCE"
+    ],
+    "roles_present": [
+     "PRICE_EVIDENCE"
+    ],
+    "supporting_ids": [
+     "do10",
+     "dsup_1",
+     "dsup_2",
+     "dsup_3"
+    ],
+    "required_now": false,
+    "required_for": [
+     "SOURCING_READY",
+     "QUALIFIED_LEAD"
+    ],
+    "satisfied": true
+   }
+  },
+  "independence": {
+   "independent_groups": 13,
+   "source_families": 3
+  },
+  "core_satisfied": true,
+  "missing": [],
+  "computed_at": "2026-08-10T07:28:35+00:00",
+  "cycle": 3
+ }
+}

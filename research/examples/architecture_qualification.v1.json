@@ -1,0 +1,287 @@
+{
+ "report": "architecture_qualification",
+ "version": "v1",
+ "generated_at": "2026-08-11T07:23:41+00:00",
+ "config": {
+  "control_graph_hash": "d904c3b0c8d66023",
+  "loop_spec_hash": "8b8fcaa4af65cb5a",
+  "policy_hash": "e825351734c440b6",
+  "schemas_hash": "863b6336b5b4cd3d",
+  "prompts_hash": "7e432cdf1fd87aed",
+  "registry_build": "reg_4d1f8ff4927e"
+ },
+ "runs": [
+  {
+   "run_id": "pos",
+   "mode": "opportunity_research",
+   "graph_path": [
+    "polymath",
+    "primitives",
+    "signal_gate",
+    "lenses",
+    "structural_lookup",
+    "hypothesize",
+    "semantic_review",
+    "apply_review",
+    "challenge",
+    "triage",
+    "gaps",
+    "web_research",
+    "curate",
+    "challenge",
+    "triage",
+    "gaps",
+    "mechanism",
+    "supplier_search",
+    "normalize_supplier",
+    "qualify",
+    "stop"
+   ],
+   "loops_exercised": {
+    "research_rounds": 1
+   },
+   "actions_generated": 10,
+   "context_recovery": "TERMINAL_IMMUTABLE",
+   "checkpoints": 6,
+   "evidence_role_coverage": {
+    "mechanism": true,
+    "real_behavior": true,
+    "friction_or_desire": true,
+    "contradiction_search": true,
+    "supplier": true,
+    "price": true
+   },
+   "capability_failures": [],
+   "terminal": {
+    "status": "stopped",
+    "verdict": "QUALIFIED_LEADS"
+   },
+   "settings_hash": null,
+   "registry_candidates_emitted": 7,
+   "handoffs": {
+    "out": 0,
+    "in": 0
+   },
+   "invariant_violations": []
+  },
+  {
+   "run_id": "md",
+   "mode": "market_discovery",
+   "graph_path": [
+    "field_lane",
+    "trend_lane",
+    "corpus_lane",
+    "supply_lane",
+    "merge_signals",
+    "query_graph",
+    "lattice",
+    "market_frontier",
+    "community_sampling",
+    "curate",
+    "divergence",
+    "gap_analysis",
+    "whitespace",
+    "market_gaps",
+    "targeted_research",
+    "revise",
+    "market_gaps",
+    "entry_surface",
+    "capture_gate",
+    "market_skeptic",
+    "apply_skeptic",
+    "promotion",
+    "stop"
+   ],
+   "loops_exercised": {
+    "research_rounds": 2
+   },
+   "actions_generated": 12,
+   "context_recovery": "TERMINAL_IMMUTABLE",
+   "checkpoints": 4,
+   "evidence_role_coverage": {
+    "mechanism": false,
+    "real_behavior": true,
+    "friction_or_desire": true,
+    "contradiction_search": true,
+    "supplier": false,
+    "price": false
+   },
+   "capability_failures": [],
+   "terminal": {
+    "status": "stopped",
+    "verdict": "MARKET_SCOPES_READY"
+   },
+   "settings_hash": null,
+   "registry_candidates_emitted": 7,
+   "handoffs": {
+    "out": 2,
+    "in": 0
+   },
+   "invariant_violations": []
+  },
+  {
+   "run_id": "pa",
+   "mode": "product_anchored",
+   "graph_path": [
+    "identity_resolution",
+    "identity_gate",
+    "claim_quarantine",
+    "pa_query_graph",
+    "blind_field",
+    "corpus_lane",
+    "commerce_scan",
+    "merge_signals",
+    "meanings",
+    "bridges",
+    "reverse_fit",
+    "community_research",
+    "revise_bridges",
+    "bridge_gaps",
+    "targeted_research",
+    "revise_bridges",
+    "bridge_gaps",
+    "reframe",
+    "skeptic",
+    "apply_skeptic",
+    "bridge_gate",
+    "stop"
+   ],
+   "loops_exercised": {
+    "research_rounds": 2
+   },
+   "actions_generated": 12,
+   "context_recovery": "TERMINAL_IMMUTABLE",
+   "checkpoints": 4,
+   "evidence_role_coverage": {},
+   "capability_failures": [],
+   "terminal": {
+    "status": "stopped",
+    "verdict": "PRODUCT_REFRAMED"
+   },
+   "settings_hash": null,
+   "registry_candidates_emitted": 1,
+   "handoffs": {
+    "out": 2,
+    "in": 0
+   },
+   "invariant_violations": []
+  },
+  {
+   "run_id": "child_nl",
+   "mode": "niche_loadout",
+   "graph_path": [],
+   "loops_exercised": {
+    "research_rounds": 0
+   },
+   "actions_generated": 0,
+   "context_recovery": "NO_LIVE_ACTION",
+   "checkpoints": 0,
+   "evidence_role_coverage": {},
+   "capability_failures": [],
+   "terminal": {
+    "status": "running",
+    "verdict": null
+   },
+   "settings_hash": null,
+   "registry_candidates_emitted": 0,
+   "handoffs": {
+    "out": 0,
+    "in": 1
+   },
+   "invariant_violations": []
+  },
+  {
+   "run_id": "capfail",
+   "mode": "opportunity_research",
+   "graph_path": [
+    "polymath",
+    "primitives",
+    "signal_gate",
+    "lenses",
+    "structural_lookup",
+    "hypothesize",
+    "semantic_review",
+    "apply_review",
+    "challenge",
+    "triage",
+    "gaps",
+    "web_research",
+    "curate",
+    "challenge",
+    "triage",
+    "gaps",
+    "mechanism",
+    "supplier_search",
+    "normalize_supplier",
+    "qualify",
+    "stop",
+    "normalize_supplier",
+    "qualify",
+    "stop"
+   ],
+   "loops_exercised": {
+    "research_rounds": 1
+   },
+   "actions_generated": 0,
+   "context_recovery": "TERMINAL_IMMUTABLE",
+   "checkpoints": 2,
+   "evidence_role_coverage": {
+    "mechanism": true,
+    "real_behavior": true,
+    "friction_or_desire": true,
+    "contradiction_search": true,
+    "supplier": false,
+    "price": false
+   },
+   "capability_failures": [
+    {
+     "node": "supplier_search",
+     "capability": "alibaba"
+    }
+   ],
+   "terminal": {
+    "status": "stopped",
+    "verdict": "MECHANISM_WITHOUT_SUPPLY"
+   },
+   "settings_hash": null,
+   "registry_candidates_emitted": 7,
+   "handoffs": {
+    "out": 0,
+    "in": 0
+   },
+   "invariant_violations": []
+  },
+  {
+   "run_id": "ops",
+   "mode": "opportunity_research",
+   "graph_path": [],
+   "loops_exercised": {
+    "research_rounds": 0
+   },
+   "actions_generated": 0,
+   "context_recovery": "TERMINAL_IMMUTABLE",
+   "checkpoints": 0,
+   "evidence_role_coverage": {},
+   "capability_failures": [],
+   "terminal": {
+    "status": "stopped",
+    "verdict": "ABANDONED"
+   },
+   "settings_hash": null,
+   "registry_candidates_emitted": 0,
+   "handoffs": {
+    "out": 0,
+    "in": 0
+   },
+   "invariant_violations": []
+  }
+ ],
+ "modes_covered": [
+  "market_discovery",
+  "niche_loadout",
+  "opportunity_research",
+  "product_anchored"
+ ],
+ "total_invariant_violations": 0,
+ "stopping_condition_met": true
+}

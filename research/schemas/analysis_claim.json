@@ -1,0 +1,18 @@
+{
+  "$id": "analysis_claim",
+  "title": "AnalysisClaim — every market statement carries its authority class (docs/11)",
+  "type": "object",
+  "required": ["id", "section", "statement", "classification"],
+  "properties": {
+    "id": {"type": "string"},
+    "section": {"enum": ["market_structure", "customer_community",
+                         "current_signals", "opportunity", "risks"]},
+    "statement": {"type": "string"},
+    "classification": {"enum": ["OBSERVED", "INFERRED", "SIMULATED",
+                                "CURRENT_SIGNAL", "WORKING_HYPOTHESIS",
+                                "CREATIVE_RECOMMENDATION"]},
+    "evidence_refs": {"type": "array"},
+    "contradicting": {"type": "array"},
+    "freshness": {"type": "string"}
+  }
+}

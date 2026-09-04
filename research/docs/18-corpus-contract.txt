@@ -1,0 +1,113 @@
+DOC 18 — THE CORPUS CONTRACT (corpus-agnostic retrieval)
+=========================================================
+Status: ADOPTED 2026-08-23. Generalizes the retrieval seam that docs/01/04/07
+wrote as "Polymath". Nothing else in the architecture changes; this doc is a
+RENAME plus a CONTRACT, not a new layer (docs/15 freeze respected).
+
+1. WHY
+------
+The pipeline's engine is abduction over a knowledge corpus: retrieval pulls a
+wide cross-domain net, θ proposes bridge hypotheses from it ("this would
+resonate because X structure in Y source"), φ constrains them, and the web
+lanes test the unknowns against real people. That engine never depended on
+WHICH corpus system serves the chunks — only on what a retrieval must return
+and on what authority its rows carry. Polymath is being rebuilt; the research
+OS must not wobble when its fuel tank is swapped. Polymath is now ONE adapter
+of this contract, not the name of the seam.
+
+2. VOCABULARY (the rename)
+--------------------------
+- graph node:     polymath            -> corpus        (control_graph)
+- data key:       polymath_evidence   -> corpus_evidence
+- executor id:    polymath_mcp        -> corpus_retrieve (all retrieve nodes)
+- source_family:  polymath_evergreen  -> corpus_evergreen (policies.yaml)
+The discovery graphs already said corpus_lane / corpus_signals; the control
+graph now matches them. Legacy states migrate transparently on load
+(models._migrate_legacy): old data keys, old node name, old source_family
+values. New submissions must use the current names — the verifier stays
+strict.
+
+3. THE CONTRACT — what any backend must provide
+-----------------------------------------------
+A corpus backend is anything the operating agent can query for knowledge:
+Polymath MCP, another RAG stack, a vector DB, a local file/notes corpus, a
+search index over transcripts. The controller never talks to it; the agent
+does, at retrieve nodes (`executor: corpus_retrieve`). To satisfy the node,
+each returned row must carry:
+
+  { "id":      stable identifier the backend can re-resolve later,
+    "summary": what this chunk/doc says (or a verbatim quote),
+    "source":  human-auditable origin (doc title, platform, author, date) }
+
+Optional, used when present: "text" (verbatim), "tags", "trail_signal"
+(see §5). Rows without a re-resolvable id or an auditable source are not
+evidence rows — they are notes, and notes don't ground hypotheses.
+
+Retrieval GUIDANCE (not enforced — quality lives here): pull a WIDE net —
+lexical + semantic when the backend has both, graph/entity hops when it has
+them, multiple queries reformulated from the signal, cross-domain on purpose.
+The corpus feeds ideation; recall beats precision at this node. Dedupe by id.
+
+4. AUTHORITY LAW (unchanged, now named honestly)
+------------------------------------------------
+corpus_evergreen rows may support: MECHANISM_SUPPORT, BEHAVIOR_SUPPORT,
+CONTRADICTION. They may NEVER establish demand roles (FRICTION_EVIDENCE,
+PURCHASE_INTENT, PRODUCT_REQUEST, ...): the corpus is the abduction pool —
+knowledge fuel — and live communities remain the only demand truth. This is
+the anti-hallucination gate: cross-domain retrieval is ALLOWED to inspire
+wild bridges precisely because no bridge survives without web-lane evidence.
+A corpus row's freshness class is EVERGREEN unless the backend supplies a
+dated, LIVE-class source — and then it is still knowledge, not demand.
+
+5. ENRICHED DOCS (trail_signal lift — backend-optional)
+-------------------------------------------------------
+Docs carrying `trail_signal: true` frontmatter + a `## 10. Trail-Signal
+Layer` (opportunity_primitives yaml, role-tagged quotes, niche scopes,
+genesis, suggested_mode) may be LIFTED directly: yaml seeds the primitives
+submission; tagged quotes become observation seeds with their platform/author
+identity. This is a recall shortcut ANY backend may serve; it grants zero
+extra authority — lifted quotes pass the same gates as scraped ones. A corpus
+with no enriched docs simply skips the shortcut.
+
+6. ABSENT OR DEGRADED CORPUS
+----------------------------
+No corpus configured, backend down, or empty results: submit
+  {"capability_failure": {"capability": "corpus", "detail": "..."}}
+at the retrieve node. The run continues with an honest recorded deficit —
+downstream gates already produce honest verdicts on missing lanes. A signal-
+only run (hypotheses from the seed + registry alone) is legitimate and is
+labeled by its deficit, never faked as corpus-grounded.
+
+7. PROVENANCE
+-------------
+`controller.py init --corpus "<backend-id>"` records the backend identity in
+the run state (e.g. "polymath-mcp", "qdrant:my_notes", "files:~/corpus").
+It rides run_identity into every frozen envelope and prints in the report
+header. Provenance only — it never changes behavior. Two runs on the same
+signal with different corpora are comparable by design.
+
+8. WHAT A BACKEND SWAP MAY NEVER CHANGE
+---------------------------------------
+The evidence-authority table (docs/04), the demand-lane monopoly on demand
+roles, gate thresholds, the abstention outcome, report shape, registry laws.
+If a swap needs any of those to move, it is not a corpus swap — it is an
+architecture change and goes through docs, not through config.
+
+9. REFERENCE ADAPTER (2026-09-03): python/corpus_polymath.py
+-------------------------------------------------------------
+Polymath is served through the orchestrator's POST /retrieve
+({query, corpus_id, limit}); the response carries lanes, not rows. The
+adapter maps them onto §3 rows and nothing else:
+  selected_documents[]  -> id polymath:doc:<doc_id>,   summary = profile text,
+                           source = "polymath/<corpus> · <title> · document profile"
+  child_evidence[]      -> id polymath:chunk:<chunk_id>, summary/text = verbatim chunk,
+                           source = "polymath/<corpus> · <title> · chunk <id>"
+  graph_facts[]         -> only with --include-facts (no per-row document origin)
+Titles come from GET /documents?corpus_id=… when reachable, else the
+re-resolvable doc id stands in. Rows are deduped by id across all --query
+reformulations. Backend down or empty -> the §6 capability_failure payload.
+The adapter is the AGENT's tool (the controller still never talks to a
+corpus); any other backend needs only the same three fields.
+Proof (2026-09-03): ecom-meta-v1, 3 reformulations -> contract rows, 0
+violations, accepted at the corpus node, run advanced to primitives.
+

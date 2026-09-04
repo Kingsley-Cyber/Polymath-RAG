@@ -1,0 +1,180 @@
+# Control Graph — the operational constitution of the opportunity_research skill.
+# Structure lives HERE, not in SKILL.md prose (graph-engineering principle:
+# structure and prompt content must be independently versionable).
+graph:
+  id: opportunity_research
+  version: 1.0.0
+  entry: understand
+
+# Every model-executed node declares a ContextContract (docs/10): what the
+# reasoning call is legally allowed and required to know. `require` must be
+# non-empty after backfill (else BLOCKED_CONTEXT_INCOMPLETE); `prefer` is
+# included when present; `exclude` is enforced, never hoped for.
+nodes:
+  understand:
+    type: reason
+    prompt: latent_interpretation
+    outputs: [signal]
+    optional_outputs: [communities]     # docs/19: named communities seed subreddit hints for the web lane
+    context:
+      require: [run_identity]
+      prefer: [signal, registry_snapshot]
+      exclude: [supplier_candidates, leads, mechanisms]
+
+  corpus:
+    type: retrieve
+    on_enter: python.corpus_query_compiler   # docs/19: 3–5 reformulations compiled the moment the run arrives, no LLM
+    executor: corpus_retrieve        # agent queries the host corpus backend (docs/18); never storage engines directly
+    fresh_submission_per_visit: true  # each entry retrieves; stale rows never satisfy a re-entry
+    outputs: [corpus_evidence]
+    optional_outputs: [corpus_backend, corpus_answers]   # docs/21: backend record; docs/22: the RAG's own answers to the plan's questions
+    context:
+      require: [run_identity, signal, corpus_queries]
+      exclude: [hypotheses, mechanisms, supplier_candidates, leads]
+
+  primitives:
+    type: reason
+    prompt: opportunity_primitives
+    outputs: [primitives]
+    context:
+      require: [signal, corpus_evidence]
+      prefer: [registry_snapshot, corpus_answers]
+      exclude: [supplier_candidates, leads]
+
+  signal_gate:
+    type: transform
+    executor: python.signal_gate   # NO_GENERATIVE_SIGNAL is a success outcome
+
+  structural_lookup:
+    type: transform
+    executor: python.structural_lookup  # registry cross-domain analogies (invariant-bounded)
+
+  lenses:
+    type: transform
+    executor: python.lens_gate
+
+  hypothesize:
+    type: reason
+    prompt: bridge_hypothesis     # PORTFOLIO: 3-6 across distinct mechanism families
+    outputs: [hypotheses]
+    context:
+      require: [signal, primitives]
+      prefer: [lenses, cross_domain_analogies, corpus_evidence, registry_snapshot,
+               evidence_authority_rules]
+      exclude: [supplier_candidates, leads]
+
+  semantic_review:
+    type: agent
+    executor: fresh_skeptical_evaluator   # L4: SEPARATE fresh-context subagent, never the generator
+    prompt: semantic_evaluation
+    outputs: [evaluations]
+    sanitize: dossier             # evaluator independence: receipts, never the generator's narrative
+    context:
+      require: [hypotheses]
+      prefer: [satisfaction, evidence_authority_rules]
+      exclude: [corpus_evidence, supplier_candidates, leads, mechanisms]
+    checkpoint: HYPOTHESES_REVIEWED
+
+  apply_review:
+    type: transform
+    executor: python.apply_evaluations    # deterministic application + L4 receipts
+
+  triage:
+    type: transform
+    executor: python.triage        # research-priority prior; HOLD the rest
+    checkpoint: TRIAGE_COMPLETE
+
+  challenge:
+    type: reason
+    prompt: contradiction
+    outputs: [challenges]
+    context:
+      require: [hypotheses]
+      prefer: [observations, evaluations, challenges, satisfaction,
+               evidence_authority_rules, research_allocation]
+      exclude: [supplier_candidates, leads]
+
+  gaps:
+    type: transform
+    executor: python.gap_compiler   # also compiles research queries for open gaps
+
+  web_research:
+    type: agent
+    fresh_submission_per_visit: true  # a research round needs THIS visit's evidence (or a capability_failure)
+    executor: hermes_existing_web_stack   # scrape waterfall / camofox / agent-reach — NO new browser layer
+    outputs: [observations]
+    context:
+      require: [queries, gaps]
+      prefer: [signal, satisfaction, evidence_authority_rules, research_allocation]   # docs/20: starved hypotheses first
+      exclude: [hypotheses, corpus_evidence, mechanisms, supplier_candidates, leads]
+
+  curate:
+    type: transform
+    executor: python.comments
+    checkpoint: RESEARCH_ROUND_CURATED
+
+  mechanism:
+    type: reason
+    prompt: mechanism_mapping
+    outputs: [mechanisms]
+    context:
+      require: [hypotheses, observations]
+      prefer: [satisfaction, primitives, evidence_authority_rules]
+      exclude: [supplier_candidates]
+
+  product_ideation:
+    type: reason
+    prompt: product_ideation             # docs/19: 3–6 DISTINCT product directions, each with variations
+    outputs: [product_concepts]
+    context:
+      require: [signal, mechanisms, observations]
+      prefer: [hypotheses, product_candidates, cross_domain_analogies, primitives]
+      exclude: [supplier_candidates, leads]
+
+  supplier_search:
+    type: agent
+    on_enter: python.sourcing_plan_compiler   # docs/20 §2: per-concept search jobs compiled on arrival
+    fresh_submission_per_visit: true
+    executor: hermes_existing_alibaba_path  # camofox-first sourcing lane
+    outputs: [supplier_candidates]
+    context:
+      require: [mechanisms, product_candidates, product_concepts, sourcing_plan]   # docs/20 §2: one sourcing job per concept
+      prefer: [signal]
+      exclude: [observations, corpus_evidence, challenges, evaluations]
+
+  normalize_supplier:
+    type: transform
+    executor: python.supplier
+    checkpoint: SOURCING_COMPLETE
+
+  qualify:
+    type: gate
+    executor: python.scoring
+    checkpoint: QUALIFICATION_COMPLETE
+
+  stop:
+    type: terminal
+
+edges:
+  - {from: understand,        to: corpus}
+  - {from: corpus,            to: primitives}
+  - {from: primitives,        to: signal_gate}
+  - {from: signal_gate,       to: stop,             when: no_generative_signal}
+  - {from: signal_gate,       to: lenses,           when: generative_signal_present}
+  - {from: lenses,            to: structural_lookup}
+  - {from: structural_lookup, to: hypothesize}
+  - {from: hypothesize,       to: semantic_review}
+  - {from: semantic_review,   to: apply_review}
+  - {from: apply_review,      to: challenge}
+  - {from: challenge,         to: triage}
+  - {from: triage,            to: gaps}
+  - {from: gaps,              to: web_research,     when: material_gap_exists}
+  - {from: gaps,              to: mechanism,        when: evidence_sufficient}
+  - {from: web_research,      to: curate}
+  - {from: curate,            to: challenge}
+  - {from: mechanism,         to: product_ideation, when: mechanism_supported}
+  - {from: product_ideation,  to: supplier_search}
+  - {from: mechanism,         to: stop,             when: no_defensible_bridge}
+  - {from: supplier_search,   to: normalize_supplier}
+  - {from: normalize_supplier, to: qualify}
+  - {from: qualify,           to: stop}
