@@ -28,3 +28,11 @@ that yields nothing is EXHAUSTED for this round — say so, do not pad. Stop
 a lead once it has clearly passed the anchor threshold (5+ records across
 2+ threads by default) and move to the next lead in the batch. What people
 did NOT say stays unknown — the cards will list it.
+
+One payload per visit: the controller applies exactly ONE result per node
+per revision. Gather every record for the round (prior rows + every lead in
+the batch) and submit them together; a second, different payload in the same
+visit is refused as IDEMPOTENCY_CONFLICT (measured live 2026-09-04 — nine
+records lost to a split submission). If you must add more, do it in the next
+population round.
+
