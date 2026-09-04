@@ -11,6 +11,8 @@ loud (502), as in R3a.
 """
 from __future__ import annotations
 
+import re
+
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
@@ -257,24 +259,45 @@ async def _chat_impl(req: ChatRequest) -> dict:
             },
         ) from exc
 
-    out = grounded_answer(bundle, query)
-    if getattr(req, "evidence", False):
-        # CHAT-EVIDENCE-ROWS-V1: the same chunks / documents / facts the answer was
-        # built from, in the contract-row shape (never a second retrieval).
-        from orchestrator.api.evidence_rows import build_evidence_rows
-        try:
-            with tx() as conn:
-                out["evidence_rows"] = build_evidence_rows(
-                    conn,
-                    {"child_evidence": [{"chunk_id": c.get("chunk_id"), "rerank_score": c.get("rerank_score")}
-                                        for c in (locals().get('selected_children') or []) if c.get("chunk_id")],
-                     "selected_documents": [{"doc_id": pr.get("doc_id"), "rerank_score": 0.0} for pr in (locals().get('profiles') or []) if pr.get("doc_id")],
-                     "graph_facts": locals().get('graph_facts') or []},
-                    list(getattr(locals().get('scope'), 'corpus_ids', None) or (req.corpus_ids or ([req.corpus_id] if req.corpus_id else []))), limit=max(12, len(locals().get('selected_children') or [])), explore=False)
-                out["evidence_contract"] = "retrieve-evidence-rows-v1"
-        except Exception as exc:  # noqa: BLE001 — rows are an add-on; the answer already stands
-            out["evidence_rows"] = []; out["evidence_rows_error"] = f"{type(exc).__name__}: {exc}"[:200]
-        out.setdefault("meta", {})["mode"] = out.get("meta", {}).get("mode") or (req.mode or "HYBRID")
+    return grounded_answer(bundle, query)
+
+
+
+_LOC_CHUNK = re.compile(r"^chunk:([A-Za-z0-9_]+)")
+
+
+def attach_evidence_rows(out: dict, req: "ChatRequest") -> dict:
+    """CHAT-EVIDENCE-ROWS-V1: the answer's own citations as RETRIEVE-EVIDENCE-
+    ROWS-V1 rows. Built from `citations[].locators` (chunk ids) and
+    `source_document_ids`, so it is identical on every answer path (FAST,
+    HYBRID, GRAPH) and never a second retrieval."""
+    from orchestrator.api.evidence_rows import build_evidence_rows
+
+    chunk_ids: list[str] = []
+    doc_ids: list[str] = []
+    for c in sorted(out.get("citations") or [], key=lambda x: x.get("citation_id") or 0):
+        for loc in c.get("locators") or []:
+            m = _LOC_CHUNK.match(str(loc))
+            if m and m.group(1) not in chunk_ids:
+                chunk_ids.append(m.group(1))
+        for d in c.get("source_document_ids") or []:
+            if d not in doc_ids:
+                doc_ids.append(d)
+    corpus_ids = list(req.corpus_ids or ([req.corpus_id] if req.corpus_id else []))
+    try:
+        with tx() as conn:
+            out["evidence_rows"] = build_evidence_rows(
+                conn,
+                {"child_evidence": [{"chunk_id": cid, "rerank_score": float(len(chunk_ids) - i)} for i, cid in enumerate(chunk_ids)],
+                 "selected_documents": [{"doc_id": d, "rerank_score": 0.0} for d in doc_ids],
+                 "graph_facts": []},
+                corpus_ids, limit=max(12, len(chunk_ids)), explore=False)
+        out["evidence_contract"] = "retrieve-evidence-rows-v1"
+    except Exception as exc:  # noqa: BLE001 — rows are an add-on; the answer already stands
+        out["evidence_rows"] = []
+        out["evidence_rows_error"] = f"{type(exc).__name__}: {exc}"[:200]
+    meta = out.setdefault("meta", {})
+    meta["mode"] = meta.get("mode") or (req.mode or "HYBRID")
     return out
 
 
@@ -289,6 +312,8 @@ async def chat(req: ChatRequest, request: Request) -> dict:
     with Timer() as t:
         try:
             out = await _chat_impl(req)
+            if getattr(req, "evidence", False):
+                attach_evidence_rows(out, req)
         except Exception as exc:  # noqa: BLE001 — record, then re-raise unchanged
             detail = getattr(exc, "detail", None)
             record_query_receipt(tx, kind="chat", question=question, req=req,
