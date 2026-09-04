@@ -176,9 +176,11 @@ def _fact_provenance(conn, fact_ids: list[str]) -> dict:
     return prov
 
 
-def _graph_hop(conn, facts: list[dict], seen_docs: set, corpus_ids: list[str], limit: int) -> list[dict]:
+def _graph_hop(conn, facts: list[dict], seen_docs: set, corpus_ids: list[str], limit: int,
+               document_ids: Optional[list[str]] = None) -> list[dict]:
     """Chunks in OTHER documents that attest facts sharing an entity with the
-    query's facts — the abduction pool's cross-document reach."""
+    query's facts — the abduction pool's cross-document reach. With a document
+    filter (DOCUMENT-SCOPED-RETRIEVE-V1) the hop stays inside those documents."""
     ent_ids = []
     for f in facts:
         for k in ("subject_id", "object_id"):
@@ -186,6 +188,8 @@ def _graph_hop(conn, facts: list[dict], seen_docs: set, corpus_ids: list[str], l
                 ent_ids.append(f[k])
     if not ent_ids or limit <= 0:
         return []
+    doc_clause = " AND e.doc_id = ANY(%s)" if document_ids else ""
+    doc_params = [list(document_ids)] if document_ids else []
     rows = conn.execute(
         """SELECT DISTINCT ON (e.doc_id) e.chunk_id, e.doc_id, f.fact_id, f.predicate,
                   s.normalized_surface AS subj, o.normalized_surface AS obj
@@ -196,17 +200,22 @@ def _graph_hop(conn, facts: list[dict], seen_docs: set, corpus_ids: list[str], l
              LEFT JOIN entities o ON o.entity_id = f.object_id
             WHERE (f.subject_id = ANY(%s) OR f.object_id = ANY(%s))
               AND d.corpus_id = ANY(%s)
-              AND NOT (e.doc_id = ANY(%s))
+              AND NOT (e.doc_id = ANY(%s))""" + doc_clause + """
             ORDER BY e.doc_id, f.created_at DESC
             LIMIT %s""",
-        (ent_ids[:12], ent_ids[:12], corpus_ids, list(seen_docs) or [""], limit)).fetchall()
+        (ent_ids[:12], ent_ids[:12], corpus_ids, list(seen_docs) or [""], *doc_params, limit)).fetchall()
     return [{"chunk_id": r[0], "doc_id": r[1], "fact_id": r[2], "predicate": r[3], "subject": r[4], "object": r[5]}
             for r in rows]
 
 
 def build_evidence_rows(conn, response: dict, corpus_ids: list[str], *, limit: int = 12,
-                        explore: bool = False) -> list[dict]:
+                        explore: bool = False, document_ids: Optional[list[str]] = None) -> list[dict]:
     limit = max(1, min(int(limit or 12), 60))
+    # DOCUMENT-SCOPED-RETRIEVE-V1: the lanes are already filtered at the store
+    # (SQL / Qdrant payload). Here the filter decides which attestations may
+    # head a graph fact, keeps the explore hop inside the filtered documents,
+    # and drops any row of another document (a no-op unless a lane leaked).
+    allowed = set(document_ids) if document_ids else None
     per_doc_cap = 2 if explore else 4
     # 1. gather chunk ids with their lanes + best score
     lanes: dict[str, set] = defaultdict(set)
@@ -237,6 +246,9 @@ def build_evidence_rows(conn, response: dict, corpus_ids: list[str], *, limit: i
             doc_ids.append(d["doc_id"])
     facts = response.get("graph_facts") or []
     prov = _fact_provenance(conn, [f.get("fact_id") for f in facts if f.get("fact_id")])
+    if allowed is not None:
+        prov = defaultdict(list, {fid: [p for p in plist if p["doc_id"] in allowed]
+                                  for fid, plist in prov.items()})
     kinds = _fact_claim_kinds(conn, [f.get("fact_id") for f in facts if f.get("fact_id")])
     for plist in prov.values():
         for p in plist:
@@ -271,7 +283,7 @@ def build_evidence_rows(conn, response: dict, corpus_ids: list[str], *, limit: i
     candidates = []
     for cid in ordered:
         r = chunk_row(cid, "chunk")
-        if r:
+        if r and (allowed is None or r["doc_id"] in allowed):
             candidates.append(r)
     if explore:
         by_doc: dict[str, list] = defaultdict(list)
@@ -292,6 +304,8 @@ def build_evidence_rows(conn, response: dict, corpus_ids: list[str], *, limit: i
     # 3. document rows: the summary when it exists (never a raw head)
     for d in response.get("selected_documents") or []:
         doc = docs.get(d.get("doc_id"))
+        if allowed is not None and d.get("doc_id") not in allowed:
+            continue
         if not doc or not doc.get("summary") or not (doc["summary"].get("summary") or "").strip():
             continue
         s = doc["summary"]
@@ -325,7 +339,8 @@ def build_evidence_rows(conn, response: dict, corpus_ids: list[str], *, limit: i
     if explore and facts:
         seen_docs = {r["doc_id"] for r in rows}
         hop_limit = max(0, limit - len([r for r in rows if r["kind"] == "chunk"]))
-        hops = _graph_hop(conn, facts, seen_docs, corpus_ids, min(12, hop_limit or 6))
+        hops = _graph_hop(conn, facts, seen_docs, corpus_ids, min(12, hop_limit or 6),
+                          document_ids=document_ids)
         hop_chunks = _fetch_chunks(conn, [h["chunk_id"] for h in hops])
         chunks.update(hop_chunks)
         docs.update(_fetch_docs(conn, [h["doc_id"] for h in hops if h["doc_id"] not in docs]))
@@ -335,4 +350,6 @@ def build_evidence_rows(conn, response: dict, corpus_ids: list[str], *, limit: i
             if r:
                 r["lanes"] = ["graph_hop"]
                 rows.append(r)
+    if allowed is not None:
+        rows = [r for r in rows if r.get("doc_id") in allowed]
     return rows
