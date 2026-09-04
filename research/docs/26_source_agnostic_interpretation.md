@@ -98,3 +98,30 @@ technical manual, a field manual, a biography, an anthropology text, a design
 book, a sports book, a history — and ask whether the same interpretation
 architecture pulls useful latent structure from all of them. Ten similar
 business books test almost nothing.
+
+## §8 Document scope and the unscoped answer path (policy B)
+
+`controller.py init --document-id <id>` (repeatable) or `corpus_polymath.py
+--document-id <id>` restricts the corpus lanes to a subset of documents.
+The adapter threads `document_ids` into `POST /retrieve` and `POST
+/retrieve/plan` (DOCUMENT-SCOPED-RETRIEVE-V1, applied at the stores before
+`limit`). `/chat` cannot be scoped, so while a scope is active the adapter
+never calls it: rows come from retrieve/plan only and θ interprets locally
+(`corpus_backend.chat_skipped` records the decision). A backend that does not
+advertise `contracts.document_ids` gets `document_scope_warning` — the scope
+is then a request, not a guarantee. Forced document diversity is still not a
+metric; the scope exists for deliberate experiments (one book, one shelf).
+
+## §9 Fail-closed lineage (senior review, 2026-09-04)
+
+Unclassified rows may sit in the retrieval context and be read. They can never
+become lineage: a latent structure's or corpus observation's `evidence_refs`,
+a primitive's `evidence_refs`, a hypothesis hop, or a structural analogy must
+name rows that exist and are classified in `row_relevance` as anything but
+IRRELEVANT. `hypothesize` may classify the rows it is about to cite by
+submitting `row_relevance` in the same payload (the map merges). Canary 6
+uses `corpus_named`, never token overlap with the whole corpus; canary 8
+requires a field cause (contradicting observation, or a challenge/evaluation
+that cites admitted field evidence); canary 7 requires a configured trap text
+that was retrieved, classified IRRELEVANT and referenced by nothing.
+

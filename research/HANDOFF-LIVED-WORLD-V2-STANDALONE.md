@@ -518,3 +518,11 @@ structure text) from searchable kinds, capped by `nominate_max_latent`; provenan
 diagnostic only. Harness section 21 must cover: both schemas, primitives mirror + rejection of an unknown relevance
 class, LATENT lead nomination with structure-language queries, IRRELEVANT rows refused in hop_refs and skipped by
 analogies, `corpus_named` true/false cases, and the canary statuses (PASS / NOT_TRIGGERED / FAIL) on synthetic states.
+
+## 14. v2.1.1 addendum — senior-review regressions
+
+Mirror the v2.1.1 versions of `python/{controller,lived_world,executors,provenance,corpus_polymath}.py`,
+`prompts/opportunity_primitives.md`, `graph/control_graph.yaml` (hypothesize `optional_outputs: [row_relevance]`),
+`tests/{calibration_acceptance,mirror_check}.py`, `tests/run_all.py` (section 22), `docs/26` §8–§9. The standalone repo
+now carries `.github/workflows/harness.yml` and `MIRROR_RECEIPT.json`; regenerate the receipt with
+`python3 tests/mirror_check.py --standalone <repo> --out <repo>/MIRROR_RECEIPT.json` after every mirror and commit it.

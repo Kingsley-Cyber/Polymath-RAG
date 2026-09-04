@@ -1,5 +1,5 @@
 name: opportunity-research
-version: 2.1.0
+version: 2.1.1
 architecture: v2-LIVED-WORLD   # docs/25 (owner directive 2026-09-04): population discovery before ideation; v1 freeze lifted for this layer only
 qualification: examples/architecture_qualification.v1.json   # 0 invariant violations, 4 modes
 kind: hermes-skill

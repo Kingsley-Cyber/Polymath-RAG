@@ -69,14 +69,18 @@ def main() -> int:
     hermes_target = os.path.realpath(a.hermes_skill) if os.path.exists(a.hermes_skill) else None
     hermes_version = version_of(os.path.join(a.hermes_skill, "SKILL.md")) if hermes_target else None
     ref_version = version_of(os.path.join(ROOT, "SKILL.md"))
+    hermes_files = {k: v for k, v in files(hermes_target).items() if k not in ("MIRROR_RECEIPT.json", ".gitignore", "README.md")} if hermes_target else {}
+    hermes_drift = sorted(k for k in ref if hermes_files.get(k) != ref[k]) if hermes_target else None
     hermes_is = ("reference" if hermes_target and os.path.realpath(ROOT) == hermes_target else
                  "standalone" if hermes_target and os.path.realpath(a.standalone) == hermes_target else
-                 "other" if hermes_target else "absent")
+                 "identical-to-reference" if hermes_target and not hermes_drift else
+                 "DRIFTED" if hermes_target else "absent")
     receipt = {"reference": {"path": ROOT, "commit": git_head(ROOT), "version": ref_version, "files": len(ref)},
                "standalone": {"path": os.path.abspath(a.standalone), "commit": git_head(a.standalone), "version": version_of(os.path.join(a.standalone, "SKILL.md")), "files_compared": len([k for k in ref if k in sa])},
                "missing_in_standalone": missing, "drift": drift, "unexpected_in_standalone": extra,
-               "hermes_skill": {"path": a.hermes_skill, "resolves_to": hermes_target, "is": hermes_is, "version": hermes_version},
-               "parity": not missing and not drift and not extra and (hermes_version == ref_version if hermes_target else True)}
+               "hermes_skill": {"path": a.hermes_skill, "resolves_to": hermes_target, "is": hermes_is, "version": hermes_version,
+                                "drift_vs_reference": (hermes_drift or [])[:10]},
+               "parity": not missing and not drift and not extra and (not hermes_drift if hermes_target else True)}
     text = json.dumps(receipt, indent=1)
     if a.out:
         open(a.out, "w", encoding="utf-8").write(text + "\n")
