@@ -2756,16 +2756,16 @@ ok(len(_recs) == 1 and _recs[0]["lead_id"] == "lz" and _recs[0]["origin"] == "PR
 # 20i. the calibration acceptance test runs on a finished state and reports per-criterion receipts
 _acc = subprocess.run([PY, os.path.join(ROOT, "tests", "calibration_acceptance.py"), "--state", pos, "--heterogeneous-docs", "Some Novel", "--trap-text", "pillow"], capture_output=True, text=True)
 _rep = json.loads(_acc.stdout)
-ok(set(_rep["statuses"]) == {"corpus_independence", "heterogeneous_source_reasoning", "noun_echo_resistance", "legitimate_echo_survival",
-                              "latent_population_discovery", "field_originated_opportunity", "irrelevant_source_rejection", "hypothesis_death"}
+ok(set(_rep["statuses"]) == {"corpus_independence", "heterogeneous_source_reasoning", "noun_echo_resistance", "legitimate_corpus_overlap_survival",
+                              "open_field_population_discovery", "latent_population_resolution", "field_originated_opportunity", "irrelevant_source_rejection", "hypothesis_death"}
    and _acc.returncode == (0 if _rep["pass"] else 1) and "cited_share_of_shelf" in _rep["diagnostics"],
-   "calibration acceptance reports the eight canaries (docs/26 §6) with shelf share as a diagnostic only")
-ok(_rep["statuses"]["corpus_independence"] == "PASS" and _rep["statuses"]["latent_population_discovery"] == "PASS"
+   "calibration acceptance reports the nine canaries (docs/26 §6, population canary split) with shelf share as a diagnostic only")
+ok(_rep["statuses"]["corpus_independence"] == "PASS" and _rep["statuses"]["open_field_population_discovery"] == "PASS"
    and _rep["statuses"]["field_originated_opportunity"] == "PASS" and _rep["statuses"]["irrelevant_source_rejection"] == "PASS"
    and _rep["statuses"]["hypothesis_death"] == "PASS" and _rep["statuses"]["noun_echo_resistance"] == "NOT_TRIGGERED",
    f"the synthetic walk earns the mandatory canaries and reports untriggered ones honestly ({_rep['statuses']})")
-ok(_rep["statuses"]["heterogeneous_source_reasoning"] == "FAIL" and _rep["pass"] is False,
-   "a configured heterogeneous document that nothing built on FAILS canary 2 and the run (the novel row was IRRELEVANT here)")
+ok(_rep["statuses"]["heterogeneous_source_reasoning"] == "NOT_EVALUATED" and _rep["pass"] is True,
+   "STANDARD calibration: a configured heterogeneous document that nothing built on is NOT_EVALUATED, never a FAIL (item 2)")
 _acc2 = subprocess.run([PY, os.path.join(ROOT, "tests", "calibration_acceptance.py"), "--state", pos, "--trap-text", "pillow"], capture_output=True, text=True)
 _rep2 = json.loads(_acc2.stdout)
 ok(_rep2["statuses"]["heterogeneous_source_reasoning"] == "NOT_EVALUATED" and _rep2["pass"] is True and _acc2.returncode == 0,
@@ -2819,8 +2819,8 @@ _cs["data"]["observations"].append({"id": "o_c", "gap_id": "g_dead", "contradict
 sys.path.insert(0, os.path.join(ROOT, "tests"))
 import calibration_acceptance as _cal  # noqa: E402
 _rep21 = _cal.evaluate(_cs, _pol20, trap_texts={"pillow scene"})
-ok(_rep21["statuses"]["noun_echo_resistance"] == "PASS" and _rep21["statuses"]["legitimate_echo_survival"] == "PASS"
-   and _rep21["statuses"]["latent_population_discovery"] == "PASS" and _rep21["statuses"]["irrelevant_source_rejection"] == "PASS"
+ok(_rep21["statuses"]["noun_echo_resistance"] == "PASS" and _rep21["statuses"]["legitimate_corpus_overlap_survival"] == "PASS"
+   and _rep21["statuses"]["open_field_population_discovery"] == "PASS" and _rep21["statuses"]["irrelevant_source_rejection"] == "PASS"
    and _rep21["statuses"]["hypothesis_death"] == "PASS",
    f"canaries 3/4/5/7/8 PASS on a state that refused an echo, kept a grounded echo, instantiated an open-field community, marked a row irrelevant and killed a corpus hypothesis ({_rep21['statuses']})")
 _cs2 = copy.deepcopy(_cs); _cs2["data"]["row_relevance"] = {}
@@ -2954,6 +2954,201 @@ _pp22 = open(os.path.join(ROOT, "prompts", "opportunity_primitives.md"), encodin
 ok("A named population is never required" in _pp22 and "LATENT PROBLEM → population" in _pp22 and "no human population or activity" not in _pp22,
    "generative_signal rule: a latent structure without any population is generative (item 8)")
 ok(doctor.run()["ok"], "doctor green over the senior-review regressions")
+
+# ---------------------------------------------------------------------------
+# 23. final correctness pass (2026-09-04): canary semantics, presence audit, field origin, fail-closed scope
+# ---------------------------------------------------------------------------
+# 23a. ITEM 1 — the population canary is SPLIT: open-field discovery vs LATENT resolution
+_lp = copy.deepcopy(_cs)                       # lz = OPEN_FIELD, INSTANTIATED, record f0 (lead_id "l")
+_r23 = _cal.evaluate(_lp, _pol20, trap_texts={"pillow scene"})
+ok("latent_population_discovery" not in _r23["statuses"] and "open_field_population_discovery" in _r23["statuses"] and "latent_population_resolution" in _r23["statuses"],
+   "the old latent_population_discovery canary is gone; open_field_population_discovery and latent_population_resolution replace it")
+ok(_r23["statuses"]["open_field_population_discovery"] == "PASS" and _r23["statuses"]["latent_population_resolution"] == "FAIL",
+   "an OPEN_FIELD instantiated lead satisfies open-field discovery and NEVER latent resolution")
+ok(_r23["pass"] is True and "latent_population_resolution" in _r23.get("advisory", []),
+   "in STANDARD mode latent resolution is advisory: reported FAIL, never gating the books-style run")
+_lp["data"]["latent_structures"] = [{"id": "st_q", "kind": "ACCESS_PROBLEM", "text": "one hand busy", "evidence_refs": ["c2"], "authority": "LATENT_HYPOTHESIS"}]
+_lp["data"]["population_leads"] = [{"id": "lat1", "kind": "POPULATION", "name": "who repeatedly experiences: one hand busy", "source_lane": "LATENT", "search_mode": "LATENT",
+                                    "latent_structure_id": "st_q", "nominated_by": ["st_q"], "authority": "LEAD", "status": "NOMINATED", "record_ids": []}]
+ok(_cal.evaluate(_lp, _pol20, trap_texts={"pillow scene"})["statuses"]["latent_population_resolution"] == "FAIL", "a LATENT lead nominated but never instantiated does not resolve")
+_lp["data"]["population_leads"][0].update({"status": "INSTANTIATED", "record_ids": ["ghost_1"]})
+ok(_cal.evaluate(_lp, _pol20, trap_texts={"pillow scene"})["statuses"]["latent_population_resolution"] == "FAIL", "a LATENT lead marked INSTANTIATED with no admitted field record behind it does not resolve")
+_lp["data"]["population_leads"][0]["record_ids"] = ["f0"]      # f0 exists but its lead_id is "l", not this lead
+ok(_cal.evaluate(_lp, _pol20, trap_texts={"pillow scene"})["statuses"]["latent_population_resolution"] == "FAIL", "a record that does not point back to the LATENT lead does not resolve it")
+_lp["data"]["field_records"].append(dict(_lp["data"]["field_records"][0], id="f_lat", lead_id="lat1", community="r/handsfree"))
+_lp["data"]["population_leads"][0]["record_ids"] = ["f_lat"]
+_r23b = _cal.evaluate(_lp, _pol20, trap_texts={"pillow scene"})
+ok(_r23b["statuses"]["latent_population_resolution"] == "PASS" and _r23b["checks"]["latent_population_resolution"]["resolved"][0]["latent_structure_id"] == "st_q",
+   "LATENT lead + admitted structure + INSTANTIATED + a real field record pointing back = latent resolution PASS")
+_lp["data"]["latent_structures"] = []
+ok(_cal.evaluate(_lp, _pol20, trap_texts={"pillow scene"})["statuses"]["latent_population_resolution"] == "FAIL", "a latent_structure_id that resolves to no admitted structure does not count")
+# 23b. ITEM 2 — heterogeneous-source reasoning is NOT_EVALUATED in normal calibration; the dedicated mode measures GENERATION
+_het = copy.deepcopy(_cs)   # c3 = a row from "N" (the novel), classified IRRELEVANT, nothing built on it
+_r_std = _cal.evaluate(_het, _pol20, heterogeneous_docs={"N"}, trap_texts={"pillow scene"})
+ok(_r_std["statuses"]["heterogeneous_source_reasoning"] == "NOT_EVALUATED" and _r_std["pass"] is True and _r_std["mode"] == "STANDARD",
+   "STANDARD mode: an unrelated novel that yielded nothing is NOT a failure — any source MAY generate, no source MUST")
+_r_sa = _cal.evaluate(_het, _pol20, heterogeneous_docs={"N"}, trap_texts={"pillow scene"}, mode="SOURCE_AGNOSTIC_CALIBRATION")
+ok(_r_sa["statuses"]["heterogeneous_source_reasoning"] == "FAIL" and _r_sa["pass"] is False and "heterogeneous_source_reasoning" in _r_sa["mandatory"],
+   "SOURCE_AGNOSTIC_CALIBRATION: a configured heterogeneous row that fed no structure and no hop FAILS, and the canary is mandatory")
+_het["data"]["row_relevance"]["c3"] = "STRUCTURAL_ANALOGY"
+_het["data"]["latent_structures"] = [{"id": "st_n", "kind": "ROUTINE", "text": "t", "evidence_refs": ["c3"], "authority": "LATENT_HYPOTHESIS"}]
+_r_sa2 = _cal.evaluate(_het, _pol20, heterogeneous_docs={"N"}, trap_texts={"never retrieved"}, mode="SOURCE_AGNOSTIC_CALIBRATION")
+ok(_r_sa2["statuses"]["heterogeneous_source_reasoning"] == "PASS" and _r_sa2["checks"]["heterogeneous_source_reasoning"]["structures"] == ["st_n"],
+   "a heterogeneous row that fed a valid latent structure PASSES generation")
+_het["data"]["hypotheses"].append({"id": "h_from_novel", "status": "REJECTED", "hop_refs": {"0": ["c3"]}}); _het["data"]["latent_structures"] = []
+ok(_cal.evaluate(_het, _pol20, heterogeneous_docs={"N"}, trap_texts={"never retrieved"}, mode="SOURCE_AGNOSTIC_CALIBRATION")["statuses"]["heterogeneous_source_reasoning"] == "PASS",
+   "a heterogeneous row that fed a hypothesis hop PASSES even though the hypothesis later died — generation, not survival")
+_het["data"]["row_relevance"]["c3"] = "IRRELEVANT"
+ok(_cal.evaluate(_het, _pol20, heterogeneous_docs={"N"}, trap_texts={"never retrieved"}, mode="SOURCE_AGNOSTIC_CALIBRATION")["statuses"]["heterogeneous_source_reasoning"] == "FAIL",
+   "a hop that cites an IRRELEVANT heterogeneous row is not a valid contribution (lineage law)")
+ok(_cal.evaluate(_het, _pol20, trap_texts={"pillow scene"}, mode="SOURCE_AGNOSTIC_CALIBRATION")["checks"]["heterogeneous_source_reasoning"]["status"] == "FAIL",
+   "the dedicated mode without configured heterogeneous documents FAILS loudly instead of guessing")
+_acc_m = subprocess.run([PY, os.path.join(ROOT, "tests", "calibration_acceptance.py"), "--state", pos, "--calibration-mode", "SOURCE_AGNOSTIC_CALIBRATION", "--heterogeneous-docs", "Some Novel", "--trap-text", "pillow"], capture_output=True, text=True)
+ok(_acc_m.returncode == 1 and json.loads(_acc_m.stdout)["mode"] == "SOURCE_AGNOSTIC_CALIBRATION", "the CLI exposes --calibration-mode explicitly (never inferred from --heterogeneous-docs)")
+# 23c. ITEM 3 — corpus-wide PRESENCE audit: "not named in retrieved rows" is not "not named in the corpus"
+_pa = copy.deepcopy(_fo); _pa["data"]["corpus_observations"] = []           # 22d: retrieved rows never name "magnetic gel sleeve"
+_pc3 = _pa["data"]["product_concepts"][0]
+ok(_pvm.corpus_named(_pc3, _pa)["named"] is False, "control: the retrieved rows alone do not name the concept")
+_elsewhere = [{"id": "x1", "doc_id": "D9", "title": "Some Manual", "text": "The magnetic gel sleeve clips onto the vest strap; refill it before long runs."}]
+_rc = _pvm.corpus_presence(_pc3, "ecom-meta-v1", _elsewhere, _pa, documents_checked=10)
+ok(_rc["named"] is True and _rc["exact_phrase_hits"] == ["x1"] and _rc["document_hits"] == ["D9"] and _rc["documents_checked"] == 10
+   and _rc["normalized_name"] == "magnetic gel sleeve" and _rc["method_version"] and _rc["concept_id"] == "pc" and _rc["corpus_id"] == "ecom-meta-v1",
+   "a concept absent from the run's rows but present elsewhere in the corpus is NAMED by the presence receipt (item 3)")
+_ln_before = _pvm.lineage(_pc3, _pa, _pol20)
+_pa["data"]["corpus_presence"] = [_rc]
+_ln3 = _pvm.lineage(_pc3, _pa, _pol20)
+ok(_ln3["corpus_named"] is True and _ln3["field_originated"] is False and _ln3["corpus_presence"]["named"] is True and _ln_before["field_originated"] is True,
+   "lineage consumes the presence receipt when available: corpus_named flips true and field_originated drops")
+ok(_ln3["verdict"] == _ln_before["verdict"] and _ln3["independent_voices"] == _ln_before["independent_voices"] and _rc["evidentiary_authority"] == "NONE_FOR_CURRENT_DEMAND",
+   "corpus presence changes NAMING only — it can never establish or remove demand (verdict and voices unchanged)")
+_rc0 = _pvm.corpus_presence(_pc3, "ecom-meta-v1", [{"id": "y1", "doc_id": "D1", "text": "a magnetic closure keeps the vest shut"}], _pa, documents_checked=10)
+ok(_rc0["named"] is False and not _rc0["exact_phrase_hits"] and not _rc0["normalized_multi_token_hits"] and _rc0["documents_checked"] == 10,
+   "one generic shared token anywhere in the corpus is NOT presence — absent from the whole corpus => named false")
+_rn1 = _pvm.corpus_presence({"id": "pcN", "name": "Dose-State Keychain FOBS"}, "c", [{"id": "z", "doc_id": "D", "text": "she hung a dose state keychain fob on the ring"}], _pa, documents_checked=1)
+_rn2 = _pvm.corpus_presence({"id": "pcN", "name": "dose state keychain fob"}, "c", [{"id": "z", "doc_id": "D", "text": "she hung a Dose-state Keychain Fob on the ring"}], _pa, documents_checked=1)
+ok(_rn1["normalized_name"] == "dose state keychain fob" and _rn1["named"] and _rn1["exact_phrase_hits"] == _rn2["exact_phrase_hits"] == ["z"] and _rn1["normalized_name"] == _rn2["normalized_name"],
+   "phrase normalization (case, hyphen, plural) is deterministic in both directions")
+_rn3 = _pvm.corpus_presence({"id": "pcM", "name": "Keychain dose fob"}, "c", [{"id": "z", "doc_id": "D", "text": "a keychain fob that shows the dose"}], _pa, documents_checked=1)
+ok(_rn3["named"] is True and _rn3["normalized_multi_token_hits"] == ["z"] and not _rn3["exact_phrase_hits"], "a normalized bigram of the name in a row is a multi-token hit")
+_rn4 = _pvm.corpus_presence({"id": "pcO", "name": "Compression socks for nurses"}, "c", [], _cn, documents_checked=1)
+ok(_rn4["named"] is True and _rn4["observed_product_hits"] == ["o1"], "a recorded OBSERVED_PRODUCT naming the concept is presence even with no rows")
+# the adapter runs the audit against the backend with EXISTING calls (/documents + /retrieve) and writes the receipts
+class _PresStub(http.server.BaseHTTPRequestHandler):
+    calls = []
+    def log_message(self, *a): pass
+    def _send(self, code, body):
+        data = json.dumps(body).encode(); self.send_response(code); self.send_header("content-type", "application/json"); self.send_header("content-length", str(len(data))); self.end_headers(); self.wfile.write(data)
+    def do_GET(self):
+        _PresStub.calls.append(("GET", self.path))
+        if self.path == "/capabilities":
+            return self._send(200, {"backend": "polymath", "version": "stub", "contracts": {"retrieve-evidence-rows": "v1", "corpus-plan": "v1", "chat-evidence": "v1", "document_ids": True}})
+        if self.path.startswith("/documents"):
+            return self._send(200, {"corpus_id": "stubcorp", "documents": [{"doc_id": "D1", "source_name": "a.md", "chunks": 3}, {"doc_id": "D9", "source_name": "b.md", "chunks": 5}], "runs": []})
+        return self._send(404, {"detail": "no"})
+    def do_POST(self):
+        n = int(self.headers.get("content-length") or 0); body = json.loads(self.rfile.read(n) or b"{}")
+        _PresStub.calls.append(("POST", self.path, body.get("query")))
+        rows = [{"id": "chunk:p1", "kind": "chunk", "doc_id": "D9", "title": "Some Manual", "source": "s", "text": "The magnetic gel sleeve clips onto the vest strap.", "text_clean": "The magnetic gel sleeve clips onto the vest strap.", "lanes": ["lexical"], "score": 0.9}]
+        if "gel sleeve" in (body.get("query") or ""):
+            return self._send(200, {"evidence_rows": rows, "evidence_contract": "retrieve-evidence-rows-v1"})
+        return self._send(200, {"evidence_rows": [], "evidence_contract": "retrieve-evidence-rows-v1"})
+_pk = socket.socket(); _pk.bind(("127.0.0.1", 0)); _pport = _pk.getsockname()[1]; _pk.close()
+_psrv = http.server.ThreadingHTTPServer(("127.0.0.1", _pport), _PresStub); threading.Thread(target=_psrv.serve_forever, daemon=True).start()
+_pst = os.path.join(tmp, "presence_state.json"); _pa2 = copy.deepcopy(_fo); _pa2["corpus"] = "polymath:stubcorp"
+_pa2["data"]["product_concepts"].append({"id": "pc_none", "mechanism_id": "m", "name": "Cabin ankle sleeve", "form_factor": "sleeve", "evidence_refs": ["f0", "f1", "f2"]})
+json.dump(_pa2, open(_pst, "w"))
+_pout = os.path.join(tmp, "presence_payload.json")
+_pr = subprocess.run([PY, os.path.join(ROOT, "python", "corpus_polymath.py"), "--state", _pst, "--url", f"http://127.0.0.1:{_pport}", "--presence", "--out", _pout], capture_output=True, text=True)
+_ppay = json.load(open(_pout)) if os.path.exists(_pout) else {}
+_pby = {r["concept_id"]: r for r in _ppay.get("corpus_presence") or []}
+ok(_pr.returncode == 0 and _pby.get("pc", {}).get("named") is True and _pby["pc"]["document_hits"] == ["D9"] and _pby["pc"]["documents_checked"] == 2
+   and _pby.get("pc_none", {}).get("named") is False and any(c[0] == "GET" and c[1].startswith("/documents") for c in _PresStub.calls)
+   and all(c[1] == "/retrieve" for c in _PresStub.calls if c[0] == "POST"),
+   "corpus_polymath --presence audits every final concept with existing /documents + /retrieve calls and writes CorpusPresenceReceipts")
+ok(not any(c[1] in ("/chat", "/retrieve/plan") for c in _PresStub.calls if c[0] == "POST"), "the presence audit is a final check, never the opportunity retrieval path (no /chat, no plan)")
+_psrv.shutdown()
+_acc_p = subprocess.run([PY, os.path.join(ROOT, "tests", "calibration_acceptance.py"), "--state", _pst, "--presence", _pout, "--trap-text", "pillow"], capture_output=True, text=True)
+_rep_p = json.loads(_acc_p.stdout)
+ok(_rep_p["checks"]["corpus_independence"]["presence_audited"] == 2 and "Magnetic gel sleeve" not in _rep_p["checks"]["corpus_independence"]["hits"],
+   "calibration acceptance consumes --presence receipts: a concept the corpus names elsewhere no longer counts as corpus-independent")
+# 23d. ITEM 4 — deterministic field origin: FIELD_NAMED / WORKAROUND_DERIVED / NOT_FIELD_ORIGINATED
+_f4 = copy.deepcopy(_fo); _f4["data"]["corpus_presence"] = []
+_o4 = _pvm.field_origin(_f4["data"]["product_concepts"][0], _f4)
+ok(_o4["origin"] == "FIELD_NAMED" and set(_o4["matched_field_records"]) == {"f0", "f1", "f2"} and _o4["explicit_product_mentions"] == ["magnetic gel sleeve"]
+   and _o4["concept_id"] == "pc" and "matched_terms" in _o4 and "workaround_refs" in _o4,
+   "an explicit products_named match is FIELD_NAMED with the matching records and mentions in the receipt (item 4)")
+for r in _f4["data"]["field_records"]:
+    r["products_named"] = []; r["workaround"] = "wraps a magnetic strip around the bottle"
+_o4b = _pvm.field_origin(_f4["data"]["product_concepts"][0], _f4)
+ok(_o4b["origin"] == "NOT_FIELD_ORIGINATED" and not _o4b["matched_field_records"], "ONE generic shared token ('magnetic') is not field lineage")
+ok(_pvm.lineage(_f4["data"]["product_concepts"][0], _f4, _pol20)["field_originated"] is False, "the old token-intersection lineage no longer makes it field-originated")
+for r in _f4["data"]["field_records"]:
+    r["workaround"] = "rubber-bands a gel sleeve to the strap"
+_f4["data"]["product_concepts"][0].update({"name": "Strap clip pouch", "form_factor": "clip-on gel sleeve for the strap"})
+_o4c = _pvm.field_origin(_f4["data"]["product_concepts"][0], _f4)
+ok(_o4c["origin"] == "WORKAROUND_DERIVED" and set(_o4c["workaround_refs"]) == {"f0", "f1", "f2"} and _o4c["explicit_product_mentions"] == []
+   and {"gel", "sleeve", "strap"} & set(_o4c["matched_terms"]),
+   "a form factor that maps onto a real admitted workaround (≥2 content terms) is WORKAROUND_DERIVED — no claim the participant named the product")
+_ln4 = _pvm.lineage(_f4["data"]["product_concepts"][0], _f4, _pol20)
+ok(_ln4["field_originated"] is True and _ln4["field_origin"]["origin"] == "WORKAROUND_DERIVED", "field_originated = origin ∈ {FIELD_NAMED, WORKAROUND_DERIVED} AND not corpus-named; the receipt rides on the lineage row")
+for r in _f4["data"]["field_records"]:
+    r.pop("source_identity", None)
+ok(_pvm.field_origin(_f4["data"]["product_concepts"][0], _f4)["origin"] == "NOT_FIELD_ORIGINATED", "a workaround without valid field provenance (no source identity) cannot originate anything")
+# 23e. ITEM 6 — receipt terminology: overlap survival is named for what it measures; per-concept receipts are explicit
+ok("legitimate_echo_survival" not in _r23["statuses"] and "legitimate_corpus_overlap_survival" in _r23["statuses"], "legitimate_echo_survival is renamed legitimate_corpus_overlap_survival (it triggers on corpus_named OR example overlap)")
+ok(_r23["concept_receipts"] and all({"concept", "corpus_named", "corpus_example_overlap", "field_origin", "verdict"} <= set(x) for x in _r23["concept_receipts"]),
+   "every concept receipt exposes corpus_named, corpus_example_overlap and field_origin separately")
+# 23f. ITEM 5 — document scope FAILS CLOSED when the backend cannot guarantee it
+class _NoScopeStub(http.server.BaseHTTPRequestHandler):
+    calls = []; advertise = False
+    def log_message(self, *a): pass
+    def _send(self, code, body):
+        data = json.dumps(body).encode(); self.send_response(code); self.send_header("content-type", "application/json"); self.send_header("content-length", str(len(data))); self.end_headers(); self.wfile.write(data)
+    def do_GET(self):
+        _NoScopeStub.calls.append(("GET", self.path, None))
+        if self.path == "/capabilities":
+            c = {"retrieve-evidence-rows": "v1", "corpus-plan": "v1", "chat-evidence": "v1"}
+            if _NoScopeStub.advertise: c["document_ids"] = True
+            return self._send(200, {"backend": "polymath", "version": "stub", "contracts": c})
+        return self._send(404, {"detail": "no"})
+    def do_POST(self):
+        n = int(self.headers.get("content-length") or 0); body = json.loads(self.rfile.read(n) or b"{}")
+        _NoScopeStub.calls.append(("POST", self.path, body))
+        rows = [dict(r) for r in _SAMPLE["evidence_rows"]]
+        if self.path == "/retrieve/plan":
+            return self._send(200, {"plan": _PLANFIX["expected"], "evidence_rows": [dict(r, query_ids=[_PLANFIX["expected"][0]["id"]]) for r in rows]})
+        if self.path == "/retrieve":
+            return self._send(200, dict(_SAMPLE))
+        if self.path == "/chat":
+            return self._send(200, {"answer": "unscoped", "evidence_rows": rows, "meta": {}})
+        return self._send(404, {"detail": "no"})
+_nk = socket.socket(); _nk.bind(("127.0.0.1", 0)); _nport = _nk.getsockname()[1]; _nk.close()
+_nsrv = http.server.ThreadingHTTPServer(("127.0.0.1", _nport), _NoScopeStub); threading.Thread(target=_nsrv.serve_forever, daemon=True).start()
+_ns = os.path.join(tmp, "noscope.json")
+ctl("init", "--state", _ns, "--signal", _PLANFIX["signal"], "--corpus", "polymath:stubcorp", "--document-id", "docA")
+ctl("step", "--state", _ns)
+_nout = os.path.join(tmp, "noscope_payload.json")
+def _nadapter(*extra):
+    if os.path.exists(_nout): os.unlink(_nout)
+    r = subprocess.run([PY, os.path.join(ROOT, "python", "corpus_polymath.py"), "--state", _ns, "--url", f"http://127.0.0.1:{_nport}", "--out", _nout, *extra], capture_output=True, text=True)
+    _note = next((json.loads(l) for l in reversed(r.stderr.strip().splitlines()) if l.startswith("{")), {"stderr": r.stderr[-400:]})
+    return r.returncode, _note, (json.load(open(_nout)) if os.path.exists(_nout) else {})
+_NoScopeStub.advertise = False; _NoScopeStub.calls.clear(); _rc5, _n5, _p5 = _nadapter()
+_cf5 = _p5.get("capability_failure") or {}
+ok(_cf5.get("capability") == "document_scoped_corpus_retrieval" and _cf5.get("blocked") == "BLOCKED_CAPABILITY_UNAVAILABLE" and "document_ids" in (_cf5.get("detail") or ""),
+   f"a backend that does not advertise document_ids gets a capability_failure (document_scoped_corpus_retrieval), never a warning ({_cf5 or _p5.keys()})")
+ok(not any(c[0] == "POST" for c in _NoScopeStub.calls) and "corpus_evidence" not in _p5,
+   "no /retrieve, /retrieve/plan or /chat request escapes unscoped while a document scope is active and unsupported")
+_NoScopeStub.calls.clear(); _rc5g, _n5g, _p5g = _nadapter("--generic")
+ok((_p5g.get("capability_failure") or {}).get("capability") == "document_scoped_corpus_retrieval" and not any(c[0] == "POST" for c in _NoScopeStub.calls),
+   "--generic cannot bypass the guarantee: the control arm fails closed too when the scope cannot be honoured")
+_NoScopeStub.advertise = True; _NoScopeStub.calls.clear(); _rc5b, _n5b, _p5b = _nadapter()
+ok("corpus_evidence" in _p5b and any(c[1] == "/retrieve/plan" and c[2].get("document_ids") == ["docA"] for c in _NoScopeStub.calls) and not any(c[1] == "/chat" for c in _NoScopeStub.calls),
+   "the same backend advertising document_ids gets the scoped /retrieve/plan and still no /chat (policy B)")
+rc5c, out5c = submit(_ns, "corpus", _p5)
+ok(rc5c == 0 and out5c.get("recorded") == "CAPABILITY_FAILURE" and json.load(open(_ns))["capability_failures"][-1]["capability"] == "document_scoped_corpus_retrieval",
+   "the controller records the fail-closed scope as a CAPABILITY_FAILURE coverage deficit — honest, never silent")
+_nsrv.shutdown()
 
 if FAILS:
     print(f"\n{len(FAILS)} CHECKS FAILED: " + "; ".join(FAILS[:8]))

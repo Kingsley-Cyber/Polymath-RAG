@@ -30,6 +30,7 @@ IGNORED_PREFIXES = (
     "research/registry/compiled/",
     "research/registry/patches/",
     "research/candidates/",
+    "research/registry/research_evidence.csv",   # local field-evidence ledger (authors + quotes) — git-ignored, never source
     "stores/postgres/data/",
     "stores/qdrant/data/",
     "stores/neo4j/data/",

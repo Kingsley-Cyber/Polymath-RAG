@@ -73,20 +73,46 @@ through maintenance and human approval.
 ## §6 The calibration proves bridge behaviour, never shelf composition
 
 Cited share of the shelf and documents cited are DIAGNOSTICS, reported and
-never gated. `tests/calibration_acceptance.py` evaluates eight canaries
+never gated. `tests/calibration_acceptance.py` evaluates nine canaries
 (statuses PASS / FAIL / NOT_TRIGGERED / NOT_EVALUATED); the run passes when
-every mandatory canary is PASS and nothing is FAIL:
+every mandatory canary for the mode is PASS and no non-advisory canary is FAIL:
 
 | # | canary | pass when | class |
 |---|---|---|---|
-| 1 | corpus_independence | ≥1 kept concept not explicitly named by any source passage (`corpus_named` false) | mandatory |
-| 2 | heterogeneous_source_reasoning | ≥1 hypothesis or latent structure cites a row from a configured non-business document (`--heterogeneous-docs`) | evaluated when configured |
+| 1 | corpus_independence | ≥1 kept concept not explicitly named by any source passage (`corpus_named` false — the run's rows, plus the corpus-wide **CorpusPresenceReceipt** from `corpus_polymath.py --presence` when audited) | mandatory |
+| 2 | heterogeneous_source_reasoning | **SOURCE_AGNOSTIC_CALIBRATION only** (`--calibration-mode`, explicit): a configured heterogeneous row (`--heterogeneous-docs`) fed a valid latent structure or a valid hypothesis hop — generation, never survival; the hypothesis may die. STANDARD runs report NOT_EVALUATED: any source MAY generate, no source MUST | mandatory in the dedicated mode |
 | 3 | noun_echo_resistance | a corpus-named concept without independent grounding was refused (echo verdict) | conditional: NOT_TRIGGERED when θ proposed no echo |
-| 4 | legitimate_echo_survival | a corpus-named concept WITH ≥3 voices from ≥2 communities kept its leads | conditional |
-| 5 | latent_population_discovery | an OPEN_FIELD or LATENT-derived community outside the seed set was instantiated with real records | mandatory |
-| 6 | field_originated_opportunity | ≥1 kept concept is field-originated AND its hypothesis cites corpus rows (deepened by the corpus) | mandatory |
-| 7 | irrelevant_source_rejection | ≥1 retrieved row classified IRRELEVANT rather than forced into an analogy | mandatory |
-| 8 | hypothesis_death | ≥1 corpus-derived hypothesis (hops cite corpus rows) ended REJECTED after meeting field evidence | mandatory |
+| 4 | legitimate_corpus_overlap_survival | a concept that overlaps the corpus (corpus-named OR example overlap — both counts exposed) WITH ≥3 voices from ≥2 communities kept its leads | conditional |
+| 5a | open_field_population_discovery | an OPEN_FIELD community outside the seed set was instantiated with real records | mandatory |
+| 5b | latent_population_resolution | a LATENT lead whose `latent_structure_id` is an admitted latent structure is INSTANTIATED with admitted field records whose `lead_id` points back to it — OPEN_FIELD never satisfies it | advisory in STANDARD, mandatory in SOURCE_AGNOSTIC_CALIBRATION |
+| 6 | field_originated_opportunity | ≥1 kept concept is field-originated (`field_origin` ∈ {FIELD_NAMED, WORKAROUND_DERIVED} AND not corpus-named) AND its hypothesis cites corpus rows | mandatory |
+| 7 | irrelevant_source_rejection | a configured KNOWN trap row (`--trap-text`) was retrieved, classified IRRELEVANT and referenced by nothing | mandatory |
+| 8 | hypothesis_death | ≥1 corpus-derived hypothesis (hops cite corpus rows) ended REJECTED BECAUSE of field evidence (contradicting observation on its gap, or a challenge / evaluation citing admitted field refs) | mandatory |
+
+The run passes when every mandatory canary for the mode is PASS and no
+non-advisory canary is FAIL. Every concept carries a receipt with
+`corpus_named`, `corpus_example_overlap` and `field_origin` exposed separately.
+
+**Field origin (deterministic, `provenance.field_origin`)** — FIELD_NAMED: a
+participant explicitly named it (a `products_named` entry equal to the concept
+phrase, a ≥2-token entry contained in it, a concept bigram inside an entry, or
+the concept phrase in the participant's own words). WORKAROUND_DERIVED: the
+concept's form factor maps onto a real admitted workaround (a shared bigram or
+≥2 shared content terms) with no claim the participant named the product.
+NOT_FIELD_ORIGINATED otherwise — one generic shared token never establishes
+lineage, and only records with valid field provenance (author identity and a
+recoverable quote) count.
+
+**Corpus presence (`CorpusPresenceReceipt`)** — "not named in the retrieved rows"
+is not "not named in the corpus". `corpus_polymath.py --presence --state run.json`
+asks the backend, with existing calls only (`GET /documents` for
+`documents_checked`, `POST /retrieve` for the concept's normalized phrase, whose
+default lane includes the corpus-wide in-memory lexical scan), and writes one
+receipt per final concept: `exact_phrase_hits`, `normalized_multi_token_hits`,
+`observed_product_hits`, `example_hits`, `document_hits`, `named`,
+`method_version`. Presence answers NAMING only; its evidentiary authority for
+current demand is NONE (Law 3). `calibration_acceptance.py --presence FILE`
+consumes it; `provenance.lineage` consumes `data.corpus_presence` when present.
 
 A canary that dies in the field still counts for the generative adapter
 (canary 2): the test is whether the bridge was built, not whether it survived.
@@ -111,6 +137,14 @@ never calls it: rows come from retrieve/plan only and θ interprets locally
 advertise `contracts.document_ids` gets `document_scope_warning` — the scope
 is then a request, not a guarantee. Forced document diversity is still not a
 metric; the scope exists for deliberate experiments (one book, one shelf).
+
+**Fail closed.** A scope is a guarantee. If the backend does not advertise
+`capabilities.contracts.document_ids`, `corpus_polymath.py` issues no request at
+all and writes `capability_failure {capability: document_scoped_corpus_retrieval,
+blocked: BLOCKED_CAPABILITY_UNAVAILABLE}`; the controller records it as a
+coverage deficit. `--generic` does not bypass the check. Never continue
+unscoped, never drop the scope, never a warning alone.
+
 
 ## §9 Fail-closed lineage (senior review, 2026-09-04)
 

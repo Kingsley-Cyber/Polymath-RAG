@@ -73,6 +73,9 @@ def compute(state: dict) -> dict:
         "corpus_contribution": __import__("provenance").corpus_contribution(state),
         "provenance": {"verdicts": dict(collections.Counter(r.get("verdict") for r in d.get("provenance") or [])),
                        "field_originated_concepts": sum(1 for r in d.get("provenance") or [] if r.get("field_originated")),
+                       "field_origins": dict(collections.Counter((r.get("field_origin") or {}).get("origin") or "UNKNOWN" for r in d.get("provenance") or [])),
+                       "corpus_named_concepts": sum(1 for r in d.get("provenance") or [] if r.get("corpus_named")),
+                       "corpus_presence_audited": sum(1 for r in d.get("provenance") or [] if r.get("corpus_presence")),
                        "excluded_leads": len(d.get("excluded_leads") or []),
                        "concepts_outside_seed": sum(1 for r in d.get("provenance") or [] if r.get("seed_population_only") is False)},
     }
@@ -108,5 +111,6 @@ def to_markdown(u: dict) -> str:
         lines += [f"| corpus contribution: cited rows / docs cited of retrieved | {cc.get('rows_cited')}/{cc.get('rows_retrieved')} / {cc.get('documents_cited')}/{cc.get('documents_retrieved')} ({cc.get('cited_share_of_shelf')}) |",
                   f"| corpus example rows retrieved / cited; mechanism-only contributions | {cc.get('example_rows_retrieved')} / {cc.get('example_rows_cited')}; {cc.get('mechanism_only_contributions')} |"]
     if pv:
-        lines += [f"| provenance verdicts / field-originated / excluded echo leads | {pv.get('verdicts')} / {pv.get('field_originated_concepts')} / {pv.get('excluded_leads')} |"]
+        lines += [f"| provenance verdicts / field-originated / excluded echo leads | {pv.get('verdicts')} / {pv.get('field_originated_concepts')} / {pv.get('excluded_leads')} |",
+                  f"| field origins / corpus-named / presence-audited | {pv.get('field_origins')} / {pv.get('corpus_named_concepts')} / {pv.get('corpus_presence_audited')} |"]
     return "\n".join(lines)

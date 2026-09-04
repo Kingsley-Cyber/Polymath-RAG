@@ -370,6 +370,43 @@ def collect(url: str, corpus: str, queries: list, limit: int, bearer: str | None
     return rows, errors
 
 
+def presence_audit(url: str, corpora: list, concepts: list, state: dict, bearer: str | None, timeout: float, limit: int = 40) -> list[dict]:
+    """Final-pass item 3: CorpusPresenceReceipt per final ProductConcept, with the
+    backend's EXISTING calls only — GET /documents (documents_checked) and POST
+    /retrieve for the concept's own normalized phrase (the default lane's in-memory
+    lexical scan surfaces exact and multi-token hits corpus-wide). Never the
+    opportunity retrieval path: no /chat, no plan, no new index."""
+    import provenance as _prov
+    docs_checked, doc_notes = 0, []
+    for corpus in corpora:
+        try:
+            out = _get(url, f"/documents?corpus_id={corpus}", bearer, max(timeout, 300.0))
+            docs_checked += len(out.get("documents") or []) if isinstance(out, dict) else 0
+        except Exception as exc:  # noqa: BLE001
+            doc_notes.append(f"{corpus}: {type(exc).__name__}: {exc}")
+    receipts = []
+    for c in concepts:
+        if not isinstance(c, dict) or not c.get("name"):
+            continue
+        phrase = _prov.normalize_phrase(c.get("name"))
+        rows, errors = [], []
+        for corpus in corpora:
+            try:
+                resp = retrieve(url, corpus, phrase, limit, bearer, timeout, explore=False)
+                rows += rows_from_evidence_rows(resp, corpus)
+            except Exception as exc:  # noqa: BLE001
+                errors.append(f"{corpus}: {type(exc).__name__}: {exc}")
+        rc = _prov.corpus_presence(c, ",".join(corpora), rows, state, documents_checked=docs_checked or None,
+                                   method_version=f"{_prov.PRESENCE_METHOD}:retrieve-lexical")
+        rc["backend_rows"] = len(rows)
+        if errors:
+            rc["errors"] = errors
+        if doc_notes:
+            rc["documents_note"] = "; ".join(doc_notes)
+        receipts.append(rc)
+    return receipts
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(prog="corpus_polymath")
     ap.add_argument("--url", default=DEFAULT_URL, help="Polymath orchestrator (default $POLYMATH_URL or 127.0.0.1:7200)")
@@ -381,8 +418,9 @@ def main() -> int:
     ap.add_argument("--via", choices=["chat", "chat-only", "plan"], default="chat", help="native lane: 'chat' = answers from the full RAG per reformulation PLUS the EXPLORE rows (docs/22, default); 'chat-only' = answers and their citations only; 'plan' = rows only")
     ap.add_argument("--state", default=None, help="run state JSON: supplies the signal and corpus identity")
     ap.add_argument("--limit", type=int, default=12)
-    ap.add_argument("--document-id", action="append", default=None, help="docs/26 §8: restrict retrieve + plan to these document ids (repeatable; unioned with the run's document_scope). /chat is unscoped and is skipped while a scope is active")
+    ap.add_argument("--document-id", action="append", default=None, help="docs/26 §8: restrict retrieve + plan to these document ids (repeatable; unioned with the run's document_scope). /chat is unscoped and is skipped while a scope is active; a backend that does not advertise document_ids yields a capability_failure (fail closed)")
     ap.add_argument("--questions", action="store_true", help="docs/25 §6: ask the corpus the run's compiled friction/mechanism questions (auto at node corpus_mechanisms)")
+    ap.add_argument("--presence", action="store_true", help="final presence audit: one CorpusPresenceReceipt per product_concept in --state (GET /documents + POST /retrieve for the concept phrase); writes {corpus_presence:[...]} for tests/calibration_acceptance.py --presence")
     ap.add_argument("--include-facts", action="store_true")
     ap.add_argument("--timeout", type=float, default=120.0)
     ap.add_argument("--out", default=None, help="write the submit payload here (default stdout)")
@@ -407,6 +445,18 @@ def main() -> int:
         corpus_names = {c: c for c in corpora}
     # docs/26 §8: document scope = CLI ids ∪ the run's document_scope (set at init)
     _scope = list(dict.fromkeys([*(args.document_id or []), *((state.get("document_scope") or []) if args.state else [])]))
+    if args.presence:
+        if not args.state or not corpora:
+            print("usage: --presence needs --state (product_concepts) and a Polymath corpus", file=sys.stderr)
+            return 2
+        _concepts = (state.get("data") or {}).get("product_concepts") or []
+        _receipts = presence_audit(args.url, corpora, _concepts, state, bearer, args.timeout, limit=max(int(args.limit or 12), 40))
+        payload = {"corpus_presence": _receipts}
+        text = json.dumps(payload, indent=1, ensure_ascii=False)
+        (open(args.out, "w", encoding="utf-8").write(text) if args.out else print(text))
+        print(json.dumps({"backend": "polymath", "mode": "presence", "concepts": len(_receipts), "named": sum(1 for r in _receipts if r.get("named")),
+                          "documents_checked": (_receipts[0].get("documents_checked") if _receipts else None), "corpora": corpora}), file=sys.stderr)
+        return 0
     # docs/25 §6: at corpus_mechanisms the run asks friction / mechanism / question-level
     # asks compiled from lived clusters — never per person, never the seed plan again
     _qmode = bool(args.state) and (args.questions or (state.get("node") == "corpus_mechanisms"))
@@ -425,6 +475,21 @@ def main() -> int:
         return 2
     rows, errors, seen, per_corpus = [], [], set(), {}
     caps = None if args.generic else probe_capabilities(args.url, bearer)
+    if _scope:
+        # FAIL CLOSED (final pass item 5): a document scope is a guarantee, not a preference. If the backend
+        # does not ADVERTISE document_ids (capabilities.contracts.document_ids) the scope cannot be honoured —
+        # no retrieve / plan / chat request leaves this process; the run records a coverage deficit instead.
+        # --generic does not bypass the check: the control arm still needs the guarantee.
+        _scope_caps = caps if caps is not None else probe_capabilities(args.url, bearer)
+        if not ((_scope_caps or {}).get("contracts") or {}).get("document_ids"):
+            payload = {"capability_failure": {"capability": "document_scoped_corpus_retrieval", "blocked": "BLOCKED_CAPABILITY_UNAVAILABLE",
+                                              "detail": f"document scope {list(_scope)} requested but the backend at {args.url} does not advertise "
+                                                        f"capabilities.contracts.document_ids — scope cannot be guaranteed; no unscoped request was issued",
+                                              "document_scope": list(_scope)}}
+            text = json.dumps(payload, indent=1)
+            (open(args.out, "w", encoding="utf-8").write(text) if args.out else print(text))
+            print(json.dumps({"backend": "polymath", "mode": "blocked", "blocked": "BLOCKED_CAPABILITY_UNAVAILABLE", "document_scope": list(_scope), "rows": 0}), file=sys.stderr)
+            return 0
     backend = backend_record(caps, args.url)
     field_corpus = (backend.get("contracts") or {}).get("field-evidence-corpus")
     if field_corpus and field_corpus not in corpora and not args.no_field_evidence and not _qmode:
@@ -443,8 +508,7 @@ def main() -> int:
         if lane == "chat":
             backend["chat_skipped"] = "document scope active: /chat is unscoped (policy B)"
             lane = "plan" if _contracts.get("corpus-plan") else "retrieve"
-        if backend["mode"] == "native" and not _contracts.get("document_ids"):
-            backend["document_scope_warning"] = "backend does not advertise document_ids — scope cannot be guaranteed"
+        backend["document_scope_guaranteed"] = True      # advertised document_ids (checked fail-closed above)
     if _qmode and lane == "plan":
         lane = "retrieve"                      # a question is not a signal: retrieve per question, never re-plan the seed
     if backend["mode"] == "native" and args.state and lane == "chat":

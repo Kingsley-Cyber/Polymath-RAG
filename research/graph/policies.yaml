@@ -241,9 +241,10 @@ provenance:                      # docs/25 §7: lineage decides what may count, 
   min_independent_voices: 3      # per concept, over the field records + observations it cites
   min_communities: 2
   echo_verdict: CORPUS_ECHO_UNGROUNDED
-calibration:                     # docs/26 §6: the eight canaries — bridge behaviour, never shelf composition
-  mandatory: [corpus_independence, latent_population_discovery, field_originated_opportunity, irrelevant_source_rejection, hypothesis_death]
-  conditional: [noun_echo_resistance, legitimate_echo_survival]
-  evaluated_when_configured: [heterogeneous_source_reasoning]
+calibration:                     # docs/26 §6: the nine canaries — bridge behaviour, never shelf composition
+  mandatory: [corpus_independence, open_field_population_discovery, field_originated_opportunity, irrelevant_source_rejection, hypothesis_death]
+  conditional: [noun_echo_resistance, legitimate_corpus_overlap_survival]
+  advisory: [latent_population_resolution]                   # STANDARD mode: reported PASS/FAIL, never gates
+  source_agnostic_mandatory: [heterogeneous_source_reasoning, latent_population_resolution]   # --calibration-mode SOURCE_AGNOSTIC_CALIBRATION
   min_independent_voices: 3
 

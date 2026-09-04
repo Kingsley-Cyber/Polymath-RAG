@@ -31,9 +31,38 @@ def _stem(t: str) -> str:
         return t[:-3] + "y"
     if len(t) > 4 and t.endswith(("sses", "shes", "ches", "xes", "zes")):
         return t[:-2]
-    if len(t) > 4 and t.endswith("s") and not t.endswith("ss"):
+    if len(t) > 3 and t.endswith("s") and not t.endswith(("ss", "us", "is")):
         return t[:-1]
     return t
+
+
+_PHRASE_STOP = _STOP | {"for", "the", "and", "with", "per", "one", "two", "via", "non", "any", "all", "its", "our", "you",
+                        "your", "who", "how", "why", "not", "but", "are", "was", "has", "had", "can", "may", "use", "new"}
+PRESENCE_METHOD = "presence-v1"          # normalized phrase + normalized multi-token + observed product + example term
+
+
+def normalize_phrase(text) -> str:
+    """Deterministic phrase normalization shared by the presence audit and
+    field-origin: lowercase, punctuation/hyphens to spaces, plural folding per
+    token. 'Dose-State Keychain FOBS' -> 'dose state keychain fob'."""
+    return " ".join(_stem(t) for t in re.findall(r"[a-z0-9]+", str(text or "").lower()))
+
+
+def phrase_content(text) -> list:
+    """Ordered content tokens of a normalized phrase (stop words out, >=3 chars)."""
+    out = []
+    for t in normalize_phrase(text).split():
+        if len(t) >= 3 and t not in _PHRASE_STOP and t not in out:
+            out.append(t)
+    return out
+
+
+def _phrase_in(phrase: str, text: str) -> bool:
+    return bool(phrase) and f" {phrase} " in f" {text} "
+
+
+def _bigrams(tokens: list) -> list:
+    return [f"{a} {b}" for a, b in zip(tokens, tokens[1:])]
 
 
 def _toks(text) -> set:
@@ -148,6 +177,129 @@ def corpus_text_tokens(state: dict) -> set:
     return out
 
 
+# ------------------------------------------------- corpus presence audit --
+def corpus_presence(concept: dict, corpus_id: str, rows: list, state: dict, documents_checked=None,
+                    method_version: str = PRESENCE_METHOD) -> dict:
+    """CorpusPresenceReceipt (final-pass item 3): was this final concept already
+    explicitly NAMED in the selected corpus? `rows` are the backend's rows for
+    the concept's own phrase (corpus_polymath --presence); the run's retrieved
+    corpus rows, recorded corpus_observations and CORPUS_EXAMPLE terms are
+    folded in. Deterministic; answers naming ONLY — evidentiary authority for
+    current demand is NONE (Law 3)."""
+    d = state.get("data") or {}
+    name = normalize_phrase(concept.get("name"))
+    content = phrase_content(concept.get("name"))
+    bigrams = _bigrams(content)
+    exact, multi, docs = [], [], set()
+    seen = set()
+    pool = list(rows or []) + [r for r in d.get("corpus_evidence") or []
+                               if isinstance(r, dict) and "field_evidence" not in (r.get("tags") or [])]
+    for r in pool:
+        if not isinstance(r, dict) or not r.get("id") or r["id"] in seen:
+            continue
+        seen.add(r["id"])
+        text = normalize_phrase(f"{r.get('text') or ''} {r.get('summary') or ''}")
+        if not text:
+            continue
+        hit = False
+        if _phrase_in(name, text):
+            exact.append(r["id"]); hit = True
+        elif len(content) >= 2 and (any(_phrase_in(b, text) for b in bigrams)
+                                    or all(_phrase_in(t, text) for t in content)):
+            multi.append(r["id"]); hit = True
+        if hit:
+            docs.add(str(r.get("doc_id") or r.get("title") or "?"))
+    observed = []
+    for o in d.get("corpus_observations") or []:
+        if not isinstance(o, dict) or o.get("kind") not in ("OBSERVED_PRODUCT", "EXAMPLE"):
+            continue
+        on = normalize_phrase(o.get("name")); oc = phrase_content(o.get("name"))
+        if on and (on == name or _phrase_in(on, name) or _phrase_in(name, on)
+                   or (len(oc) >= 2 and set(oc) <= set(content))
+                   or any(b in _bigrams(oc) for b in bigrams)):
+            observed.append(o.get("id"))
+    examples = []
+    for r in d.get("corpus_evidence") or []:
+        if isinstance(r, dict) and EXAMPLE_TAG in (r.get("tags") or []):
+            terms = {t for x in r.get("example_terms") or [] for t in phrase_content(x)}
+            if terms & set(content):
+                examples.append(r.get("id"))
+    return {"concept_id": concept.get("id"), "concept": concept.get("name"), "corpus_id": corpus_id,
+            "normalized_name": name, "exact_phrase_hits": sorted(exact), "normalized_multi_token_hits": sorted(multi),
+            "observed_product_hits": sorted(x for x in observed if x), "example_hits": sorted(x for x in examples if x),
+            "document_hits": sorted(docs), "documents_checked": documents_checked, "rows_checked": len(seen),
+            "named": bool(exact or multi or observed or examples), "method_version": method_version,
+            "evidentiary_authority": "NONE_FOR_CURRENT_DEMAND"}
+
+
+def presence_receipt(concept: dict, state: dict) -> dict | None:
+    for r in (state.get("data") or {}).get("corpus_presence") or []:
+        if isinstance(r, dict) and r.get("concept_id") == concept.get("id"):
+            return r
+    return None
+
+
+# --------------------------------------------------------- field origin --
+FIELD_ORIGINS = ("FIELD_NAMED", "WORKAROUND_DERIVED", "NOT_FIELD_ORIGINATED")
+
+
+def _valid_field_provenance(rec: dict) -> bool:
+    si = rec.get("source_identity") or {}
+    return bool(isinstance(si, dict) and si.get("author_key") and (rec.get("quote_ref") or rec.get("quote")))
+
+
+def field_origin(concept: dict, state: dict) -> dict:
+    """Deterministic field provenance (final-pass item 4).
+      FIELD_NAMED         a participant explicitly named it: a products_named entry equal to the
+                          concept phrase, a >=2-token entry contained in it, a concept bigram inside
+                          an entry, or the concept phrase inside the participant's own words.
+      WORKAROUND_DERIVED  the concept's mechanism / form factor maps onto a real admitted workaround
+                          (a shared bigram or >=2 shared content terms) — no claim the participant
+                          named the final product.
+      NOT_FIELD_ORIGINATED otherwise. One generic shared token never establishes lineage.
+    Only records with valid field provenance (author identity + recoverable quote) count."""
+    d = state.get("data") or {}
+    recs = [r for r in (d.get("field_records") or []) + (d.get("observations") or []) if isinstance(r, dict) and r.get("id")]
+    name = normalize_phrase(concept.get("name"))
+    name_c = phrase_content(concept.get("name"))
+    name_bg = set(_bigrams(name_c))
+    form_c = phrase_content(f"{concept.get('name') or ''} {concept.get('form_factor') or ''} {concept.get('mechanism') or ''}")
+    form_bg = set(_bigrams(form_c))
+    named_recs, mentions, terms, wa_recs = [], [], set(), []
+    for r in recs:
+        if not _valid_field_provenance(r):
+            continue
+        hit_named = False
+        for p in r.get("products_named") or []:
+            pn = normalize_phrase(p); pc = phrase_content(p)
+            if not pn:
+                continue
+            if pn == name or (len(pc) >= 2 and set(pc) <= set(name_c)) or (len(pc) >= 2 and _phrase_in(pn, name)) \
+               or any(b in _bigrams(pc) for b in name_bg):
+                hit_named = True; mentions.append(pn); terms |= set(pc) & set(name_c)
+        said = normalize_phrase(f"{r.get('quote') or ''} {r.get('problem') or ''}")
+        if said and len(name_c) >= 2 and _phrase_in(name, said):
+            hit_named = True; mentions.append(name); terms |= set(name_c)
+        if hit_named:
+            named_recs.append(r["id"]); continue
+        wa = normalize_phrase(r.get("workaround"))
+        if wa:
+            wa_c = set(phrase_content(r.get("workaround")))
+            shared = wa_c & set(form_c)
+            if any(_phrase_in(b, wa) for b in form_bg) or len(shared) >= 2:
+                wa_recs.append(r["id"]); terms |= shared
+    if named_recs:
+        origin = "FIELD_NAMED"
+    elif wa_recs:
+        origin = "WORKAROUND_DERIVED"
+    else:
+        origin = "NOT_FIELD_ORIGINATED"
+    return {"concept_id": concept.get("id"), "origin": origin,
+            "matched_field_records": sorted(set(named_recs if named_recs else wa_recs)),
+            "matched_terms": sorted(terms), "explicit_product_mentions": sorted(set(mentions)),
+            "workaround_refs": sorted(set(wa_recs)) if origin == "WORKAROUND_DERIVED" else []}
+
+
 # --------------------------------------------------------------- lineage --
 def _hypothesis_for(concept: dict, state: dict) -> dict | None:
     d = state["data"]
@@ -193,24 +345,24 @@ def lineage(concept: dict, state: dict, policies: dict) -> dict:
         verdict = "ECHO_WEAKLY_GROUNDED"
     else:
         verdict = "UNGROUNDED"
-    # field-originated: the noun lives in the records, not in the corpus
-    corpus_toks = corpus_text_tokens(state)
-    named = set()
-    for r in list(recs.values()) + list(obs.values()):
-        for p in r.get("products_named") or []:
-            named |= _toks(p)
-        named |= _toks(r.get("workaround"))
-    content = {t for t in ctoks if len(t) >= 4}
-    # docs/26 §6 canary 6: field-originated = positive FIELD lineage (the noun lives in what
-    # people named or rigged) AND the corpus never NAMED it (corpus_named) — not "zero token
-    # overlap with the whole corpus", which no ordinary noun survives at 100 books
-    field_lineage = bool(content & named)
-    field_originated = field_lineage and not corpus_named(concept, state)["named"]
+    # docs/26 §6 canary 6 + final pass item 4: field-originated = deterministic positive FIELD
+    # provenance (FIELD_NAMED or WORKAROUND_DERIVED, never one shared token) AND the corpus never
+    # NAMED it — by the run's rows (corpus_named) or by the corpus-wide presence receipt when one
+    # was audited (item 3). Never "zero token overlap with the whole corpus".
+    fo = field_origin(concept, state)
     named = corpus_named(concept, state)
+    presence = presence_receipt(concept, state)
+    presence_named = bool(presence and presence.get("named"))
+    named_any = bool(named["named"] or presence_named)
+    named_by = named["phrase_hits"] or named["observation_overlap"] or (
+        [f"presence:{x}" for x in (presence.get("exact_phrase_hits") or []) + (presence.get("normalized_multi_token_hits") or [])
+         + (presence.get("observed_product_hits") or []) + (presence.get("example_hits") or [])] if presence_named else [])
+    field_lineage = fo["origin"] != "NOT_FIELD_ORIGINATED"
+    field_originated = field_lineage and not named_any
     return {"concept_id": concept.get("id"), "concept": concept.get("name"), "hypothesis_id": hyp.get("id"),
             "verdict": verdict, "independent_voices": voices, "communities": sorted(communities),
-            "corpus_named": named["named"], "corpus_named_by": named["phrase_hits"] or named["observation_overlap"],
-            "field_lineage": field_lineage,
+            "corpus_named": named_any, "corpus_named_by": named_by, "corpus_presence": presence,
+            "field_lineage": field_lineage, "field_origin": fo,
             "hop_cites_corpus": bool([rid for v in (hyp.get("hop_refs") or {}).values() for rid in v or [] if str(rid).startswith("polymath:") or rid in {r.get("id") for r in d.get("corpus_evidence") or [] if isinstance(r, dict)}]),
             "field_record_refs": len(field_refs), "gap_observation_refs": len(gap_refs),
             "lived_anchor_ids": anchors, "example_overlap": overlap, "field_originated": field_originated,
@@ -232,6 +384,7 @@ def enforce(state: dict, policies: dict) -> dict:
         ln = lineage(c, state, policies)
         c["provenance"] = ln["verdict"]
         c["field_originated"] = ln["field_originated"]
+        c["field_origin"] = ln["field_origin"]["origin"]
         rows.append(ln)
     d["provenance"] = rows
     verdict_by_concept = {r["concept_id"]: r["verdict"] for r in rows}

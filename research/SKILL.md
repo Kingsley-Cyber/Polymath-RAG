@@ -1,7 +1,7 @@
 ---
 name: opportunity-research
 description: "USE THIS whenever the user asks for product leads, product ideas/ideation, opportunities, niches, what to sell, or a research run over Polymath/the corpus. Run the controller (init → step → submit …); NEVER improvise a brief by querying Polymath directly — the corpus is one evidence lane, the graph enforces evidence, allocation and a 3–6 product portfolio."
-version: 2.1.1
+version: 2.1.2
 platforms: [macos, linux]
 metadata:
   hermes:
@@ -224,11 +224,25 @@ The child inherits this SKILL.md; the controller keeps it honest.
 - **Both directions.** Named populations become leads; a structure with no
   population becomes a `search_mode: LATENT` lead the scout resolves to real
   communities by its friction language.
-- **Calibration = eight canaries** (`tests/calibration_acceptance.py`, docs/26
+- **Calibration = nine canaries** (`tests/calibration_acceptance.py`, docs/26
   §6): corpus independence, heterogeneous-source reasoning, echo resistance,
-  legitimate echo survival, latent population discovery, field-originated
-  opportunity, irrelevant-source rejection, hypothesis death. Shelf share is
-  reported, never gated.
+  legitimate corpus-overlap survival, open-field population discovery, latent
+  population resolution, field-originated opportunity, irrelevant-source
+  rejection, hypothesis death. Shelf share is reported, never gated. The mode
+  is explicit: `--calibration-mode STANDARD` (default; an unrelated source that
+  yields nothing is NOT_EVALUATED, latent resolution is advisory) or
+  `SOURCE_AGNOSTIC_CALIBRATION` (canaries 2 and 5b become mandatory).
+- **Final presence audit.** Before believing `corpus_independence`, run
+  `python3 python/corpus_polymath.py --state run.json --presence --out presence.json`
+  (GET /documents + POST /retrieve per final concept, existing calls only) and
+  pass `--presence presence.json` to the acceptance test — "not named in the
+  retrieved rows" is not "not named in the corpus". Presence changes naming
+  only, never demand.
+- **Document scope fails closed.** `init --document-id` / `--document-id` on
+  the adapter require the backend to advertise `document_ids`; otherwise the
+  adapter writes a `capability_failure` (`document_scoped_corpus_retrieval`,
+  BLOCKED_CAPABILITY_UNAVAILABLE) and issues no unscoped request — submit it
+  as-is, the controller records the coverage deficit.
 
 ## Lived world (docs/25 — LIVED-WORLD-V2)
 
@@ -243,8 +257,10 @@ The child inherits this SKILL.md; the controller keeps it honest.
 - **Provenance, not blacklists.** A concept overlapping a corpus example is
   legal when ≥3 independent voices from ≥2 communities ground it; lineage
   `corpus example → same noun → same-noun search` is CORPUS_ECHO_UNGROUNDED.
-- **Calibration:** `python3 tests/calibration_acceptance.py --state run.json`
-  must pass before a run's leads are believed (six semantic receipts, §8).
+- **Calibration:** `python3 tests/calibration_acceptance.py --state run.json
+  [--presence presence.json] [--trap-text ...]` must pass before a run's leads
+  are believed (the nine canaries of docs/26 §6; every concept carries
+  `corpus_named`, `corpus_example_overlap` and `field_origin`).
 
 ## Corpus lane + flywheel (docs/19)
 

@@ -427,10 +427,11 @@ def render(model: dict, layout: str = "FULL_RESEARCH", summary_md: str | None = 
     _pv = (model.get("utilization") or {}).get("provenance") or {}
     _prov_rows = (model.get("provenance") or [])
     if _prov_rows:
-        out.append("<h2>Provenance</h2><div class='scroll'><table><tr><th>concept</th><th>verdict</th><th>voices</th><th>communities</th><th>lived anchors</th><th>corpus example overlap</th><th>field-originated</th></tr>"
+        out.append("<h2>Provenance</h2><div class='scroll'><table><tr><th>concept</th><th>verdict</th><th>voices</th><th>communities</th><th>lived anchors</th><th>corpus named</th><th>corpus example overlap</th><th>field origin</th><th>field-originated</th></tr>"
                    + "".join(f"<tr><td>{_e(r.get('concept'))}</td><td>{_e(r.get('verdict'))}</td><td class='num'>{r.get('independent_voices')}</td>"
                              f"<td>{_e(', '.join(r.get('communities') or []))}</td><td class='num'>{len(r.get('lived_anchor_ids') or [])}</td>"
-                             f"<td>{_e(', '.join(r.get('example_overlap') or []) or '—')}</td><td>{'yes' if r.get('field_originated') else 'no'}</td></tr>" for r in _prov_rows)
+                             f"<td>{'yes' + (' (presence)' if (r.get('corpus_presence') or {}).get('named') else '') if r.get('corpus_named') else 'no'}</td>"
+                             f"<td>{_e(', '.join(r.get('example_overlap') or []) or '—')}</td><td>{_e((r.get('field_origin') or {}).get('origin') or '—')}</td><td>{'yes' if r.get('field_originated') else 'no'}</td></tr>" for r in _prov_rows)
                    + "</table></div>")
     if model.get("excluded_leads"):
         out.append("<p class='why'>Excluded as CORPUS_ECHO_UNGROUNDED (lineage was corpus example → same noun → same-noun search only): "
