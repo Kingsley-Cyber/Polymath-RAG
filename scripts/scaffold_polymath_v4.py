@@ -1645,6 +1645,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("research/docs/24_evidence_channels_and_sourcing.md", "md", None),
     ("research/docs/25_population_discovery_and_lived_world.md", "md", None),
     ("research/docs/26_source_agnostic_interpretation.md", "md", None),
+    ("research/docs/calibration/2026-09-04-books-run-01.json", "json", None),
+    ("research/docs/calibration/2026-09-04-books-run-01.md", "md", None),
     ("research/examples/architecture_qualification.v1.json", "json", None),
     ("research/examples/negative_control.json", "json", None),
     ("research/examples/run_derive_002.canary.json", "json", None),
