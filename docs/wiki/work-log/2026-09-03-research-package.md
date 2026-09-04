@@ -36,16 +36,16 @@ Polymath capability (MCP `research_*` tools — next slice).
 - The Hermes skill directory becomes a symlink to this package; the GitHub
   repo TRAIL_AGENT_AUTORESEARCH becomes a mirror or is archived (owner's call).
 
-## Proof
-- `python3 research/tests/run_all.py` from this repo → ALL 396 CHECKS PASSED (receipt below).
-- `research/python/controller.py doctor` PASS from the new path.
-- `scripts/repo_guard.py` ok with every research file declared.
-
 ## Changes
 - `research/` (160 files, copied from TRAIL_AGENT_AUTORESEARCH main 7c94e8e + the maintenance layer v1.6.0).
 - `scripts/scaffold_polymath_v4.py`: 160 TREE rows under RESEARCH-PACKAGE-V1.
 - `.gitignore`: research review artifacts / local ledgers ignored.
 - Register 11.71, continuity checkpoint, this work-log.
+
+## Proof
+- `python3 research/tests/run_all.py` from this repo → ALL 396 CHECKS PASSED (receipt below).
+- `research/python/controller.py doctor` PASS from the new path.
+- `scripts/repo_guard.py` ok with every research file declared.
 
 ## Rejected claims
 - "Merging the code fixes agent bypass by itself" — rejected: an agent can still call `retrieve` directly; the fix is
