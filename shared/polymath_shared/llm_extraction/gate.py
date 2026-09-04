@@ -194,13 +194,7 @@ def _clean_relation(r: object) -> dict | None:
             return None
         out[k] = v.strip()
     limit = {"subject": 200, "predicate": 120, "object": 200, "quote": 2000}
-    cleaned = {k: out[k][:limit[k]] for k in out}
-    # TYPED-CLAIMS-V1: the optional claim kind survives sanitation when valid;
-    # anything else is dropped silently (never poisons the relation).
-    ck = r.get("claim_kind")
-    if isinstance(ck, str) and ck.strip().lower() in ("friction", "behavior", "workaround", "purchase_language"):
-        cleaned["claim_kind"] = ck.strip().lower()
-    return cleaned
+    return {k: out[k][:limit[k]] for k in out}
 
 
 def _enforce_budgets(parsed: dict) -> dict:
@@ -742,7 +736,6 @@ def validate_and_normalize(packet: ExtractionPacket,
                 "start": q_span[0], "end": q_span[1], "text": anchor.text[q_span[0]:q_span[1]],
                 "evidence_class": "llm_relation", "predicate": canon_pred,
                 "predicate_raw": rel.predicate, "predicate_method": pred_method,
-                "claim_kind": getattr(rel, "claim_kind", None),
                 "subject": rel.subject, "object": rel.object, "score": 1.0,
                 "attestation": {"subject": levels[rel.subject], "object": levels[rel.object]}})
             n_rel += 1

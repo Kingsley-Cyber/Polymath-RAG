@@ -20,7 +20,6 @@ CONTRACTS = {
     "retrieve-evidence-rows": "v1",      # POST /retrieve evidence=true / mode=EXPLORE
     "corpus-plan": "v1",                 # POST /retrieve/plan
     "explore": True,
-    "typed-rows": [],                    # claim kinds EXPLORE can return (friction/behavior/workaround/purchase_language) — none yet
     "field-evidence-corpus": None,       # corpus_id of the ingested field-evidence ledger — none yet
 }
 ENDPOINTS = ["/retrieve", "/retrieve/plan", "/capabilities", "/chat", "/ask"]
@@ -50,10 +49,6 @@ def _live_contracts() -> dict:
                     ORDER BY r.updated_at DESC LIMIT 1""").fetchone()
             if row:
                 c["field-evidence-corpus"] = row[0]
-            kinds = conn.execute(
-                """SELECT DISTINCT qualifiers->>'claim_kind' FROM facts
-                    WHERE qualifiers ? 'claim_kind' AND qualifiers->>'claim_kind' <> '' LIMIT 8""").fetchall()
-            c["typed-rows"] = sorted(k[0] for k in kinds if k and k[0])
     except Exception:  # noqa: BLE001
         pass
     return c

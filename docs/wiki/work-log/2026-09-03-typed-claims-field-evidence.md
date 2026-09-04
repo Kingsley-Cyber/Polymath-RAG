@@ -2,7 +2,7 @@
 change_id: FIELD-EVIDENCE-CORPUS-V1 + TYPED-CLAIMS-V1
 owner: governance
 date: 2026-09-03
-status: BUILT; field corpus ingested; typed claims live after canary + blue/green (receipts below)
+status: FIELD-EVIDENCE-CORPUS-V1 DONE; TYPED-CLAIMS-V1 REVERTED 2026-09-03 (owner: the RAG's extraction is not changed for a consumer)
 architecture_impact: a research skill's curated observations become a Polymath corpus with provenance frontmatter; the extractor labels lived claims (friction / behavior / workaround / purchase_language) in facts.qualifiers and EXPLORE returns them; /capabilities detects both from the stores. Semantic bundle re-frozen (llm_direct.py, gate.py changed).
 last_reviewed: 2026-09-03
 ---
@@ -84,3 +84,26 @@ identical row sets (159/159, parity true).
   yield typed claims only after the typed prompt is live (blue/green).
 - Freshness after export is an approximation (age since export), not the
   thread's true date; the ledger does not carry post dates yet.
+
+
+## Owner reversal (2026-09-03 late) — TYPED-CLAIMS-V1 reverted
+
+Owner: "why are we extracting additional things from the documents. nooo … the
+rag shouldn't be changed it should use what it already extracts … for this
+workflow i want my full power rag system to be used for my agent ideation."
+
+Reverted end to end: the `claim_kind` field and schema entry, prompt rule 9 and
+the template field, the LEAN 5th element, the gate passthrough and sanitizer
+change, the persister qualifiers/ON CONFLICT change, and the
+`|typed_claims=v1` extraction-contract token. Bundle re-frozen
+`v5-production-006-extraction-restored`. `/capabilities` no longer advertises
+`typed-rows`. Labels already written into `facts.qualifiers` during the
+paid passes (ecom 220, field 56, marketing 4) stay as inert side-channel
+data; nothing produces or reads them as a contract.
+
+Lesson recorded: a consumer's need is served by ASKING the RAG (the full
+`/chat` path: hybrid + rerank + graph + latent lane + synthesis with
+citations), not by changing what the RAG extracts. Typed questions
+("what frictions do people report…") replace typed extraction. The
+field-evidence corpus, the plan endpoint, capabilities and the evidence
+rows stand — none of them touch extraction.

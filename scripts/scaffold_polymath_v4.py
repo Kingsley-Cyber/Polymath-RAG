@@ -1565,7 +1565,6 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_generation_swap.py", "py", None),
     ("tests/determinism/test_evidence_rows.py", "py", None),
     ("tests/determinism/test_corpus_plan.py", "py", None),
-    ("tests/determinism/test_typed_claims.py", "py", None),
     ("tests/determinism/test_control_watchdog.py", "py", None),
     ("tests/determinism/test_enrichment_concurrency_setting.py", "py", None),
     ("tests/determinism/test_mcp_server_v2.py", "py", None),
