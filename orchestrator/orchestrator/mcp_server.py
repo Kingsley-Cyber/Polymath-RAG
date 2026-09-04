@@ -390,7 +390,9 @@ def build_app():
 
 _TOOL_NAMES = ("list_corpora", "list_documents", "upload_document", "upload_text",
                "document_status", "corpus_status", "retrieve", "ask",
-               "recent_queries")
+               "recent_queries",
+    "capabilities", "compile_plan", "retrieve_evidence",
+)
 
 
 def main() -> None:
