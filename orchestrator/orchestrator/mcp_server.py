@@ -59,7 +59,9 @@ _SECURITY = TransportSecuritySettings(
 mcp = MCPServer(
     name="polymath",
     instructions=(
-        "Polymath v4 — evidence-first RAG over King's corpora. Workflow: "
+        "Polymath v4 — evidence-first RAG over King's corpora. FOR PRODUCT-OPPORTUNITY RESEARCH, IDEATION OR LEADS: "
+        "do NOT improvise a brief from these tools — run the Hermes skill `opportunity-research` (TRAIL OS); "
+        "these tools are its evidence layer and a summary of retrieved rows is not evidence. Workflow: "
         "list_corpora() to pick a corpus_id; upload_document(path, corpus_id) "
         "or upload_text(...) to ingest; poll document_status(corpus_id, "
         "source_name=...) every ~30 s until query_ready is true (a 300 KB "
