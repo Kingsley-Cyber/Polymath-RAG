@@ -502,13 +502,15 @@ def main() -> int:
             r["question_id"] = hit[0]; r["question_ids"] = hit; r["cluster_id"] = _qmap[hit[0]].get("cluster_id")
             r.setdefault("tags", []).append("question_level")
             # docs/26 §2: a deterministic HINT for θ's relevance call — which content words the row
-            # actually shares with the question; one generic word like "hold" is LEXICAL_ONLY
+            # actually shares with the question (none = semantic retrieval, one = the lexical trap)
             _qt = {w for w in re.findall(r"[a-z]{4,}", (_qmap[hit[0]].get("query") or "").lower()) if w not in _HINT_STOP}
             _rt = {w for w in re.findall(r"[a-z]{4,}", (r.get("summary") or "").lower())}
             _ov = sorted(_qt & _rt)
             r["lexical_overlap"] = _ov
-            if len(_ov) <= 1:
-                r["relevance_hint"] = "LEXICAL_ONLY"
+            if not _ov:
+                r["relevance_hint"] = "NO_LEXICAL_OVERLAP"      # reached by embedding / rerank only — judge the structure
+            elif len(_ov) == 1:
+                r["relevance_hint"] = "SINGLE_WORD_OVERLAP"     # one shared content word ("hold") — the classic lexical trap
     try:
         import provenance as _prov
         _examples = _prov.tag_corpus_examples(rows, (state.get("data") or {}).get("example_terms") if args.state else None)
