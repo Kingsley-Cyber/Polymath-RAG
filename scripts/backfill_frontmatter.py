@@ -26,10 +26,11 @@ from polymath_shared.settings import get_settings  # noqa: E402
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--corpus", default=None, help="corpus_id (default: every document without frontmatter)")
+    ap.add_argument("--force", action="store_true", help="re-parse documents that already carry frontmatter (e.g. after FRONTMATTER_KEYS grew)")
     ap.add_argument("--execute", action="store_true")
     a = ap.parse_args()
     with psycopg.connect(get_settings().postgres.dsn, connect_timeout=5) as conn:
-        where = "d.frontmatter IS NULL" + (" AND d.corpus_id = %s" if a.corpus else "")
+        where = ("TRUE" if a.force else "d.frontmatter IS NULL") + (" AND d.corpus_id = %s" if a.corpus else "")
         args = (a.corpus,) if a.corpus else ()
         rows = conn.execute(
             f"""SELECT DISTINCT ON (d.doc_id) d.doc_id, d.source_name, c.text
