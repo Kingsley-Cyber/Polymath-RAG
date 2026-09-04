@@ -51,3 +51,11 @@ def test_evidence_rows_read_claim_kind_from_qualifiers():
 
     assert _fact_claim_kinds(_Conn(), ["f1", "f2"]) == {"f1": "friction"}
     assert _fact_claim_kinds(_Conn(), []) == {}
+
+
+def test_sanitizer_keeps_valid_claim_kind_and_drops_garbage():
+    from polymath_shared.llm_extraction.gate import _clean_relation
+    base = {"subject": "women", "predicate": "USES", "object": "car tweezers", "quote": "I now have car tweezers."}
+    assert _clean_relation({**base, "claim_kind": "Workaround"})["claim_kind"] == "workaround"
+    assert "claim_kind" not in _clean_relation({**base, "claim_kind": "vibe"})
+    assert "claim_kind" not in _clean_relation(base)
