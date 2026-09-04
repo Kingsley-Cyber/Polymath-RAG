@@ -125,25 +125,7 @@ async def _chat_impl(req: ChatRequest) -> dict:
             raise HTTPException(status_code=502, detail={
                 "error_code": type(exc).__name__, "message": str(exc),
             }) from exc
-        out = grounded_answer(bundle, query)
-    if getattr(req, "evidence", False):
-        # CHAT-EVIDENCE-ROWS-V1: the same chunks / documents / facts the answer was
-        # built from, in the contract-row shape (never a second retrieval).
-        from orchestrator.api.evidence_rows import build_evidence_rows
-        try:
-            with tx() as conn:
-                out["evidence_rows"] = build_evidence_rows(
-                    conn,
-                    {"child_evidence": [{"chunk_id": c.get("chunk_id"), "rerank_score": c.get("rerank_score")}
-                                        for c in (selected_children or []) if c.get("chunk_id")],
-                     "selected_documents": [{"doc_id": pr.get("doc_id"), "rerank_score": 0.0} for pr in (profiles or []) if pr.get("doc_id")],
-                     "graph_facts": graph_facts or []},
-                    list(scope.corpus_ids), limit=max(12, len(selected_children or [])), explore=False)
-                out["evidence_contract"] = "retrieve-evidence-rows-v1"
-        except Exception as exc:  # noqa: BLE001 — rows are an add-on; the answer already stands
-            out["evidence_rows"] = []; out["evidence_rows_error"] = f"{type(exc).__name__}: {exc}"[:200]
-        out.setdefault("meta", {})["mode"] = out.get("meta", {}).get("mode") or (req.mode or "HYBRID")
-    return out
+        return grounded_answer(bundle, query)
     if mode in (MODE_FAST, MODE_HYBRID):
         if mode == MODE_FAST:
             from orchestrator.api.fast import fast_retrieve
@@ -275,7 +257,25 @@ async def _chat_impl(req: ChatRequest) -> dict:
             },
         ) from exc
 
-    return grounded_answer(bundle, query)
+    out = grounded_answer(bundle, query)
+    if getattr(req, "evidence", False):
+        # CHAT-EVIDENCE-ROWS-V1: the same chunks / documents / facts the answer was
+        # built from, in the contract-row shape (never a second retrieval).
+        from orchestrator.api.evidence_rows import build_evidence_rows
+        try:
+            with tx() as conn:
+                out["evidence_rows"] = build_evidence_rows(
+                    conn,
+                    {"child_evidence": [{"chunk_id": c.get("chunk_id"), "rerank_score": c.get("rerank_score")}
+                                        for c in (locals().get('selected_children') or []) if c.get("chunk_id")],
+                     "selected_documents": [{"doc_id": pr.get("doc_id"), "rerank_score": 0.0} for pr in (locals().get('profiles') or []) if pr.get("doc_id")],
+                     "graph_facts": locals().get('graph_facts') or []},
+                    list(getattr(locals().get('scope'), 'corpus_ids', None) or (req.corpus_ids or ([req.corpus_id] if req.corpus_id else []))), limit=max(12, len(locals().get('selected_children') or [])), explore=False)
+                out["evidence_contract"] = "retrieve-evidence-rows-v1"
+        except Exception as exc:  # noqa: BLE001 — rows are an add-on; the answer already stands
+            out["evidence_rows"] = []; out["evidence_rows_error"] = f"{type(exc).__name__}: {exc}"[:200]
+        out.setdefault("meta", {})["mode"] = out.get("meta", {}).get("mode") or (req.mode or "HYBRID")
+    return out
 
 
 @router.post("/chat")
