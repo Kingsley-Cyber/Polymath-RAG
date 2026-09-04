@@ -6,3 +6,10 @@ Output goes into `signal` (append your interpretation to the raw signal text).
 Optionally also submit `communities`: a list of the subreddits/forums you named
 (e.g. ["r/Menopause", "r/beyondthebump"]) — the web lane uses them as scope hints.
 Never mention Alibaba, suppliers, or products at this node.
+
+Also submit `example_terms`: the brands, products and named businesses the
+signal uses as ILLUSTRATIONS (e.g. ["Primal Queen", "Hims", "hydrogen water
+bottle"]). They are tagged CORPUS_EXAMPLE downstream so a run cannot anchor a
+product on the teacher's anecdote alone (docs/25 §7). Naming them is not
+banning them — the field may still ground the same category independently.
+

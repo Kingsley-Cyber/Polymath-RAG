@@ -3,7 +3,7 @@
 # structure and prompt content must be independently versionable).
 graph:
   id: opportunity_research
-  version: 1.0.0
+  version: 2.0.0   # LIVED-WORLD-V2 (docs/25): population discovery before ideation
   entry: understand
 
 # Every model-executed node declares a ContextContract (docs/10): what the
@@ -53,14 +53,76 @@ nodes:
     type: transform
     executor: python.lens_gate
 
+  # ── LIVED-WORLD-V2 (docs/25): the field co-generates the opportunity space ──
+  population_nominate:
+    type: transform
+    executor: python.population_nominate   # corpus / registry / signal / prior field rows propose leads — never demand
+
+  population_scout:
+    type: agent
+    fresh_submission_per_visit: true
+    executor: hermes_existing_web_stack    # open field: where do these populations actually talk? (+ anything current nobody predicted)
+    prompt: population_scout
+    outputs: [community_leads]
+    context:
+      require: [run_identity]
+      prefer: [population_leads, community_leads, signal, primitives, evidence_authority_rules]
+      exclude: [corpus_evidence, hypotheses, mechanisms, supplier_candidates, leads]
+
+  population_queue:
+    type: transform
+    executor: python.population_queue      # VOI-ranked work queue: ONE batch per round, sequential controller, no fan-out
+
+  community_instantiate:
+    type: agent
+    fresh_submission_per_visit: true
+    executor: hermes_existing_web_stack    # channel tool chains per lead (docs/24) → field_records with author + thread identity
+    prompt: community_instantiate
+    outputs: [field_records]
+    context:
+      require: [run_identity]
+      prefer: [population_queue, population_leads, community_leads, lived_clusters, participant_cards,
+               evidence_authority_rules, signal]
+      exclude: [corpus_evidence, hypotheses, mechanisms, supplier_candidates, leads]
+
+  evidence_cards:
+    type: transform
+    executor: python.evidence_cards        # ParticipantEvidenceCards + LivedEvidenceClusters (THIN / ANCHOR by independent records)
+
+  population_gate:
+    type: gate
+    executor: python.population_gate       # rounds until enough ANCHOR clusters; max_rounds / stagnation / wall clock
+    checkpoint: POPULATION_DISCOVERED
+
+  lived_situations:
+    type: reason
+    prompt: lived_situation                # reconstruct per cluster; FIELD_ANCHORED only on ANCHOR; unknowns preserved
+    outputs: [lived_situations]
+    context:
+      require: [lived_clusters]
+      prefer: [participant_cards, field_records, population_leads, community_leads, signal, evidence_authority_rules]
+      exclude: [corpus_evidence, hypotheses, mechanisms, supplier_candidates, leads]
+
+  corpus_mechanisms:
+    type: retrieve
+    on_enter: python.corpus_question_compiler   # docs/25 §6: friction / mechanism / question level, never per person
+    executor: corpus_retrieve
+    fresh_submission_per_visit: true
+    outputs: [corpus_evidence]
+    optional_outputs: [corpus_answers, corpus_backend]
+    context:
+      require: [run_identity]
+      prefer: [corpus_questions, lived_clusters]
+      exclude: [hypotheses, mechanisms, supplier_candidates, leads]
+
   hypothesize:
     type: reason
-    prompt: bridge_hypothesis     # PORTFOLIO: 3-6 across distinct mechanism families
+    prompt: bridge_hypothesis     # PORTFOLIO: 3-6 across distinct mechanism families; lived anchors (docs/25 §5)
     outputs: [hypotheses]
     context:
       require: [signal, primitives]
-      prefer: [lenses, cross_domain_analogies, corpus_evidence, registry_snapshot,
-               evidence_authority_rules]
+      prefer: [lived_situations, lived_clusters, lenses, cross_domain_analogies, corpus_evidence, corpus_questions,
+               registry_snapshot, evidence_authority_rules]
       exclude: [supplier_candidates, leads]
 
   semantic_review:
@@ -119,7 +181,7 @@ nodes:
     outputs: [mechanisms]
     context:
       require: [hypotheses, observations]
-      prefer: [satisfaction, primitives, evidence_authority_rules]
+      prefer: [satisfaction, primitives, field_records, lived_clusters, evidence_authority_rules]
       exclude: [supplier_candidates]
 
   product_ideation:
@@ -128,7 +190,7 @@ nodes:
     outputs: [product_concepts]
     context:
       require: [signal, mechanisms, observations]
-      prefer: [hypotheses, product_candidates, cross_domain_analogies, primitives]
+      prefer: [hypotheses, product_candidates, cross_domain_analogies, primitives, field_records, lived_situations, lived_clusters]
       exclude: [supplier_candidates, leads]
 
   supplier_search:
@@ -162,7 +224,17 @@ edges:
   - {from: signal_gate,       to: stop,             when: no_generative_signal}
   - {from: signal_gate,       to: lenses,           when: generative_signal_present}
   - {from: lenses,            to: structural_lookup}
-  - {from: structural_lookup, to: hypothesize}
+  - {from: structural_lookup, to: population_nominate}
+  - {from: population_nominate, to: population_scout}
+  - {from: population_scout,   to: population_queue}
+  - {from: population_queue,   to: community_instantiate}
+  - {from: community_instantiate, to: evidence_cards}
+  - {from: evidence_cards,     to: population_gate}
+  - {from: population_gate,    to: population_queue,   when: population_round_needed}
+  - {from: population_gate,    to: lived_situations,   when: lived_world_present}
+  - {from: population_gate,    to: hypothesize,        when: lived_world_empty}
+  - {from: lived_situations,   to: corpus_mechanisms}
+  - {from: corpus_mechanisms,  to: hypothesize}
   - {from: hypothesize,       to: semantic_review}
   - {from: semantic_review,   to: apply_review}
   - {from: apply_review,      to: challenge}

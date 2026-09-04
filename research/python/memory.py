@@ -450,6 +450,9 @@ _NODE_TYPES = {"evaluations": "SEMANTIC_EVALUATION",
                "demand_gaps": "DEMAND_GAP", "demand_reroutes": "DEMAND_REROUTE",
                "capture_assessments": "CAPTURE_FEASIBILITY"}
 _NODE_TYPES["corpus_answers"] = "CORPUS_ANSWER"
+_NODE_TYPES.update({"population_leads": "POPULATION_LEAD", "community_leads": "COMMUNITY_LEAD",
+                    "field_records": "FIELD_RECORD", "participant_cards": "PARTICIPANT_EVIDENCE_CARD",
+                    "lived_clusters": "LIVED_EVIDENCE_CLUSTER", "corpus_questions": "CORPUS_QUESTION"})   # docs/25
 
 
 def sync_work_nodes(run_id: str, state: dict) -> int:

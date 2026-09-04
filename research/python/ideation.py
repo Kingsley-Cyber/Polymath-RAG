@@ -23,6 +23,7 @@ def validate_concepts(concepts: list[dict], state: dict, policies: dict) -> list
         errors.append(f"portfolio law: {lo}–{hi} distinct product concepts required, got {len(concepts)}")
     supported = {m["id"] for m in state["data"].get("mechanisms") or [] if m.get("status") == "SUPPORTED"}
     obs_ids = {o["id"] for o in state["data"].get("observations") or []}
+    obs_ids |= {r["id"] for r in state["data"].get("field_records") or [] if isinstance(r, dict) and r.get("id")}   # docs/25: field records ground concepts too
     seen_ff: dict[str, str] = {}
     for c in concepts:
         cid = c.get("id", "?")
@@ -41,5 +42,5 @@ def validate_concepts(concepts: list[dict], state: dict, policies: dict) -> list
         refs = c.get("evidence_refs") or []
         missing = [r for r in refs if r not in obs_ids]
         if not refs or missing:
-            errors.append(f"{cid}: evidence_refs must name observation ids in state (unknown: {missing[:3]})")
+            errors.append(f"{cid}: evidence_refs must name observation / field_record ids in state (unknown: {missing[:3]})")
     return errors

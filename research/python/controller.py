@@ -49,7 +49,12 @@ SCHEMA_BY_KEY = {"product_concepts": "product_concept", "approvals": "approval",
                  "market_reframes": "market_reframe",
                  "demand_reroutes": "demand_reroute",
                  "demand_gaps": "demand_gap",
-                 "capture_assessments": "capture_assessment"}
+                 "capture_assessments": "capture_assessment",
+                 # LIVED-WORLD-V2 (docs/25): authority labels are enforced by schema + Python, never prompt text
+                 "population_leads": "population_lead", "community_leads": "population_lead",
+                 "field_records": "field_record", "participant_cards": "participant_evidence_card",
+                 "lived_clusters": "lived_evidence_cluster", "lived_situations": "lived_situation",
+                 "slot_candidates": "product_slot", "world_model": "community_world_model"}
 SINGULAR_KEYS = {"signal", "primitives", "scope_request", "world_model",
                  "market_seed", "product_seed", "product_identity", "corpus_backend",
                  "promotion_summary", "registry_patch"}
@@ -185,6 +190,7 @@ def cmd_status(args):
            "rounds": state["rounds"], "needs": _node_needs(g, state["node"]),
            "gaps": gaps_view, "allocation": alloc_view,
            "utilization": (__import__("utilization").compute(state) if state["node"] in ("qualify", "stop") else None),
+           "lived_world": __import__("lived_world").summary(state) if state.get("graph_file", "control_graph.yaml") == "control_graph.yaml" else None,
            "edges": edges, "context": ctx,
            "counts": {k: len(v) if isinstance(v, list) else 1 for k, v in state["data"].items() if v}})
     return 0
@@ -238,13 +244,30 @@ def cmd_submit(args):
             # docs/19: evidence-side hops must cite corpus rows / observations the run holds
             known = {r.get("id") for r in state["data"].get("corpus_evidence") or [] if isinstance(r, dict)}
             known |= {o.get("id") for o in state["data"].get("observations") or [] if isinstance(o, dict)}
+            # docs/25: field records and lived clusters are citable lanes too
+            known |= {r.get("id") for r in state["data"].get("field_records") or [] if isinstance(r, dict)}
+            known |= {c.get("id") for c in state["data"].get("lived_clusters") or [] if isinstance(c, dict)}
             errors += [f"bridge: {e}" for e in bridge.validate_all(items, pol_now, known_ids=known)]
             if args.node == "hypothesize":
+                # docs/25 §5: the lane is declared where the bridge is written; later
+                # status updates (challenge) never re-litigate anchors
+                import lived_world as _lw
+                errors += [f"lived: {e}" for e in _lw.validate_hypothesis_anchors(items, state, pol_now)]
                 errors += [f"bridge: {e}" for e in bridge.validate_portfolio(items, pol_now)]
+                errors += [f"lived: {e}" for e in _lw.validate_portfolio_anchors(items, state, pol_now)]
             if args.node == "challenge":
                 # docs/20 §1: starvation is not refutation
                 import allocation as _alloc
                 errors += [f"allocation: {e}" for e in _alloc.starved_rejections(items, state, pol_now)]
+        if key in ("population_leads", "community_leads"):
+            import lived_world as _lw
+            errors += [f"lead: {e}" for e in _lw.validate_leads(items, state)]
+        if key == "field_records":
+            import lived_world as _lw
+            errors += [f"record: {e}" for e in _lw.validate_records(items, state, pol_now)]
+        if key == "lived_situations":
+            import lived_world as _lw
+            errors += [f"situation: {e}" for e in _lw.validate_situations(items, state, pol_now)]
         if key == "product_concepts" and items:
             # docs/19 portfolio law: 3-6 distinct concepts, >=2 variations each, on SUPPORTED mechanisms
             import ideation as _ideation

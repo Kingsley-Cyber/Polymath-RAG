@@ -1,0 +1,46 @@
+{
+ "title": "community_world_model",
+ "description": "CommunityWorldModel (docs/09): how a community actually lives the activity. Every element is OBSERVED (refs) or INFERRED; open_questions is where honesty lives.",
+ "required": [
+  "activities",
+  "constraints",
+  "moments",
+  "open_questions"
+ ],
+ "properties": {
+  "activities": {
+   "type": "array",
+   "minItems": 1
+  },
+  "experience_profiles": {
+   "type": "array"
+  },
+  "constraints": {
+   "type": "array",
+   "minItems": 1
+  },
+  "norms_rituals": {
+   "type": "array"
+  },
+  "insider_language": {
+   "type": "array"
+  },
+  "moments": {
+   "type": "array",
+   "minItems": 1
+  },
+  "open_questions": {
+   "type": "array"
+  },
+  "evidence_refs": {
+   "type": "array"
+  },
+  "authority": {
+   "enum": [
+    "OBSERVED",
+    "MIXED",
+    "INFERRED"
+   ]
+  }
+ }
+}

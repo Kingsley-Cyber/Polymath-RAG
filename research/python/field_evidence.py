@@ -121,12 +121,53 @@ def candidates(state: dict, min_overlap: int = 3, today: dt.date | None = None) 
     return out
 
 
+def lead_candidates(state: dict, today: dt.date | None = None) -> list[dict]:
+    """docs/25 §2: prior field rows re-enter as field_records for the leads
+    whose community they came from (origin PRIOR_RUN) — real records, real
+    authors, freshness recomputed; never a person invented."""
+    import lived_world as _lw
+    d = state.get("data") or {}
+    leads = _lw.all_leads(state)
+    by_comm = {}
+    for l in leads:
+        if l.get("community_key"):
+            by_comm.setdefault(_lw._norm_community(l["community_key"]), l["id"])
+    existing = {r.get("id") for r in d.get("field_records") or []}
+    out = []
+    for row in d.get("corpus_evidence") or []:
+        if "field_evidence" not in (row.get("tags") or []):
+            continue
+        p = parse_row(row)
+        if not p or not p.get("community"):
+            continue
+        lid = by_comm.get(_lw._norm_community(p["community"]))
+        if not lid:
+            continue
+        rid = "frec_" + hashlib.sha1(f"{row.get('id')}|{lid}".encode()).hexdigest()[:12]
+        if rid in existing:
+            continue
+        out.append({"id": rid, "lead_id": lid, "source": p["source_url"], "quote_ref": p["quote"],
+                    "community": f"r/{p['community']}", "problem": p["problem"], "workaround": p["workaround"],
+                    "purchase_language": p["purchase_language"], "evidence_roles": p["roles"] or ["BEHAVIOR_SUPPORT"],
+                    "freshness": {"class": recompute_freshness(p["freshness_at_export"], p["exported_at"], today)},
+                    "source_identity": {"source_family": "community", "platform": p["platform"],
+                                        "author_key": p["author_key"], "thread_key": p["thread_key"]},
+                    "origin": "PRIOR_RUN", "corpus_row_id": row.get("id"), "query_used": "field-evidence corpus"})
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--state", required=True); ap.add_argument("--out", required=True); ap.add_argument("--min-overlap", type=int, default=3)
+    ap.add_argument("--leads", action="store_true", help="docs/25: emit field_records for nominated leads instead of gap observations")
     a = ap.parse_args()
     with open(a.state, encoding="utf-8") as f:
         state = json.load(f)
+    if a.leads:
+        recs = lead_candidates(state)
+        json.dump({"field_records": recs}, open(a.out, "w"), ensure_ascii=False, indent=1)
+        print(json.dumps({"field_records": len(recs), "leads_covered": len({r["lead_id"] for r in recs})}, indent=1))
+        return 0
     cands = candidates(state, a.min_overlap)
     json.dump({"observations": cands}, open(a.out, "w"), ensure_ascii=False, indent=1)
     by_gap: dict = {}

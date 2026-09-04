@@ -1,6 +1,6 @@
 name: opportunity-research
-version: 1.0.0
-architecture: v1-FROZEN   # docs/15: no new layers; qualification + telemetry-driven fixes only
+version: 2.0.0
+architecture: v2-LIVED-WORLD   # docs/25 (owner directive 2026-09-04): population discovery before ideation; v1 freeze lifted for this layer only
 qualification: examples/architecture_qualification.v1.json   # 0 invariant violations, 4 modes
 kind: hermes-skill
 entry: SKILL.md

@@ -375,6 +375,7 @@ def main() -> int:
     ap.add_argument("--via", choices=["chat", "chat-only", "plan"], default="chat", help="native lane: 'chat' = answers from the full RAG per reformulation PLUS the EXPLORE rows (docs/22, default); 'chat-only' = answers and their citations only; 'plan' = rows only")
     ap.add_argument("--state", default=None, help="run state JSON: supplies the signal and corpus identity")
     ap.add_argument("--limit", type=int, default=12)
+    ap.add_argument("--questions", action="store_true", help="docs/25 §6: ask the corpus the run's compiled friction/mechanism questions (auto at node corpus_mechanisms)")
     ap.add_argument("--include-facts", action="store_true")
     ap.add_argument("--timeout", type=float, default=120.0)
     ap.add_argument("--out", default=None, help="write the submit payload here (default stdout)")
@@ -397,6 +398,19 @@ def main() -> int:
         corpora, corpus_names = resolve_corpora(args.url, corpora, bearer)      # docs/22: names or ids
     else:
         corpus_names = {c: c for c in corpora}
+    # docs/25 §6: at corpus_mechanisms the run asks friction / mechanism / question-level
+    # asks compiled from lived clusters — never per person, never the seed plan again
+    _qmode = bool(args.state) and (args.questions or (state.get("node") == "corpus_mechanisms"))
+    if _qmode:
+        _qs = (state.get("data") or {}).get("corpus_questions") or []
+        queries = [{"id": q["id"], "query": q["question"], "kind": q.get("kind") or "question", "question_id": q["id"],
+                    "asked_as": q["question"], "cluster_id": q.get("cluster_id")} for q in _qs if q.get("question")]
+        if not queries:
+            payload = {"capability_failure": {"capability": "corpus_questions", "detail": "no corpus questions compiled (no lived clusters with frictions)"}}
+            text = json.dumps(payload, indent=1)
+            (open(args.out, "w", encoding="utf-8").write(text) if args.out else print(text))
+            print(json.dumps({"backend": "polymath", "mode": "questions", "rows": 0, "questions": 0}), file=sys.stderr)
+            return 0
     if not corpora or not queries:
         print("usage: --corpus <id> (repeatable) and at least one --query (or --state with corpus_queries/signal)", file=sys.stderr)
         return 2
@@ -413,13 +427,15 @@ def main() -> int:
     # docs/22: lanes follow CONTRACTS — chat when the backend serves chat-evidence,
     # else the plan endpoint when served, else the generic docs/18 path
     lane = "chat" if (args.via in ("chat", "chat-only") and _contracts.get("chat-evidence")) else ("plan" if _contracts.get("corpus-plan") else "retrieve")
+    if _qmode and lane == "plan":
+        lane = "retrieve"                      # a question is not a signal: retrieve per question, never re-plan the seed
     if backend["mode"] == "native" and args.state and lane == "chat":
         # docs/22: the full RAG answers each compiled reformulation; citations become contract rows,
         # the answer becomes a CORPUS_SYNTHESIS record (never evidence itself). Abstentions are kept.
         for corpus in corpora:
             n = 0
             for q in queries:
-                asked = chat_question(q) if isinstance(q, dict) else str(q)
+                asked = (q.get("asked_as") if isinstance(q, dict) and q.get("question_id") else (chat_question(q) if isinstance(q, dict) else str(q)))
                 if isinstance(q, dict):
                     q = dict(q, asked_as=asked)
                 try:
@@ -470,6 +486,18 @@ def main() -> int:
             r, e = collect(args.url, corpus, queries, args.limit, bearer, args.include_facts, args.timeout,
                            explore=not args.no_explore, seen=seen)
             rows += r; errors += e; per_corpus[corpus] = len(r)
+    # docs/25 §6/§7: stamp question-level provenance and tag CORPUS_EXAMPLE rows (deterministic)
+    _qmap = {q["id"]: q for q in queries if isinstance(q, dict) and q.get("question_id")}
+    for r in rows:
+        hit = [qid for qid in (r.get("query_ids") or []) if qid in _qmap]
+        if hit:
+            r["question_id"] = hit[0]; r["question_ids"] = hit; r["cluster_id"] = _qmap[hit[0]].get("cluster_id")
+            r.setdefault("tags", []).append("question_level")
+    try:
+        import provenance as _prov
+        _examples = _prov.tag_corpus_examples(rows, (state.get("data") or {}).get("example_terms") if args.state else None)
+    except Exception as exc:  # noqa: BLE001 — tagging is a receipt, never a blocker
+        _examples = f"tagging failed: {type(exc).__name__}"
     kinds = {k: sum(1 for x in rows if x.get("kind") == k) for k in ("chunk", "document", "graph_fact", "graph_hop")}
     if rows:
         payload = {"corpus_evidence": rows, "corpus_backend": backend}
@@ -480,7 +508,8 @@ def main() -> int:
                 "answers": len(answers), "answers_admitted": sum(1 for a in answers if not a["abstained"]),
                 "plan_source": backend["plan_source"], "plan_parity": backend.get("plan_parity"),
                 "url": args.url, "corpora": per_corpus, "queries": [q.get("kind") for q in queries],
-                "rows": len(rows), "kinds": kinds, "errors": errors}
+                "rows": len(rows), "kinds": kinds, "corpus_example_rows": _examples,
+                "question_level_rows": sum(1 for r in rows if r.get("question_id")), "errors": errors}
     else:
         payload = {"capability_failure": {"capability": "corpus",
                                           "detail": f"polymath/{','.join(corpora)}: no contract rows ({'; '.join(errors) or 'empty results'})"}}

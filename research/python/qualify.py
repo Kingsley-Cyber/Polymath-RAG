@@ -27,7 +27,7 @@ import verifiers
 
 KNOWN_VERDICTS = {
     "opportunity_research": {"QUALIFIED_LEADS", "PROVISIONAL_LEADS", "NO_DEFENSIBLE_BRIDGE",
-                             "MECHANISM_WITHOUT_SUPPLY", "NO_GENERATIVE_SIGNAL",
+                             "MECHANISM_WITHOUT_SUPPLY", "NO_GENERATIVE_SIGNAL", "CORPUS_ECHO_UNGROUNDED",
                              "STOPPED_WITHOUT_QUALIFICATION", "ABANDONED"},
     "niche_loadout": {"LOADOUT_READY", "LOADOUT_INCOMPLETE",
                       "STOPPED_WITHOUT_QUALIFICATION", "ABANDONED"},

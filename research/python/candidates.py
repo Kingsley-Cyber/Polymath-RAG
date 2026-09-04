@@ -123,4 +123,20 @@ def auto_emit(state: dict, policies: dict) -> str:
                        {"genesis": h["genesis"],
                         "mechanism": h.get("target_mechanism"),
                         "invariant": h.get("invariant")}, [h["id"]])
+    n += emit_communities(state)
     return f"auto-emitted {n} registry candidates (SQLite accumulates; maintenance decides)"
+
+
+def emit_communities(state: dict) -> int:
+    """docs/25 §1: an ANCHOR cluster proves a community actually spoke — it
+    becomes a COMMUNITY_CANDIDATE for the registry (approval still human)."""
+    n = 0
+    for c in state["data"].get("lived_clusters") or []:
+        if not isinstance(c, dict) or c.get("authority") != "ANCHOR":
+            continue
+        n += _emit(state, "COMMUNITY_CANDIDATE", str(c.get("community")),
+                   {"community": c.get("community"), "friction_family": c.get("friction_family"),
+                    "records": c.get("record_count"), "threads": c.get("thread_count"),
+                    "independent_voices": c.get("independent_voices"), "seed_population": c.get("seed_population")},
+                   list(c.get("record_ids") or []))
+    return n

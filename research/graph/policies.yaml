@@ -10,6 +10,7 @@ bridge:
   max_inference_hops_without_evidence: 2
   require_hop_refs: true         # docs/19: when true, hops before the boundary must cite corpus/observation ids (hop_refs)
   require_evidence_boundary: true # every hypothesis must declare first_inference_at
+  require_lived_anchor: true     # docs/25 §5: a hypothesis names ANCHOR lived clusters or declares grounding CORPUS_ONLY
 supplier:
   require_price: true
   require_moq: true
@@ -27,6 +28,12 @@ ideation:                      # docs/19: the product SET
 corpus:                        # docs/19: corpus_plan reformulations
   min_queries: 3
   max_queries: 5
+  question_forms:              # docs/25 §6: the corpus answers friction/mechanism/question-level asks, never per person
+    - "What explains this workaround: {workaround}?"
+    - "What mechanism reduces {friction} when {context}?"
+    - "What analogous constraint exists elsewhere for {friction}?"
+    - "Why do people keep doing {behavior} despite {friction}?"
+  max_questions: 12
 scoring:
   min_mechanism_support: 3        # supporting observations per mechanism
   purchase_language_bonus: 2      # observations with purchase language count extra
@@ -103,6 +110,7 @@ portfolio:
   max_hypotheses: 6
   max_exploratory: 1                     # one EXPLORATORY_TRANSFER allowed
   distinct_target_mechanisms: true       # five magnetic clips = one hypothesis
+  min_lived_anchored: 2                  # docs/25 §5: at least this many hypotheses anchor in lived clusters
 triage:
   max_research_ready: 3                  # info-gain budget: research the few that teach most
   min_priority: 2                        # below this -> HOLD (prior, never evidence)
@@ -208,3 +216,24 @@ capture_feasibility:            # decomposed dims -> categorical routing judgmen
   easy_threshold: 0.6
   plausible_threshold: 0.4
   difficult_threshold: 0.2      # below this -> HOSTILE
+
+# ── LIVED-WORLD-V2 (docs/25): population discovery before ideation ────────
+lived_world:
+  anchor_threshold:              # a cluster may ANCHOR lived-situation reasoning only at or above ALL of these
+    min_records: 5
+    min_threads: 2
+    min_independent_voices: 3    # verifiers.independence_groups over the cluster's records
+  batch_size: 4                  # leads instantiated per round (VOI-ranked work queue, no fan-out)
+  max_rounds: 3                  # population rounds before the run proceeds with what it has
+  min_anchor_clusters: 2         # the gate wants at least this many ANCHOR clusters
+  wall_clock_minutes: 45         # ceiling on population discovery per run
+  stagnation_rounds: 1           # rounds with no new record and no new ANCHOR before stopping
+  seed_population_discount: 0.5  # VOI multiplier for leads that restate the signal's own population
+  nominate_max_registry: 6       # registry situations nominated per run (predicate/friction overlap)
+  value_of_information:
+    default_source_yield: {SIGNAL: 0.8, FIELD_RECORDS: 0.7, OPEN_FIELD: 0.7, CORPUS: 0.6, REGISTRY: 0.5}
+provenance:                      # docs/25 §7: lineage decides what may count, never a category blacklist
+  min_independent_voices: 3      # per concept, over the field records + observations it cites
+  min_communities: 2
+  echo_verdict: CORPUS_ECHO_UNGROUNDED
+

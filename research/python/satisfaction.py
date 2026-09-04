@@ -13,7 +13,11 @@ from models import now
 def _roles_present(state: dict) -> dict[str, list[str]]:
     """role -> observation ids establishing it (field evidence only)."""
     out: dict[str, list[str]] = {}
-    for o in state["data"]["observations"]:
+    # docs/25: population-discovery field records are admitted through the same
+    # evidence contract and establish roles like any observation
+    for o in list(state["data"]["observations"]) + [r for r in state["data"].get("field_records") or [] if isinstance(r, dict)]:
+        if o.get("contradicts"):
+            continue
         for r in o.get("evidence_roles") or []:
             out.setdefault(r, []).append(o["id"])
     # Normalized supplier candidates ARE live supply-side evidence (L3):
@@ -32,7 +36,7 @@ def evidence_coverage(state: dict, policies: dict) -> dict:
     """Per-requirement coverage receipt for the physical-product matrix."""
     reqs = policies.get("physical_product_requirements") or {}
     present = _roles_present(state)
-    ind = verifiers.independence_groups(state["data"]["observations"])
+    ind = verifiers.independence_groups(list(state["data"]["observations"]) + [r for r in state["data"].get("field_records") or [] if isinstance(r, dict)])
     min_groups = (policies.get("independence_defaults") or {}).get("minimum_independent_groups", 3)
     searched = state["rounds"]["research"] >= 1
     coverage: dict[str, dict] = {}

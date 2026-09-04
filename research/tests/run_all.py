@@ -212,11 +212,85 @@ submit(pos, "primitives", {"primitives": {
 ctl("step", "--state", pos)            # -> signal_gate
 ctl("step", "--state", pos)            # gate -> lenses
 ctl("step", "--state", pos)            # lens gate -> structural_lookup
-rc, out = ctl("step", "--state", pos)  # structural -> hypothesize
-ok(out["ok"] and out["advanced_to"] == "hypothesize", "signal+lens+structural gates advanced")
+rc, out = ctl("step", "--state", pos)  # structural -> population_nominate (docs/25)
+ok(out["ok"] and out["advanced_to"] == "population_nominate", "signal+lens+structural gates advanced into population discovery")
 pstate = json.load(open(pos))
 ok(len(pstate["data"]["cross_domain_analogies"]) > 0,
    "invariant-bounded cross-domain analogies attached from registry")
+rc, out = ctl("step", "--state", pos)  # nominate -> population_scout
+pstate = json.load(open(pos))
+ok(out.get("advanced_to") == "population_scout" and pstate["data"]["population_leads"]
+   and all(l["authority"] == "LEAD" and l["status"] == "NOMINATED" for l in pstate["data"]["population_leads"]),
+   f"registry situations nominated as PopulationLeads (authority LEAD, never demand): {len(pstate['data']['population_leads'])}")
+ok(all(l.get("channel_queries") and all(q.get("tools") for q in l["channel_queries"]) for l in pstate["data"]["population_leads"]),
+   "every lead carries compiled channel queries with tool chains (docs/24)")
+rc, out = submit(pos, "population_scout", {"community_leads": [
+    {"id": "cl_creators", "kind": "COMMUNITY", "name": "r/NewTubers", "source_lane": "OPEN_FIELD", "platform": "reddit",
+     "community_key": "NewTubers", "nominated_by": ["reddit search 'mic cable movement' → 9 posts in r/NewTubers"],
+     "authority": "LEAD", "status": "NOMINATED", "why": "creators complain about tethered audio", "expected_frictions": ["occupied_hand"]},
+    {"id": "cl_dance", "kind": "COMMUNITY", "name": "r/Dance", "source_lane": "OPEN_FIELD", "platform": "reddit",
+     "community_key": "Dance", "nominated_by": ["reddit search 'teaching class mic' → 5 posts in r/Dance"],
+     "authority": "LEAD", "status": "NOMINATED", "why": "instructors teach while moving, nobody nominated them", "expected_frictions": ["movement_restriction"]}]})
+ok(rc == 0, f"open-field CommunityLeads admitted ({out.get('schema_errors', '')[:1]})")
+rc, out = submit(pos, "population_scout", {"community_leads": [dict(pstate["data"]["population_leads"][0], id="bad_lead", kind="COMMUNITY", authority="DEMAND")]})
+ok(rc == 1, "a lead claiming DEMAND authority is rejected — a lead never establishes demand")
+ctl("step", "--state", pos)            # scout -> population_queue
+rc, out = ctl("step", "--state", pos)  # queue -> community_instantiate
+pq = json.load(open(pos))["population_queue"]
+ok(out.get("advanced_to") == "community_instantiate" and pq["round"] == 1 and 1 <= len(pq["batch"]) <= 4
+   and pq["batch"][0] in ("cl_creators", "cl_dance"),
+   f"VOI queue hands ONE batch, open-field non-seed leads first ({pq['batch'][:2]})")
+def _rec(i, lead, comm, fam, author, thread, roles, moment=None, products=None, workaround=""):
+    return {"id": f"fr_{lead}_{i}", "lead_id": lead, "source": f"reddit.com/r/{comm}/{thread}", "quote_ref": f"real quote {lead} {i}",
+            "community": f"r/{comm}", "problem": f"{fam} while filming {i}", "workaround": workaround, "friction_family": fam,
+            "evidence_roles": roles, "freshness": {"class": "LIVE"}, "origin": "CHANNEL", **({"moment": moment} if moment else {}),
+            **({"products_named": products} if products else {}),
+            "source_identity": {"source_family": "community", "platform": "reddit", "author_key": author, "thread_key": thread}}
+# independence law: 5 authors across 2 threads = 2 voices (THIN); across 3 threads = 3 voices (ANCHOR)
+recs = ([_rec(i, "cl_creators", "NewTubers", "occupied_hand", f"nt_a{i}", f"nt_t{i % 3}", ["FRICTION_EVIDENCE"], "DURING", ["collar clip"], "tapes transmitter to belt") for i in range(5)]
+        + [_rec(i, "cl_dance", "Dance", "movement_restriction", f"dn_a{i}", f"dn_t{i % 3}", ["WORKAROUND_EVIDENCE"], None, ["sweatband pouch"], "stuffs mic in sweatband") for i in range(6)]
+        + [_rec(0, pstate["data"]["population_leads"][0]["id"], "hiking", "carry_load", "hk_a0", "hk_t0", ["BEHAVIOR_SUPPORT"])])
+rc, out = submit(pos, "community_instantiate", {"field_records": [dict(recs[0], id="bad_rec", lead_id="nope")]})
+ok(rc == 1 and any("not a nominated lead" in e for e in out.get("schema_errors", [])), "a field record must belong to a nominated lead")
+rc, out = submit(pos, "community_instantiate", {"field_records": recs})
+ok(rc == 0, f"field records admitted through the evidence contract ({out.get('schema_errors', '')[:1]})")
+ctl("step", "--state", pos)            # instantiate -> evidence_cards
+rc, out = ctl("step", "--state", pos)  # cards -> population_gate
+pstate = json.load(open(pos))
+cl = {c["community"]: c for c in pstate["data"]["lived_clusters"]}
+ok(len(pstate["data"]["participant_cards"]) == 12 and cl["newtubers"]["authority"] == "ANCHOR" and cl["dance"]["authority"] == "ANCHOR"
+   and cl["hiking"]["authority"] == "THIN" and cl["hiking"]["unknowns"],
+   f"cards + clusters: 5 records/3 threads/3 voices = ANCHOR, one record = THIN with unknowns ({ {k: v['authority'] for k, v in cl.items()} })")
+rc, out = ctl("step", "--state", pos)  # gate -> lived_situations (2 anchors satisfy the minimum)
+ok(out.get("advanced_to") == "lived_situations", f"population gate proceeds once enough ANCHOR clusters exist ({out.get('note')})")
+_anchor, _thin = cl["newtubers"]["id"], cl["hiking"]["id"]
+rc, out = submit(pos, "lived_situations", {"lived_situations": [
+    {"id": "bad_ls", "authority": "FIELD_ANCHORED", "cluster_id": _thin, "unknowns": [], "frictions": [{"text": "x", "authority": "FIELD_OBSERVATION", "refs": ["fr_cl_creators_0"]}]}]})
+ok(rc == 1 and any("THIN" in e for e in out.get("schema_errors", [])), "FIELD_ANCHORED on a THIN cluster is rejected — thin cards may only feed reconstruction")
+rc, out = submit(pos, "lived_situations", {"lived_situations": [
+    {"id": "ls_nt", "authority": "FIELD_ANCHORED", "cluster_id": _anchor, "community": "newtubers", "activity": "filming a talking-head video", "moment": "DURING",
+     "body_hand_state": "one hand on the camera, torso turning", "frictions": [{"text": "cable restricts turning", "authority": "FIELD_OBSERVATION", "refs": ["fr_cl_creators_0", "fr_cl_creators_1"]}],
+     "unknowns": ["how often they film standing", "whether they edit the same day"]},
+    {"id": "ls_hk", "authority": "RECONSTRUCTED", "cluster_id": _thin, "situation": "packing at the trailhead", "unknowns": ["what they carry", "whether hands are free"]},
+    {"id": "bad_bio", "authority": "RECONSTRUCTED", "cluster_id": _thin, "situation": "a complete life story", "unknowns": []}]})
+ok(rc == 1 and any("biography" in e for e in out.get("schema_errors", [])), "a reconstruction without unknowns is rejected as a biography")
+rc, out = submit(pos, "lived_situations", {"lived_situations": [
+    {"id": "ls_nt", "authority": "FIELD_ANCHORED", "cluster_id": _anchor, "community": "newtubers", "activity": "filming a talking-head video", "moment": "DURING",
+     "frictions": [{"text": "cable restricts turning", "authority": "FIELD_OBSERVATION", "refs": ["fr_cl_creators_0", "fr_cl_creators_1"]}],
+     "unknowns": ["how often they film standing"]},
+    {"id": "ls_hk", "authority": "RECONSTRUCTED", "cluster_id": _thin, "situation": "packing at the trailhead", "unknowns": ["what they carry"]}]})
+ok(rc == 0, f"anchored + reconstructed situations admitted ({out.get('schema_errors', '')[:1]})")
+rc, out = ctl("step", "--state", pos)  # lived_situations -> corpus_mechanisms (on_enter compiles questions)
+pstate = json.load(open(pos))
+ok(out.get("advanced_to") == "corpus_mechanisms" and pstate["data"]["corpus_questions"]
+   and all(q["question"] and q["cluster_id"] for q in pstate["data"]["corpus_questions"])
+   and any("workaround" in q["question"].lower() for q in pstate["data"]["corpus_questions"]),
+   f"corpus questions compiled at friction/mechanism level from clusters ({len(pstate['data']['corpus_questions'])})")
+submit(pos, "corpus_mechanisms", {"corpus_evidence": [{"id": "e2", "summary": "habit cues survive when the tool interferes least with the movement",
+                                                        "question_id": pstate["data"]["corpus_questions"][0]["id"], "tags": ["chunk", "question_level"], "doc_id": "bookA"}]})
+rc, out = ctl("step", "--state", pos)  # corpus_mechanisms -> hypothesize
+ok(out.get("advanced_to") == "hypothesize", "question-level corpus pass feeds the bridge")
+_c_nt, _c_dn = cl["newtubers"]["id"], cl["dance"]["id"]
 h = {"id": "h1", "source": "storytelling_importance",
      "path": ["creator_differentiation", "physical_delivery", "movement", "low_interference_audio"],
      "target_mechanism": "wearable_wireless_audio",
@@ -233,7 +307,13 @@ h3 = dict(h, id="h3", target_mechanism="garment_integrated_pocket",
           gaps=["creators would buy audio-ready garments", "garment mods observed"],
           falsifiers=["nobody modifies clothing for audio"])
 rc, out = submit(pos, "hypothesize", {"hypotheses": [h, h2, h3]})
-ok(rc == 0, f"diverse 3-hypothesis portfolio admitted ({out.get('schema_errors', '')[:1]})")
+ok(rc == 1 and any("lived_anchor_ids" in e or "CORPUS_ONLY" in e for e in out.get("schema_errors", [])),
+   "a hypothesis must name its lane: ANCHOR clusters or grounding CORPUS_ONLY (docs/25 §5)")
+rc, out = submit(pos, "hypothesize", {"hypotheses": [dict(h, lived_anchor_ids=[_thin]), dict(h2, grounding="CORPUS_ONLY"), dict(h3, grounding="CORPUS_ONLY")]})
+ok(rc == 1 and any("THIN" in e for e in out.get("schema_errors", [])), "a THIN cluster cannot anchor a hypothesis")
+h = dict(h, lived_anchor_ids=[_c_nt]); h2 = dict(h2, lived_anchor_ids=[_c_dn]); h3 = dict(h3, grounding="CORPUS_ONLY")
+rc, out = submit(pos, "hypothesize", {"hypotheses": [h, h2, h3]})
+ok(rc == 0, f"diverse 3-hypothesis portfolio admitted with lived anchors ({out.get('schema_errors', '')[:1]})")
 rc, out = ctl("step", "--state", pos)  # -> semantic_review
 ok(out.get("advanced_to") == "semantic_review" and "dossier" in str(out.get("needs", {})),
    "L4 review node reached with dossier directive")
@@ -312,6 +392,11 @@ _concepts = [{"id": f"pc{i}", "mechanism_id": "m1", "name": n, "form_factor": ff
               "variations": [{"name": f"{n} lite"}, {"name": f"{n} pro", "twist": "dual channel"}],
               "evidence_refs": _obs_ids[:2]}
              for i, (n, ff) in enumerate([("Clip mic", "wearable"), ("Collar loop", "garment-integrated"), ("Desk puck", "tabletop")], 1)]
+# docs/25 §7: one concept grounded across communities (observations + field records from two clusters),
+# one field-originated noun (the sweatband pouch the dancers named — absent from every corpus row)
+_concepts[0]["evidence_refs"] = _obs_ids[:3] + ["fr_cl_creators_0", "fr_cl_dance_0", "fr_cl_dance_1"]
+_concepts[1] = dict(_concepts[1], name="Sweatband pouch", form_factor="wearable band", origin="FIELD",
+                    evidence_refs=["fr_cl_dance_0", "fr_cl_dance_1", "fr_cl_dance_2", "fr_cl_dance_3"])
 submit(pos, "product_ideation", {"product_concepts": _concepts})
 rc, out = ctl("step", "--state", pos)
 ok(out.get("advanced_to") == "supplier_search", f"3 distinct concepts x 2 variations unlock Alibaba ({out if out.get('advanced_to') != 'supplier_search' else ''})")
@@ -334,6 +419,14 @@ ok(len(state.get("satisfaction_history", [])) >= 2,
    "satisfaction receipts are append-only history (causally frozen cycles)")
 ok(len(state["data"]["leads"]) == 1 and state["data"]["leads"][0]["moq_units"] == 50,
    "lead carries normalized supplier economics")
+_prov = {r["concept_id"]: r for r in state["data"]["provenance"]}
+ok(_prov["pc1"]["verdict"] == "GROUNDED" and _prov["pc1"]["independent_voices"] >= 3 and len(_prov["pc1"]["communities"]) >= 2,
+   f"provenance: a concept cited by independent voices across communities is GROUNDED ({_prov['pc1']['verdict']})")
+ok(_prov["pc2"]["field_originated"] is True, "a noun that lives only in the field records is field-originated")
+_u = state["data"]["utilization"]
+ok(_u["lived_world"]["clusters_by_authority"].get("ANCHOR") == 2 and _u["corpus_contribution"]["rows_cited"] >= 0
+   and "cited_share_of_shelf" in _u["corpus_contribution"] and _u["provenance"]["verdicts"],
+   "utilization receipt carries lived-world, corpus-contribution and provenance sections")
 
 # ---- 5. SQLite durability ---------------------------------------------------
 import memory  # noqa: E402
@@ -1385,11 +1478,17 @@ submit(lo2, "frontier", {"frontier_branches": [{"name": "trail_runners", "new_jo
        "inference_distance": .2, "research_cost": .3}]})
 ctl("step", "--state", lo2)            # -> frontier_gate
 ctl("step", "--state", lo2)            # -> world_model
-submit(lo2, "world_model", {"world_model": {"activities": ["long trail runs"],
+rc, out = submit(lo2, "world_model", {"world_model": {"activities": ["long trail runs"],
        "constraints": ["heat", "carry"], "insider_language": ["vert", "FKT"]}})
+ok(rc == 1 and any("moments" in e for e in out.get("schema_errors", [])), "world model without moments/open_questions is rejected (schema, not prompt text)")
+submit(lo2, "world_model", {"world_model": {"activities": ["long trail runs"], "moments": ["mid-run", "post-run"],
+       "constraints": ["heat", "carry"], "insider_language": ["vert", "FKT"], "open_questions": ["how they carry water"]}})
 ctl("step", "--state", lo2)            # -> lived_r1
-submit(lo2, "lived_r1", {"lived_situations": [{"id": "ls1", "situation": "mid-run water access",
+rc, out = submit(lo2, "lived_r1", {"lived_situations": [{"id": "ls1", "situation": "mid-run water access",
        "inferred_frictions": ["occupied_hand"]}]})
+ok(rc == 1 and any("authority" in e or "unknowns" in e for e in out.get("schema_errors", [])), "a lived situation must declare authority + unknowns")
+submit(lo2, "lived_r1", {"lived_situations": [{"id": "ls1", "situation": "mid-run water access",
+       "inferred_frictions": ["occupied_hand"], "authority": "SIMULATED", "unknowns": ["how far between refills"]}]})
 ctl("step", "--state", lo2)            # -> voi_gate
 ctl("step", "--state", lo2)            # voi -> field
 _LSRC = lambda i: {"source_family": "community", "platform": "reddit",
@@ -1402,7 +1501,7 @@ submit(lo2, "field", {"observations": [
 ctl("step", "--state", lo2)            # -> culture_curate
 ctl("step", "--state", lo2)            # curate -> lived_r2
 submit(lo2, "lived_r2", {"lived_situations": [{"id": "ls2", "situation": "post-run transition",
-       "inferred_frictions": ["wet_gear"]}]})
+       "inferred_frictions": ["wet_gear"], "authority": "RECONSTRUCTED", "evidence_refs": ["lf0"], "unknowns": ["where they change"]}]})
 ctl("step", "--state", lo2)            # -> product_slots
 _SLOT = lambda i, job, fam: {"id": f"slot{i}", "name": f"item {i}", "quality": .7 + i * .02,
                              "physical_jobs": [job], "moments": ["during"],
@@ -2481,6 +2580,156 @@ _al = _sx.parse_listing("alibaba", {"title": "Clip Mic Kit", "url": "https://www
 ok(_cj and _cj["channel"] == "cjdropshipping" and _cj["price_raw"] == "$4.20" and _cj["moq_raw"] == _sx.NOT_SHOWN
    and _al and _al["moq_raw"].lower().startswith("min. order") and _sx.parse_listing("alibaba", {"title": "x", "url": "https://example.com/p", "text": ""}) is None,
    "the sourcing helper parses CJ and Alibaba listing URLs, keeps price/MOQ verbatim, and never invents a missing value")
+
+# ---------------------------------------------------------------------------
+# 20. LIVED-WORLD-V2 (docs/25): population discovery, evidence cards, provenance
+# ---------------------------------------------------------------------------
+import lived_world as _lwm  # noqa: E402
+import provenance as _pvm  # noqa: E402
+import models as _models20  # noqa: E402
+_pol20 = graphmod.load_policies()
+# 20a. schemas are real: each new object validates / fails on its authority fields
+ok(not _models20.validate({"id": "l1", "kind": "COMMUNITY", "name": "r/x", "source_lane": "OPEN_FIELD", "nominated_by": ["search receipt"],
+                            "authority": "LEAD", "status": "NOMINATED"}, "population_lead"), "population_lead schema accepts a well-formed lead")
+ok(any("authority" in e for e in _models20.validate({"id": "l1", "kind": "COMMUNITY", "name": "r/x", "source_lane": "OPEN_FIELD",
+                                                      "nominated_by": ["x"], "authority": "DEMAND", "status": "NOMINATED"}, "population_lead")),
+   "population_lead schema refuses any authority but LEAD")
+ok(any("unknowns" in e for e in _models20.validate({"id": "s", "authority": "RECONSTRUCTED"}, "lived_situation")),
+   "lived_situation schema requires unknowns (preserved, never invented away)")
+ok(any("THIN" in e or "authority" in e for e in _models20.validate({"id": "c", "community": "x", "friction_family": "f", "card_ids": ["a"], "record_ids": ["r"],
+                                                                     "record_count": 1, "thread_count": 1, "independent_voices": 1, "authority": "STRONG", "unknowns": []}, "lived_evidence_cluster")),
+   "lived_evidence_cluster authority is THIN or ANCHOR only")
+ok(any("collection_roles" in e for e in _models20.validate({"id": "p", "name": "n", "physical_jobs": ["j"], "moments": ["m"], "collection_roles": ["HERO"]}, "product_slot")),
+   "product_slot collection_roles are the five loadout roles")
+# 20b. nomination lanes: signal communities (seed), corpus population_leads, prior field rows, registry situations
+_st = _models20.new_state("lw20", "SEED: Primal Queen sells organ supplements to postpartum and perimenopausal women. Creators record standing up.")
+_st["node"] = "population_nominate"
+_st["data"]["communities"] = ["r/Menopause"]
+_st["data"]["primitives"] = {"generative_signal": True, "frictions": ["occupied_hand"], "shared_predicates": ["access", "attach"],
+                             "population_leads": [{"name": "night-shift nurses", "why": "habit book names them", "evidence_refs": ["e1"], "frictions": ["access_latency"]},
+                                                  "perimenopausal women"]}
+_st["data"]["corpus_evidence"] = [{"id": "fe1", "summary": "FIELD_OBS author=u/a roles=FRICTION_EVIDENCE purchase=no freshness=LIVE gap=g obs=o\n\"quote\"\nproblem: x", "tags": ["chunk", "field_evidence"],
+                                   "document": {"frontmatter": {"community": "Zepbound", "platform": "reddit", "thread_key": "t1", "exported_at": "2026-09-01"}}}]
+note20 = _lwm.nominate(_st, _pol20)
+_leads = _lwm.all_leads(_st); _by_lane = {}
+for l in _leads: _by_lane.setdefault(l["source_lane"], []).append(l)
+ok(set(_by_lane) >= {"SIGNAL", "CORPUS", "REGISTRY", "FIELD_RECORDS"} and all(l["authority"] == "LEAD" for l in _leads),
+   f"all four nomination lanes produce leads, every one authority LEAD ({ {k: len(v) for k, v in _by_lane.items()} })")
+_seedy = {l["name"]: l["seed_population"] for l in _leads}
+ok(_seedy.get("r/Menopause") is True and _seedy.get("perimenopausal women") is True and _seedy.get("night-shift nurses") is False,
+   "leads restating the signal's own population are marked seed_population; a book-named population is not")
+_rank = _lwm.rank_leads(_st, _pol20); _byid = _lwm.lead_by_id(_st)
+ok(_byid[_rank[0]]["seed_population"] is False and all(_byid[i]["voi"] >= _byid[j]["voi"] for i, j in zip(_rank, _rank[1:])),
+   "VOI ranking is monotone and discounts the seed population — non-seed leads are visited first")
+ok(all(q.get("tools") and q.get("lead_id") for l in _leads for q in l["channel_queries"])
+   and any(q.get("subreddit_hints") == ["zepbound"] for l in _by_lane["FIELD_RECORDS"] for q in l["channel_queries"]),
+   "lead channel queries carry tool chains and the community key as the reddit scope")
+# 20c. queue rounds, batch size, stagnation and wall clock are ceilings, not vibes
+_pol_small = copy.deepcopy(_pol20); _pol_small["lived_world"]["batch_size"] = 2; _pol_small["lived_world"]["max_rounds"] = 2
+_lwm.queue(_st, _pol_small)
+ok(len(_st["population_queue"]["batch"]) == 2 and all(_byid[i]["status"] == "INSTANTIATING" for i in _st["population_queue"]["batch"]),
+   "queue hands exactly batch_size leads and marks them INSTANTIATING")
+_lwm.cards(_st, _pol_small)                      # no records: the batch is EXHAUSTED for now
+ok(all(_byid[i]["status"] == "EXHAUSTED" for i in _st["population_queue"]["batch"]), "a visited lead with no records is EXHAUSTED, never padded")
+_lwm.gate(_st, _pol_small)
+ok(_st["population_loop"]["continue"] is True and _st["population_loop"]["rounds"] == 1, "no ANCHOR yet and budget left: one more round")
+_lwm.queue(_st, _pol_small); _lwm.cards(_st, _pol_small); _lwm.gate(_st, _pol_small)
+ok(_st["population_loop"]["continue"] is False and ("stagnation" in _st["population_loop"]["reason"] or "ceiling" in _st["population_loop"]["reason"]),
+   f"stagnation / round ceiling stops the loop honestly ({_st['population_loop']['reason']})")
+_st["population_queue"]["started_at"] = "2026-01-01T00:00:00+00:00"; _st["population_loop"] = {}
+_lwm.gate(_st, _pol_small)
+ok("wall clock" in _st["population_loop"]["reason"], "wall-clock ceiling is enforced")
+# 20d. anchor threshold is configurable and decides THIN vs ANCHOR deterministically
+def _r20(i, comm, author, thread):
+    return {"id": f"r{i}", "lead_id": _leads[0]["id"], "source": f"u{i}", "quote_ref": f"q{i}", "community": comm, "problem": "p", "workaround": "w" if i % 2 else "",
+            "evidence_roles": ["FRICTION_EVIDENCE"], "freshness": {"class": "LIVE"},
+            "source_identity": {"source_family": "community", "platform": "reddit", "author_key": author, "thread_key": thread}}
+_st["data"]["field_records"] = [_r20(i, "r/Zepbound", f"a{i}", f"t{i % 2}") for i in range(5)]
+_lwm.cards(_st, _pol20)
+ok(_st["data"]["lived_clusters"][0]["authority"] == "THIN" and _st["data"]["lived_clusters"][0]["independent_voices"] == 2,
+   "5 authors in 2 threads = 2 voices = THIN (same thread is one voice, docs/04 §16)")
+_st["data"]["field_records"] = [_r20(i, "r/Zepbound", f"a{i}", f"t{i % 3}") for i in range(5)]
+_lwm.cards(_st, _pol20)
+ok(_st["data"]["lived_clusters"][0]["authority"] == "ANCHOR", "5 records / 3 threads / 3 voices = ANCHOR at the default threshold")
+_pol_tight = copy.deepcopy(_pol20); _pol_tight["lived_world"]["anchor_threshold"]["min_records"] = 8
+_lwm.cards(_st, _pol_tight)
+ok(_st["data"]["lived_clusters"][0]["authority"] == "THIN" and _st["data"]["lived_clusters"][0]["threshold"]["min_records"] == 8,
+   "raising the threshold flips the same cluster to THIN — configurable, recorded on the cluster")
+_st["data"]["field_records"] = [_r20(i, "r/Zepbound", "one_author", "one_thread") for i in range(6)]
+_lwm.cards(_st, _pol20)
+ok(_st["data"]["lived_clusters"][0]["authority"] == "THIN" and _st["data"]["lived_clusters"][0]["independent_voices"] == 1
+   and len(_st["data"]["participant_cards"]) == 1,
+   "six records from one author in one thread = ONE voice = THIN (independence law)")
+# 20e. corpus question compiler: friction / mechanism level, capped, never per person
+_st["data"]["field_records"] = [dict(_r20(i, "r/Zepbound", f"a{i}", f"t{i % 3}"), friction_family="small_parts") for i in range(5)]
+_lwm.cards(_st, _pol20); _lwm.compile_corpus_questions(_st, _pol20)
+ok(_st["data"]["corpus_questions"] and any("small parts" in q["question"] for q in _st["data"]["corpus_questions"])
+   and any(q["question"].startswith("What explains this workaround") for q in _st["data"]["corpus_questions"])
+   and not any("u/" in q["question"] or "a0" in q["question"] for q in _st["data"]["corpus_questions"]),
+   f"questions ask about the friction and the workaround, never about a person ({_st['data']['corpus_questions'][0]['question'][:60]})")
+_pol_cap = copy.deepcopy(_pol20); _pol_cap["corpus"]["max_questions"] = 1
+_lwm.compile_corpus_questions(_st, _pol_cap)
+ok(len(_st["data"]["corpus_questions"]) == 1, "question count honours corpus.max_questions")
+# 20f. CORPUS_EXAMPLE tagging is deterministic and never drops a row
+_rows = [{"id": "d1", "kind": "document", "doc_id": "D", "summary": "profile", "text": "profile", "document_summary": {"major_entities": ["Primal Queen", "market"]}},
+         {"id": "c1", "kind": "chunk", "doc_id": "D", "summary": "Primal Queen sells organ supplements to postpartum women", "text": "Primal Queen sells organ supplements to postpartum women", "tags": ["chunk"]},
+         {"id": "c2", "kind": "chunk", "doc_id": "D", "summary": "enter a proven market and carve out a specific segment", "text": "enter a proven market and carve out a specific segment", "tags": ["chunk"]}]
+_n = _pvm.tag_corpus_examples(_rows, ["hydrogen water bottle"])
+ok(_n == 1 and "CORPUS_EXAMPLE" in _rows[1]["tags"] and "CORPUS_EXAMPLE" not in _rows[2]["tags"] and _rows[1]["example_terms"] == ["Primal Queen"]
+   and len(_rows) == 3,
+   "rows naming a document's proper-noun entity are tagged CORPUS_EXAMPLE; the mechanism row is not; nothing is dropped")
+# 20g. provenance: echo lineage vs legal overlap vs field origin
+_ps = _models20.new_state("prov20", "seed"); _pd = _ps["data"]
+_pd["corpus_evidence"] = _rows
+_pd["hypotheses"] = [{"id": "h_echo", "status": "SUPPORTED"}, {"id": "h_ok", "status": "SUPPORTED", "lived_anchor_ids": ["cl1"]}]
+_pd["mechanisms"] = [{"id": "m_echo", "hypothesis_id": "h_echo", "status": "SUPPORTED"}, {"id": "m_ok", "hypothesis_id": "h_ok", "status": "SUPPORTED"}]
+_pd["observations"] = [{"id": f"o{i}", "gap_id": "g", "community": "r/Menopause", "quote_ref": "q", "problem": "p", "evidence_roles": ["FRICTION_EVIDENCE"], "freshness": {"class": "LIVE"},
+                        "source_identity": {"source_family": "community", "platform": "reddit", "author_key": f"oa{i}", "thread_key": f"ot{i}"}} for i in range(2)]
+_pd["field_records"] = [{"id": f"f{i}", "lead_id": "l", "community": c, "quote_ref": "q", "problem": "p", "workaround": "uses a magnetic pill caddy", "products_named": ["pill caddy"],
+                         "evidence_roles": ["WORKAROUND_EVIDENCE"], "freshness": {"class": "LIVE"},
+                         "source_identity": {"source_family": "community", "platform": "reddit", "author_key": f"fa{i}", "thread_key": f"ft{i}"}}
+                        for i, c in enumerate(["r/Zepbound", "r/Zepbound", "r/PCOS", "r/PCOS"])]
+_pd["lived_clusters"] = [{"id": "cl1", "authority": "ANCHOR", "record_ids": ["f0", "f1", "f2", "f3"], "community": "zepbound", "seed_population": False}]
+_pd["product_concepts"] = [{"id": "pc_echo", "mechanism_id": "m_echo", "name": "Organ supplements for postpartum women", "form_factor": "supplement", "evidence_refs": ["o0", "o1"]},
+                           {"id": "pc_legal", "mechanism_id": "m_ok", "name": "Organ supplement dose caddy", "form_factor": "supplement caddy", "evidence_refs": ["f0", "f1", "f2", "f3", "o0"]},
+                           {"id": "pc_field", "mechanism_id": "m_ok", "name": "Magnetic pill caddy", "form_factor": "magnetic caddy", "evidence_refs": ["f0", "f2", "f3"]}]
+_pd["leads"] = [{"id": "L1", "concept_id": "pc_echo", "product_name": "organ caps"}, {"id": "L2", "concept_id": "pc_legal", "product_name": "caddy"}]
+_sum = _pvm.enforce(_ps, _pol20)
+_pv = {r["concept_id"]: r for r in _pd["provenance"]}
+ok(_pv["pc_echo"]["verdict"] == "CORPUS_ECHO_UNGROUNDED" and _pv["pc_echo"]["example_overlap"],
+   "lineage corpus example → same noun → same-noun search only = CORPUS_ECHO_UNGROUNDED")
+ok(_pv["pc_legal"]["verdict"] == "GROUNDED" and _pv["pc_legal"]["example_overlap"],
+   "the SAME category stays legal when independent participants across communities ground it")
+ok(_pv["pc_field"]["field_originated"] is True and _pv["pc_echo"]["field_originated"] is False,
+   "a noun that lives only in field records is field-originated; the echoed noun is not")
+ok(len(_pd["leads"]) == 1 and _pd["leads"][0]["concept_id"] == "pc_legal" and _pd["excluded_leads"] and _sum["excluded_leads"] == 1,
+   "echo leads are excluded with the reason; grounded leads survive")
+_cc = _pvm.corpus_contribution(_ps)
+ok(_cc["rows_retrieved"] == 3 and _cc["rows_cited"] == 0 and _cc["cited_share_of_shelf"] == 0.0,
+   "contribution counts CITED rows, so a fully retrieved shelf with nothing cited scores zero")
+_pd["hypotheses"][1]["hop_refs"] = {"0": ["c2"]}
+_cc = _pvm.corpus_contribution(_ps)
+ok(_cc["rows_cited"] == 1 and _cc["mechanism_only_contributions"] == 1 and _cc["example_rows_cited"] == 0,
+   "a cited mechanism row that shares no noun with any concept is a mechanism-only contribution")
+# 20h. prior field rows re-enter as field_records for nominated leads (origin PRIOR_RUN)
+import field_evidence as _fe20  # noqa: E402
+_fs = _models20.new_state("fe20", "s"); _fs["data"]["community_leads"] = [{"id": "lz", "kind": "COMMUNITY", "name": "r/Zepbound", "community_key": "Zepbound", "source_lane": "SIGNAL", "nominated_by": ["signal"], "authority": "LEAD", "status": "NOMINATED"}]
+_fs["data"]["corpus_evidence"] = [{"id": "row9", "tags": ["chunk", "field_evidence"], "source": "https://reddit.com/r/Zepbound/t9",
+                                   "text": "FIELD_OBS author=u/zed roles=WORKAROUND_EVIDENCE|FRICTION_EVIDENCE purchase=yes freshness=LIVE gap=g1 obs=o1\n\"I pre-portion into tiny jars\"\nproblem: cannot finish plates\nworkaround: tiny jars",
+                                   "document": {"frontmatter": {"community": "Zepbound", "platform": "reddit", "thread_key": "t9", "exported_at": "2026-09-01"}}}]
+_recs = _fe20.lead_candidates(_fs, today=__import__("datetime").date(2026, 9, 4))
+ok(len(_recs) == 1 and _recs[0]["lead_id"] == "lz" and _recs[0]["origin"] == "PRIOR_RUN" and _recs[0]["source_identity"]["author_key"] == "u/zed"
+   and _recs[0]["freshness"]["class"] == "LIVE" and not _lwm.validate_records(_recs, _fs, _pol20),
+   "prior field rows map to their community's lead with the original author and recomputed freshness, and pass the record contract")
+# 20i. the calibration acceptance test runs on a finished state and reports per-criterion receipts
+_acc = subprocess.run([PY, os.path.join(ROOT, "tests", "calibration_acceptance.py"), "--state", pos], capture_output=True, text=True)
+_rep = json.loads(_acc.stdout)
+ok(set(_rep["checks"]) == {"concepts_outside_seed", "independent_voices_per_concept", "cited_share_of_shelf", "field_originated_products",
+                            "mechanism_only_corpus_contributions", "hypotheses_killed_or_reframed_by_field"}
+   and _rep["checks"]["field_originated_products"]["pass"] is True and _rep["checks"]["hypotheses_killed_or_reframed_by_field"]["pass"] is True
+   and _acc.returncode == (0 if _rep["pass"] else 1),
+   f"calibration acceptance reports six receipts and exits non-zero unless all pass (this synthetic walk: {[k for k, v in _rep['checks'].items() if not v['pass']]})")
+ok(doctor.run()["ok"], "doctor green over the lived-world surface")
 
 if FAILS:
     print(f"\n{len(FAILS)} CHECKS FAILED: " + "; ".join(FAILS[:8]))

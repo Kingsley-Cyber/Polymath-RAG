@@ -152,6 +152,23 @@ def all_rejected_or_held(state: dict, policies: dict) -> bool:
 
 
 
+# ---------------------------------------------------------------- LIVED-WORLD-V2 (docs/25)
+def population_round_needed(state: dict, policies: dict) -> bool:
+    """The population_gate executor already decided (anchors vs ceilings vs
+    stagnation vs wall clock) — conditions only read the recorded fact."""
+    return bool((state.get("population_loop") or {}).get("continue"))
+
+
+def lived_world_present(state: dict, policies: dict) -> bool:
+    return not population_round_needed(state, policies) and bool(state["data"].get("lived_clusters"))
+
+
+def lived_world_empty(state: dict, policies: dict) -> bool:
+    """No field record survived any round: hypotheses may still be written,
+    but every one of them is CORPUS_ONLY and can never qualify on its own."""
+    return not population_round_needed(state, policies) and not state["data"].get("lived_clusters")
+
+
 CONDITIONS = {
     "no_generative_signal": no_generative_signal,
     "generative_signal_present": generative_signal_present,
@@ -171,6 +188,9 @@ CONDITIONS = {
     "candidate_evidence_sufficient": candidate_evidence_sufficient,
     "promotion_eligible": promotion_eligible,
     "all_rejected_or_held": all_rejected_or_held,
+    "population_round_needed": population_round_needed,
+    "lived_world_present": lived_world_present,
+    "lived_world_empty": lived_world_empty,
 }
 
 

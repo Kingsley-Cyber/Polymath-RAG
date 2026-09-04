@@ -63,6 +63,13 @@ def compute(state: dict) -> dict:
                   "concepts_with_leads": len({l.get("concept_id") for l in leads if l.get("concept_id")}), "concepts": len(concepts),
                   "mechanisms_with_leads": len({l.get("mechanism_id") for l in leads}), "by_channel": dict(collections.Counter(l.get("channel") or "alibaba" for l in leads)), "mechanisms_supported": sum(1 for m in d.get("mechanisms") or [] if m.get("status") == "SUPPORTED")},
         "registry_candidates_by_kind": dict(collections.Counter(c.get("kind") for c in d.get("registry_candidates") or [])),
+        # LIVED-WORLD-V2 (docs/25): the receipt that proves semantic behaviour, not execution
+        "lived_world": __import__("lived_world").summary(state),
+        "corpus_contribution": __import__("provenance").corpus_contribution(state),
+        "provenance": {"verdicts": dict(collections.Counter(r.get("verdict") for r in d.get("provenance") or [])),
+                       "field_originated_concepts": sum(1 for r in d.get("provenance") or [] if r.get("field_originated")),
+                       "excluded_leads": len(d.get("excluded_leads") or []),
+                       "concepts_outside_seed": sum(1 for r in d.get("provenance") or [] if r.get("seed_population_only") is False)},
     }
 
 
@@ -83,4 +90,15 @@ def to_markdown(u: dict) -> str:
              f"| leads across concepts / mechanisms / channels | {ld['total']} leads, {ld['concepts_with_leads']}/{ld['concepts']} concepts, {ld['mechanisms_with_leads']}/{ld['mechanisms_supported']} mechanisms, {ld.get('by_channel', {})} |",
              f"| observations by platform | {o.get('by_platform', {})} |",
              f"| registry candidates | {u['registry_candidates_by_kind']} |"]
+    lw, cc, pv = u.get("lived_world") or {}, u.get("corpus_contribution") or {}, u.get("provenance") or {}
+    if lw:
+        lines += [f"| population leads (lane / status / seed) | {lw.get('leads')} {lw.get('leads_by_lane')} {lw.get('leads_by_status')} seed={lw.get('seed_population_leads')} |",
+                  f"| field records / cards / clusters | {lw.get('field_records')} {lw.get('records_by_origin')} / {lw.get('participant_cards')} / {lw.get('clusters_by_authority')} (outside seed {lw.get('clusters_outside_seed')}) |",
+                  f"| lived situations (authority, unknowns kept) | {lw.get('situations_by_authority')} / {lw.get('unknowns_preserved')} |",
+                  f"| population rounds / loop | {lw.get('rounds')} / {(lw.get('loop') or {}).get('reason')} |"]
+    if cc:
+        lines += [f"| corpus contribution: cited rows / docs cited of retrieved | {cc.get('rows_cited')}/{cc.get('rows_retrieved')} / {cc.get('documents_cited')}/{cc.get('documents_retrieved')} ({cc.get('cited_share_of_shelf')}) |",
+                  f"| corpus example rows retrieved / cited; mechanism-only contributions | {cc.get('example_rows_retrieved')} / {cc.get('example_rows_cited')}; {cc.get('mechanism_only_contributions')} |"]
+    if pv:
+        lines += [f"| provenance verdicts / field-originated / excluded echo leads | {pv.get('verdicts')} / {pv.get('field_originated_concepts')} / {pv.get('excluded_leads')} |"]
     return "\n".join(lines)

@@ -577,15 +577,23 @@ def scoring(state: dict, policies: dict) -> str:
     max_leads = int(_settings.effective(state, "opportunity_research.max_leads",
                                         pol["supplier"]["max_leads"]))
     d["leads"] = leads[: min(max_leads, pol["supplier"]["max_leads"] + 2)]
+    # docs/25 §7: lineage decides what may count — leads whose concept is
+    # CORPUS_ECHO_UNGROUNDED are excluded (kept visible with the reason)
+    import provenance as _prov
+    had_leads = bool(d["leads"])
+    prov = _prov.enforce(state, policies)
     tier = _sat.lead_tier(state, policies)
     if d["leads"] and tier == "QUALIFIED_LEAD":
         state["verdict"] = "QUALIFIED_LEADS"
     elif d["leads"]:
         state["verdict"] = "PROVISIONAL_LEADS"
+    elif had_leads:
+        state["verdict"] = (pol.get("provenance") or {}).get("echo_verdict", "CORPUS_ECHO_UNGROUNDED")
     else:
         state["verdict"] = "MECHANISM_WITHOUT_SUPPLY"
     import candidates as _cand
     note = _cand.auto_emit(state, policies)
+    note += f" | provenance {prov['verdicts']}" + (f", excluded {prov['excluded_leads']} echo leads" if prov["excluded_leads"] else "")
     cov = sourcing_coverage(state)
     import utilization as _util
     d["utilization"] = _util.compute(state)          # docs/21 §1: the receipt every run carries
@@ -795,3 +803,5 @@ import product_anchored as _pa  # noqa: E402
 EXECUTORS["python.demand_gap_analysis"] = _ga.demand_gap_analysis
 EXECUTORS.update(_md.EXECUTORS)
 EXECUTORS.update(_pa.EXECUTORS)
+import lived_world as _lw  # noqa: E402  LIVED-WORLD-V2 (docs/25)
+EXECUTORS.update(_lw.EXECUTORS)
