@@ -1,11 +1,11 @@
 {
- "bundle": "v5-production-003-gate-contract",
- "bundle_sha256": "7e97368daa92ec19048bf6d053bf75efa2fdced1b11019acc2fb751371dd18b7",
+ "bundle": "v5-production-004-typed-claims",
+ "bundle_sha256": "19de664ca8e36f6665640192173a34b34a6388374795fbfdd51f08c18981fbea",
  "members": {
   "shared/polymath_shared/entity_admission_policy.yaml": "94e128e73f9e5abacb06c9f3304a585aa0d39f5b96dbbd711b52f20b580db165",
   "shared/polymath_shared/entity_knowledge_admission.py": "91e478e995982faaae0676fe6ce541e11ef04295ef8adcf83d42555872d75ae6",
-  "shared/polymath_shared/llm_extraction/gate.py": "8c53bc1cd7085a0ea2708b827af04d0f520019831f837420dd5ed8e965e10082",
-  "workers/workers/llm_direct.py": "4211d1bcd571c0725d48b69f1def46de5a107dd80ed16217024bdd41b9eb34f7",
+  "shared/polymath_shared/llm_extraction/gate.py": "961773191408a3ae7a3dd6a9524cfbc83013035495a3453a13ef7d3fd5b8241a",
+  "workers/workers/llm_direct.py": "0799a0d67dbb28addbde12fdabd39ecb79888b87a0c7fd71d0f7a01d06c2faa9",
   "shared/polymath_shared/identity_allocation.py": "e3f429bbea4c1f38100fd57e5e26ee237f777b036ca109a49d238b21e88c15c9",
   "shared/polymath_shared/entity_harbor.py": "377b6d82e1d55da57aa53d5eb52b93f23c34d511092a9753962fda94cc933259",
   "shared/polymath_shared/admission_interpreter.py": "42c8adcbba995e62b25f74b57d308df711c3246d492c235e2e66351a9d442808",

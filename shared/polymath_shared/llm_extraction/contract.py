@@ -25,7 +25,7 @@ a niche domain must never fail extraction on the type list.
 """
 from __future__ import annotations
 
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -60,6 +60,10 @@ class RelationProposal(BaseModel):
     object: str = Field(min_length=1, max_length=200)
     quote: str = Field(min_length=1, max_length=2000,
                        description="Verbatim source sentence(s) expressing the relation")
+    # TYPED-CLAIMS-V1 (2026-09-03): what kind of lived claim the relation
+    # reports, when it is one. None for ordinary facts. Read-time consumers
+    # (EXPLORE rows, research skills) filter on it; retrieval ranking does not.
+    claim_kind: Optional[Literal["friction", "behavior", "workaround", "purchase_language"]] = None
 
     @field_validator("subject", "predicate", "object", "quote")
     @classmethod
@@ -167,6 +171,8 @@ EXTRACTION_JSON_SCHEMA: dict = {
                                     "predicate": {"type": "string"},
                                     "object": {"type": "string"},
                                     "quote": {"type": "string"},
+                                    "claim_kind": {"type": ["string", "null"],
+                                                   "enum": ["friction", "behavior", "workaround", "purchase_language", None]},
                                 },
                             },
                         },

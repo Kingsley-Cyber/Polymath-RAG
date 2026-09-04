@@ -178,8 +178,11 @@ def materialize(conn, *, corpus_id: str, doc_id: str, chunk_rows: dict[str, dict
                 "gate_version": "attestation-levels-v1",
                 "endpoint_attestation": att or None,
             })
+            # TYPED-CLAIMS-V1: the claim kind lives in qualifiers (jsonb); the
+            # fact id ignores it, so a typed re-extraction enriches the same fact.
+            qualifiers = json.dumps({"claim_kind": ev["claim_kind"]}) if ev.get("claim_kind") else "{}"
             fact_rows.setdefault(fid, (
-                fid, pred, sid, oid, "{}", "ACCEPT", RULE_ID, RULE_VERSION,
+                fid, pred, sid, oid, qualifiers, "ACCEPT", RULE_ID, RULE_VERSION,
                 json.dumps(provenance, sort_keys=True), EXTRACTOR_VERSION))
             quote = (int(ev["start"]), int(ev["end"]))
             s_off = _endpoint_offsets(subj_s, view, quote)
@@ -253,8 +256,11 @@ def materialize(conn, *, corpus_id: str, doc_id: str, chunk_rows: dict[str, dict
                 """INSERT INTO facts (fact_id, predicate, subject_id, object_id, qualifiers,
                                       decision, rule_id, rule_version, provenance,
                                       extractor_version)
-                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                   ON CONFLICT (fact_id) DO NOTHING""", f)
+                   VALUES (%s,%s,%s,%s,%s::jsonb,%s,%s,%s,%s,%s)
+                   ON CONFLICT (fact_id) DO UPDATE
+                       SET qualifiers = facts.qualifiers || EXCLUDED.qualifiers
+                     WHERE (EXCLUDED.qualifiers ? 'claim_kind')
+                       AND NOT (facts.qualifiers ? 'claim_kind')""", f)
             written["facts"] += cur.rowcount
         for e in evidence_rows.values():
             cur.execute(

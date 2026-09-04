@@ -120,7 +120,7 @@ def _system_prompt() -> str:
 SYSTEM_PROMPT_TEMPLATE = """You are an information extraction engine. You read source text and reply with ONE JSON object and nothing else — no prose, no markdown fences.
 
 Output schema (contract polymath-extraction-v1):
-{"contract":"polymath-extraction-v1","profile":"volume","items":[{"neighborhood_id":"<repeat the id exactly>","entities":[{"surface":"...","type":"...","quote":"..."}],"relations":[{"subject":"...","predicate":"...","object":"...","quote":"..."}],"digest":{"central_claim":"...","main_mechanism":"...","retrieval_uses":["..."]}}]}
+{"contract":"polymath-extraction-v1","profile":"volume","items":[{"neighborhood_id":"<repeat the id exactly>","entities":[{"surface":"...","type":"...","quote":"..."}],"relations":[{"subject":"...","predicate":"...","object":"...","quote":"...","claim_kind":"friction|behavior|workaround|purchase_language|null"}],"digest":{"central_claim":"...","main_mechanism":"...","retrieval_uses":["..."]}}]}
 
 Rules:
 1. quote fields MUST be copied VERBATIM from the source text (exact substring; may be the full sentence). Never paraphrase, never invent.
@@ -133,6 +133,7 @@ Rules:
 6. digest: central_claim ≤ 1 sentence; main_mechanism ≤ 1 sentence; retrieval_uses ≤ 3 short strings (what queries this passage should answer).
 7. One item per neighborhood_id, exactly as given.
 8. Never derive an entity or relation from a question stem, quiz prompt, or answer-option list (e.g. "Which of the following…", lettered choices). Extract only from declarative statements and explanations.
+9. claim_kind: when the relation reports a LIVED claim by a person or group, label it — "friction" (a difficulty, failure or annoyance someone experiences), "behavior" (a practice or routine someone describes doing), "workaround" (an improvised fix or substitute someone built or adopted), "purchase_language" (a wish, intent or report of buying/paying for something). Otherwise set null. The quote must show the lived claim; never infer it.
 
 LOCKED generation config (plan decision 18, config/extraction_models/qwen35-4b-extraction-v1.yaml):
 the local lane sends repetition_penalty=1.15 with repetition_context_size=400 —
@@ -146,7 +147,7 @@ Output schema (contract polymath-extraction-v1, LEAN form — entities by index,
 
 Rules:
 1. "e" is the entity array: [surface, TYPE] pairs. Surface MUST appear verbatim in the source text. TYPE is one of: Person, Organization, Location, Product, Technology, Concept, Method, Event, Document, Process, Measurement, TimeReference — or a more specific natural type.
-2. "r" relations reference entity INDICES: [subject_idx, PREDICATE, object_idx, quote]. The quote MUST be copied VERBATIM from the source. PREDICATE must be exactly one of: IS_A, PART_OF, HAS_PROPERTY, SAME_AS, USES, REQUIRES, PRODUCES, CAUSES, REGULATES, CORRELATES_WITH, CONSTRAINED_BY, PRECEDES, MEASURES, LOCATED_IN, ALTERNATIVE_TO, OPPOSES, ACTS_ON. Use RELATED_TO only as a last resort.
+2. "r" relations reference entity INDICES: [subject_idx, PREDICATE, object_idx, quote] with an OPTIONAL 5th element claim_kind ("friction" | "behavior" | "workaround" | "purchase_language") when the quote is a lived claim someone reports — a difficulty, a routine, an improvised fix, or buying intent; omit it for ordinary facts. The quote MUST be copied VERBATIM from the source. PREDICATE must be exactly one of: IS_A, PART_OF, HAS_PROPERTY, SAME_AS, USES, REQUIRES, PRODUCES, CAUSES, REGULATES, CORRELATES_WITH, CONSTRAINED_BY, PRECEDES, MEASURES, LOCATED_IN, ALTERNATIVE_TO, OPPOSES, ACTS_ON. Use RELATED_TO only as a last resort.
 3. Disambiguation (follow exactly): applying/imposing a rule on X = CONSTRAINED_BY, never PRODUCES (nothing new is created). "consists of/composed of/made up of" = PART_OF, not HAS_PROPERTY. PRODUCES = creates a NEW output that did not exist before. Supplying/offering something existing = USES or ACTS_ON. "not responsible for / not the root cause / prevents" = OPPOSES. RELATED_TO is the LAST RESORT — if any other id fits even loosely, use that id.
 4. No output without input: extract only what the text states. Stay lean — no padding, no repetition. Entities without relations are fine.
 5. digest: central_claim ≤ 1 sentence; main_mechanism ≤ 1 sentence; retrieval_uses ≤ 3 short strings.
@@ -181,10 +182,14 @@ def _lean_expand(obj: dict) -> dict:
                     continue
                 if not isinstance(pred, str) or not isinstance(quote, str):
                     continue
-                relations.append({"subject": entities[si]["surface"],
-                                  "predicate": pred[:120],
-                                  "object": entities[oi]["surface"],
-                                  "quote": quote[:2000]})
+                rel = {"subject": entities[si]["surface"],
+                       "predicate": pred[:120],
+                       "object": entities[oi]["surface"],
+                       "quote": quote[:2000]}
+                # TYPED-CLAIMS-V1: optional 5th element = claim_kind
+                if len(r) >= 5 and r[4] in ("friction", "behavior", "workaround", "purchase_language"):
+                    rel["claim_kind"] = r[4]
+                relations.append(rel)
         items_out.append({"neighborhood_id": it.get("id") or it.get("neighborhood_id") or "",
                           "entities": entities, "relations": relations,
                           "digest": it.get("digest") or {}})

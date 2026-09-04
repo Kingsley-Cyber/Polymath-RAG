@@ -156,6 +156,16 @@ def _fetch_chunks(conn, chunk_ids: list[str]) -> dict:
     return out
 
 
+def _fact_claim_kinds(conn, fact_ids: list[str]) -> dict:
+    """TYPED-CLAIMS-V1: the claim kind the extractor put in facts.qualifiers."""
+    if not fact_ids:
+        return {}
+    rows = conn.execute(
+        "SELECT fact_id, qualifiers->>'claim_kind' FROM facts WHERE fact_id = ANY(%s) AND qualifiers ? 'claim_kind'",
+        (list(fact_ids),)).fetchall()
+    return {r[0]: r[1] for r in rows if r[1]}
+
+
 def _fact_provenance(conn, fact_ids: list[str]) -> dict:
     prov = defaultdict(list)
     if not fact_ids:
@@ -227,6 +237,7 @@ def build_evidence_rows(conn, response: dict, corpus_ids: list[str], *, limit: i
             doc_ids.append(d["doc_id"])
     facts = response.get("graph_facts") or []
     prov = _fact_provenance(conn, [f.get("fact_id") for f in facts if f.get("fact_id")])
+    kinds = _fact_claim_kinds(conn, [f.get("fact_id") for f in facts if f.get("fact_id")])
     for plist in prov.values():
         for p in plist:
             if p["doc_id"] not in doc_ids:
@@ -248,8 +259,10 @@ def build_evidence_rows(conn, response: dict, corpus_ids: list[str], *, limit: i
                "text": c["text"], "text_clean": clean, "timecode": tc, "heading_path": c["heading_path"],
                "char_start": c["char_start"], "char_end": c["char_end"], "tier": c["tier"],
                "lanes": sorted(lanes.get(cid) or {kind}), "score": round(score.get(cid, 0.0), 4)}
-        if fm.get("channel") or fm.get("url"):
-            row["document"] = {k: fm.get(k) for k in ("channel", "upload_date", "video_id", "url") if fm.get(k)}
+        # document meta always rides along: consumers (field-evidence rows, transcripts)
+        # need the frontmatter, not just the display label
+        row["document"] = {"source_name": doc.get("source_name"), "frontmatter": dict(fm),
+                           **{k: fm.get(k) for k in ("channel", "upload_date", "video_id", "url") if fm.get(k)}}
         if extra:
             row.update(extra)
         return row
@@ -302,7 +315,10 @@ def build_evidence_rows(conn, response: dict, corpus_ids: list[str], *, limit: i
                      "title": doc["title"], "source": f"{doc['title']} · graph fact attested in {len(p)} chunk(s)",
                      "text": f"{f.get('subject')} —{f.get('predicate')}→ {f.get('object')}",
                      "text_clean": f"{f.get('subject')} {f.get('predicate')} {f.get('object')}",
-                     "fact": {k: f.get(k) for k in ("subject", "predicate", "object", "subject_id", "object_id")},
+                     "fact": {**{k: f.get(k) for k in ("subject", "predicate", "object", "subject_id", "object_id")},
+                              "claim_kind": kinds.get(fid)},
+                     "claim_kind": kinds.get(fid),          # TYPED-CLAIMS-V1: friction | behavior | workaround | purchase_language | None
+                     "document": {"source_name": doc.get("source_name"), "frontmatter": doc.get("frontmatter") or {}},
                      "evidence": p[:5], "lanes": ["graph"], "score": 0.0})
 
     # 5. explore: one entity hop into other documents
