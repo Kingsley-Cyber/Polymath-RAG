@@ -418,8 +418,8 @@ def main() -> int:
     caps = None if args.generic else probe_capabilities(args.url, bearer)
     backend = backend_record(caps, args.url)
     field_corpus = (backend.get("contracts") or {}).get("field-evidence-corpus")
-    if field_corpus and field_corpus not in corpora and not args.no_field_evidence:
-        corpora.append(field_corpus)               # docs/21 step 3: past field evidence rides along
+    if field_corpus and field_corpus not in corpora and not args.no_field_evidence and not _qmode:
+        corpora.append(field_corpus)               # docs/21 step 3: past field evidence rides along (not for mechanism questions)
         backend["field_evidence_corpus"] = field_corpus
     server_plan = None
     answers = []
@@ -456,8 +456,10 @@ def main() -> int:
             per_corpus[corpus] = n
         backend["plan_source"] = "local"; backend["lane"] = "chat"
         if args.via == "chat" and _contracts.get("corpus-plan"):
-            lane = "plan"                        # breadth: the EXPLORE rows ride along (docs/22 §1 combined lane)
-            backend["lane"] = "chat+plan"
+            # breadth rides along: the seed's EXPLORE plan normally; in question mode the
+            # per-question retrieve instead (a question is never re-planned as the seed)
+            lane = "retrieve" if _qmode else "plan"
+            backend["lane"] = "chat+questions" if _qmode else "chat+plan"
         elif not rows and errors:
             backend["mode"] = "generic"; backend["native_error"] = errors[-1]
     if backend["mode"] == "native" and args.state and lane == "plan":
@@ -481,7 +483,11 @@ def main() -> int:
         backend["plan_parity"] = (sorted(backend["plan_ids"]) == sorted(local_ids)) if local_ids and server_plan else None
         if not rows and errors:                      # native path failed outright: fall back, say so
             backend["mode"] = "generic"; backend["plan_source"] = "local"; backend["native_error"] = errors[-1]
-    if backend["mode"] != "native":
+    if backend["mode"] != "native" or lane == "retrieve":
+        # generic per-query retrieve: the docs/18 path for non-native backends AND the
+        # question lane on a native backend (a question is retrieved, never re-planned)
+        if lane == "retrieve" and backend.get("lane") not in ("chat+questions",):
+            backend["lane"] = "retrieve" if not _qmode else "questions"
         for corpus in corpora:
             r, e = collect(args.url, corpus, queries, args.limit, bearer, args.include_facts, args.timeout,
                            explore=not args.no_explore, seen=seen)
