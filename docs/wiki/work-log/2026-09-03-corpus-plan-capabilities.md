@@ -118,3 +118,17 @@ for a consumer. Consequence for consumers: ask the answer path SHORT,
 concrete questions built from the reformulation's strongest terms, and take
 breadth from the EXPLORE rows of the same plan. TRAIL v1.5.1 does both
 (`lane: chat+plan`, `corpus_answers[].asked_as`). Re-measured below.
+
+
+### Combined lane receipt (TRAIL v1.5.2 against Polymath main 357a5b1, purple-ocean signal, 3 corpora)
+
+- Lane `chat+plan`, plan parity true: **297 rows** (174 chunk, 46 document, 77 attested graph_fact) — 60 marketing, 123 ecom, **114 field-evidence (84 FIELD_OBS rows)**.
+- Answer path: 15 concrete questions asked, **2 admitted** (the seed question on marketing: 13 citations; on ecom: 10), 13 abstained
+  (`uncovered_query_terms` such as acne-prone, authorship, biological). The admission gate is doing its job; the lane's
+  breadth comes from the EXPLORE rows, its synthesis from the questions it can ground.
+- Arm 2 (field evidence on a repeat signal, counted with curate's own role + freshness filter, thread identity from the
+  re-stamped frontmatter): 64 candidates (31 LIVE, 33 FAST, all with author + thread), **17 of 18 open gaps with corpus
+  support (94 %, target ≥ 50 %)**, 11 gaps already at the three-independent-thread bar from the corpus alone, **11 fresh
+  threads still needed vs 30 in Run 4 (−63 %, target −30 %)**. Both targets met; the field-evidence corpus is promoted
+  from experiment to default (the adapter appends it whenever `/capabilities` advertises it).
+- Arm 3 (typed rows) not measured: reverted by owner decision (extraction unchanged).
