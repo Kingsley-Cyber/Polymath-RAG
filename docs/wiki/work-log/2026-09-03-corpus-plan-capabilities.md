@@ -103,3 +103,18 @@ withheld); mark-builds-brands-v1 "what makes an ugly landing page convert"
 → supported, 10 citations, 6 s; ecom-meta-v1 → supported, 21 citations, 7 s.
 Note for a later slice: `citations[].human_locators` still print a
 filesystem path for transcripts; the evidence rows do not.
+
+
+### First live arm of the chat lane (2026-09-03 late) — honest receipt
+
+TRAIL v1.5.0 asked the full answer path the five compiled reformulations
+(sentence form) on three corpora: **15 asked, 1 admitted** (the marketing
+seed sentence), 14 abstained with `uncovered_query_terms` such as
+"authorship", "acne-prone", "carnivore"; 10 rows, none from the field
+corpus; Arm 2 = 0 gaps with corpus support. The answer-admission gate
+(answer-admission-v2) requires the evidence to cover the question's content
+terms — right for a QA answer, and by the owner's rule it is NOT loosened
+for a consumer. Consequence for consumers: ask the answer path SHORT,
+concrete questions built from the reformulation's strongest terms, and take
+breadth from the EXPLORE rows of the same plan. TRAIL v1.5.1 does both
+(`lane: chat+plan`, `corpus_answers[].asked_as`). Re-measured below.
