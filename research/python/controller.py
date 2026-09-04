@@ -57,7 +57,7 @@ SCHEMA_BY_KEY = {"product_concepts": "product_concept", "approvals": "approval",
                  "slot_candidates": "product_slot", "world_model": "community_world_model"}
 SINGULAR_KEYS = {"signal", "primitives", "scope_request", "world_model",
                  "market_seed", "product_seed", "product_identity", "corpus_backend",
-                 "promotion_summary", "registry_patch"}
+                 "promotion_summary", "registry_patch", "row_relevance"}
 MODE_GRAPHS = {"opportunity_research": "control_graph.yaml",
                "niche_loadout": "loadout_graph.yaml",
                "market_discovery": "market_discovery_graph.yaml",
@@ -135,6 +135,8 @@ def cmd_init(args):
     state["node"] = g["graph"]["entry"]
     if getattr(args, "corpus", None):  # provenance only — never changes behavior
         state["corpus"] = args.corpus
+    if getattr(args, "document_id", None):  # docs/26 §8: document scope for the corpus lanes (retrieve + plan; never an unscoped /chat)
+        state["document_scope"] = list(dict.fromkeys(args.document_id))
     if getattr(args, "settings", None) or getattr(args, "preset", None):
         import settings as settingsmod
         overrides = {}
@@ -232,7 +234,18 @@ def cmd_submit(args):
         payload = json.load(f)
     merged, errors = [], []
     pol_now = graphmod.load_policies()
+    if "row_relevance" in payload and any(k == "row_relevance" for k, _, _ in specs):
+        # docs/26 §2: a later node (hypothesize) may classify rows it is about to cite; the map
+        # MERGES into the run's relevance and is applied before the hypotheses are validated
+        import lived_world as _lw
+        _rerr = _lw.validate_relevance_map(payload.get("row_relevance") or {}, state, pol_now)
+        if _rerr:
+            _emit({"ok": False, "schema_errors": _rerr[:20]}); return 1
+        _lw.merge_relevance(state, payload.get("row_relevance") or {})
+        merged.append("row_relevance")
     for key, schema, is_list in specs:
+        if key == "row_relevance":
+            continue
         if key not in payload:
             continue
         state["data"].setdefault(key, [] if is_list else {})
@@ -248,14 +261,14 @@ def cmd_submit(args):
             known |= {r.get("id") for r in state["data"].get("field_records") or [] if isinstance(r, dict)}
             known |= {c.get("id") for c in state["data"].get("lived_clusters") or [] if isinstance(c, dict)}
             errors += [f"bridge: {e}" for e in bridge.validate_all(items, pol_now, known_ids=known)]
-            # docs/26 §2: a row θ itself classified IRRELEVANT can never back a hop
-            _irr = {rid for rid, cls in (state["data"].get("row_relevance") or {}).items() if cls == "IRRELEVANT"}
-            for h in items:
-                if isinstance(h, dict):
-                    bad = sorted({rid for v in (h.get("hop_refs") or {}).values() for rid in v or [] if rid in _irr})
-                    if bad:
-                        errors.append(f"relevance: {h.get('id')}: hop_refs cite rows classified IRRELEVANT {bad[:3]} — an irrelevant passage is not a hop")
             if args.node == "hypothesize":
+                # docs/26 §2 LINEAGE LAW (fail-closed): a corpus row cited by a hop must be
+                # classified (this payload may classify it via row_relevance) and not IRRELEVANT
+                import lived_world as _lw
+                for h in items:
+                    if isinstance(h, dict):
+                        _refs = [rid for v in (h.get("hop_refs") or {}).values() for rid in v or []]
+                        errors += [f"relevance: {e}" for e in _lw.lineage_ref_errors(_refs, state, state["data"].get("row_relevance") or {}, f"{h.get('id')} hop_refs")]
                 # docs/25 §5: the lane is declared where the bridge is written; later
                 # status updates (challenge) never re-litigate anchors
                 import lived_world as _lw
@@ -268,26 +281,26 @@ def cmd_submit(args):
                 errors += [f"allocation: {e}" for e in _alloc.starved_rejections(items, state, pol_now)]
         if key == "primitives" and items and isinstance(items[0], dict):
             # docs/26: source-agnostic interpretation objects ride inside primitives; validated
-            # here and mirrored into their own data keys (Work Graph objects, context priorities)
+            # here and mirrored into their own data keys (Work Graph objects, context priorities).
+            # LINEAGE LAW (fail-closed): every evidence_ref must exist and, for corpus rows, be
+            # classified in row_relevance and not IRRELEVANT — an unclassified row is readable,
+            # never citable.
+            import lived_world as _lw
             prim = items[0]
+            _rel = {**(state["data"].get("row_relevance") or {}), **(prim.get("row_relevance") or {})}
+            errors += _lw.validate_relevance_map(prim.get("row_relevance") or {}, state, pol_now)
             for i, x in enumerate(prim.get("latent_structures") or []):
                 errors += [f"latent_structures[{i}]: {e}" for e in models.validate(x, "latent_structure")]
+                errors += _lw.lineage_ref_errors((x or {}).get("evidence_refs"), state, _rel, f"latent_structures[{i}]")
             for i, x in enumerate(prim.get("corpus_observations") or []):
                 errors += [f"corpus_observations[{i}]: {e}" for e in models.validate(x, "corpus_observation")]
-            _classes = set((pol_now.get("corpus") or {}).get("relevance_classes") or [])
-            _row_ids = {r.get("id") for r in state["data"].get("corpus_evidence") or [] if isinstance(r, dict)}
-            for rid, cls in (prim.get("row_relevance") or {}).items():
-                if cls not in _classes:
-                    errors.append(f"row_relevance[{rid}]: {cls!r} not in {sorted(_classes)}")
-                elif rid not in _row_ids:
-                    errors.append(f"row_relevance[{rid}]: unknown corpus row")
+                errors += _lw.lineage_ref_errors((x or {}).get("evidence_refs"), state, _rel, f"corpus_observations[{i}]")
+            for k, refs in (prim.get("evidence_refs") or {}).items():
+                errors += _lw.lineage_ref_errors(refs, state, _rel, f"primitives.evidence_refs.{k}")
             if not errors:
                 state["data"]["latent_structures"] = list(prim.get("latent_structures") or [])
                 state["data"]["corpus_observations"] = list(prim.get("corpus_observations") or [])
-                state["data"]["row_relevance"] = dict(prim.get("row_relevance") or {})
-                for r in state["data"].get("corpus_evidence") or []:
-                    if isinstance(r, dict) and r.get("id") in state["data"]["row_relevance"]:
-                        r["relevance"] = state["data"]["row_relevance"][r["id"]]
+                _lw.merge_relevance(state, prim.get("row_relevance") or {})
         if key in ("population_leads", "community_leads"):
             import lived_world as _lw
             errors += [f"lead: {e}" for e in _lw.validate_leads(items, state)]
@@ -661,6 +674,8 @@ def main():
             sp.add_argument("--preset", default=None)
             sp.add_argument("--corpus", default=None,
                             help="corpus backend identity for provenance (e.g. 'polymath-mcp', 'qdrant:mydocs')")
+            sp.add_argument("--document-id", action="append", default=None, dest="document_id",
+                            help="docs/26 §8: restrict the corpus lanes to these document ids (repeatable); /chat is never called unscoped while a scope is active")
         if name == "submit":
             sp.add_argument("--node", required=True)
             sp.add_argument("--file", required=True)

@@ -136,10 +136,10 @@ def _corpus_analogies(state: dict, prim: dict, budget: int) -> list[dict]:
         for item in prim.get(key) or []:
             vocab.update(w for w in re.findall(r"[a-z][a-z\-]{3,}", str(item).lower()) if w not in _CQ_STOP)
     out, seen = [], set()
-    _irr = {rid for rid, cls in (state["data"].get("row_relevance") or {}).items() if cls == "IRRELEVANT"}
+    _rel = state["data"].get("row_relevance") or {}
     for r in state["data"].get("corpus_evidence") or []:
-        if r.get("id") in _irr:
-            continue                            # docs/26 §2: irrelevant passages never become analogies
+        if _rel.get(r.get("id")) in (None, "IRRELEVANT"):
+            continue                            # docs/26 §2 (fail-closed): only CLASSIFIED, non-irrelevant rows become analogies
         tags = set(r.get("tags") or []) | {r.get("kind") or ""}
         if not (tags & {"graph_fact", "graph_hop"}):
             continue

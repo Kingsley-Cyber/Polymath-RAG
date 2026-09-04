@@ -51,12 +51,14 @@ def _get(url: str, path: str, bearer: str | None, timeout: float):
 
 
 def retrieve(url: str, corpus: str, query: str, limit: int = 12, bearer: str | None = None,
-             timeout: float = 120.0, explore: bool = True) -> dict:
+             timeout: float = 120.0, explore: bool = True, document_ids: list | None = None) -> dict:
     """docs/19: ask for the contract-ready evidence rows (RETRIEVE-EVIDENCE-
     ROWS-V1) in EXPLORE mode — breadth across documents, timecodes, document
     summaries, attested graph facts. Older Polymath builds ignore the flags and
     the lane fallback below still applies."""
     body = {"query": query, "corpus_id": corpus, "limit": limit, "evidence": True}
+    if document_ids:
+        body["document_ids"] = list(document_ids)          # DOCUMENT-SCOPED-RETRIEVE-V1
     if explore:
         body["mode"] = "EXPLORE"
     return _post(url, "/retrieve", body, bearer, timeout)
@@ -86,10 +88,12 @@ def backend_record(caps: dict | None, url: str) -> dict:
 
 
 def retrieve_plan(url: str, corpus: str, signal: str, communities: list | None, limit: int, bearer: str | None,
-                  timeout: float, explore: bool = True) -> dict:
+                  timeout: float, explore: bool = True, document_ids: list | None = None) -> dict:
     """Polymath compiles the reformulations itself and returns rows stamped
     with the query ids that found them (corpus-plan-v1)."""
     body = {"signal": signal, "corpus_id": corpus, "limit": limit, "explore": explore, "communities": list(communities or [])}
+    if document_ids:
+        body["document_ids"] = list(document_ids)          # DOCUMENT-SCOPED-RETRIEVE-V1
     return _post(url, "/retrieve/plan", body, bearer, timeout)
 
 
@@ -325,7 +329,7 @@ def rows_from_response(resp: dict, corpus: str, titles: dict | None = None,
 
 def collect(url: str, corpus: str, queries: list, limit: int, bearer: str | None,
             include_facts: bool, timeout: float, explore: bool = True,
-            seen: set | None = None) -> tuple[list[dict], list[str]]:
+            seen: set | None = None, document_ids: list | None = None) -> tuple[list[dict], list[str]]:
     """Run every query against one corpus; rows are deduped by id ACROSS
     queries and corpora (pass the same `seen`), and each row records the
     query ids that produced it (`query_ids`) — retrieval provenance (docs/19).
@@ -338,7 +342,7 @@ def collect(url: str, corpus: str, queries: list, limit: int, bearer: str | None
         qid, qtext = (q.get("id"), q.get("query")) if isinstance(q, dict) else (None, str(q))
         qid = qid or ("q_" + hashlib.sha1(qtext.encode("utf-8")).hexdigest()[:10])
         try:
-            resp = retrieve(url, corpus, qtext, limit, bearer, timeout, explore=explore)
+            resp = retrieve(url, corpus, qtext, limit, bearer, timeout, explore=explore, document_ids=document_ids)
         except urllib.error.HTTPError as exc:
             errors.append(f"{qtext[:60]!r}: HTTP {exc.code} {exc.read()[:160].decode(errors='replace')}")
             continue
@@ -377,6 +381,7 @@ def main() -> int:
     ap.add_argument("--via", choices=["chat", "chat-only", "plan"], default="chat", help="native lane: 'chat' = answers from the full RAG per reformulation PLUS the EXPLORE rows (docs/22, default); 'chat-only' = answers and their citations only; 'plan' = rows only")
     ap.add_argument("--state", default=None, help="run state JSON: supplies the signal and corpus identity")
     ap.add_argument("--limit", type=int, default=12)
+    ap.add_argument("--document-id", action="append", default=None, help="docs/26 §8: restrict retrieve + plan to these document ids (repeatable; unioned with the run's document_scope). /chat is unscoped and is skipped while a scope is active")
     ap.add_argument("--questions", action="store_true", help="docs/25 §6: ask the corpus the run's compiled friction/mechanism questions (auto at node corpus_mechanisms)")
     ap.add_argument("--include-facts", action="store_true")
     ap.add_argument("--timeout", type=float, default=120.0)
@@ -400,6 +405,8 @@ def main() -> int:
         corpora, corpus_names = resolve_corpora(args.url, corpora, bearer)      # docs/22: names or ids
     else:
         corpus_names = {c: c for c in corpora}
+    # docs/26 §8: document scope = CLI ids ∪ the run's document_scope (set at init)
+    _scope = list(dict.fromkeys([*(args.document_id or []), *((state.get("document_scope") or []) if args.state else [])]))
     # docs/25 §6: at corpus_mechanisms the run asks friction / mechanism / question-level
     # asks compiled from lived clusters — never per person, never the seed plan again
     _qmode = bool(args.state) and (args.questions or (state.get("node") == "corpus_mechanisms"))
@@ -429,6 +436,15 @@ def main() -> int:
     # docs/22: lanes follow CONTRACTS — chat when the backend serves chat-evidence,
     # else the plan endpoint when served, else the generic docs/18 path
     lane = "chat" if (args.via in ("chat", "chat-only") and _contracts.get("chat-evidence")) else ("plan" if _contracts.get("corpus-plan") else "retrieve")
+    if _scope:
+        # POLICY B (docs/26 §8): /chat cannot be scoped to documents, so while a scope is active the
+        # run uses retrieve/plan rows only and does θ interpretation locally — never an unscoped answer
+        backend["document_scope"] = list(_scope)
+        if lane == "chat":
+            backend["chat_skipped"] = "document scope active: /chat is unscoped (policy B)"
+            lane = "plan" if _contracts.get("corpus-plan") else "retrieve"
+        if backend["mode"] == "native" and not _contracts.get("document_ids"):
+            backend["document_scope_warning"] = "backend does not advertise document_ids — scope cannot be guaranteed"
     if _qmode and lane == "plan":
         lane = "retrieve"                      # a question is not a signal: retrieve per question, never re-plan the seed
     if backend["mode"] == "native" and args.state and lane == "chat":
@@ -469,7 +485,7 @@ def main() -> int:
         signal = (state.get("data") or {}).get("signal") or " ".join(q.get("query", "") for q in queries)
         for corpus in corpora:
             try:
-                resp = retrieve_plan(args.url, corpus, signal, (state.get("data") or {}).get("communities"), args.limit, bearer, args.timeout, explore=not args.no_explore)
+                resp = retrieve_plan(args.url, corpus, signal, (state.get("data") or {}).get("communities"), args.limit, bearer, args.timeout, explore=not args.no_explore, document_ids=_scope or None)
             except Exception as exc:  # noqa: BLE001
                 errors.append(f"plan/{corpus}: {type(exc).__name__}: {exc}"); continue
             server_plan = server_plan or resp.get("plan")
@@ -492,7 +508,7 @@ def main() -> int:
             backend["lane"] = "retrieve" if not _qmode else "questions"
         for corpus in corpora:
             r, e = collect(args.url, corpus, queries, args.limit, bearer, args.include_facts, args.timeout,
-                           explore=not args.no_explore, seen=seen)
+                           explore=not args.no_explore, seen=seen, document_ids=_scope or None)
             rows += r; errors += e; per_corpus[corpus] = len(r)
     # docs/25 §6/§7: stamp question-level provenance and tag CORPUS_EXAMPLE rows (deterministic)
     _qmap = {q["id"]: q for q in queries if isinstance(q, dict) and q.get("question_id")}
@@ -526,7 +542,7 @@ def main() -> int:
                 "answers": len(answers), "answers_admitted": sum(1 for a in answers if not a["abstained"]),
                 "plan_source": backend["plan_source"], "plan_parity": backend.get("plan_parity"),
                 "url": args.url, "corpora": per_corpus, "queries": [q.get("kind") for q in queries],
-                "rows": len(rows), "kinds": kinds, "corpus_example_rows": _examples,
+                "rows": len(rows), "kinds": kinds, "corpus_example_rows": _examples, "document_scope": _scope or None, "chat_skipped": backend.get("chat_skipped"),
                 "question_level_rows": sum(1 for r in rows if r.get("question_id")), "errors": errors}
     else:
         payload = {"capability_failure": {"capability": "corpus",

@@ -15,8 +15,8 @@ Thresholds and the mandatory set come from policies.yaml (`calibration`).
   4 legitimate_echo_survival     a corpus-named concept WITH independent grounding kept its leads
   5 latent_population_discovery an open-field or latent-derived community outside the seed set was instantiated
   6 field_originated_opportunity a field-originated concept whose hypothesis is deepened by corpus rows
-  7 irrelevant_source_rejection a retrieved row was classified IRRELEVANT rather than forced into an analogy
-  8 hypothesis_death             a corpus-derived hypothesis died when it met field evidence
+  7 irrelevant_source_rejection a KNOWN trap row (--trap-text) was retrieved, classified IRRELEVANT and never used downstream
+  8 hypothesis_death             a corpus-derived hypothesis was rejected BECAUSE of field evidence (contradiction / cited refs)
 """
 from __future__ import annotations
 
@@ -49,9 +49,11 @@ def _rows(state):
     return {r["id"]: r for r in state["data"].get("corpus_evidence") or [] if isinstance(r, dict) and r.get("id")}
 
 
-def evaluate(state: dict, policies: dict, seed_communities: set | None = None, heterogeneous_docs: set | None = None) -> dict:
+def evaluate(state: dict, policies: dict, seed_communities: set | None = None, heterogeneous_docs: set | None = None,
+             trap_texts: set | None = None) -> dict:
     d = state["data"]
     cal = policies.get("calibration") or {}
+    trap_texts = set(trap_texts or set()) | {str(t) for t in (cal.get("trap_texts") or [])}
     mandatory = list(cal.get("mandatory") or MANDATORY)
     echo = (policies.get("provenance") or {}).get("echo_verdict", "CORPUS_ECHO_UNGROUNDED")
     concepts = {c["id"]: c for c in d.get("product_concepts") or [] if isinstance(c, dict)}
@@ -101,18 +103,53 @@ def evaluate(state: dict, policies: dict, seed_communities: set | None = None, h
     fo = [r for r in kept if r.get("field_originated") and (r.get("hop_cites_corpus") or hop_rows(hyps.get(r.get("hypothesis_id")) or {}))]
     checks["field_originated_opportunity"] = {"status": "PASS" if fo else "FAIL", "concepts": [r["concept"] for r in fo][:5],
                                               "field_originated_total": sum(1 for r in kept if r.get("field_originated"))}
-    # 7 irrelevant-source rejection
+    # 7 irrelevant-source rejection — a KNOWN retrieval trap (configured text) must have been retrieved,
+    # classified IRRELEVANT, and never referenced by a structure, an observation, a hop or an analogy
     rel = d.get("row_relevance") or {}
-    irr = [rid for rid, cls in rel.items() if cls == "IRRELEVANT"]
-    checks["irrelevant_source_rejection"] = {"status": "PASS" if irr else "FAIL", "rows_classified": len(rel), "irrelevant": len(irr), "retrieved": len(rows)}
-    # 8 hypothesis death
+    traps = {t.lower() for t in (trap_texts or set()) if t}
+    if traps:
+        trap_rows = {rid for rid, r in rows.items() if any(t in f"{r.get('text') or ''} {r.get('summary') or ''}".lower() for t in traps)}
+        referenced = set()
+        for x in d.get("latent_structures") or []:
+            referenced |= set((x or {}).get("evidence_refs") or [])
+        for x in d.get("corpus_observations") or []:
+            referenced |= set((x or {}).get("evidence_refs") or [])
+        for h in hyps.values():
+            referenced |= hop_rows(h)
+        referenced |= {a.get("seed_id") for a in d.get("cross_domain_analogies") or [] if isinstance(a, dict)}
+        for refs in ((d.get("primitives") or {}).get("evidence_refs") or {}).values():
+            referenced |= set(refs or [])
+        unclassified = sorted(rid for rid in trap_rows if rel.get(rid) is None)
+        misclassified = sorted(rid for rid in trap_rows if rel.get(rid) not in (None, "IRRELEVANT"))
+        leaked = sorted(trap_rows & referenced)
+        status = "PASS" if trap_rows and not unclassified and not misclassified and not leaked else "FAIL"
+        checks["irrelevant_source_rejection"] = {"status": status, "trap_rows_retrieved": len(trap_rows), "unclassified": unclassified[:5],
+                                                 "misclassified": misclassified[:5], "leaked_downstream": leaked[:5],
+                                                 "note": None if trap_rows else "configured trap text was never retrieved — configure a trap the retrieval actually returns"}
+    else:
+        checks["irrelevant_source_rejection"] = {"status": "NOT_EVALUATED", "irrelevant_rows_any": sum(1 for c in rel.values() if c == "IRRELEVANT"),
+                                                 "note": "pass --trap-text (or set calibration.trap_texts) — a weak 'some row was marked IRRELEVANT' never proves resistance"}
+    # 8 hypothesis death — FIELD-CAUSED only: a corpus-derived hypothesis is dead for this canary
+    # when an admitted contradicting observation sits on one of its gaps, or a challenge / evaluation
+    # that rejected or revised it cites admitted field evidence. "Rejected after a round" proves nothing.
+    field_ids = {x.get("id") for x in (d.get("observations") or []) + (d.get("field_records") or []) if isinstance(x, dict)}
     contra_gaps = {o.get("gap_id") for o in d.get("observations") or [] if o.get("contradicts")}
-    dead = []
+    def _cited_field(rec):
+        refs = set((rec.get("evidence_refs") or []) + (rec.get("observation_ids") or []) + (rec.get("supporting_observation_ids") or []))
+        return bool(refs & field_ids)
+    dead, dead_without_cause = [], []
     for h in hyps.values():
+        if h.get("status") != "REJECTED" or not hop_rows(h):
+            continue
         gaps = {g["id"] for g in d.get("gaps") or [] if g.get("hypothesis_id") == h.get("id")}
-        if h.get("status") == "REJECTED" and hop_rows(h) and (gaps & contra_gaps or int((state.get("rounds") or {}).get("research", 0)) >= 1):
-            dead.append(h["id"])
-    checks["hypothesis_death"] = {"status": "PASS" if dead else "FAIL", "hypotheses": dead[:5]}
+        by_contra = bool(gaps & contra_gaps)
+        by_challenge = any(c.get("hypothesis_id") == h.get("id") and c.get("verdict") in ("REJECTED", "REVISE") and _cited_field(c)
+                           for c in d.get("challenges") or [] if isinstance(c, dict))
+        by_eval = any(e.get("hypothesis_id") == h.get("id") and e.get("verdict") in ("REJECT", "REVISE") and _cited_field(e)
+                      for e in d.get("evaluations") or [] if isinstance(e, dict))
+        (dead if (by_contra or by_challenge or by_eval) else dead_without_cause).append(h["id"])
+    checks["hypothesis_death"] = {"status": "PASS" if dead else "FAIL", "field_caused": dead[:5],
+                                  "rejected_without_field_cause": dead_without_cause[:5]}
 
     statuses = {k: v["status"] for k, v in checks.items()}
     overall = all(statuses[k] == "PASS" for k in mandatory if k in statuses) and not any(s == "FAIL" for s in statuses.values())
@@ -129,10 +166,11 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--state", required=True); ap.add_argument("--seed-communities", default="")
     ap.add_argument("--heterogeneous-docs", default="", help="comma-separated title/doc-id substrings of deliberately non-business documents (canary 2)")
+    ap.add_argument("--trap-text", action="append", default=[], help="text of a KNOWN retrieval trap that must be retrieved, classified IRRELEVANT and never used downstream (canary 7; repeatable)")
     a = ap.parse_args()
     state = json.load(open(a.state, encoding="utf-8"))
     rep = evaluate(state, graphmod.load_policies(), {x for x in a.seed_communities.split(",") if x.strip()},
-                   {x.strip() for x in a.heterogeneous_docs.split(",") if x.strip()})
+                   {x.strip() for x in a.heterogeneous_docs.split(",") if x.strip()}, set(a.trap_text))
     print(json.dumps(rep, indent=1, ensure_ascii=False))
     return 0 if rep["pass"] else 1
 

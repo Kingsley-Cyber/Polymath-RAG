@@ -454,6 +454,50 @@ def gate(state: dict, policies: dict) -> str:
             f"{state['population_loop']['elapsed_min']} min — {'ONE MORE ROUND' if cont else 'proceed: ' + state['population_loop']['reason']}")
 
 
+# ------------------------------------------------------- lineage law (docs/26 §2, fail-closed) --
+def lineage_ref_errors(refs, state: dict, relevance: dict, label: str) -> list[str]:
+    """Anything consumed as reasoning lineage must exist and, when it is a
+    corpus row, be CLASSIFIED and not IRRELEVANT. Unclassified rows may sit in
+    the retrieval context; they can never become latent-structure evidence,
+    corpus-observation evidence, an analogy or a hypothesis hop."""
+    d = state["data"]
+    rows = {r.get("id") for r in d.get("corpus_evidence") or [] if isinstance(r, dict)}
+    other = {x.get("id") for key in ("observations", "field_records", "lived_clusters", "latent_structures", "corpus_observations")
+             for x in d.get(key) or [] if isinstance(x, dict)}
+    errs = []
+    for ref in refs or []:
+        if ref in rows:
+            cls = (relevance or {}).get(ref)
+            if cls is None:
+                errs.append(f"{label}: corpus row {ref!r} is UNCLASSIFIED — classify it in row_relevance before it becomes lineage (fail-closed)")
+            elif cls == "IRRELEVANT":
+                errs.append(f"{label}: corpus row {ref!r} is classified IRRELEVANT — dead for lineage")
+        elif ref not in other:
+            errs.append(f"{label}: ref {ref!r} does not exist in this run (corpus rows, observations, field records, clusters, structures)")
+    return errs
+
+
+def validate_relevance_map(rel: dict, state: dict, policies: dict) -> list[str]:
+    classes = set((policies.get("corpus") or {}).get("relevance_classes") or [])
+    rows = {r.get("id") for r in state["data"].get("corpus_evidence") or [] if isinstance(r, dict)}
+    errs = []
+    for rid, cls in (rel or {}).items():
+        if cls not in classes:
+            errs.append(f"row_relevance[{rid}]: {cls!r} not in {sorted(classes)}")
+        elif rid not in rows:
+            errs.append(f"row_relevance[{rid}]: unknown corpus row")
+    return errs
+
+
+def merge_relevance(state: dict, rel: dict) -> None:
+    cur = dict(state["data"].get("row_relevance") or {})
+    cur.update(rel or {})
+    state["data"]["row_relevance"] = cur
+    for r in state["data"].get("corpus_evidence") or []:
+        if isinstance(r, dict) and r.get("id") in cur:
+            r["relevance"] = cur[r["id"]]
+
+
 # ------------------------------------------------------------ validation --
 def validate_leads(items: list[dict], state: dict) -> list[str]:
     errs = []

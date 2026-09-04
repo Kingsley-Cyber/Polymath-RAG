@@ -213,6 +213,7 @@ TREE: list[tuple[str, str, str | None]] = [
     # ── CI ────────────────────────────────────────────────────────────────
     (".github/workflows/contracts.yml", "yaml", "_CI_CONTRACTS"),
     (".github/workflows/determinism.yml", "yaml", "_CI_DETERMINISM"),
+    (".github/workflows/research-harness.yml", "yaml", None),
     (".github/workflows/agent-preflight.yml", "yaml", "_CI_AGENT_PREFLIGHT"),
     (".github/workflows/repo-governance.yml", "yaml", "_CI_REPO_GOVERNANCE"),
 
