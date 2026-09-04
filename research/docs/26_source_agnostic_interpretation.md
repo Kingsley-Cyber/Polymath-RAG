@@ -27,7 +27,7 @@ situation → physical job → mechanism → product hypothesis.
 
 | axis | question | who decides | where it lives |
 |---|---|---|---|
-| retrieval relevance | is this passage potentially useful for THIS question? | θ classifies (`row_relevance`: LEXICAL_MATCH / SEMANTIC_MATCH / STRUCTURAL_ANALOGY / IRRELEVANT); the adapter adds a deterministic `lexical_overlap` + `relevance_hint: LEXICAL_ONLY` | rows, `data.row_relevance` |
+| retrieval relevance | is this passage potentially useful for THIS question? | θ classifies (`row_relevance`: LEXICAL_MATCH / SEMANTIC_MATCH / STRUCTURAL_ANALOGY / IRRELEVANT); the adapter adds a deterministic `lexical_overlap` + `relevance_hint` (`SINGLE_WORD_OVERLAP` = the lexical trap, `NO_LEXICAL_OVERLAP` = semantic retrieval, judge the structure) | rows, `data.row_relevance` |
 | generative usefulness | can θ derive a transferable structure from it? | θ, at primitives | `latent_structures`, `evidence_refs` |
 | evidentiary authority | what may this source ESTABLISH? | φ, docs/04 table + `can_establish` / `cannot_establish` on rows | verifiers, satisfaction, provenance |
 

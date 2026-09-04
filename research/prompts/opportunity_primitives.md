@@ -44,10 +44,12 @@ opportunity. The named product may still win if the field grounds it.
 
 ## Row relevance (docs/26 §2 — axis 1, your call, φ's law)
 `row_relevance: {row_id: LEXICAL_MATCH | SEMANTIC_MATCH | STRUCTURAL_ANALOGY |
-IRRELEVANT}` for every row you looked at. Rows carrying `relevance_hint:
-LEXICAL_ONLY` shared one word with the question — say whether anything
-structural is there. A row you mark IRRELEVANT can never back a hop or an
-analogy afterwards; not marking noise means it stays in play.
+IRRELEVANT}` for every row you looked at. Question-level rows carry
+`lexical_overlap` and a hint: `SINGLE_WORD_OVERLAP` (one shared word such as
+"hold" — the lexical trap) or `NO_LEXICAL_OVERLAP` (reached by embedding or
+rerank only — judge the structure, not the words). A row you mark IRRELEVANT
+can never back a hop or an analogy afterwards; not marking noise means it
+stays in play.
 
 ## Population leads (docs/25 §1)
 `population_leads[]`: populations, activities or contexts the rows name or
