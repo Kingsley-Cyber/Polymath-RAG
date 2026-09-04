@@ -190,7 +190,10 @@ def worker_contracts() -> dict[str, Any]:
 
 def _extraction_gate_contract() -> str:
     from polymath_shared.llm_extraction.gate import GATE_VERSION, attestation_policy
-    return f"{GATE_VERSION}/{attestation_policy()}"
+    # TYPED-CLAIMS-V1 (2026-09-03): the extraction prompt/schema now labels lived claims;
+    # a prompt-contract change is an extraction-contract change, so blue/green REGENERATES extract
+    # instead of carrying the untyped predecessor stage.
+    return str(f"{GATE_VERSION}/{attestation_policy()}") + "|typed_claims=v1"
 
 
 def worker_identity(worker_type: str) -> dict[str, Any]:
