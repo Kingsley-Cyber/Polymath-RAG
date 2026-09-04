@@ -303,12 +303,12 @@ async def retrieve_evidence(query: str, corpus_id: str, limit: int = 12, explore
 
 @mcp.tool()
 async def ask(question: str, corpus_id: str, mode: str = "HYBRID",
-              latent: Optional[bool] = None) -> dict:
+              latent: Optional[bool] = None, evidence: bool = False) -> dict:
     """Ask a question of ONE corpus and get the grounded RAG answer with
     citations (the same path the Polymath chat UI uses). Prefer this
     over retrieve() when you want an answer, not raw evidence."""
     body: dict[str, Any] = {"message": question, "mode": mode,
-                            "corpus_id": corpus_id}
+                            "corpus_id": corpus_id, "evidence": bool(evidence)}
     if latent is not None:
         body["latent"] = latent
     out = await _orch("POST", "/chat", json=body)

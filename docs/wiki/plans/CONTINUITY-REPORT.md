@@ -20,6 +20,8 @@ Read order: this file → `CLAUDE.md` → the two newest work-logs.
 
 ## Latest checkpoint (2026-09-03 late — LLM-DIRECT CANON)
 
+**CHAT-EVIDENCE-ROWS-V1 (2026-09-03 latest, register 11.70).** `/chat` `evidence: true` = full answer path + contract rows in one call; TRAIL's corpus lane uses it by default (`--via chat`); corpus display names via GET/PATCH /corpora. Extraction untouched (typed claims reverted).
+
 **FIELD-EVIDENCE-CORPUS-V1 + TYPED-CLAIMS-V1 (2026-09-03 latest, register 11.68–11.69).** `scripts/ingest_field_evidence.py` (TRAIL observations → `field-evidence-v1` thread docs); TYPED-CLAIMS-V1 was built and then REVERTED the same night on the owner's call (the RAG's extraction is never changed for a consumer; consumers ASK the RAG via /chat). Bundle lock `v5-production-006-extraction-restored`. The field-evidence corpus stands. Work-log `2026-09-03-typed-claims-field-evidence.md`.
 
 **CORPUS-PLAN-V1 + CAPABILITIES-V1 (2026-09-03 latest, register 11.67).** `GET /capabilities` (contracts, additive) and `POST /retrieve/plan` (one signal → 3–5 reformulations → merged evidence rows with `query_ids`); MCP `capabilities`/`compile_plan`/`retrieve_evidence`. Parity with TRAIL OS pinned by `contracts/retrieve/v1/corpus_plan_fixture.json`. Next per the owner plan: field-evidence corpus ingest, then typed rows (friction/behavior/workaround/purchase_language) behind a 1-doc canary.

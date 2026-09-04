@@ -117,17 +117,43 @@ def build_documents(obs: list[dict], gaps: dict, run_ids: str, exported_at: str)
     return docs
 
 
+def _corpus_for_name(url: str, name: str) -> str:
+    """Corpus ids are immutable identity; names are the owner's. Reuse the
+    corpus whose display name matches (case-insensitive) or mint c_<hash>."""
+    import hashlib
+    try:
+        with urllib.request.urlopen(url.rstrip("/") + "/corpora?all=true", timeout=30) as r:
+            for c in (json.loads(r.read()).get("corpora") or []):
+                if str(c.get("name") or "").strip().lower() == name.strip().lower():
+                    return c["corpus_id"]
+    except Exception:  # noqa: BLE001
+        pass
+    return "c_" + hashlib.sha256(f"{name}|{dt.date.today().isoformat()}".encode()).hexdigest()[:10]
+
+
+def _name_corpus(url: str, corpus_id: str, name: str) -> None:
+    body = json.dumps({"name": name}).encode()
+    req = urllib.request.Request(url.rstrip("/") + f"/corpora/{corpus_id}", data=body, method="PATCH", headers={"content-type": "application/json"})
+    try:
+        urllib.request.urlopen(req, timeout=30).read()
+    except Exception:  # noqa: BLE001 — the row appears only after the first intake lands; rename can be re-run
+        pass
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     src = ap.add_mutually_exclusive_group(required=True)
     src.add_argument("--state"); src.add_argument("--csv")
-    ap.add_argument("--corpus", default="field-evidence-v1")
+    ap.add_argument("--corpus", default=None, help="corpus id (immutable). Omit with --corpus-name to create c_<hash> and name it")
+    ap.add_argument("--corpus-name", default=None, help="display name; resolves an existing corpus by name or creates a new id for it")
     ap.add_argument("--url", default="http://127.0.0.1:7200")
     ap.add_argument("--exported-at", default=dt.date.today().isoformat())
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--out-dir", default=None, help="also write the documents here")
     a = ap.parse_args()
     obs, gaps, run_ids = _obs_from_state(a.state) if a.state else _obs_from_csv(a.csv)
+    if not a.corpus:
+        a.corpus = _corpus_for_name(a.url, a.corpus_name or "Field evidence")
     docs = build_documents(obs, gaps, run_ids, a.exported_at)
     if a.out_dir:
         import os
@@ -146,6 +172,8 @@ def main() -> int:
             out = json.loads(r.read())
         receipt["runs"].append({"doc": name, "run_id": out.get("run_id"), "already_exists": out.get("already_exists", False)})
     receipt["submitted"] = len(receipt["runs"])
+    if a.corpus_name:
+        _name_corpus(a.url, a.corpus, a.corpus_name); receipt["name"] = a.corpus_name
     print(json.dumps(receipt, indent=1, ensure_ascii=False))
     return 0
 
