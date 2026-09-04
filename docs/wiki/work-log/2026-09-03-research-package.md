@@ -55,6 +55,6 @@ Polymath capability (MCP `research_*` tools — next slice).
   contracts are the seam, so `research/` keeps working against any docs/18 backend.
 
 ## Open contract gaps
-- MCP `research_init / research_step / research_submit / research_status / research_report` not yet mounted.
+- (closed the same night) MCP `research_init / research_step / research_submit / research_status / research_corpus / research_report` are mounted on the Polymath MCP server and route into `research/`; state under `research/state/` (ignored); the MCP instructions name them as THE way to research.
 - The GitHub repo TRAIL_AGENT_AUTORESEARCH still holds the previous canonical copy; mirror-or-archive is the owner's call.
 - `research/tests/run_all.py` is not yet invoked by Polymath's own pytest run (it is run by hand from this repo).

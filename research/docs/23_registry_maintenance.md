@@ -34,8 +34,8 @@ from existing families and predicates) is the cheap, encouraged path.
 ## Commands
 
 ```
-python3 python/maintenance_triggers.py evaluate --create-run candidates/maint_N.json
-python3 python/controller.py step --state candidates/maint_N.json        # repeat to human_approval
+python3 python/maintenance_triggers.py evaluate --create-run state/maint_N.json
+python3 python/controller.py step --state state/maint_N.json        # repeat to human_approval
 python3 python/controller.py submit --state … --node human_approval --file approvals.json
 python3 python/controller.py step --state …                              # patch → compile → regression → publish
 # then: copy registry/patches/<run>/trailsignal/* over registry/trailsignal/ and commit — that is the promotion

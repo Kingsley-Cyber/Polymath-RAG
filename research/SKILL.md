@@ -275,7 +275,7 @@ negative motifs) — never ask King to run maintenance. Periodically (or after
 several runs):
 
 ```
-$PY $SKILL/python/maintenance_triggers.py evaluate [--create-run candidates/maint_N.json]   # then step the maintenance graph to human_approval (docs/23); patch, never a live edit
+$PY $SKILL/python/maintenance_triggers.py evaluate [--create-run state/maint_N.json]   # then step the maintenance graph to human_approval (docs/23); patch, never a live edit
 $PY $SKILL/python/gap_analysis.py --state <terminal-run>.json   # typed demand gaps, any mode
 ```
 
