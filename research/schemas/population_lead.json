@@ -29,7 +29,8 @@
     "REGISTRY",
     "SIGNAL",
     "FIELD_RECORDS",
-    "OPEN_FIELD"
+    "OPEN_FIELD",
+    "LATENT"
    ]
   },
   "nominated_by": {
@@ -104,6 +105,16 @@
   },
   "evidence_summary": {
    "type": "object"
+  },
+  "search_mode": {
+   "enum": [
+    "NAMED",
+    "LATENT"
+   ],
+   "description": "NAMED: a known group to find; LATENT: a structure whose population is unknown \u2014 search by the friction language to discover who"
+  },
+  "latent_structure_id": {
+   "type": "string"
   }
  }
 }

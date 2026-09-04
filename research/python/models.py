@@ -156,6 +156,10 @@ def new_state(run_id: str, signal: str = "") -> dict:
             "corpus_questions": [],
             "example_terms": [],
             "provenance": [],
+            # docs/26: source-agnostic interpretation objects (mirrored from primitives at submit)
+            "latent_structures": [],
+            "corpus_observations": [],
+            "row_relevance": {},
         },
     }
 

@@ -188,9 +188,40 @@ def _field_record_nominations(state: dict, seed_terms: set) -> list[dict]:
     return out
 
 
+_LATENT_SEARCHABLE = {"FRICTION", "WORKAROUND", "ADAPTATION", "TRANSFERABLE_INVARIANT", "OBJECT_INTERACTION", "ACCESS_PROBLEM",
+                      "COORDINATION_PROBLEM", "REPETITION", "COMFORT_PROBLEM", "ATTENTION_PROBLEM", "STATUS_PROBLEM", "TRANSITION",
+                      "FAILURE_MODE", "ROUTINE", "CONSTRAINT", "TRADEOFF", "DESIRE"}
+
+
+def _latent_nominations(state: dict, policies: dict, seed_terms: set) -> list[dict]:
+    """docs/26 §4 — the reverse direction: LATENT PROBLEM → population search.
+    A structure read out of ANY passage (a novel, a manual) becomes a lead
+    whose population is unknown; its queries carry the friction language so
+    the scout can discover WHO repeatedly experiences it. Named populations
+    the structure proposes become ordinary NAMED leads citing the same rows."""
+    out = []
+    cap = int(_lw(policies).get("nominate_max_latent", 6))
+    structures = [x for x in state["data"].get("latent_structures") or [] if isinstance(x, dict)]
+    for st in structures:
+        refs = st.get("evidence_refs") or ["primitives"]
+        for pop in st.get("possible_populations") or []:
+            out.append(_lead("POPULATION", str(pop), "CORPUS", refs, seed_terms, search_mode="NAMED",
+                             latent_structure_id=st.get("id"), why=f"named by structure {st.get('id')}: {str(st.get('text'))[:80]}",
+                             expected_frictions=[str(st.get("text"))[:60]] if st.get("kind") in ("FRICTION", "WORKAROUND", "ADAPTATION") else []))
+        if st.get("kind") in _LATENT_SEARCHABLE and len([l for l in out if l.get("search_mode") == "LATENT"]) < cap:
+            name = f"who repeatedly experiences: {str(st.get('text'))[:70]}"
+            out.append(_lead("POPULATION", name, "LATENT", refs, seed_terms, search_mode="LATENT", latent_structure_id=st.get("id"),
+                             expected_frictions=[str(st.get("text"))[:80]], why=st.get("applicability_outside_source") or "population unknown — search by the friction language"))
+    return out
+
+
 def _compile_lead_queries(lead: dict, state: dict, policies: dict) -> list[dict]:
     import executors as _ex
-    parts = [lead["name"]] + list(lead.get("expected_frictions") or [])[:2] + list(lead.get("activities") or [])[:1]
+    if lead.get("search_mode") == "LATENT":
+        # the population is unknown: search by the structure's own language, never by a group name
+        parts = list(lead.get("expected_frictions") or [])[:2] or [lead["name"].split(":", 1)[-1]]
+    else:
+        parts = [lead["name"]] + list(lead.get("expected_frictions") or [])[:2] + list(lead.get("activities") or [])[:1]
     question = " ".join(str(p).replace("_", " ").replace("—", " ") for p in parts if p)
     qs = _ex.channel_queries(lead["id"], question, state, policies, id_prefix="pq")
     for q in qs:
@@ -206,6 +237,7 @@ def nominate(state: dict, policies: dict) -> str:
     seed_terms = _seed_terms(state)
     existing = lead_by_id(state)
     fresh = (_signal_nominations(state, seed_terms) + _corpus_nominations(state, seed_terms)
+             + _latent_nominations(state, policies, seed_terms)
              + _registry_nominations(state, policies, seed_terms) + _field_record_nominations(state, seed_terms))
     seen_names = {l["name"].strip().lower() for l in existing.values()}
     added = collections.Counter()
@@ -571,6 +603,8 @@ def summary(state: dict) -> dict:
     return {"leads": len(leads), "leads_by_lane": dict(collections.Counter(l.get("source_lane") for l in leads)),
             "leads_by_status": dict(collections.Counter(l.get("status") for l in leads)),
             "seed_population_leads": sum(1 for l in leads if l.get("seed_population")),
+            "latent_leads": sum(1 for l in leads if l.get("search_mode") == "LATENT"),
+            "latent_leads_instantiated": sum(1 for l in leads if l.get("search_mode") == "LATENT" and l.get("record_ids")),
             "field_records": len(d.get("field_records") or []),
             "records_by_origin": dict(collections.Counter(r.get("origin") or "CHANNEL" for r in d.get("field_records") or [])),
             "participant_cards": len(d.get("participant_cards") or []),

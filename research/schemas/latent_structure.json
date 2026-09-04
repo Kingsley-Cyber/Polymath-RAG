@@ -1,0 +1,78 @@
+{
+ "title": "latent_structure",
+ "description": "SOURCE-AGNOSTIC INTERPRETATION (docs/26): one latent structure \u03b8 read out of ANY corpus passage \u2014 novel, manual, transcript, memoir, marketing book. Generative axis only: authority is always LATENT_HYPOTHESIS; the field decides what is real.",
+ "required": [
+  "id",
+  "kind",
+  "text",
+  "evidence_refs",
+  "authority"
+ ],
+ "properties": {
+  "id": {
+   "type": "string"
+  },
+  "kind": {
+   "enum": [
+    "ACTIVITY",
+    "ROUTINE",
+    "OBJECT",
+    "OBJECT_INTERACTION",
+    "BODY_STATE",
+    "ENVIRONMENT",
+    "CONSTRAINT",
+    "FRICTION",
+    "DESIRE",
+    "TRADEOFF",
+    "ADAPTATION",
+    "WORKAROUND",
+    "SOCIAL_DYNAMIC",
+    "IDENTITY_SIGNAL",
+    "TRANSITION",
+    "FAILURE_MODE",
+    "REPETITION",
+    "COORDINATION_PROBLEM",
+    "ACCESS_PROBLEM",
+    "COMFORT_PROBLEM",
+    "STATUS_PROBLEM",
+    "ATTENTION_PROBLEM",
+    "TRANSFERABLE_INVARIANT",
+    "CAUSAL_MECHANISM"
+   ]
+  },
+  "text": {
+   "type": "string"
+  },
+  "evidence_refs": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "type": "string"
+   }
+  },
+  "applicability_outside_source": {
+   "type": "string",
+   "description": "where else this structure could hold \u2014 the transfer hypothesis"
+  },
+  "possible_populations": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "shared_predicates": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "physical_job": {
+   "type": "string"
+  },
+  "authority": {
+   "enum": [
+    "LATENT_HYPOTHESIS"
+   ]
+  }
+ }
+}

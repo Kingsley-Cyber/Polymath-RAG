@@ -248,6 +248,13 @@ def cmd_submit(args):
             known |= {r.get("id") for r in state["data"].get("field_records") or [] if isinstance(r, dict)}
             known |= {c.get("id") for c in state["data"].get("lived_clusters") or [] if isinstance(c, dict)}
             errors += [f"bridge: {e}" for e in bridge.validate_all(items, pol_now, known_ids=known)]
+            # docs/26 §2: a row θ itself classified IRRELEVANT can never back a hop
+            _irr = {rid for rid, cls in (state["data"].get("row_relevance") or {}).items() if cls == "IRRELEVANT"}
+            for h in items:
+                if isinstance(h, dict):
+                    bad = sorted({rid for v in (h.get("hop_refs") or {}).values() for rid in v or [] if rid in _irr})
+                    if bad:
+                        errors.append(f"relevance: {h.get('id')}: hop_refs cite rows classified IRRELEVANT {bad[:3]} — an irrelevant passage is not a hop")
             if args.node == "hypothesize":
                 # docs/25 §5: the lane is declared where the bridge is written; later
                 # status updates (challenge) never re-litigate anchors
@@ -259,6 +266,28 @@ def cmd_submit(args):
                 # docs/20 §1: starvation is not refutation
                 import allocation as _alloc
                 errors += [f"allocation: {e}" for e in _alloc.starved_rejections(items, state, pol_now)]
+        if key == "primitives" and items and isinstance(items[0], dict):
+            # docs/26: source-agnostic interpretation objects ride inside primitives; validated
+            # here and mirrored into their own data keys (Work Graph objects, context priorities)
+            prim = items[0]
+            for i, x in enumerate(prim.get("latent_structures") or []):
+                errors += [f"latent_structures[{i}]: {e}" for e in models.validate(x, "latent_structure")]
+            for i, x in enumerate(prim.get("corpus_observations") or []):
+                errors += [f"corpus_observations[{i}]: {e}" for e in models.validate(x, "corpus_observation")]
+            _classes = set((pol_now.get("corpus") or {}).get("relevance_classes") or [])
+            _row_ids = {r.get("id") for r in state["data"].get("corpus_evidence") or [] if isinstance(r, dict)}
+            for rid, cls in (prim.get("row_relevance") or {}).items():
+                if cls not in _classes:
+                    errors.append(f"row_relevance[{rid}]: {cls!r} not in {sorted(_classes)}")
+                elif rid not in _row_ids:
+                    errors.append(f"row_relevance[{rid}]: unknown corpus row")
+            if not errors:
+                state["data"]["latent_structures"] = list(prim.get("latent_structures") or [])
+                state["data"]["corpus_observations"] = list(prim.get("corpus_observations") or [])
+                state["data"]["row_relevance"] = dict(prim.get("row_relevance") or {})
+                for r in state["data"].get("corpus_evidence") or []:
+                    if isinstance(r, dict) and r.get("id") in state["data"]["row_relevance"]:
+                        r["relevance"] = state["data"]["row_relevance"][r["id"]]
         if key in ("population_leads", "community_leads"):
             import lived_world as _lw
             errors += [f"lead: {e}" for e in _lw.validate_leads(items, state)]

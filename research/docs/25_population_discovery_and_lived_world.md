@@ -107,7 +107,7 @@ lineage is corpus example → same noun → same-noun search); otherwise
 ECHO_WEAKLY_GROUNDED / UNGROUNDED. Echo leads are excluded with the reason;
 a run whose every lead was an echo ends `CORPUS_ECHO_UNGROUNDED`.
 
-## §8 Calibration proves semantics, not execution
+## §8 Calibration proves semantics, not execution (superseded by docs/26 §6 — eight canaries; shelf share is a diagnostic only)
 
 `tests/calibration_acceptance.py --state run.json` exits non-zero unless: ≥ 2
 concepts (and half of those kept) anchor outside the seed population; every

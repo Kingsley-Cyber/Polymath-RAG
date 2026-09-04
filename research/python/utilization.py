@@ -65,6 +65,11 @@ def compute(state: dict) -> dict:
         "registry_candidates_by_kind": dict(collections.Counter(c.get("kind") for c in d.get("registry_candidates") or [])),
         # LIVED-WORLD-V2 (docs/25): the receipt that proves semantic behaviour, not execution
         "lived_world": __import__("lived_world").summary(state),
+        "interpretation": {"latent_structures": len(d.get("latent_structures") or []),
+                           "by_kind": dict(collections.Counter(x.get("kind") for x in d.get("latent_structures") or [] if isinstance(x, dict))),
+                           "corpus_observations": dict(collections.Counter(x.get("kind") for x in d.get("corpus_observations") or [] if isinstance(x, dict))),
+                           "rows_classified": len(d.get("row_relevance") or {}),
+                           "relevance": dict(collections.Counter((d.get("row_relevance") or {}).values()))},
         "corpus_contribution": __import__("provenance").corpus_contribution(state),
         "provenance": {"verdicts": dict(collections.Counter(r.get("verdict") for r in d.get("provenance") or [])),
                        "field_originated_concepts": sum(1 for r in d.get("provenance") or [] if r.get("field_originated")),
@@ -96,6 +101,9 @@ def to_markdown(u: dict) -> str:
                   f"| field records / cards / clusters | {lw.get('field_records')} {lw.get('records_by_origin')} / {lw.get('participant_cards')} / {lw.get('clusters_by_authority')} (outside seed {lw.get('clusters_outside_seed')}) |",
                   f"| lived situations (authority, unknowns kept) | {lw.get('situations_by_authority')} / {lw.get('unknowns_preserved')} |",
                   f"| population rounds / loop | {lw.get('rounds')} / {(lw.get('loop') or {}).get('reason')} |"]
+    it = u.get("interpretation") or {}
+    if it:
+        lines += [f"| interpretation: latent structures (by kind) / corpus observations / rows classified | {it.get('latent_structures')} {it.get('by_kind')} / {it.get('corpus_observations')} / {it.get('rows_classified')} {it.get('relevance')} |"]
     if cc:
         lines += [f"| corpus contribution: cited rows / docs cited of retrieved | {cc.get('rows_cited')}/{cc.get('rows_retrieved')} / {cc.get('documents_cited')}/{cc.get('documents_retrieved')} ({cc.get('cited_share_of_shelf')}) |",
                   f"| corpus example rows retrieved / cited; mechanism-only contributions | {cc.get('example_rows_retrieved')} / {cc.get('example_rows_cited')}; {cc.get('mechanism_only_contributions')} |"]

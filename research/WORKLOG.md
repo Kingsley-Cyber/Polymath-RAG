@@ -1466,3 +1466,29 @@ observation schema required a gap_id, so the field could not propose.
 **Not done here:** the calibration run itself (owner-run against the same six
 transcripts; pass = a product they never name); a `calibration` policy block
 beyond the script defaults; document-scoped retrieve (separate Polymath slice).
+
+---
+
+## 2026-09-04 — v2.1.0: source-agnostic interpretation + the eight canaries (docs/26)
+
+**Owner:** the corpus was framed too narrowly in v2.0.0 (books → mechanisms,
+communities → nouns). Any source may generate hypotheses; what differs by
+source is authority. Do not strip examples; record them. Support LATENT
+PROBLEM → population as well as population → problem. Calibrate bridge
+behaviour, not shelf composition.
+
+**What landed:** `latent_structure` and `corpus_observation` schemas and the
+primitives contract (typed structures from any passage, named things recorded
+with no authority for demand, `row_relevance` classification); φ law: a row
+classified IRRELEVANT is never citable in hop_refs and never becomes an
+analogy; `search_mode: LATENT` leads nominated from structures whose
+population is unknown (queries carry the structure's language; the scout
+resolves WHO); `corpus_named` receipt per concept; `lexical_overlap` /
+`relevance_hint` on question-level rows; interpretation section in the
+utilization receipt; `calibration_acceptance.py` rewritten around eight
+canaries with PASS / FAIL / NOT_TRIGGERED / NOT_EVALUATED, shelf share
+demoted to a diagnostic; docs/26.
+
+**Kept from v2.0.0:** everything about authority (THIN / ANCHOR clusters,
+FIELD_ANCHORED situations, lived anchors, provenance verdicts). Only the
+framing that gave sources fixed jobs is gone.

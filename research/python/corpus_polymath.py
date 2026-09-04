@@ -164,6 +164,8 @@ def stable_id_local(*parts) -> str:
     return hashlib.sha256("|".join(str(p) for p in parts).encode()).hexdigest()[:12]
 
 
+_HINT_STOP = {"what", "when", "this", "that", "with", "does", "people", "keep", "doing", "despite", "explains", "mechanism", "reduces",
+              "analogous", "constraint", "exists", "elsewhere", "workaround", "which", "their", "there", "they", "from", "into", "than"}
 CAN_ESTABLISH = ["behavioral_mechanism", "conceptual_pattern"]
 CANNOT_ESTABLISH = ["current_demand", "current_purchase_intent", "current_supplier_availability"]
 
@@ -499,6 +501,14 @@ def main() -> int:
         if hit:
             r["question_id"] = hit[0]; r["question_ids"] = hit; r["cluster_id"] = _qmap[hit[0]].get("cluster_id")
             r.setdefault("tags", []).append("question_level")
+            # docs/26 §2: a deterministic HINT for θ's relevance call — which content words the row
+            # actually shares with the question; one generic word like "hold" is LEXICAL_ONLY
+            _qt = {w for w in re.findall(r"[a-z]{4,}", (_qmap[hit[0]].get("query") or "").lower()) if w not in _HINT_STOP}
+            _rt = {w for w in re.findall(r"[a-z]{4,}", (r.get("summary") or "").lower())}
+            _ov = sorted(_qt & _rt)
+            r["lexical_overlap"] = _ov
+            if len(_ov) <= 1:
+                r["relevance_hint"] = "LEXICAL_ONLY"
     try:
         import provenance as _prov
         _examples = _prov.tag_corpus_examples(rows, (state.get("data") or {}).get("example_terms") if args.state else None)

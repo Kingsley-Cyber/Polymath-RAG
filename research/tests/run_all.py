@@ -199,16 +199,32 @@ pos = os.path.join(tmp, "pos.json")
 ctl("init", "--state", pos, "--signal", "storytelling performance movement gesture friction")
 submit(pos, "understand", {"signal": "storytelling performance movement gesture friction; creators move while recording"})
 ctl("step", "--state", pos)
-submit(pos, "corpus", {"corpus_evidence": [{"id": "e1", "summary": "creator differentiation via physical delivery and movement"}]})
+submit(pos, "corpus", {"corpus_evidence": [{"id": "e1", "summary": "creator differentiation via physical delivery and movement"},
+                                             {"id": "e0", "summary": "he put a pillow under her and held it all in", "title": "Some Novel"}]})
 ctl("step", "--state", pos)            # -> primitives
-submit(pos, "primitives", {"primitives": {
-    "generative_signal": True,
+_prim = {"generative_signal": True,
     "behaviors": ["performer physically expresses while speaking"],
     "constraints": ["capture system must preserve movement"],
     "frictions": ["occupied_hand"],
     "physical_jobs": ["capture clean audio without constraining expression"],
     "shared_predicates": ["access", "attach"],
-    "transferable_invariants": ["tool should interfere as little as possible with the activity it enables"]}})
+    "transferable_invariants": ["tool should interfere as little as possible with the activity it enables"],
+    # docs/26: source-agnostic interpretation objects
+    "latent_structures": [{"id": "st1", "kind": "TRANSFERABLE_INVARIANT", "text": "frequent access to a small object while hands stay occupied and the body moves",
+                           "evidence_refs": ["e1"], "applicability_outside_source": "anyone who performs while handling gear", "authority": "LATENT_HYPOTHESIS"},
+                          {"id": "st2", "kind": "ROUTINE", "text": "sets up the same kit in a new room every day", "evidence_refs": ["e1"],
+                           "possible_populations": ["touring musicians"], "authority": "LATENT_HYPOTHESIS"}],
+    "corpus_observations": [{"id": "co1", "kind": "OBSERVED_PRODUCT", "name": "lavalier microphone", "evidence_refs": ["e1"], "job_served": "hands-free capture",
+                             "evidentiary_authority": "NONE_FOR_CURRENT_DEMAND"}],
+    "row_relevance": {"e1": "STRUCTURAL_ANALOGY", "e0": "IRRELEVANT"}}
+rc, out = submit(pos, "primitives", {"primitives": dict(_prim, row_relevance={"e1": "MAYBE"})})
+ok(rc == 1 and any("row_relevance" in e for e in out.get("schema_errors", [])), "an unknown relevance class is rejected (docs/26 axis 1)")
+rc, out = submit(pos, "primitives", {"primitives": _prim})
+ok(rc == 0, f"primitives with latent structures, corpus observations and row relevance admitted ({out.get('schema_errors', '')[:1]})")
+_ps0 = json.load(open(pos))
+ok(len(_ps0["data"]["latent_structures"]) == 2 and _ps0["data"]["corpus_observations"][0]["kind"] == "OBSERVED_PRODUCT"
+   and next(r for r in _ps0["data"]["corpus_evidence"] if r["id"] == "e0").get("relevance") == "IRRELEVANT",
+   "interpretation objects are mirrored into their own data keys and relevance is stamped on rows")
 ctl("step", "--state", pos)            # -> signal_gate
 ctl("step", "--state", pos)            # gate -> lenses
 ctl("step", "--state", pos)            # lens gate -> structural_lookup
@@ -224,6 +240,11 @@ ok(out.get("advanced_to") == "population_scout" and pstate["data"]["population_l
    f"registry situations nominated as PopulationLeads (authority LEAD, never demand): {len(pstate['data']['population_leads'])}")
 ok(all(l.get("channel_queries") and all(q.get("tools") for q in l["channel_queries"]) for l in pstate["data"]["population_leads"]),
    "every lead carries compiled channel queries with tool chains (docs/24)")
+_latent = [l for l in pstate["data"]["population_leads"] if l.get("search_mode") == "LATENT"]
+_named_from_structure = [l for l in pstate["data"]["population_leads"] if l.get("latent_structure_id") == "st2"]
+ok(_latent and all(l["source_lane"] == "LATENT" for l in _latent) and "hands" in _latent[0]["channel_queries"][0]["query"] and "who repeatedly" not in _latent[0]["channel_queries"][0]["query"]
+   and _named_from_structure and _named_from_structure[0]["name"] == "touring musicians",
+   "LATENT PROBLEM → population: a structure with no population becomes a LATENT lead searched by its own language; a named one becomes a NAMED lead (docs/26 §4)")
 rc, out = submit(pos, "population_scout", {"community_leads": [
     {"id": "cl_creators", "kind": "COMMUNITY", "name": "r/NewTubers", "source_lane": "OPEN_FIELD", "platform": "reddit",
      "community_key": "NewTubers", "nominated_by": ["reddit search 'mic cable movement' → 9 posts in r/NewTubers"],
@@ -311,7 +332,9 @@ ok(rc == 1 and any("lived_anchor_ids" in e or "CORPUS_ONLY" in e for e in out.ge
    "a hypothesis must name its lane: ANCHOR clusters or grounding CORPUS_ONLY (docs/25 §5)")
 rc, out = submit(pos, "hypothesize", {"hypotheses": [dict(h, lived_anchor_ids=[_thin]), dict(h2, grounding="CORPUS_ONLY"), dict(h3, grounding="CORPUS_ONLY")]})
 ok(rc == 1 and any("THIN" in e for e in out.get("schema_errors", [])), "a THIN cluster cannot anchor a hypothesis")
-h = dict(h, lived_anchor_ids=[_c_nt]); h2 = dict(h2, lived_anchor_ids=[_c_dn]); h3 = dict(h3, grounding="CORPUS_ONLY")
+rc, out = submit(pos, "hypothesize", {"hypotheses": [dict(h, lived_anchor_ids=[_c_nt], hop_refs={"1": ["e0"]}), dict(h2, lived_anchor_ids=[_c_dn]), dict(h3, grounding="CORPUS_ONLY")]})
+ok(rc == 1 and any("IRRELEVANT" in e for e in out.get("schema_errors", [])), "a hop citing a row classified IRRELEVANT is refused (docs/26 §2)")
+h = dict(h, lived_anchor_ids=[_c_nt], hop_refs={"1": ["e1"]}); h2 = dict(h2, lived_anchor_ids=[_c_dn], hop_refs={"1": ["e1"]}); h3 = dict(h3, grounding="CORPUS_ONLY")
 rc, out = submit(pos, "hypothesize", {"hypotheses": [h, h2, h3]})
 ok(rc == 0, f"diverse 3-hypothesis portfolio admitted with lived anchors ({out.get('schema_errors', '')[:1]})")
 rc, out = ctl("step", "--state", pos)  # -> semantic_review
@@ -2722,14 +2745,75 @@ ok(len(_recs) == 1 and _recs[0]["lead_id"] == "lz" and _recs[0]["origin"] == "PR
    and _recs[0]["freshness"]["class"] == "LIVE" and not _lwm.validate_records(_recs, _fs, _pol20),
    "prior field rows map to their community's lead with the original author and recomputed freshness, and pass the record contract")
 # 20i. the calibration acceptance test runs on a finished state and reports per-criterion receipts
-_acc = subprocess.run([PY, os.path.join(ROOT, "tests", "calibration_acceptance.py"), "--state", pos], capture_output=True, text=True)
+_acc = subprocess.run([PY, os.path.join(ROOT, "tests", "calibration_acceptance.py"), "--state", pos, "--heterogeneous-docs", "Some Novel"], capture_output=True, text=True)
 _rep = json.loads(_acc.stdout)
-ok(set(_rep["checks"]) == {"concepts_outside_seed", "independent_voices_per_concept", "cited_share_of_shelf", "field_originated_products",
-                            "mechanism_only_corpus_contributions", "hypotheses_killed_or_reframed_by_field"}
-   and _rep["checks"]["field_originated_products"]["pass"] is True and _rep["checks"]["hypotheses_killed_or_reframed_by_field"]["pass"] is True
-   and _acc.returncode == (0 if _rep["pass"] else 1),
-   f"calibration acceptance reports six receipts and exits non-zero unless all pass (this synthetic walk: {[k for k, v in _rep['checks'].items() if not v['pass']]})")
+ok(set(_rep["statuses"]) == {"corpus_independence", "heterogeneous_source_reasoning", "noun_echo_resistance", "legitimate_echo_survival",
+                              "latent_population_discovery", "field_originated_opportunity", "irrelevant_source_rejection", "hypothesis_death"}
+   and _acc.returncode == (0 if _rep["pass"] else 1) and "cited_share_of_shelf" in _rep["diagnostics"],
+   "calibration acceptance reports the eight canaries (docs/26 §6) with shelf share as a diagnostic only")
+ok(_rep["statuses"]["corpus_independence"] == "PASS" and _rep["statuses"]["latent_population_discovery"] == "PASS"
+   and _rep["statuses"]["field_originated_opportunity"] == "PASS" and _rep["statuses"]["irrelevant_source_rejection"] == "PASS"
+   and _rep["statuses"]["hypothesis_death"] == "PASS" and _rep["statuses"]["noun_echo_resistance"] == "NOT_TRIGGERED",
+   f"the synthetic walk earns the mandatory canaries and reports untriggered ones honestly ({_rep['statuses']})")
+ok(_rep["statuses"]["heterogeneous_source_reasoning"] == "FAIL" and _rep["pass"] is False,
+   "a configured heterogeneous document that nothing built on FAILS canary 2 and the run (the novel row was IRRELEVANT here)")
+_acc2 = subprocess.run([PY, os.path.join(ROOT, "tests", "calibration_acceptance.py"), "--state", pos], capture_output=True, text=True)
+_rep2 = json.loads(_acc2.stdout)
+ok(_rep2["statuses"]["heterogeneous_source_reasoning"] == "NOT_EVALUATED" and _rep2["pass"] is True and _acc2.returncode == 0,
+   "without configured heterogeneous documents canary 2 is NOT_EVALUATED and the synthetic walk passes")
 ok(doctor.run()["ok"], "doctor green over the lived-world surface")
+
+# ---------------------------------------------------------------------------
+# 21. docs/26 — source-agnostic interpretation: schemas, latent lane, relevance law, corpus_named, canaries
+# ---------------------------------------------------------------------------
+ok(not _models20.validate({"id": "s", "kind": "IDENTITY_SIGNAL", "text": "t", "evidence_refs": ["r"], "authority": "LATENT_HYPOTHESIS"}, "latent_structure")
+   and any("kind" in e for e in _models20.validate({"id": "s", "kind": "VIBE", "text": "t", "evidence_refs": ["r"], "authority": "LATENT_HYPOTHESIS"}, "latent_structure")),
+   "latent_structure schema: 24 typed kinds, authority LATENT_HYPOTHESIS")
+ok(any("evidentiary_authority" in e for e in _models20.validate({"id": "o", "kind": "OBSERVED_PRODUCT", "name": "socks", "evidence_refs": ["r"], "evidentiary_authority": "HIGH"}, "corpus_observation")),
+   "corpus_observation: a named product never carries authority for current demand")
+_st21 = _models20.new_state("lw21", "seed about a guitar left in the middle of the room"); _st21["node"] = "population_nominate"
+_st21["data"]["primitives"] = {"generative_signal": True, "frictions": [], "shared_predicates": []}
+_st21["data"]["latent_structures"] = [{"id": f"s{i}", "kind": "ACCESS_PROBLEM", "text": f"reaching a small item {i} while both hands hold something", "evidence_refs": ["e1"], "authority": "LATENT_HYPOTHESIS"} for i in range(9)]
+_st21["data"]["latent_structures"].append({"id": "s_env", "kind": "ENVIRONMENT", "text": "a damp cellar", "evidence_refs": ["e1"], "authority": "LATENT_HYPOTHESIS"})
+_lwm.nominate(_st21, _pol20)
+_lat21 = [l for l in _lwm.all_leads(_st21) if l.get("search_mode") == "LATENT"]
+ok(len(_lat21) == int(_pol20["lived_world"]["nominate_max_latent"]) and all(l["source_lane"] == "LATENT" and l["latent_structure_id"] for l in _lat21)
+   and not any(l["latent_structure_id"] == "s_env" for l in _lat21),
+   "latent leads are capped by nominate_max_latent and only searchable kinds (an ENVIRONMENT alone is not a population search)")
+ok(all("hands" in l["channel_queries"][0]["query"] or "item" in l["channel_queries"][0]["query"] for l in _lat21),
+   "a LATENT lead's queries are built from the structure's language, never from a group name")
+# relevance law: analogies skip IRRELEVANT graph rows
+_st21["data"]["primitives"].update({"transferable_invariants": ["x"], "shared_predicates": ["access"], "frictions": ["occupied_hand"], "physical_jobs": ["reach item"]})
+_st21["data"]["corpus_evidence"] = [{"id": "gf1", "kind": "graph_fact", "tags": ["graph_fact"], "title": "Novel", "fact": {"subject": "reach", "predicate": "REQUIRES", "object": "item access"}, "summary": "reach REQUIRES item access"},
+                                    {"id": "gf2", "kind": "graph_fact", "tags": ["graph_fact"], "title": "Manual", "fact": {"subject": "reach", "predicate": "REQUIRES", "object": "item hands"}, "summary": "reach REQUIRES item hands"}]
+_st21["data"]["row_relevance"] = {"gf1": "IRRELEVANT", "gf2": "STRUCTURAL_ANALOGY"}
+_an = executors._corpus_analogies(_st21, _st21["data"]["primitives"], 8)
+ok([a["seed_id"] for a in _an] == ["gf2"], "cross-domain analogies skip rows classified IRRELEVANT and keep structural ones")
+# corpus_named receipt
+_cn = _models20.new_state("cn21", "s"); _cn["data"]["corpus_evidence"] = [{"id": "r1", "text": "she wore compression socks on every long flight", "summary": "compression socks on flights"}]
+_cn["data"]["corpus_observations"] = [{"id": "o1", "kind": "OBSERVED_PRODUCT", "name": "compression socks", "evidence_refs": ["r1"], "evidentiary_authority": "NONE_FOR_CURRENT_DEMAND"}]
+ok(_pvm.corpus_named({"name": "Compression socks for nurses", "form_factor": "sock"}, _cn)["named"] is True
+   and _pvm.corpus_named({"name": "Cabin ankle sleeve", "form_factor": "sleeve"}, _cn)["named"] is False,
+   "corpus_named: a bigram or an observed-product overlap names the concept; a different noun is corpus-independent")
+# canary statuses on synthetic states
+_cs = copy.deepcopy(_ps); _cs["rounds"] = {"research": 1}
+_cs["data"]["row_relevance"] = {"c2": "IRRELEVANT"}
+_cs["data"]["community_leads"] = [{"id": "lz", "kind": "COMMUNITY", "name": "r/Zepbound", "community_key": "Zepbound", "source_lane": "OPEN_FIELD", "nominated_by": ["search"], "authority": "LEAD", "status": "INSTANTIATED", "record_ids": ["f0"]}]
+_cs["data"]["hypotheses"].append({"id": "h_dead", "status": "REJECTED", "hop_refs": {"0": ["c2"]}})
+_cs["data"]["gaps"] = [{"id": "g_dead", "hypothesis_id": "h_dead", "status": "contradicted"}]
+_cs["data"]["observations"].append({"id": "o_c", "gap_id": "g_dead", "contradicts": True, "community": "r/x", "quote_ref": "q", "problem": "p", "evidence_roles": ["CONTRADICTION"], "freshness": {"class": "LIVE"}, "source_identity": {"source_family": "community", "platform": "reddit", "author_key": "z", "thread_key": "zt"}})
+sys.path.insert(0, os.path.join(ROOT, "tests"))
+import calibration_acceptance as _cal  # noqa: E402
+_rep21 = _cal.evaluate(_cs, _pol20)
+ok(_rep21["statuses"]["noun_echo_resistance"] == "PASS" and _rep21["statuses"]["legitimate_echo_survival"] == "PASS"
+   and _rep21["statuses"]["latent_population_discovery"] == "PASS" and _rep21["statuses"]["irrelevant_source_rejection"] == "PASS"
+   and _rep21["statuses"]["hypothesis_death"] == "PASS",
+   f"canaries 3/4/5/7/8 PASS on a state that refused an echo, kept a grounded echo, instantiated an open-field community, marked a row irrelevant and killed a corpus hypothesis ({_rep21['statuses']})")
+_cs2 = copy.deepcopy(_cs); _cs2["data"]["row_relevance"] = {}
+ok(_cal.evaluate(_cs2, _pol20)["statuses"]["irrelevant_source_rejection"] == "FAIL" and _cal.evaluate(_cs2, _pol20)["pass"] is False,
+   "a run that forced every retrieved passage into play FAILS canary 7 and the calibration")
+ok("cited_share_of_shelf" in _rep21["diagnostics"] and "cited_share_of_shelf" not in _rep21["statuses"], "shelf share is a diagnostic, never a gate")
+ok(doctor.run()["ok"], "doctor green over the docs/26 surface")
 
 if FAILS:
     print(f"\n{len(FAILS)} CHECKS FAILED: " + "; ".join(FAILS[:8]))
