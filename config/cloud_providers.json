@@ -26,11 +26,11 @@
     "GROQ PARKED from the extraction ring (owner speed directive 2026-09-01): 8K TPM declared = a dead-weight slice under rank slicing (one unlucky doc per pass drew an all-groq slice). dedicated:true with no pin = reserved; re-enters by flipping the flag if the tier ever changes.",
     "PROVIDER-REMOVALS-0902: owner removed the groq host (groq1-5, qwen3.8-27b) and the gemma-3-4b candidate on 2026-09-02; keys dropped from .env; limiter blocks removed.",
     "OPENROUTER-LANE-3 (owner 2026-09-02 'which ones work well and should be wired'): qwen/qwen3.7-flash on the owner's SECOND OpenRouter key, reasoning_effort none is MANDATORY (a reasoning model: with thinking on it spends the whole output budget on reasoning tokens and returns nothing). Canary PASS 70 s (8/8 extraction 5.3 s mean, 103-130 tok/s; enrichment 8/8 gist 1.00); structured 'json' (strict schema not canaried). In the extraction ring AND the parent_enrichment pin.",
-    "OPENROUTER-ENRICHMENT-LANES-V1 (owner 2026-09-02 'both will be for enrichment lane since enrichment is slow'): openrouter5 = mistral-small-24b-instruct-2501 on the owner's THIRD OpenRouter key, dedicated:true (enrichment pin only, never extraction sharding), json; canary PASS on that key (8/8 + 8/8, 121 s). openrouter4 (ministral-3b-2512) is reserved for the same key IF its canary passes enrichment (first run 4/8)."
+    "OPENROUTER-ENRICHMENT-LANES-V1 (owner 2026-09-02 'both will be for enrichment lane since enrichment is slow'): openrouter5 = mistral-small-24b-instruct-2501 on the owner's THIRD OpenRouter key, dedicated:true (enrichment pin only, never extraction sharding), json; canary PASS on that key (8/8 + 8/8, 121 s). openrouter4 (ministral-3b-2512) is reserved for the same key IF its canary passes enrichment (first run 4/8).",
+    "NVIDIA-RETIRED-FROM-ENRICHMENT-PIN (2026-09-05, owner \"enrichment is too slow\"): nvidia (nemotron-3.5-lightning-30b-a3b) removed from the parent_enrichment pin — measured 12:00–14:00Z on cinema: 102 s mean wall per call (others 17–42 s) and 51 % of its microbatch parents gated INVALID; with parent-sharding it sat in nearly every document wave and the ladder waves, so it set the tail of all three. Provider block kept (dedicated:true, enabled) so re-adding the name to the pin restores it; enrichment identity excludes the lane, nothing re-enriches."
   ],
   "stage_pins": {
     "parent_enrichment": [
-      "nvidia",
       "gemini5",
       "gemini5b",
       "gemini6",

@@ -129,6 +129,17 @@ def test_enrichment_ladders_fan_out_in_source():
     assert body.count("_fan_out(") == 2, "semantic failover and hard-case escape must both fan out"
 
 
+def test_enrichment_outcomes_persist_in_their_own_transactions():
+    """ENRICH-OUTCOME-DURABILITY-V1: no compiled parent is persisted on the
+    ticket's outer connection; INVALID/terminal rows land committed like READY."""
+    import inspect
+    src = inspect.getsource(impl._do_enrichment)
+    assert "persist_compiled_parent(\n                conn," not in src and "persist_compiled_parent(conn," not in src, \
+        "a compiled parent is still persisted on the outer (rarely committed) transaction"
+    assert src.count("persist_compiled_parent(") == 2 and src.count("with _ptx() as _c:") == 2
+    assert "ENRICH_CALL_LADDER" in src, "ladder calls must leave receipts"
+
+
 def test_every_sweeping_handler_takes_the_sweep_lock():
     """Law 3: the structural contract — every handler that sweeps a corpus serializes on it."""
     for name in ("_do_parents", "_do_document", "_do_corpus", "_do_vocabulary", "_do_enrichment"):

@@ -631,12 +631,17 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
             # rejects only; one retry, re-gated identically.
             # ENRICH-LADDER-FANOUT-V1: the retry calls run concurrently.
             def _fb_one(item):
+                import time as _t
                 item_id, system, user, max_tokens = item
                 fb = _client_for(item_id, 1)
                 if fb.endpoint_name == _client_for(item_id).endpoint_name:
                     return (item_id, "", "ENRICH_NO_RESPONSE")
+                _t0 = _t.perf_counter()
                 raw, err = fb.complete_one(
                     user, system_prompt=system, max_tokens=max_tokens)
+                log.info("enrichment ladder call: step=failover lane=%s model=%s wall=%.1fs err=%s raw_len=%d",
+                         fb.endpoint_name, fb.model, _t.perf_counter() - _t0, err, len(raw or ""),
+                         extra={"error_code": "ENRICH_CALL_LADDER"})
                 return (item_id, raw, err)
             return _fan_out(items, _fb_one, _pool_width(items, 1))
 
@@ -648,14 +653,19 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
             # really meant "one family rejected twice").
             # ENRICH-LADDER-FANOUT-V1: the escape calls run concurrently.
             def _esc_one(item):
+                import time as _t
                 item_id, system, user, max_tokens = item
                 esc = _client_for(item_id, 2)
                 if esc.endpoint_name in (
                         _client_for(item_id).endpoint_name,
                         _client_for(item_id, 1).endpoint_name):
                     return (item_id, "", "ENRICH_NO_RESPONSE")
+                _t0 = _t.perf_counter()
                 raw, err = esc.complete_one(
                     user, system_prompt=system, max_tokens=max_tokens)
+                log.info("enrichment ladder call: step=escape lane=%s model=%s wall=%.1fs err=%s raw_len=%d",
+                         esc.endpoint_name, esc.model, _t.perf_counter() - _t0, err, len(raw or ""),
+                         extra={"error_code": "ENRICH_CALL_LADDER"})
                 return (item_id, raw, err)
             return _fan_out(items, _esc_one, _pool_width(items, 2))
 
@@ -723,17 +733,27 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
             ih = hashes[cp.parent_id]
             ticket = (_stage_ticket(conn, run_id, "parent_enrichment")
                       + ":" + cp.parent_id[-16:])
-            _ensure_job(conn, ticket, "PARENT_ENRICHMENT", corpus, ih)
             ep_cp = _sel("parent_enrichment", cp.parent_id)
-            res = persist_compiled_parent(
-                conn, corpus_id=corpus, doc_id=doc, compiled=cp,
-                input_hash=ih, provider=f"llm:{ep_cp.name}",
-                model=ep_cp.model)
-            state = "COMPLETE" if res["status"] in ("READY", "EXISTING")                 else "FAILED"
-            conn.execute(
-                "UPDATE summary_jobs SET state=%s, completed_at=now() "
-                "WHERE stage='PARENT_ENRICHMENT' AND input_hash=%s",
-                (state, ih))
+            # ENRICH-OUTCOME-DURABILITY-V1 (measured 2026-09-05): INVALID and
+            # terminal ENRICH_HARD_CASE rows were written on the ticket's
+            # OUTER transaction, and a corpus-sweep ticket almost never commits
+            # (held, bounced or fenced first) — cinema held 8,370 READY rows and
+            # ZERO INVALID rows after 5 h while the logs gated hundreds INVALID
+            # and 8 terminal. Every sweep therefore re-ran the same failing
+            # parents through the three-call ladder. Outcomes now land in their
+            # own committed transaction, exactly like READY rows do.
+            from polymath_shared.db import tx as _ptx
+            with _ptx() as _c:
+                _ensure_job(_c, ticket, "PARENT_ENRICHMENT", corpus, ih)
+                res = persist_compiled_parent(
+                    _c, corpus_id=corpus, doc_id=doc, compiled=cp,
+                    input_hash=ih, provider=f"llm:{ep_cp.name}",
+                    model=ep_cp.model)
+                state = "COMPLETE" if res["status"] in ("READY", "EXISTING") else "FAILED"
+                _c.execute(
+                    "UPDATE summary_jobs SET state=%s, completed_at=now() "
+                    "WHERE stage='PARENT_ENRICHMENT' AND input_hash=%s",
+                    (state, ih))
             if res["status"] == "READY":
                 ready += 1
             elif res["status"] == "EXISTING":
