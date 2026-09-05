@@ -32,7 +32,7 @@ from dataclasses import dataclass
 from polymath_shared.identity import chunk_id as make_chunk_id
 from workers.summarizer import summarize
 
-CHUNK_CONTRACT_V3 = "chunk-structure-v3"
+CHUNK_CONTRACT_V3 = "chunk-structure-v3.1"   # TIER-CHUNKER-V3.1 (2026-09-05): small-section merge + fragment coalescing
 PROVIDER = "tier_v3"
 
 #: word budgets (a "word" is len(text.split()) — the v4 tokenizer
@@ -312,10 +312,15 @@ def _prose_child_spans(text: str, start: int, end: int,
         units.extend(_bounded_prose_spans(
             text, para[0], para[1],
             p["child_target_words"], p["child_max_words"]))
-    # coalesce true fragments (never whole short paragraphs past the floor)
+    # coalesce true fragments (never whole short paragraphs past the floor).
+    # TIER-CHUNKER-V3.1: a fragment that ends with ":" is a LEAD-IN for
+    # whatever follows the prose region (a list, a table, a code block);
+    # it is left for _coalesce_fragments, which sends it forward.
     out: list[tuple[int, int]] = []
     for span in units:
-        if (out and _words(text[span[0]:span[1]]) < p["child_fragment_floor_words"]
+        frag = text[span[0]:span[1]]
+        if (out and _words(frag) < p["child_fragment_floor_words"]
+                and not frag.rstrip().endswith(":")
                 and _words(text[out[-1][0]:span[1]]) <= p["child_max_words"]):
             out[-1] = (out[-1][0], span[1])
         else:
@@ -416,6 +421,93 @@ def _merge_page_sections(text: str, sections: list[_Section],
     return out
 
 
+def _section_body_words(section: _Section) -> int:
+    return sum(_words(r.text) for r in section.regions if r.kind != "heading")
+
+
+def _common_prefix(a: tuple[str, ...], b: tuple[str, ...]) -> tuple[str, ...]:
+    n = 0
+    for x, y in zip(a, b):
+        if x != y:
+            break
+        n += 1
+    return tuple(a[:n])
+
+
+def _merge_small_sections(text: str, sections: list[_Section],
+                          p: dict) -> list[_Section]:
+    """TIER-CHUNKER-V3.1 (owner 2026-09-05 "fix the html list chunking"):
+    a section whose body is under `parent_min_words` absorbs the sections
+    that follow it (document order) until it reaches the floor or the next
+    section would push it past `parent_max_words`. Measured on a 316k-word
+    HTML handbook with 3,773 headings (h4/h5 used as labels): 3,167 parents
+    averaging 98 words, 3,051 of them under the frozen 280-word floor —
+    the floor only ever applied INSIDE a section. Same rule on a Markdown
+    book: 1,322 parents (857 under the floor) → 700 (6 under).
+
+    Doctrine kept: sub-stub sections (body < parent_stub_words) and
+    heading-only sections still drop as layout evidence — a title page or
+    part divider never leaks into the next chapter's first parent; only
+    sections that already carry real text merge, and only with sections
+    that carry real text. The merged section's heading_path is the
+    deepest ancestry the merged sections share (a run of "#### label"
+    sections under one "### topic" becomes one parent under the topic)."""
+    out: list[_Section] = []
+    stub = p["parent_stub_words"]
+    last_real = -1                       # index in `out` of the last section with real body
+    for sec in sections:
+        w = _section_body_words(sec)
+        if w >= stub and last_real >= 0:
+            prev = out[last_real]
+            pw = _section_body_words(prev)
+            shared = _common_prefix(prev.heading_path, sec.heading_path)
+            if (pw < p["parent_min_words"] and shared
+                    and pw + w <= p["parent_max_words"]):
+                # dropped sub-stubs between them stay in `out` as layout
+                # evidence; the parent span simply covers their bytes.
+                prev.heading_path = shared
+                prev.regions.extend(sec.regions)
+                continue
+        out.append(_Section(heading_path=sec.heading_path, regions=list(sec.regions)))
+        if w >= stub:
+            last_real = len(out) - 1
+    return out
+
+
+def _coalesce_fragments(text: str, spans: list[tuple[int, int]],
+                        kinds: list[str], p: dict) -> list[tuple[int, int]]:
+    """TIER-CHUNKER-V3.1: a child under `child_fragment_floor_words` joins
+    the NEXT child when the pair fits `child_max_words` (a lead-in such as
+    "The same applies to:" travels with the list or code block it
+    introduces), else the previous one. Prose-internal coalescing already
+    existed; this runs across region kinds inside one parent. Measured:
+    the handbook's 2,297 prose stubs were exactly these lead-ins."""
+    out = list(spans)
+    kind = list(kinds)
+    i = 0
+    while i < len(out):
+        s, e = out[i]
+        # structured blocks (code / table / list) stay atomic — only a
+        # prose fragment moves, and a span that already absorbed one is
+        # settled (never chains a code block into the next paragraph).
+        if kind[i] == "prose" and _words(text[s:e]) < p["child_fragment_floor_words"]:
+            if i + 1 < len(out) and _words(text[s:out[i + 1][1]]) <= p["child_max_words"]:
+                out[i] = (s, out[i + 1][1])
+                kind[i] = "prose" if kind[i + 1] == "prose" else "mixed"
+                del out[i + 1]
+                del kind[i + 1]
+                continue
+            if i > 0 and _words(text[out[i - 1][0]:e]) <= p["child_max_words"]:
+                out[i - 1] = (out[i - 1][0], e)
+                kind[i - 1] = "prose" if kind[i - 1] == "prose" else "mixed"
+                del out[i]
+                del kind[i]
+                i -= 1
+                continue
+        i += 1
+    return out
+
+
 @dataclass
 class _ParentSpan:
     start: int
@@ -486,20 +578,22 @@ def _parent_spans(text: str, section: _Section, p: dict) -> list[_ParentSpan]:
 def _child_spans_for_parent(text: str, parent: _ParentSpan,
                             p: dict) -> list[tuple[int, int]]:
     spans: list[tuple[int, int]] = []
+    kinds: list[str] = []
     for r in parent.regions:
         lo, hi = max(r.start, parent.start), min(r.end, parent.end)
         if lo >= hi:
             continue
         if r.kind == "prose":
-            spans.extend(_prose_child_spans(text, lo, hi, p))
+            new = _prose_child_spans(text, lo, hi, p)
         else:                                   # code / table / list: atomic
             if _words(text[lo:hi]) > p["atomic_child_max_words"]:
-                spans.extend(_line_spans(text, lo, hi, p["atomic_child_max_words"]))
+                new = _line_spans(text, lo, hi, p["atomic_child_max_words"])
             else:
                 s, e = _trim(text, lo, hi)
-                if s < e:
-                    spans.append((s, e))
-    return spans
+                new = [(s, e)] if s < e else []
+        spans.extend(new)
+        kinds.extend([r.kind] * len(new))
+    return _coalesce_fragments(text, spans, kinds, p)
 
 
 def tier_chunk_rows(text: str, doc_id: str,
@@ -533,7 +627,8 @@ def tier_chunk_layout(text: str, doc_id: str,
     regions = walk_regions(text)
     layout: list[dict] = [{"kind": "heading", "char_start": r.start, "char_end": r.end}
                           for r in regions if r.kind == "heading" and r.end > r.start]
-    sections = _merge_page_sections(text, _sections(regions), p)
+    sections = _merge_small_sections(
+        text, _merge_page_sections(text, _sections(regions), p), p)
     kept: list[tuple[_ParentSpan, list[tuple[int, int]]]] = []
     for section in sections:
         body_words = sum(_words(r.text) for r in section.regions

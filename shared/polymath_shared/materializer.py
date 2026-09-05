@@ -33,7 +33,7 @@ from typing import Optional
 from xml.etree import ElementTree
 
 MATERIALIZER_NAME = "polymath-materializer"
-MATERIALIZER_VERSION = "1.0.0"
+MATERIALIZER_VERSION = "1.1.0"   # HTML-STRUCTURE-V1 (2026-09-05): lists, tables, pre, headings keep their structure
 
 TEXT_MEDIA_TYPES = {
     "text/plain": "text",
@@ -66,7 +66,7 @@ _BLOCK_TAGS = {
     "section", "article", "header", "footer", "blockquote", "pre", "td",
     "th", "table", "ul", "ol", "dl", "dt", "dd",
 }
-_SKIP_TAGS = {"script", "style", "head", "noscript", "template", "svg"}
+_SKIP_TAGS = {"script", "style", "head", "noscript", "template", "svg", "nav"}   # nav: HTML-STRUCTURE-V1
 _WS_RE = re.compile(r"\s+")
 
 
@@ -214,16 +214,104 @@ def _materialize_text(raw: bytes, fmt: str) -> tuple[str, list[dict]]:
 # HTML
 # ---------------------------------------------------------------------------
 
+_HEADING_TAGS = {"h1": 1, "h2": 2, "h3": 3, "h4": 4, "h5": 5, "h6": 6}
+_LIST_TAGS = {"ul", "ol", "dl"}
+_ITEM_TAGS = {"li", "dt", "dd"}
+_CELL_TAGS = {"td", "th"}
+_PARA_TAGS = {"p", "div", "section", "article", "header", "footer", "main",
+              "aside", "figure", "figcaption", "address", "hr"}
+
+
 class _TextExtractor(HTMLParser):
-    """Deterministic HTML -> text: strips presentation, keeps block
-    boundaries as paragraph breaks, skips script/style/head."""
+    """Deterministic HTML -> markdown-shaped text.
+
+    HTML-STRUCTURE-V1 (owner 2026-09-05, measured on handbook.html — 6,926
+    <li>, 2,825 <tr>, 1,819 <pre>): the 1.0.0 extractor turned EVERY block
+    tag (li, tr, td, br, pre lines) into its own paragraph, so the chunker
+    — which splits on blank lines — emitted one child per list item /
+    table cell / code line: 29 % of the children were under 60 chars and
+    37 % were classed `stub` (a noise role that extraction and enrichment
+    skip) against 1.6 % / 2 % for the same book as Markdown.
+
+    The extractor now emits the structure the chunker already routes on
+    (`chunker._WRAP_HARD_LINE`: "- ", "1. ", "#", "|", ">", 4-space code):
+      * a list (nested or not) is ONE block of "- item" / "n. item" lines,
+        nested levels indented two spaces per depth; <p> inside <li> is a
+        line break, never a paragraph break;
+      * a table is ONE block of "| c1 | c2 |" rows;
+      * <pre> is ONE fenced code block (```), internal newlines and
+        indentation preserved;
+      * headings become "## Heading" lines in their own block;
+      * <br> is a line break inside the current block;
+      * <blockquote> lines are prefixed "> ";
+      * script/style/head/noscript/template/svg are dropped; entities are
+        unescaped; presentation whitespace collapses inside a line.
+    Paragraph = blank-line separated block, exactly as Markdown input."""
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
-        self.parts: list[str] = []
+        self.blocks: list[str] = []
+        self._lines: list[str] = []
+        self._cur: list[str] = []
+        self._prefix = ""
+        self._item_open = False
         self.skip_depth = 0
-        self.block_open = False
+        self.pre_depth = 0
+        self.quote_depth = 0
+        self.heading: int | None = None
+        self._lists: list[dict] = []
+        self._cells: list[str] | None = None      # open <tr>
+        self._cell: list[str] | None = None       # open <td>/<th>
 
+    # -- helpers -----------------------------------------------------
+    def _line_prefix(self) -> str:
+        pre = ""
+        if self.heading:
+            pre = "#" * self.heading + " "
+        if self.quote_depth:
+            pre = "> " * self.quote_depth + pre
+        return pre + self._prefix
+
+    def _end_line(self) -> None:
+        raw = "".join(self._cur)
+        self._cur = []
+        if self.pre_depth:
+            # <pre> becomes a fenced code block: the tier chunker's walker
+            # recognises fences (not indentation) as an atomic code region.
+            lines = raw.split("\n")
+            while lines and not lines[0].strip():
+                lines.pop(0)
+            while lines and not lines[-1].strip():
+                lines.pop()
+            if lines:
+                self._lines.append("```")
+                for ln in lines:
+                    self._lines.append(ln.rstrip())
+                self._lines.append("```")
+        else:
+            text = _WS_RE.sub(" ", raw).strip()
+            if text:
+                self._lines.append(self._line_prefix() + text)
+                if self._item_open:
+                    # <li><p>a</p><p>b</p></li>: later lines hang under the item
+                    self._prefix = " " * len(self._prefix)
+                else:
+                    self._prefix = ""
+            # an empty flush (e.g. <li><p>) keeps the pending item prefix
+
+    def _end_block(self) -> None:
+        self._end_line()
+        if self._lines:
+            while self._lines and not self._lines[-1].strip():
+                self._lines.pop()
+            if self._lines:
+                self.blocks.append("\n".join(self._lines))
+            self._lines = []
+
+    def _in_structure(self) -> bool:
+        return bool(self._lists) or self._cells is not None or self.pre_depth > 0
+
+    # -- parser events -----------------------------------------------
     def handle_starttag(self, tag: str, attrs) -> None:
         if tag in _SKIP_TAGS:
             self.skip_depth += 1
@@ -231,33 +319,125 @@ class _TextExtractor(HTMLParser):
         if self.skip_depth:
             return
         if tag == "br":
-            self.parts.append("\n")
-            self.block_open = False
-        elif tag in _BLOCK_TAGS:
-            self._close_block()
+            if self._cell is not None:
+                self._cell.append(" ")
+            else:
+                self._end_line()
+        elif tag == "pre":
+            self._end_block()
+            self.pre_depth += 1
+        elif tag in _HEADING_TAGS:
+            self._end_block()
+            self.heading = _HEADING_TAGS[tag]
+        elif tag in _LIST_TAGS:
+            if self._lists:
+                self._end_line()               # nested: close the parent item line
+                self._item_open = False
+                self._prefix = ""
+            else:
+                self._end_block()
+            self._lists.append({"kind": tag, "n": 0})
+        elif tag in _ITEM_TAGS:
+            self._item_open = False
+            self._end_line()
+            self._item_open = True
+            depth = max(0, len(self._lists) - 1)
+            top = self._lists[-1] if self._lists else {"kind": "ul", "n": 0}
+            if tag == "dd":
+                self._prefix = "  " * depth + "  "
+            elif top["kind"] == "ol":
+                top["n"] += 1
+                self._prefix = "  " * depth + f"{top['n']}. "
+            else:
+                self._prefix = "  " * depth + "- "
+        elif tag == "table":
+            self._end_block()
+        elif tag == "tr":
+            self._end_line()
+            self._cells = []
+        elif tag in _CELL_TAGS:
+            if self._cells is None:
+                self._cells = []
+            self._cell = []
+        elif tag == "blockquote":
+            self._end_block()
+            self.quote_depth += 1
+        elif tag in _PARA_TAGS:
+            if self._in_structure():
+                self._end_line()
+            else:
+                self._end_block()
 
     def handle_endtag(self, tag: str) -> None:
-        if tag in _SKIP_TAGS and self.skip_depth:
-            self.skip_depth -= 1
+        if tag in _SKIP_TAGS:
+            if self.skip_depth:
+                self.skip_depth -= 1
             return
         if self.skip_depth:
             return
-        if tag in _BLOCK_TAGS:
-            self._close_block()
+        if tag == "pre":
+            self._end_block()
+            self.pre_depth = max(0, self.pre_depth - 1)
+        elif tag in _HEADING_TAGS:
+            self._end_block()
+            self.heading = None
+        elif tag in _ITEM_TAGS:
+            self._end_line()
+            self._item_open = False
+            self._prefix = ""
+        elif tag in _LIST_TAGS:
+            self._end_line()
+            self._item_open = False
+            self._prefix = ""
+            if self._lists:
+                self._lists.pop()
+            if not self._lists:
+                self._end_block()
+        elif tag in _CELL_TAGS:
+            if self._cell is not None:
+                if self._cells is None:
+                    self._cells = []
+                self._cells.append(_WS_RE.sub(" ", "".join(self._cell)).strip())
+                self._cell = None
+        elif tag == "tr":
+            if self._cell is not None:          # unterminated cell
+                self.handle_endtag("td")
+            if self._cells is not None:
+                cells = self._cells
+                self._cells = None
+                if any(c for c in cells):
+                    self._lines.append("| " + " | ".join(cells) + " |")
+        elif tag == "table":
+            if self._cells is not None:
+                self.handle_endtag("tr")
+            self._end_block()
+        elif tag == "blockquote":
+            self._end_block()
+            self.quote_depth = max(0, self.quote_depth - 1)
+        elif tag in _PARA_TAGS:
+            if self._in_structure():
+                self._end_line()
+            else:
+                self._end_block()
 
     def handle_data(self, data: str) -> None:
         if self.skip_depth:
             return
-        self.parts.append(data)
+        if self._cell is not None:
+            self._cell.append(data)
+        else:
+            self._cur.append(data)
 
-    def _close_block(self) -> None:
-        if self.parts and not self.block_open:
-            self.parts.append("\n")
-            self.block_open = True
-        self.block_open = True
+    def close(self) -> None:  # type: ignore[override]
+        super().close()
+        if self._cell is not None:
+            self.handle_endtag("td")
+        if self._cells is not None:
+            self.handle_endtag("tr")
+        self._end_block()
 
     def text(self) -> str:
-        return html_lib.unescape("".join(self.parts))
+        return "\n\n".join(self.blocks)
 
 
 def _materialize_html(raw: bytes) -> tuple[str, list[dict]]:
@@ -271,8 +451,18 @@ def _materialize_html(raw: bytes) -> tuple[str, list[dict]]:
         parser.close()
     except Exception as exc:
         raise CorruptedDocumentError(f"html parse failed: {exc}")
-    raw_text = parser.text()
-    text, source_map = _collapse_blocks(raw_text, "block", "html-block")
+    blocks = [b for b in parser.blocks if b.strip()]
+    text = "\n\n".join(blocks)
+    source_map: list[dict] = []
+    pos = 0
+    for i, block in enumerate(blocks):
+        start = text.find(block, pos)
+        if start < 0:
+            start = pos
+        end = start + len(block)
+        source_map.append({"text_start": start, "text_end": end, "kind": "block",
+                           "location": "html-block", "label": f"html-block#{i}"})
+        pos = end
     return text, source_map
 
 
