@@ -35,6 +35,34 @@ BLOCKING_WORKER_STATUS = "quarantined"
 LIVE_HEARTBEAT_SECONDS = 120
 
 
+STATE_DEGRADED = "DEGRADED"
+
+
+def _degradation(conn) -> dict[str, Any]:
+    """Open stall episodes older than the trace threshold and recent medic actions.
+    Both tables are created by migrations 0046+/0053; absence degrades to zeros."""
+    out: dict[str, Any] = {"stalls_open": 0, "stall_diagnoses": [], "medic_actions_15m": []}
+    try:
+        with conn.transaction():
+            rows = conn.execute(
+                """SELECT diagnosis, count(*) FROM stall_traces
+                    WHERE resolved_at IS NULL AND last_traced_at > now() - interval '10 minutes'
+                    GROUP BY diagnosis ORDER BY 2 DESC""").fetchall()
+        out["stalls_open"] = int(sum(r[1] for r in rows))
+        out["stall_diagnoses"] = [f"{d}×{n}" for d, n in rows][:6]
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        with conn.transaction():
+            rows = conn.execute(
+                """SELECT kind, target, at FROM medic_actions
+                    WHERE at > now() - interval '15 minutes' ORDER BY at DESC LIMIT 10""").fetchall()
+        out["medic_actions_15m"] = [{"kind": k, "target": t, "at": str(a)} for k, t, a in rows]
+    except Exception:  # noqa: BLE001
+        pass
+    return out
+
+
 def pipeline_health(conn, live_seconds: int = LIVE_HEARTBEAT_SECONDS) -> dict[str, Any]:
     """Report BLOCKED (with cause) / IDLE / HEALTHY for the LIVE fleet.
 
@@ -93,11 +121,23 @@ def pipeline_health(conn, live_seconds: int = LIVE_HEARTBEAT_SECONDS) -> dict[st
             "queued_tickets": queued, "workers": [],
         }
 
-    if queued:
+    # MEDIC-V1 / STALL-TRACER: a fleet whose units are traced as stalled, or that
+    # the medic had to repair in the last 15 minutes, is DEGRADED — HEALTHY while
+    # tickets sat READY_UNCLAIMED for hours (measured 2026-09-05) was a lie.
+    degraded = _degradation(conn)
+    if queued and degraded["stalls_open"] == 0 and not degraded["medic_actions_15m"]:
         return {"state": STATE_HEALTHY, "blocked_workers": 0,
                 "live_workers": len(workers), "causes": [],
                 "detail": f"{queued} ticket(s) in flight",
-                "queued_tickets": queued, "workers": []}
+                "queued_tickets": queued, "workers": [], **degraded}
+    if degraded["stalls_open"] or degraded["medic_actions_15m"]:
+        return {"state": STATE_DEGRADED, "blocked_workers": 0,
+                "live_workers": len(workers), "causes": degraded["stall_diagnoses"],
+                "detail": (f"{degraded['stalls_open']} unit(s) traced as stalled "
+                           f"({', '.join(degraded['stall_diagnoses'][:3]) or 'see stall_traces'}); "
+                           f"medic acted {len(degraded['medic_actions_15m'])} time(s) in 15 min; "
+                           f"{queued} ticket(s) in flight"),
+                "queued_tickets": queued, "workers": [], **degraded}
 
     return {"state": STATE_IDLE, "blocked_workers": 0,
             "live_workers": len(workers), "causes": [],

@@ -18,7 +18,17 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → `CLAUDE.md` → the two newest work-logs.
 
-## Latest checkpoint (2026-09-03 late — LLM-DIRECT CANON)
+## Latest checkpoint (2026-09-05 — INGEST HARDENING + MEDIC)
+
+Register rows 11.74–11.79, all DONE on main. What a fresh session must know:
+
+- **The fleet runs from this worktree.** Every edit to a fleet-loaded file (control/, shared/, workers/) trips the execution-bundle fence; the supervisor's WORKER-QUARANTINE-AUTOHEAL restarts every slot within ~2 min (observed 3× on 2026-09-05). Batch edits; never edit mid-ingest unless you accept a restart round.
+- **Self-healing now lives in two authorities:** the supervisor owns process life (readiness probes, fence quarantine, restart budget; orchestrator slot 20 s × 3 after the next supervisor restart); the control tick's `medic` phase owns database state (capacity re-arm by ticket id, idle-in-transaction deadlock break), every action receipted in `medic_actions`. `/health/pipeline` reports DEGRADED with the open stall diagnoses. Work-log `2026-09-05-medic.md`.
+- **Known fixed classes:** summary_jobs cross-process deadlock (11.75 sweep lock + lock_timeout); 429 burning retry budget (11.78 capacity-is-transient); sweep-lock wait starving the lane (11.78 TransientStageHold); GET /documents 80 s (11.77); CI red since birth (11.76).
+- **Cinema ingest (63 docs) status at checkpoint:** extraction complete; the single `project_qdrant` worker runs the corpus-wide routing pass (~5 texts/s through the :8742 embedder — the bottleneck); 61 project_qdrant tickets queue behind it and complete from receipts once it lands; summaries/enrichment sweep concurrently. Pending: supervisor restart after the ingest lands (loads per-slot readiness + current worker_runtime everywhere).
+- Pre-existing data-dependent failure: `test_stall_tracer.py::test_ready_without_claim_event_and_without_live_slot` (collect_stalls `_LIMIT = 500` vs >500 open stalls in the dev store).
+
+## Previous checkpoint (2026-09-03 late — LLM-DIRECT CANON)
 
 **RESEARCH-FINAL-CORRECTNESS-V2.1.2 (2026-09-04 latest, register 11.74).** `research/` frozen at v2.1.2 after the final correctness pass: nine canaries (population canary split; `--calibration-mode SOURCE_AGNOSTIC_CALIBRATION` explicit), `corpus_polymath.py --presence` (CorpusPresenceReceipt), deterministic `field_origin`, fail-closed document scope, controller/transitions fixes found by the live runs. Harness `python3 research/tests/run_all.py` = 555 checks. Calibration receipts: `research/docs/calibration/2026-09-04-books-run-01-regression.md` (no regression) and `2026-09-04-novel-run-02.md` (novel-seeded, LATENT → r/daddit / r/beyondthebump / r/Fosterparents → field-killed → NO_DEFENSIBLE_BRIDGE; source-agnostic pass). Corpus `ecom-meta-v1`: the romance novel is now `Always Alchemy (Hart)` (doc_57aab6bb…). Standalone mirror TRAIL_AGENT_AUTORESEARCH at byte parity (`research/MIRROR_RECEIPT.json`). Do NOT add features to research/ — the implementation is frozen; the next owner decision is which corpus/seed the next calibration uses.
 

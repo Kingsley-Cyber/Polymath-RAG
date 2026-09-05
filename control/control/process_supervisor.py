@@ -56,9 +56,13 @@ FLEET: list = [
         "--app-dir", "sidecars/reranker"],
      "cwd": ".", "health_url": "http://127.0.0.1:8743/ready"},
     # ---- orchestrator ----------------------------------------------------
+    # ORCHESTRATOR-LIMBO-V1 (measured 2026-09-05): SIGTERM left uvicorn alive with
+    # the port closed for minutes; the default 5 × 120 s readiness policy is a
+    # 10-minute API outage. The API probe is one cheap GET — probe fast, restart fast.
     {"name": "orchestrator", "argv": ["{python}", "-m", "uvicorn",
         "orchestrator.main:app", "--host", "127.0.0.1", "--port", "7200"],
-     "cwd": "orchestrator", "health_url": "http://127.0.0.1:7200/health"},
+     "cwd": "orchestrator", "health_url": "http://127.0.0.1:7200/health",
+     "readiness_interval_s": 20.0, "readiness_failures_before_restart": 3},
     # ---- MCP (POLYMATH-MCP-V2) -------------------------------------------
     # Supervised here, NOT by launchd: under launchd, bash is denied
     # ~/Documents (macOS TCC) so `. .env` fails and the server booted
@@ -99,6 +103,8 @@ class Slot:
     argv: list | None = None
     cwd: str | None = None
     health_url: str | None = None
+    readiness_interval_s: float | None = None          # per-slot override (ORCHESTRATOR-LIMBO-V1)
+    readiness_failures_before_restart: int | None = None
     last_probe_at: float = 0.0
     readiness_failures: int = 0
     proc: subprocess.Popen | None = None
@@ -225,7 +231,9 @@ class Supervisor:
             if isinstance(entry, dict):
                 self.slots.append(Slot(entry["name"], "", argv=entry["argv"],
                                        cwd=entry.get("cwd"),
-                                       health_url=entry.get("health_url")))
+                                       health_url=entry.get("health_url"),
+                                       readiness_interval_s=entry.get("readiness_interval_s"),
+                                       readiness_failures_before_restart=entry.get("readiness_failures_before_restart")))
             else:
                 self.slots.append(Slot(entry[0], entry[1]))
         self.python = python or sys.executable
@@ -457,7 +465,7 @@ class Supervisor:
         # The control probe is one cheap SQL read, so it runs on its own
         # fast cadence; service probes cost a forward pass and stay slow.
         interval = (self.control_probe_interval_s if slot.name == "control"
-                    else self.readiness_interval_s)
+                    else (slot.readiness_interval_s or self.readiness_interval_s))
         if now - slot.last_probe_at < interval:
             return
         slot.last_probe_at = now
@@ -530,9 +538,9 @@ class Supervisor:
             slot.readiness_failures = 0
             return
         slot.readiness_failures += 1
-        log.warning("slot %s not ready (%d/%d)", slot.name,
-                    slot.readiness_failures, self.readiness_failures_before_restart)
-        if slot.readiness_failures < self.readiness_failures_before_restart:
+        _limit = slot.readiness_failures_before_restart or self.readiness_failures_before_restart
+        log.warning("slot %s not ready (%d/%d)", slot.name, slot.readiness_failures, _limit)
+        if slot.readiness_failures < _limit:
             return
         log.error("slot %s wedged: restarting on readiness failure", slot.name)
         slot.readiness_failures = 0

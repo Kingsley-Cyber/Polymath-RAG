@@ -122,9 +122,23 @@ def tick() -> dict:
                                 threshold_s=int(getattr(settings.control, "stall_threshold_s", 180)))
         except Exception as exc:  # noqa: BLE001
             log.error("stall tracer failed", extra={"error_code": type(exc).__name__})
+        # MEDIC-V1: act on the measured failure classes (capacity re-arm, deadlock
+        # break). Bounded, receipted, and never allowed to abort the tick.
+        medic: dict = {}
+        try:
+            from control.medic import medic_pass
+            with conn.transaction():
+                medic = _phase("medic", medic_pass, conn,
+                               rearm_per_tick=int(getattr(settings.control, "medic_rearm_per_tick", 20)),
+                               deadlock_wait_s=int(getattr(settings.control, "medic_deadlock_wait_s", 120)),
+                               per_ticket_daily_cap=int(getattr(settings.control, "medic_per_ticket_daily_cap", 5)),
+                               enabled=bool(getattr(settings.control, "medic_enabled", True)))
+        except Exception as exc:  # noqa: BLE001
+            log.error("medic failed", extra={"error_code": type(exc).__name__})
         record_heartbeat(conn, owner, tick_ok=True, census_size=len(census.gaps))
         return {
             "tick": "ok",
+            "medic": medic,
             "owner": owner[:12],
             "gaps": len(census.gaps),
             "scheduled": scheduled,

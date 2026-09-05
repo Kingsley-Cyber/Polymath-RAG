@@ -240,6 +240,10 @@ class ControlSettings(BaseSettings):
                     "(zero yield is completion); breaches surface as warnings "
                     "in /semantic_readiness. Owner sets it from measured runs.",
     )
+    medic_enabled: bool = Field(default=True, description="MEDIC-V1: autonomous repair phase in the control tick")
+    medic_rearm_per_tick: int = Field(default=20, ge=0, description="MEDIC-V1: max capacity re-arms per tick")
+    medic_deadlock_wait_s: int = Field(default=120, ge=30, description="MEDIC-V1: lock wait + idle-in-transaction age that counts as a deadlock")
+    medic_per_ticket_daily_cap: int = Field(default=5, ge=1, description="MEDIC-V1: re-arms per ticket per 24h before it stays failed")
 
 class StoreSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="POLYMATH_", extra="ignore", env_file=_ENV_FILE, env_file_encoding="utf-8")
