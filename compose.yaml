@@ -12,6 +12,13 @@ services:
     # The 12-process host-native fleet + control + operator tooling
     # saturates the 100-connection default (measured 2026-08-29).
     command: ["postgres", "-c", "max_connections=250"]
+    # PG-SHM-V1 (measured 2026-09-05): Docker's default 64 MB /dev/shm made
+    # parallel-query DSM segments fail with "could not resize shared memory
+    # segment ... No space left on device" 192 times in 24 h (routing
+    # projection, facts/evidence joins). Applies on the next `compose up`
+    # recreate; until then max_parallel_workers_per_gather=0 is set via
+    # ALTER SYSTEM so no query needs a DSM segment.
+    shm_size: "1gb"
     volumes:
       - ./stores/postgres/data:/var/lib/postgresql/data
       - ./stores/postgres/migrations:/docker-entrypoint-initdb.d:ro
