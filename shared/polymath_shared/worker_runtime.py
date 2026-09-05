@@ -370,6 +370,12 @@ def run_worker(worker_type: str, event_types: list[str],
     past claim_ttl_s let the reaper expire the queued ones. Parallelism
     comes from running several workers of a type, which is unaffected.
     """
+    # WORKER-STACK-DUMP-V1: `kill -USR1 <pid>` prints every thread's Python stack to stderr
+    # (the 2026-09-05 summary-worker deadlock was only diagnosable from pg_stat_activity)
+    import faulthandler as _fh
+    import signal as _sig
+    if hasattr(_sig, "SIGUSR1"):
+        _fh.register(_sig.SIGUSR1, all_threads=True)
     configure_logging(f"worker-{worker_type.replace('_', '-')}")
     identity = worker_identity(worker_type)
     contracts = identity["contracts"]

@@ -63,8 +63,73 @@ def _job_done(conn: Connection, stage: str, input_hash: str) -> bool:
     return bool(row and row[0] == "COMPLETE")
 
 
+# SUMMARY-SWEEP-SERIALIZATION-V1 (measured 2026-09-05, corpus `cinema`, 4
+# uploads): two summary workers sweeping the SAME corpus deadlocked across
+# processes on summary_jobs (stage, input_hash) — A's outer ticket transaction
+# held an uncommitted upsert of key K while B's short transaction upserted K,
+# and vice versa. Postgres saw no cycle (one edge was a Python wait), so both
+# workers sat "healthy" and silent until killed. Two laws close it:
+#   1. a summary_jobs upsert never waits unbounded (lock_timeout, raises);
+#   2. a corpus sweep is exclusive per (stage, corpus) — the second worker
+#      waits OUTSIDE any row lock (advisory lock on its outer transaction)
+#      and finds the work already done when its turn comes (idempotent).
+_LOCK_TIMEOUT_MS_DEFAULT = 60_000
+_SWEEP_WAIT_S_DEFAULT = 1800
+
+
+def _lock_timeout_ms() -> int:
+    import os
+    try:
+        return max(100, int(os.environ.get("POLYMATH_SUMMARY_LOCK_TIMEOUT_MS", _LOCK_TIMEOUT_MS_DEFAULT)))
+    except ValueError:
+        return _LOCK_TIMEOUT_MS_DEFAULT
+
+
+def _sweep_lock_key(stage: str, corpus_id: str) -> int:
+    import hashlib
+    digest = hashlib.sha256(f"summary-sweep|{stage}|{corpus_id}".encode("utf-8")).digest()[:8]
+    return int.from_bytes(digest, "big") & 0x7FFFFFFFFFFFFFFF
+
+
+def _try_sweep_lock(conn: Connection, stage: str, corpus_id: str) -> bool:
+    """Transaction-scoped advisory lock for one (stage, corpus) sweep; released
+    with the holder's commit / rollback. Never blocks."""
+    row = conn.execute("SELECT pg_try_advisory_xact_lock(%s)",
+                       (_sweep_lock_key(stage, corpus_id),)).fetchone()
+    return bool(row and row[0])
+
+
+def _sweep_lock(conn: Connection, stage: str, corpus_id: str) -> None:
+    """Wait for the (stage, corpus) sweep to be ours. The wait holds NO row
+    locks (the outer transaction has written nothing yet), so it can never be
+    one edge of a deadlock; the lease keeper keeps the ticket alive meanwhile."""
+    import os
+    import time as _time
+    try:
+        cap = float(os.environ.get("POLYMATH_SUMMARY_SWEEP_WAIT_S", _SWEEP_WAIT_S_DEFAULT))
+    except ValueError:
+        cap = float(_SWEEP_WAIT_S_DEFAULT)
+    t0 = _time.monotonic()
+    logged = False
+    while not _try_sweep_lock(conn, stage, corpus_id):
+        if not logged:
+            log.warning("sweep lock busy: another worker is sweeping %s for corpus %s — waiting",
+                        stage, corpus_id, extra={"error_code": "SUMMARY_SWEEP_BUSY"})
+            logged = True
+        if _time.monotonic() - t0 > cap:
+            raise RuntimeError(f"SUMMARY_SWEEP_BUSY: {stage} sweep of corpus {corpus_id} "
+                               f"still held by another worker after {int(cap)}s")
+        _time.sleep(5.0)
+    if logged:
+        log.info("sweep lock acquired after %.0fs: %s corpus %s",
+                 _time.monotonic() - t0, stage, corpus_id)
+
+
 def _ensure_job(conn: Connection, ticket_id: str, stage: str,
                 corpus_id: str, input_hash: str) -> None:
+    # bounded wait: a peer transaction holding this key is an error to
+    # surface, never something to wait on forever (SUMMARY-SWEEP-SERIALIZATION-V1)
+    conn.execute(f"SET LOCAL lock_timeout = '{_lock_timeout_ms()}ms'")
     # SUMMARY-JOB-IDEMPOTENCY-V1 (2026-09-02): summary_jobs' PRIMARY KEY is
     # ticket_id, but the only conflict arbiter here was (stage, input_hash).
     # A delete + re-ingest of identical bytes mints the SAME ticket ids
@@ -162,6 +227,7 @@ def _do_parents(conn: Connection, run_id: str) -> dict:
     corpus = _corpus_of_run(conn, run_id)
     if not corpus:
         return {"status": "NO_CORPUS"}
+    _sweep_lock(conn, "parent_summary", corpus)      # SUMMARY-SWEEP-SERIALIZATION-V1
     docs = _run_docs(conn, run_id)
     done = 0
     for pid, slot in _parents_of_docs(conn, docs).items():
@@ -198,6 +264,7 @@ def _do_document(conn: Connection, run_id: str) -> dict:
     corpus = _corpus_of_run(conn, run_id)
     if not corpus:
         return {"status": "NO_CORPUS"}
+    _sweep_lock(conn, "document_summary", corpus)      # SUMMARY-SWEEP-SERIALIZATION-V1
     docs = _run_docs(conn, run_id)
     completed = 0
     for doc in docs:
@@ -253,6 +320,7 @@ def _do_corpus(conn: Connection, run_id: str) -> dict:
     corpus = _corpus_of_run(conn, run_id)
     if not corpus:
         return {"status": "NO_CORPUS"}
+    _sweep_lock(conn, "corpus_summary", corpus)      # SUMMARY-SWEEP-SERIALIZATION-V1
     input_hash = "in_" + _content_hash({
         "corpus": corpus,
         "docs": sorted(r[0] for r in conn.execute(
@@ -274,6 +342,7 @@ def _do_vocabulary(conn: Connection, run_id: str) -> dict:
     corpus = _corpus_of_run(conn, run_id)
     if not corpus:
         return {"status": "NO_CORPUS"}
+    _sweep_lock(conn, "vocabulary", corpus)      # SUMMARY-SWEEP-SERIALIZATION-V1
     # VOCABULARY-PRODUCTION-CONTRACT-V1: `support_id` is REQUIRED by
     # build_concept_families and must be the parent evidence
     # neighbourhood (parent_id), not the summary artifact. The
@@ -342,6 +411,7 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
     corpus = _corpus_of_run(conn, run_id)
     if not corpus:
         return {"status": "NO_CORPUS"}
+    _sweep_lock(conn, "parent_enrichment", corpus)      # SUMMARY-SWEEP-SERIALIZATION-V1
     scope_doc = None
     row = conn.execute(
         "SELECT payload FROM outbox_events WHERE run_id=%s AND "
