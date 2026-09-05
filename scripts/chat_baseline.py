@@ -112,6 +112,102 @@ def build(per_corpus: int, corpora: list[str], seed: int) -> dict:
             "questions": items}
 
 
+RETRIEVAL_OVERRIDE: str | None = None      # --retrieval v1|v2 (P1.a A/B)
+
+
+LEXICAL_FIXTURE = ROOT / "eval" / "fixtures" / "chat_lexical_L.json"
+_IDENT_SQL = r"""
+WITH toks AS (
+  SELECT ch.chunk_id, ch.doc_id, d.source_name, m[1] AS tok, length(ch.text) AS n
+    FROM chunks ch JOIN documents d ON d.doc_id = ch.doc_id,
+         LATERAL regexp_matches(ch.text, '\m([A-Z][A-Z0-9]{2,}(?:-[A-Z0-9]+)*)\M', 'g') AS m
+   WHERE d.corpus_id = %s AND ch.tier = 'child' AND coalesce(ch.region_role, 'body') = 'body'
+), df AS (
+  SELECT tok, count(DISTINCT chunk_id) AS df, array_agg(DISTINCT chunk_id) AS chunk_ids,
+         min(doc_id) AS doc_id, min(source_name) AS source_name, min(n) AS min_len
+    FROM toks GROUP BY tok
+)
+SELECT tok, df, chunk_ids, doc_id, source_name FROM df
+ WHERE df BETWEEN 1 AND 2 AND length(tok) BETWEEN 3 AND 12 AND min_len >= 300
+ ORDER BY tok"""
+
+
+def _english_words() -> set[str]:
+    try:
+        return {w.strip().lower() for w in open("/usr/share/dict/words", encoding="utf-8", errors="ignore") if w.strip()}
+    except OSError:
+        return set()
+
+
+def build_lexical(per_corpus: int, corpora: list[str], seed: int) -> dict:
+    """LEXICAL FIXTURE SET L (plan §4 P1.a / §5b #1): acronyms and identifiers
+    that occur in at most two child chunks of the corpus (document frequency
+    1–2). The question names the token verbatim in quotes; the gold set is
+    exactly the chunks that contain it. An exact-match lane must find these;
+    a dense lane may not. Deterministic for a fixed corpus state and seed."""
+    rng = random.Random(seed)
+    words = _english_words()
+    items = []
+    with _connect() as c:
+        for corpus in corpora:
+            rows = c.execute(_IDENT_SQL, (corpus,)).fetchall()
+            # CASE-INSENSITIVE document frequency: "WATTS" with df 1 in caps but 40 chunks of
+            # "watts" is not an exact-match test (BM25 lowercases). Keep tokens whose whole-word,
+            # case-insensitive frequency in the corpus's child chunks is also ≤ 2.
+            pool = [r for r in rows if r[0].lower() not in words and not (re.fullmatch(r"[A-Z]+", r[0]) and len(r[0]) > 6)]
+            rng.shuffle(pool)
+            pool = pool[:160]
+            ci = dict(c.execute(
+                """SELECT t.tok, count(*) FROM unnest(%s::text[]) AS t(tok)
+                     JOIN chunks ch ON ch.tier = 'child' AND ch.text ~* ('\\m' || regexp_replace(t.tok, '([.\\-])', '\\\\\\1', 'g') || '\\M')
+                     JOIN documents d ON d.doc_id = ch.doc_id AND d.corpus_id = %s
+                    GROUP BY t.tok""", ([r[0] for r in pool], corpus)).fetchall())
+            cands = []
+            for tok, df, chunk_ids, doc_id, source in pool:
+                if ci.get(tok, 0) > 2:
+                    continue
+                low = tok.lower()
+                if low in words:
+                    continue
+                # a hyphenated compound of dictionary words ("THREE-TIME") is not an identifier: the
+                # shared BM25 tokenizer splits it into common words and no exact-match lane can
+                # single it out (measured 2026-09-05: the only L miss under v2). Identifiers carry a
+                # digit or a non-word hyphen part.
+                # the shared BM25 tokenizer splits on hyphens, so a hyphenated token is retrievable only
+                # through its parts ("ADRG-021" → adrg works, "COM-1" → com/1 does not): hyphenated tokens
+                # test the projection's tokenizer (§3.23, frozen), not the lane — excluded from L.
+                if "-" in tok:
+                    continue
+                if re.search(r"\d|-", tok):
+                    kind = "identifier"
+                elif 3 <= len(tok) <= 6:
+                    kind = "acronym"
+                else:
+                    continue
+                cands.append({"corpus_id": corpus, "doc_id": doc_id, "source_name": source, "term": tok, "kind": kind,
+                              "df": int(df), "df_ci": int(ci.get(tok, 0)), "gold_chunk_ids": list(chunk_ids)[:2], "gold_chunk_id": list(chunk_ids)[0],
+                              "question": f'What does the book say about "{tok}"?', "exact_terms": [tok]})
+            rng.shuffle(cands)
+            picked, seen_docs, kinds = [], set(), {"identifier": 0, "acronym": 0}
+            for x in sorted(cands, key=lambda x: (x["kind"] != "identifier", 0)):   # identifiers first, one per document first
+                if len(picked) >= per_corpus:
+                    break
+                if x["doc_id"] in seen_docs and len(seen_docs) < 6:
+                    continue
+                if kinds[x["kind"]] >= (per_corpus + 1) // 2 and any(v < (per_corpus + 1) // 2 for v in kinds.values()) and len(cands) > per_corpus * 2:
+                    continue
+                seen_docs.add(x["doc_id"]); kinds[x["kind"]] += 1; picked.append(x)
+            for x in cands:
+                if len(picked) >= per_corpus:
+                    break
+                if x not in picked:
+                    picked.append(x)
+            items.extend(picked)
+    return {"version": "chat-lexical-L-v1", "seed": seed, "corpora": corpora, "per_corpus": per_corpus,
+            "gold_rule": "child chunks (body region) containing the token; token df 1-2 in caps AND whole-word case-insensitive df <= 2 in the corpus; not an English word; hyphenated tokens excluded (the shared BM25 tokenizer splits on hyphens)",
+            "questions": items}
+
+
 def _stream(question: str, corpus: str, synthesizer: str | None, history: list | None = None,
             compiler: str | None = None) -> tuple[dict, float]:
     body = {"message": question, "corpus_id": corpus, "mode": "HYBRID"}
@@ -121,6 +217,8 @@ def _stream(question: str, corpus: str, synthesizer: str | None, history: list |
         body["history"] = history
     if compiler:
         body["compiler"] = compiler
+    if RETRIEVAL_OVERRIDE:
+        body["retrieval"] = RETRIEVAL_OVERRIDE
     req = urllib.request.Request(f"{ORCH}/chat/stream", data=json.dumps(body).encode(),
                                  headers={"content-type": "application/json", "accept": "text/event-stream"})
     t0 = time.time(); answer = {}
@@ -181,7 +279,14 @@ def citation_stats(ans: dict, rec: dict) -> dict:
     valid = {str(e.get("tag")) for e in legend}
     tags = [f"S{m.group(1)}" for m in _S_TAG.finditer(text)]
     good = [t for t in tags if t in valid]
-    return {"answer_chars": len(text), "answer_head": text[:160], "tags_total": len(tags), "tags_valid": len(good),
+    ret = ans.get("retrieval") or {}
+    arrivals = ret.get("arrivals") or {}
+    selected = [e.get("chunk_id") for e in legend if e.get("chunk_id") and not e.get("carried")]
+    return {"engine": ret.get("engine"), "arrivals_n": len(arrivals),
+            "arrivals_missing": sum(1 for cid in selected if not arrivals.get(cid)),      # P1.a gate: 0 on every turn
+            "lane_sizes": ret.get("lane_sizes"),
+            "degraded_components": [d.get("component") for d in (ret.get("degraded") or []) if isinstance(d, dict)],
+            "answer_chars": len(text), "answer_head": text[:160], "tags_total": len(tags), "tags_valid": len(good),
             "tags_distinct": len(set(tags)), "citation_precision": (round(len(good) / len(tags), 3) if tags else None),
             "used_evidence_n": len((ans.get("retrieval") or {}).get("used_evidence") or []),
             "abstain_marker": bool(_ABSTAIN.search(text)),
@@ -210,9 +315,10 @@ def recovery_against(results: list[dict], reference_tag: str) -> dict:
 
 
 def run(tag: str, synthesizer: str | None, limit: int | None, compiler: str | None = None, followups: bool = False,
-        reference: str | None = None) -> dict:
+        reference: str | None = None, fixture: Path | None = None) -> dict:
     from polymath_shared.funnel import where_did_it_die
-    fx = json.loads(FIXTURE.read_text())
+    fixture = fixture or FIXTURE
+    fx = json.loads(fixture.read_text())
     questions = followup_conversations(fx) if followups else fx["questions"]
     results = []
     for i, q in enumerate(questions[: limit or None]):
@@ -258,6 +364,8 @@ def run(tag: str, synthesizer: str | None, limit: int | None, compiler: str | No
         "wall_p90_s": round(sorted(r["wall_s"] for r in ok)[int(len(ok) * 0.9) - 1], 2) if len(ok) >= 10 else None,
         "deaths": dict(sorted(__import__("collections").Counter(r.get("death") for r in ok).items())),
         "synthesizer": synthesizer or "default", "tag": tag, "compiler": compiler or "server-default",
+        "retrieval": RETRIEVAL_OVERRIDE or "server-default",
+        "fixture": (str(fixture.relative_to(ROOT)) if str(fixture).startswith(str(ROOT)) else str(fixture)), "fixture_version": fx.get("version"),
         "followups": followups, "recovery": (recovery_against(results, reference) if reference else None),
         "compiler_fallbacks": sum(1 for r in ok if ((r.get("chat_plan") or {}).get("compiler") or {}).get("fallback")),
         "citation_precision_mean": (round(sum(r["citation_precision"] for r in ok if r.get("citation_precision") is not None)
@@ -265,6 +373,10 @@ def run(tag: str, synthesizer: str | None, limit: int | None, compiler: str | No
         "answers_with_tags": sum(1 for r in ok if r.get("tags_total")),
         "tags_total": sum(r.get("tags_total") or 0 for r in ok), "tags_valid": sum(r.get("tags_valid") or 0 for r in ok),
         "abstain_markers": sum(1 for r in ok if r.get("abstain_marker")),
+        "engines": dict(__import__("collections").Counter(r.get("engine") for r in ok)),
+        "arrivals_missing_total": sum(r.get("arrivals_missing") or 0 for r in ok),
+        "turns_with_arrivals": sum(1 for r in ok if r.get("arrivals_n")),
+        "degraded_turns": sum(1 for r in ok if r.get("degraded_components")),
         "answer_chars_p50": (sorted(r.get("answer_chars") or 0 for r in ok)[len(ok) // 2] if ok else 0),
     }
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -280,7 +392,7 @@ def _write_md(tag: str, summary: dict, results: list) -> None:
     today = _dt.date.today().isoformat()
     md = ["---", f"title: \"Chat baseline — {tag}\"", "owner: governance", f"last_reviewed: {today}", f"last_touched: {today}",
           "status: measured", "---", "", f"# Chat baseline — {tag}", "",
-          f"Fixture `{FIXTURE.relative_to(ROOT)}` ({fx['version']}, seed {fx['seed']}); synthesizer {summary['synthesizer']}; compiler {summary.get('compiler')}; follow-ups {summary.get('followups')}; HYBRID via /chat/stream.", "",
+          f"Fixture `{summary.get('fixture') or FIXTURE.relative_to(ROOT)}` ({summary.get('fixture_version') or fx.get('version')}, seed {fx.get('seed')}); synthesizer {summary['synthesizer']}; compiler {summary.get('compiler')}; retrieval {summary.get('retrieval')}; follow-ups {summary.get('followups')}; HYBRID via /chat/stream.", "",
           *([f"Recovery vs `{summary['recovery']['reference']}`: paired {summary['recovery']['paired']}, both {summary['recovery']['both']}, "
              f"only reference {summary['recovery']['only_reference']}, only this {summary['recovery']['only_this']}, neither {summary['recovery']['neither']}; "
              f"reference hit@10 {summary['recovery']['reference_hit@10']}; **hit@10 on the reference-retrievable subset {summary['recovery']['subset_hit@10']}**.", ""]
@@ -304,6 +416,9 @@ def main() -> int:
     ap.add_argument("--render", action="store_true", help="rewrite the .md from an existing chat-baseline-<tag>.json")
     ap.add_argument("--compiler", default=None, help="per-request POLYMATH_CHAT_COMPILER override: off | shadow | on")
     ap.add_argument("--followups", action="store_true", help="run the derived 2-turn follow-up conversations instead of the plain questions")
+    ap.add_argument("--fixture", default=None, help="fixture file to run (default eval/fixtures/chat_baseline_B.json; L = eval/fixtures/chat_lexical_L.json)")
+    ap.add_argument("--retrieval", default=None, help="per-request POLYMATH_CHAT_RETRIEVAL override: v1 | v2")
+    ap.add_argument("--build-lexical", action="store_true", help="build eval/fixtures/chat_lexical_L.json (acronyms/identifiers with df 1-2)")
     ap.add_argument("--reference", default=None, help="tag of a same-fixture run to pair with (recovery: hit@10 on the subset the reference retrieved)")
     a = ap.parse_args()
     if a.render:
@@ -316,8 +431,20 @@ def main() -> int:
         FIXTURE.parent.mkdir(parents=True, exist_ok=True)
         FIXTURE.write_text(json.dumps(fx, indent=1))
         print(f"wrote {FIXTURE} with {len(fx['questions'])} questions")
+    global RETRIEVAL_OVERRIDE
+    RETRIEVAL_OVERRIDE = a.retrieval
+    if a.build_lexical:
+        fx = build_lexical(a.per_corpus, [c for c in a.corpora.split(",") if c], a.seed)
+        LEXICAL_FIXTURE.write_text(json.dumps(fx, indent=1, ensure_ascii=False))
+        kinds = __import__("collections").Counter(q["kind"] for q in fx["questions"])
+        print(f"wrote {LEXICAL_FIXTURE.relative_to(ROOT)}: {len(fx['questions'])} questions {dict(kinds)}")
+        for q in fx["questions"]:
+            print(f"  {q['corpus_id']:14s} {q['kind']:10s} df={q['df']} df_ci={q.get('df_ci')} {q['term']}")
     if a.run:
-        run(a.tag, None if a.llm else a.synthesizer, a.limit, compiler=a.compiler, followups=a.followups, reference=a.reference)
+        fixture = Path(a.fixture) if a.fixture else None
+        if fixture is not None:
+            fixture = (fixture if fixture.is_absolute() else (ROOT / fixture) if (ROOT / fixture).exists() else fixture).resolve()
+        run(a.tag, None if a.llm else a.synthesizer, a.limit, compiler=a.compiler, followups=a.followups, reference=a.reference, fixture=fixture)
     return 0
 
 

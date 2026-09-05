@@ -1,0 +1,2655 @@
+{
+ "summary": {
+  "n": 30,
+  "errors": 0,
+  "gold_in_retrieved": 1.0,
+  "gold_in_union": 1.0,
+  "gold_in_pre_rerank": 1.0,
+  "hit@10_selected": 1.0,
+  "mrr_selected": 0.913,
+  "gold_cited": 0.4,
+  "wall_p50_s": 13.46,
+  "wall_p90_s": 26.52,
+  "deaths": {
+   "CITED": 12,
+   "IGNORED_BY_LLM": 18
+  },
+  "synthesizer": "deterministic-template-v3",
+  "tag": "p1a-L-v2",
+  "compiler": "on",
+  "retrieval": "v2",
+  "fixture": "eval/fixtures/chat_lexical_L.json",
+  "fixture_version": "chat-lexical-L-v1",
+  "followups": false,
+  "recovery": null,
+  "compiler_fallbacks": 0,
+  "citation_precision_mean": 0.0,
+  "answers_with_tags": 0,
+  "tags_total": 0,
+  "tags_valid": 0,
+  "abstain_markers": 0,
+  "engines": {
+   "chat-retrieval-v2": 30
+  },
+  "arrivals_missing_total": 0,
+  "turns_with_arrivals": 30,
+  "degraded_turns": 0,
+  "answer_chars_p50": 924
+ },
+ "results": [
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_1107fd8fac613c4e6cee06bc0c6913cdc9a52853c60ec7f4c6af0963e414f163",
+   "source_name": "Facial Action coding 3.0.md",
+   "term": "AU62",
+   "kind": "identifier",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_545eec254ab2b3410d427afa96856d5d28f05c81ad3f5616f47fdc3fa1cdc47f"
+   ],
+   "gold_chunk_id": "chunk_545eec254ab2b3410d427afa96856d5d28f05c81ad3f5616f47fdc3fa1cdc47f",
+   "question": "What does the book say about \"AU62\"?",
+   "exact_terms": [
+    "AU62"
+   ],
+   "wall_s": 18.59,
+   "phase_ms": {
+    "carry": 18541.0,
+    "total": 18544.0,
+    "compile": 1785.0,
+    "assemble": 18541.0,
+    "generate": 18543.5,
+    "retrieve": 18485.6
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 9,
+    "hierarchical_children": 18,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 102,
+    "union_uncapped": 102
+   },
+   "degraded_components": [],
+   "answer_chars": 739,
+   "answer_head": "Relevant passage: \u201cThe codification of the movement of the head and the movement of the eyes also obeys predefined criteria. For example, the AU43, which in the",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 2,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 4,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 2,
+    "union": 102,
+    "selected": 15,
+    "retrieved": 102,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 18,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "AU62",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1764.4,
+     "fallback": false,
+     "raw_chars": 419,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+   "source_name": "VES Handbook of Visual Effects.md",
+   "term": "SO202",
+   "kind": "identifier",
+   "df": 1,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_f5a61001815ab3b878221e023864ff484bfd200d7ce176246e5d16bb25e746e2"
+   ],
+   "gold_chunk_id": "chunk_f5a61001815ab3b878221e023864ff484bfd200d7ce176246e5d16bb25e746e2",
+   "question": "What does the book say about \"SO202\"?",
+   "exact_terms": [
+    "SO202"
+   ],
+   "wall_s": 31.18,
+   "phase_ms": {
+    "carry": 31185.1,
+    "total": 31187.5,
+    "compile": 1576.6,
+    "assemble": 31185.0,
+    "generate": 31187.4,
+    "retrieve": 31108.3
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 32,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 118,
+    "union_uncapped": 118
+   },
+   "degraded_components": [],
+   "answer_chars": 62,
+   "answer_head": "I don't have enough grounded evidence to answer this question.",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 0,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": false,
+   "death": "IGNORED_BY_LLM",
+   "counts": {
+    "cited": 0,
+    "union": 118,
+    "selected": 15,
+    "retrieved": 118,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 32,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "insufficient_evidence",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "SO202",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1574.4,
+     "fallback": false,
+     "raw_chars": 423,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45",
+   "source_name": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+   "term": "HD1",
+   "kind": "identifier",
+   "df": 2,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_46a7cc83d83fda994c0c32621cdb02561308917eae5c278e6a6d5c34b27b689f",
+    "chunk_d280219e81333a0bc07255821523df51b03d98f4a2354e81b23f2dcf2a44b5df"
+   ],
+   "gold_chunk_id": "chunk_46a7cc83d83fda994c0c32621cdb02561308917eae5c278e6a6d5c34b27b689f",
+   "question": "What does the book say about \"HD1\"?",
+   "exact_terms": [
+    "HD1"
+   ],
+   "wall_s": 13.3,
+   "phase_ms": {
+    "carry": 13285.8,
+    "total": 13288.0,
+    "compile": 1922.9,
+    "assemble": 13285.8,
+    "generate": 13287.9,
+    "retrieve": 13201.7
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 9,
+    "hierarchical_children": 33,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 107,
+    "union_uncapped": 107
+   },
+   "degraded_components": [],
+   "answer_chars": 499,
+   "answer_head": "Relevant passage: \u201cHD, HD+ AND UHD\nWe\u2019re going to be talking about two types of cameras: HD (Highdef) and post-HD\ncameras. High-def cameras were basically the f",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 1,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 7,
+   "gold_cited": false,
+   "death": "IGNORED_BY_LLM",
+   "counts": {
+    "cited": 1,
+    "union": 107,
+    "selected": 15,
+    "retrieved": 107,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 33,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "HD1",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1919.4,
+     "fallback": false,
+     "raw_chars": 433,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_26cceca252a72ae476beead4e21d7d3ad9bb07fa5cfd5e49e34182505cd90b16",
+   "source_name": "The Art and Science of Digital Compositing.md",
+   "term": "F850LP",
+   "kind": "identifier",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_d7b2cfb308d2044013685bb7b78da8046afd560a20eb57be257cfb19f94dab5f"
+   ],
+   "gold_chunk_id": "chunk_d7b2cfb308d2044013685bb7b78da8046afd560a20eb57be257cfb19f94dab5f",
+   "question": "What does the book say about \"F850LP\"?",
+   "exact_terms": [
+    "F850LP"
+   ],
+   "wall_s": 14.56,
+   "phase_ms": {
+    "carry": 14541.2,
+    "total": 14547.4,
+    "compile": 1814.3,
+    "assemble": 14541.1,
+    "generate": 14547.0,
+    "retrieve": 14088.7
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 24,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 108,
+    "union_uncapped": 108
+   },
+   "degraded_components": [],
+   "answer_chars": 62,
+   "answer_head": "I don't have enough grounded evidence to answer this question.",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 0,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": false,
+   "death": "IGNORED_BY_LLM",
+   "counts": {
+    "cited": 0,
+    "union": 108,
+    "selected": 15,
+    "retrieved": 108,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 24,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "insufficient_evidence",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "F850LP",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1810.8,
+     "fallback": false,
+     "raw_chars": 410,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_7041b219489ebd0ee7a2c751a2ef70682653ec9b23673d9c349e7676c0f6b4b1",
+   "source_name": "Film Directing Cinematic Motion.md",
+   "term": "D16",
+   "kind": "identifier",
+   "df": 1,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_860a8371243336aef0fa96a46ca1be2375cbd1fbfb0289b051f50fcf76bf4297"
+   ],
+   "gold_chunk_id": "chunk_860a8371243336aef0fa96a46ca1be2375cbd1fbfb0289b051f50fcf76bf4297",
+   "question": "What does the book say about \"D16\"?",
+   "exact_terms": [
+    "D16"
+   ],
+   "wall_s": 11.99,
+   "phase_ms": {
+    "carry": 11975.4,
+    "total": 11977.8,
+    "compile": 1608.2,
+    "assemble": 11975.4,
+    "generate": 11977.7,
+    "retrieve": 11909.1
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 9,
+    "hierarchical_children": 29,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 109,
+    "union_uncapped": 109
+   },
+   "degraded_components": [],
+   "answer_chars": 62,
+   "answer_head": "I don't have enough grounded evidence to answer this question.",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 0,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": false,
+   "death": "IGNORED_BY_LLM",
+   "counts": {
+    "cited": 0,
+    "union": 109,
+    "selected": 15,
+    "retrieved": 109,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 29,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "insufficient_evidence",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "D16",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1601.0,
+     "fallback": false,
+     "raw_chars": 443,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_9fd65077f00b9b97a0717d2ae785bbd3cd297a30a1ffc391f6826ac05e1adf2e",
+   "source_name": "Facial Action Coding System_ Facial action coding system _ -- Paul Ekman_ Wallace V_ Friesen_ Joseph C_ Hager -- Salt Lake City, UT, cop_ 2002 -- isbn13 9780931835018 -- b4af95ca86cb926c6c000d109b27ec66 -- Anna\u2019s A.md",
+   "term": "W372",
+   "kind": "identifier",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_0d553d4e4a0ad455b5a8f1d069181b406ad4c093ba83cbf9d156bdd0606ac01b"
+   ],
+   "gold_chunk_id": "chunk_0d553d4e4a0ad455b5a8f1d069181b406ad4c093ba83cbf9d156bdd0606ac01b",
+   "question": "What does the book say about \"W372\"?",
+   "exact_terms": [
+    "W372"
+   ],
+   "wall_s": 12.04,
+   "phase_ms": {
+    "carry": 12023.0,
+    "total": 12025.5,
+    "compile": 1457.1,
+    "assemble": 12023.0,
+    "generate": 12025.4,
+    "retrieve": 11954.8
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 33,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 108,
+    "union_uncapped": 108
+   },
+   "degraded_components": [],
+   "answer_chars": 613,
+   "answer_head": "Relevant passage: \u201cscoring prefix and \nsuffix 73, 349\nunilateral 349 , 370\nP\nPerspective for scoring left and right 329 , 370\nPhiltrum 110 , 119 , 144 , 176 , 1",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 1,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 1,
+    "union": 108,
+    "selected": 15,
+    "retrieved": 108,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 33,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "W372",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1454.5,
+     "fallback": false,
+     "raw_chars": 406,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_b239c387522687054c671a46b1d660b025a18dc2ba981eb00a3da39b501629ba",
+   "source_name": "Retrieval-Augmented Prompt Optimization for.md",
+   "term": "A100",
+   "kind": "identifier",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_ce225976982e5396153fe41ec6f86e1f107c35ca1fbf830cc6ae491627860e8c"
+   ],
+   "gold_chunk_id": "chunk_ce225976982e5396153fe41ec6f86e1f107c35ca1fbf830cc6ae491627860e8c",
+   "question": "What does the book say about \"A100\"?",
+   "exact_terms": [
+    "A100"
+   ],
+   "wall_s": 11.7,
+   "phase_ms": {
+    "carry": 11683.0,
+    "total": 11685.6,
+    "compile": 1612.7,
+    "assemble": 11683.0,
+    "generate": 11685.5,
+    "retrieve": 11608.2
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 27,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 108,
+    "union_uncapped": 108
+   },
+   "degraded_components": [],
+   "answer_chars": 62,
+   "answer_head": "I don't have enough grounded evidence to answer this question.",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 0,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": false,
+   "death": "IGNORED_BY_LLM",
+   "counts": {
+    "cited": 0,
+    "union": 108,
+    "selected": 15,
+    "retrieved": 108,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 27,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "insufficient_evidence",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "A100",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1609.7,
+     "fallback": false,
+     "raw_chars": 425,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+   "source_name": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+   "term": "M4A1",
+   "kind": "identifier",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_654b33c48e6975d896eee22b5d675a3cf67930c757f791bdd28038fb7f2af2c5"
+   ],
+   "gold_chunk_id": "chunk_654b33c48e6975d896eee22b5d675a3cf67930c757f791bdd28038fb7f2af2c5",
+   "question": "What does the book say about \"M4A1\"?",
+   "exact_terms": [
+    "M4A1"
+   ],
+   "wall_s": 13.51,
+   "phase_ms": {
+    "carry": 13496.0,
+    "total": 13498.4,
+    "compile": 2252.2,
+    "assemble": 13496.0,
+    "generate": 13498.2,
+    "retrieve": 13431.0
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 9,
+    "hierarchical_children": 23,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 108,
+    "union_uncapped": 108
+   },
+   "degraded_components": [],
+   "answer_chars": 62,
+   "answer_head": "I don't have enough grounded evidence to answer this question.",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 0,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": false,
+   "death": "IGNORED_BY_LLM",
+   "counts": {
+    "cited": 0,
+    "union": 108,
+    "selected": 15,
+    "retrieved": 108,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 23,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "insufficient_evidence",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "M4A1",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 2249.7,
+     "fallback": false,
+     "raw_chars": 409,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_42e9fa7440e5724fccf602f36e7b9bdc31e259cd2630cbb3ec9fa1316121da64",
+   "source_name": "Stage Combat Arts.md",
+   "term": "XXXII",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_53706d6843722cb634cddaa074abe89ebc399fb6ebdc9ff4e6ff694681f9f98f"
+   ],
+   "gold_chunk_id": "chunk_53706d6843722cb634cddaa074abe89ebc399fb6ebdc9ff4e6ff694681f9f98f",
+   "question": "What does the book say about \"XXXII\"?",
+   "exact_terms": [
+    "XXXII"
+   ],
+   "wall_s": 12.88,
+   "phase_ms": {
+    "carry": 12870.2,
+    "total": 12872.6,
+    "compile": 2014.7,
+    "assemble": 12870.2,
+    "generate": 12872.4,
+    "retrieve": 12803.5
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 26,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 112,
+    "union_uncapped": 112
+   },
+   "degraded_components": [],
+   "answer_chars": 739,
+   "answer_head": "Relevant passage: \u201cA good fight choreographer is much like the conductor of an orchestra. He might not\nbe able to play every single instrument in the orchestra,",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 2,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 2,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 2,
+    "union": 112,
+    "selected": 15,
+    "retrieved": 112,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 26,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "XXXII",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 2011.0,
+     "fallback": false,
+     "raw_chars": 439,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd",
+   "source_name": "Framed Ink.md",
+   "term": "MUA",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_9b6c17a6461333b9f68d872ab953660049cac611598243ccd1234d795b737d98"
+   ],
+   "gold_chunk_id": "chunk_9b6c17a6461333b9f68d872ab953660049cac611598243ccd1234d795b737d98",
+   "question": "What does the book say about \"MUA\"?",
+   "exact_terms": [
+    "MUA"
+   ],
+   "wall_s": 13.41,
+   "phase_ms": {
+    "carry": 13394.2,
+    "total": 13396.6,
+    "compile": 1730.1,
+    "assemble": 13394.2,
+    "generate": 13396.5,
+    "retrieve": 13317.5
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 27,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 111,
+    "union_uncapped": 111
+   },
+   "degraded_components": [],
+   "answer_chars": 62,
+   "answer_head": "I don't have enough grounded evidence to answer this question.",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 0,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": false,
+   "death": "IGNORED_BY_LLM",
+   "counts": {
+    "cited": 0,
+    "union": 111,
+    "selected": 15,
+    "retrieved": 111,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 27,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "insufficient_evidence",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "MUA",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1727.7,
+     "fallback": false,
+     "raw_chars": 438,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_f2e29f98369f7632bd096e9f35b45715c8c30f46e063dac7d675f7551d318048",
+   "source_name": "Sidney Lumet - Making Movies (1994).md",
+   "term": "UPA",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_6a7723f67cbf055fa5c0e768d343e6c3fb2c2ce7cd5ccc97a9f5138e72425bed"
+   ],
+   "gold_chunk_id": "chunk_6a7723f67cbf055fa5c0e768d343e6c3fb2c2ce7cd5ccc97a9f5138e72425bed",
+   "question": "What does the book say about \"UPA\"?",
+   "exact_terms": [
+    "UPA"
+   ],
+   "wall_s": 12.69,
+   "phase_ms": {
+    "carry": 12675.0,
+    "total": 12682.0,
+    "compile": 1706.2,
+    "assemble": 12675.0,
+    "generate": 12681.6,
+    "retrieve": 12602.1
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 24,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 108,
+    "union_uncapped": 108
+   },
+   "degraded_components": [],
+   "answer_chars": 62,
+   "answer_head": "I don't have enough grounded evidence to answer this question.",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 0,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": false,
+   "death": "IGNORED_BY_LLM",
+   "counts": {
+    "cited": 0,
+    "union": 108,
+    "selected": 15,
+    "retrieved": 108,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 24,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "insufficient_evidence",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "UPA",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1703.1,
+     "fallback": false,
+     "raw_chars": 448,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_776b434862c7f4d68f6cad6f84a5cae5d94914928fa479edd66a2034aa3612e6",
+   "source_name": "Sound Design The Expressive Power of Music Voice and Sound Effects in Cinema (1).md",
+   "term": "ABLEGI",
+   "kind": "acronym",
+   "df": 2,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_4f271574d3204c47734730ee9ce5a442f556a37ca3cadd36bec6ad5ed3bde6a7",
+    "chunk_ed5cdf9aaeb067c46bcbdbd68fca9e14b791f832989992d8a822a68622ee7d26"
+   ],
+   "gold_chunk_id": "chunk_4f271574d3204c47734730ee9ce5a442f556a37ca3cadd36bec6ad5ed3bde6a7",
+   "question": "What does the book say about \"ABLEGI\"?",
+   "exact_terms": [
+    "ABLEGI"
+   ],
+   "wall_s": 20.98,
+   "phase_ms": {
+    "carry": 20972.2,
+    "total": 20975.0,
+    "compile": 1559.2,
+    "assemble": 20972.2,
+    "generate": 20974.9,
+    "retrieve": 20901.9
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 28,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 112,
+    "union_uncapped": 112
+   },
+   "degraded_components": [],
+   "answer_chars": 924,
+   "answer_head": "Relevant passage: \u201cseit a ; ee ABLEGI 0 Bee\nThe speech pattern of an autistic child holds little if any verbal meaning, MUSICAL TCTRUMERE ae PERSONALITY TYPE. |",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 3,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 3,
+    "union": 112,
+    "selected": 15,
+    "retrieved": 112,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 28,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "ABLEGI",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1557.1,
+     "fallback": false,
+     "raw_chars": 455,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_0dd48434e2ceeccee1a6e406c5c6e31e205079566103f2547413bd4f3274b80d",
+   "source_name": "How to Draw Manga Illustrating Battles.md",
+   "term": "NSCB",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_a4a7d25a337cfd6e68bfc5ebd57f879aa27f5915d8d0a22b10920b82008b2e99"
+   ],
+   "gold_chunk_id": "chunk_a4a7d25a337cfd6e68bfc5ebd57f879aa27f5915d8d0a22b10920b82008b2e99",
+   "question": "What does the book say about \"NSCB\"?",
+   "exact_terms": [
+    "NSCB"
+   ],
+   "wall_s": 14.91,
+   "phase_ms": {
+    "carry": 14898.5,
+    "total": 14901.0,
+    "compile": 1472.8,
+    "assemble": 14898.5,
+    "generate": 14900.9,
+    "retrieve": 14804.8
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 9,
+    "hierarchical_children": 29,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 115,
+    "union_uncapped": 115
+   },
+   "degraded_components": [],
+   "answer_chars": 739,
+   "answer_head": "Relevant passage: \u201cThis document is created with trial version of Document2PDF Pilot 2.16.108.\nDe oe hives oe ee Be Meee Reais\npee reins ti beseeinny eaprashe a",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 2,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 2,
+    "union": 115,
+    "selected": 15,
+    "retrieved": 115,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 29,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "NSCB",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1470.1,
+     "fallback": false,
+     "raw_chars": 404,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+   "source_name": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+   "term": "VNSP",
+   "kind": "acronym",
+   "df": 2,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_36656bdfb5da3bc8e1c0d358345fcbcc0e95bc27640c23d17362e570bd4c3044",
+    "chunk_9c4fce8bfec9d8913cca3dda2d79ad69265e5c4139b14f1d3c0997efe28cacbb"
+   ],
+   "gold_chunk_id": "chunk_36656bdfb5da3bc8e1c0d358345fcbcc0e95bc27640c23d17362e570bd4c3044",
+   "question": "What does the book say about \"VNSP\"?",
+   "exact_terms": [
+    "VNSP"
+   ],
+   "wall_s": 15.24,
+   "phase_ms": {
+    "carry": 15209.9,
+    "total": 15222.4,
+    "compile": 1617.8,
+    "assemble": 15209.9,
+    "generate": 15221.8,
+    "retrieve": 15138.6
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 22,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 107,
+    "union_uncapped": 107
+   },
+   "degraded_components": [],
+   "answer_chars": 1077,
+   "answer_head": "Relevant passage: \u201cNets come in various sizes, but the standards are 18 \u00d7 24 inches, 24\n\u00d7 36 inches (also called a 2 \u00d7 3), and 4 \u00d7 4 feet. Also comes in larger\n",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 2,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 2,
+    "union": 107,
+    "selected": 15,
+    "retrieved": 107,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 22,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "VNSP",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1613.8,
+     "fallback": false,
+     "raw_chars": 464,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+   "source_name": "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+   "term": "UFO",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_2756e5116216bd3f8251fd8062235e49faa31b077665e04a03af53ad8a8b25f0"
+   ],
+   "gold_chunk_id": "chunk_2756e5116216bd3f8251fd8062235e49faa31b077665e04a03af53ad8a8b25f0",
+   "question": "What does the book say about \"UFO\"?",
+   "exact_terms": [
+    "UFO"
+   ],
+   "wall_s": 14.3,
+   "phase_ms": {
+    "carry": 14284.9,
+    "total": 14287.4,
+    "compile": 1634.3,
+    "assemble": 14284.9,
+    "generate": 14287.3,
+    "retrieve": 14221.9
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 27,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 109,
+    "union_uncapped": 109
+   },
+   "degraded_components": [],
+   "answer_chars": 62,
+   "answer_head": "I don't have enough grounded evidence to answer this question.",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 0,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": false,
+   "death": "IGNORED_BY_LLM",
+   "counts": {
+    "cited": 0,
+    "union": 109,
+    "selected": 15,
+    "retrieved": 109,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 27,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "insufficient_evidence",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "UFO",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1631.9,
+     "fallback": false,
+     "raw_chars": 450,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+   "source_name": "The_Innovators_Dilemma_Christensen.md",
+   "term": "EC2",
+   "kind": "identifier",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_84743f76a91b5a6e3c66b425e682af2f37845c5a39c621cdbe41dc4d71de1896"
+   ],
+   "gold_chunk_id": "chunk_84743f76a91b5a6e3c66b425e682af2f37845c5a39c621cdbe41dc4d71de1896",
+   "question": "What does the book say about \"EC2\"?",
+   "exact_terms": [
+    "EC2"
+   ],
+   "wall_s": 34.9,
+   "phase_ms": {
+    "carry": 34884.1,
+    "total": 34886.9,
+    "compile": 1700.0,
+    "assemble": 34884.1,
+    "generate": 34886.8,
+    "retrieve": 34809.5
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 24,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 100,
+    "union_uncapped": 100
+   },
+   "degraded_components": [],
+   "answer_chars": 1961,
+   "answer_head": "Relevant passage: \u201c23 percent gross margins. Because their salespeople were much less knowledgeable about products, at the outset the discount department stores",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 4,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": false,
+   "death": "IGNORED_BY_LLM",
+   "counts": {
+    "cited": 4,
+    "union": 100,
+    "selected": 15,
+    "retrieved": 100,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 24,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "EC2",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1697.2,
+     "fallback": false,
+     "raw_chars": 416,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_c6560827ab483d643dbb0ce0139c63dd6bad9f35793f5dc14ffdb1192963b1e1",
+   "source_name": "Psychology_of_Habit_Wood.md",
+   "term": "S311",
+   "kind": "identifier",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_465dba250040611f3a8fe99ff99e43378dd3590715b595128dd22d4a3940f089"
+   ],
+   "gold_chunk_id": "chunk_465dba250040611f3a8fe99ff99e43378dd3590715b595128dd22d4a3940f089",
+   "question": "What does the book say about \"S311\"?",
+   "exact_terms": [
+    "S311"
+   ],
+   "wall_s": 15.3,
+   "phase_ms": {
+    "carry": 15279.7,
+    "total": 15282.3,
+    "compile": 1943.6,
+    "assemble": 15279.7,
+    "generate": 15282.2,
+    "retrieve": 15198.7
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 21,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 106,
+    "union_uncapped": 106
+   },
+   "degraded_components": [],
+   "answer_chars": 1270,
+   "answer_head": "Relevant passage: \u201cTeixeira, P.\u00a0J., Carra\u00e7a, E.\u00a0V., Markland, D., Silva, M.\u00a0N., & Ryan, R.\u00a0M. (2012). Exercise, physical activity, and self-determination theory",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 2,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 2,
+    "union": 106,
+    "selected": 15,
+    "retrieved": 106,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 21,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "S311",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1940.4,
+     "fallback": false,
+     "raw_chars": 420,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_06263d7f728c7ed19ed60f8e94a5884f6a19e8ae8494b96533227955e4d2d0ad",
+   "source_name": "Blue_Ocean_Strategy_Kim_Mauborgne.md",
+   "term": "Z39",
+   "kind": "identifier",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_9985981094d4ad9454a2b69294df37d07fdcaca99010ec5c02d63c1a81028549"
+   ],
+   "gold_chunk_id": "chunk_9985981094d4ad9454a2b69294df37d07fdcaca99010ec5c02d63c1a81028549",
+   "question": "What does the book say about \"Z39\"?",
+   "exact_terms": [
+    "Z39"
+   ],
+   "wall_s": 10.79,
+   "phase_ms": {
+    "carry": 10778.8,
+    "total": 10781.4,
+    "compile": 1735.2,
+    "assemble": 10778.8,
+    "generate": 10781.3,
+    "retrieve": 10699.8
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 27,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 110,
+    "union_uncapped": 110
+   },
+   "degraded_components": [],
+   "answer_chars": 1376,
+   "answer_head": "Relevant passage: \u201cretirement programs, example of changes in, 100\u2013103\n\nreturn of products, data about, 183\n\nreviews. *See* online reviews\n\nride-sharing service",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 3,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": false,
+   "death": "IGNORED_BY_LLM",
+   "counts": {
+    "cited": 3,
+    "union": 110,
+    "selected": 15,
+    "retrieved": 110,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 27,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "Z39",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1731.1,
+     "fallback": false,
+     "raw_chars": 392,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_be6104e610e4269b31cd71169af2b2fcf6b9731d7f942aaadec0a5da65dabe98",
+   "source_name": "Competing_Against_Luck_Christensen.md",
+   "term": "M5H",
+   "kind": "identifier",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_4dc562d7e2b548b4a7aa327fa9249e774cb92a72f3237c366214b84e5ac97d39"
+   ],
+   "gold_chunk_id": "chunk_4dc562d7e2b548b4a7aa327fa9249e774cb92a72f3237c366214b84e5ac97d39",
+   "question": "What does the book say about \"M5H\"?",
+   "exact_terms": [
+    "M5H"
+   ],
+   "wall_s": 26.52,
+   "phase_ms": {
+    "carry": 26511.0,
+    "total": 26513.5,
+    "compile": 1647.4,
+    "assemble": 26511.0,
+    "generate": 26513.3,
+    "retrieve": 26441.1
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 30,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 111,
+    "union_uncapped": 111
+   },
+   "degraded_components": [],
+   "answer_chars": 1386,
+   "answer_head": "Relevant passage: \u201c---\n\nAs you keep your notebook, take a moment to reflect on the following:\u201d [1] Relevant passage: \u201c### Disruptive innovator\u2019s question check-",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 1,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": false,
+   "death": "IGNORED_BY_LLM",
+   "counts": {
+    "cited": 1,
+    "union": 111,
+    "selected": 15,
+    "retrieved": 111,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 30,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "M5H",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1644.4,
+     "fallback": false,
+     "raw_chars": 433,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_71dc577c7e96bed017fa62d6924db70ba883a2fc0a02090e8addde34fe69f020",
+   "source_name": "The_AI_Advantage_Davenport.md",
+   "term": "PCI",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_ea4fa5509f64d6d1445ac8d84f6d7ed85b9cfb72f0db5f6d87c2611bb6a03c43"
+   ],
+   "gold_chunk_id": "chunk_ea4fa5509f64d6d1445ac8d84f6d7ed85b9cfb72f0db5f6d87c2611bb6a03c43",
+   "question": "What does the book say about \"PCI\"?",
+   "exact_terms": [
+    "PCI"
+   ],
+   "wall_s": 21.59,
+   "phase_ms": {
+    "carry": 21577.6,
+    "total": 21580.4,
+    "compile": 1497.0,
+    "assemble": 21577.6,
+    "generate": 21580.2,
+    "retrieve": 21502.6
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 27,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 105,
+    "union_uncapped": 105
+   },
+   "degraded_components": [],
+   "answer_chars": 923,
+   "answer_head": "Relevant passage: \u201c### HOW TO AUTOMATE A HABIT AND NEVER THINK ABOUT IT AGAIN John Henry Patterson was born in Dayton, Ohio, in 1844. He spent his childhood doi",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 0,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": false,
+   "death": "IGNORED_BY_LLM",
+   "counts": {
+    "cited": 0,
+    "union": 105,
+    "selected": 15,
+    "retrieved": 105,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 27,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "PCI",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1494.7,
+     "fallback": false,
+     "raw_chars": 450,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_57aab6bb6dade6048ed10f63c4237e48f150b040ebb156c77a88279595ee40ae",
+   "source_name": "Always_Alchemy_Hart.md",
+   "term": "FOMO",
+   "kind": "acronym",
+   "df": 2,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_baa42a5ba23b7a7190fe40d863a01a9334be4bba67505cee08667a4c3fba99e3",
+    "chunk_eae46abbaeae83709a43d2c89e227d9600caec311fc7219b576284feaf16d009"
+   ],
+   "gold_chunk_id": "chunk_baa42a5ba23b7a7190fe40d863a01a9334be4bba67505cee08667a4c3fba99e3",
+   "question": "What does the book say about \"FOMO\"?",
+   "exact_terms": [
+    "FOMO"
+   ],
+   "wall_s": 8.53,
+   "phase_ms": {
+    "carry": 8516.2,
+    "total": 8518.7,
+    "compile": 1747.9,
+    "assemble": 8516.2,
+    "generate": 8518.6,
+    "retrieve": 8450.8
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 26,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 109,
+    "union_uncapped": 109
+   },
+   "degraded_components": [],
+   "answer_chars": 2406,
+   "answer_head": "Relevant passage: \u201cYup. When I\u2019m ovulating I definitely don\u2019t require any lube. Not for the baby-making hole, anyway. I push back against his fingers and moan, ",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 7,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 7,
+    "union": 109,
+    "selected": 15,
+    "retrieved": 109,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 26,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "FOMO",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1745.5,
+     "fallback": false,
+     "raw_chars": 444,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_c6560827ab483d643dbb0ce0139c63dd6bad9f35793f5dc14ffdb1192963b1e1",
+   "source_name": "Psychology_of_Habit_Wood.md",
+   "term": "MWQ",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_fe6bf24e8d6295b6a61401e4bcfcf0d9ff1cb19415fd230681b801e419836222"
+   ],
+   "gold_chunk_id": "chunk_fe6bf24e8d6295b6a61401e4bcfcf0d9ff1cb19415fd230681b801e419836222",
+   "question": "What does the book say about \"MWQ\"?",
+   "exact_terms": [
+    "MWQ"
+   ],
+   "wall_s": 7.44,
+   "phase_ms": {
+    "carry": 7432.7,
+    "total": 7435.0,
+    "compile": 2073.6,
+    "assemble": 7432.7,
+    "generate": 7434.9,
+    "retrieve": 7351.2
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 33,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 111,
+    "union_uncapped": 111
+   },
+   "degraded_components": [],
+   "answer_chars": 847,
+   "answer_head": "Relevant passage: \u201cHe has the good grace to look sheepish. \u2018Mummy made them last night, right, Mills? She said something about fairy wings being above my pay gr",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 1,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": false,
+   "death": "IGNORED_BY_LLM",
+   "counts": {
+    "cited": 1,
+    "union": 111,
+    "selected": 15,
+    "retrieved": 111,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 33,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "MWQ",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 2071.5,
+     "fallback": false,
+     "raw_chars": 425,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+   "source_name": "The_Innovators_Dilemma_Christensen.md",
+   "term": "ASIC",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_b31eebd166a770f9f4d5b08f25fc09b6356728fbb9a590e56b5d040d2a0165c4"
+   ],
+   "gold_chunk_id": "chunk_b31eebd166a770f9f4d5b08f25fc09b6356728fbb9a590e56b5d040d2a0165c4",
+   "question": "What does the book say about \"ASIC\"?",
+   "exact_terms": [
+    "ASIC"
+   ],
+   "wall_s": 8.73,
+   "phase_ms": {
+    "carry": 8715.6,
+    "total": 8718.0,
+    "compile": 1589.6,
+    "assemble": 8715.6,
+    "generate": 8717.9,
+    "retrieve": 8650.7
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 18,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 97,
+    "union_uncapped": 97
+   },
+   "degraded_components": [],
+   "answer_chars": 1478,
+   "answer_head": "Relevant passage: \u201cOn its surface, flash memory involves radically different *electronics* technology than the core competence of disk drive makers (magnetics a",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 4,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 4,
+    "union": 97,
+    "selected": 15,
+    "retrieved": 97,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 18,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "ASIC",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1587.2,
+     "fallback": false,
+     "raw_chars": 471,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_c6560827ab483d643dbb0ce0139c63dd6bad9f35793f5dc14ffdb1192963b1e1",
+   "source_name": "Psychology_of_Habit_Wood.md",
+   "term": "ACC",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_ea73804589fcc477d3929d262d616e7816a3a0bf9ffa424168ade9599ad7cd18"
+   ],
+   "gold_chunk_id": "chunk_ea73804589fcc477d3929d262d616e7816a3a0bf9ffa424168ade9599ad7cd18",
+   "question": "What does the book say about \"ACC\"?",
+   "exact_terms": [
+    "ACC"
+   ],
+   "wall_s": 8.58,
+   "phase_ms": {
+    "carry": 8569.7,
+    "total": 8572.3,
+    "compile": 1651.1,
+    "assemble": 8569.7,
+    "generate": 8572.1,
+    "retrieve": 8500.9
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 27,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 102,
+    "union_uncapped": 102
+   },
+   "degraded_components": [],
+   "answer_chars": 1240,
+   "answer_head": "Relevant passage: \u201c---\ntitle: \"The Innovator's Dilemma (Christensen)\"\nsource_file: \"E:\\books\\psycho_commerce\\The Innovator's Dilemma (Christensen).epub\"\nsource_",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 1,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": false,
+   "death": "IGNORED_BY_LLM",
+   "counts": {
+    "cited": 1,
+    "union": 102,
+    "selected": 15,
+    "retrieved": 102,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 27,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "ACC",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1645.6,
+     "fallback": false,
+     "raw_chars": 492,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_c6560827ab483d643dbb0ce0139c63dd6bad9f35793f5dc14ffdb1192963b1e1",
+   "source_name": "Psychology_of_Habit_Wood.md",
+   "term": "NIDA",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_253d3bb8f1bc699e7ade3e1249a7549387b62d11b92bce84ae6ae770e50adf60"
+   ],
+   "gold_chunk_id": "chunk_253d3bb8f1bc699e7ade3e1249a7549387b62d11b92bce84ae6ae770e50adf60",
+   "question": "What does the book say about \"NIDA\"?",
+   "exact_terms": [
+    "NIDA"
+   ],
+   "wall_s": 7.19,
+   "phase_ms": {
+    "carry": 7175.3,
+    "total": 7177.7,
+    "compile": 1726.2,
+    "assemble": 7175.3,
+    "generate": 7177.6,
+    "retrieve": 7110.3
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 36,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 113,
+    "union_uncapped": 113
+   },
+   "degraded_components": [],
+   "answer_chars": 1582,
+   "answer_head": "Relevant passage: \u201c319\nAcknowledgements\u2002 Financial support for this work was received from the Templeton Foundation\n(#014-2017) and National Institute on Drug A",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 3,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 3,
+    "union": 113,
+    "selected": 15,
+    "retrieved": 113,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 36,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "NIDA",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1724.0,
+     "fallback": false,
+     "raw_chars": 435,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+   "source_name": "The_Innovators_Dilemma_Christensen.md",
+   "term": "RBV",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_545f7352de5281f5ea3274f7218479c1d4b666094b66e932faeb33b138edd214"
+   ],
+   "gold_chunk_id": "chunk_545f7352de5281f5ea3274f7218479c1d4b666094b66e932faeb33b138edd214",
+   "question": "What does the book say about \"RBV\"?",
+   "exact_terms": [
+    "RBV"
+   ],
+   "wall_s": 9.19,
+   "phase_ms": {
+    "carry": 9175.6,
+    "total": 9178.0,
+    "compile": 1683.0,
+    "assemble": 9175.6,
+    "generate": 9177.9,
+    "retrieve": 9110.1
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 23,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 95,
+    "union_uncapped": 95
+   },
+   "degraded_components": [],
+   "answer_chars": 939,
+   "answer_head": "Relevant passage: \u201cFor those of us who have managed companies, consulted for management, or taught future managers, this is a most disquieting thought. We are t",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 1,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": false,
+   "death": "IGNORED_BY_LLM",
+   "counts": {
+    "cited": 1,
+    "union": 95,
+    "selected": 15,
+    "retrieved": 95,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 23,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "Resource-Based View RBV",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1680.2,
+     "fallback": false,
+     "raw_chars": 523,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_06263d7f728c7ed19ed60f8e94a5884f6a19e8ae8494b96533227955e4d2d0ad",
+   "source_name": "Blue_Ocean_Strategy_Kim_Mauborgne.md",
+   "term": "OECD",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_836bd2c0f8415dbd09e26dd4160c6970c017d7fe45aa306efce3e9c1d4b0319b"
+   ],
+   "gold_chunk_id": "chunk_836bd2c0f8415dbd09e26dd4160c6970c017d7fe45aa306efce3e9c1d4b0319b",
+   "question": "What does the book say about \"OECD\"?",
+   "exact_terms": [
+    "OECD"
+   ],
+   "wall_s": 14.34,
+   "phase_ms": {
+    "carry": 14329.0,
+    "total": 14331.7,
+    "compile": 1550.4,
+    "assemble": 14329.0,
+    "generate": 14331.5,
+    "retrieve": 14260.5
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 9,
+    "hierarchical_children": 31,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 108,
+    "union_uncapped": 108
+   },
+   "degraded_components": [],
+   "answer_chars": 1477,
+   "answer_head": "Relevant passage: \u201cEM-Kim.qxd 10/25/04 10:03 AM Page 223\n\n( ) ( ) ( ) ( )\n\nBibliography\n\n*A+ Magazine*. 1987. \u201cBack In Time.\u201d February, 48\u201349.\n\nAbernathy, Willi",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 3,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 3,
+    "union": 108,
+    "selected": 15,
+    "retrieved": 108,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 31,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "OECD",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1547.9,
+     "fallback": false,
+     "raw_chars": 453,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_c6560827ab483d643dbb0ce0139c63dd6bad9f35793f5dc14ffdb1192963b1e1",
+   "source_name": "Psychology_of_Habit_Wood.md",
+   "term": "RBI",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_36d3ceb72dbd9c74bbf618d7fe454eb3a113c927014332fb532337f582c0703b"
+   ],
+   "gold_chunk_id": "chunk_36d3ceb72dbd9c74bbf618d7fe454eb3a113c927014332fb532337f582c0703b",
+   "question": "What does the book say about \"RBI\"?",
+   "exact_terms": [
+    "RBI"
+   ],
+   "wall_s": 23.79,
+   "phase_ms": {
+    "carry": 23779.3,
+    "total": 23781.8,
+    "compile": 1560.0,
+    "assemble": 23779.2,
+    "generate": 23781.7,
+    "retrieve": 23691.4
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 33,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 108,
+    "union_uncapped": 108
+   },
+   "degraded_components": [],
+   "answer_chars": 943,
+   "answer_head": "Relevant passage: \u201cIn his revelatory book *Principles*, Bridgewater Associates founder Ray Dalio devotes some words to describing his company\u2019s pioneering use o",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 1,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 2,
+   "gold_cited": false,
+   "death": "IGNORED_BY_LLM",
+   "counts": {
+    "cited": 1,
+    "union": 108,
+    "selected": 15,
+    "retrieved": 108,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 33,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "RBI",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1557.9,
+     "fallback": false,
+     "raw_chars": 432,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_57aab6bb6dade6048ed10f63c4237e48f150b040ebb156c77a88279595ee40ae",
+   "source_name": "Always_Alchemy_Hart.md",
+   "term": "NFI",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_0142fe1c274ab8b5795288df8d205272bddeee3a4ede71635032f85b278a9c27"
+   ],
+   "gold_chunk_id": "chunk_0142fe1c274ab8b5795288df8d205272bddeee3a4ede71635032f85b278a9c27",
+   "question": "What does the book say about \"NFI\"?",
+   "exact_terms": [
+    "NFI"
+   ],
+   "wall_s": 55.36,
+   "phase_ms": {
+    "carry": 55351.9,
+    "total": 55354.4,
+    "compile": 1463.4,
+    "assemble": 55351.9,
+    "generate": 55354.2,
+    "retrieve": 55280.2
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 30,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 109,
+    "union_uncapped": 109
+   },
+   "degraded_components": [],
+   "answer_chars": 1449,
+   "answer_head": "Relevant passage: \u201c---\ntitle: \"Netnography (Kozinets)\"\nsource_file: \"E:\\books\\psycho_commerce\\Netnography (Kozinets).pdf\"\nsource_type: \"pdf\"\nrag_ready: \"True\"\np",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 3,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": false,
+   "death": "IGNORED_BY_LLM",
+   "counts": {
+    "cited": 3,
+    "union": 109,
+    "selected": 15,
+    "retrieved": 109,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 30,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "NFI",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1459.0,
+     "fallback": false,
+     "raw_chars": 429,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_c6560827ab483d643dbb0ce0139c63dd6bad9f35793f5dc14ffdb1192963b1e1",
+   "source_name": "Psychology_of_Habit_Wood.md",
+   "term": "DBASSE",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_649d84ec7367867295cc922bc7c49fb79c272ba0971066579bf876117789338b"
+   ],
+   "gold_chunk_id": "chunk_649d84ec7367867295cc922bc7c49fb79c272ba0971066579bf876117789338b",
+   "question": "What does the book say about \"DBASSE\"?",
+   "exact_terms": [
+    "DBASSE"
+   ],
+   "wall_s": 8.49,
+   "phase_ms": {
+    "carry": 8471.7,
+    "total": 8480.9,
+    "compile": 1547.5,
+    "assemble": 8471.7,
+    "generate": 8480.5,
+    "retrieve": 8394.8
+   },
+   "engine": "chat-retrieval-v2",
+   "arrivals_n": 15,
+   "arrivals_missing": 0,
+   "lane_sizes": {
+    "document_summary": 16,
+    "section_summary": 24,
+    "entity_card": 8,
+    "hierarchical_children": 19,
+    "global_dense_child": 50,
+    "global_sparse_child": 40,
+    "union": 100,
+    "union_uncapped": 100
+   },
+   "degraded_components": [],
+   "answer_chars": 2710,
+   "answer_head": "Relevant passage: \u201cContemporary Clinical Trials, 62, 146\u2013152. https://doi.org/10.1016/j.cct.2017.09.004\nAmaro, H., & Schwarts, L. (2016). Measuring recovery fro",
+   "tags_total": 0,
+   "tags_valid": 0,
+   "tags_distinct": 0,
+   "citation_precision": null,
+   "used_evidence_n": 6,
+   "abstain_marker": false,
+   "task_type": "GROUNDED_QA",
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 6,
+    "union": 100,
+    "selected": 15,
+    "retrieved": 100,
+    "pre_rerank": 20,
+    "post_rerank": 20
+   },
+   "lane_counts": {
+    "hierarchical": 19,
+    "global_dense_child": 50,
+    "global_sparse_child": 40
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "DBASSE",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1545.1,
+     "fallback": false,
+     "raw_chars": 416,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  }
+ ]
+}

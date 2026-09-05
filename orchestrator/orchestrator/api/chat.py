@@ -57,6 +57,8 @@ class ChatRequest(BaseModel):
     mode: str | None = None
     latent: bool | None = None
     utility: bool | None = None
+    # CHAT-RETRIEVAL-V2 P1.a: per-request override (v1 | v2) for evaluation and A/B.
+    retrieval: str | None = None
     # CHAT-EVIDENCE-ROWS-V1 (2026-09-03): also return the answer's evidence as
     # RETRIEVE-EVIDENCE-ROWS-V1 rows (human source, timecodes, attested facts)
     # so an agent gets the FULL answer path AND contract rows in one call.
@@ -136,11 +138,18 @@ async def _chat_impl(req: ChatRequest) -> dict:
 
             fast = fast_retrieve(query, list(scope.corpus_ids))  # F8: multi-corpus
         else:
-            from orchestrator.api.hybrid import hybrid_fast_retrieve
+            from orchestrator.api.chat_retrieval import chat_retrieval_flag, chat_retrieve_v2
+            _latent = getattr(req, 'latent', None)
+            _utility = getattr(req, 'utility', None)
+            # CHAT-RETRIEVAL-V2 (P1.a): /chat HYBRID uses the same engine as /chat/stream;
+            # latent / utility requests stay on hybrid-retrieval-v1 (not in v2 yet).
+            if chat_retrieval_flag(getattr(req, "retrieval", None)) == "v2" and not _latent and not _utility:
+                fast = chat_retrieve_v2(query, single_corpus_or_422(scope, mode))
+            else:
+                from orchestrator.api.hybrid import hybrid_fast_retrieve
 
-            fast = hybrid_fast_retrieve(query, single_corpus_or_422(scope, mode),
-                                        latent=getattr(req, 'latent', None),
-                           utility=getattr(req, 'utility', None))
+                fast = hybrid_fast_retrieve(query, single_corpus_or_422(scope, mode),
+                                            latent=_latent, utility=_utility)
         child_evidence = [
             {"chunk_id": c["chunk_id"], "doc_id": c["doc_id"], "parent_id": c["parent_id"]}
             for c in fast["evidence"]

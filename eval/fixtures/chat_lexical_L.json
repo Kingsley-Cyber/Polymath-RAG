@@ -1,0 +1,526 @@
+{
+ "version": "chat-lexical-L-v1",
+ "seed": 20260905,
+ "corpora": [
+  "cinema",
+  "ecom-meta-v1"
+ ],
+ "per_corpus": 15,
+ "gold_rule": "child chunks (body region) containing the token; token df 1-2 in caps AND whole-word case-insensitive df <= 2 in the corpus; not an English word; hyphenated tokens excluded (the shared BM25 tokenizer splits on hyphens)",
+ "questions": [
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_1107fd8fac613c4e6cee06bc0c6913cdc9a52853c60ec7f4c6af0963e414f163",
+   "source_name": "Facial Action coding 3.0.md",
+   "term": "AU62",
+   "kind": "identifier",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_545eec254ab2b3410d427afa96856d5d28f05c81ad3f5616f47fdc3fa1cdc47f"
+   ],
+   "gold_chunk_id": "chunk_545eec254ab2b3410d427afa96856d5d28f05c81ad3f5616f47fdc3fa1cdc47f",
+   "question": "What does the book say about \"AU62\"?",
+   "exact_terms": [
+    "AU62"
+   ]
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+   "source_name": "VES Handbook of Visual Effects.md",
+   "term": "SO202",
+   "kind": "identifier",
+   "df": 1,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_f5a61001815ab3b878221e023864ff484bfd200d7ce176246e5d16bb25e746e2"
+   ],
+   "gold_chunk_id": "chunk_f5a61001815ab3b878221e023864ff484bfd200d7ce176246e5d16bb25e746e2",
+   "question": "What does the book say about \"SO202\"?",
+   "exact_terms": [
+    "SO202"
+   ]
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45",
+   "source_name": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+   "term": "HD1",
+   "kind": "identifier",
+   "df": 2,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_46a7cc83d83fda994c0c32621cdb02561308917eae5c278e6a6d5c34b27b689f",
+    "chunk_d280219e81333a0bc07255821523df51b03d98f4a2354e81b23f2dcf2a44b5df"
+   ],
+   "gold_chunk_id": "chunk_46a7cc83d83fda994c0c32621cdb02561308917eae5c278e6a6d5c34b27b689f",
+   "question": "What does the book say about \"HD1\"?",
+   "exact_terms": [
+    "HD1"
+   ]
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_26cceca252a72ae476beead4e21d7d3ad9bb07fa5cfd5e49e34182505cd90b16",
+   "source_name": "The Art and Science of Digital Compositing.md",
+   "term": "F850LP",
+   "kind": "identifier",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_d7b2cfb308d2044013685bb7b78da8046afd560a20eb57be257cfb19f94dab5f"
+   ],
+   "gold_chunk_id": "chunk_d7b2cfb308d2044013685bb7b78da8046afd560a20eb57be257cfb19f94dab5f",
+   "question": "What does the book say about \"F850LP\"?",
+   "exact_terms": [
+    "F850LP"
+   ]
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_7041b219489ebd0ee7a2c751a2ef70682653ec9b23673d9c349e7676c0f6b4b1",
+   "source_name": "Film Directing Cinematic Motion.md",
+   "term": "D16",
+   "kind": "identifier",
+   "df": 1,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_860a8371243336aef0fa96a46ca1be2375cbd1fbfb0289b051f50fcf76bf4297"
+   ],
+   "gold_chunk_id": "chunk_860a8371243336aef0fa96a46ca1be2375cbd1fbfb0289b051f50fcf76bf4297",
+   "question": "What does the book say about \"D16\"?",
+   "exact_terms": [
+    "D16"
+   ]
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_9fd65077f00b9b97a0717d2ae785bbd3cd297a30a1ffc391f6826ac05e1adf2e",
+   "source_name": "Facial Action Coding System_ Facial action coding system _ -- Paul Ekman_ Wallace V_ Friesen_ Joseph C_ Hager -- Salt Lake City, UT, cop_ 2002 -- isbn13 9780931835018 -- b4af95ca86cb926c6c000d109b27ec66 -- Anna’s A.md",
+   "term": "W372",
+   "kind": "identifier",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_0d553d4e4a0ad455b5a8f1d069181b406ad4c093ba83cbf9d156bdd0606ac01b"
+   ],
+   "gold_chunk_id": "chunk_0d553d4e4a0ad455b5a8f1d069181b406ad4c093ba83cbf9d156bdd0606ac01b",
+   "question": "What does the book say about \"W372\"?",
+   "exact_terms": [
+    "W372"
+   ]
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_b239c387522687054c671a46b1d660b025a18dc2ba981eb00a3da39b501629ba",
+   "source_name": "Retrieval-Augmented Prompt Optimization for.md",
+   "term": "A100",
+   "kind": "identifier",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_ce225976982e5396153fe41ec6f86e1f107c35ca1fbf830cc6ae491627860e8c"
+   ],
+   "gold_chunk_id": "chunk_ce225976982e5396153fe41ec6f86e1f107c35ca1fbf830cc6ae491627860e8c",
+   "question": "What does the book say about \"A100\"?",
+   "exact_terms": [
+    "A100"
+   ]
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+   "source_name": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+   "term": "M4A1",
+   "kind": "identifier",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_654b33c48e6975d896eee22b5d675a3cf67930c757f791bdd28038fb7f2af2c5"
+   ],
+   "gold_chunk_id": "chunk_654b33c48e6975d896eee22b5d675a3cf67930c757f791bdd28038fb7f2af2c5",
+   "question": "What does the book say about \"M4A1\"?",
+   "exact_terms": [
+    "M4A1"
+   ]
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_42e9fa7440e5724fccf602f36e7b9bdc31e259cd2630cbb3ec9fa1316121da64",
+   "source_name": "Stage Combat Arts.md",
+   "term": "XXXII",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_53706d6843722cb634cddaa074abe89ebc399fb6ebdc9ff4e6ff694681f9f98f"
+   ],
+   "gold_chunk_id": "chunk_53706d6843722cb634cddaa074abe89ebc399fb6ebdc9ff4e6ff694681f9f98f",
+   "question": "What does the book say about \"XXXII\"?",
+   "exact_terms": [
+    "XXXII"
+   ]
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd",
+   "source_name": "Framed Ink.md",
+   "term": "MUA",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_9b6c17a6461333b9f68d872ab953660049cac611598243ccd1234d795b737d98"
+   ],
+   "gold_chunk_id": "chunk_9b6c17a6461333b9f68d872ab953660049cac611598243ccd1234d795b737d98",
+   "question": "What does the book say about \"MUA\"?",
+   "exact_terms": [
+    "MUA"
+   ]
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_f2e29f98369f7632bd096e9f35b45715c8c30f46e063dac7d675f7551d318048",
+   "source_name": "Sidney Lumet - Making Movies (1994).md",
+   "term": "UPA",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_6a7723f67cbf055fa5c0e768d343e6c3fb2c2ce7cd5ccc97a9f5138e72425bed"
+   ],
+   "gold_chunk_id": "chunk_6a7723f67cbf055fa5c0e768d343e6c3fb2c2ce7cd5ccc97a9f5138e72425bed",
+   "question": "What does the book say about \"UPA\"?",
+   "exact_terms": [
+    "UPA"
+   ]
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_776b434862c7f4d68f6cad6f84a5cae5d94914928fa479edd66a2034aa3612e6",
+   "source_name": "Sound Design The Expressive Power of Music Voice and Sound Effects in Cinema (1).md",
+   "term": "ABLEGI",
+   "kind": "acronym",
+   "df": 2,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_4f271574d3204c47734730ee9ce5a442f556a37ca3cadd36bec6ad5ed3bde6a7",
+    "chunk_ed5cdf9aaeb067c46bcbdbd68fca9e14b791f832989992d8a822a68622ee7d26"
+   ],
+   "gold_chunk_id": "chunk_4f271574d3204c47734730ee9ce5a442f556a37ca3cadd36bec6ad5ed3bde6a7",
+   "question": "What does the book say about \"ABLEGI\"?",
+   "exact_terms": [
+    "ABLEGI"
+   ]
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_0dd48434e2ceeccee1a6e406c5c6e31e205079566103f2547413bd4f3274b80d",
+   "source_name": "How to Draw Manga Illustrating Battles.md",
+   "term": "NSCB",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_a4a7d25a337cfd6e68bfc5ebd57f879aa27f5915d8d0a22b10920b82008b2e99"
+   ],
+   "gold_chunk_id": "chunk_a4a7d25a337cfd6e68bfc5ebd57f879aa27f5915d8d0a22b10920b82008b2e99",
+   "question": "What does the book say about \"NSCB\"?",
+   "exact_terms": [
+    "NSCB"
+   ]
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+   "source_name": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+   "term": "VNSP",
+   "kind": "acronym",
+   "df": 2,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_36656bdfb5da3bc8e1c0d358345fcbcc0e95bc27640c23d17362e570bd4c3044",
+    "chunk_9c4fce8bfec9d8913cca3dda2d79ad69265e5c4139b14f1d3c0997efe28cacbb"
+   ],
+   "gold_chunk_id": "chunk_36656bdfb5da3bc8e1c0d358345fcbcc0e95bc27640c23d17362e570bd4c3044",
+   "question": "What does the book say about \"VNSP\"?",
+   "exact_terms": [
+    "VNSP"
+   ]
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+   "source_name": "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+   "term": "UFO",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_2756e5116216bd3f8251fd8062235e49faa31b077665e04a03af53ad8a8b25f0"
+   ],
+   "gold_chunk_id": "chunk_2756e5116216bd3f8251fd8062235e49faa31b077665e04a03af53ad8a8b25f0",
+   "question": "What does the book say about \"UFO\"?",
+   "exact_terms": [
+    "UFO"
+   ]
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+   "source_name": "The_Innovators_Dilemma_Christensen.md",
+   "term": "EC2",
+   "kind": "identifier",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_84743f76a91b5a6e3c66b425e682af2f37845c5a39c621cdbe41dc4d71de1896"
+   ],
+   "gold_chunk_id": "chunk_84743f76a91b5a6e3c66b425e682af2f37845c5a39c621cdbe41dc4d71de1896",
+   "question": "What does the book say about \"EC2\"?",
+   "exact_terms": [
+    "EC2"
+   ]
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_c6560827ab483d643dbb0ce0139c63dd6bad9f35793f5dc14ffdb1192963b1e1",
+   "source_name": "Psychology_of_Habit_Wood.md",
+   "term": "S311",
+   "kind": "identifier",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_465dba250040611f3a8fe99ff99e43378dd3590715b595128dd22d4a3940f089"
+   ],
+   "gold_chunk_id": "chunk_465dba250040611f3a8fe99ff99e43378dd3590715b595128dd22d4a3940f089",
+   "question": "What does the book say about \"S311\"?",
+   "exact_terms": [
+    "S311"
+   ]
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_06263d7f728c7ed19ed60f8e94a5884f6a19e8ae8494b96533227955e4d2d0ad",
+   "source_name": "Blue_Ocean_Strategy_Kim_Mauborgne.md",
+   "term": "Z39",
+   "kind": "identifier",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_9985981094d4ad9454a2b69294df37d07fdcaca99010ec5c02d63c1a81028549"
+   ],
+   "gold_chunk_id": "chunk_9985981094d4ad9454a2b69294df37d07fdcaca99010ec5c02d63c1a81028549",
+   "question": "What does the book say about \"Z39\"?",
+   "exact_terms": [
+    "Z39"
+   ]
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_be6104e610e4269b31cd71169af2b2fcf6b9731d7f942aaadec0a5da65dabe98",
+   "source_name": "Competing_Against_Luck_Christensen.md",
+   "term": "M5H",
+   "kind": "identifier",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_4dc562d7e2b548b4a7aa327fa9249e774cb92a72f3237c366214b84e5ac97d39"
+   ],
+   "gold_chunk_id": "chunk_4dc562d7e2b548b4a7aa327fa9249e774cb92a72f3237c366214b84e5ac97d39",
+   "question": "What does the book say about \"M5H\"?",
+   "exact_terms": [
+    "M5H"
+   ]
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_71dc577c7e96bed017fa62d6924db70ba883a2fc0a02090e8addde34fe69f020",
+   "source_name": "The_AI_Advantage_Davenport.md",
+   "term": "PCI",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_ea4fa5509f64d6d1445ac8d84f6d7ed85b9cfb72f0db5f6d87c2611bb6a03c43"
+   ],
+   "gold_chunk_id": "chunk_ea4fa5509f64d6d1445ac8d84f6d7ed85b9cfb72f0db5f6d87c2611bb6a03c43",
+   "question": "What does the book say about \"PCI\"?",
+   "exact_terms": [
+    "PCI"
+   ]
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_57aab6bb6dade6048ed10f63c4237e48f150b040ebb156c77a88279595ee40ae",
+   "source_name": "Always_Alchemy_Hart.md",
+   "term": "FOMO",
+   "kind": "acronym",
+   "df": 2,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_baa42a5ba23b7a7190fe40d863a01a9334be4bba67505cee08667a4c3fba99e3",
+    "chunk_eae46abbaeae83709a43d2c89e227d9600caec311fc7219b576284feaf16d009"
+   ],
+   "gold_chunk_id": "chunk_baa42a5ba23b7a7190fe40d863a01a9334be4bba67505cee08667a4c3fba99e3",
+   "question": "What does the book say about \"FOMO\"?",
+   "exact_terms": [
+    "FOMO"
+   ]
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_c6560827ab483d643dbb0ce0139c63dd6bad9f35793f5dc14ffdb1192963b1e1",
+   "source_name": "Psychology_of_Habit_Wood.md",
+   "term": "MWQ",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_fe6bf24e8d6295b6a61401e4bcfcf0d9ff1cb19415fd230681b801e419836222"
+   ],
+   "gold_chunk_id": "chunk_fe6bf24e8d6295b6a61401e4bcfcf0d9ff1cb19415fd230681b801e419836222",
+   "question": "What does the book say about \"MWQ\"?",
+   "exact_terms": [
+    "MWQ"
+   ]
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+   "source_name": "The_Innovators_Dilemma_Christensen.md",
+   "term": "ASIC",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_b31eebd166a770f9f4d5b08f25fc09b6356728fbb9a590e56b5d040d2a0165c4"
+   ],
+   "gold_chunk_id": "chunk_b31eebd166a770f9f4d5b08f25fc09b6356728fbb9a590e56b5d040d2a0165c4",
+   "question": "What does the book say about \"ASIC\"?",
+   "exact_terms": [
+    "ASIC"
+   ]
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_c6560827ab483d643dbb0ce0139c63dd6bad9f35793f5dc14ffdb1192963b1e1",
+   "source_name": "Psychology_of_Habit_Wood.md",
+   "term": "ACC",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_ea73804589fcc477d3929d262d616e7816a3a0bf9ffa424168ade9599ad7cd18"
+   ],
+   "gold_chunk_id": "chunk_ea73804589fcc477d3929d262d616e7816a3a0bf9ffa424168ade9599ad7cd18",
+   "question": "What does the book say about \"ACC\"?",
+   "exact_terms": [
+    "ACC"
+   ]
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_c6560827ab483d643dbb0ce0139c63dd6bad9f35793f5dc14ffdb1192963b1e1",
+   "source_name": "Psychology_of_Habit_Wood.md",
+   "term": "NIDA",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_253d3bb8f1bc699e7ade3e1249a7549387b62d11b92bce84ae6ae770e50adf60"
+   ],
+   "gold_chunk_id": "chunk_253d3bb8f1bc699e7ade3e1249a7549387b62d11b92bce84ae6ae770e50adf60",
+   "question": "What does the book say about \"NIDA\"?",
+   "exact_terms": [
+    "NIDA"
+   ]
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+   "source_name": "The_Innovators_Dilemma_Christensen.md",
+   "term": "RBV",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_545f7352de5281f5ea3274f7218479c1d4b666094b66e932faeb33b138edd214"
+   ],
+   "gold_chunk_id": "chunk_545f7352de5281f5ea3274f7218479c1d4b666094b66e932faeb33b138edd214",
+   "question": "What does the book say about \"RBV\"?",
+   "exact_terms": [
+    "RBV"
+   ]
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_06263d7f728c7ed19ed60f8e94a5884f6a19e8ae8494b96533227955e4d2d0ad",
+   "source_name": "Blue_Ocean_Strategy_Kim_Mauborgne.md",
+   "term": "OECD",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_836bd2c0f8415dbd09e26dd4160c6970c017d7fe45aa306efce3e9c1d4b0319b"
+   ],
+   "gold_chunk_id": "chunk_836bd2c0f8415dbd09e26dd4160c6970c017d7fe45aa306efce3e9c1d4b0319b",
+   "question": "What does the book say about \"OECD\"?",
+   "exact_terms": [
+    "OECD"
+   ]
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_c6560827ab483d643dbb0ce0139c63dd6bad9f35793f5dc14ffdb1192963b1e1",
+   "source_name": "Psychology_of_Habit_Wood.md",
+   "term": "RBI",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 2,
+   "gold_chunk_ids": [
+    "chunk_36d3ceb72dbd9c74bbf618d7fe454eb3a113c927014332fb532337f582c0703b"
+   ],
+   "gold_chunk_id": "chunk_36d3ceb72dbd9c74bbf618d7fe454eb3a113c927014332fb532337f582c0703b",
+   "question": "What does the book say about \"RBI\"?",
+   "exact_terms": [
+    "RBI"
+   ]
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_57aab6bb6dade6048ed10f63c4237e48f150b040ebb156c77a88279595ee40ae",
+   "source_name": "Always_Alchemy_Hart.md",
+   "term": "NFI",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_0142fe1c274ab8b5795288df8d205272bddeee3a4ede71635032f85b278a9c27"
+   ],
+   "gold_chunk_id": "chunk_0142fe1c274ab8b5795288df8d205272bddeee3a4ede71635032f85b278a9c27",
+   "question": "What does the book say about \"NFI\"?",
+   "exact_terms": [
+    "NFI"
+   ]
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_c6560827ab483d643dbb0ce0139c63dd6bad9f35793f5dc14ffdb1192963b1e1",
+   "source_name": "Psychology_of_Habit_Wood.md",
+   "term": "DBASSE",
+   "kind": "acronym",
+   "df": 1,
+   "df_ci": 1,
+   "gold_chunk_ids": [
+    "chunk_649d84ec7367867295cc922bc7c49fb79c272ba0971066579bf876117789338b"
+   ],
+   "gold_chunk_id": "chunk_649d84ec7367867295cc922bc7c49fb79c272ba0971066579bf876117789338b",
+   "question": "What does the book say about \"DBASSE\"?",
+   "exact_terms": [
+    "DBASSE"
+   ]
+  }
+ ]
+}

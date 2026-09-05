@@ -76,7 +76,11 @@ class FastSearcher:
                 cache[corpus_id] = []
         return cache[corpus_id]
 
-    def _search(self, collection: str, vector: list[float], filters: dict, limit: int) -> list[dict]:
+    def _filter_for(self, filters: dict) -> tuple[list, list]:
+        """The ONE place corpus / representation / doc / parent filters and
+        hidden blue/green generations are applied (§3.21 #11): dense and
+        sparse searches share it, so the new global child lanes cannot leak
+        another corpus or a rebuilding generation."""
         must = [
             FieldCondition(key="representation_kind",
                            match=MatchValue(value=filters["representation_kind"])),
@@ -94,6 +98,36 @@ class FastSearcher:
             from qdrant_client.models import MatchAny
             must_not.append(FieldCondition(
                 key="doc_id", match=MatchAny(any=list(filters["exclude_doc_ids"]))))
+        return must, must_not
+
+    def sparse_search(self, collection: str, sparse_query, filters: dict, limit: int) -> list[dict]:
+        """CHAT-RETRIEVAL-V2 lane C: ONE BM25 sparse query over routing
+        children through the same filter builder as the dense lanes.
+        Raises when there is no sparse query or the collection lacks the
+        sparse vector — the engine degrades the lane (never Postgres)."""
+        if not sparse_query or not sparse_query[0]:
+            raise RuntimeError("no sparse query for this text")
+        from qdrant_client.models import SparseVector
+        from polymath_shared.sparse_bm25 import SPARSE_VECTOR_NAME
+        must, must_not = self._filter_for(filters)
+        t0 = time.time()
+        try:
+            pts = self.client.query_points(
+                collection_name=collection,
+                query=SparseVector(indices=list(sparse_query[0]), values=list(sparse_query[1])),
+                using=SPARSE_VECTOR_NAME,
+                query_filter=Filter(must=must, must_not=must_not),
+                limit=limit,
+                with_payload=True,
+            ).points
+        finally:
+            self.latency["sparse"] = self.latency.get("sparse", 0.0) + (time.time() - t0) * 1000
+        out = [{"payload": p.payload, "score": p.score} for p in pts]
+        out.sort(key=lambda r: -(r["score"] or 0.0))
+        return out
+
+    def _search(self, collection: str, vector: list[float], filters: dict, limit: int) -> list[dict]:
+        must, must_not = self._filter_for(filters)
         t0 = time.time()
         try:
             points = self.client.query_points(

@@ -1075,6 +1075,9 @@ class StreamChatRequest(BaseModel):
     # CHAT-QUERY-COMPILER P0.c: per-request override of POLYMATH_CHAT_COMPILER
     # (off | shadow | on) for evaluation and A/B; the UI leaves it unset.
     compiler: Optional[str] = None
+    # CHAT-RETRIEVAL-V2 P1.a: per-request override of POLYMATH_CHAT_RETRIEVAL
+    # (v1 = hybrid-retrieval-v1, v2 = chat-retrieval-v2) for evaluation and A/B.
+    retrieval: Optional[str] = None
 
 
 def _sse(event: str, data: dict) -> str:
@@ -1916,6 +1919,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
             graph_facts: list = []
             latent_meta = None
             wildcard_lane = None
+            _arrivals: dict = {}
             if _skip_retrieval:
                 # NO-RETRIEVAL ROUTING (plan §3.1 evidence_policy=conversation):
                 # the task lives in the conversation; the corpus is not searched.
@@ -1982,9 +1986,18 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                     fast = wildcard_retrieve(_retrieval_text, corpus_id)
                     wildcard_lane = fast.get("wildcard") or []
                 else:
-                    from orchestrator.api.hybrid import hybrid_fast_retrieve
-                    fast = hybrid_fast_retrieve(_retrieval_text, corpus_id,
-                                                latent=req.latent)
+                    from orchestrator.api.chat_retrieval import chat_retrieval_flag, chat_retrieve_v2
+                    # CHAT-RETRIEVAL-V2 (plan §3.14, P1.a): lanes A/B/C fused at child level
+                    # with provenance; the latent-rescue lane is not in v2 yet, so a turn
+                    # that asks for it stays on hybrid-retrieval-v1 (receipted by plan version).
+                    if chat_retrieval_flag(getattr(req, "retrieval", None)) == "v2" and not req.latent:
+                        fast = chat_retrieve_v2(
+                            _retrieval_text, corpus_id,
+                            exact_terms=tuple(_plan.exact_terms) if (_flag == "on" and _plan is not None) else ())
+                    else:
+                        from orchestrator.api.hybrid import hybrid_fast_retrieve
+                        fast = hybrid_fast_retrieve(_retrieval_text, corpus_id,
+                                                    latent=req.latent)
                 latent_meta = (fast.get("meta") or {}).get("latent")
                 _trace = fast.get("trace") or {}
                 evidence_rows = [
@@ -1995,7 +2008,11 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                 _mark("retrieve")
                 yield _phase("retrieve_done", "Evidence selected",
                              evidence_count=len(evidence_rows),
-                             lane_sizes=fast["trace"].get("lane_sizes"))
+                             lane_sizes=fast["trace"].get("lane_sizes"),
+                             plan=(fast.get("meta") or {}).get("plan_version"),
+                             degraded=[d.get("component") for d in ((fast.get("meta") or {}).get("degraded") or [])] or None)
+                _arrivals = {c["chunk_id"]: c.get("arrivals") or ([c["arrival"]] if c.get("arrival") else [])
+                             for c in fast["evidence"]}
                 if wildcard_lane is not None:
                     yield _phase(
                         "wildcard",
@@ -2100,6 +2117,11 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                 "chunks": chunk_inventory,
                 # CARRY-V2 accounting (plan §3.5): in / hydrated / admitted / dropped_* / floor / scores
                 "carry": _carry_meta,
+                # CHAT-RETRIEVAL-V2 (plan §3.14): which plan retrieved, and every
+                # final candidate's lane provenance (P1.a gate: 100 % have arrivals)
+                "engine": (fast.get("meta") or {}).get("plan_version"),
+                "arrivals": _arrivals,
+                "lane_sizes": (fast.get("trace") or {}).get("lane_sizes"),
                 # NEVER-ERROR-ON-A-COLD-MODEL: a lane that degraded
                 # (e.g. reranker parked behind extraction) still answers
                 # — the UI says so instead of the query failing.
