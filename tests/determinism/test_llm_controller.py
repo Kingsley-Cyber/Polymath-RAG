@@ -110,7 +110,7 @@ def test_batched_client_sizes_calls_from_the_budget(monkeypatch) -> None:
     client = LLMExtractionClient("local", url="http://127.0.0.1:1", model="m")
     seen: list[tuple[int, int | None]] = []
 
-    def _fake(prompt_items, limiter, decision, cap=None):
+    def _fake(prompt_items, limiter, decision, cap=None, use_lean=False, system_prompt=None):   # mirrors _infer_batch_call
         seen.append((len(prompt_items), cap))
         return [LLMCallResult(lane="local", model="m", raw_text="", packet=None,
                               sanitize=SanitizeResult(ok=False), wall_ms=0,

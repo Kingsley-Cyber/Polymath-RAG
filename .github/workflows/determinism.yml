@@ -1,12 +1,46 @@
 name: determinism
+# CI-DEPS-V1 (2026-09-05): the suite imports the workspace packages (pydantic,
+# psycopg, httpx, fastapi, yaml …) and 20 files talk to the dev Postgres, so the
+# job installs the four workspace members and runs a Postgres service with the
+# repo's migrations applied — the same schema `make db-up && make db-migrate`
+# gives a developer. Before this the job installed only pytest and every module
+# failed at collection (64 errors, red since the suite was wired).
 on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: polymath
+          POSTGRES_PASSWORD: polymath-dev
+          POSTGRES_DB: polymath
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U polymath -d polymath"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      POLYMATH_PG_DSN: postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath
+      POLYMATH_TEST_DSN: postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath
+      PGPASSWORD: polymath-dev
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install pytest
-      - run: pytest tests/determinism/ -v
+          cache: pip
+      - name: install workspace members + test deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest jsonschema "mcp>=2,<3" -e ./shared -e ./workers -e ./orchestrator -e ./control
+      - name: apply Postgres migrations in order (same as `make db-migrate`)
+        run: |
+          for f in stores/postgres/migrations/*.sql; do
+            echo "applying $f"
+            psql -h 127.0.0.1 -U polymath -d polymath -v ON_ERROR_STOP=1 -q -f "$f" || exit 1
+          done
+          psql -h 127.0.0.1 -U polymath -d polymath -Atc "select count(*) from information_schema.tables where table_schema='public'"
+      - name: determinism suite
+        run: pytest tests/determinism/ -q -p no:cacheprovider

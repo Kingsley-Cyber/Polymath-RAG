@@ -1,12 +1,20 @@
 name: contracts
+# CI-DEPS-V1 (2026-09-05): contract tests import the workspace packages
+# (pydantic models, jsonschema); install them instead of only pytest.
 on: [push, pull_request]
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install jsonschema pytest
-      - run: pytest tests/contracts/ -v
+          cache: pip
+      - name: install workspace members + test deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest jsonschema "mcp>=2,<3" -e ./shared -e ./workers -e ./orchestrator -e ./control
+      - name: contract suite
+        run: pytest tests/contracts/ -q -p no:cacheprovider
