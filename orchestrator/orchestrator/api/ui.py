@@ -1047,6 +1047,9 @@ class HistoryTurn(BaseModel):
 class CarriedChunk(BaseModel):
     locator: str
     preview: str = ""
+    # CARRY-V2 (plan §3.5): the cited chunk's id; older clients send only the
+    # locator, from which the id is parsed.
+    chunk_id: Optional[str] = None
 
 
 class StreamChatRequest(BaseModel):
@@ -1239,7 +1242,8 @@ def _evidence_legend(bundle: dict) -> list[dict]:
             m = _LOC_CHUNK_RE.match(str(loc))
             out.append({"tag": f"S{len(out) + 1}", "locator": loc,
                         "chunk_id": (m.group(1) if m else (item.get("source_chunk_id") or None)),
-                        "doc_id": item.get("source_document_id"), "text": text})
+                        "doc_id": item.get("source_document_id"), "text": text,
+                        "carried": bool(item.get("carried")), "carry_score": item.get("carry_score")})
     return out
 
 
@@ -1497,6 +1501,135 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
     return messages
 
 
+
+# ---------------- CARRY-V2 (CHAT-QUERY-COMPILER-PLAN §3.5, P0.e) ----------------
+#: Measured 2026-09-05 (chat-carry-p0e-v1-baseline): the frontend carried
+#: every RETRIEVED chunk of every earlier answer (cap 30), so an off-topic
+#: turn 1 put 6 of its chunks into turn 3's prompt and the prompt grew
+#: 32k → 47k chars over three turns. v2: the client carries only USED
+#: evidence (cited [S#]) with its chunk id, cap 8; the backend hydrates the
+#: chunks, reranks them against the RESOLVED request, drops those below the
+#: admission floor, caps again, and puts the survivors into the evidence
+#: bundle — so they get [S#] tags, appear in the legend as `carried`, and
+#: count in used_evidence like any other evidence. Old clients that still
+#: send 30 raw locators get the same admission (the backend owns the law).
+_CARRY_CAP = int(os.environ.get("POLYMATH_CARRY_CAP", "8"))
+#: The floor is on the reranker sidecar's RAW cross-encoder score (logit-
+#: like, not a probability: measured on-topic carried chunks 1.1–6.9,
+#: off-topic ones negative). 0.25 ≈ "more likely relevant than not" with a
+#: margin above 0; every dropped score is recorded in the accounting.
+_CARRY_ADMISSION_FLOOR = float(os.environ.get("POLYMATH_CARRY_ADMISSION_FLOOR", "0.25"))
+_CARRY_MAX_IN = 64
+
+
+def _carry_candidates(carry_context, exclude_ids: set[str] | None = None) -> tuple[list[dict], dict]:
+    """Normalise the client's carried items to chunk ids (explicit chunk_id
+    or parsed from the locator), newest-first order kept, deduped, minus
+    the ids retrieved fresh this turn."""
+    exclude_ids = exclude_ids or set()
+    seen: set[str] = set()
+    out: list[dict] = []
+    acct = {"in": len(list(carry_context or [])), "dropped_duplicate": 0, "dropped_already_retrieved": 0, "dropped_unparsed": 0}
+    for c in list(carry_context or [])[:_CARRY_MAX_IN]:
+        cid = getattr(c, "chunk_id", None) or (c.get("chunk_id") if isinstance(c, dict) else None)
+        loc = getattr(c, "locator", None) or (c.get("locator") if isinstance(c, dict) else None) or ""
+        if not cid:
+            m = _LOC_CHUNK_RE.match(str(loc))
+            cid = m.group(1) if m else None
+        if not cid:
+            acct["dropped_unparsed"] += 1
+            continue
+        if cid in seen:
+            acct["dropped_duplicate"] += 1
+            continue
+        seen.add(cid)
+        if cid in exclude_ids:
+            acct["dropped_already_retrieved"] += 1
+            continue
+        out.append({"chunk_id": str(cid), "locator": str(loc),
+                    "preview": getattr(c, "preview", None) or (c.get("preview") if isinstance(c, dict) else None) or ""})
+    return out, acct
+
+
+def _carried_bundle_item(row: dict, score: float | None, resolve_document=None) -> dict:
+    """An evidence-bundle item in the assembler's shape, flagged `carried`."""
+    from polymath_shared.evidence_assembly import _presentation, _source_span
+    if resolve_document is None:
+        from orchestrator.api.evidence import _resolve_document as resolve_document  # noqa: N813 — the assembler's resolver
+    doc = None
+    try:
+        doc = resolve_document(row.get("doc_id") or "")
+    except Exception:  # noqa: BLE001 — presentation is best-effort
+        doc = None
+    return {"lane": "carry", "kind": "carried", "text_kind": None, "carried": True, "carry_score": score,
+            "source_chunk_id": row["chunk_id"], "source_document_id": row.get("doc_id"),
+            "source_span": _source_span(row, {}),
+            "applicability": {"corpus_id": (doc or {}).get("corpus_id"), "source_name": (doc or {}).get("source_name"), "conditions": []},
+            "presentation": _presentation(doc, row, None), "retrieval": {"lanes": ["carry"], "score": score}}
+
+
+def _admit_carry(candidates: list[dict], resolved_request: str, *, resolve=None, scorer=None,
+                 resolve_document=None, floor: float | None = None, cap: int | None = None) -> tuple[list[dict], dict]:
+    """Hydrate → rerank against the resolved request → floor → cap.
+    Returns (bundle items, accounting). A reranker outage degrades to
+    newest-first + cap and is COUNTED (`degraded`), never silent."""
+    if resolve is None:
+        from orchestrator.api.evidence import _resolve_chunk as resolve  # noqa: N813 — the assembler's resolver
+    floor = _CARRY_ADMISSION_FLOOR if floor is None else float(floor)
+    cap = _CARRY_CAP if cap is None else int(cap)
+    acct = {"candidates": len(candidates), "hydrated": 0, "dropped_missing": 0, "dropped_floor": 0, "dropped_cap": 0,
+            "admitted": 0, "floor": floor, "cap": cap, "degraded": None, "scores": [], "admitted_ids": []}
+    hydrated: list[tuple[dict, dict]] = []
+    for c in candidates:
+        try:
+            row = resolve(c["chunk_id"])
+        except Exception:  # noqa: BLE001 — a missing/hidden chunk is dropped, not fatal
+            row = None
+        if not row or not str(row.get("text") or "").strip():
+            acct["dropped_missing"] += 1
+            continue
+        hydrated.append((c, row))
+    acct["hydrated"] = len(hydrated)
+    if not hydrated:
+        return [], acct
+    texts = [r["text"] for _, r in hydrated]
+    scores = None
+    try:
+        if scorer is not None:
+            scores = [float(x) for x in scorer(resolved_request, texts)]
+        else:
+            from polymath_shared.clients import RerankerClient
+            from polymath_shared.rerank import _batched_scores
+            scores = [float(x) for x in _batched_scores(RerankerClient(timeout=30.0), resolved_request, texts)["scores"]]
+        if len(scores) != len(hydrated):
+            raise ValueError(f"scores {len(scores)} != items {len(hydrated)}")
+    except Exception as exc:  # noqa: BLE001
+        scores = None
+        acct["degraded"] = f"carry_rerank_unavailable:{type(exc).__name__}"
+    if scores is None:
+        ranked = [(None, c, r) for c, r in hydrated]
+    else:
+        ranked = sorted(((sc, c, r) for sc, (c, r) in zip(scores, hydrated)), key=lambda t: -t[0])
+        kept = [t for t in ranked if t[0] >= floor]
+        acct["dropped_floor"] = len(ranked) - len(kept)
+        acct["scores_dropped_floor"] = [round(t[0], 4) for t in ranked if t[0] < floor]
+        ranked = kept
+    acct["dropped_cap"] = max(0, len(ranked) - cap)
+    ranked = ranked[:cap]
+    items = [_carried_bundle_item(r, sc, resolve_document) for sc, _, r in ranked]
+    acct["admitted"] = len(items)
+    acct["scores"] = [(round(sc, 4) if sc is not None else None) for sc, _, _ in ranked]
+    acct["admitted_ids"] = [r["chunk_id"] for _, _, r in ranked]
+    return items, acct
+
+def _prompt_stats(messages: list[dict], carry_context, carried_in_prompt: int) -> dict:
+    """CARRY-ACCOUNTING-V1 (P0.e): what the model was actually given —
+    prompt size and how many carried items entered it. Yielded first by
+    both generators, recorded in result.meta["prompt"] and the receipt."""
+    return {"prompt_chars": sum(len(str(m.get("content") or "")) for m in messages),
+            "messages": len(messages), "carry_in": len(list(carry_context or [])),
+            "carry_in_prompt": int(carried_in_prompt)}
+
 def _litellm_generate(model: str, query: str, bundle: dict,
                       graph_facts: list, history, carry_context,
                       reasoning: str | None = None,
@@ -1512,6 +1645,8 @@ def _litellm_generate(model: str, query: str, bundle: dict,
     messages = _grounded_messages(query, bundle, graph_facts,
                                   history, carry_context,
                                   reasoning, reasoning_blend, style=style, plan=plan)
+    yield {"prompt": _prompt_stats(messages, carry_context,
+                                   sum(1 for c in (carry_context or [])[:30] if getattr(c, "preview", "")))}
     try:
         stream = litellm.completion(
             model=model, messages=messages, stream=True, timeout=300,
@@ -1552,6 +1687,8 @@ def _ollama_generate(model: str, query: str, bundle: dict,
     messages = _grounded_messages(query, bundle, graph_facts,
                                   history, carry_context,
                                   reasoning, reasoning_blend, style=style, plan=plan)
+    yield {"prompt": _prompt_stats(messages, carry_context,
+                                   sum(1 for c in (carry_context or [])[:30] if getattr(c, "preview", "")))}
 
     try:
         with httpx.stream(
@@ -1903,6 +2040,20 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                                      "message": str(exc)[:300]})
                 return
             _mark("assemble")
+            # CARRY-V2: admitted carried evidence joins the bundle (tags, legend, used_evidence)
+            _carry_meta: dict = {"in": len(req.carry_context), "admitted": 0}
+            if req.carry_context and not _skip_retrieval:
+                _cands, _cacct = _carry_candidates(req.carry_context, {c.get("chunk_id") for c in evidence_rows})
+                _citems, _aacct = _admit_carry(
+                    _cands, (_plan.resolved_request if (_flag == "on" and _plan is not None and _plan.resolved_request) else query))
+                _carry_meta = {**_cacct, **_aacct}
+                if _citems:
+                    bundle.setdefault("evidence_bundle", []).extend(_citems)
+                yield _phase("carry", f"Carried evidence: {_aacct['admitted']} of {len(req.carry_context)} admitted",
+                             **{k: v for k, v in _carry_meta.items() if k not in ("scores", "admitted_ids")})
+            elif req.carry_context:
+                _carry_meta["skipped"] = "no_retrieval_turn"
+            _mark("carry")
             _legend = _evidence_legend(bundle)
             yield _phase("assemble_done", "Bundle assembled",
                          items=len(bundle.get("evidence_bundle", [])))
@@ -1921,6 +2072,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                     "locator": loc,
                     "doc_id": item.get("source_document_id"),
                     "kind": item.get("text_kind") or item.get("kind"),
+                    "carried": bool(item.get("carried")),
                     "preview": (span.get("text") or "")[:220],
                     # UI-V3 §4.1: human identity for the Sources panel;
                     # raw locator/ids demote to the provenance expander.
@@ -1946,6 +2098,8 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                 "wildcard": (wildcard_lane
                              if ui_mode == "WILDCARD" else None),
                 "chunks": chunk_inventory,
+                # CARRY-V2 accounting (plan §3.5): in / hydrated / admitted / dropped_* / floor / scores
+                "carry": _carry_meta,
                 # NEVER-ERROR-ON-A-COLD-MODEL: a lane that degraded
                 # (e.g. reranker parked behind extraction) still answers
                 # — the UI says so instead of the query failing.
@@ -1956,17 +2110,21 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                 yield _phase("generate",
                              f"Generating with {llm_model}…",
                              model=llm_model,
-                             carried=len(req.carry_context))
+                             carried=_carry_meta.get("admitted", 0))
                 full: list[str] = []
+                _prompt_meta: dict = {}
                 _gen = (_litellm_generate if llm_backend == "litellm"
                         else _ollama_generate)
                 _style = _style_for(list(getattr(scope, "corpus_ids", None) or []))
                 retrieval["style"] = _style
                 for tok in _gen(
                         llm_model, query, bundle, graph_facts,
-                        req.history, req.carry_context,
+                        req.history, [],          # CARRY-V2: admitted carry already rides in the bundle
                         req.reasoning, req.reasoning_blend, style=_style,
                         plan=(_plan if _flag == "on" else None)):
+                    if tok.get("prompt"):
+                        _prompt_meta = dict(tok["prompt"])
+                        continue
                     if tok.get("error"):
                         yield _sse("error", tok)
                         return
@@ -1981,6 +2139,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                         yield _sse("token", {"token": piece})
                 _mark("generate")
                 _join_plan()
+                _prompt_meta.update({"carry_in": _carry_meta.get("in", 0), "carry_in_prompt": _carry_meta.get("admitted", 0)})
                 answer_text = "".join(full)
                 from polymath_shared.funnel import funnel_from_trace
                 used = _cited_chunk_ids(answer_text, _legend)
@@ -1989,7 +2148,8 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                     cited=used, plan_version=(_trace or {}).get("plan"))
                 retrieval["used_evidence"] = used
                 retrieval["legend"] = [{"tag": e["tag"], "locator": e["locator"],
-                                        "chunk_id": e.get("chunk_id"), "doc_id": e.get("doc_id")}
+                                        "chunk_id": e.get("chunk_id"), "doc_id": e.get("doc_id"),
+                                        "carried": bool(e.get("carried")), "carry_score": e.get("carry_score")}
                                        for e in _legend]
                 retrieval["funnel"] = {"version": funnel["version"], "counts": funnel["counts"],
                                        "lane_counts": funnel["lane_counts"], "multi_lane": funnel["multi_lane"]}
@@ -2012,6 +2172,8 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                             "synthesis_version": f"{llm_backend}:{llm_model}",
                             "phase_ms": dict(_phase_ms),
                             **_plan_meta(_plan if _flag == "on" else None),
+                            "prompt": _prompt_meta,
+                            "carry": {k: v for k, v in _carry_meta.items() if k != "scores"},
                         },
                     },
                     "retrieval": retrieval,
@@ -2026,7 +2188,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                           "model": llm_model, "latent": req.latent, "phase_ms": dict(_phase_ms),
                           "funnel": funnel, "used_evidence": used, "legend": retrieval["legend"],
                           "degraded": retrieval.get("degraded"), "plan": (_trace or {}).get("plan"),
-                          "chat_plan": _plan_receipt or None})
+                          "chat_plan": _plan_receipt or None, "prompt": _prompt_meta or None, "carry": _carry_meta})
                 return
 
             yield _phase("synthesize", "Validating claims against "
@@ -2047,6 +2209,8 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                 _trace, selected=[e["chunk_id"] for e in _legend if e.get("chunk_id")],
                 cited=used, plan_version=(_trace or {}).get("plan"))
             retrieval["used_evidence"] = used
+            retrieval["legend"] = [{"tag": e["tag"], "locator": e["locator"], "chunk_id": e.get("chunk_id"), "doc_id": e.get("doc_id"),
+                                    "carried": bool(e.get("carried")), "carry_score": e.get("carry_score")} for e in _legend]
             retrieval["funnel"] = {"version": funnel["version"], "counts": funnel["counts"],
                                    "lane_counts": funnel["lane_counts"], "multi_lane": funnel["multi_lane"]}
             if _plan_receipt:
@@ -2071,7 +2235,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                       "synthesis_version": (answer.get("meta") or {}).get("synthesis_version"),
                       "latent": req.latent, "phase_ms": dict(_phase_ms), "funnel": funnel,
                       "used_evidence": used, "degraded": retrieval.get("degraded"),
-                      "plan": (_trace or {}).get("plan"), "chat_plan": _plan_receipt or None})
+                      "plan": (_trace or {}).get("plan"), "chat_plan": _plan_receipt or None, "carry": _carry_meta})
         except HTTPException as exc:
             detail = exc.detail if isinstance(exc.detail, dict) else {
                 "message": str(exc.detail)}

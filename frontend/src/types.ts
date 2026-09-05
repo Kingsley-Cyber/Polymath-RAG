@@ -26,6 +26,8 @@ export interface Phase {
 
 export interface ChunkRef {
   locator: string;
+  /** CARRY-V2: this item was admitted from an earlier turn, not retrieved now. */
+  carried?: boolean;
   doc_id?: string;
   kind?: string;
   preview?: string;
@@ -53,8 +55,24 @@ export interface WildcardBridge {
   channels?: string[];
 }
 
+/** [S#] legend entry (CITATION-TAGS-V1 / CARRY-V2): tag → real locator. */
+export interface LegendEntry {
+  tag: string;
+  locator: string;
+  chunk_id?: string | null;
+  doc_id?: string | null;
+  /** CARRY-V2: evidence admitted from an earlier turn of this chat. */
+  carried?: boolean;
+  carry_score?: number | null;
+}
+
 export interface Retrieval {
   mode: string;
+  /** Chunk ids behind the [S#] tags the model actually emitted. */
+  used_evidence?: string[];
+  legend?: LegendEntry[];
+  /** CARRY-V2 accounting: in / hydrated / admitted / dropped_* / floor. */
+  carry?: Record<string, unknown>;
   /** DIVERGENT-RETRIEVAL-V1: labelled derived insights, never evidence. */
   wildcard?: WildcardBridge[] | null;
   evidence_count: number;

@@ -38,7 +38,9 @@ def summarize_response(kind: str, out: Any) -> dict:
                           "answerability", "trace_id",
                           # RETRIEVAL-FUNNEL-V1 / CHAT-QUERY-COMPILER (plan §3.6, §3.9)
                           "funnel", "chat_plan", "synthesis_version", "model",
-                          "phase_ms", "used_evidence", "legend", "degraded")}
+                          "phase_ms", "used_evidence", "legend", "degraded",
+                          # CARRY-ACCOUNTING-V1 (P0.e)
+                          "prompt", "carry")}
     cits = out.get("citations")
     if isinstance(cits, list):
         d["citations"] = len(cits)

@@ -1,0 +1,226 @@
+{
+ "summary": {
+  "policy": "v2",
+  "tag": "p0e-v2",
+  "compiler": "on",
+  "synthesizer": "default",
+  "turn1_chunk_ids": [
+   "chunk_11970fedf58b95743716a1b9b46f4a3cbf24b4a370f4a53a58bc6cbb95b1d830",
+   "chunk_1b4c7a08ac6e3d239c61e7b710eba7335c6ea319504561cd76abdbef83287b3f",
+   "chunk_4e6e80bc03c4bdb444bc4148e2e911b298cb27a3ef99ba99046b4565a9deb5be",
+   "chunk_72832b2b08ef796357dc9c099933602a9cdf730bf64c0ee47239c881c55757de",
+   "chunk_74b49ddcf389b50f0305f208264f32f9a311edad11859b6dbf0835b01b73e040",
+   "chunk_9ac5c24b453865f47d0e1b71c70de57caf4fdd53683eed88d370c804fe5c651b",
+   "chunk_9d2b70392d7bf8a50ac35ab94a5c7b462c5e4557c58fde487810509c7130780c",
+   "chunk_a419c8a63ae68b6bdffd5903480111606bb039e075463b75de846d8333b464a6",
+   "chunk_bf71322e03a8e934244e5629ca66fd85c67b47a3524a07d06139dd292ee258cc",
+   "chunk_e7734b19c25a3ff7f0209317db32b36bf3eeb55875da0074e7bc860ce0336f27"
+  ],
+  "turn1_in_turn3_legend": [],
+  "turn1_sent_in_turn3_carry": [
+   "chunk_11970fedf58b95743716a1b9b46f4a3cbf24b4a370f4a53a58bc6cbb95b1d830",
+   "chunk_74b49ddcf389b50f0305f208264f32f9a311edad11859b6dbf0835b01b73e040",
+   "chunk_9d2b70392d7bf8a50ac35ab94a5c7b462c5e4557c58fde487810509c7130780c",
+   "chunk_bf71322e03a8e934244e5629ca66fd85c67b47a3524a07d06139dd292ee258cc"
+  ],
+  "turn1_in_turn3_prompt": [],
+  "prompt_chars": [
+   32483,
+   35623,
+   38731
+  ],
+  "carry_sent": [
+   0,
+   6,
+   8
+  ],
+  "carry_admitted": [
+   0,
+   0,
+   0
+  ],
+  "carry_scores_turn3": [],
+  "gate_no_leak": true
+ },
+ "turns": [
+  {
+   "turn": 1,
+   "question": "What does the book say about nonsquare pixels?",
+   "task_type": "GROUNDED_QA",
+   "retrieval_skipped": false,
+   "wall_s": 12.7,
+   "prompt": {
+    "prompt_chars": 32483,
+    "messages": 2,
+    "carry_in": 0,
+    "carry_in_prompt": 0
+   },
+   "carry": {
+    "in": 0,
+    "admitted": 0
+   },
+   "carry_sent": 0,
+   "carry_sent_ids": [],
+   "legend_chunk_ids": [
+    "chunk_9d2b70392d7bf8a50ac35ab94a5c7b462c5e4557c58fde487810509c7130780c",
+    "chunk_74b49ddcf389b50f0305f208264f32f9a311edad11859b6dbf0835b01b73e040",
+    "chunk_11970fedf58b95743716a1b9b46f4a3cbf24b4a370f4a53a58bc6cbb95b1d830",
+    "chunk_bf71322e03a8e934244e5629ca66fd85c67b47a3524a07d06139dd292ee258cc",
+    "chunk_a419c8a63ae68b6bdffd5903480111606bb039e075463b75de846d8333b464a6",
+    "chunk_72832b2b08ef796357dc9c099933602a9cdf730bf64c0ee47239c881c55757de",
+    "chunk_e7734b19c25a3ff7f0209317db32b36bf3eeb55875da0074e7bc860ce0336f27",
+    "chunk_1b4c7a08ac6e3d239c61e7b710eba7335c6ea319504561cd76abdbef83287b3f",
+    "chunk_9ac5c24b453865f47d0e1b71c70de57caf4fdd53683eed88d370c804fe5c651b",
+    "chunk_4e6e80bc03c4bdb444bc4148e2e911b298cb27a3ef99ba99046b4565a9deb5be"
+   ],
+   "legend_carried_ids": [],
+   "used_evidence": [
+    "chunk_9d2b70392d7bf8a50ac35ab94a5c7b462c5e4557c58fde487810509c7130780c",
+    "chunk_74b49ddcf389b50f0305f208264f32f9a311edad11859b6dbf0835b01b73e040",
+    "chunk_11970fedf58b95743716a1b9b46f4a3cbf24b4a370f4a53a58bc6cbb95b1d830",
+    "chunk_bf71322e03a8e934244e5629ca66fd85c67b47a3524a07d06139dd292ee258cc",
+    "chunk_e7734b19c25a3ff7f0209317db32b36bf3eeb55875da0074e7bc860ce0336f27",
+    "chunk_9ac5c24b453865f47d0e1b71c70de57caf4fdd53683eed88d370c804fe5c651b"
+   ],
+   "answer_chars": 2023,
+   "answer_head": "**Nonsquare pixels are pixels whose width and height are not equal, and their width-to-height relationship is expressed as a **pixel aspect "
+  },
+  {
+   "turn": 2,
+   "question": "What does the book say about making your own chroma keyer?",
+   "task_type": "GROUNDED_QA",
+   "retrieval_skipped": false,
+   "wall_s": 20.1,
+   "prompt": {
+    "prompt_chars": 35623,
+    "messages": 4,
+    "carry_in": 6,
+    "carry_in_prompt": 0
+   },
+   "carry": {
+    "in": 6,
+    "dropped_duplicate": 0,
+    "dropped_already_retrieved": 0,
+    "dropped_unparsed": 0,
+    "candidates": 6,
+    "hydrated": 6,
+    "dropped_missing": 0,
+    "dropped_floor": 6,
+    "dropped_cap": 0,
+    "admitted": 0,
+    "floor": 0.25,
+    "cap": 8,
+    "degraded": null,
+    "scores": [],
+    "admitted_ids": [],
+    "scores_dropped_floor": [
+     -8.625,
+     -9.3125,
+     -9.5625,
+     -10.25,
+     -10.5,
+     -11.875
+    ]
+   },
+   "carry_sent": 6,
+   "carry_sent_ids": [
+    "chunk_9d2b70392d7bf8a50ac35ab94a5c7b462c5e4557c58fde487810509c7130780c",
+    "chunk_74b49ddcf389b50f0305f208264f32f9a311edad11859b6dbf0835b01b73e040",
+    "chunk_11970fedf58b95743716a1b9b46f4a3cbf24b4a370f4a53a58bc6cbb95b1d830",
+    "chunk_bf71322e03a8e934244e5629ca66fd85c67b47a3524a07d06139dd292ee258cc",
+    "chunk_e7734b19c25a3ff7f0209317db32b36bf3eeb55875da0074e7bc860ce0336f27",
+    "chunk_9ac5c24b453865f47d0e1b71c70de57caf4fdd53683eed88d370c804fe5c651b"
+   ],
+   "legend_chunk_ids": [
+    "chunk_f8ae8454a2e5f5bff1e254d97457d7e4759464b699dff39e1b475c4ddc5c14d0",
+    "chunk_fbe841b47db000daceea61d2f3e94fd6e33a3ee22f0aac8c63b356d4dca9781a",
+    "chunk_c62d072d451f3243e17ccb8ed624f5c47830689ad738ea6163c82dc362b2ce00",
+    "chunk_7178f0bc5af5d730c99c7dbfd9b7f69ab349eedac20bd4a781457676af4eb47a",
+    "chunk_ac16b3ffb273d6bd9c977e11cf728ea611e5b248b6753f18f1f7e1d4df99a12a",
+    "chunk_3e5b1e37d3f889978e1185386ee28343dfeef67dad2ed555670d75e262880599",
+    "chunk_4abd8b5169961c3f0cae463f8a5af4f2e8bf002e1ec4f4475235a6221a7a757d",
+    "chunk_1712071f0e724181a3b818255c8b590929162e7a4140400a8068c2ed0bbdc17e",
+    "chunk_0477c79454e89e9a0c40703b2921d5036bec998adc065e501d0ef1ccdc220f5d",
+    "chunk_3468ce6f476f3855a9b85275dfc357b82f16071079e3dfdf3d3360d5107538f3"
+   ],
+   "legend_carried_ids": [],
+   "used_evidence": [
+    "chunk_fbe841b47db000daceea61d2f3e94fd6e33a3ee22f0aac8c63b356d4dca9781a",
+    "chunk_f8ae8454a2e5f5bff1e254d97457d7e4759464b699dff39e1b475c4ddc5c14d0",
+    "chunk_4abd8b5169961c3f0cae463f8a5af4f2e8bf002e1ec4f4475235a6221a7a757d",
+    "chunk_3e5b1e37d3f889978e1185386ee28343dfeef67dad2ed555670d75e262880599"
+   ],
+   "answer_chars": 1372,
+   "answer_head": "**The book's verdict is blunt: you *can* build your own chroma keyer, but it's \"probably more hassle than it's worth\" — an off-the-shelf key"
+  },
+  {
+   "turn": 3,
+   "question": "How does that work in practice?",
+   "task_type": "GROUNDED_QA",
+   "retrieval_skipped": false,
+   "wall_s": 13.8,
+   "prompt": {
+    "prompt_chars": 38731,
+    "messages": 6,
+    "carry_in": 8,
+    "carry_in_prompt": 0
+   },
+   "carry": {
+    "in": 8,
+    "dropped_duplicate": 0,
+    "dropped_already_retrieved": 4,
+    "dropped_unparsed": 0,
+    "candidates": 4,
+    "hydrated": 4,
+    "dropped_missing": 0,
+    "dropped_floor": 4,
+    "dropped_cap": 0,
+    "admitted": 0,
+    "floor": 0.25,
+    "cap": 8,
+    "degraded": null,
+    "scores": [],
+    "admitted_ids": [],
+    "scores_dropped_floor": [
+     -8.125,
+     -8.9375,
+     -10.0625,
+     -11.3125
+    ]
+   },
+   "carry_sent": 8,
+   "carry_sent_ids": [
+    "chunk_f8ae8454a2e5f5bff1e254d97457d7e4759464b699dff39e1b475c4ddc5c14d0",
+    "chunk_fbe841b47db000daceea61d2f3e94fd6e33a3ee22f0aac8c63b356d4dca9781a",
+    "chunk_3e5b1e37d3f889978e1185386ee28343dfeef67dad2ed555670d75e262880599",
+    "chunk_4abd8b5169961c3f0cae463f8a5af4f2e8bf002e1ec4f4475235a6221a7a757d",
+    "chunk_9d2b70392d7bf8a50ac35ab94a5c7b462c5e4557c58fde487810509c7130780c",
+    "chunk_74b49ddcf389b50f0305f208264f32f9a311edad11859b6dbf0835b01b73e040",
+    "chunk_11970fedf58b95743716a1b9b46f4a3cbf24b4a370f4a53a58bc6cbb95b1d830",
+    "chunk_bf71322e03a8e934244e5629ca66fd85c67b47a3524a07d06139dd292ee258cc"
+   ],
+   "legend_chunk_ids": [
+    "chunk_f8ae8454a2e5f5bff1e254d97457d7e4759464b699dff39e1b475c4ddc5c14d0",
+    "chunk_fbe841b47db000daceea61d2f3e94fd6e33a3ee22f0aac8c63b356d4dca9781a",
+    "chunk_c62d072d451f3243e17ccb8ed624f5c47830689ad738ea6163c82dc362b2ce00",
+    "chunk_ac16b3ffb273d6bd9c977e11cf728ea611e5b248b6753f18f1f7e1d4df99a12a",
+    "chunk_3e5b1e37d3f889978e1185386ee28343dfeef67dad2ed555670d75e262880599",
+    "chunk_6e4e13c8b0e0a8d0d8343334c1c8d81ab42fdb0c251a853623ef23b5555ce6ac",
+    "chunk_4abd8b5169961c3f0cae463f8a5af4f2e8bf002e1ec4f4475235a6221a7a757d",
+    "chunk_1712071f0e724181a3b818255c8b590929162e7a4140400a8068c2ed0bbdc17e",
+    "chunk_0639358f663ef9b43e8145e1de6fd26b55eae57eb9c79f34a24ec8cde6e427ab",
+    "chunk_be5e30c41ea256239ed01ad08a382732ad8876ebdea83c5a8276f4ee5580f349"
+   ],
+   "legend_carried_ids": [],
+   "used_evidence": [
+    "chunk_f8ae8454a2e5f5bff1e254d97457d7e4759464b699dff39e1b475c4ddc5c14d0",
+    "chunk_fbe841b47db000daceea61d2f3e94fd6e33a3ee22f0aac8c63b356d4dca9781a",
+    "chunk_4abd8b5169961c3f0cae463f8a5af4f2e8bf002e1ec4f4475235a6221a7a757d",
+    "chunk_6e4e13c8b0e0a8d0d8343334c1c8d81ab42fdb0c251a853623ef23b5555ce6ac",
+    "chunk_c62d072d451f3243e17ccb8ed624f5c47830689ad738ea6163c82dc362b2ce00"
+   ],
+   "answer_chars": 2873,
+   "answer_head": "**In practice, building your own chroma keyer is a node-graph exercise: convert RGB → HSV, then use a color curve to isolate the target's hu"
+  }
+ ]
+}

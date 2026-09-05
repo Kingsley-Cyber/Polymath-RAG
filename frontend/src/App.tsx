@@ -149,13 +149,36 @@ export default function App() {
             ? m.text
             : (m.answer?.result?.answer ?? m.text ?? "").slice(0, 4000),
       }));
+      // CARRY-V2 (CHAT-QUERY-COMPILER-PLAN §3.5, P0.e): carry only the
+      // evidence the model actually USED ([S#]-cited) in earlier answers
+      // of THIS chat, newest first, cap 8, with its chunk id. The backend
+      // re-hydrates, reranks it against the resolved request and drops
+      // what falls below the admission floor. The retrieved inventory is
+      // never carried (measured 2026-09-05: turn-1 noise became turn-3
+      // "evidence" and the prompt grew 32k → 47k chars in three turns).
       const seenLoc = new Set<string>();
-      const carry: { locator: string; preview: string }[] = [];
+      const carry: { locator: string; preview: string; chunk_id?: string }[] = [];
       for (const m of [...active.messages].reverse()) {
-        for (const c of m.answer?.retrieval?.chunks ?? []) {
-          if (c.locator && !seenLoc.has(c.locator) && carry.length < 30) {
-            seenLoc.add(c.locator);
-            carry.push({ locator: c.locator, preview: c.preview ?? "" });
+        const ret = m.answer?.retrieval;
+        if (!ret) continue;
+        const used = new Set(ret.used_evidence ?? []);
+        const previewByLoc = new Map(
+          (ret.chunks ?? []).map((c) => [c.locator, c.preview ?? ""] as const),
+        );
+        for (const e of ret.legend ?? []) {
+          if (
+            e.chunk_id &&
+            used.has(e.chunk_id) &&
+            e.locator &&
+            !seenLoc.has(e.locator) &&
+            carry.length < 8
+          ) {
+            seenLoc.add(e.locator);
+            carry.push({
+              locator: e.locator,
+              preview: previewByLoc.get(e.locator) ?? "",
+              chunk_id: e.chunk_id,
+            });
           }
         }
       }
