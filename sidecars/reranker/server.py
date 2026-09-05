@@ -137,11 +137,60 @@ async def ready() -> dict:
         return {"ready": False, "reason": type(exc).__name__}
 
 
+RERANK_BATCH = max(1, int(os.environ.get("POLYMATH_RERANK_BATCH", "8")))
+
+
+def _release_accelerator_cache() -> None:
+    try:
+        import torch
+        if torch.backends.mps.is_available():
+            torch.mps.empty_cache()
+    except Exception:  # noqa: BLE001 — cache release is best effort
+        pass
+
+
+def _is_oom(exc: BaseException) -> bool:
+    t = f"{type(exc).__name__}: {exc}".lower()
+    return "out of memory" in t or "mps backend" in t and "memory" in t
+
+
+def score_in_batches(predict, pairs: list, batch: int = RERANK_BATCH) -> list[float]:
+    """RERANK-BATCHING-V1 (measured 2026-09-05): one forward pass over 20-40
+    (query, document) pairs exceeded the MPS 3.5 GiB shared pool
+    ("MPS backend out of memory", 21 × HTTP 500 in an hour) while ≤ 10 pairs
+    scored in 2.2 s. Score in fixed batches, release the accelerator cache
+    between them, and halve the batch on an OOM down to 1 before giving up.
+    Order and length of the result equal the input; pure over `predict`."""
+    out: list[float] = []
+    i = 0
+    cur = max(1, int(batch))
+    while i < len(pairs):
+        chunk = pairs[i:i + cur]
+        try:
+            out.extend(float(x) for x in predict(chunk))
+            i += len(chunk)
+        except Exception as exc:  # noqa: BLE001
+            if _is_oom(exc) and cur > 1:
+                _release_accelerator_cache()
+                cur = max(1, cur // 2)
+                log.warning("rerank batch OOM at %d pairs; retrying at %d", len(chunk), cur)
+                continue
+            raise
+        finally:
+            _release_accelerator_cache()
+    return out
+
+
 @app.post("/rerank", response_model=RerankResponse)
 async def rerank(req: RerankRequest) -> RerankResponse:
     model = app.state.model
     pairs = [[req.query, d] for d in req.documents]
-    scores = [float(s) for s in model.predict(pairs)]
+    try:
+        scores = score_in_batches(model.predict, pairs)
+    except Exception as exc:  # noqa: BLE001 — typed 503, never a bare 500
+        log.error("rerank failed: %s", f"{type(exc).__name__}: {exc}"[:200])
+        raise HTTPException(status_code=503, detail={"error_code": "rerank_failed",
+                                                     "reason": type(exc).__name__, "pairs": len(pairs)})
     order = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)
     if req.top_k is not None:
         order = order[: req.top_k]

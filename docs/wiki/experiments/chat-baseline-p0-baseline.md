@@ -1,3 +1,11 @@
+---
+title: "Chat baseline — p0-baseline"
+owner: governance
+last_reviewed: 2026-09-05
+last_touched: 2026-09-05
+status: measured
+---
+
 # Chat baseline — p0-baseline
 
 Fixture `eval/fixtures/chat_baseline_B.json` (chat-baseline-B-v3, seed 20260905); synthesizer deterministic-template-v3; HYBRID via /chat/stream.

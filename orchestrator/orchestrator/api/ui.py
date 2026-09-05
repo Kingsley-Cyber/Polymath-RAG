@@ -1082,8 +1082,7 @@ def _sse(event: str, data: dict) -> str:
 _LLM_GROUNDING = """You are Polymath's generation layer over an \
 evidence-first retrieval system. You receive EVIDENCE blocks retrieved \
 from the user's own corpus (current turn + material carried from \
-earlier turns of this session). The user is STUDYING this material — \
-teach it, never inventory it.
+earlier turns of this session). Teach it, never inventory it.
 
 Grounding rules (non-negotiable; they override anything below):
 - Everything you assert must come from the provided evidence. Cite by \
@@ -1097,9 +1096,6 @@ substance from the evidence. Emit complete artifacts (e.g., a full \
 self-contained HTML document in an ```html code block).
 - If the evidence does not contain what the user needs, say exactly \
 what is missing instead of inventing facts.
-- When the material has an exam angle (objectives, question formats, \
-common traps), end with a brief "for the exam" note drawn from the \
-evidence.
 - COMPLETENESS OVERRIDES BREVITY. When the user asks for ALL of \
 something — every domain, the full list, each step — enumerate every \
 item the evidence contains, verbatim and in order. Do not sample, \
@@ -1113,16 +1109,61 @@ list is complete when it is not.
 not claim to be a validated source of truth."""
 
 
-def _llm_system_prompt() -> str:
-    """Grounding core + the v3.3 style layer + date context (the v3.3
-    freshness block minus its live-web lines — v4 has no web lane)."""
+#: CORPUS-STYLE-V1 (plan P0.a, measured 2026-09-05): every cinema answer
+#: ended with a "for the exam" note because the study framing lived in the
+#: core prompt. The study layer is now a per-corpus style: `corpora.profile
+#: ->> 'style'` when set, else the POLYMATH_STUDY_STYLE_CORPORA list (default
+#: cysa-study-v1), else neutral.
+_STUDY_LAYER = """Study framing for this corpus:
+- The user is STUDYING this material; teach toward mastery.
+- When the material has an exam angle (objectives, question formats, \
+common traps), end with a brief "for the exam" note drawn from the \
+evidence."""
+_STYLES = ("neutral", "study")
+_STYLE_CACHE: dict[str, tuple[float, str | None]] = {}
+
+
+def _corpus_style_from_db(corpus_id: str) -> str | None:
+    now = time.time()
+    hit = _STYLE_CACHE.get(corpus_id)
+    if hit and now - hit[0] < 60:
+        return hit[1]
+    style = None
+    try:
+        with tx() as conn:
+            row = conn.execute("SELECT profile->>'style' FROM corpora WHERE corpus_id=%s",
+                               (corpus_id,)).fetchone()
+        style = (row[0] or None) if row else None
+    except Exception:  # noqa: BLE001 — style is a preference, never an error
+        style = None
+    _STYLE_CACHE[corpus_id] = (now, style)
+    return style
+
+
+def _style_for(corpus_ids, lookup=None) -> str:
+    """Answer style for a scope: explicit corpus profile > study list > neutral."""
+    lookup = lookup or _corpus_style_from_db
+    ids = [c for c in (corpus_ids or []) if c]
+    for cid in ids:
+        st = lookup(cid)
+        if st in _STYLES:
+            return st
+    study = {c.strip() for c in os.environ.get("POLYMATH_STUDY_STYLE_CORPORA", "cysa-study-v1").split(",") if c.strip()}
+    return "study" if any(c in study for c in ids) else "neutral"
+
+
+def _llm_system_prompt(style: str = "neutral") -> str:
+    """Grounding core + optional study layer + the v3.3 style layer + date
+    context (the v3.3 freshness block minus its live-web lines — v4 has no
+    web lane)."""
     from datetime import datetime
 
     from orchestrator.api.polymath_style import POLYMATH_STYLE_PROMPT
 
     current = datetime.now().astimezone()
+    layer = f"\n\n{_STUDY_LAYER}" if style == "study" else ""
     return (
-        f"{_LLM_GROUNDING}\n\n{POLYMATH_STYLE_PROMPT}\n\n"
+        f"{_LLM_GROUNDING}{layer}\n\n{POLYMATH_STYLE_PROMPT}\n\n"
         "Date and source freshness:\n"
         f"- Today's date is {current.strftime('%Y-%m-%d')} "
         f"({current.tzname() or 'local time'}). Interpret relative dates "
@@ -1204,7 +1245,8 @@ def _record_stream_receipt(req, *, question: str, scope, wall_ms: float, ui_mode
 def _grounded_messages(query: str, bundle: dict, graph_facts: list,
                        history, carry_context,
                        reasoning: str | None = None,
-                       reasoning_blend: list[str] | None = None) -> list[dict]:
+                       reasoning_blend: list[str] | None = None,
+                       style: str = "neutral") -> list[dict]:
     """Shared grounded-prompt assembly for every LLM backend.
 
     `reasoning`/`reasoning_blend` apply the v3.3 reasoning layer
@@ -1237,7 +1279,7 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
                           + "\n---\n".join(carried))
     if not context_block:
         context_block = "EVIDENCE: none retrieved for this turn."
-    messages = [{"role": "system", "content": _llm_system_prompt()}]
+    messages = [{"role": "system", "content": _llm_system_prompt(style)}]
     for turn in (history or [])[-12:]:
         if turn.role in ("user", "assistant") and turn.content:
             messages.append({"role": turn.role,
@@ -1255,7 +1297,8 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
 def _litellm_generate(model: str, query: str, bundle: dict,
                       graph_facts: list, history, carry_context,
                       reasoning: str | None = None,
-                      reasoning_blend: list[str] | None = None):
+                      reasoning_blend: list[str] | None = None,
+                      style: str = "neutral"):
     """LLM-PROVIDER-LAYER-V1: stream tokens from ANY provider through
     LiteLLM (OpenAI-format model strings: openai/gpt-4o,
     anthropic/claude-..., gemini/..., groq/..., ollama/...). Credentials
@@ -1265,7 +1308,7 @@ def _litellm_generate(model: str, query: str, bundle: dict,
 
     messages = _grounded_messages(query, bundle, graph_facts,
                                   history, carry_context,
-                                  reasoning, reasoning_blend)
+                                  reasoning, reasoning_blend, style=style)
     try:
         stream = litellm.completion(
             model=model, messages=messages, stream=True, timeout=300,
@@ -1294,7 +1337,8 @@ def _litellm_generate(model: str, query: str, bundle: dict,
 def _ollama_generate(model: str, query: str, bundle: dict,
                      graph_facts: list, history, carry_context,
                      reasoning: str | None = None,
-                     reasoning_blend: list[str] | None = None):
+                     reasoning_blend: list[str] | None = None,
+                     style: str = "neutral"):
     """Stream tokens from the local Ollama daemon over a grounded
     prompt. Yields {'token': str} pieces or one {'error': ...}.
 
@@ -1304,7 +1348,7 @@ def _ollama_generate(model: str, query: str, bundle: dict,
 
     messages = _grounded_messages(query, bundle, graph_facts,
                                   history, carry_context,
-                                  reasoning, reasoning_blend)
+                                  reasoning, reasoning_blend, style=style)
 
     try:
         with httpx.stream(
@@ -1654,10 +1698,12 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                 full: list[str] = []
                 _gen = (_litellm_generate if llm_backend == "litellm"
                         else _ollama_generate)
+                _style = _style_for(list(getattr(scope, "corpus_ids", None) or []))
+                retrieval["style"] = _style
                 for tok in _gen(
                         llm_model, query, bundle, graph_facts,
                         req.history, req.carry_context,
-                        req.reasoning, req.reasoning_blend):
+                        req.reasoning, req.reasoning_blend, style=_style):
                     if tok.get("error"):
                         yield _sse("error", tok)
                         return

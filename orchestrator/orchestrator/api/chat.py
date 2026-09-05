@@ -76,7 +76,7 @@ async def _chat_impl(req: ChatRequest) -> dict:
     # graph expansion by contract: the bundle's graph lane stays empty.
     from polymath_shared.retrieval_modes import MODE_FAST, MODE_GRAPH, MODE_HYBRID, validate_mode
 
-    mode = validate_mode(req.mode)
+    mode = resolve_chat_mode(req.mode)
     if mode == MODE_GRAPH:
         # GRAPH: one GRAPH retrieval result feeds the existing bundle
         # (graph lane = qualified facts; text lane = HYBRID evidence).
@@ -127,7 +127,9 @@ async def _chat_impl(req: ChatRequest) -> dict:
             raise HTTPException(status_code=502, detail={
                 "error_code": type(exc).__name__, "message": str(exc),
             }) from exc
-        return grounded_answer(bundle, query)
+        out = grounded_answer(bundle, query)
+        out.setdefault("meta", {})["mode"] = mode
+        return out
     if mode in (MODE_FAST, MODE_HYBRID):
         if mode == MODE_FAST:
             from orchestrator.api.fast import fast_retrieve
@@ -195,6 +197,7 @@ async def _chat_impl(req: ChatRequest) -> dict:
             out["meta"]["used_evidence"] = cited
         except Exception:  # noqa: BLE001 — diagnostics never break an answer
             pass
+        out.setdefault("meta", {})["mode"] = mode
         return out
 
     corpus_ids = list(scope.corpus_ids)
@@ -276,11 +279,23 @@ async def _chat_impl(req: ChatRequest) -> dict:
             },
         ) from exc
 
-    return grounded_answer(bundle, query)
+    out = grounded_answer(bundle, query)
+    out.setdefault("meta", {})["mode"] = mode          # LEGACY, and it says so
+    return out
 
 
 
 _LOC_CHUNK = re.compile(r"^chunk:([A-Za-z0-9_]+)")
+
+
+def resolve_chat_mode(requested: str | None) -> str:
+    """CHAT-DEFAULT-HYBRID-V1 (plan P0.a, measured 2026-09-05): `/chat` with
+    no mode ran the frozen LEGACY regression path (12,732 claims, a 437 KB
+    triple dump, 30–50 s) and stamped it HYBRID. The default for chat is
+    HYBRID; LEGACY stays available only when named. `/retrieve` keeps
+    retrieval_modes.DEFAULT_MODE for its own frozen evaluations."""
+    from polymath_shared.retrieval_modes import MODE_HYBRID, validate_mode
+    return validate_mode(requested or MODE_HYBRID)
 
 
 def attach_evidence_rows(out: dict, req: "ChatRequest") -> dict:
@@ -314,7 +329,10 @@ def attach_evidence_rows(out: dict, req: "ChatRequest") -> dict:
         out["evidence_rows"] = []
         out["evidence_rows_error"] = f"{type(exc).__name__}: {exc}"[:200]
     meta = out.setdefault("meta", {})
-    meta["mode"] = meta.get("mode") or (req.mode or "HYBRID")
+    # CHAT-MODE-TRUTH-V1 (plan P0.a): the executed mode is stamped by
+    # _chat_impl; never label a LEGACY answer as HYBRID by default.
+    meta.setdefault("mode", "UNKNOWN")
+    meta["requested_mode"] = req.mode
     return out
 
 

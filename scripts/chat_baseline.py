@@ -187,12 +187,21 @@ def run(tag: str, synthesizer: str | None, limit: int | None) -> dict:
     }
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     (OUT_DIR / f"chat-baseline-{tag}.json").write_text(json.dumps({"summary": summary, "results": results}, indent=1, default=str))
-    md = [f"# Chat baseline — {tag}", "", f"Fixture `{FIXTURE.relative_to(ROOT)}` ({fx['version']}, seed {fx['seed']}); synthesizer {summary['synthesizer']}; HYBRID via /chat/stream.", "",
+    _write_md(tag, summary, results)
+    print(json.dumps(summary, indent=1))
+    return summary
+
+
+def _write_md(tag: str, summary: dict, results: list) -> None:
+    fx = json.loads(FIXTURE.read_text())
+    import datetime as _dt
+    today = _dt.date.today().isoformat()
+    md = ["---", f"title: \"Chat baseline — {tag}\"", "owner: governance", f"last_reviewed: {today}", f"last_touched: {today}",
+          "status: measured", "---", "", f"# Chat baseline — {tag}", "",
+          f"Fixture `{FIXTURE.relative_to(ROOT)}` ({fx['version']}, seed {fx['seed']}); synthesizer {summary['synthesizer']}; HYBRID via /chat/stream.", "",
           "| metric | value |", "|---|---|"] + [f"| {k} | {v} |" for k, v in summary.items() if k not in ("tag", "synthesizer")] + ["", "| corpus | question | death | selected rank | wall s |", "|---|---|---|---|---|"]
     md += [f"| {r['corpus_id']} | {r['question'][:60]} | {r.get('death', r.get('error'))} | {r.get('gold_selected_rank')} | {r.get('wall_s')} |" for r in results]
     (OUT_DIR / f"chat-baseline-{tag}.md").write_text("\n".join(md) + "\n")
-    print(json.dumps(summary, indent=1))
-    return summary
 
 
 def main() -> int:
@@ -206,7 +215,13 @@ def main() -> int:
     ap.add_argument("--synthesizer", default="deterministic-template-v3")
     ap.add_argument("--llm", action="store_true", help="use the default LLM synthesizer instead of the deterministic one")
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--render", action="store_true", help="rewrite the .md from an existing chat-baseline-<tag>.json")
     a = ap.parse_args()
+    if a.render:
+        d = json.loads((OUT_DIR / f"chat-baseline-{a.tag}.json").read_text())
+        _write_md(a.tag, d["summary"], d["results"])
+        print(f"rendered {OUT_DIR / f'chat-baseline-{a.tag}.md'}")
+        return 0
     if a.build:
         fx = build(a.per_corpus, [c.strip() for c in a.corpora.split(",") if c.strip()], a.seed)
         FIXTURE.parent.mkdir(parents=True, exist_ok=True)
