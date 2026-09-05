@@ -1226,6 +1226,103 @@ def _cited_chunk_ids(answer_text: str, legend: list[dict]) -> list[str]:
     return out
 
 
+_COMPILER_FLAG_ENV = "POLYMATH_CHAT_COMPILER"          # off | shadow | on
+#: a compiler call that has not answered in 6 s is a failed lane, not a wait
+#: (measured 2026-09-05: a Gemini 503 arrived after a 24 s hang)
+_COMPILER_HTTP_TIMEOUT_S = float(os.environ.get("POLYMATH_CHAT_COMPILER_HTTP_TIMEOUT_S", "6.0"))
+
+
+def _compiler_flag() -> str:
+    v = (os.environ.get(_COMPILER_FLAG_ENV, "shadow") or "shadow").strip().lower()
+    return v if v in ("off", "shadow", "on") else "shadow"
+
+
+_COMPILER_LANE_COOLDOWN_S = float(os.environ.get("POLYMATH_CHAT_COMPILER_LANE_COOLDOWN_S", "120"))
+_COMPILER_LANE_FAILED_AT: dict[str, float] = {}       # lane name -> last transport failure (process-local breaker)
+
+
+def _lane_family(ep) -> str:
+    try:
+        from urllib.parse import urlparse
+        return urlparse(getattr(ep, "url", "") or "").netloc or "?"
+    except Exception:  # noqa: BLE001
+        return "?"
+
+
+def _compiler_attempt_order(endpoints: list, key: str, *, failed_at: dict | None = None,
+                            now: float | None = None, cooldown_s: float = _COMPILER_LANE_COOLDOWN_S,
+                            max_attempts: int = 3) -> list:
+    """COMPILER-LANE-ORDER-V1: deterministic attempt list for one turn —
+    the ring's home lane for `key`, then the first lane of a DIFFERENT
+    provider family (a Gemini-wide 503 storm must not eat both attempts),
+    then the ring neighbour. Lanes whose last transport failure is inside
+    the cooldown are moved to the back (never dropped: if every lane is
+    cold we still try). Pure over its inputs."""
+    import hashlib
+    if not endpoints:
+        return []
+    roster = sorted(endpoints, key=lambda e: e.name)
+    digest = hashlib.blake2b((key or "").encode(), digest_size=8).digest()
+    home_idx = int.from_bytes(digest, "big") % len(roster)
+    home = roster[home_idx]
+    order = [home]
+    alt = next((e for e in roster if _lane_family(e) != _lane_family(home)), None)
+    if alt is not None:
+        order.append(alt)
+    for step in range(1, len(roster)):
+        e = roster[(home_idx + step) % len(roster)]
+        if e not in order:
+            order.append(e)
+    failed_at = failed_at if failed_at is not None else _COMPILER_LANE_FAILED_AT
+    now = time.time() if now is None else now
+    cold = lambda e: (now - failed_at.get(e.name, -1e12)) < cooldown_s
+    order = [e for e in order if not cold(e)] + [e for e in order if cold(e)]
+    return order[:max_attempts]
+
+
+def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | None = None):
+    """CHAT-INTENT-PLAN-V1 through the `chat_compiler` stage pin (plan §3.2):
+    one cheap lane, one call, strict local validation, deterministic fallback.
+    The lane is chosen per session key (ring), each lane self-gates through
+    its own limiter. Never raises."""
+    from polymath_shared.chat_plan import COMPILER_STAGE, compile_plan, fallback_plan
+    try:
+        from polymath_shared.llm_extraction.client import LLMExtractionClient
+        from polymath_shared.llm_extraction.pool import cloud_endpoints, stage_pin
+        key = session_key or message[:64]
+        pin = stage_pin(COMPILER_STAGE) or []
+        endpoints = [e for e in cloud_endpoints() if e.name in pin]
+        if not endpoints:
+            return fallback_plan(message, reason="compiler_unavailable:no_active_lane")
+        last = None
+        # COMPILER-LANE-FAILOVER-V1 + COMPILER-LANE-ORDER-V1: a transport
+        # failure (429/503/timeout) walks to the next attempt — home lane,
+        # then a different provider family, then the ring neighbour — and
+        # cools the failed lane for later turns; validation failures do not
+        # retry (the same prompt would produce the same plan).
+        for attempt_no, ep in enumerate(_compiler_attempt_order(endpoints, key), start=1):
+            offset = attempt_no - 1
+            client = LLMExtractionClient("cloud", url=ep.url, model=ep.model, limiter_key=ep.limiter_key,
+                                         api_key=ep.api_key, cloud_opts=ep.cloud_opts,
+                                         timeout_s=_COMPILER_HTTP_TIMEOUT_S, max_attempts=1)
+            client.endpoint_name = ep.name
+
+            def _complete(system_prompt: str, user_prompt: str, max_tokens: int, _c=client):
+                return _c.complete_one(user_prompt, system_prompt=system_prompt, max_tokens=max_tokens)
+            plan = compile_plan(message, history, corpus_ids, _complete, model=f"{ep.name}:{ep.model}")
+            plan.compiler["lane"] = ep.name
+            plan.compiler["attempt"] = attempt_no
+            if last is not None:
+                plan.compiler["first_failure"] = last
+            if not plan.fallback or not str(plan.compiler.get("reason", "")).startswith("transport:"):
+                return plan
+            _COMPILER_LANE_FAILED_AT[ep.name] = time.time()
+            last = f"{ep.name}:{plan.compiler.get('reason')}"
+        return plan
+    except Exception as exc:  # noqa: BLE001 — a missing pin / dark lane is a receipted fallback
+        return fallback_plan(message, reason=f"compiler_unavailable:{type(exc).__name__}")
+
+
 def _record_stream_receipt(req, *, question: str, scope, wall_ms: float, ui_mode: str,
                            answer: str | None, meta: dict, error: str | None = None) -> None:
     """QUERY-RECEIPTS on the streaming path (plan §3.6). Best effort, never
@@ -1493,6 +1590,43 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                 scope = resolve_http_scope(conn, req)
             yield _phase("scope_ok", "Scope resolved",
                          mode=scope.mode, corpora=list(scope.corpus_ids))
+            # CHAT-INTENT-PLAN-V1 (plan P0.b): compile the turn. In `shadow`
+            # the plan is receipted and shown but changes nothing downstream.
+            _plan = None
+            _plan_receipt: dict = {}
+            _plan_future = None
+            _flag = _compiler_flag()
+            if _flag != "off":
+                from concurrent.futures import ThreadPoolExecutor
+                _session_key = (req.workspace or req.corpus_id or query[:64])
+                _corpora = list(scope.corpus_ids)
+                # SHADOW runs beside retrieval (no added latency, receipt
+                # only); ON (P0.c) is the serial stage 0 the plan describes.
+                _plan_future = ThreadPoolExecutor(max_workers=1).submit(
+                    _compile_chat_plan, query, req.history, _corpora, session_key=_session_key)
+                if _flag == "on":
+                    _plan = _plan_future.result()
+                    _plan_future = None
+                    _mark("compile")
+                    from polymath_shared.chat_plan import plan_receipt
+                    _plan_receipt = plan_receipt(_plan)
+                    yield _phase("compile", "Query compiled" if not _plan.fallback else "Query compiler fell back",
+                                 task_type=_plan.task_type, retrieval_required=_plan.retrieval_required,
+                                 queries=len(_plan.queries), fallback=_plan.fallback,
+                                 mode=_flag, wall_ms=_plan.compiler.get("wall_ms"))
+
+            def _join_plan():
+                nonlocal _plan, _plan_receipt, _plan_future
+                if _plan_future is not None:
+                    from polymath_shared.chat_plan import plan_receipt
+                    try:
+                        _plan = _plan_future.result(timeout=8.0)
+                    except Exception as exc:  # noqa: BLE001
+                        from polymath_shared.chat_plan import fallback_plan
+                        _plan = fallback_plan(query, reason=f"join_failed:{type(exc).__name__}")
+                    _plan_future = None
+                    _plan_receipt = plan_receipt(_plan)
+                    _mark("compile_joined")
 
             if ui_mode == "ASK":
                 yield _phase("ask", "Routing question over stored "
@@ -1717,6 +1851,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                         full.append(piece)
                         yield _sse("token", {"token": piece})
                 _mark("generate")
+                _join_plan()
                 answer_text = "".join(full)
                 from polymath_shared.funnel import funnel_from_trace
                 used = _cited_chunk_ids(answer_text, _legend)
@@ -1729,6 +1864,13 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                                        for e in _legend]
                 retrieval["funnel"] = {"version": funnel["version"], "counts": funnel["counts"],
                                        "lane_counts": funnel["lane_counts"], "multi_lane": funnel["multi_lane"]}
+                if _plan_receipt:
+                    retrieval["chat_plan"] = _plan_receipt
+                    if _flag == "shadow" and _plan is not None:
+                        yield _phase("compile", "Query compiled (shadow)" if not _plan.fallback else "Query compiler fell back (shadow)",
+                                     task_type=_plan.task_type, retrieval_required=_plan.retrieval_required,
+                                     queries=len(_plan.queries), fallback=_plan.fallback, mode=_flag,
+                                     wall_ms=_plan.compiler.get("wall_ms"))
                 _phase_ms["total"] = round((time.perf_counter() - t0) * 1000, 1)
                 yield _sse("answer", {
                     "kind": "llm",
@@ -1753,13 +1895,15 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                     meta={"verdict": "generated", "synthesis_version": f"{llm_backend}:{llm_model}",
                           "model": llm_model, "latent": req.latent, "phase_ms": dict(_phase_ms),
                           "funnel": funnel, "used_evidence": used, "legend": retrieval["legend"],
-                          "degraded": retrieval.get("degraded"), "plan": (_trace or {}).get("plan")})
+                          "degraded": retrieval.get("degraded"), "plan": (_trace or {}).get("plan"),
+                          "chat_plan": _plan_receipt or None})
                 return
 
             yield _phase("synthesize", "Validating claims against "
                                        "evidence…")
             answer = grounded_answer(bundle, query)
             _mark("generate")
+            _join_plan()
             from polymath_shared.funnel import funnel_from_trace
             used = []
             for c in (answer.get("citations") or []):
@@ -1773,6 +1917,13 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
             retrieval["used_evidence"] = used
             retrieval["funnel"] = {"version": funnel["version"], "counts": funnel["counts"],
                                    "lane_counts": funnel["lane_counts"], "multi_lane": funnel["multi_lane"]}
+            if _plan_receipt:
+                retrieval["chat_plan"] = _plan_receipt
+                if _flag == "shadow" and _plan is not None:
+                    yield _phase("compile", "Query compiled (shadow)" if not _plan.fallback else "Query compiler fell back (shadow)",
+                                 task_type=_plan.task_type, retrieval_required=_plan.retrieval_required,
+                                 queries=len(_plan.queries), fallback=_plan.fallback, mode=_flag,
+                                 wall_ms=_plan.compiler.get("wall_ms"))
             _phase_ms["total"] = round((time.perf_counter() - t0) * 1000, 1)
             yield _sse("answer", {
                 "kind": "chat",
@@ -1788,7 +1939,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                       "synthesis_version": (answer.get("meta") or {}).get("synthesis_version"),
                       "latent": req.latent, "phase_ms": dict(_phase_ms), "funnel": funnel,
                       "used_evidence": used, "degraded": retrieval.get("degraded"),
-                      "plan": (_trace or {}).get("plan")})
+                      "plan": (_trace or {}).get("plan"), "chat_plan": _plan_receipt or None})
         except HTTPException as exc:
             detail = exc.detail if isinstance(exc.detail, dict) else {
                 "message": str(exc.detail)}

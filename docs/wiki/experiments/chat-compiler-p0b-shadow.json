@@ -1,0 +1,702 @@
+{
+ "summary": {
+  "tag": "p0b-shadow",
+  "n_fixtures": 6,
+  "n_B": 30,
+  "fixture_pass": 6,
+  "fixture_task_verb_kept": 6,
+  "B_fallback_rate": 0.0,
+  "B_task_verb_kept_rate": 1.0,
+  "B_retrieval_required_rate": 1.0,
+  "wall_p50_ms": 2008.1,
+  "wall_p90_ms": 4257.1,
+  "lanes": [
+   "compiler2",
+   "compiler3",
+   "compiler_alt"
+  ],
+  "fallback_reasons": []
+ },
+ "rows": [
+  {
+   "set": "fixture",
+   "name": "authors_agree",
+   "wall_ms": 2599.2,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_SYNTHESIS",
+   "retrieval_required": true,
+   "resolved_request": "Determine whether Christensen and Kim & Mauborgne agree or disagree about the origin of new markets.",
+   "queries": [
+    "Christensen new market creation origin",
+    "Kim Mauborgne new market creation origin Blue Ocean Strategy",
+    "Christensen Kim Mauborgne market creation comparison"
+   ],
+   "exact_terms": [
+    "Christensen",
+    "Kim & Mauborgne",
+    "Blue Ocean Strategy",
+    "new markets"
+   ],
+   "fails": []
+  },
+  {
+   "set": "fixture",
+   "name": "brainrot_transform",
+   "wall_ms": 1996.7,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "TRANSFORM_USER_CONTENT",
+   "retrieval_required": false,
+   "resolved_request": "Turn the provided Brainrot Recovery prompt into a stronger, production-quality prompt while keeping the same deliverable: a 30-day habit plan with diagnosis, a 30-day plan, warm but direct tone, 800-1200 words, markdown headings and bullet lists, and one JSON example of a daily log, without mentioning apps by name.",
+   "queries": [],
+   "exact_terms": [
+    "JSON"
+   ],
+   "fails": []
+  },
+  {
+   "set": "fixture",
+   "name": "cinema_improve_prompt",
+   "wall_ms": 2071.1,
+   "fallback": false,
+   "lane": "compiler3",
+   "task_type": "CREATE_FROM_KNOWLEDGE",
+   "retrieval_required": true,
+   "resolved_request": "Refine the previously drafted 10-second alley fight video-gen prompt by incorporating cinematic principles regarding action choreography, camera movement, and cinematography found in my cinema books.",
+   "queries": [
+    "cinematography techniques for action fight scenes",
+    "handheld camera movement for fight choreography",
+    "filming fight scenes for impact and clarity"
+   ],
+   "exact_terms": [
+    "10-second",
+    "alley",
+    "handheld",
+    "fight beat"
+   ],
+   "fails": []
+  },
+  {
+   "set": "fixture",
+   "name": "exact_terms_rapo",
+   "wall_ms": 2759.9,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the RAPO paper or method say about prompt optimization for text-to-video generation?",
+   "queries": [
+    "RAPO prompt optimization text-to-video",
+    "RAPO text-to-video prompt optimization",
+    "RAPO method prompt optimization video generation",
+    "RAPO prompt examples text-to-video"
+   ],
+   "exact_terms": [
+    "RAPO",
+    "text-to-video"
+   ],
+   "fails": []
+  },
+  {
+   "set": "fixture",
+   "name": "followup_creativity",
+   "wall_ms": 8895.2,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_SYNTHESIS",
+   "retrieval_required": true,
+   "resolved_request": "How does cognitive overload affect creativity according to the corpus?",
+   "queries": [
+    "cognitive overload creativity impact",
+    "cognitive overload creativity benefits",
+    "how cognitive overload reduces creative performance",
+    "creativity tasks impaired by cognitive overload"
+   ],
+   "exact_terms": [
+    "cognitive overload",
+    "creativity"
+   ],
+   "fails": []
+  },
+  {
+   "set": "fixture",
+   "name": "video_prompt_final",
+   "wall_ms": 3111.4,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "CONTINUE_PRIOR_ARTIFACT",
+   "retrieval_required": false,
+   "resolved_request": "Provide the final video-generation prompt for a 12-second UGC-style clip of a creator unboxing a matte-black mechanical keyboard, incorporating the tightened timing (reveal at second 9) and continuous push-in, based on the cinema corpus guidance already discussed.",
+   "queries": [],
+   "exact_terms": [],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about making your own chroma keyer?",
+   "wall_ms": 1844.8,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about making your own chroma keyer?",
+   "queries": [
+    "making your own chroma keyer"
+   ],
+   "exact_terms": [
+    "chroma keyer"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about nonsquare pixels?",
+   "wall_ms": 1887.1,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about nonsquare pixels?",
+   "queries": [
+    "nonsquare pixels"
+   ],
+   "exact_terms": [
+    "nonsquare pixels"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about oebps/ritc 9781119685401 epub3 ",
+   "wall_ms": 2344.3,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about the OEBPS/RITC section in the EPUB3 file with identifier 9781119685401, specifically in the file named 035 r1.xhtml?",
+   "queries": [
+    "oebps ritc 9781119685401 epub3 035 r1.xhtml"
+   ],
+   "exact_terms": [
+    "oebps/ritc",
+    "9781119685401",
+    "epub3",
+    "035 r1.xhtml"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about miscellaneous drawing tips?",
+   "wall_ms": 1677.3,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about miscellaneous drawing tips?",
+   "queries": [
+    "miscellaneous drawing tips"
+   ],
+   "exact_terms": [
+    "miscellaneous drawing tips"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about transcoding versus color rerend",
+   "wall_ms": 1326.2,
+   "fallback": false,
+   "lane": "compiler2",
+   "task_type": "GROUNDED_SYNTHESIS",
+   "retrieval_required": true,
+   "resolved_request": "What does the cinema corpus say about the differences between transcoding and color rerendering?",
+   "queries": [
+    "transcoding vs color rerendering",
+    "definition of transcoding and color rerendering in digital cinema"
+   ],
+   "exact_terms": [
+    "transcoding",
+    "color rerendering"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about FACE OFF?",
+   "wall_ms": 1884.6,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about the film FACE OFF?",
+   "queries": [
+    "FACE OFF"
+   ],
+   "exact_terms": [
+    "FACE OFF",
+    "FACE",
+    "OFF"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about affect, fatigue, and injury are",
+   "wall_ms": 2606.2,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about affect, fatigue, and injury as control states in cinema?",
+   "queries": [
+    "affect fatigue injury control states cinema",
+    "affect theory control states cinema",
+    "fatigue as control state in film theory",
+    "injury control states film analysis"
+   ],
+   "exact_terms": [
+    "affect",
+    "fatigue",
+    "injury",
+    "control states",
+    "cinema"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about movement of an object with a ba",
+   "wall_ms": 9355.4,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about the movement of an object relative to a background?",
+   "queries": [
+    "movement of an object with a background",
+    "object motion relative to background in film",
+    "examples of object movement against background in cinema"
+   ],
+   "exact_terms": [
+    "movement of an object with a background"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about sound editing?",
+   "wall_ms": 1802.9,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about sound editing in cinema?",
+   "queries": [
+    "sound editing cinema"
+   ],
+   "exact_terms": [
+    "sound editing",
+    "cinema"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about write radio sparely?",
+   "wall_ms": 2578.7,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about writing radio dialogue sparsely?",
+   "queries": [
+    "writing radio dialogue sparsely",
+    "sparse dialogue in radio writing"
+   ],
+   "exact_terms": [
+    "radio",
+    "sparsely",
+    "writing radio dialogue"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about rewards of good type developmen",
+   "wall_ms": 8891.0,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about the rewards of good character or personality type development in cinema?",
+   "queries": [
+    "rewards of character development in cinema",
+    "how character development benefits films",
+    "examples of character development rewards in cinema",
+    "character arc rewards in film theory"
+   ],
+   "exact_terms": [
+    "character development",
+    "rewards",
+    "cinema"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about multiple moments?",
+   "wall_ms": 1386.1,
+   "fallback": false,
+   "lane": "compiler2",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the cinema corpus say about the concept of multiple moments?",
+   "queries": [
+    "multiple moments cinema theory",
+    "definition of multiple moments in film"
+   ],
+   "exact_terms": [
+    "multiple moments"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about PREMISE AND THEME?",
+   "wall_ms": 2690.4,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_SYNTHESIS",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about premise and theme in cinema?",
+   "queries": [
+    "premise and theme in cinema",
+    "definition of premise in film",
+    "definition of theme in film",
+    "relationship between premise and theme in cinema"
+   ],
+   "exact_terms": [
+    "premise",
+    "theme",
+    "cinema",
+    "PREMISE",
+    "THEME"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about battling overconfidence?",
+   "wall_ms": 8375.2,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about battling overconfidence in cinema?",
+   "queries": [
+    "overconfidence in cinema"
+   ],
+   "exact_terms": [
+    "overconfidence"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about changing a level within a clip?",
+   "wall_ms": 4257.1,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about changing a level within a clip?",
+   "queries": [
+    "changing a level within a clip",
+    "level within a clip definition",
+    "how to change level within a clip"
+   ],
+   "exact_terms": [
+    "changing a level within a clip",
+    "level within a clip"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about why innovative leaders make a d",
+   "wall_ms": 1925.0,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about why innovative leaders make a difference?",
+   "queries": [
+    "innovative leaders make a difference"
+   ],
+   "exact_terms": [
+    "innovative leaders",
+    "make a difference"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about WHAT PROGRESS IS REALLY LIKE?",
+   "wall_ms": 1892.9,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about what progress is really like?",
+   "queries": [
+    "what progress is really like"
+   ],
+   "exact_terms": [
+    "what progress is really like",
+    "WHAT",
+    "PROGRESS",
+    "IS",
+    "REALLY",
+    "LIKE"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about the big idea?",
+   "wall_ms": 1690.1,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book ecom-meta-v1 say about the big idea?",
+   "queries": [
+    "big idea"
+   ],
+   "exact_terms": [
+    "big idea"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about automation aligned with busines",
+   "wall_ms": 2006.2,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about automation aligned with business strategy?",
+   "queries": [
+    "automation aligned with business strategy"
+   ],
+   "exact_terms": [
+    "automation",
+    "business strategy"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about cost innovations?",
+   "wall_ms": 1783.8,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about cost innovations?",
+   "queries": [
+    "cost innovations"
+   ],
+   "exact_terms": [
+    "cost innovations"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about the migration of capabilities?",
+   "wall_ms": 1772.6,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about the migration of capabilities?",
+   "queries": [
+    "migration of capabilities"
+   ],
+   "exact_terms": [
+    "migration of capabilities"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about the capabilities viewpoint?",
+   "wall_ms": 2094.6,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about the capabilities viewpoint?",
+   "queries": [
+    "capabilities viewpoint"
+   ],
+   "exact_terms": [
+    "capabilities viewpoint"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about getting the categories right?",
+   "wall_ms": 1865.5,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about getting the categories right?",
+   "queries": [
+    "getting the categories right"
+   ],
+   "exact_terms": [
+    "getting the categories right"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about discovery skill #4: networking?",
+   "wall_ms": 1946.2,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about discovery skill #4: networking?",
+   "queries": [
+    "discovery skill #4 networking"
+   ],
+   "exact_terms": [
+    "discovery skill #4",
+    "networking"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about creating capabilities through a",
+   "wall_ms": 2009.9,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about creating capabilities through a spin-out organization?",
+   "queries": [
+    "creating capabilities through a spin-out organization"
+   ],
+   "exact_terms": [
+    "spin-out organization",
+    "capabilities"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about solar versus conventional elect",
+   "wall_ms": 2187.8,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_SYNTHESIS",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about solar versus conventional electrical energy?",
+   "queries": [
+    "solar energy vs conventional electrical energy"
+   ],
+   "exact_terms": [
+    "solar energy",
+    "conventional electrical energy"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about cost structures and value netwo",
+   "wall_ms": 2765.7,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_SYNTHESIS",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about cost structures and value networks?",
+   "queries": [
+    "cost structures in e-commerce",
+    "value networks in e-commerce vs traditional retail",
+    "how value networks create competitive advantage in e-commerce",
+    "case studies of cost structures and value networks in e-commerce"
+   ],
+   "exact_terms": [
+    "cost structures",
+    "value networks",
+    "e-commerce"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about HOW DISK DRIVES WORK?",
+   "wall_ms": 1943.2,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about how disk drives work?",
+   "queries": [
+    "how disk drives work"
+   ],
+   "exact_terms": [
+    "disk drives",
+    "how disk drives work",
+    "HOW",
+    "DISK",
+    "DRIVES",
+    "WORK"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about innovations that will sustain t",
+   "wall_ms": 2286.9,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about innovations that will sustain the disruption?",
+   "queries": [
+    "innovations that will sustain the disruption"
+   ],
+   "exact_terms": [
+    "innovations that will sustain the disruption"
+   ],
+   "fails": []
+  },
+  {
+   "set": "B",
+   "name": "What does the book say about make it platform-centric?",
+   "wall_ms": 1813.0,
+   "fallback": false,
+   "lane": "compiler_alt",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "resolved_request": "What does the book say about making something platform-centric?",
+   "queries": [
+    "platform-centric"
+   ],
+   "exact_terms": [
+    "platform-centric"
+   ],
+   "fails": []
+  }
+ ]
+}

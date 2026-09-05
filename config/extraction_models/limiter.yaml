@@ -214,3 +214,52 @@ providers:
     min: 1
     max: 4
     init: 2
+  compiler1:            # CHAT-COMPILER-LANES-V1: key 1 @ gemini-3.1-flash-lite, chat_compiler pin only
+    kind: rate
+    family: gemini
+    rpd: 500
+    rpm: 15
+    tpm: 250000
+    conc_cap: 2
+    min: 1
+    max: 2
+    init: 1
+  compiler2:            # CHAT-COMPILER-LANES-V1: key 2 @ gemini-3.1-flash-lite, chat_compiler pin only
+    kind: rate
+    family: gemini
+    rpd: 500
+    rpm: 15
+    tpm: 250000
+    conc_cap: 2
+    min: 1
+    max: 2
+    init: 1
+  compiler3:            # CHAT-COMPILER-LANES-V1: key 3 @ gemini-3.1-flash-lite, chat_compiler pin only
+    kind: rate
+    family: gemini
+    rpd: 500
+    rpm: 15
+    tpm: 250000
+    conc_cap: 2
+    min: 1
+    max: 2
+    init: 1
+  compiler4:            # CHAT-COMPILER-LANES-V1: key 4 @ gemini-3.1-flash-lite, chat_compiler pin only
+    kind: rate
+    family: gemini
+    rpd: 500
+    rpm: 15
+    tpm: 250000
+    conc_cap: 2
+    min: 1
+    max: 2
+    init: 1
+  compiler_alt:          # COMPILER-CROSS-FAMILY-V1: OpenRouter mistral-small-2603, chat_compiler pin only
+    kind: rate
+    family: openrouter
+    rpm: 60
+    tpm: 500000
+    conc_cap: 2
+    min: 1
+    max: 2
+    init: 1

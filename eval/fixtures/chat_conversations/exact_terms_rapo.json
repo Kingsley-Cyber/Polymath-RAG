@@ -1,0 +1,13 @@
+{
+ "fixture": "exact_terms_rapo",
+ "corpus_id": "cinema",
+ "history": [],
+ "message": "What does RAPO say about prompt optimization for text-to-video?",
+ "expected": {
+  "task_type": "GROUNDED_QA",
+  "retrieval_required": true,
+  "exact_terms_include": [
+   "RAPO"
+  ]
+ }
+}

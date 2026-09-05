@@ -95,3 +95,28 @@ def test_live_reranker_scores_forty_documents():
                                                       headers={"content-type": "application/json"}), timeout=180)
     out = json.loads(r.read())
     assert r.status == 200 and len(out["scores"]) == 40 and len(out["order"]) == 40
+
+
+def test_compiler_attempts_are_family_diverse_and_skip_cold_lanes():
+    class E:  # minimal endpoint stand-in
+        def __init__(self, name, url):
+            self.name, self.url = name, url
+    eps = [E("compiler1", "https://generativelanguage.googleapis.com/v1beta/openai"),
+           E("compiler2", "https://generativelanguage.googleapis.com/v1beta/openai"),
+           E("compiler3", "https://generativelanguage.googleapis.com/v1beta/openai"),
+           E("compiler_alt", "https://openrouter.ai/api")]
+    order = ui._compiler_attempt_order(eps, "session-x", failed_at={}, now=1000.0)
+    names = [e.name for e in order]
+    assert len(names) == 3 and len(set(names)) == 3
+    assert names[1] == "compiler_alt" or names[0] == "compiler_alt", "the second attempt crosses provider families"
+    # deterministic per key
+    assert names == [e.name for e in ui._compiler_attempt_order(eps, "session-x", failed_at={}, now=1000.0)]
+    # a lane that failed 10 s ago moves to the back; after the cooldown it returns
+    home = names[0]
+    cooled = [e.name for e in ui._compiler_attempt_order(eps, "session-x", failed_at={home: 990.0}, now=1000.0)]
+    assert cooled[0] != home and home in cooled or home not in cooled
+    back = [e.name for e in ui._compiler_attempt_order(eps, "session-x", failed_at={home: 990.0}, now=1000.0 + 500)]
+    assert back[0] == home
+    # every lane cold: still tries them (never empty)
+    allcold = ui._compiler_attempt_order(eps, "k", failed_at={e.name: 999.0 for e in eps}, now=1000.0)
+    assert len(allcold) == 3

@@ -1,0 +1,11 @@
+{
+ "fixture": "brainrot_transform",
+ "corpus_id": "ecom-meta-v1",
+ "history": [],
+ "message": "You are an expert habit coach. Step 1: diagnose the user's scrolling triggers. Step 2: build a 30-day plan. Tone: warm but direct. Length: 800-1200 words. Use markdown headings and bullet lists. Include one JSON example of a daily log. Do not mention apps by name.\n\nHere is my Brainrot Recovery prompt above. Turn this into a stronger, production-quality prompt while keeping the same deliverable.",
+ "expected": {
+  "task_type": "TRANSFORM_USER_CONTENT",
+  "retrieval_required": false,
+  "response_type": "artifact"
+ }
+}

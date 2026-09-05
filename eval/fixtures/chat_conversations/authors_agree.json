@@ -1,0 +1,15 @@
+{
+ "fixture": "authors_agree",
+ "corpus_id": "ecom-meta-v1",
+ "history": [],
+ "message": "Do Christensen and Kim & Mauborgne agree or disagree about where new markets come from? Tell me whether the authors agree or disagree.",
+ "expected": {
+  "task_type_in": [
+   "GROUNDED_SYNTHESIS",
+   "GROUNDED_QA"
+  ],
+  "task_type": "GROUNDED_SYNTHESIS",
+  "retrieval_required": true,
+  "task_class": "compare"
+ }
+}

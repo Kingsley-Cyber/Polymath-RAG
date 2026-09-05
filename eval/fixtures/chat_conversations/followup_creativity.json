@@ -1,0 +1,23 @@
+{
+ "fixture": "followup_creativity",
+ "corpus_id": "ecom-meta-v1",
+ "history": [
+  {
+   "role": "user",
+   "content": "What does the corpus say about cognitive overload?"
+  },
+  {
+   "role": "assistant",
+   "content": "Cognitive overload occurs when working-memory demands exceed capacity; the sources tie it to attention switching, decision fatigue and reduced retention [S1][S3]."
+  }
+ ],
+ "message": "How does that affect creativity though?",
+ "expected": {
+  "task_type": "GROUNDED_SYNTHESIS",
+  "retrieval_required": true,
+  "resolved_contains": [
+   "overload",
+   "creativ"
+  ]
+ }
+}

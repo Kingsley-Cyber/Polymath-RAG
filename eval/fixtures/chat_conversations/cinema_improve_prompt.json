@@ -1,0 +1,20 @@
+{
+ "fixture": "cinema_improve_prompt",
+ "corpus_id": "cinema",
+ "history": [
+  {
+   "role": "user",
+   "content": "Draft a video-gen prompt for a 10-second fight beat: two actors, alley, handheld."
+  },
+  {
+   "role": "assistant",
+   "content": "Draft: 10 s handheld alley fight beat; wide establishing, whip to medium on the first strike; screen direction left-to-right; motivated sodium-vapor key; no slow motion."
+  }
+ ],
+ "message": "Use everything my cinema books know about action, cinematography and movement to make this final video-gen prompt better",
+ "expected": {
+  "task_type": "CREATE_FROM_KNOWLEDGE",
+  "retrieval_required": true,
+  "response_type": "artifact"
+ }
+}
