@@ -5,7 +5,7 @@ date: 2026-09-05
 owner: King (architecture) · governance (execution)
 last_reviewed: 2026-09-05
 last_touched: 2026-09-05
-revision: 4 (FINAL: + five retrieval primitives, mode composition, concurrency and latency budgets, bounded graph, parallel wildcard frontier, execution protocol for the unattended run)
+revision: 5 (+ migration protections, CandidateEvidence / RetrievalCandidateEngine / CandidateBudget contracts, exact_terms in the compiler output, the pre-promotion regression suite, the three bold rules)
 status: planned
 register: 11.84
 package: orchestrator/orchestrator/api/{ui.py,chat.py,fast.py,hybrid.py}, shared/polymath_shared/{chat_plan.py (new), chat_retrieval_v2.py (new), hybrid.py, pass1.py, answer_synthesis.py, query_receipts.py}, frontend/src/App.tsx, tests/determinism/test_chat_compiler_*.py + test_chat_retrieval_v2_*.py (new)
@@ -19,6 +19,8 @@ architecture_impact: "Adds a cognitive layer between the conversation and retrie
 > Polymath is currently a retrieval-first evidence QA system with an LLM renderer, not a conversational RAG assistant. Retrieval is fairly sophisticated. Its conversational query compiler is essentially missing.
 
 The failure happens **before** retrieval (the raw utterance is the search query; "that", "the final one", pasted 800-word prompts all go straight to Qdrant) and **after** retrieval (the grounding block gives evidence authority over the *task*, so "what's the final prompt?" becomes "the evidence doesn't contain a final prompt").
+
+**Three rules for the executor, in bold:** **Do not re-ingest.** **Do not preserve document routing as evidence authority.** **Do not add multi-query search until the full-corpus lexical fallback and the duplicate sparse paths are dealt with.**
 
 Target sequence:
 
@@ -126,6 +128,8 @@ Retrieval quality on single-turn factual questions is **good** (180-degree rule:
   "retrieval_required": false,
   "retrieval_goal": null,
   "queries": [],
+  "semantic_queries": [],
+  "exact_terms": [],
   "entities": [],
   "must_answer": [],
   "user_constraints": ["keep the deliverable a single paste-ready prompt"],
@@ -142,6 +146,17 @@ Enums:
 - `response_type`: `answer` · `artifact`
 
 Each query: `{id, type, query, weight}`; `query` ≤ 32 words, topical content only (never tone, length, format or output instructions); ≤ 4 queries; exactly one `PRIMARY` when `retrieval_required`.
+
+**Two query representations, not one.** `semantic_queries` are the rewritten dense-lane texts; `exact_terms` are identifiers, acronyms, quoted phrases, numbers and commands **preserved verbatim from the original input** ("RAPO", "FACS", "TS410", "System 1"). An LLM that rewrites "RAPO text-to-video" into "automated prompt optimization techniques for video generation" produces a good dense query and a useless BM25 query; the sparse lane therefore searches `exact_terms` + the original wording, never the rewrite alone.
+
+**One string never does four jobs:**
+
+```
+task / shape detection   → resolved_request      (plan_for_query on the RESOLVED text, not the raw follow-up)
+dense search             → semantic_queries
+BM25 / exact search      → original terms + exact_terms
+generation               → original_request + resolved_request
+```
 
 Worked examples (from the owner's analysis) are frozen as fixtures: video-gen "final prompt" (no retrieval), Brainrot prompt rewrite (`TRANSFORM_USER_CONTENT`, no retrieval), "how does that affect creativity though?" (antecedent resolved, three typed queries), "use my cinema books to make this prompt better" (`CREATE_FROM_KNOWLEDGE`, three queries), "do the authors agree or disagree?" (task preserved, per-author queries + contradictions query).
 
@@ -373,6 +388,57 @@ Today: FAST → then the divergent sweep (the baseline defines the obvious neigh
 | GRAPH | as HYBRID | ≤ 8 seeds / ≤ 20 facts | ~15–20 + graph | p50 ≤ HYBRID + 1.5 s |
 | WILDCARD | ~60–100 | ≤ 3 bridges | ~15–18 + bridges | p50 ≤ HYBRID + 2.0 s |
 
+### 3.21 Migration protections (owner, part 3 — each verified in the code on 2026-09-05)
+
+This is a **query-time migration**. Document/section vectors, child vectors, child BM25, entity cards, Neo4j and latent surfaces already exist; nothing is re-ingested.
+
+| # | Risk | Where | Protection |
+|---|---|---|---|
+| 1 | **Sparse runs twice.** `FastSearcher` already fires a sparse BM25 companion probe beside every dense routing search (incl. `routing_child`), and HYBRID separately runs `_lexical_search()` over children — a new `GLOBAL_SPARSE_CHILD` lane on top would double-vote exact-match chunks | `fast.py:55-63`, `orchestrator/api/hybrid.py:100` | explicit primitives: `HIERARCHICAL_DENSE` (doc, section, filtered child dense), `GLOBAL_DENSE_CHILD`, `GLOBAL_SPARSE_CHILD`; sparse doc/section routing may stay as an optional recall helper with its **own provenance**, never voting the same child twice; dedupe by chunk id before fusion |
+| 2 | **Postgres lexical fallback = latency disaster.** `_lexical_search()` falls back from Qdrant BM25 to loading the corpus's children from Postgres and scoring them in Python (`SELECT … FROM chunks` + `lexical_score`) | `orchestrator/api/hybrid.py:100-138` | interactive chat: Qdrant BM25 is the only qualified implementation; unavailable → `sparse_lane = DEGRADED`, continue with dense; the Python scan stays for diagnostics/legacy only (never on the chat path; 500k children × 4 subqueries is forbidden by test) |
+| 3 | **Manual plan copy.** `HybridRetrievalPlan` is converted field by field into `Pass1RetrievalPlan` before Pass-1 runs; a field added to one plan never reaches the engine | `shared/polymath_shared/hybrid.py:199-213` | eliminate the seam: one `RetrievalCandidatePlan` / `CandidateBudget` consumed by the engine, mode wrappers only enable/disable lanes |
+| 4 | **Two budget generations.** FAST's Pass-1 defaults are newer and broader; HYBRID declares older defaults; GRAPH inherits HYBRID | `pass1.py:64-87` vs `hybrid.py:55-81` | one `CandidateBudget` authority (hierarchy_doc_k, hierarchy_section_k, hierarchy_child_k, global_dense_k, global_sparse_k, merged_candidate_max, rerank_max, synthesis_max); modes override only what they genuinely need |
+| 5 | **GRAPH treats document winners as the evidence structure** with an `unassigned_rescue_evidence` bucket for anything outside them | `orchestrator/api/graph.py:217-248` | canonical `CandidateEvidence[]` list; document/section grouping becomes presentation metadata; a global child winner is first-class evidence, not a rescue |
+| 6 | **Graph seeding must use all final evidence.** Expansion already receives final evidence chunk ids for authorization | `graph.py` (D2 invariant) | preserve: entities on a `GLOBAL_DENSE_CHILD` winner are eligible seeds exactly like hierarchy-derived evidence |
+| 7 | **GRAPH re-embeds the query** for its entity-card probe after HYBRID already embedded it | `graph.py:151` (`_embed_query(query)`) | one primary `qvec` from the plan; entity cards reuse it |
+| 8 | **WILDCARD re-embeds after FAST** (`divergent_retrieve` calls `embed_query(query)`) | `divergent.py:99`, `wildcard.py:34` | share the primary vector |
+| 9 | **Concurrency hazard in wildcard:** the query vector is stored on a function attribute (`_children_of._qvec = v`) and read later | `wildcard.py:57-64` | explicit immutable arguments (`children_of(parent_id, qvec)`) or a closure over one fixed `qvec`; never function-attribute state once lanes run concurrently |
+| 10 | **`FastSearcher` carries mutable request state** (`self.latency`, `self._hidden_cache`, `self._sparse_query`) and mutates timing totals per search | `fast.py:53-77` | do not wrap one mutable `FastSearcher` in `asyncio.gather`; introduce an immutable `SearchContext {qvec, sparse_query, corpus, hidden_generations}`; each lane returns `{hits, latency, degradation}`; telemetry merged afterwards |
+| 11 | **Corpus and generation filtering stay centralized.** `FastSearcher` enforces `corpus_id`, `representation_kind`, doc/parent filters and hidden blue/green generations | `fast.py:31,65-84` | the new global child search goes through the same adapter (or reproduces every filter, proven by tests 15–16); a raw Qdrant call that leaks another corpus or a rebuilding generation is the highest-risk correctness bug here |
+| 12 | **Compiler needs two query representations** | §3.1 | `semantic_queries` + `exact_terms` |
+| 13 | **Subqueries must not invoke the full hierarchy** | §3.16 | primary → A+B+C; subqueries → B+C |
+| 14 | **Query-shape logic runs on the raw string** (`plan_for_query(query, …)` in fast/hybrid/graph) — "yeah give me all of those" misses the depth mode that "List all CySA+ domains and subdomains" triggers | `query_shape.py:128`, `fast.py:484`, `hybrid.py:172`, `graph.py:99` | `plan_for_query(resolved_request)` |
+| 15 | **Preserve original exact language separately** | §3.1 | the four-string rule |
+| 16 | **WILDCARD's "obvious" baseline is whatever FAST returned** (excludes surfaced parents, dampens same-document chunks) | `divergent.py:95-139` | baseline = the **final normal candidate neighbourhood** of the new engine, so the frontier never returns what Lane B already found |
+| 17 | **Frontend carries 30 retrieved chunks regardless of use** | `App.tsx:153-175` | response contract returns `retrieval.{candidates, selected_evidence, used_evidence}`; future turns carry `used_evidence` only (§3.5) — fixed **before** breadth grows |
+| 18 | **Up to 150 s before retrieval begins:** `POLYMATH_EMBED_WAKE_BUDGET_S = 150` and `_await_embedder()` waits for a parked embedder | `fast.py:258-261` | interactive policy: UI active → embedder stays warm; interactive wake budget tight (seconds, not minutes); ingest/non-interactive keeps its own policy. Cold-start tolerance is not retrieval latency |
+
+### 3.22 Shared contracts introduced by the migration
+
+```
+RetrievalCandidateEngine v1  (candidate-retrieval-v1)
+   HIERARCHICAL_DENSE ∥ GLOBAL_DENSE_CHILD ∥ GLOBAL_SPARSE_CHILD  →  CandidateEvidence[]
+
+CandidateEvidence
+   chunk_id · doc_id · parent_id · source_name · text
+   arrivals[] · query_ids[]
+   dense_rank? · sparse_rank? · hierarchy_rank? · rerank_score?
+   is_neighbor · region_role
+
+CandidateBudget                    (one authority; modes override only what they need)
+   hierarchy_doc_k · hierarchy_section_k · hierarchy_child_k
+   global_dense_k · global_sparse_k
+   merged_candidate_max · rerank_max · synthesis_max
+
+SearchContext (immutable)          qvec · sparse_query · exact_terms · corpus · hidden_generations
+```
+
+Every mode consumes `CandidateEvidence[]`: VECTOR = A+B, HYBRID = A+B+C, GRAPH = HYBRID candidates + G, WILDCARD = VECTOR/HYBRID baseline + W. Versions `pass1-retrieval-v2`, `hybrid-retrieval-v1`, `graph-retrieval-v1`, `divergent-retrieval-v1` are **not** overwritten; `candidate-retrieval-v1` and `chat-retrieval-plan-v1` are introduced and the existing modes adapt to them behind a rollback boundary. Establishing the shared candidate boundary is a dependency change: preflight, dependency map / reverse-dependent checks, work-log, and an ADR (AGENTS.md).
+
+### 3.23 What is not migrated
+
+Ingestion, chunking, parent construction, document summaries, section summaries, Qdrant projection, BM25 projection, entity extraction, canonical facts, Neo4j projection, latent enrichment. Changing ingestion at the same time would make it impossible to attribute any improvement to the query architecture.
+
 ## 4. Phases and gates (assert before commit; targets fixed here, before the work)
 
 Baseline set B = 30 logged single-turn questions (cinema 10, ecom-meta 10, field-evidence 10) with gold chunk ids, plus the conversation fixtures in §5. Baseline numbers are measured **first** and written into the work-log before any change.
@@ -385,11 +451,11 @@ Baseline set B = 30 logged single-turn questions (cinema 10, ecom-meta 10, field
 | P0.c compiled retrieval + no-retrieval routing | retrieve on compiled queries; skip retrieval for `conversation` policy | follow-up fixtures: gold chunk hit@10 ≥ 0.8 (baseline measured, expected ≪ 0.5); TRANSFORM/CONTINUE fixtures: 0 retrievals fired; B hit@10 not below baseline − 0.05 |
 | P0.d synthesis v2 | authority split, used_evidence + legend in the answer event | "final prompt" fixture produces the artifact; factual fixture (§5 #6) keeps ≥ baseline citation precision; no "evidence doesn't contain" on artifact tasks |
 | P0.e carry v2 | used-only carry, reranked, cap 8 | off-topic turn-1 chunk absent from turn-3 legend; prompt tokens per turn ≤ baseline |
-| P1.a CHAT-RETRIEVAL-V2 lanes (after carry v2) | Lanes A/B/C as independent experts fused at child level with full provenance (§3.14); budgets as one policy object (§3.8) read by both profiles; rescue caps retired; `chat-retrieval-v2` receipts | on B: gold chunk present in the union ≥ 0.9 (baseline measured first); lexical fixture set (acronyms, identifiers, quoted phrases) hit@union = 1.0; per-lane arrival recorded on 100 % of candidates; `/retrieve`, `/ask`, TRAIL unchanged (reverse-dependent tests) |
+| P1.a CHAT-RETRIEVAL-V2 lanes (after carry v2) | `RetrievalCandidateEngine v1` + `CandidateEvidence` + `CandidateBudget` (§3.22); Lanes A/B/C as independent experts fused at child level with full provenance (§3.14); **seams closed first**: duplicate sparse paths deduped (§3.21 #1), Postgres lexical fallback off the chat path (#2), plan-copy seam removed (#3), one budget authority (#4), corpus/generation filters through the shared adapter (#11), `plan_for_query` on the resolved request (#14); rescue caps retired; `chat-retrieval-v2` receipts | on B: gold chunk present in the union ≥ 0.9 (baseline measured first); lexical fixture set (acronyms, identifiers, quoted phrases) hit@union = 1.0; per-lane arrival recorded on 100 % of candidates; `/retrieve`, `/ask`, TRAIL unchanged (reverse-dependent tests) |
 | P1.b decomposition + aspect coverage | 1–4 typed queries; primary runs A+B+C, subqueries run B+C only; provenance-normalized fusion (§3.10); per-aspect candidate counts; one targeted second pass | multi-dimension fixture: every dimension ✓ or explicitly flagged weak; no document exceeds one vote per subquery; wall p50 ≤ baseline + 3 s |
 | P1.c judge + composition | cross-encoder as the common judge over the union (batches ≤ 10); composition = 8 pure relevance → 6 relevance + source diversity → 4 coverage/rescue (or post-rerank MMR 0.8/0.2); bounded multi-lane agreement boost; final 15–20 | funnel: gold chunk survives selection on ≥ 0.85 of B where in the union; MRR@final ≥ baseline; no final set with > 60 % of chunks from one document when ≥ 3 documents scored within 0.1 of the top; citation precision ≥ baseline |
-| P1.d concurrency + one rerank | lanes as concurrent tasks from one embedding; BM25 starts without the embedding; union → dedupe → exactly one reranker call per turn (batched); wall-clock budgets with `degraded` receipts | on B: exactly 1 embedding per distinct query text and exactly 1 rerank call per turn (spy tests); HYBRID p50 ≤ VECTOR p50 + 0.5 s; a lane forced past its deadline yields a `degraded` receipt and a complete answer in ≤ core budget + rerank budget |
-| P1.e mode recomposition | VECTOR = A+B, HYBRID = A+B+C (default), GRAPH = HYBRID → bounded G with compiler `graph_useful`, WILDCARD = core ∥ W with baseline exclusion after; evidence composer slots (§3.17) | mode-equivalence tests (same primitives → same candidate union); GRAPH p50 ≤ HYBRID + 1.5 s with ≤ 8 seeds / ≤ 20 facts; WILDCARD p50 ≤ HYBRID + 2.0 s with ≤ 3 bridges never in the evidence list |
+| P1.d concurrency + one rerank | immutable `SearchContext`; lanes as concurrent tasks from one embedding shared with graph entity cards and the wildcard frontier (#7–#9); BM25 starts without the embedding; union → dedupe → exactly one reranker call per turn (batched); wall-clock budgets with `degraded` receipts; interactive embedder wake budget (#18) | on B: exactly 1 embedding per distinct query text and exactly 1 rerank call per turn (spy tests); HYBRID p50 ≤ VECTOR p50 + 0.5 s; a lane forced past its deadline yields a `degraded` receipt and a complete answer in ≤ core budget + rerank budget |
+| P1.e mode recomposition | VECTOR = A+B, HYBRID = A+B+C (default), GRAPH = HYBRID → bounded G over the canonical `CandidateEvidence[]` (no `unassigned_rescue_evidence`; global winners seed the graph, #5–#6), WILDCARD = core ∥ W with the baseline = final normal candidate neighbourhood (#16); evidence composer slots (§3.17) | mode-equivalence tests (same primitives → same candidate union); GRAPH p50 ≤ HYBRID + 1.5 s with ≤ 8 seeds / ≤ 20 facts; WILDCARD p50 ≤ HYBRID + 2.0 s with ≤ 3 bridges never in the evidence list |
 | P1.f runtime unification | ChatRuntime; `/chat` == `/chat/stream` == MCP modulo transport; compiler, budgets, lanes, composer live in the shared policy layer | same plan + same evidence ids for the same request on all routes (determinism test) |
 | P1.g conversation regression suite | §5 frozen, including the owner's exact video-gen conversation, plus the funnel and latency expectations per fixture | suite in CI (determinism.yml) |
 
@@ -415,6 +481,27 @@ Rollout: feature flag `POLYMATH_CHAT_COMPILER` = `off` → `shadow` → `on`; ea
 13. **Wildcard separation** — bridges ≤ 3, present only in the `wildcard` lane, absent from `evidence_rows`, and the sweep starts before core retrieval finishes (timestamps in the funnel receipt).
 14. **Graph bounded** — GRAPH mode on a definitional question with `graph_useful: false` expands ≤ 2 seeds; on a relational question ≤ 8 seeds / ≤ 20 facts; never more.
 10. **The owner's exact conversation** (video-gen prompt thread) frozen as a fixture; expected: turn N produces the final prompt with no retrieval.
+
+## 5b. Pre-promotion regression suite for CHAT-RETRIEVAL-V2 (frozen before P1.a is promoted)
+
+```
+ 1. Exact acronym            RAPO is found by the sparse child lane (exact_terms), present in the final set.
+ 2. Hidden relevant paragraph the book loses document routing; its exact child still reaches the final candidates.
+ 3. Document-context question hierarchy still contributes useful contextual chunks.
+ 4. Multi-book synthesis      strong evidence from several books survives composition.
+ 5. Single-source dominance   diversity never discards obviously superior evidence (score-gap rule).
+ 6. Follow-up                 "how does that work?" resolves the prior subject before retrieval.
+ 7. Long pasted prompt        retrieval queries carry the information need, not 800 words of formatting.
+ 8. Completeness              "list all…" still triggers depth / neighbor behavior (shape on the resolved request).
+ 9. Graph                     a GLOBAL_DENSE_CHILD winner can seed graph relationships.
+10. Wildcard                  a normal candidate is never returned as a supposedly novel bridge.
+11. Sparse unavailable        no full-corpus Python scan in interactive chat; sparse_lane = DEGRADED instead.
+12. Latency                   parallel A+B+C stays within the retrieval budget; one embedding, one rerank.
+13. Degraded reranker         candidate recall intact; fusion order used; degradation receipted.
+14. Carry context             unused retrieved noise is not carried forward.
+15. Corpus isolation          no candidate from another corpus through the new child lanes.
+16. Hidden-generation isolation  rebuilding projection chunks never leak.
+```
 
 ## 6. Compiler model and cost
 
@@ -464,5 +551,5 @@ Ingestion, entity extraction, Neo4j/Qdrant projection, the GraphRAG extraction c
 3. **Per phase:** baseline numbers → failing tests → implementation → gate numbers written into that phase's work-log (Contract / Changes / Proof / Rejected claims / Open contract gaps, front matter, register row) → guard → commit on the branch → `--ff-only` into main → push → CI green before the next phase starts.
 4. **Fleet safety:** edits to fleet-loaded code are batched per phase (one fence round each); no ingestion / extraction / projection files are touched; shadow mode precedes any behavior change on the live chat.
 5. **Halt conditions (the only ones):** a gate missed twice with the numbers reported; a provider canary failing on readiness; a change that cannot meet its gate without altering a frozen contract or a §9 default; a security- or credential-touching step. Everything else is decided by the executor and recorded under Rejected claims.
-6. **Order:** P0.0 → P0.a → P0.b → P0.c → P0.d → P0.e → P1.a → P1.b → P1.c → P1.d → P1.e → P1.f → P1.g. Carry v2 (P0.e) must be merged before any breadth change (P1.a); shadow mode (P0.b) must be merged before compiled retrieval (P0.c).
+6. **Order:** P0.0 → P0.a → P0.b → P0.c → P0.d → P0.e → P1.a → P1.b → P1.c → P1.d → P1.e → P1.f → P1.g. Carry v2 (P0.e) must be merged before any breadth change (P1.a); shadow mode (P0.b) before compiled retrieval (P0.c); the P1.a seams (§3.21 #1–#4, #11, #14) and the §5b suite before multi-query (P1.b). Nothing under §3.23 is touched at any phase.
 7. **Completion report:** one final message with the before/after table of every gate, the commits, the CI runs, and the remaining open gaps.
