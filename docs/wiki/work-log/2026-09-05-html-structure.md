@@ -56,3 +56,20 @@ Owner (2026-09-05): "I just uploaded handbook.html … it can't index html junk,
 - Sub-15-word bodies under label headings (e.g. "#### Verification" + two test names) still drop; a future rule could attach them to the following real section as layout-anchored context.
 - Region role `code` is assigned to pipe tables (symbol share), which excludes them from summaries; extraction and retrieval still see them.
 - Re-ingesting an existing document requires delete + upload: intake is a replay-exempt no-op on the same content-addressed doc_id (`ON CONFLICT (doc_id) DO NOTHING`), so a materializer or chunker change never rewrites chunks by itself.
+
+## Addendum — live re-ingest receipts (16:0xZ, third ingest of handbook.html)
+
+The second ingest (materializer 1.1.0, chunker v3) ran before the intake worker had restarted onto v3.1; its extraction held a stage transaction so the delete answered 409 `runs_in_flight` until the ticket was superseded (`DELETE-WINS` quiesce), then took 115 s to remove 11,435 chunks. Third ingest, verified in the database:
+
+| receipt | value |
+|---|---|
+| `materialization.parser_version` / format | 1.1.0 / html |
+| `chunk_contract_version` | chunk-structure-v3.1 |
+| parents | 802, avg 392 words, 30 under the 280-word floor |
+| children | 5,538, avg 54 words; 94 under 60 chars |
+| child roles | body 4,802 · stub 400 (7 %) · code 302 · question_bank 20 · noise_ocr 14 |
+| list-bearing children | 996 (avg 47 words); table-bearing 280; fenced code 1,738 |
+| layout `dropped_stub` | 606 spans, 48,059 chars (label-only sections, doctrine) |
+| extraction at write time | extraction calls=16 accepted_items=442 tickets=[('extract', 'leased'), ('intake', 'done')] |
+
+Identical to the offline measurement on the same bytes (deterministic chunker).
