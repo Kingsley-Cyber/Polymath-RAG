@@ -32,6 +32,7 @@ for p in (ROOT / "shared", ROOT):
 from polymath_shared.pipeline_health import (  # noqa: E402
     BLOCKING_WORKER_STATUS,
     STATE_BLOCKED,
+    STATE_DEGRADED,
     STATE_HEALTHY,
     STATE_IDLE,
     pipeline_health,
@@ -164,7 +165,9 @@ def test_live_pipeline_health_is_answerable():
         pytest.skip("postgres unavailable")
     with conn:
         out = pipeline_health(conn)
-    assert out["state"] in {STATE_BLOCKED, STATE_IDLE, STATE_HEALTHY}
+    # PIPELINE-DEGRADED-V1 (11.79): DEGRADED = open stall episodes or recent
+    # medic actions while tickets still flow; it must name its causes too.
+    assert out["state"] in {STATE_BLOCKED, STATE_IDLE, STATE_HEALTHY, STATE_DEGRADED}
     assert "detail" in out and out["detail"]
-    if out["state"] == STATE_BLOCKED:
-        assert out["causes"], "BLOCKED with no cause is not actionable"
+    if out["state"] in (STATE_BLOCKED, STATE_DEGRADED):
+        assert out["causes"] or out.get("medic_actions_15m"), f"{out['state']} with no cause is not actionable"
