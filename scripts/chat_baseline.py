@@ -164,6 +164,30 @@ def followup_conversations(fx: dict) -> list[dict]:
     return out
 
 
+_S_TAG = re.compile(r"\[S(\d+)\]")
+_ABSTAIN = re.compile(r"(not|n't|never)\s+(in|within|part of|contained in|covered by|mentioned in|present in|found in)\s+the\s+(provided\s+)?(evidence|sources|corpus|material)"
+                      r"|evidence (does not|doesn't|did not|didn't) (contain|include|mention|cover|address|provide)"
+                      r"|(no|without) (direct |specific |relevant )?(evidence|information|material) (on|about|for|regarding)"
+                      r"|missing (premise|from the evidence)|cannot (be )?(answer|determine|confirm)", re.I)
+
+
+def citation_stats(ans: dict, rec: dict) -> dict:
+    """CITATION-PRECISION-V1 (P0.d gate): emitted [S#] tags vs the legend
+    of the turn. precision = tags that resolve to a legend entry / tags
+    emitted (None when no tag was emitted). Also the answer head and an
+    abstention-marker flag for the artifact-task gate."""
+    text = str(((ans.get("result") or {}).get("answer")) or "")
+    legend = (ans.get("retrieval") or {}).get("legend") or ((rec.get("meta") or {}).get("legend")) or []
+    valid = {str(e.get("tag")) for e in legend}
+    tags = [f"S{m.group(1)}" for m in _S_TAG.finditer(text)]
+    good = [t for t in tags if t in valid]
+    return {"answer_chars": len(text), "answer_head": text[:160], "tags_total": len(tags), "tags_valid": len(good),
+            "tags_distinct": len(set(tags)), "citation_precision": (round(len(good) / len(tags), 3) if tags else None),
+            "used_evidence_n": len((ans.get("retrieval") or {}).get("used_evidence") or []),
+            "abstain_marker": bool(_ABSTAIN.search(text)),
+            "task_type": ((ans.get("retrieval") or {}).get("chat_plan") or {}).get("task_type")}
+
+
 def _hit10(r: dict) -> bool:
     return bool(r.get("gold_selected_rank")) and r["gold_selected_rank"] <= 10
 
@@ -207,7 +231,8 @@ def run(tag: str, synthesizer: str | None, limit: int | None, compiler: str | No
         best = min(ranks) if ranks else None
         deaths = [where_did_it_die(fun, g) for g in golds] if fun else ["NO_FUNNEL"]
         order = ["CITED", "IGNORED_BY_LLM", "LOST_AT_SELECTION", "LOST_AT_RERANK", "LOST_AT_UNION_TRUNCATION", "NEVER_RETRIEVED", "NO_FUNNEL"]
-        results.append({**q, "wall_s": round(wall, 2), "phase_ms": (rec.get("meta") or {}).get("phase_ms"),
+        cite = citation_stats(ans, rec)
+        results.append({**q, "wall_s": round(wall, 2), "phase_ms": (rec.get("meta") or {}).get("phase_ms"), **cite,
                         "gold_in_retrieved": _in("retrieved"),
                         "gold_in_union": _in("union"),
                         "gold_in_pre_rerank": _in("pre_rerank"),
@@ -235,6 +260,12 @@ def run(tag: str, synthesizer: str | None, limit: int | None, compiler: str | No
         "synthesizer": synthesizer or "default", "tag": tag, "compiler": compiler or "server-default",
         "followups": followups, "recovery": (recovery_against(results, reference) if reference else None),
         "compiler_fallbacks": sum(1 for r in ok if ((r.get("chat_plan") or {}).get("compiler") or {}).get("fallback")),
+        "citation_precision_mean": (round(sum(r["citation_precision"] for r in ok if r.get("citation_precision") is not None)
+                                          / max(1, sum(1 for r in ok if r.get("citation_precision") is not None)), 3)),
+        "answers_with_tags": sum(1 for r in ok if r.get("tags_total")),
+        "tags_total": sum(r.get("tags_total") or 0 for r in ok), "tags_valid": sum(r.get("tags_valid") or 0 for r in ok),
+        "abstain_markers": sum(1 for r in ok if r.get("abstain_marker")),
+        "answer_chars_p50": (sorted(r.get("answer_chars") or 0 for r in ok)[len(ok) // 2] if ok else 0),
     }
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     (OUT_DIR / f"chat-baseline-{tag}.json").write_text(json.dumps({"summary": summary, "results": results}, indent=1, default=str))

@@ -1082,23 +1082,49 @@ def _sse(event: str, data: dict) -> str:
 #: layer appended below (POLYMATH_STYLE_PROMPT, ported verbatim from
 #: polymath v3.3) governs the answer's visual grammar; where the two
 #: conflict — notably citations — the grounding core wins.
+#: SYNTHESIS-V2 (CHAT-QUERY-COMPILER-PLAN §3.4, P0.d). The v1 prompt made
+#: retrieved evidence the authority over the TASK ("everything you assert
+#: must come from the provided evidence"), so a "give me the final prompt"
+#: turn was answered with "the evidence doesn't contain a final prompt".
+#: v2 splits authority: the user's RESOLVED request owns the task, corpus
+#: evidence owns the facts. The authority block below is the plan's text
+#: verbatim; the citation and completeness rules are carried over.
+_SYNTHESIS_CONTRACT = "synthesis-v2"
+_AUTHORITY_BLOCK = """USER INTENT HAS TASK AUTHORITY. CORPUS EVIDENCE HAS FACTUAL AUTHORITY.
+First answer or perform the user's RESOLVED request.
+Retrieved evidence is supporting knowledge. It does not define the task and
+does not need to contain the requested final artifact verbatim.
+When asked to create, rewrite, transform, organize, compare, combine, infer
+or synthesize, perform that operation.
+Never answer that "the evidence doesn't contain the final answer" merely
+because the requested artifact must be constructed.
+If a factual premise needed to complete the task is absent from the evidence,
+name that missing premise specifically.
+Conversation content and user-provided text may be transformed without
+corpus evidence. Factual claims ABOUT THE CORPUS still carry [S#] tags."""
 _LLM_GROUNDING = """You are Polymath's generation layer over an \
-evidence-first retrieval system. You receive EVIDENCE blocks retrieved \
-from the user's own corpus (current turn + material carried from \
-earlier turns of this session). Teach it, never inventory it.
+evidence-first retrieval system. You receive the user's request (as \
+written and as RESOLVED from the conversation), the conversation itself, \
+and EVIDENCE blocks retrieved from the user's own corpus (this turn + \
+material carried from earlier turns of this session). Teach it, never \
+inventory it.
 
-Grounding rules (non-negotiable; they override anything below):
-- Everything you assert must come from the provided evidence. Cite by \
-appending the evidence tag — e.g. [S2] — at the END of the sentence or \
-paragraph a claim comes from; use ONLY the [S#] tags given, never raw \
-chunk ids or page guesses. Never interrupt a sentence with a citation, \
-never open with boilerplate like "Based on the evidence in your corpus".
-- If the user asks you to BUILD something (a quiz, a PBQ-style HTML \
-test, flashcards, a study plan, code), build it fully, drawing the \
-substance from the evidence. Emit complete artifacts (e.g., a full \
-self-contained HTML document in an ```html code block).
-- If the evidence does not contain what the user needs, say exactly \
-what is missing instead of inventing facts.
+""" + _AUTHORITY_BLOCK + """
+
+Citation and completeness rules:
+- A factual claim about the corpus cites its evidence by appending the \
+evidence tag — e.g. [S2] — at the END of the sentence or paragraph the \
+claim comes from; use ONLY the [S#] tags given, never raw chunk ids or \
+page guesses. Never interrupt a sentence with a citation, never open with \
+boilerplate like "Based on the evidence in your corpus".
+- Never attribute to the corpus what the evidence does not say. For a \
+factual question about the corpus (TASK GROUNDED_QA), if the evidence does \
+not contain the asked fact, say exactly which fact is missing instead of \
+inventing it.
+- Artifacts (a prompt, a quiz, a PBQ-style HTML test, flashcards, a study \
+plan, code) are emitted COMPLETE — e.g. a full self-contained HTML document \
+in an ```html code block. Corpus-derived substance inside an artifact \
+carries [S#] tags; the parts you construct do not.
 - COMPLETENESS OVERRIDES BREVITY. When the user asks for ALL of \
 something — every domain, the full list, each step — enumerate every \
 item the evidence contains, verbatim and in order. Do not sample, \
@@ -1345,11 +1371,83 @@ def _record_stream_receipt(req, *, question: str, scope, wall_ms: float, ui_mode
         pass
 
 
+#: §9.3 default: the last artifact VERBATIM (the history window truncates
+#: assistant turns at 4,000 chars, which decapitates a long prompt or a
+#: full HTML artifact) + the compiler's summary of earlier ones.
+_PRIOR_ARTIFACT_CHARS = int(os.environ.get("POLYMATH_PRIOR_ARTIFACT_CHARS", "16000"))
+
+
+def _turn_role(t) -> str | None:
+    return getattr(t, "role", None) or (t.get("role") if isinstance(t, dict) else None)
+
+
+def _turn_content(t) -> str:
+    return str(getattr(t, "content", None) or (t.get("content") if isinstance(t, dict) else "") or "")
+
+
+def _prior_artifact(plan, history) -> str | None:
+    """SYNTHESIS-V2: the antecedent assistant turn, verbatim, when the task
+    continues or refines it (CONTINUE_PRIOR_ARTIFACT, or the compiler's
+    antecedent is an assistant artifact). The compiler's `antecedent.turn`
+    offset is honoured when it points at an assistant turn; else the last
+    non-empty assistant turn."""
+    if plan is None:
+        return None
+    ante = plan.antecedent if isinstance(plan.antecedent, dict) else {}
+    if plan.task_type != "CONTINUE_PRIOR_ARTIFACT" and ante.get("kind") != "assistant_artifact":
+        return None
+    turns = [t for t in (history or []) if _turn_role(t) in ("user", "assistant")]
+    cand = None
+    off = ante.get("turn")
+    if isinstance(off, int) and off < 0 and -off <= len(turns) and _turn_role(turns[off]) == "assistant" and _turn_content(turns[off]).strip():
+        cand = turns[off]
+    if cand is None:
+        for t in reversed(turns):
+            if _turn_role(t) == "assistant" and _turn_content(t).strip():
+                cand = t
+                break
+    return _turn_content(cand)[:_PRIOR_ARTIFACT_CHARS] if cand is not None else None
+
+
+def _request_block(query: str, plan, history) -> str:
+    """SYNTHESIS-V2 request framing: the request as written, the RESOLVED
+    request, the compiled task/evidence policy/response type, coverage,
+    constraints, the compiler's antecedent summary and the prior artifact
+    verbatim. Without a plan (compiler off) the v1 block is unchanged."""
+    if plan is None:
+        return f"REQUEST:\n{query}"
+    lines = [f"REQUEST (as written):\n{query}"]
+    resolved = (plan.resolved_request or "").strip()
+    if resolved and resolved != (query or "").strip():
+        lines.append("RESOLVED REQUEST (pronouns and references resolved from the conversation — perform THIS):\n" + resolved)
+    lines.append(f"TASK: {plan.task_type} · EVIDENCE POLICY: {plan.evidence_policy} · RESPONSE TYPE: {plan.response_type}")
+    if plan.must_answer:
+        lines.append("MUST COVER: " + "; ".join(str(x) for x in plan.must_answer[:6]))
+    if plan.user_constraints:
+        lines.append("CONSTRAINTS: " + "; ".join(str(x) for x in plan.user_constraints[:8]))
+    ante = plan.antecedent if isinstance(plan.antecedent, dict) else None
+    if ante and ante.get("summary"):
+        lines.append(f"ANTECEDENT ({ante.get('kind') or 'topic'}, turn {ante.get('turn')}): {ante['summary']}")
+    art = _prior_artifact(plan, history)
+    if art:
+        lines.append("PRIOR ARTIFACT (the assistant's earlier deliverable, verbatim — continue or refine THIS, do not ask the evidence for it):\n" + art)
+    return "\n\n".join(lines)
+
+
+def _plan_meta(plan) -> dict:
+    """§3.4: the answer event names the task the synthesizer was given."""
+    if plan is None:
+        return {"prompt_contract": _SYNTHESIS_CONTRACT}
+    return {"prompt_contract": _SYNTHESIS_CONTRACT, "task_type": plan.task_type, "evidence_policy": plan.evidence_policy,
+            "response_type": plan.response_type, "retrieval_required": plan.retrieval_required,
+            "compiler_fallback": bool(plan.fallback)}
+
+
 def _grounded_messages(query: str, bundle: dict, graph_facts: list,
                        history, carry_context,
                        reasoning: str | None = None,
                        reasoning_blend: list[str] | None = None,
-                       style: str = "neutral") -> list[dict]:
+                       style: str = "neutral", plan=None) -> list[dict]:
     """Shared grounded-prompt assembly for every LLM backend.
 
     `reasoning`/`reasoning_blend` apply the v3.3 reasoning layer
@@ -1381,7 +1479,9 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
         context_block += ("\n\nEVIDENCE (carried from earlier turns):\n"
                           + "\n---\n".join(carried))
     if not context_block:
-        context_block = "EVIDENCE: none retrieved for this turn."
+        context_block = "EVIDENCE: none retrieved for this turn" + (
+            " (by design: this request is answered from the conversation and the user's own text)."
+            if plan is not None and not plan.retrieval_required else ".")
     messages = [{"role": "system", "content": _llm_system_prompt(style)}]
     for turn in (history or [])[-12:]:
         if turn.role in ("user", "assistant") and turn.content:
@@ -1390,7 +1490,7 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
     from orchestrator.api.reasoning import apply_reasoning
 
     user_content = apply_reasoning(
-        f"{context_block}\n\nREQUEST:\n{query}",
+        f"{context_block}\n\n{_request_block(query, plan, history)}",
         mode=reasoning or os.environ.get("POLYMATH_REASONING_MODE", "none"),
         blend=reasoning_blend)
     messages.append({"role": "user", "content": user_content})
@@ -1401,7 +1501,7 @@ def _litellm_generate(model: str, query: str, bundle: dict,
                       graph_facts: list, history, carry_context,
                       reasoning: str | None = None,
                       reasoning_blend: list[str] | None = None,
-                      style: str = "neutral"):
+                      style: str = "neutral", plan=None):
     """LLM-PROVIDER-LAYER-V1: stream tokens from ANY provider through
     LiteLLM (OpenAI-format model strings: openai/gpt-4o,
     anthropic/claude-..., gemini/..., groq/..., ollama/...). Credentials
@@ -1411,7 +1511,7 @@ def _litellm_generate(model: str, query: str, bundle: dict,
 
     messages = _grounded_messages(query, bundle, graph_facts,
                                   history, carry_context,
-                                  reasoning, reasoning_blend, style=style)
+                                  reasoning, reasoning_blend, style=style, plan=plan)
     try:
         stream = litellm.completion(
             model=model, messages=messages, stream=True, timeout=300,
@@ -1441,7 +1541,7 @@ def _ollama_generate(model: str, query: str, bundle: dict,
                      graph_facts: list, history, carry_context,
                      reasoning: str | None = None,
                      reasoning_blend: list[str] | None = None,
-                     style: str = "neutral"):
+                     style: str = "neutral", plan=None):
     """Stream tokens from the local Ollama daemon over a grounded
     prompt. Yields {'token': str} pieces or one {'error': ...}.
 
@@ -1451,7 +1551,7 @@ def _ollama_generate(model: str, query: str, bundle: dict,
 
     messages = _grounded_messages(query, bundle, graph_facts,
                                   history, carry_context,
-                                  reasoning, reasoning_blend, style=style)
+                                  reasoning, reasoning_blend, style=style, plan=plan)
 
     try:
         with httpx.stream(
@@ -1865,7 +1965,8 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                 for tok in _gen(
                         llm_model, query, bundle, graph_facts,
                         req.history, req.carry_context,
-                        req.reasoning, req.reasoning_blend, style=_style):
+                        req.reasoning, req.reasoning_blend, style=_style,
+                        plan=(_plan if _flag == "on" else None)):
                     if tok.get("error"):
                         yield _sse("error", tok)
                         return
@@ -1910,6 +2011,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                             "abstained": False,
                             "synthesis_version": f"{llm_backend}:{llm_model}",
                             "phase_ms": dict(_phase_ms),
+                            **_plan_meta(_plan if _flag == "on" else None),
                         },
                     },
                     "retrieval": retrieval,
@@ -1932,6 +2034,8 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
             answer = grounded_answer(bundle, query)
             _mark("generate")
             _join_plan()
+            if isinstance(answer, dict) and isinstance(answer.get("meta"), dict):
+                answer["meta"].update(_plan_meta(_plan if _flag == "on" else None))
             from polymath_shared.funnel import funnel_from_trace
             used = []
             for c in (answer.get("citations") or []):

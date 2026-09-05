@@ -24,7 +24,7 @@ from orchestrator.api import chat  # noqa: E402
 def test_neutral_prompt_carries_no_study_or_exam_framing():
     neutral = ui._llm_system_prompt("neutral")
     assert "STUDYING" not in neutral and "for the exam" not in neutral
-    assert "Everything you assert must come from the provided evidence" in neutral
+    assert "USER INTENT HAS TASK AUTHORITY. CORPUS EVIDENCE HAS FACTUAL AUTHORITY." in neutral   # SYNTHESIS-V2 core
     study = ui._llm_system_prompt("study")
     assert "STUDYING" in study and "for the exam" in study
     assert neutral in study.replace(ui._STUDY_LAYER + "\n\n", "") or len(study) > len(neutral)
