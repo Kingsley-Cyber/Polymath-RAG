@@ -5,6 +5,7 @@ date: 2026-09-05
 owner: King (architecture) · governance (execution)
 last_reviewed: 2026-09-05
 last_touched: 2026-09-05
+revision: 2 (retrieval budgets, funnel instrumentation, RRF provenance, versioning, governance)
 status: planned
 register: 11.84
 package: orchestrator/orchestrator/api/{ui.py,chat.py,fast.py,hybrid.py}, shared/polymath_shared/{chat_plan.py (new), answer_synthesis.py, query_receipts.py}, frontend/src/App.tsx, tests/determinism/test_chat_compiler_*.py (new)
@@ -49,6 +50,10 @@ user + conversation
 | Reranker sidecar OOMs above ~10–20 documents (MPS cap 3.5 GiB); HYBRID sends 10 | `sidecar_reranker.log` (21 × 500 in 1 h) | wider callers silently degrade to fusion order |
 | Replay of three cinema questions via `/chat/stream` | this session | retrieval 7.3–9.9 s (lexical 1.3–1.8, dense 1.2–1.7, rerank 2.2), LLM 4.8–7.0 s, wall 14–16 s; answers grounded and well cited |
 | Only single-turn synthesis tests exist | `tests/determinism/test_answer_synthesis.py` | multi-turn continuation and dense-prompt transformation are untested |
+| Pass-1 default plan (`pass1-retrieval-v2`): document summaries 10, section summaries 12, global children 24, entity cards 8; compressed to `final_max_children 12` / `final_max_total_items 15`; `rrf_k 60`; "No thresholds invented here" | `shared/polymath_shared/pass1.py:38,64-87` | retrieval is recall-oriented by design; the candidate → synthesis compression already exists and must stay separate from breadth |
+| A second, hard-coded profile: `query_shape.depth_plan()` = section 24, global child 40, sections/doc 8, children/section 4, final children 28, final total 32, neighbor expansion ±1 | `shared/polymath_shared/query_shape.py:88-99` | changing Pass-1 defaults does NOT change completeness queries — a dependency trap for any breadth change |
+| Documented threshold trap: an author-bio chunk scored cosine 0.5955 and ranked #1 after rerank while the correct objectives map scored 0.4894 (#7); the design demotes noisy document regions instead of deleting them | `shared/polymath_shared/document_region.py:9-10`, `pass1.py:127` | a hard similarity threshold is not the noise fix |
+| Repository contract: bootstrap from CONTINUITY-REPORT → register → work-logs, run guards, record the slice before mutation; contract changes need reverse-dependent verification; private package imports never cross process boundaries (orchestrator may depend on `shared`, never on worker/control internals) | `AGENTS.md` §1, §3, §5 | compiler and budget policy live in `shared` (deterministic policy) or cleanly in the orchestrator; no cross-layer import |
 
 Retrieval quality on single-turn factual questions is **good** (180-degree rule: top 5 of 10 on-concept, reranker live and re-ordering). This plan does not rebuild it.
 
@@ -69,12 +74,16 @@ Retrieval quality on single-turn factual questions is **good** (180-degree rule:
                ├── NO RETRIEVAL ────────────────────────────┐
                ▼                                            │
 ┌──────────────────────────────┐                            │
-│ MULTI-QUERY RETRIEVAL        │  existing FAST/HYBRID/GRAPH │
-│ per query, query provenance  │                            │
+│ BROAD RETRIEVAL              │  existing FAST/HYBRID/GRAPH │
+│ per query, query provenance  │  retrieval_candidate_budget │
 └──────────────┬───────────────┘                            │
                ▼                                            │
 ┌──────────────────────────────┐                            │
-│ MERGE · RERANK · DEDUPE      │  RRF by query weight, ≤10 per rerank call
+│ DEDUPE + RRF (normalized)    │  merged_candidate_budget ~80–120
+└──────────────┬───────────────┘                            │
+               ▼                                            │
+┌──────────────────────────────┐                            │
+│ RERANK / CONTEXT SELECTOR    │  selection_budget ~20–30, ≤10 docs per rerank call
 └──────────────┬───────────────┘                            │
                ▼                                            │
 ┌──────────────────────────────┐                            │
@@ -83,10 +92,12 @@ Retrieval quality on single-turn factual questions is **good** (180-degree rule:
                └──────────────┬─────────────────────────────┘
                               ▼
                     ┌──────────────────────┐
-                    │ FINAL SYNTHESIS      │  original request + resolved request
-                    │ task authority       │  + conversation + evidence + coverage
-                    │ factual authority    │
-                    └──────────────────────┘
+                    │ FINAL SYNTHESIS      │  synthesis_evidence_budget ~12–18
+                    │ task authority       │  original + resolved request, conversation,
+                    │ factual authority    │  evidence, coverage
+                    └──────────┬───────────┘
+                               ▼
+                    USED / CITED EVIDENCE IDS  → the only items eligible for carry
 ```
 
 `/chat`, `/chat/stream` and MCP become transports over one `ChatRuntime` (`ChatRequest → ChatPlan → ChatRuntime{retrieval, evidence selection, synthesis}`).
@@ -177,21 +188,70 @@ corpus evidence. Factual claims ABOUT THE CORPUS still carry [S#] tags.
 - `ChatRuntime` shared by `/chat`, `/chat/stream`, MCP. `/chat` without `mode` → HYBRID (LEGACY only when explicitly requested); `meta.mode` reports the executed mode. The `ui.py` header stops claiming byte-identity with `/chat`.
 - Reranker sidecar: raise the MPS cap (`PYTORCH_MPS_HIGH_WATERMARK_RATIO`) or batch scoring internally; regression: 40 documents rerank without a 500.
 
+### 3.8 Three explicit budgets (breadth is not evidence)
+
+Retrieval stays recall-oriented; the LLM must not swim in what recall brings back. Named budgets, each its own knob, each receipted:
+
+| Budget | Meaning | Default to benchmark | Rule |
+|---|---|---|---|
+| `retrieval_candidate_budget` | per compiled query, per lane | children 40–60 (was 24), sections 20–30 (was 12), documents 10, entity cards 8 | raise **upstream** recall first |
+| `merged_candidate_budget` | **global** pool after dedupe + RRF across all subqueries | 80–120 | never defined per query only: 4 subqueries × 30 = 120 raw hits before dedupe |
+| `selection_budget` | after rerank / context selection | 20–30 | reranker calls ≤ 10 documents each until the sidecar cap is raised |
+| `synthesis_evidence_budget` | items handed to the LLM | 12–18 (today 12/15) | held constant while breadth is raised; `final_max_children = 60` is the anti-pattern |
+
+Order of operations for any breadth change: (1) raise candidate budgets, (2) measure whether the missing answer is now **present in the candidate pool**, (3) only if present-but-unselected, work on selection/rerank; never on breadth alone.
+
+### 3.9 Funnel instrumentation — where noise dies
+
+Every chat turn records, per compiled query and merged: `retrieved_candidates` → `after_dedupe` → `after_rrf` (with per-query provenance) → `after_rerank` → `selected_for_llm` → `actually_cited` (from [S#] tags). Each stage keeps chunk ids and ranks. "Retrieval gave me bad stuff" then resolves to exactly one of:
+
+1. the correct chunk was never retrieved (breadth / query formulation);
+2. retrieved at rank 47 and truncated (candidate budget);
+3. survived rerank but lost final selection (selection rule);
+4. reached the LLM and was ignored (synthesis / prompt).
+
+First diagnostic before any cap moves (P0.0): for the owner's "final video prompt" conversation and the §5 fixtures, dump the top 100 candidates with their rank at each stage. A `polymath chat funnel <receipt_id>` CLI over the receipt prints this table.
+
+### 3.10 RRF under multiple subqueries — provenance and amplification
+
+With LLM-generated subqueries the same document can appear under several near-duplicate formulations. If each occurrence contributes independently, a document wins because the planner was redundant, not because its evidence is stronger. Rules:
+
+- keep `query_id` provenance on every hit through merge;
+- dedupe by chunk id before fusion; fuse once per (chunk, query) with the query's `weight`, and **normalize** per document so that N redundant subqueries cannot add more than one document-level vote;
+- the merged pool is capped by `merged_candidate_budget`, not by the sum of per-query caps;
+- receipt the per-query contribution of every selected item (the funnel makes redundancy visible).
+
+### 3.11 Versioned retrieval behavior and the second profile
+
+- `Pass1RetrievalPlan` is `pass1-retrieval-v2` and is under evaluation. Multi-query retrieval, new fusion or new final-selection rules ship as **`pass1-retrieval-v3`** or a separate **`CHAT-RETRIEVAL-PLAN-V1`**, never as silent edits to v2 underneath existing evaluations. Receipts carry the plan version.
+- `query_shape.depth_plan()` hard-codes its own limits (section 24, global child 40, sections/doc 8, children/section 4, final 28/32). Any budget change applies to BOTH profiles, or the depth profile is derived from the same budget object. A regression asserts both profiles read their limits from one policy source.
+- No hard similarity threshold is introduced (§1, document_region case). Noise is demoted by region role and lost at selection, not deleted at retrieval.
+
+### 3.12 Ordering constraint
+
+Carry-context v2 (§3.5) lands **before** any breadth increase: raising breadth with the current 30-chunk carry increases the pool of historical contamination. The phase order enforces this (P0.e precedes P1.a).
+
+### 3.13 Where the code lives (AGENTS.md §5)
+
+The compiler contract, budgets, fusion and selection policy are deterministic policy in `shared/polymath_shared/chat_plan.py` + `chat_budgets.py` (pure functions, unit-testable); the LLM call and the transports live in the orchestrator. No orchestrator import of worker/control internals. Contract changes get reverse-dependent verification (`/chat`, `/chat/stream`, MCP, `/ask` and TRAIL `/retrieve/plan` checked) and an ADR if the dependency map changes.
+
 ## 4. Phases and gates (assert before commit; targets fixed here, before the work)
 
 Baseline set B = 30 logged single-turn questions (cinema 10, ecom-meta 10, field-evidence 10) with gold chunk ids, plus the conversation fixtures in §5. Baseline numbers are measured **first** and written into the work-log before any change.
 
 | Phase | Change | Gate (must hold to promote) |
 |---|---|---|
+| P0.0 funnel + baselines | stage-by-stage candidate receipts (§3.9) on the current pipeline; top-100 dump for the owner's video-prompt conversation and the §5 fixtures; baseline numbers for B | every chat turn has a complete funnel receipt; baseline table written into the work-log before any cap or prompt changes |
 | P0.a hygiene | exam framing out of the core prompt; `/chat` default HYBRID + truthful `meta.mode`; `/chat/stream` receipts; reranker cap/batching | receipts on 100 % of stream turns; 40-doc rerank 200; single-turn suite green |
 | P0.b compiler, **shadow** | compile every stream turn, receipt the plan, change nothing else | fallback rate < 5 % on B; task-verb preserved on 100 % of fixtures; p50 compile ≤ 2.5 s |
 | P0.c compiled retrieval + no-retrieval routing | retrieve on compiled queries; skip retrieval for `conversation` policy | follow-up fixtures: gold chunk hit@10 ≥ 0.8 (baseline measured, expected ≪ 0.5); TRANSFORM/CONTINUE fixtures: 0 retrievals fired; B hit@10 not below baseline − 0.05 |
 | P0.d synthesis v2 | authority split, used_evidence + legend in the answer event | "final prompt" fixture produces the artifact; factual fixture (§5 #6) keeps ≥ baseline citation precision; no "evidence doesn't contain" on artifact tasks |
 | P0.e carry v2 | used-only carry, reranked, cap 8 | off-topic turn-1 chunk absent from turn-3 legend; prompt tokens per turn ≤ baseline |
-| P1.a decomposition + coverage | 1–4 typed queries, gap check, one targeted second pass | multi-dimension fixture: every dimension ✓ or explicitly flagged weak; wall p50 ≤ baseline + 3 s |
-| P1.b context selection | admission floor + per-document cap before the prompt | evidence items in prompt ≤ 24 with no drop in citation precision on B |
-| P1.c runtime unification | ChatRuntime; `/chat` == `/chat/stream` modulo transport | same plan + same evidence ids for the same request on both routes (determinism test) |
-| P1.d conversation regression suite | §5 frozen, including the owner's exact video-gen conversation | suite in CI (determinism.yml) |
+| P1.a budgets + breadth (after carry v2) | three explicit budgets (§3.8) as one policy object read by BOTH Pass-1 and `depth_plan`; children 24→40–60, sections 12→20–30, merged pool 80–120, synthesis held at 12–18; ships as `pass1-retrieval-v3` / `CHAT-RETRIEVAL-PLAN-V1` | on B: gold chunk present in the merged pool ≥ 0.9 (baseline measured first); synthesis items unchanged; citation precision ≥ baseline; both profiles read one policy source (test) |
+| P1.b decomposition + coverage | 1–4 typed queries, provenance-normalized RRF (§3.10), gap check, one targeted second pass | multi-dimension fixture: every dimension ✓ or explicitly flagged weak; no document exceeds one vote per subquery; wall p50 ≤ baseline + 3 s |
+| P1.c context selection | rerank / selection to `selection_budget` 20–30, then `synthesis_evidence_budget` 12–18; admission floor + per-document cap | funnel shows the gold chunk surviving selection on ≥ 0.85 of B where it was in the pool; citation precision ≥ baseline |
+| P1.d runtime unification | ChatRuntime; `/chat` == `/chat/stream` == MCP modulo transport; compiler, budgets and selection live in the shared policy layer | same plan + same evidence ids for the same request on all routes (determinism test) |
+| P1.e conversation regression suite | §5 frozen, including the owner's exact video-gen conversation, plus the funnel expectations per fixture | suite in CI (determinism.yml) |
 
 Rollout: feature flag `POLYMATH_CHAT_COMPILER` = `off` → `shadow` → `on`; each step is its own commit with its gate numbers in the work-log.
 
@@ -219,6 +279,10 @@ Rollout: feature flag `POLYMATH_CHAT_COMPILER` = `off` → `shadow` → `on`; ea
 - **Piping chat into `/retrieve/plan`** — rejected: its reformulations are TRAIL research signals; the *pattern* (one need → several queries, merge by query id) is borrowed, the planner is not.
 - **Carrying all retrieved chunks** — rejected: measured noise propagation; only used evidence carries.
 - **Letting the compiler rewrite the task** — rejected by guard 3.2.1; the search optimizer would drift the request.
+- **A hard similarity threshold as the noise fix** — rejected: the measured author-bio (0.5955) vs objectives-map (0.4894) case; noise is demoted by region and lost at selection.
+- **Raising `final_max_children` to get recall** — rejected: breadth and synthesis evidence are separate budgets; only the candidate pool grows.
+- **Per-query budgets only** — rejected: four subqueries multiply hits; the merged pool has its own cap and provenance-normalized fusion.
+- **Editing `pass1-retrieval-v2` in place** — rejected: versioned behavior (`v3` / `CHAT-RETRIEVAL-PLAN-V1`) so existing evaluations stay comparable.
 - **Touching ingestion / extraction / projection for this** — out of scope; the repository contract already isolates read behavior from those stages.
 
 ## 8. Out of scope
