@@ -1545,6 +1545,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("stores/postgres/migrations/0049_receipt_contract_ident.sql", "sql", None),
     ("stores/postgres/migrations/0050_generation_swap.sql", "sql", None),
     ("stores/postgres/migrations/0051_document_frontmatter.sql", "sql", None),
+    ("stores/postgres/migrations/0052_schema_drift_ci_deps.sql", "sql", None),
     ("control/control/stall_tracer.py", "py", None),
     ("shared/polymath_shared/query_receipts.py", "py", None),
     ("shared/polymath_shared/generation.py", "py", None),
