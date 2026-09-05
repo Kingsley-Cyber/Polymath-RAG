@@ -260,6 +260,11 @@ def graph_retrieve(query: str, corpus_id: str,
         ],
         "trace": {
             "lane_sizes": result.trace["lane_sizes"],
+            "pre_g3_order": result.trace.get("pre_g3_order") or [],
+            "post_g3_order": result.trace.get("post_g3_order") or [],
+            "funnel_lanes": result.trace.get("funnel_lanes") or {},
+            "funnel_union": result.trace.get("funnel_union") or [],
+            "plan": result.trace.get("plan"),
             "graph_seed_surfaces": _selected_surfaces(query, evidence)[:8],
             "latency_ms": {
                 "pass1": round(pass1_ms, 1),

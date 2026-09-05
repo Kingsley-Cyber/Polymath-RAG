@@ -276,6 +276,9 @@ def hybrid_fast_retrieve(
             "lane_sizes": result.trace["lane_sizes"],
             "pre_g3_order": result.trace["pre_g3_order"],
             "post_g3_order": result.trace["post_g3_order"],
+            "funnel_lanes": result.trace.get("funnel_lanes") or {},
+            "funnel_union": result.trace.get("funnel_union") or [],
+            "plan": result.trace.get("plan"),
             "latency_ms": latency_ms,
         },
     }

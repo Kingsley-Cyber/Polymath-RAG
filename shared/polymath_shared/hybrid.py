@@ -378,6 +378,15 @@ def hybrid_retrieve(
             continue
         seen_ids.add(c["chunk_id"])
         deduped.append(c)
+    # RETRIEVAL-FUNNEL-V1 (plan §3.9): what each lane produced and the
+    # union BEFORE truncation, so a receipt can say where a candidate died.
+    _funnel_lanes = {
+        "hierarchical": [c["chunk_id"] for c in fast.deepened_children],
+        "global_dense_child": [h.chunk_id for h in fast.global_child_lane],
+        "global_sparse_child": [h.chunk_id for h in lexical_lane],
+        "latent_rescue": [c["chunk_id"] for c in rescue_latent.values()],
+    }
+    _funnel_union = [c["chunk_id"] for c in deduped]
     # DOCUMENT-REGION-V1 (see pass1): HYBRID performs its OWN global cut,
     # so the demotion must be applied here too — otherwise boilerplate
     # that FAST correctly sinks reappears through the four-lane union
@@ -519,6 +528,8 @@ def hybrid_retrieve(
         ],
         "pre_g3_order": pre_g3,
         "post_g3_order": post_g3,
+        "funnel_lanes": _funnel_lanes,
+        "funnel_union": _funnel_union,
         "g3_scores": g3_scores,
         "rescue_seated": sum(
             1 for c in final_evidence

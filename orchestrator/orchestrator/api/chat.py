@@ -178,7 +178,24 @@ async def _chat_impl(req: ChatRequest) -> dict:
             raise HTTPException(status_code=502, detail={
                 "error_code": type(exc).__name__, "message": str(exc),
             }) from exc
-        return grounded_answer(bundle, query)
+        out = grounded_answer(bundle, query)
+        # RETRIEVAL-FUNNEL-V1 (plan §3.9): where each candidate died, on the
+        # same receipt the streaming path writes.
+        try:
+            from polymath_shared.funnel import funnel_from_trace
+            cited: list[str] = []
+            for c in (out.get("citations") or []):
+                for loc in (c.get("locators") or []):
+                    m = _LOC_CHUNK.match(str(loc))
+                    if m and m.group(1) not in cited:
+                        cited.append(m.group(1))
+            out.setdefault("meta", {})["funnel"] = funnel_from_trace(
+                fast.get("trace") or {}, selected=evidence_order, cited=cited,
+                plan_version=(fast.get("trace") or {}).get("plan"))
+            out["meta"]["used_evidence"] = cited
+        except Exception:  # noqa: BLE001 — diagnostics never break an answer
+            pass
+        return out
 
     corpus_ids = list(scope.corpus_ids)
     with tx() as conn:

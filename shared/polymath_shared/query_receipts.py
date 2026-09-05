@@ -35,7 +35,10 @@ def summarize_response(kind: str, out: Any) -> dict:
     d["meta"] = {k: v for k, v in meta.items()
                  if k in ("mode", "latent", "corpus_ids", "plan", "verdict", "reranker",
                           "rerank_degraded", "lanes", "timings", "admission",
-                          "answerability", "trace_id")}
+                          "answerability", "trace_id",
+                          # RETRIEVAL-FUNNEL-V1 / CHAT-QUERY-COMPILER (plan §3.6, §3.9)
+                          "funnel", "chat_plan", "synthesis_version", "model",
+                          "phase_ms", "used_evidence", "legend", "degraded")}
     cits = out.get("citations")
     if isinstance(cits, list):
         d["citations"] = len(cits)
@@ -87,6 +90,33 @@ def summarize_response(kind: str, out: Any) -> dict:
     return d
 
 
+META_MAX_CHARS = 64_000
+
+
+def _meta_json(meta: dict) -> str:
+    """JSON-SAFE-META-V1: the old `json.dumps(meta)[:8000]` sliced the text
+    and produced INVALID JSON for any meta over 8 KB — the INSERT then
+    failed and the receipt was silently dropped. Shrink structurally
+    (funnel ids first, then whole keys) and never slice a JSON string."""
+    m = dict(meta or {})
+    txt = json.dumps(m, default=str)
+    if len(txt) <= META_MAX_CHARS:
+        return txt
+    if isinstance(m.get("funnel"), dict):
+        from polymath_shared.funnel import compact
+        m["funnel"] = compact(m["funnel"], max_chars=META_MAX_CHARS // 2)
+        txt = json.dumps(m, default=str)
+        if len(txt) <= META_MAX_CHARS:
+            return txt
+    for key in ("legend", "used_evidence", "chat_plan", "lanes", "timings", "funnel"):
+        if key in m:
+            m[key] = {"truncated": True}
+            txt = json.dumps(m, default=str)
+            if len(txt) <= META_MAX_CHARS:
+                return txt
+    return json.dumps({"truncated": True, "keys": sorted(m)}, default=str)
+
+
 def record_query_receipt(tx_factory, *, kind: str, question: str, req: Any,
                          scope_corpora: list[str] | None, scope_kind: str | None,
                          wall_ms: float, out: Any = None, error: str | None = None,
@@ -116,7 +146,7 @@ def record_query_receipt(tx_factory, *, kind: str, question: str, req: Any,
                  hashlib.sha256((question or "").encode("utf-8")).hexdigest(),
                  _head(question), int(round(wall_ms)), summ["status"], summ["verdict"],
                  summ["citations"], summ["claims"], summ["evidence"], summ["source_docs"],
-                 json.dumps(summ["meta"], default=str)[:8000], _head(error or "", 500) or None))
+                 _meta_json(summ["meta"]), _head(error or "", 500) or None))
         return qid
     except Exception as exc:  # noqa: BLE001 — receipts never break a query
         log.warning("query receipt not written: %s", str(exc)[:200],

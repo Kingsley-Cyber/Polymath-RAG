@@ -1,0 +1,16 @@
+{
+  "fixture": "video_prompt_final",
+  "source": "reconstructed from the owner's 2026-09-05 description; replace `history` with the exported transcript when available",
+  "corpus_id": "cinema",
+  "history": [
+    {"role": "user", "content": "I want a video-generation prompt for a 12-second UGC-style clip: a creator unboxing a matte-black mechanical keyboard on a wooden desk, handheld iPhone look, natural window light, one slow push-in, no captions. Use what my cinema books say about blocking, camera movement and lighting to make it precise."},
+    {"role": "assistant", "content": "Draft v1 (grounded in the cinema corpus):\n\nSHOT: single handheld take, 12 s, 24 fps, 35mm-equivalent, eye-level, slow push-in from a medium two-hands-and-box framing to a close-up on the keycaps [S2][S5].\nBLOCKING: creator seated screen-left, box centered, hands enter frame first; the reveal happens on the push-in's last third so the movement motivates the cut point [S1].\nLIGHT: soft window key from camera-right at ~45°, no fill card, let the far side fall off; matte-black surfaces read through the rim from the window edge [S3][S4].\nSOUND: room tone, box-lid friction, key click at the end.\nNEGATIVE: no captions, no music bed, no bokeh smear, no skin smoothing.\n\nWant me to tighten the movement timing or add a second beat?"},
+    {"role": "user", "content": "tighten the timing so the reveal lands at second 9 and keep the push-in continuous"}
+  ],
+  "message": "so what's the final prompt ?? for video gen",
+  "expected_after_compiler": {
+    "task_type": "CONTINUE_PRIOR_ARTIFACT",
+    "retrieval_required": false,
+    "response_type": "artifact"
+  }
+}

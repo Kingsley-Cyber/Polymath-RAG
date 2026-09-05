@@ -1150,6 +1150,57 @@ _EVIDENCE_TEXT_CHARS = int(
     os.environ.get("POLYMATH_EVIDENCE_TEXT_CHARS", "2000"))
 
 
+_LEGEND_ITEMS = 48
+_S_TAG_RE = __import__("re").compile(r"\[S(\d+)\]")
+_LOC_CHUNK_RE = __import__("re").compile(r"^chunk:([A-Za-z0-9_]+)")
+
+
+def _evidence_legend(bundle: dict) -> list[dict]:
+    """The [S#] legend exactly as the prompt builder emits it: one entry per
+    evidence item that carries a locator and text, in bundle order, capped
+    at _LEGEND_ITEMS. Shared by _grounded_messages (prompt), the answer
+    event (UI) and the query receipt (RETRIEVAL-FUNNEL-V1 `selected`)."""
+    out: list[dict] = []
+    for item in (bundle.get("evidence_bundle") or [])[:_LEGEND_ITEMS]:
+        span = item.get("source_span") or {}
+        loc = span.get("locator") or ""
+        text = (span.get("text") or "")[:_EVIDENCE_TEXT_CHARS]
+        if loc and text:
+            m = _LOC_CHUNK_RE.match(str(loc))
+            out.append({"tag": f"S{len(out) + 1}", "locator": loc,
+                        "chunk_id": (m.group(1) if m else (item.get("source_chunk_id") or None)),
+                        "doc_id": item.get("source_document_id"), "text": text})
+    return out
+
+
+def _cited_chunk_ids(answer_text: str, legend: list[dict]) -> list[str]:
+    """Chunk ids behind the [S#] tags the model actually emitted (order of
+    first citation, deduped). Tags outside the legend are ignored."""
+    by_tag = {e["tag"]: e.get("chunk_id") for e in legend}
+    out: list[str] = []
+    for n in _S_TAG_RE.findall(answer_text or ""):
+        cid = by_tag.get(f"S{n}")
+        if cid and cid not in out:
+            out.append(cid)
+    return out
+
+
+def _record_stream_receipt(req, *, question: str, scope, wall_ms: float, ui_mode: str,
+                           answer: str | None, meta: dict, error: str | None = None) -> None:
+    """QUERY-RECEIPTS on the streaming path (plan §3.6). Best effort, never
+    on the critical path; the UI's turns were previously invisible."""
+    try:
+        from polymath_shared.query_receipts import record_query_receipt
+        corpora = list(getattr(scope, "corpus_ids", None) or [])
+        kind_scope = getattr(scope, "mode", None)
+        out = None if error else {"answer": answer or "", "meta": dict(meta or {}, mode=ui_mode)}
+        record_query_receipt(tx, kind="chat_stream", question=question, req=req,
+                             scope_corpora=corpora, scope_kind=(str(kind_scope).lower() if kind_scope else None),
+                             wall_ms=wall_ms, out=out, error=error, client="ui-stream")
+    except Exception:  # noqa: BLE001 — receipts never break a stream
+        pass
+
+
 def _grounded_messages(query: str, bundle: dict, graph_facts: list,
                        history, carry_context,
                        reasoning: str | None = None,
@@ -1166,14 +1217,9 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
     # real locators for the trace/UI.
     ev_lines: list[str] = []
     legend: list[str] = []
-    for item in (bundle.get("evidence_bundle") or [])[:48]:
-        span = item.get("source_span") or {}
-        loc = span.get("locator") or ""
-        text = (span.get("text") or "")[:_EVIDENCE_TEXT_CHARS]
-        if loc and text:
-            tag = f"S{len(ev_lines) + 1}"
-            ev_lines.append(f"[{tag}]\n{text}")
-            legend.append(f"[{tag}] = {loc}")
+    for e in _evidence_legend(bundle):
+        ev_lines.append(f"[{e['tag']}]\n{e['text']}")
+        legend.append(f"[{e['tag']}] = {e['locator']}")
     for f in graph_facts[:20]:
         ev_lines.append(
             f"[fact:{f.get('fact_id', '')[:24]}] "
@@ -1390,6 +1436,13 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
         from orchestrator.api.retrieve import resolve_http_scope
 
         t0 = time.perf_counter()
+        scope = None
+        _trace: dict = {}
+        _phase_ms: dict = {}
+        _legend: list[dict] = []
+
+        def _mark(name: str) -> None:
+            _phase_ms[name] = round((time.perf_counter() - t0) * 1000, 1)
         try:
             yield _phase("scope", "Resolving query scope…")
             with tx() as conn:
@@ -1439,6 +1492,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
             if ui_mode == "GRAPH":
                 from orchestrator.api.graph import graph_retrieve
                 g = graph_retrieve(query, corpus_id, latent=req.latent)
+                _trace = g.get("trace") or {}
                 latent_meta = (g.get("meta") or {}).get("latent")
                 evidence_rows = [
                     {"chunk_id": c["chunk_id"], "doc_id": d["doc_id"],
@@ -1489,11 +1543,13 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                     fast = hybrid_fast_retrieve(query, corpus_id,
                                                 latent=req.latent)
                 latent_meta = (fast.get("meta") or {}).get("latent")
+                _trace = fast.get("trace") or {}
                 evidence_rows = [
                     {"chunk_id": c["chunk_id"], "doc_id": c["doc_id"],
                      "parent_id": c["parent_id"]}
                     for c in fast["evidence"]
                 ]
+                _mark("retrieve")
                 yield _phase("retrieve_done", "Evidence selected",
                              evidence_count=len(evidence_rows),
                              lane_sizes=fast["trace"].get("lane_sizes"))
@@ -1540,6 +1596,8 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                 yield _sse("error", {"error_code": type(exc).__name__,
                                      "message": str(exc)[:300]})
                 return
+            _mark("assemble")
+            _legend = _evidence_legend(bundle)
             yield _phase("assemble_done", "Bundle assembled",
                          items=len(bundle.get("evidence_bundle", [])))
 
@@ -1612,15 +1670,30 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                     if piece:
                         full.append(piece)
                         yield _sse("token", {"token": piece})
+                _mark("generate")
+                answer_text = "".join(full)
+                from polymath_shared.funnel import funnel_from_trace
+                used = _cited_chunk_ids(answer_text, _legend)
+                funnel = funnel_from_trace(
+                    _trace, selected=[e["chunk_id"] for e in _legend if e.get("chunk_id")],
+                    cited=used, plan_version=(_trace or {}).get("plan"))
+                retrieval["used_evidence"] = used
+                retrieval["legend"] = [{"tag": e["tag"], "locator": e["locator"],
+                                        "chunk_id": e.get("chunk_id"), "doc_id": e.get("doc_id")}
+                                       for e in _legend]
+                retrieval["funnel"] = {"version": funnel["version"], "counts": funnel["counts"],
+                                       "lane_counts": funnel["lane_counts"], "multi_lane": funnel["multi_lane"]}
+                _phase_ms["total"] = round((time.perf_counter() - t0) * 1000, 1)
                 yield _sse("answer", {
                     "kind": "llm",
                     "result": {
-                        "answer": "".join(full),
+                        "answer": answer_text,
                         "model": llm_model,
                         "meta": {
                             "verdict": "generated",
                             "abstained": False,
                             "synthesis_version": f"{llm_backend}:{llm_model}",
+                            "phase_ms": dict(_phase_ms),
                         },
                     },
                     "retrieval": retrieval,
@@ -1628,26 +1701,61 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                         (time.perf_counter() - t0) * 1000, 1),
                 })
                 yield _sse("done", {})
+                _record_stream_receipt(
+                    req, question=query, scope=scope, wall_ms=_phase_ms["total"], ui_mode=retrieval.get("mode") or ui_mode,
+                    answer=answer_text,
+                    meta={"verdict": "generated", "synthesis_version": f"{llm_backend}:{llm_model}",
+                          "model": llm_model, "latent": req.latent, "phase_ms": dict(_phase_ms),
+                          "funnel": funnel, "used_evidence": used, "legend": retrieval["legend"],
+                          "degraded": retrieval.get("degraded"), "plan": (_trace or {}).get("plan")})
                 return
 
             yield _phase("synthesize", "Validating claims against "
                                        "evidence…")
             answer = grounded_answer(bundle, query)
-
+            _mark("generate")
+            from polymath_shared.funnel import funnel_from_trace
+            used = []
+            for c in (answer.get("citations") or []):
+                for loc in (c.get("locators") or []):
+                    m = _LOC_CHUNK_RE.match(str(loc))
+                    if m and m.group(1) not in used:
+                        used.append(m.group(1))
+            funnel = funnel_from_trace(
+                _trace, selected=[e["chunk_id"] for e in _legend if e.get("chunk_id")],
+                cited=used, plan_version=(_trace or {}).get("plan"))
+            retrieval["used_evidence"] = used
+            retrieval["funnel"] = {"version": funnel["version"], "counts": funnel["counts"],
+                                   "lane_counts": funnel["lane_counts"], "multi_lane": funnel["multi_lane"]}
+            _phase_ms["total"] = round((time.perf_counter() - t0) * 1000, 1)
             yield _sse("answer", {
                 "kind": "chat",
                 "result": answer,
                 "retrieval": retrieval,
-                "latency_ms": round((time.perf_counter() - t0) * 1000, 1),
+                "latency_ms": _phase_ms["total"],
             })
             yield _sse("done", {})
+            _record_stream_receipt(
+                req, question=query, scope=scope, wall_ms=_phase_ms["total"], ui_mode=retrieval.get("mode") or ui_mode,
+                answer=answer.get("answer"),
+                meta={"verdict": (answer.get("meta") or {}).get("verdict"),
+                      "synthesis_version": (answer.get("meta") or {}).get("synthesis_version"),
+                      "latent": req.latent, "phase_ms": dict(_phase_ms), "funnel": funnel,
+                      "used_evidence": used, "degraded": retrieval.get("degraded"),
+                      "plan": (_trace or {}).get("plan")})
         except HTTPException as exc:
             detail = exc.detail if isinstance(exc.detail, dict) else {
                 "message": str(exc.detail)}
             yield _sse("error", {"status": exc.status_code, **detail})
+            _record_stream_receipt(req, question=query, scope=scope,
+                                   wall_ms=(time.perf_counter() - t0) * 1000, ui_mode=ui_mode,
+                                   answer=None, meta={}, error=f"HTTP {exc.status_code}: {str(detail)[:200]}")
         except Exception as exc:  # loud, typed-ish, never silent
             yield _sse("error", {"error_code": type(exc).__name__,
                                  "message": str(exc)[:300]})
+            _record_stream_receipt(req, question=query, scope=scope,
+                                   wall_ms=(time.perf_counter() - t0) * 1000, ui_mode=ui_mode,
+                                   answer=None, meta={}, error=f"{type(exc).__name__}: {str(exc)[:200]}")
 
     return StreamingResponse(generate(), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache",

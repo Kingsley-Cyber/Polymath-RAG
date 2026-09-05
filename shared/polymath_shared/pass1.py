@@ -608,6 +608,7 @@ def pass1_retrieve(
     # reservation is a floor for rescue, never a quota: unused rescue
     # slots go straight back to the hierarchy, so a corpus with no
     # rescue hits gets byte-identical behaviour to before.
+    _funnel_union = [c["chunk_id"] for c in deduped]      # RETRIEVAL-FUNNEL-V1: before truncation
     deduped = _truncate_reserving_rescue(
         deduped, plan.final_max_children, plan.rescue_reserved_slots)
 
@@ -673,6 +674,14 @@ def pass1_retrieve(
         ],
         "pre_g3_order": pre_g3,
         "post_g3_order": post_g3,
+        # RETRIEVAL-FUNNEL-V1 (plan §3.9): per-lane candidates and the
+        # pre-truncation union so a receipt can say where a chunk died.
+        "funnel_lanes": {
+            "hierarchical": [c["chunk_id"] for c in deepened.values()],
+            "global_dense_child": [h.chunk_id for h in child_lane],
+            "global_child_rescue": [c["chunk_id"] for c in rescue.values()],
+        },
+        "funnel_union": _funnel_union,
         "g3_scores": g3_scores,
         # PRODUCTION-REALITY-V1: every promoted lane emits BOTH its
         # opportunity and its contribution, so lane_liveness can tell a
