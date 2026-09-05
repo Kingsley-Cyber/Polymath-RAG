@@ -488,7 +488,7 @@ def run_worker(worker_type: str, event_types: list[str],
                 except StageFailed as exc:
                     if _is_sidecar_unavailable(exc):
                         _release_ticket_transient(ticket_id, str(exc))
-                        time.sleep(_TRANSIENT_BACKOFF_S)
+                        time.sleep(transient_backoff_s(exc))
                     else:
                         log.error(str(exc), extra={
                             "run_id": event.get("run_id"), "stage": worker_type,
@@ -506,7 +506,7 @@ def run_worker(worker_type: str, event_types: list[str],
                         with tx() as conn:
                             heartbeat(conn, identity["worker_id"],
                                       last_error=f"transient: {type(exc).__name__}: {exc}"[:500])
-                        time.sleep(_TRANSIENT_BACKOFF_S)
+                        time.sleep(transient_backoff_s(exc))
                     else:
                         log.exception("processing failed", extra={
                             "run_id": event.get("run_id"),
@@ -532,16 +532,61 @@ def run_worker(worker_type: str, event_types: list[str],
 _TRANSIENT_BACKOFF_S = 15.0
 
 
-def _is_sidecar_unavailable(exc: BaseException) -> bool:
-    """SidecarUnavailable anywhere in the cause chain = transient infra."""
-    from polymath_shared.clients import SidecarUnavailable
+class TransientStageHold(RuntimeError):
+    """TRANSIENT-HOLD-V1 (2026-09-05): a stage that must YIELD its ticket without
+    executing — e.g. the corpus sweep lock is held by a peer worker. The runtime
+    hands the ticket back READY (no attempt consumed) and the worker moves on to
+    other claimable work instead of blocking a lane slot for the sweep's duration
+    (measured: a summaries worker waited on the sweep lock while a parent_summary
+    ticket sat READY_UNCLAIMED for 4.2 hours)."""
+
+
+#: PROVIDER-CAPACITY-IS-TRANSIENT-V1 (measured 2026-09-05, 63-document ingest):
+#: seven extraction tickets FAILED after three consecutive HTTP 429s inside ten
+#: minutes each. A 429 / "lane refused" is a capacity event of the provider pool,
+#: never an execution failure of the document — it must not consume an attempt.
+_CAPACITY_MARKERS = ("HTTP 429", "429 Too Many Requests", "lane refused", "LIMITER_REFUSED")
+_CAPACITY_BACKOFF_S = 60.0
+
+
+def _is_provider_capacity(exc: BaseException) -> bool:
+    from polymath_shared.llm_extraction.client import ExtractionTransportError
     seen = 0
     while exc is not None and seen < 8:
-        if isinstance(exc, SidecarUnavailable):
+        if isinstance(exc, ExtractionTransportError) and any(m in str(exc) for m in _CAPACITY_MARKERS):
             return True
         exc = exc.__cause__ or exc.__context__
         seen += 1
     return False
+
+
+def _is_transient_hold(exc: BaseException) -> bool:
+    seen = 0
+    while exc is not None and seen < 8:
+        if isinstance(exc, TransientStageHold):
+            return True
+        exc = exc.__cause__ or exc.__context__
+        seen += 1
+    return False
+
+
+def transient_backoff_s(exc: BaseException) -> float:
+    return _CAPACITY_BACKOFF_S if _is_provider_capacity(exc) else _TRANSIENT_BACKOFF_S
+
+
+def _is_sidecar_unavailable(exc: BaseException) -> bool:
+    """Transient = hand the ticket back without consuming an attempt:
+    SidecarUnavailable (infra booting), a provider capacity event (HTTP 429 /
+    lane refused), or a TransientStageHold raised by the stage itself."""
+    from polymath_shared.clients import SidecarUnavailable
+    seen = 0
+    e = exc
+    while e is not None and seen < 8:
+        if isinstance(e, SidecarUnavailable):
+            return True
+        e = e.__cause__ or e.__context__
+        seen += 1
+    return _is_provider_capacity(exc) or _is_transient_hold(exc)
 
 
 def _release_ticket_transient(ticket_id: str | None, reason: str) -> None:

@@ -74,7 +74,7 @@ def _job_done(conn: Connection, stage: str, input_hash: str) -> bool:
 #      waits OUTSIDE any row lock (advisory lock on its outer transaction)
 #      and finds the work already done when its turn comes (idempotent).
 _LOCK_TIMEOUT_MS_DEFAULT = 60_000
-_SWEEP_WAIT_S_DEFAULT = 1800
+_SWEEP_WAIT_S_DEFAULT = 30          # TRANSIENT-HOLD-V1: yield the ticket instead of blocking the lane slot
 
 
 def _lock_timeout_ms() -> int:
@@ -117,8 +117,11 @@ def _sweep_lock(conn: Connection, stage: str, corpus_id: str) -> None:
                         stage, corpus_id, extra={"error_code": "SUMMARY_SWEEP_BUSY"})
             logged = True
         if _time.monotonic() - t0 > cap:
-            raise RuntimeError(f"SUMMARY_SWEEP_BUSY: {stage} sweep of corpus {corpus_id} "
-                               f"still held by another worker after {int(cap)}s")
+            # yield, never fail: the runtime hands the ticket back READY without an attempt and
+            # this worker claims other work (parent_summary, another corpus) meanwhile
+            from polymath_shared.worker_runtime import TransientStageHold
+            raise TransientStageHold(f"SUMMARY_SWEEP_BUSY: {stage} sweep of corpus {corpus_id} "
+                                     f"held by another worker for >{int(cap)}s — ticket yielded")
         _time.sleep(5.0)
     if logged:
         log.info("sweep lock acquired after %.0fs: %s corpus %s",
