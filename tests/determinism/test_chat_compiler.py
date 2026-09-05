@@ -156,3 +156,37 @@ def test_corrections_fix_the_two_measured_confusions():
     plan3 = cp.compile_plan("so what's the final prompt ?? for video gen", [], ["cinema"], _complete_returning(raw2))
     assert plan3.task_type == "CREATE_FROM_KNOWLEDGE" and plan3.compiler["corrections"] == []
     assert cp.references_corpus("what do my books say about habits") and not cp.references_corpus("what is the 180-degree rule")
+
+
+def test_retrieval_text_is_the_primary_query_plus_dropped_exact_terms():
+    raw = dict(GOOD, resolved_request="What does RAPO say about reward-aware prompt optimization for text-to-video?", task_type="GROUNDED_QA",
+               queries=[{"id": "q0", "type": "PRIMARY", "query": "automated prompt optimization for video generation", "weight": 1},
+                        {"id": "q1", "type": "MECHANISM", "query": "reward models for prompt rewriting", "weight": 0.8}])
+    plan, _ = cp.validate_plan(raw, 'What does RAPO say about "reward-aware prompt optimization" for text-to-video?')
+    text = cp.retrieval_text_for(plan)
+    assert text.startswith("automated prompt optimization for video generation")
+    assert "RAPO" in text and "reward-aware prompt optimization" in text          # exact terms ride along verbatim
+    # a fallback plan searches the raw message, unchanged
+    fb = cp.fallback_plan("What is the 180-degree rule?", reason="x")
+    assert cp.retrieval_text_for(fb) == "What is the 180-degree rule?"
+
+
+def test_correction_c_strips_corpus_id_the_conversation_never_used():
+    hist = [{"role": "user", "content": "Tell me about sound editing."}, {"role": "assistant", "content": "Here is what the book says about Sound Editing [S1]."}]
+    raw = dict(GOOD, resolved_request="How does sound editing work in practice?", task_type="GROUNDED_SYNTHESIS",
+               queries=[{"id": "q0", "type": "PRIMARY", "query": "sound editing in cinema", "weight": 1}],
+               semantic_queries=["sound editing techniques in cinema"])
+    plan, _ = cp.validate_plan(raw, "How does that work in practice?")
+    fixes = cp.apply_corrections(plan, "How does that work in practice?", hist, corpus_ids=["cinema"])
+    assert fixes == ["corpus_scope_term:cinema:q0"]
+    assert plan.queries[0].query == "sound editing" and plan.semantic_queries == ["sound editing techniques"]
+    # the corpus id IS a topical word when the user said it: untouched
+    raw2 = dict(raw, queries=[{"id": "q0", "type": "PRIMARY", "query": "cinema lighting basics", "weight": 1}], semantic_queries=[])
+    plan2, _ = cp.validate_plan(raw2, "what are the cinema lighting basics?")
+    assert cp.apply_corrections(plan2, "what are the cinema lighting basics?", [], corpus_ids=["cinema"]) == []
+    assert plan2.queries[0].query == "cinema lighting basics"
+    # never emptied
+    raw3 = dict(raw, queries=[{"id": "q0", "type": "PRIMARY", "query": "cinema", "weight": 1}], semantic_queries=[])
+    plan3, _ = cp.validate_plan(raw3, "How does that work in practice?")
+    cp.apply_corrections(plan3, "How does that work in practice?", hist, corpus_ids=["cinema"])
+    assert plan3.queries[0].query == "cinema"

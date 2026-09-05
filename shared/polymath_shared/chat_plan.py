@@ -186,7 +186,49 @@ def references_prior_artifact(message: str, history: Iterable | None) -> bool:
     return False
 
 
-def apply_corrections(plan: "ChatPlan", message: str, history: Iterable | None) -> list[str]:
+_TRAILING_FUNCTION_WORDS = {"in", "of", "for", "on", "about", "the", "a", "an", "to", "and", "with", "from", "within", "at", "by"}
+
+
+def _conversation_text(message: str, history: Iterable | None) -> str:
+    parts = [message or ""]
+    for h in list(history or []):
+        parts.append(str(getattr(h, "content", None) or (h.get("content") if isinstance(h, dict) else "") or ""))
+    return " ".join(parts).lower()
+
+
+def _strip_corpus_scope_terms(plan: "ChatPlan", message: str, history: Iterable | None,
+                              corpus_ids: Iterable[str] | None) -> list[str]:
+    """Correction C: remove corpus-id tokens the conversation never used from
+    every query (and semantic query); trailing function words left behind
+    ("sound editing in") are trimmed. A query is never emptied."""
+    fixes: list[str] = []
+    convo = _conversation_text(message, history)
+    for cid in (c for c in (corpus_ids or []) if c):
+        tok = str(cid).strip().lower()
+        if len(tok) < 3 or tok in convo:
+            continue
+        pat = re.compile(rf"(?<![\w-]){re.escape(tok)}(?![\w-])", re.IGNORECASE)
+
+        def _clean(text: str) -> str:
+            out = re.sub(r"\s+", " ", pat.sub(" ", text)).strip(" ,;:-")
+            words = out.split()
+            while len(words) > 1 and words[-1].lower() in _TRAILING_FUNCTION_WORDS:
+                words.pop()
+            while len(words) > 1 and words[0].lower() in _TRAILING_FUNCTION_WORDS:
+                words.pop(0)
+            return " ".join(words)
+
+        for q in plan.queries:
+            new = _clean(q.query)
+            if new and new != q.query:
+                fixes.append(f"corpus_scope_term:{tok}:{q.id}")
+                q.query = new
+        plan.semantic_queries = [(_clean(x) or x) for x in (plan.semantic_queries or [])]
+    return fixes
+
+
+def apply_corrections(plan: "ChatPlan", message: str, history: Iterable | None,
+                      corpus_ids: Iterable[str] | None = None) -> list[str]:
     """CHAT-PLAN-CORRECTIONS-V1: lane-independent rules that fix the two
     confusions measured on 2026-09-05 (a cross-family lane swapped
     CREATE_FROM_KNOWLEDGE and CONTINUE_PRIOR_ARTIFACT on 2 of 6 fixtures):
@@ -195,9 +237,15 @@ def apply_corrections(plan: "ChatPlan", message: str, history: Iterable | None) 
          builds/improves something, else GROUNDED_SYNTHESIS);
       B. 'the final version/prompt' with an assistant turn to refer to and
          NO corpus reference is a continuation: no retrieval.
+      C. (P0.c) a corpus id is retrieval SCOPE, never a query term: when the
+         conversation itself never says it, the token is stripped from every
+         query ("sound editing in cinema" → "sound editing"); measured on
+         2026-09-05: 8/30 single-turn and 9/30 follow-up compiled queries had
+         the corpus id injected, and both follow-up-only misses carried it.
     Every applied rule is recorded in plan.compiler['corrections']."""
     fixes: list[str] = []
     msg = message or ""
+    fixes.extend(_strip_corpus_scope_terms(plan, msg, history, corpus_ids))
     if references_corpus(msg):
         if not plan.retrieval_required or plan.task_type in NO_RETRIEVAL_TASKS:
             new_type = "CREATE_FROM_KNOWLEDGE" if (task_classes(msg) & {"create", "rewrite", "continue", "convert"}) else "GROUNDED_SYNTHESIS"
@@ -315,6 +363,10 @@ Rules:
 - queries: 1 to 4 SHORT search queries (topical content only — never tone, length, format or output instructions),
   each {"id","type","query","weight"}; exactly one type PRIMARY; other types from DEFINITION, MECHANISM, CAUSAL,
   COMPARISON, COUNTERPOINT, PROCEDURE, EXAMPLE, ENTITY, BRIDGE. Empty when retrieval_required is false.
+- The corpus name(s) named below are SCOPE, never query words: search "sound editing", not "sound editing in cinema".
+- A follow-up such as "why does that matter?", "how does that work in practice?", "can you say more about that?" is
+  discourse about the antecedent topic: the PRIMARY query is the antecedent topic itself (e.g. "sound editing") with
+  NO added words like significance, importance, purpose, examples, in practice, practical application, overview.
 - semantic_queries: the queries' texts rewritten for meaning; exact_terms: identifiers, acronyms, quoted phrases,
   product or model names copied VERBATIM from the user's words (never paraphrased).
 - must_answer: the distinct dimensions a good answer must cover (≤ 6 short labels). user_constraints: explicit
@@ -401,7 +453,7 @@ def compile_plan(message: str, history: Iterable, corpus_ids: Iterable[str] | No
     plan, reason = validate_plan(raw, message)
     if plan is None:
         return fallback_plan(message, reason=f"invalid_plan:{reason}", history_turns=n_hist, wall_ms=wall_ms, model=model)
-    fixes = apply_corrections(plan, message, history)
+    fixes = apply_corrections(plan, message, history, corpus_ids=corpus_ids)
     plan.compiler = {"fallback": False, "reason": None, "model": model, "wall_ms": round(wall_ms, 1),
                      "over_budget": wall_ms > budget_s * 1000, "history_turns": n_hist, "raw_chars": len(text or ""),
                      "corrections": fixes}
@@ -418,3 +470,19 @@ def plan_receipt(plan: ChatPlan) -> dict:
         "must_answer": plan.must_answer, "antecedent": plan.antecedent, "graph_useful": plan.graph_useful,
         "compiler": plan.compiler,
     }
+
+
+def retrieval_text_for(plan: "ChatPlan") -> str:
+    """COMPILED-RETRIEVAL-TEXT-V1 (P0.c interim until the lanes split in
+    P1.a): the PRIMARY compiled query, with any exact term from the original
+    input that the rewrite dropped appended verbatim — so the dense lane
+    searches the meaning and the BM25 lane still sees "RAPO". Falls back to
+    the resolved request, then the original message."""
+    primary = next((q.query for q in plan.queries if q.type == "PRIMARY"), None) or \
+              (plan.queries[0].query if plan.queries else None) or plan.resolved_request or plan.original_request
+    text = primary.strip()
+    low = text.lower()
+    missing = [t for t in plan.exact_terms if t.lower() not in low]
+    if missing:
+        text = f"{text} {' '.join(missing)}"
+    return text

@@ -120,3 +120,33 @@ def test_compiler_attempts_are_family_diverse_and_skip_cold_lanes():
     # every lane cold: still tries them (never empty)
     allcold = ui._compiler_attempt_order(eps, "k", failed_at={e.name: 999.0 for e in eps}, now=1000.0)
     assert len(allcold) == 3
+
+
+def test_live_transform_turn_skips_retrieval_when_the_compiler_is_on():
+    """P0.c gate (TRANSFORM/CONTINUE: 0 retrievals fired) on the live orchestrator; skips when unreachable."""
+    try:
+        urllib.request.urlopen("http://127.0.0.1:7200/ready", timeout=3)
+    except Exception as exc:  # noqa: BLE001
+        pytest.skip(f"orchestrator not reachable: {exc}")
+    fx = json.loads((ROOT / "eval" / "fixtures" / "chat_conversations" / "brainrot_transform.json").read_text())
+    body = json.dumps({"message": fx["message"], "corpus_id": fx["corpus_id"], "mode": "HYBRID", "compiler": "on",
+                       "synthesizer": "deterministic-template-v3", "history": fx.get("history") or []}).encode()
+    req = urllib.request.Request("http://127.0.0.1:7200/chat/stream", data=body,
+                                 headers={"content-type": "application/json", "accept": "text/event-stream"})
+    phases, answer = [], {}
+    with urllib.request.urlopen(req, timeout=300) as r:
+        cur = None
+        for raw in r:
+            line = raw.decode("utf-8", "replace").rstrip("\n")
+            if line.startswith("event:"):
+                cur = line[6:].strip()
+            elif line.startswith("data:") and cur == "phase":
+                phases.append(json.loads(line[5:].strip()).get("stage"))
+            elif line.startswith("data:") and cur == "answer":
+                answer = json.loads(line[5:].strip())
+    plan = (answer.get("retrieval") or {}).get("chat_plan") or {}
+    if plan.get("compiler", {}).get("fallback"):
+        pytest.skip(f"compiler fell back ({plan['compiler'].get('reason')}); lane health, not routing, is under test")
+    assert "retrieve_skipped" in phases and "retrieve_done" not in phases, phases
+    assert plan.get("retrieval_skipped") is True and plan.get("task_type") == "TRANSFORM_USER_CONTENT"
+    assert (answer.get("retrieval") or {}).get("funnel", {}).get("counts", {}).get("retrieved") == 0

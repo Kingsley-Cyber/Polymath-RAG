@@ -1069,6 +1069,9 @@ class StreamChatRequest(BaseModel):
     # WHOLE session's retrieved material, not only this turn's.
     history: list[HistoryTurn] = []
     carry_context: list[CarriedChunk] = []
+    # CHAT-QUERY-COMPILER P0.c: per-request override of POLYMATH_CHAT_COMPILER
+    # (off | shadow | on) for evaluation and A/B; the UI leaves it unset.
+    compiler: Optional[str] = None
 
 
 def _sse(event: str, data: dict) -> str:
@@ -1232,9 +1235,12 @@ _COMPILER_FLAG_ENV = "POLYMATH_CHAT_COMPILER"          # off | shadow | on
 _COMPILER_HTTP_TIMEOUT_S = float(os.environ.get("POLYMATH_CHAT_COMPILER_HTTP_TIMEOUT_S", "6.0"))
 
 
-def _compiler_flag() -> str:
-    v = (os.environ.get(_COMPILER_FLAG_ENV, "shadow") or "shadow").strip().lower()
-    return v if v in ("off", "shadow", "on") else "shadow"
+def _compiler_flag(override: str | None = None) -> str:
+    """P0.c: default `on` — the compiler is stage 0 of every streaming turn.
+    Env POLYMATH_CHAT_COMPILER and a per-request override (evaluation only)
+    can pin off | shadow | on."""
+    v = (override or os.environ.get(_COMPILER_FLAG_ENV, "on") or "on").strip().lower()
+    return v if v in ("off", "shadow", "on") else "on"
 
 
 _COMPILER_LANE_COOLDOWN_S = float(os.environ.get("POLYMATH_CHAT_COMPILER_LANE_COOLDOWN_S", "120"))
@@ -1595,7 +1601,9 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
             _plan = None
             _plan_receipt: dict = {}
             _plan_future = None
-            _flag = _compiler_flag()
+            _flag = _compiler_flag(getattr(req, "compiler", None))
+            _retrieval_text = query
+            _skip_retrieval = False
             if _flag != "off":
                 from concurrent.futures import ThreadPoolExecutor
                 _session_key = (req.workspace or req.corpus_id or query[:64])
@@ -1608,12 +1616,18 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                     _plan = _plan_future.result()
                     _plan_future = None
                     _mark("compile")
-                    from polymath_shared.chat_plan import plan_receipt
+                    from polymath_shared.chat_plan import plan_receipt, retrieval_text_for
                     _plan_receipt = plan_receipt(_plan)
+                    # COMPILED-RETRIEVAL-V1: search the compiled text, or not at all
+                    _skip_retrieval = (not _plan.retrieval_required) and ui_mode != "ASK"
+                    _retrieval_text = query if _skip_retrieval else retrieval_text_for(_plan)
+                    _plan_receipt["retrieval_query"] = None if _skip_retrieval else _retrieval_text
+                    _plan_receipt["retrieval_skipped"] = _skip_retrieval
                     yield _phase("compile", "Query compiled" if not _plan.fallback else "Query compiler fell back",
                                  task_type=_plan.task_type, retrieval_required=_plan.retrieval_required,
                                  queries=len(_plan.queries), fallback=_plan.fallback,
-                                 mode=_flag, wall_ms=_plan.compiler.get("wall_ms"))
+                                 mode=_flag, wall_ms=_plan.compiler.get("wall_ms"),
+                                 retrieval_query=(None if _skip_retrieval else _retrieval_text[:160]))
 
             def _join_plan():
                 nonlocal _plan, _plan_receipt, _plan_future
@@ -1662,14 +1676,26 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                                f"corpus; scope has {len(scope.corpus_ids)}"})
                 return
 
-            yield _phase("retrieve", f"{ui_mode} retrieval over "
-                                     f"{corpus_id}…", mode=ui_mode)
             graph_facts: list = []
             latent_meta = None
             wildcard_lane = None
-            if ui_mode == "GRAPH":
+            if _skip_retrieval:
+                # NO-RETRIEVAL ROUTING (plan §3.1 evidence_policy=conversation):
+                # the task lives in the conversation; the corpus is not searched.
+                evidence_rows = []
+                _trace = {}
+                fast = {"selected_documents": [], "selected_sections": [], "trace": {}, "meta": {}, "evidence": []}
+                _mark("retrieve")
+                yield _phase("retrieve_skipped", "No corpus retrieval: the request is answered from the conversation",
+                             task_type=_plan.task_type if _plan else None,
+                             evidence_policy=_plan.evidence_policy if _plan else None)
+                document_summaries = []
+                section_summaries = []
+            elif ui_mode == "GRAPH":
+                yield _phase("retrieve", f"{ui_mode} retrieval over "
+                                         f"{corpus_id}…", mode=ui_mode, query=_retrieval_text[:160])
                 from orchestrator.api.graph import graph_retrieve
-                g = graph_retrieve(query, corpus_id, latent=req.latent)
+                g = graph_retrieve(_retrieval_text, corpus_id, latent=req.latent)
                 _trace = g.get("trace") or {}
                 latent_meta = (g.get("meta") or {}).get("latent")
                 evidence_rows = [
@@ -1705,20 +1731,22 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                     for d in g["documents"] for s in d["sections"]
                 ]
             else:
+                yield _phase("retrieve", f"{ui_mode} retrieval over "
+                                         f"{corpus_id}…", mode=ui_mode, query=_retrieval_text[:160])
                 wildcard_lane = None
                 if ui_mode == "FAST":
                     from orchestrator.api.fast import fast_retrieve
-                    fast = fast_retrieve(query, corpus_id)
+                    fast = fast_retrieve(_retrieval_text, corpus_id)
                 elif ui_mode == "WILDCARD":
                     # DIVERGENT-RETRIEVAL-V1: the answer evidence IS
                     # FAST (wildcard never displaces it); the bridges
                     # ride the separate `wildcard` lane.
                     from orchestrator.api.wildcard import wildcard_retrieve
-                    fast = wildcard_retrieve(query, corpus_id)
+                    fast = wildcard_retrieve(_retrieval_text, corpus_id)
                     wildcard_lane = fast.get("wildcard") or []
                 else:
                     from orchestrator.api.hybrid import hybrid_fast_retrieve
-                    fast = hybrid_fast_retrieve(query, corpus_id,
+                    fast = hybrid_fast_retrieve(_retrieval_text, corpus_id,
                                                 latent=req.latent)
                 latent_meta = (fast.get("meta") or {}).get("latent")
                 _trace = fast.get("trace") or {}

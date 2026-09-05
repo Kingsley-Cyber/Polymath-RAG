@@ -112,10 +112,15 @@ def build(per_corpus: int, corpora: list[str], seed: int) -> dict:
             "questions": items}
 
 
-def _stream(question: str, corpus: str, synthesizer: str | None) -> tuple[dict, float]:
+def _stream(question: str, corpus: str, synthesizer: str | None, history: list | None = None,
+            compiler: str | None = None) -> tuple[dict, float]:
     body = {"message": question, "corpus_id": corpus, "mode": "HYBRID"}
     if synthesizer:
         body["synthesizer"] = synthesizer
+    if history:
+        body["history"] = history
+    if compiler:
+        body["compiler"] = compiler
     req = urllib.request.Request(f"{ORCH}/chat/stream", data=json.dumps(body).encode(),
                                  headers={"content-type": "application/json", "accept": "text/event-stream"})
     t0 = time.time(); answer = {}
@@ -140,13 +145,55 @@ def _receipt_for(question: str) -> dict | None:
     return {"meta": row[0], "wall_ms": row[1]} if row else None
 
 
-def run(tag: str, synthesizer: str | None, limit: int | None) -> dict:
+FOLLOWUP_TEMPLATES = ("How does that work in practice?", "Can you say more about that?", "Why does that matter?")
+
+
+def followup_conversations(fx: dict) -> list[dict]:
+    """FOLLOW-UP FIXTURES (plan §4 P0.c): each B question becomes a 2-turn
+    conversation whose last user turn is a PRONOUN-ONLY follow-up; the gold
+    set is unchanged. Deterministic: template = index mod 3."""
+    out = []
+    for i, q in enumerate(fx["questions"]):
+        term = q["term"]
+        out.append({**q, "history": [
+            {"role": "user", "content": f"Tell me about {term.lower() if not term.isupper() else term}."},
+            {"role": "assistant", "content": f"Here is what the book says about {term}: it is covered in the section of the same name, "
+                                              f"with the key points and examples the author gives there [S1]."}],
+            "question": FOLLOWUP_TEMPLATES[i % len(FOLLOWUP_TEMPLATES)],
+            "original_question": q["question"]})
+    return out
+
+
+def _hit10(r: dict) -> bool:
+    return bool(r.get("gold_selected_rank")) and r["gold_selected_rank"] <= 10
+
+
+def recovery_against(results: list[dict], reference_tag: str) -> dict:
+    """RECOVERY (P0.c): pair this run with a reference run of the same fixture
+    (same order) and report hit@10 on the subset the reference retrieved.
+    The follow-up form of a question can never beat its single-turn form, so
+    the gate reads the follow-up hit@10 on the single-turn-retrievable subset;
+    the all-item number is reported beside it."""
+    ref = json.loads((OUT_DIR / f"chat-baseline-{reference_tag}.json").read_text())["results"]
+    pairs = [(a, b) for a, b in zip(ref, results) if not a.get("error") and not b.get("error")]
+    both = sum(1 for a, b in pairs if _hit10(a) and _hit10(b))
+    only_ref = sum(1 for a, b in pairs if _hit10(a) and not _hit10(b))
+    only_this = sum(1 for a, b in pairs if _hit10(b) and not _hit10(a))
+    neither = sum(1 for a, b in pairs if not _hit10(a) and not _hit10(b))
+    return {"reference": reference_tag, "paired": len(pairs), "both": both, "only_reference": only_ref, "only_this": only_this,
+            "neither": neither, "reference_hit@10": round((both + only_ref) / max(1, len(pairs)), 3),
+            "subset_hit@10": round(both / max(1, both + only_ref), 3)}
+
+
+def run(tag: str, synthesizer: str | None, limit: int | None, compiler: str | None = None, followups: bool = False,
+        reference: str | None = None) -> dict:
     from polymath_shared.funnel import where_did_it_die
     fx = json.loads(FIXTURE.read_text())
+    questions = followup_conversations(fx) if followups else fx["questions"]
     results = []
-    for i, q in enumerate(fx["questions"][: limit or None]):
+    for i, q in enumerate(questions[: limit or None]):
         try:
-            ans, wall = _stream(q["question"], q["corpus_id"], synthesizer)
+            ans, wall = _stream(q["question"], q["corpus_id"], synthesizer, history=q.get("history"), compiler=compiler)
         except Exception as exc:  # noqa: BLE001
             results.append({**q, "error": f"{type(exc).__name__}: {str(exc)[:120]}"}); continue
         rec = _receipt_for(q["question"]) or {}
@@ -169,7 +216,9 @@ def run(tag: str, synthesizer: str | None, limit: int | None) -> dict:
                         "death": sorted(deaths, key=order.index)[0],
                         "counts": fun.get("counts"), "lane_counts": fun.get("lane_counts"),
                         "verdict": (ans.get("result") or {}).get("meta", {}).get("verdict") if isinstance(ans.get("result"), dict) else None})
-        print(f"[{i+1}/{len(fx['questions'])}] {q['corpus_id']:14s} {results[-1].get('death','?'):26s} rank={results[-1].get('gold_selected_rank')} {wall:5.1f}s  {q['question'][:60]}", flush=True)
+        plan = ((rec.get("meta") or {}).get("chat_plan")) or {}
+        results[-1]["chat_plan"] = {k: plan.get(k) for k in ("task_type", "retrieval_required", "retrieval_skipped", "retrieval_query", "compiler")}
+        print(f"[{i+1}/{len(questions)}] {q['corpus_id']:14s} {results[-1].get('death','?'):26s} rank={results[-1].get('gold_selected_rank')} {wall:5.1f}s  {q['question'][:40]} | {(plan.get('retrieval_query') or '')[:50]}", flush=True)
     ok = [r for r in results if "error" not in r]
     def rate(key):
         return round(sum(1 for r in ok if r.get(key)) / max(1, len(ok)), 3)
@@ -183,7 +232,9 @@ def run(tag: str, synthesizer: str | None, limit: int | None) -> dict:
         "wall_p50_s": round(statistics.median([r["wall_s"] for r in ok]), 2) if ok else None,
         "wall_p90_s": round(sorted(r["wall_s"] for r in ok)[int(len(ok) * 0.9) - 1], 2) if len(ok) >= 10 else None,
         "deaths": dict(sorted(__import__("collections").Counter(r.get("death") for r in ok).items())),
-        "synthesizer": synthesizer or "default", "tag": tag,
+        "synthesizer": synthesizer or "default", "tag": tag, "compiler": compiler or "server-default",
+        "followups": followups, "recovery": (recovery_against(results, reference) if reference else None),
+        "compiler_fallbacks": sum(1 for r in ok if ((r.get("chat_plan") or {}).get("compiler") or {}).get("fallback")),
     }
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     (OUT_DIR / f"chat-baseline-{tag}.json").write_text(json.dumps({"summary": summary, "results": results}, indent=1, default=str))
@@ -198,7 +249,11 @@ def _write_md(tag: str, summary: dict, results: list) -> None:
     today = _dt.date.today().isoformat()
     md = ["---", f"title: \"Chat baseline — {tag}\"", "owner: governance", f"last_reviewed: {today}", f"last_touched: {today}",
           "status: measured", "---", "", f"# Chat baseline — {tag}", "",
-          f"Fixture `{FIXTURE.relative_to(ROOT)}` ({fx['version']}, seed {fx['seed']}); synthesizer {summary['synthesizer']}; HYBRID via /chat/stream.", "",
+          f"Fixture `{FIXTURE.relative_to(ROOT)}` ({fx['version']}, seed {fx['seed']}); synthesizer {summary['synthesizer']}; compiler {summary.get('compiler')}; follow-ups {summary.get('followups')}; HYBRID via /chat/stream.", "",
+          *([f"Recovery vs `{summary['recovery']['reference']}`: paired {summary['recovery']['paired']}, both {summary['recovery']['both']}, "
+             f"only reference {summary['recovery']['only_reference']}, only this {summary['recovery']['only_this']}, neither {summary['recovery']['neither']}; "
+             f"reference hit@10 {summary['recovery']['reference_hit@10']}; **hit@10 on the reference-retrievable subset {summary['recovery']['subset_hit@10']}**.", ""]
+            if summary.get("recovery") else []),
           "| metric | value |", "|---|---|"] + [f"| {k} | {v} |" for k, v in summary.items() if k not in ("tag", "synthesizer")] + ["", "| corpus | question | death | selected rank | wall s |", "|---|---|---|---|---|"]
     md += [f"| {r['corpus_id']} | {r['question'][:60]} | {r.get('death', r.get('error'))} | {r.get('gold_selected_rank')} | {r.get('wall_s')} |" for r in results]
     (OUT_DIR / f"chat-baseline-{tag}.md").write_text("\n".join(md) + "\n")
@@ -216,6 +271,9 @@ def main() -> int:
     ap.add_argument("--llm", action="store_true", help="use the default LLM synthesizer instead of the deterministic one")
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--render", action="store_true", help="rewrite the .md from an existing chat-baseline-<tag>.json")
+    ap.add_argument("--compiler", default=None, help="per-request POLYMATH_CHAT_COMPILER override: off | shadow | on")
+    ap.add_argument("--followups", action="store_true", help="run the derived 2-turn follow-up conversations instead of the plain questions")
+    ap.add_argument("--reference", default=None, help="tag of a same-fixture run to pair with (recovery: hit@10 on the subset the reference retrieved)")
     a = ap.parse_args()
     if a.render:
         d = json.loads((OUT_DIR / f"chat-baseline-{a.tag}.json").read_text())
@@ -228,7 +286,7 @@ def main() -> int:
         FIXTURE.write_text(json.dumps(fx, indent=1))
         print(f"wrote {FIXTURE} with {len(fx['questions'])} questions")
     if a.run:
-        run(a.tag, None if a.llm else a.synthesizer, a.limit)
+        run(a.tag, None if a.llm else a.synthesizer, a.limit, compiler=a.compiler, followups=a.followups, reference=a.reference)
     return 0
 
 

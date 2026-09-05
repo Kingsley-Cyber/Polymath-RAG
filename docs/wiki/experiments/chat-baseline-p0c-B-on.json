@@ -1,0 +1,2014 @@
+{
+ "summary": {
+  "n": 30,
+  "errors": 0,
+  "gold_in_retrieved": 0.833,
+  "gold_in_union": 0.733,
+  "gold_in_pre_rerank": 0.633,
+  "hit@10_selected": 0.633,
+  "mrr_selected": 0.465,
+  "gold_cited": 0.633,
+  "wall_p50_s": 9.18,
+  "wall_p90_s": 14.45,
+  "deaths": {
+   "CITED": 19,
+   "LOST_AT_UNION_TRUNCATION": 6,
+   "NEVER_RETRIEVED": 5
+  },
+  "synthesizer": "deterministic-template-v3",
+  "tag": "p0c-B-on",
+  "compiler": "on",
+  "followups": false,
+  "recovery": null,
+  "compiler_fallbacks": 0
+ },
+ "results": [
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_6f89105b1845c0b595ab8e04b6cb107b9a6e2b7f1617a89f50bdbebd0f4aad34",
+   "source_name": "Digital Compositing for Film and Video.md",
+   "parent_id": "chunk_2f2b7a61fbf67bd9c68d449b576f1eb5c01f39ff7ed5ea4d1cbea95b09c32f20",
+   "term": "Making Your Own Chroma Keyer",
+   "heading_path": [
+    "[2",
+    "[2.2 Chroma Keys](content.xhtml#bck_Ch02_sec2_2)",
+    "[2.2.2 Making Your Own Chroma Keyer](content.xhtml#bck_Ch02_sec2_2_2)"
+   ],
+   "gold_chunk_ids": [
+    "chunk_f8ae8454a2e5f5bff1e254d97457d7e4759464b699dff39e1b475c4ddc5c14d0",
+    "chunk_fbe841b47db000daceea61d2f3e94fd6e33a3ee22f0aac8c63b356d4dca9781a",
+    "chunk_ac16b3ffb273d6bd9c977e11cf728ea611e5b248b6753f18f1f7e1d4df99a12a"
+   ],
+   "gold_chunk_id": "chunk_f8ae8454a2e5f5bff1e254d97457d7e4759464b699dff39e1b475c4ddc5c14d0",
+   "question": "What does the book say about making your own chroma keyer?",
+   "wall_s": 14.45,
+   "phase_ms": {
+    "total": 14405.6,
+    "compile": 2439.6,
+    "assemble": 14402.6,
+    "generate": 14405.2,
+    "retrieve": 14336.3
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 7,
+    "union": 33,
+    "selected": 10,
+    "retrieved": 49,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 21,
+    "latent_rescue": 9,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "making your own chroma keyer",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 2422.2,
+     "fallback": false,
+     "raw_chars": 577,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_26cceca252a72ae476beead4e21d7d3ad9bb07fa5cfd5e49e34182505cd90b16",
+   "source_name": "The Art and Science of Digital Compositing.md",
+   "parent_id": "chunk_14d1f3a3862315b1f22b2de3b5bb26f6d020e7419e46737ec3035cedd3ab3862",
+   "term": "Nonsquare Pixels",
+   "heading_path": [
+    "Film Formats: Media, Resolution and Aspect Ratios",
+    "Aspect Ratio",
+    "Nonsquare Pixels"
+   ],
+   "gold_chunk_ids": [
+    "chunk_11970fedf58b95743716a1b9b46f4a3cbf24b4a370f4a53a58bc6cbb95b1d830",
+    "chunk_74b49ddcf389b50f0305f208264f32f9a311edad11859b6dbf0835b01b73e040",
+    "chunk_bf71322e03a8e934244e5629ca66fd85c67b47a3524a07d06139dd292ee258cc",
+    "chunk_0d671409f181b0b320f5d2f9b5faeaa8ed1b3ac3a1576f0d7e0851bee9a1559d"
+   ],
+   "gold_chunk_id": "chunk_11970fedf58b95743716a1b9b46f4a3cbf24b4a370f4a53a58bc6cbb95b1d830",
+   "question": "What does the book say about nonsquare pixels?",
+   "wall_s": 8.0,
+   "phase_ms": {
+    "total": 7984.7,
+    "compile": 1977.4,
+    "assemble": 7973.9,
+    "generate": 7984.4,
+    "retrieve": 7906.9
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 2,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 7,
+    "union": 28,
+    "selected": 10,
+    "retrieved": 50,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 18,
+    "latent_rescue": 8,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "nonsquare pixels",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1972.6,
+     "fallback": false,
+     "raw_chars": 576,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_d7510ba66b3cd614f927a7872f9c78e16c34d7909d5e968925e367aec892306f",
+   "source_name": "[(Architectural Design)] Ian Ritchie - Neuroarchitecture_ Designing with the Mind in Mind (2020, Wiley) - libgen.li.md",
+   "parent_id": "chunk_e99029aa43331fe08754214d264cc4efe7b4cb81db1fbcb23466df11afe45a4b",
+   "term": "OEBPS/ritc 9781119685401 epub3 035 r1.xhtml",
+   "heading_path": [
+    "[(Architectural Design)] Ian Ritchie - Neuroarchitecture_ Designing with the Mind in Mind (2020, Wiley) - libgen.li.epub",
+    "OEBPS/ritc_9781119685401_epub3_035_r1.xhtml"
+   ],
+   "gold_chunk_ids": [
+    "chunk_01d23488248ca9121285e48509d644ba3e4f28d4f1bb51f5b27cba62a9fb2bc6",
+    "chunk_a66d71cdb86db22f053583288e7ec05ffc6be9040d9c36e70483b57e3d9ffd29"
+   ],
+   "gold_chunk_id": "chunk_01d23488248ca9121285e48509d644ba3e4f28d4f1bb51f5b27cba62a9fb2bc6",
+   "question": "What does the book say about oebps/ritc 9781119685401 epub3 035 r1.xhtml?",
+   "wall_s": 12.72,
+   "phase_ms": {
+    "total": 12710.2,
+    "compile": 1998.4,
+    "assemble": 12708.1,
+    "generate": 12710.1,
+    "retrieve": 12662.9
+   },
+   "gold_in_retrieved": false,
+   "gold_in_union": false,
+   "gold_in_pre_rerank": false,
+   "gold_selected_rank": null,
+   "gold_cited": false,
+   "death": "NEVER_RETRIEVED",
+   "counts": {
+    "cited": 0,
+    "union": 27,
+    "selected": 10,
+    "retrieved": 57,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 18,
+    "latent_rescue": 7,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "insufficient_evidence",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "oebps/ritc 9781119685401 epub3 035 r1.xhtml",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1994.0,
+     "fallback": false,
+     "raw_chars": 619,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+   "source_name": "Francis Glebas - Directing the Story (2008).md",
+   "parent_id": "chunk_ae0c87d77a5af720bfc696ad64f0afaaf8628026128ebc3506e40c193e6e6f32",
+   "term": "Miscellaneous Drawing Tips",
+   "heading_path": [
+    "Directing the Story",
+    "How to Draw for Storyboarding: Motion and Emotion",
+    "Drawing the Four Main Emotion Groups",
+    "Miscellaneous Drawing Tips"
+   ],
+   "gold_chunk_ids": [
+    "chunk_6c0a4c104f64f233a9797b5841c3282ee55bec7cf8974bb855591d82290e9c01",
+    "chunk_5a76fc85d88b1ee39fbd66022000004335ca4d1d41d6307847e265db78b3c52d"
+   ],
+   "gold_chunk_id": "chunk_6c0a4c104f64f233a9797b5841c3282ee55bec7cf8974bb855591d82290e9c01",
+   "question": "What does the book say about miscellaneous drawing tips?",
+   "wall_s": 14.57,
+   "phase_ms": {
+    "total": 14562.9,
+    "compile": 1954.9,
+    "assemble": 14560.7,
+    "generate": 14562.9,
+    "retrieve": 14508.2
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": false,
+   "gold_in_pre_rerank": false,
+   "gold_selected_rank": null,
+   "gold_cited": false,
+   "death": "LOST_AT_UNION_TRUNCATION",
+   "counts": {
+    "cited": 0,
+    "union": 34,
+    "selected": 10,
+    "retrieved": 61,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 25,
+    "latent_rescue": 6,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "insufficient_evidence",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "miscellaneous drawing tips",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1950.8,
+     "fallback": false,
+     "raw_chars": 575,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+   "source_name": "VES Handbook of Visual Effects.md",
+   "parent_id": "chunk_c6639331de42074ce54b077bcd9400fa52913045d68f424fd1242c2350f45638",
+   "term": "Transcoding versus Color Rerendering",
+   "heading_path": [
+    "[**POST-PRODUCTION/IMAGE MANIPULATION**](004_9780240825212_contents.html#ch6)",
+    "[**COLOR MANAGEMENT**](004_9780240825212_contents.html#ch6.6)",
+    "[Digital Color Image Encodings and Digital Cameras](004_9780240825212_contents.html#ch6.6.2)",
+    "_Transcoding versus Color Rerendering_"
+   ],
+   "gold_chunk_ids": [
+    "chunk_7a9df67eb59719c2da8e638cc812b3146aa43dc9eda60d39454b3f25342c81d1"
+   ],
+   "gold_chunk_id": "chunk_7a9df67eb59719c2da8e638cc812b3146aa43dc9eda60d39454b3f25342c81d1",
+   "question": "What does the book say about transcoding versus color rerendering?",
+   "wall_s": 11.56,
+   "phase_ms": {
+    "total": 11547.0,
+    "compile": 2266.1,
+    "assemble": 11544.6,
+    "generate": 11547.0,
+    "retrieve": 11496.1
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 9,
+    "union": 31,
+    "selected": 10,
+    "retrieved": 59,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 19,
+    "latent_rescue": 8,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "transcoding versus color rerendering",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 2263.8,
+     "fallback": false,
+     "raw_chars": 922,
+     "corrections": [
+      "corpus_scope_term:cinema:q1",
+      "corpus_scope_term:cinema:q2"
+     ],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+   "source_name": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+   "parent_id": "chunk_60486683c87a405a4e3de8ca0f31248a4f130c2dae8e7e451481959757d6d5b2",
+   "term": "FACE OFF",
+   "heading_path": [
+    "[Working on set](contents.xhtml#rch1)",
+    "PROTOCOL AND ADVICE FOR BEGINNERS",
+    "FACE OFF"
+   ],
+   "gold_chunk_ids": [
+    "chunk_52dd8a04f0a9549c872c1ad6de9400dff88e98eb3e76edab7ac1ba89c1e10a3b"
+   ],
+   "gold_chunk_id": "chunk_52dd8a04f0a9549c872c1ad6de9400dff88e98eb3e76edab7ac1ba89c1e10a3b",
+   "question": "What does the book say about FACE OFF?",
+   "wall_s": 19.62,
+   "phase_ms": {
+    "total": 19605.7,
+    "compile": 1808.5,
+    "assemble": 19603.4,
+    "generate": 19605.6,
+    "retrieve": 19550.8
+   },
+   "gold_in_retrieved": false,
+   "gold_in_union": false,
+   "gold_in_pre_rerank": false,
+   "gold_selected_rank": null,
+   "gold_cited": false,
+   "death": "NEVER_RETRIEVED",
+   "counts": {
+    "cited": 8,
+    "union": 35,
+    "selected": 10,
+    "retrieved": 71,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 28,
+    "latent_rescue": 9,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "FACE OFF",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1805.0,
+     "fallback": false,
+     "raw_chars": 448,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+   "source_name": "handbook.html",
+   "parent_id": "chunk_a9c8f78f823ae7a6119542196eb7911e95e1281efca2c1d8e286ae28640e4d09",
+   "term": "Affect, fatigue, and injury are control states",
+   "heading_path": [
+    "06. Interaction, contact, combat",
+    "Continuous combat state",
+    "Part II \u2014 Combat dramaturgy and persistent fight state",
+    "6. Required actor fields",
+    "6.1 Affect, fatigue, and injury are control states"
+   ],
+   "gold_chunk_ids": [
+    "chunk_cdf646794ffa0ad50c991c9b563c13e1c02b34c5d4d12c43e76933c56b2ebe34"
+   ],
+   "gold_chunk_id": "chunk_cdf646794ffa0ad50c991c9b563c13e1c02b34c5d4d12c43e76933c56b2ebe34",
+   "question": "What does the book say about affect, fatigue, and injury are control states?",
+   "wall_s": 12.32,
+   "phase_ms": {
+    "total": 12310.0,
+    "compile": 2725.3,
+    "assemble": 12307.4,
+    "generate": 12309.9,
+    "retrieve": 12258.3
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": false,
+   "gold_selected_rank": null,
+   "gold_cited": false,
+   "death": "LOST_AT_UNION_TRUNCATION",
+   "counts": {
+    "cited": 7,
+    "union": 44,
+    "selected": 10,
+    "retrieved": 68,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 30,
+    "latent_rescue": 9,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "affect, fatigue, and injury as control states cinema",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 2721.5,
+     "fallback": false,
+     "raw_chars": 1043,
+     "corrections": [
+      "corpus_scope_term:cinema:q1"
+     ],
+     "over_budget": true,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3",
+   "source_name": "Bruce Block - The Visual Story (2007).md",
+   "parent_id": "chunk_2948689931f42a6e35dd061ce14ea96f3cf758f9d787aaa867c4898aafeda1d8",
+   "term": "Movement of an Object with a Background",
+   "heading_path": [
+    "CHAPTER 7",
+    "**Contrast and Affinity**",
+    "**Movement of an Object with a Background**"
+   ],
+   "gold_chunk_ids": [
+    "chunk_4db5db1e217cdaae506ddc37d54c63f4d7bb8a1e1779c5bc7367c8fbed1e94f1",
+    "chunk_180af9f44565cd52310df840d261423cc92a111788e3b58c99bdf6cb3cee6eaf",
+    "chunk_2014d7cfa2ecdf17141b719ddb03a0f9c7d4c3364e6f035597e19b0d63417649",
+    "chunk_0a8d74a6ef1ef968790a1a5f1b8b716e547fd8eb6973823b17b865911a0122ee",
+    "chunk_ad355d57afb403a85ef2527c071091dc8ea303be8be6b345283cf7f9cabce37b",
+    "chunk_b02b2342784d3c3fb3a149f9c5351d927e565f63809d8f62bddb7e87eb3b477c"
+   ],
+   "gold_chunk_id": "chunk_4db5db1e217cdaae506ddc37d54c63f4d7bb8a1e1779c5bc7367c8fbed1e94f1",
+   "question": "What does the book say about movement of an object with a background?",
+   "wall_s": 8.77,
+   "phase_ms": {
+    "total": 8761.2,
+    "compile": 2002.4,
+    "assemble": 8759.4,
+    "generate": 8761.1,
+    "retrieve": 8712.7
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": false,
+   "gold_in_pre_rerank": false,
+   "gold_selected_rank": null,
+   "gold_cited": false,
+   "death": "LOST_AT_UNION_TRUNCATION",
+   "counts": {
+    "cited": 9,
+    "union": 24,
+    "selected": 10,
+    "retrieved": 57,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 17,
+    "latent_rescue": 7,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "movement of an object with a background",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 2000.0,
+     "fallback": false,
+     "raw_chars": 748,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+   "source_name": "Grammar of the Edit.md",
+   "parent_id": "chunk_392765aeb7a075fbc60a2b33c743d10adf3ea35edf5daba3ab38ab37f7df9c11",
+   "term": "Sound Editing",
+   "heading_path": [
+    "Chapter SevenEditing Terms, Topics, and Techniques",
+    "Editing Topics",
+    "Sound Editing"
+   ],
+   "gold_chunk_ids": [
+    "chunk_338dc69a4cfd8aa09b176438e1bd0c65a9e82486c4439e85474f40d300be335d",
+    "chunk_1b2bbeac2a4acc9a8464d4e969bff9d09b41b9daa3fef62847a901d13851f330",
+    "chunk_8b100b98bd51cc04844cfc849b134310fdfe851e5b98366e61b4370cea0fe9e7",
+    "chunk_50994b28ef138c8fd47a267aa1d611b8b83e14f8e6268baee7fe69e235675bb2",
+    "chunk_9a13af23db5f2ef32234ded71d4ef8d48b7c859f27038213a3a03c464aae2454",
+    "chunk_39ffd23de1d83302edf519a013a6e40a3c45fd5a49451a81b4514b8343e69457"
+   ],
+   "gold_chunk_id": "chunk_338dc69a4cfd8aa09b176438e1bd0c65a9e82486c4439e85474f40d300be335d",
+   "question": "What does the book say about sound editing?",
+   "wall_s": 23.33,
+   "phase_ms": {
+    "total": 23315.7,
+    "compile": 1812.9,
+    "assemble": 23313.5,
+    "generate": 23315.6,
+    "retrieve": 23266.5
+   },
+   "gold_in_retrieved": false,
+   "gold_in_union": false,
+   "gold_in_pre_rerank": false,
+   "gold_selected_rank": null,
+   "gold_cited": false,
+   "death": "NEVER_RETRIEVED",
+   "counts": {
+    "cited": 10,
+    "union": 40,
+    "selected": 10,
+    "retrieved": 66,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 29,
+    "latent_rescue": 7,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "sound editing",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1810.6,
+     "fallback": false,
+     "raw_chars": 466,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_f1b9df2cac2683b0d7ee52dbea7f0cf0bbd8168cfb8d101e468fa13feead2cfc",
+   "source_name": "Hey Whipple Squeeze This.md",
+   "parent_id": "chunk_1b1cdc451e1d001f4638524590e20dfcaf104efcb3b4e2d4fd9a70a3575bc9a1",
+   "term": "Write radio sparely",
+   "heading_path": [
+    "WRITING THE COMMERCIAL.",
+    "Write radio sparely."
+   ],
+   "gold_chunk_ids": [
+    "chunk_76a25185347a83bee385aa0fc4f80c4198197eb63a4761d899b25d99d6d4836f",
+    "chunk_3a4b68e41a9cb1ce64da73e67ce8e8826f9fa42d2c6e4aa12f99971236049b3b",
+    "chunk_55582675ca68104318f6ff8f27434cd489ca2bbc48f50bdeb9fbd205a50f675a",
+    "chunk_d43f29cc1f4dae5ca2e01f590fa4bbee7d58eaec4aad31ec8e8e4ff4f6191a3b"
+   ],
+   "gold_chunk_id": "chunk_76a25185347a83bee385aa0fc4f80c4198197eb63a4761d899b25d99d6d4836f",
+   "question": "What does the book say about write radio sparely?",
+   "wall_s": 10.13,
+   "phase_ms": {
+    "total": 10122.3,
+    "compile": 2036.8,
+    "assemble": 10120.3,
+    "generate": 10122.2,
+    "retrieve": 10077.1
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 2,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 8,
+    "union": 25,
+    "selected": 10,
+    "retrieved": 54,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 12,
+    "latent_rescue": 9,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "writing radio dialogue sparingly sparely",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 2034.0,
+     "fallback": false,
+     "raw_chars": 665,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_aef933432d47f07a79a1eff5585d61805a9a2f6ccabc017903ca51beb54bd88b",
+   "source_name": "Myers, Isabel Briggs_Myers, Peter B - Gifts differing_ understanding personality type (1995, Quercus_Davies-Black Pub) - libgen.li.md",
+   "parent_id": "chunk_875ba21f955f877a3c0974382de43bfd82e19e81c876d00723586862e6356c50",
+   "term": "Rewards of Good Type Development",
+   "heading_path": [
+    "**GIFTS DIFFERING**",
+    "xhtml/ch16.html",
+    "CHAPTER 16",
+    "**Rewards of Good Type Development**"
+   ],
+   "gold_chunk_ids": [
+    "chunk_a8c102dc5794fc5d66689d5632b5da2867014bb243626146e9a304102f247c49",
+    "chunk_a6e73f6adc8b1b835c6ee30ddc98c8873b256ac6a86a9cf03006df8bab58ffd8"
+   ],
+   "gold_chunk_id": "chunk_a8c102dc5794fc5d66689d5632b5da2867014bb243626146e9a304102f247c49",
+   "question": "What does the book say about rewards of good type development?",
+   "wall_s": 9.03,
+   "phase_ms": {
+    "total": 9007.6,
+    "compile": 2179.6,
+    "assemble": 9005.2,
+    "generate": 9007.5,
+    "retrieve": 8957.2
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 10,
+    "union": 17,
+    "selected": 10,
+    "retrieved": 42,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 6,
+    "latent_rescue": 7,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "rewards of good type development",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 2177.2,
+     "fallback": false,
+     "raw_chars": 694,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_b6e7af16218cdb0dce246ce152602d61ae5b18da3f9fa794e6612a6d926f6fdc",
+   "source_name": "Force Dynamic Life Drawing.md",
+   "parent_id": "chunk_cf0f02654c314c529e0e14979f354ef80ccf5f93f9a7f80f533acd23be132454",
+   "term": "Multiple moments",
+   "heading_path": [
+    "Force Dynamic Life Drawing.epub",
+    "**Chapter 5**",
+    "**TELL STORIES WITH LIFE**",
+    "**Multiple moments**"
+   ],
+   "gold_chunk_ids": [
+    "chunk_20ca68354e18e4a15157fb5cfca6a9215ed57347027971552cc652cb03d1ea06",
+    "chunk_757fab6819630f250b75a85bb230faaec070789b3a95b8411a2478bfe97a5544"
+   ],
+   "gold_chunk_id": "chunk_20ca68354e18e4a15157fb5cfca6a9215ed57347027971552cc652cb03d1ea06",
+   "question": "What does the book say about multiple moments?",
+   "wall_s": 7.82,
+   "phase_ms": {
+    "total": 7805.9,
+    "compile": 1977.9,
+    "assemble": 7804.0,
+    "generate": 7805.8,
+    "retrieve": 7762.3
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 6,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 5,
+    "union": 21,
+    "selected": 10,
+    "retrieved": 54,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 13,
+    "latent_rescue": 5,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "multiple moments",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1975.8,
+     "fallback": false,
+     "raw_chars": 623,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+   "source_name": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+   "parent_id": "chunk_e77bb81848311a1f80a96a1b489c0df2d00af5aa85937d2e034279a52228da98",
+   "term": "PREMISE AND THEME",
+   "heading_path": [
+    "[**PLOT, TIME, AND STRUCTURE**](contents.xhtml#rch5)",
+    "[**PREMISE AND THEME**](contents.xhtml#rch5-9)"
+   ],
+   "gold_chunk_ids": [
+    "chunk_c6ddc65092ff01d63430e0f2fe175051e3bf1760a0de647a49bd9b8c10826a70",
+    "chunk_ea9c7608f6e34fc4265d72393d59c1fbf1ad320027ce045055f6a5e3a572b9c3",
+    "chunk_c78703d35941543a3b6f37db70f4ece943db04b0b547737dab7f1b8a0281881a",
+    "chunk_ff2960114cabe2b82ca52c8ebd45d29b8b9d8ea45d4aa1200063fa9ee7dc6d83",
+    "chunk_58b258f7de1cc77c5b9bb16a2b2c6ffc3b7cc3160a459bb18edb0678324eb431"
+   ],
+   "gold_chunk_id": "chunk_c6ddc65092ff01d63430e0f2fe175051e3bf1760a0de647a49bd9b8c10826a70",
+   "question": "What does the book say about PREMISE AND THEME?",
+   "wall_s": 7.91,
+   "phase_ms": {
+    "total": 7895.6,
+    "compile": 1887.4,
+    "assemble": 7893.3,
+    "generate": 7895.5,
+    "retrieve": 7841.3
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 10,
+    "union": 26,
+    "selected": 10,
+    "retrieved": 46,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 16,
+    "latent_rescue": 8,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "premise and theme",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1883.8,
+     "fallback": false,
+     "raw_chars": 787,
+     "corrections": [
+      "corpus_scope_term:cinema:q1",
+      "corpus_scope_term:cinema:q2"
+     ],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_1c74cbfdb7737177bb775c6a8f9a55161e76a9c220d5ce9d11b57718b2a16921",
+   "source_name": "Chip Heath & Dan Heath - Made to Stick (2007).md",
+   "parent_id": "chunk_d1c526741d0873765745ad4ec4637f5ad396ba11cf1fe7b15f72e8238dc2ae44",
+   "term": "Battling Overconfidence",
+   "heading_path": [
+    "Chip Heath & Dan Heath - Made to Stick (2007).epub",
+    "**Battling Overconfidence**"
+   ],
+   "gold_chunk_ids": [
+    "chunk_7227b8d10052bc902aac390f246227153731f6f6e3e4187ca01e2a5a11ec5f51",
+    "chunk_35efd0c3451d46dba5d79b2e7148432e4c880990fdf57180c5e40bbe4a7b4131"
+   ],
+   "gold_chunk_id": "chunk_7227b8d10052bc902aac390f246227153731f6f6e3e4187ca01e2a5a11ec5f51",
+   "question": "What does the book say about battling overconfidence?",
+   "wall_s": 10.6,
+   "phase_ms": {
+    "total": 10587.4,
+    "compile": 1915.9,
+    "assemble": 10585.1,
+    "generate": 10587.3,
+    "retrieve": 10536.8
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 6,
+    "union": 23,
+    "selected": 10,
+    "retrieved": 42,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 27,
+    "latent_rescue": 5,
+    "global_dense_child": 20,
+    "global_sparse_child": 3
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "overconfidence",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1913.8,
+     "fallback": false,
+     "raw_chars": 610,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "cinema",
+   "doc_id": "doc_867ba698b4579557126ebb8aa6e83b5dce18656f5ca6c7eaade5cd1a5e8e2864",
+   "source_name": "Scoppettuolo & Saccone - The Definitive Guide to DaVinci Resolve 15 (2018).md",
+   "parent_id": "chunk_1d3cce2781fb656c4188f640b03b0b3faec83137f8290f283023f1a852b4fd18",
+   "term": "Changing a level within a clip",
+   "heading_path": [
+    "Working with Audio on the Edit Page",
+    "Changing a level within a clip"
+   ],
+   "gold_chunk_ids": [
+    "chunk_feb908559f8f3d50b38a9e689a3443f3d741168c8ac4b723cbbed7533f717378",
+    "chunk_84ed7e07af603f0335b50fe7fa8812d3f8507fd267475502a4156c94ed6a2cdd",
+    "chunk_eaa818558a96c6ba57abfd76fc3687f4da93044a98e9fd33ecd3179c06cc757a"
+   ],
+   "gold_chunk_id": "chunk_feb908559f8f3d50b38a9e689a3443f3d741168c8ac4b723cbbed7533f717378",
+   "question": "What does the book say about changing a level within a clip?",
+   "wall_s": 7.61,
+   "phase_ms": {
+    "total": 7600.4,
+    "compile": 2068.0,
+    "assemble": 7598.0,
+    "generate": 7600.4,
+    "retrieve": 7549.5
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 10,
+    "union": 20,
+    "selected": 10,
+    "retrieved": 51,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 6,
+    "latent_rescue": 9,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "changing a level within a clip",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 2065.5,
+     "fallback": false,
+     "raw_chars": 642,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+   "source_name": "The_Innovators_Dilemma_Christensen.md",
+   "parent_id": "chunk_40ffbfea2f9fc7fe364e1d65af47ffc93182d56f3fb48b4e7a1531880689df6e",
+   "term": "Why Innovative Leaders Make a Difference",
+   "heading_path": [
+    "8 Putting the Innovator\u2019s DNA into Practice: People",
+    "[8 Putting the Innovator\u2019s DNA into Practice: People](../Text/iDNAtoc.html#toc-chapter009)",
+    "Why Innovative Leaders Make a Difference"
+   ],
+   "gold_chunk_ids": [
+    "chunk_bf4a22f0297eaed3ae0d9f470f0e35e595a755717609cd183963a953e5cdfad1"
+   ],
+   "gold_chunk_id": "chunk_bf4a22f0297eaed3ae0d9f470f0e35e595a755717609cd183963a953e5cdfad1",
+   "question": "What does the book say about why innovative leaders make a difference?",
+   "wall_s": 12.75,
+   "phase_ms": {
+    "total": 12743.3,
+    "compile": 1929.6,
+    "assemble": 12740.6,
+    "generate": 12743.2,
+    "retrieve": 12696.3
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 7,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 8,
+    "union": 16,
+    "selected": 10,
+    "retrieved": 41,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 5,
+    "latent_rescue": 8,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "innovative leaders",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1927.4,
+     "fallback": false,
+     "raw_chars": 729,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_2b277aa49b3a8cc524949d5d64804ab504fdc314430ec615298f9fe8b7486b7c",
+   "source_name": "Atomic_Habits_Clear.md",
+   "parent_id": "chunk_6c64bee942ce6a33a0b2344f560c560ee76a0035755f80f1de8a088a9c53b53f",
+   "term": "WHAT PROGRESS IS REALLY LIKE",
+   "heading_path": [
+    "1",
+    "The Surprising Power of Atomic Habits",
+    "WHAT PROGRESS IS REALLY LIKE"
+   ],
+   "gold_chunk_ids": [
+    "chunk_a2cbf3d92f155bbcfbb939dcf75e1c0660376f4b794b4b90429826383d6db7e4"
+   ],
+   "gold_chunk_id": "chunk_a2cbf3d92f155bbcfbb939dcf75e1c0660376f4b794b4b90429826383d6db7e4",
+   "question": "What does the book say about WHAT PROGRESS IS REALLY LIKE?",
+   "wall_s": 12.93,
+   "phase_ms": {
+    "total": 12923.5,
+    "compile": 1988.9,
+    "assemble": 12921.3,
+    "generate": 12923.4,
+    "retrieve": 12879.3
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": false,
+   "gold_in_pre_rerank": false,
+   "gold_selected_rank": null,
+   "gold_cited": false,
+   "death": "LOST_AT_UNION_TRUNCATION",
+   "counts": {
+    "cited": 8,
+    "union": 19,
+    "selected": 10,
+    "retrieved": 50,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 15,
+    "latent_rescue": 4,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "what progress is really like",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1986.7,
+     "fallback": false,
+     "raw_chars": 629,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_be6104e610e4269b31cd71169af2b2fcf6b9731d7f942aaadec0a5da65dabe98",
+   "source_name": "Competing_Against_Luck_Christensen.md",
+   "parent_id": "chunk_13c1afb2428b03163825c5b6f784eb2410427a853e46539538e3278bfda6cc6d",
+   "term": "The Big Idea",
+   "heading_path": [
+    "[Chapter\u00a05 How to Hear What Your Customers Don\u2019t Say](nav.xhtml#nch7)",
+    "The Big Idea"
+   ],
+   "gold_chunk_ids": [
+    "chunk_35efcd6fe77341e9f631d20445903188457b00bd3141f9a0efde519a2c5f93c2",
+    "chunk_dabfaf0af436cb2e1acd9f572b699093bef617e8f6fd72245f6ee571e395761f"
+   ],
+   "gold_chunk_id": "chunk_35efcd6fe77341e9f631d20445903188457b00bd3141f9a0efde519a2c5f93c2",
+   "question": "What does the book say about the big idea?",
+   "wall_s": 5.39,
+   "phase_ms": {
+    "total": 5379.0,
+    "compile": 1661.8,
+    "assemble": 5376.7,
+    "generate": 5379.0,
+    "retrieve": 5330.7
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": false,
+   "gold_selected_rank": null,
+   "gold_cited": false,
+   "death": "LOST_AT_UNION_TRUNCATION",
+   "counts": {
+    "cited": 7,
+    "union": 22,
+    "selected": 10,
+    "retrieved": 46,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 16,
+    "latent_rescue": 6,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "big idea",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1659.5,
+     "fallback": false,
+     "raw_chars": 478,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_71dc577c7e96bed017fa62d6924db70ba883a2fc0a02090e8addde34fe69f020",
+   "source_name": "The_AI_Advantage_Davenport.md",
+   "parent_id": "chunk_6ae8c5e7a1c89d8afac84cc20a4c46c65244526920a79b409219061e618a8478",
+   "term": "Automation Aligned with Business Strategy",
+   "heading_path": [
+    "3",
+    "Start with Strategic Intent",
+    "Automation Aligned with Business Strategy"
+   ],
+   "gold_chunk_ids": [
+    "chunk_b47bd63893db426b5c44d7554ad4314a81fdf7b6a71b51fa64d62424a20a097b",
+    "chunk_09725258fc4d53cc5994a1604e6d0db1320283ef05298dda0d84a4c0cac8f659",
+    "chunk_5a15d9aa3cf7b202f7e7d313aadcd699a6065318c7dc6496e2059721c3276ac8",
+    "chunk_26a78604286bdd219404e418ca6b121c7cf7ac2dc8f04d15ccd2d7f610e9dfd5",
+    "chunk_10c99193a32b32baee935ba19bc4a3f8963a9f2726aaa1f5dd922ec5e76a99e4",
+    "chunk_3bcdbc29bc7d4ca085d340fa40c68230856145a77c4da3fd455eca5f88a1ee4f"
+   ],
+   "gold_chunk_id": "chunk_b47bd63893db426b5c44d7554ad4314a81fdf7b6a71b51fa64d62424a20a097b",
+   "question": "What does the book say about automation aligned with business strategy?",
+   "wall_s": 9.72,
+   "phase_ms": {
+    "total": 9705.7,
+    "compile": 1832.3,
+    "assemble": 9703.5,
+    "generate": 9705.6,
+    "retrieve": 9662.9
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 6,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 10,
+    "union": 16,
+    "selected": 10,
+    "retrieved": 36,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 6,
+    "latent_rescue": 7,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "automation aligned with business strategy",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1830.0,
+     "fallback": false,
+     "raw_chars": 746,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_06263d7f728c7ed19ed60f8e94a5884f6a19e8ae8494b96533227955e4d2d0ad",
+   "source_name": "Blue_Ocean_Strategy_Kim_Mauborgne.md",
+   "parent_id": "chunk_40e0690e0eb1c6a9ec7db1f194be66eb4682265916a6c546e3fbdba3362307a8",
+   "term": "Cost Innovations",
+   "heading_path": [
+    "Partnering",
+    "Cost Innovations"
+   ],
+   "gold_chunk_ids": [
+    "chunk_b3df5e9ab5a529f477a7941201cb264405fcd7689dea3e5985d4475727846129",
+    "chunk_1eca48e57adb510f9749c2f8e0a835b52241ec8fee7171e414d3c5b45ed05859",
+    "chunk_6a7e5dc5178265f8e04065ad086eff5b7695f1073dbdf9ada673f393b831f89c"
+   ],
+   "gold_chunk_id": "chunk_b3df5e9ab5a529f477a7941201cb264405fcd7689dea3e5985d4475727846129",
+   "question": "What does the book say about cost innovations?",
+   "wall_s": 5.46,
+   "phase_ms": {
+    "total": 5444.8,
+    "compile": 1723.2,
+    "assemble": 5439.3,
+    "generate": 5444.7,
+    "retrieve": 5358.6
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 3,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 8,
+    "union": 22,
+    "selected": 10,
+    "retrieved": 40,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 15,
+    "latent_rescue": 5,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "cost innovations",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1721.1,
+     "fallback": false,
+     "raw_chars": 642,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+   "source_name": "The_Innovators_Dilemma_Christensen.md",
+   "parent_id": "chunk_2212d5d884dc193eea409e3c6d32d30884cbb4725612a93bf80df0c341b9c23d",
+   "term": "The Migration of Capabilities",
+   "heading_path": [
+    "CHAPTER SEVEN IS YOUR ORGANIZATION CAPABLE OF DISRUPTIVE GROWTH?",
+    "[CHAPTER SEVEN IS YOUR ORGANIZATION CAPABLE OF DISRUPTIVE GROWTH?](../Text/InnovatorsSolu_toc.html#chap-7)",
+    "The Migration of Capabilities"
+   ],
+   "gold_chunk_ids": [
+    "chunk_f09dd66eda40742f4c624ab031adfb476ebd2d741182f4bf785e703e7cc41b69",
+    "chunk_c3b98a0527da830cecf7811591ab13d0ac58d4dc6e382368f5f5df8db2d26a2d",
+    "chunk_8a7bd45b4720bcf16cda31d93d18b630325a22f6f0c23ba7f42972b9fca829dc"
+   ],
+   "gold_chunk_id": "chunk_f09dd66eda40742f4c624ab031adfb476ebd2d741182f4bf785e703e7cc41b69",
+   "question": "What does the book say about the migration of capabilities?",
+   "wall_s": 7.64,
+   "phase_ms": {
+    "total": 7612.6,
+    "compile": 1925.3,
+    "assemble": 7610.1,
+    "generate": 7612.6,
+    "retrieve": 7565.0
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 6,
+    "union": 33,
+    "selected": 10,
+    "retrieved": 52,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 21,
+    "latent_rescue": 7,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "migration of capabilities",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1919.3,
+     "fallback": false,
+     "raw_chars": 705,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+   "source_name": "The_Innovators_Dilemma_Christensen.md",
+   "parent_id": "chunk_6bb3948eb0d2a08c9d56cadffc715f30ba335efe216df3759e0b69faa6341402",
+   "term": "The Capabilities Viewpoint",
+   "heading_path": [
+    "CHAPTER TWO Value Networks and the Impetus to Innovate",
+    "CHAPTER **TWO** Value Networks and the Impetus to Innovate",
+    "FLASH MEMORY AND THE VALUE NETWORK",
+    "*The Capabilities Viewpoint*"
+   ],
+   "gold_chunk_ids": [
+    "chunk_aa9a876897c762ad33685ecc8b3c66e4cf39f5576609b6545be9c0e1cdad7e64"
+   ],
+   "gold_chunk_id": "chunk_aa9a876897c762ad33685ecc8b3c66e4cf39f5576609b6545be9c0e1cdad7e64",
+   "question": "What does the book say about the capabilities viewpoint?",
+   "wall_s": 9.59,
+   "phase_ms": {
+    "total": 9578.7,
+    "compile": 1834.1,
+    "assemble": 9576.5,
+    "generate": 9578.6,
+    "retrieve": 9535.7
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": false,
+   "gold_selected_rank": null,
+   "gold_cited": false,
+   "death": "LOST_AT_UNION_TRUNCATION",
+   "counts": {
+    "cited": 9,
+    "union": 21,
+    "selected": 10,
+    "retrieved": 39,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 9,
+    "latent_rescue": 8,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "capabilities viewpoint",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1832.3,
+     "fallback": false,
+     "raw_chars": 712,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+   "source_name": "The_Innovators_Dilemma_Christensen.md",
+   "parent_id": "chunk_4f496dc2493dc2c3d9eec2797b70d9d5863fa4c677b5a2d736c217368eceaa57",
+   "term": "Getting the Categories Right",
+   "heading_path": [
+    "CHAPTER ONE THE GROWTH IMPERATIVE",
+    "[CHAPTER ONE THE GROWTH IMPERATIVE](../Text/InnovatorsSolu_toc.html#chap-1)",
+    "Where Predictability Comes From: Good Theory",
+    "Getting the Categories Right"
+   ],
+   "gold_chunk_ids": [
+    "chunk_e6f837045dd8714eee9c3b0ea080be7d38d5f9f1c4503f15bb1657b766b88794",
+    "chunk_d77918775c876ced611cb5b9c6c0c97875049a0c48e965022fe17600f1a7d710",
+    "chunk_d652d4cbdb1ff6a0900f90d31e109120dd16bf33593a64a8c73a76a111ec18aa",
+    "chunk_8586d65016198062e27ceb4f3455731464924341dd1248340525448a6ae4582c"
+   ],
+   "gold_chunk_id": "chunk_e6f837045dd8714eee9c3b0ea080be7d38d5f9f1c4503f15bb1657b766b88794",
+   "question": "What does the book say about getting the categories right?",
+   "wall_s": 9.34,
+   "phase_ms": {
+    "total": 9330.4,
+    "compile": 1870.6,
+    "assemble": 9328.0,
+    "generate": 9330.3,
+    "retrieve": 9278.7
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 7,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 8,
+    "union": 31,
+    "selected": 10,
+    "retrieved": 59,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 21,
+    "latent_rescue": 7,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "getting the categories right",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1868.7,
+     "fallback": false,
+     "raw_chars": 736,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+   "source_name": "The_Innovators_Dilemma_Christensen.md",
+   "parent_id": "chunk_59582a223dfff4bbdfe008bb6ac39f750aca655180c0a26cc4847264a03bda23",
+   "term": "Discovery Skill #4: Networking",
+   "heading_path": [
+    "5 Discovery Skill #4: Networking",
+    "[5 Discovery Skill #4: Networking](../Text/iDNAtoc.html#toc-chapter006)"
+   ],
+   "gold_chunk_ids": [
+    "chunk_56a42c246f21835f2c31d142b29d22a4474e5241bf915ce9b3f7aeb8e62f7824"
+   ],
+   "gold_chunk_id": "chunk_56a42c246f21835f2c31d142b29d22a4474e5241bf915ce9b3f7aeb8e62f7824",
+   "question": "What does the book say about discovery skill #4: networking?",
+   "wall_s": 8.83,
+   "phase_ms": {
+    "total": 8817.4,
+    "compile": 1898.8,
+    "assemble": 8814.7,
+    "generate": 8817.3,
+    "retrieve": 8760.9
+   },
+   "gold_in_retrieved": false,
+   "gold_in_union": false,
+   "gold_in_pre_rerank": false,
+   "gold_selected_rank": null,
+   "gold_cited": false,
+   "death": "NEVER_RETRIEVED",
+   "counts": {
+    "cited": 10,
+    "union": 13,
+    "selected": 10,
+    "retrieved": 40,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 4,
+    "latent_rescue": 5,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "discovery skill #4 networking",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1896.6,
+     "fallback": false,
+     "raw_chars": 655,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+   "source_name": "The_Innovators_Dilemma_Christensen.md",
+   "parent_id": "chunk_f188d586fabda28fd24d88efbbaa794bd0537abd813ea9b3a0dd1c5c56393b3f",
+   "term": "Creating Capabilities Through a Spin-out Organization",
+   "heading_path": [
+    "CHAPTER EIGHT How to Appraise Your Organization\u2019s Capabilities and Disabilities",
+    "CHAPTER **EIGHT** How to Appraise Your Organization\u2019s Capabilities and Disabilities",
+    "CREATING CAPABILITIES TO COPE WITH CHANGE",
+    "*Creating Capabilities Through a Spin-out Organization*"
+   ],
+   "gold_chunk_ids": [
+    "chunk_3bb447f493ac64458ecfc8e5d965d94a22561e470aa89025d3722f175336ee92",
+    "chunk_9b72f61a2730631d17afd1a706d4238399bb35bc4cb08be61816a5c47fc6abb5",
+    "chunk_1150ecb5e5219ab90e939158512fd52207c13b4641620eab079ac5dbdfe516ab",
+    "chunk_c649f0aa6d5981b214c658a22ade4e471763d3a7a055c8ffc8837e6f2b197a07",
+    "chunk_6859981d77865e160428cbe40532238d6f509aaec54e245be51420c3b2e18f26"
+   ],
+   "gold_chunk_id": "chunk_3bb447f493ac64458ecfc8e5d965d94a22561e470aa89025d3722f175336ee92",
+   "question": "What does the book say about creating capabilities through a spin-out organization?",
+   "wall_s": 7.79,
+   "phase_ms": {
+    "total": 7781.7,
+    "compile": 2141.4,
+    "assemble": 7779.1,
+    "generate": 7781.6,
+    "retrieve": 7736.9
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 10,
+    "union": 17,
+    "selected": 10,
+    "retrieved": 42,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 6,
+    "latent_rescue": 8,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "creating capabilities through a spin-out organization",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 2139.1,
+     "fallback": false,
+     "raw_chars": 922,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+   "source_name": "The_Innovators_Dilemma_Christensen.md",
+   "parent_id": "chunk_e75e17306a237ea38d403c34b7eab9647cad944106e1e5b7e9e0a3f2aa605935",
+   "term": "Solar Versus Conventional Electrical Energy",
+   "heading_path": [
+    "CHAPTER FOUR WHO ARE THE BEST CUSTOMERS FOR OUR PRODUCTS?",
+    "[CHAPTER FOUR WHO ARE THE BEST CUSTOMERS FOR OUR PRODUCTS?](../Text/InnovatorsSolu_toc.html#chap-4)",
+    "New-Market Disruptions: Three Case Histories",
+    "Solar Versus Conventional Electrical Energy"
+   ],
+   "gold_chunk_ids": [
+    "chunk_1d69b57696f5097eb147fdf28ccaf56f205bc540ba6897ea144d6ba74cd6071c",
+    "chunk_9df18e2a5c4c2240c3d6271e1eb9fd31f97557fe914073a10e52c7643ac32963",
+    "chunk_3a39b78d44eb1ec2d28d967f75c91c58fc79107e7054c784230a776ddb2a61d5"
+   ],
+   "gold_chunk_id": "chunk_1d69b57696f5097eb147fdf28ccaf56f205bc540ba6897ea144d6ba74cd6071c",
+   "question": "What does the book say about solar versus conventional electrical energy?",
+   "wall_s": 8.41,
+   "phase_ms": {
+    "total": 8403.5,
+    "compile": 1945.1,
+    "assemble": 8401.1,
+    "generate": 8403.4,
+    "retrieve": 8354.1
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 8,
+    "union": 23,
+    "selected": 10,
+    "retrieved": 45,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 15,
+    "latent_rescue": 8,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "solar energy vs conventional electrical energy",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1943.2,
+     "fallback": false,
+     "raw_chars": 786,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+   "source_name": "The_Innovators_Dilemma_Christensen.md",
+   "parent_id": "chunk_abd7ccb385b0a8b77e04c2d895128aad04fc990f4db161d7539b21333ac0a2bf",
+   "term": "Cost Structures and Value Networks",
+   "heading_path": [
+    "CHAPTER TWO Value Networks and the Impetus to Innovate",
+    "CHAPTER **TWO** Value Networks and the Impetus to Innovate",
+    "*Value Networks Mirror Product Architecture*",
+    "*Cost Structures and Value Networks*"
+   ],
+   "gold_chunk_ids": [
+    "chunk_c97d3cb96362e59f9d172d352be319900ddafe643875d246afb5c71fddcb6c02",
+    "chunk_abdc78a31cbb92d8b599d37f797b4a3ec01fd88c3c63c3e293fa1bc2633b66af",
+    "chunk_15cfcedfa5fd7fbff45b5e8fcc7a96a3f755a2cb21f71cb0617eaa312b9dc8fb",
+    "chunk_852b197ebb65efe12276357de92e3d766b1506f6133a98a10ad0ef409f354b7e",
+    "chunk_21dc9442f6922be8d4e60d24bafa00a42a66783f633237beb175402402a98683"
+   ],
+   "gold_chunk_id": "chunk_c97d3cb96362e59f9d172d352be319900ddafe643875d246afb5c71fddcb6c02",
+   "question": "What does the book say about cost structures and value networks?",
+   "wall_s": 7.14,
+   "phase_ms": {
+    "total": 7133.4,
+    "compile": 1884.5,
+    "assemble": 7130.3,
+    "generate": 7133.3,
+    "retrieve": 7081.0
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 10,
+    "union": 22,
+    "selected": 10,
+    "retrieved": 42,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 12,
+    "latent_rescue": 8,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "cost structures",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1882.3,
+     "fallback": false,
+     "raw_chars": 657,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+   "source_name": "The_Innovators_Dilemma_Christensen.md",
+   "parent_id": "chunk_04ba92beb35b49a4f2dd1a900edee6740b7e2b08f3751237862e5321f19b37d6",
+   "term": "HOW DISK DRIVES WORK",
+   "heading_path": [
+    "CHAPTER ONE How Can Great Firms Fail? Insights from the Hard Disk Drive Industry",
+    "CHAPTER **ONE** How Can Great Firms Fail? Insights from the Hard Disk Drive Industry",
+    "HOW DISK DRIVES WORK"
+   ],
+   "gold_chunk_ids": [
+    "chunk_3df5cedd59cc493c6e76ffabfa5a7788c94a56175717be46f98347548351ab02",
+    "chunk_c0851adfbcd7ae121b03463fd1e4a2319c94df93de33513953fba97f02b742bd"
+   ],
+   "gold_chunk_id": "chunk_3df5cedd59cc493c6e76ffabfa5a7788c94a56175717be46f98347548351ab02",
+   "question": "What does the book say about HOW DISK DRIVES WORK?",
+   "wall_s": 11.03,
+   "phase_ms": {
+    "total": 11022.2,
+    "compile": 2656.8,
+    "assemble": 11019.7,
+    "generate": 11022.1,
+    "retrieve": 10973.3
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 10,
+    "union": 17,
+    "selected": 10,
+    "retrieved": 48,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 5,
+    "latent_rescue": 8,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "disk drives HOW WORK",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 2654.1,
+     "fallback": false,
+     "raw_chars": 588,
+     "corrections": [],
+     "over_budget": true,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+   "source_name": "The_Innovators_Dilemma_Christensen.md",
+   "parent_id": "chunk_41bea2597126cdcf35223e7160db33af20266c7c5c410413ff1912f4a1d168ab",
+   "term": "Innovations That Will Sustain the Disruption",
+   "heading_path": [
+    "CHAPTER THREE WHAT PRODUCTS WILL CUSTOMERS WANT TO BUY?",
+    "[CHAPTER THREE WHAT PRODUCTS WILL CUSTOMERS WANT TO BUY?](../Text/InnovatorsSolu_toc.html#chap-3)",
+    "Innovations That Will Sustain the Disruption"
+   ],
+   "gold_chunk_ids": [
+    "chunk_ab37dfbb515a0c350851729f4a9085739c257689eae8dd9686047d00c16b1e0a"
+   ],
+   "gold_chunk_id": "chunk_ab37dfbb515a0c350851729f4a9085739c257689eae8dd9686047d00c16b1e0a",
+   "question": "What does the book say about innovations that will sustain the disruption?",
+   "wall_s": 7.26,
+   "phase_ms": {
+    "total": 7252.7,
+    "compile": 2095.4,
+    "assemble": 7250.5,
+    "generate": 7252.6,
+    "retrieve": 7206.0
+   },
+   "gold_in_retrieved": false,
+   "gold_in_union": false,
+   "gold_in_pre_rerank": false,
+   "gold_selected_rank": null,
+   "gold_cited": false,
+   "death": "NEVER_RETRIEVED",
+   "counts": {
+    "cited": 9,
+    "union": 21,
+    "selected": 10,
+    "retrieved": 47,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 9,
+    "latent_rescue": 9,
+    "global_dense_child": 20,
+    "global_sparse_child": 20
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "innovations that will sustain the disruption",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 2093.4,
+     "fallback": false,
+     "raw_chars": 627,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "doc_id": "doc_71dc577c7e96bed017fa62d6924db70ba883a2fc0a02090e8addde34fe69f020",
+   "source_name": "The_AI_Advantage_Davenport.md",
+   "parent_id": "chunk_54fff1c4fc4cd45585f104535dc6371d26d8a42b9dfbc30bfd50ac3017fe8f70",
+   "term": "Make It Platform-Centric",
+   "heading_path": [
+    "6",
+    "Architect for the Future",
+    "Make It Platform-Centric"
+   ],
+   "gold_chunk_ids": [
+    "chunk_67b2036a6c0e90cc0da7cd9e4901eecfc9ffae3b86026724ebfbbad547b153ed",
+    "chunk_7c8fe9db6ad792e205e96cf7dbc2d4de6b0a98e78dcc6a8e150821c6e8fb1ffe",
+    "chunk_5b70e9f50b51c1bcc4bac942afb98c4f787bfaa4e0e4d192cf1c0bce55e6d9f8",
+    "chunk_9786b4345fbceb2c3579008623b1626dfc4296193b3bf35a6fcfd9b72c684a36"
+   ],
+   "gold_chunk_id": "chunk_67b2036a6c0e90cc0da7cd9e4901eecfc9ffae3b86026724ebfbbad547b153ed",
+   "question": "What does the book say about make it platform-centric?",
+   "wall_s": 6.65,
+   "phase_ms": {
+    "total": 6646.2,
+    "compile": 1861.5,
+    "assemble": 6643.8,
+    "generate": 6646.2,
+    "retrieve": 6593.9
+   },
+   "gold_in_retrieved": true,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_selected_rank": 1,
+   "gold_cited": true,
+   "death": "CITED",
+   "counts": {
+    "cited": 5,
+    "union": 23,
+    "selected": 10,
+    "retrieved": 37,
+    "pre_rerank": 10,
+    "post_rerank": 10
+   },
+   "lane_counts": {
+    "hierarchical": 12,
+    "latent_rescue": 9,
+    "global_dense_child": 20,
+    "global_sparse_child": 8
+   },
+   "verdict": "supported",
+   "chat_plan": {
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "retrieval_skipped": false,
+    "retrieval_query": "platform-centric",
+    "compiler": {
+     "lane": "compiler_alt",
+     "model": "compiler_alt:mistralai/mistral-small-2603",
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1859.4,
+     "fallback": false,
+     "raw_chars": 582,
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0
+    }
+   }
+  }
+ ]
+}
