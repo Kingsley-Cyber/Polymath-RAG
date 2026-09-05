@@ -46,13 +46,29 @@ def persist_compiled_parent(conn, *, corpus_id: str, doc_id: str,
                             compiled: CompiledParent, input_hash: str,
                             provider: str, model: str) -> dict:
     """Persist ONE compiled parent. Idempotent on input_hash: an
-    existing row for the same logical work is EXISTING, no new row."""
+    existing row for the same logical work is EXISTING, no new row.
+
+    ENRICHMENT-ROW-TRUTH-V2 (measured 2026-09-05): a row whose parent
+    chunk no longer exists (the document was deleted and re-ingested
+    while a corpus sweep still held the old parents in memory — 184 rows
+    landed 3 minutes AFTER the delete, 922 such orphans corpus-wide) is
+    not evidence of anything: its gists point at dead child ids and no
+    projection can reach it. An orphan never answers EXISTING; it is
+    removed and the new parent's row takes its enrichment_id."""
     existing = conn.execute(
-        "SELECT enrichment_id, status FROM parent_enrichments "
-        "WHERE input_hash=%s AND status = 'READY'",
+        """SELECT pe.enrichment_id, pe.status, pe.parent_id,
+                  EXISTS (SELECT 1 FROM chunks c WHERE c.chunk_id = pe.parent_id) AS live
+             FROM parent_enrichments pe
+            WHERE pe.input_hash=%s AND pe.status = 'READY'""",
         (input_hash,)).fetchone()
-    if existing:
+    if existing and existing[3]:
         return {"status": "EXISTING", "enrichment_id": existing[0]}
+    # an orphan row (READY or INVALID) under this identity gives way
+    conn.execute(
+        """DELETE FROM parent_enrichments pe
+            WHERE pe.input_hash=%s
+              AND NOT EXISTS (SELECT 1 FROM chunks c WHERE c.chunk_id = pe.parent_id)""",
+        (input_hash,))
     # an INVALID row with this input_hash does NOT block a retry — a
     # transient transport failure (429 storm, measured 2026-08-31) must
     # be recoverable by re-clicking the button; a successful retry
@@ -80,6 +96,9 @@ def persist_compiled_parent(conn, *, corpus_id: str, doc_id: str,
                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
                        'READY')
                ON CONFLICT (enrichment_id) DO UPDATE SET
+                   parent_id=EXCLUDED.parent_id, doc_id=EXCLUDED.doc_id,
+                   corpus_id=EXCLUDED.corpus_id,
+                   source_child_ids=EXCLUDED.source_child_ids,
                    summary=EXCLUDED.summary, children=EXCLUDED.children,
                    abstraction=EXCLUDED.abstraction,
                    mechanisms=EXCLUDED.mechanisms,
@@ -108,6 +127,9 @@ def persist_compiled_parent(conn, *, corpus_id: str, doc_id: str,
             prompt_version, gist_coverage, error_class, status)
            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'INVALID')
            ON CONFLICT (enrichment_id) DO UPDATE SET
+               parent_id=EXCLUDED.parent_id, doc_id=EXCLUDED.doc_id,
+               corpus_id=EXCLUDED.corpus_id,
+               source_child_ids=EXCLUDED.source_child_ids,
                error_class=EXCLUDED.error_class,
                provider=EXCLUDED.provider, model=EXCLUDED.model
              WHERE parent_enrichments.status='INVALID'""",

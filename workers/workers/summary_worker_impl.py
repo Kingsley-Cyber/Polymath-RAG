@@ -47,6 +47,32 @@ def _run_docs(conn: Connection, run_id: str) -> list[str]:
                      d.created_at""", (run_id, run_id)).fetchall()]
 
 
+def _enrichment_row_done(conn: Connection, input_hash: str) -> bool:
+    """ENRICHMENT-ROW-TRUTH-V2: the work is done when a READY row exists
+    for this identity AND its parent chunk still exists, or when the
+    latest row is an INVALID of a class no model can repair (also on a
+    live parent). Orphan rows (parent deleted under a running sweep) and
+    summary_jobs state alone are never proof — measured 2026-09-05: 184
+    rows persisted against deleted chunks reported a re-ingested
+    document as "enriched 103 / failed 81" before its first real call."""
+    from polymath_shared.latent.gate import SEMANTIC_FAILOVER_INELIGIBLE
+    row = conn.execute(
+        """SELECT pe.status, pe.error_class
+             FROM parent_enrichments pe
+            WHERE pe.input_hash=%s AND pe.status IN ('READY','INVALID')
+              AND EXISTS (SELECT 1 FROM chunks c WHERE c.chunk_id = pe.parent_id)
+            ORDER BY (pe.status='READY') DESC LIMIT 1""", (input_hash,)).fetchone()
+    if row is None:
+        return False
+    if row[0] == "READY":
+        return True
+    return row[1] in SEMANTIC_FAILOVER_INELIGIBLE
+
+
+def _parent_alive(conn: Connection, parent_id: str) -> bool:
+    return conn.execute("SELECT 1 FROM chunks WHERE chunk_id=%s", (parent_id,)).fetchone() is not None
+
+
 def _job_done(conn: Connection, stage: str, input_hash: str) -> bool:
     """SUMMARY-IDEMPOTENCY-V1: has this WORK been done, regardless of
     which run asked?
@@ -591,23 +617,9 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
             return results
 
         def _enrichment_done(ih: str) -> bool:
-            # ROW-TRUTH-DONE (A3 follow-through): job-state alone lied —
-            # a pre-fix run marked COMPLETE against an INVALID row and
-            # the sweep skipped it forever. Done means: a READY row
-            # exists, or the failure is a SOURCE condition no model can
-            # repair. Everything else stays retryable on every sweep.
-            from polymath_shared.latent.gate import (
-                SEMANTIC_FAILOVER_INELIGIBLE,
-            )
-            row = conn.execute(
-                "SELECT status, error_class FROM parent_enrichments "
-                "WHERE input_hash=%s AND status IN ('READY','INVALID') "
-                "ORDER BY (status='READY') DESC LIMIT 1", (ih,)).fetchone()
-            if row is None:
-                return _job_done(conn, "PARENT_ENRICHMENT", ih)
-            if row[0] == "READY":
-                return True
-            return row[1] in SEMANTIC_FAILOVER_INELIGIBLE
+            # ROW-TRUTH-DONE (A3) + ENRICHMENT-ROW-TRUTH-V2: rows on LIVE
+            # parents are the only proof; job state never is.
+            return _enrichment_row_done(conn, ih)
 
 
         todo: list[ParentInput] = []
@@ -688,6 +700,13 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
                       + ":" + cp.parent_id[-16:])
             ep_cp = _sel("parent_enrichment", cp.parent_id)
             with _ptx() as _c:
+                if not _parent_alive(_c, cp.parent_id):
+                    # ENRICHMENT-ROW-TRUTH-V2: the document was deleted
+                    # under this sweep — never persist against dead chunks
+                    log.warning("enrichment persist skipped: parent %s no longer exists (document deleted mid-sweep)",
+                                cp.parent_id[-16:], extra={"error_code": "ENRICH_PERSIST_SKIPPED_DOC_GONE"})
+                    _persisted.add(cp.parent_id)
+                    return
                 _ensure_job(_c, ticket, "PARENT_ENRICHMENT", corpus, ih)
                 persist_compiled_parent(
                     _c, corpus_id=corpus, doc_id=doc, compiled=cp,
@@ -744,6 +763,11 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
             # own committed transaction, exactly like READY rows do.
             from polymath_shared.db import tx as _ptx
             with _ptx() as _c:
+                if not _parent_alive(_c, cp.parent_id):
+                    log.warning("enrichment persist skipped: parent %s no longer exists (document deleted mid-sweep)",
+                                cp.parent_id[-16:], extra={"error_code": "ENRICH_PERSIST_SKIPPED_DOC_GONE"})
+                    res = {"status": "SKIPPED_DOC_GONE"}
+                    continue
                 _ensure_job(_c, ticket, "PARENT_ENRICHMENT", corpus, ih)
                 res = persist_compiled_parent(
                     _c, corpus_id=corpus, doc_id=doc, compiled=cp,
