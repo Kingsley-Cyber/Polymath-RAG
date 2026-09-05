@@ -1624,6 +1624,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-05-pg-shm.md", "md", None),
     ("docs/wiki/work-log/2026-09-05-html-structure.md", "md", None),
     ("docs/wiki/work-log/2026-09-05-enrichment-row-truth.md", "md", None),
+    ("docs/wiki/plans/CHAT-QUERY-COMPILER-PLAN.md", "md", None),
     ("docs/wiki/work-log/2026-09-04-document-scoped-retrieve.md", "md", None),
     ("docs/wiki/work-log/2026-09-01-provider-pool-campaign.md", "md", None),
     ("tests/determinism/test_fleet_autopilot_demand.py", "py", None),
