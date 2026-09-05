@@ -259,28 +259,30 @@ def documents(corpus_id: str) -> dict:
         if not row:
             raise HTTPException(404, {"error_code": "QUERY_SCOPE_UNKNOWN",
                                       "message": f"corpus {corpus_id!r} not found"})
+        # DOCUMENTS-LIST-SUBQUERY-V1 (measured 2026-09-05 on corpus `cinema`,
+        # 67 documents / 79,787 chunks / 1,968 enrichments): the previous form
+        # LEFT JOINed chunks AND parent_enrichments on the same document and
+        # then DISTINCT-counted the cross product — chunks × enrichments rows
+        # per document, 80 s per request, and the Files view showed nothing.
+        # Correlated per-document counts use the (doc_id) indexes directly:
+        # 25 ms on the same data, identical numbers.
         rows = conn.execute(
             """
             SELECT d.doc_id, d.source_name, d.media_type, d.byte_length,
                    d.created_at,
-                   COUNT(DISTINCT c.chunk_id) FILTER (WHERE c.tier='child') AS children,
-                   COUNT(DISTINCT c.parent_id)
-                       FILTER (WHERE c.tier='child') AS parents,
-                   COUNT(DISTINCT pe.parent_id)
-                       FILTER (WHERE pe.status='READY') AS enriched,
-                   COUNT(DISTINCT pe.parent_id)
-                       FILTER (WHERE pe.status='INVALID'
-                               AND NOT EXISTS (
-                                   SELECT 1 FROM parent_enrichments pr
-                                    WHERE pr.parent_id = pe.parent_id
-                                      AND pr.status='READY'))
-                       AS enrich_failed
+                   (SELECT COUNT(*) FROM chunks c
+                     WHERE c.doc_id = d.doc_id AND c.tier = 'child') AS children,
+                   (SELECT COUNT(DISTINCT c.parent_id) FROM chunks c
+                     WHERE c.doc_id = d.doc_id AND c.tier = 'child') AS parents,
+                   (SELECT COUNT(DISTINCT pe.parent_id) FROM parent_enrichments pe
+                     WHERE pe.doc_id = d.doc_id AND pe.status = 'READY') AS enriched,
+                   (SELECT COUNT(DISTINCT pe.parent_id) FROM parent_enrichments pe
+                     WHERE pe.doc_id = d.doc_id AND pe.status = 'INVALID'
+                       AND NOT EXISTS (SELECT 1 FROM parent_enrichments pr
+                                        WHERE pr.parent_id = pe.parent_id
+                                          AND pr.status = 'READY')) AS enrich_failed
               FROM documents d
-              LEFT JOIN chunks c ON c.doc_id = d.doc_id
-              LEFT JOIN parent_enrichments pe ON pe.doc_id = d.doc_id
              WHERE d.corpus_id = %s
-             GROUP BY d.doc_id, d.source_name, d.media_type, d.byte_length,
-                      d.created_at
              ORDER BY d.created_at DESC
             """,
             (corpus_id,)).fetchall()
