@@ -411,7 +411,7 @@ This is a **query-time migration**. Document/section vectors, child vectors, chi
 | 15 | **Preserve original exact language separately** | §3.1 | the four-string rule |
 | 16 | **WILDCARD's "obvious" baseline is whatever FAST returned** (excludes surfaced parents, dampens same-document chunks) | `divergent.py:95-139` | baseline = the **final normal candidate neighbourhood** of the new engine, so the frontier never returns what Lane B already found |
 | 17 | **Frontend carries 30 retrieved chunks regardless of use** | `App.tsx:153-175` | response contract returns `retrieval.{candidates, selected_evidence, used_evidence}`; future turns carry `used_evidence` only (§3.5) — fixed **before** breadth grows |
-| 18 | **Up to 150 s before retrieval begins:** `POLYMATH_EMBED_WAKE_BUDGET_S = 150` and `_await_embedder()` waits for a parked embedder | `fast.py:258-261` | interactive policy: UI active → embedder stays warm; interactive wake budget tight (seconds, not minutes); ingest/non-interactive keeps its own policy. Cold-start tolerance is not retrieval latency |
+| 18 | **Up to 150 s before retrieval begins:** `POLYMATH_EMBED_WAKE_BUDGET_S = 150` and `_await_embedder()` waits for a parked embedder | `fast.py:258-261`; the UI already pulses `/ui_pulse` every 60 s (`App.tsx:62-67`) | interactive policy: UI pulse active → embedder stays warm; interactive wake budget tight (seconds, not minutes); ingest/non-interactive keeps its own policy. Cold-start tolerance is not retrieval latency |
 
 ### 3.22 Shared contracts introduced by the migration
 
