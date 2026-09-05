@@ -78,6 +78,7 @@ def test_companion_probe_still_fires_for_the_v1_routes_built_with_a_query(monkey
 def test_flag_defaults_to_v2_and_accepts_overrides(monkeypatch):
     monkeypatch.delenv("POLYMATH_CHAT_RETRIEVAL", raising=False)
     assert chat_retrieval_flag() == "v2" and chat_retrieval_flag("v1") == "v1" and chat_retrieval_flag("nonsense") == "v2"
+    assert chat_retrieval_flag("v2-single") == "v2-single"
     monkeypatch.setenv("POLYMATH_CHAT_RETRIEVAL", "v1")
     assert chat_retrieval_flag() == "v1" and chat_retrieval_flag("v2") == "v2"
 
@@ -120,3 +121,21 @@ def test_live_chat_hybrid_retrieves_on_v2_with_provenance_and_v1_still_answers(r
         assert ret["funnel"]["counts"]["union"] >= ret["funnel"]["counts"]["pre_rerank"] >= ret["funnel"]["counts"]["selected"] > 0
     else:
         assert ret.get("engine") == "hybrid-retrieval-v1" and ret.get("funnel", {}).get("counts", {}).get("selected", 0) > 0
+
+
+def test_embed_queries_makes_one_sidecar_call_for_all_distinct_texts(monkeypatch):
+    calls = []
+
+    class FakeEmbedder:
+        def __init__(self, *a, **k): pass
+        def ready(self): return True
+        def verify_pin(self): pass
+        def close(self): pass
+        def embed(self, texts, kind):
+            calls.append((list(texts), kind))
+            return {"vectors": [[float(i)] for i, _ in enumerate(texts)]}
+    import polymath_shared.clients as clients
+    monkeypatch.setattr(clients, "EmbedderClient", FakeEmbedder)
+    vecs = fast_api._embed_queries(["primary", "sub one", "sub two"])
+    assert calls == [(["primary", "sub one", "sub two"], "query")] and vecs == [[0.0], [1.0], [2.0]]
+    assert fast_api._embed_queries([]) == [] and len(calls) == 1

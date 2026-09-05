@@ -83,6 +83,28 @@ class CandidateBudget:
     neighbor_expansion_max: int = 8
     demote_noisy_regions: bool = True
     lanes: tuple[str, ...] = LANES
+    #: P1.b decomposition (§3.10, §3.16): typed subqueries run lanes B + C only,
+    #: with smaller K; document routing (lane A) happens once, on the primary.
+    subquery_dense_k: int = 20
+    subquery_sparse_k: int = 15
+    max_subqueries: int = 3
+    #: one targeted second pass for the weakest aspect (0 candidates): B + C
+    #: again at K × factor; at most one per turn
+    second_pass_factor: int = 2
+    #: provenance-normalised fusion: a chunk's score is its BEST per-query
+    #: contribution plus a bounded agreement term — N redundant subqueries
+    #: can at most double it, never pile up linearly
+    agreement_bonus: float = 0.5
+    #: ASPECT SEATS (P1.b gate "every dimension ✓ or flagged weak"): every
+    #: typed subquery gets at least this many of its own candidates into the
+    #: judged prefix (the prefix may grow by seats × subqueries), an aspect
+    #: whose best judged candidate scores below the floor (sigmoid of the
+    #: judge logit) is WEAK and named as such, and every non-weak aspect not
+    #: yet represented in the final set gets one seat (its best judged
+    #: candidate) in place of the lowest primary-only item.
+    aspect_prefix_seats: int = 3
+    aspect_weak_floor: float = 0.5
+    aspect_final_seats: int = 1
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -165,6 +187,19 @@ class SearchContext:
     sparse_rule: str = "topical"          # which rule built sparse_query (receipted)
 
 
+@dataclass(frozen=True)
+class SubQuery:
+    """One typed subquery of the compiled plan (§3.1), with its own vector
+    and sparse query. Runs lanes B + C only."""
+    query_id: str
+    qtype: str
+    text: str
+    weight: float
+    qvec: tuple[float, ...]
+    sparse_query: Optional[tuple[tuple[int, ...], tuple[float, ...]]] = None
+    sparse_rule: str = "topical"
+
+
 @dataclass
 class CandidateEvidence:
     chunk_id: str
@@ -184,6 +219,8 @@ class CandidateEvidence:
     document_rank: Optional[int] = None
     is_neighbor: bool = False
     region_role: Optional[str] = None
+    #: per-query lane contribution (weighted RRF), P1.b provenance
+    query_scores: dict = field(default_factory=dict)
 
     def to_row(self) -> dict:
         """The evidence dict shape the orchestrator, assembler and funnel
@@ -196,7 +233,7 @@ class CandidateEvidence:
                 "dense_score": self.dense_score, "sparse_score": self.sparse_score,
                 "rerank_score": self.rerank_score, "fused_score": round(self.fused_score, 6),
                 "document_rank": self.document_rank, "is_neighbor": self.is_neighbor,
-                "region_role": self.region_role,
+                "region_role": self.region_role, "query_scores": {k: round(v, 6) for k, v in self.query_scores.items()},
                 "similarity": self.dense_score if self.dense_score is not None else self.sparse_score}
 
 
@@ -256,13 +293,34 @@ def _sink_noisy(hits: list[LaneHit], roles: dict) -> list[LaneHit]:
     return out
 
 
+def _call_dense(dense_search, kind, top_k, extra, qvec):
+    """Adapters may accept a `qvec` keyword (P1.b); older ones close over the primary vector."""
+    if qvec is None:
+        return dense_search(kind, top_k, extra)
+    try:
+        return dense_search(kind, top_k, extra, qvec=qvec)
+    except TypeError:
+        return dense_search(kind, top_k, extra)
+
+
+def _call_sparse(sparse_search, top_k, sparse_query):
+    if sparse_query is None:
+        return sparse_search(top_k)
+    try:
+        return sparse_search(top_k, sparse_query=sparse_query)
+    except TypeError:
+        return sparse_search(top_k)
+
+
 def retrieve_candidates(ctx: SearchContext, budget: CandidateBudget, *,
-                        dense_search: Callable[[str, int, Optional[dict]], list[dict]],
-                        sparse_search: Callable[[int], list[dict]],
-                        region_lookup: Optional[Callable[[list[str]], dict]] = None) -> CandidateResult:
+                        dense_search: Callable[..., list[dict]],
+                        sparse_search: Callable[..., list[dict]],
+                        region_lookup: Optional[Callable[[list[str]], dict]] = None,
+                        subqueries: Iterable[SubQuery] = ()) -> CandidateResult:
     timings: dict[str, float] = {}
     degraded: list[dict] = []
     lanes = set(budget.lanes)
+    subqueries = list(subqueries or [])[:budget.max_subqueries]
 
     def timed(name: str, fn):
         t0 = time.perf_counter()
@@ -346,9 +404,62 @@ def retrieve_candidates(ctx: SearchContext, budget: CandidateBudget, *,
                                 sparse_score=h.raw_similarity)
               for h in sparse_lane if h.chunk_id]
 
+    # ---- typed subqueries: lanes B + C only (§3.16), per-query provenance ------
+    aspects: dict[str, dict] = {ctx.query_id: {"type": "PRIMARY", "query": ctx.query, "weight": 1.0,
+                                               "lanes": {LANE_A: len(lane_a), LANE_B: len(lane_b), LANE_C: len(lane_c)},
+                                               "degraded": [d["component"] for d in degraded]}}
+    sub_items: list[CandidateEvidence] = []
+    second_pass: Optional[dict] = None
+
+    def _run_sub(sq: SubQuery, dk: int, sk: int) -> tuple[list[CandidateEvidence], dict]:
+        items: list[CandidateEvidence] = []
+        info = {"type": sq.qtype, "query": sq.text, "weight": sq.weight, "lanes": {LANE_B: 0, LANE_C: 0}, "degraded": []}
+        if LANE_B in lanes:
+            try:
+                rows = timed(f"sub_{sq.query_id}_dense", lambda: _call_dense(dense_search, REPRESENTATION_KIND_CHILD, dk, None, sq.qvec))
+                hits = _sink_noisy(_hits(REPRESENTATION_KIND_CHILD, rows, ctx.corpus_id, dk), roles) if roles else _hits(REPRESENTATION_KIND_CHILD, rows, ctx.corpus_id, dk)
+                for h in hits:
+                    if h.chunk_id:
+                        items.append(CandidateEvidence(chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name,
+                                                       text=h.text, arrivals=[LANE_B], query_ids=[sq.query_id],
+                                                       query_scores={sq.query_id: sq.weight * _rrf_score(h.rank, budget.rrf_k)},
+                                                       dense_score=h.raw_similarity))
+                info["lanes"][LANE_B] = sum(1 for h in hits if h.chunk_id)
+            except Exception as exc:  # noqa: BLE001
+                info["degraded"].append(f"dense:{type(exc).__name__}")
+        if LANE_C in lanes and sq.sparse_query is not None:
+            try:
+                rows = timed(f"sub_{sq.query_id}_sparse", lambda: _call_sparse(sparse_search, sk, sq.sparse_query))
+                hits = _hits("child_lexical", rows, ctx.corpus_id, sk)
+                for h in hits:
+                    if h.chunk_id:
+                        items.append(CandidateEvidence(chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name,
+                                                       text=h.text, arrivals=[LANE_C], query_ids=[sq.query_id],
+                                                       query_scores={sq.query_id: sq.weight * _rrf_score(h.rank, budget.rrf_k)},
+                                                       sparse_score=h.raw_similarity))
+                info["lanes"][LANE_C] = sum(1 for h in hits if h.chunk_id)
+            except Exception as exc:  # noqa: BLE001
+                info["degraded"].append(f"sparse:{type(exc).__name__}")
+        return items, info
+
+    for sq in subqueries:
+        items, info = _run_sub(sq, budget.subquery_dense_k, budget.subquery_sparse_k)
+        aspects[sq.query_id] = info
+        sub_items.extend(items)
+    # one targeted second pass: the first aspect that found nothing gets B + C again at K × factor
+    for sq in subqueries:
+        if aspects[sq.query_id]["lanes"][LANE_B] + aspects[sq.query_id]["lanes"][LANE_C] == 0 and budget.second_pass_factor > 1:
+            items, info = _run_sub(sq, budget.subquery_dense_k * budget.second_pass_factor, budget.subquery_sparse_k * budget.second_pass_factor)
+            second_pass = {"query_id": sq.query_id, "before": 0, "after": len(items)}
+            aspects[sq.query_id] = {**info, "second_pass": True}
+            sub_items.extend(items)
+            break
+
     # ---- union + dedupe + provenance-preserving fusion --------------------
     by_id: dict[str, CandidateEvidence] = {}
-    for lane_items in (lane_a, lane_b, lane_c):
+    for c in lane_a + lane_b + lane_c:
+        c.query_scores = dict(c.query_scores)
+    for lane_items in (lane_a, lane_b, lane_c, sub_items):
         for c in lane_items:
             cur = by_id.get(c.chunk_id)
             if cur is None:
@@ -370,10 +481,33 @@ def retrieve_candidates(ctx: SearchContext, budget: CandidateBudget, *,
                 cur.document_rank = c.document_rank
             if not cur.text and c.text:
                 cur.text = c.text
+            for qid, sc in c.query_scores.items():
+                cur.query_scores[qid] = cur.query_scores.get(qid, 0.0) + sc
+    # primary contribution = the three lane ranks (as before); subquery contributions are per query
     for c in by_id.values():
-        c.fused_score = sum(_rrf_score(r, budget.rrf_k) for r in (c.hierarchy_rank, c.dense_rank, c.sparse_rank) if r is not None)
+        primary = sum(_rrf_score(r, budget.rrf_k) for r in (c.hierarchy_rank, c.dense_rank, c.sparse_rank) if r is not None)
+        if primary:
+            c.query_scores[ctx.query_id] = primary
         if c.region_role is None:
             c.region_role = roles.get(c.chunk_id)
+    # §3.10 per-document normalisation: under one subquery, only a document's best chunk keeps that
+    # query's full contribution (others keep half) — N chunks of one document cannot stack a subquery's vote
+    for qid in [sq.query_id for sq in subqueries]:
+        best_by_doc: dict[str, str] = {}
+        for c in sorted(by_id.values(), key=lambda c: -c.query_scores.get(qid, 0.0)):
+            if qid not in c.query_scores:
+                continue
+            if c.doc_id in best_by_doc:
+                c.query_scores[qid] *= 0.5
+            else:
+                best_by_doc[c.doc_id] = c.chunk_id
+    for c in by_id.values():
+        if not c.query_scores:
+            c.fused_score = 0.0
+            continue
+        best = max(c.query_scores.values())
+        extra = sum(c.query_scores.values()) - best
+        c.fused_score = best + min(best, budget.agreement_bonus * extra)
     fused = sorted(by_id.values(), key=lambda c: (-c.fused_score, c.chunk_id))
     if budget.demote_noisy_regions and roles:
         from polymath_shared.document_region import is_noisy
@@ -395,6 +529,9 @@ def retrieve_candidates(ctx: SearchContext, budget: CandidateBudget, *,
                                  "representation_kinds_present": d.representation_kinds_present} for d in documents],
         "multi_lane": sum(1 for c in union if len(c.arrivals) > 1),
         "sparse_rule": ctx.sparse_rule, "exact_terms": list(ctx.exact_terms),
+        # P1.b aspect coverage: per compiled query — lanes, union candidates, degradations
+        "aspects": {qid: {**info, "union": sum(1 for c in union if qid in c.query_ids)} for qid, info in aspects.items()},
+        "subqueries": len(subqueries), "second_pass": second_pass,
         "degraded": list(degraded), "timings_ms": dict(timings),
     }
     return CandidateResult(context=ctx, budget=budget, documents=documents, selected_documents=selected_documents,
@@ -414,7 +551,22 @@ def select_evidence(result: CandidateResult, budget: CandidateBudget, *,
     profile's neighbour expansion (additive, after the judge — the
     candidate set the reranker scored is never changed). P1.c owns the
     composition slots; here relevance order is the whole law."""
-    prefix = result.union[:budget.rerank_max]
+    import math
+    union = result.union
+    primary_id = result.context.query_id
+    aspects_all = list((result.trace.get("aspects") or {}).keys()) or [primary_id]
+    sub_ids = [q for q in aspects_all if q != primary_id]
+    prefix = list(union[:budget.rerank_max])
+    in_prefix = {c.chunk_id for c in prefix}
+    aspect_prefix: dict[str, int] = {}
+    for qid in sub_ids:                                   # reserve judged seats per aspect
+        have = sum(1 for c in prefix if qid in c.query_ids)
+        for c in union:
+            if have >= budget.aspect_prefix_seats:
+                break
+            if qid in c.query_ids and c.chunk_id not in in_prefix:
+                prefix.append(c); in_prefix.add(c.chunk_id); have += 1
+        aspect_prefix[qid] = have
     pre = [c.chunk_id for c in prefix]
     post = list(pre)
     scores: dict[str, float] = {}
@@ -428,7 +580,47 @@ def select_evidence(result: CandidateResult, budget: CandidateBudget, *,
         prefix = [by_id[cid] for cid in post]
         for c in prefix:
             c.rerank_score = scores.get(c.chunk_id)
+
+    def _sigmoid(x):
+        x = max(-30.0, min(30.0, float(x)))
+        return 1.0 / (1.0 + math.exp(-x))
+
+    judged = bool(scores) and any(v is not None for v in scores.values())
+    aspect_best: dict[str, Optional[float]] = {}
+    weak_reason: dict[str, str] = {}
+    for qid in aspects_all:
+        cands = [c for c in prefix if qid in c.query_ids]
+        if not cands:
+            aspect_best[qid] = None; weak_reason[qid] = "no_candidates"; continue
+        if judged:
+            best = max((_sigmoid(c.rerank_score) for c in cands if c.rerank_score is not None), default=None)
+            aspect_best[qid] = round(best, 4) if best is not None else None
+            if qid != primary_id and best is not None and best < budget.aspect_weak_floor:
+                weak_reason[qid] = "below_floor"
+        else:
+            aspect_best[qid] = None
     final = list(prefix[:budget.synthesis_max])
+    seated: list[dict] = []
+    for qid in sub_ids:                                   # one seat per non-weak aspect not yet represented
+        if qid in weak_reason or any(qid in c.query_ids for c in final):
+            continue
+        best_c = next((c for c in prefix if qid in c.query_ids), None)   # prefix is in judge order
+        if best_c is None or len(seated) >= budget.aspect_final_seats * max(1, len(sub_ids)):
+            continue
+        if len(final) >= budget.synthesis_max:
+            # displace the lowest item that is not another aspect's only representative
+            victim = None
+            for c in reversed(final):
+                others = [q for q in c.query_ids if q != primary_id]
+                if not others or all(sum(1 for f in final if q in f.query_ids) > 1 for q in others):
+                    victim = c; break
+            if victim is None:
+                continue
+            final.remove(victim)
+            seated.append({"query_id": qid, "chunk_id": best_c.chunk_id, "displaced": victim.chunk_id})
+        else:
+            seated.append({"query_id": qid, "chunk_id": best_c.chunk_id, "displaced": None})
+        final.append(best_c)
     added = 0
     if budget.neighbor_expansion > 0 and neighbor_lookup is not None and final:
         try:
@@ -447,6 +639,13 @@ def select_evidence(result: CandidateResult, budget: CandidateBudget, *,
             added += 1
             if added >= budget.neighbor_expansion_max:
                 break
+    aspects = (result.trace.get("aspects") or {})
+    aspect_final = {qid: sum(1 for c in final if qid in c.query_ids) for qid in aspects}
+    weak = sorted(set(weak_reason) | {qid for qid, n in aspect_final.items() if n == 0 and qid != primary_id})
     trace = {"pre_g3_order": pre, "post_g3_order": post, "g3_scores": scores, "rerank_prefix": len(pre),
-             "neighbors_added": added, "final": [c.chunk_id for c in final]}
+             "neighbors_added": added, "final": [c.chunk_id for c in final],
+             "aspect_final": aspect_final, "weak_aspects": weak, "weak_reasons": weak_reason,
+             "aspect_prefix": aspect_prefix, "aspect_best": aspect_best, "aspect_seated": seated,
+             "final_detail": [{"chunk_id": c.chunk_id, "doc_id": c.doc_id, "rerank_score": c.rerank_score,
+                               "arrivals": list(c.arrivals), "query_ids": list(c.query_ids)} for c in final]}
     return final, trace

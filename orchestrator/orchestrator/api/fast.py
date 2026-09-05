@@ -304,6 +304,27 @@ def _await_embedder(client) -> None:
             return
 
 
+def _embed_queries(texts: list[str]) -> list[list[float]]:
+    """ONE embedder call for several distinct query texts (P1.b/P1.d: one
+    embedding per distinct text, one HTTP round trip per turn)."""
+    from polymath_shared.clients import EmbedderClient
+
+    if not texts:
+        return []
+    client = EmbedderClient()
+    try:
+        _await_embedder(client)
+        client.verify_pin()
+        return list(client.embed(list(texts), "query")["vectors"])
+    except Exception as exc:
+        raise _fail({
+            "error_code": "embedder_unavailable",
+            "message": f"embedder sidecar unavailable: {type(exc).__name__}",
+        }) from exc
+    finally:
+        client.close()
+
+
 def _embed_query(query: str) -> list[float]:
     from polymath_shared.clients import EmbedderClient
 

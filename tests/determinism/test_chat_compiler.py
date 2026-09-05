@@ -190,3 +190,30 @@ def test_correction_c_strips_corpus_id_the_conversation_never_used():
     plan3, _ = cp.validate_plan(raw3, "How does that work in practice?")
     cp.apply_corrections(plan3, "How does that work in practice?", hist, corpus_ids=["cinema"])
     assert plan3.queries[0].query == "cinema"
+
+
+def test_correction_d_splits_a_two_sided_compare_into_two_queries():
+    msg = "Compare what the book says about making your own chroma keyer with what it says about nonsquare pixels."
+    assert cp.compare_sides(msg) == ("making your own chroma keyer", "nonsquare pixels")
+    assert cp.compare_sides("Compare RAPO vs FACS") == ("RAPO", "FACS") and cp.compare_sides("what is a chroma keyer?") is None
+    assert cp.compare_sides("Compare X vs Y") is None                                  # one-letter sides are not topics
+    raw = dict(GOOD, resolved_request=msg, task_type="GROUNDED_SYNTHESIS",
+               queries=[{"id": "q0", "type": "PRIMARY", "query": "chroma keyer vs nonsquare pixels", "weight": 1}])
+    plan, _ = cp.validate_plan(raw, msg)
+    fixes = cp.apply_corrections(plan, msg, [], corpus_ids=["cinema"])
+    assert "compare_sides:1->2" in fixes
+    assert [q.type for q in plan.queries] == ["PRIMARY", "COMPARISON"]
+    assert plan.queries[0].query == "making your own chroma keyer" and plan.queries[1].query == "nonsquare pixels"
+    # a plan that already decomposed is left alone
+    raw2 = dict(raw, queries=[{"id": "q0", "type": "PRIMARY", "query": "chroma keyer", "weight": 1}, {"id": "q1", "type": "COMPARISON", "query": "nonsquare pixels", "weight": 1}])
+    plan2, _ = cp.validate_plan(raw2, msg)
+    assert not any(f.startswith("compare_sides") for f in cp.apply_corrections(plan2, msg, [], corpus_ids=["cinema"])) and len(plan2.queries) == 2
+    # a plan that FOLDED both sides into the primary and spent its subquery on one side is rebuilt: one query per side
+    raw3 = dict(raw, queries=[{"id": "q0", "type": "PRIMARY", "query": "chroma keyer vs nonsquare pixels", "weight": 1},
+                              {"id": "q1", "type": "MECHANISM", "query": "chroma key construction steps", "weight": 0.8}])
+    plan3, _ = cp.validate_plan(raw3, msg)
+    fixes3 = cp.apply_corrections(plan3, msg, [], corpus_ids=["cinema"])
+    assert any(f.startswith("compare_sides:2->") for f in fixes3), fixes3
+    assert [q.type for q in plan3.queries][:2] == ["PRIMARY", "COMPARISON"] and plan3.queries[1].query == "nonsquare pixels"
+    assert any(q.query == "chroma key construction steps" for q in plan3.queries)      # the side-A-only subquery is kept
+    assert "gets its OWN typed query" in cp.SYSTEM_PROMPT

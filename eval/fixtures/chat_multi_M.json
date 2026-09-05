@@ -1,0 +1,1018 @@
+{
+ "version": "chat-multi-M-v1",
+ "seed": 20260905,
+ "source": "eval/fixtures/chat_baseline_B.json",
+ "questions": [
+  {
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about making your own chroma keyer with what it says about nonsquare pixels.",
+   "aspects": [
+    {
+     "term": "Making Your Own Chroma Keyer",
+     "doc_id": "doc_6f89105b1845c0b595ab8e04b6cb107b9a6e2b7f1617a89f50bdbebd0f4aad34",
+     "gold_chunk_ids": [
+      "chunk_f8ae8454a2e5f5bff1e254d97457d7e4759464b699dff39e1b475c4ddc5c14d0",
+      "chunk_fbe841b47db000daceea61d2f3e94fd6e33a3ee22f0aac8c63b356d4dca9781a",
+      "chunk_ac16b3ffb273d6bd9c977e11cf728ea611e5b248b6753f18f1f7e1d4df99a12a"
+     ]
+    },
+    {
+     "term": "Nonsquare Pixels",
+     "doc_id": "doc_26cceca252a72ae476beead4e21d7d3ad9bb07fa5cfd5e49e34182505cd90b16",
+     "gold_chunk_ids": [
+      "chunk_11970fedf58b95743716a1b9b46f4a3cbf24b4a370f4a53a58bc6cbb95b1d830",
+      "chunk_74b49ddcf389b50f0305f208264f32f9a311edad11859b6dbf0835b01b73e040",
+      "chunk_bf71322e03a8e934244e5629ca66fd85c67b47a3524a07d06139dd292ee258cc",
+      "chunk_0d671409f181b0b320f5d2f9b5faeaa8ed1b3ac3a1576f0d7e0851bee9a1559d"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_f8ae8454a2e5f5bff1e254d97457d7e4759464b699dff39e1b475c4ddc5c14d0",
+    "chunk_fbe841b47db000daceea61d2f3e94fd6e33a3ee22f0aac8c63b356d4dca9781a",
+    "chunk_ac16b3ffb273d6bd9c977e11cf728ea611e5b248b6753f18f1f7e1d4df99a12a",
+    "chunk_11970fedf58b95743716a1b9b46f4a3cbf24b4a370f4a53a58bc6cbb95b1d830",
+    "chunk_74b49ddcf389b50f0305f208264f32f9a311edad11859b6dbf0835b01b73e040",
+    "chunk_bf71322e03a8e934244e5629ca66fd85c67b47a3524a07d06139dd292ee258cc",
+    "chunk_0d671409f181b0b320f5d2f9b5faeaa8ed1b3ac3a1576f0d7e0851bee9a1559d"
+   ],
+   "gold_chunk_id": "chunk_f8ae8454a2e5f5bff1e254d97457d7e4759464b699dff39e1b475c4ddc5c14d0",
+   "term": "Making Your Own Chroma Keyer | Nonsquare Pixels"
+  },
+  {
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about nonsquare pixels with what it says about oebps/ritc 9781119685401 epub3 035 r1.xhtml.",
+   "aspects": [
+    {
+     "term": "Nonsquare Pixels",
+     "doc_id": "doc_26cceca252a72ae476beead4e21d7d3ad9bb07fa5cfd5e49e34182505cd90b16",
+     "gold_chunk_ids": [
+      "chunk_11970fedf58b95743716a1b9b46f4a3cbf24b4a370f4a53a58bc6cbb95b1d830",
+      "chunk_74b49ddcf389b50f0305f208264f32f9a311edad11859b6dbf0835b01b73e040",
+      "chunk_bf71322e03a8e934244e5629ca66fd85c67b47a3524a07d06139dd292ee258cc",
+      "chunk_0d671409f181b0b320f5d2f9b5faeaa8ed1b3ac3a1576f0d7e0851bee9a1559d"
+     ]
+    },
+    {
+     "term": "OEBPS/ritc 9781119685401 epub3 035 r1.xhtml",
+     "doc_id": "doc_d7510ba66b3cd614f927a7872f9c78e16c34d7909d5e968925e367aec892306f",
+     "gold_chunk_ids": [
+      "chunk_01d23488248ca9121285e48509d644ba3e4f28d4f1bb51f5b27cba62a9fb2bc6",
+      "chunk_a66d71cdb86db22f053583288e7ec05ffc6be9040d9c36e70483b57e3d9ffd29"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_11970fedf58b95743716a1b9b46f4a3cbf24b4a370f4a53a58bc6cbb95b1d830",
+    "chunk_74b49ddcf389b50f0305f208264f32f9a311edad11859b6dbf0835b01b73e040",
+    "chunk_bf71322e03a8e934244e5629ca66fd85c67b47a3524a07d06139dd292ee258cc",
+    "chunk_0d671409f181b0b320f5d2f9b5faeaa8ed1b3ac3a1576f0d7e0851bee9a1559d",
+    "chunk_01d23488248ca9121285e48509d644ba3e4f28d4f1bb51f5b27cba62a9fb2bc6",
+    "chunk_a66d71cdb86db22f053583288e7ec05ffc6be9040d9c36e70483b57e3d9ffd29"
+   ],
+   "gold_chunk_id": "chunk_11970fedf58b95743716a1b9b46f4a3cbf24b4a370f4a53a58bc6cbb95b1d830",
+   "term": "Nonsquare Pixels | OEBPS/ritc 9781119685401 epub3 035 r1.xhtml"
+  },
+  {
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about oebps/ritc 9781119685401 epub3 035 r1.xhtml with what it says about miscellaneous drawing tips.",
+   "aspects": [
+    {
+     "term": "OEBPS/ritc 9781119685401 epub3 035 r1.xhtml",
+     "doc_id": "doc_d7510ba66b3cd614f927a7872f9c78e16c34d7909d5e968925e367aec892306f",
+     "gold_chunk_ids": [
+      "chunk_01d23488248ca9121285e48509d644ba3e4f28d4f1bb51f5b27cba62a9fb2bc6",
+      "chunk_a66d71cdb86db22f053583288e7ec05ffc6be9040d9c36e70483b57e3d9ffd29"
+     ]
+    },
+    {
+     "term": "Miscellaneous Drawing Tips",
+     "doc_id": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+     "gold_chunk_ids": [
+      "chunk_6c0a4c104f64f233a9797b5841c3282ee55bec7cf8974bb855591d82290e9c01",
+      "chunk_5a76fc85d88b1ee39fbd66022000004335ca4d1d41d6307847e265db78b3c52d"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_01d23488248ca9121285e48509d644ba3e4f28d4f1bb51f5b27cba62a9fb2bc6",
+    "chunk_a66d71cdb86db22f053583288e7ec05ffc6be9040d9c36e70483b57e3d9ffd29",
+    "chunk_6c0a4c104f64f233a9797b5841c3282ee55bec7cf8974bb855591d82290e9c01",
+    "chunk_5a76fc85d88b1ee39fbd66022000004335ca4d1d41d6307847e265db78b3c52d"
+   ],
+   "gold_chunk_id": "chunk_01d23488248ca9121285e48509d644ba3e4f28d4f1bb51f5b27cba62a9fb2bc6",
+   "term": "OEBPS/ritc 9781119685401 epub3 035 r1.xhtml | Miscellaneous Drawing Tips"
+  },
+  {
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about miscellaneous drawing tips with what it says about transcoding versus color rerendering.",
+   "aspects": [
+    {
+     "term": "Miscellaneous Drawing Tips",
+     "doc_id": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+     "gold_chunk_ids": [
+      "chunk_6c0a4c104f64f233a9797b5841c3282ee55bec7cf8974bb855591d82290e9c01",
+      "chunk_5a76fc85d88b1ee39fbd66022000004335ca4d1d41d6307847e265db78b3c52d"
+     ]
+    },
+    {
+     "term": "Transcoding versus Color Rerendering",
+     "doc_id": "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+     "gold_chunk_ids": [
+      "chunk_7a9df67eb59719c2da8e638cc812b3146aa43dc9eda60d39454b3f25342c81d1"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_6c0a4c104f64f233a9797b5841c3282ee55bec7cf8974bb855591d82290e9c01",
+    "chunk_5a76fc85d88b1ee39fbd66022000004335ca4d1d41d6307847e265db78b3c52d",
+    "chunk_7a9df67eb59719c2da8e638cc812b3146aa43dc9eda60d39454b3f25342c81d1"
+   ],
+   "gold_chunk_id": "chunk_6c0a4c104f64f233a9797b5841c3282ee55bec7cf8974bb855591d82290e9c01",
+   "term": "Miscellaneous Drawing Tips | Transcoding versus Color Rerendering"
+  },
+  {
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about transcoding versus color rerendering with what it says about FACE OFF.",
+   "aspects": [
+    {
+     "term": "Transcoding versus Color Rerendering",
+     "doc_id": "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+     "gold_chunk_ids": [
+      "chunk_7a9df67eb59719c2da8e638cc812b3146aa43dc9eda60d39454b3f25342c81d1"
+     ]
+    },
+    {
+     "term": "FACE OFF",
+     "doc_id": "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+     "gold_chunk_ids": [
+      "chunk_52dd8a04f0a9549c872c1ad6de9400dff88e98eb3e76edab7ac1ba89c1e10a3b"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_7a9df67eb59719c2da8e638cc812b3146aa43dc9eda60d39454b3f25342c81d1",
+    "chunk_52dd8a04f0a9549c872c1ad6de9400dff88e98eb3e76edab7ac1ba89c1e10a3b"
+   ],
+   "gold_chunk_id": "chunk_7a9df67eb59719c2da8e638cc812b3146aa43dc9eda60d39454b3f25342c81d1",
+   "term": "Transcoding versus Color Rerendering | FACE OFF"
+  },
+  {
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about FACE OFF with what it says about affect, fatigue, and injury are control states.",
+   "aspects": [
+    {
+     "term": "FACE OFF",
+     "doc_id": "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+     "gold_chunk_ids": [
+      "chunk_52dd8a04f0a9549c872c1ad6de9400dff88e98eb3e76edab7ac1ba89c1e10a3b"
+     ]
+    },
+    {
+     "term": "Affect, fatigue, and injury are control states",
+     "doc_id": "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+     "gold_chunk_ids": [
+      "chunk_cdf646794ffa0ad50c991c9b563c13e1c02b34c5d4d12c43e76933c56b2ebe34"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_52dd8a04f0a9549c872c1ad6de9400dff88e98eb3e76edab7ac1ba89c1e10a3b",
+    "chunk_cdf646794ffa0ad50c991c9b563c13e1c02b34c5d4d12c43e76933c56b2ebe34"
+   ],
+   "gold_chunk_id": "chunk_52dd8a04f0a9549c872c1ad6de9400dff88e98eb3e76edab7ac1ba89c1e10a3b",
+   "term": "FACE OFF | Affect, fatigue, and injury are control states"
+  },
+  {
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about affect, fatigue, and injury are control states with what it says about movement of an object with a background.",
+   "aspects": [
+    {
+     "term": "Affect, fatigue, and injury are control states",
+     "doc_id": "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+     "gold_chunk_ids": [
+      "chunk_cdf646794ffa0ad50c991c9b563c13e1c02b34c5d4d12c43e76933c56b2ebe34"
+     ]
+    },
+    {
+     "term": "Movement of an Object with a Background",
+     "doc_id": "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3",
+     "gold_chunk_ids": [
+      "chunk_4db5db1e217cdaae506ddc37d54c63f4d7bb8a1e1779c5bc7367c8fbed1e94f1",
+      "chunk_180af9f44565cd52310df840d261423cc92a111788e3b58c99bdf6cb3cee6eaf",
+      "chunk_2014d7cfa2ecdf17141b719ddb03a0f9c7d4c3364e6f035597e19b0d63417649",
+      "chunk_0a8d74a6ef1ef968790a1a5f1b8b716e547fd8eb6973823b17b865911a0122ee",
+      "chunk_ad355d57afb403a85ef2527c071091dc8ea303be8be6b345283cf7f9cabce37b",
+      "chunk_b02b2342784d3c3fb3a149f9c5351d927e565f63809d8f62bddb7e87eb3b477c"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_cdf646794ffa0ad50c991c9b563c13e1c02b34c5d4d12c43e76933c56b2ebe34",
+    "chunk_4db5db1e217cdaae506ddc37d54c63f4d7bb8a1e1779c5bc7367c8fbed1e94f1",
+    "chunk_180af9f44565cd52310df840d261423cc92a111788e3b58c99bdf6cb3cee6eaf",
+    "chunk_2014d7cfa2ecdf17141b719ddb03a0f9c7d4c3364e6f035597e19b0d63417649",
+    "chunk_0a8d74a6ef1ef968790a1a5f1b8b716e547fd8eb6973823b17b865911a0122ee",
+    "chunk_ad355d57afb403a85ef2527c071091dc8ea303be8be6b345283cf7f9cabce37b",
+    "chunk_b02b2342784d3c3fb3a149f9c5351d927e565f63809d8f62bddb7e87eb3b477c"
+   ],
+   "gold_chunk_id": "chunk_cdf646794ffa0ad50c991c9b563c13e1c02b34c5d4d12c43e76933c56b2ebe34",
+   "term": "Affect, fatigue, and injury are control states | Movement of an Object with a Background"
+  },
+  {
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about movement of an object with a background with what it says about sound editing.",
+   "aspects": [
+    {
+     "term": "Movement of an Object with a Background",
+     "doc_id": "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3",
+     "gold_chunk_ids": [
+      "chunk_4db5db1e217cdaae506ddc37d54c63f4d7bb8a1e1779c5bc7367c8fbed1e94f1",
+      "chunk_180af9f44565cd52310df840d261423cc92a111788e3b58c99bdf6cb3cee6eaf",
+      "chunk_2014d7cfa2ecdf17141b719ddb03a0f9c7d4c3364e6f035597e19b0d63417649",
+      "chunk_0a8d74a6ef1ef968790a1a5f1b8b716e547fd8eb6973823b17b865911a0122ee",
+      "chunk_ad355d57afb403a85ef2527c071091dc8ea303be8be6b345283cf7f9cabce37b",
+      "chunk_b02b2342784d3c3fb3a149f9c5351d927e565f63809d8f62bddb7e87eb3b477c"
+     ]
+    },
+    {
+     "term": "Sound Editing",
+     "doc_id": "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+     "gold_chunk_ids": [
+      "chunk_338dc69a4cfd8aa09b176438e1bd0c65a9e82486c4439e85474f40d300be335d",
+      "chunk_1b2bbeac2a4acc9a8464d4e969bff9d09b41b9daa3fef62847a901d13851f330",
+      "chunk_8b100b98bd51cc04844cfc849b134310fdfe851e5b98366e61b4370cea0fe9e7",
+      "chunk_50994b28ef138c8fd47a267aa1d611b8b83e14f8e6268baee7fe69e235675bb2",
+      "chunk_9a13af23db5f2ef32234ded71d4ef8d48b7c859f27038213a3a03c464aae2454",
+      "chunk_39ffd23de1d83302edf519a013a6e40a3c45fd5a49451a81b4514b8343e69457"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_4db5db1e217cdaae506ddc37d54c63f4d7bb8a1e1779c5bc7367c8fbed1e94f1",
+    "chunk_180af9f44565cd52310df840d261423cc92a111788e3b58c99bdf6cb3cee6eaf",
+    "chunk_2014d7cfa2ecdf17141b719ddb03a0f9c7d4c3364e6f035597e19b0d63417649",
+    "chunk_0a8d74a6ef1ef968790a1a5f1b8b716e547fd8eb6973823b17b865911a0122ee",
+    "chunk_ad355d57afb403a85ef2527c071091dc8ea303be8be6b345283cf7f9cabce37b",
+    "chunk_b02b2342784d3c3fb3a149f9c5351d927e565f63809d8f62bddb7e87eb3b477c",
+    "chunk_338dc69a4cfd8aa09b176438e1bd0c65a9e82486c4439e85474f40d300be335d",
+    "chunk_1b2bbeac2a4acc9a8464d4e969bff9d09b41b9daa3fef62847a901d13851f330",
+    "chunk_8b100b98bd51cc04844cfc849b134310fdfe851e5b98366e61b4370cea0fe9e7",
+    "chunk_50994b28ef138c8fd47a267aa1d611b8b83e14f8e6268baee7fe69e235675bb2",
+    "chunk_9a13af23db5f2ef32234ded71d4ef8d48b7c859f27038213a3a03c464aae2454",
+    "chunk_39ffd23de1d83302edf519a013a6e40a3c45fd5a49451a81b4514b8343e69457"
+   ],
+   "gold_chunk_id": "chunk_4db5db1e217cdaae506ddc37d54c63f4d7bb8a1e1779c5bc7367c8fbed1e94f1",
+   "term": "Movement of an Object with a Background | Sound Editing"
+  },
+  {
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about sound editing with what it says about write radio sparely.",
+   "aspects": [
+    {
+     "term": "Sound Editing",
+     "doc_id": "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+     "gold_chunk_ids": [
+      "chunk_338dc69a4cfd8aa09b176438e1bd0c65a9e82486c4439e85474f40d300be335d",
+      "chunk_1b2bbeac2a4acc9a8464d4e969bff9d09b41b9daa3fef62847a901d13851f330",
+      "chunk_8b100b98bd51cc04844cfc849b134310fdfe851e5b98366e61b4370cea0fe9e7",
+      "chunk_50994b28ef138c8fd47a267aa1d611b8b83e14f8e6268baee7fe69e235675bb2",
+      "chunk_9a13af23db5f2ef32234ded71d4ef8d48b7c859f27038213a3a03c464aae2454",
+      "chunk_39ffd23de1d83302edf519a013a6e40a3c45fd5a49451a81b4514b8343e69457"
+     ]
+    },
+    {
+     "term": "Write radio sparely",
+     "doc_id": "doc_f1b9df2cac2683b0d7ee52dbea7f0cf0bbd8168cfb8d101e468fa13feead2cfc",
+     "gold_chunk_ids": [
+      "chunk_76a25185347a83bee385aa0fc4f80c4198197eb63a4761d899b25d99d6d4836f",
+      "chunk_3a4b68e41a9cb1ce64da73e67ce8e8826f9fa42d2c6e4aa12f99971236049b3b",
+      "chunk_55582675ca68104318f6ff8f27434cd489ca2bbc48f50bdeb9fbd205a50f675a",
+      "chunk_d43f29cc1f4dae5ca2e01f590fa4bbee7d58eaec4aad31ec8e8e4ff4f6191a3b"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_338dc69a4cfd8aa09b176438e1bd0c65a9e82486c4439e85474f40d300be335d",
+    "chunk_1b2bbeac2a4acc9a8464d4e969bff9d09b41b9daa3fef62847a901d13851f330",
+    "chunk_8b100b98bd51cc04844cfc849b134310fdfe851e5b98366e61b4370cea0fe9e7",
+    "chunk_50994b28ef138c8fd47a267aa1d611b8b83e14f8e6268baee7fe69e235675bb2",
+    "chunk_9a13af23db5f2ef32234ded71d4ef8d48b7c859f27038213a3a03c464aae2454",
+    "chunk_39ffd23de1d83302edf519a013a6e40a3c45fd5a49451a81b4514b8343e69457",
+    "chunk_76a25185347a83bee385aa0fc4f80c4198197eb63a4761d899b25d99d6d4836f",
+    "chunk_3a4b68e41a9cb1ce64da73e67ce8e8826f9fa42d2c6e4aa12f99971236049b3b",
+    "chunk_55582675ca68104318f6ff8f27434cd489ca2bbc48f50bdeb9fbd205a50f675a",
+    "chunk_d43f29cc1f4dae5ca2e01f590fa4bbee7d58eaec4aad31ec8e8e4ff4f6191a3b"
+   ],
+   "gold_chunk_id": "chunk_338dc69a4cfd8aa09b176438e1bd0c65a9e82486c4439e85474f40d300be335d",
+   "term": "Sound Editing | Write radio sparely"
+  },
+  {
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about write radio sparely with what it says about rewards of good type development.",
+   "aspects": [
+    {
+     "term": "Write radio sparely",
+     "doc_id": "doc_f1b9df2cac2683b0d7ee52dbea7f0cf0bbd8168cfb8d101e468fa13feead2cfc",
+     "gold_chunk_ids": [
+      "chunk_76a25185347a83bee385aa0fc4f80c4198197eb63a4761d899b25d99d6d4836f",
+      "chunk_3a4b68e41a9cb1ce64da73e67ce8e8826f9fa42d2c6e4aa12f99971236049b3b",
+      "chunk_55582675ca68104318f6ff8f27434cd489ca2bbc48f50bdeb9fbd205a50f675a",
+      "chunk_d43f29cc1f4dae5ca2e01f590fa4bbee7d58eaec4aad31ec8e8e4ff4f6191a3b"
+     ]
+    },
+    {
+     "term": "Rewards of Good Type Development",
+     "doc_id": "doc_aef933432d47f07a79a1eff5585d61805a9a2f6ccabc017903ca51beb54bd88b",
+     "gold_chunk_ids": [
+      "chunk_a8c102dc5794fc5d66689d5632b5da2867014bb243626146e9a304102f247c49",
+      "chunk_a6e73f6adc8b1b835c6ee30ddc98c8873b256ac6a86a9cf03006df8bab58ffd8"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_76a25185347a83bee385aa0fc4f80c4198197eb63a4761d899b25d99d6d4836f",
+    "chunk_3a4b68e41a9cb1ce64da73e67ce8e8826f9fa42d2c6e4aa12f99971236049b3b",
+    "chunk_55582675ca68104318f6ff8f27434cd489ca2bbc48f50bdeb9fbd205a50f675a",
+    "chunk_d43f29cc1f4dae5ca2e01f590fa4bbee7d58eaec4aad31ec8e8e4ff4f6191a3b",
+    "chunk_a8c102dc5794fc5d66689d5632b5da2867014bb243626146e9a304102f247c49",
+    "chunk_a6e73f6adc8b1b835c6ee30ddc98c8873b256ac6a86a9cf03006df8bab58ffd8"
+   ],
+   "gold_chunk_id": "chunk_76a25185347a83bee385aa0fc4f80c4198197eb63a4761d899b25d99d6d4836f",
+   "term": "Write radio sparely | Rewards of Good Type Development"
+  },
+  {
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about rewards of good type development with what it says about multiple moments.",
+   "aspects": [
+    {
+     "term": "Rewards of Good Type Development",
+     "doc_id": "doc_aef933432d47f07a79a1eff5585d61805a9a2f6ccabc017903ca51beb54bd88b",
+     "gold_chunk_ids": [
+      "chunk_a8c102dc5794fc5d66689d5632b5da2867014bb243626146e9a304102f247c49",
+      "chunk_a6e73f6adc8b1b835c6ee30ddc98c8873b256ac6a86a9cf03006df8bab58ffd8"
+     ]
+    },
+    {
+     "term": "Multiple moments",
+     "doc_id": "doc_b6e7af16218cdb0dce246ce152602d61ae5b18da3f9fa794e6612a6d926f6fdc",
+     "gold_chunk_ids": [
+      "chunk_20ca68354e18e4a15157fb5cfca6a9215ed57347027971552cc652cb03d1ea06",
+      "chunk_757fab6819630f250b75a85bb230faaec070789b3a95b8411a2478bfe97a5544"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_a8c102dc5794fc5d66689d5632b5da2867014bb243626146e9a304102f247c49",
+    "chunk_a6e73f6adc8b1b835c6ee30ddc98c8873b256ac6a86a9cf03006df8bab58ffd8",
+    "chunk_20ca68354e18e4a15157fb5cfca6a9215ed57347027971552cc652cb03d1ea06",
+    "chunk_757fab6819630f250b75a85bb230faaec070789b3a95b8411a2478bfe97a5544"
+   ],
+   "gold_chunk_id": "chunk_a8c102dc5794fc5d66689d5632b5da2867014bb243626146e9a304102f247c49",
+   "term": "Rewards of Good Type Development | Multiple moments"
+  },
+  {
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about multiple moments with what it says about PREMISE AND THEME.",
+   "aspects": [
+    {
+     "term": "Multiple moments",
+     "doc_id": "doc_b6e7af16218cdb0dce246ce152602d61ae5b18da3f9fa794e6612a6d926f6fdc",
+     "gold_chunk_ids": [
+      "chunk_20ca68354e18e4a15157fb5cfca6a9215ed57347027971552cc652cb03d1ea06",
+      "chunk_757fab6819630f250b75a85bb230faaec070789b3a95b8411a2478bfe97a5544"
+     ]
+    },
+    {
+     "term": "PREMISE AND THEME",
+     "doc_id": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+     "gold_chunk_ids": [
+      "chunk_c6ddc65092ff01d63430e0f2fe175051e3bf1760a0de647a49bd9b8c10826a70",
+      "chunk_ea9c7608f6e34fc4265d72393d59c1fbf1ad320027ce045055f6a5e3a572b9c3",
+      "chunk_c78703d35941543a3b6f37db70f4ece943db04b0b547737dab7f1b8a0281881a",
+      "chunk_ff2960114cabe2b82ca52c8ebd45d29b8b9d8ea45d4aa1200063fa9ee7dc6d83",
+      "chunk_58b258f7de1cc77c5b9bb16a2b2c6ffc3b7cc3160a459bb18edb0678324eb431"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_20ca68354e18e4a15157fb5cfca6a9215ed57347027971552cc652cb03d1ea06",
+    "chunk_757fab6819630f250b75a85bb230faaec070789b3a95b8411a2478bfe97a5544",
+    "chunk_c6ddc65092ff01d63430e0f2fe175051e3bf1760a0de647a49bd9b8c10826a70",
+    "chunk_ea9c7608f6e34fc4265d72393d59c1fbf1ad320027ce045055f6a5e3a572b9c3",
+    "chunk_c78703d35941543a3b6f37db70f4ece943db04b0b547737dab7f1b8a0281881a",
+    "chunk_ff2960114cabe2b82ca52c8ebd45d29b8b9d8ea45d4aa1200063fa9ee7dc6d83",
+    "chunk_58b258f7de1cc77c5b9bb16a2b2c6ffc3b7cc3160a459bb18edb0678324eb431"
+   ],
+   "gold_chunk_id": "chunk_20ca68354e18e4a15157fb5cfca6a9215ed57347027971552cc652cb03d1ea06",
+   "term": "Multiple moments | PREMISE AND THEME"
+  },
+  {
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about PREMISE AND THEME with what it says about battling overconfidence.",
+   "aspects": [
+    {
+     "term": "PREMISE AND THEME",
+     "doc_id": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+     "gold_chunk_ids": [
+      "chunk_c6ddc65092ff01d63430e0f2fe175051e3bf1760a0de647a49bd9b8c10826a70",
+      "chunk_ea9c7608f6e34fc4265d72393d59c1fbf1ad320027ce045055f6a5e3a572b9c3",
+      "chunk_c78703d35941543a3b6f37db70f4ece943db04b0b547737dab7f1b8a0281881a",
+      "chunk_ff2960114cabe2b82ca52c8ebd45d29b8b9d8ea45d4aa1200063fa9ee7dc6d83",
+      "chunk_58b258f7de1cc77c5b9bb16a2b2c6ffc3b7cc3160a459bb18edb0678324eb431"
+     ]
+    },
+    {
+     "term": "Battling Overconfidence",
+     "doc_id": "doc_1c74cbfdb7737177bb775c6a8f9a55161e76a9c220d5ce9d11b57718b2a16921",
+     "gold_chunk_ids": [
+      "chunk_7227b8d10052bc902aac390f246227153731f6f6e3e4187ca01e2a5a11ec5f51",
+      "chunk_35efd0c3451d46dba5d79b2e7148432e4c880990fdf57180c5e40bbe4a7b4131"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_c6ddc65092ff01d63430e0f2fe175051e3bf1760a0de647a49bd9b8c10826a70",
+    "chunk_ea9c7608f6e34fc4265d72393d59c1fbf1ad320027ce045055f6a5e3a572b9c3",
+    "chunk_c78703d35941543a3b6f37db70f4ece943db04b0b547737dab7f1b8a0281881a",
+    "chunk_ff2960114cabe2b82ca52c8ebd45d29b8b9d8ea45d4aa1200063fa9ee7dc6d83",
+    "chunk_58b258f7de1cc77c5b9bb16a2b2c6ffc3b7cc3160a459bb18edb0678324eb431",
+    "chunk_7227b8d10052bc902aac390f246227153731f6f6e3e4187ca01e2a5a11ec5f51",
+    "chunk_35efd0c3451d46dba5d79b2e7148432e4c880990fdf57180c5e40bbe4a7b4131"
+   ],
+   "gold_chunk_id": "chunk_c6ddc65092ff01d63430e0f2fe175051e3bf1760a0de647a49bd9b8c10826a70",
+   "term": "PREMISE AND THEME | Battling Overconfidence"
+  },
+  {
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about battling overconfidence with what it says about changing a level within a clip.",
+   "aspects": [
+    {
+     "term": "Battling Overconfidence",
+     "doc_id": "doc_1c74cbfdb7737177bb775c6a8f9a55161e76a9c220d5ce9d11b57718b2a16921",
+     "gold_chunk_ids": [
+      "chunk_7227b8d10052bc902aac390f246227153731f6f6e3e4187ca01e2a5a11ec5f51",
+      "chunk_35efd0c3451d46dba5d79b2e7148432e4c880990fdf57180c5e40bbe4a7b4131"
+     ]
+    },
+    {
+     "term": "Changing a level within a clip",
+     "doc_id": "doc_867ba698b4579557126ebb8aa6e83b5dce18656f5ca6c7eaade5cd1a5e8e2864",
+     "gold_chunk_ids": [
+      "chunk_feb908559f8f3d50b38a9e689a3443f3d741168c8ac4b723cbbed7533f717378",
+      "chunk_84ed7e07af603f0335b50fe7fa8812d3f8507fd267475502a4156c94ed6a2cdd",
+      "chunk_eaa818558a96c6ba57abfd76fc3687f4da93044a98e9fd33ecd3179c06cc757a"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_7227b8d10052bc902aac390f246227153731f6f6e3e4187ca01e2a5a11ec5f51",
+    "chunk_35efd0c3451d46dba5d79b2e7148432e4c880990fdf57180c5e40bbe4a7b4131",
+    "chunk_feb908559f8f3d50b38a9e689a3443f3d741168c8ac4b723cbbed7533f717378",
+    "chunk_84ed7e07af603f0335b50fe7fa8812d3f8507fd267475502a4156c94ed6a2cdd",
+    "chunk_eaa818558a96c6ba57abfd76fc3687f4da93044a98e9fd33ecd3179c06cc757a"
+   ],
+   "gold_chunk_id": "chunk_7227b8d10052bc902aac390f246227153731f6f6e3e4187ca01e2a5a11ec5f51",
+   "term": "Battling Overconfidence | Changing a level within a clip"
+  },
+  {
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about changing a level within a clip with what it says about making your own chroma keyer.",
+   "aspects": [
+    {
+     "term": "Changing a level within a clip",
+     "doc_id": "doc_867ba698b4579557126ebb8aa6e83b5dce18656f5ca6c7eaade5cd1a5e8e2864",
+     "gold_chunk_ids": [
+      "chunk_feb908559f8f3d50b38a9e689a3443f3d741168c8ac4b723cbbed7533f717378",
+      "chunk_84ed7e07af603f0335b50fe7fa8812d3f8507fd267475502a4156c94ed6a2cdd",
+      "chunk_eaa818558a96c6ba57abfd76fc3687f4da93044a98e9fd33ecd3179c06cc757a"
+     ]
+    },
+    {
+     "term": "Making Your Own Chroma Keyer",
+     "doc_id": "doc_6f89105b1845c0b595ab8e04b6cb107b9a6e2b7f1617a89f50bdbebd0f4aad34",
+     "gold_chunk_ids": [
+      "chunk_f8ae8454a2e5f5bff1e254d97457d7e4759464b699dff39e1b475c4ddc5c14d0",
+      "chunk_fbe841b47db000daceea61d2f3e94fd6e33a3ee22f0aac8c63b356d4dca9781a",
+      "chunk_ac16b3ffb273d6bd9c977e11cf728ea611e5b248b6753f18f1f7e1d4df99a12a"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_feb908559f8f3d50b38a9e689a3443f3d741168c8ac4b723cbbed7533f717378",
+    "chunk_84ed7e07af603f0335b50fe7fa8812d3f8507fd267475502a4156c94ed6a2cdd",
+    "chunk_eaa818558a96c6ba57abfd76fc3687f4da93044a98e9fd33ecd3179c06cc757a",
+    "chunk_f8ae8454a2e5f5bff1e254d97457d7e4759464b699dff39e1b475c4ddc5c14d0",
+    "chunk_fbe841b47db000daceea61d2f3e94fd6e33a3ee22f0aac8c63b356d4dca9781a",
+    "chunk_ac16b3ffb273d6bd9c977e11cf728ea611e5b248b6753f18f1f7e1d4df99a12a"
+   ],
+   "gold_chunk_id": "chunk_feb908559f8f3d50b38a9e689a3443f3d741168c8ac4b723cbbed7533f717378",
+   "term": "Changing a level within a clip | Making Your Own Chroma Keyer"
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about why innovative leaders make a difference with what it says about WHAT PROGRESS IS REALLY LIKE.",
+   "aspects": [
+    {
+     "term": "Why Innovative Leaders Make a Difference",
+     "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+     "gold_chunk_ids": [
+      "chunk_bf4a22f0297eaed3ae0d9f470f0e35e595a755717609cd183963a953e5cdfad1"
+     ]
+    },
+    {
+     "term": "WHAT PROGRESS IS REALLY LIKE",
+     "doc_id": "doc_2b277aa49b3a8cc524949d5d64804ab504fdc314430ec615298f9fe8b7486b7c",
+     "gold_chunk_ids": [
+      "chunk_a2cbf3d92f155bbcfbb939dcf75e1c0660376f4b794b4b90429826383d6db7e4"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_bf4a22f0297eaed3ae0d9f470f0e35e595a755717609cd183963a953e5cdfad1",
+    "chunk_a2cbf3d92f155bbcfbb939dcf75e1c0660376f4b794b4b90429826383d6db7e4"
+   ],
+   "gold_chunk_id": "chunk_bf4a22f0297eaed3ae0d9f470f0e35e595a755717609cd183963a953e5cdfad1",
+   "term": "Why Innovative Leaders Make a Difference | WHAT PROGRESS IS REALLY LIKE"
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about WHAT PROGRESS IS REALLY LIKE with what it says about the big idea.",
+   "aspects": [
+    {
+     "term": "WHAT PROGRESS IS REALLY LIKE",
+     "doc_id": "doc_2b277aa49b3a8cc524949d5d64804ab504fdc314430ec615298f9fe8b7486b7c",
+     "gold_chunk_ids": [
+      "chunk_a2cbf3d92f155bbcfbb939dcf75e1c0660376f4b794b4b90429826383d6db7e4"
+     ]
+    },
+    {
+     "term": "The Big Idea",
+     "doc_id": "doc_be6104e610e4269b31cd71169af2b2fcf6b9731d7f942aaadec0a5da65dabe98",
+     "gold_chunk_ids": [
+      "chunk_35efcd6fe77341e9f631d20445903188457b00bd3141f9a0efde519a2c5f93c2",
+      "chunk_dabfaf0af436cb2e1acd9f572b699093bef617e8f6fd72245f6ee571e395761f"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_a2cbf3d92f155bbcfbb939dcf75e1c0660376f4b794b4b90429826383d6db7e4",
+    "chunk_35efcd6fe77341e9f631d20445903188457b00bd3141f9a0efde519a2c5f93c2",
+    "chunk_dabfaf0af436cb2e1acd9f572b699093bef617e8f6fd72245f6ee571e395761f"
+   ],
+   "gold_chunk_id": "chunk_a2cbf3d92f155bbcfbb939dcf75e1c0660376f4b794b4b90429826383d6db7e4",
+   "term": "WHAT PROGRESS IS REALLY LIKE | The Big Idea"
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about the big idea with what it says about automation aligned with business strategy.",
+   "aspects": [
+    {
+     "term": "The Big Idea",
+     "doc_id": "doc_be6104e610e4269b31cd71169af2b2fcf6b9731d7f942aaadec0a5da65dabe98",
+     "gold_chunk_ids": [
+      "chunk_35efcd6fe77341e9f631d20445903188457b00bd3141f9a0efde519a2c5f93c2",
+      "chunk_dabfaf0af436cb2e1acd9f572b699093bef617e8f6fd72245f6ee571e395761f"
+     ]
+    },
+    {
+     "term": "Automation Aligned with Business Strategy",
+     "doc_id": "doc_71dc577c7e96bed017fa62d6924db70ba883a2fc0a02090e8addde34fe69f020",
+     "gold_chunk_ids": [
+      "chunk_b47bd63893db426b5c44d7554ad4314a81fdf7b6a71b51fa64d62424a20a097b",
+      "chunk_09725258fc4d53cc5994a1604e6d0db1320283ef05298dda0d84a4c0cac8f659",
+      "chunk_5a15d9aa3cf7b202f7e7d313aadcd699a6065318c7dc6496e2059721c3276ac8",
+      "chunk_26a78604286bdd219404e418ca6b121c7cf7ac2dc8f04d15ccd2d7f610e9dfd5",
+      "chunk_10c99193a32b32baee935ba19bc4a3f8963a9f2726aaa1f5dd922ec5e76a99e4",
+      "chunk_3bcdbc29bc7d4ca085d340fa40c68230856145a77c4da3fd455eca5f88a1ee4f"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_35efcd6fe77341e9f631d20445903188457b00bd3141f9a0efde519a2c5f93c2",
+    "chunk_dabfaf0af436cb2e1acd9f572b699093bef617e8f6fd72245f6ee571e395761f",
+    "chunk_b47bd63893db426b5c44d7554ad4314a81fdf7b6a71b51fa64d62424a20a097b",
+    "chunk_09725258fc4d53cc5994a1604e6d0db1320283ef05298dda0d84a4c0cac8f659",
+    "chunk_5a15d9aa3cf7b202f7e7d313aadcd699a6065318c7dc6496e2059721c3276ac8",
+    "chunk_26a78604286bdd219404e418ca6b121c7cf7ac2dc8f04d15ccd2d7f610e9dfd5",
+    "chunk_10c99193a32b32baee935ba19bc4a3f8963a9f2726aaa1f5dd922ec5e76a99e4",
+    "chunk_3bcdbc29bc7d4ca085d340fa40c68230856145a77c4da3fd455eca5f88a1ee4f"
+   ],
+   "gold_chunk_id": "chunk_35efcd6fe77341e9f631d20445903188457b00bd3141f9a0efde519a2c5f93c2",
+   "term": "The Big Idea | Automation Aligned with Business Strategy"
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about automation aligned with business strategy with what it says about cost innovations.",
+   "aspects": [
+    {
+     "term": "Automation Aligned with Business Strategy",
+     "doc_id": "doc_71dc577c7e96bed017fa62d6924db70ba883a2fc0a02090e8addde34fe69f020",
+     "gold_chunk_ids": [
+      "chunk_b47bd63893db426b5c44d7554ad4314a81fdf7b6a71b51fa64d62424a20a097b",
+      "chunk_09725258fc4d53cc5994a1604e6d0db1320283ef05298dda0d84a4c0cac8f659",
+      "chunk_5a15d9aa3cf7b202f7e7d313aadcd699a6065318c7dc6496e2059721c3276ac8",
+      "chunk_26a78604286bdd219404e418ca6b121c7cf7ac2dc8f04d15ccd2d7f610e9dfd5",
+      "chunk_10c99193a32b32baee935ba19bc4a3f8963a9f2726aaa1f5dd922ec5e76a99e4",
+      "chunk_3bcdbc29bc7d4ca085d340fa40c68230856145a77c4da3fd455eca5f88a1ee4f"
+     ]
+    },
+    {
+     "term": "Cost Innovations",
+     "doc_id": "doc_06263d7f728c7ed19ed60f8e94a5884f6a19e8ae8494b96533227955e4d2d0ad",
+     "gold_chunk_ids": [
+      "chunk_b3df5e9ab5a529f477a7941201cb264405fcd7689dea3e5985d4475727846129",
+      "chunk_1eca48e57adb510f9749c2f8e0a835b52241ec8fee7171e414d3c5b45ed05859",
+      "chunk_6a7e5dc5178265f8e04065ad086eff5b7695f1073dbdf9ada673f393b831f89c"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_b47bd63893db426b5c44d7554ad4314a81fdf7b6a71b51fa64d62424a20a097b",
+    "chunk_09725258fc4d53cc5994a1604e6d0db1320283ef05298dda0d84a4c0cac8f659",
+    "chunk_5a15d9aa3cf7b202f7e7d313aadcd699a6065318c7dc6496e2059721c3276ac8",
+    "chunk_26a78604286bdd219404e418ca6b121c7cf7ac2dc8f04d15ccd2d7f610e9dfd5",
+    "chunk_10c99193a32b32baee935ba19bc4a3f8963a9f2726aaa1f5dd922ec5e76a99e4",
+    "chunk_3bcdbc29bc7d4ca085d340fa40c68230856145a77c4da3fd455eca5f88a1ee4f",
+    "chunk_b3df5e9ab5a529f477a7941201cb264405fcd7689dea3e5985d4475727846129",
+    "chunk_1eca48e57adb510f9749c2f8e0a835b52241ec8fee7171e414d3c5b45ed05859",
+    "chunk_6a7e5dc5178265f8e04065ad086eff5b7695f1073dbdf9ada673f393b831f89c"
+   ],
+   "gold_chunk_id": "chunk_b47bd63893db426b5c44d7554ad4314a81fdf7b6a71b51fa64d62424a20a097b",
+   "term": "Automation Aligned with Business Strategy | Cost Innovations"
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about cost innovations with what it says about the migration of capabilities.",
+   "aspects": [
+    {
+     "term": "Cost Innovations",
+     "doc_id": "doc_06263d7f728c7ed19ed60f8e94a5884f6a19e8ae8494b96533227955e4d2d0ad",
+     "gold_chunk_ids": [
+      "chunk_b3df5e9ab5a529f477a7941201cb264405fcd7689dea3e5985d4475727846129",
+      "chunk_1eca48e57adb510f9749c2f8e0a835b52241ec8fee7171e414d3c5b45ed05859",
+      "chunk_6a7e5dc5178265f8e04065ad086eff5b7695f1073dbdf9ada673f393b831f89c"
+     ]
+    },
+    {
+     "term": "The Migration of Capabilities",
+     "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+     "gold_chunk_ids": [
+      "chunk_f09dd66eda40742f4c624ab031adfb476ebd2d741182f4bf785e703e7cc41b69",
+      "chunk_c3b98a0527da830cecf7811591ab13d0ac58d4dc6e382368f5f5df8db2d26a2d",
+      "chunk_8a7bd45b4720bcf16cda31d93d18b630325a22f6f0c23ba7f42972b9fca829dc"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_b3df5e9ab5a529f477a7941201cb264405fcd7689dea3e5985d4475727846129",
+    "chunk_1eca48e57adb510f9749c2f8e0a835b52241ec8fee7171e414d3c5b45ed05859",
+    "chunk_6a7e5dc5178265f8e04065ad086eff5b7695f1073dbdf9ada673f393b831f89c",
+    "chunk_f09dd66eda40742f4c624ab031adfb476ebd2d741182f4bf785e703e7cc41b69",
+    "chunk_c3b98a0527da830cecf7811591ab13d0ac58d4dc6e382368f5f5df8db2d26a2d",
+    "chunk_8a7bd45b4720bcf16cda31d93d18b630325a22f6f0c23ba7f42972b9fca829dc"
+   ],
+   "gold_chunk_id": "chunk_b3df5e9ab5a529f477a7941201cb264405fcd7689dea3e5985d4475727846129",
+   "term": "Cost Innovations | The Migration of Capabilities"
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about the migration of capabilities with what it says about getting the categories right.",
+   "aspects": [
+    {
+     "term": "The Migration of Capabilities",
+     "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+     "gold_chunk_ids": [
+      "chunk_f09dd66eda40742f4c624ab031adfb476ebd2d741182f4bf785e703e7cc41b69",
+      "chunk_c3b98a0527da830cecf7811591ab13d0ac58d4dc6e382368f5f5df8db2d26a2d",
+      "chunk_8a7bd45b4720bcf16cda31d93d18b630325a22f6f0c23ba7f42972b9fca829dc"
+     ]
+    },
+    {
+     "term": "Getting the Categories Right",
+     "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+     "gold_chunk_ids": [
+      "chunk_e6f837045dd8714eee9c3b0ea080be7d38d5f9f1c4503f15bb1657b766b88794",
+      "chunk_d77918775c876ced611cb5b9c6c0c97875049a0c48e965022fe17600f1a7d710",
+      "chunk_d652d4cbdb1ff6a0900f90d31e109120dd16bf33593a64a8c73a76a111ec18aa",
+      "chunk_8586d65016198062e27ceb4f3455731464924341dd1248340525448a6ae4582c"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_f09dd66eda40742f4c624ab031adfb476ebd2d741182f4bf785e703e7cc41b69",
+    "chunk_c3b98a0527da830cecf7811591ab13d0ac58d4dc6e382368f5f5df8db2d26a2d",
+    "chunk_8a7bd45b4720bcf16cda31d93d18b630325a22f6f0c23ba7f42972b9fca829dc",
+    "chunk_e6f837045dd8714eee9c3b0ea080be7d38d5f9f1c4503f15bb1657b766b88794",
+    "chunk_d77918775c876ced611cb5b9c6c0c97875049a0c48e965022fe17600f1a7d710",
+    "chunk_d652d4cbdb1ff6a0900f90d31e109120dd16bf33593a64a8c73a76a111ec18aa",
+    "chunk_8586d65016198062e27ceb4f3455731464924341dd1248340525448a6ae4582c"
+   ],
+   "gold_chunk_id": "chunk_f09dd66eda40742f4c624ab031adfb476ebd2d741182f4bf785e703e7cc41b69",
+   "term": "The Migration of Capabilities | Getting the Categories Right"
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about the capabilities viewpoint with what it says about discovery skill #4: networking.",
+   "aspects": [
+    {
+     "term": "The Capabilities Viewpoint",
+     "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+     "gold_chunk_ids": [
+      "chunk_aa9a876897c762ad33685ecc8b3c66e4cf39f5576609b6545be9c0e1cdad7e64"
+     ]
+    },
+    {
+     "term": "Discovery Skill #4: Networking",
+     "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+     "gold_chunk_ids": [
+      "chunk_56a42c246f21835f2c31d142b29d22a4474e5241bf915ce9b3f7aeb8e62f7824"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_aa9a876897c762ad33685ecc8b3c66e4cf39f5576609b6545be9c0e1cdad7e64",
+    "chunk_56a42c246f21835f2c31d142b29d22a4474e5241bf915ce9b3f7aeb8e62f7824"
+   ],
+   "gold_chunk_id": "chunk_aa9a876897c762ad33685ecc8b3c66e4cf39f5576609b6545be9c0e1cdad7e64",
+   "term": "The Capabilities Viewpoint | Discovery Skill #4: Networking"
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about getting the categories right with what it says about creating capabilities through a spin-out organization.",
+   "aspects": [
+    {
+     "term": "Getting the Categories Right",
+     "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+     "gold_chunk_ids": [
+      "chunk_e6f837045dd8714eee9c3b0ea080be7d38d5f9f1c4503f15bb1657b766b88794",
+      "chunk_d77918775c876ced611cb5b9c6c0c97875049a0c48e965022fe17600f1a7d710",
+      "chunk_d652d4cbdb1ff6a0900f90d31e109120dd16bf33593a64a8c73a76a111ec18aa",
+      "chunk_8586d65016198062e27ceb4f3455731464924341dd1248340525448a6ae4582c"
+     ]
+    },
+    {
+     "term": "Creating Capabilities Through a Spin-out Organization",
+     "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+     "gold_chunk_ids": [
+      "chunk_3bb447f493ac64458ecfc8e5d965d94a22561e470aa89025d3722f175336ee92",
+      "chunk_9b72f61a2730631d17afd1a706d4238399bb35bc4cb08be61816a5c47fc6abb5",
+      "chunk_1150ecb5e5219ab90e939158512fd52207c13b4641620eab079ac5dbdfe516ab",
+      "chunk_c649f0aa6d5981b214c658a22ade4e471763d3a7a055c8ffc8837e6f2b197a07",
+      "chunk_6859981d77865e160428cbe40532238d6f509aaec54e245be51420c3b2e18f26"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_e6f837045dd8714eee9c3b0ea080be7d38d5f9f1c4503f15bb1657b766b88794",
+    "chunk_d77918775c876ced611cb5b9c6c0c97875049a0c48e965022fe17600f1a7d710",
+    "chunk_d652d4cbdb1ff6a0900f90d31e109120dd16bf33593a64a8c73a76a111ec18aa",
+    "chunk_8586d65016198062e27ceb4f3455731464924341dd1248340525448a6ae4582c",
+    "chunk_3bb447f493ac64458ecfc8e5d965d94a22561e470aa89025d3722f175336ee92",
+    "chunk_9b72f61a2730631d17afd1a706d4238399bb35bc4cb08be61816a5c47fc6abb5",
+    "chunk_1150ecb5e5219ab90e939158512fd52207c13b4641620eab079ac5dbdfe516ab",
+    "chunk_c649f0aa6d5981b214c658a22ade4e471763d3a7a055c8ffc8837e6f2b197a07",
+    "chunk_6859981d77865e160428cbe40532238d6f509aaec54e245be51420c3b2e18f26"
+   ],
+   "gold_chunk_id": "chunk_e6f837045dd8714eee9c3b0ea080be7d38d5f9f1c4503f15bb1657b766b88794",
+   "term": "Getting the Categories Right | Creating Capabilities Through a Spin-out Organization"
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about discovery skill #4: networking with what it says about solar versus conventional electrical energy.",
+   "aspects": [
+    {
+     "term": "Discovery Skill #4: Networking",
+     "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+     "gold_chunk_ids": [
+      "chunk_56a42c246f21835f2c31d142b29d22a4474e5241bf915ce9b3f7aeb8e62f7824"
+     ]
+    },
+    {
+     "term": "Solar Versus Conventional Electrical Energy",
+     "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+     "gold_chunk_ids": [
+      "chunk_1d69b57696f5097eb147fdf28ccaf56f205bc540ba6897ea144d6ba74cd6071c",
+      "chunk_9df18e2a5c4c2240c3d6271e1eb9fd31f97557fe914073a10e52c7643ac32963",
+      "chunk_3a39b78d44eb1ec2d28d967f75c91c58fc79107e7054c784230a776ddb2a61d5"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_56a42c246f21835f2c31d142b29d22a4474e5241bf915ce9b3f7aeb8e62f7824",
+    "chunk_1d69b57696f5097eb147fdf28ccaf56f205bc540ba6897ea144d6ba74cd6071c",
+    "chunk_9df18e2a5c4c2240c3d6271e1eb9fd31f97557fe914073a10e52c7643ac32963",
+    "chunk_3a39b78d44eb1ec2d28d967f75c91c58fc79107e7054c784230a776ddb2a61d5"
+   ],
+   "gold_chunk_id": "chunk_56a42c246f21835f2c31d142b29d22a4474e5241bf915ce9b3f7aeb8e62f7824",
+   "term": "Discovery Skill #4: Networking | Solar Versus Conventional Electrical Energy"
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about creating capabilities through a spin-out organization with what it says about cost structures and value networks.",
+   "aspects": [
+    {
+     "term": "Creating Capabilities Through a Spin-out Organization",
+     "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+     "gold_chunk_ids": [
+      "chunk_3bb447f493ac64458ecfc8e5d965d94a22561e470aa89025d3722f175336ee92",
+      "chunk_9b72f61a2730631d17afd1a706d4238399bb35bc4cb08be61816a5c47fc6abb5",
+      "chunk_1150ecb5e5219ab90e939158512fd52207c13b4641620eab079ac5dbdfe516ab",
+      "chunk_c649f0aa6d5981b214c658a22ade4e471763d3a7a055c8ffc8837e6f2b197a07",
+      "chunk_6859981d77865e160428cbe40532238d6f509aaec54e245be51420c3b2e18f26"
+     ]
+    },
+    {
+     "term": "Cost Structures and Value Networks",
+     "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+     "gold_chunk_ids": [
+      "chunk_c97d3cb96362e59f9d172d352be319900ddafe643875d246afb5c71fddcb6c02",
+      "chunk_abdc78a31cbb92d8b599d37f797b4a3ec01fd88c3c63c3e293fa1bc2633b66af",
+      "chunk_15cfcedfa5fd7fbff45b5e8fcc7a96a3f755a2cb21f71cb0617eaa312b9dc8fb",
+      "chunk_852b197ebb65efe12276357de92e3d766b1506f6133a98a10ad0ef409f354b7e",
+      "chunk_21dc9442f6922be8d4e60d24bafa00a42a66783f633237beb175402402a98683"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_3bb447f493ac64458ecfc8e5d965d94a22561e470aa89025d3722f175336ee92",
+    "chunk_9b72f61a2730631d17afd1a706d4238399bb35bc4cb08be61816a5c47fc6abb5",
+    "chunk_1150ecb5e5219ab90e939158512fd52207c13b4641620eab079ac5dbdfe516ab",
+    "chunk_c649f0aa6d5981b214c658a22ade4e471763d3a7a055c8ffc8837e6f2b197a07",
+    "chunk_6859981d77865e160428cbe40532238d6f509aaec54e245be51420c3b2e18f26",
+    "chunk_c97d3cb96362e59f9d172d352be319900ddafe643875d246afb5c71fddcb6c02",
+    "chunk_abdc78a31cbb92d8b599d37f797b4a3ec01fd88c3c63c3e293fa1bc2633b66af",
+    "chunk_15cfcedfa5fd7fbff45b5e8fcc7a96a3f755a2cb21f71cb0617eaa312b9dc8fb",
+    "chunk_852b197ebb65efe12276357de92e3d766b1506f6133a98a10ad0ef409f354b7e",
+    "chunk_21dc9442f6922be8d4e60d24bafa00a42a66783f633237beb175402402a98683"
+   ],
+   "gold_chunk_id": "chunk_3bb447f493ac64458ecfc8e5d965d94a22561e470aa89025d3722f175336ee92",
+   "term": "Creating Capabilities Through a Spin-out Organization | Cost Structures and Value Networks"
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about solar versus conventional electrical energy with what it says about HOW DISK DRIVES WORK.",
+   "aspects": [
+    {
+     "term": "Solar Versus Conventional Electrical Energy",
+     "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+     "gold_chunk_ids": [
+      "chunk_1d69b57696f5097eb147fdf28ccaf56f205bc540ba6897ea144d6ba74cd6071c",
+      "chunk_9df18e2a5c4c2240c3d6271e1eb9fd31f97557fe914073a10e52c7643ac32963",
+      "chunk_3a39b78d44eb1ec2d28d967f75c91c58fc79107e7054c784230a776ddb2a61d5"
+     ]
+    },
+    {
+     "term": "HOW DISK DRIVES WORK",
+     "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+     "gold_chunk_ids": [
+      "chunk_3df5cedd59cc493c6e76ffabfa5a7788c94a56175717be46f98347548351ab02",
+      "chunk_c0851adfbcd7ae121b03463fd1e4a2319c94df93de33513953fba97f02b742bd"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_1d69b57696f5097eb147fdf28ccaf56f205bc540ba6897ea144d6ba74cd6071c",
+    "chunk_9df18e2a5c4c2240c3d6271e1eb9fd31f97557fe914073a10e52c7643ac32963",
+    "chunk_3a39b78d44eb1ec2d28d967f75c91c58fc79107e7054c784230a776ddb2a61d5",
+    "chunk_3df5cedd59cc493c6e76ffabfa5a7788c94a56175717be46f98347548351ab02",
+    "chunk_c0851adfbcd7ae121b03463fd1e4a2319c94df93de33513953fba97f02b742bd"
+   ],
+   "gold_chunk_id": "chunk_1d69b57696f5097eb147fdf28ccaf56f205bc540ba6897ea144d6ba74cd6071c",
+   "term": "Solar Versus Conventional Electrical Energy | HOW DISK DRIVES WORK"
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about cost structures and value networks with what it says about innovations that will sustain the disruption.",
+   "aspects": [
+    {
+     "term": "Cost Structures and Value Networks",
+     "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+     "gold_chunk_ids": [
+      "chunk_c97d3cb96362e59f9d172d352be319900ddafe643875d246afb5c71fddcb6c02",
+      "chunk_abdc78a31cbb92d8b599d37f797b4a3ec01fd88c3c63c3e293fa1bc2633b66af",
+      "chunk_15cfcedfa5fd7fbff45b5e8fcc7a96a3f755a2cb21f71cb0617eaa312b9dc8fb",
+      "chunk_852b197ebb65efe12276357de92e3d766b1506f6133a98a10ad0ef409f354b7e",
+      "chunk_21dc9442f6922be8d4e60d24bafa00a42a66783f633237beb175402402a98683"
+     ]
+    },
+    {
+     "term": "Innovations That Will Sustain the Disruption",
+     "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+     "gold_chunk_ids": [
+      "chunk_ab37dfbb515a0c350851729f4a9085739c257689eae8dd9686047d00c16b1e0a"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_c97d3cb96362e59f9d172d352be319900ddafe643875d246afb5c71fddcb6c02",
+    "chunk_abdc78a31cbb92d8b599d37f797b4a3ec01fd88c3c63c3e293fa1bc2633b66af",
+    "chunk_15cfcedfa5fd7fbff45b5e8fcc7a96a3f755a2cb21f71cb0617eaa312b9dc8fb",
+    "chunk_852b197ebb65efe12276357de92e3d766b1506f6133a98a10ad0ef409f354b7e",
+    "chunk_21dc9442f6922be8d4e60d24bafa00a42a66783f633237beb175402402a98683",
+    "chunk_ab37dfbb515a0c350851729f4a9085739c257689eae8dd9686047d00c16b1e0a"
+   ],
+   "gold_chunk_id": "chunk_c97d3cb96362e59f9d172d352be319900ddafe643875d246afb5c71fddcb6c02",
+   "term": "Cost Structures and Value Networks | Innovations That Will Sustain the Disruption"
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about HOW DISK DRIVES WORK with what it says about make it platform-centric.",
+   "aspects": [
+    {
+     "term": "HOW DISK DRIVES WORK",
+     "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+     "gold_chunk_ids": [
+      "chunk_3df5cedd59cc493c6e76ffabfa5a7788c94a56175717be46f98347548351ab02",
+      "chunk_c0851adfbcd7ae121b03463fd1e4a2319c94df93de33513953fba97f02b742bd"
+     ]
+    },
+    {
+     "term": "Make It Platform-Centric",
+     "doc_id": "doc_71dc577c7e96bed017fa62d6924db70ba883a2fc0a02090e8addde34fe69f020",
+     "gold_chunk_ids": [
+      "chunk_67b2036a6c0e90cc0da7cd9e4901eecfc9ffae3b86026724ebfbbad547b153ed",
+      "chunk_7c8fe9db6ad792e205e96cf7dbc2d4de6b0a98e78dcc6a8e150821c6e8fb1ffe",
+      "chunk_5b70e9f50b51c1bcc4bac942afb98c4f787bfaa4e0e4d192cf1c0bce55e6d9f8",
+      "chunk_9786b4345fbceb2c3579008623b1626dfc4296193b3bf35a6fcfd9b72c684a36"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_3df5cedd59cc493c6e76ffabfa5a7788c94a56175717be46f98347548351ab02",
+    "chunk_c0851adfbcd7ae121b03463fd1e4a2319c94df93de33513953fba97f02b742bd",
+    "chunk_67b2036a6c0e90cc0da7cd9e4901eecfc9ffae3b86026724ebfbbad547b153ed",
+    "chunk_7c8fe9db6ad792e205e96cf7dbc2d4de6b0a98e78dcc6a8e150821c6e8fb1ffe",
+    "chunk_5b70e9f50b51c1bcc4bac942afb98c4f787bfaa4e0e4d192cf1c0bce55e6d9f8",
+    "chunk_9786b4345fbceb2c3579008623b1626dfc4296193b3bf35a6fcfd9b72c684a36"
+   ],
+   "gold_chunk_id": "chunk_3df5cedd59cc493c6e76ffabfa5a7788c94a56175717be46f98347548351ab02",
+   "term": "HOW DISK DRIVES WORK | Make It Platform-Centric"
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about innovations that will sustain the disruption with what it says about make it platform-centric.",
+   "aspects": [
+    {
+     "term": "Innovations That Will Sustain the Disruption",
+     "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+     "gold_chunk_ids": [
+      "chunk_ab37dfbb515a0c350851729f4a9085739c257689eae8dd9686047d00c16b1e0a"
+     ]
+    },
+    {
+     "term": "Make It Platform-Centric",
+     "doc_id": "doc_71dc577c7e96bed017fa62d6924db70ba883a2fc0a02090e8addde34fe69f020",
+     "gold_chunk_ids": [
+      "chunk_67b2036a6c0e90cc0da7cd9e4901eecfc9ffae3b86026724ebfbbad547b153ed",
+      "chunk_7c8fe9db6ad792e205e96cf7dbc2d4de6b0a98e78dcc6a8e150821c6e8fb1ffe",
+      "chunk_5b70e9f50b51c1bcc4bac942afb98c4f787bfaa4e0e4d192cf1c0bce55e6d9f8",
+      "chunk_9786b4345fbceb2c3579008623b1626dfc4296193b3bf35a6fcfd9b72c684a36"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_ab37dfbb515a0c350851729f4a9085739c257689eae8dd9686047d00c16b1e0a",
+    "chunk_67b2036a6c0e90cc0da7cd9e4901eecfc9ffae3b86026724ebfbbad547b153ed",
+    "chunk_7c8fe9db6ad792e205e96cf7dbc2d4de6b0a98e78dcc6a8e150821c6e8fb1ffe",
+    "chunk_5b70e9f50b51c1bcc4bac942afb98c4f787bfaa4e0e4d192cf1c0bce55e6d9f8",
+    "chunk_9786b4345fbceb2c3579008623b1626dfc4296193b3bf35a6fcfd9b72c684a36"
+   ],
+   "gold_chunk_id": "chunk_ab37dfbb515a0c350851729f4a9085739c257689eae8dd9686047d00c16b1e0a",
+   "term": "Innovations That Will Sustain the Disruption | Make It Platform-Centric"
+  },
+  {
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about make it platform-centric with what it says about why innovative leaders make a difference.",
+   "aspects": [
+    {
+     "term": "Make It Platform-Centric",
+     "doc_id": "doc_71dc577c7e96bed017fa62d6924db70ba883a2fc0a02090e8addde34fe69f020",
+     "gold_chunk_ids": [
+      "chunk_67b2036a6c0e90cc0da7cd9e4901eecfc9ffae3b86026724ebfbbad547b153ed",
+      "chunk_7c8fe9db6ad792e205e96cf7dbc2d4de6b0a98e78dcc6a8e150821c6e8fb1ffe",
+      "chunk_5b70e9f50b51c1bcc4bac942afb98c4f787bfaa4e0e4d192cf1c0bce55e6d9f8",
+      "chunk_9786b4345fbceb2c3579008623b1626dfc4296193b3bf35a6fcfd9b72c684a36"
+     ]
+    },
+    {
+     "term": "Why Innovative Leaders Make a Difference",
+     "doc_id": "doc_f942b0db07d48a464d1482a643e2b166f1566bd7e1532acb584533899b4891b8",
+     "gold_chunk_ids": [
+      "chunk_bf4a22f0297eaed3ae0d9f470f0e35e595a755717609cd183963a953e5cdfad1"
+     ]
+    }
+   ],
+   "gold_chunk_ids": [
+    "chunk_67b2036a6c0e90cc0da7cd9e4901eecfc9ffae3b86026724ebfbbad547b153ed",
+    "chunk_7c8fe9db6ad792e205e96cf7dbc2d4de6b0a98e78dcc6a8e150821c6e8fb1ffe",
+    "chunk_5b70e9f50b51c1bcc4bac942afb98c4f787bfaa4e0e4d192cf1c0bce55e6d9f8",
+    "chunk_9786b4345fbceb2c3579008623b1626dfc4296193b3bf35a6fcfd9b72c684a36",
+    "chunk_bf4a22f0297eaed3ae0d9f470f0e35e595a755717609cd183963a953e5cdfad1"
+   ],
+   "gold_chunk_id": "chunk_67b2036a6c0e90cc0da7cd9e4901eecfc9ffae3b86026724ebfbbad547b153ed",
+   "term": "Make It Platform-Centric | Why Innovative Leaders Make a Difference"
+  }
+ ],
+ "gold_rule": "two B aspects per question; an aspect is covered when any of its gold chunks is in the final evidence"
+}

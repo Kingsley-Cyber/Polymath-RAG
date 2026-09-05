@@ -1416,7 +1416,26 @@ def _prior_artifact(plan, history) -> str | None:
     return _turn_content(cand)[:_PRIOR_ARTIFACT_CHARS] if cand is not None else None
 
 
-def _request_block(query: str, plan, history) -> str:
+def _coverage_lines(coverage: dict | None) -> list[str]:
+    """P1.b: tell the synthesizer which compiled aspects found evidence and
+    which found none, so a weak dimension is named instead of papered over."""
+    if not coverage:
+        return []
+    parts = []
+    for qid, a in coverage.items():
+        n = a.get("final", 0)
+        weak = a.get("weak")
+        if weak == "below_floor":
+            why = f"NO RELEVANT EVIDENCE (best judge score {a.get('best')}): say so explicitly for this aspect"
+        elif weak == "no_candidates" or not n:
+            why = "NO EVIDENCE RETRIEVED: say so explicitly for this aspect"
+        else:
+            why = f"{n} evidence item(s)"
+        parts.append(f'{qid} {a.get("type")} "{str(a.get("query") or "")[:60]}" — {why}')
+    return ["EVIDENCE COVERAGE BY ASPECT:\n" + "\n".join(parts)]
+
+
+def _request_block(query: str, plan, history, coverage: dict | None = None) -> str:
     """SYNTHESIS-V2 request framing: the request as written, the RESOLVED
     request, the compiled task/evidence policy/response type, coverage,
     constraints, the compiler's antecedent summary and the prior artifact
@@ -1432,6 +1451,7 @@ def _request_block(query: str, plan, history) -> str:
         lines.append("MUST COVER: " + "; ".join(str(x) for x in plan.must_answer[:6]))
     if plan.user_constraints:
         lines.append("CONSTRAINTS: " + "; ".join(str(x) for x in plan.user_constraints[:8]))
+    lines.extend(_coverage_lines(coverage))
     ante = plan.antecedent if isinstance(plan.antecedent, dict) else None
     if ante and ante.get("summary"):
         lines.append(f"ANTECEDENT ({ante.get('kind') or 'topic'}, turn {ante.get('turn')}): {ante['summary']}")
@@ -1454,7 +1474,7 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
                        history, carry_context,
                        reasoning: str | None = None,
                        reasoning_blend: list[str] | None = None,
-                       style: str = "neutral", plan=None) -> list[dict]:
+                       style: str = "neutral", plan=None, coverage: dict | None = None) -> list[dict]:
     """Shared grounded-prompt assembly for every LLM backend.
 
     `reasoning`/`reasoning_blend` apply the v3.3 reasoning layer
@@ -1497,7 +1517,7 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
     from orchestrator.api.reasoning import apply_reasoning
 
     user_content = apply_reasoning(
-        f"{context_block}\n\n{_request_block(query, plan, history)}",
+        f"{context_block}\n\n{_request_block(query, plan, history, coverage)}",
         mode=reasoning or os.environ.get("POLYMATH_REASONING_MODE", "none"),
         blend=reasoning_blend)
     messages.append({"role": "user", "content": user_content})
@@ -1637,7 +1657,7 @@ def _litellm_generate(model: str, query: str, bundle: dict,
                       graph_facts: list, history, carry_context,
                       reasoning: str | None = None,
                       reasoning_blend: list[str] | None = None,
-                      style: str = "neutral", plan=None):
+                      style: str = "neutral", plan=None, coverage: dict | None = None):
     """LLM-PROVIDER-LAYER-V1: stream tokens from ANY provider through
     LiteLLM (OpenAI-format model strings: openai/gpt-4o,
     anthropic/claude-..., gemini/..., groq/..., ollama/...). Credentials
@@ -1647,7 +1667,7 @@ def _litellm_generate(model: str, query: str, bundle: dict,
 
     messages = _grounded_messages(query, bundle, graph_facts,
                                   history, carry_context,
-                                  reasoning, reasoning_blend, style=style, plan=plan)
+                                  reasoning, reasoning_blend, style=style, plan=plan, coverage=coverage)
     yield {"prompt": _prompt_stats(messages, carry_context,
                                    sum(1 for c in (carry_context or [])[:30] if getattr(c, "preview", "")))}
     try:
@@ -1679,7 +1699,7 @@ def _ollama_generate(model: str, query: str, bundle: dict,
                      graph_facts: list, history, carry_context,
                      reasoning: str | None = None,
                      reasoning_blend: list[str] | None = None,
-                     style: str = "neutral", plan=None):
+                     style: str = "neutral", plan=None, coverage: dict | None = None):
     """Stream tokens from the local Ollama daemon over a grounded
     prompt. Yields {'token': str} pieces or one {'error': ...}.
 
@@ -1689,7 +1709,7 @@ def _ollama_generate(model: str, query: str, bundle: dict,
 
     messages = _grounded_messages(query, bundle, graph_facts,
                                   history, carry_context,
-                                  reasoning, reasoning_blend, style=style, plan=plan)
+                                  reasoning, reasoning_blend, style=style, plan=plan, coverage=coverage)
     yield {"prompt": _prompt_stats(messages, carry_context,
                                    sum(1 for c in (carry_context or [])[:30] if getattr(c, "preview", "")))}
 
@@ -1920,6 +1940,8 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
             latent_meta = None
             wildcard_lane = None
             _arrivals: dict = {}
+            _aspects: dict = {}
+            _weak: list = []
             if _skip_retrieval:
                 # NO-RETRIEVAL ROUTING (plan §3.1 evidence_policy=conversation):
                 # the task lives in the conversation; the corpus is not searched.
@@ -1990,10 +2012,16 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                     # CHAT-RETRIEVAL-V2 (plan §3.14, P1.a): lanes A/B/C fused at child level
                     # with provenance; the latent-rescue lane is not in v2 yet, so a turn
                     # that asks for it stays on hybrid-retrieval-v1 (receipted by plan version).
-                    if chat_retrieval_flag(getattr(req, "retrieval", None)) == "v2" and not req.latent:
+                    _rflag = chat_retrieval_flag(getattr(req, "retrieval", None))
+                    if _rflag in ("v2", "v2-single") and not req.latent:
                         fast = chat_retrieve_v2(
                             _retrieval_text, corpus_id,
-                            exact_terms=tuple(_plan.exact_terms) if (_flag == "on" and _plan is not None) else ())
+                            exact_terms=tuple(_plan.exact_terms) if (_flag == "on" and _plan is not None) else (),
+                            # P1.b: typed subqueries run lanes B + C on their own vectors (v2-single = A/B without them)
+                            subqueries=tuple((q.id, q.type, q.query, q.weight) for q in _plan.queries if q.type != "PRIMARY")
+                            if (_flag == "on" and _plan is not None and _rflag == "v2") else ())
+                        _aspects = (fast.get("meta") or {}).get("aspects") or {}
+                        _weak = (fast.get("meta") or {}).get("weak_aspects") or []
                     else:
                         from orchestrator.api.hybrid import hybrid_fast_retrieve
                         fast = hybrid_fast_retrieve(_retrieval_text, corpus_id,
@@ -2010,7 +2038,8 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                              evidence_count=len(evidence_rows),
                              lane_sizes=fast["trace"].get("lane_sizes"),
                              plan=(fast.get("meta") or {}).get("plan_version"),
-                             degraded=[d.get("component") for d in ((fast.get("meta") or {}).get("degraded") or [])] or None)
+                             degraded=[d.get("component") for d in ((fast.get("meta") or {}).get("degraded") or [])] or None,
+                             aspects=len(_aspects) or None, weak_aspects=_weak or None)
                 _arrivals = {c["chunk_id"]: c.get("arrivals") or ([c["arrival"]] if c.get("arrival") else [])
                              for c in fast["evidence"]}
                 if wildcard_lane is not None:
@@ -2122,6 +2151,12 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                 "engine": (fast.get("meta") or {}).get("plan_version"),
                 "arrivals": _arrivals,
                 "lane_sizes": (fast.get("trace") or {}).get("lane_sizes"),
+                # per-stage retrieval timings (embed / lanes / rerank_select / total) — P1.b/P1.d latency accounting
+                "latency_ms": (fast.get("trace") or {}).get("latency_ms"),
+                # P1.b aspect coverage: per compiled query, candidates in union / final; weak = none in final
+                "aspects": _aspects,
+                "weak_aspects": _weak,
+                "final_detail": (fast.get("meta") or {}).get("final_detail"),
                 # NEVER-ERROR-ON-A-COLD-MODEL: a lane that degraded
                 # (e.g. reranker parked behind extraction) still answers
                 # — the UI says so instead of the query failing.
@@ -2143,7 +2178,8 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                         llm_model, query, bundle, graph_facts,
                         req.history, [],          # CARRY-V2: admitted carry already rides in the bundle
                         req.reasoning, req.reasoning_blend, style=_style,
-                        plan=(_plan if _flag == "on" else None)):
+                        plan=(_plan if _flag == "on" else None),
+                        coverage=(_aspects if (_flag == "on" and len(_aspects) > 1) else None)):
                     if tok.get("prompt"):
                         _prompt_meta = dict(tok["prompt"])
                         continue

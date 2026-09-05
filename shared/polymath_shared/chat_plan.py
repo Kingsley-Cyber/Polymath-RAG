@@ -165,6 +165,30 @@ def fallback_plan(message: str, *, reason: str, history_turns: int = 0, wall_ms:
 _CORPUS_REF = re.compile(r"\b(my|the|our|these|those|all my|everything my)\s+(books?|corpus|sources?|documents?|library|notes|papers?|readings?)\b"
                          r"|\b(what|everything)\s+(my|the)\s+\w+\s+(books?|corpus|sources?)\s+(say|know|says)\b"
                          r"|\bfrom\s+(my|the)\s+(books?|corpus|sources?)\b|\bin\s+(my|the)\s+corpus\b", re.I)
+#: CHAT-PLAN-CORRECTIONS-V1 rule D (P1.b): a two-sided compare request whose plan
+#: carries a single query cannot be covered per aspect; split the sides.
+_COMPARE_SIDES = re.compile(
+    r"\bcompare\s+(?:what\s+(?:the\s+)?\w+\s+says?\s+about\s+)?(?P<a>.+?)\s+(?:with|and|to|versus|vs\.?)\s+(?:what\s+it\s+says?\s+about\s+)?(?P<b>.+?)[.?!]?\s*$",
+    re.IGNORECASE)
+
+
+_CONTENT_STOP = frozenset("the a an and or of to in on for with about what does say says book it its this that these those how why".split())
+
+
+def _content_words(text: str) -> set[str]:
+    return {w for w in re.findall(r"[a-z0-9]{3,}", (text or "").lower()) if w not in _CONTENT_STOP}
+
+
+def compare_sides(message: str) -> tuple[str, str] | None:
+    m = _COMPARE_SIDES.search((message or "").strip())
+    if not m:
+        return None
+    a, b = m.group("a").strip(" ,;:"), m.group("b").strip(" ,;:")
+    if len(a) < 3 or len(b) < 3 or a.lower() == b.lower():
+        return None
+    return a, b
+
+
 _FINAL_REF = re.compile(r"\b(final|finished|complete[d]?|latest|updated)\s+(version|prompt|draft|one|answer|copy)\b"
                         r"|\bwhat'?s the final\b|\bgive me the final\b|\bthe final\b", re.I)
 
@@ -246,6 +270,31 @@ def apply_corrections(plan: "ChatPlan", message: str, history: Iterable | None,
     fixes: list[str] = []
     msg = message or ""
     fixes.extend(_strip_corpus_scope_terms(plan, msg, history, corpus_ids))
+    sides = compare_sides(msg)
+    if sides and plan.retrieval_required:
+        # rule D: each side of a two-sided compare gets a query that names IT and not the other side
+        a, b = sides
+        wa, wb = _content_words(a), _content_words(b)
+
+        def _names_only(q: "CompiledQuery", mine: set, other: set) -> bool:
+            wq = _content_words(q.query)
+            return bool(wq & mine) and not (wq & other - mine)
+        has_a = any(_names_only(q, wa, wb) for q in plan.queries)
+        has_b = any(_names_only(q, wb, wa) for q in plan.queries)
+        if not (has_a and has_b):
+            primary = _clean_query(a)
+            second = _clean_query(b)
+            if primary and second:
+                keep = [q for q in plan.queries if q.type != "PRIMARY" and not (_content_words(q.query) & wa and _content_words(q.query) & wb)]
+                rebuilt = [CompiledQuery(id="q0", type="PRIMARY", query=primary, weight=1.0),
+                           CompiledQuery(id="q1", type="COMPARISON", query=second, weight=1.0)]
+                for i, q in enumerate(keep):
+                    if len(rebuilt) >= MAX_QUERIES:
+                        break
+                    rebuilt.append(CompiledQuery(id=f"q{len(rebuilt)}", type=q.type, query=q.query, weight=q.weight))
+                fixes.append(f"compare_sides:{len(plan.queries)}->{len(rebuilt)}")
+                plan.queries = rebuilt
+                plan.semantic_queries = [q.query for q in rebuilt]
     if references_corpus(msg):
         if not plan.retrieval_required or plan.task_type in NO_RETRIEVAL_TASKS:
             new_type = "CREATE_FROM_KNOWLEDGE" if (task_classes(msg) & {"create", "rewrite", "continue", "convert"}) else "GROUNDED_SYNTHESIS"
@@ -381,6 +430,8 @@ Disambiguation (the two most-confused types):
   knowledge → CREATE_FROM_KNOWLEDGE, retrieval_required true, queries about X, response_type artifact.
 - "turn this into a stronger prompt" with the text supplied in the message → TRANSFORM_USER_CONTENT, no retrieval.
 - "do the authors agree or disagree about X?" → GROUNDED_SYNTHESIS with a COMPARISON query per side.
+- Every DISTINCT aspect of a compare / contrast / "X and Y" request gets its OWN typed query ("compare what the book
+  says about X with what it says about Y" → PRIMARY about X, COMPARISON about Y) — never fold two topics into one query.
 Output ONLY the JSON object. No prose, no markdown fences."""
 
 

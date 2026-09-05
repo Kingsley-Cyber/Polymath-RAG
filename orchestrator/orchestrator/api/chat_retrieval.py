@@ -25,6 +25,7 @@ from polymath_shared.candidate_engine import (
     CHAT_RETRIEVAL_PLAN_VERSION,
     CandidateBudget,
     SearchContext,
+    SubQuery,
     retrieve_candidates,
     select_evidence,
     shape_budget,
@@ -37,6 +38,7 @@ from orchestrator.api.fast import (
     FastSearcher,
     _begin_retrieval,
     _corpus_collections,
+    _embed_queries,
     _embed_query,
     _ensure_fast_ready,
     _neighbor_lookup,
@@ -50,8 +52,9 @@ _FLAG_ENV = "POLYMATH_CHAT_RETRIEVAL"        # v1 | v2 (default v2 after the P1.
 
 
 def chat_retrieval_flag(override: str | None = None) -> str:
+    """v1 | v2 | v2-single (v2 with the compiled subqueries ignored — A/B only)."""
     v = (override or os.environ.get(_FLAG_ENV, "v2") or "v2").strip().lower()
-    return v if v in ("v1", "v2") else "v2"
+    return v if v in ("v1", "v2", "v2-single") else "v2"
 
 
 def default_budget() -> CandidateBudget:
@@ -71,7 +74,10 @@ def default_budget() -> CandidateBudget:
 
 
 def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...] = (),
-                     budget: Optional[CandidateBudget] = None, query_id: str = "q0") -> dict:
+                     budget: Optional[CandidateBudget] = None, query_id: str = "q0",
+                     subqueries: tuple = ()) -> dict:
+    """`subqueries`: (id, type, text, weight) tuples from the compiled plan (non-PRIMARY);
+    they run lanes B + C on their own vectors (one batched embedding call for all texts)."""
     _begin_retrieval()
     if corpus_id is None:
         raise HTTPException(status_code=422, detail={
@@ -92,8 +98,19 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
         # lane C is the one sparse search of the turn.
         searcher = FastSearcher(client, collections)
         t0 = time.perf_counter()
-        qvec = _embed_query(query)                                        # the ONE embedding
+        sub_specs = [tuple(x) for x in (subqueries or ())][: (budget.max_subqueries if budget else 3)]
+        texts = [query] + [t for (_, _, t, _) in sub_specs if t and t != query]
+        distinct = list(dict.fromkeys(texts))
+        vecs = dict(zip(distinct, _embed_queries(distinct)))               # ONE call, one vector per distinct text
+        qvec = vecs[query]
         embed_ms = round((time.perf_counter() - t0) * 1000, 1)
+        subs: list[SubQuery] = []
+        for (sid, stype, stext, sweight) in sub_specs:
+            if not stext or stext == query:
+                continue
+            sv, srule = sparse_vector_for(stext, ())
+            subs.append(SubQuery(query_id=str(sid), qtype=str(stype), text=str(stext), weight=float(sweight or 1.0),
+                                 qvec=tuple(vecs[stext]), sparse_query=sv, sparse_rule=srule))
         sparse_q, sparse_rule = None, "raw"
         try:
             sparse_q, sparse_rule = sparse_vector_for(query, exact_terms)   # exact terms alone when present
@@ -104,16 +121,18 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                             hidden_generations=tuple(searcher._hidden_for(corpus_id) or ()), query_id=query_id,
                             sparse_rule=sparse_rule)
 
-        def dense_search(kind: str, top_k: int, extra: dict | None = None) -> list[dict]:
+        def dense_search(kind: str, top_k: int, extra: dict | None = None, qvec=None) -> list[dict]:
             filters = {"representation_kind": kind, "corpus_id": corpus_id}
             if extra:
                 filters.update(extra)
-            return searcher._search(collection, list(qvec), filters, limit=top_k)
+            return searcher._search(collection, list(qvec if qvec is not None else vecs[query]), filters, limit=top_k)
 
-        def sparse_search(top_k: int) -> list[dict]:
-            return searcher.sparse_search(collection, sparse_q, {"representation_kind": "routing_child", "corpus_id": corpus_id}, limit=top_k)
+        def sparse_search(top_k: int, sparse_query=None) -> list[dict]:
+            return searcher.sparse_search(collection, sparse_query if sparse_query is not None else sparse_q,
+                                          {"representation_kind": "routing_child", "corpus_id": corpus_id}, limit=top_k)
 
-        result = retrieve_candidates(ctx, budget, dense_search=dense_search, sparse_search=sparse_search, region_lookup=_region_lookup)
+        result = retrieve_candidates(ctx, budget, dense_search=dense_search, sparse_search=sparse_search,
+                                     region_lookup=_region_lookup, subqueries=subs)
         t1 = time.perf_counter()
         final, sel = select_evidence(result, budget, rerank_children=_rerank_children, neighbor_lookup=_neighbor_lookup)
         rerank_ms = round((time.perf_counter() - t1) * 1000, 1)
@@ -122,7 +141,8 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
     total_ms = round((time.perf_counter() - t_all) * 1000, 1)
 
     latency_ms = {k: round(v, 1) for k, v in searcher.latency.items()}
-    latency_ms.update({"embed": embed_ms, "rerank_select": rerank_ms, "total": total_ms, **{f"lane_{k}": v for k, v in result.timings_ms.items()}})
+    latency_ms.update({"embed": embed_ms, "embedded_texts": len(distinct), "rerank_select": rerank_ms, "total": total_ms,
+                       **{f"lane_{k}": v for k, v in result.timings_ms.items()}})
     _p = _presentation_joins([c.chunk_id for c in final], [c.doc_id for c in final])
     trace = {**result.trace, **sel, "latency_ms": latency_ms}
     rows = []
@@ -141,6 +161,11 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
             "lexical_enabled": "GLOBAL_SPARSE_CHILD" in budget.lanes, "mmr": "NOT_IN_V2",
             "selected_document_count": len(result.selected_documents), "selected_section_count": len(result.selected_sections),
             "evidence_count": len(rows), "candidates": len(result.union), "multi_lane": trace.get("multi_lane"),
+            "subqueries": trace.get("subqueries"), "weak_aspects": trace.get("weak_aspects"), "weak_reasons": trace.get("weak_reasons"),
+            "aspect_seated": trace.get("aspect_seated"), "aspect_best": trace.get("aspect_best"), "final_detail": trace.get("final_detail"),
+            "aspects": {qid: {**a, "final": (trace.get("aspect_final") or {}).get(qid, 0), "prefix": (trace.get("aspect_prefix") or {}).get(qid),
+                              "best": (trace.get("aspect_best") or {}).get(qid), "weak": (trace.get("weak_reasons") or {}).get(qid)}
+                        for qid, a in (trace.get("aspects") or {}).items()},
             "degraded": degradations() + list(result.degraded),
             # lane liveness for v2 = the per-lane sizes + degradations above (the v1 liveness
             # table is keyed on rescue lanes that do not exist here)

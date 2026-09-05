@@ -143,7 +143,7 @@ async def _chat_impl(req: ChatRequest) -> dict:
             _utility = getattr(req, 'utility', None)
             # CHAT-RETRIEVAL-V2 (P1.a): /chat HYBRID uses the same engine as /chat/stream;
             # latent / utility requests stay on hybrid-retrieval-v1 (not in v2 yet).
-            if chat_retrieval_flag(getattr(req, "retrieval", None)) == "v2" and not _latent and not _utility:
+            if chat_retrieval_flag(getattr(req, "retrieval", None)) in ("v2", "v2-single") and not _latent and not _utility:
                 fast = chat_retrieve_v2(query, single_corpus_or_422(scope, mode))
             else:
                 from orchestrator.api.hybrid import hybrid_fast_retrieve

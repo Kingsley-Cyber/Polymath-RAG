@@ -208,6 +208,79 @@ def build_lexical(per_corpus: int, corpora: list[str], seed: int) -> dict:
             "questions": items}
 
 
+MULTI_FIXTURE = ROOT / "eval" / "fixtures" / "chat_multi_M.json"
+
+
+def build_multi(seed: int) -> dict:
+    """MULTI-DIMENSION FIXTURE M (plan §4 P1.b): pairs of B questions from the
+    same corpus and different documents become one two-aspect request; each
+    aspect keeps its own gold set. Deterministic: item i pairs with i+1 within
+    the corpus (wrapping), so every B item appears in exactly two pairs."""
+    fx = json.loads(FIXTURE.read_text())
+    by_corpus: dict[str, list] = {}
+    for q in fx["questions"]:
+        by_corpus.setdefault(q["corpus_id"], []).append(q)
+    items = []
+    for corpus, qs in by_corpus.items():
+        n = len(qs)
+        for i in range(n):
+            a, b = qs[i], qs[(i + 1) % n]
+            if a["doc_id"] == b["doc_id"]:
+                b = qs[(i + 2) % n]
+            ta = a["term"].lower() if not a["term"].isupper() else a["term"]
+            tb = b["term"].lower() if not b["term"].isupper() else b["term"]
+            items.append({"corpus_id": corpus, "question": f"Compare what the book says about {ta} with what it says about {tb}.",
+                          "aspects": [{"term": a["term"], "doc_id": a["doc_id"], "gold_chunk_ids": a["gold_chunk_ids"]},
+                                      {"term": b["term"], "doc_id": b["doc_id"], "gold_chunk_ids": b["gold_chunk_ids"]}],
+                          "gold_chunk_ids": a["gold_chunk_ids"] + b["gold_chunk_ids"], "gold_chunk_id": a["gold_chunk_id"], "term": f"{a['term']} | {b['term']}"})
+    return {"version": "chat-multi-M-v1", "seed": seed, "source": str(FIXTURE.relative_to(ROOT)), "questions": items,
+            "gold_rule": "two B aspects per question; an aspect is covered when any of its gold chunks is in the final evidence"}
+
+
+def aspect_stats(q: dict, ans: dict, rec: dict) -> dict:
+    """Per-aspect coverage for fixture M: covered = gold in the final (selected) evidence;
+    flagged = a compiled query naming the aspect term is in `weak_aspects`; the P1.b gate
+    counts an aspect as OK when it is covered OR explicitly flagged weak."""
+    aspects = q.get("aspects") or []
+    if not aspects:
+        return {}
+    st = ((rec.get("meta") or {}).get("funnel") or {}).get("stages") or {}
+    selected = set(st.get("selected") or []); union = set(st.get("union") or [])
+    ret = ans.get("retrieval") or {}
+    comp = ret.get("aspects") or {}; weak = set(ret.get("weak_aspects") or [])
+    legend = ret.get("legend") or []
+    final_docs = {e.get("doc_id") for e in legend if e.get("chunk_id") and not e.get("carried")}
+    detail = ret.get("final_detail") or []                      # P1.c: doc_id + query_ids per seated chunk
+    out = []
+    for a in aspects:
+        term_words = {w for w in re.findall(r"[a-z0-9]{3,}", a["term"].lower())}
+        naming = [qid for qid, info in comp.items() if term_words & set(re.findall(r"[a-z0-9]{3,}", str(info.get("query") or "").lower()))]
+        covered_gold = any(g in selected for g in a["gold_chunk_ids"])
+        in_union = any(g in union for g in a["gold_chunk_ids"])
+        # DIMENSION ✓ (plan §4 P1.b): evidence for the aspect is in the final set — the gold chunk itself, or a
+        # chunk of the aspect's own document (its heading lives there); with final_detail (P1.c) the document
+        # match must also come from a query that names the aspect (or the primary when nothing names it)
+        if detail:
+            covered_doc = any(d.get("doc_id") == a["doc_id"] and (not naming or set(d.get("query_ids") or []) & set(naming) or "q0" in (d.get("query_ids") or []))
+                              for d in detail)
+        else:
+            covered_doc = a["doc_id"] in final_docs
+        covered = covered_gold or covered_doc
+        flagged = bool(set(naming) & weak) or (not naming and bool(weak))
+        # SYSTEM-HONEST view: the answer shows evidence the judge accepted (sigmoid ≥ 0.5) for a query naming the aspect
+        import math as _m
+        shown = any(set(d.get("query_ids") or []) & set(naming) and d.get("rerank_score") is not None
+                    and 1.0 / (1.0 + _m.exp(-max(-30.0, min(30.0, float(d["rerank_score"]))))) >= 0.5 for d in detail) if naming else False
+        out.append({"term": a["term"], "covered_gold": covered_gold, "covered_doc": covered_doc, "covered": covered, "in_union": in_union,
+                    "flagged_weak": flagged, "ok": covered or flagged, "queries_naming": naming, "silent": (not covered and not flagged),
+                    "shown": shown, "system_ok": shown or flagged or covered})
+    return {"aspects": out, "dims": len(out), "dims_covered_gold": sum(1 for x in out if x["covered_gold"]), "dims_covered": sum(1 for x in out if x["covered"]),
+            "dims_in_union": sum(1 for x in out if x["in_union"]), "dims_flagged": sum(1 for x in out if x["flagged_weak"] and not x["covered"]),
+            "dims_ok": sum(1 for x in out if x["ok"]), "dims_silent": sum(1 for x in out if x["silent"]), "dims_unnamed": sum(1 for x in out if not x["queries_naming"]),
+            "dims_system_ok": sum(1 for x in out if x["system_ok"]),
+            "compiled_queries": len(comp), "weak_aspects": sorted(weak)}
+
+
 def _stream(question: str, corpus: str, synthesizer: str | None, history: list | None = None,
             compiler: str | None = None) -> tuple[dict, float]:
     body = {"message": question, "corpus_id": corpus, "mode": "HYBRID"}
@@ -282,7 +355,11 @@ def citation_stats(ans: dict, rec: dict) -> dict:
     ret = ans.get("retrieval") or {}
     arrivals = ret.get("arrivals") or {}
     selected = [e.get("chunk_id") for e in legend if e.get("chunk_id") and not e.get("carried")]
+    lat = ret.get("latency_ms") or {}
+    ph = (rec.get("meta") or {}).get("phase_ms") or {}
     return {"engine": ret.get("engine"), "arrivals_n": len(arrivals),
+            "retrieval_ms": lat.get("total"), "rerank_ms": lat.get("rerank_select"), "embed_ms": lat.get("embed"),
+            "phase_retrieve_ms": (round(ph["retrieve"] - ph.get("compile", 0), 1) if isinstance(ph.get("retrieve"), (int, float)) else None),
             "arrivals_missing": sum(1 for cid in selected if not arrivals.get(cid)),      # P1.a gate: 0 on every turn
             "lane_sizes": ret.get("lane_sizes"),
             "degraded_components": [d.get("component") for d in (ret.get("degraded") or []) if isinstance(d, dict)],
@@ -338,6 +415,7 @@ def run(tag: str, synthesizer: str | None, limit: int | None, compiler: str | No
         deaths = [where_did_it_die(fun, g) for g in golds] if fun else ["NO_FUNNEL"]
         order = ["CITED", "IGNORED_BY_LLM", "LOST_AT_SELECTION", "LOST_AT_RERANK", "LOST_AT_UNION_TRUNCATION", "NEVER_RETRIEVED", "NO_FUNNEL"]
         cite = citation_stats(ans, rec)
+        cite.update(aspect_stats(q, ans, rec))
         results.append({**q, "wall_s": round(wall, 2), "phase_ms": (rec.get("meta") or {}).get("phase_ms"), **cite,
                         "gold_in_retrieved": _in("retrieved"),
                         "gold_in_union": _in("union"),
@@ -374,6 +452,21 @@ def run(tag: str, synthesizer: str | None, limit: int | None, compiler: str | No
         "tags_total": sum(r.get("tags_total") or 0 for r in ok), "tags_valid": sum(r.get("tags_valid") or 0 for r in ok),
         "abstain_markers": sum(1 for r in ok if r.get("abstain_marker")),
         "engines": dict(__import__("collections").Counter(r.get("engine") for r in ok)),
+        # P1.b (fixture M): dimensions covered / flagged weak / ok, queries per turn
+        "dims_total": sum(r.get("dims") or 0 for r in ok), "dims_covered": sum(r.get("dims_covered") or 0 for r in ok),
+        "dims_covered_gold": sum(r.get("dims_covered_gold") or 0 for r in ok), "dims_silent": sum(r.get("dims_silent") or 0 for r in ok),
+        "dims_system_ok": sum(r.get("dims_system_ok") or 0 for r in ok),
+        "dims_system_ok_rate": round(sum(r.get("dims_system_ok") or 0 for r in ok) / max(1, sum(r.get("dims") or 0 for r in ok)), 3),
+        "dims_unnamed": sum(r.get("dims_unnamed") or 0 for r in ok),
+        "dims_in_union": sum(r.get("dims_in_union") or 0 for r in ok), "dims_flagged": sum(r.get("dims_flagged") or 0 for r in ok),
+        "dims_ok": sum(r.get("dims_ok") or 0 for r in ok),
+        "dims_ok_rate": round(sum(r.get("dims_ok") or 0 for r in ok) / max(1, sum(r.get("dims") or 0 for r in ok)), 3),
+        "dims_covered_rate": round(sum(r.get("dims_covered") or 0 for r in ok) / max(1, sum(r.get("dims") or 0 for r in ok)), 3),
+        "compiled_queries_mean": round(sum(r.get("compiled_queries") or 0 for r in ok) / max(1, len(ok)), 2),
+        "phase_retrieve_p50_s": (round(sorted(r["phase_retrieve_ms"] for r in ok if r.get("phase_retrieve_ms") is not None)[len([r for r in ok if r.get("phase_retrieve_ms") is not None]) // 2] / 1000, 2)
+                                 if any(r.get("phase_retrieve_ms") is not None for r in ok) else None),
+        "rerank_p50_s": (round(sorted(r["rerank_ms"] for r in ok if r.get("rerank_ms") is not None)[len([r for r in ok if r.get("rerank_ms") is not None]) // 2] / 1000, 2)
+                         if any(r.get("rerank_ms") is not None for r in ok) else None),
         "arrivals_missing_total": sum(r.get("arrivals_missing") or 0 for r in ok),
         "turns_with_arrivals": sum(1 for r in ok if r.get("arrivals_n")),
         "degraded_turns": sum(1 for r in ok if r.get("degraded_components")),
@@ -417,7 +510,8 @@ def main() -> int:
     ap.add_argument("--compiler", default=None, help="per-request POLYMATH_CHAT_COMPILER override: off | shadow | on")
     ap.add_argument("--followups", action="store_true", help="run the derived 2-turn follow-up conversations instead of the plain questions")
     ap.add_argument("--fixture", default=None, help="fixture file to run (default eval/fixtures/chat_baseline_B.json; L = eval/fixtures/chat_lexical_L.json)")
-    ap.add_argument("--retrieval", default=None, help="per-request POLYMATH_CHAT_RETRIEVAL override: v1 | v2")
+    ap.add_argument("--retrieval", default=None, help="per-request POLYMATH_CHAT_RETRIEVAL override: v1 | v2 | v2-single (v2 without subqueries)")
+    ap.add_argument("--build-multi", action="store_true", help="build eval/fixtures/chat_multi_M.json (two-aspect questions derived from B)")
     ap.add_argument("--build-lexical", action="store_true", help="build eval/fixtures/chat_lexical_L.json (acronyms/identifiers with df 1-2)")
     ap.add_argument("--reference", default=None, help="tag of a same-fixture run to pair with (recovery: hit@10 on the subset the reference retrieved)")
     a = ap.parse_args()
@@ -433,6 +527,10 @@ def main() -> int:
         print(f"wrote {FIXTURE} with {len(fx['questions'])} questions")
     global RETRIEVAL_OVERRIDE
     RETRIEVAL_OVERRIDE = a.retrieval
+    if a.build_multi:
+        fx = build_multi(a.seed)
+        MULTI_FIXTURE.write_text(json.dumps(fx, indent=1, ensure_ascii=False))
+        print(f"wrote {MULTI_FIXTURE.relative_to(ROOT)}: {len(fx['questions'])} two-aspect questions")
     if a.build_lexical:
         fx = build_lexical(a.per_corpus, [c for c in a.corpora.split(",") if c], a.seed)
         LEXICAL_FIXTURE.write_text(json.dumps(fx, indent=1, ensure_ascii=False))
