@@ -92,8 +92,50 @@ def test_sweep_lock_is_exclusive_per_stage_and_corpus(two_conns):
     assert impl._try_sweep_lock(b, "parent_enrichment", corpus) is True, "the lock dies with the holder's transaction"
 
 
+def test_enrichment_partitions_the_corpus_by_document(two_conns):
+    """ENRICH-DOC-PARTITION-V1: two workers sweep DISJOINT documents of one
+    corpus concurrently; the same document is never held twice."""
+    a, b = two_conns
+    corpus = "sweep-test-" + uuid.uuid4().hex[:8]
+    assert impl._doc_sweep_lock(a, "parent_enrichment", corpus, "doc1") is True
+    assert impl._doc_sweep_lock(b, "parent_enrichment", corpus, "doc1") is False, "peer must skip a held document"
+    assert impl._doc_sweep_lock(b, "parent_enrichment", corpus, "doc2") is True, "peer sweeps the other document meanwhile"
+    assert impl._try_sweep_lock(b, "parent_summary", corpus) is True, "other stages keep their corpus-level lock"
+    a.rollback()
+    assert impl._doc_sweep_lock(b, "parent_enrichment", corpus, "doc1") is True, "the document lock dies with the holder's transaction"
+
+
+def test_ladder_fan_out_is_concurrent_and_ordered():
+    """ENRICH-LADDER-FANOUT-V1: N calls on width N finish in ~one call's
+    time and keep input order."""
+    import time
+    items = [("p%d" % i, "sys", "user", 100) for i in range(6)]
+
+    def one(item):
+        time.sleep(0.3)
+        return (item[0], "raw", None)
+    t0 = time.monotonic()
+    out = impl._fan_out(items, one, width=6)
+    wall = time.monotonic() - t0
+    assert [o[0] for o in out] == [i[0] for i in items]
+    assert wall < 1.0, f"6 x 0.3 s calls took {wall:.2f}s — not concurrent"
+    assert impl._fan_out([], one, width=4) == []
+
+
+def test_enrichment_ladders_fan_out_in_source():
+    import inspect
+    src = inspect.getsource(impl)
+    body = src[src.index("def _complete_fb("):src.index("_persisted: set = set()")]
+    assert body.count("_fan_out(") == 2, "semantic failover and hard-case escape must both fan out"
+
+
 def test_every_sweeping_handler_takes_the_sweep_lock():
     """Law 3: the structural contract — every handler that sweeps a corpus serializes on it."""
     for name in ("_do_parents", "_do_document", "_do_corpus", "_do_vocabulary", "_do_enrichment"):
         src = inspect.getsource(getattr(impl, name))
+        if name == "_do_enrichment":
+            import re
+            assert "_doc_sweep_lock(" in src and not re.search(r'(?<!_doc)_sweep_lock\(conn, "parent_enrichment"', src), \
+                "parent_enrichment partitions the corpus per document (ENRICH-DOC-PARTITION-V1)"
+            continue
         assert "_sweep_lock(" in src, f"{name} sweeps the corpus without the per-(stage, corpus) sweep lock"

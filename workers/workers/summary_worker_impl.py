@@ -99,6 +99,36 @@ def _try_sweep_lock(conn: Connection, stage: str, corpus_id: str) -> bool:
     return bool(row and row[0])
 
 
+def _doc_sweep_lock(conn: Connection, stage: str, corpus_id: str, doc_id: str) -> bool:
+    """ENRICH-DOC-PARTITION-V1 (owner 2026-09-05 "enrichment is too slow"):
+    the corpus-wide sweep lock made the second summaries worker useless for a
+    single-corpus ingest (measured: 315 SUMMARY_SWEEP_BUSY yields in 2 h while
+    9 lanes sat ~95% idle). The deadlock that lock closed was two workers
+    upserting the SAME summary_jobs keys; keys belong to parents, parents
+    belong to documents — so partition by document: a worker takes a document
+    only if no peer holds it (try-lock, never wait), and the lock lives until
+    the holder's transaction ends. Two workers now sweep disjoint documents of
+    the same corpus concurrently and can never share a key."""
+    return _try_sweep_lock(conn, stage, f"{corpus_id}|doc:{doc_id}")
+
+
+def _fan_out(items: list, one, width: int) -> list:
+    """Run `one(item)` for every item on a bounded thread pool, preserving
+    input order. ENRICH-LADDER-FANOUT-V1 (2026-09-05): the semantic-failover
+    and hard-case escape ladders issued their calls one after another while
+    the microbatch pass ran 9-wide — with 25-50 % of parents gated INVALID
+    per lane, the sequential ladder was the wall (measured 50-94 s gaps
+    between waves). Each lane still self-gates through its own limiter."""
+    if not items:
+        return []
+    width = max(1, min(int(width), len(items)))
+    if width == 1:
+        return [one(i) for i in items]
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=width) as pool:
+        return list(pool.map(one, items))
+
+
 def _sweep_lock(conn: Connection, stage: str, corpus_id: str) -> None:
     """Wait for the (stage, corpus) sweep to be ours. The wait holds NO row
     locks (the outer transaction has written nothing yet), so it can never be
@@ -414,7 +444,9 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
     corpus = _corpus_of_run(conn, run_id)
     if not corpus:
         return {"status": "NO_CORPUS"}
-    _sweep_lock(conn, "parent_enrichment", corpus)      # SUMMARY-SWEEP-SERIALIZATION-V1
+    # ENRICH-DOC-PARTITION-V1: no corpus-wide sweep lock here — each document
+    # is claimed with _doc_sweep_lock inside the loop so a second worker sweeps
+    # the OTHER documents instead of yielding SUMMARY_SWEEP_BUSY.
     scope_doc = None
     row = conn.execute(
         "SELECT payload FROM outbox_events WHERE run_id=%s AND "
@@ -429,7 +461,11 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
     ceiling = int(getattr(settings, "enrichment_input_token_ceiling", 6000))
 
     ready = invalid = existing = 0
+    skipped_docs = 0
     for doc in docs:
+        if not _doc_sweep_lock(conn, "parent_enrichment", corpus, doc):
+            skipped_docs += 1          # a peer worker holds this document
+            continue
         parents: list[ParentInput] = []
         for pid, slot in _parents_of_docs(conn, [doc]).items():
             parents.append(ParentInput(
@@ -484,6 +520,21 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
                 _lane_clients[ep.name] = c
             return c
 
+        def _pool_width(items, ring: int = 0) -> int:
+            # width = SUM of the involved lanes' concurrency caps (each
+            # lane still self-gates through its own AIMD limiter — this
+            # is a pool sizing, never a schedule).
+            involved: dict[str, LLMExtractionClient] = {}
+            for item in items:
+                c = _client_for(item[0], ring) if ring else _client_for(item[0])
+                involved[c.endpoint_name] = c
+            width = 0
+            for c in involved.values():
+                spec = _lane_limit("cloud", None if c.limiter_key ==
+                                   "default" else c.limiter_key)
+                width += max(1, spec.conc_cap or 2)
+            return max(1, min(width, len(items), 12))
+
         def _complete(items, _doc=doc):
             import time as _time
             from concurrent.futures import ThreadPoolExecutor
@@ -535,20 +586,7 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
                                 max_tokens=max_tokens)
                 return (item_id, raw, err)
 
-            # width = SUM of the involved lanes' concurrency caps (each
-            # lane still self-gates through its own AIMD limiter — this
-            # is a pool sizing, never a schedule).
-            involved: dict[str, LLMExtractionClient] = {}
-            for item in items:
-                c = _client_for(item[0])
-                involved[c.endpoint_name] = c
-            width = 0
-            for c in involved.values():
-                spec = _lane_limit("cloud", None if c.limiter_key ==
-                                   "default" else c.limiter_key)
-                width += max(1, spec.conc_cap or 2)
-            width = max(1, min(width, len(items), 12))
-            with ThreadPoolExecutor(max_workers=width) as pool:
+            with ThreadPoolExecutor(max_workers=_pool_width(items)) as pool:
                 results = list(pool.map(_one, items))
             return results
 
@@ -591,16 +629,16 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
         def _complete_fb(items, _doc=doc):
             # SEMANTIC-FAILOVER-V1: the parent's OTHER lane, gate-
             # rejects only; one retry, re-gated identically.
-            out = []
-            for item_id, system, user, max_tokens in items:
+            # ENRICH-LADDER-FANOUT-V1: the retry calls run concurrently.
+            def _fb_one(item):
+                item_id, system, user, max_tokens = item
                 fb = _client_for(item_id, 1)
                 if fb.endpoint_name == _client_for(item_id).endpoint_name:
-                    out.append((item_id, "", "ENRICH_NO_RESPONSE"))
-                    continue
+                    return (item_id, "", "ENRICH_NO_RESPONSE")
                 raw, err = fb.complete_one(
                     user, system_prompt=system, max_tokens=max_tokens)
-                out.append((item_id, raw, err))
-            return out
+                return (item_id, raw, err)
+            return _fan_out(items, _fb_one, _pool_width(items, 1))
 
         def _complete_escape(items, _doc=doc):
             # ENRICH-HARD-CASE-V1: the bounded MINIMAL escape on the
@@ -608,18 +646,18 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
             # 4-lane pin group (the 7/67 lesson: ring-adjacent lanes
             # can be the same model family, so "both lanes rejected"
             # really meant "one family rejected twice").
-            out = []
-            for item_id, system, user, max_tokens in items:
+            # ENRICH-LADDER-FANOUT-V1: the escape calls run concurrently.
+            def _esc_one(item):
+                item_id, system, user, max_tokens = item
                 esc = _client_for(item_id, 2)
                 if esc.endpoint_name in (
                         _client_for(item_id).endpoint_name,
                         _client_for(item_id, 1).endpoint_name):
-                    out.append((item_id, "", "ENRICH_NO_RESPONSE"))
-                    continue
+                    return (item_id, "", "ENRICH_NO_RESPONSE")
                 raw, err = esc.complete_one(
                     user, system_prompt=system, max_tokens=max_tokens)
-                out.append((item_id, raw, err))
-            return out
+                return (item_id, raw, err)
+            return _fan_out(items, _esc_one, _pool_width(items, 2))
 
         _persisted: set = set()
 
