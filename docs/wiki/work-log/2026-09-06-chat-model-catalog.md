@@ -17,6 +17,7 @@ Owner decision (2026-09-06): remove Ollama's local/paid models from the chat dro
 
 ## Contract
 
+- **Scope (owner rule 2026-09-06): the catalog feeds the chat SYNTHESIZER only.** Extraction, enrichment and the query compiler are configured elsewhere (control-plane stage pins and provider presets, `POLYMATH_WORKER_EXTRACTION_PROVIDER`, `POLYMATH_LLM_CLOUD_*`, the `chat_compiler` pin) and never read `llm_providers`, the Ollama allowlist or the OpenCode / Alibaba keys; `test_the_chat_model_catalog_never_reaches_extraction_enrichment_or_the_compiler` enforces the import boundary in CI.
 - `GET /synthesizers` → `[*_litellm_models(), *_ollama_models()]`, preferred default first, `default` flag on exactly one entry; every entry carries `id`, `label`, `description`, `kind`, `available`.
 - `_ollama_models()`: `OLLAMA_FREE_CLOUD_MODELS` (six names) or `POLYMATH_OLLAMA_MODELS`; `available` = registered with the daemon (`/api/tags`, non-fatal); an unregistered name lists with `ollama pull <name>` in its description (a cloud pull registers a name, no weights).
 - Provider rows: `api_key` may be `env:NAME`; `_resolve_api_key` reads the environment at call time; `_provider_ready` hides a row whose env key is unset; `/llm/providers` returns the NAME for env keys and `ready`.

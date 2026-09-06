@@ -117,3 +117,23 @@ def test_env_indirected_alibaba_row_labels_and_hides_like_opencode(monkeypatch):
     assert entries[0]["id"] == "litellm:anthropic/qwen3.8-max" and entries[0]["label"] == "Alibaba Model Studio · qwen3.8-max"
     assert ui._litellm_credentials("anthropic/qwen3.8-max") == {"api_key": "sk-test", "api_base": row["api_base"]}
 
+
+def test_the_chat_model_catalog_never_reaches_extraction_enrichment_or_the_compiler():
+    """Owner rule (2026-09-06): the chat-model catalog (llm_providers rows, the Ollama allowlist, OpenCode / Alibaba keys) feeds
+    the chat SYNTHESIZER only. Extraction, enrichment and the query compiler keep their own stage pins and env knobs; nothing
+    under control/, workers/ or shared/ may import or read the catalog."""
+    import re
+    catalog_symbols = re.compile(r"llm_providers|_litellm_credentials|_litellm_models|_ollama_models|OLLAMA_FREE_CLOUD_MODELS|"
+                                 r"OPENCODE_API_KEY|ALIBABA_MODEL_STUDIO_API_KEY|POLYMATH_DEFAULT_SYNTHESIZER|orchestrator\.api\.ui")
+    offenders = []
+    for top in ("control", "workers", "shared"):
+        for path in (ROOT / top).rglob("*.py"):
+            if ".venv" in path.parts or "tests" in path.parts:
+                continue
+            if catalog_symbols.search(path.read_text(errors="ignore")):
+                offenders.append(path.relative_to(ROOT).as_posix())
+    assert offenders == [], offenders
+    # and the compiler lanes are pinned by the control plane, not by the catalog
+    ui_src = (ROOT / "orchestrator" / "orchestrator" / "api" / "ui.py").read_text()
+    assert "chat_compiler" not in ui_src.split("def _litellm_models")[1].split("def _litellm_credentials")[0]
+
