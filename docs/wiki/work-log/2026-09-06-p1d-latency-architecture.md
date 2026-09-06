@@ -52,6 +52,8 @@ Plan gate (ledger row, read from disk before this phase): *on B: exactly 1 embed
 
 **Unit proof:** 78 tests passed in the chat/engine/lease suites (+5 engine, +5 route, +19 lease tests); spies: one `_embed_queries` call per distinct text set and one `_rerank_children` call per turn (`test_chat_retrieval_v2.py`), lanes concurrent / deadline drop / order independent of completion (`test_candidate_engine.py`), lease exclusion + interactive-before-background + fail-open (`test_metal_lease.py`).
 
+**Disposition.** IMPLEMENTED — GATE MISSED (HYBRID ≤ VECTOR + 0.5 s: +3.41 s p50, +0.51 s on OOM-free turns; judge timeouts 9–14 / 30 at 8 s under enrichment load). Halted per the goal after diagnosis and one corrective attempt; **the owner accepted the measured deviation on 2026-09-06 ("accept relative gates under contention and finish P1.e–P1.g")**, so the run resumes with P1.e. The numbers above are not revised.
+
 ## Rejected claims
 
 - "Keep the §3.16 starting rerank budget of 3.0 s." Rejected by benchmark (arm 1): it is below this reranker's physical floor and timed the judge out on 30/30 turns, turning the composer into fusion order without anyone asking for it. §3.16 calls its numbers "starting budgets (to benchmark)"; the benchmarked default is 8.0 s, receipted on the field.
