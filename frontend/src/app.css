@@ -480,3 +480,33 @@ select, input, textarea { font: inherit; color: var(--text); }
 /* machine: code */
 .code-block, .code-body, .code-lang { font-family: var(--pm-mono); }
 .code-body { font-size: 12.5px; line-height: 1.5; }
+
+/* ---------------- LEGIBILITY-V1 (owner 2026-09-06: "hard to read text and differentiate it from the UI") ----------------
+   Every theme's secondary text now clears WCAG AA on all three surfaces (themes.css: --text-dim ≥ 5.2:1 on --bg,
+   ≥ 4.6:1 on --bg-3; light-theme accents ≥ 4.5:1). The reading column is full-contrast prose; secondary text is
+   reserved for machine information; the occasional highlight marks a semantic anchor, a citation or a selection. */
+.msg-assistant .answer, .answer .md p, .answer .md li { color: var(--text); }
+.answer .md strong, .answer .md b {
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 13%, transparent);   /* the occasional highlight: an anchor, not a shout */
+  padding: 0 0.18em; border-radius: 3px; box-decoration-break: clone; -webkit-box-decoration-break: clone;
+}
+.answer .md blockquote { color: color-mix(in srgb, var(--text) 86%, transparent); background: color-mix(in srgb, var(--accent) 6%, transparent); border-radius: 0 6px 6px 0; }
+.answer .md code { background: color-mix(in srgb, var(--accent) 10%, var(--bg-3)); color: var(--text); }
+.answer .md a { color: var(--accent); border-bottom-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+::selection { background: color-mix(in srgb, var(--accent) 32%, transparent); color: var(--text); }
+/* the reading column separates from the chrome by tone, not by boxes */
+.chat-scroll { background: var(--bg); }
+.msg-user .bubble { color: var(--text); }
+/* evidence: the quote is primary reading, the locator secondary, ids tertiary */
+.chunk-preview { color: color-mix(in srgb, var(--text) 90%, transparent); }
+.chunk-row > .chunk-loc:first-child { color: color-mix(in srgb, var(--text) 84%, transparent); }
+.chunk-row .chunk-loc:not(:first-child) { color: var(--text-dim); }
+/* process rail: rows readable, details secondary; the active row full contrast */
+.phase-line { color: color-mix(in srgb, var(--text) 74%, transparent); }
+.phase-line.active { color: var(--text); }
+.phase-detail, .phases-summary { color: var(--text-dim); }
+.phases-summary:hover, .phases-summary:focus-visible { color: var(--text); }
+/* metadata stays quiet but never below AA: the dim token is now AA on every surface */
+.meta-row, .latency, .chunk-chip, .copy-btn { color: var(--text-dim); }
+.chunk-chip:hover, .copy-btn:hover { color: var(--text); }
