@@ -6,6 +6,8 @@ and Ollama's FREE cloud tier, nothing else.
                     api_key `env:OPENCODE_API_KEY`) with the models in config/chat_models/opencode_free.json; the key itself
                     is read from .env at call time and never stored. `--refresh` re-fetches the zero-cost list from
                     models.dev into that config file first.
+  --alibaba         upsert the `alibaba-model-studio` row (Bailian token plan, ap-southeast-1, Anthropic-messages app; api_key
+                    `env:ALIBABA_MODEL_STUDIO_API_KEY`) with the nine models in config/chat_models/alibaba_model_studio.json.
   --ollama-free     disable any LiteLLM provider row that routes to the Ollama daemon (paid cloud models), then
                     `ollama pull` each free cloud model the UI allowlists (a cloud pull registers a name; no weights).
   --show            print the catalog the UI will offer (GET /synthesizers on the orchestrator when it is up).
@@ -24,6 +26,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "config" / "chat_models" / "opencode_free.json"
+ALIBABA = ROOT / "config" / "chat_models" / "alibaba_model_studio.json"
 MODELS_DEV = "https://models.dev/api.json"
 
 
@@ -49,7 +52,8 @@ def refresh_config() -> dict:
     return out
 
 
-def upsert_opencode(cfg: dict) -> str:
+def upsert_provider(cfg: dict) -> str:
+    """Upsert one provider row from a config snapshot (api_key stored as `env:<api_key_env>` — the value stays in .env)."""
     import psycopg
     dsn = os.environ.get("POLYMATH_PG_DSN") or os.environ.get("POLYMATH_TEST_DSN")
     if not dsn:
@@ -108,6 +112,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--opencode-free", action="store_true")
     ap.add_argument("--refresh", action="store_true", help="re-fetch the free list from models.dev into the config first")
+    ap.add_argument("--alibaba", action="store_true", help="upsert the Alibaba Model Studio row (Bailian token plan, ap-southeast-1, Anthropic-messages app) from config/chat_models/alibaba_model_studio.json")
     ap.add_argument("--ollama-free", action="store_true")
     ap.add_argument("--show", action="store_true")
     a = ap.parse_args()
@@ -115,7 +120,12 @@ def main() -> int:
         cfg = refresh_config(); print(f"config refreshed: {len(cfg['models'])} free models ({cfg['fetched']})")
     if a.opencode_free:
         cfg = json.loads(CONFIG.read_text())
-        pid = upsert_opencode(cfg)
+        pid = upsert_provider(cfg)
+        print(f"provider row `{pid}` upserted: {len(cfg['models'])} models, api_base {cfg['api_base']}, key env:{cfg['api_key_env']} "
+              f"({'set' if os.environ.get(cfg['api_key_env']) else 'NOT SET — add it to .env; the models stay hidden until then'})")
+    if a.alibaba:
+        cfg = json.loads(ALIBABA.read_text())
+        pid = upsert_provider(cfg)
         print(f"provider row `{pid}` upserted: {len(cfg['models'])} models, api_base {cfg['api_base']}, key env:{cfg['api_key_env']} "
               f"({'set' if os.environ.get(cfg['api_key_env']) else 'NOT SET — add it to .env; the models stay hidden until then'})")
     if a.ollama_free:

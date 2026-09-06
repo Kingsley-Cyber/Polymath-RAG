@@ -94,3 +94,25 @@ def test_setup_script_filters_models_dev_to_zero_cost_and_the_config_snapshot_is
     assert cfg["provider_id"] == "opencode-free" and cfg["litellm_provider"] == "openai" and cfg["api_key_env"] == "OPENCODE_API_KEY"
     assert cfg["api_base"] == "https://opencode.ai/zen/v1" and len(cfg["models"]) >= 20 and all(m.startswith("openai/") for m in cfg["models"])
     assert "openai/glm-5-free" in cfg["models"] and "openai/gpt-5" not in cfg["models"]
+
+
+def test_alibaba_model_studio_snapshot_is_an_anthropic_messages_provider_with_the_nine_plan_models():
+    cfg = json.loads((ROOT / "config" / "chat_models" / "alibaba_model_studio.json").read_text())
+    assert cfg["provider_id"] == "alibaba-model-studio" and cfg["litellm_provider"] == "anthropic" and cfg["api_key_env"] == "ALIBABA_MODEL_STUDIO_API_KEY"
+    assert cfg["api_base"].startswith("https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic") and cfg["api_base"].endswith("/v1/messages")
+    assert len(cfg["models"]) == 9 and all(m.startswith("anthropic/") for m in cfg["models"]) and "anthropic/qwen3.8-max" in cfg["models"]
+    assert ui._PROVIDER_LABELS["alibaba-model-studio"] == "Alibaba Model Studio"
+    assert "sk-" not in json.dumps(cfg)                                   # never a key in the snapshot
+
+
+def test_env_indirected_alibaba_row_labels_and_hides_like_opencode(monkeypatch):
+    row = {"provider_id": "alibaba-model-studio", "provider": "anthropic", "api_key": "env:ALIBABA_MODEL_STUDIO_API_KEY",
+           "api_base": "https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic/v1/messages", "models": ["anthropic/qwen3.8-max"], "enabled": True}
+    monkeypatch.setattr(ui, "_llm_provider_rows", lambda: [row])
+    monkeypatch.delenv("ALIBABA_MODEL_STUDIO_API_KEY", raising=False)
+    assert ui._litellm_models() == []
+    monkeypatch.setenv("ALIBABA_MODEL_STUDIO_API_KEY", "sk-test")
+    entries = ui._litellm_models()
+    assert entries[0]["id"] == "litellm:anthropic/qwen3.8-max" and entries[0]["label"] == "Alibaba Model Studio · qwen3.8-max"
+    assert ui._litellm_credentials("anthropic/qwen3.8-max") == {"api_key": "sk-test", "api_base": row["api_base"]}
+

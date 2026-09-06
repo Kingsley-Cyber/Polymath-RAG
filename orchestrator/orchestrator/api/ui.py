@@ -449,7 +449,7 @@ def _llm_provider_rows() -> list[dict]:
 
 #: display names for provider rows (the LiteLLM provider string is `openai`
 #: for every OpenAI-compatible endpoint, which is not what the user should read)
-_PROVIDER_LABELS = {"opencode-free": "OpenCode (free)"}
+_PROVIDER_LABELS = {"opencode-free": "OpenCode (free)", "alibaba-model-studio": "Alibaba Model Studio"}
 
 
 def _resolve_api_key(stored: str) -> str:

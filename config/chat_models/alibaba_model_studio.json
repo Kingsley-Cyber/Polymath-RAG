@@ -1,0 +1,81 @@
+{
+ "contract": "CHAT-MODEL-CATALOG-V1",
+ "provider_id": "alibaba-model-studio",
+ "display": "Alibaba Model Studio",
+ "litellm_provider": "anthropic",
+ "api_base": "https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic/v1/messages",
+ "api_base_note": "the token plan's Anthropic-messages app (ap-southeast-1). LiteLLM 1.98 uses api_base as the COMPLETE messages URL for the anthropic provider, so /v1/messages is part of it (clients that append the path themselves take the base without it)",
+ "api_key_env": "ALIBABA_MODEL_STUDIO_API_KEY",
+ "region": "ap-southeast-1",
+ "source": "owner-provided Model Studio token-plan configuration, 2026-09-06 (cost 0 under the plan; limits are the plan's)",
+ "fetched": "2026-09-06",
+ "models": [
+  "anthropic/qwen3.8-max",
+  "anthropic/qwen3.8-flash",
+  "anthropic/qwen3.7-max",
+  "anthropic/qwen3.7-plus",
+  "anthropic/qwen3.6-flash",
+  "anthropic/glm-5.2",
+  "anthropic/deepseek-v4-pro",
+  "anthropic/deepseek-v4-pro-0813",
+  "anthropic/deepseek-v4-flash-0731"
+ ],
+ "names": {
+  "anthropic/qwen3.8-max": "qwen3.8-max",
+  "anthropic/qwen3.8-flash": "qwen3.8-flash",
+  "anthropic/qwen3.7-max": "qwen3.7-max",
+  "anthropic/qwen3.7-plus": "qwen3.7-plus",
+  "anthropic/qwen3.6-flash": "qwen3.6-flash",
+  "anthropic/glm-5.2": "glm-5.2",
+  "anthropic/deepseek-v4-pro": "deepseek-v4-pro",
+  "anthropic/deepseek-v4-pro-0813": "deepseek-v4-pro-0813",
+  "anthropic/deepseek-v4-flash-0731": "deepseek-v4-flash-0731"
+ },
+ "details": {
+  "anthropic/qwen3.8-max": {
+   "reasoning": true,
+   "context_window": 983616,
+   "max_tokens": 131072
+  },
+  "anthropic/qwen3.8-flash": {
+   "reasoning": true,
+   "context_window": 983616,
+   "max_tokens": 131072
+  },
+  "anthropic/qwen3.7-max": {
+   "reasoning": false,
+   "context_window": 1000000,
+   "max_tokens": 65536
+  },
+  "anthropic/qwen3.7-plus": {
+   "reasoning": false,
+   "context_window": 1000000,
+   "max_tokens": 65536
+  },
+  "anthropic/qwen3.6-flash": {
+   "reasoning": false,
+   "context_window": 1000000,
+   "max_tokens": 32768
+  },
+  "anthropic/glm-5.2": {
+   "reasoning": false,
+   "context_window": 1000000,
+   "max_tokens": 16384
+  },
+  "anthropic/deepseek-v4-pro": {
+   "reasoning": false,
+   "context_window": 163840,
+   "max_tokens": 32768
+  },
+  "anthropic/deepseek-v4-pro-0813": {
+   "reasoning": false,
+   "context_window": 163840,
+   "max_tokens": 32768
+  },
+  "anthropic/deepseek-v4-flash-0731": {
+   "reasoning": false,
+   "context_window": 1000000,
+   "max_tokens": 393216
+  }
+ }
+}

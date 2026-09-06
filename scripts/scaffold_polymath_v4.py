@@ -1652,6 +1652,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/chat-m-replay-judge2-B.json", "json", None),
     ("docs/wiki/experiments/chat-m-replay-judge2-B.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-judge-fast-path.md", "md", None),
+    ("config/chat_models/alibaba_model_studio.json", "json", None),
     ("scripts/chat_models_setup.py", "py", None),
     ("config/chat_models/opencode_free.json", "json", None),
     ("tests/determinism/test_chat_model_catalog.py", "py", None),
