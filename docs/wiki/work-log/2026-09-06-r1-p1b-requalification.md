@@ -49,6 +49,8 @@ Run 01:03–01:18 UTC, 911 s, no degraded turns in either arm; OOM events logged
 
 **Disposition (R1.3).** **P1.b QUALIFIED.** Coverage gate as written (every dimension ✓ or explicitly flagged weak) — MET: system-honest 1.0 (60/60) on the frozen-plan pair and 1.0 live; strict 0.917 frozen / 0.9 live, reported with its retrieval ceiling (Open contract gaps 2). Latency gate (wall p50 ≤ baseline + 3 s) — MET: +0.41 s on the interleaved frozen-plan pair (+1.08 s on clean turns), +6.31 s on the sequential live pair, attributed above to the embedder thrash of the second window (29 vs 6 OOM events; embed p90 25.3 s) rather than to decomposition (lanes + seats +0.45 s at the median); the recorded +4.65 s was likewise a sequential pair across different contention windows and is superseded by the like-for-like instrument. The absolute wall (≈ 10 s of retrieval per turn, embed p50 3–4 s against 0.35 s fresh) is GPU contention with the enrichment embedder, not decomposition — it is P1.d's gate, measured under controlled interactive priority.
 
+**CI.** Commit bc051f6 failed agent-preflight and repo-governance on `missing declared path: docs/wiki/work-log/2026-09-06-r2-hybrid-sparse-lane.md`: the scaffold entry for the R2 work-log was staged one commit early. No history was rewritten; the next commit (88a6bda, R2) adds the file and is green — preflight, contracts, governance success, determinism success. Rule re-learned: a scaffold declaration ships in the same commit as the file it names.
+
 ## Rejected claims
 
 - "Count any same-corpus chunk as ✓ so strict reaches 1.0." Rejected: it would make strict identical to system-honest by definition; the strict reading keeps its retrieval ceiling visible instead.

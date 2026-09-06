@@ -1564,6 +1564,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/chat-baseline-r1-M-live-single.md", "md", None),
     ("docs/wiki/experiments/chat-baseline-r1-M-live.json", "json", None),
     ("docs/wiki/experiments/chat-baseline-r1-M-live.md", "md", None),
+    ("docs/wiki/experiments/chat-m-replay-p1c-B-before.json", "json", None),
+    ("docs/wiki/experiments/chat-m-replay-p1c-B-before.md", "md", None),
     ("scripts/chat_compiler_canary.py", "py", None),
     ("shared/polymath_shared/chat_plan.py", "py", None),
     ("eval/fixtures/chat_conversations/brainrot_transform.json", "json", None),
