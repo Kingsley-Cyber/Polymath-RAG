@@ -1837,6 +1837,21 @@ def _phase(stage: str, label: str, **detail) -> str:
                           "t": round(time.time(), 3), **detail})
 
 
+def _merged_degraded(fast: dict, stale) -> list[dict]:
+    """Route-level degradations (sparse fallback, parked reranker, stale projections) + the engine's deadline
+    receipts (P1.d `<lane>_timeout` / `rerank_timeout` / `embed_deadline`, P1.e `graph_degraded` / `wildcard`),
+    one entry per component (the engine also carries the parked-reranker note; it is not repeated)."""
+    from orchestrator.api.fast import degradations
+    from polymath_shared.evidence_assembly import stale_projection_degradation
+    out = list(degradations()) + list(stale_projection_degradation(stale))
+    seen = {d.get("component") for d in out if isinstance(d, dict)}
+    for d in ((fast or {}).get("meta") or {}).get("degraded") or []:
+        if isinstance(d, dict) and d.get("component") not in seen:
+            out.append(d)
+            seen.add(d.get("component"))
+    return out
+
+
 def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=None):
     """CHAT-RUNTIME-V1 (plan §3.7 / §4 P1.f): the ONE chat runtime — scope,
     compiler (off | shadow | on), retrieval composition (MODE-COMPOSITION-V1
@@ -2268,8 +2283,12 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 "composition": (fast.get("meta") or {}).get("composition"),
                 # NEVER-ERROR-ON-A-COLD-MODEL: a lane that degraded
                 # (e.g. reranker parked behind extraction) still answers
-                # — the UI says so instead of the query failing.
-                "degraded": degradations() + stale_projection_degradation(stale),
+                # — the UI says so instead of the query failing. The engine's
+                # deadline receipts (P1.d: `<lane>_timeout`, `rerank_timeout`,
+                # `embed_deadline`; P1.e: `graph_degraded`, `wildcard`) ride the
+                # same list so the answer event, the /chat JSON and the query
+                # receipt all say WHY a turn's evidence differs (never silent).
+                "degraded": _merged_degraded(fast, stale),
             }
 
             if llm_model is not None:

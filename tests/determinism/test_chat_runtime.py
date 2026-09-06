@@ -338,6 +338,35 @@ def test_run_chat_and_the_stream_answer_frame_agree_on_every_authority_with_the_
     assert hc.receipts[0]["out"]["citations"] == out["citations"] and hc.receipts[0]["out"]["claims"] == out["claims"]
 
 
+def test_engine_deadline_receipts_ride_the_degraded_list_on_both_routes_and_in_the_receipt(monkeypatch):
+    """P1.d/P1.e deadline receipts (`rerank_timeout`, `<lane>_timeout`, `embed_deadline`, `graph_degraded`, `wildcard`)
+    live in the engine's meta.degraded; both transports must show them in retrieval.degraded and in the query receipt —
+    a judge that timed out on one route is the documented cause of a differing evidence order, never a silent one."""
+    body = dict(BASE, mode="HYBRID")
+    receipt = {"component": "rerank_timeout", "effect": "fusion order kept (no judge)", "reason": "judge past 8.0 s"}
+
+    def runtime():
+        h = Runtime(monkeypatch, rerank_note="reranker parked: sidecar unavailable")
+        inner = cr.chat_retrieve_mode
+
+        def with_deadline_receipt(mode, query, corpus_id, **kw):
+            out = inner(mode, query, corpus_id, **kw)
+            out["meta"].setdefault("degraded", []).append(dict(receipt))
+            return out
+        monkeypatch.setattr(cr, "chat_retrieve_mode", with_deadline_receipt)
+        return h
+
+    hs = runtime()
+    frame = _answer(_stream(body))
+    hc = runtime()
+    out = ui.run_chat(ui.StreamChatRequest(**body))
+    for retrieval in (frame["retrieval"], out["retrieval"]):
+        assert [d["component"] for d in retrieval["degraded"]] == ["reranker", "rerank_timeout"], retrieval["degraded"]
+        assert retrieval["degraded"][-1]["reason"] == "judge past 8.0 s"
+    for r in (hs.receipts[0], hc.receipts[0]):
+        assert [d["component"] for d in r["out"]["meta"]["degraded"]] == ["reranker", "rerank_timeout"], r["out"]["meta"].get("degraded")
+
+
 def test_llm_synthesizer_parity_used_evidence_legend_and_prompt(monkeypatch):
     body = dict(BASE, synthesizer="ollama:fake", carry_context=CARRY, history=HISTORY, reasoning="none")
     Runtime(monkeypatch)
