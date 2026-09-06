@@ -345,11 +345,11 @@ def test_rerank_wrapper_threads_priority_and_keeps_legacy_clients_working():
             self.priority = priority
             return super().rerank(query, documents, top_k)
 
-    surfaces = [f"{'x' * i}" for i in range(1, 36)]        # 35 → 16 + 16 + 3
+    surfaces = [f"{'x' * i}" for i in range(1, 71)]        # 70 → 64 + 6 (JUDGE-FAST-PATH-V1: one request per judge call ≤ 64)
     legacy = Legacy()
     resp = R._batched_scores(legacy, "q", surfaces)
-    assert legacy.calls == [16, 16, 3] and resp["queued_ms"] == 4.5
-    assert resp["order"][0] == 34 and resp["scores"][34] == 35.0
+    assert legacy.calls == [64, 6] and resp["queued_ms"] == 3.0
+    assert resp["order"][0] == 69 and resp["scores"][69] == 70.0
     rec = Recording()
     R._batched_scores(rec, "q", surfaces, priority="interactive")
     assert rec.priority == "interactive"

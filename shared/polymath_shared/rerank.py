@@ -26,7 +26,9 @@ RERANK_VERSION = "g3-cross-representation-v1"
 #: deterministically from the merged scores (ties by original index).
 #: Same remedy class as the embedder's 64-batching (book-scale finding
 #: #3). Operational bound only — no scoring semantics change.
-RERANK_BATCH_SIZE = 16
+#: JUDGE-FAST-PATH-V1 (2026-09-06): 64 = the sidecar's wire cap, so a 24-pair chat judge call is ONE request and
+#: ONE forward pass (the sidecar scores a request in a single batch, halving only on an accelerator OOM).
+RERANK_BATCH_SIZE = 64
 
 #: The batch pads to its LONGEST passage: one pathological 77,125-char
 #: chunk (release-books-v1 chunking outlier; corpus p99 = 1,245 chars)
