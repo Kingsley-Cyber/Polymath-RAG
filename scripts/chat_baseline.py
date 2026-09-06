@@ -357,7 +357,11 @@ def citation_stats(ans: dict, rec: dict) -> dict:
     selected = [e.get("chunk_id") for e in legend if e.get("chunk_id") and not e.get("carried")]
     lat = ret.get("latency_ms") or {}
     ph = (rec.get("meta") or {}).get("phase_ms") or {}
+    comp = ret.get("composition") or {}
     return {"engine": ret.get("engine"), "arrivals_n": len(arrivals),
+            "doc_share_top": comp.get("doc_share_top"), "docs_within_gap": comp.get("docs_within_gap"), "dominance": comp.get("dominance"),
+            "dominance_avoidable": comp.get("dominance_avoidable"),
+            "composition_slots": comp.get("slots"),
             "retrieval_ms": lat.get("total"), "rerank_ms": lat.get("rerank_select"), "embed_ms": lat.get("embed"),
             "phase_retrieve_ms": (round(ph["retrieve"] - ph.get("compile", 0), 1) if isinstance(ph.get("retrieve"), (int, float)) else None),
             "arrivals_missing": sum(1 for cid in selected if not arrivals.get(cid)),      # P1.a gate: 0 on every turn
@@ -463,6 +467,13 @@ def run(tag: str, synthesizer: str | None, limit: int | None, compiler: str | No
         "dims_ok_rate": round(sum(r.get("dims_ok") or 0 for r in ok) / max(1, sum(r.get("dims") or 0 for r in ok)), 3),
         "dims_covered_rate": round(sum(r.get("dims_covered") or 0 for r in ok) / max(1, sum(r.get("dims") or 0 for r in ok)), 3),
         "compiled_queries_mean": round(sum(r.get("compiled_queries") or 0 for r in ok) / max(1, len(ok)), 2),
+        # P1.c: gold survives selection where it was in the union; document dominance under the gate's condition
+        "survival_selected_given_union": round(sum(1 for r in ok if r.get("gold_in_union") and r.get("gold_selected_rank")) / max(1, sum(1 for r in ok if r.get("gold_in_union"))), 3),
+        "dominance_violations": sum(1 for r in ok if r.get("dominance")),
+        "dominance_avoidable_violations": sum(1 for r in ok if r.get("dominance_avoidable")),
+        "dominance_eligible_turns": sum(1 for r in ok if (r.get("docs_within_gap") or 0) >= 3),
+        "doc_share_top_mean": (round(sum(r.get("doc_share_top") or 0 for r in ok if r.get("doc_share_top") is not None) / max(1, sum(1 for r in ok if r.get("doc_share_top") is not None)), 3)
+                              if any(r.get("doc_share_top") is not None for r in ok) else None),
         "phase_retrieve_p50_s": (round(sorted(r["phase_retrieve_ms"] for r in ok if r.get("phase_retrieve_ms") is not None)[len([r for r in ok if r.get("phase_retrieve_ms") is not None]) // 2] / 1000, 2)
                                  if any(r.get("phase_retrieve_ms") is not None for r in ok) else None),
         "rerank_p50_s": (round(sorted(r["rerank_ms"] for r in ok if r.get("rerank_ms") is not None)[len([r for r in ok if r.get("rerank_ms") is not None]) // 2] / 1000, 2)

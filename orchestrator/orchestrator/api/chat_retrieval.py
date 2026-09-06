@@ -163,6 +163,7 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
             "evidence_count": len(rows), "candidates": len(result.union), "multi_lane": trace.get("multi_lane"),
             "subqueries": trace.get("subqueries"), "weak_aspects": trace.get("weak_aspects"), "weak_reasons": trace.get("weak_reasons"),
             "aspect_seated": trace.get("aspect_seated"), "aspect_best": trace.get("aspect_best"), "final_detail": trace.get("final_detail"),
+            "composition": trace.get("composition"),
             "aspects": {qid: {**a, "final": (trace.get("aspect_final") or {}).get(qid, 0), "prefix": (trace.get("aspect_prefix") or {}).get(qid),
                               "best": (trace.get("aspect_best") or {}).get(qid), "weak": (trace.get("weak_reasons") or {}).get(qid)}
                         for qid, a in (trace.get("aspects") or {}).items()},

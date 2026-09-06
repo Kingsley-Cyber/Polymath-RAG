@@ -76,7 +76,12 @@ class CandidateBudget:
     #: cannot be judged per turn yet (§3.8 "until the sidecar cap is
     #: raised"). The rerank prefix is fusion order; the funnel shows what
     #: it costs (LOST_AT_RERANK vs LOST_AT_UNION_TRUNCATION).
-    rerank_max: int = 20
+    #: P1.c (measured 2026-09-06 on the frozen-plan B replay, composer on): at 20 judged pairs survival-given-union
+    #: was 22/27 = 0.815 with four gold chunks sitting at union ranks 21/21/27/38, never judged. 24 seats the two
+    #: rank-21 golds (23/27 = 0.852, gate ≥ 0.85; MRR 0.578) for +0.9 s rerank p50; 28 adds the rank-27 gold
+    #: (24/27 = 0.889, MRR 0.594) for another +1.7 s p50 under contention (+1.0 s fresh) — recorded, not taken:
+    #: the plan's rerank budget is 3 s and P1.d makes the judged prefix deadline-aware (28 = its ceiling candidate).
+    rerank_max: int = 24
     synthesis_max: int = 15
     rrf_k: int = 60
     neighbor_expansion: int = 0
@@ -108,6 +113,26 @@ class CandidateBudget:
     aspect_prefix_seats: int = 3
     aspect_weak_floor: float = 0.5
     aspect_final_seats: int = 1
+    #: P1.c EVIDENCE COMPOSER (§3.17): deterministic, metadata only. Slots
+    #: over the judged prefix: pure relevance → source diversity (soft max
+    #: per document unless the score gap to the best unrepresented document
+    #: is large) → sparse winners (lane C arrivals) → aspect coverage (one
+    #: seat per non-weak compiled query not yet represented) → fill. Scores
+    #: are compared on a sigmoid of the raw judge logit so "gap 0.1" means
+    #: the same thing on every reranker model.
+    compose_relevance_slots: int = 8
+    compose_diversity_slots: int = 4
+    compose_doc_soft_max: int = 3
+    compose_sparse_slots: int = 3
+    compose_aspect_slots: int = 3
+    compose_score_gap: float = 0.1
+    #: dominance guard (P1.c gate): max share of the final set one document may fill when ≥ 3 documents are within the gap
+    compose_dominance_share: float = 0.6
+    #: bounded multi-lane agreement: +boost per extra lane, capped, applied to
+    #: the sigmoid score for ORDERING inside composition only — never enough
+    #: to pass a candidate with a clearly higher judge score (§5 #10c)
+    compose_agreement_boost: float = 0.02
+    compose_agreement_cap: float = 0.05
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -546,6 +571,143 @@ def replace_candidate(c: CandidateEvidence) -> CandidateEvidence:
     return CandidateEvidence(**{**c.__dict__, "arrivals": list(c.arrivals), "query_ids": list(c.query_ids)})
 
 
+def _sig(x: Optional[float]) -> float:
+    import math
+    if x is None:
+        return 0.0
+    x = max(-30.0, min(30.0, float(x)))
+    return 1.0 / (1.0 + math.exp(-x))
+
+
+def judged_score(c: CandidateEvidence, budget: CandidateBudget) -> float:
+    """Sigmoid of the judge's logit plus the bounded agreement bonus (ordering only)."""
+    if c.rerank_score is None:          # degraded judge: fusion order stands (it already carries lane agreement)
+        return 0.0
+    extra = max(0, len(c.arrivals) - 1)
+    return _sig(c.rerank_score) + min(budget.compose_agreement_cap, budget.compose_agreement_boost * extra)
+
+
+def compose_evidence(judged: list[CandidateEvidence], budget: CandidateBudget, *, weak_aspects: Iterable[str] = (),
+                     primary_id: str = "q0") -> tuple[list[CandidateEvidence], dict]:
+    """EVIDENCE-COMPOSER-V1 (§3.17). `judged` = the reranked prefix in judge
+    order (rerank_score set, or fusion order when the judge degraded).
+    Returns (final, composition trace). A chunk may satisfy several slots;
+    the final list is deduped and may therefore be shorter than the cap."""
+    cap = budget.synthesis_max
+    weak = set(weak_aspects or ())
+    if not judged:
+        return [], {"slots": {}, "doc_counts": {}, "doc_share_top": 0.0, "docs_within_gap": 0, "dominance": False, "aspect_seats": [], "agreement_reordered": 0}
+    order = sorted(range(len(judged)), key=lambda i: (-judged_score(judged[i], budget), i))
+    order = [judged[i] for i in order]
+    final: list[CandidateEvidence] = []
+    seen: set[str] = set()
+    slots = {"relevance": 0, "diversity": 0, "sparse": 0, "aspect": 0, "fill": 0}
+    doc_count: dict[str, int] = {}
+    aspect_seats: list[dict] = []
+
+    def admit(c: CandidateEvidence, slot: str) -> bool:
+        if c.chunk_id in seen or len(final) >= cap:
+            return False
+        seen.add(c.chunk_id); final.append(c); doc_count[c.doc_id] = doc_count.get(c.doc_id, 0) + 1; slots[slot] += 1
+        return True
+
+    judged_any = any(c.rerank_score is not None for c in judged)
+    floor = budget.aspect_weak_floor if judged_any else None
+
+    def accepted(c: CandidateEvidence) -> bool:
+        """Slots 2–4 never promote what the judge rejected (sigmoid < floor); the fill step may still take it."""
+        return floor is None or c.rerank_score is None or _sig(c.rerank_score) >= floor
+
+    def best_unrepresented() -> Optional[float]:
+        return next((judged_score(c, budget) for c in order if c.doc_id not in doc_count and accepted(c)), None)
+
+    # DOMINANCE GUARD (P1.c gate): while ≥ 3 documents score within the gap of the top, no document may take more
+    # than compose_dominance_share of the set through slots 2–5; the final fill pass lifts the cap so seats are never
+    # left empty when only one document has evidence left (the receipt then says the dominance was not avoidable)
+    top_now = judged_score(order[0], budget)
+    docs_within_now = len({c.doc_id for c in order if top_now - judged_score(c, budget) <= budget.compose_score_gap})
+    share_cap = int(budget.compose_dominance_share * cap)
+    guard = docs_within_now >= 3
+
+    def capped(c: CandidateEvidence) -> bool:
+        return guard and doc_count.get(c.doc_id, 0) >= share_cap
+
+    # 1. pure relevance
+    for c in order[:budget.compose_relevance_slots]:
+        admit(c, "relevance")
+    # 2. source diversity (≤ compose_diversity_slots, judge-accepted only): soft max per document unless the
+    #    score gap to the best unrepresented document is large
+    for c in order:
+        if len(final) >= cap or slots["diversity"] >= budget.compose_diversity_slots:
+            break
+        if c.chunk_id in seen or not accepted(c) or capped(c):
+            continue
+        bu = best_unrepresented()
+        under_cap = doc_count.get(c.doc_id, 0) < budget.compose_doc_soft_max
+        big_gap = bu is None or (judged_score(c, budget) - bu) >= budget.compose_score_gap
+        if under_cap or big_gap:
+            admit(c, "diversity")
+    # 3. sparse winners (exact-match lane arrivals) not yet seated
+    n = 0
+    for c in order:
+        if n >= budget.compose_sparse_slots or len(final) >= cap:
+            break
+        if LANE_C in c.arrivals and c.chunk_id not in seen and accepted(c) and not capped(c) and admit(c, "sparse"):
+            n += 1
+    # 4. aspect coverage: one seat per non-weak compiled query not yet represented (displacing the lowest
+    #    item that is not another aspect's only representative when the set is full)
+    represented = {q for c in final for q in c.query_ids}
+    aspects = []
+    for c in order:
+        for q in c.query_ids:
+            if q != primary_id and q not in weak and q not in aspects:
+                aspects.append(q)
+    for q in aspects[:budget.compose_aspect_slots]:
+        if q in represented:
+            continue
+        best_c = next((c for c in order if q in c.query_ids and accepted(c) and not capped(c)), None)
+        if best_c is None or best_c.chunk_id in seen:
+            continue
+        displaced = None
+        if len(final) >= cap:
+            for c in reversed(final):
+                others = [x for x in c.query_ids if x != primary_id]
+                if not others or all(sum(1 for f in final if x in f.query_ids) > 1 for x in others):
+                    displaced = c; break
+            if displaced is None:
+                continue
+            final.remove(displaced); seen.discard(displaced.chunk_id); doc_count[displaced.doc_id] -= 1
+        admit(best_c, "aspect"); represented.update(best_c.query_ids)
+        aspect_seats.append({"query_id": q, "chunk_id": best_c.chunk_id, "displaced": (displaced.chunk_id if displaced else None)})
+    # 5. fill remaining seats in judge order — with the DOMINANCE GUARD (gate: no final set with > 60 % of its
+    #    chunks from one document when ≥ 3 documents score within the gap of the top): while that holds, a document
+    #    already at the share cap yields its fill seats to the other close documents; a second pass lifts the cap so
+    #    seats are never left empty when only one document has evidence left
+    for c in order:
+        if len(final) >= cap:
+            break
+        if c.chunk_id in seen or capped(c):
+            continue
+        admit(c, "fill")
+    for c in order:
+        if len(final) >= cap:
+            break
+        if c.chunk_id not in seen:
+            admit(c, "fill")
+    # dominance receipt (gate: no final set with > 60 % from one document when ≥ 3 documents score within 0.1 of the top)
+    top = judged_score(order[0], budget)
+    docs_within = len({c.doc_id for c in order if top - judged_score(c, budget) <= budget.compose_score_gap})
+    share_top = (max(doc_count.values()) / len(final)) if final else 0.0
+    top_doc = max(doc_count, key=doc_count.get) if doc_count else None
+    literal = bool(share_top > budget.compose_dominance_share and docs_within >= 3)
+    # avoidable = a judge-accepted chunk of ANOTHER document was left out while the top document exceeded the share
+    avoidable = literal and any(c.chunk_id not in seen and c.doc_id != top_doc and accepted(c) for c in order)
+    trace = {"slots": slots, "doc_counts": dict(sorted(doc_count.items(), key=lambda kv: -kv[1])), "doc_share_top": round(share_top, 3),
+             "docs_within_gap": docs_within, "dominance": literal, "dominance_avoidable": avoidable, "aspect_seats": aspect_seats,
+             "agreement_reordered": sum(1 for i, c in enumerate(order) if c is not judged[i])}
+    return final, trace
+
+
 def select_evidence(result: CandidateResult, budget: CandidateBudget, *,
                     rerank_children: Optional[Callable[[str, list[dict]], list[dict]]] = None,
                     neighbor_lookup: Optional[Callable[[list[dict], int], list[dict]]] = None) -> tuple[list[CandidateEvidence], dict]:
@@ -602,28 +764,8 @@ def select_evidence(result: CandidateResult, budget: CandidateBudget, *,
                 weak_reason[qid] = "below_floor"
         else:
             aspect_best[qid] = None
-    final = list(prefix[:budget.synthesis_max])
-    seated: list[dict] = []
-    for qid in sub_ids:                                   # one seat per non-weak aspect not yet represented
-        if qid in weak_reason or any(qid in c.query_ids for c in final):
-            continue
-        best_c = next((c for c in prefix if qid in c.query_ids), None)   # prefix is in judge order
-        if best_c is None or len(seated) >= budget.aspect_final_seats * max(1, len(sub_ids)):
-            continue
-        if len(final) >= budget.synthesis_max:
-            # displace the lowest item that is not another aspect's only representative
-            victim = None
-            for c in reversed(final):
-                others = [q for q in c.query_ids if q != primary_id]
-                if not others or all(sum(1 for f in final if q in f.query_ids) > 1 for q in others):
-                    victim = c; break
-            if victim is None:
-                continue
-            final.remove(victim)
-            seated.append({"query_id": qid, "chunk_id": best_c.chunk_id, "displaced": victim.chunk_id})
-        else:
-            seated.append({"query_id": qid, "chunk_id": best_c.chunk_id, "displaced": None})
-        final.append(best_c)
+    final, composition = compose_evidence(prefix, budget, weak_aspects=set(weak_reason), primary_id=primary_id)
+    seated = composition["aspect_seats"]
     added = 0
     if budget.neighbor_expansion > 0 and neighbor_lookup is not None and final:
         try:
@@ -648,7 +790,7 @@ def select_evidence(result: CandidateResult, budget: CandidateBudget, *,
     trace = {"pre_g3_order": pre, "post_g3_order": post, "g3_scores": scores, "rerank_prefix": len(pre),
              "neighbors_added": added, "final": [c.chunk_id for c in final],
              "aspect_final": aspect_final, "weak_aspects": weak, "weak_reasons": weak_reason,
-             "aspect_prefix": aspect_prefix, "aspect_best": aspect_best, "aspect_seated": seated,
+             "aspect_prefix": aspect_prefix, "aspect_best": aspect_best, "aspect_seated": seated, "composition": composition,
              "final_detail": [{"chunk_id": c.chunk_id, "doc_id": c.doc_id, "rerank_score": c.rerank_score,
                                "arrivals": list(c.arrivals), "query_ids": list(c.query_ids)} for c in final]}
     return final, trace

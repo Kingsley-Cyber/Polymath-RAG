@@ -136,7 +136,7 @@ def test_budget_shapes_on_the_resolved_request():
     meta = ce.shape_budget("who wrote this book?", b)
     assert meta.demote_noisy_regions is False and meta.neighbor_expansion == 0
     assert ce.shape_budget("what is a chroma keyer?", b) == b
-    assert b.to_dict()["lanes"] == list(ce.LANES) and b.rerank_max == 20 and b.synthesis_max == 15
+    assert b.to_dict()["lanes"] == list(ce.LANES) and b.rerank_max == 24 and b.synthesis_max == 15
 
 
 def test_selection_reranks_a_bounded_prefix_in_fusion_order_and_expands_neighbours_after():
@@ -156,7 +156,10 @@ def test_selection_reranks_a_bounded_prefix_in_fusion_order_and_expands_neighbou
     final, tr = ce.select_evidence(res, budget, rerank_children=rerank, neighbor_lookup=neighbours)
     assert seen["n"] == 4 and seen["q"] == res.context.query
     assert tr["pre_g3_order"] == [c.chunk_id for c in res.union[:4]] and tr["post_g3_order"] == list(reversed(tr["pre_g3_order"]))
-    assert [c.chunk_id for c in final[:3]] == tr["post_g3_order"][:3] and all(c.rerank_score is not None for c in final[:3])
+    # P1.c: composition orders by the judge's SCORE (sigmoid + bounded agreement), not by the order the client
+    # returned — this fake hands back ascending scores, so the top of the final set is the highest-scored prefix items
+    by_score = sorted(tr["post_g3_order"], key=lambda cid: -tr["g3_scores"][cid])
+    assert [c.chunk_id for c in final[:3]] == by_score[:3] and all(c.rerank_score is not None for c in final[:3])
     assert final[-1].chunk_id == "nbr-1" and final[-1].is_neighbor and final[-1].arrivals == [ce.ARRIVAL_NEIGHBOR] and tr["neighbors_added"] == 1
     # degraded reranker (None) → fusion order, same prefix
     final2, tr2 = ce.select_evidence(res, ce.CandidateBudget(rerank_max=4, synthesis_max=3), rerank_children=None)
@@ -321,3 +324,104 @@ def test_primary_is_flagged_weak_when_its_best_judged_candidate_is_below_the_flo
     assert "q0" not in tr2["weak_aspects"] and "q0" not in tr2["weak_reasons"]
     _, tr3 = ce.select_evidence(res, b, rerank_children=None)
     assert tr3["weak_reasons"] == {}
+
+
+def _cand(cid, doc, score, arrivals=(ce.LANE_B,), qids=("q0",)):
+    return ce.CandidateEvidence(chunk_id=cid, doc_id=doc, parent_id=f"{doc}-p", source_name=doc, text=cid,
+                                arrivals=list(arrivals), query_ids=list(qids), rerank_score=score)
+
+
+def test_composer_slots_relevance_then_diversity_then_sparse_then_aspects():
+    # judge order: ten d1 chunks (logit 6.0 … 5.1), two d2, two d3, a lane-C winner (d4, accepted), an aspect-only
+    # chunk (d5, q2, accepted) and a rejected d1 chunk. Diversity's 4 seats go to d2/d3, so the sparse and aspect
+    # winners need their own slots; the rejected chunk is left to the fill step.
+    judged = [_cand(f"d1-{i}", "d1", 6.0 - i * 0.1) for i in range(10)]
+    judged += [_cand("d2-a", "d2", 4.0), _cand("d2-b", "d2", 3.9), _cand("d3-a", "d3", 3.5), _cand("d3-b", "d3", 3.45),
+               _cand("sp-1", "d4", 0.8, arrivals=(ce.LANE_C,)), _cand("asp-q2", "d5", 0.6, qids=("q2",)), _cand("d1-y", "d1", -3.0)]
+    b = ce.CandidateBudget(synthesis_max=15, compose_relevance_slots=8, compose_diversity_slots=4, compose_doc_soft_max=3,
+                           compose_sparse_slots=3, compose_aspect_slots=3)
+    final, tr = ce.compose_evidence(judged, b)
+    ids = [c.chunk_id for c in final]
+    assert ids[:8] == [f"d1-{i}" for i in range(8)]                                    # pure relevance first, untouched
+    assert tr["slots"] == {"relevance": 8, "diversity": 4, "sparse": 1, "aspect": 1, "fill": 1}
+    assert {"d2-a", "d2-b", "d3-a", "d3-b"} <= set(ids)                                 # diversity seats other documents
+    assert "sp-1" in ids and "asp-q2" in ids and tr["aspect_seats"][0]["query_id"] == "q2"
+    assert "d1-y" not in ids and len(ids) == len(set(ids)) == 15                        # rejected chunk never promoted; cap held
+    assert tr["doc_counts"]["d1"] == 9 and tr["doc_share_top"] == 0.6 and tr["dominance"] is False
+    # a weak aspect is never seated; slots 2–4 never take a judge-rejected chunk even with room to spare
+    final2, tr2 = ce.compose_evidence(judged, b, weak_aspects={"q2"})
+    # the weak aspect gets no ASPECT seat (aspect slot 0, no seat receipt); its chunk may still arrive through the fill
+    # step in judge order once the dominance guard holds d1 at its share cap — that is fill, not coverage
+    assert tr2["aspect_seats"] == [] and tr2["slots"]["aspect"] == 0 and tr2["slots"]["fill"] == 2
+    small = [_cand("a", "d1", 3.0), _cand("rej", "d2", -2.0), _cand("rej-sp", "d3", -1.5, arrivals=(ce.LANE_C,))]
+    final3, tr3 = ce.compose_evidence(small, ce.CandidateBudget(synthesis_max=15, compose_relevance_slots=1))
+    assert [c.chunk_id for c in final3] == ["a", "rej-sp", "rej"] and tr3["slots"]["diversity"] == 0 and tr3["slots"]["sparse"] == 0 and tr3["slots"]["fill"] == 2   # fill = judge order
+
+
+def test_composer_flags_dominance_only_when_three_documents_are_close():
+    judged = [_cand(f"d1-{i}", "d1", 2.0) for i in range(12)] + [_cand("d2-a", "d2", 1.95), _cand("d3-a", "d3", 1.9)]
+    final, tr = ce.compose_evidence(judged, ce.CandidateBudget(synthesis_max=15))
+    assert tr["docs_within_gap"] >= 3
+    assert "d2-a" in [c.chunk_id for c in final] and "d3-a" in [c.chunk_id for c in final]
+    assert tr["doc_share_top"] <= 0.6 + 1e-9 or tr["dominance"] is True                # the flag is honest either way
+    judged2 = [_cand(f"d1-{i}", "d1", 5.0) for i in range(12)] + [_cand("d2-a", "d2", -4.0)]
+    final2, tr2 = ce.compose_evidence(judged2, ce.CandidateBudget(synthesis_max=15))
+    assert tr2["docs_within_gap"] == 1 and tr2["dominance"] is False and sum(1 for c in final2 if c.doc_id == "d1") == 12   # gap rule: one document may keep the set
+
+
+def test_agreement_bonus_never_passes_a_clearly_higher_judge_score():
+    single = _cand("s", "d1", 2.0)                                                       # sigmoid 0.88
+    triple = _cand("t", "d2", 1.9, arrivals=(ce.LANE_A, ce.LANE_B, ce.LANE_C))           # sigmoid 0.87 + 0.04 bonus → passes a near-tie
+    far = _cand("f", "d3", 0.5, arrivals=(ce.LANE_A, ce.LANE_B, ce.LANE_C))              # sigmoid 0.62 + 0.04 → never passes 0.88
+    b = ce.CandidateBudget()
+    assert ce.judged_score(triple, b) > ce.judged_score(single, b) > ce.judged_score(far, b)
+    final, _ = ce.compose_evidence([single, triple, far], b)
+    assert [c.chunk_id for c in final][:2] == ["t", "s"]
+    a, c2 = _cand("a", "d1", None), _cand("c", "d2", None, arrivals=(ce.LANE_A, ce.LANE_B))
+    assert ce.judged_score(c2, b) - ce.judged_score(a, b) <= b.compose_agreement_cap    # degraded judge: bonus stays bounded
+
+
+def test_select_evidence_composes_and_receipts_the_composition():
+    fake = Fake()
+    res = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=fake.dense, sparse_search=fake.sparse)
+    final, tr = ce.select_evidence(res, ce.CandidateBudget(rerank_max=8, synthesis_max=5),
+                                   rerank_children=lambda q, rows: sorted([dict(r, rerank_score=1.0 - i * 0.1) for i, r in enumerate(rows)], key=lambda r: -r["rerank_score"]))
+    assert len(final) <= 5 and tr["composition"]["slots"]["relevance"] == 5 and len(tr["final_detail"]) == len(final)
+    assert all(d["arrivals"] and d["chunk_id"] for d in tr["final_detail"]) and "doc_share_top" in tr["composition"]
+
+
+def test_fill_step_holds_the_top_document_at_the_share_cap_when_three_documents_are_close():
+    # 12 near-equal d1 chunks + 3 close d2 + 3 close d3 (all within 0.1 of the top): relevance takes 8 d1, diversity seats
+    # d2/d3 (4), then FILL must not hand the remaining seats back to d1 beyond 60 % of the cap (9 of 15)
+    judged = [_cand(f"d1-{i}", "d1", 2.0 - 0.001 * i) for i in range(12)]
+    judged += [_cand(f"d2-{i}", "d2", 1.98 - 0.001 * i) for i in range(3)] + [_cand(f"d3-{i}", "d3", 1.97 - 0.001 * i) for i in range(3)]
+    final, tr = ce.compose_evidence(judged, ce.CandidateBudget(synthesis_max=15))
+    assert tr["docs_within_gap"] >= 3 and len(final) == 15
+    assert tr["doc_counts"]["d1"] == 9 and tr["doc_share_top"] <= 0.6 + 1e-9 and tr["dominance"] is False
+    assert tr["doc_counts"]["d2"] == 3 and tr["doc_counts"]["d3"] == 3
+    # when the other documents run out, the cap lifts so seats are never wasted
+    judged2 = [_cand(f"d1-{i}", "d1", 2.0 - 0.001 * i) for i in range(14)] + [_cand("d2-0", "d2", 1.99), _cand("d3-0", "d3", 1.98)]
+    final2, tr2 = ce.compose_evidence(judged2, ce.CandidateBudget(synthesis_max=15))
+    assert len(final2) == 15 and tr2["doc_counts"]["d1"] == 13 and tr2["dominance"] is True     # honest flag, full set
+
+
+def test_dominance_is_avoidable_only_when_another_close_document_was_left_out():
+    # B #14 shape: the top document holds 12 confident chunks, two other documents within the gap hold 3 in total and all
+    # three are seated — the share is 0.8 (literal dominance) but nothing better was available: NOT avoidable
+    judged = [_cand(f"d1-{i}", "d1", 6.0 - 0.01 * i) for i in range(12)] + [_cand("d2-a", "d2", 5.95), _cand("d2-b", "d2", 5.9), _cand("d3-a", "d3", 5.85)]
+    final, tr = ce.compose_evidence(judged, ce.CandidateBudget(synthesis_max=15))
+    assert len(final) == 15 and {"d2-a", "d2-b", "d3-a"} <= {c.chunk_id for c in final}
+    assert tr["dominance"] is True and tr["dominance_avoidable"] is False
+    # same top document, but the other documents offer more accepted chunks than the composer seated: avoidable — and the
+    # guard prevents it (cap 9 of 15 for d1, the rest go to d2/d3)
+    judged2 = [_cand(f"d1-{i}", "d1", 6.0 - 0.01 * i) for i in range(12)] + [_cand(f"d2-{i}", "d2", 5.9 - 0.01 * i) for i in range(4)] + [_cand(f"d3-{i}", "d3", 5.8 - 0.01 * i) for i in range(4)]
+    final2, tr2 = ce.compose_evidence(judged2, ce.CandidateBudget(synthesis_max=15))
+    assert tr2["doc_counts"]["d1"] == 9 and tr2["dominance"] is False and tr2["dominance_avoidable"] is False
+    # the sparse and aspect slots respect the cap too: nine relevance seats already put d1 at the cap (9 of 15), so its
+    # lane-C winner and its aspect chunk are refused while d2/d3 (within the gap, accepted) take the remaining seats
+    judged3 = [_cand(f"d1-{i}", "d1", 6.0 - 0.01 * i) for i in range(9)] + [_cand("d1-sp", "d1", 5.0, arrivals=(ce.LANE_C,)), _cand("d1-q1", "d1", 4.9, qids=("q1",))] \
+              + [_cand(f"d2-{i}", "d2", 5.5 - 0.01 * i) for i in range(4)] + [_cand(f"d3-{i}", "d3", 5.4 - 0.01 * i) for i in range(4)]
+    final3, tr3 = ce.compose_evidence(judged3, ce.CandidateBudget(synthesis_max=15, compose_relevance_slots=9))
+    ids3 = {c.chunk_id for c in final3}
+    assert tr3["doc_counts"]["d1"] == 9 and "d1-sp" not in ids3 and "d1-q1" not in ids3 and tr3["slots"]["sparse"] == 0 and tr3["aspect_seats"] == []
+    assert len(final3) == 15 and tr3["dominance"] is False and tr3["dominance_avoidable"] is False

@@ -1,0 +1,2742 @@
+{
+ "summary": {
+  "tag": "p1c-final-M",
+  "fixture": "M",
+  "rerank_max_override": null,
+  "n_questions": 30,
+  "arms": [
+   "multi"
+  ],
+  "plans": "eval/fixtures/chat_multi_M_plans.json",
+  "run_utc": "2026-09-06T03:00:34+00:00",
+  "run_wall_s": 536.6,
+  "oom_during_run": {
+   "sidecar_embedder": 1,
+   "sidecar_reranker": 10
+  },
+  "per_arm": {
+   "multi": {
+    "n": 30,
+    "errors": 0,
+    "dims": 60,
+    "dims_ok_strict": 56,
+    "strict_rate": 0.933,
+    "dims_system_ok": 60,
+    "system_rate": 1.0,
+    "legacy_strict_rate": 0.933,
+    "legacy_system_rate": 1.0,
+    "dims_flagged": 6,
+    "dims_silent": 4,
+    "dims_covered_gold": 29,
+    "dims_covered": 50,
+    "dims_in_union": 50,
+    "primary_flagged_below_floor": 0,
+    "wall_p50_s": 12.21,
+    "wall_p90_s": 39.61,
+    "latency_ms_p50": {
+     "child": 63.0,
+     "deep": 314.6,
+     "doc": 47.0,
+     "embed": 2459.2,
+     "embedded_texts": 2.0,
+     "lane_document_summary": 47.0,
+     "lane_entity_card": 17.9,
+     "lane_global_dense_child": 27.2,
+     "lane_global_sparse_child": 23.9,
+     "lane_hierarchical_children": 314.8,
+     "lane_section_summary": 48.4,
+     "lane_sub_q1_dense": 23.5,
+     "lane_sub_q1_sparse": 22.3,
+     "lane_sub_q2_dense": 24.0,
+     "lane_sub_q2_sparse": 20.6,
+     "lane_sub_q3_dense": 28.4,
+     "lane_sub_q3_sparse": 23.7,
+     "rerank_select": 7650.6,
+     "section": 74.8,
+     "sparse": 53.0,
+     "total": 12109.8
+    },
+    "rerank_prefix_p50": 24.0,
+    "oom_embedder": 1,
+    "oom_reranker": 10,
+    "clean_turns": 22,
+    "clean_wall_p50_s": 10.13,
+    "clean_rerank_p50_ms": 6402.2,
+    "clean_embed_p50_ms": 2576.7,
+    "clean_total_p50_ms": 10037.7,
+    "silent": [
+     {
+      "idx": 1,
+      "term": "Nonsquare Pixels",
+      "naming": [
+       "q0"
+      ],
+      "in_union": true
+     },
+     {
+      "idx": 3,
+      "term": "Miscellaneous Drawing Tips",
+      "naming": [
+       "q0"
+      ],
+      "in_union": true
+     },
+     {
+      "idx": 6,
+      "term": "Movement of an Object with a Background",
+      "naming": [
+       "q1",
+       "q2"
+      ],
+      "in_union": true
+     },
+     {
+      "idx": 11,
+      "term": "Multiple moments",
+      "naming": [
+       "q0"
+      ],
+      "in_union": false
+     }
+    ],
+    "not_system_ok": []
+   }
+  }
+ },
+ "results": [
+  {
+   "idx": 0,
+   "arm": "multi",
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about making your own chroma keyer with what it says about nons",
+   "error": null,
+   "wall_ms": 11768.2,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 2,
+   "latency_ms": {
+    "child": 49.2,
+    "sparse": 38.6,
+    "doc": 73.2,
+    "section": 90.1,
+    "deep": 1418.0,
+    "embed": 4007.5,
+    "embedded_texts": 2,
+    "rerank_select": 5878.4,
+    "total": 11615.1,
+    "lane_global_dense_child": 27.0,
+    "lane_global_sparse_child": 20.1,
+    "lane_document_summary": 73.2,
+    "lane_section_summary": 74.4,
+    "lane_entity_card": 15.7,
+    "lane_hierarchical_children": 1418.4,
+    "lane_sub_q1_dense": 22.3,
+    "lane_sub_q1_sparse": 18.7
+   },
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": 0.9979,
+    "q1": 0.9941
+   },
+   "rerank_prefix": 24,
+   "candidates": 105,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 1,
+   "dims_covered": 2,
+   "dims_in_union": 2,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "Making Your Own Chroma Keyer",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "Nonsquare Pixels",
+     "covered_gold": false,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 1,
+   "arm": "multi",
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about nonsquare pixels with what it says about oebps/ritc 97811",
+   "error": null,
+   "wall_ms": 70355.2,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 2
+   },
+   "compiled_queries": 2,
+   "latency_ms": {
+    "child": 47.7,
+    "sparse": 47.5,
+    "doc": 71.6,
+    "section": 81.8,
+    "deep": 1579.8,
+    "embed": 7096.2,
+    "embedded_texts": 2,
+    "rerank_select": 61331.0,
+    "total": 70283.9,
+    "lane_global_dense_child": 24.4,
+    "lane_global_sparse_child": 26.3,
+    "lane_document_summary": 71.7,
+    "lane_section_summary": 70.5,
+    "lane_entity_card": 11.3,
+    "lane_hierarchical_children": 1580.3,
+    "lane_sub_q1_dense": 23.3,
+    "lane_sub_q1_sparse": 21.3
+   },
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": 0.9966,
+    "q1": 0.9966
+   },
+   "rerank_prefix": 24,
+   "candidates": 120,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 1,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 1,
+   "dims_covered_gold": 0,
+   "dims_covered": 1,
+   "dims_in_union": 1,
+   "legacy_dims_ok": 1,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "Nonsquare Pixels",
+     "covered_gold": false,
+     "covered_doc": false,
+     "covered": false,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": false,
+     "queries_naming": [
+      "q0"
+     ],
+     "silent": true,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "OEBPS/ritc 9781119685401 epub3 035 r1.xhtml",
+     "covered_gold": false,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": false,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 2,
+   "arm": "multi",
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about oebps/ritc 9781119685401 epub3 035 r1.xhtml with what it ",
+   "error": null,
+   "wall_ms": 25096.1,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 1
+   },
+   "compiled_queries": 2,
+   "latency_ms": {
+    "child": 55.9,
+    "sparse": 42.5,
+    "doc": 71.3,
+    "section": 83.6,
+    "deep": 1513.5,
+    "embed": 1118.2,
+    "embedded_texts": 2,
+    "rerank_select": 22139.9,
+    "total": 25043.3,
+    "lane_global_dense_child": 32.2,
+    "lane_global_sparse_child": 23.6,
+    "lane_document_summary": 71.3,
+    "lane_section_summary": 71.2,
+    "lane_entity_card": 12.5,
+    "lane_hierarchical_children": 1514.0,
+    "lane_sub_q1_dense": 23.7,
+    "lane_sub_q1_sparse": 18.9
+   },
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": 0.9977,
+    "q1": 0.7663
+   },
+   "rerank_prefix": 24,
+   "candidates": 118,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 1,
+   "dims_covered": 2,
+   "dims_in_union": 1,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "OEBPS/ritc 9781119685401 epub3 035 r1.xhtml",
+     "covered_gold": false,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": false,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "Miscellaneous Drawing Tips",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 3,
+   "arm": "multi",
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about miscellaneous drawing tips with what it says about transc",
+   "error": null,
+   "wall_ms": 23445.0,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 1
+   },
+   "compiled_queries": 2,
+   "latency_ms": {
+    "child": 50.9,
+    "sparse": 41.6,
+    "doc": 71.5,
+    "section": 89.3,
+    "deep": 1836.8,
+    "embed": 681.8,
+    "embedded_texts": 2,
+    "rerank_select": 20602.0,
+    "total": 23393.2,
+    "lane_global_dense_child": 27.1,
+    "lane_global_sparse_child": 21.2,
+    "lane_document_summary": 71.6,
+    "lane_section_summary": 73.2,
+    "lane_entity_card": 16.1,
+    "lane_hierarchical_children": 1837.3,
+    "lane_sub_q1_dense": 23.9,
+    "lane_sub_q1_sparse": 20.4
+   },
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": 0.9997,
+    "q1": 0.9997
+   },
+   "rerank_prefix": 24,
+   "candidates": 114,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 1,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 1,
+   "dims_covered_gold": 1,
+   "dims_covered": 1,
+   "dims_in_union": 2,
+   "legacy_dims_ok": 1,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "Miscellaneous Drawing Tips",
+     "covered_gold": false,
+     "covered_doc": false,
+     "covered": false,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": false,
+     "queries_naming": [
+      "q0"
+     ],
+     "silent": true,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "Transcoding versus Color Rerendering",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 4,
+   "arm": "multi",
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about transcoding versus color rerendering with what it says ab",
+   "error": null,
+   "wall_ms": 41230.5,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 2
+   },
+   "compiled_queries": 3,
+   "latency_ms": {
+    "child": 82.0,
+    "sparse": 67.6,
+    "doc": 72.1,
+    "section": 85.0,
+    "deep": 1960.7,
+    "embed": 1022.4,
+    "embedded_texts": 3,
+    "rerank_select": 37862.2,
+    "total": 41171.4,
+    "lane_global_dense_child": 29.0,
+    "lane_global_sparse_child": 22.9,
+    "lane_document_summary": 72.2,
+    "lane_section_summary": 71.8,
+    "lane_entity_card": 13.2,
+    "lane_hierarchical_children": 1961.4,
+    "lane_sub_q1_dense": 26.4,
+    "lane_sub_q1_sparse": 22.5,
+    "lane_sub_q2_dense": 26.7,
+    "lane_sub_q2_sparse": 22.3
+   },
+   "weak_aspects": [
+    "q2"
+   ],
+   "weak_reasons": {
+    "q2": "below_floor"
+   },
+   "aspect_best": {
+    "q0": 0.9987,
+    "q1": 0.9987,
+    "q2": 0.1192
+   },
+   "rerank_prefix": 24,
+   "candidates": 120,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 1,
+   "dims_silent": 0,
+   "dims_covered_gold": 1,
+   "dims_covered": 1,
+   "dims_in_union": 1,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "Transcoding versus Color Rerendering",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "FACE OFF",
+     "covered_gold": false,
+     "covered_doc": false,
+     "covered": false,
+     "in_union": false,
+     "flagged_weak": true,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q2"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 5,
+   "arm": "multi",
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about FACE OFF with what it says about affect, fatigue, and inj",
+   "error": null,
+   "wall_ms": 39611.6,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 1
+   },
+   "compiled_queries": 4,
+   "latency_ms": {
+    "child": 127.2,
+    "sparse": 116.9,
+    "doc": 75.7,
+    "section": 92.1,
+    "deep": 1757.5,
+    "embed": 3801.1,
+    "embedded_texts": 4,
+    "rerank_select": 33557.5,
+    "total": 39550.9,
+    "lane_global_dense_child": 40.8,
+    "lane_global_sparse_child": 25.2,
+    "lane_document_summary": 75.8,
+    "lane_section_summary": 72.8,
+    "lane_entity_card": 19.4,
+    "lane_hierarchical_children": 1758.0,
+    "lane_sub_q1_dense": 29.1,
+    "lane_sub_q1_sparse": 44.7,
+    "lane_sub_q2_dense": 29.0,
+    "lane_sub_q2_sparse": 23.4,
+    "lane_sub_q3_dense": 28.4,
+    "lane_sub_q3_sparse": 23.7
+   },
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": 0.9883,
+    "q1": 0.9883,
+    "q2": 0.9883,
+    "q3": 0.9883
+   },
+   "rerank_prefix": 24,
+   "candidates": 120,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 0,
+   "dims_covered": 2,
+   "dims_in_union": 1,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "FACE OFF",
+     "covered_gold": false,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": false,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "Affect, fatigue, and injury are control states",
+     "covered_gold": false,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1",
+      "q2",
+      "q3"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 6,
+   "arm": "multi",
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about affect, fatigue, and injury are control states with what ",
+   "error": null,
+   "wall_ms": 19187.7,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 3,
+   "latency_ms": {
+    "child": 87.6,
+    "sparse": 72.0,
+    "doc": 71.5,
+    "section": 84.7,
+    "deep": 1837.4,
+    "embed": 1573.4,
+    "embedded_texts": 3,
+    "rerank_select": 15383.8,
+    "total": 19133.9,
+    "lane_global_dense_child": 32.4,
+    "lane_global_sparse_child": 25.8,
+    "lane_document_summary": 71.6,
+    "lane_section_summary": 70.8,
+    "lane_entity_card": 14.0,
+    "lane_hierarchical_children": 1837.9,
+    "lane_sub_q1_dense": 27.4,
+    "lane_sub_q1_sparse": 22.7,
+    "lane_sub_q2_dense": 27.9,
+    "lane_sub_q2_sparse": 23.6
+   },
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": 0.9941,
+    "q1": 0.9579,
+    "q2": 0.9579
+   },
+   "rerank_prefix": 24,
+   "candidates": 120,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 1,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 1,
+   "dims_covered_gold": 1,
+   "dims_covered": 1,
+   "dims_in_union": 2,
+   "legacy_dims_ok": 1,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "Affect, fatigue, and injury are control states",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "Movement of an Object with a Background",
+     "covered_gold": false,
+     "covered_doc": false,
+     "covered": false,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": false,
+     "queries_naming": [
+      "q1",
+      "q2"
+     ],
+     "silent": true,
+     "shown": true,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 7,
+   "arm": "multi",
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about movement of an object with a background with what it says",
+   "error": null,
+   "wall_ms": 27672.2,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 1
+   },
+   "compiled_queries": 3,
+   "latency_ms": {
+    "child": 97.2,
+    "sparse": 78.0,
+    "doc": 79.5,
+    "section": 90.6,
+    "deep": 1928.2,
+    "embed": 2036.6,
+    "embedded_texts": 3,
+    "rerank_select": 23276.5,
+    "total": 27613.7,
+    "lane_global_dense_child": 33.2,
+    "lane_global_sparse_child": 25.7,
+    "lane_document_summary": 79.5,
+    "lane_section_summary": 75.1,
+    "lane_entity_card": 15.6,
+    "lane_hierarchical_children": 1928.8,
+    "lane_sub_q1_dense": 32.6,
+    "lane_sub_q1_sparse": 26.2,
+    "lane_sub_q2_dense": 31.6,
+    "lane_sub_q2_sparse": 26.3
+   },
+   "weak_aspects": [
+    "q1",
+    "q2"
+   ],
+   "weak_reasons": {
+    "q1": "below_floor",
+    "q2": "below_floor"
+   },
+   "aspect_best": {
+    "q0": 0.9988,
+    "q1": 0.0032,
+    "q2": 0.0032
+   },
+   "rerank_prefix": 24,
+   "candidates": 120,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 1,
+   "dims_silent": 0,
+   "dims_covered_gold": 0,
+   "dims_covered": 1,
+   "dims_in_union": 0,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "Movement of an Object with a Background",
+     "covered_gold": false,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": false,
+     "flagged_weak": true,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "Sound Editing",
+     "covered_gold": false,
+     "covered_doc": false,
+     "covered": false,
+     "in_union": false,
+     "flagged_weak": true,
+     "ok": true,
+     "queries_naming": [
+      "q1",
+      "q2"
+     ],
+     "silent": false,
+     "shown": false,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 8,
+   "arm": "multi",
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about sound editing with what it says about write radio sparely",
+   "error": null,
+   "wall_ms": 42268.3,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 2
+   },
+   "compiled_queries": 2,
+   "latency_ms": {
+    "child": 68.5,
+    "sparse": 52.9,
+    "doc": 90.8,
+    "section": 97.6,
+    "deep": 1892.8,
+    "embed": 1182.0,
+    "embedded_texts": 2,
+    "rerank_select": 38806.1,
+    "total": 42214.8,
+    "lane_global_dense_child": 39.2,
+    "lane_global_sparse_child": 29.4,
+    "lane_document_summary": 90.8,
+    "lane_section_summary": 77.2,
+    "lane_entity_card": 20.4,
+    "lane_hierarchical_children": 1893.3,
+    "lane_sub_q1_dense": 29.4,
+    "lane_sub_q1_sparse": 23.6
+   },
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": 0.9991,
+    "q1": 0.9991
+   },
+   "rerank_prefix": 24,
+   "candidates": 120,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 1,
+   "dims_covered": 2,
+   "dims_in_union": 1,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "Sound Editing",
+     "covered_gold": false,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": false,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "Write radio sparely",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 9,
+   "arm": "multi",
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about write radio sparely with what it says about rewards of go",
+   "error": null,
+   "wall_ms": 10033.5,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 2,
+   "latency_ms": {
+    "child": 67.0,
+    "sparse": 55.4,
+    "doc": 71.9,
+    "section": 89.5,
+    "deep": 947.5,
+    "embed": 1549.1,
+    "embedded_texts": 2,
+    "rerank_select": 7160.8,
+    "total": 9962.1,
+    "lane_global_dense_child": 34.3,
+    "lane_global_sparse_child": 28.7,
+    "lane_document_summary": 71.9,
+    "lane_section_summary": 71.8,
+    "lane_entity_card": 17.8,
+    "lane_hierarchical_children": 947.8,
+    "lane_sub_q1_dense": 32.8,
+    "lane_sub_q1_sparse": 26.8
+   },
+   "weak_aspects": [
+    "q1"
+   ],
+   "weak_reasons": {
+    "q1": "below_floor"
+   },
+   "aspect_best": {
+    "q0": 0.9997,
+    "q1": 0.0043
+   },
+   "rerank_prefix": 26,
+   "candidates": 105,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 1,
+   "dims_silent": 0,
+   "dims_covered_gold": 1,
+   "dims_covered": 1,
+   "dims_in_union": 2,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "Write radio sparely",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "Rewards of Good Type Development",
+     "covered_gold": false,
+     "covered_doc": false,
+     "covered": false,
+     "in_union": true,
+     "flagged_weak": true,
+     "ok": true,
+     "queries_naming": [
+      "q1"
+     ],
+     "silent": false,
+     "shown": false,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 10,
+   "arm": "multi",
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about rewards of good type development with what it says about ",
+   "error": null,
+   "wall_ms": 14717.9,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 2,
+   "latency_ms": {
+    "child": 67.1,
+    "sparse": 52.3,
+    "doc": 73.1,
+    "section": 87.2,
+    "deep": 302.3,
+    "embed": 1680.2,
+    "embedded_texts": 2,
+    "rerank_select": 12384.4,
+    "total": 14667.3,
+    "lane_global_dense_child": 36.3,
+    "lane_global_sparse_child": 27.2,
+    "lane_document_summary": 73.1,
+    "lane_section_summary": 70.9,
+    "lane_entity_card": 16.3,
+    "lane_hierarchical_children": 302.4,
+    "lane_sub_q1_dense": 30.9,
+    "lane_sub_q1_sparse": 25.2
+   },
+   "weak_aspects": [
+    "q1"
+   ],
+   "weak_reasons": {
+    "q1": "below_floor"
+   },
+   "aspect_best": {
+    "q0": 0.9994,
+    "q1": 0.0001
+   },
+   "rerank_prefix": 24,
+   "candidates": 110,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 1,
+   "dims_silent": 0,
+   "dims_covered_gold": 1,
+   "dims_covered": 1,
+   "dims_in_union": 2,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "Rewards of Good Type Development",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "Multiple moments",
+     "covered_gold": false,
+     "covered_doc": false,
+     "covered": false,
+     "in_union": true,
+     "flagged_weak": true,
+     "ok": true,
+     "queries_naming": [
+      "q1"
+     ],
+     "silent": false,
+     "shown": false,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 11,
+   "arm": "multi",
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about multiple moments with what it says about PREMISE AND THEM",
+   "error": null,
+   "wall_ms": 8220.1,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 2,
+   "latency_ms": {
+    "child": 71.5,
+    "sparse": 55.2,
+    "doc": 78.2,
+    "section": 89.6,
+    "deep": 1431.1,
+    "embed": 615.3,
+    "embedded_texts": 2,
+    "rerank_select": 5803.7,
+    "total": 8168.0,
+    "lane_global_dense_child": 36.3,
+    "lane_global_sparse_child": 28.3,
+    "lane_document_summary": 78.2,
+    "lane_section_summary": 71.0,
+    "lane_entity_card": 18.6,
+    "lane_hierarchical_children": 1431.5,
+    "lane_sub_q1_dense": 35.3,
+    "lane_sub_q1_sparse": 27.0
+   },
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": 0.9996,
+    "q1": 0.9996
+   },
+   "rerank_prefix": 24,
+   "candidates": 94,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 1,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 1,
+   "dims_covered_gold": 1,
+   "dims_covered": 1,
+   "dims_in_union": 1,
+   "legacy_dims_ok": 1,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "Multiple moments",
+     "covered_gold": false,
+     "covered_doc": false,
+     "covered": false,
+     "in_union": false,
+     "flagged_weak": false,
+     "ok": false,
+     "queries_naming": [
+      "q0"
+     ],
+     "silent": true,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "PREMISE AND THEME",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 12,
+   "arm": "multi",
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about PREMISE AND THEME with what it says about battling overco",
+   "error": null,
+   "wall_ms": 10720.6,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 3,
+   "latency_ms": {
+    "child": 102.0,
+    "sparse": 84.3,
+    "doc": 72.9,
+    "section": 94.1,
+    "deep": 1857.5,
+    "embed": 2991.8,
+    "embedded_texts": 3,
+    "rerank_select": 5446.0,
+    "total": 10666.8,
+    "lane_global_dense_child": 35.6,
+    "lane_global_sparse_child": 29.2,
+    "lane_document_summary": 72.9,
+    "lane_section_summary": 77.5,
+    "lane_entity_card": 16.6,
+    "lane_hierarchical_children": 1858.1,
+    "lane_sub_q1_dense": 32.5,
+    "lane_sub_q1_sparse": 27.9,
+    "lane_sub_q2_dense": 33.9,
+    "lane_sub_q2_sparse": 27.3
+   },
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": 0.9959,
+    "q1": 0.9909,
+    "q2": 0.9909
+   },
+   "rerank_prefix": 24,
+   "candidates": 120,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 2,
+   "dims_covered": 2,
+   "dims_in_union": 2,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "PREMISE AND THEME",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "Battling Overconfidence",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1",
+      "q2"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 13,
+   "arm": "multi",
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about battling overconfidence with what it says about changing ",
+   "error": null,
+   "wall_ms": 17893.7,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 2,
+   "latency_ms": {
+    "child": 74.7,
+    "sparse": 60.2,
+    "doc": 72.3,
+    "section": 92.8,
+    "deep": 1899.5,
+    "embed": 2595.2,
+    "embedded_texts": 2,
+    "rerank_select": 13004.7,
+    "total": 17822.4,
+    "lane_global_dense_child": 38.1,
+    "lane_global_sparse_child": 29.2,
+    "lane_document_summary": 72.3,
+    "lane_section_summary": 71.6,
+    "lane_entity_card": 21.3,
+    "lane_hierarchical_children": 1900.3,
+    "lane_sub_q1_dense": 36.8,
+    "lane_sub_q1_sparse": 31.3
+   },
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": 0.9937,
+    "q1": 0.985
+   },
+   "rerank_prefix": 24,
+   "candidates": 117,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 2,
+   "dims_covered": 2,
+   "dims_in_union": 2,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "Battling Overconfidence",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "Changing a level within a clip",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 14,
+   "arm": "multi",
+   "corpus_id": "cinema",
+   "question": "Compare what the book says about changing a level within a clip with what it says about ma",
+   "error": null,
+   "wall_ms": 8930.2,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 2,
+   "latency_ms": {
+    "child": 72.0,
+    "sparse": 55.9,
+    "doc": 71.8,
+    "section": 86.0,
+    "deep": 913.7,
+    "embed": 2360.3,
+    "embedded_texts": 2,
+    "rerank_select": 5297.1,
+    "total": 8875.2,
+    "lane_global_dense_child": 39.0,
+    "lane_global_sparse_child": 29.2,
+    "lane_document_summary": 71.8,
+    "lane_section_summary": 69.9,
+    "lane_entity_card": 16.2,
+    "lane_hierarchical_children": 913.9,
+    "lane_sub_q1_dense": 33.1,
+    "lane_sub_q1_sparse": 26.7
+   },
+   "weak_aspects": [
+    "q1"
+   ],
+   "weak_reasons": {
+    "q1": "below_floor"
+   },
+   "aspect_best": {
+    "q0": 0.9996,
+    "q1": 0.0011
+   },
+   "rerank_prefix": 24,
+   "candidates": 116,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 1,
+   "dims_covered": 2,
+   "dims_in_union": 2,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "Changing a level within a clip",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "Making Your Own Chroma Keyer",
+     "covered_gold": false,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": true,
+     "ok": true,
+     "queries_naming": [
+      "q1"
+     ],
+     "silent": false,
+     "shown": false,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 15,
+   "arm": "multi",
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about why innovative leaders make a difference with what it say",
+   "error": null,
+   "wall_ms": 9179.6,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 2,
+   "latency_ms": {
+    "child": 40.4,
+    "sparse": 49.7,
+    "doc": 15.1,
+    "section": 34.1,
+    "deep": 146.6,
+    "embed": 3079.6,
+    "embedded_texts": 2,
+    "rerank_select": 5752.1,
+    "total": 9128.7,
+    "lane_global_dense_child": 21.0,
+    "lane_global_sparse_child": 25.2,
+    "lane_document_summary": 15.1,
+    "lane_section_summary": 16.2,
+    "lane_entity_card": 18.0,
+    "lane_hierarchical_children": 146.8,
+    "lane_sub_q1_dense": 19.5,
+    "lane_sub_q1_sparse": 24.6
+   },
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": 0.9993,
+    "q1": 0.9993
+   },
+   "rerank_prefix": 24,
+   "candidates": 107,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 1,
+   "dims_covered": 2,
+   "dims_in_union": 1,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "Why Innovative Leaders Make a Difference",
+     "covered_gold": false,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": false,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "WHAT PROGRESS IS REALLY LIKE",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 16,
+   "arm": "multi",
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about WHAT PROGRESS IS REALLY LIKE with what it says about the ",
+   "error": null,
+   "wall_ms": 12646.5,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 2,
+   "latency_ms": {
+    "child": 55.1,
+    "sparse": 52.6,
+    "doc": 17.4,
+    "section": 48.2,
+    "deep": 326.8,
+    "embed": 3658.0,
+    "embedded_texts": 2,
+    "rerank_select": 8435.1,
+    "total": 12604.4,
+    "lane_global_dense_child": 26.7,
+    "lane_global_sparse_child": 29.3,
+    "lane_document_summary": 17.5,
+    "lane_section_summary": 24.6,
+    "lane_entity_card": 23.7,
+    "lane_hierarchical_children": 327.2,
+    "lane_sub_q1_dense": 28.4,
+    "lane_sub_q1_sparse": 23.4
+   },
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": 0.9968,
+    "q1": 0.9968
+   },
+   "rerank_prefix": 24,
+   "candidates": 114,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 1,
+   "dims_covered": 2,
+   "dims_in_union": 2,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "WHAT PROGRESS IS REALLY LIKE",
+     "covered_gold": false,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "The Big Idea",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 17,
+   "arm": "multi",
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about the big idea with what it says about automation aligned w",
+   "error": null,
+   "wall_ms": 8086.3,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 2,
+   "latency_ms": {
+    "child": 38.9,
+    "sparse": 39.9,
+    "doc": 16.2,
+    "section": 34.9,
+    "deep": 221.2,
+    "embed": 2630.1,
+    "embedded_texts": 2,
+    "rerank_select": 5048.6,
+    "total": 8042.7,
+    "lane_global_dense_child": 19.9,
+    "lane_global_sparse_child": 24.0,
+    "lane_document_summary": 16.2,
+    "lane_section_summary": 16.2,
+    "lane_entity_card": 18.7,
+    "lane_hierarchical_children": 221.6,
+    "lane_sub_q1_dense": 19.0,
+    "lane_sub_q1_sparse": 15.9
+   },
+   "weak_aspects": [
+    "q1"
+   ],
+   "weak_reasons": {
+    "q1": "below_floor"
+   },
+   "aspect_best": {
+    "q0": 0.9948,
+    "q1": 0.0034
+   },
+   "rerank_prefix": 25,
+   "candidates": 117,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 1,
+   "dims_silent": 0,
+   "dims_covered_gold": 0,
+   "dims_covered": 1,
+   "dims_in_union": 2,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "The Big Idea",
+     "covered_gold": false,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "Automation Aligned with Business Strategy",
+     "covered_gold": false,
+     "covered_doc": false,
+     "covered": false,
+     "in_union": true,
+     "flagged_weak": true,
+     "ok": true,
+     "queries_naming": [
+      "q1"
+     ],
+     "silent": false,
+     "shown": false,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 18,
+   "arm": "multi",
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about automation aligned with business strategy with what it sa",
+   "error": null,
+   "wall_ms": 14538.8,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 3,
+   "latency_ms": {
+    "child": 63.8,
+    "sparse": 54.1,
+    "doc": 14.6,
+    "section": 41.7,
+    "deep": 41.9,
+    "embed": 224.4,
+    "embedded_texts": 3,
+    "rerank_select": 14050.7,
+    "total": 14501.1,
+    "lane_global_dense_child": 22.9,
+    "lane_global_sparse_child": 19.9,
+    "lane_document_summary": 14.7,
+    "lane_section_summary": 19.7,
+    "lane_entity_card": 22.1,
+    "lane_hierarchical_children": 42.0,
+    "lane_sub_q1_dense": 21.3,
+    "lane_sub_q1_sparse": 17.9,
+    "lane_sub_q2_dense": 19.7,
+    "lane_sub_q2_sparse": 16.3
+   },
+   "weak_aspects": [
+    "q2"
+   ],
+   "weak_reasons": {
+    "q2": "below_floor"
+   },
+   "aspect_best": {
+    "q0": 0.9988,
+    "q1": 0.9903,
+    "q2": 0.0012
+   },
+   "rerank_prefix": 24,
+   "candidates": 120,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 1,
+   "dims_silent": 0,
+   "dims_covered_gold": 1,
+   "dims_covered": 1,
+   "dims_in_union": 2,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "Automation Aligned with Business Strategy",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "Cost Innovations",
+     "covered_gold": false,
+     "covered_doc": false,
+     "covered": false,
+     "in_union": true,
+     "flagged_weak": true,
+     "ok": true,
+     "queries_naming": [
+      "q1",
+      "q2"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 19,
+   "arm": "multi",
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about cost innovations with what it says about the migration of",
+   "error": null,
+   "wall_ms": 6977.0,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 2,
+   "latency_ms": {
+    "child": 41.7,
+    "sparse": 36.7,
+    "doc": 12.9,
+    "section": 33.6,
+    "deep": 174.9,
+    "embed": 717.9,
+    "embedded_texts": 2,
+    "rerank_select": 5908.5,
+    "total": 6935.3,
+    "lane_global_dense_child": 23.5,
+    "lane_global_sparse_child": 18.9,
+    "lane_document_summary": 12.9,
+    "lane_section_summary": 15.7,
+    "lane_entity_card": 17.9,
+    "lane_hierarchical_children": 175.2,
+    "lane_sub_q1_dense": 18.3,
+    "lane_sub_q1_sparse": 17.8
+   },
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": 0.9914,
+    "q1": 0.9914
+   },
+   "rerank_prefix": 24,
+   "candidates": 93,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 1,
+   "dims_covered": 2,
+   "dims_in_union": 2,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "Cost Innovations",
+     "covered_gold": false,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "The Migration of Capabilities",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 20,
+   "arm": "multi",
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about the migration of capabilities with what it says about get",
+   "error": null,
+   "wall_ms": 9002.9,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 2,
+   "latency_ms": {
+    "child": 40.0,
+    "sparse": 39.2,
+    "doc": 14.1,
+    "section": 34.6,
+    "deep": 173.1,
+    "embed": 2558.2,
+    "embedded_texts": 2,
+    "rerank_select": 6085.1,
+    "total": 8952.2,
+    "lane_global_dense_child": 20.6,
+    "lane_global_sparse_child": 23.6,
+    "lane_document_summary": 14.2,
+    "lane_section_summary": 16.4,
+    "lane_entity_card": 18.3,
+    "lane_hierarchical_children": 173.4,
+    "lane_sub_q1_dense": 19.4,
+    "lane_sub_q1_sparse": 15.7
+   },
+   "weak_aspects": [
+    "q1"
+   ],
+   "weak_reasons": {
+    "q1": "below_floor"
+   },
+   "aspect_best": {
+    "q0": 0.9984,
+    "q1": 0.0002
+   },
+   "rerank_prefix": 26,
+   "candidates": 116,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 1,
+   "dims_covered": 2,
+   "dims_in_union": 2,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "The Migration of Capabilities",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": true,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "Getting the Categories Right",
+     "covered_gold": false,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": true,
+     "ok": true,
+     "queries_naming": [
+      "q1"
+     ],
+     "silent": false,
+     "shown": false,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 21,
+   "arm": "multi",
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about the capabilities viewpoint with what it says about discov",
+   "error": null,
+   "wall_ms": 9976.7,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 2,
+   "latency_ms": {
+    "child": 46.0,
+    "sparse": 48.2,
+    "doc": 13.5,
+    "section": 33.9,
+    "deep": 121.1,
+    "embed": 3241.2,
+    "embedded_texts": 2,
+    "rerank_select": 6423.7,
+    "total": 9938.8,
+    "lane_global_dense_child": 27.4,
+    "lane_global_sparse_child": 20.3,
+    "lane_document_summary": 13.5,
+    "lane_section_summary": 16.0,
+    "lane_entity_card": 17.9,
+    "lane_hierarchical_children": 121.3,
+    "lane_sub_q1_dense": 18.7,
+    "lane_sub_q1_sparse": 27.9
+   },
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": 0.9996,
+    "q1": 0.9996
+   },
+   "rerank_prefix": 24,
+   "candidates": 88,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 0,
+   "dims_covered": 2,
+   "dims_in_union": 2,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "The Capabilities Viewpoint",
+     "covered_gold": false,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "Discovery Skill #4: Networking",
+     "covered_gold": false,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 22,
+   "arm": "multi",
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about getting the categories right with what it says about crea",
+   "error": null,
+   "wall_ms": 13484.7,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 2,
+   "latency_ms": {
+    "child": 58.2,
+    "sparse": 39.8,
+    "doc": 14.0,
+    "section": 35.7,
+    "deep": 107.8,
+    "embed": 7219.3,
+    "embedded_texts": 2,
+    "rerank_select": 5951.9,
+    "total": 13435.5,
+    "lane_global_dense_child": 38.6,
+    "lane_global_sparse_child": 24.0,
+    "lane_document_summary": 14.1,
+    "lane_section_summary": 17.1,
+    "lane_entity_card": 18.7,
+    "lane_hierarchical_children": 108.0,
+    "lane_sub_q1_dense": 19.7,
+    "lane_sub_q1_sparse": 16.0
+   },
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": 0.9992,
+    "q1": 0.9992
+   },
+   "rerank_prefix": 24,
+   "candidates": 87,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 1,
+   "dims_covered": 2,
+   "dims_in_union": 2,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "Getting the Categories Right",
+     "covered_gold": false,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "Creating Capabilities Through a Spin-out Organization",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 23,
+   "arm": "multi",
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about discovery skill #4: networking with what it says about so",
+   "error": null,
+   "wall_ms": 18754.4,
+   "oom": {
+    "sidecar_embedder": 1,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 3,
+   "latency_ms": {
+    "child": 60.4,
+    "sparse": 53.5,
+    "doc": 14.1,
+    "section": 33.8,
+    "deep": 198.3,
+    "embed": 12943.4,
+    "embedded_texts": 3,
+    "rerank_select": 5402.1,
+    "total": 18715.2,
+    "lane_global_dense_child": 23.6,
+    "lane_global_sparse_child": 19.9,
+    "lane_document_summary": 14.1,
+    "lane_section_summary": 15.8,
+    "lane_entity_card": 18.0,
+    "lane_hierarchical_children": 198.7,
+    "lane_sub_q1_dense": 19.0,
+    "lane_sub_q1_sparse": 17.1,
+    "lane_sub_q2_dense": 17.8,
+    "lane_sub_q2_sparse": 16.6
+   },
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": 0.9992,
+    "q1": 0.9196,
+    "q2": 0.9196
+   },
+   "rerank_prefix": 24,
+   "candidates": 120,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 1,
+   "dims_covered": 2,
+   "dims_in_union": 2,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "Discovery Skill #4: Networking",
+     "covered_gold": false,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "Solar Versus Conventional Electrical Energy",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1",
+      "q2"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 24,
+   "arm": "multi",
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about creating capabilities through a spin-out organization wit",
+   "error": null,
+   "wall_ms": 14101.7,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 3,
+   "latency_ms": {
+    "child": 62.1,
+    "sparse": 62.5,
+    "doc": 19.3,
+    "section": 36.1,
+    "deep": 65.6,
+    "embed": 2745.9,
+    "embedded_texts": 3,
+    "rerank_select": 11049.7,
+    "total": 14057.4,
+    "lane_global_dense_child": 22.2,
+    "lane_global_sparse_child": 23.0,
+    "lane_document_summary": 19.3,
+    "lane_section_summary": 17.2,
+    "lane_entity_card": 18.9,
+    "lane_hierarchical_children": 65.8,
+    "lane_sub_q1_dense": 18.5,
+    "lane_sub_q1_sparse": 20.8,
+    "lane_sub_q2_dense": 21.4,
+    "lane_sub_q2_sparse": 18.8
+   },
+   "weak_aspects": [
+    "q1",
+    "q2"
+   ],
+   "weak_reasons": {
+    "q1": "below_floor",
+    "q2": "below_floor"
+   },
+   "aspect_best": {
+    "q0": 0.9993,
+    "q1": 0.026,
+    "q2": 0.026
+   },
+   "rerank_prefix": 24,
+   "candidates": 120,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 1,
+   "dims_covered": 2,
+   "dims_in_union": 2,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "Creating Capabilities Through a Spin-out Organization",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "Cost Structures and Value Networks",
+     "covered_gold": false,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": true,
+     "ok": true,
+     "queries_naming": [
+      "q1",
+      "q2"
+     ],
+     "silent": false,
+     "shown": false,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 25,
+   "arm": "multi",
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about solar versus conventional electrical energy with what it ",
+   "error": null,
+   "wall_ms": 8944.8,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 3,
+   "latency_ms": {
+    "child": 64.8,
+    "sparse": 56.8,
+    "doc": 22.7,
+    "section": 37.8,
+    "deep": 40.6,
+    "embed": 2287.9,
+    "embedded_texts": 3,
+    "rerank_select": 6380.8,
+    "total": 8899.6,
+    "lane_global_dense_child": 24.3,
+    "lane_global_sparse_child": 23.8,
+    "lane_document_summary": 22.8,
+    "lane_section_summary": 20.4,
+    "lane_entity_card": 17.5,
+    "lane_hierarchical_children": 40.7,
+    "lane_sub_q1_dense": 20.7,
+    "lane_sub_q1_sparse": 16.5,
+    "lane_sub_q2_dense": 19.9,
+    "lane_sub_q2_sparse": 16.6
+   },
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": 0.9954,
+    "q1": 0.9954,
+    "q2": 0.9954
+   },
+   "rerank_prefix": 24,
+   "candidates": 71,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 2,
+   "dims_covered": 2,
+   "dims_in_union": 2,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "Solar Versus Conventional Electrical Energy",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "HOW DISK DRIVES WORK",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1",
+      "q2"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 26,
+   "arm": "multi",
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about cost structures and value networks with what it says abou",
+   "error": null,
+   "wall_ms": 10799.6,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 3,
+   "latency_ms": {
+    "child": 72.8,
+    "sparse": 53.1,
+    "doc": 14.3,
+    "section": 36.3,
+    "deep": 100.1,
+    "embed": 2316.4,
+    "embedded_texts": 3,
+    "rerank_select": 8140.4,
+    "total": 10746.6,
+    "lane_global_dense_child": 34.5,
+    "lane_global_sparse_child": 19.9,
+    "lane_document_summary": 14.3,
+    "lane_section_summary": 17.8,
+    "lane_entity_card": 18.5,
+    "lane_hierarchical_children": 100.3,
+    "lane_sub_q1_dense": 18.1,
+    "lane_sub_q1_sparse": 16.8,
+    "lane_sub_q2_dense": 20.3,
+    "lane_sub_q2_sparse": 16.5
+   },
+   "weak_aspects": [
+    "q2"
+   ],
+   "weak_reasons": {
+    "q2": "below_floor"
+   },
+   "aspect_best": {
+    "q0": 0.9919,
+    "q1": 0.9897,
+    "q2": 0.0447
+   },
+   "rerank_prefix": 24,
+   "candidates": 120,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 1,
+   "dims_covered": 2,
+   "dims_in_union": 2,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "Cost Structures and Value Networks",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "Innovations That Will Sustain the Disruption",
+     "covered_gold": false,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": true,
+     "ok": true,
+     "queries_naming": [
+      "q2"
+     ],
+     "silent": false,
+     "shown": false,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 27,
+   "arm": "multi",
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about HOW DISK DRIVES WORK with what it says about make it plat",
+   "error": null,
+   "wall_ms": 8695.1,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 2,
+   "latency_ms": {
+    "child": 42.7,
+    "sparse": 45.6,
+    "doc": 17.4,
+    "section": 33.8,
+    "deep": 85.2,
+    "embed": 2965.4,
+    "embedded_texts": 2,
+    "rerank_select": 5459.1,
+    "total": 8656.3,
+    "lane_global_dense_child": 23.9,
+    "lane_global_sparse_child": 23.6,
+    "lane_document_summary": 17.5,
+    "lane_section_summary": 16.0,
+    "lane_entity_card": 17.9,
+    "lane_hierarchical_children": 85.3,
+    "lane_sub_q1_dense": 19.0,
+    "lane_sub_q1_sparse": 22.1
+   },
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": 0.9924,
+    "q1": 0.7773
+   },
+   "rerank_prefix": 24,
+   "candidates": 105,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 2,
+   "dims_covered": 2,
+   "dims_in_union": 2,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "HOW DISK DRIVES WORK",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "Make It Platform-Centric",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 28,
+   "arm": "multi",
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about innovations that will sustain the disruption with what it",
+   "error": null,
+   "wall_ms": 9290.2,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 2,
+   "latency_ms": {
+    "child": 68.8,
+    "sparse": 56.3,
+    "doc": 17.2,
+    "section": 67.7,
+    "deep": 166.9,
+    "embed": 439.5,
+    "embedded_texts": 2,
+    "rerank_select": 8407.3,
+    "total": 9241.3,
+    "lane_global_dense_child": 23.3,
+    "lane_global_sparse_child": 23.7,
+    "lane_document_summary": 17.3,
+    "lane_section_summary": 26.9,
+    "lane_entity_card": 40.8,
+    "lane_hierarchical_children": 167.2,
+    "lane_sub_q1_dense": 45.6,
+    "lane_sub_q1_sparse": 32.6
+   },
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": 0.9996,
+    "q1": 0.997
+   },
+   "rerank_prefix": 24,
+   "candidates": 112,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 1,
+   "dims_covered": 2,
+   "dims_in_union": 1,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "Innovations That Will Sustain the Disruption",
+     "covered_gold": false,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": false,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "Make It Platform-Centric",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    }
+   ]
+  },
+  {
+   "idx": 29,
+   "arm": "multi",
+   "corpus_id": "ecom-meta-v1",
+   "question": "Compare what the book says about make it platform-centric with what it says about why inno",
+   "error": null,
+   "wall_ms": 10231.3,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 2,
+   "latency_ms": {
+    "child": 43.3,
+    "sparse": 34.9,
+    "doc": 15.0,
+    "section": 34.6,
+    "deep": 139.9,
+    "embed": 3266.1,
+    "embedded_texts": 2,
+    "rerank_select": 6569.9,
+    "total": 10113.2,
+    "lane_global_dense_child": 25.1,
+    "lane_global_sparse_child": 19.0,
+    "lane_document_summary": 15.0,
+    "lane_section_summary": 16.7,
+    "lane_entity_card": 18.0,
+    "lane_hierarchical_children": 140.2,
+    "lane_sub_q1_dense": 18.3,
+    "lane_sub_q1_sparse": 15.9
+   },
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": 0.9994,
+    "q1": 0.9994
+   },
+   "rerank_prefix": 24,
+   "candidates": 98,
+   "evidence_count": 15,
+   "degraded": [],
+   "dims": 2,
+   "dims_ok": 2,
+   "dims_system_ok": 2,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 1,
+   "dims_covered": 2,
+   "dims_in_union": 2,
+   "legacy_dims_ok": 2,
+   "legacy_dims_system_ok": 2,
+   "aspects": [
+    {
+     "term": "Make It Platform-Centric",
+     "covered_gold": true,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    },
+    {
+     "term": "Why Innovative Leaders Make a Difference",
+     "covered_gold": false,
+     "covered_doc": true,
+     "covered": true,
+     "in_union": true,
+     "flagged_weak": false,
+     "ok": true,
+     "queries_naming": [
+      "q0",
+      "q1"
+     ],
+     "silent": false,
+     "shown": true,
+     "system_ok": true
+    }
+   ]
+  }
+ ]
+}

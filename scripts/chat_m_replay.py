@@ -105,7 +105,8 @@ def _gold_stats(q: dict, trace: dict) -> dict:
     return {"gold_in_union": any(g in union for g in golds), "gold_in_pre_rerank": any(g in pre for g in golds),
             "gold_union_rank": next((i + 1 for i, cid in enumerate(union) if cid in golds), None),
             "gold_selected_rank": rank, "hit10": bool(rank and rank <= 10), "rr": (1.0 / rank if rank else 0.0),
-            "doc_share_top": comp.get("doc_share_top"), "docs_within_gap": comp.get("docs_within_gap"), "dominance": comp.get("dominance")}
+            "doc_share_top": comp.get("doc_share_top"), "docs_within_gap": comp.get("docs_within_gap"), "dominance": comp.get("dominance"),
+            "dominance_avoidable": comp.get("dominance_avoidable")}
 
 
 def run(args) -> int:
@@ -187,6 +188,7 @@ def run(args) -> int:
                     "survival_selected_given_union": round(sum(1 for r in in_union if r.get("gold_selected_rank")) / max(1, len(in_union)), 3),
                     "unseated_in_union": [{"idx": r["idx"], "union_rank": r.get("gold_union_rank"), "pre_rerank": r.get("gold_in_pre_rerank")} for r in in_union if not r.get("gold_selected_rank")],
                     "dominance_violations": sum(1 for r in ar if r.get("dominance")),
+                    "dominance_avoidable_violations": sum(1 for r in ar if r.get("dominance_avoidable")),
                     "dominance_eligible_turns": sum(1 for r in ar if (r.get("docs_within_gap") or 0) >= 3)}
         summary["per_arm"][arm] = {
             **gold,

@@ -2157,6 +2157,8 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                 "aspects": _aspects,
                 "weak_aspects": _weak,
                 "final_detail": (fast.get("meta") or {}).get("final_detail"),
+                # P1.c EVIDENCE-COMPOSER-V1: slot fills, per-document counts, dominance flag
+                "composition": (fast.get("meta") or {}).get("composition"),
                 # NEVER-ERROR-ON-A-COLD-MODEL: a lane that degraded
                 # (e.g. reranker parked behind extraction) still answers
                 # — the UI says so instead of the query failing.
@@ -2246,7 +2248,8 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                           "model": llm_model, "latent": req.latent, "phase_ms": dict(_phase_ms),
                           "funnel": funnel, "used_evidence": used, "legend": retrieval["legend"],
                           "degraded": retrieval.get("degraded"), "plan": (_trace or {}).get("plan"),
-                          "chat_plan": _plan_receipt or None, "prompt": _prompt_meta or None, "carry": _carry_meta})
+                          "chat_plan": _plan_receipt or None, "prompt": _prompt_meta or None, "carry": _carry_meta,
+                          "composition": retrieval.get("composition")})
                 return
 
             yield _phase("synthesize", "Validating claims against "
@@ -2293,7 +2296,8 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                       "synthesis_version": (answer.get("meta") or {}).get("synthesis_version"),
                       "latent": req.latent, "phase_ms": dict(_phase_ms), "funnel": funnel,
                       "used_evidence": used, "degraded": retrieval.get("degraded"),
-                      "plan": (_trace or {}).get("plan"), "chat_plan": _plan_receipt or None, "carry": _carry_meta})
+                      "plan": (_trace or {}).get("plan"), "chat_plan": _plan_receipt or None, "carry": _carry_meta,
+                      "composition": retrieval.get("composition")})
         except HTTPException as exc:
             detail = exc.detail if isinstance(exc.detail, dict) else {
                 "message": str(exc.detail)}
