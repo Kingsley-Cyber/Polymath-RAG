@@ -1,0 +1,700 @@
+{
+  "contract": "CHAT-REGRESSION-MANIFEST-V1",
+  "plan": "docs/wiki/plans/CHAT-QUERY-COMPILER-PLAN.md §4 P1.g, §5, §5b",
+  "frozen": "2026-09-05",
+  "frozen_at_commit": "0a24d7f",
+  "evaluator": "scripts/chat_regression.py (--check | --refresh <case-id>=<json-path> | --table); tests/determinism/test_chat_regression_suite.py runs the same evaluation in CI",
+  "kinds": {
+    "recorded-floor": "a committed experiment JSON holds the metric; the FLOOR is a bound the recorded value clears with margin (never the accidental exact value, except counts that are all-or-nothing by nature); `recorded` is the value in the named source run",
+    "offline-test": "named pytest functions prove the capability; the suite fails when one is deleted (entries marked live=true skip offline — CI proves only that the instrument exists)",
+    "pending": "no instrument records this yet; the owner phase must record the named metric before the entry can become recorded-floor"
+  },
+  "floor_policy": "floors are regression tripwires set below the recorded value (rates: recorded − 0.05…0.10, or the plan gate when that is lower); counts that are complete by nature (30/30 turns, 6/6 fixtures, 0 leaks) keep the exact bound; a floor is never raised or lowered by --refresh",
+  "cases": [
+    {
+      "id": "01-grounded-qa",
+      "name": "ordinary grounded QA",
+      "kind": "recorded-floor",
+      "gate_owner": "P1.a",
+      "plan_refs": "§5 #6 (factual source question), §5b 3, §4 P1.a gate (B gold in union ≥ 0.9)",
+      "source": {
+        "file": "docs/wiki/experiments/chat-baseline-p1b-B-after.json",
+        "run": "p1b-B-after",
+        "instrument": "scripts/chat_baseline.py --run --tag p1b-B-after --retrieval v2 — fixture eval/fixtures/chat_baseline_B.json (chat-baseline-B-v3, 30 heading-anchored questions, cinema + ecom-meta-v1), live /chat/stream HYBRID, compiler on, deterministic-template-v3",
+        "recorded_in": "docs/wiki/work-log/2026-09-05-p1b-decomposition.md"
+      },
+      "checks": [
+        {
+          "metric": "B gold_in_union",
+          "pointer": "/summary/gold_in_union",
+          "min": 0.85,
+          "recorded": 0.9,
+          "baseline": {"file": "docs/wiki/experiments/chat-baseline-p0-baseline.json", "pointer": "/summary/gold_in_union", "value": 0.6, "run": "p0-baseline"},
+          "note": "plan gate P1.a is ≥ 0.9 and the recording sits exactly on it (27/30); the floor admits one further miss"
+        },
+        {
+          "metric": "B hit@10_selected",
+          "pointer": "/summary/hit@10_selected",
+          "min": 0.6,
+          "recorded": 0.7,
+          "baseline": {"file": "docs/wiki/experiments/chat-baseline-p0-baseline.json", "pointer": "/summary/hit@10_selected", "value": 0.433, "run": "p0-baseline"}
+        },
+        {
+          "metric": "B mrr_selected",
+          "pointer": "/summary/mrr_selected",
+          "min": 0.45,
+          "recorded": 0.516,
+          "baseline": {"file": "docs/wiki/experiments/chat-baseline-p0-baseline.json", "pointer": "/summary/mrr_selected", "value": 0.371, "run": "p0-baseline"}
+        },
+        {
+          "metric": "B compiler_fallbacks",
+          "pointer": "/summary/compiler_fallbacks",
+          "max": 1,
+          "recorded": 0,
+          "note": "P0.b gate: fallback rate < 5 % of 30 turns"
+        },
+        {
+          "metric": "B errors",
+          "pointer": "/summary/errors",
+          "max": 0,
+          "recorded": 0
+        }
+      ],
+      "offline_tests": [
+        "tests/determinism/test_chat_synthesis.py::test_prompt_v2_splits_task_and_factual_authority_and_drops_evidence_absolutism",
+        "tests/determinism/test_candidate_engine.py::test_selection_reranks_a_bounded_prefix_in_fusion_order_and_expands_neighbours_after",
+        "tests/determinism/test_chat_compiler.py::test_fallback_is_todays_behaviour_and_receipted"
+      ]
+    },
+    {
+      "id": "02-exact-identifier",
+      "name": "exact identifier / acronym retrieval",
+      "kind": "recorded-floor",
+      "gate_owner": "P1.a",
+      "plan_refs": "§5 #10a, §5b 1–2, §4 P1.a gate (lexical fixture hit@union = 1.0)",
+      "source": {
+        "file": "docs/wiki/experiments/chat-baseline-p1a-L-v2.json",
+        "run": "p1a-L-v2",
+        "instrument": "scripts/chat_baseline.py --run --fixture eval/fixtures/chat_lexical_L.json --retrieval v2 --tag p1a-L-v2 — 30 acronyms/identifiers with document frequency ≤ 2, live /chat/stream HYBRID, compiler on",
+        "recorded_in": "docs/wiki/work-log/2026-09-05-p1a-chat-retrieval-v2.md"
+      },
+      "checks": [
+        {
+          "metric": "L gold_in_union",
+          "pointer": "/summary/gold_in_union",
+          "min": 0.95,
+          "recorded": 1.0,
+          "baseline": {"file": "docs/wiki/experiments/chat-baseline-p1a-L-v1.json", "pointer": "/summary/gold_in_union", "value": 0.833, "run": "p1a-L-v1"},
+          "note": "plan gate is the literal 1.0; the floor (≤ 1 miss in 30) is the regression tripwire, the gate stays the promotion bar"
+        },
+        {
+          "metric": "L hit@10_selected",
+          "pointer": "/summary/hit@10_selected",
+          "min": 0.9,
+          "recorded": 1.0,
+          "baseline": {"file": "docs/wiki/experiments/chat-baseline-p1a-L-v1.json", "pointer": "/summary/hit@10_selected", "value": 0.2, "run": "p1a-L-v1"}
+        },
+        {
+          "metric": "L mrr_selected",
+          "pointer": "/summary/mrr_selected",
+          "min": 0.8,
+          "recorded": 0.913,
+          "baseline": {"file": "docs/wiki/experiments/chat-baseline-p1a-L-v1.json", "pointer": "/summary/mrr_selected", "value": 0.2, "run": "p1a-L-v1"}
+        },
+        {
+          "metric": "L errors",
+          "pointer": "/summary/errors",
+          "max": 0,
+          "recorded": 0
+        }
+      ],
+      "offline_tests": [
+        "tests/determinism/test_candidate_engine.py::test_exact_term_chunk_reaches_the_union_through_the_sparse_lane_only",
+        "tests/determinism/test_candidate_engine.py::test_lane_c_searches_exact_terms_alone_and_strips_function_words_otherwise",
+        "tests/determinism/test_chat_compiler.py::test_two_query_representations_and_verbatim_exact_terms",
+        "tests/determinism/test_chat_compiler.py::test_retrieval_text_is_the_primary_query_plus_dropped_exact_terms"
+      ]
+    },
+    {
+      "id": "03-multi-aspect",
+      "name": "multi-aspect question (every dimension covered or explicitly flagged weak)",
+      "kind": "recorded-floor",
+      "gate_owner": "P1.b",
+      "plan_refs": "§4 P1.b gate, §5b 4, R1 requalification (register 11.93)",
+      "source": {
+        "file": "docs/wiki/experiments/chat-m-replay-r1-M.json",
+        "run": "r1-M",
+        "instrument": "scripts/chat_m_replay.py --tag r1-M — fixture eval/fixtures/chat_multi_M.json (30 two-aspect questions, 60 dimensions) replayed in-process through chat_retrieve_v2 with the plans FROZEN in eval/fixtures/chat_multi_M_plans.json; arms single (v2-single) and multi (v2) interleaved; arm `multi` is the promoted behaviour",
+        "recorded_in": "docs/wiki/work-log/2026-09-06-r1-p1b-requalification.md"
+      },
+      "checks": [
+        {
+          "metric": "M system-honest rate (multi arm)",
+          "pointer": "/summary/per_arm/multi/system_rate",
+          "min": 0.95,
+          "recorded": 1.0,
+          "baseline": {"file": "docs/wiki/experiments/chat-baseline-p1b-M-before.json", "pointer": "/summary/dims_system_ok_rate", "value": 0.85, "run": "p1b-M-before (v2-single, live)"},
+          "note": "dimension shown with judge-accepted evidence, or explicitly flagged weak with a reason"
+        },
+        {
+          "metric": "M strict rate (multi arm)",
+          "pointer": "/summary/per_arm/multi/strict_rate",
+          "min": 0.85,
+          "recorded": 0.917,
+          "baseline": {"file": "docs/wiki/experiments/chat-baseline-p1b-M-before.json", "pointer": "/summary/dims_ok_rate", "value": 0.783, "run": "p1b-M-before (v2-single, live)"},
+          "note": "gold or own-document chunk in the final evidence, or flagged; measured ceiling 55/60 (3 outranked in-union golds, 2 heading anchors outside the union)"
+        },
+        {
+          "metric": "M wall p50 delta multi − single (s)",
+          "pointer": "/summary/per_arm/multi/wall_p50_s",
+          "minus": "/summary/per_arm/single/wall_p50_s",
+          "max": 3.0,
+          "recorded": 0.41,
+          "note": "plan gate: wall p50 ≤ baseline + 3 s, measured on the interleaved pair (same GPU contention)"
+        },
+        {
+          "metric": "M errors (multi arm)",
+          "pointer": "/summary/per_arm/multi/errors",
+          "max": 0,
+          "recorded": 0
+        }
+      ],
+      "offline_tests": [
+        "tests/determinism/test_candidate_engine.py::test_subqueries_run_lanes_b_and_c_only_with_per_query_provenance",
+        "tests/determinism/test_candidate_engine.py::test_fusion_is_normalised_no_document_stacks_a_subquery_vote_and_redundancy_is_bounded",
+        "tests/determinism/test_candidate_engine.py::test_second_pass_runs_once_for_the_first_empty_aspect_and_weak_aspects_are_flagged",
+        "tests/determinism/test_candidate_engine.py::test_aspect_seats_reach_the_judge_and_the_final_set_or_the_aspect_is_flagged_with_a_reason",
+        "tests/determinism/test_candidate_engine.py::test_primary_is_flagged_weak_when_its_best_judged_candidate_is_below_the_floor"
+      ]
+    },
+    {
+      "id": "04-compare",
+      "name": "compare A vs B (one typed query per side, both sides reach the union)",
+      "kind": "recorded-floor",
+      "gate_owner": "P1.b",
+      "plan_refs": "§5 #7 (task-verb preservation: compare), §3.10, CHAT-PLAN-CORRECTIONS rule D",
+      "source": {
+        "file": "docs/wiki/experiments/chat-baseline-r1-M-live.json",
+        "run": "r1-M-live",
+        "instrument": "scripts/chat_baseline.py --run --fixture eval/fixtures/chat_multi_M.json --retrieval v2 --tag r1-M-live — every M question is 'Compare what the book says about X with what it says about Y'; live /chat/stream HYBRID, compiler on (rule D active), deterministic-template-v3",
+        "recorded_in": "docs/wiki/work-log/2026-09-06-r1-p1b-requalification.md"
+      },
+      "checks": [
+        {
+          "metric": "compare turns: compiled queries per turn (mean)",
+          "pointer": "/summary/compiled_queries_mean",
+          "min": 2.0,
+          "recorded": 2.37,
+          "baseline": {"file": "docs/wiki/experiments/chat-baseline-p1b-M-before.json", "pointer": "/summary/compiled_queries_mean", "value": 1.0, "run": "p1b-M-before (v2-single)"},
+          "note": "rule D gives each side of a compare its own typed query; below 2.0 on average the decomposition has regressed"
+        },
+        {
+          "metric": "compare turns: dimensions whose gold reached the union (of 60)",
+          "pointer": "/summary/dims_in_union",
+          "min": 43,
+          "recorded": 48,
+          "baseline": {"file": "docs/wiki/experiments/chat-baseline-p1b-M-before.json", "pointer": "/summary/dims_in_union", "value": 39, "run": "p1b-M-before (v2-single)"}
+        },
+        {
+          "metric": "compare turns: system-honest rate (live)",
+          "pointer": "/summary/dims_system_ok_rate",
+          "min": 0.95,
+          "recorded": 1.0,
+          "baseline": {"file": "docs/wiki/experiments/chat-baseline-p1b-M-before.json", "pointer": "/summary/dims_system_ok_rate", "value": 0.85, "run": "p1b-M-before (v2-single)"}
+        },
+        {
+          "metric": "compare turns: compiler_fallbacks",
+          "pointer": "/summary/compiler_fallbacks",
+          "max": 1,
+          "recorded": 0
+        }
+      ],
+      "offline_tests": [
+        "tests/determinism/test_chat_compiler.py::test_correction_d_splits_a_two_sided_compare_into_two_queries",
+        "tests/determinism/test_chat_compiler.py::test_law1_the_compiler_never_rewrites_the_task"
+      ]
+    },
+    {
+      "id": "05-followup",
+      "name": "pronoun / follow-up conversation (antecedent resolved before retrieval)",
+      "kind": "recorded-floor",
+      "gate_owner": "P0.c",
+      "plan_refs": "§5b 6, §4 P0.c gate (follow-up hit@10 ≥ 0.8 on the retrievable subset)",
+      "source": {
+        "file": "docs/wiki/experiments/chat-baseline-p0c-followups-on.json",
+        "run": "p0c-followups-on",
+        "instrument": "scripts/chat_baseline.py --run --followups --compiler on --reference p0c-B-on --tag p0c-followups-on — the 30 B questions as 2-turn conversations whose second turn is a pronoun follow-up; gold unchanged; recovery pairs each item with the single-turn reference run",
+        "recorded_in": "docs/wiki/work-log/2026-09-05-p0c-compiled-retrieval.md"
+      },
+      "checks": [
+        {
+          "metric": "follow-up hit@10 on the single-turn-retrievable subset",
+          "pointer": "/summary/recovery/subset_hit@10",
+          "min": 0.85,
+          "recorded": 0.947,
+          "baseline": {"file": "docs/wiki/experiments/chat-baseline-p0c-followups-off.json", "pointer": "/summary/hit@10_selected", "value": 0.0, "run": "p0c-followups-off (compiler off; all 30)"},
+          "note": "recorded on v1 retrieval before P1.a; the follow-up set has not been re-run on chat-retrieval-v2 — a refresh candidate"
+        },
+        {
+          "metric": "follow-up gold_in_union (all 30)",
+          "pointer": "/summary/gold_in_union",
+          "min": 0.6,
+          "recorded": 0.7,
+          "baseline": {"file": "docs/wiki/experiments/chat-baseline-p0c-followups-off.json", "pointer": "/summary/gold_in_union", "value": 0.0, "run": "p0c-followups-off"}
+        },
+        {
+          "metric": "follow-up recovery pairing complete (of 30)",
+          "pointer": "/summary/recovery/paired",
+          "min": 30,
+          "recorded": 30,
+          "note": "all-or-nothing: every conversation paired with its single-turn reference"
+        },
+        {
+          "metric": "follow-up compiler_fallbacks",
+          "pointer": "/summary/compiler_fallbacks",
+          "max": 1,
+          "recorded": 0
+        }
+      ],
+      "offline_tests": [
+        "tests/determinism/test_chat_compiler.py::test_valid_plan_compiles_and_resolves_the_followup",
+        "tests/determinism/test_chat_compiler.py::test_correction_c_strips_corpus_id_the_conversation_never_used",
+        "tests/determinism/test_chat_compiler.py::test_history_window_and_prompt_shape"
+      ]
+    },
+    {
+      "id": "06-transform-no-retrieval",
+      "name": "transform user content with zero retrieval",
+      "kind": "recorded-floor",
+      "gate_owner": "P0.c",
+      "plan_refs": "§5 #1, §5b 7, §4 P0.c gate (TRANSFORM/CONTINUE fixtures: 0 retrievals fired)",
+      "source": {
+        "file": "docs/wiki/experiments/chat-compiler-p0b-shadow.json",
+        "run": "p0b-shadow",
+        "instrument": "scripts/chat_compiler_canary.py --tag p0b-shadow — compiles eval/fixtures/chat_conversations/brainrot_transform.json in-process through the compiler lanes; row = the compiled CHAT-INTENT-PLAN-V1 (retrieval_required=false ⇒ the P0.c router emits `retrieve_skipped` and calls no engine)",
+        "recorded_in": "docs/wiki/work-log/2026-09-05-p0b-compiler-shadow.md; live receipt 'retrievals fired 0 / 0' in docs/wiki/work-log/2026-09-05-p0c-compiled-retrieval.md (table only — no JSON)"
+      },
+      "checks": [
+        {
+          "metric": "brainrot_transform: task_type",
+          "pointer": "/rows",
+          "select": {"set": "fixture", "name": "brainrot_transform"},
+          "field": "/task_type",
+          "equals": "TRANSFORM_USER_CONTENT",
+          "recorded": "TRANSFORM_USER_CONTENT"
+        },
+        {
+          "metric": "brainrot_transform: retrieval_required",
+          "pointer": "/rows",
+          "select": {"set": "fixture", "name": "brainrot_transform"},
+          "field": "/retrieval_required",
+          "equals": false,
+          "recorded": false
+        },
+        {
+          "metric": "brainrot_transform: compiled retrieval queries",
+          "pointer": "/rows",
+          "select": {"set": "fixture", "name": "brainrot_transform"},
+          "field": "/queries",
+          "reduce": "len",
+          "max": 0,
+          "recorded": 0,
+          "note": "zero queries ⇒ zero retrievals under P0.c routing"
+        },
+        {
+          "metric": "brainrot_transform: compiler fallback",
+          "pointer": "/rows",
+          "select": {"set": "fixture", "name": "brainrot_transform"},
+          "field": "/fallback",
+          "equals": false,
+          "recorded": false
+        }
+      ],
+      "offline_tests": [
+        "tests/determinism/test_chat_compiler.py::test_no_retrieval_tasks_carry_no_queries",
+        "tests/determinism/test_chat_hygiene.py::test_live_transform_turn_skips_retrieval_when_the_compiler_is_on",
+        "tests/determinism/test_chat_synthesis.py::test_live_artifact_tasks_produce_the_artifact_without_asking_the_evidence_for_it"
+      ],
+      "live_tests": [
+        "tests/determinism/test_chat_hygiene.py::test_live_transform_turn_skips_retrieval_when_the_compiler_is_on",
+        "tests/determinism/test_chat_synthesis.py::test_live_artifact_tasks_produce_the_artifact_without_asking_the_evidence_for_it"
+      ]
+    },
+    {
+      "id": "07-continue-artifact",
+      "name": "continue prior artifact with zero unnecessary retrieval (the owner's video-gen thread)",
+      "kind": "recorded-floor",
+      "gate_owner": "P0.d",
+      "plan_refs": "§5 #2, §5 #10 (the owner's exact conversation), §4 P0.c / P0.d gates",
+      "source": {
+        "file": "docs/wiki/experiments/chat-compiler-p0b-shadow.json",
+        "run": "p0b-shadow",
+        "instrument": "scripts/chat_compiler_canary.py --tag p0b-shadow — compiles eval/fixtures/chat_conversations/video_prompt_final.json (history + \"so what's the final prompt ?? for video gen\") in-process; row = the compiled plan",
+        "recorded_in": "docs/wiki/work-log/2026-09-05-p0b-compiler-shadow.md; live: 1,150-char final prompt with retrieval skipped in docs/wiki/work-log/2026-09-05-p0d-synthesis-v2.md (prose — no JSON)"
+      },
+      "checks": [
+        {
+          "metric": "video_prompt_final: task_type",
+          "pointer": "/rows",
+          "select": {"set": "fixture", "name": "video_prompt_final"},
+          "field": "/task_type",
+          "equals": "CONTINUE_PRIOR_ARTIFACT",
+          "recorded": "CONTINUE_PRIOR_ARTIFACT"
+        },
+        {
+          "metric": "video_prompt_final: retrieval_required",
+          "pointer": "/rows",
+          "select": {"set": "fixture", "name": "video_prompt_final"},
+          "field": "/retrieval_required",
+          "equals": false,
+          "recorded": false
+        },
+        {
+          "metric": "video_prompt_final: compiled retrieval queries",
+          "pointer": "/rows",
+          "select": {"set": "fixture", "name": "video_prompt_final"},
+          "field": "/queries",
+          "reduce": "len",
+          "max": 0,
+          "recorded": 0
+        },
+        {
+          "metric": "video_prompt_final: compiler fallback",
+          "pointer": "/rows",
+          "select": {"set": "fixture", "name": "video_prompt_final"},
+          "field": "/fallback",
+          "equals": false,
+          "recorded": false
+        }
+      ],
+      "offline_tests": [
+        "tests/determinism/test_chat_compiler.py::test_corrections_fix_the_two_measured_confusions",
+        "tests/determinism/test_chat_compiler.py::test_law1_the_compiler_never_rewrites_the_task",
+        "tests/determinism/test_chat_synthesis.py::test_request_block_carries_resolved_request_and_the_prior_artifact_verbatim",
+        "tests/determinism/test_chat_synthesis.py::test_live_artifact_tasks_produce_the_artifact_without_asking_the_evidence_for_it"
+      ],
+      "live_tests": [
+        "tests/determinism/test_chat_synthesis.py::test_live_artifact_tasks_produce_the_artifact_without_asking_the_evidence_for_it"
+      ],
+      "note": "eval/fixtures/chat_conversations/video_prompt_final.json declares itself reconstructed from the owner's description (`source` field); §5 #10 asks for the exported transcript — swap the history when it is available and re-record"
+    },
+    {
+      "id": "08-corpus-creation",
+      "name": "explicit corpus-grounded creation (retrieval fires, artifact cites the corpus)",
+      "kind": "recorded-floor",
+      "gate_owner": "P0.c",
+      "plan_refs": "§5 #3, correction A (corpus_reference)",
+      "source": {
+        "file": "docs/wiki/experiments/chat-compiler-p0b-shadow.json",
+        "run": "p0b-shadow",
+        "instrument": "scripts/chat_compiler_canary.py --tag p0b-shadow — compiles eval/fixtures/chat_conversations/cinema_improve_prompt.json (\"Use everything my cinema books know … to make this final video-gen prompt better\") in-process; row = the compiled plan",
+        "recorded_in": "docs/wiki/work-log/2026-09-05-p0b-compiler-shadow.md; live: 'retrieved 62 as its fixture expects' in docs/wiki/work-log/2026-09-05-p0c-compiled-retrieval.md (table only — no JSON)"
+      },
+      "checks": [
+        {
+          "metric": "cinema_improve_prompt: task_type",
+          "pointer": "/rows",
+          "select": {"set": "fixture", "name": "cinema_improve_prompt"},
+          "field": "/task_type",
+          "equals": "CREATE_FROM_KNOWLEDGE",
+          "recorded": "CREATE_FROM_KNOWLEDGE"
+        },
+        {
+          "metric": "cinema_improve_prompt: retrieval_required",
+          "pointer": "/rows",
+          "select": {"set": "fixture", "name": "cinema_improve_prompt"},
+          "field": "/retrieval_required",
+          "equals": true,
+          "recorded": true
+        },
+        {
+          "metric": "cinema_improve_prompt: compiled retrieval queries",
+          "pointer": "/rows",
+          "select": {"set": "fixture", "name": "cinema_improve_prompt"},
+          "field": "/queries",
+          "reduce": "len",
+          "min": 1,
+          "recorded": 3
+        },
+        {
+          "metric": "cinema_improve_prompt: compiler fallback",
+          "pointer": "/rows",
+          "select": {"set": "fixture", "name": "cinema_improve_prompt"},
+          "field": "/fallback",
+          "equals": false,
+          "recorded": false
+        }
+      ],
+      "offline_tests": [
+        "tests/determinism/test_chat_compiler.py::test_corrections_fix_the_two_measured_confusions",
+        "tests/determinism/test_chat_compiler.py::test_fixtures_declare_expectations_the_live_canary_checks"
+      ]
+    },
+    {
+      "id": "09-absent-term-abstention",
+      "name": "absent-term abstention (a factual question about a term the corpus lacks names the missing premise)",
+      "kind": "offline-test",
+      "gate_owner": "P0.d",
+      "plan_refs": "§5 #6 (abstention still fires when evidence is absent)",
+      "offline_tests": [
+        "tests/determinism/test_chat_synthesis.py::test_live_factual_question_without_evidence_still_abstains",
+        "tests/determinism/test_chat_synthesis.py::test_prompt_v2_splits_task_and_factual_authority_and_drops_evidence_absolutism",
+        "tests/contracts/test_chat_response_contract.py::test_abstention_response_validates"
+      ],
+      "live_tests": [
+        "tests/determinism/test_chat_synthesis.py::test_live_factual_question_without_evidence_still_abstains"
+      ],
+      "note": "no committed JSON records the abstention probe; the P0.d work-log (docs/wiki/work-log/2026-09-05-p0d-synthesis-v2.md §Proof) records it in prose ('names the missing premise then teaches adjacent material'). A JSON-writing absent-term fixture would promote this entry to recorded-floor"
+    },
+    {
+      "id": "10-carry-contamination",
+      "name": "carry contamination (off-topic turn-1 evidence never reaches turn 3)",
+      "kind": "recorded-floor",
+      "gate_owner": "P0.e",
+      "plan_refs": "§5 #9, §5b 14, §3.5, §4 P0.e gate",
+      "source": {
+        "file": "docs/wiki/experiments/chat-carry-p0e-v2.json",
+        "run": "p0e-v2",
+        "instrument": "scripts/chat_carry_probe.py --policy v2 --tag p0e-v2 — fixed 3-turn conversation (turn 1 off-topic) through /chat/stream with the frontend's used-evidence carry (cap 8, chunk ids); backend re-hydrates, reranks against the resolved request, floor 0.25, cap 8",
+        "recorded_in": "docs/wiki/work-log/2026-09-05-p0e-carry-v2.md"
+      },
+      "checks": [
+        {
+          "metric": "carry gate_no_leak",
+          "pointer": "/summary/gate_no_leak",
+          "equals": true,
+          "recorded": true,
+          "baseline": {"file": "docs/wiki/experiments/chat-carry-p0e-v1-baseline.json", "pointer": "/summary/gate_no_leak", "value": false, "run": "p0e-v1-baseline"}
+        },
+        {
+          "metric": "turn-1 chunks in turn-3 legend",
+          "pointer": "/summary/turn1_in_turn3_legend",
+          "reduce": "len",
+          "max": 0,
+          "recorded": 0,
+          "baseline": {"file": "docs/wiki/experiments/chat-carry-p0e-v1-baseline.json", "pointer": "/summary/turn1_in_turn3_legend", "reduce": "len", "value": 0, "run": "p0e-v1-baseline"}
+        },
+        {
+          "metric": "turn-1 chunks in turn-3 prompt",
+          "pointer": "/summary/turn1_in_turn3_prompt",
+          "reduce": "len",
+          "max": 0,
+          "recorded": 0,
+          "baseline": {"file": "docs/wiki/experiments/chat-carry-p0e-v1-baseline.json", "pointer": "/summary/turn1_in_turn3_prompt", "reduce": "len", "value": 5, "run": "p0e-v1-baseline"},
+          "note": "the P0.e gate: turn-1 leak 5 → 0"
+        },
+        {
+          "metric": "carried items admitted per turn (max over turns)",
+          "pointer": "/summary/carry_admitted",
+          "reduce": "max",
+          "max": 8,
+          "recorded": 0,
+          "note": "cap POLYMATH_CARRY_CAP=8; the probe's off-topic carry is rejected at the floor, hence 0"
+        },
+        {
+          "metric": "turn-3 prompt chars ≤ v1 baseline",
+          "pointer": "/summary/prompt_chars/2",
+          "max": 47321,
+          "recorded": 38731,
+          "baseline": {"file": "docs/wiki/experiments/chat-carry-p0e-v1-baseline.json", "pointer": "/summary/prompt_chars/2", "value": 47321, "run": "p0e-v1-baseline"},
+          "note": "plan gate 'prompt tokens per turn ≤ baseline' — the bound IS the v1 baseline by definition"
+        }
+      ],
+      "offline_tests": [
+        "tests/determinism/test_chat_carry.py::test_candidates_normalise_dedupe_and_drop_freshly_retrieved",
+        "tests/determinism/test_chat_carry.py::test_admission_hydrates_reranks_floors_and_caps_in_score_order",
+        "tests/determinism/test_chat_carry.py::test_reranker_outage_degrades_to_cap_and_is_counted",
+        "tests/determinism/test_chat_carry.py::test_live_three_turn_probe_carries_used_only_and_drops_off_topic_turn_one"
+      ],
+      "live_tests": [
+        "tests/determinism/test_chat_carry.py::test_live_three_turn_probe_carries_used_only_and_drops_off_topic_turn_one"
+      ]
+    },
+    {
+      "id": "11-mode-invariants",
+      "name": "mode parity / invariants (VECTOR ⊆ HYBRID, bounded GRAPH, separated WILDCARD, truthful meta.mode)",
+      "kind": "pending",
+      "gate_owner": "P1.e",
+      "plan_refs": "§4 P1.e gate, §5 #13–#14, §3.15, §3.18–§3.19",
+      "pending": {
+        "owner": "P1.e",
+        "instrument": "tests/determinism/test_chat_modes.py (to be written by P1.e: mode-equivalence, graph bounds, wildcard separation) plus scripts/chat_baseline.py runs of fixture B per mode with the frozen plans eval/fixtures/chat_baseline_B_plans.json, written to docs/wiki/experiments/chat-modes-<tag>.json",
+        "metric": "per turn on B (n = 30), in summary: vector_union_subset_of_hybrid_rate (VECTOR = A+B union ⊆ HYBRID = A+B+C union; gate 1.0), graph_seeds_max (≤ 8; ≤ 2 when the plan says graph_useful=false) and graph_facts_max (≤ 20), wildcard_bridges_max (≤ 3) and wildcard_bridges_in_evidence_rows (== 0), graph_minus_hybrid_wall_p50_s (≤ 1.5) and wildcard_minus_hybrid_wall_p50_s (≤ 2.0), meta_mode_truthful_rate (executed mode stamped on every turn; 1.0). Floors are set from the recording, never typed in advance",
+        "why_pending": "modes are not yet recomposed on the v2 engine (P1.e is an unapplied draft in docs/wiki/plans/handoff/p1e_patch.py); no experiment JSON records mode-level unions, seeds, facts or bridges"
+      },
+      "offline_tests": [
+        "tests/determinism/test_chat_hygiene.py::test_chat_defaults_to_hybrid_and_keeps_legacy_explicit"
+      ],
+      "note": "the offline test above covers only CHAT-MODE-TRUTH-V1 (P0.a: /chat defaults to HYBRID and labels the executed mode); it is not the invariant suite"
+    },
+    {
+      "id": "12-degraded-deadline",
+      "name": "degraded lane / deadline path (a lane past its budget yields a degraded receipt and a complete answer)",
+      "kind": "pending",
+      "gate_owner": "P1.d",
+      "plan_refs": "§5 #11–#12, §5b 11–13, §3.16, §4 P1.d gate",
+      "pending": {
+        "owner": "P1.d",
+        "instrument": "the P1.d spy/deadline tests (docs/wiki/plans/handoff/p1d_tests_patch.py names test_lanes_run_concurrently_and_a_slow_lane_is_degraded_not_awaited and test_route_spies_one_embedding_per_distinct_text_one_judge_call_and_lane_c_overlaps_the_embedding) plus a forced-deadline B run written to docs/wiki/experiments/chat-baseline-<tag>.json with the existing summary fields",
+        "metric": "forced sparse-lane deadline on B (n = 30): degraded_turns == n with every turn's degraded_components naming component global_sparse_child with reason global_sparse_child_timeout; errors == 0; answer_chars_p50 > 0 (complete answers); wall_p50_s ≤ core budget + rerank budget (the budgets P1.d fixes in CandidateBudget); spy counts embed_calls_per_distinct_query_text == 1 and rerank_calls_per_turn == 1 over a 3-subquery HYBRID turn; --lanes ABC wall_p50_s − --lanes AB wall_p50_s ≤ 0.5. Floors are set from the recording",
+        "why_pending": "lanes run sequentially today; there is no per-lane deadline, no `<lane>_timeout` degraded reason and no --lanes switch (P1.d is an unapplied draft); the only recorded value is degraded_turns == 0 on a healthy fleet, which case 15 freezes"
+      },
+      "offline_tests": [
+        "tests/determinism/test_candidate_engine.py::test_sparse_outage_degrades_the_lane_and_never_scans_postgres",
+        "tests/determinism/test_chat_carry.py::test_reranker_outage_degrades_to_cap_and_is_counted",
+        "tests/determinism/test_chat_retrieval_v2.py::test_embed_queries_makes_one_sidecar_call_for_all_distinct_texts"
+      ],
+      "note": "the offline tests cover outage degradation (sparse lane unavailable, reranker down) and the one-batched-embedding rule; none exercises a deadline"
+    },
+    {
+      "id": "13-route-parity",
+      "name": "/chat vs /chat/stream parity (same plan, same evidence ids for the same request)",
+      "kind": "pending",
+      "gate_owner": "P1.f",
+      "plan_refs": "§4 P1.f gate, §3.7",
+      "pending": {
+        "owner": "P1.f",
+        "instrument": "tests/determinism/test_chat_runtime.py (docs/wiki/plans/handoff/p1f_patch.py names test_live_chat_and_stream_agree_on_plan_and_evidence_ids and three offline run_chat tests) plus a B replay through both routes with compiler off (deterministic plan), written to docs/wiki/experiments/chat-parity-<tag>.json",
+        "metric": "over B (n = 30, compiler off, retrieval v2): plan_mismatches == 0 (task_type, queries, exact_terms, retrieval_required identical on /chat and /chat/stream), evidence_id_mismatches == 0 (same chunk ids in the same order), mode_label_mismatches == 0 (meta.mode identical), and the MCP `ask` route inheriting the same runtime where reachable. Floors are set from the recording",
+        "why_pending": "/chat and /chat/stream are two handlers today (ChatRuntime is an unapplied draft); no recording compares their plans or evidence ids"
+      },
+      "offline_tests": [
+        "tests/contracts/test_chat_response_contract.py::test_real_chat_response_validates"
+      ],
+      "note": "the offline test above pins the /chat response contract both routes must satisfy; it does not compare the routes"
+    },
+    {
+      "id": "14-citation-validity",
+      "name": "citation validity (every [S#] tag resolves to a legend entry)",
+      "kind": "recorded-floor",
+      "gate_owner": "P0.d",
+      "plan_refs": "§5 #6 (citation precision ≥ baseline), §4 P0.d gate, CITATION-PRECISION-V1",
+      "source": {
+        "file": "docs/wiki/experiments/chat-baseline-p0d-llm-after.json",
+        "run": "p0d-llm-after",
+        "instrument": "scripts/chat_baseline.py --run --llm --compiler on --tag p0d-llm-after — fixture B through /chat/stream with the default LLM synthesizer under SYNTHESIS-V2; citation_precision = tags resolving to the legend / tags emitted, per answer",
+        "recorded_in": "docs/wiki/work-log/2026-09-05-p0d-synthesis-v2.md"
+      },
+      "checks": [
+        {
+          "metric": "B citation_precision_mean (LLM synthesizer)",
+          "pointer": "/summary/citation_precision_mean",
+          "min": 0.95,
+          "recorded": 1.0,
+          "baseline": {"file": "docs/wiki/experiments/chat-baseline-p0d-llm-before.json", "pointer": "/summary/citation_precision_mean", "value": 1.0, "run": "p0d-llm-before"},
+          "note": "445 / 445 tags resolved; the only LLM-synthesizer B run — P1.c plans another (docs/wiki/plans/handoff/p1c_runs.sh), a refresh candidate"
+        },
+        {
+          "metric": "B answers carrying citation tags (of 30)",
+          "pointer": "/summary/answers_with_tags",
+          "min": 27,
+          "recorded": 30,
+          "baseline": {"file": "docs/wiki/experiments/chat-baseline-p0d-llm-before.json", "pointer": "/summary/answers_with_tags", "value": 30, "run": "p0d-llm-before"}
+        },
+        {
+          "metric": "B errors (LLM run)",
+          "pointer": "/summary/errors",
+          "max": 0,
+          "recorded": 0
+        }
+      ],
+      "offline_tests": [
+        "tests/determinism/test_chat_synthesis.py::test_prompt_v2_splits_task_and_factual_authority_and_drops_evidence_absolutism",
+        "tests/determinism/test_chat_synthesis.py::test_plan_meta_names_the_task_in_the_answer_event",
+        "tests/determinism/test_answer_synthesis.py::test_fake_citation_is_rejected",
+        "tests/contracts/test_chat_response_contract.py::test_citation_without_bundle_items_is_rejected"
+      ]
+    },
+    {
+      "id": "15-funnel-accounting",
+      "name": "evidence funnel accounting (every candidate has provenance and exactly one death; no silent degradation)",
+      "kind": "recorded-floor",
+      "gate_owner": "P1.a",
+      "plan_refs": "§3.9, §4 P0.0 gate (complete funnel receipt on every turn), §4 P1.a gate (per-lane arrival on 100 % of candidates)",
+      "source": {
+        "file": "docs/wiki/experiments/chat-baseline-p1b-B-after.json",
+        "run": "p1b-B-after",
+        "instrument": "scripts/chat_baseline.py --run --tag p1b-B-after --retrieval v2 — the receipt funnel (retrieved → union → pre_rerank → post_rerank → selected → cited) and retrieval.arrivals of every live B turn",
+        "recorded_in": "docs/wiki/work-log/2026-09-05-p1b-decomposition.md"
+      },
+      "checks": [
+        {
+          "metric": "final candidates without arrivals (total over 30 turns)",
+          "pointer": "/summary/arrivals_missing_total",
+          "max": 0,
+          "recorded": 0
+        },
+        {
+          "metric": "turns whose candidates carry arrivals (of 30)",
+          "pointer": "/summary/turns_with_arrivals",
+          "min": 30,
+          "recorded": 30,
+          "note": "all-or-nothing: the P1.a gate is 100 %"
+        },
+        {
+          "metric": "degraded turns on a healthy fleet",
+          "pointer": "/summary/degraded_turns",
+          "max": 0,
+          "recorded": 0,
+          "note": "no lane or reranker degraded on any B turn; a forced deadline is case 12 (pending)"
+        },
+        {
+          "metric": "deaths recorded (exactly one per question, sum over the funnel)",
+          "pointer": "/summary/deaths",
+          "reduce": "sum",
+          "equals": 30,
+          "recorded": 30
+        },
+        {
+          "metric": "turns answered by the chat-retrieval-v2 engine (of 30)",
+          "pointer": "/summary/engines/chat-retrieval-v2",
+          "min": 30,
+          "recorded": 30
+        }
+      ],
+      "offline_tests": [
+        "tests/determinism/test_chat_funnel.py::test_every_candidate_gets_exactly_one_death",
+        "tests/determinism/test_chat_funnel.py::test_funnel_counts_ranks_and_arrivals_are_deterministic",
+        "tests/determinism/test_chat_funnel.py::test_receipt_meta_is_never_sliced_into_invalid_json",
+        "tests/determinism/test_candidate_engine.py::test_every_candidate_carries_lane_provenance_and_multi_lane_chunks_fuse_once"
+      ],
+      "note": "P1.c's selection gate (gold survives selection on ≥ 0.85 of B where in the union) has a pre-composer baseline of 0.815 in docs/wiki/experiments/chat-m-replay-p1c-B-before.json (/summary/per_arm/single/survival_selected_given_union); it becomes a floor here only after the composer lands and re-records"
+    },
+    {
+      "id": "16-sparse-lane-regression",
+      "name": "known sparse-lane regression (v1 lexical lane 404 → silent Postgres scan; identifiers lost at union truncation)",
+      "kind": "offline-test",
+      "gate_owner": "R2",
+      "plan_refs": "§5b 11 (sparse unavailable ⇒ DEGRADED, never a full-corpus scan in chat), §3.21 #1–#2, register 11.94",
+      "source": {
+        "file": "docs/wiki/experiments/chat-baseline-p1a-L-v2.json",
+        "run": "p1a-L-v2",
+        "instrument": "scripts/chat_baseline.py --run --fixture eval/fixtures/chat_lexical_L.json --retrieval v2 --tag p1a-L-v2 — the fixed state: lane C (GLOBAL_SPARSE_CHILD) live on every identifier turn",
+        "recorded_in": "docs/wiki/work-log/2026-09-05-p1a-chat-retrieval-v2.md (FOUND: v1 sparse lane 404s) and docs/wiki/work-log/2026-09-06-r2-hybrid-sparse-lane.md (fix; live proof by /retrieve calls, no JSON)"
+      },
+      "checks": [
+        {
+          "metric": "L degraded turns (sparse lane live on every identifier turn)",
+          "pointer": "/summary/degraded_turns",
+          "max": 0,
+          "recorded": 0,
+          "known_bad": {"file": "docs/wiki/experiments/chat-baseline-p1a-L-v1.json", "pointer": "/summary/deaths/LOST_AT_UNION_TRUNCATION", "value": 21, "run": "p1a-L-v1", "meaning": "the regression signature: 21 of 30 identifiers lost at union truncation while the v1 sparse lane silently 404'd into the Postgres scan"}
+        },
+        {
+          "metric": "L turns answered by the chat-retrieval-v2 engine (of 30)",
+          "pointer": "/summary/engines/chat-retrieval-v2",
+          "min": 30,
+          "recorded": 30,
+          "known_bad": {"file": "docs/wiki/experiments/chat-baseline-p1a-L-v1.json", "pointer": "/summary/hit@10_selected", "value": 0.2, "run": "p1a-L-v1", "meaning": "hit@10 0.2 on the v1 engine (hybrid-retrieval-v1) for the same 30 identifiers"}
+        }
+      ],
+      "offline_tests": [
+        "tests/determinism/test_hybrid_sparse_lane.py::test_sparse_lane_queries_the_mapped_collection_and_no_postgres_scan_runs",
+        "tests/determinism/test_hybrid_sparse_lane.py::test_sparse_outage_degrades_to_the_scan_and_is_counted",
+        "tests/determinism/test_hybrid_sparse_lane.py::test_empty_sparse_result_falls_back_and_is_counted_as_sparse_empty",
+        "tests/determinism/test_candidate_engine.py::test_sparse_outage_degrades_the_lane_and_never_scans_postgres",
+        "tests/determinism/test_chat_retrieval_v2.py::test_dense_and_sparse_searches_share_one_filter_builder_and_no_companion_probe_without_a_query"
+      ]
+    }
+  ]
+}
