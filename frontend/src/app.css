@@ -1,10 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600&family=Roboto+Mono:wght@400;500&display=swap');
+
+/* READING-HIERARCHY-V1 (owner design contract 2026-09-06): three densities, one font contract.
+   Knowledge (answer prose, headings, sources) = proportional Rubik; machine (process rail, ids,
+   metrics, code, provenance) = Roboto Mono. The answer is the dominant object; everything else
+   is smaller, quieter, denser. Sizes below are the contract, not a theme — themes.css only colours. */
+:root {
+  --pm-prose: "Rubik", -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+  --pm-mono: "Roboto Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  /* knowledge */
+  --pm-answer-size: 15.5px; --pm-answer-line: 1.62; --pm-answer-width: 78ch;
+  --pm-h1-size: 21px; --pm-h2-size: 18px; --pm-h3-size: 16px; --pm-heading-line: 1.25;
+  /* supporting information */
+  --pm-source-size: 13px; --pm-source-line: 1.5;
+  /* agent / process */
+  --pm-process-size: 12.5px; --pm-process-line: 1.4; --pm-process-meta-size: 11px; --pm-meta-size: 11px;
+  /* rhythm */
+  --pm-space-paragraph: 0.78em; --pm-space-section: 1.55rem; --pm-space-list-item: 0.28rem;
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body, #root { height: 100%; }
 body {
   background: var(--bg);
   color: var(--text);
-  font: 14px/1.55 -apple-system, "SF Pro Text", "Segoe UI", Inter, sans-serif;
+  font: 14px/1.55 var(--pm-prose);
   transition: background 0.25s ease, color 0.25s ease;
 }
 
@@ -173,7 +193,7 @@ select, input, textarea { font: inherit; color: var(--text); }
 .chunk-chip:hover { color: var(--text); border-color: var(--accent); }
 .latency { font-size: 11px; color: var(--text-dim); margin-left: auto; }
 .msg-assistant .meta-row { margin-top: 12px; opacity: 0.9; }
-.msg-assistant .meta-row .badge { font-weight: 600; }
+.msg-assistant .meta-row .badge { font-weight: 500; }   /* READING-HIERARCHY-V1: metadata is quiet */
 
 /* FOLLOW-TAIL-V1: the reader has scrolled away from the tail */
 .chat-scroll { position: relative; }
@@ -392,3 +412,71 @@ select, input, textarea { font: inherit; color: var(--text); }
   .msg, .phase-line, .jump-latest, .chunks-panel { animation: none; }
   .disclosure { transition: none; }
 }
+
+/* ---------------- READING-HIERARCHY-V1 rules (override the layout rules above) ---------------- */
+/* knowledge: answer prose */
+.msg-assistant .answer {
+  font-family: var(--pm-prose); font-size: var(--pm-answer-size); line-height: var(--pm-answer-line);
+  font-weight: 400; letter-spacing: 0; max-width: var(--pm-answer-width); color: var(--text);
+}
+.msg-user .bubble { font-family: var(--pm-prose); font-size: 15px; line-height: 1.55; }
+.answer .md { white-space: normal; }                       /* soft line breaks in model markdown never force a break */
+.answer .md p { margin: var(--pm-space-paragraph) 0; }
+.answer .md h1, .answer .md h2, .answer .md h3, .answer .md h4 {
+  font-family: var(--pm-prose); font-weight: 600; line-height: var(--pm-heading-line);
+  margin: var(--pm-space-section) 0 0.4rem; letter-spacing: -0.005em; color: var(--text);
+}
+.answer .md h1 { font-size: var(--pm-h1-size); }
+.answer .md h2 { font-size: var(--pm-h2-size); }
+.answer .md h3 { font-size: var(--pm-h3-size); }
+.answer .md h4 { font-size: 15.5px; }
+.answer .md > h1:first-child, .answer .md > h2:first-child, .answer .md > h3:first-child, .answer .md > h4:first-child { margin-top: 0; }
+.answer .md h1 + p, .answer .md h2 + p, .answer .md h3 + p, .answer .md h4 + p,
+.answer .md h1 + ul, .answer .md h2 + ul, .answer .md h3 + ul, .answer .md h2 + ol, .answer .md h3 + ol { margin-top: 0.3em; }   /* heading → first unit: close */
+.answer .md ul, .answer .md ol { padding-left: 1.35rem; margin: 0.75rem 0; }
+.answer .md li { margin: var(--pm-space-list-item) 0; padding-left: 0.15rem; }
+.answer .md li > ul, .answer .md li > ol { margin: 0.3rem 0 0.2rem; }
+.answer .md li > p { margin: 0.2em 0; }
+.answer .md strong, .answer .md b { font-weight: 600; }      /* bold = semantic anchor, never shouting */
+.answer .md em { font-style: italic; }
+.answer .md blockquote {
+  margin: var(--pm-space-paragraph) 0; padding: 2px 14px; border-left: 2px solid var(--accent-soft);
+  color: var(--text-dim); font-size: 14.5px;
+}
+.answer .md hr { border: 0; border-top: 1px solid var(--border); margin: var(--pm-space-section) 0; }
+.answer .md table { font-size: 13.5px; line-height: 1.45; border-collapse: collapse; margin: 0.75rem 0; max-width: 100%; display: block; overflow-x: auto; }
+.answer .md th { font-weight: 600; text-align: left; padding: 5px 10px; border-bottom: 1px solid var(--border); color: var(--text); }
+.answer .md td { padding: 5px 10px; border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent); vertical-align: top; }
+.answer .md code { font-family: var(--pm-mono); font-size: 0.86em; }
+.answer .md a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+.answer-streaming { font-family: var(--pm-prose); font-size: var(--pm-answer-size); line-height: var(--pm-answer-line); }
+
+/* machine: process rail */
+.phases { font-family: var(--pm-mono); font-size: var(--pm-process-size); line-height: var(--pm-process-line); font-weight: 500; }
+.phases-summary { font-weight: 500; letter-spacing: 0.01em; }
+.phase-current, .worked-label, .thinking-label { font-family: var(--pm-mono); }
+.phase-detail { font-size: var(--pm-process-meta-size); font-family: var(--pm-mono); }
+.reasoning-pane { font-family: var(--pm-prose); font-size: 12.5px; line-height: 1.5; }   /* model thinking is prose, small */
+
+/* machine: metadata (mode, verdict, model, latency, ids) */
+.meta-row { font-family: var(--pm-mono); font-size: var(--pm-meta-size); }
+.badge { font-family: var(--pm-mono); font-size: 10.5px; font-weight: 500; letter-spacing: 0.06em; }
+.chunk-chip, .latency, .copy-btn, .mono { font-family: var(--pm-mono); font-size: 11px; font-weight: 500; }
+.chunk-chip { font-size: 11.5px; }
+
+/* supporting: evidence as footnotes, not another answer */
+.chunks-panel {
+  background: transparent; border: 0; border-left: 2px solid var(--border); border-radius: 0;
+  padding: 4px 0 4px 14px; gap: 10px; font-family: var(--pm-prose);
+}
+.chunk-row { font-size: var(--pm-source-size); line-height: var(--pm-source-line); }
+.chunk-row > .chunk-loc:first-child {
+  font-family: var(--pm-prose); font-size: var(--pm-source-size); color: var(--text); word-break: normal;
+}
+.chunk-row > .chunk-loc:first-child b { font-weight: 600; }
+.chunk-preview { color: color-mix(in srgb, var(--text) 82%, transparent); font-size: var(--pm-source-size); line-height: var(--pm-source-line); margin-top: 3px; }
+.chunk-row .chunk-loc:not(:first-child) { font-family: var(--pm-mono); font-size: 11px; color: var(--text-dim); margin-top: 3px; }
+
+/* machine: code */
+.code-block, .code-body, .code-lang { font-family: var(--pm-mono); }
+.code-body { font-size: 12.5px; line-height: 1.5; }
