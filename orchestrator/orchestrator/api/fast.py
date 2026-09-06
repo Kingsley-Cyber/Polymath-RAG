@@ -318,7 +318,7 @@ def _embed_queries(texts: list[str]) -> list[list[float]]:
 
     if not texts:
         return []
-    client = EmbedderClient()
+    client = EmbedderClient(priority="interactive")   # METAL-LEASE-V1: the chat turn outranks enrichment on the device
     try:
         _await_embedder(client)
         client.verify_pin()
@@ -477,7 +477,7 @@ def _region_lookup(chunk_ids: list[str]) -> dict:
 
 def _rerank_children(query: str, children: list[dict]) -> list[dict]:
     try:
-        _, reranked = apply_rerank(query, [], children)
+        _, reranked = apply_rerank(query, [], children, priority="interactive")   # METAL-LEASE-V1
         return reranked
     except RerankUnavailable as exc:
         _RERANK_DEGRADED.set(str(exc)[:300])

@@ -20,10 +20,11 @@ import tomllib
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
 from polymath_shared.logging import configure_logging
+from polymath_shared.metal import PRIORITY_HEADER, LeaseReceipt, device_lease, normalize_priority, priority_scope
 
 MANIFEST_PATH = Path(__file__).with_name("manifest.toml")
 DIGEST_STATE_PATH = Path(__file__).with_name("weights.digest")
@@ -43,6 +44,36 @@ class RerankResponse(BaseModel):
     order: list[int]
     model_id: str
     model_revision: str
+    #: METAL-LEASE-V1: ms this request spent waiting for the device lease
+    #: (summed over its device batches) and the class it ran under.
+    queued_ms: float = 0.0
+    priority: str = "background"
+
+
+#: Bound on a readiness probe's lease wait (see the embedder).
+PROBE_LEASE_TIMEOUT_S = 5.0
+
+
+def request_priority(header_value: str | None) -> str:
+    """X-Polymath-Priority -> lease class. Absent or unknown = background,
+    so a caller that does not know the header behaves exactly as before."""
+    return normalize_priority(header_value)
+
+
+def _threaded() -> bool:
+    """POLYMATH_SIDECAR_THREADED=1 runs device work in the threadpool so a
+    request arriving mid-batch can REGISTER its priority with the lease.
+    Default off: device work runs on the event loop, serial FIFO as before;
+    the lease then orders work across processes only."""
+    return os.environ.get("POLYMATH_SIDECAR_THREADED", "0").strip() == "1"
+
+
+async def _device_work(fn):
+    if _threaded():
+        from starlette.concurrency import run_in_threadpool
+
+        return await run_in_threadpool(fn)
+    return fn()
 
 
 def load_manifest() -> dict:
@@ -125,8 +156,12 @@ async def ready() -> dict:
     model = app.state.model
     if model is None:
         return {"ready": False, "reason": "model not loaded"}
+    def _probe():
+        with device_lease("background", timeout_s=PROBE_LEASE_TIMEOUT_S, what="probe"):
+            return model.predict([["probe", "probe"]])
+
     try:
-        probe = model.predict([["probe", "probe"]])
+        probe = await _device_work(_probe)
         return {
             "ready": bool(probe is not None and len(probe) == 1),
             "model_id": app.state.manifest["identity"]["model"]["id"],
@@ -154,39 +189,57 @@ def _is_oom(exc: BaseException) -> bool:
     return "out of memory" in t or "mps backend" in t and "memory" in t
 
 
-def score_in_batches(predict, pairs: list, batch: int = RERANK_BATCH) -> list[float]:
+def score_in_batches(predict, pairs: list, batch: int = RERANK_BATCH,
+                     priority: str = "background",
+                     receipts: list[LeaseReceipt] | None = None) -> list[float]:
     """RERANK-BATCHING-V1 (measured 2026-09-05): one forward pass over 20-40
     (query, document) pairs exceeded the MPS 3.5 GiB shared pool
     ("MPS backend out of memory", 21 × HTTP 500 in an hour) while ≤ 10 pairs
     scored in 2.2 s. Score in fixed batches, release the accelerator cache
     between them, and halve the batch on an OOM down to 1 before giving up.
-    Order and length of the result equal the input; pure over `predict`."""
+    Order and length of the result equal the input; pure over `predict`.
+    METAL-LEASE-V1: every device batch (and its OOM retry) runs under the
+    device lease of `priority`; each lease receipt lands in `receipts`."""
     out: list[float] = []
     i = 0
     cur = max(1, int(batch))
     while i < len(pairs):
         chunk = pairs[i:i + cur]
-        try:
-            out.extend(float(x) for x in predict(chunk))
-            i += len(chunk)
-        except Exception as exc:  # noqa: BLE001
-            if _is_oom(exc) and cur > 1:
+        with device_lease(priority, what="rerank") as lease:
+            if receipts is not None:
+                receipts.append(lease)
+            try:
+                out.extend(float(x) for x in predict(chunk))
+                i += len(chunk)
+            except Exception as exc:  # noqa: BLE001
+                if _is_oom(exc) and cur > 1:
+                    _release_accelerator_cache()
+                    cur = max(1, cur // 2)
+                    log.warning("rerank batch OOM at %d pairs; retrying at %d", len(chunk), cur)
+                    continue
+                raise
+            finally:
                 _release_accelerator_cache()
-                cur = max(1, cur // 2)
-                log.warning("rerank batch OOM at %d pairs; retrying at %d", len(chunk), cur)
-                continue
-            raise
-        finally:
-            _release_accelerator_cache()
     return out
 
 
 @app.post("/rerank", response_model=RerankResponse)
-async def rerank(req: RerankRequest) -> RerankResponse:
+async def rerank(req: RerankRequest,
+                 x_polymath_priority: str | None = Header(default=None, alias=PRIORITY_HEADER),
+                 ) -> RerankResponse:
     model = app.state.model
+    priority = request_priority(x_polymath_priority)
+    receipts: list[LeaseReceipt] = []
     pairs = [[req.query, d] for d in req.documents]
+
+    def _score() -> list[float]:
+        # The scope keeps an interactive request registered BETWEEN its
+        # device batches; each batch then takes the device lease itself.
+        with priority_scope(priority):
+            return score_in_batches(model.predict, pairs, priority=priority, receipts=receipts)
+
     try:
-        scores = score_in_batches(model.predict, pairs)
+        scores = await _device_work(_score)
     except Exception as exc:  # noqa: BLE001 — typed 503, never a bare 500
         log.error("rerank failed: %s", f"{type(exc).__name__}: {exc}"[:200])
         raise HTTPException(status_code=503, detail={"error_code": "rerank_failed",
@@ -199,4 +252,6 @@ async def rerank(req: RerankRequest) -> RerankResponse:
         order=order,
         model_id=app.state.manifest["identity"]["model"]["id"],
         model_revision=app.state.manifest["identity"]["model"]["revision"],
+        queued_ms=round(sum(r.waited_ms for r in receipts), 1),
+        priority=priority,
     )

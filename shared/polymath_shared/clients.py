@@ -11,6 +11,7 @@ from typing import Any
 
 import httpx
 
+from polymath_shared.metal import BACKGROUND, priority_headers
 from polymath_shared.settings import get_settings
 
 
@@ -186,8 +187,9 @@ class SidecarClient:
             f"{_bkey}{path} unreachable after {attempts} attempts: "
             f"{type(last).__name__}: {last}")
 
-    def infer(self, payload: dict[str, Any]) -> dict[str, Any]:
-        return self.request("POST", "/infer", json=payload).json()
+    def infer(self, payload: dict[str, Any],
+              headers: dict[str, str] | None = None) -> dict[str, Any]:
+        return self.request("POST", "/infer", json=payload, headers=headers).json()
 
 
 class OllamaLocalClient(SidecarClient):
@@ -272,16 +274,25 @@ class EmbedderClient(SidecarClient):
     frozen contract id — an index can only be replayed by the identical
     contract (G2 gate 4)."""
 
-    def __init__(self, pin_release: str | None = None) -> None:
+    def __init__(self, pin_release: str | None = None, *,
+                 priority: str = BACKGROUND) -> None:
         super().__init__(get_settings().sidecars.embedder_url,
                          timeout=INFERENCE_READ_TIMEOUT_S,
                          pin_release=pin_release)
+        # METAL-LEASE-V1: the lease class every call declares unless a call
+        # overrides it. Held on the instance so a call site that only owns
+        # the constructor (the chat path) can elevate without changing the
+        # `embed(texts, kind)` call shape every test double implements.
+        self.priority = priority
 
-    def embed(self, texts: list[str], representation_kind: str) -> dict[str, Any]:
+    def embed(self, texts: list[str], representation_kind: str,
+              priority: str | None = None) -> dict[str, Any]:
+        """`priority` (interactive | background) rides the X-Polymath-Priority
+        header; None = the client's class (default background)."""
         return self.infer({
             "texts": texts,
             "representation_kind": representation_kind,
-        })
+        }, headers=priority_headers(priority or self.priority))
 
 
 class RerankerClient(SidecarClient):
@@ -302,17 +313,22 @@ class RerankerClient(SidecarClient):
     """
     POST_PATH = "/rerank"
 
-    def __init__(self, timeout: float = 60.0) -> None:
+    def __init__(self, timeout: float = 60.0, *,
+                 priority: str = BACKGROUND) -> None:
         super().__init__(get_settings().sidecars.reranker_url, timeout=timeout)
+        self.priority = priority   # METAL-LEASE-V1 lease class (see EmbedderClient)
 
     def rerank(
         self,
         query: str,
         documents: list[str],
         top_k: int | None = None,
+        priority: str | None = None,
     ) -> dict[str, Any]:
+        """`priority` (interactive | background) rides the X-Polymath-Priority
+        header; None = the client's class (default background)."""
         return self.request("POST", self.POST_PATH, json={
             "query": query,
             "documents": documents,
             "top_k": top_k,
-        }).json()
+        }, headers=priority_headers(priority or self.priority)).json()

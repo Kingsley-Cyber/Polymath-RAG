@@ -86,20 +86,30 @@ def _await_reranker(client) -> None:
             return
 
 
-def _batched_scores(client, query: str, surfaces: list[str]) -> dict:
+def _batched_scores(client, query: str, surfaces: list[str], *,
+                    priority: str = "background") -> dict:
     """Score all surfaces in bounded batches; merge into one response
-    shape (order recomputed globally, deterministic)."""
+    shape (order recomputed globally, deterministic). `priority` is the
+    METAL-LEASE-V1 class; `queued_ms` sums the sidecar's lease waits."""
     scores: list[float] = []
     model_id = model_revision = None
+    queued_ms = 0.0
     surfaces = [(s or "")[:RERANK_MAX_SURFACE_CHARS] for s in surfaces]
     for i in range(0, len(surfaces), RERANK_BATCH_SIZE):
-        resp = client.rerank(query, surfaces[i:i + RERANK_BATCH_SIZE])
+        batch = surfaces[i:i + RERANK_BATCH_SIZE]
+        # Background is the wire default and the pre-lease call shape, so a
+        # duck-typed client that predates the kwarg keeps working; only an
+        # elevated class is spelled out per call.
+        resp = (client.rerank(query, batch) if priority == "background"
+                else client.rerank(query, batch, priority=priority))
         scores.extend(float(s) for s in resp["scores"])
         model_id = resp["model_id"]
         model_revision = resp["model_revision"]
+        queued_ms += float(resp.get("queued_ms") or 0.0)
     order = sorted(range(len(surfaces)), key=lambda j: (-scores[j], j))
     return {"order": order, "scores": scores,
-            "model_id": model_id, "model_revision": model_revision}
+            "model_id": model_id, "model_revision": model_revision,
+            "queued_ms": round(queued_ms, 1)}
 
 
 def rerank_fused(
@@ -108,6 +118,7 @@ def rerank_fused(
     selected_children: list[dict],
     *,
     client,
+    priority: str = "background",
 ) -> tuple[list[dict], list[dict]]:
     """Reorder fused documents and child evidence by cross-encoder score.
 
@@ -124,7 +135,7 @@ def rerank_fused(
     reranked_children = list(selected_children)
 
     if doc_surfaces:
-        resp = _batched_scores(client, query, doc_surfaces)
+        resp = _batched_scores(client, query, doc_surfaces, priority=priority)
         order = resp["order"]
         scores = resp["scores"]
         reranked_docs = [
@@ -137,7 +148,7 @@ def rerank_fused(
         ]
 
     if child_surfaces:
-        resp = _batched_scores(client, query, child_surfaces)
+        resp = _batched_scores(client, query, child_surfaces, priority=priority)
         order = resp["order"]
         scores = resp["scores"]
         reranked_children = [
@@ -164,21 +175,25 @@ def apply_rerank(
     selected_children: list[dict],
     *,
     client_factory=None,
+    priority: str = "background",
 ) -> tuple[list[dict], list[dict]]:
     """Apply reranking when the G3 candidate is enabled; otherwise return
     the fused lists untouched. A sidecar failure degrades loudly to the
-    caller (no silent reordering, no silent dropping)."""
+    caller (no silent reordering, no silent dropping). `priority` is the
+    METAL-LEASE-V1 class: the chat path passes "interactive" so its one
+    rerank outranks enrichment batches on the shared device."""
     if not rerank_enabled():
         return selected_documents, selected_children
     from polymath_shared.clients import RerankerClient
 
     client = None
     try:
-        client = client_factory() if client_factory else RerankerClient()
+        client = client_factory() if client_factory else RerankerClient(priority=priority)
         if client_factory is None:
             _await_reranker(client)
         return rerank_fused(
             query, selected_documents, selected_children, client=client,
+            priority=priority,
         )
     except RerankUnavailable:
         raise  # already typed and messaged (e.g. the no-wake shortcut)

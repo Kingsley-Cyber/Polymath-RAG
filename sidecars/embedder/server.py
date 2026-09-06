@@ -18,13 +18,14 @@ import tomllib
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, Header, HTTPException, Response
 from pydantic import BaseModel, Field
 
 from polymath_shared.embedding_contracts import CONTRACTS, NEURAL_EMBED_CONTRACT
 from polymath_shared.logging import configure_logging
+from polymath_shared.metal import PRIORITY_HEADER, LeaseReceipt, device_lease, leased_run_adaptive
+from polymath_shared.metal import normalize_priority, priority_scope
 from polymath_shared.metal import release as release_metal
-from polymath_shared.metal import run_adaptive
 
 MANIFEST_PATH = Path(__file__).with_name("manifest.toml")
 DIGEST_STATE_PATH = Path(__file__).with_name("weights.digest")
@@ -43,6 +44,37 @@ class EmbedResponse(BaseModel):
     contract_id: str
     dimension: int
     model_release: str
+    #: METAL-LEASE-V1: ms this request spent waiting for the device lease
+    #: (summed over its device batches) and the class it ran under.
+    queued_ms: float = 0.0
+    priority: str = "background"
+
+
+#: Bound on a readiness probe's lease wait: a probe must reflect device
+#: health promptly, so it fails open early rather than queueing behind work.
+PROBE_LEASE_TIMEOUT_S = 5.0
+
+
+def request_priority(header_value: str | None) -> str:
+    """X-Polymath-Priority -> lease class. Absent or unknown = background,
+    so a caller that does not know the header behaves exactly as before."""
+    return normalize_priority(header_value)
+
+
+def _threaded() -> bool:
+    """POLYMATH_SIDECAR_THREADED=1 runs device work in the threadpool so a
+    request arriving mid-batch can REGISTER its priority with the lease.
+    Default off: device work runs on the event loop, serial FIFO as before;
+    the lease then orders work across processes only."""
+    return os.environ.get("POLYMATH_SIDECAR_THREADED", "0").strip() == "1"
+
+
+async def _device_work(fn):
+    if _threaded():
+        from starlette.concurrency import run_in_threadpool
+
+        return await run_in_threadpool(fn)
+    return fn()
 
 
 def load_manifest() -> dict:
@@ -133,8 +165,14 @@ async def ready(response: Response) -> dict:
     if not getattr(app.state, "weights", {}).get("verified", False):
         response.status_code = 503
         return {"ready": False, "reason": f"weights unverified: {app.state.weights}"}
+    def _probe() -> None:
+        # A probe is a device batch too: leased as background with a short
+        # budget so it neither overlaps a batch nor queues behind the fleet.
+        with device_lease("background", timeout_s=PROBE_LEASE_TIMEOUT_S, what="probe"):
+            model.encode(["readiness probe"], normalize_embeddings=True)
+
     try:
-        model.encode(["readiness probe"], normalize_embeddings=True)
+        await _device_work(_probe)
     except Exception as exc:
         response.status_code = 503
         return {"ready": False, "reason": f"forward pass failed: {exc}"}
@@ -172,17 +210,21 @@ def _token_bounded_batches(texts: list[str]) -> list[list[int]]:
     return batches
 
 
-def _encode_adaptive(model, texts: list[str]):
-    """Encode a group, halving it on Metal exhaustion.
+def _encode_adaptive(model, texts: list[str], priority: str = "background",
+                     receipts: list[LeaseReceipt] | None = None):
+    """Encode a group under the device lease, halving it on Metal exhaustion.
 
     The batching discipline itself lives in polymath_shared.metal so the
     embedder, GLiNER and any future GPU sidecar cannot drift apart on it
     -- the same OOM defect was fixed twice before it was shared once.
+    METAL-LEASE-V1: the lease is held for the batch AND its halving
+    retries; the wait lands in `receipts` for the response's queued_ms.
     """
-    return run_adaptive(
+    return leased_run_adaptive(
+        priority,
         lambda chunk: model.encode(list(chunk), batch_size=len(chunk),
                                    normalize_embeddings=True),
-        texts, what="embed")
+        texts, what="embed", receipts=receipts)
 
 
 def _release_mps() -> None:
@@ -191,7 +233,9 @@ def _release_mps() -> None:
 
 
 @app.post("/infer", response_model=EmbedResponse)
-async def infer(request: EmbedRequest) -> EmbedResponse:
+async def infer(request: EmbedRequest,
+                x_polymath_priority: str | None = Header(default=None, alias=PRIORITY_HEADER),
+                ) -> EmbedResponse:
     if not getattr(app.state, "weights", {}).get("verified", False):
         raise HTTPException(status_code=503, detail="weights verification failed")
     contract = NEURAL_EMBED_CONTRACT
@@ -200,17 +244,28 @@ async def infer(request: EmbedRequest) -> EmbedResponse:
         for text in request.texts
     ]
     model = app.state.model
+    priority = request_priority(x_polymath_priority)
+    receipts: list[LeaseReceipt] = []
     vectors: list = [None] * len(prefixed)
-    try:
-        for group in _token_bounded_batches(prefixed):
-            chunk = [prefixed[i] for i in group]
-            for slot, vec in zip(group, _encode_adaptive(model, chunk)):
-                vectors[slot] = vec
-    finally:
-        _release_mps()
+
+    def _encode_all() -> None:
+        try:
+            # The scope keeps an interactive request registered BETWEEN its
+            # device batches; each batch then takes the device lease itself.
+            with priority_scope(priority):
+                for group in _token_bounded_batches(prefixed):
+                    chunk = [prefixed[i] for i in group]
+                    for slot, vec in zip(group, _encode_adaptive(model, chunk, priority, receipts)):
+                        vectors[slot] = vec
+        finally:
+            _release_mps()
+
+    await _device_work(_encode_all)
     return EmbedResponse(
         vectors=[v.tolist() for v in vectors],
         contract_id=contract.contract_id,
         dimension=contract.dimension,
         model_release=app.state.manifest["identity"]["version"],
+        queued_ms=round(sum(r.waited_ms for r in receipts), 1),
+        priority=priority,
     )
