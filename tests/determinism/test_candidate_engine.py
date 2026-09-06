@@ -326,6 +326,27 @@ def test_primary_is_flagged_weak_when_its_best_judged_candidate_is_below_the_flo
     assert tr3["weak_reasons"] == {}
 
 
+def test_a_judge_that_scored_nothing_flags_every_aspect_unjudged_without_changing_the_selection():
+    """ACCEPTANCE FINDING A1 (2026-09-06, M replay under judge contention): on `rerank_timeout` turns the route's
+    judge wrapper hands the rows back unscored; no floor verdict exists, so nothing was flagged and every aspect read
+    as covered (system-honest 0.844 on those turns vs 1.0 on judged turns). Unverified coverage is now named
+    `unjudged` on every aspect with candidates (PRIMARY included); the composition is byte-identical to the
+    no-judge path, and a caller that passes no judge at all is unchanged."""
+    fake = FakeMulti()
+    res = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=fake.dense, sparse_search=fake.sparse,
+                                 subqueries=[_subq("q1", "a"), _subq("q2", "b", vec=(0.2, 0.8), sparse=((8,), (1.0,)))])
+    b = ce.CandidateBudget(rerank_max=8, synthesis_max=3, aspect_prefix_seats=3, aspect_weak_floor=0.5)
+    final_to, tr_to = ce.select_evidence(res, b, rerank_children=lambda q, rows: rows)          # the deadline wrapper's return
+    final_none, tr_none = ce.select_evidence(res, b, rerank_children=None)                      # no judge configured
+    assert tr_to["judge"] == "unjudged" and tr_none["judge"] == "absent"
+    assert tr_to["weak_reasons"] == {"q0": "unjudged", "q1": "unjudged", "q2": "unjudged"} and set(tr_to["weak_aspects"]) >= {"q0", "q1", "q2"}
+    assert tr_none["weak_reasons"] == {} and [c.chunk_id for c in final_to] == [c.chunk_id for c in final_none]   # receipt, not a filter
+    assert tr_to["aspect_best"] == {"q0": None, "q1": None, "q2": None} and tr_to["composition"] == tr_none["composition"]
+    # a live judge keeps its verdicts: only the floor decides, nothing is `unjudged`
+    _, tr_live = ce.select_evidence(res, b, rerank_children=lambda q, rows: sorted([dict(r, rerank_score=1.5) for r in rows], key=lambda r: -r["rerank_score"]))
+    assert tr_live["judge"] == "live" and "unjudged" not in tr_live["weak_reasons"].values() and tr_live["weak_reasons"] == {}
+
+
 def _cand(cid, doc, score, arrivals=(ce.LANE_B,), qids=("q0",)):
     return ce.CandidateEvidence(chunk_id=cid, doc_id=doc, parent_id=f"{doc}-p", source_name=doc, text=cid,
                                 arrivals=list(arrivals), query_ids=list(qids), rerank_score=score)

@@ -1,0 +1,250 @@
+{
+ "summary": {
+  "policy": "v2",
+  "tag": "final",
+  "compiler": "on",
+  "synthesizer": "deterministic-template-v3",
+  "turn1_chunk_ids": [
+   "chunk_0d671409f181b0b320f5d2f9b5faeaa8ed1b3ac3a1576f0d7e0851bee9a1559d",
+   "chunk_11970fedf58b95743716a1b9b46f4a3cbf24b4a370f4a53a58bc6cbb95b1d830",
+   "chunk_1a8a069fa038e79360ae790993f880e277f5811bff38e5dcd35f6f4745bfc9d1",
+   "chunk_241fb31a1ff0a64264c7712d2aaf6ba747419a5445dc0f763b37b1f1e7ff52be",
+   "chunk_3a35454448629159133db6c1db523f39e3e38cf408b6671a917d12f4c663443e",
+   "chunk_4b37208fce213e10561a24328e8da69aceac7bbb796882258a0c3a8f62e4b4fc",
+   "chunk_5e241c55d303f8fc9ec90bfb26e4b59fa8690f517e1c77a0c233b46c1ba84e4a",
+   "chunk_6a848276179c0d4445e83dab7e9ec185ef035f3e2b67b6d561fee56d287e27e2",
+   "chunk_74b49ddcf389b50f0305f208264f32f9a311edad11859b6dbf0835b01b73e040",
+   "chunk_920686a3dfe1e0948d7538c7267c72c00ac08cbdf1f02c5e87ca99e6c9666981",
+   "chunk_9357e48a9969253afcad160cc0f53e0a3121c26adc4dcd3d7ee6473b1b31e9b0",
+   "chunk_9d2b70392d7bf8a50ac35ab94a5c7b462c5e4557c58fde487810509c7130780c",
+   "chunk_bf71322e03a8e934244e5629ca66fd85c67b47a3524a07d06139dd292ee258cc",
+   "chunk_fac7e1b1d499d9479689c0a2083ec4eec221b1b8db3c7c87ba98b43e6c56b25a",
+   "chunk_fc24fb98807bef37f202869df69153066f624f0c1ee7890e31c0b47ed42d7424"
+  ],
+  "turn1_in_turn3_legend": [],
+  "turn1_sent_in_turn3_carry": [],
+  "turn1_in_turn3_prompt": [],
+  "prompt_chars": [
+   null,
+   null,
+   null
+  ],
+  "carry_sent": [
+   0,
+   8,
+   8
+  ],
+  "carry_admitted": [
+   0,
+   0,
+   1
+  ],
+  "carry_scores_turn3": [
+   6.1875
+  ],
+  "gate_no_leak": true
+ },
+ "turns": [
+  {
+   "turn": 1,
+   "question": "What does the book say about nonsquare pixels?",
+   "task_type": "GROUNDED_QA",
+   "retrieval_skipped": false,
+   "wall_s": 10.4,
+   "prompt": null,
+   "carry": {
+    "in": 0,
+    "admitted": 0
+   },
+   "carry_sent": 0,
+   "carry_sent_ids": [],
+   "legend_chunk_ids": [
+    "chunk_74b49ddcf389b50f0305f208264f32f9a311edad11859b6dbf0835b01b73e040",
+    "chunk_11970fedf58b95743716a1b9b46f4a3cbf24b4a370f4a53a58bc6cbb95b1d830",
+    "chunk_9d2b70392d7bf8a50ac35ab94a5c7b462c5e4557c58fde487810509c7130780c",
+    "chunk_4b37208fce213e10561a24328e8da69aceac7bbb796882258a0c3a8f62e4b4fc",
+    "chunk_920686a3dfe1e0948d7538c7267c72c00ac08cbdf1f02c5e87ca99e6c9666981",
+    "chunk_3a35454448629159133db6c1db523f39e3e38cf408b6671a917d12f4c663443e",
+    "chunk_0d671409f181b0b320f5d2f9b5faeaa8ed1b3ac3a1576f0d7e0851bee9a1559d",
+    "chunk_fac7e1b1d499d9479689c0a2083ec4eec221b1b8db3c7c87ba98b43e6c56b25a",
+    "chunk_241fb31a1ff0a64264c7712d2aaf6ba747419a5445dc0f763b37b1f1e7ff52be",
+    "chunk_1a8a069fa038e79360ae790993f880e277f5811bff38e5dcd35f6f4745bfc9d1",
+    "chunk_6a848276179c0d4445e83dab7e9ec185ef035f3e2b67b6d561fee56d287e27e2",
+    "chunk_5e241c55d303f8fc9ec90bfb26e4b59fa8690f517e1c77a0c233b46c1ba84e4a",
+    "chunk_bf71322e03a8e934244e5629ca66fd85c67b47a3524a07d06139dd292ee258cc",
+    "chunk_fc24fb98807bef37f202869df69153066f624f0c1ee7890e31c0b47ed42d7424",
+    "chunk_9357e48a9969253afcad160cc0f53e0a3121c26adc4dcd3d7ee6473b1b31e9b0"
+   ],
+   "legend_carried_ids": [],
+   "used_evidence": [
+    "chunk_74b49ddcf389b50f0305f208264f32f9a311edad11859b6dbf0835b01b73e040",
+    "chunk_11970fedf58b95743716a1b9b46f4a3cbf24b4a370f4a53a58bc6cbb95b1d830",
+    "chunk_9d2b70392d7bf8a50ac35ab94a5c7b462c5e4557c58fde487810509c7130780c",
+    "chunk_4b37208fce213e10561a24328e8da69aceac7bbb796882258a0c3a8f62e4b4fc",
+    "chunk_920686a3dfe1e0948d7538c7267c72c00ac08cbdf1f02c5e87ca99e6c9666981",
+    "chunk_3a35454448629159133db6c1db523f39e3e38cf408b6671a917d12f4c663443e",
+    "chunk_0d671409f181b0b320f5d2f9b5faeaa8ed1b3ac3a1576f0d7e0851bee9a1559d",
+    "chunk_fac7e1b1d499d9479689c0a2083ec4eec221b1b8db3c7c87ba98b43e6c56b25a",
+    "chunk_241fb31a1ff0a64264c7712d2aaf6ba747419a5445dc0f763b37b1f1e7ff52be",
+    "chunk_1a8a069fa038e79360ae790993f880e277f5811bff38e5dcd35f6f4745bfc9d1",
+    "chunk_5e241c55d303f8fc9ec90bfb26e4b59fa8690f517e1c77a0c233b46c1ba84e4a",
+    "chunk_bf71322e03a8e934244e5629ca66fd85c67b47a3524a07d06139dd292ee258cc",
+    "chunk_fc24fb98807bef37f202869df69153066f624f0c1ee7890e31c0b47ed42d7424",
+    "chunk_9357e48a9969253afcad160cc0f53e0a3121c26adc4dcd3d7ee6473b1b31e9b0"
+   ],
+   "answer_chars": 4252,
+   "answer_head": "Relevant passage: “This width-to-height relationship of a nonsquare pixel can also be represented as an aspect ratio. To distinguish it from"
+  },
+  {
+   "turn": 2,
+   "question": "What does the book say about making your own chroma keyer?",
+   "task_type": "GROUNDED_QA",
+   "retrieval_skipped": false,
+   "wall_s": 15.8,
+   "prompt": null,
+   "carry": {
+    "in": 8,
+    "dropped_duplicate": 0,
+    "dropped_already_retrieved": 0,
+    "dropped_unparsed": 0,
+    "candidates": 8,
+    "hydrated": 8,
+    "dropped_missing": 0,
+    "dropped_floor": 8,
+    "dropped_cap": 0,
+    "admitted": 0,
+    "floor": 0.25,
+    "cap": 8,
+    "degraded": null,
+    "scores": [],
+    "admitted_ids": [],
+    "scores_dropped_floor": [
+     -8.375,
+     -8.6875,
+     -9.0,
+     -9.3125,
+     -9.6875,
+     -9.8125,
+     -10.1875,
+     -10.25
+    ]
+   },
+   "carry_sent": 8,
+   "carry_sent_ids": [
+    "chunk_74b49ddcf389b50f0305f208264f32f9a311edad11859b6dbf0835b01b73e040",
+    "chunk_11970fedf58b95743716a1b9b46f4a3cbf24b4a370f4a53a58bc6cbb95b1d830",
+    "chunk_9d2b70392d7bf8a50ac35ab94a5c7b462c5e4557c58fde487810509c7130780c",
+    "chunk_4b37208fce213e10561a24328e8da69aceac7bbb796882258a0c3a8f62e4b4fc",
+    "chunk_920686a3dfe1e0948d7538c7267c72c00ac08cbdf1f02c5e87ca99e6c9666981",
+    "chunk_3a35454448629159133db6c1db523f39e3e38cf408b6671a917d12f4c663443e",
+    "chunk_0d671409f181b0b320f5d2f9b5faeaa8ed1b3ac3a1576f0d7e0851bee9a1559d",
+    "chunk_fac7e1b1d499d9479689c0a2083ec4eec221b1b8db3c7c87ba98b43e6c56b25a"
+   ],
+   "legend_chunk_ids": [
+    "chunk_f8ae8454a2e5f5bff1e254d97457d7e4759464b699dff39e1b475c4ddc5c14d0",
+    "chunk_fbe841b47db000daceea61d2f3e94fd6e33a3ee22f0aac8c63b356d4dca9781a",
+    "chunk_ad933eab2ed813b8b4e901f29ce493fc4630c06516d748741fc4fced6b58c180",
+    "chunk_c62d072d451f3243e17ccb8ed624f5c47830689ad738ea6163c82dc362b2ce00",
+    "chunk_ac16b3ffb273d6bd9c977e11cf728ea611e5b248b6753f18f1f7e1d4df99a12a",
+    "chunk_d0d744398b9d66e53ca27a4f2361019d49c53b195950ec503e889f0b6f966c63",
+    "chunk_f37382ae023c017573d3b72a944f4a7e5716478329dd6c423b57394ef858c69c",
+    "chunk_3f6115d603ad49db4ebff570f83a569b5e4c369aedfe1b5283f341aa202e5246",
+    "chunk_491b3642e1a4db16576a1b1d193ce3d116a9b0c596dfa0e65b017f7b3a6d7d93",
+    "chunk_87293d68fc67bb60c54ab57d24ca44f0b814aec6ade0b739a5445b570accccf6",
+    "chunk_91d3efc95c3fcb90525e635851bbc0658559c97be42c2f9b847525be71a3e6fe",
+    "chunk_46bde40c6a0d48823e454d625fde49a6a06cd62c3cd8614d3355edfabc8cfdce",
+    "chunk_b0efda27324e232a679247f4a37664d2a3337940f366c2afc23f8e68bbb17422",
+    "chunk_6fbd21fe00ada09b98603290dfff3f8778bdda81860ad0a8f1503d23a666b06a",
+    "chunk_944db641f5c7da7bd40b69615d4bd2118226b57cf5a5eaa296f6c9e8fa32e0d6"
+   ],
+   "legend_carried_ids": [],
+   "used_evidence": [
+    "chunk_f8ae8454a2e5f5bff1e254d97457d7e4759464b699dff39e1b475c4ddc5c14d0",
+    "chunk_fbe841b47db000daceea61d2f3e94fd6e33a3ee22f0aac8c63b356d4dca9781a",
+    "chunk_ad933eab2ed813b8b4e901f29ce493fc4630c06516d748741fc4fced6b58c180",
+    "chunk_c62d072d451f3243e17ccb8ed624f5c47830689ad738ea6163c82dc362b2ce00",
+    "chunk_ac16b3ffb273d6bd9c977e11cf728ea611e5b248b6753f18f1f7e1d4df99a12a",
+    "chunk_d0d744398b9d66e53ca27a4f2361019d49c53b195950ec503e889f0b6f966c63",
+    "chunk_f37382ae023c017573d3b72a944f4a7e5716478329dd6c423b57394ef858c69c",
+    "chunk_3f6115d603ad49db4ebff570f83a569b5e4c369aedfe1b5283f341aa202e5246",
+    "chunk_491b3642e1a4db16576a1b1d193ce3d116a9b0c596dfa0e65b017f7b3a6d7d93",
+    "chunk_87293d68fc67bb60c54ab57d24ca44f0b814aec6ade0b739a5445b570accccf6",
+    "chunk_91d3efc95c3fcb90525e635851bbc0658559c97be42c2f9b847525be71a3e6fe",
+    "chunk_46bde40c6a0d48823e454d625fde49a6a06cd62c3cd8614d3355edfabc8cfdce",
+    "chunk_b0efda27324e232a679247f4a37664d2a3337940f366c2afc23f8e68bbb17422",
+    "chunk_6fbd21fe00ada09b98603290dfff3f8778bdda81860ad0a8f1503d23a666b06a",
+    "chunk_944db641f5c7da7bd40b69615d4bd2118226b57cf5a5eaa296f6c9e8fa32e0d6"
+   ],
+   "answer_chars": 4447,
+   "answer_head": "Relevant passage: “You can roll your own chroma keyer rather like we did with the luma key in Section 2.1.3: Making Your Own Luma Keyer. Sta"
+  },
+  {
+   "turn": 3,
+   "question": "How does that work in practice?",
+   "task_type": "GROUNDED_QA",
+   "retrieval_skipped": false,
+   "wall_s": 19.7,
+   "prompt": null,
+   "carry": {
+    "in": 8,
+    "dropped_duplicate": 0,
+    "dropped_already_retrieved": 7,
+    "dropped_unparsed": 0,
+    "candidates": 1,
+    "hydrated": 1,
+    "dropped_missing": 0,
+    "dropped_floor": 0,
+    "dropped_cap": 0,
+    "admitted": 1,
+    "floor": 0.25,
+    "cap": 8,
+    "degraded": null,
+    "scores": [
+     6.1875
+    ],
+    "admitted_ids": [
+     "chunk_f37382ae023c017573d3b72a944f4a7e5716478329dd6c423b57394ef858c69c"
+    ],
+    "scores_dropped_floor": []
+   },
+   "carry_sent": 8,
+   "carry_sent_ids": [
+    "chunk_f8ae8454a2e5f5bff1e254d97457d7e4759464b699dff39e1b475c4ddc5c14d0",
+    "chunk_fbe841b47db000daceea61d2f3e94fd6e33a3ee22f0aac8c63b356d4dca9781a",
+    "chunk_ad933eab2ed813b8b4e901f29ce493fc4630c06516d748741fc4fced6b58c180",
+    "chunk_c62d072d451f3243e17ccb8ed624f5c47830689ad738ea6163c82dc362b2ce00",
+    "chunk_ac16b3ffb273d6bd9c977e11cf728ea611e5b248b6753f18f1f7e1d4df99a12a",
+    "chunk_d0d744398b9d66e53ca27a4f2361019d49c53b195950ec503e889f0b6f966c63",
+    "chunk_f37382ae023c017573d3b72a944f4a7e5716478329dd6c423b57394ef858c69c",
+    "chunk_3f6115d603ad49db4ebff570f83a569b5e4c369aedfe1b5283f341aa202e5246"
+   ],
+   "legend_chunk_ids": [
+    "chunk_d0d744398b9d66e53ca27a4f2361019d49c53b195950ec503e889f0b6f966c63",
+    "chunk_87293d68fc67bb60c54ab57d24ca44f0b814aec6ade0b739a5445b570accccf6",
+    "chunk_add52a562a8b975afe47fd4775fd4bb4b55a8bd66cf43813f0f7ff6fa88ff852",
+    "chunk_e107b69b69296da8210ccf8b79a6bd476069c113e2b726c8e38f3b96c51d6aef",
+    "chunk_fbe841b47db000daceea61d2f3e94fd6e33a3ee22f0aac8c63b356d4dca9781a",
+    "chunk_6fbd21fe00ada09b98603290dfff3f8778bdda81860ad0a8f1503d23a666b06a",
+    "chunk_f8ae8454a2e5f5bff1e254d97457d7e4759464b699dff39e1b475c4ddc5c14d0",
+    "chunk_ad933eab2ed813b8b4e901f29ce493fc4630c06516d748741fc4fced6b58c180",
+    "chunk_035f65df308b81481e03f03446a755adcfaf2e2c4676d13114d86eb9d066d9f4",
+    "chunk_91d3efc95c3fcb90525e635851bbc0658559c97be42c2f9b847525be71a3e6fe",
+    "chunk_8f8b9c4ab0ceec987dfcafb712565ea8f8868925f529ccbabe4726dae93b9f52",
+    "chunk_226c44db6e445faff2d84757723aae40f18c84316f9da0f976310dc7ca1feaa5",
+    "chunk_c62d072d451f3243e17ccb8ed624f5c47830689ad738ea6163c82dc362b2ce00",
+    "chunk_3f6115d603ad49db4ebff570f83a569b5e4c369aedfe1b5283f341aa202e5246",
+    "chunk_ac16b3ffb273d6bd9c977e11cf728ea611e5b248b6753f18f1f7e1d4df99a12a",
+    "chunk_f37382ae023c017573d3b72a944f4a7e5716478329dd6c423b57394ef858c69c"
+   ],
+   "legend_carried_ids": [
+    "chunk_f37382ae023c017573d3b72a944f4a7e5716478329dd6c423b57394ef858c69c"
+   ],
+   "used_evidence": [
+    "chunk_e107b69b69296da8210ccf8b79a6bd476069c113e2b726c8e38f3b96c51d6aef",
+    "chunk_3f6115d603ad49db4ebff570f83a569b5e4c369aedfe1b5283f341aa202e5246"
+   ],
+   "answer_chars": 1477,
+   "answer_head": "Relevant passage: “Some years ago Adobe developed a cute little keyer that works surprisingly well for blue-screens and greenscreens. While "
+  }
+ ]
+}

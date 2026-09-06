@@ -1,0 +1,275 @@
+{
+ "summary": {
+  "tag": "final",
+  "n": 10,
+  "evidence_mismatches": 0,
+  "mode_mismatches": 0,
+  "plan_mismatches": 0,
+  "runtime": [
+   "chat-runtime-v1"
+  ],
+  "degraded_mismatches": 5,
+  "clean_pairs": 3,
+  "clean_evidence_mismatches": 0,
+  "explained_evidence_mismatches": 0,
+  "degraded_components_seen": [
+   "embed_deadline",
+   "rerank_timeout"
+  ],
+  "wall_chat_p50_s": 11.4,
+  "wall_stream_p50_s": 14.9
+ },
+ "results": [
+  {
+   "question": "What does the book say about making your own chroma keyer?",
+   "evidence_equal": true,
+   "same_set": true,
+   "n_chat": 15,
+   "n_stream": 15,
+   "mode_chat": "HYBRID",
+   "mode_stream": "HYBRID",
+   "engine_chat": "chat-retrieval-v2",
+   "engine_stream": "chat-retrieval-v2",
+   "degraded_chat": [],
+   "degraded_stream": [],
+   "oom_in_window": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "clean_pair": true,
+   "runtime": "chat-runtime-v1",
+   "plan_equal": true,
+   "wall_chat_s": 6.9,
+   "wall_stream_s": 5.8
+  },
+  {
+   "question": "What does the book say about nonsquare pixels?",
+   "evidence_equal": true,
+   "same_set": true,
+   "n_chat": 15,
+   "n_stream": 15,
+   "mode_chat": "HYBRID",
+   "mode_stream": "HYBRID",
+   "engine_chat": "chat-retrieval-v2",
+   "engine_stream": "chat-retrieval-v2",
+   "degraded_chat": [],
+   "degraded_stream": [],
+   "oom_in_window": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "clean_pair": true,
+   "runtime": "chat-runtime-v1",
+   "plan_equal": true,
+   "wall_chat_s": 7.4,
+   "wall_stream_s": 7.1
+  },
+  {
+   "question": "What does the book say about oebps/ritc 9781119685401 epub3 035 r1.xhtml?",
+   "evidence_equal": true,
+   "same_set": true,
+   "n_chat": 15,
+   "n_stream": 15,
+   "mode_chat": "HYBRID",
+   "mode_stream": "HYBRID",
+   "engine_chat": "chat-retrieval-v2",
+   "engine_stream": "chat-retrieval-v2",
+   "degraded_chat": [
+    "rerank_timeout"
+   ],
+   "degraded_stream": [
+    "embed_deadline",
+    "rerank_timeout"
+   ],
+   "oom_in_window": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 3
+   },
+   "clean_pair": false,
+   "runtime": "chat-runtime-v1",
+   "plan_equal": true,
+   "wall_chat_s": 11.3,
+   "wall_stream_s": 34.9
+  },
+  {
+   "question": "What does the book say about miscellaneous drawing tips?",
+   "evidence_equal": true,
+   "same_set": true,
+   "n_chat": 15,
+   "n_stream": 15,
+   "mode_chat": "HYBRID",
+   "mode_stream": "HYBRID",
+   "engine_chat": "chat-retrieval-v2",
+   "engine_stream": "chat-retrieval-v2",
+   "degraded_chat": [
+    "embed_deadline"
+   ],
+   "degraded_stream": [],
+   "oom_in_window": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 1
+   },
+   "clean_pair": false,
+   "runtime": "chat-runtime-v1",
+   "plan_equal": true,
+   "wall_chat_s": 33.1,
+   "wall_stream_s": 8.2
+  },
+  {
+   "question": "What does the book say about transcoding versus color rerendering?",
+   "evidence_equal": true,
+   "same_set": true,
+   "n_chat": 15,
+   "n_stream": 15,
+   "mode_chat": "HYBRID",
+   "mode_stream": "HYBRID",
+   "engine_chat": "chat-retrieval-v2",
+   "engine_stream": "chat-retrieval-v2",
+   "degraded_chat": [
+    "rerank_timeout"
+   ],
+   "degraded_stream": [
+    "embed_deadline",
+    "rerank_timeout"
+   ],
+   "oom_in_window": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 2
+   },
+   "clean_pair": false,
+   "runtime": "chat-runtime-v1",
+   "plan_equal": true,
+   "wall_chat_s": 11.4,
+   "wall_stream_s": 18.0
+  },
+  {
+   "question": "What does the book say about FACE OFF?",
+   "evidence_equal": true,
+   "same_set": true,
+   "n_chat": 15,
+   "n_stream": 15,
+   "mode_chat": "HYBRID",
+   "mode_stream": "HYBRID",
+   "engine_chat": "chat-retrieval-v2",
+   "engine_stream": "chat-retrieval-v2",
+   "degraded_chat": [
+    "embed_deadline",
+    "rerank_timeout"
+   ],
+   "degraded_stream": [
+    "embed_deadline",
+    "rerank_timeout"
+   ],
+   "oom_in_window": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "clean_pair": false,
+   "runtime": "chat-runtime-v1",
+   "plan_equal": true,
+   "wall_chat_s": 22.3,
+   "wall_stream_s": 14.9
+  },
+  {
+   "question": "What does the book say about affect, fatigue, and injury are control states?",
+   "evidence_equal": true,
+   "same_set": true,
+   "n_chat": 15,
+   "n_stream": 15,
+   "mode_chat": "HYBRID",
+   "mode_stream": "HYBRID",
+   "engine_chat": "chat-retrieval-v2",
+   "engine_stream": "chat-retrieval-v2",
+   "degraded_chat": [],
+   "degraded_stream": [],
+   "oom_in_window": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "clean_pair": true,
+   "runtime": "chat-runtime-v1",
+   "plan_equal": true,
+   "wall_chat_s": 8.9,
+   "wall_stream_s": 11.3
+  },
+  {
+   "question": "What does the book say about movement of an object with a background?",
+   "evidence_equal": true,
+   "same_set": true,
+   "n_chat": 15,
+   "n_stream": 15,
+   "mode_chat": "HYBRID",
+   "mode_stream": "HYBRID",
+   "engine_chat": "chat-retrieval-v2",
+   "engine_stream": "chat-retrieval-v2",
+   "degraded_chat": [
+    "rerank_timeout"
+   ],
+   "degraded_stream": [
+    "embed_deadline",
+    "rerank_timeout"
+   ],
+   "oom_in_window": {
+    "sidecar_embedder": 2,
+    "sidecar_reranker": 0
+   },
+   "clean_pair": false,
+   "runtime": "chat-runtime-v1",
+   "plan_equal": true,
+   "wall_chat_s": 11.4,
+   "wall_stream_s": 36.3
+  },
+  {
+   "question": "What does the book say about sound editing?",
+   "evidence_equal": true,
+   "same_set": true,
+   "n_chat": 15,
+   "n_stream": 15,
+   "mode_chat": "HYBRID",
+   "mode_stream": "HYBRID",
+   "engine_chat": "chat-retrieval-v2",
+   "engine_stream": "chat-retrieval-v2",
+   "degraded_chat": [
+    "embed_deadline",
+    "rerank_timeout"
+   ],
+   "degraded_stream": [
+    "embed_deadline",
+    "rerank_timeout"
+   ],
+   "oom_in_window": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 2
+   },
+   "clean_pair": false,
+   "runtime": "chat-runtime-v1",
+   "plan_equal": true,
+   "wall_chat_s": 14.7,
+   "wall_stream_s": 33.5
+  },
+  {
+   "question": "What does the book say about write radio sparely?",
+   "evidence_equal": true,
+   "same_set": true,
+   "n_chat": 15,
+   "n_stream": 15,
+   "mode_chat": "HYBRID",
+   "mode_stream": "HYBRID",
+   "engine_chat": "chat-retrieval-v2",
+   "engine_stream": "chat-retrieval-v2",
+   "degraded_chat": [
+    "embed_deadline"
+   ],
+   "degraded_stream": [],
+   "oom_in_window": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 2
+   },
+   "clean_pair": false,
+   "runtime": "chat-runtime-v1",
+   "plan_equal": true,
+   "wall_chat_s": 24.5,
+   "wall_stream_s": 7.4
+  }
+ ]
+}

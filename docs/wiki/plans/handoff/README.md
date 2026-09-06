@@ -19,7 +19,7 @@ design time. Apply in this order, run the named tests, then measure the ledger g
 | P1.d concurrency + one rerank | APPLIED 2026-09-06 — see `applied/` and work-log `2026-09-06-p1d-latency-architecture.md` (register 11.96) | — | — | — |
 | P1.e mode recomposition | APPLIED 2026-09-06 — see `applied/` and work-log `2026-09-06-p1e-mode-recomposition.md` (register 11.97) | — | — | — |
 | P1.f chat runtime | APPLIED 2026-09-06 — see `applied/` and work-log `2026-09-06-p1f-runtime-unification.md` (register 11.98) | — | — | — |
-| P1.g regression suite | `p1g_patch.py` (frozen manifest from the latest experiment JSONs, `--check`, CI test, live replay), `p1g_worklog_skeleton.md` | after P1.f | `tests/determinism/test_chat_regression_suite.py` runs in determinism.yml | `chat_baseline.py --check B|L|M:<tag>` |
+| P1.g regression suite | APPLIED 2026-09-06 — see `applied/` and work-log `2026-09-06-p1g-regression-suite.md` (register 11.99) | — | — | — |
 
 Caveats the next session must respect:
 

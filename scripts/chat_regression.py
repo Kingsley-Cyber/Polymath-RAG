@@ -22,6 +22,9 @@ A check reads one value from the source JSON:
   field     optional pointer applied inside the selected row
   reduce    optional len | sum | max | min applied to a list (sum/max/min of a dict use its values)
   minus     optional second pointer whose value is subtracted (latency deltas)
+  file      optional recording that overrides case.source.file for this one check (a sibling recording of the
+            same run family, e.g. the rerank-deadline probe next to the lane-deadline probe); `--refresh` leaves
+            such checks alone — re-record them by editing the manifest deliberately
 and compares it with exactly one bound: `min` (value ≥ bound), `max` (value ≤ bound), `equals`.
 
 Usage (repo root, no services needed):
@@ -165,17 +168,22 @@ def evaluate_case(case: dict, root: Path = ROOT) -> list[dict]:
     """One row per check / offline test / pending metric: PASS, FAIL, MISSING, DRIFT, EXISTS, ABSENT, PENDING."""
     rows: list[dict] = []
     source = (case.get("source") or {}).get("file")
-    doc = None
-    doc_error = None
-    if case.get("checks"):
-        try:
-            doc = load_json(root, source)
-        except Exception as exc:  # noqa: BLE001
-            doc_error = f"{source}: {type(exc).__name__}: {exc}"
+    docs: dict[str, tuple[Any, str | None]] = {}
+
+    def _doc(path: str) -> tuple[Any, str | None]:
+        if path not in docs:
+            try:
+                docs[path] = (load_json(root, path), None)
+            except Exception as exc:  # noqa: BLE001
+                docs[path] = (None, f"{path}: {type(exc).__name__}: {exc}")
+        return docs[path]
+
     for check in case.get("checks") or []:
         op, bound = bound_of(check)
+        src = check.get("file") or source            # a check may pin a sibling recording of the same run family
+        doc, doc_error = _doc(src)
         row = {"case": case["id"], "kind": case["kind"], "metric": check["metric"], "floor": describe_bound(op, bound),
-               "recorded": check.get("recorded"), "source": source, "value": None, "result": "MISSING", "detail": ""}
+               "recorded": check.get("recorded"), "source": src, "value": None, "result": "MISSING", "detail": ""}
         if doc_error:
             row["detail"] = doc_error
         else:
@@ -250,6 +258,8 @@ def validate_shape(manifest: dict, root: Path = ROOT) -> list[str]:
             if not (case.get("source") or {}).get("run"):
                 errors.append(f"{cid}: source.run missing")
         for check in checks:
+            if check.get("file") and not (Path(root) / check["file"]).exists():
+                errors.append(f"{cid}: check {check.get('metric')!r} file missing: {check['file']}")
             try:
                 bound_of(check)
             except ValueError as exc:
@@ -307,6 +317,8 @@ def refresh(manifest: dict, case_id: str, new_file: str, root: Path = ROOT, toda
     new_values: list[tuple[dict, Any]] = []
     problems: list[str] = []
     for check in case["checks"]:
+        if check.get("file"):
+            continue            # pinned to its own recording; not re-pointed by --refresh
         op, bound = bound_of(check)
         try:
             value = read_metric(doc, check)
@@ -363,7 +375,8 @@ def acceptance_table(manifest: dict, root: Path = ROOT) -> str:
             row = rows[check["metric"]]
             base = check.get("baseline")
             baseline = f"{_fmt(base['value'])} ({base.get('run') or base['file'].rsplit('/', 1)[-1]})" if base else "—"
-            final = f"{_fmt(row['value'])} ({case['source'].get('run')})" if row["value"] is not None else f"— ({row['detail']})"
+            run_label = check.get("run") or case["source"].get("run")
+            final = f"{_fmt(row['value'])} ({run_label})" if row["value"] is not None else f"— ({row['detail']})"
             lines.append(f"| {label} — {check['metric']} | {baseline} | {final} | {row['floor']} | {row['result']} |")
         for ref in case.get("offline_tests") or []:
             row = rows[ref]

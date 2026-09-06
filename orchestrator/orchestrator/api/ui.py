@@ -1460,6 +1460,9 @@ def _coverage_lines(coverage: dict | None) -> list[str]:
         weak = a.get("weak")
         if weak == "below_floor":
             why = f"NO RELEVANT EVIDENCE (best judge score {a.get('best')}): say so explicitly for this aspect"
+        elif weak == "unjudged" and n:
+            why = (f"{n} evidence item(s), relevance UNVERIFIED — the relevance judge did not score this turn (deadline or outage); "
+                   "treat this aspect's coverage as unconfirmed and say so if the evidence does not plainly answer it")
         elif weak == "no_candidates" or not n:
             why = "NO EVIDENCE RETRIEVED: say so explicitly for this aspect"
         else:

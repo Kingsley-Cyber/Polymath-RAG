@@ -1014,7 +1014,17 @@ def select_evidence(result: CandidateResult, budget: CandidateBudget, *,
                 weak_reason[qid] = "below_floor"
         else:
             aspect_best[qid] = None
+    # the composition sees only JUDGED verdicts (below_floor / no_candidates); an unjudged turn keeps fusion order
     final, composition = compose_evidence(prefix, budget, weak_aspects=set(weak_reason), primary_id=primary_id)
+    # ACCEPTANCE FINDING A1 (2026-09-06): when a judge was expected (the route always passes one) but scored nothing —
+    # `rerank_timeout` past the deadline, or a parked sidecar — no floor verdict exists, so nothing was flagged and every
+    # aspect READ as covered (M system-honest 0.844 on judge-timeout turns vs 1.0 on judged turns). Coverage that the
+    # judge never verified is named as such: every aspect with candidates is flagged `unjudged` (a receipt and a prompt
+    # line, never a filter — selection above is unchanged). Callers without a judge (rerank_children=None) are unchanged.
+    judge_state = "live" if judged else ("unjudged" if (rerank_children is not None and prefix) else "absent")
+    if judge_state == "unjudged":
+        for qid in aspects_all:
+            weak_reason.setdefault(qid, "unjudged")
     seated = composition["aspect_seats"]
     added = 0
     if budget.neighbor_expansion > 0 and neighbor_lookup is not None and final:
@@ -1039,7 +1049,7 @@ def select_evidence(result: CandidateResult, budget: CandidateBudget, *,
     weak = sorted(set(weak_reason) | {qid for qid, n in aspect_final.items() if n == 0 and qid != primary_id})
     trace = {"pre_g3_order": pre, "post_g3_order": post, "g3_scores": scores, "rerank_prefix": len(pre),
              "neighbors_added": added, "final": [c.chunk_id for c in final],
-             "aspect_final": aspect_final, "weak_aspects": weak, "weak_reasons": weak_reason,
+             "aspect_final": aspect_final, "weak_aspects": weak, "weak_reasons": weak_reason, "judge": judge_state,
              "aspect_prefix": aspect_prefix, "aspect_best": aspect_best, "aspect_seated": seated, "composition": composition,
              "final_detail": [{"chunk_id": c.chunk_id, "doc_id": c.doc_id, "rerank_score": c.rerank_score,
                                "arrivals": list(c.arrivals), "query_ids": list(c.query_ids)} for c in final]}

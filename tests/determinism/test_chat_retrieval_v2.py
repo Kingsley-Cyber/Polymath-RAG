@@ -255,7 +255,11 @@ def test_route_rerank_deadline_falls_back_to_fusion_order_with_a_receipt_and_nev
     assert tr["post_g3_order"] == tr["pre_g3_order"] and all(v is None for v in tr["g3_scores"].values())
     assert out["evidence"] and all(e["g3_score"] is None for e in out["evidence"])
     assert [e["chunk_id"] for e in out["evidence"]] == tr["pre_g3_order"][:len(out["evidence"])]   # fusion order stands
-    assert tr["latency_ms"]["rerank"] < 900 and tr["weak_reasons"] == {}
+    assert tr["latency_ms"]["rerank"] < 900
+    # ACCEPTANCE FINDING A1: an unjudged turn names its unverified coverage — every aspect with candidates is flagged
+    # `unjudged` (receipt + prompt line; the selection above stayed in fusion order)
+    assert tr["judge"] == "unjudged" and tr["weak_reasons"] and set(tr["weak_reasons"].values()) == {"unjudged"}
+    assert "q0" in tr["weak_reasons"] and set(out["meta"]["weak_aspects"]) >= set(tr["weak_reasons"])
 
 
 def test_route_carries_a_pool_thread_reranker_degradation_into_meta(monkeypatch):

@@ -146,3 +146,18 @@ def test_live_factual_question_without_evidence_still_abstains():
     assert meta.get("task_type") in (None, "GROUNDED_QA", "GROUNDED_SYNTHESIS"), meta
     tags = re.findall(r"\[S\d+\]", text)
     assert ABSTAIN.search(text) or "Zorblax" in text and not tags or "missing" in text.lower(), text[:400]
+
+
+
+def test_coverage_lines_name_unjudged_aspects_as_unverified():
+    """ACCEPTANCE FINDING A1: a judge that missed its deadline leaves the aspects unverified; the prompt says so
+    instead of presenting the evidence as confirmed coverage (below_floor / no_candidates wording unchanged)."""
+    from orchestrator.api.ui import _coverage_lines
+    cov = {"q0": {"type": "PRIMARY", "query": "how does X work", "final": 5, "weak": "unjudged"},
+           "q1": {"type": "MECHANISM", "query": "mechanism", "final": 0, "weak": "unjudged"},
+           "q2": {"type": "CAUSAL", "query": "why", "final": 2, "weak": "below_floor", "best": 0.31},
+           "q3": {"type": "COMPARISON", "query": "vs", "final": 3, "weak": None}}
+    text = "\n".join(_coverage_lines(cov))
+    assert "q0 PRIMARY" in text and "UNVERIFIED" in text.split("q1")[0] and "did not score this turn" in text
+    assert "q1 MECHANISM" in text and "NO EVIDENCE RETRIEVED" in text.split("q1")[1].split("q2")[0]
+    assert "NO RELEVANT EVIDENCE (best judge score 0.31)" in text and "q3 COMPARISON" in text and "3 evidence item(s)" in text

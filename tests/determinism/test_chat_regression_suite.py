@@ -42,10 +42,11 @@ def test_manifest_is_the_frozen_sixteen_case_contract():
     errors = cr.validate_shape(MANIFEST, ROOT)
     assert not errors, "\n".join(errors)
     kinds = cr.counts(MANIFEST)
-    assert sum(kinds.values()) == 16 and kinds["pending"] == 3, kinds
+    # 2026-09-06 acceptance: P1.d / P1.e / P1.f recorded their metrics — no pending entry is left (a new pending
+    # entry needs a new owner phase in the plan, never a silent demotion of a recorded floor)
+    assert sum(kinds.values()) == 16 and kinds["pending"] == 0, kinds
     for case in CASES:
         if case["kind"] == "pending":
-            assert case["pending"]["owner"] in ("P1.d", "P1.e", "P1.f"), case["id"]
             assert not case.get("checks"), f"{case['id']}: a pending case has no recorded floor by definition"
     for case, check in CHECKS:
         op, bound = cr.bound_of(check)
@@ -61,7 +62,7 @@ def test_baseline_and_known_bad_references_still_read_their_stated_values():
 
 @pytest.mark.parametrize("case,check", CHECKS, ids=[f"{c['id']}/{chk['metric']}" for c, chk in CHECKS])
 def test_recorded_metric_clears_its_floor(case, check):
-    source = case["source"]["file"]
+    source = check.get("file") or case["source"]["file"]        # a check may pin a sibling recording
     doc = cr.load_json(ROOT, source)
     op, bound = cr.bound_of(check)
     try:
@@ -122,6 +123,22 @@ def test_evaluator_reports_pass_fail_drift_and_missing(tmp_path):
     rows = cr.evaluate_case(_case(drifted, checks[:1]), tmp_path)
     assert rows[0]["result"] == "DRIFT" and "re-freeze" in rows[0]["detail"]
     assert cr.failures(rows) and not cr.failures(cr.evaluate_case(_case(good, checks), tmp_path))
+
+
+def test_a_check_may_pin_a_sibling_recording_and_refresh_leaves_it_alone(tmp_path):
+    main = _synthetic(tmp_path, {"tag": "main", "per_arm": {"single": {"degraded_turns": 10, "errors": 0}}})
+    sibling = _synthetic(tmp_path, {"tag": "sibling", "per_arm": {"single": {"degraded_turns": 10, "errors": 1}}})
+    checks = [{"metric": "lane: degraded", "pointer": "/summary/per_arm/single/degraded_turns", "min": 10, "recorded": 10},
+              {"metric": "rerank: errors", "file": sibling, "pointer": "/summary/per_arm/single/errors", "max": 0, "recorded": 0}]
+    rows = cr.evaluate_case(_case(main, checks), tmp_path)
+    assert [r["result"] for r in rows] == ["PASS", "FAIL"] and rows[1]["source"] == sibling, rows
+    assert cr.validate_shape({"contract": cr.CONTRACT, "cases": [_case(main, [dict(checks[1], file="docs/absent.json")])] * 16}, tmp_path)
+    better = _synthetic(tmp_path, {"tag": "better", "per_arm": {"single": {"degraded_turns": 12, "errors": 0}}})
+    manifest = {"contract": cr.CONTRACT, "cases": [_case(main, [dict(c) for c in checks])]}
+    cr.refresh(manifest, "01-grounded-qa", better, tmp_path, today="2026-09-06")
+    case = manifest["cases"][0]
+    assert case["source"]["file"] == better and case["checks"][0]["recorded"] == 12
+    assert case["checks"][1]["file"] == sibling and case["checks"][1]["recorded"] == 0     # pinned check untouched
 
 
 def test_refresh_refreezes_a_better_recording_and_refuses_a_regressed_one(tmp_path):
