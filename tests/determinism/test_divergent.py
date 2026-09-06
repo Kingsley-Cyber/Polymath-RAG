@@ -142,3 +142,30 @@ def test_bounds_configurable():
     out = _run(latent, children,
                plan=DivergentPlan(max_bridges=1))
     assert len(out["wildcard"]) == 1
+
+
+def test_finish_with_a_deadline_returns_the_bridges_validated_so_far_and_says_partial():
+    """P1.e: the frontier budget cannot always validate every candidate parent (one reranker call each); with a
+    deadline the finish stops STARTING validations, ranks what it validated, and receipts partial / counts.
+    Without a deadline the output is unchanged."""
+    import shared.polymath_shared.divergent as dv0  # noqa: F401 — path insert above
+    from polymath_shared import divergent as dv
+    parents = {f"p{i}": {"parent_id": f"p{i}", "doc_id": f"d{i}", "source_name": f"s{i}", "hop1": 0.9 - 0.05 * i,
+                         "channels": ["abstraction"], "abstraction": f"principle {i}", "transfer": ""} for i in range(6)}
+    children = {f"p{i}": [{"score": 0.8, "payload": {"chunk_id": f"c{i}", "text": f"child text {i} about something new", "source_name": f"s{i}"}}] for i in range(6)}
+    ticks = {"t": 0.0}
+    def clock():
+        return ticks["t"]
+    def rerank(anchor, texts):
+        ticks["t"] += 1.0                       # every validation costs 1.0 s on this clock
+        return [0.9 for _ in texts]
+    full = dv.divergent_finish("q", parents, children_of=lambda pid: children[pid], baseline={}, rerank_pairs=rerank)
+    assert full["diagnostics"]["partial"] is False and full["diagnostics"]["parents_validated"] == 6 and len(full["wildcard"]) == 3
+    ticks["t"] = 0.0
+    part = dv.divergent_finish("q", parents, children_of=lambda pid: children[pid], baseline={}, rerank_pairs=rerank, deadline=2.5, clock=clock)
+    d = part["diagnostics"]
+    assert d["partial"] is True and d["parents_validated"] == 2 and d["parents_skipped"] == 4      # 0.4 s estimate, then 1.0 s per validation
+    assert 1 <= len(part["wildcard"]) <= 3 and all(b["parent_id"] in ("p0", "p1") for b in part["wildcard"])
+    ticks["t"] = 0.0
+    none = dv.divergent_finish("q", parents, children_of=lambda pid: children[pid], baseline={}, rerank_pairs=rerank, deadline=0.1, clock=clock)
+    assert none["diagnostics"]["partial"] is True and none["diagnostics"]["parents_validated"] == 0 and none["wildcard"] == []

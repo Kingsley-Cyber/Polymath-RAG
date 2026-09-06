@@ -12,11 +12,16 @@ Arms (interleaved per question so both see the same GPU contention):
   multi   PRIMARY + typed subqueries   (= v2, P1.b decomposition + aspect seats)
   AB      lanes A+B only (VECTOR composition), PRIMARY only          (P1.d / P1.e)
   ABC     lanes A+B+C (HYBRID composition), PRIMARY only
+  VECTOR    chat_retrieve_mode("VECTOR"),   PRIMARY only   (P1.e MODE-COMPOSITION-V1: lanes A+B, no sparse call; == AB)
   HYBRID    chat_retrieve_mode("HYBRID"),   PRIMARY only   (P1.e MODE-COMPOSITION-V1: the composition owner; == ABC)
   GRAPH     chat_retrieve_mode("GRAPH"),    PRIMARY only   (HYBRID → bounded hop-1: ≤ 8 seeds / ≤ 20 facts)
   WILDCARD  chat_retrieve_mode("WILDCARD"), PRIMARY only   (HYBRID ∥ latent frontier: ≤ 3 bridges, never in the evidence)
   The P1.e gates read the mode arms against the HYBRID arm: GRAPH wall p50 ≤ HYBRID + 1.5 s, WILDCARD ≤ HYBRID + 2.0 s,
-  `bridges_in_evidence` = 0 (summary + modes table).
+  `bridges_in_evidence` = 0 (summary + modes table). When a vector arm (VECTOR, else AB) and a hybrid arm (HYBRID, else
+  ABC) run in the same replay, `summary.vector_union_subset_of_hybrid` records per question whether the vector union
+  ⊆ the hybrid union (the P1.e mode-parity invariant; `rate` over all paired turns, `rate_clean` over turns where neither
+  arm was degraded). Each mode arm also records `mode_truthful_rate` (meta.mode == the requested mode) and the graph arm
+  `graph_seeds_max` (+ `graph_seeds_max_when_not_useful`: the ≤ 2 definitional-seed bound when the plan says graph_useful=false).
 
 Scoring is scripts/chat_baseline.aspect_stats — the same strict (gold / own document) and system-honest
 (judge-accepted evidence shown, or explicitly flagged) readings as the recorded gate. The pre-R1 reading
@@ -105,7 +110,8 @@ def _legacy_reading(ans: dict, weak_reasons: dict) -> dict:
 
 
 #: P1.e MODE-COMPOSITION-V1 arms — chat_retrieve_mode(arm, …), PRIMARY only
-MODE_ARMS = ("HYBRID", "GRAPH", "WILDCARD")
+MODE_ARMS = ("VECTOR", "HYBRID", "GRAPH", "WILDCARD")
+UNION_ARMS = ("VECTOR", "AB", "HYBRID", "ABC")   # arms whose funnel union ids are kept per turn (mode-parity invariant)
 
 
 def _mode_stats(fast: dict) -> dict:
@@ -191,6 +197,8 @@ def run(args) -> int:
                             "weak_reasons": meta.get("weak_reasons"), "aspect_best": meta.get("aspect_best"),
                             "rerank_prefix": trace.get("rerank_prefix"), "candidates": meta.get("candidates"),
                             "evidence_count": meta.get("evidence_count"), "degraded": meta.get("degraded"),
+                            "mode_truthful": ((meta.get("mode") == arm) if arm in MODE_ARMS else None),
+                            "union_ids": (list(trace.get("funnel_union") or []) if arm in UNION_ARMS else None),
                             "dims": st.get("dims", 0), "dims_ok": st.get("dims_ok", 0), "dims_system_ok": st.get("dims_system_ok", 0),
                             "dims_flagged": st.get("dims_flagged", 0), "dims_silent": st.get("dims_silent", 0),
                             "dims_covered_gold": st.get("dims_covered_gold", 0), "dims_covered": st.get("dims_covered", 0),
@@ -252,6 +260,10 @@ def run(args) -> int:
             "graph_fact_count_p50": _med([r.get("graph_fact_count") for r in ar]),
             "graph_seeds_p50": _med([r.get("graph_seeds_offered") for r in ar]),
             "graph_facts_max": max([r.get("graph_fact_count") for r in ar if isinstance(r.get("graph_fact_count"), int)] or [None]),
+            "graph_seeds_max": max([r.get("graph_seeds_offered") for r in ar if isinstance(r.get("graph_seeds_offered"), int)] or [None]),
+            "graph_seeds_max_when_not_useful": max([r.get("graph_seeds_offered") for r in ar if isinstance(r.get("graph_seeds_offered"), int)
+                                                    and (r.get("graph_bounds") or {}).get("graph_useful") is False] or [None]),
+            "mode_truthful_rate": (round(sum(1 for r in ar if r.get("mode_truthful")) / max(1, len(ar)), 3) if arm in MODE_ARMS else None),
             "wildcard_bridges_p50": _med([r.get("wildcard_bridges") for r in ar]),
             "wildcard_bridges_max": max([r.get("wildcard_bridges") for r in ar if isinstance(r.get("wildcard_bridges"), int)] or [None]),
             "bridges_in_evidence": sum(r.get("bridges_in_evidence") or 0 for r in ar),
@@ -271,6 +283,27 @@ def run(args) -> int:
             "not_system_ok": [{"idx": r["idx"], "term": a["term"], "naming": a["queries_naming"]}
                               for r in ar for a in (r.get("aspects") or []) if not a.get("system_ok")],
         }
+    # P1.e mode-parity invariant: VECTOR (A+B) union ⊆ HYBRID (A+B+C) union, per question, from the same replay
+    v_arm = next((a for a in ("VECTOR", "AB") if a in arms), None)
+    h_arm = next((a for a in ("HYBRID", "ABC") if a in arms), None)
+    if v_arm and h_arm:
+        pairs = []
+        for i in idxs:
+            rv = next((r for r in rows if r["idx"] == i and r["arm"] == v_arm and not r.get("error")), None)
+            rh = next((r for r in rows if r["idx"] == i and r["arm"] == h_arm and not r.get("error")), None)
+            if rv is None or rh is None or rv.get("union_ids") is None or rh.get("union_ids") is None:
+                continue
+            subset = set(rv["union_ids"]) <= set(rh["union_ids"])
+            clean = not (rv.get("degraded_components") or rh.get("degraded_components"))
+            pairs.append({"idx": i, "subset": subset, "clean": clean, "vector_union": len(rv["union_ids"]), "hybrid_union": len(rh["union_ids"]),
+                          "missing_from_hybrid": sorted(set(rv["union_ids"]) - set(rh["union_ids"]))[:5]})
+        clean_pairs = [p for p in pairs if p["clean"]]
+        summary["vector_union_subset_of_hybrid"] = {
+            "vector_arm": v_arm, "hybrid_arm": h_arm, "turns": len(pairs),
+            "rate": round(sum(1 for p in pairs if p["subset"]) / max(1, len(pairs)), 3),
+            "clean_turns": len(clean_pairs),
+            "rate_clean": round(sum(1 for p in clean_pairs if p["subset"]) / max(1, len(clean_pairs)), 3) if clean_pairs else None,
+            "violations": [p for p in pairs if not p["subset"]]}
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     (OUT_DIR / f"chat-m-replay-{args.tag}.json").write_text(json.dumps({"summary": summary, "results": rows}, indent=1, default=str))
     md = [f"---\ntitle: \"CHAT-M-REPLAY {args.tag}: fixture M replayed in-process with frozen plans\"\nowner: governance\n"
@@ -297,17 +330,21 @@ def run(args) -> int:
         ref = (summary["per_arm"].get("HYBRID") or summary["per_arm"].get("ABC") or {}).get("wall_p50_s")
         md += ["", "P1.e mode compositions (gates: GRAPH p50 ≤ HYBRID + 1.5 s with ≤ 8 seeds / ≤ 20 facts; WILDCARD p50 ≤ HYBRID + 2.0 s with ≤ 3 bridges, "
                "`bridges in evidence` = 0):", "",
-               "| arm | mode | n | wall p50 s | Δ vs HYBRID s | clean wall p50 s | graph facts p50 / max | graph seeds p50 | graph ms p50 | "
-               "wildcard bridges p50 / max | bridges in evidence | wildcard ms p50 | graph degraded | wildcard degraded |", "|---|" + "---|" * 13]
+               "| arm | mode | mode truthful | n | wall p50 s | Δ vs HYBRID s | clean wall p50 s | graph facts p50 / max | graph seeds p50 / max | graph ms p50 | "
+               "wildcard bridges p50 / max | bridges in evidence | wildcard ms p50 | graph degraded | wildcard degraded |", "|---|" + "---|" * 14]
         for arm, s_ in summary["per_arm"].items():
             if arm not in MODE_ARMS:
                 continue
             L = s_["latency_ms_p50"]
             delta = (round(s_["wall_p50_s"] - ref, 2) if (ref is not None and s_["wall_p50_s"] is not None) else None)
-            md.append(f"| {arm} | {s_.get('mode')} | {s_['n']} | {s_['wall_p50_s']} | {delta} | {s_['clean_wall_p50_s']} | "
-                      f"{s_['graph_fact_count_p50']} / {s_['graph_facts_max']} | {s_['graph_seeds_p50']} | {L.get('graph')} | "
+            md.append(f"| {arm} | {s_.get('mode')} | {s_['mode_truthful_rate']} | {s_['n']} | {s_['wall_p50_s']} | {delta} | {s_['clean_wall_p50_s']} | "
+                      f"{s_['graph_fact_count_p50']} / {s_['graph_facts_max']} | {s_['graph_seeds_p50']} / {s_['graph_seeds_max']} | {L.get('graph')} | "
                       f"{s_['wildcard_bridges_p50']} / {s_['wildcard_bridges_max']} | {s_['bridges_in_evidence']} | {L.get('wildcard')} | "
                       f"{s_['graph_degraded_turns']} | {s_['wildcard_degraded_turns']} |")
+    if summary.get("vector_union_subset_of_hybrid"):
+        v = summary["vector_union_subset_of_hybrid"]
+        md += ["", f"Mode parity: {v['vector_arm']} union ⊆ {v['hybrid_arm']} union on {v['rate']} of {v['turns']} paired turns "
+               f"(clean turns {v['rate_clean']} of {v['clean_turns']}); violations: {[(p['idx'], p['missing_from_hybrid']) for p in v['violations']] or 'none'}"]
     md += ["", "Residual (not system-honest OK):", ""] + [f"- {arm}: {s['not_system_ok'] or 'none'}" for arm, s in summary["per_arm"].items()]
     md += ["", "Strict misses (silent):", ""] + [f"- {arm}: {s['silent'] or 'none'}" for arm, s in summary["per_arm"].items()]
     (OUT_DIR / f"chat-m-replay-{args.tag}.md").write_text("\n".join(md) + "\n")

@@ -66,6 +66,9 @@ from polymath_shared.candidate_engine import (
     sparse_vector_for,
 )
 from polymath_shared.divergent import DIVERGENT_DEFAULT_PLAN, divergent_finish, divergent_sweep
+#: P1.e: the finish stops STARTING validations at the frontier deadline; a validation already in flight may overrun by
+#: at most one reranker call — the route waits this bounded grace for the partial result instead of abandoning it.
+WILDCARD_FINISH_GRACE_S = 1.5
 from polymath_shared.retrieval_modes import (
     GRAPH_DEFINITIONAL_MAX_SEEDS,
     GRAPH_MAX_FACTS,
@@ -519,7 +522,7 @@ def _retrieve_wildcard(query: str, corpus_id: str, *, lanes: tuple, budget: Opti
             def _expired() -> None:
                 # an abandoned validation (deadline passed, result ignored) must not keep the stores and the
                 # reranker busy: every further call raises, divergent_finish treats it as a fail-open miss
-                if time.perf_counter() > deadline:
+                if time.perf_counter() > deadline + WILDCARD_FINISH_GRACE_S:
                     raise TimeoutError("wildcard deadline passed; frontier abandoned")
 
             def _children_of(parent_id: str, _v: tuple = qvec) -> list[dict]:   # closure over ONE fixed vector (#9)
@@ -542,17 +545,20 @@ def _retrieve_wildcard(query: str, corpus_id: str, *, lanes: tuple, budget: Opti
             finish_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="wildcard-finish")
             t1 = time.perf_counter()
             f2 = finish_pool.submit(divergent_finish, query, parents, children_of=_children_of, baseline=baseline,
-                                    rerank_pairs=_rerank_pairs, plan=plan)
+                                    rerank_pairs=_rerank_pairs, plan=plan, deadline=deadline)
             try:
-                w = f2.result(timeout=max(0.0, deadline - time.perf_counter()))
+                w = f2.result(timeout=max(0.0, deadline + WILDCARD_FINISH_GRACE_S - time.perf_counter()))
                 receipt["finish_ms"] = round((time.perf_counter() - t1) * 1000, 1)
-                receipt.update({k: w["diagnostics"].get(k) for k in ("latent_candidates", "excluded_obvious", "support_filtered", "reranker")})
+                receipt.update({k: w["diagnostics"].get(k) for k in ("latent_candidates", "excluded_obvious", "support_filtered", "reranker",
+                                                                       "partial", "parents_validated", "parents_skipped")})
                 for b in w["wildcard"]:
                     if (b.get("source_evidence") or {}).get("chunk_id") in baseline["chunk_ids"]:
                         receipt["excluded_in_evidence"] += 1          # a bridge never duplicates an evidence chunk
                         continue
                     bridges.append(b)
                 bridges = bridges[:plan.max_bridges]
+                if not bridges and w["diagnostics"].get("partial") and not w["diagnostics"].get("parents_validated"):
+                    receipt["degraded"] = "wildcard_timeout:finish"          # the budget did not fit a single validation
             except FutureTimeout:
                 receipt["finish_ms"] = round((time.perf_counter() - t1) * 1000, 1)
                 receipt["degraded"] = "wildcard_timeout:finish"

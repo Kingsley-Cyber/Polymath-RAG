@@ -382,17 +382,27 @@ def test_wildcard_sweep_timeout_degrades_to_an_empty_lane_and_never_holds_the_tu
 
 
 def test_wildcard_validation_timeout_degrades_the_same_way_and_the_abandoned_frontier_stops_calling_out(monkeypatch):
+    # (a) a budget that cannot fit ONE validation: the deadline-aware finish (P1.e) starts none — no store call and no
+    # reranker call at all — the lane is empty and receipted degraded, the core answer stands
     h = _ModeHarness(monkeypatch, latent=FAR_FIVE, children_sleep=0.5)
     out = h.mode("WILDCARD", budget=ce.CandidateBudget(wildcard_deadline_s=0.3))
     w = out["meta"]["wildcard"]
     assert out["wildcard"] == [] and w["degraded"] == "wildcard_timeout:finish" and w["sweep_ms"] is not None
     assert w["finish_ms"] is not None and w["finish_ms"] < 900 and out["evidence"]
-    assert h.children_calls == ["pfar0"] and h.pair_calls == 0                                 # one search was in flight at the deadline
-    h.drain("children_calls", 1)
-    # past the deadline the abandoned validation raises instead of searching or reranking: no store call for the
-    # remaining parents, no cross-encoder call for the one that returned late (the reranker is never held busy)
-    assert h.children_calls == ["pfar0"] and h.pair_calls == 0
-
+    assert w["partial"] is True and w["parents_validated"] == 0 and w["parents_skipped"] >= 1
+    assert h.children_calls == [] and h.pair_calls == 0
+    h.drain("children_calls", 0)
+    assert h.children_calls == [] and h.pair_calls == 0                                          # nothing calls out afterwards
+    # (b) a budget that fits exactly one validation (0.5 s of store latency, 0.9 s budget): the first parent is validated,
+    # the rest are SKIPPED before they start (never abandoned mid-flight), the validated bridge is returned, the lane is
+    # partial but not degraded, and no store or reranker call happens after the result
+    h2 = _ModeHarness(monkeypatch, latent=FAR_FIVE, children_sleep=0.5)
+    out2 = h2.mode("WILDCARD", budget=ce.CandidateBudget(wildcard_deadline_s=0.9))
+    w2 = out2["meta"]["wildcard"]
+    assert w2["partial"] is True and w2["parents_validated"] == 1 and w2["parents_skipped"] >= 1 and not w2["degraded"]
+    assert h2.children_calls == ["pfar0"] and h2.pair_calls == 1 and len(out2["wildcard"]) <= 1
+    h2.drain("children_calls", 1)
+    assert h2.children_calls == ["pfar0"] and h2.pair_calls == 1
 
 def test_wildcard_deadline_is_a_budget_knob_with_the_env_override(monkeypatch):
     monkeypatch.delenv("POLYMATH_CHAT_WILDCARD_DEADLINE_S", raising=False)
@@ -459,7 +469,8 @@ def test_divergent_sweep_plus_finish_equals_divergent_retrieve_and_the_sweep_is_
     new = dv.divergent_finish(query, parents, children_of=lambda pid: children.get(pid, []), baseline=baseline, rerank_pairs=rerank)
     assert new == old and parents == frozen
     assert len(parents) == 11 and parents["p0"]["channels"] == ["abstraction", "transfer"] and parents["p0"]["hop1"] == 0.95
-    assert new["diagnostics"] == {"latent_candidates": 11, "excluded_obvious": 1, "support_filtered": 1, "returned": 3, "reranker": True}
+    assert new["diagnostics"] == {"latent_candidates": 11, "excluded_obvious": 1, "support_filtered": 1, "returned": 3, "reranker": True,
+                                  "partial": False, "parents_validated": 8, "parents_skipped": 0}   # P1.e deadline-aware finish: additive keys
     assert [b["parent_id"] for b in new["wildcard"]] == ["p0", "p1", "p2"]
     # finish with no baseline and no reranker behaves like the one-shot function too
     assert dv.divergent_finish(query, parents, children_of=lambda pid: children.get(pid, [])) == \
@@ -471,7 +482,7 @@ def test_divergent_sweep_fails_open_per_channel_and_finish_fails_open_to_an_empt
         raise RuntimeError("store down")
     assert dv.divergent_sweep([0.0], broken) == {}
     out = dv.divergent_finish("q", {}, children_of=broken)
-    assert out == {"wildcard": [], "diagnostics": {"latent_candidates": 0, "excluded_obvious": 0, "support_filtered": 0, "returned": 0,
+    assert out == {"wildcard": [], "diagnostics": {"latent_candidates": 0, "excluded_obvious": 0, "support_filtered": 0, "returned": 0, "partial": False, "parents_validated": 0, "parents_skipped": 0,
                                                     "reranker": False}, "plan": "divergent-retrieval-v1"}
     half = dv.divergent_sweep([0.0], lambda kind, v, k: ([_lat("p1", 0.8, "principle")] if kind == "latent_transfer" else broken()))
     assert list(half) == ["p1"] and half["p1"]["channels"] == ["transfer"] and half["p1"]["transfer"] == "principle"

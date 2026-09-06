@@ -135,10 +135,22 @@ def divergent_finish(
     baseline: dict | None = None,   # {doc_ids,parent_ids,chunk_ids} of the core result
     rerank_pairs=None,    # (anchor_text, [texts]) -> [scores] | None
     plan: DivergentPlan = DIVERGENT_DEFAULT_PLAN,
+    deadline: float | None = None,   # P1.e: monotonic instant (clock()) after which no NEW validation starts
+    clock=None,
 ) -> dict:
     """Stages 2–3 — baseline exclusion (the step that must wait for the
     core result), two-hop validation + novelty, hard bounds. Same output
-    as the pre-split single function for the same sweep."""
+    as the pre-split single function for the same sweep.
+
+    DEADLINE-AWARE (P1.e, 2026-09-06): each candidate parent costs one
+    reranker call (~0.25 s fresh, 1–2 s under enrichment contention), so the
+    plan's +2 s frontier budget cannot always validate all `candidate_parents`.
+    With `deadline` set, a new validation starts only while the budget still
+    fits one more (estimated from the validations so far); the bridges
+    validated by then are ranked and returned with `partial: True` instead of
+    the whole frontier being abandoned. Without `deadline` nothing changes."""
+    import time as _time
+    clock = clock or _time.perf_counter
     base = baseline or {}
     obvious_parents = set(base.get("parent_ids") or ())
     obvious_docs = set(base.get("doc_ids") or ())
@@ -147,7 +159,8 @@ def divergent_finish(
 
     diag = {"latent_candidates": len(parents), "excluded_obvious": 0,
             "support_filtered": 0, "returned": 0,
-            "reranker": rerank_pairs is not None}
+            "reranker": rerank_pairs is not None,
+            "partial": False, "parents_validated": 0, "parents_skipped": 0}
 
     # 2. EXCLUDE the obvious neighborhood — the whole point. Hard
     # exclusion is PARENT-level: the section the baseline already
@@ -167,7 +180,16 @@ def divergent_finish(
 
     # 3. two-hop validation + novelty per candidate
     bridges: list[tuple[float, Bridge]] = []
-    for slot in frontier:
+    durations: list[float] = []
+    for i, slot in enumerate(frontier):
+        if deadline is not None:
+            est = max(0.4, sum(durations) / len(durations)) if durations else 0.4
+            if clock() + est > deadline:
+                diag["partial"] = True
+                diag["parents_skipped"] = len(frontier) - i
+                break
+        t_slot = clock()
+        diag["parents_validated"] += 1
         try:
             kid_rows = children_of(slot["parent_id"]) or []
         except Exception:
@@ -175,6 +197,7 @@ def divergent_finish(
         kids = [(r.get("payload") or {}) for r in kid_rows]
         kids = [k for k in kids if (k.get("text") or "").strip()]
         if not kids:
+            durations.append(clock() - t_slot)
             continue
         anchor = slot["abstraction"] or slot["transfer"]
         support = None
@@ -189,6 +212,7 @@ def divergent_finish(
                 best, support = kids[idx], float(scores[idx])
                 if support < plan.support_floor:
                     diag["support_filtered"] += 1
+                    durations.append(clock() - t_slot)
                     continue        # interesting but unsupported → dies
         overlap = _jaccard(qtoks, _toks(best.get("text") or ""))
         in_neighborhood = best.get("chunk_id") in obvious_chunks
@@ -226,6 +250,7 @@ def divergent_finish(
                     "novelty": novelty,
                     "value": round(value, 4)},
             channels=sorted(set(slot["channels"])))))
+        durations.append(clock() - t_slot)
 
     bridges.sort(key=lambda vb: (-vb[0], vb[1].parent_id))
     out = [vars(b) for _, b in bridges[:plan.max_bridges]]
