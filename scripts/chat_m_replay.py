@@ -12,6 +12,11 @@ Arms (interleaved per question so both see the same GPU contention):
   multi   PRIMARY + typed subqueries   (= v2, P1.b decomposition + aspect seats)
   AB      lanes A+B only (VECTOR composition), PRIMARY only          (P1.d / P1.e)
   ABC     lanes A+B+C (HYBRID composition), PRIMARY only
+  HYBRID    chat_retrieve_mode("HYBRID"),   PRIMARY only   (P1.e MODE-COMPOSITION-V1: the composition owner; == ABC)
+  GRAPH     chat_retrieve_mode("GRAPH"),    PRIMARY only   (HYBRID → bounded hop-1: ≤ 8 seeds / ≤ 20 facts)
+  WILDCARD  chat_retrieve_mode("WILDCARD"), PRIMARY only   (HYBRID ∥ latent frontier: ≤ 3 bridges, never in the evidence)
+  The P1.e gates read the mode arms against the HYBRID arm: GRAPH wall p50 ≤ HYBRID + 1.5 s, WILDCARD ≤ HYBRID + 2.0 s,
+  `bridges_in_evidence` = 0 (summary + modes table).
 
 Scoring is scripts/chat_baseline.aspect_stats — the same strict (gold / own document) and system-honest
 (judge-accepted evidence shown, or explicitly flagged) readings as the recorded gate. The pre-R1 reading
@@ -22,6 +27,7 @@ the sidecar logs record inside each turn's window are receipted per arm.
 Usage:
   set -a; . ./.env; set +a
   .venv/bin/python scripts/chat_m_replay.py --tag r1-M [--limit 10] [--arms single,multi]
+  .venv/bin/python scripts/chat_m_replay.py --tag p1e-B --fixture B --arms HYBRID,GRAPH,WILDCARD
 Writes docs/wiki/experiments/chat-m-replay-<tag>.json + .md. No receipts are written (the route owns those).
 """
 from __future__ import annotations
@@ -98,6 +104,28 @@ def _legacy_reading(ans: dict, weak_reasons: dict) -> dict:
     return {"retrieval": ret}
 
 
+#: P1.e MODE-COMPOSITION-V1 arms — chat_retrieve_mode(arm, …), PRIMARY only
+MODE_ARMS = ("HYBRID", "GRAPH", "WILDCARD")
+
+
+def _mode_stats(fast: dict) -> dict:
+    """Per-turn mode receipts: the graph stage's bounds/facts/seeds and the wildcard lane's bridges — plus the
+    gate `bridges_in_evidence` (a bridge whose source chunk is in the evidence list; must be 0)."""
+    meta = fast.get("meta") or {}
+    ev_ids = {e.get("chunk_id") for e in (fast.get("evidence") or [])}
+    bridges = fast.get("wildcard") or []
+    seeds = meta.get("graph_seeds") or {}
+    offered = (min(int(seeds["max_seeds"]), int(seeds.get("cards") or 0) + int(seeds.get("surfaces") or 0))
+               if seeds.get("max_seeds") is not None else None)
+    return {"mode": meta.get("mode"),
+            "graph_fact_count": meta.get("graph_fact_count"), "graph_bounds": meta.get("graph_bounds"),
+            "graph_seeds": seeds or None, "graph_seeds_offered": offered, "graph_degraded": meta.get("graph_degraded"),
+            "wildcard_bridges": (len(bridges) if "wildcard" in fast else None),
+            "bridges_in_evidence": sum(1 for b in bridges if (b.get("source_evidence") or {}).get("chunk_id") in ev_ids),
+            "wildcard_degraded": (meta.get("wildcard") or {}).get("degraded"),
+            "wildcard_receipt": meta.get("wildcard")}
+
+
 def _gold_stats(q: dict, trace: dict) -> dict:
     """Fixture B / L: where the gold chunk died or was seated (same definitions as chat_baseline)."""
     golds = set(q.get("gold_chunk_ids") or ([q["gold_chunk_id"]] if q.get("gold_chunk_id") else []))
@@ -115,7 +143,7 @@ def run(args) -> int:
     import os
     if args.rerank_max:
         os.environ["POLYMATH_CHAT_RERANK_MAX"] = str(args.rerank_max)       # default_budget() reads it per call
-    from orchestrator.api.chat_retrieval import chat_retrieve_v2   # the chat path's engine call
+    from orchestrator.api.chat_retrieval import chat_retrieve_mode, chat_retrieve_v2   # the chat path's engine calls
     from chat_baseline import aspect_stats                          # the recorded gate's scorer
 
     kind = args.fixture.upper()
@@ -138,7 +166,10 @@ def run(args) -> int:
             lanes = {"AB": ("HIERARCHICAL_ROUTE", "GLOBAL_DENSE_CHILD"), "ABC": ("HIERARCHICAL_ROUTE", "GLOBAL_DENSE_CHILD", "GLOBAL_SPARSE_CHILD")}.get(arm)
             kw = {"lanes": lanes} if lanes else {}
             try:
-                fast = chat_retrieve_v2(query, q["corpus_id"], exact_terms=exact, subqueries=(subs if arm == "multi" else ()), **kw)
+                if arm in MODE_ARMS:        # P1.e: the composition owner (PRIMARY only, like AB / ABC)
+                    fast = chat_retrieve_mode(arm, query, q["corpus_id"], exact_terms=exact)
+                else:
+                    fast = chat_retrieve_v2(query, q["corpus_id"], exact_terms=exact, subqueries=(subs if arm == "multi" else ()), **kw)
                 err = None
             except Exception as exc:  # noqa: BLE001 — recorded, never hides a turn
                 fast, err = None, f"{type(exc).__name__}: {str(exc)[:200]}"
@@ -154,6 +185,7 @@ def run(args) -> int:
                 st_legacy = aspect_stats(q, _legacy_reading(ans, meta.get("weak_reasons") or {}), rec) if kind == "M" else {}
                 if kind != "M":
                     row.update(_gold_stats(q, trace))
+                row.update(_mode_stats(fast))
                 row.update({"latency_ms": trace.get("latency_ms") or {}, "degraded_components": [d.get("component") for d in (meta.get("degraded") or [])],
                             "lanes_used": meta.get("lanes"), "weak_aspects": meta.get("weak_aspects"),
                             "weak_reasons": meta.get("weak_reasons"), "aspect_best": meta.get("aspect_best"),
@@ -166,12 +198,15 @@ def run(args) -> int:
                             "legacy_dims_ok": st_legacy.get("dims_ok", 0), "legacy_dims_system_ok": st_legacy.get("dims_system_ok", 0),
                             "aspects": st.get("aspects")})
             rows.append(row)
+            mode_note = (f" facts={row.get('graph_fact_count')} bridges={row.get('wildcard_bridges')} in_ev={row.get('bridges_in_evidence')}"
+                         f"{(' gdeg=' + str(row.get('graph_degraded'))) if row.get('graph_degraded') else ''}"
+                         f"{(' wdeg=' + str(row.get('wildcard_degraded'))) if row.get('wildcard_degraded') else ''}") if arm in MODE_ARMS else ""
             if kind == "M":
-                print(f"[{i:02d}] {arm:6s} {row['wall_ms']/1000:6.2f}s  ok={row.get('dims_ok')}/{row.get('dims')} sys={row.get('dims_system_ok')} "
-                      f"weak={row.get('weak_aspects')} oom={row['oom']} {('ERR ' + err) if err else ''}", flush=True)
+                print(f"[{i:02d}] {arm:8s} {row['wall_ms']/1000:6.2f}s  ok={row.get('dims_ok')}/{row.get('dims')} sys={row.get('dims_system_ok')} "
+                      f"weak={row.get('weak_aspects')} oom={row['oom']}{mode_note} {('ERR ' + err) if err else ''}", flush=True)
             else:
-                print(f"[{i:02d}] {arm:6s} {row['wall_ms']/1000:6.2f}s  union={row.get('gold_in_union')} pre={row.get('gold_in_pre_rerank')} "
-                      f"rank={row.get('gold_selected_rank')} urank={row.get('gold_union_rank')} prefix={row.get('rerank_prefix')} oom={row['oom']} {('ERR ' + err) if err else ''}", flush=True)
+                print(f"[{i:02d}] {arm:8s} {row['wall_ms']/1000:6.2f}s  union={row.get('gold_in_union')} pre={row.get('gold_in_pre_rerank')} "
+                      f"rank={row.get('gold_selected_rank')} urank={row.get('gold_union_rank')} prefix={row.get('rerank_prefix')} oom={row['oom']}{mode_note} {('ERR ' + err) if err else ''}", flush=True)
     t_run1 = time.time()
 
     summary = {"tag": args.tag, "fixture": kind, "rerank_max_override": args.rerank_max, "n_questions": len(idxs), "arms": arms,
@@ -212,6 +247,16 @@ def run(args) -> int:
             "rerank_prefix_p50": _med([r.get("rerank_prefix") for r in ar]),
             "degraded_turns": sum(1 for r in ar if r.get("degraded_components")),
             "degraded_components": sorted({c for r in ar for c in (r.get("degraded_components") or [])}),
+            # P1.e MODE-COMPOSITION-V1 bounds (graph: ≤ 8 seeds / ≤ 20 facts; wildcard: ≤ 3 bridges, never in the evidence)
+            "mode": next((r.get("mode") for r in ar if r.get("mode")), None),
+            "graph_fact_count_p50": _med([r.get("graph_fact_count") for r in ar]),
+            "graph_seeds_p50": _med([r.get("graph_seeds_offered") for r in ar]),
+            "graph_facts_max": max([r.get("graph_fact_count") for r in ar if isinstance(r.get("graph_fact_count"), int)] or [None]),
+            "wildcard_bridges_p50": _med([r.get("wildcard_bridges") for r in ar]),
+            "wildcard_bridges_max": max([r.get("wildcard_bridges") for r in ar if isinstance(r.get("wildcard_bridges"), int)] or [None]),
+            "bridges_in_evidence": sum(r.get("bridges_in_evidence") or 0 for r in ar),
+            "graph_degraded_turns": sum(1 for r in ar if r.get("graph_degraded")),
+            "wildcard_degraded_turns": sum(1 for r in ar if r.get("wildcard_degraded")),
             "latency_ms_p90": {k: _p90([l.get(k) for l in lat]) for k in keys if k in ("embed", "rerank_select", "total", "lanes", "union", "compose")},
             "oom_embedder": sum(r["oom"]["sidecar_embedder"] for r in ar), "oom_reranker": sum(r["oom"]["sidecar_reranker"] for r in ar),
             # clean-turn subset: turns during which neither sidecar logged an OOM split — the closest thing to an
@@ -248,6 +293,21 @@ def run(args) -> int:
                   f"{s['legacy_strict_rate']} | {s['legacy_system_rate']} | {s['dims_flagged']} | {s['dims_silent']} | {s['dims_covered_gold']} | {s['dims_in_union']} | "
                   f"{s['primary_flagged_below_floor']} | {s['wall_p50_s']} | {s['wall_p90_s']} | {L.get('embed')} | {L.get('rerank_select')} | {L.get('total')} | "
                   f"{s['rerank_prefix_p50']} | {s['oom_embedder']}/{s['oom_reranker']} | {s['clean_turns']} | {s['clean_wall_p50_s']} | {s['clean_rerank_p50_ms']} |")
+    if any(arm in MODE_ARMS for arm in arms):
+        ref = (summary["per_arm"].get("HYBRID") or summary["per_arm"].get("ABC") or {}).get("wall_p50_s")
+        md += ["", "P1.e mode compositions (gates: GRAPH p50 ≤ HYBRID + 1.5 s with ≤ 8 seeds / ≤ 20 facts; WILDCARD p50 ≤ HYBRID + 2.0 s with ≤ 3 bridges, "
+               "`bridges in evidence` = 0):", "",
+               "| arm | mode | n | wall p50 s | Δ vs HYBRID s | clean wall p50 s | graph facts p50 / max | graph seeds p50 | graph ms p50 | "
+               "wildcard bridges p50 / max | bridges in evidence | wildcard ms p50 | graph degraded | wildcard degraded |", "|---|" + "---|" * 13]
+        for arm, s_ in summary["per_arm"].items():
+            if arm not in MODE_ARMS:
+                continue
+            L = s_["latency_ms_p50"]
+            delta = (round(s_["wall_p50_s"] - ref, 2) if (ref is not None and s_["wall_p50_s"] is not None) else None)
+            md.append(f"| {arm} | {s_.get('mode')} | {s_['n']} | {s_['wall_p50_s']} | {delta} | {s_['clean_wall_p50_s']} | "
+                      f"{s_['graph_fact_count_p50']} / {s_['graph_facts_max']} | {s_['graph_seeds_p50']} | {L.get('graph')} | "
+                      f"{s_['wildcard_bridges_p50']} / {s_['wildcard_bridges_max']} | {s_['bridges_in_evidence']} | {L.get('wildcard')} | "
+                      f"{s_['graph_degraded_turns']} | {s_['wildcard_degraded_turns']} |")
     md += ["", "Residual (not system-honest OK):", ""] + [f"- {arm}: {s['not_system_ok'] or 'none'}" for arm, s in summary["per_arm"].items()]
     md += ["", "Strict misses (silent):", ""] + [f"- {arm}: {s['silent'] or 'none'}" for arm, s in summary["per_arm"].items()]
     (OUT_DIR / f"chat-m-replay-{args.tag}.md").write_text("\n".join(md) + "\n")

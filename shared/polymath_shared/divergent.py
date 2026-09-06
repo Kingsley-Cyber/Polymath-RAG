@@ -36,6 +36,14 @@ bridge is query-time reasoning, not canonical truth.
 Deterministic given fixed model outputs; every stage fail-open (no
 latent points, reranker down, empty corpus → empty wildcard lane,
 never an error).
+
+P1.e (CHAT-QUERY-COMPILER-PLAN §3.19, WILDCARD as a parallel frontier):
+the engine is two composable stages. `divergent_sweep` needs only the
+query VECTOR and can therefore run beside core retrieval from the moment
+the shared embedding exists; `divergent_finish` (baseline exclusion,
+two-hop validation, novelty, bounds) is the part that must wait for the
+core result. `divergent_retrieve` is the one-shot composition of the
+two — same signature, same output as before the split.
 """
 from __future__ import annotations
 
@@ -86,24 +94,12 @@ class Bridge:
     channels: list = field(default_factory=list)
 
 
-def divergent_retrieve(
-    query: str,
-    *,
-    embed_query,
-    latent_search,        # (kind, qvec, top_k) -> rows(score,payload)
-    children_of,          # (parent_id) -> rows(score,payload)
-    baseline: dict | None = None,   # {doc_ids,parent_ids,chunk_ids} of FAST
-    rerank_pairs=None,    # (anchor_text, [texts]) -> [scores] | None
-    plan: DivergentPlan = DIVERGENT_DEFAULT_PLAN,
-) -> dict:
-    qvec = embed_query(query)
-    base = baseline or {}
-    obvious_parents = set(base.get("parent_ids") or ())
-    obvious_docs = set(base.get("doc_ids") or ())
-    obvious_chunks = set(base.get("chunk_ids") or ())
-    qtoks = _toks(query)
-
-    # 1. broad latent sweep, both channels, merged per parent
+def divergent_sweep(qvec, latent_search, plan: DivergentPlan = DIVERGENT_DEFAULT_PLAN) -> dict[str, dict]:
+    """Stage 1 — the broad latent sweep over both channels, merged per
+    parent. Needs only the query vector (no baseline), so a caller may
+    start it at T=0 beside core retrieval (§3.19). Pure over
+    `latent_search`; fail-open per channel (the frontier is optional).
+    Returns {parent_id: slot} in first-seen order."""
     parents: dict[str, dict] = {}
     for kind in ("latent_abstraction", "latent_transfer"):
         try:
@@ -128,6 +124,26 @@ def divergent_retrieve(
                 slot["abstraction"] = payload.get("text") or ""
             else:
                 slot["transfer"] = payload.get("text") or ""
+    return parents
+
+
+def divergent_finish(
+    query: str,
+    parents: dict[str, dict],       # the finished sweep (read, never mutated)
+    *,
+    children_of,          # (parent_id) -> rows(score,payload)
+    baseline: dict | None = None,   # {doc_ids,parent_ids,chunk_ids} of the core result
+    rerank_pairs=None,    # (anchor_text, [texts]) -> [scores] | None
+    plan: DivergentPlan = DIVERGENT_DEFAULT_PLAN,
+) -> dict:
+    """Stages 2–3 — baseline exclusion (the step that must wait for the
+    core result), two-hop validation + novelty, hard bounds. Same output
+    as the pre-split single function for the same sweep."""
+    base = baseline or {}
+    obvious_parents = set(base.get("parent_ids") or ())
+    obvious_docs = set(base.get("doc_ids") or ())
+    obvious_chunks = set(base.get("chunk_ids") or ())
+    qtoks = _toks(query)
 
     diag = {"latent_candidates": len(parents), "excluded_obvious": 0,
             "support_filtered": 0, "returned": 0,
@@ -216,3 +232,21 @@ def divergent_retrieve(
     diag["returned"] = len(out)
     return {"wildcard": out, "diagnostics": diag,
             "plan": plan.plan_version}
+
+
+def divergent_retrieve(
+    query: str,
+    *,
+    embed_query,
+    latent_search,        # (kind, qvec, top_k) -> rows(score,payload)
+    children_of,          # (parent_id) -> rows(score,payload)
+    baseline: dict | None = None,   # {doc_ids,parent_ids,chunk_ids} of FAST
+    rerank_pairs=None,    # (anchor_text, [texts]) -> [scores] | None
+    plan: DivergentPlan = DIVERGENT_DEFAULT_PLAN,
+) -> dict:
+    """One-shot form: embed → sweep → finish (unchanged contract)."""
+    qvec = embed_query(query)
+    parents = divergent_sweep(qvec, latent_search, plan)
+    return divergent_finish(query, parents, children_of=children_of,
+                            baseline=baseline, rerank_pairs=rerank_pairs,
+                            plan=plan)

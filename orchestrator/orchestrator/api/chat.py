@@ -133,18 +133,23 @@ async def _chat_impl(req: ChatRequest) -> dict:
         out.setdefault("meta", {})["mode"] = mode
         return out
     if mode in (MODE_FAST, MODE_HYBRID):
+        from orchestrator.api.chat_retrieval import chat_retrieval_flag, chat_retrieve_mode
+        _latent = getattr(req, 'latent', None)
+        _utility = getattr(req, 'utility', None)
+        # CHAT-RETRIEVAL-V2 (P1.a) / MODE-COMPOSITION-V1 (P1.e): /chat uses the same compositions as
+        # /chat/stream — FAST = VECTOR (lanes A + B), HYBRID = A + B + C — through the one owner;
+        # latent / utility requests, and the multi-corpus FAST fan-out, stay on the v1 engines.
+        _v2 = chat_retrieval_flag(getattr(req, "retrieval", None)) in ("v2", "v2-single") and not _latent and not _utility
         if mode == MODE_FAST:
-            from orchestrator.api.fast import fast_retrieve
+            if _v2 and len(list(scope.corpus_ids)) == 1:
+                fast = chat_retrieve_mode("VECTOR", query, list(scope.corpus_ids)[0])
+            else:
+                from orchestrator.api.fast import fast_retrieve
 
-            fast = fast_retrieve(query, list(scope.corpus_ids))  # F8: multi-corpus
+                fast = fast_retrieve(query, list(scope.corpus_ids))  # F8: multi-corpus
         else:
-            from orchestrator.api.chat_retrieval import chat_retrieval_flag, chat_retrieve_v2
-            _latent = getattr(req, 'latent', None)
-            _utility = getattr(req, 'utility', None)
-            # CHAT-RETRIEVAL-V2 (P1.a): /chat HYBRID uses the same engine as /chat/stream;
-            # latent / utility requests stay on hybrid-retrieval-v1 (not in v2 yet).
-            if chat_retrieval_flag(getattr(req, "retrieval", None)) in ("v2", "v2-single") and not _latent and not _utility:
-                fast = chat_retrieve_v2(query, single_corpus_or_422(scope, mode))
+            if _v2:
+                fast = chat_retrieve_mode("HYBRID", query, single_corpus_or_422(scope, mode))
             else:
                 from orchestrator.api.hybrid import hybrid_fast_retrieve
 
@@ -207,6 +212,9 @@ async def _chat_impl(req: ChatRequest) -> dict:
         except Exception:  # noqa: BLE001 — diagnostics never break an answer
             pass
         out.setdefault("meta", {})["mode"] = mode
+        # which composition / engine served the text lane (VECTOR for FAST on v2; pass1 / hybrid-v1 otherwise)
+        out["meta"]["retrieval_mode"] = (fast.get("meta") or {}).get("mode")
+        out["meta"]["retrieval_engine"] = (fast.get("meta") or {}).get("plan_version")
         return out
 
     corpus_ids = list(scope.corpus_ids)

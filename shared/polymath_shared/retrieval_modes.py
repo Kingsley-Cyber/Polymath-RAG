@@ -90,6 +90,15 @@ def apply_utility(plan: HybridRetrievalPlan,
 GRAPH_PLAN_VERSION = "graph-retrieval-v1"
 GRAPH_MAX_SEEDS = 8
 GRAPH_MAX_FACTS = 20
+#: P1.e MODE-COMPOSITION-V1 (CHAT-QUERY-COMPILER-PLAN §3.15 / §3.18 / §5 #14):
+#: GRAPH is honoured on every question, but when the compiled plan says the
+#: question is not relational (`graph_useful: false` — definitional) the
+#: expansion stays tiny: at most this many seeds instead of GRAPH_MAX_SEEDS.
+GRAPH_DEFINITIONAL_MAX_SEEDS = 2
+#: The chat surfaces call the A+B composition VECTOR (plan §3.15); it is the
+#: same lane set FAST names on /retrieve. Not an EXPOSED_MODES entry: the
+#: chat routes map VECTOR → FAST themselves and stamp the truthful name.
+MODE_VECTOR = "VECTOR"
 
 
 def validate_mode(mode: str | None) -> str:

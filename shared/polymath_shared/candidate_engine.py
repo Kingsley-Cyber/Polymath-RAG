@@ -161,6 +161,12 @@ class CandidateBudget:
     #: normal fresh case with margin and still catches the thrash case; the Metal lease removes the thrash, not the per-pair cost.
     rerank_deadline_s: float = 8.0
     max_workers: int = 8
+    #: P1.e MODE-COMPOSITION-V1 (§3.16 "graph / wildcard (bounded optional)", §3.19): the WILDCARD frontier's
+    #: budget for the work that EXTENDS the turn beyond the core result — joining the latent sweep (which ran
+    #: beside the lanes from the embedding on) plus baseline exclusion and two-hop validation. Past it the turn
+    #: answers with the core evidence and an empty `wildcard` lane, receipted `wildcard_timeout` (the late
+    #: frontier is not awaited). Starting budget from the plan; the route reads POLYMATH_CHAT_WILDCARD_DEADLINE_S.
+    wildcard_deadline_s: float = 2.5
 
     def to_dict(self) -> dict:
         d = asdict(self)

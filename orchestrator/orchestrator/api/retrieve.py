@@ -114,10 +114,13 @@ def graph_expand_or_502(
     preferred_chunk_ids: list[str],
     seed_entity_ids: list[str] | None = None,
     document_ids: list[str] | None = None,
+    max_seeds: int | None = None,
 ) -> list[dict]:
     """FAILURE-TRANSPARENCY-V1: one translation point from the typed
     graph-store failure to the typed HTTP failure. GRAPH_SUCCESS with
-    zero relationships stays an empty list; a backend failure is 502."""
+    zero relationships stays an empty list; a backend failure is 502.
+    `max_seeds` (P1.e) narrows the resolved-seed cap below the D2 default
+    of 8 (a definitional GRAPH turn expands ≤ 2 seeds); None = 8."""
     from polymath_shared.stores import GraphBackendUnavailable
 
     try:
@@ -127,6 +130,7 @@ def graph_expand_or_502(
             preferred_chunk_ids=preferred_chunk_ids,
             seed_entity_ids=seed_entity_ids,
             document_ids=document_ids,
+            max_seeds=max_seeds,
         )
     except GraphBackendUnavailable as exc:
         raise HTTPException(status_code=502, detail={
@@ -474,6 +478,10 @@ def _surface_matches(surface: str, term: str) -> bool:
     return bool(t) and (t in s or s in t)
 
 
+#: D2 seed cap (8 seeds / 20 facts); `max_seeds` may only narrow it.
+_GRAPH_SEED_CAP = 8
+
+
 def _corpus_seed_ids(
     conn,
     surfaces: list[str],
@@ -481,6 +489,7 @@ def _corpus_seed_ids(
     preferred_chunk_ids: list[str],
     seed_entity_ids: Optional[list[str]] = None,
     document_ids: Optional[list[str]] = None,
+    max_seeds: Optional[int] = None,
 ) -> list[str]:
     """Corpus-authorized seed resolution (D2).
 
@@ -490,6 +499,7 @@ def _corpus_seed_ids(
     then any entity evidenced in the active corpus; ties broken by
     entity_id for determinism. MENTION_ONLY entities can never seed
     (they have no graph nodes). GLOBAL identity is untouched.
+    `max_seeds` (P1.e, plan §3.18) narrows the 8-seed cap — never widens it.
 
     corpus_ids=None is the UNSCOPED qualification form (eval harnesses
     only); every production route resolves scope before reaching here."""
@@ -529,7 +539,8 @@ def _corpus_seed_ids(
         and any(_surface_matches(surf, term) for term in surfaces)
     ]
     matched.sort(key=lambda x: (not x[0], x[1]))
-    return (card_seeds + [eid for _, eid in matched])[:8]
+    cap = _GRAPH_SEED_CAP if max_seeds is None else max(0, min(_GRAPH_SEED_CAP, int(max_seeds)))
+    return (card_seeds + [eid for _, eid in matched])[:cap]
 
 
 def _authorized_fact_ids(conn, corpus_ids: Optional[list[str]],
@@ -573,10 +584,12 @@ def _neo4j_expand(
     corpus_ids: Optional[list[str]] = None,
     seed_entity_ids: Optional[list[str]] = None,
     document_ids: Optional[list[str]] = None,
+    max_seeds: Optional[int] = None,
 ) -> list[dict]:
     """One-hop graph expansion (production, canonical bidirectional,
     corpus-authorized; document_ids narrows seeds and authorization to
-    evidence in those documents — DOCUMENT-SCOPED-RETRIEVE-V1).
+    evidence in those documents — DOCUMENT-SCOPED-RETRIEVE-V1;
+    max_seeds narrows the 8-seed cap — P1.e definitional GRAPH turns).
 
     Two DIRECTED clauses preserve stored fact orientation by
     construction; an incoming edge only makes the EXISTING fact
@@ -596,7 +609,7 @@ def _neo4j_expand(
 
     with tx() as conn:
         ids = _corpus_seed_ids(conn, surfaces, corpus_ids, preferred_chunk_ids or [],
-                               seed_entity_ids or [], document_ids=document_ids)
+                               seed_entity_ids or [], document_ids=document_ids, max_seeds=max_seeds)
         authorized = _authorized_fact_ids(conn, corpus_ids, document_ids=document_ids)
 
     if not ids:

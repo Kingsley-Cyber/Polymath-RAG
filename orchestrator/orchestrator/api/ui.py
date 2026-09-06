@@ -1942,6 +1942,16 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
             _arrivals: dict = {}
             _aspects: dict = {}
             _weak: list = []
+            # CHAT-RETRIEVAL-V2 / P1.e MODE-COMPOSITION-V1: every mode is a composition on the v2 engine
+            # (VECTOR = A+B, HYBRID = A+B+C, GRAPH = HYBRID → bounded G, WILDCARD = HYBRID ∥ W) owned by
+            # chat_retrieve_mode; the v1 engines stay behind `retrieval: v1` or `latent` (rollback boundary).
+            from orchestrator.api.chat_retrieval import chat_retrieval_flag
+            _rflag = chat_retrieval_flag(getattr(req, "retrieval", None))
+            _v2_mode = _rflag in ("v2", "v2-single") and not req.latent
+            # GRAPH bounds follow the compiled plan's relational verdict (plan §3.15 / §5 #14): `graph_useful: false`
+            # keeps the expansion definitional (≤ 2 seeds); no compiler, or a fallback plan, keeps the default breadth.
+            _graph_useful = True if (_flag != "on" or _plan is None or getattr(_plan, "fallback", False)) \
+                else bool(getattr(_plan, "graph_useful", True))
             if _skip_retrieval:
                 # NO-RETRIEVAL ROUTING (plan §3.1 evidence_policy=conversation):
                 # the task lives in the conversation; the corpus is not searched.
@@ -1954,11 +1964,15 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                              evidence_policy=_plan.evidence_policy if _plan else None)
                 document_summaries = []
                 section_summaries = []
-            elif ui_mode == "GRAPH":
+            elif ui_mode == "GRAPH" and not _v2_mode:
+                # graph-retrieval-v1 (rollback boundary: `retrieval: v1` or `latent`)
                 yield _phase("retrieve", f"{ui_mode} retrieval over "
                                          f"{corpus_id}…", mode=ui_mode, query=_retrieval_text[:160])
                 from orchestrator.api.graph import graph_retrieve
                 g = graph_retrieve(_retrieval_text, corpus_id, latent=req.latent)
+                # the answer event reads the retrieval result through `fast` on every path
+                fast = {"meta": g.get("meta") or {}, "trace": g.get("trace") or {}, "evidence": [],
+                        "selected_documents": [], "selected_sections": []}
                 _trace = g.get("trace") or {}
                 latent_meta = (g.get("meta") or {}).get("latent")
                 evidence_rows = [
@@ -1968,6 +1982,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                     for s in d["sections"]
                     for c in s["evidence"]
                 ]
+                _mark("retrieve")
                 yield _phase("retrieve_done", "Dense + lexical evidence "
                              "selected",
                              evidence_count=len(evidence_rows),
@@ -1997,35 +2012,42 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                 yield _phase("retrieve", f"{ui_mode} retrieval over "
                                          f"{corpus_id}…", mode=ui_mode, query=_retrieval_text[:160])
                 wildcard_lane = None
-                if ui_mode == "FAST":
+                if _v2_mode:
+                    from orchestrator.api.chat_retrieval import chat_retrieve_mode
+                    # MODE-COMPOSITION-V1 (plan §3.15, P1.e): lanes A/B/C fused at child level with provenance;
+                    # GRAPH adds the bounded hop-1 over the FINAL evidence (§3.18), WILDCARD the parallel latent
+                    # frontier (§3.19) — bridges ride `fast["wildcard"]`, never the evidence list.
+                    fast = chat_retrieve_mode(
+                        "VECTOR" if ui_mode == "FAST" else ui_mode, _retrieval_text, corpus_id,
+                        graph_useful=_graph_useful,
+                        exact_terms=tuple(_plan.exact_terms) if (_flag == "on" and _plan is not None) else (),
+                        # P1.b: typed subqueries run lanes B + C on their own vectors (v2-single = A/B without them)
+                        subqueries=tuple((q.id, q.type, q.query, q.weight) for q in _plan.queries if q.type != "PRIMARY")
+                        if (_flag == "on" and _plan is not None and _rflag == "v2") else ())
+                    _aspects = (fast.get("meta") or {}).get("aspects") or {}
+                    _weak = (fast.get("meta") or {}).get("weak_aspects") or []
+                    if ui_mode == "WILDCARD":
+                        wildcard_lane = fast.get("wildcard") or []
+                    if ui_mode == "GRAPH":
+                        graph_facts = [
+                            {"fact_id": f["fact_id"], "predicate": f["predicate"],
+                             "subject": f["subject"], "object": f["object"]}
+                            for f in (fast.get("graph_relationships") or [])
+                        ]
+                elif ui_mode == "FAST":
                     from orchestrator.api.fast import fast_retrieve
                     fast = fast_retrieve(_retrieval_text, corpus_id)
                 elif ui_mode == "WILDCARD":
-                    # DIVERGENT-RETRIEVAL-V1: the answer evidence IS
+                    # DIVERGENT-RETRIEVAL-V1 (v1): the answer evidence IS
                     # FAST (wildcard never displaces it); the bridges
                     # ride the separate `wildcard` lane.
                     from orchestrator.api.wildcard import wildcard_retrieve
                     fast = wildcard_retrieve(_retrieval_text, corpus_id)
                     wildcard_lane = fast.get("wildcard") or []
                 else:
-                    from orchestrator.api.chat_retrieval import chat_retrieval_flag, chat_retrieve_v2
-                    # CHAT-RETRIEVAL-V2 (plan §3.14, P1.a): lanes A/B/C fused at child level
-                    # with provenance; the latent-rescue lane is not in v2 yet, so a turn
-                    # that asks for it stays on hybrid-retrieval-v1 (receipted by plan version).
-                    _rflag = chat_retrieval_flag(getattr(req, "retrieval", None))
-                    if _rflag in ("v2", "v2-single") and not req.latent:
-                        fast = chat_retrieve_v2(
-                            _retrieval_text, corpus_id,
-                            exact_terms=tuple(_plan.exact_terms) if (_flag == "on" and _plan is not None) else (),
-                            # P1.b: typed subqueries run lanes B + C on their own vectors (v2-single = A/B without them)
-                            subqueries=tuple((q.id, q.type, q.query, q.weight) for q in _plan.queries if q.type != "PRIMARY")
-                            if (_flag == "on" and _plan is not None and _rflag == "v2") else ())
-                        _aspects = (fast.get("meta") or {}).get("aspects") or {}
-                        _weak = (fast.get("meta") or {}).get("weak_aspects") or []
-                    else:
-                        from orchestrator.api.hybrid import hybrid_fast_retrieve
-                        fast = hybrid_fast_retrieve(_retrieval_text, corpus_id,
-                                                    latent=req.latent)
+                    from orchestrator.api.hybrid import hybrid_fast_retrieve
+                    fast = hybrid_fast_retrieve(_retrieval_text, corpus_id,
+                                                latent=req.latent)
                 latent_meta = (fast.get("meta") or {}).get("latent")
                 _trace = fast.get("trace") or {}
                 evidence_rows = [
@@ -2040,6 +2062,17 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                              plan=(fast.get("meta") or {}).get("plan_version"),
                              degraded=[d.get("component") for d in ((fast.get("meta") or {}).get("degraded") or [])] or None,
                              aspects=len(_aspects) or None, weak_aspects=_weak or None)
+                if ui_mode == "GRAPH":
+                    # P1.e: the bounded stage already ran inside the composition; the phases carry its receipts
+                    yield _phase("graph", "Expanding the canonical fact "
+                                          "graph (hop-1, bounded)…",
+                                 bounds=(fast.get("meta") or {}).get("graph_bounds"))
+                    yield _phase("graph_done",
+                                 f"{len(graph_facts)} canonical relationship(s)",
+                                 graph_fact_count=len(graph_facts),
+                                 relationships=graph_facts[:8],
+                                 seeds=(fast.get("meta") or {}).get("graph_seeds"),
+                                 degraded=(fast.get("meta") or {}).get("graph_degraded"))
                 _arrivals = {c["chunk_id"]: c.get("arrivals") or ([c["arrival"]] if c.get("arrival") else [])
                              for c in fast["evidence"]}
                 if wildcard_lane is not None:
@@ -2047,7 +2080,8 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                         "wildcard",
                         f"{len(wildcard_lane)} frontier bridge(s) beyond "
                         f"the obvious neighborhood",
-                        bridges=len(wildcard_lane))
+                        bridges=len(wildcard_lane),
+                        degraded=((fast.get("meta") or {}).get("wildcard") or {}).get("degraded"))
                 document_summaries = [
                     {"doc_id": d["doc_id"],
                      "summary": (d.get("document_summary") or {}).get("text", "")}
@@ -2135,6 +2169,13 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                 "mode": "VECTOR" if ui_mode == "FAST" else ui_mode,
                 "evidence_count": len(evidence_rows),
                 "graph_fact_count": len(graph_facts),
+                # P1.e MODE-COMPOSITION-V1 receipts: the bounded graph stage (seeds / facts / fail-open reason)
+                # and the frontier lane's diagnostics (sweep overlap, baseline, timeout) — `wildcard` below
+                # stays the bridges the UI renders.
+                "graph_bounds": (fast.get("meta") or {}).get("graph_bounds"),
+                "graph_seeds": (fast.get("meta") or {}).get("graph_seeds"),
+                "graph_degraded": (fast.get("meta") or {}).get("graph_degraded"),
+                "wildcard_diagnostics": (fast.get("meta") or {}).get("wildcard"),
                 # LATENT-DIAGNOSTICS-V1 (roadmap B5): the survival
                 # attribution frame the UI chip + P6 read.
                 "latent": latent_meta,
