@@ -297,3 +297,27 @@ def test_aspect_seats_reach_the_judge_and_the_final_set_or_the_aspect_is_flagged
     res3 = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(second_pass_factor=1), dense_search=lambda k, n, e=None, qvec=None: ([] if qvec == (0.5, 0.5) else fake3.dense(k, n, e, qvec=qvec)), sparse_search=fake3.sparse, subqueries=[empty])
     _, tr3 = ce.select_evidence(res3, ce.CandidateBudget(), rerank_children=None)
     assert tr3["weak_reasons"].get("q9") == "no_candidates" and "q9" in tr3["weak_aspects"]
+
+
+def test_primary_is_flagged_weak_when_its_best_judged_candidate_is_below_the_floor():
+    """R1 requalification of P1.b (the recorded residual: M #5 'FACE OFF'): a dimension named only by the
+    PRIMARY query (compare side A after correction D) is flagged `below_floor` when the judge rejects every
+    primary candidate — it is never shown as covered. Selection itself does not change: the flag is a receipt
+    and a prompt line, not a filter."""
+    fake = FakeMulti()
+    res = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=fake.dense, sparse_search=fake.sparse, subqueries=[_subq("q1", "a")])
+    b = ce.CandidateBudget(rerank_max=8, synthesis_max=3, aspect_prefix_seats=3, aspect_weak_floor=0.5)
+
+    def judge(q, rows):                                       # q1's own chunks relevant, every primary candidate rejected
+        scored = [dict(r, rerank_score=(1.0 if r["chunk_id"].startswith("s1-") else -2.0)) for r in rows]
+        return sorted(scored, key=lambda r: -r["rerank_score"])
+    final, tr = ce.select_evidence(res, b, rerank_children=judge)
+    assert tr["weak_reasons"].get("q0") == "below_floor" and "q0" in tr["weak_aspects"]
+    assert tr["aspect_best"]["q0"] < 0.5 <= tr["aspect_best"]["q1"] and "q1" not in tr["weak_aspects"]
+    assert len(final) == 3 and any(c.chunk_id.startswith("s1-") for c in final)
+    assert [d["chunk_id"] for d in tr["final_detail"]] == [c.chunk_id for c in final]
+    # a relevant primary is not flagged; a degraded judge (no scores) flags nobody on the floor
+    _, tr2 = ce.select_evidence(res, b, rerank_children=lambda q, rows: sorted([dict(r, rerank_score=1.5) for r in rows], key=lambda r: -r["rerank_score"]))
+    assert "q0" not in tr2["weak_aspects"] and "q0" not in tr2["weak_reasons"]
+    _, tr3 = ce.select_evidence(res, b, rerank_children=None)
+    assert tr3["weak_reasons"] == {}

@@ -1,0 +1,639 @@
+{
+ "contract": "CHAT-L-REPLAY-PLANS-V1",
+ "source": "query_receipts (latest receipt per question with a compiled plan), frozen 2026-09-06 for in-process replays",
+ "fixture": "eval/fixtures/chat_lexical_L.json",
+ "n": 30,
+ "plans": [
+  {
+   "idx": 0,
+   "corpus_id": "cinema",
+   "question": "What does the book say about \"AU62\"?",
+   "received_at": "2026-09-05 21:12:11.988289+00:00",
+   "retrieval_query": "AU62",
+   "exact_terms": [
+    "AU62"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "AU62",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"AU62\"?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 1,
+   "corpus_id": "cinema",
+   "question": "What does the book say about \"SO202\"?",
+   "received_at": "2026-09-05 21:12:43.240198+00:00",
+   "retrieval_query": "SO202",
+   "exact_terms": [
+    "SO202"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "SO202",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"SO202\"?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 2,
+   "corpus_id": "cinema",
+   "question": "What does the book say about \"HD1\"?",
+   "received_at": "2026-09-05 21:12:56.555383+00:00",
+   "retrieval_query": "HD1",
+   "exact_terms": [
+    "HD1"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "HD1",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"HD1\"?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 3,
+   "corpus_id": "cinema",
+   "question": "What does the book say about \"F850LP\"?",
+   "received_at": "2026-09-05 21:13:11.135508+00:00",
+   "retrieval_query": "F850LP",
+   "exact_terms": [
+    "F850LP"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "F850LP",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"F850LP\"?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 4,
+   "corpus_id": "cinema",
+   "question": "What does the book say about \"D16\"?",
+   "received_at": "2026-09-05 21:13:23.198892+00:00",
+   "retrieval_query": "D16",
+   "exact_terms": [
+    "D16"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "D16",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"D16\"?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 5,
+   "corpus_id": "cinema",
+   "question": "What does the book say about \"W372\"?",
+   "received_at": "2026-09-05 21:13:35.257243+00:00",
+   "retrieval_query": "W372",
+   "exact_terms": [
+    "W372"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "W372",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"W372\"?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 6,
+   "corpus_id": "cinema",
+   "question": "What does the book say about \"A100\"?",
+   "received_at": "2026-09-05 21:13:46.989783+00:00",
+   "retrieval_query": "A100",
+   "exact_terms": [
+    "A100"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "A100",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"A100\"?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 7,
+   "corpus_id": "cinema",
+   "question": "What does the book say about \"M4A1\"?",
+   "received_at": "2026-09-05 21:14:00.523837+00:00",
+   "retrieval_query": "M4A1",
+   "exact_terms": [
+    "M4A1"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "M4A1",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about the M4A1?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 8,
+   "corpus_id": "cinema",
+   "question": "What does the book say about \"XXXII\"?",
+   "received_at": "2026-09-05 21:14:13.436506+00:00",
+   "retrieval_query": "XXXII",
+   "exact_terms": [
+    "XXXII"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "XXXII",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"XXXII\"?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 9,
+   "corpus_id": "cinema",
+   "question": "What does the book say about \"MUA\"?",
+   "received_at": "2026-09-05 21:14:26.871908+00:00",
+   "retrieval_query": "MUA",
+   "exact_terms": [
+    "MUA"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "MUA",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"MUA\" in the context of cinema?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 10,
+   "corpus_id": "cinema",
+   "question": "What does the book say about \"UPA\"?",
+   "received_at": "2026-09-05 21:14:39.584445+00:00",
+   "retrieval_query": "UPA",
+   "exact_terms": [
+    "UPA"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "UPA",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"UPA\"?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 11,
+   "corpus_id": "cinema",
+   "question": "What does the book say about \"ABLEGI\"?",
+   "received_at": "2026-09-05 21:15:00.596047+00:00",
+   "retrieval_query": "ABLEGI",
+   "exact_terms": [
+    "ABLEGI"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "ABLEGI",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"ABLEGI\"?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 12,
+   "corpus_id": "cinema",
+   "question": "What does the book say about \"NSCB\"?",
+   "received_at": "2026-09-05 21:15:15.522808+00:00",
+   "retrieval_query": "NSCB",
+   "exact_terms": [
+    "NSCB"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "NSCB",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"NSCB\"?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 13,
+   "corpus_id": "cinema",
+   "question": "What does the book say about \"VNSP\"?",
+   "received_at": "2026-09-05 21:15:30.786505+00:00",
+   "retrieval_query": "VNSP",
+   "exact_terms": [
+    "VNSP"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "VNSP",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"VNSP\"?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 14,
+   "corpus_id": "cinema",
+   "question": "What does the book say about \"UFO\"?",
+   "received_at": "2026-09-05 21:15:45.106753+00:00",
+   "retrieval_query": "UFO",
+   "exact_terms": [
+    "UFO"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "UFO",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"UFO\"?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 15,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about \"EC2\"?",
+   "received_at": "2026-09-05 21:16:20.029115+00:00",
+   "retrieval_query": "EC2",
+   "exact_terms": [
+    "EC2"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "EC2",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"EC2\"?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 16,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about \"S311\"?",
+   "received_at": "2026-09-05 21:16:35.353262+00:00",
+   "retrieval_query": "S311",
+   "exact_terms": [
+    "S311"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "S311",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"S311\"?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 17,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about \"Z39\"?",
+   "received_at": "2026-09-05 21:16:46.196909+00:00",
+   "retrieval_query": "Z39",
+   "exact_terms": [
+    "Z39"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "Z39",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"Z39\"?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 18,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about \"M5H\"?",
+   "received_at": "2026-09-05 21:17:12.737452+00:00",
+   "retrieval_query": "M5H",
+   "exact_terms": [
+    "M5H"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "M5H",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"M5H\"?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 19,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about \"PCI\"?",
+   "received_at": "2026-09-05 21:17:34.342817+00:00",
+   "retrieval_query": "PCI",
+   "exact_terms": [
+    "PCI"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "PCI",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about PCI?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 20,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about \"FOMO\"?",
+   "received_at": "2026-09-05 21:17:42.907786+00:00",
+   "retrieval_query": "FOMO",
+   "exact_terms": [
+    "FOMO"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "FOMO",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about FOMO?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 21,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about \"MWQ\"?",
+   "received_at": "2026-09-05 21:17:50.373568+00:00",
+   "retrieval_query": "MWQ",
+   "exact_terms": [
+    "MWQ"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "MWQ",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"MWQ\"?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 22,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about \"ASIC\"?",
+   "received_at": "2026-09-05 21:17:59.126818+00:00",
+   "retrieval_query": "ASIC",
+   "exact_terms": [
+    "ASIC"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "ASIC",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"ASIC\"?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 23,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about \"ACC\"?",
+   "received_at": "2026-09-05 21:18:07.738031+00:00",
+   "retrieval_query": "ACC",
+   "exact_terms": [
+    "ACC"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "ACC",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about ACC?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 24,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about \"NIDA\"?",
+   "received_at": "2026-09-05 21:18:14.949965+00:00",
+   "retrieval_query": "NIDA",
+   "exact_terms": [
+    "NIDA"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "NIDA",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"NIDA\"?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 25,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about \"RBV\"?",
+   "received_at": "2026-09-05 21:18:24.149271+00:00",
+   "retrieval_query": "Resource-Based View RBV",
+   "exact_terms": [
+    "RBV",
+    "Resource-Based View"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "Resource-Based View",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about the Resource-Based View (RBV)?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 26,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about \"OECD\"?",
+   "received_at": "2026-09-05 21:18:38.514219+00:00",
+   "retrieval_query": "OECD",
+   "exact_terms": [
+    "OECD"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "OECD",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about the OECD?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 27,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about \"RBI\"?",
+   "received_at": "2026-09-05 21:19:02.324637+00:00",
+   "retrieval_query": "RBI",
+   "exact_terms": [
+    "RBI"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "RBI",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"RBI\"?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 28,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about \"NFI\"?",
+   "received_at": "2026-09-05 21:19:57.710830+00:00",
+   "retrieval_query": "NFI",
+   "exact_terms": [
+    "NFI"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "NFI",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"NFI\"?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 29,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about \"DBASSE\"?",
+   "received_at": "2026-09-05 21:20:06.215776+00:00",
+   "retrieval_query": "DBASSE",
+   "exact_terms": [
+    "DBASSE"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "DBASSE",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about \"DBASSE\"?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  }
+ ]
+}

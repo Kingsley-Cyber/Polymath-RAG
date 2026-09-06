@@ -1,0 +1,706 @@
+{
+ "contract": "CHAT-B-REPLAY-PLANS-V1",
+ "source": "query_receipts (latest receipt per question with a compiled plan), frozen 2026-09-06 for in-process replays",
+ "fixture": "eval/fixtures/chat_baseline_B.json",
+ "n": 30,
+ "plans": [
+  {
+   "idx": 0,
+   "corpus_id": "cinema",
+   "question": "What does the book say about making your own chroma keyer?",
+   "received_at": "2026-09-05 23:09:42.250187+00:00",
+   "retrieval_query": "making your own chroma keyer",
+   "exact_terms": [
+    "chroma keyer"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "making your own chroma keyer",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about making your own chroma keyer?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 1,
+   "corpus_id": "cinema",
+   "question": "What does the book say about nonsquare pixels?",
+   "received_at": "2026-09-05 23:07:43.303839+00:00",
+   "retrieval_query": "nonsquare pixels",
+   "exact_terms": [
+    "nonsquare pixels"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "nonsquare pixels",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the cinema corpus say about nonsquare pixels?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler1:gemini-3.1-flash-lite"
+  },
+  {
+   "idx": 2,
+   "corpus_id": "cinema",
+   "question": "What does the book say about oebps/ritc 9781119685401 epub3 035 r1.xhtml?",
+   "received_at": "2026-09-05 22:27:48.612365+00:00",
+   "retrieval_query": "oebps/ritc 9781119685401 epub3 035 r1.xhtml",
+   "exact_terms": [
+    "oebps/ritc 9781119685401 epub3 035 r1.xhtml"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "oebps/ritc 9781119685401 epub3 035 r1.xhtml",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about oebps/ritc 9781119685401 epub3 035 r1.xhtml?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 3,
+   "corpus_id": "cinema",
+   "question": "What does the book say about miscellaneous drawing tips?",
+   "received_at": "2026-09-05 22:27:58.343657+00:00",
+   "retrieval_query": "miscellaneous drawing tips",
+   "exact_terms": [
+    "miscellaneous drawing tips"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "miscellaneous drawing tips",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about miscellaneous drawing tips in cinema?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 4,
+   "corpus_id": "cinema",
+   "question": "What does the book say about transcoding versus color rerendering?",
+   "received_at": "2026-09-05 22:28:27.318674+00:00",
+   "retrieval_query": "transcoding color rerendering",
+   "exact_terms": [
+    "transcoding",
+    "color rerendering"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "transcoding",
+     "weight": 1.0
+    },
+    {
+     "id": "q1",
+     "type": "COMPARISON",
+     "query": "color rerendering",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about transcoding versus color rerendering in cinema?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 5,
+   "corpus_id": "cinema",
+   "question": "What does the book say about FACE OFF?",
+   "received_at": "2026-09-05 22:28:37.357861+00:00",
+   "retrieval_query": "FACE OFF",
+   "exact_terms": [
+    "FACE OFF",
+    "FACE",
+    "OFF"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "FACE OFF",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about FACE OFF?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 6,
+   "corpus_id": "cinema",
+   "question": "What does the book say about affect, fatigue, and injury are control states?",
+   "received_at": "2026-09-05 22:29:08.307554+00:00",
+   "retrieval_query": "affect fatigue injury control states",
+   "exact_terms": [],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "affect fatigue injury control states",
+     "weight": 1.0
+    },
+    {
+     "id": "q1",
+     "type": "DEFINITION",
+     "query": "affect control states",
+     "weight": 0.8
+    },
+    {
+     "id": "q2",
+     "type": "MECHANISM",
+     "query": "fatigue as control state",
+     "weight": 0.8
+    },
+    {
+     "id": "q3",
+     "type": "MECHANISM",
+     "query": "injury as control state",
+     "weight": 0.8
+    }
+   ],
+   "resolved_request": "What does the book say about affect, fatigue, and injury as control states in cinema?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 7,
+   "corpus_id": "cinema",
+   "question": "What does the book say about movement of an object with a background?",
+   "received_at": "2026-09-05 22:29:55.248527+00:00",
+   "retrieval_query": "movement of an object with a background",
+   "exact_terms": [],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "movement of an object with a background",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about movement of an object with a background in cinema?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 8,
+   "corpus_id": "cinema",
+   "question": "What does the book say about sound editing?",
+   "received_at": "2026-09-05 22:30:24.837878+00:00",
+   "retrieval_query": "sound editing",
+   "exact_terms": [
+    "sound editing"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "sound editing",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about sound editing?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 9,
+   "corpus_id": "cinema",
+   "question": "What does the book say about write radio sparely?",
+   "received_at": "2026-09-05 22:30:38.042396+00:00",
+   "retrieval_query": "writing radio sparsely",
+   "exact_terms": [
+    "radio"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "writing radio sparsely",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about writing radio sparsely?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 10,
+   "corpus_id": "cinema",
+   "question": "What does the book say about rewards of good type development?",
+   "received_at": "2026-09-05 22:30:52.714030+00:00",
+   "retrieval_query": "rewards of good type development",
+   "exact_terms": [
+    "rewards of good type development"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "rewards of good type development",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about the rewards of good type development in cinema?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 11,
+   "corpus_id": "cinema",
+   "question": "What does the book say about multiple moments?",
+   "received_at": "2026-09-05 22:31:19.543138+00:00",
+   "retrieval_query": "multiple moments",
+   "exact_terms": [
+    "multiple moments"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "multiple moments",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about multiple moments in cinema?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 12,
+   "corpus_id": "cinema",
+   "question": "What does the book say about PREMISE AND THEME?",
+   "received_at": "2026-09-05 22:31:50.686099+00:00",
+   "retrieval_query": "premise and theme",
+   "exact_terms": [
+    "premise",
+    "theme",
+    "PREMISE",
+    "THEME"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "premise and theme",
+     "weight": 1.0
+    },
+    {
+     "id": "q1",
+     "type": "DEFINITION",
+     "query": "premise",
+     "weight": 0.8
+    },
+    {
+     "id": "q2",
+     "type": "DEFINITION",
+     "query": "theme",
+     "weight": 0.8
+    }
+   ],
+   "resolved_request": "What does the book say about premise and theme in cinema?",
+   "task_type": "GROUNDED_SYNTHESIS",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 13,
+   "corpus_id": "cinema",
+   "question": "What does the book say about battling overconfidence?",
+   "received_at": "2026-09-05 22:32:00.759198+00:00",
+   "retrieval_query": "overconfidence",
+   "exact_terms": [
+    "overconfidence"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "overconfidence",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about battling overconfidence?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 14,
+   "corpus_id": "cinema",
+   "question": "What does the book say about changing a level within a clip?",
+   "received_at": "2026-09-05 22:32:14.413336+00:00",
+   "retrieval_query": "changing a level within a clip",
+   "exact_terms": [
+    "changing a level within a clip"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "changing a level within a clip",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about changing a level within a clip?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 15,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about why innovative leaders make a difference?",
+   "received_at": "2026-09-05 22:32:28.412953+00:00",
+   "retrieval_query": "innovative leaders make a difference",
+   "exact_terms": [],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "innovative leaders make a difference",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about why innovative leaders make a difference?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 16,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about WHAT PROGRESS IS REALLY LIKE?",
+   "received_at": "2026-09-05 22:32:42.453172+00:00",
+   "retrieval_query": "what progress is really like",
+   "exact_terms": [
+    "what progress is really like",
+    "WHAT",
+    "PROGRESS",
+    "IS",
+    "REALLY",
+    "LIKE"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "what progress is really like",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about what progress is really like?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 17,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about the big idea?",
+   "received_at": "2026-09-05 22:32:58.104278+00:00",
+   "retrieval_query": "big idea",
+   "exact_terms": [
+    "big idea"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "big idea",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about the big idea?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 18,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about automation aligned with business strategy?",
+   "received_at": "2026-09-05 22:33:27.118170+00:00",
+   "retrieval_query": "automation aligned with business strategy",
+   "exact_terms": [
+    "automation",
+    "business strategy"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "automation aligned with business strategy",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about automation aligned with business strategy?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 19,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about cost innovations?",
+   "received_at": "2026-09-05 22:33:44.931261+00:00",
+   "retrieval_query": "cost innovations",
+   "exact_terms": [
+    "cost innovations"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "cost innovations",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about cost innovations?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 20,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about the migration of capabilities?",
+   "received_at": "2026-09-05 22:33:56.451555+00:00",
+   "retrieval_query": "migration of capabilities",
+   "exact_terms": [
+    "migration of capabilities"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "migration of capabilities",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about the migration of capabilities?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 21,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about the capabilities viewpoint?",
+   "received_at": "2026-09-05 22:34:06.238447+00:00",
+   "retrieval_query": "capabilities viewpoint",
+   "exact_terms": [
+    "capabilities viewpoint"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "capabilities viewpoint",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about the capabilities viewpoint?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 22,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about getting the categories right?",
+   "received_at": "2026-09-05 22:34:15.578295+00:00",
+   "retrieval_query": "getting the categories right",
+   "exact_terms": [
+    "getting the categories right"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "getting the categories right",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about getting the categories right?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 23,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about discovery skill #4: networking?",
+   "received_at": "2026-09-05 22:34:28.647091+00:00",
+   "retrieval_query": "discovery skill #4 networking",
+   "exact_terms": [
+    "discovery skill #4",
+    "networking"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "discovery skill #4 networking",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about discovery skill #4: networking?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 24,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about creating capabilities through a spin-out organization?",
+   "received_at": "2026-09-05 22:34:38.171715+00:00",
+   "retrieval_query": "creating capabilities through a spin-out organization",
+   "exact_terms": [
+    "spin-out organization"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "creating capabilities through a spin-out organization",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about creating capabilities through a spin-out organization?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 25,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about solar versus conventional electrical energy?",
+   "received_at": "2026-09-05 22:34:49.443245+00:00",
+   "retrieval_query": "solar energy versus conventional electrical energy",
+   "exact_terms": [
+    "solar",
+    "conventional electrical energy"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "solar energy versus conventional electrical energy",
+     "weight": 1.0
+    },
+    {
+     "id": "q1",
+     "type": "ENTITY",
+     "query": "solar power",
+     "weight": 0.8
+    },
+    {
+     "id": "q2",
+     "type": "ENTITY",
+     "query": "conventional electrical energy",
+     "weight": 0.8
+    },
+    {
+     "id": "q3",
+     "type": "BRIDGE",
+     "query": "advantages disadvantages solar conventional energy",
+     "weight": 0.7
+    }
+   ],
+   "resolved_request": "What does the book say about solar versus conventional electrical energy?",
+   "task_type": "GROUNDED_SYNTHESIS",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 26,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about cost structures and value networks?",
+   "received_at": "2026-09-05 22:34:58.441988+00:00",
+   "retrieval_query": "cost structures",
+   "exact_terms": [],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "cost structures",
+     "weight": 1.0
+    },
+    {
+     "id": "q1",
+     "type": "COMPARISON",
+     "query": "value networks",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about cost structures and value networks?",
+   "task_type": "GROUNDED_SYNTHESIS",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 27,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about HOW DISK DRIVES WORK?",
+   "received_at": "2026-09-05 22:35:08.001013+00:00",
+   "retrieval_query": "disk drives HOW WORK",
+   "exact_terms": [
+    "disk drives",
+    "HOW",
+    "DISK",
+    "DRIVES",
+    "WORK"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "disk drives",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about how disk drives work?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 28,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about innovations that will sustain the disruption?",
+   "received_at": "2026-09-05 22:35:16.446816+00:00",
+   "retrieval_query": "innovations that will sustain the disruption",
+   "exact_terms": [],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "innovations that will sustain the disruption",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about innovations that will sustain the disruption?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  },
+  {
+   "idx": 29,
+   "corpus_id": "ecom-meta-v1",
+   "question": "What does the book say about make it platform-centric?",
+   "received_at": "2026-09-05 22:35:26.455795+00:00",
+   "retrieval_query": "platform-centric",
+   "exact_terms": [
+    "platform-centric"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "type": "PRIMARY",
+     "query": "platform-centric",
+     "weight": 1.0
+    }
+   ],
+   "resolved_request": "What does the book say about making a system platform-centric?",
+   "task_type": "GROUNDED_QA",
+   "compiler_model": "compiler_alt:mistralai/mistral-small-2603"
+  }
+ ]
+}

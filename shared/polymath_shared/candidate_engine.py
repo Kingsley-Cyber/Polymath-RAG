@@ -102,6 +102,9 @@ class CandidateBudget:
     #: judge logit) is WEAK and named as such, and every non-weak aspect not
     #: yet represented in the final set gets one seat (its best judged
     #: candidate) in place of the lowest primary-only item.
+    #: R1 (2026-09-06): the PRIMARY is judged by the same floor — when every primary candidate is
+    #: below it, q0 is flagged `below_floor` too (the P1.b residual: a compare side named only by the
+    #: primary was shown as covered while the judge had rejected all of its evidence).
     aspect_prefix_seats: int = 3
     aspect_weak_floor: float = 0.5
     aspect_final_seats: int = 1
@@ -595,7 +598,7 @@ def select_evidence(result: CandidateResult, budget: CandidateBudget, *,
         if judged:
             best = max((_sigmoid(c.rerank_score) for c in cands if c.rerank_score is not None), default=None)
             aspect_best[qid] = round(best, 4) if best is not None else None
-            if qid != primary_id and best is not None and best < budget.aspect_weak_floor:
+            if best is not None and best < budget.aspect_weak_floor:   # the PRIMARY too (R1): irrelevant-only evidence is named, not shown as coverage
                 weak_reason[qid] = "below_floor"
         else:
             aspect_best[qid] = None
