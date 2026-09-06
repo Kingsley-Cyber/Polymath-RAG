@@ -356,22 +356,49 @@ def _embed_query(query: str) -> list[float]:
 #: question.
 _RERANK_DEGRADED: "ContextVar[str | None]" = ContextVar(
     "rerank_degraded", default=None)
+#: R2 (2026-09-06): the v1 HYBRID child lexical lane falls back to the
+#: in-memory Postgres scan when the BM25 sparse query fails or returns
+#: nothing. That fallback was silent — and, until R2, it fired on EVERY
+#: turn because the collection dict's KEYS were queried as collection
+#: names (404). It is now counted per request and surfaced in
+#: meta.degraded exactly like the reranker's degradation.
+_SPARSE_FALLBACK: "ContextVar[str | None]" = ContextVar(
+    "sparse_fallback", default=None)
 
 
 def _begin_retrieval() -> None:
     """Reset per-request degradation state (call once per retrieve)."""
     _RERANK_DEGRADED.set(None)
+    _SPARSE_FALLBACK.set(None)
+
+
+def note_sparse_fallback(reason: str) -> None:
+    """The child lexical lane was served by the Postgres scan, not BM25."""
+    _SPARSE_FALLBACK.set(reason)
+    log.warning("sparse lexical lane fell back to the in-memory scan: %s",
+                reason, extra={"error_code": "sparse_fallback"})
 
 
 def degradations() -> list[dict]:
     """Degradations recorded for the current request, for meta."""
+    out: list[dict] = []
     note = _RERANK_DEGRADED.get()
-    return [] if not note else [{
-        "component": "reranker",
-        "effect": "results ordered by RRF fusion (no cross-encoder rerank); "
-                  "same candidate set, same recall",
-        "reason": note,
-    }]
+    if note:
+        out.append({
+            "component": "reranker",
+            "effect": "results ordered by RRF fusion (no cross-encoder rerank); "
+                      "same candidate set, same recall",
+            "reason": note,
+        })
+    sparse = _SPARSE_FALLBACK.get()
+    if sparse:
+        out.append({
+            "component": "sparse_lexical",
+            "effect": "child lexical lane served by the in-memory Postgres "
+                      "scan (legacy path), not the BM25 index",
+            "reason": sparse,
+        })
+    return out
 
 
 def _neighbor_lookup(want: list[dict], distance: int) -> list[dict]:

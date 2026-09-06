@@ -1665,6 +1665,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("orchestrator/orchestrator/api/chat_retrieval.py", "py", None),
     ("tests/determinism/test_candidate_engine.py", "py", None),
     ("tests/determinism/test_chat_retrieval_v2.py", "py", None),
+    ("tests/determinism/test_hybrid_sparse_lane.py", "py", None),
     ("eval/fixtures/chat_lexical_L.json", "json", None),
     ("docs/wiki/work-log/2026-09-05-p1a-chat-retrieval-v2.md", "md", None),
     ("docs/wiki/experiments/chat-baseline-p1a-B-v1.json", "json", None),

@@ -37,6 +37,7 @@ from orchestrator.api.fast import (
     _rerank_children,
     _corpus_collections,
     degradations,
+    note_sparse_fallback,
     FastSearcher,
 )
 
@@ -69,8 +70,8 @@ def _sparse_lexical_search(query: str, corpus_id: str, top_k: int) -> list[LaneH
             FieldCondition(key="corpus_id", match=MatchValue(value=corpus_id)),
         ], must_not=[FieldCondition(key="chunk_contract_version",
                                     match=MatchValue(value=g)) for g in _hidden])
-        for collection in collections:
-            pts = client.query_points(
+        for collection in collections.values():   # R2: dict maps corpus_id → collection NAME; iterating the keys
+            pts = client.query_points(               # queried 'cinema' as a collection → 404 → silent Postgres scan every turn
                 collection_name=collection,
                 query=SparseVector(indices=idx, values=vals),
                 using=SPARSE_VECTOR_NAME,
@@ -106,8 +107,9 @@ def _lexical_search(query: str, corpus_id: str, top_k: int) -> list[LaneHit]:
         hits = _sparse_lexical_search(query, corpus_id, top_k)
         if hits:
             return hits
-    except Exception:
-        pass  # legacy collection without the bm25 vector: fall through
+        note_sparse_fallback("sparse_empty")            # R2: the scan is a counted degradation, never a silent twin
+    except Exception as exc:  # noqa: BLE001 — legacy collection without the bm25 vector, or an outage
+        note_sparse_fallback(f"sparse_error:{type(exc).__name__}")
     with tx() as conn:
         rows = conn.execute(
             """
