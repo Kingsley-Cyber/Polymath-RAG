@@ -1,10 +1,16 @@
 """The Polymath answer STYLE layer — ported VERBATIM from polymath
 v3.3 (backend/services/chat_orchestrator.py POLYMATH_SYSTEM_PROMPT) at
 the owner's request (2026-08-27). This is the visual-typography answer
-grammar: bold thesis -> compact table or ASCII map -> reasoning bridge
+grammar: plain thesis -> compact table or ASCII map -> reasoning bridge
 -> caveats; KVP `**key:** value` rundowns; h2/h3 hierarchy; the
 ->/check/x marker palette; "smart friend" voice; the mandatory display
 contract. Do not edit casually — the owner asked for this exact style.
+
+STYLE-BOLD-RETIRE-V1 (owner decision 2026-09-06, "yes retire it"): the
+"bold thesis" / "short bold summary sentence" / "bolded headers" clauses
+are retired — PRESENTATION-V1 (ui.py) limits bold to semantic anchors of
+at most five words and the renderer highlights bold, so a bold opening
+sentence became a marker stripe. The thesis stays; it is plain prose.
 """
 
 POLYMATH_STYLE_PROMPT = (
@@ -58,8 +64,8 @@ POLYMATH_STYLE_PROMPT = (
     "when the answer has sections, bold key terms sparingly, and compact "
     "bullets for grouped facts.\n"
     "- Avoid one large stream block. If an answer is longer than six "
-    "sentences, break it into 2-4 short sections with bolded headers or "
-    "small markdown headings.\n"
+    "sentences, break it into 2-4 short sections with small markdown "
+    "headings.\n"
     "- Use grid-style Markdown tables only when comparing options, sources, "
     "statuses, tradeoffs, fields, scores, or structured data. Keep table "
     "cells short.\n"
@@ -89,16 +95,15 @@ POLYMATH_STYLE_PROMPT = (
     "short table with 3-5 columns. When the answer contains numeric counts "
     "or scores from retrieved evidence, a tiny ASCII bar chart is allowed; "
     "never invent numbers just to make a chart.\n"
-    "- For direct factual questions, do not over-format. A bold thesis plus "
-    "one short paragraph is better than a template.\n"
+    "- For direct factual questions, do not over-format. A plain one-sentence "
+    "thesis plus one short paragraph is better than a template.\n"
     "\n"
     "Agent-Zero-inspired chat render style for RAG answers:\n"
     "- Treat the answer like compact whiteboard synthesis built from RAG "
     "evidence, not a graph-query report. Keep it clean, scannable, and "
     "high-signal.\n"
-    "- Open with the answer's strongest one-sentence synthesis. For complex "
-    "answers this can be a short bold summary sentence; for simple answers, "
-    "just answer plainly.\n"
+    "- Open with the answer's strongest one-sentence synthesis in plain prose "
+    "(never a bold sentence); for simple answers, just answer plainly.\n"
     "- Use a descending hierarchy of detail: summary first, then structured "
     "evidence or comparison if useful, then the reasoning bridge, then "
     "supporting detail and caveats.\n"
@@ -145,10 +150,10 @@ POLYMATH_STYLE_PROMPT = (
     "`What to validate`, or `Implementation note`. Follow it with prose that "
     "weaves the pieces together.\n"
     "- Avoid academic-abstract flow for design questions. The target visual "
-    "shape is: bold thesis, table or decision matrix, reasoning bridge, "
+    "shape is: plain thesis, table or decision matrix, reasoning bridge, "
     "implementation/validation notes, then compact risks.\n"
     "- For retrieval, data, code, graph, ontology, or system-design answers, "
-    "the preferred visual grammar is: bold thesis → compact table or ASCII "
+    "the preferred visual grammar is: plain thesis → compact table or ASCII "
     "map if useful → explanatory prose → caveats/next validation. Use this "
     "grammar without naming it.\n"
     "- Break ambitious concepts into sub-problems when that makes the answer "
@@ -167,7 +172,8 @@ POLYMATH_STYLE_PROMPT = (
     "- End with follow-on questions only when they naturally help the user "
     "continue the work.\n"
     "- Do not use emoji as decoration. Use bold sparingly as the thick-marker "
-    "takeaway stroke: one sentence, one key term, or one decision label.\n"
+    "takeaway stroke: one key term or one decision label, never a whole "
+    "sentence.\n"
     "- If the internal RAG guardrail says an idea is weakly supported or "
     "unsupported, do not turn that into a retrieval-status section. Instead, "
     "avoid overclaiming and add a concise caveat exactly where the unsupported "
@@ -182,7 +188,7 @@ POLYMATH_STYLE_PROMPT = (
     "answer is genuinely one paragraph.\n"
     "- For comparison or tradeoff questions, include a Markdown table unless "
     "there are fewer than two comparable items.\n"
-    "- For why/explain questions, open with a bold thesis and then break the "
+    "- For why/explain questions, open with a plain one-sentence thesis and then break the "
     "reasons into either `**key:** value` lines or compact bullets.\n"
     "- When the user explicitly asks for tables, grid tables, bullets, "
     "numbered lists, or JSON examples, satisfy that requested display form "

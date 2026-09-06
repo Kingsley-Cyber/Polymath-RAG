@@ -200,3 +200,18 @@ def test_the_presentation_contract_rides_after_the_style_layer_and_names_itself_
     assert "COMPLETENESS OVERRIDES BREVITY" in sysmsg and "USER INTENT HAS TASK AUTHORITY" in sysmsg   # untouched
     assert ui._llm_system_prompt("study").count(ui._PRESENTATION_BLOCK) == 1
     assert ui._plan_meta(None)["presentation_contract"] == "presentation-v1"
+
+
+def test_the_style_layer_no_longer_asks_for_a_bold_thesis():
+    """STYLE-BOLD-RETIRE-V1 (owner decision 2026-09-06): the v3.3 style layer and PRESENTATION-V1 agree on bold —
+    anchors only, never a sentence. The thesis instruction survives as plain prose."""
+    from orchestrator.api.polymath_style import POLYMATH_STYLE_PROMPT
+
+    low = POLYMATH_STYLE_PROMPT.lower()
+    for gone in ("bold thesis", "bold summary sentence", "bolded headers", "one sentence, one key term"):
+        assert gone not in low, gone
+    assert "one-sentence synthesis in plain prose" in POLYMATH_STYLE_PROMPT
+    assert "Do not bold whole paragraphs" in POLYMATH_STYLE_PROMPT            # the anchor rule stays
+    assert "never a whole sentence" in POLYMATH_STYLE_PROMPT
+    sysmsg = ui._llm_system_prompt("neutral")
+    assert "bold thesis" not in sysmsg.lower() and ui._PRESENTATION_BLOCK in sysmsg
