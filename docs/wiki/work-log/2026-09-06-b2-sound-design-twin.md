@@ -6,7 +6,7 @@ owner: governance (owner backlog B2, released 2026-09-06 with the backlog execut
 last_reviewed: 2026-09-06
 last_touched: 2026-09-06
 status: complete
-register: 11.111
+register: 11.111 (follow-up 11.114)
 package: data only — corpus `cinema` (documents, chunks, Qdrant points, derived rows); no code
 architecture_impact: "None to code. One of two near-identical copies of Sound Design (1,067,157 vs 1,067,149 bytes, 255 sections each, both layers of the duplicate guard blind to an 8-byte difference) was removed with the existing DOCUMENT-DELETE-V1 endpoint (typed confirmation = the file name), which removes the document and everything derived from it in one transaction and receipts every table it touched. The corpus is 67 documents; the surviving copy is untouched; nothing was re-ingested. The systemic fix (near-duplicate containment at intake) remains B1."
 ---
@@ -35,3 +35,9 @@ Remove the "(1)" copy and nothing else, through the API (never by hand in the st
 ## Open contract gaps
 
 - Facts evidenced only by the removed copy (987) are gone; the surviving copy's own facts stand. If any answer relied on a fact whose sole evidence was the "(1)" copy, the surviving copy's identical text re-derives it on the next enrichment pass.
+
+## Follow-up (same day): the delete left the derived graph behind — found by the suite, fixed, cleaned
+
+The full determinism run after B7 failed `test_no_derived_node_outlives_its_postgres_row`: Document 1, Fact 987, Evidence 1,061, Chunk 1,975 nodes in Neo4j had no Postgres row — exactly the removed copy. Two defects in DOCUMENT-DELETE-V1: its Neo4j step matched `Chunk {doc_id}` (a property Chunk nodes do not carry → 0 deleted, receipted as `neo4j_chunks: 0` and read as "nothing to delete") and it never touched Document / Fact / Evidence nodes; and its optional `projection_receipts` delete was receipted as a bare `skipped`, which left the removed chunks' receipts in place, so the verify reconciler (which keeps any receipted chunk node) could not prune them either.
+
+Fix (ui.py, register 11.114): the endpoint prunes Chunk / Evidence / Fact (orphan facts only) / REL edges / Document by the ids Postgres released, each count receipted (`neo4j_chunks`, `neo4j_evidence`, `neo4j_facts`, `neo4j_rel_edges`, `neo4j_documents`); a skipped optional table carries its reason. Pin test `test_document_delete_prunes_every_derived_node_kind` (five Cypher patterns; the old doc_id-keyed delete must not return). Cleanup: `reconcile_neo4j` run once for `cinema` (Document −1, Fact −987, Evidence −1,061), then 7,512 stale chunk projection receipts (no chunk row; 1,975 from this delete, the rest older) removed and the reconciler run again (Chunk 98,238 → 96,263 = the Postgres chunk count). The lifecycle test is green.

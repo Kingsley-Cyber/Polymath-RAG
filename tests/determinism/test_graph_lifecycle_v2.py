@@ -199,3 +199,19 @@ def test_qualified_edges_are_kept_not_deleted():
     assert edges & qualified, (
         "no QUALIFY fact survives in the graph — the reconciler may be "
         "deleting hedged knowledge as if it were orphaned")
+
+
+@pytest.mark.parametrize("label,needle", [
+    ("Chunk nodes by released chunk ids", "MATCH (c:Chunk) WHERE c.chunk_id IN $ids DETACH DELETE c"),
+    ("Evidence nodes by released evidence ids", "MATCH (e:Evidence) WHERE e.evidence_id IN $ids DETACH DELETE e"),
+    ("orphan Fact nodes", "MATCH (f:Fact) WHERE f.fact_id IN $ids DETACH DELETE f"),
+    ("REL edges of orphan facts", "MATCH ()-[r:REL]->() WHERE r.fact_id IN $ids DELETE r"),
+    ("the Document node", "MATCH (d:Document {doc_id: $d}) DETACH DELETE d"),
+])
+def test_document_delete_prunes_every_derived_node_kind(label, needle):
+    """B2 follow-up (2026-09-06): DOCUMENT-DELETE-V1 matched Chunk nodes by a property they do not carry and left
+    Document / Fact / Evidence behind (1 / 987 / 1,061 / 1,975 orphans after one delete). The endpoint now prunes
+    every derived kind by the ids Postgres released; this pins the Cypher the same way the reconciler test does."""
+    src = (ROOT / "orchestrator" / "orchestrator" / "api" / "ui.py").read_text()
+    assert needle in src, f"document delete no longer prunes {label}"
+    assert "MATCH (c:Chunk {doc_id: $d})" not in src, "the old doc_id-keyed Chunk delete (matches nothing) is back"

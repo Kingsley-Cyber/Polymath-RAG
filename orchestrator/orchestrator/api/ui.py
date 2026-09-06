@@ -578,10 +578,12 @@ def _delete_document_tx(doc_id: str, confirm: str = "") -> dict:
             try:
                 removed[key] = removed.get(key, 0) + conn.execute(
                     sql, params).rowcount
-            except Exception:
+            except Exception as exc:  # noqa: BLE001
                 if optional:
                     conn.execute("ROLLBACK TO SAVEPOINT docdel")
-                    removed[key] = "skipped"
+                    # B2 follow-up: a skipped optional table is receipted WITH its reason — a bare "skipped" hid
+                    # the projection-receipt rows that then kept the verify reconciler from pruning the graph
+                    removed[key] = f"skipped: {type(exc).__name__}: {str(exc)[:80]}"
                 else:
                     raise
 
@@ -592,6 +594,8 @@ def _delete_document_tx(doc_id: str, confirm: str = "") -> dict:
                   (SELECT 1 FROM evidence e2
                     WHERE e2.fact_id=e.fact_id AND e2.doc_id<>%s)""",
             (doc_id, doc_id)).fetchall()]
+        evidence_ids = [r[0] for r in conn.execute(
+            "SELECT evidence_id FROM evidence WHERE doc_id=%s", (doc_id,)).fetchall()]
         _del("DELETE FROM evidence WHERE doc_id=%s", (doc_id,), "evidence")
         if orphan_facts:
             _del("DELETE FROM facts WHERE fact_id = ANY(%s)",
@@ -685,12 +689,31 @@ def _delete_document_tx(doc_id: str, confirm: str = "") -> dict:
     try:
         from polymath_shared.stores import neo4j_driver
 
+        # B2 follow-up (2026-09-06): this step matched Chunk nodes by a `doc_id` property they do not carry and
+        # never touched the Document / Fact / Evidence nodes, so a deleted document left its whole derived
+        # subgraph behind (measured: Document 1, Fact 987, Evidence 1,061, Chunk 1,975 orphans after one
+        # delete; found by test_no_derived_node_outlives_its_postgres_row). The four kinds are now pruned by
+        # the ids Postgres just released — the same doctrine as the verify reconciler — and each count is
+        # receipted. Facts: only the ones this document evidenced alone (`orphan_facts`); shared facts stand.
         with neo4j_driver() as driver:
             with driver.session() as s:
-                out = s.run(
-                    "MATCH (c:Chunk {doc_id: $d}) DETACH DELETE c "
-                    "RETURN count(*) AS n", d=doc_id).single()
-                removed["neo4j_chunks"] = out["n"] if out else 0
+                def _n(cypher: str, **params) -> int:
+                    out = s.run(cypher, **params).single()
+                    return int(out["n"]) if out and out["n"] is not None else 0
+                removed["neo4j_chunks"] = sum(
+                    _n("MATCH (c:Chunk) WHERE c.chunk_id IN $ids DETACH DELETE c RETURN count(*) AS n",
+                       ids=chunk_ids[i:i + 1000]) for i in range(0, len(chunk_ids), 1000)) if chunk_ids else 0
+                removed["neo4j_evidence"] = sum(
+                    _n("MATCH (e:Evidence) WHERE e.evidence_id IN $ids DETACH DELETE e RETURN count(*) AS n",
+                       ids=evidence_ids[i:i + 1000]) for i in range(0, len(evidence_ids), 1000)) if evidence_ids else 0
+                removed["neo4j_facts"] = sum(
+                    _n("MATCH (f:Fact) WHERE f.fact_id IN $ids DETACH DELETE f RETURN count(*) AS n",
+                       ids=orphan_facts[i:i + 1000]) for i in range(0, len(orphan_facts), 1000)) if orphan_facts else 0
+                removed["neo4j_rel_edges"] = sum(
+                    _n("MATCH ()-[r:REL]->() WHERE r.fact_id IN $ids DELETE r RETURN count(*) AS n",
+                       ids=orphan_facts[i:i + 1000]) for i in range(0, len(orphan_facts), 1000)) if orphan_facts else 0
+                removed["neo4j_documents"] = _n(
+                    "MATCH (d:Document {doc_id: $d}) DETACH DELETE d RETURN count(*) AS n", d=doc_id)
     except Exception as exc:
         removed["neo4j_error"] = str(exc)[:120]
     return {"deleted": doc_id, "source_name": source_name,
@@ -1403,34 +1426,11 @@ def _evidence_legend(bundle: dict) -> list[dict]:
             out.append({"tag": f"S{len(out) + 1}", "locator": loc,
                         "chunk_id": (m.group(1) if m else (item.get("source_chunk_id") or None)),
                         "doc_id": item.get("source_document_id"), "text": text,
+                        "breadcrumb": _breadcrumb(item),
                         "carried": bool(item.get("carried")), "carry_score": item.get("carry_score")})
     return out
 
 
-def _cited_chunk_ids(answer_text: str, legend: list[dict]) -> list[str]:
-    """Chunk ids behind the [S#] tags the model actually emitted (order of
-    first citation, deduped). Tags outside the legend are ignored."""
-    by_tag = {e["tag"]: e.get("chunk_id") for e in legend}
-    out: list[str] = []
-    for n in _S_TAG_RE.findall(answer_text or ""):
-        cid = by_tag.get(f"S{n}")
-        if cid and cid not in out:
-            out.append(cid)
-    return out
-
-
-_COMPILER_FLAG_ENV = "POLYMATH_CHAT_COMPILER"          # off | shadow | on
-#: a compiler call that has not answered in 6 s is a failed lane, not a wait
-#: (measured 2026-09-05: a Gemini 503 arrived after a 24 s hang)
-_COMPILER_HTTP_TIMEOUT_S = float(os.environ.get("POLYMATH_CHAT_COMPILER_HTTP_TIMEOUT_S", "6.0"))
-
-
-def _compiler_flag(override: str | None = None) -> str:
-                        "breadcrumb": _breadcrumb(item),
-    """P0.c: default `on` — the compiler is stage 0 of every streaming turn.
-    Env POLYMATH_CHAT_COMPILER and a per-request override (evaluation only)
-    can pin off | shadow | on."""
-    v = (override or os.environ.get(_COMPILER_FLAG_ENV, "on") or "on").strip().lower()
 #: EVIDENCE-DIET-V1: the assembler's summary kinds (never prompt rows); carried items have no text_kind
 _SUMMARY_TEXT_KINDS = ("document_summary", "section_summary")
 
@@ -1475,6 +1475,29 @@ def _breadcrumb(item: dict) -> str:
     return f"{book} › {title}" if book and title else (book or title)
 
 
+def _cited_chunk_ids(answer_text: str, legend: list[dict]) -> list[str]:
+    """Chunk ids behind the [S#] tags the model actually emitted (order of
+    first citation, deduped). Tags outside the legend are ignored."""
+    by_tag = {e["tag"]: e.get("chunk_id") for e in legend}
+    out: list[str] = []
+    for n in _S_TAG_RE.findall(answer_text or ""):
+        cid = by_tag.get(f"S{n}")
+        if cid and cid not in out:
+            out.append(cid)
+    return out
+
+
+_COMPILER_FLAG_ENV = "POLYMATH_CHAT_COMPILER"          # off | shadow | on
+#: a compiler call that has not answered in 6 s is a failed lane, not a wait
+#: (measured 2026-09-05: a Gemini 503 arrived after a 24 s hang)
+_COMPILER_HTTP_TIMEOUT_S = float(os.environ.get("POLYMATH_CHAT_COMPILER_HTTP_TIMEOUT_S", "6.0"))
+
+
+def _compiler_flag(override: str | None = None) -> str:
+    """P0.c: default `on` — the compiler is stage 0 of every streaming turn.
+    Env POLYMATH_CHAT_COMPILER and a per-request override (evaluation only)
+    can pin off | shadow | on."""
+    v = (override or os.environ.get(_COMPILER_FLAG_ENV, "on") or "on").strip().lower()
     return v if v in ("off", "shadow", "on") else "on"
 
 
@@ -2594,6 +2617,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 retrieval["used_evidence"] = used
                 retrieval["legend"] = [{"tag": e["tag"], "locator": e["locator"],
                                         "chunk_id": e.get("chunk_id"), "doc_id": e.get("doc_id"),
+                                        "breadcrumb": e.get("breadcrumb") or "",          # EVIDENCE-DIET-V1: book › section
                                         "carried": bool(e.get("carried")), "carry_score": e.get("carry_score")}
                                        for e in _legend]
                 retrieval["funnel"] = {"version": funnel["version"], "counts": funnel["counts"],
@@ -2617,7 +2641,6 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                             "synthesis_version": f"{llm_backend}:{llm_model}",
                             "phase_ms": dict(_phase_ms),
                             **_plan_meta(_plan if _flag == "on" else None),
-                                        "breadcrumb": e.get("breadcrumb") or "",          # EVIDENCE-DIET-V1: book › section
                             "prompt": _prompt_meta,
                             "generation": _gen_meta or None,
                             "carry": {k: v for k, v in _carry_meta.items() if k != "scores"},
@@ -2658,6 +2681,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 cited=used, plan_version=(_trace or {}).get("plan"))
             retrieval["used_evidence"] = used
             retrieval["legend"] = [{"tag": e["tag"], "locator": e["locator"], "chunk_id": e.get("chunk_id"), "doc_id": e.get("doc_id"),
+                                    "breadcrumb": e.get("breadcrumb") or "",
                                     "carried": bool(e.get("carried")), "carry_score": e.get("carry_score")} for e in _legend]
             retrieval["funnel"] = {"version": funnel["version"], "counts": funnel["counts"],
                                    "lane_counts": funnel["lane_counts"], "multi_lane": funnel["multi_lane"]}
@@ -2681,7 +2705,6 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 answer=answer.get("answer"), result=answer,
                 meta={"verdict": (answer.get("meta") or {}).get("verdict"),
                       "synthesis_version": (answer.get("meta") or {}).get("synthesis_version"),
-                                    "breadcrumb": e.get("breadcrumb") or "",
                       "latent": req.latent, "phase_ms": dict(_phase_ms), "funnel": funnel,
                       "used_evidence": used, "degraded": retrieval.get("degraded"),
                       "plan": (_trace or {}).get("plan"), "chat_plan": _plan_receipt or None, "carry": _carry_meta,
