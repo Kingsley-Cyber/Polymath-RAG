@@ -561,3 +561,36 @@ select, input, textarea { font: inherit; color: var(--text); }
   .model-picker { min-width: 0; max-width: 100%; }
   .model-picker-pop { position: fixed; left: 8px; right: 8px; top: auto; bottom: 8px; max-width: none; max-height: 70vh; }
 }
+
+/* ---------------- SIDEBAR-COLLAPSE-V1: the side panel as a rail ---------------- */
+.sidebar { transition: width 0.18s ease, min-width 0.18s ease, padding 0.18s ease; }
+.brand-spacer { flex: 1; }
+.sb-toggle, .rail-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 8px; border: 1px solid transparent;
+  background: none; color: var(--text-dim); cursor: pointer; padding: 0;
+}
+.sb-toggle:hover, .rail-btn:hover { color: var(--text); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.sb-toggle:focus-visible, .rail-btn:focus-visible, .brand-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sb-icon { display: block; }
+.sidebar.collapsed {
+  width: 52px; min-width: 52px; padding: 12px 8px; gap: 6px; align-items: center;
+}
+.sidebar.collapsed .brand { padding: 4px 0 10px; }
+.brand-btn { border: none; background: none; cursor: pointer; padding: 6px; display: flex; align-items: center; }
+.rail-btn.new { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); background: var(--accent-soft); }
+.rail-btn.new:hover { filter: brightness(1.15); }
+.rail-tabs { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.rail-btn.active { color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, transparent); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+.rail-spacer { flex: 1; }
+@media (prefers-reduced-motion: reduce) { .sidebar { transition: none; } }
+@media (max-width: 640px) {
+  /* stacked shell: the collapsed panel is one short row — brand, new chat, the views, the toggle */
+  .sidebar.collapsed {
+    width: 100%; min-width: 0; max-height: none; flex-direction: row; align-items: center;
+    padding: 6px 10px; gap: 6px; overflow: visible;
+  }
+  .sidebar.collapsed .brand { padding: 0 4px 0 0; }
+  .rail-tabs { flex-direction: row; margin-top: 0; }
+  .rail-spacer { flex: 1; }
+}

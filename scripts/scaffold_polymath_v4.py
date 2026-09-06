@@ -1295,8 +1295,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/v5/wipe_corpus_v5.py", "py", None),
     # frontend
     ("frontend/.gitignore", "gitignore", None),
-    ("frontend/dist/assets/index-DUCZ3ilI.js", "js", None),
-    ("frontend/dist/assets/index-BMKbEi0y.css", "css", None),
+    ("frontend/dist/assets/index-DbGXYWNH.js", "js", None),
+    ("frontend/dist/assets/index-CCme32b3.css", "css", None),
     ("frontend/dist/index.html", "html", None),
     ("frontend/index.html", "html", None),
     ("frontend/package-lock.json", "json", None),
@@ -1677,6 +1677,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-06-generation-bound.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-model-picker.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-opencode-reconcile.md", "md", None),
+    ("docs/wiki/work-log/2026-09-06-sidebar-collapse.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-style-bold-retire.md", "md", None),
     ("docs/wiki/experiments/chat-parity-p1f-first.json", "json", None),
     ("docs/wiki/work-log/2026-09-06-p1e-mode-recomposition.md", "md", None),

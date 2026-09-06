@@ -51,6 +51,32 @@ export default function App() {
     localStorage.setItem(THEME_KEY, theme);
   }, [theme]);
 
+  // SIDEBAR-COLLAPSE-V1: the side panel collapses to a rail; remembered per viewer; ⌘/Ctrl+B toggles.
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("pm-sidebar-open") !== "0";
+    } catch {
+      return true;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem("pm-sidebar-open", sidebarOpen ? "1" : "0");
+    } catch {
+      /* per-viewer convenience only */
+    }
+  }, [sidebarOpen]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        setSidebarOpen((o) => !o);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   useEffect(() => {
     localStorage.setItem(STORE, JSON.stringify(chats.slice(0, 60)));
   }, [chats]);
@@ -228,6 +254,8 @@ export default function App() {
         chats={chats}
         activeId={activeId}
         view={view}
+        collapsed={!sidebarOpen}
+        onToggle={() => setSidebarOpen((o) => !o)}
         onSelect={(id) => {
           setActiveId(id);
           setView("chat");
