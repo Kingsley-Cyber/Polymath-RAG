@@ -169,7 +169,7 @@ function DegradedNote({ retrieval }: { retrieval: Retrieval }) {
     <div className="degraded-note">
       {items.map((d, i) => (
         <div key={i} title={d.reason}>
-          ⚠ {d.component} unavailable — {d.effect}
+          ⚠ {d.component} {d.state ?? "unavailable"} — {d.effect}
         </div>
       ))}
     </div>

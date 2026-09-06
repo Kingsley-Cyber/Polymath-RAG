@@ -23,7 +23,25 @@ from polymath_shared import chat_plan as cp  # noqa: E402
 
 ABSTAIN = re.compile(r"evidence (does not|doesn't|did not|didn't) (contain|include|mention|cover|provide)"
                      r"|(not|n't) (in|within|contained in|present in|found in) the (provided )?(evidence|sources|corpus)"
-                     r"|cannot (be )?(answer|determine|provide)|no (direct |specific |relevant )?evidence (on|about|for|regarding)", re.I)
+                     r"|cannot (be )?(answer|determine|provide)|no (direct |specific |relevant )?evidence (on|about|for|regarding)"
+                     # PRESENTATION-V1 live run (2026-09-06): a correct abstention worded "contains no mention of",
+                     # "does not appear anywhere in the retrieved material", "it's not in this corpus"
+                     r"|(contains|has|there is|there's) no (mention|record|reference)|(does not|doesn't|never) appear"
+                     r"|(not|n't) (in|within|found in|present in) (this|the|your|that) (retrieved )?(material|corpus|evidence|sources|book)"
+                     r"|(can't|cannot|can not) (report|say|state|tell)|without inventing", re.I)
+
+
+def _abstains(text: str) -> bool:
+    """Markdown emphasis must not hide an abstention ('contains **no mention of** …' is one)."""
+    return bool(ABSTAIN.search(re.sub(r"[*_`]+", "", text or "")))
+
+
+def _names_missing_premise(text: str, term: str) -> bool:
+    """SYNTHESIS-V2's abstention shape: the OPENING names the absent premise negatively ('never mentions a
+    Zorblax-9 …, I won't invent them') and may then teach the related evidence with tags. Wording varies per
+    model and per run; the invariant is term + negation in the first 400 characters."""
+    head = re.sub(r"[*_`]+", "", text or "")[:400].lower()
+    return term.lower() in head and re.search(r"\b(no|not|never|absent|missing|n't|won't|invent|fabricat)", head) is not None
 
 
 def _plan(**over) -> cp.ChatPlan:
@@ -83,9 +101,10 @@ def test_request_block_carries_resolved_request_and_the_prior_artifact_verbatim(
 
 def test_plan_meta_names_the_task_in_the_answer_event():
     meta = ui._plan_meta(_plan())
-    assert meta == {"prompt_contract": "synthesis-v2", "task_type": "CONTINUE_PRIOR_ARTIFACT", "evidence_policy": "conversation",
+    assert meta == {"prompt_contract": "synthesis-v2", "presentation_contract": "presentation-v1",
+                    "task_type": "CONTINUE_PRIOR_ARTIFACT", "evidence_policy": "conversation",
                     "response_type": "artifact", "retrieval_required": False, "compiler_fallback": False}
-    assert ui._plan_meta(None) == {"prompt_contract": "synthesis-v2"}
+    assert ui._plan_meta(None) == {"prompt_contract": "synthesis-v2", "presentation_contract": "presentation-v1"}
     fb = cp.fallback_plan("what is X?", reason="timeout")
     assert ui._plan_meta(fb)["compiler_fallback"] is True
 
@@ -134,7 +153,7 @@ def test_live_artifact_tasks_produce_the_artifact_without_asking_the_evidence_fo
     assert meta.get("task_type") in ("CONTINUE_PRIOR_ARTIFACT", "TRANSFORM_USER_CONTENT"), meta
     assert "retrieve_skipped" in phases
     assert len(text) >= 300, text[:200]
-    assert not ABSTAIN.search(text), text[:400]
+    assert not _abstains(text), text[:400]
 
 
 def test_live_factual_question_without_evidence_still_abstains():
@@ -145,7 +164,7 @@ def test_live_factual_question_without_evidence_still_abstains():
     meta = (answer.get("result") or {}).get("meta") or {}
     assert meta.get("task_type") in (None, "GROUNDED_QA", "GROUNDED_SYNTHESIS"), meta
     tags = re.findall(r"\[S\d+\]", text)
-    assert ABSTAIN.search(text) or "Zorblax" in text and not tags or "missing" in text.lower(), text[:400]
+    assert _abstains(text) or _names_missing_premise(text, "Zorblax") or ("Zorblax" in text and not tags), text[:400]
 
 
 
@@ -161,3 +180,23 @@ def test_coverage_lines_name_unjudged_aspects_as_unverified():
     assert "q0 PRIMARY" in text and "UNVERIFIED" in text.split("q1")[0] and "did not score this turn" in text
     assert "q1 MECHANISM" in text and "NO EVIDENCE RETRIEVED" in text.split("q1")[1].split("q2")[0]
     assert "NO RELEVANT EVIDENCE (best judge score 0.31)" in text and "q3 COMPARISON" in text and "3 evidence item(s)" in text
+
+
+def test_the_presentation_contract_rides_after_the_style_layer_and_names_itself_in_the_receipt():
+    """PRESENTATION-V1: the owner's information-presentation contract is the LAST display
+    instruction (it overrides the v3.3 style layer on shape only) and every answer receipt
+    names it, so before/after measurements are distinguishable."""
+    from orchestrator.api.polymath_style import POLYMATH_STYLE_PROMPT
+
+    sysmsg = ui._llm_system_prompt("neutral")
+    assert ui._PRESENTATION_CONTRACT == "presentation-v1"
+    assert ui._PRESENTATION_BLOCK in sysmsg
+    assert sysmsg.index(ui._PRESENTATION_BLOCK) > sysmsg.index(POLYMATH_STYLE_PROMPT) > sysmsg.index(ui._AUTHORITY_BLOCK)
+    for rule in ("Paragraphs are the default unit", "No one-sentence paragraph spam", "Progressive explanation",
+                 "Headings only when they clarify structure", "Lists only for genuinely parallel items",
+                 "Tables only for comparisons or structured data", "Bold only for semantic anchors",
+                 "options, not requirements", "this contract wins", "Citation tags stay at the END"):
+        assert rule in ui._PRESENTATION_BLOCK, rule
+    assert "COMPLETENESS OVERRIDES BREVITY" in sysmsg and "USER INTENT HAS TASK AUTHORITY" in sysmsg   # untouched
+    assert ui._llm_system_prompt("study").count(ui._PRESENTATION_BLOCK) == 1
+    assert ui._plan_meta(None)["presentation_contract"] == "presentation-v1"

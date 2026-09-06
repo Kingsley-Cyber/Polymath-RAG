@@ -42,6 +42,8 @@ export interface Degradation {
   component: string;
   effect: string;
   reason: string;
+  /** GENERATION-BOUND-V1: how the component degraded when it did not go away ("cut", "bound refused"); absent = unavailable. */
+  state?: string;
 }
 
 export interface WildcardBridge {

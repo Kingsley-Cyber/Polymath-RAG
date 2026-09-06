@@ -1236,6 +1236,54 @@ list is complete when it is not.
 not claim to be a validated source of truth."""
 
 
+#: PRESENTATION-V1 (owner design contract 2026-09-06, "the LLM's answer-generation
+#: instructions should cooperate with the renderer"): READING-HIERARCHY-V1 set the
+#: answer as a reading document (15.5 px prose / 78ch, headings 21/18/16, bold as a
+#: highlighted anchor, citations as footnotes). Measured before this block (10 fixture-B
+#: questions, deepseek-v4-flash): bold covered 6 % of the words at the median (17 % at
+#: the worst), two one-sentence paragraphs per answer, bold lines standing in for
+#: headings, a 2.5-line bold thesis. The v3.3 style layer below asks for those shapes
+#: ("bold thesis", "at least one visible structure", KVP by default); this contract is
+#: appended AFTER it and takes precedence on display shape only — authority, citation
+#: and completeness rules are untouched.
+_PRESENTATION_CONTRACT = "presentation-v1"
+_PRESENTATION_BLOCK = """Information-presentation contract. The renderer sets each \
+answer as a reading document — 15.5 px prose in a 78-character column, headings \
+21 / 18 / 16, bold rendered as a highlighted anchor, citations as footnote tags — \
+so write the shape that typography expects. Where a display rule above and this \
+contract disagree, this contract wins.
+- Paragraphs are the default unit: short, information-dense, two to five \
+sentences (about 40–110 words) each. Split a paragraph where the mechanism \
+changes; never run everything into one undifferentiated block.
+- No one-sentence paragraph spam: a lone sentence stands alone only as the \
+opening conclusion or a closing caveat.
+- Progressive explanation: the conclusion in plain prose first, then the \
+mechanism, then evidence and detail. A reader who stops after any paragraph \
+holds a correct picture.
+- Headings only when they clarify structure. An answer under about eight \
+paragraphs has NO headings; a longer one has at most three, each covering \
+several paragraphs or a substantial group of items. Never a heading per \
+theme, per paragraph or per bullet group, never a heading on a short answer, \
+never a bold line standing in for a heading, and never headings that merely \
+restate the question's parts.
+- Lists only for genuinely parallel items (steps, alternatives, members of a \
+set), each item a short phrase or one sentence; an item that needs explanation \
+is a paragraph. When completeness demands a long enumeration, it is one list \
+under one lead paragraph, not a list under a heading per group.
+- Tables only for comparisons or structured data: two or more comparable items \
+with two or more attributes. Never a table for a single fact list or for \
+narrated prose.
+- Bold only for semantic anchors — a concept, a distinction, a critical term, a \
+decision label: a bold span is at most FIVE words, most paragraphs carry zero \
+or one, and no sentence, clause, bullet lead-in or conclusion is ever bold in \
+full. The eye must learn what matters from the bold alone.
+- `**key:** value` rundowns, ASCII maps and "at least one visible structure" are \
+options, not requirements: use them only when the content is a configuration, a \
+pipeline, or a comparison the reader would otherwise have to reconstruct. A \
+plain factual answer is paragraphs.
+- Citation tags stay at the END of the sentence or paragraph they support — \
+never inside headings or bold anchors."""
+
 #: CORPUS-STYLE-V1 (plan P0.a, measured 2026-09-05): every cinema answer
 #: ended with a "for the exam" note because the study framing lived in the
 #: core prompt. The study layer is now a per-corpus style: `corpora.profile
@@ -1290,7 +1338,7 @@ def _llm_system_prompt(style: str = "neutral") -> str:
     current = datetime.now().astimezone()
     layer = f"\n\n{_STUDY_LAYER}" if style == "study" else ""
     return (
-        f"{_LLM_GROUNDING}{layer}\n\n{POLYMATH_STYLE_PROMPT}\n\n"
+        f"{_LLM_GROUNDING}{layer}\n\n{POLYMATH_STYLE_PROMPT}\n\n{_PRESENTATION_BLOCK}\n\n"
         "Date and source freshness:\n"
         f"- Today's date is {current.strftime('%Y-%m-%d')} "
         f"({current.tzname() or 'local time'}). Interpret relative dates "
@@ -1582,8 +1630,9 @@ def _request_block(query: str, plan, history, coverage: dict | None = None) -> s
 def _plan_meta(plan) -> dict:
     """§3.4: the answer event names the task the synthesizer was given."""
     if plan is None:
-        return {"prompt_contract": _SYNTHESIS_CONTRACT}
-    return {"prompt_contract": _SYNTHESIS_CONTRACT, "task_type": plan.task_type, "evidence_policy": plan.evidence_policy,
+        return {"prompt_contract": _SYNTHESIS_CONTRACT, "presentation_contract": _PRESENTATION_CONTRACT}
+    return {"prompt_contract": _SYNTHESIS_CONTRACT, "presentation_contract": _PRESENTATION_CONTRACT,
+            "task_type": plan.task_type, "evidence_policy": plan.evidence_policy,
             "response_type": plan.response_type, "retrieval_required": plan.retrieval_required,
             "compiler_fallback": bool(plan.fallback)}
 
@@ -1788,29 +1837,72 @@ def _litellm_generate(model: str, query: str, bundle: dict,
                                   reasoning, reasoning_blend, style=style, plan=plan, coverage=coverage)
     yield {"prompt": _prompt_stats(messages, carry_context,
                                    sum(1 for c in (carry_context or [])[:30] if getattr(c, "preview", "")))}
-    try:
-        stream = litellm.completion(
-            model=model, messages=messages, stream=True, timeout=300,
-            **_litellm_credentials(model))
-        for chunk in stream:
-            piece = ""
-            rpiece = ""
-            try:
-                delta = chunk.choices[0].delta
-                piece = delta.content or ""
-                # REASONING-STREAM-V1: providers that expose model
-                # thinking surface it as reasoning_content.
-                rpiece = getattr(delta, "reasoning_content", None) or ""
-            except Exception:
+    # GENERATION-BOUND-V1 (measured 2026-09-06): LiteLLM sends Anthropic-format
+    # providers DEFAULT_MAX_TOKENS = 4096 when no bound is given; deepseek-v4-flash
+    # (Alibaba Model Studio) spends most of that on reasoning, so long artifacts
+    # ended mid-sentence with no error and no receipt (a 66-char "answer" once,
+    # a 5,773-char one cut at "which is what separates" another time; 1 of 10
+    # baseline answers cut). The chat path now sends its own bound, records the
+    # provider's finish_reason, and retries ONCE without the bound when a
+    # provider rejects the number — every branch is receipted, never silent.
+    bound = _chat_max_tokens()
+    kwargs = dict(model=model, messages=messages, stream=True, timeout=300,
+                  **_litellm_credentials(model))
+    finish = None
+    bound_sent = bool(bound)
+    for attempt, with_bound in enumerate([True, False] if bound else [False]):
+        started = False
+        try:
+            stream = litellm.completion(**kwargs, **({"max_tokens": bound} if with_bound else {}))
+            for chunk in stream:
+                started = True
                 piece = ""
-            if rpiece:
-                yield {"reasoning": rpiece}
-            if piece:
-                yield {"token": piece}
-    except Exception as exc:
-        yield {"error": True, "error_code": "litellm_error",
-               "message": f"{type(exc).__name__}: {str(exc)[:280]}"}
-        return
+                rpiece = ""
+                try:
+                    choice = chunk.choices[0]
+                    delta = choice.delta
+                    piece = delta.content or ""
+                    # REASONING-STREAM-V1: providers that expose model
+                    # thinking surface it as reasoning_content.
+                    rpiece = getattr(delta, "reasoning_content", None) or ""
+                    if getattr(choice, "finish_reason", None):
+                        finish = str(choice.finish_reason)
+                except Exception:
+                    piece = ""
+                if rpiece:
+                    yield {"reasoning": rpiece}
+                if piece:
+                    yield {"token": piece}
+            break
+        except Exception as exc:
+            if with_bound and not started and _bound_rejected(exc):
+                bound_sent = False
+                yield {"degraded": {"component": "generation", "state": "bound refused",
+                                    "reason": f"max_tokens_rejected:{bound}",
+                                    "effect": f"the provider refused max_tokens={bound}; generated once more without a bound",
+                                    "detail": f"{type(exc).__name__}: {str(exc)[:160]}"}}
+                continue
+            yield {"error": True, "error_code": "litellm_error",
+                   "message": f"{type(exc).__name__}: {str(exc)[:280]}"}
+            return
+    yield {"finish": {"finish_reason": finish, "max_tokens": bound if bound_sent else None}}
+
+
+def _chat_max_tokens() -> int:
+    """GENERATION-BOUND-V1: the output bound the chat path sends to LiteLLM
+    providers (POLYMATH_CHAT_MAX_TOKENS, default 16000; 0 = send none and
+    accept LiteLLM's provider default, 4096 for Anthropic-format APIs)."""
+    try:
+        return max(0, int(os.environ.get("POLYMATH_CHAT_MAX_TOKENS", "16000")))
+    except ValueError:
+        return 16000
+
+
+def _bound_rejected(exc: BaseException) -> bool:
+    """A provider refusing the number itself (e.g. 'max_tokens: 16000 > 8192
+    maximum') — retry without it; any other error is the provider's answer."""
+    text = str(exc).lower()
+    return "max_tokens" in text or "max_completion_tokens" in text or "max output tokens" in text
 
 
 def _ollama_generate(model: str, query: str, bundle: dict,
@@ -2383,6 +2475,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                              carried=_carry_meta.get("admitted", 0))
                 full: list[str] = []
                 _prompt_meta: dict = {}
+                _gen_meta: dict = {}
                 _gen = (_litellm_generate if llm_backend == "litellm"
                         else _ollama_generate)
                 _style = _style_for(list(getattr(scope, "corpus_ids", None) or []))
@@ -2395,6 +2488,20 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                         coverage=(_aspects if (_flag == "on" and len(_aspects) > 1) else None)):
                     if tok.get("prompt"):
                         _prompt_meta = dict(tok["prompt"])
+                        continue
+                    if tok.get("degraded"):
+                        # GENERATION-BOUND-V1: a provider refused the bound → retried without it (receipted)
+                        retrieval.setdefault("degraded", []).append(dict(tok["degraded"]))
+                        continue
+                    if "finish" in tok:
+                        _gen_meta = dict(tok["finish"] or {})
+                        if _gen_meta.get("finish_reason") == "length":
+                            # the provider stopped at its output bound: the answer is CUT — say so on
+                            # the answer event, the /chat JSON and the query receipt (never silent)
+                            retrieval.setdefault("degraded", []).append(
+                                {"component": "generation", "state": "cut", "reason": "truncated:max_tokens",
+                                 "effect": f"the answer stopped at the provider's output bound ({_gen_meta.get('max_tokens') or 'provider default'} tokens); it is incomplete",
+                                 "detail": f"finish_reason=length at max_tokens={_gen_meta.get('max_tokens')}"})
                         continue
                     if tok.get("error"):
                         yield _sse("error", tok)
@@ -2446,6 +2553,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                             "phase_ms": dict(_phase_ms),
                             **_plan_meta(_plan if _flag == "on" else None),
                             "prompt": _prompt_meta,
+                            "generation": _gen_meta or None,
                             "carry": {k: v for k, v in _carry_meta.items() if k != "scores"},
                         },
                     },
@@ -2462,7 +2570,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                           "funnel": funnel, "used_evidence": used, "legend": retrieval["legend"],
                           "degraded": retrieval.get("degraded"), "plan": (_trace or {}).get("plan"),
                           "chat_plan": _plan_receipt or None, "prompt": _prompt_meta or None, "carry": _carry_meta,
-                          "composition": retrieval.get("composition")})
+                          "generation": _gen_meta or None, "composition": retrieval.get("composition")})
                 return
 
             yield _phase("synthesize", "Validating claims against "
