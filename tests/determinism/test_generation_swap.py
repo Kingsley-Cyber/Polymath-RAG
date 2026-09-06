@@ -60,12 +60,16 @@ def test_every_chunk_reader_applies_the_visibility_guard():
         "hybrid.py": ["_chunk_visible_sql(\"ch\", \"d\")", "hidden_generations(_conn, corpus_id)"],
         "retrieve.py": ["chunk_visible_sql(\"c\", \"d\")"],
         "evidence.py": ["chunk_visible_sql(\"c\", \"d\")"],
-        "chat.py": ["chunk_visible_sql(\"c\", \"d\")"],
     }
     for name, needles in expectations.items():
         src = (api / name).read_text()
         for needle in needles:
             assert needle in src, f"{name} lost the generation guard: {needle}"
+    # CHAT-RUNTIME-V1 (P1.f): /chat no longer reads chunk rows itself — it runs the stream's runtime, whose readers
+    # are the guarded ones above (fast.py / evidence.py / hybrid.py / retrieve.py). A chunk query re-appearing in
+    # chat.py without the guard is the regression this test exists to catch.
+    chat_src = (api / "chat.py").read_text()
+    assert "FROM chunks" not in chat_src and "JOIN chunks" not in chat_src, "chat.py reads chunk rows again — apply chunk_visible_sql"
     # retrieve applies it to BOTH the parent and the children query
     assert (api / "retrieve.py").read_text().count('chunk_visible_sql("c", "d")') == 2
 
