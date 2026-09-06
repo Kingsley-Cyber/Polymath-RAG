@@ -1701,7 +1701,6 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-06-b7-generation-receipt.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-b11-evidence-diet.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-b8-graph-evidence-hygiene.md", "md", None),
-    ("docs/wiki/work-log/2026-09-06-b12-latent-composition.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-style-bold-retire.md", "md", None),
     ("docs/wiki/experiments/chat-parity-p1f-first.json", "json", None),
     ("docs/wiki/work-log/2026-09-06-p1e-mode-recomposition.md", "md", None),
