@@ -57,7 +57,10 @@ def test_chat_defaults_to_hybrid_and_keeps_legacy_explicit():
     src = inspect.getsource(chat.attach_evidence_rows)
     assert 'or "HYBRID"' not in src, "the evidence-rows wrapper must not invent a HYBRID label"
     impl = inspect.getsource(chat._chat_impl)
-    assert impl.count('["mode"] = mode') == 3, "every _chat_impl return stamps the executed mode"
+    # CHAT-RUNTIME-V1 (P1.f): /chat has no dispatch of its own — its one return is the runtime's answer,
+    # and the executed mode is stamped where the /chat shape is built (run_chat), never a requested label
+    assert "run_chat(" in impl and "hybrid_fast_retrieve" not in impl and "graph_retrieve" not in impl
+    assert '["mode"] = retrieval.get("mode")' in inspect.getsource(ui.run_chat), "run_chat stamps the executed mode"
 
 
 def _load_sidecar():

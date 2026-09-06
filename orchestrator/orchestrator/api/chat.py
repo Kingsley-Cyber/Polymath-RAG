@@ -1,51 +1,44 @@
-"""Chat API. POST /chat — R3b grounded answer generation.
+"""Chat API. POST /chat — the one-shot JSON transport of CHAT-RUNTIME-V1.
 
-Flow: user query -> R3a EvidenceBundle -> answer synthesis ->
-claim/evidence validation -> final answer + citations.
+CHAT-RUNTIME-V1 (CHAT-QUERY-COMPILER-PLAN §3.7 / §4 P1.f): /chat has no
+retrieval, compiler or synthesis logic of its own. It maps its request onto
+the runtime's request (`stream_request`, the field table below), runs
+`run_chat` — which drains the SAME generator `/chat/stream` streams — and
+returns the answer frame as one JSON object. MCP `ask` posts here and
+inherits everything: the compiler, the CHAT-RETRIEVAL-V2 compositions,
+aspect coverage, the evidence composer, CARRY-V2 and SYNTHESIS-V2. An
+identical request yields the identical compiled plan, retrieval decision,
+evidence ids, carry admission, executed mode, degraded list and synthesis
+contract on both routes; what differs is transport — one body instead of
+frames, and the receipt's `kind` (`chat`) and `client` (the caller's user
+agent) on the same receipt payload the stream writes.
 
-The synthesizer receives ONLY the assembled bundle (never Postgres /
-Neo4j / Qdrant handles), and the deterministic validator decides which
-claims may render. No factual assertion survives into the answer
-unless supported by one or more bundle items. Assembly failures stay
-loud (502), as in R3a.
+Historical contract kept: without `synthesizer` the deterministic grounded
+synthesizer answers (claims validated against the bundle; answer /
+citations / claims / meta as before — contracts/answer/v2), `meta.mode` is
+the EXECUTED mode (CHAT-MODE-TRUTH-V1), `evidence: true` appends
+RETRIEVE-EVIDENCE-ROWS-V1 rows. Assembly failures stay loud (502).
 """
 from __future__ import annotations
 
 import re
+import time
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Request
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 
-from polymath_shared.answer_synthesis import grounded_answer
 from polymath_shared.db import tx
-from polymath_shared.generation import chunk_visible_sql
-from polymath_shared.evidence_assembly import (
-    AssemblyError,
-    assemble_evidence_bundle,
-)
-from polymath_shared.retrieval import graph_expansion, run_lanes
-
-from .evidence import (
-    _resolve_chunk,
-    _resolve_document,
-    _resolve_entity,
-    _resolve_evidence_rows,
-    _resolve_fact,
-)
-from .retrieve import (
-    _entity_surfaces,
-    _fetch_children_rows,
-    _fetch_parents,
-    _fetch_profiles,
-    _qdrant_search,
-    graph_expand_or_502,
-    resolve_http_scope,
-    single_corpus_or_422,
-)
-
 from polymath_shared.query_receipts import Timer, record_query_receipt
 
+from .ui import CarriedChunk, HistoryTurn, StreamChatRequest, run_chat
+
 router = APIRouter()
+
+#: /chat answers deterministically unless a synthesizer is named: its JSON
+#: contract (claims validated against the bundle) predates the LLM layer, and
+#: MCP `ask` / TRAIL read `claims` and `citations` from it.
+CHAT_DEFAULT_SYNTHESIZER = "deterministic-template-v3"
 
 
 class ChatRequest(BaseModel):
@@ -63,243 +56,62 @@ class ChatRequest(BaseModel):
     # RETRIEVE-EVIDENCE-ROWS-V1 rows (human source, timecodes, attested facts)
     # so an agent gets the FULL answer path AND contract rows in one call.
     evidence: bool = False
+    # CHAT-RUNTIME-V1 (P1.f): the runtime's remaining inputs, mirrored from
+    # StreamChatRequest so an API / MCP caller can drive the same turn the UI
+    # drives. Every default keeps /chat's historical behaviour.
+    synthesizer: str | None = None        # None -> CHAT_DEFAULT_SYNTHESIZER (the stream's None is the UI LLM)
+    history: list[HistoryTurn] = []
+    carry_context: list[CarriedChunk] = []
+    compiler: str | None = None           # off | shadow | on; None -> POLYMATH_CHAT_COMPILER
+    reasoning: str | None = None
+    reasoning_blend: list[str] = []
 
 
-async def _chat_impl(req: ChatRequest) -> dict:
-    query = req.message.strip()
-    if not query:
-        raise HTTPException(status_code=422, detail="message is required")
+def stream_request(req: ChatRequest) -> StreamChatRequest:
+    """CHAT-REQUEST-MAP-V1: ChatRequest → StreamChatRequest, field by field.
 
-    with tx() as conn:
-        scope = resolve_http_scope(conn, req)
-
-    # R1C: FAST mode consumes the SAME qualified Pass-1 result as
-    # /retrieve and /evidence (one control-plane path). FAST excludes
-    # graph expansion by contract: the bundle's graph lane stays empty.
-    from polymath_shared.retrieval_modes import MODE_FAST, MODE_GRAPH, MODE_HYBRID, validate_mode
-
-    mode = resolve_chat_mode(req.mode)
-    if mode == MODE_GRAPH:
-        # GRAPH: one GRAPH retrieval result feeds the existing bundle
-        # (graph lane = qualified facts; text lane = HYBRID evidence).
-        # No synthesis change: EvidenceBundle v2 semantics as-is.
-        from orchestrator.api.graph import graph_retrieve
-
-        g = graph_retrieve(query, single_corpus_or_422(scope, mode),
-                           latent=getattr(req, 'latent', None),
-                           utility=getattr(req, 'utility', None))
-        graph_facts = [
-            {"fact_id": f["fact_id"], "predicate": f["predicate"],
-             "subject": f["subject"], "object": f["object"]}
-            for f in g["graph_relationships"]
-        ]
-        child_evidence = [
-            {"chunk_id": c["chunk_id"], "doc_id": d["doc_id"]}
-            for d in g["documents"]
-            for s in d["sections"]
-            for c in s["evidence"]
-        ]
-        evidence_order = [c["chunk_id"] for c in child_evidence]
-        document_summaries = [
-            {"doc_id": d["doc_id"], "summary": d["document_summary"] or ""}
-            for d in g["documents"] if d["document_summary"]
-        ]
-        section_summaries = [
-            {"chunk_id": s["parent_id"], "doc_id": d["doc_id"],
-             "summary": s["summary"] or ""}
-            for d in g["documents"] for s in d["sections"]
-        ]
-        try:
-            stale: list[dict] = []
-            bundle = assemble_evidence_bundle(
-                query,
-                graph_facts,
-                child_evidence,
-                evidence_order=evidence_order,
-                resolve_fact=lambda fid: _resolve_fact(fid),
-                resolve_evidence=lambda fid: _resolve_evidence_rows(fid),
-                resolve_entity=lambda eid: _resolve_entity(eid),
-                resolve_document=lambda did: _resolve_document(did),
-                resolve_chunk=lambda cid: _resolve_chunk(cid),
-                unresolved=stale,
-                document_summaries=document_summaries,
-                section_summaries=section_summaries,
-            )
-        except AssemblyError as exc:
-            raise HTTPException(status_code=502, detail={
-                "error_code": type(exc).__name__, "message": str(exc),
-            }) from exc
-        out = grounded_answer(bundle, query)
-        out.setdefault("meta", {})["mode"] = mode
-        return out
-    if mode in (MODE_FAST, MODE_HYBRID):
-        from orchestrator.api.chat_retrieval import chat_retrieval_flag, chat_retrieve_mode
-        _latent = getattr(req, 'latent', None)
-        _utility = getattr(req, 'utility', None)
-        # CHAT-RETRIEVAL-V2 (P1.a) / MODE-COMPOSITION-V1 (P1.e): /chat uses the same compositions as
-        # /chat/stream — FAST = VECTOR (lanes A + B), HYBRID = A + B + C — through the one owner;
-        # latent / utility requests, and the multi-corpus FAST fan-out, stay on the v1 engines.
-        _v2 = chat_retrieval_flag(getattr(req, "retrieval", None)) in ("v2", "v2-single") and not _latent and not _utility
-        if mode == MODE_FAST:
-            if _v2 and len(list(scope.corpus_ids)) == 1:
-                fast = chat_retrieve_mode("VECTOR", query, list(scope.corpus_ids)[0])
-            else:
-                from orchestrator.api.fast import fast_retrieve
-
-                fast = fast_retrieve(query, list(scope.corpus_ids))  # F8: multi-corpus
-        else:
-            if _v2:
-                fast = chat_retrieve_mode("HYBRID", query, single_corpus_or_422(scope, mode))
-            else:
-                from orchestrator.api.hybrid import hybrid_fast_retrieve
-
-                fast = hybrid_fast_retrieve(query, single_corpus_or_422(scope, mode),
-                                            latent=_latent, utility=_utility)
-        child_evidence = [
-            {"chunk_id": c["chunk_id"], "doc_id": c["doc_id"], "parent_id": c["parent_id"]}
-            for c in fast["evidence"]
-        ]
-        evidence_order = [c["chunk_id"] for c in fast["evidence"]]
-        document_summaries = [
-            {"doc_id": d["doc_id"], "summary": (d.get("document_summary") or {}).get("text", "")}
-            for d in fast["selected_documents"] if d.get("document_summary")
-        ]
-        parent_ids = [s["parent_id"] for s in fast["selected_sections"]]
-        with tx() as conn:
-            rows = conn.execute(
-                "SELECT c.chunk_id, c.doc_id, c.summary FROM chunks c JOIN documents d ON d.doc_id = c.doc_id "
-                "WHERE c.chunk_id = ANY(%s) AND " + chunk_visible_sql("c", "d"),
-                (parent_ids,),
-            ).fetchall()
-            section_summaries = [
-                {"chunk_id": r[0], "doc_id": r[1], "summary": r[2] or ""} for r in rows
-            ]
-        try:
-            stale: list[dict] = []
-            bundle = assemble_evidence_bundle(
-                query,
-                [],
-                child_evidence,
-                evidence_order=evidence_order,
-                resolve_fact=lambda fid: _resolve_fact(fid),
-                resolve_evidence=lambda fid: _resolve_evidence_rows(fid),
-                resolve_entity=lambda eid: _resolve_entity(eid),
-                resolve_document=lambda did: _resolve_document(did),
-                resolve_chunk=lambda cid: _resolve_chunk(cid),
-                unresolved=stale,
-                document_summaries=document_summaries,
-                section_summaries=section_summaries,
-            )
-        except AssemblyError as exc:
-            raise HTTPException(status_code=502, detail={
-                "error_code": type(exc).__name__, "message": str(exc),
-            }) from exc
-        out = grounded_answer(bundle, query)
-        # RETRIEVAL-FUNNEL-V1 (plan §3.9): where each candidate died, on the
-        # same receipt the streaming path writes.
-        try:
-            from polymath_shared.funnel import funnel_from_trace
-            cited: list[str] = []
-            for c in (out.get("citations") or []):
-                for loc in (c.get("locators") or []):
-                    m = _LOC_CHUNK.match(str(loc))
-                    if m and m.group(1) not in cited:
-                        cited.append(m.group(1))
-            out.setdefault("meta", {})["funnel"] = funnel_from_trace(
-                fast.get("trace") or {}, selected=evidence_order, cited=cited,
-                plan_version=(fast.get("trace") or {}).get("plan"))
-            out["meta"]["used_evidence"] = cited
-        except Exception:  # noqa: BLE001 — diagnostics never break an answer
-            pass
-        out.setdefault("meta", {})["mode"] = mode
-        # which composition / engine served the text lane (VECTOR for FAST on v2; pass1 / hybrid-v1 otherwise)
-        out["meta"]["retrieval_mode"] = (fast.get("meta") or {}).get("mode")
-        out["meta"]["retrieval_engine"] = (fast.get("meta") or {}).get("plan_version")
-        return out
-
-    corpus_ids = list(scope.corpus_ids)
-    with tx() as conn:
-        profiles = _fetch_profiles(conn, corpus_ids)
-        children_rows = _fetch_children_rows(conn, corpus_ids)
-        children = [r for r in children_rows if r["tier"] == "child"]
-        parent_rows = [r for r in children_rows if r["tier"] == "parent"]
-        parents = [
-            {"chunk_id": r["chunk_id"], "doc_id": r["doc_id"], "summary": r["summary"]}
-            for r in parent_rows
-        ]
-
-    result = run_lanes(
-        query,
-        fetch_profiles=lambda: profiles,
-        fetch_parents=lambda: parents,
-        fetch_children=lambda limit: children[:limit],
-        child_search=lambda limit: _qdrant_search(query, corpus_ids, limit),
+        message            → message
+        corpus_id, corpus_ids, workspace, all_authorized
+                           → the same four (QUERY-SCOPE-V1, resolved by the runtime)
+        mode               → mode; None/"" → resolve_chat_mode(None) = HYBRID
+                             (CHAT-DEFAULT-HYBRID-V1). Explicit modes pass
+                             through: the runtime is the one validator
+                             (FAST/VECTOR, HYBRID, GRAPH, WILDCARD, ASK → 422
+                             `unknown_mode` otherwise; LEGACY has no runtime path)
+        latent, utility    → latent, utility (v1 plan knobs; `utility` was added
+                             to StreamChatRequest for this mapping)
+        retrieval          → retrieval (v1 | v2 | v2-single)
+        synthesizer        → synthesizer; None → deterministic-template-v3
+        history            → history (HistoryTurn)
+        carry_context      → carry_context (CarriedChunk, CARRY-V2)
+        compiler           → compiler (off | shadow | on)
+        reasoning, reasoning_blend → the same
+        evidence           → NOT a runtime input: a /chat response add-on applied
+                             after the turn (`attach_evidence_rows`, built from
+                             the answer's own citations — never a second retrieval)
+    """
+    return StreamChatRequest(
+        message=req.message,
+        corpus_id=req.corpus_id, corpus_ids=req.corpus_ids,
+        workspace=req.workspace, all_authorized=req.all_authorized,
+        mode=(req.mode or resolve_chat_mode(None)),
+        latent=req.latent, utility=req.utility, retrieval=req.retrieval,
+        synthesizer=(req.synthesizer or CHAT_DEFAULT_SYNTHESIZER),
+        history=list(req.history or []), carry_context=list(req.carry_context or []),
+        compiler=req.compiler, reasoning=req.reasoning,
+        reasoning_blend=list(req.reasoning_blend or []),
     )
 
-    graph_facts = graph_expansion(
-        _entity_surfaces(query, result),
-        expand=lambda surfaces: graph_expand_or_502(
-            surfaces, corpus_ids,
-            [c["chunk_id"] for c in result.selected_children[:10]],
-        ),
-    )
 
-    # G3 candidate: rerank the fused candidates feeding the bundle.
-    # NEVER-ERROR-ON-A-COLD-MODEL: an unreachable reranker degrades to
-    # fusion order (same candidate set, same recall) instead of
-    # failing an answer the user is waiting on.
-    from polymath_shared.rerank import RerankUnavailable, apply_rerank
-
-    from orchestrator.api.fast import _RERANK_DEGRADED
-
-    try:
-        _reranked_documents, selected_children = apply_rerank(
-            query, result.selected_documents, result.selected_children,
-        )
-    except RerankUnavailable as exc:
-        _RERANK_DEGRADED.set(str(exc)[:300])
-        selected_children = result.selected_children
-
-    try:
-        _evidence_order = None
-        if selected_children and all("rerank_score" in c for c in selected_children):
-            _evidence_order = [c["chunk_id"] for c in selected_children]
-        stale: list[dict] = []
-        bundle = assemble_evidence_bundle(
-            query,
-            graph_facts,
-            selected_children,
-            evidence_order=_evidence_order,
-            resolve_fact=lambda fid: _resolve_fact(fid),
-            resolve_evidence=lambda fid: _resolve_evidence_rows(fid),
-            resolve_entity=lambda eid: _resolve_entity(eid),
-            resolve_document=lambda did: _resolve_document(did),
-            resolve_chunk=lambda cid: _resolve_chunk(cid),
-            unresolved=stale,
-            document_summaries=[
-                {"doc_id": p["doc_id"],
-                 "summary": (p.get("retrieval_profile") or {}).get("semantic_summary") or ""}
-                for p in profiles
-            ],
-            section_summaries=[
-                {"chunk_id": p["chunk_id"], "doc_id": p["doc_id"],
-                 "summary": p.get("summary") or ""}
-                for p in parents
-            ],
-        )
-    except AssemblyError as exc:
-        raise HTTPException(
-            status_code=502,
-            detail={
-                "error_code": type(exc).__name__,
-                "message": str(exc),
-            },
-        ) from exc
-
-    out = grounded_answer(bundle, query)
-    out.setdefault("meta", {})["mode"] = mode          # LEGACY, and it says so
+def _chat_impl(req: ChatRequest, *, receipt=None) -> dict:
+    """The /chat body: ONE runtime turn (`run_chat`, the same frames the
+    stream emits, drained), then the /chat-only evidence-rows add-on.
+    Synchronous — it runs in a worker thread, exactly like the stream's
+    generator under Starlette's iterate_in_threadpool."""
+    out = run_chat(stream_request(req), route="chat", receipt=receipt)
+    if req.evidence:
+        attach_evidence_rows(out, req)
     return out
-
 
 
 _LOC_CHUNK = re.compile(r"^chunk:([A-Za-z0-9_]+)")
@@ -309,8 +121,10 @@ def resolve_chat_mode(requested: str | None) -> str:
     """CHAT-DEFAULT-HYBRID-V1 (plan P0.a, measured 2026-09-05): `/chat` with
     no mode ran the frozen LEGACY regression path (12,732 claims, a 437 KB
     triple dump, 30–50 s) and stamped it HYBRID. The default for chat is
-    HYBRID; LEGACY stays available only when named. `/retrieve` keeps
-    retrieval_modes.DEFAULT_MODE for its own frozen evaluations."""
+    HYBRID. `/retrieve` keeps retrieval_modes.DEFAULT_MODE for its own frozen
+    evaluations. CHAT-RUNTIME-V1 (P1.f): `stream_request` takes the DEFAULT
+    from here; an explicit mode is validated by the runtime itself (the one
+    authority for both routes), where LEGACY no longer has a path."""
     from polymath_shared.retrieval_modes import MODE_HYBRID, validate_mode
     return validate_mode(requested or MODE_HYBRID)
 
@@ -347,7 +161,7 @@ def attach_evidence_rows(out: dict, req: "ChatRequest") -> dict:
         out["evidence_rows_error"] = f"{type(exc).__name__}: {exc}"[:200]
     meta = out.setdefault("meta", {})
     # CHAT-MODE-TRUTH-V1 (plan P0.a): the executed mode is stamped by
-    # _chat_impl; never label a LEGACY answer as HYBRID by default.
+    # run_chat; never label a LEGACY answer as HYBRID by default.
     meta.setdefault("mode", "UNKNOWN")
     meta["requested_mode"] = req.mode
     return out
@@ -355,26 +169,31 @@ def attach_evidence_rows(out: dict, req: "ChatRequest") -> dict:
 
 @router.post("/chat")
 async def chat(req: ChatRequest, request: Request) -> dict:
-    """QUERY-RECEIPTS-V1 wrapper: serve exactly as before, then record one
-    durable receipt (latency, scope, mode, verdict, citations, error) —
-    best effort, off the critical path (see polymath_shared.query_receipts)."""
-    question = req.message
-    scope_corpora, scope_kind = (([req.corpus_id] if getattr(req, "corpus_id", None) else list(getattr(req, "corpus_ids", None) or [])), ("corpus" if getattr(req, "corpus_id", None) else "corpora" if getattr(req, "corpus_ids", None) else "workspace" if getattr(req, "workspace", None) else "all_authorized" if getattr(req, "all_authorized", False) else None))
+    """QUERY-RECEIPTS-V1 on the JSON transport. The runtime writes the turn's
+    receipt through `_sink` — kind `chat`, the caller's user agent: the
+    transport's tags on the same payload the stream receipts (`route: chat`
+    in its meta). A request the runtime rejected before it ran (empty
+    message, unknown mode or synthesizer) never reached the runtime's
+    writer and is receipted here, so every /chat call leaves exactly one row
+    — best effort, off the critical path (polymath_shared.query_receipts)."""
     client = request.headers.get("user-agent", "")
+    receipted: list[str] = []
+
+    def _sink(payload: dict) -> None:
+        receipted.append(record_query_receipt(tx, kind="chat", client=client, **payload) or "")
+
     with Timer() as t:
         try:
-            out = await _chat_impl(req)
-            if getattr(req, "evidence", False):
-                attach_evidence_rows(out, req)
+            return await run_in_threadpool(_chat_impl, req, receipt=_sink)
         except Exception as exc:  # noqa: BLE001 — record, then re-raise unchanged
-            detail = getattr(exc, "detail", None)
-            record_query_receipt(tx, kind="chat", question=question, req=req,
-                                 scope_corpora=scope_corpora, scope_kind=scope_kind,
-                                 wall_ms=(__import__("time").perf_counter() - t.t0) * 1000.0,
-                                 error=f"{type(exc).__name__}: {detail if detail is not None else exc}",
-                                 client=client)
+            if not receipted:
+                detail = getattr(exc, "detail", None)
+                scope_corpora = [req.corpus_id] if req.corpus_id else list(req.corpus_ids or [])
+                scope_kind = ("corpus" if req.corpus_id else "corpora" if req.corpus_ids
+                              else "workspace" if req.workspace else "all_authorized" if req.all_authorized else None)
+                record_query_receipt(tx, kind="chat", question=req.message, req=req,
+                                     scope_corpora=scope_corpora, scope_kind=scope_kind,
+                                     wall_ms=(time.perf_counter() - t.t0) * 1000.0,
+                                     error=f"{type(exc).__name__}: {detail if detail is not None else exc}",
+                                     client=client)
             raise
-    record_query_receipt(tx, kind="chat", question=question, req=req,
-                         scope_corpora=scope_corpora, scope_kind=scope_kind,
-                         wall_ms=t.ms, out=out, client=client)
-    return out

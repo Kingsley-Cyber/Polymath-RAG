@@ -1719,6 +1719,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_candidate_engine.py", "py", None),
     ("tests/determinism/test_chat_retrieval_v2.py", "py", None),
     ("tests/determinism/test_chat_modes.py", "py", None),
+    ("tests/determinism/test_chat_runtime.py", "py", None),
     ("tests/determinism/test_metal_lease.py", "py", None),
     ("tests/determinism/test_hybrid_sparse_lane.py", "py", None),
     ("eval/fixtures/chat_lexical_L.json", "json", None),

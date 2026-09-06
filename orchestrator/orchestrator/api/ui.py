@@ -12,17 +12,23 @@ needs on top of the existing query product.
                            registry; deterministic grounded synthesis is
                            the only production entry today — the shape
                            is a list so future synthesizers slot in)
-  POST /chat/stream        SSE: the SAME retrieval/synthesis machinery
-                           as /chat, with phase events emitted between
-                           the real pipeline steps (scope → retrieve →
-                           graph → assemble → synthesize → answer) so
-                           the UI can show what the engine is actually
-                           doing, plus the retrieved-chunk inventory in
-                           the final event.
+  POST /chat/stream        SSE transport of CHAT-RUNTIME-V1 (`chat_events`
+                           below): the ONE chat runtime — scope → compiler
+                           → retrieval composition → graph / wildcard →
+                           assemble → carry → synthesize → answer — as
+                           phase / token / answer frames so the UI can
+                           show what the engine is actually doing, plus
+                           the retrieved-chunk inventory in the final
+                           event.
 
-No new semantics anywhere: every phase event wraps an existing call;
-the final answer is byte-identical to what /chat (or /ask) returns.
-Scope stays fail-closed through the same shared resolver.
+CHAT-RUNTIME-V1 (CHAT-QUERY-COMPILER-PLAN §3.7 / §4 P1.f): `chat_events(req)`
+is the single authority for a chat turn. `/chat/stream` streams its frames;
+`/chat` (`run_chat`, and therefore MCP `ask`) drains them and returns the
+answer frame as one JSON object. The same request yields the same compiled
+plan, retrieval decision, evidence ids, carry admission, executed mode,
+degraded list and synthesis contract on every route; only the transport
+differs (frames vs. one body; the receipt's `kind` / `client`). Scope stays
+fail-closed through the same shared resolver.
 """
 from __future__ import annotations
 
@@ -1060,6 +1066,10 @@ class StreamChatRequest(BaseModel):
     all_authorized: bool = False
     mode: Optional[str] = "HYBRID"        # VECTOR|HYBRID|GRAPH|ASK
     latent: Optional[bool] = None         # LATENT-TRANSFER D10 flag
+    # EVIDENCE-UTILITY-V1 plan knob (v1 engines, exactly like `latent`). CHAT-RUNTIME-V1 (P1.f):
+    # mirrored from /chat's ChatRequest so the one runtime carries every /chat field; None inherits
+    # the settings default, a set value keeps the turn on the v1 engines as /chat always did.
+    utility: Optional[bool] = None
     synthesizer: Optional[str] = None  # None -> _PREFERRED_DEFAULT
     # v3.3 reasoning layer (orchestrator.api.reasoning): a mode key
     # from REASONING_TEMPLATES, plus an optional power-user blend.
@@ -1362,20 +1372,43 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
         return fallback_plan(message, reason=f"compiler_unavailable:{type(exc).__name__}")
 
 
-def _record_stream_receipt(req, *, question: str, scope, wall_ms: float, ui_mode: str,
-                           answer: str | None, meta: dict, error: str | None = None) -> None:
-    """QUERY-RECEIPTS on the streaming path (plan §3.6). Best effort, never
-    on the critical path; the UI's turns were previously invisible."""
-    try:
-        from polymath_shared.query_receipts import record_query_receipt
-        corpora = list(getattr(scope, "corpus_ids", None) or [])
-        kind_scope = getattr(scope, "mode", None)
-        out = None if error else {"answer": answer or "", "meta": dict(meta or {}, mode=ui_mode)}
-        record_query_receipt(tx, kind="chat_stream", question=question, req=req,
-                             scope_corpora=corpora, scope_kind=(str(kind_scope).lower() if kind_scope else None),
-                             wall_ms=wall_ms, out=out, error=error, client="ui-stream")
-    except Exception:  # noqa: BLE001 — receipts never break a stream
-        pass
+RUNTIME_CONTRACT = "chat-runtime-v1"          # CHAT-RUNTIME-V1 (plan §3.7 / §4 P1.f)
+
+
+def _receipt_payload(req, *, question: str, scope, wall_ms: float, ui_mode: str, route: str,
+                     answer: str | None, meta: dict, error: str | None = None,
+                     result: dict | None = None) -> dict:
+    """QUERY-RECEIPTS on the chat runtime (plan §3.6): ONE payload per turn,
+    built by the runtime for every transport — `record_query_receipt`'s
+    keyword arguments minus the transport's own tags (`kind`, `client`).
+    `meta.route` ("chat" | "chat/stream") is the transport tag the plan asks
+    for (§4 P1.f); citations / claims ride along when the synthesizer
+    produced them (deterministic answers), so /chat's receipt keeps its
+    citation count. Pure."""
+    corpora = list(getattr(scope, "corpus_ids", None) or [])
+    kind_scope = getattr(scope, "mode", None)
+    out = None
+    if not error:
+        out = {"answer": answer or "", "meta": dict(meta or {}, mode=ui_mode, route=route)}
+        for key in ("citations", "claims"):
+            if isinstance(result, dict) and isinstance(result.get(key), list):
+                out[key] = result[key]
+    return {"question": question, "req": req, "scope_corpora": corpora,
+            "scope_kind": (str(kind_scope).lower() if kind_scope else None),
+            "wall_ms": wall_ms, "out": out, "error": error}
+
+
+def _default_receipt_sink(route: str):
+    """The receipt writer used when the transport passes none: the stream's
+    tags for the stream (kind `chat_stream`, client `ui-stream` — the UI's
+    turns were previously invisible), the JSON transport's kind (`chat`, no
+    client) for a bare `run_chat`. Best effort, never on the critical path."""
+    from polymath_shared.query_receipts import record_query_receipt
+    kind, client = ("chat_stream", "ui-stream") if route == "chat/stream" else ("chat", None)
+
+    def _sink(payload: dict) -> None:
+        record_query_receipt(tx, kind=kind, client=client, **payload)
+    return _sink
 
 
 #: §9.3 default: the last artifact VERBATIM (the history window truncates
@@ -1804,8 +1837,28 @@ def _phase(stage: str, label: str, **detail) -> str:
                           "t": round(time.time(), 3), **detail})
 
 
-@router.post("/chat/stream")
-async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
+def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=None):
+    """CHAT-RUNTIME-V1 (plan §3.7 / §4 P1.f): the ONE chat runtime — scope,
+    compiler (off | shadow | on), retrieval composition (MODE-COMPOSITION-V1
+    on CHAT-RETRIEVAL-V2; the v1 engines behind `retrieval: v1` / `latent` /
+    `utility`), evidence bundle, CARRY-V2 admission, SYNTHESIS-V2 — as a
+    generator of SSE frames (`phase`, `token`, `reasoning`, `answer`, `done`,
+    `error`). `/chat/stream` streams the frames; `/chat` (and so MCP `ask`)
+    drains them through `run_chat`. Same request ⇒ same plan, same evidence
+    ids, same synthesis contract on every route.
+
+    Request validation (message, mode, synthesizer) happens here, EAGERLY —
+    typed HTTPExceptions before the first frame — so both transports reject
+    the same requests with the same status (a streaming response cannot
+    change its status once the first frame is out). The returned object is
+    the frame generator.
+
+    `route` ("chat/stream" | "chat") and `receipt` are transport tags only.
+    The receipt payload is built once, in the runtime, for every turn that
+    ran (`_receipt_payload`, `meta.route` = the route); `receipt(payload)` —
+    default `_default_receipt_sink(route)` — adds the transport's `kind` and
+    `client`. Neither changes the plan, the retrieval decision, the evidence
+    ids or the synthesis."""
     query = (req.message or "").strip()
     if not query:
         raise HTTPException(422, "message is required")
@@ -1825,6 +1878,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
     if synth != "deterministic-template-v3" and llm_model is None:
         raise HTTPException(422, {"error_code": "unknown_synthesizer",
                                   "message": f"{req.synthesizer!r}"})
+    sink = receipt or _default_receipt_sink(route)
 
     def generate():
         from polymath_shared.answer_synthesis import grounded_answer
@@ -1850,6 +1904,13 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
 
         def _mark(name: str) -> None:
             _phase_ms[name] = round((time.perf_counter() - t0) * 1000, 1)
+
+        def _receipt(**kw) -> None:
+            # the turn's one receipt, through the transport's writer; never breaks a turn
+            try:
+                sink(_receipt_payload(req, question=query, scope=scope, route=route, **kw))
+            except Exception:  # noqa: BLE001
+                pass
         try:
             yield _phase("scope", "Resolving query scope…")
             with tx() as conn:
@@ -1930,10 +1991,12 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
 
             corpus_id = scope.corpus_ids[0]
             if len(scope.corpus_ids) != 1:
+                _msg = f"{ui_mode} retrieves over exactly one corpus; scope has {len(scope.corpus_ids)}"
                 yield _sse("error", {
                     "error_code": "mode_requires_single_corpus",
-                    "message": f"{ui_mode} retrieves over exactly one "
-                               f"corpus; scope has {len(scope.corpus_ids)}"})
+                    "message": _msg})
+                _receipt(wall_ms=(time.perf_counter() - t0) * 1000, ui_mode=ui_mode, answer=None, meta={},
+                         error=f"mode_requires_single_corpus: {_msg[:200]}")
                 return
 
             graph_facts: list = []
@@ -1947,7 +2010,8 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
             # chat_retrieve_mode; the v1 engines stay behind `retrieval: v1` or `latent` (rollback boundary).
             from orchestrator.api.chat_retrieval import chat_retrieval_flag
             _rflag = chat_retrieval_flag(getattr(req, "retrieval", None))
-            _v2_mode = _rflag in ("v2", "v2-single") and not req.latent
+            # `latent` / `utility` are v1 plan knobs: either keeps the turn on the v1 engines (as /chat always did)
+            _v2_mode = _rflag in ("v2", "v2-single") and not req.latent and not req.utility
             # GRAPH bounds follow the compiled plan's relational verdict (plan §3.15 / §5 #14): `graph_useful: false`
             # keeps the expansion definitional (≤ 2 seeds); no compiler, or a fallback plan, keeps the default breadth.
             _graph_useful = True if (_flag != "on" or _plan is None or getattr(_plan, "fallback", False)) \
@@ -1969,7 +2033,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                 yield _phase("retrieve", f"{ui_mode} retrieval over "
                                          f"{corpus_id}…", mode=ui_mode, query=_retrieval_text[:160])
                 from orchestrator.api.graph import graph_retrieve
-                g = graph_retrieve(_retrieval_text, corpus_id, latent=req.latent)
+                g = graph_retrieve(_retrieval_text, corpus_id, latent=req.latent, utility=req.utility)
                 # the answer event reads the retrieval result through `fast` on every path
                 fast = {"meta": g.get("meta") or {}, "trace": g.get("trace") or {}, "evidence": [],
                         "selected_documents": [], "selected_sections": []}
@@ -2047,7 +2111,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                 else:
                     from orchestrator.api.hybrid import hybrid_fast_retrieve
                     fast = hybrid_fast_retrieve(_retrieval_text, corpus_id,
-                                                latent=req.latent)
+                                                latent=req.latent, utility=req.utility)
                 latent_meta = (fast.get("meta") or {}).get("latent")
                 _trace = fast.get("trace") or {}
                 evidence_rows = [
@@ -2118,6 +2182,8 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
             except AssemblyError as exc:
                 yield _sse("error", {"error_code": type(exc).__name__,
                                      "message": str(exc)[:300]})
+                _receipt(wall_ms=(time.perf_counter() - t0) * 1000, ui_mode=ui_mode, answer=None, meta={},
+                         error=f"{type(exc).__name__}: {str(exc)[:200]}")
                 return
             _mark("assemble")
             # CARRY-V2: admitted carried evidence joins the bundle (tags, legend, used_evidence)
@@ -2228,6 +2294,8 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                         continue
                     if tok.get("error"):
                         yield _sse("error", tok)
+                        _receipt(wall_ms=(time.perf_counter() - t0) * 1000, ui_mode=ui_mode, answer=None, meta={},
+                                 error=f"{tok.get('error_code') or 'generation_error'}: {str(tok.get('message') or '')[:200]}")
                         return
                     rpiece = tok.get("reasoning", "")
                     if rpiece:
@@ -2282,8 +2350,8 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                         (time.perf_counter() - t0) * 1000, 1),
                 })
                 yield _sse("done", {})
-                _record_stream_receipt(
-                    req, question=query, scope=scope, wall_ms=_phase_ms["total"], ui_mode=retrieval.get("mode") or ui_mode,
+                _receipt(
+                    wall_ms=_phase_ms["total"], ui_mode=retrieval.get("mode") or ui_mode,
                     answer=answer_text,
                     meta={"verdict": "generated", "synthesis_version": f"{llm_backend}:{llm_model}",
                           "model": llm_model, "latent": req.latent, "phase_ms": dict(_phase_ms),
@@ -2330,9 +2398,9 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
                 "latency_ms": _phase_ms["total"],
             })
             yield _sse("done", {})
-            _record_stream_receipt(
-                req, question=query, scope=scope, wall_ms=_phase_ms["total"], ui_mode=retrieval.get("mode") or ui_mode,
-                answer=answer.get("answer"),
+            _receipt(
+                wall_ms=_phase_ms["total"], ui_mode=retrieval.get("mode") or ui_mode,
+                answer=answer.get("answer"), result=answer,
                 meta={"verdict": (answer.get("meta") or {}).get("verdict"),
                       "synthesis_version": (answer.get("meta") or {}).get("synthesis_version"),
                       "latent": req.latent, "phase_ms": dict(_phase_ms), "funnel": funnel,
@@ -2343,16 +2411,101 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
             detail = exc.detail if isinstance(exc.detail, dict) else {
                 "message": str(exc.detail)}
             yield _sse("error", {"status": exc.status_code, **detail})
-            _record_stream_receipt(req, question=query, scope=scope,
-                                   wall_ms=(time.perf_counter() - t0) * 1000, ui_mode=ui_mode,
-                                   answer=None, meta={}, error=f"HTTP {exc.status_code}: {str(detail)[:200]}")
+            _receipt(wall_ms=(time.perf_counter() - t0) * 1000, ui_mode=ui_mode,
+                     answer=None, meta={}, error=f"HTTP {exc.status_code}: {str(detail)[:200]}")
         except Exception as exc:  # loud, typed-ish, never silent
             yield _sse("error", {"error_code": type(exc).__name__,
                                  "message": str(exc)[:300]})
-            _record_stream_receipt(req, question=query, scope=scope,
-                                   wall_ms=(time.perf_counter() - t0) * 1000, ui_mode=ui_mode,
-                                   answer=None, meta={}, error=f"{type(exc).__name__}: {str(exc)[:200]}")
+            _receipt(wall_ms=(time.perf_counter() - t0) * 1000, ui_mode=ui_mode,
+                     answer=None, meta={}, error=f"{type(exc).__name__}: {str(exc)[:200]}")
 
-    return StreamingResponse(generate(), media_type="text/event-stream",
+    return generate()
+
+
+@router.post("/chat/stream")
+async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
+    """The SSE transport of the chat runtime (CHAT-RUNTIME-V1): the frames of
+    `chat_events`, unchanged, with the stream's own receipt writer."""
+    return StreamingResponse(chat_events(req), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache",
                                       "X-Accel-Buffering": "no"})
+
+
+#: HTTP status for the runtime's in-band error frames (frames without a `status`
+#: — i.e. not an HTTPException inside the runtime): the typed codes the runtime
+#: emits itself; an assembly failure is a 502 (as /chat always answered one).
+_ERROR_STATUS = {"mode_requires_single_corpus": 422,
+                 "ollama_unavailable": 502, "ollama_error": 502, "litellm_error": 502}
+
+
+def _error_status(data: dict) -> int:
+    if data.get("status"):
+        return int(data["status"])
+    code = str(data.get("error_code") or "")
+    if code in _ERROR_STATUS:
+        return _ERROR_STATUS[code]
+    from polymath_shared.evidence_assembly import AssemblyError
+    if code in {c.__name__ for c in (AssemblyError, *AssemblyError.__subclasses__())}:
+        return 502
+    return 500
+
+
+def run_chat(req: StreamChatRequest, *, route: str = "chat", receipt=None) -> dict:
+    """CHAT-RUNTIME-V1: drain the runtime's frames and return the answer as
+    ONE JSON object — the /chat shape. The answer event's `result` (answer /
+    citations / claims / meta for the deterministic synthesizer; answer /
+    model / meta for an LLM) merged with the SAME `retrieval` block the
+    stream's answer event carries (mode, engine, evidence inventory, legend,
+    used_evidence, funnel, carry, chat_plan, aspects, composition, degraded
+    …), `phases` (the phase frames, in order), `kind`, `latency_ms` and
+    `runtime: "chat-runtime-v1"`. `meta.mode` is the EXECUTED mode
+    (CHAT-MODE-TRUTH-V1, from the retrieval block: VECTOR | HYBRID | GRAPH |
+    WILDCARD | ASK) and `meta` mirrors funnel / used_evidence / retrieval_mode
+    / retrieval_engine for /chat's historical readers. Token and reasoning
+    frames are transport-only and dropped.
+
+    The generator is drained to its end BEFORE an error frame is raised, so
+    the runtime's receipt for the turn is written exactly as on the stream;
+    the error then surfaces as HTTPException(status, detail) with the frame's
+    status (`_error_status`). Eager request validation raises from
+    `chat_events` itself — the same HTTPException the stream route raises."""
+    phases: list[dict] = []
+    answer: dict | None = None
+    error: dict | None = None
+    cur: str | None = None
+    for frame in chat_events(req, route=route, receipt=receipt):
+        for line in str(frame).split("\n"):
+            if line.startswith("event:"):
+                cur = line[6:].strip()
+            elif line.startswith("data:"):
+                try:
+                    data = json.loads(line[5:].strip())
+                except Exception:  # noqa: BLE001 — every frame is JSON; never break the drain
+                    continue
+                if cur == "phase":
+                    phases.append(data)
+                elif cur == "answer":
+                    answer = data
+                elif cur == "error" and error is None:
+                    error = data
+    if error is not None:
+        raise HTTPException(status_code=_error_status(error),
+                            detail={k: v for k, v in error.items() if k != "status"} or {"message": "chat runtime error"})
+    if answer is None:
+        raise HTTPException(status_code=502, detail={"error_code": "no_answer",
+                                                     "message": "the chat runtime produced no answer frame"})
+    result = dict(answer.get("result") or {})
+    retrieval = dict(answer.get("retrieval") or {})
+    meta = result.get("meta") if isinstance(result.get("meta"), dict) else {}
+    result["meta"] = meta
+    meta["mode"] = retrieval.get("mode")                       # the executed mode, never the requested label
+    for src, dst in (("funnel", "funnel"), ("used_evidence", "used_evidence"),
+                     ("mode", "retrieval_mode"), ("engine", "retrieval_engine")):
+        if src in retrieval:
+            meta.setdefault(dst, retrieval[src])
+    result["retrieval"] = retrieval
+    result["phases"] = phases
+    result["kind"] = answer.get("kind")
+    result.setdefault("latency_ms", answer.get("latency_ms"))
+    result["runtime"] = RUNTIME_CONTRACT
+    return result

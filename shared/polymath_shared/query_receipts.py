@@ -40,7 +40,9 @@ def summarize_response(kind: str, out: Any) -> dict:
                           "funnel", "chat_plan", "synthesis_version", "model",
                           "phase_ms", "used_evidence", "legend", "degraded",
                           # CARRY-ACCOUNTING-V1 (P0.e); EVIDENCE-COMPOSER-V1 (P1.c)
-                          "prompt", "carry", "composition")}
+                          "prompt", "carry", "composition",
+                          # CHAT-RUNTIME-V1 (P1.f): the transport tag ("chat" | "chat/stream") on the one runtime receipt
+                          "route")}
     cits = out.get("citations")
     if isinstance(cits, list):
         d["citations"] = len(cits)
