@@ -13,3 +13,4 @@ These patch scripts were DESIGN INPUT for phases that have since been implemente
 | draft | authoritative implementation |
 |---|---|
 | p1c_patch.py, p1c_patch2.py, p1c_runs.sh, p1c_worklog_skeleton.md | P1.c — work-log `docs/wiki/work-log/2026-09-06-p1c-composition.md`, register 11.95 (composer re-designed: bounded diversity, acceptance floor, dominance guard; prefix 24 by measurement, not 28) |
+| p1d_engine_draft.py, p1d_engine_rewrite.py, p1d_route_patch.py, p1d_tests_patch.py, p1d_worklog_skeleton.md | P1.d — work-log `docs/wiki/work-log/2026-09-06-p1d-latency-architecture.md`, register 11.96 (implemented as CONCURRENCY-DEADLINES-V1 + METAL-LEASE-V1 by two worktree agents from the drafts as design input; re-derived against the P1.c code) |

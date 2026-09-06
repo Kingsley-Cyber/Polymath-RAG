@@ -229,7 +229,9 @@ def test_leased_run_adaptive_keeps_oom_splitting_and_receipts(fleet_dir):
     receipts: list[metal.LeaseReceipt] = []
     out = leased_run_adaptive(BACKGROUND, fn, [1, 2, 3, 4], what="embed", receipts=receipts)
     assert out == [101, 102, 103, 104] and seen == [4, 2, 2]
-    assert len(receipts) == 1 and receipts[0].acquired and receipts[0].what == "embed"
+    # per-attempt leasing (P1.d arm 2 fix): one receipt per device call — the failed 4-item attempt and both 2-item retries —
+    # so the device is released between OOM-halving sub-batches and an interactive waiter gets in
+    assert len(receipts) == 3 and all(r.acquired and r.what == "embed" for r in receipts)
     with pytest.raises(ValueError):
         leased_run_adaptive(INTERACTIVE, lambda items: (_ for _ in ()).throw(ValueError("x")), [1])
     assert not interactive_pending()                        # the lease is released on error

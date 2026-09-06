@@ -1,0 +1,1165 @@
+{
+ "summary": {
+  "tag": "p1d-B-lane-deadline",
+  "fixture": "B",
+  "rerank_max_override": null,
+  "n_questions": 10,
+  "arms": [
+   "single"
+  ],
+  "plans": "eval/fixtures/chat_baseline_B_plans.json",
+  "run_utc": "2026-09-06T04:23:28+00:00",
+  "run_wall_s": 203.7,
+  "oom_during_run": {
+   "sidecar_embedder": 0,
+   "sidecar_reranker": 8
+  },
+  "per_arm": {
+   "single": {
+    "gold_in_union": 0.7,
+    "gold_in_pre_rerank": 0.5,
+    "hit@10_selected": 0.5,
+    "mrr_selected": 0.27,
+    "survival_selected_given_union": 0.714,
+    "unseated_in_union": [
+     {
+      "idx": 7,
+      "union_rank": 38,
+      "pre_rerank": false
+     },
+     {
+      "idx": 9,
+      "union_rank": 32,
+      "pre_rerank": false
+     }
+    ],
+    "dominance_violations": 0,
+    "dominance_avoidable_violations": 0,
+    "dominance_eligible_turns": 7,
+    "n": 10,
+    "errors": 0,
+    "dims": 0,
+    "dims_ok_strict": 0,
+    "strict_rate": 0.0,
+    "dims_system_ok": 0,
+    "system_rate": 0.0,
+    "legacy_strict_rate": 0.0,
+    "legacy_system_rate": 0.0,
+    "dims_flagged": 0,
+    "dims_silent": 0,
+    "dims_covered_gold": 0,
+    "dims_covered": 0,
+    "dims_in_union": 0,
+    "primary_flagged_below_floor": 0,
+    "wall_p50_s": 17.81,
+    "wall_p90_s": 31.39,
+    "latency_ms_p50": {
+     "child": 93.7,
+     "compose": 0.2,
+     "doc": 107.2,
+     "embed": 11096.5,
+     "embedded_texts": 1.0,
+     "lane_document_summary": 0.0,
+     "lane_entity_card": 0.0,
+     "lane_global_dense_child": 57.0,
+     "lane_global_sparse_child": 0.0,
+     "lane_hierarchical_children": 0.0,
+     "lane_section_summary": 0.0,
+     "lanes": 62.9,
+     "lanes_primary_batch": 59.6,
+     "rerank": 8008.1,
+     "rerank_select": 8008.4,
+     "section": 228.1,
+     "sparse": 14.8,
+     "sparse_prestart": 14.8,
+     "total": 17746.4,
+     "union": 0.3
+    },
+    "rerank_prefix_p50": 24.0,
+    "degraded_turns": 10,
+    "degraded_components": [
+     "document_summary_timeout",
+     "embed_deadline",
+     "entity_card_timeout",
+     "global_dense_child_timeout",
+     "hierarchical_children_timeout",
+     "rerank_timeout",
+     "section_summary_timeout"
+    ],
+    "latency_ms_p90": {
+     "compose": 0.3,
+     "embed": 23242.8,
+     "lanes": 86.2,
+     "rerank_select": 8010.7,
+     "total": 31332.6,
+     "union": 2.2
+    },
+    "oom_embedder": 0,
+    "oom_reranker": 8,
+    "clean_turns": 4,
+    "clean_wall_p50_s": 17.81,
+    "clean_rerank_p50_ms": 6575.0,
+    "clean_embed_p50_ms": 11096.5,
+    "clean_total_p50_ms": 17746.4,
+    "silent": [],
+    "not_system_ok": []
+   }
+  }
+ },
+ "results": [
+  {
+   "idx": 0,
+   "arm": "single",
+   "corpus_id": "cinema",
+   "question": "What does the book say about making your own chroma keyer?",
+   "error": null,
+   "wall_ms": 12670.4,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 1
+   },
+   "compiled_queries": 1,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_union_rank": 4,
+   "gold_selected_rank": 4,
+   "hit10": true,
+   "rr": 0.25,
+   "doc_share_top": 0.6,
+   "docs_within_gap": 4,
+   "dominance": false,
+   "dominance_avoidable": false,
+   "latency_ms": {
+    "sparse": 15.4,
+    "section": 212.4,
+    "child": 88.6,
+    "doc": 138.7,
+    "embed": 4438.3,
+    "embedded_texts": 1,
+    "sparse_prestart": 15.4,
+    "lanes": 68.2,
+    "lanes_primary_batch": 65.3,
+    "union": 0.3,
+    "rerank": 8013.3,
+    "compose": 0.4,
+    "rerank_select": 8013.7,
+    "total": 12535.6,
+    "lane_global_dense_child": 62.5,
+    "lane_document_summary": 0.0,
+    "lane_section_summary": 0.0,
+    "lane_entity_card": 0.0,
+    "lane_hierarchical_children": 0.0,
+    "lane_global_sparse_child": 0.0
+   },
+   "degraded_components": [
+    "global_dense_child_timeout",
+    "document_summary_timeout",
+    "section_summary_timeout",
+    "entity_card_timeout",
+    "embed_deadline",
+    "rerank_timeout"
+   ],
+   "lanes_used": [
+    "HIERARCHICAL_ROUTE",
+    "GLOBAL_DENSE_CHILD",
+    "GLOBAL_SPARSE_CHILD"
+   ],
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": null
+   },
+   "rerank_prefix": 24,
+   "candidates": 40,
+   "evidence_count": 15,
+   "degraded": [
+    {
+     "component": "global_dense_child_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 62 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "document_summary_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "section_summary_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "entity_card_timeout",
+     "effect": "no entity-card routing votes this turn",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "embed_deadline",
+     "effect": "dense lanes started late (the embedding is a hard dependency; the turn waited for it)",
+     "reason": "embedding took 4438 ms; embed_deadline_s=2.5"
+    },
+    {
+     "component": "rerank_timeout",
+     "effect": "results ordered by fusion (the judge missed its deadline); same candidate set, same recall",
+     "reason": "no judgement after 8 s \u2014 late result ignored"
+    }
+   ],
+   "dims": 0,
+   "dims_ok": 0,
+   "dims_system_ok": 0,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 0,
+   "dims_covered": 0,
+   "dims_in_union": 0,
+   "legacy_dims_ok": 0,
+   "legacy_dims_system_ok": 0,
+   "aspects": null
+  },
+  {
+   "idx": 1,
+   "arm": "single",
+   "corpus_id": "cinema",
+   "question": "What does the book say about nonsquare pixels?",
+   "error": null,
+   "wall_ms": 21055.4,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 1,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_union_rank": 7,
+   "gold_selected_rank": 1,
+   "hit10": true,
+   "rr": 1.0,
+   "doc_share_top": 0.6,
+   "docs_within_gap": 1,
+   "dominance": false,
+   "dominance_avoidable": false,
+   "latency_ms": {
+    "sparse": 13.5,
+    "doc": 105.1,
+    "section": 257.4,
+    "child": 120.2,
+    "embed": 15792.3,
+    "embedded_texts": 1,
+    "sparse_prestart": 13.6,
+    "lanes": 63.1,
+    "lanes_primary_batch": 60.8,
+    "union": 0.2,
+    "rerank": 5113.7,
+    "compose": 0.2,
+    "rerank_select": 5113.9,
+    "total": 20985.2,
+    "lane_global_dense_child": 58.3,
+    "lane_document_summary": 0.0,
+    "lane_section_summary": 0.0,
+    "lane_entity_card": 0.0,
+    "lane_hierarchical_children": 0.0,
+    "lane_global_sparse_child": 0.0
+   },
+   "degraded_components": [
+    "global_dense_child_timeout",
+    "document_summary_timeout",
+    "section_summary_timeout",
+    "entity_card_timeout",
+    "embed_deadline"
+   ],
+   "lanes_used": [
+    "HIERARCHICAL_ROUTE",
+    "GLOBAL_DENSE_CHILD",
+    "GLOBAL_SPARSE_CHILD"
+   ],
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": 0.9998
+   },
+   "rerank_prefix": 24,
+   "candidates": 40,
+   "evidence_count": 15,
+   "degraded": [
+    {
+     "component": "global_dense_child_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 58 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "document_summary_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "section_summary_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "entity_card_timeout",
+     "effect": "no entity-card routing votes this turn",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "embed_deadline",
+     "effect": "dense lanes started late (the embedding is a hard dependency; the turn waited for it)",
+     "reason": "embedding took 15792 ms; embed_deadline_s=2.5"
+    }
+   ],
+   "dims": 0,
+   "dims_ok": 0,
+   "dims_system_ok": 0,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 0,
+   "dims_covered": 0,
+   "dims_in_union": 0,
+   "legacy_dims_ok": 0,
+   "legacy_dims_system_ok": 0,
+   "aspects": null
+  },
+  {
+   "idx": 2,
+   "arm": "single",
+   "corpus_id": "cinema",
+   "question": "What does the book say about oebps/ritc 9781119685401 epub3 035 r1.xhtml?",
+   "error": null,
+   "wall_ms": 9743.8,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 1
+   },
+   "compiled_queries": 1,
+   "gold_in_union": false,
+   "gold_in_pre_rerank": false,
+   "gold_union_rank": null,
+   "gold_selected_rank": null,
+   "hit10": false,
+   "rr": 0.0,
+   "doc_share_top": 0.267,
+   "docs_within_gap": 15,
+   "dominance": false,
+   "dominance_avoidable": false,
+   "latency_ms": {
+    "sparse": 16.2,
+    "child": 31.3,
+    "section": 229.2,
+    "doc": 109.3,
+    "embed": 1575.1,
+    "embedded_texts": 1,
+    "sparse_prestart": 16.2,
+    "lanes": 92.2,
+    "lanes_primary_batch": 57.5,
+    "union": 0.2,
+    "rerank": 8010.1,
+    "compose": 0.1,
+    "rerank_select": 8010.2,
+    "total": 9690.3,
+    "lane_global_dense_child": 31.3,
+    "lane_document_summary": 25.4,
+    "lane_section_summary": 0.0,
+    "lane_entity_card": 0.0,
+    "lane_hierarchical_children": 0.0,
+    "lane_global_sparse_child": 0.0
+   },
+   "degraded_components": [
+    "document_summary_timeout",
+    "section_summary_timeout",
+    "entity_card_timeout",
+    "hierarchical_children_timeout",
+    "rerank_timeout"
+   ],
+   "lanes_used": [
+    "HIERARCHICAL_ROUTE",
+    "GLOBAL_DENSE_CHILD",
+    "GLOBAL_SPARSE_CHILD"
+   ],
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": null
+   },
+   "rerank_prefix": 24,
+   "candidates": 90,
+   "evidence_count": 15,
+   "degraded": [
+    {
+     "component": "document_summary_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 25 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "section_summary_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "entity_card_timeout",
+     "effect": "no entity-card routing votes this turn",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "hierarchical_children_timeout",
+     "effect": "9 of 9 section deepenings dropped; lane A keeps the sections that answered",
+     "reason": "not started: the core budget (lane_deadline_s=0.05) was spent before this stage"
+    },
+    {
+     "component": "rerank_timeout",
+     "effect": "results ordered by fusion (the judge missed its deadline); same candidate set, same recall",
+     "reason": "no judgement after 8 s \u2014 late result ignored"
+    }
+   ],
+   "dims": 0,
+   "dims_ok": 0,
+   "dims_system_ok": 0,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 0,
+   "dims_covered": 0,
+   "dims_in_union": 0,
+   "legacy_dims_ok": 0,
+   "legacy_dims_system_ok": 0,
+   "aspects": null
+  },
+  {
+   "idx": 3,
+   "arm": "single",
+   "corpus_id": "cinema",
+   "question": "What does the book say about miscellaneous drawing tips?",
+   "error": null,
+   "wall_ms": 42174.9,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 1
+   },
+   "compiled_queries": 1,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_union_rank": 1,
+   "gold_selected_rank": 1,
+   "hit10": true,
+   "rr": 1.0,
+   "doc_share_top": 0.2,
+   "docs_within_gap": 1,
+   "dominance": false,
+   "dominance_avoidable": false,
+   "latency_ms": {
+    "sparse": 13.7,
+    "child": 68.1,
+    "doc": 93.3,
+    "section": 228.6,
+    "embed": 36108.3,
+    "embedded_texts": 1,
+    "sparse_prestart": 13.7,
+    "lanes": 58.1,
+    "lanes_primary_batch": 55.8,
+    "union": 2.1,
+    "rerank": 5942.4,
+    "compose": 0.3,
+    "rerank_select": 5942.7,
+    "total": 42122.1,
+    "lane_global_dense_child": 53.0,
+    "lane_document_summary": 0.0,
+    "lane_section_summary": 0.0,
+    "lane_entity_card": 0.0,
+    "lane_hierarchical_children": 0.0,
+    "lane_global_sparse_child": 0.0
+   },
+   "degraded_components": [
+    "global_dense_child_timeout",
+    "document_summary_timeout",
+    "section_summary_timeout",
+    "entity_card_timeout",
+    "embed_deadline"
+   ],
+   "lanes_used": [
+    "HIERARCHICAL_ROUTE",
+    "GLOBAL_DENSE_CHILD",
+    "GLOBAL_SPARSE_CHILD"
+   ],
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": 0.9707
+   },
+   "rerank_prefix": 24,
+   "candidates": 40,
+   "evidence_count": 15,
+   "degraded": [
+    {
+     "component": "global_dense_child_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 53 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "document_summary_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "section_summary_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "entity_card_timeout",
+     "effect": "no entity-card routing votes this turn",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "embed_deadline",
+     "effect": "dense lanes started late (the embedding is a hard dependency; the turn waited for it)",
+     "reason": "embedding took 36108 ms; embed_deadline_s=2.5"
+    }
+   ],
+   "dims": 0,
+   "dims_ok": 0,
+   "dims_system_ok": 0,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 0,
+   "dims_covered": 0,
+   "dims_in_union": 0,
+   "legacy_dims_ok": 0,
+   "legacy_dims_system_ok": 0,
+   "aspects": null
+  },
+  {
+   "idx": 4,
+   "arm": "single",
+   "corpus_id": "cinema",
+   "question": "What does the book say about transcoding versus color rerendering?",
+   "error": null,
+   "wall_ms": 9995.5,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 1
+   },
+   "compiled_queries": 1,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_union_rank": 4,
+   "gold_selected_rank": 4,
+   "hit10": true,
+   "rr": 0.25,
+   "doc_share_top": 0.2,
+   "docs_within_gap": 8,
+   "dominance": false,
+   "dominance_avoidable": false,
+   "latency_ms": {
+    "sparse": 14.2,
+    "child": 106.0,
+    "section": 227.5,
+    "doc": 134.0,
+    "embed": 1850.3,
+    "embedded_texts": 1,
+    "sparse_prestart": 14.3,
+    "lanes": 61.7,
+    "lanes_primary_batch": 60.1,
+    "union": 0.2,
+    "rerank": 8007.8,
+    "compose": 0.2,
+    "rerank_select": 8008.0,
+    "total": 9934.9,
+    "lane_global_dense_child": 57.9,
+    "lane_document_summary": 0.0,
+    "lane_section_summary": 0.0,
+    "lane_entity_card": 0.0,
+    "lane_hierarchical_children": 0.0,
+    "lane_global_sparse_child": 0.0
+   },
+   "degraded_components": [
+    "global_dense_child_timeout",
+    "document_summary_timeout",
+    "section_summary_timeout",
+    "entity_card_timeout",
+    "rerank_timeout"
+   ],
+   "lanes_used": [
+    "HIERARCHICAL_ROUTE",
+    "GLOBAL_DENSE_CHILD",
+    "GLOBAL_SPARSE_CHILD"
+   ],
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": null
+   },
+   "rerank_prefix": 24,
+   "candidates": 40,
+   "evidence_count": 15,
+   "degraded": [
+    {
+     "component": "global_dense_child_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 58 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "document_summary_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "section_summary_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "entity_card_timeout",
+     "effect": "no entity-card routing votes this turn",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "rerank_timeout",
+     "effect": "results ordered by fusion (the judge missed its deadline); same candidate set, same recall",
+     "reason": "no judgement after 8 s \u2014 late result ignored"
+    }
+   ],
+   "dims": 0,
+   "dims_ok": 0,
+   "dims_system_ok": 0,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 0,
+   "dims_covered": 0,
+   "dims_in_union": 0,
+   "legacy_dims_ok": 0,
+   "legacy_dims_system_ok": 0,
+   "aspects": null
+  },
+  {
+   "idx": 5,
+   "arm": "single",
+   "corpus_id": "cinema",
+   "question": "What does the book say about FACE OFF?",
+   "error": null,
+   "wall_ms": 26603.1,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 1
+   },
+   "compiled_queries": 1,
+   "gold_in_union": false,
+   "gold_in_pre_rerank": false,
+   "gold_union_rank": null,
+   "gold_selected_rank": null,
+   "hit10": false,
+   "rr": 0.0,
+   "doc_share_top": 0.4,
+   "docs_within_gap": 9,
+   "dominance": false,
+   "dominance_avoidable": false,
+   "latency_ms": {
+    "sparse": 14.6,
+    "section": 153.6,
+    "doc": 96.8,
+    "child": 98.7,
+    "embed": 18467.3,
+    "embedded_texts": 1,
+    "sparse_prestart": 14.7,
+    "lanes": 58.9,
+    "lanes_primary_batch": 56.4,
+    "union": 0.3,
+    "rerank": 8008.5,
+    "compose": 0.2,
+    "rerank_select": 8008.7,
+    "total": 26548.3,
+    "lane_global_dense_child": 53.6,
+    "lane_document_summary": 0.0,
+    "lane_section_summary": 0.0,
+    "lane_entity_card": 22.4,
+    "lane_hierarchical_children": 0.0,
+    "lane_global_sparse_child": 0.0
+   },
+   "degraded_components": [
+    "global_dense_child_timeout",
+    "document_summary_timeout",
+    "section_summary_timeout",
+    "embed_deadline",
+    "rerank_timeout"
+   ],
+   "lanes_used": [
+    "HIERARCHICAL_ROUTE",
+    "GLOBAL_DENSE_CHILD",
+    "GLOBAL_SPARSE_CHILD"
+   ],
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": null
+   },
+   "rerank_prefix": 24,
+   "candidates": 40,
+   "evidence_count": 15,
+   "degraded": [
+    {
+     "component": "global_dense_child_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 54 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "document_summary_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "section_summary_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "embed_deadline",
+     "effect": "dense lanes started late (the embedding is a hard dependency; the turn waited for it)",
+     "reason": "embedding took 18467 ms; embed_deadline_s=2.5"
+    },
+    {
+     "component": "rerank_timeout",
+     "effect": "results ordered by fusion (the judge missed its deadline); same candidate set, same recall",
+     "reason": "no judgement after 8 s \u2014 late result ignored"
+    }
+   ],
+   "dims": 0,
+   "dims_ok": 0,
+   "dims_system_ok": 0,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 0,
+   "dims_covered": 0,
+   "dims_in_union": 0,
+   "legacy_dims_ok": 0,
+   "legacy_dims_system_ok": 0,
+   "aspects": null
+  },
+  {
+   "idx": 6,
+   "arm": "single",
+   "corpus_id": "cinema",
+   "question": "What does the book say about affect, fatigue, and injury are control states?",
+   "error": null,
+   "wall_ms": 14564.5,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 1,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": true,
+   "gold_union_rank": 5,
+   "gold_selected_rank": 5,
+   "hit10": true,
+   "rr": 0.2,
+   "doc_share_top": 0.467,
+   "docs_within_gap": 4,
+   "dominance": false,
+   "dominance_avoidable": false,
+   "latency_ms": {
+    "sparse": 15.0,
+    "child": 55.8,
+    "doc": 100.5,
+    "section": 206.9,
+    "embed": 6400.8,
+    "embedded_texts": 1,
+    "sparse_prestart": 15.0,
+    "lanes": 86.2,
+    "lanes_primary_batch": 56.1,
+    "union": 0.7,
+    "rerank": 8008.6,
+    "compose": 0.2,
+    "rerank_select": 8008.8,
+    "total": 14507.6,
+    "lane_global_dense_child": 55.9,
+    "lane_document_summary": 0.0,
+    "lane_section_summary": 0.0,
+    "lane_entity_card": 0.0,
+    "lane_hierarchical_children": 0.0,
+    "lane_global_sparse_child": 0.0
+   },
+   "degraded_components": [
+    "document_summary_timeout",
+    "section_summary_timeout",
+    "entity_card_timeout",
+    "hierarchical_children_timeout",
+    "embed_deadline",
+    "rerank_timeout"
+   ],
+   "lanes_used": [
+    "HIERARCHICAL_ROUTE",
+    "GLOBAL_DENSE_CHILD",
+    "GLOBAL_SPARSE_CHILD"
+   ],
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": null
+   },
+   "rerank_prefix": 24,
+   "candidates": 83,
+   "evidence_count": 15,
+   "degraded": [
+    {
+     "component": "document_summary_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "section_summary_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "entity_card_timeout",
+     "effect": "no entity-card routing votes this turn",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "hierarchical_children_timeout",
+     "effect": "10 of 10 section deepenings dropped; lane A keeps the sections that answered",
+     "reason": "not started: the core budget (lane_deadline_s=0.05) was spent before this stage"
+    },
+    {
+     "component": "embed_deadline",
+     "effect": "dense lanes started late (the embedding is a hard dependency; the turn waited for it)",
+     "reason": "embedding took 6401 ms; embed_deadline_s=2.5"
+    },
+    {
+     "component": "rerank_timeout",
+     "effect": "results ordered by fusion (the judge missed its deadline); same candidate set, same recall",
+     "reason": "no judgement after 8 s \u2014 late result ignored"
+    }
+   ],
+   "dims": 0,
+   "dims_ok": 0,
+   "dims_system_ok": 0,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 0,
+   "dims_covered": 0,
+   "dims_in_union": 0,
+   "legacy_dims_ok": 0,
+   "legacy_dims_system_ok": 0,
+   "aspects": null
+  },
+  {
+   "idx": 7,
+   "arm": "single",
+   "corpus_id": "cinema",
+   "question": "What does the book say about movement of an object with a background?",
+   "error": null,
+   "wall_ms": 12445.2,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 1,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": false,
+   "gold_union_rank": 38,
+   "gold_selected_rank": null,
+   "hit10": false,
+   "rr": 0.0,
+   "doc_share_top": 0.267,
+   "docs_within_gap": 11,
+   "dominance": false,
+   "dominance_avoidable": false,
+   "latency_ms": {
+    "sparse": 19.3,
+    "section": 230.1,
+    "doc": 112.9,
+    "child": 119.3,
+    "embed": 4279.4,
+    "embedded_texts": 1,
+    "sparse_prestart": 19.3,
+    "lanes": 62.0,
+    "lanes_primary_batch": 59.1,
+    "union": 0.1,
+    "rerank": 8010.6,
+    "compose": 0.1,
+    "rerank_select": 8010.7,
+    "total": 12366.1,
+    "lane_global_dense_child": 56.6,
+    "lane_document_summary": 0.0,
+    "lane_section_summary": 0.0,
+    "lane_entity_card": 0.0,
+    "lane_hierarchical_children": 0.0,
+    "lane_global_sparse_child": 0.0
+   },
+   "degraded_components": [
+    "global_dense_child_timeout",
+    "document_summary_timeout",
+    "section_summary_timeout",
+    "entity_card_timeout",
+    "embed_deadline",
+    "rerank_timeout"
+   ],
+   "lanes_used": [
+    "HIERARCHICAL_ROUTE",
+    "GLOBAL_DENSE_CHILD",
+    "GLOBAL_SPARSE_CHILD"
+   ],
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": null
+   },
+   "rerank_prefix": 24,
+   "candidates": 40,
+   "evidence_count": 15,
+   "degraded": [
+    {
+     "component": "global_dense_child_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 57 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "document_summary_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "section_summary_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "entity_card_timeout",
+     "effect": "no entity-card routing votes this turn",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "embed_deadline",
+     "effect": "dense lanes started late (the embedding is a hard dependency; the turn waited for it)",
+     "reason": "embedding took 4279 ms; embed_deadline_s=2.5"
+    },
+    {
+     "component": "rerank_timeout",
+     "effect": "results ordered by fusion (the judge missed its deadline); same candidate set, same recall",
+     "reason": "no judgement after 8 s \u2014 late result ignored"
+    }
+   ],
+   "dims": 0,
+   "dims_ok": 0,
+   "dims_system_ok": 0,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 0,
+   "dims_covered": 0,
+   "dims_in_union": 0,
+   "legacy_dims_ok": 0,
+   "legacy_dims_system_ok": 0,
+   "aspects": null
+  },
+  {
+   "idx": 8,
+   "arm": "single",
+   "corpus_id": "cinema",
+   "question": "What does the book say about sound editing?",
+   "error": null,
+   "wall_ms": 31387.2,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 3
+   },
+   "compiled_queries": 1,
+   "gold_in_union": false,
+   "gold_in_pre_rerank": false,
+   "gold_union_rank": null,
+   "gold_selected_rank": null,
+   "hit10": false,
+   "rr": 0.0,
+   "doc_share_top": 0.467,
+   "docs_within_gap": 6,
+   "dominance": false,
+   "dominance_avoidable": false,
+   "latency_ms": {
+    "sparse": 17.7,
+    "section": 207.0,
+    "child": 79.1,
+    "doc": 103.5,
+    "embed": 23242.8,
+    "embedded_texts": 1,
+    "sparse_prestart": 17.8,
+    "lanes": 62.6,
+    "lanes_primary_batch": 60.1,
+    "union": 2.2,
+    "rerank": 8002.6,
+    "compose": 0.2,
+    "rerank_select": 8002.8,
+    "total": 31332.6,
+    "lane_global_dense_child": 57.3,
+    "lane_document_summary": 0.0,
+    "lane_section_summary": 0.0,
+    "lane_entity_card": 0.0,
+    "lane_hierarchical_children": 0.0,
+    "lane_global_sparse_child": 0.0
+   },
+   "degraded_components": [
+    "global_dense_child_timeout",
+    "document_summary_timeout",
+    "section_summary_timeout",
+    "entity_card_timeout",
+    "embed_deadline",
+    "rerank_timeout"
+   ],
+   "lanes_used": [
+    "HIERARCHICAL_ROUTE",
+    "GLOBAL_DENSE_CHILD",
+    "GLOBAL_SPARSE_CHILD"
+   ],
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": null
+   },
+   "rerank_prefix": 24,
+   "candidates": 40,
+   "evidence_count": 15,
+   "degraded": [
+    {
+     "component": "global_dense_child_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 57 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "document_summary_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "section_summary_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "entity_card_timeout",
+     "effect": "no entity-card routing votes this turn",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "embed_deadline",
+     "effect": "dense lanes started late (the embedding is a hard dependency; the turn waited for it)",
+     "reason": "embedding took 23243 ms; embed_deadline_s=2.5"
+    },
+    {
+     "component": "rerank_timeout",
+     "effect": "results ordered by fusion (the judge missed its deadline); same candidate set, same recall",
+     "reason": "no judgement after 8 s \u2014 late result ignored"
+    }
+   ],
+   "dims": 0,
+   "dims_ok": 0,
+   "dims_system_ok": 0,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 0,
+   "dims_covered": 0,
+   "dims_in_union": 0,
+   "legacy_dims_ok": 0,
+   "legacy_dims_system_ok": 0,
+   "aspects": null
+  },
+  {
+   "idx": 9,
+   "arm": "single",
+   "corpus_id": "cinema",
+   "question": "What does the book say about write radio sparely?",
+   "error": null,
+   "wall_ms": 22774.6,
+   "oom": {
+    "sidecar_embedder": 0,
+    "sidecar_reranker": 0
+   },
+   "compiled_queries": 1,
+   "gold_in_union": true,
+   "gold_in_pre_rerank": false,
+   "gold_union_rank": 32,
+   "gold_selected_rank": null,
+   "hit10": false,
+   "rr": 0.0,
+   "doc_share_top": 0.467,
+   "docs_within_gap": 1,
+   "dominance": false,
+   "dominance_avoidable": false,
+   "latency_ms": {
+    "sparse": 14.6,
+    "child": 106.7,
+    "doc": 111.8,
+    "section": 266.7,
+    "embed": 17503.8,
+    "embedded_texts": 1,
+    "sparse_prestart": 14.6,
+    "lanes": 63.7,
+    "lanes_primary_batch": 61.2,
+    "union": 2.2,
+    "rerank": 5141.0,
+    "compose": 0.2,
+    "rerank_select": 5141.2,
+    "total": 22721.4,
+    "lane_global_dense_child": 58.6,
+    "lane_document_summary": 0.0,
+    "lane_section_summary": 0.0,
+    "lane_entity_card": 0.0,
+    "lane_hierarchical_children": 0.0,
+    "lane_global_sparse_child": 0.0
+   },
+   "degraded_components": [
+    "global_dense_child_timeout",
+    "document_summary_timeout",
+    "section_summary_timeout",
+    "entity_card_timeout",
+    "embed_deadline"
+   ],
+   "lanes_used": [
+    "HIERARCHICAL_ROUTE",
+    "GLOBAL_DENSE_CHILD",
+    "GLOBAL_SPARSE_CHILD"
+   ],
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "aspect_best": {
+    "q0": 0.9919
+   },
+   "rerank_prefix": 24,
+   "candidates": 40,
+   "evidence_count": 15,
+   "degraded": [
+    {
+     "component": "global_dense_child_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 59 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "document_summary_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "section_summary_timeout",
+     "effect": "lane dropped this turn (deadline); the other lanes continue",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "entity_card_timeout",
+     "effect": "no entity-card routing votes this turn",
+     "reason": "no result after 0 ms; lane_deadline_s=0.05 \u2014 late result ignored"
+    },
+    {
+     "component": "embed_deadline",
+     "effect": "dense lanes started late (the embedding is a hard dependency; the turn waited for it)",
+     "reason": "embedding took 17504 ms; embed_deadline_s=2.5"
+    }
+   ],
+   "dims": 0,
+   "dims_ok": 0,
+   "dims_system_ok": 0,
+   "dims_flagged": 0,
+   "dims_silent": 0,
+   "dims_covered_gold": 0,
+   "dims_covered": 0,
+   "dims_in_union": 0,
+   "legacy_dims_ok": 0,
+   "legacy_dims_system_ok": 0,
+   "aspects": null
+  }
+ ]
+}

@@ -10,6 +10,8 @@ engine call the chat path makes — so a before/after pair differs only in the c
 Arms (interleaved per question so both see the same GPU contention):
   single  PRIMARY only                 (= POLYMATH_CHAT_RETRIEVAL v2-single)
   multi   PRIMARY + typed subqueries   (= v2, P1.b decomposition + aspect seats)
+  AB      lanes A+B only (VECTOR composition), PRIMARY only          (P1.d / P1.e)
+  ABC     lanes A+B+C (HYBRID composition), PRIMARY only
 
 Scoring is scripts/chat_baseline.aspect_stats — the same strict (gold / own document) and system-honest
 (judge-accepted evidence shown, or explicitly flagged) readings as the recorded gate. The pre-R1 reading
@@ -131,10 +133,12 @@ def run(args) -> int:
         query = plan.get("retrieval_query") or plan["queries"][0]["query"]
         exact = tuple(plan.get("exact_terms") or ())
         subs = tuple((s["id"], s["type"], s["query"], s.get("weight", 1.0)) for s in plan["queries"] if s.get("type") != "PRIMARY")
-        for arm in arms:
+        for arm in (arms if i % 2 == 0 else list(reversed(arms))):   # alternate the arm order per question (no order bias)
             t0 = time.time()
+            lanes = {"AB": ("HIERARCHICAL_ROUTE", "GLOBAL_DENSE_CHILD"), "ABC": ("HIERARCHICAL_ROUTE", "GLOBAL_DENSE_CHILD", "GLOBAL_SPARSE_CHILD")}.get(arm)
+            kw = {"lanes": lanes} if lanes else {}
             try:
-                fast = chat_retrieve_v2(query, q["corpus_id"], exact_terms=exact, subqueries=(subs if arm == "multi" else ()))
+                fast = chat_retrieve_v2(query, q["corpus_id"], exact_terms=exact, subqueries=(subs if arm == "multi" else ()), **kw)
                 err = None
             except Exception as exc:  # noqa: BLE001 — recorded, never hides a turn
                 fast, err = None, f"{type(exc).__name__}: {str(exc)[:200]}"
@@ -150,7 +154,8 @@ def run(args) -> int:
                 st_legacy = aspect_stats(q, _legacy_reading(ans, meta.get("weak_reasons") or {}), rec) if kind == "M" else {}
                 if kind != "M":
                     row.update(_gold_stats(q, trace))
-                row.update({"latency_ms": trace.get("latency_ms") or {}, "weak_aspects": meta.get("weak_aspects"),
+                row.update({"latency_ms": trace.get("latency_ms") or {}, "degraded_components": [d.get("component") for d in (meta.get("degraded") or [])],
+                            "lanes_used": meta.get("lanes"), "weak_aspects": meta.get("weak_aspects"),
                             "weak_reasons": meta.get("weak_reasons"), "aspect_best": meta.get("aspect_best"),
                             "rerank_prefix": trace.get("rerank_prefix"), "candidates": meta.get("candidates"),
                             "evidence_count": meta.get("evidence_count"), "degraded": meta.get("degraded"),
@@ -205,6 +210,9 @@ def run(args) -> int:
             "wall_p50_s": round((_med([r["wall_ms"] for r in ar]) or 0) / 1000, 2), "wall_p90_s": round((_p90([r["wall_ms"] for r in ar]) or 0) / 1000, 2),
             "latency_ms_p50": {k: _med([l.get(k) for l in lat]) for k in keys},
             "rerank_prefix_p50": _med([r.get("rerank_prefix") for r in ar]),
+            "degraded_turns": sum(1 for r in ar if r.get("degraded_components")),
+            "degraded_components": sorted({c for r in ar for c in (r.get("degraded_components") or [])}),
+            "latency_ms_p90": {k: _p90([l.get(k) for l in lat]) for k in keys if k in ("embed", "rerank_select", "total", "lanes", "union", "compose")},
             "oom_embedder": sum(r["oom"]["sidecar_embedder"] for r in ar), "oom_reranker": sum(r["oom"]["sidecar_reranker"] for r in ar),
             # clean-turn subset: turns during which neither sidecar logged an OOM split — the closest thing to an
             # uncontended interactive measurement without pausing any service

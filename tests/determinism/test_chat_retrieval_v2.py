@@ -231,7 +231,7 @@ def test_route_one_embedding_per_distinct_text_one_judge_call_and_lane_c_starts_
     assert len(h.sparse_starts) == 2 and all(t < h.embed_returned_at for _, t in h.sparse_starts), (h.sparse_starts, h.embed_returned_at)
     assert out["meta"]["plan_version"] == "chat-retrieval-v2" and out["meta"]["degraded"] == []
     assert out["meta"]["lanes"] == list(ce.LANES) and out["meta"]["deadlines"]["contract"] == "concurrency-deadlines-v1"
-    assert out["meta"]["deadlines"]["lane_deadline_s"] == 3.0 and out["meta"]["deadlines"]["rerank_deadline_s"] == 3.0
+    assert out["meta"]["deadlines"]["lane_deadline_s"] == 3.0 and out["meta"]["deadlines"]["rerank_deadline_s"] == 8.0
     assert out["trace"]["concurrency"]["prestarted"] == ["global_sparse_child", "sub_q1_sparse"]
     assert any(e["chunk_id"].startswith("sp-") for e in out["evidence"])                             # the pre-started lane reached the answer
     assert out["meta"]["aspects"]["q1"]["lanes"]["GLOBAL_SPARSE_CHILD"] == 1 and out["meta"]["aspects"]["q1"]["lanes"]["GLOBAL_DENSE_CHILD"] > 0
@@ -290,9 +290,9 @@ def test_default_budget_reads_the_p1d_knobs_through_the_existing_env_pattern(mon
     for k in ("LANE_DEADLINE_S", "RERANK_DEADLINE_S", "EMBED_DEADLINE_S", "MAX_WORKERS", "RERANK_MAX"):
         monkeypatch.delenv(f"POLYMATH_CHAT_{k}", raising=False)
     b = default_budget()
-    assert (b.embed_deadline_s, b.lane_deadline_s, b.rerank_deadline_s, b.max_workers) == (2.5, 3.0, 3.0, 8)
+    assert (b.embed_deadline_s, b.lane_deadline_s, b.rerank_deadline_s, b.max_workers) == (2.5, 3.0, 8.0, 8)
     monkeypatch.setenv("POLYMATH_CHAT_LANE_DEADLINE_S", "1.25")
     monkeypatch.setenv("POLYMATH_CHAT_MAX_WORKERS", "4")
     monkeypatch.setenv("POLYMATH_CHAT_RERANK_DEADLINE_S", "nonsense")
     b2 = default_budget()
-    assert b2.lane_deadline_s == 1.25 and b2.max_workers == 4 and b2.rerank_deadline_s == 3.0 and b2.rerank_max == 24
+    assert b2.lane_deadline_s == 1.25 and b2.max_workers == 4 and b2.rerank_deadline_s == 8.0 and b2.rerank_max == 24

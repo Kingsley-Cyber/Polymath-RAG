@@ -454,10 +454,15 @@ def leased_run_adaptive(priority: str,
                         *,
                         receipts: list[LeaseReceipt] | None = None,
                         timeout_s: float | None = None) -> list:
-    """`run_adaptive` under one device lease: the batch AND its OOM-halving
-    retries run while the device is held, so the other process cannot pile
-    on mid-recovery. Appends the lease receipt to `receipts` when given."""
-    with device_lease(priority, timeout_s=timeout_s, what=what) as lease:
-        if receipts is not None:
-            receipts.append(lease)
-        return run_adaptive(fn, items, what)
+    """`run_adaptive` with EVERY device call under its own lease (P1.d arm 2
+    finding, 2026-09-06): holding the lease across the OOM-halving retries let
+    a background 8-item batch keep the device for seconds while an interactive
+    waiter sat behind it (embed p50 5.8 s, max 107 s). Leasing per attempt
+    releases the device between sub-batches, so an interactive caller gets in
+    after at most one sub-batch. Every attempt's receipt lands in `receipts`."""
+    def _leased(chunk):
+        with device_lease(priority, timeout_s=timeout_s, what=what) as lease:
+            if receipts is not None:
+                receipts.append(lease)
+            return fn(chunk)
+    return run_adaptive(_leased, items, what)

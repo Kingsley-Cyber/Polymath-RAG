@@ -155,7 +155,11 @@ class CandidateBudget:
     #: `max_workers`: the bounded per-turn pool the lanes share (≤ 5 primary + 2 × subqueries + ≤ 12 deepening tasks).
     embed_deadline_s: float = 2.5
     lane_deadline_s: float = 3.0
-    rerank_deadline_s: float = 3.0
+    #: BENCHMARKED 2026-09-06 (P1.d arm 1, frozen-plan B, 24 judged pairs): the §3.16 starting value of 3.0 s is below this
+    #: reranker's physical floor (~240 ms/pair fresh → 5.8 s for 24 pairs; 27–52 s under enrichment thrash) and timed the
+    #: judge out on 30/30 turns, silently turning composition into fusion order (MRR 0.578 → 0.562). 8.0 s admits the
+    #: normal fresh case with margin and still catches the thrash case; the Metal lease removes the thrash, not the per-pair cost.
+    rerank_deadline_s: float = 8.0
     max_workers: int = 8
 
     def to_dict(self) -> dict:
