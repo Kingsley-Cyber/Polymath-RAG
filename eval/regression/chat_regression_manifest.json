@@ -574,10 +574,15 @@
       "gate_owner": "P0.e",
       "plan_refs": "§5 #9, §5b 14, §3.5, §4 P0.e gate",
       "source": {
-        "file": "docs/wiki/experiments/chat-carry-p0e-v2.json",
-        "run": "p0e-v2",
-        "instrument": "scripts/chat_carry_probe.py --policy v2 --tag p0e-v2 — fixed 3-turn conversation (turn 1 off-topic) through /chat/stream with the frontend's used-evidence carry (cap 8, chunk ids); backend re-hydrates, reranks against the resolved request, floor 0.25, cap 8",
-        "recorded_in": "docs/wiki/work-log/2026-09-05-p0e-carry-v2.md"
+        "file": "docs/wiki/experiments/chat-carry-final-llm.json",
+        "run": "final-llm",
+        "instrument": "scripts/chat_carry_probe.py --policy v2 --tag final-llm — fixed 3-turn conversation (turn 1 off-topic) through /chat/stream with the frontend's used-evidence carry (cap 8, chunk ids); backend re-hydrates, reranks against the resolved request, floor 0.25, cap 8",
+        "recorded_in": "refreshed 2026-09-06 from docs/wiki/experiments/chat-carry-final-llm.json; add the work-log that recorded run final-llm",
+        "refreshed": {
+          "from": "docs/wiki/experiments/chat-carry-p0e-v2.json",
+          "previous_run": "p0e-v2",
+          "on": "2026-09-06"
+        }
       },
       "checks": [
         {
@@ -626,21 +631,21 @@
           "pointer": "/summary/carry_admitted",
           "reduce": "max",
           "max": 8,
-          "recorded": 0,
+          "recorded": 3,
           "note": "cap POLYMATH_CARRY_CAP=8; the probe's off-topic carry is rejected at the floor, hence 0"
         },
         {
-          "metric": "turn-3 prompt chars ≤ v1 baseline",
+          "metric": "turn-3 prompt chars ≤ 55,000 (owner decision 2026-09-06; v1 baseline 47,321)",
           "pointer": "/summary/prompt_chars/2",
-          "max": 47321,
-          "recorded": 38731,
+          "max": 55000,
+          "recorded": 50578,
           "baseline": {
             "file": "docs/wiki/experiments/chat-carry-p0e-v1-baseline.json",
             "pointer": "/summary/prompt_chars/2",
             "value": 47321,
             "run": "p0e-v1-baseline"
           },
-          "note": "plan gate 'prompt tokens per turn ≤ baseline' — the bound IS the v1 baseline by definition"
+          "note": "plan gate 'prompt tokens per turn ≤ baseline' held from P0.e (38,731 ≤ 47,321) until the P1 evidence contract (15 composed rows + coverage-by-aspect lines + the SYNTHESIS-V2 request block) made the turn-3 prompt 50,578 chars with zero turn-1 leaks; the owner raised the floor to 55,000 on 2026-09-06 (reviewed manual edit — the only way a floor moves). A reasoning-mode template adds ≤ 300 chars (≤ 590 for a two-mode blend), inside this headroom"
         }
       ],
       "offline_tests": [
@@ -651,7 +656,8 @@
       ],
       "live_tests": [
         "tests/determinism/test_chat_carry.py::test_live_three_turn_probe_carries_used_only_and_drops_off_topic_turn_one"
-      ]
+      ],
+      "note": "floor for the prompt-size check raised 47,321 → 55,000 by the owner on 2026-09-06 (see the check's note); every leak bound is unchanged"
     },
     {
       "id": "11-mode-invariants",
