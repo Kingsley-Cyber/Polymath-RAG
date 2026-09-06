@@ -74,6 +74,18 @@ _PREFERRED_DEFAULTS = [x.strip() for x in os.environ.get(
     "litellm:openai/glm-5-free,litellm:anthropic/deepseek-v4-flash-0731,ollama:gemma4:31b-cloud").split(",") if x.strip()]
 _PREFERRED_DEFAULT = _PREFERRED_DEFAULTS[0] if _PREFERRED_DEFAULTS else "ollama:gemma4:31b-cloud"
 
+
+def _default_synthesizer() -> str:
+    """The id a request without a synthesizer gets: the first OFFERED preference (a provider whose key is missing is
+    skipped), else the first offered model, else the raw first preference. Same rule as the dropdown's default — a
+    request that names nothing must never be routed to a hidden provider (measured 2026-09-06: an empty synthesizer
+    fell to `litellm:openai/glm-5-free` while the OpenCode key was unset → LiteLLM 'Missing credentials')."""
+    offered = [e["id"] for e in (*_litellm_models(), *_ollama_models())]
+    for pref in _PREFERRED_DEFAULTS:
+        if pref in offered:
+            return pref
+    return offered[0] if offered else _PREFERRED_DEFAULT
+
 #: Ollama's free cloud tier (https://ollama.com/library, "free usage"), as the
 #: daemon names them (`ollama pull <name>` registers a cloud model; no weights).
 OLLAMA_FREE_CLOUD_MODELS = ("gemma4:31b-cloud", "gpt-oss:120b-cloud", "gpt-oss:20b-cloud",
@@ -1140,7 +1152,7 @@ class StreamChatRequest(BaseModel):
     # mirrored from /chat's ChatRequest so the one runtime carries every /chat field; None inherits
     # the settings default, a set value keeps the turn on the v1 engines as /chat always did.
     utility: Optional[bool] = None
-    synthesizer: Optional[str] = None  # None -> _PREFERRED_DEFAULT
+    synthesizer: Optional[str] = None  # None -> _default_synthesizer() (first OFFERED preference)
     # v3.3 reasoning layer (orchestrator.api.reasoning): a mode key
     # from REASONING_TEMPLATES, plus an optional power-user blend.
     # None -> POLYMATH_REASONING_MODE env, default "none".
@@ -1956,7 +1968,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
     if ui_mode not in ("FAST", "HYBRID", "GRAPH", "ASK", "WILDCARD"):
         raise HTTPException(422, {"error_code": "unknown_mode",
                                   "message": f"mode {req.mode!r}"})
-    synth = req.synthesizer or _PREFERRED_DEFAULT
+    synth = req.synthesizer or _default_synthesizer()   # never a hidden provider (see _default_synthesizer)
     llm_model = None
     llm_backend = None
     if synth.startswith("ollama:"):

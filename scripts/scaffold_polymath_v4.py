@@ -1294,8 +1294,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/v5/wipe_corpus_v5.py", "py", None),
     # frontend
     ("frontend/.gitignore", "gitignore", None),
-    ("frontend/dist/assets/index-Csajs2yu.js", "js", None),
-    ("frontend/dist/assets/index-DM5QBXlf.css", "css", None),
+    ("frontend/dist/assets/index-CpFQLLHh.js", "js", None),
+    ("frontend/dist/assets/index-CIfdnkcg.css", "css", None),
     ("frontend/dist/index.html", "html", None),
     ("frontend/index.html", "html", None),
     ("frontend/package-lock.json", "json", None),
@@ -1657,6 +1657,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("config/chat_models/opencode_free.json", "json", None),
     ("tests/determinism/test_chat_model_catalog.py", "py", None),
     ("docs/wiki/work-log/2026-09-06-chat-model-catalog.md", "md", None),
+    ("docs/wiki/work-log/2026-09-06-chat-ui-surgical.md", "md", None),
     ("docs/wiki/experiments/chat-parity-p1f-first.json", "json", None),
     ("docs/wiki/work-log/2026-09-06-p1e-mode-recomposition.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-p1d-latency-architecture.md", "md", None),

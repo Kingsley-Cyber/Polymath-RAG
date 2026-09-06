@@ -44,7 +44,7 @@ export default function MessageBubble({ msg }: { msg: Message }) {
         />
       )}
       {msg.error && (
-        <div className="bubble">
+        <div className="answer answer-error">
           <span className="badge badge-error">
             {msg.error.error_code ?? "ERROR"}
           </span>{" "}
@@ -52,7 +52,7 @@ export default function MessageBubble({ msg }: { msg: Message }) {
         </div>
       )}
       {!msg.answer && msg.pending && msg.text && (
-        <div className="bubble">{msg.text}<span className="cursor">▍</span></div>
+        <div className="answer answer-streaming">{msg.text}<span className="cursor">▍</span></div>
       )}
       {msg.answer && <AnswerBody msg={msg} />}
     </div>
@@ -73,7 +73,7 @@ function AnswerBody({ msg }: { msg: Message }) {
   const uncovered: string[] = res?.meta?.uncovered_query_terms ?? [];
 
   return (
-    <div className="bubble">
+    <div className="answer">
       <div>{res?.answer}</div>
       {abstained && uncovered.length > 0 && (
         <div className="phase-detail" style={{ marginTop: 6 }}>
@@ -408,7 +408,7 @@ function LlmBody({
 
   const bareHtml = html && !text.includes("```");
   return (
-    <div className="bubble">
+    <div className="answer">
       <LlmText text={text} chunks={r.chunks} />
       <DegradedNote retrieval={r} />
       <div className="meta-row">
@@ -459,7 +459,7 @@ function AskBody({ msg }: { msg: Message }) {
   ];
   const total = lanes.reduce((n, [, v]) => n + v.length, 0);
   return (
-    <div className="bubble">
+    <div className="answer">
       {total === 0 ? (
         <div>
           <span className="badge badge-abstained">NO STORED OBJECTS</span>{" "}

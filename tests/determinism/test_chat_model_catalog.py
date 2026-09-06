@@ -137,3 +137,24 @@ def test_the_chat_model_catalog_never_reaches_extraction_enrichment_or_the_compi
     ui_src = (ROOT / "orchestrator" / "orchestrator" / "api" / "ui.py").read_text()
     assert "chat_compiler" not in ui_src.split("def _litellm_models")[1].split("def _litellm_credentials")[0]
 
+
+def test_a_request_without_a_synthesizer_gets_the_first_offered_model_never_a_hidden_provider(monkeypatch):
+    """2026-09-06 UI finding: an empty synthesizer fell to the raw first preference (glm-5-free) while its key was unset
+    → LiteLLM 'Missing credentials'. The fallback must follow the dropdown's rule: first OFFERED preference."""
+    import httpx
+    monkeypatch.setattr(httpx, "get", lambda url, timeout=3: _Resp(list(ui.OLLAMA_FREE_CLOUD_MODELS)))
+    alibaba = {"provider_id": "alibaba-model-studio", "provider": "anthropic", "api_key": "env:ALIBABA_MODEL_STUDIO_API_KEY",
+               "api_base": "https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic/v1/messages",
+               "models": ["anthropic/deepseek-v4-flash-0731", "anthropic/qwen3.8-max"], "enabled": True}
+    monkeypatch.setattr(ui, "_llm_provider_rows", lambda: [_rows()[0], alibaba])
+    monkeypatch.setattr(ui, "_PREFERRED_DEFAULTS", ["litellm:openai/glm-5-free", "litellm:anthropic/deepseek-v4-flash-0731", "ollama:gemma4:31b-cloud"])
+    monkeypatch.delenv("OPENCODE_API_KEY", raising=False)
+    monkeypatch.delenv("ALIBABA_MODEL_STUDIO_API_KEY", raising=False)
+    assert ui._default_synthesizer() == "ollama:gemma4:31b-cloud"                        # both keyed providers hidden
+    monkeypatch.setenv("ALIBABA_MODEL_STUDIO_API_KEY", "sk-test")
+    assert ui._default_synthesizer() == "litellm:anthropic/deepseek-v4-flash-0731"       # second preference, first offered
+    monkeypatch.setenv("OPENCODE_API_KEY", "oc")
+    assert ui._default_synthesizer() == "litellm:openai/glm-5-free"
+    src = (ROOT / "orchestrator" / "orchestrator" / "api" / "ui.py").read_text()
+    assert "synth = req.synthesizer or _default_synthesizer()" in src and "synth = req.synthesizer or _PREFERRED_DEFAULT" not in src
+
