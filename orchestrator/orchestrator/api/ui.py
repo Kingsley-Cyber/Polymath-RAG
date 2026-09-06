@@ -58,26 +58,58 @@ OLLAMA_URL = os.environ.get("POLYMATH_OLLAMA_URL",
 #: longer OFFERED (owner request 2026-08-27): its verbatim quote
 #: assembly is audit output, not an answer. The execution path is kept
 #: for API callers that name it explicitly.
+#: CHAT-MODEL-CATALOG-V1 (owner decision 2026-09-06): the chat model list is
+#: (a) OpenCode Zen's FREE models through the LiteLLM provider layer (a
+#: provider row whose api_key is `env:OPENCODE_API_KEY` — the key lives in
+#: .env, never in the table or the browser) and (b) the local Ollama daemon's
+#: FREE cloud tier only — the six names below, no local models, no paid cloud
+#: models — as a fixed, env-overridable list so the dropdown does not follow
+#: whatever happens to be pulled on this Mac. New chats take the first entry.
 _PREFERRED_DEFAULT = os.environ.get(
-    "POLYMATH_DEFAULT_SYNTHESIZER", "ollama:deepseek-v4-flash:cloud")
+    "POLYMATH_DEFAULT_SYNTHESIZER", "litellm:openai/glm-5-free")
+
+#: Ollama's free cloud tier (https://ollama.com/library, "free usage"), as the
+#: daemon names them (`ollama pull <name>` registers a cloud model; no weights).
+OLLAMA_FREE_CLOUD_MODELS = ("gemma4:31b-cloud", "gpt-oss:120b-cloud", "gpt-oss:20b-cloud",
+                            "nemotron-3-nano:30b-cloud", "nemotron-3-super:cloud", "nemotron-3-ultra:cloud")
 
 
-def _ollama_models() -> list[dict]:
-    """Live model list from the local Ollama daemon (non-fatal)."""
+def _ollama_allowlist() -> list[str]:
+    raw = os.environ.get("POLYMATH_OLLAMA_MODELS", "")
+    names = [n.strip() for n in raw.split(",") if n.strip()] if raw else list(OLLAMA_FREE_CLOUD_MODELS)
+    return names
+
+
+def _ollama_registered() -> set[str]:
+    """Names the local daemon knows (non-fatal, 3 s)."""
     import httpx
 
     try:
         r = httpx.get(f"{OLLAMA_URL}/api/tags", timeout=3)
-        return [
-            {"id": f"ollama:{m['name']}",
-             "label": f"Ollama · {m['name']}",
-             "description": "LLM generation over the retrieved evidence "
-                            "(answers are GENERATED, not claim-validated).",
-             "kind": "ollama"}
-            for m in (r.json().get("models") or [])
-        ]
+        return {m["name"] for m in (r.json().get("models") or []) if m.get("name")}
     except Exception:
-        return []
+        return set()
+
+
+def _ollama_models() -> list[dict]:
+    """The allowlisted free cloud models, each flagged `available` when the
+    daemon has it registered (an unregistered name still lists, with the
+    pull command in its description, so a new machine sees what to run)."""
+    registered = _ollama_registered()
+    out = []
+    for name in _ollama_allowlist():
+        available = name in registered
+        out.append({
+            "id": f"ollama:{name}",
+            "label": f"Ollama cloud (free) · {name}",
+            "description": ("LLM generation over the retrieved evidence via Ollama's free cloud tier "
+                            "(answers are GENERATED, not claim-validated)."
+                            if available else
+                            f"not registered with the local daemon — run `ollama pull {name}` (cloud model, no weights)"),
+            "kind": "ollama",
+            "available": available,
+        })
+    return out
 
 
 @router.get("/corpora")
@@ -415,31 +447,56 @@ def _llm_provider_rows() -> list[dict]:
             for r in rows]
 
 
+#: display names for provider rows (the LiteLLM provider string is `openai`
+#: for every OpenAI-compatible endpoint, which is not what the user should read)
+_PROVIDER_LABELS = {"opencode-free": "OpenCode (free)"}
+
+
+def _resolve_api_key(stored: str) -> str:
+    """`env:NAME` reads the key from the process environment (.env) at call
+    time; anything else is the stored literal. Empty when the variable is unset."""
+    stored = stored or ""
+    if stored.startswith("env:"):
+        return os.environ.get(stored[4:].strip(), "")
+    return stored
+
+
+def _provider_ready(row: dict) -> bool:
+    """A row whose key is env-indirected but unset cannot answer: hide it from
+    the dropdown instead of offering a model that fails on first use."""
+    stored = row.get("api_key") or ""
+    return bool(_resolve_api_key(stored)) if stored.startswith("env:") else True
+
+
 def _litellm_models() -> list[dict]:
     out = []
     for row in _llm_provider_rows():
-        if not row["enabled"]:
+        if not row["enabled"] or not _provider_ready(row):
             continue
+        base = _PROVIDER_LABELS.get(row["provider_id"], row["provider"])
         for m in row["models"]:
             out.append({
                 "id": f"litellm:{m}",
-                "label": f"{row['provider']} · {m.split('/', 1)[-1]}",
+                "label": f"{base} · {m.split('/', 1)[-1]}",
                 "description": "LLM generation over the retrieved evidence "
                                "via LiteLLM (answers are GENERATED, not "
                                "claim-validated).",
                 "kind": "litellm",
+                "available": True,
             })
     return out
 
 
 def _litellm_credentials(model: str) -> dict:
     """api_key/api_base for the configured provider owning this model
-    string; first enabled provider listing the model wins."""
+    string; first enabled provider listing the model wins. An `env:NAME`
+    key is resolved from the environment at call time."""
     for row in _llm_provider_rows():
         if row["enabled"] and model in row["models"]:
             cred = {}
-            if row["api_key"]:
-                cred["api_key"] = row["api_key"]
+            key = _resolve_api_key(row["api_key"])
+            if key:
+                cred["api_key"] = key
             if row["api_base"]:
                 cred["api_base"] = row["api_base"]
             return cred
@@ -717,8 +774,14 @@ class ProviderUpsert(BaseModel):
 def llm_providers() -> dict:
     rows = _llm_provider_rows()
     for r in rows:  # never return raw keys to the browser
-        r["api_key_set"] = bool(r["api_key"])
-        r["api_key"] = (r["api_key"][-4:] if r["api_key"] else "")
+        stored = r["api_key"] or ""
+        if stored.startswith("env:"):
+            r["api_key_set"] = bool(_resolve_api_key(stored))   # the variable's presence, not its value
+            r["api_key"] = stored                                # the variable NAME is safe to show
+        else:
+            r["api_key_set"] = bool(stored)
+            r["api_key"] = (stored[-4:] if stored else "")
+        r["ready"] = r["enabled"] and _provider_ready(r)
     return {"providers": rows}
 
 
