@@ -40,6 +40,7 @@ the turn's pool) — never through the result dict.
 from __future__ import annotations
 
 import os
+import re
 import time
 from concurrent.futures import CancelledError, Executor, ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
@@ -109,10 +110,12 @@ def chat_retrieval_flag(override: str | None = None) -> str:
 
 #: env-tunable knobs on the one budget authority, POLYMATH_CHAT_<NAME> (measurement only; the defaults are the contract)
 _INT_KNOBS = ("rerank_max", "synthesis_max", "global_dense_k", "global_sparse_k", "merged_candidate_max", "max_workers",
+              "latent_enabled", "latent_max_parents", "latent_children_per_parent", "latent_budget_ms",   # B12 lane D
               # EVIDENCE-DIET-V1 step 3: POLYMATH_CHAT_RERANK_ROUND_ROBIN (0/1), POLYMATH_CHAT_RERANK_DOC_CAP, POLYMATH_CHAT_RERANK_MAX_FAIR
               "rerank_round_robin", "rerank_doc_cap", "rerank_max_fair")
 _FLOAT_KNOBS = ("embed_deadline_s", "lane_deadline_s", "rerank_deadline_s",     # P1.d wall-clock budgets
-                "wildcard_deadline_s")                                            # P1.e frontier budget
+                "wildcard_deadline_s",                                            # P1.e frontier budget
+                "wildcard_finish_budget_s", "wildcard_unverified_fill_s")        # B12 finish budget + unverified fill
 
 
 def default_budget() -> CandidateBudget:
@@ -192,6 +195,10 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                 filters.update(extra)
             return searcher._search(collection, list(qvec if qvec is not None else vecs[query]), filters, limit=top_k)
 
+        def latent_search(_collection: str, v, filters: dict) -> list[dict]:
+            # B12 lane D: the latent kinds live in the same collection; `latent_rescue_parents` passes the kind + corpus
+            return searcher._search(collection, list(v), dict(filters), limit=max(budget.latent_abstraction_top_k, budget.latent_transfer_top_k))
+
         def sparse_search(top_k: int, sparse_query=None) -> list[dict]:
             return searcher.sparse_search(collection, sparse_query if sparse_query is not None else sparse_q,
                                           {"representation_kind": "routing_child", "corpus_id": corpus_id}, limit=top_k)
@@ -235,7 +242,7 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
         if on_context is not None:
             on_context(ctx, pool)          # P1.e: the vector exists — a frontier may start beside the dense lanes
         # STAGES 2–3: concurrent lanes under `lane_deadline_s` → union with provenance (the engine)
-        result = retrieve_candidates(ctx, budget, dense_search=dense_search, sparse_search=sparse_search,
+        result = retrieve_candidates(ctx, budget, dense_search=dense_search, sparse_search=sparse_search, latent_search=latent_search,
                                      region_lookup=_region_lookup, subqueries=subs, executor=pool, prestarted=prestarted)
 
         # STAGE 4: exactly ONE judge call per turn, under `rerank_deadline_s`. Past it the turn proceeds in
@@ -440,6 +447,45 @@ def _attach_graph(out: dict, query: str, corpus_id: str, *, qvec, graph_useful: 
     trace.setdefault("latency_ms", {})["graph"] = graph_ms
 
 
+def _unverified_bridges(slots: list, *, children_of, baseline: dict, quota: int, fill_deadline: float, plan, qtoks) -> list[dict]:
+    """B12: bridges for parents the finish budget never reached — the sweep's own ranking (hop1), the parent's best
+    routing child fetched WITHOUT the judge (one Qdrant call each, under `fill_deadline`), `verified: False`,
+    `source_support: None`. Never a chunk already in the evidence; never more than `quota`; fail-open per parent."""
+    out: list[dict] = []
+    obvious_parents = set(baseline.get("parent_ids") or ()); obvious_chunks = set(baseline.get("chunk_ids") or ()); obvious_docs = set(baseline.get("doc_ids") or ())
+    for slot in sorted(slots, key=lambda x: (-float(x.get("hop1") or 0.0), str(x.get("parent_id")))):
+        if len(out) >= quota or time.perf_counter() > fill_deadline:
+            break
+        if slot.get("parent_id") in obvious_parents:
+            continue
+        try:
+            rows = children_of(slot["parent_id"]) or []
+        except Exception:  # noqa: BLE001 — fail-open per parent
+            rows = []
+        kids = [(x.get("payload") or {}) for x in rows]
+        kids = [k for k in kids if (k.get("text") or "").strip() and k.get("chunk_id") not in obvious_chunks]
+        if not kids:
+            continue
+        best = kids[0]
+        overlap = _jaccard_tokens(qtoks, (best.get("text") or ""))
+        same_doc = slot.get("doc_id") in obvious_docs
+        novelty = plan.borderline_novelty if overlap > plan.obvious_lexical_cap else (plan.borderline_novelty + (1.0 - plan.borderline_novelty) / 2 if same_doc else 1.0)
+        principle = slot.get("abstraction") or slot.get("transfer") or ""
+        out.append({"parent_id": slot["parent_id"], "doc_id": slot.get("doc_id") or "", "source_name": slot.get("source_name") or "",
+                    "principle": principle, "why_it_may_transfer": (slot.get("transfer") if slot.get("abstraction") else "") or "",
+                    "source_evidence": {"chunk_id": best.get("chunk_id"), "text": (best.get("text") or "")[:plan.source_text_chars],
+                                        "source_name": best.get("source_name") or slot.get("source_name") or ""},
+                    "scores": {"latent_alignment": round(float(slot.get("hop1") or 0.0), 4), "source_support": None, "novelty": novelty,
+                               "value": round(float(slot.get("hop1") or 0.0) * novelty, 4)},
+                    "channels": sorted(set(slot.get("channels") or [])), "verified": False})
+    return out
+
+
+def _jaccard_tokens(qtoks: set, text: str) -> float:
+    toks = {t for t in re.findall(r"[a-z0-9]+", (text or "").lower()) if len(t) > 2}
+    return (len(qtoks & toks) / len(qtoks | toks)) if (qtoks or toks) else 0.0
+
+
 def _retrieve_wildcard(query: str, corpus_id: str, *, lanes: tuple, budget: Optional[CandidateBudget] = None, **kw) -> dict:
     """WILDCARD = HYBRID core ∥ W (§3.19). The latent sweep (`divergent_sweep`) is submitted to the core's
     per-turn pool from `on_context` — i.e. the moment the ONE embedding returns, beside the dense lanes, with
@@ -492,7 +538,10 @@ def _retrieve_wildcard(query: str, corpus_id: str, *, lanes: tuple, budget: Opti
                     "parent_ids": {e.get("parent_id") for e in evidence if e.get("parent_id")},
                     "chunk_ids": {e.get("chunk_id") for e in evidence if e.get("chunk_id")}}
         t_core = time.perf_counter()
-        deadline = t_core + deadline_s
+        deadline = t_core + deadline_s                                   # the sweep must have landed by here
+        finish_budget_s = float((budget or default_budget()).wildcard_finish_budget_s)
+        fill_s = float((budget or default_budget()).wildcard_unverified_fill_s)
+        finish_deadline = t_core + max(deadline_s, finish_budget_s)     # B12: the finish has its own, larger budget
         receipt: dict = {
             "contract": MODE_COMPOSITION_CONTRACT, "plan": plan.plan_version, "deadline_s": deadline_s,
             "max_bridges": plan.max_bridges, "latent_top_k": plan.latent_top_k, "candidate_parents": plan.candidate_parents,
@@ -524,7 +573,7 @@ def _retrieve_wildcard(query: str, corpus_id: str, *, lanes: tuple, budget: Opti
             def _expired() -> None:
                 # an abandoned validation (deadline passed, result ignored) must not keep the stores and the
                 # reranker busy: every further call raises, divergent_finish treats it as a fail-open miss
-                if time.perf_counter() > deadline + WILDCARD_FINISH_GRACE_S:
+                if time.perf_counter() > finish_deadline + WILDCARD_FINISH_GRACE_S + fill_s:
                     raise TimeoutError("wildcard deadline passed; frontier abandoned")
 
             def _children_of(parent_id: str, _v: tuple = qvec) -> list[dict]:   # closure over ONE fixed vector (#9)
@@ -547,9 +596,9 @@ def _retrieve_wildcard(query: str, corpus_id: str, *, lanes: tuple, budget: Opti
             finish_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="wildcard-finish")
             t1 = time.perf_counter()
             f2 = finish_pool.submit(divergent_finish, query, parents, children_of=_children_of, baseline=baseline,
-                                    rerank_pairs=_rerank_pairs, plan=plan, deadline=deadline)
+                                    rerank_pairs=_rerank_pairs, plan=plan, deadline=finish_deadline)
             try:
-                w = f2.result(timeout=max(0.0, deadline + WILDCARD_FINISH_GRACE_S - time.perf_counter()))
+                w = f2.result(timeout=max(0.0, finish_deadline + WILDCARD_FINISH_GRACE_S - time.perf_counter()))
                 receipt["finish_ms"] = round((time.perf_counter() - t1) * 1000, 1)
                 receipt.update({k: w["diagnostics"].get(k) for k in ("latent_candidates", "excluded_obvious", "support_filtered", "reranker",
                                                                        "partial", "parents_validated", "parents_skipped")})
@@ -557,23 +606,49 @@ def _retrieve_wildcard(query: str, corpus_id: str, *, lanes: tuple, budget: Opti
                     if (b.get("source_evidence") or {}).get("chunk_id") in baseline["chunk_ids"]:
                         receipt["excluded_in_evidence"] += 1          # a bridge never duplicates an evidence chunk
                         continue
+                    b.setdefault("verified", True)
                     bridges.append(b)
+                receipt["verified_bridges"] = len(bridges)
+                skipped = (w["diagnostics"].get("skipped_parents") or [])
+                if skipped and len(bridges) < plan.max_bridges:
+                    qtoks = {t for t in re.findall(r"[a-z0-9]+", query.lower()) if len(t) > 2}
+                    extra = _unverified_bridges(skipped, children_of=_children_of, baseline=baseline, quota=plan.max_bridges - len(bridges),
+                                                fill_deadline=time.perf_counter() + fill_s, plan=plan, qtoks=qtoks)
+                    bridges.extend(extra)
+                    receipt["unverified_bridges"] = len(extra)
+                    if extra:
+                        # the judge missed part or all of its budget: the lane is degraded even though it delivered —
+                        # `wildcard_timeout:finish` when nothing was validated, `wildcard_partial:unverified` otherwise
+                        receipt["degraded"] = receipt["degraded"] or (
+                            "wildcard_timeout:finish" if not w["diagnostics"].get("parents_validated") else "wildcard_partial:unverified")
                 bridges = bridges[:plan.max_bridges]
                 if not bridges and w["diagnostics"].get("partial") and not w["diagnostics"].get("parents_validated"):
                     receipt["degraded"] = "wildcard_timeout:finish"          # the budget did not fit a single validation
             except FutureTimeout:
                 receipt["finish_ms"] = round((time.perf_counter() - t1) * 1000, 1)
                 receipt["degraded"] = "wildcard_timeout:finish"
+                # B12: the validated frontier is lost, the sweep is not — ship its top parents unverified
+                frontier = [dict(x) for x in (parents or {}).values() if x.get("parent_id") not in baseline["parent_ids"]]
+                qtoks = {t for t in re.findall(r"[a-z0-9]+", query.lower()) if len(t) > 2}
+                extra = _unverified_bridges(frontier[:plan.candidate_parents], children_of=_children_of, baseline=baseline,
+                                            quota=plan.max_bridges, fill_deadline=time.perf_counter() + fill_s, plan=plan, qtoks=qtoks)
+                bridges.extend(extra)
+                receipt["verified_bridges"] = 0
+                receipt["unverified_bridges"] = len(extra)
             except Exception as exc:  # noqa: BLE001
                 receipt["degraded"] = f"finish_error:{type(exc).__name__}"
         receipt["returned"] = len(bridges)
+        receipt.setdefault("verified_bridges", sum(1 for b in bridges if b.get("verified", True)))
+        receipt.setdefault("unverified_bridges", sum(1 for b in bridges if b.get("verified", True) is False))
         out["wildcard"] = bridges
         meta["wildcard"] = receipt
         meta["wildcard_plan"] = plan.plan_version
         if receipt["degraded"]:
             meta["degraded"] = list(meta.get("degraded") or []) + [{
                 "component": "wildcard",
-                "effect": "no frontier bridges this turn; the core evidence stands",
+                "state": ("unverified" if bridges else None),
+                "effect": (f"{len(bridges)} frontier bridge(s) shipped UNVERIFIED — the two-hop judge missed its budget; the core evidence stands"
+                           if bridges else "no frontier bridges this turn; the core evidence stands"),
                 "reason": receipt["degraded"]}]
         lat = trace.setdefault("latency_ms", {})
         lat["wildcard"] = round((time.perf_counter() - t_core) * 1000, 1)     # the frontier's extension of the turn

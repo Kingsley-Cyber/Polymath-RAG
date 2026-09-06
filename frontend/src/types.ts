@@ -53,6 +53,8 @@ export interface Degradation {
 }
 
 export interface WildcardBridge {
+  /** B12: false = shipped without the two-hop judge (finish budget missed); the label says so. */
+  verified?: boolean;
   parent_id: string;
   doc_id: string;
   source_name: string;

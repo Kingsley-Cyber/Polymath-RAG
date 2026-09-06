@@ -84,7 +84,8 @@ def test_every_candidate_carries_lane_provenance_and_multi_lane_chunks_fuse_once
     single = next(c for c in res.union if c.chunk_id == "d3-deep")
     assert single.arrivals == [ce.LANE_B] and k0.fused_score > single.fused_score      # agreement ranks above single-lane
     assert res.union[0].chunk_id == "d2-p0-k0" and res.union[-1].chunk_id == "d2-noise"  # noisy region sinks, never deleted
-    assert res.trace["funnel_lanes"].keys() == {"hierarchical", "global_dense_child", "global_sparse_child"}
+    assert res.trace["funnel_lanes"].keys() == {"hierarchical", "global_dense_child", "global_sparse_child", "latent_rescue"}   # B12: lane D receipted (empty when off)
+    assert res.trace["funnel_lanes"]["latent_rescue"] == [] and res.trace["lane_sizes"]["latent_rescue"] == 0
     assert res.trace["funnel_union"] == [c.chunk_id for c in res.union] and res.trace["plan"] == "chat-retrieval-v2"
     assert res.trace["multi_lane"] >= 1 and res.degraded == []
     # exactly ONE sparse search and ONE global dense child search per turn (§3.21 #1)
@@ -713,3 +714,59 @@ def test_structural_noise_filter_drops_index_pages_and_number_lists_but_never_pr
     assert structural_noise_reason(prose) is None
     assert structural_noise_reason("short [1](a#p1) [2](b#p2)") is None                     # too short to judge
     assert structural_noise_reason("") is None
+
+
+
+def test_lane_d_latent_rescue_nominates_parents_and_their_original_children_compete_judged():
+    """B12 LATENT-COMPOSITION-V1: with `latent_enabled`, the latent kinds nominate parents and each parent's ORIGINAL
+    children enter the union as LANE_D candidates (fused and judged like any lane); latent text itself is never a
+    candidate; the lane is receipted; with the flag off the engine is byte-identical."""
+    import polymath_shared.candidate_engine as ce
+    calls = {"latent": [], "children": []}
+
+    def dense(kind, top_k, extra=None, qvec=None):
+        if kind == ce.REPRESENTATION_KIND_CHILD and extra and extra.get("parent_id"):
+            calls["children"].append(extra["parent_id"])
+            pid = extra["parent_id"]
+            return [{"score": 0.5, "payload": {"chunk_id": f"{pid}-kid{i}", "doc_id": "dL", "parent_id": pid, "source_name": "Laban.md", "text": f"effort {i}"}} for i in range(top_k)]
+        if kind == ce.REPRESENTATION_KIND_CHILD:
+            return [{"score": 0.9, "payload": {"chunk_id": "c1", "doc_id": "d1", "parent_id": "p1", "source_name": "A.md", "text": "punch"}}]
+        return []
+
+    def sparse(top_k, sparse_query=None):
+        return []
+
+    def latent(_collection, v, filters):
+        calls["latent"].append(filters.get("representation_kind"))
+        return [{"score": 0.8, "payload": {"parent_id": "pL1", "doc_id": "dL", "source_name": "Laban.md", "text": "force and intent"}},
+                {"score": 0.7, "payload": {"parent_id": "pL2", "doc_id": "dL", "source_name": "Laban.md", "text": "phrasing"}}]
+
+    ctx = _ctx()
+    on = ce.CandidateBudget(latent_enabled=True, latent_children_per_parent=2, latent_max_parents=6, lanes=(ce.LANE_B,))
+    res = ce.retrieve_candidates(ctx, on, dense_search=dense, sparse_search=sparse, latent_search=latent)
+    ids = [c.chunk_id for c in res.union]
+    assert "c1" in ids and "pL1-kid0" in ids and "pL2-kid1" in ids
+    d_rows = [c for c in res.union if ce.LANE_D in c.arrivals]
+    assert len(d_rows) == 4 and all(c.doc_id == "dL" for c in d_rows) and not any("force and intent" in c.text for c in res.union)
+    assert set(calls["latent"]) == {"latent_abstraction", "latent_transfer"} and calls["children"] == ["pL1", "pL2"]
+    assert res.trace["lane_sizes"]["latent_rescue"] == 4 and res.trace["latent"]["enabled"] is True
+    assert [p["parent_id"] for p in res.trace["latent"]["parents"]] == ["pL1", "pL2"]
+    off = ce.CandidateBudget(lanes=(ce.LANE_B,))
+    res_off = ce.retrieve_candidates(ctx, off, dense_search=dense, sparse_search=sparse, latent_search=latent)
+    assert [c.chunk_id for c in res_off.union] == ["c1"] and res_off.trace["lane_sizes"]["latent_rescue"] == 0 and res_off.trace["latent"] == {"enabled": False}
+
+
+def test_lane_d_is_fail_open_and_receipted_when_the_latent_search_breaks():
+    import polymath_shared.candidate_engine as ce
+
+    def dense(kind, top_k, extra=None, qvec=None):
+        return [{"score": 0.9, "payload": {"chunk_id": "c1", "doc_id": "d1", "parent_id": "p1", "source_name": "A.md", "text": "punch"}}] if kind == ce.REPRESENTATION_KIND_CHILD and not extra else []
+
+    def latent(_c, v, f):
+        raise RuntimeError("qdrant hiccup")
+
+    res = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(latent_enabled=True, lanes=(ce.LANE_B,)), dense_search=dense, sparse_search=lambda k, q=None: [], latent_search=latent)
+    assert [c.chunk_id for c in res.union] == ["c1"]
+    assert res.trace["latent"]["enabled"] is True and res.trace["latent"]["degraded"] and res.trace["lane_sizes"]["latent_rescue"] == 0
+
+

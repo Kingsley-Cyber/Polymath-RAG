@@ -77,6 +77,7 @@ class DivergentPlan:
     obvious_lexical_cap: float = 0.35  # query↔child overlap above = obvious
     borderline_novelty: float = 0.4   # damp factor for borderline children
     source_text_chars: int = 800
+    children_per_parent: int = 8      # B12: pairs the judge scores per candidate parent (was every child, ≤ 50)
 
 
 DIVERGENT_DEFAULT_PLAN = DivergentPlan()
@@ -92,6 +93,7 @@ class Bridge:
     source_evidence: dict             # the REAL grounding child
     scores: dict = field(default_factory=dict)
     channels: list = field(default_factory=list)
+    verified: bool = True             # B12: False = shipped without the two-hop judge (budget missed), labelled
 
 
 def divergent_sweep(qvec, latent_search, plan: DivergentPlan = DIVERGENT_DEFAULT_PLAN) -> dict[str, dict]:
@@ -160,7 +162,8 @@ def divergent_finish(
     diag = {"latent_candidates": len(parents), "excluded_obvious": 0,
             "support_filtered": 0, "returned": 0,
             "reranker": rerank_pairs is not None,
-            "partial": False, "parents_validated": 0, "parents_skipped": 0}
+            "partial": False, "parents_validated": 0, "parents_skipped": 0,
+            "skipped_parents": []}          # B12: the frontier the budget did not reach, in frontier order
 
     # 2. EXCLUDE the obvious neighborhood — the whole point. Hard
     # exclusion is PARENT-level: the section the baseline already
@@ -187,6 +190,7 @@ def divergent_finish(
             if clock() + est > deadline:
                 diag["partial"] = True
                 diag["parents_skipped"] = len(frontier) - i
+                diag["skipped_parents"] = [dict(slot) for slot in frontier[i:]]
                 break
         t_slot = clock()
         diag["parents_validated"] += 1
@@ -195,7 +199,7 @@ def divergent_finish(
         except Exception:
             kid_rows = []
         kids = [(r.get("payload") or {}) for r in kid_rows]
-        kids = [k for k in kids if (k.get("text") or "").strip()]
+        kids = [k for k in kids if (k.get("text") or "").strip()][:plan.children_per_parent]   # B12: fewer pairs per judge call
         if not kids:
             durations.append(clock() - t_slot)
             continue

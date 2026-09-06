@@ -111,6 +111,9 @@ def _legacy_reading(ans: dict, weak_reasons: dict) -> dict:
 
 #: P1.e MODE-COMPOSITION-V1 arms — chat_retrieve_mode(arm, …), PRIMARY only
 MODE_ARMS = ("VECTOR", "HYBRID", "GRAPH", "WILDCARD")
+#: B12 LATENT-COMPOSITION-V1: a mode arm with the ✨ latent lane on — "<MODE>+LATENT" runs chat_retrieve_mode(<MODE>) with
+#: budget.latent_enabled=True (lane D), so the composition can be measured with and without the latent lane on the same plans
+LATENT_SUFFIX = "+LATENT"
 UNION_ARMS = ("VECTOR", "AB", "HYBRID", "ABC")   # arms whose funnel union ids are kept per turn (mode-parity invariant)
 
 
@@ -174,6 +177,11 @@ def run(args) -> int:
             try:
                 if arm in MODE_ARMS:        # P1.e: the composition owner (PRIMARY only, like AB / ABC)
                     fast = chat_retrieve_mode(arm, query, q["corpus_id"], exact_terms=exact)
+                elif arm.endswith(LATENT_SUFFIX) and arm[: -len(LATENT_SUFFIX)] in MODE_ARMS:   # B12: the ✨ lane on
+                    from dataclasses import replace as _replace
+                    from orchestrator.api.chat_retrieval import default_budget as _default_budget
+                    fast = chat_retrieve_mode(arm[: -len(LATENT_SUFFIX)], query, q["corpus_id"], exact_terms=exact,
+                                              budget=_replace(_default_budget(), latent_enabled=True))
                 else:
                     fast = chat_retrieve_v2(query, q["corpus_id"], exact_terms=exact, subqueries=(subs if arm == "multi" else ()), **kw)
                 err = None
@@ -198,6 +206,12 @@ def run(args) -> int:
                             "rerank_prefix": trace.get("rerank_prefix"), "candidates": meta.get("candidates"),
                             "evidence_count": meta.get("evidence_count"), "degraded": meta.get("degraded"),
                             "mode_truthful": ((meta.get("mode") == arm) if arm in MODE_ARMS else None),
+                            # B12 receipts: the latent lane's size / trace, and the wildcard verified / unverified split
+                            "latent_rescue": (trace.get("lane_sizes") or {}).get("latent_rescue"),
+                            "latent_trace": trace.get("latent"),
+                            "wildcard_verified": (meta.get("wildcard") or {}).get("verified_bridges"),
+                            "wildcard_unverified": (meta.get("wildcard") or {}).get("unverified_bridges"),
+                            "wildcard_degraded": (meta.get("wildcard") or {}).get("degraded"),
                             "union_ids": (list(trace.get("funnel_union") or []) if arm in UNION_ARMS else None),
                             "dims": st.get("dims", 0), "dims_ok": st.get("dims_ok", 0), "dims_system_ok": st.get("dims_system_ok", 0),
                             "dims_flagged": st.get("dims_flagged", 0), "dims_silent": st.get("dims_silent", 0),
@@ -265,6 +279,13 @@ def run(args) -> int:
                                                     and (r.get("graph_bounds") or {}).get("graph_useful") is False] or [None]),
             "mode_truthful_rate": (round(sum(1 for r in ar if r.get("mode_truthful")) / max(1, len(ar)), 3) if arm in MODE_ARMS else None),
             "wildcard_bridges_p50": _med([r.get("wildcard_bridges") for r in ar]),
+            # B12: turns that delivered ≥ 1 bridge, the verified / unverified split, the finish timeouts, the latent lane
+            "wildcard_turns_with_bridges": sum(1 for r in ar if (r.get("wildcard_bridges") or 0) > 0),
+            "wildcard_verified_total": sum(r.get("wildcard_verified") or 0 for r in ar),
+            "wildcard_unverified_total": sum(r.get("wildcard_unverified") or 0 for r in ar),
+            "wildcard_finish_timeouts": sum(1 for r in ar if str(r.get("wildcard_degraded") or "").startswith("wildcard_timeout")),
+            "latent_rescue_p50": _med([r.get("latent_rescue") for r in ar if r.get("latent_rescue") is not None]),
+            "latent_turns_with_candidates": sum(1 for r in ar if (r.get("latent_rescue") or 0) > 0),
             "wildcard_bridges_max": max([r.get("wildcard_bridges") for r in ar if isinstance(r.get("wildcard_bridges"), int)] or [None]),
             "bridges_in_evidence": sum(r.get("bridges_in_evidence") or 0 for r in ar),
             "graph_degraded_turns": sum(1 for r in ar if r.get("graph_degraded")),

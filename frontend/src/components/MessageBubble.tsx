@@ -123,7 +123,7 @@ function WildcardCards({ retrieval }: { retrieval: Retrieval }) {
       {bridges.map((b, i) => (
         <div key={i} className="wildcard-card panel" style={{ marginTop: 8 }}>
           <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 4 }}>
-            🃏 wildcard · derived insight · {b.source_name}
+            🃏 wildcard · derived insight{b.verified === false ? " · unverified" : ""} · {b.source_name}
           </div>
           <div style={{ fontWeight: 600 }}>{b.principle}</div>
           {b.why_it_may_transfer && (

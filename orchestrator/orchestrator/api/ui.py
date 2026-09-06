@@ -2305,7 +2305,9 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
             from orchestrator.api.chat_retrieval import chat_retrieval_flag
             _rflag = chat_retrieval_flag(getattr(req, "retrieval", None))
             # `latent` / `utility` are v1 plan knobs: either keeps the turn on the v1 engines (as /chat always did)
-            _v2_mode = _rflag in ("v2", "v2-single") and not req.latent and not req.utility
+            # B12 LATENT-COMPOSITION-V1: ✨ (`req.latent`) no longer drops the turn to the v1 engine — it enables lane D
+            # inside the v2 composition (see the budget below); `utility` remains a v1 knob.
+            _v2_mode = _rflag in ("v2", "v2-single") and not req.utility
             # GRAPH bounds follow the compiled plan's relational verdict (plan §3.15 / §5 #14): `graph_useful: false`
             # keeps the expansion definitional (≤ 2 seeds); no compiler, or a fallback plan, keeps the default breadth.
             _graph_useful = True if (_flag != "on" or _plan is None or getattr(_plan, "fallback", False)) \
@@ -2375,9 +2377,12 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                     # MODE-COMPOSITION-V1 (plan §3.15, P1.e): lanes A/B/C fused at child level with provenance;
                     # GRAPH adds the bounded hop-1 over the FINAL evidence (§3.18), WILDCARD the parallel latent
                     # frontier (§3.19) — bridges ride `fast["wildcard"]`, never the evidence list.
+                    from orchestrator.api.chat_retrieval import default_budget as _default_budget
+                    from dataclasses import replace as _replace
+                    _latent_kw = {"budget": _replace(_default_budget(), latent_enabled=True)} if req.latent else {}   # B12: ✨ = lane D
                     fast = chat_retrieve_mode(
                         "VECTOR" if ui_mode == "FAST" else ui_mode, _retrieval_text, corpus_id,
-                        graph_useful=_graph_useful,
+                        graph_useful=_graph_useful, **_latent_kw,
                         exact_terms=tuple(_plan.exact_terms) if (_flag == "on" and _plan is not None) else (),
                         # P1.b: typed subqueries run lanes B + C on their own vectors (v2-single = A/B without them)
                         subqueries=tuple((q.id, q.type, q.query, q.weight) for q in _plan.queries if q.type != "PRIMARY")
