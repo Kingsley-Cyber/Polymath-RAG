@@ -126,6 +126,9 @@ def _ollama_models() -> list[dict]:
                             f"not registered with the local daemon — run `ollama pull {name}` (cloud model, no weights)"),
             "kind": "ollama",
             "available": available,
+            "provider": "ollama-free",
+            "provider_label": "Ollama cloud (free)",
+            "model": name,
         })
     return out
 
@@ -501,6 +504,10 @@ def _litellm_models() -> list[dict]:
                                "claim-validated).",
                 "kind": "litellm",
                 "available": True,
+                # MODEL-PICKER-V1: the dropdown groups by provider (collapsible sections)
+                "provider": row["provider_id"],
+                "provider_label": base,
+                "model": m.split("/", 1)[-1],
             })
     return out
 

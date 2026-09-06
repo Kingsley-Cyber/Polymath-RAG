@@ -158,3 +158,17 @@ def test_a_request_without_a_synthesizer_gets_the_first_offered_model_never_a_hi
     src = (ROOT / "orchestrator" / "orchestrator" / "api" / "ui.py").read_text()
     assert "synth = req.synthesizer or _default_synthesizer()" in src and "synth = req.synthesizer or _PREFERRED_DEFAULT" not in src
 
+
+def test_catalog_rows_carry_the_provider_grouping_fields(monkeypatch):
+    """MODEL-PICKER-V1: the dropdown groups models into collapsible provider sections from DATA
+    (provider id + display label + bare model name), never by parsing ids."""
+    monkeypatch.setenv("OPENCODE_API_KEY", "sk-test")
+    monkeypatch.setattr(ui, "_llm_provider_rows", lambda: _rows())
+    monkeypatch.setattr(ui, "_ollama_registered", lambda: {"gemma4:31b-cloud"})
+    entries = ui.synthesizers()["synthesizers"]
+    by_id = {e["id"]: e for e in entries}
+    oc = by_id["litellm:openai/glm-5-free"]
+    assert oc["provider"] == "opencode-free" and oc["provider_label"] == "OpenCode (free)" and oc["model"] == "glm-5-free"
+    ol = by_id["ollama:gemma4:31b-cloud"]
+    assert ol["provider"] == "ollama-free" and ol["provider_label"] == "Ollama cloud (free)" and ol["model"] == "gemma4:31b-cloud"
+    assert all({"provider", "provider_label", "model", "kind", "available"} <= set(e) for e in entries)

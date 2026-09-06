@@ -1,4 +1,5 @@
 import type { Corpus, Mode, ReasoningModeInfo, Synthesizer } from "../types";
+import ModelPicker from "./ModelPicker";
 
 export const THEMES = [
   { id: "obsidian", color: "#7da2f5" },
@@ -127,16 +128,7 @@ export default function TopBar({
       )}
       <div className="control">
         <label>Model</label>
-        <select
-          value={synthesizer}
-          onChange={(e) => onSynthesizer(e.target.value)}
-        >
-          {synthesizers.map((s) => (
-            <option key={s.id} value={s.id} title={s.description}>
-              {s.label}
-            </option>
-          ))}
-        </select>
+        <ModelPicker synthesizers={synthesizers} value={synthesizer} onChange={onSynthesizer} />
       </div>
       <div className="spacer" />
       <div className="control">

@@ -15,6 +15,12 @@ export interface Synthesizer {
   label: string;
   description: string;
   default?: boolean;
+  /** MODEL-PICKER-V1: grouping fields from the catalog (provider row id, display name, bare model name). */
+  provider?: string;
+  provider_label?: string;
+  model?: string;
+  kind?: string;
+  available?: boolean;
 }
 
 export interface Phase {
