@@ -245,3 +245,26 @@ def test_evidence_diet_prompt_carries_passages_only_with_breadcrumbs():
     assert "[S1] = The Screen Combat Handbook A Practical Guide for Filmmakers › Camera reaction" in user and "[S3] = handbook" in user
     assert "contents.xhtml" not in user and "9e6b68fb" not in user
     assert "doc:doc_x" not in user and "The whole book in a paragraph" not in user and "Effective Camera Angles" not in user
+
+
+def test_graph_hygiene_claims_are_not_evidence_rows_and_tags_are_unique_per_chunk():
+    """Backlog B8 (GRAPH-EVIDENCE-HYGIENE-V1): a fact's provenance passage is not an [S#] row (it was never judged);
+    the fact itself still reaches the prompt in the tagless facts block; a chunk gets one tag even when the bundle
+    lists it twice (judged text item + claim provenance, or two claims on one passage)."""
+    claim = {"kind": "claim", "lane": "graph", "text_kind": None, "fact_id": "f1",
+             "source_span": {"locator": "chunk:chunk_prov1", "text": "Other famous point fighters of the era included …", "chunk_id": "chunk_prov1"},
+             "source_document_id": "doc_x", "presentation": {"human_locator": "Fight Choreography › History"}, "applicability": {"source_name": "Fight Choreography.md"}}
+    dup_claim = dict(claim, source_span={"locator": "chunk:chunk_a1", "text": "Camera shudder on hits …", "chunk_id": "chunk_a1"})
+    bundle = {"evidence_bundle": [
+        claim, dup_claim,                                                                    # claims sort first in the assembler
+        _item("child_chunk", "chunk:chunk_a1", "Camera shudder on hits …", human="Screen Combat Handbook › Camera reaction", chunk_id="chunk_a1"),
+        _item("child_chunk", "chunk:chunk_a1", "Camera shudder on hits …", human="Screen Combat Handbook › Camera reaction", chunk_id="chunk_a1"),
+        _item("child_chunk", "chunk:chunk_b2", "Distance from the fight …", human="Fight Choreography › Distance from the Fight", chunk_id="chunk_b2"),
+    ]}
+    legend = ui._evidence_legend(bundle)
+    assert [(e["tag"], e["chunk_id"]) for e in legend] == [("S1", "chunk_a1"), ("S2", "chunk_b2")]
+    facts = [{"fact_id": "f1", "subject": "Billy Blanks", "predicate": "competed_in", "object": "point fighting"}]
+    user = ui._grounded_messages("q", bundle, facts, [], [])[-1]["content"]
+    assert "point fighters of the era" not in user                                          # the provenance passage is not evidence
+    assert "[fact:f1] Billy Blanks —competed_in→ point fighting" in user                    # the fact itself still rides, tagless
+    assert user.count("Camera shudder on hits") == 1 and "[S3]" not in user

@@ -1408,6 +1408,7 @@ def _evidence_legend(bundle: dict) -> list[dict]:
     at _LEGEND_ITEMS. Shared by _grounded_messages (prompt), the answer
     event (UI) and the query receipt (RETRIEVAL-FUNNEL-V1 `selected`)."""
     out: list[dict] = []
+    seen_chunks: set[str] = set()
     for item in bundle.get("evidence_bundle") or []:
         if len(out) >= _LEGEND_ITEMS:
             break
@@ -1418,13 +1419,26 @@ def _evidence_legend(bundle: dict) -> list[dict]:
         # deterministic synthesizer and /retrieve keep their summaries).
         if item.get("text_kind") in _SUMMARY_TEXT_KINDS:
             continue
+        # GRAPH-EVIDENCE-HYGIENE-V1 (backlog B8, measured 2026-09-06 on the owner's GRAPH turn): the assembler
+        # turns every graph fact into a `claim` item carrying its provenance passage and sorts claims FIRST —
+        # 20 of 35 legend rows were such passages, never judged, chosen by entity adjacency (a preface line and
+        # a list of 1980s point fighters were S1 / S2 and got cited). Facts stay in the prompt as the tagless
+        # `[fact:…] subject —predicate→ object` block; their passages are [S#] evidence only when the judge
+        # selected them, in which case the judged text item already carries the chunk.
+        if item.get("kind") == "claim":
+            continue
         span = item.get("source_span") or {}
         loc = span.get("locator") or ""
         text = (span.get("text") or "")[:_EVIDENCE_TEXT_CHARS]
         if loc and text:
             m = _LOC_CHUNK_RE.match(str(loc))
+            cid = (m.group(1) if m else (item.get("source_chunk_id") or None))
+            if cid and cid in seen_chunks:            # B8: one tag per passage (S1 = S4 duplicates were real)
+                continue
+            if cid:
+                seen_chunks.add(cid)
             out.append({"tag": f"S{len(out) + 1}", "locator": loc,
-                        "chunk_id": (m.group(1) if m else (item.get("source_chunk_id") or None)),
+                        "chunk_id": cid,
                         "doc_id": item.get("source_document_id"), "text": text,
                         "breadcrumb": _breadcrumb(item),
                         "carried": bool(item.get("carried")), "carry_score": item.get("carry_score")})

@@ -39,7 +39,9 @@ deadline lives in the route (one rerank call per turn, `rerank_deadline_s`).
 """
 from __future__ import annotations
 
+import re
 import time
+from collections import Counter
 from concurrent.futures import CancelledError, Executor, Future, ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
 from dataclasses import asdict, dataclass, field, replace
@@ -798,6 +800,21 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
     if budget.demote_noisy_regions and roles:
         from polymath_shared.document_region import is_noisy
         fused = sorted(fused, key=lambda c: 1 if is_noisy(c.region_role) else 0)   # stable: order kept within groups
+    # GRAPH-EVIDENCE-HYGIENE-V1 (backlog B8, measured 2026-09-06): back-of-book index pages of the VES Handbook
+    # ("solver operators (SOPs) [837](…#p837) Sony F3 camera [249](…#p249) …") reached the judged set and the prompt.
+    # The role-based demotion above only sees chunks whose region_role is set; these carried none. A conservative
+    # lexical test drops index pages and page-number lists BEFORE truncation (noise must not spend union slots
+    # either), and every drop is receipted (`noise_dropped`, `noise_reasons`, `noise_sample`). Prose never matches:
+    # the test needs a page-link density or a bare-number share no paragraph of a book has.
+    noise_dropped: list[tuple[str, str]] = []
+    kept: list[CandidateEvidence] = []
+    for c in fused:
+        why = structural_noise_reason(c.text)
+        if why:
+            noise_dropped.append((c.chunk_id, why))
+        else:
+            kept.append(c)
+    fused = kept
     union_ids_uncapped = [c.chunk_id for c in fused]
     union = fused[:budget.merged_candidate_max]
     timings["union"] = round((time.perf_counter() - t_union) * 1000, 1)
@@ -826,6 +843,9 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
                         "timed_out": [d["component"][:-len("_timeout")] for d in degraded if d["component"].endswith("_timeout")]},
         "degraded": list(degraded), "timings_ms": dict(timings),
     }
+    trace["noise_dropped"] = len(noise_dropped)
+    trace["noise_reasons"] = dict(Counter(w for _, w in noise_dropped))
+    trace["noise_sample"] = [cid for cid, _ in noise_dropped[:5]]
     return CandidateResult(context=ctx, budget=budget, documents=documents, selected_documents=selected_documents,
                            selected_sections=selected_sections, lane_a=lane_a, lane_b=lane_b, lane_c=lane_c,
                            union=union, union_ids_uncapped=union_ids_uncapped, degraded=degraded, timings_ms=timings, trace=trace)
@@ -970,6 +990,28 @@ def compose_evidence(judged: list[CandidateEvidence], budget: CandidateBudget, *
              "docs_within_gap": docs_within, "dominance": literal, "dominance_avoidable": avoidable, "aspect_seats": aspect_seats,
              "agreement_reordered": sum(1 for i, c in enumerate(order) if c is not judged[i])}
     return final, trace
+
+
+_PAGE_LINK_RE = re.compile(r"\]\([^)\s]*#p\d+\)|\[\d{1,4}\]\(")          # "[837](019_…chapter7.html#p837)"
+_NUMBER_TOKEN_RE = re.compile(r"^\W*\d{1,4}\W*$")
+
+
+def structural_noise_reason(text: str) -> Optional[str]:
+    """Pure: a reason when a candidate's text is a back-of-book index page or a page-number list, else None.
+    Thresholds are conservative — ≥ 6 page links AND ≥ 1 per 120 characters, or ≥ 40 tokens of which ≥ 45 % are
+    bare numbers — so that dense prose with a few citations never matches."""
+    t = (text or "").strip()
+    if len(t) < 80:
+        return None
+    links = len(_PAGE_LINK_RE.findall(t))
+    if links >= 6 and links / max(1.0, len(t) / 120.0) >= 1.0:
+        return "index_page_links"
+    tokens = t.split()
+    if len(tokens) >= 40:
+        numeric = sum(1 for tok in tokens if _NUMBER_TOKEN_RE.match(tok))
+        if numeric / len(tokens) >= 0.45:
+            return "number_list"
+    return None
 
 
 def judged_prefix(union: list, budget: CandidateBudget) -> tuple[list, dict]:

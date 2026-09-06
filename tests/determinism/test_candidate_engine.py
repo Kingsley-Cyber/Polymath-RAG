@@ -695,3 +695,21 @@ def test_judged_prefix_seats_every_document_once_then_fusion_order_under_a_cap_t
     assert [c.chunk_id for c in pre3] == ["a0", "a1", "a2", "a3", "a4"] and rec3["policy"] == "fusion"
     # invariants: no duplicates, never more than k, order within a document preserved
     assert len(set(ids)) == len(ids) == 8
+
+
+def test_structural_noise_filter_drops_index_pages_and_number_lists_but_never_prose():
+    """Backlog B8: the VES Handbook's back-of-book index reached the judged set. The lane-time test is lexical and
+    conservative: page-link density or a number-list share that no paragraph of a book has."""
+    from polymath_shared.candidate_engine import structural_noise_reason
+    index_page = ("solver operators (SOPs) [837](019_9780240825212_chapter7.html#p837) Sony F3 camera [_249_](015_9780240825212_chapter3.html#p249); "
+                  "for 3D capture [_514_](017_9780240825212_chapter5.html#p514) Sony F5 camera [251](015_x.html#p251) sound stage [77](011_x.html#p77) "
+                  "speed ramps [402](016_x.html#p402) spherical lenses [233](015_x.html#p233) split diopters [240](015_x.html#p240)")
+    assert structural_noise_reason(index_page) == "index_page_links"
+    number_list = " ".join(str(n) for n in range(100, 160)) + " 3 7 9 12 14 16 21 28"
+    assert structural_noise_reason(number_list) == "number_list"
+    prose = ("Attackers, if this is an OTS shot, punch almost at them, aiming a tiny bit to the camera side — but out of distance so you "
+             "can't actually reach them [S2]. If you're in profile the punch travels across the lens and the miss is visible [S11], see page 249 and "
+             "figure 7.3; the 1997 film and the 2005 remake differ in 3 respects.")
+    assert structural_noise_reason(prose) is None
+    assert structural_noise_reason("short [1](a#p1) [2](b#p2)") is None                     # too short to judge
+    assert structural_noise_reason("") is None
