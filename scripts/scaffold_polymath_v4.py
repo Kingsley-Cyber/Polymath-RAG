@@ -345,6 +345,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("config/cloud_providers.json", "json", None),
     ("scripts/probe_cloud_endpoints.py", "py", None),
     ("docs/wiki/plans/CONTINUITY-REPORT.md", "md", None),
+    ("docs/wiki/plans/OWNER-BACKLOG.md", "md", None),
     ("docs/wiki/plans/RETRIEVAL-AUDIT-PRD.md", "md", None),
     ("docs/wiki/plans/MASTER-BUILD-SEQUENCE.md", "md", None),
     ("workers/workers/project_qdrant_worker.py", "py", None),
