@@ -6,6 +6,10 @@ and Ollama's FREE cloud tier, nothing else.
                     api_key `env:OPENCODE_API_KEY`) with the models in config/chat_models/opencode_free.json; the key itself
                     is read from .env at call time and never stored. `--refresh` re-fetches the zero-cost list from
                     models.dev into that config file first.
+  --reconcile       OPENCODE-RECONCILE-V1 (measured 2026-09-06: models.dev listed 31 zero-cost ids, the endpoint served 8 of
+                    them — the rest answered "Model glm-5-free is not supported"): GET <api_base>/models with the key from .env
+                    and keep only the free ids the endpoint lists; unserved ids are recorded in the config (`unserved`), never
+                    offered. Runs with --opencode-free automatically when the key is set.
   --alibaba         upsert the `alibaba-model-studio` row (Bailian token plan, ap-southeast-1, Anthropic-messages app; api_key
                     `env:ALIBABA_MODEL_STUDIO_API_KEY`) with the nine models in config/chat_models/alibaba_model_studio.json.
   --ollama-free     disable any LiteLLM provider row that routes to the Ollama daemon (paid cloud models), then
@@ -49,6 +53,32 @@ def refresh_config() -> dict:
            "fetched": dt.date.today().isoformat(), "models": ["openai/" + m for m in free],
            "names": {"openai/" + m: p["models"][m].get("name") for m in free}}
     CONFIG.write_text(json.dumps(out, indent=1) + "\n")
+    return out
+
+
+def served_model_ids(api_base: str, api_key: str, timeout: float = 30) -> set[str]:
+    """The model ids the OpenAI-format endpoint lists at GET /models (the key is used, never printed). A browser-like
+    User-Agent: the Cloudflare edge in front of opencode.ai answers Python's default UA with 403 / error 1010."""
+    req = urllib.request.Request(f"{api_base.rstrip('/')}/models", headers={
+        "authorization": f"Bearer {api_key}", "accept": "application/json",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        data = json.load(r)
+    rows = data.get("data") if isinstance(data, dict) else data
+    return {str(row.get("id")) for row in (rows or []) if row.get("id")}
+
+
+def reconcile_with_endpoint(cfg: dict, served: set[str]) -> dict:
+    """Keep only the snapshot's free ids the endpoint serves; the rest move to `unserved` (pure: no I/O)."""
+    prefix = cfg["litellm_provider"] + "/"
+    keep = [m for m in cfg["models"] if m.split("/", 1)[-1] in served]
+    drop = [m for m in cfg["models"] if m.split("/", 1)[-1] not in served]
+    out = dict(cfg)
+    out["models"] = keep
+    out["names"] = {m: cfg.get("names", {}).get(m) for m in keep}
+    out["unserved"] = drop
+    out["served_total"] = len(served)
+    out["prefix"] = prefix
     return out
 
 
@@ -112,14 +142,37 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--opencode-free", action="store_true")
     ap.add_argument("--refresh", action="store_true", help="re-fetch the free list from models.dev into the config first")
+    ap.add_argument("--reconcile", action="store_true", help="OPENCODE-RECONCILE-V1: keep only the free ids the endpoint's /models lists (needs the key in .env)")
     ap.add_argument("--alibaba", action="store_true", help="upsert the Alibaba Model Studio row (Bailian token plan, ap-southeast-1, Anthropic-messages app) from config/chat_models/alibaba_model_studio.json")
     ap.add_argument("--ollama-free", action="store_true")
     ap.add_argument("--show", action="store_true")
     a = ap.parse_args()
     if a.refresh:
         cfg = refresh_config(); print(f"config refreshed: {len(cfg['models'])} free models ({cfg['fetched']})")
-    if a.opencode_free:
+    if a.opencode_free or a.reconcile:
         cfg = json.loads(CONFIG.read_text())
+        key = os.environ.get(cfg["api_key_env"], "")
+        if key and (a.reconcile or a.opencode_free):
+            import datetime as dt
+            try:
+                served = served_model_ids(cfg["api_base"], key)
+            except Exception as exc:  # noqa: BLE001 — the endpoint's listing is advisory; the snapshot stays
+                print(f"reconcile skipped: {type(exc).__name__}: {str(exc)[:120]}")
+            else:
+                full = json.loads(CONFIG.read_text())
+                base_models = full.get("models_snapshot") or full["models"]
+                full["models_snapshot"] = base_models
+                full["names_snapshot"] = full.get("names_snapshot") or full.get("names", {})
+                rec = reconcile_with_endpoint({**full, "models": base_models, "names": full["names_snapshot"]}, served)
+                full.update({"models": rec["models"], "names": rec["names"], "unserved": rec["unserved"],
+                             "served_total": rec["served_total"], "reconciled": dt.date.today().isoformat()})
+                CONFIG.write_text(json.dumps(full, indent=1) + "\n")
+                cfg = full
+                print(f"reconciled with {cfg['api_base']}/models: {len(cfg['models'])} free ids served of {len(base_models)} in the snapshot "
+                      f"({len(cfg['unserved'])} unserved kept out of the row; endpoint lists {cfg['served_total']} models in total)")
+        elif a.reconcile:
+            print(f"reconcile skipped: {cfg['api_key_env']} not set")
+    if a.opencode_free:
         pid = upsert_provider(cfg)
         print(f"provider row `{pid}` upserted: {len(cfg['models'])} models, api_base {cfg['api_base']}, key env:{cfg['api_key_env']} "
               f"({'set' if os.environ.get(cfg['api_key_env']) else 'NOT SET — add it to .env; the models stay hidden until then'})")

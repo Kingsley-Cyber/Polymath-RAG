@@ -92,8 +92,25 @@ def test_setup_script_filters_models_dev_to_zero_cost_and_the_config_snapshot_is
     assert free == ["big-pickle", "glm-5-free", "odd"] and p["env"] == ["OPENCODE_API_KEY"]
     cfg = json.loads((ROOT / "config" / "chat_models" / "opencode_free.json").read_text())
     assert cfg["provider_id"] == "opencode-free" and cfg["litellm_provider"] == "openai" and cfg["api_key_env"] == "OPENCODE_API_KEY"
-    assert cfg["api_base"] == "https://opencode.ai/zen/v1" and len(cfg["models"]) >= 20 and all(m.startswith("openai/") for m in cfg["models"])
-    assert "openai/glm-5-free" in cfg["models"] and "openai/gpt-5" not in cfg["models"]
+    assert cfg["api_base"] == "https://opencode.ai/zen/v1" and all(m.startswith("openai/") for m in cfg["models"])
+    snapshot = cfg.get("models_snapshot") or cfg["models"]
+    assert len(snapshot) >= 20 and 1 <= len(cfg["models"]) <= len(snapshot)      # OPENCODE-RECONCILE-V1: offered = served ⊆ snapshot
+    assert "openai/glm-5-free" in snapshot and "openai/gpt-5" not in snapshot        # models.dev's zero-cost list
+    assert all(m in snapshot for m in cfg["models"])                                   # offered ⊆ snapshot (reconcile only removes)
+
+
+def test_reconcile_keeps_only_the_free_ids_the_endpoint_serves():
+    """OPENCODE-RECONCILE-V1 (2026-09-06): models.dev listed 31 zero-cost ids; the endpoint served 8 of them and answered
+    'Model glm-5-free is not supported' for the rest — a default pointing at an unserved id broke every new chat."""
+    spec = importlib.util.spec_from_file_location("chat_models_setup", ROOT / "scripts" / "chat_models_setup.py")
+    mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+    cfg = {"litellm_provider": "openai", "models": ["openai/glm-5-free", "openai/big-pickle", "openai/deepseek-v4-flash-free"],
+           "names": {"openai/glm-5-free": "GLM-5 Free", "openai/big-pickle": "Big Pickle", "openai/deepseek-v4-flash-free": "DeepSeek V4 Flash Free"}}
+    served = {"big-pickle", "deepseek-v4-flash-free", "gpt-5", "claude-opus-5"}          # paid ids served too — never added
+    out = mod.reconcile_with_endpoint(cfg, served)
+    assert out["models"] == ["openai/big-pickle", "openai/deepseek-v4-flash-free"] and out["unserved"] == ["openai/glm-5-free"]
+    assert out["names"] == {"openai/big-pickle": "Big Pickle", "openai/deepseek-v4-flash-free": "DeepSeek V4 Flash Free"}
+    assert out["served_total"] == 4 and cfg["models"][0] == "openai/glm-5-free"          # pure: input untouched
 
 
 def test_alibaba_model_studio_snapshot_is_an_anthropic_messages_provider_with_the_nine_plan_models():

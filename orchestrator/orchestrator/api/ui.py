@@ -71,7 +71,7 @@ OLLAMA_URL = os.environ.get("POLYMATH_OLLAMA_URL",
 #: (qwen3.8-max, the reasoning model, answered in 42 s without tags); gemma4:31b-cloud is the free-tier fallback.
 _PREFERRED_DEFAULTS = [x.strip() for x in os.environ.get(
     "POLYMATH_DEFAULT_SYNTHESIZER",
-    "litellm:openai/glm-5-free,litellm:anthropic/deepseek-v4-flash-0731,ollama:gemma4:31b-cloud").split(",") if x.strip()]
+    "litellm:anthropic/deepseek-v4-flash-0731,litellm:openai/big-pickle,litellm:openai/mimo-v2.5-free,litellm:openai/nemotron-3.5-lightning-free,ollama:gemma4:31b-cloud").split(",") if x.strip()]
 _PREFERRED_DEFAULT = _PREFERRED_DEFAULTS[0] if _PREFERRED_DEFAULTS else "ollama:gemma4:31b-cloud"
 
 

@@ -9,6 +9,26 @@
  "models": [
   "openai/big-pickle",
   "openai/deepseek-v4-flash-free",
+  "openai/ling-3.0-flash-fin-free",
+  "openai/mimo-v2.5-free",
+  "openai/muse-spark-1.2-contributor-free",
+  "openai/muse-spark-1.3-contributor-free",
+  "openai/nemotron-3-ultra-free",
+  "openai/nemotron-3.5-lightning-free"
+ ],
+ "names": {
+  "openai/big-pickle": "Big Pickle",
+  "openai/deepseek-v4-flash-free": "DeepSeek V4 Flash Free",
+  "openai/ling-3.0-flash-fin-free": "Ling 3.0 Flash Fin Free",
+  "openai/mimo-v2.5-free": "MiMo V2.5 Free",
+  "openai/muse-spark-1.2-contributor-free": "Muse Spark 1.2 Free",
+  "openai/muse-spark-1.3-contributor-free": "Muse Spark 1.3 Free",
+  "openai/nemotron-3-ultra-free": "Nemotron 3 Ultra Free",
+  "openai/nemotron-3.5-lightning-free": "Nemotron 3.5 Lightning Free"
+ },
+ "models_snapshot": [
+  "openai/big-pickle",
+  "openai/deepseek-v4-flash-free",
   "openai/glm-4.7-free",
   "openai/glm-5-free",
   "openai/grok-code",
@@ -39,7 +59,7 @@
   "openai/trinity-large-preview-free",
   "openai/x-preview-f-free"
  ],
- "names": {
+ "names_snapshot": {
   "openai/big-pickle": "Big Pickle",
   "openai/deepseek-v4-flash-free": "DeepSeek V4 Flash Free",
   "openai/glm-4.7-free": "GLM-4.7 Free",
@@ -71,5 +91,32 @@
   "openai/ring-2.6-1t-free": "Ring 2.6 1T Free",
   "openai/trinity-large-preview-free": "Trinity Large Preview",
   "openai/x-preview-f-free": "Ox Alpha Free (Unlimited)"
- }
+ },
+ "unserved": [
+  "openai/glm-4.7-free",
+  "openai/glm-5-free",
+  "openai/grok-code",
+  "openai/hy3-free",
+  "openai/hy3-preview-free",
+  "openai/kimi-k2.5-free",
+  "openai/laguna-s-2.1-free",
+  "openai/ling-2.6-flash-free",
+  "openai/ling-3.0-flash-free",
+  "openai/ling-3.0-tiny-free",
+  "openai/longcat-2.0-free",
+  "openai/mimo-v2-flash-free",
+  "openai/mimo-v2-omni-free",
+  "openai/mimo-v2-pro-free",
+  "openai/minimax-m2.1-free",
+  "openai/minimax-m2.5-free",
+  "openai/minimax-m3-free",
+  "openai/nemotron-3-super-free",
+  "openai/north-mini-code-free",
+  "openai/qwen3.6-plus-free",
+  "openai/ring-2.6-1t-free",
+  "openai/trinity-large-preview-free",
+  "openai/x-preview-f-free"
+ ],
+ "served_total": 70,
+ "reconciled": "2026-09-06"
 }
