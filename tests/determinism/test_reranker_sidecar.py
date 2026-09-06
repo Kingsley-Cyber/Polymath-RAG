@@ -69,3 +69,26 @@ def test_rerank_response_carries_the_judge_receipts():
     assert r.dtype is None and r.memo_hits == 0 and r.memo_misses == 0 and r.nonfinite == 0 and r.dtype_fallback is None
     r2 = srv.RerankResponse(scores=[1.0], order=[0], model_id="m", model_revision="r", dtype="fp16", max_length=256, batch=64, memo_hits=3, memo_misses=21)
     assert r2.model_dump()["dtype"] == "fp16" and r2.max_length == 256 and r2.batch == 64
+
+
+def test_the_endpoint_scores_without_torch_installed(monkeypatch):
+    """CI has no torch: the inference scope degrades to a no-op and the wire contract (scores, order, receipts) holds."""
+    import sys
+    from fastapi.testclient import TestClient
+    monkeypatch.setitem(sys.modules, "torch", None)                 # `import torch` raises ImportError inside the request
+
+    class FakeCrossEncoder:
+        def predict(self, pairs):
+            return [float(len(p[1])) for p in pairs]
+    srv._MEMO.clear()
+    srv.app.state.model = FakeCrossEncoder()
+    srv.app.state.device = "cpu"
+    srv.app.state.dtype = "fp32"
+    srv.app.state.dtype_fallback = None
+    srv.app.state.manifest = {"identity": {"model": {"id": "m", "revision": "r"}}}
+    body = TestClient(srv.app).post("/rerank", json={"query": "q", "documents": ["a", "bbb", "cc"]}).json()
+    assert body["scores"] == [1.0, 3.0, 2.0] and body["order"] == [1, 2, 0]
+    assert body["dtype"] == "fp32" and body["memo_misses"] == 3 and body["memo_hits"] == 0 and body["nonfinite"] == 0
+    again = TestClient(srv.app).post("/rerank", json={"query": "q", "documents": ["bbb", "zzzz"]}).json()
+    assert again["scores"] == [3.0, 4.0] and again["memo_hits"] == 1 and again["memo_misses"] == 1   # memo across requests
+

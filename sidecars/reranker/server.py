@@ -13,6 +13,7 @@ sidecars).
 """
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import logging
 import hashlib
@@ -85,6 +86,16 @@ _MEMO: "OrderedDict[str, float]" = OrderedDict()
 _MEMO_LOCK = threading.Lock()
 #: cumulative since start (surfaced by /ready): the memo's live hit rate and how often fp16 ranked a pair last
 _STATS = {"requests": 0, "pairs": 0, "memo_hits": 0, "memo_misses": 0, "nonfinite": 0}
+
+
+def _inference_scope():
+    """torch.inference_mode() when torch is importable; a no-op scope otherwise (CI runs the endpoint with a fake model
+    and no torch — the wire contract must not depend on the accelerator stack being installed)."""
+    try:
+        import torch
+        return torch.inference_mode()
+    except Exception:  # noqa: BLE001 — ImportError, or a torch without inference_mode
+        return contextlib.nullcontext()
 
 
 def torch_dtype_for(name: str):
@@ -344,8 +355,7 @@ async def rerank(req: RerankRequest,
     todo = [i for i in range(len(pairs)) if i not in cached]
 
     def _predict(chunk: list) -> list[float]:
-        import torch
-        with torch.inference_mode():                       # JUDGE-FAST-PATH-V1: one pass, no autograd state
+        with _inference_scope():                           # JUDGE-FAST-PATH-V1: one pass, no autograd state
             try:
                 return model.predict(chunk, batch_size=max(1, len(chunk)), show_progress_bar=False)
             except TypeError:                              # a predict() without the batch kwargs (test doubles)
