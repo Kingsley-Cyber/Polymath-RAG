@@ -42,7 +42,10 @@ def summarize_response(kind: str, out: Any) -> dict:
                           # CARRY-ACCOUNTING-V1 (P0.e); EVIDENCE-COMPOSER-V1 (P1.c)
                           "prompt", "carry", "composition",
                           # CHAT-RUNTIME-V1 (P1.f): the transport tag ("chat" | "chat/stream") on the one runtime receipt
-                          "route")}
+                          "route",
+                          # GENERATION-BOUND-V1 / backlog B7 (2026-09-06): the provider's finish_reason and the
+                          # max_tokens the chat path sent — a cut answer is visible in the stored receipt too
+                          "generation")}
     cits = out.get("citations")
     if isinstance(cits, list):
         d["citations"] = len(cits)

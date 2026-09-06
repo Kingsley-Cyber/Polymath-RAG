@@ -111,3 +111,18 @@ def test_all_three_query_handlers_and_read_surfaces_are_wired():
     assert '@router.get("/queries")' in (api / "queries.py").read_text()
     assert "async def recent_queries(" in (ROOT / "orchestrator" / "orchestrator" / "mcp_server.py").read_text()
     assert (ROOT / "stores" / "postgres" / "migrations" / "0047_query_receipts.sql").exists()
+
+
+def test_summarize_keeps_the_generation_receipt_and_still_drops_unknown_keys():
+    """Backlog B7 (2026-09-06): GENERATION-BOUND-V1 put finish_reason / max_tokens on the answer event and the
+    /chat JSON, but the stored receipt whitelists meta keys and dropped it — a cut answer was invisible in the DB."""
+    from polymath_shared.query_receipts import summarize_response
+
+    out = {"answer": "x", "meta": {"verdict": "generated", "route": "chat/stream", "model": "m",
+                                   "generation": {"finish_reason": "length", "max_tokens": 16000},
+                                   "degraded": [{"component": "generation", "state": "cut", "reason": "truncated:max_tokens"}],
+                                   "not_a_receipt_key": {"big": "blob"}}}
+    d = summarize_response("chat_stream", out)
+    assert d["meta"]["generation"] == {"finish_reason": "length", "max_tokens": 16000}
+    assert d["meta"]["degraded"][0]["state"] == "cut" and d["meta"]["route"] == "chat/stream"
+    assert "not_a_receipt_key" not in d["meta"]
