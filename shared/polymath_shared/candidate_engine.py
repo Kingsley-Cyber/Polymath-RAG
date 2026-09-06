@@ -94,6 +94,20 @@ class CandidateBudget:
     #: (24/27 = 0.889, MRR 0.594) for another +1.7 s p50 under contention (+1.0 s fresh) — recorded, not taken:
     #: the plan's rerank budget is 3 s and P1.d makes the judged prefix deadline-aware (28 = its ceiling candidate).
     rerank_max: int = 24
+    #: EVIDENCE-DIET-V1 step 3 (backlog B11, measured 2026-09-06): the judged prefix was the top of the fusion
+    #: order, and the three largest matchers took 88 of 104–148 union slots per turn — a six-candidate book never
+    #: reached the judge. The prefix is now filled document-fairly: round 1 seats every surfaced document's best
+    #: candidate (document order = first appearance in the fusion order), then the fusion order continues under a
+    #: per-document cap, then any remaining seats fill in fusion order ignoring the cap (seats are never left
+    #: empty). Relevance — the judge — still decides survival; the receipt names how many documents were judged
+    #: and how many candidates the cap deferred (`judged_docs`, `capped_out`, `prefix_policy`).
+    rerank_round_robin: bool = True
+    rerank_doc_cap: int = 8
+    #: B11 step 3 re-measure (2026-09-06): with 24 seats the round-robin first pass (9–13 surfaced documents) displaced
+    #: the dominant documents' 2nd–8th candidates and cost recall (B hit@10 0.667 → 0.600, survival 0.852 → 0.778;
+    #: L hit@10 1.0 → 0.9 with fewer degraded turns). The backlog row named 32 seats on the fast judge as the
+    #: re-measure; the judge at fp16 / 384 tokens scores 32 pairs in one batched call.
+    rerank_max_fair: int = 32
     synthesis_max: int = 15
     rrf_k: int = 60
     neighbor_expansion: int = 0
@@ -958,6 +972,65 @@ def compose_evidence(judged: list[CandidateEvidence], budget: CandidateBudget, *
     return final, trace
 
 
+def judged_prefix(union: list, budget: CandidateBudget) -> tuple[list, dict]:
+    """EVIDENCE-DIET-V1 step 3: the `rerank_max` candidates the judge will score. Pure; fusion order is
+    preserved within a document and the set is decided document-fairly (see CandidateBudget). With
+    `rerank_round_robin` off this is exactly the old `union[:rerank_max]`."""
+    # fair policy: `rerank_max_fair` seats (32 by measurement); the old slice keeps `rerank_max` (24)
+    k = int(budget.rerank_max_fair if budget.rerank_round_robin else budget.rerank_max)
+    if not budget.rerank_round_robin or k <= 0:
+        pre = list(union[:k])
+        docs = {}
+        for c in pre:
+            docs[c.doc_id] = docs.get(c.doc_id, 0) + 1
+        return pre, {"policy": "fusion", "judged_docs": len(docs), "capped_out": 0, "docs": docs}
+    cap = max(1, int(budget.rerank_doc_cap))
+    by_doc: dict[str, list] = {}
+    doc_order: list[str] = []
+    for c in union:
+        if c.doc_id not in by_doc:
+            by_doc[c.doc_id] = []
+            doc_order.append(c.doc_id)
+        by_doc[c.doc_id].append(c)
+    chosen: list = []
+    seen: set[str] = set()
+    taken: dict[str, int] = {d: 0 for d in doc_order}
+
+    def _seat(c) -> bool:
+        if c.chunk_id in seen or len(chosen) >= k:
+            return False
+        chosen.append(c); seen.add(c.chunk_id); taken[c.doc_id] += 1
+        return True
+
+    # round 1: every surfaced document's best candidate, in order of first appearance
+    for d in doc_order:
+        if len(chosen) >= k:
+            break
+        _seat(by_doc[d][0])
+    # then the fusion order under the per-document cap
+    capped_out = 0
+    for c in union:
+        if len(chosen) >= k:
+            break
+        if c.chunk_id in seen:
+            continue
+        if taken[c.doc_id] >= cap:
+            capped_out += 1
+            continue
+        _seat(c)
+    # never leave seats empty: fill in fusion order ignoring the cap
+    for c in union:
+        if len(chosen) >= k:
+            break
+        _seat(c)
+    # the SET is document-fair; the ORDER stays the fusion order (the degraded-judge path composes in prefix order,
+    # the receipts read `pre_g3_order` as fusion order, and the judge's own ordering replaces it when it answers)
+    rank = {c.chunk_id: i for i, c in enumerate(union)}
+    chosen.sort(key=lambda c: rank[c.chunk_id])
+    docs = {d: n for d, n in taken.items() if n}
+    return chosen, {"policy": f"round_robin:cap{cap}", "judged_docs": len(docs), "capped_out": capped_out, "docs": docs}
+
+
 def select_evidence(result: CandidateResult, budget: CandidateBudget, *,
                     rerank_children: Optional[Callable[[str, list[dict]], list[dict]]] = None,
                     neighbor_lookup: Optional[Callable[[list[dict], int], list[dict]]] = None) -> tuple[list[CandidateEvidence], dict]:
@@ -971,7 +1044,7 @@ def select_evidence(result: CandidateResult, budget: CandidateBudget, *,
     primary_id = result.context.query_id
     aspects_all = list((result.trace.get("aspects") or {}).keys()) or [primary_id]
     sub_ids = [q for q in aspects_all if q != primary_id]
-    prefix = list(union[:budget.rerank_max])
+    prefix, prefix_receipt = judged_prefix(union, budget)
     in_prefix = {c.chunk_id for c in prefix}
     aspect_prefix: dict[str, int] = {}
     for qid in sub_ids:                                   # reserve judged seats per aspect
@@ -1051,6 +1124,8 @@ def select_evidence(result: CandidateResult, budget: CandidateBudget, *,
              "neighbors_added": added, "final": [c.chunk_id for c in final],
              "aspect_final": aspect_final, "weak_aspects": weak, "weak_reasons": weak_reason, "judge": judge_state,
              "aspect_prefix": aspect_prefix, "aspect_best": aspect_best, "aspect_seated": seated, "composition": composition,
+             "prefix_policy": prefix_receipt["policy"], "judged_docs": prefix_receipt["judged_docs"],
+             "capped_out": prefix_receipt["capped_out"], "prefix_docs": prefix_receipt["docs"],
              "final_detail": [{"chunk_id": c.chunk_id, "doc_id": c.doc_id, "rerank_score": c.rerank_score,
                                "arrivals": list(c.arrivals), "query_ids": list(c.query_ids)} for c in final]}
     return final, trace

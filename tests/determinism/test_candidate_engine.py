@@ -141,7 +141,9 @@ def test_budget_shapes_on_the_resolved_request():
 
 def test_selection_reranks_a_bounded_prefix_in_fusion_order_and_expands_neighbours_after():
     fake = Fake()
-    budget = ce.CandidateBudget(rerank_max=4, synthesis_max=3, neighbor_expansion=1, neighbor_expansion_max=2)
+    # EVIDENCE-DIET-V1 (B11): the default prefix is document-fair (round-robin + cap); this test pins the FUSION-ORDER
+    # path, so it switches the policy off explicitly and asserts the receipt says so.
+    budget = ce.CandidateBudget(rerank_max=4, synthesis_max=3, neighbor_expansion=1, neighbor_expansion_max=2, rerank_round_robin=False)
     res = ce.retrieve_candidates(_ctx(), budget, dense_search=fake.dense, sparse_search=fake.sparse)
     seen = {}
 
@@ -156,6 +158,7 @@ def test_selection_reranks_a_bounded_prefix_in_fusion_order_and_expands_neighbou
     final, tr = ce.select_evidence(res, budget, rerank_children=rerank, neighbor_lookup=neighbours)
     assert seen["n"] == 4 and seen["q"] == res.context.query
     assert tr["pre_g3_order"] == [c.chunk_id for c in res.union[:4]] and tr["post_g3_order"] == list(reversed(tr["pre_g3_order"]))
+    assert tr["prefix_policy"] == "fusion" and tr["judged_docs"] >= 1
     # P1.c: composition orders by the judge's SCORE (sigmoid + bounded agreement), not by the order the client
     # returned — this fake hands back ascending scores, so the top of the final set is the highest-scored prefix items
     by_score = sorted(tr["post_g3_order"], key=lambda cid: -tr["g3_scores"][cid])
@@ -661,3 +664,34 @@ def test_lane_exceptions_keep_the_sequential_semantics_and_per_call_pools_are_re
         _time.sleep(0.02)
     assert _th.active_count() <= before + 1, (before, _th.active_count())
     assert ce.CandidateBudget().to_dict()["lane_deadline_s"] == 3.0 and ce.CandidateBudget().max_workers == 8
+# appended to tests/determinism/test_candidate_engine.py when step 3 is applied
+
+
+def _rr_cand(cid, doc):
+    from polymath_shared.candidate_engine import CandidateEvidence
+    return CandidateEvidence(chunk_id=cid, doc_id=doc, parent_id=f"p_{doc}", source_name=f"{doc}.md", text=f"text of {cid}")
+
+
+def test_judged_prefix_seats_every_document_once_then_fusion_order_under_a_cap_then_fills():
+    """EVIDENCE-DIET-V1 step 3 (backlog B11): the judge's 24 seats are filled document-fairly — round 1 seats each
+    surfaced document's best candidate (first-appearance order), then the fusion order continues under a per-document
+    cap, then leftover seats fill in fusion order. Off = the old top-k slice."""
+    from polymath_shared.candidate_engine import CandidateBudget, judged_prefix
+    # fusion order: A×10, B×6, C×3, D×1 (D = the six-candidate book that never reached the judge)
+    union = [_rr_cand(f"a{i}", "A") for i in range(10)] + [_rr_cand(f"b{i}", "B") for i in range(6)] \
+        + [_rr_cand(f"c{i}", "C") for i in range(3)] + [_rr_cand("d0", "D")]
+    b = CandidateBudget(rerank_max=4, rerank_max_fair=8, rerank_doc_cap=3)      # fair policy seats rerank_max_fair, not rerank_max
+    pre, rec = judged_prefix(union, b)
+    ids = [c.chunk_id for c in pre]
+    assert set(ids) == {"a0", "b0", "c0", "d0", "a1", "a2", "b1", "b2"}    # round 1 seats one per document, then fusion order ≤ 3 per document
+    assert ids == ["a0", "a1", "a2", "b0", "b1", "b2", "c0", "d0"]         # the ORDER returned is the fusion order (set fair, order stable)
+    assert rec["policy"] == "round_robin:cap3" and rec["judged_docs"] == 4 and rec["docs"] == {"A": 3, "B": 3, "C": 1, "D": 1}
+    assert rec["capped_out"] >= 1                                           # a3.. were deferred by the cap
+    # fill: a tiny union with a low cap still uses every seat
+    pre2, rec2 = judged_prefix([_rr_cand(f"a{i}", "A") for i in range(5)], CandidateBudget(rerank_max_fair=4, rerank_doc_cap=1))
+    assert [c.chunk_id for c in pre2] == ["a0", "a1", "a2", "a3"] and rec2["judged_docs"] == 1
+    # off = the old slice
+    pre3, rec3 = judged_prefix(union, CandidateBudget(rerank_max=5, rerank_round_robin=False))
+    assert [c.chunk_id for c in pre3] == ["a0", "a1", "a2", "a3", "a4"] and rec3["policy"] == "fusion"
+    # invariants: no duplicates, never more than k, order within a document preserved
+    assert len(set(ids)) == len(ids) == 8

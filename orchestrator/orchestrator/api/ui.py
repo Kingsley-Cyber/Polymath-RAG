@@ -33,6 +33,7 @@ fail-closed through the same shared resolver.
 from __future__ import annotations
 
 import json
+import re
 import time
 from typing import Optional
 
@@ -1384,7 +1385,16 @@ def _evidence_legend(bundle: dict) -> list[dict]:
     at _LEGEND_ITEMS. Shared by _grounded_messages (prompt), the answer
     event (UI) and the query receipt (RETRIEVAL-FUNNEL-V1 `selected`)."""
     out: list[dict] = []
-    for item in (bundle.get("evidence_bundle") or [])[:_LEGEND_ITEMS]:
+    for item in bundle.get("evidence_bundle") or []:
+        if len(out) >= _LEGEND_ITEMS:
+            break
+        # EVIDENCE-DIET-V1 (backlog B11, measured 2026-09-06): document- and section-summary rows were offered
+        # 569 / 960 times in a day and cited 0 times; they cost prompt space and [S#] tags the model never used.
+        # The prompt now carries PASSAGES only; a passage's parent context rides its own legend line as a
+        # breadcrumb ("book › section") instead of a separate row. The bundle itself is unchanged (the
+        # deterministic synthesizer and /retrieve keep their summaries).
+        if item.get("text_kind") in _SUMMARY_TEXT_KINDS:
+            continue
         span = item.get("source_span") or {}
         loc = span.get("locator") or ""
         text = (span.get("text") or "")[:_EVIDENCE_TEXT_CHARS]
@@ -1416,10 +1426,55 @@ _COMPILER_HTTP_TIMEOUT_S = float(os.environ.get("POLYMATH_CHAT_COMPILER_HTTP_TIM
 
 
 def _compiler_flag(override: str | None = None) -> str:
+                        "breadcrumb": _breadcrumb(item),
     """P0.c: default `on` — the compiler is stage 0 of every streaming turn.
     Env POLYMATH_CHAT_COMPILER and a per-request override (evaluation only)
     can pin off | shadow | on."""
     v = (override or os.environ.get(_COMPILER_FLAG_ENV, "on") or "on").strip().lower()
+#: EVIDENCE-DIET-V1: the assembler's summary kinds (never prompt rows); carried items have no text_kind
+_SUMMARY_TEXT_KINDS = ("document_summary", "section_summary")
+
+
+_MD_LINK_RE = re.compile(r"\[([^\]]+)\]\([^)]*\)")
+_SOURCE_SUFFIX_RE = re.compile(r"(?:\s*\d+)?(?:_[0-9a-f]{6,}|\s*\(\d+\))+$", re.I)   # " 1_9e6b68fb", " (1)"
+
+
+def _clean_crumb(part: str) -> str:
+    """One breadcrumb segment: Markdown links → their text, whitespace collapsed, ≤ 90 chars."""
+    part = _MD_LINK_RE.sub(r"\1", str(part or ""))
+    part = re.sub(r"\s+", " ", part).strip(" #›-–—:|")
+    return part[:90].rstrip()
+
+
+def _clean_source(name: str) -> str:
+    """A document's display name: extension and content-hash / '(1)' suffixes removed."""
+    name = str(name or "").strip()
+    name = re.sub(r"\.(md|html?|pdf|epub|txt|docx?)$", "", name, flags=re.I)
+    return _clean_crumb(_SOURCE_SUFFIX_RE.sub("", name))
+
+
+def _breadcrumb(item: dict) -> str:
+    """"book › section" for a passage — the assembler's presentation join (heading_path; every cinema
+    child has one) with source › title as the fallback and the bare source name as the floor. Segments
+    are cleaned for reading: no file extension or hash suffix on the book, no Markdown link syntax in
+    headings, at most three segments."""
+    pres = item.get("presentation") or {}
+    source = ((item.get("applicability") or {}).get("source_name") or pres.get("source_name") or "").strip()
+    human = (pres.get("human_locator") or "").strip()
+    if human:
+        parts = [x for x in human.split("›")]
+        head = _clean_source(parts[0]) if parts else ""
+        tail = [c for c in (_clean_crumb(x) for x in parts[1:]) if c]
+        if len(tail) > 2:
+            tail = [tail[0], tail[-1]]
+        segs = [x for x in [head, *tail] if x]
+        if segs:
+            return " › ".join(segs)
+    title = _clean_crumb(pres.get("title") or "")
+    book = _clean_source(source)
+    return f"{book} › {title}" if book and title else (book or title)
+
+
     return v if v in ("off", "shadow", "on") else "on"
 
 
@@ -1662,8 +1717,11 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
     ev_lines: list[str] = []
     legend: list[str] = []
     for e in _evidence_legend(bundle):
-        ev_lines.append(f"[{e['tag']}]\n{e['text']}")
-        legend.append(f"[{e['tag']}] = {e['locator']}")
+        crumb = e.get("breadcrumb") or ""
+        # EVIDENCE-DIET-V1: the passage header names its book › section; the legend maps the tag to that
+        # breadcrumb (the raw locator stays on the answer event and the receipt for the UI and traces)
+        ev_lines.append(f"[{e['tag']}] {crumb}\n{e['text']}" if crumb else f"[{e['tag']}]\n{e['text']}")
+        legend.append(f"[{e['tag']}] = {crumb or e['locator']}")
     for f in graph_facts[:20]:
         ev_lines.append(
             f"[fact:{f.get('fact_id', '')[:24]}] "
@@ -2559,6 +2617,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                             "synthesis_version": f"{llm_backend}:{llm_model}",
                             "phase_ms": dict(_phase_ms),
                             **_plan_meta(_plan if _flag == "on" else None),
+                                        "breadcrumb": e.get("breadcrumb") or "",          # EVIDENCE-DIET-V1: book › section
                             "prompt": _prompt_meta,
                             "generation": _gen_meta or None,
                             "carry": {k: v for k, v in _carry_meta.items() if k != "scores"},
@@ -2622,6 +2681,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 answer=answer.get("answer"), result=answer,
                 meta={"verdict": (answer.get("meta") or {}).get("verdict"),
                       "synthesis_version": (answer.get("meta") or {}).get("synthesis_version"),
+                                    "breadcrumb": e.get("breadcrumb") or "",
                       "latent": req.latent, "phase_ms": dict(_phase_ms), "funnel": funnel,
                       "used_evidence": used, "degraded": retrieval.get("degraded"),
                       "plan": (_trace or {}).get("plan"), "chat_plan": _plan_receipt or None, "carry": _carry_meta,

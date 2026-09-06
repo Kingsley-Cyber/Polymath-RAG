@@ -215,3 +215,33 @@ def test_the_style_layer_no_longer_asks_for_a_bold_thesis():
     assert "never a whole sentence" in POLYMATH_STYLE_PROMPT
     sysmsg = ui._llm_system_prompt("neutral")
     assert "bold thesis" not in sysmsg.lower() and ui._PRESENTATION_BLOCK in sysmsg
+
+
+def _item(kind, locator, text, human="", source="", title="", chunk_id=None):
+    return {"text_kind": kind, "source_span": {"locator": locator, "text": text, "chunk_id": chunk_id},
+            "source_document_id": "doc_x", "presentation": {"human_locator": human, "title": title, "source_name": source},
+            "applicability": {"source_name": source}}
+
+
+def test_evidence_diet_prompt_carries_passages_only_with_breadcrumbs():
+    """Backlog B11 steps 1–2 (EVIDENCE-DIET-V1): document- and section-summary rows never reach the prompt
+    (569 / 960 offered, 0 cited on 2026-09-06); each passage's legend line names its book › section."""
+    bundle = {"evidence_bundle": [
+        _item("document_summary", "doc:doc_x", "The whole book in a paragraph."),
+        _item("section_summary", "section:chunk_par1", "## Page 427 Effective Camera Angles …", chunk_id="chunk_par1"),
+        _item("child_chunk", "chunk:chunk_a1", "Camera shudder on hits …",
+              human="The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md › [Camera reaction](contents.xhtml#r12)", chunk_id="chunk_a1"),
+        _item("child_chunk", "chunk:chunk_b2", "Distance from the fight …", source="Fight Choreography (1).md", title="Distance from the Fight", chunk_id="chunk_b2"),
+        _item("child_chunk", "chunk:chunk_c3", "Bare passage.", source="handbook.html", chunk_id="chunk_c3"),
+    ]}
+    legend = ui._evidence_legend(bundle)
+    assert [e["tag"] for e in legend] == ["S1", "S2", "S3"]                       # summaries skipped, tags contiguous
+    assert [e["chunk_id"] for e in legend] == ["chunk_a1", "chunk_b2", "chunk_c3"]
+    assert [e["breadcrumb"] for e in legend] == ["The Screen Combat Handbook A Practical Guide for Filmmakers › Camera reaction",
+                                                 "Fight Choreography › Distance from the Fight", "handbook"]   # no hash / (1) / .md / link syntax
+    assert all(e["locator"].startswith("chunk:") for e in legend)                 # raw locator kept for UI / receipts
+    user = ui._grounded_messages("q", bundle, [], [], [])[-1]["content"]
+    assert "[S1] The Screen Combat Handbook A Practical Guide for Filmmakers › Camera reaction\nCamera shudder on hits" in user
+    assert "[S1] = The Screen Combat Handbook A Practical Guide for Filmmakers › Camera reaction" in user and "[S3] = handbook" in user
+    assert "contents.xhtml" not in user and "9e6b68fb" not in user
+    assert "doc:doc_x" not in user and "The whole book in a paragraph" not in user and "Effective Camera Angles" not in user
