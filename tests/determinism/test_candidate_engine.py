@@ -425,3 +425,218 @@ def test_dominance_is_avoidable_only_when_another_close_document_was_left_out():
     ids3 = {c.chunk_id for c in final3}
     assert tr3["doc_counts"]["d1"] == 9 and "d1-sp" not in ids3 and "d1-q1" not in ids3 and tr3["slots"]["sparse"] == 0 and tr3["aspect_seats"] == []
     assert len(final3) == 15 and tr3["dominance"] is False and tr3["dominance_avoidable"] is False
+
+
+# ---------------- P1.d CONCURRENCY-DEADLINES-V1: concurrent lanes, one wall-clock budget, dropped lanes receipted ----------------
+
+import concurrent.futures as _cf  # noqa: E402
+import threading as _th  # noqa: E402
+import time as _time  # noqa: E402
+
+
+class Slow(Fake):
+    """The base fake with sleeps: `per_call` on every call, plus `sleep` on the lane named by `slow`
+    ("child" | "sparse" | "doc" | "section" | "card" | "deep"). Counts in-flight calls to prove overlap."""
+    def __init__(self, per_call=0.0, slow=None, sleep=0.0):
+        super().__init__()
+        self.per_call, self.slow, self.sleep = per_call, slow, sleep
+        self._lock, self.inflight, self.max_inflight = _th.Lock(), 0, 0
+
+    def _enter(self):
+        with self._lock:
+            self.inflight += 1; self.max_inflight = max(self.max_inflight, self.inflight)
+
+    def _exit(self):
+        with self._lock:
+            self.inflight -= 1
+
+    @staticmethod
+    def _lane(kind, extra):
+        if kind == CHILD:
+            return "deep" if extra and extra.get("parent_id") else "child"
+        return {DOC: "doc", SEC: "section", CARD: "card"}.get(kind, kind)
+
+    def dense(self, kind, top_k, extra=None):
+        self._enter()
+        try:
+            _time.sleep(self.per_call + (self.sleep if self._lane(kind, extra) == self.slow else 0.0))
+            return super().dense(kind, top_k, extra)
+        finally:
+            self._exit()
+
+    def sparse(self, top_k):
+        self._enter()
+        try:
+            _time.sleep(self.per_call + (self.sleep if self.slow == "sparse" else 0.0))
+            return super().sparse(top_k)
+        finally:
+            self._exit()
+
+
+class SlowMulti(FakeMulti):
+    """Subquery q1's lanes sleep (`slow_lanes` ⊆ {"dense", "sparse"}); everything else answers at once."""
+    def __init__(self, slow_lanes=("dense",), sleep=1.5):
+        super().__init__(); self.slow_lanes, self.sleep = set(slow_lanes), sleep
+
+    def dense(self, kind, top_k, extra=None, qvec=None):
+        if qvec == (0.9, 0.1) and "dense" in self.slow_lanes:
+            _time.sleep(self.sleep)
+        return super().dense(kind, top_k, extra, qvec=qvec)
+
+    def sparse(self, top_k, sparse_query=None):
+        if sparse_query == ((7,), (1.0,)) and "sparse" in self.slow_lanes:
+            _time.sleep(self.sleep)
+        return super().sparse(top_k, sparse_query=sparse_query)
+
+
+def test_primary_lanes_and_deepening_run_concurrently_wall_is_the_slowest_lane_not_the_sum():
+    fake = Slow(per_call=0.2)
+    t0 = _time.perf_counter()
+    res = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=fake.dense, sparse_search=fake.sparse)
+    wall = _time.perf_counter() - t0
+    calls = len(fake.calls)                                   # 5 primary lanes + one deepening per selected section
+    assert calls >= 8 and res.union and res.degraded == []
+    assert wall < 0.2 * 4, (wall, calls)                      # sequential = calls × 0.2 s; two concurrent waves ≈ 0.4 s
+    assert fake.max_inflight >= 3                             # overlap observed, not inferred
+    conc = res.trace["concurrency"]
+    assert conc["contract"] == "concurrency-deadlines-v1" and conc["max_workers"] == 8 and conc["timed_out"] == [] and conc["prestarted"] == []
+    t = res.trace["timings_ms"]
+    assert t["lanes_wall"] < 0.2 * 3 * 1000 and t["core_wall"] >= t["lanes_wall"] and "union" in t and "hierarchical_children" in t
+    assert all(k in t for k in ("global_dense_child", "global_sparse_child", "document_summary", "section_summary", "entity_card"))
+
+
+def test_a_lane_past_its_deadline_is_dropped_receipted_by_name_and_the_turn_completes_on_the_other_lanes():
+    # the sparse lane sleeps past the deadline → dropped and named; dense lanes intact; nobody waits for the late result
+    fake = Slow(slow="sparse", sleep=1.5)
+    t0 = _time.perf_counter()
+    res = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(lane_deadline_s=0.3), dense_search=fake.dense, sparse_search=fake.sparse)
+    wall = _time.perf_counter() - t0
+    assert wall < 1.2, wall
+    assert [d["component"] for d in res.degraded] == ["global_sparse_child_timeout"]
+    assert "lane_deadline_s=0.3" in res.degraded[0]["reason"] and res.degraded[0]["effect"] and res.trace["degraded"] == res.degraded
+    assert res.lane_c == [] and res.lane_a and res.lane_b and res.union
+    assert res.trace["concurrency"]["timed_out"] == ["global_sparse_child"] and res.trace["lane_sizes"]["global_sparse_child"] == 0
+    assert "global_sparse_child_timeout" in res.trace["aspects"]["q0"]["degraded"]
+    # the deepening fan-out past the deadline: routing happened, lane A keeps nothing, B + C still answer
+    fake2 = Slow(slow="deep", sleep=1.5)
+    t0 = _time.perf_counter()
+    res2 = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(lane_deadline_s=0.3), dense_search=fake2.dense, sparse_search=fake2.sparse)
+    assert _time.perf_counter() - t0 < 1.2
+    assert res2.lane_a == [] and res2.lane_b and res2.lane_c and res2.selected_sections and res2.union
+    d = next(x for x in res2.degraded if x["component"] == "hierarchical_children_timeout")
+    n = len(res2.selected_sections)
+    assert d["effect"].startswith(f"{n} of {n} section deepenings dropped") and res2.trace["concurrency"]["timed_out"] == ["hierarchical_children"]
+    # a ROUTING lane past the deadline: the deepening needs it, so routing waits for it up to the deadline; ONE core
+    # budget means nothing is left for the fan-out — both drops are receipted, routing still ran on the lanes that
+    # answered (documents selected), and B + C carry the turn within the budget
+    fake3 = Slow(slow="doc", sleep=1.5)
+    t0 = _time.perf_counter()
+    res3 = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(lane_deadline_s=0.3), dense_search=fake3.dense, sparse_search=fake3.sparse)
+    assert _time.perf_counter() - t0 < 1.2
+    assert [d["component"] for d in res3.degraded] == ["document_summary_timeout", "hierarchical_children_timeout"]
+    assert res3.trace["lane_sizes"]["document_summary"] == 0 and res3.selected_documents and res3.selected_sections
+    assert res3.lane_a == [] and res3.lane_b and res3.lane_c and res3.union
+    assert res3.trace["concurrency"]["timed_out"] == ["document_summary", "hierarchical_children"]
+    # a subquery lane past the deadline: the aspect keeps its other lane; no second pass is spent on a lane that was not given time
+    fake4 = SlowMulti(("dense",))
+    t0 = _time.perf_counter()
+    res4 = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(lane_deadline_s=0.3), dense_search=fake4.dense, sparse_search=fake4.sparse, subqueries=[_subq("q1", "a")])
+    assert _time.perf_counter() - t0 < 1.2
+    assert [d["component"] for d in res4.degraded] == ["sub_q1_dense_timeout"]
+    asp = res4.trace["aspects"]["q1"]
+    assert asp["lanes"] == {ce.LANE_B: 0, ce.LANE_C: 1} and asp["degraded"] == ["dense:timeout"] and res4.trace["second_pass"] is None
+    hit = next(c for c in res4.union if c.chunk_id == "s1-hit0")
+    assert hit.arrivals == [ce.LANE_C] and hit.query_ids == ["q1"]
+    fake5 = SlowMulti(("dense", "sparse"))
+    res5 = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(lane_deadline_s=0.3), dense_search=fake5.dense, sparse_search=fake5.sparse, subqueries=[_subq("q1", "a")])
+    assert [d["component"] for d in res5.degraded] == ["sub_q1_dense_timeout", "sub_q1_sparse_timeout"]
+    assert res5.trace["aspects"]["q1"]["degraded"] == ["dense:timeout", "sparse:timeout"] and res5.trace["second_pass"] is None
+    _, tr5 = ce.select_evidence(res5, ce.CandidateBudget(), rerank_children=None)
+    assert tr5["weak_reasons"].get("q1") == "no_candidates"
+
+
+def test_fused_order_does_not_depend_on_completion_order():
+    class Jitter(FakeMulti):
+        """Completion order reversed relative to submission: later lanes answer first, subqueries last."""
+        DELAY = {DOC: 0.12, SEC: 0.09, CARD: 0.03, CHILD: 0.06}
+
+        def dense(self, kind, top_k, extra=None, qvec=None):
+            _time.sleep(0.0 if (extra and extra.get("parent_id")) else (0.15 if qvec is not None else self.DELAY.get(kind, 0.0)))
+            return super().dense(kind, top_k, extra, qvec=qvec)
+
+    subs = [_subq("q1", "a"), _subq("q2", "b", vec=(0.2, 0.8), sparse=((8,), (1.0,)))]
+
+    def run(fake, **kw):
+        res = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(**kw), dense_search=fake.dense, sparse_search=fake.sparse, subqueries=subs,
+                                     region_lookup=lambda ids: {"d2-noise": "front_matter"})
+        assert res.degraded == []
+        tr = {k: v for k, v in res.trace.items() if k not in ("timings_ms", "budget", "concurrency")}
+        return [c.to_row() for c in res.union], res.union_ids_uncapped, tr, [c.chunk_id for c in res.lane_a]
+
+    ref = run(FakeMulti(), max_workers=1)          # a one-worker pool runs the lanes in submission order = the sequential engine
+    assert ref[1] and ref[3]
+    assert run(Jitter(), max_workers=8) == ref
+    assert run(FakeMulti(), max_workers=8) == ref
+    assert run(Jitter(), max_workers=3) == ref     # queueing behind a smaller pool changes nothing either
+
+
+def test_prestarted_sparse_rows_or_futures_replace_the_lane_c_call():
+    pre_rows = [_row(CHILD, 0, "d3", parent="d3-p1", chunk="pre-1", score=9.0)]
+    fake = Fake()
+    res = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=fake.dense, sparse_search=fake.sparse, prestarted={"global_sparse_child": pre_rows})
+    assert [c.chunk_id for c in res.lane_c] == ["pre-1"] and not any(c[0] == "sparse" for c in fake.calls)
+    assert res.trace["concurrency"]["prestarted"] == ["global_sparse_child"] and res.degraded == [] and "global_sparse_child" in res.timings_ms
+    # a Future resolves the same way (the route hands in the BM25 lane it started before the embedding)
+    with _cf.ThreadPoolExecutor(max_workers=2) as pool:
+        fut = pool.submit(lambda: pre_rows)
+        fake2 = Fake()
+        res2 = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=fake2.dense, sparse_search=fake2.sparse, executor=pool,
+                                      prestarted={"global_sparse_child": fut})
+        assert [c.chunk_id for c in res2.lane_c] == ["pre-1"] and not any(c[0] == "sparse" for c in fake2.calls)
+        assert pool.submit(lambda: 1).result(timeout=1) == 1  # a caller-owned pool is never shut down by the engine
+    # a pre-started lane that fails degrades exactly like an in-engine sparse failure; one that never answers is dropped by name
+    bad = _cf.Future(); bad.set_exception(ConnectionError("no bm25 vector"))
+    res3 = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=Fake().dense, sparse_search=Fake().sparse, prestarted={"global_sparse_child": bad})
+    assert res3.degraded[0]["component"] == "sparse_lane" and "ConnectionError" in res3.degraded[0]["reason"] and res3.lane_c == [] and res3.lane_b
+    never = _cf.Future()
+    res4 = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(lane_deadline_s=0.2), dense_search=Fake().dense, sparse_search=Fake().sparse,
+                                  prestarted={"global_sparse_child": never})
+    assert [d["component"] for d in res4.degraded] == ["global_sparse_child_timeout"] and res4.lane_b and never.cancelled()
+    # a pre-started subquery sparse lane is consumed by name; with lane C off, pre-started rows are ignored
+    fake5 = FakeMulti()
+    res5 = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=fake5.dense, sparse_search=fake5.sparse, subqueries=[_subq("q1", "a")],
+                                  prestarted={"sub_q1_sparse": [_row(CHILD, 0, "d3", parent="d3-p1", chunk="pre-q1", score=5.0)]})
+    assert any(c.chunk_id == "pre-q1" and c.query_ids == ["q1"] and c.arrivals == [ce.LANE_C] for c in res5.union)
+    assert not any(c[0] == "sparse" and len(c) > 2 and c[2] == ((7,), (1.0,)) for c in fake5.calls)     # q1's sparse query never searched
+    assert res5.trace["concurrency"]["prestarted"] == ["sub_q1_sparse"]
+    fake6 = Fake()
+    res6 = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(lanes=(ce.LANE_A, ce.LANE_B)), dense_search=fake6.dense, sparse_search=fake6.sparse,
+                                  prestarted={"global_sparse_child": pre_rows})
+    assert res6.lane_c == [] and res6.trace["concurrency"]["prestarted"] == [] and not any(c[0] == "sparse" for c in fake6.calls)
+
+
+def test_lane_exceptions_keep_the_sequential_semantics_and_per_call_pools_are_released():
+    class Broken(Fake):
+        def __init__(self, kind):
+            super().__init__(); self.kind = kind
+
+        def dense(self, kind, top_k, extra=None):
+            if kind == self.kind and not extra:
+                raise RuntimeError(f"{kind} down")
+            return super().dense(kind, top_k, extra)
+
+    for kind in (CHILD, DOC, SEC):                            # the core dense lanes still fail the turn (typed by the route)
+        with pytest.raises(RuntimeError, match="down"):
+            ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=Broken(kind).dense, sparse_search=Fake().sparse)
+    res = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=Broken(CARD).dense, sparse_search=Fake().sparse)
+    assert res.trace["lane_sizes"]["entity_card"] == 0 and res.degraded == [] and res.union     # routing votes only: silent, as before
+    # per-call pools are released even when a lane raises (no thread leak across turns)
+    before = _th.active_count()
+    for _ in range(3):
+        with pytest.raises(RuntimeError):
+            ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=Broken(CHILD).dense, sparse_search=Fake().sparse)
+    deadline = _time.perf_counter() + 3.0
+    while _th.active_count() > before and _time.perf_counter() < deadline:
+        _time.sleep(0.02)
+    assert _th.active_count() <= before + 1, (before, _th.active_count())
+    assert ce.CandidateBudget().to_dict()["lane_deadline_s"] == 3.0 and ce.CandidateBudget().max_workers == 8

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
 import time
 from contextvars import ContextVar
 from typing import Optional
@@ -51,6 +52,9 @@ class FastSearcher:
         self.client = client
         self.collections = collections
         self.latency: dict[str, float] = {}
+        # P1.d (§3.21 #10): the chat route runs lanes on a thread pool through ONE searcher;
+        # the per-kind latency sums are the only mutable state the lanes share.
+        self._latency_lock = threading.Lock()
         # SPARSE-BREADTH-V1: one tokenization per query, shared tokenizer
         self._sparse_query = None
         if query:
@@ -61,6 +65,10 @@ class FastSearcher:
                     self._sparse_query = (idx, vals)
             except Exception:
                 self._sparse_query = None
+
+    def _add_latency(self, key: str, ms: float) -> None:
+        with self._latency_lock:
+            self.latency[key] = self.latency.get(key, 0.0) + ms
 
     def _hidden_for(self, corpus_id: str | None) -> list[str]:
         if not corpus_id:
@@ -121,7 +129,7 @@ class FastSearcher:
                 with_payload=True,
             ).points
         finally:
-            self.latency["sparse"] = self.latency.get("sparse", 0.0) + (time.time() - t0) * 1000
+            self._add_latency("sparse", (time.time() - t0) * 1000)
         out = [{"payload": p.payload, "score": p.score} for p in pts]
         out.sort(key=lambda r: -(r["score"] or 0.0))
         return out
@@ -142,7 +150,7 @@ class FastSearcher:
                 else "deep" if filters.get("parent_id") \
                 else "child" if filters["representation_kind"] == "routing_child" \
                 else "section"
-            self.latency[key] = self.latency.get(key, 0.0) + (time.time() - t0) * 1000
+            self._add_latency(key, (time.time() - t0) * 1000)
         out = [{"payload": p.payload, "score": p.score} for p in points]
         out.sort(key=lambda r: -(r["score"] or 0.0))
         # SPARSE-BREADTH-V1 (audit F4): every routing lane gets a bm25
@@ -177,8 +185,7 @@ class FastSearcher:
             except Exception:
                 pass
             finally:
-                self.latency["sparse"] = self.latency.get("sparse", 0.0) \
-                    + (time.time() - t1) * 1000
+                self._add_latency("sparse", (time.time() - t1) * 1000)
         return out
 
     def __call__(self, collection: str, vector: list[float], filters: dict) -> list[dict]:

@@ -27,10 +27,21 @@ continue; #3 no plan copy — one `CandidateBudget` is consumed directly;
 request (`shape_budget`). Rescue caps do not exist: B and C are lanes.
 `hybrid-retrieval-v1` / `pass1-retrieval-v2` are untouched for /retrieve,
 /ask and TRAIL.
+
+P1.d — CONCURRENCY-DEADLINES-V1 (§3.16): the lanes are concurrent tasks on a
+bounded pool under ONE wall-clock budget (`lane_deadline_s`); a lane past
+its deadline is dropped with a `<lane>_timeout` receipt in `degraded` and
+the turn completes on the others; results are collected by lane NAME and
+fused in the fixed lane order, so the union never depends on completion
+order (no deadline hit ⇒ byte-identical to the sequential engine). Lane C
+may be handed in pre-started (BM25 needs no embedding). The judge's
+deadline lives in the route (one rerank call per turn, `rerank_deadline_s`).
 """
 from __future__ import annotations
 
 import time
+from concurrent.futures import CancelledError, Executor, Future, ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeout
 from dataclasses import asdict, dataclass, field, replace
 from typing import Callable, Iterable, Optional
 
@@ -49,6 +60,7 @@ from polymath_shared.query_shape import is_document_metadata_query, is_enumerati
 
 CANDIDATE_ENGINE_VERSION = "candidate-retrieval-v1"
 CHAT_RETRIEVAL_PLAN_VERSION = "chat-retrieval-v2"
+CONCURRENCY_CONTRACT = "concurrency-deadlines-v1"    # P1.d: concurrent lanes + wall-clock budgets + one judge
 
 LANE_A = "HIERARCHICAL_ROUTE"
 LANE_B = "GLOBAL_DENSE_CHILD"
@@ -133,6 +145,18 @@ class CandidateBudget:
     #: to pass a candidate with a clearly higher judge score (§5 #10c)
     compose_agreement_boost: float = 0.02
     compose_agreement_cap: float = 0.05
+    #: P1.d CONCURRENCY-DEADLINES-V1 (§3.16 "wall-clock budgets, not only K"; starting budgets to benchmark).
+    #: `embed_deadline_s`: the ONE embedding call's budget — a hard dependency (no vector, no dense lane), so the
+    #: route waits past it and RECEIPTS the breach (`embed_deadline`), it never drops the stage.
+    #: `lane_deadline_s`: the core lanes' budget, measured from engine entry over the T=0 lanes, the hierarchical
+    #: deepening and the second pass together; a lane still pending at the deadline is dropped and receipted
+    #: `<lane>_timeout` (its late result is ignored), the turn completes on the other lanes.
+    #: `rerank_deadline_s`: the judge's budget; past it the turn proceeds in fusion order (`rerank_timeout`).
+    #: `max_workers`: the bounded per-turn pool the lanes share (≤ 5 primary + 2 × subqueries + ≤ 12 deepening tasks).
+    embed_deadline_s: float = 2.5
+    lane_deadline_s: float = 3.0
+    rerank_deadline_s: float = 3.0
+    max_workers: int = 8
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -340,26 +364,190 @@ def _call_sparse(sparse_search, top_k, sparse_query):
         return sparse_search(top_k)
 
 
+class _Outcome:
+    """What one lane produced: rows, its milliseconds, and whether it was
+    dropped at the deadline (`timeout`; `started=False` when the budget was
+    already spent before the stage could be launched) or raised (`error`)."""
+    __slots__ = ("rows", "ms", "timeout", "error", "started")
+
+    def __init__(self, rows: list, ms: float, *, timeout: bool = False, error: Optional[BaseException] = None, started: bool = True):
+        self.rows, self.ms, self.timeout, self.error, self.started = rows, ms, timeout, error, started
+
+
+def _timed_call(fn: Callable[[], list]) -> tuple[list, float]:
+    t0 = time.perf_counter()
+    rows = fn()
+    return rows, round((time.perf_counter() - t0) * 1000, 1)
+
+
+def _submit(executor: Executor, tasks: list[tuple[str, Callable[[], list]]]) -> dict[str, Future]:
+    """Submit lanes in the given (fixed) order; every future resolves to
+    (rows, own_ms). Submission order is the only order the pool sees."""
+    return {name: executor.submit(_timed_call, fn) for name, fn in tasks}
+
+
+def _gather(futs: dict[str, Future], deadline: float, *, raw: frozenset = frozenset()) -> dict[str, _Outcome]:
+    """Collect lanes by NAME (never by completion order) against one absolute
+    `deadline` (perf_counter clock). A lane still pending at the deadline is
+    dropped — its future is cancelled if it has not started, its late result
+    is ignored if it has — and reported as `timeout`; a lane that raised is
+    reported as `error`. Nothing is raised here. `raw` names futures whose
+    result is plain rows (pre-started outside the engine) rather than
+    (rows, ms); their `ms` is the time the engine waited for them."""
+    out: dict[str, _Outcome] = {}
+    for name, fut in futs.items():
+        t_wait = time.perf_counter()
+        try:
+            r = fut.result(timeout=max(0.0, deadline - t_wait))
+            if name in raw:
+                rows, ms = r, round((time.perf_counter() - t_wait) * 1000, 1)
+            else:
+                rows, ms = r
+            out[name] = _Outcome(list(rows or []), ms)
+        except (FutureTimeout, CancelledError):
+            fut.cancel()
+            out[name] = _Outcome([], round((time.perf_counter() - t_wait) * 1000, 1), timeout=True)
+        except Exception as exc:  # noqa: BLE001 — the caller decides per lane (propagate / degrade / ignore)
+            out[name] = _Outcome([], round((time.perf_counter() - t_wait) * 1000, 1), error=exc)
+    return out
+
+
+def _run_stage(pool: Executor, tasks: list[tuple[str, Callable[[], list]]], deadline: float) -> dict[str, _Outcome]:
+    """Submit-and-gather one dependent stage (the deepening fan-out, the
+    second pass). Nothing is launched once the deadline has passed — a hard
+    budget never starts work it cannot wait for — so the stage is reported
+    as not started, deterministically, instead of racing a zero timeout."""
+    if not tasks:
+        return {}
+    if time.perf_counter() >= deadline:
+        return {name: _Outcome([], 0.0, timeout=True, started=False) for name, _ in tasks}
+    return _gather(_submit(pool, tasks), deadline)
+
+
+def _deadline_reason(budget: CandidateBudget, waited_ms: float, started: bool, plural: bool = False) -> str:
+    if not started:
+        return f"not started: the core budget (lane_deadline_s={budget.lane_deadline_s:g}) was spent before this stage"
+    return f"no result after {waited_ms:.0f} ms; lane_deadline_s={budget.lane_deadline_s:g} — late result{'s' if plural else ''} ignored"
+
+
+def _timeout_receipt(name: str, budget: CandidateBudget, effect: str, o: _Outcome) -> dict:
+    return {"component": f"{name}_timeout", "effect": effect, "reason": _deadline_reason(budget, o.ms, o.started)}
+
+
 def retrieve_candidates(ctx: SearchContext, budget: CandidateBudget, *,
                         dense_search: Callable[..., list[dict]],
                         sparse_search: Callable[..., list[dict]],
                         region_lookup: Optional[Callable[[list[str]], dict]] = None,
-                        subqueries: Iterable[SubQuery] = ()) -> CandidateResult:
+                        subqueries: Iterable[SubQuery] = (),
+                        executor: Optional[Executor] = None,
+                        prestarted: Optional[dict] = None) -> CandidateResult:
+    """CONCURRENCY-DEADLINES-V1 (P1.d, §3.16): the lanes of a turn run as
+    concurrent tasks on a bounded pool, under ONE wall-clock budget
+    (`lane_deadline_s`, the core lanes) measured from entry:
+
+        T=0   doc summaries ∥ section summaries ∥ entity cards ∥ global dense
+              child ∥ global sparse child ∥ every subquery's B + C
+        then  routing aggregation → the hierarchical child deepening fan-out
+              (one task per selected section) ∥ the subquery lanes still running
+        then  (at most) one second pass for the first empty aspect
+
+    A lane past the deadline is dropped — late result ignored — and receipted
+    in `degraded` as {"component": "<lane>_timeout", …}; the turn completes
+    with the other lanes. Results are collected BY LANE NAME and fused in the
+    fixed lane order, so the union never depends on completion order: with no
+    deadline hit the output is byte-identical to the sequential P1.b/P1.c
+    engine (lane exceptions propagate or degrade exactly as before).
+
+    `executor`: a caller-owned pool (the route shares one per turn); when
+    None a pool of `max_workers` is created here and shut down on every path
+    (never awaited — a late lane may not hold the turn). `prestarted`: lanes
+    the caller started before calling (BM25 needs no embedding, §3.16), keyed
+    by lane name (`global_sparse_child`, `sub_<qid>_sparse`) → a Future or a
+    list of rows; a pre-started lane is not searched again.
+    """
     timings: dict[str, float] = {}
     degraded: list[dict] = []
     lanes = set(budget.lanes)
     subqueries = list(subqueries or [])[:budget.max_subqueries]
+    prestarted = dict(prestarted or {})
+    t_turn = time.perf_counter()
+    deadline = t_turn + float(budget.lane_deadline_s)
+    own_pool = executor is None
+    pool: Executor = executor if executor is not None else ThreadPoolExecutor(
+        max_workers=max(1, int(budget.max_workers)), thread_name_prefix="candidate-lanes")
+    try:
+        return _retrieve_on(ctx, budget, pool, dense_search, sparse_search, region_lookup, subqueries, prestarted,
+                            lanes, deadline, t_turn, timings, degraded)
+    finally:
+        if own_pool:
+            pool.shutdown(wait=False, cancel_futures=True)      # never wait on a late lane; queued work is dropped
 
-    def timed(name: str, fn):
-        t0 = time.perf_counter()
-        try:
-            return fn()
-        finally:
-            timings[name] = round((time.perf_counter() - t0) * 1000, 1)
 
-    # ---- global child lanes (B, C) --------------------------------------
-    child_rows = timed("global_dense_child", lambda: dense_search(REPRESENTATION_KIND_CHILD, budget.global_dense_k, None)) \
-        if (LANE_B in lanes or LANE_A in lanes) else []
+def _prestarted_future(value) -> Future:
+    """Rows already in hand become a resolved future; a Future is used as is."""
+    if isinstance(value, Future):
+        return value
+    f: Future = Future()
+    f.set_result(list(value or []))
+    return f
+
+
+def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, dense_search, sparse_search, region_lookup,
+                 subqueries: list[SubQuery], prestarted: dict, lanes: set, deadline: float, t_turn: float,
+                 timings: dict, degraded: list) -> CandidateResult:
+    LANE_DROPPED = "lane dropped this turn (deadline); the other lanes continue"
+    SPARSE_DROPPED = "no exact-match lane this turn; dense lanes only"
+
+    # ---- T=0: every independent lane, submitted in the fixed lane order ----------------
+    primary_tasks: list[tuple[str, Callable[[], list]]] = []
+    raw: set[str] = set()
+    pre_futs: dict[str, Future] = {}
+    if LANE_B in lanes or LANE_A in lanes:
+        primary_tasks.append(("global_dense_child", lambda: dense_search(REPRESENTATION_KIND_CHILD, budget.global_dense_k, None)))
+    if LANE_C in lanes:
+        if "global_sparse_child" in prestarted:
+            pre_futs["global_sparse_child"] = _prestarted_future(prestarted["global_sparse_child"]); raw.add("global_sparse_child")
+        else:
+            primary_tasks.append(("global_sparse_child", lambda: sparse_search(budget.global_sparse_k)))
+    if LANE_A in lanes:
+        primary_tasks.append(("document_summary", lambda: dense_search(REPRESENTATION_KIND_DOCUMENT_SUMMARY, budget.hierarchy_doc_k, None)))
+        primary_tasks.append(("section_summary", lambda: dense_search(REPRESENTATION_KIND_SECTION_SUMMARY, budget.hierarchy_section_k, None)))
+        if budget.entity_card_k > 0:
+            primary_tasks.append(("entity_card", lambda: dense_search(REPRESENTATION_KIND_ENTITY_CARD,
+                                                                      budget.entity_card_k * budget.entity_card_max_docs_per_card, None)))
+    sub_tasks: list[tuple[str, Callable[[], list]]] = []
+    sub_pre: dict[str, Future] = {}
+    for sq in subqueries:
+        if LANE_B in lanes:
+            sub_tasks.append((f"sub_{sq.query_id}_dense", lambda sq=sq: _call_dense(dense_search, REPRESENTATION_KIND_CHILD, budget.subquery_dense_k, None, sq.qvec)))
+        if LANE_C in lanes and sq.sparse_query is not None:
+            name = f"sub_{sq.query_id}_sparse"
+            if name in prestarted:
+                sub_pre[name] = _prestarted_future(prestarted[name]); raw.add(name)
+            else:
+                sub_tasks.append((name, lambda sq=sq: _call_sparse(sparse_search, budget.subquery_sparse_k, sq.sparse_query)))
+    futs = _submit(pool, primary_tasks + sub_tasks)
+    futs.update(pre_futs); futs.update(sub_pre)
+    # the ROUTING lanes first: the hierarchical deepening needs all four of them and nothing else — lane C is
+    # gathered only once the deepening is in flight, so a slow BM25 never delays the fan-out
+    routing_names = [n for n, _ in primary_tasks if n != "global_sparse_child"]
+    outs = _gather({n: futs[n] for n in routing_names}, deadline, raw=frozenset(raw))
+    timings["lanes_wall"] = round((time.perf_counter() - t_turn) * 1000, 1)
+    for name in routing_names:
+        timings[name] = outs[name].ms
+
+    def dropped(name: str, effect: str) -> None:
+        degraded.append(_timeout_receipt(name, budget, effect, outs[name]))
+
+    # ---- lanes B and C (primary) — the sequential engine's failure semantics, lane by lane ----
+    child_rows: list[dict] = []
+    if "global_dense_child" in outs:
+        o = outs["global_dense_child"]
+        if o.error is not None:
+            raise o.error                                       # as before: the primary dense lane failing fails the turn
+        if o.timeout:
+            dropped("global_dense_child", LANE_DROPPED)
+        child_rows = o.rows
     child_lane = _hits(REPRESENTATION_KIND_CHILD, child_rows, ctx.corpus_id, budget.global_dense_k)
     roles: dict = {}
     if budget.demote_noisy_regions and region_lookup is not None and child_lane:
@@ -369,16 +557,7 @@ def retrieve_candidates(ctx: SearchContext, budget: CandidateBudget, *,
             roles = {}
         child_lane = _sink_noisy(child_lane, roles)
 
-    sparse_lane: list[LaneHit] = []
-    if LANE_C in lanes:
-        try:
-            sparse_rows = timed("global_sparse_child", lambda: sparse_search(budget.global_sparse_k))
-            sparse_lane = _hits("child_lexical", sparse_rows, ctx.corpus_id, budget.global_sparse_k)
-        except Exception as exc:  # noqa: BLE001 — §3.21 #2: DEGRADED, never a Postgres scan
-            degraded.append({"component": "sparse_lane", "effect": "no exact-match lane this turn; dense lanes only",
-                             "reason": f"{type(exc).__name__}: {str(exc)[:160]}"})
-
-    # ---- lane A: hierarchical route --------------------------------------
+    # ---- lane A: hierarchical route (routing lanes gathered above; deepening fans out concurrently) ----
     doc_lane: list[LaneHit] = []
     section_lane: list[LaneHit] = []
     card_lane: list[LaneHit] = []
@@ -387,21 +566,21 @@ def retrieve_candidates(ctx: SearchContext, budget: CandidateBudget, *,
     selected_sections: list[dict] = []
     lane_a: list[CandidateEvidence] = []
     if LANE_A in lanes:
-        doc_lane = _hits(REPRESENTATION_KIND_DOCUMENT_SUMMARY,
-                         timed("document_summary", lambda: dense_search(REPRESENTATION_KIND_DOCUMENT_SUMMARY, budget.hierarchy_doc_k, None)),
-                         ctx.corpus_id, budget.hierarchy_doc_k)
-        section_lane = _hits(REPRESENTATION_KIND_SECTION_SUMMARY,
-                             timed("section_summary", lambda: dense_search(REPRESENTATION_KIND_SECTION_SUMMARY, budget.hierarchy_section_k, None)),
-                             ctx.corpus_id, budget.hierarchy_section_k)
-        if budget.entity_card_k > 0:
-            try:
-                card_lane = _hits(REPRESENTATION_KIND_ENTITY_CARD,
-                                  timed("entity_card", lambda: dense_search(REPRESENTATION_KIND_ENTITY_CARD,
-                                                                            budget.entity_card_k * budget.entity_card_max_docs_per_card, None)),
-                                  ctx.corpus_id, budget.entity_card_k * budget.entity_card_max_docs_per_card,
+        for name in ("document_summary", "section_summary"):
+            if outs[name].error is not None:
+                raise outs[name].error
+            if outs[name].timeout:
+                dropped(name, LANE_DROPPED)
+        doc_lane = _hits(REPRESENTATION_KIND_DOCUMENT_SUMMARY, outs["document_summary"].rows, ctx.corpus_id, budget.hierarchy_doc_k)
+        section_lane = _hits(REPRESENTATION_KIND_SECTION_SUMMARY, outs["section_summary"].rows, ctx.corpus_id, budget.hierarchy_section_k)
+        if "entity_card" in outs:
+            o = outs["entity_card"]
+            if o.timeout:
+                dropped("entity_card", "no entity-card routing votes this turn")
+            if o.error is None and not o.timeout:               # a failing card probe stays silent: routing votes only
+                card_lane = _hits(REPRESENTATION_KIND_ENTITY_CARD, o.rows, ctx.corpus_id,
+                                  budget.entity_card_k * budget.entity_card_max_docs_per_card,
                                   card_k=budget.entity_card_k, card_max_docs=budget.entity_card_max_docs_per_card)
-            except Exception:  # noqa: BLE001 — routing votes only
-                card_lane = []
         documents = aggregate_documents_n(
             [(REPRESENTATION_KIND_DOCUMENT_SUMMARY, doc_lane), (REPRESENTATION_KIND_SECTION_SUMMARY, section_lane),
              (REPRESENTATION_KIND_CHILD, child_lane), (REPRESENTATION_KIND_ENTITY_CARD, card_lane)], k=budget.rrf_k)
@@ -409,11 +588,22 @@ def retrieve_candidates(ctx: SearchContext, budget: CandidateBudget, *,
         selected_sections = resolve_sections(selected_documents, budget.hierarchy_max_sections_per_document)
         doc_rank = {d.doc_id: d.aggregate_rank for d in selected_documents}
         t0 = time.perf_counter()
+        deep_tasks = [(f"deep_{i}", (lambda section=section: dense_search(REPRESENTATION_KIND_CHILD, budget.hierarchy_child_k,
+                                                                          {"doc_id": section["doc_id"], "parent_id": section["parent_id"]})))
+                      for i, section in enumerate(selected_sections)]
+        deep = _run_stage(pool, deep_tasks, deadline)
+        timings["hierarchical_children"] = round((time.perf_counter() - t0) * 1000, 1)
+        for name, o in deep.items():                            # fixed section order: the first failing deepening raises, as before
+            if o.error is not None:
+                raise o.error
+        late = [n for n, o in deep.items() if o.timeout]
+        if late:
+            degraded.append({"component": "hierarchical_children_timeout",
+                             "effect": f"{len(late)} of {len(deep)} section deepenings dropped; lane A keeps the sections that answered",
+                             "reason": _deadline_reason(budget, max(deep[n].ms for n in late), any(deep[n].started for n in late), plural=True)})
         seen_a: set[str] = set()
-        for section in selected_sections:
-            rows = dense_search(REPRESENTATION_KIND_CHILD, budget.hierarchy_child_k,
-                                {"doc_id": section["doc_id"], "parent_id": section["parent_id"]})
-            for h in _hits(REPRESENTATION_KIND_CHILD, rows, ctx.corpus_id, budget.hierarchy_child_k):
+        for i, section in enumerate(selected_sections):
+            for h in _hits(REPRESENTATION_KIND_CHILD, deep[f"deep_{i}"].rows, ctx.corpus_id, budget.hierarchy_child_k):
                 if not h.chunk_id or h.chunk_id in seen_a:
                     continue
                 seen_a.add(h.chunk_id)
@@ -421,7 +611,20 @@ def retrieve_candidates(ctx: SearchContext, budget: CandidateBudget, *,
                     chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name, text=h.text,
                     arrivals=[LANE_A], query_ids=[ctx.query_id], hierarchy_rank=len(lane_a), dense_score=h.raw_similarity,
                     document_rank=doc_rank.get(h.doc_id)))
-        timings["hierarchical_children"] = round((time.perf_counter() - t0) * 1000, 1)
+
+    # ---- lane C (primary): running since T=0, joined here — BM25 is not a routing input -----------------
+    sparse_lane: list[LaneHit] = []
+    if "global_sparse_child" in futs:
+        outs.update(_gather({"global_sparse_child": futs["global_sparse_child"]}, deadline, raw=frozenset(raw)))
+        o = outs["global_sparse_child"]
+        timings["global_sparse_child"] = o.ms
+        if o.error is not None:                                 # §3.21 #2: DEGRADED, never a Postgres scan
+            degraded.append({"component": "sparse_lane", "effect": SPARSE_DROPPED,
+                             "reason": f"{type(o.error).__name__}: {str(o.error)[:160]}"})
+        elif o.timeout:
+            dropped("global_sparse_child", SPARSE_DROPPED)
+        else:
+            sparse_lane = _hits("child_lexical", o.rows, ctx.corpus_id, budget.global_sparse_k)
 
     lane_b = [CandidateEvidence(chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name,
                                 text=h.text, arrivals=[LANE_B], query_ids=[ctx.query_id], dense_rank=h.rank,
@@ -432,20 +635,28 @@ def retrieve_candidates(ctx: SearchContext, budget: CandidateBudget, *,
                                 sparse_score=h.raw_similarity)
               for h in sparse_lane if h.chunk_id]
 
-    # ---- typed subqueries: lanes B + C only (§3.16), per-query provenance ------
+    # ---- typed subqueries: lanes B + C only (§3.16), per-query provenance; started at T=0, gathered here ------
     aspects: dict[str, dict] = {ctx.query_id: {"type": "PRIMARY", "query": ctx.query, "weight": 1.0,
                                                "lanes": {LANE_A: len(lane_a), LANE_B: len(lane_b), LANE_C: len(lane_c)},
                                                "degraded": [d["component"] for d in degraded]}}
     sub_items: list[CandidateEvidence] = []
     second_pass: Optional[dict] = None
+    sub_names = [n for n, _ in sub_tasks] + list(sub_pre)
+    sub_outs = _gather({n: futs[n] for n in sub_names}, deadline, raw=frozenset(raw))
+    for name in sub_names:
+        timings[name] = sub_outs[name].ms
 
-    def _run_sub(sq: SubQuery, dk: int, sk: int) -> tuple[list[CandidateEvidence], dict]:
+    def _items_for(sq: SubQuery, outcomes: dict[str, _Outcome], dk: int, sk: int) -> tuple[list[CandidateEvidence], dict]:
         items: list[CandidateEvidence] = []
         info = {"type": sq.qtype, "query": sq.text, "weight": sq.weight, "lanes": {LANE_B: 0, LANE_C: 0}, "degraded": []}
-        if LANE_B in lanes:
-            try:
-                rows = timed(f"sub_{sq.query_id}_dense", lambda: _call_dense(dense_search, REPRESENTATION_KIND_CHILD, dk, None, sq.qvec))
-                hits = _sink_noisy(_hits(REPRESENTATION_KIND_CHILD, rows, ctx.corpus_id, dk), roles) if roles else _hits(REPRESENTATION_KIND_CHILD, rows, ctx.corpus_id, dk)
+        o = outcomes.get("dense")
+        if o is not None:
+            if o.error is not None:
+                info["degraded"].append(f"dense:{type(o.error).__name__}")
+            elif o.timeout:
+                info["degraded"].append("dense:timeout")
+            else:
+                hits = _sink_noisy(_hits(REPRESENTATION_KIND_CHILD, o.rows, ctx.corpus_id, dk), roles) if roles else _hits(REPRESENTATION_KIND_CHILD, o.rows, ctx.corpus_id, dk)
                 for h in hits:
                     if h.chunk_id:
                         items.append(CandidateEvidence(chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name,
@@ -453,12 +664,14 @@ def retrieve_candidates(ctx: SearchContext, budget: CandidateBudget, *,
                                                        query_scores={sq.query_id: sq.weight * _rrf_score(h.rank, budget.rrf_k)},
                                                        dense_score=h.raw_similarity))
                 info["lanes"][LANE_B] = sum(1 for h in hits if h.chunk_id)
-            except Exception as exc:  # noqa: BLE001
-                info["degraded"].append(f"dense:{type(exc).__name__}")
-        if LANE_C in lanes and sq.sparse_query is not None:
-            try:
-                rows = timed(f"sub_{sq.query_id}_sparse", lambda: _call_sparse(sparse_search, sk, sq.sparse_query))
-                hits = _hits("child_lexical", rows, ctx.corpus_id, sk)
+        o = outcomes.get("sparse")
+        if o is not None:
+            if o.error is not None:
+                info["degraded"].append(f"sparse:{type(o.error).__name__}")
+            elif o.timeout:
+                info["degraded"].append("sparse:timeout")
+            else:
+                hits = _hits("child_lexical", o.rows, ctx.corpus_id, sk)
                 for h in hits:
                     if h.chunk_id:
                         items.append(CandidateEvidence(chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name,
@@ -466,24 +679,45 @@ def retrieve_candidates(ctx: SearchContext, budget: CandidateBudget, *,
                                                        query_scores={sq.query_id: sq.weight * _rrf_score(h.rank, budget.rrf_k)},
                                                        sparse_score=h.raw_similarity))
                 info["lanes"][LANE_C] = sum(1 for h in hits if h.chunk_id)
-            except Exception as exc:  # noqa: BLE001
-                info["degraded"].append(f"sparse:{type(exc).__name__}")
         return items, info
 
     for sq in subqueries:
-        items, info = _run_sub(sq, budget.subquery_dense_k, budget.subquery_sparse_k)
+        outcomes = {}
+        if f"sub_{sq.query_id}_dense" in sub_outs:
+            outcomes["dense"] = sub_outs[f"sub_{sq.query_id}_dense"]
+        if f"sub_{sq.query_id}_sparse" in sub_outs:
+            outcomes["sparse"] = sub_outs[f"sub_{sq.query_id}_sparse"]
+        items, info = _items_for(sq, outcomes, budget.subquery_dense_k, budget.subquery_sparse_k)
+        for lane_key, o in outcomes.items():
+            if o.timeout:
+                degraded.append(_timeout_receipt(f"sub_{sq.query_id}_{lane_key}", budget, f"aspect {sq.query_id} loses its {lane_key} lane this turn", o))
         aspects[sq.query_id] = info
         sub_items.extend(items)
-    # one targeted second pass: the first aspect that found nothing gets B + C again at K × factor
+    # one targeted second pass: the first aspect that found nothing gets B + C again at K × factor — but an aspect
+    # whose lanes were DROPPED at the deadline was not given time, not found empty: no second pass for it
     for sq in subqueries:
-        if aspects[sq.query_id]["lanes"][LANE_B] + aspects[sq.query_id]["lanes"][LANE_C] == 0 and budget.second_pass_factor > 1:
-            items, info = _run_sub(sq, budget.subquery_dense_k * budget.second_pass_factor, budget.subquery_sparse_k * budget.second_pass_factor)
+        info = aspects[sq.query_id]
+        if info["lanes"][LANE_B] + info["lanes"][LANE_C] == 0 and budget.second_pass_factor > 1 \
+                and not any(d.endswith(":timeout") for d in info["degraded"]):
+            dk, sk = budget.subquery_dense_k * budget.second_pass_factor, budget.subquery_sparse_k * budget.second_pass_factor
+            tasks2: list[tuple[str, Callable[[], list]]] = []
+            if LANE_B in lanes:
+                tasks2.append(("dense", lambda sq=sq, dk=dk: _call_dense(dense_search, REPRESENTATION_KIND_CHILD, dk, None, sq.qvec)))
+            if LANE_C in lanes and sq.sparse_query is not None:
+                tasks2.append(("sparse", lambda sq=sq, sk=sk: _call_sparse(sparse_search, sk, sq.sparse_query)))
+            outs2 = _run_stage(pool, tasks2, deadline)
+            for lane_key, o in outs2.items():
+                timings[f"sub_{sq.query_id}_{lane_key}"] = o.ms
+                if o.timeout:
+                    degraded.append(_timeout_receipt(f"sub_{sq.query_id}_{lane_key}", budget, f"second pass for aspect {sq.query_id} dropped", o))
+            items, info2 = _items_for(sq, outs2, dk, sk)
             second_pass = {"query_id": sq.query_id, "before": 0, "after": len(items)}
-            aspects[sq.query_id] = {**info, "second_pass": True}
+            aspects[sq.query_id] = {**info2, "second_pass": True}
             sub_items.extend(items)
             break
 
-    # ---- union + dedupe + provenance-preserving fusion --------------------
+    # ---- union + dedupe + provenance-preserving fusion (fixed lane order: A, B, C, subqueries) --------
+    t_union = time.perf_counter()
     by_id: dict[str, CandidateEvidence] = {}
     for c in lane_a + lane_b + lane_c:
         c.query_scores = dict(c.query_scores)
@@ -542,6 +776,8 @@ def retrieve_candidates(ctx: SearchContext, budget: CandidateBudget, *,
         fused = sorted(fused, key=lambda c: 1 if is_noisy(c.region_role) else 0)   # stable: order kept within groups
     union_ids_uncapped = [c.chunk_id for c in fused]
     union = fused[:budget.merged_candidate_max]
+    timings["union"] = round((time.perf_counter() - t_union) * 1000, 1)
+    timings["core_wall"] = round((time.perf_counter() - t_turn) * 1000, 1)
 
     trace = {
         "plan": CHAT_RETRIEVAL_PLAN_VERSION, "engine": CANDIDATE_ENGINE_VERSION, "rrf_k": budget.rrf_k,
@@ -560,6 +796,10 @@ def retrieve_candidates(ctx: SearchContext, budget: CandidateBudget, *,
         # P1.b aspect coverage: per compiled query — lanes, union candidates, degradations
         "aspects": {qid: {**info, "union": sum(1 for c in union if qid in c.query_ids)} for qid, info in aspects.items()},
         "subqueries": len(subqueries), "second_pass": second_pass,
+        # P1.d receipts: the pool, the deadline, which lanes were handed in pre-started, which were dropped
+        "concurrency": {"contract": CONCURRENCY_CONTRACT, "max_workers": max(1, int(budget.max_workers)),
+                        "lane_deadline_s": budget.lane_deadline_s, "prestarted": sorted(raw),
+                        "timed_out": [d["component"][:-len("_timeout")] for d in degraded if d["component"].endswith("_timeout")]},
         "degraded": list(degraded), "timings_ms": dict(timings),
     }
     return CandidateResult(context=ctx, budget=budget, documents=documents, selected_documents=selected_documents,
