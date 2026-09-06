@@ -10,15 +10,15 @@
  "source": "owner-provided Model Studio token-plan configuration, 2026-09-06 (cost 0 under the plan; limits are the plan's)",
  "fetched": "2026-09-06",
  "models": [
-  "anthropic/qwen3.8-max",
-  "anthropic/qwen3.8-flash",
-  "anthropic/qwen3.7-max",
+  "anthropic/deepseek-v4-flash-0731",
   "anthropic/qwen3.7-plus",
   "anthropic/qwen3.6-flash",
   "anthropic/glm-5.2",
+  "anthropic/qwen3.7-max",
   "anthropic/deepseek-v4-pro",
   "anthropic/deepseek-v4-pro-0813",
-  "anthropic/deepseek-v4-flash-0731"
+  "anthropic/qwen3.8-flash",
+  "anthropic/qwen3.8-max"
  ],
  "names": {
   "anthropic/qwen3.8-max": "qwen3.8-max",
@@ -77,5 +77,6 @@
    "context_window": 1000000,
    "max_tokens": 393216
   }
- }
+ },
+ "order_note": "2026-09-06 live turns on one grounded question (chroma keyer, cinema): deepseek-v4-flash-0731 16\u201323 s with [S#] tags; qwen3.7-plus 39 s with tags; qwen3.8-max (reasoning) 42 s WITHOUT tags \u2014 fast citing models first"
 }

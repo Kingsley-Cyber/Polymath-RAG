@@ -65,8 +65,14 @@ OLLAMA_URL = os.environ.get("POLYMATH_OLLAMA_URL",
 #: FREE cloud tier only — the six names below, no local models, no paid cloud
 #: models — as a fixed, env-overridable list so the dropdown does not follow
 #: whatever happens to be pulled on this Mac. New chats take the first entry.
-_PREFERRED_DEFAULT = os.environ.get(
-    "POLYMATH_DEFAULT_SYNTHESIZER", "litellm:openai/glm-5-free")
+#: New chats take the FIRST OFFERED id of this comma-separated preference list (POLYMATH_DEFAULT_SYNTHESIZER): a provider
+#: whose key is missing is skipped, never a dead default. Order measured 2026-09-06 on one grounded question: OpenCode's
+#: glm-5-free is the owner's first choice; Alibaba's deepseek-v4-flash-0731 answered in 16–23 s WITH [S#] citation tags
+#: (qwen3.8-max, the reasoning model, answered in 42 s without tags); gemma4:31b-cloud is the free-tier fallback.
+_PREFERRED_DEFAULTS = [x.strip() for x in os.environ.get(
+    "POLYMATH_DEFAULT_SYNTHESIZER",
+    "litellm:openai/glm-5-free,litellm:anthropic/deepseek-v4-flash-0731,ollama:gemma4:31b-cloud").split(",") if x.strip()]
+_PREFERRED_DEFAULT = _PREFERRED_DEFAULTS[0] if _PREFERRED_DEFAULTS else "ollama:gemma4:31b-cloud"
 
 #: Ollama's free cloud tier (https://ollama.com/library, "free usage"), as the
 #: daemon names them (`ollama pull <name>` registers a cloud model; no weights).
@@ -741,11 +747,12 @@ def ui_pulse() -> dict:
 @router.get("/synthesizers")
 def synthesizers() -> dict:
     entries = [*_litellm_models(), *_ollama_models()]
-    # Move the preferred study default to the front (new chats take
-    # synths[0]).
-    for i, e in enumerate(entries):
-        if e["id"] == _PREFERRED_DEFAULT:
-            entries.insert(0, entries.pop(i))
+    # Move the first OFFERED preferred id to the front (new chats take
+    # synths[0]); an unoffered preference (key missing) is skipped.
+    offered = {e["id"]: i for i, e in enumerate(entries)}
+    for pref in _PREFERRED_DEFAULTS:
+        if pref in offered:
+            entries.insert(0, entries.pop(offered[pref]))
             break
     if not entries:
         # Model daemons unreachable: still offer the preferred id so

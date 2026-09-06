@@ -69,10 +69,10 @@ def test_synthesizers_default_is_the_preferred_free_model_when_offered_else_the_
     import httpx
     monkeypatch.setattr(httpx, "get", lambda url, timeout=3: _Resp(list(ui.OLLAMA_FREE_CLOUD_MODELS)))
     monkeypatch.setattr(ui, "_llm_provider_rows", lambda: _rows()[:1])                # only the OpenCode row configured
-    monkeypatch.setattr(ui, "_PREFERRED_DEFAULT", "litellm:openai/glm-5-free")
+    monkeypatch.setattr(ui, "_PREFERRED_DEFAULTS", ["litellm:openai/glm-5-free", "litellm:anthropic/deepseek-v4-flash-0731", "ollama:gpt-oss:20b-cloud"])
     monkeypatch.delenv("OPENCODE_API_KEY", raising=False)
     out = ui.synthesizers()["synthesizers"]
-    assert out[0]["id"] == "ollama:gemma4:31b-cloud" and out[0]["default"] is True     # no key yet → first free Ollama model
+    assert out[0]["id"] == "ollama:gpt-oss:20b-cloud" and out[0]["default"] is True     # no key → the first OFFERED preference (a free Ollama model)
     assert not any(e["id"].startswith("litellm:") for e in out) and len(out) == len(ui.OLLAMA_FREE_CLOUD_MODELS)
     monkeypatch.setenv("OPENCODE_API_KEY", "oc-secret")
     out = ui.synthesizers()["synthesizers"]
@@ -100,6 +100,7 @@ def test_alibaba_model_studio_snapshot_is_an_anthropic_messages_provider_with_th
     cfg = json.loads((ROOT / "config" / "chat_models" / "alibaba_model_studio.json").read_text())
     assert cfg["provider_id"] == "alibaba-model-studio" and cfg["litellm_provider"] == "anthropic" and cfg["api_key_env"] == "ALIBABA_MODEL_STUDIO_API_KEY"
     assert cfg["api_base"].startswith("https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic") and cfg["api_base"].endswith("/v1/messages")
+    assert cfg["models"][0] == "anthropic/deepseek-v4-flash-0731" and cfg["models"][-1] == "anthropic/qwen3.8-max"   # measured order: fast + citing first
     assert len(cfg["models"]) == 9 and all(m.startswith("anthropic/") for m in cfg["models"]) and "anthropic/qwen3.8-max" in cfg["models"]
     assert ui._PROVIDER_LABELS["alibaba-model-studio"] == "Alibaba Model Studio"
     assert "sk-" not in json.dumps(cfg)                                   # never a key in the snapshot
