@@ -263,11 +263,11 @@ providers:
     min: 1
     max: 2
     init: 1
-  profile_groq1:       # DOCUMENT-PROFILE-V1 pool tier 0: dedicated Groq account 1, groq/compound (provider limits RPM 30 / RPD 250 / TPM 70k). The limiter is per PROCESS (threading locks): with six profile slots each row is ONE slot's budget on ITS key (lane offset) — rpm 12 / conc 1 leaves headroom for a second slot falling back onto the same key.
+  profile_groq1:       # DOCUMENT-PROFILE-V1 pool tier 0: dedicated Groq account 1, groq/compound (provider limits RPM 30 / RPD 250 / TPM 70k). The limiter is per PROCESS (threading locks): with six profile slots each row is ONE slot's budget on ITS key (lane offset) — rpm 2 / conc 1: measured 2026-09-07 with the rate-limit headers, ONE profile request through compound = 12 internal model calls (11 llama-4-scout router steps + 1 gpt-oss-120b answer), 38.5k internal tokens, 40 s, while the key's own TPM window is charged only ~3.7k and RPD 1 — the 429s come from the internal models' budgets, so ~1–2 compound requests per key per minute is the safe cadence (AIMD halves on 429/503).
     kind: rate
     family: groq
     rpd: 230
-    rpm: 12
+    rpm: 2
     tpm: 60000
     conc_cap: 1
     min: 1
@@ -277,7 +277,7 @@ providers:
     kind: rate
     family: groq
     rpd: 230
-    rpm: 12
+    rpm: 2
     tpm: 60000
     conc_cap: 1
     min: 1
@@ -287,7 +287,7 @@ providers:
     kind: rate
     family: groq
     rpd: 230
-    rpm: 12
+    rpm: 2
     tpm: 60000
     conc_cap: 1
     min: 1
@@ -297,7 +297,7 @@ providers:
     kind: rate
     family: groq
     rpd: 230
-    rpm: 12
+    rpm: 2
     tpm: 60000
     conc_cap: 1
     min: 1
@@ -307,7 +307,7 @@ providers:
     kind: rate
     family: groq
     rpd: 230
-    rpm: 12
+    rpm: 2
     tpm: 60000
     conc_cap: 1
     min: 1
@@ -317,7 +317,7 @@ providers:
     kind: rate
     family: groq
     rpd: 230
-    rpm: 12
+    rpm: 2
     tpm: 60000
     conc_cap: 1
     min: 1

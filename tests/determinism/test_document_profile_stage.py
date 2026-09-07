@@ -248,4 +248,4 @@ def test_each_profile_slot_starts_on_its_own_key_and_falls_back_to_run_rotation_
     src = (ROOT / "control/control/process_supervisor.py").read_text()
     assert 'POLYMATH_DOC_PROFILE_LANE_OFFSET' in src and 'slot.name[len("doc_profile"):] or "1"' in src
     lim = (ROOT / "config/extraction_models/limiter.yaml").read_text()
-    assert lim.count("    rpm: 12\n") >= 6 and "limiter is per PROCESS" in lim
+    assert lim.count("    rpm: 2\n") >= 6 and "limiter is per PROCESS" in lim and "12 internal model calls" in lim
