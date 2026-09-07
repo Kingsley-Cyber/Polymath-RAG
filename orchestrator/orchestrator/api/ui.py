@@ -1288,12 +1288,20 @@ not claim to be a validated source of truth."""
 #: ("bold thesis", "at least one visible structure", KVP by default); this contract is
 #: appended AFTER it and takes precedence on display shape only — authority, citation
 #: and completeness rules are untouched.
-_PRESENTATION_CONTRACT = "presentation-v1"
+_PRESENTATION_CONTRACT = "presentation-v2"
 _PRESENTATION_BLOCK = """Information-presentation contract. The renderer sets each \
 answer as a reading document — 15.5 px prose in a 78-character column, headings \
 21 / 18 / 16, bold rendered as a highlighted anchor, citations as footnote tags — \
 so write the shape that typography expects. Where a display rule above and this \
 contract disagree, this contract wins.
+- Length follows the question, never the amount of evidence: a factual \
+question is one to three paragraphs (under about 200 words); an explanation \
+or comparison three to six (under about 450 words); a build, rewrite or \
+create request delivers the artifact itself with at most two short framing \
+paragraphs. Go longer only when the user asks for depth, a full draft, or an \
+enumeration that needs it. Never restate the question, never pad with generic \
+advice, and never add a closing summary or a "next steps" list the user did \
+not ask for.
 - Paragraphs are the default unit: short, information-dense, two to five \
 sentences (about 40–110 words) each. Split a paragraph where the mechanism \
 changes; never run everything into one undifferentiated block.
@@ -1912,6 +1920,8 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
 #: count in used_evidence like any other evidence. Old clients that still
 #: send 30 raw locators get the same admission (the backend owns the law).
 _CARRY_CAP = int(os.environ.get("POLYMATH_CARRY_CAP", "8"))
+#: CARRY-ARTIFACT-V1: a transform / continue turn keeps up to this many of the previous answer's cited passages
+_CARRY_ARTIFACT_CAP = int(os.environ.get("POLYMATH_CARRY_ARTIFACT_CAP", "16"))
 #: The floor is on the reranker sidecar's RAW cross-encoder score (logit-
 #: like, not a probability: measured on-topic carried chunks 1.1–6.9,
 #: off-topic ones negative). 0.25 ≈ "more likely relevant than not" with a
@@ -2098,12 +2108,15 @@ def _litellm_generate(model: str, query: str, bundle: dict,
 
 def _chat_max_tokens() -> int:
     """GENERATION-BOUND-V1: the output bound the chat path sends to LiteLLM
-    providers (POLYMATH_CHAT_MAX_TOKENS, default 16000; 0 = send none and
-    accept LiteLLM's provider default, 4096 for Anthropic-format APIs)."""
+    providers (POLYMATH_CHAT_MAX_TOKENS; 0 = send none and accept LiteLLM's
+    provider default, 4096 for Anthropic-format APIs). Default 16000 → 6000 on
+    2026-09-07 (owner: "it generates too much and too long"; a 179 s / ~3,500-word
+    CREATE answer): the ceiling backs the contract's length rule, it is not the
+    lever — 6000 still holds any artifact the contract allows."""
     try:
-        return max(0, int(os.environ.get("POLYMATH_CHAT_MAX_TOKENS", "16000")))
+        return max(0, int(os.environ.get("POLYMATH_CHAT_MAX_TOKENS", "6000")))
     except ValueError:
-        return 16000
+        return 6000
 
 
 def _bound_rejected(exc: BaseException) -> bool:
@@ -2595,17 +2608,26 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
             _mark("assemble")
             # CARRY-V2: admitted carried evidence joins the bundle (tags, legend, used_evidence)
             _carry_meta: dict = {"in": len(req.carry_context), "admitted": 0}
-            if req.carry_context and not _skip_retrieval:
+            if req.carry_context:
                 _cands, _cacct = _carry_candidates(req.carry_context, {c.get("chunk_id") for c in evidence_rows})
-                _citems, _aacct = _admit_carry(
-                    _cands, (_plan.resolved_request if (_flag == "on" and _plan is not None and _plan.resolved_request) else query))
+                if _skip_retrieval:
+                    # CARRY-ARTIFACT-V1 (owner 2026-09-07: "did you use the corpus?" after a rewrite turn came back
+                    # ungrounded): a transform / continue turn does not search, but it works ON the previous answer,
+                    # so the evidence that answer cited stays in the bundle — no relevance gate (a passage's score
+                    # against "put the prompt in XML" is meaningless), no reranker call, newest first, capped.
+                    _citems, _aacct = _admit_carry(
+                        _cands, query, scorer=lambda _q, texts: [1.0] * len(texts), floor=0.0, cap=_CARRY_ARTIFACT_CAP)
+                    _aacct["mode"] = "artifact"
+                else:
+                    _citems, _aacct = _admit_carry(
+                        _cands, (_plan.resolved_request if (_flag == "on" and _plan is not None and _plan.resolved_request) else query))
+                    _aacct["mode"] = "judged"
                 _carry_meta = {**_cacct, **_aacct}
                 if _citems:
                     bundle.setdefault("evidence_bundle", []).extend(_citems)
-                yield _phase("carry", f"Carried evidence: {_aacct['admitted']} of {len(req.carry_context)} admitted",
+                yield _phase("carry", (f"Carried evidence: {_aacct['admitted']} of {len(req.carry_context)} kept for the rewrite"
+                                       if _skip_retrieval else f"Carried evidence: {_aacct['admitted']} of {len(req.carry_context)} admitted"),
                              **{k: v for k, v in _carry_meta.items() if k not in ("scores", "admitted_ids")})
-            elif req.carry_context:
-                _carry_meta["skipped"] = "no_retrieval_turn"
             _mark("carry")
             _legend = _evidence_legend(bundle)
             yield _phase("assemble_done", "Bundle assembled",

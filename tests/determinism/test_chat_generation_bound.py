@@ -92,9 +92,9 @@ def test_zero_disables_the_bound_and_a_bad_value_falls_back_to_the_default(monke
     out = _pieces()
     assert "max_tokens" not in calls[0] and out[-1]["finish"] == {"finish_reason": "stop", "max_tokens": None}
     monkeypatch.setenv("POLYMATH_CHAT_MAX_TOKENS", "lots")
-    assert ui._chat_max_tokens() == 16000
+    assert ui._chat_max_tokens() == 6000
     monkeypatch.delenv("POLYMATH_CHAT_MAX_TOKENS")
-    assert ui._chat_max_tokens() == 16000
+    assert ui._chat_max_tokens() == 6000
 
 
 @pytest.mark.parametrize("text,expected", [

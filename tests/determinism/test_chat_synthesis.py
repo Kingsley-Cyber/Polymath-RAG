@@ -101,10 +101,10 @@ def test_request_block_carries_resolved_request_and_the_prior_artifact_verbatim(
 
 def test_plan_meta_names_the_task_in_the_answer_event():
     meta = ui._plan_meta(_plan())
-    assert meta == {"prompt_contract": "synthesis-v2", "presentation_contract": "presentation-v1",
+    assert meta == {"prompt_contract": "synthesis-v2", "presentation_contract": "presentation-v2",
                     "task_type": "CONTINUE_PRIOR_ARTIFACT", "evidence_policy": "conversation",
                     "response_type": "artifact", "retrieval_required": False, "compiler_fallback": False}
-    assert ui._plan_meta(None) == {"prompt_contract": "synthesis-v2", "presentation_contract": "presentation-v1"}
+    assert ui._plan_meta(None) == {"prompt_contract": "synthesis-v2", "presentation_contract": "presentation-v2"}
     fb = cp.fallback_plan("what is X?", reason="timeout")
     assert ui._plan_meta(fb)["compiler_fallback"] is True
 
@@ -189,17 +189,18 @@ def test_the_presentation_contract_rides_after_the_style_layer_and_names_itself_
     from orchestrator.api.polymath_style import POLYMATH_STYLE_PROMPT
 
     sysmsg = ui._llm_system_prompt("neutral")
-    assert ui._PRESENTATION_CONTRACT == "presentation-v1"
+    assert ui._PRESENTATION_CONTRACT == "presentation-v2"          # v2 = the length rule (2026-09-07)
     assert ui._PRESENTATION_BLOCK in sysmsg
     assert sysmsg.index(ui._PRESENTATION_BLOCK) > sysmsg.index(POLYMATH_STYLE_PROMPT) > sysmsg.index(ui._AUTHORITY_BLOCK)
-    for rule in ("Paragraphs are the default unit", "No one-sentence paragraph spam", "Progressive explanation",
+    for rule in ("Length follows the question, never the amount of evidence", "under about 200 words", "under about 450 words",
+                 "never add a closing summary", "Paragraphs are the default unit", "No one-sentence paragraph spam", "Progressive explanation",
                  "Headings only when they clarify structure", "Lists only for genuinely parallel items",
                  "Tables only for comparisons or structured data", "Bold only for semantic anchors",
                  "options, not requirements", "this contract wins", "Citation tags stay at the END"):
         assert rule in ui._PRESENTATION_BLOCK, rule
     assert "COMPLETENESS OVERRIDES BREVITY" in sysmsg and "USER INTENT HAS TASK AUTHORITY" in sysmsg   # untouched
     assert ui._llm_system_prompt("study").count(ui._PRESENTATION_BLOCK) == 1
-    assert ui._plan_meta(None)["presentation_contract"] == "presentation-v1"
+    assert ui._plan_meta(None)["presentation_contract"] == "presentation-v2"
 
 
 def test_the_style_layer_no_longer_asks_for_a_bold_thesis():
@@ -268,3 +269,20 @@ def test_graph_hygiene_claims_are_not_evidence_rows_and_tags_are_unique_per_chun
     assert "point fighters of the era" not in user                                          # the provenance passage is not evidence
     assert "[fact:f1] Billy Blanks —competed_in→ point fighting" in user                    # the fact itself still rides, tagless
     assert user.count("Camera shudder on hits") == 1 and "[S3]" not in user
+
+
+def test_carry_artifact_mode_keeps_the_previous_answers_evidence_without_a_relevance_gate():
+    """CARRY-ARTIFACT-V1 (2026-09-07): a transform / continue turn skips retrieval but keeps the passages the previous
+    answer cited — admitted with a unit scorer and a zero floor, so a 'put it in XML' request never judges them away."""
+    cands = [{"chunk_id": f"chunk_{i}", "locator": f"chunk:chunk_{i}@0:10", "preview": "p"} for i in range(5)]
+    rows = {f"chunk_{i}": {"chunk_id": f"chunk_{i}", "doc_id": "doc_a", "text": f"passage {i} about weight and timing"} for i in range(4)}
+    items, acct = ui._admit_carry(cands, "put the prompt in XML and YAML", resolve=lambda cid: rows.get(cid),
+                                  resolve_document=lambda _d: {"source_name": "Book.md"},
+                                  scorer=lambda _q, texts: [1.0] * len(texts), floor=0.0, cap=16)
+    assert acct["hydrated"] == 4 and acct["dropped_missing"] == 1 and acct["admitted"] == 4 and acct["dropped_floor"] == 0
+    assert len(items) == 4 and all(it.get("carried") for it in items)
+    # the judged path still gates: a scorer below the floor admits nothing
+    items2, acct2 = ui._admit_carry(cands[:4], "unrelated", resolve=lambda cid: rows.get(cid),
+                                    resolve_document=lambda _d: {"source_name": "Book.md"},
+                                    scorer=lambda _q, texts: [0.05] * len(texts), floor=0.25, cap=8)
+    assert items2 == [] and acct2["dropped_floor"] == 4

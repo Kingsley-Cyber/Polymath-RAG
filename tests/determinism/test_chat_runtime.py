@@ -423,8 +423,13 @@ def test_compiler_on_drives_the_same_retrieval_decision_on_both_routes(monkeypat
     out2 = ui.run_chat(ui.StreamChatRequest(**body2))
     a2, b2 = _view(frame2["result"], frame2["retrieval"]), _view(out2, out2["retrieval"])
     assert a2 == b2 and hs2.calls == hc2.calls == []
-    assert b2["task_type"] == "CONTINUE_PRIOR_ARTIFACT" and b2["retrieval_skipped"] is True and b2["evidence_ids"] == [] and b2["evidence_count"] == 0
-    assert b2["carry"] == {"in": 2, "admitted": 0, "skipped": "no_retrieval_turn"} and b2["engine"] is None
+    # CARRY-ARTIFACT-V1: the previous answer's cited passages ride along as evidence on a no-retrieval turn
+    assert b2["task_type"] == "CONTINUE_PRIOR_ARTIFACT" and b2["retrieval_skipped"] is True
+    # `evidence_count` counts RETRIEVED passages (0 on a skipped turn); the carried ones are in the bundle ids + carry.admitted
+    assert sorted(b2["evidence_ids"]) == ["carry1", "carry2"] and b2["evidence_count"] == 0
+    # CARRY-ARTIFACT-V1 (2026-09-07): a no-retrieval turn KEEPS the previous answer's evidence (no relevance gate)
+    assert b2["carry"]["in"] == 2 and b2["carry"]["mode"] == "artifact" and b2["carry"]["admitted"] == b2["carry"]["hydrated"] >= 1
+    assert b2["carry"]["dropped_floor"] == 0 and b2["engine"] is None
     assert ("phase", "retrieve_skipped") in _seq(frames2) and [p["stage"] for p in out2["phases"]] == [s for ev, s in _seq(frames2) if ev == "phase"]
 
 
@@ -477,7 +482,7 @@ def test_a_runtime_error_surfaces_on_chat_with_the_same_status_as_the_stream_fra
     ("compiler on", dict(BASE, compiler="on", synthesizer="ollama:fake"), dict(plan=_plan),
      ["scope", "scope_ok", "compile", "retrieve", "retrieve_done", "assemble", "assemble_done", "generate", "token", "answer", "done"]),
     ("compiler on, no retrieval", dict(BASE, compiler="on", synthesizer="ollama:fake", carry_context=CARRY, history=HISTORY), dict(plan=_artifact_plan),
-     ["scope", "scope_ok", "compile", "retrieve_skipped", "assemble", "assemble_done", "generate", "token", "answer", "done"]),
+     ["scope", "scope_ok", "compile", "retrieve_skipped", "assemble", "carry", "assemble_done", "generate", "token", "answer", "done"]),
     ("multi-corpus scope", dict(BASE), dict(corpora=("cinema", "ecom")), ["scope", "scope_ok", "error"]),
     ("scope 404", dict(BASE), dict(scope_error=HTTPException(404, {"error_code": "QUERY_SCOPE_UNKNOWN", "message": "x"})), ["scope", "error"]),
     ("engine 502", dict(BASE), dict(engine_error=HTTPException(502, {"error_code": "qdrant_unavailable", "message": "x"})),

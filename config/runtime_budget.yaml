@@ -62,8 +62,8 @@ sidecars:
     mps_gb: 3.5           # measured peak 3.17 GiB + margin
     # Long chunk texts make attention memory scale with the SQUARE of
     # sequence length, so batches are bounded by TOKENS, not by count.
-    max_batch_tokens: 16384
-    max_batch_texts: 8
+    max_batch_tokens: 8192
+    max_batch_texts: 4
   local_extractor:
     port: 8755          # observed to decide if this cap is actually held
     resident_gb: 1.5      # python + tokenizer; weights live in MLX memory
