@@ -39,7 +39,8 @@ One list, in the order to execute it. Every item carries the rule this repo work
 **Why.** The compiler prompt says only `CORPUS IN SCOPE: cinema`; it has never seen a title, so ADJACENT is a domain-neutral guess. Owner rule: **titles only, never summaries; dynamic top-N (default 40)**.
 
 - [ ] `RELEVANT BOOKS IN THE LIBRARY:` block of TITLES (extension / hash suffixes stripped), fetched live from `documents` every turn — no cache, so it can never be stale.
-- [ ] Top-N selection, `POLYMATH_CHAT_COMPILER_TITLES_TOP_N` default 40 (0 = off): ≤ N documents → all titles; > N → rank by question-word overlap with the title, then with the stored `major_concepts` words (scoring only, never injected), then alphabetical. Deterministic, one SQL query, no retrieval round.
+- [ ] Top-N selection, `POLYMATH_CHAT_COMPILER_TITLES_TOP_N` default 40 (0 = off): ≤ N documents → all titles; > N → **rank by content** (owner refinement): embed the question once → dense search over section summaries (lane A's route) → `aggregate_documents_n` → top-k documents → titles. Hand the vector to retrieval (`SearchContext.qvec`) so it is never embedded twice; compile already runs serially before retrieval, so the net cost is one Qdrant search (~50 ms). Deterministic given the index. Fallback when the embedder is dark: title-word overlap.
+- [ ] Receipt `compiler.titles.rank = section_summary_route | title_overlap`; the same ranking can later feed B15's outside-document set.
 - [ ] Prompt rule: use the library's terminology when it fits; PRIMARY stays the raw message (already enforced by `validate_plan`); seats per aspect unchanged.
 - [ ] Receipts `compiler.titles` {n_injected, n_corpus, top_n}; `chat_m_replay.py` arm `+TITLES`.
 - [ ] Hygiene folded in: delete the orphan `document_summaries` row (document deleted 09-05 via the old path) and the duplicate summary on one document.
