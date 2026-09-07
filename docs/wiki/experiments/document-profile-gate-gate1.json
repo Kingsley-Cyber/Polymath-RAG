@@ -1,0 +1,1032 @@
+{
+ "summary": {
+  "documents": 67,
+  "probes": 400,
+  "self_top1_rate": 0.858,
+  "self_top3_rate": 0.995,
+  "median_rank": 1.0,
+  "question": "What do the screen-combat and fight-choreography books say about making a punch read as real on camera: camera angle, di",
+  "question_top15": [
+   "Fight Choreography The Art of Non-Ve",
+   "The Screen Combat Handbook A Practic",
+   "Stage Combat Arts.md",
+   "How to Draw Manga Martial Arts and C",
+   "Grammar of the Shot.md",
+   "The Laban Workbook for Actors.md",
+   "Timing for Animation.md",
+   "How to Draw Manga Illustrating Battl",
+   "Kelly Gordon Brine - The Art Of Cine",
+   "Complete Guide to Drawing Dynamic Ma",
+   "handbook.html",
+   "Joseph V. Mascelli - The Five C's of",
+   "Ken Dancyger - The technique of film",
+   "Framed Ink.md",
+   "Your Move - A New Approach to the St"
+  ]
+ },
+ "per_doc": [
+  {
+   "doc": "Ken Dancyger - The technique of film & v",
+   "doc_id": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "David Keirsey - Please Understand Me II ",
+   "doc_id": "doc_0661e39c4ec6c9d461b27f089e07c832a47774cea4f9f74285da732d1a886cae",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    2,
+    1
+   ],
+   "top1": 5,
+   "top3": 6
+  },
+  {
+   "doc": "Timing for Animation.md",
+   "doc_id": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Framed Environment Design.md",
+   "doc_id": "doc_00487073b3ec1095c2e7970753cd0c7f650cc8db92af2905894f16e487f1e347",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "What the Face Reveals.md",
+   "doc_id": "doc_0c9cded11e26fd11f398b54595307220925fce38f13dffd530d84bf3e05d7c2b",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "How to Draw Manga Illustrating Battles.m",
+   "doc_id": "doc_0dd48434e2ceeccee1a6e406c5c6e31e205079566103f2547413bd4f3274b80d",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Facial Action coding 3.0.md",
+   "doc_id": "doc_1107fd8fac613c4e6cee06bc0c6913cdc9a52853c60ec7f4c6af0963e414f163",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Walter Murch - In the Blink of an Eye (2",
+   "doc_id": "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Comics and Sequential Art.md",
+   "doc_id": "doc_16c77321ead95c542ae1cedfd050807dc4264bb42ca52ba46f1f6aa46379825c",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Paul Ekman - Facial Action Coding System",
+   "doc_id": "doc_17b69e1d403309f257f6ac8972a60389e4601693d140c07834e4f903958e2e15",
+   "probes": 6,
+   "ranks": [
+    1,
+    3,
+    1,
+    1,
+    1,
+    2
+   ],
+   "top1": 4,
+   "top3": 6
+  },
+  {
+   "doc": "Chip Heath & Dan Heath - Made to Stick (",
+   "doc_id": "doc_1c74cbfdb7737177bb775c6a8f9a55161e76a9c220d5ce9d11b57718b2a16921",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "The Art and Science of Digital Compositi",
+   "doc_id": "doc_26cceca252a72ae476beead4e21d7d3ad9bb07fa5cfd5e49e34182505cd90b16",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Elemental Magic.md",
+   "doc_id": "doc_2780d9bb55cf555b3d8f496c6fd2d7a1ac5c2ad9165104a63a92a1e5cb34b4c8",
+   "probes": 6,
+   "ranks": [
+    1,
+    2,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 5,
+   "top3": 6
+  },
+  {
+   "doc": "The Laban Workbook for Actors.md",
+   "doc_id": "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Donald Miller - Building a StoryBrand (2",
+   "doc_id": "doc_2ce79e8ebec9d33e88458fc12308f6d1eff0416517c0c1685f3e20008b725013",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Complete Guide to Drawing Dynamic Manga ",
+   "doc_id": "doc_2d6319ceeaabdec1e74b3ce9e06c1f58ccac29033d3658f14b97a21ac0db5875",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "The Filmmaker&_039_s Eye - The Language ",
+   "doc_id": "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    2
+   ],
+   "top1": 5,
+   "top3": 6
+  },
+  {
+   "doc": "Classifying Facial Action.md",
+   "doc_id": "doc_3a5f1728b3a1f3f749ad82c1c3178e381cf2dbcd0aaa9795ea83023c085733bd",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Stage Combat Arts.md",
+   "doc_id": "doc_42e9fa7440e5724fccf602f36e7b9bdc31e259cd2630cbb3ec9fa1316121da64",
+   "probes": 6,
+   "ranks": [
+    1,
+    2,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 5,
+   "top3": 6
+  },
+  {
+   "doc": "Making Connections Bartenieff Fundamenta",
+   "doc_id": "doc_40ea46ad28c5482bfdde720f7eb3ebf5b083397d27ac7852d99104ac11be0174",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Kelly Gordon Brine - The Art Of Cinemati",
+   "doc_id": "doc_4832e3833d520e27e8465687cfbb981c20694ea6514e584016c97249b78da497",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Joseph V. Mascelli - The Five C's of Cin",
+   "doc_id": "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "The Adweek Copywriting Handbook.md",
+   "doc_id": "doc_554b59358b768884ec87225e887b895a66b14f607f3bd96f2c0a2364ece2a23e",
+   "probes": 6,
+   "ranks": [
+    1,
+    2,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 5,
+   "top3": 6
+  },
+  {
+   "doc": "A Circumplex Model of Affect.md",
+   "doc_id": "doc_4bfdf4034799f5df3d5c81f999b004ed69898239591df0c5894abcb58953417a",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "[International Journal of Reasoning-base",
+   "doc_id": "doc_609d972e5fe0e1039810db8918621326f894f3123aa006b7ad31834821018b87",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    2,
+    1,
+    2
+   ],
+   "top1": 4,
+   "top3": 6
+  },
+  {
+   "doc": "Digital Compositing for Film and Video.m",
+   "doc_id": "doc_6f89105b1845c0b595ab8e04b6cb107b9a6e2b7f1617a89f50bdbebd0f4aad34",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Making Meaning with Machines.md",
+   "doc_id": "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    2,
+    2,
+    1
+   ],
+   "top1": 4,
+   "top3": 6
+  },
+  {
+   "doc": "VES Handbook of Visual Effects.md",
+   "doc_id": "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "The Anatomy of Story.md",
+   "doc_id": "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Retrieval-Augmented Prompt Optimization ",
+   "doc_id": "doc_b239c387522687054c671a46b1d660b025a18dc2ba981eb00a3da39b501629ba",
+   "probes": 4,
+   "ranks": [
+    1,
+    2,
+    1,
+    1
+   ],
+   "top1": 3,
+   "top3": 4
+  },
+  {
+   "doc": "Ed Hooks - Acting for Animators (2017).m",
+   "doc_id": "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    2,
+    1,
+    1,
+    2
+   ],
+   "top1": 4,
+   "top3": 6
+  },
+  {
+   "doc": "[Quest 1975-jan vol. 23 iss. 1] THE BENE",
+   "doc_id": "doc_c967daa374b6dad1c7ee9c0b90cf12bd79bc9ba5344dd665004847d0b6abf8fa",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Framed Ink.md",
+   "doc_id": "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "handbook.html",
+   "doc_id": "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    3,
+    1,
+    1,
+    3
+   ],
+   "top1": 4,
+   "top3": 6
+  },
+  {
+   "doc": "Affective Movement Generation using Laba",
+   "doc_id": "doc_6a3530004713125ce5873c541c5a1fdcad6991c00ff7aed3096bed284a1957f7",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Laban-Bartenieff Movement Studies for Ne",
+   "doc_id": "doc_6a5301e0043db44f0aed09800e82362afa2e74eec45f5f971f0dbe925c0f2743",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Anatomy for Sculptors.md",
+   "doc_id": "doc_5f06d211c3b25fe63f5bb7ef5b815a18ce597260cba4d8785c32e44fab5d2ab0",
+   "probes": 6,
+   "ranks": [
+    1,
+    4,
+    10,
+    1,
+    1,
+    1
+   ],
+   "top1": 4,
+   "top3": 4
+  },
+  {
+   "doc": "Blain Brown - Cinematography - Theory an",
+   "doc_id": "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+   "probes": 6,
+   "ranks": [
+    1,
+    2,
+    1,
+    1,
+    1,
+    2
+   ],
+   "top1": 4,
+   "top3": 6
+  },
+  {
+   "doc": "Film Directing Cinematic Motion.md",
+   "doc_id": "doc_7041b219489ebd0ee7a2c751a2ef70682653ec9b23673d9c349e7676c0f6b4b1",
+   "probes": 6,
+   "ranks": [
+    1,
+    2,
+    1,
+    1,
+    1,
+    2
+   ],
+   "top1": 4,
+   "top3": 6
+  },
+  {
+   "doc": "Manga in Theory and Practice.md",
+   "doc_id": "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Francis Glebas - Directing the Story (20",
+   "doc_id": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+   "probes": 6,
+   "ranks": [
+    3,
+    2,
+    2,
+    1,
+    2,
+    2
+   ],
+   "top1": 1,
+   "top3": 6
+  },
+  {
+   "doc": "Scoppettuolo & Saccone - The Definitive ",
+   "doc_id": "doc_867ba698b4579557126ebb8aa6e83b5dce18656f5ca6c7eaade5cd1a5e8e2864",
+   "probes": 6,
+   "ranks": [
+    1,
+    2,
+    1,
+    1,
+    2,
+    1
+   ],
+   "top1": 4,
+   "top3": 6
+  },
+  {
+   "doc": "Kathryn Anne Morey - Bringing history to",
+   "doc_id": "doc_8d2b6e61c391eec95c696400010df57830df45cf51f02c6e9cb34b19d392d079",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Elemental Magic Volume 2.md",
+   "doc_id": "doc_832446a863bb46d68c5823d026a4094a102b29bc1677a109c2e986118582ae7e",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Save the Cat.md",
+   "doc_id": "doc_92531b09c0ad2942c9a4b903bfe2a30359d8b52847303d0a09d14d99ff839027",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Grammar of the Edit.md",
+   "doc_id": "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+   "probes": 6,
+   "ranks": [
+    1,
+    2,
+    3,
+    1,
+    1,
+    2
+   ],
+   "top1": 3,
+   "top3": 6
+  },
+  {
+   "doc": "Myers, Isabel Briggs_Myers, Peter B - Gi",
+   "doc_id": "doc_aef933432d47f07a79a1eff5585d61805a9a2f6ccabc017903ca51beb54bd88b",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Sidney Lumet - Making Movies (1994).md",
+   "doc_id": "doc_f2e29f98369f7632bd096e9f35b45715c8c30f46e063dac7d675f7551d318048",
+   "probes": 6,
+   "ranks": [
+    1,
+    2,
+    3,
+    1,
+    1,
+    3
+   ],
+   "top1": 3,
+   "top3": 6
+  },
+  {
+   "doc": "A Multistage Pipeline for Character-Stab",
+   "doc_id": "doc_3d35616670f223135165ad22295e80420b23d4d9214751b2ff50ff76bb692815",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "David Landau - Lighting for Cinematograp",
+   "doc_id": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Facial Action Coding System_ Facial acti",
+   "doc_id": "doc_9fd65077f00b9b97a0717d2ae785bbd3cd297a30a1ffc391f6826ac05e1adf2e",
+   "probes": 6,
+   "ranks": [
+    2,
+    1,
+    2,
+    2,
+    1,
+    2
+   ],
+   "top1": 2,
+   "top3": 6
+  },
+  {
+   "doc": "Laban Movement-Guided Diffusion for Text",
+   "doc_id": "doc_3f09f808d1fa2a25ebb4fb0aa894f1b652a0550e7ce6b17185baa5be97ae9e1c",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    2,
+    1,
+    1
+   ],
+   "top1": 5,
+   "top3": 6
+  },
+  {
+   "doc": "Michael Rabiger, Mick Hurbis-Cherrier - ",
+   "doc_id": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+   "probes": 6,
+   "ranks": [
+    2,
+    1,
+    2,
+    1,
+    1,
+    2
+   ],
+   "top1": 3,
+   "top3": 6
+  },
+  {
+   "doc": "The Screen Combat Handbook A Practical G",
+   "doc_id": "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    2,
+    1,
+    2,
+    2
+   ],
+   "top1": 3,
+   "top3": 6
+  },
+  {
+   "doc": "Sound Design The Expressive Power of Mus",
+   "doc_id": "doc_aba296ce45733ff009322ceab7a3e485938d9af151211e00028281a757b1d5b3",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Fight Choreography The Art of Non-Verbal",
+   "doc_id": "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Grammar of the Shot.md",
+   "doc_id": "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    2,
+    1
+   ],
+   "top1": 5,
+   "top3": 6
+  },
+  {
+   "doc": "Force Dynamic Life Drawing.md",
+   "doc_id": "doc_b6e7af16218cdb0dce246ce152602d61ae5b18da3f9fa794e6612a6d926f6fdc",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Bayesian reasoning for Laban Movement An",
+   "doc_id": "doc_3abd20d49066ef7568bb1cae65d6fe224b57acedd6b37b398349944dbe21d11a",
+   "probes": 6,
+   "ranks": [
+    2,
+    1,
+    1,
+    1,
+    2,
+    1
+   ],
+   "top1": 4,
+   "top3": 6
+  },
+  {
+   "doc": "[(Architectural Design)] Ian Ritchie - N",
+   "doc_id": "doc_d7510ba66b3cd614f927a7872f9c78e16c34d7909d5e968925e367aec892306f",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Hey Whipple Squeeze This.md",
+   "doc_id": "doc_f1b9df2cac2683b0d7ee52dbea7f0cf0bbd8168cfb8d101e468fa13feead2cfc",
+   "probes": 6,
+   "ranks": [
+    3,
+    1,
+    2,
+    2,
+    1,
+    2
+   ],
+   "top1": 2,
+   "top3": 6
+  },
+  {
+   "doc": "Damian Allen et al - Fusion Visual Effec",
+   "doc_id": "doc_f9abfb57bc9fbc55cf5f934aae1a8340a16ac16d979fb4baf694f0b781925680",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    2,
+    2
+   ],
+   "top1": 4,
+   "top3": 6
+  },
+  {
+   "doc": "Ogilvy on Advertising.md",
+   "doc_id": "doc_efca6a91d4d05b4f71ddd147e301584cbc612b7dfc2edbc02601f5c46094eeb6",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Your Move - A New Approach to the Study ",
+   "doc_id": "doc_d27eace5b84028c90337d5b277f53d8f360f9a65ac5d8484edab8fbab63d58a4",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "How to Draw Manga Martial Arts and Comba",
+   "doc_id": "doc_b86bc56a5e4b9ef951a152b8ae2becdf8d51d9ce2adf5786a3d168e380538e1a",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    2
+   ],
+   "top1": 5,
+   "top3": 6
+  },
+  {
+   "doc": "Breakthrough Advertising.md",
+   "doc_id": "doc_fddb8380b192aedb102483172cbae4ec5a0d0e52654459286cc2d7999e1a1fb1",
+   "probes": 6,
+   "ranks": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 6,
+   "top3": 6
+  },
+  {
+   "doc": "Bruce Block - The Visual Story (2007).md",
+   "doc_id": "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3",
+   "probes": 6,
+   "ranks": [
+    1,
+    2,
+    1,
+    1,
+    1,
+    1
+   ],
+   "top1": 5,
+   "top3": 6
+  }
+ ]
+}

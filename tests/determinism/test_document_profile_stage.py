@@ -33,6 +33,8 @@ def test_stage_is_wired_non_blocking_for_rollout_phase_a():
     flat = [x for lane in lanes for x in lane]
     demand = [x for x in flat if "doc_profile" in x[1]]
     assert demand and {"doc_profile", "sidecar_embedder", "qdrant"} <= set(demand[0][2])
+    names = [(e[0] if isinstance(e, tuple) else e.get("name")) for e in PS.FLEET]
+    assert [n for n in names if n.startswith("doc_profile")] == ["doc_profile"] + [f"doc_profile{i}" for i in range(2, 7)]   # SCALE-OUT-V1
     fleet = [e for e in PS.FLEET if (e[0] if isinstance(e, tuple) else e.get("name")) == "doc_profile"]
     assert fleet == [("doc_profile", "workers.doc_profile_worker")]
 
@@ -44,7 +46,7 @@ def test_profile_pool_is_pinned_and_isolated_in_config():
     assert d["stage_pins"]["doc_profile"] == groq + fallbacks                                  # tier 0 first, fallbacks last
     eps = {e["name"]: e for e in d["providers"]}
     for n in groq + fallbacks:
-        assert eps[n]["enabled"] and eps[n]["dedicated"] and eps[n]["structured"] is None     # plain-text labels, never JSON mode
+        assert eps[n]["enabled"] and eps[n]["dedicated"] and eps[n]["structured"] == "text"   # plain-text labels: the client sends NO response_format (Groq 400s json_object without the word "json")
     assert all(eps[n]["url"] == "https://api.groq.com/openai" and eps[n]["model"] == "groq/compound" for n in groq)
     assert [eps[n]["api_key_env"] for n in groq] == [f"GROQ_API_KEY_{i}" for i in range(1, 7)]  # six DISTINCT dedicated keys
     other_envs = {e["api_key_env"] for e in d["providers"] if e["name"] not in groq + fallbacks}
@@ -159,7 +161,7 @@ def test_worker_writes_the_profile_and_projection_artifacts_with_the_receipt_cha
     # the chain: content hash → input hash → raw response hash → compiled hash → projection hash
     assert p["content_hash"] == doc[1] and len(p["input_hash"]) == 64 and len(p["raw_response_hash"]) == 64
     assert p["compiled_hash"] == pq["compiled_hash"] and len(pq["projection_hash"]) == 64 and pq["projection_key"]
-    assert p["schema_version"] == "rag-profile-v3" and p["prompt_version"] == "doc-profile-v3.1" and p["compiler_version"] == "rag-compiler-v3"
+    assert p["schema_version"] == "rag-profile-v3" and p["prompt_version"] == "doc-profile-v3.2" and p["compiler_version"] == "rag-compiler-v3.1"
     assert p["valid"] is True and p["ok"] is True and p["quality"] >= 0.7 and p["missing"] == []
     assert p["compiled"]["theories"] and p["compiled"]["concepts"] and len(p["representations"]["questions"]) == 3
     assert pq["valid"] is True and pq["vectors"]["identity"] == 1 and pq["vectors"]["questions"] == 3 and pq["dim"] == dim
@@ -196,3 +198,54 @@ def test_lane_order_rotates_primaries_by_run_and_keeps_fallbacks_last():
     assert W.lane_order(pin, "run_x") == W.lane_order(pin, "run_x")                                      # deterministic per run
     assert W.lane_order(["only_fallback"], "r") == ["only_fallback"] and W.lane_order([], "r") == []
     assert W.MAX_LANE_ATTEMPTS == 4
+
+
+def test_one_pass_tries_two_rotated_primaries_then_the_fallbacks_so_gemini_is_reachable():
+    pin = ["profile_groq1", "profile_groq2", "profile_groq3", "profile_groq4", "profile_groq5", "profile_groq6",
+           "profile_fallback_gemini1", "profile_fallback_gemini2", "profile_fallback_openrouter"]
+    lanes = W.attempt_lanes(pin, "run_a")
+    assert len(lanes) == W.MAX_LANE_ATTEMPTS == 4
+    assert all("fallback" not in n for n in lanes[:2]) and lanes[2:] == ["profile_fallback_gemini1", "profile_fallback_gemini2"]
+    assert lanes[:2] == W.lane_order(pin, "run_a")[:2]
+    assert {W.attempt_lanes(pin, f"run_{i}")[0] for i in range(40)} == set(pin[:6])      # rotation still spreads the keys
+
+
+def test_only_transient_pool_errors_hold_the_ticket_the_rest_fail_the_attempt():
+    hold = {"attempts": [{"lane": "a", "error": "HTTP_429"}, {"lane": "b", "error": "HTTP_413"}, {"lane": "c", "error": "ReadTimeout"}]}
+    assert W.transient_pool_error(hold, "ReadTimeout")
+    assert W.transient_pool_error({"attempts": []}, "no_active_lane")
+    fail = {"attempts": [{"lane": "a", "error": "HTTP_429"}, {"lane": "b", "error": "HTTP_400"}]}
+    assert not W.transient_pool_error(fail, "HTTP_400")
+    assert not W.transient_pool_error({"attempts": [{"lane": "a", "error": "empty_response"}]}, "empty_response")
+
+
+def test_profile_embedding_is_sent_in_slices_of_the_sidecar_batch_cap(monkeypatch):
+    monkeypatch.setenv("POLYMATH_MAX_BATCH_TEXTS", "4")
+    calls: list[int] = []
+
+    def fake(chunk):
+        calls.append(len(chunk))
+        return {"vectors": [[float(len(t))] for t in chunk]}
+
+    texts = [f"t{i}" * (i + 1) for i in range(63)]                       # one profile ≈ 3 dense + 60 multivector rows
+    vecs = W._embed_texts(texts, embed_one_batch=fake)
+    assert len(vecs) == 63 and calls == [4] * 15 + [3] and W.embed_batch_size() == 4
+
+
+def test_each_profile_slot_starts_on_its_own_key_and_falls_back_to_run_rotation_without_the_offset(monkeypatch):
+    pin = ["profile_groq1", "profile_groq2", "profile_groq3", "profile_groq4", "profile_groq5", "profile_groq6",
+           "profile_fallback_gemini1", "profile_fallback_gemini2", "profile_fallback_openrouter"]
+    monkeypatch.setenv("POLYMATH_DOC_PROFILE_LANE_OFFSET", "4")
+    assert W.lane_order(pin, "run_a")[:3] == ["profile_groq4", "profile_groq5", "profile_groq6"]
+    assert W.lane_order(pin, "run_b")[0] == "profile_groq4"                 # the same slot always starts on its key
+    assert W.attempt_lanes(pin, "run_a") == ["profile_groq4", "profile_groq5", "profile_fallback_gemini1", "profile_fallback_gemini2"]
+    monkeypatch.setenv("POLYMATH_DOC_PROFILE_LANE_OFFSET", "1")
+    assert W.lane_order(pin, "run_a")[0] == "profile_groq1"
+    monkeypatch.delenv("POLYMATH_DOC_PROFILE_LANE_OFFSET")
+    assert {W.lane_order(pin, f"run_{i}")[0] for i in range(40)} == set(pin[:6])   # no offset → run-hash rotation
+    # the supervisor hands slot N the offset N (doc_profile → 1)
+    from control import process_supervisor as PS
+    src = (ROOT / "control/control/process_supervisor.py").read_text()
+    assert 'POLYMATH_DOC_PROFILE_LANE_OFFSET' in src and 'slot.name[len("doc_profile"):] or "1"' in src
+    lim = (ROOT / "config/extraction_models/limiter.yaml").read_text()
+    assert lim.count("    rpm: 12\n") >= 6 and "limiter is per PROCESS" in lim

@@ -263,13 +263,13 @@ providers:
     min: 1
     max: 2
     init: 1
-  profile_groq1:       # DOCUMENT-PROFILE-V1 pool tier 0: dedicated Groq account 1, groq/compound (provider limits RPM 30 / RPD 250 / TPM 70k)
+  profile_groq1:       # DOCUMENT-PROFILE-V1 pool tier 0: dedicated Groq account 1, groq/compound (provider limits RPM 30 / RPD 250 / TPM 70k). The limiter is per PROCESS (threading locks): with six profile slots each row is ONE slot's budget on ITS key (lane offset) — rpm 12 / conc 1 leaves headroom for a second slot falling back onto the same key.
     kind: rate
     family: groq
     rpd: 230
-    rpm: 25
+    rpm: 12
     tpm: 60000
-    conc_cap: 2
+    conc_cap: 1
     min: 1
     max: 2
     init: 1
@@ -277,9 +277,9 @@ providers:
     kind: rate
     family: groq
     rpd: 230
-    rpm: 25
+    rpm: 12
     tpm: 60000
-    conc_cap: 2
+    conc_cap: 1
     min: 1
     max: 2
     init: 1
@@ -287,9 +287,9 @@ providers:
     kind: rate
     family: groq
     rpd: 230
-    rpm: 25
+    rpm: 12
     tpm: 60000
-    conc_cap: 2
+    conc_cap: 1
     min: 1
     max: 2
     init: 1
@@ -297,9 +297,9 @@ providers:
     kind: rate
     family: groq
     rpd: 230
-    rpm: 25
+    rpm: 12
     tpm: 60000
-    conc_cap: 2
+    conc_cap: 1
     min: 1
     max: 2
     init: 1
@@ -307,9 +307,9 @@ providers:
     kind: rate
     family: groq
     rpd: 230
-    rpm: 25
+    rpm: 12
     tpm: 60000
-    conc_cap: 2
+    conc_cap: 1
     min: 1
     max: 2
     init: 1
@@ -317,9 +317,9 @@ providers:
     kind: rate
     family: groq
     rpd: 230
-    rpm: 25
+    rpm: 12
     tpm: 60000
-    conc_cap: 2
+    conc_cap: 1
     min: 1
     max: 2
     init: 1

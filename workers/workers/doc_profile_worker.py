@@ -15,6 +15,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import re
 import logging
 import time
 
@@ -36,7 +38,13 @@ EVENT_TYPE = "doc_profile.v1"
 CONTEXT_BUDGET_TOKENS = 500
 MAX_OUTPUT_TOKENS = 2400         # ~80 labelled lines at the v3.1 aims (10 / 10 / 15 / 15 / 10 / 10 / 10)
 MAX_LANE_ATTEMPTS = 4            # up to 2 primary lanes (rotated by run), then the fallbacks in pin order
+PRIMARY_ATTEMPTS = 2             # primaries tried per pass before the fallback tier (six keys would otherwise starve it)
 FALLBACK_MARK = "fallback"       # a pinned lane whose name contains this is a fallback tier, tried after every primary
+# Errors that mean "the pool cannot answer right now" (rate/size limits, 5xx, transport) — the ticket is handed back
+# READY (TRANSIENT-HOLD-V1). Anything else (HTTP 400/401/403/404, a 200 with empty text) is a failed attempt, so a
+# document that can never be profiled ends as a receipted failure instead of holding forever.
+_TRANSIENT_ERR = re.compile(r"^(?:HTTP_(?:408|413|425|429|5\d\d)|TRANSPORT_.*|.*Timeout.*|Connect.*|RemoteProtocolError"
+                            r"|ReadError|WriteError|rate_limited|pool_dark|circuit_open|no_active_lane|no_attempt)$")
 
 log = logging.getLogger("doc_profile")
 
@@ -108,9 +116,39 @@ def lane_order(pin: list[str], run_key: str) -> list[str]:
     primaries = [n for n in pin if FALLBACK_MARK not in n]
     fallbacks = [n for n in pin if FALLBACK_MARK in n]
     if primaries:
-        start = int(hashlib.sha256((run_key or "").encode("utf-8")).hexdigest(), 16) % len(primaries)
+        offset = lane_offset()
+        if offset is not None:
+            # DOC-PROFILE-SCALE-OUT-V1: this slot's own key first (doc_profileN → primary N), the rest in order
+            start = (offset - 1) % len(primaries)
+        else:
+            start = int(hashlib.sha256((run_key or "").encode("utf-8")).hexdigest(), 16) % len(primaries)
         primaries = primaries[start:] + primaries[:start]
     return primaries + fallbacks
+
+
+def lane_offset() -> int | None:
+    """1-based primary-lane offset the supervisor gives each profile slot (POLYMATH_DOC_PROFILE_LANE_OFFSET);
+    None when unset → rotate by run hash. Measured 2026-09-07: six slots on run-hash rotation collided on keys
+    and drew 22 HTTP 429s in five minutes (groq/compound); one key per slot keeps each account at one call in flight."""
+    raw = os.environ.get("POLYMATH_DOC_PROFILE_LANE_OFFSET", "").strip()
+    if not raw.isdigit() or int(raw) < 1:
+        return None
+    return int(raw)
+
+
+def attempt_lanes(pin: list[str], run_key: str) -> list[str]:
+    """The lanes ONE pass actually tries: the first PRIMARY_ATTEMPTS rotated primaries, then the fallbacks, capped at
+    MAX_LANE_ATTEMPTS — so with six primaries a document still reaches Gemini on its third attempt."""
+    order = lane_order(pin, run_key)
+    primaries = [n for n in order if FALLBACK_MARK not in n][:PRIMARY_ATTEMPTS]
+    fallbacks = [n for n in order if FALLBACK_MARK in n]
+    return (primaries + fallbacks)[:MAX_LANE_ATTEMPTS]
+
+
+def transient_pool_error(pool_rec: dict, err: str | None) -> bool:
+    """True when every attempt failed for a transient reason (or nothing could be attempted)."""
+    errors = [a.get("error") for a in (pool_rec.get("attempts") or [])] or [err or "no_attempt"]
+    return all(bool(_TRANSIENT_ERR.match(str(e or "empty_response"))) for e in errors)
 
 
 def _pool_complete(system_prompt: str, user_prompt: str, max_tokens: int, run_key: str = "") -> tuple[str, str | None, dict]:
@@ -121,12 +159,11 @@ def _pool_complete(system_prompt: str, user_prompt: str, max_tokens: int, run_ke
 
     pin = stage_pin(STAGE) or []
     by_name = {e.name: e for e in cloud_endpoints() if e.name in pin}
-    order = lane_order(pin, run_key)
-    endpoints = [by_name[n] for n in order if n in by_name]
+    endpoints = [by_name[n] for n in attempt_lanes(pin, run_key) if n in by_name]
     if not endpoints:
         return "", "no_active_lane", {"attempts": [], "pin": list(pin)}
     attempts: list[dict] = []
-    for ep in endpoints[:MAX_LANE_ATTEMPTS]:
+    for ep in endpoints:
         t0 = time.perf_counter()
         try:
             client = LLMExtractionClient("cloud", url=ep.url, model=ep.model, limiter_key=ep.limiter_key,
@@ -135,19 +172,39 @@ def _pool_complete(system_prompt: str, user_prompt: str, max_tokens: int, run_ke
             raw, err = client.complete_one(user_prompt, system_prompt=system_prompt, max_tokens=max_tokens)
         except Exception as exc:  # noqa: BLE001 — a lane failure is a receipted attempt, never a crash
             raw, err = "", f"{type(exc).__name__}"
+        if not err and not (raw or "").strip():
+            err = "empty_response"
         attempts.append({"lane": ep.name, "model": ep.model, "ms": round((time.perf_counter() - t0) * 1000, 1), "error": err})
-        if not err and (raw or "").strip():
+        if not err:
             return raw, None, {"attempts": attempts, "lane": ep.name, "model": f"{ep.name}:{ep.model}"}
     return "", attempts[-1]["error"] if attempts else "no_attempt", {"attempts": attempts}
 
 
-def _embed_texts(texts: list[str]) -> list[list[float]]:
-    from polymath_shared.clients import EmbedderClient
-    resp = EmbedderClient().embed(texts, "doc_profile")
-    vecs = resp.get("vectors") or resp.get("embeddings")
-    if vecs is None:
-        raise RuntimeError(f"embedder response without vectors: {sorted(resp.keys())}")
-    return [list(v) for v in vecs]
+def embed_batch_size() -> int:
+    """The embedder sidecar rejects (422) a request with more texts than POLYMATH_MAX_BATCH_TEXTS (fleet: 4 since the
+    2026-09-07 OOM relief); a profile is ~63 texts, so the worker sends them in slices of that size."""
+    try:
+        return max(1, int(os.environ.get("POLYMATH_MAX_BATCH_TEXTS", "4")))
+    except ValueError:
+        return 4
+
+
+def _embed_texts(texts: list[str], embed_one_batch=None) -> list[list[float]]:
+    if embed_one_batch is None:
+        from polymath_shared.clients import EmbedderClient
+        client = EmbedderClient()
+        embed_one_batch = lambda chunk: client.embed(chunk, "doc_profile")  # noqa: E731
+    size = embed_batch_size()
+    out: list[list[float]] = []
+    for i in range(0, len(texts), size):
+        resp = embed_one_batch(texts[i:i + size])
+        vecs = resp.get("vectors") or resp.get("embeddings")
+        if vecs is None:
+            raise RuntimeError(f"embedder response without vectors: {sorted(resp.keys())}")
+        out.extend(list(v) for v in vecs)
+    if len(out) != len(texts):
+        raise RuntimeError(f"embedder returned {len(out)} vectors for {len(texts)} texts")
+    return out
 
 
 def process_event(conn: Connection, event: dict) -> None:
@@ -165,10 +222,13 @@ def process_event(conn: Connection, event: dict) -> None:
         else:
             raw, err, pool_rec = complete(SYSTEM, user_prompt, MAX_OUTPUT_TOKENS)
         if err or not (raw or "").strip():
-            # the pool is dark or rate-limited: hand the ticket back without consuming an attempt (TRANSIENT-HOLD-V1)
-            log.warning("doc_profile pool unavailable run=%s doc=%s err=%s attempts=%s",
+            tried = len(pool_rec.get("attempts") or [])
+            log.warning("doc_profile pool failed run=%s doc=%s err=%s attempts=%s",
                         run_id[:16], doc_id[:16], err, json.dumps(pool_rec.get("attempts"))[:300])
-            raise TransientStageHold(f"DOC_PROFILE_POOL_UNAVAILABLE: {err} ({len(pool_rec.get('attempts') or [])} lanes tried)")
+            if transient_pool_error(pool_rec, err):
+                # rate/size-limited or dark: hand the ticket back without consuming an attempt (TRANSIENT-HOLD-V1)
+                raise TransientStageHold(f"DOC_PROFILE_POOL_UNAVAILABLE: {err} ({tried} lanes tried)")
+            raise RuntimeError(f"DOC_PROFILE_POOL_FAILED: {err} ({tried} lanes tried)")
 
         source_text = "\n".join(p.get("text") or "" for p in parents)
         result = C.compile_llm_output(raw, source_text=source_text, grounding_mode="warn")
@@ -178,6 +238,7 @@ def process_event(conn: Connection, event: dict) -> None:
         emitted = C.emit(rec, doc_id)
         compiled_hash = _sha(artifact)
         profile_record = {
+            "doc_id": doc_id, "corpus_id": corpus_id,
             "schema_version": C.SCHEMA_VERSION, "prompt_version": PROMPT_VERSION, "compiler_version": C.COMPILER_VERSION,
             "builder_version": CX.BUILDER_VERSION, "model": pool_rec.get("model"), "lane": pool_rec.get("lane"),
             "attempts": pool_rec.get("attempts"),

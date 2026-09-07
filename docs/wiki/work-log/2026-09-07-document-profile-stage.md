@@ -45,3 +45,62 @@ Not yet exercised: a LIVE LLM call on the pool and a real point in Qdrant — th
 - Phase B: move the DAG entry ahead of `verify_projections`, drop it from `NON_BLOCKING_STAGES` — the readiness invariant.
 - Dedicated provider keys for the profile pool.
 - A `TransientStageHold` raised inside the stage transaction still records a failed attempt row before the runtime hands the ticket back (existing behaviour shared with the summary stages); the ticket's own attempt counter is what the retry law reads.
+
+---
+
+# Step 5 — the live backfill (2026-09-07, later the same day)
+
+Owner: "will it replace current doc summaries? if so go ahead and backfill" (answer: no — the profile is ADDITIVE to the summary layer; nothing about summaries changes) and, on the first compile problem, "you should be improving the script to essentially compile the output because the model is capable inference wise" — the compiler absorbs the model's shape; the prompt is not the fix.
+
+## What the first live calls showed
+
+- **Transport** (all nine profile lanes): Groq HTTP 400 — `'messages' must contain the word 'json' … to use response_format json_object`. The registry rows had `structured: null`, the loader fell back to JSON mode and the client sent `response_format: json_object`. Fix: the nine `profile_*` rows are `structured: "text"`, `json_mode: false` (the profile is labelled lines, never JSON). Pinned.
+- **Shape** (groq/compound AND openai/gpt-oss-120b, same keys): the model sometimes writes a label once and lists the rest on bare lines — `TOPIC: Screen Combat\nFilm Production\nAction Design…`, all fifteen questions under one `Q:`, ten CONCEPTs joined. The v3 compiler treated every unlabeled line as a wrapped continuation (`LINE_MERGED`) → counts 1 / 1 / 1 / 1 / 1 / 1 / 1, coverage 0.29, and the same document re-asked came back fully labelled with quality 1.00. Non-deterministic output shape, deterministic compile loss.
+- **Groq HTTP 413** on one lane for one document (12.9 s), 200 on the next lane for the same prompt (~1.3 k tokens) — compound is agentic; a size error there is transient, not ours.
+- **Embedder HTTP 422** on the first real ticket: the projection sends ~63 texts per profile in ONE request; the sidecar rejects more than `POLYMATH_MAX_BATCH_TEXTS` (4 since the OOM relief earlier today). Two tickets burned an attempt each before the fix.
+
+## Changes
+
+- **`compiler.py` → `rag-compiler-v3.1`.** Under a LIST tag an unlabeled line is a NEW item (`ITEM_SPLIT`, info) unless the previous item is visibly open — ends with joining punctuation or a connector word (`and, or, of, the, to, for, with, …`), or, for the sentence-shaped lists Q / THEORY / CONCEPT, the new line starts lowercase after an unterminated item (keyword lists TOPIC / TERM / SEARCH / SEEALSO are usually lowercase, so case says nothing there). Text tags (ONE / SUMMARY / DETAIL) still merge. `Q: a? B? C?` on one line → three questions (`split_inline_questions`). The exact live shape compiles to 4 / 1 / 3 / 2 / 1 / 3 / 2 items with nine `ITEM_SPLIT`s; a genuinely wrapped question (`…when the actor is\nstanding too far away?`) still merges.
+- **`prompt.py` → `doc-profile-v3.2`** (secondary): "Start EVERY line with its label … Never write a label once and then list unlabeled lines under it" + "Do not put more than one item on a line".
+- **`doc_profile_worker.py`**: (1) `attempt_lanes(pin, run)` = the first 2 rotated primaries + the fallbacks, ≤ 4 — with six primaries the old `lane_order[:4]` never reached Gemini (fallback 1 was dead code); (2) `transient_pool_error` — only 408 / 413 / 425 / 429 / 5xx / transport / `rate_limited` / dark-pool errors hand the ticket back (`TransientStageHold`); a 400 / 401 / 403 / 404 or an empty 200 is a FAILED attempt, so a document that can never be profiled ends as a receipted failure instead of holding forever; (3) `_embed_texts` slices to `embed_batch_size()` (`POLYMATH_MAX_BATCH_TEXTS`, default 4) and asserts one vector per text; (4) the artifact carries `doc_id` / `corpus_id`.
+- **`config/cloud_providers.json`**: text mode on the nine profile lanes.
+- **`scripts/backfill_document_profiles.py`** (mint / `--dry-run` / `--status`) and **`scripts/document_profile_gate.py`** (self-retrieval gate through the profile collection) — declared in the scaffold and `scripts/README.md`.
+
+## Proof (automated)
+
+Determinism: compiler 10 (three new: the live unlabeled shape, the open-item merge, inline questions), stage 12 (three new: attempt lanes, transient classification, embedding slices), context 6, projection 4, control-plane v2 — 33 green; `repo_guard` ok. Full `tests/determinism` run: the only failure is `test_chat_retrieval_v2 … rerank_deadline_s == 8.0` because this shell had `.env` sourced (`POLYMATH_CHAT_RERANK_DEADLINE_S=12`, the interactive-relief setting); CI does not source `.env`.
+
+## Proof (live)
+
+Canaries after the fix (groq/compound, lean context ≈ 320 prompt tokens + 3.6 k system): Screen Combat Handbook quality 1.00 counts 10 / 10 / 15 / 15 / 10 / 10 / 10; Bayesian reasoning for Laban Movement Analysis 1.00, 4.7 s; Affective Movement Generation 0.94, 8.2 s (after the 413 on the other lane).
+
+Backfill: 67 tickets minted 14:41:41Z; the autopilot spawned the single demand slot at 14:41:44Z; first success after the slicing fix at 14:44Z. Profiles read in full (not counts): Dancyger's editing book → continuity / montage theory, "pacing influences narrative tension"; Keirsey → the four temperaments with MBTI / Jung as SEEALSO; Timing for Animation → "timing controls perceived weight", squash-and-stretch as timing modifiers. Lowest quality so far 0.88 (How to Draw Manga: Illustrating Battles) — its `UNGROUNDED_TERM`s include `Document2PDF Pilot`, `Trial version`, `PDF guide`: the source carries a converter watermark and the profile faithfully reports it (a document-quality finding, like Framed Environment Design's OCR).
+
+## Throughput (owner, mid-backfill: "those are different api accounts, one document at a time is stupid")
+
+Measured on the single slot (15 documents): claim wait + LLM 7–16 s (two outliers 47 / 52 s), embedding 8–9 sidecar calls spanning 9–15 s per document, ≈ 1 document a minute end to end. The runtime executes tickets serially (LONG-STAGE-LEASE-CORRECTNESS-V1) and the fleet scales a stage by SLOTS (EXTRACT-SCALE-OUT-V1: one extract worker per open ticket, capped at 3). **DOC-PROFILE-SCALE-OUT-V1:** `FLEET` gains `doc_profile2..6`; the autopilot wakes one profile worker per open `doc_profile` ticket, capped at six — one document in flight per dedicated key (the run-hash lane rotation spreads them). Pinned in `test_fleet_autopilot_demand` (1 → one slot, 3 → three, 51 → six, never a seventh) and the stage test's FLEET pin. The supervisor reads `FLEET` at boot, so the fleet was booted mid-backfill (in-flight tickets roll back and re-lease). Ceiling that remains: the embedder sidecar (≈ 5.8 texts/s regardless of callers; ~63 texts per profile ≈ 11 s of embedding per document serialized), shared with the 24 `project_qdrant` tickets still draining.
+
+## Rate limits and the model actually serving (owner questions, 15:0xZ)
+
+- **Is the pool inside the provider limits?** Not cleanly on the first six-slot run: 18 × HTTP 429, 2 × 503, 1 × 413 across 88 attempts (all in 14:54–14:59Z, when six slots on run-hash rotation collided on keys; the single-slot phase had one 429). Every event was absorbed by the next lane (`attempt_lanes`) or the Gemini fallback (3 documents); 0 failed receipts, 0 holds after the slicing fix. Peak observed rate 17 Groq requests/min across six keys. Fix shipped: each slot now starts its lane walk on ITS key (`POLYMATH_DOC_PROFILE_LANE_OFFSET` from the supervisor: `doc_profile` → 1 … `doc_profile6` → 6), and because the limiter is per PROCESS (threading locks, no shared state) the profile rows are one slot's budget: rpm 12 / conc 1 / tpm 60 000 / rpd 230 (rpd is advisory — it resets with the process). Pinned in the stage test. A durable shared budget is open work (UNFINISHED-WORK #5).
+- **Which model is serving?** The backend sends `model: groq/compound` on every attempt (84 / 84 in the artifacts; registry and pin carry no other Groq model). Groq echoes `"model": "groq/compound"` and reports in `usage_breakdown` that compound routed the request through `meta-llama/llama-4-scout-17b-16e-instruct` (two router steps) and `openai/gpt-oss-120b` (the answer, with reasoning tokens). The Groq dashboard attributes usage to those underlying models — that is compound working as designed, not a mis-pinned model. Consequence: one profile request costs 2–3 model calls on the key, which is the multiplier behind the 429s. Two manual probe calls earlier in the session used other names directly (`openai/gpt-oss-120b` on lane 3: 200 in 3.5 s, same output shape; `qwen/qwen3.8-27b` on lane 2: 429) — canaries, not backend traffic. Keeping compound is the owner's call (UNFINISHED-WORK #6).
+
+## Result
+
+67/67 cinema documents profiled (0 failed, 0 dead) in 20 min (one slot 14:43–14:54Z ≈ 1 doc/min, six slots 14:54–15:03Z ≈ 6 docs/min); quality p50 1.0 (min 0.13), LLM p50 7.7 s/doc; lanes fallback_gemini1 2, fallback_gemini2 1, groq1 11, groq2 11, groq3 11, groq4 10, groq5 11, groq6 10; 67 points in the profile collection; self-retrieval (own questions + searches → profile lane, RRF) top-1 85.8 %, top-3 99.5 %, median rank 1; punch question top-5: Fight Choreography: The Art of Non-Verbal Dialogue · The Screen Combat Handbook · Stage Combat Arts · How to Draw Manga: Martial Arts and Combat · Grammar of the Shot · … The Laban Workbook for Actors at 6 and Your Move at 15 — the Laban case reached through the profile lane alone.
+
+Quality issues seen across the corpus: UNGROUNDED_TERM 23 (terms not lexically in the source, incl. converter-watermark text), BELOW_TARGET 8, ITEM_SPLIT 7 (the compiler fix exercised live), UNKNOWN_TAG 7 + GARBAGE_LINE 10 (all on the one 0.13 profile, RAPO paper — compound wrote `Retrieval:` / `Diffusion:` style lines), LIST_CAPPED 1. Holds recorded: 5 (all before the slicing fix or transient lane errors that the next lane answered).
+
+## Rejected claims
+
+- "Fix it in the prompt" — no (owner): a prompt rule cannot make a sampled output shape deterministic; the compiler now compiles what the model writes, the rule only raises the odds.
+- "Merge unlabeled lines by default because they might be wrapped" — no: plain-text LLM output does not hard-wrap; the observed failure was always a dropped label. Merge only on visible openness.
+- "Hold on every pool error" — no: a 400 / 401 / 403 / 404 on every lane is a defect to surface as a failed attempt with receipts, not a ticket parked forever (3-minute stall rule).
+
+## Open contract gaps
+
+- Step 6 retrieval lane `DOCUMENT_PROFILE` (boost, never gate) + the title ranker on the same ranking; then phase B (DAG entry ahead of `verify_projections`, out of `NON_BLOCKING_STAGES`).
+- New documents: the DAG mints `doc_profile` for every new run (phase A, non-blocking) — the profile lags ingestion by one pool call; phase B makes it a readiness requirement.
+- Converter watermarks and OCR garbage surface as `UNGROUNDED_TERM`s in the profile (How to Draw Manga: Illustrating Battles; Framed Environment Design) — a source-quality decision for the owner, not a compiler one.
+- The six Groq keys pasted in chat on 2026-09-07 are to be rotated by the owner.

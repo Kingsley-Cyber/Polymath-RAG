@@ -103,7 +103,7 @@ identity ~40 (title, subtitle, meaningful filename, type, author/org, page/meta 
 
 ## API pool isolation
 
-`profile.enrich` is its own lease class with its own keys / concurrency / rate limits — never the extraction / graph / enhancement pool. Wired 2026-09-07: tier 0 = six DEDICATED Groq accounts (`profile_groq1..6`, groq/compound, RPM 30 / RPD 250 / TPM 70k each, limiter rows at 25 / 230 / 60k), rotated per run, ≤ 2 tried per document → fallback 1 = Gemini flash-lite on its own keys (`profile_fallback_gemini1/2`) → fallback 2 = OpenRouter mistral-small (`profile_fallback_openrouter`) → dead-letter. Keys live only in `.env` (`GROQ_API_KEY_1..6`, `GEMINI_API_KEY_5/6`, `OPENROUTER_API_KEY_2`). Enrichment is a control-plane gate, so it must not be able to starve ingestion or be starved by it.
+`profile.enrich` is its own lease class with its own keys / concurrency / rate limits — never the extraction / graph / enhancement pool. Wired 2026-09-07: tier 0 = six DEDICATED Groq accounts (`profile_groq1..6`, groq/compound, RPM 30 / RPD 250 / TPM 70k each, limiter rows at 25 / 230 / 60k), rotated per run, ≤ 2 tried per document → fallback 1 = Gemini flash-lite on its own keys (`profile_fallback_gemini1/2`) → fallback 2 = OpenRouter mistral-small (`profile_fallback_openrouter`) → dead-letter. Keys live only in `.env` (`GROQ_API_KEY_1..6`, `GEMINI_API_KEY_5/6`, `OPENROUTER_API_KEY_2`). Live 2026-09-07: `groq/compound` is agentic (Groq's `usage_breakdown` shows llama-4-scout router steps + gpt-oss-120b answers per request — the dashboard attributes usage there), so one request is 2–3 model calls on the key; six `doc_profile` slots run one document each, every slot starting on its own key (`POLYMATH_DOC_PROFILE_LANE_OFFSET`), limiter rows rpm 12 / conc 1 per process (the limiter is per process). Enrichment is a control-plane gate, so it must not be able to starve ingestion or be starved by it.
 
 ## Retrieval
 
@@ -115,9 +115,11 @@ Normal answer retrieval: title ✓ identity ✓ theme ✓ questions ✓ searches
 2. Lean context builder — pure, tested on md / html / pdf / transcript shapes.
 3. Profile pool + stage `document_profile` (ticket after intake; artifact with the receipt chain) — the readiness gate flips to require it.
 4. Projection to the profile collection (named dense + multivectors) with the projection key.
-5. Backfill every existing document; readiness re-evaluated.
+5. Backfill every existing document; readiness re-evaluated. — **DONE for cinema 2026-09-07 (11.128):** 67/67 profiled, quality p50 1.0; readiness itself flips in phase B.
 6. Retrieval lane + fusion; receipts; the gate below.
 
 ## Gate
 
 Per document: its own generated questions retrieve it first (self-retrieval). Per turn: documents reached and cited up on the synthesis loop, factual precision unchanged, frozen fixture floors held; a book with a vocabulary different from the question's (the Laban case) reached through the profile lane without the compiler-title workaround.
+
+**Measured 2026-09-07 (cinema, `document-profile-gate-gate1.json`, before the retrieval lane exists):** self-retrieval top-1 85.8 %, top-3 99.5 %, median rank 1 over 400 probes (3 questions + 3 searches per document); punch question through the profile lane alone → Fight Choreography: The Art of Non-Verbal Dialogue · The Screen Combat Handbook · Stage Combat Arts · How to Draw Manga: Martial Arts and Combat · Grammar of the Shot · … The Laban Workbook for Actors at 6 and Your Move at 15 — the Laban case reached through the profile lane alone.

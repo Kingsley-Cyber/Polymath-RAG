@@ -93,10 +93,10 @@ One list, in the order to execute it. Every item carries the rule this repo work
 
 - [x] Step 1 compiler rag-profile-v3 (11.125)
 - [x] Step 2 lean context builder · Step 3 `doc_profile` stage + isolated pool + phase-A DAG entry · Step 4 projection (11.126)
-- [ ] Step 5 backfill: `scripts/backfill_document_profiles.py` mints `doc_profile` tickets for every existing run; fleet boot with the new slot; 67 pool calls; self-retrieval gate — **owner go (spend + fleet bounce)**
+- [x] Step 5 backfill DONE 2026-09-07 (11.128): `scripts/backfill_document_profiles.py` minted 67 tickets, 67 profiled; `scripts/document_profile_gate.py` self-retrieval top-1 85.8 % / top-3 99.5 %
 - [ ] Step 6 retrieval lane `DOCUMENT_PROFILE` (prefetch → RRF → deepen children → fusion; receipts) + the title ranker on the same ranking
 - [ ] Phase B: DAG entry ahead of `verify_projections`, out of `NON_BLOCKING_STAGES` — ingested != query_ready
-- [ ] Dedicated provider keys for `profile1` / `profile2`
+- [x] Dedicated provider keys: six Groq accounts as tier 0 (`profile_groq1..6`, `GROQ_API_KEY_1..6` in `.env` only), Gemini fallback 1, OpenRouter fallback 2 (11.127 / 11.128)
 
 ## Owner decisions still open (no code until the owner says)
 

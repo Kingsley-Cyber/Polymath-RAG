@@ -34,7 +34,7 @@ from typing import Literal
 
 SCHEMA_VERSION = "rag-profile-v3"          # v3 (owner 2026-09-07): THEORY + CONCEPT, new counts, atomic representations
 PROMPT_VERSION = "doc-profile-v3"
-COMPILER_VERSION = "rag-compiler-v3"
+COMPILER_VERSION = "rag-compiler-v3.1"   # v3.1: unlabeled list lines are new items (ITEM_SPLIT), inline Q split
 
 # Preferred counts for a lean but useful retrieval profile.
 # (advisory floor, aim) — owner 2026-09-07: "increase output to 10 topics, 10 terms, Q 15, search 15,
@@ -377,18 +377,62 @@ _LIST_ATTR = {
 }
 
 
-def _append_continuation(rec: Record, last_tag: str, text: str) -> None:
+# An unlabeled line under a LIST tag is far more often a new item whose label the model dropped
+# ("TOPIC: Screen Combat\nFilm Production\nAction Design", seen live from groq/compound and
+# gpt-oss-120b on 2026-09-07) than a hard-wrapped continuation (plain-text LLM output does not wrap).
+# Merge only when the previous item is visibly open: it ends with joining punctuation or a connector
+# word, or the new line starts lowercase after an unterminated item.
+_PREV_OPEN = re.compile(
+    r"(?:[,;:(\[\-\u2013\u2014/]|\b(?:and|or|of|the|a|an|to|for|with|in|on|by|from|as|at|that|which|into|than|vs))$",
+    re.IGNORECASE,
+)
+_PREV_TERMINAL = re.compile(r"[.?!]['\")\]]?$")
+_ITEM_START = re.compile(r"^['\"\u201c\u2018(\[]?[A-Z0-9]")
+_INLINE_Q_SPLIT = re.compile(r"(?<=\?)\s+(?=['\"\u201c(]?[A-Z])")
+
+
+# Keyword-shaped lists (topics, terms, searches, see-also) are usually lowercase phrases, so a lowercase start
+# says nothing there; only sentence-shaped lists (Q, THEORY, CONCEPT) use it as a continuation signal.
+_SENTENCE_TAGS = frozenset({"Q", "THEORY", "CONCEPT"})
+
+
+def _starts_new_item(tag: str, prev: str, text: str) -> bool:
+    prev = prev.rstrip()
+    if not prev:
+        return True
+    if _PREV_TERMINAL.search(prev):
+        return True
+    if _PREV_OPEN.search(prev):
+        return False
+    if tag in _SENTENCE_TAGS:
+        return bool(_ITEM_START.match(text))
+    return True
+
+
+def split_inline_questions(value: str) -> list[str]:
+    """'Q: What is X? How is Y done?' -> two questions (one label, several questions on one line)."""
+    parts = [p.strip() for p in _INLINE_Q_SPLIT.split(value) if p.strip()]
+    return parts if len(parts) > 1 else [value]
+
+
+def _append_continuation(rec: Record, last_tag: str, text: str) -> str:
+    """Return the issue code describing what happened: LINE_MERGED or ITEM_SPLIT."""
     if last_tag in _TEXT_ATTR:
         attr = _TEXT_ATTR[last_tag]
         current = getattr(rec, attr)
         setattr(rec, attr, f"{current} {text}".strip())
-        return
+        return "LINE_MERGED"
 
-    if last_tag in _LIST_ATTR:
-        attr = _LIST_ATTR[last_tag]
-        items: list[str] = getattr(rec, attr)
-        if items:
-            items[-1] = f"{items[-1]} {text}".strip()
+    attr = _LIST_ATTR[last_tag]
+    items: list[str] = getattr(rec, attr)
+    if items and not _starts_new_item(last_tag, items[-1], text):
+        items[-1] = f"{items[-1]} {text}".strip()
+        return "LINE_MERGED"
+    if last_tag == "Q":
+        items.extend(split_inline_questions(text))
+    else:
+        items.append(text)
+    return "ITEM_SPLIT"
 
 
 def parse(norm: str, issues: list[Issue]) -> tuple[Record, bool]:
@@ -417,12 +461,13 @@ def parse(norm: str, issues: list[Issue]) -> tuple[Record, bool]:
             ):
                 continuation = clean_value(s)
                 if continuation:
-                    _append_continuation(rec, last_tag, continuation)
+                    what = _append_continuation(rec, last_tag, continuation)
                     issues.append(
                         Issue(
                             "info",
-                            "LINE_MERGED",
-                            f"wrapped line merged into {last_tag}",
+                            what,
+                            (f"wrapped line merged into {last_tag}" if what == "LINE_MERGED"
+                             else f"unlabeled line kept as a new {last_tag} item"),
                             line_no,
                         )
                     )
@@ -487,7 +532,15 @@ def parse(norm: str, issues: list[Issue]) -> tuple[Record, bool]:
             last_tag = tag
             continue
 
-        getattr(rec, _LIST_ATTR[tag]).append(value)
+        if tag == "Q":
+            parts = split_inline_questions(value)
+            if len(parts) > 1:
+                issues.append(
+                    Issue("info", "ITEM_SPLIT", f"{len(parts)} questions on one Q line split", line_no)
+                )
+            getattr(rec, _LIST_ATTR[tag]).extend(parts)
+        else:
+            getattr(rec, _LIST_ATTR[tag]).append(value)
         last_tag = tag
 
     if truncated:

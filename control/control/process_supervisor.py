@@ -95,6 +95,15 @@ FLEET: list = [
     ("summaries2", "workers.summary_worker"),
     # DOCUMENT-PROFILE-V1: the document retrieval profile stage (its own LLM pool; demand-driven)
     ("doc_profile", "workers.doc_profile_worker"),
+    # DOC-PROFILE-SCALE-OUT-V1 (2026-09-07): the pool is six independent accounts and the runtime executes
+    # tickets serially, so ONE slot meant one document a minute on a 67-document backfill (owner: "those are
+    # different api accounts, one document at a time is stupid"). One worker per open doc_profile ticket,
+    # capped at six — one in flight per key; the run-hash lane rotation spreads them.
+    ("doc_profile2", "workers.doc_profile_worker"),
+    ("doc_profile3", "workers.doc_profile_worker"),
+    ("doc_profile4", "workers.doc_profile_worker"),
+    ("doc_profile5", "workers.doc_profile_worker"),
+    ("doc_profile6", "workers.doc_profile_worker"),
 ]
 
 
@@ -316,6 +325,11 @@ class Supervisor:
             child_env.setdefault("POLYMATH_EXTRACT_AFFINITY", "local")
         elif slot.name.startswith("extract"):
             child_env.setdefault("POLYMATH_EXTRACT_AFFINITY", "cloud")
+        # DOC-PROFILE-SCALE-OUT-V1: each profile slot starts its lane walk on ITS OWN dedicated key
+        # (doc_profile → key 1, doc_profile2 → key 2, …) so six workers never burst one account; the
+        # run-hash rotation stays the fallback when the offset is absent (single slot, tests).
+        if slot.name.startswith("doc_profile"):
+            child_env.setdefault("POLYMATH_DOC_PROFILE_LANE_OFFSET", slot.name[len("doc_profile"):] or "1")
         slot.proc = subprocess.Popen(
             argv, cwd=cwd,
             stdout=out, stderr=subprocess.STDOUT,

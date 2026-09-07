@@ -120,3 +120,17 @@ def test_reranker_stays_warm_during_ingest_when_queries_are_recent():
     got, reasons = desired_slots(_Conn({"extract": 1, "profile_document": 1}), known)
     assert "extract" in got
     assert "sidecar_reranker" in got, reasons
+
+
+def test_doc_profile_scales_out_one_worker_per_open_ticket_capped_at_6():
+    """DOC-PROFILE-SCALE-OUT-V1: six dedicated accounts → up to six documents in flight, never a seventh."""
+    from control.fleet_autopilot import desired_slots
+    known = {"doc_profile", "doc_profile2", "doc_profile3", "doc_profile4", "doc_profile5", "doc_profile6",
+             "doc_profile7", "sidecar_embedder", "qdrant"}
+    one, _ = desired_slots(_FakeConn({"doc_profile": 1}), known)
+    three, _ = desired_slots(_FakeConn({"doc_profile": 3}), known)
+    many, _ = desired_slots(_FakeConn({"doc_profile": 51}), known)
+    assert "doc_profile" in one and "doc_profile2" not in one
+    assert {"doc_profile", "doc_profile2", "doc_profile3"} <= three and "doc_profile4" not in three
+    assert {f"doc_profile{i}" for i in range(2, 7)} | {"doc_profile", "sidecar_embedder", "qdrant"} <= many
+    assert "doc_profile7" not in many

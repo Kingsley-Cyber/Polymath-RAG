@@ -97,10 +97,69 @@ def test_hard_caps_apply_to_the_new_lists():
 
 
 def test_prompt_carries_the_v3_labels_counts_and_the_no_invented_theory_rule():
-    assert P.PROMPT_VERSION == "doc-profile-v3.1"
+    assert P.PROMPT_VERSION == "doc-profile-v3.2"
+    assert "Start EVERY line with its label" in P.SYSTEM and "more than one item on a line" in P.SYSTEM
     for s in ("THEORY:", "CONCEPT:", "Aim for 10", "Aim for 15", "Do not invent a named theory",
               "transferable idea", "never quotas to fill", "End with END."):
         assert s in P.SYSTEM, s
     u = P.build_user_prompt("Stage Combat Arts", "Chapter 1 › Breath\nChapter 2 › Partnering", "Breath is the …")
     assert "TITLE:\nStage Combat Arts" in u and "Chapter 2" in u and u.endswith("\n")
     assert "(no headings available)" in P.build_user_prompt("t", "", "e")
+
+
+# The live failure of 2026-09-07: groq/compound (and gpt-oss-120b) sometimes write a label once and then list the
+# remaining items on bare lines; the v3 compiler merged them into ONE item per list (counts 1/1/1/1/1/1/1).
+UNLABELED = """ONE: A practical handbook on designing, performing and filming screen combat.
+SUMMARY: It covers pre-production planning, unarmed and weapon technique, acting the fight,
+camera and sound choices, and cutting the action so that hits read on screen.
+TOPIC: Screen Combat
+Film Production
+Action Design
+Fight Choreography
+TERM: Sweeney gun
+Q: How do I plan a combat scene during pre-production?
+What safety equipment should be used for falls and rolls?
+How can I teach actors unarmed combat fundamentals?
+SEARCH: selling a punch on camera
+fight scene camera angle
+THEORY: perceived force is inferred from the receiver's reaction, not from contact
+CONCEPT: Translating real combat into stylized visual language
+Balancing realism with performer safety
+Using character intent to shape movement choices
+SEEALSO: Stunt coordination manuals
+Film set safety guidelines
+END
+"""
+
+
+def test_unlabeled_lines_under_a_list_tag_are_new_items_while_wrapped_prose_still_merges():
+    res = C.compile_llm_output(UNLABELED)
+    r = res.record
+    assert r.topics == ["Screen Combat", "Film Production", "Action Design", "Fight Choreography"]
+    assert len(r.questions) == 3 and r.questions[1].startswith("What safety equipment")
+    assert r.searches == ["selling a punch on camera", "fight scene camera angle"]
+    assert len(r.concepts) == 3 and r.concepts[2].startswith("Using character intent")
+    assert r.seealso == ["Stunt coordination manuals", "Film set safety guidelines"]
+    codes = [i.code for i in res.issues]
+    assert codes.count("ITEM_SPLIT") == 9                 # 3 topics + 2 questions + 1 search + 2 concepts + 1 see-also
+    # The SUMMARY's second line is prose continuation and is still merged.
+    assert "camera and sound choices" in r.summary and codes.count("LINE_MERGED") == 1
+    assert C.COMPILER_VERSION == "rag-compiler-v3.1"
+
+
+def test_a_visibly_open_list_item_still_absorbs_its_wrapped_tail():
+    raw = ("ONE: x about y.\nQ: How do you make a punch look real on camera when the actor is\n"
+           "standing too far away?\nQ: Why does the reaction matter more than the strike, and\n"
+           "what does the camera need to see?\nTOPIC: camera coverage of\naction scenes\nEND")
+    r = C.compile_llm_output(raw).record
+    assert r.questions == ["How do you make a punch look real on camera when the actor is standing too far away?",
+                           "Why does the reaction matter more than the strike, and what does the camera need to see?"]
+    assert r.topics == ["camera coverage of action scenes"]
+
+
+def test_several_questions_on_one_q_line_become_separate_questions():
+    raw = "ONE: x about y.\nQ: What is a Sweeney gun? How is a fall padded? Why cut on the hit?\nEND"
+    res = C.compile_llm_output(raw)
+    assert res.record.questions == ["What is a Sweeney gun?", "How is a fall padded?", "Why cut on the hit?"]
+    assert any(i.code == "ITEM_SPLIT" for i in res.issues)
+    assert C.split_inline_questions("Is it 'A?' or B?") == ["Is it 'A?' or B?"]   # no capital after the inner ? → intact

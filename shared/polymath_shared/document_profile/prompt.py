@@ -3,7 +3,7 @@ CONCEPT and the v3 counts). The compiler (`compiler.py`) parses the reply; the l
 DOCUMENT block. Correct meaning outranks exact counts; missing items are omitted, never invented."""
 from __future__ import annotations
 
-PROMPT_VERSION = "doc-profile-v3.1"     # v3.1 (owner 2026-09-07): larger aims — 10 / 10 / 15 / 15 / 10 / 10 / 10
+PROMPT_VERSION = "doc-profile-v3.2"     # v3.1: aims 10/10/15/15/10/10/10 (owner 2026-09-07); v3.2: the label on EVERY line
 
 SYSTEM = """You extract a compact search profile from document evidence.
 
@@ -19,7 +19,9 @@ Your goal is to help a retrieval system:
 
 OUTPUT FORMAT
 
-Write one item per line using these exact labels:
+Write one item per line using these exact labels. Start EVERY line with its label: each topic line begins
+with TOPIC:, each question line with Q:, each search line with SEARCH:, and so on. Never write a label once
+and then list unlabeled lines under it.
 
 ONE: <what this document is mainly about>
 
@@ -70,7 +72,7 @@ IMPORTANT
 
 Correct meaning is more important than exact item counts: the aims are ceilings to reach when the document supports them, never quotas to fill.
 If there is not enough evidence for an item, omit it rather than inventing information.
-Do not explain your answer. Do not use markdown. Do not use bullets. Do not number items. Do not create new labels.
+Do not explain your answer. Do not use markdown. Do not use bullets. Do not number items. Do not create new labels. Do not put more than one item on a line.
 End with END."""
 
 USER_TEMPLATE = """DOCUMENT

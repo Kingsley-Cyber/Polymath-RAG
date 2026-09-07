@@ -158,6 +158,17 @@ def desired_slots(conn, known_slots: set[str]) -> tuple[set[str], dict]:
                          for i in range(2, min(int(n_extract), 3) + 1)]
                 _last_demand.update({s: now for s in extra})
                 slots = set(slots) | set(extra)
+            if lane == "doc_profile":
+                # DOC-PROFILE-SCALE-OUT-V1 (2026-09-07): the profile pool is six
+                # dedicated accounts and a worker runs tickets serially, so one
+                # slot = one document a minute (measured on the cinema backfill:
+                # LLM 7–16 s + embedding 9–15 s + claim cadence). One worker per
+                # open doc_profile ticket, capped at six — one in flight per key.
+                n_dp = _open_work(conn, ("doc_profile",))
+                extra = [f"doc_profile{i}"
+                         for i in range(2, min(int(n_dp), 6) + 1)]
+                _last_demand.update({s: now for s in extra})
+                slots = set(slots) | set(extra)
             if lane == "summary" and int(n) >= 2:
                 # SUMMARIES-SCALE-OUT-V1 (2026-09-02): ONE summaries worker
                 # serialized a run's enrichment (45–105 s per call on the
