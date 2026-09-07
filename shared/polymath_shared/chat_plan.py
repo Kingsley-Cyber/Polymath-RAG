@@ -43,7 +43,11 @@ TASK_TYPES = ("GROUNDED_QA", "GROUNDED_SYNTHESIS", "CREATE_FROM_KNOWLEDGE",
               "TRANSFORM_USER_CONTENT", "CONTINUE_PRIOR_ARTIFACT", "GENERAL_CONVERSATION")
 EVIDENCE_POLICIES = ("corpus_grounded", "conversation", "mixed")
 QUERY_TYPES = ("PRIMARY", "DEFINITION", "MECHANISM", "CAUSAL", "COMPARISON", "COUNTERPOINT",
-               "PROCEDURE", "EXAMPLE", "ENTITY", "BRIDGE")
+               "PROCEDURE", "EXAMPLE", "ENTITY", "BRIDGE",
+               # B9 BREADTH-V1 (2026-09-06): the adjacent-knowledge aspect — the underlying principle in domain-neutral words
+               "ADJACENT")
+ADJACENT_MAX = 1                       # at most one per plan; it takes the seats an aspect gets, never more
+ADJACENT_TASKS = ("GROUNDED_SYNTHESIS", "CREATE_FROM_KNOWLEDGE")   # never for identifier lookups / plain factual QA
 RESPONSE_TYPES = ("answer", "artifact")
 NO_RETRIEVAL_TASKS = ("TRANSFORM_USER_CONTENT", "CONTINUE_PRIOR_ARTIFACT", "GENERAL_CONVERSATION")
 
@@ -358,6 +362,12 @@ def validate_plan(raw: dict, message: str) -> tuple[ChatPlan | None, str | None]
     if rr:
         if not queries:
             return None, "no_queries_for_retrieval"
+        adj = [q for q in queries if q.type == "ADJACENT"]
+        if adj and task not in ADJACENT_TASKS:            # B9: never widen an identifier lookup or plain QA
+            queries = [q for q in queries if q.type != "ADJACENT"] or queries
+        elif len(adj) > ADJACENT_MAX:
+            for q in adj[ADJACENT_MAX:]:
+                q.type = "MECHANISM"
         if sum(1 for q in queries if q.type == "PRIMARY") != 1:
             queries[0].type = "PRIMARY"
             for q in queries[1:]:
@@ -411,7 +421,14 @@ Rules:
   user explicitly asks to use their books/corpus/sources; true otherwise.
 - queries: 1 to 4 SHORT search queries (topical content only — never tone, length, format or output instructions),
   each {"id","type","query","weight"}; exactly one type PRIMARY; other types from DEFINITION, MECHANISM, CAUSAL,
-  COMPARISON, COUNTERPOINT, PROCEDURE, EXAMPLE, ENTITY, BRIDGE. Empty when retrieval_required is false.
+  COMPARISON, COUNTERPOINT, PROCEDURE, EXAMPLE, ENTITY, BRIDGE, ADJACENT. Empty when retrieval_required is false.
+- ADJACENT: for task_type GROUNDED_SYNTHESIS or CREATE_FROM_KNOWLEDGE, ALWAYS include exactly ONE query of type
+  ADJACENT (weight 0.6) — the question's underlying principle restated in domain-neutral words that OTHER books in
+  the corpus would use: no names of the asked-about domain, no product or book names. A fight-camera question →
+  {"id":"q2","type":"ADJACENT","query":"how a body communicates force and intent to an observer","weight":0.6};
+  a green-screen lighting question → "even illumination of a large flat surface"; a comparison of two chapters →
+  the principle the two share ("choosing a representation that preserves what the next stage needs"). Never for
+  GROUNDED_QA, identifier lookups or definitions.
 - The corpus name(s) named below are SCOPE, never query words: search "sound editing", not "sound editing in cinema".
 - A follow-up such as "why does that matter?", "how does that work in practice?", "can you say more about that?" is
   discourse about the antecedent topic: the PRIMARY query is the antecedent topic itself (e.g. "sound editing") with
@@ -429,7 +446,8 @@ Disambiguation (the two most-confused types):
 - "use everything my cinema books know about X to make this prompt better" → the user asked for CORPUS
   knowledge → CREATE_FROM_KNOWLEDGE, retrieval_required true, queries about X, response_type artifact.
 - "turn this into a stronger prompt" with the text supplied in the message → TRANSFORM_USER_CONTENT, no retrieval.
-- "do the authors agree or disagree about X?" → GROUNDED_SYNTHESIS with a COMPARISON query per side.
+- "do the authors agree or disagree about X?" → GROUNDED_SYNTHESIS with a COMPARISON query per side, plus the one
+  ADJACENT query (the shared principle in neutral words).
 - Every DISTINCT aspect of a compare / contrast / "X and Y" request gets its OWN typed query ("compare what the book
   says about X with what it says about Y" → PRIMARY about X, COMPARISON about Y) — never fold two topics into one query.
 Output ONLY the JSON object. No prose, no markdown fences."""

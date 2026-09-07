@@ -217,3 +217,24 @@ def test_correction_d_splits_a_two_sided_compare_into_two_queries():
     assert [q.type for q in plan3.queries][:2] == ["PRIMARY", "COMPARISON"] and plan3.queries[1].query == "nonsquare pixels"
     assert any(q.query == "chroma key construction steps" for q in plan3.queries)      # the side-A-only subquery is kept
     assert "gets its OWN typed query" in cp.SYSTEM_PROMPT
+
+
+def test_adjacent_aspect_is_a_known_type_capped_at_one_and_only_for_synthesis_tasks():
+    """B9 BREADTH-V1: the compiler may emit one domain-neutral ADJACENT query for synthesis / creation requests; extras
+    demote to MECHANISM, and a plain factual question never carries one (breadth must not blur identifier lookups)."""
+    import polymath_shared.chat_plan as cp
+    assert "ADJACENT" in cp.QUERY_TYPES and cp.ADJACENT_MAX == 1 and "GROUNDED_SYNTHESIS" in cp.ADJACENT_TASKS
+    assert "ALWAYS include exactly ONE query of type\n  ADJACENT" in cp.SYSTEM_PROMPT and '"type":"ADJACENT"' in cp.SYSTEM_PROMPT
+    raw = {"task_type": "GROUNDED_SYNTHESIS", "retrieval_required": True, "resolved_request": "how to make a punch read as real on camera",
+           "queries": [{"id": "q0", "type": "PRIMARY", "query": "punch realism camera angle", "weight": 1.0},
+                       {"id": "q1", "type": "ADJACENT", "query": "how a body communicates force and intent to an observer", "weight": 0.6},
+                       {"id": "q2", "type": "ADJACENT", "query": "reading effort and timing in movement", "weight": 0.6}],
+           "exact_terms": [], "must_answer": [], "graph_useful": False, "response_type": "answer"}
+    plan, why = cp.validate_plan(raw, "how to make a punch read as real on camera")
+    assert plan is not None, why
+    types = [q.type for q in plan.queries]
+    assert types.count("ADJACENT") == 1 and types.count("PRIMARY") == 1 and "MECHANISM" in types
+    raw_qa = dict(raw, task_type="GROUNDED_QA", queries=raw["queries"][:2])
+    plan_qa, why_qa = cp.validate_plan(raw_qa, "how to make a punch read as real on camera")
+    assert plan_qa is not None, why_qa
+    assert all(q.type != "ADJACENT" for q in plan_qa.queries) and len(plan_qa.queries) == 1
