@@ -30,3 +30,5 @@ Branch for every commit: `architecture/evidence-first-v5`. Merge mechanism for e
 No merge commits. Each fast-forward is verified by `git -C ../polymath-v4-main rev-parse HEAD` == the commit and `git ls-remote origin main` == the commit (VERIFICATION.md).
 
 ## Closeout commit
+
+`4824ffb` — docs(handoff): the eleven-file handoff set, superseded drafts, hooks in AGENTS.md / CLAUDE.md / README.md / docs/README.md / docs/wiki/README.md / continuity read order, work-log closeout, scaffold declarations. Followed by one small record commit (this text and the final VERIFICATION section); both fast-forwarded to `main` after the four CI checks — confirm with `git log --oneline -3 -- docs/wiki/reports/2026-09-07/` and `git rev-parse main origin/main`.

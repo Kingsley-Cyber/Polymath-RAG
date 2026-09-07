@@ -83,3 +83,17 @@ Not tested in this closeout: `tests/integration` (needs the full live stack in a
 
 ## Final state after the closeout commit
 (appended below by the closeout pass)
+
+```text
+Command: git status --short; git branch --show-current; git worktree list; git log --oneline --decorate -n 3   (after commit 4824ffb, before the record commit)
+Result:
+   M docs/wiki/reports/2026-09-07/COMMITS_AND_MERGES.md
+   M docs/wiki/reports/2026-09-07/VERIFICATION.md
+  branch: architecture/evidence-first-v5
+  /Users/king/Documents/polymath-rebuild/polymath-v4       4824ffb [architecture/evidence-first-v5]
+  /Users/king/Documents/polymath-rebuild/polymath-v4-main  22f93c3 [main]
+  4824ffb (HEAD -> architecture/evidence-first-v5) docs(handoff): 2026-09-07 successor bootstrap, be-aware rules, unfinished-work dependency map and continuation hooks
+  22f93c3 (origin/main, origin/architecture/evidence-first-v5, origin/HEAD, main) DOCUMENT-PROFILE-V1: profile lanes paced to two compound requests per key per minute, measured against Groq's rate-limit headers
+  0c78579 DOCUMENT-PROFILE-V1 step 5: cinema backfilled 67/67, compiler compiles what the model writes, six profile slots one per key (11.128)
+Interpretation: the handoff commit is the only change since 22f93c3; the record commit that follows adds this section and the ledger line; both go to main by fast-forward after CI (see COMMITS_AND_MERGES.md).
+```
