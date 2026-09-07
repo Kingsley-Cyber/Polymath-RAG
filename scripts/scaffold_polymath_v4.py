@@ -1787,6 +1787,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-07-parent-skeleton.md", "md", None),
     ("docs/wiki/work-log/2026-09-07-parent-map-compiler.md", "md", None),
     ("docs/wiki/work-log/2026-09-07-map-batches.md", "md", None),
+    ("docs/wiki/work-log/2026-09-07-map-contract-corrections.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-style-bold-retire.md", "md", None),
     ("docs/wiki/experiments/chat-parity-p1f-first.json", "json", None),
     ("docs/wiki/work-log/2026-09-06-p1e-mode-recomposition.md", "md", None),

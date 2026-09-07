@@ -24,7 +24,7 @@ into durable ``CompiledMap`` records, keyed to the real parent by the S1
 * **Reuse the repository normalization contract** (§10): compiled search text is
   NFC-normalized (as ``canonicalizer`` / ``identity`` do) with the measured
   Compound-Mini artifacts folded (non-breaking hyphen/space); the raw model text
-  is hashed FIRST so ``raw_response_hash != completeness_hash`` by design.
+  is hashed FIRST so ``raw_response_hash != map_completeness_hash`` by design.
 * **Source text is untrusted data** (§30): an injected instruction inside a MAP
   line is compiled as the signature string; this compiler executes nothing.
 """
@@ -130,7 +130,11 @@ class MapCompileResult:
     duplicate_aliases: tuple[str, ...]
     rejected: tuple[RejectedLine, ...]
     raw_response_hash: str
-    completeness_hash: str
+    #: The parent-map completeness hash (§33): binds the source manifest, the
+    #: EXPECTED alias set, the valid (alias, map_hash) pairs AND the missing set —
+    #: so a 73/90 partial and a different 73/90 partial never collide, and neither
+    #: matches a complete 90/90 run of the same document.
+    map_completeness_hash: str
 
     @property
     def expected_count(self) -> int:
@@ -151,7 +155,7 @@ class MapCompileResult:
                 {"raw": r.raw, "reason": r.reason, "alias": r.alias} for r in self.rejected
             ],
             "raw_response_hash": self.raw_response_hash,
-            "completeness_hash": self.completeness_hash,
+            "map_completeness_hash": self.map_completeness_hash,
         }
 
 
@@ -279,7 +283,16 @@ def compile_maps(
 
     ordered = tuple(maps[a] for a in sorted(maps))
     missing = tuple(sorted(expected_aliases - set(maps)))
-    completeness_hash = _sha256("\x1d".join(f"{m.alias}\x1c{m.map_hash}" for m in ordered))
+    map_completeness_hash = _sha256(
+        "\x1d".join(
+            [
+                "manifest:" + manifest.manifest_hash,
+                "expected:" + ",".join(sorted(expected_aliases)),
+                "valid:" + "|".join(f"{m.alias}\x1c{m.map_hash}" for m in ordered),
+                "missing:" + ",".join(missing),
+            ]
+        )
+    )
     return MapCompileResult(
         contract=contract,
         maps=ordered,
@@ -288,5 +301,5 @@ def compile_maps(
         duplicate_aliases=tuple(sorted(set(duplicate_aliases))),
         rejected=tuple(rejected),
         raw_response_hash=_sha256(raw_response or ""),
-        completeness_hash=completeness_hash,
+        map_completeness_hash=map_completeness_hash,
     )

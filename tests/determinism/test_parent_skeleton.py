@@ -24,7 +24,7 @@ from polymath_shared.document_profile import parent_skeleton as PS  # noqa: E402
 
 def _parent(idx, text, *, heading=None, role="body", char_start=None):
     return {
-        "parent_id": f"par-{idx}",
+        "chunk_id": f"par-{idx}",   # durable parent chunk id (not chunk_index)
         "chunk_index": idx,
         "char_start": idx * 1000 if char_start is None else char_start,
         "char_end": idx * 1000 + 999,
@@ -74,6 +74,19 @@ def test_single_parent_yields_one_skeleton_and_manifest_entry():
     assert manifest.alias_to_parent == {"P0001": "par-0"}
     assert manifest.builder_version == PS.SKELETON_BUILDER_VERSION
     assert skel.text_hash and skel.skeleton_hash and manifest.manifest_hash
+
+
+def test_durable_identity_requires_chunk_id_not_chunk_index():
+    # chunk_index is positional (UNIQUE(doc_id, chunk_index)) and unstable across
+    # re-ingest — it must never become the durable map key. A row without a
+    # durable chunk id fails loudly rather than mis-keying.
+    import pytest
+
+    with pytest.raises(ValueError):
+        PS.build_parent_skeletons([{"chunk_index": 0, "text": "body text", "region_role": "body"}])
+    # chunk_id resolves; an alias maps to the chunk_id, never to the index.
+    man = PS.build_parent_skeletons([{"chunk_id": "chunk-abc", "chunk_index": 7, "text": "body text", "region_role": "body"}])
+    assert man.alias_to_parent == {"P0001": "chunk-abc"}
 
 
 def test_furniture_is_excluded_and_accounted_never_dropped():

@@ -24,7 +24,7 @@ def _manifest(texts, *, roles=None):
     for i, t in enumerate(texts):
         parents.append(
             {
-                "parent_id": f"par-{i}",
+                "chunk_id": f"par-{i}",
                 "char_start": i * 100,
                 "heading_path": [f"Section {i}"],
                 "region_role": (roles[i] if roles else "body"),
@@ -117,7 +117,7 @@ def test_unicode_search_text_normalized_and_raw_hashed_first():
     assert "top-k re-ranking under load" == m.routing_signature
     assert "top-k" in m.semantic_hooks
     # Raw model text hashed first; compiled completeness hash differs by design (§10).
-    assert result.raw_response_hash != result.completeness_hash
+    assert result.raw_response_hash != result.map_completeness_hash
 
 
 def test_exact_identifiers_come_from_skeleton_not_model_hooks():
@@ -181,7 +181,38 @@ def test_deterministic_same_input_same_result():
     a = MC.compile_maps(raw, manifest)
     b = MC.compile_maps(raw, manifest)
     assert a.to_dict() == b.to_dict()
-    assert a.completeness_hash == b.completeness_hash
+    assert a.map_completeness_hash == b.map_completeness_hash
+
+
+def test_map_completeness_hash_binds_manifest_and_missing_identity():
+    manifest = _manifest([f"section {i} concept token{i}" for i in range(5)])
+    aliases = [s.alias for s in manifest.skeletons]
+    full = MC.compile_maps("\n".join(_line(a, f"sig {a}") for a in aliases), manifest)
+    # Same manifest, one alias missing -> different completeness identity.
+    partial = MC.compile_maps("\n".join(_line(a, f"sig {a}") for a in aliases if a != "P0003"), manifest)
+    assert full.map_completeness_hash != partial.map_completeness_hash
+    # A DIFFERENT document (different manifest_hash) with the SAME aliases and the
+    # same signatures must not share completeness identity.
+    other = _manifest([f"other body {i} different token{i}" for i in range(5)])
+    other_full = MC.compile_maps("\n".join(_line(a, f"sig {a}") for a in aliases), other)
+    assert other_full.map_completeness_hash != full.map_completeness_hash
+
+
+def test_real_40_parent_mini_output_when_pinned():
+    """Regression against the owner's REAL Compound-Mini output, once supplied.
+    Skips until the raw fixture exists; synthetic fixtures above cover the shape
+    meanwhile. To activate: drop the raw MAP lines at the path below and declare
+    it in the scaffold TREE."""
+    import pytest
+
+    fixture = ROOT / "tests" / "determinism" / "fixtures" / "parent_map_mini_40.txt"
+    if not fixture.exists():
+        pytest.skip("owner's real 40-parent Compound-Mini output not yet pinned (synthetic fixtures cover the DSL shape)")
+    raw = fixture.read_text()
+    manifest = _manifest([f"real parent {i} token{i}" for i in range(40)])  # P0001..P0040
+    result = MC.compile_maps(raw, manifest)
+    assert len(result.maps) == 40 and result.complete
+    assert result.unknown_aliases == () and result.duplicate_aliases == ()
 
 
 def test_module_is_pure():

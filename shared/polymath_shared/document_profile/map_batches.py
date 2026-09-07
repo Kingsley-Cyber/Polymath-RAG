@@ -136,15 +136,17 @@ def token_feasible_rpm(
     tpm_ceiling: int = TPM_CEILING,
     per_request_cap: int = PER_REQUEST_TOKEN_CAP,
 ) -> int:
-    """§14.4 token guard: 4 RPM is a CEILING, allowed only when the per-request
-    token estimate keeps the key under safe TPM. Above the per-request cap, drop
-    to whatever the ceiling allows."""
+    """§14.4 token guard: the target RPM is a CEILING allowed ONLY when the
+    per-request token estimate stays within the safe per-request cap (4 x 15,000 =
+    60,000 TPM, ~10K under the 70K ceiling). Above the cap the target itself is no
+    longer feasible, so the ceiling drops by one BEFORE the TPM bound is applied —
+    otherwise 15,001-17,500-token requests (where `tpm_ceiling // total` still
+    floors to 4) would silently keep 4 RPM."""
     if total_tokens_per_request <= 0:
         return target_rpm
-    rpm = min(target_rpm, int(tpm_ceiling // total_tokens_per_request))
-    if total_tokens_per_request > per_request_cap:
-        rpm = min(rpm, int(tpm_ceiling // total_tokens_per_request))
-    return max(1, rpm)
+    tpm_bound = int(tpm_ceiling // total_tokens_per_request)
+    ceiling = target_rpm if total_tokens_per_request <= per_request_cap else target_rpm - 1
+    return max(1, min(ceiling, tpm_bound))
 
 
 @dataclass(frozen=True)
@@ -179,12 +181,19 @@ class BatchPlan:
 BATCH_PLANNER_VERSION = "map-batches-v1"
 
 
-def _batch(ordinal, skeletons_by_alias, aliases, density, is_combined) -> MapBatch:
-    skels = [skeletons_by_alias[a] for a in aliases]
+def _batch(ordinal, by_alias, aliases, density, *, contract, manifest_hash, is_combined) -> MapBatch:
+    skels = [by_alias[a] for a in aliases]
     est_input = estimate_input_tokens(skels)
     est_billed = int(round(len(aliases) * density.billed_tokens_per_parent))
+    # Source identity: the planner contract + the document's manifest hash + each
+    # alias bound to its skeleton hash + the combined flag. Two different documents
+    # that both alias P0001..P0060 differ in manifest_hash and every skeleton_hash,
+    # so their durable batch identities can never collide.
     batch_hash = _sha256(
-        "\x1f".join([BATCH_PLANNER_VERSION, str(is_combined)] + list(aliases))
+        "\x1f".join(
+            [contract, manifest_hash, str(is_combined)]
+            + [f"{s.alias}\x1e{s.skeleton_hash}" for s in skels]
+        )
     )
     return MapBatch(
         ordinal=ordinal,
@@ -222,17 +231,20 @@ def plan_batches(
     batches: list[MapBatch] = []
     idx = 0
     ordinal = 0
+    mh = manifest.manifest_hash
     if combined_global_profile_billed_tokens is not None and comb_cap > 0 and aliases:
         first = aliases[:comb_cap]
-        batches.append(_batch(ordinal, by_alias, first, density, is_combined=True))
+        batches.append(_batch(ordinal, by_alias, first, density, contract=contract, manifest_hash=mh, is_combined=True))
         idx = len(first)
         ordinal += 1
     while idx < len(aliases):
         chunk = aliases[idx : idx + cap]
-        batches.append(_batch(ordinal, by_alias, chunk, density, is_combined=False))
+        batches.append(_batch(ordinal, by_alias, chunk, density, contract=contract, manifest_hash=mh, is_combined=False))
         idx += len(chunk)
         ordinal += 1
-    plan_hash = _sha256("\x1d".join(b.batch_hash for b in batches))
+    # Bind source identity into the plan hash too, so even an empty (noise-only)
+    # document's plan cannot collide with another's.
+    plan_hash = _sha256("\x1d".join([contract, mh] + [b.batch_hash for b in batches]))
     return BatchPlan(
         contract=contract,
         density=density,

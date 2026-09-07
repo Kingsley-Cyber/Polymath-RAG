@@ -22,11 +22,26 @@ from polymath_shared.document_profile import parent_skeleton as PS  # noqa: E402
 def _manifest(n):
     parents = [
         {
-            "parent_id": f"par-{i}",
+            "chunk_id": f"par-{i}",
             "char_start": i * 100,
             "heading_path": [f"Section {i}"],
             "region_role": "body",
             "text": f"section {i} graph traversal reinforcement token{i} identifier ID{i:04d}",
+        }
+        for i in range(n)
+    ]
+    return PS.build_parent_skeletons(parents)
+
+
+def _manifest_variant(n, tag):
+    # A DIFFERENT document with the SAME alias set (P0001..) but different content.
+    parents = [
+        {
+            "chunk_id": f"{tag}-par-{i}",
+            "char_start": i * 100,
+            "heading_path": [f"{tag} Section {i}"],
+            "region_role": "body",
+            "text": f"{tag} chapter {i} distinct content vocabulary token{i} MK{i:04d}",
         }
         for i in range(n)
     ]
@@ -91,6 +106,15 @@ def test_token_feasible_rpm_guard():
     assert MB.token_feasible_rpm(0) == MB.TARGET_RPM
 
 
+def test_token_feasible_rpm_boundary_at_15k():
+    # The bug this pins: 15,001-17,500-token requests floor to 4 under TPM math,
+    # so the per-request cap itself must drop the ceiling to 3 there.
+    assert MB.token_feasible_rpm(15000) == 4   # exactly at the cap: still feasible
+    assert MB.token_feasible_rpm(15001) == 3   # one over: reduced (was silently 4)
+    assert MB.token_feasible_rpm(17500) == 3   # still reduced across the window
+    assert MB.token_feasible_rpm(17501) == 3
+
+
 def test_combined_capacity_leaves_room_for_the_global_profile():
     d = MB.DEFAULT_DENSITY
     assert MB.combined_capacity(d, global_profile_billed_tokens=1200) == (6500 - 1200 - 512) // 87
@@ -125,6 +149,19 @@ def test_deterministic_same_inputs_same_plan():
     b = MB.plan_batches(_manifest(75))
     assert a.plan_hash == b.plan_hash
     assert [x.aliases for x in a.batches] == [x.aliases for x in b.batches]
+
+
+def test_batch_hash_binds_source_identity_no_cross_document_collision():
+    # Two DIFFERENT documents that both alias P0001..P0060 identically...
+    doc_a = _manifest(60)
+    doc_b = _manifest_variant(60, "docB")
+    assert [s.alias for s in doc_a.skeletons] == [s.alias for s in doc_b.skeletons]
+    assert doc_a.manifest_hash != doc_b.manifest_hash
+    a = MB.plan_batches(doc_a)
+    b = MB.plan_batches(doc_b)
+    # ...must never share durable batch identity (manifest_hash + skeleton_hashes bind it).
+    assert a.batches[0].batch_hash != b.batches[0].batch_hash
+    assert a.plan_hash != b.plan_hash
 
 
 def test_skeleton_prompt_tokens_positive_and_bounded():

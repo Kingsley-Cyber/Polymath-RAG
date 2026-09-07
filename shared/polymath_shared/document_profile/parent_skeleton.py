@@ -318,12 +318,20 @@ def _normalize_heading(value: Any) -> tuple[str, ...]:
     return tuple(str(v) for v in value if str(v).strip())
 
 
-def _identity(parent: Mapping[str, Any], position: int) -> str:
-    for key in ("parent_id", "chunk_index"):
+def _identity(parent: Mapping[str, Any]) -> str:
+    """The durable parent identity is the parent chunk's Postgres id
+    (`chunk_id`, content-derived `chunk_<sha256(doc_id|idx|text)>`). `chunk_index`
+    is positional (`UNIQUE(doc_id, chunk_index)`) and NOT stable across re-ingest,
+    so it must never become a durable map key — a row without a durable id is a
+    caller-contract error, raised loudly rather than mis-keyed."""
+    for key in ("chunk_id", "parent_id"):
         val = parent.get(key)
-        if val is not None and str(val) != "":
+        if val is not None and str(val).strip() != "":
             return str(val)
-    return f"pos-{position}"
+    raise ValueError(
+        "ParentSkeleton requires a durable parent chunk id (chunk_id/parent_id); "
+        "chunk_index is positional, not durable identity"
+    )
 
 
 def _source_position(parent: Mapping[str, Any], position: int) -> int:
@@ -376,7 +384,7 @@ def build_parent_skeletons(
     eligible: list[tuple[int, str, tuple[str, ...], str, str]] = []
     excluded: list[ExcludedParent] = []
     for position, parent in enumerate(parents):
-        pid = _identity(parent, position)
+        pid = _identity(parent)
         role = str(parent.get("region_role") or document_region.ROLE_UNKNOWN)
         heading_path = _normalize_heading(parent.get("heading_path"))
         text = normalize_whitespace(str(parent.get("text") or ""))
