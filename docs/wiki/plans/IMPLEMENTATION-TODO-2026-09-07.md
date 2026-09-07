@@ -34,7 +34,18 @@ One list, in the order to execute it. Every item carries the rule this repo work
 - [ ] **Tests**: term selection (spread filter, hub filter, canonical join), fetch bounds, legend label, receipt shape; regression manifest case 11 (GRAPH facts ≤ 20, seeds ≤ 8) held.
 - [ ] **Gate**: the punch question surfaces ≥ 1 Laban-family passage that the answer **cites**; on the 10-question synthesis loop bridge rows cited on ≥ ⅓ of turns; literal precision 1.0 unchanged; GRAPH wall Δ ≤ +1 s.
 
-### 2. B14 ABSTRACTION-LADDER-V1 — levels as the compiler's vocabulary, L3 first  (M)
+### 2. B16 COMPILER-CORPUS-CONTEXT-V1 — the compiler sees the library's titles  (S–M)
+
+**Why.** The compiler prompt says only `CORPUS IN SCOPE: cinema`; it has never seen a title, so ADJACENT is a domain-neutral guess. Owner rule: **titles only, never summaries; dynamic top-N (default 40)**.
+
+- [ ] `RELEVANT BOOKS IN THE LIBRARY:` block of TITLES (extension / hash suffixes stripped), fetched live from `documents` every turn — no cache, so it can never be stale.
+- [ ] Top-N selection, `POLYMATH_CHAT_COMPILER_TITLES_TOP_N` default 40 (0 = off): ≤ N documents → all titles; > N → rank by question-word overlap with the title, then with the stored `major_concepts` words (scoring only, never injected), then alphabetical. Deterministic, one SQL query, no retrieval round.
+- [ ] Prompt rule: use the library's terminology when it fits; PRIMARY stays the raw message (already enforced by `validate_plan`); seats per aspect unchanged.
+- [ ] Receipts `compiler.titles` {n_injected, n_corpus, top_n}; `chat_m_replay.py` arm `+TITLES`.
+- [ ] Hygiene folded in: delete the orphan `document_summaries` row (document deleted 09-05 via the old path) and the duplicate summary on one document.
+- [ ] **Gate** (10 synthesis questions incl. the punch question, on vs off interleaved): the punch plan carries ≥ 1 query in corpus terms and arrivals from a Laban-family book > 0; title-driven rows cited on ≥ ⅓ of turns; distinct final-set documents ≥ 43 / 10 turns; compiler wall Δ ≤ +0.3 s; precision 1.0.
+
+### 3. B14 ABSTRACTION-LADDER-V1 — levels as the compiler's vocabulary, L3 first  (M)
 
 - [ ] **L3 FRAMEWORK / MODEL query type** in `chat_plan.py` (QUERY_TYPES, prompt rule with a JSON example — the ADJACENT lesson: prescriptive wording, permissive got 0/18), `validate_plan` (L3 only for GROUNDED_SYNTHESIS / CREATE_FROM_KNOWLEDGE; `MAX_QUERIES` stays 4).
 - [ ] **Levels per task**: factual = L0 + L1; synthesis / create = L0 + L2 + L3 + one L6 (ADJACENT). Document the mapping L0 PRIMARY/EXAMPLE/ENTITY · L1 PROCEDURE · L2 MECHANISM/CAUSAL · L3 new · L6 ADJACENT/BRIDGE.
@@ -43,21 +54,21 @@ One list, in the order to execute it. Every item carries the rule this repo work
 - [ ] **Gate**: 10 synthesis questions, L3 on vs off interleaved — L3 rows cited on ≥ ⅓ of turns, distinct final-set documents ≥ B9's 43 / 10 turns, B and L floors held, compiler wall ≤ +0.3 s.
 - [ ] **Held**: L4 / L5 behind a corpus-map "holds theory" flag; L6 stays ADJACENT (the LLM's bridge) with B15 as the corpus's bridge.
 
-### 3. B11 follow-up — recover survival under document-fair judging  (S–M)
+### 4. B11 follow-up — recover survival under document-fair judging  (S–M)
 
 - [ ] Round-robin judging lifted documents judged 5 → 9 but survival-given-union fell (B 0.852 → 0.778, L 1.0 → 0.933). Measure `rerank_max_fair` 40 and 48 on the fast judge (fp16 / 384) against the same fixtures; promote the smallest seat count that restores B ≥ 0.85 without a judge-timeout increase. Knob today: `POLYMATH_CHAT_RERANK_ROUND_ROBIN=0` is the rollback.
 
-### 4. Live parity test — apply P1.f's clean-pair rule  (S)
+### 5. Live parity test — apply P1.f's clean-pair rule  (S)
 
 - [ ] `test_live_chat_and_stream_agree_on_plan_and_evidence_ids` failed once in the B13 full run and passed on re-run (judge deadline between two sequential live calls). Classify the pair as clean only when neither side carries a deadline receipt, as the parity probe already does; skip-with-reason otherwise.
 
-### 5. B1 follow-ups  (S each)
+### 6. B1 follow-ups  (S each)
 
 - [ ] Documents table: a "near-duplicate of X (likely / review)" badge from `materialization.near_duplicate` (stored today, not shown).
 - [ ] A refused run reads `intake` until its three ticket retries exhaust; either mark the ticket terminal on a typed duplicate refusal or accept the cosmetic delay (the Files tab already keys off the receipt).
 - [ ] Optional: port v3.3's `dedupe_corpus.py` corpus-wide DETECT (dry-run only) over the shared core — only if a corpus ever needs a sweep.
 
-### 6. NEW-MACHINE-V1 — prove the cold boot  (M, needs the second computer)
+### 7. NEW-MACHINE-V1 — prove the cold boot  (M, needs the second computer)
 
 - [ ] On the other machine: `git clone`, copy `.env` by hand (never through GitHub — the repo is public), run CONTINUITY-REPORT §1; record what broke in a work-log. Known gaps: the spool directory and PolymathRuntime paths are per-machine; keys are per-machine; the CI waiter script assumes this Mac's paths.
 
