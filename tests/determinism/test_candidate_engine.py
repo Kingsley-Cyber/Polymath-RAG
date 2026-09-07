@@ -216,7 +216,8 @@ def test_subqueries_run_lanes_b_and_c_only_with_per_query_provenance():
     res = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=fake.dense, sparse_search=fake.sparse, subqueries=subs)
     sub_calls = [c for c in fake.calls if c[0] == "dense" and len(c) > 4 and c[4] is not None]
     assert sub_calls and all(c[1] == CHILD and not c[3] for c in sub_calls)         # no doc/section routing, no deepening for subqueries
-    assert sum(1 for c in fake.calls if c[0] == "dense" and c[1] == DOC) == 1        # lane A once, on the primary
+    assert sum(1 for c in fake.calls if c[0] == "dense" and c[1] == SEC) == 1        # lane A once, on the primary (section routing; SECTION-ROUTING-V1)
+    assert sum(1 for c in fake.calls if c[0] == "dense" and c[1] == DOC) == 0        # the document vote is opt-in now
     hit = next(c for c in res.union if c.chunk_id == "s1-hit0")
     assert hit.query_ids == ["q1"] and set(hit.arrivals) == {ce.LANE_B, ce.LANE_C} and "q1" in hit.query_scores
     both = next(c for c in res.union if c.chunk_id == "d2-p0-k0")
@@ -517,7 +518,7 @@ class SlowMulti(FakeMulti):
 def test_primary_lanes_and_deepening_run_concurrently_wall_is_the_slowest_lane_not_the_sum():
     fake = Slow(per_call=0.2)
     t0 = _time.perf_counter()
-    res = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=fake.dense, sparse_search=fake.sparse)
+    res = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(hierarchy_route_documents=True), dense_search=fake.dense, sparse_search=fake.sparse)
     wall = _time.perf_counter() - t0
     calls = len(fake.calls)                                   # 5 primary lanes + one deepening per selected section
     assert calls >= 8 and res.union and res.degraded == []
@@ -534,7 +535,7 @@ def test_a_lane_past_its_deadline_is_dropped_receipted_by_name_and_the_turn_comp
     # the sparse lane sleeps past the deadline → dropped and named; dense lanes intact; nobody waits for the late result
     fake = Slow(slow="sparse", sleep=1.5)
     t0 = _time.perf_counter()
-    res = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(lane_deadline_s=0.3), dense_search=fake.dense, sparse_search=fake.sparse)
+    res = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(hierarchy_route_documents=True, lane_deadline_s=0.3), dense_search=fake.dense, sparse_search=fake.sparse)
     wall = _time.perf_counter() - t0
     assert wall < 1.2, wall
     assert [d["component"] for d in res.degraded] == ["global_sparse_child_timeout"]
@@ -545,7 +546,7 @@ def test_a_lane_past_its_deadline_is_dropped_receipted_by_name_and_the_turn_comp
     # the deepening fan-out past the deadline: routing happened, lane A keeps nothing, B + C still answer
     fake2 = Slow(slow="deep", sleep=1.5)
     t0 = _time.perf_counter()
-    res2 = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(lane_deadline_s=0.3), dense_search=fake2.dense, sparse_search=fake2.sparse)
+    res2 = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(hierarchy_route_documents=True, lane_deadline_s=0.3), dense_search=fake2.dense, sparse_search=fake2.sparse)
     assert _time.perf_counter() - t0 < 1.2
     assert res2.lane_a == [] and res2.lane_b and res2.lane_c and res2.selected_sections and res2.union
     d = next(x for x in res2.degraded if x["component"] == "hierarchical_children_timeout")
@@ -556,7 +557,7 @@ def test_a_lane_past_its_deadline_is_dropped_receipted_by_name_and_the_turn_comp
     # answered (documents selected), and B + C carry the turn within the budget
     fake3 = Slow(slow="doc", sleep=1.5)
     t0 = _time.perf_counter()
-    res3 = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(lane_deadline_s=0.3), dense_search=fake3.dense, sparse_search=fake3.sparse)
+    res3 = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(hierarchy_route_documents=True, lane_deadline_s=0.3), dense_search=fake3.dense, sparse_search=fake3.sparse)
     assert _time.perf_counter() - t0 < 1.2
     assert [d["component"] for d in res3.degraded] == ["document_summary_timeout", "hierarchical_children_timeout"]
     assert res3.trace["lane_sizes"]["document_summary"] == 0 and res3.selected_documents and res3.selected_sections
@@ -565,7 +566,7 @@ def test_a_lane_past_its_deadline_is_dropped_receipted_by_name_and_the_turn_comp
     # a subquery lane past the deadline: the aspect keeps its other lane; no second pass is spent on a lane that was not given time
     fake4 = SlowMulti(("dense",))
     t0 = _time.perf_counter()
-    res4 = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(lane_deadline_s=0.3), dense_search=fake4.dense, sparse_search=fake4.sparse, subqueries=[_subq("q1", "a")])
+    res4 = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(hierarchy_route_documents=True, lane_deadline_s=0.3), dense_search=fake4.dense, sparse_search=fake4.sparse, subqueries=[_subq("q1", "a")])
     assert _time.perf_counter() - t0 < 1.2
     assert [d["component"] for d in res4.degraded] == ["sub_q1_dense_timeout"]
     asp = res4.trace["aspects"]["q1"]
@@ -573,10 +574,10 @@ def test_a_lane_past_its_deadline_is_dropped_receipted_by_name_and_the_turn_comp
     hit = next(c for c in res4.union if c.chunk_id == "s1-hit0")
     assert hit.arrivals == [ce.LANE_C] and hit.query_ids == ["q1"]
     fake5 = SlowMulti(("dense", "sparse"))
-    res5 = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(lane_deadline_s=0.3), dense_search=fake5.dense, sparse_search=fake5.sparse, subqueries=[_subq("q1", "a")])
+    res5 = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(hierarchy_route_documents=True, lane_deadline_s=0.3), dense_search=fake5.dense, sparse_search=fake5.sparse, subqueries=[_subq("q1", "a")])
     assert [d["component"] for d in res5.degraded] == ["sub_q1_dense_timeout", "sub_q1_sparse_timeout"]
     assert res5.trace["aspects"]["q1"]["degraded"] == ["dense:timeout", "sparse:timeout"] and res5.trace["second_pass"] is None
-    _, tr5 = ce.select_evidence(res5, ce.CandidateBudget(), rerank_children=None)
+    _, tr5 = ce.select_evidence(res5, ce.CandidateBudget(hierarchy_route_documents=True), rerank_children=None)
     assert tr5["weak_reasons"].get("q1") == "no_candidates"
 
 
@@ -652,19 +653,19 @@ def test_lane_exceptions_keep_the_sequential_semantics_and_per_call_pools_are_re
 
     for kind in (CHILD, DOC, SEC):                            # the core dense lanes still fail the turn (typed by the route)
         with pytest.raises(RuntimeError, match="down"):
-            ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=Broken(kind).dense, sparse_search=Fake().sparse)
-    res = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=Broken(CARD).dense, sparse_search=Fake().sparse)
+            ce.retrieve_candidates(_ctx(), ce.CandidateBudget(hierarchy_route_documents=True), dense_search=Broken(kind).dense, sparse_search=Fake().sparse)
+    res = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(hierarchy_route_documents=True), dense_search=Broken(CARD).dense, sparse_search=Fake().sparse)
     assert res.trace["lane_sizes"]["entity_card"] == 0 and res.degraded == [] and res.union     # routing votes only: silent, as before
     # per-call pools are released even when a lane raises (no thread leak across turns)
     before = _th.active_count()
     for _ in range(3):
         with pytest.raises(RuntimeError):
-            ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=Broken(CHILD).dense, sparse_search=Fake().sparse)
+            ce.retrieve_candidates(_ctx(), ce.CandidateBudget(hierarchy_route_documents=True), dense_search=Broken(CHILD).dense, sparse_search=Fake().sparse)
     deadline = _time.perf_counter() + 3.0
     while _th.active_count() > before and _time.perf_counter() < deadline:
         _time.sleep(0.02)
     assert _th.active_count() <= before + 1, (before, _th.active_count())
-    assert ce.CandidateBudget().to_dict()["lane_deadline_s"] == 3.0 and ce.CandidateBudget().max_workers == 8
+    assert ce.CandidateBudget(hierarchy_route_documents=True).to_dict()["lane_deadline_s"] == 3.0 and ce.CandidateBudget(hierarchy_route_documents=True).max_workers == 8
 # appended to tests/determinism/test_candidate_engine.py when step 3 is applied
 
 
@@ -770,3 +771,24 @@ def test_lane_d_is_fail_open_and_receipted_when_the_latent_search_breaks():
     assert res.trace["latent"]["enabled"] is True and res.trace["latent"]["degraded"] and res.trace["lane_sizes"]["latent_rescue"] == 0
 
 
+def test_section_routing_is_the_default_and_the_document_vote_is_opt_in():
+    """SECTION-ROUTING-V1 (owner decision 2026-09-07): the hierarchical lane routes by section summaries; the
+    document-summary search runs only when `hierarchy_route_documents` is set, and the receipt names the route kinds."""
+    import polymath_shared.candidate_engine as ce
+    calls = []
+
+    def dense(kind, top_k, extra=None, qvec=None):
+        calls.append(kind)
+        if kind == ce.REPRESENTATION_KIND_SECTION_SUMMARY:
+            return [{"score": 0.9, "payload": {"chunk_id": "sec1", "doc_id": "d1", "parent_id": "sec1", "source_name": "A.md", "text": "section"}}]
+        if kind == ce.REPRESENTATION_KIND_CHILD:
+            return [{"score": 0.8, "payload": {"chunk_id": "c1", "doc_id": "d1", "parent_id": "sec1", "source_name": "A.md", "text": "punch"}}]
+        return []
+
+    res = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=dense, sparse_search=lambda k, q=None: [])
+    assert ce.REPRESENTATION_KIND_DOCUMENT_SUMMARY not in calls and ce.REPRESENTATION_KIND_SECTION_SUMMARY in calls
+    assert res.trace["lane_sizes"]["document_summary"] == 0 and res.trace["route_kinds"] == ["section_summary", "child", "entity_card"]
+    assert res.selected_documents and res.selected_sections                     # routing still lands on documents through their sections
+    calls.clear()
+    res_on = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(hierarchy_route_documents=True), dense_search=dense, sparse_search=lambda k, q=None: [])
+    assert ce.REPRESENTATION_KIND_DOCUMENT_SUMMARY in calls and res_on.trace["route_kinds"][0] == "document_summary"

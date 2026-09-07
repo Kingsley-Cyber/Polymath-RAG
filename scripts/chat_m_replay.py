@@ -179,6 +179,11 @@ def run(args) -> int:
             try:
                 if arm in MODE_ARMS:        # P1.e: the composition owner (PRIMARY only, like AB / ABC)
                     fast = chat_retrieve_mode(arm, query, q["corpus_id"], exact_terms=exact)
+                elif arm.endswith("+DOCS") and arm[: -5] in MODE_ARMS:               # SECTION-ROUTING-V1: the document vote ON (the old routing)
+                    from dataclasses import replace as _replace
+                    from orchestrator.api.chat_retrieval import default_budget as _default_budget
+                    fast = chat_retrieve_mode(arm[: -5], query, q["corpus_id"], exact_terms=exact,
+                                              budget=_replace(_default_budget(), hierarchy_route_documents=True))
                 elif arm.endswith(LATENT_SUFFIX) and arm[: -len(LATENT_SUFFIX)] in MODE_ARMS:   # B12: the ✨ lane on
                     from dataclasses import replace as _replace
                     from orchestrator.api.chat_retrieval import default_budget as _default_budget
@@ -210,6 +215,10 @@ def run(args) -> int:
                             "mode_truthful": ((meta.get("mode") == arm) if arm in MODE_ARMS else None),
                             # B12 receipts: the latent lane's size / trace, and the wildcard verified / unverified split
                             "latent_rescue": (trace.get("lane_sizes") or {}).get("latent_rescue"),
+                            # SECTION-ROUTING-V1: document breadth per turn (B11's judged_docs receipt + the final set's documents)
+                            "judged_docs": trace.get("judged_docs"),
+                            "final_docs": len({e.get("doc_id") for e in (fast.get("evidence") or []) if e.get("doc_id")}),
+                            "route_kinds": trace.get("route_kinds"),
                             "latent_trace": trace.get("latent"),
                             "wildcard_verified": (meta.get("wildcard") or {}).get("verified_bridges"),
                             "wildcard_unverified": (meta.get("wildcard") or {}).get("unverified_bridges"),
@@ -287,6 +296,8 @@ def run(args) -> int:
             "wildcard_unverified_total": sum(r.get("wildcard_unverified") or 0 for r in ar),
             "wildcard_finish_timeouts": sum(1 for r in ar if str(r.get("wildcard_degraded") or "").startswith("wildcard_timeout")),
             "latent_rescue_p50": _med([r.get("latent_rescue") for r in ar if r.get("latent_rescue") is not None]),
+            "judged_docs_p50": _med([r.get("judged_docs") for r in ar if r.get("judged_docs") is not None]),
+            "final_docs_p50": _med([r.get("final_docs") for r in ar if r.get("final_docs") is not None]),
             "latent_turns_with_candidates": sum(1 for r in ar if (r.get("latent_rescue") or 0) > 0),
             "wildcard_bridges_max": max([r.get("wildcard_bridges") for r in ar if isinstance(r.get("wildcard_bridges"), int)] or [None]),
             "bridges_in_evidence": sum(r.get("bridges_in_evidence") or 0 for r in ar),

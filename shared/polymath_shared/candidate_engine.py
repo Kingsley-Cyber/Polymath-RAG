@@ -81,6 +81,12 @@ class CandidateBudget:
     override only what they genuinely need (P1.e)."""
     hierarchy_doc_k: int = 16
     hierarchy_section_k: int = 24
+    #: SECTION-ROUTING-V1 (owner decision 2026-09-07: "document summary should be removed from search; routing falls on
+    #: the section"): the hierarchical lane routes by section summaries (and the child / entity-card votes) only; the
+    #: document-summary search is off unless this knob is set (POLYMATH_CHAT_HIERARCHY_ROUTE_DOCUMENTS=1 restores it).
+    #: Measured 2026-09-06 (B10): with the whole lane off, recall on the frozen plans did not move — the document vote
+    #: was never the part that found a page.
+    hierarchy_route_documents: bool = False
     hierarchy_child_k: int = 3              # children deepened per section
     hierarchy_max_documents: int = 6
     hierarchy_max_sections_per_document: int = 2
@@ -556,7 +562,8 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
         else:
             primary_tasks.append(("global_sparse_child", lambda: sparse_search(budget.global_sparse_k)))
     if LANE_A in lanes:
-        primary_tasks.append(("document_summary", lambda: dense_search(REPRESENTATION_KIND_DOCUMENT_SUMMARY, budget.hierarchy_doc_k, None)))
+        if budget.hierarchy_route_documents:      # SECTION-ROUTING-V1: the document vote is opt-in
+            primary_tasks.append(("document_summary", lambda: dense_search(REPRESENTATION_KIND_DOCUMENT_SUMMARY, budget.hierarchy_doc_k, None)))
         primary_tasks.append(("section_summary", lambda: dense_search(REPRESENTATION_KIND_SECTION_SUMMARY, budget.hierarchy_section_k, None)))
         if budget.entity_card_k > 0:
             primary_tasks.append(("entity_card", lambda: dense_search(REPRESENTATION_KIND_ENTITY_CARD,
@@ -613,11 +620,14 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
     lane_a: list[CandidateEvidence] = []
     if LANE_A in lanes:
         for name in ("document_summary", "section_summary"):
+            if name not in outs:
+                continue                          # SECTION-ROUTING-V1: no document vote unless asked for
             if outs[name].error is not None:
                 raise outs[name].error
             if outs[name].timeout:
                 dropped(name, LANE_DROPPED)
-        doc_lane = _hits(REPRESENTATION_KIND_DOCUMENT_SUMMARY, outs["document_summary"].rows, ctx.corpus_id, budget.hierarchy_doc_k)
+        doc_lane = (_hits(REPRESENTATION_KIND_DOCUMENT_SUMMARY, outs["document_summary"].rows, ctx.corpus_id, budget.hierarchy_doc_k)
+                    if "document_summary" in outs else [])
         section_lane = _hits(REPRESENTATION_KIND_SECTION_SUMMARY, outs["section_summary"].rows, ctx.corpus_id, budget.hierarchy_section_k)
         if "entity_card" in outs:
             o = outs["entity_card"]
@@ -893,6 +903,7 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
         "degraded": list(degraded), "timings_ms": dict(timings),
     }
     trace["latent"] = latent_trace
+    trace["route_kinds"] = (["document_summary"] if budget.hierarchy_route_documents else []) + ["section_summary", "child", "entity_card"]
     trace["noise_dropped"] = len(noise_dropped)
     trace["noise_reasons"] = dict(Counter(w for _, w in noise_dropped))
     trace["noise_sample"] = [cid for cid, _ in noise_dropped[:5]]
