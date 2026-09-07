@@ -172,7 +172,9 @@ def run(args) -> int:
         subs = tuple((s["id"], s["type"], s["query"], s.get("weight", 1.0)) for s in plan["queries"] if s.get("type") != "PRIMARY")
         for arm in (arms if i % 2 == 0 else list(reversed(arms))):   # alternate the arm order per question (no order bias)
             t0 = time.time()
-            lanes = {"AB": ("HIERARCHICAL_ROUTE", "GLOBAL_DENSE_CHILD"), "ABC": ("HIERARCHICAL_ROUTE", "GLOBAL_DENSE_CHILD", "GLOBAL_SPARSE_CHILD")}.get(arm)
+            lanes = {"AB": ("HIERARCHICAL_ROUTE", "GLOBAL_DENSE_CHILD"), "ABC": ("HIERARCHICAL_ROUTE", "GLOBAL_DENSE_CHILD", "GLOBAL_SPARSE_CHILD"),
+                     # B10 SUMMARY-ABLATION-V1: the engine without the summary-routed hierarchical lane (dense + lexical children only)
+                     "BC": ("GLOBAL_DENSE_CHILD", "GLOBAL_SPARSE_CHILD")}.get(arm)
             kw = {"lanes": lanes} if lanes else {}
             try:
                 if arm in MODE_ARMS:        # P1.e: the composition owner (PRIMARY only, like AB / ABC)
