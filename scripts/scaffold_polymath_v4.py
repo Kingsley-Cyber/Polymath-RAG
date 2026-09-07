@@ -364,6 +364,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/plans/IMPLEMENTATION-TODO-2026-09-07.md", "md", None),
     ("docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-PLAN.md", "md", None),
     ("docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-START-HERE.md", "md", None),
+    ("docs/wiki/plans/GROQ-ROUTING-POLICY-V1.md", "md", None),
     ("docs/wiki/plans/RETRIEVAL-AUDIT-PRD.md", "md", None),
     ("docs/wiki/plans/MASTER-BUILD-SEQUENCE.md", "md", None),
     ("workers/workers/project_qdrant_worker.py", "py", None),
@@ -392,6 +393,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("shared/polymath_shared/document_profile/parent_skeleton.py", "py", None),
     ("shared/polymath_shared/document_profile/map_compiler.py", "py", None),
     ("shared/polymath_shared/document_profile/map_batches.py", "py", None),
+    ("shared/polymath_shared/document_profile/groq_router.py", "py", None),
     ("shared/polymath_shared/embedding_contracts.py", "py", None),
 
     # stores: Neo4j uniqueness constraints + document profile columns
@@ -1760,6 +1762,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_parent_skeleton.py", "py", None),
     ("tests/determinism/test_parent_map_compiler.py", "py", None),
     ("tests/determinism/test_map_batches.py", "py", None),
+    ("tests/determinism/test_groq_router.py", "py", None),
     ("docs/wiki/work-log/2026-09-06-chat-model-catalog.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-chat-ui-surgical.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-reading-hierarchy.md", "md", None),
@@ -1788,6 +1791,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-07-parent-map-compiler.md", "md", None),
     ("docs/wiki/work-log/2026-09-07-map-batches.md", "md", None),
     ("docs/wiki/work-log/2026-09-07-map-contract-corrections.md", "md", None),
+    ("docs/wiki/work-log/2026-09-07-groq-routing-policy.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-style-bold-retire.md", "md", None),
     ("docs/wiki/experiments/chat-parity-p1f-first.json", "json", None),
     ("docs/wiki/work-log/2026-09-06-p1e-mode-recomposition.md", "md", None),
