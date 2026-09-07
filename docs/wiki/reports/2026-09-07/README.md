@@ -25,11 +25,11 @@ the document-semantic-index phase:
 - **`docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-START-HERE.md`** — the coding-agent
   bootstrap hook for it.
 
-State: **S0 (admission) DONE (11.129); S1 (deterministic ParentSkeleton) DONE
-(11.130); S2 (parent-map compiler) DONE (11.131); S3 (token packer / capacity
-model) is the next executable slice.** The U1–U12 inventory below still holds —
-U1 folds into slice S12, U2 into slice S15; S3–S11/S13/S14 are the remaining
-prerequisite slices.
+State: the deterministic map-production core is built — **S0 (11.129), S1
+ParentSkeleton (11.130), S2 parent-map compiler (11.131), S3 token packer
+(11.132) all DONE; S4 (SQL durability) is the next executable slice.** The
+U1–U12 inventory below still holds — U1 folds into slice S12, U2 into slice S15;
+S4–S11/S13/S14 are the remaining prerequisite slices.
 
 ## Reading sequence
 
