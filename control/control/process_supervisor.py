@@ -93,6 +93,8 @@ FLEET: list = [
     ("summaries", "workers.summary_worker"),
     # SUMMARIES-SCALE-OUT-V1: second summaries worker, demand-driven by the autopilot
     ("summaries2", "workers.summary_worker"),
+    # DOCUMENT-PROFILE-V1: the document retrieval profile stage (its own LLM pool; demand-driven)
+    ("doc_profile", "workers.doc_profile_worker"),
 ]
 
 

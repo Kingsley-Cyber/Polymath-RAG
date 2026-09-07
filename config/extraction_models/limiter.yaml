@@ -263,3 +263,32 @@ providers:
     min: 1
     max: 2
     init: 1
+  profile1:             # DOCUMENT-PROFILE-V1 pool (tier 0, free): gemini-3.1-flash-lite on GEMINI_API_KEY_3 — doc_profile pin only.
+    kind: rate          # NOTE: shares the provider key with compiler3 (owner may add dedicated keys later); its own limiter row.
+    family: gemini
+    rpd: 400
+    rpm: 8
+    tpm: 200000
+    conc_cap: 2
+    min: 1
+    max: 2
+    init: 1
+  profile2:             # DOCUMENT-PROFILE-V1 pool (tier 0, free): gemini-3.1-flash-lite on GEMINI_API_KEY_4 — doc_profile pin only.
+    kind: rate
+    family: gemini
+    rpd: 400
+    rpm: 8
+    tpm: 200000
+    conc_cap: 2
+    min: 1
+    max: 2
+    init: 1
+  profile_fallback:     # DOCUMENT-PROFILE-V1 pool (tier 1, cheap): OpenRouter mistral-small-2603 — sees only tier-0 failures.
+    kind: rate
+    family: openrouter
+    rpm: 20
+    tpm: 300000
+    conc_cap: 1
+    min: 1
+    max: 1
+    init: 1

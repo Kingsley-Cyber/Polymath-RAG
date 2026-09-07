@@ -48,6 +48,11 @@
       "compiler3",
       "compiler4",
       "compiler_alt"
+    ],
+    "doc_profile": [
+      "profile1",
+      "profile2",
+      "profile_fallback"
     ]
   },
   "providers": [
@@ -299,6 +304,39 @@
       "api_key_env": "OPENROUTER_API_KEY",
       "dedicated": true,
       "request_char_budget": 40000
+    },
+    {
+      "name": "profile1",
+      "enabled": true,
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "model": "gemini-3.1-flash-lite",
+      "reasoning_effort": null,
+      "structured": null,
+      "api_key_env": "GEMINI_API_KEY_3",
+      "dedicated": true,
+      "request_char_budget": 12000
+    },
+    {
+      "name": "profile2",
+      "enabled": true,
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "model": "gemini-3.1-flash-lite",
+      "reasoning_effort": null,
+      "structured": null,
+      "api_key_env": "GEMINI_API_KEY_4",
+      "dedicated": true,
+      "request_char_budget": 12000
+    },
+    {
+      "name": "profile_fallback",
+      "enabled": true,
+      "url": "https://openrouter.ai/api",
+      "model": "mistralai/mistral-small-2603",
+      "reasoning_effort": null,
+      "structured": null,
+      "api_key_env": "OPENROUTER_API_KEY",
+      "dedicated": true,
+      "request_char_budget": 12000
     }
   ]
 }

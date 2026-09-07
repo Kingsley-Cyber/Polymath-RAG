@@ -643,6 +643,10 @@ commit is the proven method).
 
 - **Noisy regions never become evidence for a subject question (REGION-EXCLUSION-V1, 11.123).** A candidate whose materializer role is front matter / marketing / toc / index / bibliography / OCR noise is dropped at the union and receipted (`noise_reasons` `region:<role>`); demotion alone was undone by the document-fair judged prefix. Document-metadata questions keep the old behaviour. Section summaries measured 2026-09-07: faithful, and unnecessary in chat — the owner decides whether to keep producing them.
 
+- **Judge timeouts under the shared GPU are the embedder wasting attempts, not the judge (INTERACTIVE-RELIEF-V1, 11.124).** A corpus re-projection drives the embedder into MPS OOM-splitting at its 3.5 GiB cap; the fix is smaller embedder batches (`runtime_budget.yaml`), applied by recycling the embedder slot (the supervisor exports the budget and overlays `.env` on every spawn). Transform / continue turns keep the previous answer's evidence (CARRY-ARTIFACT-V1); presentation-v2 carries a length rule; standing instructions are 17 k chars per turn (style layer 10.9 k) — LEAN-PROMPT is queued.
+
+- **DOCUMENT-PROFILE-V1 is the owner's architecture for document-level retrieval (plan DOCUMENT-PROFILE-V1.md; 11.125–11.126).** Every admitted document gets one cheap enrichment pass → a compiled multi-field profile (ONE, SUMMARY, TOPIC, TERM, Q, SEARCH, THEORY, CONCEPT, SEEALSO) → an artifact with a deterministic receipt chain → one multi-representation point in its own Qdrant collection; QUERY_READY will require it (phase B). The `doc_profile` stage, pool and projection exist (phase A, non-blocking, dormant until the fleet boots with the slot); the backfill, the retrieval lane and the gate follow. Invariants: chunk vectors, chunk ids, parent/child identity, graph receipts never change.
+
 ## 7. Key files
 
 `control/control/{census,scheduler,tickets,main,process_supervisor}.py` ·

@@ -64,6 +64,8 @@ LANES = [
     # AUTOPILOT-TAIL-DEMAND-V1 (2026-09-01): compile_objects had no lane
     # at all — its ready ticket could never wake its worker.
     ("compile", ("compile_objects",), {"compile_objects"}),
+    # DOCUMENT-PROFILE-V1: the profile stage wakes its own worker (and the embedder for the projection)
+    ("doc_profile", ("doc_profile",), {"doc_profile", "sidecar_embedder", "qdrant"}),
 ]
 
 #: Grace before a demand-resident slot is parked after demand ends.

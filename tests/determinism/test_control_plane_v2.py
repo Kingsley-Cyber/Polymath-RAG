@@ -36,6 +36,7 @@ def test_stage_dag_covers_the_production_chain_in_order():
         "compile_objects",
         "parent_summary", "document_summary", "corpus_summary",
         "vocabulary",
+        "doc_profile",   # DOCUMENT-PROFILE-V1 rollout phase A: last, non-blocking,
     ]
     # every stage declares its event type; explicit handoff specs exist
     for stage, event_type, artifacts, receipts in STAGE_DAG:

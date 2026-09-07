@@ -80,6 +80,24 @@ One list, in the order to execute it. Every item carries the rule this repo work
 - [ ] **Owner decision — section summaries.** Measured: well made (69 % grounded, 6 / 10 distinctive terms, no boilerplate) and unnecessary in chat (B10 / B13 / B11 / 11.123). Still used by /retrieve Tier-0 routing and the corpus map; producing them is enrichment spend (§3.23). Options: keep as is; stop producing for new documents; prune the 18,907 inactive rows.
 - [ ] **Corpus hygiene — "Framed Environment Design.md"** is OCR of an unrelated civil-engineering microcomputer paper (found while sampling summaries); the owner may want it deleted from `cinema`.
 
+### 9. INTERACTIVE-RELIEF-V1 (register 11.124) and what it opened
+
+- [x] Judge timeouts traced to embedder OOM-splitting under the 09-05 corpus re-projection; embedder batch caps halved; judge deadline 12 s while the 24-ticket backlog drains (return to 8 s after).
+- [x] CARRY-ARTIFACT-V1: transform / continue turns keep the previous answer's cited passages.
+- [x] presentation-v2 length rule + output ceiling 6 000.
+- [ ] **B17 LEAN-PROMPT-V1**: the 10.9 k-character style layer is 64 % of every prompt; trim to what the other contracts do not say, measured.
+- [ ] Meta-questions about the turn itself ("did you use the corpus?") compile as GROUNDED_SYNTHESIS (80 s answer); answer them from the receipt in one paragraph.
+- [ ] Return `POLYMATH_CHAT_RERANK_DEADLINE_S` to 8 once `project_qdrant` tickets for cinema reach 0.
+
+### 10. B18 DOCUMENT-PROFILE-V1 (owner architecture; plan DOCUMENT-PROFILE-V1.md)
+
+- [x] Step 1 compiler rag-profile-v3 (11.125)
+- [x] Step 2 lean context builder · Step 3 `doc_profile` stage + isolated pool + phase-A DAG entry · Step 4 projection (11.126)
+- [ ] Step 5 backfill: `scripts/backfill_document_profiles.py` mints `doc_profile` tickets for every existing run; fleet boot with the new slot; 67 pool calls; self-retrieval gate — **owner go (spend + fleet bounce)**
+- [ ] Step 6 retrieval lane `DOCUMENT_PROFILE` (prefetch → RRF → deepen children → fusion; receipts) + the title ranker on the same ranking
+- [ ] Phase B: DAG entry ahead of `verify_projections`, out of `NON_BLOCKING_STAGES` — ingested != query_ready
+- [ ] Dedicated provider keys for `profile1` / `profile2`
+
 ## Owner decisions still open (no code until the owner says)
 
 | # | decision | what it unblocks |

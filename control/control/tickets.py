@@ -49,6 +49,12 @@ STAGE_DAG: list[tuple[str, str, tuple[str, ...], tuple[str, ...]]] = [
     ("document_summary", "document_summary.v1", (), ()),
     ("corpus_summary", "corpus_summary.v1", (), ()),
     ("vocabulary", "vocabulary.v1", (), ()),
+    # DOCUMENT-PROFILE-V1 (owner architecture 2026-09-07): the mandatory document retrieval profile —
+    # lean context → isolated LLM pool → rag-profile-v3 compiler → artifact → own-collection vectors.
+    # ROLLOUT PHASE A: sits with the background stages and is NON-blocking so existing corpora keep serving
+    # while the backfill runs; PHASE B moves this entry ahead of verify_projections and out of
+    # NON_BLOCKING_STAGES, which is what makes QUERY_READY require the profile (ingested != query_ready).
+    ("doc_profile", "doc_profile.v1", ("doc_profile",), ()),
 ]
 
 # Stages whose incompleteness must NOT block corpus promotion
@@ -57,6 +63,7 @@ STAGE_DAG: list[tuple[str, str, tuple[str, ...], tuple[str, ...]]] = [
 NON_BLOCKING_STAGES = frozenset({
     "compile_objects",
     "parent_summary", "document_summary", "corpus_summary", "vocabulary",
+    "doc_profile",                     # DOCUMENT-PROFILE-V1 rollout phase A only — removed in phase B
     # LATENT-TRANSFER-LAYER-V1 §0a: OWNER-TRIGGERED — its tickets are
     # minted by the enrichment buttons, never by chain advancement, so
     # it is deliberately ABSENT from STAGE_DAG. Non-blocking so a
