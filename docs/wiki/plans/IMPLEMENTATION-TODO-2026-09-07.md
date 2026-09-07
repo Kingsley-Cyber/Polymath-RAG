@@ -73,6 +73,13 @@ One list, in the order to execute it. Every item carries the rule this repo work
 
 - [ ] On the other machine: `git clone`, copy `.env` by hand (never through GitHub — the repo is public), run CONTINUITY-REPORT §1; record what broke in a work-log. Known gaps: the spool directory and PolymathRuntime paths are per-machine; keys are per-machine; the CI waiter script assumes this Mac's paths.
 
+### 8. Done in passing on 2026-09-07 (register 11.123, REGION-EXCLUSION-V1)
+
+- [x] Table-of-contents / index / front-matter / bibliography / OCR-noise chunks are excluded at the union for subject questions (receipted `region:<role>`; metadata questions exempt); Markdown contents pages recognised (`toc_links`); the chunker's `noise_ocr` spelling now counts as noisy.
+- [x] B16 follow-up: the title ranker fuses the child passages' own vote (no dependence on summaries).
+- [ ] **Owner decision — section summaries.** Measured: well made (69 % grounded, 6 / 10 distinctive terms, no boilerplate) and unnecessary in chat (B10 / B13 / B11 / 11.123). Still used by /retrieve Tier-0 routing and the corpus map; producing them is enrichment spend (§3.23). Options: keep as is; stop producing for new documents; prune the 18,907 inactive rows.
+- [ ] **Corpus hygiene — "Framed Environment Design.md"** is OCR of an unrelated civil-engineering microcomputer paper (found while sampling summaries); the owner may want it deleted from `cinema`.
+
 ## Owner decisions still open (no code until the owner says)
 
 | # | decision | what it unblocks |

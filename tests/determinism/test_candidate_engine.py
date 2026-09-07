@@ -83,7 +83,10 @@ def test_every_candidate_carries_lane_provenance_and_multi_lane_chunks_fuse_once
     assert k0.hierarchy_rank is not None and k0.dense_rank == 0 and k0.sparse_rank == 1
     single = next(c for c in res.union if c.chunk_id == "d3-deep")
     assert single.arrivals == [ce.LANE_B] and k0.fused_score > single.fused_score      # agreement ranks above single-lane
-    assert res.union[0].chunk_id == "d2-p0-k0" and res.union[-1].chunk_id == "d2-noise"  # noisy region sinks, never deleted
+    assert res.union[0].chunk_id == "d2-p0-k0"
+    # REGION-EXCLUSION-V1 (2026-09-07): a noisy role is dropped at the union and receipted — demotion alone let a
+    # table-of-contents chunk take a document-fair judged seat and become S1 when the judge missed its deadline
+    assert "d2-noise" not in ids and res.trace["noise_reasons"] == {"region:front_matter": 1} and res.trace["noise_dropped"] == 1
     assert res.trace["funnel_lanes"].keys() == {"hierarchical", "global_dense_child", "global_sparse_child", "latent_rescue"}   # B12: lane D receipted (empty when off)
     assert res.trace["funnel_lanes"]["latent_rescue"] == [] and res.trace["lane_sizes"]["latent_rescue"] == 0
     assert res.trace["funnel_union"] == [c.chunk_id for c in res.union] and res.trace["plan"] == "chat-retrieval-v2"
@@ -699,6 +702,16 @@ def test_judged_prefix_seats_every_document_once_then_fusion_order_under_a_cap_t
     assert len(set(ids)) == len(ids) == 8
 
 
+def test_document_metadata_questions_keep_noisy_regions_in_the_union():
+    """`demote_noisy_regions=False` (lifted for front-matter / contents questions by query_shape) keeps the
+    region chunk competing: exclusion is a default, never a law."""
+    fake = Fake()
+    res = ce.retrieve_candidates(_ctx("who wrote this book and what is in its table of contents"),
+                                 ce.CandidateBudget(demote_noisy_regions=False), dense_search=fake.dense, sparse_search=fake.sparse,
+                                 region_lookup=lambda ids: {"d2-noise": "front_matter"})
+    assert "d2-noise" in [c.chunk_id for c in res.union] and res.trace["noise_dropped"] == 0
+
+
 def test_structural_noise_filter_drops_index_pages_and_number_lists_but_never_prose():
     """Backlog B8: the VES Handbook's back-of-book index reached the judged set. The lane-time test is lexical and
     conservative: page-link density or a number-list share that no paragraph of a book has."""
@@ -715,6 +728,13 @@ def test_structural_noise_filter_drops_index_pages_and_number_lists_but_never_pr
     assert structural_noise_reason(prose) is None
     assert structural_noise_reason("short [1](a#p1) [2](b#p2)") is None                     # too short to judge
     assert structural_noise_reason("") is None
+    # REGION-EXCLUSION-V1: the Markdown table of contents that reached S1 on 2026-09-07 (links to chapter files)
+    toc = "\n".join(f"  {i}. [Chapter {i} title words here]({i:02d}_Chapter{i:02d}.xhtml#Chapter{i:02d})" for i in range(1, 12))
+    assert structural_noise_reason(toc) == "toc_links"
+    prose_link = ("The combination of these two action units keeps the raising action of the first with the drawing "
+                  "together of the second; see [the appendix](appendix.xhtml#a1) for the full table of appearance changes "
+                  "and the discussion that follows in the next chapter of this manual.")
+    assert structural_noise_reason(prose_link) is None                                        # one link in prose never matches
 
 
 

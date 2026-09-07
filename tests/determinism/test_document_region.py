@@ -221,3 +221,11 @@ def test_noisy_roles_are_demoted():
 def test_deterministic():
     t = "Chris Crayton, MCSE, is a technical consultant and author."
     assert classify_region(t) == classify_region(t)
+
+
+def test_the_chunkers_noise_ocr_spelling_is_noisy_too():
+    """REGION-EXCLUSION-V1 (2026-09-07): region_role.py writes "noise_ocr"; this module's constant is "ocr_noise" —
+    121 cinema children carried the chunker's spelling and were never demoted."""
+    from polymath_shared.document_region import ROLE_OCR_NOISE, is_noisy
+    assert is_noisy("noise_ocr") and is_noisy(ROLE_OCR_NOISE) and is_noisy("toc")
+    assert not is_noisy("body") and not is_noisy(None) and not is_noisy("stub")

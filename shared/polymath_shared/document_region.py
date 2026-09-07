@@ -72,7 +72,11 @@ ROLE_UNKNOWN = "unknown"
 #: Roles demoted out of DEFAULT retrieval. Everything here is still
 #: stored, still embedded, still indexed, and still reachable by an
 #: explicit document-metadata question.
-NOISY_ROLES = (ROLE_FRONT_MATTER, ROLE_MARKETING, ROLE_TOC,
+#: REGION-EXCLUSION-V1: the chunker's region_role module spells OCR noise "noise_ocr" (region_role.ROLE_NOISE_OCR);
+#: this module's constant is "ocr_noise". Both are noisy — 121 cinema children carried the chunker's spelling and were
+#: never demoted (measured 2026-09-07).
+ROLE_NOISE_OCR_ALIAS = "noise_ocr"
+NOISY_ROLES = (ROLE_FRONT_MATTER, ROLE_MARKETING, ROLE_TOC, ROLE_NOISE_OCR_ALIAS,
                ROLE_INDEX, ROLE_BIBLIOGRAPHY, ROLE_OCR_NOISE)
 
 #: Never demoted. BODY is the default; UNKNOWN means "no text to judge"

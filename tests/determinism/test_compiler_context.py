@@ -99,3 +99,14 @@ def test_compile_plan_passes_titles_into_the_prompt_it_sends():
     assert "- Stage Combat Arts" in seen["user"]
     cp.compile_plan("what makes a stage punch read as real?", [], ["cinema"], complete)
     assert "BOOKS IN THE LIBRARY" not in seen["user"]
+
+
+def test_rank_documents_takes_the_passages_own_vote_as_a_third_lane():
+    """2026-09-07: children rank the library as well as the summaries (16 / 20 overlap) — with this lane the title
+    ranker no longer depends on summaries existing; a document seen only by children still gets ranked."""
+    sec = [_row("a", 0.9), _row("b", 0.8)]
+    kids = [_row("c", 0.95), _row("a", 0.9), _row("c", 0.85)]
+    assert cc.rank_documents(sec, [], corpus_id="cinema", k=10) == ["a", "b"]
+    ranked = cc.rank_documents(sec, [], corpus_id="cinema", k=10, child_rows=kids)
+    assert ranked[0] == "a" and set(ranked) == {"a", "b", "c"}          # a: two lanes; c enters through children alone
+    assert cc.rank_documents([], [], corpus_id="cinema", k=10, child_rows=kids) == ["c", "a"]

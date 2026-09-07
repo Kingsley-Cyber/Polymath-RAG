@@ -26,6 +26,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from polymath_shared.pass1 import (
+    REPRESENTATION_KIND_CHILD,
     REPRESENTATION_KIND_DOCUMENT_SUMMARY,
     REPRESENTATION_KIND_SECTION_SUMMARY,
     LaneHit,
@@ -128,7 +129,8 @@ def _hits(kind: str, rows: Iterable[dict], corpus_id: str, limit: int) -> list[L
 
 
 def rank_documents(section_rows: Iterable[dict], document_rows: Iterable[dict], *, corpus_id: str,
-                   k: int, section_limit: int = 200, document_limit: int = 40) -> list[str]:
+                   k: int, section_limit: int = 200, document_limit: int = 40,
+                   child_rows: Iterable[dict] = ()) -> list[str]:
     """Section-summary hits (and optional document-summary hits) → the top-k documents in relevance order — the same
     RRF vote lane A casts (`aggregate_documents_n`: one vote per document per lane, from its BEST-ranked hit), so
     'top sections per document, backward-mapped' is exactly this. A document seen by two lanes outranks one seen
@@ -137,6 +139,12 @@ def rank_documents(section_rows: Iterable[dict], document_rows: Iterable[dict], 
     doc_hits = _hits(REPRESENTATION_KIND_DOCUMENT_SUMMARY, document_rows, corpus_id, document_limit)
     if doc_hits:
         lanes.append((REPRESENTATION_KIND_DOCUMENT_SUMMARY, doc_hits))
+    # the passages' own vote (measured 2026-09-07: children rank the library as well as the summaries — 16 / 20 overlap
+    # on the top 20 — and found the Laban Workbook for the punch question when the summary route did not); with this
+    # lane the ranker no longer depends on summaries existing at all
+    child_hits = _hits(REPRESENTATION_KIND_CHILD, child_rows, corpus_id, section_limit)
+    if child_hits:
+        lanes.append((REPRESENTATION_KIND_CHILD, child_hits))
     return [c.doc_id for c in aggregate_documents_n(lanes, k=RRF_K)][: max(k, 1)]
 
 

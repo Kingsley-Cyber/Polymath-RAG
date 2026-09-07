@@ -863,10 +863,19 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
     # lexical test drops index pages and page-number lists BEFORE truncation (noise must not spend union slots
     # either), and every drop is receipted (`noise_dropped`, `noise_reasons`, `noise_sample`). Prose never matches:
     # the test needs a page-link density or a bare-number share no paragraph of a book has.
+    # REGION-EXCLUSION-V1 (B8 follow-up, measured 2026-09-07 on the owner's stick-figure turn): a `toc` chunk of
+    # Timing for Animation was S1. Demotion sinks noisy roles to the END of the fused list, but the document-fair
+    # judged prefix then hands every surfaced document one seat — so a document whose ONLY candidate is its table
+    # of contents gets that seat, and with the judge past its deadline nothing pushes it back down. Every cinema
+    # child now carries a materializer role, so a noisy role is dropped at the union outright (never for a
+    # document-metadata question, where `demote_noisy_regions` is already lifted), receipted like the lexical drops.
+    from polymath_shared.document_region import is_noisy as _is_noisy_role
     noise_dropped: list[tuple[str, str]] = []
     kept: list[CandidateEvidence] = []
     for c in fused:
         why = structural_noise_reason(c.text)
+        if not why and budget.demote_noisy_regions and _is_noisy_role(getattr(c, "region_role", None)):
+            why = f"region:{c.region_role}"
         if why:
             noise_dropped.append((c.chunk_id, why))
         else:
@@ -1054,6 +1063,8 @@ def compose_evidence(judged: list[CandidateEvidence], budget: CandidateBudget, *
 
 
 _PAGE_LINK_RE = re.compile(r"\]\([^)\s]*#p\d+\)|\[\d{1,4}\]\(")          # "[837](019_…chapter7.html#p837)"
+#: REGION-EXCLUSION-V1: a Markdown table of contents — links to chapter files ("[Foreword](06_Foreword.xhtml#Foreword)")
+_TOC_LINK_RE = re.compile(r"\]\([^)\s]*\.x?html?(?:#[^)\s]*)?\)", re.IGNORECASE)
 _NUMBER_TOKEN_RE = re.compile(r"^\W*\d{1,4}\W*$")
 
 
@@ -1067,6 +1078,9 @@ def structural_noise_reason(text: str) -> Optional[str]:
     links = len(_PAGE_LINK_RE.findall(t))
     if links >= 6 and links / max(1.0, len(t) / 120.0) >= 1.0:
         return "index_page_links"
+    toc_links = len(_TOC_LINK_RE.findall(t))
+    if toc_links >= 6 and toc_links / max(1.0, len(t) / 120.0) >= 1.0:
+        return "toc_links"
     tokens = t.split()
     if len(tokens) >= 40:
         numeric = sum(1 for tok in tokens if _NUMBER_TOKEN_RE.match(tok))

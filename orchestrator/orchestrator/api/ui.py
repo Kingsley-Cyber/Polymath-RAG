@@ -1607,7 +1607,7 @@ def _compiler_titles(message: str, corpus_ids, *, rank_override: str | None = No
     used = knobs.rank
     try:
         from polymath_shared.candidate_engine import sparse_vector_for
-        from polymath_shared.pass1 import (REPRESENTATION_KIND_DOCUMENT_SUMMARY,
+        from polymath_shared.pass1 import (REPRESENTATION_KIND_CHILD, REPRESENTATION_KIND_DOCUMENT_SUMMARY,
                                            REPRESENTATION_KIND_SECTION_SUMMARY)
         from orchestrator.api.fast import FastSearcher, _corpus_collections, _embed_queries
         from polymath_shared.settings import get_settings as _gs
@@ -1626,15 +1626,18 @@ def _compiler_titles(message: str, corpus_ids, *, rank_override: str | None = No
                     continue
                 sec_f = {"representation_kind": REPRESENTATION_KIND_SECTION_SUMMARY, "corpus_id": cid}
                 doc_f = {"representation_kind": REPRESENTATION_KIND_DOCUMENT_SUMMARY, "corpus_id": cid}
+                kid_f = {"representation_kind": REPRESENTATION_KIND_CHILD, "corpus_id": cid}
                 if vec is not None:
                     sec = searcher._search(coll, vec, sec_f, limit=knobs.section_limit)
                     docs = searcher._search(coll, vec, doc_f, limit=knobs.document_limit)
+                    kids = searcher._search(coll, vec, kid_f, limit=knobs.section_limit)
                 elif sq is not None:
                     sec = searcher.sparse_search(coll, sq, sec_f, limit=knobs.section_limit)
                     docs = searcher.sparse_search(coll, sq, doc_f, limit=knobs.document_limit)
+                    kids = searcher.sparse_search(coll, sq, kid_f, limit=knobs.section_limit)
                 else:
-                    sec, docs = [], []
-                ranked.extend(rank_documents(sec, docs, corpus_id=cid, k=knobs.top_n,
+                    sec, docs, kids = [], [], []
+                ranked.extend(rank_documents(sec, docs, corpus_id=cid, k=knobs.top_n, child_rows=kids,
                                              section_limit=knobs.section_limit, document_limit=knobs.document_limit))
         finally:
             client.close()

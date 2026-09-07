@@ -641,6 +641,8 @@ commit is the proven method).
 
 - **The query compiler sees the library (COMPILER-CORPUS-CONTEXT-V1, 11.122).** Before a plan is compiled, the corpus's documents are ranked for the message by content (section-summary and document-summary hits through lane A's vote) and their TITLES — never summaries — go into the compiler prompt, ranked first then A→Z up to 40. Default ranker dense (one message embedding; the one that reaches the Laban books for a fight question), `POLYMATH_CHAT_COMPILER_TITLES_RANK=sparse` is the 80 ms lexical route, `..._TOP_N=0` turns it off, request field `titles_rank` overrides per turn. Receipt `plan.compiler.titles`.
 
+- **Noisy regions never become evidence for a subject question (REGION-EXCLUSION-V1, 11.123).** A candidate whose materializer role is front matter / marketing / toc / index / bibliography / OCR noise is dropped at the union and receipted (`noise_reasons` `region:<role>`); demotion alone was undone by the document-fair judged prefix. Document-metadata questions keep the old behaviour. Section summaries measured 2026-09-07: faithful, and unnecessary in chat — the owner decides whether to keep producing them.
+
 ## 7. Key files
 
 `control/control/{census,scheduler,tickets,main,process_supervisor}.py` ·
