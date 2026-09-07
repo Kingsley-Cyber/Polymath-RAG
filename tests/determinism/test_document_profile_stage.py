@@ -138,7 +138,7 @@ def test_worker_writes_the_profile_and_projection_artifacts_with_the_receipt_cha
     monkeypatch.setitem(W.HOOKS, "complete", fake_complete); monkeypatch.setitem(W.HOOKS, "embed", fake_embed); monkeypatch.setitem(W.HOOKS, "qdrant", q)
     with _db()() as conn:
         W.process_event(conn, {"run_id": rid, "payload": {"run_id": rid, "ticket_id": "t"}})
-    assert "TITLE:\nProof Book" in seen["user"] and "Chapter" in seen["user"] and "THEORY:" in seen["system"] and seen["max_tokens"] == 900
+    assert "TITLE:\nProof Book" in seen["user"] and "Chapter" in seen["user"] and "THEORY:" in seen["system"] and seen["max_tokens"] == 2400
     with _db()() as conn:
         art = conn.execute("SELECT payload FROM artifacts WHERE run_id=%s AND stage='doc_profile'", (rid,)).fetchone()[0]
         rcpt = conn.execute("SELECT status FROM receipts WHERE run_id=%s AND stage='doc_profile'", (rid,)).fetchone()[0]
@@ -149,7 +149,7 @@ def test_worker_writes_the_profile_and_projection_artifacts_with_the_receipt_cha
     # the chain: content hash → input hash → raw response hash → compiled hash → projection hash
     assert p["content_hash"] == doc[1] and len(p["input_hash"]) == 64 and len(p["raw_response_hash"]) == 64
     assert p["compiled_hash"] == pq["compiled_hash"] and len(pq["projection_hash"]) == 64 and pq["projection_key"]
-    assert p["schema_version"] == "rag-profile-v3" and p["prompt_version"] == "doc-profile-v3" and p["compiler_version"] == "rag-compiler-v3"
+    assert p["schema_version"] == "rag-profile-v3" and p["prompt_version"] == "doc-profile-v3.1" and p["compiler_version"] == "rag-compiler-v3"
     assert p["valid"] is True and p["ok"] is True and p["quality"] >= 0.7 and p["missing"] == []
     assert p["compiled"]["theories"] and p["compiled"]["concepts"] and len(p["representations"]["questions"]) == 3
     assert pq["valid"] is True and pq["vectors"]["identity"] == 1 and pq["vectors"]["questions"] == 3 and pq["dim"] == dim
@@ -175,3 +175,14 @@ def test_dark_pool_yields_the_ticket_without_consuming_an_attempt(corpus, monkey
     with _db()() as conn:
         assert conn.execute("SELECT count(*) FROM artifacts WHERE run_id=%s AND stage='doc_profile'", (rid,)).fetchone()[0] == 0
         conn.execute("DELETE FROM runs WHERE run_id=%s", (rid,))
+
+
+def test_lane_order_rotates_primaries_by_run_and_keeps_fallbacks_last():
+    pin = ["profile1", "profile2", "profile3", "profile4", "profile5", "profile6", "profile_fallback_gemini", "profile_fallback_openrouter"]
+    orders = {W.lane_order(pin, f"run_{i}")[0] for i in range(60)}
+    assert orders == {"profile1", "profile2", "profile3", "profile4", "profile5", "profile6"}          # every key gets first turns
+    o = W.lane_order(pin, "run_x")
+    assert o[-2:] == ["profile_fallback_gemini", "profile_fallback_openrouter"] and sorted(o[:6]) == pin[:6]
+    assert W.lane_order(pin, "run_x") == W.lane_order(pin, "run_x")                                      # deterministic per run
+    assert W.lane_order(["only_fallback"], "r") == ["only_fallback"] and W.lane_order([], "r") == []
+    assert W.MAX_LANE_ATTEMPTS == 4

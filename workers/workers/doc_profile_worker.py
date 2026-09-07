@@ -34,8 +34,9 @@ from psycopg import Connection
 STAGE = "doc_profile"
 EVENT_TYPE = "doc_profile.v1"
 CONTEXT_BUDGET_TOKENS = 500
-MAX_OUTPUT_TOKENS = 900
-MAX_LANE_ATTEMPTS = 3            # tier 0 (free) × 2 then tier 1 (cheap fallback) × 1 — the pin order decides the tiers
+MAX_OUTPUT_TOKENS = 2400         # ~80 labelled lines at the v3.1 aims (10 / 10 / 15 / 15 / 10 / 10 / 10)
+MAX_LANE_ATTEMPTS = 4            # up to 2 primary lanes (rotated by run), then the fallbacks in pin order
+FALLBACK_MARK = "fallback"       # a pinned lane whose name contains this is a fallback tier, tried after every primary
 
 log = logging.getLogger("doc_profile")
 
@@ -100,15 +101,28 @@ def _load_inputs(conn: Connection, doc_id: str) -> tuple[dict, list[dict], list[
     return document, parents, terms
 
 
-def _pool_complete(system_prompt: str, user_prompt: str, max_tokens: int) -> tuple[str, str | None, dict]:
-    """The isolated profile pool: walk the `doc_profile` stage pin in order (tier 0 free lanes first, the cheap
-    fallback last). Returns (raw_text, error, receipt). A transport failure on one lane moves to the next."""
+def lane_order(pin: list[str], run_key: str) -> list[str]:
+    """The pool's attempt order for one run: the PRIMARY lanes (pin entries without "fallback" in the name)
+    rotated by a hash of the run so consecutive documents start on different keys, then the fallback lanes in
+    pin order (owner 2026-09-07: six dedicated keys as tier 0, Gemini as fallback 1, OpenRouter as fallback 2)."""
+    primaries = [n for n in pin if FALLBACK_MARK not in n]
+    fallbacks = [n for n in pin if FALLBACK_MARK in n]
+    if primaries:
+        start = int(hashlib.sha256((run_key or "").encode("utf-8")).hexdigest(), 16) % len(primaries)
+        primaries = primaries[start:] + primaries[:start]
+    return primaries + fallbacks
+
+
+def _pool_complete(system_prompt: str, user_prompt: str, max_tokens: int, run_key: str = "") -> tuple[str, str | None, dict]:
+    """The isolated profile pool: walk `lane_order(stage_pin("doc_profile"), run)` — primaries rotated by run,
+    fallbacks last. Returns (raw_text, error, receipt). A transport failure on one lane moves to the next."""
     from polymath_shared.llm_extraction.client import LLMExtractionClient
     from polymath_shared.llm_extraction.pool import cloud_endpoints, stage_pin
 
     pin = stage_pin(STAGE) or []
-    endpoints = [e for e in cloud_endpoints() if e.name in pin]
-    endpoints.sort(key=lambda e: pin.index(e.name))
+    by_name = {e.name: e for e in cloud_endpoints() if e.name in pin}
+    order = lane_order(pin, run_key)
+    endpoints = [by_name[n] for n in order if n in by_name]
     if not endpoints:
         return "", "no_active_lane", {"attempts": [], "pin": list(pin)}
     attempts: list[dict] = []
@@ -145,8 +159,11 @@ def process_event(conn: Connection, event: dict) -> None:
         input_hash = ctx.input_hash(document.get("content_hash") or "")
         user_prompt = build_user_prompt(ctx.title, ctx.structure_block, ctx.excerpts_block)
 
-        complete = HOOKS.get("complete") or _pool_complete
-        raw, err, pool_rec = complete(SYSTEM, user_prompt, MAX_OUTPUT_TOKENS)
+        complete = HOOKS.get("complete")
+        if complete is None:
+            raw, err, pool_rec = _pool_complete(SYSTEM, user_prompt, MAX_OUTPUT_TOKENS, run_key=run_id)
+        else:
+            raw, err, pool_rec = complete(SYSTEM, user_prompt, MAX_OUTPUT_TOKENS)
         if err or not (raw or "").strip():
             # the pool is dark or rate-limited: hand the ticket back without consuming an attempt (TRANSIENT-HOLD-V1)
             log.warning("doc_profile pool unavailable run=%s doc=%s err=%s attempts=%s",

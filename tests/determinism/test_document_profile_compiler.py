@@ -90,15 +90,16 @@ def test_validity_needs_a_semantic_core_and_a_query_hook():
 
 
 def test_hard_caps_apply_to_the_new_lists():
-    raw = "ONE: x about y.\nQ: q?\n" + "\n".join(f"THEORY: theory number {i}" for i in range(12)) + "\nEND"
+    raw = "ONE: x about y.\nQ: q?\n" + "\n".join(f"THEORY: theory number {i}" for i in range(20)) + "\nEND"
     res = C.compile_llm_output(raw)
-    assert len(res.record.theories) == C.HARD_MAX["THEORY"] == 8 and any(i.code == "LIST_CAPPED" for i in res.issues)
+    assert len(res.record.theories) == C.HARD_MAX["THEORY"] == 16 and any(i.code == "LIST_CAPPED" for i in res.issues)
+    assert C.TARGET_COUNTS == {"TOPIC": (5, 10), "TERM": (5, 10), "Q": (8, 15), "SEARCH": (8, 15), "THEORY": (4, 10), "CONCEPT": (4, 10), "SEEALSO": (5, 10)}
 
 
 def test_prompt_carries_the_v3_labels_counts_and_the_no_invented_theory_rule():
-    assert P.PROMPT_VERSION == "doc-profile-v3"
-    for s in ("THEORY:", "CONCEPT:", "Prefer 3 to 5", "Prefer 3 to 7", "Prefer 2 to 5", "Do not invent a named theory",
-              "transferable idea", "End with END."):
+    assert P.PROMPT_VERSION == "doc-profile-v3.1"
+    for s in ("THEORY:", "CONCEPT:", "Aim for 10", "Aim for 15", "Do not invent a named theory",
+              "transferable idea", "never quotas to fill", "End with END."):
         assert s in P.SYSTEM, s
     u = P.build_user_prompt("Stage Combat Arts", "Chapter 1 › Breath\nChapter 2 › Partnering", "Breath is the …")
     assert "TITLE:\nStage Combat Arts" in u and "Chapter 2" in u and u.endswith("\n")

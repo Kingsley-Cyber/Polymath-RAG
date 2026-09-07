@@ -41,13 +41,15 @@ DOCUMENT ADMITTED
 |---|---|---|
 | ONE | 1 | what the document is mainly about |
 | SUMMARY | 1 | one or two dense sentences |
-| TOPIC | 3–5 | specific major topics |
-| TERM | 3–5 | terms, entities, frameworks, acronyms actually supported |
-| Q | 3–7 | natural questions the document can answer |
-| SEARCH | 3–7 | short keyword searches (2–6 words, no question mark) |
-| THEORY | 1–5 (prefer 1–2) | underlying framework, mechanism, model or explanatory lens; never invent a named theory |
-| CONCEPT | 1–5 (prefer 1–3) | a transferable idea that could appear in another field — mechanisms, relationships, constraints, trade-offs, patterns; never broad nouns |
-| SEEALSO | 2–5 | neighbouring, prerequisite, deeper, broader, contrasting or complementary knowledge |
+| TOPIC | aim 10 (floor 5) | specific major topics |
+| TERM | aim 10 (floor 5) | terms, entities, frameworks, acronyms actually supported |
+| Q | aim 15 (floor 8) | natural questions the document can answer, spread across its parts |
+| SEARCH | aim 15 (floor 8) | short keyword searches (2–6 words, no question mark) |
+| THEORY | aim 10 (floor 4) | underlying frameworks, mechanisms, models or explanatory lenses; never invent a named theory |
+| CONCEPT | aim 10 (floor 4) | transferable ideas that could appear in another field — mechanisms, relationships, constraints, trade-offs, patterns; never broad nouns |
+| SEEALSO | aim 10 (floor 5) | neighbouring, prerequisite, deeper, broader, contrasting or complementary knowledge |
+
+Owner update 2026-09-07: aims raised from the v3 draft (3–5 / 3–7 / 1–5 / 2–5) to 10 / 10 / 15 / 15 / 10 / 10 / 10. Aims are ceilings to reach when the document supports them; floors only raise an informational note; counts are never required.
 | END | — | never required |
 
 Correct meaning outranks exact counts. Missing items are omitted, never invented.

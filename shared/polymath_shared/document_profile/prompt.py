@@ -3,7 +3,7 @@ CONCEPT and the v3 counts). The compiler (`compiler.py`) parses the reply; the l
 DOCUMENT block. Correct meaning outranks exact counts; missing items are omitted, never invented."""
 from __future__ import annotations
 
-PROMPT_VERSION = "doc-profile-v3"
+PROMPT_VERSION = "doc-profile-v3.1"     # v3.1 (owner 2026-09-07): larger aims — 10 / 10 / 15 / 15 / 10 / 10 / 10
 
 SYSTEM = """You extract a compact search profile from document evidence.
 
@@ -25,28 +25,13 @@ ONE: <what this document is mainly about>
 
 SUMMARY: <1 or 2 sentences describing the main content>
 
-TOPIC: <specific major topic>
-TOPIC: <specific major topic>
-TOPIC: <specific major topic>
-
-TERM: <important term, entity, framework, method, acronym, or jargon>
-TERM: <important term>
-TERM: <important term>
-
-Q: <natural question this document can answer?>
-Q: <different question this document can answer?>
-Q: <different question this document can answer?>
-
-SEARCH: <short search query>
-SEARCH: <short search query>
-SEARCH: <short search query>
-
-THEORY: <underlying framework, mechanism, model, or explanatory lens>
-
-CONCEPT: <generalizable concept that could also matter in other domains>
-
-SEEALSO: <type of related document or neighboring knowledge>
-SEEALSO: <type of related document or neighboring knowledge>
+TOPIC: <specific major topic>            (aim for 10 lines)
+TERM: <important term, entity, framework, method, acronym, or jargon>   (aim for 10 lines)
+Q: <natural question this document can answer?>                         (aim for 15 lines)
+SEARCH: <short search query>                                             (aim for 15 lines)
+THEORY: <underlying framework, mechanism, model, or explanatory lens>    (aim for 10 lines)
+CONCEPT: <generalizable concept that could also matter in other domains> (aim for 10 lines)
+SEEALSO: <type of related document or neighboring knowledge>             (aim for 10 lines)
 
 END
 
@@ -59,31 +44,31 @@ SUMMARY
 * One or two dense sentences covering the document's main scope, argument, explanation, or purpose.
 
 TOPIC
-* Prefer 3 to 5. Use specific conceptual topics; avoid broad labels such as "history", "technology" or "science" when a more specific topic exists.
+* Aim for 10. Use specific conceptual topics, each a different area the document covers; avoid broad labels such as "history", "technology" or "science" when a more specific topic exists.
 
 TERM
-* Prefer 3 to 5. Use important terminology actually supported by the document. Preserve proper names and acronyms.
+* Aim for 10. Use important terminology actually supported by the document. Preserve proper names and acronyms.
 
 Q
-* Prefer 3 to 7. Questions a person could naturally ask; each a different information need; the document must contain enough to answer it.
+* Aim for 15. Questions a person could naturally ask; each a different information need, spread across the document's parts; the document must contain enough to answer it.
 
 SEARCH
-* Prefer 3 to 7. How a person might search for the information: usually 2 to 6 words, keyword-style, no question mark, varied wording.
+* Aim for 15. How a person might search for the information: usually 2 to 6 words, keyword-style, no question mark, varied wording, spread across the document's parts.
 
 THEORY
-* Generate 1 to 2 THEORY lines. Identify what deeper mechanism or framework helps explain the document: an established named framework when strongly supported, a recurring mechanism, a causal pattern, or a plain-language explanatory principle. Do not invent a named theory merely because it seems related.
+* Aim for 10. Identify the deeper mechanisms or frameworks that help explain the document: established named frameworks when strongly supported, recurring mechanisms, causal patterns, or plain-language explanatory principles. Do not invent a named theory merely because it seems related; fewer lines are better than invented ones.
 
 CONCEPT
-* Generate 1 to 3 CONCEPT lines. Abstract beyond the document's immediate subject: "What transferable idea is demonstrated here that could also appear in a different field?" Prefer mechanisms, relationships, constraints, behaviors, tradeoffs and patterns over broad nouns.
+* Aim for 10. Abstract beyond the document's immediate subject: "What transferable idea is demonstrated here that could also appear in a different field?" Prefer mechanisms, relationships, constraints, behaviors, tradeoffs and patterns over broad nouns.
 * Good: coordinated action increases group leverage · delayed feedback destabilizes control · authority should follow verified identity.
 * Weak: workers · technology · management.
 
 SEEALSO
-* Prefer 2 to 5. Describe neighboring, prerequisite, deeper, broader, contrasting, or complementary knowledge. Do not simply repeat a TOPIC. Do not invent specific documents or authors.
+* Aim for 10. Describe neighboring, prerequisite, deeper, broader, contrasting, or complementary knowledge. Do not simply repeat a TOPIC. Do not invent specific documents or authors.
 
 IMPORTANT
 
-Correct meaning is more important than exact item counts.
+Correct meaning is more important than exact item counts: the aims are ceilings to reach when the document supports them, never quotas to fill.
 If there is not enough evidence for an item, omit it rather than inventing information.
 Do not explain your answer. Do not use markdown. Do not use bullets. Do not number items. Do not create new labels.
 End with END."""

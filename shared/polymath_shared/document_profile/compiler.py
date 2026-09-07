@@ -37,26 +37,29 @@ PROMPT_VERSION = "doc-profile-v3"
 COMPILER_VERSION = "rag-compiler-v3"
 
 # Preferred counts for a lean but useful retrieval profile.
+# (advisory floor, aim) — owner 2026-09-07: "increase output to 10 topics, 10 terms, Q 15, search 15,
+# theory & concept 10, see also 10". The aim is what the prompt asks for; the floor only raises a BELOW_TARGET
+# info; counts are never required (readiness is the semantic core + a query hook).
 TARGET_COUNTS: dict[str, tuple[int, int]] = {
-    "TOPIC":   (3, 5),
-    "TERM":    (3, 5),
-    "Q":       (3, 7),
-    "SEARCH":  (3, 7),
-    "THEORY":  (1, 5),      # prefer 1–2: the framework / mechanism / explanatory lens behind the document
-    "CONCEPT": (1, 5),      # prefer 1–3: a transferable idea that could appear in another field
-    "SEEALSO": (2, 5),
+    "TOPIC":   (5, 10),
+    "TERM":    (5, 10),
+    "Q":       (8, 15),
+    "SEARCH":  (8, 15),
+    "THEORY":  (4, 10),     # the frameworks / mechanisms / explanatory lenses behind the document
+    "CONCEPT": (4, 10),     # transferable ideas that could appear in another field
+    "SEEALSO": (5, 10),
 }
 
 # Defensive caps. Going under target is allowed. Going far over target is
 # wasteful and is deterministically capped.
-HARD_MAX: dict[str, int] = {
-    "TOPIC": 10,
-    "TERM": 12,
-    "Q": 12,
-    "SEARCH": 12,
-    "THEORY": 8,
-    "CONCEPT": 8,
-    "SEEALSO": 8,
+HARD_MAX: dict[str, int] = {          # aim + headroom; anything beyond is deterministically capped (LIST_CAPPED)
+    "TOPIC": 16,
+    "TERM": 16,
+    "Q": 22,
+    "SEARCH": 22,
+    "THEORY": 16,
+    "CONCEPT": 16,
+    "SEEALSO": 16,
 }
 
 TAG_ALIASES: dict[str, str] = {
