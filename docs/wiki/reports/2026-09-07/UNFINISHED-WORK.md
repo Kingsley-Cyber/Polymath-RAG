@@ -2,8 +2,11 @@
 owner: @king
 last_reviewed: 2026-09-07
 last_touched: 2026-09-07
-status: accepted
+status: superseded
+superseded_by: UNFINISHED_WORK.md
 ---
+
+> **Superseded the same day by [UNFINISHED_WORK.md](UNFINISHED_WORK.md)** (the structured closeout version). Retained for its measurements; do not update this file.
 
 # UNFINISHED WORK, DEPENDENCIES AND HOOKS — state at the 2026-09-07 wrap-up
 

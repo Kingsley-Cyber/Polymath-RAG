@@ -106,3 +106,12 @@ Quality issues seen across the corpus: UNGROUNDED_TERM 23 (terms not lexically i
 - New documents: the DAG mints `doc_profile` for every new run (phase A, non-blocking) — the profile lags ingestion by one pool call; phase B makes it a readiness requirement.
 - Converter watermarks and OCR garbage surface as `UNGROUNDED_TERM`s in the profile (How to Draw Manga: Illustrating Battles; Framed Environment Design) — a source-quality decision for the owner, not a compiler one.
 - The six Groq keys pasted in chat on 2026-09-07 are to be rotated by the owner.
+## Closeout (end of the 2026-09-07 session)
+
+Repository handed off in a continuation-ready state. Git: `main` == `architecture/evidence-first-v5` == `origin/main` at `22f93c3` before the closeout commit; worktree clean; no untracked implementation files; two worktrees (`polymath-v4`, `polymath-v4-main`); no stash. Fleet: orchestrator, embedder, reranker ready; `doc_profile` tickets 67 done / 0 open; `project_qdrant` backlog 19 (deadline stays at 12 s until it drains).
+
+Documentation generated: `docs/wiki/reports/2026-09-07/` — `README.md` (successor bootstrap + operating contract), `CONTINUATION_REPORT.md`, `BE_AWARE.md` (classified rules; supersedes `BE-AWARE-REPORT.md`), `ARCHITECTURE_STATE.md`, `DECISION_REGISTER.md`, `UNFINISHED_WORK.md` (U1–U12; supersedes `UNFINISHED-WORK.md`), `DEPENDENCY_MAP.md`, `NEXT_ACTIONS.md`, `WORKTREE_AND_BRANCH_CLOSEOUT.md`, `COMMITS_AND_MERGES.md`, `VERIFICATION.md`. Hooks: `AGENTS.md` §0, `CLAUDE.md`, `README.md`, `docs/README.md`, `docs/wiki/README.md`, the continuity report's read order.
+
+Verification at closeout: `repo_guard` ok, `wiki_worm --check` ok, `agent_preflight` ok, 75 targeted determinism tests green in a clean shell (the `rerank_deadline_s == 8.0` pin only fails when `.env` is sourced).
+
+Closed today: B1 (11.121), region exclusion (11.123), DOCUMENT-PROFILE steps 1–5 (11.125–11.128) incl. scale-out and pacing. Still IMPLEMENTED: B16 (11.122, owner hand-test), INTERACTIVE-RELIEF (11.124, after-measurement). Next continuation point: `UNFINISHED_WORK.md` U1 — the `DOCUMENT_PROFILE` retrieval lane — then phase B.

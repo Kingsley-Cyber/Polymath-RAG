@@ -18,6 +18,7 @@ weekly, reports open refactors and work records, and fails on broken metadata.
 - `work-log/`: append-only records for repository mutations.
 - `reports/<YYYY-MM-DD>/`: dated wrap-up snapshots (be-aware report, unfinished work with dependencies) the
   continuity report points to; never edited after the day, superseded by the next dated folder.
+  Current: `reports/2026-09-07/README.md`.
 
 ## Front-matter
 

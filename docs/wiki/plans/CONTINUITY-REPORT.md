@@ -16,7 +16,7 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → `CLAUDE.md` → the two newest work-logs.
+Read order: this file → `docs/wiki/reports/2026-09-07/README.md` (the dated handoff: be-aware rules, unfinished work, dependency map) → `CLAUDE.md` → the two newest work-logs.
 
 ## Latest checkpoint (2026-09-07 — DOCUMENT PROFILES LIVE + CHAT RELIEF + CORPUS-AWARE COMPILER)
 

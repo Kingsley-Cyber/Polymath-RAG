@@ -4,7 +4,9 @@ Governance and file-ownership rules live in `AGENTS.md` (read it). This file
 is the working style the owner expects, distilled from the 2026-08-29/30
 sessions. Start every session with
 `docs/wiki/plans/CONTINUITY-REPORT.md` (the latest packet; it
-names the fleet environment and the bootstrap commands).
+names the fleet environment and the bootstrap commands), then the dated
+handoff it points to — currently `docs/wiki/reports/2026-09-07/README.md`
+(read its BE_AWARE.md and UNFINISHED_WORK.md before touching architecture).
 
 ## Way of working
 1. **Measure before you touch.** Read the code path AND the live state (DB,

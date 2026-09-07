@@ -12,7 +12,9 @@ Before modifying this repository, read `AGENTS.md` — it is the mandatory
 entrypoint. It directs you to the single session bootstrap:
 [docs/wiki/plans/CONTINUITY-REPORT.md](docs/wiki/plans/CONTINUITY-REPORT.md)
 (state, fleet, golden-run baseline, traps, ranked next work — updated in
-place every session; no dated handoff files exist).
+place every session). It points to the current dated handoff snapshot,
+[docs/wiki/reports/2026-09-07/README.md](docs/wiki/reports/2026-09-07/README.md)
+(successor bootstrap, be-aware rules, unfinished work, dependency map).
 
 ## Quickstart
 

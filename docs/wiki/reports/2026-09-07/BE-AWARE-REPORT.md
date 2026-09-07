@@ -2,8 +2,11 @@
 owner: @king
 last_reviewed: 2026-09-07
 last_touched: 2026-09-07
-status: accepted
+status: superseded
+superseded_by: BE_AWARE.md
 ---
+
+> **Superseded the same day by [BE_AWARE.md](BE_AWARE.md)** (the structured closeout version). Retained for its measurements; do not update this file.
 
 # BE AWARE — how Polymath v4 is built, why it is that way, and which parts are the owner's preference versus operational necessity (2026-09-07)
 

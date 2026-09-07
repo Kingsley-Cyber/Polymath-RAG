@@ -18,14 +18,27 @@ Before making any code, schema, data, architecture, or evaluation change:
 1. Read `AGENTS.md` (this file).
 2. Read `docs/wiki/plans/CONTINUITY-REPORT.md` — THE single session
    bootstrap (state, fleet, golden-run baseline, traps, next work). It is
-   updated in place at session end; dated packets/state files no longer
-   exist and any found copy is stale by definition.
+   updated in place at session end. Dated handoff snapshots live ONLY under
+   `docs/wiki/reports/<date>/` and are reached from it; any other dated
+   packet/state file is stale by definition.
 3. Read `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the completion
    contract) and the two newest `docs/wiki/work-log/` entries.
 4. Run `git status`, record the active branch and `HEAD`.
 5. Run the bootstrap command block from the CONTINUITY-REPORT §0
    (guards + bundle integrity + fleet-truth query).
 6. Do not modify anything until repository state and bootstrap state agree.
+
+## Current Repository State (dated handoff — read before architectural work)
+
+Before making architectural changes or continuing unfinished work, read, in order:
+
+1. `docs/wiki/reports/2026-09-07/README.md` — successor bootstrap and the model operating contract
+2. `docs/wiki/reports/2026-09-07/CONTINUATION_REPORT.md` — what exists, what this cycle built, the state of each piece
+3. `docs/wiki/reports/2026-09-07/BE_AWARE.md` — repository-specific rules, each classified as owner preference, operational constraint, invariant, experiment or compromise
+4. `docs/wiki/reports/2026-09-07/UNFINISHED_WORK.md` — open items U1–U12 with files, tests and risks
+5. `docs/wiki/reports/2026-09-07/DEPENDENCY_MAP.md` — which open item must precede which
+
+The living bootstrap remains `docs/wiki/plans/CONTINUITY-REPORT.md` (updated in place); the dated folder is the snapshot it points to. A newer `docs/wiki/reports/<date>/` folder supersedes this one.
 
 Never assume:
 
@@ -50,8 +63,9 @@ Where to find things:
 |---|---|
 | current state, golden-run baseline, traps | `docs/wiki/plans/CONTINUITY-REPORT.md` |
 | next work, ranked | CONTINUITY-REPORT §4 |
+| current handoff snapshot (state, be-aware rules, unfinished work, dependencies) | `docs/wiki/reports/2026-09-07/README.md` |
 | architecture + ownership | `ARCHITECTURE.md`, `architecture/dependencies.json` |
-| decisions | `docs/wiki/decisions/` (ADRs 0000–0008) |
+| decisions | `docs/wiki/decisions/` (ADRs 0000–0017) |
 | experiments + measured results | `docs/wiki/experiments/`, `eval/phase_h/REPORT*.md` |
 | work log (append-only) | `docs/wiki/work-log/` |
 | contracts | `contracts/` |
@@ -111,7 +125,8 @@ Read in this order:
 
 1. `AGENTS.md` (bootstrap section included)
 2. `docs/wiki/plans/CONTINUITY-REPORT.md`
-3. `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md`
+3. `docs/wiki/reports/2026-09-07/README.md` (the dated handoff it points to)
+4. `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md`
 4. `ARCHITECTURE.md`
 5. `architecture/dependencies.json`
 6. `PLAN.md`
