@@ -639,6 +639,8 @@ commit is the proven method).
 
 - **Near-duplicate uploads are refused at intake (NEAR-DUPLICATE-GUARD-V1, 11.121).** Layer 3 of the duplicate guard is v3.3's containment dedup (`polymath_shared/dedup.py`); a copy ≥ 0.95 contained in an existing document fails intake with `NEAR_DUPLICATE_DOCUMENT: … contained in '<match>'`, the Files tab shows it as `already in corpus (…)` with a `keep both` button (`allow_near_duplicate`), and a landed document is never re-judged on the scheduler's intake replays. `POLYMATH_INTAKE_NEAR_DUPLICATE_GUARD=0` is the rollback.
 
+- **The query compiler sees the library (COMPILER-CORPUS-CONTEXT-V1, 11.122).** Before a plan is compiled, the corpus's documents are ranked for the message by content (section-summary and document-summary hits through lane A's vote) and their TITLES — never summaries — go into the compiler prompt, ranked first then A→Z up to 40. Default ranker dense (one message embedding; the one that reaches the Laban books for a fight question), `POLYMATH_CHAT_COMPILER_TITLES_RANK=sparse` is the 80 ms lexical route, `..._TOP_N=0` turns it off, request field `titles_rank` overrides per turn. Receipt `plan.compiler.titles`.
+
 ## 7. Key files
 
 `control/control/{census,scheduler,tickets,main,process_supervisor}.py` ·

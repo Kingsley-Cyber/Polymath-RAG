@@ -1,0 +1,81 @@
+{
+ "summary": {
+  "partial": true,
+  "turns": 6,
+  "note": "dense synthesis arm stopped by the owner at 8 / 10 turns (2026-09-07 04:44Z); rows rebuilt from the probe log, receipts complete for these turns"
+ },
+ "results": [
+  {
+   "question": "Compare what the book says about making your own chroma keyer with what it says about nons",
+   "wall_s": 51.7,
+   "paragraphs": 3,
+   "words_per_paragraph_p50": 94,
+   "headings": 0,
+   "list_items": 0,
+   "bold_anchors": 4,
+   "bold_words_share": 0.043,
+   "citation_tags": 21,
+   "error": null
+  },
+  {
+   "question": "Compare what the book says about nonsquare pixels with what it says about oebps/ritc 97811",
+   "wall_s": 63.6,
+   "paragraphs": 4,
+   "words_per_paragraph_p50": 59.0,
+   "headings": 0,
+   "list_items": 6,
+   "bold_anchors": 9,
+   "bold_words_share": 0.055,
+   "citation_tags": 9,
+   "error": null
+  },
+  {
+   "question": "Compare what the book says about oebps/ritc 9781119685401 epub3 035 r1.xhtml with what it ",
+   "wall_s": 39.4,
+   "paragraphs": 8,
+   "words_per_paragraph_p50": 20.5,
+   "headings": 0,
+   "list_items": 6,
+   "bold_anchors": 3,
+   "bold_words_share": 0.047,
+   "citation_tags": 11,
+   "error": null
+  },
+  {
+   "question": "Compare what the book says about miscellaneous drawing tips with what it says about transc",
+   "wall_s": 32.6,
+   "paragraphs": 7,
+   "words_per_paragraph_p50": 51,
+   "headings": 0,
+   "list_items": 0,
+   "bold_anchors": 5,
+   "bold_words_share": 0.042,
+   "citation_tags": 20,
+   "error": null
+  },
+  {
+   "question": "Compare what the book says about transcoding versus color rerendering with what it says ab",
+   "wall_s": 57.4,
+   "paragraphs": 5,
+   "words_per_paragraph_p50": 105,
+   "headings": 3,
+   "list_items": 0,
+   "bold_anchors": 8,
+   "bold_words_share": 0.031,
+   "citation_tags": 13,
+   "error": null
+  },
+  {
+   "question": "Compare what the book says about FACE OFF with what it says about affect, fatigue, and inj",
+   "wall_s": 60.7,
+   "paragraphs": 3,
+   "words_per_paragraph_p50": 81,
+   "headings": 0,
+   "list_items": 0,
+   "bold_anchors": 1,
+   "bold_words_share": 0.005,
+   "citation_tags": 5,
+   "error": null
+  }
+ ]
+}

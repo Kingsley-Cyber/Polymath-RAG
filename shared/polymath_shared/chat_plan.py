@@ -430,6 +430,10 @@ Rules:
   the principle the two share ("choosing a representation that preserves what the next stage needs"). Never for
   GROUNDED_QA, identifier lookups or definitions.
 - The corpus name(s) named below are SCOPE, never query words: search "sound editing", not "sound editing in cinema".
+- BOOKS IN THE LIBRARY (when listed): the titles the corpus actually holds, most relevant to this message first. Use
+  their own terminology when it fits — a movement-analysis book in the list means an ADJACENT or MECHANISM query may
+  say "effort, weight and timing of a strike" rather than a generic phrase — but NEVER put a title itself in a query,
+  never invent books, and PRIMARY stays the user's own message. The list only informs vocabulary and scope.
 - A follow-up such as "why does that matter?", "how does that work in practice?", "can you say more about that?" is
   discourse about the antecedent topic: the PRIMARY query is the antecedent topic itself (e.g. "sound editing") with
   NO added words like significance, importance, purpose, examples, in practice, practical application, overview.
@@ -465,10 +469,16 @@ def _history_block(history: Iterable, turns: int = HISTORY_TURNS) -> tuple[str, 
     return ("\n".join(lines) if lines else "(no earlier turns)"), len(items)
 
 
-def user_prompt(message: str, history: Iterable, corpus_ids: Iterable[str] | None = None) -> tuple[str, int]:
+def user_prompt(message: str, history: Iterable, corpus_ids: Iterable[str] | None = None,
+                titles: Iterable[str] | None = None) -> tuple[str, int]:
+    """`titles` (COMPILER-CORPUS-CONTEXT-V1, B16): the library's book TITLES for this message, most relevant first —
+    never summaries; rendered as one block between the scope line and the conversation."""
     hist, n = _history_block(history)
     corpora = ", ".join(c for c in (corpus_ids or []) if c) or "the user's corpus"
-    return (f"CORPUS IN SCOPE: {corpora}\n\nRECENT CONVERSATION:\n{hist}\n\n"
+    from polymath_shared.compiler_context import titles_block
+    block = titles_block(titles or [])
+    library = f"{block}\n\n" if block else ""
+    return (f"CORPUS IN SCOPE: {corpora}\n\n{library}RECENT CONVERSATION:\n{hist}\n\n"
             f"CURRENT MESSAGE:\n{(message or '').strip()}\n\nJSON:"), n
 
 
@@ -494,7 +504,7 @@ def _parse_json_object(text: str) -> dict | None:
 def compile_plan(message: str, history: Iterable, corpus_ids: Iterable[str] | None,
                  complete: Callable[[str, str, int], tuple[str, str | None]],
                  *, budget_s: float = COMPILER_BUDGET_S, hard_budget_s: float | None = None,
-                 model: str | None = None) -> ChatPlan:
+                 model: str | None = None, titles: Iterable[str] | None = None) -> ChatPlan:
     """Run the compiler through `complete` (system_prompt, user_prompt,
     max_tokens) -> (text, error). Every failure path returns the fallback
     plan with a reason; the wall time is recorded either way.
@@ -506,7 +516,7 @@ def compile_plan(message: str, history: Iterable, corpus_ids: Iterable[str] | No
     losing it, but a turn never waits on the compiler indefinitely."""
     hard = float(hard_budget_s if hard_budget_s is not None else max(COMPILER_HARD_BUDGET_S, 2 * budget_s))
     t0 = time.perf_counter()
-    prompt, n_hist = user_prompt(message, history, corpus_ids)
+    prompt, n_hist = user_prompt(message, history, corpus_ids, titles=titles)
     try:
         text, err = complete(SYSTEM_PROMPT, prompt, COMPILER_MAX_OUTPUT_TOKENS)
     except Exception as exc:  # noqa: BLE001 — the transport never breaks a turn

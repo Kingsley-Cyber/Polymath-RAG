@@ -21,7 +21,7 @@ One list, in the order to execute it. Every item carries the rule this repo work
 
 ## To build, in order
 
-### 1. B15 BRIDGE-HOP-V1 — GRAPH hop-2 in the corpus's own language  (M, recommended first)
+### 1. B15 BRIDGE-HOP-V1 — GRAPH hop-2 in the corpus's own language  (M) — **DEMOTED to third after the pre-build measurement (see the backlog row): from the punch winners no corpus-supervised source reaches Laban (facts 2 terms, mentions 6 with `impact → Timing for Animation` the only real bridge, latent neighbours all cinematography). Build order is now B16 → B14 → B15; B15's gate becomes "an outside-book bridge row cited on ≥ ⅓ of synthesis turns".**
 
 **Why first.** Measured 2026-09-07 on the punch question: GRAPH seeds were the question's own 12 words + 8 camera-ish entity cards; one hop gave 20 facts from VES / Fight Choreography / Cinematic Motion and **0 from any Laban book**, and 0 of the 20 passed the judge floor. The bridge entities exist and are strong (`effort` in 11 books incl. Stage Combat Arts, Fight Choreography, the Laban Workbook, Bartenieff; also `weight`, `timing`, `rhythm`, `breath support`, `intention`, `footwork`) — they were simply never seeds.
 
@@ -34,17 +34,17 @@ One list, in the order to execute it. Every item carries the rule this repo work
 - [ ] **Tests**: term selection (spread filter, hub filter, canonical join), fetch bounds, legend label, receipt shape; regression manifest case 11 (GRAPH facts ≤ 20, seeds ≤ 8) held.
 - [ ] **Gate**: the punch question surfaces ≥ 1 Laban-family passage that the answer **cites**; on the 10-question synthesis loop bridge rows cited on ≥ ⅓ of turns; literal precision 1.0 unchanged; GRAPH wall Δ ≤ +1 s.
 
-### 2. B16 COMPILER-CORPUS-CONTEXT-V1 — the compiler sees the library's titles  (S–M)
+### 2. B16 COMPILER-CORPUS-CONTEXT-V1 — the compiler sees the library's titles  (S–M) — **IMPLEMENTED 2026-09-07**
 
 **Why.** The compiler prompt says only `CORPUS IN SCOPE: cinema`; it has never seen a title, so ADJACENT is a domain-neutral guess. Owner rule: **titles only, never summaries; dynamic top-N (default 40)**.
 
-- [ ] `RELEVANT BOOKS IN THE LIBRARY:` block of TITLES (extension / hash suffixes stripped), fetched live from `documents` every turn — no cache, so it can never be stale.
-- [ ] Top-N selection, `POLYMATH_CHAT_COMPILER_TITLES_TOP_N` default 40 (0 = off): ≤ N documents → all titles; > N → **rank by content** (owner refinement): embed the question once → dense search over section summaries (lane A's route) → `aggregate_documents_n` → top-k documents → titles. Hand the vector to retrieval (`SearchContext.qvec`) so it is never embedded twice; compile already runs serially before retrieval, so the net cost is one Qdrant search (~50 ms). Deterministic given the index. Fallback when the embedder is dark: title-word overlap.
-- [ ] Receipt `compiler.titles.rank = section_summary_route | title_overlap`; the same ranking can later feed B15's outside-document set.
-- [ ] Prompt rule: use the library's terminology when it fits; PRIMARY stays the raw message (already enforced by `validate_plan`); seats per aspect unchanged.
-- [ ] Receipts `compiler.titles` {n_injected, n_corpus, top_n}; `chat_m_replay.py` arm `+TITLES`.
-- [ ] Hygiene folded in: delete the orphan `document_summaries` row (document deleted 09-05 via the old path) and the duplicate summary on one document.
-- [ ] **Gate** (10 synthesis questions incl. the punch question, on vs off interleaved): the punch plan carries ≥ 1 query in corpus terms and arrivals from a Laban-family book > 0; title-driven rows cited on ≥ ⅓ of turns; distinct final-set documents ≥ 43 / 10 turns; compiler wall Δ ≤ +0.3 s; precision 1.0.
+- [x] `RELEVANT BOOKS IN THE LIBRARY:` block of TITLES (extension / hash suffixes stripped), fetched live from `documents` every turn — no cache, so it can never be stale.
+- [x] Top-N selection, `POLYMATH_CHAT_COMPILER_TITLES_TOP_N` default 40 (0 = off): ≤ N documents → all titles; > N → **rank by content** (owner refinement): embed the question once → dense search over section summaries (lane A's route) → `aggregate_documents_n` → top-k documents → titles. Hand the vector to retrieval (`SearchContext.qvec`) so it is never embedded twice; compile already runs serially before retrieval, so the net cost is one Qdrant search (~50 ms). Deterministic given the index. Fallback when the embedder is dark: title-word overlap.
+- [x] Receipt `compiler.titles.rank = section_summary_route | title_overlap`; the same ranking can later feed B15's outside-document set.
+- [x] Prompt rule: use the library's terminology when it fits; PRIMARY stays the raw message (already enforced by `validate_plan`); seats per aspect unchanged.
+- [x] Receipts `compiler.titles` {n_injected, n_corpus, top_n}; `chat_m_replay.py` arm `+TITLES`.
+- [x] Hygiene folded in: orphan `document_summaries` row + older duplicate deleted; 2,754 orphan routing points of the same pre-B2 delete removed (2026-09-07).
+- [x] **Gate** — RESULT 2026-09-07 (register 11.122): punch question MET with dense (Laban query written, Laban Workbook cited); latency gate MISSED (dense +1.3–2.2 s under load); synthesis fixture: sparse distinct cited docs 24 → 31, dense arm partial (owner stopped it). Shipped IMPLEMENTED with dense default, sparse via env/request.
 
 ### 3. B14 ABSTRACTION-LADDER-V1 — levels as the compiler's vocabulary, L3 first  (M)
 
