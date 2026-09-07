@@ -637,6 +637,8 @@ commit is the proven method).
   supervisor** (its argv is the relative `.venv/bin/python`); grep
   `control.process_supervisor` alone.
 
+- **Near-duplicate uploads are refused at intake (NEAR-DUPLICATE-GUARD-V1, 11.121).** Layer 3 of the duplicate guard is v3.3's containment dedup (`polymath_shared/dedup.py`); a copy ≥ 0.95 contained in an existing document fails intake with `NEAR_DUPLICATE_DOCUMENT: … contained in '<match>'`, the Files tab shows it as `already in corpus (…)` with a `keep both` button (`allow_near_duplicate`), and a landed document is never re-judged on the scheduler's intake replays. `POLYMATH_INTAKE_NEAR_DUPLICATE_GUARD=0` is the rollback.
+
 ## 7. Key files
 
 `control/control/{census,scheduler,tickets,main,process_supervisor}.py` ·

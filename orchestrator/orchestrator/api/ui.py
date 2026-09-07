@@ -385,7 +385,8 @@ _UPLOAD_EXTENSIONS = {".md", ".txt", ".html", ".pdf", ".epub", ".docx"}
 
 @router.post("/upload")
 async def upload(corpus_id: str = Form(...),
-                 file: UploadFile = File(...)) -> dict:
+                 file: UploadFile = File(...),
+                 allow_near_duplicate: str = Form("")) -> dict:
     """SPOOL-CLAIM-CHECK-V1: stream to the spool volume in 1 MiB
     chunks (sha256 computed in flight), then submit the canonical
     intake payload carrying a content REFERENCE — the request body is
@@ -436,16 +437,23 @@ async def upload(corpus_id: str = Form(...),
             "error_code": "duplicate_document",
             "message": f"this exact file is already in the corpus as "
                        f"{dup[0]!r}; upload skipped"})
+    # NEAR-DUPLICATE-GUARD-V1 override ("keep both"): rides in the
+    # canonical payload's config, so the overridden run has its own
+    # identity and the intake worker's layer 3 sees it. Layers 1 and 2
+    # (identical bytes / identical text) are never overridable.
+    keep_both = allow_near_duplicate.strip().lower() in ("1", "true", "yes", "on")
     payload = canonical_intake_payload(
         corpus_id=corpus_id,
         source_name=source_name,
         media_type=file.content_type or "application/octet-stream",
         content_ref=ref,
+        config={"allow_near_duplicate": True} if keep_both else None,
     )
     with tx() as conn:
         out = submit_intake(conn, payload)
     return {**out, "corpus_id": corpus_id, "source_name": source_name,
-            "bytes": ref["bytes"], "sha256": ref["sha256"]}
+            "bytes": ref["bytes"], "sha256": ref["sha256"],
+            "near_duplicate_override": keep_both}
 
 
 def _llm_provider_rows() -> list[dict]:

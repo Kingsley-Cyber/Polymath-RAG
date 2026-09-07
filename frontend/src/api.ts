@@ -86,14 +86,50 @@ export async function enrichDocument(docId: string) {
   return r.json();
 }
 
-export async function uploadFile(corpus: string, file: File) {
+/** A refused upload with the server's typed code (DUPLICATE-DOCUMENT-GUARD
+ * layer 1 answers 409 `duplicate_document` with the matched source name). */
+export class UploadError extends Error {
+  code: string;
+  status: number;
+  constructor(status: number, code: string, message: string) {
+    super(message);
+    this.code = code;
+    this.status = status;
+  }
+}
+
+export async function uploadFile(
+  corpus: string,
+  file: File,
+  opts: { allowNearDuplicate?: boolean } = {},
+) {
   const form = new FormData();
   form.append("corpus_id", corpus);
   form.append("file", file);
+  // NEAR-DUPLICATE-GUARD-V1 override ("keep both"): layer 3 only.
+  if (opts.allowNearDuplicate) form.append("allow_near_duplicate", "1");
   const r = await fetch("/upload", { method: "POST", body: form });
-  if (!r.ok) throw new Error(`upload → ${r.status}: ${await r.text()}`);
+  if (!r.ok) {
+    const text = await r.text();
+    let code = "";
+    let message = text;
+    try {
+      const body = JSON.parse(text);
+      const detail = body?.detail ?? body;
+      if (detail && typeof detail === "object") {
+        code = String(detail.error_code ?? "");
+        message = String(detail.message ?? text);
+      } else if (typeof detail === "string") {
+        message = detail;
+      }
+    } catch {
+      /* plain-text error body */
+    }
+    throw new UploadError(r.status, code, `upload → ${r.status}: ${message}`);
+  }
   return r.json() as Promise<{
     run_id: string; accepted: boolean; already_exists?: boolean;
+    near_duplicate_override?: boolean;
   }>;
 }
 

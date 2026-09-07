@@ -21,6 +21,7 @@ import time
 import psycopg
 from psycopg import Connection
 
+from polymath_shared import dedup as _dedup
 from polymath_shared.db import tx
 from polymath_shared.identity import document_id, normalize_document_bytes
 from polymath_shared.logging import configure_logging
@@ -67,6 +68,84 @@ def contract() -> str:
         "normalization": NORMALIZATION,
         "router_version": ROUTER_VERSION,
     })
+
+
+def _near_duplicate_guard(
+    conn: Connection,
+    *,
+    corpus_id: str,
+    doc_id: str,
+    source_name: str,
+    parent_texts: list[str],
+    override: bool,
+) -> dict | None:
+    """DUPLICATE-DOCUMENT-GUARD layer 3 (NEAR-DUPLICATE-GUARD-V1; the v3.3
+    containment design, polymath_shared.dedup). Compares the incoming
+    document's PARENT chunk text — the same chunker output the existing
+    documents carry, so a byte-for-byte reformat scores containment 1.0 —
+    against the corpus's most recent `scan_docs` documents, one at a time.
+
+    Returns None when the guard is off; otherwise the verdict record
+    {contract, verdict, candidates, compared, overridden, knobs}. Raises
+    RuntimeError (the typed NEAR_DUPLICATE_DOCUMENT refusal, which the
+    FAILURE receipt and the Files tab carry) on `refuse`."""
+    knobs = _dedup.guard_knobs()
+    if not knobs.enabled:
+        return None
+    # REPLAY EXEMPTION (found on the first live proof, 2026-09-07): the
+    # control plane re-delivers an intake event after the document has
+    # landed (the same property layer 2 exempts). A landed document is
+    # never re-judged — otherwise an overridden twin ingested AFTER it
+    # would flip its committed receipt to a near-duplicate failure.
+    landed = conn.execute(
+        "SELECT 1 FROM documents WHERE doc_id = %s AND corpus_id = %s",
+        (doc_id, corpus_id),
+    ).fetchone()
+    if landed:
+        return {"contract": _dedup.CONTRACT, "verdict": "replay", "candidates": [],
+                "compared": 0, "overridden": False, "knobs": knobs.to_dict()}
+    incoming = _dedup.shingle_set(parent_texts, k=knobs.shingle_k)
+
+    def _existing():
+        # One document per row, parents in order, streamed — a corpus is
+        # never held in memory twice (measured 2.7 s for all 67 cinema docs).
+        with conn.cursor(name=f"nd_scan_{doc_id[:16]}") as cur:
+            cur.itersize = 1
+            cur.execute(
+                """SELECT d.doc_id, d.source_name,
+                          string_agg(ch.text, E'\n' ORDER BY ch.chunk_index)
+                     FROM documents d
+                     JOIN chunks ch ON ch.doc_id = d.doc_id AND ch.tier = 'parent'
+                    WHERE d.corpus_id = %s AND d.doc_id <> %s
+                    GROUP BY d.doc_id, d.source_name, d.created_at
+                    ORDER BY d.created_at DESC
+                    LIMIT %s""",
+                (corpus_id, doc_id, knobs.scan_docs),
+            )
+            for other_id, other_name, text in cur:
+                yield other_id, other_name, _dedup.shingle_set([text or ""], k=knobs.shingle_k)
+
+    candidates, compared = _dedup.near_duplicate_candidates(incoming, _existing(), knobs=knobs)
+    verdict = _dedup.decide(candidates, knobs=knobs, override=override)
+    record = {
+        "contract": _dedup.CONTRACT,
+        "verdict": verdict,
+        "incoming_shingles": len(incoming),
+        "compared": compared,
+        "candidates": candidates,
+        "overridden": bool(override and candidates),
+        "knobs": knobs.to_dict(),
+    }
+    if verdict == _dedup.VERDICT_REFUSE:
+        log.info("near_duplicate refused doc=%s corpus=%s of=%s containment=%s jaccard=%s",
+                 doc_id[:16], corpus_id, str(candidates[0].get("doc_id"))[:16],
+                 candidates[0].get("containment"), candidates[0].get("jaccard"))
+        raise RuntimeError(_dedup.refusal_message(source_name, corpus_id, candidates[0]))
+    if candidates:
+        log.info("near_duplicate %s doc=%s corpus=%s of=%s containment=%s overridden=%s",
+                 verdict, doc_id[:16], corpus_id, str(candidates[0].get("doc_id"))[:16],
+                 candidates[0].get("containment"), record["overridden"])
+    return record
 
 
 def process_event(conn: Connection, event: dict) -> None:
@@ -191,6 +270,30 @@ def process_event(conn: Connection, event: dict) -> None:
                 f"by normalized text, independent of file format); ingest "
                 f"refused so the corpus keeps one copy.")
 
+        # DUPLICATE-DOCUMENT-GUARD layer 3 (NEAR-DUPLICATE-GUARD-V1): the
+        # same text a few bytes apart — the cinema Sound Design twin that
+        # layers 1 and 2 both let through. Refuses only a near-identical
+        # copy (containment >= 0.95 of the INCOMING document); anything
+        # below is ingested and recorded on the document row and the
+        # intake artifact. `config.allow_near_duplicate` is the owner's
+        # override (keep both); POLYMATH_INTAKE_NEAR_DUPLICATE_GUARD=0
+        # switches the layer off.
+        _nd_record = _near_duplicate_guard(
+            conn,
+            corpus_id=corpus_id,
+            doc_id=doc_id,
+            source_name=source_name,
+            parent_texts=[r["text"] for r in chunks if r["tier"] == "parent"],
+            override=bool((payload.get("config") or {}).get("allow_near_duplicate")),
+        )
+        _nd_flag = (_nd_record or {}).get("candidates") and _nd_record
+        _nd_warnings = (
+            [f"near_duplicate:{_nd_flag['verdict']}:"
+             f"{_nd_flag['candidates'][0]['source_name']}:"
+             f"{_nd_flag['candidates'][0]['containment']}"]
+            if _nd_flag else []
+        )
+
         conn.execute(
             """
             INSERT INTO corpora (corpus_id, name, config_hash, profile,
@@ -218,7 +321,8 @@ def process_event(conn: Connection, event: dict) -> None:
                  "format": materialization.format,
                  "normalized_text_sha256": materialization.normalized_text_sha256,
                  "original_byte_length": materialization.original_byte_length,
-                 "warnings": materialization.warnings,
+                 "warnings": [*materialization.warnings, *_nd_warnings],
+                 **({"near_duplicate": _nd_flag} if _nd_flag else {}),
              }),
              json.dumps(materialization.source_map),
              json.dumps(_parse_frontmatter(normalized.decode("utf-8", "replace")[:4000]))),
@@ -317,6 +421,9 @@ def process_event(conn: Connection, event: dict) -> None:
             "parent_chunks": len(parents),
         }
         writer.artifact({"routing_card": routing_card})
+        if _nd_flag:
+            # the near-duplicate record is part of the intake receipt
+            writer.artifact({"near_duplicate": _nd_flag})
         # doc_content (the full base64 body) used to ride along here.
         # No downstream stage ever read it — every consumer works from
         # the chunks/documents rows — so it was pure jsonb bloat: a

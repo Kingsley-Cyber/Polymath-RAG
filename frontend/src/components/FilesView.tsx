@@ -8,9 +8,98 @@ import {
   fetchSections,
   setQueryEnabled,
   uploadFile,
+  UploadError,
 } from "../api";
 import type { SectionRow } from "../api";
 import type { DocumentRow, RunRow } from "../types";
+
+const ACCEPTED_EXT = /\.(md|txt|html|pdf|epub|docx)$/i;
+
+/** Files from a drop, descending into dropped FOLDERS (webkitGetAsEntry);
+ * falls back to the flat file list where the directory API is absent.
+ * Unsupported extensions are skipped here so a folder of mixed files
+ * does not spray 422s. */
+async function collectDroppedFiles(dt: DataTransfer): Promise<File[]> {
+  const items = Array.from(dt.items ?? []);
+  const entries = items
+    .map((it) => (it as any).webkitGetAsEntry?.())
+    .filter(Boolean);
+  if (entries.length === 0 || !entries.some((e: any) => e.isDirectory)) {
+    return Array.from(dt.files ?? []);
+  }
+  const out: File[] = [];
+  const readEntry = (entry: any): Promise<void> =>
+    new Promise((resolve) => {
+      if (entry.isFile) {
+        entry.file((f: File) => {
+          if (ACCEPTED_EXT.test(f.name)) out.push(f);
+          resolve();
+        }, () => resolve());
+      } else if (entry.isDirectory) {
+        const reader = entry.createReader();
+        const readBatch = () =>
+          reader.readEntries(async (batch: any[]) => {
+            if (!batch.length) return resolve();
+            for (const e of batch) await readEntry(e);
+            readBatch();
+          }, () => resolve());
+        readBatch();
+      } else resolve();
+    });
+  for (const e of entries) await readEntry(e);
+  return out;
+}
+
+/** The typed duplicate refusals (DUPLICATE-DOCUMENT-GUARD layers 2 and 3)
+ * as the intake FAILURE receipt records them. */
+const DUP_RE = /(NEAR_DUPLICATE_DOCUMENT|DUPLICATE_DOCUMENT):\s*([^]*?)(?:\s+<-\s|$)/;
+const NEAR_MATCH_RE = /contained in (['"])(.+?)\1/;
+const SAME_MATCH_RE = /same content as (['"])(.+?)\1/;
+const EXACT_MATCH_RE = /already in the corpus as (['"])(.+?)\1/;
+const PCT_RE = /is ([0-9.]+)% contained/;
+
+type DupKind = "exact" | "same_text" | "near";
+/** Parse a run's stored error into a duplicate verdict, or null. */
+function duplicateVerdict(err?: string | null): { kind: DupKind; match: string; pct?: string } | null {
+  if (!err) return null;
+  const m = err.match(DUP_RE);
+  if (!m) return null;
+  if (m[1] === "NEAR_DUPLICATE_DOCUMENT") {
+    return { kind: "near", match: m[2].match(NEAR_MATCH_RE)?.[2] ?? "?", pct: m[2].match(PCT_RE)?.[1] };
+  }
+  return { kind: "same_text", match: m[2].match(SAME_MATCH_RE)?.[2] ?? "?" };
+}
+function dupLabel(v: { kind: DupKind; match: string; pct?: string }): string {
+  if (v.kind === "exact") return `already in corpus (same bytes as '${v.match}')`;
+  if (v.kind === "same_text") return `already in corpus (same text as '${v.match}')`;
+  return `already in corpus (near-duplicate of '${v.match}'${v.pct ? ` — ${v.pct}% contained` : ""})`;
+}
+
+type UploadRow = {
+  name: string;
+  state: string;
+  run?: string;
+  file?: File;
+  kind?: "uploading" | "ingesting" | "ingested" | "exact" | "same_text" | "near" | "failed";
+  match?: string;
+};
+
+/** Reconcile an upload row with its run's terminal state (the intake worker
+ * decides layers 2 and 3 asynchronously, after the upload has returned). */
+function deriveUpload(u: UploadRow, runs: { run_id: string; status: string; error?: string | null }[]): UploadRow {
+  if (!u.run) return u;
+  const r = runs.find((x) => x.run_id === u.run);
+  if (!r) return u;
+  if (r.status === "query_ready") return { ...u, kind: "ingested", state: "ingested — query-ready" };
+  // The intake receipt is the verdict: a refused copy carries its typed error
+  // while the run is still `intake` (retries) and after it turns `failed`. A
+  // run that moved past intake (e.g. after `keep both` admitted the same
+  // document) is no longer a refusal, whatever its receipt history says.
+  const v = r.status === "intake" || r.status === "failed" ? duplicateVerdict(r.error) : null;
+  if (v) return { ...u, kind: v.kind, match: v.match, state: dupLabel(v) };
+  if (r.status === "failed") return { ...u, kind: "failed", state: `failed: ${(r.error ?? "").slice(0, 80)}` };
+  return u;
+}
 
 function fmtBytes(n: number): string {
   if (n > 1_048_576) return `${(n / 1_048_576).toFixed(1)} MB`;
@@ -57,9 +146,7 @@ export default function FilesView({
   const [readiness, setReadiness] = useState<any>(null);
   const [queryEnabled, setQueryEnabledState] = useState<boolean | null>(null);
   const [drag, setDrag] = useState(false);
-  const [uploads, setUploads] = useState<
-    { name: string; state: string; run?: string }[]
-  >([]);
+  const [uploads, setUploads] = useState<UploadRow[]>([]);
 
   const refresh = useCallback(async () => {
     if (!corpus) return;
@@ -98,26 +185,40 @@ export default function FilesView({
       document.removeEventListener("visibilitychange", onVis); };
   }, [refresh, uploads, runs]);
 
-  const handleFiles = async (files: FileList | null) => {
+  const handleFiles = async (
+    files: FileList | File[] | null,
+    opts: { allowNearDuplicate?: boolean } = {},
+  ) => {
     if (!files || !corpus) return;
     for (const file of Array.from(files)) {
-      setUploads((u) => [...u, { name: file.name, state: "uploading…" }]);
+      setUploads((u) => [
+        ...u.filter((x) => x.name !== file.name),
+        { name: file.name, state: "uploading…", kind: "uploading", file },
+      ]);
       try {
-        const out = await uploadFile(corpus, file);
+        const out = await uploadFile(corpus, file, opts);
         setUploads((u) =>
           u.map((x) =>
             x.name === file.name
-              ? { ...x, state: out.already_exists
+              ? { ...x,
+                  kind: out.already_exists ? "exact" : "ingesting",
+                  state: out.already_exists
                     ? "already in corpus — no new run"
-                    : "ingesting", run: out.run_id }
+                    : opts.allowNearDuplicate ? "ingesting (keeping both)" : "ingesting",
+                  run: out.run_id }
               : x,
           ),
         );
       } catch (e: any) {
+        const dup = e instanceof UploadError && e.code === "duplicate_document";
+        const match = dup ? String(e.message).match(EXACT_MATCH_RE)?.[2] : undefined;
         setUploads((u) =>
           u.map((x) =>
             x.name === file.name
-              ? { ...x, state: `failed: ${String(e.message).slice(0, 80)}` }
+              ? dup
+                ? { ...x, kind: "exact", match,
+                    state: match ? dupLabel({ kind: "exact", match }) : "already in corpus (same bytes)" }
+                : { ...x, kind: "failed", state: `failed: ${String(e.message).slice(0, 80)}` }
               : x,
           ),
         );
@@ -167,7 +268,8 @@ export default function FilesView({
             onDrop={(e) => {
               e.preventDefault();
               setDrag(false);
-              handleFiles(e.dataTransfer.files);
+              const dt = e.dataTransfer;
+              collectDroppedFiles(dt).then((files) => handleFiles(files));
             }}
             onClick={() => {
               const inp = document.createElement("input");
@@ -178,16 +280,48 @@ export default function FilesView({
               inp.click();
             }}
           >
-            Drop files here (md · txt · html · pdf · epub · docx) or click
-            to browse. Each file goes through the full evidence-first
-            pipeline.
+            Drop files or a folder here (md · txt · html · pdf · epub · docx)
+            or click to browse. Each file goes through the full evidence-first
+            pipeline; a copy already in the corpus is refused, not re-ingested.
           </div>
-          {uploads.map((u, i) => (
-            <div key={i} className="chunk-row" style={{ marginTop: 8 }}>
-              <b>{u.name}</b> — {u.state}
-              {u.run && <span className="mono"> {u.run.slice(0, 20)}…</span>}
-            </div>
-          ))}
+          {uploads.length > 1 && (() => {
+            const rows = uploads.map((u) => deriveUpload(u, runs));
+            const n = (k: UploadRow["kind"][]) => rows.filter((r) => k.includes(r.kind)).length;
+            const parts = [
+              `${rows.length} files`,
+              `${n(["ingested"])} ingested`,
+              `${n(["ingesting", "uploading"])} in flight`,
+              `${n(["exact", "same_text"])} already in corpus`,
+              `${n(["near"])} near-duplicates`,
+              `${n(["failed"])} failed`,
+            ].filter((p, i) => i < 2 || !p.startsWith("0 "));
+            return (
+              <div className="phase-detail" style={{ marginTop: 8 }} data-testid="upload-summary">
+                {parts.join(" · ")}
+              </div>
+            );
+          })()}
+          {uploads.map((u0, i) => {
+            const u = deriveUpload(u0, runs);
+            const dup = u.kind === "exact" || u.kind === "same_text" || u.kind === "near";
+            return (
+              <div key={i} className="chunk-row" style={{ marginTop: 8 }}>
+                <b>{u.name}</b> —{" "}
+                <span className={dup ? "status-pill st-duplicate" : undefined}>{u.state}</span>
+                {u.run && !dup && <span className="mono"> {u.run.slice(0, 20)}…</span>}
+                {u.kind === "near" && u.file && (
+                  <button
+                    className="chunk-chip"
+                    style={{ marginLeft: 8 }}
+                    title="Ingest this file anyway, alongside the document it near-duplicates"
+                    onClick={() => handleFiles([u.file!], { allowNearDuplicate: true })}
+                  >
+                    keep both
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {readiness && (
@@ -353,29 +487,33 @@ export default function FilesView({
           <h3>Recent runs</h3>
           <table className="doc-table">
             <tbody>
-              {runs.slice(0, 8).map((r) => (
+              {runs.slice(0, 8).map((r) => {
+                const dup = r.status === "intake" || r.status === "failed" ? duplicateVerdict(r.error) : null;
+                const note = dup ? dupLabel(dup) : r.error ?? "";
+                return (
                 <tr key={r.run_id}>
                   <td className="mono">{r.run_id.slice(0, 26)}…</td>
                   <td>
-                    <span className={`status-pill st-${r.status}`}>
-                      {r.status}
+                    <span className={`status-pill ${dup ? "st-duplicate" : `st-${r.status}`}`}>
+                      {dup ? "duplicate" : r.status}
                     </span>
                   </td>
                   <td className="mono">{r.created_at.slice(0, 19)}</td>
                   <td>
-                    {r.error && (
+                    {note && (
                       <span
                         className="phase-detail"
-                        title={r.error}
-                        style={{ color: "var(--accent)" }}
+                        title={r.error ?? note}
+                        style={{ color: dup ? "var(--warn)" : "var(--accent)" }}
                       >
-                        {r.error.slice(0, 70)}
-                        {r.error.length > 70 ? "…" : ""}
+                        {note.slice(0, 90)}
+                        {note.length > 90 ? "…" : ""}
                       </span>
                     )}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

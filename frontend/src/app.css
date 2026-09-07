@@ -274,6 +274,8 @@ select, input, textarea { font: inherit; color: var(--text); }
 .st-query_ready { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
 .st-reconciling, .st-intake { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
 .st-degraded, .st-failed { color: var(--bad); background: color-mix(in srgb, var(--bad) 14%, transparent); }
+/* NEAR-DUPLICATE-GUARD-V1: a refused copy is a verdict, not a failure */
+.st-duplicate { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
 .readiness { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--text-dim); }
 .readiness b { color: var(--text); }
 

@@ -364,6 +364,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("shared/polymath_shared/answer_synthesis.py", "py", None),
     ("shared/polymath_shared/canonicalizer.py", "py", None),
     ("shared/polymath_shared/materializer.py", "py", None),
+    ("shared/polymath_shared/dedup.py", "py", None),
     ("shared/polymath_shared/embedding_contracts.py", "py", None),
 
     # stores: Neo4j uniqueness constraints + document profile columns
@@ -1295,8 +1296,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/v5/wipe_corpus_v5.py", "py", None),
     # frontend
     ("frontend/.gitignore", "gitignore", None),
-    ("frontend/dist/assets/index-CGM49MiU.js", "js", None),
-    ("frontend/dist/assets/index-CCme32b3.css", "css", None),
+    ("frontend/dist/assets/index-DYcMYPLj.js", "js", None),
+    ("frontend/dist/assets/index-ECN76Tar.css", "css", None),
     ("frontend/dist/index.html", "html", None),
     ("frontend/index.html", "html", None),
     ("frontend/package-lock.json", "json", None),
@@ -1708,6 +1709,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_chat_model_catalog.py", "py", None),
     ("tests/determinism/test_chat_generation_bound.py", "py", None),
     ("tests/determinism/test_wildcard_finish.py", "py", None),
+    ("tests/determinism/test_near_duplicate_guard.py", "py", None),
     ("docs/wiki/work-log/2026-09-06-chat-model-catalog.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-chat-ui-surgical.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-reading-hierarchy.md", "md", None),
@@ -1726,6 +1728,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-06-b10-summary-ablation.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-b3-corpus-shape-proposal.md", "md", None),
     ("docs/wiki/work-log/2026-09-07-b13-section-routing.md", "md", None),
+    ("docs/wiki/work-log/2026-09-07-b1-near-duplicate-guard.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-style-bold-retire.md", "md", None),
     ("docs/wiki/experiments/chat-parity-p1f-first.json", "json", None),
     ("docs/wiki/work-log/2026-09-06-p1e-mode-recomposition.md", "md", None),
