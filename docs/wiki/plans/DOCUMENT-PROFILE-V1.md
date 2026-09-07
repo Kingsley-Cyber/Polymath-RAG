@@ -103,7 +103,7 @@ identity ~40 (title, subtitle, meaningful filename, type, author/org, page/meta 
 
 ## API pool isolation
 
-`profile.enrich` is its own lease class with its own keys / concurrency / rate limits — never the extraction / graph / enhancement pool. Tier 0 free providers (≤ 2 attempts) → Tier 1 cheap dedicated provider (1 attempt) → dead-letter for inspection. Enrichment is a control-plane gate, so it must not be able to starve ingestion or be starved by it.
+`profile.enrich` is its own lease class with its own keys / concurrency / rate limits — never the extraction / graph / enhancement pool. Wired 2026-09-07: tier 0 = six DEDICATED Groq accounts (`profile_groq1..6`, groq/compound, RPM 30 / RPD 250 / TPM 70k each, limiter rows at 25 / 230 / 60k), rotated per run, ≤ 2 tried per document → fallback 1 = Gemini flash-lite on its own keys (`profile_fallback_gemini1/2`) → fallback 2 = OpenRouter mistral-small (`profile_fallback_openrouter`) → dead-letter. Keys live only in `.env` (`GROQ_API_KEY_1..6`, `GEMINI_API_KEY_5/6`, `OPENROUTER_API_KEY_2`). Enrichment is a control-plane gate, so it must not be able to starve ingestion or be starved by it.
 
 ## Retrieval
 

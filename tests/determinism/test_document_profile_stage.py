@@ -39,16 +39,26 @@ def test_stage_is_wired_non_blocking_for_rollout_phase_a():
 
 def test_profile_pool_is_pinned_and_isolated_in_config():
     d = json.loads((ROOT / "config/cloud_providers.json").read_text())
-    assert d["stage_pins"]["doc_profile"] == ["profile1", "profile2", "profile_fallback"]
+    groq = [f"profile_groq{i}" for i in range(1, 7)]
+    fallbacks = ["profile_fallback_gemini1", "profile_fallback_gemini2", "profile_fallback_openrouter"]
+    assert d["stage_pins"]["doc_profile"] == groq + fallbacks                                  # tier 0 first, fallbacks last
     eps = {e["name"]: e for e in d["providers"]}
-    for n in ("profile1", "profile2", "profile_fallback"):
+    for n in groq + fallbacks:
         assert eps[n]["enabled"] and eps[n]["dedicated"] and eps[n]["structured"] is None     # plain-text labels, never JSON mode
-    assert eps["profile_fallback"]["url"].startswith("https://openrouter.ai")
+    assert all(eps[n]["url"] == "https://api.groq.com/openai" and eps[n]["model"] == "groq/compound" for n in groq)
+    assert [eps[n]["api_key_env"] for n in groq] == [f"GROQ_API_KEY_{i}" for i in range(1, 7)]  # six DISTINCT dedicated keys
+    other_envs = {e["api_key_env"] for e in d["providers"] if e["name"] not in groq + fallbacks}
+    assert not ({eps[n]["api_key_env"] for n in groq} & other_envs)                            # tier 0 is fully isolated
+    # fallbacks may share PROVIDER keys with enrichment (every Gemini / OpenRouter key is in use) — they see only
+    # tier-0 failures and carry their own limiter rows; that is the documented compromise, pinned here
+    assert all("fallback" in n for n in fallbacks)
     lim = (ROOT / "config/extraction_models/limiter.yaml").read_text()
-    for n in ("  profile1:", "  profile2:", "  profile_fallback:"):
-        assert n in lim
-    # the compiler pool and the extraction pool never list the profile lanes
-    assert not (set(d["stage_pins"]["chat_compiler"]) & {"profile1", "profile2", "profile_fallback"})
+    for n in groq + fallbacks:
+        assert f"  {n}:" in lim
+    assert not (set(d["stage_pins"]["chat_compiler"]) & set(groq + fallbacks))
+    assert W.lane_order(d["stage_pins"]["doc_profile"], "run_x")[-3:] == fallbacks
+    ex = (ROOT / ".env.example").read_text()
+    assert all(f"GROQ_API_KEY_{i}=" in ex for i in range(1, 7))
 
 
 # ── the worker against Postgres ──────────────────────────────────────────────

@@ -263,17 +263,67 @@ providers:
     min: 1
     max: 2
     init: 1
-  profile1:             # DOCUMENT-PROFILE-V1 pool (tier 0, free): gemini-3.1-flash-lite on GEMINI_API_KEY_3 — doc_profile pin only.
-    kind: rate          # NOTE: shares the provider key with compiler3 (owner may add dedicated keys later); its own limiter row.
-    family: gemini
-    rpd: 400
-    rpm: 8
-    tpm: 200000
+  profile_groq1:       # DOCUMENT-PROFILE-V1 pool tier 0: dedicated Groq account 1, groq/compound (provider limits RPM 30 / RPD 250 / TPM 70k)
+    kind: rate
+    family: groq
+    rpd: 230
+    rpm: 25
+    tpm: 60000
     conc_cap: 2
     min: 1
     max: 2
     init: 1
-  profile2:             # DOCUMENT-PROFILE-V1 pool (tier 0, free): gemini-3.1-flash-lite on GEMINI_API_KEY_4 — doc_profile pin only.
+  profile_groq2:       # DOCUMENT-PROFILE-V1 pool tier 0: dedicated Groq account 2, groq/compound (provider limits RPM 30 / RPD 250 / TPM 70k)
+    kind: rate
+    family: groq
+    rpd: 230
+    rpm: 25
+    tpm: 60000
+    conc_cap: 2
+    min: 1
+    max: 2
+    init: 1
+  profile_groq3:       # DOCUMENT-PROFILE-V1 pool tier 0: dedicated Groq account 3, groq/compound (provider limits RPM 30 / RPD 250 / TPM 70k)
+    kind: rate
+    family: groq
+    rpd: 230
+    rpm: 25
+    tpm: 60000
+    conc_cap: 2
+    min: 1
+    max: 2
+    init: 1
+  profile_groq4:       # DOCUMENT-PROFILE-V1 pool tier 0: dedicated Groq account 4, groq/compound (provider limits RPM 30 / RPD 250 / TPM 70k)
+    kind: rate
+    family: groq
+    rpd: 230
+    rpm: 25
+    tpm: 60000
+    conc_cap: 2
+    min: 1
+    max: 2
+    init: 1
+  profile_groq5:       # DOCUMENT-PROFILE-V1 pool tier 0: dedicated Groq account 5, groq/compound (provider limits RPM 30 / RPD 250 / TPM 70k)
+    kind: rate
+    family: groq
+    rpd: 230
+    rpm: 25
+    tpm: 60000
+    conc_cap: 2
+    min: 1
+    max: 2
+    init: 1
+  profile_groq6:       # DOCUMENT-PROFILE-V1 pool tier 0: dedicated Groq account 6, groq/compound (provider limits RPM 30 / RPD 250 / TPM 70k)
+    kind: rate
+    family: groq
+    rpd: 230
+    rpm: 25
+    tpm: 60000
+    conc_cap: 2
+    min: 1
+    max: 2
+    init: 1
+  profile_fallback_gemini1:   # DOCUMENT-PROFILE-V1 fallback 1: gemini-3.1-flash-lite on GEMINI_API_KEY_5 (own key)
     kind: rate
     family: gemini
     rpd: 400
@@ -283,7 +333,17 @@ providers:
     min: 1
     max: 2
     init: 1
-  profile_fallback:     # DOCUMENT-PROFILE-V1 pool (tier 1, cheap): OpenRouter mistral-small-2603 — sees only tier-0 failures.
+  profile_fallback_gemini2:   # DOCUMENT-PROFILE-V1 fallback 1: gemini-3.1-flash-lite on GEMINI_API_KEY_6 (own key)
+    kind: rate
+    family: gemini
+    rpd: 400
+    rpm: 8
+    tpm: 200000
+    conc_cap: 2
+    min: 1
+    max: 2
+    init: 1
+  profile_fallback_openrouter:   # DOCUMENT-PROFILE-V1 fallback 2: OpenRouter mistral-small-2603 on OPENROUTER_API_KEY_2 — sees only earlier-tier failures
     kind: rate
     family: openrouter
     rpm: 20

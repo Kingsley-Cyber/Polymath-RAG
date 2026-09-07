@@ -29,7 +29,8 @@
     "OPENROUTER-ENRICHMENT-LANES-V1 (owner 2026-09-02 'both will be for enrichment lane since enrichment is slow'): openrouter5 = mistral-small-24b-instruct-2501 on the owner's THIRD OpenRouter key, dedicated:true (enrichment pin only, never extraction sharding), json; canary PASS on that key (8/8 + 8/8, 121 s). openrouter4 (ministral-3b-2512) is reserved for the same key IF its canary passes enrichment (first run 4/8).",
     "NVIDIA-RETIRED-FROM-ENRICHMENT-PIN (2026-09-05, owner \"enrichment is too slow\"): nvidia (nemotron-3.5-lightning-30b-a3b) removed from the parent_enrichment pin — measured 12:00–14:00Z on cinema: 102 s mean wall per call (others 17–42 s) and 51 % of its microbatch parents gated INVALID; with parent-sharding it sat in nearly every document wave and the ladder waves, so it set the tail of all three. Provider block kept (dedicated:true, enabled) so re-adding the name to the pin restores it; enrichment identity excludes the lane, nothing re-enriches.",
     "CHAT-COMPILER-LANES-V1 (2026-09-05, CHAT-QUERY-COMPILER-PLAN §3.2/§6, P0.b): compiler1..compiler4 = AI Studio keys 1–4 on gemini-3.1-flash-lite, dedicated:true (only the chat_compiler stage pin uses them), structured json_object (custom system prompt; the plan is validated locally against CHAT-INTENT-PLAN-V1). Their LOCAL AIMD limiter keys are separate from gemini1..gemini4 so extraction saturation never blocks a compile; Google's per-key-per-model quota is shared with those lanes by construction (one call per chat turn, ≤ 600 output tokens).",
-    "COMPILER-CROSS-FAMILY-V1 (2026-09-05): compiler_alt = OpenRouter key 1 @ mistral-small-2603 (dedicated, json) joins the chat_compiler ring so a Gemini-wide 503 storm (measured: 78 enrichment 503s today, a 24 s hang on compiler2's probe) never zeroes the compiler; the compiler client uses a 6 s HTTP timeout and walks one ring step on a transport failure."
+    "COMPILER-CROSS-FAMILY-V1 (2026-09-05): compiler_alt = OpenRouter key 1 @ mistral-small-2603 (dedicated, json) joins the chat_compiler ring so a Gemini-wide 503 storm (measured: 78 enrichment 503s today, a 24 s hang on compiler2's probe) never zeroes the compiler; the compiler client uses a 6 s HTTP timeout and walks one ring step on a transport failure.",
+    "DOCUMENT-PROFILE-V1 pool (owner 2026-09-07): profile_groq1..6 = six DEDICATED Groq accounts (groq/compound; RPM 30 / RPD 250 / TPM 70k each) as tier 0, rotated per run; profile_fallback_gemini1/2 (own keys 5/6) as fallback 1; profile_fallback_openrouter as fallback 2. Plain-text labelled output (structured null). Never shared with extraction, enrichment or the chat compiler."
   ],
   "stage_pins": {
     "parent_enrichment": [
@@ -50,9 +51,15 @@
       "compiler_alt"
     ],
     "doc_profile": [
-      "profile1",
-      "profile2",
-      "profile_fallback"
+      "profile_groq1",
+      "profile_groq2",
+      "profile_groq3",
+      "profile_groq4",
+      "profile_groq5",
+      "profile_groq6",
+      "profile_fallback_gemini1",
+      "profile_fallback_gemini2",
+      "profile_fallback_openrouter"
     ]
   },
   "providers": [
@@ -306,35 +313,101 @@
       "request_char_budget": 40000
     },
     {
-      "name": "profile1",
+      "name": "profile_groq1",
+      "enabled": true,
+      "url": "https://api.groq.com/openai",
+      "model": "groq/compound",
+      "reasoning_effort": null,
+      "structured": null,
+      "api_key_env": "GROQ_API_KEY_1",
+      "dedicated": true,
+      "request_char_budget": 18000
+    },
+    {
+      "name": "profile_groq2",
+      "enabled": true,
+      "url": "https://api.groq.com/openai",
+      "model": "groq/compound",
+      "reasoning_effort": null,
+      "structured": null,
+      "api_key_env": "GROQ_API_KEY_2",
+      "dedicated": true,
+      "request_char_budget": 18000
+    },
+    {
+      "name": "profile_groq3",
+      "enabled": true,
+      "url": "https://api.groq.com/openai",
+      "model": "groq/compound",
+      "reasoning_effort": null,
+      "structured": null,
+      "api_key_env": "GROQ_API_KEY_3",
+      "dedicated": true,
+      "request_char_budget": 18000
+    },
+    {
+      "name": "profile_groq4",
+      "enabled": true,
+      "url": "https://api.groq.com/openai",
+      "model": "groq/compound",
+      "reasoning_effort": null,
+      "structured": null,
+      "api_key_env": "GROQ_API_KEY_4",
+      "dedicated": true,
+      "request_char_budget": 18000
+    },
+    {
+      "name": "profile_groq5",
+      "enabled": true,
+      "url": "https://api.groq.com/openai",
+      "model": "groq/compound",
+      "reasoning_effort": null,
+      "structured": null,
+      "api_key_env": "GROQ_API_KEY_5",
+      "dedicated": true,
+      "request_char_budget": 18000
+    },
+    {
+      "name": "profile_groq6",
+      "enabled": true,
+      "url": "https://api.groq.com/openai",
+      "model": "groq/compound",
+      "reasoning_effort": null,
+      "structured": null,
+      "api_key_env": "GROQ_API_KEY_6",
+      "dedicated": true,
+      "request_char_budget": 18000
+    },
+    {
+      "name": "profile_fallback_gemini1",
       "enabled": true,
       "url": "https://generativelanguage.googleapis.com/v1beta/openai",
       "model": "gemini-3.1-flash-lite",
       "reasoning_effort": null,
       "structured": null,
-      "api_key_env": "GEMINI_API_KEY_3",
+      "api_key_env": "GEMINI_API_KEY_5",
       "dedicated": true,
       "request_char_budget": 12000
     },
     {
-      "name": "profile2",
+      "name": "profile_fallback_gemini2",
       "enabled": true,
       "url": "https://generativelanguage.googleapis.com/v1beta/openai",
       "model": "gemini-3.1-flash-lite",
       "reasoning_effort": null,
       "structured": null,
-      "api_key_env": "GEMINI_API_KEY_4",
+      "api_key_env": "GEMINI_API_KEY_6",
       "dedicated": true,
       "request_char_budget": 12000
     },
     {
-      "name": "profile_fallback",
+      "name": "profile_fallback_openrouter",
       "enabled": true,
       "url": "https://openrouter.ai/api",
       "model": "mistralai/mistral-small-2603",
       "reasoning_effort": null,
       "structured": null,
-      "api_key_env": "OPENROUTER_API_KEY",
+      "api_key_env": "OPENROUTER_API_KEY_2",
       "dedicated": true,
       "request_char_budget": 12000
     }
