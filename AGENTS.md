@@ -37,6 +37,7 @@ Before making architectural changes or continuing unfinished work, read, in orde
 3. `docs/wiki/reports/2026-09-07/BE_AWARE.md` — repository-specific rules, each classified as owner preference, operational constraint, invariant, experiment or compromise
 4. `docs/wiki/reports/2026-09-07/UNFINISHED_WORK.md` — open items U1–U12 with files, tests and risks
 5. `docs/wiki/reports/2026-09-07/DEPENDENCY_MAP.md` — which open item must precede which
+6. `docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-PLAN.md` — the **next-phase plan of record** (document semantic index + parent map + vocabulary bridge; slices S0–S16), with `docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-START-HERE.md` as its coding-agent hook. Current slice: **S0 done (register 11.129); S1 deterministic ParentSkeleton next.**
 
 The living bootstrap remains `docs/wiki/plans/CONTINUITY-REPORT.md` (updated in place); the dated folder is the snapshot it points to. A newer `docs/wiki/reports/<date>/` folder supersedes this one.
 

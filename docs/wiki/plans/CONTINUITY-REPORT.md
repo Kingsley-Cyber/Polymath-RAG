@@ -16,7 +16,19 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → `docs/wiki/reports/2026-09-07/README.md` (the dated handoff: be-aware rules, unfinished work, dependency map) → `CLAUDE.md` → the two newest work-logs.
+Read order: this file → `docs/wiki/reports/2026-09-07/README.md` (the dated handoff: be-aware rules, unfinished work, dependency map) → **`docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-START-HERE.md` → `docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-PLAN.md`** (the next-phase plan of record) → `CLAUDE.md` → the two newest work-logs.
+
+## Latest checkpoint (2026-09-07 — NEXT-PHASE PLAN ADMITTED: DOCUMENT SEMANTIC INDEX)
+
+**START HERE (the ladder a fresh or context-compacted session follows):**
+
+- **repository truth** — branch `architecture/evidence-first-v5`; the phase began at `HEAD = fa49448` (the plan's planning snapshot). Guards pass under `.venv/bin/python` (or `python3.11`): `agent_preflight` needs Python ≥ 3.11 (`tomllib`); the Mac default `python3` is 3.9.6 and crashes it — not a regression. Never trust this file for live fleet state (query Postgres per §0).
+- **finalized next-phase plan** — `docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-PLAN.md` (start-here hook: `...-START-HERE.md`). Owner plan of record. Build a two-scale semantic index: ONE global document profile (vNext: adds research surfaces LATENT-PATTERN / ANCHOR / RECALLQ / TENSION / BRIDGE / INVERSION / BOUNDARY) + ONE deterministic `ParentSkeleton` and compact routing `MAP` per eligible parent, produced in **packed** Compound-Mini calls (never one LLM call per parent; exact identifiers extracted in Python) + a deterministic **Vocabulary Bridge** (no extra LLM). Postgres proves completeness; Qdrant is projection. Retrieval: document → parent map → child evidence. **Do NOT build Wildcard.**
+- **current implementation slice** — **S0 (plan/bootstrap admission) DONE** (register 11.129, this checkpoint). **S1 (deterministic ParentSkeleton) is the next executable slice.** Slice ledger: S0…S16 in the plan §40.
+- **completed dependencies** — DOCUMENT-PROFILE-V1 steps 1–5 are LIVE (the plan's global-profile scale; see the checkpoint below). The plan extends that scale and adds the parent-map scale + vocabulary bridge on top; nothing about it is restarted.
+- **measured results (do not overwrite with guesses)** — Compound Mini frozen 40-parent stress test: 40/40 aliases, 0 missing/invented/duplicate, injection-resistant, identifiers preserved; input 135.7 tok/parent, **billed completion 87 tok/parent** (visible ~29 — use billed for capacity), latency 8.1 s, finish_reason stop, tools disabled. Cinema profile self-gate: top-1 85.8 %, top-3 99.5 %, median rank 1.
+- **unfinished work** — S1–S16 (plan §40). The old handoff's U1 (profile retrieval lane) folds into **S12**; U2 (QUERY_READY flip) into **S15**. Full inventory: the plan + `docs/wiki/reports/2026-09-07/UNFINISHED_WORK.md`.
+- **exact next action** — re-read plan §40 slice **S1**, admit it in a work-log, then build `shared/polymath_shared/document_profile/parent_skeleton.py` + `tests/determinism/test_parent_skeleton.py` (pure Python: aliases, DF/TF-IDF-like key terms, salient extractive sentence, deterministic exact identifiers, furniture eligibility, hashes; 1,000-parent fixture deterministic and cheap; no API).
 
 ## Latest checkpoint (2026-09-07 — DOCUMENT PROFILES LIVE + CHAT RELIEF + CORPUS-AWARE COMPILER)
 

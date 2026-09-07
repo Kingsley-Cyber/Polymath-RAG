@@ -13,6 +13,22 @@ Do not begin implementation based solely on the user's newest request.
 
 This repository contains architectural decisions and unfinished dependency chains that are not obvious from isolated source files: a document is served by five stores that must agree, six supervised worker kinds that restart themselves when you edit shared code, and a retrieval pipeline whose composition rules are the owner's design rather than engineering defaults. Read the documents below in order before modifying architecture. Then re-read `docs/wiki/plans/CONTINUITY-REPORT.md`, which remains the living bootstrap that this dated folder snapshots.
 
+## Next-phase plan of record (admitted 2026-09-07, slice S0)
+
+The owner's finalized next-phase plan is installed and is the plan of record for
+the document-semantic-index phase:
+
+- **`docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-PLAN.md`** — two-scale semantic
+  index (global document profile vNext + deterministic `ParentSkeleton` and
+  compact routing `MAP` per eligible parent in packed Compound-Mini calls +
+  deterministic Vocabulary Bridge). Slices S0–S16 in §40.
+- **`docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-START-HERE.md`** — the coding-agent
+  bootstrap hook for it.
+
+State: **S0 (admission) DONE (register 11.129); S1 (deterministic ParentSkeleton)
+is the next executable slice.** The U1–U12 inventory below still holds — U1 folds
+into slice S12, U2 into slice S15; S1–S11/S13/S14 are the new prerequisite slices.
+
 ## Reading sequence
 
 | # | Document | Read it to answer |
@@ -37,6 +53,7 @@ Earlier drafts written the same day — [BE-AWARE-REPORT.md](BE-AWARE-REPORT.md)
 | What does the owner want next, in what order? | `docs/wiki/plans/OWNER-BACKLOG.md` and `IMPLEMENTATION-TODO-2026-09-07.md`; ordered in NEXT_ACTIONS.md |
 | Is this rule a preference or a constraint? | BE_AWARE.md (classification per item) |
 | What is the plan of record for the profile work? | `docs/wiki/plans/DOCUMENT-PROFILE-V1.md` (owner's architecture, verbatim invariants) |
+| What is the plan of record for the NEXT phase (document semantic index + parent map + vocabulary bridge)? | `docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-PLAN.md` (slices S0–S16); hook `...-START-HERE.md` |
 | What happened, with numbers? | `docs/wiki/work-log/2026-09-07-*.md` (append-only) |
 | Which files may exist in the repo? | `scripts/scaffold_polymath_v4.py` (declarations) + `scripts/README.md` (script registry) — `scripts/repo_guard.py` enforces both |
 | How do agents operate here? | `AGENTS.md` (contract), `CLAUDE.md` (working style) |

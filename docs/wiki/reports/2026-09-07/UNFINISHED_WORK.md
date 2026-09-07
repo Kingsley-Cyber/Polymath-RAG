@@ -10,6 +10,20 @@ supersedes: UNFINISHED-WORK.md
 
 Ordering: U1 → U2 are the architecture's critical path; U3–U6 are reliability items that the critical path touches; U7+ are owner decisions and improvements. See `DEPENDENCY_MAP.md` for the graph.
 
+> **Next-phase plan admitted 2026-09-07 (slice S0, register 11.129).** The owner's
+> plan of record `docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-PLAN.md` (slices S0–S16)
+> extends this critical path. **U1** (DOCUMENT_PROFILE retrieval lane) folds into
+> its slice **S12** (runtime profile/map lane); **U2** (QUERY_READY flip) into its
+> slice **S15** (QUERY_READY promotion, owner go). The plan inserts new prerequisite
+> slices before them: **S1** deterministic ParentSkeleton → S2 map compiler → S3
+> token packer → S4 SQL durability → S5 profile vNext + fingerprint → S6 combined
+> one-call canary → S7 shared Groq budget → S8 `doc_profile` refactor → S9
+> `doc_parent_map` worker → S10 `project_doc_profile` → S11 shadow verifier → S12 →
+> S13 Vocabulary Bridge → S14 quality gate + backfill → S15 → S16 old-parent
+> ablation. Execute in that dependency order; the plan §40 is authoritative, this
+> inventory is the reliability/owner-decision context around it. **Current slice:
+> S0 DONE; S1 next.**
+
 ---
 
 ```text

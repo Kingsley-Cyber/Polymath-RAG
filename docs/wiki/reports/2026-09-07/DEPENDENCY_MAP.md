@@ -7,6 +7,16 @@ status: accepted
 
 # DEPENDENCY MAP — unfinished work (2026-09-07)
 
+> **Next-phase plan admitted 2026-09-07 (S0, register 11.129):**
+> `docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-PLAN.md` extends the profile
+> critical path with a parent-map scale and a vocabulary bridge. Slice order
+> S1 ParentSkeleton → S2 map compiler → S3 packer → S4 SQL → S5 profile vNext →
+> S6 one-call canary → S7 shared budget → S8 `doc_profile` refactor → S9
+> `doc_parent_map` worker → S10 projection → S11 verifier → **S12 (= old U1)**
+> runtime lane → S13 vocabulary bridge → S14 backfill → **S15 (= old U2)**
+> QUERY_READY (owner go) → S16 ablation. `ParentSkeleton` (S1) has no blockers.
+> The graph below is the chat-side/profile reliability context around that path.
+
 ## Human-readable
 
 The document profile chain is the architecture's critical path. Its first five steps are done: the compiler produces the representation (`compiler.py` → `representations`), the worker projects it into the profile collection with `doc_id` in the payload, and the backfill populated cinema. **Step 6 (U1)** consumes exactly that payload: the lane resolves documents by `doc_id` and reads the same named vectors the gate script reads. Therefore a compiler or projection change (a new surface, a renamed vector) breaks the lane even when lane code is untouched — bump `COMPILER_VERSION` / `PROJECTION_VERSION` and re-backfill instead of editing in place. **Phase B (U2)** must wait for U1 because gating readiness on a representation that retrieval does not yet use would only make documents un-serveable; it also needs every corpus backfilled and the pacing (U5) proven at that scale.
