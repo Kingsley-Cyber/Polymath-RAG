@@ -346,6 +346,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("scripts/probe_cloud_endpoints.py", "py", None),
     ("docs/wiki/plans/CONTINUITY-REPORT.md", "md", None),
     ("docs/wiki/plans/OWNER-BACKLOG.md", "md", None),
+    ("docs/wiki/plans/DOCUMENT-PROFILE-V1.md", "md", None),
     ("docs/wiki/plans/IMPLEMENTATION-TODO-2026-09-07.md", "md", None),
     ("docs/wiki/plans/RETRIEVAL-AUDIT-PRD.md", "md", None),
     ("docs/wiki/plans/MASTER-BUILD-SEQUENCE.md", "md", None),
@@ -367,6 +368,9 @@ TREE: list[tuple[str, str, str | None]] = [
     ("shared/polymath_shared/materializer.py", "py", None),
     ("shared/polymath_shared/dedup.py", "py", None),
     ("shared/polymath_shared/compiler_context.py", "py", None),
+    ("shared/polymath_shared/document_profile/__init__.py", "py", None),
+    ("shared/polymath_shared/document_profile/compiler.py", "py", None),
+    ("shared/polymath_shared/document_profile/prompt.py", "py", None),
     ("shared/polymath_shared/embedding_contracts.py", "py", None),
 
     # stores: Neo4j uniqueness constraints + document profile columns
@@ -1726,6 +1730,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_wildcard_finish.py", "py", None),
     ("tests/determinism/test_near_duplicate_guard.py", "py", None),
     ("tests/determinism/test_compiler_context.py", "py", None),
+    ("tests/determinism/test_document_profile_compiler.py", "py", None),
     ("docs/wiki/work-log/2026-09-06-chat-model-catalog.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-chat-ui-surgical.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-reading-hierarchy.md", "md", None),
