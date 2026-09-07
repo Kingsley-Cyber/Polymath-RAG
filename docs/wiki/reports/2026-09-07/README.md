@@ -25,11 +25,14 @@ the document-semantic-index phase:
 - **`docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-START-HERE.md`** — the coding-agent
   bootstrap hook for it.
 
-State: the deterministic map-production core is built — **S0 (11.129), S1
-ParentSkeleton (11.130), S2 parent-map compiler (11.131), S3 token packer
-(11.132) all DONE; S4 (SQL durability) is the next executable slice.** The
-U1–U12 inventory below still holds — U1 folds into slice S12, U2 into slice S15;
-S4–S11/S13/S14 are the remaining prerequisite slices.
+State: the deterministic core + persistence + Groq policy are built — **S0
+(11.129), S1 ParentSkeleton (11.130), S2 map compiler (11.131), S3 token packer
+(11.132), a corrective checkpoint (11.133), GROQ-ROUTING-POLICY-V1 + router core
+(11.134), and S4 SQL durability (11.135) all DONE; S5 (profile vNext +
+fingerprint) is the next executable slice.** The U1–U12 inventory below still
+holds — U1 folds into slice S12, U2 into slice S15; S5–S11/S13/S14 remain, and
+the Groq live wiring + reindex canary are gated (they touch fleet config +
+provider spend).
 
 ## Reading sequence
 

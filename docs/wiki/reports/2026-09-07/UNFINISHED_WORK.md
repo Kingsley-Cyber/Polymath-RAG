@@ -22,7 +22,7 @@ Ordering: U1 → U2 are the architecture's critical path; U3–U6 are reliabilit
 > S13 Vocabulary Bridge → S14 quality gate + backfill → S15 → S16 old-parent
 > ablation. Execute in that dependency order; the plan §40 is authoritative, this
 > inventory is the reliability/owner-decision context around it. **Current slice:
-> S0-S3 DONE (11.129-11.132: admission, ParentSkeleton, map compiler, token packer — the deterministic map-production core); S4 SQL durability next.**
+> S0-S4 DONE (11.129-11.135: admission, ParentSkeleton, map compiler, token packer, corrective checkpoint, Groq routing policy + router core, SQL durability); S5 profile vNext + fingerprint next. Groq live wiring + reindex canary gated.**
 
 ---
 
