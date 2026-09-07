@@ -26,8 +26,9 @@ the document-semantic-index phase:
   bootstrap hook for it.
 
 State: **S0 (admission) DONE (register 11.129); S1 (deterministic ParentSkeleton)
-is the next executable slice.** The U1–U12 inventory below still holds — U1 folds
-into slice S12, U2 into slice S15; S1–S11/S13/S14 are the new prerequisite slices.
+DONE (register 11.130); S2 (map compiler) is the next executable slice.** The
+U1–U12 inventory below still holds — U1 folds into slice S12, U2 into slice S15;
+S2–S11/S13/S14 are the remaining prerequisite slices.
 
 ## Reading sequence
 

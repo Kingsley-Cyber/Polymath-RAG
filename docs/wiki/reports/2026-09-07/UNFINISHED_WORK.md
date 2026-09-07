@@ -22,7 +22,7 @@ Ordering: U1 → U2 are the architecture's critical path; U3–U6 are reliabilit
 > S13 Vocabulary Bridge → S14 quality gate + backfill → S15 → S16 old-parent
 > ablation. Execute in that dependency order; the plan §40 is authoritative, this
 > inventory is the reliability/owner-decision context around it. **Current slice:
-> S0 DONE; S1 next.**
+> S0 DONE (11.129), S1 deterministic ParentSkeleton DONE (11.130); S2 map compiler next.**
 
 ---
 
