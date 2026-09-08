@@ -1389,6 +1389,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("scripts/profile_vnext_selfretrieval_canary.py", "py", None),
     ("scripts/parent_map_canary.py", "py", None),
     ("scripts/parent_map_projection_canary.py", "py", None),
+    ("scripts/parent_map_backfill.py", "py", None),
     # shared
     ("shared/polymath_shared/acceptance_harness.py", "py", None),
     ("shared/polymath_shared/blob_spool.py", "py", None),
@@ -1841,6 +1842,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-07-vnext-profile-qualified-enabled.md", "md", None),
     ("docs/wiki/work-log/2026-09-07-parent-map-live-activation.md", "md", None),
     ("docs/wiki/work-log/2026-09-07-parent-map-projection-canary.md", "md", None),
+    ("docs/wiki/work-log/2026-09-07-parent-map-controlled-backfill.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-style-bold-retire.md", "md", None),
     ("docs/wiki/experiments/chat-parity-p1f-first.json", "json", None),
     ("docs/wiki/work-log/2026-09-06-p1e-mode-recomposition.md", "md", None),
@@ -2011,6 +2013,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/profile-vnext-selfretrieval-2026-09-07.json", "json", None),
     ("docs/wiki/experiments/parent-map-canary-2026-09-07.json", "json", None),
     ("docs/wiki/experiments/parent-map-projection-canary-2026-09-07.json", "json", None),
+    ("docs/wiki/experiments/parent-map-backfill-2026-09-07.json", "json", None),
     ("eval/fixtures/chat_conversations/video_prompt_final.json", "json", None),
     ("docs/wiki/plans/CHAT-QUERY-COMPILER-PLAN.md", "md", None),
     ("docs/wiki/work-log/2026-09-04-document-scoped-retrieve.md", "md", None),

@@ -1,0 +1,85 @@
+{
+ "summary": {
+  "gate": "parent-map-backfill-v1",
+  "corpus": "cinema",
+  "docs": 8,
+  "complete_docs": 4,
+  "wall_s": 852.2,
+  "lane_spread": {
+   "map_groq1": 30,
+   "map_groq2": 1,
+   "map_groq3": 1,
+   "map_groq4": 2,
+   "map_groq5": 2,
+   "map_groq6": 2
+  },
+  "distinct_accounts_used": 6,
+  "PASS": false
+ },
+ "docs": [
+  {
+   "doc": "A Circumplex Model of Affect.md",
+   "eligible": 20,
+   "mapped": 20,
+   "complete": true,
+   "unresolved": 0,
+   "projected": 20
+  },
+  {
+   "doc": "A Multistage Pipeline for Character-Stable.m",
+   "eligible": 11,
+   "mapped": 11,
+   "complete": true,
+   "unresolved": 0,
+   "projected": 11
+  },
+  {
+   "doc": "Affective Movement Generation using Laban Ef",
+   "eligible": 19,
+   "mapped": 19,
+   "complete": true,
+   "unresolved": 0,
+   "projected": 19
+  },
+  {
+   "doc": "Anatomy for Sculptors.md",
+   "eligible": 71,
+   "mapped": 11,
+   "complete": false,
+   "unresolved": 60,
+   "projected": 11
+  },
+  {
+   "doc": "Bayesian reasoning for Laban Movement Analys",
+   "eligible": 23,
+   "mapped": 23,
+   "complete": true,
+   "unresolved": 0,
+   "projected": 23
+  },
+  {
+   "doc": "Blain Brown - Cinematography - Theory and Pr",
+   "eligible": 264,
+   "mapped": 88,
+   "complete": false,
+   "unresolved": 176,
+   "projected": 88
+  },
+  {
+   "doc": "Breakthrough Advertising.md",
+   "eligible": 90,
+   "mapped": 0,
+   "complete": false,
+   "unresolved": 90,
+   "projected": null
+  },
+  {
+   "doc": "Bruce Block - The Visual Story (2007).md",
+   "eligible": 297,
+   "mapped": 0,
+   "complete": false,
+   "unresolved": 297,
+   "projected": null
+  }
+ ]
+}
