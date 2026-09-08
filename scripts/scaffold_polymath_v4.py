@@ -401,6 +401,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("shared/polymath_shared/document_profile/map_compiler.py", "py", None),
     ("shared/polymath_shared/document_profile/map_batches.py", "py", None),
     ("shared/polymath_shared/document_profile/groq_router.py", "py", None),
+    ("shared/polymath_shared/document_profile/fingerprint.py", "py", None),
     ("shared/polymath_shared/embedding_contracts.py", "py", None),
 
     # stores: Neo4j uniqueness constraints + document profile columns
@@ -1771,6 +1772,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_parent_map_compiler.py", "py", None),
     ("tests/determinism/test_map_batches.py", "py", None),
     ("tests/determinism/test_groq_router.py", "py", None),
+    ("tests/determinism/test_document_fingerprint.py", "py", None),
     ("tests/determinism/test_document_parent_maps_store.py", "py", None),
     ("docs/wiki/work-log/2026-09-06-chat-model-catalog.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-chat-ui-surgical.md", "md", None),
@@ -1805,6 +1807,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-07-live-map-contract-canary.md", "md", None),
     ("docs/wiki/work-log/2026-09-07-parent-skeleton-lead-excerpt.md", "md", None),
     ("docs/wiki/work-log/2026-09-07-retrieval-migration-ledger.md", "md", None),
+    ("docs/wiki/work-log/2026-09-07-profile-vnext-fingerprint.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-style-bold-retire.md", "md", None),
     ("docs/wiki/experiments/chat-parity-p1f-first.json", "json", None),
     ("docs/wiki/work-log/2026-09-06-p1e-mode-recomposition.md", "md", None),

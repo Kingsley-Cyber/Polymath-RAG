@@ -41,7 +41,7 @@ HEAD `93a16c0` (code HEAD `0962f83` + docs finalize), clean, in sync with
 | S4 | Additive SQL ledgers | repo S4 | **LANDED** | migration `0054_document_parent_maps.sql`; register 11.135; 5 durability pins on dev PG |
 | S5 | Durable map worker / manifests | repo S9 | **NOT STARTED** | substrate exists (0054); needs S7 Groq budget before it can run at scale |
 | S6 | Parent-map Qdrant projector | repo S10 | **NOT STARTED** | additive contract-named collection `polymath_document_parent_maps_<contract>` |
-| S7 | Global profile vNext independence | repo S5 | **IN PROGRESS** | closes **GAP-04**: `workers/workers/doc_profile_worker.py:102` reads `document_summaries.major_concepts`. Building deterministic `shared/polymath_shared/document_profile/fingerprint.py` now (self-sufficient vocabulary surface). The live switch + 500/1000/1500/2000 quality canary is **GATED** (spend). |
+| S7 | Global profile vNext independence | repo S5 | **IMPLEMENTED** | deterministic `shared/polymath_shared/document_profile/fingerprint.py` built + 17 determinism pins (register 11.139): adaptive 500-2000, six surfaces (coverage largest, full-structure, no first-400 bias), SELF-SUFFICIENT source-derived vocabulary — removes the vNext profile's NEED for `document_summaries.major_concepts`. GAP-04's live reader `workers/workers/doc_profile_worker.py:102` is dropped in the S8 worker refactor. **VERIFIED** pending the live switch + 500/1000/1500/2000 quality canary, which stays **GATED** (provider spend). |
 | S8 | Shadow runtime route | repo S12 | **NOT STARTED** | global profile → parent maps → child deepening as shadow |
 | S9 | Dual-read feature flag | repo S12 | **NOT STARTED** | Hybrid consumes new candidates; direct child lane stays unrestricted |
 | S10 | Query-compiler title-context bridge | (ui.py `_compiler_titles`) | **NOT STARTED** | **GAP-02** ablation; profile nominations into corpus title context |
@@ -66,10 +66,17 @@ legacy generation OR a complete qualified vNext generation, never a mixture
 Wildcard, projection receipts, purge/rebuild paths, caches, and the current
 `QUERY_READY` semantics.
 
-**Exact next executable dependency:** profile vNext fingerprint (§S7 / GAP-04) —
-`shared/polymath_shared/document_profile/fingerprint.py` — deterministic, additive,
-no spend. Then the additive profile-atom output contract (research-index tags,
-tolerant parsing) with its qualification canary GATED.
+**Exact next executable dependency (updated 2026-09-07, register 11.139):** the
+profile vNext fingerprint (§S7 / GAP-04) is IMPLEMENTED
+(`shared/polymath_shared/document_profile/fingerprint.py`, 17 pins). The next
+additive, no-spend slices, in dependency order: (a) the profile-atom OUTPUT contract —
+the research-index tags (`RESEARCH_INDEX_TAGS`) in a vNext prompt + a
+backward-compatible tolerant compiler extension (version-bumped, parsing-only; the
+live default is unchanged and the quality switch stays canary-GATED); then (b) the
+S9 `doc_parent_map` worker CODE, (c) the parent-map Qdrant projector + contract-named
+collection, and (d) the report-only vNext readiness verifier — each buildable and
+determinism/skip-testable without provider spend or fleet mutation. GATED at the
+first live switch: the S5 quality canary, S7 Groq live wiring, backfill, cutover.
 
 ---
 
