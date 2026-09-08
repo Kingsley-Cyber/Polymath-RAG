@@ -116,6 +116,7 @@ _INT_KNOBS = ("rerank_max", "synthesis_max", "global_dense_k", "global_sparse_k"
               "dualread_enabled", "dualread_profile_docs", "dualread_map_k",                            # S9 dual-read (lane E)
               "dualread_max_parents", "dualread_children_per_parent", "dualread_budget_ms",             # POLYMATH_CHAT_DUALREAD_*
               "hierarchy_route_documents",                                                              # SECTION-ROUTING-V1
+              "seealso_fanout_enabled", "seealso_fanout_atoms", "seealso_fanout_children",              # P5 fan-out (lane G)
               # EVIDENCE-DIET-V1 step 3: POLYMATH_CHAT_RERANK_ROUND_ROBIN (0/1), POLYMATH_CHAT_RERANK_DOC_CAP, POLYMATH_CHAT_RERANK_MAX_FAIR
               "rerank_round_robin", "rerank_doc_cap", "rerank_max_fair")
 _FLOAT_KNOBS = ("embed_deadline_s", "lane_deadline_s", "rerank_deadline_s",     # P1.d wall-clock budgets
@@ -270,6 +271,32 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                     rows.append(r)
             return rows
 
+        def fanout_search(qv) -> list[dict]:
+            # P5 SEEALSO/BRIDGE/ANCHOR fan-out (§20–§23, TERM branch): the intent's RELATIONAL atom
+            # texts ("look over here" pointers) probe ORIGINAL children — GLOBAL dense child search,
+            # so it is INDEPENDENT of parent-MAP coverage. The atom only ROUTES (never evidence,
+            # §63/§64); source children PROVE; the cross-encoder still judges. Zero cost when off.
+            from polymath_shared.document_profile import profile_atom_projection as _pap
+            from polymath_shared.document_profile.profile_atom import RELATIONAL_KINDS as _REL
+            from polymath_shared.embedding_contracts import active_contract as _ac
+            kinds = tuple(k for k in (getattr(budget, "atom_kinds", ()) or ()) if k in _REL)
+            if not kinds:
+                return []
+            cid = _ac().contract_id
+            atoms = [a for a in _pap.search_atoms(client, _pap.collection_name(cid), qv, kinds,
+                                                  k=int(budget.seealso_fanout_atoms)) if a.get("text")]
+            if not atoms:
+                return []
+            rows: list[dict] = []
+            for atom, tv in zip(atoms, _embed_queries([a["text"] for a in atoms])):
+                for r in searcher._search(collection, list(tv),
+                                          {"representation_kind": "routing_child", "corpus_id": corpus_id},
+                                          limit=int(budget.seealso_fanout_children)):
+                    r = dict(r)
+                    r["fanout_atom"] = atom["text"]
+                    rows.append(r)
+            return rows
+
         def sparse_search(top_k: int, sparse_query=None) -> list[dict]:
             return searcher.sparse_search(collection, sparse_query if sparse_query is not None else sparse_q,
                                           {"representation_kind": "routing_child", "corpus_id": corpus_id}, limit=top_k)
@@ -314,8 +341,8 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
             on_context(ctx, pool)          # P1.e: the vector exists — a frontier may start beside the dense lanes
         # STAGES 2–3: concurrent lanes under `lane_deadline_s` → union with provenance (the engine)
         result = retrieve_candidates(ctx, budget, dense_search=dense_search, sparse_search=sparse_search, latent_search=latent_search,
-                                     dualread_search=dualread_search, lift_search=lift_search, region_lookup=_region_lookup,
-                                     subqueries=subs, executor=pool, prestarted=prestarted)
+                                     dualread_search=dualread_search, lift_search=lift_search, fanout_search=fanout_search,
+                                     region_lookup=_region_lookup, subqueries=subs, executor=pool, prestarted=prestarted)
 
         # STAGE 4: exactly ONE judge call per turn, under `rerank_deadline_s`. Past it the turn proceeds in
         # fusion order (a complete, correct answer — the judge only reorders) and says so; the late sidecar

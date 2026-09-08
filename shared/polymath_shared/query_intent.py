@@ -132,6 +132,7 @@ class IntentPolicy:
     resolution_lift: str = "normal"           # off | normal | high | very_high (§10/§33, P3)
     graph: str = "off"                        # off | conditional | auto | strong (§37/§38, P6)
     atom_kinds: tuple[str, ...] = ()          # R4 PROFILE_ATOM kinds this intent searches (§33)
+    seealso_fanout: bool = False              # P5 fan-out (lane G): probe RELATIONAL atom texts as children (§20–§23)
 
 
 #: canonical atom-kind groupings (mirror profile_atom.py; inlined to avoid an import cycle).
@@ -143,13 +144,13 @@ INTENT_POLICY: dict[str, IntentPolicy] = {
     "EXACT":        IntentPolicy(dualread=True,  micro_latent=False, breadth="SINGLE_OK",      resolution_lift="high",      graph="off",         atom_kinds=()),
     "DEFINITION":   IntentPolicy(dualread=True,  micro_latent=False, breadth="SINGLE_OK",      resolution_lift="high",      graph="off",         atom_kinds=("CONCEPT", "THEORY")),
     "MECHANISM":    IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="high",      graph="conditional", atom_kinds=_MECH),
-    "RELATIONSHIP": IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="high",      graph="auto",        atom_kinds=("CONCEPT", "THEORY", "SEEALSO", "BRIDGE", "ANCHOR", "TENSION")),
+    "RELATIONSHIP": IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="high",      graph="auto",        atom_kinds=("CONCEPT", "THEORY", "SEEALSO", "BRIDGE", "ANCHOR", "TENSION"), seealso_fanout=True),
     "COMPARISON":   IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_REQUIRED",  resolution_lift="high",      graph="conditional", atom_kinds=("CONCEPT", "BOUNDARY", "TENSION", "INVERSION")),
     "PROCEDURE":    IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="high",      graph="conditional", atom_kinds=("THEORY", "BOUNDARY", "INVERSION", "SEEALSO")),
     "APPLICATION":  IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="very_high", graph="conditional", atom_kinds=("THEORY", "CONCEPT", "BOUNDARY", "INVERSION", "SEEALSO")),
     "SYNTHESIS":    IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_REQUIRED",  resolution_lift="normal",    graph="conditional", atom_kinds=("THEORY", "CONCEPT", "BOUNDARY", "TENSION")),
     "RECALL":       IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="normal",    graph="off",         atom_kinds=("RECALLQ", "CONCEPT", "LATENT_PATTERN", "SEEALSO")),
-    "EXPLORATORY":  IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="normal",    graph="conditional", atom_kinds=_ALL_ATOMS),
+    "EXPLORATORY":  IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="normal",    graph="conditional", atom_kinds=_ALL_ATOMS, seealso_fanout=True),
 }
 
 
@@ -173,6 +174,8 @@ def apply_intent_policy(intent: str, budget):
         overrides["atom_kinds"] = p.atom_kinds
     if hasattr(budget, "resolution_lift_enabled"):
         overrides["resolution_lift_enabled"] = p.resolution_lift != "off"   # R6 precision lane per intent
+    if hasattr(budget, "seealso_fanout_enabled"):
+        overrides["seealso_fanout_enabled"] = p.seealso_fanout              # P5 fan-out lane per intent (relational/exploratory)
     # P9 task-conditioned breadth (§48/§49/§61): SINGLE_OK (exact/definition) lets one excellent
     # source dominate — turn OFF the doc-fair round-robin; MULTI_* keep it on (evidence-earned
     # diversity, never a hard quota — the composer still fills remaining seats in fusion order).

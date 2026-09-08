@@ -87,7 +87,7 @@ def test_every_candidate_carries_lane_provenance_and_multi_lane_chunks_fuse_once
     # REGION-EXCLUSION-V1 (2026-09-07): a noisy role is dropped at the union and receipted — demotion alone let a
     # table-of-contents chunk take a document-fair judged seat and become S1 when the judge missed its deadline
     assert "d2-noise" not in ids and res.trace["noise_reasons"] == {"region:front_matter": 1} and res.trace["noise_dropped"] == 1
-    assert res.trace["funnel_lanes"].keys() == {"hierarchical", "global_dense_child", "global_sparse_child", "latent_rescue", "dualread", "resolution_lift"}   # lanes D/E/F receipted (empty when off)
+    assert res.trace["funnel_lanes"].keys() == {"hierarchical", "global_dense_child", "global_sparse_child", "latent_rescue", "dualread", "resolution_lift", "seealso_fanout"}   # lanes D/E/F/G receipted (empty when off)
     assert res.trace["funnel_lanes"]["latent_rescue"] == [] and res.trace["lane_sizes"]["latent_rescue"] == 0
     assert res.trace["funnel_union"] == [c.chunk_id for c in res.union] and res.trace["plan"] == "chat-retrieval-v2"
     assert res.trace["multi_lane"] >= 1 and res.degraded == []
@@ -914,3 +914,42 @@ def test_synthesis_role_maps_arrivals_to_roles():
     assert ce.synthesis_role([ce.ARRIVAL_GRAPH_DEST]) == "RELATIONAL"
     assert ce.synthesis_role([]) == "DIRECT"
     assert set(ce.SYNTHESIS_ROLES) == {"DIRECT", "PRECISION", "RELATIONAL", "LATENT"}
+
+
+def test_seealso_fanout_lane_g_adds_relational_atom_children_as_latent():
+    # P5 fan-out (lane G): a RELATIONAL atom's text probes ORIGINAL children; they enter the union
+    # tagged LANE_G (LATENT role), additive + unioned last, receipted — and never demote a DIRECT
+    # answer they also arrive through (§47).
+    fake = Fake()
+    fan_rows = [_row(CHILD, 0, "d3", parent="d3-p1", chunk="d3-fanout", text="adjacent knowledge via SEEALSO"),
+                _row(CHILD, 1, "d2", parent="d2-p0", chunk="d2-p0-k0")]   # also a dense winner -> fuses, multi-lane
+    calls = []
+
+    def fanout(qv):
+        calls.append(tuple(qv))
+        return fan_rows
+
+    b = ce.CandidateBudget(seealso_fanout_enabled=True, atom_kinds=("SEEALSO",))
+    res = ce.retrieve_candidates(_ctx(), b, dense_search=fake.dense, sparse_search=fake.sparse, fanout_search=fanout)
+    ids = [c.chunk_id for c in res.union]
+    assert calls and "d3-fanout" in ids
+    g = next(c for c in res.union if c.chunk_id == "d3-fanout")
+    assert ce.LANE_G in g.arrivals and ce.synthesis_role(g.arrivals) == "LATENT"
+    assert res.trace["seealso_fanout"]["enabled"] and res.trace["seealso_fanout"]["candidates"] >= 1
+    assert res.trace["lane_sizes"]["seealso_fanout"] >= 1
+    fused = next(c for c in res.union if c.chunk_id == "d2-p0-k0")
+    assert ce.LANE_G in fused.arrivals and ce.synthesis_role(fused.arrivals) == "DIRECT"   # fan-out never demotes a direct answer
+
+
+def test_seealso_fanout_is_off_by_default_and_never_invokes_the_probe():
+    fake = Fake()
+    called = []
+
+    def fanout(qv):
+        called.append(qv)
+        return [_row(CHILD, 0, "d3", chunk="d3-fanout")]
+
+    res = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=fake.dense, sparse_search=fake.sparse, fanout_search=fanout)
+    assert called == []                                                # default off => the callback is never invoked
+    assert "d3-fanout" not in [c.chunk_id for c in res.union]
+    assert res.trace["seealso_fanout"] == {"enabled": False} and res.trace["lane_sizes"]["seealso_fanout"] == 0

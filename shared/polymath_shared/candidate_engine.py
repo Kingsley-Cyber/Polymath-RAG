@@ -80,6 +80,13 @@ LANE_E = "SHADOW_DUALREAD"
 #: probed as ORIGINAL children — an ADDITIVE precision lane. Vocabulary discovers, source
 #: chunks prove: the lifted terms only fetch children; the cross-encoder still judges.
 LANE_F = "RESOLUTION_LIFT"
+#: P5 SEEALSO/BRIDGE/ANCHOR fan-out (§20–§23), TERM/vocab-probe branch: a relational atom is a
+#: routing-inferred "look over here" pointer; its TEXT probes ORIGINAL children (global dense
+#: child search — coverage-INDEPENDENT of the parent-MAP). The children PROVE (source-attested),
+#: the atom only ROUTES (never evidence, §63/§64); the cross-encoder still judges. Additive,
+#: unioned LAST, default-off. Role = LATENT (it EXTENDS via adjacency; RELATIONAL stays reserved
+#: for Neo4j source-attested relationships, §46/§64).
+LANE_G = "SEEALSO_FANOUT"
 #: P7 graph-destination children (§39): a child reached by localizing a graph destination
 #: through the parent-MAP. Tagged so synthesis can mark it RELATIONAL (source-attested).
 ARRIVAL_GRAPH_DEST = "GRAPH_DEST"
@@ -90,7 +97,7 @@ LANES = (LANE_A, LANE_B, LANE_C)
 #: arrived via ANY direct answer lane is DIRECT (it answers); otherwise its role is its
 #: strongest non-direct contribution. §47 law: LATENT may never substitute for DIRECT.
 _DIRECT_LANES = frozenset({LANE_A, LANE_B, LANE_C})
-_LATENT_LANES = frozenset({LANE_D, LANE_E})
+_LATENT_LANES = frozenset({LANE_D, LANE_E, LANE_G})
 SYNTHESIS_ROLES = ("DIRECT", "PRECISION", "RELATIONAL", "LATENT")
 
 
@@ -263,6 +270,11 @@ class CandidateBudget:
     #: Default OFF ⇒ lane F empty ⇒ union byte-identical. Additive, unioned last.
     resolution_lift_enabled: bool = False
     resolution_lift_children: int = 6
+    #: P5 SEEALSO/BRIDGE fan-out (lane G): the intent's RELATIONAL atom texts probe ORIGINAL
+    #: children (§20–§23 TERM branch). Default OFF ⇒ lane G empty ⇒ union byte-identical.
+    seealso_fanout_enabled: bool = False
+    seealso_fanout_atoms: int = 6            # relational atoms probed per turn
+    seealso_fanout_children: int = 4         # children kept per probed atom
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -546,6 +558,7 @@ def retrieve_candidates(ctx: SearchContext, budget: CandidateBudget, *,
                         latent_search: Optional[Callable[..., list[dict]]] = None,
                         dualread_search: Optional[Callable[..., list[dict]]] = None,
                         lift_search: Optional[Callable[..., list[dict]]] = None,
+                        fanout_search: Optional[Callable[..., list[dict]]] = None,
                         region_lookup: Optional[Callable[[list[str]], dict]] = None,
                         subqueries: Iterable[SubQuery] = (),
                         executor: Optional[Executor] = None,
@@ -587,7 +600,7 @@ def retrieve_candidates(ctx: SearchContext, budget: CandidateBudget, *,
     try:
         return _retrieve_on(ctx, budget, pool, dense_search, sparse_search, region_lookup, subqueries, prestarted,
                             lanes, deadline, t_turn, timings, degraded, latent_search=latent_search,
-                            dualread_search=dualread_search, lift_search=lift_search)
+                            dualread_search=dualread_search, lift_search=lift_search, fanout_search=fanout_search)
     finally:
         if own_pool:
             pool.shutdown(wait=False, cancel_futures=True)      # never wait on a late lane; queued work is dropped
@@ -604,7 +617,8 @@ def _prestarted_future(value) -> Future:
 
 def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, dense_search, sparse_search, region_lookup,
                  subqueries: list[SubQuery], prestarted: dict, lanes: set, deadline: float, t_turn: float,
-                 timings: dict, degraded: list, latent_search=None, dualread_search=None, lift_search=None) -> CandidateResult:
+                 timings: dict, degraded: list, latent_search=None, dualread_search=None, lift_search=None,
+                 fanout_search=None) -> CandidateResult:
     LANE_DROPPED = "lane dropped this turn (deadline); the other lanes continue"
     SPARSE_DROPPED = "no exact-match lane this turn; dense lanes only"
 
@@ -826,6 +840,25 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
         lift_trace["candidates"] = len(lane_f)
         lift_trace["lane_ms"] = round((time.perf_counter() - t_lift) * 1000, 1)
 
+    # ---- lane G (P5 SEEALSO/BRIDGE fan-out): RELATIONAL atom texts probed as ORIGINAL children ----
+    lane_g: list[CandidateEvidence] = []
+    fanout_trace: dict = {"enabled": bool(budget.seealso_fanout_enabled and fanout_search is not None)}
+    if budget.seealso_fanout_enabled and fanout_search is not None:
+        t_fan = time.perf_counter()
+        try:
+            rows = fanout_search(list(ctx.qvec)) or []   # dense-child rows ({payload, score}) from the atom-text probes
+            cap = budget.seealso_fanout_atoms * budget.seealso_fanout_children
+            for h in _hits(REPRESENTATION_KIND_CHILD, rows, ctx.corpus_id, cap):
+                if h.chunk_id:
+                    lane_g.append(CandidateEvidence(chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name,
+                                                    text=h.text, arrivals=[LANE_G], query_ids=[ctx.query_id], dense_rank=h.rank,
+                                                    dense_score=h.raw_similarity, region_role=roles.get(h.chunk_id)))
+            fanout_trace["atoms"] = sorted({str(r.get("fanout_atom")) for r in rows if r.get("fanout_atom")})[:8]
+        except Exception as exc:  # noqa: BLE001 — the lane is optional; absence is receipted, never silent
+            fanout_trace["degraded"] = f"{type(exc).__name__}: {str(exc)[:80]}"
+        fanout_trace["candidates"] = len(lane_g)
+        fanout_trace["lane_ms"] = round((time.perf_counter() - t_fan) * 1000, 1)
+
     # ---- typed subqueries: lanes B + C only (§3.16), per-query provenance; started at T=0, gathered here ------
     aspects: dict[str, dict] = {ctx.query_id: {"type": "PRIMARY", "query": ctx.query, "weight": 1.0,
                                                "lanes": {LANE_A: len(lane_a), LANE_B: len(lane_b), LANE_C: len(lane_c)},
@@ -912,7 +945,7 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
     by_id: dict[str, CandidateEvidence] = {}
     for c in lane_a + lane_b + lane_c:
         c.query_scores = dict(c.query_scores)
-    for lane_items in (lane_a, lane_b, lane_c, lane_d, sub_items, lane_e, lane_f):
+    for lane_items in (lane_a, lane_b, lane_c, lane_d, sub_items, lane_e, lane_f, lane_g):
         for c in lane_items:
             cur = by_id.get(c.chunk_id)
             if cur is None:
@@ -1000,10 +1033,11 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
         "lane_sizes": {"document_summary": len(doc_lane), "section_summary": len(section_lane), "entity_card": len(card_lane),
                        "hierarchical_children": len(lane_a), "global_dense_child": len(lane_b), "global_sparse_child": len(lane_c),
                        "latent_rescue": len(lane_d), "dualread": len(lane_e), "resolution_lift": len(lane_f),
+                       "seealso_fanout": len(lane_g),
                        "union": len(union), "union_uncapped": len(union_ids_uncapped)},
         "funnel_lanes": {"hierarchical": [c.chunk_id for c in lane_a], "global_dense_child": [c.chunk_id for c in lane_b],
                          "latent_rescue": [c.chunk_id for c in lane_d], "dualread": [c.chunk_id for c in lane_e],
-                         "resolution_lift": [c.chunk_id for c in lane_f],
+                         "resolution_lift": [c.chunk_id for c in lane_f], "seealso_fanout": [c.chunk_id for c in lane_g],
                          "global_sparse_child": [c.chunk_id for c in lane_c]},
         "funnel_union": union_ids_uncapped,
         "document_candidates": [{"doc_id": d.doc_id, "aggregate_rank": d.aggregate_rank, "aggregate_score": round(d.aggregate_score, 6),
@@ -1023,6 +1057,7 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
     trace["latent"] = latent_trace
     trace["dualread"] = dualread_trace
     trace["resolution_lift"] = lift_trace
+    trace["seealso_fanout"] = fanout_trace
     trace["route_kinds"] = (["document_summary"] if budget.hierarchy_route_documents else []) + ["section_summary", "child", "entity_card"]
     trace["noise_dropped"] = len(noise_dropped)
     trace["noise_reasons"] = dict(Counter(w for _, w in noise_dropped))
