@@ -62,7 +62,12 @@ FINGERPRINT_BUILDER_VERSION = "fingerprint-v1"
 #: Adaptive budget bounds (plan §18). 2,000 is a ceiling, never required padding.
 PROFILE_CONTEXT_BUDGET_MIN = 500
 PROFILE_CONTEXT_BUDGET_MAX = 2000
-DEFAULT_BUDGET_TOKENS = 1000
+#: S5 canary-selected (docs/wiki/experiments/document-profile-vnext-canary-2026-09-07):
+#: on a 5-doc cinema cohort, field + research-tag coverage saturates at 500 and the
+#: no-first-400-bias gate is already met (late-structure ~0.82 — the coverage surface
+#: spans the whole document at every budget), while 1000-2000 nearly double the input
+#: cost for no quality gain (slight regression at 2000). The plateau is the floor.
+DEFAULT_BUDGET_TOKENS = 500
 
 #: Fractional allocation across the six surfaces. Fractions (not absolute tokens)
 #: so the same shape scales 500 -> 2,000. ``coverage`` is the largest share — the

@@ -195,6 +195,11 @@ def test_furniture_parents_excluded():
     assert fp.sources["body_parents"] == 1
 
 
+def test_default_budget_is_canary_selected_floor():
+    # S5 canary (2026-09-07) selected the 500-token floor as the quality plateau.
+    assert FP.DEFAULT_BUDGET_TOKENS == 500 == FP.PROFILE_CONTEXT_BUDGET_MIN
+
+
 def test_research_index_tag_vocabulary():
     assert FP.RESEARCH_INDEX_TAGS == (
         "LATENT-PATTERN", "ANCHOR", "RECALLQ", "TENSION", "BRIDGE", "INVERSION", "BOUNDARY")
