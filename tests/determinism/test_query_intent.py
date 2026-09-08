@@ -26,6 +26,7 @@ class _FakeBudget:
     dualread_enabled: bool = False
     latent_enabled: bool = False
     atom_kinds: tuple = ()
+    rerank_round_robin: bool = True
     other: int = 7  # an unrelated field must be preserved
 
 
@@ -154,3 +155,11 @@ if __name__ == "__main__":
             traceback.print_exc()
     print(f"\n{len(fns) - failed}/{len(fns)} passed")
     sys.exit(1 if failed else 0)
+
+
+def test_apply_intent_policy_sets_breadth_round_robin():
+    # SINGLE_OK (EXACT/DEFINITION) → one doc may dominate (round-robin off); MULTI_* → doc-fair on.
+    assert apply_intent_policy("EXACT", _FakeBudget()).rerank_round_robin is False
+    assert apply_intent_policy("DEFINITION", _FakeBudget()).rerank_round_robin is False
+    assert apply_intent_policy("MECHANISM", _FakeBudget()).rerank_round_robin is True
+    assert apply_intent_policy("COMPARISON", _FakeBudget()).rerank_round_robin is True   # MULTI_REQUIRED

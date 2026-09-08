@@ -173,6 +173,11 @@ def apply_intent_policy(intent: str, budget):
         overrides["atom_kinds"] = p.atom_kinds
     if hasattr(budget, "resolution_lift_enabled"):
         overrides["resolution_lift_enabled"] = p.resolution_lift != "off"   # R6 precision lane per intent
+    # P9 task-conditioned breadth (§48/§49/§61): SINGLE_OK (exact/definition) lets one excellent
+    # source dominate — turn OFF the doc-fair round-robin; MULTI_* keep it on (evidence-earned
+    # diversity, never a hard quota — the composer still fills remaining seats in fusion order).
+    if hasattr(budget, "rerank_round_robin"):
+        overrides["rerank_round_robin"] = p.breadth != "SINGLE_OK"
     return replace(budget, **overrides)
 
 
