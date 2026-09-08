@@ -45,7 +45,7 @@ HEAD `93a16c0` (code HEAD `0962f83` + docs finalize), clean, in sync with
 | S8 | Shadow runtime route | repo S12 | **NOT STARTED** | global profile → parent maps → child deepening as shadow |
 | S9 | Dual-read feature flag | repo S12 | **NOT STARTED** | Hybrid consumes new candidates; direct child lane stays unrestricted |
 | S10 | Query-compiler title-context bridge | (ui.py `_compiler_titles`) | **NOT STARTED** | **GAP-02** ablation; profile nominations into corpus title context |
-| S11 | Report-only vNext readiness verifier | repo S11 | **NOT STARTED** | per-document contract verdict, availability-neutral |
+| S11 | Report-only vNext readiness verifier | `scripts/vnext_readiness_report.py` | **IMPLEMENTED** | report-only parent-map backfill VIEW (§2/§16/§19), read-only, availability-neutral, fence-free (register 11.141). Per corpus: legacy_query_ready_runs + eligible/mapped/excluded/unresolved parents + docs by map-state, preserving the generation invariant (partial ≠ complete). Live baseline: cinema 67 docs / 11,993 eligible parents, ecom 10 / 1,346, d7 3 / 78 — all NOT_STARTED (0 vNext maps; substrate empty by design). **VERIFIED** live on dev PG. Promotion into `semantic_readiness.py` as a first-class verdict + a vNext-profile column is the S11-proper step (deferred with S8). |
 | S12 | Existing corpus backfill | repo S14 | **GATED** | provider spend + no mass reindex before canary |
 | S13 | New-document blocking gate | repo S13/S15 | **GATED** | owner QUERY_READY flip (BE-AWARE §7) |
 | S14 | Existing corpus cutover | repo S14 | **GATED** | after backfill + shadow + dual-read qualify |

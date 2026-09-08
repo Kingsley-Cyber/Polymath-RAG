@@ -1378,6 +1378,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("scripts/run_fleet_supervised.sh", "sh", None),
     ("scripts/semantic_lane_census.py", "py", None),
     ("scripts/legacy_dependency_census.py", "py", None),
+    ("scripts/vnext_readiness_report.py", "py", None),
     # shared
     ("shared/polymath_shared/acceptance_harness.py", "py", None),
     ("shared/polymath_shared/blob_spool.py", "py", None),
@@ -1775,6 +1776,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_groq_router.py", "py", None),
     ("tests/determinism/test_document_fingerprint.py", "py", None),
     ("tests/determinism/test_legacy_dependency_census.py", "py", None),
+    ("tests/determinism/test_vnext_readiness_report.py", "py", None),
     ("tests/determinism/test_document_parent_maps_store.py", "py", None),
     ("docs/wiki/work-log/2026-09-06-chat-model-catalog.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-chat-ui-surgical.md", "md", None),
@@ -1811,6 +1813,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-07-retrieval-migration-ledger.md", "md", None),
     ("docs/wiki/work-log/2026-09-07-profile-vnext-fingerprint.md", "md", None),
     ("docs/wiki/work-log/2026-09-07-legacy-dependency-census.md", "md", None),
+    ("docs/wiki/work-log/2026-09-07-vnext-readiness-report.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-style-bold-retire.md", "md", None),
     ("docs/wiki/experiments/chat-parity-p1f-first.json", "json", None),
     ("docs/wiki/work-log/2026-09-06-p1e-mode-recomposition.md", "md", None),
