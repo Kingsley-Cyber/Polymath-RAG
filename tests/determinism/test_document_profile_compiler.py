@@ -163,3 +163,25 @@ def test_several_questions_on_one_q_line_become_separate_questions():
     assert res.record.questions == ["What is a Sweeney gun?", "How is a fall padded?", "Why cut on the hit?"]
     assert any(i.code == "ITEM_SPLIT" for i in res.issues)
     assert C.split_inline_questions("Is it 'A?' or B?") == ["Is it 'A?' or B?"]   # no capital after the inner ? → intact
+
+
+def test_vnext_research_tags_recognized_and_backward_compatible():
+    """S8: the compiler recognizes the vNext research-index tags (incl. the hyphenated
+    LATENT-PATTERN, distinct from PATTERN->CONCEPT) and stores them, while a v3.x profile
+    that never emits them compiles byte-identically (no contract drift)."""
+    vnext = (FULL.rstrip().removesuffix("END").rstrip()
+             + "\nLATENT-PATTERN: recurring speed/control tension"
+             + "\nANCHOR: the stance\nRECALLQ: how does stance govern force?"
+             + "\nTENSION: weight vs speed\nBRIDGE: dance notation\nINVERSION: stillness as action"
+             + "\nBOUNDARY: on-screen combat only\nEND\n")
+    r = C.compile_llm_output(vnext, source_text=FULL, grounding_mode="warn")
+    rec = r.record
+    assert r.ok and rec.latent_pattern == ["recurring speed/control tension"]
+    assert rec.anchor and rec.recallq and rec.tension and rec.bridge and rec.inversion and rec.boundary
+    art = C.semantic_artifact(rec)
+    assert {"latent_pattern", "anchor", "recallq", "tension", "bridge", "inversion", "boundary"} <= set(art)
+    # backward compatibility: a profile WITHOUT research tags has none of those keys
+    base = C.compile_llm_output(FULL, source_text=FULL, grounding_mode="warn")
+    base_art = C.semantic_artifact(base.record)
+    assert not ({"latent_pattern", "anchor", "recallq", "tension", "bridge", "inversion", "boundary"} & set(base_art))
+    assert C.COMPILER_VERSION == "rag-compiler-v3.1"   # additive superset; version unchanged for v3.x inputs

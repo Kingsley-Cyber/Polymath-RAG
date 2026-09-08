@@ -1828,6 +1828,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-07-map-prompt.md", "md", None),
     ("docs/wiki/work-log/2026-09-07-profile-prompt-vnext.md", "md", None),
     ("docs/wiki/work-log/2026-09-07-profile-vnext-canary.md", "md", None),
+    ("docs/wiki/work-log/2026-09-07-s8-profile-compiler-wiring.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-style-bold-retire.md", "md", None),
     ("docs/wiki/experiments/chat-parity-p1f-first.json", "json", None),
     ("docs/wiki/work-log/2026-09-06-p1e-mode-recomposition.md", "md", None),

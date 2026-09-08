@@ -22,6 +22,8 @@ import time
 
 from polymath_shared.document_profile import compiler as C
 from polymath_shared.document_profile import context as CX
+from polymath_shared.document_profile import fingerprint as FP
+from polymath_shared.document_profile import profile_prompt_vnext as PP
 from polymath_shared.document_profile import projection as PJ
 from polymath_shared.document_profile.prompt import (
     PROMPT_VERSION,
@@ -52,7 +54,23 @@ log = logging.getLogger("doc_profile")
 HOOKS: dict = {"complete": None, "embed": None, "qdrant": None}
 
 
+def _vnext_enabled() -> bool:
+    """DOCUMENT-SEMANTIC-INDEX-V1 S8 rollback switch (plan §28 `profile_generation`):
+    when set, the stage builds the vNext DocumentFingerprint (full-structure, no
+    first-400 bias) + `profile_prompt_vnext` and DROPS the `document_summaries.major_concepts`
+    read (GAP-04). Default OFF — the live path is byte-identical, so flipping it back is
+    a config change, never a re-ingest. The base surfaces still project unchanged; the
+    research-index tags land in the artifact (not yet projected)."""
+    return os.environ.get("POLYMATH_DOC_PROFILE_VNEXT", "").strip().lower() in ("1", "true", "yes", "on")
+
+
 def contract() -> str:
+    if _vnext_enabled():
+        return stage_contract_hash(STAGE, {
+            "schema": C.SCHEMA_VERSION, "prompt": PP.PROFILE_VNEXT_PROMPT_VERSION, "compiler": C.COMPILER_VERSION,
+            "builder": FP.FINGERPRINT_BUILDER_VERSION, "projection": PJ.PROJECTION_VERSION,
+            "budget_tokens": FP.DEFAULT_BUDGET_TOKENS, "vnext": True,
+        })
     return stage_contract_hash(STAGE, {
         "schema": C.SCHEMA_VERSION, "prompt": PROMPT_VERSION, "compiler": C.COMPILER_VERSION,
         "builder": CX.BUILDER_VERSION, "projection": PJ.PROJECTION_VERSION, "budget_tokens": CONTEXT_BUDGET_TOKENS,
@@ -84,7 +102,7 @@ def _resolve_document(conn: Connection, run_id: str) -> tuple[str, str]:
     return str(doc[0]), str(ip.get("corpus_id"))
 
 
-def _load_inputs(conn: Connection, doc_id: str) -> tuple[dict, list[dict], list[str]]:
+def _load_inputs(conn: Connection, doc_id: str, *, want_terms: bool = True) -> tuple[dict, list[dict], list[str]]:
     d = conn.execute(
         "SELECT doc_id, corpus_id, source_name, media_type, frontmatter, content_hash FROM documents WHERE doc_id=%s",
         (doc_id,)).fetchone()
@@ -98,14 +116,17 @@ def _load_inputs(conn: Connection, doc_id: str) -> tuple[dict, list[dict], list[
             "SELECT chunk_index, char_start, char_end, heading_path, text, region_role FROM chunks "
             "WHERE doc_id=%s AND tier='parent' ORDER BY chunk_index", (doc_id,)).fetchall()]
     terms: list[str] = []
-    try:
-        t = conn.execute("SELECT major_concepts FROM document_summaries WHERE document_id=%s ORDER BY created_at DESC LIMIT 1",
-                         (doc_id,)).fetchone()
-        if t and t[0]:
-            vals = t[0] if isinstance(t[0], list) else json.loads(t[0])
-            terms = [str(x.get("name") if isinstance(x, dict) else x) for x in vals][:12]
-    except Exception:  # noqa: BLE001 — terms are an optional surface
-        terms = []
+    # GAP-04: the vNext fingerprint derives its own vocabulary, so the vNext path passes
+    # want_terms=False and this legacy `document_summaries.major_concepts` read is skipped.
+    if want_terms:
+        try:
+            t = conn.execute("SELECT major_concepts FROM document_summaries WHERE document_id=%s ORDER BY created_at DESC LIMIT 1",
+                             (doc_id,)).fetchone()
+            if t and t[0]:
+                vals = t[0] if isinstance(t[0], list) else json.loads(t[0])
+                terms = [str(x.get("name") if isinstance(x, dict) else x) for x in vals][:12]
+        except Exception:  # noqa: BLE001 — terms are an optional surface
+            terms = []
     return document, parents, terms
 
 
@@ -211,16 +232,31 @@ def process_event(conn: Connection, event: dict) -> None:
     run_id = event["run_id"]
     with stage_transaction(conn, run_id=run_id, stage=STAGE, contract_hash=contract()) as writer:
         doc_id, corpus_id = _resolve_document(conn, run_id)
-        document, parents, terms = _load_inputs(conn, doc_id)
-        ctx = CX.build_context(document, parents, terms=terms, budget_tokens=CONTEXT_BUDGET_TOKENS)
-        input_hash = ctx.input_hash(document.get("content_hash") or "")
-        user_prompt = build_user_prompt(ctx.title, ctx.structure_block, ctx.excerpts_block)
+        vnext = _vnext_enabled()
+        document, parents, terms = _load_inputs(conn, doc_id, want_terms=not vnext)
+        if vnext:
+            fp = FP.build_fingerprint(document, parents)   # budget = canary-selected default (500)
+            input_hash = fp.input_hash(document.get("content_hash") or "")
+            system_prompt, user_prompt = PP.build_vnext_profile_prompt(fp)
+            title = fp.title
+            prompt_ver, builder_ver = PP.PROFILE_VNEXT_PROMPT_VERSION, FP.FINGERPRINT_BUILDER_VERSION
+            ctx_meta = {"builder_version": FP.FINGERPRINT_BUILDER_VERSION, "title": fp.title, "identity": fp.identity,
+                        "used_tokens": fp.used_tokens, "sources": fp.sources, "budget_tokens": fp.budget_tokens}
+        else:
+            ctx = CX.build_context(document, parents, terms=terms, budget_tokens=CONTEXT_BUDGET_TOKENS)
+            input_hash = ctx.input_hash(document.get("content_hash") or "")
+            system_prompt = SYSTEM
+            user_prompt = build_user_prompt(ctx.title, ctx.structure_block, ctx.excerpts_block)
+            title = ctx.title
+            prompt_ver, builder_ver = PROMPT_VERSION, CX.BUILDER_VERSION
+            ctx_meta = {k: v for k, v in ctx.to_dict().items()
+                        if k in ("title", "identity", "structure", "used_tokens", "sources", "allocation", "budget_tokens")}
 
         complete = HOOKS.get("complete")
         if complete is None:
-            raw, err, pool_rec = _pool_complete(SYSTEM, user_prompt, MAX_OUTPUT_TOKENS, run_key=run_id)
+            raw, err, pool_rec = _pool_complete(system_prompt, user_prompt, MAX_OUTPUT_TOKENS, run_key=run_id)
         else:
-            raw, err, pool_rec = complete(SYSTEM, user_prompt, MAX_OUTPUT_TOKENS)
+            raw, err, pool_rec = complete(system_prompt, user_prompt, MAX_OUTPUT_TOKENS)
         if err or not (raw or "").strip():
             tried = len(pool_rec.get("attempts") or [])
             log.warning("doc_profile pool failed run=%s doc=%s err=%s attempts=%s",
@@ -239,8 +275,8 @@ def process_event(conn: Connection, event: dict) -> None:
         compiled_hash = _sha(artifact)
         profile_record = {
             "doc_id": doc_id, "corpus_id": corpus_id,
-            "schema_version": C.SCHEMA_VERSION, "prompt_version": PROMPT_VERSION, "compiler_version": C.COMPILER_VERSION,
-            "builder_version": CX.BUILDER_VERSION, "model": pool_rec.get("model"), "lane": pool_rec.get("lane"),
+            "schema_version": C.SCHEMA_VERSION, "prompt_version": prompt_ver, "compiler_version": C.COMPILER_VERSION,
+            "builder_version": builder_ver, "vnext": vnext, "model": pool_rec.get("model"), "lane": pool_rec.get("lane"),
             "attempts": pool_rec.get("attempts"),
             "content_hash": document.get("content_hash"), "input_hash": input_hash, "raw_response_hash": _sha(raw),
             "compiled_hash": compiled_hash,
@@ -248,7 +284,7 @@ def process_event(conn: Connection, event: dict) -> None:
             "coverage_quality": round(result.coverage_quality, 3), "ok": result.ok, "valid": valid, "missing": missing,
             "truncated": result.truncated,
             "issues": [{"severity": i.severity, "code": i.code, "message": i.message[:160]} for i in result.issues][:24],
-            "context": {k: v for k, v in ctx.to_dict().items() if k in ("title", "identity", "structure", "used_tokens", "sources", "allocation", "budget_tokens")},
+            "context": ctx_meta,
             "raw": raw[:8000], "compiled": artifact, "representations": emitted["representations"],
         }
         writer.artifact({"doc_profile": profile_record})
@@ -268,11 +304,11 @@ def process_event(conn: Connection, event: dict) -> None:
         try:
             receipt = PJ.project_profile(
                 client, embed=embed, embedding_contract_id=contract_obj.contract_id, dim=contract_obj.dimension,
-                doc_id=doc_id, corpus_id=corpus_id, title=ctx.title, representations=emitted["representations"],
+                doc_id=doc_id, corpus_id=corpus_id, title=title, representations=emitted["representations"],
                 payload_extra={"topics": rec.topics, "terms": rec.terms, "quality": round(result.quality, 3),
                                "source_name": document.get("source_name")},
                 source_doc_hash=document.get("content_hash") or "", schema_version=C.SCHEMA_VERSION,
-                prompt_version=PROMPT_VERSION, compiled_hash=compiled_hash)
+                prompt_version=prompt_ver, compiled_hash=compiled_hash)
         finally:
             if owned:
                 client.close()

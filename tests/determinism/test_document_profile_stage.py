@@ -174,6 +174,45 @@ def test_worker_writes_the_profile_and_projection_artifacts_with_the_receipt_cha
         conn.execute("DELETE FROM runs WHERE run_id=%s", (rid,))
 
 
+def test_worker_vnext_path_uses_fingerprint_and_carries_research_tags(corpus, monkeypatch):
+    # S8: with POLYMATH_DOC_PROFILE_VNEXT set, the stage builds the fingerprint +
+    # profile_prompt_vnext (no major_concepts read) and the artifact carries the
+    # research-index surfaces; the base surfaces still project unchanged.
+    from polymath_shared.embedding_contracts import active_contract
+    dim = active_contract().dimension
+    monkeypatch.setenv("POLYMATH_DOC_PROFILE_VNEXT", "1")
+    rid = _ingest("Proof Book vNext.md", _book(seed=11))
+    vnext_response = (FULL.rstrip().removesuffix("END").rstrip()
+                      + "\nLATENT-PATTERN: recurring tension between speed and control"
+                      + "\nANCHOR: the core stance\nRECALLQ: how does stance govern force?"
+                      + "\nTENSION: weight versus speed\nBRIDGE: connects to dance notation"
+                      + "\nINVERSION: stillness as action\nBOUNDARY: only on-screen combat\nEND\n")
+    seen = {}
+    def fake_complete(system_prompt, user_prompt, max_tokens):
+        seen["system"], seen["user"] = system_prompt, user_prompt
+        return vnext_response, None, {"lane": "fake", "model": "fake:model", "attempts": [{"lane": "fake", "error": None, "ms": 1.0}]}
+    monkeypatch.setitem(W.HOOKS, "complete", fake_complete)
+    monkeypatch.setitem(W.HOOKS, "embed", lambda texts: [[0.1] * dim for _ in texts])
+    monkeypatch.setitem(W.HOOKS, "qdrant", FakeQdrant())
+    with _db()() as conn:
+        W.process_event(conn, {"run_id": rid, "payload": {"run_id": rid}})
+    # the vNext prompt + fingerprint block were used (not the lean-context TOC prompt)
+    assert "LATENT-PATTERN:" in seen["system"] and "routing hypotheses" in seen["system"]
+    assert "COVERAGE:" in seen["user"] or "FRAMING:" in seen["user"]
+    with _db()() as conn:
+        art = conn.execute("SELECT payload FROM artifacts WHERE run_id=%s AND stage='doc_profile'", (rid,)).fetchone()[0]
+    art = art if isinstance(art, dict) else json.loads(art)
+    p = art["doc_profile"]
+    assert p["vnext"] is True and p["prompt_version"] == "doc-profile-vnext-v1" and p["builder_version"] == "fingerprint-v1"
+    assert p["valid"] is True and p["ok"] is True
+    # the research-index surfaces reached the durable artifact
+    compiled = p["compiled"]
+    assert compiled.get("latent_pattern") and compiled.get("anchor") and compiled.get("boundary")
+    assert art["doc_profile_qdrant"]["valid"] is True                    # base surfaces still project
+    with _db()() as conn:
+        conn.execute("DELETE FROM runs WHERE run_id=%s", (rid,))
+
+
 def test_dark_pool_yields_the_ticket_without_consuming_an_attempt(corpus, monkeypatch):
     from polymath_shared.worker_runtime import TransientStageHold
     rid = _ingest("Proof Book Two.md", _book(seed=9))

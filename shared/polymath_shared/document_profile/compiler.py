@@ -129,6 +129,20 @@ TAG_ALIASES: dict[str, str] = {
     "RELATEDDOCUMENT": "SEEALSO",
     "RELATEDDOCUMENTS": "SEEALSO",
 
+    # vNext research-index surfaces (doc-profile-vnext-v1, plan §18): routing hypotheses,
+    # never cited as evidence. ADDITIVE — v3.x prompts never emit these, so existing
+    # profiles compile byte-identically. "PATTERN" already aliases to CONCEPT above, so
+    # LATENT-PATTERN is kept as a DISTINCT hyphenated label.
+    "LATENT-PATTERN": "LATENTPATTERN",
+    "LATENTPATTERN": "LATENTPATTERN",
+    "ANCHOR": "ANCHOR",
+    "RECALLQ": "RECALLQ",
+    "RECALL-Q": "RECALLQ",
+    "TENSION": "TENSION",
+    "BRIDGE": "BRIDGE",
+    "INVERSION": "INVERSION",
+    "BOUNDARY": "BOUNDARY",
+
     "END": "END",
 }
 
@@ -156,6 +170,15 @@ class Record:
     theories: list[str] = field(default_factory=list)
     concepts: list[str] = field(default_factory=list)
     seealso: list[str] = field(default_factory=list)
+    # vNext research-index surfaces (optional routing hypotheses; never required for
+    # validity, never capped/scored, never projected as evidence).
+    latent_pattern: list[str] = field(default_factory=list)
+    anchor: list[str] = field(default_factory=list)
+    recallq: list[str] = field(default_factory=list)
+    tension: list[str] = field(default_factory=list)
+    bridge: list[str] = field(default_factory=list)
+    inversion: list[str] = field(default_factory=list)
+    boundary: list[str] = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -216,6 +239,12 @@ _TAGLIKE_UNKNOWN = re.compile(
 
 _BULLET_NUM = re.compile(r"^[-*\u2022]?\s*(?:\d+[.)]\s+)?")
 
+# The `_TAG_LINE` separator class includes '-', so a tag with an INTERNAL hyphen
+# ("LATENT-PATTERN:") is mis-split into tag "LATENT" + value "PATTERN: \u2026". The only
+# hyphenated label the vNext prompt emits is LATENT-PATTERN, so collapse its hyphen at
+# line start before parsing (the LATENTPATTERN alias resolves it). v3.x never emits it.
+_LATENT_PATTERN_LABEL = re.compile(r"^([-*\u2022]?\s*)LATENT-PATTERN(\s*[:\-])", re.IGNORECASE)
+
 
 def _alias_key(tag: str) -> str:
     # Preserve hyphen-aware aliases first, then fall back to compact form.
@@ -273,6 +302,8 @@ def normalize(raw: str, issues: list[Issue]) -> str:
 
     for line_no, line in enumerate(raw.splitlines(), 1):
         s = line.strip()
+        if s:
+            s = _LATENT_PATTERN_LABEL.sub(r"\1LATENTPATTERN\2", s)
 
         if not s:
             if started:
@@ -374,6 +405,13 @@ _LIST_ATTR = {
     "THEORY": "theories",
     "CONCEPT": "concepts",
     "SEEALSO": "seealso",
+    "LATENTPATTERN": "latent_pattern",
+    "ANCHOR": "anchor",
+    "RECALLQ": "recallq",
+    "TENSION": "tension",
+    "BRIDGE": "bridge",
+    "INVERSION": "inversion",
+    "BOUNDARY": "boundary",
 }
 
 
@@ -657,7 +695,8 @@ def validate(
     _repair_core(rec, issues)
 
     # Preserve model surface form while deduping case/spacing variants.
-    for attr in ("topics", "terms", "questions", "searches", "theories", "concepts", "seealso"):
+    for attr in ("topics", "terms", "questions", "searches", "theories", "concepts", "seealso",
+                 "latent_pattern", "anchor", "recallq", "tension", "bridge", "inversion", "boundary"):
         values = getattr(rec, attr)
         deduped, removed = _dedupe_preserve_surface(values)
         setattr(rec, attr, deduped)
@@ -825,11 +864,18 @@ def _quality(format_quality: float, coverage_quality: float) -> float:
 
 def semantic_artifact(rec: Record) -> dict:
     """The compiled semantic artifact (owner spec 2026-09-07): plain fields, atomic lists."""
-    return {
+    art = {
         "one": rec.one_liner, "summary": rec.summary, "topics": list(rec.topics), "terms": list(rec.terms),
         "questions": list(rec.questions), "searches": list(rec.searches), "theories": list(rec.theories),
         "concepts": list(rec.concepts), "seealso": list(rec.seealso),
     }
+    # vNext research-index surfaces — added ONLY when present, so a v3.x profile (which
+    # never emits them) produces a byte-identical artifact and no contract drift.
+    for key in ("latent_pattern", "anchor", "recallq", "tension", "bridge", "inversion", "boundary"):
+        vals = getattr(rec, key)
+        if vals:
+            art[key] = list(vals)
+    return art
 
 
 def profile_valid(rec: Record) -> tuple[bool, list[str]]:
