@@ -20,9 +20,8 @@ Read order: this file → **`docs/wiki/reports/2026-09-08/README.md` + `DIRECTOR
 
 ## Latest checkpoint (2026-09-08 late — DATA-REGEN: D-5/D-12 UNBLOCKED; parent-MAP backfill parallelized)
 
-**Branch `architecture/evidence-first-v5` is 2 commits ahead of `main` (`0089506` vNext
-profile+atom regen, `83b044d` backfill concurrency); ff `main` after the branch's 4 CI checks go
-green (determinism is the slow one).** This session executed the FINAL-PLAN data-regen chain on cinema:
+**This session's work is LANDED on `main` (via `architecture/evidence-first-v5`, all 4 CI checks
+green; registers 11.169–11.171).** It executed the FINAL-PLAN data-regen chain on cinema:
 
 - **vNext profiles regenerated (67/67, register 11.169):** `backfill_document_profiles.py --rearm`
   (new flag; era-compatible re-arm via `_emit_ticket_event`, `compatible()=True`, no blue-green) → the
