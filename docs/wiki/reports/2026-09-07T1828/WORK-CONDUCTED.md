@@ -24,6 +24,8 @@ narrative index.
 | 8b3af46 | Groq routing policy + decision core (S7a) | 11.134 | 2026-09-07-groq-routing-policy |
 | 26f3e73 | S4 — parent-map SQL durability (migration 0054) | 11.135 | 2026-09-07-parent-map-sql |
 | 4fc931a | Live Groq map-contract canary + identifier fix | 11.136 | 2026-09-07-live-map-contract-canary |
+| 5ae431f | Handoff continuation snapshot (this folder) + strong BE-AWARE | — | (docs) |
+| 0962f83 | ParentSkeleton **v2** — `lead_excerpt` for headingless parents | 11.137 | 2026-09-07-parent-skeleton-lead-excerpt |
 
 ## What each delivered (pure `shared/` + one migration + docs — no fleet wiring)
 

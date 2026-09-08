@@ -16,10 +16,10 @@ replace the canonical docs — it links them and hands you the exact next move.
 ## Start here (ladder)
 
 ```
-repository truth      -> git @ 4fc931a, clean; guards green (SESSION-CONTINUATION.md)
+repository truth      -> git @ 0962f83 (last code commit), clean; guards green
 next-phase plan       -> docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-PLAN.md
-current slice         -> S0-S4 + corrective + Groq core + live canary DONE; S5 next
-completed deps        -> WORK-CONDUCTED.md (commits 6549398 -> 4fc931a, reg 11.129-11.136)
+current slice         -> S0-S4 + corrective + Groq core + live canary + skeleton v2 DONE; S5 next
+completed deps        -> WORK-CONDUCTED.md (commits 6549398 -> 0962f83, reg 11.129-11.137)
 measured results      -> live map contract 22/22 & 11/11; child sizing ~108-140 tok
 unfinished work       -> UNFINISHED-WORK.md
 dependencies          -> DEPENDENCY-MAP.md (recursive)

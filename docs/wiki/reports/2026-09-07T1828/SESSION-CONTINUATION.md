@@ -19,10 +19,12 @@ state at HEAD and hands you the exact next move.
   Retrieval becomes document → parent map → child evidence. Plan of record:
   `docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-PLAN.md`. Why this way: `BE-AWARE.md`
   (this folder).
-- **Current HEAD:** `4fc931a` on `architecture/evidence-first-v5`; `main ==
-  origin/main == this branch == ../polymath-v4-main == 4fc931a`. Worktree clean.
+- **Current HEAD:** `0962f83` on `architecture/evidence-first-v5` (last code commit);
+  a docs-only handoff-finalize commit sits on top. `main` is fast-forwarded to the
+  finalize commit; branch, `main`, and `../polymath-v4-main` agree. Worktree clean.
 - **What landed:** S0–S4 + a corrective checkpoint + the Groq routing policy/decision
-  core + a live map-contract canary. Registers 11.129–11.136. See WORK-CONDUCTED.md.
+  core + a live map-contract canary + **ParentSkeleton v2 (`lead_excerpt`, 11.137)**.
+  Registers 11.129–11.137. See WORK-CONDUCTED.md.
 - **What was verified:** four CI checks green on every commit; guards green;
   migration 0054 idempotent on dev Postgres; the map contract proven LIVE on real
   documents (22/22 and 11/11 mapped, injection resisted).
@@ -60,7 +62,7 @@ docs/wiki/plans/GROQ-ROUTING-POLICY-V1.md
 
 ```bash
 cd /Users/king/Documents/polymath-rebuild/polymath-v4
-git status && git rev-parse --short HEAD          # expect clean, 4fc931a (or a later ff)
+git status && git rev-parse --short HEAD          # clean; 0962f83 = last code commit (docs finalize on top)
 .venv/bin/python scripts/agent_preflight.py       # needs py>=3.11 (tomllib); mac python3 is 3.9
 .venv/bin/python scripts/repo_guard.py
 .venv/bin/python scripts/wiki_worm.py --check
