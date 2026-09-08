@@ -45,12 +45,22 @@ green; registers 11.169–11.171).** It executed the FINAL-PLAN data-regen chain
   gentle sequential backfill runs, capturing what capacity trickles back. Coverage = cinema ~543/11,993
   parents; **capacity-gated multi-session** (resume when Groq limits reset). **D-10 uplift stays GATED on coverage.**
 
-**Exact next executable:** D-5/D-12 are now IMPLEMENTABLE (relational atoms exist) — P5 SEEALSO/BRIDGE/ANCHOR
-fan-out resolver (§20–§23) + Wildcard-over-atoms; P7 (graph dest, BLOCKED-arch reorder) and P8b
-(synthesizer-by-role, BLOCKED-arch) remain. When Groq capacity resets, resume the parent-MAP backfill —
-now parallel: `POLYMATH_GROQ_ROUTER=1 parent_map_backfill.py --corpus cinema --project` (default
-`--concurrency 6`, spreads across the six accounts) — toward coverage (unblocks D-10). Do NOT cutover/retire
-before the migration ledger's gates.
+**Routing slices LANDED this session (each additive, default-off, flag-off byte-identical, structurally
+qualified live; corpus-scale UPLIFT gated on coverage):** **P5** SEEALSO/BRIDGE fan-out lane G (11.172,
+TERM branch — relational atom texts → children, LATENT) · **P7** graph destination lane H (11.173, D-7
+cleared additively — entity→Neo4j hop→dest docs→JUDGED children, RELATIONAL populated 0→1) · **P8b**
+role-aware synthesis (11.174, D-8b cleared for the LLM path — `_grounded_messages` presents [S#] by role
+behind `POLYMATH_CHAT_SYNTH_ROLES`, claim system untouched). All the routing plan's implementable-without-
+coverage BLOCKED/GATED rows are now cleared.
+
+**Exact next executable (implementable now, structural-qual; value coverage-gated):** **P12** Wildcard over
+the atom frontier (§ wildcard — wire the profile atoms into `_retrieve_wildcard`/divergent; atoms exist);
+**S10** compiler/title-context migration (GAP-02 — profile nominations into `ui.py` `_compiler_titles`).
+**GATED on coverage/capacity (the legitimate cutover boundary — do NOT force):** P10-uplift/P11/P13
+measurement + P12/P5-value need parent-MAP coverage + graph density; S12–S18 cutover/retirement need full
+vNext coverage + QUERY_READY flip + zero-reader proof. **When Groq capacity resets, resume the now-parallel
+backfill** (`POLYMATH_GROQ_ROUTER=1 parent_map_backfill.py --corpus cinema --project`, `--concurrency 6`) →
+coverage → re-run `production_routing_qualify` (uplift) + the GRAPH/Wildcard arms.
 
 ## Latest checkpoint (2026-09-08 — FINAL RETRIEVAL/ROUTING/SYNTHESIS EXECUTED; MD is the living ledger)
 
