@@ -286,3 +286,26 @@ def test_carry_artifact_mode_keeps_the_previous_answers_evidence_without_a_relev
                                     resolve_document=lambda _d: {"source_name": "Book.md"},
                                     scorer=lambda _q, texts: [0.05] * len(texts), floor=0.25, cap=8)
     assert items2 == [] and acct2["dropped_floor"] == 4
+
+
+def test_p8b_role_aware_presentation_is_flag_gated_and_groups_by_role(monkeypatch):
+    # P8b (§44-§47): with POLYMATH_CHAT_SYNTH_ROLES on, evidence is labeled by role and presented
+    # DIRECT -> PRECISION -> RELATIONAL -> LATENT; default off is byte-identical (no labels, no
+    # reorder, no guidance). The [S#] tag -> locator mapping is unchanged either way (citations safe).
+    bundle = {"evidence_bundle": [
+        _item("child_chunk", "chunk:c_latent", "extends the topic", source="Book.md", chunk_id="c_latent"),
+        _item("child_chunk", "chunk:c_direct", "answers the question", source="Book.md", chunk_id="c_direct"),
+        _item("child_chunk", "chunk:c_rel", "a source-attested connection", source="Book.md", chunk_id="c_rel"),
+    ], "evidence_roles": {"c_latent": "LATENT", "c_direct": "DIRECT", "c_rel": "RELATIONAL"}}
+
+    monkeypatch.delenv("POLYMATH_CHAT_SYNTH_ROLES", raising=False)
+    off = ui._grounded_messages("q", bundle, [], [], [])[-1]["content"]
+    assert "(LATENT)" not in off and "(DIRECT)" not in off and "EVIDENCE ROLES" not in off
+    assert off.index("[S1]") < off.index("[S2]") < off.index("[S3]")          # original bundle/tag order
+
+    monkeypatch.setenv("POLYMATH_CHAT_SYNTH_ROLES", "1")
+    on = ui._grounded_messages("q", bundle, [], [], [])[-1]["content"]
+    assert "EVIDENCE ROLES" in on
+    assert "(DIRECT)" in on and "(RELATIONAL)" in on and "(LATENT)" in on
+    assert on.index("(DIRECT)") < on.index("(RELATIONAL)") < on.index("(LATENT)")   # grouped by role
+    assert "[S1] = " in on and "[S2] = " in on and "[S3] = " in on            # tag->locator legend intact

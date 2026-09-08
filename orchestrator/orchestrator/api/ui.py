@@ -1850,6 +1850,20 @@ def _plan_meta(plan) -> dict:
             "compiler_fallback": bool(plan.fallback)}
 
 
+#: P8b (§44–§47) synthesis-role presentation. Default OFF ⇒ the grounded prompt is byte-identical.
+_SYNTH_ROLE_ORDER = {"DIRECT": 0, "PRECISION": 1, "RELATIONAL": 2, "LATENT": 3}
+_SYNTH_ROLE_GUIDANCE = (
+    "EVIDENCE ROLES — each [S#] is tagged by role: DIRECT answers the question; PRECISION gives the "
+    "corpus's precise vocabulary/mechanism for it; RELATIONAL is a source-attested connection; LATENT "
+    "extends with related knowledge the user may not have asked for. Lead with the DIRECT answer, then "
+    "use PRECISION to sharpen it, RELATIONAL to connect, and LATENT to extend — never let LATENT or "
+    "RELATIONAL substitute for a DIRECT answer.")
+
+
+def _synth_roles_enabled() -> bool:
+    return os.environ.get("POLYMATH_CHAT_SYNTH_ROLES", "").strip().lower() in ("1", "true", "yes", "on")
+
+
 def _grounded_messages(query: str, bundle: dict, graph_facts: list,
                        history, carry_context,
                        reasoning: str | None = None,
@@ -1867,11 +1881,21 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
     # real locators for the trace/UI.
     ev_lines: list[str] = []
     legend: list[str] = []
-    for e in _evidence_legend(bundle):
+    _roles = bundle.get("evidence_roles") or {}
+    _role_present = bool(_synth_roles_enabled() and _roles)
+    _entries = list(_evidence_legend(bundle))
+    if _role_present:
+        # P8b: PRESENT evidence grouped by role — DIRECT first, then PRECISION / RELATIONAL / LATENT.
+        # A STABLE sort by role only (ties keep tag order); the [S#] tag→locator mapping is unchanged,
+        # so citations are unaffected — only the presentation order + a per-tag role label change.
+        _entries.sort(key=lambda e: _SYNTH_ROLE_ORDER.get(_roles.get(e.get("chunk_id")), 0))
+    for e in _entries:
         crumb = e.get("breadcrumb") or ""
+        _role = _roles.get(e.get("chunk_id")) if _role_present else None
+        _lbl = f" ({_role})" if _role else ""
         # EVIDENCE-DIET-V1: the passage header names its book › section; the legend maps the tag to that
         # breadcrumb (the raw locator stays on the answer event and the receipt for the UI and traces)
-        ev_lines.append(f"[{e['tag']}] {crumb}\n{e['text']}" if crumb else f"[{e['tag']}]\n{e['text']}")
+        ev_lines.append(f"[{e['tag']}]{_lbl} {crumb}\n{e['text']}" if crumb else f"[{e['tag']}]{_lbl}\n{e['text']}")
         legend.append(f"[{e['tag']}] = {crumb or e['locator']}")
     for f in graph_facts[:20]:
         ev_lines.append(
@@ -1883,6 +1907,8 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
     ]
     context_block = ""
     if ev_lines:
+        if _role_present:
+            context_block += (_SYNTH_ROLE_GUIDANCE + "\n\n")
         context_block += ("EVIDENCE (this turn):\n" + "\n---\n".join(ev_lines))
         context_block += ("\n\nSOURCE TAGS:\n" + "\n".join(legend))
     if carried:
@@ -2617,6 +2643,11 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                          error=f"{type(exc).__name__}: {str(exc)[:200]}")
                 return
             _mark("assemble")
+            # P8b (§44–§47): the retrieval evidence-role per chunk (DIRECT/PRECISION/RELATIONAL/LATENT)
+            # rides the bundle for role-aware synthesis presentation (POLYMATH_CHAT_SYNTH_ROLES);
+            # default-off ⇒ the grounded prompt is byte-identical. assemble_evidence_bundle is untouched.
+            bundle["evidence_roles"] = {c.get("chunk_id"): c.get("role") for c in evidence_rows
+                                        if c.get("chunk_id") and c.get("role")}
             # CARRY-V2: admitted carried evidence joins the bundle (tags, legend, used_evidence)
             _carry_meta: dict = {"in": len(req.carry_context), "admitted": 0}
             if req.carry_context:
