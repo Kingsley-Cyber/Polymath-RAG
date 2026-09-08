@@ -184,6 +184,26 @@ def test_excerpt_is_bounded_and_not_blindly_the_first_sentence():
     assert not excerpt.startswith("P. 42")
 
 
+def test_lead_excerpt_fills_the_framing_slot_only_when_headingless():
+    # Structured parent (has a heading): the heading is the framing, so lead stays "".
+    with_heading = PS.build_parent_skeletons([_parent(0, HTML_LIKE, heading=["Graphs"])])
+    assert with_heading.skeletons[0].lead_excerpt == ""
+    # Headingless parent (flat / transcript window): lead = the OPENING framing,
+    # bounded, and distinct from the best-sentence salient excerpt.
+    text = ("This window opens by framing the topic of graph traversal for the reader. "
+            "A couple of context sentences follow before the key claim. The single "
+            "strongest statement is that a graph hop is a stored relationship traversal "
+            "between two entity nodes.")
+    flat = PS.build_parent_skeletons([_parent(0, text, heading=[])])
+    s = flat.skeletons[0]
+    assert s.heading_path == ()
+    assert s.lead_excerpt and len(s.lead_excerpt.split()) <= PS.LEAD_EXCERPT_MAX_WORDS
+    assert s.lead_excerpt.lower().startswith("this window opens")
+    assert s.lead_excerpt != s.salient_excerpt   # opening framing, not the best sentence
+    # lead_excerpt is part of the derived MAP input, so it enters the skeleton hash.
+    assert "lead_excerpt" in s.to_dict()
+
+
 def test_key_terms_bounded_and_reject_stopwords():
     manifest = PS.build_parent_skeletons(
         [_parent(0, HTML_LIKE, heading=["Graph traversal"]), _parent(1, PSYCH_BOOK)]

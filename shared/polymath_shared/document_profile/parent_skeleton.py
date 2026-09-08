@@ -38,10 +38,16 @@ from polymath_shared import document_region
 
 #: Bump when the skeleton algorithm changes (plan §32 tracks this independently
 #: of the map prompt / map compiler so effects do not couple into rebuilds).
-SKELETON_BUILDER_VERSION = "parent-skeleton-v1"
+#: v2 (2026-09-07): added lead_excerpt for headingless (flat / transcript) parents.
+SKELETON_BUILDER_VERSION = "parent-skeleton-v2"
 
 #: Bounds — all deliberately small; the point of the skeleton is density.
 SALIENT_EXCERPT_MAX_WORDS = 30
+#: lead_excerpt = the parent's opening framing (the slot a heading normally fills),
+#: emitted ONLY when heading_path is empty. Kept small so a headingless parent adds
+#: ~30-50 words, not a per-paragraph blow-up of the measured prompt density.
+LEAD_EXCERPT_SENTENCES = 2
+LEAD_EXCERPT_MAX_WORDS = 50
 KEY_TERMS_MIN = 3
 KEY_TERMS_MAX = 5
 MIN_SENTENCE_WORDS = 4
@@ -244,11 +250,29 @@ def select_salient_excerpt(
     return _truncate_words(best_sentence, SALIENT_EXCERPT_MAX_WORDS)
 
 
+def select_lead_excerpt(text: str) -> str:
+    """The parent's OPENING framing — the first substantive sentences — filling the
+    slot a heading normally supplies. Used only for headingless (flat / transcript)
+    parents, where ``select_salient_excerpt`` (the best sentence ANYWHERE) can miss
+    the window's opening orientation. Reuses the same sentence / boilerplate /
+    truncation helpers; no transcript classifier, no filler heuristic."""
+    normalized = normalize_whitespace(text)
+    if not normalized:
+        return ""
+    sentences = [
+        s for s in _sentences(normalized)
+        if len(s.split()) >= MIN_SENTENCE_WORDS and not _is_boilerplate(s)
+    ]
+    lead = " ".join(sentences[:LEAD_EXCERPT_SENTENCES])
+    return _truncate_words(lead or normalized, LEAD_EXCERPT_MAX_WORDS)
+
+
 @dataclass(frozen=True)
 class ParentSkeleton:
     """One deterministic skeleton. ``parent_id`` is Postgres identity and never
-    enters the prompt; the prompt sees ``alias``, ``heading_path``,
-    ``salient_excerpt``, ``key_terms`` and ``identifiers`` only."""
+    enters the prompt; the prompt sees ``alias``, ``heading_path``, ``lead_excerpt``
+    (headingless parents only), ``salient_excerpt``, ``key_terms`` and
+    ``identifiers`` only."""
 
     parent_id: str
     alias: str
@@ -256,6 +280,7 @@ class ParentSkeleton:
     heading_path: tuple[str, ...]
     region_role: str
     source_position: int
+    lead_excerpt: str            # opening framing; non-empty ONLY when heading_path is empty
     salient_excerpt: str
     key_terms: tuple[str, ...]
     identifiers: tuple[str, ...]
@@ -270,6 +295,7 @@ class ParentSkeleton:
             "heading_path": list(self.heading_path),
             "region_role": self.region_role,
             "source_position": self.source_position,
+            "lead_excerpt": self.lead_excerpt,
             "salient_excerpt": self.salient_excerpt,
             "key_terms": list(self.key_terms),
             "identifiers": list(self.identifiers),
@@ -349,18 +375,21 @@ def _source_position(parent: Mapping[str, Any], position: int) -> int:
 def _skeleton_hash(
     heading_path: tuple[str, ...],
     region_role: str,
+    lead_excerpt: str,
     salient_excerpt: str,
     key_terms: tuple[str, ...],
     identifiers: tuple[str, ...],
 ) -> str:
     # Content identity of the DERIVED skeleton (excludes alias/ordinal/position
     # so identical parent content yields an identical hash and re-aliasing does
-    # not churn it — plan §32/§33).
+    # not churn it — plan §32/§33). lead_excerpt is part of the derived MAP input,
+    # so it enters the hash; the version bump to v2 does the rest.
     payload = "\x1f".join(
         [
             SKELETON_BUILDER_VERSION,
             "\x1e".join(heading_path),
             region_role,
+            lead_excerpt,
             salient_excerpt,
             "\x1e".join(key_terms),
             "\x1e".join(identifiers),
@@ -419,6 +448,9 @@ def build_parent_skeletons(
             select_key_terms(token_lists[ordinal], heading_tokens, identifier_tokens, df, n_docs)
         )
         salient = select_salient_excerpt(text, heading_tokens, key_terms, identifiers)
+        # The heading fills the framing slot for structured parents; a headingless
+        # (flat / transcript) parent gets its opening framing from lead_excerpt.
+        lead = select_lead_excerpt(text) if not heading_path else ""
         skeletons.append(
             ParentSkeleton(
                 parent_id=pid,
@@ -427,11 +459,12 @@ def build_parent_skeletons(
                 heading_path=heading_path,
                 region_role=role,
                 source_position=src_pos,
+                lead_excerpt=lead,
                 salient_excerpt=salient,
                 key_terms=key_terms,
                 identifiers=identifiers,
                 text_hash=_sha256(text),
-                skeleton_hash=_skeleton_hash(heading_path, role, salient, key_terms, identifiers),
+                skeleton_hash=_skeleton_hash(heading_path, role, lead, salient, key_terms, identifiers),
             )
         )
         alias_to_parent[alias] = pid

@@ -78,10 +78,13 @@ DEFAULT_DENSITY = DensityModel()
 
 def skeleton_prompt_tokens(skeleton: ParentSkeleton) -> int:
     """Deterministic estimate of the tokens one skeleton contributes to the prompt
-    (what the LLM actually sees: alias, heading, excerpt, key terms, identifiers)."""
+    (what the LLM actually sees: alias, heading, lead + salient excerpt, key terms,
+    identifiers). lead_excerpt is empty for structured parents, so it adds nothing
+    there and ~30-50 words on a headingless (transcript) parent."""
     parts = [
         skeleton.alias,
         " ".join(skeleton.heading_path),
+        skeleton.lead_excerpt,
         skeleton.salient_excerpt,
         " ".join(skeleton.key_terms),
         " ".join(skeleton.identifiers),
