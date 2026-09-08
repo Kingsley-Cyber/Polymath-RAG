@@ -1,0 +1,19 @@
+{
+  "corpus": "cinema",
+  "docs": 67,
+  "atoms": 1847,
+  "by_kind": {
+    "THEORY": 580,
+    "CONCEPT": 629,
+    "SEEALSO": 638
+  },
+  "profile_contract": "rag-profile-v3",
+  "projected_points": 1847,
+  "collection": "polymath_document_profile_atoms_embed_e794ec4cab197a3f",
+  "reconcile": {
+    "corpus_id": "cinema",
+    "active_atoms": 1847,
+    "projected_points": 1847,
+    "reconciled": true
+  }
+}

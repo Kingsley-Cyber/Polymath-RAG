@@ -58,6 +58,28 @@ Execution workflow per slice: implement → asserting test → guards (`repo_gua
 → ff `main` (4 CI checks) → update this ledger + register → next. Reversible + additive by
 default; every new frontier behind a flag, byte-identical when off.
 
+### Primitive state — VERIFIED against the live repo (2026-09-08)
+
+Per the owner directive "verify rather than assume"; the ten primitives (§9) and their
+retrieval-time state. Nothing GATED/BLOCKED is dropped — it stays here with its dependency.
+
+| Primitive | State | Evidence / gap |
+|---|---|---|
+| R1 EXACT_LOOKUP | **BUILT** | lane C sparse + `sparse_query_for` exact-terms; `chat_plan.exact_terms` |
+| R2 CHILD_DENSE | **BUILT** | lane B global dense child |
+| R3 DOCUMENT_PROFILE | **BUILT** | `polymath_document_profiles_<contract>` (67 cinema pts); `profile_nominate` RRF; consumed by lane E |
+| R4 PROFILE_ATOM | **SUBSTRATE BUILT (lane next)** | its OWN table `document_profile_atoms` (0055) + collection `polymath_document_profile_atoms_<contract>` — 1847 cinema atoms persisted+projected, reconcile TRUE (register 11.159); NOT collapsed into the global profile. **GATED:** full coverage (latent_pattern/boundary/tension/inversion/bridge/anchor/recallq = 0) depends on vNext profile regeneration. Retrieval lane (atom→docs/parents→MAP→children) = next slice. |
+| R5 PARENT_MAP | **BUILT** | `document_parent_maps` (0054) + `polymath_document_parent_maps_<contract>` (172 pts); `search_parent_maps`; deepened by lane E |
+| R6 RESOLUTION_LIFT | **CORE BUILT (gatherer/probe next)** | ranker core `resolution_lift.py` BUILT + tested (register 11.160, §11 ranking + ≤3 cap + specificity gate). GATHERER (read TERM/TOPIC, MAP hooks/identifiers, entity cards/aliases, headings, atom terminology → LiftCandidates) + the bounded second-pass probe via the `candidate_engine` seam = next slice. Corpus-wide DF for rarity is not persisted (compute on the fly). |
+| R7 ENTITY_RESOLUTION | **SUBSTRATE BUILT** | Postgres `entities`/`mentions` + `concept_families`/`concept_aliases` (LIVE vocab bridge, read via `corpus_map_planning`); entity cards `routing_entity` in Qdrant. Query-time canonical resolution lane for GRAPH seeds = wire in P6. |
+| R8 GRAPH_TRAVERSAL | **BUILT (mode)** | GRAPH mode `_attach_graph` bounded hop-1 over final evidence (Neo4j). Intent-conditioned AUTO-routing + destination-MAP localization = P6/P7. |
+| R9 LATENT_FRONTIER | **BUILT** | lane D latent rescue + WILDCARD `_retrieve_wildcard`; activated per-intent by P2b micro-latent. |
+| R10 SOURCE_HYDRATION | **BUILT** | parent→child deepening in `candidate_engine` (`dense_search(CHILD,{doc_id,parent_id})`); §43 in-parent narrowing = refine in P8. |
+
+**Next dependencies (this phase):** R4 PROFILE_ATOM (independent persistence → projection →
+retrieval lane) → R6 RESOLUTION_LIFT gatherer + probe → then MAP/graph/latent assist → union
+→ cross-encoder qualification → synthesis evidence-role bundle → production qualification.
+
 ---
 
 ## 0. PURPOSE
