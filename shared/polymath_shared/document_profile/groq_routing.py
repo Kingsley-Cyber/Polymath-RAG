@@ -84,16 +84,19 @@ def route(pin: list[str], work_class: str, *, est_total_tokens: float,
         registry = registry or REGISTRY
         get_lane = lambda name: registry.get_lane(DEFAULT_PROVIDER, name)  # noqa: E731
     rpd = dict(account_rpd) if account_rpd else {a: DEFAULT_ACCOUNT_RPD for a in set(account_of.values())}
+    # EVERY pin lane gets a snapshot — a live one when its limiter lane exists, else a
+    # fresh full-budget placeholder. Considering only the registered lanes would leave
+    # every unused account invisible and pin the router to the first-used lane (the bug
+    # the 8-doc backfill exposed: 43/43 calls landed on map_groq1).
     snaps: dict[str, dict] = {}
-    for lane in account_of:
+    for lane, acct in account_of.items():
         lim = get_lane(lane)
         if lim is not None and hasattr(lim, "capacity_snapshot"):
             snaps[lane] = lim.capacity_snapshot(now=now)
+        else:
+            snaps[lane] = {"day_count": 0, "remaining_rpd": rpd.get(acct, DEFAULT_ACCOUNT_RPD),
+                           "rolling_rpm": 0, "tpm_used": 0, "in_flight": 0,
+                           "locked_until": 0.0, "breaker_open": False}
     states = account_states(snaps, account_of, rpd)
-    if not states:
-        # no live state yet (lanes unused): every account is fresh → let the router pick
-        # deterministically from full-budget placeholders so the first calls still spread.
-        states = account_states({lane: {"day_count": 0, "remaining_rpd": rpd.get(acct, DEFAULT_ACCOUNT_RPD)}
-                                 for lane, acct in account_of.items()}, account_of, rpd)
     decision = GR.choose(work_class, states, now=now, est_total_tokens=est_total_tokens)
     return select_lane(pin, decision, account_of, model_of), decision

@@ -58,6 +58,16 @@ def test_route_picks_least_loaded_account_lane():
     assert lane in MAP_PIN and lane != "map_groq3"
 
 
+def test_route_spreads_when_only_one_lane_is_registered():
+    # regression for the 8-doc backfill bug: only map_groq1 has live state (used); the
+    # rest are unregistered (get_lane -> None). The router MUST still consider the fresh
+    # accounts and route AWAY from the used one — not pin every call to map_groq1.
+    used = _lim(day_count=5)
+    lane, decision = RT.route(MAP_PIN, "PARENT_ROUTING_MAP", est_total_tokens=4000.0, providers=PROVIDERS,
+                              get_lane=lambda n: used if n == "map_groq1" else None, now=0.0)
+    assert decision.routed and lane != "map_groq1"
+
+
 def test_route_fresh_pool_still_spreads_deterministically():
     # no live lanes yet (get_lane -> None): route falls back to full-budget placeholders.
     lane, decision = RT.route(MAP_PIN, "PARENT_ROUTING_MAP", est_total_tokens=4000.0,
