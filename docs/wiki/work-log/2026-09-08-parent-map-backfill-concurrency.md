@@ -58,8 +58,28 @@ Owner: `governance`. Verifier: the canary run (below) + the run summary (`errore
 
 ## Open contract gaps
 
-- Groq TPM/RPD may still throttle at 6-way — the per-doc `try/except` + resumability absorb it;
-  re-run to continue. Watch `errored_docs` in the summary and `search`-side transient notes.
 - The `--project` resume-projection gap (a fully-mapped doc on resume has `parents_mapped=0` →
   projection skipped) is unchanged by this slice; a standalone parent-map projector/reconcile pass
   remains the clean follow-up before cutover (noted in the vNext-profile-atom-regen work-log).
+
+## CORRECTION (2026-09-08) — concurrency >1 is counterproductive; root cause = route_groq single-account pinning
+
+The canary (5 docs) spread across 3 accounts and looked healthy, but **at scale concurrency >1
+single-account-pins and is worse than sequential**, so the default is reverted to `--concurrency 1`.
+
+- **Measured:** a `--concurrency 3` full-corpus pass made **633 of ~640 map calls on `map_groq1`**
+  (map_groq2–6: 1–2 each), saturating that one account (429s) and netting only **+13 maps / 6
+  complete docs** in 63 s — WORSE than the sequential ~15 maps/min.
+- **Root cause:** `route_groq.route` picks the account with the most shared remaining budget from a
+  point-in-time `capacity_snapshot`. **Sequentially** each call sees the prior call's draw and
+  rotates; **concurrently** the N threads read near-identical snapshots and all choose the same
+  best account (`map_groq1`) — the exact "single-account pinning" `groq_routing.py` documents for
+  the 8-doc backfill, re-triggered by parallelism. The limiter then enforces that one account's
+  capacity, so the extra threads just pile onto it.
+- **Resolution:** default `--concurrency 1` (sequential = the account-spreading path). The flag
+  stays for when the router is fixed. **The real unblock for a parallel backfill is a
+  concurrency-aware `route_groq`** (atomically reserve/decrement per-account capacity, or
+  round-robin/least-in-flight under concurrent callers) — a scoped follow-up on
+  `shared/polymath_shared/document_profile/groq_routing.py` + `groq_router.choose`. Until then the
+  backfill is a steady sequential capacity-gated campaign (~15 maps/min), and coverage for D-10 is
+  multi-session.
