@@ -4,7 +4,7 @@ owner: governance
 date: 2026-08-30
 status: living
 architecture_impact: none (the single session bootstrap — updated in place, never forked into dated copies)
-last_reviewed: 2026-09-07
+last_reviewed: 2026-09-08
 ---
 
 # CONTINUITY REPORT — the single bootstrap (golden-run edition)
@@ -16,7 +16,36 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-07T1828/README.md` (the NEWEST dated handoff snapshot — SESSION-CONTINUATION, the strong BE-AWARE, recursive DEPENDENCY-MAP, unfinished work; supersedes the earlier `2026-09-07/` snapshot, which still holds for the U-items)** → **`docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-START-HERE.md` → `docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-PLAN.md`** (the next-phase plan of record) → `CLAUDE.md` → the two newest work-logs.
+Read order: this file → **`docs/wiki/reports/2026-09-08/README.md` + `DIRECTORY_MAP.md` (the NEWEST dated handoff snapshot — retrieval/routing/synthesis phase; supersedes `2026-09-07T1828/`, which still holds for the document-semantic-index substrate = this phase's P1)** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (rows 11.155–11.167) → `CLAUDE.md` → the two newest work-logs. The document-semantic-index START-HERE/plan below remain valid for the P1 substrate.
+
+## Latest checkpoint (2026-09-08 — FINAL RETRIEVAL/ROUTING/SYNTHESIS EXECUTED; MD is the living ledger)
+
+**`main` = `a17e4d6`** (whole phase landed, CI-green; branch 0 ahead). Plan-of-record =
+`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md` — its top block is the SINGLE LIVING
+LEDGER (phase table + primitive table + DEFERRED register D-5…D-14); register 11.155–11.167 +
+work-logs are its EVIDENCE, not a parallel ledger. Newest snapshot: `docs/wiki/reports/2026-09-08/`.
+
+- **LANDED (all reversible, default-off, flag-off byte-identical, additive):** P0 plan frozen ·
+  P1.spine dual-read lane E (`POLYMATH_CHAT_DUALREAD_ENABLED`) · P2 intent classifier +
+  intent→budget→fields policy (`POLYMATH_CHAT_INTENT_POLICY`, the master switch) · **R4
+  PROFILE_ATOM** as its OWN primitive (table 0055 + collection, 1847 cinema atoms reconcile
+  TRUE, + retrieval lane — NOT collapsed into the profile) · **R6 RESOLUTION_LIFT** end-to-end
+  (ranker + gatherer + probe lane F) · P4 micro-latent · P6 intent-conditioned graph assist on
+  HYBRID (no 4th mode, Neo4j fail-open) · P8 synthesis evidence-role bundle · P9 breadth
+  (no quotas). **P10 production routing qualification = NON-REGRESSION PASS** (intent-aware
+  stack ON vs OFF: L exact 15/15→15/15, B grounded 13/15→13/15, 0 regressions). Live query
+  path UNCHANGED until a flag is set.
+- **DEFERRED (in the FINAL-PLAN DEFERRED register, nothing dropped):** D-5 P5 BRIDGE/ANCHOR
+  (GATED: vNext atom regen) · D-7 P7 graph→children (BLOCKED: graph-before-judge reorder) ·
+  D-8b synthesizer-by-role (BLOCKED: `answer_synthesis.py` claim system) · D-10 P10 *uplift*
+  (GATED: parent-MAP backfill + atoms) · D-11/12/13 GRAPH/Wildcard measurement · D-14 legacy
+  retirement (BLOCKED: migration zero-reader proof).
+- **Unblockable-now continuation:** the paced parent-MAP backfill (`scripts/parent_map_backfill.py
+  --corpus cinema --project`, resumable — unblocks D-10 uplift) + vNext profile regeneration
+  (unblocks D-5/D-12 relational atoms). Ports moved: embedder/reranker/orchestrator = 8742/8743/7200.
+- **Substrate note:** the DOCUMENT-SEMANTIC-INDEX substrate (below) is this phase's **P1** — still
+  valid, not restarted. The migration ledger `RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` still owns P1
+  safe-migration + the D-14 retirement gate.
 
 ## Latest checkpoint (2026-09-07 — NEXT-PHASE PLAN ADMITTED: DOCUMENT SEMANTIC INDEX)
 

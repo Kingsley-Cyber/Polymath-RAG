@@ -349,6 +349,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/plans/CONTINUITY-REPORT.md", "md", None),
     ("docs/wiki/reports/2026-09-07/BE-AWARE-REPORT.md", "md", None),
     ("docs/wiki/reports/2026-09-07/README.md", "md", None),
+    ("docs/wiki/reports/2026-09-08/README.md", "md", None),
+    ("docs/wiki/reports/2026-09-08/DIRECTORY_MAP.md", "md", None),
     ("docs/wiki/reports/2026-09-07/CONTINUATION_REPORT.md", "md", None),
     ("docs/wiki/reports/2026-09-07/BE_AWARE.md", "md", None),
     ("docs/wiki/reports/2026-09-07/ARCHITECTURE_STATE.md", "md", None),

@@ -2,8 +2,8 @@
 title: "POLYMATH NEXT PHASE — CODING AGENT START HERE"
 date: 2026-09-07
 status: "bootstrap hook"
-last_reviewed: 2026-09-07
-plan_of_record: "docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-PLAN.md"
+last_reviewed: 2026-09-08
+plan_of_record: "docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md"
 ---
 
 # CODING AGENT START HERE
@@ -41,16 +41,27 @@ python3 scripts/wiki_worm.py --check
 
 Do not discard unknown dirty-worktree changes.
 
-## 2. Read the authoritative next-phase plan
+## 2. Read the authoritative plan of record
 
-Read in full:
+Read in full (CURRENT plan-of-record, 2026-09-08):
 
 ```text
-docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-PLAN.md
+docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md   ← the LIVING execution ledger
+docs/wiki/reports/2026-09-08/README.md + DIRECTORY_MAP.md ← newest handoff + dir map
 ```
 
-(Installed into the repository under `docs/wiki/plans/` on 2026-09-07 as slice S0;
-the original Downloads artifact was `POLYMATH_NEXT_PHASE_IMPLEMENTATION_PLAN_FINAL_2026-09-07.md`.)
+The FINAL retrieval/routing/synthesis plan is the query-time architecture and the single living
+ledger (its top block: phase table P0–P14 + primitive table R1–R10 + DEFERRED register). The
+`DOCUMENT-SEMANTIC-INDEX-V1-PLAN.md` below built the two-scale **indexing substrate** = this
+plan's **P1**; it remains valid and is not restarted. `RETRIEVAL-MIGRATION-DEPENDENCY-V1.md`
+owns the P1 safe-migration + the legacy-retirement gate.
+
+```text
+docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-PLAN.md   (P1 substrate build-slices S0–S16)
+```
+
+(Installed under `docs/wiki/plans/` on 2026-09-07 as slice S0; the original Downloads artifact
+was `POLYMATH_NEXT_PHASE_IMPLEMENTATION_PLAN_FINAL_2026-09-07.md`.)
 
 Do not continue from the older V1–V6 standalone design artifacts except for historical clarification.
 
