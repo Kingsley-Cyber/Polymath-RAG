@@ -49,8 +49,12 @@ def test_profile_pool_is_pinned_and_isolated_in_config():
         assert eps[n]["enabled"] and eps[n]["dedicated"] and eps[n]["structured"] == "text"   # plain-text labels: the client sends NO response_format (Groq 400s json_object without the word "json")
     assert all(eps[n]["url"] == "https://api.groq.com/openai" and eps[n]["model"] == "groq/compound" for n in groq)
     assert [eps[n]["api_key_env"] for n in groq] == [f"GROQ_API_KEY_{i}" for i in range(1, 7)]  # six DISTINCT dedicated keys
-    other_envs = {e["api_key_env"] for e in d["providers"] if e["name"] not in groq + fallbacks}
-    assert not ({eps[n]["api_key_env"] for n in groq} & other_envs)                            # tier 0 is fully isolated
+    map_lanes = [f"map_groq{i}" for i in range(1, 7)]                                           # S7b compound-mini lanes
+    other_envs = {e["api_key_env"] for e in d["providers"] if e["name"] not in groq + fallbacks + map_lanes}
+    assert not ({eps[n]["api_key_env"] for n in groq} & other_envs)                            # tier 0 isolated from UNRELATED providers
+    # S7 shared budget: map_groq{i} (compound-mini, doc_parent_map) deliberately SHARES account i's key
+    # with profile_groq{i} (compound) — one account, both models draw down the one budget.
+    assert [eps[n]["api_key_env"] for n in map_lanes] == [f"GROQ_API_KEY_{i}" for i in range(1, 7)]
     # fallbacks may share PROVIDER keys with enrichment (every Gemini / OpenRouter key is in use) — they see only
     # tier-0 failures and carry their own limiter rows; that is the documented compromise, pinned here
     assert all("fallback" in n for n in fallbacks)
