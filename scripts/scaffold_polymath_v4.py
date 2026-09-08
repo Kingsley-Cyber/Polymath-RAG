@@ -1863,6 +1863,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-08-r4-atom-lane.md", "md", None),
     ("docs/wiki/work-log/2026-09-08-r6-lift-gatherer.md", "md", None),
     ("docs/wiki/work-log/2026-09-08-r6b-lift-probe.md", "md", None),
+    ("docs/wiki/work-log/2026-09-08-p6-graph-assist.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-style-bold-retire.md", "md", None),
     ("docs/wiki/experiments/chat-parity-p1f-first.json", "json", None),
     ("docs/wiki/work-log/2026-09-06-p1e-mode-recomposition.md", "md", None),

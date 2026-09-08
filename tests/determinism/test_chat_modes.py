@@ -515,3 +515,16 @@ def test_wildcard_children_of_closes_over_one_fixed_vector_not_function_state(mo
     assert h.children_calls == ["pfar0"]
     assert not hasattr(fast_api, "_children_of")
     assert all(list(v) == h.primary_vec for _, v, _, _ in h.latent_calls)
+
+
+# ---- P6: intent-conditioned graph ASSIST on a HYBRID turn (no 4th mode) -------------------
+
+def test_graph_assist_attaches_facts_to_hybrid_without_changing_mode(monkeypatch):
+    h = _ModeHarness(monkeypatch, graph_facts_n=30, cards_n=5)
+    out = h.mode("HYBRID", graph_assist="auto")
+    assert out["meta"]["mode"] == "HYBRID"                       # §2: still HYBRID, not GRAPH
+    assert len(out["graph_relationships"]) == 20                 # the bounded hop attached facts
+    off = _ModeHarness(monkeypatch, graph_facts_n=30, cards_n=5).mode("HYBRID", graph_assist="off")
+    assert "graph_relationships" not in off                      # default HYBRID: no graph attach
+    cond = _ModeHarness(monkeypatch, graph_facts_n=30, cards_n=5).mode("HYBRID", graph_assist="conditional")
+    assert "graph_relationships" not in cond                     # only auto/strong attach

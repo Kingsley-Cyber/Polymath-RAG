@@ -44,7 +44,7 @@ through the parent-MAP localization layer (§42).
 | P3 | Resolution Lift (user vocab → corpus vocab, source-derived) | **DONE** — §11 core (11.160) + gatherer (11.162) + probe lane F (11.163, default-off); **GATED:** corpus-DF rarity index + lift-term quality on arbitrary corpora |
 | P4 | Default micro-latent atom retrieval (THEORY/CONCEPT/PATTERN/BOUNDARY) | **DONE (via P2b)** — lane D micro-latent activated per intent by `apply_intent_policy`; **GATED:** richer atom generation (vNext) |
 | P5 | SEEALSO / BRIDGE fan-out resolver | GATED on P4 (relational atoms + entity resolution) |
-| P6 | Intent-conditioned GRAPH auto-routing | GATED on P2 + entity resolution |
+| P6 | Intent-conditioned GRAPH auto-routing | **DONE** — graph assist auto-attaches on HYBRID for relational intents (11.164, default-off, mode stays HYBRID, fail-open) |
 | P7 | Graph destinations through parent-MAP | GATED on P6 |
 | P8 | Synthesis evidence-role bundle (DIRECT/PRECISION/RELATIONAL/LATENT) | GATED on P3/P4 |
 | P9 | Task-conditioned breadth (SINGLE_OK/MULTI_PREFERRED/MULTI_REQUIRED) | GATED on P2 |
@@ -72,7 +72,7 @@ retrieval-time state. Nothing GATED/BLOCKED is dropped — it stays here with it
 | R5 PARENT_MAP | **BUILT** | `document_parent_maps` (0054) + `polymath_document_parent_maps_<contract>` (172 pts); `search_parent_maps`; deepened by lane E |
 | R6 RESOLUTION_LIFT | **BUILT (core+gatherer+probe)** | ranker core (11.160, §11 ranking + ≤3 cap + specificity gate) + gatherer `resolution_lift_gather.py` (11.162, reads TERM/TOPIC, MAP hooks/identifiers, aliases, headings, atom terminology → ranked LiftCandidates). the bounded ≤3 second-pass probe is lane F (R6b, 11.163, additive + default-off, flag-off byte-identical) + `is_meaningful_term` noise gate. **GATED:** corpus DF rarity index + lift-term quality on arbitrary corpora. |
 | R7 ENTITY_RESOLUTION | **SUBSTRATE BUILT** | Postgres `entities`/`mentions` + `concept_families`/`concept_aliases` (LIVE vocab bridge, read via `corpus_map_planning`); entity cards `routing_entity` in Qdrant. Query-time canonical resolution lane for GRAPH seeds = wire in P6. |
-| R8 GRAPH_TRAVERSAL | **BUILT (mode)** | GRAPH mode `_attach_graph` bounded hop-1 over final evidence (Neo4j). Intent-conditioned AUTO-routing + destination-MAP localization = P6/P7. |
+| R8 GRAPH_TRAVERSAL | **BUILT (mode + intent auto-assist)** | GRAPH mode `_attach_graph` bounded hop-1 (Neo4j); P6 (11.164) auto-attaches it on HYBRID for relational intents (default-off, mode stays HYBRID). Destination→parent-MAP localization = P7. |
 | R9 LATENT_FRONTIER | **BUILT** | lane D latent rescue + WILDCARD `_retrieve_wildcard`; activated per-intent by P2b micro-latent. |
 | R10 SOURCE_HYDRATION | **BUILT** | parent→child deepening in `candidate_engine` (`dense_search(CHILD,{doc_id,parent_id})`); §43 in-parent narrowing = refine in P8. |
 

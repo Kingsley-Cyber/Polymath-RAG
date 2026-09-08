@@ -428,7 +428,22 @@ MODE_LANES: dict[str, tuple[str, ...]] = {
 }
 
 
-def chat_retrieve_mode(mode: str, query: str, corpus_id: str, *, graph_useful: bool = True, **kw) -> dict:
+def _with_graph_assist(query: str, corpus_id: str, lanes, *, graph_useful: bool, mode_stamp: str, kw: dict) -> dict:
+    """Run the v2 composition capturing the primary vector, stamp the mode, then attach the
+    bounded graph hop (§3.18). Shared by GRAPH mode and P6 intent-conditioned HYBRID assist."""
+    seen: dict = {}
+
+    def _capture(ctx: SearchContext, _pool: Executor) -> None:
+        seen["qvec"] = ctx.qvec
+
+    out = chat_retrieve_v2(query, corpus_id, lanes=lanes, on_context=_capture, **kw)
+    out["meta"]["mode"] = mode_stamp
+    _attach_graph(out, query, corpus_id, qvec=seen.get("qvec"), graph_useful=graph_useful)
+    return out
+
+
+def chat_retrieve_mode(mode: str, query: str, corpus_id: str, *, graph_useful: bool = True,
+                       graph_assist: str = "off", **kw) -> dict:
     """One engine, four compositions (§3.15). VECTOR / FAST = A + B; HYBRID = A + B + C; GRAPH = HYBRID +
     bounded hop-1 over the FINAL evidence (`_attach_graph`; global winners seed exactly like hierarchy
     winners, §3.21 #5–#6; the primary vector is reused for the entity-card seeds, #7); WILDCARD = HYBRID ∥
@@ -448,15 +463,12 @@ def chat_retrieve_mode(mode: str, query: str, corpus_id: str, *, graph_useful: b
     if m == MODE_WILDCARD:
         return _retrieve_wildcard(query, corpus_id, lanes=lanes, **kw)
     if m == MODE_GRAPH:
-        seen: dict = {}
-
-        def _capture(ctx: SearchContext, _pool: Executor) -> None:
-            seen["qvec"] = ctx.qvec            # the ONE primary vector, handed on explicitly (§3.21 #7)
-
-        out = chat_retrieve_v2(query, corpus_id, lanes=lanes, on_context=_capture, **kw)
-        out["meta"]["mode"] = MODE_GRAPH
-        _attach_graph(out, query, corpus_id, qvec=seen.get("qvec"), graph_useful=graph_useful)
-        return out
+        return _with_graph_assist(query, corpus_id, lanes, graph_useful=graph_useful, mode_stamp=MODE_GRAPH, kw=kw)
+    # P6 (§37/§38): intent-conditioned graph ASSIST on a HYBRID turn — attach the bounded hop
+    # WITHOUT changing the public mode (§2: no 4th mode). Neo4j degrades cleanly, so this is
+    # additive (facts ride the side channel; evidence/ranking untouched).
+    if m == MODE_HYBRID and str(graph_assist or "off").strip().lower() in ("auto", "strong"):
+        return _with_graph_assist(query, corpus_id, lanes, graph_useful=graph_useful, mode_stamp=MODE_HYBRID, kw=kw)
     out = chat_retrieve_v2(query, corpus_id, lanes=lanes, **kw)
     out["meta"]["mode"] = MODE_VECTOR if m in (MODE_VECTOR, MODE_FAST) else MODE_HYBRID
     return out
