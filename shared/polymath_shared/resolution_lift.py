@@ -44,6 +44,16 @@ _SOURCE_PRIOR = {
 
 _IDENTIFIER = re.compile(r"\d|(?:\b(?:CVE|RFC|ISO|IEEE)\b)|(?:\b[A-Z]{1,5}\d[A-Z0-9]*\b)|%", re.I)
 _WORD = re.compile(r"[a-z0-9]+")
+_HAS_LETTER = re.compile(r"[A-Za-z]")
+
+
+def is_meaningful_term(term: str) -> bool:
+    """A lift candidate must carry semantic content: at least one letter (so a bare source
+    number like a page/figure ref — "001", "0421702" — is not surfaced as precision
+    vocabulary) and length ≥ 2. User-typed exact identifiers still ride the raw exact-term
+    lane; this only gates DISCOVERED lift terms (§10: raise vocabulary, don't inject noise)."""
+    t = (term or "").strip()
+    return len(t) >= 2 and bool(_HAS_LETTER.search(t))
 
 
 def is_identifier_like(term: str) -> bool:
@@ -115,7 +125,7 @@ def rank_lift_candidates(candidates: Sequence[LiftCandidate], query: str, *,
     qet = tuple(query_exact_terms or ())
     scored: dict[str, tuple[float, LiftCandidate]] = {}
     for c in candidates:
-        if not c.term or not specificity_beyond(c.term, query, qet):
+        if not c.term or not is_meaningful_term(c.term) or not specificity_beyond(c.term, query, qet):
             continue
         s = score_candidate(c, corpus_doc_count=corpus_doc_count)
         key = c.term.strip().lower()

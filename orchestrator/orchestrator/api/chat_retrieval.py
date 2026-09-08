@@ -233,6 +233,41 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                     pass
             return _pmp.search_parent_maps(client, _pmp.collection_name(cid), qv, docs, k=budget.dualread_map_k)
 
+        def lift_search(qv) -> list[dict]:
+            # R6 RESOLUTION_LIFT (§10–§12): discover the corpus's precise vocabulary from the
+            # profile-nominated docs' SOURCE surfaces, then probe the top ≤3 lifted terms as
+            # ORIGINAL children (dense-child rows tagged with the term). Vocabulary discovers,
+            # source chunks prove — the cross-encoder still judges. Zero cost when off.
+            from polymath_shared.db import tx as _tx
+            from polymath_shared.document_profile import projection as _pj
+            from polymath_shared.embedding_contracts import active_contract as _ac
+            from polymath_shared.resolution_lift_gather import LiveLiftSources, gather_lift_candidates
+            cid = _ac().contract_id
+            docs = _pj.profile_nominate(client, _pj.collection_name(cid), qv, corpus_id, k=budget.dualread_profile_docs)
+            if not docs:
+                return []
+            try:
+                with _tx() as _conn:
+                    lifted = gather_lift_candidates(
+                        query, doc_ids=docs, corpus_id=corpus_id,
+                        sources=LiveLiftSources(_conn, client, corpus_id=corpus_id, embedding_contract_id=cid),
+                        top_evidence_docs=docs, query_exact_terms=exact_terms, k=3,
+                        atom_kinds=tuple(getattr(budget, "atom_kinds", ()) or ()))
+            except Exception:  # noqa: BLE001 — the precision lane is optional; never break the turn
+                return []
+            terms = [c.term for c in lifted]
+            if not terms:
+                return []
+            rows: list[dict] = []
+            for term, tv in zip(terms, _embed_queries(terms)):
+                for r in searcher._search(collection, list(tv),
+                                          {"representation_kind": "routing_child", "corpus_id": corpus_id},
+                                          limit=int(budget.resolution_lift_children)):
+                    r = dict(r)
+                    r["lifted_term"] = term
+                    rows.append(r)
+            return rows
+
         def sparse_search(top_k: int, sparse_query=None) -> list[dict]:
             return searcher.sparse_search(collection, sparse_query if sparse_query is not None else sparse_q,
                                           {"representation_kind": "routing_child", "corpus_id": corpus_id}, limit=top_k)
@@ -277,8 +312,8 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
             on_context(ctx, pool)          # P1.e: the vector exists — a frontier may start beside the dense lanes
         # STAGES 2–3: concurrent lanes under `lane_deadline_s` → union with provenance (the engine)
         result = retrieve_candidates(ctx, budget, dense_search=dense_search, sparse_search=sparse_search, latent_search=latent_search,
-                                     dualread_search=dualread_search, region_lookup=_region_lookup, subqueries=subs,
-                                     executor=pool, prestarted=prestarted)
+                                     dualread_search=dualread_search, lift_search=lift_search, region_lookup=_region_lookup,
+                                     subqueries=subs, executor=pool, prestarted=prestarted)
 
         # STAGE 4: exactly ONE judge call per turn, under `rerank_deadline_s`. Past it the turn proceeds in
         # fusion order (a complete, correct answer — the judge only reorders) and says so; the late sidecar

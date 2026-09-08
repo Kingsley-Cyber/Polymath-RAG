@@ -171,6 +171,8 @@ def apply_intent_policy(intent: str, budget):
         overrides["breadth"] = p.breadth
     if hasattr(budget, "atom_kinds"):
         overrides["atom_kinds"] = p.atom_kinds
+    if hasattr(budget, "resolution_lift_enabled"):
+        overrides["resolution_lift_enabled"] = p.resolution_lift != "off"   # R6 precision lane per intent
     return replace(budget, **overrides)
 
 

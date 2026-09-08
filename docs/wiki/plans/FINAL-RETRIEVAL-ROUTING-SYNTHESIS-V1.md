@@ -40,10 +40,10 @@ through the parent-MAP localization layer (§42).
 | P0 | Freeze this plan in repo bootstrap | **DONE 2026-09-07** (this admission; register 11.155) |
 | P1 | Document profile / profile-atom / parent-MAP indexing | **SUBSTRATE BUILT** via the migration ledger (profile vNext, parent-maps, projections, Groq routing, backfill — registers 11.139–11.154); profile-ATOM surfaces pending |
 | P1.spine | DOCUMENT_PROFILE→PARENT_MAP→CHILD as an additive lane | **LANDED** — `candidate_engine` lane E (`POLYMATH_CHAT_DUALREAD_ENABLED`, default off, §53-compliant); register 11.154 (S8 shadow) + the S9 dual-read lane |
-| P2 | Intent-policy mapping (intent → fields → technique → budget) | **NEXT** — derive intents from the existing query compiler / typed subqueries |
-| P3 | Resolution Lift (user vocab → corpus vocab, source-derived) | GATED on P2 |
-| P4 | Default micro-latent atom retrieval (THEORY/CONCEPT/PATTERN/BOUNDARY) | GATED on P2 |
-| P5 | SEEALSO / BRIDGE fan-out resolver | GATED on P4 |
+| P2 | Intent-policy mapping (intent → fields → technique → budget) | **DONE** — P2a deterministic intent classifier (11.157) + P2b intent→budget policy (11.158, default-off flag); R4 atom-kinds per intent (11.161) |
+| P3 | Resolution Lift (user vocab → corpus vocab, source-derived) | **DONE** — §11 core (11.160) + gatherer (11.162) + probe lane F (11.163, default-off); **GATED:** corpus-DF rarity index + lift-term quality on arbitrary corpora |
+| P4 | Default micro-latent atom retrieval (THEORY/CONCEPT/PATTERN/BOUNDARY) | **DONE (via P2b)** — lane D micro-latent activated per intent by `apply_intent_policy`; **GATED:** richer atom generation (vNext) |
+| P5 | SEEALSO / BRIDGE fan-out resolver | GATED on P4 (relational atoms + entity resolution) |
 | P6 | Intent-conditioned GRAPH auto-routing | GATED on P2 + entity resolution |
 | P7 | Graph destinations through parent-MAP | GATED on P6 |
 | P8 | Synthesis evidence-role bundle (DIRECT/PRECISION/RELATIONAL/LATENT) | GATED on P3/P4 |
@@ -70,7 +70,7 @@ retrieval-time state. Nothing GATED/BLOCKED is dropped — it stays here with it
 | R3 DOCUMENT_PROFILE | **BUILT** | `polymath_document_profiles_<contract>` (67 cinema pts); `profile_nominate` RRF; consumed by lane E |
 | R4 PROFILE_ATOM | **BUILT (substrate + lane)** | own table `document_profile_atoms` (0055) + collection (1847 cinema atoms, reconcile TRUE, 11.159); LANE wired (11.161) — atoms nominate docs that converge through parent-MAP (§42), kind-selected per intent, additive + default-off, flag-off byte-identical. NOT collapsed into the global profile. **GATED:** full atom coverage + measurable uplift depend on vNext profile regeneration + parent-MAP backfill. |
 | R5 PARENT_MAP | **BUILT** | `document_parent_maps` (0054) + `polymath_document_parent_maps_<contract>` (172 pts); `search_parent_maps`; deepened by lane E |
-| R6 RESOLUTION_LIFT | **CORE + GATHERER BUILT (probe next)** | ranker core `resolution_lift.py` BUILT + tested (register 11.160, §11 ranking + ≤3 cap + specificity gate). GATHERER (read TERM/TOPIC, MAP hooks/identifiers, entity cards/aliases, headings, atom terminology → LiftCandidates) + the bounded second-pass probe via the `candidate_engine` seam = next slice. Corpus-wide DF for rarity is not persisted (compute on the fly). |
+| R6 RESOLUTION_LIFT | **BUILT (core+gatherer+probe)** | ranker core (11.160, §11 ranking + ≤3 cap + specificity gate) + gatherer `resolution_lift_gather.py` (11.162, reads TERM/TOPIC, MAP hooks/identifiers, aliases, headings, atom terminology → ranked LiftCandidates). the bounded ≤3 second-pass probe is lane F (R6b, 11.163, additive + default-off, flag-off byte-identical) + `is_meaningful_term` noise gate. **GATED:** corpus DF rarity index + lift-term quality on arbitrary corpora. |
 | R7 ENTITY_RESOLUTION | **SUBSTRATE BUILT** | Postgres `entities`/`mentions` + `concept_families`/`concept_aliases` (LIVE vocab bridge, read via `corpus_map_planning`); entity cards `routing_entity` in Qdrant. Query-time canonical resolution lane for GRAPH seeds = wire in P6. |
 | R8 GRAPH_TRAVERSAL | **BUILT (mode)** | GRAPH mode `_attach_graph` bounded hop-1 over final evidence (Neo4j). Intent-conditioned AUTO-routing + destination-MAP localization = P6/P7. |
 | R9 LATENT_FRONTIER | **BUILT** | lane D latent rescue + WILDCARD `_retrieve_wildcard`; activated per-intent by P2b micro-latent. |

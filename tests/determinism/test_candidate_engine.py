@@ -87,7 +87,7 @@ def test_every_candidate_carries_lane_provenance_and_multi_lane_chunks_fuse_once
     # REGION-EXCLUSION-V1 (2026-09-07): a noisy role is dropped at the union and receipted — demotion alone let a
     # table-of-contents chunk take a document-fair judged seat and become S1 when the judge missed its deadline
     assert "d2-noise" not in ids and res.trace["noise_reasons"] == {"region:front_matter": 1} and res.trace["noise_dropped"] == 1
-    assert res.trace["funnel_lanes"].keys() == {"hierarchical", "global_dense_child", "global_sparse_child", "latent_rescue", "dualread"}   # B12 lane D + S9 lane E receipted (empty when off)
+    assert res.trace["funnel_lanes"].keys() == {"hierarchical", "global_dense_child", "global_sparse_child", "latent_rescue", "dualread", "resolution_lift"}   # lanes D/E/F receipted (empty when off)
     assert res.trace["funnel_lanes"]["latent_rescue"] == [] and res.trace["lane_sizes"]["latent_rescue"] == 0
     assert res.trace["funnel_union"] == [c.chunk_id for c in res.union] and res.trace["plan"] == "chat-retrieval-v2"
     assert res.trace["multi_lane"] >= 1 and res.degraded == []
@@ -878,3 +878,25 @@ def test_dualread_none_nominator_with_flag_on_is_safe():
                                  sparse_search=fake.sparse, dualread_search=None)
     assert res.trace["dualread"]["enabled"] is False              # no nominator → lane inert, no error
     assert res.trace["lane_sizes"]["dualread"] == 0
+
+
+# ---- R6 resolution-lift lane (lane F): additive, default-off ------------------------------
+
+def test_resolution_lift_lane_off_by_default_and_on_adds_children():
+    def _boom_lift(_qv):
+        raise AssertionError("lift_search must NOT run when off")
+    base = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=Fake().dense, sparse_search=Fake().sparse)
+    off = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=Fake().dense, sparse_search=Fake().sparse,
+                                 lift_search=_boom_lift)
+    assert [c.chunk_id for c in base.union] == [c.chunk_id for c in off.union]      # byte-identical
+    assert off.trace["resolution_lift"]["enabled"] is False and off.trace["lane_sizes"]["resolution_lift"] == 0
+
+    def _lift(_qv):
+        return [{"payload": {"chunk_id": "L1", "doc_id": "d1", "parent_id": "d1-p0", "source_name": "A", "text": "AU21 detail"},
+                 "score": 0.7, "lifted_term": "AU21"}]
+    fake = Fake()
+    on = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(resolution_lift_enabled=True), dense_search=fake.dense,
+                                sparse_search=fake.sparse, lift_search=_lift)
+    assert on.trace["resolution_lift"]["enabled"] is True
+    assert on.trace["resolution_lift"]["terms"] == ["AU21"]
+    assert any(ce.LANE_F in c.arrivals for c in on.union)
