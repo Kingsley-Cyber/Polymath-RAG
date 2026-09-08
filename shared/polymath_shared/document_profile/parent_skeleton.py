@@ -74,7 +74,9 @@ _IDENTIFIER_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"\bRFC\s?\d{3,5}\b", re.IGNORECASE),          # RFC 5246 / RFC5246
     re.compile(r"\bv?\d+\.\d+(?:\.\d+)+\b"),                  # 3.11.15, v2.1.0
     re.compile(r"\b[A-Z]{1,6}\d{1,6}(?:-\d{1,6})*\b"),        # AU21, CS0-003, ISO27001
-    re.compile(r"\b0\d{1,6}\b"),                              # 021 (zero-padded code)
+    re.compile(r"\b0\d{2,6}\b"),                              # 021 (>=3-digit zero-padded code;
+                                                              # >=3 avoids 2-digit table cells 02/03,
+                                                              # a live-canary finding 2026-09-07)
     re.compile(r"\b[A-Z]{2,8}\b"),                            # FACS, TPM, DSL (acronyms)
 )
 

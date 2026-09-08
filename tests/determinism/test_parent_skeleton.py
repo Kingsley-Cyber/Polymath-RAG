@@ -135,6 +135,14 @@ def test_exact_identifiers_preserved_deterministically():
     assert manifest.skeletons[0].identifiers == tuple(PS.extract_identifiers(TECH_MANUAL))
 
 
+def test_zero_padded_code_requires_three_digits_not_table_cells():
+    # Live-canary finding 2026-09-07: on table-heavy parents the zero-padded rule
+    # grabbed bare 2-digit cells (02, 03). Require >=3 digits: keep 021, drop 02/03.
+    ids = PS.extract_identifiers("row 02 and 03 and 08 with objective 021 and code 0217")
+    assert "021" in ids and "0217" in ids
+    assert "02" not in ids and "03" not in ids and "08" not in ids
+
+
 def test_same_input_same_hashes_and_manifest():
     parents = [_parent(i, t) for i, t in enumerate([TECH_MANUAL, PSYCH_BOOK, HTML_LIKE, CODE_DESIGN])]
     a = PS.build_parent_skeletons(parents)
