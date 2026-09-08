@@ -87,7 +87,7 @@ cutover — then, only after zero-reader proof + a rollback window, retirement.
 | S13 | New-document blocking gate | repo S13/S15 | **GATED** | owner QUERY_READY flip (BE-AWARE §7) |
 | S14 | Existing corpus cutover | repo S14 | **GATED** | after backfill + shadow + dual-read qualify |
 | S15 | Disable legacy enrichment producers | — | **GATED** | reversible flag; needs S1 census + shadow qualification |
-| S16 | Remove legacy runtime readers | repo S16 | **GATED** | needs S1 census == 0 required readers + §23 ablation |
+| S16 | Remove legacy runtime readers | repo S16 | **GATED** | needs S1 census == 0 required readers + §23 ablation. **Census re-run 2026-09-08: runtime=334, unclassified=216** — inspected: the unclassified are overwhelmingly BENIGN (trace/telemetry keys like `"document_summary": len(doc_lane)`, lane-name constants `SECTION_SUMMARY_LANE`, and the chunker/intake PRODUCING summaries), NOT legacy READERS. The genuine readers are the classified 72 (summary/compiler-title/enrichment consumers); retiring them is COVERAGE-GATED — they read the legacy summaries vNext replaces, and migrate only when vNext is the live generation (S14 cutover). Exact next before S16: (a) reach vNext coverage + cutover; (b) confirm the 72 readers each migrated; (c) a census heuristic pass to auto-classify the benign trace/constant/producer patterns (shrinks the manual queue). |
 | S17 | Stop obsolete legacy writers/stages | — | **GATED** | rollback window; zero-reader proof |
 | S18 | Physical cleanup (tables/indexes/flags/collections) | repo S18 | **GATED** | only after rollback window expires |
 
