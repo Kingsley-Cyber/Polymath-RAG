@@ -42,11 +42,26 @@ required CI checks green before ff `main`:
 - 11.142 **parent-MAP scale** — S9 durable worker (restart/partial-safe, injected
   inference); 11.143 S10 Qdrant projection contract; 11.144 map prompt (§19/§30).
 
-Both semantic scales are deterministically complete end-to-end: skeleton→prompt→
-compile→pack→persist→project (maps) and fingerprint→prompt→[compile at S8]→project
-(profile). **Everything that remains requires opening an owner gate** — provider
-spend, fleet/provider-layer config, a live-stage/DAG change, or a live-reader/writer
-migration. This is the true gate boundary, reached by building — not a stopping-short.
+Both semantic scales are deterministically complete end-to-end. **The owner then
+authorized the controlled live migration (2026-09-07), and the live gates have been
+crossed with evidence** (registers 11.146–11.152):
+
+- **S5 budget canary** (11.146) → `DEFAULT_BUDGET_TOKENS = 500` (the plateau).
+- **S8 profile/compiler wiring** (11.147) reversible (`POLYMATH_DOC_PROFILE_VNEXT`);
+  **vNext profile QUALIFIED + ENABLED** (11.149) — self-retrieval 0.933 > 0.860 baseline.
+- **S7 Groq shared-budget routing** — accounting (11.148) + `route_groq` + compound-mini
+  lanes (11.152), reversible (`POLYMATH_GROQ_ROUTER`).
+- **Parent-MAP LIVE** — activation on a 3-doc cohort (11.150, 50 maps, complete +
+  restart-idempotent) + projection reconciliation + purge/rebuild (11.151, 50 points,
+  Postgres==Qdrant).
+- **Controlled cinema backfill** (in progress) — routed generation + projection; it
+  SURFACED and fixed a router single-account-pinning bug (the point of a controlled
+  backfill) before any mass run.
+
+Everything reversible (flags / `--cleanup` / `--purge-only`). **Remaining (owner-gated
+sequence, step 5 back half):** finish the controlled backfill, then the retrieval-runtime
+integration — shadow → dual-read → compiler/title bridge → vNext-readiness/QUERY_READY →
+cutover — then, only after zero-reader proof + a rollback window, retirement.
 
 | Migration slice (§30) | Capability | Repo build-slice | Status | Evidence / next gate |
 |---|---|---|---|---|

@@ -29,7 +29,10 @@ _PROVIDERS_FILE = _ROOT / "config" / "cloud_providers.json"
 #: Fallback per-account daily budget when limiter config is not consulted (the six Groq
 #: accounts' measured quota; the limiter row's rpd is authoritative when available).
 DEFAULT_ACCOUNT_RPD = 230
-DEFAULT_PROVIDER = "cloud"
+#: The limiter registry keys a cloud lane as (f"llm_{client_lane}", limiter_key); the
+#: doc_profile/parent-map clients use client lane "cloud", so their registry provider is
+#: "llm_cloud" (NOT "cloud" — the 8-doc backfill's single-account pinning traced here).
+DEFAULT_PROVIDER = "llm_cloud"
 
 
 def router_enabled() -> bool:
