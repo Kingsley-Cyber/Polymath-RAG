@@ -1,0 +1,698 @@
+{
+ "verdict": {
+  "gate": "profile-vnext-selfretrieval-v1",
+  "corpus": "cinema",
+  "docs_projected": 67,
+  "errors": [],
+  "recorded_baseline_top1": 0.858,
+  "tolerance": 0.03,
+  "baseline_same_cohort": {
+   "documents": 67,
+   "probes": 400,
+   "top1_rate": 0.86,
+   "top3_rate": 0.995,
+   "median_rank": 1.0
+  },
+  "vnext": {
+   "documents": 67,
+   "probes": 135,
+   "top1_rate": 0.933,
+   "top3_rate": 0.985,
+   "median_rank": 1
+  },
+  "PASS": true
+ },
+ "vnext_per_doc": [
+  {
+   "doc": "A Circumplex Model of Affect.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "A Multistage Pipeline for Character-Stab",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Affective Movement Generation using Laba",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Anatomy for Sculptors.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Bayesian reasoning for Laban Movement An",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Blain Brown - Cinematography - Theory an",
+   "probes": 2,
+   "ranks": [
+    1,
+    2
+   ],
+   "top1": 1,
+   "top3": 2
+  },
+  {
+   "doc": "Breakthrough Advertising.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Bruce Block - The Visual Story (2007).md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Chip Heath & Dan Heath - Made to Stick (",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Classifying Facial Action.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Comics and Sequential Art.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Complete Guide to Drawing Dynamic Manga ",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Damian Allen et al - Fusion Visual Effec",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "David Keirsey - Please Understand Me II ",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "David Landau - Lighting for Cinematograp",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Digital Compositing for Film and Video.m",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Donald Miller - Building a StoryBrand (2",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Ed Hooks - Acting for Animators (2017).m",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Elemental Magic Volume 2.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Elemental Magic.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Facial Action Coding System_ Facial acti",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Facial Action coding 3.0.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Fight Choreography The Art of Non-Verbal",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Film Directing Cinematic Motion.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    2
+   ],
+   "top1": 1,
+   "top3": 2
+  },
+  {
+   "doc": "Force Dynamic Life Drawing.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Framed Environment Design.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Framed Ink.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Francis Glebas - Directing the Story (20",
+   "probes": 3,
+   "ranks": [
+    1,
+    1,
+    1
+   ],
+   "top1": 3,
+   "top3": 3
+  },
+  {
+   "doc": "Grammar of the Edit.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Grammar of the Shot.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    3
+   ],
+   "top1": 1,
+   "top3": 2
+  },
+  {
+   "doc": "Hey Whipple Squeeze This.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "How to Draw Manga Illustrating Battles.m",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "How to Draw Manga Martial Arts and Comba",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Joseph V. Mascelli - The Five C's of Cin",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Kathryn Anne Morey - Bringing history to",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Kelly Gordon Brine - The Art Of Cinemati",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Ken Dancyger - The technique of film & v",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Laban Movement-Guided Diffusion for Text",
+   "probes": 2,
+   "ranks": [
+    1,
+    5
+   ],
+   "top1": 1,
+   "top3": 1
+  },
+  {
+   "doc": "Laban-Bartenieff Movement Studies for Ne",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Making Connections Bartenieff Fundamenta",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Making Meaning with Machines.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Manga in Theory and Practice.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Michael Rabiger, Mick Hurbis-Cherrier - ",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Myers, Isabel Briggs_Myers, Peter B - Gi",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Ogilvy on Advertising.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Paul Ekman - Facial Action Coding System",
+   "probes": 2,
+   "ranks": [
+    2,
+    2
+   ],
+   "top1": 0,
+   "top3": 2
+  },
+  {
+   "doc": "Retrieval-Augmented Prompt Optimization ",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Save the Cat.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Scoppettuolo & Saccone - The Definitive ",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Sidney Lumet - Making Movies (1994).md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Sound Design The Expressive Power of Mus",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Stage Combat Arts.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "The Adweek Copywriting Handbook.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "The Anatomy of Story.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "The Art and Science of Digital Compositi",
+   "probes": 2,
+   "ranks": [
+    1,
+    2
+   ],
+   "top1": 1,
+   "top3": 2
+  },
+  {
+   "doc": "The Filmmaker&_039_s Eye - The Language ",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "The Laban Workbook for Actors.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "The Screen Combat Handbook A Practical G",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Timing for Animation.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "VES Handbook of Visual Effects.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Walter Murch - In the Blink of an Eye (2",
+   "probes": 2,
+   "ranks": [
+    1,
+    5
+   ],
+   "top1": 1,
+   "top3": 1
+  },
+  {
+   "doc": "What the Face Reveals.md",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "Your Move - A New Approach to the Study ",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "[(Architectural Design)] Ian Ritchie - N",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "[International Journal of Reasoning-base",
+   "probes": 2,
+   "ranks": [
+    1,
+    2
+   ],
+   "top1": 1,
+   "top3": 2
+  },
+  {
+   "doc": "[Quest 1975-jan vol. 23 iss. 1] THE BENE",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  },
+  {
+   "doc": "handbook.html",
+   "probes": 2,
+   "ranks": [
+    1,
+    1
+   ],
+   "top1": 2,
+   "top3": 2
+  }
+ ]
+}
