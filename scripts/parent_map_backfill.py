@@ -77,6 +77,8 @@ def main(argv=None) -> int:
     ap.add_argument("--corpus", default="cinema")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--project", action="store_true", help="also project maps to Qdrant + reconcile")
+    ap.add_argument("--concurrency", type=int, default=6,
+                    help="docs mapped in parallel (route_groq spreads across the 6 accounts; 1 = sequential)")
     ap.add_argument("--out", default=None)
     args = ap.parse_args(argv)
 
@@ -98,17 +100,31 @@ def main(argv=None) -> int:
         client = QdrantClient(url=get_settings().stores.qdrant_url, timeout=90)
 
     cohort = _cohort(args.corpus, args.limit)
-    print(f"[backfill] {args.corpus}: {len(cohort)} docs; router={os.environ.get('POLYMATH_GROQ_ROUTER','0')}")
-    rows, ok_docs = [], 0
+    concurrency = max(1, int(args.concurrency))
+    print(f"[backfill] {args.corpus}: {len(cohort)} docs; router={os.environ.get('POLYMATH_GROQ_ROUTER','0')}; concurrency={concurrency}")
+    # Projection helpers imported once (thread-safe); each doc is independent (own tx() pool
+    # connection), route_groq spreads Groq calls across the six accounts, the qdrant client +
+    # embedder handle concurrent requests. run_document_mapping is idempotent, so a killed run
+    # resumes with zero re-work.
+    import workers.doc_profile_worker as W
+    from polymath_shared.document_profile import parent_map_projection as PMP
+    from polymath_shared.document_profile.map_compiler import CompiledMap
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    import threading
+    print_lock = threading.Lock()
     t0 = time.time()
-    for doc_id, corpus_id, name, parents in cohort:
-        out = run_document_mapping(tx, run_id=f"map-backfill-{doc_id[:8]}", doc_id=doc_id, corpus_id=corpus_id,
-                                   parents=parents, infer=infer, provider="groq", model="groq/compound-mini")
+
+    def _process_one(doc) -> dict:
+        doc_id, corpus_id, name, parents = doc
+        try:
+            out = run_document_mapping(tx, run_id=f"map-backfill-{doc_id[:8]}", doc_id=doc_id, corpus_id=corpus_id,
+                                       parents=parents, infer=infer, provider="groq", model="groq/compound-mini")
+        except Exception as exc:  # noqa: BLE001 — one doc's failure never kills the batch; resumable next run
+            with print_lock:
+                print(f"  {name[:44]:44} ERROR {type(exc).__name__}: {str(exc)[:70]}")
+            return {"doc": name[:44], "error": f"{type(exc).__name__}: {str(exc)[:120]}", "complete": False}
         proj = None
         if args.project and out.parents_mapped:
-            import workers.doc_profile_worker as W
-            from polymath_shared.document_profile import parent_map_projection as PMP
-            from polymath_shared.document_profile.map_compiler import CompiledMap
             with tx() as conn:
                 mrows = conn.execute("SELECT alias, parent_id, routing_signature, semantic_hooks, exact_identifiers, "
                                      "map_hash, quality_flags FROM document_parent_maps WHERE doc_id=%s AND map_contract=%s "
@@ -122,13 +138,19 @@ def main(argv=None) -> int:
                                          map_contract=contract)
             proj = rc["points"]
         doc_ok = out.complete and not out.unresolved_parent_ids
-        ok_docs += 1 if doc_ok else 0
-        rows.append({"doc": name[:44], "eligible": out.eligible_parents, "mapped": out.parents_mapped,
-                     "complete": doc_ok, "unresolved": len(out.unresolved_parent_ids), "projected": proj})
-        print(f"  {name[:44]:44} mapped={out.parents_mapped}/{out.eligible_parents} complete={doc_ok} "
-              f"projected={proj}")
+        with print_lock:
+            print(f"  {name[:44]:44} mapped={out.parents_mapped}/{out.eligible_parents} complete={doc_ok} projected={proj}")
+        return {"doc": name[:44], "eligible": out.eligible_parents, "mapped": out.parents_mapped,
+                "complete": doc_ok, "unresolved": len(out.unresolved_parent_ids), "projected": proj}
 
+    rows: list = []
+    with ThreadPoolExecutor(max_workers=concurrency, thread_name_prefix="pm-backfill") as ex:
+        for f in as_completed([ex.submit(_process_one, d) for d in cohort]):
+            rows.append(f.result())
+    ok_docs = sum(1 for r in rows if r.get("complete"))
+    errored = [r for r in rows if r.get("error")]
     summary = {"gate": "parent-map-backfill-v1", "corpus": args.corpus, "docs": len(cohort), "complete_docs": ok_docs,
+               "errored_docs": len(errored), "concurrency": concurrency,
                "wall_s": round(time.time() - t0, 1), "lane_spread": dict(lane_counter),
                "distinct_accounts_used": len({l.replace("map_groq", "") for l in lane_counter}),
                "PASS": ok_docs == len(cohort)}
