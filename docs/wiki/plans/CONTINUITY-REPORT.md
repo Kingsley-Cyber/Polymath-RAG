@@ -18,9 +18,25 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-08/README.md` + `DIRECTORY_MAP.md` (the NEWEST dated handoff snapshot — retrieval/routing/synthesis phase; supersedes `2026-09-07T1828/`, which still holds for the document-semantic-index substrate = this phase's P1)** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (rows 11.155–11.167) → `CLAUDE.md` → the two newest work-logs. The document-semantic-index START-HERE/plan below remain valid for the P1 substrate.
 
-## Latest checkpoint (2026-09-08 late — DATA-REGEN: D-5/D-12 UNBLOCKED; parent-MAP backfill parallelized)
+## Latest checkpoint (2026-09-08 latest — S11-proper landed + FIRST corpus VNEXT_COMPLETE)
 
-**This session's work is LANDED on `main` (via `architecture/evidence-first-v5`, all 4 CI checks
+**`main` = `a4659f8` (all 4 CI checks green).** Two migration milestones landed after the data-regen
+block below (registers 11.175–11.176):
+- **S11-proper (11.175, main a4659f8):** `semantic_readiness.vnext_readiness` + a `vnext` field on
+  `semantic_completion` — the readiness authority now carries VNEXT_COMPLETE/INCOMPLETE/NOT_STARTED
+  (§19 floor `unresolved==0` + vNext-profile coverage), additive, fail-open, `query_ready` untouched.
+- **FIRST corpus to VNEXT_COMPLETE (11.176):** `d7-h1-test` (3 docs, 78 parents) driven through the
+  entire data-regen chain end-to-end — capacity canary (26/26, spread across 3 Groq accounts) → full
+  parent-MAP backfill (78/78 mapped, 0 unresolved) → 3/3 vNext profiles → 30 atoms/10 kinds
+  (reconciled) → `semantic_completion.vnext` = **VNEXT_COMPLETE**. Proves the migration substrate is
+  autonomously completable and the S11 verdict transitions INCOMPLETE→COMPLETE exactly. NOT a cutover
+  (owner QUERY_READY flip, untaken); NOT a real-corpus uplift (d7 is synthetic, no P10 fixtures).
+  **The cutover/retirement boundary is now precisely characterized: cinema coverage (551/11,993,
+  multi-session RPD campaign) + owner QUERY_READY flip (BE-AWARE §7) — neither autonomously reachable.**
+
+### Earlier this session — DATA-REGEN: D-5/D-12 UNBLOCKED; parent-MAP backfill parallelized
+
+**This block LANDED on `main` (via `architecture/evidence-first-v5`, all 4 CI checks
 green; registers 11.169–11.171).** It executed the FINAL-PLAN data-regen chain on cinema:
 
 - **vNext profiles regenerated (67/67, register 11.169):** `backfill_document_profiles.py --rearm`
@@ -53,14 +69,18 @@ role-aware synthesis (11.174, D-8b cleared for the LLM path — `_grounded_messa
 behind `POLYMATH_CHAT_SYNTH_ROLES`, claim system untouched). All the routing plan's implementable-without-
 coverage BLOCKED/GATED rows are now cleared.
 
-**Exact next executable (implementable now, structural-qual; value coverage-gated):** **P12** Wildcard over
-the atom frontier (§ wildcard — wire the profile atoms into `_retrieve_wildcard`/divergent; atoms exist);
-**S10** compiler/title-context migration (GAP-02 — profile nominations into `ui.py` `_compiler_titles`).
-**GATED on coverage/capacity (the legitimate cutover boundary — do NOT force):** P10-uplift/P11/P13
-measurement + P12/P5-value need parent-MAP coverage + graph density; S12–S18 cutover/retirement need full
-vNext coverage + QUERY_READY flip + zero-reader proof. **When Groq capacity resets, resume the now-parallel
-backfill** (`POLYMATH_GROQ_ROUTER=1 parent_map_backfill.py --corpus cinema --project`, `--concurrency 6`) →
-coverage → re-run `production_routing_qualify` (uplift) + the GRAPH/Wildcard arms.
+**Exact next executable (implementable now):** **P12** Wildcard over the atom frontier — substrate now
+PROVEN complete on d7-h1-test (30 atoms/10 kinds); the design work is the atom→parent resolution (atoms are
+doc-scoped; `divergent_finish` needs parent-scoped `children_of`). Lowest-value/highest-complexity routing
+slice; deferred, not blocked. **S10** compiler/title-context migration was tried + reverted (inert on a small
+corpus; needs RRF merge + large corpus).
+**GATED on coverage/capacity + owner (the cutover boundary — do NOT force):** cinema coverage 551/11,993
+parents (multi-session RPD campaign) gates P10-uplift/P11/P13 + P12/P5 REAL value; cutover S13/S14 additionally
+needs the **owner QUERY_READY flip (BE-AWARE §7)** — a production control-plane decision, not autonomous, on
+any corpus. d7-h1-test now satisfies the VNEXT_COMPLETE prerequisite — the earliest corpus the owner could cut
+over. **When Groq capacity resets, resume** `POLYMATH_GROQ_ROUTER=1 parent_map_backfill.py --corpus cinema
+--project --concurrency 6` (canary-confirmed working, spread across accounts) → coverage → re-run
+`production_routing_qualify` (uplift) + the GRAPH/Wildcard arms.
 
 ## Latest checkpoint (2026-09-08 — FINAL RETRIEVAL/ROUTING/SYNTHESIS EXECUTED; MD is the living ledger)
 
