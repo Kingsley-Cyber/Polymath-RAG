@@ -25,6 +25,7 @@ from polymath_shared.query_intent import (  # noqa: E402
 class _FakeBudget:
     dualread_enabled: bool = False
     latent_enabled: bool = False
+    atom_kinds: tuple = ()
     other: int = 7  # an unrelated field must be preserved
 
 
@@ -40,6 +41,15 @@ def test_apply_intent_policy_sets_the_additive_lanes():
     assert e.dualread_enabled is True and e.latent_enabled is False
     d = apply_intent_policy("DEFINITION", _FakeBudget())
     assert d.latent_enabled is False
+
+
+def test_apply_intent_policy_sets_atom_kinds_per_intent():
+    # EXACT searches no atoms; MECHANISM the mechanism kinds; EXPLORATORY all 10.
+    assert apply_intent_policy("EXACT", _FakeBudget()).atom_kinds == ()
+    mech = apply_intent_policy("MECHANISM", _FakeBudget()).atom_kinds
+    assert set(mech) == {"THEORY", "CONCEPT", "LATENT_PATTERN", "BOUNDARY"}
+    assert len(apply_intent_policy("EXPLORATORY", _FakeBudget()).atom_kinds) == 10
+    assert "SEEALSO" in apply_intent_policy("RELATIONSHIP", _FakeBudget()).atom_kinds
 
 
 def test_apply_intent_policy_unknown_intent_is_identity():

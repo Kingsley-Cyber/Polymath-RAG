@@ -224,6 +224,11 @@ class CandidateBudget:
     dualread_max_parents: int = 8
     dualread_children_per_parent: int = 3
     dualread_budget_ms: int = 400
+    #: R4 PROFILE_ATOM lane (§42): atoms of these kinds nominate ADDITIONAL docs that converge
+    #: through the SAME parent-MAP localization inside the dualread nominator. Empty ⇒ no atom
+    #: search (default; EXACT). Kinds are intent-selected by the P2b policy.
+    atom_kinds: tuple[str, ...] = ()
+    atom_k: int = 12
 
     def to_dict(self) -> dict:
         d = asdict(self)

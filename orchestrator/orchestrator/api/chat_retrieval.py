@@ -218,6 +218,19 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
             from polymath_shared.embedding_contracts import active_contract as _ac
             cid = _ac().contract_id
             docs = _pj.profile_nominate(client, _pj.collection_name(cid), qv, corpus_id, k=budget.dualread_profile_docs)
+            # R4 PROFILE_ATOM lane (§42): atoms of the intent-selected kinds nominate ADDITIONAL
+            # docs (routing/expansion, never evidence) that converge through the SAME parent-MAP.
+            atom_kinds = tuple(getattr(budget, "atom_kinds", ()) or ())
+            if atom_kinds:
+                from polymath_shared.document_profile import profile_atom_projection as _pap
+                try:
+                    for h in _pap.search_atoms(client, _pap.collection_name(cid), qv, atom_kinds,
+                                               k=int(getattr(budget, "atom_k", 12))):
+                        d = h.get("doc_id")
+                        if d and d not in docs:
+                            docs.append(d)
+                except Exception:  # noqa: BLE001 — the atom lane is optional; absence never breaks routing
+                    pass
             return _pmp.search_parent_maps(client, _pmp.collection_name(cid), qv, docs, k=budget.dualread_map_k)
 
         def sparse_search(top_k: int, sparse_query=None) -> list[dict]:

@@ -131,20 +131,25 @@ class IntentPolicy:
     breadth: str = "MULTI_PREFERRED"          # SINGLE_OK | MULTI_PREFERRED | MULTI_REQUIRED (§48, P9)
     resolution_lift: str = "normal"           # off | normal | high | very_high (§10/§33, P3)
     graph: str = "off"                        # off | conditional | auto | strong (§37/§38, P6)
+    atom_kinds: tuple[str, ...] = ()          # R4 PROFILE_ATOM kinds this intent searches (§33)
 
+
+#: canonical atom-kind groupings (mirror profile_atom.py; inlined to avoid an import cycle).
+_MECH = ("THEORY", "CONCEPT", "LATENT_PATTERN", "BOUNDARY")
+_ALL_ATOMS = _MECH + ("SEEALSO", "BRIDGE", "ANCHOR", "TENSION", "INVERSION", "RECALLQ")
 
 #: FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1 §33 intent matrix, one row per intent.
 INTENT_POLICY: dict[str, IntentPolicy] = {
-    "EXACT":        IntentPolicy(dualread=True,  micro_latent=False, breadth="SINGLE_OK",      resolution_lift="high",      graph="off"),
-    "DEFINITION":   IntentPolicy(dualread=True,  micro_latent=False, breadth="SINGLE_OK",      resolution_lift="high",      graph="off"),
-    "MECHANISM":    IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="high",      graph="conditional"),
-    "RELATIONSHIP": IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="high",      graph="auto"),
-    "COMPARISON":   IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_REQUIRED",  resolution_lift="high",      graph="conditional"),
-    "PROCEDURE":    IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="high",      graph="conditional"),
-    "APPLICATION":  IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="very_high", graph="conditional"),
-    "SYNTHESIS":    IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_REQUIRED",  resolution_lift="normal",    graph="conditional"),
-    "RECALL":       IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="normal",    graph="off"),
-    "EXPLORATORY":  IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="normal",    graph="conditional"),
+    "EXACT":        IntentPolicy(dualread=True,  micro_latent=False, breadth="SINGLE_OK",      resolution_lift="high",      graph="off",         atom_kinds=()),
+    "DEFINITION":   IntentPolicy(dualread=True,  micro_latent=False, breadth="SINGLE_OK",      resolution_lift="high",      graph="off",         atom_kinds=("CONCEPT", "THEORY")),
+    "MECHANISM":    IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="high",      graph="conditional", atom_kinds=_MECH),
+    "RELATIONSHIP": IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="high",      graph="auto",        atom_kinds=("CONCEPT", "THEORY", "SEEALSO", "BRIDGE", "ANCHOR", "TENSION")),
+    "COMPARISON":   IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_REQUIRED",  resolution_lift="high",      graph="conditional", atom_kinds=("CONCEPT", "BOUNDARY", "TENSION", "INVERSION")),
+    "PROCEDURE":    IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="high",      graph="conditional", atom_kinds=("THEORY", "BOUNDARY", "INVERSION", "SEEALSO")),
+    "APPLICATION":  IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="very_high", graph="conditional", atom_kinds=("THEORY", "CONCEPT", "BOUNDARY", "INVERSION", "SEEALSO")),
+    "SYNTHESIS":    IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_REQUIRED",  resolution_lift="normal",    graph="conditional", atom_kinds=("THEORY", "CONCEPT", "BOUNDARY", "TENSION")),
+    "RECALL":       IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="normal",    graph="off",         atom_kinds=("RECALLQ", "CONCEPT", "LATENT_PATTERN", "SEEALSO")),
+    "EXPLORATORY":  IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="normal",    graph="conditional", atom_kinds=_ALL_ATOMS),
 }
 
 
@@ -164,6 +169,8 @@ def apply_intent_policy(intent: str, budget):
     overrides = {"dualread_enabled": p.dualread, "latent_enabled": p.micro_latent}
     if hasattr(budget, "breadth"):
         overrides["breadth"] = p.breadth
+    if hasattr(budget, "atom_kinds"):
+        overrides["atom_kinds"] = p.atom_kinds
     return replace(budget, **overrides)
 
 
