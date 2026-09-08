@@ -29,12 +29,24 @@ asserting test green but not yet on `main`; GATED = code-ready or design-fixed b
 withheld pending owner LLM spend / fleet config / mass reindex.)
 
 **Repo truth at last ledger review (2026-09-07):** branch
-`architecture/evidence-first-v5`. Safe non-gated migration runway LANDED on `main`
-this session: 11.138 ledger admission, 11.139 S5 profile-vNext fingerprint,
-11.140 S1 legacy dependency census, 11.141 S11 report-only readiness verifier.
-Guards green (py3.11); each slice's four required CI checks green before ff `main`.
-**All remaining migration work is owner-GATED** (see "Exact next" below) — the
-session reached the gate boundary, not a stopping-short.
+`architecture/evidence-first-v5`. The **entire deterministic migration substrate is now
+built + tested + landed** this session (registers 11.138–11.145), each with its four
+required CI checks green before ff `main`:
+
+- 11.138 migration ledger admitted (this file, living);
+- 11.139 **profile scale** — S5 `DocumentFingerprint` (adaptive, full-structure,
+  self-sufficient vocabulary → GAP-04); 11.145 vNext profile prompt (research-index
+  surfaces, additive; live compiler untouched);
+- 11.140 S1 legacy dependency census (retirement gate); 11.141 S11 report-only
+  readiness verifier;
+- 11.142 **parent-MAP scale** — S9 durable worker (restart/partial-safe, injected
+  inference); 11.143 S10 Qdrant projection contract; 11.144 map prompt (§19/§30).
+
+Both semantic scales are deterministically complete end-to-end: skeleton→prompt→
+compile→pack→persist→project (maps) and fingerprint→prompt→[compile at S8]→project
+(profile). **Everything that remains requires opening an owner gate** — provider
+spend, fleet/provider-layer config, a live-stage/DAG change, or a live-reader/writer
+migration. This is the true gate boundary, reached by building — not a stopping-short.
 
 | Migration slice (§30) | Capability | Repo build-slice | Status | Evidence / next gate |
 |---|---|---|---|---|
@@ -70,22 +82,29 @@ legacy generation OR a complete qualified vNext generation, never a mixture
 Wildcard, projection receipts, purge/rebuild paths, caches, and the current
 `QUERY_READY` semantics.
 
-**Exact next executable dependency (updated 2026-09-07, register 11.141 — GATE BOUNDARY):**
-the safe, additive, no-spend, fence-free runway is COMPLETE (fingerprint + census +
-report-only verifier all LANDED). **Every remaining dependency requires an owner
-action** — none is executable by an assistant without opening a gate:
+**Exact next executable dependency (updated 2026-09-07, register 11.145 — GATE BOUNDARY):**
+the entire deterministic substrate for BOTH scales is BUILT + TESTED + LANDED
+(fingerprint + profile prompt; skeleton + map prompt + compiler + packer + SQL +
+durable worker + projection contract; census + report-only verifier). **Every
+remaining dependency requires an owner action to WIRE or RUN it — the code each gate
+would execute already exists:**
 
 1. **S5 quality canary** (profile vNext qualification): run the 500/1000/1500/2000
-   `DocumentFingerprint` canary on real documents → provider spend. Owner opens by
-   authorising the spend; then the smallest quality plateau is picked and S8 may switch.
-2. **Profile-atom OUTPUT contract** (research-index tags in `prompt.py`/`compiler.py`):
-   T1828 handoff locks the live compiler until S8; qualification needs the canary. GATED
-   behind (1).
-3. **S8 `doc_profile` refactor** (switch to fingerprint, drop `major_concepts` reader
-   at `doc_profile_worker.py:102`, remove Qdrant projection responsibility): changes a
-   LIVE ingestion stage + trips the fleet fence → owner (fleet) + (1).
-4. **S3 local-model tournament** / **S7 Groq live wiring** / **S9 `doc_parent_map`
-   worker RUN**: provider spend + fleet config + DAG change to live ingestion.
+   `DocumentFingerprint` → `profile_prompt_vnext` canary on real documents → provider
+   spend. Owner authorises spend; the smallest quality plateau is picked; then S8 switches.
+2. **S8 `doc_profile` refactor + compiler tag-parse**: extend the LIVE `compiler.py` to
+   parse the research-index tags (`profile_prompt_vnext.output_fields()` is the label
+   set) and switch `doc_profile_worker.py` to build the fingerprint + `profile_prompt_vnext`,
+   dropping the `major_concepts` reader at `doc_profile_worker.py:102` (GAP-04). Changes a
+   LIVE stage + the live compiler + trips the fleet fence → owner (fleet) + gated behind (1).
+3. **S7 Groq live-routing wiring**: wire the built `groq_router.choose` (11.134) +
+   compound-mini lanes into `pool.py`/`limiter.py` — the live fleet provider layer →
+   owner (fleet + spend).
+4. **Worker/projector RUN**: give `run_document_mapping` a live Groq `infer` closure
+   (`map_prompt` + the routed model) and register the stage; give `project_parent_maps`
+   the embedder + Qdrant client + receipt persistence → provider spend + embedder + Qdrant
+   + a DAG change to live ingestion. **S3 local-model tournament** feeds the `infer`
+   choice (spend).
 5. **S12 backfill → shadow → dual-read → S14 cutover → S15–S18 retirement**: mass
    generation (spend), then live-reader migration, then — only after the S1 census's
    214 runtime references are each classified non-reading — stop-writers/retire.
