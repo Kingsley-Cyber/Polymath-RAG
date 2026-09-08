@@ -77,11 +77,10 @@ def main(argv=None) -> int:
     ap.add_argument("--corpus", default="cinema")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--project", action="store_true", help="also project maps to Qdrant + reconcile")
-    ap.add_argument("--concurrency", type=int, default=1,
-                    help="docs mapped in parallel. DEFAULT 1 (sequential): route_groq spreads across the "
-                         "6 accounts ONLY sequentially (each call sees the prior call's capacity draw). "
-                         "Under concurrency it single-account-pins (measured 2026-09-08: c=3 → 633/640 calls "
-                         "on map_groq1, +13 maps) — do NOT raise >1 until route_groq is made concurrency-aware.")
+    ap.add_argument("--concurrency", type=int, default=6,
+                    help="docs mapped in parallel (one per Groq account). route_groq CONCURRENCY-SPREAD-V1 "
+                         "(2026-09-08) rotates a simultaneous burst across the six accounts, so 6-way spreads "
+                         "the load one-per-account. 1 = sequential.")
     ap.add_argument("--out", default=None)
     args = ap.parse_args(argv)
 

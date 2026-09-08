@@ -8,7 +8,11 @@ from __future__ import annotations
 
 import json
 import sys
+from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "shared"))
@@ -16,6 +20,14 @@ sys.path.insert(0, str(ROOT / "shared"))
 from polymath_shared.document_profile import groq_routing as RT  # noqa: E402
 from polymath_shared.document_profile import groq_router as GR  # noqa: E402
 from polymath_shared.llm_extraction.limiter import AdaptiveLimiter, ProviderLimit  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def _clean_reservations():
+    """CONCURRENCY-SPREAD-V1 reservations are module-level; isolate every test."""
+    RT.reset_reservations()
+    yield
+    RT.reset_reservations()
 
 MAP_PIN = [f"map_groq{i}" for i in range(1, 7)]
 PROVIDERS = [{"name": f"map_groq{i}", "api_key_env": f"GROQ_API_KEY_{i}", "model": "groq/compound-mini"}
@@ -73,6 +85,34 @@ def test_route_fresh_pool_still_spreads_deterministically():
     lane, decision = RT.route(MAP_PIN, "PARENT_ROUTING_MAP", est_total_tokens=4000.0,
                               providers=PROVIDERS, get_lane=lambda n: None, now=0.0)
     assert decision.routed and lane in MAP_PIN
+
+
+def test_route_spreads_a_concurrent_burst_across_accounts():
+    # CONCURRENCY-SPREAD-V1 regression: N callers firing at ONCE read the same fresh snapshot and,
+    # without the reservation, every one picks the lexicographically-smallest account (measured: a
+    # 3-way parent-map backfill put 633/640 map calls on map_groq1). The in-process reservation
+    # injects pending picks as in_flight so the burst rotates across all six accounts.
+    def one(_):
+        _lane, d = RT.route(MAP_PIN, "PARENT_ROUTING_MAP", est_total_tokens=250.0,
+                            providers=PROVIDERS, get_lane=lambda n: None)
+        return d.account
+
+    with ThreadPoolExecutor(max_workers=6) as ex:
+        got = Counter(a for a in ex.map(one, range(60)) if a)
+    assert len(got) == 6, f"a concurrent burst pinned to {dict(got)} — expected all six accounts"
+    assert max(got.values()) <= 18, f"one account took {max(got.values())}/60 — not spread: {dict(got)}"
+
+
+def test_reservation_decays_so_sequential_is_not_starved():
+    # A pick recorded now must NOT still steer a call one TTL later (sequential map calls are ~8 s
+    # apart, past RESERVATION_TTL_S) — otherwise the reservation would permanently avoid accounts.
+    RT.reset_reservations()
+    RT.route(MAP_PIN, "PARENT_ROUTING_MAP", est_total_tokens=250.0, providers=PROVIDERS,
+             get_lane=lambda n: None, now=0.0)
+    # a fresh pool one TTL later: the earlier reservation has decayed, so account 1 is eligible again
+    lane, d = RT.route(MAP_PIN, "PARENT_ROUTING_MAP", est_total_tokens=250.0, providers=PROVIDERS,
+                       get_lane=lambda n: None, now=RT.RESERVATION_TTL_S + 1.0)
+    assert d.routed and d.account == "GROQ_API_KEY_1"   # back to the deterministic first pick
 
 
 def test_config_has_map_lanes_sharing_the_profile_keys():

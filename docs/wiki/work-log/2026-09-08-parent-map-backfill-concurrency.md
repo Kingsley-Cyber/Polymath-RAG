@@ -76,10 +76,14 @@ single-account-pins and is worse than sequential**, so the default is reverted t
   best account (`map_groq1`) — the exact "single-account pinning" `groq_routing.py` documents for
   the 8-doc backfill, re-triggered by parallelism. The limiter then enforces that one account's
   capacity, so the extra threads just pile onto it.
-- **Resolution:** default `--concurrency 1` (sequential = the account-spreading path). The flag
-  stays for when the router is fixed. **The real unblock for a parallel backfill is a
-  concurrency-aware `route_groq`** (atomically reserve/decrement per-account capacity, or
-  round-robin/least-in-flight under concurrent callers) — a scoped follow-up on
-  `shared/polymath_shared/document_profile/groq_routing.py` + `groq_router.choose`. Until then the
-  backfill is a steady sequential capacity-gated campaign (~15 maps/min), and coverage for D-10 is
-  multi-session.
+- **Resolution — FIXED same day (CONCURRENCY-SPREAD-V1, register 11.171):** `route_groq` now
+  carries a short-TTL in-process reservation (`RESERVATION_TTL_S = 6 s`): each pick is recorded per
+  account and injected as extra `in_flight` into the snapshot `choose` sees, so a simultaneous
+  burst rotates across all six accounts via the existing `-in_flight` tie-break. Verified: 60
+  concurrent `route()` calls → **exactly 10 per account** (was 60/60 on one); sequential is
+  unaffected (picks decay past the TTL — map calls are ~8 s apart). Tests
+  `test_route_spreads_a_concurrent_burst_across_accounts` + `test_reservation_decays_…` (27/27
+  green). **Default therefore restored to `--concurrency 6`.** The reservation is process-local (it
+  coordinates this backfill's threads); cross-process fleet spreading (six worker processes) is a
+  separate concern and is tolerated for the low-volume profile stage. Coverage for D-10 is still
+  capacity-gated (six accounts' combined daily budget) but now consumed in parallel.
