@@ -1,0 +1,26 @@
+{
+  "corpus": "cinema",
+  "docs": 67,
+  "atoms": 609,
+  "by_kind": {
+    "THEORY": 64,
+    "CONCEPT": 66,
+    "LATENT_PATTERN": 66,
+    "BOUNDARY": 60,
+    "SEEALSO": 59,
+    "BRIDGE": 54,
+    "ANCHOR": 67,
+    "TENSION": 58,
+    "INVERSION": 50,
+    "RECALLQ": 65
+  },
+  "profile_contract": "rag-profile-v3",
+  "projected_points": 609,
+  "collection": "polymath_document_profile_atoms_embed_e794ec4cab197a3f",
+  "reconcile": {
+    "corpus_id": "cinema",
+    "active_atoms": 609,
+    "projected_points": 609,
+    "reconciled": true
+  }
+}

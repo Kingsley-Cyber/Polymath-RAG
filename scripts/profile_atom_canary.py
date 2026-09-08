@@ -96,6 +96,11 @@ def main(argv=None) -> int:
 
     # 2. project (embed each atom text once) + reconcile.
     if args.project:
+        # §14: the atom collection is a rebuildable cache of the ACTIVE rows. A regen that
+        # SUPERSEDES atoms (fewer/different) leaves the old points behind, so purge the corpus's
+        # points first and rebuild from the active set — otherwise reconcile (active == projected)
+        # fails on the stale accumulation.
+        PAP.purge(client, ct.contract_id, args.corpus)
         with tx() as conn:
             atoms = PA.active_atoms(conn, corpus_id=args.corpus)
         proj = PAP.project_atoms(client, embed=_embed_queries, embedding_contract_id=ct.contract_id,

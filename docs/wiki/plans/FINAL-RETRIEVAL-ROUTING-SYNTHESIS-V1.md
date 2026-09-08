@@ -57,7 +57,7 @@ dependency and appears again in the DEFERRED register below.
 | P2 | Intent-policy mapping (intent → fields → technique → budget) | **DONE** (default-off) | 11.157/11.158/11.161 · p2a-query-intent, p2b-intent-policy |
 | P3 | Resolution Lift (user vocab → corpus vocab, source-derived) | **DONE** (default-off) | 11.160/11.162/11.163 · r4-profile-atom, r6-lift-gatherer, r6b-lift-probe |
 | P4 | Default micro-latent atom retrieval | **DONE** (via P2b) | 11.158 · p2b-intent-policy |
-| P5 | SEEALSO / BRIDGE fan-out resolver | **GATED** — SEEALSO adjacency routes via lane E atoms; the §20–§22 resolver + BRIDGE/ANCHOR need those atom kinds generated | dep: vNext atom regen (see D-5) |
+| P5 | SEEALSO / BRIDGE fan-out resolver | **DATA GATE CLEARED (2026-09-08, 11.169)** — the relational atom kinds now exist (cinema BRIDGE 54 / ANCHOR 66 / TENSION 58 / INVERSION 50 / LATENT_PATTERN 66, reconciled + queryable); the §20–§22 resolver + BRIDGE/ANCHOR fan-out are now IMPLEMENTABLE (not yet built) | was dep: vNext atom regen (D-5, now satisfied) |
 | P6 | Intent-conditioned GRAPH auto-routing | **DONE** (default-off, mode stays HYBRID, fail-open) | 11.164 · p6-graph-assist |
 | P7 | Graph destinations through parent-MAP | **BLOCKED** — designed (entity→doc_ids→`search_parent_maps`→deepen); needs the graph-before-judge flow reorder to make destinations JUDGED evidence | dep: pipeline reorder (see D-7) |
 | P8 | Synthesis evidence-role bundle (DIRECT/PRECISION/RELATIONAL/LATENT) | **DONE (role structure)** | 11.165 · p8-synthesis-roles |
@@ -65,7 +65,7 @@ dependency and appears again in the DEFERRED register below.
 | P9 | Task-conditioned breadth (no quotas) | **DONE** (default-off) | 11.166 · p9-breadth |
 | P10 | Measure HYBRID | **NON-REGRESSION PASS (controlling fact)** — intent-aware stack ON vs OFF: L exact 15/15→15/15, B grounded 13/15→13/15, **0 regressions** (§53 preserved). Production-SAFE. Uplift is a separate GATED follow-up (D-10). | 11.167 · production-routing-qualify |
 | P11 | Measure GRAPH | **GATED** on P7 + Neo4j graph density | dep: P7 (see D-11) |
-| P12 | Wildcard over profile atoms | **GATED** — WILDCARD activates all atom kinds; the relational/rediscovery kinds are ungenerated | dep: vNext atom regen (see D-12) |
+| P12 | Wildcard over profile atoms | **DATA GATE CLEARED (2026-09-08, 11.169)** — all 10 atom kinds now generated on cinema (incl. relational + RECALLQ), reconciled; WILDCARD can now activate the full atom frontier (implementable, not yet wired) | was dep: vNext atom regen (D-12, now satisfied) |
 | P13 | Measure Wildcard | **GATED** on P12 | dep: P12 |
 | P14 | Ablate legacy summaries / retire duplicate surfaces | **BLOCKED** — destructive retirement | dep: migration-ledger zero-reader proof (see D-14) |
 
@@ -73,12 +73,12 @@ dependency and appears again in the DEFERRED register below.
 
 | ID | Item | State | Blocking dependency | Unblocks when |
 |---|---|---|---|---|
-| D-5 | P5 BRIDGE/ANCHOR fan-out resolver (§20–§22) | GATED (data) | BRIDGE/ANCHOR/TENSION/INVERSION/LATENT_PATTERN atom kinds = 0 in the compiled profiles | vNext profile regeneration generates the relational atom kinds (SEEALSO already routes via lane E) |
+| D-5 | P5 BRIDGE/ANCHOR fan-out resolver (§20–§22) | **DEPENDENCY SATISFIED 2026-09-08 (11.169)** — was GATED (data) | ~~BRIDGE/ANCHOR/TENSION/INVERSION/LATENT_PATTERN atom kinds = 0~~ → cinema regenerated under vNext, all 10 kinds now active + reconciled + queryable (609 atoms) | CLEARED — the §20–§22 resolver + BRIDGE/ANCHOR/SEEALSO fan-out are now implementable (next code slice) |
 | D-7 | P7 graph-destination → parent-MAP → JUDGED children | BLOCKED (arch) | graph hop runs AFTER the cross-encoder judge (§3.18); judged destinations need the flow reordered (a load-bearing pipeline change) | a scoped graph-before-judge reorder slice (design in the P7 row) |
 | D-8b | P8b synthesizer presents evidence by role | BLOCKED (arch) | `answer_synthesis.py` is a load-bearing deterministic claim system; role-ordered presentation is a careful change to it | a scoped synthesizer slice consuming `meta.evidence_roles` (the P8 role structure is ready) |
 | D-10 | P10 HYBRID **uplift** (recall/precision improvement, not just non-regression) | GATED (data) | the additive lanes add unique winning candidates only as the parent-MAP backfill fills the corpus + richer atoms exist | parent-MAP backfill reaches corpus coverage (in progress) + vNext atom regen; re-run `production_routing_qualify.py` + a recall-delta variant |
 | D-11 | P11 GRAPH measurement | GATED | P7 (judged graph children) + Neo4j graph density | D-7 lands |
-| D-12 | P12 Wildcard over the full atom frontier | GATED (data) | relational/rediscovery atom kinds ungenerated | vNext atom regen (as D-5) |
+| D-12 | P12 Wildcard over the full atom frontier | **DEPENDENCY SATISFIED 2026-09-08 (11.169)** — was GATED (data) | ~~relational/rediscovery atom kinds ungenerated~~ → all 10 kinds generated on cinema (as D-5) | CLEARED — WILDCARD can now activate the full atom frontier (implementable) |
 | D-14 | P14 legacy-summary / duplicate-surface retirement | BLOCKED (safety) | migration law: no legacy retirement before a zero-reader proof + rollback window | `RETRIEVAL-MIGRATION-DEPENDENCY-V1` S1 census classified + zero-reader proof passes |
 
 **Migration-safety floor (enforced under all routing work):** no vNext-only production cutover
@@ -95,7 +95,7 @@ retrieval-time state. Nothing GATED/BLOCKED is dropped — it stays here with it
 | R1 EXACT_LOOKUP | **BUILT** | lane C sparse + `sparse_query_for` exact-terms; `chat_plan.exact_terms` |
 | R2 CHILD_DENSE | **BUILT** | lane B global dense child |
 | R3 DOCUMENT_PROFILE | **BUILT** | `polymath_document_profiles_<contract>` (67 cinema pts); `profile_nominate` RRF; consumed by lane E |
-| R4 PROFILE_ATOM | **BUILT (substrate + lane)** | own table `document_profile_atoms` (0055) + collection (1847 cinema atoms, reconcile TRUE, 11.159); LANE wired (11.161) — atoms nominate docs that converge through parent-MAP (§42), kind-selected per intent, additive + default-off, flag-off byte-identical. NOT collapsed into the global profile. **GATED:** full atom coverage + measurable uplift depend on vNext profile regeneration + parent-MAP backfill. |
+| R4 PROFILE_ATOM | **BUILT (substrate + lane)** | own table `document_profile_atoms` (0055) + collection; LANE wired (11.161) — atoms nominate docs that converge through parent-MAP (§42), kind-selected per intent, additive + default-off, flag-off byte-identical. NOT collapsed into the global profile. **FULL KINDS GENERATED 2026-09-08 (11.169):** cinema re-profiled under vNext → **609 atoms across all 10 kinds** (ANCHOR 67 · LATENT_PATTERN 66 · CONCEPT 66 · RECALLQ 65 · THEORY 64 · BOUNDARY 60 · SEEALSO 59 · TENSION 58 · BRIDGE 54 · INVERSION 50), reconciled (active == projected) + queryable via `search_atoms`. **Still GATED:** measurable HYBRID *uplift* (D-10) depends on parent-MAP backfill coverage (cinema 420/11,993 parents at pause). |
 | R5 PARENT_MAP | **BUILT** | `document_parent_maps` (0054) + `polymath_document_parent_maps_<contract>` (172 pts); `search_parent_maps`; deepened by lane E |
 | R6 RESOLUTION_LIFT | **BUILT (core+gatherer+probe)** | ranker core (11.160, §11 ranking + ≤3 cap + specificity gate) + gatherer `resolution_lift_gather.py` (11.162, reads TERM/TOPIC, MAP hooks/identifiers, aliases, headings, atom terminology → ranked LiftCandidates). the bounded ≤3 second-pass probe is lane F (R6b, 11.163, additive + default-off, flag-off byte-identical) + `is_meaningful_term` noise gate. **GATED:** corpus DF rarity index + lift-term quality on arbitrary corpora. |
 | R7 ENTITY_RESOLUTION | **SUBSTRATE BUILT** | Postgres `entities`/`mentions` + `concept_families`/`concept_aliases` (LIVE vocab bridge, read via `corpus_map_planning`); entity cards `routing_entity` in Qdrant. Query-time canonical resolution lane for GRAPH seeds = wire in P6. |

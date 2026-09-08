@@ -61,6 +61,26 @@ def mint(conn, corpus_id: str, *, dry_run: bool, limit: int | None) -> dict:
     return {"corpus": corpus_id, "documents": len(rows), "minted": minted, "already_had_ticket": skipped, "dry_run": dry_run}
 
 
+def rearm(conn, corpus_id: str, *, limit: int | None) -> dict:
+    """Re-arm the doc_profile stage for landed runs: reset each existing ticket to READY and
+    re-emit its outbox event (the sanctioned re-processing path, `_emit_ticket_event`) so the
+    fleet regenerates the profile — under vNext when POLYMATH_DOC_PROFILE_VNEXT=1. Idempotent;
+    only re-arms runs that already have a doc_profile ticket (fresh runs still go through mint)."""
+    from control.tickets import _emit_ticket_event, ticket_id
+    rows = landed_runs(conn, corpus_id)
+    if limit:
+        rows = rows[:limit]
+    rearmed = missing = 0
+    for run_id, _doc_id, _name in rows:
+        tid = ticket_id(run_id, STAGE)
+        if not conn.execute("SELECT 1 FROM stage_tickets WHERE ticket_id=%s", (tid,)).fetchone():
+            missing += 1
+            continue
+        _emit_ticket_event(conn, tid, run_id, STAGE)      # READY + re-armed (claimable) outbox event
+        rearmed += 1
+    return {"corpus": corpus_id, "documents": len(rows), "rearmed": rearmed, "no_ticket_use_mint": missing}
+
+
 def status(conn, corpus_id: str) -> dict:
     tickets = dict(conn.execute(
         "SELECT status, count(*) FROM stage_tickets WHERE corpus_id=%s AND stage=%s GROUP BY 1", (corpus_id, STAGE)).fetchall())
@@ -101,10 +121,17 @@ def main() -> int:
     ap.add_argument("--corpus", required=True)
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--status", action="store_true")
+    ap.add_argument("--rearm", action="store_true",
+                    help="re-arm existing doc_profile tickets (re-emit event) to regenerate — vNext when the flag is set")
     ap.add_argument("--limit", type=int, default=None)
     a = ap.parse_args()
     with tx() as conn:
-        out = status(conn, a.corpus) if a.status else mint(conn, a.corpus, dry_run=a.dry_run, limit=a.limit)
+        if a.status:
+            out = status(conn, a.corpus)
+        elif a.rearm:
+            out = rearm(conn, a.corpus, limit=a.limit)
+        else:
+            out = mint(conn, a.corpus, dry_run=a.dry_run, limit=a.limit)
     print(json.dumps(out, indent=1, default=str))
     return 0
 
