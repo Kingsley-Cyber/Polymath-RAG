@@ -1,0 +1,76 @@
+{
+ "gate": "parent-map-canary-v1",
+ "corpus": "cinema",
+ "contract": "map-compiler-v1",
+ "docs": [
+  {
+   "doc": "A Circumplex Model of Affect.md",
+   "eligible_parents": 20,
+   "wall_s": 0.0,
+   "parents_mapped": 20,
+   "batches_done": 1,
+   "batches_partial": 0,
+   "unresolved": 0,
+   "attempts_used": 0,
+   "errors": [],
+   "complete": true,
+   "restart_idempotent": true,
+   "restart_reinfer_calls": 0,
+   "state": {
+    "active_maps": 20,
+    "exclusions": 0,
+    "batches": {
+     "done": 1
+    }
+   },
+   "ok": true
+  },
+  {
+   "doc": "A Multistage Pipeline for Character-Stable.m",
+   "eligible_parents": 11,
+   "wall_s": 3.6,
+   "parents_mapped": 11,
+   "batches_done": 1,
+   "batches_partial": 0,
+   "unresolved": 0,
+   "attempts_used": 1,
+   "errors": [],
+   "complete": true,
+   "restart_idempotent": true,
+   "restart_reinfer_calls": 0,
+   "state": {
+    "active_maps": 11,
+    "exclusions": 0,
+    "batches": {
+     "done": 1
+    }
+   },
+   "ok": true
+  },
+  {
+   "doc": "Affective Movement Generation using Laban Ef",
+   "eligible_parents": 19,
+   "wall_s": 7.1,
+   "parents_mapped": 19,
+   "batches_done": 1,
+   "batches_partial": 0,
+   "unresolved": 0,
+   "attempts_used": 2,
+   "errors": [
+    "59eb386e84c1:RuntimeError"
+   ],
+   "complete": true,
+   "restart_idempotent": true,
+   "restart_reinfer_calls": 0,
+   "state": {
+    "active_maps": 19,
+    "exclusions": 0,
+    "batches": {
+     "done": 1
+    }
+   },
+   "ok": true
+  }
+ ],
+ "PASS": true
+}
