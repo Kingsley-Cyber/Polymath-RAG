@@ -1,0 +1,38 @@
+{
+ "gate": "parent-map-projection-canary-v1",
+ "collection": "polymath_document_parent_maps_embed_e794ec4cab197a3f",
+ "contract": "map-compiler-v1",
+ "docs": [
+  {
+   "doc": "A Circumplex Model of Affect.md",
+   "active_maps": 20,
+   "projected_points": 20,
+   "reconcile_ok": true,
+   "purged_to": 0,
+   "rebuilt_to": 20,
+   "points_written": 20,
+   "ok": true
+  },
+  {
+   "doc": "A Multistage Pipeline for Character-Stable.m",
+   "active_maps": 11,
+   "projected_points": 11,
+   "reconcile_ok": true,
+   "purged_to": 0,
+   "rebuilt_to": 11,
+   "points_written": 11,
+   "ok": true
+  },
+  {
+   "doc": "Affective Movement Generation using Laban Ef",
+   "active_maps": 19,
+   "projected_points": 19,
+   "reconcile_ok": true,
+   "purged_to": 0,
+   "rebuilt_to": 19,
+   "points_written": 19,
+   "ok": true
+  }
+ ],
+ "PASS": true
+}
