@@ -30,6 +30,59 @@ COMPLETE = "SEMANTIC_COMPLETE"
 INCOMPLETE = "SEMANTIC_INCOMPLETE"
 FAILED = "SEMANTIC_FAILED"
 
+# S11-proper (RETRIEVAL-MIGRATION-DEPENDENCY-V1 §2/§19): the vNext substrate's own verdict, a
+# first-class dimension beside the legacy semantic verdict — the cutover prerequisite. Generation
+# invariant: a corpus is vNext-complete only when EVERY retrieval-eligible parent is resolved
+# (active map OR explicit exclusion) AND every document has a qualified vNext profile; a partial
+# generation is never "complete" (no accidental legacy/vNext mixture, §16).
+VNEXT_COMPLETE = "VNEXT_COMPLETE"
+VNEXT_INCOMPLETE = "VNEXT_INCOMPLETE"
+VNEXT_NOT_STARTED = "VNEXT_NOT_STARTED"
+
+
+def vnext_readiness(conn, corpus_id: str, documents: int) -> dict:
+    """Durable vNext-substrate readiness for a corpus (parent-MAP + vNext profile), the §19 floor
+    `unresolved_eligible_parents == 0`. Read-only; mirrors the report verifier's core so the
+    readiness AUTHORITY (not just the on-demand script) carries the verdict the QUERY_READY flip
+    (S13) and cutover (S14) gate on. Never raises: a missing substrate reads NOT_STARTED."""
+    try:
+        if conn.execute("SELECT to_regclass('public.document_parent_maps')").fetchone()[0] is None:
+            return {"verdict": VNEXT_NOT_STARTED, "reason": "no_parent_map_schema"}
+        from polymath_shared import document_region
+        noisy = list(document_region.NOISY_ROLES)
+        eligible = conn.execute(
+            "SELECT COUNT(*) FROM chunks c JOIN documents d ON d.doc_id=c.doc_id "
+            "WHERE d.corpus_id=%s AND c.tier='parent' AND COALESCE(c.region_role,'') <> ALL(%s)",
+            (corpus_id, noisy)).fetchone()[0]
+        mapped = conn.execute(
+            "SELECT COUNT(DISTINCT m.parent_id) FROM document_parent_maps m "
+            "JOIN documents d ON d.doc_id=m.doc_id WHERE d.corpus_id=%s AND m.active",
+            (corpus_id,)).fetchone()[0]
+        excluded = conn.execute(
+            "SELECT COUNT(*) FROM document_parent_exclusions e "
+            "JOIN documents d ON d.doc_id=e.doc_id WHERE d.corpus_id=%s", (corpus_id,)).fetchone()[0]
+        vnext_profiles = conn.execute(
+            "SELECT COUNT(DISTINCT a.payload->'doc_profile'->>'doc_id') FROM artifacts a "
+            "JOIN runs r ON r.run_id=a.run_id WHERE r.corpus_id=%s AND a.stage='doc_profile' "
+            "AND a.payload->'doc_profile'->>'vnext'='true'", (corpus_id,)).fetchone()[0]
+    except Exception as exc:  # noqa: BLE001 — availability-neutral; never blocks the legacy verdict
+        return {"verdict": VNEXT_NOT_STARTED, "reason": f"read_error:{type(exc).__name__}"}
+    unresolved = max(0, eligible - mapped - excluded)
+    reasons: list[str] = []
+    if unresolved:
+        reasons.append(f"unresolved_eligible_parents_{unresolved}_of_{eligible}")
+    if documents and vnext_profiles < documents:
+        reasons.append(f"vnext_profiles_{vnext_profiles}_of_{documents}")
+    if eligible == 0 and mapped == 0 and vnext_profiles == 0:
+        verdict = VNEXT_NOT_STARTED
+    elif not reasons:
+        verdict = VNEXT_COMPLETE
+    else:
+        verdict = VNEXT_INCOMPLETE
+    return {"verdict": verdict, "pending": reasons,
+            "parents": {"eligible": eligible, "mapped": mapped, "excluded": excluded, "unresolved": unresolved},
+            "vnext_profiles": vnext_profiles, "documents": documents}
+
 
 def semantic_completion(conn, corpus_id: str) -> dict:
     """One deterministic read of the durable semantic-lane state."""
@@ -160,6 +213,9 @@ def semantic_completion(conn, corpus_id: str) -> dict:
         "contract": SEMANTIC_READINESS_VERSION,
         "corpus_id": corpus_id,
         "verdict": verdict,
+        # S11-proper: the vNext substrate verdict rides beside the legacy verdict (additive — it does
+        # NOT change `verdict`, which stays the legacy-lane contract). The cutover (S13/S14) reads this.
+        "vnext": vnext_readiness(conn, corpus_id, docs),
         "pending": pending,
         "artifact_lane_failures": artifact_lane_failures,
         "extraction": extraction,

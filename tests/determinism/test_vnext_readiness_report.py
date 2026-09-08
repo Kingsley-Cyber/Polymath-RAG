@@ -57,3 +57,31 @@ def test_backfill_report_on_live_db_if_present():
     assert sum(rep["documents_by_state"].values()) == rep["total_documents"]
     p = rep["parents"]
     assert p["unresolved"] == max(0, p["eligible"] - p["mapped"] - p["excluded"])
+
+
+def test_s11proper_vnext_readiness_verdict_and_generation_invariant():
+    # S11-proper: semantic_readiness.vnext_readiness is the first-class vNext verdict the cutover
+    # gates on. Pure verdict logic over canned durable counts (fake conn); the §19 floor is
+    # unresolved_eligible_parents == 0 AND every document vNext-profiled.
+    from polymath_shared.semantic_readiness import (
+        vnext_readiness, VNEXT_COMPLETE, VNEXT_INCOMPLETE, VNEXT_NOT_STARTED)
+
+    class _Conn:
+        def __init__(self, vals):
+            self._v = list(vals)
+
+        def execute(self, sql, params=None):
+            v = self._v.pop(0)
+            return type("R", (), {"fetchone": (lambda val: (lambda s: (val,)))(v)})()
+
+    S = "public.document_parent_maps"
+    # eligible 100 = mapped 90 + excluded 10 -> unresolved 0; profiles 5/5 -> COMPLETE
+    assert vnext_readiness(_Conn([S, 100, 90, 10, 5]), "x", 5)["verdict"] == VNEXT_COMPLETE
+    # one unresolved eligible parent -> INCOMPLETE (§19 floor: partial is never complete)
+    assert vnext_readiness(_Conn([S, 100, 89, 10, 5]), "x", 5)["verdict"] == VNEXT_INCOMPLETE
+    # maps resolved but a profile short -> INCOMPLETE (both scales must be complete)
+    assert vnext_readiness(_Conn([S, 100, 90, 10, 4]), "x", 5)["verdict"] == VNEXT_INCOMPLETE
+    # nothing built -> NOT_STARTED
+    assert vnext_readiness(_Conn([S, 0, 0, 0, 0]), "x", 5)["verdict"] == VNEXT_NOT_STARTED
+    # no substrate schema -> NOT_STARTED (fail-open, availability-neutral)
+    assert vnext_readiness(_Conn([None]), "x", 5)["verdict"] == VNEXT_NOT_STARTED
