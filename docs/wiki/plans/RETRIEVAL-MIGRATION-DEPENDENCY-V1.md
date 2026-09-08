@@ -28,9 +28,13 @@ GATED · BLOCKED · SUPERSEDED. (LANDED = committed to `main` with CI green; VER
 asserting test green but not yet on `main`; GATED = code-ready or design-fixed but
 withheld pending owner LLM spend / fleet config / mass reindex.)
 
-**Repo truth at last ledger review:** branch `architecture/evidence-first-v5`,
-HEAD `93a16c0` (code HEAD `0962f83` + docs finalize), clean, in sync with
-`origin/main`. Registers 11.129–11.137 landed. Guards green (py3.11).
+**Repo truth at last ledger review (2026-09-07):** branch
+`architecture/evidence-first-v5`. Safe non-gated migration runway LANDED on `main`
+this session: 11.138 ledger admission, 11.139 S5 profile-vNext fingerprint,
+11.140 S1 legacy dependency census, 11.141 S11 report-only readiness verifier.
+Guards green (py3.11); each slice's four required CI checks green before ff `main`.
+**All remaining migration work is owner-GATED** (see "Exact next" below) — the
+session reached the gate boundary, not a stopping-short.
 
 | Migration slice (§30) | Capability | Repo build-slice | Status | Evidence / next gate |
 |---|---|---|---|---|
@@ -66,17 +70,32 @@ legacy generation OR a complete qualified vNext generation, never a mixture
 Wildcard, projection receipts, purge/rebuild paths, caches, and the current
 `QUERY_READY` semantics.
 
-**Exact next executable dependency (updated 2026-09-07, register 11.139):** the
-profile vNext fingerprint (§S7 / GAP-04) is IMPLEMENTED
-(`shared/polymath_shared/document_profile/fingerprint.py`, 17 pins). The next
-additive, no-spend slices, in dependency order: (a) the profile-atom OUTPUT contract —
-the research-index tags (`RESEARCH_INDEX_TAGS`) in a vNext prompt + a
-backward-compatible tolerant compiler extension (version-bumped, parsing-only; the
-live default is unchanged and the quality switch stays canary-GATED); then (b) the
-S9 `doc_parent_map` worker CODE, (c) the parent-map Qdrant projector + contract-named
-collection, and (d) the report-only vNext readiness verifier — each buildable and
-determinism/skip-testable without provider spend or fleet mutation. GATED at the
-first live switch: the S5 quality canary, S7 Groq live wiring, backfill, cutover.
+**Exact next executable dependency (updated 2026-09-07, register 11.141 — GATE BOUNDARY):**
+the safe, additive, no-spend, fence-free runway is COMPLETE (fingerprint + census +
+report-only verifier all LANDED). **Every remaining dependency requires an owner
+action** — none is executable by an assistant without opening a gate:
+
+1. **S5 quality canary** (profile vNext qualification): run the 500/1000/1500/2000
+   `DocumentFingerprint` canary on real documents → provider spend. Owner opens by
+   authorising the spend; then the smallest quality plateau is picked and S8 may switch.
+2. **Profile-atom OUTPUT contract** (research-index tags in `prompt.py`/`compiler.py`):
+   T1828 handoff locks the live compiler until S8; qualification needs the canary. GATED
+   behind (1).
+3. **S8 `doc_profile` refactor** (switch to fingerprint, drop `major_concepts` reader
+   at `doc_profile_worker.py:102`, remove Qdrant projection responsibility): changes a
+   LIVE ingestion stage + trips the fleet fence → owner (fleet) + (1).
+4. **S3 local-model tournament** / **S7 Groq live wiring** / **S9 `doc_parent_map`
+   worker RUN**: provider spend + fleet config + DAG change to live ingestion.
+5. **S12 backfill → shadow → dual-read → S14 cutover → S15–S18 retirement**: mass
+   generation (spend), then live-reader migration, then — only after the S1 census's
+   214 runtime references are each classified non-reading — stop-writers/retire.
+
+**Evidence that permits the next cutover** (none yet satisfied): the canary quality
+gate (§29), the shadow/dual-read non-regression (§17/§23), the readiness floor
+`unresolved_eligible_parents == 0` per document (§19, measured by
+`scripts/vnext_readiness_report.py` — currently 0 mapped / 13,417 eligible across
+corpora), and the census showing 0 required legacy readers for a symbol before its
+retirement (§S16). Do NOT mass reindex before the canary gates pass (§26).
 
 ---
 
