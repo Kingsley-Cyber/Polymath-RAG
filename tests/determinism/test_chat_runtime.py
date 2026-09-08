@@ -412,6 +412,7 @@ def test_compiler_on_drives_the_same_retrieval_decision_on_both_routes(monkeypat
     assert a == b, {k: (a[k], b[k]) for k in a if a[k] != b[k]}
     assert b["task_type"] == "GROUNDED_QA" and b["retrieval_skipped"] is False and b["plan"]["retrieval_query"] == "RAPO prompts"
     assert hs.calls == hc.calls == [{"mode": "HYBRID", "query": "RAPO prompts", "corpus_id": "cinema", "graph_useful": False,
+                                     "graph_assist": "off",  # P6: intent-policy off ⇒ no graph assist
                                      "exact_terms": ("RAPO",), "subqueries": (("q1", "MECHANISM", "reward models for prompts", 0.8),)}]
     assert set(b["aspects"]) == {"q0", "q1"} and out["meta"]["task_type"] == "GROUNDED_QA" and out["meta"]["retrieval_required"] is True
     # a conversation-policy plan: no retrieval fired, on either route
