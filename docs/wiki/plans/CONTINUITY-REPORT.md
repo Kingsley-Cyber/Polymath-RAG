@@ -36,19 +36,22 @@ green (determinism is the slow one).** This session executed the FINAL-PLAN data
   the atom lane consumes them now.
 - **P10 re-confirmed non-regressive** on the enriched substrate: L 15/15, B 13/15, 0 regressions (vNext
   profiles + all-kind atoms preserve gold; uplift stays coverage-gated).
-- **Parent-MAP backfill (register 11.170):** `parent_map_backfill.py` gained a `--concurrency` flag, but
-  a live pass FOUND that concurrency >1 **single-account-pins** (`route_groq` picks the same best account
-  from a point-in-time snapshot for simultaneous callers — c=3 put 633/640 calls on `map_groq1`, +13 maps).
-  **Default reverted to `--concurrency 1` (sequential = the account-spreading path).** The real unblock for a
-  parallel backfill is a concurrency-aware `route_groq` (a scoped follow-up). Coverage is therefore a steady
-  sequential capacity-gated campaign (~15 maps/min): cinema ~543/11,993 parents, resumable/idempotent.
-  **D-10 uplift stays GATED on coverage.**
+- **Parent-MAP backfill parallelization (registers 11.170 + 11.171):** `parent_map_backfill.py
+  --concurrency N` (default 6). A live pass found concurrency >1 single-account-pinned (`route_groq` picked
+  the same account from a point-in-time snapshot for simultaneous callers — c=3 put 633/640 calls on
+  `map_groq1`); **FIXED same session — `route_groq` CONCURRENCY-SPREAD-V1** (short-TTL in-process reservation
+  injects pending picks as `in_flight` → a burst rotates across all six accounts; 60 concurrent → exactly
+  10/account; 27/27 tests). So 6-way now spreads. **BUT** today's Groq server-side per-account budget is
+  **spent** (67-doc profile regen + several backfill runs) → new-doc map calls now 429 (`mapped=0`); a
+  gentle sequential backfill runs, capturing what capacity trickles back. Coverage = cinema ~543/11,993
+  parents; **capacity-gated multi-session** (resume when Groq limits reset). **D-10 uplift stays GATED on coverage.**
 
 **Exact next executable:** D-5/D-12 are now IMPLEMENTABLE (relational atoms exist) — P5 SEEALSO/BRIDGE/ANCHOR
 fan-out resolver (§20–§23) + Wildcard-over-atoms; P7 (graph dest, BLOCKED-arch reorder) and P8b
-(synthesizer-by-role, BLOCKED-arch) remain. Keep the parent-MAP backfill resuming toward coverage
-(`parent_map_backfill.py --corpus cinema --project`, sequential, unblocks D-10). A concurrency-aware
-`route_groq` would let it parallelize. Do NOT cutover/retire before the migration ledger's gates.
+(synthesizer-by-role, BLOCKED-arch) remain. When Groq capacity resets, resume the parent-MAP backfill —
+now parallel: `POLYMATH_GROQ_ROUTER=1 parent_map_backfill.py --corpus cinema --project` (default
+`--concurrency 6`, spreads across the six accounts) — toward coverage (unblocks D-10). Do NOT cutover/retire
+before the migration ledger's gates.
 
 ## Latest checkpoint (2026-09-08 — FINAL RETRIEVAL/ROUTING/SYNTHESIS EXECUTED; MD is the living ledger)
 
