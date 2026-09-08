@@ -352,3 +352,45 @@ providers:
     min: 1
     max: 1
     init: 1
+  map_groq1:       # PARENT-MAP compound-mini lane; SHARES account 1's budget (GROQ_API_KEY_1) with profile_groq1 via groq_accounts (S7a)
+    kind: rate
+    family: groq
+    rpd: 230
+    rpm: 2
+    tpm: 60000
+    conc_cap: 1
+  map_groq2:       # PARENT-MAP compound-mini lane; SHARES account 2's budget (GROQ_API_KEY_2) with profile_groq2 via groq_accounts (S7a)
+    kind: rate
+    family: groq
+    rpd: 230
+    rpm: 2
+    tpm: 60000
+    conc_cap: 1
+  map_groq3:       # PARENT-MAP compound-mini lane; SHARES account 3's budget (GROQ_API_KEY_3) with profile_groq3 via groq_accounts (S7a)
+    kind: rate
+    family: groq
+    rpd: 230
+    rpm: 2
+    tpm: 60000
+    conc_cap: 1
+  map_groq4:       # PARENT-MAP compound-mini lane; SHARES account 4's budget (GROQ_API_KEY_4) with profile_groq4 via groq_accounts (S7a)
+    kind: rate
+    family: groq
+    rpd: 230
+    rpm: 2
+    tpm: 60000
+    conc_cap: 1
+  map_groq5:       # PARENT-MAP compound-mini lane; SHARES account 5's budget (GROQ_API_KEY_5) with profile_groq5 via groq_accounts (S7a)
+    kind: rate
+    family: groq
+    rpd: 230
+    rpm: 2
+    tpm: 60000
+    conc_cap: 1
+  map_groq6:       # PARENT-MAP compound-mini lane; SHARES account 6's budget (GROQ_API_KEY_6) with profile_groq6 via groq_accounts (S7a)
+    kind: rate
+    family: groq
+    rpd: 230
+    rpm: 2
+    tpm: 60000
+    conc_cap: 1

@@ -743,6 +743,12 @@ class LimiterRegistry:
                 self._lanes[k] = lim
             return self._lanes[k]
 
+    def get_lane(self, provider: str, key: str) -> AdaptiveLimiter | None:
+        """Read-only lookup of an EXISTING lane (None if never created). For the
+        SELECTION layer (groq_router) to read live capacity without creating a lane."""
+        with self._lock:
+            return self._lanes.get((provider, key or "default"))
+
     def budget(self, key: str, *, seed: int, floor: int, ceiling: int,
                step: int) -> AdaptiveBudget:
         with self._lock:
