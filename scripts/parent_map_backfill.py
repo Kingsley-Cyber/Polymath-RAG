@@ -2,11 +2,15 @@
 """PARENT-MAP-BACKFILL-V1 — routed generation + projection for a corpus (step 5).
 
 RETRIEVAL-MIGRATION-DEPENDENCY-V1 step 5 "controlled backfill". For each live document
-of a corpus, generate its parent maps through the SHARED-BUDGET-ROUTED compound-mini
-lanes (S7b `route_groq` spreads across the six accounts) and project them to the
-contract-scoped Qdrant collection. Idempotent + resumable: a doc already fully mapped
-re-infers NOTHING (§36.5), and projection upserts by point id. Owner-authorized
-controlled backfill (after the step 1-4 E2E gates passed); bounded by `--limit`.
+of a corpus, generate its parent maps through the six compound-mini accounts and project
+them to the contract-scoped Qdrant collection. Lane selection is explicit ROUND-ROBIN
+across the six distinct-account endpoints (BACKFILL-SPREAD-V1): `route_groq`'s capacity
+view is blind for these lanes in a dedicated backfill process (unregistered limiter lanes
+→ every account tied → lexical-first pin), so round-robin gives every account ~1/6 of the
+load while each endpoint keeps its own AIMD limiter for per-account backoff. Idempotent +
+resumable: a doc already fully mapped re-infers NOTHING (§36.5), and projection upserts by
+point id. Owner-authorized controlled backfill (after the step 1-4 E2E gates passed);
+bounded by `--limit`.
 
     POLYMATH_GROQ_ROUTER=1 .venv/bin/python scripts/parent_map_backfill.py --corpus cinema --limit 8 --project
 """
@@ -45,20 +49,30 @@ def _cohort(corpus_id, limit):
 
 
 def _routed_infer(lane_counter):
+    import itertools
+    import threading
     from polymath_shared.llm_extraction.client import LLMExtractionClient
     from polymath_shared.llm_extraction.pool import cloud_endpoints, stage_pin
-    from polymath_shared.document_profile.groq_routing import route
     from polymath_shared.document_profile.map_prompt import build_map_prompt
     pin = stage_pin("doc_parent_map") or []
     eps = {e.name: e for e in cloud_endpoints() if e.name in pin}
+    ep_names = [n for n in pin if n in eps]              # ordered; only endpoints that exist
+    # ROUND-ROBIN across the six distinct-account endpoints (BACKFILL-SPREAD-V1). `route()`'s
+    # capacity view is BLIND for these map lanes in a dedicated backfill process: the limiter
+    # lanes it reads (`REGISTRY.get_lane`) are unregistered until first use, so every account
+    # looks tied at full budget and the only spread is a 6 s reservation that expires during a
+    # real multi-second map call — collapsing to a lexical-first pin (measured 2026-09-08:
+    # 649/657 calls on map_groq1 while 55 fresh docs mapped 0/0-error). Explicit round-robin
+    # gives every account ~1/6 of the load; each endpoint keeps its own AIMD limiter
+    # (`limiter_key=map_groqN`, six distinct API keys) for real per-account backoff.
+    _rr = itertools.count()
+    _rr_lock = threading.Lock()
 
     def infer(skeletons, is_combined=False):
-        est = max(1, len(skeletons)) * 250.0
-        lane, decision = route(pin, "PARENT_ROUTING_MAP", est_total_tokens=est)
-        if lane is None or lane not in eps:
-            lane = next(iter(eps)) if eps else None                      # fail-open to any active lane
-        if lane is None:
+        if not ep_names:
             raise RuntimeError("no active doc_parent_map lane")
+        with _rr_lock:
+            lane = ep_names[next(_rr) % len(ep_names)]
         lane_counter[lane] += 1
         ep = eps[lane]
         client = LLMExtractionClient("cloud", url=ep.url, model=ep.model, limiter_key=ep.limiter_key,

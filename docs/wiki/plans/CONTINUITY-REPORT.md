@@ -31,8 +31,16 @@ block below (registers 11.175–11.176):
   (reconciled) → `semantic_completion.vnext` = **VNEXT_COMPLETE**. Proves the migration substrate is
   autonomously completable and the S11 verdict transitions INCOMPLETE→COMPLETE exactly. NOT a cutover
   (owner QUERY_READY flip, untaken); NOT a real-corpus uplift (d7 is synthetic, no P10 fixtures).
-  **The cutover/retirement boundary is now precisely characterized: cinema coverage (551/11,993,
-  multi-session RPD campaign) + owner QUERY_READY flip (BE-AWARE §7) — neither autonomously reachable.**
+  **The cutover/retirement boundary is now precisely characterized: cinema coverage + owner
+  QUERY_READY flip (BE-AWARE §7).**
+- **Backfill account-spread FIXED + large-doc yield GATED (11.177):** advancing cinema coverage
+  551→**704**/11,993 exposed two defects. FIXED: the backfill pinned map inference to one account
+  (`route()` blind on unregistered lanes) → explicit ROUND-ROBIN across the six accounts
+  (BACKFILL-SPREAD-V1, live-verified even 110/acct, tested). GATED (the real coverage wall, NOT
+  capacity/concurrency): docs ≥~430 parents map ≈0 IN ISOLATION (Ken Dancyger 2/430; small docs map
+  fully; endpoints probe OK) — a large-doc map-yield issue. Exact-next in S12 + a dedicated task:
+  capture a big-doc batch's raw response (model-decline vs parse-fail) → fix batch/prompt or exclude
+  unmappable big-doc parents so `unresolved→0`.
 
 ### Earlier this session — DATA-REGEN: D-5/D-12 UNBLOCKED; parent-MAP backfill parallelized
 
