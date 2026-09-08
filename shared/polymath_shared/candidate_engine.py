@@ -275,6 +275,11 @@ class CandidateBudget:
     seealso_fanout_enabled: bool = False
     seealso_fanout_atoms: int = 6            # relational atoms probed per turn
     seealso_fanout_children: int = 4         # children kept per probed atom
+    #: P7 graph destination (lane H): query entities → Neo4j hop → destination entities → their
+    #: documents → ORIGINAL children (JUDGED). Source-attested relationship route ⇒ RELATIONAL role
+    #: (ARRIVAL_GRAPH_DEST). Default OFF ⇒ lane H empty ⇒ union byte-identical. Additive, last.
+    graph_dest_enabled: bool = False
+    graph_dest_children: int = 8             # graph-destination children kept per turn (post-hop)
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -559,6 +564,7 @@ def retrieve_candidates(ctx: SearchContext, budget: CandidateBudget, *,
                         dualread_search: Optional[Callable[..., list[dict]]] = None,
                         lift_search: Optional[Callable[..., list[dict]]] = None,
                         fanout_search: Optional[Callable[..., list[dict]]] = None,
+                        graph_dest_search: Optional[Callable[..., list[dict]]] = None,
                         region_lookup: Optional[Callable[[list[str]], dict]] = None,
                         subqueries: Iterable[SubQuery] = (),
                         executor: Optional[Executor] = None,
@@ -600,7 +606,8 @@ def retrieve_candidates(ctx: SearchContext, budget: CandidateBudget, *,
     try:
         return _retrieve_on(ctx, budget, pool, dense_search, sparse_search, region_lookup, subqueries, prestarted,
                             lanes, deadline, t_turn, timings, degraded, latent_search=latent_search,
-                            dualread_search=dualread_search, lift_search=lift_search, fanout_search=fanout_search)
+                            dualread_search=dualread_search, lift_search=lift_search, fanout_search=fanout_search,
+                            graph_dest_search=graph_dest_search)
     finally:
         if own_pool:
             pool.shutdown(wait=False, cancel_futures=True)      # never wait on a late lane; queued work is dropped
@@ -618,7 +625,7 @@ def _prestarted_future(value) -> Future:
 def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, dense_search, sparse_search, region_lookup,
                  subqueries: list[SubQuery], prestarted: dict, lanes: set, deadline: float, t_turn: float,
                  timings: dict, degraded: list, latent_search=None, dualread_search=None, lift_search=None,
-                 fanout_search=None) -> CandidateResult:
+                 fanout_search=None, graph_dest_search=None) -> CandidateResult:
     LANE_DROPPED = "lane dropped this turn (deadline); the other lanes continue"
     SPARSE_DROPPED = "no exact-match lane this turn; dense lanes only"
 
@@ -859,6 +866,24 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
         fanout_trace["candidates"] = len(lane_g)
         fanout_trace["lane_ms"] = round((time.perf_counter() - t_fan) * 1000, 1)
 
+    # ---- lane H (P7 graph destination): query entities → Neo4j hop → destination docs → JUDGED children ----
+    lane_h: list[CandidateEvidence] = []
+    graph_dest_trace: dict = {"enabled": bool(budget.graph_dest_enabled and graph_dest_search is not None)}
+    if budget.graph_dest_enabled and graph_dest_search is not None:
+        t_gd = time.perf_counter()
+        try:
+            rows = graph_dest_search(list(ctx.qvec)) or []   # ORIGINAL children of the graph destinations (source-attested route)
+            for h in _hits(REPRESENTATION_KIND_CHILD, rows, ctx.corpus_id, budget.graph_dest_children):
+                if h.chunk_id:
+                    lane_h.append(CandidateEvidence(chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name,
+                                                    text=h.text, arrivals=[ARRIVAL_GRAPH_DEST], query_ids=[ctx.query_id], dense_rank=h.rank,
+                                                    dense_score=h.raw_similarity, region_role=roles.get(h.chunk_id)))
+            graph_dest_trace["destinations"] = sorted({str(r.get("dest_entity")) for r in rows if r.get("dest_entity")})[:8]
+        except Exception as exc:  # noqa: BLE001 — the graph lane is optional + fail-open; absence is receipted, never silent
+            graph_dest_trace["degraded"] = f"{type(exc).__name__}: {str(exc)[:80]}"
+        graph_dest_trace["candidates"] = len(lane_h)
+        graph_dest_trace["lane_ms"] = round((time.perf_counter() - t_gd) * 1000, 1)
+
     # ---- typed subqueries: lanes B + C only (§3.16), per-query provenance; started at T=0, gathered here ------
     aspects: dict[str, dict] = {ctx.query_id: {"type": "PRIMARY", "query": ctx.query, "weight": 1.0,
                                                "lanes": {LANE_A: len(lane_a), LANE_B: len(lane_b), LANE_C: len(lane_c)},
@@ -945,7 +970,7 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
     by_id: dict[str, CandidateEvidence] = {}
     for c in lane_a + lane_b + lane_c:
         c.query_scores = dict(c.query_scores)
-    for lane_items in (lane_a, lane_b, lane_c, lane_d, sub_items, lane_e, lane_f, lane_g):
+    for lane_items in (lane_a, lane_b, lane_c, lane_d, sub_items, lane_e, lane_f, lane_g, lane_h):
         for c in lane_items:
             cur = by_id.get(c.chunk_id)
             if cur is None:
@@ -1033,11 +1058,12 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
         "lane_sizes": {"document_summary": len(doc_lane), "section_summary": len(section_lane), "entity_card": len(card_lane),
                        "hierarchical_children": len(lane_a), "global_dense_child": len(lane_b), "global_sparse_child": len(lane_c),
                        "latent_rescue": len(lane_d), "dualread": len(lane_e), "resolution_lift": len(lane_f),
-                       "seealso_fanout": len(lane_g),
+                       "seealso_fanout": len(lane_g), "graph_dest": len(lane_h),
                        "union": len(union), "union_uncapped": len(union_ids_uncapped)},
         "funnel_lanes": {"hierarchical": [c.chunk_id for c in lane_a], "global_dense_child": [c.chunk_id for c in lane_b],
                          "latent_rescue": [c.chunk_id for c in lane_d], "dualread": [c.chunk_id for c in lane_e],
                          "resolution_lift": [c.chunk_id for c in lane_f], "seealso_fanout": [c.chunk_id for c in lane_g],
+                         "graph_dest": [c.chunk_id for c in lane_h],
                          "global_sparse_child": [c.chunk_id for c in lane_c]},
         "funnel_union": union_ids_uncapped,
         "document_candidates": [{"doc_id": d.doc_id, "aggregate_rank": d.aggregate_rank, "aggregate_score": round(d.aggregate_score, 6),
@@ -1058,6 +1084,7 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
     trace["dualread"] = dualread_trace
     trace["resolution_lift"] = lift_trace
     trace["seealso_fanout"] = fanout_trace
+    trace["graph_dest"] = graph_dest_trace
     trace["route_kinds"] = (["document_summary"] if budget.hierarchy_route_documents else []) + ["section_summary", "child", "entity_card"]
     trace["noise_dropped"] = len(noise_dropped)
     trace["noise_reasons"] = dict(Counter(w for _, w in noise_dropped))

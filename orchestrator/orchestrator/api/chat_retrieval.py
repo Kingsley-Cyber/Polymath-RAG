@@ -117,6 +117,7 @@ _INT_KNOBS = ("rerank_max", "synthesis_max", "global_dense_k", "global_sparse_k"
               "dualread_max_parents", "dualread_children_per_parent", "dualread_budget_ms",             # POLYMATH_CHAT_DUALREAD_*
               "hierarchy_route_documents",                                                              # SECTION-ROUTING-V1
               "seealso_fanout_enabled", "seealso_fanout_atoms", "seealso_fanout_children",              # P5 fan-out (lane G)
+              "graph_dest_enabled", "graph_dest_children",                                             # P7 graph destination (lane H)
               # EVIDENCE-DIET-V1 step 3: POLYMATH_CHAT_RERANK_ROUND_ROBIN (0/1), POLYMATH_CHAT_RERANK_DOC_CAP, POLYMATH_CHAT_RERANK_MAX_FAIR
               "rerank_round_robin", "rerank_doc_cap", "rerank_max_fair")
 _FLOAT_KNOBS = ("embed_deadline_s", "lane_deadline_s", "rerank_deadline_s",     # P1.d wall-clock budgets
@@ -297,6 +298,50 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                     rows.append(r)
             return rows
 
+        def graph_dest_search(qv) -> list[dict]:
+            # P7 graph destination (§39): query entities (entity-card seeds on the primary vector) →
+            # Neo4j hop-1 (the SAME `graph_expand` P6 uses) → destination entities → their DOCUMENTS
+            # (`mentions`) → ORIGINAL children (global dense child search, filtered per destination
+            # doc). Neo4j supplies the source-attested relationship ROUTE; source children PROVE; the
+            # cross-encoder judges. Routing-inferred, never evidence itself. Fail-open, zero cost off.
+            from polymath_shared.db import tx as _tx
+            try:
+                cards = entity_card_probe(client, collections, corpus_id, query, list(qv), limit=budget.entity_card_k)
+            except Exception:  # noqa: BLE001 — seeding is optional
+                return []
+            seeds = [c["entity_id"] for c in (cards or []) if c.get("entity_id")]
+            if not seeds:
+                return []
+            try:
+                facts = list(graph_expand_or_502(list(_selected_surfaces(query, [])), [corpus_id], [],
+                                                 seed_entity_ids=seeds, max_seeds=budget.entity_card_k) or [])
+            except Exception:  # noqa: BLE001 — Neo4j degrades cleanly; the turn keeps its other lanes
+                return []
+            seed_set = set(seeds)
+            dest_ids: list[str] = []
+            for f in facts:
+                for k in ("subject_id", "object_id"):
+                    eid = f.get(k)
+                    if eid and eid not in seed_set and eid not in dest_ids:
+                        dest_ids.append(eid)
+            if not dest_ids:
+                return []
+            try:
+                with _tx() as _conn:
+                    doc_rows = _conn.execute("SELECT DISTINCT doc_id FROM mentions WHERE entity_id = ANY(%s) AND corpus_id=%s",
+                                             (dest_ids[:32], corpus_id)).fetchall()
+            except Exception:  # noqa: BLE001
+                return []
+            rows: list[dict] = []
+            for (did,) in doc_rows[: budget.graph_dest_children]:
+                for r in searcher._search(collection, list(qv),
+                                          {"representation_kind": "routing_child", "corpus_id": corpus_id, "doc_id": did},
+                                          limit=2):
+                    r = dict(r)
+                    r["dest_entity"] = did
+                    rows.append(r)
+            return rows
+
         def sparse_search(top_k: int, sparse_query=None) -> list[dict]:
             return searcher.sparse_search(collection, sparse_query if sparse_query is not None else sparse_q,
                                           {"representation_kind": "routing_child", "corpus_id": corpus_id}, limit=top_k)
@@ -342,7 +387,8 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
         # STAGES 2–3: concurrent lanes under `lane_deadline_s` → union with provenance (the engine)
         result = retrieve_candidates(ctx, budget, dense_search=dense_search, sparse_search=sparse_search, latent_search=latent_search,
                                      dualread_search=dualread_search, lift_search=lift_search, fanout_search=fanout_search,
-                                     region_lookup=_region_lookup, subqueries=subs, executor=pool, prestarted=prestarted)
+                                     graph_dest_search=graph_dest_search, region_lookup=_region_lookup, subqueries=subs,
+                                     executor=pool, prestarted=prestarted)
 
         # STAGE 4: exactly ONE judge call per turn, under `rerank_deadline_s`. Past it the turn proceeds in
         # fusion order (a complete, correct answer — the judge only reorders) and says so; the late sidecar

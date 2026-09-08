@@ -87,7 +87,7 @@ def test_every_candidate_carries_lane_provenance_and_multi_lane_chunks_fuse_once
     # REGION-EXCLUSION-V1 (2026-09-07): a noisy role is dropped at the union and receipted — demotion alone let a
     # table-of-contents chunk take a document-fair judged seat and become S1 when the judge missed its deadline
     assert "d2-noise" not in ids and res.trace["noise_reasons"] == {"region:front_matter": 1} and res.trace["noise_dropped"] == 1
-    assert res.trace["funnel_lanes"].keys() == {"hierarchical", "global_dense_child", "global_sparse_child", "latent_rescue", "dualread", "resolution_lift", "seealso_fanout"}   # lanes D/E/F/G receipted (empty when off)
+    assert res.trace["funnel_lanes"].keys() == {"hierarchical", "global_dense_child", "global_sparse_child", "latent_rescue", "dualread", "resolution_lift", "seealso_fanout", "graph_dest"}   # lanes D/E/F/G/H receipted (empty when off)
     assert res.trace["funnel_lanes"]["latent_rescue"] == [] and res.trace["lane_sizes"]["latent_rescue"] == 0
     assert res.trace["funnel_union"] == [c.chunk_id for c in res.union] and res.trace["plan"] == "chat-retrieval-v2"
     assert res.trace["multi_lane"] >= 1 and res.degraded == []
@@ -953,3 +953,27 @@ def test_seealso_fanout_is_off_by_default_and_never_invokes_the_probe():
     assert called == []                                                # default off => the callback is never invoked
     assert "d3-fanout" not in [c.chunk_id for c in res.union]
     assert res.trace["seealso_fanout"] == {"enabled": False} and res.trace["lane_sizes"]["seealso_fanout"] == 0
+
+
+def test_graph_dest_lane_h_adds_relational_children_and_is_off_by_default():
+    # P7 graph destination (lane H): destination-doc children enter the union tagged ARRIVAL_GRAPH_DEST
+    # (RELATIONAL role — a source-attested relationship route), additive + unioned last; off by default.
+    fake = Fake()
+    calls = []
+
+    def gdest(qv):
+        calls.append(tuple(qv))
+        return [_row(CHILD, 0, "d3", parent="d3-p1", chunk="d3-graphdest", text="source-attested destination child")]
+
+    res = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(graph_dest_enabled=True),
+                                 dense_search=fake.dense, sparse_search=fake.sparse, graph_dest_search=gdest)
+    assert calls and "d3-graphdest" in [c.chunk_id for c in res.union]
+    h = next(c for c in res.union if c.chunk_id == "d3-graphdest")
+    assert ce.ARRIVAL_GRAPH_DEST in h.arrivals and ce.synthesis_role(h.arrivals) == "RELATIONAL"
+    assert res.trace["graph_dest"]["enabled"] and res.trace["lane_sizes"]["graph_dest"] >= 1
+
+    called2 = []
+    res2 = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=Fake().dense, sparse_search=Fake().sparse,
+                                  graph_dest_search=lambda qv: (called2.append(qv) or [_row(CHILD, 0, "d3", chunk="d3-graphdest")]))
+    assert called2 == [] and "d3-graphdest" not in [c.chunk_id for c in res2.union]
+    assert res2.trace["graph_dest"] == {"enabled": False} and res2.trace["lane_sizes"]["graph_dest"] == 0
