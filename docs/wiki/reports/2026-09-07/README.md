@@ -7,6 +7,12 @@ status: accepted
 
 # 2026-09-07 HANDOFF — successor bootstrap
 
+> **NEWER SNAPSHOT:** a later same-day continuation supersedes this one —
+> **`docs/wiki/reports/2026-09-07T1828/`** (S0–S4 + Groq router core + live map
+> canary landed; the strengthened `BE-AWARE.md` and recursive `DEPENDENCY-MAP.md`
+> live there). This folder still holds for the U-item / chat-side detail
+> (U1 → S12, U2 → S15).
+
 **STOP.**
 
 Do not begin implementation based solely on the user's newest request.

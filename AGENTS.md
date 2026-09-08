@@ -32,12 +32,13 @@ Before making any code, schema, data, architecture, or evaluation change:
 
 Before making architectural changes or continuing unfinished work, read, in order:
 
-1. `docs/wiki/reports/2026-09-07/README.md` — successor bootstrap and the model operating contract
+0. **`docs/wiki/reports/2026-09-07T1828/README.md` — the NEWEST handoff snapshot** (SESSION-CONTINUATION with the exact next slice, a strengthened BE-AWARE.md, and a recursive DEPENDENCY-MAP.md). It supersedes the `2026-09-07/` snapshot below, which still holds for the U-item / chat-side detail.
+1. `docs/wiki/reports/2026-09-07/README.md` — earlier same-day snapshot (successor bootstrap and the model operating contract)
 2. `docs/wiki/reports/2026-09-07/CONTINUATION_REPORT.md` — what exists, what this cycle built, the state of each piece
 3. `docs/wiki/reports/2026-09-07/BE_AWARE.md` — repository-specific rules, each classified as owner preference, operational constraint, invariant, experiment or compromise
 4. `docs/wiki/reports/2026-09-07/UNFINISHED_WORK.md` — open items U1–U12 with files, tests and risks
 5. `docs/wiki/reports/2026-09-07/DEPENDENCY_MAP.md` — which open item must precede which
-6. `docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-PLAN.md` — the **next-phase plan of record** (document semantic index + parent map + vocabulary bridge; slices S0–S16), with `docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-START-HERE.md` as its coding-agent hook. Current slice: **S0-S4 done (11.129-11.135: admission, ParentSkeleton, map compiler, token packer, corrective checkpoint, Groq routing policy + router core, SQL durability); S5 profile vNext + fingerprint next. Groq live wiring + reindex canary gated (fleet config + provider spend).**
+6. `docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-PLAN.md` — the **next-phase plan of record** (document semantic index + parent map + vocabulary bridge; slices S0–S16), with `docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-START-HERE.md` as its coding-agent hook. Current slice: **S0-S4 + corrective checkpoint + Groq router core + LIVE map-contract canary done (11.129-11.136, HEAD 4fc931a); the parent-map contract is proven live (22/22 & 11/11 mapped, injection resisted). S5 profile vNext + fingerprint next. Groq live wiring + reindex canary gated (fleet config + provider spend). See docs/wiki/reports/2026-09-07T1828/ for the full continuation.**
 
 The living bootstrap remains `docs/wiki/plans/CONTINUITY-REPORT.md` (updated in place); the dated folder is the snapshot it points to. A newer `docs/wiki/reports/<date>/` folder supersedes this one.
 
