@@ -1,0 +1,295 @@
+{
+  "corpus": "cinema",
+  "fixtures": {
+    "L": {
+      "n": 15,
+      "gold_in_union_off": 1.0,
+      "gold_in_union_on": 1.0,
+      "no_regression": true,
+      "turns_dualread_contributed": 1,
+      "rows": [
+        {
+          "q": "What does the book say about \"AU62\"?",
+          "term": "AU62",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 0,
+          "resolved_parents": 0,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about \"SO202\"?",
+          "term": "SO202",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 0,
+          "resolved_parents": 0,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about \"HD1\"?",
+          "term": "HD1",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 0,
+          "resolved_parents": 0,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about \"F850LP\"?",
+          "term": "F850LP",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 0,
+          "resolved_parents": 0,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about \"D16\"?",
+          "term": "D16",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 0,
+          "resolved_parents": 0,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about \"W372\"?",
+          "term": "W372",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 0,
+          "resolved_parents": 0,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about \"A100\"?",
+          "term": "A100",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 0,
+          "resolved_parents": 0,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about \"M4A1\"?",
+          "term": "M4A1",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 0,
+          "resolved_parents": 0,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about \"XXXII\"?",
+          "term": "XXXII",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 0,
+          "resolved_parents": 0,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about \"MUA\"?",
+          "term": "MUA",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 24,
+          "resolved_parents": 23,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about \"UPA\"?",
+          "term": "UPA",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 0,
+          "resolved_parents": 0,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about \"ABLEGI\"?",
+          "term": "ABLEGI",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 0,
+          "resolved_parents": 0,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about \"NSCB\"?",
+          "term": "NSCB",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 0,
+          "resolved_parents": 0,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about \"VNSP\"?",
+          "term": "VNSP",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 0,
+          "resolved_parents": 0,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about \"UFO\"?",
+          "term": "UFO",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 0,
+          "resolved_parents": 0,
+          "regressed": false
+        }
+      ]
+    },
+    "B": {
+      "n": 15,
+      "gold_in_union_off": 0.867,
+      "gold_in_union_on": 0.867,
+      "no_regression": true,
+      "turns_dualread_contributed": 6,
+      "rows": [
+        {
+          "q": "What does the book say about making your own chroma keyer?",
+          "term": "Making Your Own Chroma Keyer",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 24,
+          "resolved_parents": 24,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about nonsquare pixels?",
+          "term": "Nonsquare Pixels",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 19,
+          "resolved_parents": 24,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about oebps/ritc 9781119685401 epub3 035 r1.xht",
+          "term": "OEBPS/ritc 9781119685401 epub3 035 r1.xhtml",
+          "gold_in_union_off": false,
+          "gold_in_union_on": false,
+          "dualread_children": 0,
+          "resolved_parents": 0,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about miscellaneous drawing tips?",
+          "term": "Miscellaneous Drawing Tips",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 0,
+          "resolved_parents": 0,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about transcoding versus color rerendering?",
+          "term": "Transcoding versus Color Rerendering",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 24,
+          "resolved_parents": 24,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about FACE OFF?",
+          "term": "FACE OFF",
+          "gold_in_union_off": false,
+          "gold_in_union_on": false,
+          "dualread_children": 0,
+          "resolved_parents": 0,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about affect, fatigue, and injury are control s",
+          "term": "Affect, fatigue, and injury are control states",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 24,
+          "resolved_parents": 24,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about movement of an object with a background?",
+          "term": "Movement of an Object with a Background",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 24,
+          "resolved_parents": 23,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about sound editing?",
+          "term": "Sound Editing",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 0,
+          "resolved_parents": 0,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about write radio sparely?",
+          "term": "Write radio sparely",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 0,
+          "resolved_parents": 0,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about rewards of good type development?",
+          "term": "Rewards of Good Type Development",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 24,
+          "resolved_parents": 20,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about multiple moments?",
+          "term": "Multiple moments",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 0,
+          "resolved_parents": 0,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about PREMISE AND THEME?",
+          "term": "PREMISE AND THEME",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 0,
+          "resolved_parents": 0,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about battling overconfidence?",
+          "term": "Battling Overconfidence",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 0,
+          "resolved_parents": 0,
+          "regressed": false
+        },
+        {
+          "q": "What does the book say about changing a level within a clip?",
+          "term": "Changing a level within a clip",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "dualread_children": 0,
+          "resolved_parents": 0,
+          "regressed": false
+        }
+      ]
+    }
+  },
+  "regressions": [],
+  "passed": true
+}

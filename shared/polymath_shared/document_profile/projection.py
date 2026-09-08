@@ -36,6 +36,30 @@ def point_id(doc_id: str) -> str:
     return str(uuid.uuid5(uuid.NAMESPACE_URL, f"polymath:doc_profile:{doc_id}"))
 
 
+def profile_nominate(client, collection: str, query_vec, corpus_id: str, k: int = 8,
+                     *, surfaces: tuple[str, ...] = ANSWER_SURFACES) -> list[str]:
+    """RRF nomination over the profile collection → ordered doc_ids (the S8/S9 door).
+
+    The SAME surfaces the self-retrieval gate qualified: dense `identity`/`theme`/`title`
+    + `questions`/`searches` multivectors, fused by RRF, filtered to the corpus. Read-only
+    — this is the reusable profile-search contract the shadow canary and the live dual-read
+    lane both nominate through."""
+    from qdrant_client.http import models as qm
+    flt = qm.Filter(must=[qm.FieldCondition(key="corpus_id", match=qm.MatchValue(value=corpus_id))])
+    v = list(query_vec)
+    pre = [qm.Prefetch(query=([v] if s in MULTI_SURFACES else v), using=s, limit=k, filter=flt)
+           for s in surfaces]
+    res = client.query_points(collection, prefetch=pre, query=qm.FusionQuery(fusion=qm.Fusion.RRF),
+                              limit=k, with_payload=["doc_id"])
+    out, seen = [], set()
+    for p in res.points:
+        d = (p.payload or {}).get("doc_id")
+        if d and d not in seen:
+            seen.add(d)
+            out.append(d)
+    return out
+
+
 def projection_key(*, source_doc_hash: str, schema_version: str, prompt_version: str, embedding_contract_id: str) -> str:
     return hashlib.sha256(json.dumps({"doc": source_doc_hash, "schema": schema_version, "prompt": prompt_version,
                                       "embedding": embedding_contract_id, "projection": PROJECTION_VERSION},

@@ -87,7 +87,7 @@ def test_every_candidate_carries_lane_provenance_and_multi_lane_chunks_fuse_once
     # REGION-EXCLUSION-V1 (2026-09-07): a noisy role is dropped at the union and receipted — demotion alone let a
     # table-of-contents chunk take a document-fair judged seat and become S1 when the judge missed its deadline
     assert "d2-noise" not in ids and res.trace["noise_reasons"] == {"region:front_matter": 1} and res.trace["noise_dropped"] == 1
-    assert res.trace["funnel_lanes"].keys() == {"hierarchical", "global_dense_child", "global_sparse_child", "latent_rescue"}   # B12: lane D receipted (empty when off)
+    assert res.trace["funnel_lanes"].keys() == {"hierarchical", "global_dense_child", "global_sparse_child", "latent_rescue", "dualread"}   # B12 lane D + S9 lane E receipted (empty when off)
     assert res.trace["funnel_lanes"]["latent_rescue"] == [] and res.trace["lane_sizes"]["latent_rescue"] == 0
     assert res.trace["funnel_union"] == [c.chunk_id for c in res.union] and res.trace["plan"] == "chat-retrieval-v2"
     assert res.trace["multi_lane"] >= 1 and res.degraded == []
@@ -812,3 +812,69 @@ def test_section_routing_is_the_default_and_the_document_vote_is_opt_in():
     calls.clear()
     res_on = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(hierarchy_route_documents=True), dense_search=dense, sparse_search=lambda k, q=None: [])
     assert ce.REPRESENTATION_KIND_DOCUMENT_SUMMARY in calls and res_on.trace["route_kinds"][0] == "document_summary"
+
+
+# ---- S9 dual-read (lane E): additive, default-off, provenance-preserving --------------------
+
+def _boom_dualread(_qv):
+    raise AssertionError("dualread_search must NOT be called when the flag is off")
+
+
+def _fake_dualread(parents):
+    """A fake profile→map nominator: returns resolved parents [{doc_id, parent_id}]."""
+    calls = []
+
+    def f(qv):
+        calls.append(list(qv))
+        return [dict(p) for p in parents]
+
+    f.calls = calls
+    return f
+
+
+def test_dualread_off_by_default_is_byte_identical_and_never_calls_the_nominator():
+    # default budget → lane E is empty → the union is identical whether or not a nominator is passed.
+    base = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=Fake().dense, sparse_search=Fake().sparse)
+    with_cb = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=Fake().dense,
+                                     sparse_search=Fake().sparse, dualread_search=_boom_dualread)
+    assert [c.chunk_id for c in base.union] == [c.chunk_id for c in with_cb.union]      # byte-identical union
+    assert with_cb.trace["lane_sizes"]["dualread"] == 0
+    assert with_cb.trace["dualread"]["enabled"] is False
+    assert all(ce.LANE_E not in c.arrivals for c in with_cb.union)
+
+
+def test_dualread_on_adds_shadow_children_with_lane_e_provenance():
+    fake = Fake()
+    nominator = _fake_dualread([{"doc_id": "d1", "parent_id": "d1-p0"}, {"doc_id": "d2", "parent_id": "d2-p1"}])
+    budget = ce.CandidateBudget(dualread_enabled=True, dualread_max_parents=8, dualread_children_per_parent=3)
+    res = ce.retrieve_candidates(_ctx(), budget, dense_search=fake.dense, sparse_search=fake.sparse, dualread_search=nominator)
+    assert nominator.calls, "nominator must run when the flag is on"
+    assert res.trace["dualread"]["enabled"] is True
+    assert res.trace["dualread"]["resolved_parents"] == 2
+    assert res.trace["lane_sizes"]["dualread"] > 0
+    # every parent was deepened through the ORIGINAL child lane, scoped by doc_id + parent_id.
+    deepen = [c for c in fake.calls if c[0] == "dense" and c[1] == CHILD and c[3].get("parent_id") in ("d1-p0", "d2-p1")]
+    assert {c[3]["parent_id"] for c in deepen} == {"d1-p0", "d2-p1"}
+    assert all("doc_id" in c[3] for c in deepen)
+    # at least one shadow-only child reached the union carrying the lane-E arrival tag.
+    assert any(ce.LANE_E in c.arrivals for c in res.union)
+
+
+def test_dualread_duplicate_child_merges_provenance_instead_of_duplicating():
+    fake = Fake()
+    # d2-p0-k0 is also a global dense child (Fake.dense CHILD row 0) → a shadow hit on the same
+    # chunk must MERGE (append LANE_E to the existing row), never add a second row.
+    nominator = _fake_dualread([{"doc_id": "d2", "parent_id": "d2-p0"}])
+    budget = ce.CandidateBudget(dualread_enabled=True, dualread_children_per_parent=3)
+    res = ce.retrieve_candidates(_ctx(), budget, dense_search=fake.dense, sparse_search=fake.sparse, dualread_search=nominator)
+    rows = [c for c in res.union if c.chunk_id == "d2-p0-k0"]
+    assert len(rows) == 1                                          # one row, not duplicated
+    assert ce.LANE_B in rows[0].arrivals and ce.LANE_E in rows[0].arrivals   # both lanes recorded
+
+
+def test_dualread_none_nominator_with_flag_on_is_safe():
+    fake = Fake()
+    res = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(dualread_enabled=True), dense_search=fake.dense,
+                                 sparse_search=fake.sparse, dualread_search=None)
+    assert res.trace["dualread"]["enabled"] is False              # no nominator → lane inert, no error
+    assert res.trace["lane_sizes"]["dualread"] == 0

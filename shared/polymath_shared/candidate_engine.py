@@ -71,6 +71,11 @@ LANE_C = "GLOBAL_SPARSE_CHILD"
 #: same latent rescue (abstraction / transfer vectors nominate parents, their ORIGINAL children compete) inside the v2
 #: composition — judged, fused and receipted like every other lane. Additive: `budget.latent_enabled` opts in.
 LANE_D = "LATENT_RESCUE"
+#: S9 dual-read (RETRIEVAL-MIGRATION §17): the vNext routing substrate (global profile →
+#: parent-map nominated parents, their ORIGINAL children compete) as an ADDITIVE lane inside
+#: the v2 composition — judged, fused and receipted like every other lane. Opt-in:
+#: `budget.dualread_enabled`; unioned LAST so every existing lane keeps precedence.
+LANE_E = "SHADOW_DUALREAD"
 ARRIVAL_NEIGHBOR = "NEIGHBOR_EXPANSION"
 LANES = (LANE_A, LANE_B, LANE_C)
 
@@ -208,6 +213,17 @@ class CandidateBudget:
     latent_max_parents: int = 6
     latent_children_per_parent: int = 3
     latent_budget_ms: int = 400
+    #: S9 dual-read (RETRIEVAL-MIGRATION §17): an ADDITIVE shadow lane — profile→parent-map
+    #: nominated parents deepened through ORIGINAL children (same deepen as lane D), unioned
+    #: last so every existing lane keeps precedence. Default OFF ⇒ the lane is empty ⇒ the
+    #: union is byte-identical to today. `dualread_search` is the injected profile→map
+    #: nominator (returns resolved parents); reversible via POLYMATH_CHAT_DUALREAD_ENABLED.
+    dualread_enabled: bool = False
+    dualread_profile_docs: int = 8
+    dualread_map_k: int = 24
+    dualread_max_parents: int = 8
+    dualread_children_per_parent: int = 3
+    dualread_budget_ms: int = 400
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -489,6 +505,7 @@ def retrieve_candidates(ctx: SearchContext, budget: CandidateBudget, *,
                         dense_search: Callable[..., list[dict]],
                         sparse_search: Callable[..., list[dict]],
                         latent_search: Optional[Callable[..., list[dict]]] = None,
+                        dualread_search: Optional[Callable[..., list[dict]]] = None,
                         region_lookup: Optional[Callable[[list[str]], dict]] = None,
                         subqueries: Iterable[SubQuery] = (),
                         executor: Optional[Executor] = None,
@@ -529,7 +546,8 @@ def retrieve_candidates(ctx: SearchContext, budget: CandidateBudget, *,
         max_workers=max(1, int(budget.max_workers)), thread_name_prefix="candidate-lanes")
     try:
         return _retrieve_on(ctx, budget, pool, dense_search, sparse_search, region_lookup, subqueries, prestarted,
-                            lanes, deadline, t_turn, timings, degraded, latent_search=latent_search)
+                            lanes, deadline, t_turn, timings, degraded, latent_search=latent_search,
+                            dualread_search=dualread_search)
     finally:
         if own_pool:
             pool.shutdown(wait=False, cancel_futures=True)      # never wait on a late lane; queued work is dropped
@@ -546,7 +564,7 @@ def _prestarted_future(value) -> Future:
 
 def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, dense_search, sparse_search, region_lookup,
                  subqueries: list[SubQuery], prestarted: dict, lanes: set, deadline: float, t_turn: float,
-                 timings: dict, degraded: list, latent_search=None) -> CandidateResult:
+                 timings: dict, degraded: list, latent_search=None, dualread_search=None) -> CandidateResult:
     LANE_DROPPED = "lane dropped this turn (deadline); the other lanes continue"
     SPARSE_DROPPED = "no exact-match lane this turn; dense lanes only"
 
@@ -718,6 +736,38 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
         latent_trace["candidates"] = len(lane_d)
         latent_trace["lane_ms"] = round((time.perf_counter() - t_lat) * 1000, 1)
 
+    # ---- lane E (S9 dual-read): global-profile→parent-map nominated parents, deepened through ORIGINAL children ----
+    lane_e: list[CandidateEvidence] = []
+    dualread_trace: dict = {"enabled": bool(budget.dualread_enabled and dualread_search is not None)}
+    if budget.dualread_enabled and dualread_search is not None:
+        t_dr = time.perf_counter()
+        try:
+            rows = dualread_search(list(ctx.qvec)) or []          # profile→map → resolved parents [{doc_id, parent_id, …}]
+            parents: list[tuple[str, str]] = []
+            seen_p: set[str] = set()
+            for r in rows:
+                pid = r.get("parent_id")
+                if pid and pid not in seen_p:
+                    seen_p.add(pid)
+                    parents.append((r.get("doc_id", ""), pid))
+            dualread_trace["resolved_parents"] = len(parents)
+            for doc_id_p, pid in parents[: budget.dualread_max_parents]:
+                extra = {"parent_id": pid, "doc_id": doc_id_p} if doc_id_p else {"parent_id": pid}
+                try:
+                    crows = dense_search(REPRESENTATION_KIND_CHILD, budget.dualread_children_per_parent, extra) or []
+                except Exception as exc:  # noqa: BLE001 — a parent that fails to deepen is skipped, receipted
+                    dualread_trace.setdefault("deepen_errors", []).append(f"{pid[:20]}:{type(exc).__name__}")
+                    continue
+                for h in _hits(REPRESENTATION_KIND_CHILD, crows, ctx.corpus_id, budget.dualread_children_per_parent):
+                    if h.chunk_id:
+                        lane_e.append(CandidateEvidence(chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name,
+                                                        text=h.text, arrivals=[LANE_E], query_ids=[ctx.query_id], dense_rank=h.rank,
+                                                        dense_score=h.raw_similarity, region_role=roles.get(h.chunk_id)))
+        except Exception as exc:  # noqa: BLE001 — the lane is optional; absence is receipted, never silent
+            dualread_trace["degraded"] = f"{type(exc).__name__}: {str(exc)[:80]}"
+        dualread_trace["candidates"] = len(lane_e)
+        dualread_trace["lane_ms"] = round((time.perf_counter() - t_dr) * 1000, 1)
+
     # ---- typed subqueries: lanes B + C only (§3.16), per-query provenance; started at T=0, gathered here ------
     aspects: dict[str, dict] = {ctx.query_id: {"type": "PRIMARY", "query": ctx.query, "weight": 1.0,
                                                "lanes": {LANE_A: len(lane_a), LANE_B: len(lane_b), LANE_C: len(lane_c)},
@@ -804,7 +854,7 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
     by_id: dict[str, CandidateEvidence] = {}
     for c in lane_a + lane_b + lane_c:
         c.query_scores = dict(c.query_scores)
-    for lane_items in (lane_a, lane_b, lane_c, lane_d, sub_items):
+    for lane_items in (lane_a, lane_b, lane_c, lane_d, sub_items, lane_e):
         for c in lane_items:
             cur = by_id.get(c.chunk_id)
             if cur is None:
@@ -891,10 +941,10 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
         "budget": budget.to_dict(),
         "lane_sizes": {"document_summary": len(doc_lane), "section_summary": len(section_lane), "entity_card": len(card_lane),
                        "hierarchical_children": len(lane_a), "global_dense_child": len(lane_b), "global_sparse_child": len(lane_c),
-                       "latent_rescue": len(lane_d),
+                       "latent_rescue": len(lane_d), "dualread": len(lane_e),
                        "union": len(union), "union_uncapped": len(union_ids_uncapped)},
         "funnel_lanes": {"hierarchical": [c.chunk_id for c in lane_a], "global_dense_child": [c.chunk_id for c in lane_b],
-                         "latent_rescue": [c.chunk_id for c in lane_d],
+                         "latent_rescue": [c.chunk_id for c in lane_d], "dualread": [c.chunk_id for c in lane_e],
                          "global_sparse_child": [c.chunk_id for c in lane_c]},
         "funnel_union": union_ids_uncapped,
         "document_candidates": [{"doc_id": d.doc_id, "aggregate_rank": d.aggregate_rank, "aggregate_score": round(d.aggregate_score, 6),
@@ -912,6 +962,7 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
         "degraded": list(degraded), "timings_ms": dict(timings),
     }
     trace["latent"] = latent_trace
+    trace["dualread"] = dualread_trace
     trace["route_kinds"] = (["document_summary"] if budget.hierarchy_route_documents else []) + ["section_summary", "child", "entity_card"]
     trace["noise_dropped"] = len(noise_dropped)
     trace["noise_reasons"] = dict(Counter(w for _, w in noise_dropped))

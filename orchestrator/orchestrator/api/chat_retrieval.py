@@ -111,6 +111,8 @@ def chat_retrieval_flag(override: str | None = None) -> str:
 #: env-tunable knobs on the one budget authority, POLYMATH_CHAT_<NAME> (measurement only; the defaults are the contract)
 _INT_KNOBS = ("rerank_max", "synthesis_max", "global_dense_k", "global_sparse_k", "merged_candidate_max", "max_workers",
               "latent_enabled", "latent_max_parents", "latent_children_per_parent", "latent_budget_ms",   # B12 lane D
+              "dualread_enabled", "dualread_profile_docs", "dualread_map_k",                            # S9 dual-read (lane E)
+              "dualread_max_parents", "dualread_children_per_parent", "dualread_budget_ms",             # POLYMATH_CHAT_DUALREAD_*
               "hierarchy_route_documents",                                                              # SECTION-ROUTING-V1
               # EVIDENCE-DIET-V1 step 3: POLYMATH_CHAT_RERANK_ROUND_ROBIN (0/1), POLYMATH_CHAT_RERANK_DOC_CAP, POLYMATH_CHAT_RERANK_MAX_FAIR
               "rerank_round_robin", "rerank_doc_cap", "rerank_max_fair")
@@ -200,6 +202,18 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
             # B12 lane D: the latent kinds live in the same collection; `latent_rescue_parents` passes the kind + corpus
             return searcher._search(collection, list(v), dict(filters), limit=max(budget.latent_abstraction_top_k, budget.latent_transfer_top_k))
 
+        def dualread_search(qv) -> list[dict]:
+            # S9 lane E (RETRIEVAL-MIGRATION §17): the vNext routing door — global-profile RRF
+            # nomination → ONE `doc_id`-filtered parent-map search → resolved parents
+            # [{doc_id, parent_id, …}]. The engine deepens each parent through the ORIGINAL
+            # child lane (dense_search) and unions it LAST. Read-only; only invoked when
+            # `budget.dualread_enabled` (POLYMATH_CHAT_DUALREAD_ENABLED) — zero cost when off.
+            from polymath_shared.document_profile import parent_map_projection as _pmp, projection as _pj
+            from polymath_shared.embedding_contracts import active_contract as _ac
+            cid = _ac().contract_id
+            docs = _pj.profile_nominate(client, _pj.collection_name(cid), qv, corpus_id, k=budget.dualread_profile_docs)
+            return _pmp.search_parent_maps(client, _pmp.collection_name(cid), qv, docs, k=budget.dualread_map_k)
+
         def sparse_search(top_k: int, sparse_query=None) -> list[dict]:
             return searcher.sparse_search(collection, sparse_query if sparse_query is not None else sparse_q,
                                           {"representation_kind": "routing_child", "corpus_id": corpus_id}, limit=top_k)
@@ -244,7 +258,8 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
             on_context(ctx, pool)          # P1.e: the vector exists — a frontier may start beside the dense lanes
         # STAGES 2–3: concurrent lanes under `lane_deadline_s` → union with provenance (the engine)
         result = retrieve_candidates(ctx, budget, dense_search=dense_search, sparse_search=sparse_search, latent_search=latent_search,
-                                     region_lookup=_region_lookup, subqueries=subs, executor=pool, prestarted=prestarted)
+                                     dualread_search=dualread_search, region_lookup=_region_lookup, subqueries=subs,
+                                     executor=pool, prestarted=prestarted)
 
         # STAGE 4: exactly ONE judge call per turn, under `rerank_deadline_s`. Past it the turn proceeds in
         # fusion order (a complete, correct answer — the judge only reorders) and says so; the late sidecar
