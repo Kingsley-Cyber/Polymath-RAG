@@ -386,6 +386,33 @@ class AdaptiveLimiter:
                     "adopted_rpm": self._adopted_rpm,
                     "adopted_tpm": self._adopted_tpm}
 
+    def capacity_snapshot(self, *, now: float | None = None) -> dict:
+        """Read-only capacity view for the SELECTION layer (GROQ-ROUTING-POLICY-V1 /
+        groq_router.choose). The limiter remains the ENFORCEMENT authority — this only
+        REPORTS remaining headroom so the router can prefer the least-loaded account.
+        No second scheduler. Uses the monotonic clock (matching `_not_before`)."""
+        now = _now() if now is None else now
+        with self._lock:
+            today = time.strftime("%Y-%m-%d", time.gmtime())
+            day_count = self._day_count if self._day == today else 0
+            remaining_rpd = (self.spec.rpd - day_count) if self.spec.rpd else 1_000_000_000
+            rpm_cap = self._adopted_rpm or (self.spec.rpm or 0)
+            tpm_cap = self._adopted_tpm or (self.spec.tpm or 0)
+            rpm_tokens = self._rpm.tokens if self._rpm else 0.0
+            tpm_tokens = self._tpm.tokens if self._tpm else 0.0
+            not_before = self._not_before
+            in_flight = self._sem.held
+        return {
+            "remaining_rpd": max(0, remaining_rpd),
+            "rolling_rpm": max(0, int(round(rpm_cap - rpm_tokens))) if rpm_cap else 0,
+            "tpm_used": max(0, int(round(tpm_cap - tpm_tokens))) if tpm_cap else 0,
+            "in_flight": in_flight,
+            "locked_until": not_before,
+            "breaker_open": self._breaker.is_open,
+            "day_count": day_count,
+            "rpd_budget": self.spec.rpd,
+        }
+
     def restore(self, state: dict | None) -> bool:
         """Adopt a persisted effective limit (clamped into [floor, ceil]).
         The persisted value is what the controller had FOUND before the
