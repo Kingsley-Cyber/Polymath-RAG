@@ -18,6 +18,34 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-08/README.md` + `DIRECTORY_MAP.md` (the NEWEST dated handoff snapshot — retrieval/routing/synthesis phase; supersedes `2026-09-07T1828/`, which still holds for the document-semantic-index substrate = this phase's P1)** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (rows 11.155–11.167) → `CLAUDE.md` → the two newest work-logs. The document-semantic-index START-HERE/plan below remain valid for the P1 substrate.
 
+## Latest checkpoint (2026-09-08 late — DATA-REGEN: D-5/D-12 UNBLOCKED; parent-MAP backfill parallelized)
+
+**Branch `architecture/evidence-first-v5` is 2 commits ahead of `main` (`0089506` vNext
+profile+atom regen, `83b044d` backfill concurrency); ff `main` after the branch's 4 CI checks go
+green (determinism is the slow one).** This session executed the FINAL-PLAN data-regen chain on cinema:
+
+- **vNext profiles regenerated (67/67, register 11.169):** `backfill_document_profiles.py --rearm`
+  (new flag; era-compatible re-arm via `_emit_ticket_event`, `compatible()=True`, no blue-green) → the
+  supervised doc_profile slots regenerated every cinema profile under vNext (`POLYMATH_DOC_PROFILE_VNEXT=1`):
+  67/67 `vnext=true`, 0 invalid, all 16 fields incl. the relational research-index surfaces.
+- **Full-kind profile atoms (609, reconciled + queryable):** `profile_atom_canary.py --project` (now
+  purge-then-rebuild) → all 10 kinds (ANCHOR 67 · LATENT_PATTERN 66 · CONCEPT 66 · RECALLQ 65 · THEORY 64
+  · BOUNDARY 60 · SEEALSO 59 · TENSION 58 · BRIDGE 54 · INVERSION 50), active == projected, `search_atoms`
+  returns relational atoms. **UNBLOCKS D-5 (P5 fan-out) + D-12 (Wildcard frontier)** — GATED purely on
+  relational atom kinds = 0. `INTENT_POLICY.atom_kinds` ALREADY selects the relational kinds per intent, so
+  the atom lane consumes them now.
+- **P10 re-confirmed non-regressive** on the enriched substrate: L 15/15, B 13/15, 0 regressions (vNext
+  profiles + all-kind atoms preserve gold; uplift stays coverage-gated).
+- **Parent-MAP backfill parallelized (register 11.170):** `parent_map_backfill.py --concurrency N` (default
+  6, canary-clean; running at 3 in the background — 6 saturates the six Groq accounts on map-heavy docs).
+  Coverage is a capacity-gated multi-day campaign: cinema ~530/11,993 parents, resumable/idempotent.
+  **D-10 uplift stays GATED on coverage.**
+
+**Exact next executable:** D-5/D-12 are now IMPLEMENTABLE (relational atoms exist) — P5 SEEALSO/BRIDGE/ANCHOR
+fan-out resolver (§20–§23) + Wildcard-over-atoms; P7 (graph dest, BLOCKED-arch reorder) and P8b
+(synthesizer-by-role, BLOCKED-arch) remain. Keep the parent-MAP backfill resuming toward coverage
+(`--concurrency 3`, unblocks D-10). Do NOT cutover/retire before the migration ledger's gates.
+
 ## Latest checkpoint (2026-09-08 — FINAL RETRIEVAL/ROUTING/SYNTHESIS EXECUTED; MD is the living ledger)
 
 **`main` = `a17e4d6`** (whole phase landed, CI-green; branch 0 ahead). Plan-of-record =
