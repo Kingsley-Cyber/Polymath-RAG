@@ -43,10 +43,10 @@ through the parent-MAP localization layer (§42).
 | P2 | Intent-policy mapping (intent → fields → technique → budget) | **DONE** — P2a deterministic intent classifier (11.157) + P2b intent→budget policy (11.158, default-off flag); R4 atom-kinds per intent (11.161) |
 | P3 | Resolution Lift (user vocab → corpus vocab, source-derived) | **DONE** — §11 core (11.160) + gatherer (11.162) + probe lane F (11.163, default-off); **GATED:** corpus-DF rarity index + lift-term quality on arbitrary corpora |
 | P4 | Default micro-latent atom retrieval (THEORY/CONCEPT/PATTERN/BOUNDARY) | **DONE (via P2b)** — lane D micro-latent activated per intent by `apply_intent_policy`; **GATED:** richer atom generation (vNext) |
-| P5 | SEEALSO / BRIDGE fan-out resolver | GATED on P4 (relational atoms + entity resolution) |
+| P5 | SEEALSO / BRIDGE fan-out resolver | **PARTIAL** — SEEALSO adjacency already routes via the R4 atom lane (SEEALSO in RELATIONSHIP/EXPLORATORY atom_kinds); **GATED** — the dedicated §20–§22 fan-out RESOLVER + BRIDGE/ANCHOR need those atom kinds generated (= 0 until vNext profile regen) |
 | P6 | Intent-conditioned GRAPH auto-routing | **DONE** — graph assist auto-attaches on HYBRID for relational intents (11.164, default-off, mode stays HYBRID, fail-open) |
-| P7 | Graph destinations through parent-MAP | GATED on P6 |
-| P8 | Synthesis evidence-role bundle (DIRECT/PRECISION/RELATIONAL/LATENT) | **DONE (role tagging)** — every evidence row tagged + `meta.evidence_roles` bundle (11.165, additive); P8b = synthesizer presents by role |
+| P7 | Graph destinations through parent-MAP | **SCOPED** — destination entities→doc_ids→`search_parent_maps`→child deepen (§39/§42). Dependency: today the graph hop runs AFTER the judge (§3.18), so making destinations JUDGED evidence needs the graph-before-judge flow reorder (a load-bearing pipeline change) — designed, not yet landed |
+| P8 | Synthesis evidence-role bundle (DIRECT/PRECISION/RELATIONAL/LATENT) | **DONE (role structure, 11.165)** — every evidence row tagged + `meta.evidence_roles` bundle. **P8b SCOPED** — the synthesizer PRESENTING by role is a change to the load-bearing deterministic claim system (`answer_synthesis.py`); the role structure is ready for it |
 | P9 | Task-conditioned breadth (SINGLE_OK/MULTI_PREFERRED/MULTI_REQUIRED) | **DONE** — intent breadth → `rerank_round_robin` (SINGLE_OK lets one source dominate; MULTI_* doc-fair), default-off, no quota (11.166) |
 | P10 | Measure HYBRID | **NON-REGRESSION PASS** (11.167: intent-aware stack ON, L 15/15 + B 13/15, 0 regressions); **UPLIFT GATED** on parent-MAP backfill + vNext atom regen |
 | P11 | Measure GRAPH | GATED on P6–P7 |
