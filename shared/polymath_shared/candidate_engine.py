@@ -80,8 +80,34 @@ LANE_E = "SHADOW_DUALREAD"
 #: probed as ORIGINAL children — an ADDITIVE precision lane. Vocabulary discovers, source
 #: chunks prove: the lifted terms only fetch children; the cross-encoder still judges.
 LANE_F = "RESOLUTION_LIFT"
+#: P7 graph-destination children (§39): a child reached by localizing a graph destination
+#: through the parent-MAP. Tagged so synthesis can mark it RELATIONAL (source-attested).
+ARRIVAL_GRAPH_DEST = "GRAPH_DEST"
 ARRIVAL_NEIGHBOR = "NEIGHBOR_EXPANSION"
 LANES = (LANE_A, LANE_B, LANE_C)
+
+#: FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1 §44–§47 synthesis evidence roles. A chunk that
+#: arrived via ANY direct answer lane is DIRECT (it answers); otherwise its role is its
+#: strongest non-direct contribution. §47 law: LATENT may never substitute for DIRECT.
+_DIRECT_LANES = frozenset({LANE_A, LANE_B, LANE_C})
+_LATENT_LANES = frozenset({LANE_D, LANE_E})
+SYNTHESIS_ROLES = ("DIRECT", "PRECISION", "RELATIONAL", "LATENT")
+
+
+def synthesis_role(arrivals) -> str:
+    """Map a candidate's lane arrivals to its synthesis role (§46). DIRECT answers,
+    PRECISION sharpens (resolution lift), RELATIONAL connects (graph destination), LATENT
+    extends (latent/dual-read)."""
+    a = set(arrivals or ())
+    if a & _DIRECT_LANES:
+        return "DIRECT"
+    if ARRIVAL_GRAPH_DEST in a:
+        return "RELATIONAL"
+    if LANE_F in a:
+        return "PRECISION"
+    if a & _LATENT_LANES:
+        return "LATENT"
+    return "DIRECT"
 
 
 @dataclass(frozen=True)

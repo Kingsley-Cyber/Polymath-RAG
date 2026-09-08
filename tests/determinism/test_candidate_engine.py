@@ -900,3 +900,17 @@ def test_resolution_lift_lane_off_by_default_and_on_adds_children():
     assert on.trace["resolution_lift"]["enabled"] is True
     assert on.trace["resolution_lift"]["terms"] == ["AU21"]
     assert any(ce.LANE_F in c.arrivals for c in on.union)
+
+
+# ---- P8: synthesis evidence roles (§46) --------------------------------------------------
+
+def test_synthesis_role_maps_arrivals_to_roles():
+    assert ce.synthesis_role([ce.LANE_B]) == "DIRECT"
+    assert ce.synthesis_role([ce.LANE_A, ce.LANE_F]) == "DIRECT"      # a direct arrival always wins
+    assert ce.synthesis_role([ce.LANE_C]) == "DIRECT"
+    assert ce.synthesis_role([ce.LANE_F]) == "PRECISION"             # resolution-lift only
+    assert ce.synthesis_role([ce.LANE_E]) == "LATENT"                # dual-read only
+    assert ce.synthesis_role([ce.LANE_D]) == "LATENT"                # latent rescue only
+    assert ce.synthesis_role([ce.ARRIVAL_GRAPH_DEST]) == "RELATIONAL"
+    assert ce.synthesis_role([]) == "DIRECT"
+    assert set(ce.SYNTHESIS_ROLES) == {"DIRECT", "PRECISION", "RELATIONAL", "LATENT"}

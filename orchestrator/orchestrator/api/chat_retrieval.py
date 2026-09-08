@@ -63,6 +63,8 @@ from polymath_shared.candidate_engine import (
     SubQuery,
     retrieve_candidates,
     select_evidence,
+    SYNTHESIS_ROLES,
+    synthesis_role,
     shape_budget,
     sparse_vector_for,
 )
@@ -366,7 +368,10 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
         r.update({"g3_score": c.rerank_score, "locator": f"chunk:{c.chunk_id}",
                   "source_name": c.source_name or _p.get(c.doc_id, {}).get("source_name", ""),
                   "title": _p.get(c.chunk_id, {}).get("title", ""), "heading_path": _p.get(c.chunk_id, {}).get("heading_path", ""),
-                  "human_locator": _p.get(c.chunk_id, {}).get("human_locator", ""), "text": (c.text or "")[:240]})
+                  "human_locator": _p.get(c.chunk_id, {}).get("human_locator", ""), "text": (c.text or "")[:240],
+                  # FINAL-PLAN P8 (§44–§47): the synthesis evidence role — DIRECT answers,
+                  # PRECISION sharpens, RELATIONAL connects, LATENT extends (source children only).
+                  "role": synthesis_role(c.arrivals)})
         rows.append(r)
     return {
         "query": query,
@@ -380,6 +385,8 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                           "max_workers": max(1, int(budget.max_workers))},
             "selected_document_count": len(result.selected_documents), "selected_section_count": len(result.selected_sections),
             "evidence_count": len(rows), "candidates": len(result.union), "multi_lane": trace.get("multi_lane"),
+            # P8: the synthesis evidence-role bundle counts (DIRECT/PRECISION/RELATIONAL/LATENT).
+            "evidence_roles": {role: sum(1 for r in rows if r.get("role") == role) for role in SYNTHESIS_ROLES},
             "subqueries": trace.get("subqueries"), "weak_aspects": trace.get("weak_aspects"), "weak_reasons": trace.get("weak_reasons"),
             "aspect_seated": trace.get("aspect_seated"), "aspect_best": trace.get("aspect_best"), "final_detail": trace.get("final_detail"),
             "composition": trace.get("composition"),

@@ -46,7 +46,7 @@ through the parent-MAP localization layer (§42).
 | P5 | SEEALSO / BRIDGE fan-out resolver | GATED on P4 (relational atoms + entity resolution) |
 | P6 | Intent-conditioned GRAPH auto-routing | **DONE** — graph assist auto-attaches on HYBRID for relational intents (11.164, default-off, mode stays HYBRID, fail-open) |
 | P7 | Graph destinations through parent-MAP | GATED on P6 |
-| P8 | Synthesis evidence-role bundle (DIRECT/PRECISION/RELATIONAL/LATENT) | GATED on P3/P4 |
+| P8 | Synthesis evidence-role bundle (DIRECT/PRECISION/RELATIONAL/LATENT) | **DONE (role tagging)** — every evidence row tagged + `meta.evidence_roles` bundle (11.165, additive); P8b = synthesizer presents by role |
 | P9 | Task-conditioned breadth (SINGLE_OK/MULTI_PREFERRED/MULTI_REQUIRED) | GATED on P2 |
 | P10 | Measure HYBRID | GATED on P2–P9 |
 | P11 | Measure GRAPH | GATED on P6–P7 |
