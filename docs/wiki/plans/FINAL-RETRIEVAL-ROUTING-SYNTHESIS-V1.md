@@ -1,6 +1,8 @@
 ---
 title: "POLYMATH v4 — FINAL RETRIEVAL, ROUTING, AND SYNTHESIS IMPLEMENTATION PLAN"
 date: 2026-09-07
+last_reviewed: 2026-09-07
+last_touched: 2026-09-07
 status: "FINAL PLAN OF RECORD"
 owner: "@king"
 scope: "Intent-aware HYBRID / GRAPH / WILDCARD routing, profile-field mapping, precision lift, latent depth, graph assist, source hydration, and synthesis"

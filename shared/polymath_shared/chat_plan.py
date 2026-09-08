@@ -29,6 +29,8 @@ import time
 from dataclasses import asdict, dataclass, field
 from typing import Callable, Iterable
 
+from polymath_shared.query_intent import intent_of_plan
+
 CONTRACT = "chat-intent-plan-v1"
 COMPILER_STAGE = "chat_compiler"                 # stage pin in config/cloud_providers.json
 COMPILER_BUDGET_S = float(os.environ.get("POLYMATH_CHAT_COMPILER_BUDGET_S", "2.5"))       # soft: the p50 gate
@@ -104,6 +106,9 @@ class ChatPlan:
     response_type: str
     antecedent: dict | None
     graph_useful: bool
+    #: FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1 §5: the canonical query intent, DERIVED
+    #: deterministically from the fields above (no new classifier LLM). Set at construction.
+    intent: str = ""
     compiler: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
@@ -154,7 +159,7 @@ def fallback_plan(message: str, *, reason: str, history_turns: int = 0, wall_ms:
                   model: str | None = None) -> ChatPlan:
     """Today's behavior, made explicit: grounded QA on the raw message."""
     msg = (message or "").strip()
-    return ChatPlan(
+    plan = ChatPlan(
         contract=CONTRACT, original_request=msg, resolved_request=msg,
         task_type="GROUNDED_QA", evidence_policy="corpus_grounded", retrieval_required=True,
         retrieval_goal=None,
@@ -164,6 +169,8 @@ def fallback_plan(message: str, *, reason: str, history_turns: int = 0, wall_ms:
         antecedent=None, graph_useful=False,
         compiler={"fallback": True, "reason": reason, "model": model, "wall_ms": round(wall_ms, 1),
                   "history_turns": history_turns})
+    plan.intent = intent_of_plan(plan)
+    return plan
 
 
 _CORPUS_REF = re.compile(r"\b(my|the|our|these|those|all my|everything my)\s+(books?|corpus|sources?|documents?|library|notes|papers?|readings?)\b"
@@ -398,6 +405,7 @@ def validate_plan(raw: dict, message: str) -> tuple[ChatPlan | None, str | None]
                     queries=queries, semantic_queries=sem[:MAX_QUERIES], exact_terms=exact[:16],
                     entities=_strs("entities"), must_answer=_strs("must_answer", 8), user_constraints=_strs("user_constraints", 8),
                     response_type=resp, antecedent=ant, graph_useful=bool(raw.get("graph_useful", False)))
+    plan.intent = intent_of_plan(plan)
     return plan, None
 
 
@@ -547,7 +555,7 @@ def plan_receipt(plan: ChatPlan) -> dict:
         "resolved_request": plan.resolved_request[:400], "queries": [asdict(q) for q in plan.queries],
         "semantic_queries": plan.semantic_queries, "exact_terms": plan.exact_terms,
         "must_answer": plan.must_answer, "antecedent": plan.antecedent, "graph_useful": plan.graph_useful,
-        "compiler": plan.compiler,
+        "intent": plan.intent, "compiler": plan.compiler,
     }
 
 
