@@ -11,6 +11,8 @@ package: shared/polymath_shared/query_intent.py, orchestrator/orchestrator/api/c
 architecture_impact: "P2b of FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1: the intent→budget policy (§33 matrix). `query_intent.INTENT_POLICY` is one `IntentPolicy` row per intent (dualread, micro_latent, breadth, resolution_lift, graph); `apply_intent_policy(intent, budget)` applies the ACTIVE, already-built knobs — the profile→map spine (`dualread_enabled`) + the latent micro-search (`latent_enabled`, §13 default) — per intent, leaving resolution_lift/graph/breadth forward-declared for P3/P6/P9. Wired at the ui.py budget seam behind `POLYMATH_CHAT_INTENT_POLICY` (default OFF ⇒ byte-identical); the explicit ✨ (req.latent) always wins the latent toggle. Duck-typed via dataclasses.replace so query_intent stays decoupled from CandidateBudget."
 ---
 
+> **Ledger row:** `FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md` phase **P2** — this work-log is the EVIDENCE for that ledger row (the MD phase table is the control point; this does not duplicate it).
+
 # WORK LOG — P2b intent→budget policy
 
 ## Contract

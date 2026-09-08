@@ -11,6 +11,8 @@ package: scripts/production_routing_qualify.py, docs/wiki/experiments/production
 architecture_impact: "The 'production routing qualification' the plan names: with the intent policy ON, the whole routing stack (intent → budget → the additive lanes dual-read / profile-atom / resolution-lift + micro-latent + intent breadth + graph assist) must not regress the frozen gold. `scripts/production_routing_qualify.py` runs the exact live function (`chat_retrieve_v2`) over the frozen L (exact identifiers) + B (grounded QA) cinema fixtures, policy OFF vs ON, comparing `gold_in_union`; every lane is additive + unioned last, so gold can only stay or rise. Read-only. LIVE: L 15/15→15/15, B 13/15→13/15, 0 regressions — PASS."
 ---
 
+> **Ledger row:** `FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md` phase **P10** — this work-log is the EVIDENCE for that ledger row (the MD phase table is the control point; this does not duplicate it).
+
 # WORK LOG — production routing qualification
 
 ## Contract

@@ -11,6 +11,8 @@ package: shared/polymath_shared/candidate_engine.py, orchestrator/orchestrator/a
 architecture_impact: "P8 (§44–§47): every selected evidence chunk is tagged with its synthesis ROLE derived from its lane arrivals — DIRECT (a direct answer lane A/B/C), PRECISION (resolution lift, lane F only), RELATIONAL (a graph-destination child, P7), LATENT (latent rescue / dual-read, lanes D/E only). `candidate_engine.synthesis_role(arrivals)` is pure; `chat_retrieve_v2` stamps `role` on each evidence row and a `meta.evidence_roles` count bundle. Additive — no ranking or selection changes; a chunk that arrived via any direct lane is DIRECT (§47: LATENT never substitutes for DIRECT). This gives synthesis the role structure to present DIRECT answers first, PRECISION to sharpen, LATENT to extend."
 ---
 
+> **Ledger row:** `FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md` phase **P8** — this work-log is the EVIDENCE for that ledger row (the MD phase table is the control point; this does not duplicate it).
+
 # WORK LOG — P8 synthesis evidence-role bundle
 
 ## Contract

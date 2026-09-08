@@ -11,6 +11,8 @@ package: shared/polymath_shared/candidate_engine.py, orchestrator/orchestrator/a
 architecture_impact: "R6b closes Resolution Lift: candidate_engine gains lane F — the corpus's precise vocabulary probed as ORIGINAL children. The injected `lift_search` (chat_retrieval) profile-nominates docs, gathers ≤3 source-derived lift terms (resolution_lift_gather), embeds them, dense-child-searches each, and returns the children tagged with the lifted term; the engine unions lane F LAST and the cross-encoder judges them (§12 'vocabulary discovers, source chunks prove'). Additive + default-off (`resolution_lift_enabled`, set per intent by apply_intent_policy from policy.resolution_lift != off) ⇒ flag-off byte-identical. Also a §10 quality gate: `is_meaningful_term` drops bare-numeric DISCOVERED terms (page/figure refs) so lift surfaces precision vocabulary, not source noise."
 ---
 
+> **Ledger row:** `FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md` phase **P3** — this work-log is the EVIDENCE for that ledger row (the MD phase table is the control point; this does not duplicate it).
+
 # WORK LOG — R6b Resolution-Lift probe lane
 
 ## Contract

@@ -11,6 +11,8 @@ package: shared/polymath_shared/resolution_lift_gather.py, tests/determinism/tes
 architecture_impact: "The Resolution-Lift gatherer (§10–§12): read the SOURCE-DERIVED precision surfaces for the evidence docs — profile TERM/TOPIC (Qdrant payload), MAP semantic_hooks/exact_identifiers (Postgres document_parent_maps), profile-atom terminology (document_profile_atoms), heading paths (chunks.heading_path), and canonical entity aliases (concept_families/concept_aliases) — into LiftCandidates, ranked by the §11 core (≤3). `gather_lift_candidates` is pure over an injected `sources` object (fakeable); `LiveLiftSources` implements the live reads. NO hardcoded domain vocabulary — every term is a corpus record. Corpus DF (rarity) has no persisted index (P3 map), so it is OFF by default (rarity falls back to mid; source-prior/locality/identifier-form/canonicality carry ranking) — a GATED refinement. The bounded second-pass probe that consumes these terms is R6b."
 ---
 
+> **Ledger row:** `FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md` phase **P3** — this work-log is the EVIDENCE for that ledger row (the MD phase table is the control point; this does not duplicate it).
+
 # WORK LOG — R6 Resolution-Lift gatherer
 
 ## Contract

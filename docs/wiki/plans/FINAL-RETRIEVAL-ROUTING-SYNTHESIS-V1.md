@@ -14,49 +14,76 @@ supersedes:
 
 ---
 
-## REPO ADMISSION + PHASE-EXECUTION LEDGER (P0)
+## LIVING EXECUTION LEDGER (this MD is the single source of truth)
 
-Admitted verbatim as the retrieval/routing/synthesis **plan-of-record** on 2026-09-07
-(owner @king authorized executing the FULL plan, all phases P0–P14, GRAPH + WILDCARD
-included). The body below (§0–§64) is frozen owner design; this ledger block is the only
-living part — it records per-phase repo status, updated as each slice lands.
+**This document IS the living execution ledger for the retrieval/routing/synthesis phase — the
+single control point, not a frozen design.** §0–§64 below are the frozen owner SPEC (do not
+edit); THIS block is the living part. Every phase (P0–P14) and every primitive (R1–R10) has a
+status row here; the per-slice work-logs (`docs/wiki/work-log/…`) and the register
+(`PLAN-AUTHORITY-REGISTER.md` 11.155–11.167) are the EVIDENCE each row references — they do
+not constitute a parallel ledger. The execution loop is driven from THIS table: read the next
+non-DONE / non-BLOCKED row → inspect the repo → mark it IN PROGRESS here → implement → test →
+qualify → guards → commit → ff `main` → update the row here → next. Admitted 2026-09-07 (owner
+@king authorized the FULL plan, P0–P14, GRAPH + WILDCARD).
 
-**Relationship to `RETRIEVAL-MIGRATION-DEPENDENCY-V1.md`:** that ledger is the safe-
-migration mechanics (eliminate readers → stop writers → delete state) for the indexing
-substrate = **this plan's P1**. Both stay in force; this plan governs the query-time
-architecture, the migration ledger governs how the substrate is safely cut over/retired.
+**Relationship to `RETRIEVAL-MIGRATION-DEPENDENCY-V1.md`:** that ledger owns the safe-migration
+mechanics (eliminate readers → stop writers → delete state) for the indexing substrate = **this
+plan's P1**, and the retirement gate (zero-reader proof) that P14 depends on. Both stay in
+force; this plan owns the query-time architecture.
 
-**Governing laws carried from the body (do not violate while executing):** raw query +
-exact terms + global raw child retrieval ALWAYS survive (§53); profile nomination NEVER
-hard-gates the evidence universe; latent/precision are ADDITIVE; Resolution Lift uses
-SOURCE-DERIVED terms only, never hardcoded domain vocab (§10, §63); profile atoms are
-never citation evidence (§63); PRECISION ≠ DEPTH (independent budgets, §1); no 4th public
-mode (§2). Query policy = INTENT × PROFILE-FIELD × TECHNIQUE × BUDGET (§4, §64); intents
-derive from the EXISTING compiler — no new classifier LLM (§5). All routes converge
-through the parent-MAP localization layer (§42).
+**Governing laws (invariants — never violate while executing):** raw query + exact terms +
+global raw child retrieval ALWAYS survive (§53); profile nomination NEVER hard-gates the
+evidence universe; latent/precision are ADDITIVE; Resolution Lift uses SOURCE-DERIVED terms
+only, never hardcoded domain vocab (§10, §63); Document Profile = discovery, Profile Atom =
+routing/expansion, Parent MAP = localization, Neo4j = source-attested relationships, source
+children = factual proof, cross-encoder = final judge — routing-inferred artifacts (profiles,
+atoms, lift terms, SEEALSO/BRIDGE/ANCHOR) are NEVER factual evidence (§63/§64); PRECISION ≠
+DEPTH (§1); no 4th public mode (§2). Policy = INTENT × PROFILE-FIELD × TECHNIQUE × BUDGET,
+intents from the EXISTING compiler — no new classifier LLM (§5). All routes converge through
+the parent-MAP localization layer (§42).
 
-| Phase | What | Status |
-|---|---|---|
-| P0 | Freeze this plan in repo bootstrap | **DONE 2026-09-07** (this admission; register 11.155) |
-| P1 | Document profile / profile-atom / parent-MAP indexing | **SUBSTRATE BUILT** via the migration ledger (profile vNext, parent-maps, projections, Groq routing, backfill — registers 11.139–11.154); profile-ATOM surfaces pending |
-| P1.spine | DOCUMENT_PROFILE→PARENT_MAP→CHILD as an additive lane | **LANDED** — `candidate_engine` lane E (`POLYMATH_CHAT_DUALREAD_ENABLED`, default off, §53-compliant); register 11.154 (S8 shadow) + the S9 dual-read lane |
-| P2 | Intent-policy mapping (intent → fields → technique → budget) | **DONE** — P2a deterministic intent classifier (11.157) + P2b intent→budget policy (11.158, default-off flag); R4 atom-kinds per intent (11.161) |
-| P3 | Resolution Lift (user vocab → corpus vocab, source-derived) | **DONE** — §11 core (11.160) + gatherer (11.162) + probe lane F (11.163, default-off); **GATED:** corpus-DF rarity index + lift-term quality on arbitrary corpora |
-| P4 | Default micro-latent atom retrieval (THEORY/CONCEPT/PATTERN/BOUNDARY) | **DONE (via P2b)** — lane D micro-latent activated per intent by `apply_intent_policy`; **GATED:** richer atom generation (vNext) |
-| P5 | SEEALSO / BRIDGE fan-out resolver | **PARTIAL** — SEEALSO adjacency already routes via the R4 atom lane (SEEALSO in RELATIONSHIP/EXPLORATORY atom_kinds); **GATED** — the dedicated §20–§22 fan-out RESOLVER + BRIDGE/ANCHOR need those atom kinds generated (= 0 until vNext profile regen) |
-| P6 | Intent-conditioned GRAPH auto-routing | **DONE** — graph assist auto-attaches on HYBRID for relational intents (11.164, default-off, mode stays HYBRID, fail-open) |
-| P7 | Graph destinations through parent-MAP | **SCOPED** — destination entities→doc_ids→`search_parent_maps`→child deepen (§39/§42). Dependency: today the graph hop runs AFTER the judge (§3.18), so making destinations JUDGED evidence needs the graph-before-judge flow reorder (a load-bearing pipeline change) — designed, not yet landed |
-| P8 | Synthesis evidence-role bundle (DIRECT/PRECISION/RELATIONAL/LATENT) | **DONE (role structure, 11.165)** — every evidence row tagged + `meta.evidence_roles` bundle. **P8b SCOPED** — the synthesizer PRESENTING by role is a change to the load-bearing deterministic claim system (`answer_synthesis.py`); the role structure is ready for it |
-| P9 | Task-conditioned breadth (SINGLE_OK/MULTI_PREFERRED/MULTI_REQUIRED) | **DONE** — intent breadth → `rerank_round_robin` (SINGLE_OK lets one source dominate; MULTI_* doc-fair), default-off, no quota (11.166) |
-| P10 | Measure HYBRID | **NON-REGRESSION PASS** (11.167: intent-aware stack ON, L 15/15 + B 13/15, 0 regressions); **UPLIFT GATED** on parent-MAP backfill + vNext atom regen |
-| P11 | Measure GRAPH | GATED on P6–P7 |
-| P12 | Wildcard over profile atoms | GATED on P4/P5 |
-| P13 | Measure Wildcard | GATED on P12 |
-| P14 | Ablate legacy summaries / duplicate semantic surfaces | GATED on P10–P13 + migration-ledger zero-reader proof |
+### Phase table (the control point)
 
-Execution workflow per slice: implement → asserting test → guards (`repo_guard`) → commit
-→ ff `main` (4 CI checks) → update this ledger + register → next. Reversible + additive by
-default; every new frontier behind a flag, byte-identical when off.
+Status legend: **DONE** landed on `main` + gate-passed · **IN PROGRESS** · **GATED** blocked by
+a named data/proof dependency (implementable when it clears) · **BLOCKED** blocked by a scoped
+re-architecture of a load-bearing component. Nothing is dropped — every deferred row names its
+dependency and appears again in the DEFERRED register below.
+
+| Phase | Deliverable | Status | Evidence (register · work-log) |
+|---|---|---|---|
+| P0 | Freeze this plan as the living ledger | **DONE** | 11.155 |
+| P1 | Document-profile / profile-atom / parent-MAP indexing substrate | **DONE (substrate)** | 11.139–11.154 (migration ledger) |
+| P1.spine | DOCUMENT_PROFILE→PARENT_MAP→CHILD additive lane E | **DONE** (default-off, §53) | 11.154 · s9-dualread-lane |
+| P2 | Intent-policy mapping (intent → fields → technique → budget) | **DONE** (default-off) | 11.157/11.158/11.161 · p2a-query-intent, p2b-intent-policy |
+| P3 | Resolution Lift (user vocab → corpus vocab, source-derived) | **DONE** (default-off) | 11.160/11.162/11.163 · r4-profile-atom, r6-lift-gatherer, r6b-lift-probe |
+| P4 | Default micro-latent atom retrieval | **DONE** (via P2b) | 11.158 · p2b-intent-policy |
+| P5 | SEEALSO / BRIDGE fan-out resolver | **GATED** — SEEALSO adjacency routes via lane E atoms; the §20–§22 resolver + BRIDGE/ANCHOR need those atom kinds generated | dep: vNext atom regen (see D-5) |
+| P6 | Intent-conditioned GRAPH auto-routing | **DONE** (default-off, mode stays HYBRID, fail-open) | 11.164 · p6-graph-assist |
+| P7 | Graph destinations through parent-MAP | **BLOCKED** — designed (entity→doc_ids→`search_parent_maps`→deepen); needs the graph-before-judge flow reorder to make destinations JUDGED evidence | dep: pipeline reorder (see D-7) |
+| P8 | Synthesis evidence-role bundle (DIRECT/PRECISION/RELATIONAL/LATENT) | **DONE (role structure)** | 11.165 · p8-synthesis-roles |
+| P8b | Synthesizer PRESENTS by role | **BLOCKED** — role structure ready; presenting it changes the load-bearing deterministic claim system `answer_synthesis.py` | dep: claim-system change (see D-8b) |
+| P9 | Task-conditioned breadth (no quotas) | **DONE** (default-off) | 11.166 · p9-breadth |
+| P10 | Measure HYBRID | **NON-REGRESSION PASS (controlling fact)** — intent-aware stack ON vs OFF: L exact 15/15→15/15, B grounded 13/15→13/15, **0 regressions** (§53 preserved). Production-SAFE. Uplift is a separate GATED follow-up (D-10). | 11.167 · production-routing-qualify |
+| P11 | Measure GRAPH | **GATED** on P7 + Neo4j graph density | dep: P7 (see D-11) |
+| P12 | Wildcard over profile atoms | **GATED** — WILDCARD activates all atom kinds; the relational/rediscovery kinds are ungenerated | dep: vNext atom regen (see D-12) |
+| P13 | Measure Wildcard | **GATED** on P12 | dep: P12 |
+| P14 | Ablate legacy summaries / retire duplicate surfaces | **BLOCKED** — destructive retirement | dep: migration-ledger zero-reader proof (see D-14) |
+
+### DEFERRED register — GATED / BLOCKED (nothing dropped; each unblocks when its dependency clears)
+
+| ID | Item | State | Blocking dependency | Unblocks when |
+|---|---|---|---|---|
+| D-5 | P5 BRIDGE/ANCHOR fan-out resolver (§20–§22) | GATED (data) | BRIDGE/ANCHOR/TENSION/INVERSION/LATENT_PATTERN atom kinds = 0 in the compiled profiles | vNext profile regeneration generates the relational atom kinds (SEEALSO already routes via lane E) |
+| D-7 | P7 graph-destination → parent-MAP → JUDGED children | BLOCKED (arch) | graph hop runs AFTER the cross-encoder judge (§3.18); judged destinations need the flow reordered (a load-bearing pipeline change) | a scoped graph-before-judge reorder slice (design in the P7 row) |
+| D-8b | P8b synthesizer presents evidence by role | BLOCKED (arch) | `answer_synthesis.py` is a load-bearing deterministic claim system; role-ordered presentation is a careful change to it | a scoped synthesizer slice consuming `meta.evidence_roles` (the P8 role structure is ready) |
+| D-10 | P10 HYBRID **uplift** (recall/precision improvement, not just non-regression) | GATED (data) | the additive lanes add unique winning candidates only as the parent-MAP backfill fills the corpus + richer atoms exist | parent-MAP backfill reaches corpus coverage (in progress) + vNext atom regen; re-run `production_routing_qualify.py` + a recall-delta variant |
+| D-11 | P11 GRAPH measurement | GATED | P7 (judged graph children) + Neo4j graph density | D-7 lands |
+| D-12 | P12 Wildcard over the full atom frontier | GATED (data) | relational/rediscovery atom kinds ungenerated | vNext atom regen (as D-5) |
+| D-14 | P14 legacy-summary / duplicate-surface retirement | BLOCKED (safety) | migration law: no legacy retirement before a zero-reader proof + rollback window | `RETRIEVAL-MIGRATION-DEPENDENCY-V1` S1 census classified + zero-reader proof passes |
+
+**Migration-safety floor (enforced under all routing work):** no vNext-only production cutover
+before readiness permits it; no legacy retirement before zero-reader proof (D-14); no
+partially-ready generation presented as complete (the GATED rows above make this explicit).
 
 ### Primitive state — VERIFIED against the live repo (2026-09-08)
 

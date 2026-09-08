@@ -11,6 +11,8 @@ package: scripts/parent_map_backfill.py, docs/wiki/experiments/parent-map-backfi
 architecture_impact: "The controlled routed backfill: scripts/parent_map_backfill.py generates parent maps through the S7b route_groq (shared-budget spread across the six compound-mini accounts) + projects them, idempotently and resumably. It proved the routed pipeline at cohort scale AND surfaced two findings before any mass run: (1) a router single-account-pinning bug (route_groq looked up limiter lanes under provider 'cloud' instead of 'llm_cloud' → get_lane always missed → no spread) — FIXED (register: the fix commit), now distinct_accounts_used 1 → 6; (2) a full backfill is Groq-RPM/RPD-paced and resumable — the shared accounts are heavily loaded (profiles + maps), so large docs' many batches 429 and complete over time, not in one run. Touches only the 0054 tables + the parent-map Qdrant collection for the cohort. No mass backfill."
 ---
 
+> **Ledger row:** `FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md` phase **P1 substrate** — this work-log is the EVIDENCE for that ledger row (the MD phase table is the control point; this does not duplicate it).
+
 # WORK LOG — controlled routed parent-MAP backfill (step 5)
 
 ## Contract

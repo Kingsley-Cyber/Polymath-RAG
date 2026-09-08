@@ -11,6 +11,8 @@ package: docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md, shared/polymat
 architecture_impact: "Two things land together. (P0) The FINAL RETRIEVAL/ROUTING/SYNTHESIS plan is admitted verbatim into the repo as the query-time plan-of-record with a P0-P14 phase-execution ledger (owner authorized the full plan). (S9 / P1.spine) The first live-reader change of the migration: candidate_engine gains lane E — the DOCUMENT_PROFILE → PARENT_MAP → CHILD spine (R3→R5→R10) as an ADDITIVE lane unioned LAST, behind POLYMATH_CHAT_DUALREAD_ENABLED (default off). Flag off ⇒ lane E empty ⇒ the union is byte-identical to today (chat_regression --check green). It obeys the plan's §53 laws (raw query + exact terms + global raw child always survive; profile nomination never hard-gates; latent/precision additive). The nominator (profile RRF → ONE filtered parent-map search) is injected from chat_retrieval; the engine deepens each resolved parent through the ORIGINAL child lane (dense_search), exactly like lane D. Reusable search contracts added to the projection modules (profile_nominate, search_parent_maps)."
 ---
 
+> **Ledger row:** `FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md` phase **P1.spine** — this work-log is the EVIDENCE for that ledger row (the MD phase table is the control point; this does not duplicate it).
+
 # WORK LOG — S9 dual-read lane + FINAL-PLAN P0
 
 ## Contract

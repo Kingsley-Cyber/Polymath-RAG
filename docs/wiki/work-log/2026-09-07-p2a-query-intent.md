@@ -11,6 +11,8 @@ package: shared/polymath_shared/query_intent.py, shared/polymath_shared/chat_pla
 architecture_impact: "P2a of FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1: the deterministic 10-intent classifier (§5). `query_intent.classify_intent` folds signals the compiler ALREADY produces (task_type, the multiset of subquery qtypes, graph_useful, exact_terms, entities, response_type) + the existing query_router lexical families into ONE canonical intent (EXACT/DEFINITION/MECHANISM/RELATIONSHIP/COMPARISON/PROCEDURE/APPLICATION/SYNTHESIS/RECALL/EXPLORATORY) — NO new classifier LLM. `ChatPlan` gains an `intent` field set at construction (compile + fallback) and surfaced in `plan_receipt`. This is OBSERVABILITY ONLY — intent is computed + receipted but does not yet change any budget/technique (that is P2b onward). Also fixes the FINAL-PLAN doc's missing `last_reviewed` frontmatter (wiki_worm CI gate)."
 ---
 
+> **Ledger row:** `FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md` phase **P2** — this work-log is the EVIDENCE for that ledger row (the MD phase table is the control point; this does not duplicate it).
+
 # WORK LOG — P2a query-intent classifier
 
 ## Contract

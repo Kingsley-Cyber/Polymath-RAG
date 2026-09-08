@@ -11,6 +11,8 @@ package: stores/postgres/migrations/0055_document_profile_atoms.sql, shared/poly
 architecture_impact: "The owner directive verified R4 PROFILE_ATOM as an UNFINISHED dependency (the compiler produced 10 atom kinds but they were never independently persisted/projected — only 3 rode as multivectors inside the global doc-profile point). This builds the Profile Atom as its own primitive, NOT collapsed into the global profile: migration 0055 `document_profile_atoms` (Postgres authority, §51), `profile_atom.extract_atoms/persist_atoms/active_atoms` (one row per atom, superseded per doc+contract), `profile_atom_projection` (one dense point per atom in `polymath_document_profile_atoms_<contract>`, §34 + §14 reconcile + purge). LIVE cinema canary: 1847 atoms persisted + projected, reconcile TRUE. Additive: no existing table/collection/reader touched. Also lands the R6 Resolution-Lift ranking core (`resolution_lift.py`, §11) — the gatherer/probe wiring is the next slice."
 ---
 
+> **Ledger row:** `FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md` phase **R4 / P1** — this work-log is the EVIDENCE for that ledger row (the MD phase table is the control point; this does not duplicate it).
+
 # WORK LOG — R4 PROFILE_ATOM substrate + R6 Resolution-Lift core
 
 ## Contract

@@ -11,6 +11,8 @@ package: shared/polymath_shared/document_profile/shadow_route.py, scripts/shadow
 architecture_impact: "The S8 shadow route: a NEW pure, store-abstracted module (shadow_route) that runs global profile → ONE filtered parent-map search → child deepening and returns the §17 shadow receipt, plus a read-only canary that records its coverage against the current child lane. ADDITIVE ONLY — it edits nothing in candidate_engine, the orchestrator query path, ranking, QUERY_READY, or any live reader; the S8 gate ('no production rank effect yet') is structural. Headline finding: shadow coverage tracks parent-map backfill completeness in near-lockstep (fully-mapped docs 0.80-1.00 overlap; partial docs Blain 33%→0.242, Anatomy 11%→0.017), while document nomination (1.0) and parent-resolve-into-source-doc (0.972) hold regardless. The routing substrate is sound; the remaining gap is unmapped parents, closed by the paced backfill (11.153), not by code."
 ---
 
+> **Ledger row:** `FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md` phase **P1.spine (S8 shadow)** — this work-log is the EVIDENCE for that ledger row (the MD phase table is the control point; this does not duplicate it).
+
 # WORK LOG — S8 shadow runtime route (step 5: backfill → SHADOW → dual-read)
 
 ## Contract

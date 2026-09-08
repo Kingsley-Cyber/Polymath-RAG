@@ -11,6 +11,8 @@ package: orchestrator/orchestrator/api/chat_retrieval.py, orchestrator/orchestra
 architecture_impact: "P6 (§37/§38): graph assist auto-activates on a HYBRID turn when the query intent is relational (RELATIONSHIP → policy.graph=auto), WITHOUT adding a 4th public mode (§2) — `chat_retrieve_mode` gains a `graph_assist` kwarg and, in the HYBRID branch, replicates the GRAPH branch's qvec-capture + bounded `_attach_graph` hop while KEEPING `meta.mode=HYBRID`. Fed from `policy_for(_plan.intent).graph` at the ui.py call site, gated behind the intent policy (default off ⇒ byte-identical). Neo4j degrades cleanly (fail-open), so auto-enable is safe. Facts ride the existing `out['graph_relationships']` side channel (never evidence — that is P7); the ui surface gate is relaxed to show them when present. `_with_graph_assist` factors the shared capture+attach."
 ---
 
+> **Ledger row:** `FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md` phase **P6** — this work-log is the EVIDENCE for that ledger row (the MD phase table is the control point; this does not duplicate it).
+
 # WORK LOG — P6 intent-conditioned graph assist
 
 ## Contract
