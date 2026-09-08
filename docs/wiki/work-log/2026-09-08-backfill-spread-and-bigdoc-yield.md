@@ -51,13 +51,20 @@ campaign was stuck. Keep the backfill resumable/idempotent/contract-scoped; no p
 
 ## Open contract gaps
 
-- **GATED — large-document map yield (the real cinema-coverage wall).** Docs ≤~300 parents map fully
-  (Walter Murch 42/42; Bruce Block 220/297); docs ≥~430 map ≈0 in isolation (Ken Dancyger **2/430**,
-  428 unresolved, 24 batches ran). **Blocking dependency:** map inference/exclusion for large docs.
-  **Evidence:** isolated `run_document_mapping` on a 430-parent fresh doc = 2 mapped / 428 unresolved,
-  capacity OK. **What unblocks:** a fix in `map_batches.plan_batches`/`map_prompt.build_map_prompt`/the
-  parse, or routing legitimately-unmappable big-doc parents to `document_parent_exclusions` so
-  `unresolved→0`. **Exact next:** capture one big-doc batch's raw model response (model-decline vs
-  parse-failure vs truncation at `max_tokens=2400`), then fix batch sizing/prompt or the exclusion
-  step + an asserting test (a large fresh doc reaches `mapped+excluded==eligible`). Handed to a
-  dedicated task. Cinema coverage → cutover (S13/S14, owner QUERY_READY flip) stays gated on this.
+- **GATED — large-document batch OVER-SIZING (the real cinema-coverage wall; ROOT CAUSE captured).**
+  Docs ≤~300 parents map fully (Walter Murch 42/42; Bruce Block 220/297); docs ≥~430 map ≈0 in
+  isolation (Ken Dancyger **2/430**). **Root cause:** `map_batches.plan_batches` sizes each batch by a
+  fixed alias COUNT (`mapping_only_capacity` ~40, from the average density's OUTPUT/billed tokens) with
+  **no INPUT-token cap**. Large reference docs have big parent chunks, so a 40-alias batch's INPUT
+  overflows the endpoint. **Evidence (469-parent doc, one batch, varying alias count):** 20 → raw 2157,
+  20 maps; **40 → raw 0 (EMPTY)** even at `max_tokens=8000` (so NOT an output-token cap); **60 →
+  HTTP_413**. Endpoints otherwise answer fine (direct probe OK), so it is not capacity/decline/parse.
+  **What unblocks:** cap batch packing by estimated INPUT tokens (existing `estimate_input_tokens`/
+  `skeleton_prompt_tokens`) to a safe budget (≈20 big parents) alongside the count target, and **bump
+  `BATCH_PLANNER_VERSION`** (batch_hash changes → re-batch under the new version; maps persist by
+  map_hash; resumable). **Why not done here:** this is a FROZEN batch-planner CONTRACT change — needs a
+  migration-safe version bump, updated planner determinism pins, and full-map-path validation; not
+  rushed at session tail. **Exact next:** implement the token-capped packing + version bump + an
+  asserting test that a large fresh doc reaches `unresolved==0`, then a bounded live backfill advances
+  cinema coverage. Handed to task `980b57cb`. Cinema coverage → cutover (S13/S14, owner QUERY_READY
+  flip) stays gated on this.
