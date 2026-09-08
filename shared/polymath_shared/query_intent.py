@@ -118,6 +118,55 @@ def classify_intent(resolved_request: str, *, task_type: str | None = None,
     return "EXPLORATORY"
 
 
+from dataclasses import dataclass, replace
+
+
+@dataclass(frozen=True)
+class IntentPolicy:
+    """The §33 intent row, declarative. `dualread`/`micro_latent` are the additive lanes
+    that EXIST today (P2b applies them); `resolution_lift`/`graph`/`breadth` are forward-
+    declared for later phases (P3/P6/P9) to read — recorded now, applied as they land."""
+    dualread: bool                 # activate the DOCUMENT_PROFILE→PARENT_MAP→CHILD spine (lane E)
+    micro_latent: bool             # activate the latent micro-search (lane D; §13 default depth)
+    breadth: str = "MULTI_PREFERRED"          # SINGLE_OK | MULTI_PREFERRED | MULTI_REQUIRED (§48, P9)
+    resolution_lift: str = "normal"           # off | normal | high | very_high (§10/§33, P3)
+    graph: str = "off"                        # off | conditional | auto | strong (§37/§38, P6)
+
+
+#: FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1 §33 intent matrix, one row per intent.
+INTENT_POLICY: dict[str, IntentPolicy] = {
+    "EXACT":        IntentPolicy(dualread=True,  micro_latent=False, breadth="SINGLE_OK",      resolution_lift="high",      graph="off"),
+    "DEFINITION":   IntentPolicy(dualread=True,  micro_latent=False, breadth="SINGLE_OK",      resolution_lift="high",      graph="off"),
+    "MECHANISM":    IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="high",      graph="conditional"),
+    "RELATIONSHIP": IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="high",      graph="auto"),
+    "COMPARISON":   IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_REQUIRED",  resolution_lift="high",      graph="conditional"),
+    "PROCEDURE":    IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="high",      graph="conditional"),
+    "APPLICATION":  IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="very_high", graph="conditional"),
+    "SYNTHESIS":    IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_REQUIRED",  resolution_lift="normal",    graph="conditional"),
+    "RECALL":       IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="normal",    graph="off"),
+    "EXPLORATORY":  IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="normal",    graph="conditional"),
+}
+
+
+def policy_for(intent: str) -> IntentPolicy | None:
+    return INTENT_POLICY.get((intent or "").upper())
+
+
+def apply_intent_policy(intent: str, budget):
+    """Return a copy of `budget` with the ACTIVE (already-built) knobs the intent selects:
+    the profile→map spine (`dualread_enabled`), the latent micro-search (`latent_enabled`),
+    and the `breadth` preference. Forward-declared policy (resolution_lift/graph) is left for
+    P3/P6 to read from `policy_for(intent)`; it is NOT applied here. Duck-typed on `budget`
+    (uses `dataclasses.replace`) so this module stays decoupled from `CandidateBudget`."""
+    p = policy_for(intent)
+    if p is None:
+        return budget
+    overrides = {"dualread_enabled": p.dualread, "latent_enabled": p.micro_latent}
+    if hasattr(budget, "breadth"):
+        overrides["breadth"] = p.breadth
+    return replace(budget, **overrides)
+
+
 def intent_of_plan(plan) -> str:
     """Classify a compiled plan (duck-typed ChatPlan — no import cycle)."""
     qtypes = [getattr(q, "type", "") for q in (getattr(plan, "queries", None) or [])]

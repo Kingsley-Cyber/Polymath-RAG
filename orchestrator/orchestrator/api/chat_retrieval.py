@@ -134,6 +134,12 @@ def default_budget() -> CandidateBudget:
     return replace(b, **over) if over else b
 
 
+def intent_policy_enabled() -> bool:
+    """FINAL-PLAN P2b: apply the intent→budget policy (activates the additive depth lanes
+    per query intent). Reversible; default OFF ⇒ the budget is unchanged (byte-identical)."""
+    return os.environ.get("POLYMATH_CHAT_INTENT_POLICY", "").strip().lower() in ("1", "true", "yes", "on")
+
+
 def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...] = (),
                      budget: Optional[CandidateBudget] = None, query_id: str = "q0",
                      subqueries: tuple = (), lanes: Optional[tuple] = None,

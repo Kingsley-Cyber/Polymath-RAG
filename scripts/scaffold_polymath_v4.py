@@ -1852,6 +1852,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-07-shadow-route.md", "md", None),
     ("docs/wiki/work-log/2026-09-07-s9-dualread-lane.md", "md", None),
     ("docs/wiki/work-log/2026-09-07-p2a-query-intent.md", "md", None),
+    ("docs/wiki/work-log/2026-09-07-p2b-intent-policy.md", "md", None),
     ("docs/wiki/work-log/2026-09-06-style-bold-retire.md", "md", None),
     ("docs/wiki/experiments/chat-parity-p1f-first.json", "json", None),
     ("docs/wiki/work-log/2026-09-06-p1e-mode-recomposition.md", "md", None),

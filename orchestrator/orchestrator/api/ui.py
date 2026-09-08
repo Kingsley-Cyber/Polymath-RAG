@@ -2498,9 +2498,16 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                     # MODE-COMPOSITION-V1 (plan §3.15, P1.e): lanes A/B/C fused at child level with provenance;
                     # GRAPH adds the bounded hop-1 over the FINAL evidence (§3.18), WILDCARD the parallel latent
                     # frontier (§3.19) — bridges ride `fast["wildcard"]`, never the evidence list.
-                    from orchestrator.api.chat_retrieval import default_budget as _default_budget
+                    from orchestrator.api.chat_retrieval import default_budget as _default_budget, intent_policy_enabled as _ip_on
+                    from polymath_shared.query_intent import apply_intent_policy as _apply_intent
                     from dataclasses import replace as _replace
-                    _latent_kw = {"budget": _replace(_default_budget(), latent_enabled=True)} if req.latent else {}   # B12: ✨ = lane D
+                    # FINAL-PLAN P2b: intent→budget policy (default off, byte-identical when off);
+                    # the explicit ✨ (req.latent) always wins the latent toggle.
+                    _ip = bool(_ip_on() and _plan is not None and getattr(_plan, "intent", ""))
+                    _budget = _apply_intent(_plan.intent, _default_budget()) if _ip else _default_budget()
+                    if req.latent:
+                        _budget = _replace(_budget, latent_enabled=True)                       # B12: ✨ = lane D
+                    _latent_kw = {"budget": _budget} if (req.latent or _ip) else {}
                     fast = chat_retrieve_mode(
                         "VECTOR" if ui_mode == "FAST" else ui_mode, _retrieval_text, corpus_id,
                         graph_useful=_graph_useful, **_latent_kw,

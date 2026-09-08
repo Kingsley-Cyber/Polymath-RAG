@@ -9,7 +9,48 @@ for _p in (ROOT / "shared",):
     if str(_p) not in sys.path:
         sys.path.insert(0, str(_p))
 
-from polymath_shared.query_intent import INTENTS, classify_intent, intent_of_plan  # noqa: E402
+from dataclasses import dataclass  # noqa: E402
+
+from polymath_shared.query_intent import (  # noqa: E402
+    INTENT_POLICY,
+    INTENTS,
+    apply_intent_policy,
+    classify_intent,
+    intent_of_plan,
+    policy_for,
+)
+
+
+@dataclass(frozen=True)
+class _FakeBudget:
+    dualread_enabled: bool = False
+    latent_enabled: bool = False
+    other: int = 7  # an unrelated field must be preserved
+
+
+def test_intent_policy_covers_every_intent():
+    assert set(INTENT_POLICY) == set(INTENTS)
+
+
+def test_apply_intent_policy_sets_the_additive_lanes():
+    # MECHANISM → both additive lanes on; EXACT → spine on, latent off (§33).
+    b = apply_intent_policy("MECHANISM", _FakeBudget())
+    assert b.dualread_enabled is True and b.latent_enabled is True and b.other == 7
+    e = apply_intent_policy("EXACT", _FakeBudget())
+    assert e.dualread_enabled is True and e.latent_enabled is False
+    d = apply_intent_policy("DEFINITION", _FakeBudget())
+    assert d.latent_enabled is False
+
+
+def test_apply_intent_policy_unknown_intent_is_identity():
+    b = _FakeBudget(dualread_enabled=False, latent_enabled=True)
+    assert apply_intent_policy("NOPE", b) is b
+    assert apply_intent_policy("", b) is b
+
+
+def test_policy_for_is_case_insensitive():
+    assert policy_for("mechanism") is policy_for("MECHANISM")
+    assert policy_for("bogus") is None
 
 
 def test_plan_worked_examples():
