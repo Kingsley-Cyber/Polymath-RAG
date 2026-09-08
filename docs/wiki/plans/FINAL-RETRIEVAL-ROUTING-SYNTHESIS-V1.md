@@ -48,7 +48,7 @@ through the parent-MAP localization layer (§42).
 | P7 | Graph destinations through parent-MAP | GATED on P6 |
 | P8 | Synthesis evidence-role bundle (DIRECT/PRECISION/RELATIONAL/LATENT) | **DONE (role tagging)** — every evidence row tagged + `meta.evidence_roles` bundle (11.165, additive); P8b = synthesizer presents by role |
 | P9 | Task-conditioned breadth (SINGLE_OK/MULTI_PREFERRED/MULTI_REQUIRED) | **DONE** — intent breadth → `rerank_round_robin` (SINGLE_OK lets one source dominate; MULTI_* doc-fair), default-off, no quota (11.166) |
-| P10 | Measure HYBRID | GATED on P2–P9 |
+| P10 | Measure HYBRID | **NON-REGRESSION PASS** (11.167: intent-aware stack ON, L 15/15 + B 13/15, 0 regressions); **UPLIFT GATED** on parent-MAP backfill + vNext atom regen |
 | P11 | Measure GRAPH | GATED on P6–P7 |
 | P12 | Wildcard over profile atoms | GATED on P4/P5 |
 | P13 | Measure Wildcard | GATED on P12 |

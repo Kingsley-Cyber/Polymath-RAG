@@ -1,0 +1,263 @@
+{
+  "corpus": "cinema",
+  "fixtures": {
+    "L": {
+      "n": 15,
+      "gold_in_union_off": 1.0,
+      "gold_in_union_on": 1.0,
+      "no_regression": true,
+      "rows": [
+        {
+          "intent": "EXACT",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 60,
+          "union_on": 66,
+          "regressed": false
+        },
+        {
+          "intent": "EXACT",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 72,
+          "union_on": 96,
+          "regressed": false
+        },
+        {
+          "intent": "EXACT",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 69,
+          "union_on": 97,
+          "regressed": false
+        },
+        {
+          "intent": "EXACT",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 68,
+          "union_on": 74,
+          "regressed": false
+        },
+        {
+          "intent": "EXACT",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 74,
+          "union_on": 80,
+          "regressed": false
+        },
+        {
+          "intent": "EXACT",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 74,
+          "union_on": 98,
+          "regressed": false
+        },
+        {
+          "intent": "EXACT",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 73,
+          "union_on": 100,
+          "regressed": false
+        },
+        {
+          "intent": "EXACT",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 76,
+          "union_on": 99,
+          "regressed": false
+        },
+        {
+          "intent": "EXPLORATORY",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 67,
+          "union_on": 110,
+          "regressed": false
+        },
+        {
+          "intent": "EXPLORATORY",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 61,
+          "union_on": 104,
+          "regressed": false
+        },
+        {
+          "intent": "EXPLORATORY",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 72,
+          "union_on": 112,
+          "regressed": false
+        },
+        {
+          "intent": "EXPLORATORY",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 68,
+          "union_on": 112,
+          "regressed": false
+        },
+        {
+          "intent": "EXPLORATORY",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 72,
+          "union_on": 110,
+          "regressed": false
+        },
+        {
+          "intent": "EXPLORATORY",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 72,
+          "union_on": 114,
+          "regressed": false
+        },
+        {
+          "intent": "EXPLORATORY",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 65,
+          "union_on": 105,
+          "regressed": false
+        }
+      ]
+    },
+    "B": {
+      "n": 15,
+      "gold_in_union_off": 0.867,
+      "gold_in_union_on": 0.867,
+      "no_regression": true,
+      "rows": [
+        {
+          "intent": "EXPLORATORY",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 69,
+          "union_on": 115,
+          "regressed": false
+        },
+        {
+          "intent": "EXPLORATORY",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 100,
+          "union_on": 138,
+          "regressed": false
+        },
+        {
+          "intent": "EXPLORATORY",
+          "gold_in_union_off": false,
+          "gold_in_union_on": false,
+          "union_off": 68,
+          "union_on": 109,
+          "regressed": false
+        },
+        {
+          "intent": "EXPLORATORY",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 97,
+          "union_on": 116,
+          "regressed": false
+        },
+        {
+          "intent": "COMPARISON",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 86,
+          "union_on": 130,
+          "regressed": false
+        },
+        {
+          "intent": "EXPLORATORY",
+          "gold_in_union_off": false,
+          "gold_in_union_on": false,
+          "union_off": 83,
+          "union_on": 105,
+          "regressed": false
+        },
+        {
+          "intent": "EXPLORATORY",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 108,
+          "union_on": 145,
+          "regressed": false
+        },
+        {
+          "intent": "EXPLORATORY",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 108,
+          "union_on": 151,
+          "regressed": false
+        },
+        {
+          "intent": "EXPLORATORY",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 95,
+          "union_on": 112,
+          "regressed": false
+        },
+        {
+          "intent": "EXPLORATORY",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 85,
+          "union_on": 120,
+          "regressed": false
+        },
+        {
+          "intent": "EXPLORATORY",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 68,
+          "union_on": 110,
+          "regressed": false
+        },
+        {
+          "intent": "EXPLORATORY",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 102,
+          "union_on": 147,
+          "regressed": false
+        },
+        {
+          "intent": "EXPLORATORY",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 92,
+          "union_on": 131,
+          "regressed": false
+        },
+        {
+          "intent": "EXPLORATORY",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 108,
+          "union_on": 142,
+          "regressed": false
+        },
+        {
+          "intent": "EXPLORATORY",
+          "gold_in_union_off": true,
+          "gold_in_union_on": true,
+          "union_off": 94,
+          "union_on": 116,
+          "regressed": false
+        }
+      ]
+    }
+  },
+  "regressions": [],
+  "passed": true
+}
