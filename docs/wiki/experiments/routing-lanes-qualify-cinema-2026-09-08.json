@@ -216,6 +216,42 @@
         "RELATIONAL": 0,
         "PRECISION": 0
       }
-    }
+    },
+    "bridge_queries": [
+      {
+        "q": "What principles do film editing and fermentation processes share?",
+        "intent": "EXPLORATORY",
+        "roles": {
+          "DIRECT": 10,
+          "PRECISION": 0,
+          "RELATIONAL": 0,
+          "LATENT": 5
+        },
+        "nondirect_survivors": 5
+      },
+      {
+        "q": "How does hydrology inform visual composition and flow?",
+        "intent": "MECHANISM",
+        "roles": {
+          "DIRECT": 12,
+          "PRECISION": 0,
+          "RELATIONAL": 0,
+          "LATENT": 3
+        },
+        "nondirect_survivors": 3
+      },
+      {
+        "q": "What connects equipment maintenance discipline to cinematography craft?",
+        "intent": "RELATIONSHIP",
+        "roles": {
+          "DIRECT": 13,
+          "PRECISION": 0,
+          "RELATIONAL": 2,
+          "LATENT": 0
+        },
+        "nondirect_survivors": 2
+      }
+    ],
+    "value_finding": "On cross-doc/exploratory (sparse-direct) queries the relational/latent candidates SURVIVE the cross-encoder into final evidence (LATENT/PRECISION rows); on exact/QA queries direct hits correctly dominate. Value shows where direct is insufficient."
   }
 }
