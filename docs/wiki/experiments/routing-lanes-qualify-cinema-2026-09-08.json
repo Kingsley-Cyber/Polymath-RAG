@@ -253,5 +253,21 @@
       }
     ],
     "value_finding": "On cross-doc/exploratory (sparse-direct) queries the relational/latent candidates SURVIVE the cross-encoder into final evidence (LATENT/PRECISION rows); on exact/QA queries direct hits correctly dominate. Value shows where direct is insufficient."
+  },
+  "p8b_synthesis": {
+    "query": "What principles do film editing and fermentation processes share?",
+    "evidence_roles": {
+      "DIRECT": 10,
+      "LATENT": 5
+    },
+    "roles_on": {
+      "regroup": "DIRECT-first",
+      "direct_after_latent": 0,
+      "role_labels": true,
+      "guidance_prepended": true,
+      "guidance_clause": "never let LATENT/RELATIONAL substitute for a DIRECT answer"
+    },
+    "roles_off": "byte-identical (tag order, no labels, no guidance)",
+    "citations": "[S#]->locator mapping unchanged (stable)"
   }
 }

@@ -49,6 +49,11 @@ judges; routing-inferred artifacts NEVER become factual evidence, §63/§64).
   **15–20 source-attested Neo4j facts** (predicates PRODUCES/REQUIRES) via 8 entity-card seeds
   (card_probe ok), bounded hop-1, `graph_degraded` null, on the `graph_relationships` side channel
   (relationships route, children prove). Recorded in the evidence JSON's `wildcard`/`graph` sections.
+- **P8b synthesis presentation operationalized on REAL evidence** (`_grounded_messages`): the bridge
+  query's 10 DIRECT + 5 LATENT rows, roles ON → regrouped DIRECT-first (measured **0 DIRECT-after-LATENT**),
+  every [S#] role-labelled, §47 guidance prepended ("never let LATENT/RELATIONAL substitute for a DIRECT
+  answer"); roles OFF byte-identical; the [S#]→locator mapping is unchanged so citations are stable.
+  This presents grounded evidence by role on live multi-role retrieval (not just the synthetic unit test).
 
 ## Rejected claims
 
