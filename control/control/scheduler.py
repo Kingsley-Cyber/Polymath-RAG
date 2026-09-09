@@ -298,6 +298,63 @@ def auto_enrich_on_chunks(conn: Connection) -> int:
     return minted
 
 
+def auto_map_parents_on_chunks(conn: Connection) -> int:
+    """DOC-PARENT-MAP AUTO-MINT (RAG-PIPELINE-FINISH): mint the pMAP stage for a run
+    once its parents exist (intake done), so a FRESH upload produces grounded maps and
+    can reach VNEXT_COMPLETE. Mirrors `auto_enrich_on_chunks` exactly (pMAP is OUTSIDE
+    STAGE_DAG, like parent_enrichment). FLAG-GATED + hold-safe: disabled by default
+    (no ticket minted → byte-identical current behavior, zero spend); an optional
+    single-corpus scope keeps the cinema corpus untouched during the bounded canary.
+    Fail-open per run."""
+    from polymath_shared.document_profile.map_trigger import (
+        doc_parent_map_corpus_scope,
+        doc_parent_map_enabled,
+        mint_doc_parent_map,
+    )
+    if not doc_parent_map_enabled():
+        return 0
+    scope = doc_parent_map_corpus_scope()
+    corpus_filter = "AND r.corpus_id = %s" if scope else ""
+    params = [scope] if scope else []
+    rows = conn.execute(
+        f"""
+        SELECT r.run_id, r.corpus_id
+          FROM runs r
+          JOIN stage_tickets t ON t.run_id = r.run_id
+               AND t.stage = 'intake' AND t.status = 'done'
+         WHERE r.status IN ('intake', 'reconciling', 'degraded', 'query_ready')
+           AND r.superseded_by_run_id IS NULL {corpus_filter}
+           AND NOT EXISTS (SELECT 1 FROM stage_tickets e
+                            WHERE e.run_id = r.run_id AND e.stage = 'doc_parent_map')
+           AND NOT EXISTS (SELECT 1 FROM archived_corpora ac
+                            WHERE ac.corpus_id = r.corpus_id)
+        """, params).fetchall()
+    # RESCUE: a ready/failed pMAP ticket whose event was already consumed is unreachable;
+    # re-minting re-opens it (the NOT EXISTS stops re-firing once an undelivered event waits).
+    stranded = conn.execute(
+        """
+        SELECT t.run_id, t.corpus_id
+          FROM stage_tickets t
+         WHERE t.stage = 'doc_parent_map'
+           AND t.status IN ('ready', 'failed')
+           AND NOT EXISTS (SELECT 1 FROM outbox_events e
+                            WHERE e.run_id = t.run_id
+                              AND e.event_type = 'doc_parent_map.v1'
+                              AND e.delivered_at IS NULL)
+        """).fetchall()
+    minted = 0
+    for run_id, corpus_id in list(rows) + list(stranded):
+        try:
+            mint_doc_parent_map(conn, corpus_id=corpus_id, run_id=run_id)
+            minted += 1
+        except Exception:  # noqa: BLE001 — fail-open per run (never break the tick)
+            import logging
+            logging.getLogger("control-schedule").warning(
+                "auto pMAP mint failed open for %s", run_id[:20],
+                extra={"error_code": "AUTO_PMAP_MINT_FAILED"})
+    return minted
+
+
 def apply_promotions(conn: Connection, census: Census) -> None:
     for run_id in census.promote:
         cur = conn.execute(

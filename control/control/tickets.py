@@ -69,6 +69,11 @@ NON_BLOCKING_STAGES = frozenset({
     # it is deliberately ABSENT from STAGE_DAG. Non-blocking so a
     # lingering enrichment ticket can never hold promotion.
     "parent_enrichment",
+    # DOC-PARENT-MAP AUTO-MINT (RAG-PIPELINE-FINISH): the pMAP stage is likewise
+    # ABSENT from STAGE_DAG and minted by the flag-gated `auto_map_parents_on_chunks`
+    # scheduler phase (never by chain advancement). Non-blocking so an incomplete /
+    # capacity-held pMAP ticket can never hold legacy QUERY_READY promotion.
+    "doc_parent_map",
 })
 
 

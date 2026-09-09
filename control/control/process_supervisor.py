@@ -104,6 +104,11 @@ FLEET: list = [
     ("doc_profile4", "workers.doc_profile_worker"),
     ("doc_profile5", "workers.doc_profile_worker"),
     ("doc_profile6", "workers.doc_profile_worker"),
+    # DOC-PARENT-MAP AUTO-MINT (RAG-PIPELINE-FINISH): the pMAP stage worker. Idle until
+    # POLYMATH_DOC_PARENT_MAP_ENABLED mints doc_parent_map.v1 events (flag off => no work,
+    # the slot simply parks). One slot: the worker's own infer closure fails over across
+    # the six map_groq accounts in-run, so one slot drains the pool.
+    ("doc_parent_map", "workers.doc_parent_map_stage_worker"),
 ]
 
 
