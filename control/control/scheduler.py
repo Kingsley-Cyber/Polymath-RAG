@@ -355,6 +355,32 @@ def auto_map_parents_on_chunks(conn: Connection) -> int:
             logging.getLogger("control-schedule").warning(
                 "auto pMAP mint failed open for %s", run_id[:20],
                 extra={"error_code": "AUTO_PMAP_MINT_FAILED"})
+    # DOC-PROFILE EARLY (RAG-PIPELINE-FINISH): the vNext readiness floor also needs a
+    # vNext doc_profile, but doc_profile sits LAST in STAGE_DAG (after four summary LLM
+    # stages), so a fresh doc cannot reach VNEXT_COMPLETE within the canary's 4-min window.
+    # doc_profile only needs chunks (present at intake), so — like pMAP — fire it EARLY for
+    # the SAME scoped runs, in parallel with the legacy chain. `_emit_ticket_event` is the
+    # canonical emission (idempotent), so chain advancement later sees it already done.
+    from control.tickets import _emit_ticket_event, ticket_id
+    profile_rows = conn.execute(
+        f"""
+        SELECT r.run_id
+          FROM runs r
+          JOIN stage_tickets t ON t.run_id = r.run_id
+               AND t.stage = 'intake' AND t.status = 'done'
+          JOIN stage_tickets dp ON dp.run_id = r.run_id
+               AND dp.stage = 'doc_profile' AND dp.status = 'pending'
+         WHERE r.status IN ('intake', 'reconciling', 'degraded', 'query_ready')
+           AND r.superseded_by_run_id IS NULL {corpus_filter}
+        """, params).fetchall()
+    for (run_id,) in profile_rows:
+        try:
+            _emit_ticket_event(conn, ticket_id(run_id, "doc_profile"), run_id, "doc_profile")
+        except Exception:  # noqa: BLE001 — fail-open; chain advancement remains the backstop
+            import logging
+            logging.getLogger("control-schedule").warning(
+                "auto doc_profile-early emit failed open for %s", run_id[:20],
+                extra={"error_code": "AUTO_PROFILE_EARLY_FAILED"})
     return minted
 
 
