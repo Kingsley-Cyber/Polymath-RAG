@@ -1,240 +1,67 @@
-# RAG Pipeline Finish Plan — Grounded Execution, Migration & Acceptance Criteria
+# RAG Pipeline Final Execution Plan — Unattended Agent Runbook
 
 **Date:** 2026-09-09  
 **Repository:** `Kingsley-Cyber/Polymath-RAG`  
-**Baseline inspected:** `main @ 1c61a6f476222d9df03c73ae3eac2c399f35dafd`  
-**Status:** execution / acceptance overlay  
-**Primary objective:** finish the RAG pipeline so a newly uploaded document reaches a fully observable, retrieval-usable terminal state, then reconcile the existing corpus without blind re-ingestion or repeated expensive testing.
+**Status:** FINAL EXECUTION AUTHORITY for the RAG pipeline finish work  
+**Purpose:** give an implementation agent enough architecture, ordering, stop conditions, diagnostics, and acceptance criteria to finish the pipeline unattended without rediscovering design decisions or wasting provider calls.
 
-> This file does **not** replace `PLAN.md` or the migration authority in `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md`. The latter remains authoritative for retrieval-generation migration, retirement ordering, and cutover. This plan is the grounded execution/acceptance path for finishing the product pipeline. If this file conflicts with the migration authority, stop and reconcile the conflict instead of silently forking architecture.
-
----
-
-## 0. Execution doctrine
-
-The goal is **pipeline completion**, not a long sequence of ceremonial tests.
-
-The operating rule for this plan is:
-
-> **Prove each behavior at the cheapest layer that can actually fail for that behavior. Run the expensive end-to-end production proof once, after the offline contracts and wiring are coherent.**
-
-Do not run the whole repository suite after every edit. Do not make a live provider call to prove a deterministic parser. Do not create a frontend test framework merely to prove that a number renders. Do not repeatedly upload fresh documents after each internal change when a cheaper contract or persistence test isolates the same defect.
-
-### 0.1 Graphify is mandatory before modification
-
-The execution model must use Graphify against its **actual local/current HEAD** before changing pipeline behavior. Graphify is used to reconstruct runtime edges and dependency ownership; it does not replace opening the real files and verifying the cited symbols.
-
-At minimum, trace these paths:
-
-```text
-frontend/src/api.ts::uploadFile
-  -> orchestrator/orchestrator/api/ui.py::upload
-  -> shared/polymath_shared/intake_submission.py::submit_intake
-  -> intake/materialization/chunk production
-  -> extraction / compiler
-  -> core projections
-  -> control/control/tickets.py::STAGE_DAG
-  -> document/profile stages
-  -> doc_profile
-  -> parent-MAP generation + projection
-  -> parent_enrichment
-  -> semantic readiness
-  -> retrieval readers
-  -> Files UI / document status UI
-```
-
-For every live stage, record:
-
-| Question | Required answer |
-|---|---|
-| What event/ticket starts it? | exact `FILE:SYMBOL` |
-| Which worker consumes it? | exact `FILE:SYMBOL` |
-| What durable artifact/table proves completion? | exact table/artifact/receipt |
-| What contract/version scopes current rows? | exact field/version |
-| How is it retried/recovered? | exact ticket/receipt/idempotency path |
-| Is it a current `query_ready` blocker? | yes/no + code authority |
-| Does retrieval actually read it? | exact runtime reader |
-| Which API exposes it? | endpoint + builder/query |
-| Which UI consumes it? | component/API function |
-
-**Gate:** no pipeline stage may be classified KEEP / BRIDGE / DUAL-RUN / RETIRE / DELETE-LATER from memory or comments alone.
+> This file is the ordered execution plan for finishing the current RAG pipeline. `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` remains authoritative for retrieval-generation retirement/cutover ordering. If current source code contradicts historical comments, source/runtime evidence wins. If this plan conflicts with a later explicit owner decision, the later owner decision wins.
 
 ---
 
-# 1. Grounded current-state facts that this plan must reconcile
+# 0. Mission and finish line
 
-These are not design guesses. They are current-main facts observed in the files below and are the starting constraints for Graphify.
+The agent's mission is to finish the fresh-document ingestion path so that a normal new document flows through the real control plane, uses the intended provider pools efficiently, becomes fully observable, reaches current semantic-index readiness, and is retrievable through the normal chat/retrieval path.
 
-## 1.1 Upload already uses the canonical intake writer
+The agent must not treat a worker starting, a ticket existing, a provider lane being selected, or legacy `query_ready` becoming true as proof of completion.
 
-`frontend/src/api.ts::uploadFile` POSTs `/upload`. `orchestrator/orchestrator/api/ui.py::upload` streams the upload to the blob spool, applies duplicate guards, builds the canonical intake payload, and calls the same `submit_intake` path used by `/intake`.
+## 0.1 Final product invariant
 
-**Implication:** do not create a second “new upload pipeline” for the migration. The finish path must prove and extend this path.
+For a valid new upload through the canonical production-style `/upload` path:
 
-Grounding:
-- `frontend/src/api.ts`
-- `orchestrator/orchestrator/api/ui.py`
-- `orchestrator/orchestrator/api/intake.py`
-- `shared/polymath_shared/intake_submission.py`
+1. the upload is accepted and assigned a durable run/document identity;
+2. materialization/chunking settle deterministically;
+3. graph extraction work is drained by the `GRAPH_EXTRACTION` functional pool;
+4. the deterministic document grounding context is compiled locally;
+5. the document profile is produced by the `DOCUMENT_PROFILE` functional pool and compiler-valid;
+6. all retrieval-eligible parents are mapped or explicitly excluded under the current pMAP contract;
+7. pMAP work is drained by the `PMAP` functional pool without becoming pinned to a failed account/model lane;
+8. required profile/pMAP projections reconcile;
+9. current semantic-index/vNext readiness is explicit and truthful;
+10. the backend exposes exact counts and exact blockers;
+11. the Files/status UI consumes the same canonical backend truth;
+12. normal retrieval/chat can retrieve the new document and cite underlying source evidence;
+13. the same document/reconciliation operation remains idempotent;
+14. a small 3–5 KB text canary completes from accepted upload to semantic terminal state in **less than 4 minutes** on a healthy warmed stack;
+15. diagnostics are automatically captured for every canary and are sufficient to identify a >4-minute stall without reconstructing events from scattered logs.
 
-## 1.2 The live ticket DAG contains `doc_profile`, but it is still non-blocking
+## 0.2 Definition of "under 4 minutes"
 
-`control/control/tickets.py::STAGE_DAG` contains the normal chain through `verify_projections`, then the background intelligence stages and `doc_profile`. `NON_BLOCKING_STAGES` explicitly includes `doc_profile` and `parent_enrichment`.
+The four-minute service-level expectation applies to the iterative micro-canary only.
 
-The comments describe `doc_profile` rollout Phase A as non-blocking, with a future Phase B that changes the readiness barrier.
+Start the timer when:
+- required services are already healthy/warmed;
+- the canary upload has been accepted;
+- a `run_id`/document identity exists.
 
-**Implication:** present `run.status == query_ready` does not, by itself, prove that the new document profile / parent-MAP retrieval generation is complete.
+Stop the timer when:
+- the document has reached the current intended semantic terminal state;
+- required profile/pMAP artifacts and projections reconcile;
+- the canonical status builder reports no unexplained blocker.
 
-Grounding:
-- `control/control/tickets.py::STAGE_DAG`
-- `control/control/tickets.py::NON_BLOCKING_STAGES`
-- `workers/workers/doc_profile_worker.py`
+Do **not** include Docker/service cold-start time in this timer.
 
-## 1.3 Legacy/core `query_ready` and vNext semantic readiness are intentionally separate today
+If elapsed time reaches 4:00 and the document is not semantically complete, classify that iteration as **FAIL — PERFORMANCE/STALL**, capture diagnostics immediately, identify the exact blocking stage/lane, repair the smallest responsible layer, and run a new unique canary. Do not simply continue waiting and call the run successful later.
 
-`shared/polymath_shared/semantic_readiness.py` explicitly says `query_ready` is the control contract and must not be silently redefined. It now carries a separate `vnext` verdict.
+---
 
-`vnext_readiness()` already derives durable corpus-level parent-MAP/profile state:
-- eligible parents,
-- active mapped parents,
-- explicit exclusions,
-- unresolved parents,
-- vNext profile count,
-- `VNEXT_COMPLETE / VNEXT_INCOMPLETE / VNEXT_NOT_STARTED`.
+# 1. Frozen architecture — do not redesign while executing
 
-**Implication:** the finish work should first expose and make this generation state correct at **document level**, rather than casually overloading the old `query_ready` flag.
+These decisions are frozen for this finish work.
 
-Grounding:
-- `shared/polymath_shared/semantic_readiness.py`
-- `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md`
+## 1.1 Four permanent API-backed functional pools
 
-## 1.4 The parent enrichment lane is live current code, not a forgotten historical idea
-
-`workers/workers/summary_worker_impl.py::_do_enrichment` implements `parent_enrichment.v1` over parent sections and persists outcomes into `parent_enrichments`.
-
-`control/control/scheduler.py::auto_enrich_on_chunks` auto-mints parent enrichment after intake, and `apply_promotions` contains a promotion-time backstop.
-
-`orchestrator/orchestrator/api/ui.py` exposes corpus/document enrichment endpoints. `orchestrator/orchestrator/api/intake.py::pipeline_status` reads `parent_enrichments`. `frontend/src/components/FilesView.tsx` displays enrichment state and manual re-enrich actions.
-
-**Implication:** enrichment must be traced and classified. It may remain additive/non-blocking, but it cannot be accidentally omitted from migration accounting.
-
-Grounding:
-- `workers/workers/summary_worker_impl.py::_do_enrichment`
-- `control/control/scheduler.py::auto_enrich_on_chunks`
-- `control/control/scheduler.py::apply_promotions`
-- `orchestrator/orchestrator/api/ui.py::_mint_enrichment`
-- `orchestrator/orchestrator/api/intake.py::pipeline_status`
-- `frontend/src/components/FilesView.tsx::EnrichBadge`
-
-## 1.5 Parent enrichment comments and scheduler behavior currently disagree
-
-The `_do_enrichment` docstring still describes the stage as owner-triggered, while `scheduler.py` automatically mints it early and again at promotion.
-
-**Implication:** treat comments as historical evidence, not runtime authority. Graphify must identify the live event mint path and the retrieval reader before deciding whether the stage is required, optional, superseded, or ready for retirement.
-
-## 1.6 vNext profile support exists, but the worker switch defaults OFF in code
-
-`workers/workers/doc_profile_worker.py::_vnext_enabled()` returns true only when `POLYMATH_DOC_PROFILE_VNEXT` is enabled. The code default is OFF.
-
-The migration ledger records that vNext was qualified and enabled in deployment configuration, but a clean/current environment must not be assumed to inherit an untracked local `.env` value.
-
-The old/default prompt `shared/polymath_shared/document_profile/prompt.py` already supports:
-- ONE,
-- SUMMARY,
-- TOPIC,
-- TERM,
-- Q,
-- SEARCH,
-- THEORY,
-- CONCEPT,
-- SEEALSO.
-
-The vNext prompt additionally supports:
-- LATENT-PATTERN,
-- ANCHOR,
-- RECALLQ,
-- TENSION,
-- BRIDGE,
-- INVERSION,
-- BOUNDARY,
-
-and uses the `DocumentFingerprint` path.
-
-**Implication:** before the UI claims the new field inventory is production truth, prove which profile generation a brand-new upload actually uses under the production startup contract.
-
-Grounding:
-- `workers/workers/doc_profile_worker.py::_vnext_enabled`
-- `workers/workers/doc_profile_worker.py::process_event`
-- `shared/polymath_shared/document_profile/prompt.py`
-- `shared/polymath_shared/document_profile/profile_prompt_vnext.py`
-- `shared/polymath_shared/document_profile/fingerprint.py`
-
-## 1.7 The profile compiler already supports vNext tags additively
-
-`shared/polymath_shared/document_profile/compiler.py` has:
-- `rag-profile-v3` schema,
-- `rag-compiler-v3.1`,
-- advisory targets for TOPIC / TERM / Q / SEARCH / THEORY / CONCEPT / SEEALSO,
-- vNext Record fields for latent pattern / anchor / recallq / tension / bridge / inversion / boundary,
-- tolerant tag aliases.
-
-Counts are explicitly **soft coverage aims**, not hard validity quotas.
-
-**Implication:** UI must report `actual count` separately from `aim`. An 8/10 TOPIC profile is not automatically invalid. Compiler validity and item quantity are different concepts.
-
-## 1.8 Parent-MAP has durable orchestration and strict-identity compiler semantics
-
-`workers/workers/doc_parent_map_worker.py` provides the durable map orchestration over:
-- `document_parent_map_batches`,
-- `document_parent_maps`,
-- `document_parent_exclusions`.
-
-It persists partial valid work and repairs only unresolved aliases.
-
-`shared/polymath_shared/document_profile/map_prompt.py` freezes the plaintext contract:
-
-```text
-MAP|<alias>|<routing signature>|<hook1>;<hook2>;<hook3>
-```
-
-`shared/polymath_shared/document_profile/map_compiler.py` is explicitly **tolerant format, strict identity**.
-
-**Implication:** no JSON Object Mode, no second parser, no schema layer that replaces the MAP compiler contract as part of finishing the pipeline.
-
-## 1.9 Current Files UI exposes enrichment counts but not the complete document contract
-
-`orchestrator/orchestrator/api/ui.py::documents` currently returns per-document:
-- child chunks,
-- distinct parents,
-- READY enrichment count,
-- unrecovered INVALID enrichment count.
-
-`frontend/src/types.ts::DocumentRow` mirrors that shape. `frontend/src/components/FilesView.tsx` shows chunks, enrichment state, sections, recent runs, corpus semantic readiness, and retrieval visibility.
-
-It does **not** currently show per document:
-- materialized parent count versus parents-with-children,
-- profile generation/version/validity,
-- actual profile field counts,
-- parent-MAP eligible/excluded/mapped/unresolved counts,
-- semantic-index readiness,
-- exact blocker(s),
-- required projection completeness.
-
-**Implication:** UI migration is a backend-contract problem first, a rendering problem second.
-
-## 1.10 The old E2E checklist is stale in at least one concrete place
-
-`RAG_E2E_CHECKLIST.md` still marks I1 manifest ingestion “NOT STARTED.” Current `control/control/manifest_ingest.py` explicitly implements “I1 manifest ingestion orchestration: plan / execute / status.”
-
-**Implication:** do not blindly execute unchecked historical gates. Reconcile checklist claims against current code/runtime evidence first.
-
-## 1.11 Frozen API-backed functional-lane architecture
-
-This section is a **frozen architecture decision for the finish work**. It separates *what Polymath is trying to do* from *which provider/model/key executes the work*.
-
-### 1.11.1 Four permanent functional lanes
-
-The production provider-control plane shall expose exactly four permanent API-backed function classes:
+The provider control plane has four permanent functional classes:
 
 ```text
 1. CHAT
@@ -243,22 +70,99 @@ The production provider-control plane shall expose exactly four permanent API-ba
 4. PMAP
 ```
 
-Definitions:
+They are purposes, not providers.
 
-| Functional lane | Owns |
-|---|---|
-| `CHAT` | query-time LLM work managed by this provider-control plane: intent/compiler/planning and any directly managed chat/synthesis lane discovered by Graphify |
-| `GRAPH_EXTRACTION` | high-volume ingestion workhorse: structured fact/entity/relation/object extraction and equivalent graph-building inference |
-| `DOCUMENT_PROFILE` | one document-level retrieval/semantic profile compiled from the document fingerprint/context |
-| `PMAP` | parent-level semantic localization: routing signature + hooks for each retrieval-eligible parent |
+| Functional pool | Purpose | Execution objective |
+|---|---|---|
+| `CHAT` | query-time compiler/planning/synthesis work managed by this provider plane | low interactive latency and reliable structured result |
+| `GRAPH_EXTRACTION` | high-volume ingestion workhorse for entity/relation/object/fact extraction | drain extraction backlog at maximum compliant valid-work throughput |
+| `DOCUMENT_PROFILE` | one document-level semantic/retrieval profile | drain pending documents; compiler-valid profiles with minimal retries |
+| `PMAP` | parent-level semantic localization/routing maps | drain mapping batches at maximum valid-maps-per-call throughput |
 
-`parent_enrichment` is **not** a fifth permanent lane. It remains a live legacy/dual-run compatibility surface until its readers are migrated and the accepted migration authority permits retirement. Do not add long-lived provider capacity solely to preserve a lane already classified for eventual retirement unless a measured short-term migration need requires it.
+`parent_enrichment` is **not** a fifth permanent pool. It remains a live legacy/bridge surface until its retrieval readers are migrated and the accepted migration authority permits retirement.
 
-A functional lane is **purpose**, not provider identity. The same model may appear in multiple functional lanes without implying shared quota/circuit state.
+## 1.2 Three asynchronous ingestion work pools plus one latency pool
 
-### 1.11.2 Credential-isolation rule: one API key = one account lane by default
+The three ingestion functions use independent shared queues:
 
-Freeze the default resource model as:
+```text
+GRAPH_EXTRACTION_QUEUE
+DOCUMENT_PROFILE_QUEUE
+PMAP_QUEUE
+```
+
+`CHAT` uses the same account/model capacity concepts but is not a backlog-draining ingestion queue. Its policy is latency-oriented.
+
+High-level target:
+
+```text
+                         INGESTION
+                            │
+          ┌─────────────────┼──────────────────┐
+          │                 │                  │
+          ▼                 ▼                  ▼
+ GRAPH_EXTRACTION      DOCUMENT_PROFILE       PMAP
+     shared queue          shared queue      shared queue
+          │                 │                  │
+     qualified         qualified account/ qualified account/
+ account/model lanes     model lanes         model lanes
+          │                 │                  │
+          └─────────────────┼──────────────────┘
+                            ▼
+                  durable receipts/state
+```
+
+Every healthy qualified worker in a functional pool may claim eligible work from that pool. Work must not become permanently attached to the first lane that attempted it.
+
+## 1.3 Job lifecycle
+
+Use a durable equivalent of:
+
+```text
+PENDING
+  -> CLAIMED / ASSIGNED
+  -> PROCESSING
+      -> DONE
+      -> RETRYABLE -> PENDING
+      -> TERMINAL_ERROR / DLQ
+```
+
+Required properties:
+- claim/lease semantics are durable;
+- retries are idempotent;
+- successful work is never needlessly regenerated;
+- provider/network failures return work to the functional pool;
+- deterministic/source-invalid failures do not bounce forever;
+- retry counts and failure classifications are visible.
+
+## 1.4 Pool-drain invariant
+
+Freeze this invariant:
+
+> A retryable job belongs to its functional pool, not to the account/model lane that first attempted it. If any qualified healthy lane remains available, retryable work remains eligible for processing.
+
+Examples:
+
+```text
+lane A -> 429      => lane A cooldown; job returns to pool
+lane B -> timeout  => lane B health/retry state; job returns to pool
+lane C -> 200 + valid compiler result => DONE
+```
+
+A lane-level outage must not manufacture a document-level failure while another qualified lane can perform the job.
+
+Terminal/DLQ classification is appropriate only after the failure is proven non-transient or the functional pool has exhausted meaningful repair paths, for example:
+- malformed deterministic input;
+- unsupported payload;
+- source corruption;
+- deterministic compiler-invalid response reproduced across independent qualified attempts;
+- explicit unrecoverable provider 4xx caused by the request contract.
+
+Do not DLQ because one provider/account is exhausted or rate-limited.
+
+## 1.5 API key = account lane by default
+
+Freeze the resource hierarchy:
 
 ```text
 FUNCTION
@@ -268,641 +172,855 @@ FUNCTION
 
 Rules:
 
-1. Every configured provider API key is treated as an independent account/capacity lane by default.
-2. Provider name alone (`gemini`, `openrouter`, `groq`, etc.) must **never** define a shared limiter or shared failure circuit.
-3. RPM, TPM, RPD, Retry-After, concurrency, AIMD state and breaker/circuit state may not cross API-key boundaries unless an explicit provider-specific exception is documented and proven.
-4. Different models under one key may be represented as distinct model-capacity sub-lanes when the provider actually meters them separately.
-5. If model quotas under the same key are partly shared, encode that relationship explicitly; do not infer it from provider branding.
-6. Functional pools reference eligible account/model lanes. They do not themselves own the provider quota truth.
-7. A shared credential used by more than one function must be surfaced as an explicit contention edge in the pool inventory/status tooling.
-8. Any gateway adopted later (LiteLLM/Bifrost/etc.) must preserve this account-lane model rather than recreating provider-wide families.
+1. Every API key is an independent account/capacity lane by default.
+2. Provider name alone must never define a shared limiter/circuit.
+3. RPM, TPM, RPD, concurrency, Retry-After, breaker state and adaptive limiter state must not cross API-key boundaries unless an explicit provider-specific shared-capacity contract is proven.
+4. Different models under one key may have distinct model-capacity sub-lanes when the provider meters them separately.
+5. Any shared quota inside one key must be represented explicitly, not inferred from provider branding.
+6. Functional pools reference eligible account/model lanes; functional pools do not own provider quota truth.
+7. Every cross-function credential reuse must be visible in inventory/status output.
 
-**Groq exception:** the current `DOCUMENT_PROFILE` (`groq/compound`) and `PMAP` (`groq/compound-mini`) topology may deliberately share the same six Groq credentials because exploiting the available free-account capacity and the provider's actual quota behavior is an intentional owner decision. That exception must remain explicit and evidence-driven. It does **not** establish a general shared-family rule for other providers.
+### Explicit Groq exception
 
-### 1.11.3 Current pMAP input is local ParentSkeleton only — profile context is not wired today
+The current six Groq credentials may intentionally serve both:
+- `DOCUMENT_PROFILE` through `groq/compound`;
+- `PMAP` through `groq/compound-mini`.
 
-Current-main code confirms that pMAP does **not** consume the document profile.
+This is an explicit owner-approved capacity optimization driven by free-token/account reality. It does not restore a general provider-family mental model.
 
-`shared/polymath_shared/document_profile/parent_skeleton.py` constructs the model-facing `ParentSkeleton` with the bounded local surfaces:
+## 1.6 Capacity has two contracts
 
-```text
-alias
-heading_path
-lead_excerpt       # headingless parents only
-salient_excerpt
-key_terms          # bounded high-information terms
-identifiers        # deterministic exact ids/acronyms/codes
-```
+Do not collapse provider capacity and workload reliability.
 
-`shared/polymath_shared/document_profile/map_prompt.py::_render_skeleton` renders only those fields as:
+### Provider/account-model capacity
+
+Per API key + model:
 
 ```text
-ALIAS ...
-HEADING: ...
-OPENING: ...
-EXCERPT: ...
-TERMS: ...
-IDENTIFIERS: ...
+rpm
+tpm
+itpm / otpm where relevant
+rpd / tpd where relevant
+max_concurrency
+retry_after/reset observations
+provider headers
+account tier/source
 ```
 
-`workers/workers/doc_parent_map_worker.py::run_document_mapping` currently calls:
+### Functional workload capacity
+
+Per function + API key + model:
 
 ```text
-build_parent_skeletons(parents)
--> map_batches.plan_batches(manifest, density, ...)
--> infer(skels, is_combined=batch.is_combined)
--> map_compiler.compile_maps(...)
+GRAPH_EXTRACTION
+  qualified input/batch envelope
+  expected output envelope
+  valid extraction throughput
+
+DOCUMENT_PROFILE
+  qualified document-fingerprint/context envelope
+  expected output ceiling
+  compiler-pass rate
+
+PMAP
+  qualified aliases/request
+  expected billed output density
+  map completeness/reliability
+
+CHAT
+  latency envelope
+  structured-output reliability
+  output ceiling
 ```
 
-There is no load/read of the compiled document profile in this path.
+The scheduler must optimize **valid durable work**, not nominal context-window size or raw request count.
 
-**Current-state conclusion:** today's pMAP is local-section semantic routing, not profile-grounded document-aware routing.
+## 1.7 Provider rate-limit catalog is a seed, not runtime authority
 
-### 1.11.4 The repo already contains an unfinished combined-path scaffold
+The agent should evaluate and, if low-risk, use `llerandi/llm-rate-limits-tracker` as a **seed/reference registry** for published provider/model/tier RPM/TPM/RPD metadata. The project publishes machine-readable JSON and updates weekly.
 
-`shared/polymath_shared/document_profile/map_batches.py::plan_batches` accepts `combined_global_profile_billed_tokens`. When supplied, the first batch is marked `is_combined=True` and sized with `combined_capacity`; subsequent batches remain mapping-only.
+Do not make production request admission depend on live access to GitHub/jsDelivr.
 
-However, the current worker calls `plan_batches(...)` without that argument, and `shared/polymath_shared/document_profile/map_prompt.py::build_map_prompt(..., is_combined=...)` explicitly states that `is_combined` is not specialized: both branches return the same MAP-only prompt.
-
-Therefore:
+Preferred integration pattern:
 
 ```text
-combined-path planning scaffold        EXISTS
-profile context actually entering MAP  DOES NOT EXIST
+external rate-limit catalog
+        ↓ development/sync only
+local versioned seed snapshot
+        ↓
+explicit account/config override
+        ↓
+observed provider headers / Retry-After / 429 evidence
+        ↓
+measured safe workload envelope
+        ↓
+effective scheduling capacity
 ```
 
-Do not report the combined profile+pMAP path as implemented until the real worker/prompt/artifact path proves it.
-
-### 1.11.5 Frozen semantic-index relationship: profile -> pMAP context
-
-`DOCUMENT_PROFILE` and `PMAP` remain **separate durable functional contracts**, but they form one coupled semantic-indexing subsystem:
+Authority order:
 
 ```text
-DOCUMENT
-   -> DocumentFingerprint / document context
-   -> DOCUMENT_PROFILE
-       -> compiled, validated document profile
-       -> bounded deterministic PMAP document context
-   -> PMAP
-       -> local ParentSkeleton evidence + document-level context
-       -> MAP compiler
-       -> durable parent maps
+1. actual provider headers/response evidence for this key+model
+2. explicit owner/account configuration
+3. Polymath measured safe workload envelope
+4. versioned external catalog seed
+5. conservative unknown-provider default
 ```
 
-The reason to keep separate contracts is repair cardinality:
+Requirements:
+- record catalog source URL/repository commit or retrieval timestamp;
+- never write secrets to the catalog snapshot;
+- null/unknown published limits remain unknown rather than guessed;
+- a stale catalog may seed config but must never override newer runtime evidence;
+- rate limits and workload qualification are separate concepts.
 
-- one document produces one compiled profile;
-- one document may produce hundreds of parent maps across many batches;
-- a failed/unresolved parent must be repairable without regenerating the valid profile;
-- a profile failure must not destroy already-valid map state from another current contract;
-- partial pMAP output remains useful work and repairs only missing aliases.
+## 1.8 Universal deterministic document grounding compiler
 
-The **logical dependency is frozen:** current-generation pMAP should be grounded by the current compiled document profile, not by isolated parent skeletons alone.
+pMAP must not depend on the LLM-generated `DOCUMENT_PROFILE` for basic document orientation.
 
-The exact compact-context projection must be deterministic, bounded and versioned. It should be derived from **compiled profile state**, never directly from unvalidated raw LLM output. A reasonable implementation surface is a compact subset such as the profile `ONE` plus selected high-value `TOPIC` / `THEORY` / `CONCEPT` / `BOUNDARY` lines, but the exact field-selection/token bound must be pinned in the MAP prompt contract after direct code/fixture review rather than improvised in worker code.
-
-### 1.11.6 Single physical call is an optimization, not a contract merge
-
-The existing combined-first-batch idea may be used if it is actually beneficial:
+Implement/freeze a CPU-only deterministic artifact, conceptually:
 
 ```text
-CALL 1
-  -> document profile output
-  -> first MAP batch output
-
-CALL 2..N
-  -> compact compiled profile context
-  -> remaining parent skeleton batches
+DocumentGroundingContextV1
 ```
 
-But even if one provider request emits both products:
+Target payload: **approximately 50–100 tokens**, hard bounded and deterministic.
 
-- the profile and MAP outputs must compile independently;
-- each artifact keeps independent identity/version/readiness;
-- later pMAP repair does not regenerate the profile;
-- profile repair does not discard valid maps;
-- one physical request must never be treated as proof that the two functions are one durable stage.
+It must work across all supported document classes, including:
+- structured Markdown/text;
+- HTML;
+- EPUB;
+- DOCX;
+- native PDFs;
+- scanned/OCR PDFs;
+- transcripts;
+- white papers/reports;
+- books/manuals;
+- sparse/poorly structured files.
 
-Do not force the combined-call optimization if it complicates reliability, compiler separation, or provider economics. The mandatory architecture is **profile-grounded pMAP**, not “one call at all costs.”
-
-### 1.11.7 MAP identity must include the new semantic context generation
-
-Current batch identity binds planner contract, manifest hash, skeleton hashes and the `is_combined` flag. Current worker map scope defaults to the map compiler contract. Adding document-profile context changes the semantics of generated routing maps even when parent text/skeleton identity is unchanged.
-
-Therefore the implementation must make stale-vs-current maps unambiguous by doing at least one explicit versioned identity action consistent with repository authority, e.g.:
-
-- bump/version the MAP prompt/map contract and scope current rows to it; and/or
-- bind the deterministic profile-context hash/prompt generation into batch/map input identity.
-
-**Forbidden:** silently start sending profile context while allowing pre-context maps to satisfy the exact same “current” contract.
-
-Before choosing the minimal implementation, inspect:
-- `shared/polymath_shared/document_profile/map_batches.py::_batch`
-- `shared/polymath_shared/document_profile/map_prompt.py::MAP_PROMPT_VERSION`
-- `shared/polymath_shared/document_profile/map_compiler.py::MAP_COMPILER_VERSION`
-- `workers/workers/doc_parent_map_worker.py::run_document_mapping`
-- migration `0054_document_parent_maps.sql` / current schema authority.
-
-### 1.11.8 Functional-pool inventory becomes a formal production contract
-
-Graphify + config inspection must produce one canonical generated/maintained inventory able to answer both directions:
+Evidence precedence:
 
 ```text
-FUNCTION -> ACCOUNT KEY -> MODEL -> provider config -> limiter/capacity state
-ACCOUNT KEY -> every FUNCTION/MODEL that can spend it
-MODEL -> every FUNCTION/ACCOUNT deployment using it
+1. explicit metadata/frontmatter
+2. title-page/title metadata
+3. author/byline/organization
+4. explicit date/type when reliable
+5. table of contents
+6. high-level heading hierarchy
+7. repeated high-confidence structural headings
+8. filename only as a weak fallback
 ```
 
-For every account/model lane expose at least:
+Reject/down-weight:
+- page numbers;
+- running headers/footers;
+- navigation furniture;
+- copyright/publisher boilerplate;
+- generic `Contents`/`Index` labels without substance;
+- repeated scanner artifacts;
+- obvious OCR garbage;
+- low-confidence tokens that consume the budget without orienting the document.
 
-- functional lane(s),
-- provider,
-- exact model,
-- API-key environment name or non-secret key fingerprint,
-- whether the credential is dedicated or intentionally cross-used,
-- configured RPM/TPM/RPD/concurrency where known,
-- provider-observed limit state when available,
-- active/parked status,
-- retry/fallback priority,
-- explicit shared-capacity exception if one exists.
+Rules:
+- source-derived only;
+- no LLM call;
+- no invented summary;
+- prefer omission to fabricated context;
+- same source inputs + compiler version => same output/hash;
+- token/character hard cap;
+- persist/hash/version it so pMAP generation identity includes the grounding contract.
 
-Do not maintain this primarily as prose comments. Prefer a single config/registry that can render the operator-facing pool map.
-
-### 1.11.9 Test economics for this architecture
-
-Do **not** launch a new benchmark campaign merely because profile context is being wired into pMAP. Prove the architecture at the cheapest meaningful levels first.
-
-Required offline tests when implementing this section:
-
-1. **Prompt-context unit:** deterministic compiled profile fixture produces the expected bounded pMAP document-context block; same input -> same context/hash.
-2. **MAP prompt unit:** pMAP request contains both the document context and the unchanged ParentSkeleton evidence; MAP DSL output contract remains unchanged.
-3. **Identity/version pin:** changing profile-context generation/prompt version cannot leave old maps/batches falsely current.
-4. **Worker fake-inference integration:** pMAP cannot silently run under the new contract without the required current profile; partial MAP repair still reuses valid maps.
-5. **Credential-isolation config test:** two API keys from the same provider do not share limiter/circuit state by provider name alone; explicit Groq shared-account behavior remains explicit.
-6. **Pool inventory test:** every active configured endpoint belongs to a known function/account/model lane, and unreachable/parked fallbacks are surfaced.
-
-**Do not run yet:** broad live model-quality benchmark, corpus-wide remap, repeated provider canaries, or a full E2E after each prompt edit. The single production E2E in §16 proves the composed profile->pMAP path once the offline gates are green. Run a dedicated quality comparison only if the final canary or retrieval evidence shows the compact context materially harms/does not improve localization.
-
----
-
-# 2. Definition of Done
-
-The pipeline is finished only when all of the following are true.
-
-## 2.1 Fresh-document product invariant
-
-For any supported, valid new upload (`.md`, `.txt`, `.html`, `.pdf`, `.epub`, `.docx`) through the production `/upload` path:
-
-1. the upload is durably accepted or receives a typed duplicate/refusal result;
-2. materialization and chunking produce deterministic document/child/parent identities;
-3. extraction and core projection settle without hidden dropped work;
-4. the intended document-profile generation runs and persists a valid compiled profile;
-5. required profile vectors are projected and receipted;
-6. every retrieval-eligible parent is either:
-   - actively MAP-mapped under the current map contract using the required current compiled profile context, or
-   - explicitly excluded under the current exclusion contract;
-7. required parent-MAP vectors are projected/reconciled;
-8. parent enrichment is accounted for according to its final classification;
-9. the backend reports the exact current blocker if any of the above are incomplete;
-10. the Files UI displays the same authoritative counts/state;
-11. normal retrieval/chat can retrieve the document and cite its source evidence;
-12. rerunning/reconciling the same document does not duplicate durable state.
-
-## 2.2 No-hidden-state invariant
-
-A document may be `IN_PROGRESS`, `DEGRADED`, `FAILED`, `CORE_QUERY_READY`, `VNEXT/SEMANTIC_INDEX_READY`, etc., but it must never look “done” merely because one coarse status settled while required current-generation artifacts are still missing.
-
-Every visible blocker must be derived from durable state, not from a worker-local counter or a log message.
-
-## 2.3 Quantitative document invariant
-
-For every document, the product must be able to answer **what actually exists now**, at minimum:
-
-### Chunk / parent substrate
-- `children_total`
-- `parents_materialized`
-- `parents_with_children`
-
-### Document profile
-- current schema version
-- current compiler version
-- current prompt version
-- vNext true/false
-- valid / invalid
-- quality / format / coverage summary
-- actual item count for every supported field
-- advisory target/aim where the compiler defines one
-
-### Parent MAP
-- current map contract
-- profile-context generation/hash or equivalent current-context identity
-- eligible parents
-- explicitly excluded parents
-- active mapped parents
-- unresolved eligible parents
-- batch total / complete / partial if operationally useful
-- current failure/repair summary
-
-### Enrichment
-- ready
-- invalid-unrecovered
-- remaining applicable parents
-- additive/required classification
-
-### Projection/readiness
-- required profile projection complete/incomplete
-- required parent-MAP projection complete/incomplete
-- core `query_ready`
-- vNext/semantic-index verdict
-- final blocker list
-
----
-
-# 3. Canonical parent-count contract
-
-The current code uses the word “parent” for multiple related populations. Do not build UI arithmetic until these are explicitly named.
-
-## 3.1 Required definitions
-
-Graphify and direct SQL/file inspection must establish these definitions:
+Conceptual output examples:
 
 ```text
-children_total
-  = chunk rows where tier='child' for this doc
-
-parents_materialized
-  = chunk rows where tier='parent' for this doc
-
-parents_with_children
-  = DISTINCT child.parent_id for this doc
-
-map_eligible
-  = current MAP skeleton/eligibility universe for this doc
-
-map_excluded
-  = explicit current-contract parent exclusions
-
-map_active
-  = active current-contract document_parent_maps
-
-map_unresolved
-  = eligible parents not resolved by current active map/exclusion semantics
-
-enrichment_applicable
-  = the parent universe the current enrichment worker actually considers after its noise/role exclusions
-
-enrichment_ready
-  = current durable READY rows for applicable parents
-
-enrichment_invalid_unrecovered
-  = current durable INVALID rows without a later READY resolution
+TITLE: Benesh Movement Notation
+AUTHORS: Rudolf Benesh; Joan Benesh
+TYPE: technical manual
+STRUCTURE: notation principles; signs and symbols; body positions; timing; examples
 ```
 
-## 3.2 Do not assume equality until proved
-
-Do **not** assume these are always equal:
+or, when weakly structured:
 
 ```text
-parents_materialized == parents_with_children == map_eligible == enrichment_applicable
+TITLE: <reliable title or sanitized filename>
+TYPE: scanned document
+STRUCTURE: <only high-confidence headings if available>
 ```
 
-The MAP skeleton builder and enrichment worker have independent exclusion/noise logic. The UI currently derives “parents” from `DISTINCT child.parent_id`, while `doc_profile_worker._load_inputs()` reads `tier='parent'` rows directly.
+## 1.9 pMAP input and batching architecture
 
-**Acceptance criterion:** the backend contract names each population instead of collapsing them into an ambiguous `parents` integer.
-
-## 3.3 Current-contract scoping
-
-Counts must ignore obsolete historical rows when a versioned successor exists.
-
-For profile/MAP/enrichment/projection state, prove the scope used for “current”:
-- active flag,
-- map contract,
-- compiler/prompt generation,
-- input/content hash,
-- projection contract,
-- supersession state.
-
-A count that silently mixes old and new generations is a migration failure.
-
----
-
-# 4. Resolve the production document-profile generation
-
-## 4.1 Required decision
-
-Prove what a brand-new production upload uses today:
+pMAP receives:
 
 ```text
-legacy/current v3.2 prompt + lean context
-OR
-vNext DocumentFingerprint + profile_prompt_vnext
+DocumentGroundingContextV1       # global 50–100 token orientation
++
+ParentSkeleton[]                 # local source evidence
 ```
 
-Do not infer this from the migration ledger alone. Verify startup configuration and the worker branch at runtime.
+The current `ParentSkeleton` model-facing evidence remains:
+- alias;
+- heading path;
+- headingless opening excerpt where applicable;
+- salient excerpt;
+- bounded key terms;
+- exact deterministic identifiers.
 
-Relevant code:
-- `workers/workers/doc_profile_worker.py::_vnext_enabled`
-- `workers/workers/doc_profile_worker.py::process_event`
-- `shared/polymath_shared/document_profile/prompt.py`
-- `shared/polymath_shared/document_profile/profile_prompt_vnext.py`
-- `shared/polymath_shared/document_profile/compiler.py`
-
-## 4.2 Finish criterion
-
-If vNext is the intended production generation, completion requires:
-
-- a clean supported startup path enables it intentionally;
-- startup/config diagnostics make that state observable;
-- new documents persist `doc_profile.vnext=true`;
-- the compiler version recognizes the full intended field vocabulary;
-- profile projection uses the compiled current artifact;
-- rollback remains explicit and version-safe.
-
-Do not hard-code a local `.env` accident into architectural truth.
-
-## 4.3 Required profile count payload
-
-Expose actual compiled counts for:
-
-### Source-anchored
-- `ONE`
-- `SUMMARY`
-- `TOPIC`
-- `TERM`
-- `Q`
-
-### Routing-inferred
-- `SEARCH`
-- `THEORY`
-- `CONCEPT`
-- `LATENT-PATTERN`
-- `ANCHOR`
-- `RECALLQ`
-- `TENSION`
-- `BRIDGE`
-- `INVERSION`
-- `BOUNDARY`
-- `SEEALSO`
-
-Return an `aim` only where a real compiler/prompt target exists. Never fabricate a target for the new optional research-index tags merely to make a progress bar look complete.
-
-Example contract shape:
-
-```json
-{
-  "profile": {
-    "valid": true,
-    "vnext": true,
-    "schema_version": "rag-profile-v3",
-    "compiler_version": "rag-compiler-v3.1",
-    "prompt_version": "doc-profile-vnext-v1",
-    "counts": {
-      "ONE": {"actual": 1, "aim": 1},
-      "SUMMARY": {"actual": 1, "aim": 1},
-      "TOPIC": {"actual": 8, "aim": 10},
-      "TERM": {"actual": 11, "aim": 10},
-      "Q": {"actual": 14, "aim": 15},
-      "SEARCH": {"actual": 13, "aim": 15},
-      "THEORY": {"actual": 8, "aim": 10},
-      "CONCEPT": {"actual": 9, "aim": 10},
-      "LATENT-PATTERN": {"actual": 2, "aim": null}
-    }
-  }
-}
-```
-
-The numbers above are illustrative only. Production values come from the persisted compiled artifact.
-
----
-
-# 5. Profile compiler adversarial certification
-
-The compiler should be reviewed by a **different capable model** to theorize realistic model-output failure modes, but that reviewer does not get authority to redesign or patch the compiler from speculation.
-
-## 5.1 Reviewer task
-
-Give the reviewer model the actual:
-- production profile prompt(s),
-- compiler source,
-- representative valid outputs,
-- existing tests.
-
-Ask it to generate a categorized threat/scenario inventory covering outputs from a cheap but capable model.
-
-At minimum consider:
-- leading/trailing whitespace;
-- CRLF vs LF;
-- no final newline;
-- markdown fence around otherwise valid output;
-- small preamble or trailing sentence;
-- bullets/numbering;
-- missing colon variants already intended to be tolerated;
-- wrapped lines;
-- lower/variant labels;
-- duplicate singleton ONE/SUMMARY;
-- duplicate list items;
-- unknown labels;
-- `END` variants;
-- Unicode punctuation;
-- below-target but semantically valid lists;
-- over-target lists and deterministic caps;
-- optional vNext tags omitted;
-- malformed vNext tag spelling;
-- model refusal/apology;
-- truncated output;
-- a semantically empty core surrounded by many list items.
-
-## 5.2 Convert theory to deterministic fixtures
-
-Only scenarios that correspond to a real contract risk become fixtures.
-
-Expected classification:
-
-| Class | Expected compiler behavior |
-|---|---|
-| harmless presentation drift | accept/repair deterministically |
-| soft count miss | compile; record coverage issue, do not invent |
-| unknown optional text | receipt/issue without misclassification |
-| missing semantic core | invalid/retry-review |
-| malformed/untrusted content | never convert into invented structured meaning |
-| duplicate/capped list | deterministic first/cap policy |
-
-## 5.3 Test timing
-
-**Run now:** targeted compiler tests only after compiler/prompt compatibility changes.  
-**Do not run now:** provider call, full pipeline, whole repo suite.
-
-The final production E2E later proves the real model can pass the compiler. These fixtures prove the compiler is not unfairly rejecting harmless model formatting.
-
----
-
-# 6. Parent-MAP completion and compiler certification
-
-## 6.1 Architecture remains frozen
-
-Keep:
+Keep the frozen output DSL:
 
 ```text
 MAP|<alias>|<routing signature>|<hook1>;<hook2>;<hook3>
 ```
 
-Do not introduce:
-- JSON Object Mode,
-- function calling,
-- a second model-facing schema,
-- a second parser,
-- a bypass around `map_compiler.py`.
+No JSON-mode redesign, function-calling rewrite, second parser, or chunker redesign is authorized for this finish work.
 
-The **MAP DSL/compiler contract is frozen, while the model input is upgraded to include the bounded current compiled document-profile context defined in §1.11.** This is an input-grounding change, not a MAP output-schema redesign.
+### Restore original pMAP efficiency objective
 
-Grounding:
-- `shared/polymath_shared/document_profile/map_prompt.py`
-- `shared/polymath_shared/document_profile/map_compiler.py`
-- `workers/workers/doc_parent_map_worker.py`
+The repo's original design objective remains:
 
-## 6.2 Current forensic hold is a prerequisite, not the project finish line
+> extract everything under one call whenever physically/reliably possible; batch only overflow.
 
-The current Groq/MAP control-plane forensic repair must close its **offline** acceptance gate before any live MAP canary or backfill resumes.
+`MAPPING_ONLY_TARGET = 60` is the architectural target.
 
-Required preconditions include the already identified conservation chain:
+The current `MAP_RELIABILITY_CAP = 15` is a measured **Groq Compound-Mini workload qualification result**, not a global pMAP architecture ceiling.
+
+Therefore the effective pMAP batch size is per account/model lane:
 
 ```text
-local scheduling
-  -> limiter admission/refusal
-  -> actual HTTP dispatch
-  -> provider response/quota observation
-  -> raw MAP response
-  -> compiler yield
-  -> persisted maps
+min(
+  functional target,
+  token envelope,
+  provider/account capacity,
+  qualified model reliability envelope
+)
 ```
 
-A local refusal must never be counted as provider spend. Hidden `MappingOutcome.errors`, partial compiler outcomes, and retry waste must be observable before scaled migration resumes.
-
-Do not let this work expand into unrelated provider tuning once those defects are proven/fixed.
-
-## 6.3 Prove automatic new-document MAP wiring
-
-The durable worker exists, but finishing the product requires proving how a **new upload** reaches it.
-
-Graphify must locate:
-- ticket/event mint,
-- worker registration/fleet slot,
-- required current `doc_profile` dependency/context load,
-- inference adapter,
-- projection trigger,
-- completion/readiness reader.
-
-If any edge is absent, that missing edge is P0 migration work.
-
-Do not infer automatic execution merely because backfill/canary scripts exist.
-
-## 6.4 MAP compiler adversarial fixtures
-
-Use the same cheap deterministic strategy as the profile compiler.
-
-Cover:
-- whitespace around `MAP` and `|`;
-- zero-padded/lowercase aliases;
-- CRLF / no final newline;
-- reordered valid MAP lines;
-- valid MAPs surrounded by non-MAP prose;
-- Unicode hyphen/space drift;
-- fewer/more than three semantic hooks;
-- empty hooks;
-- generic hooks/signature;
-- duplicate alias;
-- unknown/invented alias;
-- empty signature;
-- missing aliases / partial response;
-- valid partial response + garbage;
-- refusal/apology/empty response;
-- truncation mid-final MAP line.
-
-Required behavior:
+Examples:
 
 ```text
-harmless format drift        -> valid map survives
-unknown/ambiguous identity   -> rejected, never cross-attached
-partial valid output         -> valid maps persist
-missing aliases              -> exact repair set
-already-active parent        -> never needlessly regenerated
+groq_key_1 / compound-mini -> qualified aliases may be 15
+other_key / stronger model -> qualified aliases may be 40
+other_key / proven model    -> qualified aliases may be 60
 ```
 
-**Test timing:** targeted `map_compiler` / durable map-worker fake-inference tests now; real provider behavior only in the one bounded production canary after the offline gate.
+Do not force every pMAP lane to 15 because one model was flaky at larger structured outputs.
+
+Persist workload qualification. Do not re-benchmark every ingestion.
+
+Requalify only when:
+- model/version changes;
+- account tier materially changes;
+- provider behavior materially changes;
+- receipts show sustained degradation;
+- the owner deliberately wants to raise the envelope.
+
+## 1.10 pMAP batches are independently drainable jobs
+
+A large document should produce durable pMAP batch jobs that can be processed by different healthy qualified lanes in the PMAP pool.
+
+A 469-parent document should conceptually be:
+
+```text
+document
+  -> deterministic grounding
+  -> deterministic parent skeleton manifest
+  -> lane-aware/contract-aware batches
+  -> shared PMAP work pool
+  -> healthy qualified account/model workers
+  -> persist valid partial maps
+  -> repair only unresolved parents
+```
+
+Do not serialize an entire large document behind one failed lane when independent batches can be drained safely.
+
+Batch identity must include the grounding context/contract and relevant skeleton source identity so old skeleton-only maps do not silently count as current grounded maps.
+
+## 1.11 Document profile and pMAP remain separate durable functions
+
+`DOCUMENT_PROFILE` and `PMAP` are separate contracts even if the same provider key participates in both.
+
+Reason:
+- one document profile per document;
+- potentially many pMAP batches per document;
+- independent retries/backfills;
+- pMAP should be able to run from deterministic grounding without waiting for LLM profile generation;
+- repairing one missing pMAP batch must not regenerate a valid document profile.
+
+Any dormant combined-call scaffold is an optimization candidate only after these contracts are correct. Single HTTP call does not imply one durable function.
+
+## 1.12 Parent enrichment remains bridge/legacy until reader migration is proven
+
+Current code still mints/reads `parent_enrichment` behavior. Do not delete it from intuition.
+
+The agent must trace its actual retrieval readers and classify it against the migration authority. Do not invest major new provider architecture into this lane unless required to preserve current retrieval during migration.
+
+Do not make parent enrichment a surprise hard readiness barrier unless the accepted migration contract explicitly requires it.
+
+## 1.13 Legacy `query_ready` is not semantic-index completion
+
+Preserve the distinction between:
+- legacy/core `query_ready`;
+- current/vNext semantic-index readiness.
+
+The canonical document status must expose both until an authorized cutover changes the contract.
 
 ---
 
-# 7. Parent enrichment: trace, classify, preserve or retire intentionally
+# 2. Unattended execution rules
 
-## 7.1 Required Graphify questions
+The agent is expected to continue without asking routine clarification questions while the owner is away. When the repo/runtime gives enough evidence to choose safely, choose and document the decision.
 
-Trace `parent_enrichment` end-to-end and answer:
+## 2.1 Safety/worktree rules
 
-1. Which retrieval path(s) read `parent_enrichments` today?
-2. Which fields/surfaces from the compiled enrichment actually enter candidate generation/ranking?
-3. Is absence intentionally invisible/fail-open, as the current additive design comments state?
-4. What parent population is enrichment-eligible after region/noise filtering?
-5. Does profile/MAP duplicate its function, complement it, or serve a different query lane?
-6. Which code mints enrichment automatically versus manually?
-7. What durable row/contract determines current READY vs INVALID vs superseded?
+Before edits:
 
-Grounding anchors:
-- `workers/workers/summary_worker_impl.py::_do_enrichment`
-- `shared/polymath_shared/latent/*`
-- `control/control/scheduler.py::auto_enrich_on_chunks`
-- `control/control/scheduler.py::apply_promotions`
-- `orchestrator/orchestrator/api/ui.py::_mint_enrichment`
-- `frontend/src/components/FilesView.tsx`
+1. inspect `git status --short`;
+2. inspect current branch/HEAD;
+3. run repository preflight/guard commands required by current `AGENTS.md` and repo policy;
+4. preserve unknown dirty work;
+5. never `git reset --hard`;
+6. never mass-stage unrelated files;
+7. do not delete user data to make tests pass;
+8. do not expose API keys/Authorization headers in diagnostics, commits, logs, screenshots or reports;
+9. make coherent commits by phase;
+10. update work log/wiki/continuity artifacts required by the repository.
 
-## 7.2 Required classification
+If the working tree contains unrelated owner work, isolate this task in a safe branch/worktree rather than overwriting it.
 
-Assign exactly one:
-- **KEEP — required additive retrieval lane**
-- **KEEP — optional additive retrieval lane**
-- **BRIDGE during vNext migration**
-- **SUPERSEDED — readers already migrated**
-- **RETIRE after reader migration**
+## 2.2 Graphify + source verification is mandatory
 
-The intended end state under §1.11 is that `parent_enrichment` is not a permanent fifth API function; preserve it only as long as real readers/rollback requirements justify it.
+Before modifying runtime behavior, run Graphify against the actual execution HEAD and directly inspect the real files/symbols.
 
-## 7.3 Readiness policy
-
-Unless the existing accepted migration authority is explicitly changed, do not make enrichment a surprise hard `query_ready` barrier. If it remains additive, display its own state separately:
+At minimum trace:
 
 ```text
-enrichment: READY / PARTIAL / FAILED_OPTIONAL / DISABLED
+/upload
+ -> intake_submission
+ -> materialization/chunks
+ -> extraction tickets/workers
+ -> profile_document/core projection
+ -> doc_profile
+ -> pMAP mint/worker/projection
+ -> semantic readiness
+ -> retrieval readers
+ -> Files/status UI
 ```
 
-That preserves observability without turning a historical non-blocking retrieval aid into an accidental ingestion outage.
+For each functional pool/stage record:
+- minting event/ticket;
+- queue/work ownership;
+- worker registration;
+- account/model selection;
+- limiter/circuit owner;
+- durable artifact/table;
+- retry/lease/idempotency path;
+- projection path;
+- readiness reader;
+- API status exposure;
+- UI consumer.
+
+Comments are evidence, not authority, when they disagree with executable paths.
+
+## 2.3 Evidence labels
+
+Use concise labels in diagnostics/reports:
+
+```text
+MEASURED
+CONFIRMED
+INFERRED
+DISPUTED
+UNKNOWN
+```
+
+Do not convert guesses into architecture facts.
+
+## 2.4 Testing economics
+
+Use the cheapest proof that can fail for the behavior under test.
+
+- deterministic compiler -> deterministic tests;
+- queue routing -> fake provider/persistence tests;
+- status aggregation -> local DB integration;
+- frontend contract -> TypeScript production build;
+- real provider composition -> tiny bounded canary;
+- corpus migration -> only after tiny canaries are stable.
+
+Do not repeatedly run whole-repo suites after every edit.
 
 ---
 
-# 8. One canonical document-status contract
+# 3. Exact execution order
 
-The UI should not independently reconstruct migration truth from several unrelated endpoints.
+Execute the following phases in order. A phase may contain small internal iterations, but do not jump ahead across a failed gate.
 
-Graphify must choose the lowest-blast-radius compatibility path:
-- extend `/status`, or
-- extend `/documents`, or
-- add `/documents/{doc_id}/status`,
+---
 
-but the actual count/state builder should be **one shared backend authority** reused by any compatibility endpoint.
+## PHASE 0 — Establish clean execution environment
 
-## 8.1 Recommended response model
+### Actions
+
+1. Capture:
+   - execution branch;
+   - HEAD SHA;
+   - dirty worktree state;
+   - running service/container state;
+   - relevant environment/config presence without printing secret values.
+2. Run repository preflight/guard commands.
+3. Create or confirm a task branch/worktree.
+4. Create a dated execution-log directory if repository policy does not already define one.
+5. Record the starting architecture/config hashes for:
+   - provider configuration;
+   - limiter configuration;
+   - ticket DAG;
+   - profile prompt/compiler;
+   - pMAP prompt/compiler/batcher;
+   - semantic readiness.
+
+### Gate
+
+Proceed only when unknown owner changes are safe and preserved.
+
+---
+
+## PHASE 1 — Reconstruct runtime truth with Graphify
+
+### Actions
+
+1. Graphify the real current pipeline.
+2. Directly verify all load-bearing symbols.
+3. Produce a compact runtime-topology report.
+4. Resolve stale comments/docs where they conflict with source.
+5. Specifically prove:
+   - how `GRAPH_EXTRACTION` work is minted and consumed;
+   - how `DOCUMENT_PROFILE` is minted and consumed;
+   - whether/how `PMAP` is automatically minted for fresh uploads;
+   - how parent enrichment is minted/read;
+   - what currently makes semantic readiness complete;
+   - what the normal retrieval/chat reader consumes.
+
+### Required output
+
+A machine/auditor-readable inventory such as:
+
+```text
+function
+queue/ticket
+worker
+lane selector
+provider/account/model
+limiter owner
+artifact/table
+projection
+readiness reader
+retry path
+```
+
+### Gate
+
+Do not patch provider routing or stage ordering until this graph is complete enough to explain current behavior.
+
+---
+
+## PHASE 2 — Freeze and implement the account/model lane registry
+
+### Objective
+
+Make provider capacity explicit and stop provider-wide shared-family behavior.
+
+### Actions
+
+1. Build/normalize a lane registry where each lane identifies:
+   - functional pool eligibility;
+   - provider;
+   - API-key environment reference/account identity;
+   - model;
+   - active/configured/reachable state;
+   - provider capacity metadata;
+   - functional workload qualification;
+   - priority/fallback role.
+2. Remove/replace broad provider-family limiter/circuit coupling where it violates the one-key-one-account rule.
+3. Preserve explicit Groq account relationships where intentional.
+4. Make shared credential use across functions visible.
+5. Detect configured-but-unreachable lanes.
+6. Fix the document-profile fallback reachability topology if current code still slices configured fallback lanes out of the attempt path.
+
+### Required query views
+
+The registry must be able to answer:
+
+```text
+function -> account/model lanes
+account/key -> functions/models consuming it
+model -> functions/accounts using it
+lane -> configured / credential-present / active / reachable / cooldown
+```
+
+### Tests
+
+Provider-free deterministic tests for:
+- different API keys do not share limiter/circuit state by default;
+- model sub-lanes under one key are represented distinctly;
+- explicit shared quota relationships work only when configured;
+- one lane cooldown does not disable unrelated keys;
+- configured fallback lanes are actually reachable;
+- no secret values are rendered in inventory output.
+
+### Gate
+
+All account-isolation tests green before live provider calls.
+
+---
+
+## PHASE 3 — Add versioned rate-limit seed/capability metadata
+
+### Objective
+
+Stop manually rediscovering common published RPM/TPM/RPD information while retaining runtime truth.
+
+### Actions
+
+1. Evaluate `llerandi/llm-rate-limits-tracker` schema and licensing/fit.
+2. If suitable, create a versioned local seed/snapshot or small sync utility; do not add a hard runtime CDN dependency.
+3. Store source metadata and retrieval timestamp/commit.
+4. Map only exact known provider/model/tier identities; unknowns stay unknown.
+5. Add explicit per-account overrides where the user's real account differs from generic published tiers.
+6. Keep runtime provider headers and measured behavior higher authority.
+7. Persist/compute an effective capacity view used by the scheduler.
+
+### Tests
+
+- catalog unavailable -> production/runtime still works from local config;
+- null catalog values do not become zeros or guessed values;
+- explicit account override beats catalog;
+- observed provider limit beats stale seed;
+- different keys remain isolated.
+
+### Gate
+
+The system can print a sanitized effective-capacity table without making a provider call.
+
+---
+
+## PHASE 4 — Establish durable functional work pools
+
+### Objective
+
+Make `GRAPH_EXTRACTION`, `DOCUMENT_PROFILE`, and `PMAP` true functional pools whose healthy lanes finish retryable work.
+
+### Actions
+
+1. Reuse the existing durable ticket/lease/control-plane substrate wherever possible; do not introduce an unnecessary second orchestration system.
+2. Implement the functional equivalent of shared queues within the current control plane.
+3. Ensure workers claim work by functional eligibility, not sticky provider ownership.
+4. Ensure transient failures return work to the pool.
+5. Preserve idempotency and existing receipts.
+6. Define terminal/DLQ classification explicitly.
+7. Add queue/pool metrics:
+   - pending;
+   - claimed/in-flight;
+   - retryable;
+   - terminal;
+   - oldest age;
+   - throughput;
+   - healthy lane count.
+
+### Tests
+
+Using fake providers:
+
+```text
+A 429s, B succeeds                 -> job DONE through B
+A times out, B/C healthy           -> job remains drainable
+one lane breaker opens             -> other keys continue
+all lanes transiently unavailable  -> job remains retryable, not DLQ
+permanent deterministic failure    -> bounded retries then terminal classification
+successful result already exists   -> no duplicate regeneration
+```
+
+### Gate
+
+A fake-pool stress test proves working lanes drain the queue despite injected lane failures.
+
+---
+
+## PHASE 5 — Build `DocumentGroundingContextV1`
+
+### Objective
+
+Provide every pMAP request with compact, reliable document orientation without an LLM dependency.
+
+### Actions
+
+1. Identify canonical structural metadata already available from materialization/chunking/fingerprint code.
+2. Implement one deterministic compiler rather than format-specific ad hoc prompt logic.
+3. Support all currently supported document types using common normalized structural inputs where possible.
+4. Enforce a hard context budget targeting 50–100 tokens.
+5. Establish deterministic precedence and boilerplate/OCR-noise rejection.
+6. Version/hash the compiler and output.
+7. Persist or reproducibly derive the context so diagnostics can display it.
+8. Include its identity in current pMAP generation/batch identity.
+
+### Required deterministic fixtures
+
+At minimum:
+- structured Markdown with title/author/headings;
+- plain text with title-like first lines;
+- HTML metadata/headings;
+- EPUB/TOC-derived structure fixture;
+- DOCX heading fixture;
+- native PDF metadata/heading fixture where supported by existing extraction;
+- scanned/OCR fixture with noisy repeated headers;
+- transcript fixture;
+- almost-empty/poorly structured document;
+- duplicate boilerplate-heavy document;
+- non-English/Unicode title/heading fixture where existing parser supports it.
+
+### Invariants
+
+- source-derived only;
+- deterministic output/hash;
+- no invented summary;
+- no API call;
+- budget never exceeded;
+- garbage does not crowd out high-confidence title/structure;
+- missing metadata degrades gracefully.
+
+### Gate
+
+All document-context fixtures green before pMAP prompt integration.
+
+---
+
+## PHASE 6 — Integrate deterministic grounding into pMAP
+
+### Actions
+
+1. Extend the pMAP user prompt with `DocumentGroundingContextV1` ahead of local ParentSkeleton blocks.
+2. Preserve the frozen MAP DSL/compiler.
+3. Bump the appropriate prompt/map generation contract so old skeleton-only maps cannot satisfy the new grounded generation.
+4. Keep partial valid MAP persistence and exact unresolved repair behavior.
+5. Ensure prompt render is deterministic for the same grounding context + skeleton manifest.
+6. Update diagnostics to capture the sanitized grounding header and a bounded pMAP prompt sample.
+
+### Tests
+
+- same document context + skeletons -> exact same rendered prompt;
+- changed grounding source identity -> new mapping generation/batch identity;
+- unknown/invented alias still rejected;
+- valid partial MAPs persist;
+- missing aliases remain exact repair set;
+- context text cannot be interpreted as instruction/control data;
+- no LLM document profile is required to render the pMAP prompt.
+
+### Gate
+
+Fake-inference pMAP flow passes end to end.
+
+---
+
+## PHASE 7 — Restore pMAP capacity to lane-specific qualification
+
+### Objective
+
+Prevent `MAP_RELIABILITY_CAP=15` from becoming a global functional limit.
+
+### Actions
+
+1. Refactor the effective pMAP batch cap so it can be qualified/configured per account/model lane.
+2. Preserve architectural target 60.
+3. Preserve measured Compound-Mini safe value unless new evidence justifies change.
+4. Use measured density/receipts to guard token envelopes.
+5. Persist lane workload capability separately from provider RPM/TPM.
+6. Ensure large-document batches are independently drainable by the PMAP pool.
+7. Do not run a new expensive 15/30/40/60 provider benchmark unless an actual model's qualified envelope is unknown and the answer changes configuration.
+
+### Offline tests
+
+Use synthetic manifests/fake inference to prove:
+- lane qualified at 15 gets <=15 aliases;
+- lane qualified at 40 gets <=40;
+- lane qualified at 60 gets <=60 when token envelope permits;
+- token envelope can lower the functional target;
+- successful batches are not regenerated;
+- multiple pMAP workers can drain independent batches from one large document.
+
+### Metrics
+
+Expose:
+
+```text
+aliases requested
+valid maps persisted
+maps/request
+completion ratio
+retries
+qualified batch size
+input/output/billed tokens
+latency
+```
+
+Primary pMAP efficiency signal:
+
+```text
+valid current maps persisted / actual HTTP requests
+```
+
+### Gate
+
+Lane-specific batch qualification works provider-free before live use.
+
+---
+
+## PHASE 8 — Normalize `DOCUMENT_PROFILE` as a functional pool
+
+### Actions
+
+1. Confirm the intended vNext profile generation is explicitly enabled by supported startup/config, not an accidental local environment value.
+2. Route pending profile jobs through the `DOCUMENT_PROFILE` functional pool.
+3. Make transient failures lane-independent and retryable by another qualified lane.
+4. Preserve compiler validity and artifact identity.
+5. Fix configured fallback reachability.
+6. Keep provider/account/model receipt metadata.
+7. Expose actual profile field counts and prompt/compiler/schema versions.
+
+### Profile count contract
+
+Source-anchored:
+- ONE;
+- SUMMARY;
+- TOPIC;
+- TERM;
+- Q.
+
+Routing-inferred:
+- SEARCH;
+- THEORY;
+- CONCEPT;
+- LATENT-PATTERN;
+- ANCHOR;
+- RECALLQ;
+- TENSION;
+- BRIDGE;
+- INVERSION;
+- BOUNDARY;
+- SEEALSO.
+
+Targets/aims remain advisory. Never turn soft count aims into validity quotas.
+
+### Tests
+
+- compiler adversarial fixtures;
+- lane A failure -> lane B can complete same document;
+- valid current profile -> no regeneration;
+- fallback lanes reachable;
+- status counts equal persisted compiled artifact.
+
+### Gate
+
+Fake-provider and deterministic profile tests green.
+
+---
+
+## PHASE 9 — Normalize `GRAPH_EXTRACTION` as the workhorse pool
+
+### Actions
+
+1. Inventory every currently eligible extraction lane.
+2. Route extraction jobs through the shared functional pool using existing durable control-plane primitives.
+3. Respect each account/model's provider capacity and qualified workload envelope.
+4. Preserve output compiler/ontology contracts.
+5. Ensure transient provider failures return jobs to the pool.
+6. Maintain traceability:
+   - chunk/job identity;
+   - lane/account/model;
+   - attempt;
+   - provider response classification;
+   - compiler/extraction outcome;
+   - durable receipt.
+
+### Efficiency metrics
+
+At minimum:
+
+```text
+parents/chunks completed per minute
+valid entities/objects/relationships persisted per request
+tokens per valid completed unit
+queue age/depth
+retry rate
+per-lane success rate
+```
+
+### Tests
+
+Use fake lanes to prove free-for-all draining and deterministic result persistence before live canaries.
+
+### Gate
+
+No extraction job can remain stuck solely because its first selected provider/account is unavailable while another qualified lane is healthy.
+
+---
+
+## PHASE 10 — Keep `CHAT` latency-oriented and right-size its compiler lane
+
+### Actions
+
+1. Keep CHAT outside the ingestion backlog drainers.
+2. Retain account/model isolation and capacity accounting.
+3. Right-size the chat compiler/model based on its small structured-plan contract; do not use expensive capacity without measured benefit.
+4. Preserve deterministic fallback for invalid structured plans.
+5. Ensure ingestion backlog cannot starve interactive chat if credentials are intentionally shared.
+
+### Gate
+
+Chat routing remains functional after provider-control-plane changes and does not accidentally consume ingestion queue semantics.
+
+---
+
+## PHASE 11 — Trace/classify parent enrichment and migration dependency
+
+### Actions
+
+1. Graphify exact current `parent_enrichments` writers/readers.
+2. Verify candidate/retrieval surfaces that still consume it.
+3. Classify against the migration authority:
+   - required bridge;
+   - optional bridge;
+   - readers migrated/superseded;
+   - retire after explicit reader migration.
+4. Do not build a new permanent provider pool for it.
+5. Keep its visible status separate if still live.
+
+### Gate
+
+No current retrieval reader is silently broken by the functional-pool migration.
+
+---
+
+## PHASE 12 — Build one canonical document status + diagnostics authority
+
+### Objective
+
+A failed canary must explain itself.
+
+### Canonical document status
+
+The backend must expose one authoritative aggregate, reused by compatibility endpoints/UI where practical.
+
+At minimum:
 
 ```text
 identity
-  doc_id
   run_id
+  doc_id
   corpus_id
-  source_name
-  media_type
+  source
 
 state
   run_status
   core_query_ready
-  vnext_verdict / semantic_index_ready
-  fully_ready
+  semantic/vnext verdict
+  fully_ready if retained
   blockers[]
 
 chunks
@@ -913,665 +1031,647 @@ chunks
 profile
   present
   valid
-  vnext
-  schema_version
-  prompt_version
-  compiler_version
+  generation/schema/prompt/compiler versions
   counts_by_field
-  issues_summary
   projected
+  provider/account/model/attempt summary
 
-parent_map
+pmap
+  grounding_context_version/hash
   map_contract
-  profile_context_contract/hash
   eligible
   excluded
   mapped_active
   unresolved
-  batches_total
-  batches_done
-  batches_partial
-  repair_or_error_summary
+  batches total/done/partial
   projected
+  provider/account/model/attempt summary
 
 enrichment
   classification
-  applicable
-  ready
-  invalid_unrecovered
-  remaining
+  applicable/ready/invalid/remaining
+
+functional_pools
+  graph_extraction queue/healthy lanes/oldest age
+  document_profile queue/healthy lanes/oldest age
+  pmap queue/healthy lanes/oldest age
 
 stages
-  ticket/status/attempt/error for current run
+  ticket/lease/status/attempt/error/last_progress
 ```
 
-## 8.2 Truth rules
+### Canary diagnostic packet
 
-- Every number comes from authoritative Postgres/artifact/projection-receipt state.
-- Logs are diagnostics, not completion proof.
-- Provider lane selection is not equivalent to HTTP dispatch.
-- A queued ticket is not progress completion.
-- Old/superseded contract rows do not count toward current generation.
-- An advisory profile target miss is not automatically a blocker.
-- A missing current required artifact is a blocker even if legacy `query_ready` is true.
-- A pMAP generated without the required current profile context must not satisfy the new profile-grounded pMAP contract.
+For every iterative canary, automatically write a run-scoped diagnostic folder. Use the repository's existing reporting convention if present; otherwise use a path conceptually like:
 
-## 8.3 Backend acceptance criteria
+```text
+reports/rag_pipeline_canaries/YYYY-MM-DD/<run_id>/
+```
 
-For one seeded document fixture/database state, the status builder must correctly distinguish:
+Minimum files/content:
 
-1. no document yet;
-2. chunks landed, profile missing;
-3. valid profile but profile projection missing;
-4. MAP partial with exact unresolved count;
-5. all eligible parents resolved by active maps + exclusions;
-6. optional enrichment partial;
-7. full semantic-index ready;
-8. stale historical rows under an old contract that must **not** satisfy current readiness.
+```text
+summary.md
+canary_manifest.json
+pipeline_timing.json
+canonical_status.json
+pool_state.json
+lane_capacity.json
+provider_receipts.jsonl
+profile_status.json
+pmap_status.json
+grounding_context.txt
+pmap_prompt_sample.txt          # sanitized/bounded
+projection_status.json
+retrieval_probe.json
+errors.jsonl
+```
 
-**Test timing:** one targeted DB integration module for this aggregate. Do not duplicate all compiler edge cases here.
+Never include:
+- raw API keys;
+- Authorization headers;
+- secret env values;
+- unbounded copyrighted document text.
+
+### Timing events
+
+Capture at least:
+
+```text
+upload_accepted
+intake_started/intake_done
+chunks_ready
+extraction_started/extraction_done
+grounding_compiled
+profile_started/profile_done
+pmap_started/pmap_done
+profile_projection_done
+pmap_projection_done
+semantic_ready
+retrieval_probe_done
+```
+
+Where exact events do not exist yet, derive them from durable state and label them accordingly.
+
+### Gate
+
+A seeded local DB/status test can identify exact blockers without reading free-form logs.
 
 ---
 
-# 9. UI/UX migration
+## PHASE 13 — Reconcile projection/readiness wiring
 
-Grounded files:
-- `frontend/src/api.ts`
-- `frontend/src/types.ts`
-- `frontend/src/components/FilesView.tsx`
-- `orchestrator/orchestrator/api/ui.py`
+### Actions
 
-The current Files page already owns upload, duplicate feedback, document rows, section expansion, enrichment, readiness, and retrieval visibility. Extend this surface rather than creating a parallel admin page unless Graphify shows a concrete ownership conflict.
-
-## 9.1 Document row — fast operational answer
-
-Each row should answer, without expanding it:
+Prove current source rows/artifacts flow to current projections and readiness:
 
 ```text
-Source
-Type / size
-Children
-Parents
-Profile state
-MAP mapped/eligible
-Enrichment state
-Overall semantic-index state
-Primary blocker if incomplete
+doc_profile artifact -> profile representations -> Qdrant/profile projection
+pMAP rows -> pMAP vector text -> Qdrant/pMAP projection
 ```
 
-Example conceptually:
+Then prove current retrieval readers consume the intended generation.
 
-```text
-Book.pdf   4.2 MB   982 child   173 parent
-Profile ✓ vNext
-MAP 168/171 + 2 excluded · 1 unresolved
-Enrich 160/169
-Semantic index: BLOCKED — 1 parent MAP unresolved
-```
+Required rule:
+- routing/profile/pMAP hypotheses may route/deepen retrieval;
+- final answer citations come from underlying source evidence, not from inferred routing text as if it were source evidence.
 
-Do not use the example numbers as test fixtures or target values.
+### Gate
 
-## 9.2 Expanded document — quantitative contract
-
-Expanded view should show:
-
-### Profile counts
-A compact table of actual counts, with target/aim only where defined:
-
-```text
-ONE             1
-SUMMARY         1
-TOPIC           8 / aim 10
-TERM           11 / aim 10
-Q              14 / aim 15
-SEARCH         13 / aim 15
-THEORY          8 / aim 10
-CONCEPT         9 / aim 10
-LATENT-PATTERN  2
-ANCHOR          1
-RECALLQ         3
-TENSION         1
-BRIDGE          2
-INVERSION       1
-BOUNDARY        1
-SEEALSO         7 / aim 10
-```
-
-### Parent contract
-- materialized
-- MAP eligible
-- excluded
-- active mapped
-- unresolved
-- projected
-- enrichment applicable / ready / failed / remaining
-
-### Pipeline contract
-- current generation/version
-- current profile->pMAP context generation
-- current stage states
-- exact blockers
-- last durable error
-
-Keep raw model output, hashes, provider lane, full compiler issue payload, and low-level receipts **collapsed/debug-only**. The normal UI is for operational truth, not forensic noise.
-
-## 9.3 UI testing policy
-
-`frontend/package.json` currently has no frontend unit/component test framework; it has `tsc --noEmit && vite build`.
-
-Therefore:
-- do not introduce Jest/Vitest solely for the migration status cards;
-- put the correctness burden in the backend document-status contract tests;
-- run `npm run build` after UI/types/API changes;
-- visually/behaviorally prove the UI during the final production document E2E.
-
-Introduce a frontend test framework only if new UI logic becomes sufficiently stateful that the backend contract + TypeScript build cannot isolate it.
+A document cannot report semantic-ready while a required current projection is missing.
 
 ---
 
-# 10. Projection and retrieval-readiness wiring
+## PHASE 14 — Offline acceptance gate
 
-The vNext migration authority already distinguishes build substrate from live readers. Finishing ingestion is not enough if the new artifacts are never consumed or projected.
+Before the first timed provider canary, all items below must be green.
 
-Graphify must prove:
+### Architecture/control plane
+- [ ] Graphify runtime graph captured against current execution HEAD.
+- [ ] four functional pools represented explicitly.
+- [ ] one-key-one-account isolation implemented/tested.
+- [ ] provider-wide family coupling removed except explicit proven relationships.
+- [ ] configured lanes have active/reachable diagnostics.
+- [ ] retryable work is functional-pool-owned, not sticky-lane-owned.
 
-1. `doc_profile` artifact -> profile representation -> profile Qdrant projection;
-2. current compiled profile -> bounded/versioned pMAP document context;
-3. parent MAP row -> parent-MAP vector text -> parent-MAP Qdrant projection;
-4. projection reconciliation/receipts use the current embedding contract;
-5. retrieval dual-read/shadow/current reader actually consumes the intended profile/MAP generation;
-6. the final normal query path deepens back to source child evidence and does not cite routing hypotheses as evidence.
+### Capacity
+- [ ] local rate-limit seed/override/evidence precedence works.
+- [ ] no runtime dependency on external catalog availability.
+- [ ] per account/model provider capacity visible.
+- [ ] per function/account/model workload qualification visible.
+- [ ] pMAP batch capability is lane-specific.
 
-Grounding:
-- `workers/workers/doc_profile_worker.py`
-- `shared/polymath_shared/document_profile/projection.py`
-- `shared/polymath_shared/document_profile/parent_skeleton.py`
-- `shared/polymath_shared/document_profile/map_batches.py`
-- `shared/polymath_shared/document_profile/map_prompt.py`
-- `workers/workers/doc_parent_map_worker.py`
-- `shared/polymath_shared/document_profile/parent_map_projection.py`
-- `shared/polymath_shared/semantic_readiness.py`
-- current retrieval modules identified by Graphify, including the live `orchestrator/orchestrator/api/chat_retrieval.py` path.
+### Grounding/pMAP
+- [ ] `DocumentGroundingContextV1` deterministic fixtures green.
+- [ ] grounding payload budget enforced.
+- [ ] pMAP prompt includes deterministic grounding.
+- [ ] pMAP contract/version invalidates old skeleton-only generation appropriately.
+- [ ] MAP compiler remains tolerant-format / strict-identity.
+- [ ] partial MAP persistence/repair remains correct.
+- [ ] offline 15/40/60 lane-capability batch-planner tests green.
 
-**P0 failure condition:** a stage can say “complete” while its current required projection/context generation is missing and no readiness/status surface reports that gap.
+### Profile/extraction
+- [ ] profile compiler adversarial tests green.
+- [ ] vNext intended startup contract explicit.
+- [ ] profile pool failover test green.
+- [ ] graph extraction pool failover/drain tests green.
+
+### Status/diagnostics
+- [ ] canonical document status builder exists.
+- [ ] exact blocker list derives from durable state.
+- [ ] run-scoped canary diagnostics writer works locally.
+- [ ] frontend/API types compile if changed.
+
+### Repo quality
+- [ ] targeted relevant tests green.
+- [ ] affected persistence integration tests green.
+- [ ] frontend `npm run build` green when frontend touched.
+- [ ] repo guards/preflight green.
+
+**STOP if this gate is not green. Do not use live provider calls to discover deterministic implementation defects.**
 
 ---
 
-# 11. Existing corpus reconciliation — repair, do not blindly re-ingest
+## PHASE 15 — Iterative 3–5 KB timed canary loop
 
-`control/control/manifest_ingest.py` already implements deterministic I1-style plan / execute / status. Reuse its design principle: derive owed work from durable state, then enqueue only what is missing/stale.
+This phase is explicitly authorized for unattended execution after Phase 14 passes.
 
-## 11.1 Reconciliation classification
+### 15.1 Canary file specification
 
-For each document, classify current generation state, e.g.:
+Generate a unique synthetic `.txt` file for each iteration.
 
-- `CORE_NOT_READY`
-- `CORE_READY_PROFILE_MISSING`
-- `PROFILE_STALE_GENERATION`
-- `PROFILE_READY_MAP_NOT_STARTED`
-- `MAP_STALE_PROFILE_CONTEXT`
-- `MAP_PARTIAL`
-- `MAP_READY_PROJECTION_STALE`
-- `VNEXT_READY_ENRICHMENT_PARTIAL`
-- `FULLY_READY`
-- `FAILED_REPAIRABLE`
-- `RUNNING`
+Size:
 
-Names can change; the key is mutually understandable state derived from durable truth.
+```text
+3 KB <= file size <= 5 KB
+```
 
-## 11.2 Migration rules
+Target around 4 KB when convenient.
 
-- Do not delete/re-ingest documents just to regenerate an additive semantic lane.
-- Do not re-profile a current valid profile.
-- Do not remap an active current-contract parent.
-- **When the profile-grounded pMAP contract is introduced, pre-context maps become a different/stale generation by explicit version/identity, not by ad-hoc deletion.**
-- Preserve partial MAP work and repair only unresolved parents within the same current contract.
-- Do not treat optional enrichment gaps as current-generation MAP gaps.
-- Do not mix old contract rows into “complete.”
-- Every repair is resumable and idempotent.
+Each canary should be source-safe synthetic text and contain enough deterministic structure to test grounding and retrieval:
+- clear title;
+- clear author/organization;
+- small `Contents` section or equivalent high-level outline;
+- 3–5 meaningful headings/sections;
+- at least one exact identifier/code/acronym;
+- at least one numerical fact;
+- at least one explicit negation (`X does not ...`) to exercise preservation;
+- one cross-section relationship that can be queried later;
+- no copyrighted copied text.
 
-## 11.3 Dry-run first
+Example themes may vary per iteration so duplicate guards do not collapse runs.
 
-Before any corpus-wide mutation, produce a read-only reconciliation report with:
+Do not deliberately create an extreme stress document. This is a fast composition canary.
+
+### 15.2 Canary environment
+
+Prefer:
+1. dedicated test/dev corpus/database if already supported;
+2. dedicated canary corpus in the real stack if supported;
+3. otherwise a clearly marked synthetic source name and safe cleanup/reconciliation path.
+
+Never delete unrelated real user documents to clean canaries.
+
+### 15.3 Timed run procedure
+
+For each iteration:
+
+1. confirm required services healthy;
+2. capture pre-run pool/lane state;
+3. create unique 3–5 KB canary file;
+4. upload through the canonical `/upload` path, not a test-only shortcut;
+5. record `run_id`, `doc_id`, source hash and start timestamp;
+6. poll canonical status at a sane interval;
+7. capture stage/pool transitions into the diagnostic packet;
+8. at 4:00, if semantic completion is not reached, mark FAIL immediately and snapshot diagnostics;
+9. if complete before 4:00, run a normal retrieval/chat probe against a fact intentionally present in the canary;
+10. verify citation/source identity;
+11. finalize diagnostic summary.
+
+### 15.4 Canary success criteria
+
+A run passes only if all are true:
+
+- accepted through real upload path;
+- expected chunks/parents exist;
+- graph extraction settles;
+- `DocumentGroundingContextV1` exists and reflects reliable title/author/structure;
+- document profile exists and compiler-valid;
+- pMAP eligible/excluded/mapped/unresolved arithmetic reconciles;
+- current required pMAP/profile projections reconcile;
+- semantic/vNext readiness is complete;
+- no unexplained pending/retryable tickets remain for the document;
+- elapsed accepted-upload -> semantic-ready < 4:00;
+- normal retrieval/chat retrieves the canary for a relevant query;
+- answer/source evidence is correctly attributable;
+- diagnostic packet is complete and sanitized.
+
+### 15.5 Required consecutive passes
+
+Do not close the pipeline after one lucky run.
+
+Require **3 consecutive unique 3–5 KB canaries** to pass the criteria above.
+
+If provider quota/availability makes three impossible despite healthy failover, capture that as a capacity defect; the pool architecture is supposed to let healthy lanes finish the job.
+
+### 15.6 Failure triage order
+
+When a canary fails or exceeds four minutes, do not make broad speculative edits. Diagnose in this order:
+
+```text
+1. canonical blocker/status truth
+2. stuck/oldest ticket or queue item
+3. healthy lane count and reachability
+4. limiter admission vs actual HTTP dispatch
+5. provider response/Retry-After/headers
+6. worker lease/retry behavior
+7. compiler validity/yield
+8. durable persistence
+9. projection reconciliation
+10. readiness aggregation
+11. retrieval reader
+```
+
+Classify failure as one of:
+
+```text
+CONTROL_PLANE_STALL
+NO_HEALTHY_LANE
+LIMITER_FALSE_REFUSAL
+PROVIDER_RATE_LIMIT
+PROVIDER_TRANSPORT
+DETERMINISTIC_INPUT
+COMPILER_INVALID
+PERSISTENCE
+PROJECTION
+READINESS
+RETRIEVAL
+UNKNOWN
+```
+
+Repair the smallest responsible layer.
+
+### 15.7 Rerun policy
+
+After a fix:
+- run the smallest deterministic/integration test proving that fix first;
+- then run a **new unique** 3–5 KB canary;
+- reset consecutive-pass count after any canary failure that indicates a pipeline defect.
+
+Do not use repeated live canaries as a substitute for local tests.
+
+---
+
+## PHASE 16 — pMAP efficiency sanity after the micro-canaries
+
+The 3–5 KB canary proves composition, not 60-parent pMAP packing.
+
+After three consecutive micro-canaries pass:
+
+1. inspect measured pMAP receipts from canaries;
+2. verify the selected lane's qualified batch size is being honored;
+3. run provider-free synthetic planning/persistence tests for a 60-parent manifest;
+4. only run a live larger pMAP qualification if an actual production lane's workload envelope remains unknown and the result will change configuration.
+
+Do not automatically spend provider quota proving 60 live when the current model is already known to require 15.
+
+---
+
+## PHASE 17 — Existing corpus reconciliation/backfill
+
+Only after the micro-canary gate passes may existing-corpus migration resume.
+
+### Dry-run first
+
+Produce read-only reconciliation counts:
 
 ```text
 documents_total
 core_ready
 profiles_current
-profiles_missing_or_stale
-map_eligible_parents
-map_active
-map_excluded
-map_unresolved
-map_stale_profile_context
-docs_map_complete
-docs_map_partial
-enrichment_ready / partial / failed
-projection_gaps
-repairable_failures
-estimated provider calls for owed work
-```
-
-The report becomes the bulk execution input. No “scan everything and hope idempotency saves us” migration.
-
----
-
-# 12. Reconcile stale planning/checklist state only after runtime proof
-
-Do not spend engineering time implementing historical “NOT STARTED” items that current code already provides.
-
-At the end of the offline implementation pass:
-
-1. compare `RAG_E2E_CHECKLIST.md` against current code/runtime evidence;
-2. reconcile I1 with `control/control/manifest_ingest.py`;
-3. update the retrieval migration ledger only where the authoritative runtime evidence changed;
-4. append the required work log/continuity entry;
-5. preserve prior history rather than rewriting it to look cleaner.
-
-Documentation follows proven runtime state; documentation does not manufacture it.
-
----
-
-# 13. Test economics — required timing and scope
-
-## 13.1 Tier A — deterministic targeted tests
-
-**When:** immediately after changing deterministic policy/logic.  
-**Cost:** low; no provider/network spend.  
-**Purpose:** isolate exact behavior.
-
-Use for:
-- profile compiler adversarial fixtures;
-- MAP compiler adversarial fixtures;
-- profile->pMAP context builder and prompt rendering;
-- API-key/account isolation and pool inventory rules;
-- limiter/accounting/refusal logic;
-- parent-count/readiness arithmetic;
-- document-status builder logic;
-- migration/reconciliation selection;
-- current-contract/supersession semantics.
-
-Run the smallest relevant test module(s). Do **not** run full integration/E2E here.
-
-## 13.2 Tier B — coherent persistence/wiring integration tests
-
-**When:** after a coherent backend boundary is assembled, not after each line edit.  
-**Cost:** medium; local Postgres/fakes, no provider spend.  
-**Purpose:** prove transaction/persistence/event wiring that unit tests cannot.
-
-Use only where needed, e.g.:
-- profile compiled artifact -> pMAP context -> current map-contract status;
-- profile compiled artifact -> status aggregate;
-- MAP maps/exclusions/batches -> status aggregate;
-- current-contract projection receipt -> readiness transition;
-- reconciliation plan -> correct re-arm/no-op behavior;
-- new-upload ticket graph reaches the expected semantic stage with provider call stubbed.
-
-Do not repeat every Tier-A malformed-output fixture through Postgres.
-
-## 13.3 Tier C — frontend compile/build
-
-**When:** after backend response shape and UI wiring settle.  
-**Command authority:** `frontend/package.json` -> `npm run build`.  
-**Purpose:** TypeScript/API/component integration and production bundle.
-
-No new test framework by default.
-
-## 13.4 Tier D — grouped offline acceptance suite
-
-**When:** once the offline implementation is coherent and before any live provider canary.  
-Run:
-- affected backend/compiler/worker suites;
-- functional-lane/account-isolation configuration tests;
-- Groq conservation regressions;
-- one local DB status/readiness integration set;
-- migration dry-run tests;
-- frontend production build;
-- repo governance/guards required by `AGENTS.md`/work-log policy.
-
-This is the first reasonable point for a broader relevant suite. Do not repeatedly run it after each small commit.
-
-## 13.5 Tier E — ONE bounded production fresh-document E2E
-
-**When:** only after the offline acceptance gate in §15 is green.  
-**Cost:** real provider/runtime spend.  
-**Purpose:** prove actual production composition, not parser edge cases.
-
-One representative new document should traverse the real production path. This replaces many redundant earlier live “smokes.”
-
-If it fails, repair at the smallest layer that explains the failure. Repeat the entire E2E only if the fix changes cross-stage wiring or final behavior.
-
-## 13.6 Tier F — bulk migration integrity
-
-**When:** after the single fresh-document production E2E passes.  
-Do not E2E every historical document. Use reconciliation counts, durable receipts, failure classes, and sampled normal queries.
-
----
-
-# 14. Tests explicitly not worth running early
-
-Do **not** spend time on these until the condition that makes them decision-relevant exists:
-
-- live 15/20/30/40/60 MAP batch-size benchmark **unless** `MAP_RELIABILITY_CAP` is still unresolved and the result will change production configuration;
-- broad profile-context-vs-no-context pMAP quality tournament before the profile-grounded path is correctly wired and the final canary shows a decision-relevant quality question;
-- full corpus backfill before the one fresh-document canary;
-- repeated full repo suites after every logical patch;
-- repeated live profile/model calls to test parser tolerance;
-- new frontend unit framework for straightforward status rendering;
-- live enrichment requalification just to discover whether retrieval reads it — Graphify/file/runtime trace comes first;
-- destructive restart/recovery drills already proven by foundation gates unless new migration code introduces a new untested recovery boundary;
-- unrelated MCP / model-catalog / UI-polish work that does not block fresh-document-to-query completion.
-
----
-
-# 15. Offline acceptance gate — STOP before live provider calls
-
-All of the following must be true before the final production canary begins.
-
-## Runtime truth
-- [ ] Graphify runtime graph captured against the execution worktree HEAD.
-- [ ] Fresh `/upload` path traced to canonical intake and downstream semantic stages.
-- [ ] `doc_profile` trigger/worker/persistence/projection path proven.
-- [ ] `doc_parent_map` trigger/worker/persistence/projection path proven or missing edge implemented.
-- [ ] pMAP current input path proven to consume the required bounded compiled-profile context under the new current contract.
-- [ ] `parent_enrichment` current reader/writer/trigger behavior classified.
-- [ ] four permanent API-backed functional lanes (`CHAT`, `GRAPH_EXTRACTION`, `DOCUMENT_PROFILE`, `PMAP`) are represented in the authoritative provider configuration/inventory.
-- [ ] contradictory comments/checklists identified and not treated as runtime truth.
-
-## Provider/account topology
-- [ ] every API key is an independent account lane by default.
-- [ ] no Gemini/OpenRouter/etc. provider-wide family circuit crosses independent keys merely by provider name.
-- [ ] model-specific sub-lanes are explicit where provider quotas differ by model.
-- [ ] any same-key cross-function use is surfaced in the generated pool inventory.
-- [ ] Groq profile+pMAP shared-account behavior is the explicit exception, not the default abstraction.
-- [ ] configured-but-unreachable or credential-parked fallbacks are surfaced.
-
-## Counts / state
-- [ ] canonical parent populations named and implemented.
-- [ ] profile actual field counts derive from persisted compiled artifact.
-- [ ] profile targets remain advisory.
-- [ ] MAP eligible/excluded/mapped/unresolved derive from current-contract durable rows.
-- [ ] profile-context generation/version is part of current pMAP identity/readiness.
-- [ ] current-generation projection gaps are visible.
-- [ ] document blocker list derives from durable state.
-- [ ] legacy `query_ready` is not silently mistaken for vNext completeness.
-
-## Compilers
-- [ ] profile compiler adversarial fixture set green.
-- [ ] MAP compiler adversarial fixture set green.
-- [ ] no JSON/second-parser regression introduced.
-- [ ] partial MAP work still persists and repairs only missing aliases.
-
-## Groq/MAP control-plane prerequisite
-- [ ] RPD/RPM/provider-header accounting defects closed offline.
-- [ ] `LIMITER_REFUSED` proves zero HTTP dispatch/provider spend.
-- [ ] actual HTTP dispatch is distinct from lane selection/local attempt.
-- [ ] hidden mapping errors/partial compiler outcomes are surfaced.
-- [ ] retry behavior cannot blindly burn quota on deterministic/local-refusal failure.
-
-## UI / migration
-- [ ] one canonical backend document-status builder exists.
-- [ ] Files UI consumes authoritative counts/state.
-- [ ] frontend `npm run build` passes.
-- [ ] existing-corpus reconciliation dry-run is idempotent/read-only.
-- [ ] targeted/grouped offline tests pass.
-
-**STOP if any item above is false.** Do not compensate by “trying a real upload and seeing what happens.”
-
----
-
-# 16. One bounded production fresh-document E2E
-
-After §15 passes, authorize exactly one representative production ingestion proof.
-
-## 16.1 Document choice
-
-Use a real supported document that:
-- is not already in the target corpus;
-- is not a tiny toy with one parent;
-- is not an extreme 400+ parent stress book for the first proof;
-- has enough structure/content to exercise profile fields and multiple MAP batches;
-- has a known source identity for retrieval verification.
-
-## 16.2 Capture identifiers
-
-Record:
-- source name,
-- upload sha/content identity,
-- `run_id`,
-- `doc_id`,
-- corpus,
-- active profile/map/profile-context/projection contracts.
-
-## 16.3 End-to-end acceptance
-
-Prove in order:
-
-1. UI `/upload` accepts the file and returns the canonical run.
-2. duplicate guard behavior remains correct.
-3. materialized document appears in Postgres.
-4. `children_total`, `parents_materialized`, and `parents_with_children` reconcile with direct DB truth.
-5. core extraction/projection chain settles.
-6. intended profile generation runs (`vnext` state explicit).
-7. profile is compiler-valid.
-8. UI/API field counts equal persisted compiled profile counts.
-9. pMAP requests use the current compiled profile context plus local ParentSkeleton evidence under the versioned current contract.
-10. MAP counts reconcile:
-   - eligible,
-   - excluded,
-   - mapped active,
-   - unresolved.
-11. unresolved current eligible parents reach zero for this canary unless there is a specifically justified persistent failure that correctly blocks completion.
-12. required MAP/profile projections reconcile with current durable source rows.
-13. enrichment state is visible and behaves according to its final additive/required classification.
-14. core `query_ready` and vNext/semantic-index readiness both display truthfully.
-15. normal retrieval/chat — not a test-only path — can retrieve the new document for a query it should answer.
-16. final answer cites underlying source evidence, not routing-inferred profile/MAP hypotheses as evidence.
-17. Files UI values equal canonical status API values and direct DB truth.
-18. re-reading/reconciling the document produces no duplicate current artifacts.
-19. operator pool inventory can identify which function/account/model lane actually served each provider-backed stage without exposing secrets.
-
-## 16.4 What not to cram into this E2E
-
-Do not intentionally crash every worker, cycle every provider, run every retrieval mode, or repeat all parser malformed-output fixtures here. Those belong to cheaper targeted proofs unless this migration introduced a new recovery contract that has never been tested.
-
-The purpose is one thing: **prove the finished production composition works for a genuinely new document.**
-
----
-
-# 17. Existing-corpus migration / backfill
-
-Only after §16 passes may the controlled profile/MAP migration resume at scale.
-
-## 17.1 Resume from durable state
-
-Use current contract state to select owed work:
-- profile missing/stale only;
-- MAP unresolved only;
-- MAP stale because it predates the required profile-context generation;
-- projection gaps only;
-- enrichment only according to its classification.
-
-Never restart from zero because a corpus is partially migrated.
-
-## 17.2 Provider budgeting
-
-For live MAP/profile work, request budgeting must be based on observed/conservatively reconciled provider capacity after the Groq forensic repair. Do not forecast from lane selection counts or unverified “accounts × advertised RPD” arithmetic.
-
-Provider/account budgeting must follow §1.11: API-key/account lane first, then model sub-lane. A provider label is never itself a budget domain.
-
-## 17.3 Live migration dashboard/report
-
-At minimum track:
-
-```text
-documents_total
-core_query_ready_documents
-vnext_profile_ready_documents
-vnext_map_complete_documents
-vnext_map_partial_documents
-semantic_index_ready_documents
-
-parents_materialized
+profiles_missing/stale
 map_eligible
 map_excluded
 map_active
 map_unresolved
-map_stale_profile_context
-
-profile field-count distributions
-profile invalid/stale
-map failure classes
-projection gaps
-enrichment ready/partial/invalid
-provider HTTP calls / valid maps persisted
-function/account/model lane utilization
+docs_map_complete
+docs_map_partial
+projection_gaps
+enrichment bridge state
+repairable failures
+estimated owed provider work by function/account/model capability
 ```
 
-Use document and parent denominators, not just “jobs processed.”
+### Repair rules
 
-## 17.4 Completion arithmetic
+- no blind re-ingestion;
+- no regeneration of current valid profiles;
+- no remap of current valid grounded maps;
+- repair only unresolved/stale current-contract work;
+- preserve partial valid MAPs;
+- use functional pools so healthy lanes drain owed work;
+- do not let optional parent enrichment gaps masquerade as pMAP gaps;
+- old contracts never satisfy current-generation completion.
 
-For MAP coverage, the current migration authority’s generation invariant remains load-bearing: a partial generation is not complete. Use the current-contract equivalent of:
+### Bulk execution
+
+Use durable receipts and reconciliation counters. Do not E2E every historical document.
+
+Sample normal retrieval queries after reconciliation.
+
+---
+
+## PHASE 18 — Frontend/status product closeout
+
+If not already completed as part of Phase 12, ensure Files/status UI shows operational truth:
+
+Per document row:
 
 ```text
-unresolved eligible parents == 0
-AND
-all required documents have current qualified profiles
-AND
-all active maps belong to the required profile-grounded map generation
-AND
-required projections reconcile
+source/type/size
+children
+parents
+profile state
+pMAP mapped/eligible/excluded/unresolved
+semantic-index state
+primary blocker
+enrichment bridge state if still live
 ```
 
-Do not hide unresolved work by marking a batch/run complete.
+Expanded/debug view may expose:
+- profile field counts;
+- contract versions;
+- pMAP batch counts;
+- lane/provider summaries;
+- last durable error;
+- diagnostics link/reference.
+
+Keep raw model output and forensic payloads collapsed/debug-only.
+
+Do not introduce a frontend testing framework solely for basic status cards. Use backend contract tests + `npm run build` unless UI logic becomes sufficiently stateful to justify more.
 
 ---
 
-# 18. Final pipeline acceptance / exit criteria
+## PHASE 19 — Final repo validation, commits, continuity and handoff
 
-The RAG pipeline may be declared finished for the current migration when:
+### Actions
 
-- [ ] a newly uploaded production document passes §16 end to end;
-- [ ] current document profile generation is intentional, versioned, and observable;
-- [ ] profile compiler has cheap-model formatting tolerance without semantic looseness;
-- [ ] MAP compiler remains tolerant-format / strict-identity and is adversarially fixture-tested;
-- [ ] pMAP is grounded by the bounded current compiled document-profile context while preserving the MAP DSL/compiler contract;
-- [ ] profile and pMAP remain independently durable/repairable even if a combined provider call is later used as an optimization;
-- [ ] all current required semantic stages are automatically reachable from a new upload;
-- [ ] four permanent functional lanes are formally represented: CHAT, GRAPH_EXTRACTION, DOCUMENT_PROFILE, PMAP;
-- [ ] API-key/account isolation is the default and provider-wide family sharing is removed except explicit evidence-backed exceptions;
-- [ ] pool inventory exposes function -> account/key -> model and reverse cross-use relationships;
-- [ ] parent enrichment has an explicit current bridge/retirement classification and is not accidentally lost;
-- [ ] document-level counts are authoritative and unambiguous;
-- [ ] Files UI shows profile/MAP/enrichment/readiness state and exact blockers;
-- [ ] current vNext/semantic-index completion is distinct from legacy core readiness until an authorized cutover changes that contract;
-- [ ] parent/profile/MAP projections reconcile to durable current rows;
-- [ ] existing corpus migration is resumable/idempotent and no blind re-ingestion is required;
-- [ ] bulk reconciliation reaches zero unexplained owed current-generation work;
-- [ ] normal retrieval/chat samples use the migrated generation without source-evidence/citation regression;
-- [ ] no hidden tickets/stalls/errors contradict the visible terminal state;
-- [ ] `RAG_E2E_CHECKLIST.md`, migration ledger, and work logs are reconciled to the proven runtime state.
+1. run targeted affected tests;
+2. run the grouped relevant acceptance suite once;
+3. run frontend production build if touched;
+4. run repo guards/preflight;
+5. inspect `git diff` and working tree for unrelated changes;
+6. commit coherent work in understandable slices;
+7. update work log/wiki/continuity docs required by repo policy;
+8. reconcile stale comments/checklists only after runtime proof;
+9. leave no unexplained dirty files;
+10. if branch protection/required checks permit and the owner's operating instructions authorize normal merge behavior, complete the normal PR/merge workflow; otherwise leave a clean ready-to-merge PR with exact blockers/check status. Never bypass failed required checks.
 
----
+### Required final evidence packet
 
-# 19. Critical-path work order
+Create one concise final report containing:
 
-Execute in this order unless Graphify proves a dependency requires a small reorder:
+```text
+execution branch + final SHA/commit range
+Graphify/runtime topology reference
+frozen functional-pool inventory
+account/model lane inventory
+rate-limit seed source/version + effective precedence
+workload qualification table
+DocumentGroundingContextV1 version + fixture results
+profile compiler/version + tests
+pMAP contract/version + tests
+canonical status contract
+3 consecutive canary run IDs
+each canary size + elapsed time
+each canary profile/pMAP/readiness counts
+retrieval probe result for each canary
+diagnostics folder references
+bulk reconciliation totals if executed
+frontend build result
+repo guard/test commands + results
+remaining intentional deferred work
+```
 
-### P0-A — Reconstruct runtime truth
-Graphify + direct file verification; resolve stale docs/comments and identify all automatic trigger edges.
-
-### P0-B — Freeze functional/account topology in the provider control plane
-Formalize CHAT / GRAPH_EXTRACTION / DOCUMENT_PROFILE / PMAP; API-key-per-account isolation; model sub-lanes; generated pool inventory; explicit Groq exception. Keep legacy `parent_enrichment` as migration-only, not a fifth permanent function.
-
-### P0-C — Finish the bounded offline Groq/MAP control repair
-Close conservation/accounting/observability/retry defects. **No live call yet.**
-
-### P0-D — Freeze canonical document-count/status contract
-Name parent populations; build one backend status authority; add targeted DB tests.
-
-### P0-E — Finalize document-profile production generation
-Prove vNext enablement/rollback and expose actual compiled field counts.
-
-### P0-F — Wire profile-grounded pMAP under a versioned current contract
-Build the deterministic compact profile-context input, keep ParentSkeleton local evidence, preserve MAP DSL/compiler, and ensure current-map identity cannot mix pre-context and profile-grounded generations.
-
-### P0-G — Adversarially certify both compilers offline
-Second-model scenario generation -> deterministic fixtures -> minimal proven compiler fixes only.
-
-### P0-H — Finish new-document parent-MAP wiring
-Prove/implement automatic stage + projection path and current-generation readiness accounting.
-
-### P0-I — Resolve parent enrichment
-Trace readers, classify bridge/retirement state, preserve until reader migration is proven.
-
-### P0-J — Wire projection/readiness contract
-Current profile/MAP source rows -> current projections -> document/vNext readiness.
-
-### P0-K — Migrate Files UI to the canonical backend contract
-Operational counts/status first; forensic detail collapsed.
-
-### P0-L — Run grouped offline acceptance (§15)
-Targeted suites + DB integration + frontend build + guards. **Still no provider canary until green.**
-
-### P0-M — Run one production fresh-document E2E (§16)
-This is the composition proof.
-
-### P1-N — Resume/reconcile existing corpus migration (§17)
-Repair only owed work; budget live requests from provider/account truth.
-
-### P1-O — Corpus integrity and retrieval sample
-Reconciliation counters + sampled normal queries; no per-document E2E ceremony.
-
-### P1-P — Reconcile documentation and declare finish
-Update stale gates/ledgers only after production evidence exists.
+The final report must distinguish:
+- finished/current;
+- legacy bridge still intentionally present;
+- deferred/non-blocking;
+- blocked by an external condition.
 
 ---
 
-# 20. Do-not-do list
+# 4. Canonical quantitative contracts
 
-Until this plan’s finish criteria require otherwise:
+These names should remain unambiguous throughout implementation/status/UI.
+
+## 4.1 Parent populations
+
+```text
+children_total
+parents_materialized
+parents_with_children
+map_eligible
+map_excluded
+map_active
+map_unresolved
+enrichment_applicable
+enrichment_ready
+enrichment_invalid_unrecovered
+```
+
+Do not assume these populations are equal until the actual policy proves it.
+
+## 4.2 Current-generation scoping
+
+Counts must scope to the current relevant:
+- profile schema/compiler/prompt generation;
+- pMAP contract/prompt/grounding-context generation;
+- active/superseded state;
+- input/content hashes;
+- projection contract.
+
+Historical stale rows must not satisfy current completion.
+
+## 4.3 Functional-pool operational metrics
+
+### Graph extraction
+
+```text
+queue depth/oldest age
+healthy qualified lanes
+completed units/min
+valid objects/relationships per request
+tokens per valid unit
+retry rate
+```
+
+### Document profile
+
+```text
+queue depth/oldest age
+healthy qualified lanes
+valid profiles/request
+compiler-pass rate
+documents/min
+tokens/profile
+p50/p95 latency
+```
+
+### pMAP
+
+```text
+queue depth/oldest age
+healthy qualified lanes
+qualified aliases/request
+requested aliases
+valid maps persisted
+maps/request
+completion ratio
+tokens/map
+retry rate
+p50/p95 latency
+```
+
+### Chat
+
+```text
+healthy lanes
+p50/p95 latency
+structured-plan compiler pass/fallback rate
+error/retry rate
+```
+
+---
+
+# 5. Deterministic compiler certification requirements
+
+## 5.1 Document profile compiler
+
+Use a different capable reviewer model to theorize edge cases, but convert only real risks into deterministic fixtures.
+
+Cover:
+- whitespace/CRLF/no final newline;
+- markdown fences;
+- small preamble/trailing text;
+- bullets/numbering;
+- label variants;
+- duplicate fields;
+- unknown labels;
+- Unicode punctuation;
+- below/above advisory counts;
+- missing optional vNext tags;
+- malformed optional tags;
+- refusal/apology;
+- truncation;
+- semantically empty core.
+
+Expected philosophy:
+- tolerant to harmless presentation drift;
+- strict about semantic core/identity;
+- never invent missing content to hit a quota.
+
+## 5.2 pMAP compiler
+
+Cover:
+- whitespace around `MAP` and separators;
+- lowercase/zero-padded aliases;
+- CRLF/no final newline;
+- reordered valid lines;
+- valid MAPs surrounded by prose;
+- Unicode drift;
+- hook count errors;
+- empty/generic hooks;
+- duplicate alias;
+- unknown alias;
+- empty signature;
+- partial response;
+- valid partial + garbage;
+- refusal/empty;
+- truncation.
+
+Invariant:
+
+> tolerant format, strict identity; valid partial persists; missing aliases become exact repair set.
+
+## 5.3 Deterministic grounding compiler
+
+Cover the universal document fixtures from Phase 5 and explicitly test:
+- title/author precedence conflicts;
+- repeated headers;
+- TOC with page numbers;
+- OCR mirrored/garbled tokens;
+- boilerplate-heavy front matter;
+- no author;
+- no title;
+- filename fallback;
+- extremely long heading trees;
+- token-budget clipping;
+- deterministic ordering/tie breaks.
+
+---
+
+# 6. Do-not-do list
+
+Unless a later explicit owner decision changes the plan:
 
 - do not redesign the chunker;
-- do not create a second intake path;
-- do not replace MAP DSL with JSON;
-- do not add a new compiler/parser layer just for model formatting;
-- do not collapse `DOCUMENT_PROFILE` and `PMAP` into one durable artifact merely because one provider call may eventually emit both;
-- do not let pMAP continue to satisfy the new current contract from isolated ParentSkeleton input without the required compiled profile context;
-- do not share limiter/circuit state across independent API keys merely because they use the same provider;
-- do not infer account sharing from provider/model names; encode exceptions explicitly;
-- do not make soft profile item targets hard quotas;
-- do not make `parent_enrichment` a permanent fifth functional lane or blocking stage by accident;
-- do not redefine legacy `query_ready` without the authorized retrieval cutover;
-- do not count local limiter attempts as provider requests;
-- do not treat logs as completion authority;
-- do not use backfill scripts as evidence that automatic new-document wiring exists;
-- do not rebuild already-current profiles/MAPs during migration except where a deliberately versioned profile-grounded map generation makes old MAP rows stale by contract;
-- do not create a frontend test stack for basic status rendering;
-- do not repeatedly run the full production E2E during intermediate implementation;
-- do not resume a full corpus backfill before the single fresh-document canary passes;
-- do not retire legacy readers/writers from comments or intuition — follow `RETRIEVAL-MIGRATION-DEPENDENCY-V1` reader-before-writer retirement ordering.
+- do not create a second upload/intake path;
+- do not replace the MAP DSL with JSON mode;
+- do not make pMAP depend on the LLM document profile for basic grounding;
+- do not hard-code 15 as the global pMAP batch size;
+- do not hard-code 60 for a model that has not qualified at 60;
+- do not make provider name a shared failure/capacity domain;
+- do not let one key's 429 suppress another key;
+- do not let one lane's failure permanently own/stall retryable work;
+- do not use external rate-limit catalog data as stronger authority than real account/runtime evidence;
+- do not make production depend on the external catalog CDN being online;
+- do not count limiter admission/selection as an HTTP provider call;
+- do not count logs as completion authority;
+- do not turn soft profile count aims into hard quotas;
+- do not make legacy parent enrichment blocking by accident;
+- do not silently redefine legacy `query_ready` as semantic completeness;
+- do not blindly re-ingest the corpus;
+- do not repeatedly run large live pMAP benchmarks when configuration will not change;
+- do not repeatedly run whole-repo suites during small edits;
+- do not use live canaries to debug deterministic parser/compiler defects that local tests can expose;
+- do not expose secrets in diagnostics;
+- do not delete unrelated user data or dirty work to obtain a green run;
+- do not declare success after a single lucky canary;
+- do not bypass failed required checks to merge.
 
 ---
 
-# 21. Required final evidence packet
+# 7. Final completion checklist
 
-At completion, leave one concise evidence packet/work-log entry containing:
+The task is complete only when:
 
-1. execution HEAD / commit range;
-2. Graphify runtime graph or reference to its generated graph artifacts;
-3. four-function provider/account/model pool inventory;
-4. canonical document-status contract example from the production canary;
-5. direct DB reconciliation for the same canary document;
-6. profile field counts and compiler/version identity;
-7. pMAP profile-context contract/hash plus eligible/excluded/mapped/unresolved counts;
-8. required projection reconciliation;
-9. enrichment bridge/retirement classification and canary state;
-10. normal retrieval/chat query demonstrating source retrieval/citation;
-11. frontend build result;
-12. targeted/grouped test commands + results;
-13. bulk migration/reconciliation totals;
-14. remaining intentionally deferred work, if any, clearly separated from pipeline blockers.
+- [ ] Graphify/runtime topology is documented against final execution HEAD.
+- [ ] Four permanent functional pools are explicitly represented.
+- [ ] `GRAPH_EXTRACTION`, `DOCUMENT_PROFILE`, and `PMAP` operate as durable shared-work pools.
+- [ ] Working qualified lanes finish retryable work when another lane fails.
+- [ ] API key = independent account lane is the default control-plane rule.
+- [ ] Provider-wide family failure/capacity coupling is removed unless explicitly proven.
+- [ ] Provider/account/model capacity and workload qualification are separately visible.
+- [ ] External rate-limit data is only a versioned seed/reference layer.
+- [ ] `DocumentGroundingContextV1` works deterministically across supported document classes.
+- [ ] pMAP receives bounded deterministic global grounding + local ParentSkeleton evidence.
+- [ ] pMAP remains the frozen plaintext DSL/compiler contract.
+- [ ] pMAP batch size is lane-qualified; architectural target 60 remains intact.
+- [ ] current Compound-Mini reliability limit is treated as model-lane evidence, not global architecture.
+- [ ] intended vNext document profile generation is explicit and observable.
+- [ ] configured profile fallback lanes are reachable.
+- [ ] graph extraction pool failover is proven.
+- [ ] parent enrichment has an explicit migration classification.
+- [ ] canonical document status exposes exact counts/blockers.
+- [ ] run-scoped diagnostics exist for every canary.
+- [ ] required profile/pMAP projections reconcile.
+- [ ] semantic readiness is distinct from legacy `query_ready` until authorized cutover.
+- [ ] **3 consecutive unique 3–5 KB `.txt` canaries complete in <4:00 each after upload acceptance.**
+- [ ] every passing canary succeeds through normal retrieval/chat with source evidence.
+- [ ] existing corpus reconciliation is dry-run-first and idempotent.
+- [ ] final relevant tests/build/guards are green.
+- [ ] worktree is clean of unexplained task changes.
+- [ ] final evidence/continuity report is committed.
 
-The evidence packet should be short enough to audit. It is not a transcript of every command run.
+When all boxes above are satisfied, the agent may report the RAG pipeline finish work complete for this migration generation.
