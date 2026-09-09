@@ -18,6 +18,39 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-08/README.md` + `DIRECTORY_MAP.md` (the NEWEST dated handoff snapshot — retrieval/routing/synthesis phase; supersedes `2026-09-07T1828/`, which still holds for the document-semantic-index substrate = this phase's P1)** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (rows 11.155–11.167) → `CLAUDE.md` → the two newest work-logs. The document-semantic-index START-HERE/plan below remain valid for the P1 substrate.
 
+## Latest checkpoint (2026-09-09 — RAG-PIPELINE-FINISH-V1: offline pipeline BUILT, gate GREEN)
+
+**Branch `architecture/evidence-first-v5` (fully pushed to origin at bootstrap; new commits `303e9e7…ce46001`
+LOCAL/unpushed).** Owner /goal (2026-09-09) adopted `RAG_PIPELINE_FINISH_PLAN.md` (from PR #2
+`origin/docs/rag-pipeline-finish-plan`, a pure-docs branch) as the runbook to finish the fresh-document
+pipeline so a new upload reaches **VNEXT_COMPLETE**. **Phases 0–14 landed OFFLINE, gate GREEN (178 passed/1
+skipped), ZERO provider spend, forensic hold intact.** Register **11.186**.
+
+**Central finding (Phase 1):** `doc_parent_map` (pMAP) was NOT auto-minted — backfill-only — so a fresh
+upload could never satisfy the vNext floor `unresolved_eligible_parents==0`. **The spine now exists:** a new
+`doc_parent_map_stage_worker` (in-run cross-lane failover over the six `map_groq` accounts; first healthy lane
+finishes a batch, all-dark defers TRANSIENT with no attempt burned) driving the frozen durable core +
+projection, minted like `parent_enrichment` by the **flag-gated** `auto_map_parents_on_chunks` scheduler phase
+(OUTSIDE STAGE_DAG, NON_BLOCKING). Also built: LANE-REGISTRY-V1 + `lane_inventory.py` (P2), rate-limit seed +
+effective-capacity precedence (P3), DOCUMENT-GROUNDING-CONTEXT-V1 (P5) wired into the pMAP prompt as
+map-prompt-v2 with grounding_hash binding batch identity (P6), lane-qualified pMAP batch cap (P7),
+CANONICAL-DOCUMENT-STATUS-V1 (P12), and `rag_pipeline_canary.py` (P14/15 harness).
+
+**HOLD-SAFE:** `POLYMATH_DOC_PARENT_MAP_ENABLED` defaults OFF ⇒ no tickets minted ⇒ current behavior
+byte-identical (the running fleet is unaffected; grounding=None reproduces the frozen cinema batch identities);
+`POLYMATH_DOC_PARENT_MAP_CORPUS` scopes the canary so cinema is never re-mapped. STAGE_DAG unchanged; frozen
+MAP DSL/compiler/chunker untouched.
+
+**EXACT NEXT ACTION — Phase 15 LIVE canary** (the one remaining step; spends a TINY amount of Groq on the
+canary doc, authorized by the goal after the green offline gate): (1) restart the fleet so it loads the new
+control code + the `doc_parent_map` slot; (2) launch it with `POLYMATH_DOC_PARENT_MAP_ENABLED=1` +
+`POLYMATH_DOC_PARENT_MAP_CORPUS=rag-canary`; (3) run
+`POLYMATH_DOC_PARENT_MAP_ENABLED=1 POLYMATH_DOC_PARENT_MAP_CORPUS=rag-canary .venv/bin/python
+scripts/rag_pipeline_canary.py --corpus rag-canary --passes 3` → require 3 consecutive canaries reaching
+VNEXT_COMPLETE < 4 min with a passing `/retrieve` citation probe; diagnostics land in `/tmp/polymath_canaries`.
+On a >4-min miss: triage via `document_status` blockers → repair the smallest layer → new canary. Phase 17
+corpus reconciliation (cinema) stays behind the FORENSIC HOLD. Do NOT resume the cinema backfill.
+
 ## Latest checkpoint (2026-09-08 latest — S11-proper landed + FIRST corpus VNEXT_COMPLETE)
 
 **`main` = `a4659f8` (all 4 CI checks green).** Two migration milestones landed after the data-regen
