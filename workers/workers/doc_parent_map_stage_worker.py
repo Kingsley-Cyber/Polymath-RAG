@@ -177,14 +177,16 @@ def _project_active_maps(document, parents, corpus_id, map_contract) -> dict | N
             for r in mrows]
     manifest = build_parent_skeletons(parents)
     ct = active_contract()
-    from polymath_shared.clients import EmbedderClient
-    embedder = EmbedderClient()
+    # the projection's embed contract is (list[str]) -> list[list[float]]; reuse the proven
+    # batch-slicing embed helper the backfill/profile paths use (returns vectors, not the raw
+    # embedder response). Its embed-lane tag is immaterial — same model, same vector space.
+    from workers.doc_profile_worker import _embed_texts
     from polymath_shared.settings import get_settings
     from qdrant_client import QdrantClient
     client = QdrantClient(url=get_settings().stores.qdrant_url, timeout=60)
     try:
         return PMP.project_parent_maps(
-            client, embed=lambda t: embedder.embed(t, "doc_parent_map"), embedding_contract_id=ct.contract_id,
+            client, embed=lambda t: _embed_texts(t), embedding_contract_id=ct.contract_id,
             dim=ct.dimension, doc_id=doc_id, corpus_id=corpus_id, maps=maps, manifest=manifest,
             map_contract=map_contract)
     finally:

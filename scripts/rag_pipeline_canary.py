@@ -102,12 +102,22 @@ def resolve_doc(corpus: str, source_name: str) -> str | None:
     return row[0] if row else None
 
 
-def poll_status(doc_id: str, deadline_s: int) -> tuple[dict, float, list]:
+def poll_status(corpus: str, source_name: str, deadline_s: int) -> tuple[str | None, dict, float, list]:
+    """Poll from accepted-upload to VNEXT_COMPLETE. The intake stage writes the
+    `documents` row + chunks a few seconds after acceptance, so the doc_id is
+    resolved INSIDE the timed window (the 4-min clock starts at acceptance)."""
     from polymath_shared.db import tx
     t0 = time.time()
     timeline: list = []
     last = None
+    doc_id = None
     while time.time() - t0 < deadline_s:
+        if doc_id is None:
+            doc_id = resolve_doc(corpus, source_name)
+            if doc_id is None:
+                timeline.append({"t": round(time.time() - t0, 1), "phase": "awaiting_intake"})
+                time.sleep(3)
+                continue
         with tx() as conn:
             st = document_status(conn, doc_id=doc_id)
         v = st.get("state", {}).get("vnext_verdict")
@@ -116,11 +126,13 @@ def poll_status(doc_id: str, deadline_s: int) -> tuple[dict, float, list]:
             timeline.append(snap)
             last = snap
         if st.get("complete") and v == "VNEXT_COMPLETE":
-            return st, time.time() - t0, timeline
+            return doc_id, st, time.time() - t0, timeline
         time.sleep(3)
-    with tx() as conn:
-        st = document_status(conn, doc_id=doc_id)
-    return st, time.time() - t0, timeline
+    st = {}
+    if doc_id:
+        with tx() as conn:
+            st = document_status(conn, doc_id=doc_id)
+    return doc_id, st, time.time() - t0, timeline
 
 
 def retrieval_probe(base: str, corpus: str, query: str, doc_id: str, facts: dict) -> dict:
@@ -177,10 +189,12 @@ def main() -> int:
             up = upload(args.base, args.corpus, facts["source_name"], text)
         except Exception as exc:  # noqa: BLE001
             print(f"  UPLOAD FAILED: {exc}"); consecutive = 0; continue
-        doc_id = resolve_doc(args.corpus, facts["source_name"])
+        if not up.get("accepted"):
+            print(f"  upload not accepted: {up}"); consecutive = 0; continue
+        doc_id, status, elapsed, timeline = poll_status(args.corpus, facts["source_name"], args.deadline)
         if not doc_id:
-            print(f"  no doc_id resolved (upload resp {up})"); consecutive = 0; continue
-        status, elapsed, timeline = poll_status(doc_id, args.deadline)
+            print(f"  no doc_id landed within {args.deadline}s (intake never wrote the document row)")
+            consecutive = 0; continue
         ready = status.get("complete") and status.get("state", {}).get("vnext_verdict") == "VNEXT_COMPLETE"
         under_time = elapsed < args.deadline
         probe = retrieval_probe(args.base, args.corpus, facts["query"], doc_id, facts) if ready else {"ok": False, "skipped": "not_ready"}
