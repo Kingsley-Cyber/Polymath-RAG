@@ -46,6 +46,16 @@ block below (registers 11.175–11.176):
   conclusion is now DISPUTED and the backfill is STOPPED under a FORENSIC HOLD (owner directive 2026-09-08/09).
   DO NOT resume the backfill on a quota reset — the Groq Parent-MAP forensic audit must pass first. See
   `docs/wiki/reports/2026-09-08/` (START-HERE) and RETRIEVAL-MIGRATION-DEPENDENCY-V1 S12.**
+  **CONTROL-PLANE REPAIR LANDED 2026-09-09 (11.185, offline, no spend, architecture unchanged):** the
+  audit ran and the control plane is now an instrumented conservation chain. The disputed `+0/0-errors`
+  pass is MEASURED as a LOCAL refusal cascade — cinema durable census: terminal `LIMITER_REFUSED` on
+  **926** batches (95.2% of 15,773 claims zero-yield) vs 14 real HTTP faults; a `LIMITER_REFUSED`
+  dispatches zero HTTP, so provider RPD was NOT proven exhausted. Fixed with regressions: RPD≠RPM header
+  split + provider-RPD gate, success-path header retention, reasoned `LimiterDecision`, selection-vs-
+  dispatch counters, `errored_docs=0` can no longer mask failures, defer-not-spin retry, `family:
+  groq_acct_N` isolation. **The gate is now narrowed to a bounded, owner-authorized live probe** (real
+  Groq per-account quota + compound/compound-mini sharing UNVERIFIED) + the 15/20/30/40/60 batch
+  benchmark → bounded canary → owner review. Backfill STILL STOPPED.**
 - **Routing lanes QUALIFIED LIVE on cinema (11.179):** P10 rerun through the real `chat_retrieve_v2`
   (read-only) — non-regressive (L 15/15, B 13/15, 0 reg) AND the intent lanes expand the union in
   EVERY query (L +58%, B +63%). On RELATIONSHIP queries all four fire + contribute source-child
