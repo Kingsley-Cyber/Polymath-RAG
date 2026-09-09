@@ -74,7 +74,19 @@ def test_role_precedence_unit():
     assert CENSUS._role("INSERT INTO document_summaries (x) VALUES (1)", "runtime") == "writer"
     assert CENSUS._role("rows = conn.execute('SELECT * FROM document_summaries')", "runtime") == "reader"
     assert CENSUS._role("CREATE TABLE parent_enrichments (id text)", "migration") == "schema"
-    assert CENSUS._role("# a comment mentioning document_summaries", "runtime") == "reference"
+
+
+def test_benign_autoclassification_shrinks_the_review_queue():
+    # §S16c: comments and string-literal names/keys/labels are BENIGN (no state read) and must NOT sit in
+    # the human review queue ("reference"). A read verb still wins (safety): a quoted SQL string is a reader.
+    assert CENSUS._role("# a comment mentioning document_summaries", "runtime") == "comment"
+    assert CENSUS._role('("compile_objects", "workers.compile_objects_worker"),', "runtime", "compile_objects") == "label"
+    assert CENSUS._role('EVENT_TYPE = "compile_objects.v1"', "runtime", "compile_objects") == "label"
+    assert CENSUS._role('"latent_transfer": {', "runtime", "latent_transfer") == "label"
+    # SAFETY: a genuine read whose table name is a quoted string stays "reader" (verb precedence), and a
+    # BARE identifier reference (not inside quotes) stays "reference" for human review.
+    assert CENSUS._role("rows = conn.execute('SELECT * FROM document_summaries')", "runtime", "document_summaries") == "reader"
+    assert CENSUS._role("summaries = document_summaries.values()", "runtime", "document_summaries") == "reference"
 
 
 def test_main_smoke():

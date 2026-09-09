@@ -121,8 +121,17 @@ def _kind(rel: str, layer: str, ext: str) -> str:
     return "other"
 
 
-def _role(snippet: str, kind: str) -> str:
-    """Heuristic role for a code occurrence. Precedence writer > producer > reader."""
+#: S16(c) BENIGN auto-classification (RETRIEVAL-MIGRATION §S16): a runtime occurrence that matched no
+#: writer/producer/reader verb is either a COMMENT or the symbol appearing inside a STRING LITERAL — a
+#: name / event-type / dict key / lane-label / constant value, NOT a read of the legacy STATE. A genuine
+#: read carries a reader verb (SELECT/FROM/get_/read_/fetch/load_/query/route/.get) caught ABOVE, so these
+#: are safe to lift out of the human review queue. `LABEL` is deliberately narrow: the symbol must sit
+#: BETWEEN two quotes with no intervening quote, so a bare-identifier reference stays `reference`.
+_BENIGN_ROLES = ("comment", "label")
+
+
+def _role(snippet: str, kind: str, symbol: str | None = None) -> str:
+    """Heuristic role for a code occurrence. Precedence writer > producer > reader > (benign) > reference."""
     if kind == "migration":
         return "schema"
     if _CREATE_RE.search(snippet):
@@ -133,6 +142,10 @@ def _role(snippet: str, kind: str) -> str:
         return "producer"
     if _READER_RE.search(snippet):
         return "reader"
+    if snippet.lstrip().startswith("#"):
+        return "comment"                                   # a comment line — never a runtime reader
+    if symbol and re.search(r"""["'][^"']*\b""" + re.escape(symbol) + r"""\b[^"']*["']""", snippet):
+        return "label"                                     # symbol inside a string literal (name/key/label)
     return "reference"
 
 
@@ -186,7 +199,7 @@ def collect(symbols_filter: set[str] | None = None) -> list[Occurrence]:
                 if pattern[symbol].search(line):
                     snippet = line.strip()[:120]
                     out.append(Occurrence(groups[0], symbol, rel, lineno, layer, kind,
-                                           _role(snippet, kind), snippet))
+                                           _role(snippet, kind, symbol), snippet))
     out.sort(key=lambda o: (o.group, o.symbol, o.file, o.line))
     return out
 
@@ -194,6 +207,7 @@ def collect(symbols_filter: set[str] | None = None) -> list[Occurrence]:
 def _print_report(occ: list[Occurrence], runtime_only: bool) -> None:
     runtime = [o for o in occ if o.kind == "runtime"]
     unclassified = [o for o in runtime if o.role == "reference"]
+    benign = [o for o in runtime if o.role in _BENIGN_ROLES]
     print("LEGACY-DEPENDENCY-CENSUS-V1 (repository source scan; read-only)\n")
     if not runtime_only:
         print("== occurrences by symbol (kind counts) ==")
@@ -208,10 +222,16 @@ def _print_report(occ: list[Occurrence], runtime_only: bool) -> None:
     print(f"== RUNTIME surface ({len(runtime)} occurrences; the live dependency the migration must migrate) ==")
     for o in runtime:
         print(f"  [{o.role:9}] {o.layer:12} {o.file}:{o.line}  {o.snippet}")
+    from collections import Counter as _C
+    _brk = _C(o.role for o in benign)
+    print(f"\n== BENIGN runtime ({len(benign)}; auto-classified out of the review queue, §S16c: "
+          + ", ".join(f"{r}={_brk[r]}" for r in _BENIGN_ROLES) + ") ==")
+    print("  (symbol as comment / string-literal name / event-type / dict key / lane label — no state read)")
     print(f"\n== UNCLASSIFIED RUNTIME ({len(unclassified)}; classify before retiring the owning symbol) ==")
     for o in unclassified:
         print(f"  {o.symbol:24} {o.file}:{o.line}  {o.snippet}")
-    print(f"\nTOTAL occurrences={len(occ)}  runtime={len(runtime)}  unclassified_runtime={len(unclassified)}")
+    print(f"\nTOTAL occurrences={len(occ)}  runtime={len(runtime)}  "
+          f"benign={len(benign)}  unclassified_runtime={len(unclassified)}")
 
 
 def main(argv: list[str] | None = None) -> int:
