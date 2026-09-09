@@ -27,15 +27,36 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared"))
 
 from polymath_shared.llm_extraction import lane_registry as LR  # noqa: E402
+from polymath_shared.llm_extraction import effective_capacity as EC  # noqa: E402
+
+
+def _effective_table(reg: LR.LaneRegistry) -> str:
+    effs = EC.resolve_all(reg)
+    lines = [f"# EFFECTIVE CAPACITY ({EC.EFFECTIVE_CAPACITY_VERSION}) — precedence: "
+             f"observed > config > seed > unknown (no provider call, no secret)",
+             f"{'lane':<24} {'rpm':<14} {'tpm':<16} {'rpd':<14} {'conc':<12}"]
+    for e in effs:
+        def cell(f):
+            v, s = e.values.get(f), e.sources.get(f)
+            return f"{'-' if v is None else v}({s[:3]})"
+        lines.append(f"{e.lane:<24} {cell('rpm'):<14} {cell('tpm'):<16} "
+                     f"{cell('rpd'):<14} {cell('conc_cap'):<12}")
+    return "\n".join(lines)
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Sanitized provider lane inventory (no provider call).")
     ap.add_argument("--json", action="store_true", help="emit machine-readable JSON instead of the table")
+    ap.add_argument("--effective", action="store_true",
+                    help="show the resolved effective-capacity table (precedence: observed>config>seed)")
     args = ap.parse_args()
     reg = LR.build_registry()
     if args.json:
-        print(json.dumps(reg.to_dict(), indent=2, sort_keys=True))
+        out = reg.to_dict()
+        out["effective_capacity"] = [e.to_dict() for e in EC.resolve_all(reg)]
+        print(json.dumps(out, indent=2, sort_keys=True))
+    elif args.effective:
+        print(_effective_table(reg))
     else:
         print(LR.sanitized_inventory(reg))
     return 0
