@@ -81,3 +81,66 @@ def test_deterministic_and_pairs():
 
 def test_empty_is_safe():
     assert "(no sections)" in MP.build_map_user_prompt([])
+
+
+# ---- Phase 6: DocumentGroundingContextV1 integration -------------------------
+from polymath_shared.document_profile.grounding import build_grounding_context  # noqa: E402
+
+
+def _grounding():
+    doc = {"source_name": "laban.md", "media_type": "text/markdown",
+           "frontmatter": {"title": "The Laban Workbook", "author": "Jean Newlove"}}
+    return build_grounding_context(doc, _parents())
+
+
+def test_prompt_version_is_v2():
+    assert MP.MAP_PROMPT_VERSION == "map-prompt-v2"
+
+
+def test_grounding_none_is_byte_identical_to_v1_body():
+    skels = _skels()
+    assert MP.build_map_user_prompt(skels, None) == MP.build_map_user_prompt(skels)
+    assert MP.build_map_prompt(skels)[1] == MP.build_map_user_prompt(skels)
+
+
+def test_grounding_is_prepended_as_data_before_sections():
+    skels = _skels()
+    g = _grounding()
+    user = MP.build_map_user_prompt(skels, g)
+    # the orientation header + rendered grounding come BEFORE the sections header
+    assert user.index(MP._GROUNDING_HEADER) < user.index("SECTIONS TO MAP")
+    assert "DOCUMENT: The Laban Workbook" in user
+    assert "BY: Jean Newlove" in user
+    # framed as data-only, never instructions
+    assert "data only" in MP._GROUNDING_HEADER
+    # the sections still render every alias exactly once
+    for sk in skels:
+        assert user.count(f"ALIAS {sk.alias}") == 1
+
+
+def test_grounding_is_deterministic():
+    skels = _skels()
+    g = _grounding()
+    assert MP.build_map_prompt(skels, grounding=g) == MP.build_map_prompt(skels, grounding=g)
+
+
+def test_grounding_system_contract_unchanged_and_no_profile_required():
+    # grounding never changes the SYSTEM contract, and build_map_prompt needs no LLM
+    # document profile to render (only skeletons + optional deterministic grounding).
+    skels = _skels()
+    sys_g, _ = MP.build_map_prompt(skels, grounding=_grounding())
+    assert sys_g == MP.MAP_SYSTEM
+
+
+def test_grounding_changes_batch_identity():
+    # a document mapped WITH grounding gets a different batch_hash than the same
+    # skeletons mapped skeleton-only — so an old ungrounded map cannot satisfy the
+    # grounded generation (Phase 6 identity binding).
+    from polymath_shared.document_profile import map_batches
+    manifest = build_parent_skeletons(_parents())
+    plain = map_batches.plan_batches(manifest)
+    grounded = map_batches.plan_batches(manifest, grounding_hash=_grounding().context_hash)
+    assert plain.batches[0].batch_hash != grounded.batches[0].batch_hash
+    assert plain.plan_hash != grounded.plan_hash
+    # empty grounding_hash reproduces the legacy identity exactly (backward compatible).
+    assert map_batches.plan_batches(manifest, grounding_hash="").batches[0].batch_hash == plain.batches[0].batch_hash

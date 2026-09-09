@@ -44,7 +44,7 @@ def _parents():
     return body
 
 
-def _all_lines(skels, is_combined=False):
+def _all_lines(skels, is_combined=False, grounding=None):
     return "\n".join(f"MAP|{s.alias}|routing signature for {s.alias}|hook{i};weight;impact"
                      for i, s in enumerate(skels))
 
@@ -54,7 +54,7 @@ class _PartialInfer:
     def __init__(self):
         self.calls = 0
 
-    def __call__(self, skels, is_combined=False):
+    def __call__(self, skels, is_combined=False, grounding=None):
         self.calls += 1
         drop = {skels[-1].alias} if self.calls == 1 else set()
         return "\n".join(f"MAP|{s.alias}|sig {s.alias}|a;b;c" for s in skels if s.alias not in drop)
@@ -64,7 +64,7 @@ class _CountingInfer:
     def __init__(self):
         self.seen: list[str] = []
 
-    def __call__(self, skels, is_combined=False):
+    def __call__(self, skels, is_combined=False, grounding=None):
         self.seen.extend(s.alias for s in skels)
         return _all_lines(skels)
 
@@ -156,14 +156,14 @@ def test_persist_supersede_keeps_one_active(tx):
 
 class _EmptyInfer:
     """A dispatched 2xx that returned nothing (compound-mini's big-batch flake)."""
-    def __call__(self, skels, is_combined=False):
+    def __call__(self, skels, is_combined=False, grounding=None):
         return ""
 
 
 class _RefusingInfer:
     """A LOCAL limiter refusal: zero HTTP, a named gate — the dominant class in
     the disputed cinema cascade."""
-    def __call__(self, skels, is_combined=False):
+    def __call__(self, skels, is_combined=False, grounding=None):
         from workers.doc_parent_map_worker import MapInferError
         raise MapInferError("LIMITER_REFUSED", reason="FAMILY_GATE", dispatched=False)
 

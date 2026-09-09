@@ -75,7 +75,7 @@ def _routed_infer(lane_selected, dispatch):
     _rr = itertools.count()
     _rr_lock = threading.Lock()
 
-    def infer(skeletons, is_combined=False):
+    def infer(skeletons, is_combined=False, grounding=None):
         if not ep_names:
             raise RuntimeError("no active doc_parent_map lane")
         with _rr_lock:
@@ -85,7 +85,7 @@ def _routed_infer(lane_selected, dispatch):
         client = LLMExtractionClient("cloud", url=ep.url, model=ep.model, limiter_key=ep.limiter_key,
                                      api_key=ep.api_key, cloud_opts=ep.cloud_opts, timeout_s=90.0, max_attempts=1)
         client.endpoint_name = ep.name
-        system, user = build_map_prompt(skeletons, is_combined=is_combined)
+        system, user = build_map_prompt(skeletons, grounding=grounding, is_combined=is_combined)
         raw, err = client.complete_one(user, system_prompt=system, max_tokens=2400)
         dispatched = getattr(client, "_last_http_dispatched", False)
         if dispatched:

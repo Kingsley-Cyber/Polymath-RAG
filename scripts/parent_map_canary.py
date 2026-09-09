@@ -67,8 +67,8 @@ def _live_infer(api_key):
     from polymath_shared.llm_extraction.client import LLMExtractionClient
     from polymath_shared.document_profile.map_prompt import build_map_prompt
 
-    def infer(skeletons, is_combined=False):
-        system, user = build_map_prompt(skeletons, is_combined=is_combined)
+    def infer(skeletons, is_combined=False, grounding=None):
+        system, user = build_map_prompt(skeletons, grounding=grounding, is_combined=is_combined)
         client = LLMExtractionClient("cloud", url=GROQ_URL, model=MINI_MODEL, limiter_key="map_canary",
                                      api_key=api_key, cloud_opts={"structured": "text", "json_mode": False},
                                      timeout_s=90.0, max_attempts=1)
@@ -133,9 +133,9 @@ def main(argv=None) -> int:
         state1 = _map_state(doc_id, contract)
         # restart idempotency: a second run must re-infer NOTHING and keep the SAME active set
         seen = {"calls": 0}
-        def counting_infer(skels, is_combined=False, _i=infer):
+        def counting_infer(skels, is_combined=False, grounding=None, _i=infer):
             seen["calls"] += 1
-            return _i(skels, is_combined=is_combined)
+            return _i(skels, is_combined=is_combined, grounding=grounding)
         out2 = run_document_mapping(tx, run_id=f"map-canary-{doc_id[:8]}", doc_id=doc_id, corpus_id=corpus_id,
                                     parents=parents, infer=counting_infer, provider="groq", model=MINI_MODEL)
         state2 = _map_state(doc_id, contract)

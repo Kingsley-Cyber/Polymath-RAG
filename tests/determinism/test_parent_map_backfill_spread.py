@@ -43,7 +43,8 @@ def test_backfill_infer_round_robins_evenly_across_six_accounts(monkeypatch):
 
     # The round-robin is upstream of prompt building; stub it so the test needs no real skeletons.
     import polymath_shared.document_profile.map_prompt as map_prompt
-    monkeypatch.setattr(map_prompt, "build_map_prompt", lambda skeletons, is_combined=False: ("sys", "user"))
+    monkeypatch.setattr(map_prompt, "build_map_prompt",
+                        lambda skeletons, is_combined=False, grounding=None: ("sys", "user"))
 
     class _FakeClient:
         def __init__(self, *a, **k):

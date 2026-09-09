@@ -198,7 +198,8 @@ class BatchPlan:
 BATCH_PLANNER_VERSION = "map-batches-v2"  # v2: MAP_RELIABILITY_CAP (compound-mini big-batch reliability)
 
 
-def _batch(ordinal, by_alias, aliases, density, *, contract, manifest_hash, is_combined) -> MapBatch:
+def _batch(ordinal, by_alias, aliases, density, *, contract, manifest_hash, is_combined,
+           grounding_hash: str = "") -> MapBatch:
     skels = [by_alias[a] for a in aliases]
     est_input = estimate_input_tokens(skels)
     est_billed = int(round(len(aliases) * density.billed_tokens_per_parent))
@@ -206,12 +207,13 @@ def _batch(ordinal, by_alias, aliases, density, *, contract, manifest_hash, is_c
     # alias bound to its skeleton hash + the combined flag. Two different documents
     # that both alias P0001..P0060 differ in manifest_hash and every skeleton_hash,
     # so their durable batch identities can never collide.
-    batch_hash = _sha256(
-        "\x1f".join(
-            [contract, manifest_hash, str(is_combined)]
-            + [f"{s.alias}\x1e{s.skeleton_hash}" for s in skels]
-        )
-    )
+    # RAG-PIPELINE-FINISH Phase 6: a non-empty grounding_hash binds the document
+    # grounding into the batch identity, so an old SKELETON-ONLY map cannot satisfy the
+    # new grounded generation. Empty (the legacy path) reproduces the v1 hash exactly.
+    parts = [contract, manifest_hash, str(is_combined)] + [f"{s.alias}\x1e{s.skeleton_hash}" for s in skels]
+    if grounding_hash:
+        parts.append(f"grounding\x1e{grounding_hash}")
+    batch_hash = _sha256("\x1f".join(parts))
     return MapBatch(
         ordinal=ordinal,
         aliases=tuple(aliases),
@@ -229,6 +231,7 @@ def plan_batches(
     *,
     combined_global_profile_billed_tokens: int | None = None,
     contract: str = BATCH_PLANNER_VERSION,
+    grounding_hash: str = "",
 ) -> BatchPlan:
     """Cut a document's eligible parents into deterministic mapping batches.
 
@@ -251,17 +254,23 @@ def plan_batches(
     mh = manifest.manifest_hash
     if combined_global_profile_billed_tokens is not None and comb_cap > 0 and aliases:
         first = aliases[:comb_cap]
-        batches.append(_batch(ordinal, by_alias, first, density, contract=contract, manifest_hash=mh, is_combined=True))
+        batches.append(_batch(ordinal, by_alias, first, density, contract=contract, manifest_hash=mh,
+                              is_combined=True, grounding_hash=grounding_hash))
         idx = len(first)
         ordinal += 1
     while idx < len(aliases):
         chunk = aliases[idx : idx + cap]
-        batches.append(_batch(ordinal, by_alias, chunk, density, contract=contract, manifest_hash=mh, is_combined=False))
+        batches.append(_batch(ordinal, by_alias, chunk, density, contract=contract, manifest_hash=mh,
+                              is_combined=False, grounding_hash=grounding_hash))
         idx += len(chunk)
         ordinal += 1
     # Bind source identity into the plan hash too, so even an empty (noise-only)
-    # document's plan cannot collide with another's.
-    plan_hash = _sha256("\x1d".join([contract, mh] + [b.batch_hash for b in batches]))
+    # document's plan cannot collide with another's; the grounding (when present) binds
+    # here too so an empty-doc grounded plan differs from its ungrounded twin.
+    plan_parts = [contract, mh] + [b.batch_hash for b in batches]
+    if grounding_hash:
+        plan_parts.append(f"grounding\x1e{grounding_hash}")
+    plan_hash = _sha256("\x1d".join(plan_parts))
     return BatchPlan(
         contract=contract,
         density=density,

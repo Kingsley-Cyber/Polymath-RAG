@@ -40,6 +40,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping, Sequence
 
 from polymath_shared.document_profile import map_batches, map_compiler
+from polymath_shared.document_profile.grounding import DocumentGroundingContextV1
 from polymath_shared.document_profile.parent_skeleton import (
     ParentSkeleton,
     SkeletonManifest,
@@ -240,15 +241,24 @@ def run_document_mapping(
     provider: str | None = None, model: str | None = None, lease_owner: str = MAP_WORKER_VERSION,
     max_attempts: int = DEFAULT_MAX_ATTEMPTS, lease_seconds: int = DEFAULT_LEASE_SECONDS,
     now_fn: Callable[[], Any] | None = None,
+    grounding: DocumentGroundingContextV1 | None = None,
 ) -> MappingOutcome:
     """Map one document's parents durably. ``tx`` is a transaction context manager
     factory (``polymath_shared.db.tx`` in production); ``infer`` is the injected
-    inference boundary. Never holds a tx across ``infer`` (§28)."""
+    inference boundary. Never holds a tx across ``infer`` (§28).
+
+    ``grounding`` (Phase 6): the deterministic DocumentGroundingContextV1 for this
+    document. When supplied, its ``context_hash`` binds the batch identity (an old
+    skeleton-only map cannot satisfy the grounded generation) and the context is passed
+    to ``infer`` for the prompt. None => the legacy skeleton-only path, byte-identical
+    batch identity."""
     import datetime as _dt
     now_fn = now_fn or (lambda: _dt.datetime.now(_dt.timezone.utc))
 
     manifest = build_parent_skeletons(parents)
-    plan = map_batches.plan_batches(manifest, density, contract=map_batches.BATCH_PLANNER_VERSION)
+    g_hash = grounding.context_hash if grounding is not None else ""
+    plan = map_batches.plan_batches(manifest, density, contract=map_batches.BATCH_PLANNER_VERSION,
+                                    grounding_hash=g_hash)
     by_alias = {s.alias: s for s in manifest.skeletons}
     text_hash_by_alias = {s.alias: s.text_hash for s in manifest.skeletons}
 
@@ -302,7 +312,7 @@ def run_document_mapping(
             # INFERENCE — OUTSIDE any transaction (§28).
             try:
                 try:
-                    raw = infer(skels, is_combined=batch.is_combined)  # type: ignore[call-arg]
+                    raw = infer(skels, is_combined=batch.is_combined, grounding=grounding)  # type: ignore[call-arg]
                 except TypeError:
                     raw = infer(skels)  # a fake without the keyword
             except MapInferError as exc:
