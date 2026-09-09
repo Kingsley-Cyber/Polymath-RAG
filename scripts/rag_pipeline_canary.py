@@ -120,12 +120,16 @@ def poll_status(corpus: str, source_name: str, deadline_s: int) -> tuple[str | N
                 continue
         with tx() as conn:
             st = document_status(conn, doc_id=doc_id)
-        v = st.get("state", {}).get("vnext_verdict")
-        snap = {"t": round(time.time() - t0, 1), "vnext": v, "blockers": st.get("blockers")}
+        snap = {"t": round(time.time() - t0, 1), "vnext_ready": st.get("vnext_ready"),
+                "blockers": st.get("blockers")}
         if snap != last:
             timeline.append(snap)
             last = snap
-        if st.get("complete") and v == "VNEXT_COMPLETE":
+        # PER-DOCUMENT vNext terminal state = THIS doc's parents mapped + its own vNext
+        # profile. The legacy knowledge lane (neo4j/summaries/vocabulary) is additive and
+        # the CORPUS vnext verdict stays INCOMPLETE while sibling docs ingest — so the timer
+        # stops at this doc's own `vnext_ready`. The retrieval probe then confirms child chunks.
+        if st.get("vnext_ready"):
             return doc_id, st, time.time() - t0, timeline
         time.sleep(3)
     st = {}
@@ -161,7 +165,7 @@ def write_packet(run_dir: Path, *, manifest, status, elapsed, timeline, probe, p
     (run_dir / "summary.md").write_text(
         f"# Canary {manifest['source_name']} — {verdict}\n\n"
         f"- elapsed accepted→semantic-ready: **{elapsed:.1f}s** (cap 240s)\n"
-        f"- vnext verdict: {status.get('state',{}).get('vnext_verdict')}\n"
+        f"- vnext_ready (per-doc): {status.get('vnext_ready')} | corpus verdict: {status.get('state',{}).get('corpus_vnext_verdict')}\n"
         f"- pmap: {status.get('pmap')}\n"
         f"- profile: {status.get('profile')}\n"
         f"- blockers: {blk or 'none'}\n"
@@ -195,7 +199,7 @@ def main() -> int:
         if not doc_id:
             print(f"  no doc_id landed within {args.deadline}s (intake never wrote the document row)")
             consecutive = 0; continue
-        ready = status.get("complete") and status.get("state", {}).get("vnext_verdict") == "VNEXT_COMPLETE"
+        ready = bool(status.get("vnext_ready"))
         under_time = elapsed < args.deadline
         probe = retrieval_probe(args.base, args.corpus, facts["query"], doc_id, facts) if ready else {"ok": False, "skipped": "not_ready"}
         passed = bool(ready and under_time and probe.get("ok"))

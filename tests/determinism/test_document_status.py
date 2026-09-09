@@ -82,28 +82,35 @@ _PMAP_STALLED = {"stages": _DONE_STAGES[:3] + [("doc_parent_map", "ready", 0, No
                  "mapped": 1, "b_done": 0, "b_partial": 1, "vnext_profiles": 1}
 
 
-def test_complete_document_has_no_blockers():
+def test_complete_document_is_vnext_ready_with_no_blockers():
     st = document_status(_FakeConn(_COMPLETE), doc_id="docA")
     assert st["found"] and st["complete"] is True
+    assert st["vnext_ready"] is True and st["state"]["vnext_ready"] is True
     assert st["blockers"] == []
-    assert st["state"]["vnext_verdict"] == "VNEXT_COMPLETE"
+    # corpus verdict rides along separately (COMPLETE here since the fake corpus has 1 doc)
+    assert st["state"]["corpus_vnext_verdict"] == "VNEXT_COMPLETE"
     assert st["pmap"]["mapped_active"] == 3 and st["pmap"]["unresolved"] == 0
     assert st["profile"]["present"] and st["profile"]["valid"] and st["profile"]["vnext"]
     assert st["chunks"] == {"children_total": 8, "parents_total": 3}
-    # the functional-pool health rides along (config truth)
     assert "PMAP" in st["functional_pools"]
 
 
-def test_pmap_stalled_document_names_the_blocker_first():
+def test_pmap_stalled_document_is_not_vnext_ready_and_names_the_blocker():
     st = document_status(_FakeConn(_PMAP_STALLED), doc_id="docA")
-    assert st["complete"] is False
-    # the pMAP shortfall is surfaced with exact counts, and vNext is INCOMPLETE
+    assert st["complete"] is False and st["vnext_ready"] is False
+    # the pMAP shortfall is surfaced with exact counts (the per-doc vNext blocker)
     assert any(b.startswith("pmap_unresolved:2_of_3") for b in st["blockers"])
-    assert any(b.startswith("vnext_vnext_incomplete") for b in st["blockers"])
     assert st["pmap"]["unresolved"] == 2 and st["pmap"]["batches_partial"] == 1
-    # a non-blocking doc_parent_map ticket that is merely 'ready' is NOT reported as a
-    # generic stage_incomplete blocker (its shortfall shows as pmap_unresolved instead).
-    assert not any(b == "stage_incomplete:doc_parent_map:ready" for b in st["blockers"])
+    # the legacy knowledge lane is NOT a per-doc vNext blocker: a merely-pending legacy
+    # stage never appears as a blocker (only failed stages + pMAP/profile do).
+    assert not any(b.startswith("stage_incomplete") for b in st["blockers"])
+
+
+def test_vnext_ready_requires_both_pmap_and_profile():
+    # profile ok but pMAP unresolved -> not ready
+    assert document_status(_FakeConn(_PMAP_STALLED), doc_id="docA")["vnext_ready"] is False
+    # both ok -> ready
+    assert document_status(_FakeConn(_COMPLETE), doc_id="docA")["vnext_ready"] is True
 
 
 def test_missing_document():

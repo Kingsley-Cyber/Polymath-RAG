@@ -102,28 +102,40 @@ def document_status(conn, *, doc_id: str) -> dict[str, Any]:
     except Exception:  # noqa: BLE001 — status must never crash on a config read
         pool_health = {}
 
-    # --- blockers (plan triage order) -----------------------------------------
+    # --- per-document vNext readiness (the canary's target — NOT the corpus verdict) --
+    # THIS document's own vNext substrate is ready when every eligible parent is mapped
+    # (or none is eligible) AND it has a valid vNext profile. The corpus-level
+    # `vnext_readiness` verdict gates the cutover of a WHOLE corpus and stays INCOMPLETE
+    # while any sibling doc is still ingesting — so a fresh-doc canary reads THIS field.
+    pmap_ok = pmap.get("schema") == "present" and (pmap.get("eligible", 0) == 0 or not pmap.get("unresolved"))
+    profile_ok = bool(profile["present"] and profile["valid"] and profile["vnext"])
+    vnext_ready = bool(pmap_ok and profile_ok)
+
+    # --- blockers (plan triage order; per-document) ----------------------------
     blockers: list[str] = []
     for st in stages:
         if st["status"] in ("failed",):
             blockers.append(f"stage_failed:{st['stage']}:{st['last_error'] or 'failed'}")
-        elif st["status"] in ("pending", "ready", "leased") and st["stage"] not in ("doc_parent_map",):
-            blockers.append(f"stage_incomplete:{st['stage']}:{st['status']}")
     if parents_total and pmap.get("schema") == "present" and pmap.get("unresolved"):
         blockers.append(f"pmap_unresolved:{pmap['unresolved']}_of_{pmap['eligible']}")
+    elif pmap.get("schema") != "present" and parents_total:
+        blockers.append("pmap_not_started")
     if not profile["present"]:
         blockers.append("profile_missing")
     elif not profile["valid"]:
         blockers.append("profile_invalid")
-    if vnext.get("verdict") != SR.VNEXT_COMPLETE:
-        blockers.append(f"vnext_{vnext.get('verdict','?').lower()}:" + ",".join(vnext.get("pending", []) or []))
+    elif not profile["vnext"]:
+        blockers.append("profile_not_vnext")
 
     return {
         "contract": DOCUMENT_STATUS_VERSION,
         "found": True,
+        "vnext_ready": vnext_ready,
         "identity": {"doc_id": doc_id, "corpus_id": corpus_id, "source_name": drow[2],
                      "media_type": drow[3], "run_id": run_id},
-        "state": {"run_status": run_status, "vnext_verdict": vnext.get("verdict"),
+        "state": {"run_status": run_status, "vnext_ready": vnext_ready,
+                  "corpus_vnext_verdict": vnext.get("verdict"),
+                  "vnext_verdict": vnext.get("verdict"),  # kept for compatibility (corpus-level)
                   "vnext_pending": vnext.get("pending", [])},
         "chunks": {"children_total": children_total, "parents_total": parents_total},
         "profile": profile,
