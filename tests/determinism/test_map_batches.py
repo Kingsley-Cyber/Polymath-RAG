@@ -48,37 +48,37 @@ def _manifest_variant(n, tag):
     return PS.build_parent_skeletons(parents)
 
 
-def test_mapping_only_capacity_is_target_at_baseline():
-    # 40 is proven; ~74 is the theoretical edge we do NOT pack to; target is 60.
-    assert MB.mapping_only_capacity(MB.DEFAULT_DENSITY) == MB.MAPPING_ONLY_TARGET == 60
-    assert MB.MAPPING_ONLY_PROVEN <= MB.mapping_only_capacity(MB.DEFAULT_DENSITY)
+def test_mapping_only_capacity_is_reliability_capped():
+    # The token envelope supports 60 (MAPPING_ONLY_TARGET), but compound-mini reliably maps
+    # only small batches, so MAP_RELIABILITY_CAP (15) dominates — see the map_batches constant
+    # (measured 2026-09-08: >=25-alias batches flakily return EMPTY, losing large-doc maps).
+    assert MB.mapping_only_capacity(MB.DEFAULT_DENSITY) == MB.MAP_RELIABILITY_CAP == 15
+    assert MB.MAP_RELIABILITY_CAP < MB.MAPPING_ONLY_TARGET == 60
 
 
-def test_40_parent_fixture_fits_known_baseline_single_request():
-    # Measured baseline (§14.5): 40 parents ~= 8908 total tokens, single request.
+def test_40_parent_token_baseline_holds_but_batches_are_reliability_capped():
+    # Token baseline (§14.5) is unchanged — 40 parents ~= 8908 total tokens, 4 RPM feasible.
     assert round(MB.request_total_tokens(MB.DEFAULT_DENSITY, 40)) == 8908
-    plan = MB.plan_batches(_manifest(40))
-    assert len(plan.batches) == 1
-    b = plan.batches[0]
-    assert b.parent_count == 40
-    assert b.est_billed_tokens == round(40 * 87.0) == 3480
-    assert b.est_billed_tokens <= MB.COMPLETION_ENVELOPE_TOKENS
     assert MB.token_feasible_rpm(MB.request_total_tokens(MB.DEFAULT_DENSITY, 40)) == 4
+    # But batching is now reliability-capped at 15 → 3 batches [15, 15, 10] (not one 40-batch,
+    # which compound-mini returned empty for). Each stays well under the completion envelope.
+    plan = MB.plan_batches(_manifest(40))
+    assert [b.parent_count for b in plan.batches] == [15, 15, 10]
+    assert all(b.est_billed_tokens <= MB.COMPLETION_ENVELOPE_TOKENS for b in plan.batches)
 
 
-def test_60_parent_pack_respects_token_target_single_request():
-    # §14.5: ~13.4k tokens/request at 60 parents — still one request, still 4 RPM.
+def test_60_parent_pack_is_reliability_batched():
+    # §14.5 token math at 60 parents is unchanged; batching is now 4 x 15 (was one 60-batch).
     assert round(MB.request_total_tokens(MB.DEFAULT_DENSITY, 60)) == 13362
     plan = MB.plan_batches(_manifest(60))
-    assert len(plan.batches) == 1
-    assert plan.batches[0].parent_count == 60
-    assert plan.batches[0].est_billed_tokens <= MB.COMPLETION_ENVELOPE_TOKENS
+    assert [b.parent_count for b in plan.batches] == [15, 15, 15, 15]
+    assert all(b.est_billed_tokens <= MB.COMPLETION_ENVELOPE_TOKENS for b in plan.batches)
     assert MB.token_feasible_rpm(MB.request_total_tokens(MB.DEFAULT_DENSITY, 60)) == 4
 
 
 def test_overflow_splits_into_deterministic_bounded_batches():
     plan = MB.plan_batches(_manifest(150))
-    assert [b.parent_count for b in plan.batches] == [60, 60, 30]
+    assert [b.parent_count for b in plan.batches] == [15] * 10
     # Every batch stays under the completion envelope.
     assert all(b.est_billed_tokens <= MB.COMPLETION_ENVELOPE_TOKENS for b in plan.batches)
     # Aliases partition exactly once, in order, no gaps or repeats.

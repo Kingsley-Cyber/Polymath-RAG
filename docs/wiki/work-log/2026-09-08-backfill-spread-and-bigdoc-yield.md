@@ -1,13 +1,13 @@
 ---
-title: "WORK LOG — Parent-MAP backfill: account-spread FIXED, large-doc yield GATED"
+title: "WORK LOG — Parent-MAP backfill: account-spread + large-doc batch cap, BOTH FIXED"
 change_id: BACKFILL-SPREAD-V1
 date: 2026-09-08
 owner: governance (backfill tooling; migration coverage)
 last_reviewed: 2026-09-08
 last_touched: 2026-09-08
 status: complete
-register: 11.177
-package: scripts/parent_map_backfill.py, tests/determinism/test_parent_map_backfill_spread.py, scripts/scaffold_polymath_v4.py, docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md
+register: 11.177, 11.178
+package: scripts/parent_map_backfill.py, tests/determinism/test_parent_map_backfill_spread.py, shared/polymath_shared/document_profile/map_batches.py, tests/determinism/test_map_batches.py, scripts/scaffold_polymath_v4.py, docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md
 architecture_impact: "RETRIEVAL-MIGRATION-DEPENDENCY-V1 S12 (cinema coverage). Two backfill defects were diagnosed while advancing cinema parent-MAP coverage 551→704. (1) FIXED — the backfill routed map inference through `route()`, whose capacity view is BLIND for these map lanes in a dedicated process (their limiter lanes are unregistered → every account reads a tied full-budget placeholder), so the only spread was a 6 s reservation that expired during real multi-second calls and collapsed to a lexical-first pin (649/657 calls on map_groq1). Replaced with explicit ROUND-ROBIN across the six distinct-account endpoints; each endpoint keeps its own AIMD limiter for per-account backoff. Live-verified even spread; unit-tested. (2) GATED — the residual coverage wall is the map inference YIELD on large documents (≥~430 parents map ≈0 even in isolation, capacity fine), NOT capacity/concurrency/pinning. Root-caused with evidence and handed to a dedicated task. No contract changed; the backfill is still resumable/idempotent."
 ---
 
@@ -51,20 +51,19 @@ campaign was stuck. Keep the backfill resumable/idempotent/contract-scoped; no p
 
 ## Open contract gaps
 
-- **GATED — large-document batch OVER-SIZING (the real cinema-coverage wall; ROOT CAUSE captured).**
-  Docs ≤~300 parents map fully (Walter Murch 42/42; Bruce Block 220/297); docs ≥~430 map ≈0 in
-  isolation (Ken Dancyger **2/430**). **Root cause:** `map_batches.plan_batches` sizes each batch by a
-  fixed alias COUNT (`mapping_only_capacity` ~40, from the average density's OUTPUT/billed tokens) with
-  **no INPUT-token cap**. Large reference docs have big parent chunks, so a 40-alias batch's INPUT
-  overflows the endpoint. **Evidence (469-parent doc, one batch, varying alias count):** 20 → raw 2157,
-  20 maps; **40 → raw 0 (EMPTY)** even at `max_tokens=8000` (so NOT an output-token cap); **60 →
-  HTTP_413**. Endpoints otherwise answer fine (direct probe OK), so it is not capacity/decline/parse.
-  **What unblocks:** cap batch packing by estimated INPUT tokens (existing `estimate_input_tokens`/
-  `skeleton_prompt_tokens`) to a safe budget (≈20 big parents) alongside the count target, and **bump
-  `BATCH_PLANNER_VERSION`** (batch_hash changes → re-batch under the new version; maps persist by
-  map_hash; resumable). **Why not done here:** this is a FROZEN batch-planner CONTRACT change — needs a
-  migration-safe version bump, updated planner determinism pins, and full-map-path validation; not
-  rushed at session tail. **Exact next:** implement the token-capped packing + version bump + an
-  asserting test that a large fresh doc reaches `unresolved==0`, then a bounded live backfill advances
-  cinema coverage. Handed to task `980b57cb`. Cinema coverage → cutover (S13/S14, owner QUERY_READY
-  flip) stays gated on this.
+- **FIXED — large-document batch OVER-SIZING (map-batches-v2).** Docs ≥~430 parents mapped ≈0
+  (Ken Dancyger **2/430**; Hey Whipple 0/469). **Root cause (corrected after capture — it was NOT
+  input size):** `map_batches.plan_batches` capped batches by a token-envelope alias COUNT
+  (`mapping_only_capacity`=60), but `groq/compound-mini` reliably returns a COMPLETE structured map
+  only for SMALL batches — measured: **10-15 aliases 100% (10/10, 15/15 ×3), 20 mostly, ≥25 flakily
+  EMPTY/partial** even though the prompt is tiny (~16 KB at 60 aliases). The token envelope was not the
+  ceiling — the model's structured-output reliability is. **Fix:** `MAP_RELIABILITY_CAP=15` applied in
+  `mapping_only_capacity`; `BATCH_PLANNER_VERSION`→`map-batches-v2` (batch_hash changes → large docs
+  re-batch into 15s; maps persist by map_hash; resumable; small docs' single ≤15-batch unchanged).
+  **Proof:** `test_map_batches` pins updated (capacity==15; 40→[15,15,10]; 60→4×15; 150→10×15); 24
+  planner-dependent tests GREEN. **Qualified live:** the 469-parent Hey Whipple that mapped ~0 under
+  the 60-cap mapped **75/469 in one capacity-limited pass** under the 15-cap (~20× better maps/call);
+  15-alias batches measured 100% reliable under fresh capacity. **Remaining:** completing all cinema
+  large docs is now purely CAPACITY-gated (multi-session — this session's diagnosis spent today's
+  budget), resumable via `parent_map_backfill.py --corpus cinema --project --concurrency 6`. Cinema
+  coverage → cutover (S13/S14, owner QUERY_READY flip) no longer batch-size-blocked.

@@ -33,14 +33,18 @@ block below (registers 11.175–11.176):
   (owner QUERY_READY flip, untaken); NOT a real-corpus uplift (d7 is synthetic, no P10 fixtures).
   **The cutover/retirement boundary is now precisely characterized: cinema coverage + owner
   QUERY_READY flip (BE-AWARE §7).**
-- **Backfill account-spread FIXED + large-doc yield GATED (11.177):** advancing cinema coverage
-  551→**704**/11,993 exposed two defects. FIXED: the backfill pinned map inference to one account
-  (`route()` blind on unregistered lanes) → explicit ROUND-ROBIN across the six accounts
-  (BACKFILL-SPREAD-V1, live-verified even 110/acct, tested). GATED (the real coverage wall, NOT
-  capacity/concurrency): docs ≥~430 parents map ≈0 IN ISOLATION (Ken Dancyger 2/430; small docs map
-  fully; endpoints probe OK) — a large-doc map-yield issue. Exact-next in S12 + a dedicated task:
-  capture a big-doc batch's raw response (model-decline vs parse-fail) → fix batch/prompt or exclude
-  unmappable big-doc parents so `unresolved→0`.
+- **Backfill: TWO defects FIXED (11.177 spread + 11.178 batch cap):** advancing cinema coverage
+  551→**704+**/11,993 exposed two defects, both now fixed. (1) The backfill pinned map inference to one
+  account (`route()` blind on unregistered lanes) → explicit ROUND-ROBIN across the six accounts
+  (BACKFILL-SPREAD-V1, live-verified even 110/acct, tested). (2) Large docs (≥~430 parents) mapped ≈0
+  because `map_batches.plan_batches` packed 60-alias batches, but `compound-mini` reliably maps only
+  SMALL batches (measured: ≤15 → 100%, ≥25 → flaky EMPTY, despite tiny prompts — a model
+  structured-output reliability limit, NOT input size). Fixed: `MAP_RELIABILITY_CAP=15` +
+  `BATCH_PLANNER_VERSION`→`map-batches-v2` (re-batch; maps persist by map_hash); 24 planner tests green;
+  live-qualified (Hey Whipple 0→75/469, ~20× better maps/call). **Cinema large-doc mapping is no longer
+  batch-size-blocked — completing coverage is now purely capacity-gated (multi-session; today's Groq
+  budget spent by the diagnosis), resumable via `parent_map_backfill.py --corpus cinema --project
+  --concurrency 6`.**
 
 ### Earlier this session — DATA-REGEN: D-5/D-12 UNBLOCKED; parent-MAP backfill parallelized
 

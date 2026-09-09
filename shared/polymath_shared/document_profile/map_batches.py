@@ -30,6 +30,16 @@ COMPLETION_ENVELOPE_TOKENS = 6500
 #: edge we do NOT pack to (§13.1).
 MAPPING_ONLY_TARGET = 60
 MAPPING_ONLY_PROVEN = 40
+#: RELIABILITY cap on aliases-per-batch, INDEPENDENT of the token envelope. Measured
+#: 2026-09-08 (BACKFILL-SPREAD-V1 follow-up): `groq/compound-mini` returns a COMPLETE
+#: structured map only for SMALL batches — 10-15 aliases map 100% (10/10, 15/15 across
+#: attempts), 20 mostly (occasional 18/20), and >=25 flakily return EMPTY/partial even
+#: though the prompt is tiny (~16 KB at 60 aliases). So the token target (60) is NOT the
+#: true ceiling — the model's structured-output reliability is. Large reference docs were
+#: mapping ~0 (e.g. Ken Dancyger 2/430) PURELY because they packed 60-alias batches; at 15
+#: they map reliably. The effective batch size is the smaller of the token target and this.
+#: Canaryable: raise it if compound-mini's big-batch reliability improves.
+MAP_RELIABILITY_CAP = 15
 #: Reserve so a slightly-over-density response still finishes with `stop`.
 SAFETY_RESERVE_TOKENS = 512
 #: Per-request total-token cap under which 4 RPM/key is token-feasible (§14.4).
@@ -103,11 +113,15 @@ def mapping_only_capacity(
     envelope: int = COMPLETION_ENVELOPE_TOKENS,
     target: int = MAPPING_ONLY_TARGET,
     safety: int = SAFETY_RESERVE_TOKENS,
+    reliability_cap: int = MAP_RELIABILITY_CAP,
 ) -> int:
-    """Parents per mapping-only request: the smaller of the production target and
-    what the billed-completion envelope supports. Never the theoretical edge."""
+    """Parents per mapping-only request: the smaller of the production target, what the
+    billed-completion envelope supports, and the model's structured-output RELIABILITY cap
+    (`MAP_RELIABILITY_CAP`). Never the theoretical edge. The reliability cap dominates the
+    token target here — compound-mini flakily returns empty above ~20 aliases regardless of
+    the (small) prompt size, so packing to the token envelope silently lost large-doc maps."""
     theoretical = int((envelope - safety) // max(1.0, density.billed_tokens_per_parent))
-    return max(1, min(target, theoretical))
+    return max(1, min(target, theoretical, reliability_cap))
 
 
 def combined_capacity(
@@ -181,7 +195,7 @@ class BatchPlan:
         return sum(b.parent_count for b in self.batches)
 
 
-BATCH_PLANNER_VERSION = "map-batches-v1"
+BATCH_PLANNER_VERSION = "map-batches-v2"  # v2: MAP_RELIABILITY_CAP (compound-mini big-batch reliability)
 
 
 def _batch(ordinal, by_alias, aliases, density, *, contract, manifest_hash, is_combined) -> MapBatch:
