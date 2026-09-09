@@ -53,15 +53,20 @@ Bugs fixed live (all committed): pMAP projection embed contract (`_embed_texts`)
 doc_profile-early (else doc_profile runs last in STAGE_DAG, blowing the 4-min budget), probe reads
 `child_evidence`.
 
-**REMAINING for the goal's 3-consecutive-<4min gate — OPERATIONAL, not a pipeline defect:** the substrate-
-mint latency (the control-loop `auto_map_parents` cadence) + the demand-driven fleet's worker park/respawn +
-the accumulated `rag-canary` test corpus slowing control queries push some canaries near/over 240 s. To close
-it: run on a WARMED, low-contention fleet (workers resident; a small/fresh canary corpus), or reduce the mint
-latency. The pipeline itself is proven; the gate is a timing/warm-up concern. Commands as above
-(`scripts/rag_pipeline_canary.py --corpus rag-canary --passes 3`); diagnostics in `/tmp/polymath_canaries`.
-**The fleet is currently running WITH the transient canary flags** (they clear on the next normal restart —
-`scripts/run_fleet_supervised.sh` without the two `POLYMATH_DOC_PARENT_MAP_*` env vars). Phase 17 cinema
-reconciliation stays behind the FORENSIC HOLD; do NOT resume the cinema backfill.
+**3-CONSECUTIVE-<4min CANARY GATE — PASSED (2026-09-09).** `scripts/rag_pipeline_canary.py --corpus
+rag-canary --passes 3`: **215.9 s → 169.3 s → 107.7 s** (all < 240 s, each with `probe_ok=True` — the exact
+`ZQX-*` fact cited from `/retrieve` `child_evidence`), times DROPPING as the stack warmed (the plan's warmed-
+stack behavior). "✅ 3 consecutive canary passes — fresh-document pipeline stable." Diagnostic packets in
+`/tmp/polymath_canaries/2026-09-09/` (doc_924470acad11, doc_d47cdb771f61, doc_53b03a8d8472). The
+fresh-document pipeline is COMPLETE: `/upload` → auto-minted grounded pMAP (Groq compound-mini) + early
+doc_profile → per-doc `vnext_ready` < 4 min → source-grounded retrieval.
+
+**The fleet is currently running WITH the transient canary flags** (`POLYMATH_DOC_PARENT_MAP_ENABLED=1` +
+`POLYMATH_DOC_PARENT_MAP_CORPUS=rag-canary`); they clear on the next normal restart
+(`scripts/run_fleet_supervised.sh` without those two env vars). To make pMAP auto-mint the DEFAULT for all
+new uploads (owner decision), set `POLYMATH_DOC_PARENT_MAP_ENABLED=1` with no corpus scope — but that
+would begin spending Groq pMAP on every fresh doc, so it is an owner call, and cinema reconciliation stays
+behind the FORENSIC HOLD (Phase 17). Do NOT resume the cinema backfill.
 
 ## Latest checkpoint (2026-09-08 latest — S11-proper landed + FIRST corpus VNEXT_COMPLETE)
 
