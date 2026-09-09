@@ -80,11 +80,14 @@ number still needs a chat model + rubric.
 
 ## Open contract gaps
 
-- **D-10 downstream uplift (NARROWED):** union-recall + cross-encoder SURVIVAL are now shown live
-  (2-5 non-DIRECT survivors on cross-doc/exploratory queries). What remains is a FORMAL ANSWER-QUALITY
-  number — an LLM-judge or human rubric comparing final answers with the lanes on vs off on a
-  relational-query fixture. Needs a chat model (Groq capacity) + a rubric; `gold_in_union` on exact/QA
-  L/B is the wrong instrument (base ceilings it AND direct out-competes relational candidates there).
+- **D-10 downstream uplift — MEASURED (11.181):** over the FREE Ollama `gemma4:31b-cloud`
+  (`_ollama_generate`, no owner spend), 5 relational cinema queries GENERATED with lanes ON vs default
+  OFF. A blind A/B LLM-judge (randomized order) prefers the lanes-ON answer **4/5**; the ON answer
+  objectively cites relational-role evidence (LATENT/RELATIONAL/PRECISION `[S#]`) in **3/5** — evidence
+  the DIRECT-only default could not supply (colour→film-music "coloristic effects", etc.). Consistent
+  with the survival result. **Caveat:** small sample + LLM-judge, not a human rubric — residual is to
+  scale the relational fixture + a human/larger-model rubric for a statistically-tight number. Evidence
+  `docs/wiki/experiments/d10-answer-quality-cinema-2026-09-08.json`.
 - **E dual-read reach** scales with parent-MAP coverage (cinema 838/11,993) — capacity-gated
   multi-session (batch-size unblocked in 11.178).
 - **Wildcard (P12)** still unimplemented (divergent atom frontier); lowest-value slice.

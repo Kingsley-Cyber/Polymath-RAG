@@ -1,0 +1,93 @@
+{
+  "contract": "d10-answer-quality-v1",
+  "model": "gemma4:31b-cloud",
+  "rows": [
+    {
+      "q": "How does colour theory connect to emotional storytelling in cinema?",
+      "intent": "RELATIONSHIP",
+      "on_roles": {
+        "DIRECT": 9,
+        "LATENT": 3,
+        "RELATIONAL": 3
+      },
+      "off_roles": {
+        "DIRECT": 15
+      },
+      "on_relational_cited": [
+        "S12",
+        "S14"
+      ],
+      "on_ans_chars": 1687,
+      "off_ans_chars": 1931,
+      "judge_on_wins": true
+    },
+    {
+      "q": "What links editing rhythm to the viewer's perception of time?",
+      "intent": "EXPLORATORY",
+      "on_roles": {
+        "DIRECT": 15
+      },
+      "off_roles": {
+        "DIRECT": 15
+      },
+      "on_relational_cited": [],
+      "on_ans_chars": 1489,
+      "off_ans_chars": 1511,
+      "judge_on_wins": true
+    },
+    {
+      "q": "How do composition principles relate to directing the viewer's attention?",
+      "intent": "RELATIONSHIP",
+      "on_roles": {
+        "DIRECT": 14,
+        "RELATIONAL": 1
+      },
+      "off_roles": {
+        "DIRECT": 15
+      },
+      "on_relational_cited": [
+        "S12"
+      ],
+      "on_ans_chars": 1645,
+      "off_ans_chars": 1885,
+      "judge_on_wins": false
+    },
+    {
+      "q": "How does lighting connect to character psychology on screen?",
+      "intent": "RELATIONSHIP",
+      "on_roles": {
+        "DIRECT": 15
+      },
+      "off_roles": {
+        "DIRECT": 15
+      },
+      "on_relational_cited": [],
+      "on_ans_chars": 1957,
+      "off_ans_chars": 2039,
+      "judge_on_wins": true
+    },
+    {
+      "q": "What connects sound design to the emotional pacing of a scene?",
+      "intent": "RELATIONSHIP",
+      "on_roles": {
+        "DIRECT": 13,
+        "LATENT": 1,
+        "RELATIONAL": 1
+      },
+      "off_roles": {
+        "DIRECT": 15
+      },
+      "on_relational_cited": [
+        "S15"
+      ],
+      "on_ans_chars": 1597,
+      "off_ans_chars": 1397,
+      "judge_on_wins": true
+    }
+  ],
+  "summary": {
+    "judge_on_wins": 4,
+    "n": 5,
+    "on_cites_relational": 3
+  }
+}
