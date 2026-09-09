@@ -140,3 +140,12 @@ def test_inventory_flags_dark_pool_when_no_credentials(monkeypatch) -> None:
     # Structural: unreachable_pins returns only WHOLE-dark pools; on a normally
     # configured repo it is a dict (possibly empty) and never raises.
     assert isinstance(reg.unreachable_pins(), dict)
+
+
+def test_pmap_pool_batch_cap_is_min_over_active_lanes() -> None:
+    reg = _reg()
+    # config declares map_batch_cap=15 on the six compound-mini pMAP lanes.
+    caps = {l.name: l.map_batch_cap for l in reg.by_function()[LR.PMAP]}
+    assert all(c == 15 for c in caps.values())
+    assert LR.pmap_pool_batch_cap(reg) == 15
+    assert LR.PMAP_DEFAULT_BATCH_CAP == 15

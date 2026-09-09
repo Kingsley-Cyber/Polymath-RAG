@@ -1914,6 +1914,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-09-rag-finish-phase4-functional-pools.md", "md", None),
     ("docs/wiki/work-log/2026-09-09-rag-finish-phase5-grounding.md", "md", None),
     ("docs/wiki/work-log/2026-09-09-rag-finish-phase6-grounded-pmap-prompt.md", "md", None),
+    ("docs/wiki/work-log/2026-09-09-rag-finish-phase7-lane-qualified-pmap-cap.md", "md", None),
     ("docs/wiki/experiments/routing-lanes-qualify-cinema-2026-09-08.json", "json", None),
     ("docs/wiki/experiments/d10-answer-quality-cinema-2026-09-08.json", "json", None),
     ("docs/wiki/work-log/2026-09-06-style-bold-retire.md", "md", None),

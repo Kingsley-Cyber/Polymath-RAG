@@ -181,3 +181,23 @@ def test_module_is_pure():
             roots.add(node.module.split(".")[0])
     allowed = {"__future__", "hashlib", "math", "dataclasses", "typing", "polymath_shared"}
     assert roots <= allowed, f"unexpected imports in a pure stage: {roots - allowed}"
+
+
+def test_reliability_cap_is_lane_qualified():
+    """RAG-PIPELINE-FINISH Phase 7: the reliability cap is a per-lane-qualified input,
+    not a hard-coded global 15. Raising it produces larger batches (target 60 honored,
+    envelope permitting); the token envelope still bounds it; default 15 is unchanged."""
+    d = MB.DEFAULT_DENSITY
+    c15 = MB.mapping_only_capacity(d, reliability_cap=15)
+    c40 = MB.mapping_only_capacity(d, reliability_cap=40)
+    c60 = MB.mapping_only_capacity(d, reliability_cap=60)
+    assert c15 == 15
+    assert c40 > c15 and c40 <= 40                 # a 40-qualified lane maps bigger batches
+    assert c60 >= c40 and c60 <= 60                 # target 60 honored when the envelope permits
+    assert MB.mapping_only_capacity(d, reliability_cap=1000) < 1000   # envelope bounds a huge cap
+    # plan_batches threads it end to end
+    p40 = MB.plan_batches(_manifest(60), reliability_cap=40)
+    assert all(b.parent_count <= 40 for b in p40.batches)
+    assert max(b.parent_count for b in p40.batches) == c40
+    # default (compound-mini 15) path unchanged / backward compatible
+    assert all(b.parent_count <= 15 for b in MB.plan_batches(_manifest(60)).batches)

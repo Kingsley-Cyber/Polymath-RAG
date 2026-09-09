@@ -75,6 +75,25 @@ def functional_pool_of(stage: str) -> str | None:
     uses no provider pool (intake/projection/summary stages)."""
     return STAGE_TO_FUNCTION.get(stage)
 
+
+#: the measured compound-mini structured-output reliability cap — the pMAP batch-size
+#: default when a lane declares no `map_batch_cap` (11.178 / MAP_RELIABILITY_CAP).
+PMAP_DEFAULT_BATCH_CAP = 15
+
+
+def pmap_pool_batch_cap(registry: "LaneRegistry | None" = None,
+                        default: int = PMAP_DEFAULT_BATCH_CAP) -> int:
+    """The pMAP pool's qualified batch cap = the MIN `map_batch_cap` over its ACTIVE
+    lanes (so every planned batch is drainable by every lane — the pool-drain
+    invariant). A lane without a declared cap uses ``default``. A homogeneous pool that
+    qualifies at 60 returns 60 (architectural target honored); today's compound-mini
+    pool returns 15. No active PMAP lane => the default."""
+    reg = registry or build_registry()
+    active = [l for l in reg.by_function().get(PMAP, []) if l.reachability == ACTIVE]
+    if not active:
+        return default
+    return min((l.map_batch_cap or default) for l in active)
+
 # reachability states (static; runtime cooldown/breaker is NOT config and is
 # excluded so the offline gate is deterministic — see `runtime_note`).
 ACTIVE = "active"                              # enabled and credential present
@@ -145,6 +164,10 @@ class LaneInfo:
     credential_present: bool
     enabled: bool
     capacity: LaneCapacity = field(default_factory=LaneCapacity)
+    #: LANE-QUALIFIED pMAP batch cap (RAG-PIPELINE-FINISH Phase 7): max aliases/request
+    #: this lane's model reliably maps. None => the global MAP_RELIABILITY_CAP default.
+    #: Distinct from provider RPM/TPM — a WORKLOAD capability, not a rate limit.
+    map_batch_cap: int | None = None
 
     def to_dict(self) -> dict:
         d = {k: v for k, v in self.__dict__.items() if k != "capacity"}
@@ -226,7 +249,8 @@ def build_lanes() -> list[LaneInfo]:
             capacity=LaneCapacity(
                 kind=seed.get("kind"), rpm=seed.get("rpm"), tpm=seed.get("tpm"),
                 rpd=seed.get("rpd"), conc_cap=seed.get("conc_cap"), family=seed.get("family"),
-                request_char_budget=e.get("request_char_budget"))))
+                request_char_budget=e.get("request_char_budget")),
+            map_batch_cap=e.get("map_batch_cap")))
 
     lanes.sort(key=lambda l: (l.function, l.name))
     return lanes

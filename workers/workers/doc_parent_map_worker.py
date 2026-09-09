@@ -242,6 +242,7 @@ def run_document_mapping(
     max_attempts: int = DEFAULT_MAX_ATTEMPTS, lease_seconds: int = DEFAULT_LEASE_SECONDS,
     now_fn: Callable[[], Any] | None = None,
     grounding: DocumentGroundingContextV1 | None = None,
+    reliability_cap: int = map_batches.MAP_RELIABILITY_CAP,
 ) -> MappingOutcome:
     """Map one document's parents durably. ``tx`` is a transaction context manager
     factory (``polymath_shared.db.tx`` in production); ``infer`` is the injected
@@ -258,7 +259,7 @@ def run_document_mapping(
     manifest = build_parent_skeletons(parents)
     g_hash = grounding.context_hash if grounding is not None else ""
     plan = map_batches.plan_batches(manifest, density, contract=map_batches.BATCH_PLANNER_VERSION,
-                                    grounding_hash=g_hash)
+                                    grounding_hash=g_hash, reliability_cap=reliability_cap)
     by_alias = {s.alias: s for s in manifest.skeletons}
     text_hash_by_alias = {s.alias: s.text_hash for s in manifest.skeletons}
 

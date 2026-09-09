@@ -232,6 +232,7 @@ def plan_batches(
     combined_global_profile_billed_tokens: int | None = None,
     contract: str = BATCH_PLANNER_VERSION,
     grounding_hash: str = "",
+    reliability_cap: int = MAP_RELIABILITY_CAP,
 ) -> BatchPlan:
     """Cut a document's eligible parents into deterministic mapping batches.
 
@@ -242,7 +243,11 @@ def plan_batches(
     """
     aliases = [s.alias for s in manifest.skeletons]  # ordinal order from S1
     by_alias = {s.alias: s for s in manifest.skeletons}
-    cap = mapping_only_capacity(density)
+    # LANE-QUALIFIED CAP (RAG-PIPELINE-FINISH Phase 7): the reliability cap is no longer
+    # a hard-coded global 15 — the caller (the pMAP pool worker) passes its pool's
+    # qualified cap (min over active lanes). The token envelope still lowers it for a
+    # dense document; the architectural target 60 is honored when a lane qualifies there.
+    cap = mapping_only_capacity(density, reliability_cap=reliability_cap)
     comb_cap = (
         combined_capacity(density, global_profile_billed_tokens=combined_global_profile_billed_tokens)
         if combined_global_profile_billed_tokens is not None
