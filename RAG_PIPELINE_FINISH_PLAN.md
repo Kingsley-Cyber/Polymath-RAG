@@ -228,6 +228,221 @@ It does **not** currently show per document:
 
 **Implication:** do not blindly execute unchecked historical gates. Reconcile checklist claims against current code/runtime evidence first.
 
+## 1.11 Frozen API-backed functional-lane architecture
+
+This section is a **frozen architecture decision for the finish work**. It separates *what Polymath is trying to do* from *which provider/model/key executes the work*.
+
+### 1.11.1 Four permanent functional lanes
+
+The production provider-control plane shall expose exactly four permanent API-backed function classes:
+
+```text
+1. CHAT
+2. GRAPH_EXTRACTION
+3. DOCUMENT_PROFILE
+4. PMAP
+```
+
+Definitions:
+
+| Functional lane | Owns |
+|---|---|
+| `CHAT` | query-time LLM work managed by this provider-control plane: intent/compiler/planning and any directly managed chat/synthesis lane discovered by Graphify |
+| `GRAPH_EXTRACTION` | high-volume ingestion workhorse: structured fact/entity/relation/object extraction and equivalent graph-building inference |
+| `DOCUMENT_PROFILE` | one document-level retrieval/semantic profile compiled from the document fingerprint/context |
+| `PMAP` | parent-level semantic localization: routing signature + hooks for each retrieval-eligible parent |
+
+`parent_enrichment` is **not** a fifth permanent lane. It remains a live legacy/dual-run compatibility surface until its readers are migrated and the accepted migration authority permits retirement. Do not add long-lived provider capacity solely to preserve a lane already classified for eventual retirement unless a measured short-term migration need requires it.
+
+A functional lane is **purpose**, not provider identity. The same model may appear in multiple functional lanes without implying shared quota/circuit state.
+
+### 1.11.2 Credential-isolation rule: one API key = one account lane by default
+
+Freeze the default resource model as:
+
+```text
+FUNCTION
+  -> API KEY / ACCOUNT LANE
+      -> MODEL CAPACITY SUB-LANE
+```
+
+Rules:
+
+1. Every configured provider API key is treated as an independent account/capacity lane by default.
+2. Provider name alone (`gemini`, `openrouter`, `groq`, etc.) must **never** define a shared limiter or shared failure circuit.
+3. RPM, TPM, RPD, Retry-After, concurrency, AIMD state and breaker/circuit state may not cross API-key boundaries unless an explicit provider-specific exception is documented and proven.
+4. Different models under one key may be represented as distinct model-capacity sub-lanes when the provider actually meters them separately.
+5. If model quotas under the same key are partly shared, encode that relationship explicitly; do not infer it from provider branding.
+6. Functional pools reference eligible account/model lanes. They do not themselves own the provider quota truth.
+7. A shared credential used by more than one function must be surfaced as an explicit contention edge in the pool inventory/status tooling.
+8. Any gateway adopted later (LiteLLM/Bifrost/etc.) must preserve this account-lane model rather than recreating provider-wide families.
+
+**Groq exception:** the current `DOCUMENT_PROFILE` (`groq/compound`) and `PMAP` (`groq/compound-mini`) topology may deliberately share the same six Groq credentials because exploiting the available free-account capacity and the provider's actual quota behavior is an intentional owner decision. That exception must remain explicit and evidence-driven. It does **not** establish a general shared-family rule for other providers.
+
+### 1.11.3 Current pMAP input is local ParentSkeleton only — profile context is not wired today
+
+Current-main code confirms that pMAP does **not** consume the document profile.
+
+`shared/polymath_shared/document_profile/parent_skeleton.py` constructs the model-facing `ParentSkeleton` with the bounded local surfaces:
+
+```text
+alias
+heading_path
+lead_excerpt       # headingless parents only
+salient_excerpt
+key_terms          # bounded high-information terms
+identifiers        # deterministic exact ids/acronyms/codes
+```
+
+`shared/polymath_shared/document_profile/map_prompt.py::_render_skeleton` renders only those fields as:
+
+```text
+ALIAS ...
+HEADING: ...
+OPENING: ...
+EXCERPT: ...
+TERMS: ...
+IDENTIFIERS: ...
+```
+
+`workers/workers/doc_parent_map_worker.py::run_document_mapping` currently calls:
+
+```text
+build_parent_skeletons(parents)
+-> map_batches.plan_batches(manifest, density, ...)
+-> infer(skels, is_combined=batch.is_combined)
+-> map_compiler.compile_maps(...)
+```
+
+There is no load/read of the compiled document profile in this path.
+
+**Current-state conclusion:** today's pMAP is local-section semantic routing, not profile-grounded document-aware routing.
+
+### 1.11.4 The repo already contains an unfinished combined-path scaffold
+
+`shared/polymath_shared/document_profile/map_batches.py::plan_batches` accepts `combined_global_profile_billed_tokens`. When supplied, the first batch is marked `is_combined=True` and sized with `combined_capacity`; subsequent batches remain mapping-only.
+
+However, the current worker calls `plan_batches(...)` without that argument, and `shared/polymath_shared/document_profile/map_prompt.py::build_map_prompt(..., is_combined=...)` explicitly states that `is_combined` is not specialized: both branches return the same MAP-only prompt.
+
+Therefore:
+
+```text
+combined-path planning scaffold        EXISTS
+profile context actually entering MAP  DOES NOT EXIST
+```
+
+Do not report the combined profile+pMAP path as implemented until the real worker/prompt/artifact path proves it.
+
+### 1.11.5 Frozen semantic-index relationship: profile -> pMAP context
+
+`DOCUMENT_PROFILE` and `PMAP` remain **separate durable functional contracts**, but they form one coupled semantic-indexing subsystem:
+
+```text
+DOCUMENT
+   -> DocumentFingerprint / document context
+   -> DOCUMENT_PROFILE
+       -> compiled, validated document profile
+       -> bounded deterministic PMAP document context
+   -> PMAP
+       -> local ParentSkeleton evidence + document-level context
+       -> MAP compiler
+       -> durable parent maps
+```
+
+The reason to keep separate contracts is repair cardinality:
+
+- one document produces one compiled profile;
+- one document may produce hundreds of parent maps across many batches;
+- a failed/unresolved parent must be repairable without regenerating the valid profile;
+- a profile failure must not destroy already-valid map state from another current contract;
+- partial pMAP output remains useful work and repairs only missing aliases.
+
+The **logical dependency is frozen:** current-generation pMAP should be grounded by the current compiled document profile, not by isolated parent skeletons alone.
+
+The exact compact-context projection must be deterministic, bounded and versioned. It should be derived from **compiled profile state**, never directly from unvalidated raw LLM output. A reasonable implementation surface is a compact subset such as the profile `ONE` plus selected high-value `TOPIC` / `THEORY` / `CONCEPT` / `BOUNDARY` lines, but the exact field-selection/token bound must be pinned in the MAP prompt contract after direct code/fixture review rather than improvised in worker code.
+
+### 1.11.6 Single physical call is an optimization, not a contract merge
+
+The existing combined-first-batch idea may be used if it is actually beneficial:
+
+```text
+CALL 1
+  -> document profile output
+  -> first MAP batch output
+
+CALL 2..N
+  -> compact compiled profile context
+  -> remaining parent skeleton batches
+```
+
+But even if one provider request emits both products:
+
+- the profile and MAP outputs must compile independently;
+- each artifact keeps independent identity/version/readiness;
+- later pMAP repair does not regenerate the profile;
+- profile repair does not discard valid maps;
+- one physical request must never be treated as proof that the two functions are one durable stage.
+
+Do not force the combined-call optimization if it complicates reliability, compiler separation, or provider economics. The mandatory architecture is **profile-grounded pMAP**, not “one call at all costs.”
+
+### 1.11.7 MAP identity must include the new semantic context generation
+
+Current batch identity binds planner contract, manifest hash, skeleton hashes and the `is_combined` flag. Current worker map scope defaults to the map compiler contract. Adding document-profile context changes the semantics of generated routing maps even when parent text/skeleton identity is unchanged.
+
+Therefore the implementation must make stale-vs-current maps unambiguous by doing at least one explicit versioned identity action consistent with repository authority, e.g.:
+
+- bump/version the MAP prompt/map contract and scope current rows to it; and/or
+- bind the deterministic profile-context hash/prompt generation into batch/map input identity.
+
+**Forbidden:** silently start sending profile context while allowing pre-context maps to satisfy the exact same “current” contract.
+
+Before choosing the minimal implementation, inspect:
+- `shared/polymath_shared/document_profile/map_batches.py::_batch`
+- `shared/polymath_shared/document_profile/map_prompt.py::MAP_PROMPT_VERSION`
+- `shared/polymath_shared/document_profile/map_compiler.py::MAP_COMPILER_VERSION`
+- `workers/workers/doc_parent_map_worker.py::run_document_mapping`
+- migration `0054_document_parent_maps.sql` / current schema authority.
+
+### 1.11.8 Functional-pool inventory becomes a formal production contract
+
+Graphify + config inspection must produce one canonical generated/maintained inventory able to answer both directions:
+
+```text
+FUNCTION -> ACCOUNT KEY -> MODEL -> provider config -> limiter/capacity state
+ACCOUNT KEY -> every FUNCTION/MODEL that can spend it
+MODEL -> every FUNCTION/ACCOUNT deployment using it
+```
+
+For every account/model lane expose at least:
+
+- functional lane(s),
+- provider,
+- exact model,
+- API-key environment name or non-secret key fingerprint,
+- whether the credential is dedicated or intentionally cross-used,
+- configured RPM/TPM/RPD/concurrency where known,
+- provider-observed limit state when available,
+- active/parked status,
+- retry/fallback priority,
+- explicit shared-capacity exception if one exists.
+
+Do not maintain this primarily as prose comments. Prefer a single config/registry that can render the operator-facing pool map.
+
+### 1.11.9 Test economics for this architecture
+
+Do **not** launch a new benchmark campaign merely because profile context is being wired into pMAP. Prove the architecture at the cheapest meaningful levels first.
+
+Required offline tests when implementing this section:
+
+1. **Prompt-context unit:** deterministic compiled profile fixture produces the expected bounded pMAP document-context block; same input -> same context/hash.
+2. **MAP prompt unit:** pMAP request contains both the document context and the unchanged ParentSkeleton evidence; MAP DSL output contract remains unchanged.
+3. **Identity/version pin:** changing profile-context generation/prompt version cannot leave old maps/batches falsely current.
+4. **Worker fake-inference integration:** pMAP cannot silently run under the new contract without the required current profile; partial MAP repair still reuses valid maps.
+5. **Credential-isolation config test:** two API keys from the same provider do not share limiter/circuit state by provider name alone; explicit Groq shared-account behavior remains explicit.
+6. **Pool inventory test:** every active configured endpoint belongs to a known function/account/model lane, and unreachable/parked fallbacks are surfaced.
+
+**Do not run yet:** broad live model-quality benchmark, corpus-wide remap, repeated provider canaries, or a full E2E after each prompt edit. The single production E2E in §16 proves the composed profile->pMAP path once the offline gates are green. Run a dedicated quality comparison only if the final canary or retrieval evidence shows the compact context materially harms/does not improve localization.
+
 ---
 
 # 2. Definition of Done
@@ -244,7 +459,7 @@ For any supported, valid new upload (`.md`, `.txt`, `.html`, `.pdf`, `.epub`, `.
 4. the intended document-profile generation runs and persists a valid compiled profile;
 5. required profile vectors are projected and receipted;
 6. every retrieval-eligible parent is either:
-   - actively MAP-mapped under the current map contract, or
+   - actively MAP-mapped under the current map contract using the required current compiled profile context, or
    - explicitly excluded under the current exclusion contract;
 7. required parent-MAP vectors are projected/reconciled;
 8. parent enrichment is accounted for according to its final classification;
@@ -280,6 +495,7 @@ For every document, the product must be able to answer **what actually exists no
 
 ### Parent MAP
 - current map contract
+- profile-context generation/hash or equivalent current-context identity
 - eligible parents
 - explicitly excluded parents
 - active mapped parents
@@ -537,6 +753,8 @@ Do not introduce:
 - a second parser,
 - a bypass around `map_compiler.py`.
 
+The **MAP DSL/compiler contract is frozen, while the model input is upgraded to include the bounded current compiled document-profile context defined in §1.11.** This is an input-grounding change, not a MAP output-schema redesign.
+
 Grounding:
 - `shared/polymath_shared/document_profile/map_prompt.py`
 - `shared/polymath_shared/document_profile/map_compiler.py`
@@ -569,6 +787,7 @@ The durable worker exists, but finishing the product requires proving how a **ne
 Graphify must locate:
 - ticket/event mint,
 - worker registration/fleet slot,
+- required current `doc_profile` dependency/context load,
 - inference adapter,
 - projection trigger,
 - completion/readiness reader.
@@ -644,7 +863,7 @@ Assign exactly one:
 - **SUPERSEDED — readers already migrated**
 - **RETIRE after reader migration**
 
-Do not classify it dead simply because newer profile/MAP stages exist.
+The intended end state under §1.11 is that `parent_enrichment` is not a permanent fifth API function; preserve it only as long as real readers/rollback requirements justify it.
 
 ## 7.3 Readiness policy
 
@@ -704,6 +923,7 @@ profile
 
 parent_map
   map_contract
+  profile_context_contract/hash
   eligible
   excluded
   mapped_active
@@ -734,6 +954,7 @@ stages
 - Old/superseded contract rows do not count toward current generation.
 - An advisory profile target miss is not automatically a blocker.
 - A missing current required artifact is a blocker even if legacy `query_ready` is true.
+- A pMAP generated without the required current profile context must not satisfy the new profile-grounded pMAP contract.
 
 ## 8.3 Backend acceptance criteria
 
@@ -827,6 +1048,7 @@ SEEALSO         7 / aim 10
 
 ### Pipeline contract
 - current generation/version
+- current profile->pMAP context generation
 - current stage states
 - exact blockers
 - last durable error
@@ -854,20 +1076,24 @@ The vNext migration authority already distinguishes build substrate from live re
 Graphify must prove:
 
 1. `doc_profile` artifact -> profile representation -> profile Qdrant projection;
-2. parent MAP row -> parent-MAP vector text -> parent-MAP Qdrant projection;
-3. projection reconciliation/receipts use the current embedding contract;
-4. retrieval dual-read/shadow/current reader actually consumes the intended profile/MAP generation;
-5. the final normal query path deepens back to source child evidence and does not cite routing hypotheses as evidence.
+2. current compiled profile -> bounded/versioned pMAP document context;
+3. parent MAP row -> parent-MAP vector text -> parent-MAP Qdrant projection;
+4. projection reconciliation/receipts use the current embedding contract;
+5. retrieval dual-read/shadow/current reader actually consumes the intended profile/MAP generation;
+6. the final normal query path deepens back to source child evidence and does not cite routing hypotheses as evidence.
 
 Grounding:
 - `workers/workers/doc_profile_worker.py`
 - `shared/polymath_shared/document_profile/projection.py`
+- `shared/polymath_shared/document_profile/parent_skeleton.py`
+- `shared/polymath_shared/document_profile/map_batches.py`
+- `shared/polymath_shared/document_profile/map_prompt.py`
 - `workers/workers/doc_parent_map_worker.py`
 - `shared/polymath_shared/document_profile/parent_map_projection.py`
 - `shared/polymath_shared/semantic_readiness.py`
 - current retrieval modules identified by Graphify, including the live `orchestrator/orchestrator/api/chat_retrieval.py` path.
 
-**P0 failure condition:** a stage can say “complete” while its current required projection is missing and no readiness/status surface reports that gap.
+**P0 failure condition:** a stage can say “complete” while its current required projection/context generation is missing and no readiness/status surface reports that gap.
 
 ---
 
@@ -883,6 +1109,7 @@ For each document, classify current generation state, e.g.:
 - `CORE_READY_PROFILE_MISSING`
 - `PROFILE_STALE_GENERATION`
 - `PROFILE_READY_MAP_NOT_STARTED`
+- `MAP_STALE_PROFILE_CONTEXT`
 - `MAP_PARTIAL`
 - `MAP_READY_PROJECTION_STALE`
 - `VNEXT_READY_ENRICHMENT_PARTIAL`
@@ -897,7 +1124,8 @@ Names can change; the key is mutually understandable state derived from durable 
 - Do not delete/re-ingest documents just to regenerate an additive semantic lane.
 - Do not re-profile a current valid profile.
 - Do not remap an active current-contract parent.
-- Preserve partial MAP work and repair only unresolved parents.
+- **When the profile-grounded pMAP contract is introduced, pre-context maps become a different/stale generation by explicit version/identity, not by ad-hoc deletion.**
+- Preserve partial MAP work and repair only unresolved parents within the same current contract.
 - Do not treat optional enrichment gaps as current-generation MAP gaps.
 - Do not mix old contract rows into “complete.”
 - Every repair is resumable and idempotent.
@@ -915,6 +1143,7 @@ map_eligible_parents
 map_active
 map_excluded
 map_unresolved
+map_stale_profile_context
 docs_map_complete
 docs_map_partial
 enrichment_ready / partial / failed
@@ -954,6 +1183,8 @@ Documentation follows proven runtime state; documentation does not manufacture i
 Use for:
 - profile compiler adversarial fixtures;
 - MAP compiler adversarial fixtures;
+- profile->pMAP context builder and prompt rendering;
+- API-key/account isolation and pool inventory rules;
 - limiter/accounting/refusal logic;
 - parent-count/readiness arithmetic;
 - document-status builder logic;
@@ -969,6 +1200,7 @@ Run the smallest relevant test module(s). Do **not** run full integration/E2E he
 **Purpose:** prove transaction/persistence/event wiring that unit tests cannot.
 
 Use only where needed, e.g.:
+- profile compiled artifact -> pMAP context -> current map-contract status;
 - profile compiled artifact -> status aggregate;
 - MAP maps/exclusions/batches -> status aggregate;
 - current-contract projection receipt -> readiness transition;
@@ -990,6 +1222,7 @@ No new test framework by default.
 **When:** once the offline implementation is coherent and before any live provider canary.  
 Run:
 - affected backend/compiler/worker suites;
+- functional-lane/account-isolation configuration tests;
 - Groq conservation regressions;
 - one local DB status/readiness integration set;
 - migration dry-run tests;
@@ -1020,6 +1253,7 @@ Do not E2E every historical document. Use reconciliation counts, durable receipt
 Do **not** spend time on these until the condition that makes them decision-relevant exists:
 
 - live 15/20/30/40/60 MAP batch-size benchmark **unless** `MAP_RELIABILITY_CAP` is still unresolved and the result will change production configuration;
+- broad profile-context-vs-no-context pMAP quality tournament before the profile-grounded path is correctly wired and the final canary shows a decision-relevant quality question;
 - full corpus backfill before the one fresh-document canary;
 - repeated full repo suites after every logical patch;
 - repeated live profile/model calls to test parser tolerance;
@@ -1039,14 +1273,25 @@ All of the following must be true before the final production canary begins.
 - [ ] Fresh `/upload` path traced to canonical intake and downstream semantic stages.
 - [ ] `doc_profile` trigger/worker/persistence/projection path proven.
 - [ ] `doc_parent_map` trigger/worker/persistence/projection path proven or missing edge implemented.
+- [ ] pMAP current input path proven to consume the required bounded compiled-profile context under the new current contract.
 - [ ] `parent_enrichment` current reader/writer/trigger behavior classified.
+- [ ] four permanent API-backed functional lanes (`CHAT`, `GRAPH_EXTRACTION`, `DOCUMENT_PROFILE`, `PMAP`) are represented in the authoritative provider configuration/inventory.
 - [ ] contradictory comments/checklists identified and not treated as runtime truth.
+
+## Provider/account topology
+- [ ] every API key is an independent account lane by default.
+- [ ] no Gemini/OpenRouter/etc. provider-wide family circuit crosses independent keys merely by provider name.
+- [ ] model-specific sub-lanes are explicit where provider quotas differ by model.
+- [ ] any same-key cross-function use is surfaced in the generated pool inventory.
+- [ ] Groq profile+pMAP shared-account behavior is the explicit exception, not the default abstraction.
+- [ ] configured-but-unreachable or credential-parked fallbacks are surfaced.
 
 ## Counts / state
 - [ ] canonical parent populations named and implemented.
 - [ ] profile actual field counts derive from persisted compiled artifact.
 - [ ] profile targets remain advisory.
 - [ ] MAP eligible/excluded/mapped/unresolved derive from current-contract durable rows.
+- [ ] profile-context generation/version is part of current pMAP identity/readiness.
 - [ ] current-generation projection gaps are visible.
 - [ ] document blocker list derives from durable state.
 - [ ] legacy `query_ready` is not silently mistaken for vNext completeness.
@@ -1096,7 +1341,7 @@ Record:
 - `run_id`,
 - `doc_id`,
 - corpus,
-- active profile/map/projection contracts.
+- active profile/map/profile-context/projection contracts.
 
 ## 16.3 End-to-end acceptance
 
@@ -1110,19 +1355,21 @@ Prove in order:
 6. intended profile generation runs (`vnext` state explicit).
 7. profile is compiler-valid.
 8. UI/API field counts equal persisted compiled profile counts.
-9. MAP counts reconcile:
+9. pMAP requests use the current compiled profile context plus local ParentSkeleton evidence under the versioned current contract.
+10. MAP counts reconcile:
    - eligible,
    - excluded,
    - mapped active,
    - unresolved.
-10. unresolved current eligible parents reach zero for this canary unless there is a specifically justified persistent failure that correctly blocks completion.
-11. required MAP/profile projections reconcile with current durable source rows.
-12. enrichment state is visible and behaves according to its final additive/required classification.
-13. core `query_ready` and vNext/semantic-index readiness both display truthfully.
-14. normal retrieval/chat — not a test-only path — can retrieve the new document for a query it should answer.
-15. final answer cites underlying source evidence, not routing-inferred profile/MAP hypotheses as evidence.
-16. Files UI values equal canonical status API values and direct DB truth.
-17. re-reading/reconciling the document produces no duplicate current artifacts.
+11. unresolved current eligible parents reach zero for this canary unless there is a specifically justified persistent failure that correctly blocks completion.
+12. required MAP/profile projections reconcile with current durable source rows.
+13. enrichment state is visible and behaves according to its final additive/required classification.
+14. core `query_ready` and vNext/semantic-index readiness both display truthfully.
+15. normal retrieval/chat — not a test-only path — can retrieve the new document for a query it should answer.
+16. final answer cites underlying source evidence, not routing-inferred profile/MAP hypotheses as evidence.
+17. Files UI values equal canonical status API values and direct DB truth.
+18. re-reading/reconciling the document produces no duplicate current artifacts.
+19. operator pool inventory can identify which function/account/model lane actually served each provider-backed stage without exposing secrets.
 
 ## 16.4 What not to cram into this E2E
 
@@ -1141,6 +1388,7 @@ Only after §16 passes may the controlled profile/MAP migration resume at scale.
 Use current contract state to select owed work:
 - profile missing/stale only;
 - MAP unresolved only;
+- MAP stale because it predates the required profile-context generation;
 - projection gaps only;
 - enrichment only according to its classification.
 
@@ -1149,6 +1397,8 @@ Never restart from zero because a corpus is partially migrated.
 ## 17.2 Provider budgeting
 
 For live MAP/profile work, request budgeting must be based on observed/conservatively reconciled provider capacity after the Groq forensic repair. Do not forecast from lane selection counts or unverified “accounts × advertised RPD” arithmetic.
+
+Provider/account budgeting must follow §1.11: API-key/account lane first, then model sub-lane. A provider label is never itself a budget domain.
 
 ## 17.3 Live migration dashboard/report
 
@@ -1167,6 +1417,7 @@ map_eligible
 map_excluded
 map_active
 map_unresolved
+map_stale_profile_context
 
 profile field-count distributions
 profile invalid/stale
@@ -1174,6 +1425,7 @@ map failure classes
 projection gaps
 enrichment ready/partial/invalid
 provider HTTP calls / valid maps persisted
+function/account/model lane utilization
 ```
 
 Use document and parent denominators, not just “jobs processed.”
@@ -1186,6 +1438,8 @@ For MAP coverage, the current migration authority’s generation invariant remai
 unresolved eligible parents == 0
 AND
 all required documents have current qualified profiles
+AND
+all active maps belong to the required profile-grounded map generation
 AND
 required projections reconcile
 ```
@@ -1202,8 +1456,13 @@ The RAG pipeline may be declared finished for the current migration when:
 - [ ] current document profile generation is intentional, versioned, and observable;
 - [ ] profile compiler has cheap-model formatting tolerance without semantic looseness;
 - [ ] MAP compiler remains tolerant-format / strict-identity and is adversarially fixture-tested;
+- [ ] pMAP is grounded by the bounded current compiled document-profile context while preserving the MAP DSL/compiler contract;
+- [ ] profile and pMAP remain independently durable/repairable even if a combined provider call is later used as an optimization;
 - [ ] all current required semantic stages are automatically reachable from a new upload;
-- [ ] parent enrichment has an explicit current classification and is not accidentally lost;
+- [ ] four permanent functional lanes are formally represented: CHAT, GRAPH_EXTRACTION, DOCUMENT_PROFILE, PMAP;
+- [ ] API-key/account isolation is the default and provider-wide family sharing is removed except explicit evidence-backed exceptions;
+- [ ] pool inventory exposes function -> account/key -> model and reverse cross-use relationships;
+- [ ] parent enrichment has an explicit current bridge/retirement classification and is not accidentally lost;
 - [ ] document-level counts are authoritative and unambiguous;
 - [ ] Files UI shows profile/MAP/enrichment/readiness state and exact blockers;
 - [ ] current vNext/semantic-index completion is distinct from legacy core readiness until an authorized cutover changes that contract;
@@ -1223,43 +1482,49 @@ Execute in this order unless Graphify proves a dependency requires a small reord
 ### P0-A — Reconstruct runtime truth
 Graphify + direct file verification; resolve stale docs/comments and identify all automatic trigger edges.
 
-### P0-B — Finish the bounded offline Groq/MAP control repair
+### P0-B — Freeze functional/account topology in the provider control plane
+Formalize CHAT / GRAPH_EXTRACTION / DOCUMENT_PROFILE / PMAP; API-key-per-account isolation; model sub-lanes; generated pool inventory; explicit Groq exception. Keep legacy `parent_enrichment` as migration-only, not a fifth permanent function.
+
+### P0-C — Finish the bounded offline Groq/MAP control repair
 Close conservation/accounting/observability/retry defects. **No live call yet.**
 
-### P0-C — Freeze canonical document-count/status contract
+### P0-D — Freeze canonical document-count/status contract
 Name parent populations; build one backend status authority; add targeted DB tests.
 
-### P0-D — Finalize document-profile production generation
+### P0-E — Finalize document-profile production generation
 Prove vNext enablement/rollback and expose actual compiled field counts.
 
-### P0-E — Adversarially certify both compilers offline
+### P0-F — Wire profile-grounded pMAP under a versioned current contract
+Build the deterministic compact profile-context input, keep ParentSkeleton local evidence, preserve MAP DSL/compiler, and ensure current-map identity cannot mix pre-context and profile-grounded generations.
+
+### P0-G — Adversarially certify both compilers offline
 Second-model scenario generation -> deterministic fixtures -> minimal proven compiler fixes only.
 
-### P0-F — Finish new-document parent-MAP wiring
+### P0-H — Finish new-document parent-MAP wiring
 Prove/implement automatic stage + projection path and current-generation readiness accounting.
 
-### P0-G — Resolve parent enrichment
-Trace readers, classify it, preserve/additive-state or retire only by migration authority.
+### P0-I — Resolve parent enrichment
+Trace readers, classify bridge/retirement state, preserve until reader migration is proven.
 
-### P0-H — Wire projection/readiness contract
+### P0-J — Wire projection/readiness contract
 Current profile/MAP source rows -> current projections -> document/vNext readiness.
 
-### P0-I — Migrate Files UI to the canonical backend contract
+### P0-K — Migrate Files UI to the canonical backend contract
 Operational counts/status first; forensic detail collapsed.
 
-### P0-J — Run grouped offline acceptance (§15)
+### P0-L — Run grouped offline acceptance (§15)
 Targeted suites + DB integration + frontend build + guards. **Still no provider canary until green.**
 
-### P0-K — Run one production fresh-document E2E (§16)
+### P0-M — Run one production fresh-document E2E (§16)
 This is the composition proof.
 
-### P1-L — Resume/reconcile existing corpus migration (§17)
-Repair only owed work; budget live requests from provider truth.
+### P1-N — Resume/reconcile existing corpus migration (§17)
+Repair only owed work; budget live requests from provider/account truth.
 
-### P1-M — Corpus integrity and retrieval sample
+### P1-O — Corpus integrity and retrieval sample
 Reconciliation counters + sampled normal queries; no per-document E2E ceremony.
 
-### P1-N — Reconcile documentation and declare finish
+### P1-P — Reconcile documentation and declare finish
 Update stale gates/ledgers only after production evidence exists.
 
 ---
@@ -1272,13 +1537,17 @@ Until this plan’s finish criteria require otherwise:
 - do not create a second intake path;
 - do not replace MAP DSL with JSON;
 - do not add a new compiler/parser layer just for model formatting;
+- do not collapse `DOCUMENT_PROFILE` and `PMAP` into one durable artifact merely because one provider call may eventually emit both;
+- do not let pMAP continue to satisfy the new current contract from isolated ParentSkeleton input without the required compiled profile context;
+- do not share limiter/circuit state across independent API keys merely because they use the same provider;
+- do not infer account sharing from provider/model names; encode exceptions explicitly;
 - do not make soft profile item targets hard quotas;
-- do not make `parent_enrichment` blocking by accident;
+- do not make `parent_enrichment` a permanent fifth functional lane or blocking stage by accident;
 - do not redefine legacy `query_ready` without the authorized retrieval cutover;
 - do not count local limiter attempts as provider requests;
 - do not treat logs as completion authority;
 - do not use backfill scripts as evidence that automatic new-document wiring exists;
-- do not rebuild already-current profiles/MAPs during migration;
+- do not rebuild already-current profiles/MAPs during migration except where a deliberately versioned profile-grounded map generation makes old MAP rows stale by contract;
 - do not create a frontend test stack for basic status rendering;
 - do not repeatedly run the full production E2E during intermediate implementation;
 - do not resume a full corpus backfill before the single fresh-document canary passes;
@@ -1292,16 +1561,17 @@ At completion, leave one concise evidence packet/work-log entry containing:
 
 1. execution HEAD / commit range;
 2. Graphify runtime graph or reference to its generated graph artifacts;
-3. canonical document-status contract example from the production canary;
-4. direct DB reconciliation for the same canary document;
-5. profile field counts and compiler/version identity;
-6. parent MAP eligible/excluded/mapped/unresolved counts;
-7. required projection reconciliation;
-8. enrichment classification and canary state;
-9. normal retrieval/chat query demonstrating source retrieval/citation;
-10. frontend build result;
-11. targeted/grouped test commands + results;
-12. bulk migration/reconciliation totals;
-13. remaining intentionally deferred work, if any, clearly separated from pipeline blockers.
+3. four-function provider/account/model pool inventory;
+4. canonical document-status contract example from the production canary;
+5. direct DB reconciliation for the same canary document;
+6. profile field counts and compiler/version identity;
+7. pMAP profile-context contract/hash plus eligible/excluded/mapped/unresolved counts;
+8. required projection reconciliation;
+9. enrichment bridge/retirement classification and canary state;
+10. normal retrieval/chat query demonstrating source retrieval/citation;
+11. frontend build result;
+12. targeted/grouped test commands + results;
+13. bulk migration/reconciliation totals;
+14. remaining intentionally deferred work, if any, clearly separated from pipeline blockers.
 
 The evidence packet should be short enough to audit. It is not a transcript of every command run.
