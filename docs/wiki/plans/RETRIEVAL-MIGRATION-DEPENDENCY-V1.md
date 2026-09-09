@@ -103,39 +103,51 @@ legacy generation OR a complete qualified vNext generation, never a mixture
 Wildcard, projection receipts, purge/rebuild paths, caches, and the current
 `QUERY_READY` semantics.
 
-**Exact next executable dependency (updated 2026-09-07, register 11.145 — GATE BOUNDARY):**
-the entire deterministic substrate for BOTH scales is BUILT + TESTED + LANDED
-(fingerprint + profile prompt; skeleton + map prompt + compiler + packer + SQL +
-durable worker + projection contract; census + report-only verifier). **Every
-remaining dependency requires an owner action to WIRE or RUN it — the code each gate
-would execute already exists:**
+**Exact next executable dependency (updated 2026-09-08 — GATE BOUNDARY, CURRENT):**
+the substrate AND the routing/synthesis plan are now BUILT + QUALIFIED + LANDED. The
+2026-09-07 gates in this section (S5 canary, S8 compiler tag-parse + worker switch, S7
+Groq wiring, worker/projector RUN) are ALL DONE this session: vNext profiles regenerated
+(cinema 67/67, 11.169), Profile Atoms projected (609 / 10 kinds, reconciled), parent-MAP
+coverage ADVANCING (551→1169/11,993 via the map-batches-v2 fix, 11.178), the routing stack
+QUALIFIED LIVE (P5 fan-out · P7 graph-dest · F lift · E dual-read · WILDCARD · GRAPH · P8b
+role synthesis; 11.179) with retrieval value (cross-encoder survival) AND answer-quality
+uplift (4/5 blind judge, 11.181) DEMONSTRATED, and the retirement reader-census prepped
+(queue 216→102, 11.180). **The single remaining boundary is the PRODUCTION CUTOVER +
+RETIREMENT (S13/S14 + S15–S18 + routing P14) — OWNER-GATED, stated in the required form:**
 
-1. **S5 quality canary** (profile vNext qualification): run the 500/1000/1500/2000
-   `DocumentFingerprint` → `profile_prompt_vnext` canary on real documents → provider
-   spend. Owner authorises spend; the smallest quality plateau is picked; then S8 switches.
-2. **S8 `doc_profile` refactor + compiler tag-parse**: extend the LIVE `compiler.py` to
-   parse the research-index tags (`profile_prompt_vnext.output_fields()` is the label
-   set) and switch `doc_profile_worker.py` to build the fingerprint + `profile_prompt_vnext`,
-   dropping the `major_concepts` reader at `doc_profile_worker.py:102` (GAP-04). Changes a
-   LIVE stage + the live compiler + trips the fleet fence → owner (fleet) + gated behind (1).
-3. **S7 Groq live-routing wiring**: wire the built `groq_router.choose` (11.134) +
-   compound-mini lanes into `pool.py`/`limiter.py` — the live fleet provider layer →
-   owner (fleet + spend).
-4. **Worker/projector RUN**: give `run_document_mapping` a live Groq `infer` closure
-   (`map_prompt` + the routed model) and register the stage; give `project_parent_maps`
-   the embedder + Qdrant client + receipt persistence → provider spend + embedder + Qdrant
-   + a DAG change to live ingestion. **S3 local-model tournament** feeds the `infer`
-   choice (spend).
-5. **S12 backfill → shadow → dual-read → S14 cutover → S15–S18 retirement**: mass
-   generation (spend), then live-reader migration, then — only after the S1 census's
-   214 runtime references are each classified non-reading — stop-writers/retire.
+- **Blocking dependency:** the owner's QUERY_READY flip to serve the vNext generation
+  (BE-AWARE §7) — a hard-to-reverse, outward-facing production decision the plan reserves
+  for the owner — AND full cinema parent-MAP coverage (§19 floor `unresolved_eligible_parents
+  == 0`).
+- **Evidence it cannot proceed autonomously now:** `semantic_completion('cinema').vnext`
+  reads VNEXT_INCOMPLETE (1169/11,993 mapped; §19 floor unmet); the QUERY_READY flip is a
+  production control-plane change my operating rules AND the plan both reserve for the owner;
+  the S16 census shows 72 genuine legacy readers that migrate only when vNext is the live
+  generation. Mechanism-ready PROOF: `d7-h1-test` reached VNEXT_COMPLETE end-to-end (11.176)
+  and the whole routing/synthesis stack is qualified live on cinema (11.179/11.181).
+- **What unblocks it:** (1) cinema coverage → `unresolved==0` — the multi-session, RPD-paced
+  capacity campaign, now UNBLOCKED by map-batches-v2 (big docs map); resume
+  `POLYMATH_GROQ_ROUTER=1 parent_map_backfill.py --corpus cinema --project --concurrency 6`.
+  (2) the shadow / dual-read non-regression gates (§17/§23) green on the covered corpus.
+  (3) the owner's QUERY_READY-flip decision.
+- **Exact next action (cutover runbook — one owner decision, each mechanism built):** when
+  the owner elects to cut over — (a) confirm `semantic_completion(corpus).vnext ==
+  VNEXT_COMPLETE`; (b) run `scripts/dualread_qualify.py` + the shadow non-regression on the
+  covered corpus; (c) flip QUERY_READY to the vNext generation (S13 blocks new non-vNext docs;
+  S14 cuts existing); (d) prove zero required legacy readers (`scripts/legacy_dependency_census.py`
+  → the 72 migrated); (e) stop legacy producers/writers (S15/S17, reversible flags); (f) hold
+  the rollback window; (g) physical cleanup (S18).
 
-**Evidence that permits the next cutover** (none yet satisfied): the canary quality
-gate (§29), the shadow/dual-read non-regression (§17/§23), the readiness floor
-`unresolved_eligible_parents == 0` per document (§19, measured by
-`scripts/vnext_readiness_report.py` — currently 0 mapped / 13,417 eligible across
-corpora), and the census showing 0 required legacy readers for a symbol before its
-retirement (§S16). Do NOT mass reindex before the canary gates pass (§26).
+**Also gated (NON-owner, corpus-size — S10 / routing compiler-title bridge):** the mechanism
+(`document_profile/projection.profile_nominate` + `compiler_context.rank_documents`'s RRF)
+EXISTS and integrates cleanly as an added RRF vote lane. **Blocking dependency:** a corpus
+where `top_n ≪ N`. **Evidence:** on cinema (67 docs, 40 shown) the profile nominations are
+content-derived and overwhelmingly already in the shown set (ablation 2026-09-08, re-examined
+— the profile signal does not promote docs from outside the top-40 enough to matter), so
+implementing it now is inert scaffolding. **What unblocks it:** a large corpus (top_n ≪ N).
+**Exact next action:** add a `profile_nominate` RRF vote lane to `rank_documents` (behind a
+flag) + qualify a measurable title-promotion (a profile-relevant, content-low doc entering the
+compiler view) on a large corpus.
 
 ---
 
