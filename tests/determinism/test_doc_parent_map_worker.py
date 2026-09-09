@@ -154,6 +154,66 @@ def test_persist_supersede_keeps_one_active(tx):
     assert total == 2                                # the superseded row is retained, not deleted
 
 
+class _EmptyInfer:
+    """A dispatched 2xx that returned nothing (compound-mini's big-batch flake)."""
+    def __call__(self, skels, is_combined=False):
+        return ""
+
+
+class _RefusingInfer:
+    """A LOCAL limiter refusal: zero HTTP, a named gate — the dominant class in
+    the disputed cinema cascade."""
+    def __call__(self, skels, is_combined=False):
+        from workers.doc_parent_map_worker import MapInferError
+        raise MapInferError("LIMITER_REFUSED", reason="FAMILY_GATE", dispatched=False)
+
+
+def test_empty_completion_is_visible_and_marked(tx):
+    # GROQ-MAP-CONTROL-PLANE-REPAIR-V1 Phase 10: an empty 2xx is a distinct,
+    # durable class — not silently a NULL-last_error partial.
+    out = run_document_mapping(tx, run_id="run-s9", doc_id=DOC, corpus_id=CORPUS,
+                               parents=_parents(), infer=_EmptyInfer(), max_attempts=1)
+    assert not out.complete and out.parents_mapped == 0
+    assert out.empty_completions >= 1 and out.http_dispatches >= 1
+    assert out.limiter_refusals == 0
+    with tx() as conn:
+        markers = conn.execute(
+            "SELECT DISTINCT last_error FROM document_parent_map_batches "
+            "WHERE doc_id=%s AND last_error IS NOT NULL", (DOC,)).fetchall()
+    assert any("COMPILER_EMPTY" in (m[0] or "") for m in markers), markers
+
+
+def test_local_refusal_is_zero_dispatch_and_named(tx):
+    out = run_document_mapping(tx, run_id="run-s9", doc_id=DOC, corpus_id=CORPUS,
+                               parents=_parents(), infer=_RefusingInfer(), max_attempts=1)
+    assert not out.complete and out.parents_mapped == 0
+    assert out.limiter_refusals >= 1
+    assert out.http_dispatches == 0            # LOCAL refusal: nothing left the box
+    assert "FAMILY_GATE" in out.refusal_reasons
+    assert out.errors                          # surfaced, never hidden
+
+
+def test_local_refusal_does_not_burn_retries(tx):
+    # GROQ-MAP-CONTROL-PLANE-REPAIR-V1 Phase 11: max_attempts=3, but a LOCAL
+    # refusal defers instead of spinning three attempts on the same batch — the
+    # exact waste behind the disputed cascade (692 batches at attempt_count=15).
+    out = run_document_mapping(tx, run_id="run-s9", doc_id=DOC, corpus_id=CORPUS,
+                               parents=_parents(), infer=_RefusingInfer(), max_attempts=3)
+    assert out.batches_total >= 1
+    assert out.attempts_used == out.batches_total   # ONE attempt per batch, not three
+    assert out.limiter_refusals == out.batches_total
+    assert out.http_dispatches == 0
+
+
+def test_partial_still_repairs_under_retry_policy(tx):
+    # PARTIAL is the one class that still earns a retry — the productive §18.4
+    # repair loop re-infers only the missing aliases.
+    infer = _PartialInfer()
+    out = run_document_mapping(tx, run_id="run-s9", doc_id=DOC, corpus_id=CORPUS,
+                               parents=_parents(), infer=infer, max_attempts=3)
+    assert out.complete and out.parents_mapped == 6 and infer.calls == 2
+
+
 def test_claim_lease_recovery(tx):
     import datetime as dt
     manifest = build_parent_skeletons(_parents())

@@ -56,6 +56,23 @@ DEFAULT_MAX_ATTEMPTS = 3
 Infer = Callable[[Sequence[ParentSkeleton]], str]
 
 
+class MapInferError(RuntimeError):
+    """A typed inference-boundary failure carrying the CONSERVATION facts the
+    control plane needs (GROQ-MAP-CONTROL-PLANE-REPAIR-V1): the transport error
+    class, the specific limiter refusal gate when the request was NOT dispatched,
+    and whether the request actually left the process. `dispatched=False` means
+    zero HTTP and zero provider consumption — the retry policy and accounting
+    both key off it. A live infer closure raises this; a plain-Exception raise
+    from a test fake is still handled (treated as a dispatched transport fault)."""
+
+    def __init__(self, error_class: str, *, reason: str | None = None,
+                 dispatched: bool = False) -> None:
+        super().__init__(error_class if reason is None else f"{error_class}:{reason}")
+        self.error_class = error_class
+        self.reason = reason
+        self.dispatched = dispatched
+
+
 @dataclass
 class MappingOutcome:
     doc_id: str
@@ -69,10 +86,29 @@ class MappingOutcome:
     unresolved_parent_ids: tuple[str, ...] = ()
     attempts_used: int = 0
     errors: tuple[str, ...] = field(default_factory=tuple)
+    # CONSERVATION observability (GROQ-MAP-CONTROL-PLANE-REPAIR-V1): every infer
+    # call is classified so a run can prove where the work went. Refusals are
+    # LOCAL (0 HTTP); dispatches reached the provider; compiler_* classify the
+    # yield of a dispatched 2xx. `+0 parents / 0 errors` can no longer hide any
+    # of these.
+    parents_already_mapped: int = 0
+    limiter_refusals: int = 0
+    http_dispatches: int = 0
+    http_429: int = 0
+    http_failures: int = 0
+    empty_completions: int = 0
+    compiler_complete: int = 0
+    compiler_partial: int = 0
+    compiler_invalid: int = 0
+    refusal_reasons: tuple[str, ...] = field(default_factory=tuple)
 
     @property
     def complete(self) -> bool:
         return not self.unresolved_parent_ids and self.batches_partial == 0
+
+    @property
+    def parents_newly_mapped(self) -> int:
+        return max(0, self.parents_mapped - self.parents_already_mapped)
 
 
 # --------------------------------------------------------------- durable store ops
@@ -227,7 +263,20 @@ def run_document_mapping(
         batches_done=0, batches_partial=0, parents_mapped=0,
     )
     errors: list[str] = []
+    refusal_reasons: set[str] = set()
     attempts_used = 0
+    # request/compiler conservation counters (see MappingOutcome). Refusals are
+    # LOCAL (0 HTTP); dispatches reached the provider; compiler_* classify a 2xx.
+    n_refused = n_dispatch = n_429 = n_httpfail = n_empty = 0
+    n_complete = n_partial = n_invalid = 0
+
+    # Parents already mapped before this run (the idempotent skip set): the
+    # newly-mapped count is the DELTA, so a resume of a done doc reads +0 NEW
+    # without masquerading as a failure.
+    with tx() as conn:
+        outcome.parents_already_mapped = len(active_parent_ids(
+            conn, doc_id=doc_id, map_contract=map_contract,
+            parent_ids=[s.parent_id for s in manifest.skeletons]))
 
     for batch in plan.batches:
         batch_aliases = list(batch.aliases)
@@ -252,18 +301,59 @@ def run_document_mapping(
             skels = [by_alias[a] for a in remaining]
             # INFERENCE — OUTSIDE any transaction (§28).
             try:
-                raw = infer(skels, is_combined=batch.is_combined)  # type: ignore[call-arg]
-            except TypeError:
-                raw = infer(skels)  # a fake without the keyword
-            except Exception as exc:  # provider/transport failure — durable, retryable
+                try:
+                    raw = infer(skels, is_combined=batch.is_combined)  # type: ignore[call-arg]
+                except TypeError:
+                    raw = infer(skels)  # a fake without the keyword
+            except MapInferError as exc:
+                # LOCAL refusal (0 HTTP, 0 provider quota) vs a DISPATCHED
+                # provider/transport fault — accounted separately.
+                if exc.dispatched:
+                    n_dispatch += 1
+                    n_429 += 1 if exc.error_class == "HTTP_429" else 0
+                    n_httpfail += 0 if exc.error_class == "HTTP_429" else 1
+                else:
+                    n_refused += 1
+                    if exc.reason:
+                        refusal_reasons.add(exc.reason)
+                errors.append(f"{batch.batch_hash[:12]}:{exc.reason or exc.error_class}")
+                with tx() as conn:
+                    record_batch_result(conn, batch_id=batch.batch_hash, status="partial",
+                                        valid_count=0, last_error=str(exc)[:500],
+                                        provider=provider, model=model)
+                # RETRY POLICY (GROQ-MAP-CONTROL-PLANE-REPAIR-V1 Phase 11): a local
+                # refusal (family/breaker/RPD cooldown) will not clear inside this
+                # tight loop, and re-hammering a just-429'd account only reopens the
+                # family gate. A dispatched HTTP fault re-fails the same way. Neither
+                # is retried within the run — DEFER to the resumable next run (the
+                # batch stays claimable; already-mapped parents are never re-inferred).
+                break
+            except Exception as exc:  # an untyped fault (e.g. a test fake) — dispatched
+                n_dispatch += 1
+                n_httpfail += 1
                 errors.append(f"{batch.batch_hash[:12]}:{type(exc).__name__}")
                 with tx() as conn:
                     record_batch_result(conn, batch_id=batch.batch_hash, status="partial",
                                         valid_count=0, last_error=str(exc)[:500],
                                         provider=provider, model=model)
-                continue
+                break  # defer (see above) — do not spin the same batch
+            # A returned completion is a dispatched 2xx (complete_one raises on
+            # non-2xx). Classify its yield against what THIS call requested.
+            n_dispatch += 1
             result = map_compiler.compile_maps(raw, manifest, contract=map_contract)
             valid_here = [m for m in result.maps if m.alias in remaining]
+            got = {m.alias for m in valid_here}
+            req = set(remaining)
+            if not (raw or "").strip():
+                cls = "EMPTY"; n_empty += 1
+            elif got >= req:
+                cls = "COMPLETE"; n_complete += 1
+            elif got:
+                cls = "PARTIAL"; n_partial += 1
+            elif result.rejected:
+                cls = "INVALID"; n_invalid += 1
+            else:
+                cls = "EMPTY"; n_empty += 1
             with tx() as conn:
                 persist_maps(conn, doc_id=doc_id, corpus_id=corpus_id, map_contract=map_contract,
                              batch_id=batch.batch_hash, maps=valid_here,
@@ -272,13 +362,24 @@ def run_document_mapping(
                 still = active_parent_ids(conn, doc_id=doc_id, map_contract=map_contract,
                                           parent_ids=[by_alias[a].parent_id for a in batch_aliases])
                 mapped_all = all(by_alias[a].parent_id in still for a in batch_aliases)
+                # Durable classification marker: a zero/partial-yield 2xx records
+                # COMPILER_<class>, not NULL, so a later census tells an empty 200
+                # from an invalid one from a real refusal.
                 record_batch_result(conn, batch_id=batch.batch_hash,
                                     status=("done" if mapped_all else "partial"),
                                     valid_count=len(still), raw_response_hash=result.raw_response_hash,
+                                    last_error=(None if mapped_all else f"COMPILER_{cls}"),
                                     provider=provider, model=model)
             if mapped_all:
                 break
-            batch_aliases = batch_aliases  # repair loop re-computes remaining from DB
+            # RETRY POLICY (Phase 11): only a PARTIAL completion earns another
+            # attempt — the repair loop re-infers ONLY the still-missing aliases
+            # (§18.4), which is genuinely productive. A COMPLETE-but-not-mapped_all
+            # cannot occur here; an EMPTY or INVALID 2xx is a deterministic
+            # (temperature=0) result the same payload will only repeat, so it is
+            # NOT retried within the run — it defers to a resumable next run.
+            if cls != "PARTIAL":
+                break
 
     # Final tally from durable state.
     with tx() as conn:
@@ -297,4 +398,13 @@ def run_document_mapping(
     outcome.unresolved_parent_ids = unresolved
     outcome.attempts_used = attempts_used
     outcome.errors = tuple(errors)
+    outcome.limiter_refusals = n_refused
+    outcome.http_dispatches = n_dispatch
+    outcome.http_429 = n_429
+    outcome.http_failures = n_httpfail
+    outcome.empty_completions = n_empty
+    outcome.compiler_complete = n_complete
+    outcome.compiler_partial = n_partial
+    outcome.compiler_invalid = n_invalid
+    outcome.refusal_reasons = tuple(sorted(refusal_reasons))
     return outcome

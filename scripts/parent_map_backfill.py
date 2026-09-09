@@ -48,12 +48,19 @@ def _cohort(corpus_id, limit):
         return out
 
 
-def _routed_infer(lane_counter):
+def _routed_infer(lane_selected, dispatch):
+    """Round-robin infer closure. Records LANE SELECTION (at pick time) and
+    PROVIDER HTTP DISPATCH (only when the request actually reached the network)
+    as SEPARATE counters — a selection is not a dispatch (GROQ-MAP-CONTROL-
+    PLANE-REPAIR-V1). Raises MapInferError carrying the refusal gate / dispatch
+    fact so the worker accounts a local refusal (0 HTTP) apart from a provider
+    fault."""
     import itertools
     import threading
     from polymath_shared.llm_extraction.client import LLMExtractionClient
     from polymath_shared.llm_extraction.pool import cloud_endpoints, stage_pin
     from polymath_shared.document_profile.map_prompt import build_map_prompt
+    from workers.doc_parent_map_worker import MapInferError
     pin = stage_pin("doc_parent_map") or []
     eps = {e.name: e for e in cloud_endpoints() if e.name in pin}
     ep_names = [n for n in pin if n in eps]              # ordered; only endpoints that exist
@@ -73,17 +80,65 @@ def _routed_infer(lane_counter):
             raise RuntimeError("no active doc_parent_map lane")
         with _rr_lock:
             lane = ep_names[next(_rr) % len(ep_names)]
-        lane_counter[lane] += 1
+            lane_selected[lane] += 1                 # SELECTION (pre-dispatch)
         ep = eps[lane]
         client = LLMExtractionClient("cloud", url=ep.url, model=ep.model, limiter_key=ep.limiter_key,
                                      api_key=ep.api_key, cloud_opts=ep.cloud_opts, timeout_s=90.0, max_attempts=1)
         client.endpoint_name = ep.name
         system, user = build_map_prompt(skeletons, is_combined=is_combined)
         raw, err = client.complete_one(user, system_prompt=system, max_tokens=2400)
+        dispatched = getattr(client, "_last_http_dispatched", False)
+        if dispatched:
+            with _rr_lock:
+                dispatch[lane] += 1              # actual HTTP request that left the box
         if err:
-            raise RuntimeError(f"{ep.model} error: {err}")
+            raise MapInferError(err, reason=getattr(client, "_last_refusal_reason", None),
+                                dispatched=dispatched)
         return raw
     return infer
+
+
+def summarize(corpus, rows, lane_selected, dispatch, *, concurrency, wall_s) -> dict:
+    """Pure conservation summary (unit-testable). `+0 parents / 0 errored_docs`
+    can no longer read as a clean provider run: limiter refusals (0 HTTP), HTTP
+    faults, empty/invalid completions and per-doc internal errors are each
+    surfaced, and PASS requires BOTH every doc complete AND zero internal
+    failures (GROQ-MAP-CONTROL-PLANE-REPAIR-V1)."""
+    def agg(k):
+        return sum(int(r.get(k) or 0) for r in rows)
+    complete_docs = sum(1 for r in rows if r.get("complete"))
+    escaped = sum(1 for r in rows if r.get("error"))
+    internal = sum(1 for r in rows if (
+        r.get("errors_n") or r.get("limiter_refusals") or r.get("http_failures")
+        or r.get("http_429") or r.get("compiler_invalid") or r.get("empty_completions")))
+    return {
+        "gate": "parent-map-backfill-v1", "corpus": corpus, "docs": len(rows),
+        "complete_docs": complete_docs,
+        "errored_docs": escaped,                       # run_document_mapping RAISED
+        "documents_with_internal_errors": internal,    # refusals/HTTP/empty/invalid/errors
+        "eligible_parents": agg("eligible"),
+        "parents_already_mapped": agg("already_mapped"),
+        "parents_newly_mapped": agg("newly_mapped"),
+        "maps_persisted": agg("newly_mapped"),
+        "unresolved_parents": agg("unresolved"),
+        "batches_done": agg("batches_done"),
+        "batches_partial": agg("batches_partial"),
+        "attempts_used": agg("attempts_used"),
+        "limiter_refusals": agg("limiter_refusals"),
+        "http_dispatches": agg("http_dispatches"),
+        "http_429": agg("http_429"),
+        "http_failures": agg("http_failures"),
+        "empty_completions": agg("empty_completions"),
+        "compiler_complete": agg("compiler_complete"),
+        "compiler_partial": agg("compiler_partial"),
+        "compiler_invalid": agg("compiler_invalid"),
+        "concurrency": concurrency, "wall_s": round(wall_s, 1),
+        "lane_selection": dict(lane_selected),          # endpoint picks (NOT dispatches)
+        "provider_http_dispatch": dict(dispatch),       # requests that left the box
+        "distinct_accounts_selected": len({l.replace("map_groq", "") for l in lane_selected}),
+        "distinct_accounts_dispatched": len({l.replace("map_groq", "") for l in dispatch}),
+        "PASS": complete_docs == len(rows) and internal == 0,
+    }
 
 
 def main(argv=None) -> int:
@@ -102,8 +157,9 @@ def main(argv=None) -> int:
     from polymath_shared.document_profile import map_compiler
     from polymath_shared.document_profile.parent_skeleton import build_parent_skeletons
     contract = map_compiler.MAP_COMPILER_VERSION
-    lane_counter: Counter = Counter()
-    infer = _routed_infer(lane_counter)
+    lane_selected: Counter = Counter()      # endpoint SELECTIONS (pre-dispatch)
+    dispatch: Counter = Counter()           # actual provider HTTP dispatches
+    infer = _routed_infer(lane_selected, dispatch)
 
     client = dim = ct = coll = None
     if args.project:
@@ -155,21 +211,28 @@ def main(argv=None) -> int:
             proj = rc["points"]
         doc_ok = out.complete and not out.unresolved_parent_ids
         with print_lock:
-            print(f"  {name[:44]:44} mapped={out.parents_mapped}/{out.eligible_parents} complete={doc_ok} projected={proj}")
+            print(f"  {name[:44]:44} mapped={out.parents_mapped}/{out.eligible_parents} "
+                  f"new={out.parents_newly_mapped} dispatch={out.http_dispatches} "
+                  f"refused={out.limiter_refusals} empty={out.empty_completions} "
+                  f"complete={doc_ok} projected={proj}")
         return {"doc": name[:44], "eligible": out.eligible_parents, "mapped": out.parents_mapped,
-                "complete": doc_ok, "unresolved": len(out.unresolved_parent_ids), "projected": proj}
+                "already_mapped": out.parents_already_mapped, "newly_mapped": out.parents_newly_mapped,
+                "complete": doc_ok, "unresolved": len(out.unresolved_parent_ids),
+                "batches_done": out.batches_done, "batches_partial": out.batches_partial,
+                "attempts_used": out.attempts_used, "errors_n": len(out.errors),
+                "limiter_refusals": out.limiter_refusals, "http_dispatches": out.http_dispatches,
+                "http_429": out.http_429, "http_failures": out.http_failures,
+                "empty_completions": out.empty_completions,
+                "compiler_complete": out.compiler_complete, "compiler_partial": out.compiler_partial,
+                "compiler_invalid": out.compiler_invalid,
+                "refusal_reasons": list(out.refusal_reasons), "projected": proj}
 
     rows: list = []
     with ThreadPoolExecutor(max_workers=concurrency, thread_name_prefix="pm-backfill") as ex:
         for f in as_completed([ex.submit(_process_one, d) for d in cohort]):
             rows.append(f.result())
-    ok_docs = sum(1 for r in rows if r.get("complete"))
-    errored = [r for r in rows if r.get("error")]
-    summary = {"gate": "parent-map-backfill-v1", "corpus": args.corpus, "docs": len(cohort), "complete_docs": ok_docs,
-               "errored_docs": len(errored), "concurrency": concurrency,
-               "wall_s": round(time.time() - t0, 1), "lane_spread": dict(lane_counter),
-               "distinct_accounts_used": len({l.replace("map_groq", "") for l in lane_counter}),
-               "PASS": ok_docs == len(cohort)}
+    summary = summarize(args.corpus, rows, lane_selected, dispatch,
+                        concurrency=concurrency, wall_s=time.time() - t0)
     print(json.dumps(summary, indent=1))
     if args.out:
         Path(args.out).write_text(json.dumps({"summary": summary, "docs": rows}, indent=1, ensure_ascii=False))
