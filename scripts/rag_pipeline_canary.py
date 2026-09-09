@@ -147,11 +147,16 @@ def retrieval_probe(base: str, corpus: str, query: str, doc_id: str, facts: dict
         data = r.json()
     except Exception as exc:  # noqa: BLE001
         return {"ok": False, "error": f"{type(exc).__name__}:{exc}"}
-    ev = data.get("evidence") or data.get("results") or data.get("rows") or []
+    # /retrieve returns lanes; `child_evidence` is the citable child-chunk lane (chunk_id,
+    # doc_id, text, rerank_score) — the underlying source evidence a chat answer cites.
+    ev = data.get("child_evidence") or []
     blob = json.dumps(ev)
-    hit_doc = any((e.get("doc_id") == doc_id) or (doc_id in json.dumps(e)) for e in ev) if isinstance(ev, list) else False
+    hit_doc = any(e.get("doc_id") == doc_id for e in ev) if isinstance(ev, list) else False
     hit_fact = facts["code"] in blob or str(facts["number"]) in blob
-    return {"ok": bool(hit_doc and hit_fact), "hit_doc": hit_doc, "hit_fact": hit_fact, "evidence_count": len(ev) if isinstance(ev, list) else None}
+    # the canary doc must also be among the selected/routed documents (routing worked)
+    routed = any(d.get("doc_id") == doc_id for d in (data.get("selected_documents") or []))
+    return {"ok": bool(hit_doc and hit_fact), "hit_doc": hit_doc, "hit_fact": hit_fact,
+            "routed": routed, "evidence_count": len(ev) if isinstance(ev, list) else None}
 
 
 def write_packet(run_dir: Path, *, manifest, status, elapsed, timeline, probe, passed):
