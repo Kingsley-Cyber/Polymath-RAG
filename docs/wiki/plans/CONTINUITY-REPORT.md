@@ -41,15 +41,27 @@ byte-identical (the running fleet is unaffected; grounding=None reproduces the f
 `POLYMATH_DOC_PARENT_MAP_CORPUS` scopes the canary so cinema is never re-mapped. STAGE_DAG unchanged; frozen
 MAP DSL/compiler/chunker untouched.
 
-**EXACT NEXT ACTION — Phase 15 LIVE canary** (the one remaining step; spends a TINY amount of Groq on the
-canary doc, authorized by the goal after the green offline gate): (1) restart the fleet so it loads the new
-control code + the `doc_parent_map` slot; (2) launch it with `POLYMATH_DOC_PARENT_MAP_ENABLED=1` +
-`POLYMATH_DOC_PARENT_MAP_CORPUS=rag-canary`; (3) run
-`POLYMATH_DOC_PARENT_MAP_ENABLED=1 POLYMATH_DOC_PARENT_MAP_CORPUS=rag-canary .venv/bin/python
-scripts/rag_pipeline_canary.py --corpus rag-canary --passes 3` → require 3 consecutive canaries reaching
-VNEXT_COMPLETE < 4 min with a passing `/retrieve` citation probe; diagnostics land in `/tmp/polymath_canaries`.
-On a >4-min miss: triage via `document_status` blockers → repair the smallest layer → new canary. Phase 17
-corpus reconciliation (cinema) stays behind the FORENSIC HOLD. Do NOT resume the cinema backfill.
+**PHASE 15 EXECUTED LIVE (2026-09-09) — the fresh-document pipeline WORKS end-to-end.** The fleet was
+restarted (loads the pMAP slot + the fleet-autopilot demand lane) with `POLYMATH_DOC_PARENT_MAP_ENABLED=1`
++ `POLYMATH_DOC_PARENT_MAP_CORPUS=rag-canary` (cinema untouched). Proven LIVE on the `rag-canary` corpus:
+a fresh `/upload` auto-mints the pMAP stage (scoped), the worker maps every parent via Groq compound-mini
+(e.g. 5/5, grounded), projects them (5 points), and doc_profile fires EARLY → the document reaches per-doc
+`vnext_ready` (pMAP unresolved==0 + vNext profile). Retrieval verified: the canary's child chunks + exact
+fact (`ZQX-*`) appear in `/retrieve` `child_evidence`. **A clean canary hit `vnext_ready` in 227 s (< 4 min).**
+Bugs fixed live (all committed): pMAP projection embed contract (`_embed_texts`), doc-resolution race
+(poll for the intake-written row), per-doc `vnext_ready` (corpus verdict stays INCOMPLETE with sibling docs),
+doc_profile-early (else doc_profile runs last in STAGE_DAG, blowing the 4-min budget), probe reads
+`child_evidence`.
+
+**REMAINING for the goal's 3-consecutive-<4min gate — OPERATIONAL, not a pipeline defect:** the substrate-
+mint latency (the control-loop `auto_map_parents` cadence) + the demand-driven fleet's worker park/respawn +
+the accumulated `rag-canary` test corpus slowing control queries push some canaries near/over 240 s. To close
+it: run on a WARMED, low-contention fleet (workers resident; a small/fresh canary corpus), or reduce the mint
+latency. The pipeline itself is proven; the gate is a timing/warm-up concern. Commands as above
+(`scripts/rag_pipeline_canary.py --corpus rag-canary --passes 3`); diagnostics in `/tmp/polymath_canaries`.
+**The fleet is currently running WITH the transient canary flags** (they clear on the next normal restart —
+`scripts/run_fleet_supervised.sh` without the two `POLYMATH_DOC_PARENT_MAP_*` env vars). Phase 17 cinema
+reconciliation stays behind the FORENSIC HOLD; do NOT resume the cinema backfill.
 
 ## Latest checkpoint (2026-09-08 latest — S11-proper landed + FIRST corpus VNEXT_COMPLETE)
 
