@@ -204,5 +204,18 @@
       "graph_degraded": null,
       "sample_predicate": "REQUIRES"
     }
-  ]
+  ],
+  "judge_survival": {
+    "finding": "relational candidates expand the union but do NOT survive the cross-encoder into final evidence on L/B; final top-15 all DIRECT (evidence_roles DIRECT:15, RELATIONAL:0)",
+    "implication": "judge prefers direct hits when present; relational value needs relational-query fixtures (sparse-direct topics)",
+    "sample": {
+      "union_candidates": 120,
+      "final_evidence": 15,
+      "final_roles": {
+        "DIRECT": 15,
+        "RELATIONAL": 0,
+        "PRECISION": 0
+      }
+    }
+  }
 }

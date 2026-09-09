@@ -58,11 +58,21 @@ judges; routing-inferred artifacts NEVER become factual evidence, §63/§64).
 - **Not an answer-quality number.** This qualifies that the lanes fire + contribute invariant-preserving
   breadth; whether the +60-75 % breadth improves FINAL answers needs a downstream answer-quality eval.
 
+## Judge-survival finding (the honest value limit)
+
+The relational candidates expand the UNION (+60-75 %) but do NOT survive the cross-encoder into final
+evidence on the L/B fixtures: the final top-15 is **all `DIRECT`** (`meta.evidence_roles`
+{DIRECT:15, RELATIONAL:0, PRECISION:0}), even on RELATIONSHIP-classified queries. The judge correctly
+prefers direct dense hits when cinema HAS them — the routing lanes are supplementary breadth, and their
+final-evidence value shows only where direct hits are sparse/insufficient. So "measurable uplift" is
+NOT observable on the exact/QA L/B set (direct dominates); it needs a relational-query fixture.
+
 ## Open contract gaps
 
-- **D-10 downstream uplift:** build a relational-recall fixture (see-also / bridge gold) or an
-  answer-quality eval to quantify whether the qualified breadth improves answers. `gold_in_union` on
-  the exact/QA L/B fixtures is the wrong instrument (base ceilings it).
+- **D-10 downstream uplift:** build a RELATIONAL-QUERY fixture — topics with sparse direct answers where
+  see-also / bridge / graph discovery IS the answer — then measure union-recall AND cross-encoder
+  survival AND answer quality with the lanes on vs off. `gold_in_union` on exact/QA L/B is the wrong
+  instrument (base ceilings it AND direct out-competes the relational candidates at the judge).
 - **E dual-read reach** scales with parent-MAP coverage (cinema 838/11,993) — capacity-gated
   multi-session (batch-size unblocked in 11.178).
 - **Wildcard (P12)** still unimplemented (divergent atom frontier); lowest-value slice.
