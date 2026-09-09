@@ -331,17 +331,20 @@ def auto_map_parents_on_chunks(conn: Connection) -> int:
         """, params).fetchall()
     # RESCUE: a ready/failed pMAP ticket whose event was already consumed is unreachable;
     # re-minting re-opens it (the NOT EXISTS stops re-firing once an undelivered event waits).
+    # Respects the SAME corpus scope as the mint select, so an out-of-scope corpus is never
+    # re-armed even if a pMAP ticket somehow exists there.
+    stranded_filter = "AND t.corpus_id = %s" if scope else ""
     stranded = conn.execute(
-        """
+        f"""
         SELECT t.run_id, t.corpus_id
           FROM stage_tickets t
          WHERE t.stage = 'doc_parent_map'
-           AND t.status IN ('ready', 'failed')
+           AND t.status IN ('ready', 'failed') {stranded_filter}
            AND NOT EXISTS (SELECT 1 FROM outbox_events e
                             WHERE e.run_id = t.run_id
                               AND e.event_type = 'doc_parent_map.v1'
                               AND e.delivered_at IS NULL)
-        """).fetchall()
+        """, params).fetchall()
     minted = 0
     for run_id, corpus_id in list(rows) + list(stranded):
         try:
