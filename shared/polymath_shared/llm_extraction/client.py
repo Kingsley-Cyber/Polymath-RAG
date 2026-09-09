@@ -326,6 +326,12 @@ class LLMExtractionClient:
             "json_mode": True,
         }
         self._last_finish_reason: str | None = None
+        # GROQ-MAP-CONTROL-PLANE-REPAIR-V1 control-plane observability for the
+        # MAP infer path: the specific limiter gate that refused the last
+        # complete_one (None when admitted) and whether that call reached the
+        # network (a refusal never does).
+        self._last_refusal_reason: str | None = None
+        self._last_http_dispatched: bool = False
 
     def _headers(self) -> dict:
         if self.api_key:
@@ -335,7 +341,7 @@ class LLMExtractionClient:
     # -- transport ---------------------------------------------------------
 
     def _chat(self, user_prompt: str, max_tokens: int,
-              system_prompt: str | None = None) -> tuple[str, int, int]:
+              system_prompt: str | None = None) -> tuple[str, int, int, dict]:
         payload = {
             "model": self.model,
             "messages": [
@@ -395,7 +401,17 @@ class LLMExtractionClient:
         content = (choice.get("message") or {}).get("content") or ""
         usage = body.get("usage") or {}
         self._last_finish_reason = choice.get("finish_reason")
-        return content, int(usage.get("prompt_tokens", 0)), int(usage.get("completion_tokens", 0))
+        # GROQ-MAP-CONTROL-PLANE-REPAIR-V1: return the SUCCESS-path response
+        # headers so the limiter can observe provider rate-limit truth on 2xx
+        # (previously dropped — RPD was observable only on 429). Reading headers
+        # for observability must never break the transport, so a header object
+        # that is not a plain mapping degrades to {}.
+        try:
+            hdrs = dict(resp.headers)
+        except Exception:  # noqa: BLE001 — observability only, never fatal
+            hdrs = {}
+        return (content, int(usage.get("prompt_tokens", 0)),
+                int(usage.get("completion_tokens", 0)), hdrs)
 
     # -- public API --------------------------------------------------------
 
@@ -421,12 +437,21 @@ class LLMExtractionClient:
         method never interprets content. Cloud lanes only (the local
         batched path goes through complete_batched)."""
         limiter = self._lane_limiter()
-        if not limiter.acquire(est_tokens=len(user_prompt) / 4.0):
+        decision = limiter.admit(est_tokens=len(user_prompt) / 4.0)
+        # GROQ-MAP-CONTROL-PLANE-REPAIR-V1: keep the bare "LIMITER_REFUSED"
+        # return (existing consumers exact-match it) but expose WHICH gate
+        # refused and whether the request reached the network, so the MAP
+        # control plane can separate a family/breaker/RPD refusal (0 HTTP) from
+        # a real provider response.
+        self._last_refusal_reason = decision.reason
+        if not decision.admitted:
+            self._last_http_dispatched = False       # no request left the process
             return "", "LIMITER_REFUSED"
+        self._last_http_dispatched = True            # about to dispatch
         try:
-            text, _ti, _to = self._chat(user_prompt, max_tokens,
-                                        system_prompt=system_prompt)
-            limiter.record_success()
+            text, _ti, _to, hdrs = self._chat(user_prompt, max_tokens,
+                                              system_prompt=system_prompt)
+            limiter.record_success(headers=hdrs)     # observe provider RPD on 2xx
             return text, None
         except httpx.HTTPStatusError as exc:
             limiter.record_failure(
@@ -762,7 +787,7 @@ class LLMExtractionClient:
             retry_delay: float | None = None
             try:
                 try:
-                    raw, tin, tout = self._chat(user_prompt + nudge, max_tokens)
+                    raw, tin, tout, _hdrs = self._chat(user_prompt + nudge, max_tokens)
                 except httpx.HTTPStatusError as exc:
                     status = exc.response.status_code
                     # THROUGHPUT-V2: 413 is a PAYLOAD condition, not a

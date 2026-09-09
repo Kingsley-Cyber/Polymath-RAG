@@ -423,6 +423,6 @@ def test_short_neighborhood_aliases_round_trip(monkeypatch) -> None:
                       "items": [{"neighborhood_id": "n2", "entities": [
                           {"surface": "FortiGate", "type": "Product", "quote": CH}],
                           "relations": [], "digest": {}}]})
-    monkeypatch.setattr(client, "_chat", lambda *a, **k: (raw, 10, 5))
+    monkeypatch.setattr(client, "_chat", lambda *a, **k: (raw, 10, 5, {}))
     res = client.extract(hoods, source_bytes=10, threshold_bytes=CLOUD_MIN_BYTES)
     assert res.packet is not None and res.packet.items[0].neighborhood_id == hoods[1][0]
