@@ -66,6 +66,10 @@ LANES = [
     ("compile", ("compile_objects",), {"compile_objects"}),
     # DOCUMENT-PROFILE-V1: the profile stage wakes its own worker (and the embedder for the projection)
     ("doc_profile", ("doc_profile",), {"doc_profile", "sidecar_embedder", "qdrant"}),
+    # DOC-PARENT-MAP AUTO-MINT (RAG-PIPELINE-FINISH): an open doc_parent_map ticket wakes the pMAP stage
+    # worker (+ the embedder/qdrant its projection needs). Flag-gated: no ticket is minted while
+    # POLYMATH_DOC_PARENT_MAP_ENABLED is off, so this lane is simply never demanded then.
+    ("doc_parent_map", ("doc_parent_map",), {"doc_parent_map", "sidecar_embedder", "qdrant"}),
 ]
 
 #: Grace before a demand-resident slot is parked after demand ends.
