@@ -394,3 +394,39 @@ providers:
     rpm: 2
     tpm: 60000
     conc_cap: 1
+  # SILICONFLOW-EXTRACTION-LANES-V1 (2026-09-08): 3 INDEPENDENT accounts (own
+  # balances), Qwen/Qwen3-8B, firing EXCLUSIVELY into the unpinned `extract`
+  # (graph) ring. kind=CONCURRENCY, not rate — MEASURED single-account probes
+  # (2026-09-08) found SiliconFlow exposes NO rate-limit headers (use_headers is
+  # a no-op) and returns NO 429/Retry-After even at 48 trivial-concurrent; the
+  # ONLY failure mode is ReadTimeout under heavy-request latency saturation.
+  # Heavy bursts (prod system prompt, max_tokens=2000, enable_thinking:false):
+  #     N=16 -> 16/16 clean       N=24 -> 24/24 clean (~32 req/min, highest CLEAN)
+  #     N=32 -> 30/32 (2 ReadTimeouts, still no 429) = tail saturates here.
+  # So ceiling max=24 (highest measured-clean per account), seed init=12 (climb,
+  # don't cold-open at the edge during a slow provider window). AIMD halves on
+  # timeout/503 and climbs +1/8-clean back to 24. NO `family` -> the 3 accounts
+  # are fully independent lanes (a backoff on one never cools the others), which
+  # is the whole point of 3 separate balances. Raise max only with a NEW measured
+  # burst. 3 x 24 = 72 aggregate concurrent graph-extraction slots.
+  siliconflow1:
+    kind: concurrency
+    init: 12
+    min: 2
+    max: 24
+    adaptive: true
+    use_headers: false
+  siliconflow2:
+    kind: concurrency
+    init: 12
+    min: 2
+    max: 24
+    adaptive: true
+    use_headers: false
+  siliconflow3:
+    kind: concurrency
+    init: 12
+    min: 2
+    max: 24
+    adaptive: true
+    use_headers: false

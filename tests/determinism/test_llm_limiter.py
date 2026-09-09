@@ -126,3 +126,24 @@ def test_registry_keys_by_provider_and_key() -> None:
     b = reg.lane("llm_cloud", "keyB", ProviderLimit(kind="rate", rpm=10))
     a2 = reg.lane("llm_cloud", "keyA", ProviderLimit(kind="rate", rpm=10))
     assert a is not b and a is a2
+
+
+def test_siliconflow_lanes_are_independent_concurrency() -> None:
+    """SILICONFLOW-EXTRACTION-LANES-V1: the three siliconflow lanes load from
+    limiter.yaml as INDEPENDENT pure-concurrency limiters (measured 2026-09-08:
+    the provider exposes no rate headers and rate-limits nothing up to the
+    heavy-latency edge, so a rate bucket would be a fiction). Guards against a
+    limiter.yaml edit silently turning them into rate lanes, correlating them
+    under a shared family, or moving the measured ceiling."""
+    from polymath_shared.llm_extraction.client import _lane_limit
+    for name in ("siliconflow1", "siliconflow2", "siliconflow3"):
+        spec = _lane_limit("cloud", provider=name)
+        assert spec.kind == "concurrency", f"{name} must be concurrency, not rate"
+        assert spec.family is None, f"{name} must be independent (no family cooldown)"
+        assert (spec.init, spec.min, spec.max) == (12, 2, 24), \
+            f"{name} measured seed/ceiling drifted: {(spec.init, spec.min, spec.max)}"
+        lim = AdaptiveLimiter(name, spec)
+        assert lim._rpm is None and lim._tpm is None, \
+            f"{name} concurrency lane must build NO rate/token buckets"
+        st = lim.state()
+        assert st["effective"] == 12 and st["ceiling"] == 24 and st["floor"] == 2
