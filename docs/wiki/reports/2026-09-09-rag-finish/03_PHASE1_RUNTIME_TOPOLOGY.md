@@ -3,6 +3,7 @@ owner: "@king (executing agent)"
 change_id: RAG-PIPELINE-FINISH-V1
 phase: "PHASE 1 — reconstruct runtime truth (Graphify + direct symbol verification)"
 date: 2026-09-09
+last_reviewed: 2026-09-09
 status: DONE
 method: "graphify-out (fresh Sep-9 04:44, HEAD-current) + 3 read-only Explore traces + direct source reads"
 ---

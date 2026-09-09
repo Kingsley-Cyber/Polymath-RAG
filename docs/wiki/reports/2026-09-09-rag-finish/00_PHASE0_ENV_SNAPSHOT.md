@@ -3,6 +3,7 @@ owner: "@king (executing agent: governance/phase-owner per slice)"
 change_id: RAG-PIPELINE-FINISH-V1
 phase: "PHASE 0 — clean execution environment"
 date: 2026-09-09
+last_reviewed: 2026-09-09
 status: DONE
 ---
 
