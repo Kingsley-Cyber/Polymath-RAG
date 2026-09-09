@@ -1371,7 +1371,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/v5/wipe_corpus_v5.py", "py", None),
     # frontend
     ("frontend/.gitignore", "gitignore", None),
-    ("frontend/dist/assets/index-DYcMYPLj.js", "js", None),
+    ("frontend/dist/assets/index-BDrlm60s.js", "js", None),
     ("frontend/dist/assets/index-ECN76Tar.css", "css", None),
     ("frontend/dist/index.html", "html", None),
     ("frontend/index.html", "html", None),
