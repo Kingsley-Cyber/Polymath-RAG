@@ -90,18 +90,27 @@ role-aware synthesis (11.174, D-8b cleared for the LLM path — `_grounded_messa
 behind `POLYMATH_CHAT_SYNTH_ROLES`, claim system untouched). All the routing plan's implementable-without-
 coverage BLOCKED/GATED rows are now cleared.
 
-**Exact next executable (implementable now):** **P12** Wildcard over the atom frontier — substrate now
-PROVEN complete on d7-h1-test (30 atoms/10 kinds); the design work is the atom→parent resolution (atoms are
-doc-scoped; `divergent_finish` needs parent-scoped `children_of`). Lowest-value/highest-complexity routing
-slice; deferred, not blocked. **S10** compiler/title-context migration was tried + reverted (inert on a small
-corpus; needs RRF merge + large corpus).
-**GATED on coverage/capacity + owner (the cutover boundary — do NOT force):** cinema coverage 551/11,993
-parents (multi-session RPD campaign) gates P10-uplift/P11/P13 + P12/P5 REAL value; cutover S13/S14 additionally
-needs the **owner QUERY_READY flip (BE-AWARE §7)** — a production control-plane decision, not autonomous, on
-any corpus. d7-h1-test now satisfies the VNEXT_COMPLETE prerequisite — the earliest corpus the owner could cut
-over. **When Groq capacity resets, resume** `POLYMATH_GROQ_ROUTER=1 parent_map_backfill.py --corpus cinema
---project --concurrency 6` (canary-confirmed working, spread across accounts) → coverage → re-run
-`production_routing_qualify` (uplift) + the GRAPH/Wildcard arms.
+**ROUTING/SYNTHESIS PLAN — QUALIFICATION COMPLETE (2026-09-08, 11.179).** The whole stack is live-qualified
+on cinema, past 'default-off wiring', VALUE demonstrated: P10 non-regression (L 15/15, B 13/15) + union
++58-63%/query; P5 fan-out 24 / P7 graph_dest 8 / F lift 6 / E dual-read 22-24 source-child candidates; WILDCARD
+3 bridges; GRAPH 15-20 attested facts; P8b presents by role on real multi-role evidence. **Value:** on
+cross-doc/sparse-direct queries the relational/latent candidates SURVIVE the cross-encoder into final evidence
+(5 LATENT / 3 LATENT / 2 RELATIONAL), and correctly yield to direct hits on exact/QA queries — the designed
+behaviour, invariant-preserved. Evidence `docs/wiki/experiments/routing-lanes-qualify-cinema-2026-09-08.json`.
+
+**Remaining — all owner- or resource-gated (the legitimate autonomous boundary):**
+- **D-10 formal answer-quality number:** retrieval value is shown live; a statistical ANSWER uplift needs an
+  LLM-judge/rubric on a RELATIONAL-QUERY fixture (sparse-direct topics) + chat-model capacity. The one
+  qualification not yet run.
+- **Cinema coverage** 838/11,993: batch-size UNBLOCKED (map-batches-v2) so it now completes over sessions;
+  purely capacity (RPD, multi-session). Resume `POLYMATH_GROQ_ROUTER=1 parent_map_backfill.py --corpus cinema
+  --project --concurrency 6`.
+- **S13/S14 cutover + S15-S18 retirement:** owner **QUERY_READY flip (BE-AWARE §7)**. These are POST-cutover
+  mechanisms (block new docs / disable legacy producers / remove readers) that would break the live legacy
+  generation if pre-implemented — correctly gated on the owner. Autonomous PREP done: **S16(c)** reader-census
+  benign auto-classification (queue 216→102, 11.180). Genuine 72 readers migrate at cutover.
+- **P12** atom-frontier Wildcard (lowest-value; value coverage-gated) + **S10** compiler-title bridge (inert on
+  small corpus) — deferred with exact unblocks; implementing either now = unqualified scaffolding.
 
 ## Latest checkpoint (2026-09-08 — FINAL RETRIEVAL/ROUTING/SYNTHESIS EXECUTED; MD is the living ledger)
 
