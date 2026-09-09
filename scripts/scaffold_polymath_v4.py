@@ -370,6 +370,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/reports/2026-09-09/08_DEPENDENCIES_AND_BLOCKERS.md", "md", None),
     ("docs/wiki/reports/2026-09-09/09_DECISION_LEDGER.md", "md", None),
     ("docs/wiki/reports/2026-09-09-rag-finish/00_PHASE0_ENV_SNAPSHOT.md", "md", None),
+    ("docs/wiki/reports/2026-09-09-rag-finish/03_PHASE1_RUNTIME_TOPOLOGY.md", "md", None),
     ("docs/wiki/reports/2026-09-07/CONTINUATION_REPORT.md", "md", None),
     ("docs/wiki/reports/2026-09-07/BE_AWARE.md", "md", None),
     ("docs/wiki/reports/2026-09-07/ARCHITECTURE_STATE.md", "md", None),
