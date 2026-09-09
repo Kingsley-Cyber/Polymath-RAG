@@ -32,7 +32,8 @@ Before making any code, schema, data, architecture, or evaluation change:
 
 Before making architectural changes or continuing unfinished work, read, in order:
 
-0. **`docs/wiki/reports/2026-09-07T1828/README.md` — the NEWEST handoff snapshot** (SESSION-CONTINUATION with the exact next slice, a strengthened BE-AWARE.md, and a recursive DEPENDENCY-MAP.md). It supersedes the `2026-09-07/` snapshot below, which still holds for the U-item / chat-side detail.
+00. **`docs/wiki/reports/2026-09-08/START-HERE.md` — the NEWEST handoff + CURRENT operating state (FORENSIC HOLD 2026-09-08/09).** `CINEMA PARENT-MAP BACKFILL = STOPPED`; the prior "Groq RPD exhausted" conclusion is DISPUTED. The next session's principal task is the **Groq Parent-MAP forensic audit** (`GROQ-FORENSIC-AUDIT.md`), NOT a backfill and NOT a code patch. Do not resume backfill on a quota reset; do not spend provider quota to gather evidence; architecture frozen (ParentSkeleton → plaintext MAP DSL → deterministic `map_compiler` → maps → projection; no JSON mode; chunker untouched). This folder also carries CONTINUATION_REPORT / BE_AWARE / UNFINISHED_WORK / DEPENDENCY_MAP.
+0. **`docs/wiki/reports/2026-09-07T1828/README.md` — prior handoff snapshot** (SESSION-CONTINUATION with the then-next slice, a strengthened BE-AWARE.md, and a recursive DEPENDENCY-MAP.md). It supersedes the `2026-09-07/` snapshot below, which still holds for the U-item / chat-side detail.
 1. `docs/wiki/reports/2026-09-07/README.md` — earlier same-day snapshot (successor bootstrap and the model operating contract)
 2. `docs/wiki/reports/2026-09-07/CONTINUATION_REPORT.md` — what exists, what this cycle built, the state of each piece
 3. `docs/wiki/reports/2026-09-07/BE_AWARE.md` — repository-specific rules, each classified as owner preference, operational constraint, invariant, experiment or compromise

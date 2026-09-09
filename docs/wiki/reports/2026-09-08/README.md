@@ -7,6 +7,13 @@ architecture_impact: none (session continuation snapshot)
 
 # SESSION CONTINUATION — 2026-09-08 (FINAL RETRIEVAL / ROUTING / SYNTHESIS phase)
 
+> **⚠️ FORENSIC HOLD (2026-09-08/09) — read `START-HERE.md` first.** The CURRENT operating state is
+> `CINEMA PARENT-MAP BACKFILL = STOPPED` and the prior "Groq RPD exhausted" conclusion is DISPUTED.
+> This README remains accurate for the routing/synthesis phase narrative, but the next session's task is
+> the **Groq Parent-MAP forensic audit** — see `START-HERE.md` → `GROQ-FORENSIC-AUDIT.md`. Also note the
+> `main` SHA below is stale (`a17e4d6`); current `main` includes the SiliconFlow lanes — verify with
+> `git rev-parse HEAD`.
+
 **Newest handoff snapshot. Supersedes `2026-09-07T1828/` for the retrieval/routing/synthesis
 phase** (the document-semantic-index substrate it describes is this phase's P1, still valid).
 

@@ -42,9 +42,10 @@ block below (registers 11.175–11.176):
   structured-output reliability limit, NOT input size). Fixed: `MAP_RELIABILITY_CAP=15` +
   `BATCH_PLANNER_VERSION`→`map-batches-v2` (re-batch; maps persist by map_hash); 24 planner tests green;
   live-qualified (Hey Whipple 0→75/469, ~20× better maps/call). **Cinema large-doc mapping is no longer
-  batch-size-blocked — completing coverage is now purely capacity-gated (multi-session; today's Groq
-  budget spent by the diagnosis), resumable via `parent_map_backfill.py --corpus cinema --project
-  --concurrency 6`.**
+  batch-size-blocked. Coverage ≈1254/11,993. Completing it was believed purely capacity-gated, but that
+  conclusion is now DISPUTED and the backfill is STOPPED under a FORENSIC HOLD (owner directive 2026-09-08/09).
+  DO NOT resume the backfill on a quota reset — the Groq Parent-MAP forensic audit must pass first. See
+  `docs/wiki/reports/2026-09-08/` (START-HERE) and RETRIEVAL-MIGRATION-DEPENDENCY-V1 S12.**
 - **Routing lanes QUALIFIED LIVE on cinema (11.179):** P10 rerun through the real `chat_retrieve_v2`
   (read-only) — non-regressive (L 15/15, B 13/15, 0 reg) AND the intent lanes expand the union in
   EVERY query (L +58%, B +63%). On RELATIONSHIP queries all four fire + contribute source-child
@@ -102,9 +103,11 @@ behaviour, invariant-preserved. Evidence `docs/wiki/experiments/routing-lanes-qu
 - **D-10 formal answer-quality number:** retrieval value is shown live; a statistical ANSWER uplift needs an
   LLM-judge/rubric on a RELATIONAL-QUERY fixture (sparse-direct topics) + chat-model capacity. The one
   qualification not yet run.
-- **Cinema coverage** 838/11,993: batch-size UNBLOCKED (map-batches-v2) so it now completes over sessions;
-  purely capacity (RPD, multi-session). Resume `POLYMATH_GROQ_ROUTER=1 parent_map_backfill.py --corpus cinema
-  --project --concurrency 6`.
+- **Cinema coverage** ≈1254/11,993 (verify live): batch-size UNBLOCKED (map-batches-v2). **FORENSIC HOLD —
+  backfill STOPPED (owner directive 2026-09-08/09).** The prior "purely capacity / RPD-exhausted" conclusion is
+  DISPUTED and unreconciled against provider truth. **DO NOT resume the backfill on a quota reset;** the Groq
+  Parent-MAP forensic audit must pass its acceptance gate first, then a bounded owner-reviewed canary. Start:
+  `docs/wiki/reports/2026-09-08/START-HERE.md`.
 - **S13/S14 cutover + S15-S18 retirement:** owner **QUERY_READY flip (BE-AWARE §7)**. These are POST-cutover
   mechanisms (block new docs / disable legacy producers / remove readers) that would break the live legacy
   generation if pre-implemented — correctly gated on the owner. Autonomous PREP done: **S16(c)** reader-census
