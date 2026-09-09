@@ -1927,6 +1927,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-09-rag-finish-phase15-canary-live.md", "md", None),
     ("docs/wiki/work-log/2026-09-09-rag-finish-phase16-pmap-packing.md", "md", None),
     ("docs/wiki/work-log/2026-09-09-rag-finish-phase18-files-status-ui.md", "md", None),
+    ("docs/wiki/work-log/2026-09-09-rag-finish-phase17-reconciliation-dryrun.md", "md", None),
     ("docs/wiki/experiments/routing-lanes-qualify-cinema-2026-09-08.json", "json", None),
     ("docs/wiki/experiments/d10-answer-quality-cinema-2026-09-08.json", "json", None),
     ("docs/wiki/work-log/2026-09-06-style-bold-retire.md", "md", None),
