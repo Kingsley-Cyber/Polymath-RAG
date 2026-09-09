@@ -43,6 +43,12 @@ judges; routing-inferred artifacts NEVER become factual evidence, §63/§64).
 - **Coverage independence (correction):** P5/P7/F use atom/graph → GLOBAL child search, so they fired
   fully on cinema despite parent-MAP coverage being partial (838/11,993). Only E dual-read's reach
   scales with coverage.
+- **All three compositions qualified live** (`chat_retrieve_mode`, cinema): **HYBRID** (the four lanes
+  above); **WILDCARD** (P13) — divergent sweep 45/42 latent_candidates → obvious-excluded → two-hop
+  validated → **3 bridges** on the separate `wildcard` lane (never evidence, §3.19); **GRAPH** (P11) —
+  **15–20 source-attested Neo4j facts** (predicates PRODUCES/REQUIRES) via 8 entity-card seeds
+  (card_probe ok), bounded hop-1, `graph_degraded` null, on the `graph_relationships` side channel
+  (relationships route, children prove). Recorded in the evidence JSON's `wildcard`/`graph` sections.
 
 ## Rejected claims
 

@@ -162,5 +162,47 @@
         }
       }
     }
+  ],
+  "wildcard": [
+    {
+      "q": "What unexpected connections link film editing to music and rhythm?",
+      "latent_candidates": 45,
+      "returned": 3,
+      "parents_validated": 5,
+      "degraded": null
+    },
+    {
+      "q": "What surprising ideas connect lighting to human psychology?",
+      "latent_candidates": 42,
+      "returned": 3,
+      "parents_validated": 8,
+      "degraded": null
+    }
+  ],
+  "graph": [
+    {
+      "q": "What is the relationship between Walter Murch and film editing?",
+      "graph_fact_count": 15,
+      "graph_seeds": {
+        "surfaces": 12,
+        "cards": 8,
+        "max_seeds": 8,
+        "card_probe": "ok"
+      },
+      "graph_degraded": null,
+      "sample_predicate": "PRODUCES"
+    },
+    {
+      "q": "How do colour theory and visual composition connect?",
+      "graph_fact_count": 20,
+      "graph_seeds": {
+        "surfaces": 12,
+        "cards": 8,
+        "max_seeds": 8,
+        "card_probe": "ok"
+      },
+      "graph_degraded": null,
+      "sample_predicate": "REQUIRES"
+    }
   ]
 }
