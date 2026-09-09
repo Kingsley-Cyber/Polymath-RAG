@@ -58,6 +58,23 @@ _PIN_FUNCTION = {
     "parent_enrichment": PARENT_ENRICHMENT,
 }
 
+#: DAG stage name -> functional pool (the ingestion mapping the pool-metrics view
+#: joins against stage_tickets). `extract` is the unpinned GRAPH_EXTRACTION ring;
+#: the pinned stages map through their pin. Stages absent here have no LLM pool.
+STAGE_TO_FUNCTION = {
+    "extract": GRAPH_EXTRACTION,
+    "doc_profile": DOCUMENT_PROFILE,
+    "doc_parent_map": PMAP,
+    "parent_enrichment": PARENT_ENRICHMENT,
+    "chat_compiler": CHAT,
+}
+
+
+def functional_pool_of(stage: str) -> str | None:
+    """The functional pool that drains a DAG stage's LLM work, or None if the stage
+    uses no provider pool (intake/projection/summary stages)."""
+    return STAGE_TO_FUNCTION.get(stage)
+
 # reachability states (static; runtime cooldown/breaker is NOT config and is
 # excluded so the offline gate is deterministic — see `runtime_note`).
 ACTIVE = "active"                              # enabled and credential present
@@ -249,6 +266,22 @@ class LaneRegistry:
         for l in self.lanes:
             acc_fns.setdefault(l.account_id, set()).add(l.function)
         return {a: fns for a, fns in acc_fns.items() if len(fns) > 1}
+
+    def pool_lane_health(self) -> dict[str, dict]:
+        """Per functional pool: total / active / credential-absent / disabled lane
+        counts — the 'healthy qualified lanes' signal the pool-drain invariant and
+        the canonical status (Phase 12) report. Provider-free (config truth)."""
+        out: dict[str, dict] = {}
+        for fn, lanes in self.by_function().items():
+            active = [l for l in lanes if l.reachability == ACTIVE]
+            out[fn] = {
+                "total": len(lanes),
+                "active": len(active),
+                "credential_absent": sum(1 for l in lanes if l.reachability == CREDENTIAL_ABSENT),
+                "disabled": sum(1 for l in lanes if l.reachability == DISABLED),
+                "active_lanes": sorted(l.name for l in active),
+            }
+        return out
 
     def reachability(self) -> dict[str, list[str]]:
         out: dict[str, list[str]] = {ACTIVE: [], CREDENTIAL_ABSENT: [], DISABLED: []}

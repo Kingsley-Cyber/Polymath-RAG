@@ -109,6 +109,28 @@ def test_inventory_renders_no_secret_value() -> None:
     assert "GROQ_API_KEY_1" in {l.account_id for l in LR.build_registry().lanes}
 
 
+def test_stage_to_functional_pool_mapping() -> None:
+    assert LR.functional_pool_of("doc_parent_map") == LR.PMAP
+    assert LR.functional_pool_of("doc_profile") == LR.DOCUMENT_PROFILE
+    assert LR.functional_pool_of("extract") == LR.GRAPH_EXTRACTION
+    assert LR.functional_pool_of("chat_compiler") == LR.CHAT
+    # a non-LLM stage has no pool.
+    assert LR.functional_pool_of("project_qdrant") is None
+    assert LR.functional_pool_of("verify_projections") is None
+
+
+def test_pool_lane_health_counts_active_lanes() -> None:
+    health = _reg().pool_lane_health()
+    # each ingestion pool has >=1 lane; totals partition into active/absent/disabled.
+    for fn in (LR.DOCUMENT_PROFILE, LR.PMAP, LR.GRAPH_EXTRACTION):
+        h = health[fn]
+        assert h["total"] >= 1
+        assert h["active"] + h["credential_absent"] + h["disabled"] == h["total"]
+        assert len(h["active_lanes"]) == h["active"]
+    # PMAP has the six map_groq lanes.
+    assert health[LR.PMAP]["total"] == 6
+
+
 def test_inventory_flags_dark_pool_when_no_credentials(monkeypatch) -> None:
     # If EVERY lane of a function is credential-absent, the inventory names it as a
     # fully-dark pool (would raise PinnedProviderUnavailable) — the reachability
