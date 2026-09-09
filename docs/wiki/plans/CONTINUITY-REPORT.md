@@ -45,6 +45,15 @@ block below (registers 11.175–11.176):
   batch-size-blocked — completing coverage is now purely capacity-gated (multi-session; today's Groq
   budget spent by the diagnosis), resumable via `parent_map_backfill.py --corpus cinema --project
   --concurrency 6`.**
+- **Routing lanes QUALIFIED LIVE on cinema (11.179):** P10 rerun through the real `chat_retrieve_v2`
+  (read-only) — non-regressive (L 15/15, B 13/15, 0 reg) AND the intent lanes expand the union in
+  EVERY query (L +58%, B +63%). On RELATIONSHIP queries all four fire + contribute source-child
+  candidates: P5 fan-out 24, P7 graph_dest 8, F lift 6, E dual-read 22-24; union +60-75%, gold
+  preserved, candidates all `routing_child` (atoms/graph route, children prove). **KEY: P5/P7/F are
+  parent-MAP-coverage-INDEPENDENT (atom/graph→global child) — they qualify on cinema NOW despite the
+  coverage wall.** The lanes are past 'default-off wiring'. Remaining (D-10): downstream ANSWER-quality
+  uplift from the +60-75% breadth needs a relational-recall fixture (`gold_in_union` ceilings on the
+  exact/QA L/B fixtures). Evidence: `docs/wiki/experiments/routing-lanes-qualify-cinema-2026-09-08.json`.
 
 ### Earlier this session — DATA-REGEN: D-5/D-12 UNBLOCKED; parent-MAP backfill parallelized
 

@@ -1879,6 +1879,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-08-s11-vnext-readiness-verdict.md", "md", None),
     ("docs/wiki/work-log/2026-09-08-d7-first-vnext-complete.md", "md", None),
     ("docs/wiki/work-log/2026-09-08-backfill-spread-and-bigdoc-yield.md", "md", None),
+    ("docs/wiki/work-log/2026-09-08-routing-lanes-live-qualify.md", "md", None),
+    ("docs/wiki/experiments/routing-lanes-qualify-cinema-2026-09-08.json", "json", None),
     ("docs/wiki/work-log/2026-09-06-style-bold-retire.md", "md", None),
     ("docs/wiki/experiments/chat-parity-p1f-first.json", "json", None),
     ("docs/wiki/work-log/2026-09-06-p1e-mode-recomposition.md", "md", None),

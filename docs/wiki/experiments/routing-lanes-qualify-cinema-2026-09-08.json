@@ -1,0 +1,166 @@
+{
+  "corpus": "cinema",
+  "contract": "routing-lanes-live-qualify-v1",
+  "note": "Lanes fire + contribute source-child candidates; atoms/graph ROUTE, children PROVE. P5 fan-out / P7 graph-dest / F lift are parent-MAP-coverage-INDEPENDENT (atom/graph -> global child).",
+  "queries": [
+    {
+      "q": "What ideas are related to montage and continuity editing?",
+      "intent": "RELATIONSHIP",
+      "union_off": 84,
+      "union_on": 147,
+      "union_gain_pct": 75.0,
+      "lanes": {
+        "seealso_fanout": {
+          "enabled": true,
+          "candidates": 24,
+          "extra": {},
+          "atom_router_texts": [
+            "Walter Murch's editing principles",
+            "balancing realism with immediacy when applying television techniques to film editing",
+            "connects cinematography practice to visual storytelling theory"
+          ]
+        },
+        "graph_dest": {
+          "enabled": true,
+          "candidates": 8,
+          "extra": {
+            "destinations": [
+              "doc_0c9cded11e26fd11f398b54595307220925fce38f13dffd530d84bf3e05d7c2b",
+              "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+              "doc_17b69e1d403309f257f6ac8972a60389e4601693d140c07834e4f903958e2e15",
+              "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+              "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+              "doc_7041b219489ebd0ee7a2c751a2ef70682653ec9b23673d9c349e7676c0f6b4b1",
+              "doc_aef933432d47f07a79a1eff5585d61805a9a2f6ccabc017903ca51beb54bd88b",
+              "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45"
+            ]
+          }
+        },
+        "resolution_lift": {
+          "enabled": true,
+          "candidates": 6,
+          "extra": {
+            "terms": [
+              "B1",
+              "C3",
+              "C500"
+            ]
+          }
+        },
+        "dualread": {
+          "enabled": true,
+          "candidates": 24,
+          "extra": {
+            "resolved_parents": 24
+          }
+        }
+      }
+    },
+    {
+      "q": "What are the relationships between framing, composition, and emotion?",
+      "intent": "RELATIONSHIP",
+      "union_off": 96,
+      "union_on": 166,
+      "union_gain_pct": 72.9,
+      "lanes": {
+        "seealso_fanout": {
+          "enabled": true,
+          "candidates": 24,
+          "extra": {},
+          "atom_router_texts": [
+            "Balancing aesthetic/functional design goals with empirical findings on human perception",
+            "Importance of visual structure for narrative composition",
+            "balancing visual compression with narrative clarity"
+          ]
+        },
+        "graph_dest": {
+          "enabled": true,
+          "candidates": 8,
+          "extra": {
+            "destinations": [
+              "doc_0661e39c4ec6c9d461b27f089e07c832a47774cea4f9f74285da732d1a886cae",
+              "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+              "doc_0c9cded11e26fd11f398b54595307220925fce38f13dffd530d84bf3e05d7c2b",
+              "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+              "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+              "doc_2ce79e8ebec9d33e88458fc12308f6d1eff0416517c0c1685f3e20008b725013",
+              "doc_2d6319ceeaabdec1e74b3ce9e06c1f58ccac29033d3658f14b97a21ac0db5875",
+              "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852"
+            ]
+          }
+        },
+        "resolution_lift": {
+          "enabled": true,
+          "candidates": 6,
+          "extra": {
+            "terms": [
+              "A122",
+              "A124",
+              "IEEE"
+            ]
+          }
+        },
+        "dualread": {
+          "enabled": true,
+          "candidates": 22,
+          "extra": {
+            "resolved_parents": 24
+          }
+        }
+      }
+    },
+    {
+      "q": "How is depth of field connected to other cinematography ideas?",
+      "intent": "RELATIONSHIP",
+      "union_off": 91,
+      "union_on": 144,
+      "union_gain_pct": 58.2,
+      "lanes": {
+        "seealso_fanout": {
+          "enabled": true,
+          "candidates": 24,
+          "extra": {},
+          "atom_router_texts": [
+            "Balancing artistic intent with technical camera constraints",
+            "Balancing depth of field control with atmospheric visibility",
+            "connects cinematography practice to visual storytelling theory"
+          ]
+        },
+        "graph_dest": {
+          "enabled": true,
+          "candidates": 8,
+          "extra": {
+            "destinations": [
+              "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+              "doc_26cceca252a72ae476beead4e21d7d3ad9bb07fa5cfd5e49e34182505cd90b16",
+              "doc_2d6319ceeaabdec1e74b3ce9e06c1f58ccac29033d3658f14b97a21ac0db5875",
+              "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+              "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+              "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+              "doc_4832e3833d520e27e8465687cfbb981c20694ea6514e584016c97249b78da497",
+              "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a"
+            ]
+          }
+        },
+        "resolution_lift": {
+          "enabled": true,
+          "candidates": 6,
+          "extra": {
+            "terms": [
+              "B1",
+              "C3",
+              "C500"
+            ]
+          }
+        },
+        "dualread": {
+          "enabled": true,
+          "candidates": 23,
+          "extra": {
+            "resolved_parents": 24
+          }
+        }
+      }
+    }
+  ]
+}
