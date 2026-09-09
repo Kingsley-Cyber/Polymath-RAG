@@ -68,6 +68,27 @@ new uploads (owner decision), set `POLYMATH_DOC_PARENT_MAP_ENABLED=1` with no co
 would begin spending Groq pMAP on every fresh doc, so it is an owner call, and cinema reconciliation stays
 behind the FORENSIC HOLD (Phase 17). Do NOT resume the cinema backfill.
 
+**POST-CANARY WORK LANDED (2026-09-09, all offline, no spend, hold intact — commits `1ad74bc…87fe75e`):**
+- **Phase 16** pMAP packing sanity: provider-free 60-parent planning (target-60 honored where a lane
+  qualifies — cap60→[60], cap15→[15×4]) + durable persistence (60 mapped across 4 batches, idempotent);
+  live canary receipts confirm 5 maps/request. No live 60-benchmark.
+- **Phase 18** Files/status UI on CANONICAL-DOCUMENT-STATUS-V1: `GET /documents/{doc_id}/status` +
+  `map_active` on the list; FilesView MapBadge + StatusPanel; `npm run build` green; live-verified. The
+  committed frontend `dist` was rebuilt (`index-BDrlm60s.js`).
+- **New-uploads-only production guard** `POLYMATH_DOC_PARENT_MAP_SINCE` (a created-after boundary): lets the
+  owner enable pMAP GLOBALLY for FRESH uploads only — enable with `POLYMATH_DOC_PARENT_MAP_ENABLED=1` +
+  `POLYMATH_DOC_PARENT_MAP_SINCE=<now>` and NO corpus scope; every run created before the boundary (cinema +
+  all history) is NEVER swept. Flag still OFF by default.
+- **Phase 17 read-only dry-run** (cinema, no spend): 67 docs · 11,993 eligible · 1,449 mapped (UNGROUNDED
+  `map-compiler-v1`) · 10,176 unresolved. **Phase 17 + Phase B remain OWNER-GATED** — see
+  `docs/wiki/work-log/2026-09-09-rag-finish-phase17-reconciliation-dryrun.md` for the exact unblocks
+  (forensic-hold Groq probe → cinema generation decision → resume; Phase B = the cutover-gated doc_profile
+  DAG reorder). Full offline gate green (156 passed/1 skipped); guards green.
+
+**The ONLY remaining RAG-finish work is genuinely owner-/external-gated:** (a) enable pMAP for production
+new-uploads (owner spend decision — the SINCE mechanism is ready); (b) the forensic-hold Groq probe + cinema
+reconciliation (Phase 17); (c) the Phase B DAG cutover. Everything independently executable is DONE.
+
 ## Latest checkpoint (2026-09-08 latest — S11-proper landed + FIRST corpus VNEXT_COMPLETE)
 
 **`main` = `a4659f8` (all 4 CI checks green).** Two migration milestones landed after the data-regen
