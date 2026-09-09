@@ -309,13 +309,22 @@ def auto_map_parents_on_chunks(conn: Connection) -> int:
     from polymath_shared.document_profile.map_trigger import (
         doc_parent_map_corpus_scope,
         doc_parent_map_enabled,
+        doc_parent_map_since,
         mint_doc_parent_map,
     )
     if not doc_parent_map_enabled():
         return 0
     scope = doc_parent_map_corpus_scope()
-    corpus_filter = "AND r.corpus_id = %s" if scope else ""
-    params = [scope] if scope else []
+    since = doc_parent_map_since()
+    # run-based filter (mint + doc_profile-early): optional single-corpus scope AND/OR a
+    # NEW-UPLOADS-ONLY created-after boundary. With SINCE set and NO corpus scope, every
+    # FRESH upload (created after the boundary) is mapped while cinema and every existing
+    # run created before it is NEVER swept — the forensic-hold-safe production config.
+    run_filter, run_params = "", []
+    if scope:
+        run_filter += " AND r.corpus_id = %s"; run_params.append(scope)
+    if since:
+        run_filter += " AND r.created_at > %s::timestamptz"; run_params.append(since)
     rows = conn.execute(
         f"""
         SELECT r.run_id, r.corpus_id
@@ -323,17 +332,18 @@ def auto_map_parents_on_chunks(conn: Connection) -> int:
           JOIN stage_tickets t ON t.run_id = r.run_id
                AND t.stage = 'intake' AND t.status = 'done'
          WHERE r.status IN ('intake', 'reconciling', 'degraded', 'query_ready')
-           AND r.superseded_by_run_id IS NULL {corpus_filter}
+           AND r.superseded_by_run_id IS NULL {run_filter}
            AND NOT EXISTS (SELECT 1 FROM stage_tickets e
                             WHERE e.run_id = r.run_id AND e.stage = 'doc_parent_map')
            AND NOT EXISTS (SELECT 1 FROM archived_corpora ac
                             WHERE ac.corpus_id = r.corpus_id)
-        """, params).fetchall()
+        """, run_params).fetchall()
     # RESCUE: a ready/failed pMAP ticket whose event was already consumed is unreachable;
     # re-minting re-opens it (the NOT EXISTS stops re-firing once an undelivered event waits).
-    # Respects the SAME corpus scope as the mint select, so an out-of-scope corpus is never
-    # re-armed even if a pMAP ticket somehow exists there.
+    # Scope-only: a stranded ticket only EXISTS for a run that already passed the mint guards
+    # (corpus + SINCE), so re-arming it can never sweep an out-of-scope/historical run.
     stranded_filter = "AND t.corpus_id = %s" if scope else ""
+    stranded_params = [scope] if scope else []
     stranded = conn.execute(
         f"""
         SELECT t.run_id, t.corpus_id
@@ -344,7 +354,7 @@ def auto_map_parents_on_chunks(conn: Connection) -> int:
                             WHERE e.run_id = t.run_id
                               AND e.event_type = 'doc_parent_map.v1'
                               AND e.delivered_at IS NULL)
-        """, params).fetchall()
+        """, stranded_params).fetchall()
     minted = 0
     for run_id, corpus_id in list(rows) + list(stranded):
         try:
@@ -371,8 +381,8 @@ def auto_map_parents_on_chunks(conn: Connection) -> int:
           JOIN stage_tickets dp ON dp.run_id = r.run_id
                AND dp.stage = 'doc_profile' AND dp.status = 'pending'
          WHERE r.status IN ('intake', 'reconciling', 'degraded', 'query_ready')
-           AND r.superseded_by_run_id IS NULL {corpus_filter}
-        """, params).fetchall()
+           AND r.superseded_by_run_id IS NULL {run_filter}
+        """, run_params).fetchall()
     for (run_id,) in profile_rows:
         try:
             _emit_ticket_event(conn, ticket_id(run_id, "doc_profile"), run_id, "doc_profile")

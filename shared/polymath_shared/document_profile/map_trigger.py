@@ -31,6 +31,17 @@ def doc_parent_map_corpus_scope() -> str | None:
     return v or None
 
 
+def doc_parent_map_since() -> str | None:
+    """NEW-UPLOADS-ONLY production guard: an ISO-8601 timestamp; only runs CREATED AFTER
+    it are eligible for the auto-minted pMAP + early doc_profile. This is how pMAP is
+    turned on for production without touching historical corpora — enable the flag with
+    `POLYMATH_DOC_PARENT_MAP_SINCE=<now>` and NO corpus scope, and every FRESH upload is
+    mapped while cinema and every other existing run (created before the boundary) is
+    NEVER swept (forensic-hold safe). Empty/unset = no lower bound (scope by corpus only)."""
+    v = os.environ.get("POLYMATH_DOC_PARENT_MAP_SINCE", "").strip()
+    return v or None
+
+
 def mint_doc_parent_map(conn, *, corpus_id: str, run_id: str) -> dict:
     """Mint/re-arm the doc_parent_map ticket + event for a run. One ticket per (run,
     stage); a re-mint re-arms it and re-opens the event (idempotent, restart-safe)."""

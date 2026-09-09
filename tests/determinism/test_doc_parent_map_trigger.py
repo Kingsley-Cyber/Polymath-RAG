@@ -73,3 +73,45 @@ def test_mint_writes_ticket_and_event():
     assert any("doc_parent_map.v1" in str(p) for _s, p in conn.calls)
     # idempotency key is per-run so a re-mint re-arms the same ticket/event.
     assert any("pmap:runA" in str(p) for _s, p in conn.calls)
+
+
+def test_since_helper(monkeypatch):
+    monkeypatch.delenv("POLYMATH_DOC_PARENT_MAP_SINCE", raising=False)
+    assert MT.doc_parent_map_since() is None
+    monkeypatch.setenv("POLYMATH_DOC_PARENT_MAP_SINCE", "2026-09-09T00:00:00Z")
+    assert MT.doc_parent_map_since() == "2026-09-09T00:00:00Z"
+
+
+class _SqlCapConn:
+    """Records SQL; returns no rows (so the phase mints nothing) — for asserting the guards."""
+    def __init__(self):
+        self.sqls = []
+    def execute(self, sql, params=()):
+        self.sqls.append(" ".join(sql.split()))
+        conn = self
+        class _C:
+            def fetchall(self_):
+                return []
+        return _C()
+
+
+def test_since_guard_adds_created_after_boundary(monkeypatch):
+    monkeypatch.setenv("POLYMATH_DOC_PARENT_MAP_ENABLED", "1")
+    monkeypatch.setenv("POLYMATH_DOC_PARENT_MAP_SINCE", "2026-09-09T00:00:00Z")
+    monkeypatch.delenv("POLYMATH_DOC_PARENT_MAP_CORPUS", raising=False)
+    from control.scheduler import auto_map_parents_on_chunks
+    conn = _SqlCapConn()
+    auto_map_parents_on_chunks(conn)
+    # NEW-UPLOADS-ONLY: the mint + doc_profile-early selects carry the created-after boundary,
+    # so historical/cinema runs (created before it) are excluded even with no corpus scope.
+    assert any("r.created_at > %s" in s for s in conn.sqls), conn.sqls
+
+
+def test_no_since_means_no_created_after_boundary(monkeypatch):
+    monkeypatch.setenv("POLYMATH_DOC_PARENT_MAP_ENABLED", "1")
+    monkeypatch.delenv("POLYMATH_DOC_PARENT_MAP_SINCE", raising=False)
+    monkeypatch.delenv("POLYMATH_DOC_PARENT_MAP_CORPUS", raising=False)
+    from control.scheduler import auto_map_parents_on_chunks
+    conn = _SqlCapConn()
+    auto_map_parents_on_chunks(conn)
+    assert not any("created_at > %s" in s for s in conn.sqls)
