@@ -229,6 +229,57 @@ def test_structured_capability_negotiation(pool_env, monkeypatch, tmp_path):
         pool.cloud_endpoints()
 
 
+def test_enable_thinking_passthrough(pool_env, monkeypatch, tmp_path):
+    # THINKING-CONTROL-V1 (SiliconFlow Qwen3): a provider may carry a top-level
+    # `enable_thinking` toggle; it rides cloud_opts and the client payload, while a
+    # provider WITHOUT the field omits it entirely (existing lanes byte-unchanged).
+    import json as _json
+    import httpx
+    from unittest.mock import MagicMock, patch
+
+    from polymath_shared.llm_extraction import pool
+    from polymath_shared.llm_extraction.client import LLMExtractionClient
+    pf = tmp_path / "providers.json"
+    monkeypatch.setattr(pool, "_PROVIDERS_FILE", pf)
+    monkeypatch.setenv("T_SF_KEY", "sk-sf")
+    pf.write_text(_json.dumps({"providers": [
+        {"name": "sf", "url": "https://api.siliconflow.com", "model": "Qwen/Qwen3-8B",
+         "api_key_env": "T_SF_KEY", "reasoning_effort": None, "enable_thinking": False,
+         "structured": "json", "dedicated": False},
+        {"name": "plain", "url": "http://p", "model": "m", "api_key_env": "T_SF_KEY"},
+    ]}))
+    pool_env(None)
+    by = {ep.name: ep for ep in pool.cloud_endpoints()}
+    assert by["sf"].enable_thinking is False
+    assert by["sf"].cloud_opts["enable_thinking"] is False
+    assert by["sf"].dedicated is False                         # joins the unpinned extract ring
+    assert by["plain"].enable_thinking is None                 # absent field -> unchanged
+    assert by["plain"].cloud_opts["enable_thinking"] is None
+
+    captured: dict = {}
+
+    def fake_post(url, json=None, timeout=None, headers=None):  # noqa: A002
+        captured.update(json or {})
+        r = MagicMock()
+        r.json.return_value = {"choices": [{"message": {"content": "{}"}, "finish_reason": "stop"}], "usage": {}}
+        r.raise_for_status = lambda: None
+        return r
+
+    c = LLMExtractionClient("cloud", url=by["sf"].url, model=by["sf"].model,
+                            api_key="k", cloud_opts=by["sf"].cloud_opts)
+    with patch.object(httpx, "post", fake_post):
+        c._chat("doc", 128, system_prompt="sys")
+    assert captured.get("enable_thinking") is False            # top-level toggle sent
+    assert "reasoning_effort" not in captured                  # reasoning_effort:null omitted
+
+    captured.clear()
+    c2 = LLMExtractionClient("cloud", url="http://p", model="m", api_key="k",
+                             cloud_opts=by["plain"].cloud_opts)
+    with patch.object(httpx, "post", fake_post):
+        c2._chat("doc", 128, system_prompt="sys")
+    assert "enable_thinking" not in captured                   # omitted for non-thinking providers
+
+
 def test_stage_pin_dedicates_and_fails_loudly(pool_env, monkeypatch, tmp_path):
     # STAGE-PIN-V1: pinned stage -> exactly that provider; pinned but
     # inactive -> loud PinnedProviderUnavailable (never silent reroute);

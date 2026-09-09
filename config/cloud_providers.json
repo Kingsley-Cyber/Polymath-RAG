@@ -30,7 +30,8 @@
     "NVIDIA-RETIRED-FROM-ENRICHMENT-PIN (2026-09-05, owner \"enrichment is too slow\"): nvidia (nemotron-3.5-lightning-30b-a3b) removed from the parent_enrichment pin \u2014 measured 12:00\u201314:00Z on cinema: 102 s mean wall per call (others 17\u201342 s) and 51 % of its microbatch parents gated INVALID; with parent-sharding it sat in nearly every document wave and the ladder waves, so it set the tail of all three. Provider block kept (dedicated:true, enabled) so re-adding the name to the pin restores it; enrichment identity excludes the lane, nothing re-enriches.",
     "CHAT-COMPILER-LANES-V1 (2026-09-05, CHAT-QUERY-COMPILER-PLAN \u00a73.2/\u00a76, P0.b): compiler1..compiler4 = AI Studio keys 1\u20134 on gemini-3.1-flash-lite, dedicated:true (only the chat_compiler stage pin uses them), structured json_object (custom system prompt; the plan is validated locally against CHAT-INTENT-PLAN-V1). Their LOCAL AIMD limiter keys are separate from gemini1..gemini4 so extraction saturation never blocks a compile; Google's per-key-per-model quota is shared with those lanes by construction (one call per chat turn, \u2264 600 output tokens).",
     "COMPILER-CROSS-FAMILY-V1 (2026-09-05): compiler_alt = OpenRouter key 1 @ mistral-small-2603 (dedicated, json) joins the chat_compiler ring so a Gemini-wide 503 storm (measured: 78 enrichment 503s today, a 24 s hang on compiler2's probe) never zeroes the compiler; the compiler client uses a 6 s HTTP timeout and walks one ring step on a transport failure.",
-    "DOCUMENT-PROFILE-V1 pool (owner 2026-09-07): profile_groq1..6 = six DEDICATED Groq accounts (groq/compound; RPM 30 / RPD 250 / TPM 70k each) as tier 0, rotated per run; profile_fallback_gemini1/2 (own keys 5/6) as fallback 1; profile_fallback_openrouter as fallback 2. Plain-text labelled output (structured null). Never shared with extraction, enrichment or the chat compiler."
+    "DOCUMENT-PROFILE-V1 pool (owner 2026-09-07): profile_groq1..6 = six DEDICATED Groq accounts (groq/compound; RPM 30 / RPD 250 / TPM 70k each) as tier 0, rotated per run; profile_fallback_gemini1/2 (own keys 5/6) as fallback 1; profile_fallback_openrouter as fallback 2. Plain-text labelled output (structured null). Never shared with extraction, enrichment or the chat compiler.",
+    "SILICONFLOW-EXTRACTION-LANES-V1 (owner 2026-09-08): siliconflow1..3 = three SEPARATE SiliconFlow accounts on Qwen/Qwen3-8B, added EXCLUSIVELY to assist GRAPH EXTRACTION. dedicated:false => they join the general (unpinned) extraction ring only; the enrichment / doc_profile / chat_compiler / doc_parent_map stages are pinned and never spend them. enable_thinking:false (THINKING-CONTROL-V1) is MANDATORY: Qwen3-8B is a reasoning model and with thinking ON burns the whole max_tokens budget on reasoning tokens and returns empty extraction (SiliconFlow's toggle is the top-level enable_thinking, not reasoning_effort, so reasoning_effort:null). structured:json (json_object; upgrade to schema only after a strict-schema canary). request_char_budget 30000 (8B => keep batches modest). ACTIVATES when SILICONFLOW_API_KEY_1/2/3 resolve in .env; until then the three lanes park (surfaced, never silent). Note: an 8B model is on the small side for relation extraction — watch the canary's relation yield before leaning on it. Canary: scripts/siliconflow_extraction_canary.py."
   ],
   "stage_pins": {
     "parent_enrichment": [
@@ -499,6 +500,42 @@
       "dedicated": true,
       "request_char_budget": 18000,
       "json_mode": false
+    },
+    {
+      "name": "siliconflow1",
+      "enabled": true,
+      "url": "https://api.siliconflow.com",
+      "model": "Qwen/Qwen3-8B",
+      "reasoning_effort": null,
+      "enable_thinking": false,
+      "structured": "json",
+      "api_key_env": "SILICONFLOW_API_KEY_1",
+      "dedicated": false,
+      "request_char_budget": 30000
+    },
+    {
+      "name": "siliconflow2",
+      "enabled": true,
+      "url": "https://api.siliconflow.com",
+      "model": "Qwen/Qwen3-8B",
+      "reasoning_effort": null,
+      "enable_thinking": false,
+      "structured": "json",
+      "api_key_env": "SILICONFLOW_API_KEY_2",
+      "dedicated": false,
+      "request_char_budget": 30000
+    },
+    {
+      "name": "siliconflow3",
+      "enabled": true,
+      "url": "https://api.siliconflow.com",
+      "model": "Qwen/Qwen3-8B",
+      "reasoning_effort": null,
+      "enable_thinking": false,
+      "structured": "json",
+      "api_key_env": "SILICONFLOW_API_KEY_3",
+      "dedicated": false,
+      "request_char_budget": 30000
     }
   ]
 }

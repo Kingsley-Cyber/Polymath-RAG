@@ -74,6 +74,14 @@ class CloudEndpoint:
     # become impossible instead of survivable (39 groq 413s measured
     # in one 4-book ingest before this existed).
     request_char_budget: int = 60000
+    # THINKING-CONTROL-V1: some OpenAI-compat providers (e.g. SiliconFlow's Qwen3
+    # family) gate reasoning with a TOP-LEVEL `enable_thinking` toggle instead of
+    # `reasoning_effort`. A Qwen3 reasoning model left thinking-ON spends the whole
+    # `max_tokens` budget on reasoning tokens and returns EMPTY structured output
+    # (the same thinking-burn failure the OpenRouter/DeepSeek lanes hit). None omits
+    # the field (default, unchanged for every existing provider); false disables
+    # thinking for the structured-extraction path.
+    enable_thinking: bool | None = None
 
     @property
     def limiter_key(self) -> str:
@@ -88,7 +96,8 @@ class CloudEndpoint:
         # provider+model (STRICT-SCHEMA-V1; verified Groq qwen3.8-27b).
         return {"reasoning_effort": self.reasoning_effort,
                 "structured": self.structured,
-                "json_mode": self.structured in ("schema", "json")}
+                "json_mode": self.structured in ("schema", "json"),
+                "enable_thinking": self.enable_thinking}
 
 
 def _resolve_key(env_name: str) -> str | None:
@@ -162,7 +171,8 @@ def _configured_providers() -> list[CloudEndpoint]:
             json_mode=bool(e.get("json_mode", True)),
             structured=_structured_level(e),
             dedicated=bool(e.get("dedicated", False)),
-            request_char_budget=int(e.get("request_char_budget", 60000))))
+            request_char_budget=int(e.get("request_char_budget", 60000)),
+            enable_thinking=e.get("enable_thinking")))
     return out
 
 

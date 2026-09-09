@@ -1400,6 +1400,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("scripts/dualread_qualify.py", "py", None),
     ("scripts/profile_atom_canary.py", "py", None),
     ("scripts/production_routing_qualify.py", "py", None),
+    ("scripts/siliconflow_extraction_canary.py", "py", None),
     # shared
     ("shared/polymath_shared/acceptance_harness.py", "py", None),
     ("shared/polymath_shared/blob_spool.py", "py", None),

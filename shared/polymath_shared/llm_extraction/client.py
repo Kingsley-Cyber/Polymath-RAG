@@ -364,6 +364,12 @@ class LLMExtractionClient:
             # entirely (unsupported params can 400 on strict APIs).
             if self.cloud_opts.get("reasoning_effort") is not None:
                 payload["reasoning_effort"] = self.cloud_opts["reasoning_effort"]
+            # THINKING-CONTROL-V1: providers whose reasoning toggle is a TOP-LEVEL
+            # `enable_thinking` (SiliconFlow's Qwen3) rather than reasoning_effort —
+            # false stops a reasoning model from spending the whole max_tokens budget
+            # on thinking and returning empty structured output. None omits it.
+            if self.cloud_opts.get("enable_thinking") is not None:
+                payload["enable_thinking"] = self.cloud_opts["enable_thinking"]
             # STRICT-SCHEMA-V1: level-1 endpoints get the full packet
             # schema (live-verified per provider before config declares
             # "schema"); level-2 gets json_object; level-3 neither. The
