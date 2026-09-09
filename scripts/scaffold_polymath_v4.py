@@ -1935,6 +1935,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_mcp_server_v2.py", "py", None),
     ("tests/determinism/test_fleet_v3_limits.py", "py", None),
     ("tests/determinism/test_limiter_control_plane.py", "py", None),
+    ("tests/determinism/test_groq_account_isolation.py", "py", None),
     ("eval/v5/fleet/provider_equivalence.py", "py", None),
     ("eval/v5/fleet/PROVIDER-EQUIVALENCE-RESULTS.md", "md", None),
     ("eval/v5/fleet/provider_canary.py", "py", None),

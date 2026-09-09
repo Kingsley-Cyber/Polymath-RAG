@@ -265,7 +265,7 @@ providers:
     init: 1
   profile_groq1:       # DOCUMENT-PROFILE-V1 pool tier 0: dedicated Groq account 1, groq/compound (provider limits RPM 30 / RPD 250 / TPM 70k). The limiter is per PROCESS (threading locks): with six profile slots each row is ONE slot's budget on ITS key (lane offset) — rpm 2 / conc 1: measured 2026-09-07 with the rate-limit headers, ONE profile request through compound = 12 internal model calls (11 llama-4-scout router steps + 1 gpt-oss-120b answer), 38.5k internal tokens, 40 s, while the key's own TPM window is charged only ~3.7k and RPD 1 — the 429s come from the internal models' budgets, so ~1–2 compound requests per key per minute is the safe cadence (AIMD halves on 429/503).
     kind: rate
-    family: groq
+    family: groq_acct_1
     rpd: 230
     rpm: 2
     tpm: 60000
@@ -275,7 +275,7 @@ providers:
     init: 1
   profile_groq2:       # DOCUMENT-PROFILE-V1 pool tier 0: dedicated Groq account 2, groq/compound (provider limits RPM 30 / RPD 250 / TPM 70k)
     kind: rate
-    family: groq
+    family: groq_acct_2
     rpd: 230
     rpm: 2
     tpm: 60000
@@ -285,7 +285,7 @@ providers:
     init: 1
   profile_groq3:       # DOCUMENT-PROFILE-V1 pool tier 0: dedicated Groq account 3, groq/compound (provider limits RPM 30 / RPD 250 / TPM 70k)
     kind: rate
-    family: groq
+    family: groq_acct_3
     rpd: 230
     rpm: 2
     tpm: 60000
@@ -295,7 +295,7 @@ providers:
     init: 1
   profile_groq4:       # DOCUMENT-PROFILE-V1 pool tier 0: dedicated Groq account 4, groq/compound (provider limits RPM 30 / RPD 250 / TPM 70k)
     kind: rate
-    family: groq
+    family: groq_acct_4
     rpd: 230
     rpm: 2
     tpm: 60000
@@ -305,7 +305,7 @@ providers:
     init: 1
   profile_groq5:       # DOCUMENT-PROFILE-V1 pool tier 0: dedicated Groq account 5, groq/compound (provider limits RPM 30 / RPD 250 / TPM 70k)
     kind: rate
-    family: groq
+    family: groq_acct_5
     rpd: 230
     rpm: 2
     tpm: 60000
@@ -315,7 +315,7 @@ providers:
     init: 1
   profile_groq6:       # DOCUMENT-PROFILE-V1 pool tier 0: dedicated Groq account 6, groq/compound (provider limits RPM 30 / RPD 250 / TPM 70k)
     kind: rate
-    family: groq
+    family: groq_acct_6
     rpd: 230
     rpm: 2
     tpm: 60000
@@ -354,42 +354,42 @@ providers:
     init: 1
   map_groq1:       # PARENT-MAP compound-mini lane; SHARES account 1's budget (GROQ_API_KEY_1) with profile_groq1 via groq_accounts (S7a)
     kind: rate
-    family: groq
+    family: groq_acct_1
     rpd: 230
     rpm: 2
     tpm: 60000
     conc_cap: 1
   map_groq2:       # PARENT-MAP compound-mini lane; SHARES account 2's budget (GROQ_API_KEY_2) with profile_groq2 via groq_accounts (S7a)
     kind: rate
-    family: groq
+    family: groq_acct_2
     rpd: 230
     rpm: 2
     tpm: 60000
     conc_cap: 1
   map_groq3:       # PARENT-MAP compound-mini lane; SHARES account 3's budget (GROQ_API_KEY_3) with profile_groq3 via groq_accounts (S7a)
     kind: rate
-    family: groq
+    family: groq_acct_3
     rpd: 230
     rpm: 2
     tpm: 60000
     conc_cap: 1
   map_groq4:       # PARENT-MAP compound-mini lane; SHARES account 4's budget (GROQ_API_KEY_4) with profile_groq4 via groq_accounts (S7a)
     kind: rate
-    family: groq
+    family: groq_acct_4
     rpd: 230
     rpm: 2
     tpm: 60000
     conc_cap: 1
   map_groq5:       # PARENT-MAP compound-mini lane; SHARES account 5's budget (GROQ_API_KEY_5) with profile_groq5 via groq_accounts (S7a)
     kind: rate
-    family: groq
+    family: groq_acct_5
     rpd: 230
     rpm: 2
     tpm: 60000
     conc_cap: 1
   map_groq6:       # PARENT-MAP compound-mini lane; SHARES account 6's budget (GROQ_API_KEY_6) with profile_groq6 via groq_accounts (S7a)
     kind: rate
-    family: groq
+    family: groq_acct_6
     rpd: 230
     rpm: 2
     tpm: 60000
