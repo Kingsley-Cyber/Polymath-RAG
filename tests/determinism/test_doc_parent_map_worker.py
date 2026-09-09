@@ -96,6 +96,25 @@ def _active_count(tx):
                             (DOC,)).fetchone()[0]
 
 
+def test_60_parent_multibatch_persistence_and_idempotent_restart(tx):
+    """RAG-PIPELINE-FINISH Phase 16: a 60-parent doc under the compound-mini cap (15)
+    plans into FOUR batches and the durable worker persists all 60 across them; a second
+    run re-infers nothing (idempotent) and the active map set is unchanged."""
+    parents = [_parent(i, f"Section {i} on mechanism ZZ{i} in the adaptive control framework and its "
+                          f"downstream stability effects, identifier ID{i:04d}.") for i in range(60)]
+    out = run_document_mapping(tx, run_id="run-s9", doc_id=DOC, corpus_id=CORPUS,
+                               parents=parents, infer=_all_lines, reliability_cap=15)
+    assert out.eligible_parents == 60 and out.parents_mapped == 60 and not out.unresolved_parent_ids
+    assert out.complete and out.batches_total == 4 and out.batches_done == 4 and out.batches_partial == 0
+    assert _active_count(tx) == 60
+    # idempotent restart: nothing re-inferred, active set byte-identical
+    counting = _CountingInfer()
+    out2 = run_document_mapping(tx, run_id="run-s9", doc_id=DOC, corpus_id=CORPUS,
+                                parents=parents, infer=counting, reliability_cap=15)
+    assert out2.complete and out2.parents_newly_mapped == 0 and counting.seen == []
+    assert _active_count(tx) == 60
+
+
 def test_full_mapping(tx):
     out = run_document_mapping(tx, run_id="run-s9", doc_id=DOC, corpus_id=CORPUS,
                                parents=_parents(), infer=_all_lines)
