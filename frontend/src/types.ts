@@ -159,6 +159,24 @@ export interface DocumentRow {
   parents?: number;
   enriched?: number;
   enrich_failed?: number;
+  // RAG-PIPELINE-FINISH Phase 18: active parent maps (vNext pMAP coverage) for the row badge.
+  map_active?: number;
+}
+
+// CANONICAL-DOCUMENT-STATUS-V1 (GET /documents/{doc_id}/status) — the fields the Files
+// status panel renders. The endpoint returns more; this types the rendered subset.
+export interface DocumentStatus {
+  found: boolean;
+  vnext_ready?: boolean;
+  identity?: { doc_id: string; corpus_id: string; source_name: string; run_id?: string | null };
+  chunks?: { children_total: number; parents_total: number };
+  profile?: { present: boolean; valid: boolean; vnext: boolean; quality?: number | null;
+              prompt_version?: string | null; compiler_version?: string | null };
+  pmap?: { schema?: string | null; eligible?: number; mapped_active?: number; excluded?: number;
+           unresolved?: number; batches_total?: number; batches_done?: number; batches_partial?: number };
+  state?: { run_status?: string | null; vnext_ready?: boolean; corpus_vnext_verdict?: string };
+  stages?: { stage: string; status: string; attempt: number; last_error?: string | null }[];
+  blockers?: string[];
 }
 
 export interface RunRow {

@@ -4,6 +4,7 @@ import {
   enrichDocument,
   fetchCorpora,
   fetchDocuments,
+  fetchDocumentStatus,
   fetchReadiness,
   fetchSections,
   setQueryEnabled,
@@ -11,7 +12,7 @@ import {
   UploadError,
 } from "../api";
 import type { SectionRow } from "../api";
-import type { DocumentRow, RunRow } from "../types";
+import type { DocumentRow, DocumentStatus, RunRow } from "../types";
 
 const ACCEPTED_EXT = /\.(md|txt|html|pdf|epub|docx)$/i;
 
@@ -539,6 +540,7 @@ function DocRows({
 }) {
   const [open, setOpen] = useState(false);
   const [sections, setSections] = useState<SectionRow[] | null>(null);
+  const [status, setStatus] = useState<DocumentStatus | null>(null);
   const toggle = async () => {
     const next = !open;
     setOpen(next);
@@ -547,6 +549,13 @@ function DocRows({
         setSections((await fetchSections(d.doc_id)).sections);
       } catch {
         setSections([]);
+      }
+    }
+    if (next && status === null) {
+      try {
+        setStatus(await fetchDocumentStatus(d.doc_id));
+      } catch {
+        /* status panel is best-effort; sections still render */
       }
     }
   };
@@ -558,7 +567,8 @@ function DocRows({
             {open ? "▾" : "▸"}
           </button>
           {d.source_name}{" "}
-          <EnrichBadge d={d} />
+          <EnrichBadge d={d} />{" "}
+          <MapBadge d={d} />
         </td>
         <td className="mono">{d.media_type}</td>
         <td>{fmtBytes(d.bytes)}</td>
@@ -600,6 +610,7 @@ function DocRows({
       {open && (
         <tr>
           <td colSpan={6} style={{ padding: "0 0 8px 28px" }}>
+            <StatusPanel status={status} />
             {sections === null ? (
               <div className="phase-detail">loading sections…</div>
             ) : sections.length === 0 ? (
@@ -687,5 +698,56 @@ function EnrichCell({ d }: { d: DocumentRow }) {
     >
       ✨ {remaining}
     </button>
+  );
+}
+
+/** vNext pMAP coverage badge (RAG-PIPELINE-FINISH Phase 18): active parent maps vs
+ * sections. Green when every section carries a parent map; the full per-doc status
+ * (profile / unresolved / blockers) is in the expanded StatusPanel. */
+function MapBadge({ d }: { d: DocumentRow }) {
+  const maps = d.map_active ?? 0;
+  const parents = d.parents ?? 0;
+  if (parents === 0) return null;
+  const done = maps >= parents;
+  return (
+    <span className={`status-pill ${done ? "st-query_ready" : "st-reconciling"}`}
+          title={`${maps} of ${parents} sections have a vNext parent map (pMAP). Expand the row for full status.`}>
+      🗺 {maps}/{parents}
+    </span>
+  );
+}
+
+/** CANONICAL-DOCUMENT-STATUS-V1 panel (Phase 18): the document's vNext readiness,
+ * profile state, pMAP arithmetic, contract versions and ordered blockers. */
+function StatusPanel({ status }: { status: DocumentStatus | null }) {
+  if (status === null) return <div className="phase-detail">loading status…</div>;
+  if (!status.found) return <div className="phase-detail">no status</div>;
+  const p = status.profile ?? { present: false, valid: false, vnext: false };
+  const m = status.pmap ?? {};
+  const ready = status.vnext_ready;
+  const profileTxt = !p.present ? "missing"
+    : `${p.vnext ? "vNext✓" : "present"}${p.valid === false ? " (invalid)" : ""}`
+      + (typeof p.quality === "number" ? ` q${p.quality.toFixed(2)}` : "");
+  return (
+    <div className="phase-detail" style={{ marginBottom: 8 }}>
+      <span className={`status-pill ${ready ? "st-query_ready" : "st-reconciling"}`}>
+        {ready ? "vNext ready" : "vNext incomplete"}
+      </span>{" "}
+      <span title="LLM document profile">profile: {profileTxt}</span>{" · "}
+      <span title="parent maps (pMAP)">
+        pMAP: {m.mapped_active ?? 0}/{m.eligible ?? 0} mapped
+        {(m.excluded ?? 0) ? `, ${m.excluded} excluded` : ""}
+        {(m.unresolved ?? 0) ? `, ${m.unresolved} unresolved` : ""}
+        {(m.batches_total ?? 0) ? ` (${m.batches_done ?? 0}/${m.batches_total} batches)` : ""}
+      </span>
+      {status.blockers && status.blockers.length > 0 && (
+        <div style={{ marginTop: 4, opacity: 0.85 }}>blockers: {status.blockers.join(" · ")}</div>
+      )}
+      {p.present && p.prompt_version && (
+        <div style={{ marginTop: 2, opacity: 0.6, fontSize: 11 }}>
+          contract: profile {p.prompt_version}/{p.compiler_version}
+        </div>
+      )}
+    </div>
   );
 }

@@ -340,7 +340,13 @@ def documents(corpus_id: str) -> dict:
                      WHERE pe.doc_id = d.doc_id AND pe.status = 'INVALID'
                        AND NOT EXISTS (SELECT 1 FROM parent_enrichments pr
                                         WHERE pr.parent_id = pe.parent_id
-                                          AND pr.status = 'READY')) AS enrich_failed
+                                          AND pr.status = 'READY')) AS enrich_failed,
+                   -- RAG-PIPELINE-FINISH Phase 18: the vNext substrate row badge —
+                   -- active parent maps (pMAP coverage). Cheap indexed (doc_id) subquery,
+                   -- same shape as the enrichment counts. Full per-doc status (profile /
+                   -- unresolved / blockers) is GET /documents/{doc_id}/status.
+                   (SELECT COUNT(DISTINCT m.parent_id) FROM document_parent_maps m
+                     WHERE m.doc_id = d.doc_id AND m.active) AS map_active
               FROM documents d
              WHERE d.corpus_id = %s
              ORDER BY d.created_at DESC
@@ -371,13 +377,30 @@ def documents(corpus_id: str) -> dict:
              # UI-V3 enrichment indicator: parents vs READY vs
              # unrecovered INVALID — the doc ✨ button renders only
              # while remaining > 0
-             "parents": r[6], "enriched": r[7], "enrich_failed": r[8]}
+             "parents": r[6], "enriched": r[7], "enrich_failed": r[8],
+             "map_active": r[9]}
             for r in rows
         ],
         "runs": [{"run_id": r[0], "status": r[1], "created_at": str(r[2]),
                   "error": r[3]}
                  for r in runs],
     }
+
+
+@router.get("/documents/{doc_id}/status")
+def document_status_view(doc_id: str) -> dict:
+    """CANONICAL-DOCUMENT-STATUS-V1 (RAG-PIPELINE-FINISH Phase 18): the one authoritative
+    per-document aggregate for the Files/status UI — identity, chunks, profile
+    (present/valid/vnext/versions/counts), pMAP (eligible/mapped/excluded/unresolved/
+    batches), per-doc vnext_ready, stages (ticket/status/attempt/error), functional-pool
+    lane health, and the ordered blocker list. Read-only durable Postgres; no provider call."""
+    from polymath_shared.document_status import document_status
+    with tx() as conn:
+        st = document_status(conn, doc_id=doc_id)
+    if not st.get("found"):
+        raise HTTPException(404, {"error_code": "DOCUMENT_UNKNOWN",
+                                  "message": f"document {doc_id!r} not found"})
+    return st
 
 
 _UPLOAD_EXTENSIONS = {".md", ".txt", ".html", ".pdf", ".epub", ".docx"}
