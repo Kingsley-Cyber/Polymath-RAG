@@ -257,6 +257,10 @@ select, input, textarea { font: inherit; color: var(--text); }
 /* ---------------- files view ---------------- */
 .files { flex: 1; overflow-y: auto; padding: 22px; }
 .files-inner { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+/* scrollable full-height view container (Control Plane, Fleet detail) */
+.view-scroll { flex: 1; overflow-y: auto; padding: 22px; display: flex; flex-direction: column; gap: 16px; }
+.view-scroll > * { width: 100%; max-width: 1040px; margin: 0 auto; }
+.view-scroll .view-scroll { padding: 0; }
 .panel { background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
 .panel h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.7px; color: var(--text-dim); margin-bottom: 10px; }
 .dropzone {
@@ -306,6 +310,32 @@ select, input, textarea { font: inherit; color: var(--text); }
   background: color-mix(in srgb, var(--bad) 12%, transparent);
   padding: 2px 8px; border-radius: 6px;
 }
+
+/* control plane (operational-UI §3-8) */
+.cp-summary { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 8px; }
+.cp-metrics { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 8px; align-items: baseline; }
+.cp-provider {
+  margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);
+}
+.cp-metric { display: inline-flex; flex-direction: column; gap: 1px; }
+.cp-metric-value { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); line-height: 1.1; }
+.cp-metric-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim); }
+.cp-note { color: var(--text-dim); font-size: 11px; }
+.cp-spacer { flex: 1; }
+.cp-fn { color: var(--text-dim); font-size: 10.5px; letter-spacing: 0.5px; }
+.cp-pool-head { display: flex; align-items: center; gap: 10px; }
+.cp-actions { display: flex; gap: 8px; margin-top: 10px; }
+.cp-lanes { margin-top: 10px; }
+.cp-model { margin-top: 10px; }
+.cp-model-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 3px; }
+.cp-lane-table { font-size: 11.5px; }
+.cp-lane-table th { font-size: 10px; }
+.cp-predicates { margin-top: 10px; display: flex; flex-direction: column; gap: 4px; }
+.cp-pred-row { display: grid; grid-template-columns: 130px 1fr 44px; align-items: center; gap: 8px; }
+.cp-pred-name { font-size: 11px; }
+.cp-pred-bar { height: 9px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.cp-pred-bar > span { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+.cp-pred-count { text-align: right; font-variant-numeric: tabular-nums; font-size: 11.5px; color: var(--text-dim); }
 
 ::-webkit-scrollbar { width: 9px; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }

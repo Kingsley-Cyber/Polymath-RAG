@@ -1,4 +1,4 @@
-import type { ChatAnswer, Corpus, DocSummary, DocumentRow, DocumentStatus, Mode, Phase, ReasoningModeInfo, RunRow, Synthesizer } from "./types";
+import type { ChatAnswer, ControlPlane, Corpus, DocSummary, DocumentRow, DocumentStatus, Mode, Phase, PoolLanesDetail, PredicateRow, ReasoningModeInfo, RunRow, Synthesizer } from "./types";
 
 async function getJSON<T>(url: string): Promise<T> {
   const r = await fetch(url);
@@ -51,6 +51,20 @@ export const fetchDocumentsSummary = (corpus: string) =>
   getJSON<{ summaries: Record<string, DocSummary> }>(
     `/documents/summary?corpus_id=${encodeURIComponent(corpus)}`,
   ).then((d) => d.summaries);
+
+// CONTROL-PLANE-STATUS-V1 (operational-UI §3-8): the machinery-health authority.
+export const fetchControlPlane = (corpus: string) =>
+  getJSON<ControlPlane>(`/control_plane?corpus_id=${encodeURIComponent(corpus)}`);
+
+// Per-function model → account/key lanes (VIEW-ONLY, env NAME only, never a secret).
+export const fetchPoolLanes = (fn: string) =>
+  getJSON<PoolLanesDetail>(`/control_plane/pool/${encodeURIComponent(fn)}`);
+
+// GRAPH_EXTRACTION predicate distribution (bounded top-N, on demand).
+export const fetchPredicates = (corpus: string, limit = 12) =>
+  getJSON<{ corpus_id: string; predicates: PredicateRow[] }>(
+    `/control_plane/predicates?corpus_id=${encodeURIComponent(corpus)}&limit=${limit}`,
+  ).then((d) => d.predicates);
 
 export interface SectionRow {
   parent_id: string;

@@ -5,6 +5,7 @@ const BACKEND = "http://127.0.0.1:7200";
 const apiPaths = [
   "/chat", "/ask", "/retrieve", "/evidence", "/corpora", "/documents",
   "/upload", "/synthesizers", "/semantic_readiness", "/health", "/runs",
+  "/control_plane", "/fleet", "/reasoning_modes",
 ];
 
 export default defineConfig({

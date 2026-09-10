@@ -213,3 +213,72 @@ export interface RunRow {
   /** Latest stage failure note (e.g. a duplicate-document refusal). */
   error?: string | null;
 }
+
+// CONTROL-PLANE-STATUS-V1 (GET /control_plane): the machinery-health authority.
+// One shape covers both provider blocks (graph extraction + pMAP conservation);
+// each field is optional so a pool renders only the counters it actually has.
+export interface PoolProvider {
+  provider_requests?: number;
+  // GRAPH_EXTRACTION
+  neighborhoods_sent?: number;
+  neighborhoods_unaccounted?: number;
+  neighborhoods_dropped?: number;
+  entities?: number;
+  relations?: number;
+  // PMAP conservation — limiter_refused (LOCAL, 0 HTTP) is NEVER http_429 (provider).
+  limiter_refused?: number;
+  http_429?: number;
+  transport_errors?: number;
+  empty_completions?: number;
+  valid_maps_persisted?: number;
+  maps_per_request?: number;
+}
+
+export interface PoolLaneSummary {
+  active: number;
+  total: number;
+  credential_absent?: number;
+  disabled?: number;
+  active_lanes?: string[];
+}
+
+export interface PoolStatus {
+  lanes: PoolLaneSummary;
+  queued?: number;
+  processing?: number;
+  retry?: number;
+  failed?: number;
+  provider?: PoolProvider;
+  /** CHAT is a latency pool, not an ingestion queue. */
+  latency_pool?: boolean;
+}
+
+export interface ControlPlane {
+  contract: string;
+  corpus_id: string;
+  summary: { documents: number; semantic_ready: number; processing: number; blocked: number };
+  pools: Record<string, PoolStatus>;
+}
+
+// Per-function model → account/key lane detail (GET /control_plane/pool/{function}).
+// account_env is the env NAME only — the endpoint NEVER returns a secret value.
+export interface LaneDetail {
+  lane: string;
+  account_env: string;
+  configured: boolean;
+  reachability: string;
+  role: string;
+  family?: string;
+  capacity?: { rpm?: number; tpm?: number; rpd?: number; concurrency?: number; map_batch_cap?: number };
+  live?: { day_count?: number; effective?: number; ceiling?: number; decreases?: number; increases?: number };
+}
+
+export interface PoolLanesDetail {
+  function: string;
+  models: { model: string; lanes: LaneDetail[] }[];
+}
+
+export interface PredicateRow {
+  predicate: string;
+  count: number;
+}

@@ -4,7 +4,7 @@ import ChatView from "./components/ChatView";
 import CorporaView from "./components/CorporaView";
 import ModelsView from "./components/ModelsView";
 import FilesView from "./components/FilesView";
-import FleetView from "./components/FleetView";
+import ControlPlaneView from "./components/ControlPlaneView";
 import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
 import type { Chat, Corpus, Message, Mode, ReasoningModeInfo, Synthesizer } from "./types";
@@ -34,7 +34,7 @@ export default function App() {
   const [activeId, setActiveId] = useState<string | null>(
     () => loadChats()[0]?.id ?? null,
   );
-  const [view, setView] = useState<"chat" | "files" | "corpora" | "models" | "fleet">("chat");
+  const [view, setView] = useState<"chat" | "files" | "corpora" | "models" | "control">("chat");
   const [corpora, setCorpora] = useState<Corpus[]>([]);
   const [synths, setSynths] = useState<Synthesizer[]>([]);
   const [reasoningModes, setReasoningModes] = useState<ReasoningModeInfo[]>([]);
@@ -313,8 +313,8 @@ export default function App() {
               fetchSynthesizers().then(setSynths).catch(() => {});
             }}
           />
-        ) : view === "fleet" ? (
-          <FleetView />
+        ) : view === "control" ? (
+          <ControlPlaneView corpus={active?.corpus ?? ""} />
         ) : view === "corpora" ? (
           <CorporaView
             onChanged={() => {
