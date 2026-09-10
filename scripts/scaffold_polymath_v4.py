@@ -1934,6 +1934,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-09-operational-ui-files-drawer.md", "md", None),
     ("docs/wiki/work-log/2026-09-09-operational-ui-control-plane.md", "md", None),
     ("docs/wiki/work-log/2026-09-09-operational-ui-chat-intent.md", "md", None),
+    ("docs/wiki/work-log/2026-09-09-operational-ui-acceptance.md", "md", None),
     ("docs/wiki/experiments/routing-lanes-qualify-cinema-2026-09-08.json", "json", None),
     ("docs/wiki/experiments/d10-answer-quality-cinema-2026-09-08.json", "json", None),
     ("docs/wiki/work-log/2026-09-06-style-bold-retire.md", "md", None),

@@ -18,7 +18,46 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-08/README.md` + `DIRECTORY_MAP.md` (the NEWEST dated handoff snapshot — retrieval/routing/synthesis phase; supersedes `2026-09-07T1828/`, which still holds for the document-semantic-index substrate = this phase's P1)** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (rows 11.155–11.167) → `CLAUDE.md` → the two newest work-logs. The document-semantic-index START-HERE/plan below remain valid for the P1 substrate.
 
-## Latest checkpoint (2026-09-09 — RAG-PIPELINE-FINISH-V1: offline pipeline BUILT, gate GREEN)
+## Latest checkpoint (2026-09-09 — OPERATIONAL-UI-V1: control-plane visibility SHIPPED + proven live)
+
+**Branch `architecture/evidence-first-v5` (local commits `53c444a` backend → `1924b84` Files → `72d6261`
+Control Plane → `72b359a` Chat → the Slice-5 acceptance commit; unpushed).** Register **11.187**. A MINIMAL
+visual extension of the existing Polymath UI (no redesign, no navigation replaced) that surfaces the
+control-plane health the pipeline already computes. **Design law:** FILES = "is this document healthy?",
+CONTROL PLANE = "is the machinery healthy?", CHAT unchanged. **Read-only; no provider spend; no secret
+rendered; forensic hold intact.**
+
+**Backend (one authority the UI renders, never recomputes):** `document_status.py` — run resolution fixed to
+THIS document's own `chunked.v1` run; `detail=True` adds the diagnostic-drawer sections (graph extraction,
+projections, elapsed, pMAP efficiency); `corpus_document_summaries()` bounded N+1-free batch for the Files
+columns. `control_plane_status.py` (CONTROL-PLANE-STATUS-V1) — corpus summary + the four functional pools
+(GRAPH_EXTRACTION/DOCUMENT_PROFILE/PMAP/CHAT), `limiter_refused` (LOCAL, 0 HTTP) kept DISTINCT from HTTP 429,
+`pool_lanes_detail()` model→account lanes exposing the api-key env NAME only. Endpoints (read-only):
+`/documents/{id}/status`, `/documents/summary`, `/control_plane`, `/control_plane/pool/{fn}`,
+`/control_plane/predicates`.
+
+**Frontend (4 slices, all built green + browser-verified at :5173/ui → :7200):** Files health columns
+(File/Type/Size/Added/Parents/pMAP/Graph/Profile/Ready — an under-mapped doc renders RED; cinema 53/67 red) +
+the CANONICAL-DOCUMENT-STATUS-V1 diagnostic drawer; the "Fleet" rail slot repurposed into the **Control Plane**
+screen (summary + four pool cards + model/account-lane and predicate drill-downs; parent_enrichment shown as a
+legacy bridge, not a 5th pool); Chat left minimal — the settable selectors already existed (Query Type / Model /
+Reasoning, default `none` = low, no auto-escalate), and the compiler-DERIVED intent is surfaced READ-ONLY as a
+`⌖ intent` badge (no fake control, since there is no intent-override contract). **§13 acceptance: 16/16 PASS**
+against the live backend (see `2026-09-09-operational-ui-acceptance.md`). One consistency FIX found by the
+acceptance test: the detail graph block now returns `relations` (the Files column and the drawer had disagreed).
+
+**No API-key value is ever rendered** (env NAMES only — planted-sentinel test + live DOM scan). The three status
+suites (`test_document_status`, `test_control_plane_status`, `test_document_status_endpoint`) are 9/9 green; the
+full `tests/determinism` has 2 PRE-EXISTING failures UNRELATED to this change (a `you` pronoun fact in the
+**cinema** corpus from 2026-09-05, and a live `/chat/stream` synthesis variance test) — neither touches the
+status/UI surface. `repo_guard` + `wiki_worm` ok. Work-logs: `2026-09-09-operational-ui-*` (backend-counters,
+files-drawer, control-plane, chat-intent, acceptance).
+
+**Owner-gated remainders are UNCHANGED by this UI work** — production pMAP enable (spend), the Groq forensic
+probe + cinema reconciliation, the Phase B doc_profile DAG cutover. The dev vite server (:5173) was restarted to
+pick up new proxy paths; the orchestrator (:7200, supervised) was restarted to load the `relations` fix.
+
+## Prior checkpoint (2026-09-09 — RAG-PIPELINE-FINISH-V1: offline pipeline BUILT, gate GREEN)
 
 **Branch `architecture/evidence-first-v5` (fully pushed to origin at bootstrap; new commits `303e9e7…ce46001`
 LOCAL/unpushed).** Owner /goal (2026-09-09) adopted `RAG_PIPELINE_FINISH_PLAN.md` (from PR #2

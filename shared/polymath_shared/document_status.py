@@ -257,6 +257,9 @@ def document_status(conn, *, doc_id: str, detail: bool = False) -> dict[str, Any
             "neighborhoods_dropped": st.get("neighborhoods_dropped"),
             "neighborhoods_unaccounted": st.get("neighborhoods_unaccounted"),
             "entities": st.get("entities"), "entities_rejected": st.get("entities_rejected"),
+            # relations from the SAME extract-stats artifact the Files summary reads,
+            # so the drawer's relation count matches the row's Graph column (one authority).
+            "relations": st.get("relations"),
             "facts": facts_n, "distinct_predicates": preds_n,
             "calls": st.get("calls"), "calls_salvaged": st.get("calls_salvaged"),
             "calls_truncated": st.get("calls_truncated"),
