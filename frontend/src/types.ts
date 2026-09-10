@@ -87,6 +87,16 @@ export interface Retrieval {
   wildcard?: WildcardBridge[] | null;
   evidence_count: number;
   graph_fact_count?: number;
+  /** CHAT-QUERY-COMPILER receipt (read-only): the compiler-DERIVED query intent
+   * + plan. Displayed, never set — intent is classified by the backend from the
+   * question, not chosen in the UI. */
+  chat_plan?: {
+    intent?: string;
+    task_type?: string;
+    response_type?: string;
+    graph_useful?: boolean;
+    compiler?: string;
+  };
   chunks: ChunkRef[];
   counts?: Record<string, number>;
   /** Lanes that degraded rather than failing (e.g. parked reranker). */

@@ -84,6 +84,7 @@ function AnswerBody({ msg }: { msg: Message }) {
       <WildcardCards retrieval={r} />
       <div className="meta-row">
         <span className="badge badge-mode">{r.mode}</span>
+        <IntentChip retrieval={r} />
         <span
           className={`badge ${abstained ? "badge-abstained" : "badge-supported"}`}
         >
@@ -141,6 +142,26 @@ function WildcardCards({ retrieval }: { retrieval: Retrieval }) {
         </div>
       ))}
     </div>
+  );
+}
+
+/** READ-ONLY query intent — the CHAT-QUERY-COMPILER classifies it from the
+ * question (never a UI control; §9). Shows only when the compiler ran and
+ * returned an intent, so the badge is honest about when a plan was made. */
+function IntentChip({ retrieval }: { retrieval: Retrieval }) {
+  const plan = retrieval.chat_plan;
+  const intent = plan?.intent;
+  if (!intent) return null;
+  const bits = [
+    plan?.task_type ? `task ${plan.task_type}` : "",
+    plan?.response_type ? `response ${plan.response_type}` : "",
+    plan?.graph_useful ? "graph useful" : "",
+  ].filter(Boolean).join(" · ");
+  return (
+    <span className="badge badge-intent"
+      title={`Query intent, derived by the chat compiler from your question — read-only, not a control.${bits ? " " + bits + "." : ""}`}>
+      ⌖ {intent.toLowerCase().replace(/_/g, " ")}
+    </span>
   );
 }
 
@@ -413,6 +434,7 @@ function LlmBody({
       <DegradedNote retrieval={r} />
       <div className="meta-row">
         <span className="badge badge-mode">{r.mode}</span>
+        <IntentChip retrieval={r} />
         <span className="badge badge-generated">
           GENERATED · {a.result?.model ?? "llm"}
         </span>
