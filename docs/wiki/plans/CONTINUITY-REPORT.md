@@ -38,21 +38,23 @@ homogeneous docs). Nothing was enabled; no spend; baseline fleet untouched.
   retirement ledger) records U-1 as a landed migration measurement. `FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`
   remains the query-time authority. **No cutover authority was created for this slice** (see below).
 
-**MASTER PRODUCTION CUTOVER PLAN: NOT YET MATERIALIZED.** `PRODUCTION-RAG-MIGRATION-CUTOVER-V1.md` does NOT
-exist and must NOT be treated as authoritative until it is produced by a dedicated planning slice through
-exhaustive dependency closure. U-1 proves ONE migration uncertainty (intent routing is implemented, wired,
-reaches the live runtime, additive, non-regressive — final-evidence uplift still unproven); it is NOT the full
-production dependency archaeology.
+**MASTER PRODUCTION CUTOVER PLAN: MATERIALIZED 2026-09-09** (register 11.190) —
+`docs/wiki/plans/PRODUCTION-RAG-MIGRATION-CUTOVER-V1.md`, produced by the bidirectional archaeology against HEAD
+`bbe956d` (execution_authority: true; dependency_closure: PARTIAL with a named blocker per non-zero category).
+It holds the endpoint→engine map, the per-component disposition matrix (KEEP/MIGRATE READER/STOP WRITER/RETIRE/
+DELETE-LATER + FILE:SYMBOL + gate), the flag inventory, the dependency-ordered phases, and the closure gate.
 
-**NEXT PLANNING SLICE:** create `docs/wiki/plans/PRODUCTION-RAG-MIGRATION-CUTOVER-V1.md` through the bidirectional
-production archaeology (ENTRYPOINT→runtime→readers→state AND state/producers→every reader/consumer; plus
-`legacy_dependency_census`, semantic state/lane census, Graphify, direct FILE:SYMBOL verification, live
-feature-flag/env inventory, stage/worker/scheduler inventory, UI/API contract inventory, delete/purge/rebuild
-inventory). Its dependency-closure gate: unknown runtime readers / writers / producers / stage-minters / public
-query paths / readiness consumers / cleanup dependencies / feature flags each = 0, or a named blocker per
-non-zero category. Only once that master plan passes closure does it establish whether U-2 is truly the first
-migration EXECUTION phase (the archaeology may surface an earlier prerequisite; the previous handoff ordering
-does not override newly discovered production dependencies).
+**Archaeology headline (good news):** the final engine is ALREADY the default and legacy-state-free —
+`chat_retrieval_flag()` defaults `v2`, `/chat`+`/chat/stream` run `chat_retrieve_v2` for all modes, and the
+final modules read none of parent_enrichment/retrieval_summaries/parent_summaries/summary_jobs/document_summaries.
+`routing_*` lanes are FINAL (KEEP). Live legacy producers still re-minting: `auto_enrich_on_chunks`
+(scheduler.py:235) + the summary worker. `/retrieve`,`/ask`,evidence,MCP-retrieve = KEPT v1 lower-level
+contracts, not Chat bypasses.
+
+**MASTER BLOCKER:** every cutover step past phase 1 (readers use the final engine — DONE) is transitively gated
+on **U-2** — cinema forensic hold → coverage → S14 cutover → S16 reader-migration / S15+S17 producer-stop / D-14
+retirement; the `INTENT_POLICY` default flip needs U-1 uplift → also U-2. **No safe non-owner-gated
+retirement/producer/reader-migration step exists at HEAD.**
 
 **U-1 result (record this — do not collapse "activates" into "improves"):**
 
@@ -76,17 +78,16 @@ selection (`chat_retrieval.py:447`); the composer reserves relevance/diversity/s
 role-reserved seat (`candidate_engine.py:1131`) — the cross-encoder stays the sole selection authority. Whether
 that or the corpus is the limiter is exactly what the covered-corpus uplift proof must disambiguate.
 
-**NEXT SESSION FIRST ACTION — the MASTER PRODUCTION MIGRATION PLANNING slice (NOT U-2 execution).** Bootstrap
-and execute the bidirectional production archaeology against current HEAD (the method + closure gate above) and
-produce `PRODUCTION-RAG-MIGRATION-CUTOVER-V1.md` with its full appendices/matrices. **U-2 (Groq Parent-MAP
-forensic closure) is a KNOWN dependency but not confirmed to be the FIRST execution phase** — the archaeology
-may surface an earlier prerequisite; do not let the previous handoff ordering override newly discovered
-production dependencies. When U-2 does run: owner-authorized bounded probe (limiter-refusal vs HTTP dispatch,
+**NEXT SESSION FIRST ACTION — U-2 (the OWNER GATE the whole cutover now blocks on).** The master planning slice
+is DONE (cutover plan materialized, register 11.190); the archaeology confirmed U-2 IS the first execution
+prerequisite (no earlier one surfaced — the final engine is already the default legacy-free runtime). U-2 needs
+**owner spend authorization** for the bounded Groq Parent-MAP forensic probe (limiter-refusal vs HTTP dispatch,
 account/key isolation, RPD/day-count truth, Retry-After/provider headers, HTTP request accounting, retry waste,
-compiler/MAP yield, persisted-map reconciliation, lane-selection vs dispatch accounting) → bounded cinema canary
-→ owner-safe resumption → sufficient pMAP coverage → rerun the intent-routing UPLIFT proof → owner default
-decision. **Do NOT resume cinema pMAP backfill merely to obtain the U-1 uplift test.** The forensic hold
-(register 11.184/11.185) stands.
+compiler/MAP yield, persisted-map reconciliation, lane-selection vs dispatch accounting) + the 15/20/30/40/60
+MAP-batch benchmark → bounded canary → owner review → resumption → coverage → cutover phases 3–9 in
+`PRODUCTION-RAG-MIGRATION-CUTOVER-V1.md`. **Do NOT resume cinema pMAP backfill to obtain coverage.** The forensic
+hold (register 11.184/11.185) stands. The one owner decision that does NOT need U-2: whether to default-enable
+`POLYMATH_CHAT_SYNTH_ROLES` (P8b, qualified 11.179) — a live presentation change awaiting owner review.
 
 ## Prior checkpoint (2026-09-09T2039 — SESSION HANDOFF: operational-UI SHIPPED + chat-retrieval runtime AUDITED)
 

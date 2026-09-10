@@ -403,6 +403,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/plans/DOCUMENT-SEMANTIC-INDEX-V1-START-HERE.md", "md", None),
     ("docs/wiki/plans/GROQ-ROUTING-POLICY-V1.md", "md", None),
     ("docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md", "md", None),
+    ("docs/wiki/plans/PRODUCTION-RAG-MIGRATION-CUTOVER-V1.md", "md", None),
+    ("docs/wiki/work-log/2026-09-09-production-cutover-plan.md", "md", None),
     ("docs/wiki/experiments/u1-intent-routing-ab-2026-09-09/README.md", "md", None),
     ("docs/wiki/experiments/u1-intent-routing-ab-2026-09-09/proof-a-result.json", "json", None),
     ("docs/wiki/experiments/u1-intent-routing-ab-2026-09-09/proof-b-result.json", "json", None),
