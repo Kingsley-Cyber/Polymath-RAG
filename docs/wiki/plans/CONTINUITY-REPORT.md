@@ -16,12 +16,23 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-08/README.md` + `DIRECTORY_MAP.md` (the NEWEST dated handoff snapshot — retrieval/routing/synthesis phase; supersedes `2026-09-07T1828/`, which still holds for the document-semantic-index substrate = this phase's P1)** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (rows 11.155–11.167) → `CLAUDE.md` → the two newest work-logs. The document-semantic-index START-HERE/plan below remain valid for the P1 substrate.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.184–11.187) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-09 — OPERATIONAL-UI-V1: control-plane visibility SHIPPED + proven live)
+## Latest checkpoint (2026-09-09T2039 — SESSION HANDOFF: operational-UI SHIPPED + chat-retrieval runtime AUDITED)
 
-**Branch `architecture/evidence-first-v5` (local commits `53c444a` backend → `1924b84` Files → `72d6261`
-Control Plane → `72b359a` Chat → the Slice-5 acceptance commit; unpushed).** Register **11.187**. A MINIMAL
+**Repo truth: branch `architecture/evidence-first-v5` @ `dbfb91c` — 32 commits AHEAD of
+`origin/architecture/evidence-first-v5` (`1dc67c0`) and 37 ahead of `origin/main` (`1c61a6f`); LOCAL/unpushed;
+no PR for this branch. Worktree CLEAN. Guards: agent_preflight ok · repo_guard ok · wiki_worm ok ·
+bundle_integrity READY.** Dated snapshot: `docs/wiki/reports/2026-09-09T2039/`.
+
+**BLUF (three things this session):** (1) fresh-document pipeline COMPLETE + proven (register 11.186, 3/3
+canary); (2) OPERATIONAL-UI-V1 (register 11.187) control-plane visibility SHIPPED + 16/16 acceptance; (3) a
+VERIFIED finding — the planned INTENT×FIELD×TECHNIQUE×BUDGET chat routing is **built but flag-gated OFF at
+runtime** (`POLYMATH_CHAT_INTENT_POLICY` unset), so live chat runs baseline HYBRID.
+
+### (2) OPERATIONAL-UI-V1 — control-plane visibility (register 11.187, commits `53c444a`→`dbfb91c`)
+
+Register **11.187**. A MINIMAL
 visual extension of the existing Polymath UI (no redesign, no navigation replaced) that surfaces the
 control-plane health the pipeline already computes. **Design law:** FILES = "is this document healthy?",
 CONTROL PLANE = "is the machinery healthy?", CHAT unchanged. **Read-only; no provider spend; no secret
@@ -56,6 +67,51 @@ files-drawer, control-plane, chat-intent, acceptance).
 **Owner-gated remainders are UNCHANGED by this UI work** — production pMAP enable (spend), the Groq forensic
 probe + cinema reconciliation, the Phase B doc_profile DAG cutover. The dev vite server (:5173) was restarted to
 pick up new proxy paths; the orchestrator (:7200, supervised) was restarted to load the `relations` fix.
+
+### (3) CHAT-RETRIEVAL RUNTIME AUDIT — planned routing is built but OFF (no code changed)
+
+Verified against `FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1` (§4/§64). The compiler classifies the canonical intent
+(`/chat/stream` live: `intent=SYNTHESIS, graph_useful=True`), but the intent→field→technique→budget policy is
+gated by `intent_policy_enabled()` = `POLYMATH_CHAT_INTENT_POLICY` (default OFF,
+`orchestrator/orchestrator/api/chat_retrieval.py:141`), which is **unset in `.env`, scripts, `settings.py`, and
+the running process env.** Live receipt: `mode HYBRID · counts {} · additive-lane counts NONE · evidence_roles
+None` — intent classified, NOT routed. So chat = **baseline HYBRID** (dense+sparse+document-profile →
+cross-encoder → synthesis); Resolution Lift / micro-latent-by-intent / SEEALSO-BRIDGE / graph-assist / role
+bundle all inert. Endpoint split: `/chat`+`/chat/stream` = chat-retrieval-v2 (policy present-but-off);
+`/retrieve`+`/ask` = hybrid-retrieval-v1 (no policy). Work-log `2026-09-09-chat-retrieval-runtime-audit.md`.
+
+### Migration state (the four distinct truths — do NOT conflate)
+
+- **INDEXING COMPLETE** = TRUE for fresh docs (rag-canary 3/3); existing corpora (cinema) NOT backfilled (hold).
+- **RETRIEVAL MIGRATED** = FALSE (routing flag-off, above).
+- **PRODUCTION DEFAULT** = FALSE (pMAP auto-mint transient, scoped to rag-canary).
+- **LEGACY RETIRED** = FALSE (legacy summaries + parent_enrichment + hybrid-retrieval-v1 all still live).
+
+**Active forensic hold (UNCHANGED):** CINEMA pMAP backfill STOPPED (register 11.184/11.185). Do not resume on a
+quota reset; do not spend Groq quota to gather evidence. **Fleet runs with TRANSIENT flags**
+(`POLYMATH_DOC_PARENT_MAP_ENABLED=1` + `_CORPUS=rag-canary` + `POLYMATH_AUTOPILOT=1` in the supervisor env;
+clear on a normal restart). **Latest accepted canary:** rag-canary 3/3, 215.9s→169.3s→107.7s, each `probe_ok`,
+diagnostics `/tmp/polymath_canaries/2026-09-09/` (evidence predates this session; UI-only + docs changes since
+do NOT invalidate it).
+
+### NEXT SESSION — READ IN THIS ORDER
+
+1. `AGENTS.md`
+2. `docs/wiki/plans/CONTINUITY-REPORT.md` (this file)
+3. `docs/wiki/reports/2026-09-09T2039/START-HERE.md`
+4. `docs/wiki/reports/2026-09-09T2039/BE_AWARE.md`
+5. `docs/wiki/reports/2026-09-09T2039/UNFINISHED_WORK.md`
+6. `docs/wiki/reports/2026-09-09T2039/DEPENDENCY_MAP.md`
+7. `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (rows 11.184–11.187)
+8. `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration authority)
+9. `docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md` (query-time authority)
+10. the two newest work-logs (`2026-09-09-operational-ui-acceptance.md`, `2026-09-09-chat-retrieval-runtime-audit.md`)
+
+**NEXT SESSION FIRST ACTION:** run the read-only intent-routing A/B (UNFINISHED_WORK U-1) — start a throwaway
+orchestrator/probe with `POLYMATH_CHAT_INTENT_POLICY=1` and diff `/chat/stream` retrieval `counts`/`evidence_roles`
+against the default-off run on `rag-canary` (no running-default change, no provider spend); bring the owner the
+measured delta before proposing any default flip. (Everything past that — enabling routing by default, cinema
+backfill, legacy retirement — is owner-gated per DEPENDENCY_MAP.)
 
 ## Prior checkpoint (2026-09-09 — RAG-PIPELINE-FINISH-V1: offline pipeline BUILT, gate GREEN)
 
