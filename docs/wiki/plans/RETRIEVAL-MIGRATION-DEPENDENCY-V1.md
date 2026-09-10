@@ -69,6 +69,21 @@ sequence, step 5 back half):** finish the controlled backfill, then the retrieva
 integration — shadow → dual-read → compiler/title bridge → vNext-readiness/QUERY_READY →
 cutover — then, only after zero-reader proof + a rollback window, retirement.
 
+**U-1 intent-routing A/B — LANDED as a migration measurement (2026-09-09, register 11.189).** The intent policy
+(`POLYMATH_CHAT_INTENT_POLICY`, `INTENT × FIELD × TECHNIQUE × BUDGET`) was qualified read-only on `rag-canary`,
+no default changed, no provider spend, baseline fleet untouched: `IMPLEMENTATION PROVEN · LIVE WIRING PROVEN ·
+CANDIDATE CONTRIBUTION PROVEN · NON-REGRESSION PROVEN · FINAL-EVIDENCE UPLIFT NOT PROVEN · PRODUCTION DEFAULT
+OFF/GATED`. Proof A (retrieval primitive, `production_routing_qualify` method) + Proof B (full `/chat` runtime,
+scratch orchestrator differing by exactly the flag, deterministic synthesizer). Additive lanes (SHADOW_DUALREAD
+/ RESOLUTION_LIFT / SEEALSO_FANOUT / GRAPH_DEST / LATENT_RESCUE) activate per intent and enter the candidate
+union, but do NOT survive rerank into the final evidence with non-DIRECT roles on this homogeneous 10-doc probe
+corpus — final-evidence uplift is unproven and needs a richly-covered corpus (cinema, behind the U-2 forensic
+hold). Evidence `docs/wiki/experiments/u1-intent-routing-ab-2026-09-09/`; contract guard
+`tests/determinism/test_u1_intent_routing_contract.py`. **The master production cutover plan
+(`PRODUCTION-RAG-MIGRATION-CUTOVER-V1.md`) is NOT YET MATERIALIZED** — the next planning slice produces it via
+exhaustive bidirectional dependency closure, which (not the previous handoff ordering) decides whether U-2 is the
+first execution phase.
+
 | Migration slice (§30) | Capability | Repo build-slice | Status | Evidence / next gate |
 |---|---|---|---|---|
 | S0 | Freeze migration audit (this doc) | — | **LANDED** | this file; register 11.138 |

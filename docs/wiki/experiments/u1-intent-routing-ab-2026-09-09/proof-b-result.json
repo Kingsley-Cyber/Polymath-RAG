@@ -1,0 +1,159 @@
+{
+  "relationship": {
+    "OFF_baseline_7200": {
+      "executed_mode": "HYBRID",
+      "engine": "chat-retrieval-v2",
+      "evidence_count": 15,
+      "graph_fact_count": 0,
+      "additive_lane_sizes": {
+        "dualread": 0,
+        "resolution_lift": 0,
+        "seealso_fanout": 0,
+        "graph_dest": 0,
+        "latent_rescue": 0
+      },
+      "arrivals_lanes_seen": [
+        "GLOBAL_DENSE_CHILD",
+        "GLOBAL_SPARSE_CHILD",
+        "HIERARCHICAL_ROUTE"
+      ],
+      "funnel_counts": {
+        "retrieved": 57,
+        "union": 57,
+        "pre_rerank": 32,
+        "post_rerank": 32,
+        "selected": 15,
+        "cited": 0
+      },
+      "composition_slots": {
+        "relevance": 8,
+        "diversity": 4,
+        "sparse": 3,
+        "aspect": 0,
+        "fill": 0
+      },
+      "roles_in_final": "(no role field in receipt)",
+      "degraded": [],
+      "plan_task_type": "GROUNDED_QA",
+      "plan_resolved": "How is Method ZQX-59622 connected to kiln firing cycle baselines?"
+    },
+    "ON_scratch_7299": {
+      "executed_mode": "HYBRID",
+      "engine": "chat-retrieval-v2",
+      "evidence_count": 15,
+      "graph_fact_count": 7,
+      "additive_lane_sizes": {
+        "dualread": 16,
+        "resolution_lift": 6,
+        "seealso_fanout": 24,
+        "graph_dest": 8,
+        "latent_rescue": 4
+      },
+      "arrivals_lanes_seen": [
+        "GLOBAL_DENSE_CHILD",
+        "GLOBAL_SPARSE_CHILD",
+        "GRAPH_DEST",
+        "HIERARCHICAL_ROUTE",
+        "SEEALSO_FANOUT",
+        "SHADOW_DUALREAD"
+      ],
+      "funnel_counts": {
+        "retrieved": 63,
+        "union": 63,
+        "pre_rerank": 32,
+        "post_rerank": 32,
+        "selected": 15,
+        "cited": 0
+      },
+      "composition_slots": {
+        "relevance": 8,
+        "diversity": 4,
+        "sparse": 3,
+        "aspect": 0,
+        "fill": 0
+      },
+      "roles_in_final": "(no role field in receipt)",
+      "degraded": [],
+      "plan_task_type": "GROUNDED_QA",
+      "plan_resolved": "How is Method ZQX-59622 connected to kiln firing cycle baselines?"
+    }
+  },
+  "synthesis": {
+    "OFF_baseline_7200": {
+      "executed_mode": "HYBRID",
+      "engine": "chat-retrieval-v2",
+      "evidence_count": 15,
+      "graph_fact_count": 0,
+      "additive_lane_sizes": {
+        "dualread": 0,
+        "resolution_lift": 0,
+        "seealso_fanout": 0,
+        "graph_dest": 0,
+        "latent_rescue": 0
+      },
+      "arrivals_lanes_seen": [
+        "GLOBAL_DENSE_CHILD",
+        "GLOBAL_SPARSE_CHILD",
+        "HIERARCHICAL_ROUTE"
+      ],
+      "funnel_counts": {
+        "retrieved": 66,
+        "union": 66,
+        "pre_rerank": 32,
+        "post_rerank": 32,
+        "selected": 15,
+        "cited": 0
+      },
+      "composition_slots": {
+        "relevance": 8,
+        "diversity": 4,
+        "sparse": 0,
+        "aspect": 0,
+        "fill": 3
+      },
+      "roles_in_final": "(no role field in receipt)",
+      "degraded": [],
+      "plan_task_type": "GROUNDED_SYNTHESIS",
+      "plan_resolved": "What do the provided handbooks say overall about kiln firing baselines across di"
+    },
+    "ON_scratch_7299": {
+      "executed_mode": "HYBRID",
+      "engine": "chat-retrieval-v2",
+      "evidence_count": 15,
+      "graph_fact_count": 0,
+      "additive_lane_sizes": {
+        "dualread": 10,
+        "resolution_lift": 6,
+        "seealso_fanout": 0,
+        "graph_dest": 0,
+        "latent_rescue": 0
+      },
+      "arrivals_lanes_seen": [
+        "GLOBAL_DENSE_CHILD",
+        "GLOBAL_SPARSE_CHILD",
+        "HIERARCHICAL_ROUTE",
+        "RESOLUTION_LIFT",
+        "SHADOW_DUALREAD"
+      ],
+      "funnel_counts": {
+        "retrieved": 66,
+        "union": 66,
+        "pre_rerank": 32,
+        "post_rerank": 32,
+        "selected": 15,
+        "cited": 0
+      },
+      "composition_slots": {
+        "relevance": 8,
+        "diversity": 4,
+        "sparse": 0,
+        "aspect": 0,
+        "fill": 3
+      },
+      "roles_in_final": "(no role field in receipt)",
+      "degraded": [],
+      "plan_task_type": "GROUNDED_SYNTHESIS",
+      "plan_resolved": "What do the provided handbooks say overall about kiln firing baselines across di"
+    }
+  }
+}

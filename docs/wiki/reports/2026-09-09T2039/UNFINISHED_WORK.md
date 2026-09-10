@@ -10,6 +10,14 @@ Ranked. Every item: PRIORITY · PROBLEM · EVIDENCE · FILE:SYMBOL · DEPENDENCY
 No vague "finish migration" items.
 
 ## U-1 · Intent routing is built but OFF — decide/enable the vNext chat routing
+- **STATUS (2026-09-09): COMPLETE / QUALIFIED** (register 11.189). Read-only A/B on `rag-canary`, no default
+  changed, no provider spend, baseline fleet untouched: `IMPLEMENTATION PROVEN · LIVE WIRING PROVEN · CANDIDATE
+  CONTRIBUTION PROVEN · NON-REGRESSION PROVEN · FINAL-EVIDENCE UPLIFT NOT PROVEN · PRODUCTION DEFAULT OFF/GATED`.
+  Evidence `docs/wiki/experiments/u1-intent-routing-ab-2026-09-09/`; contract guard
+  `tests/determinism/test_u1_intent_routing_contract.py`. `POLYMATH_CHAT_INTENT_POLICY` stays OFF. Uplift needs a
+  richly-covered corpus (cinema, behind U-2). **Next slice = MASTER PRODUCTION MIGRATION PLANNING** (bidirectional
+  dependency archaeology → `PRODUCTION-RAG-MIGRATION-CUTOVER-V1.md`, NOT YET MATERIALIZED); that closure decides
+  whether U-2 is the first execution phase.
 - **PRIORITY:** P1 (this is the whole retrieval-migration lane).
 - **PROBLEM:** `INTENT × FIELD × TECHNIQUE × BUDGET` (the plan-of-record) is not active. Chat classifies intent
   then ignores it; no Resolution Lift, micro-latent-by-intent, SEEALSO/BRIDGE, graph auto-assist, or evidence

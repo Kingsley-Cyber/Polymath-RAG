@@ -18,7 +18,77 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.184–11.187) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-09T2039 — SESSION HANDOFF: operational-UI SHIPPED + chat-retrieval runtime AUDITED)
+## Latest checkpoint (2026-09-09 later — U-1 INTENT-ROUTING A/B: COMPLETE / QUALIFIED; production default GATED)
+
+**Repo truth: branch `architecture/evidence-first-v5`; worktree clean after this slice. Guards:
+`agent_preflight` ok (run with `.venv/bin/python` — system python3 lacks `tomllib`) · `repo_guard` ok ·
+`wiki_worm --check` ok.** Register **11.189**.
+
+**BLUF:** U-1 is closed as durable evidence. `POLYMATH_CHAT_INTENT_POLICY` intent routing is **PROVEN**
+mechanically (Proof A), **PROVEN** at the live `/chat/stream` runtime (Proof B), and **non-regressive** — but
+**final-evidence uplift is NOT proven on the only covered corpus available** (`rag-canary`, 10 synthetic
+homogeneous docs). Nothing was enabled; no spend; baseline fleet untouched.
+
+- **Evidence (frozen):** `docs/wiki/experiments/u1-intent-routing-ab-2026-09-09/` — `README.md` +
+  machine-readable `proof-a-result.json` / `proof-b-result.json` + the two harnesses.
+- **Contract test:** `tests/determinism/test_u1_intent_routing_contract.py` (23 green, provider-free) — pins
+  OFF-inert / ON-only-permitted-lanes / base-retrieval-preserved / additive-union / no-role-reserved-selection.
+  Encodes NO rag-canary ids or live counts (those live only in the experiment artifact).
+- **Living authorities updated with the U-1 result:** `RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/
+  retirement ledger) records U-1 as a landed migration measurement. `FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`
+  remains the query-time authority. **No cutover authority was created for this slice** (see below).
+
+**MASTER PRODUCTION CUTOVER PLAN: NOT YET MATERIALIZED.** `PRODUCTION-RAG-MIGRATION-CUTOVER-V1.md` does NOT
+exist and must NOT be treated as authoritative until it is produced by a dedicated planning slice through
+exhaustive dependency closure. U-1 proves ONE migration uncertainty (intent routing is implemented, wired,
+reaches the live runtime, additive, non-regressive — final-evidence uplift still unproven); it is NOT the full
+production dependency archaeology.
+
+**NEXT PLANNING SLICE:** create `docs/wiki/plans/PRODUCTION-RAG-MIGRATION-CUTOVER-V1.md` through the bidirectional
+production archaeology (ENTRYPOINT→runtime→readers→state AND state/producers→every reader/consumer; plus
+`legacy_dependency_census`, semantic state/lane census, Graphify, direct FILE:SYMBOL verification, live
+feature-flag/env inventory, stage/worker/scheduler inventory, UI/API contract inventory, delete/purge/rebuild
+inventory). Its dependency-closure gate: unknown runtime readers / writers / producers / stage-minters / public
+query paths / readiness consumers / cleanup dependencies / feature flags each = 0, or a named blocker per
+non-zero category. Only once that master plan passes closure does it establish whether U-2 is truly the first
+migration EXECUTION phase (the archaeology may surface an earlier prerequisite; the previous handoff ordering
+does not override newly discovered production dependencies).
+
+**U-1 result (record this — do not collapse "activates" into "improves"):**
+
+```
+IMPLEMENTATION             PROVEN
+LIVE WIRING                PROVEN
+CANDIDATE CONTRIBUTION     PROVEN
+NON-REGRESSION             PROVEN
+FINAL-EVIDENCE UPLIFT      NOT PROVEN
+PRODUCTION DEFAULT         OFF / GATED
+```
+
+```
+LIVE DEFAULT:          POLYMATH_CHAT_INTENT_POLICY = OFF
+PRODUCTION ENABLEMENT: GATED
+```
+
+**Architectural note (observed, NOT changed):** additive candidates enter the union but do not survive rerank
+into the final 15 with PRECISION/RELATIONAL/LATENT roles on rag-canary. `synthesis_role` is assigned AFTER
+selection (`chat_retrieval.py:447`); the composer reserves relevance/diversity/sparse/aspect/fill with no
+role-reserved seat (`candidate_engine.py:1131`) — the cross-encoder stays the sole selection authority. Whether
+that or the corpus is the limiter is exactly what the covered-corpus uplift proof must disambiguate.
+
+**NEXT SESSION FIRST ACTION — the MASTER PRODUCTION MIGRATION PLANNING slice (NOT U-2 execution).** Bootstrap
+and execute the bidirectional production archaeology against current HEAD (the method + closure gate above) and
+produce `PRODUCTION-RAG-MIGRATION-CUTOVER-V1.md` with its full appendices/matrices. **U-2 (Groq Parent-MAP
+forensic closure) is a KNOWN dependency but not confirmed to be the FIRST execution phase** — the archaeology
+may surface an earlier prerequisite; do not let the previous handoff ordering override newly discovered
+production dependencies. When U-2 does run: owner-authorized bounded probe (limiter-refusal vs HTTP dispatch,
+account/key isolation, RPD/day-count truth, Retry-After/provider headers, HTTP request accounting, retry waste,
+compiler/MAP yield, persisted-map reconciliation, lane-selection vs dispatch accounting) → bounded cinema canary
+→ owner-safe resumption → sufficient pMAP coverage → rerun the intent-routing UPLIFT proof → owner default
+decision. **Do NOT resume cinema pMAP backfill merely to obtain the U-1 uplift test.** The forensic hold
+(register 11.184/11.185) stands.
+
+## Prior checkpoint (2026-09-09T2039 — SESSION HANDOFF: operational-UI SHIPPED + chat-retrieval runtime AUDITED)
 
 **Repo truth: branch `architecture/evidence-first-v5` @ `dbfb91c` — 32 commits AHEAD of
 `origin/architecture/evidence-first-v5` (`1dc67c0`) and 37 ahead of `origin/main` (`1c61a6f`); LOCAL/unpushed;
