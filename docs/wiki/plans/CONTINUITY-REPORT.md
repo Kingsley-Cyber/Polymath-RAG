@@ -1025,14 +1025,17 @@ commit is the proven method).
 ## 6. Traps that cost real time (measured, all sessions)
 
 - **Provider-lane gotchas (2026-09-10, measured).**
-  - **Graph-extraction model criterion:** must emit COMPLETE structured output at a modest token budget,
-    NON-reasoning (no thinking-burn), fast, high RPD. **Qualifies: `gemini-3.1-flash-lite`, `gemini-3.5-flash-lite`**
-    (full JSON at max_tokens=512). **Does NOT qualify out-of-box: every full-flash / `-flash-preview`**
-    (`gemini-3-flash-preview`, `gemini-3.5/3.6/3.7/3.8-flash`) — they are REASONING models that burn the token
-    budget → truncated/empty at 512 tok, and the newest/preview ones 503 frequently. Using them for extraction
-    needs thinking disabled + a far larger max_tokens; the Gemini OpenAI-compat thinking-off param is finicky
-    (`thinking_budget:0` + `reasoning_effort` together → 400) — a tuning task, not plug-and-play.
-    `gemini-2.5-flash-lite` = 404 on our key.
+  - **Graph-extraction SCHEMA adherence (validated against the real `SYSTEM_PROMPT` + packet, not just "returns JSON").**
+    A conformant packet = entities `{surface, quote, type}` + relations with FROZEN-ONTOLOGY predicates
+    (ACTS_ON / LOCATED_IN / PRODUCES / …). **Confirmed adhering:** `gemini-3.1-flash-lite` (5 ents/4 rels, ~2–7s),
+    `gemini-3.5-flash-lite` (5/2, ~8s) — the EFFICIENT choice (fast, high RPD, non-reasoning). `gemini-3.5-flash`
+    ALSO adheres (5/4) **but at ~15s** (reasoning model — slower, lower RPD). **CRITICAL:** a small `max_tokens`
+    (e.g. 512) makes reasoning models return EMPTY (thinking eats the budget) — that is a false-negative, NOT a
+    schema failure; give extraction **≥2000 `max_tokens`**. `gemini-3.6-flash` / `gemini-3-flash-preview` are
+    503-prone (newest/preview) — couldn't confirm live; same architecture as 3.5-flash. `gemini-2.5-flash-lite` =
+    404 on our key. **Bottom line for graph lanes: use the lites (efficient); full-flash adheres but is slower +
+    the newest are unstable.** (Gemini OpenAI-compat thinking-off param is finicky: `thinking_budget:0` +
+    `reasoning_effort` together → 400.)
   - **Rate/concurrency model = per (model, key), NOT per key.** Each `(model,key)` is ONE limiter lane with its own
     RPM token-bucket + concurrency semaphore + daily RPD. Dispatch is CONCURRENT (sync httpx + ThreadPoolExecutor,
     bounded by `conc_cap`) — not asyncio, not single-sync. `limiter.yaml` seeds (rpm/conc/rpd) are conservative
