@@ -10,6 +10,7 @@ generation outside retrieval scoring and graph policy).
 """
 from __future__ import annotations
 
+import os
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Request
@@ -154,6 +155,17 @@ def single_corpus_or_422(scope, mode: str) -> str:
     return scope.corpus_ids[0]
 
 
+def retrieve_engine_flag(override: str | None = None) -> str:
+    """RETRIEVE-ENGINE-MIGRATION-V1: which retrieval core `/retrieve`'s single-corpus HYBRID mode
+    uses — `v2` (the final `chat_retrieve_mode` core, default) or `v1` (rollback = the legacy
+    `hybrid_fast_retrieve`). Reader migration only: the response CONTRACT is byte-shape-identical
+    (parity-proven — same top-level keys: evidence/meta/query/selected_documents/selected_sections/
+    trace). FAST (multi-corpus), GRAPH, WILDCARD and the legacy summaries path are UNAFFECTED — their
+    v1/final output shapes are not yet parity-proven, so they stay on v1 here."""
+    v = (override or os.environ.get("POLYMATH_RETRIEVE_ENGINE", "v2") or "v2").strip().lower()
+    return v if v in ("v1", "v2") else "v2"
+
+
 async def _retrieve_impl(req: RetrieveRequest) -> dict:
     query = req.query.strip()
     if not query:
@@ -189,9 +201,21 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
 
         return fast_retrieve(query, list(scope.corpus_ids))  # F8: multi-corpus
     if mode == MODE_HYBRID:
+        cid = single_corpus_or_422(scope, mode)
+        # RETRIEVE-ENGINE-MIGRATION-V1: single-corpus HYBRID rides the FINAL core by default
+        # (one retrieval core, many surfaces). Shape-identical to hybrid_fast_retrieve (parity-proven).
+        # `utility` keeps the v1 utility path; `latent` maps to the final latent lane via the budget.
+        if retrieve_engine_flag() == "v2" and not req.utility:
+            from dataclasses import replace as _replace
+            from orchestrator.api.chat_retrieval import chat_retrieve_mode, default_budget
+
+            _kw = {}
+            if req.latent:
+                _kw["budget"] = _replace(default_budget(), latent_enabled=True)
+            return chat_retrieve_mode("HYBRID", query, cid, **_kw)
         from orchestrator.api.hybrid import hybrid_fast_retrieve
 
-        return hybrid_fast_retrieve(query, single_corpus_or_422(scope, mode),
+        return hybrid_fast_retrieve(query, cid,
                                     latent=req.latent,
                                     utility=req.utility)
     if mode == MODE_GRAPH:

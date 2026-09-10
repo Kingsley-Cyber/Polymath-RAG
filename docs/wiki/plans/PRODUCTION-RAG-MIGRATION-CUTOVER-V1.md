@@ -162,9 +162,9 @@ coverage / U-2 gates the LATTER only. Steady-state target: **one retrieval core,
 | SURFACE | CURRENT ENGINE | FINAL ENGINE | MIGRATE BEFORE COVERAGE? | WHY / WHY NOT | API CONTRACT IMPACT | ROLLBACK |
 |---|---|---|---|---|---|---|
 | `/chat`, `/chat/stream` | FINAL `chat_retrieve_v2` (v2 default) | — | DONE | already migrated | none | `retrieval:v1` |
-| `/retrieve` HYBRID (single corpus) | v1 `hybrid_fast_retrieve` | `chat_retrieve_mode("HYBRID")` | **YES** | same dict shape (`chat_retrieval.py:16`); base lanes corpus-agnostic, additive off ⇒ coverage-free; U-1 non-regressive | shape preserved; evidence content = final ranking | `POLYMATH_RETRIEVE_ENGINE=v1` |
-| `/retrieve` GRAPH (single) | v1 `graph_retrieve` | `chat_retrieve_mode("GRAPH")` | **YES** | same | shape preserved | flag |
-| `/retrieve` WILDCARD (single) | v1 `wildcard_retrieve` | `chat_retrieve_mode("WILDCARD")` | **YES** | same | shape preserved | flag |
+| `/retrieve` HYBRID (single corpus) | v1 `hybrid_fast_retrieve` | `chat_retrieve_mode("HYBRID")` | **YES — MIGRATED 2026-09-10 (11.191)** | parity-proven identical keys on covered + legacy corpora; base lanes corpus-agnostic, additive off ⇒ coverage-free | shape preserved; content = final ranking (15 vs 10 rows) | `POLYMATH_RETRIEVE_ENGINE=v1` |
+| `/retrieve` GRAPH (single) | v1 `graph_retrieve` | `chat_retrieve_mode("GRAPH")` | **PENDING PARITY** | v1 `graph_retrieve` returns a NESTED documents/sections shape (evidence.py:80-92); `chat_retrieve_mode("GRAPH")` is FLAT — NOT shape-compatible; needs a parity proof or an adapter first | would change output shape | keep v1 |
+| `/retrieve` WILDCARD (single) | v1 `wildcard_retrieve` | `chat_retrieve_mode("WILDCARD")` | **PENDING PARITY** | shape not yet parity-proven | unverified | keep v1 |
 | `/retrieve` FAST (multi-corpus) | v1 `fast_retrieve` | — | **NO** | final core requires ONE corpus (`corpus_required`); FAST is multi-corpus (F8) | would break multi-corpus contract | keep v1 |
 | `/retrieve` default/LEGACY | inline `_fetch_*` + `retrieval_summaries` JOIN (`retrieve.py:344`) | — | **NO — DELETE STATE** | reads legacy `retrieval_summaries`; retiring it is coverage/cutover-gated | different contract (rows+summaries) | keep |
 | `/ask` | `_ask_impl` composite (corpus-map + concept/procedure/fact lanes) | — | **LATER** | a distinct grounded composition, not a v1 engine swap; by-role deterministic `grounded_answer` deferred (FINAL-… D-8b) | different composition | keep |
