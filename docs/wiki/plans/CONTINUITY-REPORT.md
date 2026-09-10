@@ -18,7 +18,37 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.184–11.187) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-09 later — U-1 INTENT-ROUTING A/B: COMPLETE / QUALIFIED; production default GATED)
+## Latest checkpoint (2026-09-10 — CUTOVER EXECUTION: reader migration + U-2 forensic probe)
+
+**Branch `architecture/evidence-first-v5`; worktree clean. Commits `5376f39` (MIGRATE-READER≠DELETE-STATE
+analysis), `6290fbc` (/retrieve HYBRID reader migration), + this U-2 probe slice — all LOCAL/UNPUSHED (origin at
+`d3b7fe5`; not pushed — U-7 owner-gated).** Guards green.
+
+**Two tracks advanced (owner /goal 2026-09-10):**
+
+1. **MIGRATE LEGACY READER ≠ DELETE LEGACY STATE (correction).** Reader migration onto the final core is
+   INDEPENDENT of cinema coverage/U-2 (final base lanes are standard projections, additive off ⇒ coverage-free).
+   **`/retrieve` HYBRID (single-corpus) MIGRATED** onto `chat_retrieve_mode` behind `POLYMATH_RETRIEVE_ENGINE`
+   (default v2, v1 rollback) — parity-proven shape-identical on covered + legacy corpora (11.191). MCP `retrieve`
+   (default HYBRID) inherits it. NOT migrated: FAST (multi-corpus; final core is single-corpus), GRAPH/WILDCARD
+   (v1 nested shape ≠ final flat — PENDING PARITY), the `retrieval_summaries` LEGACY path (DELETE STATE, gated),
+   `/ask` (distinct composite). `parent_enrichment` new-doc gating: mechanism spec'd (`POLYMATH_ENRICHMENT_AUTO_SINCE`,
+   mirrors the pMAP `_SINCE`), proven independent of the final engine + pMAP; NOT built/activated (legacy `latent/`
+   still reads enrichment). See `PRODUCTION-RAG-MIGRATION-CUTOVER-V1.md` §10/§11.
+
+2. **U-2 bounded Groq forensic probe DONE (11.192)** — cinema-free, 17 requests, `max_attempts=1`.
+   **Provider RPD is NOT exhausted** (all 6 accounts ~247/250 remaining; the "exhausted RPD" premise is
+   DISPROVEN); local↔provider RPD reconcile; historical `+0/0-errors` was a LOCAL `LIMITER_REFUSED` cascade
+   (11.185). Batch 15–60 yield 1.0 on SYNTHETIC parents (real-parent benchmark still pending before raising
+   `MAP_RELIABILITY_CAP`). Cinema-finish ≈ 716 req at cap-15 vs ~1,500 req/day ⇒ < 1 day. Evidence
+   `docs/wiki/experiments/u2-groq-map-forensic-probe-2026-09-10/`.
+
+**GATE NOW = OWNER REVIEW (not evidence).** Resuming cinema pMAP (bounded canary → full backfill) awaits the
+owner's review of the U-2 findings + estimate. **Do NOT resume on a quota reset.** `POLYMATH_CHAT_SYNTH_ROLES`
+stays OFF (owner said not yet). The intent-policy default flip still needs U-1 uplift on a covered corpus (⇒ after
+cinema coverage). Remaining audit item: a real-parent (non-cinema) batch benchmark.
+
+## Prior checkpoint (2026-09-09 later — U-1 INTENT-ROUTING A/B: COMPLETE / QUALIFIED; production default GATED)
 
 **Repo truth: branch `architecture/evidence-first-v5`; worktree clean after this slice. Guards:
 `agent_preflight` ok (run with `.venv/bin/python` — system python3 lacks `tomllib`) · `repo_guard` ok ·
