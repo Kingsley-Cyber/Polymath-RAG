@@ -1024,6 +1024,35 @@ commit is the proven method).
 
 ## 6. Traps that cost real time (measured, all sessions)
 
+- **Provider-lane gotchas (2026-09-10, measured).**
+  - **Graph-extraction model criterion:** must emit COMPLETE structured output at a modest token budget,
+    NON-reasoning (no thinking-burn), fast, high RPD. **Qualifies: `gemini-3.1-flash-lite`, `gemini-3.5-flash-lite`**
+    (full JSON at max_tokens=512). **Does NOT qualify out-of-box: every full-flash / `-flash-preview`**
+    (`gemini-3-flash-preview`, `gemini-3.5/3.6/3.7/3.8-flash`) — they are REASONING models that burn the token
+    budget → truncated/empty at 512 tok, and the newest/preview ones 503 frequently. Using them for extraction
+    needs thinking disabled + a far larger max_tokens; the Gemini OpenAI-compat thinking-off param is finicky
+    (`thinking_budget:0` + `reasoning_effort` together → 400) — a tuning task, not plug-and-play.
+    `gemini-2.5-flash-lite` = 404 on our key.
+  - **Rate/concurrency model = per (model, key), NOT per key.** Each `(model,key)` is ONE limiter lane with its own
+    RPM token-bucket + concurrency semaphore + daily RPD. Dispatch is CONCURRENT (sync httpx + ThreadPoolExecutor,
+    bounded by `conc_cap`) — not asyncio, not single-sync. `limiter.yaml` seeds (rpm/conc/rpd) are conservative
+    starting points; the limiter ADOPTS the provider's real limit from `x-ratelimit-*` headers (`use_headers`) via
+    AIMD. ⇒ N distinct models on one key = N independent quota buckets (the "double-quota" trick: `gemini1`=
+    3.1-flash-lite + `gemini1b`=3.5-flash-lite on KEY_1 ≈ 1000 RPD/key).
+  - **OpenCode is unusable by the raw extraction/compiler client** — Cloudflare 1010 (HTTP 403) blocks it; it works
+    ONLY via the synthesizer's litellm. Never pin it to an extraction/compiler stage.
+  - **Alibaba token-plan has TWO doors:** OpenAI-compatible = `https://token-plan.<region>.maas.aliyuncs.com/compatible-mode`
+    (client appends `/v1/chat/completions`; works with the raw client — qwen3.8-flash, deepseek-v4-flash-0731, glm-5.2);
+    `/apps/anthropic` is Anthropic-messages (litellm/synthesizer only). The STANDARD dashscope hosts
+    (`dashscope-intl.aliyuncs.com/compatible-mode`) **401** the token-plan key.
+  - **json_mode needs the word "json" in the prompt** — an OpenAI-compat endpoint with `json_mode`/
+    `response_format:json_object` returns **HTTP 400** if the prompt lacks "json" (bit a health-check that said
+    "reply one word"; the real compiler prompt asks for JSON, so production is fine).
+  - **No-key endpoints count as INACTIVE** (`PinnedProviderUnavailable` treats "no key" as dark) — a local no-auth
+    lane (Ollama) needs a dummy `api_key_env` (daemon ignores the value) or it never joins the roster.
+  - **Ollama:** only `gemma4:31b-cloud` is pulled (`gemma4:26b` / `gemma4:31b` = 404); OpenAI-compat door =
+    `http://127.0.0.1:11434` (client appends `/v1/chat/completions`), native API = `/api/chat`.
+
 - **Concurrent sessions share this repo.** A sibling session's
   `git add -A` swept in-progress work into its commit once. Commit
   narrowly and early; on "my changes vanished", read `git log --stat`
