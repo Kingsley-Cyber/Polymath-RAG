@@ -1037,7 +1037,12 @@ commit is the proven method).
     `gemini-3-flash-preview` = persistent 503 (preview, overloaded) — unconfirmable live (availability, not a
     schema issue). `gemini-2.5-flash-lite` = 404 on our key. **gemma4:31b-cloud (Ollama) ALSO CONFIRMED adhering**
     (6 ents/6 rels, `{surface,type,quote}` + ontology predicates, 3.7s) — it can do graph extraction too, not just
-    the compiler; **`gemma4:26b` is NOT available (404).** **Bottom line for graph lanes: use the lites
+    the compiler. **Google's API ALSO hosts Gemma on your GEMINI key** (`models.list` — filter includes them):
+    **`gemma-4-26b-a4b-it` CONFIRMED adhering** (5 ents/3 rels, ~6s; `a4b` = MoE, efficient) — so it's a 3rd
+    qualifying extraction model PER GEMINI KEY (gemini-3.1-flash-lite + gemini-3.5-flash-lite + gemma-4-26b-a4b-it
+    ≈ 3 independent RPD buckets/key ≈ the "3–4 qualify per key"). `gemma-4-31b-it` on Google is UNSTABLE
+    (timeout/500/503); use the Ollama `gemma4:31b-cloud` host for 31b instead. Ollama's `gemma4:26b` is NOT
+    available (404) — the 26b lives on the Google API (`gemma-4-26b-a4b-it`), not Ollama. **Bottom line for graph lanes: use the lites
     (efficient/reliable); full-flash + gemma4:31b adhere but are slower; the newest/preview Gemini flashes are
     503-unstable.** (Gemini OpenAI-compat thinking-off param is finicky: `thinking_budget:0` + `reasoning_effort`
     together → 400.)
