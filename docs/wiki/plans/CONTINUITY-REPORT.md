@@ -1032,10 +1032,15 @@ commit is the proven method).
     ALSO adheres (5/4) **but at ~15s** (reasoning model — slower, lower RPD). **CRITICAL:** a small `max_tokens`
     (e.g. 512) makes reasoning models return EMPTY (thinking eats the budget) — that is a false-negative, NOT a
     schema failure; give extraction **≥2000 `max_tokens`**. `gemini-3.6-flash` / `gemini-3-flash-preview` are
-    503-prone (newest/preview) — couldn't confirm live; same architecture as 3.5-flash. `gemini-2.5-flash-lite` =
-    404 on our key. **Bottom line for graph lanes: use the lites (efficient); full-flash adheres but is slower +
-    the newest are unstable.** (Gemini OpenAI-compat thinking-off param is finicky: `thinking_budget:0` +
-    `reasoning_effort` together → 400.)
+    `gemini-3.6-flash` ALSO CONFIRMED adhering (full 1708-char `polymath-extraction-v1` packet) but reasoning →
+    slower + it intermittently TRUNCATES/503s (its earlier "fails" were truncation/503, not schema failure).
+    `gemini-3-flash-preview` = persistent 503 (preview, overloaded) — unconfirmable live (availability, not a
+    schema issue). `gemini-2.5-flash-lite` = 404 on our key. **gemma4:31b-cloud (Ollama) ALSO CONFIRMED adhering**
+    (6 ents/6 rels, `{surface,type,quote}` + ontology predicates, 3.7s) — it can do graph extraction too, not just
+    the compiler; **`gemma4:26b` is NOT available (404).** **Bottom line for graph lanes: use the lites
+    (efficient/reliable); full-flash + gemma4:31b adhere but are slower; the newest/preview Gemini flashes are
+    503-unstable.** (Gemini OpenAI-compat thinking-off param is finicky: `thinking_budget:0` + `reasoning_effort`
+    together → 400.)
   - **Rate/concurrency model = per (model, key), NOT per key.** Each `(model,key)` is ONE limiter lane with its own
     RPM token-bucket + concurrency semaphore + daily RPD. Dispatch is CONCURRENT (sync httpx + ThreadPoolExecutor,
     bounded by `conc_cap`) — not asyncio, not single-sync. `limiter.yaml` seeds (rpm/conc/rpd) are conservative
