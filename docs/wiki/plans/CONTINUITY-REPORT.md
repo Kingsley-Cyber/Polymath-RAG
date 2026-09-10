@@ -18,11 +18,29 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.184–11.187) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-10 — CUTOVER EXECUTION: reader migration + U-2 forensic probe)
+## Latest checkpoint (2026-09-10 — CUTOVER EXECUTION: reader migration + U-2 probe + provider-lane reassignment + model gotchas)
 
-**Branch `architecture/evidence-first-v5`; worktree clean. Commits `5376f39` (MIGRATE-READER≠DELETE-STATE
-analysis), `6290fbc` (/retrieve HYBRID reader migration), + this U-2 probe slice — all LOCAL/UNPUSHED (origin at
-`d3b7fe5`; not pushed — U-7 owner-gated).** Guards green.
+**Branch `architecture/evidence-first-v5` @ `8282845`; worktree clean; guards green (`agent_preflight` ok ·
+`repo_guard` ok · `wiki` ok · `bundle_integrity` READY). 10 commits AHEAD of origin (`d3b7fe5`), ALL
+LOCAL/UNPUSHED (push owner-gated, U-7).** The 10 unpushed slices:
+`bbe956d` U-1 qualification (11.189) · `d50dd98` cutover plan materialized (11.190) · `5376f39`
+MIGRATE-READER≠DELETE-STATE analysis · `6290fbc` /retrieve HYBRID reader migration (11.191) · `3c36c4e` U-2
+forensic probe (11.192) · `5adb0f5` provider-lane reassignment (11.193) · `6fb5948`/`2888377`/`f7932cb`/`8282845`
+provider-model gotchas (CONTINUITY §6).
+
+**GAP ANALYSIS — live vs committed (Step 3b):**
+- **Fleet is running the OLD lane topology.** Orchestrator (pid at boot ~Sep 9 19:04) predates
+  `config/cloud_providers.json` (edited Sep 10) — so the `5adb0f5` reassignment (Google→graph, Groq 1-doc/5-pMAP,
+  Alibaba+Ollama compiler, OpenRouter fallbacks) is **committed but INERT until `scripts/boot_polymath.sh`.** The
+  13 live workers + `POLYMATH_RETRIEVE_ENGINE`/`INTENT_POLICY`/`SYNTH_ROLES` defaults reflect the pre-change state.
+- **Ledger coverage:** all 10 commits have register rows (11.189–11.193 + §6 gotcha edits) + work-logs; scaffold
+  TREE + scripts/README declared. No drift outstanding after this backfill.
+
+**Provider-model gotchas landed in §6 (2026-09-10):** graph-extraction SCHEMA qualifiers (validated vs the real
+`SYSTEM_PROMPT`/packet) = `gemini-3.1-flash-lite`, `gemini-3.5-flash-lite`, **`gemma-4-26b-a4b-it`** (Google API,
+3rd model/key), + slower `gemini-3.5/3.6-flash` & Ollama `gemma4:31b-cloud`; `gemini-3-flash-preview` unconfirmed
+(503). Rate model = per-(model,key), concurrent+header-adaptive. `give extraction ≥2000 max_tokens` or reasoning
+models false-empty. OpenCode = Cloudflare-blocked for the raw client. Alibaba OpenAI door = `.../compatible-mode`.
 
 **Two tracks advanced (owner /goal 2026-09-10):**
 
