@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import {
   enrichCorpus,
   enrichDocument,
   fetchCorpora,
   fetchDocuments,
+  fetchDocumentsSummary,
   fetchDocumentStatus,
   fetchReadiness,
   fetchSections,
@@ -12,7 +14,7 @@ import {
   UploadError,
 } from "../api";
 import type { SectionRow } from "../api";
-import type { DocumentRow, DocumentStatus, RunRow } from "../types";
+import type { DocSummary, DocumentRow, DocumentStatus, RunRow } from "../types";
 
 const ACCEPTED_EXT = /\.(md|txt|html|pdf|epub|docx)$/i;
 
@@ -143,6 +145,7 @@ export default function FilesView({
   onCorpusDeleted?: () => void;
 }) {
   const [docs, setDocs] = useState<DocumentRow[]>([]);
+  const [summaries, setSummaries] = useState<Record<string, DocSummary>>({});
   const [runs, setRuns] = useState<RunRow[]>([]);
   const [readiness, setReadiness] = useState<any>(null);
   const [queryEnabled, setQueryEnabledState] = useState<boolean | null>(null);
@@ -155,6 +158,9 @@ export default function FilesView({
       const d = await fetchDocuments(corpus);
       setDocs(d.documents);
       setRuns(d.runs);
+      // operational per-document columns (Parents / pMAP / Graph / Profile / Ready) —
+      // one bounded batch; best-effort so the base list never blocks on it.
+      fetchDocumentsSummary(corpus).then(setSummaries).catch(() => setSummaries({}));
       setReadiness(await fetchReadiness(corpus));
       const row = (await fetchCorpora(true)).find(
         (c) => c.corpus_id === corpus,
@@ -372,17 +378,21 @@ export default function FilesView({
           <table className="doc-table">
             <thead>
               <tr>
-                <th>Source</th>
+                <th>File</th>
                 <th>Type</th>
                 <th>Size</th>
-                <th>Chunks</th>
                 <th>Added</th>
+                <th title="Retrieval-eligible parent sections">Parents</th>
+                <th title="Parent maps active / eligible (vNext pMAP coverage)">pMAP</th>
+                <th title="Graph entities / relationships extracted">Graph</th>
+                <th title="Document profile (vNext)">Profile</th>
+                <th title="Per-document semantic (vNext) readiness">Ready</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               {docs.map((d) => (
-                <DocRows key={d.doc_id} d={d} corpus={corpus} refresh={refresh} />
+                <DocRows key={d.doc_id} d={d} s={summaries[d.doc_id]} corpus={corpus} refresh={refresh} />
               ))}
             </tbody>
           </table>
@@ -531,10 +541,12 @@ export default function FilesView({
  * summary-head titles (PRD §2 NULL fallback). */
 function DocRows({
   d,
+  s,
   corpus,
   refresh,
 }: {
   d: DocumentRow;
+  s?: DocSummary;
   corpus: string;
   refresh: () => void;
 }) {
@@ -566,14 +578,16 @@ function DocRows({
           <button className="chunk-chip" onClick={toggle} style={{ marginRight: 6 }}>
             {open ? "▾" : "▸"}
           </button>
-          {d.source_name}{" "}
-          <EnrichBadge d={d} />{" "}
-          <MapBadge d={d} />
+          {d.source_name}
         </td>
         <td className="mono">{d.media_type}</td>
         <td>{fmtBytes(d.bytes)}</td>
-        <td>{d.chunks}</td>
         <td className="mono">{d.created_at.slice(0, 19)}</td>
+        <td>{s?.parents ?? d.parents ?? "—"}</td>
+        <td><PmapCell s={s} /></td>
+        <td><GraphCell s={s} /></td>
+        <td><ProfileCell s={s} /></td>
+        <td><ReadyCell s={s} /></td>
         <td>
           <button
             className="chunk-chip"
@@ -609,7 +623,7 @@ function DocRows({
       </tr>
       {open && (
         <tr>
-          <td colSpan={6} style={{ padding: "0 0 8px 28px" }}>
+          <td colSpan={10} style={{ padding: "0 0 8px 28px" }}>
             <StatusPanel status={status} />
             {sections === null ? (
               <div className="phase-detail">loading sections…</div>
@@ -652,30 +666,6 @@ function DocRows({
 }
 
 
-/** Enrichment indicator: sections that carry latent retrieval surfaces.
- * Green = every section enriched; amber = partial (auto-enrich runs at
- * ingest; failures/edits leave a remainder); nothing = no sections yet. */
-function EnrichBadge({ d }: { d: DocumentRow }) {
-  const parents = d.parents ?? 0;
-  const enriched = d.enriched ?? 0;
-  if (parents === 0) return null;
-  if (enriched >= parents)
-    return (
-      <span className="status-pill st-query_ready"
-            title="All sections carry latent retrieval surfaces">
-        ✨ enriched
-      </span>
-    );
-  return (
-    <span className="status-pill st-reconciling"
-          title={`${enriched} of ${parents} sections enriched${
-            (d.enrich_failed ?? 0) > 0
-              ? ` · ${d.enrich_failed} failed (re-run below)` : ""}`}>
-      ✨ {enriched}/{parents}
-    </span>
-  );
-}
-
 /** The per-document enrich button renders ONLY while sections remain
  * un-enriched (ingest errors, transient provider failures, edits). */
 function EnrichCell({ d }: { d: DocumentRow }) {
@@ -701,53 +691,182 @@ function EnrichCell({ d }: { d: DocumentRow }) {
   );
 }
 
-/** vNext pMAP coverage badge (RAG-PIPELINE-FINISH Phase 18): active parent maps vs
- * sections. Green when every section carries a parent map; the full per-doc status
- * (profile / unresolved / blockers) is in the expanded StatusPanel. */
-function MapBadge({ d }: { d: DocumentRow }) {
-  const maps = d.map_active ?? 0;
-  const parents = d.parents ?? 0;
-  if (parents === 0) return null;
-  const done = maps >= parents;
+const EMPTY = <span style={{ opacity: 0.4 }}>—</span>;
+
+/** pMAP coverage: active / eligible. Green when every eligible parent is mapped,
+ * RED when unresolved > 0 (an under-mapped document must look unhealthy). */
+function PmapCell({ s }: { s?: DocSummary }) {
+  if (!s || s.map_eligible === 0) return s ? <span style={{ opacity: 0.5 }}>n/a</span> : EMPTY;
+  const done = s.map_active >= s.map_eligible;
   return (
-    <span className={`status-pill ${done ? "st-query_ready" : "st-reconciling"}`}
-          title={`${maps} of ${parents} sections have a vNext parent map (pMAP). Expand the row for full status.`}>
-      🗺 {maps}/{parents}
+    <span className={`status-pill ${done ? "st-query_ready" : s.map_unresolved > 0 ? "st-failed" : "st-reconciling"}`}
+          title={`${s.map_active} mapped / ${s.map_eligible} eligible`
+            + (s.map_excluded ? ` · ${s.map_excluded} excluded` : "")
+            + (s.map_unresolved ? ` · ${s.map_unresolved} unresolved` : "")}>
+      {s.map_active}/{s.map_eligible}
     </span>
   );
 }
 
-/** CANONICAL-DOCUMENT-STATUS-V1 panel (Phase 18): the document's vNext readiness,
- * profile state, pMAP arithmetic, contract versions and ordered blockers. */
+/** Graph: entities / relationships extracted. */
+function GraphCell({ s }: { s?: DocSummary }) {
+  if (!s || s.graph_entities === null) return EMPTY;
+  return (
+    <span className="mono" title="entities / relationships extracted (graph)">
+      {s.graph_entities}/{s.graph_relations ?? 0}
+    </span>
+  );
+}
+
+/** Document profile: ✓ vNext · ! present-not-vNext · … none. */
+function ProfileCell({ s }: { s?: DocSummary }) {
+  if (!s) return EMPTY;
+  if (s.profile_vnext)
+    return <span className="status-pill st-query_ready" title="vNext document profile present">✓</span>;
+  if (s.profile_present)
+    return <span className="status-pill st-reconciling" title="profile present, not vNext">!</span>;
+  return <span style={{ opacity: 0.5 }} title="no document profile yet">…</span>;
+}
+
+/** Per-document semantic (vNext) readiness — the backend authority, never inferred here. */
+function ReadyCell({ s }: { s?: DocSummary }) {
+  if (!s) return EMPTY;
+  return s.vnext_ready
+    ? <span className="status-pill st-query_ready" title="semantic (vNext) ready">✓</span>
+    : <span className="status-pill st-reconciling" title="not yet semantic-ready">…</span>;
+}
+
+/** One labelled metric inside a drawer section. */
+function Stat({ label, value, title, bad }: { label: string; value: ReactNode; title?: string; bad?: boolean }) {
+  return (
+    <span className="ddrawer-stat" title={title}>
+      <span className="ddrawer-stat-label">{label}</span>
+      <span className={`ddrawer-stat-value${bad ? " bad" : ""}`}>{value}</span>
+    </span>
+  );
+}
+
+/** One section (heading + a wrapped row of Stats) of the diagnostic drawer. */
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="ddrawer-section">
+      <div className="ddrawer-section-title">{title}</div>
+      <div className="ddrawer-stats">{children}</div>
+    </div>
+  );
+}
+
+/** CANONICAL-DOCUMENT-STATUS-V1 diagnostic drawer (operational-UI §2): the document's
+ * health rendered as DOCUMENT / GRAPH EXTRACTION / DOCUMENT PROFILE / PMAP / PROJECTIONS /
+ * READINESS. Every number is the backend authority (detail=True) — the frontend never
+ * recomputes readiness, and the exact ordered blockers come straight from the contract. */
 function StatusPanel({ status }: { status: DocumentStatus | null }) {
   if (status === null) return <div className="phase-detail">loading status…</div>;
   if (!status.found) return <div className="phase-detail">no status</div>;
+
+  const id = status.identity ?? { doc_id: "", corpus_id: "", source_name: "" };
   const p = status.profile ?? { present: false, valid: false, vnext: false };
   const m = status.pmap ?? {};
-  const ready = status.vnext_ready;
-  const profileTxt = !p.present ? "missing"
-    : `${p.vnext ? "vNext✓" : "present"}${p.valid === false ? " (invalid)" : ""}`
-      + (typeof p.quality === "number" ? ` q${p.quality.toFixed(2)}` : "");
+  const g = status.graph ?? null;
+  const proj = status.projections ?? null;
+  const ready = !!status.vnext_ready;
+  const yn = (v: boolean | null | undefined) =>
+    v === true ? <span className="ddrawer-ok">✓</span>
+      : v === false ? <span className="ddrawer-no">✕</span>
+        : <span style={{ opacity: 0.5 }}>—</span>;
+  const coverage = typeof m.coverage_pct === "number" ? `${Math.round(m.coverage_pct)}%` : "—";
+
   return (
-    <div className="phase-detail" style={{ marginBottom: 8 }}>
-      <span className={`status-pill ${ready ? "st-query_ready" : "st-reconciling"}`}>
-        {ready ? "vNext ready" : "vNext incomplete"}
-      </span>{" "}
-      <span title="LLM document profile">profile: {profileTxt}</span>{" · "}
-      <span title="parent maps (pMAP)">
-        pMAP: {m.mapped_active ?? 0}/{m.eligible ?? 0} mapped
-        {(m.excluded ?? 0) ? `, ${m.excluded} excluded` : ""}
-        {(m.unresolved ?? 0) ? `, ${m.unresolved} unresolved` : ""}
-        {(m.batches_total ?? 0) ? ` (${m.batches_done ?? 0}/${m.batches_total} batches)` : ""}
-      </span>
-      {status.blockers && status.blockers.length > 0 && (
-        <div style={{ marginTop: 4, opacity: 0.85 }}>blockers: {status.blockers.join(" · ")}</div>
-      )}
-      {p.present && p.prompt_version && (
-        <div style={{ marginTop: 2, opacity: 0.6, fontSize: 11 }}>
-          contract: profile {p.prompt_version}/{p.compiler_version}
-        </div>
-      )}
+    <div className="ddrawer">
+      <div className="ddrawer-head">
+        <span className={`status-pill ${ready ? "st-query_ready" : "st-reconciling"}`}>
+          {ready ? "SEMANTIC READY" : "NOT READY"}
+        </span>
+        {typeof status.elapsed_s === "number" && (
+          <span className="ddrawer-elapsed" title="wall-clock since this document's run started">
+            {status.elapsed_s < 90 ? `${status.elapsed_s.toFixed(0)}s`
+              : `${(status.elapsed_s / 60).toFixed(1)}m`} elapsed
+          </span>
+        )}
+      </div>
+
+      <Section title="DOCUMENT">
+        <Stat label="parents" value={status.chunks?.parents_total ?? "—"} title="retrieval-eligible parent sections" />
+        <Stat label="children" value={status.chunks?.children_total ?? "—"} title="leaf chunks" />
+        {typeof id.bytes === "number" && <Stat label="size" value={fmtBytes(id.bytes)} />}
+        {id.run_id && <Stat label="run" value={<span className="mono">{id.run_id.slice(0, 18)}…</span>}
+          title={`this document's own run: ${id.run_id}` + (status.state?.run_status ? ` (${status.state.run_status})` : "")} />}
+      </Section>
+
+      <Section title="GRAPH EXTRACTION">
+        {g ? (
+          <>
+            <Stat label="entities" value={g.entities ?? "—"} />
+            <Stat label="relations" value={g.relations ?? "—"} />
+            <Stat label="facts" value={g.facts ?? "—"} title="accepted facts evidenced by this document" />
+            <Stat label="predicates" value={g.distinct_predicates ?? "—"} title="distinct accepted predicates" />
+            <Stat label="neighborhoods" value={g.neighborhoods_total ?? "—"} title="neighborhoods sent to the extractor" />
+            {(g.neighborhoods_dropped ?? 0) > 0 &&
+              <Stat label="dropped" value={g.neighborhoods_dropped} bad title="neighborhoods dropped by the extractor" />}
+            {(g.neighborhoods_unaccounted ?? 0) > 0 &&
+              <Stat label="unaccounted" value={g.neighborhoods_unaccounted} bad
+                title="sent minus (returned + dropped) — should be 0" />}
+            {g.provider && <Stat label="provider" value={g.provider} />}
+          </>
+        ) : <span className="ddrawer-empty">no extraction artifact yet</span>}
+      </Section>
+
+      <Section title="DOCUMENT PROFILE">
+        <Stat label="state" bad={p.present && p.valid === false}
+          value={!p.present ? "missing" : p.vnext ? "vNext" : "legacy"} />
+        <Stat label="valid" value={yn(p.present ? p.valid : null)} />
+        {typeof p.quality === "number" && <Stat label="quality" value={p.quality.toFixed(2)} />}
+        {p.model && <Stat label="model" value={p.model} />}
+        {p.projected != null && <Stat label="projected" value={yn(p.projected)} title="profile embedded to its Qdrant collection" />}
+        {p.prompt_version && <Stat label="contract" value={<span className="mono">{p.prompt_version}/{p.compiler_version ?? "?"}</span>} />}
+      </Section>
+
+      <Section title="PMAP">
+        <Stat label="mapped" bad={(m.unresolved ?? 0) > 0}
+          value={`${m.mapped_active ?? 0}/${m.eligible ?? 0}`} title="active parent maps / eligible parents" />
+        {(m.excluded ?? 0) > 0 && <Stat label="excluded" value={m.excluded} title="parents excluded from mapping" />}
+        {(m.unresolved ?? 0) > 0 && <Stat label="unresolved" value={m.unresolved} bad title="eligible parents with no active map" />}
+        <Stat label="coverage" value={coverage} bad={(m.unresolved ?? 0) > 0} />
+        {(m.batches_total ?? 0) > 0 &&
+          <Stat label="batches" value={`${m.batches_done ?? 0}/${m.batches_total}`}
+            title={`${m.batches_partial ?? 0} partial`} />}
+        {(m.http_dispatches ?? 0) > 0 && <Stat label="requests" value={m.http_dispatches} title="HTTP requests to the provider" />}
+        {typeof m.maps_per_request === "number" &&
+          <Stat label="maps/req" value={m.maps_per_request.toFixed(1)}
+            title={`efficiency — valid maps per HTTP request. Model qualified batch ${m.qualified_batch ?? "?"}; architectural target ${m.architectural_target ?? 60}.`} />}
+        {m.model && <Stat label="model" value={m.model} />}
+        {(m.limiter_refusals ?? 0) > 0 &&
+          <Stat label="limiter refused" value={m.limiter_refusals}
+            title="LOCAL limiter refusals — zero provider HTTP, not a 429" />}
+        {(m.http_429 ?? 0) > 0 && <Stat label="HTTP 429" value={m.http_429} bad title="actual provider rate-limit responses" />}
+      </Section>
+
+      <Section title="PROJECTIONS">
+        {proj ? (
+          <>
+            <Stat label="children→qdrant" value={yn(proj.child_qdrant)} />
+            <Stat label="graph→neo4j" value={yn(proj.graph_neo4j)} />
+            <Stat label="profile→qdrant" value={yn(proj.profile_qdrant)} />
+            <Stat label="pMAP points" value={proj.pmap_qdrant_points ?? "—"} title="parent-map projection points in Qdrant" />
+          </>
+        ) : <span className="ddrawer-empty">no projection state</span>}
+      </Section>
+
+      <Section title="READINESS">
+        <Stat label="vNext ready" value={yn(ready)} />
+        {status.state?.corpus_vnext_verdict &&
+          <Stat label="corpus" value={status.state.corpus_vnext_verdict} title="corpus-level vNext verdict (context, not this document's gate)" />}
+        {status.blockers && status.blockers.length > 0 ? (
+          <span className="ddrawer-blockers" title="exact ordered blockers from the backend contract">
+            blocked: {status.blockers.join(" · ")}
+          </span>
+        ) : ready ? null : <span className="ddrawer-empty">no blocker reported</span>}
+      </Section>
     </div>
   );
 }

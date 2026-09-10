@@ -163,17 +163,44 @@ export interface DocumentRow {
   map_active?: number;
 }
 
-// CANONICAL-DOCUMENT-STATUS-V1 (GET /documents/{doc_id}/status) — the fields the Files
-// status panel renders. The endpoint returns more; this types the rendered subset.
+// Per-document OPERATIONAL summary for the Files list columns (GET /documents/summary).
+export interface DocSummary {
+  children: number;
+  parents: number;
+  map_eligible: number;
+  map_active: number;
+  map_excluded: number;
+  map_unresolved: number;
+  profile_present: boolean;
+  profile_vnext: boolean;
+  graph_entities: number | null;
+  graph_relations: number | null;
+  vnext_ready: boolean;
+}
+
+// CANONICAL-DOCUMENT-STATUS-V1 (GET /documents/{doc_id}/status, detail) — the diagnostic
+// drawer's fields. The endpoint returns more; this types the rendered subset.
 export interface DocumentStatus {
   found: boolean;
   vnext_ready?: boolean;
-  identity?: { doc_id: string; corpus_id: string; source_name: string; run_id?: string | null };
+  elapsed_s?: number | null;
+  identity?: { doc_id: string; corpus_id: string; source_name: string; bytes?: number | null; run_id?: string | null };
   chunks?: { children_total: number; parents_total: number };
   profile?: { present: boolean; valid: boolean; vnext: boolean; quality?: number | null;
+              projected?: boolean; model?: string | null;
               prompt_version?: string | null; compiler_version?: string | null };
   pmap?: { schema?: string | null; eligible?: number; mapped_active?: number; excluded?: number;
-           unresolved?: number; batches_total?: number; batches_done?: number; batches_partial?: number };
+           unresolved?: number; batches_total?: number; batches_done?: number; batches_partial?: number;
+           coverage_pct?: number | null; http_dispatches?: number; parents_mapped?: number;
+           limiter_refusals?: number; http_429?: number; maps_per_request?: number | null;
+           model?: string | null; qualified_batch?: number | null; architectural_target?: number;
+           projection_points?: number | null };
+  graph?: { neighborhoods_total?: number | null; neighborhoods_dropped?: number | null;
+            neighborhoods_unaccounted?: number | null; entities?: number | null;
+            entities_rejected?: number | null; facts?: number | null; distinct_predicates?: number | null;
+            relations?: number | null; provider?: string | null; pool?: string } | null;
+  projections?: { child_qdrant?: boolean; graph_neo4j?: boolean; pmap_qdrant_points?: number | null;
+                  profile_qdrant?: boolean | null } | null;
   state?: { run_status?: string | null; vnext_ready?: boolean; corpus_vnext_verdict?: string };
   stages?: { stage: string; status: string; attempt: number; last_error?: string | null }[];
   blockers?: string[];

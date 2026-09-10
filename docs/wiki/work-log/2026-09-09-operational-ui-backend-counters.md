@@ -5,12 +5,12 @@ date: 2026-09-09
 owner: orchestrator (read-only status endpoints) + governance (shared status authorities)
 last_reviewed: 2026-09-09
 status: complete (backend contract; frontend wiring follows)
-register: 11.199 (pending)
+register: 11.187
 package: shared/polymath_shared/document_status.py, shared/polymath_shared/control_plane_status.py, orchestrator/orchestrator/api/ui.py, tests/determinism/test_control_plane_status.py, tests/determinism/test_document_status.py, tests/determinism/test_document_status_endpoint.py
 architecture_impact: "One backend authority for document + control-plane health (§11 of the operational-UI brief). Extends CANONICAL-DOCUMENT-STATUS-V1 with the diagnostic-drawer sections (graph extraction, projections, elapsed, pMAP efficiency + model) and FIXES its run resolution to the DOCUMENT's own run (was the corpus's newest — wrong for multi-doc corpora). Adds a bounded, N+1-free per-corpus batch summary and CONTROL-PLANE-STATUS-V1 (functional-pool queue/lane/provider accounting, limiter_refused≠HTTP 429). Read-only Postgres + LANE-REGISTRY config; no provider call, no secret. Orchestrator reload-only (no worker fence)."
 ---
 
-> **Ledger:** operational-UI brief §11 (backend contract first) + register **11.199** (pending). No pipeline/architecture change.
+> **Ledger:** operational-UI brief §11 (backend contract first) + register **11.187**. No pipeline/architecture change.
 
 ## Contract
 

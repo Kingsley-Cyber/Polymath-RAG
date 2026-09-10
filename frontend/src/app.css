@@ -279,6 +279,34 @@ select, input, textarea { font: inherit; color: var(--text); }
 .readiness { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--text-dim); }
 .readiness b { color: var(--text); }
 
+/* document diagnostic drawer (operational-UI §2) */
+.ddrawer {
+  border: 1px solid var(--border); border-radius: 9px;
+  background: color-mix(in srgb, var(--border) 22%, transparent);
+  padding: 10px 12px; margin-bottom: 10px; font-size: 12px;
+}
+.ddrawer-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.ddrawer-elapsed { color: var(--text-dim); font-size: 11px; }
+.ddrawer-section { padding: 6px 0; border-top: 1px solid var(--border); }
+.ddrawer-section:first-of-type { border-top: none; }
+.ddrawer-section-title {
+  color: var(--text-dim); font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.7px; font-weight: 700; margin-bottom: 5px;
+}
+.ddrawer-stats { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; }
+.ddrawer-stat { display: inline-flex; gap: 5px; align-items: baseline; }
+.ddrawer-stat-label { color: var(--text-dim); font-size: 11px; }
+.ddrawer-stat-value { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.ddrawer-stat-value.bad { color: var(--bad); }
+.ddrawer-ok { color: var(--good); font-weight: 700; }
+.ddrawer-no { color: var(--bad); font-weight: 700; }
+.ddrawer-empty { color: var(--text-dim); font-style: italic; font-size: 11px; }
+.ddrawer-blockers {
+  color: var(--bad); font-size: 11.5px; font-weight: 600;
+  background: color-mix(in srgb, var(--bad) 12%, transparent);
+  padding: 2px 8px; border-radius: 6px;
+}
+
 ::-webkit-scrollbar { width: 9px; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

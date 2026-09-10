@@ -1,4 +1,4 @@
-import type { ChatAnswer, Corpus, DocumentRow, DocumentStatus, Mode, Phase, ReasoningModeInfo, RunRow, Synthesizer } from "./types";
+import type { ChatAnswer, Corpus, DocSummary, DocumentRow, DocumentStatus, Mode, Phase, ReasoningModeInfo, RunRow, Synthesizer } from "./types";
 
 async function getJSON<T>(url: string): Promise<T> {
   const r = await fetch(url);
@@ -45,6 +45,12 @@ export const fetchReadiness = (corpus: string) =>
 // CANONICAL-DOCUMENT-STATUS-V1 (Phase 18): the per-document vNext status panel.
 export const fetchDocumentStatus = (docId: string) =>
   getJSON<DocumentStatus>(`/documents/${encodeURIComponent(docId)}/status`);
+
+// Operational per-document summary for the Files list columns (bounded batch).
+export const fetchDocumentsSummary = (corpus: string) =>
+  getJSON<{ summaries: Record<string, DocSummary> }>(
+    `/documents/summary?corpus_id=${encodeURIComponent(corpus)}`,
+  ).then((d) => d.summaries);
 
 export interface SectionRow {
   parent_id: string;

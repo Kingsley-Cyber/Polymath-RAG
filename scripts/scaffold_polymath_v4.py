@@ -1371,8 +1371,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/v5/wipe_corpus_v5.py", "py", None),
     # frontend
     ("frontend/.gitignore", "gitignore", None),
-    ("frontend/dist/assets/index-BDrlm60s.js", "js", None),
-    ("frontend/dist/assets/index-ECN76Tar.css", "css", None),
+    ("frontend/dist/assets/index-fFvRpVKr.js", "js", None),
+    ("frontend/dist/assets/index-DP6HCqU5.css", "css", None),
     ("frontend/dist/index.html", "html", None),
     ("frontend/index.html", "html", None),
     ("frontend/package-lock.json", "json", None),
@@ -1930,6 +1930,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-09-rag-finish-phase18-files-status-ui.md", "md", None),
     ("docs/wiki/work-log/2026-09-09-rag-finish-phase17-reconciliation-dryrun.md", "md", None),
     ("docs/wiki/work-log/2026-09-09-operational-ui-backend-counters.md", "md", None),
+    ("docs/wiki/work-log/2026-09-09-operational-ui-files-drawer.md", "md", None),
     ("docs/wiki/experiments/routing-lanes-qualify-cinema-2026-09-08.json", "json", None),
     ("docs/wiki/experiments/d10-answer-quality-cinema-2026-09-08.json", "json", None),
     ("docs/wiki/work-log/2026-09-06-style-bold-retire.md", "md", None),
