@@ -396,11 +396,53 @@ def document_status_view(doc_id: str) -> dict:
     lane health, and the ordered blocker list. Read-only durable Postgres; no provider call."""
     from polymath_shared.document_status import document_status
     with tx() as conn:
-        st = document_status(conn, doc_id=doc_id)
+        st = document_status(conn, doc_id=doc_id, detail=True)
     if not st.get("found"):
         raise HTTPException(404, {"error_code": "DOCUMENT_UNKNOWN",
                                   "message": f"document {doc_id!r} not found"})
     return st
+
+
+@router.get("/control_plane")
+def control_plane(corpus_id: str) -> dict:
+    """CONTROL-PLANE-STATUS-V1: is the machinery processing documents healthy? Corpus
+    summary + per functional pool (GRAPH_EXTRACTION / DOCUMENT_PROFILE / PMAP / CHAT)
+    queue depth, lane health, and provider accounting (limiter_refused ≠ HTTP 429)."""
+    from polymath_shared.control_plane_status import control_plane_status
+    with tx() as conn:
+        return control_plane_status(conn, corpus_id=corpus_id)
+
+
+@router.get("/control_plane/pool/{function}")
+def control_plane_pool(function: str) -> dict:
+    """Model → account/key lanes for one functional pool (config + live limiter state,
+    NEVER a secret value)."""
+    from polymath_shared.control_plane_status import pool_lanes_detail
+    with tx() as conn:
+        return pool_lanes_detail(conn, function=function)
+
+
+@router.get("/control_plane/predicates")
+def control_plane_predicates(corpus_id: str, limit: int = 40) -> dict:
+    """Bounded predicate distribution for the GRAPH_EXTRACTION drill-down (top N; opened on
+    demand, not on every render). Catches an extraction/compiler collapse (few predicates)."""
+    limit = max(1, min(int(limit), 200))
+    with tx() as conn:
+        rows = conn.execute(
+            "SELECT f.predicate, COUNT(*) FROM facts f JOIN evidence ev ON ev.fact_id=f.fact_id "
+            "JOIN documents d ON d.doc_id=ev.doc_id WHERE d.corpus_id=%s AND f.decision='ACCEPT' "
+            "GROUP BY 1 ORDER BY 2 DESC LIMIT %s", (corpus_id, limit)).fetchall()
+    return {"corpus_id": corpus_id, "predicates": [{"predicate": p, "count": n} for p, n in rows]}
+
+
+@router.get("/documents/summary")
+def documents_summary(corpus_id: str) -> dict:
+    """Per-document OPERATIONAL summary for the Files list (Parents / pMAP / Graph /
+    Profile / Ready) — one bounded batch of corpus-level aggregates (no N+1). The frontend
+    merges this into the /documents rows by doc_id."""
+    from polymath_shared.document_status import corpus_document_summaries
+    with tx() as conn:
+        return {"corpus_id": corpus_id, "summaries": corpus_document_summaries(conn, corpus_id=corpus_id)}
 
 
 _UPLOAD_EXTENSIONS = {".md", ".txt", ".html", ".pdf", ".epub", ".docx"}

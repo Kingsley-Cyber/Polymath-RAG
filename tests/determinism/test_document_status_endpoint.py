@@ -28,7 +28,7 @@ def _fake_tx():
 
 def test_status_endpoint_returns_canonical(monkeypatch):
     monkeypatch.setattr(ui, "tx", _fake_tx)
-    monkeypatch.setattr(DS, "document_status", lambda conn, *, doc_id: {
+    monkeypatch.setattr(DS, "document_status", lambda conn, *, doc_id, detail=False: {
         "found": True, "vnext_ready": True, "identity": {"doc_id": doc_id},
         "pmap": {"mapped_active": 5, "eligible": 5, "unresolved": 0}, "blockers": []})
     out = ui.document_status_view("docX")
@@ -39,7 +39,7 @@ def test_status_endpoint_returns_canonical(monkeypatch):
 
 def test_status_endpoint_404s_on_unknown_doc(monkeypatch):
     monkeypatch.setattr(ui, "tx", _fake_tx)
-    monkeypatch.setattr(DS, "document_status", lambda conn, *, doc_id: {"found": False, "blockers": ["no_document"]})
+    monkeypatch.setattr(DS, "document_status", lambda conn, *, doc_id, detail=False: {"found": False, "blockers": ["no_document"]})
     with pytest.raises(HTTPException) as ei:
         ui.document_status_view("ghost")
     assert ei.value.status_code == 404

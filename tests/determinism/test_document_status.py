@@ -35,15 +35,19 @@ class _FakeConn:
         s = " ".join(sql.split())
         scn = self.scn
         if "FROM documents WHERE doc_id" in s:
-            return _Cur(one=("docA", "corpA", "a.txt", "text/plain"))
+            return _Cur(one=("docA", "corpA", "a.txt", "text/plain", 1234))
+        if "JOIN outbox_events e" in s and "chunked.v1" in s:
+            return _Cur(one=("runA", "query_ready", None))  # the doc's own run
         if "FROM runs WHERE corpus_id" in s:
-            return _Cur(all_=[("runA", "query_ready")])
+            return _Cur(one=("runA", "query_ready", None))  # fallback path
         if "tier='child'" in s:
             return _Cur(one=(8,))
         if "COUNT(*) FROM chunks WHERE doc_id=%s AND tier='parent'" in s and "region_role" not in s:
             return _Cur(one=(3,))
         if "FROM stage_tickets WHERE run_id" in s:
             return _Cur(all_=scn["stages"])
+        if "a.payload->'doc_parent_map' FROM artifacts" in s:
+            return _Cur(one=None)  # no pMAP stage artifact in the light-path fixtures
         if "a.payload->'doc_profile' FROM artifacts" in s:
             return _Cur(one=(scn["profile"],))
         if "to_regclass('public.document_parent_maps')" in s:
