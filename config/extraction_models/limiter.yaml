@@ -430,3 +430,43 @@ providers:
     max: 24
     adaptive: true
     use_headers: false
+  compiler_alibaba_qwen:   # CHAT-COMPILER pool: Alibaba token-plan compatible-mode qwen3.8-flash (shared token-plan account)
+    kind: rate
+    family: alibaba
+    rpm: 15
+    tpm: 500000
+    conc_cap: 2
+    min: 1
+    max: 2
+    init: 1
+    adaptive: true
+  compiler_alibaba_deepseek:   # CHAT-COMPILER pool: Alibaba token-plan deepseek-v4-flash-0731 (SHARES token-plan account via family alibaba)
+    kind: rate
+    family: alibaba
+    rpm: 15
+    tpm: 500000
+    conc_cap: 2
+    min: 1
+    max: 2
+    init: 1
+    adaptive: true
+  compiler_ollama_gemma:   # CHAT-COMPILER pool: local Ollama daemon gemma4:31b-cloud (OpenAI-compat, no-auth dummy key)
+    kind: rate
+    family: ollama
+    rpm: 30
+    tpm: 500000
+    conc_cap: 2
+    min: 1
+    max: 2
+    init: 1
+    adaptive: true
+  map_fallback_openrouter:   # PARENT-MAP fallback: OpenRouter mistral-small-2603 (OPENROUTER_API_KEY_3), MAP DSL, fires only on groq-lane failure
+    kind: rate
+    family: openrouter
+    rpm: 60
+    tpm: 500000
+    conc_cap: 2
+    min: 1
+    max: 2
+    init: 1
+    adaptive: true
