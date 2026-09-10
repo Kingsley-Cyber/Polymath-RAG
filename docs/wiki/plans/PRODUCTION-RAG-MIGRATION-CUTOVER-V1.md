@@ -122,9 +122,15 @@ FINAL ENGINE ✓ → all readers use it → final defaults → legacy readers=0 
 
 Every remaining cutover step past phase 1 is **transitively gated on U-2 (the Groq Parent-MAP forensic hold)**:
 legacy-reader migration (S16) needs the S14 cutover, which needs cinema coverage (S12), which is STOPPED under
-the forensic hold. Producer-stop (S15/S17) and retirement (D-14) need the zero-reader proof, which needs the same
+the forensic hold. Producer-stop (S15/S17) and **DELETE of legacy STATE** (D-14) need the zero-reader proof, which needs the same
 cutover. The `POLYMATH_CHAT_INTENT_POLICY` default flip needs U-1 uplift, which needs a covered corpus (again
-U-2). **There is no safe, non-owner-gated retirement/producer/reader-migration step available until U-2 clears.**
+U-2).
+
+**CORRECTION (owner, 2026-09-10): U-2 gates DELETE LEGACY STATE, not MIGRATE LEGACY READER.** Reader migration
+onto the final core is INDEPENDENT of cinema coverage — see §10. The final core's BASE lanes (routing hierarchy +
+dense/sparse child) are standard projections on any `query_ready` corpus and its additive lanes are flag-off, so
+it runs coverage-free. So the earlier "no non-gated reader-migration step" claim is WITHDRAWN: the single-corpus
+HYBRID/GRAPH/WILDCARD surfaces can migrate now (§10); only retiring the legacy state they leave behind waits on U-2.
 
 **Do NOT resume cinema pMAP backfill to obtain coverage.** U-2 = the owner-authorized bounded Groq forensic
 probe first (limiter-refusal vs HTTP dispatch, account/key isolation, RPD/day-count truth, Retry-After/provider
@@ -137,6 +143,57 @@ spend authorization.
 ## 9. This slice / next
 
 - **Done (SAFE, non-gated):** phases 0–1 — archaeology, endpoint→engine map, disposition matrix, closure gate,
-  and the confirmation that the final engine is already the default legacy-free production runtime.
-- **Next action (OWNER GATE):** U-2 bounded Groq forensic probe (spend authorization). Everything downstream is
-  blocked on it. No further non-owner-gated cutover work exists at HEAD `bbe956d`.
+  the confirmation that the final engine is already the default legacy-free production runtime, and (2026-09-10)
+  the MIGRATE-READER-vs-DELETE-STATE correction + per-surface migration analysis (§10) + the `parent_enrichment`
+  new-doc-gating determination (§11).
+- **In flight (SAFE, non-gated):** reader migration of the U-2-independent surfaces (§10) behind
+  `POLYMATH_RETRIEVE_ENGINE`; the `POLYMATH_ENRICHMENT_AUTO_SINCE` new-doc gate mechanism (§11), default-off.
+- **Owner gate (parallel):** U-2 bounded Groq forensic probe (spend authorized 2026-09-10) — required for cinema
+  resumption, coverage, intent-policy uplift, default-flip, historical cutover, and DELETE of legacy state; NOT a
+  blocker for reader migration or stale-UI cleanup.
+
+## 10. MIGRATE LEGACY READER vs DELETE LEGACY STATE — corrected dependency graph (2026-09-10)
+
+`MIGRATE LEGACY READER` (point a surface's reader at the already-qualified final core, preserving its public
+contract) is separate from `DELETE LEGACY STATE` (drop the summary/enrichment tables + producers). Cinema
+coverage / U-2 gates the LATTER only. Steady-state target: **one retrieval core, multiple presentation surfaces**
+— not permanent v1/v2 generations. Per runtime-reachable legacy surface:
+
+| SURFACE | CURRENT ENGINE | FINAL ENGINE | MIGRATE BEFORE COVERAGE? | WHY / WHY NOT | API CONTRACT IMPACT | ROLLBACK |
+|---|---|---|---|---|---|---|
+| `/chat`, `/chat/stream` | FINAL `chat_retrieve_v2` (v2 default) | — | DONE | already migrated | none | `retrieval:v1` |
+| `/retrieve` HYBRID (single corpus) | v1 `hybrid_fast_retrieve` | `chat_retrieve_mode("HYBRID")` | **YES** | same dict shape (`chat_retrieval.py:16`); base lanes corpus-agnostic, additive off ⇒ coverage-free; U-1 non-regressive | shape preserved; evidence content = final ranking | `POLYMATH_RETRIEVE_ENGINE=v1` |
+| `/retrieve` GRAPH (single) | v1 `graph_retrieve` | `chat_retrieve_mode("GRAPH")` | **YES** | same | shape preserved | flag |
+| `/retrieve` WILDCARD (single) | v1 `wildcard_retrieve` | `chat_retrieve_mode("WILDCARD")` | **YES** | same | shape preserved | flag |
+| `/retrieve` FAST (multi-corpus) | v1 `fast_retrieve` | — | **NO** | final core requires ONE corpus (`corpus_required`); FAST is multi-corpus (F8) | would break multi-corpus contract | keep v1 |
+| `/retrieve` default/LEGACY | inline `_fetch_*` + `retrieval_summaries` JOIN (`retrieve.py:344`) | — | **NO — DELETE STATE** | reads legacy `retrieval_summaries`; retiring it is coverage/cutover-gated | different contract (rows+summaries) | keep |
+| `/ask` | `_ask_impl` composite (corpus-map + concept/procedure/fact lanes) | — | **LATER** | a distinct grounded composition, not a v1 engine swap; by-role deterministic `grounded_answer` deferred (FINAL-… D-8b) | different composition | keep |
+| `evidence.py` HYBRID/GRAPH (single) | `hybrid_fast_retrieve`/`graph_retrieve` | `chat_retrieve_mode` | **YES** | shape-compat, single-corpus | shape preserved | flag |
+| `evidence.py` FAST (multi) | `fast_retrieve` | — | **NO** | multi-corpus | break | keep v1 |
+| MCP `retrieve` → `/retrieve` | inherits `/retrieve` | inherits | **via `/retrieve`** | follows `/retrieve` per mode | inherited | flag |
+| `/chat` `retrieval:v1` | v1 (explicit) | — | **KEEP** | this IS the rollback boundary | — | — |
+| `/chat` `utility:true` | v1 utility | — | **LATER** | utility folds into final later | — | keep |
+
+**Execution:** the YES rows migrate now behind `POLYMATH_RETRIEVE_ENGINE` (`v1`|`v2`) with v1 rollback; FAST
+(multi-corpus) + the `retrieval_summaries` LEGACY path + `/ask` are KEEP/LATER. The default-flip to `v2` is
+justified by a read-only `/retrieve` parity A/B (v1 vs final on a covered + a legacy corpus), mirroring U-1.
+
+## 11. `parent_enrichment` — new-document gating determination (2026-09-10)
+
+Goal distinction: *historical legacy state retained for rollback* ≠ *new documents keep minting legacy
+enrichment*. `auto_enrich_on_chunks` (`scheduler.py:235`) currently mints `parent_enrichment` for every new run.
+
+- **Mechanism (proven pattern):** add `POLYMATH_ENRICHMENT_AUTO_SINCE` (a created-after boundary) to
+  `auto_enrich_on_chunks`, mirroring `doc_parent_map_since()` (`map_trigger.py:34`, the pMAP `_SINCE` guard,
+  commit `0a42f10`). Runs created after the boundary skip the auto-mint; every pre-boundary run keeps its
+  enrichment + readers for rollback. Default UNSET = byte-identical (no behavior change).
+- **Safety — proven independent:** the final retrieval engine does not read `parent_enrichment`; **pMAP (the
+  final parent localization) is independent of it** — `map_trigger.mint_doc_parent_map` only *mirrors* the
+  enrichment mint pattern (comment), it does not read enrichment state, so a new vNext doc gets pMAP without
+  enrichment.
+- **Safety — remaining dependency (why NOT disabled yet):** the legacy `latent/` path (`latent/{trigger,runtime,
+  projection}.py`) and `fleet_autopilot` still read `parent_enrichment`. Gating new docs off enrichment would
+  drop legacy ✨-latent for those docs. That is acceptable ONLY once legacy latent is confirmed retired/migrated
+  (final `latent_rescue` in `candidate_engine` is separate) — so the `_SINCE` mechanism ships **default-off** and
+  is activated only after the latent-path disposition. **Do not set the boundary until then.**
+
