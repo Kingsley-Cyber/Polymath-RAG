@@ -4,8 +4,8 @@
  * backend number.
  */
 import type {
-  ControlPlane, Corpus, DocSummary, PoolLanes, ReasoningMode,
-  RetrieveResponse, SemanticReadiness, Synthesizer,
+  CompareResponse, ControlPlane, Corpus, DocSummary, GraphEntities, GraphRelationships,
+  PoolLanes, ReasoningMode, RetrieveResponse, ReviewResponse, SemanticReadiness, Synthesizer,
 } from "./contracts";
 
 export class ApiError extends Error {
@@ -55,6 +55,18 @@ export const api = {
     get<Record<string, unknown>>(
       `/control_plane/predicates?corpus_id=${encodeURIComponent(corpusId)}&limit=${limit}`, s),
   capabilities: (s?: AbortSignal) => get<Record<string, unknown>>("/capabilities", s),
+  graphEntities: (corpusId: string, q: string, limit: number, s?: AbortSignal) =>
+    get<GraphEntities>(
+      `/graph/entities?corpus_id=${encodeURIComponent(corpusId)}&q=${encodeURIComponent(q)}&limit=${limit}`, s),
+  graphRelationships: (entityId: string, corpusId: string, limit: number, s?: AbortSignal) =>
+    get<GraphRelationships>(
+      `/graph/entity/${encodeURIComponent(entityId)}/relationships?corpus_id=${encodeURIComponent(corpusId)}&limit=${limit}`, s),
+  compare: (body: { message: string; corpus_id: string; modes: string[] }, s?: AbortSignal) =>
+    post<CompareResponse>("/compare", body, s),
+  review: (body: {
+    question: string; answer: string; citations: string[];
+    evidence: unknown[]; retrieval_meta: Record<string, unknown>; reviewer?: string;
+  }, s?: AbortSignal) => post<ReviewResponse>("/review", body, s),
 };
 
 /* ── SSE ──────────────────────────────────────────────────────────────────── */

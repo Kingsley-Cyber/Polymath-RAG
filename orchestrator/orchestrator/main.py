@@ -103,7 +103,11 @@ app.include_router(chat_router)
 app.include_router(ask_router)
 app.include_router(queries_router)
 app.include_router(ui_router)
+from orchestrator.api.graph_browse import router as graph_browse_router
+from orchestrator.api.compare_review import router as compare_review_router
 app.include_router(fleet_router)
+app.include_router(graph_browse_router)
+app.include_router(compare_review_router)
 
 # Serve the built web UI at /ui when a build exists (single-port product).
 from pathlib import Path  # noqa: E402

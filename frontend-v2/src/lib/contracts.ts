@@ -147,3 +147,56 @@ export interface RetrieveResponse {
   selected_sections: unknown[];
   trace: Record<string, unknown>;
 }
+
+/* ── graph (GRAPH-BROWSE-V1) ──────────────────────────────────────────────── */
+
+export interface GraphEntity {
+  normalized_surface: string; surface: string; core_type: string | null;
+  mentions: number; documents: number; entity_id: string;
+}
+export interface GraphEntities {
+  contract: string; corpus_id: string; query: string; entities: GraphEntity[];
+}
+export interface GraphSource {
+  doc_id: string; chunk_id: string; source_name: string | null; text: string;
+}
+export interface GraphRelationship {
+  fact_id: string; predicate: string;
+  subject_id: string; subject: string; object_id: string; object: string;
+  direction: "in" | "out";
+  /** Source attestation — the reason this relationship may be shown at all. */
+  sources: GraphSource[]; source_count: number;
+}
+export interface GraphRelationships {
+  contract: string; corpus_id: string; entity_id: string;
+  relationships: GraphRelationship[];
+  /** Relationships withheld because nothing in THIS corpus attests them. */
+  dropped_unattested: number;
+}
+
+/* ── compare + review (COMPARE-REVIEW-V1) ────────────────────────────────── */
+
+export interface CompareArm {
+  mode: string; ok: boolean; latency_ms: number; error?: string;
+  retrieval?: {
+    engine?: string; plan_version?: string; degraded?: string[] | null;
+    evidence_count?: number; selected_documents?: number; selected_sections?: number;
+    lane_sizes?: Record<string, number> | null; funnel_lanes?: Record<string, number> | null;
+    union_size?: number; latency_ms?: number;
+    documents?: string[];
+    rows?: { chunk_id?: string; doc_id?: string; source_name?: string; score?: number; arrival?: string }[];
+  };
+}
+export interface CompareResponse {
+  contract: string; corpus_id: string; question: string; arms: CompareArm[];
+}
+
+export interface ReviewScores {
+  grounding?: number; correctness?: number; completeness?: number;
+  citation_support?: number; retrieval_adequacy?: number;
+  unsupported_claims?: string[]; missing_evidence?: string[]; verdict?: string;
+}
+export interface ReviewResponse {
+  contract: string; reviewer: string;
+  review: ReviewScores | null; parse_error: string | null; raw: string | null;
+}

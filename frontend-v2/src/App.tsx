@@ -10,11 +10,13 @@ import { Chat } from "./screens/Chat";
 import { Files } from "./screens/Files";
 import { ControlPlane } from "./screens/ControlPlane";
 import { Graph } from "./screens/Graph";
+import { Compare } from "./screens/Compare";
 
 /** FRONTEND-V2-PLAN §1 — Chat · Files · Graph │ Control Plane · Settings. */
 const NAV = [
   { id: "overview", label: "Overview" },
   { id: "chat", label: "Chat" },
+  { id: "compare", label: "Compare" },
   { id: "files", label: "Files" },
   { id: "graph", label: "Graph" },
   { id: "rule", label: "" },
@@ -76,9 +78,10 @@ export function App() {
       <main className="main">
         {screen === "overview" && <Overview corpusId={corpusId} />}
         {screen === "chat" && <Chat corpusId={corpusId} />}
+        {screen === "compare" && <Compare corpusId={corpusId} />}
         {screen === "files" && <Files corpusId={corpusId} />}
         {screen === "control" && <ControlPlane corpusId={corpusId} />}
-        {screen === "graph" && <Graph corpusId={corpusId} onOpenChat={() => setScreen("chat")} />}
+        {screen === "graph" && <Graph corpusId={corpusId} />}
 
         {screen === "settings" && (
           <div className="screen">

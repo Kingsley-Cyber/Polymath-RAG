@@ -2,10 +2,11 @@ import { useRef, useState } from "react";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { PUBLIC_MODES } from "../lib/contracts";
-import type { PublicMode } from "../lib/contracts";
+import type { PublicMode, Synthesizer } from "../lib/contracts";
 import { newTurn, runTurn, type Turn } from "../lib/chat";
 import { QueryTrace } from "../components/QueryTrace";
 import { EvidenceInspector } from "../components/EvidenceInspector";
+import { AnswerReview } from "../components/AnswerReview";
 
 /**
  * F2 + F3 — Chat with corpus, retrieval mode, intent, model, reasoning and streaming.
@@ -112,13 +113,15 @@ export function Chat({ corpusId }: { corpusId: string }) {
       {turns.length === 0 && <div className="empty">No turns yet.</div>}
 
       <div className="stack">
-        {turns.slice().reverse().map((t, i) => <TurnView key={turns.length - 1 - i} t={t} />)}
+        {turns.slice().reverse().map((t, i) => (
+          <TurnView key={turns.length - 1 - i} t={t} models={synths.data ?? []} />
+        ))}
       </div>
     </div>
   );
 }
 
-function TurnView({ t }: { t: Turn }) {
+function TurnView({ t, models }: { t: Turn; models: Synthesizer[] }) {
   const intent = t.receipt?.chat_plan?.intent;
   return (
     <div className="card">
@@ -162,6 +165,15 @@ function TurnView({ t }: { t: Turn }) {
               <EvidenceInspector receipt={t.receipt} />
             </div>
           </details>
+          {t.answerText && (
+            <details style={{ marginTop: 8 }}>
+              <summary className="label" style={{ cursor: "pointer" }}>Review this answer</summary>
+              <div style={{ marginTop: 10 }}>
+                <AnswerReview question={t.question} answer={t.answerText}
+                              receipt={t.receipt} models={models} />
+              </div>
+            </details>
+          )}
         </>
       )}
     </div>
