@@ -1,0 +1,139 @@
+{
+  "contract": "u2-forensic-closure-audit-v1",
+  "generated": "2026-09-11T02:31:17.766369+00:00",
+  "source": "durable state (document_parent_map_batches, document_parent_maps, artifacts) \u2014 read-only, no provider call",
+  "batches_by_status": {
+    "leased": {
+      "batches": 6,
+      "expected": 90,
+      "returned": 0,
+      "attempts": 102
+    },
+    "partial": {
+      "batches": 937,
+      "expected": 21812,
+      "returned": 100,
+      "attempts": 15006
+    },
+    "done": {
+      "batches": 134,
+      "expected": 2212,
+      "returned": 2212,
+      "attempts": 681
+    }
+  },
+  "persisted": {
+    "active_rows": 1577,
+    "distinct_doc_parent_contract": 1577,
+    "dedupe_active": true,
+    "by_corpus": {
+      "rag-canary": 50,
+      "d7-h1-test": 78,
+      "cinema": 1449
+    }
+  },
+  "C6_returned_vs_persisted": {
+    "maps_returned": 2312,
+    "returned_with_persisted_parent": 2312,
+    "batches_short": 0,
+    "reconciles": true,
+    "note": "batch-level delta 735 is batch re-identity (grounding_hash rebinds batch_id); dedupe on (doc,parent,contract) means a re-returned parent persists once"
+  },
+  "C1_C7_limiter_vs_dispatch": {
+    "limiter_refused_batches": 926,
+    "violations": 3,
+    "invariant": "LIMITER_REFUSED must imply ZERO provider consumption (no raw_response_hash)",
+    "holds": false,
+    "violating_batches": [
+      {
+        "doc_id": "doc_16c77321ead95c542ae1cedfd050807dc4264bb42ca52ba46f1f6aa46379825c",
+        "expected_count": 60,
+        "valid_count": 0,
+        "attempt_count": 23,
+        "raw_response_hash": "811915ea41eb03e2",
+        "date": "2026-09-08"
+      },
+      {
+        "doc_id": "doc_16c77321ead95c542ae1cedfd050807dc4264bb42ca52ba46f1f6aa46379825c",
+        "expected_count": 60,
+        "valid_count": 0,
+        "attempt_count": 24,
+        "raw_response_hash": "e3b0c44298fc1c14",
+        "date": "2026-09-08"
+      },
+      {
+        "doc_id": "doc_2d6319ceeaabdec1e74b3ce9e06c1f58ccac29033d3658f14b97a21ac0db5875",
+        "expected_count": 60,
+        "valid_count": 0,
+        "attempt_count": 27,
+        "raw_response_hash": "543240c3b603d083",
+        "date": "2026-09-08"
+      }
+    ]
+  },
+  "frozen_leases": [
+    {
+      "doc_id": "doc_6f89105b1845c0b595ab8e04b6cb107b9a6e2b7f1617a89f50bdbebd0f4aad34",
+      "corpus_id": "cinema",
+      "expected_count": 15,
+      "attempt_count": 17,
+      "lease_owner": "doc-parent-map-worker-v1",
+      "lease_expires_at": "2026-09-09 04:54:10.573059+00",
+      "last_error": "groq/compound-mini error: HTTP_429"
+    },
+    {
+      "doc_id": "doc_f9abfb57bc9fbc55cf5f934aae1a8340a16ac16d979fb4baf694f0b781925680",
+      "corpus_id": "cinema",
+      "expected_count": 15,
+      "attempt_count": 17,
+      "lease_owner": "doc-parent-map-worker-v1",
+      "lease_expires_at": "2026-09-09 04:54:15.731817+00",
+      "last_error": "groq/compound-mini error: HTTP_429"
+    },
+    {
+      "doc_id": "doc_2ce79e8ebec9d33e88458fc12308f6d1eff0416517c0c1685f3e20008b725013",
+      "corpus_id": "cinema",
+      "expected_count": 15,
+      "attempt_count": 17,
+      "lease_owner": "doc-parent-map-worker-v1",
+      "lease_expires_at": "2026-09-09 04:54:16.729227+00",
+      "last_error": "groq/compound-mini error: HTTP_429"
+    },
+    {
+      "doc_id": "doc_0661e39c4ec6c9d461b27f089e07c832a47774cea4f9f74285da732d1a886cae",
+      "corpus_id": "cinema",
+      "expected_count": 15,
+      "attempt_count": 18,
+      "lease_owner": "doc-parent-map-worker-v1",
+      "lease_expires_at": "2026-09-09 04:54:22.479037+00",
+      "last_error": "groq/compound-mini error: HTTP_429"
+    },
+    {
+      "doc_id": "doc_16c77321ead95c542ae1cedfd050807dc4264bb42ca52ba46f1f6aa46379825c",
+      "corpus_id": "cinema",
+      "expected_count": 15,
+      "attempt_count": 17,
+      "lease_owner": "doc-parent-map-worker-v1",
+      "lease_expires_at": "2026-09-09 04:54:22.549635+00",
+      "last_error": "groq/compound-mini error: HTTP_429"
+    },
+    {
+      "doc_id": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+      "corpus_id": "cinema",
+      "expected_count": 15,
+      "attempt_count": 16,
+      "lease_owner": "doc-parent-map-worker-v1",
+      "lease_expires_at": "2026-09-09 04:54:35.41021+00",
+      "last_error": "groq/compound-mini error: LIMITER_REFUSED"
+    }
+  ],
+  "frozen_leases_total": {
+    "batches": 6,
+    "parents_held": 90
+  },
+  "C5_real_parent_yield": {
+    "done_batch_yield": 1.0,
+    "done_batches": 134,
+    "note": "REAL parents at batch 15 -> yield 1.0 across all done batches. Batch 60 on real parents is where the 3 dispatched-but-empty batches occurred (expected_count=60)."
+  }
+}
