@@ -1,0 +1,13 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "polymath-v2",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "frontend-v2",
+      "port": 5273,
+      "url": "http://localhost:5273"
+    }
+  ]
+}

@@ -40,6 +40,10 @@ IGNORED_PREFIXES = (
     "resources/vendor/verbnet-3.3.zip",
     "resources/vendor/propbank-frames.zip",
     "resources/vendor/semlink.zip",
+    # FRONTEND-V2: vite build output. Git-ignored and content-hashed, so every build
+    # would otherwise mint "undeclared" files. Same rationale as node_modules above:
+    # it is not a repository file. The V2 SOURCE is declared in the scaffold TREE.
+    "frontend-v2/dist/",
 )
 IGNORED_SUFFIXES = (".egg-info", ".pid", ".sqlite3")
 MODULE_OWNERS = {
