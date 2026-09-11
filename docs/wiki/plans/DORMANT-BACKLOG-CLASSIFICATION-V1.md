@@ -65,6 +65,28 @@ prevents.
 5. **Never by status sweep.** Every action above is pinned by ticket id or batch id (MEDIC SCOPING LAW: stale
    batches wake up).
 
+## 4b. Re-classified under the owner's five-way taxonomy (2026-09-10, after U-2 CLEARED)
+
+`U-2 FORENSIC HOLD: CLEARED` changes one class: cinema's runs are no longer FORENSICALLY HELD. They become
+CURRENT OWED WORK awaiting bounded resumption — the work is real, permitted and simply not done yet.
+
+| class | runs | stage tickets | pMAP batches | what it means |
+|---|---|---|---|---|
+| **CURRENT OWED WORK** | **66** (cinema 63 + d7-h1-test 3) | **146** pending on final-path stages — `vocabulary` 41 · `verify_projections` 27 · `compile_objects` 27 · `project_canonical` 21 · `project_neo4j` 9 · `canonicalize` 9 · `profile_document` 4 · `project_qdrant` 4 · `extract` 4 — plus **5 failed** `project_qdrant` (cinema) | **6 frozen** on expired leases (D-2), holding **90 parents** | real work on the live path; unblocks with cinema resumption. The 5 `project_qdrant` failures are the cheapest repair in the backlog (local projection, zero provider spend). |
+| **LEGACY OWED WORK** | — | **107** — `corpus_summary` 41 · `document_summary` 39 · `parent_summary` 27 | — | owed to the summary subsystem the cutover marks **STOP WRITER → RETIRE** (S15→S17). **Requeuing spends provider quota building state scheduled for deletion.** Cancel these AS retirement, never requeue. |
+| **SUPERSEDED** | **0** | 122 (already terminal) | 122 batch rows | **No open run is superseded** — tested: no open run's `source_name` has a `query_ready` twin, so each is the only run for its document and cancelling one abandons the document. |
+| **FORENSICALLY HELD** | **0** *(was 66)* | 0 | 0 | Emptied by `U-2 FORENSIC HOLD: CLEARED` (register 11.204). |
+| **ORPHANED** | **4** (1 cinema `intake` + 3 d7-h1-test) | **4 failed** `intake` | — | The 3 d7-h1-test ones are unrepairable BY DESIGN — `LEGACY_EVENT_UNRECOVERABLE intake.v1: missing ['source_name']`; a retry re-fails deterministically. Archive with a reason; do not retry. |
+
+**Totals:** 70 open runs = 66 current-owed + 4 orphaned. 253 pending tickets = 146 current-owed + 107
+legacy-owed. 9 failed = 5 current-owed (repairable) + 4 orphaned. Still **nothing requeued, nothing
+cancelled, nothing swept.**
+
+**The 282 "open stalls" on `/health/pipeline` are this same backlog seen from the health surface**
+(`PENDING_ON_PREDECESSOR×221` + `PENDING_ADVANCE_BLOCKED×32` + `RUN_SETTLED_NOT_PROMOTED×29`), with 0 queued
+tickets and 0 blocked workers. The V2 Control Plane renders that distinction explicitly (register 11.203)
+rather than presenting dormant records as current pipeline failure.
+
 ## 5. Cross-reference
 
 - GAP-4 in `FRONTEND-V2-CONTRACT-INVENTORY-V1` depends on this: `control_plane.summary.processing` counts these

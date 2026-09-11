@@ -18,7 +18,91 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.189–11.193) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-10T22:40 — THREE WORKSTREAMS: lane gate 0 · V2 plan+F1+F2/F3 shipped · U-2 canary run, hold ACTIVE)
+## Latest checkpoint (2026-09-11T05:15 — U-2 CLEARED · D-3/D-4 fixed · V2 F1–F10 shipped)
+
+**Branch `architecture/evidence-first-v5` @ `b154533`+; worktree clean; guards green; PUSHED (remote == local).**
+`main` untouched. Registers this session: 11.194–11.204.
+
+```
+U-2 FORENSIC HOLD: CLEARED        (register 11.204, gate in experiments/u2-persistence-canary-2026-09-10/RELEASE-GATE.md)
+```
+
+### D-3 + D-4 (register 11.202) — both fixed, tested, proven live
+
+- **D-3 `doc_parent_map_worker.py::MappingOutcome.complete`** → `not self.unresolved_parent_ids`. Completion is
+  CURRENT DURABLE STATE (`eligible − mapped − excluded`). The `batches_partial == 0` term was redundant for a
+  LIVE partial and WRONG for a stale one. Both predicates were evaluated on the canary's fixture: OLD False,
+  NEW True, INCOMPLETE direction unchanged. 6 regression cases.
+- **D-4 root cause was the ATTACH SITE, not the limiter.** The only `_ensure_controller_store()` lived in
+  `workers/llm_provider.py`, which the pMAP worker never imports — so that process attached no store and every
+  pMAP dispatch was counted in memory only. Now `LimiterRegistry.ensure_store()` called from
+  **`LLMExtractionClient.__init__`**, the one seam every provider path uses, plus `last_dispatch_at` and a
+  1 s-coalesced flush (the row is a LOWER BOUND, never an over-count). 5 tests.
+- **A first attempt attached from `lane()`/`budget()` and the full determinism gate caught it** — that made
+  merely creating a lane bind PRODUCTION controller state in any test or tool. Moved to the client seam; both
+  `test_llm_controller` failures cleared.
+
+### The chain, proven four times through the real production path
+
+```
+ 5 eligible →  1 dispatch →  5 compiled →  5 persisted →  5 projected     (pre-fix; then re-run: 0 dispatch, done)
+ 9 eligible →  1 dispatch →  9 compiled →  9 persisted →  9 projected
+10 eligible →  1 dispatch → 10 compiled → 10 persisted → 10 projected     reconciles: true
+11 eligible →  1 dispatch → 11 compiled → 11 persisted → 11 projected     reconciles: true (shipped code)
+```
+Durable rows now exist for `map_groq3` and `map_groq5` (`day` + `day_count` + `last_dispatch_at`) — the first
+pMAP controller rows ever. Restart continuity proven with zero spend. Total U-2 spend: 17 probe + 4 canary.
+
+**NOT fixed, carry into resumption: D-1** (3 batches with real consumption booked `LIMITER_REFUSED`; the
+classifier is unchanged, so a backfill would misbook the same way and corrupt the refused-vs-429 signal —
+one-line fix recommended first) and **D-2** (6 batches frozen on leases expired 2026-09-09 04:54Z, 90 parents;
+reap BY PINNED BATCH ID). `MAP_RELIABILITY_CAP` stays **15** — the 3 dispatched-but-empty batches were ALL
+`expected_count=60` on real parents. Seven stop conditions documented in the release gate.
+
+### FRONTEND V2 (registers 11.199 · 11.201 · 11.203) — F1–F5, F8, F9(partial), F10
+
+`frontend-v2/` (React 19 · TS strict · Vite 6), legacy `frontend/` untouched. `npm run build` green.
+Working screens: **Overview · Chat · Files · Graph · Control Plane**.
+
+- **Chat/F2–F3:** streaming phases, grounded answer with `[S1]…[S11]`, `HYBRID · ⌖ EXACT · chat-retrieval-v2`.
+  VECTOR not offered; Intent is a DISABLED "Auto (classified)" control stating there is no override contract.
+- **F5 trace:** requested vs executed mode, intent (labelled INERT), version, latency, degradation, lanes, plan.
+  The lane distinction holds everywhere: `section_summary` FIRED 24 → survived 0 → used 0; `entity_card`
+  FIRED 8 → survived 0 → used 0.
+- **F4 evidence:** final-selection rows separated from candidates; routing-lane rows tagged **ROUTING**.
+- **F8 Files on `cinema`:** *67 documents, 17 vNext-ready, 50 BLOCKED*, 10,152 unresolved — and it reconciles
+  with this session's canaries (1,449+24=1,473; 10,176−24=10,152). Nothing manufactured green.
+- **F10 Control Plane:** says plainly that DEGRADED is historical — 282 stall episodes with 0 queued tickets
+  and 0 blocked workers are DORMANT backlog records, listed by cause, deliberately NOT cleared.
+- **GAP-7 (new):** no graph route exists in the API, so F9 is partial by necessity.
+- **F6 blocked on GAP-2, F7 on GAP-3.** F11/F12 unbuilt.
+
+### BACKLOG — re-classified under the owner's taxonomy (11.197 §4b); nothing swept
+
+```
+CURRENT OWED WORK    66 runs · 146 pending tickets · 5 failed project_qdrant · 6 frozen pMAP leases (90 parents)
+LEGACY OWED WORK     107 pending tickets (corpus/document/parent_summary) — retiring subsystem; cancel AS
+                     retirement, never requeue (it would spend quota building state scheduled for deletion)
+SUPERSEDED           0 runs — no open run has a query_ready twin; cancelling one abandons its document
+FORENSICALLY HELD    0  (was 66 — emptied by U-2 CLEARED)
+ORPHANED             4 runs / 4 failed intakes — 3 unrepairable by design (missing source_name)
+```
+
+### LIVE RUNTIME
+
+13 workers / one bundle / 0 quarantined · `/ready` true · `/retrieve` and `/chat` both `chat-retrieval-v2` ·
+graph ring 18 lanes · pMAP auto-mint **rag-canary only** · `INTENT_POLICY` OFF · `SYNTH_ROLES` OFF ·
+0 ready/leased tickets. Full determinism gate: 5 failures, all PRE-EXISTING and unrelated
+(chat-retrieval timing, doc-profile `TITLE:`→`IDENTITY:` drift, cinema `you`-pronoun fact) — the two
+`test_llm_controller` failures this session introduced were found and fixed.
+
+### NEXT ACTION
+
+Bounded cinema resumption is now PERMITTED under the 7 documented stop conditions (pinned ids; auto-mint scope
+unchanged) — recommended to fix D-1 and reap D-2 first. Frontend: F6/F7 need GAP-2/GAP-3, F9 needs GAP-7,
+F11/F12 unbuilt. Backlog dispositions remain owner-gated.
+
+## Prior checkpoint (2026-09-10T22:40 — lane gate 0 · V2 plan+F1+F2/F3 · U-2 canary, hold then ACTIVE)
 
 **Branch `architecture/evidence-first-v5` @ `a067871`; worktree clean; guards green; PUSHED (remote == local,
 0 ahead).** `main` untouched. Registers this session: **11.194** orphaned lanes · **11.195** F0 inventory ·
