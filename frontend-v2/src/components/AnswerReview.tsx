@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api } from "../lib/api";
+import { chunkIdOf } from "../lib/chunkid";
 import type { RetrievalReceipt, ReviewResponse, Synthesizer } from "../lib/contracts";
 
 /**
@@ -17,14 +18,15 @@ export function AnswerReview({ question, answer, receipt, models }: {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const legend = (receipt?.legend ?? []) as { chunk_id?: string; tag?: string }[];
+  const legend = (receipt?.legend ?? []) as Record<string, unknown>[];
   const chunks = (receipt?.chunks ?? []) as Record<string, unknown>[];
   const citations = legend.map((l) => l.tag).filter(Boolean) as string[];
-  const cited = new Set(legend.map((l) => l.chunk_id));
+  // `chunks[]` carries only `locator`; `legend[]` carries `chunk_id` — see lib/chunkid.
+  const tagById = new Map(legend.map((l) => [chunkIdOf(l), l.tag as string | undefined]));
   const evidence = chunks
-    .filter((c) => cited.has(String(c.chunk_id)))
+    .filter((c) => tagById.has(chunkIdOf(c)))
     .map((c) => ({
-      tag: legend.find((l) => l.chunk_id === c.chunk_id)?.tag,
+      tag: tagById.get(chunkIdOf(c)),
       doc_id: c.doc_id, source_name: c.source_name, text: c.preview,
     }));
 

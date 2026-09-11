@@ -80,19 +80,37 @@ def pending_docs(c, limit: int) -> list[tuple[str, str, int]]:
          LIMIT %s""", (CORPUS, limit)).fetchall()
 
 
+def lane_decreases(c) -> dict[str, int]:
+    """Per-lane cumulative AIMD decrease count — snapshotted so SC2 can measure a
+    DELTA rather than a lifetime total."""
+    rows = c.execute("""
+        SELECT key, COALESCE((state->>'decreases')::int, 0)
+          FROM llm_controller_state WHERE key LIKE '%%map_groq%%'""").fetchall()
+    return {k: v for k, v in rows}
+
+
 def check_stop_conditions(c, before: dict, health: dict) -> list[str]:
     """The seven documented stop conditions. Any hit halts the run."""
     stops: list[str] = []
     # 1 — dispatched-but-empty (the D-1 signature)
     if health.get("PROVIDER_EMPTY", 0) > 0:
         stops.append(f"SC1 dispatched-but-empty completions: {health['PROVIDER_EMPTY']}")
-    # 2 — 429s on two distinct lanes within the hour
-    lanes_429 = c.execute("""
-        SELECT COUNT(DISTINCT key) FROM llm_controller_state
-         WHERE key LIKE '%%map%%' AND (state->>'decreases')::int > 0
-           AND updated_at > now() - interval '1 hour'""").fetchone()[0]
-    if lanes_429 >= 2:
-        stops.append(f"SC2 provider pushback on {lanes_429} lanes within the hour")
+    # 2 — REAL provider pushback during THIS run.
+    #
+    # The first version of this check read `decreases > 0` on rows whose `updated_at`
+    # was inside the hour. That was wrong twice over: `decreases` is a LIFETIME
+    # counter, and RPD-DURABILITY-V1 (D-4) now rewrites the row on every dispatch, so
+    # `updated_at` is always fresh — any lane that had EVER backed off tripped it
+    # forever. It fired on a run whose terminal states were SUCCESS x170 and nothing
+    # else. Measure the delta since this run started, and corroborate with the
+    # first-class HTTP_429 terminal state that D-1 gives us.
+    now_dec = lane_decreases(c)
+    base_dec = before.get("_decreases", {})
+    backed_off = [k for k, v in now_dec.items() if v > base_dec.get(k, v)]
+    if len(backed_off) >= 2:
+        stops.append(f"SC2 AIMD backoff during this run on {len(backed_off)} lanes: {backed_off}")
+    if health.get("HTTP_429", 0) > before.get("_http_429", 0) + 5:
+        stops.append(f"SC2b HTTP_429 terminal states rising: {health.get('HTTP_429')}")
     # 3 — refusal cascade re-forming
     if health.get("LIMITER_REFUSED", 0) > before.get("_refused", 0) + 25:
         stops.append("SC3 limiter refusals rising while dispatch is flat")
@@ -143,7 +161,10 @@ def main() -> int:
     LEDGER.parent.mkdir(parents=True, exist_ok=True)
     from polymath_shared.document_profile.map_trigger import mint_doc_parent_map
 
-    baseline = {"_refused": provider_health(c).get("LIMITER_REFUSED", 0)}
+    _h0 = provider_health(c)
+    baseline = {"_refused": _h0.get("LIMITER_REFUSED", 0),
+                "_http_429": _h0.get("HTTP_429", 0),
+                "_decreases": lane_decreases(c)}
     t0 = time.time()
     for wave in range(1, a.max_waves + 1):
         todo = pending_docs(c, a.wave)

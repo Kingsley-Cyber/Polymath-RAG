@@ -1,4 +1,5 @@
 import { Fragment, useState } from "react";
+import { chunkIdOf } from "../lib/chunkid";
 import type { RetrievalReceipt } from "../lib/contracts";
 
 /**
@@ -48,7 +49,7 @@ export function EvidenceInspector({ receipt }: { receipt: RetrievalReceipt }) {
   };
 
   for (const c of chunks) {
-    const id = String(c.chunk_id ?? c.locator ?? "");
+    const id = chunkIdOf(c);
     if (!id) continue;
     const r = put(id);
     r.docId = str(c.doc_id); r.sourceName = str(c.source_name); r.title = str(c.title);
@@ -56,7 +57,7 @@ export function EvidenceInspector({ receipt }: { receipt: RetrievalReceipt }) {
     r.humanLocator = str(c.human_locator); r.preview = str(c.preview); r.kind = str(c.kind);
   }
   for (const d of final) {
-    const id = String(d.chunk_id ?? "");
+    const id = chunkIdOf(d);
     if (!id) continue;
     const r = put(id);
     r.docId ??= str(d.doc_id);
@@ -64,7 +65,7 @@ export function EvidenceInspector({ receipt }: { receipt: RetrievalReceipt }) {
     r.arrivals = (d.arrivals as string[]) ?? r.arrivals;
   }
   for (const l of legend) {
-    const id = String(l.chunk_id ?? "");
+    const id = chunkIdOf(l);
     if (!id) continue;
     const r = put(id);
     r.tag = str(l.tag);
@@ -74,7 +75,7 @@ export function EvidenceInspector({ receipt }: { receipt: RetrievalReceipt }) {
 
   // Only rows that reached the FINAL selection are evidence for an answer; the rest
   // are candidates the reader can still inspect, clearly separated.
-  const finalIds = new Set(final.map((d) => String(d.chunk_id ?? "")));
+  const finalIds = new Set(final.map((d) => chunkIdOf(d)));
   const rows = [...byId.values()];
   const selected = rows.filter((r) => finalIds.has(r.chunkId))
     .sort((a, b) => (b.score ?? -1e9) - (a.score ?? -1e9));

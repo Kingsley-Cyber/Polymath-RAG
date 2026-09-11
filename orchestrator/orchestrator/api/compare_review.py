@@ -151,11 +151,15 @@ def review(req: ReviewRequest) -> dict:
     if not req.answer.strip():
         raise HTTPException(status_code=422, detail="nothing to review: empty answer")
 
+    # Bound the prompt. 20 x 1200 chars of evidence plus a long answer pushed the
+    # reviewer past its useful window and it returned prose instead of JSON (seen in
+    # F12 on a real 15-passage answer). 12 x 600 keeps every cited passage
+    # recognisable while leaving the model room to actually answer in JSON.
     passages = []
-    for i, e in enumerate(req.evidence[:20], 1):
+    for i, e in enumerate(req.evidence[:12], 1):
         if not isinstance(e, dict):
             continue
-        text = str(e.get("text") or e.get("preview") or "")[:1200]
+        text = str(e.get("text") or e.get("preview") or "")[:600]
         src = str(e.get("source_name") or e.get("doc_id") or "")[:120]
         tag = str(e.get("tag") or f"S{i}")
         passages.append(f"[{tag}] ({src}) {text}")
@@ -163,7 +167,8 @@ def review(req: ReviewRequest) -> dict:
     user = (f"QUESTION:\n{req.question}\n\n"
             f"ANSWER UNDER REVIEW:\n{req.answer}\n\n"
             f"CITATIONS: {', '.join(req.citations) or '(none)'}\n\n"
-            f"EVIDENCE THE ANSWER HAD:\n" + ("\n\n".join(passages) or "(none supplied)"))
+            f"EVIDENCE THE ANSWER HAD ({len(req.evidence)} passage(s), {len(passages)} shown):\n"
+            + ("\n\n".join(passages) or "(none supplied)"))
 
     try:
         raw = _run_reviewer(req.reviewer, user)
@@ -190,13 +195,29 @@ def _run_reviewer(model: Optional[str], user: str) -> str:
         name = name[len("litellm:"):]
     if not name:
         raise RuntimeError("no reviewer model available")
-    resp = litellm.completion(
+    kwargs: dict = dict(
         model=name,
         messages=[{"role": "system", "content": REVIEW_SYSTEM},
                   {"role": "user", "content": user}],
-        temperature=0, max_tokens=2000, timeout=120,
+        temperature=0, max_tokens=4000, timeout=180,
         **_litellm_credentials(name))
-    return resp.choices[0].message.content or ""
+    # DEEPSEEK-V4 THINKING TRAP (CONTINUITY §6): v4-flash / v4-pro spend the whole
+    # token budget on hidden reasoning and return an EMPTY body unless thinking is
+    # explicitly disabled. Measured here on a realistic 15-passage review, which came
+    # back with no JSON at all until this was set.
+    if "deepseek-v4" in name:
+        # It must travel as EXTRA BODY, not a top-level param: litellm validates
+        # top-level kwargs against the provider route and rejects `thinking` for this
+        # one ("anthropic does not support parameters: ['thinking']"), while the
+        # upstream API reads it from the request body.
+        kwargs["extra_body"] = {**kwargs.get("extra_body", {}),
+                                "thinking": {"type": "disabled"}}
+    resp = litellm.completion(**kwargs)
+    out = resp.choices[0].message.content or ""
+    if not out.strip():
+        # Say WHICH model returned nothing rather than reporting "unparseable".
+        raise RuntimeError(f"reviewer {name!r} returned an empty completion")
+    return out
 
 
 def _parse_json(raw: Any) -> tuple[dict | None, str | None]:
