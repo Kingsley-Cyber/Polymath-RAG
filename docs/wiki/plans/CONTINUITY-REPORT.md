@@ -18,7 +18,88 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.189–11.193) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-10T21:05 — POST-CUTOVER: F0 done · U-2 hold NOT cleared · backlog classified · F1 blocked)
+## Latest checkpoint (2026-09-10T22:40 — THREE WORKSTREAMS: lane gate 0 · V2 plan+F1+F2/F3 shipped · U-2 canary run, hold ACTIVE)
+
+**Branch `architecture/evidence-first-v5` @ `a067871`; worktree clean; guards green; PUSHED (remote == local,
+0 ahead).** `main` untouched. Registers this session: **11.194** orphaned lanes · **11.195** F0 inventory ·
+**11.196** U-2 closure audit · **11.197** backlog classification · **11.198** lane gate + test realignment ·
+**11.199** V2 plan + F1 · **11.200** U-2 persistence canary · **11.201** V2 F2/F3.
+
+### A — PROVIDER LANES: gate MET
+
+```
+enabled + dedicated + unreachable = 0        (46-lane inventory; unreachable_pins() NONE)
+GRAPH_EXTRACTION 18 · DOCUMENT_PROFILE 2 · PMAP 6 · CHAT 4     live == declared
+parent_enrichment = legacy STAGE PIN, never a 5th permanent function
+```
+The 12 `dedicated_unpinned` lanes are ALL `enabled=false` — exactly what 11.193 superseded; **none disabled to
+satisfy the gate.** Credential audit: the only real cross-function sharing is 3 OpenRouter keys between a
+permanent function's LAST-RESORT fallback and legacy `parent_enrichment`. **Attribution measured** (two
+throwaway worktrees + `-p no:randomly`): 6 of the 8 config-test failures predate the reassignment; `5adb0f5`
+introduced exactly **2** (it shipped with red tests it never ran); **11.194 introduced 0**. Eight assertions
+realigned to the approved allocation — rewritten to the new contract, never weakened (the isolation test is
+stronger than the sharing test it replaces). Limiter/runtime-config/control-plane-v2: **38 passed**.
+**No config change ⇒ no restart needed.** One PRE-EXISTING unrelated failure left RED deliberately
+(`test_worker_writes_the_profile_…`: asserts `TITLE:` while the builder emits `IDENTITY:… · format: markdown`).
+
+### B — FRONTEND V2: plan is an AUTHORITY; F1 + F2 + F3 shipped
+
+`docs/wiki/plans/FRONTEND-V2-PLAN.md` — **status ACTIVE**, greenfield replacement, backend FROZEN, old frontend
+LEGACY/rollback. New app at `frontend-v2/` (React 19 · TS strict · Vite 6), shares **no code** with `frontend/`,
+which is untouched. `npm run build` green; dev server `localhost:5273/v2/`.
+
+- **F1** shell · nav (Chat/Files/Graph │ Control Plane/Settings) · design system · typed client + SSE reader ·
+  readiness triad. Live: `SEMANTIC_COMPLETE` / `VNEXT_COMPLETE` / 50-of-50 parents on `rag-canary`.
+- **F2/F3** Chat: corpus · Hybrid/Graph/Wildcard · intent · model · reasoning · streaming. Verified on a real
+  turn — phases streamed in order, grounded answer with `[S1]…[S11]`, `HYBRID · ⌖ EXACT · chat-retrieval-v2`,
+  29.3 s. **VECTOR not offered**; Intent is a DISABLED "Auto (classified)" control stating there is no override
+  contract (a real limitation shown as one, never a fake selector).
+- **F5 lane core** inside the Chat inspector, and it earned its place on the first turn:
+  `global_dense_child` 50→50→15→15 · `hierarchical` 24→24→13→13 · `global_sparse_child` 40→40→12→12, but
+  **`section_summary` FIRED 24 → survived 0 → used 0** and **`entity_card` FIRED 8 → survived 0 → used 0**.
+  32 candidates from two lanes reached the answer in ZERO rows.
+
+**GAP-6, found by F1:** `/health/pipeline` = `DEGRADED`, `stalls_open: 282` on a COMPLETELY IDLE fleet
+(0 queued, 0 blocked, 13 live, no medic actions). The 282 are exactly the dormant backlog
+(`PENDING_ON_PREDECESSOR×221` + `PENDING_ADVANCE_BLOCKED×32` + `RUN_SETTLED_NOT_PROMOTED×29`) ⇒ **CONTROL READY
+cannot read green until the backlog is dispositioned.** Same class as GAP-4.
+
+### C — U-2: the chain is PROVEN; the hold is ACTIVE on a named broken transition
+
+One bounded canary (`scripts/u2_persistence_canary.py`), **1 Groq request**, smallest unmapped cinema document
+(5 parents), auto-mint scope untouched, never a backfill:
+
+```
+requested 5 = eligible 5 → dispatched 1 → compiler_complete 1 (0 partial/invalid/empty/429/fail/refusal)
+            → compiled 5 → PERSISTED 5 (5 new map_ids) → PROJECTED 5 → unresolved 0, 1 attempt, 0 retry waste
+```
+**No unexplained parents, no unexplained requests, no silent loss.** The persistence question 11.192 could not
+answer is **ANSWERED AFFIRMATIVELY**.
+
+**THE EXACT BROKEN TRANSITION (D-3, new):** `MappingOutcome.complete` is computed from **stale batch rows**, not
+from **unresolved eligible parents**. The worker mapped and projected all 5, then raised
+`DOC_PARENT_MAP_INCOMPLETE: unresolved=0 partial=2` (the 2 stale rows never dispatched — `raw_response_hash
+NULL`) and the ticket re-armed. **A successful document reports FAILURE** — at cinema scale a resumed backfill
+would report failures on documents it actually completed, a strong candidate explanation for the historical
+`+0 parents / 0 errored_docs` confusion this hold began with. Blast radius measured **zero** (90 s watch, no
+re-dispatch). **D-4:** `llm_controller_state` has NO row for any pMAP lane — the dispatch incremented no
+DURABLE `day_count`; 11.192's "+1 per dispatch" was in-process only.
+
+```
+U-2 FORENSIC HOLD: ACTIVE   (D-1, D-2 from 11.196 also still open)
+```
+Cinema left clean: the canary's own ticket closed BY PINNED ID with the reason recorded and `last_error_note`
+preserved; **0 ready/leased tickets anywhere**; the 5 maps + 5 projections KEPT as real verified work.
+
+### NEXT ACTION
+
+Owner-gated: (a) fix D-3 (completeness from `unresolved_parent_ids`, or exclude `raw_response_hash IS NULL`
+rows) — worker code ⇒ fence ⇒ one bounce, fleet idle so the window is cheap; (b) D-1 fix + D-2 lease reap by
+pinned id; (c) GAP-2/GAP-3 backend contracts (F6/F7 blocked without them); (d) backlog dispositions.
+Non-gated next: **F4 evidence inspector** (the receipt already carries `chunks`/`legend`/`final_detail.
+rerank_score`), then F8/F9/F10; GAP-4/GAP-6 age qualifier; the 5 `project_qdrant` repairs.
+
+## Prior checkpoint (2026-09-10T21:05 — POST-CUTOVER: F0 done · U-2 hold not cleared · backlog classified)
 
 **Branch `architecture/evidence-first-v5` @ `e53de37`; worktree clean; guards green; PUSHED (remote HEAD ==
 local HEAD, 0 ahead).** `main` untouched. Registers added this session: **11.194** (orphaned lanes),
