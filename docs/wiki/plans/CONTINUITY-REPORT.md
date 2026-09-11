@@ -16,9 +16,49 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.184–11.187) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.189–11.193) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-10 — CUTOVER EXECUTION: reader migration + U-2 probe + provider-lane reassignment + model gotchas)
+## Latest checkpoint (2026-09-10T19:58 — BOOTSTRAP GAP AUDIT: live-vs-committed reconciled; everything parked at owner gates)
+
+**Branch `architecture/evidence-first-v5` @ `4722644`; worktree CLEAN; guards green (`agent_preflight` ok ·
+`repo_guard` ok · `wiki_worm --check` ok · `bundle_integrity` READY `v5-production-006-extraction-restored
+7e97368daa92ec19`). 11 commits AHEAD of `origin/architecture/evidence-first-v5` (`d3b7fe5`), ALL LOCAL/UNPUSHED
+(push owner-gated, U-7).** This checkpoint supersedes the prior one, which recorded `8282845`/10 commits and did
+NOT name its own backfill commit `4722644` (self-referential lag — now closed).
+
+**The 11 unpushed slices:** `bbe956d` U-1 qualification (11.189) · `d50dd98` cutover plan materialized (11.190) ·
+`5376f39` MIGRATE-READER≠DELETE-STATE analysis · `6290fbc` /retrieve HYBRID reader migration (11.191) · `3c36c4e`
+U-2 forensic probe (11.192) · `5adb0f5` provider-lane reassignment (11.193) · `6fb5948`/`2888377`/`f7932cb`/
+`8282845` provider-model gotchas (§6) · `4722644` continuity backfill. Every one has a register row and/or a
+work-log; `scripts/groq_map_forensic_probe.py` is declared in `scaffold_polymath_v4.py` TREE + `scripts/README.md`;
+both experiment folders (`u2-groq-map-forensic-probe-2026-09-10`, `retrieve-engine-migration-2026-09-10`) exist.
+**No ledger drift outstanding.**
+
+### GAP TABLE — the four truths (commits · ledger · live process · gates), measured 2026-09-10T19:58
+
+| # | Item | In ledger? | LIVE? | Gated by | Evidence |
+|---|---|---|---|---|---|
+| G1 | `5adb0f5` provider-lane reassignment (Google→graph, Groq 1 doc/5 pMAP, Alibaba+Ollama compiler, OpenRouter fallbacks) | YES (11.193) | **NO — INERT** | owner runs `scripts/boot_polymath.sh` | `config/cloud_providers.json` + `.env` mtime `2026-09-10 09:15:14`; newest fleet process started `2026-09-09 19:04`; supervisor `2026-09-09 06:44`. Live pMAP worker log still names the OLD pool (`compiler1–4`, `profile_groq2–6`, `map_groq1`). |
+| G2 | `6290fbc` `/retrieve` HYBRID → final core (`POLYMATH_RETRIEVE_ENGINE`, default v2) | YES (11.191) | **NO** | same bounce (or an orchestrator restart) | orchestrator pid 67556 booted `2026-09-09 19:04`, commit landed `2026-09-10 00:14`; `POLYMATH_RETRIEVE_ENGINE` unset in the running env ⇒ `/retrieve` still executes LEGACY v1 in-process. |
+| G3 | Phase-15 TRANSIENT canary flags — prior checkpoint said they "clear on the next normal restart" | PARTIAL (stated as future) | **STILL ARMED** | — (clears on the pending bounce) | `ps eww` on supervisor 64351 / orchestrator 67556 / extract 67589 all carry `POLYMATH_DOC_PARENT_MAP_ENABLED=1` + `POLYMATH_DOC_PARENT_MAP_CORPUS=rag-canary` + `POLYMATH_AUTOPILOT=1`. **Consequence: the `boot_polymath.sh` bounce that activates G1 also DISARMS pMAP auto-mint** — re-set both vars in the boot env if fresh-upload pMAP should survive the bounce. |
+| G4 | Fleet shape — 13 workers / 10 types, ONE bundle | YES | **YES, healthy** | — | `worker_registrations` (60 s window): canonicalize 1 · compile_objects 1 · extract 3 · intake 1 · profile_document 1 · project_canonical 1 · project_neo4j 1 · project_qdrant 1 · summaries 2 · verify_projections 1; one hash `490f5bc5a21f00f6`; `/ready` `{ready:true, embedder:true, reranker:true, cloud-modal:false}`. |
+| G5 | 7 supervisor slots show `alive=false` (`doc_profile`, `doc_profile2–6`, `doc_parent_map`) | NOT previously recorded | **PARKED, not dead** | — | FLEET-AUTOPILOT-V1 demand parking (`POLYMATH_AUTOPILOT=1`): `quarantined=false`, `last_exit_code=null`, 0 open tickets for those stages. Not a defect; the slot wakes when a ticket is minted. Recorded so the next session does not mis-read it as a stall. |
+| G6 | Stale-bundle fence — is it safe to edit `shared/`·`workers/`·`control/`? | YES (standing law) | **SAFE NOW** | — | `git diff --name-only dbfb91c..HEAD -- shared/polymath_shared workers/workers control/control` = **0 files**; last `BUNDLE_STALE_CODE_DRIFT` `2026-09-10T01:04Z` (pre-19:04-restart, cleared); ready tickets **0**, leased **0** (newest ticket update `2026-09-09T13:25Z`). |
+| G7 | Dormant legacy backlog (do NOT status-sweep) | NOT previously recorded | **DORMANT** | MEDIC SCOPING LAW | 70 runs in the fence-open set `('intake','reconciling','degraded')` — cinema 64 + d7-h1-test 6 — all last updated `2026-09-07`; 253 `pending` stage_tickets from 2026-09-04…07 (corpus_summary 41 · vocabulary 41 · document_summary 39 · parent_summary 27 · verify_projections 27 · compile_objects 27 · project_canonical 21 · canonicalize 9 · project_neo4j 9 · qdrant 4 · extract 4 · profile_document 4) + 9 failed. Nothing is moving; a status-sweep would wake all of it. Pin batch/run ids if any repair is ever ordered. |
+| G8 | `POLYMATH_CHAT_INTENT_POLICY` / `POLYMATH_CHAT_SYNTH_ROLES` | YES (11.188/11.189) | **OFF (unset)** | owner (needs U-1 uplift on a covered corpus ⇒ U-2) | absent from the running env of supervisor, orchestrator and workers. |
+| G9 | Cinema pMAP backfill | YES (11.184/11.185/11.192) | **STOPPED** | **FORENSIC HOLD + owner review** | U-2 (11.192) disproved the RPD-exhaustion premise (≈247/250 per account, 6 accounts); cinema-finish ≈716 req at cap-15 vs ~1,500 req/day ⇒ <1 day. Evidence complete except the real-parent batch benchmark. Do NOT resume on a quota reset. |
+| G10 | `gemma-4-26b-a4b-it` as a 3rd graph-extraction lane per Gemini key | schema-confirmed in §6 (`8282845`) | **NOT WIRED** | owner yes/no | would add `gemini1c–6c` + limiter seeds to the unpinned graph ring. No config change made. |
+| G11 | Push to origin | YES (U-7) | — | **owner** | 11 commits local; no push attempted. |
+| G12 | Pre-existing test failures (attribution baseline) | YES (11.187) | carried | — | 2 in `tests/determinism`: a cinema `you`-pronoun fact (2026-09-05) + a live `/chat/stream` synthesis-variance test. Not re-run this bootstrap (no mutation made); re-verify before attributing any new failure. |
+
+**CRITICAL PATH:** the `boot_polymath.sh` bounce (G1) unblocks the most — it activates the new lane topology AND
+picks up the migrated `/retrieve` default (G2) in one restart. Its one side effect is G3 (transient pMAP flags
+clear). Everything else is an independent owner decision (G9 cinema resumption, G10 gemma lane, G8 flag defaults).
+
+**NO WORK EXECUTED THIS BOOTSTRAP** beyond this ledger backfill: no config change, no fleet bounce, no provider
+spend, no push. Cinema untouched; forensic hold intact.
+
+## Prior checkpoint (2026-09-10 earlier — CUTOVER EXECUTION: reader migration + U-2 probe + provider-lane reassignment + model gotchas)
 
 **Branch `architecture/evidence-first-v5` @ `8282845`; worktree clean; guards green (`agent_preflight` ok ·
 `repo_guard` ok · `wiki` ok · `bundle_integrity` READY). 10 commits AHEAD of origin (`d3b7fe5`), ALL
