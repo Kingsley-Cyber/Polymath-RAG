@@ -6,6 +6,7 @@ import { controlReady } from "./lib/readiness";
 import { Pill } from "./components/Pill";
 import { PhaseStub } from "./components/PhaseStub";
 import { Overview } from "./screens/Overview";
+import { Chat } from "./screens/Chat";
 
 /** FRONTEND-V2-PLAN §1 — Chat · Files · Graph │ Control Plane · Settings. */
 const NAV = [
@@ -71,14 +72,14 @@ export function App() {
 
       <main className="main">
         {screen === "overview" && <Overview corpusId={corpusId} />}
+        {screen === "chat" && <Chat corpusId={corpusId} />}
 
-        {screen !== "overview" && (
+        {screen !== "overview" && screen !== "chat" && (
           <div className="screen">
             <div className="screen__head">
               <h1 className="screen__title">{NAV.find((n) => n.id === screen)?.label}</h1>
               <p className="screen__sub">Corpus <span className="mono">{corpusId}</span></p>
             </div>
-            {screen === "chat" && <PhaseStub phase="F2" title="Chat — corpus, retrieval mode, intent, model, reasoning, streaming" />}
             {screen === "files" && <PhaseStub phase="F8" title="Files — Control / Semantic / vNext readiness per document, plus Graph, Profile, Atoms, pMAP" />}
             {screen === "graph" && <PhaseStub phase="F9" title="Graph — entity search, relationships, source-attested supporting chunks" />}
             {screen === "control" && <PhaseStub phase="F10" title="Control Plane — GRAPH_EXTRACTION, DOCUMENT_PROFILE, PMAP, CHAT function cards" />}
