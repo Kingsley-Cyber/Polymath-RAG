@@ -63,21 +63,63 @@ def provider_health(c) -> dict:
     return out
 
 
+#: A document whose batch rows vastly outnumber the batches its parents need has been
+#: re-planned over and over for a handful of parents the model will not emit. Selecting
+#: it again costs a full re-plan and yields ~nothing.
+STRAGGLER_REPLAN_RATIO = 3.0
+
+
 def pending_docs(c, limit: int) -> list[tuple[str, str, int]]:
-    """Documents with unresolved eligible parents, smallest first (cheapest proof first)."""
+    """Documents with unresolved eligible parents, LARGEST REMAINING FIRST.
+
+    This started as `ORDER BY unresolved ASC` — smallest first, to prove the path on
+    cheap documents. Correct at the start, badly wrong later: once the small documents
+    were done the working set became "10 near-complete documents with 1-5 stubborn
+    parents" + "26 documents holding 99% of the remaining work", and ASC kept picking
+    the stragglers. MEASURED 2026-09-11: those 10 documents had 18-23 batch ROWS each
+    for 1-4 outstanding parents (a 112-parent document needs ~8 batches), i.e. the run
+    was re-planning ~8 batches per ticket to attempt 2 parents while 8,815 parents sat
+    untouched. Throughput fell from 71 batches / 10 min to 8.
+
+    So: order by remaining work DESC, and skip documents that keep being re-planned
+    without finishing — their leftovers are parents the compiler will not accept, and
+    looping on them starves the bulk.
+    """
     return c.execute("""
-        SELECT d.doc_id, r.run_id, d.source_parent_count -
-               (SELECT COUNT(*) FROM document_parent_maps m
-                 WHERE m.doc_id = d.doc_id AND m.active) AS unresolved
+        SELECT d.doc_id, r.run_id, u.unresolved
           FROM documents d
           JOIN runs r ON r.corpus_id = d.corpus_id
                      AND r.metadata->>'source_name' = d.source_name
+          JOIN LATERAL (
+                SELECT d.source_parent_count -
+                       (SELECT COUNT(*) FROM document_parent_maps m
+                         WHERE m.doc_id = d.doc_id AND m.active) AS unresolved,
+                       (SELECT COUNT(*) FROM document_parent_map_batches b
+                         WHERE b.doc_id = d.doc_id) AS batch_rows
+               ) u ON TRUE
          WHERE d.corpus_id = %s AND d.source_parent_count > 0
-           AND d.source_parent_count >
-               (SELECT COUNT(*) FROM document_parent_maps m
-                 WHERE m.doc_id = d.doc_id AND m.active)
-         ORDER BY unresolved ASC
-         LIMIT %s""", (CORPUS, limit)).fetchall()
+           AND u.unresolved > 0
+           -- skip re-planned stragglers (see STRAGGLER_REPLAN_RATIO)
+           AND u.batch_rows < GREATEST(4, CEIL(d.source_parent_count / 15.0) * %s)
+         ORDER BY u.unresolved DESC
+         LIMIT %s""", (CORPUS, STRAGGLER_REPLAN_RATIO, limit)).fetchall()
+
+
+def stragglers(c) -> list[tuple[str, int, int]]:
+    """Documents excluded by the re-plan guard — reported, never silently dropped."""
+    return c.execute("""
+        SELECT d.doc_id, u.unresolved, u.batch_rows
+          FROM documents d
+          JOIN LATERAL (
+                SELECT d.source_parent_count -
+                       (SELECT COUNT(*) FROM document_parent_maps m
+                         WHERE m.doc_id = d.doc_id AND m.active) AS unresolved,
+                       (SELECT COUNT(*) FROM document_parent_map_batches b
+                         WHERE b.doc_id = d.doc_id) AS batch_rows
+               ) u ON TRUE
+         WHERE d.corpus_id = %s AND d.source_parent_count > 0 AND u.unresolved > 0
+           AND u.batch_rows >= GREATEST(4, CEIL(d.source_parent_count / 15.0) * %s)
+         ORDER BY u.unresolved DESC""", (CORPUS, STRAGGLER_REPLAN_RATIO)).fetchall()
 
 
 def lane_decreases(c) -> dict[str, int]:
@@ -169,7 +211,17 @@ def main() -> int:
     for wave in range(1, a.max_waves + 1):
         todo = pending_docs(c, a.wave)
         if not todo:
-            print(f"\nCOMPLETE — no cinema document has unresolved eligible parents.")
+            st = stragglers(c)
+            print("\nNo schedulable document left.")
+            if st:
+                total = sum(u for _, u, _ in st)
+                print(f"  {len(st)} document(s) excluded by the re-plan guard, holding {total} "
+                      f"parent(s) the compiler has repeatedly declined to emit:")
+                for doc, u, br in st[:10]:
+                    print(f"    {doc[:20]} unresolved={u} batch_rows={br}")
+                print("  These need a look at the parents themselves, not more provider spend.")
+            else:
+                print("  COMPLETE — no cinema document has unresolved eligible parents.")
             break
         minted = []
         for doc_id, run_id, unresolved in todo:
