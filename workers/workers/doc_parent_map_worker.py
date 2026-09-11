@@ -243,6 +243,56 @@ def persist_maps(
     return n
 
 
+# ---------------------------------------------------------- terminal-state classifier
+# TERMINAL-STATE-V1 (D-1, owner directive 2026-09-11).
+#
+# A batch attempt ends in exactly ONE of these. They are NOT interchangeable: the first
+# cost zero provider quota, the rest all cost a real request, and the control plane's
+# refused-vs-429 signal (11.187) depends on never confusing them.
+TERMINAL_LIMITER_REFUSED   = "LIMITER_REFUSED"    # LOCAL admission refusal — 0 HTTP, 0 quota
+TERMINAL_HTTP_429          = "HTTP_429"           # dispatched; provider throttled it
+TERMINAL_PROVIDER_ERROR    = "PROVIDER_ERROR"     # dispatched; transport/non-2xx fault
+TERMINAL_PROVIDER_EMPTY    = "PROVIDER_EMPTY"     # dispatched 2xx with an EMPTY body
+TERMINAL_COMPILER_REJECTED = "COMPILER_REJECTED"  # dispatched 2xx, non-empty, nothing compiled
+TERMINAL_SUCCESS           = "SUCCESS"            # every requested alias mapped
+
+#: The states that PROVE provider consumption. A later LOCAL refusal must never
+#: overwrite one of these — that is exactly the D-1 defect: three batches carried a
+#: raw_response_hash (proof of dispatch) yet were terminally booked LIMITER_REFUSED,
+#: so the control plane counted real spend as a local refusal.
+DISPATCHED_TERMINAL_STATES = frozenset({
+    TERMINAL_HTTP_429, TERMINAL_PROVIDER_ERROR,
+    TERMINAL_PROVIDER_EMPTY, TERMINAL_COMPILER_REJECTED, TERMINAL_SUCCESS,
+})
+
+
+def classify_terminal_state(
+    *, dispatched: bool, error_class: str | None = None, raw: str | None = None,
+    mapped_all: bool = False, compiled_any: bool = False, compiler_rejected: bool = False,
+) -> str:
+    """Terminal state from REAL dispatch metadata. Pure — no I/O, no limiter behaviour.
+
+    `dispatched` is the only thing that separates a free refusal from a paid request;
+    it comes from the limiter/client boundary (`MapInferError.dispatched`, or the fact
+    that a completion was returned at all), never from the error text.
+    """
+    if not dispatched:
+        return TERMINAL_LIMITER_REFUSED
+    if error_class == "HTTP_429":
+        return TERMINAL_HTTP_429
+    if error_class:
+        return TERMINAL_PROVIDER_ERROR
+    if not (raw or "").strip():
+        return TERMINAL_PROVIDER_EMPTY
+    if mapped_all:
+        return TERMINAL_SUCCESS
+    if compiled_any:
+        return TERMINAL_SUCCESS if mapped_all else TERMINAL_COMPILER_REJECTED
+    if compiler_rejected:
+        return TERMINAL_COMPILER_REJECTED
+    return TERMINAL_PROVIDER_EMPTY
+
+
 def record_batch_result(
     conn, *, batch_id: str, status: str, valid_count: int,
     raw_response_hash: str | None = None, last_error: str | None = None,
@@ -250,13 +300,25 @@ def record_batch_result(
 ) -> None:
     """Finalize a batch attempt and RELEASE its lease (lease_expires_at=NULL) so a
     partial batch is immediately re-claimable for repair."""
+    # TERMINAL-STATE-V1 (D-1): a LOCAL refusal must not erase the record of a request
+    # that was actually dispatched. `raw_response_hash` is COALESCEd (it never clears),
+    # so a row carrying one has PROVABLY consumed provider quota; overwriting its
+    # terminal marker with LIMITER_REFUSED is what produced the three misbooked
+    # batches found on 2026-09-10. Any other marker (including a dispatched state, or
+    # NULL on success) writes normally.
+    downgrade_guard = last_error == TERMINAL_LIMITER_REFUSED or (
+        isinstance(last_error, str) and TERMINAL_LIMITER_REFUSED in last_error)
     conn.execute(
         """UPDATE document_parent_map_batches
               SET status=%s, valid_count=%s, raw_response_hash=COALESCE(%s, raw_response_hash),
-                  last_error=%s, provider=COALESCE(%s, provider), model=COALESCE(%s, model),
+                  last_error = CASE
+                      WHEN %s AND raw_response_hash IS NOT NULL THEN last_error
+                      ELSE %s END,
+                  provider=COALESCE(%s, provider), model=COALESCE(%s, model),
                   lease_owner=NULL, lease_expires_at=NULL, updated_at=now()
             WHERE batch_id=%s""",
-        (status, valid_count, raw_response_hash, last_error, provider, model, batch_id),
+        (status, valid_count, raw_response_hash, downgrade_guard, last_error,
+         provider, model, batch_id),
     )
 
 
@@ -356,9 +418,13 @@ def run_document_mapping(
                     if exc.reason:
                         refusal_reasons.add(exc.reason)
                 errors.append(f"{batch.batch_hash[:12]}:{exc.reason or exc.error_class}")
+                # TERMINAL-STATE-V1 (D-1): the marker comes from `exc.dispatched`, the
+                # real boundary metadata — never from the error text.
+                terminal = classify_terminal_state(dispatched=bool(exc.dispatched),
+                                                   error_class=exc.error_class)
                 with tx() as conn:
                     record_batch_result(conn, batch_id=batch.batch_hash, status="partial",
-                                        valid_count=0, last_error=str(exc)[:500],
+                                        valid_count=0, last_error=terminal,
                                         provider=provider, model=model)
                 # RETRY POLICY (GROQ-MAP-CONTROL-PLANE-REPAIR-V1 Phase 11): a local
                 # refusal (family/breaker/RPD cooldown) will not clear inside this
@@ -372,9 +438,11 @@ def run_document_mapping(
                 n_httpfail += 1
                 errors.append(f"{batch.batch_hash[:12]}:{type(exc).__name__}")
                 with tx() as conn:
-                    record_batch_result(conn, batch_id=batch.batch_hash, status="partial",
-                                        valid_count=0, last_error=str(exc)[:500],
-                                        provider=provider, model=model)
+                    record_batch_result(
+                        conn, batch_id=batch.batch_hash, status="partial", valid_count=0,
+                        last_error=classify_terminal_state(dispatched=True,
+                                                           error_class=type(exc).__name__),
+                        provider=provider, model=model)
                 break  # defer (see above) — do not spin the same batch
             # A returned completion is a dispatched 2xx (complete_one raises on
             # non-2xx). Classify its yield against what THIS call requested.
@@ -401,13 +469,16 @@ def run_document_mapping(
                 still = active_parent_ids(conn, doc_id=doc_id, map_contract=map_contract,
                                           parent_ids=[by_alias[a].parent_id for a in batch_aliases])
                 mapped_all = all(by_alias[a].parent_id in still for a in batch_aliases)
-                # Durable classification marker: a zero/partial-yield 2xx records
-                # COMPILER_<class>, not NULL, so a later census tells an empty 200
-                # from an invalid one from a real refusal.
+                # TERMINAL-STATE-V1 (D-1): one vocabulary for every outcome, derived
+                # from real dispatch metadata — a 2xx that returned an empty body is
+                # PROVIDER_EMPTY (it COST a request), never a local refusal.
+                terminal = classify_terminal_state(
+                    dispatched=True, raw=raw, mapped_all=mapped_all,
+                    compiled_any=bool(valid_here), compiler_rejected=bool(result.rejected))
                 record_batch_result(conn, batch_id=batch.batch_hash,
                                     status=("done" if mapped_all else "partial"),
                                     valid_count=len(still), raw_response_hash=result.raw_response_hash,
-                                    last_error=(None if mapped_all else f"COMPILER_{cls}"),
+                                    last_error=(None if mapped_all else terminal),
                                     provider=provider, model=model)
             if mapped_all:
                 break

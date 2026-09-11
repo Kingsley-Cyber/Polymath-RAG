@@ -199,7 +199,11 @@ def test_empty_completion_is_visible_and_marked(tx):
         markers = conn.execute(
             "SELECT DISTINCT last_error FROM document_parent_map_batches "
             "WHERE doc_id=%s AND last_error IS NOT NULL", (DOC,)).fetchall()
-    assert any("COMPILER_EMPTY" in (m[0] or "") for m in markers), markers
+    # TERMINAL-STATE-V1 (D-1, 2026-09-11): the marker vocabulary changed from
+    # COMPILER_<class> to the six terminal states. An empty 2xx is PROVIDER_EMPTY —
+    # it COST a provider request, which is precisely what must not be confused with
+    # a LIMITER_REFUSED (0 HTTP).
+    assert any("PROVIDER_EMPTY" in (m[0] or "") for m in markers), markers
 
 
 def test_local_refusal_is_zero_dispatch_and_named(tx):
