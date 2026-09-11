@@ -1,0 +1,219 @@
+{
+  "contract": "u2-persistence-canary-v1",
+  "target": {
+    "doc_id": "doc_6a5301e0043db44f0aed09800e82362afa2e74eec45f5f971f0dbe925c0f2743",
+    "corpus_id": "cinema",
+    "source_name": "Laban-Bartenieff Movement Studies for Neonatal Movements.md",
+    "source_parent_count": 5,
+    "run_id": "run_6f829effbd730164e4778e3efb5a310324acd3a9bf0043ca0f3dbb17b3f6d9c9",
+    "run_status": "reconciling"
+  },
+  "pmap_pin": [
+    "map_groq2",
+    "map_groq3",
+    "map_groq4",
+    "map_groq5",
+    "map_groq6",
+    "map_fallback_openrouter"
+  ],
+  "before": {
+    "at": "2026-09-11T03:08:19.796130+00:00",
+    "maps_active": 0,
+    "maps_total": 0,
+    "map_ids": [],
+    "mapped_parent_ids": [],
+    "batches": [
+      {
+        "batch_id": "b69d4d2de81aaed6b15904cbe41ab206ce9bd3d80449f2ba89ff9900fe7b18e0",
+        "status": "partial",
+        "expected_count": 5,
+        "valid_count": 0,
+        "attempt_count": 18,
+        "raw_response_hash": null,
+        "provider": "groq",
+        "model": "groq/compound-mini",
+        "last_error": "groq/compound-mini error: LIMITER_REFUSED"
+      },
+      {
+        "batch_id": "aab5f3af7503e95600d71310e34bac89d7a5fb751a3b0d2041917e10ebde8303",
+        "status": "partial",
+        "expected_count": 5,
+        "valid_count": 0,
+        "attempt_count": 15,
+        "raw_response_hash": null,
+        "provider": "groq",
+        "model": "groq/compound-mini",
+        "last_error": "groq/compound-mini error: LIMITER_REFUSED"
+      }
+    ],
+    "tickets": [],
+    "artifacts": [],
+    "projection": {
+      "collections": {
+        "polymath_document_parent_maps_embed_e794ec4cab197a3f": 0
+      },
+      "total": 0,
+      "error": null
+    },
+    "limiter": {}
+  },
+  "executed": true,
+  "minted": {
+    "run_id": "run_6f829effbd730164e4778e3efb5a310324acd3a9bf0043ca0f3dbb17b3f6d9c9",
+    "ticket_id": "tkt_cf1316924ed10d28810dee889df9fafa7779085a",
+    "corpus_id": "cinema"
+  },
+  "wall_s": 420.8,
+  "after": {
+    "at": "2026-09-11T03:15:20.626612+00:00",
+    "maps_active": 5,
+    "maps_total": 5,
+    "map_ids": [
+      "4d83b76351b24178f85dd6f52cec54e559066fe105eafb386929e087960d65da",
+      "513d0aaf164ecf1f00637480c5e9475fb5a20babe43ef24f41a4ceb73ed542a5",
+      "97090d8860552d7dcceb86de7b73605b15857695832084f0c84d21c77a9c25c2",
+      "990f3a6d99c261a115817ee3e80ab1e5d293d1b8f310dfc76fda5ccb40efa3b4",
+      "ab85b608b41c2537f781a6efe3f0c081e27c953a32b079ddf4058c16d6f80f30"
+    ],
+    "mapped_parent_ids": [
+      "chunk_5fe76dfc8c84ab8342f2fb8cedbf6be4da5cd1aa05146c41d06ad8415a86dbcb",
+      "chunk_b11b26be653c964e213f0a1bf3f231513f44852eff4482b9a4c1cea74771abd5",
+      "chunk_c11ffb0bfa66893e7b10dc14b90d6eb4d891536854815fa9117abf71a1384239",
+      "chunk_d587c11f3d27f88f878c523178f8dd2a116d63c44ee4f0f6486aeaf9ea2d4c6f",
+      "chunk_f5f9c350f84de0f87469552897851e54dc35f589b882a78c3ea2172f2aaabaa7"
+    ],
+    "batches": [
+      {
+        "batch_id": "50dae640a62512af2e3a2c6ff8ffbbff12fc19ba3b49f9b22a5f898d79119a0e",
+        "status": "done",
+        "expected_count": 5,
+        "valid_count": 5,
+        "attempt_count": 1,
+        "raw_response_hash": "0fc38dc21222380638ffc1c303b43f634f9f8696e923c09599983bf968daa3fb",
+        "provider": "groq",
+        "model": null,
+        "last_error": null
+      },
+      {
+        "batch_id": "b69d4d2de81aaed6b15904cbe41ab206ce9bd3d80449f2ba89ff9900fe7b18e0",
+        "status": "partial",
+        "expected_count": 5,
+        "valid_count": 0,
+        "attempt_count": 18,
+        "raw_response_hash": null,
+        "provider": "groq",
+        "model": "groq/compound-mini",
+        "last_error": "groq/compound-mini error: LIMITER_REFUSED"
+      },
+      {
+        "batch_id": "aab5f3af7503e95600d71310e34bac89d7a5fb751a3b0d2041917e10ebde8303",
+        "status": "partial",
+        "expected_count": 5,
+        "valid_count": 0,
+        "attempt_count": 15,
+        "raw_response_hash": null,
+        "provider": "groq",
+        "model": "groq/compound-mini",
+        "last_error": "groq/compound-mini error: LIMITER_REFUSED"
+      }
+    ],
+    "tickets": [
+      {
+        "ticket_id": "tkt_cf1316924ed10d28810dee889df9fafa7779085a",
+        "status": "ready",
+        "attempt": 1,
+        "last_error_note": "RuntimeError: DOC_PARENT_MAP_INCOMPLETE: unresolved=0 partial=2 refusals=0 http_fail=0"
+      }
+    ],
+    "artifacts": [
+      {
+        "doc_id": "doc_6a5301e0043db44f0aed09800e82362afa2e74eec45f5f971f0dbe925c0f2743",
+        "complete": false,
+        "http_429": 0,
+        "corpus_id": "cinema",
+        "projection": {
+          "points": 5,
+          "point_ids": [
+            "05267190-f91d-599c-9664-3f303c7a5453",
+            "f2982e03-47fd-5b2a-bf5f-1438dea81cb6",
+            "586060d3-b382-5748-b9a7-f49b4f1aa841",
+            "a8a2d3d8-7286-5d2f-874d-0da1dc3224ee",
+            "a781a634-3aae-5a04-9348-827ad941bb58"
+          ],
+          "collection": "polymath_document_parent_maps_embed_e794ec4cab197a3f",
+          "projection": "parent-map-projection-v1",
+          "map_contract": "map-compiler-v1",
+          "texts_embedded": 5,
+          "projection_hash": "a1806cd2f3f6b9d69fcd12213818871bad26457fa59a4c2b679c4b9a6c1f5553",
+          "created_collection": false,
+          "embedding_contract": "embed_e794ec4cab197a3f"
+        },
+        "unresolved": 0,
+        "batches_done": 1,
+        "map_contract": "map-compiler-v1",
+        "batches_total": 1,
+        "http_failures": 0,
+        "grounding_hash": "c00197d70e516bf5ccd2778eb9f613eb0a7900efb3a1cb52c31244d842b166da",
+        "parents_mapped": 5,
+        "batches_partial": 2,
+        "http_dispatches": 1,
+        "reliability_cap": 15,
+        "compiler_invalid": 0,
+        "compiler_partial": 0,
+        "eligible_parents": 5,
+        "excluded_parents": 0,
+        "limiter_refusals": 0,
+        "compiler_complete": 1,
+        "empty_completions": 0,
+        "grounding_version": "grounding-context-v1",
+        "parents_newly_mapped": 5
+      }
+    ],
+    "projection": {
+      "collections": {
+        "polymath_document_parent_maps_embed_e794ec4cab197a3f": 5
+      },
+      "total": 5,
+      "error": null
+    },
+    "limiter": {}
+  },
+  "reconciliation": {
+    "requested_parents": 5,
+    "eligible_parents": 5,
+    "excluded_parents": 0,
+    "http_dispatches": 1,
+    "limiter_refusals": 0,
+    "http_429": 0,
+    "http_failures": 0,
+    "empty_completions": 0,
+    "compiler_complete": 1,
+    "compiler_partial": 0,
+    "compiler_invalid": 0,
+    "maps_returned": 5,
+    "maps_persisted_delta": 5,
+    "maps_projected_delta": 5,
+    "parents_mapped": 5,
+    "errors": null,
+    "provider": "groq",
+    "model": null,
+    "attempts": 1,
+    "limiter_day_count_delta": {},
+    "new_map_ids": [
+      "4d83b76351b24178f85dd6f52cec54e559066fe105eafb386929e087960d65da",
+      "513d0aaf164ecf1f00637480c5e9475fb5a20babe43ef24f41a4ceb73ed542a5",
+      "97090d8860552d7dcceb86de7b73605b15857695832084f0c84d21c77a9c25c2",
+      "990f3a6d99c261a115817ee3e80ab1e5d293d1b8f310dfc76fda5ccb40efa3b4",
+      "ab85b608b41c2537f781a6efe3f0c081e27c953a32b079ddf4058c16d6f80f30"
+    ],
+    "checks": {
+      "requested_equals_eligible": true,
+      "returned_equals_persisted": true,
+      "persisted_equals_projected": true,
+      "dispatch_fully_accounted": true,
+      "limiter_matches_dispatch": false,
+      "no_unresolved_left": true
+    },
+    "reconciles": false
+  }
+}
