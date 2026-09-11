@@ -29,6 +29,7 @@ runtime.
 from __future__ import annotations
 
 import logging
+import os
 import re
 import threading
 import time
@@ -87,6 +88,12 @@ class ProviderLimit:
         merged = {**base.__dict__,
                   **{k: v for k, v in (cfg or {}).items() if k in known}}
         return cls(**merged)
+
+
+def _utc_iso() -> str:
+    """RPD-DURABILITY-V1 (D-4): UTC wall-clock stamp for the durable row. The day
+    bucket itself is already UTC (`time.gmtime`), so the two agree by construction."""
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
 
 def _now() -> float:
@@ -432,6 +439,14 @@ class AdaptiveLimiter:
         self._provider_rpd_limit: float | None = None
         self._provider_rpd_remaining: float | None = None
         self._provider_rpd_reset_at: float | None = None   # monotonic epoch end
+        # RPD-DURABILITY-V1 (D-4): the day counter must survive a restart, not only
+        # an AIMD move. `_emit_change()` fires when the controller CHANGES SHAPE, so a
+        # lane that runs steadily at concurrency 1 and never adapts (exactly the pMAP
+        # lanes) persisted nothing — `day_count` lived in memory and died with the
+        # worker. These track a coalesced persist of the counter itself.
+        self._last_dispatch_at: str | None = None
+        self._last_rpd_persist_mono: float = 0.0
+        self._rpd_dirty: bool = False
 
     # -- durable state -----------------------------------------------------
 
@@ -441,6 +456,12 @@ class AdaptiveLimiter:
                     "floor": self._floor, "ceiling": self._ceil,
                     "increases": self._increases, "decreases": self._decreases,
                     "day": self._day, "day_count": self._day_count,
+                    # RPD-DURABILITY-V1 (D-4): when this lane last DISPATCHED, so a
+                    # restart can reconcile "day/window + dispatch count + last update"
+                    # from durable truth. The lane is the row key and its account/
+                    # function come from the LANE REGISTRY join (never duplicated here,
+                    # and never a secret).
+                    "last_dispatch_at": self._last_dispatch_at,
                     "adopted_rpm": self._adopted_rpm,
                     "adopted_tpm": self._adopted_tpm,
                     # provider truth (observed from headers; not restored — it is
@@ -497,6 +518,11 @@ class AdaptiveLimiter:
             if state.get("day") == today:
                 self._day, self._day_count = today, int(
                     state.get("day_count", 0) or 0)
+                # RPD-DURABILITY-V1 (D-4): the next dispatch continues from durable
+                # truth. A row from a PREVIOUS day is deliberately not restored — the
+                # daily budget resets, and carrying it over would refuse live capacity.
+                lda = state.get("last_dispatch_at")
+                self._last_dispatch_at = str(lda) if lda else None
             for attr, bucket in (("adopted_rpm", self._rpm),
                                  ("adopted_tpm", self._tpm)):
                 val = state.get(attr)
@@ -600,13 +626,49 @@ class AdaptiveLimiter:
                         reason = REFUSE_RPD      # local daily safety cap spent
                     else:
                         self._day_count += 1
+                        # RPD-DURABILITY-V1 (D-4): admission is the dispatch moment.
+                        self._last_dispatch_at = _utc_iso()
+                        self._rpd_dirty = True
                 if reason == REFUSE_RPD:
                     self._refund_rate(est_tokens)
             if reason is not None:
                 self._sem.release()
                 self._breaker.release_probe()
                 return LimiterDecision(False, reason)
+        # RPD-DURABILITY-V1 (D-4): persist the day counter OUTSIDE the lock, on the
+        # admitted path only (a refusal consumes no provider request, so it moves no
+        # counter). Coalesced — see _persist_rpd_if_due.
+        self._persist_rpd_if_due()
         return LimiterDecision(True)
+
+    #: RPD-DURABILITY-V1 (D-4) coalescing window. A write per dispatch would put a
+    #: Postgres round trip in the admission path of every extraction call; a window
+    #: keeps the store's "writes are rare" contract while bounding what an abrupt
+    #: kill can lose to at most this many seconds of dispatches on ONE lane. The
+    #: durable row is therefore a LOWER BOUND on today's dispatches, never an
+    #: over-count — which is the safe direction for a budget.
+    RPD_PERSIST_MIN_INTERVAL_S: float = 1.0
+
+    def _persist_rpd_if_due(self, *, force: bool = False) -> None:
+        cb = self._on_change
+        if cb is None:
+            return
+        with self._lock:
+            if not self._rpd_dirty:
+                return
+            now = _now()
+            if not force and (now - self._last_rpd_persist_mono) < self.RPD_PERSIST_MIN_INTERVAL_S:
+                return
+            self._last_rpd_persist_mono = now
+            self._rpd_dirty = False
+        try:
+            cb(self.state())          # outside the lock: does I/O
+        except Exception:             # noqa: BLE001 — accounting must never block a call
+            log.debug("rpd persist failed for %s; continuing in-memory", self.name)
+
+    def flush_rpd(self) -> None:
+        """Force the coalesced counter out (shutdown / end of a bounded run)."""
+        self._persist_rpd_if_due(force=True)
 
     def _refund_rate(self, est_tokens: float) -> None:
         """Hand back the rpm/tpm tokens taken for a call that will not be made."""
@@ -843,6 +905,34 @@ class LimiterRegistry:
     def store_attached(self) -> bool:
         return self._store is not None
 
+    def ensure_store(self) -> None:
+        """RPD-DURABILITY-V1 (D-4): make durability a property of the REGISTRY, not of
+        one caller.
+
+        Before this, the only attach site was `workers.llm_provider.
+        _ensure_controller_store()`. The extract worker goes through that module, so its
+        Gemini/NVIDIA lanes persisted. The pMAP stage worker uses the SHARED
+        `LLMExtractionClient` directly and never imports `workers.llm_provider`, so in
+        that process no store was ever attached, `_on_change` stayed None, and every
+        pMAP dispatch was accounted only in memory — measured 2026-09-10: zero
+        `llm_controller_state` rows for `map_groq2..6` despite thousands of dispatches.
+
+        Attaching here means every consumer of the one registry (extract, pMAP,
+        doc_profile, chat compiler) gets the same durable accounting with no per-caller
+        wiring to forget. Idempotent, and fail-soft exactly like the store itself: no
+        DSN or no table means one warning and in-memory operation, never a blocked call.
+        """
+        if self._store is not None:
+            return
+        dsn = os.environ.get("POLYMATH_PG_DSN", "").strip()
+        if not dsn:
+            return
+        try:
+            from polymath_shared.llm_extraction.state_store import PostgresControllerStore
+            self.attach_store(PostgresControllerStore(dsn))
+        except Exception:  # noqa: BLE001 — accounting must never block extraction
+            log.debug("controller store unavailable; continuing in-memory")
+
     def attach_store(self, store: ControllerStore) -> None:
         """Attach durable state; lanes created earlier are restored now."""
         with self._lock:
@@ -860,6 +950,7 @@ class LimiterRegistry:
         controller._on_change = lambda state, _k=key: store.save(_k, state)
 
     def lane(self, provider: str, key: str, spec: ProviderLimit) -> AdaptiveLimiter:
+        self.ensure_store()          # RPD-DURABILITY-V1 (D-4): durable by default
         k = (provider, key or "default")
         with self._lock:
             if k not in self._lanes:
@@ -876,6 +967,7 @@ class LimiterRegistry:
 
     def budget(self, key: str, *, seed: int, floor: int, ceiling: int,
                step: int) -> AdaptiveBudget:
+        self.ensure_store()          # RPD-DURABILITY-V1 (D-4)
         with self._lock:
             if key not in self._budgets:
                 budget = AdaptiveBudget(key, seed=seed, floor=floor,

@@ -105,7 +105,35 @@ class MappingOutcome:
 
     @property
     def complete(self) -> bool:
-        return not self.unresolved_parent_ids and self.batches_partial == 0
+        """COMPLETION-TRUTH-V1 (D-3, owner directive 2026-09-10).
+
+        Completion authority is CURRENT DURABLE STATE, not batch bookkeeping:
+
+            eligible - mapped - explicitly excluded  ==  unresolved  ==  0
+
+        `unresolved_parent_ids` is derived at the end of the run from
+        `active_parent_ids()` — i.e. read back from `document_parent_maps` — so it
+        already IS that subtraction over durable rows.
+
+        This deliberately no longer consults `batches_partial`. That term was both
+        redundant and wrong:
+
+          * redundant for a LIVE partial — a batch that dispatched and mapped only
+            some of its parents leaves those parents in `unresolved_parent_ids`, so
+            the first clause already returns False;
+          * wrong for a STALE partial — a historical row that never dispatched
+            (`raw_response_hash IS NULL`) kept `complete` False forever even after
+            every eligible parent was mapped AND projected. Measured 2026-09-10
+            (U2-PERSISTENCE-CANARY-V1): a document with 5 eligible / 5 mapped /
+            5 projected / 0 unresolved raised
+            `DOC_PARENT_MAP_INCOMPLETE: unresolved=0 partial=2` and re-armed its
+            ticket — a successful document reporting failure, which at cinema scale
+            would make a backfill report failures on documents it had completed.
+
+        `batches_partial` is still recorded on the outcome and in the stage receipt;
+        it is diagnostic, not the completion authority.
+        """
+        return not self.unresolved_parent_ids
 
     @property
     def parents_newly_mapped(self) -> int:
