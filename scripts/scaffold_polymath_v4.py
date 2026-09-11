@@ -436,6 +436,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/u2-persistence-canary-2026-09-10/postfix/canary-result.json", "json", None),
     ("docs/wiki/experiments/u2-persistence-canary-2026-09-10/postfix2/canary-result.json", "json", None),
     ("docs/wiki/experiments/u2-persistence-canary-2026-09-10/final/canary-result.json", "json", None),
+    ("docs/wiki/experiments/u2-persistence-canary-2026-09-10/RELEASE-GATE.md", "md", None),
     ("docs/wiki/experiments/u2-groq-map-forensic-probe-2026-09-10/preflight.json", "json", None),
     ("docs/wiki/experiments/u2-groq-map-forensic-probe-2026-09-10/batch-benchmark.json", "json", None),
     ("docs/wiki/experiments/u2-groq-map-forensic-probe-2026-09-10/per-account-rpd.json", "json", None),
