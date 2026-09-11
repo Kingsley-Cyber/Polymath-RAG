@@ -40,37 +40,44 @@ def test_stage_is_wired_non_blocking_for_rollout_phase_a():
 
 
 def test_profile_pool_is_pinned_and_isolated_in_config():
+    """PROVIDER-LANE-REASSIGNMENT-V1 (11.193): doc_profile is ONE dedicated Groq account
+    (GROQ_API_KEY_1, groq/compound) plus an OpenRouter fallback. The other five Groq
+    accounts left doc_profile for pMAP, and the Gemini profile fallbacks were retired
+    when Google moved to graph extraction.
+    """
     d = json.loads((ROOT / "config/cloud_providers.json").read_text())
-    groq = [f"profile_groq{i}" for i in range(1, 7)]
-    fallbacks = ["profile_fallback_gemini1", "profile_fallback_gemini2", "profile_fallback_openrouter"]
-    assert d["stage_pins"]["doc_profile"] == groq + fallbacks                                  # tier 0 first, fallbacks last
     eps = {e["name"]: e for e in d["providers"]}
-    for n in groq + fallbacks:
-        assert eps[n]["enabled"] and eps[n]["dedicated"] and eps[n]["structured"] == "text"   # plain-text labels: the client sends NO response_format (Groq 400s json_object without the word "json")
-    assert all(eps[n]["url"] == "https://api.groq.com/openai" and eps[n]["model"] == "groq/compound" for n in groq)
-    assert [eps[n]["api_key_env"] for n in groq] == [f"GROQ_API_KEY_{i}" for i in range(1, 7)]  # six DISTINCT dedicated keys
-    map_lanes = [f"map_groq{i}" for i in range(1, 7)]                                           # S7b compound-mini lanes
-    other_envs = {e["api_key_env"] for e in d["providers"] if e["name"] not in groq + fallbacks + map_lanes}
-    assert not ({eps[n]["api_key_env"] for n in groq} & other_envs)                            # tier 0 isolated from UNRELATED providers
-    # S7 shared budget: map_groq{i} (compound-mini, doc_parent_map) deliberately SHARES account i's key
-    # with profile_groq{i} (compound) — one account, both models draw down the one budget.
-    assert [eps[n]["api_key_env"] for n in map_lanes] == [f"GROQ_API_KEY_{i}" for i in range(1, 7)]
-    # fallbacks may share PROVIDER keys with enrichment (every Gemini / OpenRouter key is in use) — they see only
-    # tier-0 failures and carry their own limiter rows; that is the documented compromise, pinned here
+    tier0 = ["profile_groq1"]
+    fallbacks = ["profile_fallback_openrouter"]
+    assert d["stage_pins"]["doc_profile"] == tier0 + fallbacks        # tier 0 first, fallback last
+    for n in tier0 + fallbacks:
+        # plain-text labels: the client sends NO response_format (Groq 400s json_object
+        # unless the prompt contains the word "json")
+        assert eps[n]["enabled"] and eps[n]["dedicated"] and eps[n]["structured"] == "text"
+    assert eps["profile_groq1"]["url"] == "https://api.groq.com/openai"
+    assert eps["profile_groq1"]["model"] == "groq/compound"
+    assert eps["profile_groq1"]["api_key_env"] == "GROQ_API_KEY_1"
+    # ISOLATION: the doc_profile account is used by NO other enabled lane.
+    others = {e["api_key_env"] for e in d["providers"]
+              if e["name"] not in tier0 + fallbacks and e.get("enabled") is not False}
+    assert "GROQ_API_KEY_1" not in others
+    # superseded lanes are DISABLED, not deleted (rollback stays possible)
+    for n in [f"profile_groq{i}" for i in range(2, 7)] + ["profile_fallback_gemini1",
+                                                          "profile_fallback_gemini2"]:
+        assert eps[n]["enabled"] is False
     assert all("fallback" in n for n in fallbacks)
     lim = (ROOT / "config/extraction_models/limiter.yaml").read_text()
-    for n in groq + fallbacks:
+    for n in tier0 + fallbacks:
         assert f"  {n}:" in lim
-    assert not (set(d["stage_pins"]["chat_compiler"]) & set(groq + fallbacks))
-    assert W.lane_order(d["stage_pins"]["doc_profile"], "run_x")[-3:] == fallbacks
+    assert not (set(d["stage_pins"]["chat_compiler"]) & set(tier0 + fallbacks))
+    assert W.lane_order(d["stage_pins"]["doc_profile"], "run_x")[-1:] == fallbacks
+    # all six Groq accounts remain documented even though five now serve pMAP
     ex = (ROOT / ".env.example").read_text()
     assert all(f"GROQ_API_KEY_{i}=" in ex for i in range(1, 7))
 
 
 # ── the worker against Postgres ──────────────────────────────────────────────
 CORPUS = "dp-stage-test"
-
-
 def _db():
     from polymath_shared.db import tx
     return tx

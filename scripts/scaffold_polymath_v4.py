@@ -418,6 +418,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-10-frontend-v2-f0-contract-inventory.md", "md", None),
     ("docs/wiki/work-log/2026-09-10-u2-forensic-closure-audit.md", "md", None),
     ("docs/wiki/work-log/2026-09-10-dormant-backlog-classification.md", "md", None),
+    ("docs/wiki/work-log/2026-09-10-lane-contract-tests-realigned.md", "md", None),
     ("docs/wiki/experiments/u2-groq-map-forensic-probe-2026-09-10/README.md", "md", None),
     ("docs/wiki/experiments/u2-forensic-closure-audit-2026-09-10/README.md", "md", None),
     ("docs/wiki/experiments/u2-forensic-closure-audit-2026-09-10/closure-audit.json", "json", None),

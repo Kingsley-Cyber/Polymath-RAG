@@ -20,8 +20,12 @@ def test_functional_pools_map_to_their_pins() -> None:
     prof = {l.name for l in by_fn.get(LR.DOCUMENT_PROFILE, [])}
     pmap = {l.name for l in by_fn.get(LR.PMAP, [])}
     chat = {l.name for l in by_fn.get(LR.CHAT, [])}
-    assert {"profile_groq1", "profile_groq6"} <= prof
-    assert {"map_groq1", "map_groq6"} <= pmap
+    # PROVIDER-LANE-REASSIGNMENT-V1 (11.193): the six Groq accounts are DE-SHARED —
+    # GROQ_API_KEY_1 serves doc_profile ONLY, KEY_2..6 serve pMAP ONLY.
+    assert {"profile_groq1", "profile_fallback_openrouter"} <= prof
+    assert {"map_groq2", "map_groq6", "map_fallback_openrouter"} <= pmap
+    assert "map_groq1" not in pmap        # retired with the de-sharing
+    assert "profile_groq6" not in prof    # ditto
     assert any(n.startswith("compiler") for n in chat)
     # GRAPH_EXTRACTION is the unpinned ring: siliconflow (dedicated:false) lands there.
     graph = {l.name for l in by_fn.get(LR.GRAPH_EXTRACTION, [])}
@@ -31,17 +35,24 @@ def test_functional_pools_map_to_their_pins() -> None:
 def test_one_key_one_account_and_groq_sharing_is_visible() -> None:
     reg = _reg()
     lanes = {l.name: l for l in reg.lanes}
-    prof1, map1 = lanes["profile_groq1"], lanes["map_groq1"]
+    prof1, map2 = lanes["profile_groq1"], lanes["map_groq2"]
     # distinct lanes / models / functions...
-    assert prof1.name != map1.name
-    assert prof1.model != map1.model
-    assert prof1.function == LR.DOCUMENT_PROFILE and map1.function == LR.PMAP
-    # ...but the SAME account (one key = one account lane, plan §1.5).
-    assert prof1.account_id == map1.account_id == "GROQ_API_KEY_1"
-    # the explicit Groq exception is surfaced in the by-account audit.
-    shared = reg.shared_accounts()
-    assert "GROQ_API_KEY_1" in shared
-    assert shared["GROQ_API_KEY_1"] == {LR.DOCUMENT_PROFILE, LR.PMAP}
+    assert prof1.name != map2.name
+    assert prof1.model != map2.model
+    assert prof1.function == LR.DOCUMENT_PROFILE and map2.function == LR.PMAP
+    # PROVIDER-LANE-REASSIGNMENT-V1 (11.193) INVERTED the old S7 shared-budget rule:
+    # each Groq account now serves EXACTLY ONE function. One key = one account = one function.
+    assert prof1.account_id == "GROQ_API_KEY_1"
+    assert map2.account_id == "GROQ_API_KEY_2"
+    assert prof1.account_id != map2.account_id
+    # No ENABLED lane pair may share one account across two PERMANENT functions.
+    PERMANENT = {LR.GRAPH_EXTRACTION, LR.DOCUMENT_PROFILE, LR.PMAP, LR.CHAT}
+    by_acct: dict[str, set] = {}
+    for l in reg.lanes:
+        if l.enabled and l.function in PERMANENT and l.api_key_env:
+            by_acct.setdefault(l.api_key_env, set()).add(l.function)
+    straddlers = {a: fns for a, fns in by_acct.items() if len(fns) > 1}
+    assert not straddlers, f"account shared across permanent functions: {straddlers}"
 
 
 def test_distinct_keys_are_distinct_accounts() -> None:
@@ -66,10 +77,12 @@ def test_groq_accounts_carry_distinct_isolation_families() -> None:
 def test_configured_fallback_lanes_are_present_and_labelled() -> None:
     by_fn = _reg().by_function()
     prof = {l.name: l for l in by_fn.get(LR.DOCUMENT_PROFILE, [])}
-    assert "profile_fallback_gemini1" in prof
-    assert prof["profile_fallback_gemini1"].role == "fallback"
+    # 11.193 retired the Gemini profile fallbacks (Google went to graph extraction);
+    # OpenRouter mistral-small is the doc_profile fallback tier.
+    assert "profile_fallback_gemini1" not in prof
     # a fallback is a real reachable lane in the pool, not sliced out of the path.
     assert "profile_fallback_openrouter" in prof
+    assert prof["profile_fallback_openrouter"].role == "fallback"
 
 
 def test_reachability_partitions_every_lane() -> None:
@@ -144,8 +157,12 @@ def test_inventory_flags_dark_pool_when_no_credentials(monkeypatch) -> None:
 
 def test_pmap_pool_batch_cap_is_min_over_active_lanes() -> None:
     reg = _reg()
-    # config declares map_batch_cap=15 on the six compound-mini pMAP lanes.
+    # config declares map_batch_cap=15 on the FIVE compound-mini pMAP lanes (11.193
+    # de-shared GROQ_API_KEY_1 to doc_profile); the OpenRouter last-resort fallback
+    # declares no cap, and the pool cap is the min over lanes that DO declare one.
     caps = {l.name: l.map_batch_cap for l in reg.by_function()[LR.PMAP]}
-    assert all(c == 15 for c in caps.values())
+    groq_caps = {n: c for n, c in caps.items() if n.startswith("map_groq")}
+    assert len(groq_caps) == 5 and all(c == 15 for c in groq_caps.values())
+    assert caps["map_fallback_openrouter"] is None
     assert LR.pmap_pool_batch_cap(reg) == 15
     assert LR.PMAP_DEFAULT_BATCH_CAP == 15
