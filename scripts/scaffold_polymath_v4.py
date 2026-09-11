@@ -412,6 +412,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("scripts/groq_map_forensic_probe.py", "py", None),
     ("docs/wiki/work-log/2026-09-10-u2-groq-map-forensic-probe.md", "md", None),
     ("docs/wiki/work-log/2026-09-10-provider-lane-reassignment.md", "md", None),
+    ("docs/wiki/work-log/2026-09-10-orphaned-dedicated-lanes.md", "md", None),
     ("docs/wiki/experiments/u2-groq-map-forensic-probe-2026-09-10/README.md", "md", None),
     ("docs/wiki/experiments/u2-groq-map-forensic-probe-2026-09-10/preflight.json", "json", None),
     ("docs/wiki/experiments/u2-groq-map-forensic-probe-2026-09-10/batch-benchmark.json", "json", None),

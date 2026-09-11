@@ -68,7 +68,7 @@
       "api_key_env": "NVIDIA_API_KEY",
       "reasoning_effort": "none",
       "structured": "json",
-      "dedicated": true,
+      "dedicated": false,
       "request_char_budget": 60000
     },
     {
@@ -130,7 +130,7 @@
       "reasoning_effort": null,
       "structured": "schema",
       "api_key_env": "GEMINI_API_KEY_5",
-      "dedicated": true,
+      "dedicated": false,
       "request_char_budget": 120000
     },
     {
@@ -141,7 +141,7 @@
       "reasoning_effort": null,
       "structured": "schema",
       "api_key_env": "GEMINI_API_KEY_6",
-      "dedicated": true,
+      "dedicated": false,
       "request_char_budget": 120000
     },
     {
@@ -197,7 +197,7 @@
       "reasoning_effort": null,
       "structured": "schema",
       "request_char_budget": 120000,
-      "dedicated": true
+      "dedicated": false
     },
     {
       "name": "gemini6b",
@@ -208,7 +208,7 @@
       "reasoning_effort": null,
       "structured": "schema",
       "request_char_budget": 120000,
-      "dedicated": true
+      "dedicated": false
     },
     {
       "name": "openrouter1",
