@@ -106,9 +106,24 @@ FLEET: list = [
     ("doc_profile6", "workers.doc_profile_worker"),
     # DOC-PARENT-MAP AUTO-MINT (RAG-PIPELINE-FINISH): the pMAP stage worker. Idle until
     # POLYMATH_DOC_PARENT_MAP_ENABLED mints doc_parent_map.v1 events (flag off => no work,
-    # the slot simply parks). One slot: the worker's own infer closure fails over across
-    # the six map_groq accounts in-run, so one slot drains the pool.
+    # the slot simply parks).
+    #
+    # PMAP-SCALE-OUT-V1 (2026-09-11, MEASURED). One slot was chosen on the assumption that
+    # the pool is the constraint — "the worker's own infer closure fails over across the
+    # map_groq accounts in-run, so one slot drains the pool". The cinema backfill measured
+    # otherwise: 40 dispatches in ~70 minutes against 5 lanes x 2 rpm = 10/min available,
+    # i.e. ~6% provider utilisation. The constraint is the WORKER — one slot maps one
+    # document at a time and pays skeleton-build, batch-planning and projection-embed
+    # serially between dispatches.
+    #
+    # Four slots claim four DOCUMENTS concurrently (tickets are leased per document, so
+    # there is no double-mapping), which fits inside the lane budget rather than straining
+    # it. Autopilot still parks them all when no pMAP ticket is open, so the idle cost is
+    # unchanged. MAP_RELIABILITY_CAP is untouched.
     ("doc_parent_map", "workers.doc_parent_map_stage_worker"),
+    ("doc_parent_map2", "workers.doc_parent_map_stage_worker"),
+    ("doc_parent_map3", "workers.doc_parent_map_stage_worker"),
+    ("doc_parent_map4", "workers.doc_parent_map_stage_worker"),
 ]
 
 

@@ -431,6 +431,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-10-frontend-v2-f4-f5-f8-f9-f10.md", "md", None),
     ("docs/wiki/work-log/2026-09-11-d1-terminal-state-classifier.md", "md", None),
     ("docs/wiki/work-log/2026-09-11-frontend-v2-f6-f7-f9-f11.md", "md", None),
+    ("docs/wiki/work-log/2026-09-11-pmap-scale-out.md", "md", None),
     ("orchestrator/orchestrator/api/graph_browse.py", "py", None),
     ("orchestrator/orchestrator/api/compare_review.py", "py", None),
     ("tests/integration/test_frontend_v2_contracts.py", "py", None),

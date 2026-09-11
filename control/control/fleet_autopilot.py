@@ -173,6 +173,21 @@ def desired_slots(conn, known_slots: set[str]) -> tuple[set[str], dict]:
                          for i in range(2, min(int(n_dp), 6) + 1)]
                 _last_demand.update({s: now for s in extra})
                 slots = set(slots) | set(extra)
+            if lane == "doc_parent_map":
+                # PMAP-SCALE-OUT-V1 (2026-09-11, MEASURED on the cinema backfill):
+                # one pMAP slot ran at ~6% of provider capacity — 40 dispatches in
+                # ~70 minutes against 5 lanes x 2 rpm = 10/min available — because a
+                # worker maps ONE DOCUMENT at a time and pays skeleton-build, batch
+                # planning and projection-embed serially between dispatches. The
+                # constraint is the worker, not the pool. One worker per open
+                # doc_parent_map ticket, capped at FOUR: tickets are leased per
+                # document so there is no double-mapping, and four concurrent
+                # documents still fit inside the lane budget.
+                n_pm = _open_work(conn, ("doc_parent_map",))
+                extra = [f"doc_parent_map{i}"
+                         for i in range(2, min(int(n_pm), 4) + 1)]
+                _last_demand.update({s: now for s in extra})
+                slots = set(slots) | set(extra)
             if lane == "summary" and int(n) >= 2:
                 # SUMMARIES-SCALE-OUT-V1 (2026-09-02): ONE summaries worker
                 # serialized a run's enrichment (45–105 s per call on the
