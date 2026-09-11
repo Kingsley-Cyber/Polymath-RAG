@@ -126,3 +126,14 @@ if _UI_DIST.exists():
               name="generated")
     app.mount("/ui", StaticFiles(directory=str(_UI_DIST), html=True),
               name="ui")
+
+# FRONTEND-V2: serve the greenfield app at /v2 on the SAME port, beside the legacy /ui.
+# Until now V2 existed only on a vite dev port, so the owner's normal URL kept showing
+# the legacy app — the single-port product rule above is exactly what makes it visible.
+# Mounted independently of /ui so either can exist without the other, and /ui remains
+# the rollback reference (FRONTEND-V2-PLAN §0.1).
+_V2_DIST = Path(__file__).resolve().parents[2] / "frontend-v2" / "dist"
+if _V2_DIST.exists():
+    from fastapi.staticfiles import StaticFiles as _StaticFilesV2  # noqa: E402
+
+    app.mount("/v2", _StaticFilesV2(directory=str(_V2_DIST), html=True), name="v2")

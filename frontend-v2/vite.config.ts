@@ -30,6 +30,9 @@ export default defineConfig({
   server: {
     port: 5273,
     strictPort: true,
+    // Bind IPv4 too: vite defaults to [::1] only, so http://127.0.0.1:5273 was refused
+    // while http://localhost:5273 worked — a confusing failure when checking the app.
+    host: "127.0.0.1",
     proxy: Object.fromEntries(apiPaths.map((p) => [p, { target: BACKEND }])),
   },
 });
