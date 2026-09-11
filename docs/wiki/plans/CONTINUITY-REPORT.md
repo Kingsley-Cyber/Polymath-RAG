@@ -18,7 +18,83 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.189–11.193) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-10T20:35 — CUTOVER DEPLOYED: branch pushed · fleet bounced · G1+G2 PROVEN LIVE · orphaned-lane defect fixed)
+## Latest checkpoint (2026-09-10T21:05 — POST-CUTOVER: F0 done · U-2 hold NOT cleared · backlog classified · F1 blocked)
+
+**Branch `architecture/evidence-first-v5` @ `e53de37`; worktree clean; guards green; PUSHED (remote HEAD ==
+local HEAD, 0 ahead).** `main` untouched. Registers added this session: **11.194** (orphaned lanes),
+**11.195** (F0 inventory), **11.196** (U-2 closure audit), **11.197** (backlog classification).
+
+### RUNTIME (unchanged since 20:35 — both bounces done, nothing running)
+
+```
+REMOTE HEAD        e53de37 == local
+LIVE BUNDLE        f0db5412e473820e   (one hash, 13 workers / 10 types, 0 quarantined, 7 autopilot-parked)
+/retrieve ENGINE   chat-retrieval-v2 / candidate-retrieval-v1, 15 rows, degraded=[]   (was hybrid-retrieval-v1, 10 rows)
+/chat ENGINE       chat-retrieval-v2, selected 15, 0 error frames
+GRAPH RING         18 lanes live (was 8 before the 11.194 fix)
+PMAP AUTO-MINT     rag-canary ONLY (ENABLED=1 + CORPUS=rag-canary; _SINCE deliberately UNSET)
+INTENT_POLICY      OFF     SYNTH_ROLES  OFF
+ready/leased tkts  0       pending backlog 253 (unchanged through both bounces)
+```
+
+### U-2 — **HOLD NOT CLEARED** (register 11.196, evidence `experiments/u2-forensic-closure-audit-2026-09-10/`)
+
+Audited the owner's SEVEN criteria against DURABLE state, zero provider requests, cinema untouched.
+**Criterion 6 (maps returned vs persisted) was closed HERE, not by the probe** — the probe wrote nothing to the
+DB by design. Parent-level: **2,312 returned → 2,312 persisted active rows, 0 batches short**; the naive
+batch-level Δ735 is batch RE-IDENTITY (`grounding_hash` rebinds `batch_id`) against dedupe on
+`(doc,parent,contract)` (active rows 1,577 == distinct triples 1,577). **Criterion 5 is stronger than assumed:
+REAL-parent yield = 1.000** across all 134 `done` batches (16.5 maps/batch); the 937 `partial` batches' 0.005 is
+the LOCAL refusal cascade (14,617 attempts, 0 HTTP), not the model.
+
+**Two defects block closure:**
+- **D-1 (criteria 1 + 7):** 3 of 926 terminally-`LIMITER_REFUSED` batches carry a `raw_response_hash` with
+  `valid_count=0` — real provider consumption booked as a LOCAL refusal, breaking the invariant the control
+  plane depends on. One hash is `e3b0c44298fc1c14…` = SHA-256 of the EMPTY STRING. All three are
+  `expected_count=60` on REAL parents ⇒ independently corroborates 11.178 and the cap of 15. Magnitude 3/1,077
+  batches — moves NEITHER the RPD conclusion NOR the cinema-finish estimate, but the owner set completeness, not
+  plausibility, as the bar, so **waiving it is the owner's call, not the agent's.**
+- **D-2:** 6 batches frozen on leases expired **2026-09-09 04:54Z**, holding **90 parents**.
+
+The hold's PREMISE (RPD exhaustion) stays DISPROVEN. **No cinema canary was run** — the owner gated it on the
+hold clearing first. Path to closure: fix D-1 forward (classify terminal state by whether HTTP was dispatched ⇒
+`EMPTY_COMPLETION`, not `LIMITER_REFUSED`; worker code ⇒ fence ⇒ bounce), reap D-2 by pinned batch id, never
+rewrite the 3 historical rows, then re-audit or waive explicitly.
+
+### FRONTEND V2 — F0 COMPLETE, F1 BLOCKED
+
+`docs/wiki/plans/FRONTEND-V2-CONTRACT-INVENTORY-V1.md` (register 11.195), measured against the live app (39
+routes). Capabilities 1–6 and 9 are SERVED today (`answer.retrieval.arrivals` = per-chunk lane provenance,
+`lane_sizes` funnel, `graph_fact_count`/`graph_seeds`/`graph_bounds`). **The readiness triad is served AND the
+legacy boolean is disproven with data:** `cinema.query_ready = true` while SEMANTIC/VNEXT are INCOMPLETE with
+**14 of 67** documents ready and 10,176 unresolved parents; `rag-canary` is COMPLETE/COMPLETE, 10/10, 0
+unresolved. **Five gaps recorded, not papered over:** GAP-1 no single CONTROL-READY verdict · GAP-2 no
+retrieval-comparison contract (⇒ **F6 blocked**) · GAP-3 no answer-REVIEW contract (⇒ **F7 blocked**) · GAP-4
+`control_plane.processing` has no age qualifier (cinema shows 64 dormant runs as processing) · GAP-5
+`/documents/summary` unpaginated.
+
+**F1 IS BLOCKED ON AN OWNER GATE: the approved greenfield design document does not exist** in
+`docs/wiki/plans/`, `docs/wiki/reports/` or `~/Downloads` (searched 2026-09-10). The owner's F0–F12 phase list
+and capability list settle F0 but not F1's information architecture / navigation / design system.
+
+### DORMANT BACKLOG — CLASSIFIED, NOT SWEPT (register 11.197)
+
+`docs/wiki/plans/DORMANT-BACKLOG-CLASSIFICATION-V1.md`. 70 open runs = 66 **HELD** + 4 **ORPHANED**; **none
+SUPERSEDED** (no open run's `source_name` has a `query_ready` twin ⇒ cancelling one abandons a document).
+**107 of 253 pending tickets (42%) are owed to a RETIRING subsystem** (`corpus_summary`/`document_summary`/
+`parent_summary` → STOP WRITER → RETIRE, cutover §68) — a blanket requeue would spend quota on state scheduled
+for deletion. `vocabulary` (41) is NOT legacy (read by the final core). 5 cinema `project_qdrant` failures are
+the cheapest real repair (local, zero spend); the 3 d7-h1-test intake failures are ORPHANED and unrepairable by
+design (`LEGACY_EVENT_UNRECOVERABLE … missing ['source_name']`). **Nothing requeued, nothing cancelled.**
+
+### NEXT ACTION
+
+Owner decisions: (a) the greenfield design doc for F1; (b) D-1 — fix-then-reaudit, or clear the hold accepting
+it as a known bounded exception; (c) whether GAP-2/GAP-3 backend contracts get built (F6/F7 depend on them);
+(d) backlog dispositions (all pinned by ticket id, never a status sweep). Non-gated work available now:
+GAP-4's age qualifier, and the 5 `project_qdrant` repairs.
+
+## Prior checkpoint (2026-09-10T20:35 — CUTOVER DEPLOYED: pushed · bounced · G1+G2 proven live · orphaned-lane fix)
 
 **Branch `architecture/evidence-first-v5` @ `820ceeb`; worktree clean; guards green (`agent_preflight` ok ·
 `repo_guard` ok · `wiki_worm` ok · `bundle_integrity` READY). PUSHED to origin (owner-authorized 2026-09-10):
