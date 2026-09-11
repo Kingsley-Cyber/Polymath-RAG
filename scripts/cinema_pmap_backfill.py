@@ -180,15 +180,20 @@ def main() -> int:
             minted.append({"doc_id": doc_id, "run_id": run_id, "unresolved": int(unresolved),
                            "ticket_id": m["ticket_id"]})
         time.sleep(a.settle)
-        # let the wave drain
-        for _ in range(90):
+        # KEEP THE QUEUE FED. Waiting for the queue to hit ZERO before minting the next
+        # wave starves the workers on every tail: autopilot sizes the pMAP pool to the
+        # number of OPEN tickets (cap 4), so as a wave drains to 1-2 tickets it parks
+        # workers, and throughput collapses right before the refill. Top up as soon as
+        # the queue falls below half a wave, so the pool stays saturated.
+        floor = max(2, a.wave // 2)
+        for _ in range(180):
             open_n = c.execute("""
                 SELECT COUNT(*) FROM stage_tickets
                  WHERE stage='doc_parent_map' AND corpus_id=%s AND status IN ('ready','leased')""",
                 (CORPUS,)).fetchone()[0]
-            if open_n == 0:
+            if open_n <= floor:
                 break
-            time.sleep(10)
+            time.sleep(5)
 
         cov = coverage(c)
         health = provider_health(c)
