@@ -18,7 +18,81 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.189–11.193) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-10T19:58 — BOOTSTRAP GAP AUDIT: live-vs-committed reconciled; everything parked at owner gates)
+## Latest checkpoint (2026-09-10T20:35 — CUTOVER DEPLOYED: branch pushed · fleet bounced · G1+G2 PROVEN LIVE · orphaned-lane defect fixed)
+
+**Branch `architecture/evidence-first-v5` @ `820ceeb`; worktree clean; guards green (`agent_preflight` ok ·
+`repo_guard` ok · `wiki_worm` ok · `bundle_integrity` READY). PUSHED to origin (owner-authorized 2026-09-10):
+remote HEAD == local HEAD, verified by `ls-remote`. `main` untouched.** Owner decisions 2026-09-10 executed:
+push ✓ · controlled bounce ✓ · canary-scoped pMAP preserved ✓ · INTENT_POLICY OFF ✓ · SYNTH_ROLES OFF ✓ ·
+gemma third graph lane DECLINED (convergence, not topology).
+
+### RUNTIME TRUTH (exercised, not inferred from timestamps)
+
+| Surface | Before bounce | After bounce |
+|---|---|---|
+| `/retrieve` HYBRID (rag-canary) | `plan_version=hybrid-retrieval-v1`, **10** rows | **`plan_version=chat-retrieval-v2`, `engine=candidate-retrieval-v1`, 15 rows, `degraded=[]`** |
+| `/retrieve` HYBRID (**cinema**, legacy/partial) | — | `chat-retrieval-v2`, 15 rows, `degraded=[]` (coverage-independent, as 11.191 predicted) |
+| `/chat/stream` | `engine=chat-retrieval-v2`, selected 15 | `engine=chat-retrieval-v2`, selected 15, 0 error frames |
+| public response shape | `evidence/meta/query/selected_documents/selected_sections/trace` | **identical** |
+
+**G1 (lane reassignment `5adb0f5`) LANDED** — `/control_plane/pool/*` now serves the new topology:
+DOCUMENT_PROFILE = `profile_groq1` + `profile_fallback_openrouter`; PMAP = `map_groq2–6` +
+`map_fallback_openrouter`; CHAT = `compiler_alibaba_qwen`/`_deepseek`/`compiler_ollama_gemma`/`compiler_alt`;
+GRAPH_EXTRACTION = **18 lanes**. Superseded lanes (`compiler1–4`, `map_groq1`, `profile_groq2–6`,
+`profile_fallback_gemini1/2`) verified ABSENT. **G2 (`6290fbc`) LANDED** — see the table.
+
+**DEFECT FOUND + FIXED DURING VERIFICATION (register 11.194, `820ceeb`).** The first post-bounce check showed the
+graph ring at **8** Google lanes, not the 12 that 11.193 declared. `gemini5/5b/6/6b` + `nvidia` were enabled,
+credentialed and ACTIVE but carried `"dedicated": true` while pinned to NO stage — and per DEDICATED-V1
+(`llm_extraction/pool.py:68-70`) a dedicated endpoint never joins the general sharding, so those five lanes
+dispatched **nothing**. They had been dedicated to the `profile_fallback_gemini1/2` lanes that `5adb0f5` disabled.
+11.193's validation checked the four PINS (0 dark) — a pin-side check cannot see an un-pinned dedicated lane, and
+`unreachable_pins()` skips `dedicated_unpinned` (`lane_registry.py:322`). Fixed by `"dedicated": false`; a second
+bounce proved **18 live graph lanes** (`gemini1–6`, `gemini1b–6b`, `nvidia`, `nvidia2`, `primary`,
+`siliconflow1–3`), 0 enabled+active lanes orphaned, `unreachable_pins()` NONE.
+
+### FLEET (after the second bounce)
+
+13 workers / 10 types, **ONE** bundle `f0db5412e473820e` (was `490f5bc5a21f00f6`), **0 quarantined**, 19 alive
+slots + 7 autopilot-PARKED (`doc_profile`,`doc_profile2–6`,`doc_parent_map` — demand-driven, not dead).
+`/ready` = `{ready:true, embedder:true, reranker:true, cloud-modal:false}`. Shutdown was clean both times
+(SIGTERM → 0 survivors, no ORCHESTRATOR-LIMBO uvicorn leak, no port held).
+
+### LIVE FLAGS (reconstructed deliberately, not inherited)
+
+```
+POLYMATH_AUTOPILOT=1                          (demand parking + per-tick budget gating)
+POLYMATH_DOC_PARENT_MAP_ENABLED=1             ) CANARY SCOPE ONLY — fresh rag-canary
+POLYMATH_DOC_PARENT_MAP_CORPUS=rag-canary     ) uploads auto-map; historical corpora NEVER swept
+POLYMATH_DOC_PARENT_MAP_SINCE                 NOT SET — deliberately. This is the GLOBAL
+                                              new-uploads-only production guard; setting it would
+                                              take pMAP beyond the canary corpus boundary.
+POLYMATH_RETRIEVE_ENGINE      unset ⇒ code default v2 (final core)   [v1 = rollback]
+POLYMATH_CHAT_INTENT_POLICY   unset ⇒ OFF (owner: stays off; UI may DISPLAY the classified intent)
+POLYMATH_CHAT_SYNTH_ROLES     unset ⇒ OFF (owner: stays off; UI may DISPLAY returned evidence roles)
+```
+
+### DORMANT BACKLOG — UNTOUCHED BY BOTH BOUNCES (verified)
+
+`pending` stage_tickets = **253 before and after**; ready/leased = **0** throughout. 70 runs remain in the
+fence-open set (cinema 64 + d7-h1-test 6, last updated 2026-09-07). Owner standing order: **classify by
+generation/function/corpus first** (valid owed · legacy owed · superseded · held · orphaned) — **no blind
+requeue, no blind cancellation, no status sweep.**
+
+### OPEN GATES
+
+- **U-2 forensic closure** — hold NOT yet cleared. Clearing requires ALL of: limiter admission vs actual HTTP
+  dispatch · per-account request accounting · provider headers/RPD evidence · retry accounting · compiler/MAP
+  yield · **maps returned vs maps persisted** · no unexplained dropped/unaccounted requests. "~247/250 looks
+  plausible" is explicitly NOT sufficient. If it closes → record `U-2 FORENSIC HOLD: CLEARED` + evidence path,
+  commit, then a bounded post-bounce cinema pMAP canary under the NEW provider assignment before any resumption.
+- **Frontend V2 (F0–F12)** — the priority, independent of cinema. Greenfield; do not modify the old frontend
+  except to keep it runnable. Readiness must be shown as three DISTINCT concepts — **CONTROL READY ·
+  SEMANTIC READY · VNEXT READY** — never the legacy `query_ready` boolean alone.
+- Graph ring throughput is NOT measured (no ingestion running). A future third graph lane needs a measured
+  ring-throughput number, not a lane count.
+
+## Prior checkpoint (2026-09-10T19:58 — BOOTSTRAP GAP AUDIT: live-vs-committed reconciled)
 
 **Branch `architecture/evidence-first-v5` @ `4722644`; worktree CLEAN; guards green (`agent_preflight` ok ·
 `repo_guard` ok · `wiki_worm --check` ok · `bundle_integrity` READY `v5-production-006-extraction-restored
