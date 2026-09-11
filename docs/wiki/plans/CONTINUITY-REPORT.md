@@ -18,7 +18,75 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.189–11.193) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-11T05:15 — U-2 CLEARED · D-3/D-4 fixed · V2 F1–F10 shipped)
+## Latest checkpoint (2026-09-11T22:45 — D-1 fixed · cinema backfill RUNNING · Frontend V2 F1–F12 COMPLETE)
+
+**Branch `architecture/evidence-first-v5` @ `844432c`; worktree clean; guards green; PUSHED (remote == local).**
+Registers this session: 11.194–11.208.
+
+### D-1 — FIXED (11.205)
+
+`classify_terminal_state()` in `doc_parent_map_worker.py`: six distinct outcomes —
+`LIMITER_REFUSED · HTTP_429 · PROVIDER_ERROR · PROVIDER_EMPTY · COMPILER_REJECTED · SUCCESS` — derived from
+**real dispatch metadata** (`exc.dispatched`, error class, body, compiler result), never from error text.
+`record_batch_result()` gained a **downgrade guard**: a `LIMITER_REFUSED` marker cannot overwrite a row that
+already carries a `raw_response_hash`, which is exactly the mechanism that produced D-1. **18 regression
+cases.** The live census now reads in the new vocabulary (`SUCCESS` on every recent batch).
+
+### D-2 — NOT A DEFECT (11.205)
+
+All 6 "frozen" batches evaluate **claimable** against `claim_batch`'s own predicate — an expired lease is
+already reclaimable (the dead-worker recovery path). They sat because **no `doc_parent_map` ticket existed for
+their runs**, so nothing ever attempted a claim. No lease surgery was performed; the backfill picks them up
+through the normal path.
+
+### CINEMA BACKFILL — RUNNING (`scripts/cinema_pmap_backfill.py`)
+
+```
+mapped 3,205 / 12,361 (25%)      unresolved 9,156      fully-mapped documents 27 / 67
+terminal states: SUCCESS only — no HTTP_429, no PROVIDER_EMPTY, no PROVIDER_ERROR, no LIMITER_REFUSED
+MAP_RELIABILITY_CAP 15 (untouched) · auto-mint still rag-canary only · INTENT_POLICY OFF · SYNTH_ROLES OFF
+```
+Two throughput constraints were found and fixed **by measurement, not assumption**:
+1. **PMAP-SCALE-OUT-V1 (11.207).** One slot ran at **~6% of provider capacity** (40 dispatches in 70 min
+   against 10/min available) — the constraint was the WORKER, not the pool. Four demand-scaled slots: **~4×**.
+2. **Queue starvation.** Waiting for the queue to reach zero before refilling parked workers on every tail
+   (autopilot sizes the pool to open tickets). The runner now tops up below half a wave.
+The constraint has now moved again — to the **shared MLX embedder**: one dispatch yields 15 maps, then 15
+projection embeddings, and four workers serialize on one Metal GPU. Expected, not a fault.
+
+**One stop condition fired, and it was MY false positive.** SC2 read `decreases > 0` (a LIFETIME AIMD counter)
+on rows whose `updated_at` was fresh — and RPD-DURABILITY-V1 (D-4) now rewrites the row on EVERY dispatch, so
+any lane that had ever backed off tripped it permanently. It halted a run whose terminal states were
+**SUCCESS × 170 and nothing else**. Rewritten to measure the DELTA since the run started, corroborated by the
+first-class `HTTP_429` terminal state D-1 provides. A stop condition that cannot tell history from now is worse
+than none.
+
+### FRONTEND V2 — F1–F12 COMPLETE (11.206, 11.208)
+
+Working screens: **Overview · Chat · Compare · Files · Graph · Control Plane**. Three ADDITIVE contracts closed
+the gaps: **GRAPH-BROWSE-V1** (source-attested by construction; unattested relationships withheld AND counted),
+**COMPARE-RETRIEVAL-V1** (one question, N modes, retrieval only, arms sequential and differing ONLY by mode),
+**ANSWER-REVIEW-V1** (evaluation only; no retrieval, no regeneration). F11 = 9 live integration tests.
+
+**F12 drove the whole flow in a browser and exposed three defects the build could not:**
+1. The receipt names a chunk **three ways** (`chunk_id` in `final_detail`/`legend`, `locator` in `chunks`), so
+   the evidence join matched NOTHING — the reviewer judged a well-cited answer against "0 cited passages" and
+   returned **0/5 UNSUPPORTED**, a confident verdict built from an empty input. One `chunkIdOf()` fixed it
+   (and the same latent bug in the Evidence Inspector).
+2. A route missing from the dev proxy is a **silent vite 404**. It bit twice, so a test now walks the live
+   `/openapi.json` against the proxy list — and immediately found two more uncovered routes.
+3. The reviewer returned an **empty body**: the documented DeepSeek-v4 thinking trap. It must travel as
+   `extra_body` (litellm rejects `thinking` as a top-level param for that route).
+
+Live now: compare 4039/590/2747 ms across three arms; review returns grounding 3 · correctness 2 ·
+completeness 1 · citation 3 · retrieval 5 · **PARTIALLY_SUPPORTED**.
+
+### NEXT
+
+Cinema to 100% (running). Then the owner's INTENT_POLICY OFF-vs-ON qualification on a covered corpus, then
+migration cleanup. Baseline determinism failures remain 5, all pre-existing and untouched by instruction.
+
+## Prior checkpoint (2026-09-11T05:15 — U-2 CLEARED · D-3/D-4 fixed · V2 F1–F10)
 
 **Branch `architecture/evidence-first-v5` @ `b154533`+; worktree clean; guards green; PUSHED (remote == local).**
 `main` untouched. Registers this session: 11.194–11.204.
