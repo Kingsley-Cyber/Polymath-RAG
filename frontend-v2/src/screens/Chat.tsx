@@ -4,7 +4,8 @@ import { useAsync } from "../lib/useAsync";
 import { PUBLIC_MODES } from "../lib/contracts";
 import type { PublicMode } from "../lib/contracts";
 import { newTurn, runTurn, type Turn } from "../lib/chat";
-import { LaneTable } from "../components/LaneTable";
+import { QueryTrace } from "../components/QueryTrace";
+import { EvidenceInspector } from "../components/EvidenceInspector";
 
 /**
  * F2 + F3 — Chat with corpus, retrieval mode, intent, model, reasoning and streaming.
@@ -148,12 +149,20 @@ function TurnView({ t }: { t: Turn }) {
       )}
 
       {t.receipt && (
-        <details style={{ marginTop: 12 }}>
-          <summary className="label" style={{ cursor: "pointer" }}>Query inspector</summary>
-          <div style={{ marginTop: 10 }}>
-            <LaneTable receipt={t.receipt} />
-          </div>
-        </details>
+        <>
+          <details style={{ marginTop: 12 }}>
+            <summary className="label" style={{ cursor: "pointer" }}>Query trace</summary>
+            <div style={{ marginTop: 10 }}>
+              <QueryTrace receipt={t.receipt} requestedMode={t.mode} />
+            </div>
+          </details>
+          <details style={{ marginTop: 8 }}>
+            <summary className="label" style={{ cursor: "pointer" }}>Evidence</summary>
+            <div style={{ marginTop: 10 }}>
+              <EvidenceInspector receipt={t.receipt} />
+            </div>
+          </details>
+        </>
       )}
     </div>
   );

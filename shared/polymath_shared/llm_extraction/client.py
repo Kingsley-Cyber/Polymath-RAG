@@ -305,6 +305,14 @@ class LLMExtractionClient:
                  cloud_opts: dict | None = None) -> None:
         if lane not in ("local", "cloud"):
             raise ValueError(f"unknown lane: {lane!r}")
+        # RPD-DURABILITY-V1 (D-4): this constructor is the ONE seam every
+        # provider-calling path goes through. Before this, the only controller-store
+        # attach lived in `workers.llm_provider`, which the pMAP stage worker never
+        # imports — so pMAP dispatches were counted in memory only and
+        # `llm_controller_state` held zero rows for map_groq* after thousands of
+        # calls. Idempotent and fail-soft; an explicit attach_store() still wins.
+        from polymath_shared.llm_extraction.limiter import REGISTRY as _REGISTRY
+        _REGISTRY.ensure_store()
         self.lane = lane
         # EXTRACTION-POOL-V1: each cloud endpoint throttles independently
         # (a slow provider must not drag the pool's AIMD budget down).

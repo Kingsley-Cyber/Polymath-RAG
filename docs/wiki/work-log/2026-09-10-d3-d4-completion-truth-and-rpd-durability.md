@@ -78,6 +78,23 @@ the store a property of the REGISTRY, so every consumer gets it with no per-call
   26, lane-registry/groq-routing/doc-profile/control-plane 42, pMAP-related 85 (1 skipped).
 - Fleet bounced twice (fence-safe, 0 ready/leased both times); 13 workers, one bundle, 0 quarantined each time.
 
+### Correction made during verification (recorded, not hidden)
+
+The first D-4 implementation called `ensure_store()` from `LimiterRegistry.lane()`/`budget()`. The full
+determinism gate caught two regressions —
+`test_llm_controller.py::test_attach_after_creation_restores_existing_lanes` and
+`::test_batched_client_sizes_calls_from_the_budget` — and the cause was a genuine design hazard, not a fussy
+test: merely CREATING a lane reached for Postgres, so any process touching the registry (a test, a tool, a
+dry run) silently bound and mutated PRODUCTION controller state. The attach moved to
+`LLMExtractionClient.__init__` — the one seam every provider-calling path goes through, and precisely the seam
+the pMAP worker uses. Both tests pass; explicit `attach_store()` still wins.
+
+**Re-proven end to end on the SHIPPED code** (canary 5, `doc_b239c387…`, 11 parents):
+11 eligible → **1** dispatch → `compiler_complete 1` → 11 returned → **11 persisted → 11 projected**,
+attempts 1, ticket `done` at attempt 0, and **`reconciles: true` with all six checks PASS including
+`limiter_matches_dispatch`**. `llm_controller_state` now carries durable rows for TWO pMAP lanes
+(`map_groq3`, `map_groq5`), each with `day`, `day_count` and `last_dispatch_at`.
+
 ## Rejected claims
 
 - **"Delete the 2 stale batch rows."** REJECTED — owner-forbidden and wrong: they are forensic evidence of the

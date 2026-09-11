@@ -7,6 +7,9 @@ import { Pill } from "./components/Pill";
 import { PhaseStub } from "./components/PhaseStub";
 import { Overview } from "./screens/Overview";
 import { Chat } from "./screens/Chat";
+import { Files } from "./screens/Files";
+import { ControlPlane } from "./screens/ControlPlane";
+import { Graph } from "./screens/Graph";
 
 /** FRONTEND-V2-PLAN §1 — Chat · Files · Graph │ Control Plane · Settings. */
 const NAV = [
@@ -73,16 +76,16 @@ export function App() {
       <main className="main">
         {screen === "overview" && <Overview corpusId={corpusId} />}
         {screen === "chat" && <Chat corpusId={corpusId} />}
+        {screen === "files" && <Files corpusId={corpusId} />}
+        {screen === "control" && <ControlPlane corpusId={corpusId} />}
+        {screen === "graph" && <Graph corpusId={corpusId} onOpenChat={() => setScreen("chat")} />}
 
-        {screen !== "overview" && screen !== "chat" && (
+        {screen === "settings" && (
           <div className="screen">
             <div className="screen__head">
               <h1 className="screen__title">{NAV.find((n) => n.id === screen)?.label}</h1>
               <p className="screen__sub">Corpus <span className="mono">{corpusId}</span></p>
             </div>
-            {screen === "files" && <PhaseStub phase="F8" title="Files — Control / Semantic / vNext readiness per document, plus Graph, Profile, Atoms, pMAP" />}
-            {screen === "graph" && <PhaseStub phase="F9" title="Graph — entity search, relationships, source-attested supporting chunks" />}
-            {screen === "control" && <PhaseStub phase="F10" title="Control Plane — GRAPH_EXTRACTION, DOCUMENT_PROFILE, PMAP, CHAT function cards" />}
             {screen === "settings" && <PhaseStub phase="F1" title="Settings — backend target, policy flags (read-only mirrors of the server's own state)" />}
           </div>
         )}

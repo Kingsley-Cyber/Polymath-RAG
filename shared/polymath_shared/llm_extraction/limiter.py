@@ -917,10 +917,20 @@ class LimiterRegistry:
         pMAP dispatch was accounted only in memory — measured 2026-09-10: zero
         `llm_controller_state` rows for `map_groq2..6` despite thousands of dispatches.
 
-        Attaching here means every consumer of the one registry (extract, pMAP,
-        doc_profile, chat compiler) gets the same durable accounting with no per-caller
-        wiring to forget. Idempotent, and fail-soft exactly like the store itself: no
-        DSN or no table means one warning and in-memory operation, never a blocked call.
+        Called from `LLMExtractionClient.__init__` — the seam EVERY provider-calling
+        path goes through (extract, pMAP, doc_profile, chat compiler) — so durability
+        needs no per-caller wiring.
+
+        Deliberately NOT called from `lane()`/`budget()`: that made merely creating a
+        lane reach for Postgres, so any process touching the registry (tests, tools,
+        a dry-run) silently bound and mutated PRODUCTION controller state. Caught by
+        `test_llm_controller.py::test_attach_after_creation_restores_existing_lanes`,
+        which creates a lane and then attaches its OWN store — the auto-attach hijacked
+        it with live state. Explicit `attach_store()` still wins: it rebinds every
+        existing lane.
+
+        Idempotent, and fail-soft exactly like the store itself: no DSN or no table
+        means one warning and in-memory operation, never a blocked call.
         """
         if self._store is not None:
             return
@@ -950,7 +960,6 @@ class LimiterRegistry:
         controller._on_change = lambda state, _k=key: store.save(_k, state)
 
     def lane(self, provider: str, key: str, spec: ProviderLimit) -> AdaptiveLimiter:
-        self.ensure_store()          # RPD-DURABILITY-V1 (D-4): durable by default
         k = (provider, key or "default")
         with self._lock:
             if k not in self._lanes:
@@ -967,7 +976,6 @@ class LimiterRegistry:
 
     def budget(self, key: str, *, seed: int, floor: int, ceiling: int,
                step: int) -> AdaptiveBudget:
-        self.ensure_store()          # RPD-DURABILITY-V1 (D-4)
         with self._lock:
             if key not in self._budgets:
                 budget = AdaptiveBudget(key, seed=seed, floor=floor,

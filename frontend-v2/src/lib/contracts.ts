@@ -43,19 +43,24 @@ export interface DocSummary {
   vnext_ready: boolean;
 }
 
-/** `/control_plane?corpus_id=` — CONTROL-PLANE-STATUS-V1. */
+/** `/control_plane?corpus_id=` — CONTROL-PLANE-STATUS-V1.
+ *  Verified against a live response 2026-09-10: `pools` is a MAP keyed by function
+ *  name, and the queue counters sit at the TOP level of each pool (not nested). */
 export interface ControlPlane {
   contract: string;
   corpus_id: string;
   summary: { documents: number; semantic_ready: number; processing: number; blocked: number };
-  pools: ControlPlanePool[];
+  pools: Record<string, ControlPlanePool>;
 }
 
 export interface ControlPlanePool {
-  function: string;
-  queue?: { queued: number; processing: number; retry: number; failed: number };
+  lanes?: { active: number; total: number; credential_absent: number; disabled: number; active_lanes: string[] };
+  queued?: number;
+  processing?: number;
+  retry?: number;
+  failed?: number;
+  /** `limiter_refused` is LOCAL (0 HTTP); `http_429` cost a real provider request. */
   provider?: Record<string, number | null>;
-  [k: string]: unknown;
 }
 
 /** `/control_plane/pool/{function}` — model → account lanes. ENV NAMES only, never secrets. */

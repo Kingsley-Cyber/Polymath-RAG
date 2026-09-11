@@ -51,6 +51,10 @@ export const api = {
   pipelineHealth: (s?: AbortSignal) => get<Record<string, unknown>>("/health/pipeline", s),
   retrieve: (body: { query: string; corpus_id: string; mode: string }, s?: AbortSignal) =>
     post<RetrieveResponse>("/retrieve", body, s),
+  predicates: (corpusId: string, limit: number, s?: AbortSignal) =>
+    get<Record<string, unknown>>(
+      `/control_plane/predicates?corpus_id=${encodeURIComponent(corpusId)}&limit=${limit}`, s),
+  capabilities: (s?: AbortSignal) => get<Record<string, unknown>>("/capabilities", s),
 };
 
 /* ── SSE ──────────────────────────────────────────────────────────────────── */
