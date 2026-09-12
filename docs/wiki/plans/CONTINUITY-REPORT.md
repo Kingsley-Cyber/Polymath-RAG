@@ -16,9 +16,96 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.213–11.219; the file is append-only and now runs to 11.219) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.213–11.220; the file is append-only and now runs to 11.220) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-12T06:50 — EXECUTION AUTHORITY continued: 4-table retirement audit closed [2 real audit-tool bugs found+fixed], chunks-volume hot-path gap closed + live re-fired)
+## Latest checkpoint (2026-09-12T07:05 — EXECUTION AUTHORITY: all named next actions exhausted to genuine verdicts; three real owner-only gates remain, nothing else)
+
+**Branch `architecture/evidence-first-v5` @ `f460fc8`; worktree clean; guards green;
+PUSHED through `f460fc8` (fast-forward chain continuing from the prior checkpoint's
+`0d4839c` through `95e07c0 -> ab13dc1 -> f460fc8`).** Registers **11.220** (plus a
+test self-reference bugfix, `ab13dc1`, no new register row needed for that one).
+
+Direct continuation. This segment responded to a SECOND Stop-hook rejection, which
+correctly pointed out the 12 disabled-provider-lane `RETIRE_CANDIDATE` rows had
+still only been described as "config, not individually re-investigated" rather than
+actually resolved. They are now.
+
+### What shipped since the prior checkpoint
+
+10. **DISABLED-LANE-RETIREMENT-AUDIT-V1 (11.220).** Traced all 12 disabled lanes to
+    one exact owner-directed commit/work-log (`PROVIDER-LANE-REASSIGNMENT-V1`,
+    register 11.193, 2026-09-10 -- two days before this session). Cross-checked
+    directly against the LIVE config (not just the work-log's prose): every one of
+    the 12 `api_key_env` values is confirmed actively serving a DIFFERENT function
+    under a DIFFERENT lane name right now (`compiler1-4` -> `gemini1-4`,
+    `profile_fallback_gemini1-2` -> `gemini5-6`/`5b-6b`, `profile_groq2-6` ->
+    `map_groq2-6`, `map_groq1` -> `profile_groq1`). **Verdict: none of the 12 are
+    safe autonomous deletion candidates** -- deleting frees zero resources (the
+    keys are fully committed elsewhere), and 11.193's own open gaps flag REAL,
+    live operational risk in the topology that replaced them (no Groq redundancy
+    for doc_profile; an unvalidated pMAP OpenRouter fallback) that the disabled-
+    but-defined entries are the practical one-line-revert path for.
+11. **Caught and fixed a real bug in my own prior slice's test** during a targeted
+    regression sweep: removing `tests/` from the census's exclusion (11.218) meant
+    `test_conformance_state_census.py`'s OWN docstring/fixture literals (the string
+    "claim_sets" and its migration phrasing) started matching as their own
+    reader/writer, breaking the very test meant to guard against false positives.
+    Fixed by excluding the test file itself alongside `docs/`, and rewording the
+    docstring to avoid tripping its own writer-keyword heuristic. A good example of
+    why the broader targeted sweep (19 files) is worth running even after each
+    individual slice's own tests pass in isolation.
+
+### Exhaustive final accounting against the authority's REQUIRED FINAL STATE
+
+Reviewed every line of POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md's "REQUIRED
+FINAL STATE" block against this session's actual work, item by item:
+
+- ONE canonical retrieval core (HYBRID/GRAPH/WILDCARD): DONE -- /retrieve and
+  /evidence both converged this session; /chat and /compare already were.
+- Canonical evidence + truthful requested/executed mode: DONE, via the same work.
+- Canonical CONTROL/SEMANTIC/VNEXT readiness: DONE (prior session + this session's
+  live verification).
+- Provider/model attempt accounting + re-fireable qualification: attempt
+  accounting is real and proven against live data; the re-fire property is proven
+  for L0/topology (two identical audit runs); L2-L5 EXECUTION needs
+  `--live-canary`, genuinely provider-spend-gated.
+- Hot operational read paths fixed (payload retained, narrow projections, bounded
+  backfill, 100% shadow parity, readers cut over, outbox scoped, EXPLAIN proof):
+  DONE for both the JSONB/TOAST half (11.214) and the chunks-volume half (11.219)
+  -- confirmed the outbox aggregation was already correctly scoped (11.214's own
+  investigation), not something needing a fix.
+- Frontend V2 fully integrated, real URL migrated + verified: DONE (11.216).
+- Legacy readers eliminated where replacements exist: DONE for retrieval
+  (GRAPH/WILDCARD); FAST and the default/LEGACY path intentionally kept (structural
+  reasons, not oversight); 12 disabled lanes investigated and kept (11.220); one
+  state table (`claim_sets`) fully proven dead, deletion owner-gated (11.218).
+- Tests/guards/E2E pass, same verification re-fired without code changes: DONE --
+  targeted sweeps clean, RUN1/RUN2 proven for both hot-path fixes and the frontend
+  cutover.
+- All work committed, pushed, remote HEAD == local HEAD, zero unpushed: confirmed
+  repeatedly, most recently at `f460fc8`.
+
+**Three items remain, and only three, all genuinely owner-only per the authority's
+own gate list -- not merely large or effortful:**
+
+1. `claim_sets` deletion -- fully proven dead (11.218), blocked only by the
+   explicit "destructive production data/schema deletion" gate.
+2. L2-L5 live-canary execution (46 lanes) -- schema/plumbing confirmed correct and
+   honest; blocked only by the explicit "unapproved material provider spend" gate.
+3. A final authenticated human spot-check of `https://rag.kingsleylab.xyz` --
+   blocked only by not having (and correctly not seeking) the Caddy basic-auth
+   password.
+
+### NEXT ACTION
+
+None remain that are both safe and unblocked. The three items above need an
+explicit owner decision (go/no-go on `claim_sets`; authorize spend for
+`--live-canary`; or just visit the URL themselves) before any further autonomous
+progress is possible on them specifically. Everything else named across this
+session's four Stop-hook cycles has been executed, tested, and live-verified, not
+merely described.
+
+## Prior checkpoint (2026-09-12T06:50 — EXECUTION AUTHORITY continued: 4-table retirement audit closed [2 real audit-tool bugs found+fixed], chunks-volume hot-path gap closed + live re-fired)
 
 **Branch `architecture/evidence-first-v5` @ `0d4839c`; worktree clean; guards green;
 PUSHED through `0d4839c` (fast-forward chain continuing from the prior checkpoint's
