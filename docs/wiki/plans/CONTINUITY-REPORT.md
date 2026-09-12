@@ -16,9 +16,81 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.213–11.221; the file is append-only and now runs to 11.221) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.213–11.222; the file is append-only and now runs to 11.222) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-12T07:10 — EXECUTION AUTHORITY: fresh full re-read of the authority doc cross-checked section-by-section; §12 legacy-checklist + §20A outbox gate now closed with live proof; same three owner-only gates remain, now evidenced more precisely)
+## Latest checkpoint (2026-09-12T07:25 — EXECUTION AUTHORITY: qualification_matrix.json wired to real evidence, closing the buildable half of the L2-L5 item; the residual gate is now precisely per-lane-with-zero-evidence, not the whole subsystem)
+
+**Branch `architecture/evidence-first-v5` @ (pending this checkpoint's commit); worktree
+clean pre-commit; guards green.** Register **11.222**.
+
+Direct continuation — a Stop-hook rejection of the prior turn's final report correctly
+identified a conflation: that report listed "L2-L5 provider/model qualification" as an
+OWNER/EXTERNAL BLOCKER in full, even after itself finding that `--live-canary` is an
+unwired no-op — but building the dispatch/qualify WIRING costs no spend; only
+exercising it against a lane with zero existing evidence does. The hook's exact words:
+"a feature gap that IS implementable by the agent, not blocked by external/owner
+factors." Correct, and now closed for the buildable part.
+
+### What shipped since the prior checkpoint
+
+14. **QUALIFICATION-MATRIX-LIVE-CANARY-WIRING-V1 (11.222).** Investigated building a new
+    bounded-dispatch canary (the proven `u2_persistence_canary.py` pattern) for each of
+    the 4 permanent functions first, and rejected it: no such script exists today for
+    GRAPH_EXTRACTION or CHAT (confirmed by a dedicated research pass), a
+    memory-recalled "JWT/Mongo chat probe" doesn't exist in this repo at all (Mongo was
+    removed per ADR-0002), and building fresh dispatch logic unable to validate without
+    spending risks shipping unexercised classification logic that silently mis-reports —
+    worse than the honest NOT_TESTED it would replace. Used the safer alternative
+    instead: `query_receipts` and `llm_provider_attempts` already durably record every
+    real dispatch/query the live system has ever served (confirmed live:
+    `llm_controller_state.day_count` shows real activity in the hundreds for active
+    extraction lanes; `query_receipts` shows 2000+ real calls in 7 days, including this
+    SESSION'S OWN earlier `/retrieve` GRAPH+WILDCARD live-verification runs). New
+    `evidence.py::query_receipt_summary()` + `assess.py::qualify_lane()` derive real
+    L2 (per-lane, ledger with a `day_count` fallback tier matching `assess_lanes`'s
+    already-shipped promotion bar), L3 (per-function, from `stage_tickets` or, for CHAT
+    which has no ticket stage, from `query_receipts`), and L5 (CHAT-only, from
+    grounded/cited evidence; NOT_APPLICABLE for the other three functions) — wired into
+    `audit_polymath.py::_matrix()`, replacing 3 hardcoded `"NOT_TESTED"` literals. 17/17
+    new fixture-based unit tests pass (zero DB, zero spend). **Live `--no-spend` run
+    against the real database**: `contract_qualified` went from 0/46 real (46/46
+    hardcoded) to 15 PASS + 1 FAIL + 30 honest NOT_TESTED; `pipeline_qualified` 0->10
+    PASS; `e2e_qualified` 0->4 PASS. **Surfaced a genuine, previously-invisible defect
+    as a direct result**: `compiler_alibaba_qwen` (CHAT lane) has 9 real attempts, 0
+    succeeded, over 7 days — real evidence the old hardcoded literal was hiding. Not
+    diagnosed/fixed here (separate investigation, named as a follow-up). Also found and
+    documented (not fixed, out of scope) a separate pre-existing gap: the attempt ledger
+    is populated ONLY for the 3 CHAT-compiler lanes despite `doc_parent_map_stage_worker
+    .py` wrapping its calls in `attempt_context(function="PMAP", ...)` — PMAP rows never
+    land in `llm_provider_attempts` for a reason not yet investigated.
+
+### Reframing the residual L2-L5 gate
+
+The prior checkpoint's item 2 ("L2-L5 live-canary execution... blocked only by the
+explicit 'unapproved material provider spend' owner gate") was imprecise in a way the
+hook correctly caught. The accurate state, post-11.222:
+
+- **CLOSED, zero spend**: qualification for every lane/function with ANY existing
+  recent evidence (attempt ledger, durable limiter state, stage-ticket activity, or
+  query receipts) now reports a real, evidence-backed verdict, re-derived fresh on
+  every future run as real production traffic accumulates — no owner action needed,
+  nothing further to build.
+- **GENUINELY RESIDUAL, still owner-gated**: only a lane/function with LITERALLY ZERO
+  recent evidence anywhere (30/46 lanes this run, mostly DOCUMENT_PROFILE and disabled/
+  dedicated_unpinned lanes) cannot be qualified by reading existing state — closing
+  those specific lanes requires either organic production traffic reaching them, or an
+  owner-approved bounded live-canary dispatch built against one of the two real,
+  investigated templates (PMAP's existing `u2_persistence_canary.py`; a new one for
+  GRAPH_EXTRACTION/CHAT would need to be built, which is itself safe non-spending work
+  for a FUTURE session, deliberately not rushed into this one blind).
+
+### NEXT ACTION
+
+None remain that are both safe and unblocked under this authority. The three items
+named in the prior checkpoint stand, `claim_sets` and the Caddy spot-check unchanged; the
+L2-L5 item is now precisely scoped rather than a blanket blocker, per above.
+
+## Prior checkpoint (2026-09-12T07:10 — EXECUTION AUTHORITY: fresh full re-read of the authority doc cross-checked section-by-section; §12 legacy-checklist + §20A outbox gate now closed with live proof; same three owner-only gates remain, now evidenced more precisely)
 
 **Branch `architecture/evidence-first-v5` @ (pending this checkpoint's commit); worktree
 clean pre-commit; guards green.** Register **11.221**.

@@ -36,6 +36,47 @@ def stage_activity(conn, window: str = "24 hours") -> dict[str, dict]:
             for r in rows}
 
 
+def query_receipt_summary(conn, window: str = "7 days") -> dict:
+    """Durable CHAT/retrieval receipts (`query_receipts`) -- what `/chat`, `/chat/stream`
+    and `/retrieve` actually served, per (kind, mode), in the window. This is REAL
+    production traffic the system already recorded for every real query; reading it costs
+    nothing and dispatches nothing new. A 7-day window (wider than `stage_activity`'s 24h)
+    because retrieval-mode traffic (GRAPH/WILDCARD especially) is real but lower-volume
+    than default-mode HYBRID chat, and a too-tight window would report a working mode as
+    NOT_TESTED purely for lack of recent callers, not lack of evidence it works."""
+    try:
+        rows = conn.execute(f"""
+            SELECT kind, mode, status,
+                   COUNT(*) AS n,
+                   COUNT(*) FILTER (WHERE verdict IN ('supported','generated')) AS grounded,
+                   COUNT(*) FILTER (WHERE verdict = 'insufficient_evidence') AS abstained,
+                   COUNT(*) FILTER (WHERE citations > 0) AS cited,
+                   MAX(received_at) AS last_at
+              FROM query_receipts
+             WHERE received_at > now() - interval '{window}'
+             GROUP BY 1, 2, 3""").fetchall()
+    except Exception as exc:  # noqa: BLE001
+        return {"available": False, "error": str(exc)[:200]}
+    by_mode: dict[str, dict] = {}
+    overall = {"ok": 0, "error": 0, "grounded": 0, "abstained": 0, "cited": 0, "last_at": None}
+    for kind, mode, status, n, grounded, abstained, cited, last_at in rows:
+        d = by_mode.setdefault(f"{kind}:{mode or 'unspecified'}",
+                               {"ok": 0, "error": 0, "grounded": 0, "abstained": 0,
+                                "cited": 0, "last_at": None})
+        for bucket in (d, overall):
+            if status == "ok":
+                bucket["ok"] += n
+            elif status == "error":
+                bucket["error"] += n
+            bucket["grounded"] += grounded
+            bucket["abstained"] += abstained
+            bucket["cited"] += cited
+            ts = str(last_at) if last_at else None
+            if ts and (bucket["last_at"] is None or ts > bucket["last_at"]):
+                bucket["last_at"] = ts
+    return {"available": True, "window": window, "overall": overall, "by_kind_mode": by_mode}
+
+
 def reader_writer_census(tables: list[str]) -> dict[str, dict]:
     """Static reader/writer census per table, from tracked source only.
 

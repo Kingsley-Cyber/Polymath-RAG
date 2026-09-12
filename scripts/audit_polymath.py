@@ -82,6 +82,14 @@ def main() -> int:
     git = evidence.git_state()
     rbundle = evidence.runtime_bundle(conn) if conn else {"live": [], "uniform": None}
 
+    # ── L2/L3/L5 qualification evidence -- already-durable, zero new spend ─────
+    from polymath_shared.conformance.attempts import ledger_available, attempt_summary
+    attempts_per_lane: dict[str, dict] = {}
+    if conn is not None and ledger_available(conn):
+        attempts_per_lane = {r["lane"]: r for r in attempt_summary(conn)["per_lane"]}
+    receipt_summary = evidence.query_receipt_summary(conn) if conn is not None else {}
+    chat_receipts = receipt_summary.get("overall") or {}
+
     components: list[dict] = []
     components += assess.assess_lanes(lanes, controller)
 
@@ -143,7 +151,8 @@ def main() -> int:
     b.write("manifest.json", man)
     b.write("runtime_topology.json", snap)
     b.write("function_results.json", components)
-    b.write("qualification_matrix.json", _matrix(snap["lanes"], controller))
+    b.write("qualification_matrix.json",
+           _matrix(snap["lanes"], controller, attempts_per_lane, stage_act, chat_receipts))
     b.write("retirement_candidates.json", retire)
     b.write("failures.json", [c for c in components if c["severity"] == "red"])
     b.write("legacy_scan.json", snap["legacy_scan"])
@@ -169,17 +178,27 @@ def main() -> int:
     return 0
 
 
-def _matrix(lanes: list[dict], controller: dict) -> list[dict]:
+def _matrix(lanes: list[dict], controller: dict, attempts_per_lane: dict[str, dict],
+           stage_act: dict[str, dict], chat_receipts: dict) -> list[dict]:
+    """Per-lane qualification matrix. L2/L3/L5 are computed from evidence ALREADY durable
+    in Postgres (the attempt ledger + stage_tickets + query_receipts) -- see
+    `assess.qualify_lane`. A lane/function with genuinely zero recent evidence still
+    reports NOT_TESTED honestly; this never dispatches a fresh call to manufacture a
+    verdict, so it costs nothing to run and needs no `--live-canary` spend authorization
+    to reflect real, already-happened production traffic."""
     rows = []
     for l in lanes:
         st = controller.get(l["name"], {})
+        q = assess.qualify_lane(l, attempts_per_lane, controller, stage_act, chat_receipts)
         rows.append({
             "function": l["function"], "provider": l["provider"], "model": l["model"],
             "lane": l["name"], "account_env": l["account_env"],
             "configured": l["enabled"], "reachable": l["reachability"] == "active",
             "observed": bool(st.get("day_count")),
-            "contract_qualified": "NOT_TESTED", "pipeline_qualified": "NOT_TESTED",
-            "e2e_qualified": "NOT_TESTED",
+            "contract_qualified": q["contract_qualified"],
+            "pipeline_qualified": q["pipeline_qualified"],
+            "e2e_qualified": q["e2e_qualified"],
+            "qualification_evidence": q["qualification_evidence"],
             "production_eligible": l["enabled"] and l["reachability"] == "active"
                                    and l["function"] != "dedicated_unpinned",
             "last_dispatch_at": st.get("last_dispatch_at"),
