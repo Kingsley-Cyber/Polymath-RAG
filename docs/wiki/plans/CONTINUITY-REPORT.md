@@ -16,9 +16,82 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.213–11.217; the file is append-only and now runs to 11.217) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.213–11.219; the file is append-only and now runs to 11.219) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-12T06:10 — EXECUTION AUTHORITY continued: evidence.py migrated, Frontend V2 is now the public default, conformance framework assessed)
+## Latest checkpoint (2026-09-12T06:50 — EXECUTION AUTHORITY continued: 4-table retirement audit closed [2 real audit-tool bugs found+fixed], chunks-volume hot-path gap closed + live re-fired)
+
+**Branch `architecture/evidence-first-v5` @ `0d4839c`; worktree clean; guards green;
+PUSHED through `0d4839c` (fast-forward chain continuing from the prior checkpoint's
+`c591a7d` through `c1669c7 -> 39aeda3 -> 7003264 -> 0d4839c`).** Registers **11.218,
+11.219**.
+
+Direct continuation — this segment responded to a Stop-hook rejection of the prior
+"BLOCKED" report, which correctly pointed out three named next actions had NOT
+actually been executed (only described as remaining). All three now have real,
+completed, pushed work.
+
+### What shipped since the prior checkpoint
+
+7. **LEGACY-STATE-RETIREMENT-AUDIT-V1 (11.218).** Deeper runtime/dependency proof
+   for the 4 state tables the conformance audit flagged `RETIRE_CANDIDATE`.
+   Independent `rg` (not the audit's own git-grep) found the audit tool itself had
+   two real bugs: `durable_tables()` queried `information_schema.tables` with no
+   `table_type` filter, so VIEWS (`entity_knowledge_refusals`,
+   `knowledge_tier_facts` -- the latter genuinely load-bearing, referenced by a
+   CONTRACT TEST) were audited as reclaimable state; `reader_writer_census()`
+   excluded `docs/`/`tests/` from its scan, directly contradicting its own stated
+   "over-counting is safe" philosophy and producing that exact false
+   `RETIRE_CANDIDATE` verdict plus a second one for `medic_deadlock_probe` (a
+   test-only fixture table, not production legacy). Fixed both; live re-run:
+   state-level RETIRE_CANDIDATE rows 4->1. `claim_sets` remains the one genuinely
+   proven candidate (0 references anywhere, 0 writes in the database's lifetime) --
+   **documented, not deleted**, schema deletion stays an explicit owner gate.
+8. **DOCUMENT-CHUNK-SUMMARY-V1 (11.219).** Closed the specific gap 11.214's own
+   work-log had named and left out of scope: `corpus_document_summaries()`'s two
+   `chunks` GROUP BY scans cost ~150ms on `cinema` (87% of that table's rows) -- a
+   volume-proportional cost, not a TOAST or missing-index issue. Write-path
+   investigation found a MUCH simpler surface than 11.214 needed: exactly one
+   INSERT site for `chunks`, zero `UPDATE chunks` statements anywhere (confirmed by
+   grep). New `document_chunk_summary` table (migration 0058, FK-CASCADE from
+   `documents` -- every deletion path, present and future, cleans it up for free,
+   zero extra code) is populated from the SAME `children`/`parents` lists
+   `intake_worker.py` already computes for its `routing_card` artifact -- no new
+   query against `chunks`, ever, on the write path. Backfilled 90/90 documents, 0
+   errors; shadow parity 100%, 0 mismatches. **Live re-fired post-bounce, RUN 1 ->
+   PASS, RUN 2 -> PASS**: `/documents/summary` on cinema **30-38ms**, down from
+   151ms (11.214-only) and the original ~1.1-1.4s this whole investigation started
+   from -- the full Control Plane/Files hot path is now addressed end-to-end.
+   Deliberately did NOT spend real provider quota on a live document upload just to
+   exercise the write path (the new UPSERT is the identical SQL the backfill
+   already proved 90/90 times against the same table; a bug would fail loudly on
+   the next real intake via the existing `stage_transaction` safety net, not
+   silently corrupt anything) -- documented as the honest, deliberate reasoning, not
+   an oversight.
+9. **Fleet bounce, done correctly this time.** `intake_worker.py` required a full
+   worker-fleet bounce (unlike this session's earlier orchestrator-only changes).
+   Applied the lesson from the EARLIER bounce incident explicitly: confirmed
+   exactly one supervisor running, killed it FIRST, confirmed the whole tree exited
+   (zero orphans), then launched fresh -- zero duplication this time, converged to
+   one bundle hash within the same ~90s window as before.
+
+### NEXT ACTION
+
+1. A final full `tests/determinism` regression run covering these last two slices
+   was in progress (backgrounded) when this checkpoint was written -- read its
+   result before starting new implementation work if it hasn't already landed.
+2. Provider/model conformance L2-L5 live-canary EXECUTION remains
+   provider-spend-gated (46 lanes) -- an explicit owner-authorization item, not a
+   missing framework (the schema/plumbing is confirmed correct and honest). Ask
+   before spending if this is wanted next.
+3. The 12 remaining RETIRE_CANDIDATE rows (disabled provider LANES in
+   `config/cloud_providers.json`, not state tables) were not individually
+   re-investigated -- config entries, not code/schema; the audit's own "superseded
+   unless a rollback needs it" note is not clearly a safe-to-delete verdict without
+   checking each one's specific rollback relevance.
+4. `claim_sets` deletion remains a fully-proven, ready-for-approval owner decision.
+5. The external authenticated URL spot-check (Caddy password) remains owner-only.
+
+## Prior checkpoint (2026-09-12T06:10 — EXECUTION AUTHORITY continued: evidence.py migrated, Frontend V2 is now the public default, conformance framework assessed)
 
 **Branch `architecture/evidence-first-v5` @ `c591a7d`; worktree clean except this
 checkpoint edit; guards green; PUSHED through `c591a7d` (fast-forward chain
