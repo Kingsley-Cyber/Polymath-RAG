@@ -279,6 +279,78 @@ def check_legacy_engine_traffic(conn) -> None:
          + f"; last real-user v1 call ever: {ever or 'never'}")
 
 
+#: The four legacy retrieval modules §10 names, and their public entry points.
+_LEGACY_MODULES = {
+    "orchestrator/orchestrator/api/graph.py": ["graph_retrieve"],
+    "orchestrator/orchestrator/api/wildcard.py": ["wildcard_retrieve"],
+    "orchestrator/orchestrator/api/hybrid.py": ["hybrid_fast_retrieve", "_lexical_search",
+                                                "_sparse_lexical_search"],
+    "orchestrator/orchestrator/api/fast.py": ["fast_retrieve", "entity_card_probe",
+                                              "note_sparse_fallback", "degradations",
+                                              "FastSearcher"],
+}
+
+
+def check_legacy_code_removal(conn) -> None:
+    """The retirement law's REMOVE CODE step, measured rather than asserted.
+
+    "Remove dead code" only has work in it if code is actually dead. For each public
+    symbol of the four legacy retrieval modules, count callers ANYWHERE in the repo other
+    than its own defining line. A symbol with zero callers is removable and this gate
+    FAILs until it is gone; a symbol with callers is LEGACY_REQUIRED and removing it would
+    break a live path.
+
+    NOTE on the counting: callers are counted across the WHOLE repo, including the other
+    legacy modules. An earlier hand-run of this census excluded all four modules as "own
+    module" and so reported `note_sparse_fallback` as dead — it is imported and called by
+    `hybrid.py:40,110,112`. Cross-module use inside the legacy set is still use.
+    """
+    dead: list[str] = []
+    alive: dict[str, int] = {}
+    for path, symbols in _LEGACY_MODULES.items():
+        for sym in symbols:
+            try:
+                res = subprocess.run(["git", "grep", "-nw", "--", sym],
+                                     cwd=ROOT, capture_output=True, text=True, timeout=60)
+                lines = [l for l in res.stdout.splitlines() if l.strip()]
+            except Exception:  # noqa: BLE001
+                gate("legacy_code_no_dead_symbols", NOT_TESTED, f"census failed for {sym}")
+                return
+            # drop the definition line itself and pure prose
+            callers = [l for l in lines
+                       if not l.startswith("docs/")
+                       and not (l.startswith(path) and f"def {sym}" in l)
+                       and not (l.startswith(path) and f"class {sym}" in l)]
+            (alive.setdefault(sym, len(callers)) if callers else dead.append(sym))
+
+    gate("legacy_code_no_dead_symbols", PASS if not dead else FAIL,
+         f"{len(alive)}/{sum(len(v) for v in _LEGACY_MODULES.values())} legacy entry points "
+         f"have live callers (LEGACY_REQUIRED — removing them breaks a live path); "
+         f"removable dead symbols: {dead or 'NONE'}"
+         + ("" if not dead else " — these should be deleted"))
+
+
+def check_legacy_state_writers(conn) -> None:
+    """The retirement law's STOP WRITERS step, measured.
+
+    A writer may only be stopped once its readers are gone — stopping one while readers
+    are live is how you get a silently empty table. So this reports, for the §12 state
+    probes, whether any has reached zero readers (which is what would make stopping its
+    writer correct). `claim_sets` is the one component that ever reached zero-readers AND
+    zero-writers, and it is reported by its own gate."""
+    try:
+        from polymath_shared.conformance.discovery import legacy_scan
+        rows = legacy_scan()
+    except Exception as exc:  # noqa: BLE001
+        gate("legacy_writers_correctly_running", NOT_TESTED, f"{type(exc).__name__}: {exc}")
+        return
+    readerless = [r["probe"] for r in rows if not r["code_files"]]
+    gate("legacy_writers_correctly_running", PASS if not readerless else FAIL,
+         f"every §12 state probe still has live code readers, so its writers MUST keep "
+         f"running (stopping them would starve a live reader); probes with zero readers "
+         f"— i.e. whose writers could now be stopped: {readerless or 'NONE'}")
+
+
 def check_legacy(conn) -> None:
     """Every §12 probe must be classified, and nothing may be sitting in an
     unexplained RETIRE_CANDIDATE state."""
@@ -378,6 +450,8 @@ def main() -> int:
     check_hot_paths(conn)
     check_parity()
     check_legacy_engine_traffic(conn)
+    check_legacy_code_removal(conn)
+    check_legacy_state_writers(conn)
     check_legacy(conn)
     check_frontend()
     check_delivery()
