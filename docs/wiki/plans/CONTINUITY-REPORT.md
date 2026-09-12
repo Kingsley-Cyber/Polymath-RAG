@@ -18,7 +18,62 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.189–11.193) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-11T22:45 — D-1 fixed · cinema backfill RUNNING · Frontend V2 F1–F12 COMPLETE)
+## Latest checkpoint (2026-09-12T00:20 — CONFORMANCE AUDIT FRAMEWORK (slices A–C) · cinema PAUSED)
+
+**Branch `architecture/evidence-first-v5` @ `5a2348b`+; guards green; PUSHED.** Register **11.209**.
+
+### PRODUCTION-CONFORMANCE-AUDIT-V1 — built, re-fire proven
+
+`scripts/audit_polymath.py` + `shared/polymath_shared/conformance/`. Authority:
+`docs/wiki/plans/PRODUCTION-CONFORMANCE-AUDIT-V1.md`.
+
+```
+--no-spend run 1 : 178 components  green 69  amber 62  red 47
+--no-spend run 2 : 178 components  green 69  amber 62  red 47      identical, no code edits
+discovered       : 46 lanes · 7 providers · 15 models · 43 routes · 16 workers · 46 tables
+```
+Nothing about today's topology is hardcoded. Between two runs it auto-discovered the NEW
+`llm_provider_attempts` table (177 → 178) without an edit. **`NOT_TESTED` is RED** —
+47 components sit there rather than being flattered into green.
+
+### PROVIDER-ATTEMPT-LEDGER-V1 (migration 0056) — the 429 blindness, closed
+
+One row per provider ATTEMPT at `LLMExtractionClient.complete_one`: lane · provider ·
+model · account ENV NAME · ordinal · limiter admission · dispatch · status · Retry-After ·
+error · latency · success. Fail-soft; no credential stored. pMAP tagged via
+`attempt_context`. `attempts.reconcile()` reports `PROVIDER_PRESSURE` / `FAILOVER_ATTEMPTS`
+/ `HIDDEN_429` as counts.
+
+### HONEST STATUS — what is NOT built
+
+L2–L5 are **not implemented**: `contract_qualified`, `pipeline_qualified` and
+`e2e_qualified` emit `NOT_TESTED` rather than a guess. No product E2E re-fire. No
+Control Plane integration. No CI job. **No retirement was performed** — the legacy scan
+shows every probe still has 7–52 code files, so nothing satisfies the deletion proof,
+and two `RETIRE_CANDIDATE` tables hold live data (`entity_knowledge_refusals` 226,566
+rows; `knowledge_tier_facts` 96) which the static census missed. That is precisely why
+removal requires runtime proof and why none was done.
+
+**Final questions: discovery YES · agnosticism YES · retirement PARTIAL (static only).**
+The framework is therefore NOT declared complete.
+
+### CINEMA — PAUSED (owner instruction)
+
+```
+mapped 5,668 / 12,361 (45%)   unresolved 6,693   fully-mapped 29/67
+tickets: 36 done · 12 pending (parked, reversible) · 0 ready · 0 leased
+```
+Parking tickets alone did NOT stop spend — workers had already claimed documents
+in-process and kept dispatching; the worker processes had to be stopped. **Ticket state
+is not a kill switch mid-document.**
+
+### DUE BEFORE PIPELINE WORK
+
+The audit's first run flagged **runtime bundle NOT uniform (3 hashes)** — adding the
+conformance package to `shared/` changed the execution fingerprint. A `boot_polymath.sh`
+bounce is required before resuming any stage work.
+
+## Prior checkpoint (2026-09-11T22:45 — D-1 fixed · cinema backfill · Frontend V2 F1–F12)
 
 **Branch `architecture/evidence-first-v5` @ `844432c`; worktree clean; guards green; PUSHED (remote == local).**
 Registers this session: 11.194–11.208.
