@@ -18,7 +18,56 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.189–11.193) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-12T00:20 — CONFORMANCE AUDIT FRAMEWORK (slices A–C) · cinema PAUSED)
+## Latest checkpoint (2026-09-12T00:30 — BOOTSTRAP GAP BACKFILL: ledger reconciled to reality)
+
+**Branch `architecture/evidence-first-v5`; worktree clean; guards green (`agent_preflight` ok · `repo_guard` ok ·
+`wiki_worm` ok · `bundle_integrity` READY `7e97368daa92ec19`); 0 unpushed.** Registers **11.205 · 11.208 ·
+11.210** backfilled this slice.
+
+### LIVE STATE (measured, not remembered)
+
+```
+fleet     17 workers / 11 types, ONE bundle 83d3fd1298cf8394, 0 quarantined
+          (incl. doc_parent_map x4 — supervisor-restarted, holding NO claimable work)
+/ready    true · embedder + reranker up
+cinema    PAUSED — 5,668/12,361 (45%) · 36 done / 12 pending / 0 ready / 0 leased
+          last provider call 23:59:13, silent since
+flags     INTENT_POLICY OFF · SYNTH_ROLES OFF · pMAP auto-mint = rag-canary only
+```
+
+### GAP TABLE (Step 3b)
+
+| # | item | in ledger? | live? | gated by | action taken |
+|---|---|---|---|---|---|
+| G1 | register **11.205** (D-1) | **NO — row missing**, though the work-log cited it | YES — a terminal `HTTP_429` now appears on cinema batches | — | **row appended** |
+| G2 | register **11.208** (F12) | **NO — row missing**, work-log cited it | YES | — | **row appended** |
+| G3 | `b8351f9` · `844432c` · `4b5143e` · `df41d67` | **NO work-log, NO register row** | YES (all four in effect; `/v2/` verified 200) | — | **row 11.210**; no retrospective work-logs invented |
+| G4 | "runtime bundle NOT uniform, bounce due" | prior checkpoint said YES | **NO — one bundle, READY** | — | **checkpoint corrected; no bounce owed** |
+| G5 | attempt ledger integrity | assumed clean | **NO — 2 fabricated rows** (`cp_success`/`cp_refused`, lanes in no config) | — | test isolation added + rows purged |
+| G6 | cinema paused | YES | YES — 0 claimable, 24 min silence | **owner** | unchanged |
+| G7 | conformance L2–L5 | recorded as NOT built | n/a | — | still NOT built; 47 components `NOT_TESTED` |
+
+**Critical path:** nothing is blocked by infrastructure. The open decisions are the owner's —
+resume cinema, or build conformance L2–L5.
+
+### THE DEFECT THIS BOOTSTRAP FOUND
+
+Unit tests were writing into the production attempt ledger: the recorder fires whenever
+`POLYMATH_PG_DSN` is set, and the suite runs against the dev database, so fake lanes
+(`cp_success`, `cp_refused`) landed as real attempt rows. An accounting surface containing
+invented attempts is worse than an empty one — every later `attempts.reconcile()` would have
+silently included them. `tests/conftest.py` now sets `POLYMATH_ATTEMPT_LEDGER=0` for the whole
+session; the two rows were purged by primary key, selected by "lane present in no configured
+topology" rather than by name. Ledger is now 0 rows and has **not yet observed a live provider
+attempt** — `reconcile()` is unexercised against real data.
+
+### NEXT ACTION
+
+Owner's call: (a) resume cinema pMAP (flip the 12 parked tickets `pending → ready`, restart
+`scripts/cinema_pmap_backfill.py --execute`), or (b) build conformance L2–L5 so the 47
+`NOT_TESTED` components can be qualified. Neither is blocked.
+
+## Prior checkpoint (2026-09-12T00:20 — CONFORMANCE AUDIT FRAMEWORK slices A–C · cinema PAUSED)
 
 **Branch `architecture/evidence-first-v5` @ `5a2348b`+; guards green; PUSHED.** Register **11.209**.
 
