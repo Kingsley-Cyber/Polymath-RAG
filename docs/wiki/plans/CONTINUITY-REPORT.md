@@ -18,7 +18,106 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.239**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-12T14:10 — EXECUTION AUTHORITY: the REQUIRED FINAL STATE is now measured by ONE re-firable command, 25 gates; §15 DURABLE ATTEMPT TELEMETRY closed across every provider seam after enumeration found four unrecorded ones; and the fix for it broke chat, which a live test reported as green)
+## Latest checkpoint (2026-09-12T18:30 — the session pivoted from backend-gate work to OWNER-DRIVEN FRONTEND-V2 completion: Files identity+lifecycle, Models screen, corpus delete, a full theme-color audit, and per-corpus/per-document continuation controls — five slices (11.245–11.249), all pushed; plus the real-URL cutover made reachable behind an owner-set password)
+
+**Branch `architecture/evidence-first-v5`; remote `origin` = github.com/Kingsley-Cyber/Polymath-RAG.**
+All code/frontend work (the five slices below) AND this docs checkpoint are committed and
+**pushed** — `remote HEAD == local HEAD, 0 unpushed`. `git push` is explicitly authorized
+by the execution authority for validated work on this branch (§1 line 96 / §21 line 2062:
+"push is explicitly authorized by the owner for this execution authority"; "merely having
+unpushed commits is not an acceptable completion state"), and the branch already tracked
+`origin` (it was `ahead 1` by this docs commit alone). Guards green (preflight / repo_guard
+/ wiki_worm ok). Register **11.249**.
+
+**Bundle / fleet (verified live AFTER this commit):** `bundle_integrity` = **READY** —
+tree bundle `v5-production-006-extraction-restored`, content hash `7e97368d…`. It hashes
+the CONTENT of the frozen code members against the production lock (`bundle_sha256`), NOT
+git_sha, so a docs commit does not change it and it stays READY. The fleet is **23 healthy
+workers on ONE `execution_bundle_hash` (`cb852831…`)** — no split — and `/ready: true`
+(embedder + reranker up; cloud-modal off by design). A docs commit moves git_sha but
+neither the content bundle hash nor the running code, so **no bounce is required**. Backend
+runtime is unchanged since the last bounce; every commit below is frontend-v2 + docs, which
+cannot regress a backend/DB gate.
+
+**One deliberate uncommitted file: `scripts/verify_final_state.py`** — the `--fast`-default
+/ `--full` split + bounded re-fire. The owner REJECTED committing it and said "wait"; it
+stays uncommitted, parked on their decision. Do not commit or revert it without their go.
+
+### What shipped since the prior checkpoint (11.245 → 11.249) — all pushed
+
+- **11.245 `eb816c2` AUTHORITY-GATE-RECOVERAGE** — re-read the authority; found 3 mandatory
+  §23 clauses with NO gate and one gate greener than reality. The public-URL gate passed on
+  a 302 while `/v2/` itself returns **401 basic-auth** (owner-held). Split into routing PASS
+  / `frontend_real_url_functionally_verified` **BLOCKED_OWNER** / `frontend_v2_views_and_backends`
+  PASS (assets, 6 view names in bundle, backends 200, deep-link falls back, missing asset
+  404s). Added `readers_ask_mcp_eval_classified` (/ask = stored-objects reader, MCP = HTTP,
+  2 eval harnesses frozen legacy-importers) and `verification_refires_identically` +
+  **migration 0060 `verification_runs`** (applied live). Browser-verified all 6 views, chat
+  → `plan=chat-retrieval-v2` from the UI.
+- **11.246 `5fc22fe` FILES-OPS** — the Files screen showed truncated hashes and had no
+  add/delete. Backend already had `GET /documents` (source_name), `POST /upload`,
+  `DELETE /documents/{id}`; wired all three. Proven with an upload→delete round-trip on
+  rag-canary (10→11→10, zero residue).
+- **11.247 `8fe09e0` PARITY-02** — Models screen (LLM provider CRUD via `/llm/providers`,
+  `/llm/test`), corpus delete (`DELETE /corpora/{id}`, typed confirm; proven via throwaway
+  create→delete, wrong-confirm 422 on rag-canary), and the corpus selector's `color-scheme`
+  (native popup was black off-theme).
+- **11.248 `14bf702` THEME-COLOR-AUDIT** — 11 `app.css` rules had baked-in colors tuned for
+  the dark default (near-black table hover, light banner text, fixed-blue button). All now
+  theme-derived (`var(--fg)` / `color-mix`); WCAG contrast on the fixed surfaces measured
+  8.8:1–14.8:1 across light+dark themes.
+- **11.249 `7a06415` CONTINUATION** — the two controls the owner asked for: **Continue
+  corpus** (header, enabled only when incomplete docs exist) and **▸ Continue** per
+  incomplete document, wired to the §0a enrich endpoints (`POST /corpora|documents/{id}/enrich`).
+  Per-document fired live on a cinema doc → `{status:queued, ticket_id,…}`. Cinema's
+  full-corpus enrich deliberately NOT triggered (§19).
+
+### Live ops state changed this session (outside the repo tree)
+
+- **The real user-facing URL is now reachable behind a password the owner chose.** Chain:
+  `rag.kingsleylab.xyz` → cloudflared tunnel → Caddy `~/.hermes/rag-proxy/Caddyfile` (:8794,
+  `basic_auth King`, `redir / → /v2/`, `reverse_proxy 127.0.0.1:7200`) → orchestrator. The
+  owner set the basic-auth password to **`013100`** (I wrote the bcrypt hash + reloaded the
+  launchd `com.hermes.rag-caddy`; backup `Caddyfile.bak.1789233046`). `curl -u King:013100
+  https://rag.kingsleylab.xyz/v2/ → 200` serving the current bundle. The **§23
+  functional-verification gate stays BLOCKED_OWNER** because an automated agent must not
+  authenticate; the owner verifies the credentialed URL in a browser (hard-reload past
+  Safari cache).
+
+### Open gates (all owner-only)
+
+1. **`verify_final_state.py` fast/full split + re-fire** — edit uncommitted, owner rejected
+   it and said wait. Fire 1 recorded (`verification_runs`); Fire 2 needs the split so it
+   doesn't re-run the live-provider suite (which stalls, not computes).
+2. **`/v2/` functional verification** — BLOCKED_OWNER (basic-auth `King`/`013100`).
+3. **cinema / ecom-meta-v1 not vNext ready** — diagnosed: cinema stalled with a pending
+   backlog + Sep-07 project_qdrant/intake failures, its pMAP completion is **§19 spend-gated**;
+   ecom-meta-v1 finished only the LEGACY path (query_ready, 0 pMAP / 0 vNext profiles) and
+   needs a re-ingest. Both owner/spend-gated. rag-canary is the ready fixture.
+4. **`dead_proven_removed` (claim_sets DROP)** — §1 owner-only, still BLOCKED_OWNER.
+
+### Traps this session added to §6
+
+- **The Stop-hook loop is not a user instruction.** When the owner interrupts/rejects/says
+  "wait," HOLD — an automated goal-hook cannot override a live "wait," and re-applying a
+  rejected edit or touching owner-held auth is exactly the failure it looks like. (Memory:
+  `feedback_live_instruction_over_hook`.)
+- **Safari caches the V2 bundle hard.** The entry is `no-store`, so a fresh/private window
+  gets the new bundle; a stale tab makes "it looks the same." Not a deploy bug.
+- **The real URL is auth-walled by design.** `/` 302s to `/v2/`, `/v2/` is 401 basic-auth
+  (owner password). "Down" vs "auth-gated" are different; verify with `curl -u`.
+
+### NEXT SESSION — exact first action
+
+`scripts/verify_final_state.py` is the entry point (25 gates + the new frontend/reader/
+re-fire gates). Re-fire it. Everything the agent can execute is done and pushed; the four
+open gates above are all owner-only (the verifier split the owner parked, the auth password
+verification, the §19-gated corpus completions, and the claim_sets DROP). Do NOT commit or
+revert the parked `verify_final_state.py` without the owner's word.
+
+---
+
+## Prior checkpoint (2026-09-12T14:10 — EXECUTION AUTHORITY: the REQUIRED FINAL STATE is now measured by ONE re-firable command, 25 gates; §15 DURABLE ATTEMPT TELEMETRY closed across every provider seam after enumeration found four unrecorded ones; and the fix for it broke chat, which a live test reported as green)
 
 **Branch `architecture/evidence-first-v5` @ `0967c46`; upstream matches; 0 unpushed;
 worktree clean; guards green.** Register **11.244**.
