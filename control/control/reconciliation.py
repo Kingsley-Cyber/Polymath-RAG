@@ -414,13 +414,24 @@ def _carry_completed_stages(conn: Connection, old_run_id: str,
             art_payload = json.loads(art_payload)
         art_payload = dict(art_payload)
         art_payload["carried_from_run"] = old_run_id
+        # EXTRACT-OPERATIONAL-PROJECTION-V1: this is a full carried-forward copy of a
+        # previously-completed artifact (never a partial write), so the projection
+        # columns are always derivable directly from it — same derivation as
+        # receipts.py::StageTransaction.artifact, so a carried-forward extract stage
+        # never regresses to a NULL/stale operational read the way a second
+        # independent writer easily could.
+        from polymath_shared.extract_projection import extract_projection_columns_for
+
+        projection = extract_projection_columns_for(art_payload) or {}
+        proj_cols = list(projection)
         conn.execute(
-            """INSERT INTO artifacts
-                   (artifact_id, run_id, stage, contract_hash, payload)
-               VALUES (%s,%s,%s,%s,%s)
+            f"""INSERT INTO artifacts
+                   (artifact_id, run_id, stage, contract_hash, payload{"".join(f", {c}" for c in proj_cols)})
+               VALUES (%s,%s,%s,%s,%s{"".join(", %s" for _ in proj_cols)})
                ON CONFLICT (artifact_id) DO NOTHING""",
             ("art_" + content_hash({"run": new_run_id, "stage": stage}),
-             new_run_id, stage, contract_hash, json.dumps(art_payload)))
+             new_run_id, stage, contract_hash, json.dumps(art_payload),
+             *[projection[c] for c in proj_cols]))
 
         # The DOWNSTREAM stage's claim payload derives from the event
         # this stage PRODUCED (_emit_ticket_event copies that row

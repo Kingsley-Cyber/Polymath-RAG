@@ -64,13 +64,22 @@ def _pmap_provider(conn, corpus_id: str) -> dict:
 
 
 def _graph_provider(conn, corpus_id: str) -> dict:
-    """GRAPH_EXTRACTION accounting (corpus-scoped) from the extract-stats artifacts."""
+    """GRAPH_EXTRACTION accounting (corpus-scoped) from the extract-artifact operational
+    projection (migration 0057, EXTRACT-OPERATIONAL-PROJECTION-V1) — narrow scalar
+    columns, never the full artifacts.payload. That payload is TOAST-heavy (108 rows
+    averaging 116 KB, 455 of the table's 456 MB is TOAST): EXPLAIN (ANALYZE, BUFFERS)
+    measured the old `jsonb_exists(payload,'llm_extraction')` filter forcing a ~45,000-
+    buffer detoast of nearly the whole TOAST relation on every call (490-605 ms), on an
+    endpoint the Control Plane polls frequently. Same aggregate semantics as before:
+    SUM over stage='extract' rows in the corpus, COALESCEd to 0 for an empty/absent
+    set — proven by 100% shadow parity against the old JSONB derivation, 0 mismatches
+    (docs/wiki/experiments/extract-operational-projection-2026-09-12/)."""
     row = conn.execute(
-        "SELECT COALESCE(SUM((s->>'calls')::int),0), COALESCE(SUM((s->>'neighborhoods_sent')::int),0), "
-        "COALESCE(SUM((s->>'neighborhoods_unaccounted')::int),0), COALESCE(SUM((s->>'neighborhoods_dropped')::int),0), "
-        "COALESCE(SUM((s->>'entities')::int),0), COALESCE(SUM((s->>'relations')::int),0) "
-        "FROM (SELECT a.payload->'llm_extraction'->'stats' s FROM artifacts a JOIN runs r ON r.run_id=a.run_id "
-        "      WHERE r.corpus_id=%s AND a.stage='extract' AND jsonb_exists(a.payload,'llm_extraction')) q",
+        "SELECT COALESCE(SUM(a.extract_llm_calls),0), COALESCE(SUM(a.extract_neighborhoods_sent),0), "
+        "COALESCE(SUM(a.extract_neighborhoods_unaccounted),0), COALESCE(SUM(a.extract_neighborhoods_dropped),0), "
+        "COALESCE(SUM(a.extract_entity_count),0), COALESCE(SUM(a.extract_relation_count),0) "
+        "FROM artifacts a JOIN runs r ON r.run_id=a.run_id "
+        "WHERE r.corpus_id=%s AND a.stage='extract' AND a.extract_stats_present",
         (corpus_id,)).fetchone()
     calls, sent, unacc, dropped, ents, rels = row
     return {"provider_requests": calls, "neighborhoods_sent": sent, "neighborhoods_unaccounted": unacc,

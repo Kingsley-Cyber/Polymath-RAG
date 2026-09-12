@@ -69,13 +69,16 @@ def corpus_document_summaries(conn, *, corpus_id: str) -> dict[str, dict]:
         if did in out:
             out[did]["profile_present"] = True
             out[did]["profile_vnext"] = str(vnext).lower() in ("true", "1")
-    # graph entities/relations from the doc's extract-stats artifact (its own run via chunked.v1)
+    # graph entities/relations from the doc's extract-stats artifact (its own run via chunked.v1).
+    # EXTRACT-OPERATIONAL-PROJECTION-V1 (migration 0057): reads the narrow projection
+    # columns, never artifacts.payload — the same TOAST-detoast cost _graph_provider
+    # had (EXPLAIN measured ~490ms/call from a near-full TOAST-relation scan), proven
+    # equivalent by 100% shadow parity, 0 mismatches, against every stage='extract' row.
     for did, ent, rel in conn.execute(
             "SELECT DISTINCT ON (e.payload->>'doc_id') e.payload->>'doc_id', "
-            "(a.payload->'llm_extraction'->'stats'->>'entities')::int, "
-            "(a.payload->'llm_extraction'->'stats'->>'relations')::int "
+            "a.extract_entity_count, a.extract_relation_count "
             "FROM artifacts a JOIN outbox_events e ON e.run_id=a.run_id AND e.event_type='chunked.v1' "
-            "WHERE a.stage='extract' AND jsonb_exists(a.payload,'llm_extraction') "
+            "WHERE a.stage='extract' AND a.extract_stats_present "
             "AND e.payload->>'doc_id' = ANY(%s) ORDER BY e.payload->>'doc_id', a.created_at DESC",
             (list(out),)).fetchall():
         if did in out:
