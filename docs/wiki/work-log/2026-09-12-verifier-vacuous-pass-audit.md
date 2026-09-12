@@ -61,5 +61,15 @@ by failing everything. Plus the AST invariant, pinned as a test so a future
 
 ## Open contract gaps
 
-- The audit covered `verify_final_state.py`. Other governance scripts
-  (`retire_*.py`, `repo_guard.py`) were not examined for the same shape.
+- **`repo_guard.py` was then examined and is sound** — a negative result, recorded so the
+  next reader does not repeat it. Its central check is a TWO-WAY diff
+  (`declared - actual` and `actual - declared`), so neither an empty scaffold TREE nor an
+  empty file scan can pass: each direction turns the other's emptiness into a loud list
+  of errors. `check_dependencies` fails explicitly on unreadable JSON and on an empty
+  `owners` map, and the work-log check reports `invalid front matter` rather than
+  skipping a file it could not parse. Six `except` handlers, none of which return a
+  success.
+- `retire_claim_sets.py` / `retire_pronoun_facts.py` were NOT examined for the same
+  shape. Both are owner-gated at the point of execution, so a vacuous "nothing to do"
+  would be visible before anything irreversible happened — but that is an argument for
+  lower priority, not for soundness.
