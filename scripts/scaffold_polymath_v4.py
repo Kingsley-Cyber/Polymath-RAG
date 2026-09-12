@@ -426,6 +426,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/retrieve-graph-wildcard-migration-2026-09-12/README.md", "md", None),
     ("docs/wiki/experiments/retrieve-graph-wildcard-migration-2026-09-12/parity-result.json", "json", None),
     ("tests/determinism/test_retrieve_graph_wildcard_engine_routing.py", "py", None),
+    ("tests/determinism/test_v2_spa_fallback.py", "py", None),
+    ("docs/wiki/work-log/2026-09-12-frontend-v2-real-url-cutover.md", "md", None),
     ("stores/postgres/migrations/0057_extract_operational_projection.sql", "sql", None),
     ("shared/polymath_shared/extract_projection.py", "py", None),
     ("scripts/backfill_extract_projection.py", "py", None),

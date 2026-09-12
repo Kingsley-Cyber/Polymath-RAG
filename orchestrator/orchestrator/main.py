@@ -127,6 +127,32 @@ if _UI_DIST.exists():
     app.mount("/ui", StaticFiles(directory=str(_UI_DIST), html=True),
               name="ui")
 
+from fastapi.staticfiles import StaticFiles as _StaticFilesV2Base  # noqa: E402
+from starlette.exceptions import HTTPException as _StarletteHTTPExceptionV2  # noqa: E402
+
+
+class _SPAStaticFilesV2(_StaticFilesV2Base):
+    """React Router (BrowserRouter) serves /v2/chat, /v2/files, etc. client-side —
+    a direct load or refresh on one of those paths is a real GET the server must
+    answer, and plain StaticFiles 404s it (confirmed live: GET /v2/files -> 404
+    before this fix). Falls back to index.html for any 404 whose last path segment
+    has no file extension, so the SPA router can take over; a genuinely missing
+    asset (e.g. /v2/assets/app-xyz.js after a stale deploy) still 404s normally
+    instead of silently becoming an HTML page.
+
+    Defined at module level (not inside the `if _V2_DIST.exists()` guard below) so
+    it is importable and unit-testable in any environment, even one with no local
+    frontend-v2 build (frontend-v2/dist is git-ignored)."""
+
+    async def get_response(self, path: str, scope):
+        try:
+            return await super().get_response(path, scope)
+        except _StarletteHTTPExceptionV2 as exc:
+            if exc.status_code == 404 and "." not in path.rsplit("/", 1)[-1]:
+                return await super().get_response("index.html", scope)
+            raise
+
+
 # FRONTEND-V2: serve the greenfield app at /v2 on the SAME port, beside the legacy /ui.
 # Until now V2 existed only on a vite dev port, so the owner's normal URL kept showing
 # the legacy app — the single-port product rule above is exactly what makes it visible.
@@ -134,6 +160,4 @@ if _UI_DIST.exists():
 # the rollback reference (FRONTEND-V2-PLAN §0.1).
 _V2_DIST = Path(__file__).resolve().parents[2] / "frontend-v2" / "dist"
 if _V2_DIST.exists():
-    from fastapi.staticfiles import StaticFiles as _StaticFilesV2  # noqa: E402
-
-    app.mount("/v2", _StaticFilesV2(directory=str(_V2_DIST), html=True), name="v2")
+    app.mount("/v2", _SPAStaticFilesV2(directory=str(_V2_DIST), html=True), name="v2")
