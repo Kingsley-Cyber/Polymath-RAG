@@ -219,16 +219,42 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
                                     latent=req.latent,
                                     utility=req.utility)
     if mode == MODE_GRAPH:
+        cid = single_corpus_or_422(scope, mode)
+        # RETRIEVE-ENGINE-MIGRATION-V1 (GRAPH): same pattern as HYBRID above. The final
+        # core's GRAPH composition (chat_retrieval.py::_with_graph_assist) already produces
+        # the flat evidence/meta/selected_documents/selected_sections/trace contract plus
+        # graph_relationships — the SAME shape /chat and /compare already treat as canonical
+        # (compare_review.py's own docstring calls chat_retrieve_mode's output "the /retrieve
+        # contract"). `utility` stays a v1-only knob (ui.py: "utility remains a v1 knob"), so
+        # its presence keeps the turn on v1 — identical gate to the HYBRID migration above.
+        if retrieve_engine_flag() == "v2" and not req.utility:
+            from dataclasses import replace as _replace
+            from orchestrator.api.chat_retrieval import chat_retrieve_mode, default_budget
+
+            _kw = {}
+            if req.latent:
+                _kw["budget"] = _replace(default_budget(), latent_enabled=True)
+            return chat_retrieve_mode("GRAPH", query, cid, **_kw)
         from orchestrator.api.graph import graph_retrieve
 
-        return graph_retrieve(query, single_corpus_or_422(scope, mode),
-                               latent=req.latent,
-                               utility=req.utility)
+        return graph_retrieve(query, cid, latent=req.latent, utility=req.utility)
     from polymath_shared.retrieval_modes import MODE_WILDCARD
     if mode == MODE_WILDCARD:
+        cid = single_corpus_or_422(scope, mode)
+        # Same migration for WILDCARD: the final core's composition (chat_retrieval.py::
+        # _retrieve_wildcard) returns FAST's own flat shape plus a `wildcard` bridge lane —
+        # the identical top-level contract v1 already produced via `{**fast, "wildcard": [...]}`.
+        if retrieve_engine_flag() == "v2" and not req.utility:
+            from dataclasses import replace as _replace
+            from orchestrator.api.chat_retrieval import chat_retrieve_mode, default_budget
+
+            _kw = {}
+            if req.latent:
+                _kw["budget"] = _replace(default_budget(), latent_enabled=True)
+            return chat_retrieve_mode("WILDCARD", query, cid, **_kw)
         from orchestrator.api.wildcard import wildcard_retrieve
 
-        return wildcard_retrieve(query, single_corpus_or_422(scope, mode))
+        return wildcard_retrieve(query, cid)
 
     corpus_ids = list(scope.corpus_ids)
     with tx() as conn:
