@@ -169,5 +169,14 @@ def test_validate_startup_passes_against_the_real_deployment():
     try:
         report = validate_startup()
     except StartupContractError as exc:
+        # Skipping on EVERY contract error made this test's only failure mode
+        # unreachable: raise -> skip, return -> assert. POSTGRES_AUTH_FAILED is precisely
+        # what "passes against the real deployment" is supposed to catch, so only
+        # genuinely absent infrastructure may skip. (Same masking shape as the chat
+        # stream-error skip fixed on 2026-09-12.)
+        _ABSENT = {"POSTGRES_CONFIG_MISSING", "POSTGRES_UNREACHABLE",
+                   "POSTGRES_DRIVER_MISSING"}
+        if exc.code not in _ABSENT:
+            pytest.fail(f"the real deployment violates the startup contract: {exc}")
         pytest.skip(f"deployment not available: {exc.code}")
     assert report["postgres"] == "ok"

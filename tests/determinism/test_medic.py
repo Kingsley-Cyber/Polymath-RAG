@@ -45,10 +45,11 @@ def _connect(autocommit=False):
 @pytest.fixture
 def conn():
     c = _connect()
-    try:
-        c.execute("SELECT 1 FROM medic_actions LIMIT 1")
-    except Exception as exc:  # noqa: BLE001
-        pytest.skip(f"migration 0053 not applied: {exc}")
+    # Ask the question directly. `SELECT 1 FROM medic_actions` inside a broad except
+    # reported a connection drop, a permissions problem or a query bug as "migration not
+    # applied" — a skip reason that is a guess, and one that hides real faults.
+    if not c.execute("SELECT to_regclass('medic_actions')").fetchone()[0]:
+        pytest.skip("migration 0053 not applied (medic_actions does not exist)")
     yield c
     try:
         c.rollback(); c.close()

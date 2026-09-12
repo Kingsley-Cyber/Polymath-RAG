@@ -391,6 +391,14 @@ def check_guards_and_attributed_failures(fast: bool = False) -> None:
                        cwd=ROOT, capture_output=True, text=True, timeout=3600)
     failed = {l.split(" ", 1)[1].strip() for l in r.stdout.splitlines()
               if l.startswith("FAILED ")}
+    # SKIP COUNT, reported as a first-class number. On 2026-09-12 a change broke /chat in
+    # production and the live chat tests SKIPPED on it ("stream error — LLM lane, not the
+    # contract under test"), so the suite read 10 passed / 3 skipped / exit 0 and the
+    # break was reported as verified. A skip is not a pass, and a RISING skip count is
+    # the visible shape of coverage quietly leaving. The number is printed on PASS too.
+    import re as _re
+    _m = _re.search(r"(\d+) skipped", r.stdout)
+    skipped = int(_m.group(1)) if _m else 0
     unexpected = sorted(failed - ATTRIBUTED)
     vanished = sorted(ATTRIBUTED - failed)
 
@@ -414,7 +422,8 @@ def check_guards_and_attributed_failures(fast: bool = False) -> None:
          f"{len(failed) - len(unexpected)}; "
          f"reproduced alone (REAL regressions): {reproduced or 'NONE'}; "
          f"passed alone (load-flaky, reported not hidden): {flaky or 'NONE'}; "
-         f"attributed-but-now-passing: {vanished or 'NONE'}")
+         f"attributed-but-now-passing: {vanished or 'NONE'}; "
+         f"SKIPPED: {skipped} (a skip is not a pass — see 11.239)")
 
 
 def check_parity() -> None:
