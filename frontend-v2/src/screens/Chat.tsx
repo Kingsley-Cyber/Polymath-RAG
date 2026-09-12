@@ -8,6 +8,7 @@ import { QueryTrace } from "../components/QueryTrace";
 import { EvidenceInspector } from "../components/EvidenceInspector";
 import { AnswerReview } from "../components/AnswerReview";
 import { ModelPicker } from "../components/ModelPicker";
+import type { ChatSession } from "../lib/chatStore";
 
 /**
  * F2 + F3 — Chat with corpus, retrieval mode, intent, model, reasoning and streaming.
@@ -18,12 +19,21 @@ import { ModelPicker } from "../components/ModelPicker";
  * intent is honest but inert for routing. The UI says exactly that rather than
  * implying a control that does not exist.
  */
-export function Chat({ corpusId }: { corpusId: string }) {
+export function Chat({
+  corpusId,
+  session = null,
+  onTurns,
+}: {
+  corpusId: string;
+  /** CHAT-HISTORY-V1: the persisted session being viewed, or null for a scratch thread. */
+  session?: ChatSession | null;
+  onTurns?: (turns: Turn[]) => void;
+}) {
   const [mode, setMode] = useState<PublicMode>("HYBRID");
   const [model, setModel] = useState<string>("");
   const [reasoning, setReasoning] = useState<string>("");
   const [question, setQuestion] = useState("");
-  const [turns, setTurns] = useState<Turn[]>([]);
+  const [turns, setTurns] = useState<Turn[]>(session?.turns ?? []);
   const [busy, setBusy] = useState(false);
   const abort = useRef<AbortController | null>(null);
 
@@ -35,6 +45,13 @@ export function Chat({ corpusId }: { corpusId: string }) {
   useEffect(() => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
+  }, [turns]);
+
+  // Hand every change back up so the session persists (App owns the store).
+  // Skipped while empty so merely opening Chat never creates a blank session.
+  useEffect(() => {
+    if (turns.length) onTurns?.(turns);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [turns]);
 
   async function send() {

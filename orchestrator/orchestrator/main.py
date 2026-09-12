@@ -150,12 +150,31 @@ class _SPAStaticFilesV2(_StaticFilesV2Base):
     it is importable and unit-testable in any environment, even one with no local
     frontend-v2 build (frontend-v2/dist is git-ignored)."""
 
+    #: The entry document must never be cached: Vite fingerprints every asset
+    #: (index-<hash>.js), so index.html is the ONE file whose URL is stable while
+    #: its contents change on each deploy. Served cacheable, a browser that has
+    #: loaded /v2/ once keeps replaying the OLD index and therefore the OLD asset
+    #: hashes — the app silently stays on the previous build until a hard refresh.
+    #: Observed live 2026-09-12: two consecutive deploys were invisible in the
+    #: browser for exactly this reason. The hashed assets themselves stay
+    #: cacheable (their URL changes when their content does), so this costs one
+    #: small revalidation per load, not the asset payloads.
+    _NO_STORE = "no-cache, no-store, must-revalidate"
+
+    def _uncache_html(self, response):
+        media = str(getattr(response, "media_type", "") or "")
+        if media.startswith("text/html"):
+            response.headers["cache-control"] = self._NO_STORE
+            response.headers["pragma"] = "no-cache"
+            response.headers["expires"] = "0"
+        return response
+
     async def get_response(self, path: str, scope):
         try:
-            return await super().get_response(path, scope)
+            return self._uncache_html(await super().get_response(path, scope))
         except _StarletteHTTPExceptionV2 as exc:
             if exc.status_code == 404 and "." not in path.rsplit("/", 1)[-1]:
-                return await super().get_response("index.html", scope)
+                return self._uncache_html(await super().get_response("index.html", scope))
             raise
 
 

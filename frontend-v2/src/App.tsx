@@ -12,6 +12,9 @@ import { Files } from "./screens/Files";
 import { ControlPlane } from "./screens/ControlPlane";
 import { Graph } from "./screens/Graph";
 import { Compare } from "./screens/Compare";
+import {
+  emptySession, loadSessions, saveSessions, titleFor, type ChatSession,
+} from "./lib/chatStore";
 
 /** FRONTEND-V2-PLAN §1 — Chat · Files · Graph │ Control Plane · Settings.
  *  `glyph` is the collapsed-rail label (owner request 2026-09-12: side panel collapse). */
@@ -65,6 +68,43 @@ export function App() {
     try { localStorage.setItem(COLLAPSE_KEY, collapsed ? "1" : "0"); } catch { /* private mode */ }
   }, [collapsed]);
 
+  // CHAT-HISTORY-V1 — sessions live at app level so the sidebar can list them.
+  const [sessions, setSessions] = useState<ChatSession[]>(() => loadSessions());
+  const [activeChatId, setActiveChatId] = useState<string>("");
+
+  useEffect(() => { saveSessions(sessions); }, [sessions]);
+
+  const activeChat =
+    sessions.find((s) => s.id === activeChatId) ?? null;
+
+  function startChat() {
+    const s = emptySession(corpusId);
+    setSessions((xs) => [s, ...xs]);
+    setActiveChatId(s.id);
+    setScreen("chat");
+  }
+
+  function openChat(id: string) {
+    setActiveChatId(id);
+    setScreen("chat");
+  }
+
+  function deleteChat(id: string) {
+    setSessions((xs) => xs.filter((s) => s.id !== id));
+    setActiveChatId((cur) => (cur === id ? "" : cur));
+  }
+
+  /** Chat.tsx owns the live turns; it hands them back so they persist. */
+  function updateChat(id: string, turns: ChatSession["turns"]) {
+    setSessions((xs) =>
+      xs.map((s) =>
+        s.id === id
+          ? { ...s, turns, updatedAt: Date.now(), title: titleFor({ ...s, turns }) }
+          : s,
+      ),
+    );
+  }
+
   const corpora = useAsync((s) => api.corpora(s), []);
   const cp = useAsync((s) => api.controlPlane(corpusId, s), [corpusId]);
   const control = useMemo(() => controlReady(cp.data?.control_ready), [cp.data]);
@@ -84,6 +124,11 @@ export function App() {
           </button>
         </div>
 
+        <button className="nav__newchat" data-glyph="＋" onClick={startChat}
+                title={collapsed ? "New chat" : undefined}>
+          <span>＋ New chat</span>
+        </button>
+
         {NAV.map((n) =>
           n.id === "rule" ? (
             <div className="nav__rule" key="rule" />
@@ -99,6 +144,27 @@ export function App() {
               <span>{n.label}</span>
             </button>
           ),
+        )}
+
+        {sessions.length > 0 && (
+          <div className="nav__chats">
+            <span className="label">Chats</span>
+            {sessions.map((s) => (
+              <div
+                key={s.id}
+                className="nav__chat"
+                aria-current={screen === "chat" && s.id === activeChatId ? "page" : undefined}
+              >
+                <button className="nav__chat-open" title={s.title} onClick={() => openChat(s.id)}>
+                  {s.title}
+                </button>
+                <button className="nav__chat-del" title="Delete chat"
+                        aria-label={`Delete ${s.title}`} onClick={() => deleteChat(s.id)}>
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
         )}
 
         <div className="nav__spacer" />
@@ -140,7 +206,22 @@ export function App() {
 
       <main className="main">
         {screen === "overview" && <Overview corpusId={corpusId} />}
-        {screen === "chat" && <Chat corpusId={corpusId} />}
+        {screen === "chat" && (
+          <Chat
+            key={activeChat?.id ?? "scratch"}
+            corpusId={corpusId}
+            session={activeChat}
+            onTurns={(turns) => {
+              if (activeChat) updateChat(activeChat.id, turns);
+              else {
+                // first message with no session selected starts one
+                const s = { ...emptySession(corpusId), turns };
+                setSessions((xs) => [{ ...s, title: titleFor(s) }, ...xs]);
+                setActiveChatId(s.id);
+              }
+            }}
+          />
+        )}
         {screen === "compare" && <Compare corpusId={corpusId} />}
         {screen === "files" && <Files corpusId={corpusId} />}
         {screen === "control" && <ControlPlane corpusId={corpusId} />}

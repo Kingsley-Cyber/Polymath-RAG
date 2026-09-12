@@ -74,3 +74,28 @@ def test_a_path_with_a_dot_that_isnt_a_real_file_also_404s(client):
     the actual (narrow, deliberate) rule rather than 'any 404 becomes 200'."""
     r = client.get("/v2/some.weird.path", follow_redirects=False)
     assert r.status_code == 404
+
+
+def test_index_is_served_uncacheable_so_a_deploy_is_actually_picked_up(client):
+    """Vite fingerprints every asset, so index.html is the ONE stable URL whose
+    contents change per deploy. Served cacheable, a browser that has loaded /v2/
+    once replays the OLD index and therefore the OLD asset hashes, and silently
+    stays on the previous build (observed live 2026-09-12: two deploys in a row
+    were invisible in the browser until a cache-busting query was added).
+
+    Both the direct entry AND the SPA fallback must carry the header — the
+    fallback is how a refresh on a deep path re-enters the app."""
+    for path in ("/v2/", "/v2/index.html", "/v2/files"):
+        r = client.get(path, follow_redirects=False)
+        assert r.status_code == 200, path
+        cc = r.headers.get("cache-control", "")
+        assert "no-cache" in cc and "no-store" in cc, f"{path} served cacheable: {cc!r}"
+
+
+def test_hashed_assets_are_left_cacheable(client):
+    """The counterpart: content-hashed assets must NOT be forced to revalidate —
+    their URL changes when their content does, so caching them is free and
+    correct. Only the entry document is uncacheable."""
+    r = client.get("/v2/assets/app-abc123.js", follow_redirects=False)
+    assert r.status_code == 200
+    assert "no-store" not in r.headers.get("cache-control", "")

@@ -281,3 +281,42 @@ button.btn:disabled { opacity: .5; cursor: not-allowed; }
   flex: 1; min-height: 0; display: flex; flex-direction: column;
   overflow: hidden; padding-bottom: 0;
 }
+
+/* ── chat history list (CHAT-HISTORY-V1) ──────────────────────────────────── */
+
+.nav__newchat {
+  appearance: none; cursor: pointer; font: inherit; text-align: left;
+  background: var(--accent-dim); color: var(--fg);
+  border: 1px solid var(--line); border-radius: var(--r);
+  padding: 8px 10px; margin-bottom: 10px;
+}
+.nav__newchat:hover { border-color: var(--accent); }
+
+.nav__chats {
+  margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 1px;
+  max-height: 34vh; overflow-y: auto;
+}
+.nav__chat { display: flex; align-items: center; gap: 2px; border-radius: var(--r); }
+.nav__chat:hover { background: var(--bg-raised); }
+.nav__chat[aria-current="page"] { background: var(--accent-dim); }
+.nav__chat-open {
+  appearance: none; border: 0; background: transparent; cursor: pointer;
+  color: var(--fg-dim); font: inherit; text-align: left;
+  padding: 6px 8px; flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.nav__chat:hover .nav__chat-open,
+.nav__chat[aria-current="page"] .nav__chat-open { color: var(--fg); }
+.nav__chat-del {
+  appearance: none; border: 0; background: transparent; cursor: pointer;
+  color: var(--fg-faint); font: inherit; padding: 4px 7px; border-radius: var(--r);
+  opacity: 0; transition: opacity .12s;
+}
+.nav__chat:hover .nav__chat-del { opacity: 1; }
+.nav__chat-del:hover { color: var(--bad); }
+
+.shell--collapsed .nav__chats { display: none; }
+.shell--collapsed .nav__newchat { padding: 8px 0; text-align: center; }
+.shell--collapsed .nav__newchat span { display: none; }
+.shell--collapsed .nav__newchat::before { content: attr(data-glyph); }

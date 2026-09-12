@@ -1497,6 +1497,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("frontend-v2/src/screens/Overview.tsx", "tsx", None),
     ("frontend-v2/src/screens/Chat.tsx", "tsx", None),
     ("frontend-v2/src/lib/chat.ts", "ts", None),
+    ("frontend-v2/src/lib/chatStore.ts", "ts", None),
     ("frontend-v2/src/components/LaneTable.tsx", "tsx", None),
     ("frontend-v2/src/components/EvidenceInspector.tsx", "tsx", None),
     ("frontend-v2/src/components/QueryTrace.tsx", "tsx", None),
