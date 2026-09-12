@@ -94,6 +94,10 @@ schema deletion", owner-only: `scripts/retire_claim_sets.py --execute` once auth
   than by reviewing what had just been changed.
 - **Editing the tree invalidates a running verifier.** Two ~7-minute runs were discarded
   because the suite reads the working tree. Finish the slice, then verify once.
+- **The execution bundle hash includes `git_sha`, so ANY commit — a docs-only one
+  included — makes fleet ≠ tree.** That is not code drift and needs no bounce; compare
+  the RUNTIME trees (`shared/`, `workers/`, `control/`, `orchestrator/`) before spending
+  a fleet restart on it. This checkpoint's own commit moves the hash, by construction.
 - **`ps | grep control.process_supervisor` counts your own shells.** Confirm the
   supervisor with `ps -eo pid,command | awk '/control\.process_supervisor/ && /venv/'`
   before concluding there are three of them.
