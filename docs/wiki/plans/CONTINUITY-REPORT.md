@@ -16,9 +16,99 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.213–11.226; the file is append-only and now runs to 11.226) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.239**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-12T08:20 — EXECUTION AUTHORITY: investigated all 3 pre-existing test failures to genuine root cause; fixed 2 (both a recurring .env-override-vs-test-isolation pattern, zero product code touched); the 3rd confirmed to require live production data mutation, precisely matching claim_sets as a genuine §1 owner gate, not a code bug)
+## Latest checkpoint (2026-09-12T14:10 — EXECUTION AUTHORITY: the REQUIRED FINAL STATE is now measured by ONE re-firable command, 25 gates; §15 DURABLE ATTEMPT TELEMETRY closed across every provider seam after enumeration found four unrecorded ones; and the fix for it broke chat, which a live test reported as green)
+
+**Branch `architecture/evidence-first-v5` @ `68eea5e`; upstream matches; 0 unpushed;
+worktree clean; guards green.** Register **11.239**.
+
+**Fleet:** 23 healthy workers, ONE bundle hash `9bf616674e5a` == the committed tree,
+`/ready: true`, embedder + reranker up (`cloud-modal` false, as configured).
+
+**`scripts/verify_final_state.py` → 25 PASS · 1 BLOCKED_OWNER · 0 FAIL, exit 0.**
+The single BLOCKED_OWNER is `dead_proven_removed` (`claim_sets`: 0 rows, 0 lifetime
+writes, 0 code references, re-proved live — the DROP itself is §1 "destructive production
+schema deletion", owner-only: `scripts/retire_claim_sets.py --execute` once authorized).
+
+### What shipped since the prior checkpoint (11.227 → 11.239)
+
+- **11.227–11.230** — frontend-v2 parity with the legacy `/ui` (owner-requested: themes,
+  grouped model picker, sidebar collapse, bottom-docked ChatGPT-style chat, chat history)
+  and the real defect underneath it: `index.html` was served CACHEABLE, so deploys were
+  invisible to returning browsers. Public chain re-verified.
+- **11.231–11.235 — FINAL-STATE-VERIFIER.** One re-firable command replacing "read a
+  dozen work-logs to answer *is it done?*". Gates are derived FROM the authority
+  document's own mandatory-gate blocks rather than from recollection; doing that
+  enumeration found four clauses that had never been measured at all (including the
+  `/chat` half of the retrieval requirement). The attribution gate re-runs unexpected
+  failures ALONE and only counts a FAIL if it reproduces — evidence instead of a
+  curated flaky-list.
+- **11.236–11.238 — §15 DURABLE ATTEMPT TELEMETRY, closed by enumeration, three times.**
+  Measured first: 209 rows, **3** distinct lanes, **0** tagged, against **13** lanes with
+  real dispatch activity. Root cause was one wiring gap — `record()` lived only in
+  `complete_one`, while the ONLY caller of `attempt_context` in the repo wrapped the
+  batched path, which recorded nothing. Fixing the batched seam and claiming the clause
+  was premature: an AST walk found **four** seams in the client (11.237), and widening to
+  "what else dispatches to an external model?" found **chat synthesis** (11.238) — paid
+  models, recording nothing. Also: `provider` populated, `started_at` made honest
+  (`DEFAULT now()` on a row inserted after the attempt meant it held the FINISH time),
+  `attempt_ordinal` derived in SQL (a contextvar counter recorded every attempt of one
+  call as ordinal 1), `failover_attempts` no longer inflated by uncorrelated rows
+  (live: read 16, true value 2), migration **0059** `limiter_bypassed` so a seam with no
+  lane limiter can say "not applicable" instead of asserting "zero quota" about a paid
+  call, and two more of §15's five named detections (`LIMITER_BYPASS`,
+  `DARK_ENABLED_LANE`). The durable part is the **gate**: two seams went unrecorded for
+  months because nothing enumerated them.
+- **11.239 — the correction that matters most.** 11.238's context wrapper spanned a
+  streaming generator's `yield`s; a contextvar token is valid only in the Context that
+  created it, Starlette resumes such a generator in another one, and `__exit__` raised —
+  **every `/chat` answer became a stream error** for ~14 minutes. It was invisible
+  because `test_chat_synthesis.py` skips on stream errors as "LLM lane, not the contract
+  under test": the suite read **10 passed, 3 skipped, exit 0** and I reported that as
+  proof the restructuring worked live. Found only by re-running with `-rs` to read the
+  skip reasons. Fixed structurally (no attempt context spans a yield), defensively
+  (`__exit__` restores by value when the token is foreign), and at the source of the
+  masking (the live test now `pytest.fail`s on any error that does not NAME a provider
+  condition). After the fix: **13 passed, 0 skipped**, and the first real traffic proof
+  arrived with it — six genuine synthesis attempts on `chat_synth:anthropic`, 7.0s–59.0s,
+  previously invisible.
+
+### Ledger, before → after this session's telemetry work
+
+| | before | after |
+|---|---|---|
+| rows | 209 | 315 |
+| distinct lanes | 3 | 8 |
+| max attempt_ordinal | 1 | 2 |
+| rows with `provider` | 0 | 88 |
+| recording seams | 1 | 8 (across 2 modules, 3 exclusions printed with reasons) |
+
+### Traps this session added to §6
+
+- **A SKIP is not a PASS.** A live test that classifies an unknown error as the
+  provider's fault will hide your own break. Read skip REASONS (`-rs`) before believing a
+  green run that contains skips.
+- **Enumerate, don't read the diff.** Every one of 11.236–11.238 was found by asking
+  "how many are there?" (seams, then modules, then the arithmetic over the rows) rather
+  than by reviewing what had just been changed.
+- **Editing the tree invalidates a running verifier.** Two ~7-minute runs were discarded
+  because the suite reads the working tree. Finish the slice, then verify once.
+- **`ps | grep control.process_supervisor` counts your own shells.** Confirm the
+  supervisor with `ps -eo pid,command | awk '/control\.process_supervisor/ && /venv/'`
+  before concluding there are three of them.
+
+### NEXT SESSION — exact first action
+
+`scripts/verify_final_state.py` is the entry point: re-fire it, and work the single
+BLOCKED_OWNER or the gaps named in the newest work-logs. Explicitly NOT claimed closed
+and worth picking up: §15's third detection `CONFIG/LIVE_MISMATCH`; `response_hash` is
+never set on any attempt; and other live tests may carry the same skip-on-error masking
+that 11.239 found in `test_chat_synthesis.py` — only that one was audited.
+
+---
+
+## Prior checkpoint (2026-09-12T08:20 — EXECUTION AUTHORITY: investigated all 3 pre-existing test failures to genuine root cause; fixed 2 (both a recurring .env-override-vs-test-isolation pattern, zero product code touched); the 3rd confirmed to require live production data mutation, precisely matching claim_sets as a genuine §1 owner gate, not a code bug)
 
 **Branch `architecture/evidence-first-v5` @ (pending this checkpoint's commit); worktree
 clean pre-commit; guards green.** Register **11.226**.
