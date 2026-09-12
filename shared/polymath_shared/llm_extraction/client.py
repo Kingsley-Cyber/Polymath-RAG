@@ -458,7 +458,7 @@ class LLMExtractionClient:
         # earlier 429 can no longer be erased by a later success on another lane.
         from polymath_shared.conformance.attempts import Attempt, record as _rec
         _t0 = time.monotonic()
-        _base = dict(lane=self.limiter_key, model=self.model, account_env=self._account_env())
+        _base = dict(lane=self.limiter_key, model=self.model, account_env=self._account_env(), provider=self._provider())
 
         if not decision.admitted:
             self._last_http_dispatched = False       # no request left the process
@@ -510,6 +510,18 @@ class LLMExtractionClient:
         except Exception:  # noqa: BLE001
             pass
         return None
+
+    def _provider(self) -> str | None:
+        """PROVIDER for the attempt ledger: the HOST this lane actually dispatches to.
+        §15 lists `provider` among the fields each attempt must record, and it was NULL
+        on every row because no call site set it. Taken from the live base URL rather
+        than from config, so it reports where the request WENT, not where it was meant
+        to go — and a URL netloc carries no credential."""
+        try:
+            from urllib.parse import urlparse
+            return urlparse(self.base_url).netloc or None
+        except Exception:  # noqa: BLE001 — accounting must never break a dispatch
+            return None
 
     def _lane_limiter(self):
         return REGISTRY.lane(
@@ -607,8 +619,8 @@ class LLMExtractionClient:
         from polymath_shared.conformance.attempts import Attempt as _At, record as _rec
         if not limiter.acquire(est_tokens=sum(len(u) for _, u, _ in prompt_items) / 4.0):
             _rec(_At(lane=self.limiter_key, limiter_admitted=False, http_dispatched=False,
-                     success=False, error_class="limiter_refused",
-                     model=self.model, account_env=self._account_env()))
+                     success=False, error_class="LIMITER_REFUSED",
+                     model=self.model, account_env=self._account_env(), provider=self._provider()))
             raise ExtractionTransportError(
                 f"{self.lane} lane refused the batched call (breaker open "
                 "or rate hold); stage must retry")
@@ -646,9 +658,9 @@ class LLMExtractionClient:
                          success=False, http_status=status,
                          retry_after_s=(float(_ra) if (_ra or "").replace(".", "", 1).isdigit()
                                         else None),
-                         error_class=f"http_{status}",
+                         error_class=f"HTTP_{status}",
                          latency_ms=int((time.perf_counter() - t0) * 1000),
-                         model=self.model, account_env=self._account_env()))
+                         model=self.model, account_env=self._account_env(), provider=self._provider()))
                 limiter.record_failure(
                     retry_after=_ra,
                     headers=dict(exc.response.headers))
@@ -661,7 +673,7 @@ class LLMExtractionClient:
                 _rec(_At(lane=self.limiter_key, limiter_admitted=True, http_dispatched=True,
                          success=False, error_class=type(exc).__name__,
                          latency_ms=int((time.perf_counter() - t0) * 1000),
-                         model=self.model, account_env=self._account_env()))
+                         model=self.model, account_env=self._account_env(), provider=self._provider()))
                 limiter.record_failure()
                 raise ExtractionTransportError(
                     f"{self.lane} batched transport failed: "
@@ -670,7 +682,7 @@ class LLMExtractionClient:
                 _rec(_At(lane=self.limiter_key, limiter_admitted=True, http_dispatched=True,
                          success=True, http_status=200,
                          latency_ms=int((time.perf_counter() - t0) * 1000),
-                         model=self.model, account_env=self._account_env()))
+                         model=self.model, account_env=self._account_env(), provider=self._provider()))
                 limiter.record_success()
                 if budget is not None:
                     budget.record_success()
@@ -767,10 +779,20 @@ class LLMExtractionClient:
         limiter = self._lane_limiter()
         cap = budget.effective if budget is not None else None
 
+        # PROVIDER-ATTEMPT-LEDGER: the SECOND batched seam. `_infer_batch_call` serves
+        # extraction; this one serves the non-extraction compilers, and it has the same
+        # four branches and the same 500-halving recursion — so it needed the same rows.
+        from polymath_shared.conformance.attempts import Attempt as _At, record as _rec
+        _base = dict(lane=self.limiter_key, model=self.model, account_env=self._account_env(), provider=self._provider())
+
         def run(batch: list[tuple[str, str, str, int]]
                 ) -> list[tuple[str, str, str | None]]:
+            _a0 = time.perf_counter()
             if not limiter.acquire(
                     est_tokens=sum(len(u) for _, _, u, _ in batch) / 4.0):
+                _rec(_At(limiter_admitted=False, http_dispatched=False, success=False,
+                         error_class="LIMITER_REFUSED",
+                         latency_ms=int((time.perf_counter() - _a0) * 1000), **_base))
                 return [(i, "", "LIMITER_REFUSED") for i, _, _, _ in batch]
             status: int | None = None
             body: dict = {}
@@ -787,17 +809,29 @@ class LLMExtractionClient:
                     body = resp.json()
                 except httpx.HTTPStatusError as exc:
                     status = exc.response.status_code
+                    _ra = exc.response.headers.get("retry-after")
+                    _rec(_At(limiter_admitted=True, http_dispatched=True, success=False,
+                             http_status=status, error_class=f"HTTP_{status}",
+                             retry_after_s=(float(_ra) if (_ra or "").replace(".", "", 1).isdigit()
+                                            else None),
+                             latency_ms=int((time.perf_counter() - _a0) * 1000), **_base))
                     limiter.record_failure(
-                        retry_after=exc.response.headers.get("retry-after"),
+                        retry_after=_ra,
                         headers=dict(exc.response.headers))
                     if not (status == 500 and len(batch) > 1):
                         return [(i, "", f"TRANSPORT_HTTP_{status}")
                                 for i, _, _, _ in batch]
                 except (httpx.HTTPError, json.JSONDecodeError) as exc:
+                    _rec(_At(limiter_admitted=True, http_dispatched=True, success=False,
+                             error_class=type(exc).__name__,
+                             latency_ms=int((time.perf_counter() - _a0) * 1000), **_base))
                     limiter.record_failure()
                     return [(i, "", f"TRANSPORT_{type(exc).__name__}")
                             for i, _, _, _ in batch]
                 else:
+                    _rec(_At(limiter_admitted=True, http_dispatched=True, success=True,
+                             http_status=200,
+                             latency_ms=int((time.perf_counter() - _a0) * 1000), **_base))
                     limiter.record_success()
                     if budget is not None:
                         budget.record_success()
@@ -843,9 +877,19 @@ class LLMExtractionClient:
         tokens_in = tokens_out = 0
         nudge = ""
         t0 = time.perf_counter()
+        # PROVIDER-ATTEMPT-LEDGER: this loop IS §15's example. Attempt 1 can take a 429,
+        # the loop retries, attempt 2 succeeds and the function returns SUCCESS — and
+        # before this the 429 was durable nowhere. `attempts` was counted in the RESULT,
+        # which is per logical call; the ledger needs one row per attempt.
+        from polymath_shared.conformance.attempts import Attempt as _At, record as _rec
+        _base = dict(lane=self.limiter_key, model=self.model, account_env=self._account_env(), provider=self._provider())
         while attempts < self.max_attempts:
             attempts += 1
+            _a0 = time.perf_counter()
             if not limiter.acquire(est_tokens=est_tokens):
+                _rec(_At(limiter_admitted=False, http_dispatched=False, success=False,
+                         error_class="LIMITER_REFUSED",
+                         latency_ms=int((time.perf_counter() - _a0) * 1000), **_base))
                 # breaker open / rate hold: no network I/O made. The caller
                 # (run_proposals) turns this into a stage failure so the
                 # ticket retries — it is never a completed extraction.
@@ -862,6 +906,12 @@ class LLMExtractionClient:
                     raw, tin, tout, _hdrs = self._chat(user_prompt + nudge, max_tokens)
                 except httpx.HTTPStatusError as exc:
                     status = exc.response.status_code
+                    _ra = exc.response.headers.get("retry-after")
+                    _rec(_At(limiter_admitted=True, http_dispatched=True, success=False,
+                             http_status=status, error_class=f"HTTP_{status}",
+                             retry_after_s=(float(_ra) if (_ra or "").replace(".", "", 1).isdigit()
+                                            else None),
+                             latency_ms=int((time.perf_counter() - _a0) * 1000), **_base))
                     # THROUGHPUT-V2: 413 is a PAYLOAD condition, not a
                     # rate condition — halving the AIMD limit for it
                     # starved healthy lanes (measured 2026-09-01).
@@ -884,17 +934,26 @@ class LLMExtractionClient:
                         raise ExtractionTransportError(
                             f"{self.lane} transport failed: HTTP {status}") from exc
                 except (httpx.HTTPError, json.JSONDecodeError, KeyError) as exc:
+                    _rec(_At(limiter_admitted=True, http_dispatched=True, success=False,
+                             error_class=type(exc).__name__,
+                             latency_ms=int((time.perf_counter() - _a0) * 1000), **_base))
                     limiter.record_failure()
                     raise ExtractionTransportError(
                         f"{self.lane} transport failed: {type(exc).__name__}: {exc}") from exc
                 except Exception as exc:
                     # malformed body SHAPE (non-numeric usage, non-dict
                     # choice, ...): a transport fault, not a model fault
+                    _rec(_At(limiter_admitted=True, http_dispatched=True, success=False,
+                             error_class=type(exc).__name__,
+                             latency_ms=int((time.perf_counter() - _a0) * 1000), **_base))
                     limiter.record_failure()
                     raise ExtractionTransportError(
                         f"{self.lane} transport returned a malformed body: "
                         f"{type(exc).__name__}: {exc}") from exc
                 else:
+                    _rec(_At(limiter_admitted=True, http_dispatched=True, success=True,
+                             http_status=200, tokens_in=tin, tokens_out=tout,
+                             latency_ms=int((time.perf_counter() - _a0) * 1000), **_base))
                     limiter.record_success()
             finally:
                 limiter.release()

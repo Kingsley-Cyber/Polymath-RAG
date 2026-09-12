@@ -100,7 +100,14 @@ class Attempt:
 
 
 def record(a: Attempt) -> None:
-    """Persist one attempt. Never raises."""
+    """Persist one attempt. Never raises.
+
+    `started_at` is derived, not defaulted. The row is inserted AFTER the attempt
+    finishes, so the column's `DEFAULT now()` made it hold the FINISH time under a name
+    that says start — which silently inverts any latency or overlap analysis built on
+    it. Writing `now() - latency` makes the column mean what it is called, and
+    `started_at + latency_ms` then gives the finish time §15 also asks for.
+    """
     if not enabled():
         return
     dsn = os.environ.get("POLYMATH_PG_DSN", "").strip()
@@ -115,13 +122,14 @@ def record(a: Attempt) -> None:
                     (correlation_id, run_id, ticket_id, function, stage, lane, provider,
                      model, account_env, attempt_ordinal, limiter_admitted, http_dispatched,
                      http_status, retry_after_s, error_class, success, latency_ms,
-                     response_hash, tokens_in, tokens_out)
-                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                     response_hash, tokens_in, tokens_out, started_at)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
+                            now() - make_interval(secs => COALESCE(%s,0) / 1000.0))""",
                 (ctx.get("correlation_id"), ctx.get("run_id"), ctx.get("ticket_id"),
                  ctx.get("function"), ctx.get("stage"), a.lane, a.provider, a.model,
                  a.account_env, next_ordinal(), a.limiter_admitted, a.http_dispatched,
                  a.http_status, a.retry_after_s, a.error_class, a.success, a.latency_ms,
-                 a.response_hash, a.tokens_in, a.tokens_out))
+                 a.response_hash, a.tokens_in, a.tokens_out, a.latency_ms))
     except Exception as exc:  # noqa: BLE001
         if not _warned.is_set():
             _warned.set()

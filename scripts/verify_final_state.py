@@ -643,6 +643,111 @@ def check_frontend() -> None:
 
 # ── 6. delivery ──────────────────────────────────────────────────────────────
 
+# ── 17. §15 DURABLE ATTEMPT TELEMETRY — every provider seam reaches the ledger ─
+
+#: Functions in the LLM client that dispatch to a provider but deliberately do NOT
+#: record, each with the reason. Listed here (and PRINTED by the gate) so an exclusion
+#: is a visible decision rather than a silent hole.
+_ATTEMPT_SEAM_EXCLUSIONS = {
+    "_chat": "pure transport helper — every caller (complete_one, _extract_prompt) "
+             "records around it; recording here too would double-count each attempt",
+    "probe": "liveness probe, not workload: it bypasses the limiter by design, so "
+             "recording it as limiter_admitted would corrupt the LIMITER_BYPASS signal "
+             "this same ledger exists to detect",
+}
+#: §15's field list, mapped to what the writer sets. `finished_at` is derived
+#: (started_at + latency_ms) and `cost` is "if available" in the authority's own words.
+_S15_FIELDS = ("lane", "provider", "model", "account_env", "attempt_ordinal",
+               "limiter_admitted", "http_dispatched", "http_status", "retry_after_s",
+               "error_class", "success", "latency_ms", "started_at",
+               "correlation_id", "run_id", "ticket_id", "function", "stage")
+
+
+def check_attempt_telemetry(conn) -> None:
+    """§15: 'lane A 429 · lane B 429 · lane C 200 · PMAP batch -> SUCCESS ... the first
+    two attempts must not disappear.' A ledger proves nothing unless every seam that can
+    produce one of those attempts writes to it, so this gate reads the CODE for coverage
+    and the DATABASE for shape — not a row count, which only measures the seams that
+    already work."""
+    import ast
+    src_path = ROOT / "shared" / "polymath_shared" / "llm_extraction" / "client.py"
+    try:
+        tree = ast.parse(src_path.read_text())
+    except Exception as exc:  # noqa: BLE001
+        gate("attempt_ledger_covers_every_provider_seam", NOT_TESTED,
+             f"could not parse {src_path.name}: {type(exc).__name__}")
+        return
+
+    def _dotted(n):
+        out = []
+        while isinstance(n, ast.Attribute):
+            out.append(n.attr); n = n.value
+        if isinstance(n, ast.Name):
+            out.append(n.id)
+        return ".".join(reversed(out))
+
+    DISPATCH = {"httpx.post", "httpx.stream", "httpx.request"}
+    covered, uncovered, excluded = [], [], []
+    for fn in [n for n in ast.walk(tree)
+               if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]:
+        calls = [c for c in ast.walk(fn) if isinstance(c, ast.Call)]
+        # a seam either dispatches itself, or calls the transport helper that does
+        dispatches = [c for c in calls if _dotted(c.func) in DISPATCH]
+        via_helper = [c for c in calls if getattr(c.func, "attr", "") == "_chat"]
+        if not dispatches and not via_helper:
+            continue
+        if fn.name in _ATTEMPT_SEAM_EXCLUSIONS:
+            excluded.append(fn.name); continue
+        records = [c for c in calls
+                   if getattr(c.func, "id", "") in ("_rec", "record")
+                   or getattr(c.func, "attr", "") == "record"]
+        (covered if records else uncovered).append(f"{fn.name}(L{fn.lineno})")
+
+    detail = (f"seams recording: {len(covered)} [{', '.join(covered)}]; "
+              f"excluded by design: {', '.join(f'{k} ({_ATTEMPT_SEAM_EXCLUSIONS[k]})' for k in excluded)}")
+    if uncovered:
+        gate("attempt_ledger_covers_every_provider_seam", FAIL,
+             f"UNACCOUNTED_ATTEMPT — these provider seams dispatch without recording: "
+             f"{', '.join(uncovered)}. {detail}")
+    else:
+        gate("attempt_ledger_covers_every_provider_seam", PASS, detail)
+
+    # ── shape, live. Per-attempt granularity is a property of the WRITER (each seam
+    # records inside its retry/halving loop, so a retried call writes N rows); live
+    # failover traffic is reported as an observed number, never as the gate's basis.
+    if conn is None:
+        gate("attempt_ledger_shape_matches_s15", NOT_TESTED, "no database connection")
+        return
+    try:
+        cols = {r[0] for r in conn.execute(
+            "select column_name from information_schema.columns "
+            "where table_name='llm_provider_attempts'").fetchall()}
+    except Exception as exc:  # noqa: BLE001
+        gate("attempt_ledger_shape_matches_s15", FAIL, f"ledger unreadable: {exc}")
+        return
+    if not cols:
+        gate("attempt_ledger_shape_matches_s15", FAIL,
+             "llm_provider_attempts does not exist — §15 has no durable ledger at all")
+        return
+    missing = [f for f in _S15_FIELDS if f not in cols]
+    try:
+        rows, lanes, mx, with_prov = conn.execute(
+            "select count(*), count(distinct lane), coalesce(max(attempt_ordinal),0), "
+            "       count(provider) from llm_provider_attempts").fetchone()
+    except Exception:
+        rows = lanes = mx = with_prov = -1
+    observed = (f"rows={rows} lanes={lanes} max_ordinal={mx} provider_set={with_prov}/{rows} "
+                f"(history written before a seam/field fix keeps its NULLs — reported, "
+                f"not windowed away)")
+    if missing:
+        gate("attempt_ledger_shape_matches_s15", FAIL,
+             f"ledger is missing §15 fields: {missing}. {observed}")
+    else:
+        gate("attempt_ledger_shape_matches_s15", PASS,
+             f"all §15 fields present (finished_at = started_at + latency_ms; cost is "
+             f"'if available' per the authority). {observed}")
+
+
 def check_delivery() -> None:
     def g(*a):
         return subprocess.run(["git", *a], cwd=ROOT, capture_output=True, text=True).stdout.strip()
@@ -678,6 +783,7 @@ def main() -> int:
     check_legacy_code_removal(conn)
     check_legacy_state_writers(conn)
     check_legacy(conn)
+    check_attempt_telemetry(conn)
     check_frontend()
     check_delivery()
 

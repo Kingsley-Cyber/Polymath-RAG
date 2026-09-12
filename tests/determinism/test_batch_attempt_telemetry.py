@@ -15,6 +15,11 @@ motivating example describes.
 These tests pin the four branches with a mocked transport, so the wiring is proven
 without spending provider quota: limiter refusal (no HTTP), success, an HTTP error
 carrying Retry-After (the 429 case), and a transport error.
+
+Extended the same day: auditing the OTHER seams found two more that dispatched to a
+provider and recorded nothing — `_extract_prompt` (the single-neighborhood extraction
+path, which has a RETRY LOOP and so is §15's example verbatim) and `complete_batched`
+(the non-extraction batched compilers). Those are pinned at the bottom.
 """
 from __future__ import annotations
 
@@ -81,7 +86,9 @@ def test_limiter_refusal_is_recorded_as_an_attempt_that_never_dispatched(recorde
     a = recorded[0]
     assert a.lane == "gemini-test"   # the lane NAME, not "cloud"
     assert a.limiter_admitted is False and a.http_dispatched is False
-    assert a.success is False and a.error_class == "limiter_refused"
+    # UPPERCASE, matching what `complete_one` has always written: one table must not
+    # carry two spellings of the same condition or every query has to know both.
+    assert a.success is False and a.error_class == "LIMITER_REFUSED"
 
 
 def test_a_successful_batch_is_recorded(monkeypatch, recorded):
@@ -122,7 +129,7 @@ def test_a_429_is_recorded_with_its_status_and_retry_after(monkeypatch, recorded
     a = recorded[0]
     assert a.http_dispatched is True and a.success is False
     assert a.http_status == 429 and a.retry_after_s == 7.0
-    assert a.error_class == "http_429"
+    assert a.error_class == "HTTP_429"
 
 
 def test_a_transport_error_is_recorded(monkeypatch, recorded):
@@ -167,3 +174,73 @@ def test_recording_never_breaks_a_dispatch(monkeypatch):
         # `record`'s own try/except is what makes it safe. If that swallow is ever
         # removed, this test fails loudly rather than extraction breaking in production.
         _call(cli, _Limiter())
+
+
+# ── the OTHER seams, found by auditing every provider dispatch in the client ──
+
+def test_the_retry_loop_keeps_BOTH_attempts(monkeypatch, recorded):
+    """§15's example, in one function: attempt 1 takes a 429, the loop retries, attempt 2
+    succeeds and `_extract_prompt` returns a RESULT. The 429 used to survive only as an
+    `attempts=2` integer on that result — per logical call, which is precisely the
+    granularity the authority says is insufficient."""
+    cli = _client()
+    monkeypatch.setattr(cli, "_lane_limiter", lambda: _Limiter())
+    request = httpx.Request("POST", "http://127.0.0.1:9/v1/chat/completions")
+    response = httpx.Response(429, headers={"retry-after": "3"}, request=request)
+    calls = {"n": 0}
+
+    def _chat(prompt, max_tokens, system_prompt=None):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise httpx.HTTPStatusError("429", request=request, response=response)
+        return ('{"entities": [], "relations": []}', 11, 7, {})
+
+    monkeypatch.setattr(cli, "_chat", _chat)
+    cli._extract_prompt("prompt", set(), 64, None)
+
+    assert len(recorded) == 2, "one row per ATTEMPT, not one per call"
+    first, second = recorded
+    assert first.http_status == 429 and first.retry_after_s == 3.0
+    assert first.error_class == "HTTP_429" and first.success is False
+    assert second.success is True and second.http_status == 200
+    assert (second.tokens_in, second.tokens_out) == (11, 7)
+
+
+def test_limiter_refusal_in_the_retry_loop_is_recorded_without_dispatch(monkeypatch, recorded):
+    cli = _client()
+    monkeypatch.setattr(cli, "_lane_limiter", lambda: _Limiter(admit=False))
+    cli._extract_prompt("prompt", set(), 64, None)
+    assert len(recorded) == 1
+    assert recorded[0].limiter_admitted is False and recorded[0].http_dispatched is False
+    assert recorded[0].error_class == "LIMITER_REFUSED"
+
+
+def test_the_non_extraction_batched_compiler_seam_records(monkeypatch, recorded):
+    """`complete_batched` serves the compilers rather than extraction, and had the same
+    four branches with none of the rows."""
+    cli = _client()
+    monkeypatch.setattr(cli, "_lane_limiter", lambda: _Limiter())
+
+    class _Resp:
+        status_code = 200
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"results": [{"content": "ok"}]}
+
+    monkeypatch.setattr(C.httpx, "post", lambda *a, **k: _Resp())
+    out = cli.complete_batched([("i1", "sys", "user", 32)])
+    assert out == [("i1", "ok", None)]
+    assert len(recorded) == 1 and recorded[0].success is True
+
+
+def test_every_recorded_attempt_carries_the_provider(monkeypatch, recorded):
+    """§15 lists `provider` among the fields each attempt must record; it was NULL on all
+    226 live rows because no call site set it. The value is the HOST actually dispatched
+    to — where the request WENT, not where config said it should go."""
+    cli = _client()
+    with pytest.raises(C.ExtractionTransportError):
+        _call(cli, _Limiter(admit=False))
+    assert recorded[0].provider == "127.0.0.1:9"
