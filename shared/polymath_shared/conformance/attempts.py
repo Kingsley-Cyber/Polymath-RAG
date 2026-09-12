@@ -298,4 +298,39 @@ def reconcile(conn, window: str = "24 hours") -> dict:
             "code": "DARK_ENABLED_LANE",
             "detail": f"{len(dark)} enabled, credentialled lane(s) made no attempt in "
                       f"{window}: {', '.join(dark)}"})
+    # CONFIG/LIVE_MISMATCH — the last of §15's five. Config is a claim about what the
+    # system will do; the ledger is a record of what it did. Two ways they diverge, both
+    # invisible from either side alone:
+    #   * a lane DISPATCHED that the registry does not contain at all (live > config);
+    #   * a lane whose configured model is not the model its attempts actually carried
+    #     (config says one thing, the wire says another — e.g. a stage pin that never
+    #     took effect, or a provider silently substituting a model).
+    try:
+        from polymath_shared.llm_extraction import lane_registry as _LR2
+        configured = {l.name: l for l in _LR2.build_registry().lanes}
+    except Exception:  # noqa: BLE001
+        configured = {}
+    if configured:
+        live = conn.execute(f"""
+            SELECT lane, COALESCE(model,'(none)'), COUNT(*)
+              FROM {TABLE}
+             WHERE created_at > now() - interval '{window}' AND http_dispatched
+             GROUP BY 1,2""").fetchall()
+        unknown, wrong_model = [], []
+        for lane, model, n in live:
+            cfg = configured.get(lane)
+            if cfg is None:
+                # chat_synth:* lanes are synthesis seams with no registry entry by
+                # design; they are not provider LANES in the registry's sense.
+                if not str(lane).startswith("chat_synth"):
+                    unknown.append(f"{lane}×{n}")
+            elif getattr(cfg, "model", "") and model not in ("(none)", cfg.model):
+                wrong_model.append(f"{lane}: config={cfg.model} wire={model} ×{n}")
+        if unknown or wrong_model:
+            bits = []
+            if unknown:
+                bits.append(f"dispatched but absent from the registry: {', '.join(unknown)}")
+            if wrong_model:
+                bits.append(f"configured model != model on the wire: {'; '.join(wrong_model)}")
+            findings.append({"code": "CONFIG/LIVE_MISMATCH", "detail": "; ".join(bits)})
     return {"available": True, "summary": s, "batch_outcomes": outcomes, "findings": findings}

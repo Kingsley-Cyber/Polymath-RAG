@@ -32,6 +32,7 @@ fail-closed through the same shared resolver.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import time
@@ -2210,6 +2211,7 @@ def _litellm_generate(model: str, query: str, bundle: dict,
     for attempt, with_bound in enumerate([True, False] if bound else [False]):
         started = False
         _t0 = time.perf_counter()
+        _digest, _chars = hashlib.sha256(), 0
         try:
             stream = litellm.completion(**kwargs, **({"max_tokens": bound} if with_bound else {}))
             for chunk in stream:
@@ -2230,8 +2232,11 @@ def _litellm_generate(model: str, query: str, bundle: dict,
                 if rpiece:
                     yield {"reasoning": rpiece}
                 if piece:
+                    _digest.update(piece.encode("utf-8", "replace"))
+                    _chars += len(piece)
                     yield {"token": piece}
             _rec_attempt(success=True, http_status=200,
+                         response_hash=(_digest.hexdigest()[:32] if _chars else None),
                          latency_ms=int((time.perf_counter() - _t0) * 1000))
             break
         except Exception as exc:
@@ -2289,10 +2294,21 @@ class _AttemptOutcome:
         self._error = None
         self._t0 = time.perf_counter()
         self._corr = None
+        # §15's response_hash, accumulated as the stream arrives so nothing is buffered.
+        # Two attempts returning the SAME body — a stuck model, a cached edge, an error
+        # page served with HTTP 200 — are invisible in status codes and obvious here.
+        self._digest = hashlib.sha256()
+        self._chars = 0
 
     def status(self, code): self._status = code
     def ok(self): self._ok = True
     def failed(self, error_class): self._error = error_class
+
+    def chunk(self, piece: str):
+        """Feed one streamed piece into the digest (never stored, only hashed)."""
+        if piece:
+            self._digest.update(piece.encode("utf-8", "replace"))
+            self._chars += len(piece)
 
     def __enter__(self):
         # CAPTURE the ambient correlation id; do NOT hold a context open across the
@@ -2314,6 +2330,8 @@ class _AttemptOutcome:
                              correlation_id=self._corr):
             record(Attempt(success=self._ok and err is None, http_status=self._status,
                            error_class=err,
+                           response_hash=(self._digest.hexdigest()[:32]
+                                          if self._chars else None),
                            latency_ms=int((time.perf_counter() - self._t0) * 1000),
                            **self._base))
         return False
@@ -2395,6 +2413,7 @@ def _ollama_generate_inner(_out, model: str, messages: list[dict]):
                     yield {"reasoning": rpiece}
                 piece = msg.get("content", "")
                 if piece:
+                    _out.chunk(piece)
                     yield {"token": piece}
                 if chunk.get("done"):
                     _out.ok()
@@ -2443,6 +2462,7 @@ def _ollama_stream_plain_inner(_out, model: str, messages: list[dict]):
                     return
                 piece = (chunk.get("message") or {}).get("content", "")
                 if piece:
+                    _out.chunk(piece)
                     yield {"token": piece}
                 if chunk.get("done"):
                     _out.ok()

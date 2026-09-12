@@ -448,6 +448,7 @@ class LLMExtractionClient:
                      latency_ms=int((time.perf_counter() - t0) * 1000), **_base))
             raise
         wall_ms = int((time.perf_counter() - t0) * 1000)
+        body = resp.json() if resp.status_code < 400 else {}
         if resp.status_code >= 400:
             _ra = resp.headers.get("retry-after")
             _rec(_At(success=False, http_status=resp.status_code,
@@ -456,10 +457,9 @@ class LLMExtractionClient:
                                     else None),
                      latency_ms=wall_ms, **_base))
         else:
-            _rec(_At(success=True, http_status=resp.status_code,
-                     latency_ms=wall_ms, **_base))
+            _rec(_At(success=True, http_status=resp.status_code, latency_ms=wall_ms,
+                     response_hash=self._response_hash(body.get("model")), **_base))
         resp.raise_for_status()
-        body = resp.json()
         return {"ok": True, "lane": self.lane, "model": self.model,
                 "wall_ms": wall_ms, "served_model": body.get("model")}
 
@@ -499,6 +499,7 @@ class LLMExtractionClient:
             limiter.record_success(headers=hdrs)     # observe provider RPD on 2xx
             _rec(Attempt(limiter_admitted=True, http_dispatched=True, success=True,
                          http_status=200, tokens_in=_ti, tokens_out=_to,
+                         response_hash=self._response_hash(text),
                          latency_ms=int((time.monotonic() - _t0) * 1000), **_base))
             return text, None
         except httpx.HTTPStatusError as exc:
@@ -546,6 +547,23 @@ class LLMExtractionClient:
         try:
             from urllib.parse import urlparse
             return urlparse(self.base_url).netloc or None
+        except Exception:  # noqa: BLE001 — accounting must never break a dispatch
+            return None
+
+    @staticmethod
+    def _response_hash(payload) -> str | None:
+        """§15's `response_hash`, which no seam had ever set.
+
+        It is what makes two attempts comparable without storing the response: a lane
+        returning the SAME body for different prompts (a stuck model, a cached edge, a
+        provider serving an error page with HTTP 200) is invisible in status codes and
+        obvious in a repeated hash. Never stores content — only the digest.
+        """
+        try:
+            from polymath_shared.identity import content_hash
+            if payload is None or payload == "" or payload == {}:
+                return None
+            return content_hash(payload)[:32]
         except Exception:  # noqa: BLE001 — accounting must never break a dispatch
             return None
 
@@ -707,6 +725,7 @@ class LLMExtractionClient:
             else:
                 _rec(_At(lane=self.limiter_key, limiter_admitted=True, http_dispatched=True,
                          success=True, http_status=200,
+                         response_hash=self._response_hash(body),
                          latency_ms=int((time.perf_counter() - t0) * 1000),
                          model=self.model, account_env=self._account_env(), provider=self._provider()))
                 limiter.record_success()
@@ -856,7 +875,7 @@ class LLMExtractionClient:
                             for i, _, _, _ in batch]
                 else:
                     _rec(_At(limiter_admitted=True, http_dispatched=True, success=True,
-                             http_status=200,
+                             http_status=200, response_hash=self._response_hash(body),
                              latency_ms=int((time.perf_counter() - _a0) * 1000), **_base))
                     limiter.record_success()
                     if budget is not None:
@@ -979,6 +998,7 @@ class LLMExtractionClient:
                 else:
                     _rec(_At(limiter_admitted=True, http_dispatched=True, success=True,
                              http_status=200, tokens_in=tin, tokens_out=tout,
+                             response_hash=self._response_hash(raw),
                              latency_ms=int((time.perf_counter() - _a0) * 1000), **_base))
                     limiter.record_success()
             finally:

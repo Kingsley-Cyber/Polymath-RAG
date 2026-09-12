@@ -252,3 +252,103 @@ def test_a_streamed_attempt_still_groups_with_its_caller(recorded):
     assert len(recorded) == 1
     # the write happened inside a context carrying the SAME correlation id
     assert out._corr == outer["correlation_id"]
+
+
+# ── §15's last unset field and last unimplemented detection ──────────────────
+
+def test_a_streamed_answer_is_hashed_without_being_stored(recorded):
+    """`response_hash` was NULL on every row. It is what makes two attempts comparable
+    without keeping the response: a lane returning the SAME body for different prompts —
+    a stuck model, a cached edge, an error page served with HTTP 200 — is invisible in
+    status codes and obvious in a repeated hash."""
+    with UI._AttemptOutcome("http://127.0.0.1:11434", "m") as out:
+        out.status(200)
+        out.chunk("hello "); out.chunk("world")
+        out.ok()
+    h = recorded[0].response_hash
+    assert h and len(h) == 32
+    import hashlib
+    assert h == hashlib.sha256(b"hello world").hexdigest()[:32], "hashed in stream order"
+
+
+def test_an_empty_answer_hashes_to_nothing_rather_than_to_the_empty_digest(recorded):
+    """sha256("") is a perfectly good constant, and recording it would make every empty
+    answer look identical to every other — a match that means nothing."""
+    with UI._AttemptOutcome("http://127.0.0.1:11434", "m") as out:
+        out.status(200); out.ok()
+    assert recorded[0].response_hash is None
+
+
+def test_the_extraction_client_hashes_its_response_too():
+    from polymath_shared.llm_extraction import client as CC
+    h1 = CC.LLMExtractionClient._response_hash({"results": [{"content": "a"}]})
+    h2 = CC.LLMExtractionClient._response_hash({"results": [{"content": "a"}]})
+    h3 = CC.LLMExtractionClient._response_hash({"results": [{"content": "b"}]})
+    assert h1 == h2 and h1 != h3 and len(h1) == 32
+    assert CC.LLMExtractionClient._response_hash(None) is None
+    assert CC.LLMExtractionClient._response_hash("") is None
+
+
+class _ReconcileConn:
+    """Feeds reconcile() its queries in order: summary, per-lane, outcomes, bypass
+    lanes (optional), live lanes."""
+
+    def __init__(self, head, per_lane, live):
+        self._head, self._per_lane, self._live = head, per_lane, live
+        self._n = 0
+
+    def execute(self, sql, *a, **k):
+        self._n += 1
+        rows = {1: self._head, 2: self._per_lane}.get(self._n)
+        if rows is None:
+            rows = self._live if "http_dispatched" in sql else []
+        class _R:
+            def fetchone(_s): return rows
+            def fetchall(_s): return rows
+        return _R()
+
+
+def test_config_live_mismatch_reports_a_lane_that_dispatched_but_is_not_configured(
+        monkeypatch):
+    """§15's fifth detection. Config is a claim about what the system WILL do; the ledger
+    records what it DID. A lane on the wire that the registry has never heard of is the
+    clearest form of that gap, and neither side can see it alone."""
+    from polymath_shared.conformance import attempts as A
+
+    class _Lane:
+        def __init__(self, name, model): self.name, self.model = name, model
+        enabled = True
+        credential_present = True
+
+    class _Reg:
+        lanes = [_Lane("groq_a", "llama-3.3"), _Lane("groq_b", "llama-3.3")]
+
+    monkeypatch.setattr(
+        "polymath_shared.llm_extraction.lane_registry.build_registry", lambda: _Reg())
+    head = (10, 0, 0, 10, 0, 10, 10, 0)
+    live = [("groq_a", "llama-3.3", 5), ("ghost_lane", "some/model", 5)]
+    r = A.reconcile(_ReconcileConn(head, [("groq_a", 5, 0, 5)], live), "24 hours")
+    codes = {f["code"] for f in r["findings"]}
+    assert "CONFIG/LIVE_MISMATCH" in codes
+    d = next(f["detail"] for f in r["findings"] if f["code"] == "CONFIG/LIVE_MISMATCH")
+    assert "ghost_lane" in d and "groq_a" not in d.split("registry:")[-1].split(";")[0]
+
+
+def test_config_live_mismatch_also_catches_a_model_substitution(monkeypatch):
+    """The subtler half: the lane IS configured, but the model on the wire is not the
+    model config named — a stage pin that never took effect, or a provider substituting."""
+    from polymath_shared.conformance import attempts as A
+
+    class _Lane:
+        name, model, enabled, credential_present = "groq_a", "llama-3.3", True, True
+
+    class _Reg:
+        lanes = [_Lane()]
+
+    monkeypatch.setattr(
+        "polymath_shared.llm_extraction.lane_registry.build_registry", lambda: _Reg())
+    head = (5, 0, 0, 5, 0, 5, 5, 0)
+    live = [("groq_a", "llama-3.1-DIFFERENT", 5)]
+    r = A.reconcile(_ReconcileConn(head, [("groq_a", 5, 0, 5)], live), "24 hours")
+    d = next(f["detail"] for f in r["findings"] if f["code"] == "CONFIG/LIVE_MISMATCH")
+    assert "config=llama-3.3" in d and "wire=llama-3.1-DIFFERENT" in d
