@@ -595,7 +595,20 @@ class LLMExtractionClient:
         without /infer_batch: fall back to per-neighborhood calls through
         the OpenAI-compatible path (the documented fallback)."""
         budget = local_batch_budget() if self.lane == "local" else None
+        # PROVIDER-ATTEMPT-LEDGER: record the BATCHED seam too. `complete_one` has
+        # recorded attempts since the ledger landed, but `_infer_batch_call` — the path
+        # every batched extraction and pMAP dispatch actually takes — never did, so the
+        # ledger held only the single-completion (chat-compiler) lanes: 3 of 13 lanes
+        # with real dispatch activity, every row untagged. That is precisely the case
+        # §15 exists for ("lane A 429, lane B 429, lane C 200, batch -> SUCCESS"): the
+        # batch outcome was durable, the per-attempt 429s were not. Recording is
+        # fail-soft by construction (`record` never raises, warns once if the ledger is
+        # unavailable) so this cannot affect a dispatch.
+        from polymath_shared.conformance.attempts import Attempt as _At, record as _rec
         if not limiter.acquire(est_tokens=sum(len(u) for _, u, _ in prompt_items) / 4.0):
+            _rec(_At(lane=self.limiter_key, limiter_admitted=False, http_dispatched=False,
+                     success=False, error_class="limiter_refused",
+                     model=self.model, account_env=self._account_env()))
             raise ExtractionTransportError(
                 f"{self.lane} lane refused the batched call (breaker open "
                 "or rate hold); stage must retry")
@@ -628,8 +641,16 @@ class LLMExtractionClient:
                         f"{self.lane} batched transport returned a non-object body")
             except httpx.HTTPStatusError as exc:
                 status = exc.response.status_code
+                _ra = exc.response.headers.get("retry-after")
+                _rec(_At(lane=self.limiter_key, limiter_admitted=True, http_dispatched=True,
+                         success=False, http_status=status,
+                         retry_after_s=(float(_ra) if (_ra or "").replace(".", "", 1).isdigit()
+                                        else None),
+                         error_class=f"http_{status}",
+                         latency_ms=int((time.perf_counter() - t0) * 1000),
+                         model=self.model, account_env=self._account_env()))
                 limiter.record_failure(
-                    retry_after=exc.response.headers.get("retry-after"),
+                    retry_after=_ra,
                     headers=dict(exc.response.headers))
                 halve = status == 500 and len(prompt_items) > 1
                 if not halve and status != 404:
@@ -637,11 +658,19 @@ class LLMExtractionClient:
                         f"{self.lane} batched transport failed: "
                         f"HTTP {status}") from exc
             except (httpx.HTTPError, json.JSONDecodeError) as exc:
+                _rec(_At(lane=self.limiter_key, limiter_admitted=True, http_dispatched=True,
+                         success=False, error_class=type(exc).__name__,
+                         latency_ms=int((time.perf_counter() - t0) * 1000),
+                         model=self.model, account_env=self._account_env()))
                 limiter.record_failure()
                 raise ExtractionTransportError(
                     f"{self.lane} batched transport failed: "
                     f"{type(exc).__name__}: {exc}") from exc
             else:
+                _rec(_At(lane=self.limiter_key, limiter_admitted=True, http_dispatched=True,
+                         success=True, http_status=200,
+                         latency_ms=int((time.perf_counter() - t0) * 1000),
+                         model=self.model, account_env=self._account_env()))
                 limiter.record_success()
                 if budget is not None:
                     budget.record_success()
