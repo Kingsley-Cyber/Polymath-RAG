@@ -43,6 +43,45 @@ export interface DocSummary {
   vnext_ready: boolean;
 }
 
+/** `GET /documents?corpus_id=` — the IDENTITY authority for the Files screen.
+ *  `source_name` is the human filename that survives ingestion; the operational
+ *  detail (pMAP / profile / graph / vNext) is merged in from DocSummary by doc_id.
+ *  Verified against the live route (orchestrator/api/ui.py::documents) 2026-09-12. */
+export interface DocumentRow {
+  doc_id: string;
+  source_name: string;
+  media_type: string;
+  bytes: number;
+  created_at: string;
+  chunks: number;
+  parents: number;
+  enriched: number;
+  enrich_failed: number;
+  map_active: number;
+}
+
+export interface DocumentRun {
+  run_id: string;
+  status: string;
+  created_at: string;
+  error: string | null;
+}
+
+export interface DocumentsResponse {
+  corpus_id: string;
+  documents: DocumentRow[];
+  runs: DocumentRun[];
+}
+
+/** `POST /upload` reply (the fields the UI surfaces; the run submission carries more). */
+export interface UploadResult {
+  corpus_id: string;
+  source_name: string;
+  bytes: number;
+  sha256: string;
+  near_duplicate_override: boolean;
+}
+
 /** `/control_plane?corpus_id=` — CONTROL-PLANE-STATUS-V1.
  *  Verified against a live response 2026-09-10: `pools` is a MAP keyed by function
  *  name, and the queue counters sit at the TOP level of each pool (not nested).

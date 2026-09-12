@@ -499,6 +499,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-12-verifier-vacuous-pass-audit.md", "md", None),
     ("docs/wiki/work-log/2026-09-12-retirement-proof-vacuity.md", "md", None),
     ("docs/wiki/work-log/2026-09-12-authority-gate-recoverage.md", "md", None),
+    ("docs/wiki/work-log/2026-09-12-frontend-v2-files-ops.md", "md", None),
     ("docs/wiki/work-log/2026-09-12-control-plane-honesty-gaps.md", "md", None),
     ("docs/wiki/work-log/2026-09-11-f12-e2e-and-fixes.md", "md", None),
     ("frontend-v2/src/lib/chunkid.ts", "ts", None),

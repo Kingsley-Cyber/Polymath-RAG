@@ -4,8 +4,9 @@
  * backend number.
  */
 import type {
-  CompareResponse, ControlPlane, Corpus, DocSummary, GraphEntities, GraphRelationships,
-  PoolLanes, ReasoningMode, RetrieveResponse, ReviewResponse, SemanticReadiness, Synthesizer,
+  CompareResponse, ControlPlane, Corpus, DocSummary, DocumentsResponse, GraphEntities,
+  GraphRelationships, PoolLanes, ReasoningMode, RetrieveResponse, ReviewResponse,
+  SemanticReadiness, Synthesizer, UploadResult,
 } from "./contracts";
 
 export class ApiError extends Error {
@@ -31,6 +32,21 @@ async function post<T>(path: string, body: unknown, signal?: AbortSignal): Promi
   return (await r.json()) as T;
 }
 
+/** Multipart POST — the browser sets the `content-type` boundary itself, so we must
+ *  NOT set a content-type header (doing so drops the boundary and the server rejects
+ *  the body). `/upload` is the only multipart route. */
+async function postForm<T>(path: string, form: FormData, signal?: AbortSignal): Promise<T> {
+  const r = await fetch(path, { method: "POST", signal, headers: { accept: "application/json" }, body: form });
+  if (!r.ok) throw new ApiError(r.status, path, (await r.text()).slice(0, 300));
+  return (await r.json()) as T;
+}
+
+async function del<T>(path: string, signal?: AbortSignal): Promise<T> {
+  const r = await fetch(path, { method: "DELETE", signal, headers: { accept: "application/json" } });
+  if (!r.ok) throw new ApiError(r.status, path, (await r.text()).slice(0, 300));
+  return (await r.json()) as T;
+}
+
 export const api = {
   corpora: (s?: AbortSignal) => get<{ corpora: Corpus[] }>("/corpora", s).then((d) => d.corpora),
   semanticReadiness: (corpusId: string, s?: AbortSignal) =>
@@ -38,6 +54,23 @@ export const api = {
   documentSummaries: (corpusId: string, s?: AbortSignal) =>
     get<{ corpus_id: string; summaries: Record<string, DocSummary> }>(
       `/documents/summary?corpus_id=${encodeURIComponent(corpusId)}`, s),
+  // GET /documents — identity/list authority (source_name, media_type, bytes, created_at).
+  documents: (corpusId: string, s?: AbortSignal) =>
+    get<DocumentsResponse>(`/documents?corpus_id=${encodeURIComponent(corpusId)}`, s),
+  // POST /upload — canonical ingestion (.md .txt .html .pdf .epub .docx). `allowNearDuplicate`
+  // rides the "keep both" override; byte-identical files are refused server-side (409) regardless.
+  upload: (corpusId: string, file: File, allowNearDuplicate = false, s?: AbortSignal) => {
+    const form = new FormData();
+    form.append("corpus_id", corpusId);
+    form.append("file", file, file.name);
+    if (allowNearDuplicate) form.append("allow_near_duplicate", "1");
+    return postForm<UploadResult>("/upload", form, s);
+  },
+  // DELETE /documents/{doc_id} — confirm token is the doc_id OR the source_name (a
+  // 64-char hash is not human-typable, so the human filename is a valid confirm).
+  deleteDocument: (docId: string, confirm: string, s?: AbortSignal) =>
+    del<Record<string, unknown>>(
+      `/documents/${encodeURIComponent(docId)}?confirm=${encodeURIComponent(confirm)}`, s),
   controlPlane: (corpusId: string, s?: AbortSignal) =>
     get<ControlPlane>(`/control_plane?corpus_id=${encodeURIComponent(corpusId)}`, s),
   poolLanes: (fn: string, s?: AbortSignal) =>

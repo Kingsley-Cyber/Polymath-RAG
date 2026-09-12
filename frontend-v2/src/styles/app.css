@@ -131,7 +131,16 @@ body {
   padding: 9px 13px; border-radius: var(--r); font-size: 12.5px;
 }
 .banner--bad { border-left-color: var(--bad); background: var(--bad-bg); color: #f3b3b0; }
+.banner--ok { border-left-color: var(--ok); background: var(--ok-bg); color: #9be0ac; }
 .banner--info { border-left-color: var(--accent); background: #0f1b2b; color: #b8d3f5; }
+
+/* F8 Files — a real file manager: filename is the identity, lifecycle controls present. */
+.files__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.files__actions { flex: none; padding-top: 2px; }
+.files__name { font-weight: 600; }
+.files__docid { font-size: 11px; color: var(--fg-faint); }
+.files__del { padding: 3px 9px; font-size: 12px; color: var(--bad); border-color: var(--line); }
+.files__del:hover:not(:disabled) { background: var(--bad-bg); border-color: #5c2326; }
 
 .empty { color: var(--fg-faint); font-size: 13px; padding: 26px 0; text-align: center; }
 
