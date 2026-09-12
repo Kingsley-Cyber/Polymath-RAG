@@ -89,12 +89,13 @@ stays uncommitted, parked on their decision. Do not commit or revert it without 
 1. **`verify_final_state.py` fast/full split + re-fire** — edit uncommitted, owner rejected
    it and said wait. Fire 1 recorded (`verification_runs`); Fire 2 needs the split so it
    doesn't re-run the live-provider suite (which stalls, not computes).
-2. **`/v2/` functional verification** — BLOCKED_OWNER (basic-auth `King`/`013100`).
+2. **`/v2/` real-URL verification** — SERVING fully proven 2026-09-12: public `rag.kingsleylab.xyz/` → **302 → `/v2/` unauthenticated** through the live Cloudflare→tunnel→Caddy chain; backend `:7200/v2/` serves `index-BJ3rXy1X.js`/`index-ChkYtcSE.css` **byte-identical to built `dist/`** and containing the 11.249 continuation code; the **V2 app renders in a browser** (verified on the unauthenticated local `:7200/v2/`, the identical bundle). Residual = the authenticated public *visual* only (basic-auth `King`/`013100`; an agent must not authenticate) — NOT_TESTED→owner, byte-identical to what was rendered.
 3. **cinema / ecom-meta-v1 not vNext ready** — diagnosed: cinema stalled with a pending
    backlog + Sep-07 project_qdrant/intake failures, its pMAP completion is **§19 spend-gated**;
    ecom-meta-v1 finished only the LEGACY path (query_ready, 0 pMAP / 0 vNext profiles) and
-   needs a re-ingest. Both owner/spend-gated. rag-canary is the ready fixture.
+   needs a re-ingest. Both owner/spend-gated. **LIVE-TRUTH CORRECTION 2026-09-12: the backend now holds ONLY `cinema` (67 docs); `rag-canary` (the prior ready fixture) is ABSENT** — `/corpora` and the `documents` table agree. See finding 5.
 4. **`dead_proven_removed` (claim_sets DROP)** — §1 owner-only, still BLOCKED_OWNER.
+5. **Frontend default corpus is a dead name (NEW 2026-09-12, NOT auto-fixed).** `frontend-v2/src/App.tsx:55` hardcodes `useState("rag-canary")`; with `rag-canary` gone, a fresh `/v2/` load 404s on `/semantic_readiness?corpus_id=rag-canary` until the user selects `cinema`. OWNER TO CHOOSE the fix: (a) default `corpusId` to the first `/corpora` entry (small frontend change + rebuild + push), or (b) recreate `rag-canary` as the ready fixture (re-ingest). Surfaced, held per live instruction — not a regression from the 11.245–11.249 slices (those tested green when the fixture existed).
 
 ### Traps this session added to §6
 
