@@ -503,6 +503,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-12-frontend-v2-models-corpus-delete-theme.md", "md", None),
     ("docs/wiki/work-log/2026-09-12-frontend-v2-theme-color-audit.md", "md", None),
     ("docs/wiki/work-log/2026-09-12-frontend-v2-continuation-controls.md", "md", None),
+    ("docs/wiki/work-log/2026-09-12-frontend-v2-corpus-resolution.md", "md", None),
     ("docs/wiki/work-log/2026-09-12-control-plane-honesty-gaps.md", "md", None),
     ("docs/wiki/work-log/2026-09-11-f12-e2e-and-fixes.md", "md", None),
     ("frontend-v2/src/lib/chunkid.ts", "ts", None),

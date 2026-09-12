@@ -49,10 +49,20 @@ const THEMES = [
 
 const THEME_KEY = "polymath-v2.theme";
 const COLLAPSE_KEY = "polymath-v2.nav-collapsed";
+const CORPUS_KEY = "polymath-v2.corpus";
+
+/** Screens whose data is scoped to a corpus. These render only once a valid corpus is
+ *  resolved from `/corpora`, so no corpus-scoped request ever fires for an unresolved
+ *  or non-existent id (FRONTEND-V2-CORPUS-RESOLUTION). Models/Settings are corpus-free. */
+const CORPUS_SCREENS = new Set<ScreenId>(["overview", "chat", "compare", "files", "control", "graph"]);
 
 export function App() {
   const [screen, setScreen] = useState<ScreenId>("overview");
-  const [corpusId, setCorpusId] = useState<string>("rag-canary");
+  // Never hardcode a corpus. Start from the persisted choice (validated against the
+  // backend below); "" means "unresolved" until /corpora answers.
+  const [corpusId, setCorpusId] = useState<string>(() => {
+    try { return localStorage.getItem(CORPUS_KEY) ?? ""; } catch { return ""; }
+  });
   const [theme, setTheme] = useState<string>(() => {
     try { return localStorage.getItem(THEME_KEY) ?? ""; } catch { return ""; }
   });
@@ -110,6 +120,29 @@ export function App() {
   const [corporaNonce, setCorporaNonce] = useState(0);
   const corpora = useAsync((s) => api.corpora(s), [corporaNonce]);
 
+  // /corpora is the backend authority for which corpora exist and are query-enabled.
+  const corpusList = useMemo(() => corpora.data ?? [], [corpora.data]);
+  const corporaLoaded = corpora.data != null || corpora.error != null;
+  const corpusValid = corpusId !== "" && corpusList.some((c) => c.corpus_id === corpusId);
+
+  // CORPUS RESOLUTION — derive the active corpus from backend authority, never a
+  // hardcoded name. Priority: (1) the persisted/current corpus if it still exists,
+  // (2) the first query-enabled corpus, (3) the first corpus, (4) none → empty state.
+  // Runs once /corpora loads and again whenever the current id stops being valid
+  // (e.g. the selected corpus was just deleted).
+  useEffect(() => {
+    if (!corpora.data) return;              // wait for the backend authority
+    if (corpusValid) return;                // a still-valid persisted/current id wins
+    const next = corpora.data.find((c) => c.query_ready)?.corpus_id
+      ?? corpora.data[0]?.corpus_id ?? "";  // "" only when the backend has no corpora
+    setCorpusId(next);
+  }, [corpora.data, corpusValid]);
+
+  // Persist the resolved corpus so a refresh/deep-link re-resolves to it (priority 1).
+  useEffect(() => {
+    if (corpusId) { try { localStorage.setItem(CORPUS_KEY, corpusId); } catch { /* private mode */ } }
+  }, [corpusId]);
+
   // OWNER-DESTRUCTIVE: wipe a corpus and everything derived from it. The backend requires
   // confirm==corpus_id, so we make the user type the corpus name — a typed confirm, not a
   // one-click delete. On success we refetch the list and switch to another corpus.
@@ -129,7 +162,12 @@ export function App() {
     }
   }
 
-  const cp = useAsync((s) => api.controlPlane(corpusId, s), [corpusId]);
+  // Only probe control-plane readiness once a real corpus is resolved — never for the
+  // unresolved "" or a stale persisted id (that was the transient 404 on cold load).
+  const cp = useAsync(
+    (s) => (corpusValid ? api.controlPlane(corpusId, s) : Promise.resolve(null)),
+    [corpusId, corpusValid],
+  );
   const control = useMemo(() => controlReady(cp.data?.control_ready), [cp.data]);
 
   return (
@@ -194,16 +232,20 @@ export function App() {
 
         <div className="field nav__corpus" style={{ padding: "0 10px 10px" }}>
           <span className="label">Corpus</span>
-          <select value={corpusId} onChange={(e) => setCorpusId(e.target.value)}>
-            {(corpora.data ?? []).map((c) => (
+          <select value={corpusValid ? corpusId : ""} onChange={(e) => setCorpusId(e.target.value)}>
+            {!corpusValid && (
+              <option value="" disabled>
+                {!corporaLoaded ? "Loading…" : corpusList.length ? "Select corpus…" : "No corpora"}
+              </option>
+            )}
+            {corpusList.map((c) => (
               <option key={c.corpus_id} value={c.corpus_id}>
                 {c.corpus_id} ({c.documents})
               </option>
             ))}
-            {!corpora.data && <option value={corpusId}>{corpusId}</option>}
           </select>
           <button className="btn nav__corpus-del" onClick={() => void deleteCorpus()}
-                  title={`Delete corpus ${corpusId}`} disabled={!corpusId}>
+                  title={`Delete corpus ${corpusId}`} disabled={!corpusValid}>
             Delete corpus
           </button>
         </div>
@@ -232,6 +274,21 @@ export function App() {
       </nav>
 
       <main className="main">
+        {CORPUS_SCREENS.has(screen) && !corpusValid ? (
+          <div className="screen">
+            <div className="screen__head">
+              <h1 className="screen__title">
+                {corporaLoaded && !corpusList.length ? "No corpora yet" : "Resolving corpus…"}
+              </h1>
+              <p className="screen__sub">
+                {corporaLoaded && !corpusList.length
+                  ? "Nothing is indexed on this backend yet — ingest a corpus to begin."
+                  : "Reading the corpus list from the backend."}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <>
         {screen === "overview" && <Overview corpusId={corpusId} />}
         {screen === "chat" && (
           <Chat
@@ -259,10 +316,12 @@ export function App() {
           <div className="screen">
             <div className="screen__head">
               <h1 className="screen__title">{NAV.find((n) => n.id === screen)?.label}</h1>
-              <p className="screen__sub">Corpus <span className="mono">{corpusId}</span></p>
+              <p className="screen__sub">Corpus <span className="mono">{corpusId || "—"}</span></p>
             </div>
             {screen === "settings" && <PhaseStub phase="F1" title="Settings — backend target, policy flags (read-only mirrors of the server's own state)" />}
           </div>
+        )}
+          </>
         )}
       </main>
     </div>
