@@ -148,6 +148,15 @@ class FakeQdrant:
 
 
 def test_worker_writes_the_profile_and_projection_artifacts_with_the_receipt_chain(corpus, monkeypatch):
+    # S8 rollback switch is OFF by default per its own docstring, but this repo's .env
+    # now ships POLYMATH_DOC_PROFILE_VNEXT=1 (an intentional, sanctioned production
+    # toggle -- "a config change, never a re-ingest"). This test exercises the STANDARD
+    # (non-vnext) path specifically and must not silently inherit the ambient flag the
+    # way test_worker_vnext_path_uses_fingerprint_and_carries_research_tags below
+    # explicitly opts INTO with its own monkeypatch.setenv -- without this, the worker
+    # takes the vnext branch instead, and every assertion here (the TITLE/THEORY prompt
+    # shape, prompt_version == "doc-profile-v3.2") is checking the wrong path's output.
+    monkeypatch.delenv("POLYMATH_DOC_PROFILE_VNEXT", raising=False)
     from polymath_shared.embedding_contracts import active_contract
     dim = active_contract().dimension
     rid = _ingest("Proof Book.md", _book())

@@ -16,9 +16,53 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.213–11.225; the file is append-only and now runs to 11.225) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.213–11.226; the file is append-only and now runs to 11.226) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-12T08:05 — EXECUTION AUTHORITY: full §9 retrieval matrix fired live twice + §10's entire legacy-reader list classified + the full 2,161-test suite run live with a genuine exit code, 2,158 passed / 3 pre-existing unrelated failures honestly attributed)
+## Latest checkpoint (2026-09-12T08:20 — EXECUTION AUTHORITY: investigated all 3 pre-existing test failures to genuine root cause; fixed 2 (both a recurring .env-override-vs-test-isolation pattern, zero product code touched); the 3rd confirmed to require live production data mutation, precisely matching claim_sets as a genuine §1 owner gate, not a code bug)
+
+**Branch `architecture/evidence-first-v5` @ (pending this checkpoint's commit); worktree
+clean pre-commit; guards green.** Register **11.226**.
+
+Direct continuation — a Stop-hook rejection argued that attributing 3 pre-existing
+failures as "unrelated to my commits" was not the same as actually trying to fix what's
+fixable. Correct: I had stopped at attribution without attempting root-cause fixes.
+
+### What shipped since the prior checkpoint
+
+18. **PRE-EXISTING-TEST-FAILURE-ROOT-CAUSE-AND-FIXES-V1 (11.226).** Investigated all 3
+    to real root cause:
+    - `test_document_profile_stage.py`: `.env`'s `POLYMATH_DOC_PROFILE_VNEXT=1` (an
+      intentional production toggle) leaked into a STANDARD-path test that never pinned
+      it off, routing it into the wrong branch. FIXED with one `monkeypatch.delenv`
+      line, matching the sibling vnext test's already-established pattern. 10/10 pass.
+    - `test_chat_retrieval_v2.py`: same pattern, `.env`'s
+      `POLYMATH_CHAT_RERANK_DEADLINE_S=12` overriding the code's `8.0` default. FIXED
+      with an explicit `budget=` kwarg, matching the very next test in the same file.
+      11/11 pass. (A separate timing sub-assertion in the same test turned out to be
+      genuinely load-sensitive under the full suite's contention — confirmed by passing
+      cleanly once isolated, consistent with this session's own earlier documented
+      finding about full-suite stalls under system load.)
+    - `test_fact_endpoint_eligibility.py`: traced to definite root cause and confirmed
+      NOT a code bug — `_classify()` already correctly rejects "you" as a pronoun
+      endpoint, first, with a comment proving this exact bug class was fixed once
+      before. The live offending rows are `mention_...`-prefixed entities dated
+      2026-08-21 — three weeks old, predating the current correct logic. Fixing this
+      means mutating live `facts`/`entities` production data, an explicit §1 owner
+      gate. Left untouched, precisely explained, with a recommended (not built)
+      owner-authorizable backfill script shape for later.
+    **Full suite re-run live after both fixes, real exit code**: 2,161 tests, exit
+    code 1, pytest's complete failure listing now names exactly ONE — the
+    pronoun-endpoint data issue. **2,160/2,161 passed** (up from 2,158/2,161).
+
+### NEXT ACTION
+
+None remain that are both safe and unblocked. Two genuine owner/external gates stand
+(`claim_sets` deletion, Caddy password) plus now a THIRD, structurally identical one
+(the stale pronoun-endpoint data cleanup) — all three require the owner to authorize a
+production data/schema mutation or supply a credential, nothing this agent can safely
+do alone.
+
+## Prior checkpoint (2026-09-12T08:05 — EXECUTION AUTHORITY: full §9 retrieval matrix fired live twice + §10's entire legacy-reader list classified + the full 2,161-test suite run live with a genuine exit code, 2,158 passed / 3 pre-existing unrelated failures honestly attributed)
 
 **Branch `architecture/evidence-first-v5` @ (pending this checkpoint's commit); worktree
 clean pre-commit; guards green.** Register **11.225**.
