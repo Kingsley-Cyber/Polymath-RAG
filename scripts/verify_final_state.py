@@ -88,11 +88,16 @@ def check_retrieval_core() -> None:
          PASS if len(distinct) == 1 and len(engines) == 3 else FAIL,
          f"engines per mode: {engines} -> {len(distinct)} distinct")
 
-    untruthful = {m: v for m, v in modes.items() if v[0] != m or (v[1] and v[1] != m)}
+    # An ABSENT executed_mode is not truthfulness. The previous test was "no conflict",
+    # which a response carrying no mode metadata at all satisfied vacuously — it could
+    # not tell "reported the right mode" from "reported nothing". Presence is required.
+    untruthful = {m: v for m, v in modes.items()
+                  if v[0] != m or not v[1] or v[1] != m}
     gate("retrieval_truthful_mode",
-         PASS if not untruthful else FAIL,
-         f"requested/executed per mode: {modes}"
-         + (f"; MISMATCHED: {untruthful}" if untruthful else ""))
+         PASS if (untruthful == {} and len(modes) == 3) else FAIL,
+         f"requested/executed per mode: {modes} ({len(modes)}/3 modes answered, each "
+         f"reporting an executed mode)"
+         + (f"; MISMATCHED or ABSENT: {untruthful}" if untruthful else ""))
 
 
 def check_chat_modes_on_final_core(conn) -> None:
@@ -272,17 +277,27 @@ def check_hot_paths(conn) -> None:
         f"EXPLAIN (ANALYZE, BUFFERS) {HOT_GRAPH_SQL}", (CORPUS,)).fetchall())
     toast_free = "payload" not in plan.lower() and "toast" not in plan.lower()
     ms = [l for l in plan.splitlines() if "Execution Time" in l]
-    gate("hot_path_no_toast_detoast", PASS if toast_free else FAIL,
-         f"_graph_provider plan is TOAST/payload-free: {toast_free}; {ms[0].strip() if ms else ''}")
+    # An EMPTY plan is payload-free too. Require evidence the query actually ran.
+    ran = bool(ms)
+    gate("hot_path_no_toast_detoast", PASS if (toast_free and ran) else FAIL,
+         f"_graph_provider plan is TOAST/payload-free: {toast_free}; plan actually "
+         f"executed: {ran}; {ms[0].strip() if ms else '(no Execution Time line)'}")
 
     ids = [r[0] for r in conn.execute(
         "SELECT doc_id FROM documents WHERE corpus_id=%s", (CORPUS,)).fetchall()]
     oplan = "\n".join(r[0] for r in conn.execute(
         f"EXPLAIN (ANALYZE, BUFFERS) {OUTBOX_SQL}", (ids,)).fetchall())
+    # "No Seq Scan" is trivially true of a query that scanned nothing. Require the plan
+    # to have actually touched outbox_events, and the corpus to have documents at all —
+    # otherwise an empty corpus certifies the index path it never used.
     seq_outbox = "Seq Scan on outbox_events" in oplan
-    gate("outbox_corpus_scoped", PASS if not seq_outbox else FAIL,
+    touched = "outbox_events" in oplan
+    ok = (not seq_outbox) and touched and bool(ids)
+    gate("outbox_corpus_scoped", PASS if ok else FAIL,
          "outbox_events joined via index (no Seq Scan on outbox_events) and filtered to "
-         f"the corpus's doc_ids; seq_scan_present={seq_outbox}")
+         f"the corpus's doc_ids; seq_scan_present={seq_outbox}; "
+         f"plan touched outbox_events={touched}; corpus doc_ids={len(ids)} "
+         f"(a plan that scanned nothing cannot certify the index path)")
 
 
 def check_control_paths_no_regress(conn) -> None:
