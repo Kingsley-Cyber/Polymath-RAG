@@ -16,9 +16,98 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.189–11.193) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.211–11.212; the file is append-only and now runs to 11.212) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-12T00:30 — BOOTSTRAP GAP BACKFILL: ledger reconciled to reality)
+## Latest checkpoint (2026-09-12T01:15 — IMPLEMENTATION-AGENT TAKEOVER: GAP-1/4/6 closed, parent_enrichment KEPT, fleet bounced)
+
+**Branch `architecture/evidence-first-v5` @ `ab3f510`; worktree clean; guards green (`agent_preflight`
+ok · `repo_guard` ok · `wiki_worm` ok); 3 unpushed (`6ce6752`, `ab3f510`, plus the prior session's
+`52e1590` — push is still owner-gated, U-7).** Registers **11.211, 11.212**.
+
+Owner directive 2026-09-11: take over as the implementation agent, stop producing inventories,
+execute. This checkpoint covers that session.
+
+### LIVE STATE (measured after this session's fleet bounce)
+
+```
+fleet     23 workers / 12 types, ONE bundle, 0 quarantined, all healthy
+/ready    true · embedder + reranker up (cloud-modal optional, down)
+cinema    UNTOUCHED — still PAUSED 5,668/11,993 mapped (VNEXT_INCOMPLETE), owner's call, not touched this session
+flags     INTENT_POLICY OFF · SYNTH_ROLES OFF · pMAP auto-mint = rag-canary only (all unchanged)
+```
+
+### DONE THIS SESSION — CONTROL-PLANE-HONESTY-V1 (register 11.211, commit `6ce6752`)
+
+Closed three named gaps from `FRONTEND-V2-CONTRACT-INVENTORY-V1.md` that Frontend V2 had already
+fenced off with client-side hedges rather than presenting as fact:
+
+- **GAP-1**: `/control_plane` now returns ONE composed `control_ready` verdict
+  (`pipeline_health.py::control_ready`, sidecars + fleet state) instead of the frontend deriving one
+  itself from two separate calls. All four call sites (`App.tsx`, `Overview.tsx`, `Files.tsx`,
+  `ControlPlane.tsx`) now source health from `/control_plane` alone; `readiness.ts::controlReady()`
+  is a pure passthrough.
+- **GAP-4**: `summary.processing` splits into `processing_active`/`processing_stalled` via
+  `runs.updated_at` age against the owner's existing 3-minute stall rule
+  (`DORMANT_RUN_AGE_SECONDS=180`). Live-verified on `cinema`: `processing_active: 0,
+  processing_stalled: 64` — the exact 64 frozen-since-2026-09-07 runs, no longer presented as live
+  activity.
+- **GAP-6**: `pipeline_health.py`'s `stalls_open` splits into `stalls_active`/`stalls_dormant` by
+  diagnosis (`DORMANT_STALL_DIAGNOSES` — the four diagnoses that, by construction of
+  `stall_tracer.diagnose_pending()`, only exist with nothing live behind them). The DEGRADED/HEALTHY
+  gate now keys off `stalls_active` alone. Browser-verified live on `/v2` Control Plane: the `cinema`
+  corpus pill now reads **IDLE**, not the perpetual DEGRADED a 282-row dormant backlog used to force.
+
+8 new tests (`test_pipeline_health.py`) + the existing `test_control_plane_status.py` updated (not
+weakened); `npm run build` green. Full `tests/determinism` run + attribution against the pre-change
+commit: 4 failures, 3 pre-existing (`test_chat_retrieval_v2` timing, `test_document_profile_stage`
+IDENTITY/TITLE drift, `test_fact_endpoint_eligibility` `you`-pronoun — all three fail identically on
+`52e1590`) and 1 flake (`test_chat_synthesis[brainrot_transform]`, a live-call test that passed on
+re-run and passed on the old commit). **Zero regressions introduced.**
+
+**Fleet bounce required and executed.** Both edited files sit in the HASH-FENCE-V2 fingerprinted
+dirs. Found the live supervisor (pid from a manual launch, NOT launchd-tracked —
+`launchctl print gui/<uid>/com.polymath.v5` said `not running` while `ps` showed it live).
+`launchctl kickstart -k` alone FAILED (exit 126, `Operation not permitted` — TCC blocks a
+launchd-spawned process from reading `~/Documents`, exactly as `scripts/autoboot.sh`'s own comment
+warns) and left the fleet down for about a minute. Recovered by launching
+`scripts/boot_polymath.sh` directly (not through launchd), matching how the original manual instance
+was presumably started for the same TCC reason. Fleet came back: 23/12/one-bundle, healthy,
+`/ready` true. **Lesson for the next bounce: use the manual `nohup ./scripts/boot_polymath.sh &
+disown` path directly — `launchctl kickstart` is not currently viable for this checkout's location.**
+
+### INVESTIGATED, NOT CHANGED — parent_enrichment (register 11.212)
+
+Owner directive §11 asked whether `parent_enrichment` auto-mint for new documents can be disabled
+now that pMAP/DOCUMENT_PROFILE cover the vNext path. Traced FILE:SYMBOL rather than trusting
+11.190's 2-day-old note ("reads NONE of parent_enrichment" — true only for the BASE lanes):
+`latent/projection.py::latent_rows()` reads `parent_enrichments` and projects into the routing
+Qdrant collection that `chat_retrieval.py::_retrieve_wildcard` (**MODE_WILDCARD — one of the three
+sanctioned public modes**) unconditionally queries every turn, plus a second independent consumer in
+`candidate_engine.py`'s opt-in lane D. 118/118 tickets `done`, 13,233 READY rows across 6 corpora —
+a healthy producer, not dead code. **Verdict: KEEP.** Disabling it would have silently starved every
+future document of WILDCARD's latent coverage. Not touched; verdict recorded so the question isn't
+re-opened from a stale note.
+
+### NOT STARTED — GRAPH/WILDCARD `/retrieve` parity (directive §12, register 11.191's own follow-up)
+
+`/retrieve`'s GRAPH mode still dispatches to the legacy `orchestrator/api/graph.py::graph_retrieve`
+and WILDCARD to `orchestrator/api/wildcard.py::wildcard_retrieve` — separate v1 modules with a NESTED
+`documents/sections` response shape, not the final engine's flat shape (11.191 already found this;
+HYBRID single-corpus was migrated the same session, GRAPH/WILDCARD deferred). This needs the same
+rigor HYBRID's migration got (a shape-compatibility path + read-only parity A/B across corpora) —
+real engineering, not a quick fix; deliberately not started this session rather than rushed.
+`/ask` stays intentionally unmigrated (11.190: "distinct composite," not a Chat bypass).
+
+### NEXT ACTION
+
+**GRAPH/WILDCARD `/retrieve` parity migration** (files above) is the next concrete implementation
+slice, following the `RETRIEVE-ENGINE-MIGRATION-V1` (11.191) pattern exactly: response-shape adapter
++ read-only parity A/B on `rag-canary`/`ecom-meta-v1`/`cinema` + a `POLYMATH_RETRIEVE_ENGINE`-gated
+rollback, same as HYBRID got. Independent of cinema and of U-2. Cinema resumption and conformance
+L2–L5 remain the two owner-gated options named in the prior checkpoint; neither was touched this
+session and neither is blocked.
+
+## Prior checkpoint (2026-09-12T00:30 — BOOTSTRAP GAP BACKFILL: ledger reconciled to reality)
 
 **Branch `architecture/evidence-first-v5`; worktree clean; guards green (`agent_preflight` ok · `repo_guard` ok ·
 `wiki_worm` ok · `bundle_integrity` READY `7e97368daa92ec19`); 0 unpushed.** Registers **11.205 · 11.208 ·
