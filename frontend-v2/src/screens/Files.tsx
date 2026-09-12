@@ -12,8 +12,7 @@ import { Pill } from "../components/Pill";
  * An under-mapped document renders RED. Nothing here is manufactured green.
  */
 export function Files({ corpusId }: { corpusId: string }) {
-  const ready = useAsync((s) => api.ready(s), []);
-  const pipeline = useAsync((s) => api.pipelineHealth(s), []);
+  const cp = useAsync((s) => api.controlPlane(corpusId, s), [corpusId]);
   const sr = useAsync((s) => api.semanticReadiness(corpusId, s), [corpusId]);
   const docs = useAsync((s) => api.documentSummaries(corpusId, s), [corpusId]);
 
@@ -32,7 +31,7 @@ export function Files({ corpusId }: { corpusId: string }) {
       </div>
 
       <ReadinessTriad
-        control={controlReady(ready.data, pipeline.data)}
+        control={controlReady(cp.data?.control_ready)}
         semantic={semanticReady(sr.data)}
         vnext={vnextReady(sr.data)}
       />

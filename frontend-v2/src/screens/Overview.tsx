@@ -9,13 +9,12 @@ import { ReadinessTriad } from "../components/ReadinessTriad";
  * counter-example (plan §7).
  */
 export function Overview({ corpusId }: { corpusId: string }) {
-  const ready = useAsync((s) => api.ready(s), []);
-  const pipeline = useAsync((s) => api.pipelineHealth(s), []);
+  const cp = useAsync((s) => api.controlPlane(corpusId, s), [corpusId]);
   const sr = useAsync((s) => api.semanticReadiness(corpusId, s), [corpusId]);
   const corpora = useAsync((s) => api.corpora(s), []);
 
   const corpus = corpora.data?.find((c) => c.corpus_id === corpusId);
-  const err = ready.error ?? pipeline.error ?? sr.error;
+  const err = cp.error ?? sr.error;
 
   return (
     <div className="screen">
@@ -29,7 +28,7 @@ export function Overview({ corpusId }: { corpusId: string }) {
       {err && <div className="banner banner--bad" style={{ marginBottom: 14 }}>{err}</div>}
 
       <ReadinessTriad
-        control={controlReady(ready.data, pipeline.data)}
+        control={controlReady(cp.data?.control_ready)}
         semantic={semanticReady(sr.data)}
         vnext={vnextReady(sr.data)}
       />

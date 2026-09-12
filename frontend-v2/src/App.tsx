@@ -31,9 +31,8 @@ export function App() {
   const [corpusId, setCorpusId] = useState<string>("rag-canary");
 
   const corpora = useAsync((s) => api.corpora(s), []);
-  const ready = useAsync((s) => api.ready(s), []);
-  const pipeline = useAsync((s) => api.pipelineHealth(s), []);
-  const control = useMemo(() => controlReady(ready.data, pipeline.data), [ready.data, pipeline.data]);
+  const cp = useAsync((s) => api.controlPlane(corpusId, s), [corpusId]);
+  const control = useMemo(() => controlReady(cp.data?.control_ready), [cp.data]);
 
   return (
     <div className="shell">

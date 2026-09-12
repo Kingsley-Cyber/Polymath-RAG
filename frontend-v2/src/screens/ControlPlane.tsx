@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
-import { controlReady, processingIsTrustworthy } from "../lib/readiness";
+import { controlReady } from "../lib/readiness";
 import { Pill } from "../components/Pill";
 
 const FUNCTIONS = ["GRAPH_EXTRACTION", "DOCUMENT_PROFILE", "PMAP", "CHAT"] as const;
@@ -13,26 +13,28 @@ const FUNCTIONS = ["GRAPH_EXTRACTION", "DOCUMENT_PROFILE", "PMAP", "CHAT"] as co
  *
  *  1. `limiter_refused` is LOCAL (zero HTTP) and must stay visually distinct from a
  *     real HTTP 429, which cost a provider request.
- *  2. A DORMANT historical stall is not a current pipeline failure. `/health/pipeline`
- *     reads DEGRADED with 282 open stalls that decompose into the 2026-09-07 backlog
- *     (GAP-6); this screen says so instead of presenting it as live breakage, and
- *     never presents `summary.processing` as live activity while GAP-4 stands.
+ *  2. A DORMANT stall (PENDING_ON_PREDECESSOR / PENDING_ADVANCE_BLOCKED /
+ *     PENDING_OWNER_STAGE / RUN_SETTLED_NOT_PROMOTED — nothing live behind it) is not
+ *     a current pipeline failure; this screen shows the backend's own active/dormant
+ *     split (GAP-6) rather than re-deriving it from queued/blocked counts.
+ *
+ * GAP-1 (closed 2026-09-12): `/control_plane` is now the ONLY call this screen makes
+ * for health — `control_ready` and its embedded `pipeline` snapshot replace the
+ * separate `/ready` + `/health/pipeline` fetches this screen used to compose itself.
  */
 export function ControlPlane({ corpusId }: { corpusId: string }) {
   const [fn, setFn] = useState<string | null>(null);
-  const ready = useAsync((s) => api.ready(s), []);
-  const pipeline = useAsync((s) => api.pipelineHealth(s), []);
   const cp = useAsync((s) => api.controlPlane(corpusId, s), [corpusId]);
   const lanes = useAsync((s) => (fn ? api.poolLanes(fn, s) : Promise.resolve(null)), [fn]);
 
-  const control = controlReady(ready.data, pipeline.data);
-  const p = pipeline.data ?? {};
+  const control = controlReady(cp.data?.control_ready);
+  const p = (cp.data?.control_ready?.pipeline ?? {}) as Record<string, unknown>;
   const causes = (p.causes as string[] | undefined) ?? [];
-  const stallsOpen = typeof p.stalls_open === "number" ? p.stalls_open : null;
+  const stallsActive = typeof p.stalls_active === "number" ? p.stalls_active : null;
+  const stallsDormant = typeof p.stalls_dormant === "number" ? p.stalls_dormant : null;
   const queued = typeof p.queued_tickets === "number" ? p.queued_tickets : null;
   const liveWorkers = typeof p.live_workers === "number" ? p.live_workers : null;
   const blocked = typeof p.blocked_workers === "number" ? p.blocked_workers : null;
-  const dormant = stallsOpen != null && stallsOpen > 0 && queued === 0 && blocked === 0;
 
   const pools = cp.data?.pools ?? {};
 
@@ -50,12 +52,14 @@ export function ControlPlane({ corpusId }: { corpusId: string }) {
         {blocked != null && <span className="mono faint">{blocked} blocked workers</span>}
       </div>
 
-      {dormant && (
+      {stallsDormant != null && stallsDormant > 0 && (
         <div className="banner" style={{ marginBottom: 14 }}>
-          <b>DEGRADED for a historical reason, not a live one.</b> {stallsOpen} open stall episodes with{" "}
-          <b>0 queued tickets</b> and <b>0 blocked workers</b> — these are DORMANT records of the migration
-          backlog, not current pipeline failures.
-          {causes.length > 0 && <> Causes: <span className="mono">{causes.join(" · ")}</span>.</>}
+          <b>{stallsDormant} dormant stall record{stallsDormant === 1 ? "" : "s"}</b> — nothing live is running
+          behind them (predecessor/advance/promotion backlog), so they no longer pin this badge to DEGRADED.
+          {stallsActive != null && stallsActive > 0 && (
+            <> <b>{stallsActive} ACTIVE</b> stall{stallsActive === 1 ? "" : "s"} remain
+            {causes.length > 0 && <>: <span className="mono">{causes.join(" · ")}</span></>}.</>
+          )}
           {" "}They are not cleared, because clearing them to make this badge green would destroy the evidence
           the backlog classification depends on.
         </div>
@@ -70,8 +74,10 @@ export function ControlPlane({ corpusId }: { corpusId: string }) {
             <Stat label="documents" value={cp.data.summary.documents} />
             <Stat label="semantic ready" value={cp.data.summary.semantic_ready} />
             <Stat label="blocked" value={cp.data.summary.blocked} bad={cp.data.summary.blocked > 0} />
-            <Stat label="processing" value={cp.data.summary.processing}
-                  note={processingIsTrustworthy(cp.data) ? undefined : "not age-qualified (GAP-4) — may count dormant runs"} />
+            <Stat label="processing" value={cp.data.summary.processing_active}
+                  note={cp.data.summary.processing_stalled > 0
+                        ? `+${cp.data.summary.processing_stalled} stalled (>3min since last move)` : undefined}
+                  bad={cp.data.summary.processing_stalled > 0} />
           </div>
         </div>
       )}

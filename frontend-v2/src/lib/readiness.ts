@@ -20,32 +20,19 @@ export interface Verdict {
   detail?: string;
 }
 
-/** CONTROL READY — is the machinery healthy? */
-export function controlReady(
-  ready: { ready: boolean; sidecars: Record<string, boolean> } | null,
-  pipeline: Record<string, unknown> | null,
-): Verdict {
-  if (!ready) return { state: "unknown", label: "UNKNOWN", detail: "/ready not reachable" };
-  const state = typeof pipeline?.state === "string" ? (pipeline.state as string) : null;
-  const dark = Object.entries(ready.sidecars ?? {})
-    .filter(([name, up]) => !up && name !== "cloud-modal")   // cloud-modal is optional
-    .map(([name]) => name);
-  if (!ready.ready || dark.length) {
-    return { state: "blocked", label: state ?? "NOT READY", detail: dark.length ? `sidecars down: ${dark.join(", ")}` : undefined };
-  }
-  if (state && state !== "OK" && state !== "HEALTHY") {
-    return { state: "degraded", label: state, detail: describeStalls(pipeline) };
-  }
-  return { state: "ready", label: state ?? "READY" };
-}
-
-function describeStalls(pipeline: Record<string, unknown> | null): string | undefined {
-  const open = pipeline?.stalls_open;
-  const queued = pipeline?.queued_tickets;
-  const parts: string[] = [];
-  if (typeof open === "number" && open > 0) parts.push(`${open} open stall${open === 1 ? "" : "s"}`);
-  if (typeof queued === "number" && queued > 0) parts.push(`${queued} queued`);
-  return parts.length ? parts.join(" · ") : undefined;
+/**
+ * CONTROL READY — is the machinery healthy?
+ *
+ * GAP-1 (FRONTEND-V2-CONTRACT-INVENTORY-V1), closed 2026-09-12: this used to compose
+ * `/ready` + `/health/pipeline` HERE — two independent calls, arithmetic in the UI,
+ * exactly the drift the design law forbids (11.187: two screens composing it
+ * differently will disagree). `/control_plane` now returns one composed
+ * `control_ready` verdict (`shared/polymath_shared/pipeline_health.py::control_ready`);
+ * this function only paints it. Pass `null` while the fetch is in flight.
+ */
+export function controlReady(cr: ControlPlane["control_ready"] | null | undefined): Verdict {
+  if (!cr) return { state: "unknown", label: "UNKNOWN", detail: "/control_plane not reachable" };
+  return { state: cr.state, label: cr.label, detail: cr.detail };
 }
 
 /** SEMANTIC READY — is the corpus's meaning built? */
@@ -79,12 +66,3 @@ export function docVnext(d: DocSummary): Verdict {
   return { state: "blocked", label: "BLOCKED", detail: why.join(" · ") || undefined };
 }
 
-/**
- * GAP-4 (F0 / register 11.195): `control_plane.summary.processing` counts runs in
- * ('intake','reconciling','degraded') with NO age qualifier. Measured 2026-09-10:
- * cinema reported processing=64 for runs last touched 2026-09-07. Until the backend
- * age-qualifies it, the UI must NOT present that number as live activity.
- */
-export function processingIsTrustworthy(_cp: ControlPlane | null): boolean {
-  return false;
-}

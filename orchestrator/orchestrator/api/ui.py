@@ -37,7 +37,7 @@ import re
 import time
 from typing import Optional
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -404,13 +404,20 @@ def document_status_view(doc_id: str) -> dict:
 
 
 @router.get("/control_plane")
-def control_plane(corpus_id: str) -> dict:
+def control_plane(corpus_id: str, request: Request) -> dict:
     """CONTROL-PLANE-STATUS-V1: is the machinery processing documents healthy? Corpus
     summary + per functional pool (GRAPH_EXTRACTION / DOCUMENT_PROFILE / PMAP / CHAT)
-    queue depth, lane health, and provider accounting (limiter_refused ≠ HTTP 429)."""
+    queue depth, lane health, and provider accounting (limiter_refused ≠ HTTP 429).
+    GAP-1: also the single composed `control_ready` verdict — sidecar readiness lives
+    in app state (not Postgres), so it is read here and passed through, not recomputed
+    by the caller."""
     from polymath_shared.control_plane_status import control_plane_status
+    try:
+        sidecars = {name: s.is_ready() for name, s in request.app.state.sidecars.items()}
+    except AttributeError:
+        sidecars = {}
     with tx() as conn:
-        return control_plane_status(conn, corpus_id=corpus_id)
+        return control_plane_status(conn, corpus_id=corpus_id, sidecars=sidecars)
 
 
 @router.get("/control_plane/pool/{function}")

@@ -45,11 +45,17 @@ export interface DocSummary {
 
 /** `/control_plane?corpus_id=` — CONTROL-PLANE-STATUS-V1.
  *  Verified against a live response 2026-09-10: `pools` is a MAP keyed by function
- *  name, and the queue counters sit at the TOP level of each pool (not nested). */
+ *  name, and the queue counters sit at the TOP level of each pool (not nested).
+ *  `control_ready` (GAP-1) and `summary.processing_active`/`processing_stalled`
+ *  (GAP-4) added 2026-09-12 — composed server-side; the UI renders them, it does
+ *  not re-derive them from `/ready` + `/health/pipeline` itself. */
 export interface ControlPlane {
   contract: string;
   corpus_id: string;
-  summary: { documents: number; semantic_ready: number; processing: number; blocked: number };
+  control_ready: { state: "ready" | "blocked" | "degraded"; label: string; detail?: string;
+                    pipeline?: Record<string, unknown> };
+  summary: { documents: number; semantic_ready: number; processing: number;
+             processing_active: number; processing_stalled: number; blocked: number };
   pools: Record<string, ControlPlanePool>;
 }
 

@@ -111,17 +111,26 @@ def pool_lanes_detail(conn, *, function: str) -> dict[str, Any]:
     return {"function": function, "models": [{"model": m, "lanes": ls} for m, ls in sorted(by_model.items())]}
 
 
-def control_plane_status(conn, *, corpus_id: str) -> dict[str, Any]:
+def control_plane_status(conn, *, corpus_id: str,
+                          sidecars: dict[str, bool] | None = None) -> dict[str, Any]:
     from polymath_shared.document_status import corpus_document_summaries
+    from polymath_shared.pipeline_health import DORMANT_RUN_AGE_SECONDS, control_ready
     summaries = corpus_document_summaries(conn, corpus_id=corpus_id)
     documents = len(summaries)
     semantic_ready = sum(1 for v in summaries.values() if v["vnext_ready"])
     blocked = sum(1 for v in summaries.values()
                   if not v["vnext_ready"] and (v["map_unresolved"] or not v["profile_vnext"]))
-    # in-flight runs (any non-terminal run for the corpus)
-    processing = conn.execute(
-        "SELECT COUNT(*) FROM runs WHERE corpus_id=%s AND status IN ('intake','reconciling','degraded') "
-        "AND superseded_by_run_id IS NULL", (corpus_id,)).fetchone()[0]
+    # GAP-4: in-flight runs (any non-terminal run for the corpus), age-qualified by the
+    # same dormancy window pipeline_health uses — "processing" must not count a run
+    # whose `updated_at` stopped moving (measured live: 64 runs frozen since 2026-09-07
+    # were previously reported as processing on an otherwise-idle corpus).
+    processing_active, processing_stalled = conn.execute(
+        "SELECT COUNT(*) FILTER (WHERE updated_at > now() - make_interval(secs => %s)), "
+        "       COUNT(*) FILTER (WHERE updated_at <= now() - make_interval(secs => %s)) "
+        "FROM runs WHERE corpus_id=%s AND status IN ('intake','reconciling','degraded') "
+        "AND superseded_by_run_id IS NULL",
+        (DORMANT_RUN_AGE_SECONDS, DORMANT_RUN_AGE_SECONDS, corpus_id)).fetchone()
+    processing = processing_active + processing_stalled
 
     queue = _queue_by_pool(conn, corpus_id)
     try:
@@ -153,7 +162,11 @@ def control_plane_status(conn, *, corpus_id: str) -> dict[str, Any]:
     return {
         "contract": CONTROL_PLANE_STATUS_VERSION,
         "corpus_id": corpus_id,
+        # GAP-1: the one CONTROL READY verdict (sidecars + fleet state composed HERE,
+        # once) — callers render `control_ready.state`, they do not derive it.
+        "control_ready": control_ready(conn, sidecars=sidecars),
         "summary": {"documents": documents, "semantic_ready": semantic_ready,
-                    "processing": processing, "blocked": blocked},
+                    "processing": processing, "processing_active": processing_active,
+                    "processing_stalled": processing_stalled, "blocked": blocked},
         "pools": pools,
     }

@@ -3,7 +3,8 @@
 Provider-free, DB-free: a scripted fake connection drives the batch summary + the
 control-plane rollup; the lane detail runs against the real committed config with NO
 secret rendered. Asserts the four functional pools, the per-document vnext_ready rule,
-and the LOCAL limiter_refused vs ACTUAL HTTP 429 distinction.
+the LOCAL limiter_refused vs ACTUAL HTTP 429 distinction, the GAP-4 age-qualified
+processing split, and the GAP-1 composed control_ready verdict.
 """
 from __future__ import annotations
 
@@ -44,13 +45,19 @@ class _Conn:
         if "a.stage='extract'" in s and "DISTINCT ON" in s:
             return _Cur([("docA", 42, 17), ("docB", 5, 2)])
         if "FROM runs WHERE corpus_id" in s and "IN ('intake'" in s:
-            return _Cur([(1,)])                            # one in-flight run
+            return _Cur([(1, 0)])                          # one in-flight run, still fresh (GAP-4)
         if "FROM stage_tickets WHERE corpus_id" in s:
             return _Cur([("extract", "ready", 0, 2), ("doc_parent_map", "leased", 0, 1)])
         if "a.stage='doc_parent_map'" in s:                # pMAP provider conservation
             return _Cur([(9, 3, 1, 0, 8, 0)])              # disp, refused, 429, fail, mapped, empty
         if "a.stage='extract'" in s:                       # graph provider
             return _Cur([(12, 47, 0, 1, 47, 19)])
+        # pipeline_health() (GAP-1 control_ready composition) — fleet-wide, not
+        # corpus-scoped, so these are distinct fragments from the corpus queries above.
+        if "FROM worker_registrations" in s:
+            return _Cur([])                                # no live workers -> IDLE
+        if "WHERE status IN ('ready','leased')" in s:
+            return _Cur([(0,)])                             # nothing queued fleet-wide
         raise AssertionError(f"unscripted SQL: {s[:80]}")
 
 
@@ -64,7 +71,14 @@ def test_corpus_summaries_apply_vnext_ready_rule():
 
 def test_control_plane_status_four_pools_and_refused_vs_429():
     cp = CPS.control_plane_status(_Conn(), corpus_id="c")
-    assert cp["summary"] == {"documents": 2, "semantic_ready": 1, "processing": 1, "blocked": 1}
+    assert cp["summary"] == {
+        "documents": 2, "semantic_ready": 1,
+        "processing": 1, "processing_active": 1, "processing_stalled": 0,
+        "blocked": 1,
+    }
+    # GAP-1: composed once, here — never left for the UI to derive from two calls.
+    assert cp["control_ready"]["state"] == "ready"
+    assert cp["control_ready"]["label"] == "IDLE"
     assert set(cp["pools"]) == {"GRAPH_EXTRACTION", "DOCUMENT_PROFILE", "PMAP", "CHAT"}
     # pMAP provider accounting distinguishes LOCAL refusal from ACTUAL HTTP 429
     prov = cp["pools"]["PMAP"]["provider"]
