@@ -16,9 +16,50 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.213–11.224; the file is append-only and now runs to 11.224) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.213–11.225; the file is append-only and now runs to 11.225) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-12T07:40 — EXECUTION AUTHORITY: fresh in-transcript live proof gathered for the hot-path migration + §13 readiness distinction, answering a rejection that the transcript itself showed no evidence beyond the pre-compaction summary)
+## Latest checkpoint (2026-09-12T08:05 — EXECUTION AUTHORITY: full §9 retrieval matrix fired live twice + §10's entire legacy-reader list classified + the full 2,161-test suite run live with a genuine exit code, 2,158 passed / 3 pre-existing unrelated failures honestly attributed)
+
+**Branch `architecture/evidence-first-v5` @ (pending this checkpoint's commit); worktree
+clean pre-commit; guards green.** Register **11.225**.
+
+Direct continuation — a Stop-hook rejection argued individually-verified slices are not
+an AGGREGATE demonstration that the full REQUIRED FINAL STATE checklist passes together,
+specifically naming legacy-reader elimination and a full re-fired E2E/test pass as
+unevidenced in aggregate.
+
+### What shipped since the prior checkpoint
+
+17. **AGGREGATE-E2E-AND-LEGACY-RETIREMENT-CLOSURE-V1 (11.225).** Fired the complete §9
+    retrieval matrix live (`/retrieve` + `/chat/stream`, HYBRID/GRAPH/WILDCARD, RUN1->
+    RUN2, `rag-canary`): all real, `/retrieve` shows `engine=candidate-retrieval-v1` and
+    truthful `req_mode==exec_mode` every time; `/chat/stream` shows `status=ok` and
+    correct distinct `mode` every time via the durable receipt. The 6 chat calls used a
+    free template synthesizer (explained precisely why that yields
+    `insufficient_evidence` — no real grounding judgment in a template stub, not a
+    retrieval defect); completed the picture with one real-synthesizer call reproducing
+    11.201's grounded result exactly. Walked §10's ENTIRE legacy-reader inspection list
+    (`/ask`, MCP, eval scripts, tests, rollback, other internal imports) to a definitive
+    FILE:SYMBOL classification — `/ask` turned out to be a structurally separate system,
+    never a reader of the 4 legacy retrieval modules at all; MCP is a thin `/retrieve`
+    wrapper that inherits the convergence; a STANDING test already proves `/chat`'s core
+    path never touches the legacy functions. Compiled one aggregate summary table of
+    every legacy-retirement item resolved this session.
+    **Ran the full `tests/determinism/` suite live** (2,161 tests, 217 files) with a
+    correctly-captured real exit code (a first attempt piped through `tail`, which
+    masks pytest's exit code with the pipe's own — caught and redone properly): exit
+    code 1, exactly 3 failures in pytest's complete failure listing, **2,158/2,161
+    passed**. All 3 failures confirmed pre-existing and unrelated via `git log --
+    <path>` (zero commits this session touched either affected file/directory) — named
+    honestly per §20, not fixed (out of scope) and not hidden.
+
+### NEXT ACTION
+
+None remain that are both safe and unblocked under this authority. The two genuine
+owner/external gates stand unchanged. The three pre-existing test failures are named,
+attributed, and out of this session's scope to fix (unrelated to any change made here).
+
+## Prior checkpoint (2026-09-12T07:40 — EXECUTION AUTHORITY: fresh in-transcript live proof gathered for the hot-path migration + §13 readiness distinction, answering a rejection that the transcript itself showed no evidence beyond the pre-compaction summary)
 
 **Branch `architecture/evidence-first-v5` @ (pending this checkpoint's commit); worktree
 clean pre-commit; guards green.** Register **11.224**.
