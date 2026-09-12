@@ -105,17 +105,37 @@ def _write_stats(conn) -> dict:
 _SQL_CONTEXT = r"(FROM|JOIN|INTO|UPDATE|TABLE)[[:space:]]+" + TABLE
 
 
+#: POSITIVE CONTROL for the census. `chunks` is referenced by real SQL all over the
+#: repository, so the same pattern shape MUST find it. Without this, a census that
+#: silently matches nothing — a regex the local grep does not support, a wrong cwd, a
+#: renamed pattern — is indistinguishable from "no code references the table", and that
+#: reading is what authorises the DROP.
+_CONTROL_TABLE = "chunks"
+
+
+def _census(table: str) -> list[str]:
+    pattern = r"(FROM|JOIN|INTO|UPDATE|TABLE)[[:space:]]+" + table
+    try:
+        res = subprocess.run(["git", "grep", "-lEi", "--", pattern],
+                             cwd=ROOT, capture_output=True, text=True, timeout=60)
+    except Exception as exc:  # noqa: BLE001
+        raise SystemExit(f"census failed ({type(exc).__name__}: {exc}) — refusing to proceed")
+    return [l.strip() for l in res.stdout.splitlines() if l.strip()]
+
+
 def _code_references() -> list[str]:
     """Tracked files whose SQL actually reads or writes the table.
 
     Prose under docs/ and tests/, this script, and its registry entry are excluded by
     path; everything else must contain a real SQL reference to count."""
-    try:
-        res = subprocess.run(["git", "grep", "-lEi", "--", _SQL_CONTEXT],
-                             cwd=ROOT, capture_output=True, text=True, timeout=60)
-        hits = [l.strip() for l in res.stdout.splitlines() if l.strip()]
-    except Exception as exc:  # noqa: BLE001
-        raise SystemExit(f"census failed ({type(exc).__name__}: {exc}) — refusing to proceed")
+    control = _census(_CONTROL_TABLE)
+    if not control:
+        raise SystemExit(
+            f"census self-test FAILED: the same pattern finds no reference to "
+            f"`{_CONTROL_TABLE}`, which the repository certainly does reference. The "
+            f"census machinery is broken (unsupported regex? wrong cwd?), so its empty "
+            f"result for {TABLE} proves nothing — refusing to proceed.")
+    hits = _census(TABLE)
     return [h for h in hits
             if h not in _ALLOWED
             and not h.startswith("docs/")
@@ -134,9 +154,17 @@ def reprove(conn) -> tuple[bool, dict]:
     findings["code_references"] = _code_references()
 
     ws = findings["write_stats"]
-    never_written = (not ws.get("present_in_stats")) or (
-        (ws.get("inserts") or 0) == 0 and (ws.get("updates") or 0) == 0
-        and (ws.get("deletes") or 0) == 0)
+    # ABSENT statistics are not evidence of no writes. `pg_stat_user_tables` loses a row
+    # after `pg_stat_reset()`, on a replica, or for a schema this query does not cover —
+    # and the old code read "no statistics" as "never written", which is NOT_TESTED
+    # counted as green (§18) on the one verdict that authorises an irreversible DROP.
+    if not ws.get("present_in_stats"):
+        findings["verdict"] = ("UNPROVEN — no row in pg_stat_user_tables for this table, "
+                               "so 'never written' cannot be established (stats reset? "
+                               "replica? different schema?). Refusing to call it dead.")
+        return False, findings
+    never_written = ((ws.get("inserts") or 0) == 0 and (ws.get("updates") or 0) == 0
+                     and (ws.get("deletes") or 0) == 0)
     holds = (findings["rows"] == 0 and never_written and not findings["code_references"])
     findings["verdict"] = ("DEAD_PROVEN still holds — safe to drop on authorization"
                            if holds else

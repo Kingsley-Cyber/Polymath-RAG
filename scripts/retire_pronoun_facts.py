@@ -118,6 +118,24 @@ def main() -> int:
         print(f"already retired           : "
               f"{sum(1 for r in rows if r[1] == 'REJECT')}")
 
+        # PROTECTION must be PROVEN, not assumed. `acronymic` is the set that keeps
+        # "US", "IT", "WHO" from being deleted as pronouns. If that query silently
+        # returns nothing — a renamed table, a changed column, an empty `mentions` — the
+        # protection vanishes and every acronym-shaped endpoint joins `doomed`. Unlike
+        # the claim_sets census, an empty result here does not block a deletion, it
+        # ENABLES a larger one, so it must be checked before `--apply`, never after.
+        mention_rows = conn.execute("SELECT count(*) FROM mentions").fetchone()[0]
+        if mention_rows and not acronymic:
+            print(f"\nREFUSING: `mentions` holds {mention_rows} rows but the acronym "
+                  f"protection set is EMPTY. That is a broken protection query, not a "
+                  f"corpus without acronyms — applying now would delete every "
+                  f"acronym-shaped endpoint as a pronoun.")
+            return 1
+        if not mention_rows:
+            print("\nREFUSING: `mentions` is empty, so nothing can be protected from "
+                  "this pass. Retirement needs evidence, and there is none here.")
+            return 1
+
         if not args.apply:
             print("\nDRY RUN — pass --apply to retire")
             return 0
