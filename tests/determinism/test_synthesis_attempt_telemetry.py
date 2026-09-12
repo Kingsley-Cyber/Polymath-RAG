@@ -352,3 +352,54 @@ def test_config_live_mismatch_also_catches_a_model_substitution(monkeypatch):
     r = A.reconcile(_ReconcileConn(head, [("groq_a", 5, 0, 5)], live), "24 hours")
     d = next(f["detail"] for f in r["findings"] if f["code"] == "CONFIG/LIVE_MISMATCH")
     assert "config=llama-3.3" in d and "wire=llama-3.1-DIFFERENT" in d
+
+
+# ── the detection that nearly cost an hour, and what made it honest ──────────
+
+def test_dark_lane_ignores_functions_that_simply_were_not_running(monkeypatch):
+    """First implementation reported 31 dark lanes — every GRAPH_EXTRACTION / PMAP /
+    parent_enrichment / DOCUMENT_PROFILE lane on the host — because no ingestion had run
+    in 24h. A detector that fires on "the pipeline is idle" teaches its reader to ignore
+    it. A lane is dark only if its FUNCTION was working and it was still skipped."""
+    from polymath_shared.conformance import attempts as A
+
+    class _L:
+        def __init__(self, name, fn): self.name, self.function = name, fn
+        model, enabled, credential_present = "m", True, True
+
+    class _Reg:
+        lanes = [_L("chat_a", "CHAT"), _L("chat_b", "CHAT"),
+                 _L("extract_a", "GRAPH_EXTRACTION"), _L("extract_b", "GRAPH_EXTRACTION")]
+
+    monkeypatch.setattr(
+        "polymath_shared.llm_extraction.lane_registry.build_registry", lambda: _Reg())
+    head = (10, 0, 0, 10, 0, 10, 10, 0)
+    conn = _ReconcileConn(head, [("chat_a", 10, 0, 10)], [("chat_a", "m", 10)])
+    r = A.reconcile(conn, "24 hours")
+    d = next((f["detail"] for f in r["findings"] if f["code"] == "DARK_ENABLED_LANE"), "")
+    assert "chat_b" in d, "a lane skipped while its sibling worked IS dark"
+    assert "extract_a" not in d and "extract_b" not in d, \
+        "an idle function's lanes are not dark, they are idle"
+    assert "GRAPH_EXTRACTION(2)" in d, "the idle function is still reported, as context"
+
+
+def test_the_dark_lane_finding_states_its_sample_size(monkeypatch):
+    """28 logical calls over 4 lanes cannot show a lane is neglected; the rotation proved
+    fair (~25% home each over 4000 keys). The finding must carry the number of draws so a
+    reader is not sent chasing a 28-sample 'anomaly'."""
+    from polymath_shared.conformance import attempts as A
+
+    class _L:
+        def __init__(self, name): self.name = name
+        function, model, enabled, credential_present = "CHAT", "m", True, True
+
+    class _Reg:
+        lanes = [_L("chat_a"), _L("chat_b")]
+
+    monkeypatch.setattr(
+        "polymath_shared.llm_extraction.lane_registry.build_registry", lambda: _Reg())
+    head = (356, 0, 0, 356, 0, 356, 28, 0)
+    conn = _ReconcileConn(head, [("chat_a", 356, 0, 356)], [("chat_a", "m", 356)])
+    d = next(f["detail"] for f in A.reconcile(conn, "24 hours")["findings"]
+             if f["code"] == "DARK_ENABLED_LANE")
+    assert "28 logical call(s)" in d and "356 attempt(s)" in d

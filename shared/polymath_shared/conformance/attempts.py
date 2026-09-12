@@ -285,19 +285,44 @@ def reconcile(conn, window: str = "24 hours") -> dict:
     # DARK_ENABLED_LANE — configured, credentialled and ENABLED, yet it made no attempt
     # in the window. Either it is dead weight in the rotation or something upstream is
     # never selecting it; both are invisible from outcome counters.
+    # A lane is DARK only if its FUNCTION was working and it still made no attempt.
+    # Measured 2026-09-12: the first implementation reported 31 dark lanes — every
+    # GRAPH_EXTRACTION / PMAP / parent_enrichment / DOCUMENT_PROFILE lane on the host —
+    # simply because no ingestion had run in 24h. A detector that fires on "the pipeline
+    # is idle" trains its reader to ignore it. Idle functions are reported as CONTEXT,
+    # never as a finding; the interesting case is a lane skipped while its SIBLINGS ran.
+    dark, idle_functions = [], []
     try:
         from polymath_shared.llm_extraction import lane_registry as _LR
-        enabled = {l.name for l in _LR.build_registry().lanes
-                   if getattr(l, "enabled", False) and getattr(l, "credential_present", False)}
+        lanes = [l for l in _LR.build_registry().lanes
+                 if getattr(l, "enabled", False) and getattr(l, "credential_present", False)]
         seen = {row["lane"] for row in s.get("per_lane", [])}
-        dark = sorted(enabled - seen)
+        by_fn: dict[str, list] = {}
+        for l in lanes:
+            by_fn.setdefault(getattr(l, "function", "?"), []).append(l.name)
+        for fn, names in sorted(by_fn.items()):
+            live = [n for n in names if n in seen]
+            if not live:
+                idle_functions.append(f"{fn}({len(names)})")
+                continue
+            dark += [f"{n} [{fn}, {len(live)} sibling(s) working]"
+                     for n in sorted(set(names) - seen)]
     except Exception:  # noqa: BLE001 — a registry read must never break reconciliation
-        dark = []
+        dark, idle_functions = [], []
     if dark:
+        # SAMPLE SIZE, in the finding itself. Chased one of these on 2026-09-12: a
+        # compiler lane with 0 attempts while 3 siblings worked looked like a broken
+        # rotation, and the rotation proved fair (each of 4 lanes is home ~25% over 4000
+        # keys) — the window simply held 28 logical calls from a handful of session keys.
+        # A reader cannot judge "no attempt" without knowing how many draws there were.
         findings.append({
             "code": "DARK_ENABLED_LANE",
             "detail": f"{len(dark)} enabled, credentialled lane(s) made no attempt in "
-                      f"{window}: {', '.join(dark)}"})
+                      f"{window} WHILE THEIR FUNCTION WAS WORKING: {', '.join(dark)}"
+                      f". Sample: {s['logical_calls']} logical call(s), {s['attempts']} "
+                      f"attempt(s) — with few calls, absence is expected, not evidence"
+                      + (f". (Idle functions, not counted: {', '.join(idle_functions)})"
+                         if idle_functions else "")})
     # CONFIG/LIVE_MISMATCH — the last of §15's five. Config is a claim about what the
     # system will do; the ledger is a record of what it did. Two ways they diverge, both
     # invisible from either side alone:

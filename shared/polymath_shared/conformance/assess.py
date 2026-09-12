@@ -111,13 +111,14 @@ def qualify_lane(lane: dict, attempts_per_lane: dict[str, dict], controller: dic
     Two evidence tiers, preferring the richer one: the attempt ledger (per-call
     success/failure, `llm_provider_attempts`) when THIS lane has rows in it; falling back
     to the durable limiter's `day_count` (`llm_controller_state`) when it does not --
-    **as of 2026-09-12 the ledger is populated only for the CHAT-compiler lanes**
-    (confirmed live: `compiler_alt`/`compiler_ollama_gemma`/`compiler_alibaba_qwen` are
-    the only rows in `llm_provider_attempts` even over a 7-day window, despite
-    `doc_parent_map_stage_worker.py` wrapping its calls in `attempt_context(function=
-    "PMAP", ...)` -- a separate, pre-existing ledger-population gap, not something this
-    slice fixes), so for GRAPH_EXTRACTION/DOCUMENT_PROFILE/PMAP lanes today this
-    correctly and necessarily falls back to `day_count`. This exactly matches the
+    That population gap is CLOSED as of 2026-09-12 (registers 11.236-11.238): the ledger
+    recorded only `complete_one`, so the CHAT-compiler lanes were its only rows even over
+    a 7-day window -- `doc_parent_map_stage_worker.py` was the ONLY caller of
+    `attempt_context` in the repo and it wrapped the batched path, which recorded nothing.
+    All four client seams plus the chat seams now record, so GRAPH_EXTRACTION /
+    DOCUMENT_PROFILE / PMAP lanes get the ledger tier as soon as they next dispatch. The
+    `day_count` fallback stays for lanes with no rows YET (nothing has re-run them since
+    the fix) and for any future seam that slips the ledger. This exactly matches the
     precedent `assess_lanes` (above) already established in production -- `day > 0`
     already promotes a lane to `Level.CONTRACT_QUALIFIED` there; this function must not
     invent a stricter, inconsistent bar. The day_count fallback has no per-call
