@@ -12,6 +12,7 @@ import { Files } from "./screens/Files";
 import { ControlPlane } from "./screens/ControlPlane";
 import { Graph } from "./screens/Graph";
 import { Compare } from "./screens/Compare";
+import { Models } from "./screens/Models";
 import {
   emptySession, loadSessions, saveSessions, titleFor, type ChatSession,
 } from "./lib/chatStore";
@@ -26,6 +27,7 @@ const NAV = [
   { id: "graph", label: "Graph", glyph: "◈" },
   { id: "rule", label: "", glyph: "" },
   { id: "control", label: "Control Plane", glyph: "⚙" },
+  { id: "models", label: "Models", glyph: "❋" },
   { id: "settings", label: "Settings", glyph: "⋯" },
 ] as const;
 
@@ -105,7 +107,28 @@ export function App() {
     );
   }
 
-  const corpora = useAsync((s) => api.corpora(s), []);
+  const [corporaNonce, setCorporaNonce] = useState(0);
+  const corpora = useAsync((s) => api.corpora(s), [corporaNonce]);
+
+  // OWNER-DESTRUCTIVE: wipe a corpus and everything derived from it. The backend requires
+  // confirm==corpus_id, so we make the user type the corpus name — a typed confirm, not a
+  // one-click delete. On success we refetch the list and switch to another corpus.
+  async function deleteCorpus() {
+    const typed = window.prompt(
+      `Permanently delete corpus "${corpusId}" and EVERYTHING in it — documents, vectors, ` +
+      `graph substrate? This cannot be undone.\n\nType the corpus name to confirm:`);
+    if (typed == null) return;
+    if (typed !== corpusId) { window.alert(`"${typed}" does not match "${corpusId}" — nothing deleted.`); return; }
+    try {
+      await api.deleteCorpus(corpusId, corpusId);
+      const remaining = (corpora.data ?? []).filter((c) => c.corpus_id !== corpusId);
+      setCorporaNonce((n) => n + 1);
+      if (remaining[0]) setCorpusId(remaining[0].corpus_id);
+    } catch (e) {
+      window.alert(`Delete failed: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+
   const cp = useAsync((s) => api.controlPlane(corpusId, s), [corpusId]);
   const control = useMemo(() => controlReady(cp.data?.control_ready), [cp.data]);
 
@@ -179,6 +202,10 @@ export function App() {
             ))}
             {!corpora.data && <option value={corpusId}>{corpusId}</option>}
           </select>
+          <button className="btn nav__corpus-del" onClick={() => void deleteCorpus()}
+                  title={`Delete corpus ${corpusId}`} disabled={!corpusId}>
+            Delete corpus
+          </button>
         </div>
 
         <div className="nav__themes">
@@ -226,6 +253,7 @@ export function App() {
         {screen === "files" && <Files corpusId={corpusId} />}
         {screen === "control" && <ControlPlane corpusId={corpusId} />}
         {screen === "graph" && <Graph corpusId={corpusId} />}
+        {screen === "models" && <Models />}
 
         {screen === "settings" && (
           <div className="screen">

@@ -82,6 +82,39 @@ export interface UploadResult {
   near_duplicate_override: boolean;
 }
 
+/** `GET /llm/providers` — a configured LiteLLM provider. The backend NEVER returns a raw
+ *  key: `api_key` is either the last 4 chars, or the env var NAME (`env:NAME`), and
+ *  `api_key_set` says whether a usable key resolves. Verified against
+ *  orchestrator/api/ui.py::llm_providers 2026-09-12. */
+export interface LlmProvider {
+  provider_id: string;
+  provider: string;
+  api_key: string;      // masked (…last4) or "env:NAME" — never the real key
+  api_key_set: boolean;
+  api_base: string;
+  models: string[];
+  enabled: boolean;
+  ready: boolean;
+}
+
+/** `POST /llm/providers` body (ProviderUpsert). An empty `api_key` on an existing
+ *  provider keeps the stored key (masked round-trip). */
+export interface ProviderUpsertBody {
+  provider: string;
+  api_key?: string;
+  api_base?: string;
+  models: string[];
+  enabled: boolean;
+}
+
+/** `POST /llm/test` — one-shot connectivity/credential check for a model string. */
+export interface LlmTestResult {
+  ok: boolean;
+  model: string;
+  reply?: string;
+  error?: string;
+}
+
 /** `/control_plane?corpus_id=` — CONTROL-PLANE-STATUS-V1.
  *  Verified against a live response 2026-09-10: `pools` is a MAP keyed by function
  *  name, and the queue counters sit at the TOP level of each pool (not nested).

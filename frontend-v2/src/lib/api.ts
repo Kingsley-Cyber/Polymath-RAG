@@ -5,8 +5,9 @@
  */
 import type {
   CompareResponse, ControlPlane, Corpus, DocSummary, DocumentsResponse, GraphEntities,
-  GraphRelationships, PoolLanes, ReasoningMode, RetrieveResponse, ReviewResponse,
-  SemanticReadiness, Synthesizer, UploadResult,
+  GraphRelationships, LlmProvider, LlmTestResult, PoolLanes, ProviderUpsertBody,
+  ReasoningMode, RetrieveResponse, ReviewResponse, SemanticReadiness, Synthesizer,
+  UploadResult,
 } from "./contracts";
 
 export class ApiError extends Error {
@@ -49,6 +50,12 @@ async function del<T>(path: string, signal?: AbortSignal): Promise<T> {
 
 export const api = {
   corpora: (s?: AbortSignal) => get<{ corpora: Corpus[] }>("/corpora", s).then((d) => d.corpora),
+  // DELETE /corpora/{id} — OWNER-DESTRUCTIVE: wipes the corpus and everything derived
+  // (PG rows, Qdrant collection, Neo4j substrate). The backend requires confirm==corpus_id,
+  // so the UI makes the user type the corpus name.
+  deleteCorpus: (corpusId: string, confirm: string, s?: AbortSignal) =>
+    del<Record<string, unknown>>(
+      `/corpora/${encodeURIComponent(corpusId)}?confirm=${encodeURIComponent(confirm)}`, s),
   semanticReadiness: (corpusId: string, s?: AbortSignal) =>
     get<SemanticReadiness>(`/semantic_readiness?corpus_id=${encodeURIComponent(corpusId)}`, s),
   documentSummaries: (corpusId: string, s?: AbortSignal) =>
@@ -94,6 +101,17 @@ export const api = {
   graphRelationships: (entityId: string, corpusId: string, limit: number, s?: AbortSignal) =>
     get<GraphRelationships>(
       `/graph/entity/${encodeURIComponent(entityId)}/relationships?corpus_id=${encodeURIComponent(corpusId)}&limit=${limit}`, s),
+  // LLM provider management (the legacy /ui "Models" screen — F1 in V2). The backend
+  // never returns a raw key, and an empty api_key on upsert keeps the stored one.
+  llmProviders: (s?: AbortSignal) =>
+    get<{ providers: LlmProvider[] }>("/llm/providers", s).then((d) => d.providers),
+  saveProvider: (body: ProviderUpsertBody, s?: AbortSignal) =>
+    post<{ saved: string }>("/llm/providers", body, s),
+  deleteProvider: (providerId: string, s?: AbortSignal) =>
+    del<{ deleted: string; existed: boolean }>(
+      `/llm/providers/${encodeURIComponent(providerId)}`, s),
+  testModel: (model: string, s?: AbortSignal) =>
+    post<LlmTestResult>("/llm/test", { model }, s),
   compare: (body: { message: string; corpus_id: string; modes: string[] }, s?: AbortSignal) =>
     post<CompareResponse>("/compare", body, s),
   review: (body: {

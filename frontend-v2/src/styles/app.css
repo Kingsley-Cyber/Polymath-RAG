@@ -2,6 +2,10 @@
    Dark-first: this is an instrument panel, read for long stretches. */
 
 :root {
+  /* Native controls (the <select> popup, scrollbars, checkboxes) render in the OS
+     color-scheme unless told otherwise — without this the corpus selector's dropdown
+     came up black on the LIGHT themes. Light palettes override it below. */
+  color-scheme: dark;
   --bg:        #0d1014;
   --bg-raised: #14181e;
   --bg-sunken: #090b0e;
@@ -159,11 +163,15 @@ table.t th {
 table.t td { border-bottom: 1px solid var(--line-soft); padding: 7px 9px; vertical-align: top; }
 table.t tr:hover td { background: #11151a; }
 
-select, input[type="text"], textarea, button.btn {
-  background: var(--bg-sunken); color: var(--fg);
+select, input[type="text"], input[type="password"], textarea, button.btn {
+  background: var(--bg-raised); color: var(--fg);
   border: 1px solid var(--line); border-radius: var(--r);
   padding: 6px 9px; font: inherit; font-size: 13px;
 }
+/* The dropdown list is a native popup — style the options so it tracks the theme
+   instead of falling back to a black system menu. */
+select option { background: var(--bg-raised); color: var(--fg); }
+select:hover { border-color: var(--accent-dim); }
 select:focus, input:focus, textarea:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
 button.btn { cursor: pointer; }
 button.btn:hover { background: var(--bg-raised); }
@@ -191,6 +199,11 @@ button.btn:disabled { opacity: .5; cursor: not-allowed; }
 .shell--collapsed .nav__health,
 .shell--collapsed .nav__themes,
 .shell--collapsed .nav__corpus { display: none; }
+.nav__corpus-del {
+  margin-top: 6px; width: 100%; padding: 4px 8px; font-size: 12px;
+  color: var(--bad); border-color: var(--line);
+}
+.nav__corpus-del:hover:not(:disabled) { background: var(--bad-bg); border-color: var(--bad); }
 .shell--collapsed .nav__item { justify-content: center; padding: 8px 0; }
 .shell--collapsed .nav__item span { display: none; }
 .shell--collapsed .nav__item::before {

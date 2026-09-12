@@ -89,6 +89,12 @@
   --ok: #5f8f56;  --warn: #b3862e;  --bad: #b85c47;  --unknown: #988770;
 }
 
+/* Light palettes: flip native controls (the <select> popup, scrollbars) to light so
+   they stop rendering as a black system menu against a light UI. */
+[data-theme="slate"],
+[data-theme="paper"],
+[data-theme="champagne"] { color-scheme: light; }
+
 /* ── derived, every theme (including the untagged default) ─────────────────── */
 
 :root,
