@@ -438,6 +438,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("scripts/verify_document_chunk_summary_parity.py", "py", None),
     ("tests/determinism/test_document_chunk_summary.py", "py", None),
     ("docs/wiki/work-log/2026-09-12-document-chunk-summary.md", "md", None),
+    ("docs/wiki/work-log/2026-09-12-disabled-lane-retirement-audit.md", "md", None),
     ("stores/postgres/migrations/0057_extract_operational_projection.sql", "sql", None),
     ("shared/polymath_shared/extract_projection.py", "py", None),
     ("scripts/backfill_extract_projection.py", "py", None),
