@@ -26,6 +26,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import urllib.request
@@ -622,6 +623,139 @@ def check_legacy(conn) -> None:
 
 # ── 5. frontend cutover ──────────────────────────────────────────────────────
 
+def check_refire(conn) -> None:
+    """§23 "Re-fire": production verification executes twice with the same commands and
+    no source edits.
+
+    Running it twice satisfies the clause; PROVING it did is a different thing, and the
+    evidence used to live in a terminal scrollback. Each completed run records its commit
+    and every gate's verdict (`verification_runs`), so a second run at the same commit is
+    COMPARED with the first — which exposes two things one run never can: a verification
+    that is not reproducible (same commit, different verdicts), and a claim of re-fire
+    that never happened.
+    """
+    if conn is None:
+        gate("verification_refires_identically", NOT_TESTED, "no database connection")
+        return
+    sha = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT,
+                         capture_output=True, text=True).stdout.strip()
+    try:
+        prior = conn.execute(
+            "SELECT verdicts, finished_at FROM verification_runs "
+            "WHERE commit_sha=%s AND NOT worktree_dirty "
+            "ORDER BY finished_at DESC LIMIT 1", (sha,)).fetchone()
+    except Exception as exc:  # noqa: BLE001
+        gate("verification_refires_identically", NOT_TESTED,
+             f"verification_runs unreadable ({exc}); apply migration 0060")
+        return
+    if not prior:
+        gate("verification_refires_identically", NOT_TESTED,
+             f"no clean prior run recorded at {sha[:12]} — this IS the first fire. "
+             f"Re-run this same command with no source edits to satisfy §23's re-fire "
+             f"clause; NOT_TESTED is never counted as green (§18).")
+        return
+    old = prior[0]
+    now = {r["gate"]: r["status"] for r in results}
+    # only gates present in BOTH runs can disagree; a gate added since the prior run is
+    # new coverage, not a divergence, and is reported rather than silently ignored.
+    shared = set(old) & set(now)
+    diverged = {g: f"{old[g]} -> {now[g]}" for g in sorted(shared) if old[g] != now[g]}
+    added, removed = sorted(set(now) - set(old)), sorted(set(old) - set(now))
+    detail = (f"prior clean run at {sha[:12]} on {prior[1]:%Y-%m-%d %H:%M}; "
+              f"{len(shared)} gate(s) compared"
+              + (f"; NEW since then: {added}" if added else "")
+              + (f"; GONE since then: {removed}" if removed else ""))
+    gate("verification_refires_identically", PASS if not diverged else FAIL,
+         detail + (f"; DIVERGED: {diverged}" if diverged
+                   else "; every shared gate reported the same verdict"))
+
+
+def check_reader_classification() -> None:
+    """§23: "`/ask`, MCP, and evaluation readers are explicitly classified."
+
+    Convergence is a claim about the readers that USE the retrieval core. A reader that
+    is never classified is neither converged nor exempt — it is unexamined, which is the
+    state this clause exists to forbid. Measured live, not asserted: each class is fired
+    or read, and what it reports decides its classification.
+    """
+    rows, problems = [], []
+
+    # /ask — fired live. It is NOT a retrieval-core reader: it answers from stored
+    # objects under its own contract, with no engine/mode at all, so the HYBRID /
+    # GRAPH / WILDCARD convergence clause does not apply to it. That is a
+    # CLASSIFICATION, not an exemption, and it must be re-derived rather than trusted.
+    try:
+        out = _post("/ask", {"question": "What is ZQX-59213?", "corpus_id": CORPUS},
+                    timeout=240)
+        contracts = out.get("contracts") or {}
+        grounding = contracts.get("grounding")
+        has_engine = any(k in (out.get("meta") or {}) for k in ("engine", "engine_version"))
+        if grounding == "stored-objects-only-v1" and not has_engine:
+            rows.append(f"/ask -> STORED-OBJECTS READER (grounding={grounding!r}, "
+                        f"router={contracts.get('query_router')!r}, "
+                        f"objects={len(out.get('objects') or [])}) — not a retrieval-core "
+                        f"reader, so engine convergence does not apply")
+        else:
+            problems.append(f"/ask reports grounding={grounding!r} engine_present={has_engine} "
+                            f"— it now looks like a retrieval-core reader and must be "
+                            f"gated as one")
+    except Exception as exc:  # noqa: BLE001
+        gate("readers_ask_mcp_eval_classified", NOT_TESTED,
+             f"/ask probe failed: {type(exc).__name__}: {exc}")
+        return
+
+    # MCP — classified from its own source: every retrieval tool must delegate to a
+    # gated HTTP endpoint rather than reaching into the engine itself.
+    mcp = (ROOT / "orchestrator/orchestrator/mcp_server.py").read_text()
+    direct = [sym for sym in ("hybrid_fast_retrieve", "candidate_engine",
+                              "chat_retrieve_mode", "run_chat") if sym in mcp]
+    if direct:
+        problems.append(f"MCP imports the engine directly ({direct}) instead of going "
+                        f"through a gated endpoint")
+    else:
+        endpoints = sorted(set(re.findall(r'_orch\(\s*"[A-Z]+",\s*"(/[a-z/]+)"', mcp)))
+        rows.append(f"MCP -> HTTP READER via {endpoints or '(none found)'} — inherits "
+                    f"whatever those endpoints are gated to; no direct engine import")
+
+    # Evaluation readers — same rule: they may call the HTTP surface, never the engine.
+    # Match an IMPORT, not a mention: the first version of this census flagged a
+    # REPORT.md and a JSON manifest for merely naming the symbol, which is the
+    # match-the-mention bug already fixed twice this session (conformance census,
+    # retirement census). Only a Python import line counts.
+    import subprocess as _sp
+    ev = _sp.run(["git", "grep", "-lE",
+                  r"^[[:space:]]*(from|import)[[:space:]].*"
+                  r"(hybrid_fast_retrieve|candidate_engine|chat_retrieve_mode)",
+                  "--", "*.py"], cwd=ROOT, capture_output=True, text=True)
+    importers = {l.strip() for l in ev.stdout.splitlines() if l.strip()}
+    #: FROZEN EXPERIMENT ARTIFACTS — dated harnesses that import the LEGACY engine
+    #: directly. Classified, per §23, as intentionally retained with a reason rather
+    #: than migrated: they are the reproducible record of the experiment they ran, and
+    #: rewriting them onto the current core would destroy exactly the comparison they
+    #: exist to document. Verified 2026-09-12: last touched 2026-08-15, referenced only
+    #: by docs, invoked by nothing, and not imported by the test suite. They must stay
+    #: named here — if one ever becomes live again, this list is where that shows.
+    _FROZEN_EVAL_HARNESSES = {"eval/r1f/measure.py", "eval/r2a/harness.py"}
+    live_offenders = sorted(f for f in importers
+                            if f.startswith(("eval/", "research/"))
+                            and f not in _FROZEN_EVAL_HARNESSES)
+    stale = sorted(_FROZEN_EVAL_HARNESSES - importers)
+    if live_offenders:
+        problems.append(f"evaluation readers import the engine directly and are NOT "
+                        f"classified: {live_offenders}")
+    if stale:
+        problems.append(f"classified as frozen engine-importers but no longer import it "
+                        f"— remove from the list rather than letting it rot: {stale}")
+    if not live_offenders and not stale:
+        rows.append(f"evaluation readers -> HTTP READERS, except {len(_FROZEN_EVAL_HARNESSES)} "
+                    f"FROZEN EXPERIMENT ARTIFACT(S) {sorted(_FROZEN_EVAL_HARNESSES)} that "
+                    f"import the LEGACY engine by design (the record of the experiment they "
+                    f"ran; invoked by nothing, last touched 2026-08-15)")
+
+    gate("readers_ask_mcp_eval_classified", PASS if not problems else FAIL,
+         "; ".join(rows) + ("; PROBLEMS: " + "; ".join(problems) if problems else ""))
+
+
 def check_frontend() -> None:
     class _NoRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self, *a, **k):  # noqa: D401
@@ -653,6 +787,84 @@ def check_frontend() -> None:
             ok = code in (301, 302, 307, 308) and "/v2" in (loc or "")
             gate("frontend_public_url_serves_v2", PASS if ok else FAIL,
                  f"{PUBLIC}/ -> HTTP {code}, location={loc!r}")
+
+    # §23's frontend gate asks for more than a redirect: the real URL must be verified to
+    # EXPOSE working views. Probing /v2/ itself (not just /) found what the redirect check
+    # could never see — the page is behind HTTP Basic auth, so no automated probe and no
+    # fresh browser session can reach it without the owner's credential. That is a
+    # BLOCKED_OWNER condition, and it must not be reported as a passing redirect.
+    try:
+        try:
+            r2 = opener.open(urllib.request.Request(
+                f"{PUBLIC}/v2/", headers=dict(req.headers)), timeout=20)
+            code2, auth = r2.status, r2.headers.get("www-authenticate", "")
+        except urllib.error.HTTPError as e:
+            code2, auth = e.code, e.headers.get("www-authenticate", "")
+    except Exception as exc:  # noqa: BLE001
+        gate("frontend_real_url_functionally_verified", NOT_TESTED,
+             f"{type(exc).__name__}: {exc}")
+    else:
+        if code2 == 401:
+            gate("frontend_real_url_functionally_verified", BLOCKED,
+                 f"{PUBLIC}/v2/ -> HTTP 401 {auth!r}. The routing IS correct (302 -> /v2/) "
+                 f"and the origin serves a working V2 (see frontend_v2_views_and_backends), "
+                 f"but §23 requires the REAL URL be verified to expose Chat/Compare/Files/"
+                 f"Graph/Control Plane/Settings — impossible without the owner-held basic-auth "
+                 f"credential, which must not be guessed.")
+        elif code2 == 200:
+            gate("frontend_real_url_functionally_verified", PASS,
+                 f"{PUBLIC}/v2/ -> HTTP 200 (no auth wall); functional checks apply")
+        else:
+            gate("frontend_real_url_functionally_verified", FAIL,
+                 f"{PUBLIC}/v2/ -> HTTP {code2} (expected 200, or 401 for the auth wall)")
+
+    # §23's named functional checks, measured against the origin the proxy fronts. What a
+    # browser alone can show (rendered data, clean console) was verified by hand and is
+    # recorded in the work-log; these are the halves that can be RE-FIRED without one.
+    views = ("Chat", "Compare", "Files", "Graph", "Control Plane", "Settings")
+    findings, problems = [], []
+    try:
+        with urllib.request.urlopen(f"{ORCH}/v2/", timeout=20) as r:
+            index = r.read().decode("utf-8", "replace")
+        assets = re.findall(r'(?:src|href)="([^"]*/assets/[^"]+)"', index)
+        if not assets:
+            problems.append("index references no /assets/ bundle")
+        bundle = ""
+        for a in assets:
+            with urllib.request.urlopen(f"{ORCH}{a if a.startswith('/') else '/v2/' + a}",
+                                        timeout=30) as ra:
+                if ra.status != 200:
+                    problems.append(f"asset {a} -> HTTP {ra.status}")
+                bundle += ra.read().decode("utf-8", "replace")
+        findings.append(f"{len(assets)} asset(s) fetched, {len(bundle)} bytes")
+        missing_views = [v for v in views if v not in bundle]
+        if missing_views:
+            problems.append(f"views absent from the built bundle: {missing_views}")
+        else:
+            findings.append(f"all {len(views)} §23 views present in the bundle")
+        # the backends V2 reads for readiness/status/graph must answer
+        for path in (f"/corpora", f"/control_plane?corpus_id={CORPUS}",
+                     f"/semantic_readiness?corpus_id={CORPUS}"):
+            with urllib.request.urlopen(f"{ORCH}{path}", timeout=30) as rb:
+                if rb.status != 200:
+                    problems.append(f"{path} -> HTTP {rb.status}")
+        findings.append("corpora/control_plane/semantic_readiness all 200")
+        # SPA deep-link must serve the app, and a MISSING ASSET must NOT fall back to it
+        with urllib.request.urlopen(f"{ORCH}/v2/files", timeout=20) as rd:
+            if "html" not in rd.headers.get("content-type", ""):
+                problems.append("/v2/files did not fall back to the SPA entry")
+        try:
+            urllib.request.urlopen(f"{ORCH}/v2/assets/does-not-exist.js", timeout=20)
+            problems.append("a missing ASSET fell back to index.html — that hides broken builds")
+        except urllib.error.HTTPError as e:
+            if e.code != 404:
+                problems.append(f"missing asset -> HTTP {e.code}, expected 404")
+        findings.append("deep-link falls back to the SPA; a missing asset 404s")
+    except Exception as exc:  # noqa: BLE001
+        gate("frontend_v2_views_and_backends", NOT_TESTED, f"{type(exc).__name__}: {exc}")
+    else:
+        gate("frontend_v2_views_and_backends", PASS if not problems else FAIL,
+             "; ".join(findings) + ("; PROBLEMS: " + "; ".join(problems) if problems else ""))
 
     try:
         with urllib.request.urlopen(f"{ORCH}/v2/", timeout=20) as r:
@@ -825,6 +1037,8 @@ def main() -> int:
     check_legacy_state_writers(conn)
     check_legacy(conn)
     check_attempt_telemetry(conn)
+    check_refire(conn)
+    check_reader_classification()
     check_frontend()
     check_delivery()
 
@@ -845,7 +1059,31 @@ def main() -> int:
                   "or unobservable here. NOT_TESTED is never counted as green (§18).")
         else:
             print("\n  VERDICT: every gate PASSES.")
+    _record_run(conn)
     return 1 if any(r["status"] == FAIL for r in results) else 0
+
+
+def _record_run(conn) -> None:
+    """Append this run to `verification_runs` so the NEXT run can compare against it.
+    Fail-soft: a verifier must never fail because its own bookkeeping did."""
+    if conn is None:
+        return
+    try:
+        sha = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT,
+                             capture_output=True, text=True).stdout.strip()
+        dirty = bool(subprocess.run(["git", "status", "--short"], cwd=ROOT,
+                                    capture_output=True, text=True).stdout.strip())
+        counts: dict[str, int] = {}
+        for r in results:
+            counts[r["status"]] = counts.get(r["status"], 0) + 1
+        conn.execute(
+            "INSERT INTO verification_runs (commit_sha, worktree_dirty, verdicts, counts) "
+            "VALUES (%s,%s,%s,%s)",
+            (sha, dirty, json.dumps({r["gate"]: r["status"] for r in results}),
+             json.dumps(counts)))
+        conn.commit()
+    except Exception:  # noqa: BLE001 — bookkeeping only
+        pass
 
 
 if __name__ == "__main__":
