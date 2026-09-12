@@ -20,10 +20,10 @@ Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (t
 
 ## Latest checkpoint (2026-09-12T14:10 — EXECUTION AUTHORITY: the REQUIRED FINAL STATE is now measured by ONE re-firable command, 25 gates; §15 DURABLE ATTEMPT TELEMETRY closed across every provider seam after enumeration found four unrecorded ones; and the fix for it broke chat, which a live test reported as green)
 
-**Branch `architecture/evidence-first-v5` @ `68eea5e`; upstream matches; 0 unpushed;
-worktree clean; guards green.** Register **11.239**.
+**Branch `architecture/evidence-first-v5` @ `e8aa959`; upstream matches; 0 unpushed;
+worktree clean; guards green.** Register **11.242**.
 
-**Fleet:** 23 healthy workers, ONE bundle hash `9bf616674e5a` == the committed tree,
+**Fleet:** 23 healthy workers, ONE bundle hash `07e8d4a7636a` == the committed tree,
 `/ready: true`, embedder + reranker up (`cloud-modal` false, as configured).
 
 **`scripts/verify_final_state.py` → 25 PASS · 1 BLOCKED_OWNER · 0 FAIL, exit 0.**
@@ -74,15 +74,37 @@ schema deletion", owner-only: `scripts/retire_claim_sets.py --execute` once auth
   arrived with it — six genuine synthesis attempts on `chat_synth:anthropic`, 7.0s–59.0s,
   previously invisible.
 
+- **11.240 — the skip audit that 11.239 implied.** 49 `pytest.skip` calls reviewed with
+  one filter: *could this condition be caused by our own code?* Three qualified.
+  `test_runtime_config_contract.py` **could not fail** (raise → skip, return → assert),
+  and `POSTGRES_AUTH_FAILED` — the code it most exists to catch — was among the skipped.
+  `test_retrieve_plan_capabilities.py` skipped on a guess; its guard matched `corpus_id`,
+  a FIELD NAME present in every error, so it **admitted everything** — the same
+  match-the-mention bug the conformance censuses had. **Both tests in that file had been
+  silently not running and now PASS.** The suite gate reports the SKIP COUNT on PASS too.
+- **11.241 — §15 completed.** `response_hash` set at all seven success seams (streams
+  hashed incrementally; an empty answer records NULL, not `sha256("")`), and
+  `CONFIG/LIVE_MISMATCH` implemented — so all five detections §15 names now exist and all
+  produce real findings. Its first finding was my own probe lanes; kept, not excluded.
+- **11.242 — diagnosing 11.241's own noisiest finding.** "31 dark lanes" was one fact
+  (no ingestion in 24h) reported 31 times. A lane is now dark only if its FUNCTION was
+  working; the one survivor, `compiler_alibaba_deepseek`, was then **tested rather than
+  assumed** — the rotation is uniform over 4000 keys (home 25.5/25.4/25.1/24.0%), so its
+  absence is a 28-logical-call sample, not neglect. The finding now states its sample
+  size. Also corrected a `conformance/assess.py` docstring that my own 11.236–11.238
+  invalidated hours earlier.
+
 ### Ledger, before → after this session's telemetry work
 
 | | before | after |
 |---|---|---|
-| rows | 209 | 315 |
+| rows | 209 | 356 |
 | distinct lanes | 3 | 8 |
 | max attempt_ordinal | 1 | 2 |
-| rows with `provider` | 0 | 88 |
+| rows with `provider` | 0 | 129 |
 | recording seams | 1 | 8 (across 2 modules, 3 exclusions printed with reasons) |
+| rows with `response_hash` | 0 | set at every success seam from 11.241 on |
+| §15 detections implemented | 1 of 5 | **5 of 5** |
 
 ### Traps this session added to §6
 
@@ -104,11 +126,14 @@ schema deletion", owner-only: `scripts/retire_claim_sets.py --execute` once auth
 
 ### NEXT SESSION — exact first action
 
-`scripts/verify_final_state.py` is the entry point: re-fire it, and work the single
-BLOCKED_OWNER or the gaps named in the newest work-logs. Explicitly NOT claimed closed
-and worth picking up: §15's third detection `CONFIG/LIVE_MISMATCH`; `response_hash` is
-never set on any attempt; and other live tests may carry the same skip-on-error masking
-that 11.239 found in `test_chat_synthesis.py` — only that one was audited.
+`scripts/verify_final_state.py` is the entry point: re-fire it (25 gates), and work the
+single BLOCKED_OWNER or the gaps named in the newest work-logs. §15 is now implemented in
+full — every field it lists is written, every detection it names exists, every provider
+seam reaches the ledger. Explicitly NOT closed and worth picking up:
+**`cost`** is never recorded (§15 lists it "if available"); **`scripts/`** was not
+included in the skip-masking audit (only `tests/`); and every lane-level conclusion from
+the current ledger is weak by construction — 28 logical calls from a handful of reused
+session keys — so a neglected-lane claim needs a window with real user traffic.
 
 ---
 
