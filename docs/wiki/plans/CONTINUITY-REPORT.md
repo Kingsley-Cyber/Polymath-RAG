@@ -20,8 +20,8 @@ Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (t
 
 ## Latest checkpoint (2026-09-12T14:10 — EXECUTION AUTHORITY: the REQUIRED FINAL STATE is now measured by ONE re-firable command, 25 gates; §15 DURABLE ATTEMPT TELEMETRY closed across every provider seam after enumeration found four unrecorded ones; and the fix for it broke chat, which a live test reported as green)
 
-**Branch `architecture/evidence-first-v5` @ `e8aa959`; upstream matches; 0 unpushed;
-worktree clean; guards green.** Register **11.242**.
+**Branch `architecture/evidence-first-v5` @ `0967c46`; upstream matches; 0 unpushed;
+worktree clean; guards green.** Register **11.244**.
 
 **Fleet:** 23 healthy workers, ONE bundle hash `07e8d4a7636a` == the committed tree,
 `/ready: true`, embedder + reranker up (`cloud-modal` false, as configured).
@@ -94,6 +94,23 @@ schema deletion", owner-only: `scripts/retire_claim_sets.py --execute` once auth
   size. Also corrected a `conformance/assess.py` docstring that my own 11.236–11.238
   invalidated hours earlier.
 
+- **11.243 — can the verifier itself PASS on nothing?** An AST walk proved the worst
+  shape absent (no gate reports PASS from inside an `except`; all 13 such calls report
+  NOT_TESTED or FAIL). Three gates had the subtler shape — a verdict an EMPTY input
+  satisfies: `retrieval_truthful_mode` passed a response carrying **no mode metadata at
+  all**; `outbox_corpus_scoped` let a **zero-document corpus** certify an index path it
+  never used; `hot_path_no_toast_detoast` accepted an **empty plan** as TOAST-free. Each
+  now needs positive evidence. All three still PASS — they were truthful, they just could
+  not have caught the vacuous case.
+- **11.244 — the same question, asked of the script that authorises `DROP TABLE`.** Worse
+  answers. `retire_claim_sets.py` read "no row in `pg_stat_user_tables`" as "never
+  written" (stats vanish on `pg_stat_reset()`, on a replica, for an uncovered schema), and
+  read an empty `git grep` as "nothing references this table" — a pattern the local grep
+  cannot parse gives the identical result. Now: UNPROVEN-and-refuse, plus a **positive
+  control** (the same pattern must find `chunks`). `retire_pronoun_facts.py` has the
+  MIRROR risk — an empty `acronymic` set does not block a deletion, it **enables a larger
+  one** — so it refuses before `--apply`, not after. Live verdict unchanged.
+
 ### Ledger, before → after this session's telemetry work
 
 | | before | after |
@@ -130,10 +147,18 @@ schema deletion", owner-only: `scripts/retire_claim_sets.py --execute` once auth
 single BLOCKED_OWNER or the gaps named in the newest work-logs. §15 is now implemented in
 full — every field it lists is written, every detection it names exists, every provider
 seam reaches the ledger. Explicitly NOT closed and worth picking up:
-**`cost`** is never recorded (§15 lists it "if available"); **`scripts/`** was not
-included in the skip-masking audit (only `tests/`); and every lane-level conclusion from
-the current ledger is weak by construction — 28 logical calls from a handful of reused
-session keys — so a neglected-lane claim needs a window with real user traffic.
+**`cost`** is never recorded — §15 lists it "if available", and on the streaming
+synthesis path it is not available without adding `stream_options` to the provider
+request, which is a behaviour change on the path this session already broke once (11.239)
+and was judged not worth it for a diagnostic; **rollback paths** of both retirement
+scripts are complete-by-inspection, never exercised (exercising them needs a schema
+mutation, so owner-gated); and every lane-level conclusion from the current ledger is
+weak by construction — 28 logical calls from a handful of reused session keys — so a
+neglected-lane claim needs a window with real user traffic.
+
+The vacuity audit covered `verify_final_state.py`, `repo_guard.py` (examined, sound — a
+two-way diff cannot pass on an empty scan) and both `retire_*.py`. Other `scripts/` were
+not swept; none of them gate anything.
 
 ---
 
