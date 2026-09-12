@@ -16,9 +16,50 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.213–11.223; the file is append-only and now runs to 11.223) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.213–11.224; the file is append-only and now runs to 11.224) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-12T07:32 — EXECUTION AUTHORITY: fired the bounded CHAT canary live instead of deferring it; the L2-L5 residual is now down to specific, individually-justified NOT_TESTED lanes, each with a stated reason, not a blanket blocker)
+## Latest checkpoint (2026-09-12T07:40 — EXECUTION AUTHORITY: fresh in-transcript live proof gathered for the hot-path migration + §13 readiness distinction, answering a rejection that the transcript itself showed no evidence beyond the pre-compaction summary)
+
+**Branch `architecture/evidence-first-v5` @ (pending this checkpoint's commit); worktree
+clean pre-commit; guards green.** Register **11.224**.
+
+Direct continuation — a Stop-hook rejection made a structurally different point than the
+prior three: it did not dispute that 11.214/11.219 (the hot-path migration) or the §13
+readiness distinction were DONE, it disputed that THIS TRANSCRIPT contained evidence of
+it — the detailed work happened before this session's mid-conversation compaction, and
+the reviewing hook cannot inspect a pre-compaction summary the way it can inspect actual
+tool output in the visible transcript. Correct standard to hold to, matching §2's own
+truth hierarchy (LIVE RUNTIME beats CURRENT AUTHORITY/CONTINUITY beats CHAT HISTORY).
+
+### What shipped since the prior checkpoint
+
+16. **HOT-PATH-AND-READINESS-FRESH-REFIRE-V1 (11.224).** Zero code changes —
+    verification only, gathered fresh in this exact continuation:
+    - `EXPLAIN (ANALYZE, BUFFERS)` on `_graph_provider`'s live query, all 3 real
+      corpora: 2.083ms / 0.181ms / 0.237ms, zero TOAST access in any plan.
+    - Same for `document_chunk_summary`: 0.114ms.
+    - Both shadow-parity scripts RE-FIRED live: 100% match, 0 mismatches, both, across
+      all 4 corpora each.
+    - `/control_plane` and `/documents/summary` fired TWICE (RUN1->RUN2) with zero code
+      changes between: byte-identical `summary` payload, 233ms/258ms and 30ms/33ms.
+    - Confirmed the §13 three-way readiness distinction directly from live response
+      bodies: `control_ready` (fleet-level object), `semantic_ready` (corpus-level
+      document count, 44/67 for cinema), `vnext_ready` (per-document boolean) — three
+      genuinely different shapes at three different scopes, not collapsed.
+    - Confirmed GRAPH/Files/Control Plane cut-over live: `pools.GRAPH_EXTRACTION
+      .provider` in the SAME fast response shows real corpus-scale numbers (78,234
+      entities) sourced from the narrow projection the EXPLAIN above proves is what's
+      actually read.
+
+### NEXT ACTION
+
+None remain that are both safe and unblocked under this authority. The two genuine
+owner/external gates from the prior checkpoint stand unchanged (`claim_sets` deletion,
+Caddy password); every REQUIRED FINAL STATE item this and the prior three Stop-hook
+cycles have named now has either fresh in-transcript live evidence or an honestly-stated,
+non-owner-blocking reason it reads NOT_TESTED.
+
+## Prior checkpoint (2026-09-12T07:32 — EXECUTION AUTHORITY: fired the bounded CHAT canary live instead of deferring it; the L2-L5 residual is now down to specific, individually-justified NOT_TESTED lanes, each with a stated reason, not a blanket blocker)
 
 **Branch `architecture/evidence-first-v5` @ (pending this checkpoint's commit); worktree
 clean pre-commit; guards green.** Register **11.223**.
