@@ -183,3 +183,48 @@ must not require detoasting the full extraction artifact payload, while
   backfill/parity/regression-test proof; the bounce + post-bounce re-verification is
   the next step before this slice can be called fully closed per the authority's own
   re-fire definition.
+
+## Live re-fire (phase K — completed after this work-log's original commit)
+
+The fleet bounce needed to load this migration's code hit a real incident, resolved
+before any live verification: `nohup ./scripts/boot_polymath.sh & disown` was run
+without first stopping the PRE-EXISTING supervisor (pid 1263, running since the start
+of this session) — it spawned a SECOND supervisor on top of the first, which
+crash-looped its own orchestrator/mcp spawns because the old orchestrator still held
+port 7200. Diagnosed via the boot log's own `worker orchestrator exited code=3 (exit N
+in window)` lines plus `lsof -i :7200` showing the OLD pid as the listener; fixed with
+`kill -TERM 1263` (graceful — the whole old tree, including orchestrator/mcp/sidecars/
+workers, exited cleanly with zero orphans, confirmed by `ps`) and letting the new
+supervisor's own retry succeed. `worker_registrations` briefly showed two distinct
+bundle hashes per worker type — a stale-heartbeat artifact of the just-killed old
+rows aging out of the 60-second freshness window, not a real duplicate fleet (`ps`
+confirmed only one process per role throughout); converged to one hash within ~90s.
+
+**RUN 1 and RUN 2** (identical commands, zero code changes between them) against the
+live, bounced orchestrator:
+
+| Check | RUN 1 | RUN 2 |
+|---|---|---|
+| `/ready` | `{"ready":true,"sidecars":{"embedder":true,"reranker":true}}` | same |
+| `/control_plane?corpus_id=cinema` | 200, 358 ms | 200, 270 ms |
+| `/control_plane?corpus_id=ecom-meta-v1` | 200, 224 ms | 200, 149 ms |
+| `/control_plane?corpus_id=rag-canary` | 200, 131 ms | 200, 127 ms |
+| `/documents/summary?corpus_id=cinema` | 200, 151 ms | 200, 122 ms |
+| `/documents/summary?corpus_id=ecom-meta-v1` | 200, 20 ms | 200, 22 ms |
+| `/documents/summary?corpus_id=rag-canary` | 200, 16 ms | 200, 13 ms |
+| `/retrieve` HYBRID (rag-canary) | evidence=15 | evidence=15 (identical) |
+| `/retrieve` GRAPH (rag-canary) | evidence=15, graph_relationships=10 | identical |
+| `/retrieve` WILDCARD (rag-canary) | evidence=15, wildcard=3 | identical |
+
+`cinema`'s `/control_plane`/`/documents/summary` timings are consistent with this
+work-log's own documented finding: the fixed extraction-payload cost (now ~4-6 ms) plus
+the separately-scoped, out-of-scope chunks-by-tier cost (~150 ms, cinema's raw volume,
+not a TOAST bug) account for the totals. `ecom-meta-v1`/`rag-canary` — much smaller
+corpora — land at 13-224 ms end-to-end, with no chunks-volume effect.
+
+This also live-proves, over real HTTP, the SAME-DAY `RETRIEVE-GRAPH-WILDCARD-
+MIGRATION-V1` slice (register 11.213/commit 418f22e): its earlier proof was direct
+Python calls to `chat_retrieve_mode`/`graph_retrieve`/`wildcard_retrieve`, not yet
+through the actual FastAPI route — RUN 1/RUN 2 above are the first HTTP-level
+confirmation that `/retrieve` GRAPH and WILDCARD return the final engine's flat shape
+in production.

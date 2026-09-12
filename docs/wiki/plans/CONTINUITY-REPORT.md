@@ -16,9 +16,96 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.211–11.212; the file is append-only and now runs to 11.212) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.213–11.215; the file is append-only and now runs to 11.215) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly, e.g. it MANDATES the Control Plane/Files hot-path fix the prior checkpoint had left owner-deferred) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-12T01:20 — BOOTSTRAP RE-VERIFY: attempt ledger observed its first live data)
+## Latest checkpoint (2026-09-12T05:50 — EXECUTION AUTHORITY: GRAPH/WILDCARD converged, §20A hot-path gate closed + live re-fired, bounce incident resolved)
+
+**Branch `architecture/evidence-first-v5` @ (register-row-only edits pending final commit; code HEADs
+`418f22e` then `e08210d`); worktree — guards green; PUSHED through `418f22e` (fast-forward,
+`5d12105..418f22e`); `e08210d` + this checkpoint's docs are the next push.** Registers **11.213,
+11.214, 11.215**.
+
+Owner delivered a new, more detailed execution authority (`POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md`,
+via `/goal`) superseding the prior "implementation agent takeover" directive on every point it names
+explicitly — most importantly, it makes the Control Plane/Files hot-path fix **mandatory** ("not a
+parked optimization"), overriding the owner's own earlier 2026-09-11 "just report it, don't fix now."
+Continuous-execution mode: no stopping between slices.
+
+### What shipped
+
+1. **RETRIEVE-GRAPH-WILDCARD-MIGRATION-V1 (11.213, commit 418f22e).** `/retrieve` GRAPH and WILDCARD
+   now default to the final `chat_retrieve_mode` core (same `POLYMATH_RETRIEVE_ENGINE`/`utility` gate
+   HYBRID already used since 11.191) — completing directive §8's immediate subtask. GRAPH's shape
+   changes by design (v1's nested `documents[].sections[].evidence` → the flat contract `/chat`/
+   `/compare` already use); WILDCARD's is a near-strict subset of v1's. No compatibility adapter was
+   built — direct inspection found zero real readers of the nested GRAPH shape, and MCP's `retrieve`
+   tool (which reads `evidence` first) actually had a LIVE defect for `mode=GRAPH` this migration
+   fixes. Also completed the §10 legacy-reader classification: `/ask` is NOT_APPLICABLE (a distinct
+   knowledge-object system), MCP needs no change, `/retrieve` FAST stays LEGACY_REQUIRED (structural
+   multi-corpus mismatch), `evidence.py` is the one genuine RETIRE_CANDIDATE (deferred — it walks the
+   nested shape as an INPUT extraction pattern, needs real rewiring, not a dispatch swap).
+2. **EXTRACT-OPERATIONAL-PROJECTION-V1 (11.214, commit e08210d) — the §20A mandatory gate.**
+   `control_plane_status.py::_graph_provider` and `document_status.py::corpus_document_summaries`
+   both filtered `jsonb_exists(payload,'llm_extraction')` over `artifacts`, forcing Postgres to
+   detoast the (TOAST-heavy: 455 of 456 MB) full extraction payload on every poll — EXPLAIN measured
+   ~45k buffer reads and 605/489 ms per call on `cinema`. Migration 0057 adds 7 nullable columns;
+   `extract_projection.py::derive_extract_projection` is the one derivation both known writers
+   (`receipts.py`, `control/reconciliation.py`'s carry-forward) call, so they can't drift. Backfilled
+   all 108 rows; **100% shadow parity, 0 mismatches**. After cutover: `_graph_provider` 4.1 ms
+   (~147x), extract-join 5.7 ms (~85x), zero payload/TOAST access in either plan. Found, and
+   explicitly left OUT of this gate: `corpus_document_summaries`'s non-extraction counters cost
+   ~150 ms on `cinema` specifically — confirmed by EXPLAIN to be the planner correctly seq-scanning
+   `chunks` (cinema owns 87% of it), a volume-proportional cost needing its own future slice, not a
+   TOAST bug.
+3. **Live re-fire (11.215).** The bounce needed to load 11.214's fenced-directory code hit a real
+   incident — see "Traps" below — resolved, then **RUN 1 → PASS, RUN 2 → PASS** against the live
+   orchestrator for `/control_plane`, `/documents/summary` (3 corpora each) and `/retrieve`
+   HYBRID/GRAPH/WILDCARD, identical results both runs. This is also the first live HTTP-level proof
+   of item 1 above (its own proof had been direct Python calls, not yet through the real route).
+
+### Traps that cost real time this session (§6 addition)
+
+- **A fleet bounce must stop the OLD supervisor FIRST.** `nohup ./scripts/boot_polymath.sh & disown`
+  on top of an ALREADY-RUNNING supervisor spawns a SECOND one; the new orchestrator/mcp crash-loop
+  forever because the old ones still hold their ports. Symptom: boot log shows
+  `worker orchestrator exited code=3 (exit N in window)` repeating with growing N; `lsof -i :7200`
+  names the OLD pid as listener despite a fresh boot log. **Fix: `kill -TERM <old supervisor pid>`
+  first** (found via `ps -eo pid,ppid,lstart,command | grep process_supervisor` — the one with the
+  OLDER start time), confirm it exits (a well-behaved supervisor propagates SIGTERM to every child,
+  zero orphans), THEN the freshly-launched supervisor's own retry succeeds within seconds.
+- **A `worker_registrations` row showing 2 distinct bundle hashes right after a bounce is not
+  necessarily a real duplicate fleet.** A worker's last heartbeat write can land just before it dies,
+  so its row still reads "recent" for up to ~60-90s after the PROCESS is confirmed dead via `ps`. Cross-
+  check `ps` (ground truth for "what's running now") before treating a stale-heartbeat artifact as an
+  incident; it self-resolves within about 90 seconds.
+- **`chat_retrieve_mode`'s flat contract is not fully documented as canonical anywhere central** —
+  `/chat` and `/compare` already used it, `/retrieve`'s own HYBRID migration (11.191) proved it
+  byte-shape-compatible, but nothing said "this is now THE `/retrieve` contract" until this session's
+  work-logs made it explicit. Read `docs/wiki/experiments/retrieve-graph-wildcard-migration-2026-09-12/`
+  before assuming a v1 engine's response shape is still required anywhere.
+- **`tests/determinism/test_legacy_dependency_census.py::test_collect_is_deterministic_and_nonempty`
+  is a genuine pre-existing flake in the FULL suite** (passes reliably in isolation; in two separate
+  full-suite runs it failed pointing at two DIFFERENT files/lines each time — not caused by any edit
+  this session made, confirmed by worktree-comparison against the pre-session commit). Do not spend
+  time chasing it as a regression; it is unrelated to whatever you were just editing.
+
+### NEXT ACTION
+
+1. Push `e08210d` + this checkpoint (owner-authorized under the current execution authority, §21).
+2. `evidence.py`'s GRAPH/HYBRID branches — the one genuine RETIRE_CANDIDATE from item 1's
+   classification — needs its own slice (real internal rewiring of its evidence-extraction walk, not
+   a dispatch swap).
+3. `corpus_document_summaries`'s non-extraction (`chunks`-volume) cost on large corpora — named but
+   explicitly out of scope for 11.214; would need a new maintained per-document chunk-count
+   summary/cache, its own migration decision.
+4. Frontend V2 real-URL cutover gate (directive's `frontend_v2_real_url_cutover_gate`) — not
+   inspected this session; unclear whether Frontend V2 already serves the real user-facing URL or
+   still needs the reverse-proxy/serving-layer migration the directive requires before COMPLETE.
+5. Provider/model-agnostic conformance framework (directive §14-18) — `PRODUCTION-CONFORMANCE-AUDIT-V1`
+   exists (register 11.209) from a prior session; unclear how much of §16's L0-L5 levels it already
+   covers vs. still needs.
+
+## Prior checkpoint (2026-09-12T01:20 — BOOTSTRAP RE-VERIFY: attempt ledger observed its first live data)
 
 **Branch `architecture/evidence-first-v5` @ `3e60289`; worktree clean; guards green; 4 unpushed
 (`52e1590`, `6ce6752`, `ab3f510`, `3e60289`) — unchanged from the prior checkpoint, no new register
