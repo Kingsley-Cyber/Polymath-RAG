@@ -83,11 +83,17 @@ def main() -> int:
     rbundle = evidence.runtime_bundle(conn) if conn else {"live": [], "uniform": None}
 
     # ── L2/L3/L5 qualification evidence -- already-durable, zero new spend ─────
+    # 7 days on both evidence sources, matching query_receipt_summary's own reasoning:
+    # a too-tight window can misreport a genuinely working, lower-frequency lane/mode as
+    # NOT_TESTED purely for lack of a recent caller, not lack of evidence it works.
+    QUALIFICATION_WINDOW = "7 days"
     from polymath_shared.conformance.attempts import ledger_available, attempt_summary
     attempts_per_lane: dict[str, dict] = {}
     if conn is not None and ledger_available(conn):
-        attempts_per_lane = {r["lane"]: r for r in attempt_summary(conn)["per_lane"]}
-    receipt_summary = evidence.query_receipt_summary(conn) if conn is not None else {}
+        attempts_per_lane = {r["lane"]: r for r in
+                             attempt_summary(conn, window=QUALIFICATION_WINDOW)["per_lane"]}
+    receipt_summary = (evidence.query_receipt_summary(conn, window=QUALIFICATION_WINDOW)
+                       if conn is not None else {})
     chat_receipts = receipt_summary.get("overall") or {}
 
     components: list[dict] = []
