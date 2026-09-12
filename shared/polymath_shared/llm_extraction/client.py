@@ -452,22 +452,45 @@ class LLMExtractionClient:
         # control plane can separate a family/breaker/RPD refusal (0 HTTP) from
         # a real provider response.
         self._last_refusal_reason = decision.reason
+        # PROVIDER-ATTEMPT-LEDGER-V1: record EVERY attempt at this seam — the only place
+        # that sees limiter admission, the lane, the HTTP status and Retry-After
+        # together. Cross-lane failover retries land here as separate attempts, so an
+        # earlier 429 can no longer be erased by a later success on another lane.
+        from polymath_shared.conformance.attempts import Attempt, record as _rec
+        _t0 = time.monotonic()
+        _base = dict(lane=self.limiter_key, model=self.model, account_env=self._account_env())
+
         if not decision.admitted:
             self._last_http_dispatched = False       # no request left the process
+            _rec(Attempt(limiter_admitted=False, http_dispatched=False, success=False,
+                         error_class="LIMITER_REFUSED",
+                         latency_ms=int((time.monotonic() - _t0) * 1000), **_base))
             return "", "LIMITER_REFUSED"
         self._last_http_dispatched = True            # about to dispatch
         try:
             text, _ti, _to, hdrs = self._chat(user_prompt, max_tokens,
                                               system_prompt=system_prompt)
             limiter.record_success(headers=hdrs)     # observe provider RPD on 2xx
+            _rec(Attempt(limiter_admitted=True, http_dispatched=True, success=True,
+                         http_status=200, tokens_in=_ti, tokens_out=_to,
+                         latency_ms=int((time.monotonic() - _t0) * 1000), **_base))
             return text, None
         except httpx.HTTPStatusError as exc:
             limiter.record_failure(
                 retry_after=exc.response.headers.get("retry-after"),
                 headers=dict(exc.response.headers))
+            _ra = exc.response.headers.get("retry-after")
+            _rec(Attempt(limiter_admitted=True, http_dispatched=True, success=False,
+                         http_status=exc.response.status_code,
+                         retry_after_s=(float(_ra) if (_ra or "").replace(".", "", 1).isdigit() else None),
+                         error_class=f"HTTP_{exc.response.status_code}",
+                         latency_ms=int((time.monotonic() - _t0) * 1000), **_base))
             return "", f"HTTP_{exc.response.status_code}"
         except Exception as exc:
             limiter.record_failure()
+            _rec(Attempt(limiter_admitted=True, http_dispatched=True, success=False,
+                         error_class=type(exc).__name__,
+                         latency_ms=int((time.monotonic() - _t0) * 1000), **_base))
             return "", type(exc).__name__
         finally:
             # the acquire takes a CONCURRENCY SLOT (conc_cap); leaking it
@@ -475,6 +498,18 @@ class LLMExtractionClient:
             # threads parked in acquire forever). Same finally-release
             # contract as extract_batched.
             limiter.release()
+
+    def _account_env(self) -> str | None:
+        """ENV NAME of this lane's credential — never the value. Resolved from the
+        lane registry so it matches what the control plane already renders."""
+        try:
+            from polymath_shared.llm_extraction import lane_registry as LR
+            for l in LR.build_registry().lanes:
+                if l.name == self.limiter_key:
+                    return l.api_key_env
+        except Exception:  # noqa: BLE001
+            pass
+        return None
 
     def _lane_limiter(self):
         return REGISTRY.lane(

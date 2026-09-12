@@ -44,6 +44,10 @@ IGNORED_PREFIXES = (
     # would otherwise mint "undeclared" files. Same rationale as node_modules above:
     # it is not a repository file. The V2 SOURCE is declared in the scaffold TREE.
     "frontend-v2/dist/",
+    # PRODUCTION-CONFORMANCE-AUDIT-V1: one bundle per audit RUN. These are run
+    # artifacts with generated names, not repository source — declaring them would
+    # mean a TREE edit per audit. Same rationale as the build output above.
+    "artifacts/audit/",
 )
 IGNORED_SUFFIXES = (".egg-info", ".pid", ".sqlite3")
 MODULE_OWNERS = {

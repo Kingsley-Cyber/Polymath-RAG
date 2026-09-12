@@ -221,9 +221,18 @@ def process_event(conn: Connection, event: dict) -> None:
     from polymath_shared.db import tx as _db_tx
     tx_factory = HOOKS.get("tx") or _db_tx
 
-    outcome = run_document_mapping(
-        tx_factory, run_id=run_id, doc_id=doc_id, corpus_id=corpus_id, parents=parents,
-        infer=infer, grounding=grounding, reliability_cap=cap, provider="groq")
+    # PROVIDER-ATTEMPT-LEDGER-V1: tag every provider attempt this stage makes,
+
+    # so per-lane 429s are attributable to PMAP rather than anonymous.
+
+    # PROVIDER-ATTEMPT-LEDGER-V1: tag every provider attempt this stage makes, so a
+    # per-lane 429 is attributable to PMAP and to this run instead of being anonymous.
+    from polymath_shared.conformance.attempts import attempt_context
+
+    with attempt_context(function="PMAP", stage="doc_parent_map", run_id=run_id):
+        outcome = run_document_mapping(
+            tx_factory, run_id=run_id, doc_id=doc_id, corpus_id=corpus_id, parents=parents,
+            infer=infer, grounding=grounding, reliability_cap=cap, provider="groq")
 
     proj = None
     if outcome.parents_mapped:
