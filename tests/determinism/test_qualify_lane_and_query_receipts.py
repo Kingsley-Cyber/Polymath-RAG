@@ -12,11 +12,27 @@ production traffic — the provider-attempt ledger, the durable limiter state
 real `/chat`, `/chat/stream`, `/retrieve` call ever served). Nothing here dispatches a
 fresh provider call; a lane/function with genuinely zero recent evidence must still
 report NOT_TESTED, never a manufactured PASS.
+
+A follow-up Stop-hook review correctly pushed back on treating "close the remaining
+zero-evidence lanes" as purely owner-gated when a bounded, already-precedented, real
+verification action was actually available: `scripts/chat_qualification_canary.py`
+fires ONE real `/chat/stream` turn (the same proven pattern as
+`test_chat_funnel.py`'s live test) so CHAT's evidence keeps accumulating on every
+re-fire. `read_receipt`'s query-scoping is pinned here so it can never silently widen
+into matching an older, unrelated turn.
 """
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
 from polymath_shared.conformance import assess
 from polymath_shared.conformance.evidence import query_receipt_summary
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+import chat_qualification_canary as CANARY  # noqa: E402
 
 
 def _lane(name: str, function: str) -> dict:
@@ -188,3 +204,43 @@ def test_query_receipt_summary_empty_table_is_available_but_zero():
     assert out["available"] is True
     assert out["overall"]["ok"] == 0
     assert out["by_kind_mode"] == {}
+
+
+# ── chat_qualification_canary.read_receipt: scoped to this exact turn ────────
+
+class _ReceiptCur:
+    def __init__(self, rows): self._rows = rows
+    def fetchone(self): return self._rows[0] if self._rows else None
+
+
+class _ReceiptConn:
+    """Scripts by SQL fragment, asserting the query is scoped to kind='chat_stream',
+    the exact question, and `since_ts` -- never a broad "most recent row" read that could
+    silently match a DIFFERENT, older, unrelated turn."""
+    def __init__(self, row):
+        self._row = row
+    def execute(self, sql, params=()):
+        s = " ".join(sql.split())
+        assert "kind = 'chat_stream'" in s, s
+        assert "question_head = %s" in s, s
+        assert "received_at > to_timestamp(%s)" in s, s
+        question, since_ts = params
+        assert question == "what is the ZQX fact"
+        assert isinstance(since_ts, float)
+        return _ReceiptCur([self._row] if self._row else [])
+
+
+def test_read_receipt_maps_columns_in_order():
+    row = ("q_abc123", "chat_stream", "HYBRID", "ok", "insufficient_evidence",
+          0, None, None, 9536, "2026-09-12 07:27:00", {"funnel": {}})
+    out = CANARY.read_receipt(_ReceiptConn(row), "what is the ZQX fact", 1700000000.0)
+    assert out["query_id"] == "q_abc123"
+    assert out["status"] == "ok"
+    assert out["verdict"] == "insufficient_evidence"
+    assert out["citations"] == 0
+    assert out["wall_ms"] == 9536
+
+
+def test_read_receipt_returns_none_when_no_row_lands():
+    out = CANARY.read_receipt(_ReceiptConn(None), "what is the ZQX fact", 1700000000.0)
+    assert out is None

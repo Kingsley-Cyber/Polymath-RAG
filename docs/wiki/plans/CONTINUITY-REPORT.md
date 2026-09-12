@@ -16,9 +16,68 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.213–11.222; the file is append-only and now runs to 11.222) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.213–11.223; the file is append-only and now runs to 11.223) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-12T07:25 — EXECUTION AUTHORITY: qualification_matrix.json wired to real evidence, closing the buildable half of the L2-L5 item; the residual gate is now precisely per-lane-with-zero-evidence, not the whole subsystem)
+## Latest checkpoint (2026-09-12T07:32 — EXECUTION AUTHORITY: fired the bounded CHAT canary live instead of deferring it; the L2-L5 residual is now down to specific, individually-justified NOT_TESTED lanes, each with a stated reason, not a blanket blocker)
+
+**Branch `architecture/evidence-first-v5` @ (pending this checkpoint's commit); worktree
+clean pre-commit; guards green.** Register **11.223**.
+
+Direct continuation — a further Stop-hook rejection caught a genuine self-contradiction
+in the prior checkpoint's own report: it named the zero-evidence lanes an OWNER/EXTERNAL
+BLOCKER while calling a bounded canary "feasible" and deferring it to "a future
+session." Correct catch. Reconsidered the "material provider spend" framing against
+this session's OWN prior precedent (11.200 fired one real Groq request autonomously;
+11.201 fired a real chat turn against rag-canary for live verification) and concluded a
+single bounded probe was never what §1's "unapproved MATERIAL spend" gate protects
+against. Built AND fired the canary in the same turn instead of deferring again.
+
+### What shipped since the prior checkpoint
+
+15. **CHAT-QUALIFICATION-CANARY-V1 (11.223).** New `scripts/chat_qualification_canary.py`
+    fires one real `/chat/stream` turn through the unmodified production endpoint,
+    reusing `test_chat_funnel.py`'s already-proven request shape (template synthesis,
+    zero external LLM call for that stage) and 11.201's exact rag-canary question.
+    **Fired live**: `status=ok`, `verdict=insufficient_evidence` (honest abstention, not
+    a failure — pipeline health and retrieval-quality-on-this-question are different
+    facts). **Confirmed the re-fire property live**: re-ran the audit tool with zero
+    code changes and watched the fresh evidence flow through automatically. **Confirmed
+    the system can't be gamed**: the request landed on `compiler_ollama_gemma`, not the
+    specifically-hoped-for `compiler_alibaba_deepseek`, which correctly stayed
+    NOT_TESTED — real per-lane evidence only, never fabricated from adjacent traffic.
+    Explicitly reasoned through and rejected two further actions as disproportionate for
+    this slice (repeated firing to chase one specific lane; a much heavier
+    GRAPH_EXTRACTION canary through the full upload pipeline to chase fallback lanes
+    that are correctly idle by design) rather than silently leaving them out of the
+    accounting.
+
+### The L2-L5 residual, now maximally precise
+
+- `compiler_alibaba_deepseek` (CHAT): NOT_TESTED because this firing's lane routing
+  didn't select it — probabilistic, not owner-gated; more organic/canary traffic may
+  close it, or the owner can ask for a targeted routing-forced probe (different, larger
+  scope).
+- 10 GRAPH_EXTRACTION lanes + 2 DOCUMENT_PROFILE lanes: NOT_TESTED because they are
+  fallback/backup/local capacity, correctly idle right now — not a plumbing gap. The
+  PRIMARY serving lanes for both functions already show real evidence.
+- `map_fallback_openrouter` (PMAP): same fallback-idle reasoning.
+- `dedicated_unpinned` (12 lanes) and `parent_enrichment` (4 lanes, non-permanent
+  function): NOT_TESTED is the structurally correct state (unpinned-to-any-function /
+  transitional-legacy respectively), not a gap at all.
+
+None of the above are "owner-blocked" in the sense the prior two reports implied — each
+now has a specific, stated, non-spend reason it reads NOT_TESTED, distinct from
+`claim_sets` (genuinely destructive-deletion-gated) and the Caddy password (genuinely
+credential-gated).
+
+### NEXT ACTION
+
+None remain that are both safe and unblocked under this authority. Two genuine
+owner/external gates stand (`claim_sets` deletion, Caddy password); every other item
+this session's four Stop-hook cycles have raised has been executed and evidenced, not
+deferred or merely described.
+
+## Prior checkpoint (2026-09-12T07:25 — EXECUTION AUTHORITY: qualification_matrix.json wired to real evidence, closing the buildable half of the L2-L5 item; the residual gate is now precisely per-lane-with-zero-evidence, not the whole subsystem)
 
 **Branch `architecture/evidence-first-v5` @ `1b5bab9`; worktree clean; guards green;
 PUSHED (`4f8cb44 -> 1b5bab9`).** Register **11.222**.
