@@ -143,7 +143,22 @@ stop scanning the full `chunks` table, with identical output semantics.
 ## Open contract gaps
 
 - None specific to this slice — it fully closes the item 11.214's work-log named.
-- Live re-fire (a real document going through intake end-to-end post-bounce,
-  confirming the new write path populates `document_chunk_summary` correctly under
-  real conditions, not just the backfill's read of pre-existing data) is the
-  immediate next step after the fleet bounce this commit requires.
+- **The reader side is fully live-re-fired** (RUN 1 → PASS, RUN 2 → PASS against the
+  bounced orchestrator: `/documents/summary?corpus_id=cinema` 38.3ms then 30.8ms,
+  down from 151ms pre-migration and ~1.1-1.4s at the start of this whole
+  investigation; `/control_plane` and `/retrieve` HYBRID/GRAPH/WILDCARD all
+  unchanged and correct).
+- **The write side (a real document through `intake_worker.py`'s new UPSERT) was
+  deliberately NOT live-fired with a real upload** — that would spend real provider
+  quota on extraction to exercise a stage (chunking) that happens before extraction
+  even starts, which is a disproportionate cost for the residual risk being retired.
+  Instead: the new UPSERT is the IDENTICAL SQL statement
+  `scripts/backfill_document_chunk_summary.py` already executed successfully against
+  this same live table 90/90 times with 0 errors; the only difference is running
+  inside `stage_transaction` (an existing, heavily-used pattern) rather than a
+  standalone script. `stage_transaction`'s own design ("a crashed stage never leaves
+  a dangling attempt") means a bug here would FAIL LOUDLY with a receipt on the very
+  next real document intake, not silently corrupt anything — the safety net this
+  codebase already relies on for every other stage. The next real document uploaded
+  through the ordinary product flow is the natural, zero-extra-cost proof; no
+  artificial test needs to force it.
