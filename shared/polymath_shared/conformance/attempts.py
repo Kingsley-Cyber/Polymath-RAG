@@ -54,9 +54,11 @@ class attempt_context:
     def __init__(self, **fields: Any) -> None:
         self.fields = {k: v for k, v in fields.items() if v is not None}
         self._token = None
+        self._prev: dict = {}
 
     def __enter__(self) -> dict:
         outer = _ctx.get()
+        self._prev = outer
         merged = {**outer, **self.fields}
         # INHERIT the correlation id. Minting one per context meant a nested context —
         # e.g. the Ollama `think` retry, which opens a second _AttemptOutcome inside the
@@ -71,8 +73,21 @@ class attempt_context:
         return merged
 
     def __exit__(self, *exc) -> None:
-        if self._token is not None:
+        if self._token is None:
+            return
+        try:
             _ctx.reset(self._token)
+        except ValueError:
+            # "Token was created in a different Context". A contextvar token is only
+            # valid in the Context that produced it, and a generator held open across
+            # yields can be resumed in another one (Starlette moves a sync streaming
+            # generator between threads). Restoring BY VALUE is equivalent here — the
+            # mapping is what readers see — and it must never raise: this is diagnostics
+            # wrapped around a user-visible stream, and raising here turned every chat
+            # answer into a stream error.
+            _ctx.set(self._prev)
+        finally:
+            self._token = None
 
 
 def current_context() -> dict:

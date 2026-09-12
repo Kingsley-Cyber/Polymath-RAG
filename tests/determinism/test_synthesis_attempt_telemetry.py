@@ -212,3 +212,43 @@ def test_a_clean_window_with_no_uncorrelated_rows_is_unchanged():
     head = (9, 1, 0, 8, 3, 3, 3, 0)
     s = attempt_summary(_StubConn(head, []), "10 minutes")
     assert s["failover_attempts"] == 6 and s["uncorrelated_attempts"] == 0
+
+
+# ── the production break this slice caused, pinned so it cannot return ───────
+
+def test_a_context_can_be_exited_from_a_different_context(recorded):
+    """THE regression: holding an attempt_context open across a streaming generator's
+    yields raised `<Token ...> was created in a different Context` on exit, because
+    Starlette resumes a sync streaming generator in another Context. Every chat answer
+    became a stream error — and the live test's own skip-on-stream-error branch reported
+    it as "LLM lane, not the contract under test", so the suite stayed green while chat
+    was broken. Diagnostics must never be able to do that."""
+    import contextvars
+    from polymath_shared.conformance.attempts import attempt_context
+
+    ctx = attempt_context(function="CHAT", stage="answer_synthesis")
+    ctx.__enter__()
+    # exit from a DIFFERENT Context, exactly as the streaming path did
+    contextvars.copy_context().run(ctx.__exit__, None, None, None)
+
+
+def test_the_outcome_recorder_holds_no_context_across_the_stream():
+    """The durable fix is structural, not a rescued exception: `_AttemptOutcome` captures
+    the correlation id on entry and opens a context only around the write, so no yield
+    can ever happen inside one."""
+    out = UI._AttemptOutcome("http://127.0.0.1:11434", "m")
+    out.__enter__()
+    assert out._corr, "the correlation id is captured up front"
+    assert not hasattr(out, "_ctx") or out.__dict__.get("_ctx") is None, \
+        "no context object is held open across the stream"
+
+
+def test_a_streamed_attempt_still_groups_with_its_caller(recorded):
+    """Capturing the id must not lose the grouping it existed for."""
+    from polymath_shared.conformance.attempts import attempt_context
+    with attempt_context(function="CHAT", stage="request") as outer:
+        with UI._AttemptOutcome("http://127.0.0.1:11434", "m") as out:
+            out.status(200); out.ok()
+    assert len(recorded) == 1
+    # the write happened inside a context carrying the SAME correlation id
+    assert out._corr == outer["correlation_id"]

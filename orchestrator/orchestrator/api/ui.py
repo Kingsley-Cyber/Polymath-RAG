@@ -35,6 +35,7 @@ from __future__ import annotations
 import json
 import re
 import time
+import uuid
 from typing import Optional
 
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
@@ -2197,54 +2198,55 @@ def _litellm_generate(model: str, query: str, bundle: dict,
     _abase = dict(lane=_lane, model=model, provider=(model.split("/")[0] if "/" in model
                                                      else None),
                   limiter_admitted=False, limiter_bypassed=True, http_dispatched=True)
-    _ctx = _actx(function="CHAT", stage="answer_synthesis")
-    # try/finally, not a bare enter: a chat stream can be abandoned when the client
-    # disconnects, and an un-exited context would tag every later attempt in this
-    # request as CHAT/answer_synthesis.
-    _ctx.__enter__()
-    try:
-        for attempt, with_bound in enumerate([True, False] if bound else [False]):
-            started = False
-            _t0 = time.perf_counter()
-            try:
-                stream = litellm.completion(**kwargs, **({"max_tokens": bound} if with_bound else {}))
-                for chunk in stream:
-                    started = True
+    # One correlation id for the whole retry loop, captured WITHOUT holding a context
+    # open across the stream's yields (see _AttemptOutcome for what that cost).
+    from polymath_shared.conformance.attempts import current_context as _curctx
+    _corr = _curctx().get("correlation_id") or uuid.uuid4().hex[:24]
+
+    def _rec_attempt(**kw):
+        with _actx(function="CHAT", stage="answer_synthesis", correlation_id=_corr):
+            _rec(_At(**kw, **_abase))
+
+    for attempt, with_bound in enumerate([True, False] if bound else [False]):
+        started = False
+        _t0 = time.perf_counter()
+        try:
+            stream = litellm.completion(**kwargs, **({"max_tokens": bound} if with_bound else {}))
+            for chunk in stream:
+                started = True
+                piece = ""
+                rpiece = ""
+                try:
+                    choice = chunk.choices[0]
+                    delta = choice.delta
+                    piece = delta.content or ""
+                    # REASONING-STREAM-V1: providers that expose model
+                    # thinking surface it as reasoning_content.
+                    rpiece = getattr(delta, "reasoning_content", None) or ""
+                    if getattr(choice, "finish_reason", None):
+                        finish = str(choice.finish_reason)
+                except Exception:
                     piece = ""
-                    rpiece = ""
-                    try:
-                        choice = chunk.choices[0]
-                        delta = choice.delta
-                        piece = delta.content or ""
-                        # REASONING-STREAM-V1: providers that expose model
-                        # thinking surface it as reasoning_content.
-                        rpiece = getattr(delta, "reasoning_content", None) or ""
-                        if getattr(choice, "finish_reason", None):
-                            finish = str(choice.finish_reason)
-                    except Exception:
-                        piece = ""
-                    if rpiece:
-                        yield {"reasoning": rpiece}
-                    if piece:
-                        yield {"token": piece}
-                _rec(_At(success=True, http_status=200,
-                         latency_ms=int((time.perf_counter() - _t0) * 1000), **_abase))
-                break
-            except Exception as exc:
-                _rec(_At(success=False, error_class=type(exc).__name__,
-                         latency_ms=int((time.perf_counter() - _t0) * 1000), **_abase))
-                if with_bound and not started and _bound_rejected(exc):
-                    bound_sent = False
-                    yield {"degraded": {"component": "generation", "state": "bound refused",
-                                        "reason": f"max_tokens_rejected:{bound}",
-                                        "effect": f"the provider refused max_tokens={bound}; generated once more without a bound",
-                                        "detail": f"{type(exc).__name__}: {str(exc)[:160]}"}}
-                    continue
-                yield {"error": True, "error_code": "litellm_error",
-                       "message": f"{type(exc).__name__}: {str(exc)[:280]}"}
-                return
-    finally:
-        _ctx.__exit__(None, None, None)
+                if rpiece:
+                    yield {"reasoning": rpiece}
+                if piece:
+                    yield {"token": piece}
+            _rec_attempt(success=True, http_status=200,
+                         latency_ms=int((time.perf_counter() - _t0) * 1000))
+            break
+        except Exception as exc:
+            _rec_attempt(success=False, error_class=type(exc).__name__,
+                         latency_ms=int((time.perf_counter() - _t0) * 1000))
+            if with_bound and not started and _bound_rejected(exc):
+                bound_sent = False
+                yield {"degraded": {"component": "generation", "state": "bound refused",
+                                    "reason": f"max_tokens_rejected:{bound}",
+                                    "effect": f"the provider refused max_tokens={bound}; generated once more without a bound",
+                                    "detail": f"{type(exc).__name__}: {str(exc)[:160]}"}}
+                continue
+            yield {"error": True, "error_code": "litellm_error",
+                   "message": f"{type(exc).__name__}: {str(exc)[:280]}"}
+            return
     yield {"finish": {"finish_reason": finish, "max_tokens": bound if bound_sent else None}}
 
 
@@ -2286,28 +2288,34 @@ class _AttemptOutcome:
         self._ok = False
         self._error = None
         self._t0 = time.perf_counter()
-        self._ctx = None
+        self._corr = None
 
     def status(self, code): self._status = code
     def ok(self): self._ok = True
     def failed(self, error_class): self._error = error_class
 
     def __enter__(self):
-        from polymath_shared.conformance.attempts import attempt_context
-        self._ctx = attempt_context(function="CHAT", stage="answer_synthesis")
-        self._ctx.__enter__()
+        # CAPTURE the ambient correlation id; do NOT hold a context open across the
+        # stream's yields. A contextvar token is only valid in the Context that made it,
+        # and Starlette resumes a sync streaming generator in another one — holding the
+        # context open raised "Token was created in a different Context" on exit, which
+        # surfaced as a stream error on every chat answer.
+        from polymath_shared.conformance.attempts import current_context
+        self._corr = current_context().get("correlation_id") or uuid.uuid4().hex[:24]
         return self
 
     def __exit__(self, *exc):
-        from polymath_shared.conformance.attempts import Attempt, record
+        from polymath_shared.conformance.attempts import Attempt, attempt_context, record
         err = self._error or (f"HTTP_{self._status}"
                               if (self._status and self._status >= 400) else
                               (None if self._ok else "INCOMPLETE_STREAM"))
-        record(Attempt(success=self._ok and err is None, http_status=self._status,
-                       error_class=err,
-                       latency_ms=int((time.perf_counter() - self._t0) * 1000),
-                       **self._base))
-        self._ctx.__exit__(*exc)
+        # the context wraps the WRITE only — no yield can happen inside it
+        with attempt_context(function="CHAT", stage="answer_synthesis",
+                             correlation_id=self._corr):
+            record(Attempt(success=self._ok and err is None, http_status=self._status,
+                           error_class=err,
+                           latency_ms=int((time.perf_counter() - self._t0) * 1000),
+                           **self._base))
         return False
 
 
