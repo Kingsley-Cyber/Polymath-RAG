@@ -78,6 +78,13 @@ export const api = {
   deleteDocument: (docId: string, confirm: string, s?: AbortSignal) =>
     del<Record<string, unknown>>(
       `/documents/${encodeURIComponent(docId)}?confirm=${encodeURIComponent(confirm)}`, s),
+  // CONTINUATION (§0a enrich buttons) — re-drive processing to push a corpus/document
+  // toward vNext ready. POST /corpora/{id}/enrich (whole corpus) and
+  // POST /documents/{id}/enrich (one doc); both queue work off the latest run.
+  enrichCorpus: (corpusId: string, s?: AbortSignal) =>
+    post<{ status: string }>(`/corpora/${encodeURIComponent(corpusId)}/enrich`, {}, s),
+  enrichDocument: (docId: string, s?: AbortSignal) =>
+    post<{ status: string }>(`/documents/${encodeURIComponent(docId)}/enrich`, {}, s),
   controlPlane: (corpusId: string, s?: AbortSignal) =>
     get<ControlPlane>(`/control_plane?corpus_id=${encodeURIComponent(corpusId)}`, s),
   poolLanes: (fn: string, s?: AbortSignal) =>

@@ -108,6 +108,36 @@ export function Files({ corpusId }: { corpusId: string }) {
     }
   }
 
+  // CONTINUATION control 1 of 2 — corpus-level: re-drive processing for every document.
+  async function onContinueCorpus() {
+    setErr(null); setNotice(null); setBusy(`Continuing ${corpusId}…`);
+    try {
+      await api.enrichCorpus(corpusId);
+      setNotice(`Continuation queued for all documents in ${corpusId}.`);
+    } catch (e) {
+      setErr(describeError(e));
+    } finally {
+      setBusy(null);
+      refresh();
+    }
+  }
+
+  // CONTINUATION control 2 of 2 — per-document: re-drive one incomplete document.
+  async function onContinueDoc(docId: string, sourceName: string) {
+    setErr(null); setNotice(null); setBusy(`Continuing ${sourceName || docId}…`);
+    try {
+      await api.enrichDocument(docId);
+      setNotice(`Continuation queued for "${sourceName || docId}".`);
+    } catch (e) {
+      setErr(describeError(e));
+    } finally {
+      setBusy(null);
+      refresh();
+    }
+  }
+
+  const incompleteCount = rows.filter((r) => !summaries[r.doc_id]?.vnext_ready).length;
+
   return (
     <div className="screen screen--wide">
       <div className="screen__head files__head">
@@ -127,6 +157,16 @@ export function Files({ corpusId }: { corpusId: string }) {
             hidden
             onChange={(e) => void onFilesPicked(e.target.files)}
           />
+          <button
+            className="btn"
+            disabled={!!busy || !incompleteCount}
+            title={incompleteCount
+              ? `Continue processing the ${incompleteCount} not-ready document(s) in this corpus`
+              : "All documents are vNext ready"}
+            onClick={() => void onContinueCorpus()}
+          >
+            ▸ Continue corpus{incompleteCount ? ` (${incompleteCount})` : ""}
+          </button>
           <button
             className="btn btn--primary"
             disabled={!!busy}
@@ -189,14 +229,26 @@ export function Files({ corpusId }: { corpusId: string }) {
                   <td className="mono">{d ? d.graph_entities : "—"}</td>
                   <td className="mono">{d ? d.graph_relations : "—"}</td>
                   <td>
-                    <button
-                      className="btn files__del"
-                      disabled={!!busy}
-                      title={`Delete ${r.source_name || r.doc_id}`}
-                      onClick={() => void onDelete(r.doc_id, r.source_name)}
-                    >
-                      Delete
-                    </button>
+                    <div className="row" style={{ gap: 6 }}>
+                      {!d?.vnext_ready && (
+                        <button
+                          className="btn files__continue"
+                          disabled={!!busy}
+                          title={`Continue processing ${r.source_name || r.doc_id}`}
+                          onClick={() => void onContinueDoc(r.doc_id, r.source_name)}
+                        >
+                          ▸ Continue
+                        </button>
+                      )}
+                      <button
+                        className="btn files__del"
+                        disabled={!!busy}
+                        title={`Delete ${r.source_name || r.doc_id}`}
+                        onClick={() => void onDelete(r.doc_id, r.source_name)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );

@@ -151,6 +151,8 @@ body {
 .files__docid { font-size: 11px; color: var(--fg-faint); }
 .files__del { padding: 3px 9px; font-size: 12px; color: var(--bad); border-color: var(--line); }
 .files__del:hover:not(:disabled) { background: var(--bad-bg); border-color: var(--bad); }
+.files__continue { padding: 3px 9px; font-size: 12px; color: var(--accent); border-color: var(--line); }
+.files__continue:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 14%, var(--bg)); border-color: var(--accent); }
 
 .empty { color: var(--fg-faint); font-size: 13px; padding: 26px 0; text-align: center; }
 
