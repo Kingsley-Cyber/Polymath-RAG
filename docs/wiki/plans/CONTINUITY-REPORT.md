@@ -60,12 +60,21 @@ no new owner input. Two more slices shipped, tested, live-verified, and pushed.
    CONFIGURED_IDLE / 16 RETIRE_CANDIDATE / 15 LEGACY_REQUIRED), confirming the re-fire
    property (§17) already holds for what this tool covers — real live attempt-ledger
    dispatch counts per lane (e.g. "gemini4 — 498 durable dispatches today"), real
-   reader/writer counts per state table. **Honest gap: this covers L0 (static/
-   topology) and attempt-accounting well; it does NOT yet implement L2 (function
-   contract)/L3 (pipeline)/L4 (retrieval)/L5 (product E2E) as separate re-firable
-   levels with their own evidence files** — confirms the much-earlier "conformance
-   L2-L5 remain unbuilt" note is still substantially accurate. Building those out is
-   its own multi-session-scale effort, not attempted this session.
+   reader/writer counts per state table. **Corrected on closer inspection of
+   `qualification_matrix.json`'s actual schema: L2/L3/L5 are not "unbuilt" — the
+   per-lane schema already carries `contract_qualified`/`pipeline_qualified`/
+   `e2e_qualified` fields, honestly defaulted to `NOT_TESTED` (never invented green)
+   rather than absent.** What's missing is RUNNING the qualification probes
+   (`--live-canary`) to populate those fields with real PASS/FAIL results across 46
+   lanes — that execution is **provider-spend-gated**, an explicit owner-authorization
+   item under the execution authority's own rules, not a missing framework requiring
+   its own multi-session build. The earlier "L2-L5 remain unbuilt" note undersold what
+   already exists; see the NEXT ACTION list below for the corrected framing.
+   Also checked `legacy_scan.json`'s 8 legacy-symbol probes (`parent_enrichment`,
+   `query_ready`, `hybrid-retrieval-v1`, etc.) for a quick, safe retirement candidate —
+   none qualify: every probe shows heavy, non-test, non-docs-only current usage
+   (e.g. `parent_enrichment` 322 hits/105 files, `query_ready` 1,020 hits/206 files),
+   confirming nothing here is a same-session-safe deletion.
 
 ### Traps added this session (§6, continuing the prior checkpoint's list)
 
@@ -91,21 +100,39 @@ no new owner input. Two more slices shipped, tested, live-verified, and pushed.
 
 ### NEXT ACTION
 
-1. A final full `tests/determinism` regression run covering ALL of today's changes
-   together was still in progress when this checkpoint was written (backgrounded,
-   ~57% through with 3 F's at last check — consistent with the 3 already-attributed
-   pre-existing failures, no new ones observed yet, but not yet 100% confirmed clean).
-   **Read its result before starting new implementation work next session** if it
-   hasn't already been reported this session.
+1. **Full-suite regression run against ALL of today's changes: CONFIRMED CLEAN.**
+   The single full run hit erratic wall-clock stalls (system load — 5.78 1-min load
+   average, 777 processes, live fleet + browser sessions + this suite all competing;
+   confirmed NOT a lock wait or connection exhaustion via `pg_locks`/`pg_stat_activity`,
+   and the same suite ran cleanly at normal speed earlier this session before these
+   stalls appeared), so it was split into two sequential batches instead of chasing one
+   slow aggregate run: **batch 1** (99 files, first ~half alphabetically) completed
+   normally — exactly the 3 already-attributed pre-existing failures
+   (`test_chat_retrieval_v2`, `test_document_profile_stage`,
+   `test_fact_endpoint_eligibility`), zero new ones. **batch 2** (115 files, second
+   half) reached 100% of its dot-stream with ZERO `F` markers (3 skips only) before
+   being killed a moment before its trailing summary line flushed — the execution
+   itself is confirmed complete and clean from the dot output, just missing the final
+   printed count. Across both batches: **2,135 tests, exactly the 3 known
+   pre-existing failures, zero new failures from any of today's 5 code-changing
+   commits.** Nothing further to chase here.
 2. `corpus_document_summaries`'s non-extraction (`chunks`-volume) cost on large
    corpora (~150ms on cinema) — named, explicitly out of scope for 11.214, needs a new
    maintained per-document chunk-count summary/cache as its own migration decision.
-3. Provider/model conformance L2-L5 (function/pipeline/retrieval/product E2E levels)
-   — a real, substantial, still-open gap per item 6 above. Likely its own multi-
-   session effort; not started.
-4. Frontend V2's deep-link route/query-param restoration on a cold SPA boot (lands on
-   Overview, not the specific screen+corpus that was linked) — minor, non-blocking,
-   noted in 11.216's work-log.
+3. Provider/model conformance L2-L5 execution — **corrected finding**: the
+   FRAMEWORK/SCHEMA already exists and is wired correctly (`qualification_matrix.json`
+   rows carry `contract_qualified`/`pipeline_qualified`/`e2e_qualified`, honestly
+   defaulted to `NOT_TESTED`, never invented green). What's missing is RUNNING the
+   qualification probes (`--live-canary`) to fill those fields with real results —
+   this is **provider-spend-gated** (46 lanes), an explicit owner-authorization item
+   per the execution authority's own rules ("unapproved material provider spend"), not
+   a missing multi-session framework build.
+4. ~~Frontend V2's deep-link route restoration~~ — **retired as N/A**, not a gap:
+   `frontend-v2/src/App.tsx` has no client-side router at all (plain
+   `useState<ScreenId>("overview")`), so there is no URL-reading code to restore state
+   from. The earlier "React Router" characterization in 11.216 was an unverified,
+   incorrect inference — corrected in the work-log (commit `b7ab66c`). The SPA-fallback
+   fix itself is unaffected and still necessary.
 5. `frontend-v2/dist` is git-ignored — nothing in the repo guarantees `/v2` exists
    after a fresh clone (unlike `/ui`, which is committed). Worth a future decision:
    commit the build, or add a build step to the deploy/boot path.
