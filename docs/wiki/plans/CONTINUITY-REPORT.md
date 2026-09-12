@@ -23,7 +23,7 @@ Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (t
 **Branch `architecture/evidence-first-v5` @ `0967c46`; upstream matches; 0 unpushed;
 worktree clean; guards green.** Register **11.244**.
 
-**Fleet:** 23 healthy workers, ONE bundle hash `07e8d4a7636a` == the committed tree,
+**Fleet:** 23 healthy workers, ONE bundle hash `f0528d38e4f5` == the committed tree,
 `/ready: true`, embedder + reranker up (`cloud-modal` false, as configured).
 
 **`scripts/verify_final_state.py` → 25 PASS · 1 BLOCKED_OWNER · 0 FAIL, exit 0.**
@@ -134,9 +134,15 @@ schema deletion", owner-only: `scripts/retire_claim_sets.py --execute` once auth
 - **Editing the tree invalidates a running verifier.** Two ~7-minute runs were discarded
   because the suite reads the working tree. Finish the slice, then verify once.
 - **The execution bundle hash includes `git_sha`, so ANY commit — a docs-only one
-  included — makes fleet ≠ tree.** That is not code drift and needs no bounce; compare
-  the RUNTIME trees (`shared/`, `workers/`, `control/`, `orchestrator/`) before spending
-  a fleet restart on it. This checkpoint's own commit moves the hash, by construction.
+  included — makes fleet ≠ tree.** That comparison alone is not code drift: compare the
+  RUNTIME trees (`shared/`, `workers/`, `control/`, `orchestrator/`) before spending a
+  restart on it. **But a fleet split across TWO hashes is never benign**, whatever caused
+  it. Observed at the end of this session: 12 workers on one bundle, 11 on another, with
+  `doc_parent_map` / `doc_profile` / `extract` each served by BOTH — because workers
+  respawn individually and recompute the hash from the then-current tree, so a run of
+  commits without a closing bounce strands them on different shas. It does not converge
+  on its own (watched over 3 minutes, stable). **End a working session with one bounce**,
+  and check for ONE hash, not merely for a hash that matches.
 - **`ps | grep control.process_supervisor` counts your own shells.** Confirm the
   supervisor with `ps -eo pid,command | awk '/control\.process_supervisor/ && /venv/'`
   before concluding there are three of them.
