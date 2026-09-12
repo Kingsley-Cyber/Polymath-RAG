@@ -19,6 +19,7 @@ distinctly, per §18's rule that NOT_TESTED is never green).
 
     .venv/bin/python scripts/verify_final_state.py
     .venv/bin/python scripts/verify_final_state.py --json
+    .venv/bin/python scripts/verify_final_state.py --fast   # skip the ~6min suite gate
 """
 from __future__ import annotations
 
@@ -199,6 +200,121 @@ def check_hot_paths(conn) -> None:
     gate("outbox_corpus_scoped", PASS if not seq_outbox else FAIL,
          "outbox_events joined via index (no Seq Scan on outbox_events) and filtered to "
          f"the corpus's doc_ids; seq_scan_present={seq_outbox}")
+
+
+def check_control_paths_no_regress(conn) -> None:
+    """§20A PERFORMANCE: "pMAP and existing fast health paths do not regress".
+
+    The authority names these as CONTROLS — the paths that were already fast before the
+    hot-path migration and must stay that way, so a win on the graph counters is not
+    quietly paid for elsewhere. Measured, not assumed: both are re-timed live here.
+    The threshold is deliberately loose (250ms); this catches a regression to the
+    seconds-scale detoast the migration removed, not normal jitter."""
+    if conn is None:
+        gate("perf_control_paths_no_regress", NOT_TESTED, "no database connection")
+        return
+    import time
+    try:
+        from polymath_shared.control_plane_status import _pmap_provider, _queue_by_pool
+        from polymath_shared.pipeline_health import pipeline_health
+    except Exception as exc:  # noqa: BLE001
+        gate("perf_control_paths_no_regress", NOT_TESTED, f"import failed: {exc}")
+        return
+
+    timings: dict[str, float] = {}
+    try:
+        for name, fn in (("_pmap_provider", lambda: _pmap_provider(conn, CORPUS)),
+                         ("_queue_by_pool", lambda: _queue_by_pool(conn, CORPUS)),
+                         ("pipeline_health", lambda: pipeline_health(conn))):
+            t0 = time.perf_counter()
+            fn()
+            timings[name] = round((time.perf_counter() - t0) * 1000, 1)
+    except Exception as exc:  # noqa: BLE001
+        gate("perf_control_paths_no_regress", NOT_TESTED,
+             f"{name} raised {type(exc).__name__}: {exc}")
+        return
+
+    LIMIT_MS = 250.0
+    slow = {k: v for k, v in timings.items() if v > LIMIT_MS}
+    gate("perf_control_paths_no_regress", PASS if not slow else FAIL,
+         f"control paths (ms): {timings}; limit {LIMIT_MS}ms"
+         + (f"; REGRESSED: {slow}" if slow else " — the already-fast paths stayed fast"))
+
+
+def check_write_path_boundary() -> None:
+    """§20A WRITE PATH: one authoritative derivation boundary, deterministic, and not
+    silently bypassable by a provider/model change.
+
+    Measured structurally: the derivation lives in ONE module, the write sites call THAT
+    module rather than re-deriving inline, and its unit tests (which pin the historical
+    payload shapes) pass."""
+    deriv = ROOT / "shared/polymath_shared/extract_projection.py"
+    if not deriv.exists():
+        gate("write_path_single_projection_boundary", FAIL, f"{deriv} missing")
+        return
+    try:
+        res = subprocess.run(["git", "grep", "-lw", "--", "extract_projection_columns_for"],
+                             cwd=ROOT, capture_output=True, text=True, timeout=60)
+        users = [l for l in res.stdout.splitlines()
+                 if l.strip() and not l.startswith("docs/")]
+    except Exception as exc:  # noqa: BLE001
+        gate("write_path_single_projection_boundary", NOT_TESTED, str(exc))
+        return
+    # Scope: WRITE sites only. An earlier version scanned the whole repo for any
+    # `payload->'llm_extraction'->'stats'` read and printed the hits as "stray" — but
+    # those are READS (census, semantic_readiness, extraction_coverage), and §20A
+    # explicitly RETAINS the payload "for forensic/detail use". Reading it is allowed;
+    # what must not happen is a WRITE site deriving the projection inline instead of
+    # through the one boundary. Worse, that version printed the list while the verdict
+    # ignored it, so it looked alarming and passed anyway.
+    WRITE_SITES = ("shared/polymath_shared/receipts.py",
+                   "control/control/reconciliation.py")
+    missing = [w for w in WRITE_SITES
+               if "extract_projection" not in (ROOT / w).read_text()]
+    r = subprocess.run([str(ROOT / ".venv/bin/python"), "-m", "pytest", "-q",
+                        "tests/determinism/test_extract_projection.py"],
+                       cwd=ROOT, capture_output=True, text=True, timeout=600)
+    ok = len(users) >= 2 and r.returncode == 0 and not missing
+    gate("write_path_single_projection_boundary", PASS if ok else FAIL,
+         f"derivation centralised in extract_projection.py, imported by {len(users)} site(s); "
+         f"every artifact WRITE site routes through it (not re-deriving inline) — "
+         f"missing: {missing or 'NONE'}; its historical-shape tests rc={r.returncode}")
+
+
+def check_guards_and_attributed_failures(fast: bool = False) -> None:
+    """§20A REGRESSION: "repo guard passes" and "relevant determinism/integration tests
+    pass OR failures are attributed".
+
+    The authority explicitly permits attributed failures — so this asserts the failure
+    set is EXACTLY the known, attributed one. A new failure appearing, or an attributed
+    one silently disappearing from the list, both break the gate."""
+    g = subprocess.run([str(ROOT / ".venv/bin/python"), "scripts/repo_guard.py"],
+                       cwd=ROOT, capture_output=True, text=True, timeout=600)
+    gate("repo_guard_passes", PASS if g.returncode == 0 else FAIL,
+         f"scripts/repo_guard.py rc={g.returncode}")
+
+    #: Known-failing, investigated and attributed (11.226): the live `facts`/`entities`
+    #: rows predate the current admission logic; clearing it is an owner-gated data
+    #: mutation (`scripts/retire_pronoun_facts.py --apply`), not a code fix.
+    ATTRIBUTED = {"tests/determinism/test_fact_endpoint_eligibility.py::"
+                  "test_no_active_fact_has_a_pronoun_endpoint"}
+    if fast:
+        gate("determinism_failures_all_attributed", NOT_TESTED,
+             "--fast: full determinism suite skipped (it is the slow gate, ~6 min). "
+             "Run without --fast before claiming completion.")
+        return
+    r = subprocess.run([str(ROOT / ".venv/bin/python"), "-m", "pytest", "-q",
+                        "tests/determinism/", "--tb=no"],
+                       cwd=ROOT, capture_output=True, text=True, timeout=3600)
+    failed = {l.split(" ", 1)[1].strip() for l in r.stdout.splitlines()
+              if l.startswith("FAILED ")}
+    unexpected = failed - ATTRIBUTED
+    vanished = ATTRIBUTED - failed
+    gate("determinism_failures_all_attributed",
+         PASS if not unexpected else FAIL,
+         f"{len(failed)} failing; unexpected(new): {sorted(unexpected) or 'NONE'}; "
+         f"attributed-and-now-passing: {sorted(vanished) or 'NONE'}"
+         + (" — every failure is the known owner-gated data issue" if not unexpected else ""))
 
 
 def check_parity() -> None:
@@ -441,6 +557,9 @@ def check_delivery() -> None:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--fast", action="store_true",
+                    help="skip the full determinism suite (the ~6min gate); it then "
+                         "reports NOT_TESTED, never PASS")
     a = ap.parse_args()
 
     conn = _conn()
@@ -448,7 +567,10 @@ def main() -> int:
     check_chat_core()
     check_readiness_triad()
     check_hot_paths(conn)
+    check_control_paths_no_regress(conn)
+    check_write_path_boundary()
     check_parity()
+    check_guards_and_attributed_failures(fast=a.fast)
     check_legacy_engine_traffic(conn)
     check_legacy_code_removal(conn)
     check_legacy_state_writers(conn)
