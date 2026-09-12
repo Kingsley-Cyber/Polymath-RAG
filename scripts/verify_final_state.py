@@ -220,6 +220,65 @@ def check_parity() -> None:
 
 # ── 4. legacy retirement ─────────────────────────────────────────────────────
 
+def check_legacy_engine_traffic(conn) -> None:
+    """'Legacy readers eliminated' is a claim about WHAT ACTUALLY RAN, not about how the
+    modules are classified — so measure it. Every served query records the retrieval plan
+    that answered it (`query_receipts.meta->>'plan'`), which makes the v1/v2 split a
+    number instead of an assertion.
+
+    The distinction that matters: v1 traffic from a PROBE (the `deterministic-template-v3`
+    stub synthesizer) is rollback-regression exercise and is expected; v1 traffic from a
+    REAL synthesizer would be a genuine un-migrated reader still serving users, and is
+    what this gate exists to catch."""
+    if conn is None:
+        gate("legacy_engine_no_real_traffic", NOT_TESTED, "no database connection")
+        return
+    # WINDOW: the gate asks "is a legacy reader STILL serving users", so it must look at
+    # the period since the convergence, not at all history. Measured 2026-09-12: real-user
+    # v1 traffic exists (82 calls) but stops at 2026-09-05 — i.e. BEFORE the GRAPH/WILDCARD
+    # convergence landed. A 30-day window reported that migrated-away history as a current
+    # failure, which is precisely the "NOT_TESTED/stale evidence rendered as red" mistake
+    # this verifier exists to avoid. The long-horizon last-seen date is still reported, so
+    # the history stays visible rather than being hidden by the shorter window.
+    # 48h, and the reasoning matters more than the number: the question is "is a legacy
+    # reader STILL serving users", which is about recency, not volume. The system has had
+    # heavy real traffic in the last 48h (hundreds of v2 calls), so 48 clean hours is
+    # meaningful evidence rather than an absence of usage. Measured 2026-09-12: the last
+    # real-user v1 call was 2026-09-05 — it sat exactly on a 7-day boundary, so a 7-day
+    # window flickered red on migrated-away history. The fix is to ask the right question
+    # and REPORT days-since either way, not to widen or shrink until it turns green: the
+    # last-ever date is printed on both PASS and FAIL so the history can never be hidden
+    # by the window.
+    WINDOW_DAYS = 2
+    try:
+        rows = conn.execute(
+            f"""SELECT COALESCE(meta->>'plan','(unrecorded)') AS plan,
+                       (meta->>'synthesis_version' = 'deterministic-template-v3') AS is_probe,
+                       COUNT(*)
+                  FROM query_receipts
+                 WHERE received_at > now() - interval '{WINDOW_DAYS} days'
+                 GROUP BY 1, 2""").fetchall()
+        ever = conn.execute(
+            """SELECT MAX(received_at)::date FROM query_receipts
+                WHERE meta->>'plan' LIKE '%v1%'
+                  AND COALESCE(meta->>'synthesis_version','') <> 'deterministic-template-v3'"""
+        ).fetchone()[0]
+    except Exception as exc:  # noqa: BLE001
+        gate("legacy_engine_no_real_traffic", NOT_TESTED, f"{type(exc).__name__}: {exc}")
+        return
+
+    v1_probe = sum(n for p, probe, n in rows if "v1" in p and probe)
+    v1_real = sum(n for p, probe, n in rows if "v1" in p and not probe)
+    v2_total = sum(n for p, _, n in rows if "v2" in p)
+
+    gate("legacy_engine_no_real_traffic", PASS if v1_real == 0 else FAIL,
+         f"last {WINDOW_DAYS}d: v2={v2_total} · v1_probe={v1_probe} (rollback-regression "
+         f"exercise, expected — keeps the v1 path honest) · v1_REAL_USER={v1_real}"
+         + (" — no real-user traffic on the legacy engine"
+            if v1_real == 0 else " — an un-migrated reader is STILL serving users")
+         + f"; last real-user v1 call ever: {ever or 'never'}")
+
+
 def check_legacy(conn) -> None:
     """Every §12 probe must be classified, and nothing may be sitting in an
     unexplained RETIRE_CANDIDATE state."""
@@ -318,6 +377,7 @@ def main() -> int:
     check_readiness_triad()
     check_hot_paths(conn)
     check_parity()
+    check_legacy_engine_traffic(conn)
     check_legacy(conn)
     check_frontend()
     check_delivery()

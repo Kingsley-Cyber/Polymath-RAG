@@ -96,10 +96,22 @@ def _write_stats(conn) -> dict:
             "seq_scans": seq, "idx_scans": idx}
 
 
+#: A reader/writer is SQL that actually touches the table — not prose that names it.
+#: Matching bare mentions turned this census into whack-a-mole: it flagged the script's
+#: own filename, then its registry entry, then FINAL-STATE-VERIFIER-V1 merely for naming
+#: the gate. Each time the "fix" was another allow-list entry, which is the wrong shape:
+#: any future governance doc or tool that discusses the retirement would break it again.
+#: So match the SQL context instead — FROM/JOIN/INTO/UPDATE/DELETE FROM/TABLE <name>.
+_SQL_CONTEXT = r"(FROM|JOIN|INTO|UPDATE|TABLE)[[:space:]]+" + TABLE
+
+
 def _code_references() -> list[str]:
-    """Tracked files naming the table, minus its own migration, this script, docs/tests."""
+    """Tracked files whose SQL actually reads or writes the table.
+
+    Prose under docs/ and tests/, this script, and its registry entry are excluded by
+    path; everything else must contain a real SQL reference to count."""
     try:
-        res = subprocess.run(["git", "grep", "-lw", "--", TABLE],
+        res = subprocess.run(["git", "grep", "-lEi", "--", _SQL_CONTEXT],
                              cwd=ROOT, capture_output=True, text=True, timeout=60)
         hits = [l.strip() for l in res.stdout.splitlines() if l.strip()]
     except Exception as exc:  # noqa: BLE001
