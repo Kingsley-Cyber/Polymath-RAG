@@ -30,10 +30,10 @@ class _Conn:
         s = " ".join(sql.split())
         if "SELECT doc_id FROM documents WHERE corpus_id" in s:
             return _Cur([("docA",), ("docB",)])
-        if "FROM chunks WHERE doc_id = ANY(%s) GROUP BY 1,2" in s:
-            return _Cur([("docA", "child", 8), ("docA", "parent", 3), ("docB", "parent", 5)])
-        if "tier='parent' AND COALESCE(region_role" in s:
-            return _Cur([("docA", 3), ("docB", 5)])
+        if "to_regclass('public.document_chunk_summary')" in s:
+            return _Cur([("document_chunk_summary",)])
+        if "child_count, parent_count, map_eligible_count" in s:
+            return _Cur([("docA", 8, 3, 3), ("docB", 0, 5, 5)])
         if "to_regclass('public.document_parent_maps')" in s:
             return _Cur([("document_parent_maps",)])
         if "COUNT(DISTINCT parent_id) FROM document_parent_maps" in s:

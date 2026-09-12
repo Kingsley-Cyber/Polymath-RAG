@@ -29,25 +29,39 @@ def corpus_document_summaries(conn, *, corpus_id: str) -> dict[str, dict]:
     columns. `document_status` remains the single readiness authority — `vnext_ready` here
     applies its exact per-document rule to the batched counters.
     """
-    from polymath_shared import document_region
-    noisy = list(document_region.NOISY_ROLES)
     out: dict[str, dict] = {}
     for (did,) in conn.execute("SELECT doc_id FROM documents WHERE corpus_id=%s", (corpus_id,)).fetchall():
         out[did] = {"children": 0, "parents": 0, "map_eligible": 0, "map_active": 0,
                     "map_excluded": 0, "profile_present": False, "profile_vnext": False,
                     "graph_entities": None, "graph_relations": None}
-    # chunks by tier
-    for did, tier, n in conn.execute(
-            "SELECT doc_id, tier, COUNT(*) FROM chunks WHERE doc_id = ANY(%s) GROUP BY 1,2",
-            (list(out),)).fetchall():
-        if did in out:
-            out[did]["children" if tier == "child" else "parents"] = n
-    # map-eligible parents (non-noisy)
-    for did, n in conn.execute(
-            "SELECT doc_id, COUNT(*) FROM chunks WHERE doc_id = ANY(%s) AND tier='parent' "
-            "AND COALESCE(region_role,'') <> ALL(%s) GROUP BY 1", (list(out), noisy)).fetchall():
-        if did in out:
-            out[did]["map_eligible"] = n
+    # DOCUMENT-CHUNK-SUMMARY-V1 (migration 0058): child/parent/map-eligible counts
+    # from the narrow per-document projection, never a live COUNT(*) scan over
+    # `chunks` — cinema alone owns 87% of that table's 96k rows, which made the old
+    # two GROUP BY queries here cost ~100ms + ~47ms per call (EXPLAIN-confirmed: the
+    # planner correctly seq-scans at that selectivity, not a missing-index bug).
+    # Falls back to the live scan if the projection table doesn't exist yet (a
+    # pre-migration checkout, or mid-rollback) so this reader never hard-fails.
+    if conn.execute("SELECT to_regclass('public.document_chunk_summary')").fetchone()[0] is not None:
+        for did, child_n, parent_n, eligible_n in conn.execute(
+                "SELECT doc_id, child_count, parent_count, map_eligible_count "
+                "FROM document_chunk_summary WHERE doc_id = ANY(%s)", (list(out),)).fetchall():
+            if did in out:
+                out[did]["children"] = child_n
+                out[did]["parents"] = parent_n
+                out[did]["map_eligible"] = eligible_n
+    else:
+        from polymath_shared import document_region
+        noisy = list(document_region.NOISY_ROLES)
+        for did, tier, n in conn.execute(
+                "SELECT doc_id, tier, COUNT(*) FROM chunks WHERE doc_id = ANY(%s) GROUP BY 1,2",
+                (list(out),)).fetchall():
+            if did in out:
+                out[did]["children" if tier == "child" else "parents"] = n
+        for did, n in conn.execute(
+                "SELECT doc_id, COUNT(*) FROM chunks WHERE doc_id = ANY(%s) AND tier='parent' "
+                "AND COALESCE(region_role,'') <> ALL(%s) GROUP BY 1", (list(out), noisy)).fetchall():
+            if did in out:
+                out[did]["map_eligible"] = n
     if conn.execute("SELECT to_regclass('public.document_parent_maps')").fetchone()[0] is not None:
         for did, n in conn.execute(
                 "SELECT doc_id, COUNT(DISTINCT parent_id) FROM document_parent_maps "
