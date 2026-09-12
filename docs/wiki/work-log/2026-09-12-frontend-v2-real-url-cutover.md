@@ -158,3 +158,25 @@ verified rollback path, and refresh/deep-link must not break.
   in the repo GUARANTEES `/v2` exists after a fresh clone (unlike `/ui`, whose build is
   committed). Not addressed here; worth a future decision (commit the build like `/ui`
   does, or add a build step to the deploy/boot path).
+
+## Correction (same session, before any other commit landed on top)
+
+This work-log and register row 11.216 characterized the client-side navigation as
+"React Router (BrowserRouter, confirmed by the clean-path URLs)." That inference was
+never actually verified against the source and was **wrong**: `frontend-v2/src/
+App.tsx` has no router at all —
+`const [screen, setScreen] = useState<ScreenId>("overview")` is plain React state;
+`screen` always initializes to `"overview"` regardless of the URL path. There is no
+client-side code that reads `window.location` to pick a screen.
+
+This does **not** change the fix's validity or necessity: any direct load of
+`/v2/<anything>` still needs the server to return `index.html` instead of a raw 404 —
+that is a static-serving contract, independent of whether the client does anything
+with the extra path segments. The `_SPAStaticFilesV2` fallback and its tests stand
+exactly as shipped.
+
+It DOES retire the "Open contract gap" this work-log listed about deep-link
+route/query-param restoration on a cold boot: landing on Overview after any `/v2/*`
+load is not a minor gap to fix later — it is simply what a screen-state app with no
+URL-reading code does, by design as it exists today. Nothing to fix; the item is
+removed as N/A rather than left open.
