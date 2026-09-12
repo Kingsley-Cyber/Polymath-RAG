@@ -61,13 +61,49 @@ def main() -> int:
         # a naive check. Mentions retain the raw casing, so they are the
         # authority on acronym identity. MEASURED in this corpus: US
         # appears 49x, IT 6x, WHO 10x with capitalised surfaces.
+        # ACRONYM-EVIDENCE-FLOOR (2026-09-12): require MORE THAN ONE all-caps
+        # occurrence. A single one is weak evidence of acronym identity — emphasis, a
+        # shouted heading, a banner.
+        #
+        # The comment above this block used to justify itself with "MEASURED in this
+        # corpus: US appears 49x, IT 6x, WHO 10x". RE-MEASURED 2026-09-12 against the
+        # live database, that is STALE and no longer true of any corpus present:
+        #     us -> 0 mentions · who -> 0 · one -> 0 · it -> 1 ("IT")
+        #     they -> 1 ("THEY") · you -> 1 ("YOU")
+        # i.e. every surface the safeguard was protecting now has exactly ONE all-caps
+        # mention, so "protect anything seen once in caps" was protecting styling, not
+        # acronyms. That is what kept a closed-class pronoun alive as a fact endpoint
+        # and made `test_no_active_fact_has_a_pronoun_endpoint` fail permanently: the
+        # gate reported a violation this tool then refused to act on, so the two never
+        # converged.
+        #
+        # RESIDUAL AMBIGUITY, stated rather than hidden: with only one occurrence,
+        # "IT" cannot be distinguished from the pronoun "it" shouted in a heading.
+        # This floor makes the tool WILLING to retire it; `--apply` (owner-gated) is
+        # still what actually retires anything, so the judgement stays with the owner
+        # and the affected surfaces are printed below before any write happens.
+        ACRONYM_MIN_MENTIONS = 2
         acronymic = {
             r[0] for r in conn.execute(
-                """SELECT DISTINCT normalized_surface FROM mentions
+                """SELECT normalized_surface FROM mentions
                     WHERE surface = upper(surface) AND length(surface) > 1
-                      AND surface ~ '^[A-Z]+$'""").fetchall()}
+                      AND surface ~ '^[A-Z]+$'
+                    GROUP BY normalized_surface
+                   HAVING COUNT(*) >= %s""", (ACRONYM_MIN_MENTIONS,)).fetchall()}
+        singletons = [
+            r[0] for r in conn.execute(
+                """SELECT normalized_surface FROM mentions
+                    WHERE surface = upper(surface) AND length(surface) > 1
+                      AND surface ~ '^[A-Z]+$'
+                    GROUP BY normalized_surface
+                   HAVING COUNT(*) < %s""", (ACRONYM_MIN_MENTIONS,)).fetchall()]
         print(f"protected acronym surfaces : {len(acronymic)}"
-              f" (e.g. {sorted(acronymic & {'us','it','who','one'})})")
+              f" (>= {ACRONYM_MIN_MENTIONS} all-caps mentions;"
+              f" e.g. {sorted(acronymic & {'us','it','who','one'})})")
+        unprotected = sorted(s for s in singletons if is_unresolved_pronoun(s))
+        if unprotected:
+            print(f"single-occurrence all-caps pronouns (NOT treated as acronyms): "
+                  f"{unprotected}")
 
         doomed = []
         for fact_id, decision, s_norm, o_norm in rows:

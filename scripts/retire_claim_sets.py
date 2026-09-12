@@ -59,9 +59,18 @@ ORIGINAL_DDL = """CREATE TABLE IF NOT EXISTS claim_sets (
 );"""
 
 #: Paths whose mention of the table is NOT a live reader/writer: the migration that
-#: created it, this script, and prose. Everything else counts against the retirement.
+#: created it, this script, and this script's own registry entry (which necessarily
+#: describes the table it retires). Prose under docs/ and tests/ is filtered
+#: separately. Everything else counts against the retirement.
+#:
+#: The census also matches on a WORD boundary (`git grep -w`). Without it this
+#: script's own FILENAME — retire_claim_sets.py — matched as a "reference" wherever
+#: the file is registered, so registering the tool made it permanently refuse to run
+#: (observed 2026-09-12 by FINAL-STATE-VERIFIER-V1). Fail-closed was the safe
+#: direction, but it would have blocked a legitimately authorized deletion forever.
 _ALLOWED = ("stores/postgres/migrations/0026_identity_model.sql",
-            "scripts/retire_claim_sets.py")
+            "scripts/retire_claim_sets.py",
+            "scripts/README.md")
 
 
 def dsn() -> str:
@@ -90,7 +99,7 @@ def _write_stats(conn) -> dict:
 def _code_references() -> list[str]:
     """Tracked files naming the table, minus its own migration, this script, docs/tests."""
     try:
-        res = subprocess.run(["git", "grep", "-l", "--", TABLE],
+        res = subprocess.run(["git", "grep", "-lw", "--", TABLE],
                              cwd=ROOT, capture_output=True, text=True, timeout=60)
         hits = [l.strip() for l in res.stdout.splitlines() if l.strip()]
     except Exception as exc:  # noqa: BLE001
