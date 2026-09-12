@@ -20,8 +20,14 @@ Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (t
 
 ## Latest checkpoint (2026-09-12T07:25 — EXECUTION AUTHORITY: qualification_matrix.json wired to real evidence, closing the buildable half of the L2-L5 item; the residual gate is now precisely per-lane-with-zero-evidence, not the whole subsystem)
 
-**Branch `architecture/evidence-first-v5` @ (pending this checkpoint's commit); worktree
-clean pre-commit; guards green.** Register **11.222**.
+**Branch `architecture/evidence-first-v5` @ `1b5bab9`; worktree clean; guards green;
+PUSHED (`4f8cb44 -> 1b5bab9`).** Register **11.222**.
+
+Small same-slice follow-up (`1b5bab9`, no new register row, same precedent as the
+earlier `ab13dc1` self-reference bugfix): noticed `main()` called `attempt_summary()`
+with its default 24h window while `query_receipt_summary()` deliberately used 7 days —
+confirmed live the two windows return identical data today (so no reported verdict
+changed), fixed the asymmetry for consistency before it could mislead a future reader.
 
 Direct continuation — a Stop-hook rejection of the prior turn's final report correctly
 identified a conflation: that report listed "L2-L5 provider/model qualification" as an
