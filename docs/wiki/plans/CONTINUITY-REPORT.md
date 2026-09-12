@@ -16,9 +16,104 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.213–11.215; the file is append-only and now runs to 11.215) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly, e.g. it MANDATES the Control Plane/Files hot-path fix the prior checkpoint had left owner-deferred) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.213–11.217; the file is append-only and now runs to 11.217) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-12T05:50 — EXECUTION AUTHORITY: GRAPH/WILDCARD converged, §20A hot-path gate closed + live re-fired, bounce incident resolved)
+## Latest checkpoint (2026-09-12T06:10 — EXECUTION AUTHORITY continued: evidence.py migrated, Frontend V2 is now the public default, conformance framework assessed)
+
+**Branch `architecture/evidence-first-v5` @ `c591a7d`; worktree clean except this
+checkpoint edit; guards green; PUSHED through `c591a7d` (fast-forward chain
+`418f22e → e08210d → c7ee7db → 59e0505 → c591a7d`).** Registers **11.216, 11.217**
+(11.213–11.215 covered by the prior checkpoint below).
+
+Direct continuation of the prior checkpoint — same execution authority, same session,
+no new owner input. Two more slices shipped, tested, live-verified, and pushed.
+
+### What shipped since the prior checkpoint
+
+4. **FRONTEND-V2-REAL-URL-CUTOVER-V1 (11.216, commit 59e0505).** Investigated the real
+   serving topology first (Explore agent): the owner's actual URL is
+   `https://rag.kingsleylab.xyz` (Cloudflare Tunnel → Caddy `:8794`,
+   `~/.hermes/rag-proxy/Caddyfile` — OUTSIDE this git repo) → orchestrator `:7200`.
+   Caddy's only route logic was `redir / /ui/ 302` — the real URL always landed on the
+   LEGACY app; `/v2` was already reachable but never the default. **Found a real
+   blocking bug before flipping anything:** direct navigation/refresh on any V2
+   client-side route (`/v2/files`, etc.) 404'd — plain FastAPI `StaticFiles` has no
+   SPA-router fallback. Fixed with a small, unit-tested `_SPAStaticFilesV2` subclass
+   (module-level, `/v2` mount only — `/ui` untouched, stays the rollback). Verified
+   the full V2 app live on two corpora (Overview/Chat/Control Plane/Files/Graph, a
+   real 18.6s cited Chat turn) BEFORE touching the redirect. Then changed one line in
+   the Caddyfile and restarted its launchd job (`launchctl kickstart`, since
+   `admin off` blocks `caddy reload`). **Live-verified on the real external hostname,
+   unauthenticated:** `curl -I https://rag.kingsleylab.xyz/` now redirects to `/v2/`;
+   `/ui` still 401s normally (rollback confirmed reachable). One gap owner-only:
+   session had no basic-auth password for a full authenticated spot-check.
+5. **EVIDENCE-ENGINE-MIGRATION-V1 (11.217, commit c591a7d).** Closed the one deferred
+   item from slice 1 (`evidence.py`, previously classified RETIRE_CANDIDATE because it
+   WALKS v1 GRAPH's nested shape as an input-extraction pattern, not a pass-through).
+   Wrote a second extraction branch against the final engine's flat shape; both GRAPH
+   and HYBRID now share `/retrieve`'s exact `retrieve_engine_flag()` gate. Live-
+   verified on `rag-canary`: `POST /evidence mode=GRAPH` → 200, 31 real fully-resolved
+   entries; `mode=HYBRID` → 200, 24 entries.
+6. **Conformance framework assessment (no code change, no register row — pure
+   verification).** Ran `scripts/audit_polymath.py --no-spend` TWICE: identical
+   178-component classification both times (69 WORKING_PROVEN / 47 NOT_TESTED / 31
+   CONFIGURED_IDLE / 16 RETIRE_CANDIDATE / 15 LEGACY_REQUIRED), confirming the re-fire
+   property (§17) already holds for what this tool covers — real live attempt-ledger
+   dispatch counts per lane (e.g. "gemini4 — 498 durable dispatches today"), real
+   reader/writer counts per state table. **Honest gap: this covers L0 (static/
+   topology) and attempt-accounting well; it does NOT yet implement L2 (function
+   contract)/L3 (pipeline)/L4 (retrieval)/L5 (product E2E) as separate re-firable
+   levels with their own evidence files** — confirms the much-earlier "conformance
+   L2-L5 remain unbuilt" note is still substantially accurate. Building those out is
+   its own multi-session-scale effort, not attempted this session.
+
+### Traps added this session (§6, continuing the prior checkpoint's list)
+
+- **A Caddy/reverse-proxy config with `admin off` cannot use `caddy reload`** — it
+  needs a full process restart. If the process is launchd-managed, use
+  `launchctl kickstart -k gui/<uid>/<label>` (found via `launchctl list | grep <name>`)
+  rather than a manual kill+relaunch — a few seconds of gap, not a hand-reconstructed
+  command line that might drift from the job's actual invocation.
+- **Before making any SPA the public default, test a direct load/refresh on a deep
+  sub-route, not just the root.** A client-side router (React Router BrowserRouter,
+  clean paths) needs server-side fallback to `index.html` for unknown paths; plain
+  `StaticFiles(html=True)` mounting a build dir like `frontend-v2/dist` does not have
+  it. This app had the bug the whole time it existed only on `/v2` — it just never
+  mattered until this session made it the default. Check this BEFORE flipping any app
+  to be the default, not after an owner reports a broken refresh.
+- **For an orchestrator-only code change** (anything in `orchestrator/orchestrator/`,
+  outside the HASH-FENCE-V2 dirs), a surgical `kill -TERM <orchestrator pid>` and
+  letting the existing supervisor respawn just that one process is materially safer
+  and faster than a full `boot_polymath.sh` bounce — confirmed zero fleet duplication
+  across three such restarts this session, versus the full-bounce incident earlier.
+  Reserve the full bounce for changes actually inside the fenced dirs
+  (`shared/polymath_shared`, `workers/workers`, `control/control`).
+
+### NEXT ACTION
+
+1. A final full `tests/determinism` regression run covering ALL of today's changes
+   together was still in progress when this checkpoint was written (backgrounded,
+   ~57% through with 3 F's at last check — consistent with the 3 already-attributed
+   pre-existing failures, no new ones observed yet, but not yet 100% confirmed clean).
+   **Read its result before starting new implementation work next session** if it
+   hasn't already been reported this session.
+2. `corpus_document_summaries`'s non-extraction (`chunks`-volume) cost on large
+   corpora (~150ms on cinema) — named, explicitly out of scope for 11.214, needs a new
+   maintained per-document chunk-count summary/cache as its own migration decision.
+3. Provider/model conformance L2-L5 (function/pipeline/retrieval/product E2E levels)
+   — a real, substantial, still-open gap per item 6 above. Likely its own multi-
+   session effort; not started.
+4. Frontend V2's deep-link route/query-param restoration on a cold SPA boot (lands on
+   Overview, not the specific screen+corpus that was linked) — minor, non-blocking,
+   noted in 11.216's work-log.
+5. `frontend-v2/dist` is git-ignored — nothing in the repo guarantees `/v2` exists
+   after a fresh clone (unlike `/ui`, which is committed). Worth a future decision:
+   commit the build, or add a build step to the deploy/boot path.
+6. A final authenticated human spot-check of `https://rag.kingsleylab.xyz` — the one
+   verification step in 11.216 only the owner can do (this session has no basic-auth
+   password and correctly did not try to obtain one).
+
+## Prior checkpoint (2026-09-12T05:50 — EXECUTION AUTHORITY: GRAPH/WILDCARD converged, §20A hot-path gate closed + live re-fired, bounce incident resolved)
 
 **Branch `architecture/evidence-first-v5` @ (register-row-only edits pending final commit; code HEADs
 `418f22e` then `e08210d`); worktree — guards green; PUSHED through `418f22e` (fast-forward,
