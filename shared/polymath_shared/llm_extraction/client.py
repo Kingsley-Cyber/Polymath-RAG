@@ -424,14 +424,40 @@ class LLMExtractionClient:
     # -- public API --------------------------------------------------------
 
     def probe(self) -> dict:
-        """One-token, no-document liveness + auth probe."""
+        """One-token, no-document liveness + auth probe.
+
+        Recorded like any other attempt, with `limiter_bypassed=True`: a probe must not
+        queue behind a rate hold, so it never passes the lane limiter. Until migration
+        0059 the ledger had no way to say that — `limiter_admitted=False` would have
+        asserted "zero HTTP, zero quota" about a call that really did reach the provider
+        — so probes went unrecorded, and a probe that takes a 429 or a 401 is exactly the
+        evidence lane qualification is arguing about."""
+        from polymath_shared.conformance.attempts import Attempt as _At, record as _rec
         t0 = time.perf_counter()
         payload = {"model": self.model, "messages": [
             {"role": "user", "content": "ping"}], "max_tokens": 1, "stream": False}
-        resp = httpx.post(f"{self.base_url}/v1/chat/completions",
-                          json=payload, timeout=min(self.timeout_s, 30.0),
-                          headers=self._headers())
+        _base = dict(lane=self.limiter_key, model=self.model, provider=self._provider(),
+                     account_env=self._account_env(), limiter_admitted=False,
+                     limiter_bypassed=True, http_dispatched=True)
+        try:
+            resp = httpx.post(f"{self.base_url}/v1/chat/completions",
+                              json=payload, timeout=min(self.timeout_s, 30.0),
+                              headers=self._headers())
+        except Exception as exc:  # noqa: BLE001 — record, then let the caller see it
+            _rec(_At(success=False, error_class=type(exc).__name__,
+                     latency_ms=int((time.perf_counter() - t0) * 1000), **_base))
+            raise
         wall_ms = int((time.perf_counter() - t0) * 1000)
+        if resp.status_code >= 400:
+            _ra = resp.headers.get("retry-after")
+            _rec(_At(success=False, http_status=resp.status_code,
+                     error_class=f"HTTP_{resp.status_code}",
+                     retry_after_s=(float(_ra) if (_ra or "").replace(".", "", 1).isdigit()
+                                    else None),
+                     latency_ms=wall_ms, **_base))
+        else:
+            _rec(_At(success=True, http_status=resp.status_code,
+                     latency_ms=wall_ms, **_base))
         resp.raise_for_status()
         body = resp.json()
         return {"ok": True, "lane": self.lane, "model": self.model,

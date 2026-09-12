@@ -53,12 +53,20 @@ class attempt_context:
 
     def __init__(self, **fields: Any) -> None:
         self.fields = {k: v for k, v in fields.items() if v is not None}
-        self.fields.setdefault("correlation_id", uuid.uuid4().hex[:24])
         self._token = None
 
     def __enter__(self) -> dict:
-        merged = {**_ctx.get(), **self.fields}
-        merged["_ordinal"] = 0
+        outer = _ctx.get()
+        merged = {**outer, **self.fields}
+        # INHERIT the correlation id. Minting one per context meant a nested context —
+        # e.g. the Ollama `think` retry, which opens a second _AttemptOutcome inside the
+        # first — split one logical call across two correlation ids, and
+        # `failover_attempts` (attempts - distinct correlation ids) then read as zero
+        # while a retry had plainly happened. A new id is minted only at the OUTERMOST
+        # context, which is what "groups the attempts of one logical call" means.
+        if not merged.get("correlation_id"):
+            merged["correlation_id"] = uuid.uuid4().hex[:24]
+        merged["_ordinal"] = int(outer.get("_ordinal", 0))
         self._token = _ctx.set(merged)
         return merged
 
@@ -72,6 +80,14 @@ def current_context() -> dict:
 
 
 def next_ordinal() -> int:
+    """DEPRECATED in favour of deriving the ordinal in SQL (see `record`).
+
+    A contextvar counter cannot sequence attempts across SIBLING contexts: the Ollama
+    `think` retry opens a second attempt context inside the first, and resetting the
+    token on exit discarded the increment, so every attempt of one logical call was
+    recorded as ordinal 1. Kept for callers that want an in-process counter; the ledger
+    no longer uses it.
+    """
     c = _ctx.get()
     if not c:
         return 1
@@ -87,6 +103,10 @@ class Attempt:
     limiter_admitted: bool
     http_dispatched: bool
     success: bool
+    #: This seam does not pass through a lane limiter at all (probe, chat synthesis).
+    #: `limiter_admitted` is then NOT APPLICABLE rather than false — 0056's invariant
+    #: "limiter_admitted=false => zero HTTP, zero quota" holds only when this is false.
+    limiter_bypassed: bool = False
     http_status: int | None = None
     retry_after_s: float | None = None
     error_class: str | None = None
@@ -122,14 +142,23 @@ def record(a: Attempt) -> None:
                     (correlation_id, run_id, ticket_id, function, stage, lane, provider,
                      model, account_env, attempt_ordinal, limiter_admitted, http_dispatched,
                      http_status, retry_after_s, error_class, success, latency_ms,
-                     response_hash, tokens_in, tokens_out, started_at)
-                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
+                     response_hash, tokens_in, tokens_out, limiter_bypassed, started_at)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,
+                            -- the ordinal is DERIVED, not counted in memory: attempts of
+                            -- one logical call can span sibling contexts, threads and
+                            -- processes, and an in-process counter recorded every one of
+                            -- them as attempt 1.
+                            (SELECT COALESCE(MAX(attempt_ordinal), 0) + 1
+                               FROM {TABLE} WHERE correlation_id = %s),
+                            %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
                             now() - make_interval(secs => COALESCE(%s,0) / 1000.0))""",
                 (ctx.get("correlation_id"), ctx.get("run_id"), ctx.get("ticket_id"),
                  ctx.get("function"), ctx.get("stage"), a.lane, a.provider, a.model,
-                 a.account_env, next_ordinal(), a.limiter_admitted, a.http_dispatched,
+                 a.account_env, ctx.get("correlation_id"),
+                 a.limiter_admitted, a.http_dispatched,
                  a.http_status, a.retry_after_s, a.error_class, a.success, a.latency_ms,
-                 a.response_hash, a.tokens_in, a.tokens_out, a.latency_ms))
+                 a.response_hash, a.tokens_in, a.tokens_out, a.limiter_bypassed,
+                 a.latency_ms))
     except Exception as exc:  # noqa: BLE001
         if not _warned.is_set():
             _warned.set()
@@ -151,17 +180,20 @@ def attempt_summary(conn, window: str = "24 hours") -> dict:
     """Attempt-level truth: what the provider actually did, per lane and per function."""
     q = f"""
         SELECT COUNT(*)                                            AS attempts,
-               COUNT(*) FILTER (WHERE NOT limiter_admitted)        AS limiter_refused,
+               COUNT(*) FILTER (WHERE NOT limiter_admitted
+                                AND NOT limiter_bypassed)         AS limiter_refused,
+               COUNT(*) FILTER (WHERE limiter_bypassed)           AS limiter_bypassed,
                COUNT(*) FILTER (WHERE http_dispatched)             AS dispatched,
                COUNT(*) FILTER (WHERE http_status = 429)           AS http_429,
                COUNT(*) FILTER (WHERE success)                     AS succeeded,
-               COUNT(DISTINCT correlation_id)                      AS logical_calls
+               COUNT(DISTINCT correlation_id)                      AS logical_calls,
+               COUNT(*) FILTER (WHERE correlation_id IS NULL)      AS uncorrelated
           FROM {TABLE} WHERE created_at > now() - interval '{window}'"""
     try:
         r = conn.execute(q).fetchone()
     except Exception as exc:  # noqa: BLE001
         return {"available": False, "error": str(exc)[:200]}
-    attempts, refused, dispatched, h429, ok, calls = r
+    attempts, refused, bypassed, dispatched, h429, ok, calls, uncorrelated = r
     per_lane = conn.execute(f"""
         SELECT lane, COUNT(*), COUNT(*) FILTER (WHERE http_status=429),
                COUNT(*) FILTER (WHERE success)
@@ -170,11 +202,17 @@ def attempt_summary(conn, window: str = "24 hours") -> dict:
     return {
         "available": True, "window": window,
         "attempts": attempts, "logical_calls": calls,
-        "limiter_refused": refused, "dispatched": dispatched,
+        "limiter_refused": refused, "limiter_bypassed": bypassed,
+        "dispatched": dispatched,
         "http_429": h429, "succeeded": ok,
         "attempts_per_success": (round(attempts / ok, 2) if ok else None),
         "rejection_rate": (round(h429 / dispatched, 3) if dispatched else None),
-        "failover_attempts": max(0, attempts - calls),
+        # FAILOVER is (attempts - logical calls) over CORRELATED rows only. An attempt
+        # recorded without a correlation id belongs to no logical call, and counting it
+        # here inflated failover by exactly the number of untagged rows — a seam that
+        # simply forgot its context would have looked like provider failover.
+        "failover_attempts": max(0, (attempts - uncorrelated) - calls),
+        "uncorrelated_attempts": uncorrelated,
         "per_lane": [{"lane": l, "attempts": n, "http_429": q4, "succeeded": s}
                      for l, n, q4, s in per_lane],
     }
@@ -211,4 +249,38 @@ def reconcile(conn, window: str = "24 hours") -> dict:
             "detail": f"{s['http_429']} HTTP 429 attempt(s) recorded, but 0 batch outcomes "
                       f"carry HTTP_429 — failover absorbed them. Outcome counters alone "
                       f"cannot see provider pressure."})
+    # LIMITER_BYPASS — §15 names it; it was undetectable until the ledger could express
+    # the state at all (migration 0059). Reported as an OBSERVATION with its lanes, not
+    # as a fault: probe and chat synthesis bypass by design. A lane appearing here that
+    # is supposed to be limiter-mediated is the fault, and naming the lanes is what lets
+    # that be seen.
+    if s.get("limiter_bypassed"):
+        try:
+            lanes = conn.execute(f"""
+                SELECT lane, COUNT(*) FROM {TABLE}
+                 WHERE limiter_bypassed AND created_at > now() - interval '{window}'
+                 GROUP BY 1 ORDER BY 2 DESC""").fetchall()
+        except Exception:  # noqa: BLE001
+            lanes = []
+        findings.append({
+            "code": "LIMITER_BYPASS",
+            "detail": f"{s['limiter_bypassed']} attempt(s) reached a provider without "
+                      f"limiter admission, on: "
+                      + ", ".join(f"{l}×{n}" for l, n in lanes)})
+    # DARK_ENABLED_LANE — configured, credentialled and ENABLED, yet it made no attempt
+    # in the window. Either it is dead weight in the rotation or something upstream is
+    # never selecting it; both are invisible from outcome counters.
+    try:
+        from polymath_shared.llm_extraction import lane_registry as _LR
+        enabled = {l.name for l in _LR.build_registry().lanes
+                   if getattr(l, "enabled", False) and getattr(l, "credential_present", False)}
+        seen = {row["lane"] for row in s.get("per_lane", [])}
+        dark = sorted(enabled - seen)
+    except Exception:  # noqa: BLE001 — a registry read must never break reconciliation
+        dark = []
+    if dark:
+        findings.append({
+            "code": "DARK_ENABLED_LANE",
+            "detail": f"{len(dark)} enabled, credentialled lane(s) made no attempt in "
+                      f"{window}: {', '.join(dark)}"})
     return {"available": True, "summary": s, "batch_outcomes": outcomes, "findings": findings}

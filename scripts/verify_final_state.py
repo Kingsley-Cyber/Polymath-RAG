@@ -645,21 +645,32 @@ def check_frontend() -> None:
 
 # ── 17. §15 DURABLE ATTEMPT TELEMETRY — every provider seam reaches the ledger ─
 
-#: Functions in the LLM client that dispatch to a provider but deliberately do NOT
-#: record, each with the reason. Listed here (and PRINTED by the gate) so an exclusion
-#: is a visible decision rather than a silent hole.
-_ATTEMPT_SEAM_EXCLUSIONS = {
-    "_chat": "pure transport helper — every caller (complete_one, _extract_prompt) "
-             "records around it; recording here too would double-count each attempt",
-    "probe": "liveness probe, not workload: it bypasses the limiter by design, so "
-             "recording it as limiter_admitted would corrupt the LIMITER_BYPASS signal "
-             "this same ledger exists to detect",
-}
+#: Every module that dispatches to an external model, with the call shapes that count as
+#: a dispatch there and the functions that legitimately do NOT record. An exclusion is a
+#: named decision with a reason, PRINTED on every run — a silent skip list is how four
+#: seams went unrecorded for months.
+_ATTEMPT_SEAM_MODULES = (
+    {"path": "shared/polymath_shared/llm_extraction/client.py",
+     "dispatch": {"httpx.post", "httpx.stream", "httpx.request"},
+     "helpers": {"_chat"},
+     "exclude": {"_chat": "pure transport helper — every caller (complete_one, "
+                          "_extract_prompt) records around it; recording here too would "
+                          "double-count each attempt"}},
+    {"path": "orchestrator/orchestrator/api/ui.py",
+     "dispatch": {"litellm.completion", "httpx.stream"},
+     "helpers": set(),
+     "exclude": {"_ollama_generate_inner": "its caller wraps it in _AttemptOutcome, "
+                                           "which owns one row for the whole stream — a "
+                                           "stream has four exits and recording at each "
+                                           "would duplicate or drop the attempt",
+                 "_ollama_stream_plain_inner": "same — _ollama_stream_plain holds the "
+                                               "outcome recorder for this dispatch"}},
+)
 #: §15's field list, mapped to what the writer sets. `finished_at` is derived
 #: (started_at + latency_ms) and `cost` is "if available" in the authority's own words.
 _S15_FIELDS = ("lane", "provider", "model", "account_env", "attempt_ordinal",
-               "limiter_admitted", "http_dispatched", "http_status", "retry_after_s",
-               "error_class", "success", "latency_ms", "started_at",
+               "limiter_admitted", "limiter_bypassed", "http_dispatched", "http_status",
+               "retry_after_s", "error_class", "success", "latency_ms", "started_at",
                "correlation_id", "run_id", "ticket_id", "function", "stage")
 
 
@@ -670,13 +681,6 @@ def check_attempt_telemetry(conn) -> None:
     and the DATABASE for shape — not a row count, which only measures the seams that
     already work."""
     import ast
-    src_path = ROOT / "shared" / "polymath_shared" / "llm_extraction" / "client.py"
-    try:
-        tree = ast.parse(src_path.read_text())
-    except Exception as exc:  # noqa: BLE001
-        gate("attempt_ledger_covers_every_provider_seam", NOT_TESTED,
-             f"could not parse {src_path.name}: {type(exc).__name__}")
-        return
 
     def _dotted(n):
         out = []
@@ -686,25 +690,38 @@ def check_attempt_telemetry(conn) -> None:
             out.append(n.id)
         return ".".join(reversed(out))
 
-    DISPATCH = {"httpx.post", "httpx.stream", "httpx.request"}
-    covered, uncovered, excluded = [], [], []
-    for fn in [n for n in ast.walk(tree)
-               if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]:
-        calls = [c for c in ast.walk(fn) if isinstance(c, ast.Call)]
-        # a seam either dispatches itself, or calls the transport helper that does
-        dispatches = [c for c in calls if _dotted(c.func) in DISPATCH]
-        via_helper = [c for c in calls if getattr(c.func, "attr", "") == "_chat"]
-        if not dispatches and not via_helper:
+    covered, uncovered, excluded, unreadable = [], [], [], []
+    for mod in _ATTEMPT_SEAM_MODULES:
+        src_path = ROOT / mod["path"]
+        try:
+            tree = ast.parse(src_path.read_text())
+        except Exception as exc:  # noqa: BLE001
+            unreadable.append(f"{mod['path']} ({type(exc).__name__})")
             continue
-        if fn.name in _ATTEMPT_SEAM_EXCLUSIONS:
-            excluded.append(fn.name); continue
-        records = [c for c in calls
-                   if getattr(c.func, "id", "") in ("_rec", "record")
-                   or getattr(c.func, "attr", "") == "record"]
-        (covered if records else uncovered).append(f"{fn.name}(L{fn.lineno})")
+        short = src_path.name
+        for fn in [n for n in ast.walk(tree)
+                   if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]:
+            calls = [c for c in ast.walk(fn) if isinstance(c, ast.Call)]
+            dispatches = [c for c in calls if _dotted(c.func) in mod["dispatch"]]
+            via_helper = [c for c in calls
+                          if getattr(c.func, "attr", "") in mod["helpers"]]
+            if not dispatches and not via_helper:
+                continue
+            if fn.name in mod["exclude"]:
+                excluded.append(f"{short}:{fn.name} ({mod['exclude'][fn.name]})")
+                continue
+            records = [c for c in calls
+                       if getattr(c.func, "id", "") in ("_rec", "record")
+                       or getattr(c.func, "attr", "") == "record"]
+            (covered if records else uncovered).append(f"{short}:{fn.name}(L{fn.lineno})")
 
+    if unreadable:
+        gate("attempt_ledger_covers_every_provider_seam", NOT_TESTED,
+             f"could not parse: {', '.join(unreadable)} — the gate would be blind, so it "
+             f"reports NOT_TESTED rather than a vacuous PASS")
+        return
     detail = (f"seams recording: {len(covered)} [{', '.join(covered)}]; "
-              f"excluded by design: {', '.join(f'{k} ({_ATTEMPT_SEAM_EXCLUSIONS[k]})' for k in excluded)}")
+              f"excluded by design: {'; '.join(excluded) or 'none'}")
     if uncovered:
         gate("attempt_ledger_covers_every_provider_seam", FAIL,
              f"UNACCOUNTED_ATTEMPT — these provider seams dispatch without recording: "

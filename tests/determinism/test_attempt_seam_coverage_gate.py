@@ -57,9 +57,13 @@ def verifier():
 
 
 def _point_at(verifier, tmp_path: Path, source: str, monkeypatch) -> None:
-    client = tmp_path / "shared" / "polymath_shared" / "llm_extraction" / "client.py"
-    client.parent.mkdir(parents=True)
-    client.write_text(source)
+    """Build a whole fake tree: the gate scans EVERY module in its seam list, and a
+    missing one makes it report NOT_TESTED rather than a vacuous PASS — so the fixture
+    has to supply them all, with the doctored source standing in for the LLM client."""
+    for mod in verifier._ATTEMPT_SEAM_MODULES:
+        f = tmp_path / mod["path"]
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(source if f.name == "client.py" else "# no dispatch here\n")
     monkeypatch.setattr(verifier, "ROOT", tmp_path)
 
 
@@ -94,10 +98,22 @@ def test_the_transport_helper_is_excluded_but_named(verifier, tmp_path, monkeypa
     assert "_chat" in detail and "double-count" in detail
 
 
-def test_the_live_client_is_what_the_gate_reads(verifier):
-    """Guards against the gate quietly pointing at a path that no longer exists: a
-    missing file must report NOT_TESTED, never a vacuous PASS."""
+def test_every_module_the_gate_names_still_exists(verifier):
+    """Guards against the gate quietly pointing at a path that no longer exists."""
     import ast
-    src = (ROOT / "shared" / "polymath_shared" / "llm_extraction" / "client.py")
-    assert src.exists(), "the gate's target moved; the gate would go blind"
-    ast.parse(src.read_text())
+    for mod in verifier._ATTEMPT_SEAM_MODULES:
+        src = ROOT / mod["path"]
+        assert src.exists(), f"{mod['path']} moved; the gate would go blind there"
+        ast.parse(src.read_text())
+
+
+def test_a_missing_module_reports_NOT_TESTED_not_a_vacuous_pass(
+        verifier, tmp_path, monkeypatch):
+    """The failure mode a static gate dies of: its target is moved or renamed, it finds
+    nothing to complain about, and it reports PASS forever."""
+    client = tmp_path / "shared" / "polymath_shared" / "llm_extraction" / "client.py"
+    client.parent.mkdir(parents=True)
+    client.write_text(_COVERED)                    # the OTHER module is simply absent
+    monkeypatch.setattr(verifier, "ROOT", tmp_path)
+    verifier.check_attempt_telemetry(None)
+    assert _seam_gate(verifier)["status"] == verifier.NOT_TESTED

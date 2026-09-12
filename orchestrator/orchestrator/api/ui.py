@@ -955,19 +955,38 @@ class LlmTest(BaseModel):
 
 @router.post("/llm/test")
 def llm_test(req: LlmTest) -> dict:
-    """One-shot connectivity/credential test for a configured model."""
-    import litellm
+    """One-shot connectivity/credential test for a configured model.
 
-    try:
-        out = litellm.completion(
-            model=req.model,
-            messages=[{"role": "user", "content": "Reply with exactly: ok"}],
-            max_tokens=20, timeout=30, **_litellm_credentials(req.model))
-        text = (out.choices[0].message.content or "").strip()
-        return {"ok": True, "model": req.model, "reply": text[:80]}
-    except Exception as exc:
-        return {"ok": False, "model": req.model,
-                "error": f"{type(exc).__name__}: {str(exc)[:220]}"}
+    Recorded like the extraction lanes' `probe`: a connectivity test IS an external model
+    attempt, it spends a few tokens, and its failures (401, 429, missing credentials) are
+    the evidence a model-selection argument turns on. `limiter_bypassed=True` — there is
+    no lane limiter on this path."""
+    import litellm
+    import time as _time
+    from polymath_shared.conformance.attempts import (Attempt as _At, attempt_context as _actx,
+                                                      record as _rec)
+
+    _base = dict(lane=f"chat_synth:{req.model.split('/')[0]}" if "/" in req.model
+                 else "chat_synth",
+                 model=req.model,
+                 provider=(req.model.split("/")[0] if "/" in req.model else None),
+                 limiter_admitted=False, limiter_bypassed=True, http_dispatched=True)
+    _t0 = _time.perf_counter()
+    with _actx(function="CHAT", stage="llm_test"):
+        try:
+            out = litellm.completion(
+                model=req.model,
+                messages=[{"role": "user", "content": "Reply with exactly: ok"}],
+                max_tokens=20, timeout=30, **_litellm_credentials(req.model))
+            text = (out.choices[0].message.content or "").strip()
+            _rec(_At(success=True, http_status=200,
+                     latency_ms=int((_time.perf_counter() - _t0) * 1000), **_base))
+            return {"ok": True, "model": req.model, "reply": text[:80]}
+        except Exception as exc:
+            _rec(_At(success=False, error_class=type(exc).__name__,
+                     latency_ms=int((_time.perf_counter() - _t0) * 1000), **_base))
+            return {"ok": False, "model": req.model,
+                    "error": f"{type(exc).__name__}: {str(exc)[:220]}"}
 
 
 def _lock_timeout_or_409(conn, what: str) -> None:
@@ -2166,41 +2185,66 @@ def _litellm_generate(model: str, query: str, bundle: dict,
                   **_litellm_credentials(model))
     finish = None
     bound_sent = bool(bound)
-    for attempt, with_bound in enumerate([True, False] if bound else [False]):
-        started = False
-        try:
-            stream = litellm.completion(**kwargs, **({"max_tokens": bound} if with_bound else {}))
-            for chunk in stream:
-                started = True
-                piece = ""
-                rpiece = ""
-                try:
-                    choice = chunk.choices[0]
-                    delta = choice.delta
-                    piece = delta.content or ""
-                    # REASONING-STREAM-V1: providers that expose model
-                    # thinking surface it as reasoning_content.
-                    rpiece = getattr(delta, "reasoning_content", None) or ""
-                    if getattr(choice, "finish_reason", None):
-                        finish = str(choice.finish_reason)
-                except Exception:
+    # PROVIDER-ATTEMPT-LEDGER-V4: answer synthesis is an EXTERNAL MODEL ATTEMPT on a paid
+    # provider, and it recorded nothing — §15's ledger covered extraction and the query
+    # compiler only. The loop below can make TWO attempts (bound refused, then retried
+    # without it) and the first one survived merely as a `degraded` SSE event, which is
+    # per-call evidence in a stream the user closes. `limiter_bypassed=True`: this path
+    # has no lane limiter at all, a state the ledger could not express before 0059.
+    from polymath_shared.conformance.attempts import (Attempt as _At, attempt_context as _actx,
+                                                      record as _rec)
+    _lane = f"chat_synth:{model.split('/')[0]}" if "/" in model else "chat_synth"
+    _abase = dict(lane=_lane, model=model, provider=(model.split("/")[0] if "/" in model
+                                                     else None),
+                  limiter_admitted=False, limiter_bypassed=True, http_dispatched=True)
+    _ctx = _actx(function="CHAT", stage="answer_synthesis")
+    # try/finally, not a bare enter: a chat stream can be abandoned when the client
+    # disconnects, and an un-exited context would tag every later attempt in this
+    # request as CHAT/answer_synthesis.
+    _ctx.__enter__()
+    try:
+        for attempt, with_bound in enumerate([True, False] if bound else [False]):
+            started = False
+            _t0 = time.perf_counter()
+            try:
+                stream = litellm.completion(**kwargs, **({"max_tokens": bound} if with_bound else {}))
+                for chunk in stream:
+                    started = True
                     piece = ""
-                if rpiece:
-                    yield {"reasoning": rpiece}
-                if piece:
-                    yield {"token": piece}
-            break
-        except Exception as exc:
-            if with_bound and not started and _bound_rejected(exc):
-                bound_sent = False
-                yield {"degraded": {"component": "generation", "state": "bound refused",
-                                    "reason": f"max_tokens_rejected:{bound}",
-                                    "effect": f"the provider refused max_tokens={bound}; generated once more without a bound",
-                                    "detail": f"{type(exc).__name__}: {str(exc)[:160]}"}}
-                continue
-            yield {"error": True, "error_code": "litellm_error",
-                   "message": f"{type(exc).__name__}: {str(exc)[:280]}"}
-            return
+                    rpiece = ""
+                    try:
+                        choice = chunk.choices[0]
+                        delta = choice.delta
+                        piece = delta.content or ""
+                        # REASONING-STREAM-V1: providers that expose model
+                        # thinking surface it as reasoning_content.
+                        rpiece = getattr(delta, "reasoning_content", None) or ""
+                        if getattr(choice, "finish_reason", None):
+                            finish = str(choice.finish_reason)
+                    except Exception:
+                        piece = ""
+                    if rpiece:
+                        yield {"reasoning": rpiece}
+                    if piece:
+                        yield {"token": piece}
+                _rec(_At(success=True, http_status=200,
+                         latency_ms=int((time.perf_counter() - _t0) * 1000), **_abase))
+                break
+            except Exception as exc:
+                _rec(_At(success=False, error_class=type(exc).__name__,
+                         latency_ms=int((time.perf_counter() - _t0) * 1000), **_abase))
+                if with_bound and not started and _bound_rejected(exc):
+                    bound_sent = False
+                    yield {"degraded": {"component": "generation", "state": "bound refused",
+                                        "reason": f"max_tokens_rejected:{bound}",
+                                        "effect": f"the provider refused max_tokens={bound}; generated once more without a bound",
+                                        "detail": f"{type(exc).__name__}: {str(exc)[:160]}"}}
+                    continue
+                yield {"error": True, "error_code": "litellm_error",
+                       "message": f"{type(exc).__name__}: {str(exc)[:280]}"}
+                return
+    finally:
+        _ctx.__exit__(None, None, None)
     yield {"finish": {"finish_reason": finish, "max_tokens": bound if bound_sent else None}}
 
 
@@ -2224,6 +2268,49 @@ def _bound_rejected(exc: BaseException) -> bool:
     return "max_tokens" in text or "max_completion_tokens" in text or "max output tokens" in text
 
 
+class _AttemptOutcome:
+    """One provider attempt whose outcome is only known at one of several exits.
+
+    A streaming generator can end at `done`, at an error chunk, at a non-200, or at an
+    exception, and recording at each exit duplicates the row or misses one. This records
+    exactly once, in `__exit__`, from whatever the last marker said — so the ledger keeps
+    one row per DISPATCH, which is what `attempt_ordinal` is counting."""
+
+    def __init__(self, url: str, model: str):
+        from urllib.parse import urlparse
+        self._base = dict(lane="chat_synth:ollama", model=model,
+                          provider=urlparse(url).netloc or None,
+                          limiter_admitted=False, limiter_bypassed=True,
+                          http_dispatched=True)
+        self._status = None
+        self._ok = False
+        self._error = None
+        self._t0 = time.perf_counter()
+        self._ctx = None
+
+    def status(self, code): self._status = code
+    def ok(self): self._ok = True
+    def failed(self, error_class): self._error = error_class
+
+    def __enter__(self):
+        from polymath_shared.conformance.attempts import attempt_context
+        self._ctx = attempt_context(function="CHAT", stage="answer_synthesis")
+        self._ctx.__enter__()
+        return self
+
+    def __exit__(self, *exc):
+        from polymath_shared.conformance.attempts import Attempt, record
+        err = self._error or (f"HTTP_{self._status}"
+                              if (self._status and self._status >= 400) else
+                              (None if self._ok else "INCOMPLETE_STREAM"))
+        record(Attempt(success=self._ok and err is None, http_status=self._status,
+                       error_class=err,
+                       latency_ms=int((time.perf_counter() - self._t0) * 1000),
+                       **self._base))
+        self._ctx.__exit__(*exc)
+        return False
+
+
 def _ollama_generate(model: str, query: str, bundle: dict,
                      graph_facts: list, history, carry_context,
                      reasoning: str | None = None,
@@ -2242,6 +2329,19 @@ def _ollama_generate(model: str, query: str, bundle: dict,
     yield {"prompt": _prompt_stats(messages, carry_context,
                                    sum(1 for c in (carry_context or [])[:30] if getattr(c, "preview", "")))}
 
+    # PROVIDER-ATTEMPT-LEDGER-V4: the daemon is local, but the MODEL need not be —
+    # `gemma4:31b-cloud` is in the default catalog and routes through this same daemon to
+    # a cloud service. Excluding this seam as "local" would be true of the hop and false
+    # of the spend, so it records like any other. One row per dispatch, written in a
+    # `finally` because the stream has several exits (done, error chunk, non-200, retry).
+    _out = _AttemptOutcome(f"{OLLAMA_URL}", model)
+    with _out:
+        yield from _ollama_generate_inner(_out, model, messages)
+
+
+def _ollama_generate_inner(_out, model: str, messages: list[dict]):
+    import httpx
+
     try:
         with httpx.stream(
                 "POST", f"{OLLAMA_URL}/api/chat",
@@ -2255,6 +2355,7 @@ def _ollama_generate(model: str, query: str, bundle: dict,
                       "think": os.environ.get("POLYMATH_CHAT_THINK", "off")
                                .lower() in ("1", "on", "true")},
                 timeout=httpx.Timeout(300, connect=10)) as r:
+            _out.status(r.status_code)
             if r.status_code != 200:
                 r.read()
                 # REASONING-STREAM-V1: `think` is rejected by models
@@ -2274,6 +2375,7 @@ def _ollama_generate(model: str, query: str, bundle: dict,
                 except Exception:
                     continue
                 if chunk.get("error"):
+                    _out.failed("OLLAMA_ERROR_CHUNK")
                     yield {"error": True, "error_code": "ollama_error",
                            "message": str(chunk["error"])[:300]}
                     return
@@ -2287,14 +2389,25 @@ def _ollama_generate(model: str, query: str, bundle: dict,
                 if piece:
                     yield {"token": piece}
                 if chunk.get("done"):
+                    _out.ok()
                     return
     except Exception as exc:
+        _out.failed(type(exc).__name__)
         yield {"error": True, "error_code": "ollama_unavailable",
                "message": f"{type(exc).__name__}: {exc}"[:300]}
 
 
 def _ollama_stream_plain(model: str, messages: list[dict]):
-    """Fallback stream without `think` for models that reject it."""
+    """Fallback stream without `think` for models that reject it.
+
+    Its own dispatch, so its own ledger row: the caller already recorded the attempt that
+    was refused for `think`, and a retry that also fails must not hide behind it."""
+    _out = _AttemptOutcome(f"{OLLAMA_URL}", model)
+    with _out:
+        yield from _ollama_stream_plain_inner(_out, model, messages)
+
+
+def _ollama_stream_plain_inner(_out, model: str, messages: list[dict]):
     import httpx
 
     try:
@@ -2302,6 +2415,7 @@ def _ollama_stream_plain(model: str, messages: list[dict]):
                 "POST", f"{OLLAMA_URL}/api/chat",
                 json={"model": model, "messages": messages, "stream": True},
                 timeout=httpx.Timeout(300, connect=10)) as r:
+            _out.status(r.status_code)
             if r.status_code != 200:
                 r.read()
                 yield {"error": True, "error_code": "ollama_error",
@@ -2315,6 +2429,7 @@ def _ollama_stream_plain(model: str, messages: list[dict]):
                 except Exception:
                     continue
                 if chunk.get("error"):
+                    _out.failed("OLLAMA_ERROR_CHUNK")
                     yield {"error": True, "error_code": "ollama_error",
                            "message": str(chunk["error"])[:300]}
                     return
@@ -2322,8 +2437,10 @@ def _ollama_stream_plain(model: str, messages: list[dict]):
                 if piece:
                     yield {"token": piece}
                 if chunk.get("done"):
+                    _out.ok()
                     return
     except Exception as exc:
+        _out.failed(type(exc).__name__)
         yield {"error": True, "error_code": "ollama_unavailable",
                "message": f"{type(exc).__name__}: {exc}"[:300]}
 
