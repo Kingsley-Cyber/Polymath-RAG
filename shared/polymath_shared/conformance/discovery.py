@@ -165,10 +165,17 @@ def worker_modules() -> list[dict]:
 
 
 def durable_tables(conn) -> list[dict]:
-    """Every table, with row count and last-activity where a timestamp column exists."""
+    """Every BASE TABLE, with row count and last-activity where a timestamp column
+    exists. VIEWS are excluded (PRODUCTION-CONFORMANCE-AUDIT-V1 follow-up, 2026-09-12):
+    `information_schema.tables` returns both, unfiltered, so a VIEW with no static
+    reader — which holds no storage of its own, e.g. `entity_knowledge_refusals` over
+    the live `entity_admission_decisions` table — was being classified RETIRE_CANDIDATE
+    as if dropping it would reclaim durable state. It would reclaim nothing; the
+    underlying table is the actual state, and it is audited on its own row in this
+    same list."""
     rows = conn.execute("""
         SELECT table_name FROM information_schema.tables
-         WHERE table_schema='public' ORDER BY table_name""").fetchall()
+         WHERE table_schema='public' AND table_type='BASE TABLE' ORDER BY table_name""").fetchall()
     out = []
     for (t,) in rows:
         try:

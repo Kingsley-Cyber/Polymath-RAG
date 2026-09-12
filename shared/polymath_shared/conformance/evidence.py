@@ -43,6 +43,16 @@ def reader_writer_census(tables: list[str]) -> dict[str, dict]:
     Deliberately conservative: anything ambiguous is recorded as a reader, because
     over-counting readers only DELAYS a retirement, while under-counting enables a
     wrong deletion.
+
+    `docs/` and `tests/` are NOT excluded (PRODUCTION-CONFORMANCE-AUDIT-V1 follow-up,
+    2026-09-12): they were, and it silently contradicted this function's own stated
+    philosophy — measured false negative: `tests/contracts/test_admission_boundary.py`
+    asserts `"knowledge_tier_facts" in src` (a live contract test proving the symbol
+    is load-bearing), and `docs/SEMANTIC_CONTRACTS.md`/`docs/WAY_AHEAD.md` both
+    document it, yet the census reported ZERO readers/writers and the table was
+    classified RETIRE_CANDIDATE. A contract-test assertion is exactly the kind of
+    strong, unambiguous liveness signal this function exists to catch, not the kind of
+    incidental mention worth discarding.
     """
     out: dict[str, dict] = {}
     for t in tables:
@@ -56,9 +66,7 @@ def reader_writer_census(tables: list[str]) -> dict[str, dict]:
         readers, writers = set(), set()
         for line in lines:
             f = line.split(":", 1)[0]
-            if not f.endswith((".py", ".sql", ".ts", ".tsx")):
-                continue
-            if f.startswith(("docs/", "tests/")):
+            if not f.endswith((".py", ".sql", ".ts", ".tsx", ".md")):
                 continue
             low = line.lower()
             if any(k in low for k in ("insert into", "update ", "delete from", "create table", "alter table")):
