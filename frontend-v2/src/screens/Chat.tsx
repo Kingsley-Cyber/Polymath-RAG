@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { PUBLIC_MODES } from "../lib/contracts";
@@ -7,6 +7,7 @@ import { newTurn, runTurn, type Turn } from "../lib/chat";
 import { QueryTrace } from "../components/QueryTrace";
 import { EvidenceInspector } from "../components/EvidenceInspector";
 import { AnswerReview } from "../components/AnswerReview";
+import { ModelPicker } from "../components/ModelPicker";
 
 /**
  * F2 + F3 — Chat with corpus, retrieval mode, intent, model, reasoning and streaming.
@@ -28,6 +29,13 @@ export function Chat({ corpusId }: { corpusId: string }) {
 
   const synths = useAsync((s) => api.synthesizers(s), []);
   const reasons = useAsync((s) => api.reasoningModes(s), []);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // ChatGPT-style thread: newest at the bottom, so follow it as it streams.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [turns]);
 
   async function send() {
     const q = question.trim();
@@ -49,7 +57,7 @@ export function Chat({ corpusId }: { corpusId: string }) {
   }
 
   return (
-    <div className="screen screen--wide">
+    <div className="screen screen--wide screen--chat chat">
       <div className="screen__head">
         <h1 className="screen__title">Chat</h1>
         <p className="screen__sub">
@@ -57,7 +65,7 @@ export function Chat({ corpusId }: { corpusId: string }) {
         </p>
       </div>
 
-      <div className="card" style={{ marginBottom: 14 }}>
+      <div className="card" style={{ marginBottom: 12 }}>
         <div className="row" style={{ gap: 14, alignItems: "flex-end" }}>
           <div className="field">
             <span className="label">Retrieval</span>
@@ -73,13 +81,7 @@ export function Chat({ corpusId }: { corpusId: string }) {
           </div>
           <div className="field" style={{ minWidth: 260 }}>
             <span className="label">Model</span>
-            <select value={model} onChange={(e) => setModel(e.target.value)}>
-              <option value="">backend default</option>
-              {(synths.data ?? []).map((s) => {
-                const id = s.id ?? s.name ?? "";
-                return <option key={id} value={id}>{id}</option>;
-              })}
-            </select>
+            <ModelPicker synthesizers={synths.data ?? []} value={model} onChange={setModel} />
           </div>
           <div className="field">
             <span className="label">Reasoning</span>
@@ -93,14 +95,38 @@ export function Chat({ corpusId }: { corpusId: string }) {
         </div>
       </div>
 
-      <div className="card" style={{ marginBottom: 14 }}>
-        <div className="row">
-          <input
-            type="text" style={{ flex: 1, minWidth: 300 }}
+      <div className="chat__scroll" ref={scrollRef}>
+        {turns.length === 0 ? (
+          <div className="chat__welcome">
+            <h2>Grounded answers, exact evidence.</h2>
+            <p>
+              Ask <span className="mono">{corpusId}</span> anything. Unsupported questions
+              abstain — by design.
+            </p>
+          </div>
+        ) : (
+          <div className="chat__thread">
+            {turns.map((t, i) => (
+              <TurnView key={i} t={t} models={synths.data ?? []} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="chat__composer">
+        <div className="chat__composer-inner">
+          <textarea
+            className="chat__input"
+            rows={1}
             placeholder={`Ask ${corpusId}…`}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") void send(); }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                void send();
+              }
+            }}
             disabled={busy}
           />
           <button className="btn btn--primary" onClick={() => void send()} disabled={busy || !question.trim()}>
@@ -108,14 +134,9 @@ export function Chat({ corpusId }: { corpusId: string }) {
           </button>
           {busy && <button className="btn" onClick={() => abort.current?.abort()}>Stop</button>}
         </div>
-      </div>
-
-      {turns.length === 0 && <div className="empty">No turns yet.</div>}
-
-      <div className="stack">
-        {turns.slice().reverse().map((t, i) => (
-          <TurnView key={turns.length - 1 - i} t={t} models={synths.data ?? []} />
-        ))}
+        <div className="chat__hint">
+          Enter to send · Shift+Enter for a newline · answers cite exact source spans
+        </div>
       </div>
     </div>
   );
@@ -124,9 +145,12 @@ export function Chat({ corpusId }: { corpusId: string }) {
 function TurnView({ t, models }: { t: Turn; models: Synthesizer[] }) {
   const intent = t.receipt?.chat_plan?.intent;
   return (
-    <div className="card">
-      <div className="row" style={{ justifyContent: "space-between" }}>
-        <strong>{t.question}</strong>
+    <>
+      <div className="msg-user">
+        <div className="msg-user__bubble">{t.question}</div>
+      </div>
+      <div className="card">
+      <div className="row" style={{ justifyContent: "flex-end" }}>
         <span className="row" style={{ gap: 6 }}>
           <span className="pill pill--unknown">{t.mode}</span>
           {intent && (
@@ -176,6 +200,7 @@ function TurnView({ t, models }: { t: Turn; models: Synthesizer[] }) {
           )}
         </>
       )}
-    </div>
+      </div>
+    </>
   );
 }

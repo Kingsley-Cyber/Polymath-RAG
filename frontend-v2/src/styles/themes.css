@@ -1,0 +1,100 @@
+/* FRONTEND-V2 THEMES — the nine palettes the legacy /ui carried, ported onto V2's
+   own token names (owner request 2026-09-12: "themes ... that this url has").
+
+   `data-theme` on <html> selects one; App.tsx persists the choice in localStorage.
+   The default (no attribute) stays V2's original dark instrument palette, so an
+   existing session that has never picked a theme looks exactly as before.
+
+   Each block sets ONLY surfaces, text, accent and the three status hues. The
+   status *background* tints are derived once, at the bottom, with color-mix
+   against that theme's own --bg — so a light theme gets a light tint and a dark
+   theme a dark one without 36 hand-picked values drifting out of sync. */
+
+/* ── dark ─────────────────────────────────────────────────────────────────── */
+
+[data-theme="obsidian"] {
+  --bg: #08090d;  --bg-raised: #0e1016;  --bg-sunken: #050609;
+  --line: #232a3a;  --line-soft: #161a24;
+  --fg: #e6ebf6;  --fg-dim: #8b95ac;  --fg-faint: #5d677c;
+  --accent: #7da2f5;  --accent-dim: #23304d;
+  --ok: #46d385;  --warn: #e8b64c;  --bad: #ef7b6f;  --unknown: #6e7681;
+}
+
+[data-theme="nord"] {
+  --bg: #2e3440;  --bg-raised: #353c4a;  --bg-sunken: #272c36;
+  --line: #4c566a;  --line-soft: #3b4252;
+  --fg: #eceff4;  --fg-dim: #a6b0c1;  --fg-faint: #7b8698;
+  --accent: #88c0d0;  --accent-dim: #3b4d58;
+  --ok: #a3be8c;  --warn: #ebcb8b;  --bad: #bf616a;  --unknown: #7b8698;
+}
+
+[data-theme="solar"] {
+  --bg: #002b36;  --bg-raised: #073642;  --bg-sunken: #00222b;
+  --line: #1c586a;  --line-soft: #0d4250;
+  --fg: #eee8d5;  --fg-dim: #9faaa8;  --fg-faint: #74817f;
+  --accent: #b58900;  --accent-dim: #4a3d13;
+  --ok: #859900;  --warn: #cb4b16;  --bad: #dc322f;  --unknown: #74817f;
+}
+
+[data-theme="rose"] {
+  --bg: #191118;  --bg-raised: #221722;  --bg-sunken: #130d12;
+  --line: #46304a;  --line-soft: #2d1e2c;
+  --fg: #f2e5f1;  --fg-dim: #a98da8;  --fg-faint: #806a80;
+  --accent: #ea9ac6;  --accent-dim: #4a2f40;
+  --ok: #8fd6a8;  --warn: #eec680;  --bad: #ef7f8e;  --unknown: #806a80;
+}
+
+/* espresso — dark roasted brown, cream text, copper accent */
+[data-theme="espresso"] {
+  --bg: #17100c;  --bg-raised: #201712;  --bg-sunken: #110b08;
+  --line: #403024;  --line-soft: #2b1f18;
+  --fg: #efe4d7;  --fg-dim: #a89583;  --fg-faint: #7d6d5e;
+  --accent: #d29a63;  --accent-dim: #47321f;
+  --ok: #9dbb7d;  --warn: #e2b25c;  --bad: #d97b64;  --unknown: #7d6d5e;
+}
+
+/* graphite — the mid mode: medium-luminance charcoal, neither dark nor light */
+[data-theme="graphite"] {
+  --bg: #33373e;  --bg-raised: #3b4048;  --bg-sunken: #2c3037;
+  --line: #565d69;  --line-soft: #454b55;
+  --fg: #eef1f5;  --fg-dim: #b6bdc8;  --fg-faint: #8b93a0;
+  --accent: #9db4d8;  --accent-dim: #4a5464;
+  --ok: #93c795;  --warn: #d9b877;  --bad: #d98d81;  --unknown: #8b93a0;
+}
+
+/* ── light ────────────────────────────────────────────────────────────────── */
+
+[data-theme="slate"] {
+  --bg: #f2f4f8;  --bg-raised: #ffffff;  --bg-sunken: #e8ecf3;
+  --line: #d3dae6;  --line-soft: #e2e7f0;
+  --fg: #1d2635;  --fg-dim: #5b667f;  --fg-faint: #8892a6;
+  --accent: #3465d2;  --accent-dim: #cfdcf7;
+  --ok: #15803d;  --warn: #b45309;  --bad: #b91c1c;  --unknown: #8892a6;
+}
+
+[data-theme="paper"] {
+  --bg: #f7f2e7;  --bg-raised: #fffdf6;  --bg-sunken: #efe7d4;
+  --line: #ddd2b8;  --line-soft: #e8dfca;
+  --fg: #3a3226;  --fg-dim: #6e6450;  --fg-faint: #948a74;
+  --accent: #9c621c;  --accent-dim: #ecdcc2;
+  --ok: #4d7c0f;  --warn: #a16207;  --bad: #b91c1c;  --unknown: #948a74;
+}
+
+/* champagne — warm ivory light with espresso-brown ink and muted gold accent */
+[data-theme="champagne"] {
+  --bg: #f6f0e6;  --bg-raised: #fcf8f1;  --bg-sunken: #efe6d7;
+  --line: #d8cab4;  --line-soft: #e6dbc8;
+  --fg: #3a2e22;  --fg-dim: #726149;  --fg-faint: #988770;
+  --accent: #8a6832;  --accent-dim: #e7d9bf;
+  --ok: #5f8f56;  --warn: #b3862e;  --bad: #b85c47;  --unknown: #988770;
+}
+
+/* ── derived, every theme (including the untagged default) ─────────────────── */
+
+:root,
+[data-theme] {
+  --ok-bg:      color-mix(in srgb, var(--ok) 15%, var(--bg));
+  --warn-bg:    color-mix(in srgb, var(--warn) 15%, var(--bg));
+  --bad-bg:     color-mix(in srgb, var(--bad) 15%, var(--bg));
+  --unknown-bg: color-mix(in srgb, var(--unknown) 13%, var(--bg));
+}

@@ -132,13 +132,19 @@ from starlette.exceptions import HTTPException as _StarletteHTTPExceptionV2  # n
 
 
 class _SPAStaticFilesV2(_StaticFilesV2Base):
-    """React Router (BrowserRouter) serves /v2/chat, /v2/files, etc. client-side —
-    a direct load or refresh on one of those paths is a real GET the server must
-    answer, and plain StaticFiles 404s it (confirmed live: GET /v2/files -> 404
-    before this fix). Falls back to index.html for any 404 whose last path segment
-    has no file extension, so the SPA router can take over; a genuinely missing
-    asset (e.g. /v2/assets/app-xyz.js after a stale deploy) still 404s normally
-    instead of silently becoming an HTML page.
+    """A direct load or refresh on /v2/chat, /v2/files, etc. is a real GET the
+    server must answer, and plain StaticFiles 404s it (confirmed live: GET
+    /v2/files -> 404 before this fix). Falls back to index.html for any 404 whose
+    last path segment has no file extension, so the app boots instead of erroring;
+    a genuinely missing asset (e.g. /v2/assets/app-xyz.js after a stale deploy)
+    still 404s normally instead of silently becoming an HTML page.
+
+    NOTE (corrected 2026-09-12): an earlier version of this docstring said React
+    Router/BrowserRouter owns those paths. It does not — `frontend-v2/src/App.tsx`
+    holds the screen in plain `useState<ScreenId>`, with no router at all. So the
+    contract this class actually provides is "a deep path never 404s and the app
+    boots at its default screen", NOT "the URL selects the screen". Verified live
+    in a browser: GET /v2/files returns the app, which opens on Overview.
 
     Defined at module level (not inside the `if _V2_DIST.exists()` guard below) so
     it is importable and unit-testable in any environment, even one with no local

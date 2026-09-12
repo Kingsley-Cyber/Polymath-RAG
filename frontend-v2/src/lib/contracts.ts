@@ -102,7 +102,14 @@ export interface Corpus {
 export const PUBLIC_MODES = ["HYBRID", "GRAPH", "WILDCARD"] as const;
 export type PublicMode = (typeof PUBLIC_MODES)[number];
 
-export interface Synthesizer { id?: string; name?: string; label?: string; offered?: boolean }
+/** `/synthesizers` catalog row. `provider`/`provider_label`/`model` are the
+ *  grouping fields MODEL-PICKER-V2 renders — they come from the catalog itself,
+ *  never from parsing ids (verified live: the endpoint returns all of them). */
+export interface Synthesizer {
+  id?: string; name?: string; label?: string; offered?: boolean;
+  description?: string; kind?: string; available?: boolean; default?: boolean;
+  provider?: string; provider_label?: string; model?: string;
+}
 export interface ReasoningMode { id: string; label: string; description: string }
 
 /**
