@@ -35,16 +35,26 @@ def test_a_contract_test_reference_now_counts_as_a_reader():
 
 
 def test_claim_sets_has_no_code_reader_or_writer_anywhere():
-    """claim_sets has genuinely zero CODE references anywhere outside its own
-    CREATE TABLE statement (the real RETIRE_CANDIDATE this investigation confirmed,
-    LEGACY-STATE-RETIREMENT-AUDIT-V1) — the census must still report it as code-
-    reader-and-writer-free, i.e. this fix must not make the census over-eager and
-    start inventing false positives. Doc mentions ARE expected and excluded from
-    this assertion: this investigation's own work-log/register entries now name
-    `claim_sets` by design (documenting that it's dead), which correctly makes it a
-    doc "reader" per the fixed census — that's the fix working as intended, not a
-    contradiction of "no code reads or writes it"."""
+    """claim_sets has genuinely zero real-code references anywhere outside its own
+    schema-creating migration (the RETIRE_CANDIDATE LEGACY-STATE-RETIREMENT-AUDIT-V1
+    confirmed) — the census must still report it as free of code readers/writers,
+    i.e. this fix must not make the census over-eager and start inventing false
+    positives.
+
+    Two kinds of expected self-reference are excluded below, neither a
+    contradiction of "no code reads or writes it": doc mentions (this
+    investigation's own work-log/register entries name the table by design,
+    documenting that it's dead, and one necessarily quotes the exact migration
+    phrasing that created it — exactly the fix working as intended, over-counting a
+    doc is harmless), and THIS TEST FILE ITSELF, which necessarily contains the
+    table's name and that same migration phrasing as plain text/fixture values, not
+    a real SQL reference — now caught by both the reader and writer scan since
+    `tests/` is no longer excluded."""
+    this_file = "tests/determinism/test_conformance_state_census.py"
+
+    def _real_code(paths):
+        return [p for p in paths if not p.startswith("docs/") and p != this_file]
+
     census = reader_writer_census(["claim_sets"])
-    code_readers = [r for r in census["claim_sets"]["readers"] if not r.startswith("docs/")]
-    assert code_readers == [], code_readers
-    assert census["claim_sets"]["writers"] == []
+    assert _real_code(census["claim_sets"]["readers"]) == []
+    assert _real_code(census["claim_sets"]["writers"]) == []
