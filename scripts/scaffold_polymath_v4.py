@@ -447,6 +447,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-12-aggregate-e2e-and-legacy-retirement-closure.md", "md", None),
     ("docs/wiki/work-log/2026-09-12-pre-existing-test-failure-root-cause-and-fixes.md", "md", None),
     ("docs/wiki/work-log/2026-09-12-frontend-v2-parity-themes-collapse-composer.md", "md", None),
+    ("docs/wiki/work-log/2026-09-12-public-chain-cutover-and-cache-verification.md", "md", None),
     ("stores/postgres/migrations/0057_extract_operational_projection.sql", "sql", None),
     ("shared/polymath_shared/extract_projection.py", "py", None),
     ("scripts/backfill_extract_projection.py", "py", None),
