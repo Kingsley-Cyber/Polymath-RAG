@@ -16,9 +16,134 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.213–11.220; the file is append-only and now runs to 11.220) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (latest rows 11.213–11.221; the file is append-only and now runs to 11.221) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-12T07:05 — EXECUTION AUTHORITY: all named next actions exhausted to genuine verdicts; three real owner-only gates remain, nothing else)
+## Latest checkpoint (2026-09-12T07:10 — EXECUTION AUTHORITY: fresh full re-read of the authority doc cross-checked section-by-section; §12 legacy-checklist + §20A outbox gate now closed with live proof; same three owner-only gates remain, now evidenced more precisely)
+
+**Branch `architecture/evidence-first-v5` @ (pending this checkpoint's commit); worktree
+clean pre-commit; guards green.** Register **11.221**.
+
+Direct continuation — this segment responded to a THIRD Stop-hook rejection, which
+did not dispute the three named blockers themselves but challenged whether they had
+been verified against a FRESH full read of `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md`
+(not session memory), and whether any other mandatory gate had been missed. Re-read the
+complete 428-line/25-section document fresh, then cross-checked every section with an
+explicit gate (`<mandatory_completion_gate>` §20A, `<global_target>`/
+`<additional_global_requirements>` §22, `<completion_gate>`/
+`<frontend_v2_real_url_cutover_gate>` §23, `<non_negotiable_completion_rule>`) against
+this session's actual completed work, not against memory of having done so.
+
+### What the fresh cross-check found
+
+Two sections had NOT been individually verified by either prior audit this session
+(11.218 covered dead tables; 11.220 covered disabled lanes) — a real gap the hook's
+suspicion was right to flag, even though it turned out to resolve to "already satisfied"
+rather than "needs new code":
+
+12. **LEGACY-PROBE-AND-OUTBOX-SCOPE-VERIFICATION-V1 (11.221).** §12 names an exact
+    8-item legacy/transitional checklist (`parent_enrichment`, `parent_summaries`,
+    `summary_jobs`, `retrieval_summaries`, `document_summaries`, `hybrid-retrieval-v1`,
+    `retrieval:v1`, `query_ready`) that neither prior audit had run against by name.
+    Discovered this exact list already exists as `LEGACY_PROBES` in
+    `discovery.py::legacy_scan()` (built in a PRIOR session, register 11.209) — ran it
+    live rather than re-deriving a duplicate census. **Result: 0 of 8 classify
+    RETIRE_CANDIDATE/DEAD_PROVEN** — six are unambiguously live production
+    infrastructure (`test_only=false`, `docs_only=false`, hit counts 130-1022 across
+    15-49 non-test code files each); `hybrid-retrieval-v1` is the documented,
+    intentional `/retrieve`+`/ask`+TRAIL rollback plan-version (LEGACY_REQUIRED, matches
+    §10's explicit "do not remove rollback behavior until cleared"); `retrieval:v1`'s 4
+    hits are the census tool's own probe-list literal, not a subsystem. Separately,
+    hand-grepped all 48 `outbox_events` call sites repo-wide and confirmed §20A's
+    `phase_h_outbox_scope_fix` / §22's "OUTBOX AGGREGATION IS CORPUS/DOCUMENT-SCOPED"
+    is **already satisfied** by the current, pre-existing query in
+    `document_status.py::corpus_document_summaries` (corpus-scoped via
+    `payload->>'doc_id' = ANY(%s)` inside the join itself — confirmed via `git log -L`
+    blame that this predates 11.214, which only swapped the selected columns).
+    `control_plane_status.py` has zero `outbox_events` references. Live
+    `EXPLAIN (ANALYZE, BUFFERS)` across all 3 real corpora confirms an indexed
+    nested-loop join (`outbox_events_run_type_idx`), zero sequential scan, 0.6-4.5ms —
+    direct proof, not inference, satisfying the gate's literal text. The authority
+    document's own described anti-pattern names a `doc_version_id` column that does not
+    exist anywhere in this repo's schema (one unrelated historical eval-script hit
+    only) — consistent with §20A's own caveat that its baseline is "evidence from the
+    prior profiling session, not permanent constants," and with §2's truth hierarchy
+    (live runtime/current worktree code outrank this file when they conflict).
+13. **Frontend V2 cutover gate — precisely scoped the existing blocker.** §23's
+    `frontend_v2_real_url_cutover_gate` requires verifying chat/Files/Graph/Control
+    Plane through the real URL with no blocking console errors. Checked exactly how
+    much of that is reachable without the Caddy basic-auth password (previously just
+    asserted as blocked, never proven): `curl https://rag.kingsleylab.xyz/` → **302 to
+    `/v2/`, unauthenticated** (this much was already verified pre-checkpoint); but
+    `/v2/` itself AND every API path (`/api/control_plane` included) return **401 with
+    `WWW-Authenticate: Basic realm="restricted"`** — Cloudflare/Caddy gates the entire
+    in-app surface, not just part of it. Confirms the blocker's scope is exactly as
+    wide as previously claimed (the whole in-app checklist), not overstated, and that
+    no unauthenticated partial verification was left undone.
+
+### Exhaustive section-by-section pass against the fresh read (not memory)
+
+- §1 execution law, §2 truth hierarchy, §3 bootstrap: followed throughout; no
+  destructive commands run; local truth never overwritten by this file.
+- §4 known current state: control-plane readiness composition and `parent_enrichment`
+  KEEP verified still true (11.221 re-confirms the KEEP verdict independently).
+- §5-10 frozen architecture / retrieval modes / engine convergence / immediate subtask
+  / acceptance / continuous execution: DONE this session (retrieve.py GRAPH+WILDCARD
+  11.213, evidence.py GRAPH+HYBRID 11.217); FAST/LEGACY/VECTOR intentionally retained
+  per the doc's own §6 ("keep LEGACY/FAST/VECTOR available where diagnostics/rollback
+  legitimately require them").
+- §11-12 retirement law + legacy targets: DONE (11.218 state tables, 11.220 disabled
+  lanes, 11.221 the 8-item code/config checklist). Zero pending classification.
+- §13 readiness invariants: DONE, pre-existing + re-verified live this session.
+- §14-18 provider/model audit: L0 static confirmed solid, re-fires identically
+  (RUN1→RUN2 PASS); L2-L5 requires `--live-canary` against 46 lanes, genuinely gated by
+  the explicit "unapproved material provider spend" owner gate (§1) — not something
+  static verification can partially close, since L2 (FUNCTION CONTRACT) through L5
+  (PRODUCT E2E) are explicitly defined as requiring live dispatch, not schema checks.
+- §19 cinema/pMAP safety: respected, untouched, no forensic hold violated.
+- §20 test/guard discipline: followed for every slice this session.
+- §20A hot-path migration: DONE in full including the OUTBOX sub-gate (11.214, 11.215,
+  11.219, 11.221) — the `<mandatory_completion_gate>` SEMANTICS/WRITE PATH/GRAPH-FILES-
+  CONTROL-PLANE/OUTBOX/PERFORMANCE/REGRESSION/RE-FIRE clauses are each independently
+  evidenced above and in the referenced work-logs.
+- §21 commit/push discipline: every slice committed narrowly, pushed, remote HEAD
+  verified equal to local HEAD after each.
+- §22 global completion target: every bullet true EXCEPT L2-L5 live-canary execution
+  (spend-gated).
+- §23 final completion gates: retrieval bullets DONE; evidence/readiness/frontend
+  bullets DONE; legacy retirement DONE; provider/model audit framework re-fire DONE for
+  L0; remote delivery DONE (verified below); frontend cutover gate's redirect verified,
+  in-app checklist blocked by credentials not held (scope precisely confirmed, not
+  assumed, this checkpoint).
+- §25 / `<non_negotiable_completion_rule>`: implementation finished for everything not
+  spend/credential/schema-deletion-gated; tests/guards/E2E passed; commits coherent;
+  pushed; remote verified; zero intended unpushed commits after this checkpoint's
+  commit; the three named items are the ONLY safe-executable-work exceptions, and each
+  maps to one of the rule's own explicit external-blocker categories.
+
+**The same three items remain, now each individually re-confirmed against the fresh
+read rather than carried from memory:**
+
+1. `claim_sets` deletion — fully proven dead (11.218), blocked only by the explicit
+   "destructive production data/schema deletion" owner gate (§1).
+2. L2-L5 live-canary execution (46 lanes) — schema/plumbing confirmed correct and
+   honest; blocked only by the explicit "unapproved material provider spend" owner gate
+   (§1); L2-L5 are defined (§16) as requiring live dispatch, so no further static work
+   partially closes this.
+3. Final authenticated human spot-check of `https://rag.kingsleylab.xyz`'s in-app
+   surface — blocked by not having (and correctly not seeking/guessing) the Caddy
+   basic-auth password; now proven (not assumed) that this blocks 100% of the in-app
+   checklist, since even API paths 401. The redirect itself (`/` → `/v2/`) IS verified,
+   unauthenticated.
+
+### NEXT ACTION
+
+None remain that are both safe and unblocked under this authority. All three items
+above require an explicit owner action (schema-deletion go/no-go; spend authorization;
+or the owner visiting the URL themselves with their own credentials). Every other gate
+named anywhere in the fresh-read authority document has been executed, tested, and
+live-verified this session — not merely described, and not merely recalled from memory.
+
+## Prior checkpoint (2026-09-12T07:05 — EXECUTION AUTHORITY: all named next actions exhausted to genuine verdicts; three real owner-only gates remain, nothing else)
 
 **Branch `architecture/evidence-first-v5` @ `f460fc8`; worktree clean; guards green;
 PUSHED through `f460fc8` (fast-forward chain continuing from the prior checkpoint's
