@@ -161,11 +161,27 @@ def submit(conn, run_id: str, submission: dict[str, Any], directory: Path | None
     return status(conn, run_id, directory)
 
 
-def cancel(conn, run_id: str, directory: Path | None = None) -> dict[str, Any]:
+def cancel(conn, run_id: str, directory: Path | None = None,
+           external_cancel: Callable[[dict[str, Any]], dict[str, Any] | None] | None = None) -> dict[str, Any]:
+    """Cancel the run (terminal, idempotent). If the current step holds a NON-terminal external operation and a cancel
+    callable is supplied, it is invoked best-effort (its outcome or error is recorded on the receipt; cancel never blocks)."""
     loaded = store.load_run(conn, run_id, for_update=True)
     if not loaded:
         raise UnknownRun(run_id)
     state, _ = loaded
+    if state.terminal:
+        return status(conn, run_id, directory)
+    row = store.current_step(conn, run_id)
+    ext = (row or {}).get("external_operation")
+    if ext and ext.get("phase") != "TERMINAL" and external_cancel is not None:
+        try:
+            updated = external_cancel(ext)
+            if updated:
+                assert_valid("external_operation_receipt", updated)
+                store.finish_step(conn, run_id, row["sequence"], status=row["status"], receipt=None, external=updated)
+        except Exception as exc:  # noqa: BLE001 — best effort; the run still cancels
+            ext2 = {**ext, "failure": {"code": "EXTERNAL_CANCEL_FAILED", "message": f"{type(exc).__name__}: {exc}"[:2000]}}
+            store.finish_step(conn, run_id, row["sequence"], status=row["status"], receipt=None, external=ext2)
     store.save_state(conn, T.cancel_run(state))
     return status(conn, run_id, directory)
 
@@ -203,6 +219,8 @@ def advance(conn, run_id: str, executors: dict[str, Executor], *, max_steps: int
             step = dict(row["step"])
             if row.get("external_operation"):
                 step["_external_receipt"] = row["external_operation"]
+            if row.get("output"):
+                step["_partial_output"] = row["output"]
         else:
             try:
                 state, step = T.issue_step(m, state, issued_at=now_iso(), evidence_refs=_context_refs(state),
@@ -249,7 +267,8 @@ def advance(conn, run_id: str, executors: dict[str, Executor], *, max_steps: int
             ext = outcome.get("external")
             if ext:
                 assert_valid("external_operation_receipt", ext)
-            store.finish_step(conn, run_id, step["sequence"], status="issued", receipt=None, external=ext)
+            store.finish_step(conn, run_id, step["sequence"], status="issued", receipt=None, external=ext,
+                              output=outcome.get("output"))          # composite progress survives the pause
             state = T.replace(state, status="running")
             store.save_state(conn, state)
             break
@@ -352,6 +371,12 @@ def _compile_result(conn, run_id: str, state: RunState, m: Manifest, *, output: 
         if e:
             ext_ops.append({"external_system": e["external_system"], "operation_kind": e.get("operation_kind"), "operation_id": e["operation_id"],
                             "record_ids": list(e.get("record_ids") or [])})
+    # composite steps (e.g. batch acquire + per-artifact extraction) report their sub-operations on the step output
+    for out in state.outputs.values():
+        for e in (out or {}).get("_external_operations") or []:
+            if e.get("operation_id") and e["operation_id"] not in {x["operation_id"] for x in ext_ops}:
+                ext_ops.append({"external_system": e.get("external_system", "trailsignal"), "operation_kind": e.get("operation_kind"),
+                                "operation_id": e["operation_id"], "record_ids": list(e.get("record_ids") or [])})
     terminal_status = {"completed": "completed", "terminal_gap": "terminal_gap", "cancelled": "cancelled", "failed": "failed"}.get(state.status, "completed")
     res = {"run_id": run_id, **m.identity, "status": terminal_status, "started_at": _ts(meta["created_at"]),
            "terminal_at": _ts(meta["terminal_at"]) or now_iso(), "output": output,
