@@ -1,0 +1,209 @@
+{
+  "method": "read-only, local sidecars, no external spend \u2014 direct Python calls to v1 (graph_retrieve/wildcard_retrieve) and v2 (chat_retrieve_mode) on the same query per corpus; no mutation, no provider spend.",
+  "verdict": {
+    "graph_shape": "CHANGED_BY_DESIGN \u2014 v1 nests evidence under documents[].sections[].evidence; v2 is the flat evidence/selected_documents/selected_sections contract already used by /chat and /compare. graph_relationships (same per-item shape: fact_id/predicate/subject_id/subject/object_id/object) is common to both and present on every corpus.",
+    "wildcard_shape": "NEAR_IDENTICAL \u2014 v2 keys are a proper subset of v1's; the only field v1 has that v2 lacks is entity_card_lane, which has zero readers repo-wide (grep: only assigned in fast.py, never read). wildcard bridge count matches exactly (3/3) on every corpus.",
+    "both_engines_succeed_all_corpora": true,
+    "migration_safe": true
+  },
+  "rows": [
+    {
+      "corpus": "rag-canary",
+      "query": "What is the baseline relationship for Method ZQX-59622?",
+      "graph": {
+        "v1_keys": [
+          "documents",
+          "graph_relationships",
+          "meta",
+          "query",
+          "trace",
+          "unassigned_rescue_evidence"
+        ],
+        "v2_keys": [
+          "evidence",
+          "graph_relationships",
+          "meta",
+          "query",
+          "selected_documents",
+          "selected_sections",
+          "trace"
+        ],
+        "v1_document_count": 5,
+        "v2_evidence_count": 15,
+        "v1_graph_fact_count": 10,
+        "v2_graph_fact_count": 10,
+        "graph_relationships_key_present_both": true,
+        "v1_ok": true,
+        "v2_ok": true,
+        "v1_ms": 2646.8,
+        "v2_ms": 3078.5
+      },
+      "wildcard": {
+        "v1_keys": [
+          "entity_card_lane",
+          "evidence",
+          "meta",
+          "query",
+          "selected_documents",
+          "selected_sections",
+          "trace",
+          "wildcard"
+        ],
+        "v2_keys": [
+          "evidence",
+          "meta",
+          "query",
+          "selected_documents",
+          "selected_sections",
+          "trace",
+          "wildcard"
+        ],
+        "keys_only_in_v1": [
+          "entity_card_lane"
+        ],
+        "keys_only_in_v2": [],
+        "v1_evidence_count": 12,
+        "v2_evidence_count": 15,
+        "v1_wildcard_bridge_count": 3,
+        "v2_wildcard_bridge_count": 3,
+        "bridge_count_matches": true,
+        "v1_ok": true,
+        "v2_ok": true,
+        "v1_ms": 3416.9,
+        "v2_ms": 1078.4
+      }
+    },
+    {
+      "corpus": "ecom-meta-v1",
+      "query": "What are the product return policies?",
+      "graph": {
+        "v1_keys": [
+          "documents",
+          "graph_relationships",
+          "meta",
+          "query",
+          "trace",
+          "unassigned_rescue_evidence"
+        ],
+        "v2_keys": [
+          "evidence",
+          "graph_relationships",
+          "meta",
+          "query",
+          "selected_documents",
+          "selected_sections",
+          "trace"
+        ],
+        "v1_document_count": 5,
+        "v2_evidence_count": 15,
+        "v1_graph_fact_count": 9,
+        "v2_graph_fact_count": 12,
+        "graph_relationships_key_present_both": true,
+        "v1_ok": true,
+        "v2_ok": true,
+        "v1_ms": 3401.6,
+        "v2_ms": 4391.8
+      },
+      "wildcard": {
+        "v1_keys": [
+          "entity_card_lane",
+          "evidence",
+          "meta",
+          "query",
+          "selected_documents",
+          "selected_sections",
+          "trace",
+          "wildcard"
+        ],
+        "v2_keys": [
+          "evidence",
+          "meta",
+          "query",
+          "selected_documents",
+          "selected_sections",
+          "trace",
+          "wildcard"
+        ],
+        "keys_only_in_v1": [
+          "entity_card_lane"
+        ],
+        "keys_only_in_v2": [],
+        "v1_evidence_count": 12,
+        "v2_evidence_count": 15,
+        "v1_wildcard_bridge_count": 3,
+        "v2_wildcard_bridge_count": 3,
+        "bridge_count_matches": true,
+        "v1_ok": true,
+        "v2_ok": true,
+        "v1_ms": 7761.1,
+        "v2_ms": 1224.0
+      }
+    },
+    {
+      "corpus": "cinema",
+      "query": "How is lighting used to build tension in a scene?",
+      "graph": {
+        "v1_keys": [
+          "documents",
+          "graph_relationships",
+          "meta",
+          "query",
+          "trace",
+          "unassigned_rescue_evidence"
+        ],
+        "v2_keys": [
+          "evidence",
+          "graph_relationships",
+          "meta",
+          "query",
+          "selected_documents",
+          "selected_sections",
+          "trace"
+        ],
+        "v1_document_count": 5,
+        "v2_evidence_count": 15,
+        "v1_graph_fact_count": 20,
+        "v2_graph_fact_count": 20,
+        "graph_relationships_key_present_both": true,
+        "v1_ok": true,
+        "v2_ok": true,
+        "v1_ms": 7369.2,
+        "v2_ms": 5352.1
+      },
+      "wildcard": {
+        "v1_keys": [
+          "entity_card_lane",
+          "evidence",
+          "meta",
+          "query",
+          "selected_documents",
+          "selected_sections",
+          "trace",
+          "wildcard"
+        ],
+        "v2_keys": [
+          "evidence",
+          "meta",
+          "query",
+          "selected_documents",
+          "selected_sections",
+          "trace",
+          "wildcard"
+        ],
+        "keys_only_in_v1": [
+          "entity_card_lane"
+        ],
+        "keys_only_in_v2": [],
+        "v1_evidence_count": 12,
+        "v2_evidence_count": 15,
+        "v1_wildcard_bridge_count": 3,
+        "v2_wildcard_bridge_count": 3,
+        "bridge_count_matches": true,
+        "v1_ok": true,
+        "v2_ok": true,
+        "v1_ms": 13851.1,
+        "v2_ms": 3629.0
+      }
+    }
+  ]
+}

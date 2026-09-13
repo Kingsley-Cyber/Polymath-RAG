@@ -1,0 +1,166 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "polymath/contracts/adapter/v1/adapter_step.schema.json",
+ "title": "AdapterStepV1",
+ "description": "One issued step. For AGENT_REASON it carries the exact objective, bounded evidence refs, constraints, the required output schema and acceptance rules; the connected agent answers with an AdapterSubmissionV1.",
+ "type": "object",
+ "required": [
+  "run_id",
+  "step_id",
+  "step_type",
+  "sequence",
+  "issued_at",
+  "objective",
+  "context",
+  "output_schema"
+ ],
+ "properties": {
+  "run_id": {
+   "type": "string",
+   "pattern": "^adr_[0-9a-f]{16,64}$"
+  },
+  "step_id": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 200
+  },
+  "step_type": {
+   "enum": [
+    "POLYMATH_RETRIEVE",
+    "POLYMATH_COMPILE_PLAN",
+    "POLYMATH_GRAPH_EXPAND",
+    "EXTERNAL_OPERATION",
+    "AGENT_REASON",
+    "VALIDATE",
+    "BRANCH",
+    "COMPILE_RESULT"
+   ]
+  },
+  "sequence": {
+   "type": "integer",
+   "minimum": 1
+  },
+  "issued_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "objective": {
+   "type": "string",
+   "maxLength": 4000
+  },
+  "context": {
+   "type": "object",
+   "additionalProperties": false,
+   "properties": {
+    "evidence_refs": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "required": [
+       "kind",
+       "id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "kind": {
+        "enum": [
+         "chunk",
+         "document",
+         "graph_fact",
+         "graph_hop",
+         "parent_map",
+         "query_receipt",
+         "trail_record",
+         "step_output"
+        ]
+       },
+       "id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+       },
+       "corpus_id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+       },
+       "doc_id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+       },
+       "score": {
+        "type": "number"
+       },
+       "note": {
+        "type": "string",
+        "maxLength": 500
+       }
+      }
+     },
+     "maxItems": 500
+    },
+    "inputs": {
+     "type": "object"
+    },
+    "prior_step_ids": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+     }
+    }
+   }
+  },
+  "constraints": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "maxLength": 500
+   }
+  },
+  "output_schema": {
+   "type": "object"
+  },
+  "acceptance_rules": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "maxLength": 500
+   }
+  },
+  "external": {
+   "type": [
+    "object",
+    "null"
+   ],
+   "required": [
+    "system",
+    "operation_kind"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "system": {
+     "enum": [
+      "trailsignal"
+     ]
+    },
+    "operation_kind": {
+     "type": "string"
+    },
+    "request": {
+     "type": "object"
+    }
+   }
+  },
+  "expires_at": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "format": "date-time"
+  }
+ },
+ "additionalProperties": false
+}

@@ -87,6 +87,16 @@ export interface Retrieval {
   wildcard?: WildcardBridge[] | null;
   evidence_count: number;
   graph_fact_count?: number;
+  /** CHAT-QUERY-COMPILER receipt (read-only): the compiler-DERIVED query intent
+   * + plan. Displayed, never set — intent is classified by the backend from the
+   * question, not chosen in the UI. */
+  chat_plan?: {
+    intent?: string;
+    task_type?: string;
+    response_type?: string;
+    graph_useful?: boolean;
+    compiler?: string;
+  };
   chunks: ChunkRef[];
   counts?: Record<string, number>;
   /** Lanes that degraded rather than failing (e.g. parked reranker). */
@@ -159,6 +169,51 @@ export interface DocumentRow {
   parents?: number;
   enriched?: number;
   enrich_failed?: number;
+  // RAG-PIPELINE-FINISH Phase 18: active parent maps (vNext pMAP coverage) for the row badge.
+  map_active?: number;
+}
+
+// Per-document OPERATIONAL summary for the Files list columns (GET /documents/summary).
+export interface DocSummary {
+  children: number;
+  parents: number;
+  map_eligible: number;
+  map_active: number;
+  map_excluded: number;
+  map_unresolved: number;
+  profile_present: boolean;
+  profile_vnext: boolean;
+  graph_entities: number | null;
+  graph_relations: number | null;
+  vnext_ready: boolean;
+}
+
+// CANONICAL-DOCUMENT-STATUS-V1 (GET /documents/{doc_id}/status, detail) — the diagnostic
+// drawer's fields. The endpoint returns more; this types the rendered subset.
+export interface DocumentStatus {
+  found: boolean;
+  vnext_ready?: boolean;
+  elapsed_s?: number | null;
+  identity?: { doc_id: string; corpus_id: string; source_name: string; bytes?: number | null; run_id?: string | null };
+  chunks?: { children_total: number; parents_total: number };
+  profile?: { present: boolean; valid: boolean; vnext: boolean; quality?: number | null;
+              projected?: boolean; model?: string | null;
+              prompt_version?: string | null; compiler_version?: string | null };
+  pmap?: { schema?: string | null; eligible?: number; mapped_active?: number; excluded?: number;
+           unresolved?: number; batches_total?: number; batches_done?: number; batches_partial?: number;
+           coverage_pct?: number | null; http_dispatches?: number; parents_mapped?: number;
+           limiter_refusals?: number; http_429?: number; maps_per_request?: number | null;
+           model?: string | null; qualified_batch?: number | null; architectural_target?: number;
+           projection_points?: number | null };
+  graph?: { neighborhoods_total?: number | null; neighborhoods_dropped?: number | null;
+            neighborhoods_unaccounted?: number | null; entities?: number | null;
+            entities_rejected?: number | null; facts?: number | null; distinct_predicates?: number | null;
+            relations?: number | null; provider?: string | null; pool?: string } | null;
+  projections?: { child_qdrant?: boolean; graph_neo4j?: boolean; pmap_qdrant_points?: number | null;
+                  profile_qdrant?: boolean | null } | null;
+  state?: { run_status?: string | null; vnext_ready?: boolean; corpus_vnext_verdict?: string };
+  stages?: { stage: string; status: string; attempt: number; last_error?: string | null }[];
+  blockers?: string[];
 }
 
 export interface RunRow {
@@ -167,4 +222,73 @@ export interface RunRow {
   created_at: string;
   /** Latest stage failure note (e.g. a duplicate-document refusal). */
   error?: string | null;
+}
+
+// CONTROL-PLANE-STATUS-V1 (GET /control_plane): the machinery-health authority.
+// One shape covers both provider blocks (graph extraction + pMAP conservation);
+// each field is optional so a pool renders only the counters it actually has.
+export interface PoolProvider {
+  provider_requests?: number;
+  // GRAPH_EXTRACTION
+  neighborhoods_sent?: number;
+  neighborhoods_unaccounted?: number;
+  neighborhoods_dropped?: number;
+  entities?: number;
+  relations?: number;
+  // PMAP conservation — limiter_refused (LOCAL, 0 HTTP) is NEVER http_429 (provider).
+  limiter_refused?: number;
+  http_429?: number;
+  transport_errors?: number;
+  empty_completions?: number;
+  valid_maps_persisted?: number;
+  maps_per_request?: number;
+}
+
+export interface PoolLaneSummary {
+  active: number;
+  total: number;
+  credential_absent?: number;
+  disabled?: number;
+  active_lanes?: string[];
+}
+
+export interface PoolStatus {
+  lanes: PoolLaneSummary;
+  queued?: number;
+  processing?: number;
+  retry?: number;
+  failed?: number;
+  provider?: PoolProvider;
+  /** CHAT is a latency pool, not an ingestion queue. */
+  latency_pool?: boolean;
+}
+
+export interface ControlPlane {
+  contract: string;
+  corpus_id: string;
+  summary: { documents: number; semantic_ready: number; processing: number; blocked: number };
+  pools: Record<string, PoolStatus>;
+}
+
+// Per-function model → account/key lane detail (GET /control_plane/pool/{function}).
+// account_env is the env NAME only — the endpoint NEVER returns a secret value.
+export interface LaneDetail {
+  lane: string;
+  account_env: string;
+  configured: boolean;
+  reachability: string;
+  role: string;
+  family?: string;
+  capacity?: { rpm?: number; tpm?: number; rpd?: number; concurrency?: number; map_batch_cap?: number };
+  live?: { day_count?: number; effective?: number; ceiling?: number; decreases?: number; increases?: number };
+}
+
+export interface PoolLanesDetail {
+  function: string;
+  models: { model: string; lanes: LaneDetail[] }[];
+}
+
+export interface PredicateRow {
+  predicate: string;
+  count: number;
 }

@@ -25,24 +25,30 @@ def _lane(**over):
     return AdaptiveLimiter("t", ProviderLimit(**spec))
 
 
-def test_ceiling_adoption_grows_and_clamps():
-    lane = _lane(rpm=30)
-    lane._sync_headers({"x-ratelimit-limit-requests": "60"})
-    assert lane._rpm.capacity == 60.0            # provider said more
-    lane._sync_headers({"x-ratelimit-limit-requests": "10"})
-    assert lane._rpm.capacity == 60.0            # grow-only
-    lane._sync_headers({"x-ratelimit-limit-requests": "100000"})
-    assert lane._rpm.capacity == 30 * CEILING_ADOPT_MAX_MULTIPLE
-    assert lane.state()["adopted_rpm"] == 30 * CEILING_ADOPT_MAX_MULTIPLE
+# GROQ-MAP-CONTROL-PLANE-REPAIR-V1: ceiling adoption is a TOKENS-only channel.
+# The prior form of these two tests adopted `x-ratelimit-limit-requests` (a
+# DAILY/RPD budget on Groq) into the per-MINUTE `_rpm` bucket — that was the
+# Target-A category error. They are superseded to the correct token channel;
+# the requests→RPM path is now asserted absent in
+# tests/determinism/test_limiter_control_plane.py.
+def test_token_ceiling_adoption_grows_and_clamps():
+    lane = _lane(tpm=10000)
+    lane._sync_headers({"x-ratelimit-limit-tokens": "20000"})
+    assert lane._tpm.capacity == 20000.0            # provider said more
+    lane._sync_headers({"x-ratelimit-limit-tokens": "5000"})
+    assert lane._tpm.capacity == 20000.0            # grow-only
+    lane._sync_headers({"x-ratelimit-limit-tokens": "100000000"})
+    assert lane._tpm.capacity == 10000 * CEILING_ADOPT_MAX_MULTIPLE
+    assert lane.state()["adopted_tpm"] == 10000 * CEILING_ADOPT_MAX_MULTIPLE
 
 
-def test_adopted_ceiling_survives_restore():
+def test_adopted_token_ceiling_survives_restore():
     lane = _lane()
-    lane._sync_headers({"x-ratelimit-limit-requests": "90"})
+    lane._sync_headers({"x-ratelimit-limit-tokens": "30000"})
     saved = lane.state()
     fresh = _lane()
     assert fresh.restore(saved)
-    assert fresh._rpm.capacity == 90.0
+    assert fresh._tpm.capacity == 30000.0
 
 
 def test_rpd_budget_refuses_when_spent_and_restores():

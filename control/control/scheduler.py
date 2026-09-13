@@ -298,6 +298,102 @@ def auto_enrich_on_chunks(conn: Connection) -> int:
     return minted
 
 
+def auto_map_parents_on_chunks(conn: Connection) -> int:
+    """DOC-PARENT-MAP AUTO-MINT (RAG-PIPELINE-FINISH): mint the pMAP stage for a run
+    once its parents exist (intake done), so a FRESH upload produces grounded maps and
+    can reach VNEXT_COMPLETE. Mirrors `auto_enrich_on_chunks` exactly (pMAP is OUTSIDE
+    STAGE_DAG, like parent_enrichment). FLAG-GATED + hold-safe: disabled by default
+    (no ticket minted → byte-identical current behavior, zero spend); an optional
+    single-corpus scope keeps the cinema corpus untouched during the bounded canary.
+    Fail-open per run."""
+    from polymath_shared.document_profile.map_trigger import (
+        doc_parent_map_corpus_scope,
+        doc_parent_map_enabled,
+        doc_parent_map_since,
+        mint_doc_parent_map,
+    )
+    if not doc_parent_map_enabled():
+        return 0
+    scope = doc_parent_map_corpus_scope()
+    since = doc_parent_map_since()
+    # run-based filter (mint + doc_profile-early): optional single-corpus scope AND/OR a
+    # NEW-UPLOADS-ONLY created-after boundary. With SINCE set and NO corpus scope, every
+    # FRESH upload (created after the boundary) is mapped while cinema and every existing
+    # run created before it is NEVER swept — the forensic-hold-safe production config.
+    run_filter, run_params = "", []
+    if scope:
+        run_filter += " AND r.corpus_id = %s"; run_params.append(scope)
+    if since:
+        run_filter += " AND r.created_at > %s::timestamptz"; run_params.append(since)
+    rows = conn.execute(
+        f"""
+        SELECT r.run_id, r.corpus_id
+          FROM runs r
+          JOIN stage_tickets t ON t.run_id = r.run_id
+               AND t.stage = 'intake' AND t.status = 'done'
+         WHERE r.status IN ('intake', 'reconciling', 'degraded', 'query_ready')
+           AND r.superseded_by_run_id IS NULL {run_filter}
+           AND NOT EXISTS (SELECT 1 FROM stage_tickets e
+                            WHERE e.run_id = r.run_id AND e.stage = 'doc_parent_map')
+           AND NOT EXISTS (SELECT 1 FROM archived_corpora ac
+                            WHERE ac.corpus_id = r.corpus_id)
+        """, run_params).fetchall()
+    # RESCUE: a ready/failed pMAP ticket whose event was already consumed is unreachable;
+    # re-minting re-opens it (the NOT EXISTS stops re-firing once an undelivered event waits).
+    # Scope-only: a stranded ticket only EXISTS for a run that already passed the mint guards
+    # (corpus + SINCE), so re-arming it can never sweep an out-of-scope/historical run.
+    stranded_filter = "AND t.corpus_id = %s" if scope else ""
+    stranded_params = [scope] if scope else []
+    stranded = conn.execute(
+        f"""
+        SELECT t.run_id, t.corpus_id
+          FROM stage_tickets t
+         WHERE t.stage = 'doc_parent_map'
+           AND t.status IN ('ready', 'failed') {stranded_filter}
+           AND NOT EXISTS (SELECT 1 FROM outbox_events e
+                            WHERE e.run_id = t.run_id
+                              AND e.event_type = 'doc_parent_map.v1'
+                              AND e.delivered_at IS NULL)
+        """, stranded_params).fetchall()
+    minted = 0
+    for run_id, corpus_id in list(rows) + list(stranded):
+        try:
+            mint_doc_parent_map(conn, corpus_id=corpus_id, run_id=run_id)
+            minted += 1
+        except Exception:  # noqa: BLE001 — fail-open per run (never break the tick)
+            import logging
+            logging.getLogger("control-schedule").warning(
+                "auto pMAP mint failed open for %s", run_id[:20],
+                extra={"error_code": "AUTO_PMAP_MINT_FAILED"})
+    # DOC-PROFILE EARLY (RAG-PIPELINE-FINISH): the vNext readiness floor also needs a
+    # vNext doc_profile, but doc_profile sits LAST in STAGE_DAG (after four summary LLM
+    # stages), so a fresh doc cannot reach VNEXT_COMPLETE within the canary's 4-min window.
+    # doc_profile only needs chunks (present at intake), so — like pMAP — fire it EARLY for
+    # the SAME scoped runs, in parallel with the legacy chain. `_emit_ticket_event` is the
+    # canonical emission (idempotent), so chain advancement later sees it already done.
+    from control.tickets import _emit_ticket_event, ticket_id
+    profile_rows = conn.execute(
+        f"""
+        SELECT r.run_id
+          FROM runs r
+          JOIN stage_tickets t ON t.run_id = r.run_id
+               AND t.stage = 'intake' AND t.status = 'done'
+          JOIN stage_tickets dp ON dp.run_id = r.run_id
+               AND dp.stage = 'doc_profile' AND dp.status = 'pending'
+         WHERE r.status IN ('intake', 'reconciling', 'degraded', 'query_ready')
+           AND r.superseded_by_run_id IS NULL {run_filter}
+        """, run_params).fetchall()
+    for (run_id,) in profile_rows:
+        try:
+            _emit_ticket_event(conn, ticket_id(run_id, "doc_profile"), run_id, "doc_profile")
+        except Exception:  # noqa: BLE001 — fail-open; chain advancement remains the backstop
+            import logging
+            logging.getLogger("control-schedule").warning(
+                "auto doc_profile-early emit failed open for %s", run_id[:20],
+                extra={"error_code": "AUTO_PROFILE_EARLY_FAILED"})
+    return minted
+
+
 def apply_promotions(conn: Connection, census: Census) -> None:
     for run_id in census.promote:
         cur = conn.execute(

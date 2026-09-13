@@ -144,3 +144,23 @@ separate owner-gated steps. Do NOT resume backfill because a quota window reset.
 - do not weaken strict parent identity
 - do not autonomously flip QUERY_READY, disable legacy producers/readers, delete legacy state, or cut over
 ```
+
+## PROBE RESULT (2026-09-10, owner-authorized bounded probe — register 11.192)
+
+Executed the LIVE portion of this gate CINEMA-FREE via `scripts/groq_map_forensic_probe.py` (synthetic parents,
+production `complete_one`, `max_attempts=1`, 17 requests, ~3 RPD/account). Evidence:
+`docs/wiki/experiments/u2-groq-map-forensic-probe-2026-09-10/`.
+
+- **Provider RPD OBSERVABLE + NOT exhausted:** all 6 accounts ~246–248 remaining of ~250 (`x-ratelimit-remaining-requests`
+  captured on success). The "six accounts exhausted daily RPD" inference is CONTRADICTED.
+- **Local ↔ provider RPD reconcile:** `day_count` +1 per HTTP dispatch; dispatched==requests; RPD tracks dispatch.
+- **LIMITER_REFUSED = 0 HTTP** confirmed (11.185 census: 926 historical refusals, zero dispatch) ⇒ the historical
+  `+0/0-errors` pass was a LOCAL refusal cascade.
+- **Batch 15/20/30/40/60 = yield 1.0 on SYNTHETIC parents** (best case) — a REAL-parent (non-cinema) benchmark is
+  still needed before raising `MAP_RELIABILITY_CAP` above 15.
+- **Cinema-finish estimate:** ~10,739 unresolved → ~716 requests at cap-15 (or ~179 at batch 60), vs ~1,500 req/day
+  capacity ⇒ finishes in well under a day.
+
+**Gate substantially MET** (only the real-parent batch benchmark remains). **Next = OWNER REVIEW** of these
+findings + estimate → (bounded cinema canary → owner review → full backfill). Resumption remains owner-gated; do
+NOT resume on a quota reset.

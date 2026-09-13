@@ -1,0 +1,25 @@
+{
+ "run_id": "adr_3322182605da76d37631b9dc0e0e7cbf",
+ "step_id": "D_discover",
+ "external_system": "trailsignal",
+ "operation_kind": "discover.submit",
+ "operation_id": "op_01J9X2Q4F8ZK",
+ "idempotency_key": "adr_3322182605da76d37631b9dc0e0e7cbf:D_discover:1:h0",
+ "principal": "polymath",
+ "submitted_at": "2026-09-13T18:32:00Z",
+ "status_revision": 3,
+ "temporal_workflow_id": "op_01J9X2Q4F8ZK",
+ "temporal_run_id": "9c1f5f2e-0f4a-4d3e-9b0c-2c6c5b1e7a10",
+ "phase": "TERMINAL",
+ "outcome": "SUCCEEDED",
+ "terminal_at": "2026-09-13T18:32:19Z",
+ "record_ids": [
+  "urlc_3b9e",
+  "urlc_3b9f"
+ ],
+ "dataset_ids": [],
+ "export_ids": [],
+ "poll_count": 4,
+ "last_polled_at": "2026-09-13T18:32:19Z",
+ "failure": null
+}

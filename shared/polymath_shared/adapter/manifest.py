@@ -1,0 +1,113 @@
+"""Admitted adapter manifests (config/adapters/*.json): load, validate, graph integrity. Pure."""
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+from .contracts import _REPO, STEP_TYPES, validate
+
+ADAPTER_DIR = _REPO / "config" / "adapters"
+
+
+class ManifestError(ValueError):
+    pass
+
+
+@dataclass(frozen=True)
+class Manifest:
+    adapter_id: str
+    adapter_version: str
+    workflow_version: str
+    retrieval_policy_version: str
+    input_schema_version: str
+    output_schema_version: str
+    entry_step_id: str
+    terminal_step_id: str
+    budgets: dict[str, int]
+    steps: dict[str, dict[str, Any]]          # step_id -> step definition (insertion order = manifest order)
+    raw: dict[str, Any]
+
+    @property
+    def identity(self) -> dict[str, str]:
+        return {k: getattr(self, k) for k in ("adapter_id", "adapter_version", "workflow_version",
+                                              "retrieval_policy_version", "input_schema_version", "output_schema_version")}
+
+    def step(self, step_id: str) -> dict[str, Any]:
+        try:
+            return self.steps[step_id]
+        except KeyError:
+            raise ManifestError(f"{self.adapter_id}: unknown step {step_id!r}") from None
+
+
+def graph_integrity_errors(raw: dict[str, Any]) -> list[str]:
+    """Invariants the JSON Schema cannot express (mirrors tests/contracts/test_adapter_contract_v1.py)."""
+    errs: list[str] = []
+    steps = raw.get("steps") or []
+    ids = [s.get("step_id") for s in steps]
+    if len(ids) != len(set(ids)):
+        errs.append("duplicate step_id")
+    by_id = {s.get("step_id"): s for s in steps}
+    entry, terminal = raw.get("entry_step_id"), raw.get("terminal_step_id")
+    if entry not in by_id:
+        errs.append(f"entry_step_id {entry!r} is not a step")
+    if terminal not in by_id:
+        errs.append(f"terminal_step_id {terminal!r} is not a step")
+    elif by_id[terminal].get("type") != "COMPILE_RESULT":
+        errs.append("terminal step must be COMPILE_RESULT")
+    for s in steps:
+        sid, typ, nxt = s.get("step_id"), s.get("type"), s.get("next")
+        if typ not in STEP_TYPES:
+            errs.append(f"{sid}: unknown type {typ!r}")
+        if typ == "COMPILE_RESULT":
+            if nxt is not None:
+                errs.append(f"{sid}: COMPILE_RESULT has no successor")
+        elif nxt not in by_id:
+            errs.append(f"{sid}: next {nxt!r} is not a step")
+        for b in s.get("branches") or []:
+            if b.get("next") not in by_id:
+                errs.append(f"{sid}: branch target {b.get('next')!r} is not a step")
+        if typ == "AGENT_REASON" and not (s.get("objective") and s.get("output_schema")):
+            errs.append(f"{sid}: AGENT_REASON needs objective + output_schema")
+        if typ == "EXTERNAL_OPERATION":
+            ext = s.get("external") or {}
+            if ext.get("system") != "trailsignal":
+                errs.append(f"{sid}: EXTERNAL_OPERATION must name system=trailsignal")
+            if ext.get("availability") == "planned" and not ext.get("planned_node"):
+                errs.append(f"{sid}: a planned Trail capability names its graph node")
+        if typ == "BRANCH" and not (s.get("branches") or nxt):
+            errs.append(f"{sid}: BRANCH needs branches or a default next")
+    if entry in by_id and terminal in by_id:
+        seen, todo = set(), [entry]
+        while todo:
+            cur = todo.pop()
+            if cur in seen or cur not in by_id:
+                continue
+            seen.add(cur)
+            s = by_id[cur]
+            todo += [x for x in ([s.get("next")] + [b.get("next") for b in s.get("branches") or []]) if x]
+        if terminal not in seen:
+            errs.append("terminal step is unreachable from the entry step")
+    return errs
+
+
+def load_manifest(path: Path) -> Manifest:
+    raw = json.loads(Path(path).read_text())
+    errors = validate("adapter_manifest", raw) + graph_integrity_errors(raw)
+    if errors:
+        raise ManifestError(f"{path.name}: " + "; ".join(errors[:5]))
+    return Manifest(adapter_id=raw["adapter_id"], adapter_version=raw["adapter_version"], workflow_version=raw["workflow_version"],
+                    retrieval_policy_version=raw["retrieval_policy_version"], input_schema_version=raw["input_schema_version"],
+                    output_schema_version=raw["output_schema_version"], entry_step_id=raw["entry_step_id"],
+                    terminal_step_id=raw["terminal_step_id"], budgets=dict(raw["budgets"]),
+                    steps={s["step_id"]: s for s in raw["steps"]}, raw=raw)
+
+
+def list_manifests(directory: Path = ADAPTER_DIR) -> list[Manifest]:
+    """Every admitted manifest, sorted by adapter_id. A malformed file fails LOUDLY (never silently skipped)."""
+    out = [load_manifest(p) for p in sorted(Path(directory).glob("*.json"))]
+    ids = [m.adapter_id for m in out]
+    if len(ids) != len(set(ids)):
+        raise ManifestError(f"duplicate adapter_id in {directory}: {ids}")
+    return sorted(out, key=lambda m: m.adapter_id)

@@ -1,0 +1,140 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "polymath/contracts/adapter/v1/adapter_step_receipt.schema.json",
+ "title": "AdapterStepReceiptV1",
+ "description": "Durable receipt for one step attempt: status, timing, the evidence and external operations it touched, validation outcome, typed failure.",
+ "type": "object",
+ "required": [
+  "run_id",
+  "step_id",
+  "step_type",
+  "sequence",
+  "status",
+  "started_at",
+  "receipt_hash"
+ ],
+ "properties": {
+  "run_id": {
+   "type": "string",
+   "pattern": "^adr_[0-9a-f]{16,64}$"
+  },
+  "step_id": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 200
+  },
+  "step_type": {
+   "enum": [
+    "POLYMATH_RETRIEVE",
+    "POLYMATH_COMPILE_PLAN",
+    "POLYMATH_GRAPH_EXPAND",
+    "EXTERNAL_OPERATION",
+    "AGENT_REASON",
+    "VALIDATE",
+    "BRANCH",
+    "COMPILE_RESULT"
+   ]
+  },
+  "sequence": {
+   "type": "integer",
+   "minimum": 1
+  },
+  "status": {
+   "enum": [
+    "issued",
+    "accepted",
+    "rejected",
+    "executed",
+    "failed",
+    "skipped"
+   ]
+  },
+  "started_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "ended_at": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "format": "date-time"
+  },
+  "wall_ms": {
+   "type": "integer",
+   "minimum": 0
+  },
+  "evidence_ids": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "minLength": 1,
+    "maxLength": 200
+   }
+  },
+  "external_operation_ids": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "minLength": 1,
+    "maxLength": 200
+   }
+  },
+  "model_or_agent": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "validation": {
+   "type": "object",
+   "required": [
+    "ok"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "ok": {
+     "type": "boolean"
+    },
+    "errors": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "maxLength": 1000
+     }
+    }
+   }
+  },
+  "failure": {
+   "type": [
+    "object",
+    "null"
+   ],
+   "required": [
+    "code",
+    "message"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "code": {
+     "type": "string",
+     "pattern": "^[A-Z][A-Z0-9_]{2,60}$"
+    },
+    "message": {
+     "type": "string",
+     "maxLength": 2000
+    },
+    "step_id": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 200
+    }
+   }
+  },
+  "receipt_hash": {
+   "type": "string",
+   "pattern": "^[0-9a-f]{64}$"
+  }
+ },
+ "additionalProperties": false
+}

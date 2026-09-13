@@ -295,6 +295,12 @@ def build_user_prompt(neighborhoods: list[tuple[str, list[tuple[str, str]]]]) ->
     return "\n\n".join(parts)
 
 
+#: Statuses an OpenAI-compatible cloud host returns for the LOCAL-only `/infer_batch`
+#: route (it has no such path): 404 not-found, 405 method-not-allowed, 400 (Cloudflare).
+#: All mean 'no batch endpoint' → fall back to per-neighborhood /v1/chat/completions.
+_NO_INFER_BATCH_STATUSES = (400, 404, 405)
+
+
 class LLMExtractionClient:
     """One client, two lanes. `lane` selects endpoint + model pin."""
 
@@ -305,6 +311,14 @@ class LLMExtractionClient:
                  cloud_opts: dict | None = None) -> None:
         if lane not in ("local", "cloud"):
             raise ValueError(f"unknown lane: {lane!r}")
+        # RPD-DURABILITY-V1 (D-4): this constructor is the ONE seam every
+        # provider-calling path goes through. Before this, the only controller-store
+        # attach lived in `workers.llm_provider`, which the pMAP stage worker never
+        # imports — so pMAP dispatches were counted in memory only and
+        # `llm_controller_state` held zero rows for map_groq* after thousands of
+        # calls. Idempotent and fail-soft; an explicit attach_store() still wins.
+        from polymath_shared.llm_extraction.limiter import REGISTRY as _REGISTRY
+        _REGISTRY.ensure_store()
         self.lane = lane
         # EXTRACTION-POOL-V1: each cloud endpoint throttles independently
         # (a slow provider must not drag the pool's AIMD budget down).
@@ -326,6 +340,12 @@ class LLMExtractionClient:
             "json_mode": True,
         }
         self._last_finish_reason: str | None = None
+        # GROQ-MAP-CONTROL-PLANE-REPAIR-V1 control-plane observability for the
+        # MAP infer path: the specific limiter gate that refused the last
+        # complete_one (None when admitted) and whether that call reached the
+        # network (a refusal never does).
+        self._last_refusal_reason: str | None = None
+        self._last_http_dispatched: bool = False
 
     def _headers(self) -> dict:
         if self.api_key:
@@ -335,7 +355,13 @@ class LLMExtractionClient:
     # -- transport ---------------------------------------------------------
 
     def _chat(self, user_prompt: str, max_tokens: int,
-              system_prompt: str | None = None) -> tuple[str, int, int]:
+              system_prompt: str | None = None) -> tuple[str, int, int, dict]:
+        # CLOUDFLARE-WORKERS-AI-V1: append a prompt-level reasoning switch (e.g. Qwen's
+        # `/no_think`) for lanes whose thinking is not controllable by a request parameter.
+        # A message string only; omitted (None) for every existing provider.
+        suffix = (self.cloud_opts or {}).get("think_suffix") if self.lane != "local" else None
+        if suffix:
+            user_prompt = f"{user_prompt}\n\n{suffix}"
         payload = {
             "model": self.model,
             "messages": [
@@ -395,21 +421,57 @@ class LLMExtractionClient:
         content = (choice.get("message") or {}).get("content") or ""
         usage = body.get("usage") or {}
         self._last_finish_reason = choice.get("finish_reason")
-        return content, int(usage.get("prompt_tokens", 0)), int(usage.get("completion_tokens", 0))
+        # GROQ-MAP-CONTROL-PLANE-REPAIR-V1: return the SUCCESS-path response
+        # headers so the limiter can observe provider rate-limit truth on 2xx
+        # (previously dropped — RPD was observable only on 429). Reading headers
+        # for observability must never break the transport, so a header object
+        # that is not a plain mapping degrades to {}.
+        try:
+            hdrs = dict(resp.headers)
+        except Exception:  # noqa: BLE001 — observability only, never fatal
+            hdrs = {}
+        return (content, int(usage.get("prompt_tokens", 0)),
+                int(usage.get("completion_tokens", 0)), hdrs)
 
     # -- public API --------------------------------------------------------
 
     def probe(self) -> dict:
-        """One-token, no-document liveness + auth probe."""
+        """One-token, no-document liveness + auth probe.
+
+        Recorded like any other attempt, with `limiter_bypassed=True`: a probe must not
+        queue behind a rate hold, so it never passes the lane limiter. Until migration
+        0059 the ledger had no way to say that — `limiter_admitted=False` would have
+        asserted "zero HTTP, zero quota" about a call that really did reach the provider
+        — so probes went unrecorded, and a probe that takes a 429 or a 401 is exactly the
+        evidence lane qualification is arguing about."""
+        from polymath_shared.conformance.attempts import Attempt as _At, record as _rec
         t0 = time.perf_counter()
         payload = {"model": self.model, "messages": [
             {"role": "user", "content": "ping"}], "max_tokens": 1, "stream": False}
-        resp = httpx.post(f"{self.base_url}/v1/chat/completions",
-                          json=payload, timeout=min(self.timeout_s, 30.0),
-                          headers=self._headers())
+        _base = dict(lane=self.limiter_key, model=self.model, provider=self._provider(),
+                     account_env=self._account_env(), limiter_admitted=False,
+                     limiter_bypassed=True, http_dispatched=True)
+        try:
+            resp = httpx.post(f"{self.base_url}/v1/chat/completions",
+                              json=payload, timeout=min(self.timeout_s, 30.0),
+                              headers=self._headers())
+        except Exception as exc:  # noqa: BLE001 — record, then let the caller see it
+            _rec(_At(success=False, error_class=type(exc).__name__,
+                     latency_ms=int((time.perf_counter() - t0) * 1000), **_base))
+            raise
         wall_ms = int((time.perf_counter() - t0) * 1000)
+        body = resp.json() if resp.status_code < 400 else {}
+        if resp.status_code >= 400:
+            _ra = resp.headers.get("retry-after")
+            _rec(_At(success=False, http_status=resp.status_code,
+                     error_class=f"HTTP_{resp.status_code}",
+                     retry_after_s=(float(_ra) if (_ra or "").replace(".", "", 1).isdigit()
+                                    else None),
+                     latency_ms=wall_ms, **_base))
+        else:
+            _rec(_At(success=True, http_status=resp.status_code, latency_ms=wall_ms,
+                     response_hash=self._response_hash(body.get("model")), **_base))
         resp.raise_for_status()
-        body = resp.json()
         return {"ok": True, "lane": self.lane, "model": self.model,
                 "wall_ms": wall_ms, "served_model": body.get("model")}
 
@@ -421,20 +483,63 @@ class LLMExtractionClient:
         method never interprets content. Cloud lanes only (the local
         batched path goes through complete_batched)."""
         limiter = self._lane_limiter()
-        if not limiter.acquire(est_tokens=len(user_prompt) / 4.0):
+        decision = limiter.admit(est_tokens=len(user_prompt) / 4.0)
+        # GROQ-MAP-CONTROL-PLANE-REPAIR-V1: keep the bare "LIMITER_REFUSED"
+        # return (existing consumers exact-match it) but expose WHICH gate
+        # refused and whether the request reached the network, so the MAP
+        # control plane can separate a family/breaker/RPD refusal (0 HTTP) from
+        # a real provider response.
+        self._last_refusal_reason = decision.reason
+        # PROVIDER-ATTEMPT-LEDGER-V1: record EVERY attempt at this seam — the only place
+        # that sees limiter admission, the lane, the HTTP status and Retry-After
+        # together. Cross-lane failover retries land here as separate attempts, so an
+        # earlier 429 can no longer be erased by a later success on another lane.
+        from polymath_shared.conformance.attempts import Attempt, record as _rec
+        _t0 = time.monotonic()
+        _base = dict(lane=self.limiter_key, model=self.model, account_env=self._account_env(), provider=self._provider())
+
+        if not decision.admitted:
+            self._last_http_dispatched = False       # no request left the process
+            _rec(Attempt(limiter_admitted=False, http_dispatched=False, success=False,
+                         error_class="LIMITER_REFUSED",
+                         latency_ms=int((time.monotonic() - _t0) * 1000), **_base))
             return "", "LIMITER_REFUSED"
+        self._last_http_dispatched = True            # about to dispatch
         try:
-            text, _ti, _to = self._chat(user_prompt, max_tokens,
-                                        system_prompt=system_prompt)
-            limiter.record_success()
+            text, _ti, _to, hdrs = self._chat(user_prompt, max_tokens,
+                                              system_prompt=system_prompt)
+            limiter.record_success(headers=hdrs)     # observe provider RPD on 2xx
+            _rec(Attempt(limiter_admitted=True, http_dispatched=True, success=True,
+                         http_status=200, tokens_in=_ti, tokens_out=_to,
+                         response_hash=self._response_hash(text),
+                         latency_ms=int((time.monotonic() - _t0) * 1000), **_base))
             return text, None
         except httpx.HTTPStatusError as exc:
-            limiter.record_failure(
-                retry_after=exc.response.headers.get("retry-after"),
-                headers=dict(exc.response.headers))
-            return "", f"HTTP_{exc.response.status_code}"
+            # CLOUDFLARE-WORKERS-AI-V1: a 3036 daily-free-quota body parks the account for
+            # the day (no retry-loop against a dead free allocation); 3040/429 is transient
+            # capacity → normal AIMD backoff. Cloudflare-host lanes only; a no-op elsewhere.
+            from polymath_shared.llm_extraction import cloudflare_errors as _cf
+            _status = exc.response.status_code
+            _cf_class = _cf.classify(_status, exc.response.text) if _cf.is_cloudflare_host(self.base_url) else None
+            if _cf_class == _cf.DAILY_FREE_QUOTA_EXHAUSTED:
+                limiter.park_provider_day(_cf.seconds_to_daily_reset())
+            else:
+                limiter.record_failure(
+                    retry_after=exc.response.headers.get("retry-after"),
+                    headers=dict(exc.response.headers))
+            _ra = exc.response.headers.get("retry-after")
+            _err = _cf_class or f"HTTP_{_status}"
+            _rec(Attempt(limiter_admitted=True, http_dispatched=True, success=False,
+                         http_status=_status,
+                         retry_after_s=(float(_ra) if (_ra or "").replace(".", "", 1).isdigit() else None),
+                         error_class=_err,
+                         latency_ms=int((time.monotonic() - _t0) * 1000), **_base))
+            return "", _err
         except Exception as exc:
             limiter.record_failure()
+            _rec(Attempt(limiter_admitted=True, http_dispatched=True, success=False,
+                         error_class=type(exc).__name__,
+                         latency_ms=int((time.monotonic() - _t0) * 1000), **_base))
             return "", type(exc).__name__
         finally:
             # the acquire takes a CONCURRENCY SLOT (conc_cap); leaking it
@@ -442,6 +547,47 @@ class LLMExtractionClient:
             # threads parked in acquire forever). Same finally-release
             # contract as extract_batched.
             limiter.release()
+
+    def _account_env(self) -> str | None:
+        """ENV NAME of this lane's credential — never the value. Resolved from the
+        lane registry so it matches what the control plane already renders."""
+        try:
+            from polymath_shared.llm_extraction import lane_registry as LR
+            for l in LR.build_registry().lanes:
+                if l.name == self.limiter_key:
+                    return l.api_key_env
+        except Exception:  # noqa: BLE001
+            pass
+        return None
+
+    def _provider(self) -> str | None:
+        """PROVIDER for the attempt ledger: the HOST this lane actually dispatches to.
+        §15 lists `provider` among the fields each attempt must record, and it was NULL
+        on every row because no call site set it. Taken from the live base URL rather
+        than from config, so it reports where the request WENT, not where it was meant
+        to go — and a URL netloc carries no credential."""
+        try:
+            from urllib.parse import urlparse
+            return urlparse(self.base_url).netloc or None
+        except Exception:  # noqa: BLE001 — accounting must never break a dispatch
+            return None
+
+    @staticmethod
+    def _response_hash(payload) -> str | None:
+        """§15's `response_hash`, which no seam had ever set.
+
+        It is what makes two attempts comparable without storing the response: a lane
+        returning the SAME body for different prompts (a stuck model, a cached edge, a
+        provider serving an error page with HTTP 200) is invisible in status codes and
+        obvious in a repeated hash. Never stores content — only the digest.
+        """
+        try:
+            from polymath_shared.identity import content_hash
+            if payload is None or payload == "" or payload == {}:
+                return None
+            return content_hash(payload)[:32]
+        except Exception:  # noqa: BLE001 — accounting must never break a dispatch
+            return None
 
     def _lane_limiter(self):
         return REGISTRY.lane(
@@ -527,7 +673,20 @@ class LLMExtractionClient:
         without /infer_batch: fall back to per-neighborhood calls through
         the OpenAI-compatible path (the documented fallback)."""
         budget = local_batch_budget() if self.lane == "local" else None
+        # PROVIDER-ATTEMPT-LEDGER: record the BATCHED seam too. `complete_one` has
+        # recorded attempts since the ledger landed, but `_infer_batch_call` — the path
+        # every batched extraction and pMAP dispatch actually takes — never did, so the
+        # ledger held only the single-completion (chat-compiler) lanes: 3 of 13 lanes
+        # with real dispatch activity, every row untagged. That is precisely the case
+        # §15 exists for ("lane A 429, lane B 429, lane C 200, batch -> SUCCESS"): the
+        # batch outcome was durable, the per-attempt 429s were not. Recording is
+        # fail-soft by construction (`record` never raises, warns once if the ledger is
+        # unavailable) so this cannot affect a dispatch.
+        from polymath_shared.conformance.attempts import Attempt as _At, record as _rec
         if not limiter.acquire(est_tokens=sum(len(u) for _, u, _ in prompt_items) / 4.0):
+            _rec(_At(lane=self.limiter_key, limiter_admitted=False, http_dispatched=False,
+                     success=False, error_class="LIMITER_REFUSED",
+                     model=self.model, account_env=self._account_env(), provider=self._provider()))
             raise ExtractionTransportError(
                 f"{self.lane} lane refused the batched call (breaker open "
                 "or rate hold); stage must retry")
@@ -560,20 +719,42 @@ class LLMExtractionClient:
                         f"{self.lane} batched transport returned a non-object body")
             except httpx.HTTPStatusError as exc:
                 status = exc.response.status_code
+                _ra = exc.response.headers.get("retry-after")
+                _rec(_At(lane=self.limiter_key, limiter_admitted=True, http_dispatched=True,
+                         success=False, http_status=status,
+                         retry_after_s=(float(_ra) if (_ra or "").replace(".", "", 1).isdigit()
+                                        else None),
+                         error_class=f"HTTP_{status}",
+                         latency_ms=int((time.perf_counter() - t0) * 1000),
+                         model=self.model, account_env=self._account_env(), provider=self._provider()))
                 limiter.record_failure(
-                    retry_after=exc.response.headers.get("retry-after"),
+                    retry_after=_ra,
                     headers=dict(exc.response.headers))
                 halve = status == 500 and len(prompt_items) > 1
-                if not halve and status != 404:
+                # `/infer_batch` is the LOCAL daemon's proprietary batch route; an
+                # OpenAI-compatible cloud host has no such path and says so with 404
+                # (most), 405 (method not allowed) or 400 (Cloudflare's answer for the
+                # unknown route). All three mean "no batch endpoint here" → fall back to
+                # the per-neighborhood /v1/chat/completions path (CLOUDFLARE-WORKERS-AI-V1).
+                if not halve and status not in _NO_INFER_BATCH_STATUSES:
                     raise ExtractionTransportError(
                         f"{self.lane} batched transport failed: "
                         f"HTTP {status}") from exc
             except (httpx.HTTPError, json.JSONDecodeError) as exc:
+                _rec(_At(lane=self.limiter_key, limiter_admitted=True, http_dispatched=True,
+                         success=False, error_class=type(exc).__name__,
+                         latency_ms=int((time.perf_counter() - t0) * 1000),
+                         model=self.model, account_env=self._account_env(), provider=self._provider()))
                 limiter.record_failure()
                 raise ExtractionTransportError(
                     f"{self.lane} batched transport failed: "
                     f"{type(exc).__name__}: {exc}") from exc
             else:
+                _rec(_At(lane=self.limiter_key, limiter_admitted=True, http_dispatched=True,
+                         success=True, http_status=200,
+                         response_hash=self._response_hash(body),
+                         latency_ms=int((time.perf_counter() - t0) * 1000),
+                         model=self.model, account_env=self._account_env(), provider=self._provider()))
                 limiter.record_success()
                 if budget is not None:
                     budget.record_success()
@@ -588,7 +769,7 @@ class LLMExtractionClient:
             out.extend(self._infer_batch_call(prompt_items[half:], limiter, decision, cap,
                                               use_lean, system_prompt))
             return out
-        if status == 404:
+        if status in _NO_INFER_BATCH_STATUSES:
             fallback: list[LLMCallResult] = []
             for nid, u, mt in prompt_items:
                 one = self._extract_prompt(u, {nid}, mt, decision)
@@ -670,10 +851,20 @@ class LLMExtractionClient:
         limiter = self._lane_limiter()
         cap = budget.effective if budget is not None else None
 
+        # PROVIDER-ATTEMPT-LEDGER: the SECOND batched seam. `_infer_batch_call` serves
+        # extraction; this one serves the non-extraction compilers, and it has the same
+        # four branches and the same 500-halving recursion — so it needed the same rows.
+        from polymath_shared.conformance.attempts import Attempt as _At, record as _rec
+        _base = dict(lane=self.limiter_key, model=self.model, account_env=self._account_env(), provider=self._provider())
+
         def run(batch: list[tuple[str, str, str, int]]
                 ) -> list[tuple[str, str, str | None]]:
+            _a0 = time.perf_counter()
             if not limiter.acquire(
                     est_tokens=sum(len(u) for _, _, u, _ in batch) / 4.0):
+                _rec(_At(limiter_admitted=False, http_dispatched=False, success=False,
+                         error_class="LIMITER_REFUSED",
+                         latency_ms=int((time.perf_counter() - _a0) * 1000), **_base))
                 return [(i, "", "LIMITER_REFUSED") for i, _, _, _ in batch]
             status: int | None = None
             body: dict = {}
@@ -690,17 +881,29 @@ class LLMExtractionClient:
                     body = resp.json()
                 except httpx.HTTPStatusError as exc:
                     status = exc.response.status_code
+                    _ra = exc.response.headers.get("retry-after")
+                    _rec(_At(limiter_admitted=True, http_dispatched=True, success=False,
+                             http_status=status, error_class=f"HTTP_{status}",
+                             retry_after_s=(float(_ra) if (_ra or "").replace(".", "", 1).isdigit()
+                                            else None),
+                             latency_ms=int((time.perf_counter() - _a0) * 1000), **_base))
                     limiter.record_failure(
-                        retry_after=exc.response.headers.get("retry-after"),
+                        retry_after=_ra,
                         headers=dict(exc.response.headers))
                     if not (status == 500 and len(batch) > 1):
                         return [(i, "", f"TRANSPORT_HTTP_{status}")
                                 for i, _, _, _ in batch]
                 except (httpx.HTTPError, json.JSONDecodeError) as exc:
+                    _rec(_At(limiter_admitted=True, http_dispatched=True, success=False,
+                             error_class=type(exc).__name__,
+                             latency_ms=int((time.perf_counter() - _a0) * 1000), **_base))
                     limiter.record_failure()
                     return [(i, "", f"TRANSPORT_{type(exc).__name__}")
                             for i, _, _, _ in batch]
                 else:
+                    _rec(_At(limiter_admitted=True, http_dispatched=True, success=True,
+                             http_status=200, response_hash=self._response_hash(body),
+                             latency_ms=int((time.perf_counter() - _a0) * 1000), **_base))
                     limiter.record_success()
                     if budget is not None:
                         budget.record_success()
@@ -746,9 +949,19 @@ class LLMExtractionClient:
         tokens_in = tokens_out = 0
         nudge = ""
         t0 = time.perf_counter()
+        # PROVIDER-ATTEMPT-LEDGER: this loop IS §15's example. Attempt 1 can take a 429,
+        # the loop retries, attempt 2 succeeds and the function returns SUCCESS — and
+        # before this the 429 was durable nowhere. `attempts` was counted in the RESULT,
+        # which is per logical call; the ledger needs one row per attempt.
+        from polymath_shared.conformance.attempts import Attempt as _At, record as _rec
+        _base = dict(lane=self.limiter_key, model=self.model, account_env=self._account_env(), provider=self._provider())
         while attempts < self.max_attempts:
             attempts += 1
+            _a0 = time.perf_counter()
             if not limiter.acquire(est_tokens=est_tokens):
+                _rec(_At(limiter_admitted=False, http_dispatched=False, success=False,
+                         error_class="LIMITER_REFUSED",
+                         latency_ms=int((time.perf_counter() - _a0) * 1000), **_base))
                 # breaker open / rate hold: no network I/O made. The caller
                 # (run_proposals) turns this into a stage failure so the
                 # ticket retries — it is never a completed extraction.
@@ -762,9 +975,25 @@ class LLMExtractionClient:
             retry_delay: float | None = None
             try:
                 try:
-                    raw, tin, tout = self._chat(user_prompt + nudge, max_tokens)
+                    raw, tin, tout, _hdrs = self._chat(user_prompt + nudge, max_tokens)
                 except httpx.HTTPStatusError as exc:
                     status = exc.response.status_code
+                    # CLOUDFLARE-WORKERS-AI-V1: 3036 daily-quota body → park the account for
+                    # the day and fail this lane over (never retry a dead free allocation);
+                    # 3040/429 → transient, bounded retry below. Cloudflare-host lanes only.
+                    from polymath_shared.llm_extraction import cloudflare_errors as _cf
+                    cf_class = _cf.classify(status, exc.response.text) if _cf.is_cloudflare_host(self.base_url) else None
+                    _ra = exc.response.headers.get("retry-after")
+                    _rec(_At(limiter_admitted=True, http_dispatched=True, success=False,
+                             http_status=status, error_class=(cf_class or f"HTTP_{status}"),
+                             retry_after_s=(float(_ra) if (_ra or "").replace(".", "", 1).isdigit()
+                                            else None),
+                             latency_ms=int((time.perf_counter() - _a0) * 1000), **_base))
+                    if cf_class == _cf.DAILY_FREE_QUOTA_EXHAUSTED:
+                        limiter.park_provider_day(_cf.seconds_to_daily_reset())
+                        raise ExtractionTransportError(
+                            f"{self.lane} cloudflare account daily free quota exhausted "
+                            "(3036) — lane parked until reset, stage fails over") from exc
                     # THROUGHPUT-V2: 413 is a PAYLOAD condition, not a
                     # rate condition — halving the AIMD limit for it
                     # starved healthy lanes (measured 2026-09-01).
@@ -779,7 +1008,8 @@ class LLMExtractionClient:
                     # ticket's second attempt. A daemon-proxy 500 is as
                     # transient as 502/503; the limiter already recorded
                     # the failure (backoff), and a repeat still fails closed.
-                    if status in (429, 500, 502, 503, 504) and attempts < self.max_attempts:
+                    if (status in (429, 500, 502, 503, 504)
+                            or cf_class == _cf.OUT_OF_CAPACITY) and attempts < self.max_attempts:
                         retry_delay = min(
                             parse_retry_after(exc.response.headers.get("retry-after")) or 1.5,
                             15.0)
@@ -787,17 +1017,27 @@ class LLMExtractionClient:
                         raise ExtractionTransportError(
                             f"{self.lane} transport failed: HTTP {status}") from exc
                 except (httpx.HTTPError, json.JSONDecodeError, KeyError) as exc:
+                    _rec(_At(limiter_admitted=True, http_dispatched=True, success=False,
+                             error_class=type(exc).__name__,
+                             latency_ms=int((time.perf_counter() - _a0) * 1000), **_base))
                     limiter.record_failure()
                     raise ExtractionTransportError(
                         f"{self.lane} transport failed: {type(exc).__name__}: {exc}") from exc
                 except Exception as exc:
                     # malformed body SHAPE (non-numeric usage, non-dict
                     # choice, ...): a transport fault, not a model fault
+                    _rec(_At(limiter_admitted=True, http_dispatched=True, success=False,
+                             error_class=type(exc).__name__,
+                             latency_ms=int((time.perf_counter() - _a0) * 1000), **_base))
                     limiter.record_failure()
                     raise ExtractionTransportError(
                         f"{self.lane} transport returned a malformed body: "
                         f"{type(exc).__name__}: {exc}") from exc
                 else:
+                    _rec(_At(limiter_admitted=True, http_dispatched=True, success=True,
+                             http_status=200, tokens_in=tin, tokens_out=tout,
+                             response_hash=self._response_hash(raw),
+                             latency_ms=int((time.perf_counter() - _a0) * 1000), **_base))
                     limiter.record_success()
             finally:
                 limiter.release()

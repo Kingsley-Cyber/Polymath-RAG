@@ -1,6 +1,6 @@
 import type { Chat } from "../types";
 
-type View = "chat" | "files" | "corpora" | "models" | "fleet";
+type View = "chat" | "files" | "corpora" | "models" | "control";
 
 /** SIDEBAR-COLLAPSE-V1 (owner request 2026-09-06): the side panel collapses to a
  * narrow rail — brand dot, new chat, the five views as icons, and the toggle —
@@ -12,7 +12,7 @@ const ICONS: Record<View | "new" | "collapse" | "expand", string> = {
   files: "M6 3h8l4 4v14H6z M14 3v4h4",
   corpora: "M4 5h16v4H4z M4 10h16v4H4z M4 15h16v4H4z",
   models: "M8 8h8v8H8z M4 10h4 M4 14h4 M16 10h4 M16 14h4 M10 4v4 M14 4v4 M10 16v4 M14 16v4",
-  fleet: "M12 4v5 M5 20v-5h14v5 M4 9h16 M8 15v-6 M16 15v-6",
+  control: "M12 4v5 M5 20v-5h14v5 M4 9h16 M8 15v-6 M16 15v-6",
   new: "M12 5v14 M5 12h14",
   collapse: "M15 6l-6 6 6 6 M4 4v16",
   expand: "M9 6l6 6-6 6 M20 4v16",
@@ -32,7 +32,7 @@ const TABS: { id: View; label: string }[] = [
   { id: "files", label: "Files" },
   { id: "corpora", label: "Corpora" },
   { id: "models", label: "Models" },
-  { id: "fleet", label: "Fleet" },
+  { id: "control", label: "Control Plane" },
 ];
 
 export default function Sidebar({

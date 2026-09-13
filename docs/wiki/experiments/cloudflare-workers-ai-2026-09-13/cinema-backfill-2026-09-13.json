@@ -1,0 +1,249 @@
+{
+ "corpus": "cinema",
+ "started_utc": "2026-09-13 07:05:00+00",
+ "finished_utc": "2026-09-13T08:11:35.631045+00:00",
+ "parents_total": 12361,
+ "mapped": 11993,
+ "excluded": 368,
+ "unresolved_after": 0,
+ "unresolved_before": 3810,
+ "maps_written": 3810,
+ "docs_touched": 23,
+ "first_map": "2026-09-13 07:06:24.336605+00:00",
+ "last_map": "2026-09-13 08:08:42.076261+00:00",
+ "by_provider": [
+  {
+   "provider": "cloudflare",
+   "model": "@cf/qwen/qwen3-30b-a3b-fp8",
+   "maps": 1284,
+   "three_hooks": 1273
+  },
+  {
+   "provider": "groq",
+   "model": "groq/compound-mini",
+   "maps": 1280,
+   "three_hooks": 1277
+  },
+  {
+   "provider": "openrouter",
+   "model": "mistralai/mistral-small-2603",
+   "maps": 1246,
+   "three_hooks": 1240
+  }
+ ],
+ "attempts_by_lane": [
+  {
+   "lane": "cloudflare_map2",
+   "attempts": 132,
+   "http_200": 132,
+   "http_429": 0,
+   "other": 0,
+   "avg_ms": 8932,
+   "tokens_in": 231343,
+   "tokens_out": 163545
+  },
+  {
+   "lane": "map_fallback_openrouter",
+   "attempts": 134,
+   "http_200": 133,
+   "http_429": 1,
+   "other": 0,
+   "avg_ms": 2963,
+   "tokens_in": 258286,
+   "tokens_out": 45745
+  },
+  {
+   "lane": "map_groq2",
+   "attempts": 74,
+   "http_200": 10,
+   "http_429": 63,
+   "other": 0,
+   "avg_ms": 650,
+   "tokens_in": 32719,
+   "tokens_out": 13896
+  },
+  {
+   "lane": "map_groq3",
+   "attempts": 75,
+   "http_200": 10,
+   "http_429": 65,
+   "other": 0,
+   "avg_ms": 708,
+   "tokens_in": 34368,
+   "tokens_out": 15600
+  },
+  {
+   "lane": "map_groq4",
+   "attempts": 73,
+   "http_200": 12,
+   "http_429": 61,
+   "other": 0,
+   "avg_ms": 952,
+   "tokens_in": 45404,
+   "tokens_out": 23333
+  },
+  {
+   "lane": "map_groq5",
+   "attempts": 73,
+   "http_200": 10,
+   "http_429": 63,
+   "other": 0,
+   "avg_ms": 716,
+   "tokens_in": 34692,
+   "tokens_out": 16091
+  },
+  {
+   "lane": "map_groq6",
+   "attempts": 72,
+   "http_200": 20,
+   "http_429": 52,
+   "other": 0,
+   "avg_ms": 1324,
+   "tokens_in": 67750,
+   "tokens_out": 32978
+  }
+ ],
+ "qdrant_parent_map_points_total": 11831,
+ "qdrant_parent_map_points_cinema": 11703,
+ "qdrant_collection": "polymath_document_parent_maps_embed_e794ec4cab197a3f",
+ "projected_points_sum_over_passes": 44345,
+ "cloudflare_3036_parks": 0,
+ "passes": [
+  {
+   "pass": 1,
+   "docs": 67,
+   "complete_docs": 46,
+   "eligible_parents": 11993,
+   "parents_already_mapped": 8183,
+   "parents_newly_mapped": 1682,
+   "unresolved_parents": 2128,
+   "http_dispatches": 326,
+   "http_429": 177,
+   "http_failures": 0,
+   "empty_completions": 0,
+   "limiter_refusals": 0,
+   "compiler_complete": 146,
+   "compiler_partial": 3,
+   "compiler_invalid": 0,
+   "wall_s": 1493.9,
+   "concurrency": 4,
+   "PASS": false,
+   "lane_selection": {
+    "map_groq2": 47,
+    "map_groq3": 48,
+    "map_groq4": 47,
+    "map_groq5": 47,
+    "map_groq6": 46,
+    "map_fallback_openrouter": 46,
+    "cloudflare_map2": 46
+   },
+   "provider_http_dispatch": {
+    "map_groq2": 46,
+    "map_groq3": 48,
+    "map_groq4": 47,
+    "map_groq5": 47,
+    "map_fallback_openrouter": 46,
+    "map_groq6": 46,
+    "cloudflare_map2": 46
+   },
+   "lane_local_refusals": {
+    "map_groq2": 1
+   }
+  },
+  {
+   "pass": 2,
+   "docs": 67,
+   "complete_docs": 46,
+   "eligible_parents": 11993,
+   "parents_already_mapped": 9865,
+   "parents_newly_mapped": 644,
+   "unresolved_parents": 1484,
+   "http_dispatches": 177,
+   "http_429": 123,
+   "http_failures": 0,
+   "empty_completions": 0,
+   "limiter_refusals": 0,
+   "compiler_complete": 54,
+   "compiler_partial": 0,
+   "compiler_invalid": 0,
+   "wall_s": 890.5,
+   "concurrency": 4,
+   "PASS": false,
+   "lane_selection": {
+    "map_groq2": 26,
+    "map_groq3": 26,
+    "map_groq4": 25,
+    "map_groq5": 25,
+    "map_groq6": 25,
+    "map_fallback_openrouter": 25,
+    "cloudflare_map2": 25
+   },
+   "provider_http_dispatch": {
+    "map_groq2": 26,
+    "map_groq3": 26,
+    "map_groq4": 25,
+    "map_groq5": 25,
+    "map_groq6": 25,
+    "map_fallback_openrouter": 25,
+    "cloudflare_map2": 25
+   },
+   "lane_local_refusals": {}
+  },
+  {
+   "pass": 3,
+   "docs": 67,
+   "complete_docs": 66,
+   "eligible_parents": 11993,
+   "parents_already_mapped": 10509,
+   "parents_newly_mapped": 1469,
+   "unresolved_parents": 15,
+   "http_dispatches": 123,
+   "http_429": 0,
+   "http_failures": 0,
+   "empty_completions": 1,
+   "limiter_refusals": 0,
+   "compiler_complete": 122,
+   "compiler_partial": 0,
+   "compiler_invalid": 0,
+   "wall_s": 702.5,
+   "concurrency": 4,
+   "PASS": false,
+   "lane_selection": {
+    "map_fallback_openrouter": 62,
+    "cloudflare_map2": 61
+   },
+   "provider_http_dispatch": {
+    "map_fallback_openrouter": 62,
+    "cloudflare_map2": 61
+   },
+   "lane_local_refusals": {}
+  },
+  {
+   "pass": 4,
+   "docs": 67,
+   "complete_docs": 67,
+   "eligible_parents": 11993,
+   "parents_already_mapped": 11978,
+   "parents_newly_mapped": 15,
+   "unresolved_parents": 0,
+   "http_dispatches": 1,
+   "http_429": 0,
+   "http_failures": 0,
+   "empty_completions": 0,
+   "limiter_refusals": 0,
+   "compiler_complete": 1,
+   "compiler_partial": 0,
+   "compiler_invalid": 0,
+   "wall_s": 663.8,
+   "concurrency": 4,
+   "PASS": true,
+   "lane_selection": {
+    "map_fallback_openrouter": 1
+   },
+   "provider_http_dispatch": {
+    "map_fallback_openrouter": 1
+   },
+   "lane_local_refusals": {}
+  }
+ ]
+}

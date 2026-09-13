@@ -1,0 +1,235 @@
+{
+  "contract": "u2-persistence-canary-v1",
+  "target": {
+    "doc_id": "doc_c967daa374b6dad1c7ee9c0b90cf12bd79bc9ba5344dd665004847d0b6abf8fa",
+    "corpus_id": "cinema",
+    "source_name": "[Quest 1975-jan vol. 23 iss. 1] THE BENESH MOVEMENT NOTATION(1975 January)[10.1080_00336297.1975.10519826]{45131196} libgen.li.md",
+    "source_parent_count": 9,
+    "run_id": "run_28c272843c0976c1d79ec2244b2d326523b99edb89b0196d90237d103df6a557",
+    "run_status": "reconciling"
+  },
+  "pmap_pin": [
+    "map_groq2",
+    "map_groq3",
+    "map_groq4",
+    "map_groq5",
+    "map_groq6",
+    "map_fallback_openrouter"
+  ],
+  "before": {
+    "at": "2026-09-11T04:42:46.948673+00:00",
+    "maps_active": 0,
+    "maps_total": 0,
+    "map_ids": [],
+    "mapped_parent_ids": [],
+    "batches": [
+      {
+        "batch_id": "7f77c827e4424232b1c98e35d332b9119fb1f22e5ad6572e8e171720ead18bca",
+        "status": "partial",
+        "expected_count": 9,
+        "valid_count": 0,
+        "attempt_count": 18,
+        "raw_response_hash": null,
+        "provider": "groq",
+        "model": "groq/compound-mini",
+        "last_error": "groq/compound-mini error: LIMITER_REFUSED"
+      },
+      {
+        "batch_id": "0568c55179eb37f59a9fac72ac73018cddf543f106992f35373b027a7ad83d4c",
+        "status": "partial",
+        "expected_count": 9,
+        "valid_count": 0,
+        "attempt_count": 15,
+        "raw_response_hash": null,
+        "provider": "groq",
+        "model": "groq/compound-mini",
+        "last_error": "groq/compound-mini error: LIMITER_REFUSED"
+      }
+    ],
+    "tickets": [],
+    "artifacts": [],
+    "projection": {
+      "collections": {
+        "polymath_document_parent_maps_embed_e794ec4cab197a3f": 0
+      },
+      "total": 0,
+      "error": null
+    },
+    "limiter": {}
+  },
+  "executed": true,
+  "minted": {
+    "run_id": "run_28c272843c0976c1d79ec2244b2d326523b99edb89b0196d90237d103df6a557",
+    "ticket_id": "tkt_3f608acb223f16bfcef3c946c3a95a556304c2d9",
+    "corpus_id": "cinema"
+  },
+  "wall_s": 15.0,
+  "after": {
+    "at": "2026-09-11T04:43:02.029646+00:00",
+    "maps_active": 9,
+    "maps_total": 9,
+    "map_ids": [
+      "45fe63802dc209dfd62c9b2e4237eda60aae8a7eb6524ba6003b24568d2a1e5b",
+      "836c0fcee1006da873b5f0055b23b676bd293b94c31d319990cbe5db557d4868",
+      "94d3b196058e80aadd7447d9c484fe5ec4c74babe7bc24f68fadcdc48038d3f2",
+      "a94a0c35d4380ff92b9d0cbf884588069ddec9c5cfcb65ee070e9f444eae68ba",
+      "ac749d598d135d6633c47362498c105ffbd143fcfe3ba76c1db8bc8bfb5626c0",
+      "bb1bec0d0bb8701a10f2f26899a765d4f79b1bffdd8b81e2e1c99ea6b86a09ab",
+      "c1bd66f2dd7f7aa5c96049ea006c61c6b6490299b5110ddc8773f14cb6b01521",
+      "d1734e8147b63841d62faaf4b62d167f34b3cd2a74c3edf0328463eef236c50c",
+      "d7c60d22713eddcaa863b09cb0ba6b62b40c7d32dec61525470cf6c9c259be1e"
+    ],
+    "mapped_parent_ids": [
+      "chunk_227a52b973ee2e1af6076b72d9180c769a21cc6b43c20eda4c3d031c20f47b3f",
+      "chunk_32e0bb6d7232a45f08f7931ba10f85690f329204719ec778ec753fe4bb0e4234",
+      "chunk_33489d649064b962e2060f51f0975c957d24b2db8eff0df071895bec20a5c127",
+      "chunk_3e80cc483e5feba5068e6b4266162e39f84b3e8f6194fffdd16f4bce9afda8fe",
+      "chunk_4719273bc20ec954b6adceff60223244fa6e943c50b99ee16b03455c4929f024",
+      "chunk_8c8ce86c0ce3b1b91ece9ed5acecae3cd3de49bf9b750609b3f82b49279cfaa5",
+      "chunk_cb88321faa41e6b8ca47adbb7799f3fda68041735ecdf267b442ba35cf6859e3",
+      "chunk_dd270593c182a885933ad6c7e04a5a92c2a677d0ff68dc08f51a0517dff3f7a0",
+      "chunk_ec1448b68b1463f331c781f34a6a5b3101bdc482f8be81b69282da7f3e80369c"
+    ],
+    "batches": [
+      {
+        "batch_id": "96a6450680297aed1039375f9949d76d19b201c16b40da791cd01f89c3f24406",
+        "status": "done",
+        "expected_count": 9,
+        "valid_count": 9,
+        "attempt_count": 1,
+        "raw_response_hash": "9f18a4500b89f6006ebc913738d8bc6462ff54b8eab1ed1376f4fb01bc1e33a4",
+        "provider": "groq",
+        "model": null,
+        "last_error": null
+      },
+      {
+        "batch_id": "7f77c827e4424232b1c98e35d332b9119fb1f22e5ad6572e8e171720ead18bca",
+        "status": "partial",
+        "expected_count": 9,
+        "valid_count": 0,
+        "attempt_count": 18,
+        "raw_response_hash": null,
+        "provider": "groq",
+        "model": "groq/compound-mini",
+        "last_error": "groq/compound-mini error: LIMITER_REFUSED"
+      },
+      {
+        "batch_id": "0568c55179eb37f59a9fac72ac73018cddf543f106992f35373b027a7ad83d4c",
+        "status": "partial",
+        "expected_count": 9,
+        "valid_count": 0,
+        "attempt_count": 15,
+        "raw_response_hash": null,
+        "provider": "groq",
+        "model": "groq/compound-mini",
+        "last_error": "groq/compound-mini error: LIMITER_REFUSED"
+      }
+    ],
+    "tickets": [
+      {
+        "ticket_id": "tkt_3f608acb223f16bfcef3c946c3a95a556304c2d9",
+        "status": "done",
+        "attempt": 0,
+        "last_error_note": null
+      }
+    ],
+    "artifacts": [
+      {
+        "doc_id": "doc_c967daa374b6dad1c7ee9c0b90cf12bd79bc9ba5344dd665004847d0b6abf8fa",
+        "complete": true,
+        "http_429": 0,
+        "corpus_id": "cinema",
+        "projection": {
+          "points": 9,
+          "point_ids": [
+            "eb50b160-2a9a-5daa-94c9-4bee7e3c6f02",
+            "c5fe64d1-26c7-57e1-a15f-da0389c282c9",
+            "36747207-4eb0-56e3-8c2f-390a3f937fb4",
+            "9c078ab7-6840-5013-b820-56321d6c54a9",
+            "0ab75ce4-19da-573f-8803-90520680b9d3",
+            "8ecbca6f-35dd-5aeb-a7a2-04df647edb09",
+            "ea5f122b-b993-5c1e-8820-2972ef59d50c",
+            "450ded1a-f8c0-58d6-873b-8e3aef818d33",
+            "243a8254-3e5d-5319-bc64-6a15981c4f96"
+          ],
+          "collection": "polymath_document_parent_maps_embed_e794ec4cab197a3f",
+          "projection": "parent-map-projection-v1",
+          "map_contract": "map-compiler-v1",
+          "texts_embedded": 9,
+          "projection_hash": "fc09121337d4bc4ff3f0a9a5ca4b00aba5843dfcfad9d0100b4467a7c48429c0",
+          "created_collection": false,
+          "embedding_contract": "embed_e794ec4cab197a3f"
+        },
+        "unresolved": 0,
+        "batches_done": 1,
+        "map_contract": "map-compiler-v1",
+        "batches_total": 1,
+        "http_failures": 0,
+        "grounding_hash": "1fa65104b52d39d0adf1486c89e7c6bba85ec87efcd21a271cd1c330bab6b5e4",
+        "parents_mapped": 9,
+        "batches_partial": 2,
+        "http_dispatches": 1,
+        "reliability_cap": 15,
+        "compiler_invalid": 0,
+        "compiler_partial": 0,
+        "eligible_parents": 9,
+        "excluded_parents": 0,
+        "limiter_refusals": 0,
+        "compiler_complete": 1,
+        "empty_completions": 0,
+        "grounding_version": "grounding-context-v1",
+        "parents_newly_mapped": 9
+      }
+    ],
+    "projection": {
+      "collections": {
+        "polymath_document_parent_maps_embed_e794ec4cab197a3f": 9
+      },
+      "total": 9,
+      "error": null
+    },
+    "limiter": {}
+  },
+  "reconciliation": {
+    "requested_parents": 9,
+    "eligible_parents": 9,
+    "excluded_parents": 0,
+    "http_dispatches": 1,
+    "limiter_refusals": 0,
+    "http_429": 0,
+    "http_failures": 0,
+    "empty_completions": 0,
+    "compiler_complete": 1,
+    "compiler_partial": 0,
+    "compiler_invalid": 0,
+    "maps_returned": 9,
+    "maps_persisted_delta": 9,
+    "maps_projected_delta": 9,
+    "parents_mapped": 9,
+    "errors": null,
+    "provider": "groq",
+    "model": null,
+    "attempts": 1,
+    "limiter_day_count_delta": {},
+    "new_map_ids": [
+      "45fe63802dc209dfd62c9b2e4237eda60aae8a7eb6524ba6003b24568d2a1e5b",
+      "836c0fcee1006da873b5f0055b23b676bd293b94c31d319990cbe5db557d4868",
+      "94d3b196058e80aadd7447d9c484fe5ec4c74babe7bc24f68fadcdc48038d3f2",
+      "a94a0c35d4380ff92b9d0cbf884588069ddec9c5cfcb65ee070e9f444eae68ba",
+      "ac749d598d135d6633c47362498c105ffbd143fcfe3ba76c1db8bc8bfb5626c0",
+      "bb1bec0d0bb8701a10f2f26899a765d4f79b1bffdd8b81e2e1c99ea6b86a09ab",
+      "c1bd66f2dd7f7aa5c96049ea006c61c6b6490299b5110ddc8773f14cb6b01521",
+      "d1734e8147b63841d62faaf4b62d167f34b3cd2a74c3edf0328463eef236c50c",
+      "d7c60d22713eddcaa863b09cb0ba6b62b40c7d32dec61525470cf6c9c259be1e"
+    ],
+    "checks": {
+      "requested_equals_eligible": true,
+      "returned_equals_persisted": true,
+      "persisted_equals_projected": true,
+      "dispatch_fully_accounted": true,
+      "limiter_matches_dispatch": false,
+      "no_unresolved_left": true
+    },
+    "reconciles": false
+  }
+}

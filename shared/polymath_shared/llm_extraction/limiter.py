@@ -29,6 +29,8 @@ runtime.
 from __future__ import annotations
 
 import logging
+import os
+import re
 import threading
 import time
 from collections.abc import Callable
@@ -88,6 +90,12 @@ class ProviderLimit:
         return cls(**merged)
 
 
+def _utc_iso() -> str:
+    """RPD-DURABILITY-V1 (D-4): UTC wall-clock stamp for the durable row. The day
+    bucket itself is already UTC (`time.gmtime`), so the two agree by construction."""
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
 def _now() -> float:
     return time.monotonic()
 
@@ -102,6 +110,57 @@ def parse_retry_after(value) -> float | None:
     except (TypeError, ValueError):
         return None
     return max(0.0, seconds)
+
+
+# --- control-plane observability (GROQ-MAP-CONTROL-PLANE-REPAIR-V1) ----------
+# A single boolean `acquire()` collapsed every admission gate into one opaque
+# "refused". `admit()` returns a LimiterDecision naming WHICH gate refused, so
+# the caller can distinguish a family-circuit cooldown from a breaker, a local
+# daily cap, or a provider-declared exhaustion — none of which dispatch HTTP.
+REFUSE_RETRY_AFTER = "RETRY_AFTER"
+REFUSE_FAMILY_GATE = "FAMILY_GATE"
+REFUSE_BREAKER = "BREAKER"
+REFUSE_CONCURRENCY = "CONCURRENCY"
+REFUSE_RPM = "RPM"
+REFUSE_TPM = "TPM"
+REFUSE_RPD = "RPD"                 # local daily safety cap spent
+REFUSE_PROVIDER_RPD = "PROVIDER_RPD"  # provider header says the day is spent
+
+
+@dataclass(frozen=True)
+class LimiterDecision:
+    """The outcome of one admission attempt. `admitted=False` ALWAYS means no
+    HTTP request is dispatched and no provider quota is consumed."""
+    admitted: bool
+    reason: str | None = None          # None iff admitted; else a REFUSE_* class
+    retry_after: float | None = None
+
+
+_DURATION_RE = re.compile(
+    r"^(?:(\d+(?:\.\d+)?)h)?(?:(\d+(?:\.\d+)?)m)?(?:(\d+(?:\.\d+)?)s)?$")
+
+
+def parse_reset_seconds(value) -> float | None:
+    """Seconds until a rate-limit reset. Accepts plain seconds ("60", "60.5")
+    and Groq's duration form ("2m59.56s", "1h2m3s"). None when unparseable."""
+    if value is None:
+        return None
+    try:
+        return max(0.0, float(value))
+    except (TypeError, ValueError):
+        pass
+    m = _DURATION_RE.match(str(value).strip())
+    if not m or not any(m.groups()):
+        return None
+    h, mi, s = (float(g) if g else 0.0 for g in m.groups())
+    return h * 3600.0 + mi * 60.0 + s
+
+
+def _to_float(value) -> float | None:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 class _TokenBucket:
@@ -374,6 +433,20 @@ class AdaptiveLimiter:
         self._day_count = 0
         self._adopted_rpm: float | None = None
         self._adopted_tpm: float | None = None
+        # PROVIDER-RPD OBSERVATION (distinct from the local `_day_count` safety
+        # cap): the provider's OWN declared daily request budget, read from
+        # x-ratelimit-*-requests. Never fed into the per-minute _rpm bucket.
+        self._provider_rpd_limit: float | None = None
+        self._provider_rpd_remaining: float | None = None
+        self._provider_rpd_reset_at: float | None = None   # monotonic epoch end
+        # RPD-DURABILITY-V1 (D-4): the day counter must survive a restart, not only
+        # an AIMD move. `_emit_change()` fires when the controller CHANGES SHAPE, so a
+        # lane that runs steadily at concurrency 1 and never adapts (exactly the pMAP
+        # lanes) persisted nothing — `day_count` lived in memory and died with the
+        # worker. These track a coalesced persist of the counter itself.
+        self._last_dispatch_at: str | None = None
+        self._last_rpd_persist_mono: float = 0.0
+        self._rpd_dirty: bool = False
 
     # -- durable state -----------------------------------------------------
 
@@ -383,8 +456,18 @@ class AdaptiveLimiter:
                     "floor": self._floor, "ceiling": self._ceil,
                     "increases": self._increases, "decreases": self._decreases,
                     "day": self._day, "day_count": self._day_count,
+                    # RPD-DURABILITY-V1 (D-4): when this lane last DISPATCHED, so a
+                    # restart can reconcile "day/window + dispatch count + last update"
+                    # from durable truth. The lane is the row key and its account/
+                    # function come from the LANE REGISTRY join (never duplicated here,
+                    # and never a secret).
+                    "last_dispatch_at": self._last_dispatch_at,
                     "adopted_rpm": self._adopted_rpm,
-                    "adopted_tpm": self._adopted_tpm}
+                    "adopted_tpm": self._adopted_tpm,
+                    # provider truth (observed from headers; not restored — it is
+                    # re-observed live each epoch so a stale value never binds)
+                    "provider_rpd_limit": self._provider_rpd_limit,
+                    "provider_rpd_remaining": self._provider_rpd_remaining}
 
     def capacity_snapshot(self, *, now: float | None = None) -> dict:
         """Read-only capacity view for the SELECTION layer (GROQ-ROUTING-POLICY-V1 /
@@ -411,6 +494,9 @@ class AdaptiveLimiter:
             "breaker_open": self._breaker.is_open,
             "day_count": day_count,
             "rpd_budget": self.spec.rpd,
+            # provider-declared daily-request truth (None until first observed)
+            "provider_rpd_limit": self._provider_rpd_limit,
+            "provider_rpd_remaining": self._provider_rpd_remaining,
         }
 
     def restore(self, state: dict | None) -> bool:
@@ -432,6 +518,11 @@ class AdaptiveLimiter:
             if state.get("day") == today:
                 self._day, self._day_count = today, int(
                     state.get("day_count", 0) or 0)
+                # RPD-DURABILITY-V1 (D-4): the next dispatch continues from durable
+                # truth. A row from a PREVIOUS day is deliberately not restored — the
+                # daily budget resets, and carrying it over would refuse live capacity.
+                lda = state.get("last_dispatch_at")
+                self._last_dispatch_at = str(lda) if lda else None
             for attr, bucket in (("adopted_rpm", self._rpm),
                                  ("adopted_tpm", self._tpm)):
                 val = state.get(attr)
@@ -475,15 +566,25 @@ class AdaptiveLimiter:
         return False
 
     def acquire(self, est_tokens: float = 0.0, block: bool = True) -> bool:
-        """Take the concurrency slot + rate tokens. Returns False when
-        non-blocking and the lane is saturated, when the breaker is open,
-        or (non-blocking) inside a Retry-After hold. A False return never
-        leaves anything held."""
+        """Backward-compatible boolean admission. Returns True iff admitted;
+        a False return never leaves anything held. Callers that need the
+        REASON for a refusal use `admit()` (GROQ-MAP-CONTROL-PLANE-REPAIR-V1)."""
+        return self.admit(est_tokens=est_tokens, block=block).admitted
+
+    def admit(self, est_tokens: float = 0.0, block: bool = True) -> LimiterDecision:
+        """Take the concurrency slot + rate tokens, returning a reasoned
+        LimiterDecision. `admitted=False` ALWAYS means zero HTTP dispatch and
+        zero provider consumption; every refusal releases whatever it briefly
+        held. The gate order (retry-after → family → breaker → concurrency →
+        rpm/tpm → provider-rpd → local-rpd) is unchanged; only the outcome is
+        now named."""
         if not self._honor_retry_after(block):
-            return False
+            with self._lock:
+                ra = max(0.0, self._not_before - _now())
+            return LimiterDecision(False, REFUSE_RETRY_AFTER, retry_after=ra)
         if self.spec.family and not FAMILY_GATE.allowed(
                 self.spec.family, _registry_store()):
-            return False        # family cooldown: correlated 429 storm
+            return LimiterDecision(False, REFUSE_FAMILY_GATE)  # correlated storm
         if not self._breaker.allow():
             # BREAKER-WAIT (measured 2026-08-30): failing fast here turned
             # one OOM storm into a dead ticket — every stage retry hit the
@@ -492,40 +593,128 @@ class AdaptiveLimiter:
             # half-open probe itself; only a non-blocking caller (or a
             # breaker that stays open past BREAKER_WAIT_MAX_S) is refused.
             if not block or not self._wait_for_breaker():
-                return False
+                return LimiterDecision(False, REFUSE_BREAKER)
         if block:
             self._sem.acquire()
         elif not self._sem.try_acquire():
             self._breaker.release_probe()
-            return False
+            return LimiterDecision(False, REFUSE_CONCURRENCY)
         if self.spec.kind == "rate":
-            refused = False
+            reason: str | None = None
             if self._rpm is not None and not self._rpm.acquire(1.0, block):
-                refused = True
+                reason = REFUSE_RPM
             elif (self._tpm is not None and est_tokens > 0
                     and not self._tpm.acquire(est_tokens, block)):
                 if self._rpm is not None:
                     self._rpm.refund(1.0)         # no call will be made
-                refused = True
-            if not refused and self.spec.rpd:
+                reason = REFUSE_TPM
+            # PROVIDER-declared daily exhaustion (from headers) refuses BEFORE
+            # the local cap is charged — a provider-spent day must not consume a
+            # local admission slot, and must never dispatch.
+            if reason is None:
+                with self._lock:
+                    prov_spent = self._provider_rpd_exhausted_locked()
+                if prov_spent:
+                    reason = REFUSE_PROVIDER_RPD
+                    self._refund_rate(est_tokens)
+            if reason is None and self.spec.rpd:
                 with self._lock:
                     today = time.strftime("%Y-%m-%d", time.gmtime())
                     if today != self._day:
                         self._day, self._day_count = today, 0
                     if self._day_count >= self.spec.rpd:
-                        refused = True      # daily quota spent
+                        reason = REFUSE_RPD      # local daily safety cap spent
                     else:
                         self._day_count += 1
-                if refused:
-                    if self._rpm is not None:
-                        self._rpm.refund(1.0)
-                    if self._tpm is not None and est_tokens > 0:
-                        self._tpm.refund(est_tokens)
-            if refused:
+                        # RPD-DURABILITY-V1 (D-4): admission is the dispatch moment.
+                        self._last_dispatch_at = _utc_iso()
+                        self._rpd_dirty = True
+                if reason == REFUSE_RPD:
+                    self._refund_rate(est_tokens)
+            if reason is not None:
                 self._sem.release()
                 self._breaker.release_probe()
-                return False
-        return True
+                return LimiterDecision(False, reason)
+        # RPD-DURABILITY-V1 (D-4): persist the day counter OUTSIDE the lock, on the
+        # admitted path only (a refusal consumes no provider request, so it moves no
+        # counter). Coalesced — see _persist_rpd_if_due.
+        self._persist_rpd_if_due()
+        return LimiterDecision(True)
+
+    #: RPD-DURABILITY-V1 (D-4) coalescing window. A write per dispatch would put a
+    #: Postgres round trip in the admission path of every extraction call; a window
+    #: keeps the store's "writes are rare" contract while bounding what an abrupt
+    #: kill can lose to at most this many seconds of dispatches on ONE lane. The
+    #: durable row is therefore a LOWER BOUND on today's dispatches, never an
+    #: over-count — which is the safe direction for a budget.
+    RPD_PERSIST_MIN_INTERVAL_S: float = 1.0
+
+    def _persist_rpd_if_due(self, *, force: bool = False) -> None:
+        cb = self._on_change
+        if cb is None:
+            return
+        with self._lock:
+            if not self._rpd_dirty:
+                return
+            now = _now()
+            if not force and (now - self._last_rpd_persist_mono) < self.RPD_PERSIST_MIN_INTERVAL_S:
+                return
+            self._last_rpd_persist_mono = now
+            self._rpd_dirty = False
+        try:
+            cb(self.state())          # outside the lock: does I/O
+        except Exception:             # noqa: BLE001 — accounting must never block a call
+            log.debug("rpd persist failed for %s; continuing in-memory", self.name)
+
+    def flush_rpd(self) -> None:
+        """Force the coalesced counter out (shutdown / end of a bounded run)."""
+        self._persist_rpd_if_due(force=True)
+
+    def _refund_rate(self, est_tokens: float) -> None:
+        """Hand back the rpm/tpm tokens taken for a call that will not be made."""
+        if self._rpm is not None:
+            self._rpm.refund(1.0)
+        if self._tpm is not None and est_tokens > 0:
+            self._tpm.refund(est_tokens)
+
+    def _observe_provider_rpd_locked(self, limit, remaining, reset_secs) -> None:
+        """Reconcile the provider's declared daily-request budget conservatively.
+        Within one reset epoch the provider's `remaining` must not rise (we take
+        the min); a proven epoch boundary — the reset deadline elapsed, or the
+        declared limit changed — adopts the fresh value. Caller holds the lock."""
+        now = _now()
+        epoch_expired = (self._provider_rpd_reset_at is not None
+                         and now >= self._provider_rpd_reset_at)
+        new_epoch = (self._provider_rpd_remaining is None or epoch_expired
+                     or (limit is not None and limit != self._provider_rpd_limit))
+        if limit is not None:
+            self._provider_rpd_limit = limit
+        if remaining is not None:
+            self._provider_rpd_remaining = (
+                remaining if new_epoch
+                else min(self._provider_rpd_remaining, remaining))
+        if reset_secs is not None:
+            self._provider_rpd_reset_at = now + reset_secs
+
+    def park_provider_day(self, reset_secs: float) -> None:
+        """CLOUDFLARE-WORKERS-AI-V1: a provider BODY error (Cloudflare 3036 — daily free
+        allocation exhausted) declares the day spent even though no rate-limit HEADER did.
+        Reuse the provider-RPD-exhausted gate: `admit()` then returns REFUSE_PROVIDER_RPD
+        (zero HTTP, zero quota) until `reset_secs` elapses — a parked account, never a
+        retry-loop against a dead free allocation. Other lanes are untouched (per-lane)."""
+        with self._lock:
+            self._observe_provider_rpd_locked(limit=None, remaining=0, reset_secs=reset_secs)
+
+    def _provider_rpd_exhausted_locked(self) -> bool:
+        """True only when the provider itself reports zero daily requests left
+        AND the current reset epoch has NOT elapsed (a stale zero past its reset
+        is treated as a probable reset, not a block). Caller holds the lock."""
+        if self._provider_rpd_remaining is None:
+            return False
+        if (self._provider_rpd_reset_at is not None
+                and _now() >= self._provider_rpd_reset_at):
+            return False
+        return self._provider_rpd_remaining <= 0
 
     def release(self) -> None:
         self._sem.release()
@@ -574,36 +763,43 @@ class AdaptiveLimiter:
     def _sync_headers(self, headers: dict | None) -> None:
         if not headers or not self.spec.use_headers:
             return
-        # FLEET-V3 CEILING ADOPTION (owner 2026-09-01): when the
-        # provider DECLARES its limit above our configured seed, adopt
-        # theirs — clamped to seed x CEILING_ADOPT_MAX_MULTIPLE. Grow-
-        # only, zero probing (a 429 response carries these headers at
-        # exactly the moment the edge is found).
-        for key, bucket, seed, attr in (
-                ("x-ratelimit-limit-requests", self._rpm,
-                 self.spec.rpm, "_adopted_rpm"),
-                ("x-ratelimit-limit-tokens", self._tpm,
-                 self.spec.tpm, "_adopted_tpm")):
-            if bucket is None or seed is None or key not in headers:
-                continue
-            try:
-                declared = float(headers[key])
-            except (TypeError, ValueError):
-                continue
-            cap = min(declared, seed * CEILING_ADOPT_MAX_MULTIPLE)
-            if bucket.adopt_capacity(cap):
-                setattr(self, attr, cap)
-                log.info(
-                    "%s adopted provider-declared %s: %s (seed %s)",
-                    self.name, key, int(cap), seed)
-        for key, bucket in (("x-ratelimit-remaining-requests", self._rpm),
-                            ("x-ratelimit-remaining-tokens", self._tpm),
+        # GROQ-MAP-CONTROL-PLANE-REPAIR-V1: `*-requests` headers are a DAILY
+        # (RPD) budget on Groq — they MUST NOT touch the per-MINUTE `_rpm`
+        # bucket (the old code fed x-ratelimit-*-requests into _rpm, a
+        # per-day/per-minute category error). Only `*-tokens` are per-minute
+        # (TPM) and correctly drive `_tpm`; `*-requests` drive the distinct
+        # provider-RPD observation below.
+        #
+        # FLEET-V3 CEILING ADOPTION (owner 2026-09-01), now TOKENS-only: when
+        # the provider declares a token limit above our seed, adopt theirs,
+        # clamped to seed x CEILING_ADOPT_MAX_MULTIPLE. Grow-only.
+        if (self._tpm is not None and self.spec.tpm is not None
+                and "x-ratelimit-limit-tokens" in headers):
+            declared = _to_float(headers["x-ratelimit-limit-tokens"])
+            if declared is not None:
+                cap = min(declared, self.spec.tpm * CEILING_ADOPT_MAX_MULTIPLE)
+                if self._tpm.adopt_capacity(cap):
+                    self._adopted_tpm = cap
+                    log.info(
+                        "%s adopted provider-declared x-ratelimit-limit-tokens:"
+                        " %s (seed %s)", self.name, int(cap), self.spec.tpm)
+        for key, bucket in (("x-ratelimit-remaining-tokens", self._tpm),
                             ("anthropic-ratelimit-tokens-remaining", self._tpm)):
-            if bucket is not None and key in (headers or {}):
-                try:
-                    bucket.sync_remaining(float(headers[key]))
-                except (TypeError, ValueError):
-                    pass
+            if bucket is not None and key in headers:
+                val = _to_float(headers[key])
+                if val is not None:
+                    bucket.sync_remaining(val)
+        # PROVIDER-RPD OBSERVATION (distinct from the local `_day_count` safety
+        # cap): record the provider's own declared daily-request budget so RPD
+        # truth is observable on EVERY response (success and 429), and gate
+        # admission when the provider says the day is spent. Never inflates or
+        # shrinks the per-minute bucket.
+        lim_v = _to_float(headers.get("x-ratelimit-limit-requests"))
+        rem_v = _to_float(headers.get("x-ratelimit-remaining-requests"))
+        reset_v = parse_reset_seconds(headers.get("x-ratelimit-reset-requests"))
+        if lim_v is not None or rem_v is not None or reset_v is not None:
+            with self._lock:
+                self._observe_provider_rpd_locked(lim_v, rem_v, reset_v)
 
     @property
     def effective(self) -> int:
@@ -717,6 +913,44 @@ class LimiterRegistry:
     @property
     def store_attached(self) -> bool:
         return self._store is not None
+
+    def ensure_store(self) -> None:
+        """RPD-DURABILITY-V1 (D-4): make durability a property of the REGISTRY, not of
+        one caller.
+
+        Before this, the only attach site was `workers.llm_provider.
+        _ensure_controller_store()`. The extract worker goes through that module, so its
+        Gemini/NVIDIA lanes persisted. The pMAP stage worker uses the SHARED
+        `LLMExtractionClient` directly and never imports `workers.llm_provider`, so in
+        that process no store was ever attached, `_on_change` stayed None, and every
+        pMAP dispatch was accounted only in memory — measured 2026-09-10: zero
+        `llm_controller_state` rows for `map_groq2..6` despite thousands of dispatches.
+
+        Called from `LLMExtractionClient.__init__` — the seam EVERY provider-calling
+        path goes through (extract, pMAP, doc_profile, chat compiler) — so durability
+        needs no per-caller wiring.
+
+        Deliberately NOT called from `lane()`/`budget()`: that made merely creating a
+        lane reach for Postgres, so any process touching the registry (tests, tools,
+        a dry-run) silently bound and mutated PRODUCTION controller state. Caught by
+        `test_llm_controller.py::test_attach_after_creation_restores_existing_lanes`,
+        which creates a lane and then attaches its OWN store — the auto-attach hijacked
+        it with live state. Explicit `attach_store()` still wins: it rebinds every
+        existing lane.
+
+        Idempotent, and fail-soft exactly like the store itself: no DSN or no table
+        means one warning and in-memory operation, never a blocked call.
+        """
+        if self._store is not None:
+            return
+        dsn = os.environ.get("POLYMATH_PG_DSN", "").strip()
+        if not dsn:
+            return
+        try:
+            from polymath_shared.llm_extraction.state_store import PostgresControllerStore
+            self.attach_store(PostgresControllerStore(dsn))
+        except Exception:  # noqa: BLE001 — accounting must never block extraction
+            log.debug("controller store unavailable; continuing in-memory")
 
     def attach_store(self, store: ControllerStore) -> None:
         """Attach durable state; lanes created earlier are restored now."""

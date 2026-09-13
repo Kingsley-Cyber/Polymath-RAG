@@ -1,0 +1,179 @@
+{
+  "contract": "pmap-concurrency-curve-v1",
+  "doc": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+  "cap": 15,
+  "per_level": 72,
+  "levels": {
+    "1": {
+      "concurrency": 1,
+      "wall_s": 22.1,
+      "window_start": "2026-09-13 01:51:20.513522+00:00",
+      "window_end": "2026-09-13 01:51:42.633773+00:00",
+      "submitted": 72,
+      "mapped": 42,
+      "disp": 6,
+      "http_429": 2,
+      "refused": 0,
+      "empty": 0,
+      "maps_min": 114,
+      "slices": [
+        {
+          "tag": "c1s0",
+          "submitted": 72,
+          "mapped": 42,
+          "unresolved": 30,
+          "disp": 6,
+          "http_429": 2,
+          "empty": 0,
+          "refused": 0,
+          "reasons": []
+        }
+      ]
+    },
+    "2": {
+      "concurrency": 2,
+      "wall_s": 9.1,
+      "window_start": "2026-09-13 01:51:45.222635+00:00",
+      "window_end": "2026-09-13 01:51:54.286684+00:00",
+      "submitted": 72,
+      "mapped": 12,
+      "disp": 6,
+      "http_429": 4,
+      "refused": 0,
+      "empty": 0,
+      "maps_min": 79,
+      "slices": [
+        {
+          "tag": "c2s0",
+          "submitted": 36,
+          "mapped": 6,
+          "unresolved": 30,
+          "disp": 3,
+          "http_429": 2,
+          "empty": 0,
+          "refused": 0,
+          "reasons": []
+        },
+        {
+          "tag": "c2s1",
+          "submitted": 36,
+          "mapped": 6,
+          "unresolved": 30,
+          "disp": 3,
+          "http_429": 2,
+          "empty": 0,
+          "refused": 0,
+          "reasons": []
+        }
+      ]
+    },
+    "3": {
+      "concurrency": 3,
+      "wall_s": 83.6,
+      "window_start": "2026-09-13 01:51:57.534513+00:00",
+      "window_end": "2026-09-13 01:53:21.178253+00:00",
+      "submitted": 72,
+      "mapped": 9,
+      "disp": 6,
+      "http_429": 5,
+      "refused": 0,
+      "empty": 0,
+      "maps_min": 6,
+      "slices": [
+        {
+          "tag": "c3s0",
+          "submitted": 24,
+          "mapped": 0,
+          "unresolved": 24,
+          "disp": 2,
+          "http_429": 2,
+          "empty": 0,
+          "refused": 0,
+          "reasons": []
+        },
+        {
+          "tag": "c3s1",
+          "submitted": 24,
+          "mapped": 0,
+          "unresolved": 24,
+          "disp": 2,
+          "http_429": 2,
+          "empty": 0,
+          "refused": 0,
+          "reasons": []
+        },
+        {
+          "tag": "c3s2",
+          "submitted": 24,
+          "mapped": 9,
+          "unresolved": 15,
+          "disp": 2,
+          "http_429": 1,
+          "empty": 0,
+          "refused": 0,
+          "reasons": []
+        }
+      ]
+    },
+    "4": {
+      "concurrency": 4,
+      "wall_s": 116.3,
+      "window_start": "2026-09-13 01:53:24.859414+00:00",
+      "window_end": "2026-09-13 01:55:21.197943+00:00",
+      "submitted": 72,
+      "mapped": 0,
+      "disp": 8,
+      "http_429": 8,
+      "refused": 0,
+      "empty": 0,
+      "maps_min": 0,
+      "slices": [
+        {
+          "tag": "c4s0",
+          "submitted": 18,
+          "mapped": 0,
+          "unresolved": 18,
+          "disp": 2,
+          "http_429": 2,
+          "empty": 0,
+          "refused": 0,
+          "reasons": []
+        },
+        {
+          "tag": "c4s1",
+          "submitted": 18,
+          "mapped": 0,
+          "unresolved": 18,
+          "disp": 2,
+          "http_429": 2,
+          "empty": 0,
+          "refused": 0,
+          "reasons": []
+        },
+        {
+          "tag": "c4s2",
+          "submitted": 18,
+          "mapped": 0,
+          "unresolved": 18,
+          "disp": 2,
+          "http_429": 2,
+          "empty": 0,
+          "refused": 0,
+          "reasons": []
+        },
+        {
+          "tag": "c4s3",
+          "submitted": 18,
+          "mapped": 0,
+          "unresolved": 18,
+          "disp": 2,
+          "http_429": 2,
+          "empty": 0,
+          "refused": 0,
+          "reasons": []
+        }
+      ]
+    }
+  },
+  "duplicate_parent_maps": 0
+}

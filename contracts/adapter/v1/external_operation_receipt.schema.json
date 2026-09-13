@@ -1,0 +1,164 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "polymath/contracts/adapter/v1/external_operation_receipt.schema.json",
+ "title": "ExternalOperationReceiptV1",
+ "description": "What Polymath stores about one TrailSignal sub-operation: references and the terminal receipt only \u2014 never Trail's internal state, raw bytes or records.",
+ "type": "object",
+ "required": [
+  "run_id",
+  "step_id",
+  "external_system",
+  "operation_kind",
+  "operation_id",
+  "idempotency_key",
+  "principal",
+  "submitted_at",
+  "status_revision",
+  "phase"
+ ],
+ "properties": {
+  "run_id": {
+   "type": "string",
+   "pattern": "^adr_[0-9a-f]{16,64}$"
+  },
+  "step_id": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 200
+  },
+  "external_system": {
+   "enum": [
+    "trailsignal"
+   ]
+  },
+  "operation_kind": {
+   "type": "string"
+  },
+  "operation_id": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 200
+  },
+  "idempotency_key": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 200
+  },
+  "principal": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 200
+  },
+  "submitted_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "status_revision": {
+   "type": "integer",
+   "minimum": 0
+  },
+  "temporal_workflow_id": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "temporal_run_id": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "phase": {
+   "enum": [
+    "PENDING",
+    "RUNNING",
+    "PAUSED",
+    "WAITING",
+    "TERMINAL"
+   ]
+  },
+  "outcome": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "enum": [
+    "SUCCEEDED",
+    "PARTIAL",
+    "CANCELLED",
+    "FAILED",
+    null
+   ]
+  },
+  "terminal_at": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "format": "date-time"
+  },
+  "record_ids": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "minLength": 1,
+    "maxLength": 200
+   }
+  },
+  "dataset_ids": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "minLength": 1,
+    "maxLength": 200
+   }
+  },
+  "export_ids": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "minLength": 1,
+    "maxLength": 200
+   }
+  },
+  "poll_count": {
+   "type": "integer",
+   "minimum": 0
+  },
+  "last_polled_at": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "format": "date-time"
+  },
+  "failure": {
+   "type": [
+    "object",
+    "null"
+   ],
+   "required": [
+    "code",
+    "message"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "code": {
+     "type": "string",
+     "pattern": "^[A-Z][A-Z0-9_]{2,60}$"
+    },
+    "message": {
+     "type": "string",
+     "maxLength": 2000
+    },
+    "step_id": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 200
+    }
+   }
+  }
+ },
+ "additionalProperties": false
+}

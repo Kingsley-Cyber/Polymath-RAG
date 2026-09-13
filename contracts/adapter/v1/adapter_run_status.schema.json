@@ -1,0 +1,172 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "polymath/contracts/adapter/v1/adapter_run_status.schema.json",
+ "title": "AdapterRunStatusV1",
+ "description": "Current lifecycle of an adapter run (adapter_status / adapter_submit / adapter_cancel). Every identity field from the manifest is repeated so a status is self-describing.",
+ "type": "object",
+ "required": [
+  "run_id",
+  "adapter_id",
+  "adapter_version",
+  "workflow_version",
+  "retrieval_policy_version",
+  "input_schema_version",
+  "output_schema_version",
+  "status",
+  "current_step_id",
+  "steps_issued",
+  "steps_accepted",
+  "started_at",
+  "updated_at"
+ ],
+ "properties": {
+  "run_id": {
+   "type": "string",
+   "pattern": "^adr_[0-9a-f]{16,64}$"
+  },
+  "adapter_id": {
+   "type": "string",
+   "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$"
+  },
+  "adapter_version": {
+   "type": "string",
+   "pattern": "^\\d+\\.\\d+\\.\\d+$"
+  },
+  "workflow_version": {
+   "type": "string",
+   "pattern": "^\\d+\\.\\d+\\.\\d+$"
+  },
+  "retrieval_policy_version": {
+   "type": "string",
+   "pattern": "^\\d+\\.\\d+\\.\\d+$"
+  },
+  "input_schema_version": {
+   "type": "string",
+   "pattern": "^\\d+\\.\\d+\\.\\d+$"
+  },
+  "output_schema_version": {
+   "type": "string",
+   "pattern": "^\\d+\\.\\d+\\.\\d+$"
+  },
+  "status": {
+   "enum": [
+    "created",
+    "running",
+    "awaiting_agent",
+    "completed",
+    "terminal_gap",
+    "cancelled",
+    "failed"
+   ]
+  },
+  "current_step_id": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "current_step_type": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "enum": [
+    "POLYMATH_RETRIEVE",
+    "POLYMATH_COMPILE_PLAN",
+    "POLYMATH_GRAPH_EXPAND",
+    "EXTERNAL_OPERATION",
+    "AGENT_REASON",
+    "VALIDATE",
+    "BRANCH",
+    "COMPILE_RESULT",
+    null
+   ]
+  },
+  "steps_issued": {
+   "type": "integer",
+   "minimum": 0
+  },
+  "steps_accepted": {
+   "type": "integer",
+   "minimum": 0
+  },
+  "branch_loops": {
+   "type": "integer",
+   "minimum": 0
+  },
+  "started_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "updated_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "terminal_at": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "format": "date-time"
+  },
+  "failure": {
+   "type": [
+    "object",
+    "null"
+   ],
+   "required": [
+    "code",
+    "message"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "code": {
+     "type": "string",
+     "pattern": "^[A-Z][A-Z0-9_]{2,60}$"
+    },
+    "message": {
+     "type": "string",
+     "maxLength": 2000
+    },
+    "step_id": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 200
+    }
+   }
+  },
+  "gap": {
+   "type": [
+    "object",
+    "null"
+   ],
+   "required": [
+    "code",
+    "message"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "code": {
+     "type": "string",
+     "pattern": "^[A-Z][A-Z0-9_]{2,60}$"
+    },
+    "message": {
+     "type": "string",
+     "maxLength": 2000
+    },
+    "step_id": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 200
+    }
+   }
+  },
+  "agent_identity": {
+   "type": [
+    "string",
+    "null"
+   ]
+  }
+ },
+ "additionalProperties": false
+}

@@ -1,0 +1,109 @@
+{
+  "contract_keys": [
+    "evidence",
+    "meta",
+    "trace"
+  ],
+  "rows": [
+    {
+      "corpus": "rag-canary",
+      "query": "What is the baseline relationship for Method ZQX-59622?",
+      "v1": {
+        "keys": [
+          "evidence",
+          "meta",
+          "query",
+          "selected_documents",
+          "selected_sections",
+          "trace"
+        ],
+        "evidence": 10,
+        "mode": "HYBRID"
+      },
+      "v2": {
+        "keys": [
+          "evidence",
+          "meta",
+          "query",
+          "selected_documents",
+          "selected_sections",
+          "trace"
+        ],
+        "evidence": 15,
+        "mode": "HYBRID",
+        "engine": "candidate-retrieval-v1"
+      },
+      "contract_keys_present_both": true,
+      "v2_superset_of_contract": true,
+      "both_nonempty": true,
+      "v2_no_error": true
+    },
+    {
+      "corpus": "ecom-meta-v1",
+      "query": "What are the product return policies?",
+      "v1": {
+        "keys": [
+          "evidence",
+          "meta",
+          "query",
+          "selected_documents",
+          "selected_sections",
+          "trace"
+        ],
+        "evidence": 10,
+        "mode": "HYBRID"
+      },
+      "v2": {
+        "keys": [
+          "evidence",
+          "meta",
+          "query",
+          "selected_documents",
+          "selected_sections",
+          "trace"
+        ],
+        "evidence": 15,
+        "mode": "HYBRID",
+        "engine": "candidate-retrieval-v1"
+      },
+      "contract_keys_present_both": true,
+      "v2_superset_of_contract": true,
+      "both_nonempty": true,
+      "v2_no_error": true
+    },
+    {
+      "corpus": "cinema",
+      "query": "How is lighting used to build tension in a scene?",
+      "v1": {
+        "keys": [
+          "evidence",
+          "meta",
+          "query",
+          "selected_documents",
+          "selected_sections",
+          "trace"
+        ],
+        "evidence": 10,
+        "mode": "HYBRID"
+      },
+      "v2": {
+        "keys": [
+          "evidence",
+          "meta",
+          "query",
+          "selected_documents",
+          "selected_sections",
+          "trace"
+        ],
+        "evidence": 15,
+        "mode": "HYBRID",
+        "engine": "candidate-retrieval-v1"
+      },
+      "contract_keys_present_both": true,
+      "v2_superset_of_contract": true,
+      "both_nonempty": true,
+      "v2_no_error": true
+    }
+  ],
+  "migration_safe": true
+}

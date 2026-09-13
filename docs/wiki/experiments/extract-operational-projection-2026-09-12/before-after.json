@@ -1,0 +1,53 @@
+{
+  "method": "EXPLAIN (ANALYZE, BUFFERS) on the exact hot-path SQL, before migration 0057 / reader cutover and after, same corpus (cinema, the largest: 67 extract-stage artifacts of 108 total), same live database, no data changes between measurements other than the migration + backfill under test.",
+  "graph_provider": {
+    "before": {
+      "plan": "Seq Scan on artifacts a ... Filter: (jsonb_exists(payload, 'llm_extraction') AND stage = 'extract')",
+      "buffers": "shared hit=1573 read=45346 written=2 (~354 MB touched)",
+      "execution_time_ms": 605.486
+    },
+    "after": {
+      "plan": "Seq Scan on artifacts a ... Filter: (extract_stats_present AND stage = 'extract')",
+      "buffers": "shared hit=8 read=174 (~1.4 MB touched)",
+      "execution_time_ms": 4.106
+    },
+    "speedup": "~147x; buffers touched dropped ~260x"
+  },
+  "corpus_document_summaries_extract_join": {
+    "before": {
+      "plan": "Hash Join on artifacts (Seq Scan, jsonb_exists filter) x outbox_events (Seq Scan)",
+      "buffers": "shared hit=6339 read=46857 written=7 (~362 MB touched)",
+      "execution_time_ms": 489.339
+    },
+    "after": {
+      "plan": "Nested Loop: Seq Scan on artifacts (extract_stats_present filter, no TOAST) x Bitmap Heap Scan on outbox_events using outbox_events_run_type_idx",
+      "buffers": "shared hit=406 read=180 (~4.6 MB touched)",
+      "execution_time_ms": 5.728
+    },
+    "speedup": "~85x; buffers touched dropped ~78x"
+  },
+  "controls_checked_for_regression": {
+    "pipeline_health_ms": 12.2,
+    "control_ready_ms": 1.9,
+    "pmap_provider_ms": 13.7,
+    "queue_by_pool_ms": 14.5,
+    "verdict": "unchanged order of magnitude from the prior CONTROL-PLANE-HONESTY-V1 session (register 11.211) — not regressed by this migration"
+  },
+  "shadow_parity": {
+    "eligible_rows": 108,
+    "mismatches": 0,
+    "per_corpus": {"cinema": {"rows": 67, "mismatched": 0}, "ecom-meta-v1": {"rows": 28, "mismatched": 0},
+                   "rag-canary": {"rows": 10, "mismatched": 0}, "d7-h1-test": {"rows": 3, "mismatched": 0}},
+    "verdict": "100% match, 0 mismatches"
+  },
+  "found_but_out_of_scope_for_this_gate": {
+    "what": "corpus_document_summaries()'s NON-extraction counters (chunks-by-tier, map-eligible-parents) still cost ~150ms end-to-end on cinema specifically",
+    "root_cause": "NOT a TOAST/JSONB issue — EXPLAIN shows a Seq Scan on `chunks` (96,391 rows / 215 MB) IS the planner's correct choice here because cinema's 67 documents own 84,152 of those rows (87% of the whole table); an index scan would cost MORE at that selectivity. `chunks_doc_idx (doc_id, chunk_index)` already exists and is not being ignored — it is correctly unused for this selectivity.",
+    "why_not_fixed_here": "This is a genuinely different problem (proportional to a corpus's raw chunk volume) from the artifacts.payload TOAST detoasting this gate targets, and fixing it would mean designing a NEW maintained summary/cache for chunk counts by document — a real, separate migration decision (semantic inventory, write-path, backfill, parity) this authority's own non-goals list warns against bundling in (\"do not use this task as justification to redesign... do not refactor X merely because it happens to be nearby\").",
+    "disposition": "Documented for a future, separate slice if the owner wants corpus_document_summaries's non-extraction counters optimized too; not part of the mandatory completion gate for THIS migration, which is scoped to artifacts.payload."
+  },
+  "outbox_events_scoping": {
+    "checked": true,
+    "finding": "No unscoped-then-filtered anti-pattern exists in the current code for either target reader. corpus_document_summaries's extract-join already scopes outbox_events by doc_id IN-list before/during the join (not after a broad aggregate), and outbox_events is small (2,486 rows / 12 MB total) — EXPLAIN shows sub-2ms cost via outbox_events_run_type_idx (run_id, event_type) even before this migration. No index change was made: phase H's own instruction (\"add the narrowest justified index only if the plan needs it\") was followed by NOT adding one, since the plan does not need it."
+  }
+}

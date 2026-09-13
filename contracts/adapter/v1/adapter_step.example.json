@@ -1,0 +1,110 @@
+{
+ "run_id": "adr_3322182605da76d37631b9dc0e0e7cbf",
+ "step_id": "C_hypotheses",
+ "step_type": "AGENT_REASON",
+ "sequence": 5,
+ "issued_at": "2026-09-13T18:30:41Z",
+ "objective": "From the retrieved Polymath evidence only, propose bounded activity \u2192 friction \u2192 direction hypotheses. Cite evidence ids for every claim; list unknowns instead of inventing.",
+ "context": {
+  "evidence_refs": [
+   {
+    "kind": "chunk",
+    "id": "chunk_7f3a",
+    "corpus_id": "cinema",
+    "doc_id": "doc_554b59",
+    "score": 0.81
+   },
+   {
+    "kind": "graph_fact",
+    "id": "fact_19c2",
+    "corpus_id": "cinema"
+   },
+   {
+    "kind": "query_receipt",
+    "id": "qr_4d0e"
+   }
+  ],
+  "inputs": {
+   "seed": "outdoor cold-plunge recovery routines for amateur athletes"
+  },
+  "prior_step_ids": [
+   "A_understand",
+   "B_plan",
+   "B_retrieve",
+   "B_graph"
+  ]
+ },
+ "constraints": [
+  "Cite only evidence_refs supplied in context",
+  "No opportunity score of any kind (LAW 1)",
+  "Preserve contradictions as contradicting_evidence_ids"
+ ],
+ "output_schema": {
+  "type": "object",
+  "required": [
+   "hypotheses"
+  ],
+  "additionalProperties": false,
+  "properties": {
+   "hypotheses": {
+    "type": "array",
+    "minItems": 1,
+    "maxItems": 8,
+    "items": {
+     "type": "object",
+     "required": [
+      "activity",
+      "friction",
+      "direction",
+      "supporting_evidence_ids",
+      "confidence"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "activity": {
+       "type": "string"
+      },
+      "friction": {
+       "type": "string"
+      },
+      "direction": {
+       "type": "string"
+      },
+      "supporting_evidence_ids": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       },
+       "minItems": 1
+      },
+      "contradicting_evidence_ids": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "confidence": {
+       "enum": [
+        "low",
+        "medium",
+        "high"
+       ]
+      },
+      "unknowns": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "acceptance_rules": [
+  "every supporting_evidence_ids entry is an id from context.evidence_refs",
+  "1 <= len(hypotheses) <= 8"
+ ],
+ "external": null,
+ "expires_at": null
+}

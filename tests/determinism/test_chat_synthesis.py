@@ -135,6 +135,16 @@ def _stream(body: dict, timeout: int = 420) -> tuple[list[str], dict, str]:
             elif line.startswith("data:") and cur == "error":
                 err = line[5:].strip()
     if err:
+        # A PROVIDER/lane fault is out of this contract's scope and skips. OUR OWN
+        # exception is not: on 2026-09-12 a ledger change raised ValueError from the
+        # streaming path, every chat answer became a stream error, and this branch
+        # reported it as "LLM lane, not the contract under test" — so the suite stayed
+        # green while chat was broken in production. Skip only on error codes that name
+        # a provider condition; anything else fails loudly.
+        _LANE_FAULTS = ("ollama_unavailable", "ollama_error", "litellm_error",
+                        "rate_limit", "timeout", "upstream")
+        if not any(code in err for code in _LANE_FAULTS):
+            pytest.fail(f"stream error from OUR OWN code, not the LLM lane: {err[:300]}")
         pytest.skip(f"stream error (LLM lane, not the contract under test): {err[:160]}")
     return phases, answer, str(((answer.get("result") or {}).get("answer")) or "")
 

@@ -1,0 +1,209 @@
+{
+ "model": "@cf/qwen/qwen3-30b-a3b-fp8",
+ "extraction": {
+  "thinking_on": {
+   "n": 3,
+   "valid": 3,
+   "valid_pct": 100,
+   "empty": 0,
+   "entities": 22,
+   "relations": 23,
+   "http_fail": 0,
+   "mean_lat": 7.8,
+   "p95_lat": 9.4,
+   "tok_out_mean": 1453,
+   "rows": [
+    {
+     "nid": "n_doc_0048",
+     "valid": true,
+     "entities": 6,
+     "relations": 5,
+     "empty": false,
+     "err": null,
+     "sanitize": null,
+     "tok_out": 1736,
+     "lat": 8.56,
+     "raw": "{\"contract\":\"polymath-extraction-v1\",\"profile\":\"volume\",\"items\":[{\"neighborhood_id\":\"n_doc_0048\",\"entities\":[{\"surface\":\"16-bit microcomputers\",\"type\":\"Product\",\"quote\":\"16-bit microcomputers\"},{\"surface\":\"BASIC language\",\"type\":\"Language\",\"quote\":\"BASIC language\"},{\"surface\":\"Lotus 1-2-3\",\"type\":\"Product\",\"quote\":\"Lotus 1-2-3\"},{\"surface\":\"spreadsheet programs\",\"type\":\"Product\",\"quote\":\"spreadsheet programs\"},{\"surface\":\"computational techniques\",\"type\":\"Concept\",\"quote\":\"computational techniques\"},{\"surface\":\"structures\",\"type\":\"Concept\",\"quote\":\"structures\"}],\"relations\":[{\"subject\":\"design offices\",\"predicate\":\"USES\",\"object\":\"16-bit microcomputers\",\"quote\":\"utilization of these facilities for the analysis and design of structures\"},{\"subject\":\"engineers\",\"predicate\":\"USES\",\"object\":\"spreadsheet programs\",\"quote\":\"adopted for use in tabular type solutions\"},{\"subject\":\"Lotus 1-2-3\",\"predicate\":\"IS_A\",\"object\":\"spreadsheet programs\",\"quote\":\"spreadsheet programs such as Lotus 1-2-3\"},{\"subject\":\"discovery\",\"predicate\":\"CAUSES\",\"object\":\"adoption\",\"quote\":\"discovery... resulted in their being adopted for use in tabular type solutions\"},{\"subject\":\"computational techniques\",\"predicate\":\"ACTS_ON\",\"object\":\"structures\",\"quote\":\"computational techniques and algorithms for describing and solving for the displaced state of structures\"}],\"digest\":{\"central_claim\":\"The paper describes a new system's capabilities and methodology for structural analysis using microcomputers.\",\"main_mechanism\":\"Evolution of microcomputer phases enabled advanced structural engineering programs through computational techniques and hardware improvements.\",\"retrieval_uses\":[\"microcomputer application phases\",\"structural analysis software development\",\"BASIC language usage in engineering\"]}}]}"
+    },
+    {
+     "nid": "n_doc_0661",
+     "valid": true,
+     "entities": 8,
+     "relations": 14,
+     "empty": false,
+     "err": null,
+     "sanitize": null,
+     "tok_out": 1069,
+     "lat": 5.55,
+     "raw": "{\"contract\":\"polymath-extraction-v1\",\"profile\":\"volume\",\"items\":[{\"neighborhood_id\":\"n_doc_0661\",\"entities\":[{\"surface\":\"David Keirsey\",\"type\":\"Person\",\"quote\":\"David Keirsey\"},{\"surface\":\"Please Understand Me\",\"type\":\"Book\",\"quote\":\"Please Understand Me\"},{\"surface\":\"Please Understand Me II\",\"type\":\"Book\",\"quote\":\"Please Understand Me II\"},{\"surface\":\"Rationals\",\"type\":\"Temperament\",\"quote\":\"Rationals\"},{\"surface\":\"temperament\",\"type\":\"Concept\",\"quote\":\"temperament\"},{\"surface\":\"intelligence\",\"type\":\"Concept\",\"quote\":\"intelligence\"},{\"surface\":\"madness\",\"type\":\"Concept\",\"quote\":\"madness\"},{\"surface\":\"personality\",\"type\":\"Concept\",\"quote\":\"personality\"}],\"relations\":[{\"subject\":\"David Keirsey\",\"predicate\":\"IS_A\",\"object\":\"Person\",\"quote\":\"David Keirsey\"},{\"subject\":\"Please Understand Me\",\"predicate\":\"IS_A\",\"object\":\"Book\",\"quote\":\"Please Understand Me\"},{\"subject\":\"Please Understand Me II\",\"predicate\":\"IS_A\",\"object\":\"Book\",\"quote\":\"Please Understand Me II\"},{\"subject\":\"Rationals\",\"predicate\":\"IS_A\",\"object\":\"Temperament\",\"quote\":\"Rationals\"},{\"subject\":\"temperament\",\"predicate\":\"IS_A\",\"object\":\"Concept\",\"quote\":\"temperament\"},{\"subject\":\"intelligence\",\"predicate\":\"IS_A\",\"object\":\"Concept\",\"quote\":\"intelligence\"},{\"subject\":\"madness\",\"predicate\":\"IS_A\",\"object\":\"Concept\",\"quote\":\"madness\"},{\"subject\":\"personality\",\"predicate\":\"IS_A\",\"object\":\"Concept\",\"quote\":\"personality\"},{\"subject\":\"David Keirsey\",\"predicate\":\"PRODUCES\",\"object\":\"Please Understand Me\",\"quote\":\"Please Understand Me was a valuable report\"},{\"subject\":\"David Keirsey\",\"predicate\":\"PRODUCES\",\"object\":\"Please Understand Me II\",\"quote\":\"Please Understand Me II serves to present a report\"},{\"subject\":\"David Keirsey\",\"predicate\":\"REQUIRES\",\"object\":\"temperament\",\"quote\":\"no one is in a better position to speak to us about it\"},{\"subject\":\"Rationals\",\"predicate\":\"CORRELATES_WITH\",\"object\":\"argumentation\",\"quote\":\"finding delight in argumentation\"},{\"subject\":\"Rationals\",\"predicate\":\"CORRELATES_WITH\",\"object\":\"logical trickery\",\"quote\":\"finding delight in logical trickery\"},{\"subject\":\"Rationals\",\"predicate\":\"CORRELATES_WITH\",\"object\":\"terrible jokes\",\"quote\":\"finding delight in (I confess) terrible jokes\"}],\"digest\":{\"central_claim\":\"Understanding temperament differences enriches our sense of self and others\",\"main_mechanism\":\"Keirsey's unique theories on intelligence, madness, and personality provide practical insights\",\"retrieval_uses\":[\"queries about Keirsey's temperament theories\",\"book repor"
+    },
+    {
+     "nid": "n_doc_0730",
+     "valid": true,
+     "entities": 8,
+     "relations": 4,
+     "empty": false,
+     "err": null,
+     "sanitize": null,
+     "tok_out": 1555,
+     "lat": 9.44,
+     "raw": "{\"contract\":\"polymath-extraction-v1\",\"profile\":\"volume\",\"items\":[{\"neighborhood_id\":\"n_doc_0730\",\"entities\":[{\"surface\":\"Timing for Broadcast Media\",\"type\":\"Concept\",\"quote\":\"Timing for Broadcast Media\"},{\"surface\":\"Timing for Full Animation\",\"type\":\"Concept\",\"quote\":\"Timing for Full Animation\"},{\"surface\":\"Timing in General\",\"type\":\"Concept\",\"quote\":\"Timing in General\"},{\"surface\":\"Digital Storyboarding\",\"type\":\"Concept\",\"quote\":\"Digital Storyboarding\"},{\"surface\":\"2D Storyboarding\",\"type\":\"Concept\",\"quote\":\"2D Storyboarding\"},{\"surface\":\"3D Storyboarding\u2014Pre-Visualization\",\"type\":\"Concept\",\"quote\":\"3D Storyboarding\u2014Pre-Visualization\"},{\"surface\":\"The Basic Unit of Time in Animation\",\"type\":\"Concept\",\"quote\":\"The Basic Unit of Time in Animation\"},{\"surface\":\"Timing for Television, Web-Based Programming vs. Timing for Features\",\"type\":\"Concept\",\"quote\":\"Timing for Television, Web-Based Programming vs. Timing for Features\"}],\"relations\":[{\"subject\":\"Timing for Full Animation\",\"predicate\":\"PART_OF\",\"object\":\"Timing for Broadcast Media\",\"quote\":\"Timing for Full Animation\"},{\"subject\":\"Timing in General\",\"predicate\":\"PART_OF\",\"object\":\"Timing for Broadcast Media\",\"quote\":\"Timing in General\"},{\"subject\":\"2D Storyboarding\",\"predicate\":\"PART_OF\",\"object\":\"Digital Storyboarding\",\"quote\":\"2D Storyboarding\"},{\"subject\":\"3D Storyboarding\u2014Pre-Visualization\",\"predicate\":\"PART_OF\",\"object\":\"Digital Storyboarding\",\"quote\":\"3D Storyboarding\u2014Pre-Visualization\"}],\"digest\":{\"central_claim\":\"The text provides comprehensive guidance on animation timing techniques across different media formats and production methods.\",\"main_mechanism\":\"Structured chapters and subsections organize topics from fundamental principles to specialized applications like digital effects and character animation.\",\"retrieval_uses\":[\"What chapters cover animation timing principles?\",\"How is digital storyboarding structured?\",\"What timing considerations apply to different media types?\"]}}]}"
+    }
+   ]
+  },
+  "no_think": {
+   "n": 3,
+   "valid": 3,
+   "valid_pct": 100,
+   "empty": 0,
+   "entities": 79,
+   "relations": 8,
+   "http_fail": 0,
+   "mean_lat": 7.5,
+   "p95_lat": 13.7,
+   "tok_out_mean": 1335,
+   "rows": [
+    {
+     "nid": "n_doc_0048",
+     "valid": true,
+     "entities": 0,
+     "relations": 8,
+     "empty": false,
+     "err": null,
+     "sanitize": null,
+     "tok_out": 762,
+     "lat": 3.82,
+     "raw": "{\"contract\":\"polymath-extraction-v1\",\"profile\":\"volume\",\"items\":[{\"neighborhood_id\":\"n_doc_0048\",\"entities\":[{\"surface\":\"16-bit microcomputers\",\"type\":\"Product\"},{\"surface\":\"BASIC language\",\"type\":\"Language\"},{\"surface\":\"Lotus 1-2-3\",\"type\":\"Product\"},{\"surface\":\"spreadsheet programs\",\"type\":\"Product\"},{\"surface\":\"mainframe structural analysis programs\",\"type\":\"Product\"},{\"surface\":\"microcomputers\",\"type\":\"Product\"},{\"surface\":\"computational techniques\",\"type\":\"Concept\"},{\"surface\":\"algorithms\",\"type\":\"Concept\"},{\"surface\":\"structures\",\"type\":\"Concept\"}],\"relations\":[{\"subject\":\"16-bit microcomputers\",\"predicate\":\"INTRODUCED_IN\",\"object\":\"design offices\",\"quote\":\"Since the introduction of 16-bit microcomputers into de- sign offices, a large amount of work and research effort has been dedicated to the utilization of these facilities for the analysis and design of structures.\"},{\"subject\":\"BASIC language\",\"predicate\":\"USED_IN\",\"object\":\"computer programs\",\"quote\":\"The earliest phase consisted of computer programs written in the BASIC language mainly to perform fundamental analytic calculations or simple operations such as the design of individual structural members (Refs.\"},{\"subject\":\"Lotus 1-2-3\",\"predicate\":\"USED_IN\",\"object\":\"tabular type solutions\",\"quote\":\"The second phase began with the availability of spreadsheet programs such as Lotus 1-2-3 which were originally intended for the business and accounting professions. The discovery, by engineers, of the powerful programmable nature of these spreadsheet programs (almost a language), along with their functions, graphics, macros and data handling facilities, has resulted in their being adopted for use in tabular type so- lutions.\"},{\"subject\":\"mainframe structural analysis programs\",\"predicate\":\"PORTED_TO\",\"object\":\"microcomputers\",\"quote\":\"This, coupled with significant increases in the reliability and sophistication of compilers, allowed mainframe structural analysis programs to be ported to microcomputers.\"},{\"subject\":\"microcomputers\",\"predicate\":\"EQUIPPED_WITH\",\"object\":\"millions of bytes of disk storage\",\"quote\":\"With the advent of microcomputers having millions of bytes of disk storage and a minimum of 5 12,000 bytes of random access memory, it became possible to develop structural engineering programs with the capacity to solve structures of considerable size.\"},{\"subject\":\"computational techniques\",\"predicate\":\"USED_IN\",\"object\":\"describing structures\",\"quote\":\"Computational techniques and algori"
+    },
+    {
+     "nid": "n_doc_0661",
+     "valid": true,
+     "entities": 60,
+     "relations": 0,
+     "empty": false,
+     "err": null,
+     "sanitize": null,
+     "tok_out": 2500,
+     "lat": 13.69,
+     "raw": "{\"contract\":\"polymath-extraction-v1\",\"profile\":\"volume\",\"items\":[{\"neighborhood_id\":\"n_doc_0661\",\"entities\":[{\"surface\":\"David Keirsey\",\"type\":\"Person\",\"quote\":\"\\\"The point of this book,\\\" writes my old friend David Keirsey, \\\"is that people differ from each other, and that no amount of getting after them is going to change them.\\\"\"},{\"surface\":\"temperament\",\"type\":\"Concept\",\"quote\":\"the important differences between us are our natural birthright, arising in just a few distinctive patterns.\"},{\"surface\":\"Please Understand Me\",\"type\":\"Product\",\"quote\":\"If Please Understand Me was a valuable report on his progress to that time (1978), Please Understand Me II serves to present a report on what he has worked out in the interim twenty years, and also the valuable addition of his ideas about the relationship of temperament to intelligence.\"},{\"surface\":\"intelligence\",\"type\":\"Concept\",\"quote\":\"his ideas about the relationship of temperament to intelligence\"},{\"surface\":\"Rationals\",\"type\":\"Concept\",\"quote\":\"We are both Rationals, and as you read this book you will understand why we Rationals treasure collecting various skills, exercising ourselves with logical investigation, but also finding delight in argumentation, logical trickery, and (I confess) terrible jokes - as long as they are clever plays on words.\"},{\"surface\":\"David\",\"type\":\"Person\",\"quote\":\"I have known David for almost thirty years now.\"},{\"surface\":\"Please Understand Me II\",\"type\":\"Product\",\"quote\":\"If Please Understand Me was a valuable report on his progress to that time (1978), Please Understand Me II serves to present a report on what he has worked out in the interim twenty years, and also the valuable addition of his ideas about the relationship of temperament to intelligence.\"},{\"surface\":\"madness\",\"type\":\"Concept\",\"quote\":\"which of the many problems in psychology he has chosen to Investigate - intelligence, madness, personality - each a very complex problem, and each with a checkered history.\"},{\"surface\":\"personality\",\"type\":\"Concept\",\"quote\":\"which of the many problems in psychology he has chosen to Investigate - intelligence, madness, personality - each a very complex problem, and each with a checkered history.\"},{\"surface\":\"Keirsey\",\"type\":\"Person\",\"quote\":\"No person that I know of has studied temperament in action more persistently and more brilliantly than Keirsey, and no one is in a better position to speak to us about it.\"},{\"surface\":\"David Keirsey\",\"type\":\"Person\",\"quote\":\"No perso"
+    },
+    {
+     "nid": "n_doc_0730",
+     "valid": true,
+     "entities": 19,
+     "relations": 0,
+     "empty": false,
+     "err": null,
+     "sanitize": null,
+     "tok_out": 742,
+     "lat": 5.03,
+     "raw": "{\"contract\":\"polymath-extraction-v1\",\"profile\":\"volume\",\"items\":[{\"neighborhood_id\":\"n_doc_0730\",\"entities\":[{\"surface\":\"Foreword by Joanna Quinn\",\"type\":\"Section\",\"quote\":\"[Foreword by Joanna Quinn](06_Foreword.xhtml#Foreword)\"},{\"surface\":\"Preface to the 3rd edition\",\"type\":\"Section\",\"quote\":\"[**Preface to the 3rd edition**](07_Preface.xhtml#Preface)\"},{\"surface\":\"Preface to the 1st edition\",\"type\":\"Section\",\"quote\":\"[**Preface to the 1st edition**](08_Prefacea.xhtml#Prefacea)\"},{\"surface\":\"Acknowledgments\",\"type\":\"Section\",\"quote\":\"[Acknowledgments](09_Acknowledgments.xhtml#Acknowledgments)\"},{\"surface\":\"Introduction\",\"type\":\"Section\",\"quote\":\"[Introduction](10_Introduction.xhtml#Introduction)\"},{\"surface\":\"Timing for Broadcast Media\",\"type\":\"Section\",\"quote\":\"[Timing for Broadcast Media](11_Chapter01.xhtml#Chapter01)\"},{\"surface\":\"Timing for Full Animation\",\"type\":\"Section\",\"quote\":\"[Timing for Full Animation](11_Chapter01.xhtml#sec1)\"},{\"surface\":\"Timing in General\",\"type\":\"Section\",\"quote\":\"[Timing in General](11_Chapter01.xhtml#sec2)\"},{\"surface\":\"What Is Good Timing?\",\"type\":\"Section\",\"quote\":\"[What Is Good Timing?](12_Chapter02.xhtml#Chapter02)\"},{\"surface\":\"The Storyboard\",\"type\":\"Section\",\"quote\":\"[The Storyboard](13_Chapter03.xhtml#Chapter03)\"},{\"surface\":\"Traditional Storyboards\",\"type\":\"Section\",\"quote\":\"[Traditional Storyboards](14_Chapter04.xhtml#Chapter04)\"},{\"surface\":\"Digital Storyboarding\",\"type\":\"Section\",\"quote\":\"[Digital Storyboarding](15_Chapter05.xhtml#Chapter05)\"},{\"surface\":\"2D Storyboarding\",\"type\":\"Section\",\"quote\":\"[2D Storyboarding](15_Chapter05.xhtml#sec3)\"},{\"surface\":\"3D Storyboarding\u2014Pre-Visualization\",\"type\":\"Section\",\"quote\":\"[3D Storyboarding\u2014Pre-Visualization](15_Chapter05.xhtml#sec4)\"},{\"surface\":\"Additional Storyboard Effects\",\"type\":\"Section\",\"quote\":\"[Additional Storyboard Effects](16_Chapter06.xhtml#Chapter66)\"},{\"surface\":\"Responsibility of the Director\",\"type\":\"Section\",\"quote\":\"[Responsibility of the Director](17_Chapter07.xhtml#Chapter07)\"},{\"surface\":\"Directing for Interactive Games\",\"type\":\"Section\",\"quote\":\"[Directing for Interactive Games](18_Chapter08.xhtml#Chapter08)\"},{\"surface\":\"The Basic Unit of Time in Animation\",\"type\":\"Section\",\"quote\":\"[The Basic Unit of Time in Animation](19_Chapter09.xhtml#Chapter09)\"},{\"surface\":\"Timing for Television, Web-Based Programming vs. Timing for Features\",\"type\":\"Section\",\"quote\":\"[Timing for Television, Web-Based Programming vs. Timing for Features](20_Chapter10.xht"
+    }
+   ]
+  }
+ },
+ "profile": {
+  "thinking_on": {
+   "n": 3,
+   "valid": 0,
+   "valid_pct": 0,
+   "empty": 0,
+   "mean_lat": 5.4,
+   "rows": [
+    {
+     "doc": "doc_4bfdf4",
+     "valid": false,
+     "ok": false,
+     "fields": 0,
+     "issues": 10,
+     "quality": 0.44,
+     "empty": false,
+     "err": null,
+     "chars": 115,
+     "lat": 2.23,
+     "raw": "{\"error\": \"The request is invalid. The JSON format is incorrect. Expected a ',' delimiter between array elements.\"}"
+    },
+    {
+     "doc": "doc_3d3561",
+     "valid": false,
+     "ok": false,
+     "fields": 0,
+     "issues": 10,
+     "quality": 0.44,
+     "empty": false,
+     "err": null,
+     "chars": 1163,
+     "lat": 7.12,
+     "raw": "{\"ONE\": \"Lights, Camera, Consistency: A Multistage Pipeline for Character-Stable AI Video Stories\", \"SUMMARY\": \"A pipeline using LLMs and multiple stages to generate AI video stories with consistent character adherence, evaluated through baseline comparisons and metrics.\", \"TOPIC\": \"Multistage Pipeline for Character-Stable AI Video Stories\", \"TERM\": \"LLM\", \"TERM\": \"AI\", \"TERM\": \"NLP\", \"TERM\": \"CV\", \"TERM\": \"arXiv:2304.07193\", \"Q\": \"What is the main contribution of the document?\", \"SEARCH\": \"Multistage pipeline AI video consistency\", \"THEORY\": \"Pipeline framework for AI content generation\", \"CONCEPT\": \"Character adherence in AI storytelling\", \"LATENT-PATTERN\": \"Stages with baseline comparisons and metric evaluations\", \"ANCHOR\": \"Character-stable AI video stories\", \"RECALLQ\": \"How to ensure character consistency in AI videos?\", \"TENSION\": \"Balancing creativity and consistency in AI narratives\", \"BRIDGE\": \"Connecting NLP and computer vision in AI\", \"INVERSION\": \"Inverting the pipeline to focus on inconsistency\", \"BOUNDARY\": \"Limited to AI video stories, not other media\", \"SEEALSO\": \"arXiv:2304.07193\", \"SEEALSO\": \"LLMs\", \"SEEALSO\": \"NLP techniques\"}"
+    },
+    {
+     "doc": "doc_6a3530",
+     "valid": false,
+     "ok": false,
+     "fields": 0,
+     "issues": 10,
+     "quality": 0.44,
+     "empty": false,
+     "err": null,
+     "chars": 1278,
+     "lat": 6.85,
+     "raw": "{\"TOPIC\": \"Affective movement generation using Laban Effort and Shape with Hidden Markov Models\", \"SUMMARY\": \"The document presents an approach that uses Laban movement analysis's Effort and Shape components combined with hidden Markov modeling to isolate kinematic features for affective state recognition.\", \"TERM\": \"Laban Effort and Shape\", \"TERM\": \"Hidden Markov Models\", \"TERM\": \"LMA\", \"Q\": \"How does the proposed approach isolate salient kinematic features for affective state recognition?\", \"SEARCH\": \"Affective Movement Generation HMM\", \"THEORY\": \"Stochastic dynamic models for movement analysis\", \"CONCEPT\": \"Emotion recognition through movement kinematics\", \"LATENT-PATTERN\": \"Integration of Laban movement components with probabilistic modeling\", \"ANCHOR\": \"Laban movement analysis\", \"RECALLQ\": \"What kinematic representations are used for affective movement generation?\", \"TENSION\": \"Generative vs. discriminative modeling in affective movement analysis\", \"BRIDGE\": \"Human-computer interaction through emotional movement recognition\", \"INVERSION\": \"Movement generation without affective state consideration\", \"BOUNDARY\": \"Focus on specific emotions identified via logistic regression\", \"SEEALSO\": \"Kulic's work on stochastic dynamic models for movement recognition\"}"
+    }
+   ]
+  },
+  "no_think": {
+   "n": 3,
+   "valid": 0,
+   "valid_pct": 0,
+   "empty": 0,
+   "mean_lat": 0.7,
+   "rows": [
+    {
+     "doc": "doc_4bfdf4",
+     "valid": false,
+     "ok": false,
+     "fields": 0,
+     "issues": 10,
+     "quality": 0.44,
+     "empty": false,
+     "err": null,
+     "chars": 214,
+     "lat": 0.65,
+     "raw": "{\"error\": \"The provided input does not contain the necessary information to generate a valid retrieval profile. The 'DOCUMENT' section is incomplete and lacks the required content to extract the specified fields.\"}"
+    },
+    {
+     "doc": "doc_3d3561",
+     "valid": false,
+     "ok": false,
+     "fields": 0,
+     "issues": 10,
+     "quality": 0.44,
+     "empty": false,
+     "err": null,
+     "chars": 165,
+     "lat": 0.72,
+     "raw": "{\"error\": \"The provided input does not contain the required document content to generate a retrieval profile. Please provide the full document text for processing.\"}"
+    },
+    {
+     "doc": "doc_6a3530",
+     "valid": false,
+     "ok": false,
+     "fields": 0,
+     "issues": 10,
+     "quality": 0.44,
+     "empty": false,
+     "err": null,
+     "chars": 224,
+     "lat": 0.64,
+     "raw": "{\"error\": \"The provided input does not contain the necessary information to generate a valid retrieval profile. Please provide the full document content or specific sections that can be used to extract the required fields.\"}"
+    }
+   ]
+  }
+ },
+ "batched_path": {
+  "ok": false,
+  "results": 1,
+  "entities": 0,
+  "err": "SANITIZE_UNKNOWN_NEIGHBORHOOD"
+ }
+}

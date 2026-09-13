@@ -1,0 +1,129 @@
+{
+ "suffix": "FORMAT CHECK: every MAP line has exactly four '|'-separated fields \u2014 MAP, alias, routing signature, hooks. The three hooks in the LAST field are separated by ';' and never by '|'.",
+ "arms": {
+  "thinking_on+fmt": {
+   "rows": [
+    {
+     "batch": "aaa368b16988",
+     "mapped": 15,
+     "requested": 15,
+     "hooks3": 14,
+     "flags": {
+      "generic_hooks_dropped:1": 1,
+      "hooks_count:2": 1
+     },
+     "rejected": 0,
+     "finish": "stop",
+     "lat_s": 8.81,
+     "err": null,
+     "sample": [
+      "MAP|P0016|Overview of print ad limitations compared to digital media|preview;print;TV",
+      "MAP|P0017|Importance of general knowledge in copywriting training|knowledge;life"
+     ],
+     "raw_head": "\n\nMAP|P0016|Overview of print ad limitations compared to digital media|preview;print;TV  \nMAP|P0017|Importance of general knowledge in copywriting training|general;knowledge;life  \nMAP|P0018|Experiences as catalysts for generating new ideas|experiences;ideas;computers  \nMAP|P0019|Technique of latera"
+    },
+    {
+     "batch": "584e9127353f",
+     "mapped": 15,
+     "requested": 15,
+     "hooks3": 15,
+     "flags": {},
+     "rejected": 0,
+     "finish": "stop",
+     "lat_s": 6.61,
+     "err": null,
+     "sample": [
+      "MAP|P0031|First draft quality and copywriting improvement techniques|draft;copywriting;worry",
+      "MAP|P0032|Graphic elements' role in ad copy techniques|elements;purpose;graphic"
+     ],
+     "raw_head": "\n\nMAP|P0031|First draft quality and copywriting improvement techniques|draft;copywriting;worry  \nMAP|P0032|Graphic elements' role in ad copy techniques|elements;purpose;graphic  \nMAP|P0033|First sentence's role in engaging readers|sentence;first;read  \nMAP|P0034|Magazine techniques for article engag"
+    },
+    {
+     "batch": "0a7a8b0c8d11",
+     "mapped": 15,
+     "requested": 15,
+     "hooks3": 0,
+     "flags": {
+      "hooks_count:1": 15
+     },
+     "rejected": 0,
+     "finish": "stop",
+     "lat_s": 6.05,
+     "err": null,
+     "sample": [
+      "MAP|P0556|ADRG decision IR contract hardening with constraints|ADRG|HARD|SOFT",
+      "MAP|P0557|CPCS_CLOSURE_MATRIX gap and closure analysis|CPCS|ADRG|Closure"
+     ],
+     "raw_head": "\n\nMAP|P0556|ADRG decision IR contract hardening with constraints|ADRG|HARD|SOFT\nMAP|P0557|CPCS_CLOSURE_MATRIX gap and closure analysis|CPCS|ADRG|Closure\nMAP|P0558|PROPOSED_AGENT_BUILD_PACKET compiler operations sequence|ADRGS|Decision|Compiler\nMAP|P0559|ADRGS initial procedures and CPCS projection|A"
+    }
+   ],
+   "mapped": 45,
+   "requested": 45,
+   "hooks3": 29,
+   "mean_lat_s": 7.2
+  },
+  "no_think+fmt": {
+   "rows": [
+    {
+     "batch": "aaa368b16988",
+     "mapped": 15,
+     "requested": 15,
+     "hooks3": 14,
+     "flags": {
+      "generic_hooks_dropped:1": 1,
+      "hooks_count:2": 1
+     },
+     "rejected": 0,
+     "finish": "stop",
+     "lat_s": 2.19,
+     "err": null,
+     "sample": [
+      "MAP|P0016|Preview of print ad limitations|preview;print;TV",
+      "MAP|P0017|General knowledge for copywriters|knowledge;life"
+     ],
+     "raw_head": "\n\nMAP|P0016|Preview of print ad limitations|preview;print;TV  \nMAP|P0017|General knowledge for copywriters|general;knowledge;life  \nMAP|P0018|Experiences shape creative ideas|experiences;ideas;computers  \nMAP|P0019|Lateral thinking for creative problem solving|lateral;thinking;ideas  \nMAP|P0020|Dict"
+    },
+    {
+     "batch": "584e9127353f",
+     "mapped": 15,
+     "requested": 15,
+     "hooks3": 0,
+     "flags": {
+      "hooks_count:1": 15
+     },
+     "rejected": 0,
+     "finish": "stop",
+     "lat_s": 2.04,
+     "err": null,
+     "sample": [
+      "MAP|P0031|first draft of ad is often terrible|draft|copywriting|worry",
+      "MAP|P0032|purpose of graphic elements in ads|elements|graphic|purpose"
+     ],
+     "raw_head": "\n\nMAP|P0031|first draft of ad is often terrible|draft|copywriting|worry  \nMAP|P0032|purpose of graphic elements in ads|elements|graphic|purpose  \nMAP|P0033|first sentence's role in getting you to read|sentence|first|read  \nMAP|P0034|technique used in magazine articles|technique|magazines|article  \nM"
+    },
+    {
+     "batch": "0a7a8b0c8d11",
+     "mapped": 15,
+     "requested": 15,
+     "hooks3": 0,
+     "flags": {
+      "hooks_count:1": 15
+     },
+     "rejected": 0,
+     "finish": "stop",
+     "lat_s": 2.19,
+     "err": null,
+     "sample": [
+      "MAP|P0556|ADRG decision IR contract hardening with constraints and variants|ADRG|decision|contract",
+      "MAP|P0557|CPCS closure matrix for decision semantics|CPCS|closure|decision"
+     ],
+     "raw_head": "\n\nMAP|P0556|ADRG decision IR contract hardening with constraints and variants|ADRG|decision|contract\nMAP|P0557|CPCS closure matrix for decision semantics|CPCS|closure|decision\nMAP|P0558|Proposed agent build packet for decision processing|ADRG|decision|compiler\nMAP|P0559|ADRG initial procedures and p"
+    }
+   ],
+   "mapped": 45,
+   "requested": 45,
+   "hooks3": 14,
+   "mean_lat_s": 2.1
+  }
+ }
+}

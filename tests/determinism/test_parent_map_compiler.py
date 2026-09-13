@@ -227,3 +227,24 @@ def test_module_is_pure():
             roots.add(node.module.split(".")[0])
     allowed = {"__future__", "hashlib", "re", "unicodedata", "dataclasses", "typing", "polymath_shared"}
     assert roots <= allowed, f"unexpected imports in a pure stage: {roots - allowed}"
+
+
+def test_pipe_separated_hook_tail_compiles_to_three_hooks_with_identical_hash():
+    """CLOUDFLARE-PMAP-V1: `@cf/qwen/qwen3-30b-a3b-fp8` drifts whole responses to
+    `…|hook1|hook2|hook3`. The compiler accepts the '|' tail as the hook list (no ';' present),
+    so the map carries THREE hooks, no `hooks_count:1` flag, and the SAME map_hash as the
+    canonical ';' form — the separator style never changes map identity."""
+    m = _manifest(["Adaptive control loop stability under feedback delay in industrial plants."])
+    sig = "Adaptive control loop stability under feedback delay"
+    canonical = MC.compile_maps(f"MAP|P0001|{sig}|alpha;beta;gamma", m)
+    drifted = MC.compile_maps(f"MAP|P0001|{sig}|alpha|beta|gamma", m)
+    assert canonical.maps[0].semantic_hooks == ("alpha", "beta", "gamma")
+    assert drifted.maps[0].semantic_hooks == ("alpha", "beta", "gamma")
+    assert "hooks_count:1" not in drifted.maps[0].quality_flags
+    assert drifted.maps[0].map_hash == canonical.maps[0].map_hash
+    # a ';' tail that happens to contain a '|' is untouched (byte-identical to the old behaviour)
+    mixed = MC.compile_maps(f"MAP|P0001|{sig}|alpha;beta|gamma", m)
+    assert mixed.maps[0].semantic_hooks == ("alpha", "beta|gamma")
+    # a short '|' tail still flags the count — the 3-hook schema is not weakened
+    short = MC.compile_maps(f"MAP|P0001|{sig}|alpha|beta", m)
+    assert short.maps[0].semantic_hooks == ("alpha", "beta") and "hooks_count:2" in short.maps[0].quality_flags

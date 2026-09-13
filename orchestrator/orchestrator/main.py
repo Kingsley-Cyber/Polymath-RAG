@@ -103,7 +103,11 @@ app.include_router(chat_router)
 app.include_router(ask_router)
 app.include_router(queries_router)
 app.include_router(ui_router)
+from orchestrator.api.graph_browse import router as graph_browse_router
+from orchestrator.api.compare_review import router as compare_review_router
 app.include_router(fleet_router)
+app.include_router(graph_browse_router)
+app.include_router(compare_review_router)
 
 # Serve the built web UI at /ui when a build exists (single-port product).
 from pathlib import Path  # noqa: E402
@@ -122,3 +126,63 @@ if _UI_DIST.exists():
               name="generated")
     app.mount("/ui", StaticFiles(directory=str(_UI_DIST), html=True),
               name="ui")
+
+from fastapi.staticfiles import StaticFiles as _StaticFilesV2Base  # noqa: E402
+from starlette.exceptions import HTTPException as _StarletteHTTPExceptionV2  # noqa: E402
+
+
+class _SPAStaticFilesV2(_StaticFilesV2Base):
+    """A direct load or refresh on /v2/chat, /v2/files, etc. is a real GET the
+    server must answer, and plain StaticFiles 404s it (confirmed live: GET
+    /v2/files -> 404 before this fix). Falls back to index.html for any 404 whose
+    last path segment has no file extension, so the app boots instead of erroring;
+    a genuinely missing asset (e.g. /v2/assets/app-xyz.js after a stale deploy)
+    still 404s normally instead of silently becoming an HTML page.
+
+    NOTE (corrected 2026-09-12): an earlier version of this docstring said React
+    Router/BrowserRouter owns those paths. It does not — `frontend-v2/src/App.tsx`
+    holds the screen in plain `useState<ScreenId>`, with no router at all. So the
+    contract this class actually provides is "a deep path never 404s and the app
+    boots at its default screen", NOT "the URL selects the screen". Verified live
+    in a browser: GET /v2/files returns the app, which opens on Overview.
+
+    Defined at module level (not inside the `if _V2_DIST.exists()` guard below) so
+    it is importable and unit-testable in any environment, even one with no local
+    frontend-v2 build (frontend-v2/dist is git-ignored)."""
+
+    #: The entry document must never be cached: Vite fingerprints every asset
+    #: (index-<hash>.js), so index.html is the ONE file whose URL is stable while
+    #: its contents change on each deploy. Served cacheable, a browser that has
+    #: loaded /v2/ once keeps replaying the OLD index and therefore the OLD asset
+    #: hashes — the app silently stays on the previous build until a hard refresh.
+    #: Observed live 2026-09-12: two consecutive deploys were invisible in the
+    #: browser for exactly this reason. The hashed assets themselves stay
+    #: cacheable (their URL changes when their content does), so this costs one
+    #: small revalidation per load, not the asset payloads.
+    _NO_STORE = "no-cache, no-store, must-revalidate"
+
+    def _uncache_html(self, response):
+        media = str(getattr(response, "media_type", "") or "")
+        if media.startswith("text/html"):
+            response.headers["cache-control"] = self._NO_STORE
+            response.headers["pragma"] = "no-cache"
+            response.headers["expires"] = "0"
+        return response
+
+    async def get_response(self, path: str, scope):
+        try:
+            return self._uncache_html(await super().get_response(path, scope))
+        except _StarletteHTTPExceptionV2 as exc:
+            if exc.status_code == 404 and "." not in path.rsplit("/", 1)[-1]:
+                return self._uncache_html(await super().get_response("index.html", scope))
+            raise
+
+
+# FRONTEND-V2: serve the greenfield app at /v2 on the SAME port, beside the legacy /ui.
+# Until now V2 existed only on a vite dev port, so the owner's normal URL kept showing
+# the legacy app — the single-port product rule above is exactly what makes it visible.
+# Mounted independently of /ui so either can exist without the other, and /ui remains
+# the rollback reference (FRONTEND-V2-PLAN §0.1).
+_V2_DIST = Path(__file__).resolve().parents[2] / "frontend-v2" / "dist"
+if _V2_DIST.exists():
+    app.mount("/v2", _SPAStaticFilesV2(directory=str(_V2_DIST), html=True), name="v2")

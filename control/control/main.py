@@ -30,6 +30,7 @@ from control.scheduler import (
     apply_failures,
     apply_promotions,
     auto_enrich_on_chunks,
+    auto_map_parents_on_chunks,
     schedule_gaps,
 )
 
@@ -74,6 +75,10 @@ def tick() -> dict:
         # ENRICH-EARLY-KICK-V1: mint enrichment the tick intake lands,
         # so it overlaps the rest of the chain (promotion mint = backstop)
         _phase("auto_enrich_early", auto_enrich_on_chunks, conn)
+        # DOC-PARENT-MAP AUTO-MINT (flag-gated, default off): mint the pMAP stage once
+        # a run's parents exist so a fresh upload can reach VNEXT_COMPLETE. No-op when
+        # POLYMATH_DOC_PARENT_MAP_ENABLED is unset (hold-safe, byte-identical).
+        _phase("auto_map_parents", auto_map_parents_on_chunks, conn)
         supervised = _phase("supervise", supervise, conn)
         census = compute_census(
             conn, max_attempts=settings.control.max_attempts,

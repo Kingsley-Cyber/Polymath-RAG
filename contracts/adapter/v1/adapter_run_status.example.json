@@ -1,0 +1,21 @@
+{
+ "run_id": "adr_3322182605da76d37631b9dc0e0e7cbf",
+ "adapter_id": "trail.product_discovery",
+ "adapter_version": "1.0.0",
+ "workflow_version": "1.0.0",
+ "retrieval_policy_version": "1.0.0",
+ "input_schema_version": "1.0.0",
+ "output_schema_version": "1.0.0",
+ "status": "awaiting_agent",
+ "current_step_id": "C_hypotheses",
+ "current_step_type": "AGENT_REASON",
+ "steps_issued": 5,
+ "steps_accepted": 4,
+ "branch_loops": 0,
+ "started_at": "2026-09-13T18:30:00Z",
+ "updated_at": "2026-09-13T18:30:41Z",
+ "terminal_at": null,
+ "failure": null,
+ "gap": null,
+ "agent_identity": "hermes-local"
+}

@@ -1,0 +1,23 @@
+{
+ "run_id": "adr_3322182605da76d37631b9dc0e0e7cbf",
+ "step_id": "C_hypotheses",
+ "step_type": "AGENT_REASON",
+ "sequence": 5,
+ "status": "accepted",
+ "started_at": "2026-09-13T18:30:41Z",
+ "ended_at": "2026-09-13T18:31:10Z",
+ "wall_ms": 29000,
+ "evidence_ids": [
+  "chunk_7f3a",
+  "fact_19c2",
+  "qr_4d0e"
+ ],
+ "external_operation_ids": [],
+ "model_or_agent": "hermes/agent",
+ "validation": {
+  "ok": true,
+  "errors": []
+ },
+ "failure": null,
+ "receipt_hash": "922cfc84fd64e8f5fe48a9a574bea829910117c953b5d7b2fc001d0bffef0bdc"
+}

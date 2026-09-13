@@ -1,0 +1,22 @@
+{
+ "adapter_id": "trail.product_discovery",
+ "adapter_version": "1.0.0",
+ "input": {
+  "seed": "outdoor cold-plunge recovery routines for amateur athletes",
+  "constraints": [
+   "consumer physical product"
+  ],
+  "corpus_ids": [
+   "cinema"
+  ],
+  "freshness_days": 180
+ },
+ "request_options": {
+  "corpus_ids": [
+   "cinema"
+  ],
+  "idempotency_key": "req-2026-09-13-0001",
+  "agent_identity": "hermes-local",
+  "retrieval_mode": "HYBRID"
+ }
+}
