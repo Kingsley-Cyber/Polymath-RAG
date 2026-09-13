@@ -48,6 +48,20 @@ qualify 15/35/50 changing ONE variable (parents/request = `MAP_RELIABILITY_CAP`,
 - **Side effect (real progress):** cinema unresolved **6,693 → 4,658** (~2,035 parents mapped
   across the canary + qualification; idempotent, never re-purchased).
 
+### FORENSIC AUDIT (11.253) — SUPERSEDES the causal reading of 11.251: the 15-cap is NOT a model ceiling
+
+Byte-identical production requests, raw provider bodies captured. **Outbound request = {model, messages,
+temperature 0.0, max_tokens 2400, stream false}, nothing else.** Truncation DISPROVEN (`finish=stop` everywhere;
+completion_tokens exceeds 2400 with `stop`). **Batch 40 mapped 40/40 on a fresh-budget lane.** Parents disappear at
+the PROVIDER: compound-mini rides llama-3.3-70b with a binding **TPD of 100k tokens/day/org** (~16 requests/day at
+15 parents), plus intermittent **EMPTY 200s** (`200/stop/3420 tokens/0 content`, captured live) that cluster near TPD
+exhaustion. Amplifiers: ~5× hidden completion; admission counts ~1/5 of real tokens (`len(user)/4`). Compiler and
+persistence are lossless; LIMITER_REFUSED consumed 0 provider requests; the six keys are six budgets; compound-mini
+rejects `reasoning_effort` (400). A real model cliff exists 40→50 (single sample). **Deterministic fix specified in the
+report §13, NOT applied** (owner gate; shared/+workers/+config; the cap lives in TWO places — `MAP_RELIABILITY_CAP`
+and each lane's `map_batch_cap`). Repeats (≥5/size, fresh budget) required before promoting 40; today's TPD is spent.
+Evidence: `docs/wiki/experiments/pmap-forensic-audit-2026-09-13/`.
+
 ### Phase 3 — within-document concurrency (11.252): c≤2, 429-adaptive; the ceiling is Groq RPM
 
 Disjoint parallel slices of one doc (no duplicate work / lease conflict — verified 0 both
