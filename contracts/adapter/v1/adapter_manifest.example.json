@@ -102,7 +102,8 @@
    "config": {
     "mode": "EXPLORE",
     "evidence": true,
-    "top_k": 24
+    "top_k": 24,
+    "source": "input.seed"
    }
   },
   {
@@ -112,7 +113,8 @@
    "next": "C_hypotheses",
    "config": {
     "max_seeds": 8,
-    "max_facts": 20
+    "max_facts": 20,
+    "source": "input.seed"
    }
   },
   {
@@ -204,8 +206,8 @@
     "availability": "working"
    },
    "config": {
-    "per_hypothesis": true,
-    "maximum_candidates": 24,
+    "maximum_candidates": 16,
+    "language": "en",
     "result_target_kind": "URL_CANDIDATE_RESULT",
     "leads_are_evidence": false
    }
@@ -221,8 +223,10 @@
     "availability": "working"
    },
    "config": {
-    "batch_max": 64,
-    "route": "STATIC"
+    "batch_max": 16,
+    "extract_max": 6,
+    "route": "STATIC",
+    "records_max_per_artifact": 24
    }
   },
   {

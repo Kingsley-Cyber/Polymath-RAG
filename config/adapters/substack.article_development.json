@@ -1,0 +1,450 @@
+{
+ "adapter_id": "substack.article_development",
+ "adapter_version": "1.0.0",
+ "workflow_version": "1.0.0",
+ "retrieval_policy_version": "1.0.0",
+ "input_schema_version": "1.0.0",
+ "output_schema_version": "1.0.0",
+ "description": "Article development on the same cognitive-adapter runtime with NON-Trail semantics (plan \u00a79): seed idea \u2192 claim, mechanism, tension, evidence, counterargument, analogy, implication, narrative role \u2192 article artifact. Trail-free; proves the runtime scales by adapter semantics, not hard-coded branches.",
+ "input_schema": {
+  "type": "object",
+  "required": [
+   "seed_idea",
+   "corpus_ids"
+  ],
+  "additionalProperties": false,
+  "properties": {
+   "seed_idea": {
+    "type": "string",
+    "minLength": 10,
+    "maxLength": 2000
+   },
+   "corpus_ids": {
+    "type": "array",
+    "items": {
+     "type": "string"
+    },
+    "minItems": 1,
+    "maxItems": 8
+   },
+   "audience": {
+    "type": "string",
+    "maxLength": 300
+   },
+   "target_words": {
+    "type": "integer",
+    "minimum": 300,
+    "maximum": 4000
+   }
+  }
+ },
+ "output_schema": {
+  "type": "object",
+  "required": [
+   "article"
+  ],
+  "properties": {
+   "article": {
+    "type": "object"
+   },
+   "thesis": {
+    "type": "object"
+   },
+   "narrative": {
+    "type": "object"
+   }
+  }
+ },
+ "budgets": {
+  "max_steps": 24,
+  "max_agent_reason": 4,
+  "max_branch_loops": 1,
+  "max_external_operations": 0
+ },
+ "entry_step_id": "expand",
+ "terminal_step_id": "compile",
+ "steps": [
+  {
+   "step_id": "expand",
+   "type": "POLYMATH_COMPILE_PLAN",
+   "title": "Conceptual expansion of the seed idea (deterministic reformulations)",
+   "next": "retrieve",
+   "config": {
+    "source": "input.seed_idea"
+   }
+  },
+  {
+   "step_id": "retrieve",
+   "type": "POLYMATH_RETRIEVE",
+   "title": "Evidence, analogies and counter-evidence for the seed",
+   "next": "graph",
+   "config": {
+    "source": "input.seed_idea",
+    "mode": "EXPLORE",
+    "evidence": true,
+    "top_k": 20
+   }
+  },
+  {
+   "step_id": "graph",
+   "type": "POLYMATH_GRAPH_EXPAND",
+   "title": "One-hop graph neighbours (mechanisms, entities, relations)",
+   "next": "thesis",
+   "config": {
+    "max_seeds": 8,
+    "max_facts": 20,
+    "source": "input.seed_idea"
+   }
+  },
+  {
+   "step_id": "thesis",
+   "type": "AGENT_REASON",
+   "title": "Thesis candidates: claim, mechanism, tension, counterargument \u2014 cited",
+   "next": "stress",
+   "objective": "From the supplied evidence only, propose 2-4 thesis candidates. Each names a claim, the mechanism that would make it true, the tension it resolves or exposes, the strongest counterargument, and cites supporting_evidence_ids for the claim and counterargument_evidence_ids for the counterargument. List unknowns rather than inventing.",
+   "constraints": [
+    "Cite only ids present in context.evidence_refs",
+    "State unknowns instead of guessing",
+    "No article prose yet"
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "theses"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "theses": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 4,
+      "items": {
+       "type": "object",
+       "required": [
+        "claim",
+        "mechanism",
+        "tension",
+        "counterargument",
+        "supporting_evidence_ids",
+        "counterargument_evidence_ids"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "claim": {
+         "type": "string",
+         "minLength": 10
+        },
+        "mechanism": {
+         "type": "string",
+         "minLength": 10
+        },
+        "tension": {
+         "type": "string",
+         "minLength": 5
+        },
+        "counterargument": {
+         "type": "string",
+         "minLength": 10
+        },
+        "supporting_evidence_ids": {
+         "type": "array",
+         "minItems": 1,
+         "items": {
+          "type": "string"
+         }
+        },
+        "counterargument_evidence_ids": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
+        },
+        "unknowns": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "acceptance_rules": [
+    "every cited id is from context.evidence_refs",
+    "2 <= len(theses) <= 4"
+   ]
+  },
+  {
+   "step_id": "stress",
+   "type": "VALIDATE",
+   "title": "Thesis stress test: every claim carries a counterargument and citations",
+   "next": "gap_check",
+   "config": {
+    "require": [
+     "theses[].counterargument",
+     "theses[].supporting_evidence_ids"
+    ]
+   }
+  },
+  {
+   "step_id": "gap_check",
+   "type": "BRANCH",
+   "title": "Targeted retrieval for evidence gaps (one bounded loop)",
+   "branches": [
+    {
+     "label": "unknowns remain and loop budget left",
+     "when": {
+      "op": "all_of",
+      "of": [
+       {
+        "op": "count_gte",
+        "path": "steps.thesis.output.theses",
+        "n": 1
+       },
+       {
+        "op": "count_lt",
+        "path": "run.branch_loops",
+        "n": 1
+       },
+       {
+        "op": "exists",
+        "path": "input.audience"
+       }
+      ]
+     },
+     "next": "gap_retrieve"
+    }
+   ],
+   "next": "narrative"
+  },
+  {
+   "step_id": "gap_retrieve",
+   "type": "POLYMATH_RETRIEVE",
+   "title": "Targeted retrieval for the evidence gaps named by the theses",
+   "next": "narrative",
+   "config": {
+    "source": "input.seed_idea",
+    "mode": "EXPLORE",
+    "evidence": true,
+    "top_k": 12
+   }
+  },
+  {
+   "step_id": "narrative",
+   "type": "AGENT_REASON",
+   "title": "Narrative architecture: analogies, implications, narrative roles",
+   "next": "draft",
+   "objective": "Choose one thesis and design the narrative: an analogy and an example (cited), the implications, and a section list where each section has a narrative_role (hook, claim, mechanism, evidence, counterargument, implication, close) and the evidence ids it will use.",
+   "constraints": [
+    "Cite only ids present in context.evidence_refs",
+    "Every section names its narrative_role",
+    "Keep the counterargument section"
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "chosen_thesis",
+     "analogy",
+     "implications",
+     "sections"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "chosen_thesis": {
+      "type": "string"
+     },
+     "analogy": {
+      "type": "object",
+      "required": [
+       "text",
+       "evidence_ids"
+      ],
+      "properties": {
+       "text": {
+        "type": "string"
+       },
+       "evidence_ids": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "example": {
+      "type": "object",
+      "properties": {
+       "text": {
+        "type": "string"
+       },
+       "evidence_ids": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "implications": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+       "type": "string"
+      }
+     },
+     "sections": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 9,
+      "items": {
+       "type": "object",
+       "required": [
+        "title",
+        "narrative_role",
+        "evidence_ids"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "title": {
+         "type": "string"
+        },
+        "narrative_role": {
+         "enum": [
+          "hook",
+          "claim",
+          "mechanism",
+          "evidence",
+          "counterargument",
+          "implication",
+          "close"
+         ]
+        },
+        "evidence_ids": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "acceptance_rules": [
+    "every cited id is from context.evidence_refs",
+    "at least one section has narrative_role counterargument"
+   ]
+  },
+  {
+   "step_id": "draft",
+   "type": "AGENT_REASON",
+   "title": "Article creation with inline citations",
+   "next": "cite_check",
+   "objective": "Write the article following the narrative sections. Every factual sentence that relies on evidence ends with a citation marker [id] where id is an evidence id from context. Return the article as sections with body text and the citation ids used.",
+   "constraints": [
+    "Cite only ids present in context.evidence_refs",
+    "Follow the section list and narrative roles",
+    "No numeric scores"
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "article"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "article": {
+      "type": "object",
+      "required": [
+       "title",
+       "sections",
+       "citation_ids"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "title": {
+        "type": "string",
+        "minLength": 5
+       },
+       "sections": {
+        "type": "array",
+        "minItems": 3,
+        "items": {
+         "type": "object",
+         "required": [
+          "title",
+          "narrative_role",
+          "body",
+          "citation_ids"
+         ],
+         "additionalProperties": false,
+         "properties": {
+          "title": {
+           "type": "string"
+          },
+          "narrative_role": {
+           "type": "string"
+          },
+          "body": {
+           "type": "string",
+           "minLength": 40
+          },
+          "citation_ids": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       },
+       "citation_ids": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+         "type": "string"
+        }
+       },
+       "word_count": {
+        "type": "integer",
+        "minimum": 1
+       }
+      }
+     }
+    }
+   },
+   "acceptance_rules": [
+    "every cited id is from context.evidence_refs",
+    "sections follow the narrative roles"
+   ]
+  },
+  {
+   "step_id": "cite_check",
+   "type": "VALIDATE",
+   "title": "Citation/claim validation: cited ids \u2286 evidence in context",
+   "next": "compile",
+   "config": {
+    "require": [
+     "article.citation_ids"
+    ]
+   }
+  },
+  {
+   "step_id": "compile",
+   "type": "COMPILE_RESULT",
+   "title": "Compile AdapterResultV1: article + thesis + narrative + lineage",
+   "next": null,
+   "config": {
+    "include": [
+     "article",
+     "theses",
+     "chosen_thesis",
+     "sections",
+     "unknowns",
+     "lineage"
+    ]
+   }
+  }
+ ]
+}

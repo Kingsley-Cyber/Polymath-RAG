@@ -92,10 +92,26 @@ async def adapter_result(run_id: str) -> dict:
         raise HTTPException(status_code=409, detail=f"run is not terminal (status {exc.args[0]})")
 
 
+def _external_cancel(ext: dict) -> dict | None:
+    """Best-effort CANCEL of a pending TrailSignal operation through Trail's public boundary (E4)."""
+    from polymath_shared.adapter import trail_client as TC
+    client = TC.TrailMCPClient.from_env()
+    if not client.configured:
+        return None
+    ref = {"operation_id": ext["operation_id"], "operation_kind": ext["operation_kind"], "temporal_workflow_id": ext.get("temporal_workflow_id"),
+           "temporal_run_id": ext.get("temporal_run_id"), "submitted_at": ext["submitted_at"]}
+    status = client.status(ref)
+    if status.get("phase") == "TERMINAL":
+        return TC.receipt_after_poll(ext, status)
+    cmd = TC.cancel_command(ext["operation_id"], expected_revision=int(status.get("revision") or 0),
+                            key=TC.identifier(ext["run_id"], ext["step_id"], "cancel"))
+    return TC.receipt_after_poll(ext, client.cancel(cmd))
+
+
 @router.post("/adapter/{run_id}/cancel")
 async def adapter_cancel(run_id: str) -> dict:
     try:
         with tx() as conn:
-            return service.cancel(conn, run_id)
+            return service.cancel(conn, run_id, external_cancel=_external_cancel)
     except service.UnknownRun:
         raise _404(run_id)
