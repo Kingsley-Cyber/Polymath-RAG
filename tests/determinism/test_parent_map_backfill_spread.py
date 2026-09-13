@@ -230,3 +230,19 @@ def test_provider_family_is_derived_from_the_endpoint_host():
     assert provider_family("https://api.cloudflare.com/client/v4/accounts/ACC/ai", "cloudflare_map2") == "cloudflare"
     assert provider_family("https://openrouter.ai/api", "map_fallback_openrouter") == "openrouter"
     assert provider_family("", "lane_x") == "lane_x"          # unknown -> lane name, never None-crash
+
+
+def test_backfill_lanes_allow_list_restricts_the_ring_without_widening_it(monkeypatch):
+    """`--lanes` (operator override) keeps only the named ACTIVE lanes for this run — an exhausted
+    account is skipped instead of eating 429s — and an unknown name is ignored, never invented."""
+    mod = _load_backfill()
+    _multi_provider_pool(monkeypatch, {"map_groq2": ("ok", "MAP|P0001|sig|a;b;c"),
+                                       "cloudflare_map2": ("ok", "MAP|P0001|sig|a;b;c"),
+                                       "map_fallback_openrouter": ("ok", "MAP|P0001|sig|a;b;c")})
+    sel, disp, ref = Counter(), Counter(), Counter()
+    infer = mod._routed_infer(sel, disp, ref, lanes={"cloudflare_map2", "map_fallback_openrouter", "ghost_lane"})
+    for _ in range(6):
+        infer([{"alias": "P0001"}])
+    assert set(disp) == {"cloudflare_map2", "map_fallback_openrouter"}     # groq2 never picked
+    assert disp["cloudflare_map2"] == 3 and disp["map_fallback_openrouter"] == 3
+    assert "ghost_lane" not in sel                                          # not invented

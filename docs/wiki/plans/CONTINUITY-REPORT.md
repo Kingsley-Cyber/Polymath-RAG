@@ -18,6 +18,68 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.255**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
+## Latest checkpoint (2026-09-13T08:20 — CLOUDFLARE-PMAP-V1 (11.255): owner reversed "Parent-MAP untouched" + lifted the §19 cinema hold; Cloudflare qualified for pMAP (100% thinking-ON) and ACTIVATED with a 2 pMAP / 4 extraction / 0 profile split; fleet bounced to ONE hash a6be8823bc0b; cinema pMAP backfill COMPLETE — 3,810 → 0 unresolved)
+
+**Branch `architecture/evidence-first-v5`; remote `origin` = github.com/Kingsley-Cyber/Polymath-RAG; remote == local after the
+follow-up push (see git). Register 11.255.** Fleet: 1 supervisor (booted 06:59:04 UTC), **23 healthy / ONE hash
+`a6be8823bc0b` / `/ready` true / 0 quarantines**; `bundle_integrity` READY `7e97368d` (the edited files are not lock members).
+Only parked dirty file: `scripts/verify_final_state.py`.
+
+### What changed (owner directive 2026-09-13: "qualify cloudflare for pmap and run the backfill on cinema. i literally want 2 keys on pmap and 4 on graph extractions")
+
+- **pMAP qualification (production path, no persistence)**: 3 real cinema docs × 3 batches × 15 parents per arm →
+  **thinking-on 9/9 COMPLETE, 135/135, 0 empty, 0 rejected, `finish=stop`, 8.4 s**; `/no_think` 100% too but terse
+  signatures → **PROMOTE thinking ON**. Evidence `docs/wiki/experiments/cloudflare-workers-ai-2026-09-13/pmap-canary.json`.
+- **Hook-separator drift** (Qwen writes `|hook1|hook2|hook3`; the compiler kept ONE pipe-joined hook on 33-56% of its
+  maps; Groq <0.1%) → a prompt reminder only halved it (`pmap-format-suffix-probe.json`) → **compiler separator
+  tolerance** in `map_compiler.py` (a `|` tail with no `;` = 3 hooks, same map_hash; `;` tails byte-identical; no contract
+  bump). Verified live: 1273/1284 Cloudflare maps persisted today carry 3 hooks.
+- **Lane split LIVE**: `cloudflare_map1..2` (accounts 1-2, dedicated TEXT, thinking ON, cap 15) in `stage_pins.doc_parent_map`;
+  `cloudflare3..6` (accounts 3-6) in the extraction ring; 0 Cloudflare on doc_profile; all six `enabled:true`. **Active: only
+  `cloudflare_map2`** (the sole account id); the other five park as `configured_credential_absent` — the tokens cannot
+  self-report their account (`/accounts` → 0; `/memberships`, `/user` → auth error) → `CLOUDFLARE_ACCOUNT_ID_{1,3,4,5,6}` must come from the owner.
+- **Provenance**: `run_document_mapping` labels each batch/map with the provider FAMILY/model that served it
+  (`provider_family()`, `infer.last_provider/last_model`); before, every backfill map said `groq/compound-mini`.
+  **Backfill ring** fails LOCAL refusals over to the next lane (dispatched faults still defer) and gained a **`--lanes`
+  operator ALLOW-list** (never widens the ring). 11 new tests; `test_lane_registry` PMAP total re-pinned to the config (8 lanes).
+- **Cinema pMAP backfill — COMPLETE 08:11 UTC**: 07:05 → 08:11, 4 passes, **3810 maps written → 0 unresolved** of
+  12361 parents (11993 mapped, 368 excluded). By provider: cloudflare 1284 (1273 with 3 hooks), groq 1280 (1277 with 3 hooks), openrouter 1246 (1240 with 3 hooks). Qdrant parent-map points (cinema)
+  11703; every doc re-projected each pass. Passes 1-2 on the full ring spent 300 of 503 dispatches on Groq 429s
+  (per lane 200/429 today: cloudflare_map2 132/0, map_fallback_openrouter 133/1, map_groq2 10/63, map_groq3 10/65, map_groq4 12/61, map_groq5 10/63, map_groq6 20/52) — all five Groq accounts TPD-exhausted within ~25 min; passes 3-4 on
+  `--lanes cloudflare_map2,map_fallback_openrouter` mapped 1,484 with 0 wasted dispatches. Cloudflare 3036 parks: 0.
+  Receipts: 11.255 work-log + `cinema-backfill-2026-09-13.json`.
+
+### Committed-vs-live
+Everything above is LIVE (fleet bounced 06:59 after the code edits; config is read live). Commits `e429e6c` (slice) + the
+follow-up receipts commit; if HEAD lags, the worktree IS the running code.
+
+### Open gates
+1. **Five Cloudflare account ids** (owner) — unlocks `cloudflare_map1` (+~2,800 parents/day) and `cloudflare3..6`.
+2. **Control tick DEAD since 2026-09-11 23:53 UTC (pre-existing, traced, NOT changed)** — `control/control/tickets.py`
+   `_advance_pending_corpus` → `_try_advance_one` → `DAG_ORDER.index('doc_parent_map')` raises `ValueError` (the stage is
+   deliberately absent from STAGE_DAG; 12 auto-minted `doc_parent_map` tickets sit `pending` since 09-11 23:40); the supervisor
+   restarts `control.main` every 180 s; no ticket advances for ANY corpus; 63 cinema runs sit `reconciling` (their pending
+   vocabulary/summary tickets date from 09-05/07 with 5 `failed` project_qdrant tickets). Fix = skip non-DAG stages in the
+   pending selection (one guard) — a control-plane slice, owner's call. pMAP retrieval coverage does NOT depend on it.
+3. **Groq TPD 429s are not parked locally** (forensic §13 fix unapplied) — a backfill on the full ring wastes ~60% of dispatches
+   once the accounts are spent; use `--lanes` until the declared-tpd limiter lands.
+4. **`verify_final_state.py` fast/full split** — owner parked. 5. **`/v2/` browser verification** — needs auth (agent won't).
+6. **`claim_sets` DROP** — §1 destructive.
+
+### §6 traps this session added
+- **Bounce procedure** — the supervisor runs as a RELATIVE `.venv/bin/python -m control.process_supervisor` and `ps | grep`
+  matches the calling shell: match `python -m control\.process_supervisor`, kill via `awk | xargs -n1 kill -TERM` (zsh
+  `kill $VAR` with a multi-line VAR = "illegal pid" = NOTHING killed), wait for 0 supervisors + 0 fleet children + no
+  listeners, then ONE boot. Booting over a live supervisor spawned three fighting supervisors here (orchestrator/sidecars
+  QUARANTINED after 6 exits) — recovered by stopping all three and booting once.
+- **Enabling a lane the running code cannot parse crashes the WHOLE cloud roster** — the pre-802adbb pool raised
+  `provider needs url+model` for any enabled lane without a literal `url`; enable + bounce are one step, never two.
+- **`hooks_count:1` on a whole batch = separator drift, not model poverty** — check the raw tail for `|` before blaming the model.
+- **A 429 on an exhausted account defers the batch a whole pass** — the backfill's failover is for LOCAL refusals only; when
+  Groq shows ≥90% 429, run with `--lanes` on the serving lanes.
+- **CONTINUITY patching**: demote the old header AFTER inserting the new checkpoint above it (this session's first insert
+  no-op'd because the anchor had already been renamed).
+
 ## Prior checkpoint (2026-09-13T06:00 — CLOUDFLARE WORKERS AI added as a supplemental provider family (11.254), qualified PROMOTE but committed PARKED; the pMAP forensic arc (11.251-11.253) precedes it. All pushed; every open path is owner-gated)
 
 **Branch `architecture/evidence-first-v5` @ `802adbb`; remote `origin` = github.com/Kingsley-Cyber/Polymath-RAG;

@@ -479,6 +479,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/cloudflare-workers-ai-2026-09-13/profile-canary-text-mode.json", "json", None),
     ("docs/wiki/experiments/cloudflare-workers-ai-2026-09-13/pmap-canary.json", "json", None),
     ("docs/wiki/experiments/cloudflare-workers-ai-2026-09-13/pmap-format-suffix-probe.json", "json", None),
+    ("docs/wiki/experiments/cloudflare-workers-ai-2026-09-13/cinema-backfill-2026-09-13.json", "json", None),
     ("docs/wiki/work-log/2026-09-12-extract-operational-projection.md", "md", None),
     ("tests/determinism/test_doc_parent_map_completion_truth.py", "py", None),
     ("tests/determinism/test_rpd_durability.py", "py", None),

@@ -44,6 +44,9 @@ carry the provider that actually produced them.
   set `infer.last_provider/last_model` per lane. The backfill ring additionally FAILS OVER a local refusal
   (`_last_http_dispatched=False`) to the next lane (bounded by the ring length) instead of deferring the batch;
   a dispatched fault (429/5xx) still defers. New `refused` counter → summary `lane_local_refusals`.
+  **`--lanes` operator ALLOW-list** (added mid-run): restricts THIS run's ring to the named active lanes — the
+  five Groq accounts were TPD-exhausted by pass 2 (≥96% 429 since 07:30) and a 429 is a dispatched fault that
+  defers the batch a whole pass, so re-hammering them halved every pass's yield. Never widens the ring.
 - **Fleet bounce** (coordinated with the enable flip; the pre-802adbb pool raised on any enabled lane without
   a literal `url`): all three stray supervisors stopped, one clean `scripts/boot_polymath.sh` → 23 healthy /
   ONE hash `a6be8823bc0b` / `/ready` true / 0 quarantines.
@@ -52,6 +55,7 @@ carry the provider that actually produced them.
   dispatched fault not retried, refusals surfaced, `provider_family`); `test_doc_parent_map_worker.py` +2
   (labels follow the infer lane; plain infer falls back to run labels); `test_cloudflare_provider.py` test 12
   re-pointed to `cloudflare3..6`, +2 (owner split shape; pMAP promotion gate bound to the report's PARENT-MAP verdict).
+  `test_parent_map_backfill_spread.py` +1 (`--lanes` allow-list restricts, never widens);
   `test_lane_registry.py`: the PMAP pool total was a magic `6` (the pre-11.255 composition); re-pinned to
   `len(stage_pins.doc_parent_map)` (= 8) so the test checks the config's contract, not a stale count.
 
@@ -88,6 +92,9 @@ carry the provider that actually produced them.
   pipe-joined single hook.
 - **"Keep account 2 on graph extraction (original CF1-4 grouping)"** — REJECTED: it is the only account with an
   id; the owner's immediate ask is pMAP throughput, so accounts 1-2 are the pMAP pair (reversible config).
+- **"Wait out the Groq 429 churn"** — REJECTED: passes 1-2 spent 177+123 dispatches on 429s from exhausted
+  accounts (≈55-70% of all dispatches) and converged at ~45%/pass (≈10 more passes, ~2 h); the allow-list
+  finishes the remainder on the two serving lanes in 1-2 passes with zero wasted requests.
 - **"The bounce is optional (config is read live)"** — REJECTED: the running pre-802adbb pool raised
   `provider needs url+model` on any ENABLED lane lacking a literal `url`; enable + bounce are one step.
 
@@ -101,3 +108,33 @@ carry the provider that actually produced them.
   and kill via `xargs`, never `kill $VAR` with a multi-line variable (zsh: "illegal pid" = nothing killed).
 - **Control heartbeat**: the supervisor restarted `control.main` at boot for a stale tick heartbeat (112,149 s —
   predates this session); re-verified after the restart (see CONTINUITY).
+
+## Cinema backfill receipts (appended 2026-09-13T08:11Z)
+Started 07:05 UTC from **3,810 unresolved / 23 docs**; finished with **0 unresolved** of 12361 parents
+(11993 mapped, 368 excluded). **3810 maps written** across 23 docs in this run; projected to Qdrant `polymath_document_parent_maps_embed_e794ec4cab197a3f`
+(cinema points now 11703, collection total 11831; per-doc projection receipts summed over passes: 44345). Cloudflare 3036 parks: 0.
+
+| provider / model | maps written | with 3 hooks |
+| --- | --- | --- |
+| cloudflare / @cf/qwen/qwen3-30b-a3b-fp8 | 1284 | 1273 |
+| groq / groq/compound-mini | 1280 | 1277 |
+| openrouter / mistralai/mistral-small-2603 | 1246 | 1240 |
+
+| lane | attempts | 200 | 429 | other | avg ms |
+| --- | --- | --- | --- | --- | --- |
+| cloudflare_map2 | 132 | 132 | 0 | 0 | 8932 |
+| map_fallback_openrouter | 134 | 133 | 1 | 0 | 2963 |
+| map_groq2 | 74 | 10 | 63 | 0 | 650 |
+| map_groq3 | 75 | 10 | 65 | 0 | 708 |
+| map_groq4 | 73 | 12 | 61 | 0 | 952 |
+| map_groq5 | 73 | 10 | 63 | 0 | 716 |
+| map_groq6 | 72 | 20 | 52 | 0 | 1324 |
+
+| pass | newly mapped | unresolved after | HTTP dispatches | 429 | local refusals | empty | wall s |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 1682 | 2128 | 326 | 177 | 0 | 0 | 1493.9 |
+| 2 | 644 | 1484 | 177 | 123 | 0 | 0 | 890.5 |
+| 3 | 1469 | 15 | 123 | 0 | 0 | 1 | 702.5 |
+| 4 | 15 | 0 | 1 | 0 | 0 | 0 | 663.8 |
+
+Evidence: `docs/wiki/experiments/cloudflare-workers-ai-2026-09-13/cinema-backfill-2026-09-13.json`.

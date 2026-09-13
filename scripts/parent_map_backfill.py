@@ -48,7 +48,7 @@ def _cohort(corpus_id, limit):
         return out
 
 
-def _routed_infer(lane_selected, dispatch, refused=None):
+def _routed_infer(lane_selected, dispatch, refused=None, lanes=None):
     """Round-robin infer closure. Records LANE SELECTION (at pick time) and
     PROVIDER HTTP DISPATCH (only when the request actually reached the network)
     as SEPARATE counters — a selection is not a dispatch (GROQ-MAP-CONTROL-
@@ -64,6 +64,12 @@ def _routed_infer(lane_selected, dispatch, refused=None):
     pin = stage_pin("doc_parent_map") or []
     eps = {e.name: e for e in cloud_endpoints() if e.name in pin}
     ep_names = [n for n in pin if n in eps]              # ordered; only endpoints that exist
+    if lanes is not None:
+        # OPERATOR ALLOW-LIST (CLOUDFLARE-PMAP-V1): restrict THIS run's ring, e.g. to skip accounts
+        # whose daily token budget is spent — a 429 is a DISPATCHED fault that defers the batch a
+        # whole pass, so re-hammering an exhausted account halves the pass yield for nothing.
+        # Never widens the ring: an unknown/inactive name is ignored, never invented.
+        ep_names = [n for n in ep_names if n in lanes]
     # ROUND-ROBIN across the six distinct-account endpoints (BACKFILL-SPREAD-V1). `route()`'s
     # capacity view is BLIND for these map lanes in a dedicated backfill process: the limiter
     # lanes it reads (`REGISTRY.get_lane`) are unregistered until first use, so every account
@@ -170,6 +176,9 @@ def main(argv=None) -> int:
                          "(2026-09-08) rotates a simultaneous burst across the six accounts, so 6-way spreads "
                          "the load one-per-account. 1 = sequential.")
     ap.add_argument("--out", default=None)
+    ap.add_argument("--lanes", default=None,
+                    help="comma-separated ALLOW-list of doc_parent_map lane names for this run (operator override, "
+                         "e.g. skip accounts whose daily budget is spent). Default: every active pinned lane.")
     args = ap.parse_args(argv)
 
     from workers.doc_parent_map_worker import run_document_mapping
@@ -179,7 +188,8 @@ def main(argv=None) -> int:
     lane_selected: Counter = Counter()      # endpoint SELECTIONS (pre-dispatch)
     dispatch: Counter = Counter()           # actual provider HTTP dispatches
     refused: Counter = Counter()            # local refusals (0 HTTP) that failed over
-    infer = _routed_infer(lane_selected, dispatch, refused)
+    lanes = {n.strip() for n in args.lanes.split(",") if n.strip()} if args.lanes else None
+    infer = _routed_infer(lane_selected, dispatch, refused, lanes=lanes)
 
     client = dim = ct = coll = None
     if args.project:
@@ -193,7 +203,8 @@ def main(argv=None) -> int:
 
     cohort = _cohort(args.corpus, args.limit)
     concurrency = max(1, int(args.concurrency))
-    print(f"[backfill] {args.corpus}: {len(cohort)} docs; router={os.environ.get('POLYMATH_GROQ_ROUTER','0')}; concurrency={concurrency}")
+    print(f"[backfill] {args.corpus}: {len(cohort)} docs; router={os.environ.get('POLYMATH_GROQ_ROUTER','0')}; concurrency={concurrency}; "
+          f"lanes={sorted(lanes) if lanes else 'all-active'}", flush=True)
     # Projection helpers imported once (thread-safe); each doc is independent (own tx() pool
     # connection), route_groq spreads Groq calls across the six accounts, the qdrant client +
     # embedder handle concurrent requests. run_document_mapping is idempotent, so a killed run
