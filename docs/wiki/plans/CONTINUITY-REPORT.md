@@ -16,9 +16,58 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.239**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.251**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-12T18:30 — the session pivoted from backend-gate work to OWNER-DRIVEN FRONTEND-V2 completion: Files identity+lifecycle, Models screen, corpus delete, a full theme-color audit, and per-corpus/per-document continuation controls — five slices (11.245–11.249), all pushed; plus the real-URL cutover made reachable behind an owner-set password)
+## Latest checkpoint (2026-09-13T01:40 — pMAP BATCH-SIZE QUALIFICATION: 15 vs 35 vs 50 measured on real cinema docs; the owner's 50-parent hypothesis FALSIFIED; cap CONFIRMED at 15 with evidence; pMAP proven NOT limiter-bound)
+
+**Branch `architecture/evidence-first-v5`; remote `origin` = github.com/Kingsley-Cyber/Polymath-RAG.
+Fleet 23 healthy / ONE bundle hash / `/ready` true / `bundle_integrity` READY `7e97368d`.
+Register 11.251.** No bounce this session — the one `shared/` edit (a comment on
+`MAP_RELIABILITY_CAP`) is NOT one of the 8 execution-bundle members and changes no value.
+
+### PMAP-BATCH-SIZE-QUALIFICATION-V1 (11.251) — measured, conserved, committed
+
+Owner directive: prove/falsify pMAP is provider-capacity-bound; finish the 15-parent canary;
+qualify 15/35/50 changing ONE variable (parents/request = `MAP_RELIABILITY_CAP`, via
+`run_document_mapping(reliability_cap=)`); promote the largest RELIABLY superior size.
+
+- **pMAP is NOT local-limiter-bound (proven).** The historical **925 `LIMITER_REFUSED`** were
+  the WORKER path's shared-limiter blind-capacity pin — they do NOT reproduce on the dedicated
+  per-endpoint-limiter backfill path (0 local refusals at every batch size, every cohort).
+  Historical / current / root-cause kept distinct, not rewritten.
+- **Real-doc qualification (506 equivalent parents per size, one variable):**
+  **15 → 98.8% durably mapped, 0 empty, 0×413, 130 maps/min, retires in 38 dispatches;
+  35 → 50.8% (31% of 2xx return EMPTY), 245 unretired; 50 → 36.8% (13% HTTP 413 + 20% 429),
+  313 unretired.** Conservation reconciled per cohort. **WINNER = 15.** The ceiling is
+  `groq/compound-mini` structured-output reliability, not tokens/limiter. The synthetic probe's
+  35=1.0 was misleading (trivial skeletons) — kept as the counter-example.
+- **Production cap CONFIRMED at 15**, reaffirmed in `map_batches.py`'s provenance comment with
+  the 2026-09-13 evidence (value unchanged). Production path re-verified via the live cap=15
+  cohort (98.8% yield on the real path). Evidence:
+  `docs/wiki/experiments/pmap-batch-size-qualification-2026-09-13/`.
+- **Side effect (real progress):** cinema unresolved **6,693 → 4,658** (~2,035 parents mapped
+  across the canary + qualification; idempotent, never re-purchased).
+
+### Open gates on cinema pMAP
+
+1. **Cinema backfill at the confirmed 15-cap is CLEARED but NOT launched** — 4,658 parents
+   remain; `scripts/parent_map_backfill.py --corpus cinema --project` finishes them at ~130
+   maps/min (uncontended). Owner gate (§19 spend) — the diagnostic proved it is safe (clean
+   dispatch, only ~8% real 429), but the full corpus spend awaits the owner's explicit go.
+2. **Phase 3 — bounded within-document concurrency (start=2)** is the next experiment: the
+   measured remaining bottleneck is provider latency (p50 4.8s/dispatch, sequential), so
+   throughput scales with lane concurrency, not batch size. Deliberately separate; not started.
+
+### NEXT SESSION — exact first action
+
+Either run the owner-authorized cinema backfill at cap 15 (`parent_map_backfill.py --corpus
+cinema --project`, resumable) to finish the remaining 4,658, or run Phase 3 (within-doc
+concurrency=2) — both gated on the owner. The parked `scripts/verify_final_state.py` (fast/full
+split) is still uncommitted, awaiting the owner's decision; do NOT commit or revert it.
+
+---
+
+## Prior checkpoint (2026-09-12T18:30 — the session pivoted from backend-gate work to OWNER-DRIVEN FRONTEND-V2 completion: Files identity+lifecycle, Models screen, corpus delete, a full theme-color audit, and per-corpus/per-document continuation controls — five slices (11.245–11.249), all pushed; plus the real-URL cutover made reachable behind an owner-set password)
 
 **Branch `architecture/evidence-first-v5`; remote `origin` = github.com/Kingsley-Cyber/Polymath-RAG.**
 All code/frontend work (the five slices below) AND this docs checkpoint are committed and

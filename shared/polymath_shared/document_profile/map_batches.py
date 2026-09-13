@@ -39,6 +39,13 @@ MAPPING_ONLY_PROVEN = 40
 #: mapping ~0 (e.g. Ken Dancyger 2/430) PURELY because they packed 60-alias batches; at 15
 #: they map reliably. The effective batch size is the smaller of the token target and this.
 #: Canaryable: raise it if compound-mini's big-batch reliability improves.
+#: 2026-09-13 RE-QUALIFIED on real cinema docs (PMAP-BATCH-SIZE-QUALIFICATION-V1; 506
+#: equivalent unresolved parents per size, ONE variable = this cap): 15 -> 98.8% durably
+#: mapped / 0 empty / 0x413 / 130 maps-min; 35 -> 50.8% (31% of 2xx return EMPTY); 50 ->
+#: 36.8% (adds 13% HTTP 413 payload + 20% 429). 15 CONFIRMED, 35/50 collapse — the ceiling
+#: is compound-mini structured-output reliability, NOT tokens or the limiter (0 local
+#: refusals at every size). Evidence:
+#: docs/wiki/experiments/pmap-batch-size-qualification-2026-09-13/.
 MAP_RELIABILITY_CAP = 15
 #: Reserve so a slightly-over-density response still finishes with `stop`.
 SAFETY_RESERVE_TOKENS = 512
