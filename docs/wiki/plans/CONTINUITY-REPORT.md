@@ -16,9 +16,9 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.259**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.260**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-13T19:10 — COGNITIVE-ADAPTER-TRAIL-E2E-V1: E0 COMPLETE (11.257/11.258) and E1 ADMITTED (11.259: ADR-0018, contracts/adapter/v1, pure shared core, admitted trail.product_discovery manifest, 27 tests); PR #3 CI re-running; NEXT = E2 substrate (migration 0061, 7 MCP tools, adapter_step_worker, restart-resume test, bounce))
+## Latest checkpoint (2026-09-13T20:00 — COGNITIVE-ADAPTER-TRAIL-E2E-V1: E0 (11.257/11.258), E1 (11.259) and E2 (11.260: migration 0061, service/store, step worker, /adapter routes + 7 MCP tools, crash-resume proven LIVE) done; PR #3 squash-merged to main on green; NEXT = E4 connector against Trail's WORKING tools, then production merge + bounce)
 
 **Branch `handoff/unified-adapter-trail-e2e` (linked worktree `../polymath-v4-handoff`; the fleet runs from `polymath-v4` on
 `architecture/evidence-first-v5` and must never see a branch switch). Register 11.257.** Production fleet unchanged: 23 healthy /
@@ -53,14 +53,29 @@ gate/score steps tagged `planned` C1/C2). Pure core `shared/polymath_shared/adap
 deterministic transitions with budgets, submission validation incl. "cite only supplied evidence"). 15 contract + 12 pure-core tests.
 Refactor 0012 tracks E0–E7 (open until E7 by design).
 
-### NEXT — E2 substrate (then E4 connector against the WORKING Trail tools, E3 Trail subgraph, E5/E6/E7)
-1. **E2**: migration `0061_adapter_runs.sql` (`adapter_runs`, `adapter_steps` + receipts, `external_operation_ref JSONB`; replay proof +
-   rollback note per `dependencies.json` change_triggers), 7 MCP tools in `orchestrator/mcp_server.py` (+ `capabilities.MCP_TOOLS`,
-   `_TOOL_NAMES`; bearer-gated), `workers/workers/adapter_step_worker.py` on `worker_runtime.run_worker` executing automatic steps via
-   `receipts.stage_transaction` + `outbox_events`; integration test start → RETRIEVE → AGENT_REASON issue → forced restart → submit →
-   COMPILE_RESULT; fleet bounce at the end (workers/ edit; the fleet runs from the PRODUCTION worktree — merge back before bouncing).
-2. Merge PR #3 when green (owner directive); fast-forward production to the handoff head only while runtime trees are identical
-   (`git diff --stat handoff prod -- shared workers control orchestrator sidecars stores` empty) — after E2 that requires a real merge + bounce.
+### E2 — the substrate (11.260) in one paragraph
+Migration 0061 (`adapter_runs`/`adapter_steps`/`adapter_results`, additive — every existing workflow table FKs `runs`); `store.py`
++ `service.py` (idempotent start; next/submit/status/result/cancel; the `advance` engine: one committed unit per step, receipts,
+evidence-bounded agent context, typed gaps/failures); `workers/adapter_step_worker.py` (lease loop; `POST /retrieve` EXPLORE rows
+or lane hits normalised; `/retrieve/plan`; graph rows; EXTERNAL_OPERATION = typed gap until E4); `orchestrator/api/adapter.py`
++ 7 `adapter_*` MCP tools; second manifest `polymath.knowledge_brief`. **Crash-resume proven live** on cinema retrieval.
+Not yet: a supervised slot (needs a registration heartbeat), production worktree + bounce.
+
+### Branch/merge truth after PR #3
+`main` protection = linear history: merge commits refused, rebase refused (the branch carries the production merge) → **squash-merged**
+(main's tree == handoff a2713d9's tree; per-commit history stays on `architecture/evidence-first-v5` + `handoff/unified-adapter-trail-e2e`).
+Consequence: further work goes on a NEW branch cut from `origin/main` (E2 = `handoff/e2-adapter-substrate`, PR #5) so PR diffs stay
+honest; production (`polymath-v4` worktree) switches to `main` at the closing bounce (tag the old head first).
+
+### NEXT — E4 connector (Trail WORKING tools), then production merge + bounce; E3 Trail subgraph; E5/E6/E7
+1. **E4**: `shared/polymath_shared/adapter/trail_client.py` (typed connector over Trail's FastMCP streamable-HTTP `/mcp` with a
+   Polymath JWT principal — owner action O1; tools discover.submit / crawl.submit / scrape.submit / extract.submit / operation.get /
+   operation.command / result.page), `ExternalOperationReceiptV1` persisted per step, poll/resume by operation_id, cancel, timeouts;
+   the worker's `EXTERNAL_OPERATION` executor uses it for `availability: working` steps. Proof: a live discover → acquire → extract
+   loop under one adapter run (needs Trail's daemon + Temporal + SearXNG up: owner action O4).
+2. **Production**: switch the `polymath-v4` worktree to `main` (tag `archive/evidence-first-v5-<date>` first), apply migration 0061
+   (already applied to the dev store), bounce with the correct procedure (§6), add the `adapter_step` supervisor slot once the worker
+   registers a heartbeat.
 
 ## Prior checkpoint (2026-09-13T17:30 — CONTROL-TICK-SIDE-STAGE-GUARD-V1 (11.256): the control tick was DEAD ~41 h (pending side-stage ticket → DAG_ORDER.index ValueError); guarded, alive again, the 12 paused pMAP tickets closed under the lifted hold; NEXT = owner goal "unified cognitive adapter + TrailSignal E2E" on branch handoff/unified-adapter-trail-e2e (PR #3 / issue #4))
 

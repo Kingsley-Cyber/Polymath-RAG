@@ -68,6 +68,13 @@ def test_workflow_tools_exist_and_query_requires_scope(monkeypatch):
         assert "corpus_id" in (tools[name]["inputSchema"].get("required") or []), name
     assert "corpus_id" in (tools["upload_document"]["inputSchema"].get("required") or [])
     assert "path" in (tools["upload_document"]["inputSchema"].get("required") or [])
+    # COGNITIVE-ADAPTER-V1 (ADR-0018): the seven adapter tools are the ONE public adapter surface
+    for name in ("adapter_list", "adapter_start", "adapter_next", "adapter_submit", "adapter_status", "adapter_result", "adapter_cancel"):
+        assert name in tools, name
+    assert {"adapter_id", "input"} <= set(tools["adapter_start"]["inputSchema"].get("required") or [])
+    for name in ("adapter_next", "adapter_status", "adapter_result", "adapter_cancel"):
+        assert "run_id" in (tools[name]["inputSchema"].get("required") or []), name
+    assert {"run_id", "step_id", "payload"} <= set(tools["adapter_submit"]["inputSchema"].get("required") or [])
 
 
 @pytest.mark.parametrize("bad", ["/etc/hosts", "/definitely/not/here.md"])

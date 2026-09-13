@@ -27,9 +27,13 @@ CONTRACTS = {
     # 422 document_filter_unsupported.
     "document_ids": True,
     "field-evidence-corpus": None,       # corpus_id of the ingested field-evidence ledger — none yet
+    "adapter": "v1",                     # COGNITIVE-ADAPTER-V1 (ADR-0018): /adapter/* + the adapter_* MCP tools
 }
-ENDPOINTS = ["/retrieve", "/retrieve/plan", "/capabilities", "/chat", "/ask"]
-MCP_TOOLS = ["capabilities", "compile_plan", "retrieve_evidence", "retrieve", "ask", "list_corpora", "corpus_status"]
+ENDPOINTS = ["/retrieve", "/retrieve/plan", "/capabilities", "/chat", "/ask", "/adapter/list", "/adapter/start",
+             "/adapter/{run_id}/next", "/adapter/{run_id}/submit", "/adapter/{run_id}/status", "/adapter/{run_id}/result",
+             "/adapter/{run_id}/cancel"]
+ADAPTER_MCP_TOOLS = ["adapter_list", "adapter_start", "adapter_next", "adapter_submit", "adapter_status", "adapter_result", "adapter_cancel"]
+MCP_TOOLS = ["capabilities", "compile_plan", "retrieve_evidence", "retrieve", "ask", "list_corpora", "corpus_status"] + ADAPTER_MCP_TOOLS
 
 
 @lru_cache(maxsize=1)

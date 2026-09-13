@@ -475,6 +475,63 @@ async def recent_queries(corpus_id: str, limit: int = 20, since_h: float = 24.0,
     return await _orch("GET", "/queries", params=params)
 
 
+
+# ------------------------------------------------------- cognitive adapter (ADR-0018)
+
+@mcp.tool()
+async def adapter_list() -> dict:
+    """COGNITIVE-ADAPTER-V1: the admitted adapters (id, versions, description, input_schema, step counts, which
+    TrailSignal operations are working vs planned). One MCP connection, one adapter run — see adapter_start."""
+    return await _orch("GET", "/adapter/list")
+
+
+@mcp.tool()
+async def adapter_start(adapter_id: str, input: dict, request_options: Optional[dict] = None) -> dict:
+    """Start ONE durable adapter run (AdapterRunRefV1). `input` must satisfy the adapter's input_schema
+    (adapter_list). request_options: corpus_ids, idempotency_key, agent_identity, retrieval_mode, deadline_s.
+    Polymath executes retrieval/graph/validation/compile steps itself; when a step needs YOUR reasoning,
+    adapter_next returns a typed AGENT_REASON step — answer it with adapter_submit."""
+    return await _orch("POST", "/adapter/start", json={"adapter_id": adapter_id, "input": input, "request_options": request_options or {}})
+
+
+@mcp.tool()
+async def adapter_next(run_id: str) -> dict:
+    """What the run needs from you now: {kind:"step", step: AdapterStepV1} when an AGENT_REASON step awaits your
+    submission (objective, bounded evidence_refs, constraints, output_schema, acceptance_rules), else
+    {kind:"status", status: AdapterRunStatusV1} (running = Polymath is executing; terminal = fetch adapter_result)."""
+    return await _orch("GET", f"/adapter/{run_id}/next")
+
+
+@mcp.tool()
+async def adapter_submit(run_id: str, step_id: str, payload: dict, agent_identity: str = "connected-agent",
+                         model: Optional[str] = None) -> dict:
+    """Submit your structured result for the awaiting AGENT_REASON step. Validated against the step's
+    output_schema and acceptance rules (cite ONLY ids from context.evidence_refs); a rejection returns the
+    errors and the step stays open for a corrected submission. Returns AdapterRunStatusV1."""
+    return await _orch("POST", f"/adapter/{run_id}/submit",
+                       json={"step_id": step_id, "payload": payload, "agent_identity": agent_identity, "model": model})
+
+
+@mcp.tool()
+async def adapter_status(run_id: str) -> dict:
+    """AdapterRunStatusV1 for a run (status, current step, counters, typed failure/gap)."""
+    return await _orch("GET", f"/adapter/{run_id}/status")
+
+
+@mcp.tool()
+async def adapter_result(run_id: str) -> dict:
+    """AdapterResultV1 of a TERMINAL run: the domain output plus lineage (Polymath evidence ids, step receipt
+    hashes, TrailSignal operation/record ids), surviving contradictions/unknowns, and the typed gap if any.
+    409 while the run is still running or awaiting you."""
+    return await _orch("GET", f"/adapter/{run_id}/result")
+
+
+@mcp.tool()
+async def adapter_cancel(run_id: str) -> dict:
+    """Cancel a run (terminal, idempotent; accepted work is kept). Returns AdapterRunStatusV1."""
+    return await _orch("POST", f"/adapter/{run_id}/cancel")
+
+
 def build_app():
     """ASGI app: FastMCP streamable-http + FAIL-CLOSED bearer gate +
     open /health."""
@@ -520,7 +577,9 @@ def build_app():
     return app
 
 
-_TOOL_NAMES = ("list_corpora", "list_documents", "upload_document", "upload_text",
+_TOOL_NAMES = ("adapter_list", "adapter_start", "adapter_next", "adapter_submit", "adapter_status",
+               "adapter_result", "adapter_cancel",
+               "list_corpora", "list_documents", "upload_document", "upload_text",
                "document_status", "corpus_status", "retrieve", "ask",
                "recent_queries",
     "capabilities", "compile_plan", "retrieve_evidence",

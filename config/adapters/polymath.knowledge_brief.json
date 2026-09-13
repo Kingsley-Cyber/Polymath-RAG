@@ -1,0 +1,156 @@
+{
+ "adapter_id": "polymath.knowledge_brief",
+ "adapter_version": "1.0.0",
+ "workflow_version": "1.0.0",
+ "retrieval_policy_version": "1.0.0",
+ "input_schema_version": "1.0.0",
+ "output_schema_version": "1.0.0",
+ "description": "The smallest real cognitive workload: retrieve Polymath evidence for a question, have the connected agent write a structured brief that cites only that evidence, compile the result with lineage. Trail-free; the substrate proof adapter (plan \u00a711 E2) and a usable brief tool.",
+ "input_schema": {
+  "type": "object",
+  "required": [
+   "question"
+  ],
+  "additionalProperties": false,
+  "properties": {
+   "question": {
+    "type": "string",
+    "minLength": 3,
+    "maxLength": 2000
+   },
+   "corpus_ids": {
+    "type": "array",
+    "items": {
+     "type": "string"
+    },
+    "minItems": 1,
+    "maxItems": 8
+   },
+   "top_k": {
+    "type": "integer",
+    "minimum": 4,
+    "maximum": 40
+   }
+  }
+ },
+ "output_schema": {
+  "type": "object",
+  "required": [
+   "brief"
+  ],
+  "properties": {
+   "brief": {
+    "type": "object"
+   }
+  }
+ },
+ "budgets": {
+  "max_steps": 6,
+  "max_agent_reason": 1,
+  "max_branch_loops": 0,
+  "max_external_operations": 0
+ },
+ "entry_step_id": "retrieve",
+ "terminal_step_id": "compile",
+ "steps": [
+  {
+   "step_id": "retrieve",
+   "type": "POLYMATH_RETRIEVE",
+   "title": "Retrieve evidence rows for the question",
+   "next": "brief",
+   "config": {
+    "source": "input.question",
+    "mode": "EXPLORE",
+    "evidence": true,
+    "top_k": 16
+   }
+  },
+  {
+   "step_id": "brief",
+   "type": "AGENT_REASON",
+   "title": "Write a structured brief that cites only the supplied evidence",
+   "next": "compile",
+   "objective": "Using ONLY the evidence rows in context, write a brief: one thesis, 3-8 key points each citing supporting_evidence_ids, and explicit unknowns for anything the evidence does not settle. Never invent sources.",
+   "constraints": [
+    "Cite only ids present in context.evidence_refs",
+    "State unknowns instead of guessing",
+    "No numeric scores"
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "brief"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "brief": {
+      "type": "object",
+      "required": [
+       "thesis",
+       "key_points",
+       "unknowns"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "thesis": {
+        "type": "string",
+        "minLength": 10,
+        "maxLength": 1500
+       },
+       "key_points": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 8,
+        "items": {
+         "type": "object",
+         "required": [
+          "point",
+          "supporting_evidence_ids"
+         ],
+         "additionalProperties": false,
+         "properties": {
+          "point": {
+           "type": "string",
+           "minLength": 5,
+           "maxLength": 1000
+          },
+          "supporting_evidence_ids": {
+           "type": "array",
+           "minItems": 1,
+           "items": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       },
+       "unknowns": {
+        "type": "array",
+        "items": {
+         "type": "string",
+         "maxLength": 500
+        }
+       }
+      }
+     }
+    }
+   },
+   "acceptance_rules": [
+    "every supporting_evidence_ids entry is an id from context.evidence_refs"
+   ]
+  },
+  {
+   "step_id": "compile",
+   "type": "COMPILE_RESULT",
+   "title": "Compile AdapterResultV1 with evidence lineage",
+   "next": null,
+   "config": {
+    "include": [
+     "brief",
+     "unknowns",
+     "lineage"
+    ]
+   }
+  }
+ ]
+}
