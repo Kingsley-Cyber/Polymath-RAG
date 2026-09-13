@@ -1,0 +1,52 @@
+{
+  "_doc": [
+    "RATE-LIMIT-SEED-V1 (RAG-PIPELINE-FINISH Phase 3). A VENDORED, versioned",
+    "reference snapshot of published provider/model/tier rate limits. It is the",
+    "LOWEST authority in the effective-capacity precedence:",
+    "    runtime provider headers  >  explicit account config (limiter.yaml)  >  this seed  >  unknown",
+    "This file is a local snapshot on purpose: production NEVER depends on an",
+    "external CDN being online (plan §1.7, do-not-do list). Unknown values stay",
+    "null and MUST NOT be read as 0. Values here are generic published free/base",
+    "tiers, NOT this deployment's real per-account quota — the owner's real",
+    "accounts are described by config/extraction_models/limiter.yaml (explicit",
+    "override, higher authority) and, at runtime, by the provider's own",
+    "x-ratelimit-* headers (highest authority, owned by the limiter).",
+    "Provenance below records where the reference numbers were seeded from and",
+    "when; refresh by editing this file (bump version + retrieved_at), never by a",
+    "live runtime fetch."
+  ],
+  "version": "rate-limit-seed-v1",
+  "provenance": {
+    "source_repo": "llerandi/llm-rate-limits-tracker",
+    "source_path": "data/rate-limits.json",
+    "license": "MIT",
+    "retrieved_at": "2026-09-09",
+    "note": "Seeded from the tracker's published free/base tiers where they name the provider; the tracker does NOT cover groq/compound, groq/compound-mini, SiliconFlow, or OpenRouter model tiers, so those stay unknown here and are governed by explicit config + runtime headers."
+  },
+  "entries": [
+    {
+      "provider": "groq",
+      "model": "*",
+      "tier": "free",
+      "limits": {"rpm": null, "tpm": null, "rpd": null, "notes": "compound/compound-mini not in the tracker; per-account daily quota UNVERIFIED (forensic-hold finding) — governed by limiter.yaml + live headers"}
+    },
+    {
+      "provider": "google",
+      "model": "flash-lite",
+      "tier": "free",
+      "limits": {"rpm": 15, "tpm": 250000, "rpd": 1000, "notes": "generic AI Studio free-tier flash-lite reference; per-key-per-model. Real values are limiter.yaml + headers."}
+    },
+    {
+      "provider": "openrouter",
+      "model": "*",
+      "tier": "base",
+      "limits": {"rpm": null, "tpm": null, "rpd": null, "notes": "per-account credit-based; not a fixed tier in the tracker — unknown, governed by config + headers"}
+    },
+    {
+      "provider": "siliconflow",
+      "model": "*",
+      "tier": "base",
+      "limits": {"rpm": null, "tpm": null, "rpd": null, "notes": "not covered by the tracker; measured to expose NO rate-limit headers (11.183) — concurrency-governed, no rate seed"}
+    }
+  ]
+}

@@ -160,21 +160,40 @@ class _StageWrite:
         (run, stage, contract) row (jsonb ||, last write wins per key):
         DO NOTHING silently swallowed everything after the first call —
         manifests ate the audit, syntax, and rescue evidence (found
-        during I4R-A; provenance must never be dropped)."""
+        during I4R-A; provenance must never be dropped).
+
+        EXTRACT-OPERATIONAL-PROJECTION-V1: when this call's payload
+        mentions `llm_extraction` (extract_worker.py writes it in a LATER
+        call than its first `{"manifest": ...}` write), the narrow
+        operational columns (migration 0057) are derived and set from
+        THIS payload alone — never from a merge — so a call that omits
+        the key (manifest/trace writes) leaves the columns untouched
+        instead of clobbering a value an earlier call already set."""
         artifact_id = content_hash({
             "run": self.run_id,
             "stage": self.stage,
             "contract": self.contract_hash,
             "payload": payload,
         })
+        from polymath_shared.extract_projection import extract_projection_columns_for
+
+        projection = extract_projection_columns_for(payload)
+        extra_cols = ""
+        extra_conflict = ""
+        extra_vals: tuple = ()
+        if projection is not None:
+            cols = list(projection)
+            extra_cols = "".join(f", {c}" for c in cols)
+            extra_conflict = "".join(f", {c} = EXCLUDED.{c}" for c in cols)
+            extra_vals = tuple(projection[c] for c in cols)
         self.conn.execute(
-            """
-            INSERT INTO artifacts (artifact_id, run_id, stage, contract_hash, payload)
-            VALUES (%s, %s, %s, %s, %s)
+            f"""
+            INSERT INTO artifacts (artifact_id, run_id, stage, contract_hash, payload{extra_cols})
+            VALUES (%s, %s, %s, %s, %s{"".join(", %s" for _ in extra_vals)})
             ON CONFLICT (run_id, stage, contract_hash) DO UPDATE
-            SET payload = artifacts.payload || EXCLUDED.payload
+            SET payload = artifacts.payload || EXCLUDED.payload{extra_conflict}
             """,
-            (artifact_id, self.run_id, self.stage, self.contract_hash, json.dumps(payload)),
+            (artifact_id, self.run_id, self.stage, self.contract_hash, json.dumps(payload), *extra_vals),
         )
         return artifact_id
 

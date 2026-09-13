@@ -1,0 +1,249 @@
+{
+  "contract": "u2-persistence-canary-v1",
+  "target": {
+    "doc_id": "doc_3f09f808d1fa2a25ebb4fb0aa894f1b652a0550e7ce6b17185baa5be97ae9e1c",
+    "corpus_id": "cinema",
+    "source_name": "Laban Movement-Guided Diffusion for Text-to-Motion Generation.md",
+    "source_parent_count": 10,
+    "run_id": "run_f830009068c0e61fa4527e76040c07ff40a4414fbfac5f6ba6ae3c27154ff880",
+    "run_status": "reconciling"
+  },
+  "pmap_pin": [
+    "map_groq2",
+    "map_groq3",
+    "map_groq4",
+    "map_groq5",
+    "map_groq6",
+    "map_fallback_openrouter"
+  ],
+  "before": {
+    "at": "2026-09-11T04:45:33.109967+00:00",
+    "maps_active": 0,
+    "maps_total": 0,
+    "map_ids": [],
+    "mapped_parent_ids": [],
+    "batches": [
+      {
+        "batch_id": "a4079d581c338c44589202b7a5a30825679c4e5cea2512068190bb269d9df583",
+        "status": "partial",
+        "expected_count": 10,
+        "valid_count": 0,
+        "attempt_count": 18,
+        "raw_response_hash": null,
+        "provider": "groq",
+        "model": "groq/compound-mini",
+        "last_error": "groq/compound-mini error: LIMITER_REFUSED"
+      },
+      {
+        "batch_id": "fb623135b666e72d2de75c3426033ab5afcd8e1d6883c35fc6dc49e6ea6af03c",
+        "status": "partial",
+        "expected_count": 10,
+        "valid_count": 0,
+        "attempt_count": 15,
+        "raw_response_hash": null,
+        "provider": "groq",
+        "model": "groq/compound-mini",
+        "last_error": "groq/compound-mini error: LIMITER_REFUSED"
+      }
+    ],
+    "tickets": [],
+    "artifacts": [],
+    "projection": {
+      "collections": {
+        "polymath_document_parent_maps_embed_e794ec4cab197a3f": 0
+      },
+      "total": 0,
+      "error": null
+    },
+    "limiter": {}
+  },
+  "executed": true,
+  "minted": {
+    "run_id": "run_f830009068c0e61fa4527e76040c07ff40a4414fbfac5f6ba6ae3c27154ff880",
+    "ticket_id": "tkt_bb1cb188781c2e6c1191db1d9491daecb3b3bdff",
+    "corpus_id": "cinema"
+  },
+  "wall_s": 21.0,
+  "after": {
+    "at": "2026-09-11T04:45:54.188123+00:00",
+    "maps_active": 10,
+    "maps_total": 10,
+    "map_ids": [
+      "1e4ed188d523d12da15181e593859bb7bc459e7014d5909c5c598e93de3e6d4f",
+      "225d15f62f6585aedc9c60046620b26d95a24a4829f3025edf0a9726038bf789",
+      "2a4beb9d7d08205d5203a94711655fea4c255e575728cd6c3885e4807bce19f8",
+      "413a235498dc34dd89d54a73ed8dfb145776a13889d7d15213b2a364e6a8db76",
+      "6e6498bff8d1ee0cbbbc416749e419df31e3888947a11c7ec595f01c41b0e9d9",
+      "6fb0efa3bba1e642bc3bdccb4480858ccd1b624c6d58801c170803c06a8c0fde",
+      "8c1426d4138fc7d63932e5c93258bc94c4cfb1941c49a3d2d59c34a6ccc52e5f",
+      "8fc4c4f52faea6fb8b1918a4f1036acf6e37395e38abbc46ed409864f71c7355",
+      "9c72c29f7bbb5e2ef23436e90a5db8e5f4c13c25c6d89e825e994aa7680be914",
+      "e2ee5263fb87c25512222140d4fd52d9ac6ab97f9d464ecc28775e4059259132"
+    ],
+    "mapped_parent_ids": [
+      "chunk_13ee3ae69881c4efcd9b1366b8b636f5b4cd830632291833e66d77fdea91154a",
+      "chunk_3d88316fc76f6e824800ec50f1fd6a888cea202f2330121064c1f1e7c9f0ca27",
+      "chunk_53a1c0914551b06ea30799b9ec3333279202bb0725c2a97e6a165de9845b224b",
+      "chunk_8321822b2d5d41728660ac971043bbce39bb12d7b90a39f0741241d1297b4262",
+      "chunk_861ff115d7c6f7cf6b88123d7bcc96f6e44a75b5e66bcc2fbae855a3a1bc0b95",
+      "chunk_8fbe8bd1d928c55cb62e3cb679c4f72e98e94f5b158ee226db468c515e07fd92",
+      "chunk_92681bad0f824ff5d86b8bc1a11e44aa50b0628d8961a06cbdd79ced58c517fb",
+      "chunk_ab71dc58e67473caefdfd2309c77dabd919f6e2ae76a3df1bb6dab5e255d9af5",
+      "chunk_d5633815f114deb42a718619d072dce15bb4d3116d1812e29e5eac3874df0b3f",
+      "chunk_e3609f59a8b37819b9980b710c6f0ef8d5ca9715c169b511c68002578530e40b"
+    ],
+    "batches": [
+      {
+        "batch_id": "1007e6c8e7f11e504f0808eea1d3d1f0c99eb24f85e50eaad44d9a40ee4f6281",
+        "status": "done",
+        "expected_count": 10,
+        "valid_count": 10,
+        "attempt_count": 1,
+        "raw_response_hash": "1cd33aa13d77076acb7789e6443aed3769180d2b9a27ed348b3acea3074ab65c",
+        "provider": "groq",
+        "model": null,
+        "last_error": null
+      },
+      {
+        "batch_id": "a4079d581c338c44589202b7a5a30825679c4e5cea2512068190bb269d9df583",
+        "status": "partial",
+        "expected_count": 10,
+        "valid_count": 0,
+        "attempt_count": 18,
+        "raw_response_hash": null,
+        "provider": "groq",
+        "model": "groq/compound-mini",
+        "last_error": "groq/compound-mini error: LIMITER_REFUSED"
+      },
+      {
+        "batch_id": "fb623135b666e72d2de75c3426033ab5afcd8e1d6883c35fc6dc49e6ea6af03c",
+        "status": "partial",
+        "expected_count": 10,
+        "valid_count": 0,
+        "attempt_count": 15,
+        "raw_response_hash": null,
+        "provider": "groq",
+        "model": "groq/compound-mini",
+        "last_error": "groq/compound-mini error: LIMITER_REFUSED"
+      }
+    ],
+    "tickets": [
+      {
+        "ticket_id": "tkt_bb1cb188781c2e6c1191db1d9491daecb3b3bdff",
+        "status": "done",
+        "attempt": 0,
+        "last_error_note": null
+      }
+    ],
+    "artifacts": [
+      {
+        "doc_id": "doc_3f09f808d1fa2a25ebb4fb0aa894f1b652a0550e7ce6b17185baa5be97ae9e1c",
+        "complete": true,
+        "http_429": 0,
+        "corpus_id": "cinema",
+        "projection": {
+          "points": 10,
+          "point_ids": [
+            "41bd5451-298f-5810-acd3-375b544b9e35",
+            "ee218d10-f035-5d78-9ea6-a85ae4513025",
+            "e3f2cd57-166d-59b0-a39e-6d6a4e02db44",
+            "608bcca7-e2ae-560c-9933-9a1db598f4d1",
+            "0cbc8b5c-7f1b-5979-aa04-1079c2da61cd",
+            "68e4d21f-4c40-5f40-90c4-b447c278f038",
+            "90f1376f-b2a3-5e2d-bd89-4022eee8732f",
+            "bce57ea5-8524-536b-ab9d-35015b60a44c",
+            "f9816c6b-b93d-5b71-b5c3-915cff55a1c6",
+            "9c047583-f5c9-58b5-82fe-74449a33d4a1"
+          ],
+          "collection": "polymath_document_parent_maps_embed_e794ec4cab197a3f",
+          "projection": "parent-map-projection-v1",
+          "map_contract": "map-compiler-v1",
+          "texts_embedded": 10,
+          "projection_hash": "0fae1e003ce666462f5098d588db0f96a4312a2ca28106b2490e94780f4e7b71",
+          "created_collection": false,
+          "embedding_contract": "embed_e794ec4cab197a3f"
+        },
+        "unresolved": 0,
+        "batches_done": 1,
+        "map_contract": "map-compiler-v1",
+        "batches_total": 1,
+        "http_failures": 0,
+        "grounding_hash": "34546fed8dadbf3aa39a3147ed554e6c09a306b280d7f1aef339eac2cb806e3d",
+        "parents_mapped": 10,
+        "batches_partial": 2,
+        "http_dispatches": 1,
+        "reliability_cap": 15,
+        "compiler_invalid": 0,
+        "compiler_partial": 0,
+        "eligible_parents": 10,
+        "excluded_parents": 0,
+        "limiter_refusals": 0,
+        "compiler_complete": 1,
+        "empty_completions": 0,
+        "grounding_version": "grounding-context-v1",
+        "parents_newly_mapped": 10
+      }
+    ],
+    "projection": {
+      "collections": {
+        "polymath_document_parent_maps_embed_e794ec4cab197a3f": 10
+      },
+      "total": 10,
+      "error": null
+    },
+    "limiter": {
+      "map_groq5": {
+        "day_count": 1,
+        "effective": 2,
+        "ceiling": 2,
+        "decreases": 0,
+        "increases": 0
+      }
+    }
+  },
+  "reconciliation": {
+    "requested_parents": 10,
+    "eligible_parents": 10,
+    "excluded_parents": 0,
+    "http_dispatches": 1,
+    "limiter_refusals": 0,
+    "http_429": 0,
+    "http_failures": 0,
+    "empty_completions": 0,
+    "compiler_complete": 1,
+    "compiler_partial": 0,
+    "compiler_invalid": 0,
+    "maps_returned": 10,
+    "maps_persisted_delta": 10,
+    "maps_projected_delta": 10,
+    "parents_mapped": 10,
+    "errors": null,
+    "provider": "groq",
+    "model": null,
+    "attempts": 1,
+    "limiter_day_count_delta": {
+      "map_groq5": 1
+    },
+    "new_map_ids": [
+      "1e4ed188d523d12da15181e593859bb7bc459e7014d5909c5c598e93de3e6d4f",
+      "225d15f62f6585aedc9c60046620b26d95a24a4829f3025edf0a9726038bf789",
+      "2a4beb9d7d08205d5203a94711655fea4c255e575728cd6c3885e4807bce19f8",
+      "413a235498dc34dd89d54a73ed8dfb145776a13889d7d15213b2a364e6a8db76",
+      "6e6498bff8d1ee0cbbbc416749e419df31e3888947a11c7ec595f01c41b0e9d9",
+      "6fb0efa3bba1e642bc3bdccb4480858ccd1b624c6d58801c170803c06a8c0fde",
+      "8c1426d4138fc7d63932e5c93258bc94c4cfb1941c49a3d2d59c34a6ccc52e5f",
+      "8fc4c4f52faea6fb8b1918a4f1036acf6e37395e38abbc46ed409864f71c7355",
+      "9c72c29f7bbb5e2ef23436e90a5db8e5f4c13c25c6d89e825e994aa7680be914",
+      "e2ee5263fb87c25512222140d4fd52d9ac6ab97f9d464ecc28775e4059259132"
+    ],
+    "checks": {
+      "requested_equals_eligible": true,
+      "returned_equals_persisted": true,
+      "persisted_equals_projected": true,
+      "dispatch_fully_accounted": true,
+      "limiter_matches_dispatch": true,
+      "no_unresolved_left": true
+    },
+    "reconciles": true
+  }
+}

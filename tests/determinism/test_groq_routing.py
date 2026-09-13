@@ -115,13 +115,24 @@ def test_reservation_decays_so_sequential_is_not_starved():
     assert d.routed and d.account == "GROQ_API_KEY_1"   # back to the deterministic first pick
 
 
-def test_config_has_map_lanes_sharing_the_profile_keys():
+def test_config_map_lanes_are_de_shared_from_the_profile_key():
+    """PROVIDER-LANE-REASSIGNMENT-V1 (11.193) INVERTED the old S7 shared-budget rule.
+
+    Previously map_groq{i} deliberately SHARED account i's key with profile_groq{i}.
+    The owner-directed reassignment split them: GROQ_API_KEY_1 serves doc_profile ONLY
+    and GROQ_API_KEY_2..6 serve pMAP ONLY, so a pMAP burst can no longer starve
+    doc_profile through a shared account budget.
+    """
     d = json.loads((ROOT / "config/cloud_providers.json").read_text())
     eps = {e["name"]: e for e in d["providers"]}
-    assert d["stage_pins"]["doc_parent_map"] == MAP_PIN
-    for i in range(1, 7):
+    pin = d["stage_pins"]["doc_parent_map"]
+    assert pin == [f"map_groq{i}" for i in range(2, 7)] + ["map_fallback_openrouter"]
+    for i in range(2, 7):
         assert eps[f"map_groq{i}"]["model"] == "groq/compound-mini"
-        assert eps[f"map_groq{i}"]["api_key_env"] == f"GROQ_API_KEY_{i}"     # SHARES account i with profile_groq{i}
+        assert eps[f"map_groq{i}"]["api_key_env"] == f"GROQ_API_KEY_{i}"
         assert eps[f"map_groq{i}"]["dedicated"] is True
-    # shared account: profile_groq{i} and map_groq{i} use the same key
-    assert eps["profile_groq2"]["api_key_env"] == eps["map_groq2"]["api_key_env"]
+    # the retired lane is DISABLED, not deleted (rollback stays possible)
+    assert eps["map_groq1"]["enabled"] is False
+    # DE-SHARED: no pMAP lane may use the doc_profile account
+    assert eps["profile_groq1"]["api_key_env"] == "GROQ_API_KEY_1"
+    assert "GROQ_API_KEY_1" not in {eps[n]["api_key_env"] for n in pin}

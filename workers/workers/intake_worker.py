@@ -412,6 +412,30 @@ def process_event(conn: Connection, event: dict) -> None:
 
         children = [r for r in chunks if r["tier"] == "child"]
         parents = [r for r in chunks if r["tier"] == "parent"]
+
+        # DOCUMENT-CHUNK-SUMMARY-V1: the narrow operational projection
+        # (migration 0058) that lets corpus_document_summaries() stop
+        # scanning the full chunks table for these same three counts —
+        # computed from the SAME lists above, no extra query.
+        from polymath_shared.document_chunk_summary import compute_chunk_summary
+
+        _summary = compute_chunk_summary(children, parents)
+        conn.execute(
+            """
+            INSERT INTO document_chunk_summary
+                   (doc_id, corpus_id, child_count, parent_count, map_eligible_count, updated_at)
+            VALUES (%s, %s, %s, %s, %s, now())
+            ON CONFLICT (doc_id) DO UPDATE
+               SET corpus_id = EXCLUDED.corpus_id,
+                   child_count = EXCLUDED.child_count,
+                   parent_count = EXCLUDED.parent_count,
+                   map_eligible_count = EXCLUDED.map_eligible_count,
+                   updated_at = now()
+            """,
+            (doc_id, corpus_id, _summary["child_count"], _summary["parent_count"],
+             _summary["map_eligible_count"]),
+        )
+
         routing_card = {
             "doc_id": doc_id,
             "source_name": source_name,

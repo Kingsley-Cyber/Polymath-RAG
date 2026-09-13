@@ -39,6 +39,13 @@ MAPPING_ONLY_PROVEN = 40
 #: mapping ~0 (e.g. Ken Dancyger 2/430) PURELY because they packed 60-alias batches; at 15
 #: they map reliably. The effective batch size is the smaller of the token target and this.
 #: Canaryable: raise it if compound-mini's big-batch reliability improves.
+#: 2026-09-13 RE-QUALIFIED on real cinema docs (PMAP-BATCH-SIZE-QUALIFICATION-V1; 506
+#: equivalent unresolved parents per size, ONE variable = this cap): 15 -> 98.8% durably
+#: mapped / 0 empty / 0x413 / 130 maps-min; 35 -> 50.8% (31% of 2xx return EMPTY); 50 ->
+#: 36.8% (adds 13% HTTP 413 payload + 20% 429). 15 CONFIRMED, 35/50 collapse — the ceiling
+#: is compound-mini structured-output reliability, NOT tokens or the limiter (0 local
+#: refusals at every size). Evidence:
+#: docs/wiki/experiments/pmap-batch-size-qualification-2026-09-13/.
 MAP_RELIABILITY_CAP = 15
 #: Reserve so a slightly-over-density response still finishes with `stop`.
 SAFETY_RESERVE_TOKENS = 512
@@ -198,7 +205,8 @@ class BatchPlan:
 BATCH_PLANNER_VERSION = "map-batches-v2"  # v2: MAP_RELIABILITY_CAP (compound-mini big-batch reliability)
 
 
-def _batch(ordinal, by_alias, aliases, density, *, contract, manifest_hash, is_combined) -> MapBatch:
+def _batch(ordinal, by_alias, aliases, density, *, contract, manifest_hash, is_combined,
+           grounding_hash: str = "") -> MapBatch:
     skels = [by_alias[a] for a in aliases]
     est_input = estimate_input_tokens(skels)
     est_billed = int(round(len(aliases) * density.billed_tokens_per_parent))
@@ -206,12 +214,13 @@ def _batch(ordinal, by_alias, aliases, density, *, contract, manifest_hash, is_c
     # alias bound to its skeleton hash + the combined flag. Two different documents
     # that both alias P0001..P0060 differ in manifest_hash and every skeleton_hash,
     # so their durable batch identities can never collide.
-    batch_hash = _sha256(
-        "\x1f".join(
-            [contract, manifest_hash, str(is_combined)]
-            + [f"{s.alias}\x1e{s.skeleton_hash}" for s in skels]
-        )
-    )
+    # RAG-PIPELINE-FINISH Phase 6: a non-empty grounding_hash binds the document
+    # grounding into the batch identity, so an old SKELETON-ONLY map cannot satisfy the
+    # new grounded generation. Empty (the legacy path) reproduces the v1 hash exactly.
+    parts = [contract, manifest_hash, str(is_combined)] + [f"{s.alias}\x1e{s.skeleton_hash}" for s in skels]
+    if grounding_hash:
+        parts.append(f"grounding\x1e{grounding_hash}")
+    batch_hash = _sha256("\x1f".join(parts))
     return MapBatch(
         ordinal=ordinal,
         aliases=tuple(aliases),
@@ -229,6 +238,8 @@ def plan_batches(
     *,
     combined_global_profile_billed_tokens: int | None = None,
     contract: str = BATCH_PLANNER_VERSION,
+    grounding_hash: str = "",
+    reliability_cap: int = MAP_RELIABILITY_CAP,
 ) -> BatchPlan:
     """Cut a document's eligible parents into deterministic mapping batches.
 
@@ -239,7 +250,11 @@ def plan_batches(
     """
     aliases = [s.alias for s in manifest.skeletons]  # ordinal order from S1
     by_alias = {s.alias: s for s in manifest.skeletons}
-    cap = mapping_only_capacity(density)
+    # LANE-QUALIFIED CAP (RAG-PIPELINE-FINISH Phase 7): the reliability cap is no longer
+    # a hard-coded global 15 — the caller (the pMAP pool worker) passes its pool's
+    # qualified cap (min over active lanes). The token envelope still lowers it for a
+    # dense document; the architectural target 60 is honored when a lane qualifies there.
+    cap = mapping_only_capacity(density, reliability_cap=reliability_cap)
     comb_cap = (
         combined_capacity(density, global_profile_billed_tokens=combined_global_profile_billed_tokens)
         if combined_global_profile_billed_tokens is not None
@@ -251,17 +266,23 @@ def plan_batches(
     mh = manifest.manifest_hash
     if combined_global_profile_billed_tokens is not None and comb_cap > 0 and aliases:
         first = aliases[:comb_cap]
-        batches.append(_batch(ordinal, by_alias, first, density, contract=contract, manifest_hash=mh, is_combined=True))
+        batches.append(_batch(ordinal, by_alias, first, density, contract=contract, manifest_hash=mh,
+                              is_combined=True, grounding_hash=grounding_hash))
         idx = len(first)
         ordinal += 1
     while idx < len(aliases):
         chunk = aliases[idx : idx + cap]
-        batches.append(_batch(ordinal, by_alias, chunk, density, contract=contract, manifest_hash=mh, is_combined=False))
+        batches.append(_batch(ordinal, by_alias, chunk, density, contract=contract, manifest_hash=mh,
+                              is_combined=False, grounding_hash=grounding_hash))
         idx += len(chunk)
         ordinal += 1
     # Bind source identity into the plan hash too, so even an empty (noise-only)
-    # document's plan cannot collide with another's.
-    plan_hash = _sha256("\x1d".join([contract, mh] + [b.batch_hash for b in batches]))
+    # document's plan cannot collide with another's; the grounding (when present) binds
+    # here too so an empty-doc grounded plan differs from its ungrounded twin.
+    plan_parts = [contract, mh] + [b.batch_hash for b in batches]
+    if grounding_hash:
+        plan_parts.append(f"grounding\x1e{grounding_hash}")
+    plan_hash = _sha256("\x1d".join(plan_parts))
     return BatchPlan(
         contract=contract,
         density=density,

@@ -1,0 +1,693 @@
+{
+ "contract": "pmap-forensic-batch-qualification-v1",
+ "sizes": [
+  30,
+  40,
+  50,
+  60
+ ],
+ "arms": {
+  "A_prod": {
+   "doc": "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+   "inject": {},
+   "rows": [
+    {
+     "N": 30,
+     "wall_s": 7.7,
+     "requests": 1,
+     "newly_mapped": 29,
+     "unresolved": 0,
+     "http_dispatches": 1,
+     "http_429": 0,
+     "empty": 0,
+     "refused": 0,
+     "compiler_complete": 1,
+     "compiler_partial": 0,
+     "compiler_invalid": 0,
+     "persisted_readback": 29,
+     "lanes": {
+      "map_groq3": 1
+     },
+     "captured": [
+      {
+       "url": "https://api.groq.com/openai/v1/chat/completions",
+       "status": 200,
+       "latency_s": 7.45,
+       "request": {
+        "model": "groq/compound-mini",
+        "temperature": 0.0,
+        "max_tokens": 2400,
+        "stream": false
+       },
+       "request_msg_chars": [
+        {
+         "role": "system",
+         "chars": 1572
+        },
+        {
+         "role": "user",
+         "chars": 9366
+        }
+       ],
+       "ratelimit_headers": {
+        "x-ratelimit-limit-requests": "250",
+        "x-ratelimit-limit-tokens": "70000",
+        "x-ratelimit-remaining-requests": "222",
+        "x-ratelimit-remaining-tokens": "66643",
+        "x-ratelimit-reset-requests": "2h41m16.8s",
+        "x-ratelimit-reset-tokens": "2.877s"
+       },
+       "finish_reason": "stop",
+       "usage": {
+        "queue_time": 0.118613,
+        "prompt_tokens": 6672,
+        "prompt_time": 0.33912,
+        "completion_tokens": 3033,
+        "completion_time": 6.779095,
+        "total_tokens": 9705,
+        "total_time": 7.118215
+       },
+       "executed_tools": null,
+       "reasoning_chars": 0,
+       "message_keys": [
+        "content",
+        "reasoning",
+        "role"
+       ],
+       "body_keys": [
+        "choices",
+        "created",
+        "id",
+        "model",
+        "object",
+        "service_tier",
+        "usage",
+        "usage_breakdown",
+        "x_groq"
+       ],
+       "content_chars": 3552,
+       "content_lines": 29,
+       "map_lines": 29,
+       "raw_content": "MAP|P0001|Acknowledgements listing photo and interview credit contributors|photo credits;Benjamin Laird;Gary Peebles\nMAP|P0002|Introduction discussing finding community via film schools, stunt groups, festivals|film school;stunt groups;Indieclub\nMAP|P0003|Advice on MOS shoots meaning no sound but not staying silent|MOS shooting;no sound;set protocol\nMAP|P0004|Explanation of stunt crews handling bulk of combat characters and recycling players|stunt crews;combat characters;recycling\nMAP|P0005|Discussion of using wood, resin, 3D printed plastic for prop replicas|wood props;resin;3D printed plastic\nMAP|P0006|Robert Rodriguez's DIY guacamole gun pneumatic prop for blood effects|Robert Rodriguez;guacamole gun;pneumatic shooter\nMAP|P0007|Core competencies for stunt hires as prioritized by coordinator Richard Fike|core competencies;Richard Fike;stunt hires\nMAP|P0008|Guideline that hits not seen by camera do not count|camera visibility;hit count;OTS\nMAP|P0009|Overview of basic unarmed strikes like punches in action scenes|basic strikes;punches;universal\nMAP|P0010|Explanation that most cinematic hits are performed without physical contact|non-contact hits;movie hits;cinematic\nMAP|P0011|Description of various kick styles and their suitability for wipes or contact|crescent kicks;spin kicks;snap kicks\nMAP|P0012|Cheat method using camera-directed punch and cut to reaction for non-contact hit|camera punch;reaction cut;non-contact\nMAP|P0013|Impact of MMA on integrating striking and grappling in entertainment|MMA influence;striking grappling;entertainment\nMAP|P0014|Use of pads and mats as safety gear to absorb impact|pads;mats;impact absorption\nMAP|P0015|Explanation of rolls converting linear energy to rotational to reduce torso impact|energy conversion;roll technique;impact reduction\nMAP|P0016|Closing thoughts on safety enabling greater danger or realism in stunts|safety tradeoff;danger realism;stunt safety\nMAP|P0017|List of stunt-related documentary movies referenced|Double Dare;Jackie Chan My Stunts;Red Trousers\nMAP|P0018|Discussion of static blocks vs deflections in weapon stick work|static blocks;deflections;weapon stick\nMAP|P0019|Note that projectile or thrown weapons are no longer under performer control|projectile weapons;thrown weapons;loss of control\nMAP|P0020|Critique of expected weapons training for stunt performers in tactical raid scenario|weapons training;stunt performers;tactical raid\nMAP|P0021|Explanation that each set of intentions forms a distinct acting beat in fight scenes|acting beats;fight scenes;intentions\nMAP|P0022|Workflow concept turning screenplay words into physical actions|screenplay to action;workflow;fight choreography\nMAP|P0023|Guidance on planning setups to acquire required shots for fight sequences|shot setups;fight planning;required shots\nMAP|P0024|Advantages of prime lenses with fixed focal length for cinematic camera movement|prime lenses;fixed focal length;cinematic\nMAP|P0025|Explanation of sensor size and aspect ratio importance in image capture|sensor size;aspect ratio;image capture\nMAP|P0026|Use of close shots to emphasize hand actions and facilitate fake torso pieces|close shots;hand actions;fake torso\nMAP|P0027|Comparison of long versus short takes highlighting challenges of choreography and errors|long takes;short takes;choreography risk\nMAP|P0028|Use of chromakey to add or remove single elements such as rockets or gags|chromakey;rocket effect;decapitation gag\nMAP|P0029|Glossary entry defining frames per second (FPS) standards in film|FPS;frames per second;24p",
+       "compiler": {
+        "maps": 29,
+        "missing": 0,
+        "unknown": 0,
+        "duplicate": 0,
+        "rejected_by_reason": {}
+       }
+      }
+     ]
+    },
+    {
+     "N": 40,
+     "wall_s": 8.9,
+     "requests": 1,
+     "newly_mapped": 40,
+     "unresolved": 0,
+     "http_dispatches": 1,
+     "http_429": 0,
+     "empty": 0,
+     "refused": 0,
+     "compiler_complete": 1,
+     "compiler_partial": 0,
+     "compiler_invalid": 0,
+     "persisted_readback": 40,
+     "lanes": {
+      "map_groq3": 1,
+      "map_groq4": 1
+     },
+     "captured": [
+      {
+       "url": "https://api.groq.com/openai/v1/chat/completions",
+       "status": 200,
+       "latency_s": 8.71,
+       "request": {
+        "model": "groq/compound-mini",
+        "temperature": 0.0,
+        "max_tokens": 2400,
+        "stream": false
+       },
+       "request_msg_chars": [
+        {
+         "role": "system",
+         "chars": 1572
+        },
+        {
+         "role": "user",
+         "chars": 13216
+        }
+       ],
+       "ratelimit_headers": {
+        "x-ratelimit-limit-requests": "250",
+        "x-ratelimit-limit-tokens": "70000",
+        "x-ratelimit-remaining-requests": "230",
+        "x-ratelimit-remaining-tokens": "63842",
+        "x-ratelimit-reset-requests": "1h55m12s",
+        "x-ratelimit-reset-tokens": "5.278s"
+       },
+       "finish_reason": "stop",
+       "usage": {
+        "queue_time": 0.101797,
+        "prompt_tokens": 8982,
+        "prompt_time": 0.427778,
+        "completion_tokens": 3628,
+        "completion_time": 8.012867,
+        "total_tokens": 12610,
+        "total_time": 8.440645
+       },
+       "executed_tools": null,
+       "reasoning_chars": 0,
+       "message_keys": [
+        "content",
+        "reasoning",
+        "role"
+       ],
+       "body_keys": [
+        "choices",
+        "created",
+        "id",
+        "model",
+        "object",
+        "service_tier",
+        "usage",
+        "usage_breakdown",
+        "x_groq"
+       ],
+       "content_chars": 4068,
+       "content_lines": 40,
+       "map_lines": 40,
+       "raw_content": "MAP|P0001|Guide to film combat covering early production stages|combat;handbook;SAG\nMAP|P0002|Beginner advice and protocols for working on action sets|beginners;protocol;advice\nMAP|P0003|On\u2011set communication guidelines for background combat actions|background;combo;communication\nMAP|P0004|Overview of pre\u2011production design for sets, costumes, props, effects|preproduction;design;props\nMAP|P0005|Wardrobe design advice ensuring costumes allow full motion|wardrobe;motion;design\nMAP|P0006|Color contrast discussion of black SWAT outfits in The Raid|SWAT;black;contrast\nMAP|P0007|Technical details of blood tubing affecting spurt timing for gunshots|blood; tubing; delay\nMAP|P0008|Explanation of proper striking form versus ineffective flailing|good;form;strike\nMAP|P0009|Techniques for contact hits including stomp and side\u2011kick combos|contact;kick;impact\nMAP|P0010|Case study focusing on slap techniques as contact hits|slaps;contact;case\nMAP|P0011|Guidance for grappling scenes in empty LED rooms to simulate opponents|grappling;LED;simulation\nMAP|P0012|Advice on adjusting technique for safe, low\u2011impact stage falls|falls;stage;technique\nMAP|P0013|Principles for safe stunt falls emphasizing relaxation and soft tissue|stunt;falls; safety\nMAP|P0014|Performer checklist incorporating OODA loop for observation and reaction|OODA;checklist;performers\nMAP|P0015|Technique notes on sword stabs, CG blood, and mismatched weapon distances|sword;CG;distance\nMAP|P0016|Comparison of center\u2011grip and arm\u2011strap shield types across eras|shields;centergrip;bucklers\nMAP|P0017|Case study of tactical raid using AR15, shotgun, and blanks|tactical;raid;AR15\nMAP|P0018|Comprehensive weapons checklist covering prop materials, backups, accessories|checklist;props;blanks\nMAP|P0019|Acting example illustrating objective and tactic of delivering a punch|objective;tactic;punch\nMAP|P0020|Discussion of interrupted intentions where dialogue meets sudden combat|interruption;combat;OODA\nMAP|P0021|Concept of fight choreography structured like rhythmic phrases or paragraphs|rhythm;choreography;phrases\nMAP|P0022|Exploration of acting through objectives and reactive performance|reacting;objectives;acting\nMAP|P0023|Guidance on conveying pain, injury, death with controlled performance|pain;injury;control\nMAP|P0024|Choreography advice on posture and visual energy using non\u2011dominant hand lines|posture;non\u2011dominant;choreography\nMAP|P0025|Character analysis linking costume modifications to required fight moves|costume;kicks;analysis\nMAP|P0026|Profile of UK Equity\u2011registered fight director Kevin McCurdy|Kevin;McCurdy;fight\u2011director\nMAP|P0027|Discussion of speed\u2011ramping inconsistencies in chained fight sequences|speed\u2011ramping;consistency;choreography\nMAP|P0028|Use of chromakey and stock footage as alternatives to real footage|chromakey;stock;composite\nMAP|P0029|Guidelines for breakaway props and one\u2011off destructive elements|breakaways;props;one\u2011off\nMAP|P0030|Overview of high\u2011risk stunts like pyro, high falls, and vehicle work|pyro;high\u2011falls;stunts\nMAP|P0031|Explanation of rolling shutter artifacts caused by progressive scan cameras|rolling;shutter;artifact\nMAP|P0032|Low\u2011budget stabilization techniques using improvised dolly rigs|stabilization;dolly;budget\nMAP|P0033|Audio recording setup using field recorders, XLR inputs, shotgun mics|XLR;shotgun;field\u2011recorder\nMAP|P0034|Long\u2011take scenario featuring a SWAT team approaching a house at dusk|long\u2011take;SWAT;dusk\nMAP|P0035|Editing technique cutting on hits with alternating wide and tight shots|cutting;hits;editing\nMAP|P0036|Camera shudder used to enhance hit impact and hide misalignment|camera;shudder;impact\nMAP|P0037|General overview of post\u2011production phase assembling all elements|post\u2011production;editing;assembly\nMAP|P0038|Choosing audio transition methods for connecting sound pieces|sound;transition;choices\nMAP|P0039|Use of digital effects for muzzle flashes, gunshots, and pyro on low budgets|digital;effects;muzzle\u2011flash\nMAP|P0040|Glossary entry defining MMA and related combat sports|MMA;definition;combat\u2011sports",
+       "compiler": {
+        "maps": 40,
+        "missing": 0,
+        "unknown": 0,
+        "duplicate": 0,
+        "rejected_by_reason": {}
+       }
+      }
+     ]
+    },
+    {
+     "N": 50,
+     "wall_s": 18.0,
+     "requests": 2,
+     "newly_mapped": 29,
+     "unresolved": 21,
+     "http_dispatches": 2,
+     "http_429": 0,
+     "empty": 1,
+     "refused": 0,
+     "compiler_complete": 0,
+     "compiler_partial": 1,
+     "compiler_invalid": 0,
+     "persisted_readback": 29,
+     "lanes": {
+      "map_groq3": 1,
+      "map_groq4": 1,
+      "map_groq5": 1,
+      "map_groq6": 1
+     },
+     "captured": [
+      {
+       "url": "https://api.groq.com/openai/v1/chat/completions",
+       "status": 200,
+       "latency_s": 9.96,
+       "request": {
+        "model": "groq/compound-mini",
+        "temperature": 0.0,
+        "max_tokens": 2400,
+        "stream": false
+       },
+       "request_msg_chars": [
+        {
+         "role": "system",
+         "chars": 1572
+        },
+        {
+         "role": "user",
+         "chars": 16617
+        }
+       ],
+       "ratelimit_headers": {
+        "x-ratelimit-limit-requests": "250",
+        "x-ratelimit-limit-tokens": "70000",
+        "x-ratelimit-remaining-requests": "233",
+        "x-ratelimit-remaining-tokens": "65330",
+        "x-ratelimit-reset-requests": "1h37m55.2s",
+        "x-ratelimit-reset-tokens": "4.002s"
+       },
+       "finish_reason": "stop",
+       "usage": {
+        "queue_time": 0.227966,
+        "prompt_tokens": 10886,
+        "prompt_time": 0.524388,
+        "completion_tokens": 4010,
+        "completion_time": 9.013899,
+        "total_tokens": 14896,
+        "total_time": 9.538287
+       },
+       "executed_tools": null,
+       "reasoning_chars": 0,
+       "message_keys": [
+        "content",
+        "reasoning",
+        "role"
+       ],
+       "body_keys": [
+        "choices",
+        "created",
+        "id",
+        "model",
+        "object",
+        "service_tier",
+        "usage",
+        "usage_breakdown",
+        "x_groq"
+       ],
+       "content_chars": 3122,
+       "content_lines": 30,
+       "map_lines": 30,
+       "raw_content": "MAP|P0001|Disclaimer that the book does not prevent injury or legal liability.|injury;liability;disclaimer\nMAP|P0002|Advice to follow qualified coordinators or directors rather than rely on the book.|coordinators;directors;advice\nMAP|P0003|Emphasis on limited rehearsal time and urgency before the performance week.|rehearsal;time;urgency\nMAP|P0004|Suggested further reading titles on film set etiquette and language.|reading;film set;etiquette\nMAP|P0005|Anecdote about SAG stunt performers' evolving facial hair for wardrobe continuity.|SAG;stunt;wardrobe\nMAP|P0006|Guidance on Nomex undergarments for burns and newer gel alternatives.|Nomex;burns;wardrobe\nMAP|P0007|Recommendation to assign a safety coordinator and locate medical supplies on set.|safety;medical;coordinator\nMAP|P0008|Discussion of limited set space and need for time\u2011saving solutions.|space;obstacles;time\nMAP|P0009|List of sources for steel props including FX and LARP vendors.|steel;vendors;Halloween\nMAP|P0010|Use of CG and non\u2011firing/blowback firearms props without special modifications.|CG;firearms;blowback\nMAP|P0011|Explanation of breakaway props designed for safe shattering during fights.|breakaways;safety;shatter\nMAP|P0012|Advice to use a real sharp steel kitchen knife when realism requires.|steel knife;realism;synthesis\nMAP|P0013|Compilation of online resources for props, costumes, and weapon rentals.|resources;props;websites\nMAP|P0014|Overview of core physical skills that enhance safety and fight performance.|physical;skills;safety\nMAP|P0015|Statement emphasizing that staged combat is not real.|not real;combat;mindset\nMAP|P0016|Explanation of fighting stances to prepare and limit opponent options.|stance;preparation;opponent\nMAP|P0017|Guidance on camera angles to make hits visually effective.|camera;angles;hit\nMAP|P0018|Advice on reacting to contact hits by tensing or relaxing muscles.|contact;tense;relax\nMAP|P0019|Description of falls and rolls resulting from strong impacts.|falls;rolls;impact\nMAP|P0020|Technique of slumping after knee impact to reduce force.|knee;slump;impact reduction\nMAP|P0021|List of manufacturers for stunt pads and bumpers.|stunt pads;manufacturers;companies\nMAP|P0022|Overview of prop weapon options from CG mime to functional firearms.|weapon options;CG;functional\nMAP|P0023|Recommendation to use rubber props for visible contact hits when protection is exposed.|rubber;contact;hits\nMAP|P0024|Info on breakaway bottles made of sugar glass or polymer for safe destruction.|breakaway bottles;sugar glass;polymer\nMAP|P0025|Discussion of cultural perspectives on extreme violence.|violence;culture;ethics\nMAP|P0026|Guidance on making informed acting choices using character and story context.|acting;choices;character\nMAP|P0027|Checklist for actors covering circumstances, setting, beats, and relationships.|acting checklist;circumstances;relationships\nMAP|P0028|Explanation of worldbuilding to justify fight violence and allow genre flexibility.|worldbuilding;fight;genre\nMAP|P0029|Importance of design team collaboration for storyboards and previz work.|previz;storyboards;collaboration\nMAP|P0030|",
+       "compiler": {
+        "maps": 29,
+        "missing": 21,
+        "unknown": 0,
+        "duplicate": 0,
+        "rejected_by_reason": {
+         "empty_signature": 1
+        }
+       }
+      },
+      {
+       "url": "https://api.groq.com/openai/v1/chat/completions",
+       "status": 200,
+       "latency_s": 7.72,
+       "request": {
+        "model": "groq/compound-mini",
+        "temperature": 0.0,
+        "max_tokens": 2400,
+        "stream": false
+       },
+       "request_msg_chars": [
+        {
+         "role": "system",
+         "chars": 1572
+        },
+        {
+         "role": "user",
+         "chars": 6779
+        }
+       ],
+       "ratelimit_headers": {
+        "x-ratelimit-limit-requests": "250",
+        "x-ratelimit-limit-tokens": "70000",
+        "x-ratelimit-remaining-requests": "233",
+        "x-ratelimit-remaining-tokens": "66438",
+        "x-ratelimit-reset-requests": "1h37m55.2s",
+        "x-ratelimit-reset-tokens": "3.053s"
+       },
+       "finish_reason": "stop",
+       "usage": {
+        "queue_time": 0.083032,
+        "prompt_tokens": 5199,
+        "prompt_time": 0.239933,
+        "completion_tokens": 3420,
+        "completion_time": 7.237714,
+        "total_tokens": 8619,
+        "total_time": 7.477648
+       },
+       "executed_tools": null,
+       "reasoning_chars": 0,
+       "message_keys": [
+        "content",
+        "reasoning",
+        "role"
+       ],
+       "body_keys": [
+        "choices",
+        "created",
+        "id",
+        "model",
+        "object",
+        "service_tier",
+        "usage",
+        "usage_breakdown",
+        "x_groq"
+       ],
+       "content_chars": 0,
+       "content_lines": 0,
+       "map_lines": 0,
+       "raw_content": "",
+       "compiler": {
+        "maps": 0,
+        "missing": 50,
+        "unknown": 0,
+        "duplicate": 0,
+        "rejected_by_reason": {}
+       }
+      }
+     ]
+    },
+    {
+     "N": 60,
+     "wall_s": 0.4,
+     "requests": 1,
+     "newly_mapped": 0,
+     "unresolved": 60,
+     "http_dispatches": 1,
+     "http_429": 1,
+     "empty": 0,
+     "refused": 0,
+     "compiler_complete": 0,
+     "compiler_partial": 0,
+     "compiler_invalid": 0,
+     "persisted_readback": 0,
+     "lanes": {
+      "map_groq3": 2,
+      "map_groq4": 1,
+      "map_groq5": 1,
+      "map_groq6": 1
+     },
+     "captured": [
+      {
+       "url": "https://api.groq.com/openai/v1/chat/completions",
+       "status": 429,
+       "latency_s": 0.2,
+       "request": {
+        "model": "groq/compound-mini",
+        "temperature": 0.0,
+        "max_tokens": 2400,
+        "stream": false
+       },
+       "request_msg_chars": [
+        {
+         "role": "system",
+         "chars": 1572
+        },
+        {
+         "role": "user",
+         "chars": 20779
+        }
+       ],
+       "ratelimit_headers": {
+        "x-ratelimit-limit-requests": "250",
+        "x-ratelimit-limit-tokens": "70000",
+        "x-ratelimit-remaining-requests": "221",
+        "x-ratelimit-remaining-tokens": "61917",
+        "x-ratelimit-reset-requests": "2h47m2.4s",
+        "x-ratelimit-reset-tokens": "6.928s"
+       },
+       "finish_reason": null,
+       "usage": null,
+       "executed_tools": null,
+       "reasoning_chars": 0,
+       "message_keys": [],
+       "body_keys": [
+        "error"
+       ],
+       "content_chars": 0,
+       "content_lines": 0,
+       "map_lines": 0,
+       "raw_content": "",
+       "error_body": "{\"error\": {\"message\": \"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kxd8jj37em3ra7rd2kf1vc8a` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 98114, Requested 7005. Please try again in 1h13m42.816s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\", \"type\": \"compound\", \"code\": \"rate_limit_exceeded\"}}",
+       "compiler": {
+        "maps": 0,
+        "missing": 60,
+        "unknown": 0,
+        "duplicate": 0,
+        "rejected_by_reason": {}
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "C_reasoning_none": {
+   "doc": "doc_554b59358b768884ec87225e887b895a66b14f607f3bd96f2c0a2364ece2a23e",
+   "inject": {
+    "reasoning_effort": "none"
+   },
+   "rows": [
+    {
+     "N": 30,
+     "wall_s": 0.2,
+     "requests": 1,
+     "newly_mapped": 0,
+     "unresolved": 30,
+     "http_dispatches": 1,
+     "http_429": 0,
+     "empty": 0,
+     "refused": 0,
+     "compiler_complete": 0,
+     "compiler_partial": 0,
+     "compiler_invalid": 0,
+     "persisted_readback": 0,
+     "lanes": {
+      "map_groq3": 1
+     },
+     "captured": [
+      {
+       "url": "https://api.groq.com/openai/v1/chat/completions",
+       "status": 400,
+       "latency_s": 0.15,
+       "request": {
+        "model": "groq/compound-mini",
+        "temperature": 0.0,
+        "max_tokens": 2400,
+        "stream": false,
+        "reasoning_effort": "none"
+       },
+       "request_msg_chars": [
+        {
+         "role": "system",
+         "chars": 1572
+        },
+        {
+         "role": "user",
+         "chars": 8132
+        }
+       ],
+       "ratelimit_headers": {},
+       "finish_reason": null,
+       "usage": null,
+       "executed_tools": null,
+       "reasoning_chars": 0,
+       "message_keys": [],
+       "body_keys": [
+        "error"
+       ],
+       "content_chars": 0,
+       "content_lines": 0,
+       "map_lines": 0,
+       "raw_content": "",
+       "error_body": "{\"error\": {\"message\": \"`reasoning_effort` is not supported with this model\", \"type\": \"invalid_request_error\"}}",
+       "compiler": {
+        "maps": 0,
+        "missing": 30,
+        "unknown": 0,
+        "duplicate": 0,
+        "rejected_by_reason": {}
+       }
+      }
+     ]
+    },
+    {
+     "N": 40,
+     "wall_s": 0.3,
+     "requests": 1,
+     "newly_mapped": 0,
+     "unresolved": 40,
+     "http_dispatches": 1,
+     "http_429": 0,
+     "empty": 0,
+     "refused": 0,
+     "compiler_complete": 0,
+     "compiler_partial": 0,
+     "compiler_invalid": 0,
+     "persisted_readback": 0,
+     "lanes": {
+      "map_groq3": 1,
+      "map_groq4": 1
+     },
+     "captured": [
+      {
+       "url": "https://api.groq.com/openai/v1/chat/completions",
+       "status": 400,
+       "latency_s": 0.25,
+       "request": {
+        "model": "groq/compound-mini",
+        "temperature": 0.0,
+        "max_tokens": 2400,
+        "stream": false,
+        "reasoning_effort": "none"
+       },
+       "request_msg_chars": [
+        {
+         "role": "system",
+         "chars": 1572
+        },
+        {
+         "role": "user",
+         "chars": 10429
+        }
+       ],
+       "ratelimit_headers": {},
+       "finish_reason": null,
+       "usage": null,
+       "executed_tools": null,
+       "reasoning_chars": 0,
+       "message_keys": [],
+       "body_keys": [
+        "error"
+       ],
+       "content_chars": 0,
+       "content_lines": 0,
+       "map_lines": 0,
+       "raw_content": "",
+       "error_body": "{\"error\": {\"message\": \"`reasoning_effort` is not supported with this model\", \"type\": \"invalid_request_error\"}}",
+       "compiler": {
+        "maps": 0,
+        "missing": 40,
+        "unknown": 0,
+        "duplicate": 0,
+        "rejected_by_reason": {}
+       }
+      }
+     ]
+    },
+    {
+     "N": 50,
+     "wall_s": 0.3,
+     "requests": 1,
+     "newly_mapped": 0,
+     "unresolved": 50,
+     "http_dispatches": 1,
+     "http_429": 0,
+     "empty": 0,
+     "refused": 0,
+     "compiler_complete": 0,
+     "compiler_partial": 0,
+     "compiler_invalid": 0,
+     "persisted_readback": 0,
+     "lanes": {
+      "map_groq3": 1,
+      "map_groq4": 1,
+      "map_groq5": 1
+     },
+     "captured": [
+      {
+       "url": "https://api.groq.com/openai/v1/chat/completions",
+       "status": 400,
+       "latency_s": 0.17,
+       "request": {
+        "model": "groq/compound-mini",
+        "temperature": 0.0,
+        "max_tokens": 2400,
+        "stream": false,
+        "reasoning_effort": "none"
+       },
+       "request_msg_chars": [
+        {
+         "role": "system",
+         "chars": 1572
+        },
+        {
+         "role": "user",
+         "chars": 13057
+        }
+       ],
+       "ratelimit_headers": {},
+       "finish_reason": null,
+       "usage": null,
+       "executed_tools": null,
+       "reasoning_chars": 0,
+       "message_keys": [],
+       "body_keys": [
+        "error"
+       ],
+       "content_chars": 0,
+       "content_lines": 0,
+       "map_lines": 0,
+       "raw_content": "",
+       "error_body": "{\"error\": {\"message\": \"`reasoning_effort` is not supported with this model\", \"type\": \"invalid_request_error\"}}",
+       "compiler": {
+        "maps": 0,
+        "missing": 50,
+        "unknown": 0,
+        "duplicate": 0,
+        "rejected_by_reason": {}
+       }
+      }
+     ]
+    },
+    {
+     "N": 60,
+     "wall_s": 0.3,
+     "requests": 1,
+     "newly_mapped": 0,
+     "unresolved": 60,
+     "http_dispatches": 1,
+     "http_429": 0,
+     "empty": 0,
+     "refused": 0,
+     "compiler_complete": 0,
+     "compiler_partial": 0,
+     "compiler_invalid": 0,
+     "persisted_readback": 0,
+     "lanes": {
+      "map_groq3": 1,
+      "map_groq4": 1,
+      "map_groq5": 1,
+      "map_groq6": 1
+     },
+     "captured": [
+      {
+       "url": "https://api.groq.com/openai/v1/chat/completions",
+       "status": 400,
+       "latency_s": 0.19,
+       "request": {
+        "model": "groq/compound-mini",
+        "temperature": 0.0,
+        "max_tokens": 2400,
+        "stream": false,
+        "reasoning_effort": "none"
+       },
+       "request_msg_chars": [
+        {
+         "role": "system",
+         "chars": 1572
+        },
+        {
+         "role": "user",
+         "chars": 15933
+        }
+       ],
+       "ratelimit_headers": {},
+       "finish_reason": null,
+       "usage": null,
+       "executed_tools": null,
+       "reasoning_chars": 0,
+       "message_keys": [],
+       "body_keys": [
+        "error"
+       ],
+       "content_chars": 0,
+       "content_lines": 0,
+       "map_lines": 0,
+       "raw_content": "",
+       "error_body": "{\"error\": {\"message\": \"`reasoning_effort` is not supported with this model\", \"type\": \"invalid_request_error\"}}",
+       "compiler": {
+        "maps": 0,
+        "missing": 60,
+        "unknown": 0,
+        "duplicate": 0,
+        "rejected_by_reason": {}
+       }
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

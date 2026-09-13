@@ -66,6 +66,10 @@ LANES = [
     ("compile", ("compile_objects",), {"compile_objects"}),
     # DOCUMENT-PROFILE-V1: the profile stage wakes its own worker (and the embedder for the projection)
     ("doc_profile", ("doc_profile",), {"doc_profile", "sidecar_embedder", "qdrant"}),
+    # DOC-PARENT-MAP AUTO-MINT (RAG-PIPELINE-FINISH): an open doc_parent_map ticket wakes the pMAP stage
+    # worker (+ the embedder/qdrant its projection needs). Flag-gated: no ticket is minted while
+    # POLYMATH_DOC_PARENT_MAP_ENABLED is off, so this lane is simply never demanded then.
+    ("doc_parent_map", ("doc_parent_map",), {"doc_parent_map", "sidecar_embedder", "qdrant"}),
 ]
 
 #: Grace before a demand-resident slot is parked after demand ends.
@@ -167,6 +171,21 @@ def desired_slots(conn, known_slots: set[str]) -> tuple[set[str], dict]:
                 n_dp = _open_work(conn, ("doc_profile",))
                 extra = [f"doc_profile{i}"
                          for i in range(2, min(int(n_dp), 6) + 1)]
+                _last_demand.update({s: now for s in extra})
+                slots = set(slots) | set(extra)
+            if lane == "doc_parent_map":
+                # PMAP-SCALE-OUT-V1 (2026-09-11, MEASURED on the cinema backfill):
+                # one pMAP slot ran at ~6% of provider capacity — 40 dispatches in
+                # ~70 minutes against 5 lanes x 2 rpm = 10/min available — because a
+                # worker maps ONE DOCUMENT at a time and pays skeleton-build, batch
+                # planning and projection-embed serially between dispatches. The
+                # constraint is the worker, not the pool. One worker per open
+                # doc_parent_map ticket, capped at FOUR: tickets are leased per
+                # document so there is no double-mapping, and four concurrent
+                # documents still fit inside the lane budget.
+                n_pm = _open_work(conn, ("doc_parent_map",))
+                extra = [f"doc_parent_map{i}"
+                         for i in range(2, min(int(n_pm), 4) + 1)]
                 _last_demand.update({s: now for s in extra})
                 slots = set(slots) | set(extra)
             if lane == "summary" and int(n) >= 2:

@@ -44,7 +44,7 @@ def _parents():
     return body
 
 
-def _all_lines(skels, is_combined=False):
+def _all_lines(skels, is_combined=False, grounding=None):
     return "\n".join(f"MAP|{s.alias}|routing signature for {s.alias}|hook{i};weight;impact"
                      for i, s in enumerate(skels))
 
@@ -54,7 +54,7 @@ class _PartialInfer:
     def __init__(self):
         self.calls = 0
 
-    def __call__(self, skels, is_combined=False):
+    def __call__(self, skels, is_combined=False, grounding=None):
         self.calls += 1
         drop = {skels[-1].alias} if self.calls == 1 else set()
         return "\n".join(f"MAP|{s.alias}|sig {s.alias}|a;b;c" for s in skels if s.alias not in drop)
@@ -64,7 +64,7 @@ class _CountingInfer:
     def __init__(self):
         self.seen: list[str] = []
 
-    def __call__(self, skels, is_combined=False):
+    def __call__(self, skels, is_combined=False, grounding=None):
         self.seen.extend(s.alias for s in skels)
         return _all_lines(skels)
 
@@ -94,6 +94,25 @@ def _active_count(tx):
     with tx() as conn:
         return conn.execute("SELECT COUNT(*) FROM document_parent_maps WHERE doc_id=%s AND active",
                             (DOC,)).fetchone()[0]
+
+
+def test_60_parent_multibatch_persistence_and_idempotent_restart(tx):
+    """RAG-PIPELINE-FINISH Phase 16: a 60-parent doc under the compound-mini cap (15)
+    plans into FOUR batches and the durable worker persists all 60 across them; a second
+    run re-infers nothing (idempotent) and the active map set is unchanged."""
+    parents = [_parent(i, f"Section {i} on mechanism ZZ{i} in the adaptive control framework and its "
+                          f"downstream stability effects, identifier ID{i:04d}.") for i in range(60)]
+    out = run_document_mapping(tx, run_id="run-s9", doc_id=DOC, corpus_id=CORPUS,
+                               parents=parents, infer=_all_lines, reliability_cap=15)
+    assert out.eligible_parents == 60 and out.parents_mapped == 60 and not out.unresolved_parent_ids
+    assert out.complete and out.batches_total == 4 and out.batches_done == 4 and out.batches_partial == 0
+    assert _active_count(tx) == 60
+    # idempotent restart: nothing re-inferred, active set byte-identical
+    counting = _CountingInfer()
+    out2 = run_document_mapping(tx, run_id="run-s9", doc_id=DOC, corpus_id=CORPUS,
+                                parents=parents, infer=counting, reliability_cap=15)
+    assert out2.complete and out2.parents_newly_mapped == 0 and counting.seen == []
+    assert _active_count(tx) == 60
 
 
 def test_full_mapping(tx):
@@ -154,6 +173,70 @@ def test_persist_supersede_keeps_one_active(tx):
     assert total == 2                                # the superseded row is retained, not deleted
 
 
+class _EmptyInfer:
+    """A dispatched 2xx that returned nothing (compound-mini's big-batch flake)."""
+    def __call__(self, skels, is_combined=False, grounding=None):
+        return ""
+
+
+class _RefusingInfer:
+    """A LOCAL limiter refusal: zero HTTP, a named gate — the dominant class in
+    the disputed cinema cascade."""
+    def __call__(self, skels, is_combined=False, grounding=None):
+        from workers.doc_parent_map_worker import MapInferError
+        raise MapInferError("LIMITER_REFUSED", reason="FAMILY_GATE", dispatched=False)
+
+
+def test_empty_completion_is_visible_and_marked(tx):
+    # GROQ-MAP-CONTROL-PLANE-REPAIR-V1 Phase 10: an empty 2xx is a distinct,
+    # durable class — not silently a NULL-last_error partial.
+    out = run_document_mapping(tx, run_id="run-s9", doc_id=DOC, corpus_id=CORPUS,
+                               parents=_parents(), infer=_EmptyInfer(), max_attempts=1)
+    assert not out.complete and out.parents_mapped == 0
+    assert out.empty_completions >= 1 and out.http_dispatches >= 1
+    assert out.limiter_refusals == 0
+    with tx() as conn:
+        markers = conn.execute(
+            "SELECT DISTINCT last_error FROM document_parent_map_batches "
+            "WHERE doc_id=%s AND last_error IS NOT NULL", (DOC,)).fetchall()
+    # TERMINAL-STATE-V1 (D-1, 2026-09-11): the marker vocabulary changed from
+    # COMPILER_<class> to the six terminal states. An empty 2xx is PROVIDER_EMPTY —
+    # it COST a provider request, which is precisely what must not be confused with
+    # a LIMITER_REFUSED (0 HTTP).
+    assert any("PROVIDER_EMPTY" in (m[0] or "") for m in markers), markers
+
+
+def test_local_refusal_is_zero_dispatch_and_named(tx):
+    out = run_document_mapping(tx, run_id="run-s9", doc_id=DOC, corpus_id=CORPUS,
+                               parents=_parents(), infer=_RefusingInfer(), max_attempts=1)
+    assert not out.complete and out.parents_mapped == 0
+    assert out.limiter_refusals >= 1
+    assert out.http_dispatches == 0            # LOCAL refusal: nothing left the box
+    assert "FAMILY_GATE" in out.refusal_reasons
+    assert out.errors                          # surfaced, never hidden
+
+
+def test_local_refusal_does_not_burn_retries(tx):
+    # GROQ-MAP-CONTROL-PLANE-REPAIR-V1 Phase 11: max_attempts=3, but a LOCAL
+    # refusal defers instead of spinning three attempts on the same batch — the
+    # exact waste behind the disputed cascade (692 batches at attempt_count=15).
+    out = run_document_mapping(tx, run_id="run-s9", doc_id=DOC, corpus_id=CORPUS,
+                               parents=_parents(), infer=_RefusingInfer(), max_attempts=3)
+    assert out.batches_total >= 1
+    assert out.attempts_used == out.batches_total   # ONE attempt per batch, not three
+    assert out.limiter_refusals == out.batches_total
+    assert out.http_dispatches == 0
+
+
+def test_partial_still_repairs_under_retry_policy(tx):
+    # PARTIAL is the one class that still earns a retry — the productive §18.4
+    # repair loop re-infers only the missing aliases.
+    infer = _PartialInfer()
+    out = run_document_mapping(tx, run_id="run-s9", doc_id=DOC, corpus_id=CORPUS,
+                               parents=_parents(), infer=infer, max_attempts=3)
+    assert out.complete and out.parents_mapped == 6 and infer.calls == 2
+
+
 def test_claim_lease_recovery(tx):
     import datetime as dt
     manifest = build_parent_skeletons(_parents())
@@ -171,3 +254,38 @@ def test_claim_lease_recovery(tx):
     later = t0 + dt.timedelta(seconds=600)
     with tx() as conn:
         assert claim_batch(conn, batch_id=bid, owner="w3", now=later, lease_seconds=300) is True  # expired -> reclaim
+
+
+class _LabelledInfer:
+    """CLOUDFLARE-PMAP-V1: an infer boundary over a multi-provider pool exposes the lane that
+    served each call; the worker must persist THAT provider/model per batch."""
+    def __init__(self):
+        self.last_provider = "cloudflare"
+        self.last_model = "@cf/qwen/qwen3-30b-a3b-fp8"
+
+    def __call__(self, skels, is_combined=False, grounding=None):
+        return _all_lines(skels)
+
+
+def test_batch_provenance_follows_the_infer_lane_not_the_run_label(tx):
+    out = run_document_mapping(tx, run_id="run-s9", doc_id=DOC, corpus_id=CORPUS,
+                               parents=_parents(), infer=_LabelledInfer(),
+                               provider="groq", model="groq/compound-mini")   # run-level FALLBACK labels
+    assert out.complete and out.parents_mapped == 6
+    with tx() as conn:
+        maps = conn.execute("SELECT DISTINCT provider, model FROM document_parent_maps WHERE doc_id=%s AND active",
+                            (DOC,)).fetchall()
+        batches = conn.execute("SELECT DISTINCT provider, model FROM document_parent_map_batches WHERE doc_id=%s",
+                               (DOC,)).fetchall()
+    assert maps == [("cloudflare", "@cf/qwen/qwen3-30b-a3b-fp8")], maps
+    assert batches == [("cloudflare", "@cf/qwen/qwen3-30b-a3b-fp8")], batches
+
+
+def test_batch_provenance_falls_back_to_run_labels_for_a_plain_infer(tx):
+    out = run_document_mapping(tx, run_id="run-s9", doc_id=DOC, corpus_id=CORPUS,
+                               parents=_parents(), infer=_all_lines, provider="groq", model="groq/compound-mini")
+    assert out.complete
+    with tx() as conn:
+        maps = conn.execute("SELECT DISTINCT provider, model FROM document_parent_maps WHERE doc_id=%s AND active",
+                            (DOC,)).fetchall()
+    assert maps == [("groq", "groq/compound-mini")], maps

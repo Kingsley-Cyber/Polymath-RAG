@@ -1,0 +1,927 @@
+{
+ "contract": "pmap-forensic-batch-qualification-v1",
+ "sizes": [
+  15,
+  20,
+  30,
+  40,
+  50,
+  60
+ ],
+ "arms": {
+  "A_prod_tools_default": {
+   "doc": "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+   "inject": {},
+   "rows": [
+    {
+     "N": 15,
+     "wall_s": 5.4,
+     "requests": 1,
+     "newly_mapped": 15,
+     "unresolved": 0,
+     "http_dispatches": 1,
+     "http_429": 0,
+     "empty": 0,
+     "refused": 0,
+     "compiler_complete": 1,
+     "compiler_partial": 0,
+     "compiler_invalid": 0,
+     "persisted_readback": 15,
+     "lanes": {
+      "map_groq2": 1
+     },
+     "captured": [
+      {
+       "url": "https://api.groq.com/openai/v1/chat/completions",
+       "status": 200,
+       "latency_s": 5.25,
+       "request": {
+        "model": "groq/compound-mini",
+        "temperature": 0.0,
+        "max_tokens": 2400,
+        "stream": false
+       },
+       "request_msg_chars": [
+        {
+         "role": "system",
+         "chars": 1572
+        },
+        {
+         "role": "user",
+         "chars": 4723
+        }
+       ],
+       "ratelimit_headers": {
+        "x-ratelimit-limit-requests": "250",
+        "x-ratelimit-limit-tokens": "70000",
+        "x-ratelimit-remaining-requests": "220",
+        "x-ratelimit-remaining-tokens": "66170",
+        "x-ratelimit-reset-requests": "2h52m48s",
+        "x-ratelimit-reset-tokens": "3.282s"
+       },
+       "finish_reason": "stop",
+       "usage": {
+        "queue_time": 0.104103,
+        "prompt_tokens": 4041,
+        "prompt_time": 0.233859,
+        "completion_tokens": 2051,
+        "completion_time": 4.654571,
+        "total_tokens": 6092,
+        "total_time": 4.88843
+       },
+       "executed_tools": null,
+       "reasoning_chars": 0,
+       "message_keys": [
+        "content",
+        "reasoning",
+        "role"
+       ],
+       "body_keys": [
+        "choices",
+        "created",
+        "id",
+        "model",
+        "object",
+        "service_tier",
+        "usage",
+        "usage_breakdown",
+        "x_groq"
+       ],
+       "content_chars": 1617,
+       "content_lines": 15,
+       "map_lines": 15,
+       "raw_content": "MAP|P0001|Dedication note encouraging creators to share work despite public judgment|dedication;creators;public judgment\nMAP|P0002|Guidelines on what content can be shared from time on set|sharing;set;beginners\nMAP|P0003|Instruction on right cross punch technique emphasizing elbow placement for safety|strikes;right cross;elbow\nMAP|P0004|Stage combat avoid technique described using CRAP cue-reaction-action principle for performers|avoids;CRAP;stage combat\nMAP|P0005|Case study of stunt fall focusing on flat back technique|falls;flat back;stunt\nMAP|P0006|Techniques for blocking, parrying, and deflecting using rigid weapons in combat|blocks;parries;weapons\nMAP|P0007|Explains breath and sound as expressive tools for conveying emotions|breath;sound;acting\nMAP|P0008|Brief statement about possessing motivation and protecting it from others|motivation;protect;others\nMAP|P0009|Character description of Demaris interacting with Cash in source material|Demaris;Cash;character\nMAP|P0010|Example of camera tilt referencing 1960s Batman TV wall-climbing scene|camera tilt;Batman;TV\nMAP|P0011|Discussion of camera motion and composition choices specific to shooting fights|camera motion;composition;fights\nMAP|P0012|Guidelines advising against unnecessary pan, tilt, roll, jib movements in filming|motion;pan;tilt\nMAP|P0013|Advice to keep kiss action simple and straightforward in editing|kiss;simple;editing\nMAP|P0014|Question about whether non-contact hits are effective for selling scenes|non-contact;hits;selling\nMAP|P0015|Definition of High Frame Rate video mode exceeding standard 24/30 fps|HFR;high frame rate;fps",
+       "compiler": {
+        "maps": 15,
+        "missing": 0,
+        "unknown": 0,
+        "duplicate": 0,
+        "rejected_by_reason": {}
+       }
+      }
+     ]
+    },
+    {
+     "N": 20,
+     "wall_s": 6.8,
+     "requests": 1,
+     "newly_mapped": 19,
+     "unresolved": 0,
+     "http_dispatches": 1,
+     "http_429": 0,
+     "empty": 0,
+     "refused": 0,
+     "compiler_complete": 1,
+     "compiler_partial": 0,
+     "compiler_invalid": 0,
+     "persisted_readback": 19,
+     "lanes": {
+      "map_groq2": 1
+     },
+     "captured": [
+      {
+       "url": "https://api.groq.com/openai/v1/chat/completions",
+       "status": 200,
+       "latency_s": 6.63,
+       "request": {
+        "model": "groq/compound-mini",
+        "temperature": 0.0,
+        "max_tokens": 2400,
+        "stream": false
+       },
+       "request_msg_chars": [
+        {
+         "role": "system",
+         "chars": 1572
+        },
+        {
+         "role": "user",
+         "chars": 6396
+        }
+       ],
+       "ratelimit_headers": {
+        "x-ratelimit-limit-requests": "250",
+        "x-ratelimit-limit-tokens": "70000",
+        "x-ratelimit-remaining-requests": "219",
+        "x-ratelimit-remaining-tokens": "65768",
+        "x-ratelimit-reset-requests": "2h58m33.6s",
+        "x-ratelimit-reset-tokens": "3.627s"
+       },
+       "finish_reason": "stop",
+       "usage": {
+        "queue_time": 0.451194,
+        "prompt_tokens": 4898,
+        "prompt_time": 0.225964,
+        "completion_tokens": 2723,
+        "completion_time": 5.898512,
+        "total_tokens": 7621,
+        "total_time": 6.124476
+       },
+       "executed_tools": null,
+       "reasoning_chars": 0,
+       "message_keys": [
+        "content",
+        "reasoning",
+        "role"
+       ],
+       "body_keys": [
+        "choices",
+        "created",
+        "id",
+        "model",
+        "object",
+        "service_tier",
+        "usage",
+        "usage_breakdown",
+        "x_groq"
+       ],
+       "content_chars": 2565,
+       "content_lines": 19,
+       "map_lines": 19,
+       "raw_content": "MAP|P0001|List of key on\u2011set personnel including designers, directors, ADs, camera and sound crew|director;production assistants;camera crew\nMAP|P0002|Explanation of lengthy film end credits and prevalence of uncredited crew on IMDB|end credits;uncredited;IMDB\nMAP|P0003|Guidance on creating breakable set pieces for visual destruction in pre\u2011production|breakable props;visual destruction;preproduction\nMAP|P0004|Description of soft combat pads that cushion blows and limit attack travel|soft pads;cushion blows;attack deceleration\nMAP|P0005|Technique for bounce punches in over\u2011the\u2011shoulder shots, aiming just off\u2011camera|bounce punch;OTS shot;camera side\nMAP|P0006|Explanation of swipe strike follow\u2011through point C to illustrate attack line|swipe strike;follow\u2011through;attack line\nMAP|P0007|Discussion of down\u2011beat rhythms in falls, emphasizing timing of upward motion|down\u2011beat rhythms;falls;timing\nMAP|P0008|Overview of augmented fighting categories compensating for lack of natural weapons|augmented fighting;weapon categories;natural weapons\nMAP|P0009|Brief note on firearm choreography techniques, referencing a more detailed separate guide|firearm choreography;techniques;separate guide\nMAP|P0010|Explanation of how all visible performance reduces to specific tension patterns|tension patterns;acting;performance\nMAP|P0011|Criteria for hiring fight coordinators, emphasizing prior experience and source material familiarity|fight coordinator;experience;hiring criteria\nMAP|P0012|Details on using air rams together with air mortars for explosion effects|air rams;air mortars;explosion effects\nMAP|P0013|Safety guidelines for firearm choreography, prohibiting live blanks in staged combat|firearm safety;choreography;live blanks\nMAP|P0014|List of camera system components: sensor boxes, batteries, lenses, monitors, rigs and follow\u2011focus|camera components;sensor boxes;follow\u2011focus\nMAP|P0015|Importance of high shutter speed for crisp green\u2011screen edges and clean chroma keying|shutter speed;green screen;chroma key\nMAP|P0016|Argument that effective planning and coverage matter more than gear in filmmaking|planning;coverage;filmmaking philosophy\nMAP|P0017|Description of ultra\u2011wide shots used to establish expansive fight environments|ultra\u2011wide;establishing shot;fight environment\nMAP|P0018|Advice to add extra padding footage at start and end for editing flexibility|padding footage;editing;extra clips\nMAP|P0019|Overview of action cheats and enhancements used to mask poor performance or for artistic effect|action cheats;enhancements;performance masking",
+       "compiler": {
+        "maps": 19,
+        "missing": 0,
+        "unknown": 0,
+        "duplicate": 0,
+        "rejected_by_reason": {}
+       }
+      }
+     ]
+    },
+    {
+     "N": 30,
+     "wall_s": 10.0,
+     "requests": 1,
+     "newly_mapped": 0,
+     "unresolved": 30,
+     "http_dispatches": 1,
+     "http_429": 1,
+     "empty": 0,
+     "refused": 0,
+     "compiler_complete": 0,
+     "compiler_partial": 0,
+     "compiler_invalid": 0,
+     "persisted_readback": 0,
+     "lanes": {
+      "map_groq2": 1
+     },
+     "captured": [
+      {
+       "url": "https://api.groq.com/openai/v1/chat/completions",
+       "status": 429,
+       "latency_s": 0.17,
+       "request": {
+        "model": "groq/compound-mini",
+        "temperature": 0.0,
+        "max_tokens": 2400,
+        "stream": false
+       },
+       "request_msg_chars": [
+        {
+         "role": "system",
+         "chars": 1572
+        },
+        {
+         "role": "user",
+         "chars": 9699
+        }
+       ],
+       "ratelimit_headers": {
+        "x-ratelimit-limit-requests": "250",
+        "x-ratelimit-limit-tokens": "70000",
+        "x-ratelimit-remaining-requests": "218",
+        "x-ratelimit-remaining-tokens": "65009",
+        "x-ratelimit-reset-requests": "3h4m19.2s",
+        "x-ratelimit-reset-tokens": "4.278s"
+       },
+       "finish_reason": null,
+       "usage": null,
+       "executed_tools": null,
+       "reasoning_chars": 0,
+       "message_keys": [],
+       "body_keys": [
+        "error"
+       ],
+       "content_chars": 0,
+       "content_lines": 0,
+       "map_lines": 0,
+       "raw_content": "",
+       "error_body": "{\"error\": {\"message\": \"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kwqj97cgfd6bkhqef4anvvpn` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99497, Requested 3547. Please try again in 43m50.016s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\", \"type\": \"compound\", \"code\": \"rate_limit_exceeded\"}}",
+       "compiler": {
+        "maps": 0,
+        "missing": 30,
+        "unknown": 0,
+        "duplicate": 0,
+        "rejected_by_reason": {}
+       }
+      }
+     ]
+    },
+    {
+     "N": 40,
+     "wall_s": 26.0,
+     "requests": 1,
+     "newly_mapped": 0,
+     "unresolved": 40,
+     "http_dispatches": 1,
+     "http_429": 1,
+     "empty": 0,
+     "refused": 0,
+     "compiler_complete": 0,
+     "compiler_partial": 0,
+     "compiler_invalid": 0,
+     "persisted_readback": 0,
+     "lanes": {
+      "map_groq2": 1
+     },
+     "captured": [
+      {
+       "url": "https://api.groq.com/openai/v1/chat/completions",
+       "status": 429,
+       "latency_s": 0.26,
+       "request": {
+        "model": "groq/compound-mini",
+        "temperature": 0.0,
+        "max_tokens": 2400,
+        "stream": false
+       },
+       "request_msg_chars": [
+        {
+         "role": "system",
+         "chars": 1572
+        },
+        {
+         "role": "user",
+         "chars": 13731
+        }
+       ],
+       "ratelimit_headers": {
+        "x-ratelimit-limit-requests": "250",
+        "x-ratelimit-limit-tokens": "70000",
+        "x-ratelimit-remaining-requests": "217",
+        "x-ratelimit-remaining-tokens": "63710",
+        "x-ratelimit-reset-requests": "3h10m4.8s",
+        "x-ratelimit-reset-tokens": "5.391s"
+       },
+       "finish_reason": null,
+       "usage": null,
+       "executed_tools": null,
+       "reasoning_chars": 0,
+       "message_keys": [],
+       "body_keys": [
+        "error"
+       ],
+       "content_chars": 0,
+       "content_lines": 0,
+       "map_lines": 0,
+       "raw_content": "",
+       "error_body": "{\"error\": {\"message\": \"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kwqj97cgfd6bkhqef4anvvpn` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99462, Requested 4988. Please try again in 1h4m4.799999999s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\", \"type\": \"compound\", \"code\": \"rate_limit_exceeded\"}}",
+       "compiler": {
+        "maps": 0,
+        "missing": 40,
+        "unknown": 0,
+        "duplicate": 0,
+        "rejected_by_reason": {}
+       }
+      }
+     ]
+    },
+    {
+     "N": 50,
+     "wall_s": 25.9,
+     "requests": 1,
+     "newly_mapped": 0,
+     "unresolved": 50,
+     "http_dispatches": 1,
+     "http_429": 1,
+     "empty": 0,
+     "refused": 0,
+     "compiler_complete": 0,
+     "compiler_partial": 0,
+     "compiler_invalid": 0,
+     "persisted_readback": 0,
+     "lanes": {
+      "map_groq2": 1
+     },
+     "captured": [
+      {
+       "url": "https://api.groq.com/openai/v1/chat/completions",
+       "status": 429,
+       "latency_s": 0.2,
+       "request": {
+        "model": "groq/compound-mini",
+        "temperature": 0.0,
+        "max_tokens": 2400,
+        "stream": false
+       },
+       "request_msg_chars": [
+        {
+         "role": "system",
+         "chars": 1572
+        },
+        {
+         "role": "user",
+         "chars": 16985
+        }
+       ],
+       "ratelimit_headers": {
+        "x-ratelimit-limit-requests": "250",
+        "x-ratelimit-limit-tokens": "70000",
+        "x-ratelimit-remaining-requests": "216",
+        "x-ratelimit-remaining-tokens": "62885",
+        "x-ratelimit-reset-requests": "3h15m50.4s",
+        "x-ratelimit-reset-tokens": "6.098s"
+       },
+       "finish_reason": null,
+       "usage": null,
+       "executed_tools": null,
+       "reasoning_chars": 0,
+       "message_keys": [],
+       "body_keys": [
+        "error"
+       ],
+       "content_chars": 0,
+       "content_lines": 0,
+       "map_lines": 0,
+       "raw_content": "",
+       "error_body": "{\"error\": {\"message\": \"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kwqj97cgfd6bkhqef4anvvpn` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99427, Requested 6521. Please try again in 1h25m39.072s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\", \"type\": \"compound\", \"code\": \"rate_limit_exceeded\"}}",
+       "compiler": {
+        "maps": 0,
+        "missing": 50,
+        "unknown": 0,
+        "duplicate": 0,
+        "rejected_by_reason": {}
+       }
+      }
+     ]
+    },
+    {
+     "N": 60,
+     "wall_s": 26.1,
+     "requests": 1,
+     "newly_mapped": 0,
+     "unresolved": 60,
+     "http_dispatches": 1,
+     "http_429": 1,
+     "empty": 0,
+     "refused": 0,
+     "compiler_complete": 0,
+     "compiler_partial": 0,
+     "compiler_invalid": 0,
+     "persisted_readback": 0,
+     "lanes": {
+      "map_groq2": 1
+     },
+     "captured": [
+      {
+       "url": "https://api.groq.com/openai/v1/chat/completions",
+       "status": 429,
+       "latency_s": 0.41,
+       "request": {
+        "model": "groq/compound-mini",
+        "temperature": 0.0,
+        "max_tokens": 2400,
+        "stream": false
+       },
+       "request_msg_chars": [
+        {
+         "role": "system",
+         "chars": 1572
+        },
+        {
+         "role": "user",
+         "chars": 19565
+        }
+       ],
+       "ratelimit_headers": {
+        "x-ratelimit-limit-requests": "250",
+        "x-ratelimit-limit-tokens": "70000",
+        "x-ratelimit-remaining-requests": "215",
+        "x-ratelimit-remaining-tokens": "62497",
+        "x-ratelimit-reset-requests": "3h21m36s",
+        "x-ratelimit-reset-tokens": "6.431s"
+       },
+       "finish_reason": null,
+       "usage": null,
+       "executed_tools": null,
+       "reasoning_chars": 0,
+       "message_keys": [],
+       "body_keys": [
+        "error"
+       ],
+       "content_chars": 0,
+       "content_lines": 0,
+       "map_lines": 0,
+       "raw_content": "",
+       "error_body": "{\"error\": {\"message\": \"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kwqj97cgfd6bkhqef4anvvpn` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99393, Requested 6658. Please try again in 1h27m8.064s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\", \"type\": \"compound\", \"code\": \"rate_limit_exceeded\"}}",
+       "compiler": {
+        "maps": 0,
+        "missing": 60,
+        "unknown": 0,
+        "duplicate": 0,
+        "rejected_by_reason": {}
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "B_tools_disabled": {
+   "doc": "doc_554b59358b768884ec87225e887b895a66b14f607f3bd96f2c0a2364ece2a23e",
+   "inject": {
+    "compound_custom": {
+     "tools": {
+      "enabled_tools": []
+     }
+    }
+   },
+   "rows": [
+    {
+     "N": 15,
+     "wall_s": 25.7,
+     "requests": 1,
+     "newly_mapped": 0,
+     "unresolved": 15,
+     "http_dispatches": 1,
+     "http_429": 1,
+     "empty": 0,
+     "refused": 0,
+     "compiler_complete": 0,
+     "compiler_partial": 0,
+     "compiler_invalid": 0,
+     "persisted_readback": 0,
+     "lanes": {
+      "map_groq2": 1
+     },
+     "captured": [
+      {
+       "url": "https://api.groq.com/openai/v1/chat/completions",
+       "status": 429,
+       "latency_s": 0.16,
+       "request": {
+        "model": "groq/compound-mini",
+        "temperature": 0.0,
+        "max_tokens": 2400,
+        "stream": false,
+        "compound_custom": {
+         "tools": {
+          "enabled_tools": []
+         }
+        }
+       },
+       "request_msg_chars": [
+        {
+         "role": "system",
+         "chars": 1572
+        },
+        {
+         "role": "user",
+         "chars": 4137
+        }
+       ],
+       "ratelimit_headers": {
+        "x-ratelimit-limit-requests": "250",
+        "x-ratelimit-limit-tokens": "70000",
+        "x-ratelimit-remaining-requests": "214",
+        "x-ratelimit-remaining-tokens": "66155",
+        "x-ratelimit-reset-requests": "3h27m21.599s",
+        "x-ratelimit-reset-tokens": "3.295s"
+       },
+       "finish_reason": null,
+       "usage": null,
+       "executed_tools": null,
+       "reasoning_chars": 0,
+       "message_keys": [],
+       "body_keys": [
+        "error"
+       ],
+       "content_chars": 0,
+       "content_lines": 0,
+       "map_lines": 0,
+       "raw_content": "",
+       "error_body": "{\"error\": {\"message\": \"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kwqj97cgfd6bkhqef4anvvpn` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99358, Requested 2026. Please try again in 19m55.776s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\", \"type\": \"compound\", \"code\": \"rate_limit_exceeded\"}}",
+       "compiler": {
+        "maps": 0,
+        "missing": 15,
+        "unknown": 0,
+        "duplicate": 0,
+        "rejected_by_reason": {}
+       }
+      }
+     ]
+    },
+    {
+     "N": 20,
+     "wall_s": 25.9,
+     "requests": 1,
+     "newly_mapped": 0,
+     "unresolved": 20,
+     "http_dispatches": 1,
+     "http_429": 1,
+     "empty": 0,
+     "refused": 0,
+     "compiler_complete": 0,
+     "compiler_partial": 0,
+     "compiler_invalid": 0,
+     "persisted_readback": 0,
+     "lanes": {
+      "map_groq2": 1
+     },
+     "captured": [
+      {
+       "url": "https://api.groq.com/openai/v1/chat/completions",
+       "status": 429,
+       "latency_s": 0.16,
+       "request": {
+        "model": "groq/compound-mini",
+        "temperature": 0.0,
+        "max_tokens": 2400,
+        "stream": false,
+        "compound_custom": {
+         "tools": {
+          "enabled_tools": []
+         }
+        }
+       },
+       "request_msg_chars": [
+        {
+         "role": "system",
+         "chars": 1572
+        },
+        {
+         "role": "user",
+         "chars": 5148
+        }
+       ],
+       "ratelimit_headers": {
+        "x-ratelimit-limit-requests": "250",
+        "x-ratelimit-limit-tokens": "70000",
+        "x-ratelimit-remaining-requests": "213",
+        "x-ratelimit-remaining-tokens": "66250",
+        "x-ratelimit-reset-requests": "3h33m7.199s",
+        "x-ratelimit-reset-tokens": "3.214s"
+       },
+       "finish_reason": null,
+       "usage": null,
+       "executed_tools": null,
+       "reasoning_chars": 0,
+       "message_keys": [],
+       "body_keys": [
+        "error"
+       ],
+       "content_chars": 0,
+       "content_lines": 0,
+       "map_lines": 0,
+       "raw_content": "",
+       "error_body": "{\"error\": {\"message\": \"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kwqj97cgfd6bkhqef4anvvpn` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99324, Requested 2369. Please try again in 24m22.752s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\", \"type\": \"compound\", \"code\": \"rate_limit_exceeded\"}}",
+       "compiler": {
+        "maps": 0,
+        "missing": 20,
+        "unknown": 0,
+        "duplicate": 0,
+        "rejected_by_reason": {}
+       }
+      }
+     ]
+    },
+    {
+     "N": 30,
+     "wall_s": 26.0,
+     "requests": 1,
+     "newly_mapped": 0,
+     "unresolved": 30,
+     "http_dispatches": 1,
+     "http_429": 1,
+     "empty": 0,
+     "refused": 0,
+     "compiler_complete": 0,
+     "compiler_partial": 0,
+     "compiler_invalid": 0,
+     "persisted_readback": 0,
+     "lanes": {
+      "map_groq2": 1
+     },
+     "captured": [
+      {
+       "url": "https://api.groq.com/openai/v1/chat/completions",
+       "status": 429,
+       "latency_s": 0.16,
+       "request": {
+        "model": "groq/compound-mini",
+        "temperature": 0.0,
+        "max_tokens": 2400,
+        "stream": false,
+        "compound_custom": {
+         "tools": {
+          "enabled_tools": []
+         }
+        }
+       },
+       "request_msg_chars": [
+        {
+         "role": "system",
+         "chars": 1572
+        },
+        {
+         "role": "user",
+         "chars": 7997
+        }
+       ],
+       "ratelimit_headers": {
+        "x-ratelimit-limit-requests": "250",
+        "x-ratelimit-limit-tokens": "70000",
+        "x-ratelimit-remaining-requests": "212",
+        "x-ratelimit-remaining-tokens": "65188",
+        "x-ratelimit-reset-requests": "3h38m52.8s",
+        "x-ratelimit-reset-tokens": "4.124s"
+       },
+       "finish_reason": null,
+       "usage": null,
+       "executed_tools": null,
+       "reasoning_chars": 0,
+       "message_keys": [],
+       "body_keys": [
+        "error"
+       ],
+       "content_chars": 0,
+       "content_lines": 0,
+       "map_lines": 0,
+       "raw_content": "",
+       "error_body": "{\"error\": {\"message\": \"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kwqj97cgfd6bkhqef4anvvpn` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99289, Requested 3282. Please try again in 37m1.344s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\", \"type\": \"compound\", \"code\": \"rate_limit_exceeded\"}}",
+       "compiler": {
+        "maps": 0,
+        "missing": 30,
+        "unknown": 0,
+        "duplicate": 0,
+        "rejected_by_reason": {}
+       }
+      }
+     ]
+    },
+    {
+     "N": 40,
+     "wall_s": 25.9,
+     "requests": 1,
+     "newly_mapped": 0,
+     "unresolved": 40,
+     "http_dispatches": 1,
+     "http_429": 1,
+     "empty": 0,
+     "refused": 0,
+     "compiler_complete": 0,
+     "compiler_partial": 0,
+     "compiler_invalid": 0,
+     "persisted_readback": 0,
+     "lanes": {
+      "map_groq2": 1
+     },
+     "captured": [
+      {
+       "url": "https://api.groq.com/openai/v1/chat/completions",
+       "status": 429,
+       "latency_s": 0.16,
+       "request": {
+        "model": "groq/compound-mini",
+        "temperature": 0.0,
+        "max_tokens": 2400,
+        "stream": false,
+        "compound_custom": {
+         "tools": {
+          "enabled_tools": []
+         }
+        }
+       },
+       "request_msg_chars": [
+        {
+         "role": "system",
+         "chars": 1572
+        },
+        {
+         "role": "user",
+         "chars": 10234
+        }
+       ],
+       "ratelimit_headers": {
+        "x-ratelimit-limit-requests": "250",
+        "x-ratelimit-limit-tokens": "70000",
+        "x-ratelimit-remaining-requests": "211",
+        "x-ratelimit-remaining-tokens": "65265",
+        "x-ratelimit-reset-requests": "3h44m38.4s",
+        "x-ratelimit-reset-tokens": "4.058s"
+       },
+       "finish_reason": null,
+       "usage": null,
+       "executed_tools": null,
+       "reasoning_chars": 0,
+       "message_keys": [],
+       "body_keys": [
+        "error"
+       ],
+       "content_chars": 0,
+       "content_lines": 0,
+       "map_lines": 0,
+       "raw_content": "",
+       "error_body": "{\"error\": {\"message\": \"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kwqj97cgfd6bkhqef4anvvpn` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99254, Requested 3676. Please try again in 42m11.52s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\", \"type\": \"compound\", \"code\": \"rate_limit_exceeded\"}}",
+       "compiler": {
+        "maps": 0,
+        "missing": 40,
+        "unknown": 0,
+        "duplicate": 0,
+        "rejected_by_reason": {}
+       }
+      }
+     ]
+    },
+    {
+     "N": 50,
+     "wall_s": 26.4,
+     "requests": 1,
+     "newly_mapped": 0,
+     "unresolved": 50,
+     "http_dispatches": 1,
+     "http_429": 1,
+     "empty": 0,
+     "refused": 0,
+     "compiler_complete": 0,
+     "compiler_partial": 0,
+     "compiler_invalid": 0,
+     "persisted_readback": 0,
+     "lanes": {
+      "map_groq2": 1
+     },
+     "captured": [
+      {
+       "url": "https://api.groq.com/openai/v1/chat/completions",
+       "status": 429,
+       "latency_s": 0.17,
+       "request": {
+        "model": "groq/compound-mini",
+        "temperature": 0.0,
+        "max_tokens": 2400,
+        "stream": false,
+        "compound_custom": {
+         "tools": {
+          "enabled_tools": []
+         }
+        }
+       },
+       "request_msg_chars": [
+        {
+         "role": "system",
+         "chars": 1572
+        },
+        {
+         "role": "user",
+         "chars": 13171
+        }
+       ],
+       "ratelimit_headers": {
+        "x-ratelimit-limit-requests": "250",
+        "x-ratelimit-limit-tokens": "70000",
+        "x-ratelimit-remaining-requests": "210",
+        "x-ratelimit-remaining-tokens": "63881",
+        "x-ratelimit-reset-requests": "3h50m24s",
+        "x-ratelimit-reset-tokens": "5.244s"
+       },
+       "finish_reason": null,
+       "usage": null,
+       "executed_tools": null,
+       "reasoning_chars": 0,
+       "message_keys": [],
+       "body_keys": [
+        "error"
+       ],
+       "content_chars": 0,
+       "content_lines": 0,
+       "map_lines": 0,
+       "raw_content": "",
+       "error_body": "{\"error\": {\"message\": \"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kwqj97cgfd6bkhqef4anvvpn` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99219, Requested 4531. Please try again in 54m0s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\", \"type\": \"compound\", \"code\": \"rate_limit_exceeded\"}}",
+       "compiler": {
+        "maps": 0,
+        "missing": 50,
+        "unknown": 0,
+        "duplicate": 0,
+        "rejected_by_reason": {}
+       }
+      }
+     ]
+    },
+    {
+     "N": 60,
+     "wall_s": 26.4,
+     "requests": 1,
+     "newly_mapped": 0,
+     "unresolved": 60,
+     "http_dispatches": 1,
+     "http_429": 1,
+     "empty": 0,
+     "refused": 0,
+     "compiler_complete": 0,
+     "compiler_partial": 0,
+     "compiler_invalid": 0,
+     "persisted_readback": 0,
+     "lanes": {
+      "map_groq2": 1
+     },
+     "captured": [
+      {
+       "url": "https://api.groq.com/openai/v1/chat/completions",
+       "status": 429,
+       "latency_s": 0.16,
+       "request": {
+        "model": "groq/compound-mini",
+        "temperature": 0.0,
+        "max_tokens": 2400,
+        "stream": false,
+        "compound_custom": {
+         "tools": {
+          "enabled_tools": []
+         }
+        }
+       },
+       "request_msg_chars": [
+        {
+         "role": "system",
+         "chars": 1572
+        },
+        {
+         "role": "user",
+         "chars": 15993
+        }
+       ],
+       "ratelimit_headers": {
+        "x-ratelimit-limit-requests": "250",
+        "x-ratelimit-limit-tokens": "70000",
+        "x-ratelimit-remaining-requests": "209",
+        "x-ratelimit-remaining-tokens": "64035",
+        "x-ratelimit-reset-requests": "3h56m9.6s",
+        "x-ratelimit-reset-tokens": "5.112s"
+       },
+       "finish_reason": null,
+       "usage": null,
+       "executed_tools": null,
+       "reasoning_chars": 0,
+       "message_keys": [],
+       "body_keys": [
+        "error"
+       ],
+       "content_chars": 0,
+       "content_lines": 0,
+       "map_lines": 0,
+       "raw_content": "",
+       "error_body": "{\"error\": {\"message\": \"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kwqj97cgfd6bkhqef4anvvpn` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99184, Requested 5205. Please try again in 1h3m12.096s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\", \"type\": \"compound\", \"code\": \"rate_limit_exceeded\"}}",
+       "compiler": {
+        "maps": 0,
+        "missing": 60,
+        "unknown": 0,
+        "duplicate": 0,
+        "rejected_by_reason": {}
+       }
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

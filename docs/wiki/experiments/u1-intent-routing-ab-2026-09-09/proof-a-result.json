@@ -1,0 +1,317 @@
+{
+  "corpus": "rag-canary",
+  "proof": "A-retrieval-primitive",
+  "generated": "2026-09-10T03:27:01Z",
+  "rows": [
+    {
+      "qid": "probe_59622",
+      "query": "What is the 59659-cycle baseline relationship for Method ZQX-59622?",
+      "intent": "EXACT",
+      "fact_code": "ZQX-59622",
+      "off": {
+        "latency_s": 0.69,
+        "union_ct": 54,
+        "lane_sizes": {
+          "section_summary": 24,
+          "entity_card": 8,
+          "hierarchical_children": 24,
+          "global_dense_child": 50,
+          "global_sparse_child": 40,
+          "dualread": 0,
+          "resolution_lift": 0,
+          "seealso_fanout": 0,
+          "graph_dest": 0,
+          "latent_rescue": 0,
+          "union": 54
+        },
+        "final_ct": 15,
+        "roles": {
+          "DIRECT": 15
+        },
+        "fact_in_final": true
+      },
+      "on": {
+        "latency_s": 0.72,
+        "union_ct": 55,
+        "lane_sizes": {
+          "section_summary": 24,
+          "entity_card": 8,
+          "hierarchical_children": 24,
+          "global_dense_child": 50,
+          "global_sparse_child": 40,
+          "dualread": 16,
+          "resolution_lift": 6,
+          "seealso_fanout": 0,
+          "graph_dest": 0,
+          "latent_rescue": 0,
+          "union": 55
+        },
+        "final_ct": 15,
+        "roles": {
+          "DIRECT": 15
+        },
+        "fact_in_final": true
+      },
+      "delta": {
+        "new_candidates": 1,
+        "lanes_activated": [
+          "SHADOW_DUALREAD / Profile\u2192Atom\u2192PMAP",
+          "RESOLUTION_LIFT"
+        ],
+        "final_changed": true,
+        "final_lost": 1,
+        "final_new": 1,
+        "regression": false
+      }
+    },
+    {
+      "qid": "probe_59213",
+      "query": "What is the 59250-cycle baseline relationship for Method ZQX-59213?",
+      "intent": "EXACT",
+      "fact_code": "ZQX-59213",
+      "off": {
+        "latency_s": 0.47,
+        "union_ct": 56,
+        "lane_sizes": {
+          "section_summary": 24,
+          "entity_card": 8,
+          "hierarchical_children": 24,
+          "global_dense_child": 50,
+          "global_sparse_child": 40,
+          "dualread": 0,
+          "resolution_lift": 0,
+          "seealso_fanout": 0,
+          "graph_dest": 0,
+          "latent_rescue": 0,
+          "union": 56
+        },
+        "final_ct": 15,
+        "roles": {
+          "DIRECT": 15
+        },
+        "fact_in_final": true
+      },
+      "on": {
+        "latency_s": 0.69,
+        "union_ct": 56,
+        "lane_sizes": {
+          "section_summary": 24,
+          "entity_card": 8,
+          "hierarchical_children": 24,
+          "global_dense_child": 50,
+          "global_sparse_child": 40,
+          "dualread": 16,
+          "resolution_lift": 6,
+          "seealso_fanout": 0,
+          "graph_dest": 0,
+          "latent_rescue": 0,
+          "union": 56
+        },
+        "final_ct": 15,
+        "roles": {
+          "DIRECT": 15
+        },
+        "fact_in_final": true
+      },
+      "delta": {
+        "new_candidates": 0,
+        "lanes_activated": [
+          "SHADOW_DUALREAD / Profile\u2192Atom\u2192PMAP",
+          "RESOLUTION_LIFT"
+        ],
+        "final_changed": true,
+        "final_lost": 2,
+        "final_new": 2,
+        "regression": false
+      }
+    },
+    {
+      "qid": "probe_59439",
+      "query": "What is the 59476-cycle baseline relationship for Method ZQX-59439?",
+      "intent": "EXACT",
+      "fact_code": "ZQX-59439",
+      "off": {
+        "latency_s": 0.47,
+        "union_ct": 57,
+        "lane_sizes": {
+          "section_summary": 24,
+          "entity_card": 8,
+          "hierarchical_children": 24,
+          "global_dense_child": 50,
+          "global_sparse_child": 40,
+          "dualread": 0,
+          "resolution_lift": 0,
+          "seealso_fanout": 0,
+          "graph_dest": 0,
+          "latent_rescue": 0,
+          "union": 57
+        },
+        "final_ct": 15,
+        "roles": {
+          "DIRECT": 15
+        },
+        "fact_in_final": true
+      },
+      "on": {
+        "latency_s": 0.68,
+        "union_ct": 57,
+        "lane_sizes": {
+          "section_summary": 24,
+          "entity_card": 8,
+          "hierarchical_children": 24,
+          "global_dense_child": 50,
+          "global_sparse_child": 40,
+          "dualread": 18,
+          "resolution_lift": 6,
+          "seealso_fanout": 0,
+          "graph_dest": 0,
+          "latent_rescue": 0,
+          "union": 57
+        },
+        "final_ct": 15,
+        "roles": {
+          "DIRECT": 15
+        },
+        "fact_in_final": true
+      },
+      "delta": {
+        "new_candidates": 0,
+        "lanes_activated": [
+          "SHADOW_DUALREAD / Profile\u2192Atom\u2192PMAP",
+          "RESOLUTION_LIFT"
+        ],
+        "final_changed": true,
+        "final_lost": 2,
+        "final_new": 2,
+        "regression": false
+      }
+    },
+    {
+      "qid": "synthesis",
+      "query": "What do these handbooks say overall about kiln firing baselines across methods?",
+      "intent": "EXPLORATORY",
+      "fact_code": null,
+      "off": {
+        "latency_s": 0.34,
+        "union_ct": 62,
+        "lane_sizes": {
+          "section_summary": 24,
+          "entity_card": 8,
+          "hierarchical_children": 16,
+          "global_dense_child": 50,
+          "global_sparse_child": 40,
+          "dualread": 0,
+          "resolution_lift": 0,
+          "seealso_fanout": 0,
+          "graph_dest": 0,
+          "latent_rescue": 0,
+          "union": 62
+        },
+        "final_ct": 15,
+        "roles": {
+          "DIRECT": 15
+        },
+        "fact_in_final": null
+      },
+      "on": {
+        "latency_s": 1.08,
+        "union_ct": 65,
+        "lane_sizes": {
+          "section_summary": 24,
+          "entity_card": 8,
+          "hierarchical_children": 16,
+          "global_dense_child": 50,
+          "global_sparse_child": 40,
+          "dualread": 11,
+          "resolution_lift": 6,
+          "seealso_fanout": 24,
+          "graph_dest": 0,
+          "latent_rescue": 8,
+          "union": 65
+        },
+        "final_ct": 15,
+        "roles": {
+          "DIRECT": 15
+        },
+        "fact_in_final": null
+      },
+      "delta": {
+        "new_candidates": 3,
+        "lanes_activated": [
+          "SHADOW_DUALREAD / Profile\u2192Atom\u2192PMAP",
+          "RESOLUTION_LIFT",
+          "SEEALSO_FANOUT",
+          "LATENT_RESCUE"
+        ],
+        "final_changed": true,
+        "final_lost": 0,
+        "final_new": 0,
+        "regression": false
+      }
+    },
+    {
+      "qid": "relationship",
+      "query": "How is Method ZQX-59622 connected to kiln firing cycle baselines?",
+      "intent": "RELATIONSHIP",
+      "fact_code": "ZQX-59622",
+      "off": {
+        "latency_s": 0.32,
+        "union_ct": 54,
+        "lane_sizes": {
+          "section_summary": 24,
+          "entity_card": 8,
+          "hierarchical_children": 24,
+          "global_dense_child": 50,
+          "global_sparse_child": 40,
+          "dualread": 0,
+          "resolution_lift": 0,
+          "seealso_fanout": 0,
+          "graph_dest": 0,
+          "latent_rescue": 0,
+          "union": 54
+        },
+        "final_ct": 15,
+        "roles": {
+          "DIRECT": 15
+        },
+        "fact_in_final": true
+      },
+      "on": {
+        "latency_s": 1.38,
+        "union_ct": 67,
+        "lane_sizes": {
+          "section_summary": 24,
+          "entity_card": 8,
+          "hierarchical_children": 24,
+          "global_dense_child": 50,
+          "global_sparse_child": 40,
+          "dualread": 14,
+          "resolution_lift": 6,
+          "seealso_fanout": 24,
+          "graph_dest": 8,
+          "latent_rescue": 3,
+          "union": 67
+        },
+        "final_ct": 15,
+        "roles": {
+          "DIRECT": 15
+        },
+        "fact_in_final": true
+      },
+      "delta": {
+        "new_candidates": 13,
+        "lanes_activated": [
+          "SHADOW_DUALREAD / Profile\u2192Atom\u2192PMAP",
+          "RESOLUTION_LIFT",
+          "SEEALSO_FANOUT",
+          "GRAPH_DEST",
+          "LATENT_RESCUE"
+        ],
+        "final_changed": true,
+        "final_lost": 0,
+        "final_new": 0,
+        "regression": false
+      }
+    }
+  ]
+}

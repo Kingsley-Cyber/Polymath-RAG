@@ -224,7 +224,15 @@ class _RouteHarness:
 def test_route_one_embedding_per_distinct_text_one_judge_call_and_lane_c_starts_before_the_embedding_returns(monkeypatch):
     """§4 P1.d gate, spy form: exactly 1 embedding per distinct query text, exactly 1 rerank call per turn, BM25 first."""
     h = _RouteHarness(monkeypatch, embed_wait_for_sparse=True)
-    out = h.run(subqueries=(("q1", "MECHANISM", "reward models for prompts", 1.0), ("q2", "EXAMPLE", "what does RAPO say about prompts", 0.8)))
+    # Pin rerank_deadline_s explicitly: this repo's .env ships
+    # POLYMATH_CHAT_RERANK_DEADLINE_S=12 (an intentional, live operational tuning
+    # value chat_retrieval.py's _FLOAT_KNOBS reads at runtime), overriding
+    # CandidateBudget's own code default of 8.0 that this test's assertions below
+    # expect. Matches the explicit-budget pattern the sibling
+    # test_route_rerank_deadline_falls_back_to_fusion_order_... test already uses,
+    # so this test's expectations are independent of the ambient environment.
+    out = h.run(subqueries=(("q1", "MECHANISM", "reward models for prompts", 1.0), ("q2", "EXAMPLE", "what does RAPO say about prompts", 0.8)),
+               budget=ce.CandidateBudget(lane_deadline_s=3.0, rerank_deadline_s=8.0))
     assert h.embed_calls == [["what does RAPO say about prompts", "reward models for prompts"]]     # ONE call, distinct texts only
     assert h.rerank_calls == 1                                                                       # ONE judge call per turn
     # lane C — the primary's exact terms AND the subquery's own sparse query — STARTED before the embedding returned

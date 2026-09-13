@@ -1,0 +1,86 @@
+{
+  "contract": "pmap-within-doc-concurrency-v1",
+  "doc": "doc_17b69e1d403309f257f6ac8972a60389e4601693d140c07834e4f903958e2e15",
+  "cap": 15,
+  "unresolved_start": 323,
+  "arms": {
+    "c1": {
+      "concurrency": 1,
+      "wall_s": 68.4,
+      "window_start": "2026-09-13 01:47:36.851937+00:00",
+      "window_end": "2026-09-13 01:48:45.280221+00:00",
+      "slices": [
+        {
+          "tag": "c1",
+          "submitted": 161,
+          "newly_mapped": 161,
+          "unresolved": 0,
+          "http_dispatches": 12,
+          "http_429": 0,
+          "empty": 0,
+          "refusals": 0,
+          "refusal_reasons": [],
+          "lane_selection": {
+            "map_groq2": 2,
+            "map_groq3": 2,
+            "map_groq4": 2,
+            "map_groq5": 2,
+            "map_groq6": 2,
+            "map_fallback_openrouter": 2
+          }
+        }
+      ],
+      "mapped": 161,
+      "submitted": 161
+    },
+    "c2": {
+      "concurrency": 2,
+      "wall_s": 30.4,
+      "window_start": "2026-09-13 01:48:55.223489+00:00",
+      "window_end": "2026-09-13 01:49:25.655227+00:00",
+      "slices": [
+        {
+          "tag": "c2a",
+          "submitted": 80,
+          "newly_mapped": 64,
+          "unresolved": 15,
+          "http_dispatches": 6,
+          "http_429": 1,
+          "empty": 0,
+          "refusals": 0,
+          "refusal_reasons": [],
+          "lane_selection": {
+            "map_groq2": 1,
+            "map_groq3": 1,
+            "map_groq4": 1,
+            "map_groq5": 1,
+            "map_groq6": 1,
+            "map_fallback_openrouter": 1
+          }
+        },
+        {
+          "tag": "c2b",
+          "submitted": 80,
+          "newly_mapped": 60,
+          "unresolved": 20,
+          "http_dispatches": 7,
+          "http_429": 2,
+          "empty": 0,
+          "refusals": 0,
+          "refusal_reasons": [],
+          "lane_selection": {
+            "map_groq2": 2,
+            "map_groq3": 1,
+            "map_groq4": 1,
+            "map_groq5": 1,
+            "map_groq6": 1,
+            "map_fallback_openrouter": 1
+          }
+        }
+      ],
+      "mapped": 124,
+      "submitted": 160
+    }
+  },
+  "duplicate_parent_maps": 0
+}

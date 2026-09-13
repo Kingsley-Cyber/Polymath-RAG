@@ -82,6 +82,14 @@ class CloudEndpoint:
     # the field (default, unchanged for every existing provider); false disables
     # thinking for the structured-extraction path.
     enable_thinking: bool | None = None
+    # CLOUDFLARE-WORKERS-AI-V1: a prompt-level reasoning switch for providers whose
+    # thinking is NOT controllable by any request parameter (measured on Cloudflare's
+    # @cf/qwen/qwen3-30b-a3b-fp8: reasoning_effort / enable_thinking / chat_template_kwargs
+    # are all ignored or blank the output; only Qwen's own documented `/no_think` soft
+    # switch appended to the prompt disables thinking — verified 0 reasoning tokens, clean
+    # JSON). None = append nothing (every existing provider unchanged). This is a message
+    # STRING, never a fabricated request field.
+    think_suffix: str | None = None
 
     @property
     def limiter_key(self) -> str:
@@ -97,7 +105,8 @@ class CloudEndpoint:
         return {"reasoning_effort": self.reasoning_effort,
                 "structured": self.structured,
                 "json_mode": self.structured in ("schema", "json"),
-                "enable_thinking": self.enable_thinking}
+                "enable_thinking": self.enable_thinking,
+                "think_suffix": self.think_suffix}
 
 
 def _resolve_key(env_name: str) -> str | None:
@@ -162,9 +171,25 @@ def _configured_providers() -> list[CloudEndpoint]:
                       "in .env to activate)", name, key_env)
             continue
         url = str(e.get("url") or "").strip()
+        # CLOUDFLARE-WORKERS-AI-V1: a lane may declare `url_template` + `account_id_env`
+        # instead of a literal `url` (the Cloudflare OpenAI-compat URL embeds the account
+        # id, which is a per-account secret held in env, never in this file). Resolve the
+        # id from env and substitute `{account_id}`; a lane whose account id is unset parks
+        # exactly like a lane whose key is unset — surfaced, never silent.
+        if not url:
+            template = str(e.get("url_template") or "").strip()
+            acct_env = str(e.get("account_id_env") or "").strip()
+            if template:
+                acct = _resolve_key(acct_env) if acct_env else None
+                if acct_env and not acct:
+                    _log_once(("parked-acct", name),
+                              "cloud provider %r parked: %s not set (account id for the "
+                              "OpenAI-compat URL — set it in .env to activate)", name, acct_env)
+                    continue
+                url = template.replace("{account_id}", acct or "")
         model = str(e.get("model") or "").strip()
         if not (url and model):
-            raise ValueError(f"provider {name!r} needs url+model: {e!r}")
+            raise ValueError(f"provider {name!r} needs url (or url_template+account_id_env) + model: {e!r}")
         out.append(CloudEndpoint(
             name=name, url=url, model=model, api_key=key,
             reasoning_effort=e.get("reasoning_effort"),
@@ -172,7 +197,8 @@ def _configured_providers() -> list[CloudEndpoint]:
             structured=_structured_level(e),
             dedicated=bool(e.get("dedicated", False)),
             request_char_budget=int(e.get("request_char_budget", 60000)),
-            enable_thinking=e.get("enable_thinking")))
+            enable_thinking=e.get("enable_thinking"),
+            think_suffix=(str(e.get("think_suffix")).strip() or None) if e.get("think_suffix") else None))
     return out
 
 

@@ -35,8 +35,25 @@ from .retrieve import (
     _qdrant_search,
     graph_expand_or_502,
     resolve_http_scope,
+    retrieve_engine_flag,
     single_corpus_or_422,
 )
+
+
+def _section_summaries_from_parent_ids(parent_ids: list[str]) -> list[dict]:
+    """Presentation join: the section (parent-chunk) TEXT summary for each
+    already-selected parent_id — the same corpus_document_summaries/
+    _presentation_joins-style read the rest of this API layer already does
+    (a display lookup over already-selected ids, not new retrieval)."""
+    if not parent_ids:
+        return []
+    with tx() as conn:
+        rows = conn.execute(
+            "SELECT c.chunk_id, c.doc_id, c.summary FROM chunks c JOIN documents d ON d.doc_id = c.doc_id "
+            "WHERE c.chunk_id = ANY(%s) AND " + chunk_visible_sql("c", "d"),
+            (parent_ids,),
+        ).fetchall()
+    return [{"chunk_id": r[0], "doc_id": r[1], "summary": r[2] or ""} for r in rows]
 
 router = APIRouter()
 
@@ -66,30 +83,59 @@ async def evidence(req: EvidenceRequest) -> dict:
 
     mode = validate_mode(req.mode)
     if mode == MODE_GRAPH:
-        from orchestrator.api.graph import graph_retrieve
+        cid = single_corpus_or_422(scope, mode)
+        # RETRIEVE-GRAPH-WILDCARD-MIGRATION-V1 follow-up: unlike /retrieve, this
+        # endpoint WALKS the engine's evidence shape as an input-extraction pattern
+        # rather than passing it through, so both branches build the SAME
+        # graph_facts/child_evidence/document_summaries/section_summaries shape —
+        # only which engine produced the source data differs.
+        if retrieve_engine_flag() == "v2":
+            from dataclasses import replace as _replace
+            from orchestrator.api.chat_retrieval import chat_retrieve_mode, default_budget
 
-        g = graph_retrieve(query, single_corpus_or_422(scope, mode),
-                           latent=getattr(req, 'latent', None))
-        graph_facts = [
-            {"fact_id": f["fact_id"], "predicate": f["predicate"],
-             "subject": f["subject"], "object": f["object"]}
-            for f in g["graph_relationships"]
-        ]
-        child_evidence = [
-            {"chunk_id": c["chunk_id"], "doc_id": d["doc_id"]}
-            for d in g["documents"]
-            for s in d["sections"]
-            for c in s["evidence"]
-        ]
-        document_summaries = [
-            {"doc_id": d["doc_id"], "summary": d["document_summary"] or ""}
-            for d in g["documents"] if d["document_summary"]
-        ]
-        section_summaries = [
-            {"chunk_id": s["parent_id"], "doc_id": d["doc_id"],
-             "summary": s["summary"] or ""}
-            for d in g["documents"] for s in d["sections"]
-        ]
+            _kw = {}
+            if getattr(req, 'latent', None):
+                _kw["budget"] = _replace(default_budget(), latent_enabled=True)
+            g = chat_retrieve_mode("GRAPH", query, cid, **_kw)
+            graph_facts = [
+                {"fact_id": f["fact_id"], "predicate": f["predicate"],
+                 "subject": f["subject"], "object": f["object"]}
+                for f in g["graph_relationships"]
+            ]
+            child_evidence = [
+                {"chunk_id": c["chunk_id"], "doc_id": c["doc_id"], "parent_id": c["parent_id"]}
+                for c in g["evidence"]
+            ]
+            document_summaries = [
+                {"doc_id": d["doc_id"], "summary": (d.get("document_summary") or {}).get("text", "")}
+                for d in g["selected_documents"] if d.get("document_summary")
+            ]
+            section_summaries = _section_summaries_from_parent_ids(
+                [s["parent_id"] for s in g["selected_sections"]])
+        else:
+            from orchestrator.api.graph import graph_retrieve
+
+            g = graph_retrieve(query, cid, latent=getattr(req, 'latent', None))
+            graph_facts = [
+                {"fact_id": f["fact_id"], "predicate": f["predicate"],
+                 "subject": f["subject"], "object": f["object"]}
+                for f in g["graph_relationships"]
+            ]
+            child_evidence = [
+                {"chunk_id": c["chunk_id"], "doc_id": d["doc_id"]}
+                for d in g["documents"]
+                for s in d["sections"]
+                for c in s["evidence"]
+            ]
+            document_summaries = [
+                {"doc_id": d["doc_id"], "summary": d["document_summary"] or ""}
+                for d in g["documents"] if d["document_summary"]
+            ]
+            section_summaries = [
+                {"chunk_id": s["parent_id"], "doc_id": d["doc_id"],
+                 "summary": s["summary"] or ""}
+                for d in g["documents"] for s in d["sections"]
+            ]
         try:
             bundle = assemble_evidence_bundle(
                 query,
@@ -116,10 +162,22 @@ async def evidence(req: EvidenceRequest) -> dict:
 
             fast = fast_retrieve(query, list(scope.corpus_ids))  # F8: multi-corpus
         else:
-            from orchestrator.api.hybrid import hybrid_fast_retrieve
+            cid = single_corpus_or_422(scope, mode)
+            # Both engines already return the SAME flat evidence/selected_documents/
+            # selected_sections shape (parity-proven, RETRIEVE-ENGINE-MIGRATION-V1) —
+            # the extraction below is identical either way.
+            if retrieve_engine_flag() == "v2":
+                from dataclasses import replace as _replace
+                from orchestrator.api.chat_retrieval import chat_retrieve_mode, default_budget
 
-            fast = hybrid_fast_retrieve(query, single_corpus_or_422(scope, mode),
-                                        latent=getattr(req, 'latent', None))
+                _kw = {}
+                if getattr(req, 'latent', None):
+                    _kw["budget"] = _replace(default_budget(), latent_enabled=True)
+                fast = chat_retrieve_mode("HYBRID", query, cid, **_kw)
+            else:
+                from orchestrator.api.hybrid import hybrid_fast_retrieve
+
+                fast = hybrid_fast_retrieve(query, cid, latent=getattr(req, 'latent', None))
         child_evidence = [
             {"chunk_id": c["chunk_id"], "doc_id": c["doc_id"], "parent_id": c["parent_id"]}
             for c in fast["evidence"]
@@ -128,16 +186,8 @@ async def evidence(req: EvidenceRequest) -> dict:
             {"doc_id": d["doc_id"], "summary": (d.get("document_summary") or {}).get("text", "")}
             for d in fast["selected_documents"] if d.get("document_summary")
         ]
-        parent_ids = [s["parent_id"] for s in fast["selected_sections"]]
-        with tx() as conn:
-            rows = conn.execute(
-                "SELECT c.chunk_id, c.doc_id, c.summary FROM chunks c JOIN documents d ON d.doc_id = c.doc_id "
-                "WHERE c.chunk_id = ANY(%s) AND " + chunk_visible_sql("c", "d"),
-                (parent_ids,),
-            ).fetchall()
-            section_summaries = [
-                {"chunk_id": r[0], "doc_id": r[1], "summary": r[2] or ""} for r in rows
-            ]
+        section_summaries = _section_summaries_from_parent_ids(
+            [s["parent_id"] for s in fast["selected_sections"]])
         try:
             bundle = assemble_evidence_bundle(
                 query,
