@@ -6,7 +6,7 @@ state, and a work-log entry.
 
 | Script | Owner | Reads | Writes | Safe invocation |
 |---|---|---|---|---|
-| `scripts/scaffold_polymath_v4.py` | governance | its `TREE` and embedded content | missing declared files only | `python3 scripts/scaffold_polymath_v4.py` | 2026-09-13 (ADR-0018): `TREE` declares `contracts/adapter/v1`, `shared/polymath_shared/adapter/`, `config/adapters/`, `workers/workers/adapter_step_worker.py`, `orchestrator/orchestrator/api/adapter.py`, migration `0061_adapter_runs.sql` and their tests. |
+| `scripts/scaffold_polymath_v4.py` | governance | its `TREE` and embedded content | missing declared files only | `python3 scripts/scaffold_polymath_v4.py` | 2026-09-13 (ADR-0018): `TREE` declares `contracts/adapter/v1`, `shared/polymath_shared/adapter/`, `config/adapters/`, `workers/workers/adapter_step_worker.py`, `orchestrator/orchestrator/api/adapter.py`, migration `0061_adapter_runs.sql` and their tests; E4/E7 (11.261/11.262): `shared/polymath_shared/adapter/trail_client.py`, `config/adapters/substack.article_development.json`, the connector/neutrality/live tests. |
 | `scripts/agent_preflight.py` | governance | repository structure and metadata | nothing | `python3 scripts/agent_preflight.py` |
 | `scripts/repo_guard.py` | governance | declared paths, dependency map, work logs, optional Git diff | nothing | `python3 scripts/repo_guard.py` |
 | `scripts/wiki_worm.py` | governance | `docs/wiki/` metadata | nothing | `python3 scripts/wiki_worm.py --check` |
