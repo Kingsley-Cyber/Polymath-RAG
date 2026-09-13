@@ -16,9 +16,9 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.258**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.259**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-13T18:20 — COGNITIVE-ADAPTER-TRAIL-E2E-V1 E0 COMPLETE (11.257 admission + 11.258 gap matrix): owner goal = ONE E2E workflow, Polymath composition root + TrailSignal subgraph; handoff branch reconciled with production; plan files admitted; two-repo evidence gap matrix written; PR #3 green except one CI test now fixed; NEXT = E1 admission (ADR-0018, contracts/adapter/v1, migration 0061, MCP tools, worker))
+## Latest checkpoint (2026-09-13T19:10 — COGNITIVE-ADAPTER-TRAIL-E2E-V1: E0 COMPLETE (11.257/11.258) and E1 ADMITTED (11.259: ADR-0018, contracts/adapter/v1, pure shared core, admitted trail.product_discovery manifest, 27 tests); PR #3 CI re-running; NEXT = E2 substrate (migration 0061, 7 MCP tools, adapter_step_worker, restart-resume test, bounce))
 
 **Branch `handoff/unified-adapter-trail-e2e` (linked worktree `../polymath-v4-handoff`; the fleet runs from `polymath-v4` on
 `architecture/evidence-first-v5` and must never see a branch switch). Register 11.257.** Production fleet unchanged: 23 healthy /
@@ -46,13 +46,21 @@ registered but P4/P4V BLOCKED (owner ADR-060 + A29 done → P4W is agent work); 
 P9 ← P4W+P6R+P7R+P8R) — the plan's acceptance items 5-6 depend on Trail E3 reaching C2; no Polymath principal (owner config); the
 OCP/bridge `codex/*` branches are local-only, not authority. Owner actions O1–O5 listed in the matrix §5.3. `AGENTS.md` item 000 added.
 
-### NEXT — E1 admission (then E2 substrate, E4 connector against the WORKING Trail tools, E3 Trail subgraph)
-1. **E1**: propose ADR-0018 (Polymath cognitive-adapter boundary) + refactor 0012 + `contracts/adapter/v1/*.schema.json` (+ examples +
-   `tests/contracts/test_adapter_contract_v1.py`) + pure `shared/polymath_shared/adapter/` (closed 8-step enum, manifest loader, submission
-   validator, transition table) — no `ARCHITECTURE.md`/`dependencies.json` edit needed (shared may depend on contracts).
-2. **E2**: migration `0061_adapter_runs.sql`, 7 MCP tools in `orchestrator/mcp_server.py` (+ `capabilities.MCP_TOOLS`, `_TOOL_NAMES`),
-   `workers/workers/adapter_step_worker.py`; integration test with a forced restart; fleet bounce at the end (workers/ edit).
-3. Merge PR #3 when green (owner directive); fast-forward production to the handoff head (runtime trees identical) with a closing check.
+### E1 — admitted (11.259) in one paragraph
+ADR-0018 accepted under the owner directive (placement per plan §6 under existing owners; no ARCHITECTURE/dependencies edit). Wire
+contracts `contracts/adapter/v1` (9, with examples; manifest example = the reference `trail.product_discovery` workflow A–K, Trail
+gate/score steps tagged `planned` C1/C2). Pure core `shared/polymath_shared/adapter/` (manifest loader + integrity, closed predicates,
+deterministic transitions with budgets, submission validation incl. "cite only supplied evidence"). 15 contract + 12 pure-core tests.
+Refactor 0012 tracks E0–E7 (open until E7 by design).
+
+### NEXT — E2 substrate (then E4 connector against the WORKING Trail tools, E3 Trail subgraph, E5/E6/E7)
+1. **E2**: migration `0061_adapter_runs.sql` (`adapter_runs`, `adapter_steps` + receipts, `external_operation_ref JSONB`; replay proof +
+   rollback note per `dependencies.json` change_triggers), 7 MCP tools in `orchestrator/mcp_server.py` (+ `capabilities.MCP_TOOLS`,
+   `_TOOL_NAMES`; bearer-gated), `workers/workers/adapter_step_worker.py` on `worker_runtime.run_worker` executing automatic steps via
+   `receipts.stage_transaction` + `outbox_events`; integration test start → RETRIEVE → AGENT_REASON issue → forced restart → submit →
+   COMPILE_RESULT; fleet bounce at the end (workers/ edit; the fleet runs from the PRODUCTION worktree — merge back before bouncing).
+2. Merge PR #3 when green (owner directive); fast-forward production to the handoff head only while runtime trees are identical
+   (`git diff --stat handoff prod -- shared workers control orchestrator sidecars stores` empty) — after E2 that requires a real merge + bounce.
 
 ## Prior checkpoint (2026-09-13T17:30 — CONTROL-TICK-SIDE-STAGE-GUARD-V1 (11.256): the control tick was DEAD ~41 h (pending side-stage ticket → DAG_ORDER.index ValueError); guarded, alive again, the 12 paused pMAP tickets closed under the lifted hold; NEXT = owner goal "unified cognitive adapter + TrailSignal E2E" on branch handoff/unified-adapter-trail-e2e (PR #3 / issue #4))
 

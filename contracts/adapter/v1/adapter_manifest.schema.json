@@ -1,0 +1,252 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "polymath/contracts/adapter/v1/adapter_manifest.schema.json",
+ "title": "AdapterManifestV1",
+ "description": "A versioned, admitted cognitive adapter: identity, schema versions, the CLOSED-vocabulary step list, branch predicates and budgets. Semantic workflow only \u2014 no executable definitions, no caller-supplied code.",
+ "type": "object",
+ "required": [
+  "adapter_id",
+  "adapter_version",
+  "workflow_version",
+  "retrieval_policy_version",
+  "input_schema_version",
+  "output_schema_version",
+  "budgets",
+  "entry_step_id",
+  "terminal_step_id",
+  "steps"
+ ],
+ "properties": {
+  "adapter_id": {
+   "type": "string",
+   "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$"
+  },
+  "adapter_version": {
+   "type": "string",
+   "pattern": "^\\d+\\.\\d+\\.\\d+$"
+  },
+  "workflow_version": {
+   "type": "string",
+   "pattern": "^\\d+\\.\\d+\\.\\d+$"
+  },
+  "retrieval_policy_version": {
+   "type": "string",
+   "pattern": "^\\d+\\.\\d+\\.\\d+$"
+  },
+  "input_schema_version": {
+   "type": "string",
+   "pattern": "^\\d+\\.\\d+\\.\\d+$"
+  },
+  "output_schema_version": {
+   "type": "string",
+   "pattern": "^\\d+\\.\\d+\\.\\d+$"
+  },
+  "description": {
+   "type": "string",
+   "maxLength": 2000
+  },
+  "input_schema": {
+   "type": "object"
+  },
+  "output_schema": {
+   "type": "object"
+  },
+  "budgets": {
+   "type": "object",
+   "required": [
+    "max_steps",
+    "max_agent_reason",
+    "max_branch_loops"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "max_steps": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 500
+    },
+    "max_agent_reason": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 200
+    },
+    "max_branch_loops": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 50
+    },
+    "max_external_operations": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 500
+    }
+   }
+  },
+  "entry_step_id": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 200
+  },
+  "terminal_step_id": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 200
+  },
+  "steps": {
+   "type": "array",
+   "minItems": 2,
+   "items": {
+    "$ref": "#/$defs/step_def"
+   }
+  }
+ },
+ "additionalProperties": false,
+ "$defs": {
+  "predicate": {
+   "type": "object",
+   "required": [
+    "op"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "op": {
+     "enum": [
+      "exists",
+      "count_gte",
+      "count_lt",
+      "equals",
+      "all_of",
+      "any_of"
+     ]
+    },
+    "path": {
+     "type": "string"
+    },
+    "value": {},
+    "n": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "of": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/predicate"
+     }
+    }
+   }
+  },
+  "step_def": {
+   "type": "object",
+   "required": [
+    "step_id",
+    "type",
+    "title"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "step_id": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 200
+    },
+    "type": {
+     "enum": [
+      "POLYMATH_RETRIEVE",
+      "POLYMATH_COMPILE_PLAN",
+      "POLYMATH_GRAPH_EXPAND",
+      "EXTERNAL_OPERATION",
+      "AGENT_REASON",
+      "VALIDATE",
+      "BRANCH",
+      "COMPILE_RESULT"
+     ]
+    },
+    "title": {
+     "type": "string",
+     "maxLength": 300
+    },
+    "objective": {
+     "type": "string",
+     "maxLength": 4000
+    },
+    "next": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "config": {
+     "type": "object"
+    },
+    "output_schema": {
+     "type": "object"
+    },
+    "acceptance_rules": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "maxLength": 500
+     }
+    },
+    "constraints": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "maxLength": 500
+     }
+    },
+    "branches": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "required": [
+       "when",
+       "next"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "when": {
+        "$ref": "#/$defs/predicate"
+       },
+       "next": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+       },
+       "label": {
+        "type": "string"
+       }
+      }
+     }
+    },
+    "external": {
+     "type": "object",
+     "required": [
+      "system",
+      "operation_kind"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "system": {
+       "enum": [
+        "trailsignal"
+       ]
+      },
+      "operation_kind": {
+       "type": "string"
+      },
+      "availability": {
+       "enum": [
+        "working",
+        "planned"
+       ]
+      },
+      "planned_node": {
+       "type": "string"
+      }
+     }
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,28 @@
+{
+ "run_id": "adr_3322182605da76d37631b9dc0e0e7cbf",
+ "step_id": "C_hypotheses",
+ "payload": {
+  "hypotheses": [
+   {
+    "activity": "post-training cold-water immersion at home",
+    "friction": "temperature control without a chiller",
+    "direction": "passive insulation + timed exposure guidance",
+    "supporting_evidence_ids": [
+     "chunk_7f3a",
+     "fact_19c2"
+    ],
+    "contradicting_evidence_ids": [],
+    "confidence": "medium",
+    "unknowns": [
+     "seasonal demand curve"
+    ]
+   }
+  ]
+ },
+ "submitted_by": {
+  "agent_identity": "hermes-local",
+  "model": "hermes/agent"
+ },
+ "submitted_at": "2026-09-13T18:31:10Z",
+ "submission_hash": "23af700ea17a8c6351687171b887382ac7e23a718f996dd966970c55de29e637"
+}

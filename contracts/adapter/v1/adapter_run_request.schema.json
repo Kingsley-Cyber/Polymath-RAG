@@ -1,0 +1,63 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "polymath/contracts/adapter/v1/adapter_run_request.schema.json",
+ "title": "AdapterRunRequestV1",
+ "description": "adapter_start input: which admitted adapter, the domain input (validated against the manifest input_schema), and request options.",
+ "type": "object",
+ "required": [
+  "adapter_id",
+  "input"
+ ],
+ "properties": {
+  "adapter_id": {
+   "type": "string",
+   "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$"
+  },
+  "adapter_version": {
+   "type": "string",
+   "pattern": "^\\d+\\.\\d+\\.\\d+$"
+  },
+  "input": {
+   "type": "object"
+  },
+  "request_options": {
+   "type": "object",
+   "additionalProperties": false,
+   "properties": {
+    "corpus_ids": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+     },
+     "maxItems": 32
+    },
+    "idempotency_key": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 200
+    },
+    "agent_identity": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 200
+    },
+    "deadline_s": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 86400
+    },
+    "retrieval_mode": {
+     "enum": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    }
+   }
+  }
+ },
+ "additionalProperties": false
+}

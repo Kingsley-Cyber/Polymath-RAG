@@ -1,0 +1,432 @@
+{
+ "adapter_id": "trail.product_discovery",
+ "adapter_version": "1.0.0",
+ "workflow_version": "1.0.0",
+ "retrieval_policy_version": "1.0.0",
+ "input_schema_version": "1.0.0",
+ "output_schema_version": "1.0.0",
+ "description": "Reference E2E workload: one Polymath adapter run that uses Polymath knowledge and TrailSignal public operations to produce scored product hypotheses. Trail assigns every score (LAW 1); the agent reasons over typed steps only.",
+ "input_schema": {
+  "type": "object",
+  "required": [
+   "seed"
+  ],
+  "additionalProperties": false,
+  "properties": {
+   "seed": {
+    "type": "string",
+    "minLength": 3,
+    "maxLength": 2000
+   },
+   "constraints": {
+    "type": "array",
+    "items": {
+     "type": "string"
+    }
+   },
+   "exclusions": {
+    "type": "array",
+    "items": {
+     "type": "string"
+    }
+   },
+   "corpus_ids": {
+    "type": "array",
+    "items": {
+     "type": "string"
+    }
+   },
+   "freshness_days": {
+    "type": "integer",
+    "minimum": 1,
+    "maximum": 3650
+   },
+   "geography": {
+    "type": "string"
+   },
+   "category": {
+    "type": "string"
+   }
+  }
+ },
+ "output_schema": {
+  "type": "object",
+  "required": [
+   "product_hypotheses"
+  ],
+  "properties": {
+   "product_hypotheses": {
+    "type": "array"
+   },
+   "portfolio": {
+    "type": "object"
+   },
+   "experiments": {
+    "type": "array"
+   }
+  }
+ },
+ "budgets": {
+  "max_steps": 60,
+  "max_agent_reason": 12,
+  "max_branch_loops": 3,
+  "max_external_operations": 40
+ },
+ "entry_step_id": "A_understand",
+ "terminal_step_id": "K_compile",
+ "steps": [
+  {
+   "step_id": "A_understand",
+   "type": "VALIDATE",
+   "title": "Understand seed: validate input and scope",
+   "next": "B_plan",
+   "config": {
+    "validate": "input_schema",
+    "require_corpus": true
+   }
+  },
+  {
+   "step_id": "B_plan",
+   "type": "POLYMATH_COMPILE_PLAN",
+   "title": "Compile 3-5 deterministic reformulations of the seed",
+   "next": "B_retrieve",
+   "config": {
+    "source": "input.seed"
+   }
+  },
+  {
+   "step_id": "B_retrieve",
+   "type": "POLYMATH_RETRIEVE",
+   "title": "Retrieve conceptual neighbours, mechanisms, known frictions, opposing evidence",
+   "next": "B_graph",
+   "config": {
+    "mode": "HYBRID",
+    "evidence": true,
+    "top_k": 24
+   }
+  },
+  {
+   "step_id": "B_graph",
+   "type": "POLYMATH_GRAPH_EXPAND",
+   "title": "One-hop graph expansion from the retrieved seeds",
+   "next": "C_hypotheses",
+   "config": {
+    "max_seeds": 8,
+    "max_facts": 20
+   }
+  },
+  {
+   "step_id": "C_hypotheses",
+   "type": "AGENT_REASON",
+   "title": "Frame structured activity-friction exploration hypotheses",
+   "next": "D_discover",
+   "objective": "From the retrieved Polymath evidence only, propose bounded activity \u2192 friction \u2192 direction hypotheses. Cite evidence ids for every claim; list unknowns instead of inventing.",
+   "constraints": [
+    "Cite only evidence_refs supplied in context",
+    "No opportunity score of any kind (LAW 1)",
+    "Preserve contradictions as contradicting_evidence_ids"
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "hypotheses"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "hypotheses": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+       "type": "object",
+       "required": [
+        "activity",
+        "friction",
+        "direction",
+        "supporting_evidence_ids",
+        "confidence"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "activity": {
+         "type": "string"
+        },
+        "friction": {
+         "type": "string"
+        },
+        "direction": {
+         "type": "string"
+        },
+        "supporting_evidence_ids": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         },
+         "minItems": 1
+        },
+        "contradicting_evidence_ids": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
+        },
+        "confidence": {
+         "enum": [
+          "low",
+          "medium",
+          "high"
+         ]
+        },
+        "unknowns": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "acceptance_rules": [
+    "every supporting_evidence_ids entry is an id from context.evidence_refs",
+    "1 <= len(hypotheses) <= 8"
+   ]
+  },
+  {
+   "step_id": "D_discover",
+   "type": "EXTERNAL_OPERATION",
+   "title": "Trail discovery of permitted live leads",
+   "next": "E_acquire",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "discover.submit",
+    "availability": "working"
+   },
+   "config": {
+    "per_hypothesis": true,
+    "maximum_candidates": 24,
+    "result_target_kind": "URL_CANDIDATE_RESULT",
+    "leads_are_evidence": false
+   }
+  },
+  {
+   "step_id": "E_acquire",
+   "type": "EXTERNAL_OPERATION",
+   "title": "Trail acquisition + deterministic extraction (raw-first)",
+   "next": "F_normalize",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "scrape.submit+extract.submit",
+    "availability": "working"
+   },
+   "config": {
+    "batch_max": 64,
+    "route": "STATIC"
+   }
+  },
+  {
+   "step_id": "F_normalize",
+   "type": "AGENT_REASON",
+   "title": "Semantic normalisation into the Trail ontology",
+   "next": "G_gates",
+   "objective": "Map extracted Trail records into activity \u2192 task \u2192 context \u2192 friction \u2192 workaround \u2192 product territory \u2192 candidate. Keep every candidate tied to trail_record_ids; record contradictions and unknowns.",
+   "constraints": [
+    "Only trail_record_ids present in context may be cited",
+    "No score (LAW 1)"
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "candidates"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "candidates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+       "type": "object",
+       "required": [
+        "activity",
+        "task",
+        "context",
+        "friction",
+        "workaround",
+        "product_territory",
+        "candidate",
+        "trail_record_ids"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "activity": {
+         "type": "string"
+        },
+        "task": {
+         "type": "string"
+        },
+        "context": {
+         "type": "string"
+        },
+        "friction": {
+         "type": "string"
+        },
+        "workaround": {
+         "type": "string"
+        },
+        "product_territory": {
+         "type": "string"
+        },
+        "candidate": {
+         "type": "string"
+        },
+        "trail_record_ids": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         },
+         "minItems": 1
+        },
+        "contradictions": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
+        },
+        "unknowns": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "acceptance_rules": [
+    "every trail_record_ids entry is a record id from context.evidence_refs of kind trail_record"
+   ]
+  },
+  {
+   "step_id": "G_gates",
+   "type": "EXTERNAL_OPERATION",
+   "title": "Trail evidence promotion + hard gates",
+   "next": "H_gap_loop",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "commerce.research.submit",
+    "availability": "planned",
+    "planned_node": "C1"
+   }
+  },
+  {
+   "step_id": "H_gap_loop",
+   "type": "BRANCH",
+   "title": "Evidence-gap / contradiction loop (bounded)",
+   "branches": [
+    {
+     "label": "gaps remain and loop budget left",
+     "when": {
+      "op": "all_of",
+      "of": [
+       {
+        "op": "count_gte",
+        "path": "steps.G_gates.output.gaps",
+        "n": 1
+       },
+       {
+        "op": "count_lt",
+        "path": "run.branch_loops",
+        "n": 3
+       }
+      ]
+     },
+     "next": "D_discover"
+    }
+   ],
+   "next": "I_score"
+  },
+  {
+   "step_id": "I_score",
+   "type": "EXTERNAL_OPERATION",
+   "title": "Trail deterministic scoring (score originates only here)",
+   "next": "J_interpret",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "commerce.research.result",
+    "availability": "planned",
+    "planned_node": "C2"
+   }
+  },
+  {
+   "step_id": "J_interpret",
+   "type": "AGENT_REASON",
+   "title": "Interpret Trail scores; design the cheapest falsification experiment",
+   "next": "K_compile",
+   "objective": "Explain each Trail score using its record ids and define the cheapest falsification experiment per candidate; portfolio reasoning where the input asks for it.",
+   "constraints": [
+    "Never alter, rank or normalise a Trail score",
+    "Cite trail_score_record_id for every interpretation"
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "interpretations"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "interpretations": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "candidate",
+        "trail_score_record_id",
+        "explanation",
+        "cheapest_falsification_experiment"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "candidate": {
+         "type": "string"
+        },
+        "trail_score_record_id": {
+         "type": "string"
+        },
+        "explanation": {
+         "type": "string"
+        },
+        "cheapest_falsification_experiment": {
+         "type": "string"
+        },
+        "portfolio_note": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    }
+   },
+   "acceptance_rules": [
+    "every trail_score_record_id is a record id returned by I_score"
+   ]
+  },
+  {
+   "step_id": "K_compile",
+   "type": "COMPILE_RESULT",
+   "title": "Compile AdapterResultV1 with cross-system lineage",
+   "next": null,
+   "config": {
+    "include": [
+     "product_hypotheses",
+     "portfolio",
+     "experiments",
+     "contradictions",
+     "unknowns",
+     "lineage"
+    ]
+   }
+  }
+ ]
+}

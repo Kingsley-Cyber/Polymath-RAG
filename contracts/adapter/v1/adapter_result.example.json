@@ -1,0 +1,60 @@
+{
+ "run_id": "adr_3322182605da76d37631b9dc0e0e7cbf",
+ "adapter_id": "trail.product_discovery",
+ "adapter_version": "1.0.0",
+ "workflow_version": "1.0.0",
+ "retrieval_policy_version": "1.0.0",
+ "input_schema_version": "1.0.0",
+ "output_schema_version": "1.0.0",
+ "status": "terminal_gap",
+ "started_at": "2026-09-13T18:30:00Z",
+ "terminal_at": "2026-09-13T18:40:12Z",
+ "output": {
+  "product_hypotheses": [
+   {
+    "candidate": "insulated timed cold-plunge tub",
+    "trail_record_ids": [
+     "urlc_3b9e"
+    ]
+   }
+  ],
+  "portfolio": {},
+  "experiments": []
+ },
+ "lineage": {
+  "polymath_evidence_ids": [
+   "chunk_7f3a",
+   "fact_19c2"
+  ],
+  "query_receipt_ids": [
+   "qr_4d0e"
+  ],
+  "step_receipt_hashes": [
+   "922cfc84fd64e8f5fe48a9a574bea829910117c953b5d7b2fc001d0bffef0bdc"
+  ],
+  "external_operations": [
+   {
+    "external_system": "trailsignal",
+    "operation_kind": "discover.submit",
+    "operation_id": "op_01J9X2Q4F8ZK",
+    "record_ids": [
+     "urlc_3b9e",
+     "urlc_3b9f"
+    ]
+   }
+  ]
+ },
+ "contradictions": [],
+ "unknowns": [
+  {
+   "about": "seasonal demand curve",
+   "why": "no Trail evidence yet"
+  }
+ ],
+ "gap": {
+  "code": "TRAIL_CAPABILITY_PLANNED",
+  "message": "commerce.research.submit (Trail node C1) is not yet a production capability; evidence gates and scoring could not run",
+  "step_id": "G_gates"
+ },
+ "agent_identity": "hermes-local"
+}

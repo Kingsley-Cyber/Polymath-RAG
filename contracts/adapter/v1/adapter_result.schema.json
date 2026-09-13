@@ -1,0 +1,183 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "polymath/contracts/adapter/v1/adapter_result.schema.json",
+ "title": "AdapterResultV1",
+ "description": "Terminal result of an adapter run (adapter_result): the domain output plus cross-system lineage \u2014 Polymath evidence identities, step receipt hashes, Trail operation/record ids \u2014 and the contradictions/unknowns that survived.",
+ "type": "object",
+ "required": [
+  "run_id",
+  "adapter_id",
+  "adapter_version",
+  "workflow_version",
+  "retrieval_policy_version",
+  "input_schema_version",
+  "output_schema_version",
+  "status",
+  "started_at",
+  "terminal_at",
+  "output",
+  "lineage"
+ ],
+ "properties": {
+  "run_id": {
+   "type": "string",
+   "pattern": "^adr_[0-9a-f]{16,64}$"
+  },
+  "adapter_id": {
+   "type": "string",
+   "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$"
+  },
+  "adapter_version": {
+   "type": "string",
+   "pattern": "^\\d+\\.\\d+\\.\\d+$"
+  },
+  "workflow_version": {
+   "type": "string",
+   "pattern": "^\\d+\\.\\d+\\.\\d+$"
+  },
+  "retrieval_policy_version": {
+   "type": "string",
+   "pattern": "^\\d+\\.\\d+\\.\\d+$"
+  },
+  "input_schema_version": {
+   "type": "string",
+   "pattern": "^\\d+\\.\\d+\\.\\d+$"
+  },
+  "output_schema_version": {
+   "type": "string",
+   "pattern": "^\\d+\\.\\d+\\.\\d+$"
+  },
+  "status": {
+   "enum": [
+    "completed",
+    "terminal_gap",
+    "cancelled",
+    "failed"
+   ]
+  },
+  "started_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "terminal_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "output": {
+   "type": "object"
+  },
+  "lineage": {
+   "type": "object",
+   "required": [
+    "polymath_evidence_ids",
+    "step_receipt_hashes",
+    "external_operations"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "polymath_evidence_ids": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+     }
+    },
+    "query_receipt_ids": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+     }
+    },
+    "step_receipt_hashes": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     }
+    },
+    "external_operations": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "required": [
+       "external_system",
+       "operation_id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "external_system": {
+        "enum": [
+         "trailsignal"
+        ]
+       },
+       "operation_kind": {
+        "type": "string"
+       },
+       "operation_id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+       },
+       "record_ids": {
+        "type": "array",
+        "items": {
+         "type": "string",
+         "minLength": 1,
+         "maxLength": 200
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "contradictions": {
+   "type": "array",
+   "items": {
+    "type": "object"
+   }
+  },
+  "unknowns": {
+   "type": "array",
+   "items": {
+    "type": "object"
+   }
+  },
+  "gap": {
+   "type": [
+    "object",
+    "null"
+   ],
+   "required": [
+    "code",
+    "message"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "code": {
+     "type": "string",
+     "pattern": "^[A-Z][A-Z0-9_]{2,60}$"
+    },
+    "message": {
+     "type": "string",
+     "maxLength": 2000
+    },
+    "step_id": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 200
+    }
+   }
+  },
+  "agent_identity": {
+   "type": [
+    "string",
+    "null"
+   ]
+  }
+ },
+ "additionalProperties": false
+}
