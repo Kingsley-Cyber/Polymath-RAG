@@ -470,3 +470,69 @@ providers:
     max: 2
     init: 1
     adaptive: true
+
+  # ── Cloudflare Workers AI (CLOUDFLARE-WORKERS-AI-V1) ───────────────────────
+  # Six Free-plan accounts = six ISOLATED capacity domains (own family each, so a
+  # storm on one never cascades to the others). The daily free allocation is enforced
+  # by the 3036 park (limiter.park_provider_day), not a local rpd — Cloudflare bills in
+  # "neurons", not a published RPD; seeds are conservative and AIMD adapts to headers.
+  cloudflare1:
+    kind: rate
+    family: cloudflare_acct_1
+    rpm: 30
+    tpm: 100000
+    conc_cap: 2
+    min: 1
+    max: 3
+    init: 1
+    adaptive: true
+  cloudflare2:
+    kind: rate
+    family: cloudflare_acct_2
+    rpm: 30
+    tpm: 100000
+    conc_cap: 2
+    min: 1
+    max: 3
+    init: 1
+    adaptive: true
+  cloudflare3:
+    kind: rate
+    family: cloudflare_acct_3
+    rpm: 30
+    tpm: 100000
+    conc_cap: 2
+    min: 1
+    max: 3
+    init: 1
+    adaptive: true
+  cloudflare4:
+    kind: rate
+    family: cloudflare_acct_4
+    rpm: 30
+    tpm: 100000
+    conc_cap: 2
+    min: 1
+    max: 3
+    init: 1
+    adaptive: true
+  cloudflare_summary1:
+    kind: rate
+    family: cloudflare_acct_5
+    rpm: 20
+    tpm: 100000
+    conc_cap: 1
+    min: 1
+    max: 2
+    init: 1
+    adaptive: true
+  cloudflare_summary2:
+    kind: rate
+    family: cloudflare_acct_6
+    rpm: 20
+    tpm: 100000
+    conc_cap: 1
+    min: 1
+    max: 2
+    init: 1
+    adaptive: true

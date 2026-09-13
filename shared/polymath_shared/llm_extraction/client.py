@@ -295,6 +295,12 @@ def build_user_prompt(neighborhoods: list[tuple[str, list[tuple[str, str]]]]) ->
     return "\n\n".join(parts)
 
 
+#: Statuses an OpenAI-compatible cloud host returns for the LOCAL-only `/infer_batch`
+#: route (it has no such path): 404 not-found, 405 method-not-allowed, 400 (Cloudflare).
+#: All mean 'no batch endpoint' → fall back to per-neighborhood /v1/chat/completions.
+_NO_INFER_BATCH_STATUSES = (400, 404, 405)
+
+
 class LLMExtractionClient:
     """One client, two lanes. `lane` selects endpoint + model pin."""
 
@@ -350,6 +356,12 @@ class LLMExtractionClient:
 
     def _chat(self, user_prompt: str, max_tokens: int,
               system_prompt: str | None = None) -> tuple[str, int, int, dict]:
+        # CLOUDFLARE-WORKERS-AI-V1: append a prompt-level reasoning switch (e.g. Qwen's
+        # `/no_think`) for lanes whose thinking is not controllable by a request parameter.
+        # A message string only; omitted (None) for every existing provider.
+        suffix = (self.cloud_opts or {}).get("think_suffix") if self.lane != "local" else None
+        if suffix:
+            user_prompt = f"{user_prompt}\n\n{suffix}"
         payload = {
             "model": self.model,
             "messages": [
@@ -503,16 +515,26 @@ class LLMExtractionClient:
                          latency_ms=int((time.monotonic() - _t0) * 1000), **_base))
             return text, None
         except httpx.HTTPStatusError as exc:
-            limiter.record_failure(
-                retry_after=exc.response.headers.get("retry-after"),
-                headers=dict(exc.response.headers))
+            # CLOUDFLARE-WORKERS-AI-V1: a 3036 daily-free-quota body parks the account for
+            # the day (no retry-loop against a dead free allocation); 3040/429 is transient
+            # capacity → normal AIMD backoff. Cloudflare-host lanes only; a no-op elsewhere.
+            from polymath_shared.llm_extraction import cloudflare_errors as _cf
+            _status = exc.response.status_code
+            _cf_class = _cf.classify(_status, exc.response.text) if _cf.is_cloudflare_host(self.base_url) else None
+            if _cf_class == _cf.DAILY_FREE_QUOTA_EXHAUSTED:
+                limiter.park_provider_day(_cf.seconds_to_daily_reset())
+            else:
+                limiter.record_failure(
+                    retry_after=exc.response.headers.get("retry-after"),
+                    headers=dict(exc.response.headers))
             _ra = exc.response.headers.get("retry-after")
+            _err = _cf_class or f"HTTP_{_status}"
             _rec(Attempt(limiter_admitted=True, http_dispatched=True, success=False,
-                         http_status=exc.response.status_code,
+                         http_status=_status,
                          retry_after_s=(float(_ra) if (_ra or "").replace(".", "", 1).isdigit() else None),
-                         error_class=f"HTTP_{exc.response.status_code}",
+                         error_class=_err,
                          latency_ms=int((time.monotonic() - _t0) * 1000), **_base))
-            return "", f"HTTP_{exc.response.status_code}"
+            return "", _err
         except Exception as exc:
             limiter.record_failure()
             _rec(Attempt(limiter_admitted=True, http_dispatched=True, success=False,
@@ -709,7 +731,12 @@ class LLMExtractionClient:
                     retry_after=_ra,
                     headers=dict(exc.response.headers))
                 halve = status == 500 and len(prompt_items) > 1
-                if not halve and status != 404:
+                # `/infer_batch` is the LOCAL daemon's proprietary batch route; an
+                # OpenAI-compatible cloud host has no such path and says so with 404
+                # (most), 405 (method not allowed) or 400 (Cloudflare's answer for the
+                # unknown route). All three mean "no batch endpoint here" → fall back to
+                # the per-neighborhood /v1/chat/completions path (CLOUDFLARE-WORKERS-AI-V1).
+                if not halve and status not in _NO_INFER_BATCH_STATUSES:
                     raise ExtractionTransportError(
                         f"{self.lane} batched transport failed: "
                         f"HTTP {status}") from exc
@@ -742,7 +769,7 @@ class LLMExtractionClient:
             out.extend(self._infer_batch_call(prompt_items[half:], limiter, decision, cap,
                                               use_lean, system_prompt))
             return out
-        if status == 404:
+        if status in _NO_INFER_BATCH_STATUSES:
             fallback: list[LLMCallResult] = []
             for nid, u, mt in prompt_items:
                 one = self._extract_prompt(u, {nid}, mt, decision)
@@ -951,12 +978,22 @@ class LLMExtractionClient:
                     raw, tin, tout, _hdrs = self._chat(user_prompt + nudge, max_tokens)
                 except httpx.HTTPStatusError as exc:
                     status = exc.response.status_code
+                    # CLOUDFLARE-WORKERS-AI-V1: 3036 daily-quota body → park the account for
+                    # the day and fail this lane over (never retry a dead free allocation);
+                    # 3040/429 → transient, bounded retry below. Cloudflare-host lanes only.
+                    from polymath_shared.llm_extraction import cloudflare_errors as _cf
+                    cf_class = _cf.classify(status, exc.response.text) if _cf.is_cloudflare_host(self.base_url) else None
                     _ra = exc.response.headers.get("retry-after")
                     _rec(_At(limiter_admitted=True, http_dispatched=True, success=False,
-                             http_status=status, error_class=f"HTTP_{status}",
+                             http_status=status, error_class=(cf_class or f"HTTP_{status}"),
                              retry_after_s=(float(_ra) if (_ra or "").replace(".", "", 1).isdigit()
                                             else None),
                              latency_ms=int((time.perf_counter() - _a0) * 1000), **_base))
+                    if cf_class == _cf.DAILY_FREE_QUOTA_EXHAUSTED:
+                        limiter.park_provider_day(_cf.seconds_to_daily_reset())
+                        raise ExtractionTransportError(
+                            f"{self.lane} cloudflare account daily free quota exhausted "
+                            "(3036) — lane parked until reset, stage fails over") from exc
                     # THROUGHPUT-V2: 413 is a PAYLOAD condition, not a
                     # rate condition — halving the AIMD limit for it
                     # starved healthy lanes (measured 2026-09-01).
@@ -971,7 +1008,8 @@ class LLMExtractionClient:
                     # ticket's second attempt. A daemon-proxy 500 is as
                     # transient as 502/503; the limiter already recorded
                     # the failure (backoff), and a repeat still fails closed.
-                    if status in (429, 500, 502, 503, 504) and attempts < self.max_attempts:
+                    if (status in (429, 500, 502, 503, 504)
+                            or cf_class == _cf.OUT_OF_CAPACITY) and attempts < self.max_attempts:
                         retry_delay = min(
                             parse_retry_after(exc.response.headers.get("retry-after")) or 1.5,
                             15.0)

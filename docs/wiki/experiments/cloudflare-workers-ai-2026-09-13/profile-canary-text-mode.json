@@ -1,0 +1,96 @@
+{
+ "model": "@cf/qwen/qwen3-30b-a3b-fp8",
+ "mode": "text",
+ "profile": {
+  "thinking_on": {
+   "n": 3,
+   "valid": 3,
+   "valid_pct": 100,
+   "empty": 0,
+   "mean_lat": 6.7,
+   "rows": [
+    {
+     "doc": "doc_4bfdf4",
+     "valid": true,
+     "ok": true,
+     "fields": 18,
+     "issues": 6,
+     "q": 0.85,
+     "err": null,
+     "chars": 1563,
+     "lat": 8.76,
+     "raw": "\n\nONE: The circumplex model of affect: An integrative approach to affective neuroscience, cognitive development, and psychopathology JONATHAN POSNER,a,b JAMES A. RUSSELL,c and BRADLEY S.  \nSUMMARY: The document reviews approaches to emotion and presents the circumplex model of affect, which posits that valence and arousal underlie all affective states, with cognitive processes layered upon these neurophysiological systems.  \nTOPIC: Circumplex model of affect  \nTERM: Circumplex Model of Affect  \nTERM: Valence  \nTERM: Arousal  \nTERM: Prefrontal cortex  \nTERM: Amygdala  \nTERM: PET  \nTERM: Generalized anxiety disorder  \nTERM: Neurophysiological systems  \nTERM: Cognitive processes  \nQ: How does the circumplex model of affect integrate affective neuroscience, cognitive development, and psychopathology?  \nSEARCH: Circumplex Model of Affect integration  \nTHEORY: Integrative framework for emotion"
+    },
+    {
+     "doc": "doc_3d3561",
+     "valid": true,
+     "ok": true,
+     "fields": 14,
+     "issues": 6,
+     "q": 0.85,
+     "err": null,
+     "chars": 1298,
+     "lat": 7.22,
+     "raw": "\n\nONE: A multistage pipeline for character-stable AI video stories is presented, focusing on consistency in narrative generation.  \nSUMMARY: The document introduces a pipeline using LLMs to generate scripts and character descriptions, validated through baseline studies and consistency metrics.  \nTOPIC: Multistage Pipeline for Character-Stable AI Video Stories  \nTERM: LLM  \nTERM: arXiv:2304.07193  \nTERM: Baseline Study  \nTERM: Character-Stable  \nTERM: AI Video Stories  \nQ: What is the primary method described for ensuring consistency in AI-generated video narratives?  \nSEARCH: Multistage Pipeline Character Stability  \nTHEORY: Pipeline-based AI content generation  \nCONCEPT: Consistency in AI-generated narratives  \nLATENT-PATTERN: Comparative analysis of model performance with baseline metrics  \nANCHOR: Character-stable AI video stories  \nRECALLQ: How does the pipeline address consistency i"
+    },
+    {
+     "doc": "doc_6a3530",
+     "valid": true,
+     "ok": true,
+     "fields": 18,
+     "issues": 6,
+     "q": 0.87,
+     "err": null,
+     "chars": 1388,
+     "lat": 4.18,
+     "raw": "\n\nONE: Body movements are an important communication medium through which affective states can be expressed and recognized.  \nSUMMARY: This document presents an approach for affective movement generation using Laban Effort and Shape components combined with hidden Markov modeling to isolate kinematic features.  \nTOPIC: Affective Movement Generation  \nTERM: Laban Effort and Shape  \nTERM: Hidden Markov Models  \nTERM: LMA  \nTERM: HMM  \nTERM: Emotion Recognition  \nTERM: Kinematic Features  \nTERM: Discriminative Models  \nTERM: Generative Models  \nQ: How can affective movements be generated using Laban movement analysis and machine learning?  \nSEARCH: Affective Movement Generation  \nSEARCH: Laban Effort Shape HMM  \nTHEORY: Hidden Markov Modeling  \nCONCEPT: Affective Computing  \nLATENT-PATTERN: Use of low-dimensional movement representations for emotion discrimination  \nANCHOR: Laban movement a"
+    }
+   ]
+  },
+  "no_think": {
+   "n": 3,
+   "valid": 3,
+   "valid_pct": 100,
+   "empty": 0,
+   "mean_lat": 2.1,
+   "rows": [
+    {
+     "doc": "doc_4bfdf4",
+     "valid": true,
+     "ok": true,
+     "fields": 36,
+     "issues": 4,
+     "q": 0.94,
+     "err": null,
+     "chars": 2063,
+     "lat": 3.05,
+     "raw": "\n\nONE: The circumplex model of affect: An integrative approach to affective neuroscience, cognitive development, and psychopathology  \nSUMMARY: The circumplex model of affect integrates findings from neuroscience, cognitive development, and psychopathology, proposing that valence and arousal underlie all affective states.  \nTOPIC: Affective neuroscience  \nTOPIC: Cognitive development  \nTOPIC: Psychopathology  \nTOPIC: Neurophysiological systems  \nTOPIC: Emotion models  \nTOPIC: Arousal and valence  \nTOPIC: Prefrontal cortex function  \nTOPIC: Amygdala activity  \nTOPIC: Dimensional models of emotion  \nTERM: Circumplex model of affect  \nTERM: Valence  \nTERM: Arousal  \nTERM: Prefrontal cortex  \nTERM: Amygdala  \nTERM: PET  \nTERM: Generalized anxiety disorder  \nTERM: NIMH  \nTERM: MH01232  \nTERM: MH59139  \nQ: What is the circumplex model of affect?  \nQ: How does the circumplex model explain amygd"
+    },
+    {
+     "doc": "doc_3d3561",
+     "valid": true,
+     "ok": true,
+     "fields": 17,
+     "issues": 7,
+     "q": 0.82,
+     "err": null,
+     "chars": 1190,
+     "lat": 1.57,
+     "raw": "\n\nONE: A high-level user prompt initiates an LLM to generate a detailed script and character descriptions.\nSUMMARY: The document presents a multistage pipeline for generating character-stable AI video stories, focusing on consistency in character behavior and world adherence through a combination of natural language processing and computer vision techniques.\nTOPIC: Character-stable AI video generation\nTERM: LLM\nTERM: NLP\nTERM: CV\nTERM: arXiv\nTERM: MCTS\nTERM: DEVIL\nTERM: CGI\nTERM: PSNR\nQ: What is the main contribution of the document?\n\nSEARCH: character-stable AI video\nTHEORY: Multistage pipeline for AI video consistency\nCONCEPT: Consistency in AI-generated narratives\nLATENT-PATTERN: Iterative refinement of character behavior and world adherence\nANCHOR: Character-stable AI video stories\nRECALLQ: What approach is used to ensure consistency in AI video stories?\nTENSION: Balancing creative f"
+    },
+    {
+     "doc": "doc_6a3530",
+     "valid": true,
+     "ok": true,
+     "fields": 17,
+     "issues": 6,
+     "q": 0.85,
+     "err": null,
+     "chars": 1318,
+     "lat": 1.59,
+     "raw": "\n\nONE: Body movements are an important communication medium through which affective states can be expressed.  \nSUMMARY: This document presents an approach for generating affective movements using Laban Effort and Shape components combined with hidden Markov modeling.  \nTOPIC: Affective movement generation  \nTERM: Laban Effort and Shape  \nTERM: Hidden Markov Models  \nTERM: LMA  \nTERM: HMM  \nTERM: Emotions  \nTERM: Kinematic representations  \nTERM: Discriminative models  \nTERM: Generative models  \nQ: How can affective movements be generated using Laban movement analysis and hidden Markov modeling?  \nSEARCH: affective movement generation  \nTHEORY: Laban movement analysis  \nCONCEPT: Emotion recognition through movement  \nLATENT-PATTERN: Use of structured movement components to represent emotional states  \nANCHOR: Laban Effort and Shape  \nRECALLQ: What method is used to generate affective move"
+    }
+   ]
+  }
+ }
+}

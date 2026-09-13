@@ -696,6 +696,15 @@ class AdaptiveLimiter:
         if reset_secs is not None:
             self._provider_rpd_reset_at = now + reset_secs
 
+    def park_provider_day(self, reset_secs: float) -> None:
+        """CLOUDFLARE-WORKERS-AI-V1: a provider BODY error (Cloudflare 3036 — daily free
+        allocation exhausted) declares the day spent even though no rate-limit HEADER did.
+        Reuse the provider-RPD-exhausted gate: `admit()` then returns REFUSE_PROVIDER_RPD
+        (zero HTTP, zero quota) until `reset_secs` elapses — a parked account, never a
+        retry-loop against a dead free allocation. Other lanes are untouched (per-lane)."""
+        with self._lock:
+            self._observe_provider_rpd_locked(limit=None, remaining=0, reset_secs=reset_secs)
+
     def _provider_rpd_exhausted_locked(self) -> bool:
         """True only when the provider itself reports zero daily requests left
         AND the current reset epoch has NOT elapsed (a stale zero past its reset

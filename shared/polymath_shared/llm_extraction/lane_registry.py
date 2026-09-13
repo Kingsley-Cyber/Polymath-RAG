@@ -229,7 +229,11 @@ def build_lanes() -> list[LaneInfo]:
             continue
         api_key_env = str(e.get("api_key_env") or "").strip()
         enabled = e.get("enabled") is not False
-        present = _credential_present(api_key_env)
+        # CLOUDFLARE-WORKERS-AI-V1: a lane whose URL needs an account id (account_id_env)
+        # is only reachable when BOTH the token AND the account id resolve — a missing
+        # account id parks the lane exactly like a missing token (surfaced, actionable).
+        acct_env = str(e.get("account_id_env") or "").strip()
+        present = _credential_present(api_key_env) and (not acct_env or _credential_present(acct_env))
         dedicated = bool(e.get("dedicated", False))
         in_pin = name in pinned_function
         function = pinned_function.get(name, GRAPH_EXTRACTION if not dedicated else "dedicated_unpinned")
@@ -243,7 +247,7 @@ def build_lanes() -> list[LaneInfo]:
         lanes.append(LaneInfo(
             name=name, function=function, api_key_env=api_key_env,
             account_id=api_key_env or f"anon:{name}", model=str(e.get("model") or ""),
-            provider_host=_host(e.get("url") or ""), dedicated=dedicated,
+            provider_host=_host(e.get("url") or e.get("url_template") or ""), dedicated=dedicated,
             role=_role_for(name, dedicated, in_pin), reachability=reach,
             credential_present=present, enabled=enabled,
             capacity=LaneCapacity(
