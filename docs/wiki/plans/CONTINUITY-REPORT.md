@@ -16,7 +16,7 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.262**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.263**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
 ## Latest checkpoint (2026-09-13T21:30 — COGNITIVE-ADAPTER-TRAIL-E2E-V1: E0/E1/E2 merged to main (PR #3, PR #5); E4 connector built + hermetically proven (11.261); E7 substack adapter LIVE on the same runtime (11.262); PR #6 (E4+E7) open; NEXT = merge PR #6 → production switch + bounce → official-MCP-client acceptance run of the Trail-free adapters; live Trail path gated on owner O1/O4)
 
@@ -59,7 +59,7 @@ Migration 0061 (`adapter_runs`/`adapter_steps`/`adapter_results`, additive — e
 evidence-bounded agent context, typed gaps/failures); `workers/adapter_step_worker.py` (lease loop; `POST /retrieve` EXPLORE rows
 or lane hits normalised; `/retrieve/plan`; graph rows; EXTERNAL_OPERATION = typed gap until E4); `orchestrator/api/adapter.py`
 + 7 `adapter_*` MCP tools; second manifest `polymath.knowledge_brief`. **Crash-resume proven live** on cinema retrieval.
-Not yet: a supervised slot (needs a registration heartbeat), production worktree + bounce.
+Supervised slot `adapter_step` added (11.263: registration + heartbeat). Not yet live: production worktree + bounce.
 
 ### Branch/merge truth after PR #3
 `main` protection = linear history: merge commits refused, rebase refused (the branch carries the production merge) → **squash-merged**
