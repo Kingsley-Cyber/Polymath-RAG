@@ -124,6 +124,9 @@ FLEET: list = [
     ("doc_parent_map2", "workers.doc_parent_map_stage_worker"),
     ("doc_parent_map3", "workers.doc_parent_map_stage_worker"),
     ("doc_parent_map4", "workers.doc_parent_map_stage_worker"),
+    # COGNITIVE-ADAPTER-V1 (ADR-0018, E2): durable automatic-step executor for adapter runs; health = its own
+    # `adapter_step` registration heartbeat (register_worker/heartbeat in the worker loop).
+    ("adapter_step", "workers.adapter_step_worker"),
 ]
 
 

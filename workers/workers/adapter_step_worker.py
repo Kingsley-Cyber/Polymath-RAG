@@ -27,11 +27,13 @@ from polymath_shared.adapter import service
 from polymath_shared.adapter.manifest import Manifest
 from polymath_shared.adapter.transitions import RunState
 from polymath_shared.db import tx
+from polymath_shared.execution import heartbeat, register_worker, worker_identity
 from polymath_shared.logging import configure_logging
 
 ORCH = os.environ.get("POLYMATH_ORCH_URL", "http://127.0.0.1:7200")
 HTTP_TIMEOUT_S = float(os.environ.get("POLYMATH_ADAPTER_HTTP_TIMEOUT_S", "120"))
 log = logging.getLogger("worker-adapter-step")
+WORKER_TYPE = "adapter_step"          # == the supervisor slot name
 
 
 # ─────────────────────────────────────────────────────────── executors
@@ -391,8 +393,16 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--crash-after", type=int, default=None, help="TEST HOOK: os._exit after N steps without releasing the lease")
     args = ap.parse_args(argv)
     configure_logging("worker-adapter-step")
+    # SUPERVISED SLOT (process_supervisor `adapter_step`): register + heartbeat like every fleet worker so the supervisor's
+    # health gate (a FRESH registration for worker_type == slot name) and the fence/quarantine paths see this process.
+    identity = worker_identity(WORKER_TYPE)
+    with tx() as conn:
+        register_worker(conn, identity)
+    log.info("registered %s (bundle %s)", identity["worker_id"], identity.get("execution_bundle_id"))
     while True:
         worked = process_one(args.owner, args.lease_s, max_steps=args.max_steps, crash_after=args.crash_after)
+        with tx() as conn:
+            heartbeat(conn, identity["worker_id"], processed_count=1 if worked else None)
         if worked is None:
             if args.once:
                 return 0
