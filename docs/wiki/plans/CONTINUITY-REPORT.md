@@ -16,9 +16,48 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.263**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.264**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-13T21:30 — COGNITIVE-ADAPTER-TRAIL-E2E-V1: E0/E1/E2 merged to main (PR #3, PR #5); E4 connector built + hermetically proven (11.261); E7 substack adapter LIVE on the same runtime (11.262); PR #6 (E4+E7) open; NEXT = merge PR #6 → production switch + bounce → official-MCP-client acceptance run of the Trail-free adapters; live Trail path gated on owner O1/O4)
+## Latest checkpoint (2026-09-13T22:30 — COGNITIVE-ADAPTER-TRAIL-E2E-V1: PRODUCTION RUNS MAIN'S TREE and the Trail-free E2E is LIVE and receipted through the official MCP client (11.264); E0–E7 slices merged (PRs #3, #5, #6, #7); the live Trail path waits on owner O1/O4 and Trail E3)
+
+**Fleet worktree `polymath-v4` is on branch `production` = origin/main @ 64a4732** (`main` itself is checked out in the owner's
+`polymath-v4-main` worktree — never `git checkout main` in the fleet worktree; `git checkout -B production origin/main` and reset it
+after each merge). Old head tagged `archive/evidence-first-v5-2026-09-13` (6b1edd5). The parked `scripts/verify_final_state.py`
+modification survived the switch (stash/pop). **24 healthy / ONE hash `d9d4abe107fa` / `/ready` true / 0 quarantines**; slot
+`adapter_step` supervised (registration heartbeat); `GET /adapter/list` live; the MCP server lists the seven `adapter_*` tools.
+Register 11.264. PR #8 (this checkpoint + the acceptance driver) → after it merges: `git -C polymath-v4 fetch && stash the parked
+verifier && git reset --hard origin/main && stash pop` (docs-only: no bounce).
+
+### Acceptance receipts (official `mcp` client, zero Trail calls, supervised-worker SIGKILL mid-run)
+- `polymath.knowledge_brief` run `adr_c7a2c85b42f5bdc26980934280faf35b` — completed 19:13:00Z; 45 real evidence refs; AGENT_REASON
+  issued/accepted; restart 18933→19679 resumed; invented citation refused (422 `cited ids not in context.evidence_refs`); result lineage
+  cites the submitted ids; 2 receipt hashes; unknowns preserved; result_hash `9ad5ec57…`.
+- `substack.article_development` run `adr_5b6804278cba4afd8bd610e7aadb434a` — completed 19:15:57Z; 116 evidence refs; 11 steps
+  (3 AGENT_REASON, 2 VALIDATE, 1 bounded loop); restart 19679→19960 resumed; 422 with schema + citation reasons; 10 receipts; output
+  cites 3 lineage ids; `external_operations: []`.
+- Plan acceptance: **1,2,3,7,8,9,10 met; second adapter through the same surface met; 4,5,6 NOT met** (Trail).
+
+### What the E2E still needs (owner + Trail)
+1. **O1** — Trail `config/v2/principals.yaml` + `secrets.yaml` entries for `polymath` (exact YAML in the E0 matrix / extraction) and
+   `TRAIL_SIGNAL_MCP_JWT_SECRET` (≥32 chars) or a minted `TRAIL_SIGNAL_MCP_TOKEN_POLYMATH` in the fleet env (then bounce).
+2. **O4** — Trail's stack up: `deploy/local/core.yaml` (Temporal :7233, Postgres :15433, VersityGW :7070, MinIO/HAProxy :19000 from
+   ADR-060 source pins), the daemon :8767 (`trail-signal-v2-daemon`) + discovery/static/extraction workers, SearXNG :8080 (external).
+   Then run `scripts/adapter_mcp_acceptance.py` for `trail.product_discovery`: it will reach D_discover/E_acquire live and stop at the
+   first PLANNED capability (G_gates, Trail C1) with a typed gap — the honest state until Trail E3.
+3. **Trail E3** through Trail's own graph: lowest admissible P6R (rank 100) — or P4W (112) per ADR-060's narrative (owner ordering
+   call O2) — then P7R/P8R → P9 (`system.status`) → C1 → C2/Q1 → C3. Items 5–6 need C2. Each node = a Trail build_run with live verification.
+4. **E6** — `research_*` equivalence baseline (no MCP-level test exists) → migrate into `trail.product_discovery` or thin wrappers.
+5. **Cinema `reconciling` runs** (63) wait on 6 failed predecessors (5 project_qdrant + 1 intake) — separate slice.
+
+### §6 traps this session added
+- **`main` may be held by another worktree** → the fleet worktree tracks it on `production`; a switch script must `set -e` after the checkout.
+- **`repo_guard --base` companion rule**: a TREE (scripts/) change needs a `scripts/README.md` change in the SAME PR; `wiki_worm` needs
+  `last_reviewed` on every plan; main = squash-only, stacked branches rebase with `--onto`.
+- **The `mcp` client (this version) returns `structured_content` (snake_case)**; `streamable_http_client` yields a 2-tuple.
+- **Trail's local checkout may be far behind origin/main** — audit the remote head in a detached worktree; the unpushed `codex/*` OCP
+  branches are not authority.
+
+## Prior checkpoint (2026-09-13T21:30 — COGNITIVE-ADAPTER-TRAIL-E2E-V1: E0/E1/E2 merged to main (PR #3, PR #5); E4 connector built + hermetically proven (11.261); E7 substack adapter LIVE on the same runtime (11.262); PR #6 (E4+E7) open; NEXT = merge PR #6 → production switch + bounce → official-MCP-client acceptance run of the Trail-free adapters; live Trail path gated on owner O1/O4)
 
 **Branch `handoff/unified-adapter-trail-e2e` (linked worktree `../polymath-v4-handoff`; the fleet runs from `polymath-v4` on
 `architecture/evidence-first-v5` and must never see a branch switch). Register 11.257.** Production fleet unchanged: 23 healthy /

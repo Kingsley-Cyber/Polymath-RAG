@@ -576,6 +576,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-13-cognitive-adapter-e7-substack.md", "md", None),
     ("tests/determinism/test_adapter_worker_registration.py", "py", None),
     ("docs/wiki/work-log/2026-09-13-cognitive-adapter-e2-worker-slot.md", "md", None),
+    ("docs/wiki/work-log/2026-09-13-cognitive-adapter-production-acceptance.md", "md", None),
+    ("scripts/adapter_mcp_acceptance.py", "py", None),
     ("docs/wiki/work-log/2026-09-12-control-plane-honesty-gaps.md", "md", None),
     ("docs/wiki/work-log/2026-09-11-f12-e2e-and-fixes.md", "md", None),
     ("frontend-v2/src/lib/chunkid.ts", "ts", None),
