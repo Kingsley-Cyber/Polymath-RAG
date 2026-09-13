@@ -48,7 +48,7 @@ def _cohort(corpus_id, limit):
         return out
 
 
-def _routed_infer(lane_selected, dispatch):
+def _routed_infer(lane_selected, dispatch, refused=None):
     """Round-robin infer closure. Records LANE SELECTION (at pick time) and
     PROVIDER HTTP DISPATCH (only when the request actually reached the network)
     as SEPARATE counters — a selection is not a dispatch (GROQ-MAP-CONTROL-
@@ -60,7 +60,7 @@ def _routed_infer(lane_selected, dispatch):
     from polymath_shared.llm_extraction.client import LLMExtractionClient
     from polymath_shared.llm_extraction.pool import cloud_endpoints, stage_pin
     from polymath_shared.document_profile.map_prompt import build_map_prompt
-    from workers.doc_parent_map_worker import MapInferError
+    from workers.doc_parent_map_worker import MapInferError, provider_family
     pin = stage_pin("doc_parent_map") or []
     eps = {e.name: e for e in cloud_endpoints() if e.name in pin}
     ep_names = [n for n in pin if n in eps]              # ordered; only endpoints that exist
@@ -74,31 +74,49 @@ def _routed_infer(lane_selected, dispatch):
     # (`limiter_key=map_groqN`, six distinct API keys) for real per-account backoff.
     _rr = itertools.count()
     _rr_lock = threading.Lock()
+    refused = refused if refused is not None else Counter()
 
     def infer(skeletons, is_combined=False, grounding=None):
         if not ep_names:
             raise RuntimeError("no active doc_parent_map lane")
-        with _rr_lock:
-            lane = ep_names[next(_rr) % len(ep_names)]
-            lane_selected[lane] += 1                 # SELECTION (pre-dispatch)
-        ep = eps[lane]
-        client = LLMExtractionClient("cloud", url=ep.url, model=ep.model, limiter_key=ep.limiter_key,
-                                     api_key=ep.api_key, cloud_opts=ep.cloud_opts, timeout_s=90.0, max_attempts=1)
-        client.endpoint_name = ep.name
         system, user = build_map_prompt(skeletons, grounding=grounding, is_combined=is_combined)
-        raw, err = client.complete_one(user, system_prompt=system, max_tokens=2400)
-        dispatched = getattr(client, "_last_http_dispatched", False)
-        if dispatched:
+        with _rr_lock:
+            start = next(_rr) % len(ep_names)
+        last_err, last_reason = "no_attempt", None
+        # LOCAL-REFUSAL FAILOVER (CLOUDFLARE-PMAP-V1): a lane whose limiter refuses admission
+        # (0 HTTP, 0 spend — e.g. a Groq account parked on its daily token budget) hands the
+        # batch to the NEXT lane in the ring instead of deferring it to the next pass — the
+        # same shape as the stage worker's in-run cross-lane failover. A DISPATCHED fault
+        # (429/5xx/transport) is NOT retried on another lane within the call: it defers,
+        # exactly as before, so a provider outage never doubles spend.
+        for step in range(len(ep_names)):
+            lane = ep_names[(start + step) % len(ep_names)]
+            ep = eps[lane]
             with _rr_lock:
-                dispatch[lane] += 1              # actual HTTP request that left the box
-        if err:
-            raise MapInferError(err, reason=getattr(client, "_last_refusal_reason", None),
-                                dispatched=dispatched)
-        return raw
+                lane_selected[lane] += 1                 # SELECTION (pre-dispatch)
+            infer.last_provider = provider_family(ep.url, ep.name)   # per-batch provenance
+            infer.last_model = ep.model
+            client = LLMExtractionClient("cloud", url=ep.url, model=ep.model, limiter_key=ep.limiter_key,
+                                         api_key=ep.api_key, cloud_opts=ep.cloud_opts, timeout_s=90.0, max_attempts=1)
+            client.endpoint_name = ep.name
+            raw, err = client.complete_one(user, system_prompt=system, max_tokens=2400)
+            dispatched = bool(getattr(client, "_last_http_dispatched", False))
+            if dispatched:
+                with _rr_lock:
+                    dispatch[lane] += 1              # actual HTTP request that left the box
+                if err:
+                    raise MapInferError(err, reason=getattr(client, "_last_refusal_reason", None),
+                                        dispatched=True)
+                return raw
+            with _rr_lock:                           # NOT dispatched = local refusal -> next lane
+                refused[lane] += 1
+            last_err = err or "LIMITER_REFUSED"
+            last_reason = getattr(client, "_last_refusal_reason", None)
+        raise MapInferError(last_err, reason=last_reason, dispatched=False)
     return infer
 
 
-def summarize(corpus, rows, lane_selected, dispatch, *, concurrency, wall_s) -> dict:
+def summarize(corpus, rows, lane_selected, dispatch, *, concurrency, wall_s, refused=None) -> dict:
     """Pure conservation summary (unit-testable). `+0 parents / 0 errored_docs`
     can no longer read as a clean provider run: limiter refusals (0 HTTP), HTTP
     faults, empty/invalid completions and per-doc internal errors are each
@@ -135,6 +153,7 @@ def summarize(corpus, rows, lane_selected, dispatch, *, concurrency, wall_s) -> 
         "concurrency": concurrency, "wall_s": round(wall_s, 1),
         "lane_selection": dict(lane_selected),          # endpoint picks (NOT dispatches)
         "provider_http_dispatch": dict(dispatch),       # requests that left the box
+        "lane_local_refusals": dict(refused or {}),     # 0-HTTP refusals that failed over
         "distinct_accounts_selected": len({l.replace("map_groq", "") for l in lane_selected}),
         "distinct_accounts_dispatched": len({l.replace("map_groq", "") for l in dispatch}),
         "PASS": complete_docs == len(rows) and internal == 0,
@@ -159,7 +178,8 @@ def main(argv=None) -> int:
     contract = map_compiler.MAP_COMPILER_VERSION
     lane_selected: Counter = Counter()      # endpoint SELECTIONS (pre-dispatch)
     dispatch: Counter = Counter()           # actual provider HTTP dispatches
-    infer = _routed_infer(lane_selected, dispatch)
+    refused: Counter = Counter()            # local refusals (0 HTTP) that failed over
+    infer = _routed_infer(lane_selected, dispatch, refused)
 
     client = dim = ct = coll = None
     if args.project:
@@ -232,7 +252,7 @@ def main(argv=None) -> int:
         for f in as_completed([ex.submit(_process_one, d) for d in cohort]):
             rows.append(f.result())
     summary = summarize(args.corpus, rows, lane_selected, dispatch,
-                        concurrency=concurrency, wall_s=time.time() - t0)
+                        concurrency=concurrency, wall_s=time.time() - t0, refused=refused)
     print(json.dumps(summary, indent=1))
     if args.out:
         Path(args.out).write_text(json.dumps({"summary": summary, "docs": rows}, indent=1, ensure_ascii=False))

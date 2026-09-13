@@ -239,7 +239,16 @@ def compile_maps(
             continue
         raw_alias = parts[1]
         signature = normalize_search_text(parts[2])
-        raw_hooks = "|".join(parts[3:]) if len(parts) > 3 else ""
+        tail = parts[3:]
+        raw_hooks = "|".join(tail) if tail else ""
+        # SEPARATOR TOLERANCE (CLOUDFLARE-PMAP-V1, measured 2026-09-13): a model that writes
+        # the three hooks as extra '|' fields (`…|hook1|hook2|hook3` — whole responses drift
+        # that way) still yields THREE hooks instead of one pipe-joined blob. Applies only when
+        # the tail has more than one field AND no ';' — a ';'-separated tail is byte-identical
+        # to before. Format tolerance only: alias/parent identity and the 3-hook schema are
+        # untouched (a short tail still flags `hooks_count:N`).
+        if len(tail) > 1 and ";" not in raw_hooks:
+            raw_hooks = ";".join(tail)
 
         alias, status = _resolve_alias(raw_alias, expected_by_number)
         if status != "ok":

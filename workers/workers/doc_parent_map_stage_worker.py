@@ -46,6 +46,7 @@ from psycopg import Connection
 from workers.doc_parent_map_worker import (
     MapInferError,
     MappingOutcome,
+    provider_family,
     run_document_mapping,
 )
 
@@ -139,6 +140,8 @@ def _make_pmap_infer(run_key: str):
             client = LLMExtractionClient("cloud", url=ep.url, model=ep.model, limiter_key=ep.limiter_key,
                                          api_key=ep.api_key, cloud_opts=ep.cloud_opts, timeout_s=90.0, max_attempts=1)
             client.endpoint_name = ep.name
+            infer.last_provider = provider_family(ep.url, ep.name)   # per-batch provenance (CLOUDFLARE-PMAP-V1)
+            infer.last_model = ep.model
             try:
                 raw, err = client.complete_one(user, system_prompt=system, max_tokens=MAX_MAP_TOKENS)
             except Exception as exc:  # noqa: BLE001 — a lane failure moves to the next account

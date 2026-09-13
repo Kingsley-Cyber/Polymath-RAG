@@ -38,6 +38,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping, Sequence
+from urllib.parse import urlparse
 
 from polymath_shared.document_profile import map_batches, map_compiler
 from polymath_shared.document_profile.grounding import DocumentGroundingContextV1
@@ -72,6 +73,22 @@ class MapInferError(RuntimeError):
         self.error_class = error_class
         self.reason = reason
         self.dispatched = dispatched
+
+
+_PROVIDER_FAMILIES = (("groq.com", "groq"), ("openrouter.ai", "openrouter"), ("cloudflare.com", "cloudflare"),
+                      ("googleapis.com", "gemini"), ("siliconflow", "siliconflow"), ("nvidia.com", "nvidia"))
+
+
+def provider_family(url: str | None, name: str | None = None) -> str | None:
+    """The provider FAMILY label persisted on maps/batches (`groq`, `openrouter`,
+    `cloudflare`, ...), derived from the lane's endpoint host — never a lane name, so a
+    multi-provider pMAP pool (CLOUDFLARE-PMAP-V1) labels each batch with the provider that
+    actually served it. Pure; unknown hosts fall back to the host, then the lane name."""
+    host = (urlparse(url or "").hostname or "").lower()
+    for needle, family in _PROVIDER_FAMILIES:
+        if needle in host:
+            return family
+    return host or (name or None)
 
 
 @dataclass
@@ -379,6 +396,13 @@ def run_document_mapping(
             conn, doc_id=doc_id, map_contract=map_contract,
             parent_ids=[s.parent_id for s in manifest.skeletons]))
 
+    def _batch_labels() -> tuple[str | None, str | None]:
+        # PROVENANCE (CLOUDFLARE-PMAP-V1): an infer boundary over a multi-provider pool
+        # exposes the lane that served THIS call (`last_provider` / `last_model`, set before
+        # dispatch); a plain closure or test fake falls back to the run-level labels.
+        return (getattr(infer, "last_provider", None) or provider,
+                getattr(infer, "last_model", None) or model)
+
     for batch in plan.batches:
         batch_aliases = list(batch.aliases)
         for _attempt in range(max_attempts):
@@ -407,6 +431,7 @@ def run_document_mapping(
                 except TypeError:
                     raw = infer(skels)  # a fake without the keyword
             except MapInferError as exc:
+                b_provider, b_model = _batch_labels()
                 # LOCAL refusal (0 HTTP, 0 provider quota) vs a DISPATCHED
                 # provider/transport fault — accounted separately.
                 if exc.dispatched:
@@ -425,7 +450,7 @@ def run_document_mapping(
                 with tx() as conn:
                     record_batch_result(conn, batch_id=batch.batch_hash, status="partial",
                                         valid_count=0, last_error=terminal,
-                                        provider=provider, model=model)
+                                        provider=b_provider, model=b_model)
                 # RETRY POLICY (GROQ-MAP-CONTROL-PLANE-REPAIR-V1 Phase 11): a local
                 # refusal (family/breaker/RPD cooldown) will not clear inside this
                 # tight loop, and re-hammering a just-429'd account only reopens the
@@ -434,6 +459,7 @@ def run_document_mapping(
                 # batch stays claimable; already-mapped parents are never re-inferred).
                 break
             except Exception as exc:  # an untyped fault (e.g. a test fake) — dispatched
+                b_provider, b_model = _batch_labels()
                 n_dispatch += 1
                 n_httpfail += 1
                 errors.append(f"{batch.batch_hash[:12]}:{type(exc).__name__}")
@@ -442,8 +468,9 @@ def run_document_mapping(
                         conn, batch_id=batch.batch_hash, status="partial", valid_count=0,
                         last_error=classify_terminal_state(dispatched=True,
                                                            error_class=type(exc).__name__),
-                        provider=provider, model=model)
+                        provider=b_provider, model=b_model)
                 break  # defer (see above) — do not spin the same batch
+            b_provider, b_model = _batch_labels()
             # A returned completion is a dispatched 2xx (complete_one raises on
             # non-2xx). Classify its yield against what THIS call requested.
             n_dispatch += 1
@@ -465,7 +492,7 @@ def run_document_mapping(
                 persist_maps(conn, doc_id=doc_id, corpus_id=corpus_id, map_contract=map_contract,
                              batch_id=batch.batch_hash, maps=valid_here,
                              source_text_hash_by_alias=text_hash_by_alias,
-                             provider=provider, model=model)
+                             provider=b_provider, model=b_model)
                 still = active_parent_ids(conn, doc_id=doc_id, map_contract=map_contract,
                                           parent_ids=[by_alias[a].parent_id for a in batch_aliases])
                 mapped_all = all(by_alias[a].parent_id in still for a in batch_aliases)
@@ -479,7 +506,7 @@ def run_document_mapping(
                                     status=("done" if mapped_all else "partial"),
                                     valid_count=len(still), raw_response_hash=result.raw_response_hash,
                                     last_error=(None if mapped_all else terminal),
-                                    provider=provider, model=model)
+                                    provider=b_provider, model=b_model)
             if mapped_all:
                 break
             # RETRY POLICY (Phase 11): only a PARTIAL completion earns another

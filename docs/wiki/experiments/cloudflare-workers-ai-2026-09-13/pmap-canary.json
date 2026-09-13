@@ -1,0 +1,513 @@
+{
+ "model": "@cf/qwen/qwen3-30b-a3b-fp8",
+ "lane_url_masked": "https://api.cloudflare.com/client/v4/accounts/<ACCOUNT_ID_2>/ai",
+ "max_tokens": 2400,
+ "cap": 15,
+ "contract": "map-compiler-v1",
+ "planner": "map-batches-v2",
+ "started_utc": "2026-09-13T06:42:30.276723+00:00",
+ "docs": [
+  "doc_554b59",
+  "doc_aba296",
+  "doc_63ba98"
+ ],
+ "arms": {
+  "no_think": {
+   "n_requests": 9,
+   "parents_requested": 135,
+   "parents_mapped": 135,
+   "mapped_pct": 100.0,
+   "cls": {
+    "COMPLETE": 9
+   },
+   "complete_pct": 100.0,
+   "empty": 0,
+   "errors": 0,
+   "rejected_lines": 0,
+   "quality_flags": {
+    "generic_hooks_dropped:1": 1,
+    "hooks_count:2": 1,
+    "hooks_count:1": 75
+   },
+   "lat_mean_s": 2.3,
+   "lat_p95_s": 2.5,
+   "rows": [
+    {
+     "doc": "doc_554b59",
+     "batch": "a5a6c564f370",
+     "requested": 15,
+     "mapped": 15,
+     "missing": [],
+     "cls": "COMPLETE",
+     "err": null,
+     "finish": "stop",
+     "dispatched": true,
+     "lat_s": 2.51,
+     "chars": 1012,
+     "rejected_lines": 0,
+     "rejected_reasons": {},
+     "quality_flags": {
+      "generic_hooks_dropped:1": 1,
+      "hooks_count:2": 1
+     },
+     "duplicate_aliases": 0,
+     "unknown_aliases": 0,
+     "sample_maps": [
+      "MAP|P0001|epub file contents and internal links|epub;html;part0000",
+      "MAP|P0002|praise for joseph sugarman's previous books|joseph;book;praise"
+     ],
+     "raw_head": "\n\nMAP|P0001|epub file contents and internal links|epub;html;part0000\nMAP|P0002|praise for joseph sugarman's previous books|joseph;book;praise\nMAP|P0003|adweek copywriting handbook cover image|adweek;jpeg;sugarman\nMAP|P0004|copyright and publication information|copyright;wiley;publisher\nMAP|P0005|seminar participant testimonials|seminar;part0005;iii\nMAP|P0006|adweek and brandweek books description|"
+    },
+    {
+     "doc": "doc_554b59",
+     "batch": "aaa368b16988",
+     "requested": 15,
+     "mapped": 15,
+     "missing": [],
+     "cls": "COMPLETE",
+     "err": null,
+     "finish": "stop",
+     "dispatched": true,
+     "lat_s": 2.47,
+     "chars": 1082,
+     "rejected_lines": 0,
+     "rejected_reasons": {},
+     "quality_flags": {
+      "hooks_count:1": 15
+     },
+     "duplicate_aliases": 0,
+     "unknown_aliases": 0,
+     "sample_maps": [
+      "MAP|P0016|preview of print ad limitations|preview|print|ad",
+      "MAP|P0017|general knowledge for copywriting|general|knowledge|copywriter"
+     ],
+     "raw_head": "\n\nMAP|P0016|preview of print ad limitations|preview|print|ad  \nMAP|P0017|general knowledge for copywriting|general|knowledge|copywriter  \nMAP|P0018|experiences as idea generators|experiences|ideas|computers  \nMAP|P0019|lateral thinking for creative solutions|lateral|thinking|ideas  \nMAP|P0020|dictionary as a creative tool|dictionary|tool|conceptualizing  \nMAP|P0021|experience of running a company|"
+    },
+    {
+     "doc": "doc_554b59",
+     "batch": "584e9127353f",
+     "requested": 15,
+     "mapped": 15,
+     "missing": [],
+     "cls": "COMPLETE",
+     "err": null,
+     "finish": "stop",
+     "dispatched": true,
+     "lat_s": 1.94,
+     "chars": 1196,
+     "rejected_lines": 0,
+     "rejected_reasons": {},
+     "quality_flags": {
+      "hooks_count:1": 15
+     },
+     "duplicate_aliases": 0,
+     "unknown_aliases": 0,
+     "sample_maps": [
+      "MAP|P0031|first draft of ad is often terrible|draft|copywriting|worry",
+      "MAP|P0032|purpose of graphic elements in ad|purpose|graphic|elements"
+     ],
+     "raw_head": "\n\nMAP|P0031|first draft of ad is often terrible|draft|copywriting|worry  \nMAP|P0032|purpose of graphic elements in ad|purpose|graphic|elements  \nMAP|P0033|first sentence's role in getting you to read|sentence|first|read  \nMAP|P0034|technique used by magazines in articles|technique|magazines|article  \nMAP|P0035|purpose of first sentence is to get you to read second|purpose|sentence|read  \nMAP|P0036"
+    },
+    {
+     "doc": "doc_aba296",
+     "batch": "fe3e5a0175bb",
+     "requested": 15,
+     "mapped": 15,
+     "missing": [],
+     "cls": "COMPLETE",
+     "err": null,
+     "finish": "stop",
+     "dispatched": true,
+     "lat_s": 2.37,
+     "chars": 1074,
+     "rejected_lines": 0,
+     "rejected_reasons": {},
+     "quality_flags": {
+      "hooks_count:1": 15
+     },
+     "duplicate_aliases": 0,
+     "unknown_aliases": 0,
+     "sample_maps": [
+      "MAP|P0001|document metadata and file details|pdf|cinema|effects",
+      "MAP|P0002|draft sound design document with page markers|draft|sound|design"
+     ],
+     "raw_head": "\n\nMAP|P0001|document metadata and file details|pdf|cinema|effects  \nMAP|P0002|draft sound design document with page markers|draft|sound|design  \nMAP|P0003|sound design concepts and musical elements|melody|harmony|tonal  \nMAP|P0004|foreword by David Sonnenschein|foreword|usc|mpse  \nMAP|P0005|preface and author background|preface|usc|mpse  \nMAP|P0006|sound design in film and MPSE recognition|mpse|ci"
+    },
+    {
+     "doc": "doc_aba296",
+     "batch": "ab77a8759867",
+     "requested": 15,
+     "mapped": 15,
+     "missing": [],
+     "cls": "COMPLETE",
+     "err": null,
+     "finish": "stop",
+     "dispatched": true,
+     "lat_s": 2.01,
+     "chars": 1088,
+     "rejected_lines": 0,
+     "rejected_reasons": {},
+     "quality_flags": {},
+     "duplicate_aliases": 0,
+     "unknown_aliases": 0,
+     "sample_maps": [
+      "MAP|P0016|director's ignorance of sound design process|director;pddgt;utoctors",
+      "MAP|P0017|sound map creation and initial draft|sound;map;seq"
+     ],
+     "raw_head": "\n\nMAP|P0016|director's ignorance of sound design process|director;pddgt;utoctors  \nMAP|P0017|sound map creation and initial draft|sound;map;seq  \nMAP|P0018|examples of sound effects and their emotional impact|sound;gallop;coyotes  \nMAP|P0019|linking visual and sound maps|map;sound;jsf  \nMAP|P0020|advice for sound professionals in film production|sound;director;whe  \nMAP|P0021|next step in sound de"
+    },
+    {
+     "doc": "doc_aba296",
+     "batch": "56cd70827244",
+     "requested": 15,
+     "mapped": 15,
+     "missing": [],
+     "cls": "COMPLETE",
+     "err": null,
+     "finish": "stop",
+     "dispatched": true,
+     "lat_s": 1.99,
+     "chars": 1096,
+     "rejected_lines": 0,
+     "rejected_reasons": {},
+     "quality_flags": {},
+     "duplicate_aliases": 0,
+     "unknown_aliases": 0,
+     "sample_maps": [
+      "MAP|P0031|sound design techniques in lcrs system|sound;design;lcrs",
+      "MAP|P0032|documentary on tee and sound optimization|sound;tee;amg"
+     ],
+     "raw_head": "\n\nMAP|P0031|sound design techniques in lcrs system|sound;design;lcrs  \nMAP|P0032|documentary on tee and sound optimization|sound;tee;amg  \nMAP|P0033|creating sound design with effects and filters|sound;effects;lcrs  \nMAP|P0034|importance of creativity in sound process|sound;creativity;process  \nMAP|P0035|language of sound imagery and perception|sound;imagery;sc scream  \nMAP|P0036|expanding creativ"
+    },
+    {
+     "doc": "doc_63ba98",
+     "batch": "0a7a8b0c8d11",
+     "requested": 15,
+     "mapped": 15,
+     "missing": [],
+     "cls": "COMPLETE",
+     "err": null,
+     "finish": "stop",
+     "dispatched": true,
+     "lat_s": 2.84,
+     "chars": 1008,
+     "rejected_lines": 0,
+     "rejected_reasons": {},
+     "quality_flags": {
+      "hooks_count:1": 15
+     },
+     "duplicate_aliases": 0,
+     "unknown_aliases": 0,
+     "sample_maps": [
+      "MAP|P0556|ADRG decision IR contract hardening constraints|ADRG|decision|contract",
+      "MAP|P0557|CPCS closure matrix details|CPCS|closure|matrix"
+     ],
+     "raw_head": "\n\nMAP|P0556|ADRG decision IR contract hardening constraints|ADRG|decision|contract\nMAP|P0557|CPCS closure matrix details|CPCS|closure|matrix\nMAP|P0558|Proposed agent build packet operations|ADRG|decision|compiler\nMAP|P0559|ADRG initial procedures and projection|ADRG|projection|compiler\nMAP|P0560|ADRG decision process flow|ADRG|decision|strategy\nMAP|P0561|ADRG research coverage and closure state|AD"
+    },
+    {
+     "doc": "doc_63ba98",
+     "batch": "b42b92f19926",
+     "requested": 15,
+     "mapped": 15,
+     "missing": [],
+     "cls": "COMPLETE",
+     "err": null,
+     "finish": "stop",
+     "dispatched": true,
+     "lat_s": 2.27,
+     "chars": 1134,
+     "rejected_lines": 0,
+     "rejected_reasons": {},
+     "quality_flags": {},
+     "duplicate_aliases": 0,
+     "unknown_aliases": 0,
+     "sample_maps": [
+      "MAP|P0571|Failure-directed reasoning with repair and validator|repair;validator;json",
+      "MAP|P0572|Planner metrics and evidence selection|evidence;selected;decision"
+     ],
+     "raw_head": "\n\nMAP|P0571|Failure-directed reasoning with repair and validator|repair;validator;json\nMAP|P0572|Planner metrics and evidence selection|evidence;selected;decision\nMAP|P0573|Minimal canonical ADRG graph example|ADRg;graph;canonical\nMAP|P0574|Current implementation vs ADRG closure|ADRG;closure;reuse\nMAP|P0575|Comparison of reasoning strategies with ADRG|decision;cost;ADRG\nMAP|P0576|Director decision"
+    },
+    {
+     "doc": "doc_63ba98",
+     "batch": "b2683e8ac776",
+     "requested": 15,
+     "mapped": 15,
+     "missing": [],
+     "cls": "COMPLETE",
+     "err": null,
+     "finish": "stop",
+     "dispatched": true,
+     "lat_s": 2.06,
+     "chars": 1012,
+     "rejected_lines": 0,
+     "rejected_reasons": {},
+     "quality_flags": {
+      "hooks_count:1": 15
+     },
+     "duplicate_aliases": 0,
+     "unknown_aliases": 0,
+     "sample_maps": [
+      "MAP|P0586|Semantic representation specification for active content|active|atom|prevent",
+      "MAP|P0587|External audit memory management|audit|history|vfx"
+     ],
+     "raw_head": "\n\nMAP|P0586|Semantic representation specification for active content|active|atom|prevent\nMAP|P0587|External audit memory management|audit|history|vfx\nMAP|P0588|Node and edge types for semantic representation|node|edge|vfx\nMAP|P0589|Failure-directed refinement process|error|patch|localization\nMAP|P0590|Key types for content identification|key|search|audit\nMAP|P0591|Authority and reasoning state sum"
+    }
+   ],
+   "provider_usage": {
+    "attempts": 9,
+    "tokens_in": 21363,
+    "tokens_out": 3076,
+    "http_200": 9,
+    "http_429": 0
+   }
+  },
+  "thinking_on": {
+   "n_requests": 9,
+   "parents_requested": 135,
+   "parents_mapped": 135,
+   "mapped_pct": 100.0,
+   "cls": {
+    "COMPLETE": 9
+   },
+   "complete_pct": 100.0,
+   "empty": 0,
+   "errors": 0,
+   "rejected_lines": 0,
+   "quality_flags": {
+    "generic_hooks_dropped:1": 2,
+    "hooks_count:2": 2,
+    "hooks_count:1": 45
+   },
+   "lat_mean_s": 8.4,
+   "lat_p95_s": 9.9,
+   "rows": [
+    {
+     "doc": "doc_554b59",
+     "batch": "a5a6c564f370",
+     "requested": 15,
+     "mapped": 15,
+     "missing": [],
+     "cls": "COMPLETE",
+     "err": null,
+     "finish": "stop",
+     "dispatched": true,
+     "lat_s": 10.69,
+     "chars": 1643,
+     "rejected_lines": 0,
+     "rejected_reasons": {},
+     "quality_flags": {
+      "generic_hooks_dropped:1": 1,
+      "hooks_count:2": 1
+     },
+     "duplicate_aliases": 0,
+     "unknown_aliases": 0,
+     "sample_maps": [
+      "MAP|P0001|Table of contents with chapter links and identifiers|Adweek;table of contents;chapter links",
+      "MAP|P0002|Praise for Joseph Sugarman's previous books|Joseph Sugarman;praise;previous books"
+     ],
+     "raw_head": "\n\nMAP|P0001|Table of contents with chapter links and identifiers|Adweek;table of contents;chapter links  \nMAP|P0002|Praise for Joseph Sugarman's previous books|Joseph Sugarman;praise;previous books  \nMAP|P0003|Image of Adweek Copywriting Handbook cover with Joseph Sugarman's name|Adweek Handbook;Joseph Sugarman;cover image  \nMAP|P0004|Copyright and publisher information for the book|John Wiley & S"
+    },
+    {
+     "doc": "doc_554b59",
+     "batch": "aaa368b16988",
+     "requested": 15,
+     "mapped": 15,
+     "missing": [],
+     "cls": "COMPLETE",
+     "err": null,
+     "finish": "stop",
+     "dispatched": true,
+     "lat_s": 8.72,
+     "chars": 1626,
+     "rejected_lines": 0,
+     "rejected_reasons": {},
+     "quality_flags": {},
+     "duplicate_aliases": 0,
+     "unknown_aliases": 0,
+     "sample_maps": [
+      "MAP|P0016|Comparison of print ad limitations versus internet and TV interactivity|print ad;internet;TV",
+      "MAP|P0017|Importance of general knowledge in copywriting preparation|general knowledge;copywriting;preparation"
+     ],
+     "raw_head": "\n\nMAP|P0016|Comparison of print ad limitations versus internet and TV interactivity|print ad;internet;TV  \nMAP|P0017|Importance of general knowledge in copywriting preparation|general knowledge;copywriting;preparation  \nMAP|P0018|Role of experiences in generating ideas through mental processes|experiences;ideas;mental processes  \nMAP|P0019|Edward de Bono's lateral thinking for creative problem-sol"
+    },
+    {
+     "doc": "doc_554b59",
+     "batch": "584e9127353f",
+     "requested": 15,
+     "mapped": 15,
+     "missing": [],
+     "cls": "COMPLETE",
+     "err": null,
+     "finish": "stop",
+     "dispatched": true,
+     "lat_s": 9.9,
+     "chars": 1486,
+     "rejected_lines": 0,
+     "rejected_reasons": {},
+     "quality_flags": {
+      "hooks_count:1": 15
+     },
+     "duplicate_aliases": 0,
+     "unknown_aliases": 0,
+     "sample_maps": [
+      "MAP|P0031|first draft quality in copywriting|draft|copywriting|worry",
+      "MAP|P0032|graphic elements purpose in advertising|graphic elements|ad design|copywriting techniques"
+     ],
+     "raw_head": "\n\nMAP|P0031|first draft quality in copywriting|draft|copywriting|worry  \nMAP|P0032|graphic elements purpose in advertising|graphic elements|ad design|copywriting techniques  \nMAP|P0033|first sentence function in ads|first sentence|advertising techniques|reading engagement  \nMAP|P0034|magazine article writing techniques|magazine techniques|article writing|copywriting  \nMAP|P0035|next sentence purpo"
+    },
+    {
+     "doc": "doc_aba296",
+     "batch": "fe3e5a0175bb",
+     "requested": 15,
+     "mapped": 15,
+     "missing": [],
+     "cls": "COMPLETE",
+     "err": null,
+     "finish": "stop",
+     "dispatched": true,
+     "lat_s": 7.62,
+     "chars": 1630,
+     "rejected_lines": 0,
+     "rejected_reasons": {},
+     "quality_flags": {
+      "generic_hooks_dropped:1": 1,
+      "hooks_count:2": 1
+     },
+     "duplicate_aliases": 0,
+     "unknown_aliases": 0,
+     "sample_maps": [
+      "MAP|P0001|Document metadata and introductory details about sound design in cinema|pdf;cinema;power",
+      "MAP|P0002|Draft sections and preliminary content of the sound design document|draft;sound design;pages"
+     ],
+     "raw_head": "\n\nMAP|P0001|Document metadata and introductory details about sound design in cinema|pdf;cinema;power  \nMAP|P0002|Draft sections and preliminary content of the sound design document|draft;sound design;pages  \nMAP|P0003|Exploration of musical elements like melody and harmony in sound design|melody;harmony;tonal center  \nMAP|P0004|Foreword section discussing the author's background and contributions|"
+    },
+    {
+     "doc": "doc_aba296",
+     "batch": "ab77a8759867",
+     "requested": 15,
+     "mapped": 15,
+     "missing": [],
+     "cls": "COMPLETE",
+     "err": null,
+     "finish": "stop",
+     "dispatched": true,
+     "lat_s": 8.14,
+     "chars": 1367,
+     "rejected_lines": 0,
+     "rejected_reasons": {},
+     "quality_flags": {
+      "hooks_count:1": 15
+     },
+     "duplicate_aliases": 0,
+     "unknown_aliases": 0,
+     "sample_maps": [
+      "MAP|P0016|Discusses director's role and muzak in sound design|director|muzak|pddgt",
+      "MAP|P0017|Describes first draft of sound map with SEQ notation|sound map|seq|design"
+     ],
+     "raw_head": "\n\nMAP|P0016|Discusses director's role and muzak in sound design|director|muzak|pddgt  \nMAP|P0017|Describes first draft of sound map with SEQ notation|sound map|seq|design  \nMAP|P0018|Examples of sound effects for character reactions|sound effects|coyotes|gallop  \nMAP|P0019|Instructions for linking sounds to visual maps|sound map[jsf]|you|maps  \nMAP|P0020|Advice for sound editors on Star Trek produ"
+    },
+    {
+     "doc": "doc_aba296",
+     "batch": "56cd70827244",
+     "requested": 15,
+     "mapped": 15,
+     "missing": [],
+     "cls": "COMPLETE",
+     "err": null,
+     "finish": "stop",
+     "dispatched": true,
+     "lat_s": 6.38,
+     "chars": 1371,
+     "rejected_lines": 0,
+     "rejected_reasons": {},
+     "quality_flags": {},
+     "duplicate_aliases": 0,
+     "unknown_aliases": 0,
+     "sample_maps": [
+      "MAP|P0031|LCRS system dialogue positioning and audio effects|LCRS;surround;dialogue",
+      "MAP|P0032|Sound spreading techniques in documentary production|TEE;AMG;LAMB"
+     ],
+     "raw_head": "\n\nMAP|P0031|LCRS system dialogue positioning and audio effects|LCRS;surround;dialogue  \nMAP|P0032|Sound spreading techniques in documentary production|TEE;AMG;LAMB  \nMAP|P0033|Step-by-step sound design with effects and processing|step-by-step;effects;reverb  \nMAP|P0034|Technical mastery and creative process in sound design|technical;creativity;process  \nMAP|P0035|Sound imagery and acoustic similar"
+    },
+    {
+     "doc": "doc_63ba98",
+     "batch": "0a7a8b0c8d11",
+     "requested": 15,
+     "mapped": 15,
+     "missing": [],
+     "cls": "COMPLETE",
+     "err": null,
+     "finish": "stop",
+     "dispatched": true,
+     "lat_s": 7.44,
+     "chars": 1171,
+     "rejected_lines": 0,
+     "rejected_reasons": {},
+     "quality_flags": {
+      "hooks_count:1": 15
+     },
+     "duplicate_aliases": 0,
+     "unknown_aliases": 0,
+     "sample_maps": [
+      "MAP|P0556|ADRG decision IR contract hardening with constraints|ADRG|decision|constraints",
+      "MAP|P0557|CPCS closure matrix for decision projection|CPCS|ADRGS|closure"
+     ],
+     "raw_head": "\n\nMAP|P0556|ADRG decision IR contract hardening with constraints|ADRG|decision|constraints  \nMAP|P0557|CPCS closure matrix for decision projection|CPCS|ADRGS|closure  \nMAP|P0558|ADRGS agent build packet compiler operations|ADRGS|decision|candidate  \nMAP|P0559|ADRGS initial procedures for decision projection|ADRGS|implement|projection  \nMAP|P0560|ADRGS process flow from problem to strategy|ADRGS|st"
+    },
+    {
+     "doc": "doc_63ba98",
+     "batch": "b42b92f19926",
+     "requested": 15,
+     "mapped": 15,
+     "missing": [],
+     "cls": "COMPLETE",
+     "err": null,
+     "finish": "stop",
+     "dispatched": true,
+     "lat_s": 9.84,
+     "chars": 1100,
+     "rejected_lines": 0,
+     "rejected_reasons": {},
+     "quality_flags": {},
+     "duplicate_aliases": 0,
+     "unknown_aliases": 0,
+     "sample_maps": [
+      "MAP|P0571|Failure-directed reasoning with repair example|repair;json;CPCS",
+      "MAP|P0572|Planner metrics and evaluation criteria|planner;CPCS;ID"
+     ],
+     "raw_head": "\n\nMAP|P0571|Failure-directed reasoning with repair example|repair;json;CPCS  \nMAP|P0572|Planner metrics and evaluation criteria|planner;CPCS;ID  \nMAP|P0573|Minimal ADRG graph example with schema|ADRG;schema;LLM  \nMAP|P0574|Comparison of CPCS and ADRG implementation states|CPCS;ADRG;reuse  \nMAP|P0575|Comparison of decision strategies with ADRG|ADRG;decision;cost  \nMAP|P0576|Director decision and ca"
+    },
+    {
+     "doc": "doc_63ba98",
+     "batch": "b2683e8ac776",
+     "requested": 15,
+     "mapped": 15,
+     "missing": [],
+     "cls": "COMPLETE",
+     "err": null,
+     "finish": "stop",
+     "dispatched": true,
+     "lat_s": 6.8,
+     "chars": 1096,
+     "rejected_lines": 0,
+     "rejected_reasons": {},
+     "quality_flags": {},
+     "duplicate_aliases": 0,
+     "unknown_aliases": 0,
+     "sample_maps": [
+      "MAP|P0586|Semantic representation specifications for active content management|active;atom;refs",
+      "MAP|P0587|External audit memory management strategies|vog;branches;history"
+     ],
+     "raw_head": "\n\nMAP|P0586|Semantic representation specifications for active content management|active;atom;refs  \nMAP|P0587|External audit memory management strategies|vog;branches;history  \nMAP|P0588|Node and edge type definitions for semantic graphs|operation;types;vfx  \nMAP|P0589|Failure detection and repair processes|error;patch;localization  \nMAP|P0590|Key types for content identification|key;search;count "
+    }
+   ],
+   "provider_usage": {
+    "attempts": 9,
+    "tokens_in": 21327,
+    "tokens_out": 12349,
+    "http_200": 9,
+    "http_429": 0
+   }
+  }
+ }
+}

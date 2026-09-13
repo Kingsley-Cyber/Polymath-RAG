@@ -2,8 +2,8 @@
 change_id: CLOUDFLARE-WORKERS-AI-V1
 date: 2026-09-13
 last_reviewed: 2026-09-13
-status: qualified PROMOTE (both functions) — kept enabled:false in the commit; activate = enabled:true + fleet bounce; 5/6 lanes also await account ids
-architecture_impact: "Adds Cloudflare Workers AI as a supplemental provider family (6 lanes) over the EXISTING lane/pool/limiter abstraction. No existing provider changed; Parent-MAP untouched. Live only after a fleet bounce (shared/ changed)."
+status: qualified PROMOTE (extraction, profile, PARENT-MAP) — ACTIVATED 2026-09-13 (CLOUDFLARE-PMAP-V1): owner split 2 keys pMAP / 4 graph extraction / 0 profile; enabled:true + fleet bounce done; 5/6 lanes park until their account ids are supplied
+architecture_impact: "Adds Cloudflare Workers AI as a supplemental provider family (6 lanes) over the EXISTING lane/pool/limiter abstraction. No existing provider changed. 2026-09-13 owner reversal: two lanes join the Parent-MAP pool (CLOUDFLARE-PMAP-V1) after a production-path qualification; the compiler gained a hook-separator tolerance."
 ---
 
 # Cloudflare Workers AI — qualification (CLOUDFLARE-WORKERS-AI-V1)
@@ -62,6 +62,36 @@ carried per-lane as `think_suffix`.
 | fields populated | thinking-on 14–18 · **/no_think 17–36** |
 | **promotion decision** | **PROMOTE, `/no_think`** — reasoning does NOT help profiles: `/no_think` is faster, richer (more fields), and equal-or-higher quality. First canary FALSE-negatived on a harness bug (forced `json_mode` → the model returned a JSON error blob); corrected to text mode, it passes. |
 
+## PARENT-MAP (CLOUDFLARE-PMAP-V1, owner directive 2026-09-13: "qualify cloudflare for pmap")
+Reverses the earlier "Parent-MAP untouched" scope on the owner's word. Qualified with the PRODUCTION
+path end to end: `build_parent_skeletons` → `build_grounding_context` → `plan_batches(cap 15)` →
+`build_map_prompt` → `LLMExtractionClient.complete_one(max_tokens=2400)` (the stage worker's exact
+request shape) → `map_compiler.compile_maps` — on REAL unresolved cinema parents, nothing persisted.
+
+| field | value |
+| --- | --- |
+| model / lanes | @cf/qwen/qwen3-30b-a3b-fp8 — `cloudflare_map1` (account 1), `cloudflare_map2` (account 2); dedicated:true, pinned ONLY to `doc_parent_map`, TEXT mode, `map_batch_cap: 15` |
+| sample | 3 real cinema docs (Adweek Copywriting Handbook, Sound Design, CPCS handbook.html) × 3 batches × 15 parents = **135 parents per arm**, both arms on the SAME batches |
+| single-pass COMPLETE | **thinking-on 9/9 batches, 135/135 parents (100%)** · /no_think 9/9, 135/135 (100%) — Groq baseline (11.251) 98.8% |
+| empty / errors / rejected lines | **0 / 0 / 0** in both arms; `finish_reason=stop` on every call (no reasoning burn at 2400 for this task) |
+| latency mean / p95 | thinking-on 8.4 / 9.9 s · /no_think 2.3 / 2.5 s |
+| provider usage per request | thinking-on ~2.37k in / ~1.37k out · /no_think ~2.37k in / ~0.34k out (Groq compound-mini: ~4.0k in / ~2.1k out for the same batch size) |
+| signature quality | thinking-on writes Groq-like signatures ("Comparison of print ad limitations versus internet and TV interactivity"); /no_think is terse, lowercase ("preview of print ad limitations") |
+| hook-separator drift (measured) | whole responses drift to `…\|hook1\|hook2\|hook3` (pipes, not `;`): `hooks_count:1` on 45/135 maps thinking-on, 75/135 /no_think — Groq: 5/8,183 (<0.1%) |
+| format-reminder suffix probe | on the drifted batches a per-lane prompt reminder cured 1 of 2 (thinking-on) and 1 of 3 (/no_think) — it halves the drift, it does not remove it → REJECTED as the fix |
+| **fix adopted** | **compiler separator tolerance**: a `\|`-separated hook tail with no `;` compiles to three hooks (same `map_hash` as the `;` form); a `;` tail is byte-identical to before; short tails still flag `hooks_count:N` (schema unchanged, identity untouched). Unit-pinned in `test_parent_map_compiler.py`. |
+| **promotion decision** | **PROMOTE, thinking ON (`think_suffix: null`)** — parity on completeness (100% vs 98.8%), Groq-like signatures, one-third the drift of /no_think (now neutralised by the compiler), 4× the cost of /no_think but ~2× cheaper than Groq per 15-parent request. |
+
+**Capacity (why this matters):** Groq's binding limit is 100k tokens/day/org (~16 requests → ~240 parents/day/org).
+One Cloudflare Free account at ~53 neurons per thinking-on request ≈ 10k neurons/day ≈ 190 requests ≈
+**~2,800 parents/day per account** — an order of magnitude over a Groq org; the 3036 park handles exhaustion.
+
+**Provenance + failover shipped with it:** `run_document_mapping` now labels each batch with the provider
+FAMILY/model that served it (`infer.last_provider`/`last_model`; `provider_family()` from the endpoint host)
+— previously every backfill map was persisted as `groq/compound-mini` regardless of lane. The backfill's
+round-robin now fails a LOCAL refusal (0 HTTP, e.g. a TPD-parked Groq account) over to the next lane in the
+ring instead of deferring the batch; dispatched faults still defer (spend never doubles).
+
 ## Quota / error handling (`cloudflare_errors.py` + `limiter.park_provider_day`)
 - **3036 (daily free allocation exhausted)** → `DAILY_FREE_QUOTA_EXHAUSTED`: park the account
   until the next UTC reset via the provider-RPD-exhausted gate — `admit()` then refuses BEFORE
@@ -84,18 +114,18 @@ follow-up could skip `/infer_batch` for cloud lanes entirely.)
 
 ## Final architecture
 ```
-GRAPH EXTRACTION   existing local/gemini/openrouter/nvidia/siliconflow ring  +  cloudflare1..4 (thinking ON)
-DOCUMENT PROFILE   profile_groq1 + profile_fallback_openrouter               +  cloudflare_summary1..2 (/no_think)
-PARENT-MAP         UNCHANGED
+GRAPH EXTRACTION   existing local/gemini/openrouter/nvidia/siliconflow ring  +  cloudflare3..6 (accounts 3-6, thinking ON)
+DOCUMENT PROFILE   profile_groq1 + profile_fallback_openrouter               (0 Cloudflare — owner split 2026-09-13)
+PARENT-MAP         map_groq2..6 + map_fallback_openrouter                     +  cloudflare_map1..2 (accounts 1-2, thinking ON)
 ```
 
 ## Residual risks
 1. **Sample size n=3** per contract — the schema/compiler PASS is unambiguous, but yield-parity
    vs the primary is not established. Recommend a broader confirmation (≥20 docs) before leaning on
    these lanes for volume.
-2. **5/6 lanes parked** — only cloudflare2 has an account id; the rest activate when their
-   `CLOUDFLARE_ACCOUNT_ID_n` is set.
-3. **Parked in the commit (`enabled:false`), verdict PROMOTE.** `cloud_providers.json` is read LIVE but
+2. **5/6 lanes parked** — only account 2 (`cloudflare_map2`) has an account id; `cloudflare_map1` and
+   `cloudflare3..6` activate when their `CLOUDFLARE_ACCOUNT_ID_n` is set.
+3. **ACTIVATED 2026-09-13 (`enabled:true` + coordinated bounce; CLOUDFLARE-PMAP-V1).** Historical note: `cloud_providers.json` is read LIVE but
    `client.py` loads at boot — enabling now would make the running OLD-code fleet route to cloudflare2 and fail
    the unhandled 400 until a bounce. So activation is a COORDINATED step: flip `enabled:true` AND run
    `scripts/boot_polymath.sh` together (the files are not bundle members, so the fleet is not quarantined meanwhile).

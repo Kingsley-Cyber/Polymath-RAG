@@ -254,3 +254,38 @@ def test_claim_lease_recovery(tx):
     later = t0 + dt.timedelta(seconds=600)
     with tx() as conn:
         assert claim_batch(conn, batch_id=bid, owner="w3", now=later, lease_seconds=300) is True  # expired -> reclaim
+
+
+class _LabelledInfer:
+    """CLOUDFLARE-PMAP-V1: an infer boundary over a multi-provider pool exposes the lane that
+    served each call; the worker must persist THAT provider/model per batch."""
+    def __init__(self):
+        self.last_provider = "cloudflare"
+        self.last_model = "@cf/qwen/qwen3-30b-a3b-fp8"
+
+    def __call__(self, skels, is_combined=False, grounding=None):
+        return _all_lines(skels)
+
+
+def test_batch_provenance_follows_the_infer_lane_not_the_run_label(tx):
+    out = run_document_mapping(tx, run_id="run-s9", doc_id=DOC, corpus_id=CORPUS,
+                               parents=_parents(), infer=_LabelledInfer(),
+                               provider="groq", model="groq/compound-mini")   # run-level FALLBACK labels
+    assert out.complete and out.parents_mapped == 6
+    with tx() as conn:
+        maps = conn.execute("SELECT DISTINCT provider, model FROM document_parent_maps WHERE doc_id=%s AND active",
+                            (DOC,)).fetchall()
+        batches = conn.execute("SELECT DISTINCT provider, model FROM document_parent_map_batches WHERE doc_id=%s",
+                               (DOC,)).fetchall()
+    assert maps == [("cloudflare", "@cf/qwen/qwen3-30b-a3b-fp8")], maps
+    assert batches == [("cloudflare", "@cf/qwen/qwen3-30b-a3b-fp8")], batches
+
+
+def test_batch_provenance_falls_back_to_run_labels_for_a_plain_infer(tx):
+    out = run_document_mapping(tx, run_id="run-s9", doc_id=DOC, corpus_id=CORPUS,
+                               parents=_parents(), infer=_all_lines, provider="groq", model="groq/compound-mini")
+    assert out.complete
+    with tx() as conn:
+        maps = conn.execute("SELECT DISTINCT provider, model FROM document_parent_maps WHERE doc_id=%s AND active",
+                            (DOC,)).fetchall()
+    assert maps == [("groq", "groq/compound-mini")], maps

@@ -195,11 +195,53 @@ def test_extraction_lanes_not_promoted_without_passing_canary():
     # qualification report records a graph-extraction PROMOTE. Parked (enabled:false) needs
     # no report. This binds the config to the measured verdict.
     raw = json.loads(CONFIG.read_text())
-    ext = [e for e in raw["providers"] if e["name"] in {"cloudflare1", "cloudflare2", "cloudflare3", "cloudflare4"}]
-    assert len(ext) == 4
+    ext = [e for e in raw["providers"] if e["name"] in {"cloudflare3", "cloudflare4", "cloudflare5", "cloudflare6"}]
+    assert len(ext) == 4                      # owner split 2026-09-13: accounts 3-6 = extraction helpers
     enabled = [e for e in ext if e.get("enabled") is True]
     if enabled:
         doc = REPO / "docs" / "wiki" / "plans" / "CLOUDFLARE-WORKERS-AI-QUALIFICATION.md"
         assert doc.exists(), "extraction lanes enabled but no qualification report"
         low = doc.read_text().lower()
         assert "graph extraction" in low and "promote" in low and "do not promote" not in low
+
+
+# 13 ────────────────────────────────────────────────────────────────────────
+def test_owner_split_two_map_lanes_four_extraction_lanes():
+    """CLOUDFLARE-PMAP-V1 (owner 2026-09-13): 2 keys on Parent-MAP, 4 on graph extraction, 0 on
+    doc_profile. Map lanes are DEDICATED (never join the extraction ring), pinned ONLY to
+    doc_parent_map, TEXT mode (the MAP DSL is lines, not JSON), and carry the pool's cap."""
+    raw = json.loads(CONFIG.read_text())
+    cf = {e["name"]: e for e in raw["providers"] if e["name"].startswith("cloudflare")}
+    assert set(cf) == {"cloudflare_map1", "cloudflare_map2", "cloudflare3", "cloudflare4", "cloudflare5", "cloudflare6"}
+    maps = [cf["cloudflare_map1"], cf["cloudflare_map2"]]
+    assert [m["api_key_env"] for m in maps] == ["CLOUDFLARE_API_TOKEN_1", "CLOUDFLARE_API_TOKEN_2"]
+    for m in maps:
+        assert m["dedicated"] is True and m["structured"] == "text" and m["json_mode"] is False
+        assert m["map_batch_cap"] == 15                      # never raises the pool cap (MIN over lanes)
+    for n in ("cloudflare3", "cloudflare4", "cloudflare5", "cloudflare6"):
+        assert cf[n]["dedicated"] is False and cf[n]["structured"] == "json"
+    pins = raw["stage_pins"]
+    assert pins["doc_parent_map"][-2:] == ["cloudflare_map1", "cloudflare_map2"]
+    assert not any(n.startswith("cloudflare") for n in pins["doc_profile"])           # 0 on profile
+    for stage in ("parent_enrichment", "chat_compiler", "doc_profile"):
+        assert not ({"cloudflare_map1", "cloudflare_map2"} & set(pins.get(stage) or []))
+    # every lane has its own limiter family, keyed by the NEW lane names
+    import yaml
+    lim = yaml.safe_load((REPO / "config" / "extraction_models" / "limiter.yaml").read_text())
+    lanes = lim.get("providers") or lim.get("lanes") or lim   # limiter.yaml top-level key is `providers`
+    fams = {n: lanes[n]["family"] for n in cf}
+    assert len(set(fams.values())) == 6, fams
+
+
+# 14 ────────────────────────────────────────────────────────────────────────
+def test_map_lanes_not_promoted_without_a_parent_map_verdict():
+    """PROMOTION GATE for pMAP: cloudflare_map1..2 may be enabled ONLY if the qualification
+    report records a PARENT-MAP PROMOTE measured with the production prompt + compiler."""
+    raw = json.loads(CONFIG.read_text())
+    maps = [e for e in raw["providers"] if e["name"] in {"cloudflare_map1", "cloudflare_map2"}]
+    assert len(maps) == 2
+    if any(e.get("enabled") is True for e in maps):
+        doc = REPO / "docs" / "wiki" / "plans" / "CLOUDFLARE-WORKERS-AI-QUALIFICATION.md"
+        low = doc.read_text().lower()
+        assert "parent-map" in low and "promote" in low
+        assert "parent-map: do not promote" not in low

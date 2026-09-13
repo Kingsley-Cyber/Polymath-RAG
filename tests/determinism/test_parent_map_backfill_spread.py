@@ -9,6 +9,8 @@ import sys
 import types
 from collections import Counter
 
+import pytest
+
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 for p in (ROOT / "shared", ROOT / "workers", ROOT):
     if str(p) not in sys.path:
@@ -124,3 +126,107 @@ def test_summary_pass_only_when_complete_and_clean():
                       Counter({"map_groq1": 1}), concurrency=6, wall_s=1.0)
     assert s["PASS"] is True and s["maps_persisted"] == 15
     assert s["distinct_accounts_dispatched"] == 1
+
+
+# ── CLOUDFLARE-PMAP-V1: local-refusal failover + per-batch provenance ──────────────────
+def _multi_provider_pool(monkeypatch, behaviour):
+    """behaviour: lane name -> ("refuse", reason) | ("fault", err) | ("ok", raw)."""
+    import polymath_shared.llm_extraction.pool as pool
+    import polymath_shared.llm_extraction.client as client_mod
+    import polymath_shared.document_profile.map_prompt as map_prompt
+    urls = {"map_groq2": "https://api.groq.com/openai",
+            "cloudflare_map2": "https://api.cloudflare.com/client/v4/accounts/ACC/ai",
+            "map_fallback_openrouter": "https://openrouter.ai/api"}
+    models = {"map_groq2": "groq/compound-mini", "cloudflare_map2": "@cf/qwen/qwen3-30b-a3b-fp8",
+              "map_fallback_openrouter": "mistralai/mistral-small-2603"}
+    names = list(behaviour)
+    eps = [types.SimpleNamespace(name=n, url=urls[n], model=models[n], limiter_key=n, api_key="k", cloud_opts={})
+           for n in names]
+    monkeypatch.setattr(pool, "stage_pin", lambda stage: list(names))
+    monkeypatch.setattr(pool, "cloud_endpoints", lambda: list(eps))
+    monkeypatch.setattr(map_prompt, "build_map_prompt",
+                        lambda skeletons, is_combined=False, grounding=None: ("sys", "user"))
+    by_url = {urls[n]: behaviour[n] for n in names}
+
+    class _FakeClient:
+        def __init__(self, *a, **k):
+            self.kind, self.payload = by_url[k["url"]]
+            self.endpoint_name = None
+            self._last_refusal_reason = None
+            self._last_http_dispatched = False
+
+        def complete_one(self, user, system_prompt=None, max_tokens=0):
+            if self.kind == "refuse":                      # limiter said no: 0 HTTP
+                self._last_http_dispatched = False
+                self._last_refusal_reason = self.payload
+                return "", "LIMITER_REFUSED"
+            self._last_http_dispatched = True
+            if self.kind == "fault":                       # dispatched provider fault
+                return "", self.payload
+            return self.payload, None
+    monkeypatch.setattr(client_mod, "LLMExtractionClient", _FakeClient)
+
+
+def test_backfill_infer_fails_over_a_local_refusal_to_the_next_lane_and_labels_it(monkeypatch):
+    """A Groq account parked on its daily budget refuses admission (0 HTTP). The batch must
+    NOT be deferred to the next pass: the ring hands it to the next lane (Cloudflare), the
+    refusal is counted per lane, dispatch is counted on the lane that served, and the
+    provenance labels name the provider FAMILY that actually answered."""
+    mod = _load_backfill()
+    _multi_provider_pool(monkeypatch, {"map_groq2": ("refuse", "REFUSE_PROVIDER_RPD"),
+                                       "cloudflare_map2": ("ok", "MAP|P0001|sig|a;b;c"),
+                                       "map_fallback_openrouter": ("ok", "MAP|P0001|sig|a;b;c")})
+    sel, disp, ref = Counter(), Counter(), Counter()
+    infer = mod._routed_infer(sel, disp, ref)
+    raw = infer([{"alias": "P0001"}])                        # round-robin starts on map_groq2
+    assert raw == "MAP|P0001|sig|a;b;c"
+    assert ref == {"map_groq2": 1}                            # the refusal is VISIBLE, per lane
+    assert disp == {"cloudflare_map2": 1}                     # exactly one HTTP request left the box
+    assert sel == {"map_groq2": 1, "cloudflare_map2": 1}      # selections != dispatches
+    assert infer.last_provider == "cloudflare"                # family, never the lane name
+    assert infer.last_model == "@cf/qwen/qwen3-30b-a3b-fp8"
+
+
+def test_backfill_infer_all_lanes_refused_raises_undispatched(monkeypatch):
+    mod = _load_backfill()
+    from workers.doc_parent_map_worker import MapInferError
+    _multi_provider_pool(monkeypatch, {"map_groq2": ("refuse", "REFUSE_PROVIDER_RPD"),
+                                       "cloudflare_map2": ("refuse", "FAMILY_GATE"),
+                                       "map_fallback_openrouter": ("refuse", "REFUSE_PROVIDER_RPD")})
+    sel, disp, ref = Counter(), Counter(), Counter()
+    infer = mod._routed_infer(sel, disp, ref)
+    with pytest.raises(MapInferError) as ei:
+        infer([{"alias": "P0001"}])
+    assert ei.value.dispatched is False                       # 0 HTTP, 0 spend -> LIMITER_REFUSED terminal
+    assert sum(ref.values()) == 3 and disp == {}              # every lane tried once, none dispatched
+
+
+def test_backfill_infer_dispatched_fault_is_not_retried_on_another_lane(monkeypatch):
+    """A 429/5xx that COST a request defers (as before) — failover is for FREE refusals only,
+    so a provider outage never doubles spend."""
+    mod = _load_backfill()
+    from workers.doc_parent_map_worker import MapInferError
+    _multi_provider_pool(monkeypatch, {"map_groq2": ("fault", "HTTP_429"),
+                                       "cloudflare_map2": ("ok", "MAP|P0001|sig|a;b;c")})
+    sel, disp, ref = Counter(), Counter(), Counter()
+    infer = mod._routed_infer(sel, disp, ref)
+    with pytest.raises(MapInferError) as ei:
+        infer([{"alias": "P0001"}])
+    assert ei.value.dispatched is True and ei.value.error_class == "HTTP_429"
+    assert disp == {"map_groq2": 1} and ref == {}             # one paid request, no second lane
+    assert infer.last_provider == "groq"                      # the batch is labelled with the lane that FAILED
+
+
+def test_summary_surfaces_local_refusals_per_lane():
+    mod = _load_backfill()
+    s = mod.summarize("cinema", [], Counter(), Counter(), concurrency=6, wall_s=0.1,
+                      refused=Counter({"map_groq2": 4}))
+    assert s["lane_local_refusals"] == {"map_groq2": 4}
+
+
+def test_provider_family_is_derived_from_the_endpoint_host():
+    from workers.doc_parent_map_worker import provider_family
+    assert provider_family("https://api.groq.com/openai", "map_groq2") == "groq"
+    assert provider_family("https://api.cloudflare.com/client/v4/accounts/ACC/ai", "cloudflare_map2") == "cloudflare"
+    assert provider_family("https://openrouter.ai/api", "map_fallback_openrouter") == "openrouter"
+    assert provider_family("", "lane_x") == "lane_x"          # unknown -> lane name, never None-crash
