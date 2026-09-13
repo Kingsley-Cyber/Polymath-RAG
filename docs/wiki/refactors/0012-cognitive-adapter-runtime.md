@@ -18,4 +18,4 @@ last_touched: 2026-09-13
 | E4 | typed Trail connector (JWT principal, stateless JSON-RPC, strict builders, receipts, poll/resume, cancel, timeouts); worker discover + acquire/extract executors | DONE hermetic (live gated on O1/O4) | 11.261 — 8 unit + 2 stub-E2E tests |
 | E5 | `trail.product_discovery` end to end with real knowledge + real Trail operations | planned | — |
 | E6 | migrate/retire `research_*` after an equivalence proof (baseline harness first) | planned | — |
-| E7 | `substack.article_development` on the same runtime | planned | — |
+| E7 | `substack.article_development` on the same runtime — manifest, neutrality test, LIVE harness-agent run | DONE part 1 (official MCP-client run after the production switch) | 11.262 |

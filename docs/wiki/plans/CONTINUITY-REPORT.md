@@ -16,9 +16,9 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.261**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.262**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-13T21:00 — COGNITIVE-ADAPTER-TRAIL-E2E-V1: E0/E1/E2 done, PR #3 squash-merged, PR #5 (E2) open, E4 connector BUILT + hermetically proven (11.261; live proof gated on owner O1/O4); NEXT = production switch + bounce, then live E4/E5 once Trail's stack and the polymath principal exist)
+## Latest checkpoint (2026-09-13T21:30 — COGNITIVE-ADAPTER-TRAIL-E2E-V1: E0/E1/E2 merged to main (PR #3, PR #5); E4 connector built + hermetically proven (11.261); E7 substack adapter LIVE on the same runtime (11.262); PR #6 (E4+E7) open; NEXT = merge PR #6 → production switch + bounce → official-MCP-client acceptance run of the Trail-free adapters; live Trail path gated on owner O1/O4)
 
 **Branch `handoff/unified-adapter-trail-e2e` (linked worktree `../polymath-v4-handoff`; the fleet runs from `polymath-v4` on
 `architecture/evidence-first-v5` and must never see a branch switch). Register 11.257.** Production fleet unchanged: 23 healthy /
@@ -74,7 +74,13 @@ extraction → `trail_record` evidence; two-phase pending with progress persiste
 principal / refusals. Stub-daemon E2E proves the protocol, lineage (4 Trail operations) and cancel propagation. **Live E4 needs
 owner O1 (principal + secret alias YAML) and O4 (Trail stack: Temporal, Postgres :15433, VersityGW, MinIO, daemon :8767, SearXNG :8080).**
 
-### NEXT — production switch + bounce; then live E4/E5 when O1/O4 land; E3 Trail subgraph; E6/E7
+### E7 part 1 (11.262) in one paragraph
+`substack.article_development` (claim → mechanism → tension → counterargument → analogy → implications → narrative roles → article;
+two VALIDATE gates; one bounded gap loop through `gap_retrieve`) ran LIVE to `completed` on the unchanged runtime with real
+retrieval; the neutrality test pins that no runtime file branches on an adapter id or domain word. First attempt failed CLOSED
+(typed error at `graph`, no query source) → manifests now set `config.source` on every knowledge step.
+
+### NEXT — merge PR #6; production switch (tag → checkout main → bounce per §6 → verify /adapter/list + MCP tools) → official MCP-client run; then live Trail path when O1/O4 land; E3 Trail subgraph; E6 research_* migration
 1. **E4**: `shared/polymath_shared/adapter/trail_client.py` (typed connector over Trail's FastMCP streamable-HTTP `/mcp` with a
    Polymath JWT principal — owner action O1; tools discover.submit / crawl.submit / scrape.submit / extract.submit / operation.get /
    operation.command / result.page), `ExternalOperationReceiptV1` persisted per step, poll/resume by operation_id, cancel, timeouts;

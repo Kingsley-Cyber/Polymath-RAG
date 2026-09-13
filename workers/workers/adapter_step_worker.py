@@ -52,11 +52,14 @@ def _query_text(step: dict[str, Any], state: RunState, m: Manifest) -> str:
         v = _path({"input": state.input, "options": state.options}, src)
         if isinstance(v, str) and v.strip():
             return v.strip()
-    for k in ("question", "seed", "query", "signal"):
+    for k in ("question", "seed", "seed_idea", "query", "signal", "topic", "problem"):
         v = state.input.get(k)
         if isinstance(v, str) and v.strip():
             return v.strip()
-    raise ValueError("no query text in input (expected question/seed/query)")
+    for v in state.input.values():                      # last resort: the first non-empty string field of the domain input
+        if isinstance(v, str) and v.strip():
+            return v.strip()
+    raise ValueError("no query text in input (set config.source on the step, e.g. input.seed_idea)")
 
 
 def _corpus_ids(state: RunState) -> list[str]:
@@ -153,11 +156,35 @@ def exec_graph_expand(step: dict[str, Any], state: RunState, m: Manifest) -> ser
     return {"output": {"graph_rows": _trim_rows(rows), "graph_facts": len(out.get("graph_facts") or [])}, "evidence_refs": _refs_from_rows(rows)}
 
 
+def _present(node: Any, path: str) -> bool:
+    """Closed presence check over accepted outputs: `a.b`, and `list[].field` meaning EVERY element has a non-empty field."""
+    head, _, rest = path.partition(".")
+    if head.endswith("[]"):
+        seq = node.get(head[:-2]) if isinstance(node, dict) else None
+        return isinstance(seq, list) and bool(seq) and all(_present(x, rest) if rest else bool(x) for x in seq)
+    if not isinstance(node, dict) or head not in node:
+        return False
+    val = node[head]
+    return _present(val, rest) if rest else (val not in (None, "", [], {}))
+
+
 def exec_validate(step: dict[str, Any], state: RunState, m: Manifest) -> service.ExecOutcome:
+    """VALIDATE is closed and schema-free: corpus-scope presence and `require` paths over the accepted outputs
+    (`theses[].counterargument`, `article.citation_ids`, …). A failed requirement is a typed gap, never a guess."""
     cfg = m.step(step["step_id"]).get("config") or {}
-    if cfg.get("require_corpus") and not _corpus_ids(state):
-        return {"gap": {"code": "INPUT_SCOPE_MISSING", "message": "adapter requires corpus_ids"}}
-    return {"output": {"ok": True, "checked": ["input_schema"] + (["corpus_scope"] if cfg.get("require_corpus") else [])}}
+    checked = ["input_schema"]
+    if cfg.get("require_corpus"):
+        checked.append("corpus_scope")
+        if not _corpus_ids(state):
+            return {"gap": {"code": "INPUT_SCOPE_MISSING", "message": "adapter requires corpus_ids"}}
+    missing = []
+    for req in cfg.get("require") or []:
+        checked.append(req)
+        if not any(_present(out or {}, req) for out in state.outputs.values()):
+            missing.append(req)
+    if missing:
+        return {"gap": {"code": "VALIDATION_FAILED", "message": "required outputs missing: " + ", ".join(missing)}}
+    return {"output": {"ok": True, "checked": checked}}
 
 
 def exec_branch(step: dict[str, Any], state: RunState, m: Manifest) -> service.ExecOutcome:
