@@ -110,5 +110,10 @@ def test_both_scripts_still_run_dry_without_touching_anything():
         # the RUNNING interpreter (a worktree/CI has no .venv; the dry-run proof is interpreter-agnostic)
         r = subprocess.run([sys.executable, f"scripts/{script}"],
                            cwd=ROOT, capture_output=True, text=True, timeout=300)
-        assert r.returncode == 0, f"{script}: rc={r.returncode}\n{r.stdout[-800:]}{r.stderr[-800:]}"
-        assert "DRY RUN" in r.stdout, f"{script} did not announce a dry run"
+        out = r.stdout + r.stderr
+        # An EMPTY store (CI applies the migrations to a fresh Postgres) is refused BEFORE any work:
+        # "Retirement needs evidence" — that fail-closed refusal is itself a dry run that touched nothing.
+        empty_store_refusal = "REFUSING:" in out and "is empty" in out
+        assert r.returncode == 0 or (r.returncode == 1 and empty_store_refusal), \
+            f"{script}: rc={r.returncode}\n{r.stdout[-800:]}{r.stderr[-800:]}"
+        assert "DRY RUN" in r.stdout or empty_store_refusal, f"{script} did not announce a dry run"

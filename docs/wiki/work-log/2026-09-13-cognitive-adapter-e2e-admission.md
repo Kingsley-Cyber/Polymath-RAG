@@ -37,6 +37,10 @@ the §19 hold with the completed cinema backfill (11.255), the Cloudflare lanes 
   uses a stand-in `litellm` module when the SDK is not installed (CI installs none) — the subject is the bound-retry loop, whose
   assertions are unchanged. `test_document_profile_stage` (RED since 11.254 put summary lanes on doc_profile) is green again
   because 11.255 removed them.
+  Second CI round (c32e43e): the retirement dry-run scripts now RUN on CI but `retire_pronoun_facts.py` exits 1 on CI's
+  EMPTY migrated store with "REFUSING: `mentions` is empty … Retirement needs evidence" — its own fail-closed refusal,
+  which touched nothing. The test now accepts that explicit empty-store refusal as a dry-run outcome (rc 0, or rc 1 with the
+  refusal text); proven locally against BOTH the populated store and a freshly migrated empty database (60 migrations, 74 tables).
 
 ## Proof
 - Guards on the merged handoff worktree: `agent_preflight.py` ok, `repo_guard.py` ok, `wiki_worm.py --check` ok (recorded in the commit).
