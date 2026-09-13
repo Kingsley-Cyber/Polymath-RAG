@@ -27,9 +27,22 @@ the §19 hold with the completed cinema backfill (11.255), the Cloudflare lanes 
 - **scripts/scaffold_polymath_v4.py::TREE**: declare `docs/wiki/plans/COGNITIVE-ADAPTER-TRAIL-E2E-V1-PLAN.md`,
   `docs/wiki/plans/COGNITIVE-ADAPTER-TRAIL-E2E-V1-START-HERE.md` and this work-log. No ignore rules, no guard change.
 - **Register 11.257**, **CONTINUITY checkpoint** (E0 part 1).
+- **Plan files**: `last_reviewed: 2026-09-13` added to both frontmatters — `wiki_worm --check` requires it ("missing
+  last_reviewed"); content untouched.
+- **CI hygiene (determinism workflow RED on the production branch since ≤ 2026-09-12 18:44, never green for these tests)**:
+  `test_groq_routing::test_config_map_lanes_are_de_shared_from_the_profile_key` re-pinned to the current doc_parent_map pool
+  (the Groq ring + openrouter prefix is asserted exactly; the two Cloudflare map lanes admitted by 11.255 must be dedicated and
+  never use a Groq key — the de-sharing intent is unchanged); `test_retirement_proofs_not_vacuous` runs the dry-run scripts with
+  `sys.executable` instead of a hard-coded `.venv/bin/python` (absent in worktrees and CI); `test_synthesis_attempt_telemetry`
+  uses a stand-in `litellm` module when the SDK is not installed (CI installs none) — the subject is the bound-retry loop, whose
+  assertions are unchanged. `test_document_profile_stage` (RED since 11.254 put summary lanes on doc_profile) is green again
+  because 11.255 removed them.
 
 ## Proof
 - Guards on the merged handoff worktree: `agent_preflight.py` ok, `repo_guard.py` ok, `wiki_worm.py --check` ok (recorded in the commit).
+- Local: 47 green across `test_synthesis_attempt_telemetry` / `test_groq_routing` / `test_retirement_proofs_not_vacuous` /
+  `test_document_profile_stage` on the merged worktree (the 3 CI failures reproduced locally first: the retirement test needs a
+  `.venv` the worktree lacks; the pin test fails on the new lanes; the telemetry test only fails where litellm is absent).
 - PR #3 checks before this change: `guard` FAIL, `preflight` FAIL (undeclared files), `test` PASS, `validate` PASS. After the push the
   same workflows re-run on the merged branch; merge only when green (issue #4).
 - **Plan gate §2 (forensic hold) — reconciled, not bypassed**: the mandated audit was executed and recorded (11.253, `docs/wiki/experiments/pmap-forensic-audit-2026-09-13/`);

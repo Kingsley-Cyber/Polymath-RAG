@@ -107,8 +107,15 @@ def test_the_bound_retry_records_BOTH_attempts(monkeypatch, recorded):
     monkeypatch.setattr(UI, "_grounded_messages",
                         lambda *a, **k: [{"role": "user", "content": "q"}])
     monkeypatch.setattr(UI, "_prompt_stats", lambda *a, **k: {})
-    import litellm
-    monkeypatch.setattr(litellm, "completion", _completion)
+    # The subject is the bound-retry loop, not the provider SDK: CI installs no litellm, so a
+    # stand-in module carrying only `completion` keeps the test hermetic and real either way.
+    import types
+    try:
+        import litellm
+    except ModuleNotFoundError:
+        litellm = types.ModuleType("litellm")
+        monkeypatch.setitem(sys.modules, "litellm", litellm)
+    monkeypatch.setattr(litellm, "completion", _completion, raising=False)
 
     events = list(UI._litellm_generate("anthropic/deepseek-v4-flash-0731", "q", {}, [],
                                        None, None))

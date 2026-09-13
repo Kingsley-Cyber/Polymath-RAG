@@ -126,7 +126,13 @@ def test_config_map_lanes_are_de_shared_from_the_profile_key():
     d = json.loads((ROOT / "config/cloud_providers.json").read_text())
     eps = {e["name"]: e for e in d["providers"]}
     pin = d["stage_pins"]["doc_parent_map"]
-    assert pin == [f"map_groq{i}" for i in range(2, 7)] + ["map_fallback_openrouter"]
+    groq_ring = [f"map_groq{i}" for i in range(2, 7)] + ["map_fallback_openrouter"]
+    assert pin[: len(groq_ring)] == groq_ring
+    # CLOUDFLARE-PMAP-V1 (11.255): the owner added two DEDICATED Cloudflare map lanes to the pool;
+    # they are the ONLY admissible additions and never touch a Groq account key.
+    extra = pin[len(groq_ring):]
+    assert all(n.startswith("cloudflare_map") and eps[n]["dedicated"] is True for n in extra), extra
+    assert all(not eps[n]["api_key_env"].startswith("GROQ_") for n in extra)
     for i in range(2, 7):
         assert eps[f"map_groq{i}"]["model"] == "groq/compound-mini"
         assert eps[f"map_groq{i}"]["api_key_env"] == f"GROQ_API_KEY_{i}"

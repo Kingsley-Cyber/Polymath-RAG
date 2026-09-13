@@ -2,6 +2,7 @@
 change_id: COGNITIVE-ADAPTER-TRAIL-E2E-V1-START-HERE
 owner: governance
 owner_directive_date: 2026-09-13
+last_reviewed: 2026-09-13
 status: owner handoff
 architecture_impact: none by itself; executes the linked plan through normal repository admission
 ---

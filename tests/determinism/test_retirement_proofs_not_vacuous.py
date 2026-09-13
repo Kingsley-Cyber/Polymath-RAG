@@ -107,7 +107,8 @@ def test_the_pronoun_script_refuses_when_its_protection_set_is_empty():
 def test_both_scripts_still_run_dry_without_touching_anything():
     """Dry run is the default and must stay that way."""
     for script in ("retire_claim_sets.py", "retire_pronoun_facts.py"):
-        r = subprocess.run([str(ROOT / ".venv/bin/python"), f"scripts/{script}"],
+        # the RUNNING interpreter (a worktree/CI has no .venv; the dry-run proof is interpreter-agnostic)
+        r = subprocess.run([sys.executable, f"scripts/{script}"],
                            cwd=ROOT, capture_output=True, text=True, timeout=300)
         assert r.returncode == 0, f"{script}: rc={r.returncode}\n{r.stdout[-800:]}{r.stderr[-800:]}"
         assert "DRY RUN" in r.stdout, f"{script} did not announce a dry run"
