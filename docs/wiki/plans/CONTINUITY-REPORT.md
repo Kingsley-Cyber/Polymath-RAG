@@ -48,6 +48,18 @@ qualify 15/35/50 changing ONE variable (parents/request = `MAP_RELIABILITY_CAP`,
 - **Side effect (real progress):** cinema unresolved **6,693 → 4,658** (~2,035 parents mapped
   across the canary + qualification; idempotent, never re-purchased).
 
+### Phase 3 — within-document concurrency (11.252): c≤2, 429-adaptive; the ceiling is Groq RPM
+
+Disjoint parallel slices of one doc (no duplicate work / lease conflict — verified 0 both
+runs), batch size held at 15. **c=2 helps ONLY with RPM headroom** (doc FACS: 245 maps/min =
+1.74× vs 141, 23% 429). Under throttle the curve INVERTS (doc Directing-the-Story, 43% 429
+baseline): 429% 33→67→83→100 and maps/min 114→79→6→**0** as c goes 1→4 — concurrency amplifies
+the 429 storm. RPD was not exhausted (208 left); 429s are instant RPM/burst rejections. **The
+bottleneck across all three phases is aggregate Groq RPM (~4/account × 5 map accounts ≈ 20
+RPM), not batch size, not the local limiter.** Recommendation: bound within-doc concurrency at
+2 and make it 429-adaptive; the real throughput lever is provider capacity. Adaptive-concurrency
+in `run_document_mapping` is a deferred separate slice (workers/ edit + bounce).
+
 ### Open gates on cinema pMAP
 
 1. **Cinema backfill at the confirmed 15-cap is CLEARED but NOT launched** — 4,658 parents
