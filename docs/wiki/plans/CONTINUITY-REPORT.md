@@ -16,9 +16,44 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.255**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.256**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-13T08:20 — CLOUDFLARE-PMAP-V1 (11.255): owner reversed "Parent-MAP untouched" + lifted the §19 cinema hold; Cloudflare qualified for pMAP (100% thinking-ON) and ACTIVATED with a 2 pMAP / 4 extraction / 0 profile split; fleet bounced to ONE hash a6be8823bc0b; cinema pMAP backfill COMPLETE — 3,810 → 0 unresolved)
+## Latest checkpoint (2026-09-13T17:30 — CONTROL-TICK-SIDE-STAGE-GUARD-V1 (11.256): the control tick was DEAD ~41 h (pending side-stage ticket → DAG_ORDER.index ValueError); guarded, alive again, the 12 paused pMAP tickets closed under the lifted hold; NEXT = owner goal "unified cognitive adapter + TrailSignal E2E" on branch handoff/unified-adapter-trail-e2e (PR #3 / issue #4))
+
+**Branch `architecture/evidence-first-v5`; remote == local after this checkpoint's push. Register 11.256.** Fleet: 1 supervisor,
+**23 healthy / ONE hash `074de79f4bf7`** (drift-fence cycle after the control/ edit, 0 exit-budget quarantines), `/ready` true;
+**control tick ALIVE** (`tick completed` every ~60 s since 17:22:03; heartbeat age ≤ 65 s). Only parked dirty file: `scripts/verify_final_state.py`.
+
+### What changed (owner: "fix the control tick")
+- **Root cause (measured)**: `_advance_pending_corpus` → `_try_advance_one` → `DAG_ORDER.index('doc_parent_map')` → ValueError on
+  every tick since 2026-09-11 23:53 (10,191 failures). The 12 `pending` doc_parent_map tickets were minted READY at 23:40:54 and
+  flipped to pending at 23:55:55 as the forensic-hold PAUSE (09-12 bootstrap: "36 done / 12 pending / 0 ready"). A pending ticket for a
+  stage outside STAGE_DAG has no advancer; the first one was a landmine.
+- **Fix**: `_try_advance_one` returns False (logged once per stage) for any stage outside `_STAGE_SPEC` — the same guard the READY
+  backfill got on 08-31. 3 tests (`test_control_tick_side_stage_guard.py`, real Postgres with explicit cleanup — production code
+  COMMITS mid-test and the live tick reacts to probe rows within seconds). No DAG or ticket-semantics change.
+- **Hold lifted (owner)**: the 12 tickets re-armed via the production `mint_doc_parent_map` at 17:22:31 → claimed and closed by the
+  pMAP stage workers by 17:27 with 0 provider attempts / 0 new maps (every cinema parent was already mapped by 11.255).
+- **What the restored tick did NOT fix**: 217 pending tickets (cinema) wait on 6 `failed` predecessors (5 project_qdrant + 1 intake)
+  from 09-05/07; 63 cinema runs stay `reconciling`. Pre-existing; separate slice if the owner wants those runs promoted.
+
+### Open gates
+1. **Owner goal (Stop-hook, 2026-09-13)**: ONE E2E workflow with Polymath as composition root — branch
+   `handoff/unified-adapter-trail-e2e`, `docs/wiki/plans/COGNITIVE-ADAPTER-TRAIL-E2E-V1-START-HERE.md`; PR #3 blocked ONLY by
+   governance (two plan files undeclared in `scaffold_polymath_v4.py::TREE`, issue #4); first action = declare them through the normal
+   process, CI green, merge PR #3, then execute START-HERE. Work it in a LINKED worktree (`../polymath-v4-handoff`) — the fleet runs
+   from THIS worktree and must never see a branch switch.
+2. **Five Cloudflare account ids** (owner). 3. **Groq TPD 429s not parked locally** (forensic §13). 4. **Cinema `reconciling` runs**
+   (failed predecessors, above). 5. **`verify_final_state.py`** parked. 6. **`/v2/` browser verification** (auth). 7. **`claim_sets` DROP**.
+
+### §6 traps this session added
+- **A pending ticket for a NON-DAG stage kills the whole tick** — `PENDING_OWNER_STAGE` in the stall tracer is the tell; never pause
+  side-stage work by flipping tickets to `pending` (archive or leave READY-with-no-event instead).
+- **DB-backed ticket tests cannot rely on rollback** — `_eligible_all_stages` commits on keyset wrap and the LIVE tick mints chains
+  and successor runs for probe rows within seconds; delete probe rows by a unique corpus prefix in `finally`.
+- **Insert the new checkpoint BEFORE demoting the old header** (the 07:10 checkpoint silently no-op'd this way).
+
+## Prior checkpoint (2026-09-13T08:20 — CLOUDFLARE-PMAP-V1 (11.255): owner reversed "Parent-MAP untouched" + lifted the §19 cinema hold; Cloudflare qualified for pMAP (100% thinking-ON) and ACTIVATED with a 2 pMAP / 4 extraction / 0 profile split; fleet bounced to ONE hash a6be8823bc0b; cinema pMAP backfill COMPLETE — 3,810 → 0 unresolved)
 
 **Branch `architecture/evidence-first-v5`; remote `origin` = github.com/Kingsley-Cyber/Polymath-RAG; remote == local after the
 follow-up push (see git). Register 11.255.** Fleet: 1 supervisor (booted 06:59:04 UTC), **23 healthy / ONE hash

@@ -455,7 +455,23 @@ def _advance_pending_corpus(conn, corpus_id: str,
     return advanced
 
 
+_SIDE_STAGE_SEEN: set[str] = set()
+
+
 def _try_advance_one(conn, tid: str, run_id: str, stage: str) -> bool:
+    if stage not in _STAGE_SPEC:
+        # SIDE-STAGE GUARD (CONTROL-TICK-SIDE-STAGE-GUARD-V1, measured 2026-09-11→13): stages
+        # deliberately ABSENT from STAGE_DAG (doc_parent_map, parent_enrichment) mint their OWN
+        # READY tickets and never advance by chain. A stray PENDING ticket for one of them (the
+        # 09-11 forensic-hold pause left 12) reached `DAG_ORDER.index(stage)` → ValueError → the
+        # WHOLE tick died, every ~11 s for ~31 h (10,191 failures; no corpus advanced). Same guard
+        # the READY backfill received on 2026-08-31. Skipped, never advanced, logged once per stage.
+        if stage not in _SIDE_STAGE_SEEN:
+            _SIDE_STAGE_SEEN.add(stage)
+            import logging
+            logging.getLogger("control-tickets").warning(
+                "pending ticket for side stage %r (e.g. %s) is not chain-advanced: skipped", stage, tid)
+        return False
     idx = DAG_ORDER.index(stage)
     predecessors = DAG_ORDER[:idx]
     ok = all(_stage_attempt_ok(conn, run_id, pr) for pr in predecessors)
