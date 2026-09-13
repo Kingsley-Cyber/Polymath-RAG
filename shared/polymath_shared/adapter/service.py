@@ -198,8 +198,11 @@ def advance(conn, run_id: str, executors: dict[str, Executor], *, max_steps: int
     while state.status == "running" and (max_steps is None or done < max_steps):
         row = store.current_step(conn, run_id)
         if row and row["status"] == "issued":
-            # an automatic step issued by a crashed worker: execute it (idempotent re-execution)
-            step = row["step"]
+            # an automatic step issued by a crashed worker, or a PENDING external operation: re-execute it
+            # (idempotent) — a prior ExternalOperationReceiptV1 travels with the step so the executor polls, not resubmits
+            step = dict(row["step"])
+            if row.get("external_operation"):
+                step["_external_receipt"] = row["external_operation"]
         else:
             try:
                 state, step = T.issue_step(m, state, issued_at=now_iso(), evidence_refs=_context_refs(state),
@@ -237,6 +240,17 @@ def advance(conn, run_id: str, executors: dict[str, Executor], *, max_steps: int
             store.finish_step(conn, run_id, step["sequence"], status="failed",
                               receipt=_receipt(step, "failed", started, evidence_ids=[], model=None, validation={"ok": False, "errors": [failure["message"]]}, failure=failure))
             state = T.replace(state, status="failed", failure=failure)
+            store.save_state(conn, state)
+            break
+        if outcome.get("pending"):
+            # EXTERNAL_OPERATION two-phase: the operation is submitted/polled but not terminal. Record its
+            # ExternalOperationReceiptV1 on the ISSUED step and stop; the next claim re-executes this step, which
+            # finds the receipt and polls again (idempotent by operation_id — never a second submit).
+            ext = outcome.get("external")
+            if ext:
+                assert_valid("external_operation_receipt", ext)
+            store.finish_step(conn, run_id, step["sequence"], status="issued", receipt=None, external=ext)
+            state = T.replace(state, status="running")
             store.save_state(conn, state)
             break
         gap = outcome.get("gap")

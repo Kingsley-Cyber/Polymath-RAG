@@ -38,6 +38,10 @@ Polymath evidence identities it used. E0 proved `artifacts`/`receipts`/`outbox_e
   `POLYMATH_COMPILE_PLAN` (`/retrieve/plan`), `POLYMATH_GRAPH_EXPAND` (EXPLORE graph rows), `VALIDATE`, `BRANCH`,
   `EXTERNAL_OPERATION` → typed gaps `TRAIL_CAPABILITY_PLANNED` / `TRAIL_CONNECTOR_PENDING` (E4). Executor exceptions become a
   typed `STEP_EXECUTOR_ERROR` failure receipt, never a silent skip.
+- **Two-phase EXTERNAL_OPERATION** (added for E4): an executor may answer `pending` with an `ExternalOperationReceiptV1`; the step
+  stays ISSUED carrying that receipt, the worker releases its lease and polls later; the next `advance` re-executes the same step
+  with `_external_receipt` attached, so the connector polls by `operation_id` and never resubmits; a TERMINAL outcome executes the
+  step with `external_operation_ids` on its receipt and the operation in the result lineage (test: `test_external_operation_is_two_phase…`).
 - **`orchestrator/orchestrator/api/adapter.py`** (mounted in `main.py`): `GET /adapter/list`, `POST /adapter/start`,
   `GET /adapter/{run}/next|status|result`, `POST /adapter/{run}/submit|cancel` — 404 unknown, 422 rejected (errors returned),
   409 result-not-terminal. **`capabilities.py`**: `adapter: v1`, endpoints, `ADAPTER_MCP_TOOLS`. **`mcp_server.py`**: the seven

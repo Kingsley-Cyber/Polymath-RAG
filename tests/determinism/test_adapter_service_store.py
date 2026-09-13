@@ -150,3 +150,53 @@ def test_http_routes_are_thin_wrappers(conn, monkeypatch):
     assert client.post(f"/adapter/{rid}/submit", json={"step_id": "brief", "payload": {}}).status_code == 422                    # nothing awaiting
     assert client.post(f"/adapter/{rid}/cancel").json()["status"] == "cancelled"
     assert client.get("/adapter/adr_ffffffffffffffffffffffffffffffff/status").status_code == 404
+
+
+def test_external_operation_is_two_phase_and_polls_by_operation_id(conn):
+    """A pending EXTERNAL_OPERATION records its ExternalOperationReceiptV1 on the ISSUED step; the next advance re-executes
+    the same step (the receipt travels with it) and never resubmits; a TERMINAL outcome executes the step with lineage."""
+    import copy, json, tempfile
+    from polymath_shared.adapter import manifest as MF
+    raw = json.loads((ROOT / "config/adapters/polymath.knowledge_brief.json").read_text())
+    raw["adapter_id"] = "probe.external_two_phase"; raw["budgets"]["max_external_operations"] = 2
+    raw["steps"].insert(1, {"step_id": "trail", "type": "EXTERNAL_OPERATION", "title": "probe external", "next": "brief",
+                            "external": {"system": "trailsignal", "operation_kind": "discover.submit", "availability": "working"}})
+    raw["steps"][0]["next"] = "trail"
+    d = pathlib.Path(tempfile.mkdtemp()); (d / "probe.json").write_text(json.dumps(raw))
+    service.reset_registry()
+    calls = {"submit": 0, "poll": 0}
+    def fake_external(step, state, m):
+        rc = {"run_id": step["run_id"], "step_id": step["step_id"], "external_system": "trailsignal", "operation_kind": "discover.submit",
+              "operation_id": "op_probe_1", "idempotency_key": f"{step['run_id']}:{step['step_id']}:1", "principal": "polymath",
+              "submitted_at": "2026-09-13T20:00:00Z", "status_revision": 1, "phase": "RUNNING", "outcome": None, "record_ids": [],
+              "dataset_ids": [], "export_ids": [], "poll_count": 0, "last_polled_at": None, "failure": None}
+        prior = step.get("_external_receipt")
+        if prior is None:
+            calls["submit"] += 1
+            return {"pending": True, "external": rc}
+        calls["poll"] += 1
+        assert prior["operation_id"] == "op_probe_1"                # polled by id, never resubmitted
+        done = {**prior, "phase": "TERMINAL", "outcome": "SUCCEEDED", "status_revision": 3, "record_ids": ["urlc_1"], "poll_count": prior["poll_count"] + 1}
+        return {"output": {"leads": ["urlc_1"]}, "evidence_refs": [{"kind": "trail_record", "id": "urlc_1"}], "external": done}
+    try:
+        ref = service.start(conn, adapter_id="probe.external_two_phase", input_payload={"question": "does cold water immersion reduce soreness?", "corpus_ids": ["probe"]},
+                            request_options={"corpus_ids": ["probe"]}, directory=d)
+        conn.commit(); rid = ref["run_id"]; conn.runs.append(rid)
+        ex = {**FAKE_EXECUTORS, "EXTERNAL_OPERATION": fake_external}
+        st = service.advance(conn, rid, ex, max_steps=1, directory=d); conn.commit()      # retrieve
+        st = service.advance(conn, rid, ex, max_steps=1, directory=d); conn.commit()      # external: submitted, pending
+        row = store.current_step(conn, rid)
+        assert st.status == "running" and row["step_id"] == "trail" and row["status"] == "issued" and row["external_operation"]["phase"] == "RUNNING"
+        st = service.advance(conn, rid, ex, max_steps=1, directory=d); conn.commit()      # external: polled -> terminal
+        row = store.current_step(conn, rid)
+        assert row["status"] == "executed" and row["external_operation"]["outcome"] == "SUCCEEDED" and row["receipt"]["external_operation_ids"] == ["op_probe_1"]
+        assert calls == {"submit": 1, "poll": 1}
+        st = service.advance(conn, rid, ex, max_steps=1, directory=d); conn.commit()      # brief issued (awaiting)
+        assert st.status == "awaiting_agent"
+        service.submit(conn, rid, {"step_id": "brief", "payload": {"brief": {"thesis": "leads found for the question", "key_points": [{"point": "one lead", "supporting_evidence_ids": ["chunk_fake_1"]}], "unknowns": []}},
+                                   "submitted_by": {"agent_identity": "t"}}, directory=d); conn.commit()
+        st = service.advance(conn, rid, ex, directory=d); conn.commit()
+        res = service.result(conn, rid)
+        assert st.status == "completed" and res["lineage"]["external_operations"] == [{"external_system": "trailsignal", "operation_kind": "discover.submit", "operation_id": "op_probe_1", "record_ids": ["urlc_1"]}]
+    finally:
+        service.reset_registry()

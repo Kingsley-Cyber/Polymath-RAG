@@ -193,14 +193,20 @@ def process_one(owner: str, lease_s: int, *, max_steps: int | None = None, crash
                 if not service.store.renew_lease(conn, run_id, owner, lease_s):
                     log.warning("lease lost on %s; stopping", run_id)
                     return run_id
-                before = service.store.load_run(conn, run_id)[0].sequence
+                before_state = service.store.load_run(conn, run_id)[0]
+                before_row = service.store.current_step(conn, run_id)
                 state = service.advance(conn, run_id, EXECUTORS, max_steps=1)
-                after = state.sequence
-            steps_done += 1 if after != before or state.terminal else 0
-            log.info("run %s -> %s step=%s (%s)", run_id[:16], state.status, state.current_step_id, state.sequence)
+                after_row = service.store.current_step(conn, run_id)
+            progressed = state.terminal or state.sequence != before_state.sequence or \
+                (after_row or {}).get("status") != (before_row or {}).get("status")
+            steps_done += 1 if progressed else 0
+            log.info("run %s -> %s step=%s (%s)%s", run_id[:16], state.status, state.current_step_id, state.sequence,
+                     "" if progressed else " [external pending]")
             if crash_after is not None and steps_done >= crash_after:
                 log.error("CRASH-AFTER %s reached: exiting without releasing the lease (test hook)", crash_after)
                 os._exit(137)
+            if not progressed:
+                return run_id                             # a pending external operation: release, poll again later
             if state.status != "running" or (max_steps is not None and steps_done >= max_steps):
                 return run_id
     finally:

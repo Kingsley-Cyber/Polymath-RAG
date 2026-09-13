@@ -104,14 +104,16 @@ def list_steps(conn, run_id: str) -> list[dict[str, Any]]:
     return out
 
 
-def finish_step(conn, run_id: str, sequence: int, *, status: str, receipt: dict[str, Any], output: Any = None,
+def finish_step(conn, run_id: str, sequence: int, *, status: str, receipt: dict[str, Any] | None, output: Any = None,
                 submission: dict[str, Any] | None = None, external: dict[str, Any] | None = None) -> None:
+    """Update the step row. `receipt=None` keeps the existing receipt (a PENDING external operation records only its
+    ExternalOperationReceiptV1 and stays ISSUED until the operation is terminal)."""
     conn.execute(
-        """UPDATE adapter_steps SET status=%s, receipt=%s::jsonb, output=COALESCE(%s::jsonb, output),
+        """UPDATE adapter_steps SET status=%s, receipt=COALESCE(%s::jsonb, receipt), output=COALESCE(%s::jsonb, output),
                submission=COALESCE(%s::jsonb, submission), external_operation=COALESCE(%s::jsonb, external_operation),
                ended_at=CASE WHEN %s IN ('accepted','executed','failed','skipped') THEN now() ELSE ended_at END
            WHERE run_id=%s AND sequence=%s""",
-        (status, _j(receipt), _j(output) if output is not None else None, _j(submission) if submission else None,
+        (status, _j(receipt) if receipt is not None else None, _j(output) if output is not None else None, _j(submission) if submission else None,
          _j(external) if external else None, status, run_id, sequence))
 
 
