@@ -16,9 +16,77 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.251**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.254**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-13T01:40 — pMAP BATCH-SIZE QUALIFICATION: 15 vs 35 vs 50 measured on real cinema docs; the owner's 50-parent hypothesis FALSIFIED; cap CONFIRMED at 15 with evidence; pMAP proven NOT limiter-bound)
+## Latest checkpoint (2026-09-13T06:00 — CLOUDFLARE WORKERS AI added as a supplemental provider family (11.254), qualified PROMOTE but committed PARKED; the pMAP forensic arc (11.251-11.253) precedes it. All pushed; every open path is owner-gated)
+
+**Branch `architecture/evidence-first-v5` @ `802adbb`; remote `origin` = github.com/Kingsley-Cyber/Polymath-RAG;
+remote == local, 0 unpushed. Guards green (preflight / repo_guard / wiki_worm); `bundle_integrity` READY
+`7e97368d`; fleet 23 healthy / ONE hash / `/ready` true. Register 11.254.** Only dirty file: the
+deliberately-parked `scripts/verify_final_state.py` (owner rejected the fast/full split).
+
+### Commits since the prior checkpoint — all pushed, all in-ledger
+
+- **11.251 `3f42fd8` PMAP-BATCH-SIZE-QUALIFICATION** — 15 vs 35 vs 50 on real docs; 15 CONFIRMED (98.8%),
+  35/50 collapse; cap unchanged. **Live?** `MAP_RELIABILITY_CAP=15` was already the value — no deploy.
+- **11.252 `26950b0` PMAP-WITHIN-DOC-CONCURRENCY** — c=2 ≈ 1.74× with RPM headroom, inverts under throttle;
+  bound at 2, 429-adaptive. **Live?** measurement only, no code change.
+- **11.253 `1efd3ff` PMAP-FORENSIC-AUDIT** — the 15-cap is NOT a model ceiling (batch 40 maps 40/40); parents
+  disappear at the PROVIDER (llama-3.3-70b TPD 100k/org + EMPTY 200s). Supersedes 11.251's causal reading.
+  **Live?** a comment on `map_batches.py` (NOT a bundle member) — no bounce, value unchanged.
+- **11.254 `802adbb` CLOUDFLARE-WORKERS-AI** — six Cloudflare Workers AI lanes over the existing
+  lane/pool/limiter abstraction: cloudflare1-4 → graph extraction (dedicated:false, thinking ON),
+  cloudflare_summary1-2 → doc_profile (dedicated:true, `/no_think`). Parent-MAP untouched. New mechanism:
+  `url_template`+`account_id_env` URL resolution, per-lane `think_suffix`, `cloudflare_errors.py`
+  (3036-park / 3040-backoff), `/infer_batch` 400→fallback. Qualified LIVE (production prompt+schema+compiler):
+  extraction 3/3 valid (thinking-on 22ent/23rel), profile 3/3 ok (TEXT mode, /no_think) → PROMOTE both.
+  12 tests + regressions green; credentials in gitignored `.env` only. Report:
+  `docs/wiki/plans/CLOUDFLARE-WORKERS-AI-QUALIFICATION.md`; evidence:
+  `docs/wiki/experiments/cloudflare-workers-ai-2026-09-13/`.
+  **Live? NO — committed PARKED (`enabled:false`).** `cloud_providers.json` is read LIVE but `client.py`
+  loads at boot, so enabling now would make the running OLD-code fleet route to cloudflare2 and fail the
+  unhandled 400. Activation = a COORDINATED flip `enabled:true` + `scripts/boot_polymath.sh` (the edited
+  files are NOT bundle-lock members, so the fleet is not quarantined meanwhile).
+
+### Committed-but-NOT-LIVE (state the drift explicitly)
+
+The shared/ code for Cloudflare (client/pool/limiter/cloudflare_errors) is committed but the RUNNING fleet
+keeps the pre-802adbb code until a bounce; the 6 lanes are `enabled:false` so the live fleet ignores them.
+Everything else committed is either docs-only or a value that was already live. **Net: nothing this session
+changed live runtime behavior; the fleet is byte-for-byte as it was, on bundle `7e97368d`.**
+
+### Open gates — ALL owner-only (nothing the agent can execute unblocks these)
+
+1. **Cloudflare activation** — supply `CLOUDFLARE_ACCOUNT_ID_{1,3,4,5,6}` in `.env` (AI-scoped tokens can't
+   self-report their account; only cloudflare2's id is set), flip the six `enabled:true`, and bounce. n=3
+   qualification sample (contract PASS unambiguous; yield-parity not established — a ≥20-doc confirm advised).
+2. **cinema pMAP backfill** at the confirmed cap 15 / concurrency ≤2 — 4,658 unresolved parents; §19 spend
+   gate; Groq TPD currently depleted (a run now would be 429/quota-paced). `parent_map_backfill.py --corpus
+   cinema --project`, resumable.
+3. **`verify_final_state.py` fast/full split** — owner rejected committing it; parked. Re-fire needs it.
+4. **`/v2/` browser verification** (basic-auth `King`/`013100`) — an agent must not authenticate.
+5. **`claim_sets` DROP** (`dead_proven_removed`) — §1 owner-only destructive schema.
+
+### §6 traps this session added
+
+- **A committed provider lane can be selected by the LIVE fleet before its code deploys.** `cloud_providers.json`
+  is re-read on every `cloud_endpoints()` call, but the client CODE loads at boot — so `enabled:true` + a
+  shared/ code change = the running old code routes to a lane it can't handle. Keep new lanes `enabled:false`
+  until a coordinated enable+bounce.
+- **Cloudflare answers the LOCAL-only `/infer_batch` route with HTTP 400, not 404** — the cloud fallback trigger
+  had to widen to 400/404/405. And `@cf/qwen/qwen3-30b-a3b-fp8` is reasoning-burn: only Qwen's `/no_think`
+  prompt switch disables thinking (reasoning_effort/enable_thinking/chat_template_kwargs are ignored).
+
+### NEXT SESSION — exact first action
+
+Everything the agent can execute is committed and pushed (remote==local). The next action is an OWNER decision:
+either (a) activate Cloudflare (5 account ids + enable + bounce), (b) run the cinema backfill at cap 15 when
+Groq quota resets, or (c) the parked verifier split. Do NOT commit/revert `scripts/verify_final_state.py`, do
+NOT authenticate to `/v2/`, do NOT spend cinema §19 quota, without the owner's word.
+
+---
+
+## Prior checkpoint (2026-09-13T01:40 — pMAP BATCH-SIZE QUALIFICATION: 15 vs 35 vs 50 measured on real cinema docs; the owner's 50-parent hypothesis FALSIFIED; cap CONFIRMED at 15 with evidence; pMAP proven NOT limiter-bound)
 
 **Branch `architecture/evidence-first-v5`; remote `origin` = github.com/Kingsley-Cyber/Polymath-RAG.
 Fleet 23 healthy / ONE bundle hash / `/ready` true / `bundle_integrity` READY `7e97368d`.
