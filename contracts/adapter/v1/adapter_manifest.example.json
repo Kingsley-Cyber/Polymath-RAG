@@ -100,7 +100,7 @@
    "title": "Retrieve conceptual neighbours, mechanisms, known frictions, opposing evidence",
    "next": "B_graph",
    "config": {
-    "mode": "HYBRID",
+    "mode": "EXPLORE",
     "evidence": true,
     "top_k": 24
    }

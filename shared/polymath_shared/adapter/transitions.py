@@ -34,6 +34,7 @@ class RunState:
     agent_reason_count: int = 0
     external_operation_count: int = 0
     input: dict[str, Any] = field(default_factory=dict)
+    options: dict[str, Any] = field(default_factory=dict)      # request_options (corpus scope, retrieval mode, …)
     outputs: dict[str, Any] = field(default_factory=dict)       # step_id -> accepted/executed output payload
     failure: dict[str, Any] | None = None
     gap: dict[str, Any] | None = None
@@ -78,7 +79,7 @@ def _ctx(state: RunState) -> dict[str, Any]:
     return {"steps": {sid: {"output": out} for sid, out in state.outputs.items()},
             "run": {"branch_loops": state.branch_loops, "sequence": state.sequence, "steps_accepted": state.steps_accepted,
                     "agent_reason_count": state.agent_reason_count, "external_operation_count": state.external_operation_count},
-            "input": state.input}
+            "input": state.input, "options": state.options}
 
 
 # ─────────────────────────────────────────────────────────── navigation
@@ -107,12 +108,12 @@ def _check_budgets(manifest: Manifest, state: RunState, step_type: str, took_bra
         raise BudgetExhausted(f"max_branch_loops {b['max_branch_loops']} reached")
 
 
-def start_run(manifest: Manifest, run_id: str, input_payload: dict[str, Any]) -> RunState:
+def start_run(manifest: Manifest, run_id: str, input_payload: dict[str, Any], options: dict[str, Any] | None = None) -> RunState:
     """Validate the domain input against the manifest's input_schema and open the run (status=created)."""
     errors = [e.message for e in jsonschema.Draft202012Validator(manifest.raw.get("input_schema") or {"type": "object"}).iter_errors(input_payload)]
     if errors:
         raise SubmissionRejected(["input: " + m for m in sorted(errors)])
-    return RunState(run_id=run_id, adapter_id=manifest.adapter_id, input=dict(input_payload))
+    return RunState(run_id=run_id, adapter_id=manifest.adapter_id, input=dict(input_payload), options=dict(options or {}))
 
 
 def issue_step(manifest: Manifest, state: RunState, *, issued_at: str, evidence_refs: list[dict[str, Any]] | None = None,
