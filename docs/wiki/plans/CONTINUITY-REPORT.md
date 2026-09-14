@@ -16,9 +16,31 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.268**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.269**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-14T01:55 — HARNESS-RESEARCH-MIGRATION-V1: R0–R2 MERGED and LIVE (main d79f88e; fleet bounced: 24 healthy, ONE hash 43caa08cdc66, adapter_step up); R4 manifest 2.0.0 + acquisition-path removal in PR #12; Trail A32 governance slice in progress)
+## Latest checkpoint (2026-09-14T02:05 — HARNESS-RESEARCH-MIGRATION-V1: R0–R4 MERGED AND LIVE (main b81fa2c; fleet bounced: 24 healthy, ONE hash a9f0a7d8c0a2); live receipts for R2 + R4; Trail A32 governance slice finishing; next = Trail HR1–HR4 (R3) then R5)
+
+**Production:** `production` @ b81fa2c; migrations 0062 + 0063 applied; ONE bounce after each merge that touched `workers/`/`orchestrator/`/`shared/adapter`
+(`scratchpad/post_merge_bounce.sh` = the documented procedure). Live receipts (register 11.269): knowledge_brief `adr_d5e544c4…` (restart + refusal +
+completed) and product_discovery 2.0.0 `adr_eb118ed8…` (θ hypotheses durable from 97 real evidence refs; honest `TRAIL_CAPABILITY_PLANNED` at `D_project`).
+**What is live:** durable hypothesis state (0062), HARNESS_ACTION pause/receipt, admitted-only context, θ/φ ledger hooks, the 2.0.0 manifest (28 steps,
+3 typed harness stages, 7 bounded Trail ops all `planned: HR3`), `trail_client` bounded ops only; the Trail acquisition path is gone (guarded by
+`tests/contracts/test_retired_paths.py`). `research/` stays FROZEN until R5.
+**Trail (R3):** A32 (ADR-063 + graph A32/HR1–HR4 + C1–C3/Q1 SUPERSEDED + policy/validator/digests + build-run record + task) is being sealed by an agent in
+`~/trail-signal-os-worktrees/A32` (branch `codex/a32-harness-research-boundary`, local commit only — NOT pushed; owner review before push). HR1/HR2 drafts
+(registry compiler with byte-identical replay, gap compiler, judgement, admission, qualification, territory projection, strict contracts mirroring the
+Polymath wire, replay fixture `cycle_v1.expected.json`) live in the session scratchpad `trail-hr1/` — inputs for the HR1/HR2 production slices.
+**Owner decisions still open (plan §10):** D1 score authority (note: doc-08's engine ranks within a COHORT; a single-run opportunity fits the rubric — the
+recommendation is rubric-derived qualification + score for a run, doc-08 for cross-run portfolio ranking), D2 registry delta upstream, D3 OCP branches,
+D4 ADR-063 acceptance record, D5 side table; O1 principal, O4 stack, O6 Hermes skill symlink.
+
+### NEXT
+1. A32 report → owner review of ADR-063 → push/PR on Trail (owner call) → HR1 production slice (compiler + contracts + replay; drafts ready) → HR2 (admission/
+   judgement/qualification; score after D1) → HR3 (7 bounded MCP ops + `polymath` principal; needs O1/O4 for VERIFIED) → HR4.
+2. R5: live acceptance with a real harness through `scripts/adapter_mcp_acceptance.py` (add the harness hand-off mode); remove `research/`, `research_*`,
+   the research-harness workflow; live `awaiting_harness` restart test.
+
+## Prior checkpoint (2026-09-14T01:55 — HARNESS-RESEARCH-MIGRATION-V1: R0–R2 MERGED and LIVE (main d79f88e; fleet bounced: 24 healthy, ONE hash 43caa08cdc66, adapter_step up); R4 manifest 2.0.0 + acquisition-path removal in PR #12; Trail A32 governance slice in progress)
 
 **Production:** worktree `production` @ d79f88e; migrations 0062 + 0063 applied to the store; bounce done (0 quarantines). The live adapter
 surface now has durable hypothesis state, the HARNESS_ACTION pause, admitted-only context and θ/φ hooks — but the production
