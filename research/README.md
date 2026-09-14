@@ -1,5 +1,11 @@
 # TRAIL_AGENT_AUTORESEARCH
 
+> **FROZEN (2026-09-13, ADR-0019, HARNESS-RESEARCH-MIGRATION-V1 R0).** This package is migration input only: its graph engine, the
+> `registry/trailsignal/` copy of TrailSignal's CSVs and its compiler are a second product-research authority. The harness-executed
+> adapter (`config/adapters/trail.product_discovery.json`, ADR-0019) replaces it; the package and the `research_*` MCP tools are
+> removed at R5. Do not extend it; do not add registry rows here (Trail `data/` is the authority).
+
+
 Graph-run product-opportunity research for an agent. A signal — a transcript,
 a niche, a market, a product idea — goes in; qualified, evidence-backed
 product leads come out. The agent (θ) supplies reasoning only at the nodes

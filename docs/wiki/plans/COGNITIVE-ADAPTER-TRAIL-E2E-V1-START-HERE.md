@@ -9,6 +9,10 @@ architecture_impact: none by itself; executes the linked plan through normal rep
 
 # START HERE — Unified Polymath Cognitive Adapter + TrailSignal E2E
 
+> **SUPERSEDED IN PART (2026-09-13):** the E3/E5/E6 slices and acceptance items 4–6 of this prompt are executed under
+> `docs/wiki/plans/HARNESS-RESEARCH-MIGRATION-V1-PLAN.md` (ADR-0019). Do not build Trail-owned discovery/acquisition into the adapter.
+
+
 Plan of record for this owner-directed goal:
 
 `docs/wiki/plans/COGNITIVE-ADAPTER-TRAIL-E2E-V1-PLAN.md`
