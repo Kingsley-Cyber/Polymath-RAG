@@ -18,7 +18,50 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.270**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-14T04:05 — TRAIL R3 UNDER REVIEW: A32 (ADR-063) pushed as PR #4; A33 governance micro-slice VERIFIED, committed and pushed as a stacked PR (PR #5 https://github.com/Kingsley-Cyber/trail-signal-os/pull/5); production main abb4bb4 (PR #14 merged, ff'd, no bounce); next = HR1 admission from the A33 tip with a git-anchored production baseline)
+## Latest checkpoint (2026-09-14T05:40 — TRAIL R3: governance stack A32→A35 complete or committing; HR1 admission runs automatically after A35 lands; review = ONE consolidated PR against main; Trail GitHub CI is red on main itself (environment) → local canonical governor is the truth)
+
+**Read first:** the 04:05 checkpoint below (still accurate for A32/A33), then `~/Documents/polymath-rebuild/handoff-drafts/logs/after_a35.log`
+(the orchestration log: A35 push → consolidated PR → HR1 admission → code → exact verifier → close → commit → push → PR).
+
+**What the HR1 bootstrap found and fixed as governance slices (each: build run, hash-bound measurement, closed agentctl task, zero runtime lines):**
+- A33 (6040bf4, PR #5): HR1–HR4 must declare the lifecycle + manifest outputs (P4V/P5 precedent) or a production run cannot refresh the registered manifest.
+- A34 (98876eb, PR #6): `tests/architecture/test_agent_control.py` P4V test had a stale precondition since P4V was admitted → every harness-research exact verifier (all of tests/architecture) exited 1.
+- A35 (committing at checkpoint time, run `20260914T051435Z_A35-production-admission-governor-precision`): two governor rules made HR1 unadmittable by construction —
+  (1) a bound production admission could not pass the pre-commit guard (`RUN_BASELINE_ANCHOR` demanded the snapshot's first committed blob before the commit
+  existed; proven with exactly one diagnostic on the A33 tip) → the governor now accepts the INDEX-staged snapshot only while ADMISSIBLE;
+  (2) the projection-writer heuristic treated the ADR-063 contract names `RegistryProjectionV1`/`ProductTerritoryProjectionV1` as a writer action → versioned
+  identifiers are excluded from the action signal. Two poison tests. Ranks now: A33 126, A34 127, A35 128, HR1 129, HR2 131, HR3 132, HR4 133 (P9 130).
+- Every governance insertion before HR1 re-ranks HR1–HR4 (authorized by ADR-063's graph-node scope) so the phase under verification stays the latest evidenced
+  node the governor recomputes live.
+
+**Review structure (owner):** stacked PRs #4/#5/#6 can never be green: the governor authorizes production-claim changes only through an Accepted ADR that is NEW
+relative to the comparison base, and ADR-063 is new only against `main`. So: ONE consolidated PR against main from the A35 branch (A32→A35 as separate commits);
+#4/#5/#6 closed with a pointer. Trail GitHub CI (`governance` job) has failed on `main` itself for its last three runs (the CI venv cannot regenerate 37
+registered schemas: `CONTRACT_SCHEMA_GENERATION`) → not a diagnostic of these branches; the reviewer must use the local canonical governor (PASS, 0 diagnostics,
+plain and `--base-ref 6d7ef2a`, on every slice).
+
+**HR1 (production) — admitted automatically after A35 by `handoff-drafts/after_a35.sh`:** branch `codex/hr1-registry-snapshot-compiler` from the A35 tip;
+`admit_hr1.sh` (agentctl start → `apply_hr1.py admit` (run record, graph ADMISSIBLE + run_id, ledger, task scope with exact new-file records, staged snapshot)
+→ `agentctl verify` (index-anchored) → ADMISSION COMMIT → IN_PROGRESS) → `apply-code` (planning context from `handoff-drafts/trail-hr1-prod/`, side table,
+8 registry entries, `scripts/contracts/generate.py --write`, manifest `--add`) → `record` (exact verifier = research tests + all of tests/architecture, ~16 min;
+VERIFIED flip incl. gap-report rows HR-001/HR-002 WORKING; hash-bound measurement) → `finish_hr1.sh` → push → PR (base = the A35 branch). HR1 code facts:
+exactly the 8 public BoundaryModels; nested value models in `domain/`; ports exchange registered contracts only; no `getattr`/`bytes`-returning helpers/
+action-token identifiers (governor rules); supply-stage intents derive from the side table; 16 draft tests green; ~782 src lines (budget 1000 non-test).
+
+### NEXT (in order)
+1. Read `after_a35.log`. If it stopped: the step is named with its exit code; each step is re-runnable (`apply_hr1.py <mode> <run>`; `finish_hr1.sh <run> <A35 sha>`).
+2. Owner review of the consolidated governance PR (D4 = ADR-063 acceptance record) and the HR1 PR; Polymath plan §7 row T1/T2 → CUT_OVER once merged.
+3. HR2 (after owner D1), HR3 (O1/O4), HR4; then R5 in Polymath.
+
+### §6 traps added this checkpoint
+- **Trail `agentctl verify` pre-creates every task log**: run verify → `remeasure` → verify → close (finish scripts do this now), else `RUN_ACTUAL_MEASUREMENT`.
+- **zsh does not word-split `$var`**: use `${=var}` when a variable holds several CLI tokens (cost one wrong "unrecognized arguments" on A34).
+- **A throwaway worktree that fails to `cd` runs your commands in the real worktree**: `cd "$W" || exit 1` and assert `pwd -P` (a misdirected `agentctl verify`
+  briefly ran against the live A34 task; no damage, but it cost a re-measure).
+- **`git worktree add` refuses a registered-but-deleted path**: `git worktree prune` first.
+- **The Trail pre-push hook replays the committed task verification**: pushes of governance slices with light task commands take ~3 min; A32's took ~15.
+
+## Prior checkpoint (2026-09-14T04:05 — TRAIL R3 UNDER REVIEW: A32 (ADR-063) pushed as PR #4; A33 governance micro-slice VERIFIED, committed and pushed as a stacked PR (PR #5 https://github.com/Kingsley-Cyber/trail-signal-os/pull/5); production main abb4bb4 (PR #14 merged, ff'd, no bounce); next = HR1 admission from the A33 tip with a git-anchored production baseline)
 
 **Read first:** `docs/wiki/plans/HARNESS-RESEARCH-MIGRATION-V1-PLAN.md` (§7 ledger row R3/T1–T8, §10 owner decisions), the 02:25 checkpoint below (unchanged facts),
 `~/Documents/polymath-rebuild/handoff-drafts/` (durable: `apply_a33.py` + `trail_run_tools.py` = the working Trail build-run drivers, `trail-hr1-prod/` = HR1 code
