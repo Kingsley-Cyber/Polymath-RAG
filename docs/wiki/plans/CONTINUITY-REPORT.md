@@ -16,9 +16,33 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.267**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.268**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-14T01:40 — HARNESS-RESEARCH-MIGRATION-V1: R0 + R1 MERGED (main c03c37e, production at c03c37e); R2 substrate in PR #11 — needs ONE bounce at merge; Trail A32 governance slice being authored in `~/trail-signal-os-worktrees/A32`)
+## Latest checkpoint (2026-09-14T01:55 — HARNESS-RESEARCH-MIGRATION-V1: R0–R2 MERGED and LIVE (main d79f88e; fleet bounced: 24 healthy, ONE hash 43caa08cdc66, adapter_step up); R4 manifest 2.0.0 + acquisition-path removal in PR #12; Trail A32 governance slice in progress)
+
+**Production:** worktree `production` @ d79f88e; migrations 0062 + 0063 applied to the store; bounce done (0 quarantines). The live adapter
+surface now has durable hypothesis state, the HARNESS_ACTION pause, admitted-only context and θ/φ hooks — but the production
+`trail.product_discovery` is still 1.0.0 until PR #12 merges; after that merge: fast-forward + ONE more bounce (worker changed), and a live
+run ends honestly at `D_project` with `TRAIL_CAPABILITY_PLANNED` (Trail HR3) — the correct state until R3 lands.
+**R4 (PR #12, branch `handoff/hrm-r4-manifest`):** manifest 2.0.0 (28 steps, 3 typed HARNESS_ACTION stages, 7 bounded Trail ops), `trail_client`
+bounded ops only, acquisition executors/builders/paging/`trail_record` removed, migration 0063 `output_order`, retired-paths guard, stub-daemon loop
+test (two harnesses), 78 adapter tests green, §12 audit 0 hits. Register 11.268.
+**Trail (R3):** the A32 governance slice (ADR-063, graph nodes A32 + HR1–HR4, C1/C2/Q1/C3 SUPERSEDED, policy digests, validator literals, build-run
+record, task) is being executed in `~/trail-signal-os-worktrees/A32` (branch `codex/a32-harness-research-boundary`) — local commit only, not pushed.
+The bounded-operation WIRE Trail HR3 must honour is pinned by `tests/determinism/test_adapter_product_discovery_loop.py::StubTrail`.
+
+### NEXT
+1. PR #12 green → squash-merge → production fast-forward → bounce → verify; run `scripts/adapter_mcp_acceptance.py --adapter polymath.knowledge_brief`
+   as a smoke of the live surface after the bounce.
+2. R3: A32 commit → HR1 (registry compiler + contracts + replay, pure) → HR2 (admission/judgement/qualification/score, pure; owner D1) → HR3 (bounded MCP ops; needs O1/O4 for VERIFIED) → HR4.
+3. R5: live acceptance with a real harness; remove `research/`, `research_*`, the research-harness workflow; live `awaiting_harness` restart test.
+
+### §6 traps added this checkpoint
+- **`adapter_runs.outputs` is JSONB: key order is NOT preserved.** Never derive "newest output" from dict order — use `RunState.output_order` (0063).
+- **A step re-entered through a bounded loop is a NEW issuance**: its payload may differ from the earlier pass (the old identical-replay check was wrong).
+- **After a merge that touches `shared/`, the fleet may split into two bundle hashes and NOT converge**: bounce with the documented procedure.
+
+## Prior checkpoint (2026-09-14T01:40 — HARNESS-RESEARCH-MIGRATION-V1: R0 + R1 MERGED (main c03c37e, production at c03c37e); R2 substrate in PR #11 — needs ONE bounce at merge; Trail A32 governance slice being authored in `~/trail-signal-os-worktrees/A32`)
 
 **State:** R0 authority (#9 → c3663a5) and R1 contracts (#10 → c03c37e) are on main; the production worktree is fast-forwarded to c03c37e
 (fleet re-converged through fence + medic; two bundle hashes were observed transiently — check `hashes=1` before the next merge). **R2**
