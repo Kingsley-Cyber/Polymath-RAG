@@ -4,7 +4,7 @@ owner: governance
 date: 2026-08-30
 status: living
 architecture_impact: none (the single session bootstrap — updated in place, never forked into dated copies)
-last_reviewed: 2026-09-08
+last_reviewed: 2026-09-14
 ---
 
 # CONTINUITY REPORT — the single bootstrap (golden-run edition)
@@ -18,7 +18,42 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.270**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-14T05:40 — TRAIL R3: governance stack A32→A35 complete or committing; HR1 admission runs automatically after A35 lands; review = ONE consolidated PR against main; Trail GitHub CI is red on main itself (environment) → local canonical governor is the truth)
+## Latest checkpoint (2026-09-14T10:40 — TRAIL R3: A36 committed 44379bc (PR #7 = A32–A36); HR1 v2 = 0033f74 on `codex/hr1-registry-snapshot-compiler` (PR #8, base = the A35 branch); A37 (agent-control receipts) rehearsed/committed committed 7e6532e on codex/a37-agent-control-verification-receipts, PR #9 (base = the HR1 branch); next = HR2 from the A37 tip)
+
+**Read first:** the 05:40 checkpoint below (still accurate for A33–A35), then `~/Documents/polymath-rebuild/handoff-drafts/logs/hr1_chain.log`
+(admit → apply-code → record → finish → push → PR) and `logs/a37_rehearsal.log` / `logs/a37_finish.log`.
+
+**What happened after 05:40:**
+- HR1 v1 (run 20260914T060339Z, admission f7c1a42) was ABANDONED: the exact verifier passed directly (652 s) but the governor executes the latest evidenced
+  node's verifier inside `verifier_timeout_seconds` (600) on every pass → `RUN_VERIFIER_EXECUTION: TimeoutExpired`; evidence kept in
+  `handoff-drafts/logs/hr1-v1-abandoned/`. Fix = governance slice A36 (44379bc, run 20260914T072105Z): HR1–HR3 verifiers end in `-k research`
+  (HR4 unchanged); ranks A36 129, HR1–HR4 131/132/133/134; digests recomputed; one focused test; PR #7 now carries A32–A36 (5 commits).
+- HR1 v2 admitted from 44379bc (run 20260914T080409Z_HR1-registry-snapshot-compiler-and-research-contracts): VERIFIED and committed 0033f74 (admission 986ac71), pushed, PR #8 (base = the A35 branch); bounded exact verifier 9 s, recorded full suite; legacy finish = verify 125 s → remeasure → verify 127 s → remeasure → close 188 s (~9.5 min, identity hashes unchanged throughout) = the baseline for the receipt migration.
+- Governance optimization (owner directive, rolling + backward compatible) = A37 `agent-control-verification-receipts` (rank 132; HR2–HR4 → 133/134/135):
+  `agentctl check` (guard + inexpensive task commands, `proof: none`, never a verification), `receipt.json` issued only by a passing `verify` and bound by
+  content hashes (task id, build-run id, authoritative tree without derived task artifacts, manifest, governance files, test suite, task contract),
+  `close --receipt` opt-in that refuses on any mismatch (default close still re-verifies), measurement `git-owned-diff-v2` (derived verification artifacts
+  non-authoritative; v1 runs stay valid). Drafts + drivers: `handoff-drafts/apply_a37.py`, `finish_a37.sh` (verify → measurement-stability proof →
+  `close --receipt` → governor → commit, durations in `logs/a37_metrics.json`), `rehearse_a37.sh`, `trail-a37/`, `trail-acp2/agentctl_patch.py`,
+  `trail-a36/validator_patch.py`. Equivalence matrix + self-test green on a patched copy of the A36 controller. REAL A37: committed 7e6532e (verify 116 s issuing the receipt → measurement digest reproduced byte-for-byte after verify, no remeasure → close --receipt 53 s with proof: receipt → governor PASS plain and vs main → guard PASS → commit → pre-push replay PASS), PR #9 base = the HR1 branch
+
+### NEXT (in order)
+1. Admit HR2 (evidence + scoring contexts) from the A37 tip under measurement v2 with receipt-aware close; drafts in handoff-drafts/trail-hr1/ (admission.py, contracts_draft.py); owner D1 (score composition) first.
+2. Owner review: PR #7 (D4 = ADR-063 acceptance record), the HR1 PR, then the A37 PR; Trail CI on main is red for environment reasons (local governor is the truth).
+3. HR2 (evidence + scoring contexts; drafts in `handoff-drafts/trail-hr1/admission.py`, `contracts_draft.py`) after owner D1; HR3 (O1/O4); HR4; then R5.
+
+### §6 traps added this checkpoint
+- **zsh `cmd | tee -a log || exit` is fail-open** (tee's exit status wins; no pipefail): a worktree-guard ABORT was logged and the script continued. Use
+  `cmd >> "$L" 2>&1 || exit 97` for every guard.
+- **`ACTIVE_TASK` keeps the LAST task id after `agentctl close`** (A36, not NONE) — the pre-start guard expects the previous task.
+- **`agentctl start` refuses a new context path that only holds ignored `__pycache__`** (governor PLACEHOLDER_EMPTY_CONTEXT) → `git clean -fdX -- <paths>`.
+- **Production measurement base = the admission snapshot's `workspace_tree`**, so the first measurement can only follow `--capture-run-baseline`.
+- **Every controller-derived task file must exist before the verify-time guard snapshot**: the guard result (incl. changed/added file lists) is hashed
+  into verification.json and replayed by the pre-push hook against the committed tree. verify pre-creates its logs before the guard; the receipt had to
+  join them (placeholder, never valid) or `close --receipt` commits could not be pushed (A37 attempt 1, reset, evidence in `logs/a37-v1-abandoned/`).
+- **Rehearse with the FULL tests/architecture suite before a real record**: `-k` subsets skipped the lifecycle test that caught the receipt scope bug.
+
+## Prior checkpoint (2026-09-14T05:40 — TRAIL R3: governance stack A32→A35 complete or committing; HR1 admission runs automatically after A35 lands; review = ONE consolidated PR against main; Trail GitHub CI is red on main itself (environment) → local canonical governor is the truth)
 
 **Read first:** the 04:05 checkpoint below (still accurate for A32/A33), then `~/Documents/polymath-rebuild/handoff-drafts/logs/after_a35.log`
 (the orchestration log: A35 push → consolidated PR → HR1 admission → code → exact verifier → close → commit → push → PR).
