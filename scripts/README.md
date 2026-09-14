@@ -7,6 +7,7 @@ state, and a work-log entry.
 | Script | Owner | Reads | Writes | Safe invocation |
 |---|---|---|---|---|
 | `scripts/scaffold_polymath_v4.py` | governance | its `TREE` and embedded content | missing declared files only | `python3 scripts/scaffold_polymath_v4.py` | 2026-09-13 (ADR-0018): `TREE` declares `contracts/adapter/v1`, `shared/polymath_shared/adapter/`, `config/adapters/`, `workers/workers/adapter_step_worker.py`, `orchestrator/orchestrator/api/adapter.py`, migration `0061_adapter_runs.sql` and their tests; E4/E7 (11.261/11.262): `shared/polymath_shared/adapter/trail_client.py`, `config/adapters/substack.article_development.json`, the connector/neutrality/live tests; E2 close-out (11.263): `tests/determinism/test_adapter_worker_registration.py`. |
+  - 2026-09-14 TRAIL R3 execution (HR1 landed, A37 verification receipts): TREE declares the R3/HR1/A37 work-log; no script behaviour change.
   - 2026-09-14 HARNESS-RESEARCH-MIGRATION-V1 R5 prep: `scripts/adapter_mcp_acceptance.py` gains `--adapter trail.product_discovery`, `--harness {receipts,wait}`, `--harness-receipts DIR`, `--harness-id`; exit 3 = honest planned Trail gap (TRAIL_CAPABILITY_PLANNED). TREE declares the R5-prep work-log.
   - 2026-09-14 HARNESS-RESEARCH-MIGRATION-V1 R4 live proof: TREE declares the proof work-log; no script behaviour change.
   - 2026-09-14 HARNESS-RESEARCH-MIGRATION-V1 R4: TREE declares migration 0063, the stub-daemon loop test, the retired-paths guard and the R4 work-log; the retired connector test is undeclared; no script behaviour change.
