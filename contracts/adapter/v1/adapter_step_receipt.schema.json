@@ -30,6 +30,7 @@
     "POLYMATH_GRAPH_EXPAND",
     "EXTERNAL_OPERATION",
     "AGENT_REASON",
+    "HARNESS_ACTION",
     "VALIDATE",
     "BRANCH",
     "COMPILE_RESULT"
@@ -134,6 +135,29 @@
   "receipt_hash": {
    "type": "string",
    "pattern": "^[0-9a-f]{64}$"
+  },
+  "harness_receipt_hash": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "pattern": "^[0-9a-f]{64}$"
+  },
+  "admission_id": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "pattern": "^hadm_[0-9a-f]{8,64}$"
+  },
+  "hypothesis_transition_ids": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "pattern": "^hxt_[0-9a-f]{8,64}$"
+   },
+   "minItems": 0,
+   "maxItems": 500
   }
  },
  "additionalProperties": false

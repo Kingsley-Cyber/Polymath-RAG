@@ -1,0 +1,60 @@
+{
+ "admission_id": "hadm_3c4d5e6f7a8b",
+ "run_id": "adr_3322182605da76d37631b9dc0e0e7cbf",
+ "action_id": "hact_5e2c1b7d9a04",
+ "registry_snapshot": {
+  "snapshot_id": "trs_20260913_7c1e",
+  "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+ },
+ "trail_operation_id": "op_01J9X3ADMIT7Q",
+ "admitted": [
+  {
+   "admitted_evidence_id": "fev_9a1b2c3d4e5f",
+   "observation_id": "obs_1",
+   "source_id": "src_1",
+   "evidence_role": "friction",
+   "source_class": "community_discussion",
+   "source_suitability": "suitable",
+   "freshness": "fresh",
+   "provenance": "recorded",
+   "independence_group": "reddit-r-becomingtheiceman",
+   "duplicate_of": null,
+   "polarity": "supporting",
+   "hypothesis_ids": [
+    "hyp_01c4d9e2f7a1"
+   ],
+   "stage_relevance": "field_evidence",
+   "limitations": [
+    "self-selected community"
+   ],
+   "trail_admission_record_id": "adm_rec_0001"
+  },
+  {
+   "admitted_evidence_id": "fev_9a1b2c3d4e60",
+   "observation_id": "obs_2",
+   "source_id": "src_2",
+   "evidence_role": "workaround",
+   "source_class": "community_discussion",
+   "source_suitability": "suitable",
+   "freshness": "stale_within_policy",
+   "provenance": "recorded",
+   "independence_group": "example-forum",
+   "duplicate_of": null,
+   "polarity": "supporting",
+   "hypothesis_ids": [
+    "hyp_01c4d9e2f7a1"
+   ],
+   "stage_relevance": "field_evidence",
+   "limitations": [],
+   "trail_admission_record_id": "adm_rec_0002"
+  }
+ ],
+ "rejected": [
+  {
+   "observation_id": "obs_3",
+   "reason_code": "SOURCE_ROLE_UNSUITABLE",
+   "detail": "a supplier listing cannot support a friction claim"
+  }
+ ],
+ "evaluated_at": "2026-09-13T20:39:50Z"
+}

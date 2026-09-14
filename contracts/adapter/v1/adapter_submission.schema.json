@@ -2,7 +2,7 @@
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "polymath/contracts/adapter/v1/adapter_submission.schema.json",
  "title": "AdapterSubmissionV1",
- "description": "adapter_submit payload for an AGENT_REASON step: the structured result plus who produced it. Validated against the step's output_schema and acceptance rules before the run advances.",
+ "description": "adapter_submit payload: for an AGENT_REASON step the structured reasoning result (kind=reasoning, validated against the step's output_schema and acceptance rules); for a HARNESS_ACTION step a HarnessResearchReceiptV1 (kind=receipt, validated as provenance shape). `kind` may be omitted; the runtime derives it from the awaiting step and rejects a mismatch.",
  "type": "object",
  "required": [
   "run_id",
@@ -48,6 +48,12 @@
   "submission_hash": {
    "type": "string",
    "pattern": "^[0-9a-f]{64}$"
+  },
+  "kind": {
+   "enum": [
+    "reasoning",
+    "receipt"
+   ]
   }
  },
  "additionalProperties": false

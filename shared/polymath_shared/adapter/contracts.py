@@ -14,10 +14,26 @@ _REPO = Path(__file__).resolve().parents[3]
 CONTRACT_DIR = _REPO / "contracts" / "adapter" / "v1"
 
 STEP_TYPES = ("POLYMATH_RETRIEVE", "POLYMATH_COMPILE_PLAN", "POLYMATH_GRAPH_EXPAND", "EXTERNAL_OPERATION",
-              "AGENT_REASON", "VALIDATE", "BRANCH", "COMPILE_RESULT")
-#: steps the runtime executes itself; AGENT_REASON is the only step a connected agent answers
-AUTOMATIC_STEP_TYPES = frozenset(STEP_TYPES) - {"AGENT_REASON"}
-RUN_STATUSES = ("created", "running", "awaiting_agent", "completed", "terminal_gap", "cancelled", "failed")
+              "AGENT_REASON", "HARNESS_ACTION", "VALIDATE", "BRANCH", "COMPILE_RESULT")
+#: steps answered through adapter_submit: AGENT_REASON by the connected agent (reasoning), HARNESS_ACTION by the host
+#: harness (a HarnessResearchReceiptV1). Every other step is executed by the runtime.
+AGENT_ANSWERED_STEP_TYPES = frozenset({"AGENT_REASON", "HARNESS_ACTION"})
+AUTOMATIC_STEP_TYPES = frozenset(STEP_TYPES) - AGENT_ANSWERED_STEP_TYPES
+RUN_STATUSES = ("created", "running", "awaiting_agent", "awaiting_harness", "completed", "terminal_gap", "cancelled", "failed")
+# ── ADR-0019 closed cognitive vocabulary (generic: the engine knows hypotheses and transitions, never a domain)
+HARNESS_ACTION_KINDS = ("AGENT_RESEARCH", "PRODUCT_REALITY_CHECK", "SUPPLIER_RESEARCH")
+THETA_OPS = ("generate_hypotheses", "derive_mechanisms", "cross_map_frictions", "derive_physical_jobs", "derive_analogies",
+             "split_hypotheses", "generate_product_mechanisms")
+PHI_OPS = ("reject", "merge", "deduplicate", "weaken", "strengthen", "challenge", "require_evidence", "promote")
+HYPOTHESIS_STATUSES = ("proposed", "filtered", "retained", "revised", "split", "merged", "weakened", "strengthened",
+                       "contradicted", "killed", "promoted")
+TRANSITION_KINDS = ("GENERATE", "REVISE", "SPLIT", "MERGE", "WEAKEN", "STRENGTHEN", "CONTRADICT", "KILL", "PROMOTE")
+TRANSITION_ACTORS = ("theta", "phi", "runtime")
+#: evidence roles are DOMAIN DATA: declared by a manifest (`evidence_roles`) and by the Trail registry snapshot, never here
+EVIDENCE_ROLE_PATTERN = r"^[a-z][a-z0-9_]{1,40}$"
+#: evidence-ref kinds an agent may CITE (knowledge + Trail-admitted field evidence); `trail_prior` is a coordinate, never evidence
+CITABLE_EVIDENCE_KINDS = frozenset({"chunk", "document", "graph_fact", "graph_hop", "parent_map", "trail_record", "field_evidence"})
+PRIOR_EVIDENCE_KINDS = frozenset({"trail_prior"})
 TERMINAL_RUN_STATUSES = frozenset({"completed", "terminal_gap", "cancelled", "failed"})
 STEP_STATUSES = ("issued", "accepted", "rejected", "executed", "failed", "skipped")
 

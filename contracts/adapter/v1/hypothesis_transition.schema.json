@@ -1,0 +1,161 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "polymath/contracts/adapter/v1/hypothesis_transition.schema.json",
+ "title": "HypothesisTransitionV1",
+ "description": "One durable hypothesis lifecycle transition (adapter_hypothesis_transitions). Kinds are the closed lifecycle GENERATE/REVISE/SPLIT/MERGE/WEAKEN/STRENGTHEN/CONTRADICT/KILL/PROMOTE; the actor is theta (a proposal accepted by the engine), phi (a deterministic verdict from TrailSignal or a closed VALIDATE rule) or runtime. A transition without at least one cause ref (chunk, graph fact, Trail prior, admitted field evidence, admission record, hypothesis, step output) is invalid: no hypothesis may lose its ancestry or the evidence that changed it.",
+ "type": "object",
+ "required": [
+  "transition_id",
+  "run_id",
+  "hypothesis_id",
+  "kind",
+  "actor",
+  "step_id",
+  "sequence",
+  "parent_hypothesis_ids",
+  "child_hypothesis_ids",
+  "cause_refs",
+  "from_revision",
+  "to_revision",
+  "resulting_status",
+  "reason_code",
+  "recorded_at"
+ ],
+ "properties": {
+  "transition_id": {
+   "type": "string",
+   "pattern": "^hxt_[0-9a-f]{8,64}$"
+  },
+  "run_id": {
+   "type": "string",
+   "pattern": "^adr_[0-9a-f]{16,64}$"
+  },
+  "hypothesis_id": {
+   "type": "string",
+   "pattern": "^hyp_[0-9a-f]{8,64}$"
+  },
+  "kind": {
+   "enum": [
+    "GENERATE",
+    "REVISE",
+    "SPLIT",
+    "MERGE",
+    "WEAKEN",
+    "STRENGTHEN",
+    "CONTRADICT",
+    "KILL",
+    "PROMOTE"
+   ]
+  },
+  "actor": {
+   "enum": [
+    "theta",
+    "phi",
+    "runtime"
+   ]
+  },
+  "step_id": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 200
+  },
+  "sequence": {
+   "type": "integer",
+   "minimum": 1
+  },
+  "parent_hypothesis_ids": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "pattern": "^hyp_[0-9a-f]{8,64}$"
+   },
+   "minItems": 0,
+   "maxItems": 64
+  },
+  "child_hypothesis_ids": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "pattern": "^hyp_[0-9a-f]{8,64}$"
+   },
+   "minItems": 0,
+   "maxItems": 64
+  },
+  "cause_refs": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "kind",
+     "id"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "kind": {
+      "enum": [
+       "chunk",
+       "document",
+       "graph_fact",
+       "graph_hop",
+       "parent_map",
+       "trail_prior",
+       "field_evidence",
+       "evidence_admission",
+       "hypothesis",
+       "step_output"
+      ]
+     },
+     "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+     }
+    }
+   },
+   "minItems": 1,
+   "maxItems": 500
+  },
+  "from_revision": {
+   "type": [
+    "integer",
+    "null"
+   ],
+   "minimum": 0
+  },
+  "to_revision": {
+   "type": "integer",
+   "minimum": 0
+  },
+  "resulting_status": {
+   "enum": [
+    "proposed",
+    "filtered",
+    "retained",
+    "revised",
+    "split",
+    "merged",
+    "weakened",
+    "strengthened",
+    "contradicted",
+    "killed",
+    "promoted"
+   ]
+  },
+  "reason_code": {
+   "type": "string",
+   "pattern": "^[A-Z][A-Z0-9_]{2,60}$"
+  },
+  "proposal_receipt_hash": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "pattern": "^[0-9a-f]{64}$"
+  },
+  "recorded_at": {
+   "type": "string",
+   "format": "date-time"
+  }
+ },
+ "additionalProperties": false
+}

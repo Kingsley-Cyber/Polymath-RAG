@@ -1,0 +1,212 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "polymath/contracts/adapter/v1/evidence_admission.schema.json",
+ "title": "EvidenceAdmissionV1",
+ "description": "TrailSignal's admission verdict for one HarnessResearchReceiptV1, as Polymath stores it (adapter_admitted_evidence): which observations became field evidence and under which role, source suitability, freshness, provenance, independence group, duplicate linkage, polarity, hypothesis linkage and research-stage relevance; which were rejected and why. Rejected observations stay traceable and never enter the admitted set. Trail's own admission records are referenced by id, never copied.",
+ "type": "object",
+ "required": [
+  "admission_id",
+  "run_id",
+  "action_id",
+  "registry_snapshot",
+  "trail_operation_id",
+  "admitted",
+  "rejected",
+  "evaluated_at"
+ ],
+ "properties": {
+  "admission_id": {
+   "type": "string",
+   "pattern": "^hadm_[0-9a-f]{8,64}$"
+  },
+  "run_id": {
+   "type": "string",
+   "pattern": "^adr_[0-9a-f]{16,64}$"
+  },
+  "action_id": {
+   "type": "string",
+   "pattern": "^hact_[0-9a-f]{8,64}$"
+  },
+  "registry_snapshot": {
+   "type": "object",
+   "required": [
+    "snapshot_id",
+    "content_hash"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "snapshot_id": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 200
+    },
+    "content_hash": {
+     "type": "string",
+     "pattern": "^(sha256:)?[0-9a-f]{64}$"
+    }
+   }
+  },
+  "trail_operation_id": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 200
+  },
+  "admitted": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "admitted_evidence_id",
+     "observation_id",
+     "source_id",
+     "evidence_role",
+     "source_class",
+     "source_suitability",
+     "freshness",
+     "provenance",
+     "independence_group",
+     "duplicate_of",
+     "polarity",
+     "hypothesis_ids",
+     "stage_relevance",
+     "limitations",
+     "trail_admission_record_id"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "admitted_evidence_id": {
+      "type": "string",
+      "pattern": "^fev_[0-9a-f]{8,64}$"
+     },
+     "observation_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+     },
+     "source_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+     },
+     "evidence_role": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{1,40}$",
+      "description": "an evidence role declared by the adapter manifest (`evidence_roles`) and by the Trail registry snapshot; the generic engine never hard-codes the vocabulary"
+     },
+     "source_class": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+     },
+     "source_suitability": {
+      "enum": [
+       "suitable",
+       "conditional"
+      ]
+     },
+     "freshness": {
+      "enum": [
+       "fresh",
+       "stale_within_policy",
+       "stale"
+      ]
+     },
+     "provenance": {
+      "enum": [
+       "verified",
+       "recorded",
+       "unverified"
+      ]
+     },
+     "independence_group": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+     },
+     "duplicate_of": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 200
+     },
+     "polarity": {
+      "enum": [
+       "supporting",
+       "contradicting",
+       "neutral"
+      ]
+     },
+     "hypothesis_ids": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "pattern": "^hyp_[0-9a-f]{8,64}$"
+      },
+      "minItems": 1,
+      "maxItems": 64
+     },
+     "stage_relevance": {
+      "enum": [
+       "field_evidence",
+       "product_reality",
+       "supply"
+      ]
+     },
+     "limitations": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 1000
+      },
+      "minItems": 0,
+      "maxItems": 20
+     },
+     "trail_admission_record_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+     }
+    }
+   },
+   "minItems": 0,
+   "maxItems": 500
+  },
+  "rejected": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "observation_id",
+     "reason_code",
+     "detail"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "observation_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+     },
+     "reason_code": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]{2,60}$"
+     },
+     "detail": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+     }
+    }
+   },
+   "minItems": 0,
+   "maxItems": 500
+  },
+  "evaluated_at": {
+   "type": "string",
+   "format": "date-time"
+  }
+ },
+ "additionalProperties": false
+}

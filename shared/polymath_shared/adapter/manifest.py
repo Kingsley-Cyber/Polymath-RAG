@@ -78,6 +78,20 @@ def graph_integrity_errors(raw: dict[str, Any]) -> list[str]:
                 errs.append(f"{sid}: a planned Trail capability names its graph node")
         if typ == "BRANCH" and not (s.get("branches") or nxt):
             errs.append(f"{sid}: BRANCH needs branches or a default next")
+        # ADR-0019: HARNESS_ACTION is a typed hand-off to the host harness; theta ops belong to AGENT_REASON only; and
+        # an evidence-gap loop must return through reasoning, never straight into another research action
+        if typ == "HARNESS_ACTION":
+            if not ((s.get("harness") or {}).get("action_kind") and s.get("objective")):
+                errs.append(f"{sid}: HARNESS_ACTION needs harness.action_kind + objective")
+        elif s.get("harness") is not None:
+            errs.append(f"{sid}: only a HARNESS_ACTION step may carry `harness`")
+        if s.get("theta_op") is not None and typ != "AGENT_REASON":
+            errs.append(f"{sid}: theta_op is only valid on AGENT_REASON")
+        if typ == "BRANCH":
+            for b in s.get("branches") or []:
+                tgt = by_id.get(b.get("next")) or {}
+                if tgt.get("type") == "HARNESS_ACTION":
+                    errs.append(f"{sid}: a BRANCH may not target HARNESS_ACTION {b.get('next')!r} directly (loop through reasoning)")
     if entry in by_id and terminal in by_id:
         seen, todo = set(), [entry]
         while todo:

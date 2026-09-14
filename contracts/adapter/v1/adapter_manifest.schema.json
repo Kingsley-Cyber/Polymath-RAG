@@ -2,7 +2,7 @@
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "polymath/contracts/adapter/v1/adapter_manifest.schema.json",
  "title": "AdapterManifestV1",
- "description": "A versioned, admitted cognitive adapter: identity, schema versions, the CLOSED-vocabulary step list, branch predicates and budgets. Semantic workflow only \u2014 no executable definitions, no caller-supplied code.",
+ "description": "A versioned, admitted cognitive adapter: identity, schema versions, the CLOSED-vocabulary step list (nine types since ADR-0019: HARNESS_ACTION hands live-world research to the host harness), branch predicates, budgets and the typed theta/phi cognitive operations. Semantic workflow only \u2014 no executable definitions, no caller-supplied code, no source-specific branches.",
  "type": "object",
  "required": [
   "adapter_id",
@@ -79,6 +79,16 @@
      "type": "integer",
      "minimum": 0,
      "maximum": 500
+    },
+    "max_harness_actions": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 100
+    },
+    "max_hypotheses": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 64
     }
    }
   },
@@ -98,6 +108,15 @@
    "items": {
     "$ref": "#/$defs/step_def"
    }
+  },
+  "evidence_roles": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "pattern": "^[a-z][a-z0-9_]{1,40}$"
+   },
+   "uniqueItems": true,
+   "description": "the closed evidence-role vocabulary this adapter's harness actions, receipts and admissions may use (domain data, declared here, never in runtime code)"
   }
  },
  "additionalProperties": false,
@@ -156,6 +175,7 @@
       "POLYMATH_GRAPH_EXPAND",
       "EXTERNAL_OPERATION",
       "AGENT_REASON",
+      "HARNESS_ACTION",
       "VALIDATE",
       "BRANCH",
       "COMPILE_RESULT"
@@ -245,8 +265,105 @@
        "type": "string"
       }
      }
+    },
+    "cognitive_op": {
+     "enum": [
+      "theta",
+      "phi"
+     ]
+    },
+    "theta_op": {
+     "$ref": "#/$defs/theta_op"
+    },
+    "harness": {
+     "type": "object",
+     "required": [
+      "action_kind"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "action_kind": {
+       "$ref": "#/$defs/harness_action_kind"
+      },
+      "preferred_source_roles": {
+       "type": "array",
+       "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+       },
+       "minItems": 0,
+       "maxItems": 50
+      },
+      "disallowed_source_roles": {
+       "type": "array",
+       "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+       },
+       "minItems": 0,
+       "maxItems": 50
+      },
+      "minimum_independent_sources": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 100
+      },
+      "freshness_max_age_days": {
+       "type": [
+        "integer",
+        "null"
+       ],
+       "minimum": 1
+      },
+      "budget": {
+       "type": "object",
+       "required": [
+        "max_queries",
+        "max_sources",
+        "max_observations"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "max_queries": {
+         "type": "integer",
+         "minimum": 1,
+         "maximum": 500
+        },
+        "max_sources": {
+         "type": "integer",
+         "minimum": 1,
+         "maximum": 200
+        },
+        "max_observations": {
+         "type": "integer",
+         "minimum": 1,
+         "maximum": 1000
+        }
+       }
+      }
+     }
     }
    }
+  },
+  "harness_action_kind": {
+   "enum": [
+    "AGENT_RESEARCH",
+    "PRODUCT_REALITY_CHECK",
+    "SUPPLIER_RESEARCH"
+   ]
+  },
+  "theta_op": {
+   "enum": [
+    "generate_hypotheses",
+    "derive_mechanisms",
+    "cross_map_frictions",
+    "derive_physical_jobs",
+    "derive_analogies",
+    "split_hypotheses",
+    "generate_product_mechanisms"
+   ]
   }
  }
 }
