@@ -57,8 +57,10 @@ ADR-063 acceptance record, D5 side table; O1 `polymath` principal + `mcp.polymat
 O6 repoint `~/.hermes/skills/business/opportunity-research` (symlink → `polymath-v4-main/research`) before `research/` is removed.
 
 ### NEXT (in order)
-1. PR #14 → merge on green → `post_merge_ff.sh b79cf37` (no bounce).
-2. Finish A32 (see above) → owner review → push/PR on Trail only on the owner's word.
+0. Two unattended jobs were armed at close-out (logs in `handoff-drafts/logs/`): `merge_pr14.sh` (CI watch → squash-merge → ff) and
+   `finish_a32.sh` (verify gate → `agentctl close` → credential scan → LOCAL commit). Check their logs FIRST; each aborts without changes on any red gate.
+1. PR #14 → merge on green → `post_merge_ff.sh b79cf37` (no bounce) — if the job did not.
+2. Finish A32 (see above) — if the job did not → owner review → push/PR on Trail only on the owner's word.
 3. HR1 slice (Trail): task + build-run + baseline → move the drafts into `src/trail_signal/contexts/planning/{public,domain}/`, `data/source_capabilities.csv`,
    `schemas/registry.yaml` + generated schemas, `tests/contracts/research/`, `tests/replay/research/` → governor + suites green → local commit.
 4. HR2 (after D1), HR3 (needs O1/O4), HR4; then R5 in Polymath (live acceptance with a real harness via `scripts/adapter_mcp_acceptance.py --harness wait`;
