@@ -186,7 +186,19 @@ def exec_validate(step: dict[str, Any], state: RunState, m: Manifest) -> service
             missing.append(req)
     if missing:
         return {"gap": {"code": "VALIDATION_FAILED", "message": "required outputs missing: " + ", ".join(missing)}}
-    return {"output": {"ok": True, "checked": checked}}
+    out: dict[str, Any] = {"ok": True, "checked": checked}
+    if cfg.get("phi") == "deduplicate":
+        # closed φ rule (ADR-0019 §3): identical normalised statements merge into the lowest id; the engine records the MERGE
+        checked.append("phi:deduplicate")
+        groups: dict[str, list[str]] = {}
+        for h in step.get("context", {}).get("hypotheses") or []:
+            key = " ".join(str(h.get("statement", "")).lower().split())
+            groups.setdefault(key, []).append(h["hypothesis_id"])
+        verdicts = [{"hypothesis_id": dup, "kind": "MERGE", "into_hypothesis_id": ids[0], "cause_refs": [{"kind": "hypothesis", "id": ids[0]}],
+                     "reason_code": "DUPLICATE_STATEMENT"} for ids in groups.values() for dup in sorted(ids)[1:]]
+        if verdicts:
+            out["hypothesis_verdicts"] = verdicts
+    return {"output": out}
 
 
 def exec_branch(step: dict[str, Any], state: RunState, m: Manifest) -> service.ExecOutcome:

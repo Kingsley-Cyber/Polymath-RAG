@@ -16,9 +16,31 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.265**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.267**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-13T23:30 — HARNESS-RESEARCH-MIGRATION-V1 R0 ADMITTED: ADR-0019 + plan/cutover ledger; the owner's harness-executed hypothesis research architecture is now repository authority; research/ FROZEN; Trail side (ADR-063/A32/HR1–HR4) next under Trail governance)
+## Latest checkpoint (2026-09-14T01:40 — HARNESS-RESEARCH-MIGRATION-V1: R0 + R1 MERGED (main c03c37e, production at c03c37e); R2 substrate in PR #11 — needs ONE bounce at merge; Trail A32 governance slice being authored in `~/trail-signal-os-worktrees/A32`)
+
+**State:** R0 authority (#9 → c3663a5) and R1 contracts (#10 → c03c37e) are on main; the production worktree is fast-forwarded to c03c37e
+(fleet re-converged through fence + medic; two bundle hashes were observed transiently — check `hashes=1` before the next merge). **R2**
+(branch `handoff/hrm-r2-substrate`, PR #11): migration 0062 (applied to the dev store), pure hypothesis ledger, HARNESS_ACTION pause/receipt,
+admitted-only context, θ/φ ledger hooks, closed φ dedupe, lineage ids, `adapter_submit kind`, `.env.example` names; 72 adapter tests green.
+**Merging R2 changes `workers/` + `orchestrator/` + `shared/…/adapter` → the bundle hash changes → do the documented bounce right after the
+fast-forward** (match `python -m control\.process_supervisor`, `xargs -n1 kill -TERM`, wait for 0 supervisors/children/listeners, ONE
+`nohup ./scripts/boot_polymath.sh`), then verify 24 healthy / ONE hash / `adapter_step` up. Register 11.267.
+
+**Trail side (R3):** worktree `/Users/king/trail-signal-os-worktrees/A32` (branch `codex/a32-harness-research-boundary` from origin/main
+6d7ef2a, `.venv` = locked deps via `uv sync --python 3.12 --frozen`; governor baseline = 1 pre-existing diagnostic). ADR-063 text and the
+A32/HR1–HR4 node specs are in the scratchpad (`trail-a32/`); the governance slice (ADR-063, graph nodes, policy digests, validator literals,
+build-run record, task A32, ledger rows) is being executed there — NOT pushed. Owner decisions D1–D5 + O1/O4/O6 in plan §10 stand.
+
+### NEXT
+1. PR #11 green → squash-merge → production fast-forward → BOUNCE → verify; extend the live restart test for `awaiting_harness` (R4).
+2. R3: finish A32 (local commit), then HR1 registry compiler + contracts + replay (pure, offline) — owner D1/D2/D5 first for HR2.
+3. R4: `trail.product_discovery` 2.0.0 on the new loop with executors for the seven Trail operations; remove the Trail acquisition path
+   (P3/P4/P5/P8/P9/P15 rows of plan §7); tests C/D/H/J; dead-reference audit §12.
+4. R5: live acceptance (needs O1 principal + O4 stack); remove `research/`, `research_*`, the research-harness workflow.
+
+## Prior checkpoint (2026-09-13T23:30 — HARNESS-RESEARCH-MIGRATION-V1 R0 ADMITTED: ADR-0019 + plan/cutover ledger; the owner's harness-executed hypothesis research architecture is now repository authority; research/ FROZEN; Trail side (ADR-063/A32/HR1–HR4) next under Trail governance)
 
 **Owner directive 2026-09-13 (migration prompt):** migrate Polymath + TrailSignal to the harness-executed hypothesis research architecture as ONE
 governed live migration (no parallel replacement, one authority per responsibility, a cutover ledger). **Read first:**

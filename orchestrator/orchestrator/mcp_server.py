@@ -496,20 +496,26 @@ async def adapter_start(adapter_id: str, input: dict, request_options: Optional[
 
 @mcp.tool()
 async def adapter_next(run_id: str) -> dict:
-    """What the run needs from you now: {kind:"step", step: AdapterStepV1} when an AGENT_REASON step awaits your
-    submission (objective, bounded evidence_refs, constraints, output_schema, acceptance_rules), else
+    """What the run needs from you now: {kind:"step", step: AdapterStepV1} when a step awaits you — an AGENT_REASON
+    step (reason over objective, bounded evidence_refs, hypotheses, constraints, output_schema, acceptance_rules) or a
+    HARNESS_ACTION step (step.harness_action = HarnessActionV1: go research with YOUR OWN tools — web search, browser,
+    APIs — within its search intents, source roles, freshness, independence and budget, then submit a
+    HarnessResearchReceiptV1 of structured observations; TrailSignal decides what is admitted as evidence). Else
     {kind:"status", status: AdapterRunStatusV1} (running = Polymath is executing; terminal = fetch adapter_result)."""
     return await _orch("GET", f"/adapter/{run_id}/next")
 
 
 @mcp.tool()
 async def adapter_submit(run_id: str, step_id: str, payload: dict, agent_identity: str = "connected-agent",
-                         model: Optional[str] = None) -> dict:
-    """Submit your structured result for the awaiting AGENT_REASON step. Validated against the step's
-    output_schema and acceptance rules (cite ONLY ids from context.evidence_refs); a rejection returns the
-    errors and the step stays open for a corrected submission. Returns AdapterRunStatusV1."""
+                         model: Optional[str] = None, kind: Optional[str] = None) -> dict:
+    """Submit your answer for the awaiting step. AGENT_REASON: kind="reasoning" (default) — validated against the step's
+    output_schema and acceptance rules; cite ONLY ids from context.evidence_refs (never a trail_prior); hypotheses you
+    generate become durable state with lineage. HARNESS_ACTION: kind="receipt" — a HarnessResearchReceiptV1
+    (action_id, harness_id, sources, observations, tool_trace, limitations; no score field exists). A rejection returns
+    the errors and the step stays open for a corrected submission. Returns AdapterRunStatusV1."""
     return await _orch("POST", f"/adapter/{run_id}/submit",
-                       json={"step_id": step_id, "payload": payload, "agent_identity": agent_identity, "model": model})
+                       json={"step_id": step_id, "payload": payload, "agent_identity": agent_identity, "model": model,
+                             **({"kind": kind} if kind else {})})
 
 
 @mcp.tool()
