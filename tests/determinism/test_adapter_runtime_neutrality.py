@@ -11,10 +11,11 @@ if str(ROOT / "shared") not in sys.path:
     sys.path.insert(0, str(ROOT / "shared"))
 from polymath_shared.adapter import list_manifests  # noqa: E402
 
-RUNTIME = [ROOT / "shared/polymath_shared/adapter" / f for f in ("service.py", "transitions.py", "manifest.py", "contracts.py", "store.py", "trail_client.py")] + \
+RUNTIME = [ROOT / "shared/polymath_shared/adapter" / f for f in ("service.py", "transitions.py", "manifest.py", "contracts.py", "store.py", "trail_client.py", "hypotheses.py")] + \
           [ROOT / "workers/workers/adapter_step_worker.py", ROOT / "orchestrator/orchestrator/api/adapter.py"]
 ADAPTER_IDS = ("trail.product_discovery", "substack.article_development", "polymath.knowledge_brief")
-DOMAIN_WORDS = ("hypotheses", "product_territory", "workaround", "narrative_role", "counterargument", "thesis", "article")
+# hypotheses are GENERIC engine state since ADR-0019 (HypothesisStateV1), not a domain word
+DOMAIN_WORDS = ("product_territory", "workaround", "narrative_role", "counterargument", "thesis", "article")
 
 
 def test_runtime_never_branches_on_an_adapter_id_or_domain_vocabulary():
@@ -24,7 +25,7 @@ def test_runtime_never_branches_on_an_adapter_id_or_domain_vocabulary():
         for aid in ADAPTER_IDS:
             assert aid not in code, f"{path.name} mentions adapter id {aid!r}"
         for w in DOMAIN_WORDS:
-            assert re.search(rf"\b{w}\b", code) is None or path.name == "adapter_step_worker.py" and w == "hypotheses", f"{path.name} hard-codes domain word {w!r}"
+            assert re.search(rf"\b{w}\b", code) is None, f"{path.name} hard-codes domain word {w!r}"
 
 
 def test_both_workload_adapters_share_the_closed_vocabulary_and_differ_in_semantics():

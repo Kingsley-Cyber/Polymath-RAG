@@ -9,9 +9,10 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Callable
 
-from .contracts import AUTOMATIC_STEP_TYPES, assert_valid, stable_hash
+from .contracts import AGENT_ANSWERED_STEP_TYPES, AUTOMATIC_STEP_TYPES, PRIOR_EVIDENCE_KINDS, assert_valid, stable_hash, validate
 from .manifest import ADAPTER_DIR, Manifest, list_manifests
-from . import store, transitions as T
+from . import hypotheses as H, store, transitions as T
+from .hypotheses import HypothesisRejected
 from .transitions import BudgetExhausted, RunState, SubmissionRejected
 
 #: an executor for one automatic step: (step, state, manifest) -> ExecOutcome
@@ -123,7 +124,7 @@ def status(conn, run_id: str, directory: Path | None = None) -> dict[str, Any]:
 def next_step(conn, run_id: str, directory: Path | None = None) -> dict[str, Any]:
     """The step the connected agent must answer, or the run status when nothing is awaiting it."""
     st = status(conn, run_id, directory)
-    if st["status"] == "awaiting_agent":
+    if st["status"] in ("awaiting_agent", "awaiting_harness"):
         row = store.current_step(conn, run_id)
         if row and row["status"] == "issued":
             return {"kind": "step", "step": row["step"], "status": st}
@@ -153,12 +154,112 @@ def submit(conn, run_id: str, submission: dict[str, Any], directory: Path | None
         # the step stays ISSUED (the agent may retry); the rejection is receipted on the row
         store.finish_step(conn, run_id, row["sequence"], status="issued", receipt=receipt)
         raise
-    receipt = _receipt(step, "accepted", started, evidence_ids=sorted(_cited(sub["payload"])),
-                       model=sub.get("submitted_by", {}).get("model") or sub.get("submitted_by", {}).get("agent_identity"),
-                       validation={"ok": True, "errors": []})
-    store.finish_step(conn, run_id, row["sequence"], status="accepted", receipt=receipt, output=sub["payload"], submission=sub)
+    who = sub.get("submitted_by", {}).get("model") or sub.get("submitted_by", {}).get("agent_identity")
+    if step["step_type"] == "HARNESS_ACTION":
+        # a HarnessResearchReceiptV1: provenance recorded, nothing admitted yet (TrailSignal admission is the next automatic step)
+        rec = dict(sub["payload"])
+        rhash = stable_hash(rec)
+        store.record_receipt(conn, step["harness_action"]["action_id"], rec, rhash)
+        output = {**rec, "_harness_action_id": step["harness_action"]["action_id"], "_receipt_hash": rhash}
+        new_state = T.replace(new_state, outputs={**new_state.outputs, step["step_id"]: output})   # later steps see the bound receipt
+        receipt = _receipt(step, "accepted", started, evidence_ids=[], model=rec.get("harness_id") or who, validation={"ok": True, "errors": []})
+        receipt["harness_receipt_hash"] = rhash
+        receipt["receipt_hash"] = stable_hash({k: v for k, v in receipt.items() if k != "receipt_hash"})
+        store.finish_step(conn, run_id, row["sequence"], status="accepted", receipt=receipt, output=output, submission=sub)
+        store.save_state(conn, new_state)
+        return status(conn, run_id, directory)
+    # θ ledger: generated hypotheses and/or proposed transitions inside a reasoning payload become durable state in the SAME unit
+    output = dict(sub["payload"])
+    transition_ids: list[str] = []
+    try:
+        output, transition_ids = _apply_theta(conn, run_id, step, m, state, output, started)
+    except HypothesisRejected as exc:
+        errors = ["hypotheses: " + e for e in exc.errors]
+        receipt = _receipt(step, "rejected", started, evidence_ids=[], model=who, validation={"ok": False, "errors": errors})
+        store.finish_step(conn, run_id, row["sequence"], status="issued", receipt=receipt)
+        raise SubmissionRejected(errors) from None
+    new_state = T.replace(new_state, outputs={**new_state.outputs, step["step_id"]: output})       # payload + ledger ids
+    receipt = _receipt(step, "accepted", started, evidence_ids=sorted(_cited(sub["payload"])), model=who, validation={"ok": True, "errors": []})
+    if transition_ids:
+        receipt["hypothesis_transition_ids"] = transition_ids
+        receipt["receipt_hash"] = stable_hash({k: v for k, v in receipt.items() if k != "receipt_hash"})
+    store.finish_step(conn, run_id, row["sequence"], status="accepted", receipt=receipt, output=output, submission=sub)
     store.save_state(conn, new_state)
     return status(conn, run_id, directory)
+
+
+def _apply_theta(conn, run_id: str, step: dict[str, Any], m: Manifest, state: RunState, payload: dict[str, Any], now: str) -> tuple[dict[str, Any], list[str]]:
+    """A reasoning payload may carry `hypotheses` (θ GENERATE) and/or `transitions` (θ REVISE/SPLIT proposals). They are validated by
+    the pure ledger against the step's context and persisted as immutable revisions + transitions; the payload gains the ids."""
+    out = dict(payload)
+    tids: list[str] = []
+    max_h = int(m.budgets.get("max_hypotheses", 8))
+    snapshot = _registry_snapshot(state)
+    current = store.current_hypotheses(conn, run_id)
+    if isinstance(payload.get("hypotheses"), list) and step.get("theta_op") in (None, "generate_hypotheses", "split_hypotheses", "derive_mechanisms",
+                                                                                "cross_map_frictions", "derive_physical_jobs", "derive_analogies", "generate_product_mechanisms") \
+            and (step.get("cognitive_op") == "theta" or step.get("theta_op")):
+        states, trs = H.generate(run_id, step, payload["hypotheses"], registry_snapshot_id=(snapshot or {}).get("snapshot_id"), recorded_at=now,
+                                 max_hypotheses=max(0, max_h - len([h for h in current.values() if h["status"] not in H.ABSORBED_STATUSES])) or 1,
+                                 ordinal_base=len(current))
+        store.insert_hypothesis_revisions(conn, states)
+        store.insert_transitions(conn, trs)
+        out["hypothesis_ids"] = [s_["hypothesis_id"] for s_ in states]
+        tids += [t["transition_id"] for t in trs]
+        current.update({s_["hypothesis_id"]: s_ for s_ in states})
+    if isinstance(payload.get("transitions"), list) and payload["transitions"]:
+        allowed = _allowed_causes(conn, run_id, step, current)
+        states, trs = H.apply(run_id, step, current, payload["transitions"], actor="theta", allowed_causes=allowed, recorded_at=now,
+                              registry_snapshot_id=(snapshot or {}).get("snapshot_id"), max_hypotheses=max_h)
+        store.insert_hypothesis_revisions(conn, states)
+        store.insert_transitions(conn, trs)
+        out["hypothesis_transition_ids"] = [t["transition_id"] for t in trs]
+        tids += out["hypothesis_transition_ids"]
+    return out, tids
+
+
+def _allowed_causes(conn, run_id: str, step: dict[str, Any], current: dict[str, dict[str, Any]]) -> dict[str, str]:
+    allowed = {r["id"]: r["kind"] for r in step.get("context", {}).get("evidence_refs") or []}
+    allowed.update({h: "hypothesis" for h in current})
+    allowed.update({a: "evidence_admission" for a in store.admission_ids(conn, run_id)})
+    allowed.update({r["id"]: "field_evidence" for r in store.admitted_evidence_refs(conn, run_id)})
+    allowed.update({sid: "step_output" for sid in store.load_run(conn, run_id)[0].outputs})
+    return allowed
+
+
+def _registry_snapshot(state: RunState) -> dict[str, Any] | None:
+    snap = _gather(state.outputs, "registry_snapshot")
+    if isinstance(snap, dict) and snap.get("snapshot_id") and snap.get("content_hash"):
+        return {"snapshot_id": str(snap["snapshot_id"]), "content_hash": str(snap["content_hash"])}
+    return None
+
+
+def _compile_harness_action(state: RunState, spec: dict[str, Any], step_id: str, sequence: int, hyps: dict[str, dict[str, Any]],
+                            snapshot: dict[str, Any] | None, issued_at: str) -> dict[str, Any] | None:
+    """HarnessActionV1 = the manifest's `harness` block (kind, roles, budget, independence, freshness) + the latest compiled research
+    directive found in prior step outputs (`research_directive`: gaps, search intents, conditions, geography, language) + the live
+    hypotheses + the registry snapshot. Without a directive there is nothing lawful to hand to the harness → None (typed gap)."""
+    directive = _gather(state.outputs, "research_directive")
+    if not isinstance(directive, dict) or not directive.get("search_intents") or not snapshot:
+        return None
+    hb = spec.get("harness") or {}
+    live = [h for h, s_ in sorted(hyps.items()) if s_["status"] not in H.ABSORBED_STATUSES] or list(directive.get("hypothesis_ids") or [])
+    if not live:
+        return None
+    budget = {**{"max_queries": 20, "max_sources": 15, "max_observations": 60}, **(directive.get("budget") or {}), **(hb.get("budget") or {})}
+    action = {"action_id": "hact_" + hashlib.sha256(f"{state.run_id}:{step_id}:{sequence}".encode()).hexdigest()[:24], "run_id": state.run_id, "step_id": step_id,
+              "action_kind": hb["action_kind"], "hypothesis_ids": live[:64], "objective": str(directive.get("objective") or spec.get("objective") or spec.get("title") or step_id)[:4000],
+              "evidence_gaps": list(directive.get("evidence_gaps") or [])[:200], "search_intents": list(directive["search_intents"])[:100],
+              "preferred_source_roles": list(hb.get("preferred_source_roles") or directive.get("preferred_source_roles") or [])[:50],
+              "disallowed_source_roles": list(hb.get("disallowed_source_roles") or directive.get("disallowed_source_roles") or [])[:50],
+              "freshness_requirement": {"max_age_days": hb.get("freshness_max_age_days", (directive.get("freshness_requirement") or {}).get("max_age_days")),
+                                        "policy_ref": (directive.get("freshness_requirement") or {}).get("policy_ref")},
+              "geography": directive.get("geography"), "language": directive.get("language"),
+              "minimum_independent_sources": int(hb.get("minimum_independent_sources") or directive.get("minimum_independent_sources") or 1),
+              "success_condition": str(directive.get("success_condition") or "the evidence gaps are answered by independent sources")[:2000],
+              "falsification_condition": str(directive.get("falsification_condition") or "independent sources contradict the hypotheses")[:2000],
+              "budget": budget, "registry_snapshot": snapshot, "issued_at": issued_at}
+    return action
 
 
 def cancel(conn, run_id: str, directory: Path | None = None,
@@ -222,17 +323,30 @@ def advance(conn, run_id: str, executors: dict[str, Executor], *, max_steps: int
             if row.get("output"):
                 step["_partial_output"] = row["output"]
         else:
+            hyps = store.current_hypotheses(conn, run_id)
+            snapshot = _registry_snapshot(state)
+            sid = T.next_step_id(m, state)
+            harness_action = None
+            if sid and m.step(sid)["type"] == "HARNESS_ACTION":
+                harness_action = _compile_harness_action(state, m.step(sid), sid, state.sequence + 1, hyps, snapshot, now_iso())
+                if harness_action is None:
+                    state = T.terminal_gap(state, "HARNESS_DIRECTIVE_MISSING",
+                                           f"{sid}: no compiled research directive, registry snapshot or live hypothesis to hand to the harness", step_id=sid)
+                    store.save_state(conn, state)
+                    break
             try:
-                state, step = T.issue_step(m, state, issued_at=now_iso(), evidence_refs=_context_refs(state),
-                                           inputs=state.input)
+                state, step = T.issue_step(m, state, issued_at=now_iso(), evidence_refs=_context_refs(conn, state), inputs=state.input,
+                                           hypotheses=H.context_view(hyps), registry_snapshot=snapshot, harness_action=harness_action)
             except BudgetExhausted as exc:
                 state = T.terminal_gap(state, "BUDGET_EXHAUSTED", str(exc), step_id=state.current_step_id)
                 store.save_state(conn, state)
                 break
             store.insert_step(conn, step)
+            if harness_action:
+                store.insert_harness_action(conn, harness_action, step["sequence"])
             store.save_state(conn, state)
-            if step["step_type"] == "AGENT_REASON":
-                break                                        # the agent answers through adapter_submit
+            if step["step_type"] in AGENT_ANSWERED_STEP_TYPES:
+                break                                        # the agent / harness answers through adapter_submit
         started = now_iso()
         if step["step_type"] == "COMPILE_RESULT":
             out = _compile_result(conn, run_id, state, m, output=None, persist=True, step=step)
@@ -284,9 +398,25 @@ def advance(conn, run_id: str, executors: dict[str, Executor], *, max_steps: int
         refs = list(outcome.get("evidence_refs") or [])
         if refs:
             output["_evidence_refs"] = refs
+        # ADR-0019: an automatic step may carry TrailSignal's admission projection and/or φ verdicts; both become durable state
+        # in this same unit, or the run ends with a typed gap — a verdict is never silently dropped
+        gap = _apply_phi_outputs(conn, run_id, step, m, state, output, started)
+        if gap:
+            store.finish_step(conn, run_id, step["sequence"], status="skipped",
+                              receipt=_receipt(step, "skipped", started, evidence_ids=[], model=None, validation={"ok": False, "errors": [gap["message"]]}),
+                              external=outcome.get("external"), output=output)
+            state = T.terminal_gap(state, gap["code"], gap["message"], step_id=step["step_id"])
+            store.save_state(conn, state)
+            break
         receipt = _receipt(step, "executed", started, evidence_ids=[r["id"] for r in refs], model=None,
                            validation={"ok": True, "errors": []},
                            external_ids=[outcome["external"]["operation_id"]] if outcome.get("external") else [])
+        if output.get("hypothesis_transition_ids"):
+            receipt["hypothesis_transition_ids"] = list(output["hypothesis_transition_ids"])
+            receipt["receipt_hash"] = stable_hash({k: v for k, v in receipt.items() if k != "receipt_hash"})
+        if output.get("evidence_admission"):
+            receipt["admission_id"] = output["evidence_admission"]["admission_id"]
+            receipt["receipt_hash"] = stable_hash({k: v for k, v in receipt.items() if k != "receipt_hash"})
         store.finish_step(conn, run_id, step["sequence"], status="executed", receipt=receipt, output=output, external=outcome.get("external"))
         state = T.record_automatic_output(state, step["step_id"], output)
         store.save_state(conn, state)
@@ -299,12 +429,43 @@ def _cited(payload: Any) -> set[str]:
     return T._cited_ids(payload)
 
 
-def _context_refs(state: RunState) -> list[dict[str, Any]]:
+def _context_refs(conn, state: RunState) -> list[dict[str, Any]]:
+    """What an issued step may carry: knowledge refs and registry priors produced by executed steps, plus TrailSignal-ADMITTED field
+    evidence from the store. Raw harness observations never appear here (ADR-0019 §5)."""
     seen: dict[str, dict[str, Any]] = {}
     for sid, out in state.outputs.items():
         for r in (out or {}).get("_evidence_refs") or []:
             seen.setdefault(r["id"], r)
+    for r in store.admitted_evidence_refs(conn, state.run_id):
+        seen.setdefault(r["id"], r)
     return list(seen.values())[:MAX_CONTEXT_REFS]
+
+
+def _apply_phi_outputs(conn, run_id: str, step: dict[str, Any], m: Manifest, state: RunState, output: dict[str, Any], now: str) -> dict[str, Any] | None:
+    """Admission projections (`evidence_admission`) and φ verdicts (`hypothesis_verdicts`) on an automatic step's output."""
+    adm = output.get("evidence_admission")
+    if adm is not None:
+        errs = validate("evidence_admission", adm)
+        if errs or adm.get("run_id") != run_id:
+            return {"code": "ADMISSION_INVALID", "message": "; ".join(errs[:5]) or "admission run_id mismatch"}
+        if store.harness_action_row(conn, adm["action_id"]) is None:
+            return {"code": "ADMISSION_INVALID", "message": f"admission for unknown harness action {adm['action_id']}"}
+        store.record_admission(conn, adm)
+        output["_admitted_evidence_ids"] = [a["admitted_evidence_id"] for a in adm.get("admitted") or []]
+    verdicts = output.get("hypothesis_verdicts")
+    if verdicts:
+        current = store.current_hypotheses(conn, run_id)
+        allowed = _allowed_causes(conn, run_id, step, current)
+        allowed.update({r["id"]: r["kind"] for r in output.get("_evidence_refs") or []})
+        try:
+            states, trs = H.apply(run_id, step, current, list(verdicts), actor="phi", allowed_causes=allowed, recorded_at=now,
+                                  registry_snapshot_id=(_registry_snapshot(state) or {}).get("snapshot_id"), max_hypotheses=int(m.budgets.get("max_hypotheses", 8)))
+        except HypothesisRejected as exc:
+            return {"code": "PHI_VERDICT_INVALID", "message": "; ".join(exc.errors[:5])}
+        store.insert_hypothesis_revisions(conn, states)
+        store.insert_transitions(conn, trs)
+        output["hypothesis_transition_ids"] = [t["transition_id"] for t in trs]
+    return None
 
 
 def _receipt(step: dict[str, Any], status_: str, started: str, *, evidence_ids: list[str], model: str | None,
@@ -364,8 +525,16 @@ def _compile_result(conn, run_id: str, state: RunState, m: Manifest, *, output: 
             if v is not None:
                 output[key] = v
     evidence_ids, query_ids, ext_ops = [], [], []
-    for r in _context_refs(state):
+    for r in _context_refs(conn, state):
         (query_ids if r["kind"] == "query_receipt" else evidence_ids if r["kind"] in KNOWLEDGE_KINDS else []).append(r["id"])
+    actions = store.list_harness_actions(conn, run_id)
+    hyps = store.current_hypotheses(conn, run_id)
+    snapshots = sorted({str((_gather({sid: o}, "registry_snapshot") or {}).get("snapshot_id")) for sid, o in state.outputs.items()
+                        if isinstance(_gather({sid: o}, "registry_snapshot"), dict)} - {"None"})
+    score_ids = [str(x) for x in _collect_lists(state.outputs, "trail_score_record_ids") if isinstance(x, str)]
+    ts = _gather(state.outputs, "trail_score")
+    if isinstance(ts, dict) and ts.get("record_id"):
+        score_ids.append(str(ts["record_id"]))
     for s in steps:
         e = s.get("external_operation")
         if e:
@@ -382,7 +551,11 @@ def _compile_result(conn, run_id: str, state: RunState, m: Manifest, *, output: 
            "terminal_at": _ts(meta["terminal_at"]) or now_iso(), "output": output,
            "lineage": {"polymath_evidence_ids": sorted(set(evidence_ids)), "query_receipt_ids": sorted(set(query_ids)),
                        "step_receipt_hashes": [s["receipt"]["receipt_hash"] for s in steps if s.get("receipt")],
-                       "external_operations": ext_ops},
+                       "external_operations": ext_ops,
+                       "hypothesis_ids": sorted(hyps), "admitted_evidence_ids": sorted(r["id"] for r in store.admitted_evidence_refs(conn, run_id)),
+                       "harness_action_ids": [a["action_id"] for a in actions],
+                       "harness_ids": sorted({(a["receipt"] or {}).get("harness_id") for a in actions if a.get("receipt")} - {None}),
+                       "registry_snapshot_ids": snapshots, "trail_score_record_ids": sorted(set(score_ids))},
            "contradictions": [c for c in _collect_lists(state.outputs, "contradictions") if isinstance(c, dict)],
            "unknowns": [({"about": u} if isinstance(u, str) else u) for u in _collect_lists(state.outputs, "unknowns")],
            "gap": state.gap, "agent_identity": meta.get("agent_identity")}

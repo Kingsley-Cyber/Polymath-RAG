@@ -38,6 +38,7 @@
     "created",
     "running",
     "awaiting_agent",
+    "awaiting_harness",
     "completed",
     "terminal_gap",
     "cancelled",

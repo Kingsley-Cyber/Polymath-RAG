@@ -26,6 +26,7 @@ class SubmitRequest(BaseModel):
     payload: dict[str, Any]
     agent_identity: str = "connected-agent"
     model: Optional[str] = None
+    kind: Optional[str] = None          # reasoning | receipt (derived from the awaiting step when omitted)
 
 
 def _404(run_id: str) -> HTTPException:
@@ -60,7 +61,8 @@ async def adapter_next(run_id: str) -> dict:
 @router.post("/adapter/{run_id}/submit")
 async def adapter_submit(run_id: str, req: SubmitRequest) -> dict:
     submission = {"run_id": run_id, "step_id": req.step_id, "payload": req.payload,
-                  "submitted_by": {"agent_identity": req.agent_identity, **({"model": req.model} if req.model else {})}}
+                  "submitted_by": {"agent_identity": req.agent_identity, **({"model": req.model} if req.model else {})},
+                  **({"kind": req.kind} if req.kind else {})}
     try:
         with tx() as conn:
             return service.submit(conn, run_id, submission)

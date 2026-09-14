@@ -7,7 +7,7 @@ from typing import Any
 
 import jsonschema
 
-from .contracts import AUTOMATIC_STEP_TYPES, TERMINAL_RUN_STATUSES, assert_valid, stable_hash, validate
+from .contracts import AGENT_ANSWERED_STEP_TYPES, AUTOMATIC_STEP_TYPES, PRIOR_EVIDENCE_KINDS, TERMINAL_RUN_STATUSES, assert_valid, stable_hash, validate
 from .manifest import Manifest
 
 
@@ -33,6 +33,7 @@ class RunState:
     branch_loops: int = 0
     agent_reason_count: int = 0
     external_operation_count: int = 0
+    harness_action_count: int = 0
     input: dict[str, Any] = field(default_factory=dict)
     options: dict[str, Any] = field(default_factory=dict)      # request_options (corpus scope, retrieval mode, …)
     outputs: dict[str, Any] = field(default_factory=dict)       # step_id -> accepted/executed output payload
@@ -104,6 +105,8 @@ def _check_budgets(manifest: Manifest, state: RunState, step_type: str, took_bra
         raise BudgetExhausted(f"max_agent_reason {b['max_agent_reason']} reached")
     if step_type == "EXTERNAL_OPERATION" and state.external_operation_count + 1 > b.get("max_external_operations", 10**9):
         raise BudgetExhausted(f"max_external_operations reached")
+    if step_type == "HARNESS_ACTION" and state.harness_action_count + 1 > b.get("max_harness_actions", 10**9):
+        raise BudgetExhausted("max_harness_actions reached")
     if took_branch and state.branch_loops + 1 > b["max_branch_loops"]:
         raise BudgetExhausted(f"max_branch_loops {b['max_branch_loops']} reached")
 
@@ -117,7 +120,8 @@ def start_run(manifest: Manifest, run_id: str, input_payload: dict[str, Any], op
 
 
 def issue_step(manifest: Manifest, state: RunState, *, issued_at: str, evidence_refs: list[dict[str, Any]] | None = None,
-               inputs: dict[str, Any] | None = None) -> tuple[RunState, dict[str, Any]]:
+               inputs: dict[str, Any] | None = None, hypotheses: list[dict[str, Any]] | None = None,
+               registry_snapshot: dict[str, Any] | None = None, harness_action: dict[str, Any] | None = None) -> tuple[RunState, dict[str, Any]]:
     """Advance to the next step and build its AdapterStepV1 dict (validated). Returns (new_state, step).
     Terminal runs never issue; budget exhaustion raises BudgetExhausted for the caller to record as a typed gap."""
     if state.terminal:
@@ -130,24 +134,36 @@ def issue_step(manifest: Manifest, state: RunState, *, issued_at: str, evidence_
     spec = manifest.step(sid)
     _check_budgets(manifest, state, spec["type"], took_branch)
     seq = state.sequence + 1
+    if spec["type"] == "HARNESS_ACTION":
+        if not harness_action:
+            raise RuntimeError(f"{sid}: HARNESS_ACTION needs a compiled harness action (no research directive available)")
+        assert_valid("harness_action", harness_action)
+    context = {"evidence_refs": list(evidence_refs or []), "inputs": dict(inputs or {}), "prior_step_ids": list(state.outputs.keys())}
+    if hypotheses:
+        context["hypotheses"] = list(hypotheses)
+    if registry_snapshot:
+        context["registry_snapshot"] = dict(registry_snapshot)
     step = {
         "run_id": state.run_id, "step_id": sid, "step_type": spec["type"], "sequence": seq, "issued_at": issued_at,
         "objective": spec.get("objective") or spec.get("title") or sid,
-        "context": {"evidence_refs": list(evidence_refs or []), "inputs": dict(inputs or {}),
-                    "prior_step_ids": list(state.outputs.keys())},
+        "context": context,
         "constraints": list(spec.get("constraints") or []),
         "output_schema": dict(spec.get("output_schema") or {"type": "object"}),
         "acceptance_rules": list(spec.get("acceptance_rules") or []),
         "external": ({"system": spec["external"]["system"], "operation_kind": spec["external"]["operation_kind"]}
                      if spec["type"] == "EXTERNAL_OPERATION" else None),
+        "cognitive_op": spec.get("cognitive_op") or ("theta" if spec["type"] == "AGENT_REASON" and spec.get("theta_op") else None),
+        "theta_op": spec.get("theta_op"),
+        "harness_action": dict(harness_action) if spec["type"] == "HARNESS_ACTION" else None,
         "expires_at": None,
     }
     assert_valid("adapter_step", step)
-    new = replace(state, status=("awaiting_agent" if spec["type"] == "AGENT_REASON" else "running"),
-                  current_step_id=sid, sequence=seq,
+    status = {"AGENT_REASON": "awaiting_agent", "HARNESS_ACTION": "awaiting_harness"}.get(spec["type"], "running")
+    new = replace(state, status=status, current_step_id=sid, sequence=seq,
                   branch_loops=state.branch_loops + (1 if took_branch else 0),
                   agent_reason_count=state.agent_reason_count + (1 if spec["type"] == "AGENT_REASON" else 0),
-                  external_operation_count=state.external_operation_count + (1 if spec["type"] == "EXTERNAL_OPERATION" else 0))
+                  external_operation_count=state.external_operation_count + (1 if spec["type"] == "EXTERNAL_OPERATION" else 0),
+                  harness_action_count=state.harness_action_count + (1 if spec["type"] == "HARNESS_ACTION" else 0))
     return new, step
 
 
@@ -173,10 +189,29 @@ def validate_submission(step: dict[str, Any], payload: Any) -> list[str]:
     errors = [("payload/" + "/".join(map(str, e.path)) if e.path else "payload") + ": " + e.message
               for e in sorted(jsonschema.Draft202012Validator(step["output_schema"]).iter_errors(payload),
                               key=lambda e: (list(map(str, e.path)), e.message))]
-    allowed = {r["id"] for r in step.get("context", {}).get("evidence_refs", [])}
-    uncited = sorted(_cited_ids(payload) - allowed) if allowed or _cited_ids(payload) else []
+    refs = step.get("context", {}).get("evidence_refs", [])
+    allowed = {r["id"] for r in refs if r.get("kind") not in PRIOR_EVIDENCE_KINDS}
+    priors = {r["id"] for r in refs if r.get("kind") in PRIOR_EVIDENCE_KINDS}
+    cited = _cited_ids(payload)
+    cited_priors = sorted(cited & priors)
+    if cited_priors:
+        errors.append("registry priors may never be cited as evidence: " + ", ".join(cited_priors[:10]))
+    uncited = sorted(cited - allowed - priors) if allowed or cited else []
     if uncited:
         errors.append("cited ids not in context.evidence_refs: " + ", ".join(uncited[:10]))
+    return errors
+
+
+def validate_receipt(step: dict[str, Any], payload: Any) -> list[str]:
+    """A HARNESS_ACTION answer is a HarnessResearchReceiptV1 for THIS action: provenance shape only (the harness never decides
+    what counts as evidence — TrailSignal admission does)."""
+    errors = ["payload: " + e for e in validate("harness_receipt", payload)]
+    action = step.get("harness_action") or {}
+    if isinstance(payload, dict):
+        if payload.get("action_id") != action.get("action_id"):
+            errors.append(f"receipt action_id {payload.get('action_id')!r} does not match the issued action {action.get('action_id')!r}")
+        if payload.get("run_id") != step["run_id"]:
+            errors.append("receipt run_id does not match the run")
     return errors
 
 
@@ -186,9 +221,12 @@ def accept_submission(manifest: Manifest, state: RunState, step: dict[str, Any],
     assert_valid("adapter_submission", submission)
     if state.terminal:
         raise SubmissionRejected([f"run is terminal ({state.status})"])
-    if state.status != "awaiting_agent" or step["step_id"] != state.current_step_id or submission["step_id"] != state.current_step_id:
+    expected = {"AGENT_REASON": ("awaiting_agent", "reasoning"), "HARNESS_ACTION": ("awaiting_harness", "receipt")}.get(step["step_type"])
+    if expected is None or state.status != expected[0] or step["step_id"] != state.current_step_id or submission["step_id"] != state.current_step_id:
         raise SubmissionRejected([f"step {submission['step_id']!r} is not the awaiting step {state.current_step_id!r}"])
-    errors = validate_submission(step, submission["payload"])
+    if submission.get("kind") and submission["kind"] != expected[1]:
+        raise SubmissionRejected([f"submission kind {submission['kind']!r} does not fit a {step['step_type']} step (expected {expected[1]!r})"])
+    errors = validate_receipt(step, submission["payload"]) if step["step_type"] == "HARNESS_ACTION" else validate_submission(step, submission["payload"])
     if errors:
         raise SubmissionRejected(errors)
     prior = state.outputs.get(step["step_id"])
@@ -230,7 +268,8 @@ def run_status_view(manifest: Manifest, state: RunState, *, started_at: str, upd
     spec = manifest.step(state.current_step_id) if state.current_step_id else None
     view = {"run_id": state.run_id, **manifest.identity, "status": state.status, "current_step_id": state.current_step_id,
             "current_step_type": spec["type"] if spec else None, "steps_issued": state.sequence,
-            "steps_accepted": state.steps_accepted, "branch_loops": state.branch_loops, "started_at": started_at,
+            "steps_accepted": state.steps_accepted, "branch_loops": state.branch_loops, "harness_actions": state.harness_action_count,
+            "started_at": started_at,
             "updated_at": updated_at, "terminal_at": terminal_at, "failure": state.failure, "gap": state.gap,
             "agent_identity": agent_identity}
     assert_valid("adapter_run_status", view)
