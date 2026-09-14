@@ -16,9 +16,67 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.269**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.270**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-14T02:05 — HARNESS-RESEARCH-MIGRATION-V1: R0–R4 MERGED AND LIVE (main b81fa2c; fleet bounced: 24 healthy, ONE hash a9f0a7d8c0a2); live receipts for R2 + R4; Trail A32 governance slice finishing; next = Trail HR1–HR4 (R3) then R5)
+## Latest checkpoint (2026-09-14T02:25 — SESSION CLOSE-OUT before compaction. HARNESS-RESEARCH-MIGRATION-V1: R0–R4 merged and LIVE (main b79cf37); R5-prep driver in PR #14 (CI running); Trail A32 governance slice VERIFIED locally and being closed/committed; HR1 next)
+
+**Read first:** `docs/wiki/plans/HARNESS-RESEARCH-MIGRATION-V1-PLAN.md` (§7 cutover ledger, §8 slices, §10 owner decisions, §12 audit), ADR-0019, refactor 0013,
+register rows 11.265–11.270, work-logs `2026-09-13-harness-research-r{0,1,2}-*.md`, `2026-09-14-harness-research-r4-*.md`, `…-r5-driver.md`.
+
+**Production (fleet worktree `production`):** origin/main b79cf37 (PRs #9 R0, #10 R1, #11 R2, #12 R4, #13 proof merged); migrations 0062 + 0063 applied to the
+store; last bounce after #12: 24 healthy / ONE hash `a9f0a7d8c0a2` / `adapter_step` up / 7 adapter tools / `/ready` true / 0 quarantines. Live receipts:
+knowledge_brief `adr_d5e544c4…`, product_discovery 2.0.0 `adr_eb118ed8…` and `adr_2ffbed82…` (θ hypotheses durable; honest `TRAIL_CAPABILITY_PLANNED` at `D_project`).
+Guards green at every merge. The Trail acquisition path is gone from the adapter (guard `tests/contracts/test_retired_paths.py`); `research/` FROZEN until R5.
+
+**Open Polymath work:** PR #14 `handoff/hrm-r5-driver` (script + docs, register 11.270; CI running at close-out) → squash-merge on green → fast-forward the
+production worktree (`handoff-drafts/post_merge_ff.sh <old-sha>`; NO bounce: scripts/docs only). Helper scripts now live in
+`/Users/king/Documents/polymath-rebuild/handoff-drafts/` (`post_merge_ff.sh`, `post_merge_bounce.sh` = the documented bounce, `pd_live_smoke.py`).
+
+**Trail (R3) state:** worktree `/Users/king/trail-signal-os-worktrees/A32` (branch `codex/a32-harness-research-boundary` from origin/main 6d7ef2a; `.venv` =
+`uv sync --python 3.12 --frozen`). The A32 governance slice (ADR-063 `docs/adr/063_harness_executed_opportunity_research_boundary.md`, graph 2.9 with
+A32 rank 125 + HR1–HR4 ranks 126–129, C1/C2/Q1/C3 SUPERSEDED, policy digests, validator literals, tests, docs, manifests, ledger IN_PROGRESS→VERIFIED,
+run `build_runs/20260914T013431Z_A32-harness-research-boundary/` with slice.yaml VERIFIED) is complete on disk and UNCOMMITTED (20 dirty owned files);
+at close-out a subagent was running the `agentctl verify` replay before `agentctl close` + the local commit. **If the next session finds it still
+uncommitted:** `cd` there, `python3 .agent-control/agentctl.py verify` (long: replays the architecture suite), then `agentctl close` (record the reason if
+refused), then `git add` the exact owned paths from slice.yaml and commit `A32: govern the harness-executed opportunity research boundary (ADR-063)`.
+Do NOT push without the owner's word (ADR-063's `Accepted by` records the owner's 2026-09-13 migration instruction — owner decision D4). Deviation
+recorded: ADR-034 is cited in the ADR body but not in A32/HR3 node `adrs` (superseded ADRs may not be cited on nodes; ADR-037 is). Pre-existing:
+`tests/architecture/test_agent_control.py::test_p4v_start_after_a27_commit_creates_controller`; `agentctl start` refuses while A29's replay fails on the
+PR #1/#2 docs (the A32 task record was written by hand in the exact `_start` shape).
+
+**HR1/HR2 inputs (durable, outside both repos):** `/Users/king/Documents/polymath-rebuild/handoff-drafts/trail-hr1/` — `registry_compiler.py` (snapshot
+`trs-f9fc5d418e0a970d`, byte-identical replay, source extensibility proven), `source_capabilities.csv` (27 sources; additive side table; owner CSVs untouched),
+`gap_compiler.py` (directive + judgement), `admission.py` (admit + qualify; role-based freshness from the evidence standard), `territory.py`, `contracts_draft.py`
+(47 strict models mirror-checked against the Polymath wire), `replay_cycle.py` → `cycle_v1.expected.json`, plus `adr-063.md`/`nodes.yaml`. HR1 = a Trail
+PRODUCTION slice (planning context; pure; verifier = tests/contracts + tests/replay; budget ≤ 20 files / 1,000 lines; build-run record + task like A32;
+`--capture-run-baseline` BEFORE mutation). The bounded-operation WIRE HR3 must honour is pinned by `tests/determinism/test_adapter_product_discovery_loop.py::StubTrail`.
+
+**Owner decisions/actions (plan §10):** D1 score authority (doc-08 ranks within a cohort; run-level score = rubric derived from admitted evidence — recommendation),
+D2 upstream the 3 drifted CSV deltas from `research/registry/trailsignal/` into Trail `data/`, D3 archive the unmerged OCP branches, D4 accept/reject the
+ADR-063 acceptance record, D5 side table; O1 `polymath` principal + `mcp.polymath.bearer` + `TRAIL_SIGNAL_MCP_JWT_SECRET`/token in the fleet env; O4 Trail stack up;
+O6 repoint `~/.hermes/skills/business/opportunity-research` (symlink → `polymath-v4-main/research`) before `research/` is removed.
+
+### NEXT (in order)
+0. Unattended at close-out (logs in `handoff-drafts/logs/`): `merge_pr14.sh` (CI watch → squash-merge → ff; aborts on red). `finish_a32.sh` ABORTED by
+   design: verify #1 (02:07–02:24Z) failed only on `update_manifest.py --check` = MANIFEST STALE (the ledger VERIFIED row was written AFTER the manifest
+   refresh). The A32 subagent then refreshed the manifest (02:25:23Z) and re-ran `agentctl verify` at 02:26:16Z (scratchpad marker `verify_marker2`);
+   it owns close + local commit. Do NOT run a second actor on that tree. If the next session finds A32 uncommitted: check `.agent-control/tasks/A32/
+   verification.json` status; run the manual chain above; after `close`, run `update_manifest.py --check` and refresh (write mode) if stale BEFORE the commit.
+1. PR #14 → merge on green → `post_merge_ff.sh b79cf37` (no bounce) — if the job did not.
+2. Finish A32 (see above) — if the job did not → owner review → push/PR on Trail only on the owner's word.
+3. HR1 slice (Trail): task + build-run + baseline → move the drafts into `src/trail_signal/contexts/planning/{public,domain}/`, `data/source_capabilities.csv`,
+   `schemas/registry.yaml` + generated schemas, `tests/contracts/research/`, `tests/replay/research/` → governor + suites green → local commit.
+4. HR2 (after D1), HR3 (needs O1/O4), HR4; then R5 in Polymath (live acceptance with a real harness via `scripts/adapter_mcp_acceptance.py --harness wait`;
+   remove `research/`, `research_*`, `.github/workflows/research-harness.yml`; live `awaiting_harness` restart test).
+
+### §6 traps added this checkpoint
+- **A subagent's stop/resume pattern**: long replays (Trail `agentctl verify`, the architecture suite ≈15 min) make agents yield; check the worktree state before re-running.
+- **The Hermes skill symlink points at the OWNER's worktree** (`polymath-v4-main/research`): repo removal of `research/` needs O6 first.
+- **Trail: `progress_ledger_v2.csv`, `policy_v2.yaml`, the validator and ADRs are REGISTERED manifest artifacts** — run `scripts/update_manifest.py`
+  (write mode) after the LAST edit to any of them, or `agentctl verify` fails on `update_manifest.py --check` (cost one 17-min replay on 2026-09-14).
+- **Session scratchpads are not durable**: handoff material now lives in `~/Documents/polymath-rebuild/handoff-drafts/`.
+
+## Prior checkpoint (2026-09-14T02:05 — HARNESS-RESEARCH-MIGRATION-V1: R0–R4 MERGED AND LIVE (main b81fa2c; fleet bounced: 24 healthy, ONE hash a9f0a7d8c0a2); live receipts for R2 + R4; Trail A32 governance slice finishing; next = Trail HR1–HR4 (R3) then R5)
 
 **Production:** `production` @ b81fa2c; migrations 0062 + 0063 applied; ONE bounce after each merge that touched `workers/`/`orchestrator/`/`shared/adapter`
 (`scratchpad/post_merge_bounce.sh` = the documented procedure). Live receipts (register 11.269): knowledge_brief `adr_d5e544c4…` (restart + refusal +

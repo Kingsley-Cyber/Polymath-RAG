@@ -585,6 +585,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-13-harness-research-r2-substrate.md", "md", None),
     ("docs/wiki/work-log/2026-09-14-harness-research-r4-manifest.md", "md", None),
     ("docs/wiki/work-log/2026-09-14-harness-research-r4-live-proof.md", "md", None),
+    ("docs/wiki/work-log/2026-09-14-harness-research-r5-driver.md", "md", None),
     ("stores/postgres/migrations/0063_adapter_output_order.sql", "sql", None),
     ("tests/determinism/test_adapter_product_discovery_loop.py", "py", None),
     ("tests/contracts/test_retired_paths.py", "py", None),

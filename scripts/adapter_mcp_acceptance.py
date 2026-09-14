@@ -11,6 +11,12 @@ rejected-submission reason, result lineage). Exit 0 only when every observable c
     set -a; . ./.env; set +a
     .venv/bin/python scripts/adapter_mcp_acceptance.py --adapter polymath.knowledge_brief --corpus cinema
     .venv/bin/python scripts/adapter_mcp_acceptance.py --adapter substack.article_development --corpus cinema
+    # HARNESS-RESEARCH-MIGRATION-V1 (ADR-0019): the harness-executed loop. A HARNESS_ACTION step pauses the run until a
+    # HarnessResearchReceiptV1 arrives — either from a REAL harness (Hermes / Claude Code / Codex answering through its own
+    # MCP connection while this driver polls: --harness wait) or from receipt files for a scripted acceptance
+    # (--harness-receipts DIR with AGENT_RESEARCH.json / PRODUCT_REALITY_CHECK.json / SUPPLIER_RESEARCH.json).
+    .venv/bin/python scripts/adapter_mcp_acceptance.py --adapter trail.product_discovery --corpus cinema --harness wait
+    .venv/bin/python scripts/adapter_mcp_acceptance.py --adapter trail.product_discovery --corpus cinema --harness-receipts /path/to/receipts
 """
 from __future__ import annotations
 
@@ -81,15 +87,60 @@ def answer_substack(step: dict[str, Any]) -> dict[str, Any]:
     raise SystemExit(f"no scripted answer for step {step['step_id']}")
 
 
+def answer_product_discovery(step: dict[str, Any]) -> dict[str, Any]:
+    """θ answers for trail.product_discovery 2.0.0 — every citation is an id from the step context; no score anywhere (LAW 1)."""
+    ctx = step["context"]
+    knowledge = sorted({r["id"] for r in ctx["evidence_refs"] if r["kind"] in ("chunk", "document", "graph_fact", "graph_hop", "parent_map")})
+    field = sorted({r["id"] for r in ctx["evidence_refs"] if r["kind"] == "field_evidence"})
+    live = [h["hypothesis_id"] for h in ctx.get("hypotheses") or [] if h["status"] not in ("killed", "merged")]
+    sid = step["step_id"]
+    if sid == "C_hypotheses":
+        return {"hypotheses": [
+            {"statement": "audiences read a screen hit from the reaction shot and framing, not from physical contact", "mechanism": "eyeline and shot scale hide the miss and sell the reaction",
+             "population": "film students staging fights", "activity": "staging screen fights", "task": "sell a punch to camera", "context": "coverage and editing", "suspected_friction": "legibility versus realism",
+             "supporting_evidence_ids": knowledge[:2], "knowledge_gaps": [{"question": "do practitioners describe the trade-off in the field?", "evidence_role": "behavior"}]},
+            {"statement": "choreography is authored for the lens first and the performer second", "supporting_evidence_ids": knowledge[1:3] or knowledge[:1]}]}
+    if sid in ("G_mechanisms", "K_revise"):
+        cause = ([{"kind": "field_evidence", "id": field[0]}] if field and sid == "K_revise" else [{"kind": "chunk", "id": knowledge[0]}]) if (field or knowledge) else []
+        return {"transitions": ([{"hypothesis_id": live[0], "kind": "REVISE", "cause_refs": cause, "changes": {"mechanism": "framing, eyeline and cutting rhythm carry the hit"}, "reason_code": "MECHANISM_REFINED"}] if live and cause else []),
+                **({"knowledge_gaps": [{"hypothesis_id": live[0], "question": "how often do practitioners lose legibility in wide coverage?", "evidence_role": "behavior"}]} if sid == "G_mechanisms" and live else {}),
+                **({"open_gaps": []} if sid == "K_revise" else {})}
+    if sid == "N_jobs":
+        return {"transitions": [], "physical_jobs": [{"hypothesis_id": h, "job": "make the hit legible in one wide shot", "mechanism": "blocking to the lens with a hidden miss"} for h in live[:1]]}
+    if sid == "W_interpret":
+        score_refs = [str(x) for x in (step["context"].get("inputs") or {}).get("trail_score_refs", [])]
+        return {"product_opportunity": {"product_concept": {"title": "lens-first fight blocking guide", "mechanism_explanation": "framing carries the hit", "population": "film students", "activity": "staging screen fights",
+                                                            "context": "coverage and editing", "problem": "legibility versus realism"},
+                                        "evidence_chain": [{"hypothesis_id": h} for h in live[:1]], "field_evidence_ids": field[:2], "contradictions": [], "competing_products": [], "product_delta": None, "supply": None,
+                                        "trail_score_refs": score_refs, "remaining_uncertainty": ["field population size"], "cheapest_falsification_experiment": "interview ten fight coordinators"}}
+    raise SystemExit(f"no scripted answer for step {sid}")
+
+
 ADAPTERS = {
     "polymath.knowledge_brief": {"input": lambda corpus: {"question": "How does editing rhythm shape the audience's sense of a fight's stakes?", "corpus_ids": [corpus], "top_k": 10},
                                  "answer": answer_knowledge_brief, "expect_status": "completed"},
     "substack.article_development": {"input": lambda corpus: {"seed_idea": "Fight choreography is storytelling: the camera, not the punch, decides what the audience believes", "corpus_ids": [corpus], "audience": "film students"},
                                      "answer": answer_substack, "expect_status": "completed"},
+    "trail.product_discovery": {"input": lambda corpus: {"seed": "fight choreography: the camera, not the punch, decides what the audience believes", "corpus_ids": [corpus]},
+                                "answer": answer_product_discovery, "expect_status": "completed"},
 }
 
 
-async def run(adapter_id: str, corpus: str, mcp_url: str, key: str, restart: bool) -> dict[str, Any]:
+def load_receipt(receipts_dir: str, action: dict[str, Any]) -> dict[str, Any]:
+    """A scripted harness: `<receipts_dir>/<action_kind>.json` is a HarnessResearchReceiptV1 whose action/run ids are filled in here."""
+    path = os.path.join(receipts_dir, f"{action['action_kind']}.json")
+    if not os.path.exists(path):
+        raise SystemExit(f"no scripted receipt for {action['action_kind']} at {path}")
+    with open(path) as f:
+        rec = json.load(f)
+    rec.update({"action_id": action["action_id"], "run_id": action["run_id"]})
+    for o in rec.get("observations") or []:
+        o.setdefault("hypothesis_ids", list(action["hypothesis_ids"][:1]))
+    return rec
+
+
+async def run(adapter_id: str, corpus: str, mcp_url: str, key: str, restart: bool, *, harness: str = "receipts", receipts_dir: str | None = None,
+              harness_id: str = "mcp-acceptance-harness") -> dict[str, Any]:
     import httpx
     from mcp import ClientSession
     from mcp.client.streamable_http import streamable_http_client
@@ -120,8 +171,8 @@ async def run(adapter_id: str, corpus: str, mcp_url: str, key: str, restart: boo
                 ref = val(await s.call_tool("adapter_start", {"adapter_id": adapter_id, "input": spec["input"](corpus),
                     "request_options": {"corpus_ids": [corpus], "agent_identity": "mcp-acceptance", "idempotency_key": f"accept-{adapter_id}-{int(time.time())}"}}))
                 rid = ref["run_id"]; receipts["run_id"] = rid; receipts["run_ref"] = ref
-                receipts["agent_steps"] = []; restarted = not restart; rejected_once = False
-                for _ in range(400):
+                receipts["agent_steps"] = []; receipts["harness_actions"] = []; restarted = not restart; rejected_once = False
+                for _ in range(2000):
                     nxt = val(await s.call_tool("adapter_next", {"run_id": rid}))
                     if nxt["kind"] == "status":
                         st = nxt["status"]
@@ -130,6 +181,26 @@ async def run(adapter_id: str, corpus: str, mcp_url: str, key: str, restart: boo
                         await asyncio.sleep(2)
                         continue
                     step = nxt["step"]
+                    if step["step_type"] == "HARNESS_ACTION":
+                        action = step["harness_action"]
+                        receipts["harness_actions"].append({"step_id": step["step_id"], "action_id": action["action_id"], "action_kind": action["action_kind"],
+                                                            "hypothesis_ids": len(action["hypothesis_ids"]), "search_intents": len(action["search_intents"]), "registry_snapshot": action["registry_snapshot"]["snapshot_id"]})
+                        if harness == "wait":
+                            # a REAL harness answers through its own MCP connection; this driver only shows the action and waits
+                            print(json.dumps({"awaiting_harness": action}, indent=1, default=str), flush=True)
+                            while True:
+                                st = val(await s.call_tool("adapter_status", {"run_id": rid}))
+                                if st["status"] != "awaiting_harness":
+                                    break
+                                await asyncio.sleep(5)
+                            continue
+                        rec = load_receipt(receipts_dir or "", action)
+                        rec["harness_id"] = harness_id
+                        ans = val(await s.call_tool("adapter_submit", {"run_id": rid, "step_id": step["step_id"], "agent_identity": harness_id, "kind": "receipt", "payload": rec}))
+                        if "error" in ans:
+                            raise SystemExit(f"receipt rejected: {ans}")
+                        await asyncio.sleep(1)
+                        continue
                     ids = _ids(step)
                     receipts["agent_steps"].append({"step_id": step["step_id"], "sequence": step["sequence"], "evidence_refs": len(ids)})
                     if not restarted:
@@ -152,11 +223,16 @@ async def run(adapter_id: str, corpus: str, mcp_url: str, key: str, restart: boo
                                       "receipts": len(res["lineage"]["step_receipt_hashes"]), "external_operations": res["lineage"]["external_operations"],
                                       "unknowns": res["unknowns"], "gap": res.get("gap")}
                 if res["status"] != spec["expect_status"]:
-                    raise SystemExit(f"run ended {res['status']}: {res.get('gap') or receipts['final_status']}")
+                    gap = res.get("gap") or {}
+                    if gap.get("code") == "TRAIL_CAPABILITY_PLANNED":
+                        # honest state until TrailSignal HR3 is WORKING: the run stops at the first planned Trail operation (exit 3 in main)
+                        receipts["planned_gap"] = gap
+                        return receipts
+                    raise SystemExit(f"run ended {res['status']}: {gap or receipts['final_status']}")
                 cited = set()
                 for step_rec in receipts["agent_steps"]:
                     pass
-                for k in ("brief", "article"):
+                for k in ("brief", "article", "product_opportunity"):
                     if k in res["output"]:
                         blob = json.dumps(res["output"][k])
                         cited = {i for i in res["lineage"]["polymath_evidence_ids"] if i in blob}
@@ -172,12 +248,19 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--corpus", default=os.environ.get("POLYMATH_ADAPTER_TEST_CORPUS", "cinema"))
     ap.add_argument("--mcp-url", default=os.environ.get("POLYMATH_MCP_URL", "http://127.0.0.1:8930/mcp"))
     ap.add_argument("--no-restart", action="store_true", help="skip the supervised-worker restart proof")
+    ap.add_argument("--harness", choices=("receipts", "wait"), default="receipts", help="who answers HARNESS_ACTION steps: scripted receipt files, or a real harness through its own MCP connection (this driver waits)")
+    ap.add_argument("--harness-receipts", default=os.environ.get("POLYMATH_HARNESS_RECEIPTS"), help="directory of <ACTION_KIND>.json HarnessResearchReceiptV1 files for --harness receipts")
+    ap.add_argument("--harness-id", default="mcp-acceptance-harness")
     args = ap.parse_args(argv)
     key = os.environ.get("POLYMATH_MCP_API_KEY")
     if not key:
         raise SystemExit("POLYMATH_MCP_API_KEY is required (source .env)")
-    receipts = asyncio.run(run(args.adapter, args.corpus, args.mcp_url, key, restart=not args.no_restart))
+    receipts = asyncio.run(run(args.adapter, args.corpus, args.mcp_url, key, restart=not args.no_restart, harness=args.harness,
+                               receipts_dir=args.harness_receipts, harness_id=args.harness_id))
     print(json.dumps(receipts, indent=1, default=str))
+    if receipts.get("planned_gap"):
+        print(f"PLANNED GAP: {receipts['planned_gap']['message']} — the loop resumes once TrailSignal HR3 is WORKING", file=sys.stderr)
+        return 3
     return 0
 
 
