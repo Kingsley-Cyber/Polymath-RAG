@@ -1,11 +1,14 @@
-"""POLYMATH → TRAILSIGNAL CONNECTOR (COGNITIVE-ADAPTER-TRAIL-E2E-V1 E4, ADR-0018 §5).
+"""POLYMATH → TRAILSIGNAL CONNECTOR (ADR-0019 §8 / HARNESS-RESEARCH-MIGRATION-V1 R4; originally E4 under ADR-0018).
 
 ONE typed client over TrailSignal's public production boundary — the authenticated FastMCP streamable-HTTP daemon
 (`POST {url}/mcp`, stateless JSON-RPC 2.0 `tools/call`, HS256 bearer JWT). Nothing here touches Trail's CSV, Postgres,
-blob store or private modules (plan §1.3 / §7.3). Every request builder mirrors Trail's strict-mode contracts
-(`extra=forbid`, `strict=True`): nullable fields are sent explicitly as `null`, ids satisfy Trail's `Identifier`
-pattern, categories are unique+sorted, batch ordinals are 0..n-1. Reference: E0 gap matrix §3.5 + the 2026-09-13
-contract extraction (Trail origin/main 6d7ef2a).
+blob store or private modules. The product-discovery adapter uses Trail's seven BOUNDED SYNCHRONOUS deterministic
+operations (Trail ADR-063 / HR3): `registry.project`, `gaps.compile`, `evidence.admit`, `hypotheses.judge`,
+`territory.project`, `opportunity.qualify`, `opportunity.score` — each returns its immutable result at once (no Temporal
+state), so the adapter never submits, polls or pages a Trail acquisition operation. Requests mirror Trail's strict-mode
+contracts (`extra=forbid`, `strict=True`): explicit nulls, `Identifier` ids, a 65536-byte canonical-JSON ceiling.
+Generic `operation.get` / `operation.command` remain for cancellation of any long-running operation a future adapter
+might own.
 
 Env (worker side):  POLYMATH_TRAIL_MCP_URL (default http://127.0.0.1:8767/mcp)
                     TRAIL_SIGNAL_MCP_TOKEN_POLYMATH  — a pre-minted JWT for the `polymath` principal, OR
@@ -26,11 +29,12 @@ import httpx
 
 DEFAULT_URL = "http://127.0.0.1:8767/mcp"
 ISSUER, AUDIENCE = "trail-signal", "trail-signal-mcp"
-CAPABILITIES_V5 = ("crawl.submit", "operation.get", "operation.command", "extract.submit", "result.page", "scrape.submit",
-                   "dataset.query", "dataset.export", "export.read", "discover.submit")
+BOUNDED_OPERATIONS = ("registry.project", "gaps.compile", "evidence.admit", "hypotheses.judge", "territory.project",
+                      "opportunity.qualify", "opportunity.score")
+#: the `polymath` principal's capability set (Trail ADR-063 / PrincipalCapabilityV6): the seven bounded operations + lifecycle
+POLYMATH_CAPABILITIES = ("operation.get", "operation.command") + BOUNDED_OPERATIONS
 POLICY_REF, BUDGET_REF = "public-static-v1", "p1-static-default-v1"
-PARSER_PROFILE_REF, RESULT_POLICY_REF = "parser:deterministic-html-v1", "result-policy:document-v1"
-PURPOSE_REF = "purpose:research"
+PURPOSE_REF = "purpose:product-discovery"
 REQUEST_BYTES_MAX = 65536                   # config/v2/limits.yaml mcp.maximum_request_bytes
 _IDENT_BAD = re.compile(r"[^A-Za-z0-9._:/-]")
 _URL_BAD_QUERY_KEYS = ("apikey", "authorization", "auth", "bearer", "jwt", "key", "session", "sid", "sig")
@@ -71,7 +75,7 @@ def credential_binding_hash(principal_id: str, binding_secret: str | None = None
 
 
 def mint_principal_jwt(secret: str, *, principal_id: str = "polymath", audit_identity: str | None = None,
-                       capabilities: tuple[str, ...] = CAPABILITIES_V5, policy_ref: str = POLICY_REF, budget_ref: str = BUDGET_REF,
+                       capabilities: tuple[str, ...] = POLYMATH_CAPABILITIES, policy_ref: str = POLICY_REF, budget_ref: str = BUDGET_REF,
                        binding_hash: str | None = None, ttl_s: int = 3600, now: int | None = None) -> str:
     """HS256 JWT with exactly the claims Trail's AuthRuntime requires (sub, audit_identity, capabilities, policy_ref,
     budget_ref, credential_binding_hash, iat, exp, iss, aud). `nbf` is neither required nor sent."""
@@ -102,54 +106,17 @@ def _utc_now() -> str:
     return _dt.datetime.now(_dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
-def _check_url(url: str) -> str:
-    if len(url) > 2083 or "#" in url or "@" in url.split("://", 1)[-1].split("/", 1)[0]:
-        raise ValueError("Trail rejects URLs with fragments, userinfo or > 2083 chars")
-    q = url.split("?", 1)[1] if "?" in url else ""
-    for kv in q.split("&"):
-        k = kv.split("=", 1)[0].lower()
-        if k in _URL_BAD_QUERY_KEYS or any(t in k for t in ("token", "secret", "password", "passwd", "credential", "signature")):
-            raise ValueError(f"Trail rejects credential-like query key {k!r}")
-    return url
-
-
-def discovery_request(query: str, *, key: str, categories: tuple[str, ...] = ("general",), language: str = "en",
-                      maximum_candidates: int = 16, page_number: int = 1, safe_search: int = 1, purpose_ref: str = PURPOSE_REF) -> dict[str, Any]:
-    q = " ".join(str(query).split())
-    if not q or len(q.encode("utf-8")) > 512:
-        raise ValueError("discovery query must be 1..512 UTF-8 bytes after whitespace canonicalisation")
-    return {"request_id": identifier("request", key), "query": q, "categories": sorted(set(categories)), "language": language,
-            "time_range": None, "safe_search": int(safe_search), "page_number": int(page_number),
-            "maximum_candidates": max(1, min(64, int(maximum_candidates))), "purpose_ref": purpose_ref,
-            "idempotency_key": identifier("idempotency", key)}
-
-
-def crawl_request(url: str, *, key: str, purpose_ref: str = PURPOSE_REF) -> dict[str, Any]:
-    return {"request_id": identifier("request", key), "url": _check_url(url), "requested_route": "STATIC",
-            "source_policy_ref": POLICY_REF, "network_policy_ref": POLICY_REF, "operation_budget_ref": BUDGET_REF,
-            "purpose_ref": purpose_ref, "idempotency_key": identifier("idempotency", key), "domain_profile_ref": None}
-
-
-def batch_request(urls: list[str], *, key: str, purpose_ref: str = PURPOSE_REF) -> dict[str, Any]:
-    urls = [u for u in dict.fromkeys(urls) if u][:64]
-    if not urls:
-        raise ValueError("batch needs 1..64 urls")
-    items = [{"item_id": identifier("item", key, str(i))[:96], "ordinal": i, "url": _check_url(u), "source_policy_ref": POLICY_REF,
-              "network_policy_ref": POLICY_REF, "domain_profile_ref": None, "parser_profile_ref": PARSER_PROFILE_REF,
-              "result_policy_ref": RESULT_POLICY_REF} for i, u in enumerate(urls)]
-    req = {"request_id": identifier("request", key), "items": items, "batch_policy_ref": POLICY_REF, "operation_budget_ref": BUDGET_REF,
-           "purpose_ref": purpose_ref, "idempotency_key": identifier("idempotency", key)}
-    if len(json.dumps(req, sort_keys=True, separators=(",", ":")).encode("utf-8")) > REQUEST_BYTES_MAX:
-        raise ValueError("batch request exceeds Trail's 65536-byte canonical JSON ceiling — fewer urls")
+def bounded_request(kind: str, payload: dict[str, Any], *, key: str, run_ref: str, registry_snapshot_id: str | None = None,
+                    purpose_ref: str = PURPOSE_REF) -> dict[str, Any]:
+    """The request envelope of a bounded synchronous Trail operation: identity, idempotency, purpose, the Polymath run
+    reference, the registry snapshot the caller reasons against (null before `registry.project`) and the typed payload."""
+    if kind not in BOUNDED_OPERATIONS:
+        raise ValueError(kind)
+    req = {"request_id": identifier("request", key), "idempotency_key": identifier("idempotency", key), "purpose_ref": purpose_ref,
+           "run_ref": identifier("run", run_ref), "operation_kind": kind, "registry_snapshot_id": registry_snapshot_id, "payload": payload}
+    if len(json.dumps(req, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")) > REQUEST_BYTES_MAX:
+        raise ValueError(f"{kind} request exceeds Trail's {REQUEST_BYTES_MAX}-byte canonical JSON ceiling — bound the payload")
     return req
-
-
-def extraction_request(artifact_id: str, *, key: str, maximum_records: int = 64, maximum_output_bytes: int = 524288,
-                       purpose_ref: str = PURPOSE_REF) -> dict[str, Any]:
-    return {"request_id": identifier("request", key), "artifact_id": artifact_id, "parser_profile_ref": PARSER_PROFILE_REF,
-            "result_policy_ref": RESULT_POLICY_REF, "maximum_records": max(1, min(64, int(maximum_records))),
-            "maximum_output_bytes": max(1, min(524288, int(maximum_output_bytes))), "purpose_ref": purpose_ref,
-            "idempotency_key": identifier("idempotency", key)}
 
 
 def operation_reference(ref: dict[str, Any], *, minimum_revision: int = 0) -> dict[str, Any]:
@@ -158,13 +125,6 @@ def operation_reference(ref: dict[str, Any], *, minimum_revision: int = 0) -> di
     return {"operation_id": ref["operation_id"], "operation_kind": ref["operation_kind"],
             "temporal_workflow_id": ref.get("temporal_workflow_id") or ref["operation_id"], "temporal_run_id": ref.get("temporal_run_id"),
             "submitted_at": ref["submitted_at"], "status_revision": int(minimum_revision)}
-
-
-def page_request(target_kind: str, target_id: str, *, key: str, cursor: str | None = None, page_size: int = 64) -> dict[str, Any]:
-    if target_kind not in ("DOCUMENT_RESULT", "DATASET", "URL_CANDIDATE_RESULT"):
-        raise ValueError(target_kind)
-    return {"request_id": identifier("page-request", key, cursor or "first"), "target_kind": target_kind, "target_id": target_id,
-            "cursor": cursor, "page_size": max(1, min(64, int(page_size)))}
 
 
 def cancel_command(operation_id: str, *, expected_revision: int, key: str, reason_code: str = "CLIENT_CANCELLED") -> dict[str, Any]:
@@ -200,8 +160,16 @@ def receipt_after_poll(receipt: dict[str, Any], status: dict[str, Any], *, recor
     return out
 
 
-def outputs_of(status: dict[str, Any], kind: str) -> list[str]:
-    return [o["output_id"] for o in status.get("output_refs") or [] if o.get("output_kind") == kind]
+def bounded_receipt(run_id: str, step_id: str, kind: str, response: dict[str, Any], *, idempotency_key: str, principal: str,
+                    record_ids: list[str] | None = None) -> dict[str, Any]:
+    """ExternalOperationReceiptV1 for a bounded synchronous operation: TERMINAL + SUCCEEDED at once, the audit operation id
+    Trail committed, and the record ids its result named."""
+    now = _utc_now()
+    return {"run_id": run_id, "step_id": step_id, "external_system": "trailsignal", "operation_kind": kind,
+            "operation_id": str(response.get("operation_id") or identifier("op", kind, idempotency_key)), "idempotency_key": idempotency_key,
+            "principal": principal, "submitted_at": now, "status_revision": int(response.get("status_revision") or 1),
+            "temporal_workflow_id": None, "temporal_run_id": None, "phase": "TERMINAL", "outcome": "SUCCEEDED", "terminal_at": now,
+            "record_ids": sorted(set(record_ids or [])), "dataset_ids": [], "export_ids": [], "poll_count": 0, "last_polled_at": None, "failure": None}
 
 
 # ─────────────────────────────────────────────────────────── transport
@@ -258,36 +226,15 @@ class TrailMCPClient:
         return value
 
     # thin typed wrappers
-    def submit(self, kind: str, request: dict[str, Any]) -> dict[str, Any]:
-        if kind not in ("discover.submit", "crawl.submit", "scrape.submit", "extract.submit", "dataset.export"):
+    def operate(self, kind: str, request: dict[str, Any]) -> dict[str, Any]:
+        """One bounded synchronous operation → its immutable result envelope ({operation_id, operation_kind, status_revision,
+        registry_snapshot?, result})."""
+        if kind not in BOUNDED_OPERATIONS:
             raise ValueError(kind)
         return self.call_tool(kind, {"request": request})
 
     def status(self, ref: dict[str, Any], *, minimum_revision: int = 0) -> dict[str, Any]:
         return self.call_tool("operation.get", {"reference": operation_reference(ref, minimum_revision=minimum_revision)})
 
-    def page(self, request: dict[str, Any]) -> dict[str, Any]:
-        return self.call_tool("result.page", {"request": request})
-
     def cancel(self, command: dict[str, Any]) -> dict[str, Any]:
         return self.call_tool("operation.command", {"command": command})
-
-    def page_all(self, target_kind: str, target_id: str, *, key: str, page_size: int = 64, max_pages: int = 8) -> list[dict[str, Any]]:
-        """Every record/candidate of a result (bounded pages, single-use cursors)."""
-        items: list[dict[str, Any]] = []
-        cursor = None
-        for _ in range(max_pages):
-            page = self.page(page_request(target_kind, target_id, key=key, cursor=cursor, page_size=page_size))
-            if target_kind == "URL_CANDIDATE_RESULT":
-                p = page.get("url_candidate_page") or {}
-                items += list(p.get("items") or [])
-                cursor = p.get("next_cursor") if p.get("has_more") else None
-            else:
-                rp = (page.get("result_page") or {})
-                dp = rp.get("document_page") or rp.get("dataset_page") or {}
-                items += list(dp.get("records") or [])
-                pg = dp.get("page") or dp
-                cursor = pg.get("next_cursor") if pg.get("has_more") else None
-            if not cursor:
-                break
-        return items

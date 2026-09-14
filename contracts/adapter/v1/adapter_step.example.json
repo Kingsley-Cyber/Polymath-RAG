@@ -4,7 +4,7 @@
  "step_type": "AGENT_REASON",
  "sequence": 5,
  "issued_at": "2026-09-13T18:30:41Z",
- "objective": "From the retrieved Polymath evidence only, propose bounded activity \u2192 friction \u2192 direction hypotheses. Cite evidence ids for every claim; list unknowns instead of inventing.",
+ "objective": "From the retrieved Polymath evidence only, generate up to 8 latent hypotheses: a population doing a repeated activity meets a recurring friction with a plausible mechanism. State assumptions, falsifiers and the knowledge gaps that only the live world can close. Cite evidence ids for every hypothesis; list unknowns instead of inventing.",
  "context": {
   "evidence_refs": [
    {
@@ -32,12 +32,14 @@
    "B_plan",
    "B_retrieve",
    "B_graph"
-  ]
+  ],
+  "hypotheses": [],
+  "registry_snapshot": null
  },
  "constraints": [
-  "Cite only evidence_refs supplied in context",
-  "No opportunity score of any kind (LAW 1)",
-  "Preserve contradictions as contradicting_evidence_ids"
+  "Cite only evidence_refs supplied in context; registry priors (trail_prior) are coordinates, never evidence",
+  "No opportunity score, rank or weight of any kind (LAW 1)",
+  "Preserve contradictions with their evidence ids"
  ],
  "output_schema": {
   "type": "object",
@@ -53,22 +55,51 @@
     "items": {
      "type": "object",
      "required": [
-      "activity",
-      "friction",
-      "direction",
-      "supporting_evidence_ids",
-      "confidence"
+      "statement",
+      "supporting_evidence_ids"
      ],
      "additionalProperties": false,
      "properties": {
+      "statement": {
+       "type": "string",
+       "minLength": 8,
+       "maxLength": 2000
+      },
+      "mechanism": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "population": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
       "activity": {
-       "type": "string"
+       "type": [
+        "string",
+        "null"
+       ]
       },
-      "friction": {
-       "type": "string"
+      "task": {
+       "type": [
+        "string",
+        "null"
+       ]
       },
-      "direction": {
-       "type": "string"
+      "context": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "suspected_friction": {
+       "type": [
+        "string",
+        "null"
+       ]
       },
       "supporting_evidence_ids": {
        "type": "array",
@@ -77,23 +108,76 @@
        },
        "minItems": 1
       },
-      "contradicting_evidence_ids": {
+      "support_roles": {
+       "type": "object"
+      },
+      "contradictions": {
+       "type": "array",
+       "items": {
+        "type": "object",
+        "required": [
+         "statement",
+         "evidence_ids"
+        ],
+        "properties": {
+         "statement": {
+          "type": "string"
+         },
+         "evidence_ids": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      "assumptions": {
        "type": "array",
        "items": {
         "type": "string"
        }
       },
-      "confidence": {
-       "enum": [
-        "low",
-        "medium",
-        "high"
-       ]
-      },
-      "unknowns": {
+      "falsifiers": {
        "type": "array",
        "items": {
         "type": "string"
+       }
+      },
+      "knowledge_gaps": {
+       "type": "array",
+       "items": {
+        "type": "object",
+        "required": [
+         "question",
+         "evidence_role"
+        ],
+        "properties": {
+         "question": {
+          "type": "string"
+         },
+         "evidence_role": {
+          "type": "string"
+         }
+        }
+       }
+      },
+      "trail_priors": {
+       "type": "array",
+       "items": {
+        "type": "object",
+        "required": [
+         "registry_record_id",
+         "prior_role"
+        ],
+        "properties": {
+         "registry_record_id": {
+          "type": "string"
+         },
+         "prior_role": {
+          "type": "string"
+         }
+        }
        }
       }
      }
@@ -102,9 +186,12 @@
   }
  },
  "acceptance_rules": [
-  "every supporting_evidence_ids entry is an id from context.evidence_refs",
+  "every supporting_evidence_ids entry is a knowledge id from context.evidence_refs",
   "1 <= len(hypotheses) <= 8"
  ],
  "external": null,
- "expires_at": null
+ "expires_at": null,
+ "cognitive_op": "theta",
+ "theta_op": "generate_hypotheses",
+ "harness_action": null
 }

@@ -71,7 +71,6 @@
          "graph_hop",
          "parent_map",
          "query_receipt",
-         "trail_record",
          "step_output",
          "field_evidence",
          "trail_prior"

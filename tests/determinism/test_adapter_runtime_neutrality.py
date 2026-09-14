@@ -36,7 +36,7 @@ def test_both_workload_adapters_share_the_closed_vocabulary_and_differ_in_semant
     assert not any(s["type"] == "EXTERNAL_OPERATION" for s in sub.steps.values())          # Trail-free
     trail_words = {"activity", "task", "context", "friction", "workaround", "product_territory", "candidate"}
     sub_text = str(sub.raw).lower()
-    assert not any(w in sub_text for w in ("trail_record_ids", "product_territory", "workaround")), "substack must not import Trail ontology"
+    assert not any(w in sub_text for w in ("registry_record_id", "product_territory", "workaround")), "substack must not import Trail ontology"
     assert all(w in sub_text for w in ("claim", "mechanism", "tension", "counterargument", "analogy", "implication", "narrative_role", "article"))
 
 

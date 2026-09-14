@@ -1,11 +1,24 @@
 {
  "adapter_id": "trail.product_discovery",
- "adapter_version": "1.0.0",
- "workflow_version": "1.0.0",
+ "adapter_version": "2.0.0",
+ "workflow_version": "2.0.0",
  "retrieval_policy_version": "1.0.0",
  "input_schema_version": "1.0.0",
- "output_schema_version": "1.0.0",
- "description": "Reference E2E workload: one Polymath adapter run that uses Polymath knowledge and TrailSignal public operations to produce scored product hypotheses. Trail assigns every score (LAW 1); the agent reasons over typed steps only.",
+ "output_schema_version": "2.0.0",
+ "description": "Harness-executed product-opportunity discovery (ADR-0019): Polymath retrieves knowledge and owns durable hypothesis state; \u03b8 (the connected agent) generates, revises and splits hypotheses; TrailSignal projects its registry priors, compiles evidence gaps, admits harness observations, judges hypotheses (\u03c6), qualifies product territory / market delta / supply and computes the only score (LAW 1); the host harness executes AGENT_RESEARCH, PRODUCT_REALITY_CHECK and SUPPLIER_RESEARCH actions with its own tools. No Trail-owned live-web acquisition is required; no search engine, browser or source SDK is named.",
+ "evidence_roles": [
+  "friction",
+  "workaround",
+  "behavior",
+  "demand",
+  "competition",
+  "seasonality",
+  "operations",
+  "risk",
+  "contradiction",
+  "price",
+  "supply"
+ ],
  "input_schema": {
   "type": "object",
   "required": [
@@ -52,33 +65,82 @@
  "output_schema": {
   "type": "object",
   "required": [
-   "product_hypotheses"
+   "product_opportunity"
   ],
   "properties": {
-   "product_hypotheses": {
+   "product_opportunity": {
+    "type": "object",
+    "required": [
+     "product_concept",
+     "evidence_chain",
+     "remaining_uncertainty",
+     "cheapest_falsification_experiment"
+    ],
+    "properties": {
+     "product_concept": {
+      "type": "object"
+     },
+     "evidence_chain": {
+      "type": "array"
+     },
+     "field_evidence": {
+      "type": "array"
+     },
+     "contradictions": {
+      "type": "array"
+     },
+     "competing_products": {
+      "type": "array"
+     },
+     "product_delta": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "supply": {
+      "type": [
+       "object",
+       "null"
+      ]
+     },
+     "trail_score": {
+      "type": [
+       "object",
+       "null"
+      ]
+     },
+     "remaining_uncertainty": {
+      "type": "array"
+     },
+     "cheapest_falsification_experiment": {
+      "type": "string"
+     }
+    }
+   },
+   "hypothesis_ids": {
     "type": "array"
    },
-   "portfolio": {
+   "qualification": {
     "type": "object"
-   },
-   "experiments": {
-    "type": "array"
    }
   }
  },
  "budgets": {
-  "max_steps": 60,
-  "max_agent_reason": 12,
-  "max_branch_loops": 3,
-  "max_external_operations": 40
+  "max_steps": 90,
+  "max_agent_reason": 16,
+  "max_branch_loops": 2,
+  "max_external_operations": 30,
+  "max_harness_actions": 6,
+  "max_hypotheses": 8
  },
  "entry_step_id": "A_understand",
- "terminal_step_id": "K_compile",
+ "terminal_step_id": "X_compile",
  "steps": [
   {
    "step_id": "A_understand",
    "type": "VALIDATE",
-   "title": "Understand seed: validate input and scope",
+   "title": "Understand seed: validate input and corpus scope",
    "next": "B_plan",
    "config": {
     "validate": "input_schema",
@@ -88,7 +150,7 @@
   {
    "step_id": "B_plan",
    "type": "POLYMATH_COMPILE_PLAN",
-   "title": "Compile 3-5 deterministic reformulations of the seed",
+   "title": "Compile deterministic reformulations of the seed",
    "next": "B_retrieve",
    "config": {
     "source": "input.seed"
@@ -97,7 +159,7 @@
   {
    "step_id": "B_retrieve",
    "type": "POLYMATH_RETRIEVE",
-   "title": "Retrieve conceptual neighbours, mechanisms, known frictions, opposing evidence",
+   "title": "Retrieve chunks, parent context, mechanisms, known frictions, opposing evidence",
    "next": "B_graph",
    "config": {
     "mode": "EXPLORE",
@@ -109,7 +171,7 @@
   {
    "step_id": "B_graph",
    "type": "POLYMATH_GRAPH_EXPAND",
-   "title": "One-hop graph expansion from the retrieved seeds",
+   "title": "Graph expansion from the retrieved seeds",
    "next": "C_hypotheses",
    "config": {
     "max_seeds": 8,
@@ -120,13 +182,14 @@
   {
    "step_id": "C_hypotheses",
    "type": "AGENT_REASON",
-   "title": "Frame structured activity-friction exploration hypotheses",
-   "next": "D_discover",
-   "objective": "From the retrieved Polymath evidence only, propose bounded activity \u2192 friction \u2192 direction hypotheses. Cite evidence ids for every claim; list unknowns instead of inventing.",
+   "title": "\u03b8 generate hypotheses",
+   "theta_op": "generate_hypotheses",
+   "next": "D_project",
+   "objective": "From the retrieved Polymath evidence only, generate up to 8 latent hypotheses: a population doing a repeated activity meets a recurring friction with a plausible mechanism. State assumptions, falsifiers and the knowledge gaps that only the live world can close. Cite evidence ids for every hypothesis; list unknowns instead of inventing.",
    "constraints": [
-    "Cite only evidence_refs supplied in context",
-    "No opportunity score of any kind (LAW 1)",
-    "Preserve contradictions as contradicting_evidence_ids"
+    "Cite only evidence_refs supplied in context; registry priors (trail_prior) are coordinates, never evidence",
+    "No opportunity score, rank or weight of any kind (LAW 1)",
+    "Preserve contradictions with their evidence ids"
    ],
    "output_schema": {
     "type": "object",
@@ -142,22 +205,51 @@
       "items": {
        "type": "object",
        "required": [
-        "activity",
-        "friction",
-        "direction",
-        "supporting_evidence_ids",
-        "confidence"
+        "statement",
+        "supporting_evidence_ids"
        ],
        "additionalProperties": false,
        "properties": {
+        "statement": {
+         "type": "string",
+         "minLength": 8,
+         "maxLength": 2000
+        },
+        "mechanism": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "population": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
         "activity": {
-         "type": "string"
+         "type": [
+          "string",
+          "null"
+         ]
         },
-        "friction": {
-         "type": "string"
+        "task": {
+         "type": [
+          "string",
+          "null"
+         ]
         },
-        "direction": {
-         "type": "string"
+        "context": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "suspected_friction": {
+         "type": [
+          "string",
+          "null"
+         ]
         },
         "supporting_evidence_ids": {
          "type": "array",
@@ -166,141 +258,76 @@
          },
          "minItems": 1
         },
-        "contradicting_evidence_ids": {
-         "type": "array",
-         "items": {
-          "type": "string"
-         }
-        },
-        "confidence": {
-         "enum": [
-          "low",
-          "medium",
-          "high"
-         ]
-        },
-        "unknowns": {
-         "type": "array",
-         "items": {
-          "type": "string"
-         }
-        }
-       }
-      }
-     }
-    }
-   },
-   "acceptance_rules": [
-    "every supporting_evidence_ids entry is an id from context.evidence_refs",
-    "1 <= len(hypotheses) <= 8"
-   ]
-  },
-  {
-   "step_id": "D_discover",
-   "type": "EXTERNAL_OPERATION",
-   "title": "Trail discovery of permitted live leads",
-   "next": "E_acquire",
-   "external": {
-    "system": "trailsignal",
-    "operation_kind": "discover.submit",
-    "availability": "working"
-   },
-   "config": {
-    "maximum_candidates": 16,
-    "language": "en",
-    "result_target_kind": "URL_CANDIDATE_RESULT",
-    "leads_are_evidence": false
-   }
-  },
-  {
-   "step_id": "E_acquire",
-   "type": "EXTERNAL_OPERATION",
-   "title": "Trail acquisition + deterministic extraction (raw-first)",
-   "next": "F_normalize",
-   "external": {
-    "system": "trailsignal",
-    "operation_kind": "scrape.submit+extract.submit",
-    "availability": "working"
-   },
-   "config": {
-    "batch_max": 16,
-    "extract_max": 6,
-    "route": "STATIC",
-    "records_max_per_artifact": 24
-   }
-  },
-  {
-   "step_id": "F_normalize",
-   "type": "AGENT_REASON",
-   "title": "Semantic normalisation into the Trail ontology",
-   "next": "G_gates",
-   "objective": "Map extracted Trail records into activity \u2192 task \u2192 context \u2192 friction \u2192 workaround \u2192 product territory \u2192 candidate. Keep every candidate tied to trail_record_ids; record contradictions and unknowns.",
-   "constraints": [
-    "Only trail_record_ids present in context may be cited",
-    "No score (LAW 1)"
-   ],
-   "output_schema": {
-    "type": "object",
-    "required": [
-     "candidates"
-    ],
-    "additionalProperties": false,
-    "properties": {
-     "candidates": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-       "type": "object",
-       "required": [
-        "activity",
-        "task",
-        "context",
-        "friction",
-        "workaround",
-        "product_territory",
-        "candidate",
-        "trail_record_ids"
-       ],
-       "additionalProperties": false,
-       "properties": {
-        "activity": {
-         "type": "string"
-        },
-        "task": {
-         "type": "string"
-        },
-        "context": {
-         "type": "string"
-        },
-        "friction": {
-         "type": "string"
-        },
-        "workaround": {
-         "type": "string"
-        },
-        "product_territory": {
-         "type": "string"
-        },
-        "candidate": {
-         "type": "string"
-        },
-        "trail_record_ids": {
-         "type": "array",
-         "items": {
-          "type": "string"
-         },
-         "minItems": 1
+        "support_roles": {
+         "type": "object"
         },
         "contradictions": {
          "type": "array",
          "items": {
-          "type": "string"
+          "type": "object",
+          "required": [
+           "statement",
+           "evidence_ids"
+          ],
+          "properties": {
+           "statement": {
+            "type": "string"
+           },
+           "evidence_ids": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            }
+           }
+          }
          }
         },
-        "unknowns": {
+        "assumptions": {
          "type": "array",
          "items": {
           "type": "string"
+         }
+        },
+        "falsifiers": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
+        },
+        "knowledge_gaps": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "required": [
+           "question",
+           "evidence_role"
+          ],
+          "properties": {
+           "question": {
+            "type": "string"
+           },
+           "evidence_role": {
+            "type": "string"
+           }
+          }
+         }
+        },
+        "trail_priors": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "required": [
+           "registry_record_id",
+           "prior_role"
+          ],
+          "properties": {
+           "registry_record_id": {
+            "type": "string"
+           },
+           "prior_role": {
+            "type": "string"
+           }
+          }
          }
         }
        }
@@ -309,102 +336,843 @@
     }
    },
    "acceptance_rules": [
-    "every trail_record_ids entry is a record id from context.evidence_refs of kind trail_record"
+    "every supporting_evidence_ids entry is a knowledge id from context.evidence_refs",
+    "1 <= len(hypotheses) <= 8"
    ]
   },
   {
-   "step_id": "G_gates",
+   "step_id": "D_project",
    "type": "EXTERNAL_OPERATION",
-   "title": "Trail evidence promotion + hard gates",
-   "next": "H_gap_loop",
+   "title": "Trail projects the registry priors onto the hypotheses (snapshot recorded)",
+   "next": "E_filter",
+   "cognitive_op": "phi",
    "external": {
     "system": "trailsignal",
-    "operation_kind": "commerce.research.submit",
+    "operation_kind": "registry.project",
     "availability": "planned",
-    "planned_node": "C1"
+    "planned_node": "HR3"
+   },
+   "config": {
+    "max_priors_per_hypothesis": 12
    }
   },
   {
-   "step_id": "H_gap_loop",
+   "step_id": "E_filter",
+   "type": "EXTERNAL_OPERATION",
+   "title": "\u03c6 filter: redundancy, unsupported, self-corroboration",
+   "next": "F_plan",
+   "cognitive_op": "phi",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "hypotheses.judge",
+    "availability": "planned",
+    "planned_node": "HR3"
+   },
+   "config": {
+    "stage": "filter"
+   }
+  },
+  {
+   "step_id": "F_plan",
+   "type": "POLYMATH_COMPILE_PLAN",
+   "title": "Compile mechanism-level questions from the live hypotheses",
+   "next": "F_retrieve",
+   "config": {
+    "query_from": "hypotheses"
+   }
+  },
+  {
+   "step_id": "F_retrieve",
+   "type": "POLYMATH_RETRIEVE",
+   "title": "Retrieve mechanism evidence for the live hypotheses",
+   "next": "F_graph",
+   "config": {
+    "mode": "EXPLORE",
+    "evidence": true,
+    "top_k": 16,
+    "query_from": "hypotheses"
+   }
+  },
+  {
+   "step_id": "F_graph",
+   "type": "POLYMATH_GRAPH_EXPAND",
+   "title": "Graph expansion around the mechanisms",
+   "next": "G_mechanisms",
+   "config": {
+    "max_seeds": 8,
+    "max_facts": 16,
+    "query_from": "hypotheses"
+   }
+  },
+  {
+   "step_id": "G_mechanisms",
+   "type": "AGENT_REASON",
+   "title": "\u03b8 derive mechanisms and name the external knowledge gaps",
+   "theta_op": "derive_mechanisms",
+   "next": "H_gaps",
+   "objective": "For each live hypothesis, revise its mechanism from the corpus evidence and name the knowledge gaps that only live field evidence can close (behavior, friction, workaround, demand). Propose REVISE (or SPLIT) transitions with cause refs.",
+   "constraints": [
+    "Cite only evidence_refs supplied in context; registry priors (trail_prior) are coordinates, never evidence",
+    "No opportunity score, rank or weight of any kind (LAW 1)",
+    "A transition without a cause ref is refused"
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "transitions"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "transitions": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "hypothesis_id",
+        "kind",
+        "cause_refs"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "hypothesis_id": {
+         "type": "string"
+        },
+        "kind": {
+         "enum": [
+          "REVISE",
+          "SPLIT"
+         ]
+        },
+        "reason_code": {
+         "type": "string"
+        },
+        "cause_refs": {
+         "type": "array",
+         "minItems": 1,
+         "items": {
+          "type": "object",
+          "required": [
+           "kind",
+           "id"
+          ],
+          "properties": {
+           "kind": {
+            "type": "string"
+           },
+           "id": {
+            "type": "string"
+           }
+          }
+         }
+        },
+        "changes": {
+         "type": "object"
+        },
+        "field_evidence_ids": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
+        },
+        "children": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "required": [
+           "statement",
+           "supporting_evidence_ids"
+          ],
+          "additionalProperties": false,
+          "properties": {
+           "statement": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 2000
+           },
+           "mechanism": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "population": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "activity": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "task": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "context": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "suspected_friction": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "supporting_evidence_ids": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            },
+            "minItems": 1
+           },
+           "support_roles": {
+            "type": "object"
+           },
+           "contradictions": {
+            "type": "array",
+            "items": {
+             "type": "object",
+             "required": [
+              "statement",
+              "evidence_ids"
+             ],
+             "properties": {
+              "statement": {
+               "type": "string"
+              },
+              "evidence_ids": {
+               "type": "array",
+               "items": {
+                "type": "string"
+               }
+              }
+             }
+            }
+           },
+           "assumptions": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            }
+           },
+           "falsifiers": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            }
+           },
+           "knowledge_gaps": {
+            "type": "array",
+            "items": {
+             "type": "object",
+             "required": [
+              "question",
+              "evidence_role"
+             ],
+             "properties": {
+              "question": {
+               "type": "string"
+              },
+              "evidence_role": {
+               "type": "string"
+              }
+             }
+            }
+           },
+           "trail_priors": {
+            "type": "array",
+            "items": {
+             "type": "object",
+             "required": [
+              "registry_record_id",
+              "prior_role"
+             ],
+             "properties": {
+              "registry_record_id": {
+               "type": "string"
+              },
+              "prior_role": {
+               "type": "string"
+              }
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "knowledge_gaps": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "hypothesis_id",
+        "question",
+        "evidence_role"
+       ],
+       "properties": {
+        "hypothesis_id": {
+         "type": "string"
+        },
+        "question": {
+         "type": "string"
+        },
+        "evidence_role": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    }
+   },
+   "acceptance_rules": [
+    "every cause ref is an id from context (knowledge, admitted field evidence, hypothesis)"
+   ]
+  },
+  {
+   "step_id": "H_gaps",
+   "type": "EXTERNAL_OPERATION",
+   "title": "Trail compiles the evidence gaps into a research directive (search intents \u00d7 source roles)",
+   "next": "I_research",
+   "cognitive_op": "phi",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "gaps.compile",
+    "availability": "planned",
+    "planned_node": "HR3"
+   },
+   "config": {
+    "stage": "field_evidence"
+   }
+  },
+  {
+   "step_id": "I_research",
+   "type": "HARNESS_ACTION",
+   "title": "Harness: field research",
+   "next": "J_admit",
+   "objective": "Find first-person field evidence for the live hypotheses: recurring friction complaints, workarounds, behaviour, demand signals; record sources, observations, tool trace and limitations.",
+   "harness": {
+    "action_kind": "AGENT_RESEARCH",
+    "minimum_independent_sources": 3,
+    "disallowed_source_roles": [
+     "supplier_listing"
+    ],
+    "budget": {
+     "max_queries": 24,
+     "max_sources": 20,
+     "max_observations": 80
+    }
+   }
+  },
+  {
+   "step_id": "J_admit",
+   "type": "EXTERNAL_OPERATION",
+   "title": "Trail admits the field evidence (roles, suitability, freshness, provenance, independence, polarity)",
+   "next": "K_revise",
+   "cognitive_op": "phi",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "evidence.admit",
+    "availability": "planned",
+    "planned_node": "HR3"
+   },
+   "config": {
+    "stage": "field_evidence"
+   }
+  },
+  {
+   "step_id": "K_revise",
+   "type": "AGENT_REASON",
+   "title": "\u03b8 re-reason with admitted field evidence",
+   "theta_op": "cross_map_frictions",
+   "next": "L_judge",
+   "objective": "Reason again over the original knowledge, the hypothesis state and the newly admitted field evidence: propose REVISE or SPLIT transitions (citing admitted evidence ids), and name the gaps that remain open.",
+   "constraints": [
+    "Cite only evidence_refs supplied in context; registry priors (trail_prior) are coordinates, never evidence",
+    "No opportunity score, rank or weight of any kind (LAW 1)",
+    "Only admitted field_evidence ids may be cited as live-world evidence"
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "transitions"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "transitions": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "hypothesis_id",
+        "kind",
+        "cause_refs"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "hypothesis_id": {
+         "type": "string"
+        },
+        "kind": {
+         "enum": [
+          "REVISE",
+          "SPLIT"
+         ]
+        },
+        "reason_code": {
+         "type": "string"
+        },
+        "cause_refs": {
+         "type": "array",
+         "minItems": 1,
+         "items": {
+          "type": "object",
+          "required": [
+           "kind",
+           "id"
+          ],
+          "properties": {
+           "kind": {
+            "type": "string"
+           },
+           "id": {
+            "type": "string"
+           }
+          }
+         }
+        },
+        "changes": {
+         "type": "object"
+        },
+        "field_evidence_ids": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
+        },
+        "children": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "required": [
+           "statement",
+           "supporting_evidence_ids"
+          ],
+          "additionalProperties": false,
+          "properties": {
+           "statement": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 2000
+           },
+           "mechanism": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "population": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "activity": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "task": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "context": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "suspected_friction": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "supporting_evidence_ids": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            },
+            "minItems": 1
+           },
+           "support_roles": {
+            "type": "object"
+           },
+           "contradictions": {
+            "type": "array",
+            "items": {
+             "type": "object",
+             "required": [
+              "statement",
+              "evidence_ids"
+             ],
+             "properties": {
+              "statement": {
+               "type": "string"
+              },
+              "evidence_ids": {
+               "type": "array",
+               "items": {
+                "type": "string"
+               }
+              }
+             }
+            }
+           },
+           "assumptions": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            }
+           },
+           "falsifiers": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            }
+           },
+           "knowledge_gaps": {
+            "type": "array",
+            "items": {
+             "type": "object",
+             "required": [
+              "question",
+              "evidence_role"
+             ],
+             "properties": {
+              "question": {
+               "type": "string"
+              },
+              "evidence_role": {
+               "type": "string"
+              }
+             }
+            }
+           },
+           "trail_priors": {
+            "type": "array",
+            "items": {
+             "type": "object",
+             "required": [
+              "registry_record_id",
+              "prior_role"
+             ],
+             "properties": {
+              "registry_record_id": {
+               "type": "string"
+              },
+              "prior_role": {
+               "type": "string"
+              }
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "open_gaps": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     }
+    }
+   },
+   "acceptance_rules": [
+    "every cause ref is an admitted field_evidence, evidence_admission, knowledge or hypothesis id from context"
+   ]
+  },
+  {
+   "step_id": "L_judge",
+   "type": "EXTERNAL_OPERATION",
+   "title": "\u03c6 judge: kill / merge / weaken / strengthen / contradict / require_evidence",
+   "next": "M_loop",
+   "cognitive_op": "phi",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "hypotheses.judge",
+    "availability": "planned",
+    "planned_node": "HR3"
+   },
+   "config": {
+    "stage": "revision"
+   }
+  },
+  {
+   "step_id": "M_loop",
    "type": "BRANCH",
-   "title": "Evidence-gap / contradiction loop (bounded)",
+   "title": "Bounded evidence-gap loop (returns through reasoning, never straight to research)",
+   "next": "N_jobs",
    "branches": [
     {
-     "label": "gaps remain and loop budget left",
+     "label": "open gaps remain and loop budget left",
      "when": {
       "op": "all_of",
       "of": [
        {
         "op": "count_gte",
-        "path": "steps.G_gates.output.gaps",
+        "path": "steps.L_judge.output.open_gaps",
         "n": 1
        },
        {
         "op": "count_lt",
         "path": "run.branch_loops",
-        "n": 3
+        "n": 2
        }
       ]
      },
-     "next": "D_discover"
+     "next": "G_mechanisms"
     }
-   ],
-   "next": "I_score"
+   ]
   },
   {
-   "step_id": "I_score",
-   "type": "EXTERNAL_OPERATION",
-   "title": "Trail deterministic scoring (score originates only here)",
-   "next": "J_interpret",
-   "external": {
-    "system": "trailsignal",
-    "operation_kind": "commerce.research.result",
-    "availability": "planned",
-    "planned_node": "C2"
-   }
-  },
-  {
-   "step_id": "J_interpret",
+   "step_id": "N_jobs",
    "type": "AGENT_REASON",
-   "title": "Interpret Trail scores; design the cheapest falsification experiment",
-   "next": "K_compile",
-   "objective": "Explain each Trail score using its record ids and define the cheapest falsification experiment per candidate; portfolio reasoning where the input asks for it.",
+   "title": "\u03b8 derive physical jobs and product mechanisms",
+   "theta_op": "derive_physical_jobs",
+   "next": "O_territory",
+   "objective": "For each surviving hypothesis derive the physical jobs (access, retention, visibility, protection, \u2026) and candidate product mechanisms as REVISE transitions with cause refs; keep unknowns explicit.",
    "constraints": [
-    "Never alter, rank or normalise a Trail score",
-    "Cite trail_score_record_id for every interpretation"
+    "Cite only evidence_refs supplied in context; registry priors (trail_prior) are coordinates, never evidence",
+    "No opportunity score, rank or weight of any kind (LAW 1)"
    ],
    "output_schema": {
     "type": "object",
     "required": [
-     "interpretations"
+     "transitions",
+     "physical_jobs"
     ],
     "additionalProperties": false,
     "properties": {
-     "interpretations": {
+     "transitions": {
       "type": "array",
       "items": {
        "type": "object",
        "required": [
-        "candidate",
-        "trail_score_record_id",
-        "explanation",
-        "cheapest_falsification_experiment"
+        "hypothesis_id",
+        "kind",
+        "cause_refs"
        ],
        "additionalProperties": false,
        "properties": {
-        "candidate": {
+        "hypothesis_id": {
          "type": "string"
         },
-        "trail_score_record_id": {
+        "kind": {
+         "enum": [
+          "REVISE",
+          "SPLIT"
+         ]
+        },
+        "reason_code": {
          "type": "string"
         },
-        "explanation": {
+        "cause_refs": {
+         "type": "array",
+         "minItems": 1,
+         "items": {
+          "type": "object",
+          "required": [
+           "kind",
+           "id"
+          ],
+          "properties": {
+           "kind": {
+            "type": "string"
+           },
+           "id": {
+            "type": "string"
+           }
+          }
+         }
+        },
+        "changes": {
+         "type": "object"
+        },
+        "field_evidence_ids": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
+        },
+        "children": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "required": [
+           "statement",
+           "supporting_evidence_ids"
+          ],
+          "additionalProperties": false,
+          "properties": {
+           "statement": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 2000
+           },
+           "mechanism": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "population": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "activity": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "task": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "context": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "suspected_friction": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "supporting_evidence_ids": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            },
+            "minItems": 1
+           },
+           "support_roles": {
+            "type": "object"
+           },
+           "contradictions": {
+            "type": "array",
+            "items": {
+             "type": "object",
+             "required": [
+              "statement",
+              "evidence_ids"
+             ],
+             "properties": {
+              "statement": {
+               "type": "string"
+              },
+              "evidence_ids": {
+               "type": "array",
+               "items": {
+                "type": "string"
+               }
+              }
+             }
+            }
+           },
+           "assumptions": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            }
+           },
+           "falsifiers": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            }
+           },
+           "knowledge_gaps": {
+            "type": "array",
+            "items": {
+             "type": "object",
+             "required": [
+              "question",
+              "evidence_role"
+             ],
+             "properties": {
+              "question": {
+               "type": "string"
+              },
+              "evidence_role": {
+               "type": "string"
+              }
+             }
+            }
+           },
+           "trail_priors": {
+            "type": "array",
+            "items": {
+             "type": "object",
+             "required": [
+              "registry_record_id",
+              "prior_role"
+             ],
+             "properties": {
+              "registry_record_id": {
+               "type": "string"
+              },
+              "prior_role": {
+               "type": "string"
+              }
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "physical_jobs": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "hypothesis_id",
+        "job",
+        "mechanism"
+       ],
+       "properties": {
+        "hypothesis_id": {
          "type": "string"
         },
-        "cheapest_falsification_experiment": {
+        "job": {
          "type": "string"
         },
-        "portfolio_note": {
+        "mechanism": {
          "type": "string"
         }
        }
@@ -413,19 +1181,238 @@
     }
    },
    "acceptance_rules": [
-    "every trail_score_record_id is a record id returned by I_score"
+    "every cause ref is an id from context"
    ]
   },
   {
-   "step_id": "K_compile",
+   "step_id": "O_territory",
+   "type": "EXTERNAL_OPERATION",
+   "title": "Trail projects product territory priors and compiles the product-reality directive",
+   "next": "P_reality",
+   "cognitive_op": "phi",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "territory.project",
+    "availability": "planned",
+    "planned_node": "HR3"
+   }
+  },
+  {
+   "step_id": "P_reality",
+   "type": "HARNESS_ACTION",
+   "title": "Harness: product reality check",
+   "next": "Q_admit",
+   "objective": "Investigate current products, alternatives, reviews, pricing, complaints and saturation for the candidate mechanisms; record sources, observations, tool trace and limitations.",
+   "harness": {
+    "action_kind": "PRODUCT_REALITY_CHECK",
+    "minimum_independent_sources": 3,
+    "preferred_source_roles": [
+     "product_review",
+     "marketplace_listing",
+     "retailer"
+    ],
+    "budget": {
+     "max_queries": 24,
+     "max_sources": 20,
+     "max_observations": 80
+    }
+   }
+  },
+  {
+   "step_id": "Q_admit",
+   "type": "EXTERNAL_OPERATION",
+   "title": "Trail admits market evidence (competition, price, complaints)",
+   "next": "R_qualify",
+   "cognitive_op": "phi",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "evidence.admit",
+    "availability": "planned",
+    "planned_node": "HR3"
+   },
+   "config": {
+    "stage": "product_reality"
+   }
+  },
+  {
+   "step_id": "R_qualify",
+   "type": "EXTERNAL_OPERATION",
+   "title": "Trail qualifies the market delta and compiles the supplier directive",
+   "next": "S_supply",
+   "cognitive_op": "phi",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "opportunity.qualify",
+    "availability": "planned",
+    "planned_node": "HR3"
+   },
+   "config": {
+    "stage": "market_delta"
+   }
+  },
+  {
+   "step_id": "S_supply",
+   "type": "HARNESS_ACTION",
+   "title": "Harness: supplier research",
+   "next": "T_admit",
+   "objective": "Investigate supply feasibility: supplier URL and identity, platform, unit price, MOQ, variants, lead time, customization, shipping, limitations, retrieval date. Supply evidence never counts as demand.",
+   "harness": {
+    "action_kind": "SUPPLIER_RESEARCH",
+    "minimum_independent_sources": 2,
+    "preferred_source_roles": [
+     "supplier_listing",
+     "manufacturer_site"
+    ],
+    "budget": {
+     "max_queries": 16,
+     "max_sources": 12,
+     "max_observations": 40
+    }
+   }
+  },
+  {
+   "step_id": "T_admit",
+   "type": "EXTERNAL_OPERATION",
+   "title": "Trail admits supply evidence (role supply only)",
+   "next": "U_qualify",
+   "cognitive_op": "phi",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "evidence.admit",
+    "availability": "planned",
+    "planned_node": "HR3"
+   },
+   "config": {
+    "stage": "supply"
+   }
+  },
+  {
+   "step_id": "U_qualify",
+   "type": "EXTERNAL_OPERATION",
+   "title": "Trail qualifies supply",
+   "next": "V_score",
+   "cognitive_op": "phi",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "opportunity.qualify",
+    "availability": "planned",
+    "planned_node": "HR3"
+   },
+   "config": {
+    "stage": "supply"
+   }
+  },
+  {
+   "step_id": "V_score",
+   "type": "EXTERNAL_OPERATION",
+   "title": "Trail deterministic score (only after the hard gates; the only lawful score source)",
+   "next": "W_interpret",
+   "cognitive_op": "phi",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "opportunity.score",
+    "availability": "planned",
+    "planned_node": "HR3"
+   }
+  },
+  {
+   "step_id": "W_interpret",
+   "type": "AGENT_REASON",
+   "title": "Explain the score with record ids; define the cheapest falsification experiment",
+   "next": "X_compile",
+   "objective": "Using the qualification and score records only, explain the outcome by record id, state what remains uncertain, and define the cheapest falsification experiment. Never alter, rank or normalise a Trail score.",
+   "constraints": [
+    "Never alter, rank or normalise a Trail score",
+    "Cite trail_score_refs (V_score record ids) and admitted field_evidence_ids from context"
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "product_opportunity"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "product_opportunity": {
+      "type": "object",
+      "required": [
+       "product_concept",
+       "evidence_chain",
+       "remaining_uncertainty",
+       "cheapest_falsification_experiment"
+      ],
+      "properties": {
+       "product_concept": {
+        "type": "object",
+        "required": [
+         "title",
+         "mechanism_explanation",
+         "population",
+         "activity",
+         "context",
+         "problem"
+        ]
+       },
+       "evidence_chain": {
+        "type": "array"
+       },
+       "field_evidence_ids": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       },
+       "contradictions": {
+        "type": "array"
+       },
+       "competing_products": {
+        "type": "array"
+       },
+       "product_delta": {
+        "type": [
+         "string",
+         "null"
+        ]
+       },
+       "supply": {
+        "type": [
+         "object",
+         "null"
+        ]
+       },
+       "remaining_uncertainty": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       },
+       "cheapest_falsification_experiment": {
+        "type": "string"
+       },
+       "trail_score_refs": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    }
+   },
+   "acceptance_rules": [
+    "every trail_score_refs entry is a record id returned by V_score",
+    "every field_evidence_ids entry is an admitted id from context"
+   ]
+  },
+  {
+   "step_id": "X_compile",
    "type": "COMPILE_RESULT",
-   "title": "Compile AdapterResultV1 with cross-system lineage",
+   "title": "Compile AdapterResultV1: the product opportunity with cross-system lineage",
    "next": null,
    "config": {
     "include": [
-     "product_hypotheses",
-     "portfolio",
-     "experiments",
+     "product_opportunity",
+     "hypothesis_ids",
+     "qualification",
      "contradictions",
      "unknowns",
      "lineage"

@@ -228,7 +228,7 @@ def _allowed_causes(conn, run_id: str, step: dict[str, Any], current: dict[str, 
 
 
 def _registry_snapshot(state: RunState) -> dict[str, Any] | None:
-    snap = _gather(state.outputs, "registry_snapshot")
+    snap = _gather(state.outputs, "registry_snapshot", state.output_order)
     if isinstance(snap, dict) and snap.get("snapshot_id") and snap.get("content_hash"):
         return {"snapshot_id": str(snap["snapshot_id"]), "content_hash": str(snap["content_hash"])}
     return None
@@ -239,7 +239,7 @@ def _compile_harness_action(state: RunState, spec: dict[str, Any], step_id: str,
     """HarnessActionV1 = the manifest's `harness` block (kind, roles, budget, independence, freshness) + the latest compiled research
     directive found in prior step outputs (`research_directive`: gaps, search intents, conditions, geography, language) + the live
     hypotheses + the registry snapshot. Without a directive there is nothing lawful to hand to the harness → None (typed gap)."""
-    directive = _gather(state.outputs, "research_directive")
+    directive = _gather(state.outputs, "research_directive", state.output_order)
     if not isinstance(directive, dict) or not directive.get("search_intents") or not snapshot:
         return None
     hb = spec.get("harness") or {}
@@ -481,10 +481,11 @@ def _receipt(step: dict[str, Any], status_: str, started: str, *, evidence_ids: 
     return r
 
 
-def _gather(outputs: dict[str, Any], key: str) -> Any:
-    """First value named `key` found in step outputs, newest step first (top level, then one level down)."""
-    for sid in reversed(list(outputs)):
-        out = outputs[sid] or {}
+def _gather(outputs: dict[str, Any], key: str, order: tuple[str, ...] = ()) -> Any:
+    """First value named `key` found in step outputs, NEWEST accepted step first (top level, then one level down). `order` is the
+    run's acceptance order — JSONB does not keep dict order, so callers pass `state.output_order`."""
+    for sid in reversed(order or tuple(outputs)):
+        out = outputs.get(sid) or {}
         if isinstance(out, dict):
             if key in out:
                 return out[key]
@@ -521,7 +522,7 @@ def _compile_result(conn, run_id: str, state: RunState, m: Manifest, *, output: 
         for key in include:
             if key == "lineage":
                 continue
-            v = _gather(state.outputs, key)
+            v = _gather(state.outputs, key, state.output_order)
             if v is not None:
                 output[key] = v
     evidence_ids, query_ids, ext_ops = [], [], []
@@ -532,7 +533,7 @@ def _compile_result(conn, run_id: str, state: RunState, m: Manifest, *, output: 
     snapshots = sorted({str((_gather({sid: o}, "registry_snapshot") or {}).get("snapshot_id")) for sid, o in state.outputs.items()
                         if isinstance(_gather({sid: o}, "registry_snapshot"), dict)} - {"None"})
     score_ids = [str(x) for x in _collect_lists(state.outputs, "trail_score_record_ids") if isinstance(x, str)]
-    ts = _gather(state.outputs, "trail_score")
+    ts = _gather(state.outputs, "trail_score", state.output_order)
     if isinstance(ts, dict) and ts.get("record_id"):
         score_ids.append(str(ts["record_id"]))
     for s in steps:

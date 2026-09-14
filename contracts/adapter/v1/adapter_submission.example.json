@@ -4,17 +4,28 @@
  "payload": {
   "hypotheses": [
    {
-    "activity": "post-training cold-water immersion at home",
-    "friction": "temperature control without a chiller",
-    "direction": "passive insulation + timed exposure guidance",
+    "statement": "amateur athletes doing home cold-water immersion cannot hold target temperature without a chiller and improvise insulation",
+    "mechanism": "passive heat gain outpaces ice addition in warm months",
+    "population": "amateur athletes recovering at home",
+    "activity": "cold-water immersion at home",
+    "task": "keep water at target temperature for the session",
+    "context": "outdoor or garage tub, summer, no powered chiller",
+    "suspected_friction": "temperature control",
     "supporting_evidence_ids": [
      "chunk_7f3a",
      "fact_19c2"
     ],
-    "contradicting_evidence_ids": [],
-    "confidence": "medium",
-    "unknowns": [
-     "seasonal demand curve"
+    "assumptions": [
+     "most practitioners lack a powered chiller"
+    ],
+    "falsifiers": [
+     "temperature drift is not mentioned across three independent communities"
+    ],
+    "knowledge_gaps": [
+     {
+      "question": "how large is the warm-month population",
+      "evidence_role": "demand"
+     }
     ]
    }
   ]
@@ -24,6 +35,6 @@
   "model": "hermes/agent"
  },
  "submitted_at": "2026-09-13T18:31:10Z",
- "submission_hash": "ad59ebc344824677efbae4899c829f0aae5c3a404054d7dda01612ff2a2b3da5",
+ "submission_hash": "09d74847c1dd1e6db4c589adab1f23a29dc400a9a0cebca90cd5d5dc4132bfc0",
  "kind": "reasoning"
 }
