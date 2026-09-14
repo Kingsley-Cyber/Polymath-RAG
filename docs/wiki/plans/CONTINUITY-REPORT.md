@@ -18,7 +18,46 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.270**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-14T02:25 — SESSION CLOSE-OUT before compaction. HARNESS-RESEARCH-MIGRATION-V1: R0–R4 merged and LIVE (main b79cf37); R5-prep driver in PR #14 (CI running); Trail A32 governance slice VERIFIED locally and being closed/committed; HR1 next)
+## Latest checkpoint (2026-09-14T04:05 — TRAIL R3 UNDER REVIEW: A32 (ADR-063) pushed as PR #4; A33 governance micro-slice VERIFIED, committed and pushed as a stacked PR (PR #5 https://github.com/Kingsley-Cyber/trail-signal-os/pull/5); production main abb4bb4 (PR #14 merged, ff'd, no bounce); next = HR1 admission from the A33 tip with a git-anchored production baseline)
+
+**Read first:** `docs/wiki/plans/HARNESS-RESEARCH-MIGRATION-V1-PLAN.md` (§7 ledger row R3/T1–T8, §10 owner decisions), the 02:25 checkpoint below (unchanged facts),
+`~/Documents/polymath-rebuild/handoff-drafts/` (durable: `apply_a33.py` + `trail_run_tools.py` = the working Trail build-run drivers, `trail-hr1-prod/` = HR1 code
+drafts NOT applied anywhere, `logs/` = every job log of this session).
+
+**Polymath:** production worktree @ abb4bb4 = origin/main (PR #14 squash-merged 02:35Z, `post_merge_ff.sh` ok, fleet 24 healthy / ONE hash `a9f0a7d8c0a2`, no
+bounce). No code change this session; register still runs to 11.270.
+
+**Trail (owner authorized pushing branches for the reviewer agent, 03:35Z):**
+- A32 = commit 9e4e463 on `codex/a32-harness-research-boundary`, task closed, governor PASS with/without `--base-ref 6d7ef2a`,
+  PR #4 https://github.com/Kingsley-Cyber/trail-signal-os/pull/4 (base main). ADR-063 acceptance record = owner decision D4 (review focus).
+- A33 = commit 6040bf4 on `codex/a33-harness-phase-lifecycle-outputs` (stacked on A32), run `20260914T032726Z_A33-harness-phase-lifecycle-outputs`
+  (generation 30), VERIFIED: HR1–HR4 `produces` += build graph/mmd, ledger, gap report, 3 manifest files (the P4V/P5 precedent); A33 rank 126,
+  HR1–HR4 → 127/128/129/131; production-claim + guarded-policy digests recomputed; 6 hand-edited files / 171 non-test lines / 0 runtime lines.
+  Stacked PR: PR #5 https://github.com/Kingsley-Cyber/trail-signal-os/pull/5. WHY: without it HR1 could not refresh the registered-knowledge manifest (ledger/gap-report/graph are registered)
+  while keeping owned-path coverage — the bootstrap found this before HR1 started; it was resolved once in governance instead of per production run.
+- Owner merges; never push to main. Both worktrees: `~/trail-signal-os-worktrees/A32`, `~/trail-signal-os-worktrees/A33` (canonical `.venv` each).
+
+### NEXT (in order)
+1. Owner review of PR #4 (D4) and the A33 PR. Do not rebase either branch.
+2. HR1 (production) in the A33 worktree on a new branch from 6040bf4: `agentctl start HR1` (replays A33's light task verification), then the
+   git-anchored protocol: run dir + slice (ADMISSIBLE, owned paths = the A33-extended `produces` + own run + lifecycle) + graph HR1 ADMISSIBLE/run_id
+   + ledger ADMISSIBLE row + render + manifest → `--capture-run-baseline` → ADMISSION COMMIT (the snapshot's first committed blob is the anchor; journal
+   and ledger must stay byte-prefixes afterwards) → governor PASS → IN_PROGRESS → implement from `handoff-drafts/trail-hr1-prod/` (8 public contracts
+   only in `public/contracts.py`; nested value models in the three `domain/` modules because every public BoundaryModel needs a policy owner; no
+   `yaml`/`urllib` in domain; ≤1000 non-test lines incl. task.json) → register 8 schemas + `scripts/contracts/generate.py --write` → tests
+   (`tests/contracts/research`, `tests/replay/research`) → node verifier (architecture suite) → VERIFIED flip + gap-report rows HR-001/HR-002 WORKING
+   with the four proof tags → measure (hash-bound) → `agentctl verify` (creates task logs BEFORE the final measurement) → close → commit → push + PR.
+3. HR2 (after owner D1), HR3 (O1/O4), HR4; then R5 in Polymath.
+
+### §6 traps added this checkpoint
+- **Trail pre-push hook = `agentctl verify --check`** (full replay of the committed task verification: ~15 min for A32, ~3 min for A33). A push that looks
+  hung is replaying; killing it orphans the replay python (kill that too, `git worktree prune`).
+- **Stacked, not-yet-committed Trail tasks fail `TASK_BASE_ANCHOR`** unless `AGENT_CONTROL_BASE_REF=<parent tip>` is exported for `agentctl verify/close`.
+- **The measurement must be the last thing that changes owned paths**: run `agentctl verify` (it pre-creates every task log) BEFORE the final
+  `--measure-run`; the measurement entry must be hash-bound in the run's `verification.json`; `--render` writes the mermaid before validating.
+- **A33 driver = `handoff-drafts/apply_a33.py`** (admit-run → apply-edits → record → remeasure): copy/adapt for HR1 instead of re-deriving.
+
+## Prior checkpoint (2026-09-14T02:25 — SESSION CLOSE-OUT before compaction. HARNESS-RESEARCH-MIGRATION-V1: R0–R4 merged and LIVE (main b79cf37); R5-prep driver in PR #14 (CI running); Trail A32 governance slice VERIFIED locally and being closed/committed; HR1 next)
 
 **Read first:** `docs/wiki/plans/HARNESS-RESEARCH-MIGRATION-V1-PLAN.md` (§7 cutover ledger, §8 slices, §10 owner decisions, §12 audit), ADR-0019, refactor 0013,
 register rows 11.265–11.270, work-logs `2026-09-13-harness-research-r{0,1,2}-*.md`, `2026-09-14-harness-research-r4-*.md`, `…-r5-driver.md`.
