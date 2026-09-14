@@ -9,6 +9,12 @@ architecture_impact: proposed Polymath workload boundary; runtime mutation requi
 
 # COGNITIVE ADAPTER + TRAIL E2E V1
 
+> **SUPERSEDED IN PART (2026-09-13, ADR-0019 / register 11.265):** §7 (`trail.product_discovery` with Trail as live-web executor at D/E),
+> §8 (finish Trail's C1→C2→Q1→C3 path), §11 E3/E5/E6 and the Trail-acquisition items of §12 are replaced by
+> `docs/wiki/plans/HARNESS-RESEARCH-MIGRATION-V1-PLAN.md` (harness-executed research, durable hypothesis state, Trail priors/admission/
+> qualification/scoring). §0–§6, §9 and the Trail-free acceptance items remain in force.
+
+
 ## 0. Owner intent
 
 Build **one end-to-end agent system**.

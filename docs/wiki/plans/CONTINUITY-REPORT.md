@@ -16,9 +16,49 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.264**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.265**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-13T22:30 — COGNITIVE-ADAPTER-TRAIL-E2E-V1: PRODUCTION RUNS MAIN'S TREE and the Trail-free E2E is LIVE and receipted through the official MCP client (11.264); E0–E7 slices merged (PRs #3, #5, #6, #7); the live Trail path waits on owner O1/O4 and Trail E3)
+## Latest checkpoint (2026-09-13T23:30 — HARNESS-RESEARCH-MIGRATION-V1 R0 ADMITTED: ADR-0019 + plan/cutover ledger; the owner's harness-executed hypothesis research architecture is now repository authority; research/ FROZEN; Trail side (ADR-063/A32/HR1–HR4) next under Trail governance)
+
+**Owner directive 2026-09-13 (migration prompt):** migrate Polymath + TrailSignal to the harness-executed hypothesis research architecture as ONE
+governed live migration (no parallel replacement, one authority per responsibility, a cutover ledger). **Read first:**
+`docs/wiki/plans/HARNESS-RESEARCH-MIGRATION-V1-PLAN.md` (§7 = the migration matrix / cutover ledger; §8 slices R0–R5; §10 owner decisions
+D1–D5 + O1/O4/O6; §11 repository truth; §12 dead-reference audit) and ADR-0019 (supersedes ADR-0018 §2/§5/§6). Refactor 0013 is the slice ledger.
+Register 11.265. Branch `handoff/hypothesis-research-migration` (cut from origin/main 629278f) → PR #9.
+
+**What changed in the architecture (summary):** closed vocabulary of NINE (+`HARNESS_ACTION`: AGENT_RESEARCH / PRODUCT_REALITY_CHECK /
+SUPPLIER_RESEARCH — the HARNESS executes live-world research; Polymath/Trail never name a search engine, browser or source SDK); durable
+`HypothesisStateV1` + transitions (GENERATE…PROMOTE) with mandatory cause refs (migration 0062, R2); θ/φ as typed runtime operations
+(θ = AGENT_REASON theta_op; φ = Trail deterministic verdicts or closed VALIDATE rules); Trail owns the compiled CSV registry snapshot,
+evidence-gap compilation, evidence admission, qualification and the LAW-1 score as BOUNDED SYNCHRONOUS deterministic operations
+(`registry.project`, `gaps.compile`, `evidence.admit`, `hypotheses.judge`, `territory.project`, `opportunity.qualify`, `opportunity.score`);
+Trail-owned discover/scrape/extract leave the product-discovery critical path (removed from the adapter at R4); `research/` + `research_*`
+retired at R5.
+
+**Repository truth found at R0 (details plan §11):** Polymath `research/` carries a COPY of Trail's registry (8 CSVs byte-identical, 3 drifted
+AHEAD: friction +10, niche +6, seed +6 → owner D2) and a second registry compiler + graph engine → FROZEN. Trail unpushed branches
+`codex/a30-opportunity-control-lock`, `codex/a31-ocp-manifest-projection-lock`, `codex/ocp1…`, `codex/ocp2-read-only-polymath-bridge`
+(2026-08-08) carry ADR-061/062 "Opportunity Control Plane" (Trail-owned hypothesis IR, Trail pulls from Polymath) — NOT on origin/main,
+composition reversed by the owner's September directives; vocabulary reused, composition rejected (owner D3). Trail main: no evidence/
+scoring/planning contexts; `scoring_rubric.csv` has no code reader (scoring = `config/scoring_weights.json` 13 dims) while `signal_engine/`
+implements doc-08's five-axis engine → owner D1 (which is THE score). Trail governance baseline (canonical Python) has one pre-existing
+failing test (`test_agent_control.py::test_p4v_start_after_a27_commit_creates_controller`) and `RUN_CHANGE_COVERAGE` on A29 from PR #1/#2.
+
+### NEXT (in order)
+1. R1 (Polymath): contracts §3.1 + examples + tests; neutrality test with source names; budgets.
+2. R2 (Polymath): migration 0062 + `hypotheses.py` + HARNESS_ACTION mechanics + admitted-only context + `.env.example`.
+3. R3 (Trail, own governance): ADR-063 + A32 (governance slice, build-run record, task) → HR1 snapshot compiler/contracts/replay → HR2
+   admission/qualification/scoring → HR3 bounded MCP ops (needs O1/O4 for VERIFIED) → HR4 loop canary.
+4. R4 (Polymath): manifest 2.0.0, executors for the 7 ops, removal of the Trail acquisition path, tests B/C/D/E/H/I/J, audit §12.
+5. R5: live acceptance with a real harness; remove `research/`, `research_*`, the research-harness workflow; final audit.
+
+### §6 traps added this checkpoint
+- **Trail's canonical Python is 3.11+ (`uv venv --python 3.12` + `uv pip install PyYAML pydantic`); system python3 3.9 produces ~190 spurious
+  governor diagnostics (schema generation, syntax).** Run `make validate-v2-governance PYTHON=.venv/bin/python` in a worktree of origin/main.
+- **Never work in `~/trail-signal-os` (owner checkout, 75 behind, dirty).** Trail work = a new worktree from origin/main + `agentctl start`.
+- **The Polymath `research/` package is frozen**: do not add registry rows there; Trail `data/` is the authority (owner-owned).
+
+## Prior checkpoint (2026-09-13T22:30 — COGNITIVE-ADAPTER-TRAIL-E2E-V1: PRODUCTION RUNS MAIN'S TREE and the Trail-free E2E is LIVE and receipted through the official MCP client (11.264); E0–E7 slices merged (PRs #3, #5, #6, #7); the live Trail path waits on owner O1/O4 and Trail E3)
 
 **Fleet worktree `polymath-v4` is on branch `production` = origin/main @ 64a4732** (`main` itself is checked out in the owner's
 `polymath-v4-main` worktree — never `git checkout main` in the fleet worktree; `git checkout -B production origin/main` and reset it
