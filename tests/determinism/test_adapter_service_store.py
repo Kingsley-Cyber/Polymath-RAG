@@ -177,7 +177,7 @@ def test_external_operation_is_two_phase_and_polls_by_operation_id(conn):
         calls["poll"] += 1
         assert prior["operation_id"] == "op_probe_1"                # polled by id, never resubmitted
         done = {**prior, "phase": "TERMINAL", "outcome": "SUCCEEDED", "status_revision": 3, "record_ids": ["urlc_1"], "poll_count": prior["poll_count"] + 1}
-        return {"output": {"leads": ["urlc_1"]}, "evidence_refs": [{"kind": "trail_record", "id": "urlc_1"}], "external": done}
+        return {"output": {"leads": ["urlc_1"]}, "evidence_refs": [{"kind": "document", "id": "urlc_1"}], "external": done}
     try:
         ref = service.start(conn, adapter_id="probe.external_two_phase", input_payload={"question": "does cold water immersion reduce soreness?", "corpus_ids": ["probe"]},
                             request_options={"corpus_ids": ["probe"]}, directory=d)

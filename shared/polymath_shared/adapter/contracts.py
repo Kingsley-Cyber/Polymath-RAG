@@ -32,7 +32,7 @@ TRANSITION_ACTORS = ("theta", "phi", "runtime")
 #: evidence roles are DOMAIN DATA: declared by a manifest (`evidence_roles`) and by the Trail registry snapshot, never here
 EVIDENCE_ROLE_PATTERN = r"^[a-z][a-z0-9_]{1,40}$"
 #: evidence-ref kinds an agent may CITE (knowledge + Trail-admitted field evidence); `trail_prior` is a coordinate, never evidence
-CITABLE_EVIDENCE_KINDS = frozenset({"chunk", "document", "graph_fact", "graph_hop", "parent_map", "trail_record", "field_evidence"})
+CITABLE_EVIDENCE_KINDS = frozenset({"chunk", "document", "graph_fact", "graph_hop", "parent_map", "field_evidence"})
 PRIOR_EVIDENCE_KINDS = frozenset({"trail_prior"})
 TERMINAL_RUN_STATUSES = frozenset({"completed", "terminal_gap", "cancelled", "failed"})
 STEP_STATUSES = ("issued", "accepted", "rejected", "executed", "failed", "skipped")

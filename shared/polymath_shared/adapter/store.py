@@ -11,7 +11,7 @@ from .manifest import Manifest
 from .transitions import RunState
 
 _STATE_COLS = ("run_id", "adapter_id", "status", "current_step_id", "sequence", "steps_accepted", "branch_loops",
-               "agent_reason_count", "external_operation_count", "harness_action_count", "input", "request_options", "outputs", "failure", "gap")
+               "agent_reason_count", "external_operation_count", "harness_action_count", "input", "request_options", "outputs", "output_order", "failure", "gap")
 
 
 def _j(v: Any) -> str:
@@ -26,12 +26,12 @@ def insert_run(conn, state: RunState, manifest: Manifest, *, idempotency_key: st
     conn.execute(
         """INSERT INTO adapter_runs (run_id, adapter_id, adapter_version, workflow_version, retrieval_policy_version,
                input_schema_version, output_schema_version, status, current_step_id, sequence, steps_accepted, branch_loops,
-               agent_reason_count, external_operation_count, harness_action_count, input, request_options, outputs, failure, gap, agent_identity, idempotency_key)
-           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s::jsonb,%s::jsonb,%s::jsonb,%s,%s)""",
+               agent_reason_count, external_operation_count, harness_action_count, input, request_options, outputs, output_order, failure, gap, agent_identity, idempotency_key)
+           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s::jsonb,%s::jsonb,%s::jsonb,%s::jsonb,%s,%s)""",
         (state.run_id, manifest.adapter_id, manifest.adapter_version, manifest.workflow_version, manifest.retrieval_policy_version,
          manifest.input_schema_version, manifest.output_schema_version, state.status, state.current_step_id, state.sequence,
          state.steps_accepted, state.branch_loops, state.agent_reason_count, state.external_operation_count, state.harness_action_count, _j(state.input),
-         _j(state.options), _j(state.outputs), _j(state.failure) if state.failure else None, _j(state.gap) if state.gap else None,
+         _j(state.options), _j(state.outputs), _j(list(state.output_order)), _j(state.failure) if state.failure else None, _j(state.gap) if state.gap else None,
          agent_identity, idempotency_key))
 
 
@@ -56,6 +56,7 @@ def load_run(conn, run_id: str, *, for_update: bool = False) -> tuple[RunState, 
                      sequence=d["sequence"], steps_accepted=d["steps_accepted"], branch_loops=d["branch_loops"],
                      agent_reason_count=d["agent_reason_count"], external_operation_count=d["external_operation_count"],
                      harness_action_count=d["harness_action_count"], input=_load(d["input"]) or {}, options=_load(d["request_options"]) or {}, outputs=_load(d["outputs"]) or {},
+                     output_order=tuple(_load(d["output_order"]) or []),
                      failure=_load(d["failure"]), gap=_load(d["gap"]))
     return state, meta
 
@@ -63,11 +64,11 @@ def load_run(conn, run_id: str, *, for_update: bool = False) -> tuple[RunState, 
 def save_state(conn, state: RunState) -> None:
     conn.execute(
         """UPDATE adapter_runs SET status=%s, current_step_id=%s, sequence=%s, steps_accepted=%s, branch_loops=%s,
-               agent_reason_count=%s, external_operation_count=%s, harness_action_count=%s, outputs=%s::jsonb, failure=%s::jsonb, gap=%s::jsonb,
+               agent_reason_count=%s, external_operation_count=%s, harness_action_count=%s, outputs=%s::jsonb, output_order=%s::jsonb, failure=%s::jsonb, gap=%s::jsonb,
                updated_at=now(), terminal_at=CASE WHEN %s THEN COALESCE(terminal_at, now()) ELSE terminal_at END
            WHERE run_id=%s""",
         (state.status, state.current_step_id, state.sequence, state.steps_accepted, state.branch_loops, state.agent_reason_count,
-         state.external_operation_count, state.harness_action_count, _j(state.outputs), _j(state.failure) if state.failure else None,
+         state.external_operation_count, state.harness_action_count, _j(state.outputs), _j(list(state.output_order)), _j(state.failure) if state.failure else None,
          _j(state.gap) if state.gap else None, state.terminal, state.run_id))
 
 

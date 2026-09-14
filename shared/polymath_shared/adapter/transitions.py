@@ -37,6 +37,7 @@ class RunState:
     input: dict[str, Any] = field(default_factory=dict)
     options: dict[str, Any] = field(default_factory=dict)      # request_options (corpus scope, retrieval mode, …)
     outputs: dict[str, Any] = field(default_factory=dict)       # step_id -> accepted/executed output payload
+    output_order: tuple[str, ...] = ()                         # step ids in acceptance order (JSONB drops dict order); newest last
     failure: dict[str, Any] | None = None
     gap: dict[str, Any] | None = None
 
@@ -167,6 +168,24 @@ def issue_step(manifest: Manifest, state: RunState, *, issued_at: str, evidence_
     return new, step
 
 
+def _bump_order(order: tuple[str, ...], step_id: str) -> tuple[str, ...]:
+    """Acceptance order of step outputs; a step re-entered through a loop moves to the end (newest last)."""
+    return tuple(x for x in order if x != step_id) + (step_id,)
+
+
+def newest_output(state: RunState, key: str) -> Any:
+    """The value under `key` on the most recently accepted/executed step output that carries it (top level, or one level down)."""
+    for sid in reversed(state.output_order or tuple(state.outputs)):
+        out = state.outputs.get(sid)
+        if isinstance(out, dict):
+            if key in out:
+                return out[key]
+            for v in out.values():
+                if isinstance(v, dict) and key in v:
+                    return v[key]
+    return None
+
+
 # ─────────────────────────────────────────────────────────── submissions
 def _cited_ids(payload: Any) -> set[str]:
     """Every string under a key that ends with `_ids` (the citation convention of AGENT_REASON output schemas)."""
@@ -216,8 +235,8 @@ def validate_receipt(step: dict[str, Any], payload: Any) -> list[str]:
 
 
 def accept_submission(manifest: Manifest, state: RunState, step: dict[str, Any], submission: dict[str, Any]) -> RunState:
-    """Validate an AdapterSubmissionV1 for the CURRENT awaiting step and record its payload. Idempotent on an identical
-    resubmission; anything else out of order is rejected with the reason."""
+    """Validate an AdapterSubmissionV1 (reasoning or receipt) for the CURRENT awaiting step and record its payload. Anything
+    out of order — a duplicate submit, a wrong step, a wrong kind — is rejected with the reason."""
     assert_valid("adapter_submission", submission)
     if state.terminal:
         raise SubmissionRejected([f"run is terminal ({state.status})"])
@@ -229,18 +248,18 @@ def accept_submission(manifest: Manifest, state: RunState, step: dict[str, Any],
     errors = validate_receipt(step, submission["payload"]) if step["step_type"] == "HARNESS_ACTION" else validate_submission(step, submission["payload"])
     if errors:
         raise SubmissionRejected(errors)
-    prior = state.outputs.get(step["step_id"])
-    if prior is not None and stable_hash(prior) != stable_hash(submission["payload"]):
-        raise SubmissionRejected(["a different payload was already accepted for this step"])
-    return replace(state, status="running", steps_accepted=state.steps_accepted + (0 if prior is not None else 1),
-                   outputs={**state.outputs, step["step_id"]: submission["payload"]})
+    # A step id re-entered through a bounded loop is a NEW issuance: its payload may legitimately differ from the earlier pass
+    # (the earlier output stays on its own step row + receipt). A duplicate submit of the same issuance is refused above because
+    # the run is no longer awaiting once the first one is accepted.
+    return replace(state, status="running", steps_accepted=state.steps_accepted + 1,
+                   outputs={**state.outputs, step["step_id"]: submission["payload"]}, output_order=_bump_order(state.output_order, step["step_id"]))
 
 
 def record_automatic_output(state: RunState, step_id: str, output: dict[str, Any]) -> RunState:
     """An automatic step (retrieve/plan/graph/external/validate/branch/compile) executed by the runtime."""
     if state.current_step_id != step_id or state.status != "running":
         raise RuntimeError(f"step {step_id!r} is not the running step {state.current_step_id!r}")
-    return replace(state, steps_accepted=state.steps_accepted + 1, outputs={**state.outputs, step_id: output})
+    return replace(state, steps_accepted=state.steps_accepted + 1, outputs={**state.outputs, step_id: output}, output_order=_bump_order(state.output_order, step_id))
 
 
 def cancel_run(state: RunState) -> RunState:

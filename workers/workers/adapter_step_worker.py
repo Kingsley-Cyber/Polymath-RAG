@@ -7,7 +7,9 @@ next claim re-executes the ISSUED step idempotently (every step is a single comm
 
 Knowledge steps reach Polymath through the orchestrator's HTTP API (POLYMATH_ORCH_URL, default 127.0.0.1:7200) —
 the same seam research/ uses; workers never import orchestrator code (architecture/dependencies.json).
-EXTERNAL_OPERATION steps are typed gaps until the Trail connector (E4) lands.
+EXTERNAL_OPERATION steps call TrailSignal's BOUNDED synchronous operations (ADR-0019 §8): registry.project, gaps.compile,
+evidence.admit, hypotheses.judge, territory.project, opportunity.qualify, opportunity.score. HARNESS_ACTION steps are never
+executed here — the host harness answers them through adapter_submit.
 
     python -m workers.adapter_step_worker [--once] [--max-steps N] [--lease-s S] [--poll-s P] [--owner NAME] [--crash-after N]
 """
@@ -49,6 +51,11 @@ def _path(obj: dict[str, Any], dotted: str, default: Any = None) -> Any:
 
 def _query_text(step: dict[str, Any], state: RunState, m: Manifest) -> str:
     cfg = m.step(step["step_id"]).get("config") or {}
+    if cfg.get("query_from") == "hypotheses":                 # generic engine state: the live hypotheses' statements
+        stmts = [str(h.get("statement", "")).strip() for h in step.get("context", {}).get("hypotheses") or []]
+        stmts = [x for x in stmts if x]
+        if stmts:
+            return "; ".join(stmts)[:2000]
     src = cfg.get("source")
     if src:
         v = _path({"input": state.input, "options": state.options}, src)
@@ -205,7 +212,7 @@ def exec_branch(step: dict[str, Any], state: RunState, m: Manifest) -> service.E
     return {"output": {"evaluated": True}}          # the branch itself is resolved by transitions.next_step_id
 
 
-# ─────────────────────────────────────────────────────────── TrailSignal (E4)
+# ─────────────────────────────────────────────────────────── TrailSignal bounded operations (ADR-0019 §8)
 from polymath_shared.adapter import trail_client as TC  # noqa: E402  (shared typed client — never Trail internals)
 
 _TRAIL: TC.TrailMCPClient | None = None
@@ -218,140 +225,105 @@ def trail() -> TC.TrailMCPClient:
     return _TRAIL
 
 
-def _hypothesis_queries(state: RunState, m: Manifest, fallback: str) -> list[str]:
-    """Discovery queries: the agent's hypotheses (activity + friction / direction), else the seed."""
-    out: list[str] = []
-    for sid, o in state.outputs.items():
-        for h in (o or {}).get("hypotheses") or []:
-            q = " ".join(str(h.get(k) or "") for k in ("activity", "friction", "direction")).strip()
-            if q:
-                out.append(q)
-    return out or [fallback]
+def _newest_output_with(state: RunState, key: str) -> dict[str, Any] | None:
+    """The most recently accepted step output carrying `key` (acceptance order, not dict order — JSONB drops it)."""
+    for sid in reversed(state.output_order or tuple(state.outputs)):
+        out = state.outputs.get(sid)
+        if isinstance(out, dict) and key in out:
+            return out
+    return None
 
 
-def _leads_from_prior(state: RunState) -> list[dict[str, Any]]:
-    for sid in reversed(list(state.outputs)):
-        leads = (state.outputs[sid] or {}).get("leads")
-        if leads:
-            return leads
-    return []
-
-
-def _poll_receipt(client: TC.TrailMCPClient, receipt: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
-    ref = {"operation_id": receipt["operation_id"], "operation_kind": receipt["operation_kind"],
-           "temporal_workflow_id": receipt.get("temporal_workflow_id"), "temporal_run_id": receipt.get("temporal_run_id"),
-           "submitted_at": receipt["submitted_at"]}
-    status = client.status(ref)
-    return status, TC.receipt_after_poll(receipt, status)
+def _payload_for(kind: str, step: dict[str, Any], state: RunState, cfg: dict[str, Any]) -> dict[str, Any]:
+    """The typed payload of a bounded Trail operation, assembled from generic engine state only (live hypotheses, admitted
+    evidence ids, the latest research receipt, physical jobs, qualifications) — never from a source or harness name."""
+    ctx = step.get("context") or {}
+    hyps = list(ctx.get("hypotheses") or [])
+    admitted = [r["id"] for r in ctx.get("evidence_refs") or [] if r.get("kind") == "field_evidence"]
+    payload: dict[str, Any] = {"stage": cfg.get("stage"), "hypotheses": hyps, "admitted_evidence_ids": admitted}
+    if kind == "registry.project":
+        payload["max_priors_per_hypothesis"] = int(cfg.get("max_priors_per_hypothesis", 12))
+    elif kind == "gaps.compile":
+        gaps = []
+        for out in state.outputs.values():
+            if isinstance(out, dict):
+                gaps += [g for g in (out.get("knowledge_gaps") or []) if isinstance(g, dict)]
+        payload["knowledge_gaps"] = gaps[-100:]
+        payload["open_gaps"] = list((_newest_output_with(state, "open_gaps") or {}).get("open_gaps") or [])[:100]
+    elif kind == "evidence.admit":
+        rec = _newest_output_with(state, "_harness_action_id")
+        if not rec:
+            raise ValueError("evidence.admit needs a harness receipt in a prior step output")
+        payload["action_id"] = rec["_harness_action_id"]
+        payload["receipt"] = {k: v for k, v in rec.items() if not k.startswith("_")}
+    elif kind == "hypotheses.judge":
+        payload["redundancy_groups"] = list((_newest_output_with(state, "redundancy_groups") or {}).get("redundancy_groups") or [])
+        payload["latest_admission_id"] = ((_newest_output_with(state, "evidence_admission") or {}).get("evidence_admission") or {}).get("admission_id")
+    elif kind == "territory.project":
+        payload["physical_jobs"] = list((_newest_output_with(state, "physical_jobs") or {}).get("physical_jobs") or [])[:100]
+    elif kind == "opportunity.qualify":
+        payload["latest_admission_id"] = ((_newest_output_with(state, "evidence_admission") or {}).get("evidence_admission") or {}).get("admission_id")
+    elif kind == "opportunity.score":
+        payload["qualifications"] = [o["qualification"] for o in state.outputs.values() if isinstance(o, dict) and isinstance(o.get("qualification"), dict)]
+    return payload
 
 
 def exec_external(step: dict[str, Any], state: RunState, m: Manifest) -> service.ExecOutcome:
-    """EXTERNAL_OPERATION through Trail's public boundary. Two-phase: submit once (receipt persisted, `pending`), then each
-    re-execution polls by operation_id; a TERMINAL status pages the referenced outputs into the step output. A planned
-    Trail capability, a missing principal, or a refused operation all end the run with a TYPED gap — never invention."""
+    """EXTERNAL_OPERATION = one bounded synchronous Trail operation through the public MCP boundary. The immutable result
+    becomes the step output (registry snapshot + priors as `trail_prior` refs, research directives, admission projections,
+    φ verdicts, qualifications, the score record) and an ExternalOperationReceiptV1 (TERMINAL at once). A planned Trail
+    capability, a missing principal, or a refusal ends the run with a TYPED gap — never invention."""
     spec = m.step(step["step_id"])
     ext = spec.get("external") or {}
     kind = ext.get("operation_kind")
     if ext.get("availability") == "planned":
         return {"gap": {"code": "TRAIL_CAPABILITY_PLANNED",
                         "message": f"{kind} is not yet a TrailSignal production capability (graph node {ext.get('planned_node')})"}}
+    if kind not in TC.BOUNDED_OPERATIONS:
+        return {"gap": {"code": "TRAIL_OPERATION_UNSUPPORTED", "message": f"{kind}: not a bounded TrailSignal operation of this build"}}
     client = trail()
     if not client.configured:
         return {"gap": {"code": "TRAIL_PRINCIPAL_MISSING", "message": "no Trail principal token/secret configured for Polymath (owner action O1)"}}
     cfg = spec.get("config") or {}
     principal = os.environ.get("POLYMATH_TRAIL_PRINCIPAL", "polymath")
-    key_base = TC.identifier(state.run_id, step["step_id"], str(step["sequence"]))
-    receipt = step.get("_external_receipt")
-    partial = dict(step.get("_partial_output") or {})
+    key = TC.identifier(state.run_id, step["step_id"], str(step["sequence"]))
+    snap = (step.get("context") or {}).get("registry_snapshot") or {}
+    req = TC.bounded_request(kind, _payload_for(kind, step, state, cfg), key=key, run_ref=state.run_id, registry_snapshot_id=snap.get("snapshot_id"))
     try:
-        if kind == "discover.submit":
-            return _exec_discover(client, step, state, m, cfg, principal, key_base, receipt)
-        if kind == "scrape.submit+extract.submit":
-            return _exec_acquire_extract(client, step, state, m, cfg, principal, key_base, receipt, partial)
-        return {"gap": {"code": "TRAIL_OPERATION_UNSUPPORTED", "message": f"{kind}: no connector path in this build"}}
+        resp = client.operate(kind, req)
     except TC.TrailToolError as exc:
-        return {"gap": {"code": "TRAIL_REFUSED", "message": f"{kind}: {exc}"}, "external": receipt}
+        return {"gap": {"code": "TRAIL_REFUSED", "message": f"{kind}: {exc}"}}
     except (TC.TrailTransportError, TC.TrailProtocolError) as exc:
         raise RuntimeError(f"trail transport: {exc}") from exc              # typed STEP_EXECUTOR_ERROR (retryable by re-run)
-
-
-def _exec_discover(client, step, state, m, cfg, principal, key_base, receipt):
-    if receipt is None:
-        query = _hypothesis_queries(state, m, _query_text(step, state, m))[0]
-        req = TC.discovery_request(query, key=key_base, maximum_candidates=int(cfg.get("maximum_candidates", 16)),
-                                   language=str(cfg.get("language", "en")))
-        ref = client.submit("discover.submit", req)
-        rc = TC.receipt_from_ref(state.run_id, step["step_id"], ref, idempotency_key=req["idempotency_key"], principal=principal)
-        return {"pending": True, "external": rc, "output": {"query": query}}
-    status, rc = _poll_receipt(client, receipt)
-    if rc["phase"] != "TERMINAL":
-        return {"pending": True, "external": rc}
-    if rc["outcome"] in ("FAILED", "CANCELLED"):
-        return {"gap": {"code": f"TRAIL_DISCOVERY_{rc['outcome']}", "message": (rc.get("failure") or {}).get("message") or rc["outcome"]}, "external": rc}
-    leads = []
-    for rid in TC.outputs_of(status, "URL_CANDIDATE_RESULT"):
-        for c in client.page_all("URL_CANDIDATE_RESULT", rid, key=key_base, page_size=min(64, int(cfg.get("maximum_candidates", 16)))):
-            leads.append({"candidate_id": c.get("candidate_id"), "rank": c.get("rank"), "url": c.get("url"), "title": (c.get("title") or "")[:300],
-                          "snippet": (c.get("snippet") or "")[:500], "record_class": c.get("record_class", "OPERATIONAL_LEAD"), "evidence_eligible": False})
-    rc = TC.receipt_after_poll(rc, status, record_ids=[l["candidate_id"] for l in leads if l.get("candidate_id")])
-    rc["poll_count"] -= 1                                                    # the fold above already counted this poll
-    return {"output": {"leads": leads, "outcome": rc["outcome"]}, "external": rc, "evidence_refs": []}
-
-
-def _exec_acquire_extract(client, step, state, m, cfg, principal, key_base, receipt, partial):
-    """Composite: ONE batch scrape (the receipt), then bounded sequential extractions, each a Trail operation tracked in
-    the step's partial output; terminal when every planned extraction is paged."""
-    phase = partial.get("phase") or "batch"
-    if phase == "batch":
-        if receipt is None:
-            urls = [l["url"] for l in _leads_from_prior(state) if l.get("url")][: int(cfg.get("batch_max", 16))]
-            if not urls:
-                return {"gap": {"code": "TRAIL_NO_LEADS", "message": "discovery returned no leads to acquire"}}
-            req = TC.batch_request(urls, key=key_base)
-            ref = client.submit("scrape.submit", req)
-            rc = TC.receipt_from_ref(state.run_id, step["step_id"], ref, idempotency_key=req["idempotency_key"], principal=principal)
-            return {"pending": True, "external": rc, "output": {"phase": "batch", "urls": urls}}
-        status, rc = _poll_receipt(client, receipt)
-        if rc["phase"] != "TERMINAL":
-            return {"pending": True, "external": rc, "output": partial}
-        if rc["outcome"] in ("FAILED", "CANCELLED"):
-            return {"gap": {"code": f"TRAIL_ACQUISITION_{rc['outcome']}", "message": (rc.get("failure") or {}).get("message") or rc["outcome"]}, "external": rc}
-        artifacts = TC.outputs_of(status, "RAW_ARTIFACT")[: int(cfg.get("extract_max", 6))]
-        partial = {**partial, "phase": "extract", "artifacts": artifacts, "extractions": {}, "records": [], "batch_outcome": rc["outcome"]}
-        if not artifacts:
-            return {"output": {**partial, "phase": "done"}, "external": rc, "evidence_refs": []}
-        return {"pending": True, "external": rc, "output": partial}
-    # phase == extract: one extraction operation at a time, tracked in partial["extractions"][artifact_id]
-    extractions = dict(partial.get("extractions") or {})
-    todo = [a for a in partial.get("artifacts") or [] if extractions.get(a, {}).get("state") != "done"]
-    if not todo:
-        records = partial.get("records") or []
-        refs = [{"kind": "trail_record", "id": r["record_id"]} for r in records if r.get("record_id")]
-        rc = TC.receipt_after_poll(receipt, {"phase": "TERMINAL", "terminal_outcome": partial.get("batch_outcome"), "revision": receipt.get("status_revision", 0)},
-                                   record_ids=[r["record_id"] for r in records if r.get("record_id")])
-        sub_ops = [{"external_system": "trailsignal", "operation_kind": "extract.submit", "operation_id": ex.get("operation_id"),
-                    "record_ids": [r["record_id"] for r in records if r.get("artifact_id") == art and r.get("record_id")]}
-                   for art, ex in (partial.get("extractions") or {}).items() if ex.get("operation_id")]
-        return {"output": {**partial, "phase": "done", "_external_operations": sub_ops}, "external": rc, "evidence_refs": refs}
-    art = todo[0]
-    ex = dict(extractions.get(art) or {})
-    if not ex.get("ref"):
-        req = TC.extraction_request(art, key=TC.identifier(key_base, "x", art), maximum_records=int(cfg.get("records_max_per_artifact", 24)))
-        ex = {"state": "submitted", "ref": client.submit("extract.submit", req), "idempotency_key": req["idempotency_key"]}
-        extractions[art] = ex
-        return {"pending": True, "external": receipt, "output": {**partial, "extractions": extractions}}
-    status = client.status(ex["ref"])
-    if status.get("phase") != "TERMINAL":
-        return {"pending": True, "external": receipt, "output": {**partial, "extractions": extractions}}
-    records = list(partial.get("records") or [])
-    if status.get("terminal_outcome") in ("SUCCEEDED", "PARTIAL"):
-        for res_id in TC.outputs_of(status, "DOCUMENT_RESULT"):
-            for r in client.page_all("DOCUMENT_RESULT", res_id, key=TC.identifier(key_base, "p", art), page_size=64, max_pages=2):
-                records.append({"record_id": r.get("record_id"), "artifact_id": art, "result_id": res_id, "ordinal": r.get("ordinal"),
-                                "record_kind": r.get("record_kind"), "text": (r.get("text") or "")[:700]})
-    ex["state"] = "done"; ex["outcome"] = status.get("terminal_outcome"); ex["operation_id"] = ex["ref"]["operation_id"]
-    extractions[art] = ex
-    return {"pending": True, "external": receipt, "output": {**partial, "extractions": extractions, "records": records}}
+    result = dict(resp.get("result") or {})
+    output: dict[str, Any] = {"trail_operation_id": resp.get("operation_id"), "operation_kind": kind}
+    refs: list[dict[str, Any]] = []
+    record_ids: list[str] = []
+    if kind == "registry.project":
+        snapshot = resp.get("registry_snapshot") or result.get("registry_snapshot")
+        if not snapshot:
+            return {"gap": {"code": "TRAIL_REFUSED", "message": "registry.project returned no registry snapshot"}}
+        output["registry_snapshot"] = {"snapshot_id": str(snapshot["snapshot_id"]), "content_hash": str(snapshot["content_hash"])}
+        priors = list(result.get("priors") or [])
+        output["priors"] = priors
+        refs = [{"kind": "trail_prior", "id": str(p["registry_record_id"]), "note": str(p.get("prior_role") or "")[:500] or None} for p in priors if p.get("registry_record_id")]
+        for r in refs:
+            if r["note"] is None:
+                r.pop("note")
+        record_ids = [r["id"] for r in refs]
+    for k, v in result.items():
+        if k in ("priors", "registry_snapshot"):
+            continue
+        output["hypothesis_verdicts" if k == "verdicts" else k] = v
+    adm = output.get("evidence_admission")
+    if isinstance(adm, dict):
+        record_ids += [a.get("trail_admission_record_id") for a in adm.get("admitted") or [] if a.get("trail_admission_record_id")]
+    ts = output.get("trail_score")
+    if isinstance(ts, dict) and ts.get("record_id"):
+        output["trail_score_record_ids"] = [str(ts["record_id"])]
+        record_ids.append(str(ts["record_id"]))
+    rc = TC.bounded_receipt(state.run_id, step["step_id"], kind, resp, idempotency_key=req["idempotency_key"], principal=principal, record_ids=record_ids)
+    return {"output": output, "external": rc, "evidence_refs": refs}
 
 
 EXECUTORS: dict[str, service.Executor] = {
