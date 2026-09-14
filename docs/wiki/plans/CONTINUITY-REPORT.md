@@ -57,8 +57,11 @@ ADR-063 acceptance record, D5 side table; O1 `polymath` principal + `mcp.polymat
 O6 repoint `~/.hermes/skills/business/opportunity-research` (symlink → `polymath-v4-main/research`) before `research/` is removed.
 
 ### NEXT (in order)
-0. Two unattended jobs were armed at close-out (logs in `handoff-drafts/logs/`): `merge_pr14.sh` (CI watch → squash-merge → ff) and
-   `finish_a32.sh` (verify gate → `agentctl close` → credential scan → LOCAL commit). Check their logs FIRST; each aborts without changes on any red gate.
+0. Unattended at close-out (logs in `handoff-drafts/logs/`): `merge_pr14.sh` (CI watch → squash-merge → ff; aborts on red). `finish_a32.sh` ABORTED by
+   design: verify #1 (02:07–02:24Z) failed only on `update_manifest.py --check` = MANIFEST STALE (the ledger VERIFIED row was written AFTER the manifest
+   refresh). The A32 subagent then refreshed the manifest (02:25:23Z) and re-ran `agentctl verify` at 02:26:16Z (scratchpad marker `verify_marker2`);
+   it owns close + local commit. Do NOT run a second actor on that tree. If the next session finds A32 uncommitted: check `.agent-control/tasks/A32/
+   verification.json` status; run the manual chain above; after `close`, run `update_manifest.py --check` and refresh (write mode) if stale BEFORE the commit.
 1. PR #14 → merge on green → `post_merge_ff.sh b79cf37` (no bounce) — if the job did not.
 2. Finish A32 (see above) — if the job did not → owner review → push/PR on Trail only on the owner's word.
 3. HR1 slice (Trail): task + build-run + baseline → move the drafts into `src/trail_signal/contexts/planning/{public,domain}/`, `data/source_capabilities.csv`,
@@ -69,6 +72,8 @@ O6 repoint `~/.hermes/skills/business/opportunity-research` (symlink → `polyma
 ### §6 traps added this checkpoint
 - **A subagent's stop/resume pattern**: long replays (Trail `agentctl verify`, the architecture suite ≈15 min) make agents yield; check the worktree state before re-running.
 - **The Hermes skill symlink points at the OWNER's worktree** (`polymath-v4-main/research`): repo removal of `research/` needs O6 first.
+- **Trail: `progress_ledger_v2.csv`, `policy_v2.yaml`, the validator and ADRs are REGISTERED manifest artifacts** — run `scripts/update_manifest.py`
+  (write mode) after the LAST edit to any of them, or `agentctl verify` fails on `update_manifest.py --check` (cost one 17-min replay on 2026-09-14).
 - **Session scratchpads are not durable**: handoff material now lives in `~/Documents/polymath-rebuild/handoff-drafts/`.
 
 ## Prior checkpoint (2026-09-14T02:05 — HARNESS-RESEARCH-MIGRATION-V1: R0–R4 MERGED AND LIVE (main b81fa2c; fleet bounced: 24 healthy, ONE hash a9f0a7d8c0a2); live receipts for R2 + R4; Trail A32 governance slice finishing; next = Trail HR1–HR4 (R3) then R5)
