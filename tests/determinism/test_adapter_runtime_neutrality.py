@@ -37,3 +37,19 @@ def test_both_workload_adapters_share_the_closed_vocabulary_and_differ_in_semant
     sub_text = str(sub.raw).lower()
     assert not any(w in sub_text for w in ("trail_record_ids", "product_territory", "workaround")), "substack must not import Trail ontology"
     assert all(w in sub_text for w in ("claim", "mechanism", "tension", "counterargument", "analogy", "implication", "narrative_role", "article"))
+
+
+# ─────────────────────────────────────────────────────────── ADR-0019 §6: source scalability is enforced in code
+SOURCE_NAMES = ("reddit", "youtube", "tiktok", "facebook", "amazon", "walmart", "etsy", "ebay", "homedepot", "home_depot", "lowes",
+                "alibaba", "cj_dropshipping", "cjdropshipping", "1688", "searxng", "google", "exa", "camofox", "playwright", "crawl4ai")
+HARNESS_IDS = ("hermes", "claude-code", "claude_code", "codex", "opencode")
+
+
+def test_runtime_and_manifests_never_name_a_source_or_a_harness():
+    """Adding a website is registry data on the Trail side; the Polymath runtime, the worker and every manifest stay source- and
+    harness-neutral. (The acceptance script and tests may name harness ids as data; the runtime may not.)"""
+    files = RUNTIME + [ROOT / "orchestrator/orchestrator/api/adapter.py"] + sorted((ROOT / "config/adapters").glob("*.json"))
+    for path in files:
+        code = path.read_text().lower()
+        for w in SOURCE_NAMES + HARNESS_IDS:
+            assert re.search(rf"(?<![a-z0-9_]){re.escape(w)}(?![a-z0-9_])", code) is None, f"{path.name} names {w!r}"

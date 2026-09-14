@@ -42,7 +42,23 @@
      "urlc_3b9f"
     ]
    }
-  ]
+  ],
+  "hypothesis_ids": [
+   "hyp_01c4d9e2f7a1"
+  ],
+  "admitted_evidence_ids": [
+   "fev_9a1b2c3d4e5f"
+  ],
+  "harness_action_ids": [
+   "hact_5e2c1b7d9a04"
+  ],
+  "harness_ids": [
+   "claude-code"
+  ],
+  "registry_snapshot_ids": [
+   "trs_20260913_7c1e"
+  ],
+  "trail_score_record_ids": []
  },
  "contradictions": [],
  "unknowns": [

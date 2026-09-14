@@ -166,3 +166,41 @@ def test_issue_and_hashes_are_deterministic():
     b = _walk_to(m, start_run(m, RUN, INPUT), "C_hypotheses", {})[1]
     assert a == b and stable_hash(a) == stable_hash(b)
     assert stable_hash({"x": 1, "y": [1, 2]}) == stable_hash({"y": [1, 2], "x": 1})
+
+
+# ─────────────────────────────────────────────────────────── ADR-0019 graph rules (R1)
+from polymath_shared.adapter import manifest as _M  # noqa: E402
+def _mini(steps):
+    return {"adapter_id": "probe.harness", "adapter_version": "1.0.0", "workflow_version": "1.0.0", "retrieval_policy_version": "1.0.0",
+            "input_schema_version": "1.0.0", "output_schema_version": "1.0.0", "budgets": {"max_steps": 20, "max_agent_reason": 4, "max_branch_loops": 2, "max_harness_actions": 2},
+            "entry_step_id": steps[0]["step_id"], "terminal_step_id": steps[-1]["step_id"], "steps": steps}
+
+
+def _harness_manifest(*, branch_to_action=False, missing_kind=False, theta_on_validate=False):
+    steps = [
+        {"step_id": "a", "type": "AGENT_REASON", "title": "t", "objective": "o", "theta_op": "generate_hypotheses", "output_schema": {"type": "object"}, "next": "h"},
+        {"step_id": "h", "type": "HARNESS_ACTION", "title": "research", "objective": "find field evidence",
+         **({} if missing_kind else {"harness": {"action_kind": "AGENT_RESEARCH", "minimum_independent_sources": 3}}), "next": "v"},
+        {"step_id": "v", "type": "VALIDATE", "title": "v", **({"theta_op": "derive_mechanisms"} if theta_on_validate else {}), "next": "b"},
+        {"step_id": "b", "type": "BRANCH", "title": "b", "branches": [{"when": {"op": "exists", "path": "steps.v.output.ok"}, "next": "h" if branch_to_action else "a"}], "next": "k"},
+        {"step_id": "k", "type": "COMPILE_RESULT", "title": "k", "next": None},
+    ]
+    return _mini(steps)
+
+
+def test_harness_action_is_in_the_closed_vocabulary_and_answered_not_executed():
+    from polymath_shared.adapter import contracts as C
+    assert "HARNESS_ACTION" in C.STEP_TYPES and "HARNESS_ACTION" in C.AGENT_ANSWERED_STEP_TYPES
+    assert "HARNESS_ACTION" not in C.AUTOMATIC_STEP_TYPES and "AGENT_REASON" not in C.AUTOMATIC_STEP_TYPES
+    assert "awaiting_harness" in C.RUN_STATUSES
+    assert _M.graph_integrity_errors(_harness_manifest()) == []
+
+
+@pytest.mark.parametrize("kw, needle", [
+    ({"branch_to_action": True}, "may not target HARNESS_ACTION"),
+    ({"missing_kind": True}, "HARNESS_ACTION needs harness.action_kind"),
+    ({"theta_on_validate": True}, "theta_op is only valid on AGENT_REASON"),
+])
+def test_graph_integrity_enforces_the_adr_0019_rules(kw, needle):
+    errs = _M.graph_integrity_errors(_harness_manifest(**kw))
+    assert any(needle in e for e in errs), errs

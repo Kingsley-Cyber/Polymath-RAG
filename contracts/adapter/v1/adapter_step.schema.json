@@ -2,7 +2,7 @@
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "polymath/contracts/adapter/v1/adapter_step.schema.json",
  "title": "AdapterStepV1",
- "description": "One issued step. For AGENT_REASON it carries the exact objective, bounded evidence refs, constraints, the required output schema and acceptance rules; the connected agent answers with an AdapterSubmissionV1.",
+ "description": "One issued step. For AGENT_REASON it carries the exact objective, bounded evidence refs (Polymath knowledge + Trail-admitted field_evidence; trail_prior refs are coordinates and may never be cited as evidence), the current hypotheses, constraints, the required output schema and acceptance rules; the connected agent answers with an AdapterSubmissionV1. For HARNESS_ACTION it carries a HarnessActionV1 and the harness answers with a HarnessResearchReceiptV1 (submission kind=receipt).",
  "type": "object",
  "required": [
   "run_id",
@@ -31,6 +31,7 @@
     "POLYMATH_GRAPH_EXPAND",
     "EXTERNAL_OPERATION",
     "AGENT_REASON",
+    "HARNESS_ACTION",
     "VALIDATE",
     "BRANCH",
     "COMPILE_RESULT"
@@ -71,7 +72,9 @@
          "parent_map",
          "query_receipt",
          "trail_record",
-         "step_output"
+         "step_output",
+         "field_evidence",
+         "trail_prior"
         ]
        },
        "id": {
@@ -109,6 +112,73 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 200
+     }
+    },
+    "hypotheses": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "required": [
+       "hypothesis_id",
+       "revision",
+       "status",
+       "statement"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "hypothesis_id": {
+        "type": "string",
+        "pattern": "^hyp_[0-9a-f]{8,64}$"
+       },
+       "revision": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "status": {
+        "enum": [
+         "proposed",
+         "filtered",
+         "retained",
+         "revised",
+         "split",
+         "merged",
+         "weakened",
+         "strengthened",
+         "contradicted",
+         "killed",
+         "promoted"
+        ]
+       },
+       "statement": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000
+       }
+      }
+     },
+     "minItems": 0,
+     "maxItems": 64
+    },
+    "registry_snapshot": {
+     "type": [
+      "object",
+      "null"
+     ],
+     "required": [
+      "snapshot_id",
+      "content_hash"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "snapshot_id": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 200
+      },
+      "content_hash": {
+       "type": "string",
+       "pattern": "^(sha256:)?[0-9a-f]{64}$"
+      }
      }
     }
    }
@@ -160,6 +230,32 @@
     "null"
    ],
    "format": "date-time"
+  },
+  "cognitive_op": {
+   "enum": [
+    "theta",
+    "phi",
+    null
+   ]
+  },
+  "theta_op": {
+   "enum": [
+    "generate_hypotheses",
+    "derive_mechanisms",
+    "cross_map_frictions",
+    "derive_physical_jobs",
+    "derive_analogies",
+    "split_hypotheses",
+    "generate_product_mechanisms",
+    null
+   ]
+  },
+  "harness_action": {
+   "type": [
+    "object",
+    "null"
+   ],
+   "description": "HarnessActionV1 for HARNESS_ACTION steps (validated against harness_action.schema.json by the runtime); null otherwise."
   }
  },
  "additionalProperties": false

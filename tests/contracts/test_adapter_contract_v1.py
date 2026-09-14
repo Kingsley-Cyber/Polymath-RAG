@@ -13,9 +13,12 @@ import pytest
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 V1 = ROOT / "contracts" / "adapter" / "v1"
 NAMES = ["adapter_manifest", "adapter_run_request", "adapter_run_ref", "adapter_run_status", "adapter_step",
-         "adapter_submission", "adapter_step_receipt", "external_operation_receipt", "adapter_result"]
+         "adapter_submission", "adapter_step_receipt", "external_operation_receipt", "adapter_result",
+         "harness_action", "harness_receipt", "hypothesis_state", "hypothesis_transition", "evidence_admission"]
 STEP_TYPES = {"POLYMATH_RETRIEVE", "POLYMATH_COMPILE_PLAN", "POLYMATH_GRAPH_EXPAND", "EXTERNAL_OPERATION",
-              "AGENT_REASON", "VALIDATE", "BRANCH", "COMPILE_RESULT"}
+              "AGENT_REASON", "HARNESS_ACTION", "VALIDATE", "BRANCH", "COMPILE_RESULT"}
+ROLE_PATTERN = "^[a-z][a-z0-9_]{1,40}$"
+ACTION_KINDS = {"AGENT_RESEARCH", "PRODUCT_REALITY_CHECK", "SUPPLIER_RESEARCH"}
 
 
 def _load(name):
@@ -104,3 +107,68 @@ def test_result_lineage_references_only_known_receipts_and_operations():
     assert ext["operation_id"] in ops
     if res["status"] == "terminal_gap":
         assert res["gap"] and res["gap"]["code"]
+
+
+# ─────────────────────────────────────────────────────────── ADR-0019 (HARNESS-RESEARCH-MIGRATION-V1 R1)
+def _enum_at(schema, *path):
+    node = schema
+    for k in path:
+        node = node[k]
+    return set(x for x in node["enum"] if x is not None)
+
+
+def test_evidence_roles_are_domain_data_and_action_kinds_are_closed():
+    """Roles are declared by the manifest (`evidence_roles`) and the Trail registry snapshot; the generic contracts only fix their shape."""
+    ha, hr, adm, hs, mf = (_load(n)[0] for n in ("harness_action", "harness_receipt", "evidence_admission", "hypothesis_state", "adapter_manifest"))
+    assert ha["properties"]["evidence_gaps"]["items"]["properties"]["evidence_role"]["pattern"] == ROLE_PATTERN
+    assert ha["properties"]["search_intents"]["items"]["properties"]["evidence_roles"]["items"]["pattern"] == ROLE_PATTERN
+    assert hr["properties"]["observations"]["items"]["properties"]["evidence_role_claimed"]["pattern"] == ROLE_PATTERN
+    assert adm["properties"]["admitted"]["items"]["properties"]["evidence_role"]["pattern"] == ROLE_PATTERN
+    assert hs["properties"]["knowledge_gaps"]["items"]["properties"]["evidence_role"]["pattern"] == ROLE_PATTERN
+    assert mf["properties"]["evidence_roles"]["items"]["pattern"] == ROLE_PATTERN
+    assert _enum_at(ha, "properties", "action_kind") == ACTION_KINDS
+    assert _enum_at(mf, "$defs", "harness_action_kind") == ACTION_KINDS
+
+
+def test_receipt_and_submission_cannot_carry_a_score_field():
+    """LAW 1 at the wire: no model/harness payload has a place for an opportunity score."""
+    for name, key in (("harness_receipt", "score"), ("harness_receipt", "opportunity_score"), ("harness_action", "score")):
+        schema, example = _load(name)
+        bad = {**example, key: 0.9}
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.Draft202012Validator(schema, format_checker=jsonschema.FormatChecker()).validate(bad)
+    schema, example = _load("harness_receipt")
+    obs = {**example["observations"][0], "score": 0.9}
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.Draft202012Validator(schema).validate({**example, "observations": [obs]})
+
+
+def test_hypothesis_transition_requires_a_cause_and_state_keeps_lineage():
+    schema, example = _load("hypothesis_transition")
+    v = jsonschema.Draft202012Validator(schema, format_checker=jsonschema.FormatChecker())
+    with pytest.raises(jsonschema.ValidationError):
+        v.validate({**example, "cause_refs": []})
+    assert example["cause_refs"] and example["kind"] in {"GENERATE", "REVISE", "SPLIT", "MERGE", "WEAKEN", "STRENGTHEN", "CONTRADICT", "KILL", "PROMOTE"}
+    hs_schema, hs = _load("hypothesis_state")
+    assert {"parent_hypothesis_ids", "knowledge_support", "trail_priors", "field_evidence_ids", "revision"} <= set(hs)
+    ks = jsonschema.Draft202012Validator(hs_schema, format_checker=jsonschema.FormatChecker())
+    no_support = {**hs["knowledge_support"][0], "chunk_id": None, "document_id": None, "graph_fact_id": None, "retrieval_trace_id": None}
+    with pytest.raises(jsonschema.ValidationError):
+        ks.validate({**hs, "knowledge_support": [no_support]})
+
+
+def test_harness_action_never_names_a_tool_or_engine():
+    """The action states intent; the harness picks tools. Contract text stays engine-neutral."""
+    text = (V1 / "harness_action.schema.json").read_text().lower() + (V1 / "harness_action.example.json").read_text().lower()
+    import re
+    for word in ("google", "searxng", "playwright", "crawl4ai", "camofox", "exa", "scraper", "selenium", "puppeteer", "reddit", "amazon", "alibaba"):
+        assert re.search(rf"(?<![a-z0-9_]){word}(?![a-z0-9_])", text) is None, word
+    _, ex = _load("harness_action")
+    assert ex["registry_snapshot"]["snapshot_id"] and ex["minimum_independent_sources"] >= 1
+
+
+def test_step_context_evidence_kinds_include_admitted_field_evidence_and_priors():
+    kinds = _enum_at(_load("adapter_step")[0], "properties", "context", "properties", "evidence_refs", "items", "properties", "kind")
+    assert {"field_evidence", "trail_prior"} <= kinds
+    lineage = _load("adapter_result")[0]["properties"]["lineage"]["properties"]
+    assert {"hypothesis_ids", "admitted_evidence_ids", "harness_action_ids", "harness_ids", "registry_snapshot_ids", "trail_score_record_ids"} <= set(lineage)

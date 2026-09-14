@@ -1,0 +1,271 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "polymath/contracts/adapter/v1/harness_action.schema.json",
+ "title": "HarnessActionV1",
+ "description": "A typed research action the runtime hands to the host harness (Claude Code / Hermes / Codex) for a HARNESS_ACTION step. It states intent (gaps, search intents, source roles, freshness, independence, success/falsification conditions, budget) and the Trail registry snapshot it was compiled against. It never names a search engine, browser engine, acquisition tool or source SDK; the harness decides which native tools to use and answers with a HarnessResearchReceiptV1.",
+ "type": "object",
+ "required": [
+  "action_id",
+  "run_id",
+  "step_id",
+  "action_kind",
+  "hypothesis_ids",
+  "objective",
+  "evidence_gaps",
+  "search_intents",
+  "preferred_source_roles",
+  "disallowed_source_roles",
+  "freshness_requirement",
+  "geography",
+  "language",
+  "minimum_independent_sources",
+  "success_condition",
+  "falsification_condition",
+  "budget",
+  "registry_snapshot",
+  "issued_at"
+ ],
+ "properties": {
+  "action_id": {
+   "type": "string",
+   "pattern": "^hact_[0-9a-f]{8,64}$"
+  },
+  "run_id": {
+   "type": "string",
+   "pattern": "^adr_[0-9a-f]{16,64}$"
+  },
+  "step_id": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 200
+  },
+  "action_kind": {
+   "enum": [
+    "AGENT_RESEARCH",
+    "PRODUCT_REALITY_CHECK",
+    "SUPPLIER_RESEARCH"
+   ]
+  },
+  "hypothesis_ids": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "pattern": "^hyp_[0-9a-f]{8,64}$"
+   },
+   "minItems": 1,
+   "maxItems": 64
+  },
+  "objective": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 4000
+  },
+  "evidence_gaps": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "gap_id",
+     "hypothesis_id",
+     "question",
+     "evidence_role"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "gap_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+     },
+     "hypothesis_id": {
+      "type": "string",
+      "pattern": "^hyp_[0-9a-f]{8,64}$"
+     },
+     "question": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+     },
+     "evidence_role": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{1,40}$",
+      "description": "an evidence role declared by the adapter manifest (`evidence_roles`) and by the Trail registry snapshot; the generic engine never hard-codes the vocabulary"
+     }
+    }
+   },
+   "minItems": 0,
+   "maxItems": 200
+  },
+  "search_intents": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "intent_id",
+     "intent",
+     "evidence_goal",
+     "evidence_roles"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "intent_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+     },
+     "intent": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+     },
+     "evidence_goal": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+     },
+     "evidence_roles": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "pattern": "^[a-z][a-z0-9_]{1,40}$",
+       "description": "an evidence role declared by the adapter manifest (`evidence_roles`) and by the Trail registry snapshot; the generic engine never hard-codes the vocabulary"
+      },
+      "minItems": 1
+     },
+     "template": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 500
+     }
+    }
+   },
+   "minItems": 1,
+   "maxItems": 100
+  },
+  "preferred_source_roles": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "minLength": 1,
+    "maxLength": 100
+   },
+   "minItems": 0,
+   "maxItems": 50
+  },
+  "disallowed_source_roles": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "minLength": 1,
+    "maxLength": 100
+   },
+   "minItems": 0,
+   "maxItems": 50
+  },
+  "freshness_requirement": {
+   "type": "object",
+   "required": [
+    "max_age_days",
+    "policy_ref"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "max_age_days": {
+     "type": [
+      "integer",
+      "null"
+     ],
+     "minimum": 1
+    },
+    "policy_ref": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "maxLength": 200
+    }
+   }
+  },
+  "geography": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "maxLength": 200
+  },
+  "language": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "maxLength": 50
+  },
+  "minimum_independent_sources": {
+   "type": "integer",
+   "minimum": 1,
+   "maximum": 100
+  },
+  "success_condition": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 2000
+  },
+  "falsification_condition": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 2000
+  },
+  "budget": {
+   "type": "object",
+   "required": [
+    "max_queries",
+    "max_sources",
+    "max_observations"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "max_queries": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 500
+    },
+    "max_sources": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 200
+    },
+    "max_observations": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 1000
+    }
+   }
+  },
+  "registry_snapshot": {
+   "type": "object",
+   "required": [
+    "snapshot_id",
+    "content_hash"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "snapshot_id": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 200
+    },
+    "content_hash": {
+     "type": "string",
+     "pattern": "^(sha256:)?[0-9a-f]{64}$"
+    }
+   }
+  },
+  "issued_at": {
+   "type": "string",
+   "format": "date-time"
+  }
+ },
+ "additionalProperties": false
+}

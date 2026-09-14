@@ -1,0 +1,69 @@
+{
+ "action_id": "hact_5e2c1b7d9a04",
+ "run_id": "adr_3322182605da76d37631b9dc0e0e7cbf",
+ "harness_id": "claude-code",
+ "started_at": "2026-09-13T20:11:00Z",
+ "completed_at": "2026-09-13T20:26:30Z",
+ "sources": [
+  {
+   "source_id": "src_1",
+   "url": "https://www.reddit.com/r/BecomingTheIceman/comments/example1/",
+   "source_class": "community_discussion",
+   "retrieved_at": "2026-09-13T20:14:02Z",
+   "published_at_if_known": "2026-05-02T00:00:00Z"
+  },
+  {
+   "source_id": "src_2",
+   "url": "https://www.example-forum.org/threads/cold-plunge-temp",
+   "source_class": "community_discussion",
+   "retrieved_at": "2026-09-13T20:19:40Z",
+   "published_at_if_known": null
+  }
+ ],
+ "observations": [
+  {
+   "observation_id": "obs_1",
+   "source_id": "src_1",
+   "claim": "Users report the tub warming past 15\u00b0C within an hour in summer without a chiller",
+   "paraphrase_or_excerpt": "several commenters describe adding bagged ice every session because the water warms within the hour",
+   "metric_if_present": {
+    "name": "ice_per_session_kg",
+    "value": 9.0,
+    "unit": "kg",
+    "sample_n": 4
+   },
+   "context": "thread asking how people keep plunge water cold in July",
+   "evidence_role_claimed": "friction",
+   "hypothesis_ids": [
+    "hyp_01c4d9e2f7a1"
+   ]
+  },
+  {
+   "observation_id": "obs_2",
+   "source_id": "src_2",
+   "claim": "A user wraps the tub in a foil camping mat and a wooden lid to slow warming",
+   "paraphrase_or_excerpt": "a member describes a foil mat plus plywood lid as their workaround",
+   "metric_if_present": null,
+   "context": "DIY insulation thread",
+   "evidence_role_claimed": "workaround",
+   "hypothesis_ids": [
+    "hyp_01c4d9e2f7a1"
+   ]
+  }
+ ],
+ "tool_trace": [
+  {
+   "search_intent_id": "si_complaint",
+   "tool_class": "web_search",
+   "query_count": 6
+  },
+  {
+   "search_intent_id": "si_workaround",
+   "tool_class": "browser",
+   "query_count": 4
+  }
+ ],
+ "limitations": [
+  "community threads are self-selected; no marketplace data collected in this action"
+ ]
+}

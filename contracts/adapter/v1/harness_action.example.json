@@ -1,0 +1,72 @@
+{
+ "action_id": "hact_5e2c1b7d9a04",
+ "run_id": "adr_3322182605da76d37631b9dc0e0e7cbf",
+ "step_id": "H_field_research",
+ "action_kind": "AGENT_RESEARCH",
+ "hypothesis_ids": [
+  "hyp_01c4d9e2f7a1",
+  "hyp_02b8e5d1c6f3"
+ ],
+ "objective": "Find first-person evidence that amateur athletes doing home cold-water immersion struggle to hold water temperature without a chiller, and what they improvise.",
+ "evidence_gaps": [
+  {
+   "gap_id": "gap_1",
+   "hypothesis_id": "hyp_01c4d9e2f7a1",
+   "question": "Do people report temperature drift as a recurring problem?",
+   "evidence_role": "friction"
+  },
+  {
+   "gap_id": "gap_2",
+   "hypothesis_id": "hyp_01c4d9e2f7a1",
+   "question": "Which improvised insulation or ice routines do they use?",
+   "evidence_role": "workaround"
+  }
+ ],
+ "search_intents": [
+  {
+   "intent_id": "si_complaint",
+   "intent": "find first-person friction complaints",
+   "evidence_goal": "complaint",
+   "evidence_roles": [
+    "friction",
+    "behavior"
+   ],
+   "template": "{activity} {task} annoying"
+  },
+  {
+   "intent_id": "si_workaround",
+   "intent": "find workaround discussions",
+   "evidence_goal": "workaround",
+   "evidence_roles": [
+    "workaround"
+   ],
+   "template": "{activity} {task} DIY modification"
+  }
+ ],
+ "preferred_source_roles": [
+  "community_discussion",
+  "product_review"
+ ],
+ "disallowed_source_roles": [
+  "supplier_listing"
+ ],
+ "freshness_requirement": {
+  "max_age_days": 365,
+  "policy_ref": "stable-behavior-research"
+ },
+ "geography": "US",
+ "language": "en",
+ "minimum_independent_sources": 3,
+ "success_condition": "at least 10 independent complaint observations from at least 3 source classes",
+ "falsification_condition": "no recurring temperature-control complaints across 3 independent communities",
+ "budget": {
+  "max_queries": 20,
+  "max_sources": 15,
+  "max_observations": 60
+ },
+ "registry_snapshot": {
+  "snapshot_id": "trs_20260913_7c1e",
+  "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+ },
+ "issued_at": "2026-09-13T20:10:00Z"
+}

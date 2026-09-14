@@ -24,5 +24,6 @@
   "model": "hermes/agent"
  },
  "submitted_at": "2026-09-13T18:31:10Z",
- "submission_hash": "23af700ea17a8c6351687171b887382ac7e23a718f996dd966970c55de29e637"
+ "submission_hash": "ad59ebc344824677efbae4899c829f0aae5c3a404054d7dda01612ff2a2b3da5",
+ "kind": "reasoning"
 }

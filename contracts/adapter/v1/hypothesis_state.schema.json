@@ -1,0 +1,354 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "polymath/contracts/adapter/v1/hypothesis_state.schema.json",
+ "title": "HypothesisStateV1",
+ "description": "One immutable revision of a hypothesis inside an adapter run. Hypotheses are first-class durable state (adapter_hypotheses): every revision keeps its parents, the Polymath chunks/documents/graph facts that support it, the Trail registry priors it was projected onto (never evidence), the admitted field evidence ids, and its typed assumptions, contradictions, falsifiers and knowledge gaps. Status changes happen only through HypothesisTransitionV1 records.",
+ "type": "object",
+ "required": [
+  "hypothesis_id",
+  "run_id",
+  "parent_hypothesis_ids",
+  "revision",
+  "statement",
+  "mechanism",
+  "population",
+  "activity",
+  "task",
+  "context",
+  "suspected_friction",
+  "status",
+  "knowledge_support",
+  "trail_priors",
+  "field_evidence_ids",
+  "assumptions",
+  "contradictions",
+  "falsifiers",
+  "knowledge_gaps",
+  "created_at",
+  "updated_at"
+ ],
+ "properties": {
+  "hypothesis_id": {
+   "type": "string",
+   "pattern": "^hyp_[0-9a-f]{8,64}$"
+  },
+  "run_id": {
+   "type": "string",
+   "pattern": "^adr_[0-9a-f]{16,64}$"
+  },
+  "parent_hypothesis_ids": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "pattern": "^hyp_[0-9a-f]{8,64}$"
+   },
+   "minItems": 0,
+   "maxItems": 64
+  },
+  "revision": {
+   "type": "integer",
+   "minimum": 0
+  },
+  "statement": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 2000
+  },
+  "mechanism": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "maxLength": 2000
+  },
+  "population": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "maxLength": 500
+  },
+  "activity": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "maxLength": 500
+  },
+  "task": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "maxLength": 500
+  },
+  "context": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "maxLength": 1000
+  },
+  "suspected_friction": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "maxLength": 1000
+  },
+  "status": {
+   "enum": [
+    "proposed",
+    "filtered",
+    "retained",
+    "revised",
+    "split",
+    "merged",
+    "weakened",
+    "strengthened",
+    "contradicted",
+    "killed",
+    "promoted"
+   ]
+  },
+  "knowledge_support": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "chunk_id",
+     "document_id",
+     "graph_fact_id",
+     "retrieval_trace_id",
+     "evidence_role"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "chunk_id": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 200
+     },
+     "document_id": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 200
+     },
+     "graph_fact_id": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 200
+     },
+     "retrieval_trace_id": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 200
+     },
+     "evidence_role": {
+      "enum": [
+       "mechanism",
+       "analogy",
+       "friction",
+       "population",
+       "context",
+       "contradiction",
+       "background"
+      ]
+     }
+    },
+    "anyOf": [
+     {
+      "properties": {
+       "chunk_id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+       }
+      }
+     },
+     {
+      "properties": {
+       "document_id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+       }
+      }
+     },
+     {
+      "properties": {
+       "graph_fact_id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+       }
+      }
+     },
+     {
+      "properties": {
+       "retrieval_trace_id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+       }
+      }
+     }
+    ]
+   },
+   "minItems": 0,
+   "maxItems": 200
+  },
+  "trail_priors": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "registry_snapshot_id",
+     "registry_record_id",
+     "prior_role"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "registry_snapshot_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+     },
+     "registry_record_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+     },
+     "prior_role": {
+      "enum": [
+       "activity",
+       "task",
+       "friction_primitive",
+       "product_territory",
+       "niche_candidate",
+       "seasonal",
+       "source_role",
+       "search_intent"
+      ]
+     }
+    }
+   },
+   "minItems": 0,
+   "maxItems": 200
+  },
+  "field_evidence_ids": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "pattern": "^fev_[0-9a-f]{8,64}$"
+   },
+   "minItems": 0,
+   "maxItems": 500
+  },
+  "assumptions": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "minLength": 1,
+    "maxLength": 1000
+   },
+   "minItems": 0,
+   "maxItems": 50
+  },
+  "contradictions": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "statement",
+     "evidence_ids"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "statement": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+     },
+     "evidence_ids": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 200
+      },
+      "minItems": 1
+     }
+    }
+   },
+   "minItems": 0,
+   "maxItems": 100
+  },
+  "falsifiers": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "minLength": 1,
+    "maxLength": 1000
+   },
+   "minItems": 0,
+   "maxItems": 50
+  },
+  "knowledge_gaps": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "gap_id",
+     "question",
+     "evidence_role",
+     "status"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "gap_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+     },
+     "question": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+     },
+     "evidence_role": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{1,40}$",
+      "description": "an evidence role declared by the adapter manifest (`evidence_roles`) and by the Trail registry snapshot; the generic engine never hard-codes the vocabulary"
+     },
+     "status": {
+      "enum": [
+       "open",
+       "researched",
+       "closed"
+      ]
+     }
+    }
+   },
+   "minItems": 0,
+   "maxItems": 100
+  },
+  "created_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "updated_at": {
+   "type": "string",
+   "format": "date-time"
+  }
+ },
+ "additionalProperties": false
+}
