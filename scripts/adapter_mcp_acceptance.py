@@ -98,10 +98,11 @@ def answer_product_discovery(step: dict[str, Any]) -> dict[str, Any]:
         return {"hypotheses": [
             {"statement": "audiences read a screen hit from the reaction shot and framing, not from physical contact", "mechanism": "eyeline and shot scale hide the miss and sell the reaction",
              "population": "film students staging fights", "activity": "staging screen fights", "task": "sell a punch to camera", "context": "coverage and editing", "suspected_friction": "legibility versus realism",
-             "supporting_evidence_ids": knowledge[:2], "knowledge_gaps": [{"question": "do practitioners describe the trade-off in the field?", "evidence_role": "behavior"}]},
-            {"statement": "choreography is authored for the lens first and the performer second", "supporting_evidence_ids": knowledge[1:3] or knowledge[:1]}]}
+             "supporting_evidence_ids": knowledge[:2], "knowledge_gaps": [{"question": "do practitioners describe the trade-off in the field?", "evidence_role": "behavior"}]}]}  # ONE hypothesis end to end (as in the Trail HR3 e2e); multi-hypothesis convergence is an HR4 concern
     if sid in ("G_mechanisms", "K_revise"):
-        cause = ([{"kind": "field_evidence", "id": field[0]}] if field and sid == "K_revise" else [{"kind": "chunk", "id": knowledge[0]}]) if (field or knowledge) else []
+        cause = ([{"kind": "field_evidence", "id": field[0]}] if field
+                 else [{"kind": "chunk", "id": knowledge[0]}] if knowledge and any(r["kind"] == "chunk" and r["id"] == knowledge[0] for r in ctx.get("evidence_refs") or [])
+                 else [{"kind": "hypothesis", "id": live[0]}] if live else [])
         return {"transitions": ([{"hypothesis_id": live[0], "kind": "REVISE", "cause_refs": cause, "changes": {"mechanism": "framing, eyeline and cutting rhythm carry the hit"}, "reason_code": "MECHANISM_REFINED"}] if live and cause else []),
                 **({"knowledge_gaps": [{"hypothesis_id": live[0], "question": "how often do practitioners lose legibility in wide coverage?", "evidence_role": "behavior"}]} if sid == "G_mechanisms" and live else {}),
                 **({"open_gaps": []} if sid == "K_revise" else {})}
