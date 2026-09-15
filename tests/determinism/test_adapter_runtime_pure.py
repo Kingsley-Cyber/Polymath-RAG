@@ -44,7 +44,7 @@ def test_admitted_manifest_loads_and_matches_the_contract_example():
     (lambda r: r["steps"][1].__setitem__("next", "nope"), "is not a step"),
     (lambda r: r["steps"].append(dict(r["steps"][0])), "duplicate step_id"),
     (lambda r: r.__setitem__("terminal_step_id", "A_understand"), "must be COMPILE_RESULT"),
-    (lambda r: r["steps"][5]["external"].pop("planned_node"), "names its graph node"),
+    (lambda r: r["steps"][5]["external"].update({"availability": "planned"}), "names its graph node"),   # R5: the admitted manifest plans nothing; a planned step must still name its node
     (lambda r: r["steps"][4].pop("output_schema"), "AGENT_REASON needs objective"),
 ])
 def test_graph_integrity_catches_broken_manifests(mutate, expect):
