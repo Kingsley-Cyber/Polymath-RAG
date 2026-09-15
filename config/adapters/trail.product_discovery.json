@@ -5,7 +5,7 @@
  "retrieval_policy_version": "1.0.0",
  "input_schema_version": "1.0.0",
  "output_schema_version": "2.0.0",
- "description": "Harness-executed product-opportunity discovery (ADR-0019): Polymath retrieves knowledge and owns durable hypothesis state; \u03b8 (the connected agent) generates, revises and splits hypotheses; TrailSignal projects its registry priors, compiles evidence gaps, admits harness observations, judges hypotheses (\u03c6), qualifies product territory / market delta / supply and computes the only score (LAW 1); the host harness executes AGENT_RESEARCH, PRODUCT_REALITY_CHECK and SUPPLIER_RESEARCH actions with its own tools. No Trail-owned live-web acquisition is required; no search engine, browser or source SDK is named.",
+ "description": "Harness-executed product-opportunity discovery (ADR-0019): Polymath retrieves knowledge and owns durable hypothesis state; θ (the connected agent) generates, revises and splits hypotheses; TrailSignal projects its registry priors, compiles evidence gaps, admits harness observations, judges hypotheses (φ), qualifies product territory / market delta / supply and computes the only score (LAW 1); the host harness executes AGENT_RESEARCH, PRODUCT_REALITY_CHECK and SUPPLIER_RESEARCH actions with its own tools. No Trail-owned live-web acquisition is required; no search engine, browser or source SDK is named.",
  "evidence_roles": [
   "friction",
   "workaround",
@@ -182,7 +182,7 @@
   {
    "step_id": "C_hypotheses",
    "type": "AGENT_REASON",
-   "title": "\u03b8 generate hypotheses",
+   "title": "θ generate hypotheses",
    "theta_op": "generate_hypotheses",
    "next": "D_project",
    "objective": "From the retrieved Polymath evidence only, generate up to 8 latent hypotheses: a population doing a repeated activity meets a recurring friction with a plausible mechanism. State assumptions, falsifiers and the knowledge gaps that only the live world can close. Cite evidence ids for every hypothesis; list unknowns instead of inventing.",
@@ -349,8 +349,7 @@
    "external": {
     "system": "trailsignal",
     "operation_kind": "registry.project",
-    "availability": "planned",
-    "planned_node": "HR3"
+    "availability": "working"
    },
    "config": {
     "max_priors_per_hypothesis": 12
@@ -359,14 +358,13 @@
   {
    "step_id": "E_filter",
    "type": "EXTERNAL_OPERATION",
-   "title": "\u03c6 filter: redundancy, unsupported, self-corroboration",
+   "title": "φ filter: redundancy, unsupported, self-corroboration",
    "next": "F_plan",
    "cognitive_op": "phi",
    "external": {
     "system": "trailsignal",
     "operation_kind": "hypotheses.judge",
-    "availability": "planned",
-    "planned_node": "HR3"
+    "availability": "working"
    },
    "config": {
     "stage": "filter"
@@ -407,7 +405,7 @@
   {
    "step_id": "G_mechanisms",
    "type": "AGENT_REASON",
-   "title": "\u03b8 derive mechanisms and name the external knowledge gaps",
+   "title": "θ derive mechanisms and name the external knowledge gaps",
    "theta_op": "derive_mechanisms",
    "next": "H_gaps",
    "objective": "For each live hypothesis, revise its mechanism from the corpus evidence and name the knowledge gaps that only live field evidence can close (behavior, friction, workaround, demand). Propose REVISE (or SPLIT) transitions with cause refs.",
@@ -641,14 +639,13 @@
   {
    "step_id": "H_gaps",
    "type": "EXTERNAL_OPERATION",
-   "title": "Trail compiles the evidence gaps into a research directive (search intents \u00d7 source roles)",
+   "title": "Trail compiles the evidence gaps into a research directive (search intents × source roles)",
    "next": "I_research",
    "cognitive_op": "phi",
    "external": {
     "system": "trailsignal",
     "operation_kind": "gaps.compile",
-    "availability": "planned",
-    "planned_node": "HR3"
+    "availability": "working"
    },
    "config": {
     "stage": "field_evidence"
@@ -682,8 +679,7 @@
    "external": {
     "system": "trailsignal",
     "operation_kind": "evidence.admit",
-    "availability": "planned",
-    "planned_node": "HR3"
+    "availability": "working"
    },
    "config": {
     "stage": "field_evidence"
@@ -692,7 +688,7 @@
   {
    "step_id": "K_revise",
    "type": "AGENT_REASON",
-   "title": "\u03b8 re-reason with admitted field evidence",
+   "title": "θ re-reason with admitted field evidence",
    "theta_op": "cross_map_frictions",
    "next": "L_judge",
    "objective": "Reason again over the original knowledge, the hypothesis state and the newly admitted field evidence: propose REVISE or SPLIT transitions (citing admitted evidence ids), and name the gaps that remain open.",
@@ -910,14 +906,13 @@
   {
    "step_id": "L_judge",
    "type": "EXTERNAL_OPERATION",
-   "title": "\u03c6 judge: kill / merge / weaken / strengthen / contradict / require_evidence",
+   "title": "φ judge: kill / merge / weaken / strengthen / contradict / require_evidence",
    "next": "M_loop",
    "cognitive_op": "phi",
    "external": {
     "system": "trailsignal",
     "operation_kind": "hypotheses.judge",
-    "availability": "planned",
-    "planned_node": "HR3"
+    "availability": "working"
    },
    "config": {
     "stage": "revision"
@@ -953,10 +948,10 @@
   {
    "step_id": "N_jobs",
    "type": "AGENT_REASON",
-   "title": "\u03b8 derive physical jobs and product mechanisms",
+   "title": "θ derive physical jobs and product mechanisms",
    "theta_op": "derive_physical_jobs",
    "next": "O_territory",
-   "objective": "For each surviving hypothesis derive the physical jobs (access, retention, visibility, protection, \u2026) and candidate product mechanisms as REVISE transitions with cause refs; keep unknowns explicit.",
+   "objective": "For each surviving hypothesis derive the physical jobs (access, retention, visibility, protection, …) and candidate product mechanisms as REVISE transitions with cause refs; keep unknowns explicit.",
    "constraints": [
     "Cite only evidence_refs supplied in context; registry priors (trail_prior) are coordinates, never evidence",
     "No opportunity score, rank or weight of any kind (LAW 1)"
@@ -1193,8 +1188,7 @@
    "external": {
     "system": "trailsignal",
     "operation_kind": "territory.project",
-    "availability": "planned",
-    "planned_node": "HR3"
+    "availability": "working"
    }
   },
   {
@@ -1227,8 +1221,7 @@
    "external": {
     "system": "trailsignal",
     "operation_kind": "evidence.admit",
-    "availability": "planned",
-    "planned_node": "HR3"
+    "availability": "working"
    },
    "config": {
     "stage": "product_reality"
@@ -1243,8 +1236,7 @@
    "external": {
     "system": "trailsignal",
     "operation_kind": "opportunity.qualify",
-    "availability": "planned",
-    "planned_node": "HR3"
+    "availability": "working"
    },
    "config": {
     "stage": "market_delta"
@@ -1279,8 +1271,7 @@
    "external": {
     "system": "trailsignal",
     "operation_kind": "evidence.admit",
-    "availability": "planned",
-    "planned_node": "HR3"
+    "availability": "working"
    },
    "config": {
     "stage": "supply"
@@ -1295,8 +1286,7 @@
    "external": {
     "system": "trailsignal",
     "operation_kind": "opportunity.qualify",
-    "availability": "planned",
-    "planned_node": "HR3"
+    "availability": "working"
    },
    "config": {
     "stage": "supply"
@@ -1311,8 +1301,7 @@
    "external": {
     "system": "trailsignal",
     "operation_kind": "opportunity.score",
-    "availability": "planned",
-    "planned_node": "HR3"
+    "availability": "working"
    }
   },
   {

@@ -1,0 +1,78 @@
+{
+ "action_id": "hact_placeholder",
+ "run_id": "run_placeholder",
+ "harness_id": "mcp-acceptance-harness",
+ "started_at": "2026-09-15T05:00:00Z",
+ "completed_at": "2026-09-15T05:20:00Z",
+ "sources": [
+  {
+   "source_id": "shop0",
+   "url": "https://shop0.example/p/0",
+   "source_class": "retailer",
+   "retrieved_at": "2026-09-15T05:10:00Z",
+   "published_at_if_known": "2026-09-01T00:00:00Z"
+  },
+  {
+   "source_id": "shop1",
+   "url": "https://shop1.example/p/1",
+   "source_class": "retailer",
+   "retrieved_at": "2026-09-15T05:10:00Z",
+   "published_at_if_known": "2026-09-01T00:00:00Z"
+  },
+  {
+   "source_id": "shop2",
+   "url": "https://shop2.example/p/2",
+   "source_class": "retailer",
+   "retrieved_at": "2026-09-15T05:10:00Z",
+   "published_at_if_known": "2026-09-01T00:00:00Z"
+  }
+ ],
+ "observations": [
+  {
+   "observation_id": "pr0",
+   "source_id": "shop0",
+   "claim": "listing sells the pouch for 20 dollars",
+   "paraphrase_or_excerpt": "excerpt",
+   "metric_if_present": null,
+   "context": "scripted acceptance",
+   "evidence_role_claimed": "price"
+  },
+  {
+   "observation_id": "pr1",
+   "source_id": "shop1",
+   "claim": "listing sells the pouch for 21 dollars",
+   "paraphrase_or_excerpt": "excerpt",
+   "metric_if_present": null,
+   "context": "scripted acceptance",
+   "evidence_role_claimed": "price"
+  },
+  {
+   "observation_id": "pr2",
+   "source_id": "shop2",
+   "claim": "listing sells the pouch for 22 dollars",
+   "paraphrase_or_excerpt": "excerpt",
+   "metric_if_present": null,
+   "context": "scripted acceptance",
+   "evidence_role_claimed": "price"
+  },
+  {
+   "observation_id": "cp1",
+   "source_id": "shop0",
+   "claim": "brand x pouch has 900 reviews",
+   "paraphrase_or_excerpt": "excerpt",
+   "metric_if_present": null,
+   "context": "scripted acceptance",
+   "evidence_role_claimed": "competition"
+  }
+ ],
+ "tool_trace": [
+  {
+   "search_intent_id": "si_price",
+   "tool_class": "web_search",
+   "query_count": 3
+  }
+ ],
+ "limitations": [
+  "scripted acceptance receipt; fixture sources"
+ ]
+}

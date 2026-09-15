@@ -18,7 +18,27 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.270**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-14T10:40 — TRAIL R3: A36 committed 44379bc (PR #7 = A32–A36); HR1 v2 = 0033f74 on `codex/hr1-registry-snapshot-compiler` (PR #8, base = the A35 branch); A37 (agent-control receipts) rehearsed/committed committed 7e6532e on codex/a37-agent-control-verification-receipts, PR #9 (base = the HR1 branch); next = HR2 from the A37 tip)
+## Latest checkpoint (2026-09-15T05:00 — R5 CUTOVER: trail.product_discovery reaches TrailSignal (planned → working, register 11.272); Trail HR2 fa7ddc0 (PR #11), A39 3f5f5c8 (PR #12), A40 520d942 (PR #13) stacked; HR3 chain running; local Trail stack live; D1 resolved)
+
+**Read first:** `docs/wiki/work-log/2026-09-15-harness-research-r5-cutover.md`, then `~/Documents/polymath-rebuild/handoff-drafts/logs/hr3_chain.log`
+(the real HR3 chain from the A40 tip) and `logs/trail_stack_up.log` (the local Trail stack + daemon).
+
+**State (2026-09-15):**
+- Trail (owner merges; PRs stacked on each other): #10 A38 → #11 HR2 → #12 A39 → #13 A40 → HR3 (chain running: admission → apply-code → record (full suite) → verify → receipt → close → push → PR, base = the A40 branch).
+  Governance lessons this session: rehearsals record a BOUNDED suite, so cross-slice pins (A38 rank pin; the production MCP toolset pin in
+  `tests/architecture/test_batch_streaming.py`) only surface in the real chain → A39/A40 fix them and the rehearsals now run the pin tests first.
+- Local Trail stack (never the owner's volumes/secrets): `handoff-drafts/trail_stack_up.sh <worktree>` → compose project `trail-signal-local`
+  (Postgres 15433, Temporal 7233, VersityGW 7070), migrations 1000–1008, `trail-signal-v2-daemon` on 8767; secrets in `~/.config/trail-signal/local.env`.
+  Proven: `registry.project` for the polymath principal (JWT minted by Polymath's `trail_client`) → 5 priors, byte-identical replay, audit row.
+- Polymath: manifest cut over (this slice); fleet needs `TRAIL_SIGNAL_MCP_JWT_SECRET` (local value) + `POLYMATH_TRAIL_MCP_URL` in `.env` and ONE bounce
+  before the live acceptance; then `scripts/adapter_mcp_acceptance.py --adapter trail.product_discovery --harness receipts --harness-receipts tests/fixtures/harness_receipts`.
+- Navigation discipline (owner 2026-09-15): Graft (`~/Documents/polymath-rebuild/_graft_polymath`) + graphify `GRAPH_REPORT.md` (regenerated 2026-09-15 via the
+  free opencode proxy) before broad reads; see the polymath-bootstrap skill Step 1 item 7.
+
+**Exact next action:** when the HR3 chain lands → merge this cutover PR (CI green) → `post_merge_ff.sh` → add the two Trail values to `.env` →
+`post_merge_bounce.sh` → run the live acceptance → record its receipt in a work-log → retire `research/` + Hermes symlink (O6) → HR4.
+
+## Prior checkpoint (2026-09-14T10:40 — TRAIL R3: A36 committed 44379bc (PR #7 = A32–A36); HR1 v2 = 0033f74 on `codex/hr1-registry-snapshot-compiler` (PR #8, base = the A35 branch); A37 (agent-control receipts) rehearsed/committed committed 7e6532e on codex/a37-agent-control-verification-receipts, PR #9 (base = the HR1 branch); next = HR2 from the A37 tip)
 
 **Read first:** the 05:40 checkpoint below (still accurate for A33–A35), then `~/Documents/polymath-rebuild/handoff-drafts/logs/hr1_chain.log`
 (admit → apply-code → record → finish → push → PR) and `logs/a37_rehearsal.log` / `logs/a37_finish.log`.

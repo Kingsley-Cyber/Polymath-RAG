@@ -1,0 +1,126 @@
+{
+ "action_id": "hact_placeholder",
+ "run_id": "run_placeholder",
+ "harness_id": "mcp-acceptance-harness",
+ "started_at": "2026-09-15T05:00:00Z",
+ "completed_at": "2026-09-15T05:20:00Z",
+ "sources": [
+  {
+   "source_id": "forum0",
+   "url": "https://forum0.example/t/0",
+   "source_class": "community_discussion",
+   "retrieved_at": "2026-09-15T05:10:00Z",
+   "published_at_if_known": "2026-09-01T00:00:00Z"
+  },
+  {
+   "source_id": "forum1",
+   "url": "https://forum1.example/t/1",
+   "source_class": "community_discussion",
+   "retrieved_at": "2026-09-15T05:10:00Z",
+   "published_at_if_known": "2026-09-01T00:00:00Z"
+  },
+  {
+   "source_id": "forum2",
+   "url": "https://forum2.example/t/2",
+   "source_class": "community_discussion",
+   "retrieved_at": "2026-09-15T05:10:00Z",
+   "published_at_if_known": "2026-09-01T00:00:00Z"
+  },
+  {
+   "source_id": "forum3",
+   "url": "https://forum3.example/t/3",
+   "source_class": "community_discussion",
+   "retrieved_at": "2026-09-15T05:10:00Z",
+   "published_at_if_known": "2026-09-01T00:00:00Z"
+  },
+  {
+   "source_id": "forum4",
+   "url": "https://forum4.example/t/4",
+   "source_class": "community_discussion",
+   "retrieved_at": "2026-09-15T05:10:00Z",
+   "published_at_if_known": "2026-09-01T00:00:00Z"
+  },
+  {
+   "source_id": "forum5",
+   "url": "https://forum5.example/t/5",
+   "source_class": "community_discussion",
+   "retrieved_at": "2026-09-15T05:10:00Z",
+   "published_at_if_known": "2026-09-01T00:00:00Z"
+  }
+ ],
+ "observations": [
+  {
+   "observation_id": "fr0",
+   "source_id": "forum0",
+   "claim": "my pouch bounces on run number 0",
+   "paraphrase_or_excerpt": "excerpt",
+   "metric_if_present": null,
+   "context": "scripted acceptance",
+   "evidence_role_claimed": "friction"
+  },
+  {
+   "observation_id": "fr1",
+   "source_id": "forum1",
+   "claim": "my pouch bounces on run number 1",
+   "paraphrase_or_excerpt": "excerpt",
+   "metric_if_present": null,
+   "context": "scripted acceptance",
+   "evidence_role_claimed": "friction"
+  },
+  {
+   "observation_id": "fr2",
+   "source_id": "forum2",
+   "claim": "my pouch bounces on run number 2",
+   "paraphrase_or_excerpt": "excerpt",
+   "metric_if_present": null,
+   "context": "scripted acceptance",
+   "evidence_role_claimed": "friction"
+  },
+  {
+   "observation_id": "fr3",
+   "source_id": "forum3",
+   "claim": "my pouch bounces on run number 3",
+   "paraphrase_or_excerpt": "excerpt",
+   "metric_if_present": null,
+   "context": "scripted acceptance",
+   "evidence_role_claimed": "friction"
+  },
+  {
+   "observation_id": "fr4",
+   "source_id": "forum4",
+   "claim": "my pouch bounces on run number 4",
+   "paraphrase_or_excerpt": "excerpt",
+   "metric_if_present": null,
+   "context": "scripted acceptance",
+   "evidence_role_claimed": "friction"
+  },
+  {
+   "observation_id": "fr5",
+   "source_id": "forum5",
+   "claim": "my pouch bounces on run number 5",
+   "paraphrase_or_excerpt": "excerpt",
+   "metric_if_present": null,
+   "context": "scripted acceptance",
+   "evidence_role_claimed": "friction"
+  },
+  {
+   "observation_id": "bh1",
+   "source_id": "forum1",
+   "claim": "every run I stop to fix the pouch",
+   "paraphrase_or_excerpt": "excerpt",
+   "metric_if_present": null,
+   "context": "scripted acceptance",
+   "evidence_role_claimed": "behavior"
+  }
+ ],
+ "tool_trace": [
+  {
+   "search_intent_id": "si_complaint",
+   "tool_class": "web_search",
+   "query_count": 3
+  }
+ ],
+ "limitations": [
+  "scripted acceptance receipt; fixture sources"
+ ]
+}
