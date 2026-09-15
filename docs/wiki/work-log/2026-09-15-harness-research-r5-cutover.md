@@ -35,6 +35,8 @@ harness receipts, so a live run can traverse Trail's seven bounded research oper
 
 - Live acceptance attempt 2 (after the schema fix): four Trail operations again, then `ADMISSION_INVALID` on `run_id`: Trail echoes the wire `run_ref` (`run:adr-…`, the slug the client sends) while the v1 admission projection requires Polymath's `adr_…` run id. The worker now keys the projection by Polymath's run id (the Trail operation id remains the cross-system link).
 
+- Live acceptance attempt 3 (after the run-id fix): the admission and the first judge passed; the second judge (`L_judge`) ended in `PHI_VERDICT_INVALID` on `REQUIRE_EVIDENCE`. Trail's φ verdict carries its own `VerdictKind` (REJECT/CHALLENGE/DEDUPLICATE/REQUIRE_EVIDENCE/…) plus the `polymath_transition` it maps to (KILL/CONTRADICT/MERGE/…/null); the worker was passing Trail's `kind` straight to Polymath's transition engine. Fixed: the worker translates each verdict to its `polymath_transition` and drops null transitions (`REQUIRE_EVIDENCE` = keep gathering, not a state change).
+
 ## Rejected claims
 - "HR3 is WORKING in Trail": not until the HR3 chain records VERIFIED and the owner merges the stacked PRs; the local proof is a smoke on the HR3 tip.
 - "The old research path is retired": `research/` and the Hermes symlink (O6) are removed only after the live acceptance passes.
