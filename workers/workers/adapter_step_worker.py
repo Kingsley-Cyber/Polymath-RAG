@@ -315,7 +315,20 @@ def exec_external(step: dict[str, Any], state: RunState, m: Manifest) -> service
     for k, v in result.items():
         if k in ("priors", "registry_snapshot"):
             continue
-        output["hypothesis_verdicts" if k == "verdicts" else k] = v
+        if k == "verdicts":
+            # Trail's φ verdict carries its own VerdictKind (REJECT, CHALLENGE, DEDUPLICATE, REQUIRE_EVIDENCE, …) plus the
+            # `polymath_transition` it maps to (KILL, CONTRADICT, MERGE, …, or null). Polymath's transition engine speaks the
+            # transition vocabulary, so translate: a null transition (REQUIRE_EVIDENCE = keep gathering) is not a state change.
+            def _translate(verdict: dict[str, Any]) -> dict[str, Any] | None:
+                # `polymath_transition` present (real Trail) is authoritative: its value is the transition, null = no state change
+                # (REQUIRE_EVIDENCE, keep gathering). A verdict without the key already speaks Polymath's transition vocabulary in `kind`.
+                transition = verdict["polymath_transition"] if "polymath_transition" in verdict else verdict.get("kind")
+                if not transition:
+                    return None
+                return {kk: vv for kk, vv in {**verdict, "kind": transition}.items() if kk != "polymath_transition"}
+            output["hypothesis_verdicts"] = [w for verdict in v if isinstance(verdict, dict) for w in (_translate(verdict),) if w]
+            continue
+        output[k] = v
     adm = output.get("evidence_admission")
     if isinstance(adm, dict):
         # Trail echoes the wire run_ref (`run:<slug>`, the identifier this client sent); Polymath's admission projection is keyed by
