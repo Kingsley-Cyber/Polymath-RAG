@@ -31,6 +31,8 @@ harness receipts, so a live run can traverse Trail's seven bounded research oper
 - Live: Polymath's `trail_client.mint_principal_jwt` + `TrailMCPClient.operate("registry.project")` against the local daemon on 8767 → `operation_kind registry.project`, `status_revision 1`, registry snapshot `trs-da9942986e52f832`, 5 priors, replay identical; `select operation_kind, principal_id from v2_research_operations` → `registry.project | polymath`.
 - The live acceptance (`scripts/adapter_mcp_acceptance.py --adapter trail.product_discovery --harness receipts --harness-receipts tests/fixtures/harness_receipts`) runs after this merge lands on the fleet (fast-forward + `.env` Trail secret + bounce); its receipt is recorded in the next work-log.
 
+- Live acceptance attempt 1 (fleet on 8323105, local Trail daemon on the HR3 tip): the run executed four real Trail operations (`registry.project`, `hypotheses.judge`, `gaps.compile`, `evidence.admit`; audit rows in `v2_research_operations`) and ended in `ADMISSION_INVALID`: Trail's `AdmittedObservationV1` carries `anchored_at` and `authority_class` (`ADMITTED_OBSERVATION`) that the v1 `evidence_admission` schema did not declare. Fixed additively (schema + example); the other Trail results are not schema-validated on the Polymath side and the harness receipt contract already matches field for field.
+
 ## Rejected claims
 - "HR3 is WORKING in Trail": not until the HR3 chain records VERIFIED and the owner merges the stacked PRs; the local proof is a smoke on the HR3 tip.
 - "The old research path is retired": `research/` and the Hermes symlink (O6) are removed only after the live acceptance passes.
