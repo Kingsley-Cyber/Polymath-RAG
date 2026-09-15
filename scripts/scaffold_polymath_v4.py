@@ -591,6 +591,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/fixtures/harness_receipts/AGENT_RESEARCH.json", "json", None),
     ("tests/fixtures/harness_receipts/PRODUCT_REALITY_CHECK.json", "json", None),
     ("tests/fixtures/harness_receipts/SUPPLIER_RESEARCH.json", "json", None),
+    ("stores/postgres/migrations/0064_adapter_hypotheses_seq.sql", "sql", None),
     ("stores/postgres/migrations/0063_adapter_output_order.sql", "sql", None),
     ("tests/determinism/test_adapter_product_discovery_loop.py", "py", None),
     ("tests/contracts/test_retired_paths.py", "py", None),

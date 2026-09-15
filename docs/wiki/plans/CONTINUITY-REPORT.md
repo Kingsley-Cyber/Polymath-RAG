@@ -35,8 +35,8 @@ Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (t
 - Navigation discipline (owner 2026-09-15): Graft (`~/Documents/polymath-rebuild/_graft_polymath`) + graphify `GRAPH_REPORT.md` (regenerated 2026-09-15 via the
   free opencode proxy) before broad reads; see the polymath-bootstrap skill Step 1 item 7.
 
-**Exact next action:** when the HR3 chain lands → merge this cutover PR (CI green) → `post_merge_ff.sh` → add the two Trail values to `.env` →
-`post_merge_bounce.sh` → run the live acceptance → record its receipt in a work-log → retire `research/` + Hermes symlink (O6) → HR4.
+**Exact next action:** HR3 landed (a937623, PR #14) → merge this cutover PR (CI green) → `post_merge_ff.sh` → `make db-migrate` (0064 adds `adapter_hypotheses.seq`;
+the fleet code orders hypotheses by it) → add the two Trail values to `.env` → `post_merge_bounce.sh` → run the live acceptance → record its receipt in a work-log → retire `research/` + Hermes symlink (O6) → HR4.
 
 ## Prior checkpoint (2026-09-14T10:40 — TRAIL R3: A36 committed 44379bc (PR #7 = A32–A36); HR1 v2 = 0033f74 on `codex/hr1-registry-snapshot-compiler` (PR #8, base = the A35 branch); A37 (agent-control receipts) rehearsed/committed committed 7e6532e on codex/a37-agent-control-verification-receipts, PR #9 (base = the HR1 branch); next = HR2 from the A37 tip)
 
