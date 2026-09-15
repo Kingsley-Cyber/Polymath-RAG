@@ -4,7 +4,7 @@ that implements the seven bounded operations (httpx MockTransport, Trail's JSON-
 owner's loop: θ hypotheses → priors → φ filter → mechanisms → gaps → HARNESS_ACTION (paused, answered by TWO harness identities across
 the run) → admission → re-reason → judge → bounded loop back through reasoning → physical jobs → territory → product reality → market
 delta → supplier research → supply → score → final product with cross-system lineage; and that the ACTIVE config (Trail HR3 still
-planned) ends honestly at the first Trail operation with TRAIL_CAPABILITY_PLANNED."""
+working after the R5 cutover) reaches Trail at the first operation."""
 from __future__ import annotations
 
 import hashlib
@@ -200,7 +200,8 @@ def test_product_discovery_2_0_0_runs_the_owner_loop_end_to_end_with_two_harness
             store.delete_run(conn, rid)
 
 
-def test_active_config_ends_honestly_at_the_first_planned_trail_operation(rig):
+def test_active_config_reaches_trail_at_the_first_operation(rig):
+    """R5 cutover: the admitted manifest no longer plans the Trail operations; the first Trail call is registry.project."""
     stub, execs = rig
     with tx() as conn:
         rid = service.start(conn, adapter_id="trail.product_discovery", input_payload={"seed": "runners lose access to small items", "corpus_ids": ["probe"]},
@@ -213,10 +214,12 @@ def test_active_config_ends_honestly_at_the_first_planned_trail_operation(rig):
             step = service.next_step(conn, rid)["step"]
             service.submit(conn, rid, {"step_id": "C_hypotheses", "payload": _theta(step), "submitted_by": {"agent_identity": "t"}})
             st = service.advance(conn, rid, execs)
-        assert st.status == "terminal_gap" and st.gap["code"] == "TRAIL_CAPABILITY_PLANNED" and st.gap["step_id"] == "D_project" and "HR3" in st.gap["message"]
-        assert stub.calls == []                                     # nothing was called: planned means planned
+        assert st.status != "terminal_gap" and st.failure is None, (st.status, st.gap, st.failure)
+        assert stub.calls[:1] == ["registry.project"], stub.calls        # the active config calls Trail: no planned gap left
+        m = json.loads((ROOT / "config/adapters/trail.product_discovery.json").read_text())
+        assert all(s["external"]["availability"] == "working" and "planned_node" not in s["external"] for s in m["steps"] if s["type"] == "EXTERNAL_OPERATION")
         with tx() as conn:
-            assert len(store.current_hypotheses(conn, rid)) == 2   # θ state is durable even when the run ends in a typed gap
+            assert len(store.current_hypotheses(conn, rid)) == 2   # θ state is durable across the Trail projection
     finally:
         with tx() as conn:
             store.delete_run(conn, rid)

@@ -1,0 +1,78 @@
+{
+ "action_id": "hact_placeholder",
+ "run_id": "run_placeholder",
+ "harness_id": "mcp-acceptance-harness",
+ "started_at": "2026-09-15T05:00:00Z",
+ "completed_at": "2026-09-15T05:20:00Z",
+ "sources": [
+  {
+   "source_id": "mfg0",
+   "url": "https://maker0.example/moq",
+   "source_class": "supplier_listing",
+   "retrieved_at": "2026-09-15T05:10:00Z",
+   "published_at_if_known": "2026-09-01T00:00:00Z"
+  },
+  {
+   "source_id": "mfg1",
+   "url": "https://maker1.example/moq",
+   "source_class": "supplier_listing",
+   "retrieved_at": "2026-09-15T05:10:00Z",
+   "published_at_if_known": "2026-09-01T00:00:00Z"
+  },
+  {
+   "source_id": "mfg2",
+   "url": "https://maker2.example/moq",
+   "source_class": "supplier_listing",
+   "retrieved_at": "2026-09-15T05:10:00Z",
+   "published_at_if_known": "2026-09-01T00:00:00Z"
+  }
+ ],
+ "observations": [
+  {
+   "observation_id": "sp0",
+   "source_id": "mfg0",
+   "claim": "maker 0 quotes 4.0 usd at moq 200",
+   "paraphrase_or_excerpt": "excerpt",
+   "metric_if_present": null,
+   "context": "scripted acceptance",
+   "evidence_role_claimed": "supply"
+  },
+  {
+   "observation_id": "sp1",
+   "source_id": "mfg1",
+   "claim": "maker 1 quotes 4.1 usd at moq 200",
+   "paraphrase_or_excerpt": "excerpt",
+   "metric_if_present": null,
+   "context": "scripted acceptance",
+   "evidence_role_claimed": "supply"
+  },
+  {
+   "observation_id": "sp2",
+   "source_id": "mfg2",
+   "claim": "maker 2 quotes 4.2 usd at moq 200",
+   "paraphrase_or_excerpt": "excerpt",
+   "metric_if_present": null,
+   "context": "scripted acceptance",
+   "evidence_role_claimed": "supply"
+  },
+  {
+   "observation_id": "rk1",
+   "source_id": "mfg0",
+   "claim": "certification and returns risk reviewed",
+   "paraphrase_or_excerpt": "excerpt",
+   "metric_if_present": null,
+   "context": "scripted acceptance",
+   "evidence_role_claimed": "risk"
+  }
+ ],
+ "tool_trace": [
+  {
+   "search_intent_id": "si_supply",
+   "tool_class": "web_search",
+   "query_count": 3
+  }
+ ],
+ "limitations": [
+  "scripted acceptance receipt; fixture sources"
+ ]
+}
