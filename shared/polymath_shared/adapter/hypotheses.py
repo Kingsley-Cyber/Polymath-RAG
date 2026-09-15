@@ -254,9 +254,10 @@ def apply(run_id: str, step: dict[str, Any], current: dict[str, dict[str, Any]],
 
 
 def context_view(current: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
-    """The bounded view an issued step carries: live (non-absorbed) hypotheses, newest revision, sorted by id."""
+    """The bounded view an issued step carries: live (non-absorbed) hypotheses, newest revision, in generation order (the store's
+    order; never the run-id-dependent hash order of the ids)."""
     return [{"hypothesis_id": h, "revision": int(s["revision"]), "status": s["status"], "statement": s["statement"]}
-            for h, s in sorted(current.items()) if s["status"] not in ABSORBED_STATUSES]
+            for h, s in current.items() if s["status"] not in ABSORBED_STATUSES]
 
 
 def lineage_intact(states: list[dict[str, Any]], transitions: list[dict[str, Any]]) -> list[str]:

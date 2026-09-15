@@ -69,11 +69,11 @@ def _executors(tmp: pathlib.Path):
             return {"output": {"registry_snapshot": SNAP}, "evidence_refs": [{"kind": "trail_prior", "id": "fr-03", "note": "friction_primitive"}]}
         if kind == "gaps.compile":
             return {"output": {"research_directive": {"search_intents": [{"intent_id": "si_1", "intent": "find first-person friction complaints", "evidence_goal": "complaint", "evidence_roles": ["friction"]}],
-                                                       "evidence_gaps": [{"gap_id": "gap_1", "hypothesis_id": sorted(store_hyps(state))[0], "question": "is it recurring?", "evidence_role": "friction"}],
+                                                       "evidence_gaps": [{"gap_id": "gap_1", "hypothesis_id": next(iter(store_hyps(state))), "question": "is it recurring?", "evidence_role": "friction"}],
                                                        "geography": "US", "language": "en", "success_condition": "3 independent complaints", "falsification_condition": "none found"}}}
         if kind == "evidence.admit":
             rec = state.outputs["E_research"]
-            hid = sorted(store_hyps(state))[0]
+            hid = next(iter(store_hyps(state)))
             adm_id = "hadm_" + hashlib.sha256(rec["_harness_action_id"].encode()).hexdigest()[:12]
             admitted = [{"admitted_evidence_id": "fev_" + hashlib.sha256(o["observation_id"].encode()).hexdigest()[:12], "observation_id": o["observation_id"], "source_id": o["source_id"],
                          "evidence_role": "friction", "source_class": "community_discussion", "source_suitability": "suitable", "freshness": "fresh", "provenance": "recorded",
