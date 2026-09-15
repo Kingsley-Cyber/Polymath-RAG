@@ -432,12 +432,14 @@ def _cited(payload: Any) -> set[str]:
 def _context_refs(conn, state: RunState) -> list[dict[str, Any]]:
     """What an issued step may carry: knowledge refs and registry priors produced by executed steps, plus TrailSignal-ADMITTED field
     evidence from the store. Raw harness observations never appear here (ADR-0019 §5)."""
+    # Trail-admitted field evidence goes in FIRST: it is the scarce signal a qualify/score run depends on, and a large corpus can
+    # otherwise fill every context slot with knowledge refs and truncate it out (the admitted-evidence-ids would then be empty).
     seen: dict[str, dict[str, Any]] = {}
+    for r in store.admitted_evidence_refs(conn, state.run_id):
+        seen.setdefault(r["id"], r)
     for sid, out in state.outputs.items():
         for r in (out or {}).get("_evidence_refs") or []:
             seen.setdefault(r["id"], r)
-    for r in store.admitted_evidence_refs(conn, state.run_id):
-        seen.setdefault(r["id"], r)
     return list(seen.values())[:MAX_CONTEXT_REFS]
 
 
