@@ -35,5 +35,6 @@ harness receipts, so a live run can traverse Trail's seven bounded research oper
 - "The old research path is retired": `research/` and the Hermes symlink (O6) are removed only after the live acceptance passes.
 
 ## Open contract gaps
+- CI drift, not this slice: on a pure `origin/main` (599eef8, green on 2026-09-14) the CI `test` job now fails `tests/determinism/test_adapter_harness_action.py::test_harness_action_pauses_durably_and_a_receipt_resumes_the_same_run_with_lineage` (`revised` instead of `proposed`). Bisected locally in CI-equivalent environments: the only package that moved between the green and failing runs is `httpx2`/`httpcore2` 2.12.0 → 2.13.0, and downgrading exactly those two restores the pass; the fleet lock stays at 2.12.0. `.github/workflows/determinism.yml` pins `httpx2<2.13` / `httpcore2<2.13` until the mechanism (no first-party module imports httpx2) is identified.
 - HR4 (Trail live canary with two harness identities and a controlled restart) is not started; it needs the live acceptance first.
 - The owner's own Trail stack and production principal secret (O1/O4) remain owner actions; this session used a local stack with local secrets only.
