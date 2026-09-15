@@ -318,6 +318,9 @@ def exec_external(step: dict[str, Any], state: RunState, m: Manifest) -> service
         output["hypothesis_verdicts" if k == "verdicts" else k] = v
     adm = output.get("evidence_admission")
     if isinstance(adm, dict):
+        # Trail echoes the wire run_ref (`run:<slug>`, the identifier this client sent); Polymath's admission projection is keyed by
+        # Polymath's own run id (contracts/adapter/v1/evidence_admission: `adr_…`). The Trail operation id stays the cross-system link.
+        adm = {**adm, "run_id": state.run_id}; output["evidence_admission"] = adm
         record_ids += [a.get("trail_admission_record_id") for a in adm.get("admitted") or [] if a.get("trail_admission_record_id")]
     ts = output.get("trail_score")
     if isinstance(ts, dict) and ts.get("record_id"):

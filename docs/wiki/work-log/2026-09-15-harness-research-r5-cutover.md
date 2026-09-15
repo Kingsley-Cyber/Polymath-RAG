@@ -33,6 +33,8 @@ harness receipts, so a live run can traverse Trail's seven bounded research oper
 
 - Live acceptance attempt 1 (fleet on 8323105, local Trail daemon on the HR3 tip): the run executed four real Trail operations (`registry.project`, `hypotheses.judge`, `gaps.compile`, `evidence.admit`; audit rows in `v2_research_operations`) and ended in `ADMISSION_INVALID`: Trail's `AdmittedObservationV1` carries `anchored_at` and `authority_class` (`ADMITTED_OBSERVATION`) that the v1 `evidence_admission` schema did not declare. Fixed additively (schema + example); the other Trail results are not schema-validated on the Polymath side and the harness receipt contract already matches field for field.
 
+- Live acceptance attempt 2 (after the schema fix): four Trail operations again, then `ADMISSION_INVALID` on `run_id`: Trail echoes the wire `run_ref` (`run:adr-…`, the slug the client sends) while the v1 admission projection requires Polymath's `adr_…` run id. The worker now keys the projection by Polymath's run id (the Trail operation id remains the cross-system link).
+
 ## Rejected claims
 - "HR3 is WORKING in Trail": not until the HR3 chain records VERIFIED and the owner merges the stacked PRs; the local proof is a smoke on the HR3 tip.
 - "The old research path is retired": `research/` and the Hermes symlink (O6) are removed only after the live acceptance passes.
