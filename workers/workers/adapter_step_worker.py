@@ -313,7 +313,10 @@ def exec_external(step: dict[str, Any], state: RunState, m: Manifest) -> service
                 r.pop("note")
         record_ids = [r["id"] for r in refs]
     for k, v in result.items():
-        if k in ("priors", "registry_snapshot"):
+        # Trail's ResearchResultV1 envelope always carries every optional field; a given operation leaves the ones it does not
+        # produce null. Skip the nulls so an operation's empty `research_directive`/`evidence_admission`/… never shadows a real
+        # value an earlier step produced (the step context gathers the NEWEST occurrence of each key).
+        if k in ("priors", "registry_snapshot") or v is None:
             continue
         if k == "verdicts":
             # Trail's φ verdict carries its own VerdictKind (REJECT, CHALLENGE, DEDUPLICATE, REQUIRE_EVIDENCE, …) plus the
