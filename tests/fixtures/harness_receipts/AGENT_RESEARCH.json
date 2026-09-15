@@ -111,6 +111,15 @@
    "metric_if_present": null,
    "context": "scripted acceptance",
    "evidence_role_claimed": "behavior"
+  },
+  {
+   "observation_id": "bh2",
+   "source_id": "forum2",
+   "claim": "I stop twice per run to reseat items",
+   "paraphrase_or_excerpt": "excerpt",
+   "metric_if_present": null,
+   "context": "scripted acceptance",
+   "evidence_role_claimed": "behavior"
   }
  ],
  "tool_trace": [

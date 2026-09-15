@@ -63,6 +63,15 @@
    "metric_if_present": null,
    "context": "scripted acceptance",
    "evidence_role_claimed": "competition"
+  },
+  {
+   "observation_id": "cp2",
+   "source_id": "shop1",
+   "claim": "brand y pouch has 400 reviews",
+   "paraphrase_or_excerpt": "excerpt",
+   "metric_if_present": null,
+   "context": "scripted acceptance",
+   "evidence_role_claimed": "competition"
   }
  ],
  "tool_trace": [

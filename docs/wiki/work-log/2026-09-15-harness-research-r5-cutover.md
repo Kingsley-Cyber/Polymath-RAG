@@ -39,6 +39,8 @@ harness receipts, so a live run can traverse Trail's seven bounded research oper
 
 - Live acceptance attempt 4 (after the verdict-translation fix): the loop ran through the market and product-reality phases and ended at `S_supply` with `HARNESS_DIRECTIVE_MISSING`. Root cause: Trail's `ResearchResultV1` envelope always carries every optional field, and any operation leaves the ones it does not produce null; the worker copied the nulls, so `opportunity.qualify`'s null `research_directive` shadowed the real directive the territory step produced (`_gather` returns the newest occurrence of a key). Fixed: the worker skips null envelope fields when merging a Trail result.
 
+- Live acceptance attempt 5 (after the null-envelope fix): the loop reached the FINAL Trail operation `opportunity.score`, which Trail refused with `HARD_GATE_UNMET` (LAW 1: no score until the qualification hard gates pass). Not a wire bug — the scripted `PRODUCT_REALITY_CHECK` receipt carried one competition observation, but `competitor_review_analysis` needs two independent groups. The three fixtures now mirror the proven Trail HR3 e2e receipts exactly (2 competition, 3 price, 3 supply, 1 risk, 6 friction + 2 behavior), which satisfy every market-delta and supply gate.
+
 ## Rejected claims
 - "HR3 is WORKING in Trail": not until the HR3 chain records VERIFIED and the owner merges the stacked PRs; the local proof is a smoke on the HR3 tip.
 - "The old research path is retired": `research/` and the Hermes symlink (O6) are removed only after the live acceptance passes.
