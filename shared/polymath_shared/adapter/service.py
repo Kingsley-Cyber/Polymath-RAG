@@ -243,7 +243,7 @@ def _compile_harness_action(state: RunState, spec: dict[str, Any], step_id: str,
     if not isinstance(directive, dict) or not directive.get("search_intents") or not snapshot:
         return None
     hb = spec.get("harness") or {}
-    live = [h for h, s_ in sorted(hyps.items()) if s_["status"] not in H.ABSORBED_STATUSES] or list(directive.get("hypothesis_ids") or [])
+    live = [h for h, s_ in hyps.items() if s_["status"] not in H.ABSORBED_STATUSES] or list(directive.get("hypothesis_ids") or [])   # generation order (store), not hash order
     if not live:
         return None
     budget = {**{"max_queries": 20, "max_sources": 15, "max_observations": 60}, **(directive.get("budget") or {}), **(hb.get("budget") or {})}

@@ -145,9 +145,15 @@ def insert_transitions(conn, transitions: list[dict[str, Any]]) -> None:
 
 def current_hypotheses(conn, run_id: str) -> dict[str, dict[str, Any]]:
     """hypothesis_id -> newest revision (HypothesisStateV1)."""
-    rows = conn.execute("""SELECT DISTINCT ON (hypothesis_id) hypothesis_id, state FROM adapter_hypotheses WHERE run_id=%s
-                           ORDER BY hypothesis_id, revision DESC""", (run_id,)).fetchall()
-    return {r[0]: _load(r[1]) for r in rows}
+    # generation order (first insertion), latest revision per hypothesis: deterministic across runs, never hash order
+    rows = conn.execute("SELECT hypothesis_id, revision, state FROM adapter_hypotheses WHERE run_id=%s ORDER BY seq", (run_id,)).fetchall()
+    out: dict[str, dict[str, Any]] = {}; revs: dict[str, int] = {}
+    for hid, revision, state in rows:
+        if hid not in out or revision > revs[hid]:
+            out[hid] = _load(state); revs[hid] = revision
+        else:
+            out.setdefault(hid, _load(state))
+    return out
 
 
 def list_transitions(conn, run_id: str) -> list[dict[str, Any]]:
