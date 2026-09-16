@@ -56,6 +56,18 @@ An independent adversarial audit found real defects the builder tests missed. Fi
 
 - **Round 4 (decoupled, final):** the complete gate-facing admitted set travels as a NEW additive `adapter_step.context.admitted_evidence_ids` field the service fills from the store accumulator (uncapped, across every bounded-loop pass); `_context_refs` is re-capped at MAX_CONTEXT_REFS as a display-only citation list (so it can never breach the schema's `evidence_refs` maxItems:500 and crash `issue_step`); the worker reads the dedicated field. Rounds 1–3 had, in turn: floors-as-caps starving admitted; a `state.outputs` source that lost bounded-loop passes; and an uncapped `_context_refs` that could exceed the contract limit and crash. Adversarial tests cover the capped display, the complete/schema-legal 1000-id admitted set, >80/>200 to the gate, and loop re-entry.
 
+## Independent audit outcome (R5-AUDIT-FIX)
+An independent adversarial auditor gated this work across four rounds; it found four distinct real defects the builder's tests missed, each verified independently (the builder did not grade its own repair):
+1. context-budget floors doubled as caps and the qualify/score gate read the capped set → >80-observation runs lost gate-critical evidence;
+2. the fix sourced admitted ids from `state.outputs`, which the bounded gap loop overwrites → earlier loop passes lost;
+3. removing the cap let `_context_refs` exceed the `adapter_step` `evidence_refs maxItems:500` → an unhandled `ContractViolation` at `issue_step` (reachable up to ~1000 admitted per run);
+4. final decoupling: the complete gate-facing admitted set travels in the additive `context.admitted_evidence_ids` field (store accumulator, uncapped, loop-safe), display `evidence_refs` re-capped at 200. **Verdict: PASS** (72 adapter tests + independent probes).
+
+### LOW residual hardening (non-blocking; tracked, do NOT let disappear)
+- **RH-1** `advance()` wraps `issue_step` only in `except BudgetExhausted`; a future `ContractViolation` (e.g. a schema-cap breach) would propagate and wedge the run instead of ending in a typed gap. Unreachable for the shipped manifest (5000 admitted-id cap ≫ ~1000 manifest ceiling); harden by converting an `issue_step` `ContractViolation` into a typed terminal gap.
+- **RH-2** `context.admitted_evidence_ids` is threaded into every issued step including AGENT_REASON/HARNESS_ACTION (not citable there); could be scoped to EXTERNAL_OPERATION steps.
+- **RH-3** the θ field-evidence DISPLAY surface is the oldest 80 by `admitted_at`; immaterial to the gate (which uses the complete set) but a minor citation-surface quirk.
+
 ## R5 vs HR4 scope
 - **R5 (this cutover):** single-hypothesis production cutover — one hypothesis, real Trail, complete deterministic score.
 - **HR4 (REQUIRED behavioural canary):** multiple hypotheses with different evidence attached to each, weaken/kill/strengthen, the CORRECT hypothesis qualified/scored, and NO cross-hypothesis leakage. This is required because the audit found a real defect here: when multiple hypotheses survive, evidence is tagged to one but `opportunity.qualify`/`opportunity.score` target `hypotheses[0]`, which can be a different, evidence-less hypothesis → `NO_DEFENSIBLE_BRIDGE` on a run with ample evidence. The single-hypothesis R5 harness sidesteps this; HR4 must exercise and fix it. Do not let this disappear.
