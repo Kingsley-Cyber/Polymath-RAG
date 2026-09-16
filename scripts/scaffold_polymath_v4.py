@@ -588,6 +588,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-14-harness-research-r5-driver.md", "md", None),
     ("docs/wiki/work-log/2026-09-14-harness-research-r3-hr1-a37.md", "md", None),
     ("docs/wiki/work-log/2026-09-15-harness-research-r5-cutover.md", "md", None),
+    ("docs/wiki/work-log/2026-09-15-r5-acceptance-pass.md", "md", None),
     ("tests/fixtures/harness_receipts/AGENT_RESEARCH.json", "json", None),
     ("tests/fixtures/harness_receipts/PRODUCT_REALITY_CHECK.json", "json", None),
     ("tests/fixtures/harness_receipts/SUPPLIER_RESEARCH.json", "json", None),

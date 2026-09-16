@@ -112,7 +112,7 @@ def answer_product_discovery(step: dict[str, Any]) -> dict[str, Any]:
         score_refs = [str(x) for x in (step["context"].get("inputs") or {}).get("trail_score_refs", [])]
         return {"product_opportunity": {"product_concept": {"title": "lens-first fight blocking guide", "mechanism_explanation": "framing carries the hit", "population": "film students", "activity": "staging screen fights",
                                                             "context": "coverage and editing", "problem": "legibility versus realism"},
-                                        "evidence_chain": [{"hypothesis_id": h} for h in live[:1]], "field_evidence_ids": field[:2], "contradictions": [], "competing_products": [], "product_delta": None, "supply": None,
+                                        "evidence_chain": [{"hypothesis_id": h, "supporting_evidence_ids": knowledge[:2]} for h in live[:1]], "field_evidence_ids": field[:2], "contradictions": [], "competing_products": [], "product_delta": None, "supply": None,
                                         "trail_score_refs": score_refs, "remaining_uncertainty": ["field population size"], "cheapest_falsification_experiment": "interview ten fight coordinators"}}
     raise SystemExit(f"no scripted answer for step {sid}")
 
